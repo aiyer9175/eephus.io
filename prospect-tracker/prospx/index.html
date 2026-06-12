@@ -7868,6 +7868,92 @@
       .news-ticker { margin-bottom: 6px; }
       h1 { margin-bottom: 0.25rem; }
     }
+
+    /* --- Trade Machine (Transactions tab) --- */
+    .tm-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg, 10px);
+      padding: 14px 16px;
+      margin: 0 0 18px;
+    }
+    .tm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    @media (max-width: 720px) { .tm-grid { grid-template-columns: 1fr; } }
+    .tm-side {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+    .tm-side-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+    .tm-total { font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+    .tm-search {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg-primary); color: var(--text-primary);
+      border: 1px solid var(--border-color); border-radius: 6px;
+      padding: 6px 9px; font-size: 12.5px; font-family: inherit;
+      margin-bottom: 6px;
+    }
+    .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
+    .tm-results { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+    .tm-hit {
+      display: flex; align-items: baseline; gap: 8px; width: 100%;
+      text-align: left; cursor: pointer;
+      background: var(--bg-card); color: var(--text-primary);
+      border: 1px solid var(--border-color); border-radius: 6px;
+      padding: 5px 9px; font-size: 12px; font-family: inherit;
+    }
+    .tm-hit:hover { border-color: var(--accent-cyan); }
+    .tm-hit .tm-val { margin-left: auto; }
+    .tm-row {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 5px 2px; font-size: 12.5px;
+      border-bottom: 1px solid var(--border-color);
+      min-width: 0;
+    }
+    .tm-row:last-child { border-bottom: none; }
+    .tm-kind {
+      flex: none; width: 16px; height: 16px; line-height: 16px;
+      border-radius: 4px; text-align: center;
+      font-size: 9.5px; font-weight: 800;
+      background: var(--bg-primary); color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      align-self: center;
+    }
+    .tm-sub {
+      color: var(--text-tertiary); font-size: 11px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0;
+    }
+    .tm-row .tm-val { margin-left: auto; }
+    .tm-val {
+      flex: none; font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums; font-size: 12px;
+      color: var(--text-primary);
+    }
+    .tm-x {
+      flex: none; background: none; border: none; cursor: pointer;
+      color: var(--text-tertiary); font-size: 14px; line-height: 1;
+      padding: 0 2px; align-self: center;
+    }
+    .tm-x:hover { color: var(--down, #e05c5c); }
+    .tm-empty { color: var(--text-tertiary); font-size: 11.5px; padding: 6px 2px; font-style: italic; }
+    .tm-verdict {
+      margin-top: 10px; padding-top: 9px;
+      border-top: 1px solid var(--border-color);
+      font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+    }
   </style>
 
 </head>
@@ -7892,7 +7978,7 @@
     <a href="/articles/">Articles</a>
     <a href="/forums/">Forums</a>
     <a href="/glossary/">Glossary</a>
-    <a href="/team/">Dev Team</a>
+    <a href="/team/">Developers</a>
   </nav>
   <div class="eephus-nav-controls">
     <button class="eephus-nav-ctrl" id="global-watchlist" type="button"
@@ -18021,6 +18107,120 @@ async function _ensureMlbTradePlayersLoaded() {
   return _mlbTradePlayersLoading;
 }
 
+// ===========================================================================
+// TRADE MACHINE - build-a-package valuation over the platform's two value
+// currencies: prospect surplus (control-window NPV, calibrated) and MLB
+// contract surplus NPV (salary-known seasons). Lives at the top of the
+// Transactions tab; values are the SAME numbers the cards show.
+// ===========================================================================
+const _TM = { a: [], b: [], detail: null, detailLoading: false };
+
+function _tmEnsureDetail() {
+  if (_TM.detail || _TM.detailLoading) return;
+  _TM.detailLoading = true;
+  fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _TM.detail = (j && j.players) || {};
+      if (state.section === "traded") renderRecentlyTraded(); })
+    .catch(() => { _TM.detail = {}; });
+}
+
+function _tmSearch(q) {
+  q = q.trim().toLowerCase();
+  if (q.length < 2) return [];
+  const out = [];
+  for (const p of (DATA.players || [])) {
+    if (out.length >= 6) break;
+    if ((p.player_name || "").toLowerCase().includes(q)) {
+      const sv = p.surplus && p.surplus.value_mm;
+      if (sv != null) out.push({ kind: "prospect", key: p.player_key,
+        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
+        mm: sv });
+    }
+  }
+  if (_TM.detail) {
+    for (const k in _TM.detail) {
+      if (out.length >= 10) break;
+      const d = _TM.detail[k];
+      if ((d.name || "").toLowerCase().includes(q) && d.proj && d.proj.surNpv != null) {
+        out.push({ kind: "mlb", key: k, name: d.name,
+          sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`,
+          mm: d.proj.surNpv / 1e6 });
+      }
+    }
+  }
+  return out;
+}
+
+function _tmTotal(side) {
+  return side.reduce((s, x) => s + (x.mm || 0), 0);
+}
+
+function renderTradeMachine() {
+  const el = document.getElementById("trade-machine");
+  if (!el) return;
+  _tmEnsureDetail();
+  const sideHtml = (side, label) => {
+    const list = _TM[side].map((x, i) => `
+      <div class="tm-row">
+        <span class="tm-kind">${x.kind === "prospect" ? "P" : "M"}</span>
+        <a class="fa-player-link" href="${x.kind === "prospect" ? `#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
+        <span class="tm-sub">${escapeHtml(x.sub)}</span>
+        <span class="tm-val">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
+        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
+      </div>`).join("");
+    const tot = _tmTotal(_TM[side]);
+    return `<div class="tm-side">
+      <div class="tm-side-head">${label} receives <span class="tm-total ${tot >= 0 ? "proj-pos" : "proj-neg"}">$${tot.toFixed(1)}M</span></div>
+      <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off">
+      <div class="tm-results" data-tm-results="${side}"></div>
+      ${list || '<div class="tm-empty">no players yet</div>'}
+    </div>`;
+  };
+  const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
+  const verdict = (_TM.a.length || _TM.b.length)
+    ? `<div class="tm-verdict">${Math.abs(dA - dB) < 5 ? "≈ balanced package"
+        : (dA > dB ? `Side A receives +$${(dA - dB).toFixed(1)}M of value`
+                   : `Side B receives +$${(dB - dA).toFixed(1)}M of value`)}
+       <span class="fa-sub"> · prospect surplus (calibrated control-window NPV) vs MLB contract surplus (salary-known seasons) - one currency</span></div>`
+    : "";
+  el.innerHTML = `<div class="tm-wrap">
+    <div class="detail-title" style="font-size:13px;">Trade Machine
+      <span class="detail-title-sub">value both sides of a deal in the platform's surplus currency</span>
+    </div>
+    <div class="tm-grid">${sideHtml("a", "Side A")}${sideHtml("b", "Side B")}</div>
+    ${verdict}
+  </div>`;
+  el.querySelectorAll("[data-tm-search]").forEach(inp => {
+    inp.oninput = () => {
+      const side = inp.dataset.tmSearch;
+      const res = el.querySelector(`[data-tm-results="${side}"]`);
+      const hits = _tmSearch(inp.value);
+      res.innerHTML = hits.map((h, i) =>
+        `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
+           <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
+           <span class="tm-val">$${h.mm.toFixed(1)}M</span></button>`).join("");
+      res._hits = hits;
+    };
+  });
+  el.querySelectorAll("[data-tm-results]").forEach(res => {
+    res.onclick = (e) => {
+      const b = e.target.closest("[data-tm-add]");
+      if (!b || !res._hits) return;
+      const [side, i] = b.dataset.tmAdd.split(":");
+      _TM[side].push(res._hits[Number(i)]);
+      renderTradeMachine();
+    };
+  });
+  el.querySelectorAll("[data-tm-remove]").forEach(b => {
+    b.onclick = () => {
+      const [side, i] = b.dataset.tmRemove.split(":");
+      _TM[side].splice(Number(i), 1);
+      renderTradeMachine();
+    };
+  });
+}
+
 function renderRecentlyTraded() {
   // v31.9 - Transactions tab now ships the league-context rail.
   try { renderActiveContextRail("traded-context-rail"); } catch (e) { /* silent */ }
@@ -18842,9 +19042,10 @@ function renderRecentlyTraded() {
   const _txExpander = _txHidden > 0
     ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="traded-show-all" type="button">Show all ${_txFullCount} transactions (+${_txHidden} more)</button></div>`
     : "";
-  document.getElementById("traded-rows").innerHTML = _txFullCount
+  document.getElementById("traded-rows").innerHTML = `<div id="trade-machine"></div>` + (_txFullCount
     ? header + rows + _txExpander
-    : `<div class="state-message">No acquired prospects match these filters.</div>`;
+    : `<div class="state-message">No acquired prospects match these filters.</div>`);
+  try { renderTradeMachine(); } catch (e) { /* silent */ }
   const _txSa = document.getElementById("traded-show-all");
   if (_txSa) _txSa.addEventListener("click", () => { state.tradedShowAll = true; renderRecentlyTraded(); });
   syncSortHeaderActive();
@@ -23568,6 +23769,26 @@ function _scPool() {
 // swings exist (bat tracking has never run below MLB), so the lookup
 // resolves for debuted players. Fetched once at boot; a miss before
 // the fetch lands just skips the pill for that paint.
+// P(debut) survival curves (data/eta_eval.json km_survival_by_level -
+// cure-aware Kaplan-Meier over vintage-listed cohorts). Renders BESIDE
+// the ETA point year, never instead of it. 6KB, fetched once.
+let _ETA_CURVES = null;
+(function loadEtaCurves() {
+  fetch("/data/eta_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _ETA_CURVES = (j && j.km_survival_by_level) || {}; })
+    .catch(() => { _ETA_CURVES = {}; });
+})();
+function debutProbLine(level) {
+  if (!_ETA_CURVES || !level) return "";
+  const lvl = ({ "A-": "A", "Rk": "CPX", "ROK": "CPX", "FRk": "CPX" })[level] || level;
+  const s = _ETA_CURVES[lvl];
+  if (!s || s.length < 4) return "";
+  const p = t => Math.round((1 - s[t]) * 100);
+  if (p(3) <= 1) return "";        // DSL-style cure: a 0% line is noise
+  return `P(debut) 1y ${p(1)}% · 3y ${p(3)}%${s.length > 5 ? ` · 5y ${p(5)}%` : ""}`;
+}
+
 let _SWING_PLUS = null;
 (function loadSwingPlus() {
   fetch("/data/swing_plus.json", { cache: "no-cache" })
@@ -35214,7 +35435,10 @@ function renderPlayerDetail(key) {
   const tiles = [
     ["Age vs. level", ageTileValue, ageSub],
     [perfTileLabel,  perfTileValue, perfTileSub],
-    ["ETA",          etaDisplayYear(eta), eta.confidence ? `${eta.confidence} confidence` : ""],
+    ["ETA",          etaDisplayYear(eta),
+      [eta.confidence ? `${eta.confidence} confidence` : "",
+       (typeof debutProbLine === "function" && sl.level) ? debutProbLine(sl.level) : ""]
+        .filter(Boolean).join(" · ")],
     topToolTile,
     keyStatcastTile,
     swingTile,

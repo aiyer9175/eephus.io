@@ -51,14 +51,18 @@ def challenger_fn(models: dict):
     return _fn
 
 
-def eval_bases(bases: list[int], label: str) -> dict:
+def eval_bases(bases: list[int], label: str, star_blend: dict | None = None) -> dict:
     """Forward-chained challenger eval: per base, train on labels <= B-1,
     score through proj_eval, merge horizon stats across bases (weighted
-    by n). Champion runs the same bases through the same harness."""
+    by n). Champion runs the same bases through the same harness.
+    ``star_blend`` injects the fitted mean-blend lambdas into each
+    per-base bundle's meta (tools/fit_star_blend.py confirmation runs)."""
     corpus = fp.build_corpus()
     merged: dict[int, dict] = {}
     for B in bases:
         models = proj_ml.train(corpus, max_label_season=B - 1)
+        if star_blend:
+            models["meta"]["star_blend"] = star_blend
         res = proj_eval.run([B], persist=False, predict_fn=challenger_fn(models),
                             model_label=f"{label}@{B}")
         for h, s in res["horizons"].items():
@@ -140,6 +144,8 @@ def main() -> None:
     ap.add_argument("--champion", action="store_true",
                     help="also run the champion on the same bases for the table")
     ap.add_argument("--final", action="store_true")
+    ap.add_argument("--blend", action="store_true",
+                    help="apply the fitted star mean-blend during eval")
     args = ap.parse_args()
 
     if args.dev:
@@ -156,7 +162,14 @@ def main() -> None:
         _print_table(res)
         _append_artifact("gate1_targets", res)
     if args.holdout:
-        res = eval_bases(HOLDOUT_BASES, f"{proj_ml.MODEL_VERSION}_HOLDOUT")
+        blend = None
+        if args.blend:
+            import json as _json
+            blend = _json.loads((ROOT / "data" / "proj_star_blend.json")
+                                .read_text(encoding="utf-8"))["lambda_by_horizon"]
+        res = eval_bases(HOLDOUT_BASES,
+                         f"{proj_ml.MODEL_VERSION}{'_starblend' if blend else ''}_HOLDOUT",
+                         star_blend=blend)
         _print_table(res)
         _append_artifact("holdout_2022_2024", res)
         champ = proj_eval.run(HOLDOUT_BASES, persist=False)

@@ -115,10 +115,11 @@ NAV_ITEMS = [
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     ("fa",       "Free Agency",      "/fa/"),
     ("projections", "Projections",   "/projections/"),
+    ("teams",    "Teams",            "/teams/"),
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
     ("glossary", "Glossary",         "/glossary/"),
-    ("team",     "Development Team",  "/team/"),
+    ("team",     "Developers",        "/team/"),
 ]
 
 # PROSPX sub-sections - deep links into the app (section = `tab` query param in
@@ -482,7 +483,7 @@ def _byline(meta: dict, sep: str = " · ", link_handle: bool = True) -> str:
 def _nav(active: str) -> str:
     # The top bar runs one line, always - long labels get a short form
     # here (the homepage sidebar keeps the full names).
-    short = {"team": "Dev Team"}
+    short = {}
     items = []
     for key, label, href in NAV_ITEMS:
         cls = ' class="is-active"' if key == active else ""
@@ -872,6 +873,15 @@ def _load_fa_events_for_wire() -> list:
         return []
     return d.get("events") or []
 
+def _load_tjstats_movers_for_wire() -> dict:
+    """Latest TJStats board movers (data/tjstats_movers.json, written by
+    tjstats.export_movers in the pipeline). Additive - absent file means
+    no items, same contract as the FA events block."""
+    try:
+        return json.loads((DATA_DIR / "tjstats_movers.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
 def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
@@ -937,6 +947,24 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         elif t == "qo_offered":
             add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
                 key, e.get("from"), name=nm, val="QO offered", weight=84)
+    # TJStats board movers (month-over-month diff, gated for newsworthiness
+    # in tjstats.export_movers). Entries read "enters TJS 100"; movers carry
+    # the rank path. Org comes from the tracked player row (logo lookup).
+    tjm = _load_tjstats_movers_for_wire()
+    if tjm.get("movers"):
+        org_of = {p.get("player_key"): p.get("org") for p in players}
+        for m in tjm["movers"]:
+            key, nm = m.get("player_key"), m.get("name") or ""
+            rd = m.get("rank_delta")
+            if m.get("status") == "entered":
+                add(tjm.get("as_of"), "up", "✦", f'{nm} enters TJS 100 (#{m.get("rank")})',
+                    key, org_of.get(key), name=nm, val=f'TJS ✦ #{m.get("rank")}', weight=60)
+            elif rd:
+                up = rd > 0
+                path = f'#{m.get("prev_rank")}→#{m.get("rank")}'
+                add(tjm.get("as_of"), "up" if up else "down", "▲" if up else "▼",
+                    f'{nm} {"▲" if up else "▼"} TJS {path}', key, org_of.get(key),
+                    name=nm, val=f'TJS {path}', weight=50 + abs(rd))
     by_day: dict[str, list] = {}
     for it in fv_items:
         by_day.setdefault(it[0], []).append(it)
@@ -1635,11 +1663,54 @@ def build_team() -> str:
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
     )
     body = (
-        '<div class="section-head"><h1>Development Team</h1></div>'
+        '<div class="section-head"><h1>Developers</h1></div>'
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
-    return page("Development Team - eephus.io", "team", body, "The team behind eephus.io.")
+    return page("Developers - eephus.io", "team", body, "The team behind eephus.io.")
+
+# --------------------------------------------------------------------------- #
+# /teams/ - the cross-module org dashboard. One row per MLB org joining the
+# four org-level currencies the platform computes: projected wins (MLB
+# Projections team outlook), farm rank/score + farm surplus (PROSPX), and
+# winter behavior (FA team fits). Static build-time join - every cell deep-
+# links into the module that owns the number.
+# --------------------------------------------------------------------------- #
+def build_teams(data: dict | None) -> str:
+    org_summary = {o["org"]: o for o in ((data or {}).get("org_summary") or [])}
+    outlook, first_season = {}, None
+    try:
+        mp = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
+        outlook = {r["team"]: r for r in (mp.get("team_outlook") or [])}
+        first_season = mp.get("first_season")
+    except (OSError, ValueError):
+        pass
+    rows = []
+    orgs = sorted(ORG_NAMES, key=lambda o: -(outlook.get(o, {}).get("wins") or 0))
+    for i, org in enumerate(orgs):
+        s, t = org_summary.get(org, {}), outlook.get(org, {})
+        top_p = (s.get("prospects") or [{}])[0]
+        top_m = (t.get("top") or [{}])[0]
+        sur = s.get("_active_surplus_net_mm")
+        rows.append(f"""<tr>
+  <td>{i + 1}</td>
+  <td class="teams-org">{_team_logo(org, "feed-logo")}<a href="/prospx/#tab=farm&amp;farm={org}"><strong>{ORG_NAMES[org]}</strong></a> <span class="fa-sub">{org}</span></td>
+  <td><a href="/projections/#view=teams" title="MLB Projections team outlook (pre-free-agency frame - read ranks, not absolute wins)"><strong>{t.get("wins") and f"{t['wins']:.0f}" or " - "}</strong></a> <span class="fa-sub">{t.get("war") is not None and f"{t['war']:.1f} WAR" or ""}</span></td>
+  <td><a href="/prospx/#tab=farm&amp;farm={org}" title="PROSPX farm system detail">{s.get("farm_rank") and f"#{s['farm_rank']}" or " - "}</a> <span class="fa-sub">{s.get("farm_score") is not None and f"{s['farm_score']:.0f}" or ""}</span></td>
+  <td class="{(sur or 0) >= 0 and "proj-pos" or "proj-neg"}">{sur is not None and f"${sur:.0f}M" or " - "}</td>
+  <td>{top_p.get("name") and f'<a href="/prospx/#player={html.escape(top_p.get("player_key") or "")}">{html.escape(top_p["name"])}</a> <span class="fa-sub">FV {html.escape(str(top_p.get("fv_label") or "?"))}</span>' or " - "}</td>
+  <td>{top_m.get("name") and f'<a href="/projections/#player={html.escape(top_m.get("key") or "")}">{html.escape(top_m["name"])}</a> <span class="fa-sub">{top_m.get("war") is not None and f"{top_m['war']:.1f}" or ""}</span>' or " - "}</td>
+  <td class="fa-sub"><a href="/prospx/#tab=farm&amp;farm={org}">farm</a> · <a href="/prospx/#tab=farm&amp;farm={org}" title="Org Tendencies tab inside farm detail">tendencies</a> · <a href="/fa/#view=fits&amp;team={org}">FA fits</a> · <a href="/projections/#team={org}">roster</a></td>
+</tr>""")
+    season_lbl = f" ({first_season})" if first_season else ""
+    body = f"""<div class="section-head"><h1>Teams</h1>
+  <p class="section-sub">All 30 orgs across the platform's org-level models - projected wins{season_lbl}, farm system, prospect surplus, and the winter market. Every number links into the module that computes it.</p></div>
+<div class="fa-note" style="margin-bottom:10px;">Projected wins use the PRE-free-agency roster frame (read ranks, not absolute totals; forward-gated against final standings). Farm surplus = net control-window NPV over the org's active prospect pool.</div>
+<table class="detail-table teams-table">
+<thead><tr><th>#</th><th>Team</th><th>Proj W</th><th>Farm</th><th>Farm surplus</th><th>Top prospect</th><th>Top projected</th><th>Open</th></tr></thead>
+<tbody>{"".join(rows)}</tbody></table>"""
+    return page("Teams - eephus.io", "teams", body,
+                "All 30 MLB organizations across eephus.io's models: projected wins, farm rank, prospect surplus, and free-agency fits.")
 
 # --------------------------------------------------------------------------- #
 def _write(rel: str, content: str) -> None:
@@ -1665,6 +1736,7 @@ def main() -> None:
     _write("fa/index.html", build_fa())
     _write("projections/index.html", build_projections())
     _write("glossary/index.html", build_glossary())
+    _write("teams/index.html", build_teams(data))
     _write("team/index.html", build_team())
     print(f"done - {len(articles)} article(s).")
 

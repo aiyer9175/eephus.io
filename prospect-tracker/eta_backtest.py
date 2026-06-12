@@ -349,6 +349,34 @@ def _km_median(pool: list[dict], max_t: int = 12) -> float | None:
     return None
 
 
+def _km_curve(pool: list[dict], max_t: int = 8) -> list[float] | None:
+    """Full Kaplan-Meier survival curve S(t) for t=0..max_t (same cure
+    handling as _km_median: washed-out players never leave the risk
+    set). S(t) = P(still NOT debuted t years after a vintage listing at
+    this level); the product surface renders 1-S(t) as P(debut within
+    t years) - the honest companion to the ETA point year."""
+    if not pool:
+        return None
+    events: dict[int, int] = {}
+    censor: dict[int, int] = {}
+    for r in pool:
+        if r["outcome"] == "debuted":
+            t = max(0, r["actual"] - r["vintage"])
+            events[t] = events.get(t, 0) + 1
+        elif r["outcome"] == "censored_active":
+            t = max(0, date.today().year - r["vintage"])
+            censor[t] = censor.get(t, 0) + 1
+    s, at_risk = 1.0, len(pool)
+    curve = []
+    for t in range(0, max_t + 1):
+        d = events.get(t, 0)
+        if at_risk > 0:
+            s *= (1 - d / at_risk)
+        curve.append(round(s, 4))
+        at_risk -= d + censor.get(t, 0)
+    return curve
+
+
 def _km_table(train: list[dict], min_n: int = 50) -> dict[str, float]:
     """Censoring-aware base-years candidates by level, rounded to 0.25
     (the heuristic's adjustment granularity). Levels that never cross
@@ -509,6 +537,16 @@ def run(persist: bool = True) -> dict:
             "washed_out_share_of_listed": round(len(washed) / max(1, len(rows)), 3),
         },
         "empirical_tables_by_vintage": {str(k): v for k, v in tables_by_vintage.items()},
+        # Full survival curves per level (cure-aware KM, full window) -
+        # the product surface renders 1-S(t) as "P(debut within t years"
+        # beside (never instead of) the ETA point year. Curves are
+        # LEVEL-COHORT base rates over vintage-listed prospects; age/FV
+        # conditioning is a future fit, labeled as such on the card.
+        "km_survival_by_level": {
+            lv: _km_curve([r for r in rows if r["level"] == lv])
+            for lv in ("AAA", "AA", "A+", "A", "CPX", "DSL")
+            if sum(1 for r in rows if r["level"] == lv) >= 40
+        },
     }
     if persist:
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")

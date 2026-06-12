@@ -419,6 +419,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 if _tj.get("live"):
                     log.info("tjstats: daily Live %d players @ %s",
                              _tj["live"]["n_players"], _tj["live"]["captured_at"])
+                    tjstats.export_movers()   # wire sidecar + source events
                 elif _tj.get("health"):
                     log.error("tjstats: health check failed, skipped: %s", _tj["health"])
             except Exception:
@@ -986,6 +987,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     log.info("tjstats: Live %d players @ %s + %d historical snapshot(s)",
                              _tj["live"]["n_players"], _tj["live"]["captured_at"],
                              len(_tj["history"]))
+                    tjstats.export_movers()   # wire sidecar + source events
             except Exception:
                 log.exception("tjstats pipeline crashed — continuing")
 
