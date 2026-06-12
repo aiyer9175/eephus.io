@@ -127,3 +127,25 @@ def test_training_frame_no_lookahead_property(fitted):
             if len(ls):
                 assert ls.max() <= 2019, (side, h, int(ls.max()))
             assert len(ls) == len(frame[side]["rows"][h])
+
+
+def test_star_blend_pinned_to_artifact():
+    """The live bundle's star_blend meta must match the committed
+    data/proj_star_blend.json lambdas — and only horizons that survived
+    holdout confirmation (or were honestly disclosed as unconfirmable)
+    may carry a positive lambda. h2 FAILED confirmation 2026-06-11 and
+    must stay 0/absent."""
+    art_p = ROOT / "data" / "proj_star_blend.json"
+    meta_p = ROOT / "model" / "proj_lgbm" / "meta.json"
+    if not (art_p.exists() and meta_p.exists()):
+        pytest.skip("star blend not shipped")
+    art = json.loads(art_p.read_text(encoding="utf-8"))
+    meta = json.loads(meta_p.read_text(encoding="utf-8"))
+    lam = {k: v for k, v in art["lambda_by_horizon"].items() if v > 0}
+    stamped = {k: v for k, v in (meta.get("star_blend") or {}).items() if v > 0}
+    assert stamped == lam, (stamped, lam)
+    # h2 failed the 2022-24 holdout confirmation - it may never blend
+    assert lam.get("2", 0.0) == 0.0
+    # anything shipped must be recorded as confirmed or disclosed
+    assert art.get("ship") is True
+    assert "holdout_confirmation" in art

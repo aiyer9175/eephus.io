@@ -425,6 +425,80 @@
      "pinball_q90": 0.1864
     }
    }
+  },
+  "holdout_2022_2024_starblend": {
+   "model": "proj_lgbm_v1_starblend_HOLDOUT",
+   "bases": [
+    2022,
+    2023,
+    2024
+   ],
+   "horizons": {
+    "1": {
+     "n": 6611,
+     "mae": 0.5394,
+     "bias": -0.1227,
+     "n_star": 214,
+     "mae_star": 1.9635,
+     "bias_star": -0.6545,
+     "tail_pred_ge3": 125,
+     "tail_act_ge3": 348,
+     "tail_ratio": 0.359,
+     "coverage": 0.8136,
+     "coverage_survived": 0.6728,
+     "n_survived": 3741,
+     "pinball_q10": 0.1131,
+     "pinball_q90": 0.181
+    },
+    "2": {
+     "n": 6611,
+     "mae": 0.4864,
+     "bias": -0.1651,
+     "n_star": 214,
+     "mae_star": 1.8179,
+     "bias_star": -0.5666,
+     "tail_pred_ge3": 80,
+     "tail_act_ge3": 315,
+     "tail_ratio": 0.254,
+     "coverage": 0.8165,
+     "coverage_survived": 0.6134,
+     "n_survived": 3104,
+     "pinball_q10": 0.1017,
+     "pinball_q90": 0.1783
+    },
+    "3": {
+     "n": 4285,
+     "mae": 0.4377,
+     "bias": -0.2009,
+     "n_star": 154,
+     "mae_star": 1.7248,
+     "bias_star": -0.7489,
+     "tail_pred_ge3": 27,
+     "tail_act_ge3": 175,
+     "tail_ratio": 0.154,
+     "coverage": 0.8203,
+     "coverage_survived": 0.5489,
+     "n_survived": 1698,
+     "pinball_q10": 0.0932,
+     "pinball_q90": 0.1725
+    },
+    "4": {
+     "n": 2103,
+     "mae": 0.3985,
+     "bias": -0.1927,
+     "n_star": 79,
+     "mae_star": 1.9763,
+     "bias_star": -1.451,
+     "tail_pred_ge3": 5,
+     "tail_act_ge3": 82,
+     "tail_ratio": 0.061,
+     "coverage": 0.8103,
+     "coverage_survived": 0.4333,
+     "n_survived": 690,
+     "pinball_q10": 0.0828,
+     "pinball_q90": 0.1824
+    }
+   }
   }
  }
 }

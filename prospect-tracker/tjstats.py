@@ -564,6 +564,84 @@ def latest_snapshot_pair() -> tuple[str | None, str | None]:
     return (None, None)
 
 
+# How big a board move must be before it becomes wire/source-event news.
+# Day-to-day live diffs are mostly ±1-2 rank noise; the TJStats site's own
+# movers framing is month-over-month, so the diff runs latest-live vs the
+# newest NAMED monthly board (fallback: latest pair). Newsworthiness is
+# rank-relative on a top-100: ±10 anywhere, ±5 inside the top 25, and any
+# board entry (someone graduated or fell out to make the room).
+_MOVER_MIN_RANK_DELTA = 10
+_MOVER_TOP25_MIN_DELTA = 5
+_MOVER_MAX_ITEMS = 12
+
+
+def export_movers(out_path: Path | None = None) -> dict | None:
+    """Movers sidecar + source events (Part 6 wiring, the README follow-up).
+
+    Diffs the newest live board against the most recent NAMED monthly
+    snapshot and persists the big moves twice:
+      * data/tjstats_movers.json - the homepage Prospect Wire reads this
+        at build time (build_site._collect_events), same pattern as the
+        FA events block.
+      * source_events upsert (source='tjstats') - the per-player export
+        already ships source_events, so cards pick the move up for free.
+    Deterministic event keys make the upsert idempotent across reruns.
+    """
+    from storage import tjstats_snapshot_labels, upsert_source_events
+    labs = tjstats_snapshot_labels()
+    if not labs:
+        return None
+    newer = labs[0]
+    named = [l for l in labs[1:] if l.get("snapshot_kind") == "named"]
+    older = named[0] if named else (labs[1] if len(labs) >= 2 else None)
+    if not older:
+        return None
+    diff = compute_snapshot_diff(older["snapshot_label"], newer["snapshot_label"])
+    movers, events = [], []
+    for d in diff:
+        rd, status = d.get("rank_delta"), d.get("status")
+        in_top25 = min(d.get("rank") or 999, d.get("prev_rank") or 999) <= 25
+        is_mover = rd is not None and (
+            abs(rd) >= _MOVER_MIN_RANK_DELTA
+            or (in_top25 and abs(rd) >= _MOVER_TOP25_MIN_DELTA))
+        is_entry = status == "entered" and d.get("rank") is not None
+        if not (is_mover or is_entry):
+            continue
+        row = {"player_key": d.get("player_key"), "name": d.get("name"),
+               "mlbam_id": d.get("mlbam_id"), "rank": d.get("rank"),
+               "prev_rank": d.get("prev_rank"), "rank_delta": rd,
+               "fv_delta": d.get("fv_delta"), "status": status}
+        movers.append(row)
+        if d.get("player_key"):
+            events.append({
+                "event_key": (f"tjstats|{newer['effective_date']}|board_movement|"
+                              f"{d['player_key']}|{d.get('rank')}"),
+                "player_key": d["player_key"],
+                "player_name": d.get("name"),
+                "source": "tjstats",
+                "event_date": newer["effective_date"],
+                "event_type": "board_movement" if is_mover else "board_entry",
+                "rank_before": d.get("prev_rank"),
+                "rank_after": d.get("rank"),
+                "confidence": 0.9,
+                "payload": {"older_board": older["snapshot_label"],
+                            "newer_board": newer["snapshot_label"],
+                            "rank_delta": rd, "fv_delta": d.get("fv_delta")},
+            })
+    movers.sort(key=lambda m: -abs(m["rank_delta"] or 0))
+    movers = movers[:_MOVER_MAX_ITEMS]
+    out = {"as_of": newer["effective_date"],
+           "older_board": older["snapshot_label"],
+           "newer_board": newer["snapshot_label"],
+           "movers": movers}
+    p = out_path or (Path(__file__).parent / "data" / "tjstats_movers.json")
+    p.write_text(json.dumps(out, indent=1), encoding="utf-8")
+    n_ev = upsert_source_events(events) if events else 0
+    log.info("tjstats movers: %d wire items, %d source events (%s vs %s)",
+             len(movers), n_ev, older["snapshot_label"], newer["snapshot_label"])
+    return out
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
     issues = health_check()

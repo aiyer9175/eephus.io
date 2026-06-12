@@ -62,6 +62,24 @@
    "bias": 0.04
   }
  },
+ "baseline_intercept_only_pooled_oos": {
+  "n": 338,
+  "mae": 1.384,
+  "spearman": 0.1777,
+  "calibration": {
+   "slope": 0.726,
+   "bias": 0.11
+  }
+ },
+ "baseline_on_intercept_rows": {
+  "n": 338,
+  "mae": 1.469,
+  "spearman": 0.1923,
+  "calibration": {
+   "slope": 0.738,
+   "bias": 0.341
+  }
+ },
  "per_year": {
   "2019": {
    "challenger": {
@@ -207,5 +225,19 @@
   },
   "ship": false,
   "applies_to": "proj_export._prospect_rows mean paths (display layer only - surplus has its own isotonic calibration, never double-corrected)"
+ },
+ "calibration_intercept_only": {
+  "rule": "PRE-REGISTERED candidate #2 (2026-06-11): intercept-only shift, min-train-n 250 (skips the thin 2019 fold). Held-out |bias| must shrink, slope not worsen by >0.02, MAE not degrade by >0.02.",
+  "forward_chained": {
+   "n": 338,
+   "mae": 1.384,
+   "spearman": 0.1777,
+   "calibration": {
+    "slope": 0.726,
+    "bias": 0.11
+   }
+  },
+  "full_window_shift": 0.2673,
+  "ship": true
  }
 }

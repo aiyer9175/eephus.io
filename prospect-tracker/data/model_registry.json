@@ -10,7 +10,8 @@
  "notes": [
   "verdicts are hand-committed alongside their eval artifacts; refresh_stamps() only restamps freshness",
   "unvalidated = makes predictive claims with NO measurement - the audit hit list, listed so it can't hide",
-  "audit program plan: model-audit Phase 0 (2026-06); WAR + contract models are the priority workstreams"
+  "audit program plan: model-audit Phase 0 (2026-06); WAR + contract models are the priority workstreams",
+  "DEFERRED MODEL (2026-06-11 roadmap): injury risk - il_history is append-only since 2026-06 and needs ~a season of trail before P(IL-stint) can be fit honestly; revisit 2027-06 (transactions-derived historical IL stints are the possible accelerant, prospect-pool only)"
  ],
  "models": [
   {
@@ -36,7 +37,7 @@
    "metric": "h1-5 MAE/bias/star-slice/tail-ratio + band coverage/pinball",
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
-   "notes": "SHIPPED 2026-06-11 under best-model-wins: dev bases + gate targets + touched-once 2022-2024 holdout all beat the champion (gate-targets h1 MAE 0.557 vs 0.627; holdout pooled coverage 0.81-0.82 vs 0.67-0.77; survived coverage 0.43-0.67 vs 0.32-0.44; pinball better everywhere). DISCLOSED: long-horizon star bias ~0.2 WAR deeper than champion (zero-inflated labels pull medians; star MAE equal) - follow-up: mean-head or star-slice recalibration. Bundle model/proj_lgbm hash 442428a6498b1426; historical (Gate-2) enrichment uses point-in-time bundles (proj_ml.train_cached), never the live bundle.",
+   "notes": "SHIPPED 2026-06-11 under best-model-wins: dev bases + gate targets + touched-once 2022-2024 holdout all beat the champion (gate-targets h1 MAE 0.557 vs 0.627; holdout pooled coverage 0.81-0.82 vs 0.67-0.77; survived coverage 0.43-0.67 vs 0.32-0.44; pinball better everywhere). DISCLOSED: long-horizon star bias ~0.2 WAR deeper than champion (zero-inflated labels pull medians; star MAE equal) - follow-up: mean-head or star-slice recalibration. Bundle model/proj_lgbm hash 442428a6498b1426; historical (Gate-2) enrichment uses point-in-time bundles (proj_ml.train_cached), never the live bundle. STAR MEAN BLEND (2026-06-11 roadmap push): the disclosed long-h star miss is now half-corrected at h5 via a post-hoc quantile-implied-mean blend on the EX-ANTE star slice (lambda_5=1.0; dev bias -0.825 -> -0.743, star MAE down; heads untouched, train hash unchanged). PROTOCOL HONESTY: the dev-fitted h2 lambda FAILED holdout confirmation (star bias worsened OOW) and was dropped; h5 is unconfirmable on the 2022-24 holdout (immature labels) and ships dev-validated with that disclosure - first holdout look when 2027+ labels complete. data/proj_star_blend.json.",
    "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
@@ -204,7 +205,7 @@
    "metric": "Spearman + AUC vs realized WAR, common-set head-to-head",
    "eval_artifact": "data/consensus_weight_eval.json",
    "verdict": "validated",
-   "notes": "WS-5 (2026-06-11): vintage-disciplined A/B (weights for board-year Y from cohorts resolved before Y only) - weighted beat equal on BOTH pooled metrics (Spearman .2675 vs .2657, AUC .767 vs .759, n=3,127). SURPRISE FINDING: the resolved common sets favor MLB PIPELINE over FanGraphs (weights drift toward equal in later vintages); the earlier 'FG measurably better' claim did not survive the vintage-disciplined measurement. Weights shrunk k=150 toward equal, clamped [0.6,1.5], vintage-frozen in data/source_weights.json (only move when a new base year resolves); sources without history pinned 1.0. Mechanics: consensus.compute_consensus_point source_weights kwarg; dispersion stats stay unweighted.",
+   "notes": "WS-5 (2026-06-11): vintage-disciplined A/B (weights for board-year Y from cohorts resolved before Y only) - weighted beat equal on BOTH pooled metrics (Spearman .2675 vs .2657, AUC .767 vs .759, n=3,127). SURPRISE FINDING: the resolved common sets favor MLB PIPELINE over FanGraphs (weights drift toward equal in later vintages); the earlier 'FG measurably better' claim did not survive the vintage-disciplined measurement. Weights shrunk k=150 toward equal, clamped [0.6,1.5], vintage-frozen in data/source_weights.json (only move when a new base year resolves); sources without history pinned 1.0. Mechanics: consensus.compute_consensus_point source_weights kwarg; dispersion stats stay unweighted. TYPE-CONDITIONED WEIGHTS REJECTED (2026-06-11): separate hitter/pitcher accuracy weights (same estimator, same vintage rule) LOST to the shipped global weighting on both pooled metrics (Spearman .2705 vs .2717, AUC .7604 vs .7634, n=3,127) - the per-type common sets are too thin to beat the shrinkage. Loss committed: type_conditioned_ab block in the eval artifact (tools/consensus_type_ab.py).",
    "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
@@ -339,6 +340,17 @@
    "last_checked": "2026-06-11",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "team_win_projections",
+   "surface": "/projections/ Team Outlook view + org dashboards",
+   "predicts": "first-projected-season team wins (roster bWAR roll-up + 47.7 replacement baseline)",
+   "champion": "roster_war_rollup_v1 (Gate-1-validated player engine, summed; prospects join at ETA)",
+   "baseline": "none yet - prior-season wins carry-forward (to be scored alongside)",
+   "metric": "none yet - forward gate: MAE vs actual wins when the first projected season completes",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "NEW 2026-06-11 (roadmap push). PRE-FA frame disclosed on the surface (winter class unassigned; sub-floor players = replacement) - read as ranks. First scoreable: end of the 2027 season; a point-in-time backtest needs historical roster reconstructions (documented lift)."
   }
  ],
  "problems": []

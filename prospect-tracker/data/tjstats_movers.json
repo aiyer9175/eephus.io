@@ -1,0 +1,67 @@
+{
+ "as_of": "2026-06-11",
+ "older_board": "May 2026",
+ "newer_board": "Live 2026-06-11",
+ "movers": [
+  {
+   "player_key": "angel_genao",
+   "name": "Angel Genao",
+   "mlbam_id": "694197",
+   "rank": 95,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "karson_milbrandt",
+   "name": "Karson Milbrandt",
+   "mlbam_id": "703596",
+   "rank": 96,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "nolan_perry",
+   "name": "Nolan Perry",
+   "mlbam_id": "804526",
+   "rank": 97,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "charles_davalan",
+   "name": "Charles Davalan",
+   "mlbam_id": "804560",
+   "rank": 98,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "murf_gray",
+   "name": "Murf Gray",
+   "mlbam_id": "809092",
+   "rank": 99,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "owen_ayers",
+   "name": "Owen Ayers",
+   "mlbam_id": "689196",
+   "rank": 100,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  }
+ ]
+}

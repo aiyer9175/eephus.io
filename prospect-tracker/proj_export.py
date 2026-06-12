@@ -180,8 +180,25 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                 return [round((a[t] or 0) + (b[t] or 0), 2)
                         for t in range(min(HORIZON, len(a), len(b)))]
             war_arr = _sum_arr("war_by_year")
-            p10_arr = _sum_arr("war_by_year_p10")
-            p90_arr = _sum_arr("war_by_year_p90")
+            # Band combination at assumed cross-side correlation rho=0.5
+            # (a player's hitting and pitching seasons share health/PT
+            # shocks but not skill shocks - a documented assumption, less
+            # conservative than the previous straight quantile sum).
+            _RHO = 0.5
+            def _comb_band(key, sign):
+                lo_h = paths["hit"].get(key); lo_p = paths["pit"].get(key)
+                if not lo_h or not lo_p or not war_arr:
+                    return None
+                out = []
+                mh_ = paths["hit"]["war_by_year"]; mp_ = paths["pit"]["war_by_year"]
+                for tt in range(len(war_arr)):
+                    dh = abs((mh_[tt] or 0) - (lo_h[tt] or 0))
+                    dp = abs((mp_[tt] or 0) - (lo_p[tt] or 0))
+                    d = (dh * dh + dp * dp + 2 * _RHO * dh * dp) ** 0.5
+                    out.append(round(war_arr[tt] + sign * d, 2))
+                return out
+            p10_arr = _comb_band("war_by_year_p10", -1)
+            p90_arr = _comb_band("war_by_year_p90", +1)
             path = paths.get("hit") or paths.get("pit")   # role/meta carrier
             age = max(ages.values())
         else:
@@ -242,6 +259,23 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
 # Prospects - the calibrated FV outcome model, post-ETA
 # ============================================================================
 
+def _prospect_calibration_shift() -> float:
+    """The SHIPPED intercept-only mean-path correction (prospect_path
+    candidate #2, pre-registered + gated: held-out bias 0.341 -> 0.110
+    on identical rows, MAE down, slope within tolerance). Fit on the
+    first-3-season SUM; applied as shift/3 per season to the first three
+    projected seasons. Display layer only - surplus keeps its own
+    isotonic calibration (never double-corrected)."""
+    try:
+        d = json.loads((DATA_DIR / "prospect_path_eval.json").read_text(encoding="utf-8"))
+        blk = d.get("calibration_intercept_only") or {}
+        if blk.get("ship") and blk.get("full_window_shift") is not None:
+            return float(blk["full_window_shift"])
+    except (OSError, ValueError):
+        pass
+    return 0.0
+
+
 def _prospect_rows(dpw: float) -> list[dict]:
     try:
         players = json.loads((DATA_DIR / "timeseries.json")
@@ -249,6 +283,7 @@ def _prospect_rows(dpw: float) -> list[dict]:
     except (OSError, ValueError):
         log.warning("mlb projections: timeseries.json unavailable - no prospects")
         return []
+    cal_shift = _prospect_calibration_shift()
     out: list[dict] = []
     for p in players:
         fv = p.get("fv_close")
@@ -271,6 +306,11 @@ def _prospect_rows(dpw: float) -> list[dict]:
         n_yrs = len(paths[0])
         mean_path = [round(sum(pr * paths[i][t] for i, pr in enumerate(probs)), 2)
                      for t in range(n_yrs)]
+        if cal_shift:
+            # intercept-only mean correction, first three seasons (the
+            # window it was fit on), floored at 0
+            mean_path = [round(max(0.0, w - cal_shift / 3.0), 2) if t < 3 else w
+                         for t, w in enumerate(mean_path)]
 
         def _q_bucket(q: float) -> int:
             cum = 0.0
@@ -306,6 +346,48 @@ def _prospect_rows(dpw: float) -> list[dict]:
 # Payload
 # ============================================================================
 
+def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
+    """First-season team WAR roll-up -> projected wins (47.7 replacement
+    baseline + roster WAR). PRE-FREE-AGENCY frame: the upcoming winter's
+    FA class is unassigned (their WAR sits on no roster), and players
+    below the exposure floors count as replacement - both stated on the
+    surface. Prospects contribute at their org when their ETA is the
+    first projected season. Forward gate: scored against the season's
+    actual standings when it completes (registry row carries the clock)."""
+    REPLACEMENT_WINS = 47.7
+    teams: dict[str, dict] = {}
+    for m in vets:
+        tm = m.get("team")
+        w = (m.get("war") or [None])[0]
+        if not tm or w is None:
+            continue
+        t_ = teams.setdefault(tm, {"war": 0.0, "n": 0, "top": []})
+        t_["war"] += w
+        t_["n"] += 1
+        t_["top"].append((w, m.get("name"), m.get("key")))
+    for m in prospects:
+        tm = m.get("team")
+        if not tm or m.get("eta") != FIRST_SEASON:
+            continue
+        w = (m.get("war") or [None])[0]
+        if w is None:
+            continue
+        t_ = teams.setdefault(tm, {"war": 0.0, "n": 0, "top": []})
+        t_["war"] += w
+        t_["n"] += 1
+        t_["top"].append((w, m.get("name"), m.get("key")))
+    out = []
+    for tm, t_ in teams.items():
+        t_["top"].sort(reverse=True)
+        out.append({"team": tm, "war": round(t_["war"], 1),
+                    "wins": round(REPLACEMENT_WINS + t_["war"], 1),
+                    "n": t_["n"],
+                    "top": [{"name": n, "key": k, "war": round(w, 1)}
+                            for w, n, k in t_["top"][:3]]})
+    out.sort(key=lambda r: -r["wins"])
+    return out
+
+
 def build_payload() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
@@ -317,6 +399,7 @@ def build_payload() -> dict:
     dpw = _winter_dpw(FIRST_SEASON)
     vets = _veteran_rows(corpus, names, contracts, dpw)
     prospects = _prospect_rows(dpw)
+    team_outlook = _team_outlook(vets, prospects)
     cfg = vf._config()
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
@@ -327,11 +410,12 @@ def build_payload() -> dict:
         "dpw_reanchor": re_anchor or None,
         "n_vets": len(vets), "n_prospects": len(prospects),
         "vets": vets, "prospects": prospects,
+        "team_outlook": team_outlook,
         "notes": [
             "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
             f"dollars: convex tier pricing at the {FIRST_SEASON} ex-ante FA $/WAR level, escalated per season; veteran surplus only on salary-known (contracted) seasons, discounted at the platform rate",
-            "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; band widths sum per-side quantiles - conservative)",
+            "two-way players project BOTH sides, summed per season (per-side paths in warHit/warPit; bands combine at assumed cross-side correlation rho=0.5 - documented)",
             f"veteran universe: >= {MIN_PA} PA or >= {MIN_IP} IP in one of the last three seasons",
         ],
     }

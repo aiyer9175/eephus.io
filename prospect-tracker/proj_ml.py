@@ -283,10 +283,31 @@ def train(corpus: dict, max_label_season: int, first_base: int = 2003,
     return models
 
 
+# star_l1 flag position in the feature vector (feature_names index 10) -
+# the ex-ante star-slice gate for the mean blend below.
+_STAR_FLAG_IDX = 10
+
+
+def _implied_mean(q10, q25, q50, q75, q90) -> float:
+    """Distribution mean implied by the five quantile heads (trapezoid
+    quadrature). The median ignores the right-tail mass; for the star
+    regime (zero-inflated labels pulling q50 down) the implied mean is
+    the principled recentering target."""
+    return (q10 + 2 * q25 + 2 * q50 + 2 * q75 + q90) / 8.0
+
+
 def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
     """Quantile paths for one player: {war_by_year (q50), _p10, _p90 and,
     when trained, _p25/_p75}. Monotone-sorted across quantiles per
-    horizon; NO zero floor."""
+    horizon; NO zero floor.
+
+    STAR MEAN BLEND (the Phase-1 disclosed-miss fix): when the bundle
+    meta carries `star_blend` ({h: lambda}) and the row is in the
+    EX-ANTE star slice (base-season WAR >= 4 - the star_l1 feature),
+    the point prediction blends q50 toward the quantile-implied mean:
+    q50' = q50 + lambda_h * (mean - q50). Bands untouched; non-star rows
+    untouched. Lambdas are fitted forward-chained on the dev bases
+    (tools/fit_star_blend.py) and committed in data/proj_star_blend.json."""
     if side not in models or not models[side]:
         return None
     qs = tuple(models["meta"].get("quantiles") or QUANTILES)
@@ -299,6 +320,16 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         preds = sorted(float(heads[q].predict(x)[0]) for q in qs)
         for q, v in zip(sorted(qs), preds):
             by_q[q].append(v)
+    blend = models["meta"].get("star_blend") or {}
+    full_qs = all(q in by_q for q in QUANTILES)
+    if blend and full_qs and len(feats) > _STAR_FLAG_IDX and feats[_STAR_FLAG_IDX] >= 1.0:
+        for t in range(HORIZONS):
+            lam = float(blend.get(str(t + 1)) or blend.get(t + 1) or 0.0)
+            if lam <= 0:
+                continue
+            mean = _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
+                                 by_q[0.75][t], by_q[0.90][t])
+            by_q[0.50][t] = by_q[0.50][t] + lam * (mean - by_q[0.50][t])
     out = {"war_by_year": [round(v, 2) for v in by_q[0.50]],
            "war_by_year_p10": [round(v, 2) for v in by_q[0.10]],
            "war_by_year_p90": [round(v, 2) for v in by_q[0.90]]}

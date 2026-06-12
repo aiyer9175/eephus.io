@@ -189,7 +189,17 @@
     g.fillText(wm, W - PAD - g.measureText(wm).width, H - 28);
 
     return new Promise(resolve => {
-      c.toBlob(blob => {
+      c.toBlob(async blob => {
+        // copy-to-clipboard when asked for and supported; download is
+        // the default and the fallback
+        if (opts.action === "copy" && navigator.clipboard
+            && typeof ClipboardItem !== "undefined") {
+          try {
+            await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+            resolve("copied");
+            return;
+          } catch (e) { /* fall through to download */ }
+        }
         const a = document.createElement("a");
         a.href = URL.createObjectURL(blob);
         a.download = opts.filename || "eephus-player-card.png";

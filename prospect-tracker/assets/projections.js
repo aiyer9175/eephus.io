@@ -69,13 +69,15 @@
   }
 
   const state = { src: "all", pos: "all", team: "all", q: "", sort: "warTotal",
-                  dir: -1, limit: 100, player: null };
+                  dir: -1, limit: 100, player: null, view: "players", cmp: [] };
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
 
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
     state.player = p.get("player") || null;
+    state.view = p.get("view") === "teams" ? "teams" : "players";
+    state.cmp = (p.get("cmp") || "").split(",").filter(Boolean).slice(0, 2);
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
     if (p.has("team")) state.team = p.get("team");
@@ -85,6 +87,8 @@
   function syncToURL() {
     const p = new URLSearchParams();
     if (state.player) p.set("player", state.player);
+    if (state.view === "teams") p.set("view", "teams");
+    if (state.cmp.length) p.set("cmp", state.cmp.join(","));
     if (state.src !== "all") p.set("src", state.src);
     if (state.pos !== "all") p.set("pos", state.pos);
     if (state.team !== "all") p.set("team", state.team);
@@ -148,6 +152,8 @@
     const banner = document.getElementById("proj-banner");
     if (!root || !DATA) return;
     if (state.player) { renderPlayer(state.player); return; }
+    if (state.cmp.length === 2) { renderCompare(); return; }
+    if (state.view === "teams") { renderTeams(); return; }
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
@@ -181,7 +187,8 @@
 
     const chip = (label, key, field) =>
       `<button class="chip${state[field] === key ? " active" : ""}" data-pf="${field}:${key}">${label}</button>`;
-    bar.innerHTML = `<span class="filter-label">Source</span>
+    bar.innerHTML = `<button class="chip active" data-pv="players">Players</button><button class="chip" data-pv="teams" title="First-season roster WAR roll-up -> projected wins (pre-free-agency frame)">Team Outlook</button>
+      <span class="filter-label" style="margin-left:10px;">Source</span>
       ${chip("All", "all", "src")}${chip("Veterans", "vet", "src")}${chip("Prospects", "prospect", "src")}
       <span class="filter-label" style="margin-left:10px;">Pos</span>
       ${["all", "SP", "RP", "C", "IF", "OF", "DH"].map(p => chip(p === "all" ? "All" : p, p, "pos")).join("")}
@@ -191,6 +198,9 @@
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>
       <input id="proj-q" class="proj-search" type="search" placeholder="Search players…" value="${esc(state.q)}" aria-label="Search players">`;
+    bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
+      state.view = b.dataset.pv; syncToURL(); render();
+    });
     bar.querySelectorAll("[data-pf]").forEach(b => b.onclick = () => {
       const [field, key] = b.dataset.pf.split(":");
       state[field] = key; state.limit = 100; syncToURL(); render();
@@ -203,6 +213,33 @@
     }
     renderTable();
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
+  }
+
+  function renderTeams() {
+    const root = document.getElementById("proj-rows");
+    const bar = document.getElementById("proj-filters");
+    const rows = DATA.team_outlook || [];
+    bar.innerHTML = `<button class="chip" data-pv="players">Players</button><button class="chip active" data-pv="teams">Team Outlook</button>`;
+    bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
+      state.view = b.dataset.pv; syncToURL(); render();
+    });
+    if (!rows.length) {
+      root.innerHTML = `<div class="state-message">Team outlook not exported yet - run <code>python proj_export.py</code>.</div>`;
+      return;
+    }
+    const body = rows.map((r, i) => `<tr>
+      <td>${i + 1}</td>
+      <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
+      <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
+      <td><strong>${r.wins.toFixed(0)}</strong></td>
+      <td>${r.n}</td>
+      <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
+    </tr>`).join("");
+    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline. PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals. Forward gate: scored against ${DATA.first_season} standings when the season completes.</div>
+      <table class="detail-table proj-table">
+      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th>Proj W</th><th>Players</th><th>Top projected</th></tr></thead>
+      <tbody>${body}</tbody></table>`;
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
   }
 
   function sortHead(label, key, title) {
@@ -235,9 +272,11 @@
       const link = m.src === "prospect"
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
         : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
+      const inCmp = state.cmp.includes(m.key);
+      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}" style="border:1px solid var(--border-color);background:${inCmp ? "var(--accent-cyan)" : "transparent"};color:${inCmp ? "#08222a" : "var(--text-tertiary)"};border-radius:5px;font-size:10px;line-height:1;padding:2px 5px;cursor:pointer;margin-left:4px;">⇄</button>`;
       return `<tr>
         <td>${i + 1}</td>
-        <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span></td>
+        <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</td>
         ${cells}
         <td>${tot}</td>
         <td>${ct}</td>
@@ -260,6 +299,14 @@
     });
     const more = document.getElementById("proj-more");
     if (more) more.onclick = () => { state.limit += 100; renderTable(); };
+    root.querySelectorAll("[data-cmp-key]").forEach(b => b.onclick = () => {
+      const k = b.dataset.cmpKey;
+      const i = state.cmp.indexOf(k);
+      if (i >= 0) state.cmp.splice(i, 1);
+      else { state.cmp.push(k); if (state.cmp.length > 2) state.cmp.shift(); }
+      syncToURL();
+      if (state.cmp.length === 2) render(); else renderTable();
+    });
     // Cross-module cohesion: FA-class members get a $ chip linking to
     // their market card (async via the links map; no layout shift).
     if (window.EEPHUS_HUB) {
@@ -274,6 +321,100 @@
         });
       });
     }
+    if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
+  }
+
+  // ===========================================================================
+  // Head-to-head compare (#cmp=a,b) - two board rows side by side: overlaid
+  // projection paths, season-aligned WAR table with the edge per season,
+  // value tiles. Works across sources (vet vs prospect compares fine -
+  // warAt aligns both to calendar seasons).
+  // ===========================================================================
+  function findRow(key) {
+    return (DATA.vets || []).concat(DATA.prospects || []).find(m => m.key === key) || null;
+  }
+  function renderCompare() {
+    const root = document.getElementById("proj-rows");
+    const bar = document.getElementById("proj-filters");
+    const banner = document.getElementById("proj-banner");
+    if (banner) banner.innerHTML = "";
+    const a = findRow(state.cmp[0]), b = findRow(state.cmp[1]);
+    bar.innerHTML = `<a class="chip" href="#" id="cmp-back">← back to projections</a>
+      <button class="chip" id="cmp-gfx" title="Download this comparison as a PNG share card">&#8681; share card</button>`;
+    document.getElementById("cmp-back").onclick = (e) => {
+      e.preventDefault(); state.cmp = []; syncToURL(); render();
+    };
+    if (!a || !b) {
+      root.innerHTML = `<div class="state-message">Compare pair not found. <a href="#" onclick="location.hash='';return false;">Back</a>.</div>`;
+      return;
+    }
+    const first = DATA.first_season;
+    const seasons = Array.from({ length: DATA.horizon }, (_, t) => first + t);
+    const CA = "var(--accent-cyan)", CB = "var(--accent-gold)";
+    // overlaid mean paths (bands omitted - two bands over each other is mud;
+    // the table below carries the totals band)
+    const wA = seasons.map((_, t) => warAt(a, t)), wB = seasons.map((_, t) => warAt(b, t));
+    const all = wA.concat(wB).filter(v => v != null);
+    const W = 560, H = 180, PX = 36, PY = 16;
+    const mn = Math.min(0, ...all), mx = Math.max(1, ...all);
+    const x = t => PX + t * (W - PX - 8) / (seasons.length - 1);
+    const y = v => PY + (mx - v) * (H - PY - 24) / (mx - mn || 1);
+    const line = (w, color) => {
+      const pts = w.map((v, t) => v != null ? `${x(t)},${y(v)}` : null).filter(Boolean).join(" ");
+      return pts ? `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>` : "";
+    };
+    const dots = (w, color, nm) => w.map((v, t) => v != null
+      ? `<circle cx="${x(t)}" cy="${y(v)}" r="3" fill="${color}"><title>${esc(nm)} ${seasons[t]}: ${fmtWar(v)}</title></circle>` : "").join("");
+    const ticks = seasons.map((s, t) => `<text x="${x(t)}" y="${H - 6}" text-anchor="middle" class="mlbp-fan-tick">${s}</text>`).join("");
+    const zero = mn < 0 ? `<line x1="${PX}" x2="${W - 8}" y1="${y(0)}" y2="${y(0)}" class="mlbp-fan-zero"/>` : "";
+    const chart = `<svg class="mlbp-fan" viewBox="0 0 ${W} ${H}" role="img" aria-label="Projected WAR comparison">
+      ${zero}${line(wA, CA)}${line(wB, CB)}${dots(wA, CA, a.name)}${dots(wB, CB, b.name)}${ticks}</svg>`;
+    const head = (m, color) => `<div style="display:flex;align-items:center;gap:8px;min-width:0;">
+      ${teamLogo(m.team)}<strong style="color:${color};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(m.name)}</strong>
+      <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span>${tagFor(m)}</div>`;
+    const seasonRows = seasons.map((s, t) => {
+      const va = warAt(a, t), vb = warAt(b, t);
+      const edge = (va != null && vb != null) ? va - vb : null;
+      const cell = (v, m) => v == null
+        ? `<td class="proj-dim">${m.src === "prospect" && s < m.eta ? "MiLB" : EM_DASH}</td>`
+        : `<td class="proj-war${warClass(v)}">${fmtWar(v)}</td>`;
+      return `<tr><td>${s}</td>${cell(va, a)}${cell(vb, b)}
+        <td class="${edge == null ? "proj-dim" : edge >= 0 ? "proj-pos" : "proj-neg"}">${edge == null ? EM_DASH : (edge >= 0 ? "+" : "") + edge.toFixed(1)}</td></tr>`;
+    }).join("");
+    const totRow = (label, va, vb, fmt) => {
+      const d = (va != null && vb != null) ? va - vb : null;
+      return `<tr style="font-weight:700;"><td>${label}</td><td>${va != null ? fmt(va) : EM_DASH}</td><td>${vb != null ? fmt(vb) : EM_DASH}</td>
+        <td class="${d == null ? "proj-dim" : d >= 0 ? "proj-pos" : "proj-neg"}">${d == null ? EM_DASH : (d >= 0 ? "+" : "") + (fmt === fmtWar ? d.toFixed(1) : money(d))}</td></tr>`;
+    };
+    root.innerHTML = `<div class="mlbp-page">
+      <div class="mlbp-section" style="margin-top:4px;">
+        <div class="mlbp-section-title">Head-to-Head <span class="fa-sub">projected mean bWAR, season-aligned${(a.src === "prospect" || b.src === "prospect") ? " · prospects join at their PROSPX ETA" : ""}</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:6px 0 10px;">${head(a, CA)}${head(b, CB)}</div>
+        ${chart}
+        <table class="detail-table proj-table" style="margin-top:10px;">
+          <thead><tr><th>Season</th><th style="color:${CA};">${esc(a.name)}</th><th style="color:${CB};">${esc(b.name)}</th><th>Edge</th></tr></thead>
+          <tbody>${seasonRows}
+            ${totRow(`${DATA.horizon}y WAR`, a.warTotal, b.warTotal, fmtWar)}
+            ${totRow("Surplus", a.surNpv, b.surNpv, money)}</tbody></table>
+        <div class="fa-note" style="margin-top:8px;">Edge = left minus right, per season. Totals carry each player's own P10-P90 band on the board view. Surplus compares different things across sources (veteran contract surplus vs prospect control-window surplus) - read it as "value above cost," not like-for-like contract terms.</div>
+      </div></div>`;
+    const gfx = document.getElementById("cmp-gfx");
+    if (gfx) gfx.onclick = () => {
+      if (!window.EEPHUS_HUB) return;
+      window.EEPHUS_HUB.shareCard({
+        module: "MLB Projections",
+        name: `${a.name} vs ${b.name}`,
+        meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(a.warTotal)} vs ${fmtWar(b.warTotal)}`,
+        tiles: [],
+        sections: [
+          { title: esc(a.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(a, t))]) },
+          { title: esc(b.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(b, t))]) },
+        ],
+        url: "eephus.io/projections",
+        filename: `eephus-cmp-${a.key}-${b.key}.png`,
+        caption: "Gate-1-validated projection engine · season-aligned mean bWAR",
+      });
+    };
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
   }
 

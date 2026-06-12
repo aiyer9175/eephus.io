@@ -373,6 +373,8 @@ def run(persist: bool = True) -> dict:
     rows, acct = build_cohort()
     chall_pairs, base_pairs, lgbm_pairs = [], [], []
     cal_pairs = []          # forward-chained CALIBRATED baseline pairs
+    ical_pairs = []         # candidate #2: intercept-only, min-train-n
+    ical_base_pairs = []    # the RAW baseline on the SAME rows (fair compare)
     per_year = {}
     for yr in SCORED_YEARS:
         train = [r for r in rows if r["debut_year"] < yr]
@@ -380,7 +382,15 @@ def run(persist: bool = True) -> dict:
         # forward-chained calibration of the FV-only baseline: fit on
         # PRIOR debut cohorts' (baseline, realized), apply to this fold
         cal = _fit_linear_calibration([(r["baseline"], r["target"]) for r in train])
-        yr_c, yr_b, yr_g, yr_k = [], [], [], []
+        # candidate #2 (PRE-REGISTERED 2026-06-11, after #1 failed its
+        # slope criterion on the thin 2019 fold): INTERCEPT-ONLY shift,
+        # applied only when the training fold has >= 250 rows. Rule:
+        # held-out |bias| must shrink AND slope must not worsen by more
+        # than 0.02 AND MAE not degrade by more than 0.02.
+        ic_n = len(train)
+        ic_shift = (sum(r["baseline"] - r["target"] for r in train) / ic_n
+                    if ic_n >= 250 else None)
+        yr_c, yr_b, yr_g, yr_k, yr_i, yr_ib = [], [], [], [], [], []
         for is_pit in (False, True):
             side_train = [r for r in train if r["is_pit"] == is_pit]
             model = _fit_ridge(side_train, _KEYS[is_pit])
@@ -401,10 +411,16 @@ def run(persist: bool = True) -> dict:
                 if cal is not None:
                     yr_k.append((max(0.0, cal["a"] + cal["b"] * r["baseline"]),
                                  r["target"]))
+                if ic_shift is not None:
+                    yr_i.append((max(0.0, r["baseline"] - ic_shift),
+                                 r["target"]))
+                    yr_ib.append((r["baseline"], r["target"]))
         chall_pairs.extend(yr_c)
         base_pairs.extend(yr_b)
         lgbm_pairs.extend(yr_g)
         cal_pairs.extend(yr_k)
+        ical_pairs.extend(yr_i)
+        ical_base_pairs.extend(yr_ib)
         if yr_c:
             per_year[yr] = {"challenger": _score(yr_c), "baseline": _score(yr_b)}
             if yr_g:
@@ -416,6 +432,8 @@ def run(persist: bool = True) -> dict:
     base = _score(base_pairs) if base_pairs else {"n": 0}
     lgbm = _score(lgbm_pairs) if lgbm_pairs else {"n": 0}
     cal_fc = _score(cal_pairs) if cal_pairs else {"n": 0}
+    ical_fc = _score(ical_pairs) if ical_pairs else {"n": 0}
+    ical_base = _score(ical_base_pairs) if ical_base_pairs else {"n": 0}
     wins = (chall.get("n", 0) > 100
             and chall.get("mae") is not None and base.get("mae") is not None
             and chall["mae"] < base["mae"]
@@ -429,6 +447,9 @@ def run(persist: bool = True) -> dict:
     # toward 1 and shrink |bias| without degrading MAE. Shipped as the
     # full-window fit; proj_export applies it to prospect mean paths.
     cal_full = _fit_linear_calibration([(r["baseline"], r["target"]) for r in rows])
+    ic_full = (sum(r["baseline"] - r["target"] for r in rows) / len(rows)
+               if len(rows) >= 250 else None)
+    ic_cal_diag = (ical_fc.get("calibration") or {})
     base_cal_diag = (base.get("calibration") or {})
     fc_cal_diag = (cal_fc.get("calibration") or {})
     cal_ship = bool(
@@ -438,6 +459,16 @@ def run(persist: bool = True) -> dict:
         and abs(fc_cal_diag["slope"] - 1) < abs(base_cal_diag["slope"] - 1)
         and abs(fc_cal_diag.get("bias", 9)) < abs(base_cal_diag.get("bias", 9))
         and cal_fc.get("mae", 9e9) <= base.get("mae", 0) + 0.02)
+    base_cal2 = (ical_base.get("calibration") or {})
+    ic_ship = bool(
+        ic_full is not None and ical_fc.get("n", 0) > 100
+        and ic_cal_diag.get("bias") is not None
+        and base_cal2.get("bias") is not None
+        and abs(ic_cal_diag["bias"]) < abs(base_cal2["bias"])
+        and ic_cal_diag.get("slope") is not None
+        and base_cal2.get("slope") is not None
+        and abs(ic_cal_diag["slope"] - 1) <= abs(base_cal2["slope"] - 1) + 0.02
+        and ical_fc.get("mae", 9e9) <= ical_base.get("mae", 0) + 0.02)
     out = {
         "generated_at": date.today().isoformat(),
         "debut_years": list(DEBUT_YEARS),
@@ -454,6 +485,8 @@ def run(persist: bool = True) -> dict:
         "baseline_pooled_oos": base,
         "lgbm_challenger_pooled_oos": lgbm,
         "baseline_calibrated_pooled_oos": cal_fc,
+        "baseline_intercept_only_pooled_oos": ical_fc,
+        "baseline_on_intercept_rows": ical_base,
         "per_year": {str(k): v for k, v in per_year.items()},
         "ship_decision": {
             "rule": "challenger must beat FV-only on pooled OOS MAE AND "
@@ -473,6 +506,15 @@ def run(persist: bool = True) -> dict:
             "applies_to": "proj_export._prospect_rows mean paths (display "
                           "layer only - surplus has its own isotonic "
                           "calibration, never double-corrected)",
+        },
+        "calibration_intercept_only": {
+            "rule": "PRE-REGISTERED candidate #2 (2026-06-11): intercept-"
+                    "only shift, min-train-n 250 (skips the thin 2019 "
+                    "fold). Held-out |bias| must shrink, slope not worsen "
+                    "by >0.02, MAE not degrade by >0.02.",
+            "forward_chained": ical_fc,
+            "full_window_shift": round(ic_full, 4) if ic_full is not None else None,
+            "ship": ic_ship,
         },
     }
     if persist:
