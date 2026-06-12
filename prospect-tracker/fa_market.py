@@ -228,6 +228,12 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
               "war_by_year": med,
               "war_total": round(sum(med[:years]), 2),
               "war_y1": med[0],
+              # The champion MEAN rides along for aggregation consumers:
+              # the ML quantile heads won the player-level gates, but their
+              # median-like points sum ~520 league WAR vs the champion's
+              # ~1,100 (right-skew: median < mean). Team roll-ups must sum
+              # means - measured 2026-06-12 (team_outlook_eval retro block).
+              "war_y1_champ": out["war_y1"],
               "war_by_year_p10": _extend(ml["war_by_year_p10"],
                                          [p * 0.6 for p in path]),
               "war_by_year_p90": _extend(ml["war_by_year_p90"],

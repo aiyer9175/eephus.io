@@ -13078,14 +13078,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "rosters_by_org":     "rosters_by_org.json",
             "scout_reports":      "scout_reports.json",
             "mlb_trade_players":  "mlb_trade_players.json",
-            # v31.12 — pitch_plot raw coordinates moved out of boot.
-            # Lazy-loaded by the player-detail pitch chart only.
-            "pitch_plots":        "pitch_plots.json",
             # NB: the Free Agency sidecars (fa_class/fa_archive/fa_meta,
             # written by fa_export.py) are NOT advertised here — the FA
             # module is its own surface (/fa/, assets/fa.js) and fetches
             # them from /data/ directly. PROSPX carries zero FA bytes.
         },
+        # v32 — pitch_plot coordinates ship PER PLAYER under
+        # data/pitch_plots/{player_key}.json (the monolithic sidecar
+        # reached 411MB and one card open pulled all of it). The key
+        # list keeps absent players from ever fetching; the directory
+        # contract is advertised separately from the single-file slices.
+        "_slices_dir": {"pitch_plots": "pitch_plots/"},
+        "pitch_plots_keys": sorted(pitch_plots_sidecar),
     }
     out_dir = out_path.parent
     # Compact JSON (no indent, no spaces in separators) — cuts the boot
@@ -13114,9 +13118,26 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v31.8c — mlb_trade_players sidecar (lazy-loaded when the
     # Transactions tab opens, not part of initial boot).
     _dump(load_mlb_trade_players(), out_dir / "mlb_trade_players.json")
-    # v31.12 — pitch_plots sidecar (lazy-loaded only when the player
-    # detail page opens for a pitcher with tracked pitch data).
-    _dump(pitch_plots_sidecar, out_dir / "pitch_plots.json")
+    # v32 — pitch_plots split per player (see _slices_dir above). Stale
+    # per-player files from departed players are removed; the legacy
+    # monolithic pitch_plots.json is deleted if present so the deploy
+    # artifact never ships 411MB of coordinates again.
+    pp_dir = out_dir / "pitch_plots"
+    pp_dir.mkdir(parents=True, exist_ok=True)
+    existing = {f.stem for f in pp_dir.glob("*.json")}
+    for k, v in pitch_plots_sidecar.items():
+        _dump(v, pp_dir / f"{k}.json")
+    for stale in existing - set(pitch_plots_sidecar):
+        try:
+            (pp_dir / f"{stale}.json").unlink()
+        except OSError:
+            pass
+    legacy_pp = out_dir / "pitch_plots.json"
+    if legacy_pp.exists():
+        try:
+            legacy_pp.unlink()
+        except OSError:
+            pass
     return out_path
 
 
@@ -13140,6 +13161,11 @@ def load_export_unified(boot_path: Path) -> dict:
         sidecar = out_dir / f"{slice_name}.json"
         if sidecar.exists():
             payload[slice_name] = json.loads(sidecar.read_text())
+        elif slice_name == "pitch_plots" and (out_dir / "pitch_plots").is_dir():
+            # v32 split-per-player layout: re-assemble the unified shape.
+            payload[slice_name] = {
+                f.stem: json.loads(f.read_text())
+                for f in sorted((out_dir / "pitch_plots").glob("*.json"))}
         else:
             # Empty default keeps test assertions like `for g in
             # payload["debuts"]` from raising KeyError when the slice
