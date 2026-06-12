@@ -709,17 +709,59 @@ def _fv_window_delta(p: dict, days: int = 365) -> int | None:
             continue
     return last_v - prior_v
 
-def _latest_fv_change(p: dict) -> tuple[str, int] | None:
-    """The most recent ACTUAL grade change as (date_of_change, step). None when
-    the published grade has never moved. This is what the wire treats as FV
-    news - daily Live re-confirmations of an unchanged grade are not events."""
+def _latest_fv_change(p: dict) -> tuple[str, int, int] | None:
+    """The most recent ACTUAL grade change as (date_of_change, step,
+    new_grade). None when the published grade has never moved. This is what
+    the wire treats as FV news - daily Live re-confirmations of an unchanged
+    grade are not events.
+
+    CAUTION: when the change pair ends at the rolling daily Live point, the
+    returned date is that point's snapshot_date - which the daily capture
+    RE-STAMPS to today on every run. The wire must not consume it raw (a
+    player would ride the most-recent-day bucket forever); _collect_events
+    pins it through the first-seen ledger below."""
     series = _label_series(p)
     for i in range(len(series) - 1, 0, -1):
         prev_v = series[i - 1][1]
         cur_d, cur_v = series[i]
         if cur_v != prev_v:
-            return (cur_d, cur_v - prev_v)
+            return (cur_d, cur_v - prev_v, cur_v)
     return None
+
+
+# First-seen ledger for wire FV items (the fa_events stamping pattern).
+# The daily Live snapshot re-dates its point every run, so a grade change
+# detected against it would re-date daily and pin the player to the wire's
+# most-recent-day bucket indefinitely (Cleiner Ramirez, 3 straight days,
+# 2026-06-12 report). The ledger records the date each (player, new grade)
+# was FIRST published and serves that date forever after.
+_WIRE_FV_LEDGER = DATA_DIR / "wire_fv_first_seen.json"
+
+def _wire_fv_first_seen(ledger: dict, key: str, new_fv: int, seen_date: str) -> str:
+    entry = ledger.get(key)
+    if entry and entry.get("fv") == new_fv:
+        return entry["first_seen"]
+    ledger[key] = {"fv": new_fv, "first_seen": seen_date}
+    return seen_date
+
+def _load_wire_fv_ledger() -> dict:
+    try:
+        d = json.loads(_WIRE_FV_LEDGER.read_text(encoding="utf-8"))
+        return d if isinstance(d, dict) else {}
+    except (OSError, ValueError):
+        return {}
+
+def _save_wire_fv_ledger(ledger: dict, live_keys: set) -> None:
+    """Prune departed players, write only on real change (stable output so
+    test runs and no-op rebuilds never churn the committed file)."""
+    pruned = {k: v for k, v in sorted(ledger.items()) if k in live_keys}
+    raw = json.dumps(pruned, indent=0, sort_keys=True)
+    try:
+        if _WIRE_FV_LEDGER.exists() and _WIRE_FV_LEDGER.read_text(encoding="utf-8") == raw:
+            return
+    except OSError:
+        pass
+    _WIRE_FV_LEDGER.write_text(raw, encoding="utf-8")
 
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
@@ -897,17 +939,21 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         if dt:
             ev.append((str(dt)[:10], typ, glyph, text, key, org, name, val, weight))
     fv_items = []
+    fv_ledger = _load_wire_fv_ledger()
     for p in players:
         nm = p.get("player_name") or ""
         key = p.get("player_key")
         org = p.get("org")
-        # FV news = the most recent REAL grade change, dated at the change.
+        # FV news = the most recent REAL grade change, dated at FIRST SIGHT
+        # via the ledger (the raw change date rides the daily Live point and
+        # re-stamps to today on every run - see _latest_fv_change CAUTION).
         # Never stock.delta - that's the movement engine's composite score
         # stamped with the latest (daily Live) snapshot date, which flooded
         # the wire with fake "▲ +N FV today" items for every top prospect.
         chg = None if p.get("status") == "debuted" else _latest_fv_change(p)
         if chg and abs(chg[1]) >= 2:
-            fv_items.append((str(chg[0])[:10], chg[1], nm, key, org))
+            d_first = _wire_fv_first_seen(fv_ledger, key, chg[2], str(chg[0])[:10])
+            fv_items.append((d_first, chg[1], nm, key, org))
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
                 promo = lc["kind"] == "promotion"
@@ -924,6 +970,7 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             il_label = f'{il.get("type", "")} IL'.strip()
             add(il.get("since"), "il", "✚", f'{nm} to {il_label}', key, org,
                 name=nm, val=il_label, weight=70)
+    _save_wire_fv_ledger(fv_ledger, {p.get("player_key") for p in players})
     for g in graduates:
         add(g.get("debut_date"), "debut", "★", f'{g.get("player_name", "")} debuted · {g.get("org", "")}',
             g.get("player_key"), g.get("org"),
