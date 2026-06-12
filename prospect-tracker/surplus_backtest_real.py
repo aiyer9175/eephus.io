@@ -253,10 +253,10 @@ def run(persist: bool = True) -> dict:
     records, acct = build_cohorts()
     log.info("real surplus cohorts: %s", acct)
     full = run_backtest(records, discount_rate=float(cfg["discount_rate"]),
-                        dpw_by_year=dpw_by_year, correction_method="isotonic")
+                        dpw_by_year=dpw_by_year, correction_method="isotonic_binned")
     resolved = run_backtest(_resolved_only(records),
                             discount_rate=float(cfg["discount_rate"]),
-                            dpw_by_year=dpw_by_year, correction_method="isotonic")
+                            dpw_by_year=dpw_by_year, correction_method="isotonic_binned")
     # Lean the report: drop the big draw-dependent correction tables from the
     # committed artifact (Phase 4 refits them); keep the verdict metrics.
     def _lean(rep: dict) -> dict:

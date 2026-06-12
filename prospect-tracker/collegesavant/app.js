@@ -1,5 +1,20 @@
 const CSV_PATH = "b1g_2025_hitter_xwoba_min30pa.csv";
 
+// Real school names for team codes (owner ask 2026-06-12: badges read
+// "Minnesota", never "MIN_GOL"). Unknown codes fall back to a cleaned slug.
+const TEAM_DISPLAY_NAMES = {
+  ILL_ILL: "Illinois", IU: "Indiana", IOW_HAW: "Iowa", MAR_TER: "Maryland",
+  MIC_SPA: "Michigan State", MIC_WOL: "Michigan", MIN_GOL: "Minnesota",
+  NEB: "Nebraska", NOR_CAT: "Northwestern", ORE_DUC: "Oregon",
+  OSU_BUC: "Ohio State", PEN_NIT: "Penn State", PUR_BOI: "Purdue",
+  RUT_SCA: "Rutgers", SOU_TRO: "USC", UCLA: "UCLA", WAS_HUS: "Washington",
+};
+function formatTeamName(team) {
+  const code = String(team || "").trim().toUpperCase();
+  if (!code) return "Team";
+  return TEAM_DISPLAY_NAMES[code] || code.replace(/_/g, " ");
+}
+
 const METRICS = [
   { key: "xwoba", label: "xwOBA", fmt: "decimal", higherBetter: true },
   { key: "average_exit_velocity", label: "Avg EV", fmt: "mph", higherBetter: true },
@@ -311,7 +326,7 @@ function renderTopWidget(metric) {
           <a class="widget-row" href="#/player/${player.year}/${player.slug}">
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(player.hitter_name))}</span>
-            <span class="widget-team">${TEAM_LOGOS[player.team] ? `<img class="widget-logo" src="${TEAM_LOGOS[player.team]}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(player.team || "TEAM")}</span>
+            <span class="widget-team">${TEAM_LOGOS[player.team] ? `<img class="widget-logo" src="${TEAM_LOGOS[player.team]}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(player.team))}</span>
             <strong>${formatMetric(player[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}
@@ -407,7 +422,7 @@ function renderPlayerRow(player, rank) {
           <span class="player-name">${escapeHtml(displayName(player.hitter_name))}</span>
           <div class="player-sub">
             <span>Hitter</span>
-            <span class="badge">${escapeHtml(player.team || "TEAM")}</span>
+            <span class="badge">${escapeHtml(formatTeamName(player.team))}</span>
             <span class="badge">${player.year}</span>
             <span class="badge">30+ PA</span>
           </div>
@@ -478,7 +493,7 @@ function renderPlayer(player) {
         module: "CollegeSavant",
         accentToken: "--accent-red",
         name: displayName(player.hitter_name),
-        meta: `${player.teamLabel || player.team || ""} · ${player.year} · college hitter`,
+        meta: `${formatTeamName(player.team) || player.teamLabel || ""} · ${player.year} · college hitter`,
         headshotURL: TEAM_LOGOS[player.team] || null,
         tiles: [
           player.xwoba != null ? { label: "xwOBA", value: formatMetric(player.xwoba, "decimal") } : null,
@@ -638,7 +653,7 @@ function slugify(name) {
 
 function teamLogo(player, size = "") {
   const label = player.team || player.initials;
-  const title = player.teamLabel || label;
+  const title = formatTeamName(player.team) || player.teamLabel || label;
   const logo = TEAM_LOGOS[player.team];
   const image = logo
     ? `<img src="${logo}" alt="" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">`

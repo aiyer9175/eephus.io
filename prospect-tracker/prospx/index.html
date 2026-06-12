@@ -4083,6 +4083,18 @@
       color: var(--text-primary);
     }
     .tm-row:hover { background: var(--bg-secondary); }
+    /* Table header sharing the board grid - the full-width-table read the
+       owner asked for (2026-06-12). Hidden glyph columns keep alignment. */
+    .tm-board-head {
+      display: grid;
+      grid-template-columns: 30px 18px 20px minmax(0,1fr) 40px auto auto;
+      align-items: center; gap: 9px; padding: 6px 8px;
+      background: var(--bg-tertiary); border-bottom: 2px solid var(--border-strong);
+      font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary);
+    }
+    .tm-board-head .tm-h-rank { text-align: right; }
+    .tm-board-head .tm-h-out, .tm-board-head .tm-h-fv { text-align: right; }
     .tm-row .team-logo { width: 20px; height: 20px; }
     /* Genuine point-in-time-org gap (no historical org on file): a neutral
        placeholder slot - never the wrong current-org logo. */
@@ -7877,53 +7889,53 @@
       padding: 14px 16px;
       margin: 0 0 18px;
     }
-    .tm-grid {
+    #trade-machine .tm-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 14px;
       margin-top: 10px;
     }
-    @media (max-width: 720px) { .tm-grid { grid-template-columns: 1fr; } }
-    .tm-side {
+    @media (max-width: 720px) { #trade-machine .tm-grid { grid-template-columns: 1fr; } }
+    #trade-machine .tm-side {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
       border-radius: 8px;
       padding: 10px 12px;
       min-width: 0;
     }
-    .tm-side-head {
+    #trade-machine .tm-side-head {
       display: flex; align-items: baseline; justify-content: space-between;
       font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
       text-transform: uppercase; color: var(--text-secondary);
       margin-bottom: 8px;
     }
-    .tm-total { font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
-    .tm-search {
+    #trade-machine .tm-total { font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+    #trade-machine .tm-search {
       width: 100%; box-sizing: border-box;
       background: var(--bg-primary); color: var(--text-primary);
       border: 1px solid var(--border-color); border-radius: 6px;
       padding: 6px 9px; font-size: var(--fs-base); font-family: inherit;
       margin-bottom: 6px;
     }
-    .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
-    .tm-results { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
-    .tm-hit {
+    #trade-machine .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
+    #trade-machine .tm-results { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+    #trade-machine .tm-hit {
       display: flex; align-items: baseline; gap: 8px; width: 100%;
       text-align: left; cursor: pointer;
       background: var(--bg-card); color: var(--text-primary);
       border: 1px solid var(--border-color); border-radius: 6px;
       padding: 5px 9px; font-size: 12px; font-family: inherit;
     }
-    .tm-hit:hover { border-color: var(--accent-cyan); }
-    .tm-hit .tm-val { margin-left: auto; }
-    .tm-row {
+    #trade-machine .tm-hit:hover { border-color: var(--accent-cyan); }
+    #trade-machine .tm-hit .tm-val { margin-left: auto; }
+    #trade-machine .tm-row {
       display: flex; align-items: baseline; gap: 8px;
       padding: 5px 2px; font-size: var(--fs-base);
       border-bottom: 1px solid var(--border-color);
       min-width: 0;
     }
-    .tm-row:last-child { border-bottom: none; }
-    .tm-kind {
+    #trade-machine .tm-row:last-child { border-bottom: none; }
+    #trade-machine .tm-kind {
       flex: none; width: 16px; height: 16px; line-height: 16px;
       border-radius: 4px; text-align: center;
       font-size: 10px; font-weight: 800;
@@ -7931,25 +7943,25 @@
       border: 1px solid var(--border-color);
       align-self: center;
     }
-    .tm-sub {
+    #trade-machine .tm-sub {
       color: var(--text-tertiary); font-size: 11px;
       overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
       min-width: 0;
     }
-    .tm-row .tm-val { margin-left: auto; }
-    .tm-val {
+    #trade-machine .tm-row .tm-val { margin-left: auto; }
+    #trade-machine .tm-val {
       flex: none; font-family: var(--font-mono);
       font-variant-numeric: tabular-nums; font-size: 12px;
       color: var(--text-primary);
     }
-    .tm-x {
+    #trade-machine .tm-x {
       flex: none; background: none; border: none; cursor: pointer;
       color: var(--text-tertiary); font-size: 14px; line-height: 1;
       padding: 0 2px; align-self: center;
     }
-    .tm-x:hover { color: var(--down, #e05c5c); }
-    .tm-empty { color: var(--text-tertiary); font-size: var(--fs-sm); padding: 6px 2px; font-style: italic; }
-    .tm-verdict {
+    #trade-machine .tm-x:hover { color: var(--down, #e05c5c); }
+    #trade-machine .tm-empty { color: var(--text-tertiary); font-size: var(--fs-sm); padding: 6px 2px; font-style: italic; }
+    #trade-machine .tm-verdict {
       margin-top: 10px; padding-top: 9px;
       border-top: 1px solid var(--border-color);
       font-size: var(--fs-base); font-weight: 600; color: var(--text-primary);
@@ -17606,6 +17618,15 @@ function _tmHitMissHTML(board) {
     </details>`;
 }
 
+function _tmBoardHeadHTML(slotLabel) {
+  return `<div class="tm-board-head" aria-hidden="true">
+      <span class="tm-h-rank">#</span><span></span><span></span>
+      <span>Player</span><span>Pos</span>
+      <span class="tm-h-out">${slotLabel || ""}</span>
+      <span class="tm-h-fv">FV</span>
+    </div>`;
+}
+
 function _tmBoardRowHTML(r, opts) {
   opts = opts || {};
   const slot = opts.deltaHTML || "";
@@ -17717,7 +17738,7 @@ function _tmChangeGroup(title, glyph, items, kind) {
   }).join("");
   return `<div class="tm-change-group">
       <h3 class="tm-change-title"><span class="tm-change-glyph">${glyph}</span>${escapeHtml(title)} <span class="tm-change-count">${items.length}</span></h3>
-      <div class="tm-board">${rows}</div>
+      <div class="tm-board">${_tmBoardHeadHTML("Change / outcome")}${rows}</div>
     </div>`;
 }
 
@@ -17758,7 +17779,7 @@ function _tmRenderBody() {
         </label>
       </div>
       ${hind ? _tmHitMissHTML(board) : ""}
-      <div class="tm-board">${board.map(r => _tmBoardRowHTML(r, { deltaHTML: hind ? _tmOutcomeHTML(r) : "" })).join("")}</div>`;
+      <div class="tm-board">${_tmBoardHeadHTML(hind ? "Debut · WAR · /yr · WAG" : "")}${board.map(r => _tmBoardRowHTML(r, { deltaHTML: hind ? _tmOutcomeHTML(r) : "" })).join("")}</div>`;
     const hb = document.getElementById("tm-hindsight");
     if (hb) hb.onchange = () => { state.tmHindsight = hb.checked; _tmRenderBody(); syncToURL(); };
     _tmWirePhotoLog(el);
@@ -25261,7 +25282,9 @@ function buildProspectCard(snap) {
   const valSect = sect("Valuation & Surplus", valuationBlock);
   let sectionsHTML;
   if (variant === "compact") {
-    sectionsHTML = [flagsRow, toolPillsSect, statsOrArsenal, valSect].filter(Boolean).join("");
+    // v46: the hero dossier now carries the tool pills - the compact
+    // variant's separate tools section would duplicate them.
+    sectionsHTML = [flagsRow, statsOrArsenal, valSect].filter(Boolean).join("");
   } else if (variant === "scouting") {
     sectionsHTML = [flagsRow, fvSect, toolSect, blurbHTML, valSect].filter(Boolean).join("");
   } else if (variant === "stats") {
@@ -25294,13 +25317,69 @@ function buildProspectCard(snap) {
     sectionsHTML = [flagsRow, pctSect, statsOrArsenal, fvSect, toolSect, pitchSect, valSect, blurbHTML].filter(Boolean).join("");
   }
 
+  // v46 - hero dossier (owner report 2026-06-12): the middle column used
+  // to end at the sparkline while the right rail ran ~480px deep, leaving
+  // the card's core dead. Tools, the season line, and the +index pills
+  // now bottom-align in that column; the compact variant drops its
+  // duplicate tools section in exchange.
+  const microLabel = t => `<div style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:${P.text3};margin-bottom:5px;">${t}</div>`;
+  const dossierTools = (() => {
+    const pills = radarKeys.map(([lab, k]) => {
+      const v = getT(k); if (v == null) return "";
+      const c = v >= 60 ? "var(--up)" : v >= 50 ? P.text : v >= 40 ? "var(--neon-amber)" : "var(--down)";
+      return `<div style="flex:1;min-width:44px;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;background:${P.bg};border:1px solid ${P.border};border-radius:6px;">
+        <span style="font-family:var(--font-mono);font-size:20px;font-weight:700;color:${c};line-height:1;">${fvCeil(v)}</span>
+        <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
+      </div>`;
+    }).filter(Boolean);
+    return pills.length >= 3 ? microLabel("Tools · 20–80") + `<div style="display:flex;gap:6px;">${pills.join("")}</div>` : "";
+  })();
+  const dossierSeason = (() => {
+    const yr = sl.season || "";
+    const lvl = sl.level || "";
+    const bits = isPitcher
+      ? [sl.era != null ? `${Number(sl.era).toFixed(2)} ERA` : null,
+         sl.fip != null ? `${Number(sl.fip).toFixed(2)} FIP` : null,
+         sl.k_pct != null ? `${Number(sl.k_pct).toFixed(1)} K%` : null,
+         sl.bb_pct != null ? `${Number(sl.bb_pct).toFixed(1)} BB%` : null,
+         sl.ip != null ? `${sl.ip} IP` : null]
+      : [(sl.avg && sl.obp && sl.slg) ? `${sl.avg}/${sl.obp}/${sl.slg}` : null,
+         sl.hr != null ? `${sl.hr} HR` : null,
+         sl.sb != null ? `${sl.sb} SB` : null,
+         sl.k_pct != null ? `${Number(sl.k_pct).toFixed(1)} K%` : null,
+         sl.games != null ? `${sl.games} G` : null];
+    const line = bits.filter(Boolean).join("  ·  ");
+    return line ? microLabel(`${yr ? yr + " " : ""}${lvl ? lvl + " " : ""}season`.trim())
+      + `<div style="font-family:var(--font-mono);font-size:16px;font-weight:700;color:${P.text};">${escapeHtml(line)}</div>` : "";
+  })();
+  const dossierIndex = (() => {
+    const items = [];
+    const push = (lab, v) => { if (v != null && isFinite(v)) items.push([lab, Math.round(v)]); };
+    if (isPitcher) {
+      push("pStuff+", (typeof computeStuffPlus === "function") ? computeStuffPlus(p) : null);
+      const ast = (typeof getAaaStuffPlus === "function") ? getAaaStuffPlus(p) : null;
+      push("aStuff+", ast ? ast.stuff_plus : null);
+      push("RPS+", rps ? rps.plus : null);
+    } else {
+      push("RPS+", rps ? rps.plus : null);
+      push("HIT+", (typeof computeHittingPlus === "function") ? ((computeHittingPlus(p) || {}).value) : null);
+      push("POW+", (typeof computePowerPlus === "function") ? ((computePowerPlus(p) || {}).value) : null);
+      push("PD+", (typeof computeDisciplinePlus === "function") ? ((computeDisciplinePlus(p) || {}).value) : null);
+    }
+    if (!items.length) return "";
+    const chip = ([lab, v]) => `<span style="font-family:var(--font-mono);font-size:14px;font-weight:700;padding:5px 10px;background:${P.bg};border:1px solid ${v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : P.border};color:${v >= 110 ? "var(--up)" : v <= 90 ? "var(--down)" : P.text};border-radius:6px;">${lab} ${v}</span>`;
+    return microLabel("Index family · 100 = average") + `<div style="display:flex;gap:7px;flex-wrap:wrap;">${items.map(chip).join("")}</div>`;
+  })();
+  const heroDossier = [dossierTools, dossierSeason, dossierIndex].filter(Boolean)
+    .map(b => `<div>${b}</div>`).join("");
+
   board.style.cssText = `width:${W}px;min-height:${H}px;box-sizing:border-box;background:${frameBg};padding:${framePad}px;font-family:var(--font-sans);`;
   board.innerHTML = `
     <div style="background:${_gfxBoardBg(P, P.bg0)};border-radius:${framePad > 5 ? 6 : 4}px;box-sizing:border-box;min-height:${H - framePad * 2}px;padding:40px 44px 34px;display:flex;flex-direction:column;gap:26px;color:${P.text};">
       ${_gfxHeader(P, accent, eyebrow, qrUrl)}
       <div style="display:flex;gap:26px;align-items:stretch;flex:none;">
         ${headshot}
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:12px;">
+        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-start;gap:14px;">
           <div>
             <div style="display:flex;align-items:center;gap:12px;">
               ${orgLogo}
@@ -25311,6 +25390,7 @@ function buildProspectCard(snap) {
             ${insight ? `<div style="font-family:var(--font-retro);font-size:15px;font-weight:700;color:${accent};margin-top:10px;">▸ ${escapeHtml(insight)}</div>` : ""}
             ${fvSparkHTML}
           </div>
+          ${heroDossier ? `<div style="margin-top:auto;display:flex;flex-direction:column;gap:13px;">${heroDossier}</div>` : ""}
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
           <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
@@ -25386,17 +25466,50 @@ function buildFarmCard(snap) {
       <span style="width:26px;flex:none;font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text};text-align:right;">${c}</span>
     </div>`).join("")}</div>`;
 
-  // Finances + a development metric.
-  const finItems = [];
-  if (meta.surplusStr && meta.surplusStr !== " - ") finItems.push(["Farm surplus", meta.surplusStr]);
+  // System pulse - the org-level Arkmetrics, always present (the old
+  // "Finances & development" panel rendered EMPTY whenever the caller's
+  // meta lacked surplusStr, which left the card's bottom-left dead -
+  // owner report 2026-06-12). Values read straight off the org summary
+  // with meta fallbacks, so every farm card carries them.
+  const _gn = v => (v == null || isNaN(v)) ? null : Number(v);
+  const money = m => (typeof fmtSvMM === "function") ? fmtSvMM(m) : ("$" + Math.round(m) + "M");
+  const surNet = _gn(org._active_surplus_net_mm);
+  const surHit = _gn(org._active_surplus_net_mm_hit);
+  const surPit = _gn(org._active_surplus_net_mm_pit);
+  const scq = org.statcast_quality || {};
   const dvm = meta.dvm || org.dvm_plus || {};
-  if (dvm["6y"] != null) finItems.push(["DvM+ 6y", String(dvm["6y"])]);
-  if (dvm["3y"] != null && finItems.length < 4) finItems.push(["DvM+ 3y", String(dvm["3y"])]);
-  if (g.development) finItems.push(["Dev grade", g.development]);
-  const finHTML = finItems.length ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">${finItems.map(([l, v]) => `
-    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:12px 15px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
-      <span style="font-family:var(--font-sans);font-size:12px;font-weight:600;letter-spacing:0.03em;text-transform:uppercase;color:${P.text3};">${escapeHtml(l)}</span>
-      <span style="font-family:var(--font-mono);font-size:18px;font-weight:700;color:${P.text};">${escapeHtml(String(v))}</span>
+  const pulse = [];
+  if (surNet != null) pulse.push(["Farm surplus", money(surNet),
+    (surHit != null && surPit != null) ? `bats ${money(surHit)} · arms ${money(surPit)}` : ""]);
+  else if (meta.surplusStr && meta.surplusStr !== " - ") pulse.push(["Farm surplus", meta.surplusStr, ""]);
+  if (_gn(scq.mean) != null) pulse.push(["Org SC+", String(Math.round(scq.mean)),
+    (scq.hitter_mean != null && scq.pitcher_mean != null) ? `bats ${Math.round(scq.hitter_mean)} · arms ${Math.round(scq.pitcher_mean)}` : ""]);
+  if (dvm["3y"] != null) pulse.push(["DvM+ 3y", String(dvm["3y"]),
+    (dvm["1y"] != null && dvm["6y"] != null) ? `1y ${dvm["1y"]} · 6y ${dvm["6y"]}` : ""]);
+  if (_gn(org.avg_age) != null) pulse.push(["Avg age", Number(org.avg_age).toFixed(1),
+    org.count != null ? `${org.count} prospects` : ""]);
+  if (_gn(org.stock_up) != null && _gn(org.stock_down) != null)
+    pulse.push(["Stock pulse", `▲${org.stock_up} ▼${org.stock_down}`,
+      org.stock_flat != null ? `${org.stock_flat} flat` : ""]);
+  if (_gn(org._grad_war_total) != null) pulse.push(["Graduate WAR", Number(org._grad_war_total).toFixed(0),
+    (org.talent_translation || {}).grad_count != null ? `${org.talent_translation.grad_count} grads tracked` : ""]);
+  const finHTML = pulse.length ? `<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;">${pulse.slice(0, 6).map(([l, v, sub]) => `
+    <div style="display:flex;flex-direction:column;gap:3px;padding:11px 13px;background:${P.bg};border:1px solid ${P.border};border-radius:7px;">
+      <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:${P.text3};">${escapeHtml(l)}</span>
+      <span style="font-family:var(--font-mono);font-size:19px;font-weight:700;color:${P.text};line-height:1.1;">${escapeHtml(String(v))}</span>
+      ${sub ? `<span style="font-family:var(--font-mono);font-size:10px;color:${P.text3};">${escapeHtml(sub)}</span>` : `<span style="font-size:10px;">&nbsp;</span>`}
+    </div>`).join("")}</div>` : "";
+
+  // Level pipeline - where the system's bodies are, MiLB levels only
+  // (the FV distribution answers "how good", this answers "how close").
+  const lc = org.level_counts || {};
+  const lvls = ["AAA", "AA", "A+", "A", "CPX", "DSL"].map(k => [k, Number(lc[k] || 0)]).filter(t => t[1] > 0);
+  const maxL = Math.max(1, ...lvls.map(t => t[1]));
+  const pipelineHTML = lvls.length ? `<div style="display:flex;flex-direction:column;gap:8px;">${lvls.map(([lab, c]) => `
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="width:42px;flex:none;font-family:var(--font-mono);font-size:13px;color:${P.text2};text-align:right;">${lab}</span>
+      <div style="flex:1;height:16px;background:${P.bg};border:1px solid ${P.border};border-radius:4px;overflow:hidden;"><div style="height:100%;width:${Math.round(c / maxL * 100)}%;background:${accent};"></div></div>
+      <span style="width:26px;flex:none;font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text};text-align:right;">${c}</span>
     </div>`).join("")}</div>` : "";
 
   // Surplus top-contributors bar chart (reclaims the old footer space).
@@ -25416,7 +25529,11 @@ function buildFarmCard(snap) {
   // Detailed (default): adds the finances/dev panel + top-surplus-contributors bar.
   const compact = (_gfxOpts.variant === "compact");
   const gap = `<div style="height:24px;flex:none;"></div>`;
-  const leftPanel = [sect("Grade canopy", canopy), compact ? "" : sect("Finances & development", finHTML)].filter(Boolean).join(gap);
+  // Left column carries the system pulse + level pipeline in BOTH
+  // variants (the bottom-left used to sit empty whenever finances data
+  // was missing); detailed adds the surplus-contributors bars below.
+  const leftPanel = [sect("Grade canopy", canopy), sect("System pulse", finHTML),
+                     sect("Level pipeline", pipelineHTML)].filter(Boolean).join(gap);
   const rightPanel = [sect("Top 5 prospects", top5HTML), sect("FV distribution", distHTML)].filter(Boolean).join(gap);
   const twoCol = landscape
     ? `<div style="display:flex;gap:44px;align-items:flex-start;">

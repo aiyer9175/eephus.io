@@ -55,7 +55,7 @@ def main() -> None:
     # target population; the full-pool CV in the artifact corroborates.
     resolved = _resolved_only(records)
     rep = run_backtest(resolved, discount_rate=float(cfg["discount_rate"]),
-                       dpw_by_year=dpw_by_year, correction_method="isotonic")
+                       dpw_by_year=dpw_by_year, correction_method="isotonic_binned")
     corr = rep.get("fitted_correction_full_sample") or {}
     xs = [float(v) for v in corr.get("x_mm", [])]
     ys = [float(v) for v in corr.get("y_mm", [])]
@@ -69,13 +69,15 @@ def main() -> None:
     xs, ys = _downsample(xs, ys, N_BREAKPOINTS)
     block = {
         "enabled": True,
-        "version": f"isotonic-real-v1-{date.today().isoformat()}",
+        "version": f"isotonic-real-v2-binned-{date.today().isoformat()}",
         "method": "isotonic",
         "linear": {"slope": 1.0, "intercept_mm": 0.0},
         "isotonic": {"x_mm": [round(x, 2) for x in xs],
                      "y_mm": [round(y, 2) for y in ys]},
         "fit_provenance": (
-            "REAL-data fit (surplus_backtest_real resolved pool, 2017-2019 "
+            "REAL-data fit v2 BINNED (count-weighted PAVA on equal-count bin means - "
+            "per-player PAVA let exact-zero busts force a degenerate $0 bottom block; "
+            "surplus_backtest_real resolved pool, 2017-2019 "
             "listings, n=%d): raw slope %.2f / bias %+.1fM corrected to "
             "held-out slope %.2f / bias %+.2fM under leave-one-year-out CV "
             "(see data/surplus_backtest_real.json cross_validated_correction). "

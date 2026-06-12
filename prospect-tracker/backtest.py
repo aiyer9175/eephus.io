@@ -382,6 +382,55 @@ def fit_isotonic_correction(pred: np.ndarray, realized: np.ndarray) -> dict:
     return {"method": "isotonic", "x_mm": [float(x) for x in xs], "y_mm": [float(y) for y in ys]}
 
 
+def fit_isotonic_binned(pred: np.ndarray, realized: np.ndarray,
+                        n_bins: int = 25) -> dict:
+    """Monotone correction fit on EQUAL-COUNT BIN MEANS (count-weighted
+    PAVA) instead of per-player points.
+
+    Why (v2, 2026-06-12 owner report): per-player PAVA let the mass of
+    exact-zero realized outcomes at the bottom of the prediction axis
+    force a degenerate 0-block - every FV 35-40 prospect calibrated to
+    exactly $0.0M, erasing within-tier ordering AND the aggregate, while
+    the same region's equal-count bins realize ~$0.9-2.1M per player.
+    Bin means first, then PAVA over the bins: the noise pools to its
+    LEVEL instead of its envelope, and the bottom of the table reflects
+    the cohort's true (small, positive) realized mean."""
+    p = np.asarray(pred, dtype=float)
+    r = np.asarray(realized, dtype=float)
+    order = np.argsort(p, kind="stable")
+    p, r = p[order], r[order]
+    n = len(p)
+    n_bins = max(2, min(n_bins, n // 20 or 2))
+    edges = [round(i * n / n_bins) for i in range(n_bins + 1)]
+    bx, by, bw = [], [], []
+    for i in range(n_bins):
+        lo, hi = edges[i], edges[i + 1]
+        if hi <= lo:
+            continue
+        bx.append(float(p[lo:hi].mean()))
+        by.append(float(r[lo:hi].mean()))
+        bw.append(float(hi - lo))
+    # Count-weighted PAVA over the bin means: [value, weight, x_lo, x_hi].
+    blocks: list[list[float]] = []
+    for i in range(len(bx)):
+        blocks.append([by[i], bw[i], bx[i], bx[i]])
+        while len(blocks) >= 2 and blocks[-2][0] > blocks[-1][0]:
+            b = blocks.pop()
+            a = blocks.pop()
+            w = a[1] + b[1]
+            blocks.append([(a[0] * a[1] + b[0] * b[1]) / w, w, a[2], b[3]])
+    xs = [blk[2] for blk in blocks] + [blocks[-1][3]]
+    ys = [blk[0] for blk in blocks] + [blocks[-1][0]]
+    keep_x, keep_y = [xs[0]], [ys[0]]
+    for x, y in zip(xs[1:], ys[1:]):
+        if x > keep_x[-1]:
+            keep_x.append(x)
+            keep_y.append(y)
+    return {"method": "isotonic",
+            "x_mm": [float(x) for x in keep_x],
+            "y_mm": [float(y) for y in keep_y]}
+
+
 def apply_correction(corr: dict, pred_mm: float) -> float:
     if corr.get("method") == "isotonic":
         xs, ys = corr["x_mm"], corr["y_mm"]
@@ -424,7 +473,8 @@ def leave_one_year_out_cv(records: Sequence[PlayerRecord], preds: list[dict], *,
         if len(train) < 3 or not test:
             continue
         tp = np.array([p for p, _, _ in train]); tr = np.array([r for _, r, _ in train])
-        corr = (fit_isotonic_correction(tp, tr) if method == "isotonic"
+        corr = (fit_isotonic_binned(tp, tr) if method == "isotonic_binned"
+                else fit_isotonic_correction(tp, tr) if method == "isotonic"
                 else fit_linear_correction(tp, tr))
         # Dispersion scale from the TRAIN fold: how wide should the corrected
         # predictive be vs the raw draw spread, to match realized residuals?
@@ -626,7 +676,8 @@ def run_backtest(records: Sequence[PlayerRecord], *, discount_rate: float,
             recs, preds, discount_rate=discount_rate, dpw_by_year=dpw_by_year,
             method=correction_method, tiered=tiered, inflation=inflation),
         "fitted_correction_full_sample": (
-            fit_isotonic_correction(pred_mm, realized) if correction_method == "isotonic"
+            fit_isotonic_binned(pred_mm, realized) if correction_method == "isotonic_binned"
+            else fit_isotonic_correction(pred_mm, realized) if correction_method == "isotonic"
             else fit_linear_correction(pred_mm, realized)),
         "by_fv_tier": _by_tier_metrics(pred_mm, realized, [r.listing.fv for r in recs]),
         "by_role": _by_role_metrics(pred_mm, realized, [r.listing.is_pitcher for r in recs]),
