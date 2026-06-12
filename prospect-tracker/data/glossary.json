@@ -1,5 +1,5 @@
 {
- "version": "2026-06-12.1",
+ "version": "2026-06-12.2",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -118,7 +118,8 @@
     "rps_plus",
     "statcast_plus"
    ],
-   "visual": "<span class=\"fv-badge fv-50 is-breakout\" style=\"position:relative;display:inline-block;padding:3px 8px;\">50<span class=\"fv-breakout-mark\" title=\"Breakout\">★</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ aquamarine ★ + pulsing bottom edge</span>"
+   "visual": "<span class=\"fv-badge fv-50 is-breakout\" style=\"position:relative;display:inline-block;padding:3px 8px;\">50<span class=\"fv-breakout-mark\" title=\"Breakout\">★</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ aquamarine ★ + pulsing bottom edge</span>",
+   "example": "A 20-year-old A+ hitter whose consensus jumped +5 FV in four months while running RPS+ 118 flags Breakout ★; a 24-year-old AAA arm with the same grade jump does not (age cap), and neither does a riser whose performance gate reads RPS+ 96 (velocity without production is a re-rank, not a breakout)."
   },
   {
    "id": "upside_indicator",
@@ -139,7 +140,8 @@
     "consensus_fv",
     "fv"
    ],
-   "visual": "<span class=\"fv-badge fv-45 is-upside\" style=\"position:relative;display:inline-block;padding:3px 8px;\">45<span class=\"fv-upside-mark\" title=\"Upside\"><span>^</span></span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ soft-pink ^ + pink top edge</span>"
+   "visual": "<span class=\"fv-badge fv-45 is-upside\" style=\"position:relative;display:inline-block;padding:3px 8px;\">45<span class=\"fv-upside-mark\" title=\"Upside\"><span>^</span></span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ soft-pink ^ + pink top edge</span>",
+   "example": "A source publishing 45+ on a 19-year-old shortstop puts the soft-pink ^ on his FV badge: the outlet sees a grade above the number. A 55+ from the same outlet shows no marker because 55 already prices the upside (the cap keeps the mark meaningful below FV 50)."
   },
   {
    "id": "statcast_plus",
@@ -1373,7 +1375,9 @@
     "fv",
     "shrinkage",
     "wide_spread"
-   ]
+   ],
+   "formula": "consensus FV = mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
+   "example": "Jesus Made carries 60/62/65 grades across five sources: the consensus is their mean, 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. His rank-implied FV (68.3) reads higher than his published grades, a gap the Source Comparison tab surfaces."
   },
   {
    "id": "stock",
@@ -1392,7 +1396,9 @@
    "seeAlso": [
     "fv",
     "dvm_plus"
-   ]
+   ],
+   "formula": "stock = consensus_fv_raw(latest) − consensus_fv_raw(prior snapshot)\n▲ if ≥ +1.5 · ▼ if ≤ −1.5 · \"-\" otherwise",
+   "example": "A prospect whose consensus moves 48 to 50 between snapshots shows ▲ +2 on his row; a 48 to 47.5 move stays flat (\"-\") (under the 1.5-point gate, so source noise does not read as news)."
   },
   {
    "id": "farm_rank",
@@ -1409,7 +1415,8 @@
    "seeAlso": [
     "dvm_plus",
     "fv"
-   ]
+   ],
+   "example": "The 2026-06 board has the Dodgers at #1 with a farm score of 117: an elite top five (Josue De Paula FV 57 leads), top-25 depth, positive 1y DvM+ trajectory, and a productive graduate pipeline. Farm scores read like wRC+: 100 is the league-mean system, 117 is about 1.7 standard deviations above it."
   },
   {
    "id": "eta",
@@ -1425,7 +1432,9 @@
    "seeAlso": [
     "fv",
     "rps_plus"
-   ]
+   ],
+   "formula": "years_to_MLB = level_base + perf_adj + age_adj + fv_adj + health_adj\nETA year = current season + ceil(years_to_MLB, by season phase)",
+   "example": "Ryan Sloan (SEA, AA): base 1.35y for AA, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV-grade leaves about 0.45y, so the board shows ETA 2027 at high confidence. Every term is visible in the ETA tooltip on his card."
   },
   {
    "id": "shrinkage",
@@ -2598,7 +2607,8 @@
     "sur_plus",
     "dvm_plus",
     "mlb_production_top_grads"
-   ]
+   ],
+   "example": "A system graded A- with branches Value A, MLB Production B+, Development B, Acquisition B- is winning on aggregate risk-adjusted surplus (the 65% branch) while its trade ledger lags; the Tendencies tab shows which acquisition channels drive the B-."
   },
   {
    "id": "farm_tiebreaker",
@@ -2871,7 +2881,9 @@
     "wag",
     "farm_report_card",
     "tvi"
-   ]
+   ],
+   "formula": "OrgSur+ = 100 + 10 · avg(z(WAR/$M), z(grad contract surplus))",
+   "example": "An org producing 0.8 graduate WAR per $M of bonus spend (one stddev above the mean) and league-average graduate contract surplus posts OrgSur+ around 105: capital-efficient on the draft side, ordinary on the development-to-contract side."
   },
   {
    "id": "draft_ceiling_hits",
