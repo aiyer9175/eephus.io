@@ -25,8 +25,9 @@ Phase 4b: external Stuff+ can't score pre-debut pitchers; this can).
   VALIDATION data/stuff_plus_aaa_eval.json: (a) season-out pitch-level
              RV correlation; (b) the forward gate - graduates' final-AAA
              Stuff+ vs first-MLB ERA/K% (the arkmetric_forward_eval
-             pattern); (c) agreement with external tjStuff+ where both
-             exist. Published whatever it says.
+             pattern). Published whatever it says. The tjStuff+
+             agreement check is DEFERRED until per-season MLB Stf+ rows
+             accumulate (began persisting 2026; documented in registry).
 
 Sidecar: data/stuff_plus_aaa.json {mlbam: {stuff_plus, n_pitches,
 season}}. Surfaces: PROSPX pitcher cards (an in-house pill beside the

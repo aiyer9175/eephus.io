@@ -312,9 +312,9 @@
    "champion": "stuff_plus_aaa v1 (in-house LightGBM, AAA 2023+ per-pitch detail)",
    "baseline": "season-out OOS correlation must be nonzero; forward gate vs graduates' first-MLB outcomes published whatever it says",
    "metric": "pitch- and pitcher-level OOS r (train 2023-24 -> validate 2025); forward: final-AAA aStuff+ vs first-MLB ERA/K%, debut cohorts 2024+",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "2026-06-12: model shipped, eval pending - per-pitcher AAA fetch in flight. The tjStuff+ gap-filler the registry carried since Phase 4b: external Stuff+ cannot score pre-debut pitchers; this can. Verdict updates with the committed eval."
+   "eval_artifact": "data/stuff_plus_aaa_eval.json",
+   "verdict": "provisional",
+   "notes": "2026-06-12 SHIPPED: trained on 1.19M AAA pitches (2023-24), validated season-out on 571K 2025 pitches - pitch-level r .021 (per-pitch RV is mostly batted-ball noise; expected scale), pitcher-level r .280 (n=638). Forward gate (graduates 2024+, strictly pre-debut AAA season, >=100 MLB BF): r .230 vs first-MLB ERA (inv), r .550 vs first-MLB K% (n=17 - small, published as required). 1,372 pitchers in the sidecar. Agreement check vs external tjStuff+ deferred until per-season MLB Stf+ rows accumulate (documented). Provisional per the SC+ precedent: real measurement, small forward cohort."
   },
   {
    "model_id": "swing_plus_external",
@@ -358,10 +358,10 @@
    "predicts": "first-projected-season team wins (roster bWAR roll-up + 47.7 replacement baseline)",
    "champion": "roster_war_rollup_v1 (Gate-1-validated player engine, summed; prospects join at ETA)",
    "baseline": "none yet - prior-season wins carry-forward (to be scored alongside)",
-   "metric": "none yet - forward gate: MAE vs actual wins when the first projected season completes",
-   "eval_artifact": null,
-   "verdict": "unvalidated",
-   "notes": "NEW 2026-06-11 (roadmap push). PRE-FA frame disclosed on the surface (winter class unassigned; sub-floor players = replacement) - read as ranks. First scoreable: end of the 2027 season; a point-in-time backtest needs historical roster reconstructions (documented lift)."
+   "metric": "level: league-sum accounting vs the 1000-WAR bWAR pool (committed); forward: MAE vs actual wins when the first projected season completes",
+   "eval_artifact": "data/team_outlook_eval.json",
+   "verdict": "provisional",
+   "notes": "2026-06-12 owner escalation (best team read 83 wins): measured the level bias - the rostered universe carries 560 of the league's 1000 bWAR (returning players produce ~940; new entrants ~61, covered by the ETA-prospect block), a uniform -14.6 wins/team. Shipped additive league-sum recentering (per-team depth allowance; ordering untouched, spread stays projection-compressed) + W-L display. Accounting in the artifact. Cohort-level recalibration (playing-time normalization, age x role intercepts) needs the retro point-in-time backtest - queued, pre-register before fitting. First forward-scoreable: end of the 2027 season."
   }
  ],
  "problems": []

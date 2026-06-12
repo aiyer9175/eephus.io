@@ -382,6 +382,13 @@ def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
     first projected season. Forward gate: scored against the season's
     actual standings when it completes (registry row carries the clock)."""
     REPLACEMENT_WINS = 47.7
+    # bWAR is calibrated so the league's players sum to ~1000 WAR every
+    # season (verified 1000/1000/1000 for 2023-25 in war_daily). The
+    # rostered universe captures ~56% of that pool (Marcel regression +
+    # shrunk playing time + exposure floors), which read as a ~15-win
+    # negative bias on every team (the best team projected 83 wins).
+    LEAGUE_WAR_POOL = 1000.0
+    LEAGUE_WINS = 2430.0
     teams: dict[str, dict] = {}
     for m in vets:
         tm = m.get("team")
@@ -404,17 +411,69 @@ def _team_outlook(vets: list[dict], prospects: list[dict]) -> list[dict]:
         t_["n"] += 1
         t_["top"].append((w, m.get("name"), m.get("key")))
     farm = _org_farm_blocks()
+    # League-sum recentering (2026-06-12, owner request after the 83-win
+    # Dodgers reading): the unmodeled WAR (depth slots, mid-season call-ups,
+    # regression compression) is treated as a uniform per-team depth
+    # allowance, so the level is fixed and the ORDERING is untouched. The
+    # spread stays projection-compressed (correct for a mean projection);
+    # a cohort-level recalibration needs the retro backtest (queued).
+    raw_wins_sum = 30 * REPLACEMENT_WINS + sum(t_["war"] for t_ in teams.values())
+    depth_war = (LEAGUE_WINS - raw_wins_sum) / max(len(teams), 1)
     out = []
     for tm, t_ in teams.items():
         t_["top"].sort(reverse=True)
+        wins = round(REPLACEMENT_WINS + t_["war"] + depth_war, 1)
         out.append({"team": tm, "war": round(t_["war"], 1),
-                    "wins": round(REPLACEMENT_WINS + t_["war"], 1),
+                    "wins": wins,
+                    "losses": round(162.0 - wins, 1),
+                    "winsRaw": round(REPLACEMENT_WINS + t_["war"], 1),
+                    "depthWar": round(depth_war, 1),
                     "n": t_["n"],
                     "top": [{"name": n, "key": k, "war": round(w, 1)}
                             for w, n, k in t_["top"][:3]],
                     "farm": farm.get(tm)})
     out.sort(key=lambda r: -r["wins"])
+    _write_team_outlook_eval(out, raw_wins_sum, depth_war)
     return out
+
+
+def _write_team_outlook_eval(rows: list[dict], raw_wins_sum: float,
+                             depth_war: float) -> None:
+    """data/team_outlook_eval.json - the league-sum accounting that the
+    recentering rests on, committed per the eval-artifact standing rule.
+    The forward gate (MAE vs actual wins) stays pending until the first
+    projected season completes; this artifact documents the measured
+    level bias and the calibration that corrects it."""
+    payload = {
+        "generated_at": date.today().isoformat(),
+        "first_season": FIRST_SEASON,
+        "league_sum_accounting": {
+            "roster_war_sum": round(sum(r["war"] for r in rows), 1),
+            "league_war_benchmark": 1000,
+            "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
+            "raw_wins_sum": round(raw_wins_sum, 1),
+            "target_wins_sum": 2430,
+            "recenter_wins_per_team": round(depth_war, 2),
+            "coverage_decomposition_2025": {
+                "returning_player_war": 940, "new_entrant_war": 61,
+                "new_entrant_players": 253,
+                "note": "new-entrant WAR is covered by the ETA-prospect block; "
+                        "the level gap lives in the veteran engine "
+                        "(regression + shrunk playing time + exposure floors)"},
+        },
+        "calibration": {
+            "kind": "additive league-sum recentering (uniform per-team depth allowance)",
+            "limitations": [
+                "uniform allowance ignores org depth quality - good orgs likely capture more of the unmodeled WAR",
+                "spread stays projection-compressed; cohort-level recalibration needs the retro point-in-time backtest (queued)"],
+        },
+        "forward_gate": {
+            "status": "pending",
+            "first_scoreable": f"end of the {FIRST_SEASON} season",
+            "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"},
+    }
+    (DATA_DIR / "team_outlook_eval.json").write_text(
+        json.dumps(payload, indent=1), encoding="utf-8")
 
 
 def build_payload() -> dict:

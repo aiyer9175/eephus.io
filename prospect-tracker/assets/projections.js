@@ -244,20 +244,26 @@
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
       const openCell = `<a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}" title="Org Tendencies tab inside farm detail">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
+      const w = Math.round(r.wins);
+      const wl = `${w}-${162 - w}`;
+      const wlTip = r.depthWar != null
+        ? `Roster WAR + ${r.depthWar} depth-allowance WAR over the 47.7 replacement baseline (league recentered to 2,430 total wins${r.winsRaw != null ? `; raw roster-only read ${Math.round(r.winsRaw)} wins` : ""})`
+        : `Roster WAR over the 47.7 replacement baseline`;
       return `<tr>
       <td>${i + 1}</td>
       <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
       <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
-      <td><strong>${r.wins.toFixed(0)}</strong></td>
+      <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
       <td>${r.n}</td>
       ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
       ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
     </tr>`;
     }).join("");
-    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline. PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals. Forward gate: scored against ${DATA.first_season} standings when the season completes.${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}</div>
+    const recentered = rows.some(r => r.depthWar != null);
+    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline.${recentered ? ` Levels are league-recentered: the rostered universe captures ~56% of the league's ~1,000-WAR pool (Marcel regression + shrunk playing time + exposure floors), so each team carries a uniform depth allowance and the league sums to 2,430 wins. Ordering is untouched; the spread stays projection-compressed.` : " PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals."} Forward gate: scored against ${DATA.first_season} standings when the season completes (accounting in team_outlook_eval.json).${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th>Proj W</th><th>Players</th>${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
+      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th title="Projected record, league-recentered (depth allowance over the rostered universe)">Proj W-L</th><th>Players</th>${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
       <tbody>${body}</tbody></table>`;
     root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {
       ev.preventDefault();
