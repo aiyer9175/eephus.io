@@ -17,7 +17,7 @@ from pathlib import Path
 import pytest
 
 TS = Path(__file__).resolve().parent / "data" / "timeseries.json"
-HARD_FV_STALE_YEARS = 5  # mirrors storage.export_timeseries_json
+HARD_FV_STALE_YEARS = 2  # mirrors storage.export_timeseries_json (calendar-year basis)
 
 
 def _load():
@@ -31,16 +31,22 @@ def _latest(p):
     return pts[-1].get("snapshot_date") if pts else None
 
 
-def test_no_aged_out_player_in_active_pool():
-    """No active prospect may have a latest FV snapshot older than the ceiling."""
-    d = _load()
-    today = date.today()
+def _latest_year(p):
+    ld = _latest(p)
     try:
-        cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, today.day).isoformat()
+        return int(ld[:4]) if ld else None
     except ValueError:
-        cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, 28).isoformat()
+        return None
+
+
+def test_no_aged_out_player_in_active_pool():
+    """No active prospect may have aged out of the recency ceiling: a grade in
+    the current year or within HARD_FV_STALE_YEARS prior calendar years is
+    required (no source update in 2+ calendar years = aged out)."""
+    d = _load()
+    min_year = date.today().year - HARD_FV_STALE_YEARS
     aged = [(p["player_name"], _latest(p)) for p in d["players"]
-            if _latest(p) and _latest(p) < cutoff]
+            if (_latest_year(p) is not None and _latest_year(p) < min_year)]
     assert not aged, f"{len(aged)} aged-out players leaked into the active pool: {aged[:8]}"
 
 

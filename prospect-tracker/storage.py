@@ -8587,11 +8587,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # historical ingestion (past OR future) — a purely-historical cohort can
     # never enter the current active pool. (Time Machine / backtest read the
     # full snapshot history directly and are unaffected.)
-    HARD_FV_STALE_YEARS = int(os.environ.get("HARD_FV_STALE_YEARS", "5"))
-    try:
-        hard_fv_cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, today.day)
-    except ValueError:
-        hard_fv_cutoff = date(today.year - HARD_FV_STALE_YEARS, today.month, 28)
+    # Calendar-year basis (not a rolling day cutoff): a grade dated in the
+    # current year OR within HARD_FV_STALE_YEARS prior calendar years keeps a
+    # prospect active; anything older = aged out. Calendar years match how
+    # prospect sources actually publish (annual preseason + midseason cycles),
+    # and the rolling cutoff had a boundary artifact - an Aug-2023 grade
+    # survived a "3 years ago" test that a Jan-2023 grade failed. Lowered 5 -> 2
+    # (2026-06): the old 5y ceiling only caught the obvious 2017-2020 historical
+    # backfill and let still-grinding prospects linger on a years-old grade
+    # (e.g. Cristopher Larez, last NYM grade 2023-08). Sources re-grade every
+    # prospect of note at least annually, so 2+ idle calendar years = the
+    # industry has dropped them.
+    HARD_FV_STALE_YEARS = int(os.environ.get("HARD_FV_STALE_YEARS", "2"))
+    hard_fv_min_year = today.year - HARD_FV_STALE_YEARS
     _audit_aged_out = 0
 
     actives: list[PlayerTimeseries] = []
@@ -8657,13 +8665,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             inactives.append(p)
             continue
 
-        # ── Active-prospect recency ceiling (historical-leak fix) ──────────
-        # Latest FV snapshot older than HARD_FV_STALE_YEARS → the player hasn't
-        # been ranked by any source in 5+ years → aged out → inactive, even if
-        # still playing or on an IL. Takes precedence over the IL bypass + the
-        # softer fv_stale/play_stale gates below, so purely-historical players
-        # (e.g. the 2017-2020 backfill cohort) can never enter the current pool.
-        if latest_date < hard_fv_cutoff:
+        # ── Active-prospect recency ceiling ────────────────────────────────
+        # No source has graded this player in HARD_FV_STALE_YEARS+ calendar
+        # years → aged out of prospect status → INACTIVE, even if still playing
+        # affiliated ball or sitting on an IL. This is the ONE FV-staleness gate
+        # that fires regardless of play: the softer fv_stale gate below requires
+        # play-staleness too, which let still-grinding prospects linger forever
+        # on a years-old grade (the Cristopher Larez case - last graded 2023,
+        # still in the minors). Takes precedence over the IL bypass + the softer
+        # gates, and also subsumes the 2017-2020 historical-backfill leak this
+        # ceiling first fixed. (Time Machine / backtest read the full snapshot
+        # history directly and are unaffected.)
+        if latest_date.year < hard_fv_min_year:
             inactives.append(p)
             _audit_aged_out += 1
             continue
@@ -8770,7 +8783,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # log so the magnitude of each gate's contribution is visible at a
     # glance. Pre-dedup counts (mlbam_id dedup runs below).
     log.info(
-        "active-pool cleanup: %d low-FV (<%d), %d aged-out (FV >%dy stale), %d play-2yr-stale, "
+        "active-pool cleanup: %d low-FV (<%d), %d aged-out (no grade in %d+ cal-yr), %d play-2yr-stale, "
         "%d stale-IL, %d FV+play stale -> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
         _audit_low_fv, MIN_PROSPECT_FV, _audit_aged_out, HARD_FV_STALE_YEARS, _audit_play2yr,
         _audit_stale_il, _audit_fv_play_stale,
@@ -8840,12 +8853,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _leak_aged_out = [
         p.player_key for p in actives
         if p.points and p.points[-1].snapshot_date
-        and p.points[-1].snapshot_date < hard_fv_cutoff.isoformat()
+        and int(p.points[-1].snapshot_date[:4]) < hard_fv_min_year
     ]
     if _leak_graduated or _leak_aged_out:
         log.error(
             "INTEGRITY GUARD: active pool leak detected — %d graduated, %d aged-out "
-            "(FV >%dy stale). Examples: %s",
+            "(no grade in %d+ cal-yr). Examples: %s",
             len(_leak_graduated), len(_leak_aged_out), HARD_FV_STALE_YEARS,
             (_leak_graduated + _leak_aged_out)[:5],
         )
