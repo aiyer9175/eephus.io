@@ -224,8 +224,16 @@ select {
   background: var(--paper-2);
 }
 
-.home-toolbar {
-  justify-content: space-between;
+/* Home view has only two controls (year + leaderboard link), so it opts out
+   of the four-column .toolbar grid - that grid put the year select in a
+   minmax(250px,1fr) track and stretched it across the row. Higher specificity
+   than .toolbar so it wins on desktop and mobile; flex sizes both to content. */
+.toolbar.home-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  gap: 10px;
 }
 
 .home-intro {
@@ -374,6 +382,10 @@ select {
   min-height: 36px;
   padding: 0 11px;
   cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .control-button:hover {
