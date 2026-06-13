@@ -1557,8 +1557,8 @@ def build_fa() -> str:
     archive / model / glossary)."""
     body = (
         '<div class="fa-app">'
-        f'<div class="section-head">{CREATED_BY_BANNER}<h1>MLB Free Agency '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1>'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">the 2026-27 class, constructed from data · '
         'projected markets, rational value &amp; team fits · twelve archived winters</span></div>'
         '<div id="fa-banner"></div>'
@@ -1584,8 +1584,8 @@ def build_projections() -> str:
     a small .proj-app extension in site.css."""
     body = (
         '<div class="fa-app proj-app">'
-        f'<div class="section-head">{CREATED_BY_BANNER}<h1>MLB Projections '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1>'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
         '<div id="proj-banner"></div>'
@@ -1707,6 +1707,9 @@ def build_team() -> str:
                '2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 '
                '3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 '
                '22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>')
+    # Email - classic envelope mark (rides currentColor like the rest).
+    _MAIL_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 '
+                 '2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4-8 5-8-5V6l8 5 8-5v2z"/></svg>')
     def _initials(name: str) -> str:
         parts = [p for p in name.split() if p[:1].isalpha()]
         if not parts:
@@ -1744,6 +1747,10 @@ def build_team() -> str:
         if linkedin:
             chips.append(f'<a class="team-soc" href="https://www.linkedin.com/in/{html.escape(linkedin)}/" target="_blank" '
                          f'rel="noopener" title="LinkedIn - {html.escape(m["name"])}" aria-label="LinkedIn - {html.escape(m["name"])}">{_LI_SVG}</a>')
+        email = (m.get("email") or "").strip()
+        if email:
+            chips.append(f'<a class="team-soc" href="mailto:{html.escape(email)}" '
+                         f'title="Email - {html.escape(email)}" aria-label="Email - {html.escape(email)}">{_MAIL_SVG}</a>')
         website = (m.get("website") or "").strip()
         if website:
             _host = website.split("//", 1)[-1].strip("/")
@@ -1754,10 +1761,18 @@ def build_team() -> str:
             chips.append(f'<a class="team-soc" href="https://github.com/{html.escape(github)}" target="_blank" '
                          f'rel="noopener" title="GitHub - {html.escape(github)}" aria-label="GitHub - {html.escape(github)}">{_GH_SVG}</a>')
         socials_html = f'<div class="team-socials">{"".join(chips)}</div>' if chips else ""
-        # Optional subtle note (only Noah gets "PROSPX Creator") - small mono pill.
+        # Optional credit pills (e.g. "PROSPX Creator"). `note` may be a single
+        # string or a list - members with several credits get one pill each,
+        # wrapped in a flex row so they reflow cleanly inside the card.
+        notes = m.get("note")
+        if isinstance(notes, str):
+            notes = [notes]
+        notes = [n for n in (notes or []) if n]
         note_html = (
-            f'<p class="team-note">{html.escape(m["note"])}</p>' if m.get("note") else ""
-        )
+            '<div class="team-notes">'
+            + "".join(f'<span class="team-note">{html.escape(n)}</span>' for n in notes)
+            + "</div>"
+        ) if notes else ""
         cards.append(
             f'<div class="card team-card" id="member-{_member_slug(m["name"])}">{photo_html}'
             f'<p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
