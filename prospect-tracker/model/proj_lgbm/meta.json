@@ -107,10 +107,10 @@
  "star_blend_note": "post-hoc star mean blend (tools/fit_star_blend.py); heads untouched, train hash unchanged",
  "mean_blend": {
   "1": 1.0,
-  "2": 0.5,
-  "3": 0.25,
-  "4": 0.25,
-  "5": 0.25
+  "2": 1.0,
+  "3": 1.0,
+  "4": 0.5,
+  "5": 0.5
  },
  "mean_blend_note": "global implied-mean recenter of q50 (all rows); tools fit forward-chained + holdout-confirmed; data/proj_mean_blend.json; heads untouched"
 }
