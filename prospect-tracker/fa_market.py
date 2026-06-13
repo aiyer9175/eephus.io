@@ -200,7 +200,8 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     # historical winters — it has seen their outcomes.
     models = ml_models if ml_models is not None else proj_ml.load()
     feats = proj_ml.build_features(hist, side, class_year, age, curves,
-                                   war_map, league, champ=out)
+                                   war_map, league, champ=out,
+                                   in_progress=in_progress)
     if models is None or feats is None:
         return out
     ml = proj_ml.predict_path(models, feats, side)

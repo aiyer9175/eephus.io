@@ -114,7 +114,8 @@ def _league_mean(league: dict, season: int, side: str, comp: str):
 
 def build_features(hist: list[dict], side: str, base: int, age: float | None,
                    curves: dict, war_map: dict, league: dict,
-                   champ: dict | None = None) -> list[float] | None:
+                   champ: dict | None = None,
+                   in_progress: tuple[int, float] | None = None) -> list[float] | None:
     """One feature vector from history rows (seasons <= base-1) — the same
     inputs the champion sees, plus the champion's own path as stack
     features. Returns None when the champion itself can't project (no
@@ -136,6 +137,24 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
 
     wl = [lag(base - k, "war") for k in (1, 2, 3)]
     el = [lag(base - k, expo_key) for k in (1, 2, 3)]
+    # In-progress (LIVE) correction: the heads trained on COMPLETED seasons, so
+    # at inference the most-recent lag (base-1) being a partial season is a
+    # train/serve distribution shift - the trees read a 105-PA / 0.5-WAR
+    # half-season as a bad FULL season and project a cliff (the Lindor case).
+    # Lift the base-1 WAR and exposure lags to their full-season equivalent by
+    # reliability-blending toward the prior completed season, weighted by the
+    # unobserved fraction (1-frac): healthy regulars whose current pace matches
+    # their track record are ~unchanged; only limited/injured veterans lift.
+    # Training callers pass in_progress=None, so the fitted distribution is
+    # untouched.
+    if in_progress and (base - 1) == in_progress[0] and in_progress[1] > 0:
+        rem = 1.0 - float(in_progress[1])
+        est_war = lag(base - 2, "war") or 0.0
+        est_exp = lag(base - 2, expo_key) or 0.0
+        if wl[0] is not None:
+            wl[0] = wl[0] + rem * est_war
+        if el[0] is not None:
+            el[0] = el[0] + rem * est_exp
     feats = [
         float(age), float(age) ** 2,
         wl[0] if wl[0] is not None else 0.0,

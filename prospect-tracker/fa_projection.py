@@ -578,15 +578,31 @@ def project_player(history: list[dict], side: str, target_season: int,
         out[comp] = max(0.0, rate)
     # ---- playing time (its own model: classic Marcel PT + PT aging) ---------
     # In-progress season handling (LIVE path only; the gates always project
-    # from completed seasons): a June rebuild sees ~40% of the current
-    # season — feeding that raw into the PT model projects everyone as a
-    # part-timer. Pro-rate the in-progress season's exposure to its
-    # full-season equivalent for PT INPUTS ONLY (rate reliability keeps the
-    # actual sample size — the evidence really is partial).
+    # from completed seasons): a June rebuild sees ~40% of the current season.
+    # Naively pro-rating the partial season to a full-season equivalent (e/frac)
+    # bakes in whatever PT the player has accrued so far - which UNDER-projects
+    # a durable regular who's been hurt for part of the current season: a 700-PA
+    # everyday SS sitting at 105 PA in a 41%-elapsed season would pro-rate to
+    # ~255 PA and project as a part-timer (the Lindor case). Instead,
+    # RELIABILITY-BLEND the in-progress exposure toward the player's ESTABLISHED
+    # level (most recent completed season), weighted by elapsed fraction:
+    #   frac*(e/frac) + (1-frac)*established  ==  e + (1-frac)*established
+    # Early in the year the track record dominates; by season's end the current
+    # season takes over (frac -> 1). A healthy regular whose current pace
+    # matches their established PT is ~unchanged; only limited/injured veterans
+    # with a strong track record lift. (Rate reliability is untouched - the rate
+    # Marcel already exposure-weights the partial sample down.) Trade-off: a
+    # player limited because they LOST the job, not injury, is lifted too -
+    # accepted as the lesser error for a star-heavy surface.
+    def _established_expo(key: str) -> float:
+        for h in hist:  # sorted most-recent-first; first completed season
+            if not (in_progress and h["season"] == in_progress[0]):
+                return h.get(key) or 0
+        return 0.0
     def _pt_expo(h: dict, key: str) -> float:
         e = h.get(key) or 0
         if in_progress and h["season"] == in_progress[0] and in_progress[1] > 0:
-            return e / in_progress[1]
+            return e + (1.0 - in_progress[1]) * _established_expo(key)
         return e
     pt_cfg = cfg["playing_time"]["hit" if side == "hit" else "pit"]
     e1 = next((_pt_expo(h, expo_key) for h in hist if h["season"] == target_season - 1), 0)
