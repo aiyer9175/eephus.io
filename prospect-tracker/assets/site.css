@@ -1115,6 +1115,13 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .proj-app .proj-ct-controlled { color: var(--accent-navy); border-color: var(--accent-navy);
   background: color-mix(in srgb, var(--accent-navy) 12%, transparent); }
 .proj-app .proj-ct-prospect { color: var(--text-tertiary); background: var(--bg-tertiary); }
+/* Projections talent-by-age scatter. */
+.proj-app .proj-warmap { margin: 8px 0 12px; border: 1px solid var(--border); background: var(--bg-secondary); }
+.proj-app .proj-warmap > summary { padding: 8px 12px; cursor: pointer; font-family: var(--font-sans);
+  font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; }
+.proj-app .proj-warmap > summary:hover { color: var(--text-primary); }
+.proj-app .proj-warmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
+.proj-app .proj-warmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
 .proj-app .proj-tag-prospect { border-color: var(--accent-gold); color: var(--accent-gold); }
 
 @media (max-width: 720px) {

@@ -148,6 +148,39 @@
     return list.slice().sort((a, b) => state.dir * (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0));
   }
 
+  // Talent-by-age scatter: year-1 projected WAR (y, the if-healthy display
+  // value) vs age (x), so the league's aging landscape is visible at a glance -
+  // the inverted-U of peak years, ascending youth, declining vets. Colored by
+  // contract control status. Honors the current filters; dots link to players.
+  function projWarMap(list) {
+    const pts = list.filter(m => m.age != null && warAt(m, 0) != null);
+    if (pts.length < 6) return "";
+    const W = 760, H = 400, PAD = 50;
+    const ages = pts.map(m => m.age), wars = pts.map(m => warAt(m, 0));
+    const ax0 = Math.min(18, Math.floor(Math.min(...ages)));
+    const ax1 = Math.max(40, Math.ceil(Math.max(...ages)));
+    const wy1 = Math.max(6, Math.ceil(Math.max(...wars)));
+    const px = a => PAD + (a - ax0) / (ax1 - ax0) * (W - 2 * PAD);
+    const py = w => (H - PAD) - Math.max(0, w) / wy1 * (H - 2 * PAD);
+    const xticks = []; for (let a = Math.ceil(ax0 / 2) * 2; a <= ax1; a += 4) xticks.push(a);
+    const yticks = []; for (let w = 0; w <= wy1; w += (wy1 > 12 ? 4 : 2)) yticks.push(w);
+    const grid = xticks.map(a => `<line x1="${px(a).toFixed(1)}" y1="${PAD}" x2="${px(a).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${px(a).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${a}</text>`).join("")
+      + yticks.map(w => `<line x1="${PAD}" y1="${py(w).toFixed(1)}" x2="${W - PAD}" y2="${py(w).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${PAD - 6}" y="${(py(w) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${w}</text>`).join("");
+    const ccol = { signed: "var(--accent-green)", expiring: "var(--accent-gold)", controlled: "var(--accent-cyan)", prospect: "var(--text-tertiary)" };
+    const dots = pts.map(m => {
+      const x = px(m.age), y = py(warAt(m, 0));
+      const c = ccol[contractStatus(m).key] || "var(--text-tertiary)";
+      const href = m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`;
+      return `<a href="${href}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - age ${Math.floor(m.age)} · ${fmtWar(warAt(m, 0))} WAR (yr 1, if-healthy)</title></circle></a>`;
+    }).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" class="proj-warmap-svg" role="img" aria-label="Year-1 projected WAR versus age scatter">
+      <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} players · year-1 projected WAR by age (if-healthy)</text>
+      <text x="${W / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">age</text>
+      <text x="14" y="${H / 2}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)" transform="rotate(-90 14 ${H / 2})">year-1 WAR</text>
+      ${grid}${dots}
+    </svg>`;
+  }
+
   function tagFor(m) {
     if (m.src === "prospect") {
       return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${m.fv} · ETA ${m.eta}</span>`;
@@ -347,7 +380,9 @@
         <td>${sur}</td>
       </tr>`;
     }).join("");
-    root.innerHTML = `<table class="detail-table proj-table">
+    const _wm = projWarMap(list);
+    const warMap = _wm ? `<details class="proj-warmap"><summary>Talent by age &middot; year-1 WAR vs age (current filters)</summary><div class="proj-warmap-wrap">${_wm}</div></details>` : "";
+    root.innerHTML = warMap + `<table class="detail-table proj-table">
       <thead><tr><th>#</th><th>Player</th>
       ${seasons.map((s, t) => sortHead(String(s), "y" + t, `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`)).join("")}
       ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
