@@ -1,0 +1,29 @@
+{
+ "fitted_at": "2026-06-13",
+ "model": "proj_lgbm_v1",
+ "what": "GLOBAL mean-blend recenter, LIFT-ONLY. The q50 head is MAE-optimal but, for the right-skewed/zero-inflated WAR label, sits below the expected value - so the displayed point projection read systematically LOW for every player (forward-chained + holdout bias ~ -0.15 WAR at all horizons; the owner-reported 'a bit low across the board'). shift = lambda_h * (implied_mean - q50); q50' = q50 + max(0, shift). implied_mean = trapezoid of the five quantile heads. LIFT-ONLY: under-projected (right-skewed) rows recenter UP; a projection is NEVER pulled down - a symmetric recenter trimmed ceiling stars (mean < median when the downside tail dominates), contradicting the intent; the q90 band already carries that downside. Bands untouched; coverage/pinball preserved. Self-scaling: high-skew profiles lift more than flat replacement rows.",
+ "mode": "lift_only",
+ "protocol": "forward-chained dev bases 2017-2021 (per base B the heads train on labels <= B-1); per-horizon lambda grid [0, 0.25, 0.5, 0.75, 1.0]; objective minimize |pooled bias| with guard pooled MAE +0.01 max; CONFIRMED on the 2022-2024 holdout (the star h2 blend that FAILED this same holdout was the cautionary precedent). Live regeneration lifts year-1 vet WAR +0.12 on average (918/1246 up), 5y total +0.28; no player lowered.",
+ "lambda_by_horizon": {
+  "1": 1.0,
+  "2": 0.5,
+  "3": 0.25,
+  "4": 0.25,
+  "5": 0.25
+ },
+ "dev_baseline": {
+  "1": {"bias": -0.196, "mae": 0.584},
+  "2": {"bias": -0.144, "mae": 0.493},
+  "3": {"bias": -0.156, "mae": 0.431},
+  "4": {"bias": -0.117, "mae": 0.375},
+  "5": {"bias": -0.153, "mae": 0.357}
+ },
+ "holdout_2022_2024": {
+  "note": "LIFT-ONLY mode. h5 (and h4 from base 2024) omitted where labels have not matured; n per horizon. Blended model still beats champion marcel_decay_v2 on MAE at h1 (0.559 vs 0.618) while taking the central bias from -0.123 to nearly zero.",
+  "1": {"bias_before": -0.123, "bias_after": -0.027, "mae_before": 0.539, "mae_after": 0.559, "n": 6611},
+  "2": {"bias_before": -0.164, "bias_after": -0.105, "mae_before": 0.486, "mae_after": 0.498, "n": 6611},
+  "3": {"bias_before": -0.201, "bias_after": -0.170, "mae_before": 0.438, "mae_after": 0.442, "n": 4285},
+  "4": {"bias_before": -0.193, "bias_after": -0.168, "mae_before": 0.399, "mae_after": 0.404, "n": 2103}
+ },
+ "disclosed_residual": "The recenter only PARTIALLY closes the gap because the model's own quantile heads are tail-light (predict ~25-35% of actual >=3-WAR seasons), so even the implied mean trails the true mean. Fuller correction is a heads-level refit (monotone tail / higher upper quantile) - a separate workstream, not this post-hoc recenter."
+}

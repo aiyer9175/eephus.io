@@ -320,8 +320,36 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         preds = sorted(float(heads[q].predict(x)[0]) for q in qs)
         for q, v in zip(sorted(qs), preds):
             by_q[q].append(v)
-    blend = models["meta"].get("star_blend") or {}
     full_qs = all(q in by_q for q in QUANTILES)
+    # GLOBAL mean blend (the across-the-board recenter): the q50 head is
+    # MAE-optimal but, for the right-skewed/zero-inflated WAR label, sits below
+    # the expected value - so the displayed point projection reads systematically
+    # LOW for every player (forward-chained + holdout bias ~ -0.15 WAR at all
+    # horizons). Recenter q50 toward the quantile-implied mean for ALL rows:
+    #   q50' = q50 + lambda_h * (implied_mean - q50)
+    # Bands (q10/q90) untouched. Self-scaling: high-skew profiles (upside arms,
+    # young bats) lift more than flat replacement-level rows. Lambdas fitted
+    # forward-chained + holdout-confirmed (tools/fit_mean_blend.py),
+    # data/proj_mean_blend.json.
+    gblend = models["meta"].get("mean_blend") or {}
+    if gblend and full_qs:
+        for t in range(HORIZONS):
+            lam = float(gblend.get(str(t + 1)) or gblend.get(t + 1) or 0.0)
+            if lam <= 0:
+                continue
+            mean = _implied_mean(by_q[0.10][t], by_q[0.25][t], by_q[0.50][t],
+                                 by_q[0.75][t], by_q[0.90][t])
+            # LIFT-ONLY: recenter under-projected (right-skewed) rows UP toward
+            # the expected value; never pull a projection DOWN. A symmetric
+            # recenter trimmed ceiling stars (mean < median when the downside
+            # tail dominates), which contradicts the "low across the board"
+            # intent - the band (q90) already carries that downside.
+            shift = lam * (mean - by_q[0.50][t])
+            if shift > 0:
+                by_q[0.50][t] = by_q[0.50][t] + shift
+    # STAR top-up blend (additional, star rows only) - kept for any residual
+    # star-slice miss the global recenter leaves; inert when its lambdas are 0.
+    blend = models["meta"].get("star_blend") or {}
     if blend and full_qs and len(feats) > _STAR_FLAG_IDX and feats[_STAR_FLAG_IDX] >= 1.0:
         for t in range(HORIZONS):
             lam = float(blend.get(str(t + 1)) or blend.get(t + 1) or 0.0)
