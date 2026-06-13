@@ -1044,6 +1044,13 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   background: var(--bg-secondary); border: 1px solid var(--border);
 }
 .fa-app .fa-filter-count { margin-left: auto; color: var(--text-tertiary); }
+/* FA value map (rational value vs predicted price scatter). */
+.fa-app .fa-valmap { margin: 8px 0 12px; border: 1px solid var(--border); background: var(--bg-secondary); }
+.fa-app .fa-valmap > summary { padding: 8px 12px; cursor: pointer; font-family: var(--font-sans);
+  font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; }
+.fa-app .fa-valmap > summary:hover { color: var(--text-primary); }
+.fa-app .fa-valmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
+.fa-app .fa-valmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
 .fa-app .fa-board-layout { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px;
   align-items: start; }
 .fa-app .fa-board-main { min-width: 0; overflow-x: auto; }

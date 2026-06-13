@@ -437,7 +437,9 @@
         <td title="* = blocked (hover each club for who's blocking - prospect or MLB incumbent)">${fits || EM_DASH}</td>
       </tr>`;
     }).join("");
-    rows.innerHTML = head + filterBar + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
+    const _vm = faValueMap(members);
+    const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap">${_vm}</div></details>` : "";
+    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
       ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor–ceiling buckets")}
@@ -465,6 +467,44 @@
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => downloadShareCard(cls);
     fillRowPhotos(rows);
+  }
+
+  // Value map: a log-log scatter of rational value (y) vs predicted price (x).
+  // The dashed diagonal is fair value (rational == price); points ABOVE are
+  // value (projected underpaid), BELOW are overpay - colored by verdict so the
+  // cloud reads at a glance. Honors the current board filters. Click -> player.
+  function faValueMap(members) {
+    const pts = members.filter(m => (m.projGuar || 0) > 0 && (m.rational || 0) > 0);
+    if (pts.length < 4) return "";
+    const W = 760, H = 430, PAD = 54;
+    const vals = [];
+    pts.forEach(m => { vals.push(m.projGuar / 1e6, m.rational / 1e6); });
+    const lo = 1, hi = Math.max(10, ...vals);
+    const L = Math.log10, span = (L(hi) - L(lo)) || 1;
+    const px = v => PAD + (L(Math.max(v, lo)) - L(lo)) / span * (W - 2 * PAD);
+    const py = v => (H - PAD) - (L(Math.max(v, lo)) - L(lo)) / span * (H - 2 * PAD);
+    const ticks = [];
+    for (let e = 0; Math.pow(10, e) <= hi * 1.0001; e++) ticks.push(Math.pow(10, e));
+    const grid = ticks.map(t => `
+      <line x1="${px(t).toFixed(1)}" y1="${PAD}" x2="${px(t).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/>
+      <line x1="${PAD}" y1="${py(t).toFixed(1)}" x2="${W - PAD}" y2="${py(t).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/>
+      <text x="${px(t).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">$${t}M</text>
+      <text x="${PAD - 6}" y="${(py(t) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">$${t}M</text>`).join("");
+    const diag = `<line x1="${px(lo).toFixed(1)}" y1="${py(lo).toFixed(1)}" x2="${px(hi).toFixed(1)}" y2="${py(hi).toFixed(1)}" stroke="var(--text-tertiary)" stroke-dasharray="5,4" stroke-width="1"/>`;
+    const vcol = { value: "var(--accent-green)", market: "var(--text-secondary)", overpay: "var(--accent-red)" };
+    const dots = pts.map(m => {
+      const x = px(m.projGuar / 1e6), y = py(m.rational / 1e6);
+      const c = vcol[m.verdict] || "var(--text-tertiary)";
+      return `<a href="#player=${encodeURIComponent(m.key || "")}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${c}" fill-opacity="0.72" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - price ${money(m.projGuar)} · value ${money(m.rational)} · ${m.verdict || "?"}</title></circle></a>`;
+    }).join("");
+    return `<svg viewBox="0 0 ${W} ${H}" class="fa-valmap-svg" role="img" aria-label="Rational value versus predicted price scatter">
+      <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} priced free agents · above the line = value, below = overpay</text>
+      <text x="${W / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">predicted price (projGuarantee)</text>
+      <text x="14" y="${H / 2}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)" transform="rotate(-90 14 ${H / 2})">rational value</text>
+      ${grid}${diag}
+      <text x="${(px(hi) - 4).toFixed(1)}" y="${(py(hi) + 14).toFixed(1)}" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-tertiary)">fair value</text>
+      ${dots}
+    </svg>`;
   }
 
   // Market-pulse rail beside the board: best values, biggest projected
