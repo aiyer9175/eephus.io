@@ -340,6 +340,7 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         for q, v in zip(sorted(qs), preds):
             by_q[q].append(v)
     full_qs = all(q in by_q for q in QUANTILES)
+    raw_q50 = list(by_q[0.50])  # pre-recenter medians, for the if-healthy display path
     # GLOBAL mean blend (the across-the-board recenter): the q50 head is
     # MAE-optimal but, for the right-skewed/zero-inflated WAR label, sits below
     # the expected value - so the displayed point projection reads systematically
@@ -384,6 +385,16 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         out["war_by_year_p25"] = [round(v, 2) for v in by_q[0.25]]
     if 0.75 in by_q:
         out["war_by_year_p75"] = [round(v, 2) for v in by_q[0.75]]
+        # Playing-time-held (if-healthy) DISPLAY path: the 70th percentile of the
+        # modelled outcome distribution (q70 = q50 + 0.8*(q75-q50)), floored at
+        # the expected-value central. /projections/ shows this so a star's
+        # out-years read at their healthy level instead of the attrition-
+        # discounted mean; it is NEVER used for surplus / FA valuation, which
+        # keep war_by_year (the expected value). Only present with full quantiles
+        # (the live bundle), so the PIT/gate path is unaffected.
+        out["war_by_year_pth"] = [
+            round(max(by_q[0.50][t], raw_q50[t] + 0.8 * (by_q[0.75][t] - raw_q50[t])), 2)
+            for t in range(len(by_q[0.50]))]
     return out
 
 

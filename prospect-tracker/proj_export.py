@@ -180,6 +180,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                 return [round((a[t] or 0) + (b[t] or 0), 2)
                         for t in range(min(HORIZON, len(a), len(b)))]
             war_arr = _sum_arr("war_by_year")
+            pth_arr = _sum_arr("war_by_year_pth")   # if-healthy display path
             # Band combination at assumed cross-side correlation rho=0.5
             # (a player's hitting and pitching seasons share health/PT
             # shocks but not skill shocks - a documented assumption, less
@@ -206,6 +207,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             path = paths[side]
             age = ages[side]
             war_arr = path["war_by_year"][:HORIZON]
+            pth_arr = (path.get("war_by_year_pth") or war_arr)[:HORIZON]   # if-healthy display path
             p10_arr = (path.get("war_by_year_p10") or [None])[:HORIZON] or None
             p90_arr = (path.get("war_by_year_p90") or [None])[:HORIZON] or None
         name = names.get(mlbam)
@@ -219,6 +221,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
             "team": (ct or {}).get("team_code"),
             "war": war_arr,
+            # If-healthy (playing-time-held) display path - shown on the board's
+            # WAR cells; surplus/value below still price off `war` (expected value).
+            "warPTH": (pth_arr or war_arr),
             "warP10": p10_arr,
             "warP90": p90_arr,
             # Champion MEAN year-1 for team aggregation (sum across both
@@ -233,6 +238,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             m["warHit"] = [round(w, 2) for w in paths["hit"]["war_by_year"][:HORIZON]]
             m["warPit"] = [round(w, 2) for w in paths["pit"]["war_by_year"][:HORIZON]]
         m["warTotal"] = round(sum(m["war"]), 1)
+        m["warTotalPTH"] = round(sum(m.get("warPTH") or m["war"]), 1)  # if-healthy display total
         if p10_arr:
             m["warTotalP10"] = round(sum(p10_arr), 1)
             m["warTotalP90"] = round(sum(p90_arr), 1)

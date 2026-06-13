@@ -135,7 +135,7 @@
    "metric": "inherits Gate 1 + proj_horizon_eval",
    "eval_artifact": "data/proj_horizon_eval.json",
    "verdict": "validated",
-   "notes": "inherits the Phase-1 ship verdict; bands now from quantile heads (no zero floor)",
+   "notes": "inherits the Phase-1 ship verdict; bands now from quantile heads (no zero floor). IF-HEALTHY DISPLAY (2026-06-13, owner ask after the Skenes year-5 report): /projections/ shows the PLAYING-TIME-HELD path - the q70 of the modelled outcome distribution (q70 = q50 + 0.8*(q75-q50), floored at the expected value) - so a star's out-years read at their healthy level (Skenes 2031 1.7 -> 3.0) instead of the attrition-discounted mean. This is a DISPLAY series only (proj_ml.predict_path war_by_year_pth -> proj_export warPTH/warTotalPTH -> projections.js cells/total, labeled). The expected-value path (war / surNpv) is BYTE-UNCHANGED and remains what surplus, FA rational value, and Team Outlook price off - confirmed surNpv identical post-change. The deeper L2 mean-head refit was attempted and REVERTED: it overshot the heavy WAR tail (Ohtani 13.9, impossible) and did not lift Skenes' year-5 (1.7->1.45), confirming ~1.7 is the genuine expected value and that the higher read is necessarily an if-healthy percentile, not the mean.",
    "last_checked": "2026-06-13",
    "stale": false,
    "artifact_age_days": 1

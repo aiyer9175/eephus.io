@@ -240,6 +240,10 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
               "war_by_year_p90": _extend(ml["war_by_year_p90"],
                                          [p * 1.4 for p in path]),
               "model": proj_ml.MODEL_VERSION}
+    # Playing-time-held (if-healthy) display path, carried through for
+    # /projections/ only; consumers that price value ignore it.
+    if ml.get("war_by_year_pth"):
+        out_ml["war_by_year_pth"] = _extend(ml["war_by_year_pth"], path)
     return out_ml
 
 

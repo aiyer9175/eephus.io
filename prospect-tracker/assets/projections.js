@@ -102,12 +102,18 @@
 
   // Season-aligned WAR for a row: vets start at first_season; prospects at
   // their ETA (pre-ETA seasons are MiLB time - rendered as such, never 0).
+  // The WAR shown on the board/cells is the "playing-time-held" (if-healthy)
+  // path - the 70th-percentile outcome - so a star's out-years read at their
+  // healthy level rather than the attrition-discounted expected value. Surplus
+  // and all valuation still price off the expected value (m.war / surNpv), never
+  // this display series. Vets carry warPTH; prospects fall back to war.
   function warAt(m, t) {
+    const arr = (m.warPTH && m.warPTH.length) ? m.warPTH : m.war;
     if (m.src === "prospect") {
       const off = t - (m.eta - DATA.first_season);
-      return off >= 0 && off < (m.war || []).length ? m.war[off] : null;
+      return off >= 0 && off < (arr || []).length ? arr[off] : null;
     }
-    return (m.war || [])[t] ?? null;
+    return (arr || [])[t] ?? null;
   }
   function bandAt(m, t, which) {
     const arr = which === "lo" ? m.warP10 : m.warP90;
@@ -135,6 +141,7 @@
     const val = m => {
       if (k === "age") return m.age ?? 99;
       if (k === "sur") return m.surNpv ?? -1e15;
+      if (k === "warTotal") return m.warTotalPTH ?? m.warTotal ?? -99;  // sort by the displayed (if-healthy) total
       if (k.startsWith("y")) return warAt(m, Number(k.slice(1))) ?? -99;
       return m[k] ?? -99;
     };
@@ -186,7 +193,7 @@
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; seasons priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)},
       escalating ${(DATA.dpw_infl * 100).toFixed(0)}%/yr
-      &middot; <span data-gl="contract_surplus">surplus</span> only where a real contract exists
+      &middot; WAR shown is the <strong>playing-time-held</strong> (if-healthy) path; <span data-gl="contract_surplus">surplus</span> prices the attrition-discounted expected value, only where a real contract exists
       &middot; <button class="chip" id="proj-board-gfx" title="Download the top of this board as a PNG share card (theme-aware)">&#8681; share card</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
@@ -199,9 +206,9 @@
         tiles: [],
         sections: [
           { title: "Top 10 · projected 5y bWAR", rows: top.slice(0, 5).map((m, i) =>
-            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
           { title: " ", rows: top.slice(5, 10).map((m, i) =>
-            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
         ],
         url: "eephus.io/projections",
         filename: "eephus-projections-board.png",
@@ -317,9 +324,9 @@
           return `<td class="proj-dim">${milb ? "MiLB" : EM_DASH}</td>`;
         }
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return `<td class="proj-war${warClass(w)}" title="${s}: mean ${fmtWar(w)} bWAR${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90)` : ""}">${fmtWar(w)}</td>`;
+        return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
       }).join("");
-      const tot = `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalP10)}–${fmtWar(m.warTotalP90)})</span>` : ""}`;
+      const tot = `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalP10)}–${fmtWar(m.warTotalP90)})</span>` : ""}`;
       const cs = contractStatus(m);
       const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
         + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
@@ -342,8 +349,8 @@
     }).join("");
     root.innerHTML = `<table class="detail-table proj-table">
       <thead><tr><th>#</th><th>Player</th>
-      ${seasons.map((s, t) => sortHead(String(s), "y" + t, `Projected ${s} bWAR (hover any cell for the floor/ceiling band)`)).join("")}
-      ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR (P10–P90 band)")}
+      ${seasons.map((s, t) => sortHead(String(s), "y" + t, `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`)).join("")}
+      ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
       <th>Contract</th>
       ${sortHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
       </tr></thead><tbody>${body || `<tr><td colspan="${5 + seasons.length}">No players match.</td></tr>`}</tbody></table>
