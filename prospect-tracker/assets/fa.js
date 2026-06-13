@@ -342,11 +342,44 @@
     return blockedBy.map(b => `${b.n} (${b.t === "mlb" ? "MLB incumbent" : "prospect"})`).join(", ");
   }
 
-  const boardState = { sort: "projGuar", dir: -1 };
+  // FA type: UFA (contract expires - locked into the class) vs the OPTION
+  // family (club / player / mutual / conditional / opt-out), whose class
+  // membership is PROBABILISTIC until the option resolves. The colored pill +
+  // row accent make options scannable apart from the UFAs; the Type filter
+  // isolates either group.
+  const OPT_LABEL = {
+    ufa: "UFA", club_option: "Club opt", player_option: "Player opt",
+    mutual_option: "Mutual opt", conditional_club_option: "Cond. club opt",
+    conditional_player_option: "Cond. player opt", opt_out: "Opt-out",
+  };
+  function isOption(m) { return (m.type || "ufa") !== "ufa"; }
+  function typeTag(m) {
+    const t = m.type || "ufa";
+    const lbl = OPT_LABEL[t] || t.replace(/_/g, " ");
+    const opt = isOption(m);
+    const tip = opt
+      ? "Option / opt-out - class membership is probabilistic until the option resolves"
+      : "UFA - contract expires; locked into the class";
+    return `<span class="fa-type ${opt ? "fa-type-opt" : "fa-type-ufa"}" title="${tip}">${lbl}</span>`;
+  }
+  function posGroup(m) {
+    const head = String(m.pos || "").toUpperCase().split("/")[0];
+    return ["SP", "LHP", "RHP", "P"].includes(head) ? "SP"
+      : ["RP", "CL"].includes(head) ? "RP" : head === "C" ? "C"
+      : ["1B", "2B", "3B", "SS"].includes(head) ? "IF"
+      : ["LF", "CF", "RF", "OF"].includes(head) ? "OF" : "DH";
+  }
+
+  const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all" };
 
   function renderBoard(rows, cls) {
     const sortKey = boardState.sort;
-    const members = cls.members.slice().sort((a, b) => {
+    let members = cls.members.slice();
+    if (boardState.type === "ufa") members = members.filter(m => !isOption(m));
+    else if (boardState.type === "options") members = members.filter(isOption);
+    if (boardState.pos !== "all") members = members.filter(m => posGroup(m) === boardState.pos);
+    if (boardState.verdict !== "all") members = members.filter(m => m.verdict === boardState.verdict);
+    members.sort((a, b) => {
       const v = m => m[sortKey] ?? (sortKey === "age" ? 99 : -1e15);
       return boardState.dir * (v(a) > v(b) ? 1 : v(a) < v(b) ? -1 : 0);
     });
@@ -357,6 +390,22 @@
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
       <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip" id="fa-gfx-btn" title="Download the top of the board as a PNG share card (theme-aware)">&#8681; share card</button></span>
+    </div>`;
+    // Filter bar: Type (UFA vs the option family), position group, and verdict.
+    const nUfa = cls.members.filter(m => !isOption(m)).length;
+    const nOpt = cls.members.length - nUfa;
+    const fchip = (group, val, label, on) =>
+      `<button class="chip fa-fchip${on ? " active" : ""}" data-ffilter="${group}" data-fval="${val}">${label}</button>`;
+    const filterBar = `<div class="fa-filter-bar">
+      <span class="filter-label">Type</span>
+      ${fchip("type", "all", "All", boardState.type === "all")}
+      ${fchip("type", "ufa", `UFA · ${nUfa}`, boardState.type === "ufa")}
+      ${fchip("type", "options", `Options · ${nOpt}`, boardState.type === "options")}
+      <span class="filter-label" style="margin-left:12px;">Pos</span>
+      ${["all", "C", "IF", "OF", "SP", "RP", "DH"].map(p => fchip("pos", p, p === "all" ? "All" : p, boardState.pos === p)).join("")}
+      <span class="filter-label" style="margin-left:12px;">Verdict</span>
+      ${["all", "value", "market", "overpay"].map(v => fchip("verdict", v, v === "all" ? "All" : v[0].toUpperCase() + v.slice(1), boardState.verdict === v)).join("")}
+      <span class="fa-sub fa-filter-count">${members.length} shown</span>
     </div>`;
     const body = members.map((m, i) => {
       const fits = (m.fits || []).map(f =>
@@ -369,9 +418,13 @@
         ? `${money(m.projGuar)}<span class="fa-band"> (${money(m.projGuarP10)}&ndash;${money(m.projGuarP90)})</span>` : EM_DASH;
       const dealWar = m.warTotal != null
         ? `${formatMetric(m.warTotal, "war")}<span class="fa-band"> (${formatMetric(m.warTotalP10, "war")}&ndash;${formatMetric(m.warTotalP90, "war")})</span>` : EM_DASH;
-      return `<tr${m.projGuar == null || m.status === "option_exercised" ? ' class="fa-dim"' : ""}>
+      const trCls = [
+        (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
+        isOption(m) ? "fa-row-opt" : "",
+      ].filter(Boolean).join(" ");
+      return `<tr${trCls ? ` class="${trCls}"` : ""}>
         <td>${i + 1}</td>
-        <td>${playerLink(m)}${noteBadge(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
+        <td>${playerLink(m)}${noteBadge(m)} ${typeTag(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
         <td>${statusChip(m)}</td>
         <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
         <td title="Projected bWAR over the predicted term (floor–ceiling from the Gate-1 probability buckets)">${dealWar}</td>
@@ -384,7 +437,7 @@
         <td title="* = blocked (hover each club for who's blocking - prospect or MLB incumbent)">${fits || EM_DASH}</td>
       </tr>`;
     }).join("");
-    rows.innerHTML = head + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
+    rows.innerHTML = head + filterBar + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
       ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor–ceiling buckets")}
@@ -395,12 +448,17 @@
       ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
       <th><span data-gl="deal_plus">Verdict</span></th>
       <th><span data-gl="fit_components">Fits</span></th></tr></thead>
-      <tbody>${body}</tbody></table></div>
+      <tbody>${body || '<tr><td colspan="12" style="padding:2rem;text-align:center;color:var(--text-tertiary);">No free agents match these filters.</td></tr>'}</tbody></table></div>
       ${boardRail(cls)}</div>`;
     rows.querySelectorAll("[data-fsort]").forEach(h => h.onclick = () => {
       const k = h.dataset.fsort;
       if (boardState.sort === k) boardState.dir = -boardState.dir;
       else { boardState.sort = k; boardState.dir = -1; }
+      renderBoard(rows, cls);
+      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    });
+    rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
+      boardState[b.dataset.ffilter] = b.dataset.fval;
       renderBoard(rows, cls);
       if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
     });
