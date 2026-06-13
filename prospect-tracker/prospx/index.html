@@ -4114,6 +4114,18 @@
     }
     .tm-board-head .tm-h-rank { text-align: right; }
     .tm-board-head .tm-h-out, .tm-board-head .tm-h-fv { text-align: right; }
+    /* Hindsight board: realized-outcome stats get their OWN aligned columns so
+       each value sits directly under its header, instead of being packed into
+       one right-aligned cell. The header and every row share this grid (each
+       .tm-row is its own grid, so fixed widths are what keep them in column).
+       rank | photo | logo | name | pos | debut | WAR | /yr | WAG | FV */
+    .tm-board--hind .tm-row,
+    .tm-board--hind .tm-board-head {
+      grid-template-columns: 30px 18px 20px minmax(0,1fr) 40px 96px 56px 50px 62px 44px;
+    }
+    .tm-board--hind .tm-cell { text-align: right; white-space: nowrap;
+      overflow: hidden; text-overflow: ellipsis; }
+    .tm-board--hind .tm-board-head .tm-h-stat { text-align: right; }
     .tm-row .team-logo { width: 20px; height: 20px; }
     /* Genuine point-in-time-org gap (no historical org on file): a neutral
        placeholder slot - never the wrong current-org logo. */
@@ -17682,6 +17694,50 @@ function _tmBoardHeadHTML(slotLabel) {
     </div>`;
 }
 
+// Header + row for the hindsight as-of board, where each realized-outcome stat
+// (debut / WAR / WAR-yr / WAG) gets its own column so the label sits directly
+// above its value. Shares the .tm-board--hind grid defined in CSS.
+function _tmHindHeadHTML() {
+  return `<div class="tm-board-head" aria-hidden="true">
+      <span class="tm-h-rank">#</span><span></span><span></span>
+      <span>Player</span><span>Pos</span>
+      <span class="tm-h-stat">Debut</span><span class="tm-h-stat">WAR</span>
+      <span class="tm-h-stat">/yr</span><span class="tm-h-stat">WAG</span>
+      <span class="tm-h-fv">FV</span>
+    </div>`;
+}
+
+function _tmHindRowHTML(r) {
+  const debut = r.debutDate
+    ? `<span class="tm-grad" title="Debuted ${_tmFmtDate(r.debutDate)} - shown on this board because it predates the debut">▸ ${_tmFmtDate(r.debutDate)}</span>`
+    : "";
+  const war = r.war != null
+    ? `<span class="tm-stat tm-stat-war" title="Career MLB WAR (bWAR) since debut">${(+r.war).toFixed(1)}<em>WAR</em></span>`
+    : "";
+  const yr = r.warPerYr != null
+    ? `<span class="tm-stat tm-stat-rate" title="WAR per MLB season played${r.warSeasons ? ` (${r.warSeasons} season${r.warSeasons === 1 ? "" : "s"})` : ""} - the length-fair signal">${(+r.warPerYr).toFixed(1)}<em>/yr</em></span>`
+    : "";
+  let wag = "";
+  if (r.wag != null) {
+    const pos = r.wag >= 0;
+    wag = `<span class="tm-stat tm-stat-wag ${pos ? "is-pos" : "is-neg"}" title="WAR Above Grade - realized production vs what the grade implied">${pos ? "+" : ""}${(+r.wag).toFixed(1)}<em>WAG</em></span>`;
+  }
+  return `<a class="tm-row" href="#player=${escapeHtml(r.key)}"
+      onclick="event.preventDefault();state.section='timemachine';state.view={type:'player',key:'${escapeHtml(r.key)}'};render();syncToURL();">
+      <span class="tm-rank">${r.rank}</span>
+      ${_tmRowPhoto(r)}
+      ${r.org ? teamLogoHTML(r.org, "sm")
+              : `<span class="team-logo tm-org-gap" title="Org as of this date unavailable" aria-label="Org unavailable"></span>`}
+      <span class="tm-name">${escapeHtml(r.name)}</span>
+      <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
+      <span class="tm-cell tm-cell-debut">${debut}</span>
+      <span class="tm-cell tm-cell-war">${war}</span>
+      <span class="tm-cell tm-cell-yr">${yr}</span>
+      <span class="tm-cell tm-cell-wag">${wag}</span>
+      ${_tmFvPill(r.fv, r.fvPlus)}
+    </a>`;
+}
+
 function _tmBoardRowHTML(r, opts) {
   opts = opts || {};
   const slot = opts.deltaHTML || "";
@@ -17834,7 +17890,9 @@ function _tmRenderBody() {
         </label>
       </div>
       ${hind ? _tmHitMissHTML(board) : ""}
-      <div class="tm-board">${_tmBoardHeadHTML(hind ? "Debut · WAR · /yr · WAG" : "")}${board.map(r => _tmBoardRowHTML(r, { deltaHTML: hind ? _tmOutcomeHTML(r) : "" })).join("")}</div>`;
+      ${hind
+        ? `<div class="tm-board tm-board--hind">${_tmHindHeadHTML()}${board.map(_tmHindRowHTML).join("")}</div>`
+        : `<div class="tm-board">${_tmBoardHeadHTML("")}${board.map(r => _tmBoardRowHTML(r, {})).join("")}</div>`}`;
     const hb = document.getElementById("tm-hindsight");
     if (hb) hb.onchange = () => { state.tmHindsight = hb.checked; _tmRenderBody(); syncToURL(); };
     _tmWirePhotoLog(el);
@@ -35030,21 +35088,6 @@ function makeInjuryHistoryBlock(history) {
   return `<table class="detail-table"><thead><tr><th>Stint</th><th>List</th><th>Length</th><th>Diagnosis</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-// Expand/collapse one run of no-change Live check-in rows in the per-source
-// FV history table (see the v44 collapse block in makePerSourceHistory).
-// Scoped to the enclosing table so detail-page re-renders stay self-contained.
-function toggleSrcLiveRun(summaryRow, gid) {
-  const open = summaryRow.getAttribute("aria-expanded") === "true";
-  summaryRow.setAttribute("aria-expanded", String(!open));
-  const caret = summaryRow.querySelector(".src-live-caret");
-  if (caret) caret.textContent = open ? "▸" : "▾";
-  const table = summaryRow.closest("table");
-  if (!table) return;
-  for (const tr of table.querySelectorAll(`tr[data-src-live-run="${gid}"]`)) {
-    tr.style.display = open ? "none" : "";
-  }
-}
-
 // Per-source FV history - shows the full breakdown of how each ranking
 // source has graded the player over time.
 function makePerSourceHistory(points) {
@@ -35104,15 +35147,13 @@ function makePerSourceHistory(points) {
 
   const head = `<tr>${_sh("date", "Date")}${_sh("update", "Update")}${sortedSources.map(s => _sh(`src:${s}`, escapeHtml(SOURCE_LABELS[s] || s))).join("")}${_sh("consensus", "Consensus")}</tr>`;
 
-  // v44 - Collapse daily Live check-ins that changed nothing. The TJStats
-  // Live board is captured every day; each capture appends a snapshot point
-  // even when every source re-published identical grades, so the table was
-  // filling with duplicate "Live YYYY-MM-DD" rows. Consecutive Live-only
-  // points whose per-source grades AND consensus match the previous point
-  // collapse into ONE expandable summary row ("N live check-ins · no grade
-  // changes"); a Live capture that DID move a grade stays a normal row, and
-  // named releases (BA Top 100, TJ May, …) are never collapsed. Applies only
-  // on the date sort - other sorts scatter the rows, so they render plainly.
+  // v45 - Hide daily Live check-ins that changed nothing (owner ask). The
+  // TJStats Live board is captured every day; each capture appends a snapshot
+  // point even when every source re-published identical grades. A capture that
+  // moved no grade is not news, so it earns no row at all (v44 collapsed these
+  // into an expandable summary; the table now omits them entirely). A Live
+  // capture that DID move a grade stays a normal row, and named releases
+  // (BA Top 100, TJ May, …) are never hidden.
   const _liveLabelRe = /^Live \d{4}-\d{2}-\d{2}$/;
   const _rawLabelsOf = (pt) => {
     const labels = [];
@@ -35129,12 +35170,11 @@ function makePerSourceHistory(points) {
     JSON.stringify(Object.entries(pt.per_source || {})
       .map(([src, info]) => [src, info ? info.fv_published : null, !!(info && info.fv_plus)])
       .sort((a, b) => String(a[0]).localeCompare(String(b[0]))));
-  const collapsible = new Set();
-  // The default sort state is "source", which extract() routes to
-  // snapshot_date - so both keys render date-ordered rows where runs of
-  // consecutive Live check-ins are contiguous and collapsible.
-  const _dateOrdered = baseKey === "date" || baseKey === "source";
-  if (_dateOrdered) {
+  // Hidden in EVERY sort: compute the no-change set from chronological order
+  // (each Live point compared against the prior snapshot), then filter it out
+  // below regardless of how the visible rows are currently ordered.
+  const hidden = new Set();
+  {
     const chrono = [...points].sort((a, b) =>
       String(a.snapshot_date || "").localeCompare(String(b.snapshot_date || "")));
     for (let i = 1; i < chrono.length; i++) {
@@ -35143,7 +35183,7 @@ function makePerSourceHistory(points) {
       if (!labels.every(l => _liveLabelRe.test(l))) continue;       // named release → always a row
       if (String(pt.consensus_fv_label) !== String(prev.consensus_fv_label)) continue;
       if (_gradeSig(pt) !== _gradeSig(prev)) continue;              // a grade moved → real news
-      collapsible.add(pt);
+      hidden.add(pt);
     }
   }
 
@@ -35218,32 +35258,12 @@ function makePerSourceHistory(points) {
     </tr>`;
   };
 
-  // Assemble the body, folding consecutive collapsible Live points into one
-  // summary row each. The hidden rows stay in the DOM (display:none) so the
-  // expander is instant and the column alignment never reflows.
+  // No-change Live check-ins are omitted entirely (see the v45 note above);
+  // only rows that moved a grade or were a named release reach the table.
   let body = "";
-  let _srcLiveSeq = 0;
-  for (let i = 0; i < sortedPoints.length;) {
-    const pt = sortedPoints[i];
-    if (!collapsible.has(pt)) { body += rowHtml(pt); i++; continue; }
-    let j = i;
-    while (j < sortedPoints.length && collapsible.has(sortedPoints[j])) j++;
-    const run = sortedPoints.slice(i, j);
-    const gid = `srclive-${_srcLiveSeq++}`;
-    const dates = run.map(r => r.snapshot_date || "").sort();
-    const lo = dates[0], hi = dates[dates.length - 1];
-    const range = lo === hi ? hi : `${lo} → ${hi}`;
-    body += `<tr class="src-live-summary" data-hoverable role="button" tabindex="0" aria-expanded="false"
-      title="Daily Live-board check-ins where every source re-published the same grades - click to expand the individual captures."
-      style="cursor:pointer;"
-      onclick="toggleSrcLiveRun(this,'${gid}')"
-      onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();toggleSrcLiveRun(this,'${gid}');}">
-      <td style="white-space:nowrap;color:var(--text-tertiary);">${range}</td>
-      <td colspan="${sortedSources.length + 2}" style="color:var(--text-tertiary);font-size:11px;">
-        <span class="src-live-caret" style="display:inline-block;width:1.1em;">▸</span>${run.length} live check-in${run.length === 1 ? "" : "s"} · no grade changes</td>
-    </tr>`;
-    body += run.map(rpt => rowHtml(rpt, ` data-src-live-run="${gid}" style="display:none;"`)).join("");
-    i = j;
+  for (const pt of sortedPoints) {
+    if (hidden.has(pt)) continue;
+    body += rowHtml(pt);
   }
   // Per-source cells keep their compact badges so the reader can spot
   // source agreement at a glance; the consensus column drops the badge

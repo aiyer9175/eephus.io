@@ -22,9 +22,6 @@ import build_site
 def ledger_path(tmp_path, monkeypatch):
     p = tmp_path / "wire_fv_first_seen.json"
     monkeypatch.setattr(build_site, "_WIRE_FV_LEDGER", p)
-    # The wire also folds in TJStats movers from the real data dir - keep
-    # these tests hermetic to the injected players.
-    monkeypatch.setattr(build_site, "_load_tjstats_movers_for_wire", lambda: {})
     return p
 
 

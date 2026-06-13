@@ -192,7 +192,7 @@ def _footer() -> str:
     )
     return (
         '<footer class="eephus-footer">\n'
-        f'  <span>eephus.io - editorial baseball analytics · {html.escape(EEPHUS_VERSION)}</span>\n'
+        f'  <span>eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
         f'  <nav class="eephus-footer-links" aria-label="Footer">{links}</nav>\n'
         f'  <span>© {year} eephus.io</span>\n'
         '</footer>'
@@ -584,8 +584,8 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "",
 
 def page(title: str, active: str, body: str, description: str = "",
          image: str = "", url: str = "", og_type: str = "website") -> str:
-    desc = html.escape(description or "eephus.io - editorial baseball analytics portal")
-    social = _social_meta(title, description or "eephus.io - editorial baseball analytics portal",
+    desc = html.escape(description or "eephus.io - sabermetrics")
+    social = _social_meta(title, description or "eephus.io - sabermetrics",
                           image, url, og_type)
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -966,15 +966,6 @@ def _load_fa_events_for_wire() -> list:
         return []
     return d.get("events") or []
 
-def _load_tjstats_movers_for_wire() -> dict:
-    """Latest TJStats board movers (data/tjstats_movers.json, written by
-    tjstats.export_movers in the pipeline). Additive - absent file means
-    no items, same contract as the FA events block."""
-    try:
-        return json.loads((DATA_DIR / "tjstats_movers.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
-
 def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
     # `ticker_text` is the one-string form the scrolling WIRE marquee uses;
@@ -1045,24 +1036,9 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         elif t == "qo_offered":
             add(e.get("date"), "signing", "✎", f'{nm} receives qualifying offer',
                 key, e.get("from"), name=nm, val="QO offered", weight=84)
-    # TJStats board movers (month-over-month diff, gated for newsworthiness
-    # in tjstats.export_movers). Entries read "enters TJS 100"; movers carry
-    # the rank path. Org comes from the tracked player row (logo lookup).
-    tjm = _load_tjstats_movers_for_wire()
-    if tjm.get("movers"):
-        org_of = {p.get("player_key"): p.get("org") for p in players}
-        for m in tjm["movers"]:
-            key, nm = m.get("player_key"), m.get("name") or ""
-            rd = m.get("rank_delta")
-            if m.get("status") == "entered":
-                add(tjm.get("as_of"), "up", "✦", f'{nm} enters TJS 100 (#{m.get("rank")})',
-                    key, org_of.get(key), name=nm, val=f'TJS ✦ #{m.get("rank")}', weight=60)
-            elif rd:
-                up = rd > 0
-                path = f'#{m.get("prev_rank")}→#{m.get("rank")}'
-                add(tjm.get("as_of"), "up" if up else "down", "▲" if up else "▼",
-                    f'{nm} {"▲" if up else "▼"} TJS {path}', key, org_of.get(key),
-                    name=nm, val=f'TJS {path}', weight=50 + abs(rd))
+    # TJStats board movers are intentionally NOT folded into the wire/ticker
+    # (owner ask 2026-06-13). tjstats.export_movers still writes the movers
+    # sidecar + source events for the consensus; only the wire display drops.
     by_day: dict[str, list] = {}
     for it in fv_items:
         by_day.setdefault(it[0], []).append(it)
@@ -1171,8 +1147,8 @@ _GLOSSARY_TERMS = [
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
-    desc = html.escape(description or "eephus.io - baseball prospect analytics")
-    social = _social_meta(title, description or "eephus.io - baseball prospect analytics",
+    desc = html.escape(description or "eephus.io - sabermetrics")
+    social = _social_meta(title, description or "eephus.io - sabermetrics",
                           url=f"{SITE_ORIGIN}/")
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1437,7 +1413,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     masthead = (
         '<div class="masthead">'
         f'{eephus_logo_lockup()}'
-        '<div class="dateline"><span>Baseball Prospect Analytics</span>'
+        '<div class="dateline"><span>Sabermetrics</span>'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
 
@@ -1510,7 +1486,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
-    return page_home("eephus.io - baseball prospect analytics", inner,
+    return page_home("eephus.io - sabermetrics", inner,
                      "Live MiLB prospect movers, top prospects, graduates, and analysis.")
 
 def build_articles_index(articles: list[dict]) -> str:
@@ -1833,7 +1809,7 @@ def build_sources() -> str:
         '<div class="section-head"><h1>Data Sources &amp; Attribution</h1>'
         '<span class="section-sub">every upstream the platform reads, and how it is used</span></div>'
         '<div class="gl-intro">'
-        "<p>eephus.io is an editorial analytics platform. PROSPX grades are a consensus "
+        "<p>eephus.io is a sabermetrics platform. PROSPX grades are a consensus "
         "built across seven independent industry sources - the value added is the aggregation, "
         "calibration, and track-record audit, not any single list. No source's rankings or "
         "reports are republished wholesale; excerpts appear with attribution in the spirit of "
