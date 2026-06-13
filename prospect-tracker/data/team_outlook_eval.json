@@ -5,7 +5,7 @@
   "roster_war_sum": 994.2,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2425.1,
+  "raw_wins_sum": 2425.0,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 691,

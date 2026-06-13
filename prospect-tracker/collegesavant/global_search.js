@@ -4,10 +4,41 @@
 
   const input = root.querySelector("[data-global-search-input]");
   const results = root.querySelector("[data-global-search-results]");
-  const allPlayers = buildGlobalIndex();
+  let allPlayers = buildGlobalIndex();
 
-  input.addEventListener("input", () => renderResults(input.value));
-  input.addEventListener("focus", () => renderResults(input.value));
+  // Cross-population data is no longer shipped at boot (the hitters page
+  // skips pitcher_data.js and vice versa - 14-16MB each, search-only on
+  // the opposite page). First interaction with the search box injects the
+  // missing payload and rebuilds the index; until it arrives the index
+  // covers the current page's population, so search degrades gracefully
+  // instead of blocking first paint.
+  let pendingLoad = null;
+  function ensureFullIndex() {
+    if (pendingLoad) return;
+    const missing = [];
+    if (!window.HITTER_DATA) missing.push("hitter_year_data.js");
+    if (!window.PITCHER_DATA) missing.push("pitcher_data.js");
+    if (!missing.length) return;
+    pendingLoad = Promise.all(missing.map(injectScript))
+      .then(() => {
+        allPlayers = buildGlobalIndex();
+        if (input.value.trim().length >= 2) renderResults(input.value);
+      })
+      .catch(() => { pendingLoad = null; });  // retry on next focus
+  }
+
+  function injectScript(src) {
+    return new Promise((resolve, reject) => {
+      const s = document.createElement("script");
+      s.src = src;
+      s.onload = resolve;
+      s.onerror = () => reject(new Error(`failed to load ${src}`));
+      document.head.appendChild(s);
+    });
+  }
+
+  input.addEventListener("input", () => { ensureFullIndex(); renderResults(input.value); });
+  input.addEventListener("focus", () => { ensureFullIndex(); renderResults(input.value); });
   input.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       input.value = "";

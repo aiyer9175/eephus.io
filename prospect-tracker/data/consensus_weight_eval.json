@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-11T18:58:20Z",
+ "generated_at": "2026-06-13T00:00:48Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,209 +7,90 @@
    "n": 707,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8349,
-    "mlb_pipeline": 1.1651
+    "fangraphs": 0.835,
+    "mlb_pipeline": 1.165
    },
    "equal": {
-    "spearman": 0.2544,
-    "auc": 0.714
+    "spearman": 0.2548,
+    "auc": 0.719
    },
    "weighted": {
-    "spearman": 0.2578,
-    "auc": 0.7149
+    "spearman": 0.2583,
+    "auc": 0.7198
    }
   },
   {
    "year": 2021,
-   "n": 751,
+   "n": 755,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8589,
-    "mlb_pipeline": 1.1411
+    "fangraphs": 0.8587,
+    "mlb_pipeline": 1.1413
    },
    "equal": {
-    "spearman": 0.3032,
-    "auc": 0.7541
+    "spearman": 0.3025,
+    "auc": 0.7592
    },
    "weighted": {
-    "spearman": 0.3042,
-    "auc": 0.755
+    "spearman": 0.3033,
+    "auc": 0.76
    }
   },
   {
    "year": 2022,
-   "n": 818,
+   "n": 829,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.8788,
-    "mlb_pipeline": 1.1212
+    "fangraphs": 0.8784,
+    "mlb_pipeline": 1.1216
    },
    "equal": {
-    "spearman": 0.292,
-    "auc": 0.7633
+    "spearman": 0.2882,
+    "auc": 0.7624
    },
    "weighted": {
-    "spearman": 0.2999,
-    "auc": 0.7691
+    "spearman": 0.2949,
+    "auc": 0.7668
    }
   },
   {
    "year": 2023,
-   "n": 851,
+   "n": 868,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8971,
-    "mlb_pipeline": 1.1029
+    "fangraphs": 0.8965,
+    "mlb_pipeline": 1.1035
    },
    "equal": {
-    "spearman": 0.2463,
-    "auc": 0.7907
+    "spearman": 0.2417,
+    "auc": 0.7864
    },
    "weighted": {
-    "spearman": 0.2389,
-    "auc": 0.786
+    "spearman": 0.2332,
+    "auc": 0.7801
    }
   }
  ],
  "pooled": {
-  "pooled_n": 3127,
+  "pooled_n": 3159,
   "equal": {
-   "spearman": 0.2698,
-   "auc": 0.7555
+   "spearman": 0.2676,
+   "auc": 0.7568
   },
   "weighted": {
-   "spearman": 0.2717,
-   "auc": 0.7634
+   "spearman": 0.2689,
+   "auc": 0.7636
   }
  },
  "ship": true,
  "live_weights": {
-  "fangraphs": 0.9357,
-  "mlb_pipeline": 1.0643
+  "fangraphs": 0.943,
+  "mlb_pipeline": 1.057
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
   "two-source A/B: only FanGraphs + MLB Pipeline have resolvable multi-year history; all other sources stay at weight 1.0 (equal) in the live blend \u2014 new sources are never punished for being new",
   "weights shrunk toward equal with k=150 pseudo-n, clamped (0.6, 1.5)",
   "ship rule: weighted >= equal on BOTH pooled Spearman and AUC; loss means equal-weight retains"
- ],
- "type_conditioned_ab": {
-  "generated_at": "2026-06-12T00:53:47Z",
-  "experiment": "type-conditioned (hitter/pitcher) source weights vs the SHIPPED global accuracy weighting - same estimator, same vintage rule, one change (the conditioning set)",
-  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
-  "per_year": [
-   {
-    "year": 2020,
-    "n": 707,
-    "vintage_max_base": 2017,
-    "weights_global": {
-     "fangraphs": 0.8349,
-     "mlb_pipeline": 1.1651
-    },
-    "weights_hitter": {
-     "fangraphs": 0.8942,
-     "mlb_pipeline": 1.1058
-    },
-    "weights_pitcher": {
-     "fangraphs": 0.843,
-     "mlb_pipeline": 1.157
-    },
-    "global": {
-     "spearman": 0.2578,
-     "auc": 0.7149
-    },
-    "typed": {
-     "spearman": 0.2524,
-     "auc": 0.7085
-    }
-   },
-   {
-    "year": 2021,
-    "n": 751,
-    "vintage_max_base": 2018,
-    "weights_global": {
-     "fangraphs": 0.8589,
-     "mlb_pipeline": 1.1411
-    },
-    "weights_hitter": {
-     "fangraphs": 0.9208,
-     "mlb_pipeline": 1.0792
-    },
-    "weights_pitcher": {
-     "fangraphs": 0.8063,
-     "mlb_pipeline": 1.1937
-    },
-    "global": {
-     "spearman": 0.3042,
-     "auc": 0.755
-    },
-    "typed": {
-     "spearman": 0.3026,
-     "auc": 0.7577
-    }
-   },
-   {
-    "year": 2022,
-    "n": 818,
-    "vintage_max_base": 2019,
-    "weights_global": {
-     "fangraphs": 0.8788,
-     "mlb_pipeline": 1.1212
-    },
-    "weights_hitter": {
-     "fangraphs": 0.913,
-     "mlb_pipeline": 1.087
-    },
-    "weights_pitcher": {
-     "fangraphs": 0.8595,
-     "mlb_pipeline": 1.1405
-    },
-    "global": {
-     "spearman": 0.2999,
-     "auc": 0.7691
-    },
-    "typed": {
-     "spearman": 0.2997,
-     "auc": 0.7719
-    }
-   },
-   {
-    "year": 2023,
-    "n": 851,
-    "vintage_max_base": 2020,
-    "weights_global": {
-     "fangraphs": 0.8971,
-     "mlb_pipeline": 1.1029
-    },
-    "weights_hitter": {
-     "fangraphs": 0.9268,
-     "mlb_pipeline": 1.0732
-    },
-    "weights_pitcher": {
-     "fangraphs": 0.8733,
-     "mlb_pipeline": 1.1267
-    },
-    "global": {
-     "spearman": 0.2389,
-     "auc": 0.786
-    },
-    "typed": {
-     "spearman": 0.239,
-     "auc": 0.7863
-    }
-   }
-  ],
-  "pooled": {
-   "pooled_n": 3127,
-   "global": {
-    "spearman": 0.2717,
-    "auc": 0.7634
-   },
-   "typed": {
-    "spearman": 0.2705,
-    "auc": 0.7604
-   }
-  },
-  "ship": false
- }
+ ]
 }

@@ -124,7 +124,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): re-priced on the REALIZED slot curve - replaces the thin platform FV-at-slot median chain. DISCLOSED: pricing the expected path through the convex tier curve is a LOWER BOUND on expected value (Jensen; the rare-hit mass prices above linear) - consistent across slots. QO ACCEPTANCE model (WS-2e) still deferred: qo_history lacks per-player offered rosters; constant base rate remains the only honest acceptance model.",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "mlb_projections_vets",
@@ -166,7 +166,7 @@
    "notes": "CALIBRATION v3 (2026-06-12, owner escalations x2): v1's per-player isotonic carried a degenerate $0 bottom block (every FV35-40 prospect -> $0.0M) AND priced realized targets at era $/WAR ($6.7-12.1M) while the model prices today (~$13.0M) - the apparent 0.64 raw slope was mostly dollar inflation. v3 = count-weighted binned PAVA (fit_isotonic_binned) on TODAY-PRICED realized targets: raw slope 1.02 / bias -2.9M, held-out LOYO slope 0.97 / bias -1.13M. Curve: FV40 $1.5M / 45 $6.9M / 50 $17.9M / 55 $31.9M / 60 $65.6M (hitters); elite tail extrapolates the last observed segment (documented). Surplus now reads 'expected realized value at current replacement cost' - consistent units with vet surplus in the trade machine and team fits. Fit block: data/surplus_calibration_fit.json; the committed artifact keeps the historical-dollars slice as cohort accounting.",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -250,7 +250,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): REDUCED ANALOG (grades were never snapshotted - the Gate-3 pattern): ranking orgs by vintage surplus mass predicts realized graduate WAR at mean Spearman .508 vs count baseline .240 (wins all 5 vintages). HONEST NOTE: simple FV50+ top-end depth nearly ties (.495) - the convex surplus weighting, not the rest of the tree, carries the signal. The literal v40 letter remains unvalidated as a letter; verdict stays provisional until grades accumulate their own vintage trail.",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "draft_slot_curve",
@@ -264,7 +264,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): the hand-set table was never realized-anchored and UNDERSHOOTS resolved 2005-14 career means ~3x at every slot (pick 1: 28.4 realized vs 9.0). Live lookup = fitted FIRST-6 curve (matches the grad career-to-date comparison window + the QO control-window basis). 2015-18 holdout disclosed as censoring/COVID-confounded diagnostic (windows count from debut), not the ship criterion. Unsigned picks excluded via re-draft detection (404 of 7,000).",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "overseas_translation",
@@ -278,7 +278,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): the NPB pitcher haircut was badly optimistic (real ERA ratio 1.696 vs the hand-set 1.25); KBO was slightly harsh. NOT SHIPPED (documented lifts): hitter wRC+ factor (needs per-season foreign league offense context - raw OPS ratios 0.802 NPB / 0.819 KBO reported as analogs), fb_velo_delta (no historical velo source). Exclusions counted in the artifact; the transition ledger is owner-extendable.",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "statcast_plus",
@@ -292,7 +292,7 @@
    "notes": "Phase 4b WS-8 (2026-06-11): WEAK forward signal, published as required - r ~ .12-.17 vs first-MLB OPS/ERA, ~0 vs 2y bWAR for hitters (n~50/side per outcome). Consistent with the ISO+ r=.24 prior. SC+ stays descriptive; downstream consumers (breakout gate, ETA nudge, spotlight boost) must treat it as a tiebreaker. Zone-discipline half of the composite has no historical source (gap documented); the literal composite's own forward trail starts with the 2026 per-season rows.",
    "last_checked": "2026-06-12",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 1
   },
   {
    "model_id": "stuff_plus_external",
@@ -314,7 +314,10 @@
    "metric": "pitch- and pitcher-level OOS r (train 2023-24 -> validate 2025); forward: final-AAA aStuff+ vs first-MLB ERA/K%, debut cohorts 2024+",
    "eval_artifact": "data/stuff_plus_aaa_eval.json",
    "verdict": "provisional",
-   "notes": "2026-06-12 SHIPPED: trained on 1.19M AAA pitches (2023-24), validated season-out on 571K 2025 pitches - pitch-level r .021 (per-pitch RV is mostly batted-ball noise; expected scale), pitcher-level r .280 (n=638). Forward gate (graduates 2024+, strictly pre-debut AAA season, >=100 MLB BF): r .230 vs first-MLB ERA (inv), r .550 vs first-MLB K% (n=17 - small, published as required). 1,372 pitchers in the sidecar. Agreement check vs external tjStuff+ deferred until per-season MLB Stf+ rows accumulate (documented). Provisional per the SC+ precedent: real measurement, small forward cohort."
+   "notes": "2026-06-12 SHIPPED: trained on 1.19M AAA pitches (2023-24), validated season-out on 571K 2025 pitches - pitch-level r .021 (per-pitch RV is mostly batted-ball noise; expected scale), pitcher-level r .280 (n=638). Forward gate (graduates 2024+, strictly pre-debut AAA season, >=100 MLB BF): r .230 vs first-MLB ERA (inv), r .550 vs first-MLB K% (n=17 - small, published as required). 1,372 pitchers in the sidecar. Agreement check vs external tjStuff+ deferred until per-season MLB Stf+ rows accumulate (documented). Provisional per the SC+ precedent: real measurement, small forward cohort.",
+   "last_checked": "2026-06-12",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "swing_plus_external",
@@ -361,7 +364,10 @@
    "metric": "retro backtest 2022-25 (no lookahead, actual-roster assignment): team wins MAE 7.3-10.2, r .44-.68; beats prior-wins carry-forward pooled (3 of 4 seasons; 2025 holdout lost 7.71 vs 7.24 - published); forward: MAE vs actual standings when the first projected season completes",
    "eval_artifact": "data/team_outlook_eval.json",
    "verdict": "provisional",
-   "notes": "2026-06-12 v2 (retro-backtest-driven, proj_backtest.py): the 83-win-Dodgers level bug had two roots - the exposure-floor universe hid ~40% of league WAR from the roll-up, and the live path summed the ML quantile heads whose median-like points total ~520 league WAR vs the champion mean ~1,100 (right-skew). Roll-up now sums champion means (warY1Champ) + sub-floor depth pool + cohort intercepts (side x age, fit 2022-24, won the 2025 holdout 7.71 vs 7.76); league sums to 2,430 with remainder ~0. Player-level engine measured near-unbiased (pooled bias -0.04, n=8,866). Artifact carries the full retro block."
+   "notes": "2026-06-12 v2 (retro-backtest-driven, proj_backtest.py): the 83-win-Dodgers level bug had two roots - the exposure-floor universe hid ~40% of league WAR from the roll-up, and the live path summed the ML quantile heads whose median-like points total ~520 league WAR vs the champion mean ~1,100 (right-skew). Roll-up now sums champion means (warY1Champ) + sub-floor depth pool + cohort intercepts (side x age, fit 2022-24, won the 2025 holdout 7.71 vs 7.76); league sums to 2,430 with remainder ~0. Player-level engine measured near-unbiased (pooled bias -0.04, n=8,866). Artifact carries the full retro block.",
+   "last_checked": "2026-06-12",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

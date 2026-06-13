@@ -357,25 +357,60 @@ def build_payload() -> dict:
     }
 
 
+def _active_prospect_rows() -> list[dict]:
+    """Slim identity rows for ACTIVE PROSPX prospects (timeseries.json boot
+    file) so the site-wide search covers players who haven't debuted yet.
+    Empty on any error - the links map degrades to the MLB population."""
+    try:
+        boot = json.loads((DATA_DIR / "timeseries.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("player links: timeseries.json unavailable - search index "
+                    "covers the MLB population only")
+        return []
+    rows = []
+    for p in boot.get("players") or []:
+        pkey = p.get("player_key")
+        if not pkey:
+            continue
+        rows.append({"key": pkey, "mlbam": p.get("mlbam_id"),
+                     "fa": False, "prospx": pkey,
+                     "name": p.get("player_name"),
+                     "team": p.get("org"), "pos": p.get("position")})
+    return rows
+
+
 def _export_links(payload: dict) -> None:
     """data/player_links.json - the cross-module identity map every card
     surface reads for its hub strip: one player, every page that renders
     them. byMlbam serves PROSPX (it knows mlbam_id); byKey serves the FA
-    and projections apps (they share the normalized-name key)."""
+    and projections apps (they share the normalized-name key). name/team/pos
+    ride along so the site-wide ⌘K palette can search players from any page;
+    active PROSPX prospects merge in for the same reason (the /player/
+    router resolves their keys to the prospect card)."""
     by_key: dict[str, dict] = {}
     by_mlbam: dict[str, dict] = {}
     for key, p in payload["players"].items():
         row = {"key": key, "mlbam": p.get("mlbam"),
                "fa": bool(p.get("fa")),
-               "prospx": (p.get("origin") or {}).get("prospx")}
+               "prospx": (p.get("origin") or {}).get("prospx"),
+               "name": p.get("name"), "team": p.get("team"), "pos": p.get("pos")}
         by_key[key] = row
         if p.get("mlbam"):
             by_mlbam[str(p["mlbam"])] = row
+    n_prospects = 0
+    for row in _active_prospect_rows():
+        if row["key"] in by_key:
+            continue   # ex-prospect already carried by the MLB payload
+        by_key[row["key"]] = row
+        if row.get("mlbam"):
+            by_mlbam.setdefault(str(row["mlbam"]), row)
+        n_prospects += 1
     out = {"generated_at": payload["generated_at"],
            "byKey": by_key, "byMlbam": by_mlbam}
     (DATA_DIR / "player_links.json").write_text(
         json.dumps(out, separators=(",", ":")), encoding="utf-8")
-    log.info("player links: %d keys, %d mlbam-joined", len(by_key), len(by_mlbam))
+    log.info("player links: %d keys (%d active prospects merged), %d mlbam-joined",
+             len(by_key), n_prospects, len(by_mlbam))
 
 
 def export() -> int:

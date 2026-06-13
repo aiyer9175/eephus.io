@@ -249,11 +249,17 @@
 
   function freshnessLine(meta) {
     const src = meta && meta.sources;
-    if (!src || !Object.keys(src).length) return "";
+    // "data as of" leads even when per-source dates are missing - every
+    // module header answers how fresh its numbers are (Open Beta polish).
+    const gen = meta && meta.generated_at
+      ? `data as of ${esc(String(meta.generated_at))}` : "";
+    if (!src || !Object.keys(src).length) {
+      return gen ? `<div class="fa-note fa-sources">${gen}</div>` : "";
+    }
     const stale = d => (Date.now() - new Date(d + "T00:00:00").getTime()) / 864e5 > 14;
     const parts = Object.entries(src).map(([k, d]) =>
       `${k} ${d}${stale(d) ? ` <span class="fa-stale" title="${k} last fetched ${d} - more than 14 days old. Re-run the FA pipeline.">&#9888; stale</span>` : ""}`);
-    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table - when each input was last pulled, not when the page was built.">sources: ${parts.join(" &middot; ")}</div>`;
+    return `<div class="fa-note fa-sources" title="MAX(fetched_at) per source table - when each input was last pulled, not when the page was built.">${gen ? gen + " &middot; " : ""}sources: ${parts.join(" &middot; ")}</div>`;
   }
 
   // ---- Share card - canvas-native PNG of the board's top 10 -----------------

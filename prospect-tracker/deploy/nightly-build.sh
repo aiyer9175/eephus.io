@@ -67,14 +67,35 @@ python -m pytest -q
 echo "--- rsync -> $WEBROOT"
 mkdir -p "$WEBROOT"
 rsync -a --delete \
-  --include='/index.html' \
+  --include='/index.html' --include='/404.html' \
+  --include='/robots.txt' --include='/sitemap.xml' --include='/favicon.ico' \
   --include='/articles/***' --include='/assets/***' \
   --include='/collegesavant/***' --include='/fa/***' \
   --include='/forums/***' --include='/glossary/***' \
   --include='/player/***' --include='/projections/***' \
-  --include='/prospx/***' --include='/team/***' --include='/teams/***' \
-  --include='/data/' --include='/data/*.json' --include='/data/pitch_plots/***' \
+  --include='/prospx/***' --include='/sources/***' \
+  --include='/team/***' --include='/teams/***' \
+  --include='/data/' --include='/data/*.json' \
+  --include='/data/pitch_plots/***' --include='/data/player_detail/***' \
   --exclude='*' \
   "$APP/" "$WEBROOT/"
+
+# Precompress text assets so nginx (gzip_static on; see deploy/README.md)
+# serves .gz next to the original with zero per-request CPU. The boot JSON
+# compresses ~8-10x, which is most of the page-weight win on slow links.
+# Only (re)compress when the source is newer than its .gz twin; prune
+# orphaned .gz files so --delete'd sources don't leave stale compressed
+# copies behind.
+echo "--- precompress (gzip -9) -> $WEBROOT"
+find "$WEBROOT" -type f \( -name '*.json' -o -name '*.js' -o -name '*.css' \
+    -o -name '*.html' -o -name '*.svg' -o -name '*.xml' -o -name '*.txt' \) \
+    -size +1k | while read -r f; do
+  if [ ! -f "$f.gz" ] || [ "$f" -nt "$f.gz" ]; then
+    gzip -9 -k -f "$f"
+  fi
+done
+find "$WEBROOT" -type f -name '*.gz' | while read -r gz; do
+  [ -f "${gz%.gz}" ] || rm -f "$gz"
+done
 
 echo "=== $(date -Is) nightly build done ==="

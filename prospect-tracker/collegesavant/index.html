@@ -4,6 +4,21 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CollegeSavant - Hitters - eephus.io</title>
+    <meta name="description" content="Statcast-style percentile profiles for Big Ten college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CollegeSavant - Hitters" />
+    <meta property="og:description" content="Statcast-style percentile profiles for Big Ten college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta property="og:site_name" content="eephus.io" />
+    <meta property="og:url" content="https://eephus.io/collegesavant/" />
+    <link rel="canonical" href="https://eephus.io/collegesavant/" />
+    <meta property="og:image" content="https://eephus.io/assets/share-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CollegeSavant - Hitters" />
+    <meta name="twitter:description" content="Statcast-style percentile profiles for Big Ten college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta name="twitter:image" content="https://eephus.io/assets/share-default.png" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
     <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
     <link rel="stylesheet" href="/assets/site.css" />
     <link rel="stylesheet" href="/assets/eephus-account.css" />
@@ -22,7 +37,7 @@
         <a href="/articles/">Articles</a>
         <a href="/forums/">Forums</a>
         <a href="/glossary/">Glossary</a>
-        <a href="/team/">Dev Team</a>
+        <a href="/team/">Developers</a>
       </nav>
       <div class="eephus-nav-controls">
         <button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / Cmd+K"><span aria-hidden="true">&#8984;K</span><span class="eephus-nav-ctrl-label">Search</span></button>
@@ -54,14 +69,17 @@
       </section>
     </main>
 
-    <script src="data.js"></script>
-    <script src="hitter_year_data.js"></script>
-    <script src="pitcher_data.js"></script>
-    <script src="global_search.js"></script>
-    <script src="app.js"></script>
+    <!-- Data + app, deferred: the page paints before the payloads parse.
+         pitcher_data.js (16MB) is NOT loaded here - the global search
+         lazy-injects it on first use (global_search.js ensureFullIndex). -->
+    <script src="data.js" defer></script>
+    <script src="hitter_year_data.js" defer></script>
+    <script src="global_search.js" defer></script>
+    <script src="app.js" defer></script>
     <script src="/assets/eephus-config.js" defer></script>
     <script src="/assets/eephus-account.js" defer></script>
     <script src="/assets/eephus-ui.js" defer></script>
+    <script src="/assets/eephus-bg.js" defer></script>
     <script src="/assets/eephus-gl.js" defer></script>
     <script src="/assets/eephus-hub.js" defer></script>
   </body>

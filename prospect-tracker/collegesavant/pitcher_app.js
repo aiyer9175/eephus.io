@@ -821,8 +821,31 @@ function renderPitchMixSummary(pitcher) {
   `;
 }
 
+// Pitch-shape payloads load on demand: pitch_shape_data_2024.js is 38MB and
+// was the single heaviest asset on the site when it shipped at boot. The
+// detail panel renders a loading note, the script injects once, and the
+// hash-driven render() repaints when it lands.
+const _shapeLoadState = {};   // year -> "loading" | "ready" | "failed"
+function ensurePitchShapes(year) {
+  if (window[`PITCH_SHAPES_${year}`]) return true;
+  if (_shapeLoadState[year] === "loading" || _shapeLoadState[year] === "failed") return false;
+  _shapeLoadState[year] = "loading";
+  const s = document.createElement("script");
+  s.src = `pitch_shape_data_${year}.js`;
+  s.onload = () => { _shapeLoadState[year] = "ready"; render(); };
+  s.onerror = () => { _shapeLoadState[year] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+
 function renderPitchShapePlot(pitcher) {
   if (!hasPitchByPitchOutcomes(pitcher.year)) return "";
+
+  if (!ensurePitchShapes(pitcher.year)) {
+    return _shapeLoadState[pitcher.year] === "failed"
+      ? `<div class="chart-empty">Pitch-shape data unavailable for ${pitcher.year}.</div>`
+      : `<div class="chart-empty">Loading ${pitcher.year} pitch shapes&hellip;</div>`;
+  }
 
   const shapeData = window[`PITCH_SHAPES_${pitcher.year}`] || {};
   const rawRows = shapeData[String(pitcher.pitcher_id)] || [];

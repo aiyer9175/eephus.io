@@ -65,3 +65,53 @@ You can: Option 2 for the site plus Option 1's cron WITHOUT the rsync
 (state-only) is pointless complexity. If the server is beefy enough to
 run the pipeline, Option 1 alone is the simplest reliable system; if
 you would rather keep the server dumb, Option 2 alone.
+
+## nginx server block (required pieces)
+
+The build script precompresses every text asset (`*.gz` twins, gzip -9).
+nginx needs `gzip_static` to serve them - without it the boot JSON ships
+uncompressed and the Open Beta page-weight work is wasted. The 404 page
+and sensible cache headers ride the same block:
+
+```nginx
+server {
+    server_name eephus.io;
+    root /var/www/eephus.io;
+    index index.html;
+
+    # Serve the precompressed .gz twins (build script writes them).
+    # ngx_http_gzip_static_module ships with stock nginx.
+    gzip_static on;
+    # Fallback live compression for anything without a twin.
+    gzip on;
+    gzip_types application/json application/javascript text/css
+               image/svg+xml application/xml text/plain;
+    gzip_comp_level 5;
+    gzip_min_length 1024;
+
+    # The on-theme not-found page (build_site.py writes /404.html).
+    error_page 404 /404.html;
+
+    # Data payloads + assets are fetched with ?v=<stamp> cache-busting,
+    # so long max-age is safe; the HTML pages themselves stay no-cache
+    # so a rebuild shows up on the next reload.
+    location /data/    { add_header Cache-Control "public, max-age=604800"; }
+    location /assets/  { add_header Cache-Control "public, max-age=604800"; }
+    location ~* \.html$ { add_header Cache-Control "no-cache"; }
+
+    # Range requests must stay enabled (default) - the PROSPX boot probe
+    # reads bytes 0-2048 of timeseries.json for its version stamp.
+}
+```
+
+Reload with `sudo nginx -t && sudo systemctl reload nginx`.
+
+## Fresh-box / first-run notes
+
+`nightly-build.sh` is safe on a clean clone: a missing `prospects.db`
+forces the FULL monthly pipeline (slow, one time), `data/pitch_plots/`
+and `data/player_detail/` are (re)created by the exporter, and
+`build_site.py` writes every page plus robots.txt / sitemap.xml /
+404.html from scratch. Shell scripts are pinned LF via .gitattributes,
+so a checkout from any OS runs under cron. The only state worth
+backing up is `prospects.db` and `.cache/` (everything else rebuilds).

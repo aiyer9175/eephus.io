@@ -13042,6 +13042,118 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for p in inactive_payload:
         _harvest_and_strip_pitch_plots(p)
 
+    # v33 — player_detail per-player sidecar (Open Beta payload diet). After
+    # the pitch-plot split the boot file's residual weight was (a) raw
+    # batted-ball coordinates (contact_quality.hit_locations + rolling_xwoba,
+    # duplicated per level split) feeding the spray chart + rolling-xwOBA
+    # sparkline, (b) per-game logs (recent_games / standout_games), and
+    # (c) HISTORICAL per_source tool grades + extras on old points. All are
+    # card-only consumers, so they move to data/player_detail/{key}.json and
+    # the card lazy-merges them back in (mirrors the v32 pitch_plots
+    # pattern). What stays in boot, by consumer contract:
+    #   • per-source SCALARS (fv_published / fv_plus / rank / status …) on
+    #     EVERY point — the source-divergence chart + point tooltips read
+    #     them across the whole history.
+    #   • the full observation (tools + extras) on each source's NEWEST
+    #     point, plus the newest point per source that carries
+    #     tools._extras — newest→oldest walkers (_getFgExtras,
+    #     computeFgFlags, _getPhysicalProfile) find identical data.
+    #   • level_splits' scalar metrics — card percentile cohorts walk every
+    #     player's splits, so those can never leave boot.
+    # p90_ev is precomputed before hit_locations leave so the cohort
+    # fallback (_p90EvOf) never needs the raw coordinates.
+    player_detail_sidecar: dict[str, dict] = {}
+
+    def _p90_from_locations(cq: dict) -> None:
+        if not isinstance(cq, dict) or cq.get("p90_ev") is not None:
+            return
+        evs = []
+        for loc in cq.get("hit_locations") or []:
+            try:
+                v = float(loc.get("launch_speed"))
+            except (TypeError, ValueError, AttributeError):
+                continue
+            if v == v:  # not NaN
+                evs.append(v)
+        if evs:
+            evs.sort()
+            idx = min(len(evs) - 1, max(0, round((len(evs) - 1) * 0.90)))
+            cq["p90_ev"] = round(evs[idx], 1)
+
+    def _strip_statcast_heavy(holder: dict) -> dict:
+        """Move hit_locations / rolling_xwoba / recent_games / standout_games
+        out of a statcast block (top level or one level-split row). Returns
+        the moved fields ({} when the block had none)."""
+        moved: dict = {}
+        cq = holder.get("contact_quality")
+        if isinstance(cq, dict):
+            _p90_from_locations(cq)
+            cq_moved = {}
+            for f in ("hit_locations", "rolling_xwoba"):
+                if cq.get(f):
+                    cq_moved[f] = cq[f]
+                    cq[f] = []
+            if cq_moved:
+                moved["contact_quality"] = cq_moved
+        for f in ("recent_games", "standout_games"):
+            if holder.get(f):
+                moved[f] = holder[f]
+                holder[f] = []
+        return moved
+
+    def _harvest_player_detail(player_payload: dict) -> None:
+        pkey = player_payload.get("player_key")
+        if not pkey:
+            return
+        detail: dict = {}
+        sc = player_payload.get("statcast_metrics") or {}
+        if sc:
+            top = _strip_statcast_heavy(sc)
+            levels: dict = {}
+            for row in sc.get("level_splits") or []:
+                if not isinstance(row, dict):
+                    continue
+                lvl_moved = _strip_statcast_heavy(row)
+                if lvl_moved:
+                    levels[row.get("level") or "_"] = lvl_moved
+            if top or levels:
+                detail["statcast"] = {"top": top, "level_splits": levels}
+        pts = player_payload.get("points") or []
+        newest_any: set[str] = set()
+        newest_extras: set[str] = set()
+        moved_ps: dict[str, dict] = {}
+        for pt in reversed(pts):              # newest → oldest
+            for src, obs in (pt.get("per_source") or {}).items():
+                if not isinstance(obs, dict):
+                    continue
+                tools = obs.get("tools") or {}
+                has_extras = bool(isinstance(tools, dict) and tools.get("_extras"))
+                keep = src not in newest_any or (has_extras and src not in newest_extras)
+                newest_any.add(src)
+                if has_extras:
+                    newest_extras.add(src)
+                if keep:
+                    continue
+                moved = {}
+                for f in ("tools", "extras"):
+                    if obs.get(f):
+                        moved[f] = obs[f]
+                        obs[f] = None
+                if moved:
+                    pt_key = f"{pt.get('snapshot_date')}|{pt.get('interval_label')}"
+                    moved_ps.setdefault(pt_key, {})[src] = moved
+        if moved_ps:
+            detail["points_per_source"] = moved_ps
+        if detail:
+            player_detail_sidecar[pkey] = detail
+
+    for p in active_payload:
+        _harvest_player_detail(p)
+    for p in graduate_payload:
+        _harvest_player_detail(p)
+    for p in inactive_payload:
+        _harvest_player_detail(p)
+
     boot = {
         "generated_at": _utcnow_iso() + "Z",
         "run": latest_run_summary(),
@@ -13088,8 +13200,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # reached 411MB and one card open pulled all of it). The key
         # list keeps absent players from ever fetching; the directory
         # contract is advertised separately from the single-file slices.
-        "_slices_dir": {"pitch_plots": "pitch_plots/"},
+        # v33 — player_detail/{player_key}.json rides the same contract
+        # (spray/rolling-xwOBA coordinates, game logs, historical
+        # per-source tool grades; lazy-merged when a card opens).
+        "_slices_dir": {"pitch_plots": "pitch_plots/",
+                        "player_detail": "player_detail/"},
         "pitch_plots_keys": sorted(pitch_plots_sidecar),
+        "player_detail_keys": sorted(player_detail_sidecar),
     }
     out_dir = out_path.parent
     # Compact JSON (no indent, no spaces in separators) — cuts the boot
@@ -13130,6 +13247,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for stale in existing - set(pitch_plots_sidecar):
         try:
             (pp_dir / f"{stale}.json").unlink()
+        except OSError:
+            pass
+    # v33 — player_detail per-player sidecar files (same lifecycle rules
+    # as pitch_plots: write current, remove departed players' files).
+    pd_dir = out_dir / "player_detail"
+    pd_dir.mkdir(parents=True, exist_ok=True)
+    pd_existing = {f.stem for f in pd_dir.glob("*.json")}
+    for k, v in player_detail_sidecar.items():
+        _dump(v, pd_dir / f"{k}.json")
+    for stale in pd_existing - set(player_detail_sidecar):
+        try:
+            (pd_dir / f"{stale}.json").unlink()
         except OSError:
             pass
     legacy_pp = out_dir / "pitch_plots.json"

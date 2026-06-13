@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-11",
+ "generated_at": "2026-06-12",
  "vintage_years": [
   2018,
   2019,
@@ -9,16 +9,16 @@
   2023
  ],
  "accounting": {
-  "listed": 9185,
+  "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3707,
+  "no_level_age_fallback": 3731,
   "level_from_statsapi": 3394,
-  "level_from_career_stats": 1464,
+  "level_from_career_stats": 1465,
   "debuted": 4112,
-  "censored_active": 2344,
-  "washed_out": 749,
-  "overdue": 904
+  "censored_active": 2362,
+  "washed_out": 753,
+  "overdue": 901
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 803,
-  "km_recalibrated": 904,
-  "censored_n": 2344
+  "v38": 800,
+  "km_recalibrated": 901,
+  "censored_n": 2362
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -227,9 +227,9 @@
   }
  },
  "censoring": {
-  "censored_active": 2344,
-  "overdue_rate": 0.386,
-  "washed_out": 749,
+  "censored_active": 2362,
+  "overdue_rate": 0.381,
+  "washed_out": 753,
   "washed_out_share_of_listed": 0.104
  },
  "empirical_tables_by_vintage": {
@@ -293,15 +293,15 @@
    0.1929
   ],
   "A+": [
-   0.9003,
-   0.6867,
-   0.5084,
-   0.4341,
-   0.4027,
-   0.3853,
-   0.3824,
-   0.3824,
-   0.3824
+   0.9002,
+   0.6861,
+   0.5076,
+   0.4332,
+   0.4016,
+   0.3842,
+   0.3813,
+   0.3813,
+   0.3813
   ],
   "A": [
    0.9688,

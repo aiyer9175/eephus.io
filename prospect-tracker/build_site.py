@@ -157,6 +157,47 @@ THEME_BTN = (
     '<span class="lbl-dark">☾ Dark</span><span class="lbl-light">☀ Light</span></button>'
 )
 
+# Favicons - SVG primary (crisp at any size), ICO + PNG fallbacks, apple-touch
+# for home-screen pins. The artifacts are committed (tools/generate_brand_assets.py
+# regenerates them when the brand changes); hand-edited pages (prospx,
+# collegesavant) carry the same literal block.
+FAVICON_LINKS = (
+    '<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">\n'
+    '<link rel="icon" href="/favicon.ico" sizes="32x32">\n'
+    '<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'
+)
+
+# Default Open Graph / Twitter share image - every page emits social-card tags
+# (a shared eephus.io link should never render as a bare URL). Pages with a
+# richer card (per-article share-card.png) override it.
+DEFAULT_SHARE_IMAGE = f"{SITE_ORIGIN}/assets/share-default.png"
+
+# Contact / feedback channel for the Open Beta - one address, linked from the
+# footer of every page. Plain mailto keeps it dependency-free until the
+# account layer ships.
+FEEDBACK_MAILTO = (
+    "mailto:arkndjl@gmail.com?subject=eephus.io%20beta%20feedback"
+)
+
+def _footer() -> str:
+    """The shared page footer: identity line left, useful links right.
+    Every editorial surface and the homepage emit the same block."""
+    year = date.today().year
+    links = (
+        f'<a href="/team/">About</a>'
+        f'<a href="/sources/">Data Sources</a>'
+        f'<a href="/glossary/">Glossary</a>'
+        f'<a href="{FEEDBACK_MAILTO}">Report a bug</a>'
+        f'<a href="https://x.com/ARKNDJL" target="_blank" rel="noopener noreferrer">@ARKNDJL</a>'
+    )
+    return (
+        '<footer class="eephus-footer">\n'
+        f'  <span>eephus.io - editorial baseball analytics · {html.escape(EEPHUS_VERSION)}</span>\n'
+        f'  <nav class="eephus-footer-links" aria-label="Footer">{links}</nav>\n'
+        f'  <span>© {year} eephus.io</span>\n'
+        '</footer>'
+    )
+
 # --------------------------------------------------------------------------- #
 # Brand: one version string + one beta badge, the eephus.io placeholder logo,
 # and a shared X/social link. THE SINGLE SOURCE for the version is EEPHUS_VERSION
@@ -180,6 +221,14 @@ MODULE_STAGE = {
     "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
     "forums": ("α", "Forums is in alpha - newly launched"),
 }
+
+# Dev byline - the same "Created by" signature PROSPX renders above its
+# masthead (prospx/index.html .build-banner). FA + Projections carry it too
+# (owner ask 2026-06-12); the .build-banner rule lives in assets/site.css.
+CREATED_BY_BANNER = (
+    '<div class="build-banner" aria-label="Build version">Created by '
+    '<span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div>'
+)
 
 # Modern X (Twitter) glyph - module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
@@ -512,30 +561,32 @@ def _nav(active: str) -> str:
         "</header>"
     )
 
-def _social_meta(title: str, description: str, image: str = "", url: str = "") -> str:
+def _social_meta(title: str, description: str, image: str = "", url: str = "",
+                 og_type: str = "website") -> str:
     """Open Graph + Twitter card tags so a shared link (X/Facebook/iMessage) renders a
-    rich preview. Emitted only when a page supplies an absolute share-card `image`."""
+    rich preview. Every page gets the default brand card; articles override `image`
+    with their per-piece share card and `og_type` with "article"."""
     t, d = html.escape(title), html.escape(description)
-    tags = ['<meta property="og:type" content="article">',
+    image = image or DEFAULT_SHARE_IMAGE
+    tags = [f'<meta property="og:type" content="{html.escape(og_type)}">',
             f'<meta property="og:title" content="{t}">',
             f'<meta property="og:description" content="{d}">',
             '<meta property="og:site_name" content="eephus.io">']
     if url:
         tags += [f'<meta property="og:url" content="{html.escape(url)}">',
                  f'<link rel="canonical" href="{html.escape(url)}">']
-    if image:
-        tags += [f'<meta property="og:image" content="{html.escape(image)}">',
-                 '<meta name="twitter:card" content="summary_large_image">',
-                 f'<meta name="twitter:title" content="{t}">',
-                 f'<meta name="twitter:description" content="{d}">',
-                 f'<meta name="twitter:image" content="{html.escape(image)}">']
+    tags += [f'<meta property="og:image" content="{html.escape(image)}">',
+             '<meta name="twitter:card" content="summary_large_image">',
+             f'<meta name="twitter:title" content="{t}">',
+             f'<meta name="twitter:description" content="{d}">',
+             f'<meta name="twitter:image" content="{html.escape(image)}">']
     return "\n".join(tags)
 
 def page(title: str, active: str, body: str, description: str = "",
-         image: str = "", url: str = "") -> str:
+         image: str = "", url: str = "", og_type: str = "website") -> str:
     desc = html.escape(description or "eephus.io - editorial baseball analytics portal")
     social = _social_meta(title, description or "eephus.io - editorial baseball analytics portal",
-                          image, url) if image else ""
+                          image, url, og_type)
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -545,6 +596,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
 {social}
+{FAVICON_LINKS}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 {ACCOUNT_CSS_LINK}
 </head>
@@ -553,10 +605,7 @@ def page(title: str, active: str, body: str, description: str = "",
 <main class="eephus-wrap">
 {body}
 </main>
-<footer class="eephus-footer">
-  <span>eephus.io - editorial baseball analytics</span>
-  <span>© {date.today().year} eephus.io</span>
-</footer>
+{_footer()}
 {ACCOUNT_SCRIPTS}
 </body>
 </html>
@@ -1123,6 +1172,8 @@ _GLOSSARY_TERMS = [
 
 def page_home(title: str, inner: str, description: str = "") -> str:
     desc = html.escape(description or "eephus.io - baseball prospect analytics")
+    social = _social_meta(title, description or "eephus.io - baseball prospect analytics",
+                          url=f"{SITE_ORIGIN}/")
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1131,15 +1182,14 @@ def page_home(title: str, inner: str, description: str = "") -> str:
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
+{social}
+{FAVICON_LINKS}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page eephus-home">
 {inner}
-<footer class="eephus-footer">
-  <span>eephus.io - editorial baseball analytics</span>
-  <span>© {date.today().year} eephus.io</span>
-</footer>
+{_footer()}
 {ACCOUNT_SCRIPTS}
 </body>
 </html>
@@ -1480,7 +1530,8 @@ def build_articles_index(articles: list[dict]) -> str:
         '<div class="section-head"><h1>Articles</h1></div>'
         f'<div class="article-grid">{grid}</div>'
     )
-    return page("Articles - eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.")
+    return page("Articles - eephus.io", "articles", body, "Long-form baseball analysis from eephus.io.",
+                url=f"{SITE_ORIGIN}/articles/")
 
 def build_forums_index() -> str:
     """The /forums/ index - the third content pillar. The thread list is hydrated
@@ -1493,7 +1544,8 @@ def build_forums_index() -> str:
         '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
     )
     return page("Forums - eephus.io", "forums", body,
-                "Community discussion across prospects, farm systems, and articles on eephus.io.")
+                "Community discussion across prospects, farm systems, and articles on eephus.io.",
+                url=f"{SITE_ORIGIN}/forums/")
 
 def build_fa() -> str:
     """The /fa/ Free Agency app - its own surface, SEPARATE from PROSPX.
@@ -1505,7 +1557,7 @@ def build_fa() -> str:
     archive / model / glossary)."""
     body = (
         '<div class="fa-app">'
-        '<div class="section-head"><h1>MLB Free Agency '
+        f'<div class="section-head">{CREATED_BY_BANNER}<h1>MLB Free Agency '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1>'
         '<span class="section-sub">the 2026-27 class, constructed from data · '
         'projected markets, rational value &amp; team fits · twelve archived winters</span></div>'
@@ -1520,7 +1572,8 @@ def build_fa() -> str:
     return page("Free Agency - eephus.io", "fa", body,
                 "The 2026-27 MLB free-agent class: projected contracts (projLength / projGuarantee / "
                 "projAAV with floor-mean-ceiling bands), rational value vs predicted price, deal "
-                "verdicts, team fits, and twelve archived winters with a realized-surplus ledger.")
+                "verdicts, team fits, and twelve archived winters with a realized-surplus ledger.",
+                url=f"{SITE_ORIGIN}/fa/")
 
 
 def build_projections() -> str:
@@ -1531,7 +1584,7 @@ def build_projections() -> str:
     a small .proj-app extension in site.css."""
     body = (
         '<div class="fa-app proj-app">'
-        '<div class="section-head"><h1>MLB Projections '
+        f'<div class="section-head">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1>'
         '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
@@ -1545,7 +1598,8 @@ def build_projections() -> str:
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year bWAR projections for every MLB player - floor/mean/ceiling probability "
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
-                "prospects joining at their projected ETA.")
+                "prospects joining at their projected ETA.",
+                url=f"{SITE_ORIGIN}/projections/")
 
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
@@ -1600,7 +1654,8 @@ def build_glossary() -> str:
     )
     return page("Glossary & Methodology - eephus.io", "glossary", body,
                 "Definitions, model mechanics, and methodology for every metric on eephus.io - "
-                "PROSPX prospect analytics, MLB Free Agency, and the statistical foundations.")
+                "PROSPX prospect analytics, MLB Free Agency, and the statistical foundations.",
+                url=f"{SITE_ORIGIN}/glossary/")
 
 def build_article_page(a: dict) -> str:
     body = (
@@ -1624,7 +1679,7 @@ def build_article_page(a: dict) -> str:
     card = ROOT / "assets" / "articles" / slug / "share-card.png"
     image = f"{SITE_ORIGIN}/assets/articles/{slug}/share-card.png" if card.exists() else ""
     return page(f'{a["title"]} - eephus.io', "articles", body, a.get("summary", ""),
-                image=image, url=f"{SITE_ORIGIN}/articles/{slug}/")
+                image=image, url=f"{SITE_ORIGIN}/articles/{slug}/", og_type="article")
 
 def build_team() -> str:
     team = json.loads((CONTENT / "team.json").read_text(encoding="utf-8"))
@@ -1716,7 +1771,8 @@ def build_team() -> str:
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
-    return page("Developers - eephus.io", "team", body, "The team behind eephus.io.")
+    return page("Developers - eephus.io", "team", body, "The team behind eephus.io.",
+                url=f"{SITE_ORIGIN}/team/")
 
 # --------------------------------------------------------------------------- #
 # /teams/ - RETIRED standalone module (merged into MLB Projections
@@ -1725,11 +1781,133 @@ def build_team() -> str:
 # baked farm blocks (proj_export._org_farm_blocks). The URL stays alive
 # as a redirect so bookmarks and external links keep working.
 # --------------------------------------------------------------------------- #
+def build_sources() -> str:
+    """/sources/ - data sources and attribution. Trust page for the Open Beta:
+    names every upstream the platform reads, what it's used for, and the
+    editorial stance (consensus across sources; no single list republished)."""
+    rows = [
+        ("FanGraphs", "https://www.fangraphs.com/",
+         "Prospect rankings, FV grades, tool grades, and scouting reports (one of the "
+         "seven PROSPX consensus inputs); league stats and park factors."),
+        ("MLB Pipeline", "https://www.mlb.com/prospects",
+         "Prospect rankings and grades (consensus input); draft bonus pools and slot values."),
+        ("Baseball America", "https://www.baseballamerica.com/",
+         "Prospect rankings and grades (consensus input)."),
+        ("ESPN", "https://www.espn.com/mlb/",
+         "Prospect rankings (consensus input); team logo imagery on internal surfaces."),
+        ("The Athletic", "https://www.nytimes.com/athletic/",
+         "Prospect rankings (consensus input)."),
+        ("Just Baseball", "https://www.justbaseball.com/",
+         "Prospect rankings (consensus input)."),
+        ("TJStats", "https://x.com/TJStats",
+         "Prospect rankings (consensus input) and movers wire."),
+        ("MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/",
+         "Game logs, transactions, rosters, Statcast tracking data (pitch, batted-ball, "
+         "and zone metrics), and player headshots via MLB static media."),
+        ("Baseball-Reference", "https://www.baseball-reference.com/",
+         "bWAR - the WAR framework used site-wide - plus historical player pages."),
+        ("Spotrac", "https://www.spotrac.com/",
+         "Contracts, payrolls, free-agent classes, and international signing trackers."),
+    ]
+    cards = "".join(
+        f'<div class="card source-card"><h3><a href="{html.escape(url)}" target="_blank" '
+        f'rel="noopener noreferrer">{html.escape(name)}</a></h3><p>{html.escape(use)}</p></div>'
+        for name, url, use in rows
+    )
+    body = (
+        '<div class="section-head"><h1>Data Sources &amp; Attribution</h1>'
+        '<span class="section-sub">every upstream the platform reads, and how it is used</span></div>'
+        '<div class="gl-intro">'
+        "<p>eephus.io is an editorial analytics platform. PROSPX grades are a consensus "
+        "built across seven independent industry sources - the value added is the aggregation, "
+        "calibration, and track-record audit, not any single list. No source's rankings or "
+        "reports are republished wholesale; excerpts appear with attribution in the spirit of "
+        "commentary and analysis. All trademarks and data remain the property of their owners.</p>"
+        "<p>If you represent one of these sources and have a question or concern, email "
+        '<a href="mailto:arkndjl@gmail.com">arkndjl@gmail.com</a> and it will be addressed '
+        "promptly.</p>"
+        "</div>"
+        f'<div class="article-grid">{cards}</div>'
+    )
+    return page("Data Sources & Attribution - eephus.io", "", body,
+                "Every data source behind eephus.io - prospect ranking inputs, Statcast and "
+                "league data, contracts - and how each is used.",
+                url=f"{SITE_ORIGIN}/sources/")
+
+
+def build_404() -> str:
+    """The not-found page (nginx: `error_page 404 /404.html;`). On-theme,
+    no dead ends: home link + the module rail + the palette hint."""
+    body = (
+        '<div class="section-head"><h1>404 - lost ball in the lights</h1>'
+        '<span class="section-sub">that page does not exist, or it moved</span></div>'
+        '<div class="gl-intro">'
+        '<p>Try the <a href="/">homepage</a>, or jump straight into a module: '
+        '<a href="/prospx/">PROSPX</a> · <a href="/collegesavant/">CollegeSavant</a> · '
+        '<a href="/fa/">Free Agency</a> · <a href="/projections/">Projections</a> · '
+        '<a href="/glossary/">Glossary</a>.</p>'
+        '<p>Looking for a player? Press <strong>Ctrl+K</strong> (⌘K on Mac) anywhere on the '
+        'site and type a name.</p>'
+        '</div>'
+    )
+    return page("Page not found - eephus.io", "", body,
+                "Page not found on eephus.io.")
+
+
+def build_robots() -> str:
+    """robots.txt - crawl everything except the data payloads (multi-MB JSON
+    sidecars are for the apps, not crawlers) and the resolver stubs."""
+    return (
+        "User-agent: *\n"
+        "Disallow: /data/\n"
+        "Disallow: /player/\n"
+        "Disallow: /teams/\n"
+        "Allow: /\n"
+        f"Sitemap: {SITE_ORIGIN}/sitemap.xml\n"
+    )
+
+
+def build_sitemap(articles: list[dict]) -> str:
+    """sitemap.xml over the canonical public surfaces. lastmod is the build
+    date for app pages (data refreshes nightly) and the article date for
+    articles."""
+    today = date.today().isoformat()
+    pages = [
+        ("/", "daily", "1.0"),
+        ("/prospx/", "daily", "1.0"),
+        ("/collegesavant/", "weekly", "0.8"),
+        ("/collegesavant/pitcher_index.html", "weekly", "0.7"),
+        ("/fa/", "daily", "0.9"),
+        ("/projections/", "daily", "0.9"),
+        ("/articles/", "weekly", "0.7"),
+        ("/forums/", "daily", "0.6"),
+        ("/glossary/", "weekly", "0.7"),
+        ("/sources/", "monthly", "0.3"),
+        ("/team/", "monthly", "0.3"),
+    ]
+    urls = []
+    for path, freq, prio in pages:
+        urls.append(
+            f"  <url><loc>{SITE_ORIGIN}{path}</loc><lastmod>{today}</lastmod>"
+            f"<changefreq>{freq}</changefreq><priority>{prio}</priority></url>"
+        )
+    for a in articles:
+        lastmod = a.get("date_sort") or today
+        urls.append(
+            f"  <url><loc>{SITE_ORIGIN}/articles/{a['slug']}/</loc><lastmod>{lastmod}</lastmod>"
+            f"<changefreq>monthly</changefreq><priority>0.6</priority></url>"
+        )
+    return ('<?xml version="1.0" encoding="UTF-8"?>\n'
+            '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+            + "\n".join(urls) + "\n</urlset>\n")
+
+
 def build_teams_redirect() -> str:
-    return """<!doctype html>
+    return f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Teams - eephus.io</title>
+{FAVICON_LINKS}
 <meta name="robots" content="noindex">
 <meta http-equiv="refresh" content="0; url=/projections/#view=teams">
 <script>location.replace("/projections/#view=teams");</script>
@@ -1765,6 +1943,10 @@ def main() -> None:
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())
+    _write("sources/index.html", build_sources())
+    _write("404.html", build_404())
+    _write("robots.txt", build_robots())
+    _write("sitemap.xml", build_sitemap(articles))
     print(f"done - {len(articles)} article(s).")
 
 if __name__ == "__main__":

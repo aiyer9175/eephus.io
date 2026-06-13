@@ -12,6 +12,25 @@
   <title>PROSPX βv1.0</title>
   <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
 
+  <!-- Social cards + canonical (mirrors build_site.py's _social_meta block;
+       this file is hand-edited so the tags are inlined here). -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="PROSPX - consensus prospect tracker">
+  <meta property="og:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta property="og:site_name" content="eephus.io">
+  <meta property="og:url" content="https://eephus.io/prospx/">
+  <link rel="canonical" href="https://eephus.io/prospx/">
+  <meta property="og:image" content="https://eephus.io/assets/share-default.png">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="PROSPX - consensus prospect tracker">
+  <meta name="twitter:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
+
+  <!-- Favicons (committed artifacts; tools/generate_brand_assets.py) -->
+  <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+  <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+
   <!--
     Standalone HTML build. Drop this directory on any static host
     (Netlify, GitHub Pages, S3, your existing web server) and it works.
@@ -9635,12 +9654,16 @@ function wireThemeToggle() {
 // =============================================================================
 // LOAD DATA
 // =============================================================================
-// timeseries.json is the boot-critical payload (~24MB) carrying the
+// timeseries.json is the boot-critical payload (~42MB raw, ~5MB on the
+// wire once nginx serves the precompressed .gz twin) carrying the
 // active-prospect list, spotlights, org summaries, and norms tables.
-// Three sidecar JSONs are fetched on demand:
-//   - debuts.json     (~14MB) when the user opens the Graduates tab
-//   - inactive.json      (~4MB)  when the user opens the Inactive view
-//   - rosters_by_org.json (~2MB)  when the user opens any farm-detail page
+// v33 cut it by a third: spray/rolling-xwOBA coordinates, game logs, and
+// HISTORICAL per-source tool grades moved to data/player_detail/{key}.json
+// (lazy-merged on card open; see _ensurePlayerDetail). Sidecar JSONs
+// fetched on demand:
+//   - debuts.json          when the user opens the Graduates tab
+//   - inactive.json        when the user opens the Inactive view
+//   - rosters_by_org.json  when the user opens any farm-detail page
 //
 // The boot file advertises sidecars via `_slices`. We default-fill the
 // arrays with [] so first-paint render code that walks DATA.debuts
@@ -9681,7 +9704,39 @@ async function loadData() {
       : { cache: "no-cache" };       // legacy path
     const resp = await fetch(url, fetchOpts);
     if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const d = await resp.json();
+    // Streamed read with live progress. The boot payload is the heaviest
+    // fetch on the site; a silent "Loading…" reads as a hang on slow
+    // links. Content-Length is the on-the-wire (possibly compressed)
+    // size, so the % is approximate but monotonic; when the header is
+    // absent we show MB received. Falls back to resp.json() wholesale
+    // when streaming isn't available (older Safari, some proxies).
+    let d;
+    if (resp.body && typeof resp.body.getReader === "function") {
+      const total = Number(resp.headers.get("Content-Length")) || 0;
+      const reader = resp.body.getReader();
+      const chunks = [];
+      let received = 0;
+      const msgEl = document.querySelector(".state-message.is-loading");
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        chunks.push(value);
+        received += value.byteLength;
+        if (msgEl) {
+          const mb = (received / 1048576).toFixed(1);
+          msgEl.textContent = total
+            ? `Loading prospect data… ${Math.min(99, Math.round(received / total * 100))}% (${mb} MB)`
+            : `Loading prospect data… ${mb} MB`;
+        }
+      }
+      if (msgEl) msgEl.textContent = "Parsing prospect data…";
+      const buf = new Uint8Array(received);
+      let off = 0;
+      for (const c of chunks) { buf.set(c, off); off += c.byteLength; }
+      d = JSON.parse(new TextDecoder("utf-8").decode(buf));
+    } else {
+      d = await resp.json();
+    }
     // Back-compat: a monolithic timeseries.json may still carry these
     // arrays inline. The boot path tolerates either shape.
     if (!Array.isArray(d.debuts))     d.debuts = [];
@@ -33621,6 +33676,80 @@ function _loadPitchPlotFor(rawKey) {
     .finally(() => { delete _pitchPlotInFlight[rawKey]; });
 }
 
+// v33 - player_detail per-player sidecar (the boot file no longer carries
+// spray/rolling-xwOBA coordinates, game logs, or historical per-source tool
+// grades; see storage.py _harvest_player_detail). Same lazy contract as
+// pitch_plots: fetch on card open, merge IN PLACE into the player object,
+// re-render. Every consumer keeps reading the exact pre-split shape, and a
+// legacy monolithic data dir (fields still inline) short-circuits here, so
+// either side can deploy first.
+const _playerDetailInFlight = {};
+function _mergePlayerDetail(p, det) {
+  if (!p || !det || p.__detailMerged) return;
+  const ds = det.statcast || {};
+  const applyBlock = (holder, moved) => {
+    if (!holder || !moved) return;
+    const mcq = moved.contact_quality;
+    if (mcq) {
+      const cq = holder.contact_quality || (holder.contact_quality = {});
+      if (mcq.hit_locations) cq.hit_locations = mcq.hit_locations;
+      if (mcq.rolling_xwoba) cq.rolling_xwoba = mcq.rolling_xwoba;
+    }
+    if (moved.recent_games) holder.recent_games = moved.recent_games;
+    if (moved.standout_games) holder.standout_games = moved.standout_games;
+  };
+  const sc = p.statcast_metrics;
+  if (sc) {
+    applyBlock(sc, ds.top);
+    for (const row of (sc.level_splits || [])) {
+      if (row && typeof row === "object") {
+        applyBlock(row, (ds.level_splits || {})[row.level || "_"]);
+      }
+    }
+  }
+  const pps = det.points_per_source || {};
+  for (const pt of (p.points || [])) {
+    const entry = pps[`${pt.snapshot_date}|${pt.interval_label}`];
+    if (!entry) continue;
+    const ps = pt.per_source || {};
+    for (const [src, moved] of Object.entries(entry)) {
+      if (!ps[src]) continue;
+      if (moved.tools)  ps[src].tools  = moved.tools;
+      if (moved.extras) ps[src].extras = moved.extras;
+    }
+  }
+  p.__detailMerged = true;
+}
+
+function _ensurePlayerDetail(p) {
+  if (!p || p.__detailMerged) return;
+  if (!DATA || !DATA._slices_dir || !DATA._slices_dir.player_detail) {
+    return;   // legacy monolithic export: everything is already inline
+  }
+  const rawKey = p.player_key;
+  if (!rawKey || _playerDetailInFlight[rawKey]) return;
+  const keys = DATA.player_detail_keys;
+  if (Array.isArray(keys) && keys.length && !keys.includes(rawKey)) {
+    p.__detailMerged = true;   // nothing was harvested for this player
+    return;
+  }
+  const base = DATA_URL.replace(/[^/]+$/, "") + DATA._slices_dir.player_detail;
+  const v = DATA.generated_at ? `?v=${encodeURIComponent(DATA.generated_at)}` : "";
+  _playerDetailInFlight[rawKey] = fetch(base + encodeURIComponent(rawKey) + ".json" + v,
+                                        { cache: v ? "force-cache" : "no-cache" })
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(det => {
+      _mergePlayerDetail(p, det);
+      if (typeof renderPlayerDetail === "function"
+          && state && state.view && state.view.type === "player"
+          && state.view.key === rawKey) {
+        try { renderPlayerDetail(rawKey); } catch (e) { /* ignored */ }
+      }
+    })
+    .catch(e => console.warn("player detail fetch failed:", rawKey, e))
+    .finally(() => { delete _playerDetailInFlight[rawKey]; });
+}
+
 function makePitchMovementPlot(sc, playerKey) {
   const plot = _resolvePitchPlot(sc, playerKey);
   const points = (plot && plot.points) || [];
@@ -35136,6 +35265,10 @@ function renderPlayerDetail(key) {
     root.innerHTML = `<div class="state-message">Unknown prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
     return;
   }
+  // v33 - kick off the player_detail sidecar fetch (spray chart, game logs,
+  // historical per-source grades). First paint renders without those panels
+  // exactly like a player who lacks the data; the merge re-renders.
+  _ensurePlayerDetail(p);
   const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
   // v40 - Snapshot for the prospect-detail Generate GFX card (kind drives the
   // dedicated card template in buildGfxBoard). Set on every detail render so the

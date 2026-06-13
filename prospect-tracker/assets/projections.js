@@ -158,7 +158,7 @@
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
     banner.innerHTML = `<div class="fa-note fa-sources">
-      ${DATA.n_vets} veterans (the <span data-gl="fa_projection_engine">FA projection engine</span>, league-wide)
+      ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${DATA.n_vets} veterans (the <span data-gl="fa_projection_engine">FA projection engine</span>, league-wide)
       &middot; ${DATA.n_prospects} prospects (<span data-gl="proj_buckets">outcome buckets</span> from their PROSPX ETA)
       &middot; seasons priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)},
       escalating ${(DATA.dpw_infl * 100).toFixed(0)}%/yr

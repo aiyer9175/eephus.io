@@ -64,6 +64,58 @@
     return null;
   }
 
+  // ---- site-wide player index (lazy; first palette open) ----------------------
+  // data/player_links.json carries name/team/pos for every MLB player AND
+  // every active PROSPX prospect, so the palette finds players from any page.
+  // On PROSPX itself the app registers richer prospect search via
+  // EEPHUS_QK_EXTRA - there the built-in source only serves NON-prospect rows
+  // (vets), so the two sources never duplicate a player.
+  let _qkPlayers = null, _qkPlayersLoading = false;
+
+  function qkLoadPlayers() {
+    if (_qkPlayers || _qkPlayersLoading) return;
+    _qkPlayersLoading = true;
+    fetch("/data/player_links.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(L => {
+        const rows = [];
+        for (const row of Object.values((L && L.byKey) || {})) {
+          if (!row || !row.name) continue;
+          rows.push({
+            name: row.name,
+            search: String(row.name).toLowerCase(),
+            sub: [row.pos, row.team].filter(Boolean).join(" · "),
+            prospx: row.prospx || null,
+            href: row.prospx
+              ? "/prospx/#player=" + encodeURIComponent(row.prospx)
+              : "/projections/#player=" + encodeURIComponent(row.key),
+          });
+        }
+        _qkPlayers = rows;
+      })
+      .catch(() => { _qkPlayers = []; })
+      .finally(() => { _qkPlayersLoading = false; });
+  }
+
+  function qkPlayerMatches(lq) {
+    if (!_qkPlayers || !_qkPlayers.length) return [];
+    const hasExtra = typeof window.EEPHUS_QK_EXTRA === "function";
+    const scored = [];
+    for (const p of _qkPlayers) {
+      if (hasExtra && p.prospx) continue;   // PROSPX's own source covers these
+      let rank = null;
+      if (p.search.startsWith(lq)) rank = 0;
+      else if (p.search.split(/\s+/).some(w => w.startsWith(lq))) rank = 1;
+      else if (p.search.includes(lq)) rank = 2;
+      if (rank != null) scored.push([rank, p]);
+    }
+    scored.sort((a, b) => a[0] - b[0] || a[1].name.localeCompare(b[1].name));
+    return scored.slice(0, 6).map(([, p]) => ({
+      type: "player", kind: p.prospx ? "prospect" : "mlb",
+      label: p.name, sub: p.sub, href: p.href,
+    }));
+  }
+
   // ---- ⌘K / Ctrl+K / "/" quick-search palette ---------------------------------
   let _qkActive = 0, _qkResults = [];
 
@@ -73,7 +125,7 @@
     ov = document.createElement("div");
     ov.id = "qk-overlay"; ov.className = "qk-overlay";
     ov.innerHTML = `<div class="qk-modal" role="dialog" aria-label="Quick search">
-      <input id="qk-input" class="qk-input" type="text" placeholder="Search terms…" autocomplete="off" spellcheck="false" aria-label="Quick search">
+      <input id="qk-input" class="qk-input" type="text" placeholder="Search players, terms, metrics…" autocomplete="off" spellcheck="false" aria-label="Quick search">
       <div id="qk-results" class="qk-results"></div>
       <div class="qk-foot"><span><b>↵</b> open</span><span><b>↑ ↓</b> move</span><span><b>esc</b> close</span></div>
     </div>`;
@@ -92,6 +144,7 @@
 
   function qkOpen() {
     const ov = qkEnsure();
+    qkLoadPlayers();   // lazy: the player index fetches on first open only
     ov.classList.add("is-open");
     const inp = ov.querySelector("#qk-input");
     inp.value = ""; qkSearch("");
@@ -134,6 +187,9 @@
         for (const r of window.EEPHUS_QK_EXTRA(q).slice(0, 6)) out.push(r);
       } catch (err) { /* extra source is best-effort */ }
     }
+    if (q.length >= 2) {
+      for (const r of qkPlayerMatches(lq)) out.push(r);
+    }
     _qkResults = out;
     _qkActive = 0;
     qkRender(q);
@@ -143,7 +199,7 @@
     const el = document.getElementById("qk-results");
     if (!el) return;
     if (!q || q.length < 2) {
-      el.innerHTML = `<div class="qk-empty">Type 2+ characters - any metric, term, or model concept.</div>`;
+      el.innerHTML = `<div class="qk-empty">Type 2+ characters - any player, metric, term, or model concept.</div>`;
       return;
     }
     if (!_qkResults.length) {

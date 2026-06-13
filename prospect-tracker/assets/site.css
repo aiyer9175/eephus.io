@@ -36,6 +36,7 @@
                 "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
                      "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
+  --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -100,6 +101,7 @@
   --accent-green:  #4FFF9E;   /* refractor mint */
   --accent-navy: #4FD9FF; /* refractor cyan - links pop on black */
   --accent-cyan:   #00D9FF;
+  --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   --grain: rgba(255,255,255,.035);
   --grain2: rgba(120,200,224,.04);
@@ -426,6 +428,28 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   border-top: 1px solid var(--border);
   font-size: 12px; color: var(--text-tertiary);
   display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.eephus-footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.eephus-footer-links a {
+  color: var(--text-tertiary); text-decoration: none;
+  font-family: var(--font-retro-mono);
+}
+.eephus-footer-links a:hover { color: var(--text-primary); text-decoration: underline; }
+
+/* ---- dev byline (Created by ... on FA / Projections mastheads) ----
+   Mirrors PROSPX's .build-banner inline rule so the signature reads
+   identically on every module. */
+.build-banner {
+  display: inline-block;
+  font-family: var(--font-retro);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--byline-lilac);
+  margin: 0 0 8px;
+  opacity: 0.95;
+  font-weight: 600;
+  user-select: text;
 }
 
 /* ---- mobile ---- */

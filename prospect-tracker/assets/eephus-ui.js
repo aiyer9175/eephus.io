@@ -18,6 +18,25 @@
   var PX = function () { return window.PROSPX || {}; };
   var LIVE = function () { return !!(A && A.enabled()); };
 
+  // ---- privacy-light analytics (inert without config) -----------------------
+  // Mirrors the Supabase pattern: window.EEPHUS_ANALYTICS ships blank in
+  // assets/eephus-config.js and is filled at deploy time. When src+domain are
+  // set we self-inject the script (Plausible-compatible: data-domain + defer
+  // src; GoatCounter works via the same shape with data-goatcounter). Blank
+  // config = zero network traffic, zero cookies, no behavior change.
+  (function mountAnalytics() {
+    var cfg = window.EEPHUS_ANALYTICS;
+    if (!cfg || !cfg.src || !cfg.domain) return;
+    if (document.querySelector("script[data-eephus-analytics]")) return;
+    var s = document.createElement("script");
+    s.defer = true;
+    s.src = cfg.src;
+    s.setAttribute("data-eephus-analytics", "1");
+    s.setAttribute("data-domain", cfg.domain);
+    if (cfg.goatcounter) s.setAttribute("data-goatcounter", cfg.goatcounter);
+    document.head.appendChild(s);
+  })();
+
   // ---- tiny DOM/util helpers ------------------------------------------------
   function esc(s) {
     return String(s == null ? "" : s)
