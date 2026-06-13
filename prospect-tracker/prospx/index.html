@@ -17250,17 +17250,16 @@ function renderLeaderboards() {
     return null;
   };
 
-  // Walk every (player, career_stats row) for the selected season. Active
-  // prospects form the default pool; debuted players join when the selected
-  // level/stat path allows MLB rows so the Statcast/stats surface can inspect
-  // big-league graduates with the same org/split rendering.
+  // Walk every (player, career_stats row) for the selected season. The
+  // leaderboards are an ACTIVE-PROSPECT surface only (owner ask): debuted/
+  // graduated players are no longer prospects and are excluded - their MLB
+  // stats live on the Debuted tab and /projections/, not the prospect boards.
+  // (DATA.players is the active pool: stale/aged-out and graduated players are
+  // already filtered out upstream in storage.export_timeseries_json.)
   let pool = [];
   const _ageCap = ageMax === "all" ? null : Number(ageMax);
   const _rankCap = rankMax === "all" ? null : Number(rankMax);
-  const entityPool = [
-    ...((DATA.players || []).map(p => ({ p, isDebut: false }))),
-    ...((DATA.debuts || []).map(p => ({ p, isDebut: true }))),
-  ];
+  const entityPool = (DATA.players || []).map(p => ({ p, isDebut: false }));
   for (const { p, isDebut } of entityPool) {
     const bucket = positionBucket(p.position);
       if (pos !== "all" && !positionMatches(bucket, pos)) continue;
