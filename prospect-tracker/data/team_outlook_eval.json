@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-12",
+ "generated_at": "2026-06-13",
  "first_season": 2027,
  "league_sum_accounting": {
   "roster_war_sum": 994.2,
@@ -9,11 +9,11 @@
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 691,
-   "depth_war_sum": 51.3,
-   "n_unassigned": 505,
-   "war_unassigned": 43.7
+   "depth_war_sum": 52.1,
+   "n_unassigned": 503,
+   "war_unassigned": 42.8
   },
-  "remainder_recenter_wins_per_team": -0.08,
+  "remainder_recenter_wins_per_team": -0.11,
   "coverage_decomposition_2025": {
    "returning_player_war": 940,
    "new_entrant_war": 61,
