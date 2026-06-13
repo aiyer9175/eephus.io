@@ -68,7 +68,7 @@
     return " proj-war-low";
   }
 
-  const state = { src: "all", pos: "all", team: "all", q: "", sort: "warTotal",
+  const state = { src: "all", pos: "all", team: "all", contract: "all", q: "", sort: "warTotal",
                   dir: -1, limit: 100, player: null, view: "players", cmp: [] };
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
@@ -81,6 +81,7 @@
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
     if (p.has("team")) state.team = p.get("team");
+    if (p.has("contract")) state.contract = p.get("contract");
     if (p.has("q")) state.q = p.get("q");
     if (p.has("sort")) state.sort = p.get("sort");
   }
@@ -92,6 +93,7 @@
     if (state.src !== "all") p.set("src", state.src);
     if (state.pos !== "all") p.set("pos", state.pos);
     if (state.team !== "all") p.set("team", state.team);
+    if (state.contract !== "all") p.set("contract", state.contract);
     if (state.q) p.set("q", state.q);
     if (state.sort !== "warTotal") p.set("sort", state.sort);
     const h = p.toString();
@@ -124,6 +126,7 @@
       (state.src === "all" || m.src === state.src)
       && (state.pos === "all" || posGroup(m.pos) === state.pos)
       && (state.team === "all" || m.team === state.team)
+      && (state.contract === "all" || contractStatus(m).key === state.contract)
       && (!q || (m.name || "").toLowerCase().includes(q)));
   }
 
@@ -144,6 +147,27 @@
     }
     return m.twoWay
       ? `<span class="proj-tag" title="Two-way profile - projected on the larger recent exposure only (disclosed simplification).">two-way</span>` : "";
+  }
+
+  // Contract control status, at the granularity the data supports. Spotrac
+  // gives the guaranteed-salary schedule but no service time or option flags,
+  // so the pre-arb-vs-arb split and the option kinds (which the Free Agency
+  // module DOES tag: club / player / mutual / opt-out) are not modelled for the
+  // league-wide vet pool - the cost-controlled bucket says so plainly rather
+  // than guessing.
+  function contractStatus(m) {
+    const first = DATA.first_season;
+    if (m.src === "prospect")
+      return { key: "prospect", label: "Prospect", cls: "proj-ct-prospect",
+        tip: "Pre-MLB - the six cost-controlled years (3 pre-arb + 3 arb) start at debut" };
+    if (m.thru && m.thru > first)
+      return { key: "signed", label: `Signed · ${m.thru}`, cls: "proj-ct-signed",
+        tip: `Guaranteed contract through ${m.thru}${m.aav ? ` at ${money(m.aav)}/yr` : ""}` };
+    if (m.thru && m.thru === first)
+      return { key: "expiring", label: `Expiring ${m.thru}`, cls: "proj-ct-expiring",
+        tip: "Final guaranteed year - reaches arbitration or free agency after this season" };
+    return { key: "controlled", label: "Cost-controlled", cls: "proj-ct-controlled",
+      tip: "No guaranteed multi-year deal on file: pre-arbitration or arbitration salary (the service-time split needs data not fetched league-wide), or an unsigned free agent. FA-class members carry their option / UFA kind in the Free Agency module." };
   }
 
   function render() {
@@ -192,6 +216,8 @@
       ${chip("All", "all", "src")}${chip("Veterans", "vet", "src")}${chip("Prospects", "prospect", "src")}
       <span class="filter-label" style="margin-left:10px;">Pos</span>
       ${["all", "SP", "RP", "C", "IF", "OF", "DH"].map(p => chip(p === "all" ? "All" : p, p, "pos")).join("")}
+      <span class="filter-label" style="margin-left:10px;">Contract</span>
+      ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Cost-ctrl", "controlled"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
       <span class="filter-label" style="margin-left:10px;">Team</span>
       <select id="proj-team" class="proj-select">
         <option value="all">All teams</option>
@@ -294,9 +320,9 @@
         return `<td class="proj-war${warClass(w)}" title="${s}: mean ${fmtWar(w)} bWAR${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90)` : ""}">${fmtWar(w)}</td>`;
       }).join("");
       const tot = `${fmtWar(m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalP10)}–${fmtWar(m.warTotalP90)})</span>` : ""}`;
-      const ct = m.src === "prospect"
-        ? `<span class="fa-sub" title="Cost-controlled from debut - six control years (3 pre-arb + 3 arb)">control</span>`
-        : (m.thru ? `${m.thru}${m.aav ? ` · ${money(m.aav)}/y` : ""}` : `<span class="fa-sub">arb/pre-arb or FA</span>`);
+      const cs = contractStatus(m);
+      const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
+        + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
       const sur = m.surNpv != null
         ? `<span class="${m.surNpv >= 0 ? "proj-pos" : "proj-neg"}" title="${m.src === "prospect" ? "Platform prospect surplus value (control window, service-time aware, $/WAR-escalated)" : "NPV of (convex production value − salary) over salary-known seasons"}">${money(m.surNpv)}</span>`
         : EM_DASH;
