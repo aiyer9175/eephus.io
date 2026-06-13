@@ -3613,7 +3613,18 @@
     .state-message.is-loading {
       animation: state-pulse 1.6s ease-in-out infinite;
     }
-    .state-message.is-loading::before { content: none; }
+    /* Loading swaps the empty-state flag glyph for an animated spinner ring
+       (matches the shared site.css .state-message.is-loading + CollegeSavant). */
+    .state-message.is-loading::before {
+      content: ""; width: 34px; height: 34px; box-sizing: border-box;
+      border: 3px solid var(--border); border-top-color: var(--neon-cyan);
+      border-radius: 50%; margin: 0 auto 12px; opacity: 1;
+      animation: prospx-spin 0.8s linear infinite;
+    }
+    @keyframes prospx-spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) {
+      .state-message.is-loading::before { animation-duration: 2.4s; }
+    }
     .state-message.is-error::before {
       content: "!";
       font-weight: 700;
@@ -25281,13 +25292,21 @@ function buildProspectCard(snap) {
     : "";
 
   // Status flags + scouting blurb.
-  const chains = (typeof fvBadgeChainClasses === "function") ? fvBadgeChainClasses(p) : "";
   const ilNow = (p.il_status && p.il_status.is_on_il) ? p.il_status : null;
   const flagChip = (txt, bg, col, bd) => `<span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.03em;padding:6px 12px;border-radius:999px;background:${bg};color:${col};border:1px solid ${bd || col};">${txt}</span>`;
+  // FV indicator glyphs - the same family the site paints on the FV badge
+  // (breakout ★ / wide W / single-source 1 / upside ^), surfaced here as
+  // labeled glyph chips so the shareable card carries the same signal. The
+  // glyph + border take the indicator's signature color; the label stays
+  // theme-readable. Inline colors (not CSS vars) so html2canvas rasterizes
+  // them faithfully in the exported PNG.
+  const fvIndChip = (glyph, label, color) => `<span style="font-family:var(--font-sans);font-size:13px;font-weight:700;letter-spacing:0.03em;padding:6px 12px;border-radius:999px;background:${P.bg3};color:${P.text2};border:1px solid ${color};display:inline-flex;align-items:center;gap:7px;"><span style="font-family:var(--font-retro-mono);font-size:15px;font-weight:800;color:${color};line-height:1;">${glyph}</span>${label}</span>`;
   const flags = [];
   if (trendChip) flags.push(trendChip);
-  if (p.breakout_flag) flags.push(flagChip("★ Breakout", "rgba(127,255,212,0.18)", "#0a8f73", "#7FFFD4"));
-  if (chains && chains.includes("is-wide")) flags.push(flagChip("Wide FV spread", P.bg3, P.text2, P.border));
+  if (p.breakout_flag) flags.push(fvIndChip("★", "Breakout", "#7FFFD4"));
+  if (fvBadgeWideClass(p)) flags.push(fvIndChip("W", "Wide FV spread", "#B47CFF"));
+  if (fvBadgeSingleClass(p)) flags.push(fvIndChip("1", "Single source", "#F5B72E"));
+  if (fvBadgeUpsideClass(p)) flags.push(fvIndChip("^", "Upside", "#FF4FD8"));
   if (ilNow) flags.push(flagChip(`${escapeHtml(ilNow.type || "")} IL`, "rgba(185,28,28,0.12)", "var(--down)", "var(--down)"));
   if ((p.health_profile || {}).is_post_tj) flags.push(flagChip("Post-TJ", P.bg3, P.text2, P.border));
   const flagsRow = flags.length ? `<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${flags.join("")}</div>` : "";
@@ -25948,6 +25967,10 @@ let _gfxBoardEl = null;
 function _gfxRefresh() {
   const preview = document.getElementById("gfx-preview");
   if (!preview) return;
+  // Show the "Rendering…" overlay for the whole pipeline, not just the blob
+  // pass: the board (and its headshots/logos) take a beat to lay out, so the
+  // spinner is up from the first paint until _gfxKickPrepare flips to ready.
+  _gfxBusy(true);
   preview.innerHTML = "";
   const { board, total } = buildGfxBoard();
   _gfxBoardEl = total > 0 ? board : null;
