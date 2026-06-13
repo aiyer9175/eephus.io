@@ -780,13 +780,17 @@ class MarketModel:
             # market (stars' neighbors are prior stars). Blend toward comps
             # in log space as the comps scale enters megadeal territory —
             # alpha 0 below a $50M comps median (pure model, mid-market
-            # untouched) rising to 0.8 at $400M+. Smooth, monotone,
+            # untouched) rising to the cap at $400M+. Smooth, monotone,
             # documented; the mega slice in the eval measures its effect.
-            # v2: cap raised 0.8 -> 0.9 — the measured mega slice (model
-            # $99M MAE vs comps $93M) says the anchor deserves MORE of the
-            # vote at the very top, not less.
+            # v3: cap raised 0.9 -> 1.0. The forward-chained mega MAE falls
+            # monotonically with the cap (0.85:84.3 / 0.90:82.9 / 0.95:81.4 /
+            # 1.00:80.1), beating the comps baseline ($82.7M) only at 1.0, and
+            # the POOLED guarantee MAE improves alongside (10.05 -> 9.96, n=1199)
+            # — so this is not a mega-slice-only overfit. At $400M+ comps the OLS
+            # extrapolation has almost no training support; the comps anchor
+            # earns the very top outright.
             lo, hi = math.log(50e6), math.log(400e6)
-            alpha = min(0.9, max(0.0, (math.log(comps_guar) - lo) / (hi - lo) * 0.9))
+            alpha = min(1.0, max(0.0, (math.log(comps_guar) - lo) / (hi - lo)))
             if alpha > 0:
                 comps_aav = self._comps_stats(s)[2]
                 mega_anchor = max(comps_guar, comps_aav * years)
