@@ -419,6 +419,10 @@ def _extract_recent_games(
             h    = _safe_int(st.get("hits")) or 0
             bb   = _safe_int(st.get("baseOnBalls")) or 0
             hra  = _safe_int(st.get("homeRuns")) or 0
+            # battersFaced lets a date-windowed leaderboard recompute K% / BB%
+            # (strikeouts / walks per batter) off the raw box line. None when
+            # the feed omits it; the consumer falls back to per-9 rates.
+            bf   = _safe_int(st.get("battersFaced"))
             entry = {
                 "date": date,
                 "level": level,
@@ -427,6 +431,7 @@ def _extract_recent_games(
                                  else (split.get("game") or {}).get("isHome")),
                 "is_pitcher": True,
                 "ip": ip, "k": k, "er": er, "r": r, "h": h, "bb": bb, "hr": hra,
+                "bf": bf,
             }
         rows.append(entry)
     # Newest first; take limit.

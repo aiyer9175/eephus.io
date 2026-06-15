@@ -1163,6 +1163,25 @@
       background-position: right 8px center;
     }
     select.chip:focus { outline: none; border-color: var(--neon-cyan); }
+    /* v45 - leaderboard custom-range date inputs share the chip frame. */
+    input.lb-date-input {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      color-scheme: dark light;
+    }
+    input.lb-date-input:focus { outline: none; border-color: var(--neon-cyan); }
+    /* Stat chips that can't be recomputed from box lines dim out in
+       window mode (statcast / zone / "+" indices). */
+    .chip.lb-stat-disabled {
+      opacity: 0.32;
+      pointer-events: none;
+      filter: grayscale(0.6);
+    }
 
     /* === Prospect news ticker (newspaper-section style) ============
        Title sits left of a horizontal-scrolling chip strip, both wrapped
@@ -9201,6 +9220,25 @@
           <button class="chip"        data-lb-season="2022">2022</button>
           <button class="chip"        data-lb-season="2021">2021</button>
         </div>
+        <!-- v45 - Timeframe: full-season aggregates (default) vs a rolling
+             window or custom date range recomputed from per-game box lines
+             (data/leaderboard_gamelogs.json). Window mode only supports the
+             box-line stats (slash / ISO / BB% / K% / HR / SB ; ERA / WHIP /
+             FIP / K% / BB% / per-9) - statcast, zone and "+" indices grey out
+             since they need season-level machinery. Current-season only. -->
+        <div class="filter-group" id="lb-timeframe-group">
+          <span class="filter-label" title="Full season uses season totals. The rolling windows and custom range recompute each rate stat from that player's per-game box lines within the window.">Timeframe</span>
+          <button class="chip active" data-lb-window="season" title="Full-season aggregate stats">Full season</button>
+          <button class="chip"        data-lb-window="7"  title="Stats over the last 7 days of games">Last 7d</button>
+          <button class="chip"        data-lb-window="14" title="Stats over the last 14 days of games">Last 14d</button>
+          <button class="chip"        data-lb-window="30" title="Stats over the last 30 days of games">Last 30d</button>
+          <button class="chip"        data-lb-window="custom" title="Stats over a custom from-to date range">Custom range</button>
+        </div>
+        <div class="filter-group" id="lb-window-range" style="display:none;">
+          <span class="filter-label">From – To</span>
+          <input type="date" class="chip lb-date-input" id="lb-window-from" title="Window start date (inclusive)">
+          <input type="date" class="chip lb-date-input" id="lb-window-to" title="Window end date (inclusive)">
+        </div>
         <div class="filter-group">
           <span class="filter-label" title="Override the stat's natural ranking direction - handy for surfacing the lowest values too.">Order</span>
           <button class="chip active" data-lb-dir="auto" title="Use the stat's natural direction (e.g. high OPS, low ERA)">Stat default</button>
@@ -9835,6 +9873,40 @@ function loadPlayerNewsSidecar() {
     })
     .finally(() => { _playerNewsInFlight = null; });
   return _playerNewsInFlight;
+}
+
+// v45 - Per-game box-line slice powering date-windowed leaderboards
+// (data/leaderboard_gamelogs.json). Lazy: only fetched the first time the
+// user picks a non-season Timeframe. Shape: { as_of, season, players:
+// { <player_key>: { is_pitcher, games:[{d,lvl,...box line...}] } } }.
+let _lbGamelogsLoaded = false;
+let _lbGamelogsInFlight = null;
+function loadLeaderboardGamelogs() {
+  if (_lbGamelogsLoaded) return Promise.resolve();
+  if (_lbGamelogsInFlight) return _lbGamelogsInFlight;
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const versionParam = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  _lbGamelogsInFlight = fetch(base + "leaderboard_gamelogs.json" + versionParam, {
+    cache: versionParam ? "force-cache" : "no-cache",
+  })
+    .then(r => {
+      if (r.status === 404) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(payload => {
+      if (DATA) DATA.leaderboard_gamelogs = (payload && typeof payload === "object") ? payload : null;
+      _lbGamelogsLoaded = true;
+    })
+    .catch(err => {
+      console.warn("leaderboard_gamelogs slice fetch failed:", err);
+      if (DATA) DATA.leaderboard_gamelogs = null;
+      _lbGamelogsLoaded = true;
+    })
+    .finally(() => { _lbGamelogsInFlight = null; });
+  return _lbGamelogsInFlight;
 }
 
 // =============================================================================
@@ -11996,6 +12068,9 @@ function syncToURL() {
   if (state.lbOrg       !== "all")        p.set("lborg",   state.lbOrg);
   if ((state.lbRankMax || "all") !== "all") p.set("lbrank", state.lbRankMax);
   if (state.lbSeason    !== String(new Date().getUTCFullYear())) p.set("lbseason", state.lbSeason);
+  if ((state.lbWindow || "season") !== "season") p.set("lbwin", state.lbWindow);
+  if (state.lbWindow === "custom" && state.lbFrom) p.set("lbfrom", state.lbFrom);
+  if (state.lbWindow === "custom" && state.lbTo)   p.set("lbto",   state.lbTo);
   // Detail-page tab selection. Only encoded when actively on the
   // matching detail page so other views don't carry an unused param.
   if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
@@ -12144,6 +12219,9 @@ function syncFromURL() {
   if (p.has("lborg"))    state.lbOrg    = p.get("lborg");
   if (p.has("lbrank"))   state.lbRankMax = p.get("lbrank");
   if (p.has("lbseason")) state.lbSeason = p.get("lbseason");
+  if (p.has("lbwin"))    state.lbWindow = p.get("lbwin");
+  if (p.has("lbfrom"))   state.lbFrom   = p.get("lbfrom");
+  if (p.has("lbto"))     state.lbTo     = p.get("lbto");
   // Detail-page tab + pagination state. Reset to defaults when missing
   // so back-navigating to a list doesn't carry stale page numbers.
   state.playerTab = p.has("ptab") ? p.get("ptab") : "overview";
@@ -13565,6 +13643,13 @@ const state = {
   lbOrg:    "all",
   lbRankMax: "all",
   lbSeason: String(new Date().getUTCFullYear()),
+  // v45 - Leaderboard timeframe. "season" = full-season aggregates (default
+  // legacy behavior); "7"/"14"/"30" = rolling day windows; "custom" = the
+  // lbFrom..lbTo date range. The non-season modes recompute box-line stats
+  // from data/leaderboard_gamelogs.json (lazy-loaded on first use).
+  lbWindow: "season",
+  lbFrom:   "",
+  lbTo:     "",
   // Detail-page tab selection - which tab the prospect/farm detail page
   // opens on. URL-round-tripped via ?ptab=... / ?ftab=... so deep links
   // land on the requested tab.
@@ -17185,6 +17270,206 @@ function renderCharts() {
   }
 }
 
+// =============================================================================
+// DATE-WINDOWED LEADERBOARDS (v45)
+// =============================================================================
+// "Full season" boards walk season-total career rows. The rolling-window and
+// custom-range boards instead recompute each rate stat from per-game box lines
+// (data/leaderboard_gamelogs.json) within the chosen date window. Only the
+// box-line-derived stats are supported in window mode - statcast / zone / "+"
+// indices need season-level machinery and grey out.
+const LB_WINDOW_STATS = {
+  hit: new Set(["ops", "avg", "obp", "slg", "iso", "bb_pct", "k_pct", "hr", "sb"]),
+  pit: new Set(["era", "whip", "fip", "hr_per_9", "pitcher_k_pct", "pitcher_bb_pct"]),
+};
+function _lbStatWindowOK(statKey) {
+  const cfg = LB_STATS[statKey];
+  if (!cfg) return false;
+  return (LB_WINDOW_STATS.hit.has(statKey) && cfg.side === "hit")
+      || (LB_WINDOW_STATS.pit.has(statKey) && cfg.side === "pit");
+}
+
+// MiLB box scores report IP in "X.Y" notation where Y is outs (0/1/2), so
+// 4.1 + 5.2 IP is 4⅓ + 5⅔ = 10 IP, not 9.3. Sum in outs, format back to X.Y.
+function _lbIpOuts(ip) {
+  if (ip == null) return 0;
+  const whole = Math.floor(ip);
+  const frac = Math.round((ip - whole) * 10);
+  return whole * 3 + (frac >= 1 && frac <= 2 ? frac : 0);
+}
+function _lbOutsToIpStr(outs) {
+  return `${Math.floor(outs / 3)}.${outs % 3}`;
+}
+
+function _lbAggHitter(games) {
+  const t = { g: games.length, pa: 0, ab: 0, h: 0, _2b: 0, _3b: 0, hr: 0,
+              bb: 0, so: 0, sb: 0, r: 0, rbi: 0, lastLvl: null, lastDate: "" };
+  for (const x of games) {
+    t.pa += x.pa || 0; t.ab += x.ab || 0; t.h += x.h || 0;
+    t._2b += x["2b"] || 0; t._3b += x["3b"] || 0; t.hr += x.hr || 0;
+    t.bb += x.bb || 0; t.so += x.so || 0; t.sb += x.sb || 0;
+    t.r += x.r || 0; t.rbi += x.rbi || 0;
+    if (x.d >= t.lastDate) { t.lastDate = x.d; t.lastLvl = x.lvl; }
+  }
+  return t;
+}
+function _lbAggPitcher(games) {
+  const t = { g: games.length, outs: 0, k: 0, er: 0, r: 0, h: 0, bb: 0,
+              hr: 0, bf: 0, bfKnown: true, lastLvl: null, lastDate: "" };
+  for (const x of games) {
+    t.outs += _lbIpOuts(x.ip); t.k += x.k || 0; t.er += x.er || 0;
+    t.r += x.r || 0; t.h += x.h || 0; t.bb += x.bb || 0; t.hr += x.hr || 0;
+    if (x.bf == null) t.bfKnown = false; else t.bf += x.bf;
+    if (x.d >= t.lastDate) { t.lastDate = x.d; t.lastLvl = x.lvl; }
+  }
+  return t;
+}
+
+// FIP constant: lower MiLB run environment than MLB, so a flat ~3.10 keeps
+// the index roughly ERA-scaled across affiliated levels. Window-relative
+// ranking is unaffected by the exact constant (it shifts every pitcher
+// equally); it only sets the absolute display value.
+const _LB_FIP_CONST = 3.10;
+function _lbWindowStatValue(statKey, t, isP) {
+  if (!isP) {
+    const ab = t.ab, pa = t.pa;
+    const oneB = t.h - t._2b - t._3b - t.hr;
+    const avg = ab > 0 ? t.h / ab : null;
+    const obp = (ab + t.bb) > 0 ? (t.h + t.bb) / (ab + t.bb) : null;
+    const slg = ab > 0 ? (oneB + 2 * t._2b + 3 * t._3b + 4 * t.hr) / ab : null;
+    switch (statKey) {
+      case "avg": return avg;
+      case "obp": return obp;
+      case "slg": return slg;
+      case "ops": return (obp != null && slg != null) ? obp + slg : null;
+      case "iso": return (slg != null && avg != null) ? slg - avg : null;
+      case "bb_pct": return pa > 0 ? 100 * t.bb / pa : null;
+      case "k_pct": return pa > 0 ? 100 * t.so / pa : null;
+      case "hr": return t.hr;
+      case "sb": return t.sb;
+      default: return null;
+    }
+  }
+  const ip = t.outs / 3;
+  if (ip <= 0) return null;
+  switch (statKey) {
+    case "era": return 9 * t.er / ip;
+    case "whip": return (t.bb + t.h) / ip;
+    case "hr_per_9": return 9 * t.hr / ip;
+    case "fip": return (13 * t.hr + 3 * t.bb - 2 * t.k) / ip + _LB_FIP_CONST;
+    case "pitcher_k_pct": return (t.bfKnown && t.bf > 0) ? 100 * t.k / t.bf : null;
+    case "pitcher_bb_pct": return (t.bfKnown && t.bf > 0) ? 100 * t.bb / t.bf : null;
+    default: return null;
+  }
+}
+
+// Build the `r` row object the Context-column support builders read.
+const _lbF3 = x => (x != null && isFinite(x)) ? x.toFixed(3).replace(/^0/, "") : null;
+function _lbWindowRowHitter(t) {
+  const ab = t.ab, pa = t.pa;
+  const oneB = t.h - t._2b - t._3b - t.hr;
+  const avg = ab > 0 ? t.h / ab : null;
+  const obp = (ab + t.bb) > 0 ? (t.h + t.bb) / (ab + t.bb) : null;
+  const slg = ab > 0 ? (oneB + 2 * t._2b + 3 * t._3b + 4 * t.hr) / ab : null;
+  return {
+    level: t.lastLvl, is_pitcher: false,
+    avg: _lbF3(avg), obp: _lbF3(obp), slg: _lbF3(slg),
+    ops: (obp != null && slg != null) ? _lbF3(obp + slg) : null,
+    iso: (slg != null && avg != null) ? (slg - avg) : null,
+    bb_pct: pa > 0 ? 100 * t.bb / pa : null,
+    k_pct: pa > 0 ? 100 * t.so / pa : null,
+    hr: t.hr, sb: t.sb, rbi: t.rbi, ab: t.ab, games: t.g,
+  };
+}
+function _lbWindowRowPitcher(t) {
+  const ip = t.outs / 3;
+  return {
+    level: t.lastLvl, is_pitcher: true,
+    ip: _lbOutsToIpStr(t.outs),
+    era: ip > 0 ? (9 * t.er / ip).toFixed(2) : null,
+    whip: ip > 0 ? ((t.bb + t.h) / ip).toFixed(2) : null,
+    k_pct: (t.bfKnown && t.bf > 0) ? 100 * t.k / t.bf : null,
+    bb_pct: (t.bfKnown && t.bf > 0) ? 100 * t.bb / t.bf : null,
+    k_per_9: ip > 0 ? (9 * t.k / ip).toFixed(2) : null,
+    bb_per_9: ip > 0 ? (9 * t.bb / ip).toFixed(2) : null,
+    games: t.g,
+  };
+}
+
+// Window sample gates - scaled to window length so a 7-day board still
+// populates while a long custom range demands a fuller sample. Counting
+// stats (HR / SB) only require the player to have appeared.
+function _lbWindowQualifies(statKey, t, isP, days) {
+  if (!isP) {
+    if (statKey === "hr" || statKey === "sb") return t.pa >= 4;
+    return t.pa >= Math.max(8, Math.round(days * 0.5));
+  }
+  return t.outs >= Math.max(9, Math.round(days * 0.8));   // ~3 IP floor
+}
+
+function _lbFmtDate(iso) {
+  const d = new Date(iso + "T00:00:00");
+  return isNaN(d.getTime()) ? iso
+    : d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+// Resolve the active window to {from, to, days, label}. Presets anchor to the
+// slice's as_of (latest game we have); custom uses the date inputs.
+function _lbWindowDates() {
+  const gl = DATA.leaderboard_gamelogs || {};
+  const asOf = gl.as_of || new Date().toISOString().slice(0, 10);
+  const addDays = (iso, n) => {
+    const d = new Date(iso + "T00:00:00Z");
+    d.setUTCDate(d.getUTCDate() + n);
+    return d.toISOString().slice(0, 10);
+  };
+  if (state.lbWindow === "custom") {
+    let from = state.lbFrom, to = state.lbTo;
+    if (!to) to = asOf;
+    if (!from) from = addDays(to, -13);
+    if (from > to) { const tmp = from; from = to; to = tmp; }
+    const days = Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 86400000) + 1);
+    return { from, to, days, label: `${_lbFmtDate(from)} – ${_lbFmtDate(to)}`, asOf };
+  }
+  const N = Number(state.lbWindow) || 14;
+  return { from: addDays(asOf, -(N - 1)), to: asOf, days: N,
+           label: `Last ${N} days`, asOf };
+}
+
+// Build the window pool: every slice player that clears the WHO filters,
+// aggregated over the date window, gated by sample, scored on the stat.
+function _lbWindowPool(cfg, statKey, opt) {
+  const { lvl, pos, org, ageCap, rankCap, win } = opt;
+  const gl = DATA.leaderboard_gamelogs;
+  const byKey = (gl && gl.players) || {};
+  const pool = [];
+  for (const p of (DATA.players || [])) {
+    const entry = byKey[p.player_key];
+    if (!entry) continue;
+    const isP = !!entry.is_pitcher;
+    if (cfg.side === "hit" && isP) continue;
+    if (cfg.side === "pit" && !isP) continue;
+    const bucket = positionBucket(p.position);
+    if (pos !== "all" && !positionMatches(bucket, pos)) continue;
+    if (org !== "all" && p.org !== org) continue;
+    if (ageCap != null && !(p.age != null && p.age <= ageCap)) continue;
+    if (rankCap != null && !(p.overall_rank != null && Number(p.overall_rank) <= rankCap)) continue;
+    const games = [];
+    for (const g of (entry.games || [])) {
+      if (g.d < win.from || g.d > win.to) continue;
+      if (lvl !== "all" && g.lvl !== lvl) continue;
+      games.push(g);
+    }
+    if (!games.length) continue;
+    const t = isP ? _lbAggPitcher(games) : _lbAggHitter(games);
+    if (!_lbWindowQualifies(statKey, t, isP, win.days)) continue;
+    const v = _lbWindowStatValue(statKey, t, isP);
+    if (v == null || !isFinite(v)) continue;
+    const r = isP ? _lbWindowRowPitcher(t) : _lbWindowRowHitter(t);
+    pool.push({ p, r, v });
+  }
+  return pool;
+}
+
 function renderLeaderboards() {
   // Standout single-game performances ticker - same feed as Spotlights,
   // rendered into the leaderboards section's own container.
@@ -17201,6 +17486,13 @@ function renderLeaderboards() {
   const season = Number(state.lbSeason || new Date().getUTCFullYear());
   if (boardSide !== "all" && cfg.side !== boardSide) {
     state.lbStat = boardSide === "pit" ? "era" : "ops";
+    return renderLeaderboards();
+  }
+  // v45 - Timeframe. Window mode recomputes box-line stats over a date range;
+  // snap off any stat that can't be derived from game logs.
+  const windowMode = !!(state.lbWindow && state.lbWindow !== "season");
+  if (windowMode && !_lbStatWindowOK(statKey)) {
+    state.lbStat = cfg.side === "pit" ? "era" : "ops";
     return renderLeaderboards();
   }
   document.querySelectorAll("[data-lb-stat]").forEach(b =>
@@ -17223,6 +17515,21 @@ function renderLeaderboards() {
     const side = btn.dataset.lbStatSide;
     btn.style.display = (boardSide === "all" || side === boardSide) ? "" : "none";
   });
+  // v45 - Timeframe chip state, custom-range visibility, and dimming of any
+  // stat chip that can't be recomputed from box lines while a window is active.
+  document.querySelectorAll("[data-lb-window]").forEach(b =>
+    b.classList.toggle("active", b.dataset.lbWindow === (state.lbWindow || "season")));
+  const _lbRangeEl = document.getElementById("lb-window-range");
+  if (_lbRangeEl) _lbRangeEl.style.display = (state.lbWindow === "custom") ? "" : "none";
+  document.querySelectorAll("[data-lb-stat]").forEach(b =>
+    b.classList.toggle("lb-stat-disabled", windowMode && !_lbStatWindowOK(b.dataset.lbStat)));
+  const _winDates = windowMode ? _lbWindowDates() : null;
+  if (state.lbWindow === "custom" && _winDates) {
+    const fEl = document.getElementById("lb-window-from");
+    const tEl = document.getElementById("lb-window-to");
+    if (fEl && !fEl.value) fEl.value = _winDates.from;
+    if (tEl && !tEl.value) tEl.value = _winDates.to;
+  }
 
   const statcastValue = (sc, field) => {
     if (!sc) return null;
@@ -17259,6 +17566,26 @@ function renderLeaderboards() {
   let pool = [];
   const _ageCap = ageMax === "all" ? null : Number(ageMax);
   const _rankCap = rankMax === "all" ? null : Number(rankMax);
+  if (windowMode) {
+    // Date-windowed board: aggregate per-game box lines from the (lazy)
+    // game-log slice. Gate on the slice being loaded; re-render when it lands.
+    if (!_lbGamelogsLoaded) {
+      document.getElementById("leaderboard-rows").innerHTML =
+        `<div class="state-message">Loading game logs for the ${escapeHtml(_winDates ? _winDates.label : "date-windowed")} board…</div>`;
+      const _viz = document.getElementById("leaderboard-viz"); if (_viz) _viz.innerHTML = "";
+      loadLeaderboardGamelogs().then(() => renderLeaderboards());
+      return;
+    }
+    if (!DATA.leaderboard_gamelogs || !DATA.leaderboard_gamelogs.players) {
+      document.getElementById("leaderboard-rows").innerHTML =
+        `<div class="state-message">Date-windowed boards need <code>data/leaderboard_gamelogs.json</code>, which isn't present in this build. Switch Timeframe back to <strong>Full season</strong>.</div>`;
+      const _viz = document.getElementById("leaderboard-viz"); if (_viz) _viz.innerHTML = "";
+      return;
+    }
+    pool = _lbWindowPool(cfg, statKey, {
+      lvl, pos, org, ageCap: _ageCap, rankCap: _rankCap, win: _winDates,
+    });
+  } else {
   const entityPool = (DATA.players || []).map(p => ({ p, isDebut: false }));
   for (const { p, isDebut } of entityPool) {
     const bucket = positionBucket(p.position);
@@ -17349,6 +17676,7 @@ function renderLeaderboards() {
       pool.push({ p, r, v: Number(v) });
     }
   }
+  }
   // Top-level search bar applies here too - narrows the pool to
   // entries whose player name matches the query. Other list views
   // (actives, spotlights, traded, graduates, injured) already honor
@@ -17362,7 +17690,8 @@ function renderLeaderboards() {
   const _hiFirst = dir === "auto" ? cfg.hi : (dir === "hi");
   pool.sort((a, b) => _hiFirst ? (b.v - a.v) : (a.v - b.v));
   _gfxSet("leaderboards", "leader", pool,        // snapshot for Generate GFX
-          { statLabel: cfg.label, fmt: cfg.fmt, level: state.lbLevel, season: state.lbSeason });
+          { statLabel: cfg.label, fmt: cfg.fmt, level: state.lbLevel, season: state.lbSeason,
+            window: _winDates ? _winDates.label : null });
   const pageSize = state.pageSizes.leaderboard || 25;
   const totalItems = pool.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -17383,15 +17712,31 @@ function renderLeaderboards() {
     <span title="Stat-specific context: for OPS shows slash + HR/SB; for ERA shows IP + K/9; etc.">Context</span>
   </div>`;
 
+  // v45 - Window caption: which timeframe / date range the board reflects.
+  const _winNote = (windowMode && _winDates)
+    ? `<div style="margin:6px 0 10px;padding:7px 11px;border:1px solid var(--border);border-left:3px solid var(--neon-cyan);border-radius:var(--radius-sm);background:var(--bg-secondary);font-size:11px;line-height:1.5;">`
+      + `<strong style="color:var(--text-primary);">${state.lbWindow === "custom" ? "Custom range" : escapeHtml(_winDates.label)}</strong>`
+      + `<span style="color:var(--text-secondary);font-family:var(--font-mono);"> · ${_lbFmtDate(_winDates.from)} – ${_lbFmtDate(_winDates.to)}</span>`
+      + `<span style="color:var(--text-tertiary);"> · rate stats recomputed from per-game box lines · latest game ${_lbFmtDate(_winDates.asOf)}</span>`
+      + `</div>`
+    : "";
+
   if (!ranked.length) {
-    const minLabel = cfg.minAB ? `${cfg.minAB} AB`
+    const minLabel = windowMode
+      ? (cfg.side === "hit"
+          ? `${Math.max(8, Math.round((_winDates ? _winDates.days : 14) * 0.5))} PA`
+          : `${(Math.max(9, Math.round((_winDates ? _winDates.days : 14) * 0.8)) / 3).toFixed(1)} IP`)
+      : cfg.minAB ? `${cfg.minAB} AB`
       : cfg.minIP ? `${cfg.minIP} IP`
       : cfg.minPitches ? `${cfg.minPitches} pitches`
       : cfg.minBBE ? `${cfg.minBBE} BBE`
       : cfg.minTrackedPitches ? `${cfg.minTrackedPitches} tracked pitches`
       : "available sample";
+    const _scope = windowMode && _winDates
+      ? `the ${escapeHtml(_winDates.label).toLowerCase()} ${escapeHtml(cfg.label)} window`
+      : `the ${season} ${escapeHtml(cfg.label)} board`;
     document.getElementById("leaderboard-rows").innerHTML =
-      header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for the ${season} ${escapeHtml(cfg.label)} board under these filters (min ${minLabel}).</div>`;
+      _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).</div>`;
     return;
   }
 
@@ -17447,7 +17792,7 @@ function renderLeaderboards() {
       </div>`;
   }).join("");
 
-  document.getElementById("leaderboard-rows").innerHTML = paginationStripTop + header + rows + paginationStrip;
+  document.getElementById("leaderboard-rows").innerHTML = _winNote + paginationStripTop + header + rows + paginationStrip;
   // Phase 3 viz: cohort histogram showing where the top-10 sits in the
   // full qualifying-prospect distribution. The vertical dashed line +
   // cyan highlight bin makes the percentile context obvious.
@@ -40544,8 +40889,9 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-overseas-pos":   "all",
   "filter-overseas-status":"all",
   // Leaderboard WHO/HOW chip groups.
-  "lb-age":   "all",
-  "lb-dir":   "auto",
+  "lb-age":    "all",
+  "lb-dir":    "auto",
+  "lb-window": "season",
 };
 function attachChipGroup(attr, stateKey, onChange, opts = {}) {
   const { clearView = false, allowDeselect = true } = opts;
@@ -42623,6 +42969,29 @@ function attachHandlers() {
   attachChipGroup("lb-rank",   "lbRankMax", () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-dir",    "lbDir",    () => { resetPage("leaderboard"); renderLeaderboards(); });
   attachChipGroup("lb-season", "lbSeason", () => { resetPage("leaderboard"); renderLeaderboards(); });
+  // v45 - Timeframe chips + custom-range date inputs. Picking a non-season
+  // window kicks off the (lazy) game-log slice load; renderLeaderboards
+  // gates on _lbGamelogsLoaded and re-renders when it lands.
+  attachChipGroup("lb-window", "lbWindow", (val) => {
+    if (val && val !== "season") loadLeaderboardGamelogs().then(() => renderLeaderboards());
+    resetPage("leaderboard");
+    renderLeaderboards();
+  });
+  const _lbFromEl = document.getElementById("lb-window-from");
+  const _lbToEl   = document.getElementById("lb-window-to");
+  const _onLbDate = () => {
+    state.lbFrom = (_lbFromEl && _lbFromEl.value) || "";
+    state.lbTo   = (_lbToEl && _lbToEl.value) || "";
+    state.lbWindow = "custom";
+    document.querySelectorAll("[data-lb-window]").forEach(b =>
+      b.classList.toggle("active", b.dataset.lbWindow === "custom"));
+    resetPage("leaderboard");
+    loadLeaderboardGamelogs().then(() => renderLeaderboards());
+    renderLeaderboards();
+    syncToURL();
+  };
+  if (_lbFromEl) _lbFromEl.addEventListener("change", _onLbDate);
+  if (_lbToEl)   _lbToEl.addEventListener("change", _onLbDate);
   // Null-guard each selector binding - missing elements (caused by template
   // ordering, embed contexts, or future markup changes) would otherwise
   // throw a TypeError that aborts attachHandlers and breaks every other
@@ -42891,6 +43260,9 @@ function _resetPageFilters(page) {
     state.lbAgeMax = "all";
     state.lbRankMax = "all";
     state.lbDir    = "auto";
+    state.lbWindow = "season";
+    state.lbFrom   = "";
+    state.lbTo     = "";
   } else if (page === "draft") {
     state.draftPool          = "all";
     state.draftSide          = "all";
