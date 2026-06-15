@@ -470,9 +470,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 @media (max-width: 640px) {
   .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 10px 1rem; }
   .eephus-nav .eephus-links { order: 3; flex: 1 1 100%; margin-left: 0; }
-  .eephus-nav .eephus-links a { padding: 8px 10px; }
+  .eephus-nav .eephus-links a { padding: 10px 12px; }
   .eephus-nav .eephus-nav-controls { margin-left: auto; }
-  .eephus-nav .eephus-nav-ctrl { padding: 0 9px; min-height: 34px; }
+  /* Touch targets: keep the mobile controls at ~40px (>= recommended tap size)
+     rather than shrinking below the 38px desktop height. */
+  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 40px; }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
 }
@@ -610,6 +612,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .sb-nav a:hover, .sb-subnav a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
 .sb-subnav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 .sb-subnav a { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
+/* Touch devices get larger sidebar tap targets (~40px) without loosening the
+   dense desktop/mouse sidebar. Mouse users keep the compact 7px padding. */
+@media (hover: none) and (pointer: coarse) {
+  .sb-nav a { padding: 11px 9px; }
+  .sb-subnav a { padding: 10px 8px; }
+}
 .sb-subnav a .px-glyph { color: var(--accent-cyan); font-family: var(--font-retro-mono); }
 
 /* sidebar terminal feed */

@@ -51,7 +51,10 @@
       READY = true;
       window.dispatchEvent(new Event("eephus-glossary-ready"));
     })
-    .catch(err => console.warn("glossary data unavailable:", err));
+    // Glossary data is optional enrichment (tooltips + ⌘K palette). If it
+    // can't load, degrade silently rather than logging to every visitor's
+    // console - the site stays fully functional without it.
+    .catch(() => {});
 
   function resolve(q) {
     const map = window.EEPHUS_GLOSSARY || {};
@@ -314,6 +317,20 @@
   });
   document.addEventListener("focusout", () => tipHide());
   window.addEventListener("scroll", () => { if (_tipFor) tipHide(); }, { passive: true });
+  // Touch devices can't hover, so the mouseover/focus tooltips above never
+  // fire and term definitions were unreachable. On no-hover (touch) devices
+  // only, tapping a [data-gl] term toggles its tooltip; tapping elsewhere
+  // dismisses it. Gated to (hover: none) so mouse users keep pure hover.
+  document.addEventListener("click", e => {
+    const noHover = window.matchMedia && window.matchMedia("(hover: none)").matches;
+    if (!noHover) return;
+    const span = e.target.closest && e.target.closest("[data-gl]");
+    if (span) {
+      if (_tipFor === span) tipHide(); else tipShow(span);
+    } else if (_tipFor && !(e.target.closest && e.target.closest("#gl-tip"))) {
+      tipHide();
+    }
+  });
 
   // Screen readers get the definition inline: one hidden div per term,
   // referenced by every span for that term via aria-describedby.

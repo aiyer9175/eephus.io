@@ -40,11 +40,13 @@
     DATA_URL at the bottom of this file.
   -->
 
-  <!-- v19 - Preload the primary data payload so the browser starts
-       fetching it as soon as the HTML is parsed, in parallel with the
-       webfont + CSS work below. Saves the round-trip cost of waiting
-       for the JS boot IIFE to run before kicking off the fetch. -->
-  <link rel="preload" href="/data/timeseries.json" as="fetch" crossorigin="anonymous">
+  <!-- v35 - No preload for the boot payload: loadData() fetches the
+       version-stamped URL (timeseries.json?v=<generated_at>), which a
+       static bare-URL preload can never satisfy. The old
+       `<link rel="preload" href="/data/timeseries.json">` therefore
+       downloaded the full file a second time without ever being reused
+       (~37 MB raw / ~5 MB gz wasted per visit). The two-step probe in
+       loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
   <link rel="stylesheet" href="/assets/site.css">
@@ -43385,18 +43387,38 @@ function populateOrgFilter() {
     ? `?v=${encodeURIComponent(DATA.generated_at)}`
     : "";
   const _cacheOpt = _versionParam ? "force-cache" : "no-cache";
-  (async () => {
+  // v35 - Background prefetch is a desktop/wifi optimization: it pulls
+  // ~100 MB of sidecars (debuts/inactive/scout_reports) on boot so tab
+  // switches are instant. On a metered or slow connection that is a bad
+  // trade - it saturates the link and burns the user's data for views
+  // they may never open. Gate ALL background prefetch on the Network
+  // Information API: skip it when the user has Save-Data on or is on a
+  // 2g-class link. Everything still loads on demand when a tab is opened
+  // (loadSlice / the tab fetch paths are unchanged), so this only changes
+  // *when* the bytes move, never *whether* the feature works.
+  const _bgPrefetchOK = (() => {
     try {
-      const resp = await fetch(_dataBase + "draft_timeseries.json" + _versionParam, { cache: _cacheOpt });
-      if (resp.ok) { DATA.draft = await resp.json(); updateMeta(); }
-    } catch {}
+      const c = navigator.connection;
+      if (!c) return true;                                  // unknown (most desktop) -> prefetch
+      if (c.saveData) return false;                         // user asked to conserve data
+      if (/2g/.test(c.effectiveType || "")) return false;   // slow-2g / 2g
+      return true;
+    } catch { return true; }
   })();
-  (async () => {
-    try {
-      const resp = await fetch(_dataBase + "overseas_timeseries.json" + _versionParam, { cache: _cacheOpt });
-      if (resp.ok) { DATA.overseas = await resp.json(); updateMeta(); }
-    } catch {}
-  })();
+  if (_bgPrefetchOK) {
+    (async () => {
+      try {
+        const resp = await fetch(_dataBase + "draft_timeseries.json" + _versionParam, { cache: _cacheOpt });
+        if (resp.ok) { DATA.draft = await resp.json(); updateMeta(); }
+      } catch {}
+    })();
+    (async () => {
+      try {
+        const resp = await fetch(_dataBase + "overseas_timeseries.json" + _versionParam, { cache: _cacheOpt });
+        if (resp.ok) { DATA.overseas = await resp.json(); updateMeta(); }
+      } catch {}
+    })();
+  }
   // Cart state lives in localStorage - populate the floating button +
   // any in-page "+ Compare" buttons on first paint, then again after
   // every section render (renderCompareCart re-syncs button visuals).
@@ -43430,13 +43452,20 @@ function populateOrgFilter() {
   // the time they navigate, the slice is usually already on DATA.
   // If they beat the network, the render branches re-fire render()
   // once the slice arrives.
-  if (DATA && DATA._slices) {
-    setTimeout(() => {
+  if (DATA && DATA._slices && _bgPrefetchOK) {
+    // requestIdleCallback (when available) yields to first user input
+    // before the heavy warm starts; setTimeout is the fallback.
+    const _warm = () => {
       loadSlice("debuts");
       loadSlice("rosters_by_org");
       loadSlice("inactive");
       loadSlice("scout_reports");
-    }, 0);
+    };
+    if (typeof requestIdleCallback === "function") {
+      requestIdleCallback(_warm, { timeout: 2500 });
+    } else {
+      setTimeout(_warm, 0);
+    }
   }
 })();
 
