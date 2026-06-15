@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-13",
+ "generated_at": "2026-06-15",
  "vintage_years": [
   2018,
   2019,
@@ -12,13 +12,13 @@
   "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3731,
-  "level_from_statsapi": 3394,
-  "level_from_career_stats": 1465,
-  "debuted": 4112,
-  "censored_active": 2362,
+  "no_level_age_fallback": 3730,
+  "level_from_statsapi": 3396,
+  "level_from_career_stats": 1464,
+  "debuted": 4119,
+  "censored_active": 2355,
   "washed_out": 753,
-  "overdue": 901
+  "overdue": 899
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,44 +28,44 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4112,
-  "mae": 1.394,
-  "bias": 1.003,
-  "within_1y": 0.592,
+  "n": 4119,
+  "mae": 1.393,
+  "bias": 1.001,
+  "within_1y": 0.593,
   "exact": 0.222
  },
  "baseline_naive_level_table": {
-  "n": 3403,
-  "mae": 1.952,
+  "n": 3405,
+  "mae": 1.951,
   "bias": 1.743,
   "within_1y": 0.381,
   "exact": 0.169
  },
  "champion_on_baseline_rows": {
-  "n": 3403,
-  "mae": 1.406,
-  "bias": 1.071,
-  "within_1y": 0.585,
+  "n": 3405,
+  "mae": 1.405,
+  "bias": 1.069,
+  "within_1y": 0.586,
   "exact": 0.217
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2859,
-  "mae": 0.839,
-  "bias": 0.225,
-  "within_1y": 0.823,
+  "n": 2861,
+  "mae": 0.84,
+  "bias": 0.224,
+  "within_1y": 0.822,
   "exact": 0.377
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2784,
+  "n": 2786,
   "mae": 1.439,
-  "bias": 1.14,
-  "within_1y": 0.574,
+  "bias": 1.138,
+  "within_1y": 0.575,
   "exact": 0.201
  },
  "v38_frozen_on_km_rows": {
-  "n": 2784,
-  "mae": 2.004,
-  "bias": 1.858,
+  "n": 2786,
+  "mae": 2.003,
+  "bias": 1.856,
   "within_1y": 0.406,
   "exact": 0.136
  },
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 800,
-  "km_recalibrated": 901,
-  "censored_n": 2362
+  "v38": 798,
+  "km_recalibrated": 899,
+  "censored_n": 2355
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -127,17 +127,17 @@
    "exact": 0.243
   },
   "A": {
-   "n": 898,
-   "mae": 1.596,
-   "bias": 1.235,
-   "within_1y": 0.524,
-   "exact": 0.182
+   "n": 899,
+   "mae": 1.595,
+   "bias": 1.232,
+   "within_1y": 0.525,
+   "exact": 0.181
   },
   "A+": {
-   "n": 716,
-   "mae": 1.641,
-   "bias": 1.418,
-   "within_1y": 0.475,
+   "n": 717,
+   "mae": 1.64,
+   "bias": 1.414,
+   "within_1y": 0.476,
    "exact": 0.155
   },
   "AA": {
@@ -157,11 +157,11 @@
  },
  "by_vintage": {
   "2018": {
-   "n": 647,
-   "mae": 1.206,
-   "bias": 0.532,
-   "within_1y": 0.641,
-   "exact": 0.283
+   "n": 648,
+   "mae": 1.205,
+   "bias": 0.529,
+   "within_1y": 0.642,
+   "exact": 0.282
   },
   "2019": {
    "n": 769,
@@ -171,32 +171,32 @@
    "exact": 0.26
   },
   "2020": {
-   "n": 720,
+   "n": 721,
    "mae": 1.182,
-   "bias": 0.765,
-   "within_1y": 0.676,
-   "exact": 0.263
+   "bias": 0.766,
+   "within_1y": 0.677,
+   "exact": 0.262
   },
   "2021": {
-   "n": 710,
+   "n": 711,
    "mae": 1.889,
-   "bias": 1.677,
+   "bias": 1.678,
    "within_1y": 0.415,
    "exact": 0.111
   },
   "2022": {
-   "n": 706,
-   "mae": 1.431,
-   "bias": 1.19,
-   "within_1y": 0.576,
-   "exact": 0.215
+   "n": 708,
+   "mae": 1.428,
+   "bias": 1.185,
+   "within_1y": 0.578,
+   "exact": 0.216
   },
   "2023": {
-   "n": 560,
-   "mae": 1.436,
-   "bias": 1.286,
-   "within_1y": 0.58,
-   "exact": 0.198
+   "n": 562,
+   "mae": 1.432,
+   "bias": 1.279,
+   "within_1y": 0.582,
+   "exact": 0.199
   }
  },
  "residual_by_level": {
@@ -206,14 +206,14 @@
    "median": 1
   },
   "A": {
-   "n": 898,
-   "mean": 1.235,
-   "median": 1.0
+   "n": 899,
+   "mean": 1.232,
+   "median": 1
   },
   "A+": {
-   "n": 716,
-   "mean": 1.418,
-   "median": 2.0
+   "n": 717,
+   "mean": 1.414,
+   "median": 2
   },
   "AA": {
    "n": 902,
@@ -227,8 +227,8 @@
   }
  },
  "censoring": {
-  "censored_active": 2362,
-  "overdue_rate": 0.381,
+  "censored_active": 2355,
+  "overdue_rate": 0.382,
   "washed_out": 753,
   "washed_out_share_of_listed": 0.104
  },
@@ -262,7 +262,7 @@
    "AAA": 0.0
   },
   "2023": {
-   "A": 2.0,
+   "A": 2,
    "A+": 1.0,
    "AA": 1,
    "CPX": 3.0,
@@ -296,23 +296,23 @@
    0.9002,
    0.6861,
    0.5076,
-   0.4332,
-   0.4016,
-   0.3842,
-   0.3813,
-   0.3813,
-   0.3813
+   0.4323,
+   0.4008,
+   0.3834,
+   0.3806,
+   0.3806,
+   0.3806
   ],
   "A": [
    0.9688,
-   0.8165,
-   0.6024,
-   0.4478,
-   0.3259,
-   0.2691,
-   0.2467,
-   0.2388,
-   0.2388
+   0.8166,
+   0.6027,
+   0.4482,
+   0.3254,
+   0.2687,
+   0.2463,
+   0.2384,
+   0.2384
   ],
   "CPX": [
    0.9883,
