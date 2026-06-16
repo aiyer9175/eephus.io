@@ -26,7 +26,7 @@
    "notes": "Gate 1 PASSED: WAR 0.627 vs 0.728; coverage 0.800. IN-PROGRESS FIX (2026-06-13, owner: 'Lindor's WAR falls off a cliff / future years too low'): the heads + PT model train on COMPLETED seasons, but the LIVE base-1 season is partial (~41% elapsed at a June rebuild). Feeding the raw partial season made a durable regular briefly hurt this year (Lindor: 105 PA / 0.5 WAR vs his ~700 PA / ~6 WAR norm) read as a bad FULL season -> projected as a part-timer with an out-year cliff. Fix: reliability-blend the in-progress season's PT (fa_projection.project_player) AND the ML lag features war/exposure (proj_ml.build_features) toward the player's established (prior completed) level, weighted by the unobserved fraction (1-frac); healthy regulars whose current pace matches their track record are ~unchanged (population median y1 delta 0.000), only limited/injured veterans lift (mean +0.07). LIVE-ONLY: the gates project from completed seasons (in_progress=None), so Gate-1 (war 0.627, coverage 0.800) and Gate-2 are BYTE-UNCHANGED - re-confirmed PASS. Lindor 6.7 -> 12.2 5y WAR, cliff removed. Trade-off (disclosed): a player limited by losing the job, not injury, is also lifted - the lesser error for a star-heavy surface.",
    "last_checked": "2026-06-15",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "fa_war_paths_decay",
@@ -54,7 +54,7 @@
    "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis - Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) - committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check). MEGA v3 (2026-06-13): the comps-anchor blend cap raised 0.9 -> 1.0 so the anchor takes the very top ($400M+ comps) outright, where the OLS has no training support. Forward-chained mega slice (actual >=$100M, n=50) now BEATS the comps baseline for the first time - model $80.1M vs $82.7M - and the move is MONOTONE in the cap (0.85:84.3 / 0.90:82.9 / 0.95:81.4 / 1.00:80.1), with the POOLED guarantee MAE improving alongside (10.06 -> 9.96, n=1199), so it is not a mega-slice-only overfit. All three hard gates still pass.",
    "last_checked": "2026-06-15",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "fa_rational_value",
@@ -68,7 +68,7 @@
    "notes": "convex pricing at the NPV-basis winter $/WAR; verdict terciles recalibrated to the NPV corpus (value >= 160, overpay < 75; was 185/85 on sticker). Escalation stays flat-5% - the fitted forecasts lost their eval.",
    "last_checked": "2026-06-15",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "fa_dpw_series",
@@ -110,7 +110,7 @@
    "notes": "WS-2d (2026-06-11): player/club option P(enter) now priced from the Gate-2-validated market band distribution (P(projAAV vs option price) under the empirical-residual log-normal) - replacing the crude $-gap logistic for those types; mutual/conditional keep explicit priors. DECISION-level validation remains blocked on the historical option-decision data lift; the 2026-27 winter's logged fa_events are the first live shakedown. Verdict provisional: inputs validated, decisions not yet.",
    "last_checked": "2026-06-15",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "fa_qo_pick_tax",
@@ -166,7 +166,7 @@
    "notes": "CALIBRATION v3 (2026-06-12, owner escalations x2): v1's per-player isotonic carried a degenerate $0 bottom block (every FV35-40 prospect -> $0.0M) AND priced realized targets at era $/WAR ($6.7-12.1M) while the model prices today (~$13.0M) - the apparent 0.64 raw slope was mostly dollar inflation. v3 = count-weighted binned PAVA (fit_isotonic_binned) on TODAY-PRICED realized targets: raw slope 1.02 / bias -2.9M, held-out LOYO slope 0.97 / bias -1.13M. Curve: FV40 $1.5M / 45 $6.9M / 50 $17.9M / 55 $31.9M / 60 $65.6M (hitters); elite tail extrapolates the last observed segment (documented). Surplus now reads 'expected realized value at current replacement cost' - consistent units with vet surplus in the trade machine and team fits. Fit block: data/surplus_calibration_fit.json; the committed artifact keeps the historical-dollars slice as cohort accounting.",
    "last_checked": "2026-06-15",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "fv_to_war_anchors",
