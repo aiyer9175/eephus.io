@@ -56,13 +56,22 @@ BOOT = DATA_DIR / "timeseries.json"
 OUT = DATA_DIR / "leaderboard_gamelogs.json"
 
 
+def _home_flag(g: dict):
+    """1 home / 0 away / None unknown. The StatsAPI game feed (surfaced by
+    statcast_metrics._extract_recent_games) carries `is_home`; we keep it as a
+    compact int so the frontend can build Home/Away splits over the FULL season
+    (previously dropped here, which is why home/away splits were impossible)."""
+    v = g.get("is_home")
+    return 1 if v is True else 0 if v is False else None
+
+
 def _hitter_game(g: dict) -> dict:
     return {
         "d": g["date"], "lvl": g.get("level"),
         "pa": g.get("pa"), "ab": g.get("ab"), "h": g.get("h"),
         "2b": g.get("doub"), "3b": g.get("trip"), "hr": g.get("hr"),
         "bb": g.get("bb"), "so": g.get("so"), "sb": g.get("sb"),
-        "r": g.get("r"), "rbi": g.get("rbi"),
+        "r": g.get("r"), "rbi": g.get("rbi"), "home": _home_flag(g),
     }
 
 
@@ -71,42 +80,53 @@ def _pitcher_game(g: dict) -> dict:
         "d": g["date"], "lvl": g.get("level"),
         "ip": g.get("ip"), "k": g.get("k"), "er": g.get("er"),
         "r": g.get("r"), "h": g.get("h"), "bb": g.get("bb"),
-        "hr": g.get("hr"), "bf": g.get("bf"),
+        "hr": g.get("hr"), "bf": g.get("bf"), "home": _home_flag(g),
     }
 
 
-def _pull_one(player: dict, season: int) -> tuple[str, dict] | None:
-    """Pull + shape one player's full-season game log. Returns
-    (player_key, slice_entry) or None on no data / error."""
+def _pull_one(player: dict, seasons: list[int]) -> tuple[str, dict] | None:
+    """Pull + shape one player's full game log across `seasons` (newest first).
+    Returns (player_key, slice_entry) or None on no data / error. Multi-season
+    pulls let the frontend build By-season splits; single-season callers pass a
+    one-element list and behave exactly as before."""
     key = player.get("player_key")
     mlbam = player.get("mlbam_id")
     if not key or not mlbam:
         return None
     is_p = bool((player.get("statline") or {}).get("is_pitcher")
                 or (player.get("position") or "").upper() in {"SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP"})
-    try:
-        logs = sm._game_logs(int(mlbam), season, is_pitcher=is_p)
-    except Exception as e:  # noqa: BLE001 - network/parse hiccups skip the player
-        print(f"  ! {player.get('player_name')} ({mlbam}): {e}", file=sys.stderr)
+    shaped: list[dict] = []
+    for season in seasons:
+        try:
+            logs = sm._game_logs(int(mlbam), season, is_pitcher=is_p)
+        except Exception as e:  # noqa: BLE001 - network/parse hiccups skip the season
+            print(f"  ! {player.get('player_name')} ({mlbam}) {season}: {e}", file=sys.stderr)
+            continue
+        if not logs:
+            continue
+        # Uncapped — keep the whole season so any window is computable.
+        games = sm._extract_recent_games(logs, is_p, limit=10_000)
+        shaped.extend(_pitcher_game(g) if is_p else _hitter_game(g) for g in games)
+    if not shaped:
         return None
-    if not logs:
-        return None
-    # Uncapped — keep the whole season so any window is computable.
-    games = sm._extract_recent_games(logs, is_p, limit=10_000)
-    if not games:
-        return None
-    shaped = [(_pitcher_game(g) if is_p else _hitter_game(g)) for g in games]
+    # Newest game first, stable across seasons.
+    shaped.sort(key=lambda g: g.get("d") or "", reverse=True)
     return key, {"is_pitcher": is_p, "games": shaped}
 
 
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=datetime.now().year)
+    ap.add_argument("--seasons", type=int, default=1,
+                    help="How many seasons back (inclusive of --season) to pull, "
+                         "so the frontend can build By-season splits. 1 = current "
+                         "season only (default, matches the legacy slice).")
     ap.add_argument("--limit", type=int, default=300,
                     help="POC: cap to the top-N prospects by overall_rank. "
                          "0 = full active pool (pipeline phase).")
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
+    seasons = [args.season - i for i in range(max(1, args.seasons))]
 
     boot = json.loads(BOOT.read_text(encoding="utf-8"))
     players = boot.get("players") or []
@@ -116,14 +136,14 @@ def main() -> int:
     cand.sort(key=lambda p: (p.get("overall_rank") is None, p.get("overall_rank") or 1e9))
     if args.limit:
         cand = cand[: args.limit]
-    print(f"pulling game logs for {len(cand)} prospects (season {args.season}) "
-          f"with {args.workers} workers ...")
+    print(f"pulling game logs for {len(cand)} prospects "
+          f"(seasons {seasons[-1]}-{seasons[0]}) with {args.workers} workers ...")
 
     out_players: dict[str, dict] = {}
     t0 = time.time()
     done = 0
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        futs = {ex.submit(_pull_one, p, args.season): p for p in cand}
+        futs = {ex.submit(_pull_one, p, seasons): p for p in cand}
         for fut in as_completed(futs):
             done += 1
             res = fut.result()
