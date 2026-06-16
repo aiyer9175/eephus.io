@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-15T23:47:22Z",
+ "generated_at": "2026-06-16T16:59:11Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,16 +7,16 @@
    "n": 657,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8336,
-    "mlb_pipeline": 1.1664
+    "fangraphs": 0.8333,
+    "mlb_pipeline": 1.1667
    },
    "equal": {
-    "spearman": 0.2643,
-    "auc": 0.7052
+    "spearman": 0.2645,
+    "auc": 0.7082
    },
    "weighted": {
-    "spearman": 0.268,
-    "auc": 0.7068
+    "spearman": 0.2682,
+    "auc": 0.7098
    }
   },
   {
@@ -24,15 +24,15 @@
    "n": 680,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8571,
-    "mlb_pipeline": 1.1429
+    "fangraphs": 0.8565,
+    "mlb_pipeline": 1.1435
    },
    "equal": {
-    "spearman": 0.3169,
+    "spearman": 0.3173,
     "auc": 0.7396
    },
    "weighted": {
-    "spearman": 0.3176,
+    "spearman": 0.318,
     "auc": 0.7408
    }
   },
@@ -41,16 +41,16 @@
    "n": 727,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.8774,
-    "mlb_pipeline": 1.1226
+    "fangraphs": 0.8769,
+    "mlb_pipeline": 1.1231
    },
    "equal": {
-    "spearman": 0.2891,
-    "auc": 0.7434
+    "spearman": 0.2896,
+    "auc": 0.7459
    },
    "weighted": {
-    "spearman": 0.2966,
-    "auc": 0.7482
+    "spearman": 0.2971,
+    "auc": 0.7507
    }
   },
   {
@@ -58,15 +58,15 @@
    "n": 782,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8939,
-    "mlb_pipeline": 1.1061
+    "fangraphs": 0.8936,
+    "mlb_pipeline": 1.1064
    },
    "equal": {
-    "spearman": 0.2415,
+    "spearman": 0.2413,
     "auc": 0.7746
    },
    "weighted": {
-    "spearman": 0.2322,
+    "spearman": 0.2321,
     "auc": 0.7691
    }
   }
@@ -74,12 +74,12 @@
  "pooled": {
   "pooled_n": 2846,
   "equal": {
-   "spearman": 0.2746,
-   "auc": 0.739
+   "spearman": 0.2748,
+   "auc": 0.7404
   },
   "weighted": {
-   "spearman": 0.2768,
-   "auc": 0.7465
+   "spearman": 0.2769,
+   "auc": 0.7481
   }
  },
  "ship": true,
