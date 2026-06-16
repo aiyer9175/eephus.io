@@ -632,10 +632,12 @@
     }
     *::-webkit-scrollbar-thumb:hover { background: var(--down); }
     *::-webkit-scrollbar-corner { background: var(--bg-secondary); }
-    /* Horizontal-scroll strips (news ticker, comparison cart, etc.)
-       get a slimmer variant so the chrome doesn't dominate the row. */
-    .news-ticker-strip::-webkit-scrollbar { height: 8px; }
-    .news-ticker-strip::-webkit-scrollbar-thumb { border-width: 1px; }
+    /* Marquee strips hide the scrollbar entirely; only the reduced-motion
+       fallback (.ntk-scroll) restores a slim horizontal bar so the content
+       stays reachable when the marquee is suppressed. */
+    .news-ticker-strip::-webkit-scrollbar { display: none; }
+    .news-ticker-strip.ntk-scroll::-webkit-scrollbar { display: block; height: 8px; }
+    .news-ticker-strip.ntk-scroll::-webkit-scrollbar-thumb { border-width: 1px; }
     /* Section anchors offset by a sticky header height (~60px) so a
        jump lands the section heading below the global nav, not under
        it. Mirrors the offset used by IDE goto-line behavior. */
@@ -1114,6 +1116,21 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
       }
+      /* The spotlight bucket chips are a single tappable row on phones:
+         nowrap so they actually scroll-x (instead of stacking into 2-3
+         rows), chips don't squish, and the scrollbar is hidden to match
+         the on-theme marquee strips. */
+      .spotlight-subtabs {
+        flex-wrap: nowrap;
+        scrollbar-width: none;
+      }
+      .spotlight-subtabs::-webkit-scrollbar { display: none; }
+      .spotlight-subtabs > .chip { flex: 0 0 auto; }
+      /* Career / season expansion sub-rows keep a 12px floor on phones -
+         the desktop 0.92-0.94em multipliers fall to ~11px, below a
+         comfortable mobile read size. */
+      .stint-row > td,
+      .season-sub-row > td { font-size: 12px; }
     }
     /* v35 - Active chips echo the section-bar brand: bold text, a gold
        (--neon-amber) border, and a thin iridescent underline accent, so a
@@ -1199,7 +1216,7 @@
       border-top: 3px double var(--border);
       border-bottom: 3px double var(--border);
       background: var(--bg-secondary);
-      padding: 4px 8px;
+      padding: 2px 8px;
     }
     /* v30.6 - Two-row news ribbon (transactions on top, standout
        performances below). Stacks vertically; rows collapse to nothing
@@ -1262,10 +1279,47 @@
       flex: 1;
       min-width: 0;
       display: flex;
-      gap: 6px;
-      overflow-x: auto;
+      overflow: hidden;
       align-items: center;
       padding: 0;
+      scrollbar-width: none;        /* Firefox: no bar (marquee is the default) */
+    }
+    /* WIRE-style marquee track. The chips live inside this inline-flex
+       track; marqueeifyTicker() duplicates the track content once (two
+       .ntk-copy blocks) and animates translateX(0 -> -50%) so the strip
+       scrolls seamlessly with NO scrollbar - matching the homepage
+       .ticker-track and reclaiming the row the 8px scrollbar used to
+       take. gap:0 + per-chip margin-right keeps the two copies tiling
+       without a half-gap jump at the loop seam. Strips whose chips
+       already fit stay static (the JS leaves off the .ntk-marquee class). */
+    .news-ticker-track {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      flex: none;
+      white-space: nowrap;
+    }
+    .news-ticker-track .ntk-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      flex: none;
+    }
+    .news-ticker-track .chip { margin-right: 6px; }
+    .news-ticker-strip.ntk-marquee .news-ticker-track {
+      animation: news-ticker-scroll 40s linear infinite;
+      will-change: transform;
+    }
+    /* Pause on hover so a reader can stop the scroll and click a chip. */
+    .news-ticker:hover .news-ticker-strip.ntk-marquee .news-ticker-track {
+      animation-play-state: paused;
+    }
+    /* Reduced-motion (or no ResizeObserver) readers keep a slim horizontal
+       scroll rather than a clipped, frozen strip. */
+    .news-ticker-strip.ntk-scroll { overflow-x: auto; }
+    @keyframes news-ticker-scroll {
+      from { transform: translateX(0); }
+      to   { transform: translateX(var(--ntk-shift, -50%)); }
     }
     /* Restyle chips inside the ticker - typewriter mono + tan paper bg
        so they read as newspaper teasers, not navigation buttons. */
@@ -1660,7 +1714,7 @@
     .col-header > span.is-active::after {
       /* Keep the chevron but in cream - the default is-active color
          override is bypassed here, so the indicator inherits cleanly. */
-      color: #F5EBDC;
+      color: var(--col-header-fg);
     }
     .player-row {
       position: relative;
@@ -3359,7 +3413,7 @@
     .spotlight-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: #F5EBDC;
+      color: var(--col-header-fg);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -3370,7 +3424,7 @@
     }
     .spotlight-header > span {
       display: block;
-      color: #F5EBDC !important;
+      color: var(--col-header-fg) !important;
     }
     .spotlight-row {
       position: relative;
@@ -3489,7 +3543,7 @@
     .debut-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: #F5EBDC;
+      color: var(--col-header-fg);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -3500,7 +3554,7 @@
     }
     .debut-header > span {
       display: block;
-      color: #F5EBDC !important;
+      color: var(--col-header-fg) !important;
     }
     .debut-row {
       position: relative;
@@ -4850,7 +4904,7 @@
     .farm-header {
       font-family: var(--font-sans);
       font-size: 10px;
-      color: #F5EBDC;
+      color: var(--col-header-fg);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
@@ -4861,7 +4915,7 @@
     }
     .farm-header > span {
       display: block;
-      color: #F5EBDC !important;
+      color: var(--col-header-fg) !important;
     }
     .farm-row {
       position: relative;
@@ -14232,6 +14286,88 @@ function getFilteredGrads() {
 // the event set per tab (Injured tab shows IL-only, Traded tab shows
 // trade-only, Graduates tab shows graduation-only). Pass null to keep
 // the full feed (Active tab).
+// v32 - WIRE-style marquee for the news / standout ticker strips. The
+// homepage .ticker-track scrolls a duplicated track via translateX(-50%);
+// we mirror that here so the prospect-news + standout-performance ribbons
+// scroll seamlessly with NO scrollbar - saving the row the 8px bar used to
+// take and matching the site's terminal aesthetic. Behaviour:
+//   - the track is repeated enough times to exceed the viewport by a full
+//     copy, then animated by exactly one copy width, so it ALWAYS scrolls
+//     like the homepage WIRE ticker (even short rows) with a seamless loop
+//     and no gap; duration scales to content width (~constant px/sec);
+//   - the duplicated copy is aria-hidden + inert (data-key stripped, taken
+//     out of tab order) so AT and keyboard users see each chip once and
+//     clicks only fire on the real copy;
+//   - prefers-reduced-motion (or a browser without ResizeObserver that
+//     can't measure a hidden strip) falls back to a slim horizontal scroll
+//     so the content is never clipped-and-frozen;
+//   - a ResizeObserver (stored on the persistent container, not the
+//     re-rendered strip, so it never leaks) re-evaluates when the owning
+//     section goes from display:none to visible (clientWidth 0 -> N) or on
+//     viewport resize.
+function marqueeifyTicker(root) {
+  if (!root) return;
+  if (root._mqRO) { try { root._mqRO.disconnect(); } catch (e) {} root._mqRO = null; }
+  const strip = root.querySelector(".news-ticker-strip");
+  if (!strip) return;
+  // Wrap the raw chips into a single track once; remember the base markup
+  // so re-measures can reset to a single copy honestly.
+  let track = strip.querySelector(":scope > .news-ticker-track");
+  if (!track) {
+    const items = Array.from(strip.children);
+    if (!items.length) return;
+    track = document.createElement("div");
+    track.className = "news-ticker-track";
+    items.forEach((n) => track.appendChild(n));
+    strip.appendChild(track);
+  }
+  const base = track.innerHTML;
+  if (!base) return;
+  const reduce = !!(window.matchMedia
+    && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const apply = () => {
+    if (reduce) {
+      strip.classList.remove("ntk-marquee");
+      strip.classList.add("ntk-scroll");
+      if (track.dataset.state !== "scroll") { track.innerHTML = base; track.dataset.state = "scroll"; }
+      return;
+    }
+    const vw = strip.clientWidth;
+    if (!vw) return;                 // hidden; the ResizeObserver re-fires on show
+    // Measure one copy's true width against a single, unwrapped copy.
+    track.innerHTML = base;
+    const oneCopy = track.scrollWidth;
+    if (!oneCopy) return;
+    // Repeat the content enough to exceed the viewport by a full copy, then
+    // animate by exactly one copy width, so the strip ALWAYS scrolls like the
+    // homepage WIRE ticker (even when a single copy would fit) with a seamless
+    // loop and no gap at the seam. First copy stays interactive; the rest are
+    // decorative + inert (out of tab order, no data-key) so AT and clicks only
+    // ever see each chip once.
+    const copies = Math.max(2, Math.ceil(vw / oneCopy) + 1);
+    let html = '<span class="ntk-copy">' + base + '</span>';
+    for (let i = 1; i < copies; i++) html += '<span class="ntk-copy" aria-hidden="true">' + base + '</span>';
+    track.innerHTML = html;
+    track.querySelectorAll(".ntk-copy[aria-hidden] .chip").forEach((b) => {
+      b.tabIndex = -1;
+      b.removeAttribute("data-key");
+    });
+    track.dataset.state = "marquee";
+    strip.classList.remove("ntk-scroll");
+    strip.classList.add("ntk-marquee");
+    track.style.setProperty("--ntk-shift", "-" + oneCopy + "px");  // shift one copy
+    track.style.animationDuration = Math.max(16, Math.round(oneCopy / 55)) + "s";  // ~55px/sec, 16s floor
+  };
+  if ("ResizeObserver" in window) {
+    root._mqRO = new ResizeObserver(() => { try { apply(); } catch (e) {} });
+    root._mqRO.observe(strip);
+  } else if (!reduce && !strip.clientWidth) {
+    strip.classList.add("ntk-scroll");        // can't measure now, can't observe - keep it scrollable
+    return;
+  }
+  apply();
+}
+
 function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   const root = document.getElementById(rootId);
   if (!root) return;
@@ -14353,6 +14489,7 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
+  marqueeifyTicker(root);
 }
 
 // v30.6 - Standout performances ribbon. Companion to renderWhatsNew - 
@@ -14509,6 +14646,7 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
+  marqueeifyTicker(root);
 }
 
 // Fallback when standout_games isn't yet on the payload (cached
@@ -14575,6 +14713,7 @@ function _renderStandoutPerformancesFallback(root) {
     </button>
     <div class="news-ticker-strip">${chips}</div>
   </div>`;
+  marqueeifyTicker(root);
 }
 
 // Active-list right context rail - only visible on ≥1500px viewports

@@ -956,15 +956,23 @@ def _row_farm(o: dict, rank: int) -> str:
 # window keep their slots.
 _WIRE_MAX_FV_PER_DAY = 6
 
+@functools.lru_cache(maxsize=None)
+def _cached_data_json(name: str) -> dict:
+    """Parse a build-time JSON sidecar at most once per build. The home
+    wire (_load_fa_events_for_wire) and the cross-module strip both read
+    fa_class.json / mlb_projections.json; without this they were parsed
+    twice each run. Committed sidecars don't change mid-build, so the cache
+    is safe - callers must treat the result as read-only (shared instance)."""
+    try:
+        return json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
 def _load_fa_events_for_wire() -> list:
     """Recent winter events from the FA module's own export (the events
     block in data/fa_class.json). Additive: an absent or pre-events export
     just yields no items. Dates are the pipeline's first-seen stamps."""
-    try:
-        d = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
-    return d.get("events") or []
+    return _cached_data_json("fa_class.json").get("events") or []
 
 def _collect_events(players: list, graduates: list, fa_events: list | None = None) -> list:
     # Each event is (date, typ, glyph, ticker_text, key, org, name, val):
@@ -1306,8 +1314,7 @@ def _cross_module_strip() -> str:
     cards = []
     # MLB Free Agency - top of the current class board
     try:
-        fa = json.loads((Path(__file__).parent / "data" / "fa_class.json")
-                        .read_text(encoding="utf-8"))
+        fa = _cached_data_json("fa_class.json")
         top = sorted((m for m in fa.get("members") or [] if m.get("projGuar")),
                      key=lambda m: -m["projGuar"])[:3]
         rows = "".join(
@@ -1323,8 +1330,7 @@ def _cross_module_strip() -> str:
         pass
     # MLB Projections - 5y WAR leaders
     try:
-        mp = json.loads((Path(__file__).parent / "data" / "mlb_projections.json")
-                        .read_text(encoding="utf-8"))
+        mp = _cached_data_json("mlb_projections.json")
         top = sorted((v for v in mp.get("vets") or [] if v.get("warTotal")),
                      key=lambda v: -v["warTotal"])[:3]
         rows = "".join(
