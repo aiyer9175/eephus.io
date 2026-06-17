@@ -39206,13 +39206,14 @@ function renderPlayerDetail(key) {
       ${cfg.sub ? `<div class="ov-tile-sub">${cfg.sub}</div>` : ""}
     </div>`;
   };
+  // Summary grid: the always-visible header tiles already carry slash / top
+  // tools / ETA / Statcast, so this overview grid surfaces the COMPLEMENTARY
+  // reads (health, value, momentum) rather than repeating them. Each links to
+  // its tab where applicable.
   const summaryGridHtml = `
     <div class="detail-title flush">Summary</div>
     <div class="overview-tile-grid">
-      ${_ovTile(_ovSlash,     "performance")}
-      ${_ovTile(_ovTopTools ? { label: "Top tools", value: _ovTopTools } : null, "scouting")}
       ${_ovTile(_ovHealth,    "health")}
-      ${_ovTile(_ovEta,       "details")}
       ${_ovTile(_ovSurplus,   null)}
       ${_ovTile(_ovStock,     null)}
     </div>`;
