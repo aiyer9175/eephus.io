@@ -12,13 +12,13 @@
   "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3730,
+  "no_level_age_fallback": 3731,
   "level_from_statsapi": 3396,
-  "level_from_career_stats": 1464,
+  "level_from_career_stats": 1463,
   "debuted": 4119,
   "censored_active": 2355,
   "washed_out": 753,
-  "overdue": 899
+  "overdue": 898
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -94,7 +94,7 @@
  },
  "overdue_v38_vs_km": {
   "v38": 798,
-  "km_recalibrated": 899,
+  "km_recalibrated": 898,
   "censored_n": 2355
  },
  "ship_decision": {
@@ -228,7 +228,7 @@
  },
  "censoring": {
   "censored_active": 2355,
-  "overdue_rate": 0.382,
+  "overdue_rate": 0.381,
   "washed_out": 753,
   "washed_out_share_of_listed": 0.104
  },
@@ -293,15 +293,15 @@
    0.1929
   ],
   "A+": [
-   0.9002,
-   0.6861,
-   0.5076,
-   0.4323,
-   0.4008,
-   0.3834,
-   0.3806,
-   0.3806,
-   0.3806
+   0.9001,
+   0.6859,
+   0.5072,
+   0.4318,
+   0.4003,
+   0.3829,
+   0.3801,
+   0.3801,
+   0.3801
   ],
   "A": [
    0.9688,

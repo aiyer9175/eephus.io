@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-16T16:59:11Z",
+ "generated_at": "2026-06-16T23:53:16Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -38,54 +38,54 @@
   },
   {
    "year": 2022,
-   "n": 727,
+   "n": 728,
    "weights_vintage_max_base": 2019,
    "weights": {
     "fangraphs": 0.8769,
     "mlb_pipeline": 1.1231
    },
    "equal": {
-    "spearman": 0.2896,
-    "auc": 0.7459
+    "spearman": 0.289,
+    "auc": 0.7454
    },
    "weighted": {
-    "spearman": 0.2971,
-    "auc": 0.7507
+    "spearman": 0.2964,
+    "auc": 0.7502
    }
   },
   {
    "year": 2023,
-   "n": 782,
+   "n": 783,
    "weights_vintage_max_base": 2020,
    "weights": {
     "fangraphs": 0.8936,
     "mlb_pipeline": 1.1064
    },
    "equal": {
-    "spearman": 0.2413,
-    "auc": 0.7746
+    "spearman": 0.2405,
+    "auc": 0.7737
    },
    "weighted": {
-    "spearman": 0.2321,
-    "auc": 0.7691
+    "spearman": 0.2313,
+    "auc": 0.7682
    }
   }
  ],
  "pooled": {
-  "pooled_n": 2846,
+  "pooled_n": 2848,
   "equal": {
-   "spearman": 0.2748,
-   "auc": 0.7404
+   "spearman": 0.2744,
+   "auc": 0.74
   },
   "weighted": {
-   "spearman": 0.2769,
-   "auc": 0.7481
+   "spearman": 0.2765,
+   "auc": 0.7477
   }
  },
  "ship": true,
  "live_weights": {
-  "fangraphs": 0.9393,
-  "mlb_pipeline": 1.0607
+  "fangraphs": 0.9394,
+  "mlb_pipeline": 1.0606
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
