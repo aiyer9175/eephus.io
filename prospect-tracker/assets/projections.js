@@ -116,7 +116,9 @@
     return (arr || [])[t] ?? null;
   }
   function bandAt(m, t, which) {
-    const arr = which === "lo" ? m.warP10 : m.warP90;
+    // Prefer the prime-path bands so a prospect's displayed (prime) cell never
+    // sits outside its own band; vets fall back to their expected bands.
+    const arr = which === "lo" ? (m.warPTHP10 || m.warP10) : (m.warPTHP90 || m.warP90);
     if (!arr) return null;
     if (m.src === "prospect") {
       const off = t - (m.eta - DATA.first_season);
@@ -239,9 +241,9 @@
         tiles: [],
         sections: [
           { title: "Top 10 · projected 5y bWAR", rows: top.slice(0, 5).map((m, i) =>
-            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})` : ""}`]) },
           { title: " ", rows: top.slice(5, 10).map((m, i) =>
-            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalP10)}-${fmtWar(m.warTotalP90)})` : ""}`]) },
+            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})` : ""}`]) },
         ],
         url: "eephus.io/projections",
         filename: "eephus-projections-board.png",
@@ -359,7 +361,7 @@
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
         return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
       }).join("");
-      const tot = `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalP10)}–${fmtWar(m.warTotalP90)})</span>` : ""}`;
+      const tot = `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}–${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
       const cs = contractStatus(m);
       const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
         + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
@@ -375,7 +377,7 @@
         <td>${i + 1}</td>
         <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</td>
         ${cells}
-        <td>${tot}</td>
+        <td${m.warPeak != null ? ` title="Prime projection: ~${fmtWar(m.warPeak)} WAR/yr at peak age (talent path; surplus prices the expected value)"` : ""}>${tot}${m.warPeak != null ? `<span class="fa-sub" style="display:block;font-size:10px;">peak ~${fmtWar(m.warPeak)}</span>` : ""}</td>
         <td>${ct}</td>
         <td>${sur}</td>
       </tr>`;

@@ -337,6 +337,12 @@ def _prospect_rows(dpw: float) -> list[dict]:
         eta_yr = max(int(eta), FIRST_SEASON)
         sv = vf.surplus_value_mm(float(fv), is_pit, pos, age=age,
                                  eta_years=max(0.0, eta_yr - (FIRST_SEASON - 1)))
+        # PRIME/TALENT display path (warPTH) + headline peak: reconciled to the
+        # industry-style prime anchor so the board shows "what he is if he
+        # sticks" (a 62-FV SS ~ 3-4 WAR, star ceiling ~5) instead of the
+        # realized-mean ramp. The expected `war` above is unchanged and still
+        # prices surplus.
+        prime = vf.prospect_prime_path(float(fv), is_pit, debut_age, reliever)
         out.append(_clean({
             "key": p.get("player_key"), "name": p.get("player_name"),
             "age": age, "src": "prospect", "fv": fv, "eta": eta_yr,
@@ -347,6 +353,14 @@ def _prospect_rows(dpw: float) -> list[dict]:
             "warTotal": round(sum(mean_path), 1),
             "warTotalP10": round(sum(paths[lo_b]), 1),
             "warTotalP90": round(sum(paths[hi_b]), 1),
+            # Prime/talent display path (not used for $): board WAR cells.
+            "warPTH": [round(w, 2) for w in prime["mean"]] if prime else None,
+            "warPTHP10": [round(w, 2) for w in prime["p10"]] if prime else None,
+            "warPTHP90": [round(w, 2) for w in prime["p90"]] if prime else None,
+            "warTotalPTH": round(sum(prime["mean"]), 1) if prime else None,
+            "warTotalPTHP10": round(sum(prime["p10"]), 1) if prime else None,
+            "warTotalPTHP90": round(sum(prime["p90"]), 1) if prime else None,
+            "warPeak": prime["peak"] if prime else None,
             "bucketLo": _BUCKET_ORDER[lo_b], "bucketHi": _BUCKET_ORDER[hi_b],
             "pBust": round(probs[0], 3),
             "surNpv": int(sv * 1e6) if sv is not None else None,

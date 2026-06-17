@@ -163,6 +163,18 @@ fv_to_6yr_avg_war: {35: 0.12, 40: 0.22, 45: 0.38, 50: 0.70, 55: 0.95, 60: 1.45, 
 # retained for the diagnostic midpoint-solve provenance in the fit file.
 reconcile_fvs: [45, 50, 55, 60]
 
+# PRIME / TALENT anchor (FV -> peak-season annual WAR for a player who STICKS and
+# plays a full prime season). This is the industry-style FV->WAR people carry in
+# their heads (a 60 FV ~ a 3-WAR regular at peak), roughly the FanGraphs board
+# scale. It is a DISPLAY anchor only: it drives the prospect "prime" WAR path
+# (warPTH) and the headline warPeak shown on the projections board / player FV
+# badge. It deliberately does NOT touch surplus-$ pricing or the expected-value
+# (war) path, which stay reconciled to the realized `fv_to_6yr_avg_war` above so
+# the dollar calibration and pin tests are unchanged. The two differ by the
+# playing-time ramp + survival + bust mass that separates "what he is at his
+# prime if he makes it" from "expected WAR averaged over his first 6 years".
+fv_to_prime_war: {35: 0.3, 40: 0.6, 45: 1.1, 50: 1.7, 55: 2.3, 60: 3.0, 65: 3.8, 70: 4.7, 75: 5.5, 80: 6.5}
+
 # CONTINUOUS CALIBRATION (empirical_anchors.py, run during --fit) -- the anchors
 # above are the SEED/fallback; when use_empirical is on AND the fit file carries
 # `empirical_anchors`, fv_to_6yr_avg_war reads those instead, re-derived from the
