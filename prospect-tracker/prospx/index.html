@@ -17874,6 +17874,48 @@ function _splitCustomBuilder(key, caps, ui){
     <label>Min PA/BF<input type="number" min="0" style="width:72px;" value="${c.minSample||""}" onchange="splitCustomSet('${escapeHtml(key)}','minSample',this.value)"></label>
   </div>`;
 }
+// Season trend: a 15-game rolling OPS (hitters) / ERA (pitchers) line across
+// the full game-log slice. Reuses the Splits aggregation engine over sliding
+// windows. Oldest -> newest. Returns "" when the sample is too thin to plot.
+function _rollingPerfChart(games, isP){
+  if (!games || games.length < 10) return "";
+  const g = games.slice().sort((a,b)=> a.d<b.d?-1:a.d>b.d?1:0);
+  const WIN = 15;
+  const series = [];
+  for (let i = 0; i < g.length; i++){
+    const w = g.slice(Math.max(0, i - WIN + 1), i + 1);
+    const t = isP ? _lbAggPitcher(w) : _lbAggHitter(w);
+    let v = null;
+    if (isP){ const ip = t.outs/3; if (ip >= 3) v = 9*t.er/ip; }
+    else if (t.pa >= 15){
+      const oneB = t.h - t._2b - t._3b - t.hr;
+      const obp = (t.ab + t.bb) > 0 ? (t.h + t.bb)/(t.ab + t.bb) : null;
+      const slg = t.ab > 0 ? (oneB + 2*t._2b + 3*t._3b + 4*t.hr)/t.ab : null;
+      v = (obp != null && slg != null) ? obp + slg : null;
+    }
+    if (v != null && isFinite(v)) series.push(v);
+  }
+  if (series.length < 5) return "";
+  let lo = Math.min(...series), hi = Math.max(...series); if (lo === hi){ lo -= 0.05; hi += 0.05; }
+  const W = 560, H = 120, PADL = 34, PADR = 8, PADT = 8, PADB = 14;
+  const x = i => PADL + (W - PADL - PADR) * (i / (series.length - 1));
+  const y = v => (H - PADB) - (H - PADB - PADT) * ((v - lo) / (hi - lo));
+  const line = series.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const metric = isP ? "ERA" : "OPS";
+  const fmt = v => isP ? v.toFixed(2) : v.toFixed(3).replace(/^(-?)0\./, "$1.");
+  const ticks = [lo, (lo + hi) / 2, hi].map(t =>
+    `<line x1="${PADL}" y1="${y(t).toFixed(1)}" x2="${W - PADR}" y2="${y(t).toFixed(1)}" stroke="var(--border-light)" stroke-width="1"/>`
+    + `<text x="2" y="${(y(t) + 3).toFixed(1)}" font-size="8" fill="var(--text-tertiary)">${fmt(t)}</text>`).join("");
+  const stroke = isP ? "var(--neon-violet)" : "var(--neon-cyan)";
+  return `<div style="margin-bottom:12px;">
+    <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px;">Season trend <span style="text-transform:none;letter-spacing:0;">· ${WIN}-game rolling ${metric} (oldest to newest)</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto;display:block;" aria-hidden="true">
+      ${ticks}
+      <polyline points="${line}" fill="none" stroke="${stroke}" stroke-width="2" stroke-linejoin="round"/>
+      <circle cx="${x(series.length - 1).toFixed(1)}" cy="${y(series[series.length - 1]).toFixed(1)}" r="3" fill="${stroke}"/>
+    </svg>
+  </div>`;
+}
 function _splitFootnote(isP){
   return `<div class="split-foot">Rates re-aggregated from box-line components over each window (totals summed, then rates derived - never averaged). ${isP?("FIP uses a flat "+_LB_FIP_CONST+" MiLB constant; xFIP / GB% need batted-ball data not in the box line."):"OBP and BABIP omit HBP/SF (absent from box lines); wOBA needs season linear-weights not carried per game."} Cells dim when the sample is below the metric's stabilization point (hover for the threshold). By-level / by-season views index OPS/ISO (or ERA) to that level's average so cohorts stay comparable. Platoon (vs LHP/RHP) needs pitch-level handedness data, which is not available at this level.</div>`;
 }
@@ -17912,7 +17954,8 @@ function renderSplits(key){
     }
     body=warn+_splitTable(buckets,isP,ui,showPlus);
   }
-  host.innerHTML=`<div class="split-chips">${chips}</div><div class="split-ctrls">${controls}</div>${customUI}${body}${_splitFootnote(isP)}`;
+  const trendChart = _rollingPerfChart(games, isP);
+  host.innerHTML=`${trendChart}<div class="split-chips">${chips}</div><div class="split-ctrls">${controls}</div>${customUI}${body}${_splitFootnote(isP)}`;
 }
 function ensureSplits(p){
   const host=document.getElementById("splits-body"); if(!host||!p) return;
@@ -17982,6 +18025,55 @@ function _formBadgeHTML(p){
   const tip = `Recent form: last ${f.n} G ${f.metric} ${fmt(f.val)} vs season ${fmt(f.season)} (${dTxt} ${f.metric}). ${f.hot?"Trending up":f.cold?"Trending down":"In line with the season line"}. Full breakdown on the Stats / Statcast tab.`;
   return `<span class="stat-pill" style="color:${color};border-color:${color};font-size:11px;padding:2px 7px;" title="${escapeHtml(tip)}">${arrow} ${word} · L${f.n} ${f.metric} ${fmt(f.val)}</span>`;
 }
+
+// Tool-comp radar (Scouting tab): overlay a similar prospect's 20-80 tool
+// grades on the player's radar. Reuses _gfxRadarOverlay (the compare-view
+// overlay radar) with theme-token colors. Comp candidates = same position
+// bucket, closest FV. Interactive: chips pick the comp; state per player.
+let _toolCompUI = null;
+function _toolCompFor(key){ if (!_toolCompUI || _toolCompUI.key !== key) _toolCompUI = { key, comp: null }; return _toolCompUI; }
+function _radarToolsFor(p){
+  const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true) || !!(p.statline || {}).is_pitcher;
+  const keys = isPit ? [["FB","fb"],["SL","sl"],["CB","cb"],["CH","ch"],["CMD","cmd"]]
+                     : [["HIT","hit"],["PWR","pwr"],["SPD","speed"],["FLD","field"],["ARM","throw"]];
+  const grades = (p.tools && p.tools.grades) || {};
+  const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+  const ltc = (latest && latest.tools_consensus) || {};
+  const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
+  return keys.map(([lab, k]) => ({ label: lab, value: getT(k) }));
+}
+function _toolCompCandidates(p){
+  const bucket = positionBucket(p.position);
+  const myFv = p.fv_close_raw != null ? p.fv_close_raw : p.fv_close;
+  if (bucket == null || myFv == null) return [];
+  return (DATA.players || [])
+    .filter(q => q.player_key !== p.player_key && positionBucket(q.position) === bucket
+      && q.tools && q.tools.grades && q.fv_close != null)
+    .map(q => ({ q, d: Math.abs((q.fv_close_raw != null ? q.fv_close_raw : q.fv_close) - myFv) }))
+    .sort((a, b) => a.d - b.d).slice(0, 4).map(x => x.q);
+}
+function makeToolCompRadar(p){
+  const mine = _radarToolsFor(p);
+  if (!mine.some(it => it.value != null)) return "";   // no tool grades on file
+  if (!_toolCompCandidates(p).length) return "";
+  return `<div class="detail-title">Tool comp <span class="detail-title-sub">overlay a similar prospect's 20-80 tools on the radar</span></div><div id="tool-comp-radar"></div>`;
+}
+function renderToolCompRadar(key){
+  const host = document.getElementById("tool-comp-radar"); if (!host) return;
+  const p = findPlayer(key); if (!p) return;
+  const ui = _toolCompFor(key);
+  const cands = _toolCompCandidates(p);
+  const comp = ui.comp ? (cands.find(c => c.player_key === ui.comp) || findPlayer(ui.comp)) : null;
+  const P = { border: "var(--border)", text2: "var(--text-secondary)", bg0: "var(--bg-primary)" };
+  const series = [{ label: p.player_name, color: "var(--neon-cyan)", items: _radarToolsFor(p) }];
+  if (comp) series.push({ label: comp.player_name, color: "var(--neon-violet)", items: _radarToolsFor(comp) });
+  const radar = (typeof _gfxRadarOverlay === "function") ? _gfxRadarOverlay(series, P, 300) : "";
+  const chips = cands.map(c => `<button class="split-chip${ui.comp === c.player_key ? " active" : ""}" onclick="toolCompSet('${escapeHtml(key)}','${escapeHtml(c.player_key)}')">${escapeHtml(c.player_name)} ${Math.round(c.fv_close)}</button>`).join("");
+  const clear = ui.comp ? `<button class="split-chip" onclick="toolCompSet('${escapeHtml(key)}','')">clear</button>` : "";
+  const legend = `<div style="display:flex;gap:16px;font-size:11px;margin-top:6px;justify-content:center;"><span style="color:var(--neon-cyan);">&#9632; ${escapeHtml(p.player_name)}</span>${comp ? `<span style="color:var(--neon-violet);">&#9632; ${escapeHtml(comp.player_name)}</span>` : ""}</div>`;
+  host.innerHTML = `<div class="split-chips">${chips}${clear}</div><div style="display:flex;justify-content:center;">${radar}</div>${legend}`;
+}
+function toolCompSet(key, compKey){ _toolCompFor(key).comp = compKey || null; renderToolCompRadar(key); }
 
 function renderLeaderboards() {
   // Standout single-game performances ticker - same feed as Spotlights,
@@ -24789,6 +24881,40 @@ function debutProbLine(level) {
   const p = t => Math.round((1 - s[t]) * 100);
   if (p(3) <= 1) return "";        // DSL-style cure: a 0% line is noise
   return `P(debut) 1y ${p(1)}% · 3y ${p(3)}%${s.length > 5 ? ` · 5y ${p(5)}%` : ""}`;
+}
+
+// Kaplan-Meier debut-probability CURVE for a level cohort. _ETA_CURVES[lvl] is
+// the survival series (P still-not-debuted at year t); this plots cumulative
+// P(reach MLB) = 1 - survival as a rising curve, with 1y / 3y / 5y markers.
+// The text counterpart is debutProbLine(); this is the visual version.
+function makeDebutSurvivalCurve(level) {
+  if (!_ETA_CURVES || !level) return "";
+  const lvl = ({ "A-": "A", "Rk": "CPX", "ROK": "CPX", "FRk": "CPX" })[level] || level;
+  const s = _ETA_CURVES[lvl];
+  if (!s || s.length < 4) return "";
+  const cum = s.map(v => 1 - v);
+  if (cum[3] <= 0.01) return "";   // cure level (DSL): a flat ~0 curve is noise
+  const W = 280, H = 118, PADL = 24, PADR = 8, PADT = 8, PADB = 16;
+  const n = cum.length - 1;
+  const x = t => PADL + (W - PADL - PADR) * (t / n);
+  const y = v => (H - PADB) - (H - PADB - PADT) * v;
+  const line = cum.map((v, t) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
+  const area = `M ${x(0).toFixed(1)},${(H - PADB).toFixed(1)} L ${cum.map((v, t) => `${x(t).toFixed(1)},${y(v).toFixed(1)}`).join(" L ")} L ${x(n).toFixed(1)},${(H - PADB).toFixed(1)} Z`;
+  const grid = [0.25, 0.5, 0.75, 1].map(g =>
+    `<line x1="${PADL}" y1="${y(g).toFixed(1)}" x2="${W - PADR}" y2="${y(g).toFixed(1)}" stroke="var(--border-light)" stroke-width="1"/>`
+    + `<text x="2" y="${(y(g) + 3).toFixed(1)}" font-size="8" fill="var(--text-tertiary)">${Math.round(g * 100)}</text>`).join("");
+  const mark = [1, 3, 5].filter(t => t < cum.length).map(t =>
+    `<circle cx="${x(t).toFixed(1)}" cy="${y(cum[t]).toFixed(1)}" r="2.6" fill="var(--neon-cyan)"><title>${t}y: ${Math.round(cum[t] * 100)}%</title></circle>`
+    + `<text x="${x(t).toFixed(1)}" y="${(H - 4).toFixed(1)}" font-size="8" fill="var(--text-tertiary)" text-anchor="middle">${t}y</text>`).join("");
+  return `<div style="margin-top:10px;">
+    <div style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:4px;">Debut probability curve <span style="text-transform:none;letter-spacing:0;">· cumulative P(reach MLB) by year, ${escapeHtml(lvl)} cohort (Kaplan-Meier)</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:auto;display:block;" aria-hidden="true">
+      ${grid}
+      <path d="${area}" fill="var(--neon-cyan)" opacity="0.12"/>
+      <polyline points="${line}" fill="none" stroke="var(--neon-cyan)" stroke-width="2" stroke-linejoin="round"/>
+      ${mark}
+    </svg>
+  </div>`;
 }
 
 let _SWING_PLUS = null;
@@ -33318,44 +33444,6 @@ function _miniSparkline(values, opts = {}) {
   </svg>`;
 }
 
-// Career-trend strip above the season-by-season table. Shows 3-4 key
-// stats with a sparkline + the most recent value, so the reader gets
-// the directional read at a glance before parsing the full table.
-function makeCareerTrendStrip(career) {
-  if (!career || career.length < 2) return "";
-  const isP = career[0].is_pitcher;
-  const sorted = [...career].sort((a, b) => (a.season || 0) - (b.season || 0));
-  const cells = (isP
-    ? [
-        { key: "era",      label: "ERA",  fmt: v => v.toFixed(2), invert: true,
-          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
-        { key: "whip",     label: "WHIP", fmt: v => v.toFixed(2), invert: true,
-          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
-        { key: "k_per_9",  label: "K/9",  fmt: v => v.toFixed(1) },
-        { key: "bb_per_9", label: "BB/9", fmt: v => v.toFixed(1), invert: true,
-          stroke: "var(--down)", fill: "rgba(255, 95, 162, 0.18)" },
-      ]
-    : [
-        { key: "avg", label: "AVG", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
-        { key: "obp", label: "OBP", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
-        { key: "slg", label: "SLG", fmt: v => Number(v).toFixed(3).replace(/^0/, "") },
-        { key: "ops", label: "OPS", fmt: v => Number(v).toFixed(3).replace(/^0/, ""),
-          stroke: "var(--up)", fill: "rgba(64, 224, 132, 0.18)" },
-      ]
-  );
-  const tiles = cells.map(({ key, label, fmt, invert, stroke, fill }) => {
-    const vals = sorted.map(s => s[key] != null ? Number(s[key]) : null);
-    if (!vals.some(v => v != null)) return "";
-    const last = [...vals].reverse().find(v => v != null);
-    return `<div style="display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:6px 10px;border-right:1px solid var(--border-light);min-width:90px;">
-      <span class="t-stat-label">${label}</span>
-      ${_miniSparkline(vals, { stroke: stroke, fill: fill })}
-      <span class="t-stat-value" style="font-size:13px;">${last != null ? fmt(last) : " - "}</span>
-    </div>`;
-  }).join("");
-  if (!tiles) return "";
-  return `<div class="detail-card" style="display:flex;flex-wrap:wrap;padding:0;margin-bottom:10px;overflow-x:auto;">${tiles}</div>`;
-}
 
 // (v30.6's _seasonOrgForRow - the trade-walk approximation that folded the
 // current org backward across trades - was retired when the career table
@@ -34165,32 +34253,64 @@ function makeCareerByLevelTable(career, birthDate) {
 // / ERA- / WAR (pitchers). When the MLB Stats API has nothing on file
 // (every MiLB-only prospect), falls back to level-relative proxies
 // (OPS+ vs level / ERA- vs level) so the slot is never blank.
-// Compact inline sparkline for a numeric series (e.g. rolling xwOBA). Scales
-// the polyline to the series min/max and calls out the latest value, colored
-// against good/bad thresholds (invert flips them for "allowed" pitcher series).
-function _xwobaSparkline(vals, opts = {}) {
-  vals = (vals || []).filter(v => v != null && isFinite(v));
-  if (vals.length < 2) return "";
-  const fmt = opts.fmt || (v => Number(v).toFixed(3));
-  const W = 240, H = 40, PAD = 4;
-  let lo = Math.min(...vals), hi = Math.max(...vals);
-  if (lo === hi) { lo -= 0.01; hi += 0.01; }
-  const x = i => PAD + (W - 2 * PAD) * (i / (vals.length - 1));
-  const y = v => (H - PAD) - (H - 2 * PAD) * ((v - lo) / (hi - lo));
-  const pts = vals.map((v, i) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(" ");
-  const last = vals[vals.length - 1];
-  const { good, bad, invert } = opts;
-  const lastColor = (good != null && bad != null)
-    ? (invert ? (last <= bad ? "var(--up)" : last >= good ? "var(--down)" : "var(--neon-cyan)")
-              : (last >= good ? "var(--up)" : last <= bad ? "var(--down)" : "var(--neon-cyan)"))
-    : "var(--neon-cyan)";
-  return `<div style="display:flex;align-items:center;gap:10px;">
-    <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;height:${H}px;overflow:visible;" preserveAspectRatio="none" aria-hidden="true">
-      <polyline points="${pts}" fill="none" stroke="${lastColor}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
-      <circle cx="${x(vals.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="2.6" fill="${lastColor}"/>
-    </svg>
-    <div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${lastColor};white-space:nowrap;">${fmt(last)}<span style="font-size:9px;color:var(--text-tertiary);font-weight:400;margin-left:4px;">latest · ${opts.n || vals.length} pts</span></div>
-  </div>`;
+// Level percentile rank for box-line stats. Ranks the prospect within their
+// same-level, same-side cohort (DATA.players) on AVG/OBP/SLG/OPS/ISO/BB%/K%
+// (hitters) or ERA/WHIP/K9/BB9/K%/HR9 (pitchers). The existing Statcast
+// percentile bars are Statcast-only; this works for the ~80% with no tracking.
+function makeLevelPercentileBlock(p) {
+  const sl = p.statline || {};
+  const lvl = sl.level;
+  if (!lvl) return "";
+  const isP = !!sl.is_pitcher;
+  const minG = isP ? 10 : 20;
+  const cohort = (DATA.players || []).filter(q => {
+    const s = q.statline;
+    return s && s.level === lvl && !!s.is_pitcher === isP && (Number(s.games) || 0) >= minG;
+  });
+  if (cohort.length < 8) return "";
+  const num = v => (v == null ? null : Number(v));
+  const isoOf = s => { const a = num(s.avg), g = num(s.slg); return s.iso != null ? num(s.iso) : (a != null && g != null ? g - a : null); };
+  const f3 = v => v.toFixed(3).replace(/^(-?)0\./, "$1.");
+  const f1 = v => v.toFixed(1);
+  const f2 = v => v.toFixed(2);
+  const metrics = isP ? [
+    { k: "ERA", inv: true, get: s => num(s.era), fmt: f2 },
+    { k: "WHIP", inv: true, get: s => num(s.whip), fmt: f2 },
+    { k: "K/9", inv: false, get: s => num(s.k_per_9), fmt: f1 },
+    { k: "BB/9", inv: true, get: s => num(s.bb_per_9), fmt: f1 },
+    { k: "K%", inv: false, get: s => num(s.k_pct), fmt: f1 },
+    { k: "HR/9", inv: true, get: s => num(s.hr_per_9), fmt: f1 },
+  ] : [
+    { k: "AVG", inv: false, get: s => num(s.avg), fmt: f3 },
+    { k: "OBP", inv: false, get: s => num(s.obp), fmt: f3 },
+    { k: "SLG", inv: false, get: s => num(s.slg), fmt: f3 },
+    { k: "OPS", inv: false, get: s => num(s.ops), fmt: f3 },
+    { k: "ISO", inv: false, get: isoOf, fmt: f3 },
+    { k: "BB%", inv: false, get: s => num(s.bb_pct), fmt: f1 },
+    { k: "K%", inv: true, get: s => num(s.k_pct), fmt: f1 },
+  ];
+  const pctRank = (val, vals, inv) => {
+    const arr = vals.filter(v => v != null && isFinite(v));
+    if (arr.length < 8) return null;
+    let below = 0;
+    for (const v of arr) { if (inv ? v > val : v < val) below++; }
+    return Math.round(below / arr.length * 100);
+  };
+  const rows = metrics.map(m => {
+    const mine = m.get(sl);
+    if (mine == null || !isFinite(mine)) return "";
+    const pct = pctRank(mine, cohort.map(q => m.get(q.statline)), m.inv);
+    if (pct == null) return "";
+    const col = pct >= 80 ? "var(--up)" : pct >= 60 ? "var(--neon-cyan)" : pct <= 20 ? "var(--down)" : "var(--text-secondary)";
+    return `<div style="display:grid;grid-template-columns:46px 1fr 92px;align-items:center;gap:8px;padding:3px 0;">
+      <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);">${m.k}</span>
+      <span style="height:8px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;display:block;"><span style="display:block;height:100%;width:${pct}%;background:${col};"></span></span>
+      <span style="font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;"><span style="color:${col};font-weight:700;">${pct}</span><span style="color:var(--text-tertiary);">th · ${m.fmt(mine)}</span></span>
+    </div>`;
+  }).filter(Boolean).join("");
+  if (!rows) return "";
+  return `<div class="detail-title">Level percentile rank <span class="detail-title-sub">vs ${escapeHtml(lvl)} ${isP ? "pitchers" : "hitters"} (${cohort.length} with ${minG}+ G); higher bar = better</span></div>
+    <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
 }
 
 // Advanced-stats composer for the player detail page. Surfaces, in tiers and
@@ -34239,41 +34359,10 @@ function makeSabermetricsBlock(player) {
   }
   if (saberTiles.length) groups.push({ label: "MLB sabermetrics", html: tileGrid(saberTiles) });
 
-  // --- 2. Statcast expected outcomes (any tracked level) ------------------
-  // EV / HardHit% / Barrel% already render as level-cohort percentile bars in
-  // the dedicated Statcast section lower on the page, so we DON'T repeat those
-  // raw numbers here. This group surfaces only the expected-outcome summary
-  // (xwOBA / xwOBAcon) plus the rolling-xwOBA trend, which is shown nowhere
-  // else. Works at any tracked level (Hawk-Eye game feed reaches AAA and
-  // increasingly below, not just MLB). For pitchers these are contact ALLOWED,
-  // so the good/bad sense inverts (soft contact allowed is good).
-  const scm = player.statcast_metrics || {};
-  const cq = scm.contact_quality || null;
-  const cqN = cq ? (Number(cq.batted_balls) || 0) : 0;
-  if (cq && cqN >= 5) {
-    const cqColor = (val, hiThresh, loThresh) => {
-      if (val == null || !isFinite(val)) return neutralC;
-      return colorize(isP ? val <= loThresh : val >= hiThresh, isP ? val >= hiThresh : val <= loThresh);
-    };
-    const a = isP ? " allowed" : "";
-    const lvl = scm.level || sl.level || "";
-    const cqTiles = [];
-    if (cq.xwoba_est != null) cqTiles.push(tile(isP ? "xwOBA-a" : "xwOBA", f3(cq.xwoba_est), cqColor(cq.xwoba_est, 0.350, 0.300), `Expected wOBA from the contact-quality model${a} · ${cqN} batted balls${lvl ? " at " + lvl : ""}`));
-    if (cq.xwobacon_est != null && Math.abs(cq.xwobacon_est - (cq.xwoba_est || 0)) > 0.001)
-      cqTiles.push(tile(isP ? "xwOBAcon-a" : "xwOBAcon", f3(cq.xwobacon_est), cqColor(cq.xwobacon_est, 0.380, 0.330), `Expected wOBA on contact only${a} · ${cqN} batted balls`));
-    const rollArr = Array.isArray(cq.rolling_xwoba)
-      ? cq.rolling_xwoba.map(r => r && Number(r.xwoba)).filter(v => v != null && isFinite(v))
-      : [];
-    const spark = rollArr.length >= 4
-      ? _xwobaSparkline(rollArr, { good: 0.350, bad: 0.300, invert: isP, fmt: f3, n: rollArr.length })
-      : "";
-    if (cqTiles.length || spark) {
-      groups.push({
-        label: `Statcast expected outcomes${isP ? " (against)" : ""}${lvl ? " · " + lvl : ""}`,
-        html: tileGrid(cqTiles) + (spark ? `<div style="margin-top:8px;">${spark}</div>` : ""),
-      });
-    }
-  }
+  // --- 2. Statcast: owned by the merged Statcast section lower on this tab
+  // (makeMergedStatcastSection: nuggets + zone + spray + rolling-xwOBA +
+  // percentile bars + pitch movement). Not repeated here to keep each metric
+  // in one place.
 
   // --- 3. Swing+ (MLB bat tracking; hitters) ------------------------------
   const swp = (typeof getSwingPlus === "function") ? getSwingPlus(player) : null;
@@ -36967,10 +37056,7 @@ function renderPlayerDetail(key) {
   const _sm = p.sabermetrics || {};
   const _hasRealSabr = (_sm.wrc_plus != null || _sm.xfip != null || _sm.fip != null
     || _sm.fip_minus != null || _sm.woba != null || _sm.era_minus != null);
-  const _cqN = (((p.statcast_metrics || {}).contact_quality || {}).batted_balls) || 0;
-  const _sabrSub = _hasRealSabr ? "MLB sabermetrics"
-    : _cqN >= 5 ? "Statcast contact quality + level context"
-    : "level-relative context";
+  const _sabrSub = _hasRealSabr ? "MLB sabermetrics" : "level-relative context";
   const sabermetricsTitle = `Advanced stats <span class="detail-title-sub">${_sabrSub}</span>`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
@@ -38814,8 +38900,10 @@ function renderPlayerDetail(key) {
       : "";
     const confLine = eta.confidence
       ? `<span class="detail-title-sub">${escapeHtml(eta.confidence)} confidence</span>` : "";
+    const survivalCurve = (typeof makeDebutSurvivalCurve === "function")
+      ? makeDebutSurvivalCurve((p.statline || {}).level) : "";
     return `<div class="detail-title">ETA breakdown · ${etaDisplayYear(eta)} ${confLine}</div>
-      <table class="detail-table"><tbody>${r.map(([k, v, why]) => `<tr><td>${k}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${v}</td><td style="color:var(--text-tertiary);font-size:11px;">${why || ""}</td></tr>`).join("")}</tbody></table>${halfExplain}`;
+      <table class="detail-table"><tbody>${r.map(([k, v, why]) => `<tr><td>${k}</td><td style="text-align:right;font-variant-numeric:tabular-nums;">${v}</td><td style="color:var(--text-tertiary);font-size:11px;">${why || ""}</td></tr>`).join("")}</tbody></table>${halfExplain}${survivalCurve}`;
   })();
 
   // Scouting flags - green/red rate-stat indicators sit directly under
@@ -39153,7 +39241,11 @@ function renderPlayerDetail(key) {
   // body is filled lazily by ensureSplits(p) after render (it loads the gamelog
   // slice on first open of this tab), so the shell is cheap on every paint.
   const splitsSection = _splitsSectionShell(p);
+  // Level percentile rank (box-line stats vs same-level cohort) - works for
+  // prospects with no Statcast tracking, complements the Statcast percentile bars.
+  const levelPctSection = makeLevelPercentileBlock(p);
   const performanceHtml = [consolidatedCareerSection, sabermetricsSection,
+                           levelPctSection,
                            savantSection, statcastSection, statcastPercentilesSection,
                            recentGamesSection, splitsSection,
                            arsenalSection, projectionArcSection, debutFvCohortSection]
@@ -39171,8 +39263,10 @@ function renderPlayerDetail(key) {
   // climbing 50 → 55 while PWR holds flat, or FB jumping 60 → 70
   // post-velo-gain).
   const toolHistorySection = _toolHistoryChart(p);
+  const toolCompSection = makeToolCompRadar(p);
   const scoutingHtml = [
     toolsSection + (sourceHistorySection || ""),
+    toolCompSection,
     toolHistorySection,
     toolDevSection, perSourceToolsSection, playerNewsSection, scoutingReportsSection,
   ].filter(s => s && s.trim()).join("");
@@ -39236,6 +39330,8 @@ function renderPlayerDetail(key) {
   // Fill the Splits body lazily (only present when the Stats / Statcast tab is
   // active). Loads the gamelog slice on first open, then re-renders in place.
   try { ensureSplits(p); } catch (e) { /* splits are non-critical */ }
+  // Tool-comp radar (Scouting tab); only present when that tab is active.
+  try { if (document.getElementById("tool-comp-radar")) renderToolCompRadar(p.player_key); } catch (e) { /* non-critical */ }
   syncSortHeaderActive();
   // Module hub strip - the SAME player across eephus.io surfaces (FA market
   // card, MLB player page). Lazy via player_links.json; only renders when
