@@ -34168,7 +34168,7 @@ function makeCareerByLevelTable(career, birthDate) {
 // Compact inline sparkline for a numeric series (e.g. rolling xwOBA). Scales
 // the polyline to the series min/max and calls out the latest value, colored
 // against good/bad thresholds (invert flips them for "allowed" pitcher series).
-function _miniSparkline(vals, opts = {}) {
+function _xwobaSparkline(vals, opts = {}) {
   vals = (vals || []).filter(v => v != null && isFinite(v));
   if (vals.length < 2) return "";
   const fmt = opts.fmt || (v => Number(v).toFixed(3));
@@ -34265,7 +34265,7 @@ function makeSabermetricsBlock(player) {
       ? cq.rolling_xwoba.map(r => r && Number(r.xwoba)).filter(v => v != null && isFinite(v))
       : [];
     const spark = rollArr.length >= 4
-      ? _miniSparkline(rollArr, { good: 0.350, bad: 0.300, invert: isP, fmt: f3, n: rollArr.length })
+      ? _xwobaSparkline(rollArr, { good: 0.350, bad: 0.300, invert: isP, fmt: f3, n: rollArr.length })
       : "";
     if (cqTiles.length || spark) {
       groups.push({
@@ -36933,7 +36933,6 @@ function renderPlayerDetail(key) {
          <span class="detail-title-sub">raw stats + colored delta-vs-level-mean stacked</span>
          <span style="margin-left:8px;vertical-align:middle;display:inline-flex;gap:4px;flex-wrap:wrap;">${rpsPlusPillHTML(p)}${scoutRatesHTML(p)}</span>
        </div>
-       ${makeCareerTrendStrip(p.career_stats)}
        <div class="career-by-season">
          <div class="detail-title" style="margin-top:14px;font-size:13px;">Raw career stats</div>
          <div class="detail-title-sub" style="display:block;margin:0 0 4px;font-style:italic;">By season</div>
