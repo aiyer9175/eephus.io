@@ -1741,12 +1741,16 @@ def build_team() -> str:
     _M_STAR = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9 '
                '6.8 19l1-5.8L3.6 9.1l5.8-.8z" fill="none" stroke="currentColor" stroke-width="1.8" '
                'stroke-linejoin="round"/></svg>')
+    _M_WEB = ('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" '
+              'stroke="currentColor" stroke-width="1.9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 '
+              '2.5-2.5 15.5 0 18" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>')
     def _badge_for(note: str, uid: str) -> str:
         n = note.lower()
         if "prospx" in n:                         mark, accent = prospx_ball_logo(uid, 24), "var(--accent-gold)"
         elif "projection" in n:                   mark, accent = _M_PROJ, "var(--accent-cyan)"
         elif "free agency" in n:                  mark, accent = _M_FA, "var(--accent-green)"
         elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-gold)"
+        elif "webmaster" in n or "web" in n:      mark, accent = _M_WEB, "var(--accent-navy)"
         elif "design" in n:                       mark, accent = _M_PEN, "var(--text-secondary)"
         else:                                     mark, accent = _M_STAR, "var(--accent-gold)"
         creator = "creator" in n
