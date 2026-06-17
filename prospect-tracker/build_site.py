@@ -557,7 +557,8 @@ def _nav(active: str) -> str:
     )
     return (
         '<header class="eephus-nav">'
-        '<span class="eephus-brand"><a class="eephus-wordmark" href="/">eephus.io</a></span>'
+        f'<span class="eephus-brand"><a class="eephus-wordmark" href="/" aria-label="eephus.io home">'
+        f'{eephus_merged_wordmark("nav", tag="span")}</a></span>'
         f'<nav class="eephus-links">{"".join(items)}</nav>'
         f'{controls}'
         "</header>"

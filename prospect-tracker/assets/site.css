@@ -208,16 +208,16 @@
   background: var(--bg-secondary);
   border-bottom: 3px double var(--text-primary);
 }
+/* The masthead brand renders the eephus.io merged wordmark (the signature-arc
+   logo), matching the homepage sidebar. Font-size sizes the whole lockup; the
+   arc replaces the old iridescent underline. */
 .eephus-nav .eephus-wordmark {
   font-family: var(--font-retro-mono);
   font-weight: 700; font-size: 22px; letter-spacing: .04em;
   color: var(--text-primary); text-decoration: none;
-  display: inline-flex; flex-direction: column; line-height: 1;
+  display: inline-flex; align-items: flex-end; line-height: 1;
 }
-.eephus-nav .eephus-wordmark::after {
-  content: ""; display: block; height: 3px; margin-top: 4px;
-  background: var(--iridescent); border-radius: 2px;
-}
+.eephus-nav .eephus-wordmark .dot { color: var(--accent-gold); }
 /* Wordmark + beta tag lockup. One version string lives in build_site.py
    (EEPHUS_VERSION); the badge is a platform-wide state, so it rides the
    eephus.io wordmark - never PROSPX. Subordinate to the wordmark, sharp, both
