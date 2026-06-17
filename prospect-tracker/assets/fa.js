@@ -335,6 +335,51 @@
     }, "image/png");
   }
 
+  // Open the shared Generate GFX modal for a one-subject (card) export; fall
+  // back to the legacy direct download if the module didn't load.
+  function _openCard(opts) {
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+        title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+    } else if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.shareCard(opts);
+    }
+  }
+
+  // Board spec for the Generate GFX modal: the constructed class as a column
+  // leaderboard (proj years/guarantee, AAV, deal WAR, surplus, verdict).
+  function _faBoardSpec(cls) {
+    const top = cls.members.filter(m => m.projGuar != null)
+      .sort((a, b) => (b.projGuar || 0) - (a.projGuar || 0)).slice(0, 50);
+    const vc = v => v === "value" ? "pos" : v === "overpay" ? "neg" : "muted";
+    const rows = top.map((m, i) => ({ cells: [
+      { t: i + 1 },
+      { t: m.name, sub: `${m.pos || ""} · ${m.age != null ? Math.floor(m.age) : "?"} · ${m.from || ""}${m.thinPlatform ? " · thin" : ""}` },
+      { t: `${m.projYears != null ? m.projYears + "y / " : ""}${money(m.projGuar)}` },
+      { t: m.projAav != null ? money(m.projAav) : "-" },
+      { t: m.warTotal != null ? m.warTotal.toFixed(1) : "-" },
+      { t: m.surplus != null ? formatMetric(m.surplus / 1e6, "surplusM") : "-", c: (m.surplus || 0) >= 0 ? "pos" : "neg" },
+      { t: (m.verdict || "-").toUpperCase(), c: vc(m.verdict) },
+    ] }));
+    const yy = `${cls.class_year - 1}-${String(cls.class_year).slice(2)}`;
+    return {
+      kind: "board", module: "MLB Free Agency", accentToken: "--accent-green",
+      title: `MLB Free Agency · ${yy} Class Board`,
+      subtitle: `${cls.n_members} constructed members · ${cls.n_projected} projected · winter $/WAR ${money(cls.dpw_usd)}`,
+      url: "eephus.io/fa", filenameBase: `fa-class-board-${yy}`,
+      caption: "predicted market vs rational value - two numbers, never conflated · ex-ante",
+      board: { defaultCount: 25, counts: [10, 25, 50], columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.32 },
+        { label: "Yrs / Guar", frac: 0.16 },
+        { label: "proj AAV", frac: 0.11 },
+        { label: "Deal WAR", frac: 0.10, wideOnly: true },
+        { label: "Surplus", frac: 0.14 },
+        { label: "Verdict", frac: 0.12, wideOnly: true },
+      ], rows },
+    };
+  }
+
   // Blocked-by chips: WHO and WHAT KIND ('prospect' = PROSPX near-ETA,
   // 'mlb' = a contracted incumbent already producing at the slot).
   function blockedText(blockedBy) {
@@ -389,7 +434,7 @@
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
-      <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip" id="fa-gfx-btn" title="Download the top of the board as a PNG share card (theme-aware)">&#8681; share card</button></span>
+      <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
     </div>`;
     // Filter bar: Type (UFA vs the option family), position group, and verdict.
     const nUfa = cls.members.filter(m => !isOption(m)).length;
@@ -465,7 +510,10 @@
       if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
     });
     const gfx = document.getElementById("fa-gfx-btn");
-    if (gfx) gfx.onclick = () => downloadShareCard(cls);
+    if (gfx) gfx.onclick = () => {
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faBoardSpec(cls));
+      else downloadShareCard(cls);   // fallback if the GFX module didn't load
+    };
     fillRowPhotos(rows);
   }
 
@@ -682,7 +730,7 @@
         <div class="mlbp-hero-main">
           <div class="mlbp-name">${teamLogo(m.from)}<h2>${esc(m.name)}</h2></div>
           <div class="fa-sub">${esc(m.pos || "")} &middot; ${m.age != null ? "age " + Math.floor(m.age) : "?"} &middot; ${esc(m.from || "")} &middot; ${statusChip(m)}</div>
-          <div style="margin-top:8px;"><button class="chip" id="fa-player-gfx" title="Download this market card as a PNG share card (theme-aware)">&#8681; share card</button></div>
+          <div style="margin-top:8px;"><button class="chip egfx-chip" id="fa-player-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">
           ${m.projGuar != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">projected</span><span class="mlbp-tile-val">${m.projYears != null ? m.projYears + "y" : "?"} / ${money(m.projGuar)}</span></div>` : ""}
@@ -757,7 +805,7 @@
         rows: comps.map(c => [`${c.name || "?"}${c.yr ? ` '${String(c.yr).slice(2)}` : ""}`,
           `${c.years != null ? c.years + "y / " : ""}${c.guar != null ? money(c.guar) : "-"}${c.to ? `  ${c.to}` : ""}`]) });
     }
-    window.EEPHUS_HUB.shareCard({
+    _openCard({
       module: "MLB Free Agency",
       accentToken: "--accent-green",
       name: m.name,

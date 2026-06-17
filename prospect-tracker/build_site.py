@@ -59,6 +59,7 @@ _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
+_GFX_VER = _asset_ver("assets/eephus-gfx.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -1550,6 +1551,7 @@ def build_fa() -> str:
         '<div id="fa-rows"></div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/fa.js?v={_FA_VER}" defer></script>'
     )
     return page("Free Agency - eephus.io", "fa", body,
@@ -1576,6 +1578,7 @@ def build_projections() -> str:
         '<div id="proj-rows"></div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
     )
     return page("MLB Projections - eephus.io", "projections", body,
@@ -1709,6 +1712,49 @@ def build_team() -> str:
             if (ROOT / "assets" / "team" / f"{slug}.{ext}").exists():
                 return f"/assets/team/{slug}.{ext}"
         return None
+    # Credit badges: a LOGO mark per credit (no text), the role name on hover.
+    # A crown perches on every "Creator" badge (the founder mark); non-creator
+    # roles (e.g. Site Design) wear the mark alone. Marks ride currentColor so
+    # the per-module accent (and both themes) flow through one style hook.
+    _CROWN = ('<svg class="team-badge-crown" viewBox="0 0 24 14" aria-hidden="true">'
+              '<path d="M2 12h20l-1.6-8-4.9 4L12 2 8.5 8 3.6 4z" fill="currentColor" '
+              'stroke="rgba(0,0,0,.28)" stroke-width="0.5" stroke-linejoin="round"/>'
+              '<circle cx="2" cy="3.2" r="1.3" fill="currentColor"/>'
+              '<circle cx="12" cy="1.3" r="1.4" fill="currentColor"/>'
+              '<circle cx="22" cy="3.2" r="1.3" fill="currentColor"/></svg>')
+    _M_PROJ = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 17l5-5 4 3 8-9" fill="none" '
+               'stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>'
+               '<circle cx="3" cy="17" r="1.5" fill="currentColor"/><circle cx="8" cy="12" r="1.5" fill="currentColor"/>'
+               '<circle cx="12" cy="15" r="1.5" fill="currentColor"/><circle cx="20" cy="6" r="1.7" fill="currentColor"/></svg>')
+    _M_FA = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5v19" stroke="currentColor" '
+             'stroke-width="2" stroke-linecap="round"/><path d="M16.5 6.6C15.4 5.4 13.8 4.8 12 4.8c-2.5 0-4.5 '
+             '1.3-4.5 3.4 0 2.1 1.8 2.9 4.5 3.6 2.7.6 4.8 1.5 4.8 3.8s-2.1 3.7-4.8 3.7c-2 0-3.8-.7-4.9-2" '
+             'fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+    _M_CAP = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2.5 8.5 12 13l9.5-4.5z" fill="none" '
+              'stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M6.5 11v4.2c0 1.3 2.5 '
+              '2.4 5.5 2.4s5.5-1.1 5.5-2.4V11" fill="none" stroke="currentColor" stroke-width="1.9" '
+              'stroke-linecap="round" stroke-linejoin="round"/><path d="M21.5 8.5v5" stroke="currentColor" '
+              'stroke-width="1.9" stroke-linecap="round"/></svg>')
+    _M_PEN = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.2-4.2L15 6l3 3-9.8 9.8L4 20z" '
+              'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linejoin="round"/><path d="M13.5 7.5l3 3" '
+              'stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>')
+    _M_STAR = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.6 5.3 5.8.8-4.2 4.1 1 5.8L12 16.9 '
+               '6.8 19l1-5.8L3.6 9.1l5.8-.8z" fill="none" stroke="currentColor" stroke-width="1.8" '
+               'stroke-linejoin="round"/></svg>')
+    def _badge_for(note: str, uid: str) -> str:
+        n = note.lower()
+        if "prospx" in n:                         mark, accent = prospx_ball_logo(uid, 24), "var(--accent-gold)"
+        elif "projection" in n:                   mark, accent = _M_PROJ, "var(--accent-cyan)"
+        elif "free agency" in n:                  mark, accent = _M_FA, "var(--accent-green)"
+        elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-gold)"
+        elif "design" in n:                       mark, accent = _M_PEN, "var(--text-secondary)"
+        else:                                     mark, accent = _M_STAR, "var(--accent-gold)"
+        creator = "creator" in n
+        cls = "team-badge" + (" is-creator" if creator else "")
+        label = html.escape(note)
+        return (f'<span class="{cls}" title="{label}" aria-label="{label}" '
+                f'style="--badge-accent:{accent}">{_CROWN if creator else ""}'
+                f'<span class="team-badge-mark">{mark}</span></span>')
     cards = []
     for m in team:
         handle = (m.get("handle") or "").lstrip("@")
@@ -1753,7 +1799,7 @@ def build_team() -> str:
         notes = [n for n in (notes or []) if n]
         note_html = (
             '<div class="team-notes">'
-            + "".join(f'<span class="team-note">{html.escape(n)}</span>' for n in notes)
+            + "".join(_badge_for(n, f'{_member_slug(m["name"])}-{i}') for i, n in enumerate(notes))
             + "</div>"
         ) if notes else ""
         cards.append(

@@ -229,26 +229,10 @@
       &middot; seasons priced at the ${first} ex-ante <span data-gl="winter_dpw">$/WAR</span> ${money(DATA.dpw_usd)},
       escalating ${(DATA.dpw_infl * 100).toFixed(0)}%/yr
       &middot; WAR shown is the <strong>playing-time-held</strong> (if-healthy) path; <span data-gl="contract_surplus">surplus</span> prices the attrition-discounted expected value, only where a real contract exists
-      &middot; <button class="chip" id="proj-board-gfx" title="Download the top of this board as a PNG share card (theme-aware)">&#8681; share card</button></div>`;
+      &middot; <button class="chip egfx-chip" id="proj-board-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
     const gfxBtn = document.getElementById("proj-board-gfx");
     if (gfxBtn) gfxBtn.onclick = () => {
-      if (!window.EEPHUS_HUB) return;
-      const top = sortRows(rows()).slice(0, 10);
-      window.EEPHUS_HUB.shareCard({
-        module: "MLB Projections",
-        name: "Five-Year bWAR Leaders",
-        meta: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
-        tiles: [],
-        sections: [
-          { title: "Top 10 · projected 5y bWAR", rows: top.slice(0, 5).map((m, i) =>
-            [`${i + 1}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})` : ""}`]) },
-          { title: " ", rows: top.slice(5, 10).map((m, i) =>
-            [`${i + 6}. ${m.name}`, `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `  (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})` : ""}`]) },
-        ],
-        url: "eephus.io/projections",
-        filename: "eephus-projections-board.png",
-        caption: "Gate-1-validated engine · floor/mean/ceiling probability buckets · prospects join at their PROSPX ETA",
-      });
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_projBoardSpec(sortRows(rows()).slice(0, 50)));
     };
 
     const chip = (label, key, field) =>
@@ -441,7 +425,7 @@
     if (banner) banner.innerHTML = "";
     const a = findRow(state.cmp[0]), b = findRow(state.cmp[1]);
     bar.innerHTML = `<a class="chip" href="#" id="cmp-back">← back to projections</a>
-      <button class="chip" id="cmp-gfx" title="Download this comparison as a PNG share card">&#8681; share card</button>`;
+      <button class="chip egfx-chip" id="cmp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`;
     document.getElementById("cmp-back").onclick = (e) => {
       e.preventDefault(); state.cmp = []; syncToURL(); render();
     };
@@ -502,8 +486,9 @@
     const gfx = document.getElementById("cmp-gfx");
     if (gfx) gfx.onclick = () => {
       if (!window.EEPHUS_HUB) return;
-      window.EEPHUS_HUB.shareCard({
+      _openCard({
         module: "MLB Projections",
+        accentToken: "--accent-cyan",
         name: `${a.name} vs ${b.name}`,
         meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(a.warTotal)} vs ${fmtWar(b.warTotal)}`,
         tiles: [],
@@ -650,7 +635,7 @@
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div style="margin-top:8px;"><button class="chip" id="mlbp-gfx" title="Download this player page as a PNG share card (theme-aware)">&#8681; share card</button></div>
+          <div style="margin-top:8px;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
@@ -675,6 +660,50 @@
       const btn = document.getElementById("mlbp-gfx");
       if (btn) btn.onclick = () => shareMlbCard(p);
     }
+  }
+
+  // Open the shared Generate GFX modal for a one-subject (card) export; fall
+  // back to the legacy direct download if the module didn't load.
+  function _openCard(opts) {
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+        title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+    } else if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.shareCard(opts);
+    }
+  }
+
+  // Board spec for the Generate GFX modal: the league projection board as a
+  // column leaderboard (projected 5y bWAR, P10-P90 range, contract surplus).
+  function _projBoardSpec(top) {
+    const war = m => (m.warTotalPTH != null ? m.warTotalPTH : m.warTotal);
+    const lo = m => (m.warTotalPTHP10 != null ? m.warTotalPTHP10 : m.warTotalP10);
+    const hi = m => (m.warTotalPTHP90 != null ? m.warTotalPTHP90 : m.warTotalP90);
+    const rows = top.map((m, i) => {
+      const cells = [
+        { t: i + 1 },
+        { t: m.name, sub: [m.pos, m.team].filter(Boolean).join(" · ") || undefined },
+        { t: war(m) != null ? fmtWar(war(m)) : "-", c: "accent" },
+        { t: lo(m) != null ? `${fmtWar(lo(m))}–${fmtWar(hi(m))}` : "-", c: "muted" },
+      ];
+      const s = (m.surNpv != null) ? m.surNpv : (m.surplus != null ? m.surplus : null);
+      cells.push(s != null ? { t: money(s), c: s >= 0 ? "pos" : "neg" } : { t: "-" });
+      return { cells };
+    });
+    return {
+      kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
+      title: "MLB Projections · Five-Year bWAR Leaders",
+      subtitle: `${DATA.n_vets} veterans + ${DATA.n_prospects} prospects · seasons ${DATA.first_season}-${DATA.first_season + DATA.horizon - 1}`,
+      url: "eephus.io/projections", filenameBase: "eephus-projections-board",
+      caption: "Gate-validated engine · floor / mean / ceiling buckets · prospects join at their PROSPX ETA",
+      board: { defaultCount: 25, counts: [10, 25, 50], columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.40 },
+        { label: "Proj 5y WAR", frac: 0.16 },
+        { label: "Range P10-P90", frac: 0.22, wideOnly: true },
+        { label: "Surplus", frac: 0.15, wideOnly: true },
+      ], rows },
+    };
   }
 
   // Unified share card (EEPHUS_HUB canvas template) - the MLB module's
@@ -708,8 +737,9 @@
       sections.push({ title: `Statcast percentiles · ${p.sc.season}`,
         rows: p.sc.metrics.map(m => [m.label, `${m.value}  (${m.pct})`]) });
     }
-    window.EEPHUS_HUB.shareCard({
+    _openCard({
       module: "MLB Projections",
+      accentToken: "--accent-cyan",
       name: p.name || p.key,
       meta: `${p.pos || ""}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${p.team}` : " · FA"}`,
       sub: p.fa && p.fa.verdict ? `FA verdict: ${String(p.fa.verdict).toUpperCase()}` : "",

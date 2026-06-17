@@ -87,7 +87,7 @@
   //        filename, tiles: [{label, value, color?}] (<=4),
   //        sections: [{title, rows: [[label, value, color?], ...]}] (<=2),
   //        caption?}
-  async function shareCard(opts) {
+  async function drawCard(opts) {
     const dark = document.documentElement.getAttribute("data-theme") === "dark";
     const W = 1200, H = 675, PAD = 48;
     const c = document.createElement("canvas");
@@ -188,16 +188,32 @@
     const wm = "eephus.io";
     g.fillText(wm, W - PAD - g.measureText(wm).width, H - 28);
 
+    return c;
+  }
+
+  // Export any canvas (board or card) as a PNG. action 'copy' -> clipboard,
+  // 'share' -> Web Share (mobile), else download. Shared by shareCard and the
+  // GFX modal so all three surfaces export through one code path.
+  function exportCanvas(c, opts) {
+    opts = opts || {};
     return new Promise(resolve => {
       c.toBlob(async blob => {
-        // copy-to-clipboard when asked for and supported; download is
-        // the default and the fallback
         if (opts.action === "copy" && navigator.clipboard
             && typeof ClipboardItem !== "undefined") {
           try {
             await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
             resolve("copied");
             return;
+          } catch (e) { /* fall through to download */ }
+        }
+        if (opts.action === "share" && navigator.canShare && blob) {
+          try {
+            const file = new File([blob], opts.filename || "eephus-card.png", { type: "image/png" });
+            if (navigator.canShare({ files: [file] })) {
+              await navigator.share({ files: [file], title: opts.shareTitle || "eephus.io" });
+              resolve("shared");
+              return;
+            }
           } catch (e) { /* fall through to download */ }
         }
         const a = document.createElement("a");
@@ -210,5 +226,9 @@
     });
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, esc };
+  async function shareCard(opts) {
+    return exportCanvas(await drawCard(opts), opts);
+  }
+
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc };
 })();
