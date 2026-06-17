@@ -1,11 +1,11 @@
 [
   { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",
     "email": "arkndjl@gmail.com",
-    "note": ["PROSPX Creator", "MLB Projections Creator", "MLB Free Agency Creator", "Site Design"],
+    "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "Site Design"],
     "website": "https://arkndjl.net/", "github": "arkndjl" },
   { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396" },
   { "name": "Michael Behrens",    "handle": null,         "linkedin": "michael-behrens-" },
-  { "name": "Anirudh Iyer",       "handle": null,         "linkedin": "anirudh-iyer-193086229" },
+  { "name": "Anirudh Iyer",       "handle": null,         "linkedin": "anirudh-iyer-193086229", "note": "PROSPX Developer" },
   { "name": "Joseph Gillis",      "handle": null,         "linkedin": "josephdgil",                "note": "CollegeSavant Creator" },
   { "name": "Charlie Mortellite", "handle": null,         "linkedin": "charlie-mortellite-a8b8222a3" }
 ]
