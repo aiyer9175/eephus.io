@@ -1370,6 +1370,12 @@
     .split-lvlbox button.on { background:var(--neon-violet); color:var(--bg-primary); border-color:var(--neon-violet); font-weight:700; }
     .split-foot { font-size:10px; color:var(--text-tertiary); font-style:italic; margin-top:8px; line-height:1.5; }
 
+    /* Details-tab grouping: labeled clusters of the context sections. */
+    .ctx-group { margin-bottom:6px; }
+    .ctx-group-hd { font-size:10px; letter-spacing:0.1em; text-transform:uppercase; color:var(--text-tertiary);
+      font-weight:700; margin:20px 0 4px; padding-bottom:4px; border-bottom:1px solid var(--border); }
+    .ctx-group:first-child .ctx-group-hd { margin-top:2px; }
+
     /* === Section toggle (SECONDARY / nested nav) ================== */
     /* Beta: this is the PROSPX section nav, nested BENEATH the eephus.io
        site bar. It's deliberately styled as a SECONDARY strip - a flat,
@@ -17927,6 +17933,56 @@ function splitToggleDelta(key){ const u=_splitUIFor(key); u.delta=!u.delta; rend
 function splitCustomSet(key,field,val){ const u=_splitUIFor(key); u.custom[field]=field==="minSample"?(Number(val)||0):val; renderSplits(key); }
 function splitCustomToggleLevel(key,lvl){ const u=_splitUIFor(key); const i=u.custom.levels.indexOf(lvl); if(i>=0) u.custom.levels.splice(i,1); else u.custom.levels.push(lvl); renderSplits(key); }
 
+// Recent form ("hot/cold"): last-N games vs season, computed from the same
+// box-line component engine as Splits. Prefers the loaded gamelog slice (if the
+// user has opened the Stats tab this session); else the per-player recent_games
+// already on the Statcast payload (normalized to the slice shape) - so the
+// badge needs NO extra fetch on the Overview/ribbon. Returns null when there
+// isn't a meaningful sample.
+function _recentForm(p){
+  const sl = p.statline || {}; const isP = !!sl.is_pitcher;
+  let games = null;
+  const slice = DATA.leaderboard_gamelogs && DATA.leaderboard_gamelogs.players
+    && DATA.leaderboard_gamelogs.players[p.player_key];
+  if (slice && slice.games && slice.games.length) {
+    games = slice.games.slice().sort((a,b)=> a.d<b.d?1:a.d>b.d?-1:0).slice(0,15);
+  } else {
+    const rg = (p.statcast_metrics || {}).recent_games;
+    if (Array.isArray(rg) && rg.length) {
+      games = rg.map(g=>({ d:g.date, lvl:g.level, pa:g.pa, ab:g.ab, h:g.h, "2b":g.doub,
+        "3b":g.trip, hr:g.hr, bb:g.bb, so:g.so, sb:g.sb, r:g.r, ip:g.ip, k:g.k, er:g.er, bf:g.bf }))
+        .sort((a,b)=> a.d<b.d?1:a.d>b.d?-1:0).slice(0,15);
+    }
+  }
+  if (!games || games.length < 5) return null;
+  if (isP){
+    const t = _lbAggPitcher(games); const ip = t.outs/3; if (ip < 5) return null;
+    const era = 9*t.er/ip; const season = sl.era!=null?Number(sl.era):null;
+    if (season==null || !isFinite(season)) return null;
+    const d = era - season;   // negative = better recently
+    return { metric:"ERA", val:era, season, delta:d, hot:d<=-0.50, cold:d>=0.50, n:games.length, isP:true };
+  }
+  const t = _lbAggHitter(games); if (t.pa < 15) return null;
+  const oneB = t.h-t._2b-t._3b-t.hr;
+  const obp = (t.ab+t.bb)>0?(t.h+t.bb)/(t.ab+t.bb):null;
+  const slg = t.ab>0?(oneB+2*t._2b+3*t._3b+4*t.hr)/t.ab:null;
+  const ops = (obp!=null&&slg!=null)?obp+slg:null;
+  const season = sl.ops!=null?Number(sl.ops):null;
+  if (ops==null || season==null || !isFinite(season)) return null;
+  const d = ops - season;
+  return { metric:"OPS", val:ops, season, delta:d, hot:d>=0.060, cold:d<=-0.060, n:games.length, isP:false };
+}
+function _formBadgeHTML(p){
+  const f = _recentForm(p); if (!f) return "";
+  const color = f.hot?"var(--up)":f.cold?"var(--down)":"var(--text-secondary)";
+  const arrow = f.hot?"▲":f.cold?"▼":"→";
+  const word  = f.hot?"Hot":f.cold?"Cold":"Steady";
+  const fmt = v => f.isP? Number(v).toFixed(2) : Number(v).toFixed(3).replace(/^(-?)0\./,"$1.");
+  const dTxt = (f.delta>0?"+":"") + fmt(f.delta);
+  const tip = `Recent form: last ${f.n} G ${f.metric} ${fmt(f.val)} vs season ${fmt(f.season)} (${dTxt} ${f.metric}). ${f.hot?"Trending up":f.cold?"Trending down":"In line with the season line"}. Full breakdown on the Stats / Statcast tab.`;
+  return `<span class="stat-pill" style="color:${color};border-color:${color};font-size:11px;padding:2px 7px;" title="${escapeHtml(tip)}">${arrow} ${word} · L${f.n} ${f.metric} ${fmt(f.val)}</span>`;
+}
+
 function renderLeaderboards() {
   // Standout single-game performances ticker - same feed as Spotlights,
   // rendered into the leaderboards section's own container.
@@ -28214,6 +28270,10 @@ function _buildDetailChipRibbon(p) {
         bits.push(`<span class="stat-pill" style="color:${c};border-color:${c};font-size:11px;padding:2px 7px;" title="Swing+ (Will Cahoon) · swing-quality on MLB bat tracking · 100 = league avg (MLB swings only)">Swing+ ${sv}</span>`);
       }
     }
+    // Recent-form (hot/cold) pill - last-N games vs season, from the Splits
+    // engine. No extra fetch (uses recent_games / an already-loaded slice).
+    const formPill = (typeof _formBadgeHTML === "function") ? _formBadgeHTML(p) : "";
+    if (formPill) bits.push(formPill);
     return `<span class="ribbon-row">${bits.join("")}</span>`;
   })();
 
@@ -35801,6 +35861,63 @@ function makeTradeHistoryBlock(trades) {
 // spans the years that actually have stints (no padding) so the
 // detail reads clearly even when an org's history is short. Returns
 // "" when there's nothing to draw.
+// Classify an IL stint into a body-area bucket from its free-text reason /
+// description (the MLB IL feed doesn't carry a structured body part). Returns
+// null when nothing matches so unknowns don't pollute the breakdown.
+function _classifyInjuryArea(text) {
+  const s = String(text || "").toLowerCase();
+  const map = [
+    ["Elbow / UCL", /elbow|ucl|tommy john|\btj\b|ulnar collateral|ulnar nerve/],
+    ["Shoulder / Lat", /shoulder|rotator|labrum|capsul|\blat\b|teres|scapula/],
+    ["Forearm / Flexor", /forearm|flexor|pronator/],
+    ["Hand / Wrist", /wrist|hand|finger|thumb|hamate/],
+    ["Elbow (other)", /elbow/],
+    ["Hamstring", /hamstring/],
+    ["Knee", /knee|acl|mcl|pcl|patell|meniscus/],
+    ["Quad / Calf / Leg", /quad|calf|\bleg\b|thigh|shin|achill/],
+    ["Oblique / Core", /oblique|abdom|\bcore\b|\brib\b|intercostal/],
+    ["Back / Spine", /back|spine|lumbar|disc/],
+    ["Hip / Groin", /hip|groin|adductor|pelvis/],
+    ["Ankle / Foot", /ankle|foot|heel|plantar|\btoe\b/],
+    ["Concussion / Head", /concussion|head|face|jaw|nose/],
+    ["Illness", /illness|covid|flu|virus|fever|gastro/],
+  ];
+  for (const [lbl, re] of map) if (re.test(s)) return lbl;
+  return null;
+}
+// Compact "by area" durability breakdown for the Health card: stints + total
+// days grouped by body area, sorted by days. Plus a one-line durability read
+// (days/year on record). Returns "" when nothing is classifiable.
+function _injuryBreakdownHTML(history) {
+  if (!Array.isArray(history) || !history.length) return "";
+  const byArea = {};
+  let classified = 0;
+  for (const s of history) {
+    const area = _classifyInjuryArea(s.reason || s.description || s.type);
+    if (!area) continue;
+    classified++;
+    const a = byArea[area] || (byArea[area] = { stints: 0, days: 0 });
+    a.stints++; a.days += (s.days || 0);
+  }
+  if (!classified) return "";
+  // Durability read: total days across the on-record span, normalized per year.
+  const yrs = new Set();
+  for (const s of history) { const d = s.since || s.start; if (d) yrs.add(String(d).slice(0, 4)); }
+  const span = Math.max(1, yrs.size);
+  const totalDays = history.reduce((t, s) => t + (s.days || 0), 0);
+  const perYr = Math.round(totalDays / span);
+  const rows = Object.entries(byArea).sort((a, b) => b[1].days - a[1].days).map(([area, v]) => {
+    const c = v.days >= 120 ? "var(--down)" : v.days >= 45 ? "var(--neon-amber)" : "var(--text-secondary)";
+    return `<div style="display:flex;justify-content:space-between;gap:8px;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:11px;">
+      <span style="color:var(--text-primary);">${escapeHtml(area)}</span>
+      <span style="color:${c};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${v.stints} stint${v.stints===1?"":"s"} · ${v.days}d</span>
+    </div>`;
+  }).join("");
+  return `<div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
+    <div style="font-size:11px;color:var(--text-secondary);letter-spacing:0.04em;text-transform:uppercase;margin-bottom:6px;">By area · ~${perYr}d/yr on record</div>
+    ${rows}
+  </div>`;
+}
 function _makeIlTimelineSvg(history, healthProfile) {
   if (!Array.isArray(history) || !history.length) return "";
   const hp = healthProfile || {};
@@ -38207,6 +38324,7 @@ function renderPlayerDetail(key) {
           </div>
         </div>
         ${tjLine}
+        ${_injuryBreakdownHTML(history)}
         ${injuryDetails}
       </div>`;
   })();
@@ -38812,11 +38930,36 @@ function renderPlayerDetail(key) {
       .slice(0, 4);
     if (!ranked.length) return "";
 
+    // Mini-comparison overlay: each comp's primary rate stat (OPS hitters /
+    // ERA pitchers) shown against the focal player's, colored by who's ahead
+    // so the card reads as a real comparison, not just a name list.
+    const mySL = p.statline || {};
+    const myRef = myIsPitcher ? (mySL.era != null ? parseFloat(mySL.era) : null)
+                              : (mySL.ops != null ? parseFloat(mySL.ops) : null);
+    const refLbl = myIsPitcher ? "ERA" : "OPS";
+    const refFmt = v => myIsPitcher ? Number(v).toFixed(2) : Number(v).toFixed(3).replace(/^(-?)0\./, "$1.");
+
     const rows = ranked.map(({ t, s }) => {
       const tFv = t.fv_close_raw != null ? t.fv_close_raw : t.fv_close;
       const orgTag = t.org
         ? `<span style="color:var(--text-tertiary);font-size:10px;margin-left:4px;">${escapeHtml(t.org)}</span>`
         : "";
+      // Comp's primary stat vs the player's (green = comp ahead of the player).
+      let statChip = "";
+      const tSL = t.statline || {};
+      const tRef = myIsPitcher ? (tSL.era != null ? parseFloat(tSL.era) : null)
+                               : (tSL.ops != null ? parseFloat(tSL.ops) : null);
+      if (tRef != null && isFinite(tRef)) {
+        let col = "var(--text-secondary)", dTxt = "";
+        if (myRef != null && isFinite(myRef)) {
+          const d = tRef - myRef;                       // pitcher: lower is better
+          const better = myIsPitcher ? d < 0 : d > 0;
+          const tiny = Math.abs(d) < (myIsPitcher ? 0.05 : 0.005);
+          col = tiny ? "var(--text-secondary)" : better ? "var(--up)" : "var(--down)";
+          dTxt = ` · vs ${escapeHtml(p.player_name)} ${refFmt(myRef)} (${d > 0 ? "+" : ""}${refFmt(d)})`;
+        }
+        statChip = `<span style="font-family:var(--font-mono);font-size:11px;color:${col};font-variant-numeric:tabular-nums;white-space:nowrap;flex:none;" title="${escapeHtml(refLbl + " " + refFmt(tRef) + dTxt)}">${refLbl} ${refFmt(tRef)}</span>`;
+      }
       // Surface the similarity score subtly so the user can see why
       // the match landed where it did. 0 = identical; lower = closer.
       // The match-quality label converts the raw distance into a
@@ -38828,10 +38971,11 @@ function renderPlayerDetail(key) {
       const matchTip = `Composite similarity score: ${s.toFixed(2)} (smaller = closer). Match across FV, age, Tool grade, and current-season rate stats.`;
       return `<div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;" title="${escapeHtml(matchTip)}">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")} · ${t.age != null ? t.age.toFixed(1) + "y" : " - "} · ${matchLabel}</span>${orgTag}</span>
+        ${statChip}
         <span class="fv-badge ${fvClass(String(Math.round(tFv)))} size-sm">${Math.round(tFv)}</span>
       </div>`;
     }).join("");
-    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match - position, FV, age, Tool grade, stats</span></div>
+    return `<div class="detail-title">Similar prospects <span class="detail-title-sub">composite match · ${refLbl} vs ${escapeHtml(p.player_name)} shown</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
   })();
 
@@ -39041,10 +39185,18 @@ function renderPlayerDetail(key) {
   // surplus / ROI math, not buried under injury status.
   // v39 - surplusValueSection + contractDetailsSection moved to the Overview
   // tab (valuationHtml). The Details tab keeps the supporting context.
+  // Details tab grouped into labeled clusters so the 7 sections read as
+  // organized groups, not a flat grab-bag. A group renders only when ≥1 of
+  // its sections has content.
+  const _ctxGroup = (label, sections) => {
+    const body = sections.filter(Boolean).join("");
+    return body ? `<div class="ctx-group"><div class="ctx-group-hd">${escapeHtml(label)}</div>${body}</div>` : "";
+  };
   const contextHtml = [
-    acquisitionTimelineSection, tradesSection, etaRows,
-    rosterStatusSection, perSourceTabbedSection,
-    sameFarmSection, similarProspectsSection,
+    _ctxGroup("Acquisition & transactions", [acquisitionTimelineSection, tradesSection]),
+    _ctxGroup("Status & timeline", [rosterStatusSection, etaRows]),
+    _ctxGroup("League context", [sameFarmSection, similarProspectsSection]),
+    _ctxGroup("Per-source detail", [perSourceTabbedSection]),
   ].filter(Boolean).join("");
 
   const tabs = [
@@ -39448,6 +39600,82 @@ function _renderOrgTendencies(orgCode) {
     </div>`;
 }
 
+// Positional depth vs league: a genuinely cross-org lens (the existing depth
+// chart / pyramid are within-org). For each position area, the org's graded-
+// prospect count, the league's per-org average, a surplus/need verdict, the top
+// FV, and the nearest level with a graded prospect (proximity to the majors).
+function _farmPosGroup(pos) {
+  const s = String(pos || "").toUpperCase().split("/")[0].trim();
+  if (s === "C") return "C";
+  if (["2B", "SS"].includes(s)) return "MIF";
+  if (["1B", "3B", "CIF"].includes(s)) return "CIF";
+  if (["LF", "CF", "RF", "OF", "DH"].includes(s)) return "OF";
+  if (["SP", "RHP", "LHP", "P", "RP", "CL", "MIRP", "SIRP"].includes(s)) return "P";
+  return null;
+}
+function makeFarmPositionalNeed(orgCode) {
+  const BUCKETS = [["C", "Catcher"], ["MIF", "Middle IF"], ["CIF", "Corner IF"], ["OF", "Outfield"], ["P", "Pitching"]];
+  const players = DATA.players || [];
+  const orgs = new Set(); const leagueCnt = {};
+  for (const pl of players) {
+    if (pl.fv_close == null) continue;
+    if (pl.org) orgs.add(pl.org);
+    const g = _farmPosGroup(pl.position); if (g) leagueCnt[g] = (leagueCnt[g] || 0) + 1;
+  }
+  const nOrgs = Math.max(1, orgs.size);
+  const org = players.filter(pl => pl.org === orgCode && pl.fv_close != null);
+  if (!org.length) return "";
+  const byB = {};
+  for (const pl of org) { const g = _farmPosGroup(pl.position); if (g) (byB[g] || (byB[g] = [])).push(pl); }
+  const LEVEL_ORD = { MLB: 6, AAA: 5, AA: 4, "A+": 3, A: 2, CPX: 1, DSL: 0 };
+  const rows = BUCKETS.map(([k, lbl]) => {
+    const list = byB[k] || []; const n = list.length;
+    const avg = leagueCnt[k] ? leagueCnt[k] / nOrgs : 0;
+    const ratio = avg > 0 ? n / avg : (n > 0 ? 2 : 1);
+    const verdict = ratio >= 1.4 ? ["Surplus", "var(--up)"]
+                  : ratio >= 1.1 ? ["Deep", "var(--up)"]
+                  : ratio <= 0.4 ? ["Need", "var(--down)"]
+                  : ratio <= 0.7 ? ["Thin", "var(--neon-amber)"]
+                  : ["OK", "var(--text-secondary)"];
+    const topFv = list.reduce((m, pl) => Math.max(m, pl.fv_close || 0), 0);
+    let nearest = null, nearOrd = -1;
+    for (const pl of list) { const o = LEVEL_ORD[(pl.statline || {}).level]; if (o != null && o > nearOrd) { nearOrd = o; nearest = (pl.statline || {}).level; } }
+    return `<tr>
+      <td class="split-rowlabel">${lbl}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;">${n}</td>
+      <td style="text-align:right;font-variant-numeric:tabular-nums;color:var(--text-tertiary);">${avg.toFixed(1)}</td>
+      <td style="text-align:right;color:${verdict[1]};font-weight:700;">${verdict[0]}</td>
+      <td style="text-align:right;">${topFv ? `<span class="fv-badge ${fvClass(String(Math.round(topFv)))} size-sm">${Math.round(topFv)}</span>` : '<span class="split-sub">-</span>'}</td>
+      <td style="text-align:right;color:var(--text-secondary);">${nearest || "-"}</td>
+    </tr>`;
+  }).join("");
+  return `<div class="detail-title">Positional depth vs league <span class="detail-title-sub">graded prospects per area, the league's per-org average, and a surplus/need read · nearest = highest level with a graded prospect in that area</span></div>
+    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Area</th><th>Graded</th><th>Lg avg</th><th>Read</th><th>Top FV</th><th>Nearest</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+// Graduation outcomes: players who reached MLB with this org, newest first,
+// with their WAG (WAR above/below the FV-implied expectation) so the reader
+// sees how the system's graduates actually panned out. Complements the
+// Development tab's in-org growth/tool-dev views (which stop at graduation).
+function makeFarmGraduates(orgCode) {
+  const grads = (DATA.debuts || []).filter(g => g.org === orgCode && g.debut_date);
+  if (!grads.length) return "";
+  grads.sort((a, b) => a.debut_date < b.debut_date ? 1 : a.debut_date > b.debut_date ? -1 : 0);
+  const rows = grads.slice(0, 8).map(g => {
+    const wag = (typeof gradVsFvProjection === "function") ? gradVsFvProjection(g) : null;
+    const wagTxt = wag == null ? '<span class="split-sub">-</span>'
+      : `<span style="color:${wag >= 0.5 ? "var(--up)" : wag <= -0.5 ? "var(--down)" : "var(--text-secondary)"};font-variant-numeric:tabular-nums;">${wag > 0 ? "+" : ""}${wag.toFixed(1)}</span>`;
+    const fv = g.fv_close != null ? `<span class="fv-badge ${fvClass(String(Math.round(g.fv_close)))} size-sm">${Math.round(g.fv_close)}</span>` : '<span class="split-sub">-</span>';
+    const click = g.player_key ? ` onclick="goToPlayer('${escapeHtml(g.player_key)}');" style="cursor:pointer;"` : "";
+    return `<tr${click}>
+      <td class="split-rowlabel" style="color:${g.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};">${escapeHtml(g.player_name || g.player_key || "?")}</td>
+      <td style="text-align:right;color:var(--text-tertiary);font-size:11px;">${escapeHtml(g.debut_date)}</td>
+      <td style="text-align:center;">${fv}</td>
+      <td style="text-align:right;">${wagTxt}</td>
+    </tr>`;
+  }).join("");
+  return `<div class="detail-title">Recent graduates <span class="detail-title-sub">reached MLB with ${escapeHtml(orgCode)} · WAG = WAR above/below the FV-implied expectation (graduation outcome)</span></div>
+    <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th style="text-align:center;">FV</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
 function renderFarmDetail(orgCode) {
   const org = findOrg(orgCode);
   const root = document.getElementById("farm-detail-body");
@@ -40793,6 +41021,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
 
   const rosterTabHtml = `
     ${makeFarmRosterPyramid(rosterPlayersAll)}
+    ${makeFarmPositionalNeed(orgCode)}
     <div class="detail-title flush">Tracked prospects (${rosterPlayers.length}${_filterSuffix})</div>
     <div class="farm-roster-filters">
       ${acqFilterBar}
@@ -40844,7 +41073,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}
     ${makeFarmCohortGrowthPanel(org, state.formWindow || "6y")}
     ${makeFarmToolDevCard(org)}
-    ${makeFarmDevTopMovers(rosterPlayersAll)}`;
+    ${makeFarmDevTopMovers(rosterPlayersAll)}
+    ${makeFarmGraduates(orgCode)}`;
 
   // v7 - Finances tab expanded with Surplus + ROI sections beneath
   // the existing Spending block. Surplus pulls per-prospect FV-implied
