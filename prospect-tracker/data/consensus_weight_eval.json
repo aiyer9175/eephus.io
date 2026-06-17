@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-16T23:53:16Z",
+ "generated_at": "2026-06-17T14:43:18Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,11 +7,11 @@
    "n": 657,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8333,
-    "mlb_pipeline": 1.1667
+    "fangraphs": 0.8331,
+    "mlb_pipeline": 1.1669
    },
    "equal": {
-    "spearman": 0.2645,
+    "spearman": 0.2646,
     "auc": 0.7082
    },
    "weighted": {
@@ -24,15 +24,15 @@
    "n": 680,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8565,
-    "mlb_pipeline": 1.1435
+    "fangraphs": 0.8568,
+    "mlb_pipeline": 1.1432
    },
    "equal": {
-    "spearman": 0.3173,
+    "spearman": 0.3178,
     "auc": 0.7396
    },
    "weighted": {
-    "spearman": 0.318,
+    "spearman": 0.3184,
     "auc": 0.7408
    }
   },
@@ -41,15 +41,15 @@
    "n": 728,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.8769,
-    "mlb_pipeline": 1.1231
+    "fangraphs": 0.8774,
+    "mlb_pipeline": 1.1226
    },
    "equal": {
-    "spearman": 0.289,
+    "spearman": 0.2894,
     "auc": 0.7454
    },
    "weighted": {
-    "spearman": 0.2964,
+    "spearman": 0.2968,
     "auc": 0.7502
    }
   },
@@ -58,11 +58,11 @@
    "n": 783,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8936,
-    "mlb_pipeline": 1.1064
+    "fangraphs": 0.8941,
+    "mlb_pipeline": 1.1059
    },
    "equal": {
-    "spearman": 0.2405,
+    "spearman": 0.2406,
     "auc": 0.7737
    },
    "weighted": {
@@ -74,18 +74,18 @@
  "pooled": {
   "pooled_n": 2848,
   "equal": {
-   "spearman": 0.2744,
+   "spearman": 0.2747,
    "auc": 0.74
   },
   "weighted": {
-   "spearman": 0.2765,
-   "auc": 0.7477
+   "spearman": 0.2768,
+   "auc": 0.7476
   }
  },
  "ship": true,
  "live_weights": {
-  "fangraphs": 0.9394,
-  "mlb_pipeline": 1.0606
+  "fangraphs": 0.9402,
+  "mlb_pipeline": 1.0598
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
