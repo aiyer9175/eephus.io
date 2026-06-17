@@ -503,6 +503,36 @@ function _methTierTable(bt, rater) {
   </div>`;
 }
 
+// Per-archetype accuracy - where each grader (and the blend) is strongest.
+// AUC = the grade discriminates "became a contributor" (0.50 = coin flip);
+// best in each row marked ★. Answers "who do I trust on THIS kind of player?"
+function _methArchetypeTable(bt) {
+  const ba = bt.accuracy && bt.accuracy.by_archetype;
+  if (!ba || !ba.length) return "";
+  const raters = bt.raters;
+  const head = raters.map(r => `<th>${escapeHtml(_raterMeta(r).label)}</th>`).join("");
+  const rows = ba.map(a => {
+    const aucs = raters.map(r => (a.raters[r] || {}).auc).filter(v => v != null);
+    const best = aucs.length ? Math.max(...aucs) : null;
+    const cells = raters.map(r => {
+      const v = (a.raters[r] || {}).auc;
+      const isBest = v != null && v === best;
+      const style = isBest ? "font-weight:700;color:var(--up);"
+        : (r === "prospx_consensus" ? "color:var(--text-primary);" : "color:var(--text-secondary);");
+      return `<td style="${style}">${v != null ? v.toFixed(3) : " - "}${isBest ? " ★" : ""}</td>`;
+    }).join("");
+    return `<tr><td class="meth-td-tier">${escapeHtml(a.label)}</td><td>${a.n}</td>${cells}</tr>`;
+  }).join("");
+  return `<div class="meth-table-wrap">
+    <div class="meth-table-title">Best grader by archetype <span class="meth-sub">AUC (grade predicts ‘became a contributor’) · winner ★</span></div>
+    <div class="table-scroll-x"><table class="meth-table">
+      <thead><tr><th>Archetype</th><th>n</th>${head}</tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="meth-note">Where the consensus leads (5 of 6 archetypes), the blend is the safe default. The one place a single source wins outright is <strong>college arms, where MLB Pipeline is best</strong> and FanGraphs grades pitching weakest. International arms are the hardest archetype to grade, with AUC barely above a coin flip.</p>
+  </div>`;
+}
+
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
 // the FV history chart, and a farm page, with every element linked to its
 // glossary term, plus the metric-architecture diagram (how the metrics build on
@@ -925,6 +955,8 @@ function renderSourceComparison() {
       <h2 class="meth-h">Does the consensus outperform its sources?</h2>
       <p class="meth-window">${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methAccuracyChart(bt)}
+      <h3 class="meth-h3">Best grader by prospect archetype</h3>
+      ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">
         ${_methCalibrationChart(bt, "mean_war", "Mean career WAR")}
         ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}

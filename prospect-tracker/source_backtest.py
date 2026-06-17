@@ -81,6 +81,37 @@ FV_TIERS = (
     (0, 45, "<45"),
 )
 
+# Prospect archetypes for the per-archetype track record: bat/arm from position,
+# HS/college/international from signing path. HS vs college uses age-at-draft
+# (draft_year - birth_year), which matches explicit scouting HS/college labels
+# ~99% of the time and needs no extra data source (self-contained on the
+# exported universe).
+_PITCH_POS = {"P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP"}
+_ARCH_ORDER = ("hs_bat", "hs_arm", "college_bat", "college_arm", "intl_bat", "intl_arm")
+_ARCH_LABELS = {
+    "hs_bat": "HS bats", "hs_arm": "HS arms",
+    "college_bat": "College bats", "college_arm": "College arms",
+    "intl_bat": "Int'l bats", "intl_arm": "Int'l arms",
+}
+ARCH_MIN_N = 40   # don't score a thinly-populated archetype
+
+
+def _archetype(p: dict) -> str | None:
+    pos = (p.get("position") or "").upper().split("/")[0]
+    side = "arm" if pos in _PITCH_POS else "bat"
+    a = p.get("acquisition") or {}
+    method = a.get("method")
+    if method == "international_fa":
+        org = "intl"
+    elif method == "draft":
+        by, yr = (p.get("birth_date") or "")[:4], a.get("year")
+        if not (by.isdigit() and yr):
+            return None
+        org = "hs" if (int(yr) - int(by)) <= 19 else "college"
+    else:
+        return None
+    return f"{org}_{side}"
+
 
 # --------------------------------------------------------------------------
 # Loading
@@ -252,6 +283,28 @@ def _tier_table(rows: list[dict]) -> list[dict]:
     return out
 
 
+def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict]:
+    """Per-archetype head-to-head accuracy on the COMMON set (same players each
+    rater graded). AUC = grade discriminates 'became a contributor'; Spearman =
+    ordering vs realized WAR. Archetypes below ARCH_MIN_N are dropped (n disclosed)."""
+    out = []
+    for arch in _ARCH_ORDER:
+        rows = [c for c in common_rows if c.get("archetype") == arch]
+        if len(rows) < ARCH_MIN_N:
+            continue
+        wars = [c["outcome"]["war"] for c in rows]
+        contrib = [c["outcome"]["contributor"] for c in rows]
+        per = {}
+        for r in raters:
+            fvs = [c["grades"][r] for c in rows]
+            sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
+            per[r] = {"spearman": round(sp, 4) if sp is not None else None,
+                      "auc": round(au, 4) if au is not None else None}
+        out.append({"archetype": arch, "label": _ARCH_LABELS[arch],
+                    "n": len(rows), "raters": per})
+    return out
+
+
 def run_source_backtest(data_dir: Path = DATA_DIR,
                         write: bool = True) -> dict:
     """Compute the full source-vs-source backtest and (optionally) write
@@ -279,7 +332,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             if all(r in grades for r in raters):
                 common_by_year[y].append({"key": p.get("player_key"),
                                           "grades": {r: grades[r] for r in raters},
-                                          "outcome": out})
+                                          "outcome": out, "archetype": _archetype(p)})
 
     # Per-rater cohort/calibration tables (full cohort, pooled across years).
     cohorts = {}
@@ -326,6 +379,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "spearman": _beats("spearman"),
         "auc": _beats("auc"),
     }
+    accuracy["by_archetype"] = _archetype_accuracy(pooled_common, raters)
 
     result = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
