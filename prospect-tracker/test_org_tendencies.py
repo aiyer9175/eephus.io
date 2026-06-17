@@ -66,10 +66,31 @@ def test_promotion_panel_math():
     by_org = {f"O{i}": [mk(0.0, 1), mk(0.0, 1)] for i in range(8)}
     by_org["AGG"] = [mk(-2.0, 3), mk(-1.5, 2)]
     by_org["CON"] = [mk(2.0, 0), mk(1.5, 0)]
-    panel = ot.promotion_panel(by_org, today)
+    panel = ot.promotion_panel(by_org, [], today)
     assert panel["orgs"]["AGG"]["label"] == "aggressive"
     assert panel["orgs"]["CON"]["label"] == "conservative"
     assert panel["orgs"]["O0"]["label"] == "typical"
+
+
+def test_promotion_panel_debut_age():
+    """Debut age splits pitchers vs hitters and z's vs league."""
+    today = date(2026, 6, 10)
+    roster = [{"age_vs_level": {"diff": 0.0}, "level_changes": []}]
+    by_org = {f"O{i}": list(roster) for i in range(10)}
+    # 3 pitcher + 3 hitter debuts for ORG, league debuts older
+    debuts = []
+    for i in range(10):
+        org = f"O{i}"
+        for _ in range(3):
+            debuts.append({"org": org, "position": "SP",
+                           "birth_date": "2000-01-01", "debut_date": "2025-01-01"})  # age ~25
+            debuts.append({"org": org, "position": "SS",
+                           "birth_date": "2001-01-01", "debut_date": "2025-01-01"})  # age ~24
+    panel = ot.promotion_panel(by_org, debuts, today)
+    o0 = panel["orgs"]["O0"]
+    assert 24.5 <= o0["debutAgePit"] <= 25.5
+    assert 23.5 <= o0["debutAgeHit"] <= 24.5
+    assert o0["nDebutPit"] == 3 and o0["nDebutHit"] == 3
 
 
 def test_filter_mlb30_drops_foreign_codes():
@@ -89,7 +110,8 @@ def _payload():
 
 
 PANELS = ("promotion", "draftPos", "draftTraits", "slot", "arsenal",
-          "toolDev", "ifa", "trades", "health")
+          "toolDev", "ifa", "trades", "health",
+          "graduation", "hitterApproach", "similarFarms")
 
 
 def test_sidecar_covers_all_30_orgs_every_panel():
@@ -98,6 +120,42 @@ def test_sidecar_covers_all_30_orgs_every_panel():
         orgs = d[panel]["orgs"]
         assert len(orgs) == 30, f"{panel}: {len(orgs)} orgs"
         assert all(len(o) <= 3 for o in orgs), f"{panel}: non-MLB code leaked"
+
+
+def test_new_panel_shapes():
+    """The expanded panels carry their new fields with sane ranges."""
+    d = _payload()
+    # draft: college/HS + position buckets sum to ~1
+    for org, r in d["draftPos"]["orgs"].items():
+        bk = r.get("posBuckets") or {}
+        if bk:
+            assert abs(sum(bk.values()) - 1.0) < 0.02, org
+            assert set(bk) == {"P", "C", "MI", "CI", "OF"}, org
+        if r.get("collShare") is not None:
+            assert 0 <= r["collShare"] <= 1, org
+    # arsenal: blended arm counts + full usage matrix with ratios
+    for org, r in d["arsenal"]["orgs"].items():
+        assert r["nArms"] == r["nArmsMlb"] + r["nArmsAaa"], org
+        for pt, cell in (r.get("usage") or {}).items():
+            assert 0 <= cell["share"] <= 1, (org, pt)
+    # pitchStuff present when AAA cache exists; shape-check when so
+    for org, r in d.get("pitchStuff", {}).get("orgs", {}).items():
+        for pt, cell in (r.get("pitches") or {}).items():
+            assert cell["n"] >= 1, (org, pt)
+    # promotion debut ages in a sane window
+    for org, r in d["promotion"]["orgs"].items():
+        for k in ("debutAgePit", "debutAgeHit"):
+            if r.get(k) is not None:
+                assert 20 <= r[k] <= 28, (org, k)
+    # graduation hit rate is a rate
+    for org, r in d["graduation"]["orgs"].items():
+        if r.get("draftHitRate") is not None:
+            assert 0 <= r["draftHitRate"] <= 1, org
+    # similar farms: top-N descending, scores in [-1, 1]
+    for org, r in d["similarFarms"]["orgs"].items():
+        scores = [s["score"] for s in r["similar"]]
+        assert scores == sorted(scores, reverse=True), org
+        assert all(-1.001 <= s <= 1.001 for s in scores), org
 
 
 def test_sidecar_values_are_sane():
