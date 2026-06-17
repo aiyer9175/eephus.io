@@ -261,7 +261,22 @@
   });
 
   // ---- hover tooltips for [data-gl] term spans --------------------------------
-  let _tipTimer = null, _tipFor = null;
+  // Two timers: a SHOW delay (hover-intent on the term) and a HIDE grace. The
+  // grace is the key fix - the tooltip is appended to <body>, not nested in the
+  // term, so moving the pointer off the term toward the popup used to fire
+  // mouseout and hide it instantly, making links inside (e.g. "Full entry")
+  // unclickable. Now leaving the term only SCHEDULES a hide; entering the
+  // tooltip cancels it. So the pointer can bridge the gap and interact with the
+  // popup. Leaving either the term or the tooltip (re)starts the grace.
+  let _tipShowTimer = null, _tipHideTimer = null, _tipFor = null;
+  const _TIP_HIDE_GRACE = 220;
+
+  function tipCancelHide() { clearTimeout(_tipHideTimer); _tipHideTimer = null; }
+  function tipScheduleHide() {
+    clearTimeout(_tipShowTimer); _tipShowTimer = null;   // a pending show is moot once we leave
+    clearTimeout(_tipHideTimer);
+    _tipHideTimer = setTimeout(tipHide, _TIP_HIDE_GRACE);
+  }
 
   function tipEnsure() {
     let tip = document.getElementById("gl-tip");
@@ -269,11 +284,17 @@
     tip = document.createElement("div");
     tip.id = "gl-tip"; tip.className = "gl-tip";
     tip.setAttribute("role", "tooltip");
+    // Hovering the tooltip keeps it open; leaving it closes after the grace.
+    // This is the "bridge" that makes the popup and its links reachable.
+    tip.addEventListener("mouseenter", tipCancelHide);
+    tip.addEventListener("mouseleave", tipScheduleHide);
     document.body.appendChild(tip);
     return tip;
   }
   function tipHide() {
-    clearTimeout(_tipTimer); _tipTimer = null; _tipFor = null;
+    clearTimeout(_tipShowTimer); _tipShowTimer = null;
+    clearTimeout(_tipHideTimer); _tipHideTimer = null;
+    _tipFor = null;
     const tip = document.getElementById("gl-tip");
     if (tip) tip.classList.remove("is-open");
   }
@@ -299,23 +320,25 @@
     left = Math.max(8, Math.min(left, window.scrollX + window.innerWidth - tip.offsetWidth - 8));
     tip.style.top = top + "px";
     tip.style.left = left + "px";
+    tipCancelHide();
     _tipFor = span;
   }
   document.addEventListener("mouseover", e => {
     const span = e.target.closest("[data-gl]");
     if (!span) return;
-    clearTimeout(_tipTimer);
+    tipCancelHide();                                   // re-entering the term aborts a pending close
+    clearTimeout(_tipShowTimer);
     const delay = matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 300;
-    _tipTimer = setTimeout(() => tipShow(span), delay);
+    _tipShowTimer = setTimeout(() => tipShow(span), delay);
   });
   document.addEventListener("mouseout", e => {
-    if (e.target.closest && e.target.closest("[data-gl]")) tipHide();
+    if (e.target.closest && e.target.closest("[data-gl]")) tipScheduleHide();
   });
   document.addEventListener("focusin", e => {
     const span = e.target.closest && e.target.closest("[data-gl]");
     if (span) tipShow(span);
   });
-  document.addEventListener("focusout", () => tipHide());
+  document.addEventListener("focusout", () => tipScheduleHide());
   window.addEventListener("scroll", () => { if (_tipFor) tipHide(); }, { passive: true });
   // Touch devices can't hover, so the mouseover/focus tooltips above never
   // fire and term definitions were unreachable. On no-hover (touch) devices
