@@ -47,8 +47,10 @@ exports; safe to run standalone: python org_tendencies.py
 
 from __future__ import annotations
 
+import csv
 import json
 import logging
+import math
 import re
 import statistics
 from collections import defaultdict
@@ -68,8 +70,20 @@ TRADE_FIRST_DATE = "2022-01-01"
 HIT_TOOLS = ("hit", "game_pwr", "raw_pwr", "speed", "field", "pitch_sel", "bat_ctrl")
 PIT_TOOLS = ("fb", "sl", "cb", "ch", "cmd")
 UP_MIDDLE = {"C", "SS", "CF", "2B"}
+DRAFT_BUCKETS = ("P", "C", "MI", "CI", "OF")   # position-split order for the draft panel
 MIN_PAIR_DAYS = 60          # same-source snapshot pairs must span at least this
 MIN_TOOL_PAIRS = 6          # org-tool cells below this report null, never noise
+
+AAA_CACHE = Path(__file__).parent / ".cache" / "aaa_pitches"
+# Pitch-type codes we trust from the Savant minors feed; everything else
+# (blank, PO pitchout, UN unknown, position-player junk) is dropped.
+AAA_KEEP_PT = {"FF", "SI", "FC", "FT", "SL", "ST", "SW", "CU", "KC", "CS",
+               "SV", "CH", "FS", "FO", "SC", "EP", "KN"}
+# Canonical display order for pitch types, shared with the frontend table.
+PITCH_ORDER = ("FF", "SI", "FC", "FT", "SL", "ST", "SW", "CU", "KC", "CS",
+               "SV", "CH", "FS", "FO", "SC", "EP", "KN")
+# Hard (fastball-family) codes whose mean velo defines the org "fb velo" line.
+HARD_PT = {"FF", "SI", "FC", "FT"}
 
 
 def _z(v, mean, sd):
@@ -116,12 +130,133 @@ def _actives_by_org(players) -> dict[str, list[dict]]:
     return dict(out)
 
 
+def _load_debuts() -> list[dict]:
+    """Graduated players (data/debuts.json) — the org-attributed record of who
+    each club developed. Loaded once and threaded into the panels that need it."""
+    try:
+        d = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
+        return d if isinstance(d, list) else (d.get("players") or [])
+    except (OSError, ValueError):
+        log.warning("org_tendencies: debuts.json unavailable")
+        return []
+
+
+def _pos_bucket(pos: str | None) -> str | None:
+    """Coarse fielding bucket for draft/debut splits: P / C / MI / CI / OF.
+    (Distinct from UP_MIDDLE, which lumps C+CF for the up-the-middle share.)"""
+    head = (pos or "").upper().split("/")[0].strip()
+    if head in ("P", "SP", "RP", "RHP", "LHP", "SP2"):
+        return "P"
+    if head == "C":
+        return "C"
+    if head in ("SS", "2B"):
+        return "MI"
+    if head in ("1B", "3B"):
+        return "CI"
+    if head in ("OF", "CF", "LF", "RF"):
+        return "OF"
+    return None
+
+
+def _mlbam_org_map(players: list[dict], debuts: list[dict]) -> dict[int, str]:
+    """{mlbam_id: developing org} — actives win, debuts (graduates) fill the
+    rest. Used to attribute AAA pitch CSVs to an org."""
+    out: dict[int, str] = {}
+    for p in players:
+        mid, org = p.get("mlbam_id"), p.get("org")
+        if mid and org:
+            out.setdefault(int(mid), org)
+    for d in debuts:
+        mid, org = d.get("mlbam_id"), d.get("org")
+        if mid and org:
+            out.setdefault(int(mid), org)
+    return out
+
+
+def _aaa_iter(mlbam_org: dict[int, str]):
+    """Yield (org, mlbam, rows) for each ATTRIBUTABLE AAA pitcher, latest
+    season only. Restricting to mlbams we can map to an org keeps the read to
+    ~1s instead of scanning all ~2,200 cached CSVs. Resilient to a missing
+    cache dir and to empty/malformed files."""
+    if not AAA_CACHE.is_dir():
+        return
+    latest: dict[int, tuple[int, Path]] = {}
+    for path in AAA_CACHE.glob("*.csv"):
+        mid_s, _, season_s = path.stem.rpartition("_")
+        try:
+            mid, season = int(mid_s), int(season_s)
+        except ValueError:
+            continue
+        if mid not in mlbam_org:
+            continue
+        if mid not in latest or season > latest[mid][0]:
+            latest[mid] = (season, path)
+    for mid, (_season, path) in latest.items():
+        try:
+            with path.open(encoding="utf-8", newline="") as fh:
+                rows = [r for r in csv.DictReader(fh)
+                        if (r.get("pitch_type") or "").strip() in AAA_KEEP_PT]
+        except (OSError, csv.Error):
+            continue
+        if rows:
+            yield mlbam_org[mid], mid, rows
+
+
+def _aaa_usage_by_arm(mlbam_org: dict[int, str],
+                      exclude: set[int] | None = None) -> dict[str, list[dict[str, float]]]:
+    """Per-org list of one usage-fraction dict per AAA arm: {pitch_type: share}.
+    Averaging across arms (not pooling raw pitches) keeps a 2,000-pitch starter
+    from drowning out a 200-pitch reliever — the same 'average arm's mix'
+    footing the MLB usage_pct already uses. `exclude` skips mlbams already
+    counted on the MLB-graduate side so a grad isn't double-weighted."""
+    skip = exclude or set()
+    out: dict[str, list[dict[str, float]]] = defaultdict(list)
+    for org, mid, rows in _aaa_iter(mlbam_org):
+        if mid in skip:
+            continue
+        counts: dict[str, int] = defaultdict(int)
+        for r in rows:
+            counts[(r.get("pitch_type") or "").strip()] += 1
+        tot = sum(counts.values())
+        if tot < 30:           # too few tracked pitches to trust a mix
+            continue
+        out[org].append({pt: c / tot for pt, c in counts.items()})
+    return dict(out)
+
+
+def _f(v):
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return None
+
+
 # ============================================================================
 # Panel 1 — promotion aggressiveness
 # ============================================================================
 
-def promotion_panel(by_org: dict[str, list[dict]], today: date) -> dict:
+def _debut_age(rec: dict) -> float | None:
+    """Age (years) at MLB debut from debut_date − birth_date."""
+    try:
+        d0 = date.fromisoformat(str(rec["birth_date"])[:10])
+        d1 = date.fromisoformat(str(rec["debut_date"])[:10])
+    except (KeyError, TypeError, ValueError):
+        return None
+    yrs = (d1 - d0).days / 365.25
+    return yrs if 16 <= yrs <= 40 else None       # guard junk dates
+
+
+def promotion_panel(by_org: dict[str, list[dict]], debuts: list[dict], today: date) -> dict:
     cutoff = (today - timedelta(days=365)).isoformat()
+    # Mean debut age per org, split pitchers vs hitters (graduates).
+    debut_pit: dict[str, list] = defaultdict(list)
+    debut_hit: dict[str, list] = defaultdict(list)
+    for d in debuts:
+        org = d.get("org")
+        age = _debut_age(d)
+        if not org or age is None:
+            continue
+        (debut_pit if _is_pitcher_pos(d.get("position")) else debut_hit)[org].append(age)
     raw = {}
     for org, roster in by_org.items():
         diffs = [(p.get("age_vs_level") or {}).get("diff") for p in roster]
@@ -132,9 +267,15 @@ def promotion_panel(by_org: dict[str, list[dict]], today: date) -> dict:
             "avlDiff": round(statistics.mean(diffs), 2) if diffs else None,
             "promoRate": round(promos / len(roster), 2) if roster else None,
             "n": len(roster),
+            "debutAgePit": round(statistics.mean(debut_pit[org]), 1) if len(debut_pit[org]) >= 3 else None,
+            "debutAgeHit": round(statistics.mean(debut_hit[org]), 1) if len(debut_hit[org]) >= 3 else None,
+            "nDebutPit": len(debut_pit[org]),
+            "nDebutHit": len(debut_hit[org]),
         }
     lg_avl = _league_stats({o: r["avlDiff"] for o, r in raw.items()})
     lg_pr = _league_stats({o: r["promoRate"] for o, r in raw.items()})
+    lg_dap = _league_stats({o: r["debutAgePit"] for o, r in raw.items()})
+    lg_dah = _league_stats({o: r["debutAgeHit"] for o, r in raw.items()})
     for r in raw.values():
         z_young = _z(r["avlDiff"], lg_avl["mean"], lg_avl["sd"])
         z_promo = _z(r["promoRate"], lg_pr["mean"], lg_pr["sd"])
@@ -146,9 +287,13 @@ def promotion_panel(by_org: dict[str, list[dict]], today: date) -> dict:
             score = round(sum(parts) / 2, 2)
         r["zYoung"] = z_young
         r["zPromo"] = z_promo
+        # Younger debut age is the "aggressive" direction, so negate the z.
+        r["zDebutAgePit"] = _z(r["debutAgePit"], lg_dap["mean"], lg_dap["sd"])
+        r["zDebutAgeHit"] = _z(r["debutAgeHit"], lg_dah["mean"], lg_dah["sd"])
         r["score"] = score
         r["label"] = _label(score, "aggressive", "conservative")
-    return {"orgs": raw, "league": {"avlDiff": lg_avl, "promoRate": lg_pr}}
+    return {"orgs": raw, "league": {"avlDiff": lg_avl, "promoRate": lg_pr,
+                                    "debutAgePit": lg_dap, "debutAgeHit": lg_dah}}
 
 
 # ============================================================================
@@ -187,23 +332,45 @@ def draft_panels(con) -> tuple[dict, dict, dict]:
         n_pos_known = sum(1 for r in rows if r[6])
         pitch = sum(1 for r in rows if _is_pitcher_pos(r[6]))
         prep = sum(1 for r in rows if (r[7] or "").upper().startswith("HS"))
+        coll = sum(1 for r in rows if (r[7] or "").upper().startswith("COL"))
         upmid = sum(1 for r in rows
                     if (r[6] or "").upper().split("/")[0] in UP_MIDDLE)
+        bkt_counts: dict[str, int] = defaultdict(int)
+        n_bkt = 0
+        for r in rows:
+            b = _pos_bucket(r[6])
+            if b:
+                bkt_counts[b] += 1
+                n_bkt += 1
         pos_raw[org] = {
             "n": n,
             "pitchShare": round(pitch / n_pos_known, 3) if n_pos_known else None,
             "prepShare": round(prep / n_pos_known, 3) if n_pos_known else None,
+            "collShare": round(coll / n_pos_known, 3) if n_pos_known else None,
             "upMidShare": round(upmid / n_pos_known, 3) if n_pos_known else None,
+            "posBuckets": {b: round(bkt_counts.get(b, 0) / n_bkt, 3)
+                           for b in DRAFT_BUCKETS} if n_bkt else {},
         }
         # slot allocation: rounds with published slots only
         slotted = [(r[5], r[4], r[3]) for r in rows if r[4] and r[5]]
         over = sum(1 for b, s, _ in slotted if b > s * 1.05)
         r1 = [(b, s) for b, s, rl in slotted if rl == "1"]
         r1_under = sum(1 for b, s in r1 if b < s * 0.95)
+        # spend distribution across all signed picks with a known bonus:
+        # bonusHHI = concentration of pool $ (top-heavy vs spread); prep $
+        # share = how much of the pool went to high-schoolers.
+        bonuses = [r[5] for r in rows if r[5]]
+        tot_bonus = sum(bonuses)
+        hhi = (sum((b / tot_bonus) ** 2 for b in bonuses)
+               if tot_bonus and len(bonuses) >= 5 else None)
+        prep_bonus = sum(r[5] for r in rows
+                         if r[5] and (r[7] or "").upper().startswith("HS"))
         slot_raw[org] = {
             "nSlotted": len(slotted),
             "overSlotShare": round(over / len(slotted), 3) if slotted else None,
             "r1UnderShare": round(r1_under / len(r1), 3) if r1 else None,
+            "bonusHHI": round(hhi, 3) if hhi is not None else None,
+            "prepDollarShare": round(prep_bonus / tot_bonus, 3) if tot_bonus else None,
         }
         for r in rows:
             t = tools_by_key.get(r[8])
@@ -228,16 +395,27 @@ def draft_panels(con) -> tuple[dict, dict, dict]:
         traits[org] = {"tilts": tilts,
                        "top": [{"tool": k, "z": z} for k, z in ranked[:3] if abs(z) >= 0.4]}
     lg_pos = {k: _league_stats({o: r[k] for o, r in pos_raw.items()})
-              for k in ("pitchShare", "prepShare", "upMidShare")}
+              for k in ("pitchShare", "prepShare", "collShare", "upMidShare")}
+    lg_bkt = {b: _league_stats({o: (r.get("posBuckets") or {}).get(b)
+                                for o, r in pos_raw.items()})
+              for b in DRAFT_BUCKETS}
+    lg_pos["posBuckets"] = lg_bkt
     for org, r in pos_raw.items():
         r["zPitch"] = _z(r["pitchShare"], lg_pos["pitchShare"]["mean"], lg_pos["pitchShare"]["sd"])
         r["zPrep"] = _z(r["prepShare"], lg_pos["prepShare"]["mean"], lg_pos["prepShare"]["sd"])
+        r["zColl"] = _z(r["collShare"], lg_pos["collShare"]["mean"], lg_pos["collShare"]["sd"])
         r["zUpMid"] = _z(r["upMidShare"], lg_pos["upMidShare"]["mean"], lg_pos["upMidShare"]["sd"])
+        r["posBucketsZ"] = {b: _z((r.get("posBuckets") or {}).get(b),
+                                  lg_bkt[b]["mean"], lg_bkt[b]["sd"])
+                            for b in DRAFT_BUCKETS}
     lg_slot = {k: _league_stats({o: r[k] for o, r in slot_raw.items()})
-               for k in ("overSlotShare", "r1UnderShare")}
+               for k in ("overSlotShare", "r1UnderShare", "bonusHHI", "prepDollarShare")}
     for org, r in slot_raw.items():
         r["zOver"] = _z(r["overSlotShare"], lg_slot["overSlotShare"]["mean"], lg_slot["overSlotShare"]["sd"])
+        r["zBonusHHI"] = _z(r["bonusHHI"], lg_slot["bonusHHI"]["mean"], lg_slot["bonusHHI"]["sd"])
+        r["zPrepDollar"] = _z(r["prepDollarShare"], lg_slot["prepDollarShare"]["mean"], lg_slot["prepDollarShare"]["sd"])
         r["label"] = _label(r.get("zOver"), "over-slot shoppers", "slot-disciplined")
+        r["spendLabel"] = _label(r.get("zBonusHHI"), "top-heavy pool", "spread the pool")
     return ({"orgs": pos_raw, "league": lg_pos},
             {"orgs": traits, "league": lg_tool},
             {"orgs": slot_raw, "league": lg_slot})
@@ -247,66 +425,200 @@ def draft_panels(con) -> tuple[dict, dict, dict]:
 # Panel 4 — current arsenal profile
 # ============================================================================
 
-def arsenal_panel(con, players: list[dict]) -> dict:
-    """Pitch-shape identity of the org's PRODUCT: the MLB arsenals of the
-    players it developed (pitch_arsenals stores Statcast arsenals, which
-    exist once a player reaches MLB tracking — graduates and debuts). The
-    org attribution is the developing org from the platform's own record,
-    so 'sinker org' means 'their arms ARRIVE in MLB throwing sinkers'."""
-    org_of = {p["player_key"]: p["org"] for p in players if p.get("org")}
-    # Statcast arsenals exist for MLB-tracked players — the GRADUATES, who
-    # live in the debuts sidecar (org = the platform's record of who
-    # developed them), not the active board.
-    try:
-        debuts = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
-        for p in (debuts if isinstance(debuts, list) else debuts.get("players") or []):
-            if p.get("player_key") and p.get("org"):
-                org_of.setdefault(p["player_key"], p["org"])
-    except (OSError, ValueError):
-        log.warning("org_tendencies: debuts.json unavailable — arsenal panel thin")
-    usage: dict[str, dict[str, float]] = defaultdict(lambda: defaultdict(float))
+def _mlb_arsenal_usage(con, players, debuts):
+    """MLB-tracked (graduate) arsenals → per-org list of per-arm usage-fraction
+    dicts, per-org fb_velo list, and the set of mlbams seen (so AAA can skip
+    them). org attribution: active board first, then the debuts sidecar."""
+    org_key = {p["player_key"]: p["org"] for p in players if p.get("org")}
+    for d in debuts:
+        if d.get("player_key") and d.get("org"):
+            org_key.setdefault(d["player_key"], d["org"])
+    usage: dict[str, list[dict[str, float]]] = defaultdict(list)
     velo: dict[str, list] = defaultdict(list)
-    n_arms: dict[str, int] = defaultdict(int)
-    lg_usage: dict[str, float] = defaultdict(float)
-    lg_total = 0.0
+    seen: set[int] = set()
     for key, payload in con.execute("SELECT player_key, payload_json FROM pitch_arsenals"):
-        org = org_of.get(key)
+        org = org_key.get(key)
         if not org:
             continue
         try:
             a = json.loads(payload)
         except ValueError:
             continue
-        n_arms[org] += 1
+        if a.get("mlbam_id"):
+            seen.add(int(a["mlbam_id"]))
+        mix: dict[str, float] = defaultdict(float)
+        for p in a.get("pitches") or []:
+            pt = (p.get("pitch_type") or "").strip()
+            u = p.get("usage_pct") or 0
+            if pt and u:
+                mix[pt] += float(u)
+        tot = sum(mix.values())
+        if tot > 0:
+            usage[org].append({pt: v / tot for pt, v in mix.items()})   # normalize to fractions
         if a.get("fb_velo"):
             velo[org].append(float(a["fb_velo"]))
-        for p in a.get("pitches") or []:
-            u = p.get("usage_pct") or 0
-            usage[org][p.get("pitch_type") or "?"] += u
-            lg_usage[p.get("pitch_type") or "?"] += u
-            lg_total += u
-    lg_share = {pt: v / lg_total for pt, v in lg_usage.items() if lg_total}
+    return usage, velo, seen
+
+
+def arsenal_panel(con, players: list[dict], debuts: list[dict],
+                  mlbam_org: dict[int, str] | None = None) -> dict:
+    """Pitch-shape identity of the org's pitching inventory — BLENDED across
+    the MLB arsenals of the arms it developed (Statcast, graduates) and the
+    Savant-minors arsenals of its current AAA arms. Each arm contributes one
+    usage-fraction mix; org/league shares are the AVERAGE ARM'S mix, so the
+    table reads 'their typical arm throws sinkers 1.6× the league rate'.
+    Graduates that also threw in AAA are counted once (on the MLB side)."""
+    if mlbam_org is None:
+        mlbam_org = _mlbam_org_map(players, debuts)
+    mlb_usage, velo, mlb_seen = _mlb_arsenal_usage(con, players, debuts)
+    aaa_usage = _aaa_usage_by_arm(mlbam_org, exclude=mlb_seen)
+
+    arms: dict[str, list[dict[str, float]]] = defaultdict(list)
+    n_mlb: dict[str, int] = defaultdict(int)
+    n_aaa: dict[str, int] = defaultdict(int)
+    for org, lst in mlb_usage.items():
+        arms[org].extend(lst)
+        n_mlb[org] += len(lst)
+    for org, lst in aaa_usage.items():
+        arms[org].extend(lst)
+        n_aaa[org] += len(lst)
+
+    # League per-pitch share = mean of every arm's share of that pitch.
+    all_arms = [mix for lst in arms.values() for mix in lst]
+    n_all = len(all_arms) or 1
+    pt_union = {pt for mix in all_arms for pt in mix}
+    lg_share = {pt: sum(mix.get(pt, 0.0) for mix in all_arms) / n_all for pt in pt_union}
+
+    def _ordered(pts):
+        known = [pt for pt in PITCH_ORDER if pt in pts]
+        return known + sorted(pt for pt in pts if pt not in PITCH_ORDER)
+
     raw = {}
-    for org, mix in usage.items():
-        tot = sum(mix.values()) or 1.0
+    for org, lst in arms.items():
+        n = len(lst) or 1
+        usage_matrix = {}
         ratios = {}
-        for pt, v in mix.items():
-            share = v / tot
-            base = lg_share.get(pt)
-            if base and base >= 0.02 and share >= 0.01:
+        for pt in _ordered({p for mix in lst for p in mix} | {p for p in lg_share}):
+            base = lg_share.get(pt, 0.0)
+            if base < 0.01:                       # league barely throws it — skip noise
+                continue
+            share = sum(mix.get(pt, 0.0) for mix in lst) / n
+            usage_matrix[pt] = {"share": round(share, 3),
+                                "leagueShare": round(base, 3),
+                                "ratio": round(share / base, 2) if base else None}
+            if share >= 0.01:
                 ratios[pt] = round(share / base, 2)
         ranked = sorted(ratios.items(), key=lambda kv: -abs(kv[1] - 1.0))
         raw[org] = {
-            "nArms": n_arms[org],
+            "nArms": n_mlb[org] + n_aaa[org],
+            "nArmsMlb": n_mlb[org],
+            "nArmsAaa": n_aaa[org],
             "fbVelo": round(statistics.mean(velo[org]), 1) if velo.get(org) else None,
-            "usageRatio": dict(ranked),
+            "usage": usage_matrix,
+            "usageRatio": dict(ranked),                       # back-compat
             "lean": [{"pt": pt, "x": x} for pt, x in ranked[:3] if abs(x - 1.0) >= 0.25],
+            "blendNote": f"{n_mlb[org]} MLB + {n_aaa[org]} AAA arms",
         }
     lg_velo = _league_stats({o: r["fbVelo"] for o, r in raw.items()})
     for r in raw.values():
         r["zVelo"] = _z(r["fbVelo"], lg_velo["mean"], lg_velo["sd"])
     return {"orgs": raw, "league": {"fbVelo": lg_velo, "share": {
         pt: round(s, 4) for pt, s in sorted(lg_share.items(), key=lambda kv: -kv[1])}}}
+
+
+# ============================================================================
+# Panel 4b — per-pitch STUFF (velo + movement) profile
+# ============================================================================
+
+def _enum(vals: list[float]) -> dict:
+    return {i: v for i, v in enumerate(vals)}
+
+
+def pitch_stuff_panel(con, players: list[dict], debuts: list[dict],
+                      mlbam_org: dict[int, str] | None = None) -> dict:
+    """For each pitch type, the org's velo + movement vs league. Movement
+    (arm-side horizontal break = pfx_x·sign(throws), vertical break = pfx_z,
+    both in inches) comes from the AAA Savant-minors CSVs; velo blends AAA
+    release_speed with MLB avg_speed for the org's developed arms. Each arm
+    contributes one mean per pitch type; org/league cells are means across
+    arms, z vs the per-pitch-type league."""
+    if mlbam_org is None:
+        mlbam_org = _mlbam_org_map(players, debuts)
+    acc: dict[str, dict[str, dict[str, list]]] = defaultdict(
+        lambda: defaultdict(lambda: {"velo": [], "h": [], "v": []}))
+    # --- AAA: velo + movement, per arm ---
+    for org, _mid, rows in _aaa_iter(mlbam_org):
+        sign = 1.0 if (rows[0].get("p_throws") or "R") == "R" else -1.0
+        by_pt: dict[str, dict[str, list]] = defaultdict(lambda: {"velo": [], "h": [], "v": []})
+        for r in rows:
+            pt = (r.get("pitch_type") or "").strip()
+            if pt not in AAA_KEEP_PT:
+                continue
+            sp, hx, vz = _f(r.get("release_speed")), _f(r.get("pfx_x")), _f(r.get("pfx_z"))
+            if sp is not None:
+                by_pt[pt]["velo"].append(sp)
+            if hx is not None:
+                by_pt[pt]["h"].append(hx * sign * 12.0)     # arm-side inches
+            if vz is not None:
+                by_pt[pt]["v"].append(vz * 12.0)
+        for pt, d in by_pt.items():
+            slot = acc[org][pt]
+            if d["velo"]:
+                slot["velo"].append(statistics.mean(d["velo"]))
+            if d["h"]:
+                slot["h"].append(statistics.mean(d["h"]))
+            if d["v"]:
+                slot["v"].append(statistics.mean(d["v"]))
+    # --- MLB arsenals: avg_speed per pitch type (velo only) ---
+    org_key = {p["player_key"]: p["org"] for p in players if p.get("org")}
+    for d in debuts:
+        if d.get("player_key") and d.get("org"):
+            org_key.setdefault(d["player_key"], d["org"])
+    for key, payload in con.execute("SELECT player_key, payload_json FROM pitch_arsenals"):
+        org = org_key.get(key)
+        if not org:
+            continue
+        try:
+            a = json.loads(payload)
+        except ValueError:
+            continue
+        for p in a.get("pitches") or []:
+            pt = (p.get("pitch_type") or "").strip()
+            sp = _f(p.get("avg_speed"))
+            if pt in AAA_KEEP_PT and sp is not None:
+                acc[org][pt]["velo"].append(sp)
+    # --- per-org cells + league per-pitch-type stats ---
+    org_pt: dict[str, dict[str, dict]] = {}
+    lg_acc: dict[str, dict[str, list]] = defaultdict(lambda: {"velo": [], "h": [], "v": []})
+    for org, by_pt in acc.items():
+        row = {}
+        for pt, d in by_pt.items():
+            n = max(len(d["velo"]), len(d["h"]), len(d["v"]))
+            if n < 4:                                   # too few arms throwing it
+                continue
+            velo = round(statistics.mean(d["velo"]), 1) if d["velo"] else None
+            h = round(statistics.mean(d["h"]), 1) if d["h"] else None
+            v = round(statistics.mean(d["v"]), 1) if d["v"] else None
+            row[pt] = {"velo": velo, "hBreak": h, "vBreak": v, "n": n}
+            if velo is not None:
+                lg_acc[pt]["velo"].append(velo)
+            if h is not None:
+                lg_acc[pt]["h"].append(h)
+            if v is not None:
+                lg_acc[pt]["v"].append(v)
+        if row:
+            org_pt[org] = row
+    lg = {pt: {"velo": _league_stats(_enum(d["velo"])),
+               "hBreak": _league_stats(_enum(d["h"])),
+               "vBreak": _league_stats(_enum(d["v"]))}
+          for pt, d in lg_acc.items()}
+    for row in org_pt.values():
+        for pt, cell in row.items():
+            L = lg.get(pt, {})
+            cell["zVelo"] = _z(cell["velo"], L.get("velo", {}).get("mean"), L.get("velo", {}).get("sd"))
+            cell["zHBreak"] = _z(cell["hBreak"], L.get("hBreak", {}).get("mean"), L.get("hBreak", {}).get("sd"))
+            cell["zVBreak"] = _z(cell["vBreak"], L.get("vBreak", {}).get("mean"), L.get("vBreak", {}).get("sd"))
+    return {"orgs": {o: {"pitches": row} for o, row in org_pt.items()}, "league": lg}
 
 
 # ============================================================================
@@ -582,6 +894,208 @@ def health_panel(con, by_org: dict[str, list[dict]]) -> dict:
 
 
 # ============================================================================
+# Panel 9 — graduation track record
+# ============================================================================
+
+def graduation_panel(con, debuts: list[dict]) -> dict:
+    """How well the pipeline produces MLB players: graduates/year, mean
+    graduate career WAR, and draft-to-MLB hit rate (signed picks 2021+ whose
+    promoted_key reached the bigs / signed picks 2021+). Recent draft classes
+    have little runway, so absolute hit rates are low — the z is the signal."""
+    grads_year: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    war_by_org: dict[str, list] = defaultdict(list)
+    debut_keys: set[str] = set()
+    for d in debuts:
+        if d.get("player_key"):
+            debut_keys.add(d["player_key"])
+        org = d.get("org")
+        if not org:
+            continue
+        yr = (d.get("debut_date") or "")[:4]
+        if yr.isdigit():
+            grads_year[org][yr] += 1
+        cw = d.get("career_war")
+        if isinstance(cw, dict) and cw.get("career_war") is not None:
+            war_by_org[org].append(float(cw["career_war"]))
+    signed: dict[str, int] = defaultdict(int)
+    hit: dict[str, int] = defaultdict(int)
+    try:
+        for team, _pk, promoted in con.execute("""
+            SELECT r.team, r.player_key, p.promoted_key
+            FROM draft_results r LEFT JOIN draft_players p USING (player_key)
+            WHERE r.signed = 1 AND r.draft_year >= ?""", (DRAFT_FIRST_YEAR,)):
+            if not team:
+                continue
+            signed[team] += 1
+            if promoted and promoted in debut_keys:
+                hit[team] += 1
+    except Exception as e:                                  # noqa: BLE001 — degrade, never abort
+        log.warning("org_tendencies: draft hit-rate unavailable: %s", e)
+    raw = {}
+    for org in set(grads_year) | set(war_by_org) | set(signed):
+        years = grads_year.get(org, {})
+        wars = war_by_org.get(org, [])
+        ns = signed.get(org, 0)
+        raw[org] = {
+            "gradsPerYear": round(sum(years.values()) / len(years), 1) if years else None,
+            "totalGrads": sum(years.values()),
+            "meanGradWar": round(statistics.mean(wars), 2) if wars else None,
+            "nWar": len(wars),
+            "nSignedDraft": ns,
+            "nGradsFromDraft": hit.get(org, 0),
+            "draftHitRate": round(hit.get(org, 0) / ns, 3) if ns else None,
+        }
+    lg = {k: _league_stats({o: r[k] for o, r in raw.items()})
+          for k in ("gradsPerYear", "meanGradWar", "draftHitRate")}
+    for r in raw.values():
+        r["zGrads"] = _z(r["gradsPerYear"], lg["gradsPerYear"]["mean"], lg["gradsPerYear"]["sd"])
+        r["zWar"] = _z(r["meanGradWar"], lg["meanGradWar"]["mean"], lg["meanGradWar"]["sd"])
+        r["zHitRate"] = _z(r["draftHitRate"], lg["draftHitRate"]["mean"], lg["draftHitRate"]["sd"])
+        r["label"] = _label(r["zWar"], "produces MLB value", "thin track record")
+    return {"orgs": raw, "league": lg,
+            "note": ("draft hit rate = signed picks 2021+ reaching MLB / signed picks 2021+ — "
+                     "recent classes have little runway, so the z (relative) is the read")}
+
+
+# ============================================================================
+# Panel 10 — hitter approach (current lean, level-adjusted)
+# ============================================================================
+
+# (zone-metric field, friendly key, aggressive-direction sign for the label)
+APPROACH_MAP = (("o_swing_pct", "chase"), ("z_contact_pct", "zoneContact"), ("whiff_pct", "whiff"))
+
+
+def hitter_approach_panel(players: list[dict]) -> dict:
+    """Org hitters' plate-discipline LEAN vs league: chase (o-swing), in-zone
+    contact, and whiff. Level-adjusted (each hitter expressed as a deviation
+    from his level's league mean) so an AAA-heavy system isn't penalized.
+    NOTE: zone-metric history isn't archived, so this is a current lean, not a
+    development drift."""
+    by_level: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+    rows: list[tuple[str, str, dict]] = []
+    for p in players:
+        if p.get("status") != "active" or not p.get("org"):
+            continue
+        zm = p.get("zone_metrics")
+        if not isinstance(zm, dict) or zm.get("is_pitcher"):
+            continue
+        level = zm.get("level") or p.get("statline_level") or "?"
+        vals = {}
+        for field, name in APPROACH_MAP:
+            v = zm.get(field)
+            if isinstance(v, (int, float)):
+                vals[name] = float(v)
+                by_level[name][level].append(float(v))
+        if vals:
+            rows.append((p["org"], level, vals))
+    level_mean = {name: {lv: statistics.mean(vs) for lv, vs in lvs.items() if len(vs) >= 5}
+                  for name, lvs in by_level.items()}
+    acc: dict[str, dict[str, list]] = defaultdict(lambda: defaultdict(list))
+    for org, level, vals in rows:
+        for name, v in vals.items():
+            base = level_mean.get(name, {}).get(level)
+            if base is not None:
+                acc[org][name].append(v - base)
+    raw = {}
+    for org, by_name in acc.items():
+        cell, n = {}, 0
+        for _field, name in APPROACH_MAP:
+            xs = by_name.get(name, [])
+            if len(xs) >= 5:
+                cell[name] = {"adj": round(statistics.mean(xs), 3)}
+                n = max(n, len(xs))
+        if cell:
+            raw[org] = {"metrics": cell, "nHitters": n}
+    lg = {name: _league_stats({o: (r["metrics"].get(name) or {}).get("adj")
+                               for o, r in raw.items()})
+          for _f, name in APPROACH_MAP}
+    for r in raw.values():
+        for _field, name in APPROACH_MAP:
+            if name in r["metrics"]:
+                r["metrics"][name]["z"] = _z(r["metrics"][name]["adj"],
+                                             lg[name]["mean"], lg[name]["sd"])
+        zc = (r["metrics"].get("chase") or {}).get("z")
+        r["label"] = _label(-zc if zc is not None else None,
+                            "disciplined approach", "aggressive swingers")
+    return {"orgs": raw, "league": lg, "levelAdjusted": True,
+            "note": ("current approach lean vs league (level-adjusted); zone-metric history "
+                     "isn't archived yet, so no development drift")}
+
+
+# ============================================================================
+# Panel 11 — similar farms (tendency-vector cosine)
+# ============================================================================
+
+# (panel key, z-field) pairs composing the similarity vector. Null → 0
+# (league-typical). All already z-normalized so no rescaling needed.
+SIM_FEATURES = (
+    ("promotion", "zYoung"), ("promotion", "zPromo"),
+    ("promotion", "zDebutAgePit"), ("promotion", "zDebutAgeHit"),
+    ("draftPos", "zPitch"), ("draftPos", "zPrep"), ("draftPos", "zColl"), ("draftPos", "zUpMid"),
+    ("slot", "zOver"), ("slot", "zBonusHHI"), ("slot", "zPrepDollar"),
+    ("arsenal", "zVelo"),
+    ("ifa", "zConc"), ("ifa", "zVolume"),
+    ("trades", "zVolume"), ("trades", "zNet"), ("trades", "zQuality"),
+    ("health", "z"),
+    ("graduation", "zWar"), ("graduation", "zHitRate"),
+)
+# Human labels for the shared-dimension chips on the UI.
+SIM_FEATURE_LABELS = {
+    "promotion.zYoung": "young-for-level", "promotion.zPromo": "promotes often",
+    "promotion.zDebutAgePit": "arm debut age", "promotion.zDebutAgeHit": "bat debut age",
+    "draftPos.zPitch": "drafts pitching", "draftPos.zPrep": "drafts prep",
+    "draftPos.zColl": "drafts college", "draftPos.zUpMid": "up-the-middle",
+    "slot.zOver": "over-slot", "slot.zBonusHHI": "top-heavy pool", "slot.zPrepDollar": "prep $",
+    "arsenal.zVelo": "fastball velo",
+    "ifa.zConc": "IFA concentration", "ifa.zVolume": "IFA volume",
+    "trades.zVolume": "trade volume", "trades.zNet": "prospect acquirer", "trades.zQuality": "trades for quality",
+    "health.z": "IL burden",
+    "graduation.zWar": "graduate WAR", "graduation.zHitRate": "draft hit rate",
+}
+
+
+def similar_farms_panel(payload: dict) -> dict:
+    """Most-similar farms by tendency overlap: cosine similarity over the
+    SIM_FEATURES z-vector. Per org, the top 4 nearest plus the 2-3 shared
+    same-sign dimensions driving the match."""
+    fnames = [f"{p}.{f}" for p, f in SIM_FEATURES]
+    orgs = list(payload["promotion"]["orgs"].keys())
+    vecs: dict[str, list[float]] = {}
+    for org in orgs:
+        v = []
+        for panel, field in SIM_FEATURES:
+            cell = (payload.get(panel, {}).get("orgs", {}) or {}).get(org, {})
+            x = cell.get(field)
+            v.append(float(x) if isinstance(x, (int, float)) else 0.0)
+        vecs[org] = v
+
+    def cos(a, b):
+        num = sum(x * y for x, y in zip(a, b))
+        da = math.sqrt(sum(x * x for x in a))
+        db = math.sqrt(sum(y * y for y in b))
+        return num / (da * db) if da and db else 0.0
+
+    out = {}
+    for org in orgs:
+        sims = sorted(((o, cos(vecs[org], vecs[o])) for o in orgs if o != org),
+                      key=lambda kv: -kv[1])
+        top = []
+        for other, s in sims[:4]:
+            shared = []
+            for i, fn in enumerate(fnames):
+                a, b = vecs[org][i], vecs[other][i]
+                if a and b and (a > 0) == (b > 0) and abs(a) >= 0.5 and abs(b) >= 0.5:
+                    shared.append((fn, a * b, a, b))
+            shared.sort(key=lambda t: -t[1])
+            top.append({"org": other, "score": round(s, 3),
+                        "shared": [{"feature": fn, "label": SIM_FEATURE_LABELS.get(fn, fn),
+                                    "a": round(av, 2), "b": round(bv, 2)}
+                                   for fn, _p, av, bv in shared[:3]]})
+        out[org] = {"similar": top}
+    return {"orgs": out, "features": fnames}
+
+
+# ============================================================================
 # Payload
 # ============================================================================
 
@@ -594,6 +1108,8 @@ def _filter_mlb30(panel: dict, mlb30: set) -> dict:
 
 def build_payload() -> dict:
     players = _timeseries_players()
+    debuts = _load_debuts()
+    mlbam_org = _mlbam_org_map(players, debuts)
     by_org = _actives_by_org(players)
     mlb30 = set(by_org)
     with storage.connect() as con:
@@ -603,24 +1119,33 @@ def build_payload() -> dict:
             "windows": {"draft": f"{DRAFT_FIRST_YEAR}-present",
                         "trades": f"{TRADE_FIRST_DATE[:4]}-present",
                         "gradeHistory": "2017-present (same-source snapshot pairs)",
-                        "promotion": "active roster, trailing 365d"},
-            "promotion": promotion_panel(by_org, date.today()),
+                        "promotion": "active roster, trailing 365d",
+                        "graduation": f"debuts; draft hit rate {DRAFT_FIRST_YEAR}-present",
+                        "approach": "current active hitters (zone metrics; no history)"},
+            "promotion": promotion_panel(by_org, debuts, date.today()),
             "draftPos": _filter_mlb30(draft_pos, mlb30),
             "draftTraits": _filter_mlb30(draft_traits, mlb30),
             "slot": _filter_mlb30(slot, mlb30),
-            "arsenal": _filter_mlb30(arsenal_panel(con, players), mlb30),
+            "arsenal": _filter_mlb30(arsenal_panel(con, players, debuts, mlbam_org), mlb30),
+            "pitchStuff": _filter_mlb30(pitch_stuff_panel(con, players, debuts, mlbam_org), mlb30),
             "toolDev": _filter_mlb30(tool_dev_panel(con), mlb30),
             "ifa": _filter_mlb30(ifa_panel(), mlb30),
             "trades": _filter_mlb30(trades_panel(con), mlb30),
             "health": health_panel(con, by_org),
+            "graduation": _filter_mlb30(graduation_panel(con, debuts), mlb30),
+            "hitterApproach": _filter_mlb30(hitter_approach_panel(players), mlb30),
             "notes": [
-                "every value is league-relative: z = (org − league mean) / league sd across the 30 orgs; labels only fire at |z| ≥ 0.5",
-                "arsenal profiles the MLB pitch mixes of the players each org DEVELOPED (Statcast arsenals exist from MLB tracking) — what their arms throw when they arrive; per-pitch usage HISTORY isn't archived yet, so conversion claims (four-seam → sinker) are a documented v2 fork",
-                "toolDev measures grade drift per prospect-year inside the org from SAME-SOURCE snapshot pairs (≥60d apart) — cross-source noise never counts as development",
-                "SC+ drift covers the platform's metric-snapshot window only (2026-05 onward) — an early read, labeled as such",
-                "trade quality/depth grades acquired prospects from board snapshots within ±120 days of the trade; ungraded moves count toward volume only",
+                "every value is league-relative: z = (org minus league mean) / league sd across the 30 orgs; labels only fire at |z| >= 0.5",
+                "arsenal BLENDS the MLB arsenals of an org's graduates with the Savant-minors arsenals of its current AAA arms (each arm counted once); the table is the average arm's pitch mix vs league. about half of AAA arms can't be org-attributed, so the AAA arm count is partial, disclosed per org",
+                "pitchStuff: per-pitch velo + arm-side movement (AAA Gameday pfx) vs league; velo blends AAA + MLB",
+                "toolDev measures grade drift per prospect-year inside the org from SAME-SOURCE snapshot pairs (>=60d apart); cross-source noise never counts as development",
+                "SC+ drift covers the platform's metric-snapshot window only (2026-05 onward), an early read, labeled as such",
+                "trade quality/depth grades acquired prospects from board snapshots within 120 days of the trade; ungraded moves count toward volume only",
+                "graduation draft-hit-rate denominator is signed picks 2021+ (little MLB runway for recent classes; read the z, not the absolute)",
+                "hitterApproach is a current level-adjusted LEAN vs league, not a development drift (zone-metric history isn't archived)",
             ],
         }
+        payload["similarFarms"] = _filter_mlb30(similar_farms_panel(payload), mlb30)
     return payload
 
 

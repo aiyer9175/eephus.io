@@ -26674,6 +26674,7 @@ function buildFarmCard(snap) {
         <div style="font-family:var(--font-retro);font-size:62px;font-weight:800;line-height:1;color:${_gfxGradeColor(overall)};">${escapeHtml(String(overall))}</div>
       </div>
     </div>
+    ${_gfxTendencyStrip(org.org, P)}
     ${content}`;
   return { board, total: 1, w: W, h: H };
 }
@@ -39532,6 +39533,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
 // =============================================================================
 let _orgTendencies = null;
 let _orgTendenciesLoading = false;
+let _orgTendenciesPrefetch = false;
 
 const _OT_TOOL_LABELS = {
   hit: "Hit", game_pwr: "Game Power", raw_pwr: "Raw Power", speed: "Speed",
@@ -39539,9 +39541,10 @@ const _OT_TOOL_LABELS = {
   fb: "Fastball", sl: "Slider", cb: "Curveball", ch: "Changeup", cmd: "Command",
 };
 const _OT_PITCH_NAMES = {
-  FF: "Four-seam", SI: "Sinker", SL: "Slider", ST: "Sweeper", FC: "Cutter",
-  CH: "Changeup", CU: "Curveball", FS: "Splitter", KC: "Knuckle-curve",
-  FO: "Forkball", SV: "Slurve", SC: "Screwball",
+  FF: "Four-seam", SI: "Sinker", FT: "Two-seam", SL: "Slider", ST: "Sweeper",
+  SW: "Sweeper", FC: "Cutter", CH: "Changeup", CU: "Curveball", FS: "Splitter",
+  KC: "Knuckle-curve", CS: "Slow Curve", FO: "Forkball", SV: "Slurve",
+  SC: "Screwball", EP: "Eephus", KN: "Knuckleball",
 };
 
 // Compact league-relative bar: centered at the league mean, fill grows with
@@ -39562,6 +39565,38 @@ function _otChip(label, tip, tone) {
   if (!label) return "";
   const col = tone === "up" ? "var(--up)" : tone === "down" ? "var(--down)" : "var(--text-secondary)";
   return `<span title="${escapeHtml(tip || "")}" style="display:inline-block;border:1px solid ${col};color:${col};font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:2px 8px;margin:2px 4px 2px 0;cursor:help;">${escapeHtml(label)}</span>`;
+}
+
+// Pronounced filled "identity" badges: each kind carries its own glyph + a
+// solid saturated color chosen for white-text contrast in BOTH themes (so the
+// badges pop independent of the light/dark token swap). _otBadge(kind,...).
+const _OT_BADGE = {
+  aggressive:        { g: "⚡", c: "#1F7A3A" },
+  conservative:      { g: "🕰", c: "#475569" },
+  ifa:               { g: "🌐", c: "#6D28D9" },
+  "trade-happy":     { g: "🔁", c: "#9A6700" },
+  "trade-reluctant": { g: "🔒", c: "#475569" },
+  acquirer:          { g: "📥", c: "#1F7A3A" },
+  shipper:           { g: "📤", c: "#1E5FB4" },
+  quality:           { g: "🏆", c: "#1F7A3A" },
+  depth:             { g: "📦", c: "#1E5FB4" },
+  "over-slot":       { g: "💰", c: "#9A6700" },
+  "slot-disciplined":{ g: "💲", c: "#1E5FB4" },
+  "top-heavy":       { g: "⛰", c: "#9A6700" },
+  spread:            { g: "🪙", c: "#1E5FB4" },
+  "high-il":         { g: "🏥", c: "#B3261E" },
+  healthy:           { g: "💪", c: "#1F7A3A" },
+  "grad-value":      { g: "🎓", c: "#1F7A3A" },
+  "grad-thin":       { g: "🎓", c: "#B3261E" },
+  disciplined:       { g: "🎯", c: "#1E5FB4" },
+  "free-swing":      { g: "🗡", c: "#9A6700" },
+  velo:              { g: "🔥", c: "#B3261E" },
+  draft:             { g: "🧲", c: "#1E5FB4" },
+};
+function _otBadge(kind, label, tip) {
+  if (!label) return "";
+  const b = _OT_BADGE[kind] || { g: "●", c: "#475569" };
+  return `<span title="${escapeHtml(tip || "")}" style="display:inline-flex;align-items:center;gap:5px;background:${b.c};color:#fff;border-radius:999px;padding:3px 11px 3px 9px;font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:3px 6px 3px 0;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,0.28);white-space:nowrap;"><span style="font-size:11px;line-height:1;">${b.g}</span>${escapeHtml(label)}</span>`;
 }
 
 function _otCard(title, sub, bodyHtml) {
@@ -39591,50 +39626,96 @@ function _renderOrgTendencies(orgCode) {
   const g = panel => (T[panel] && T[panel].orgs && T[panel].orgs[orgCode]) || {};
   const promo = g("promotion"), dpos = g("draftPos"), traits = g("draftTraits"),
         slot = g("slot"), ars = g("arsenal"), dev = g("toolDev"),
-        ifa = g("ifa"), tr = g("trades"), hp = g("health");
+        ifa = g("ifa"), tr = g("trades"), hp = g("health"),
+        gradP = g("graduation"), appr = g("hitterApproach"), stuff = g("pitchStuff");
 
-  // ---- identity strip: every verdict the data earned, in one row ----------
-  const chips = [
-    _otChip(promo.label && promo.label !== "typical" ? promo.label + " promoter" : null,
-            `Promotion style - runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average, ${promo.promoRate ?? "?"} promotions per active prospect (trailing year).`,
-            promo.label === "aggressive" ? "up" : "down"),
-    _otChip(ifa.label && ifa.label !== "balanced" ? "IFA: " + ifa.label : null,
-            `International pool strategy - top signing takes ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the class pool on average (HHI ${ifa.hhi ?? "?"}), ${ifa.signingsPerClass ?? "?"} signings per class.`),
-    _otChip(tr.volLabel && tr.volLabel !== "typical" ? tr.volLabel : null,
-            `${tr.volume ?? "?"} tracked-prospect trade moves since 2022 (${tr.in ?? "?"} in / ${tr.out ?? "?"} out).`),
-    _otChip(tr.dirLabel && tr.dirLabel !== "two-way" ? tr.dirLabel : null,
-            `Net prospect capital: ${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "?"} tracked prospects since 2022 - positive = accumulates prospects, negative = ships them for MLB help.`),
-    _otChip(tr.qdLabel && tr.qdLabel !== "balanced" ? "targets " + tr.qdLabel : null,
-            `Of graded prospects acquired, ${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "?"} were FV 50+ (mean FV ${tr.acqFvMean ?? "?"}, ${tr.nGraded ?? 0} graded).`),
-    _otChip(slot.label && slot.label !== "typical" ? slot.label : null,
-            `Draft-pool allocation - ${slot.overSlotShare != null ? (slot.overSlotShare * 100).toFixed(0) + "%" : "?"} of slotted picks signed over slot; ${slot.r1UnderShare != null ? (slot.r1UnderShare * 100).toFixed(0) + "%" : "?"} of round-1 picks cut under-slot deals to spread the pool.`),
-    _otChip(hp.label && hp.label !== "typical" ? hp.label : null,
-            `${hp.stintsPer100 ?? "?"} recorded IL stints per 100 active prospects.`),
+  // strongest position lean in the draft (for the identity badge)
+  let draftLeanLabel = null;
+  if (dpos.posBucketsZ) {
+    const e = Object.entries(dpos.posBucketsZ).filter(([, z]) => z != null)
+      .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
+    if (e && Math.abs(e[1]) >= 1.0)
+      draftLeanLabel = "drafts " + ({ P: "pitching", MI: "middle-IF", CI: "corner-IF", OF: "outfield", C: "catchers" }[e[0]] || e[0]);
+  }
+
+  // ---- identity strip: pronounced filled badges, one per earned verdict -----
+  const badges = [
+    _otBadge(promo.label === "aggressive" ? "aggressive" : "conservative",
+      promo.label && promo.label !== "typical" ? promo.label + " promoter" : null,
+      `Runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average; ${promo.promoRate ?? "?"} promotions per prospect.`),
+    _otBadge("ifa", ifa.label && ifa.label !== "balanced" ? "IFA: " + ifa.label : null,
+      `Top signing ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the pool; ${ifa.signingsPerClass ?? "?"} signings/class.`),
+    _otBadge(tr.volLabel === "trade-happy" ? "trade-happy" : "trade-reluctant",
+      tr.volLabel && tr.volLabel !== "typical" ? tr.volLabel : null,
+      `${tr.volume ?? "?"} tracked-prospect trade moves since 2022 (${tr.in ?? "?"} in / ${tr.out ?? "?"} out).`),
+    _otBadge((tr.dirLabel || "").includes("acquirer") ? "acquirer" : "shipper",
+      tr.dirLabel && tr.dirLabel !== "two-way" ? tr.dirLabel : null,
+      `Net prospect capital ${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "?"} since 2022.`),
+    _otBadge((tr.qdLabel || "").includes("quality") ? "quality" : "depth",
+      tr.qdLabel && tr.qdLabel !== "balanced" ? "targets " + ((tr.qdLabel || "").includes("quality") ? "quality" : "depth") : null,
+      `${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "?"} of graded acquisitions were FV 50+.`),
+    _otBadge(slot.label === "over-slot shoppers" ? "over-slot" : "slot-disciplined",
+      slot.label && slot.label !== "typical" ? slot.label : null,
+      `${slot.overSlotShare != null ? (slot.overSlotShare * 100).toFixed(0) + "%" : "?"} of slotted picks signed over slot.`),
+    _otBadge(slot.spendLabel === "top-heavy pool" ? "top-heavy" : "spread",
+      slot.spendLabel && slot.spendLabel !== "typical" ? slot.spendLabel : null,
+      `Bonus-pool concentration HHI ${slot.bonusHHI ?? "?"}; ${slot.prepDollarShare != null ? (slot.prepDollarShare * 100).toFixed(0) + "% of $ to prep" : ""}.`),
+    _otBadge("draft", draftLeanLabel, `Position lean in the draft vs league.`),
+    _otBadge("velo", ars.zVelo != null && Math.abs(ars.zVelo) >= 0.8 ? (ars.zVelo > 0 ? "power arms" : "finesse arms") : null,
+      `Developed/AAA arms average ${ars.fbVelo ?? "?"} mph (z ${ars.zVelo ?? "?"}).`),
+    _otBadge(appr.label === "disciplined approach" ? "disciplined" : "free-swing",
+      appr.label && appr.label !== "typical" ? appr.label : null,
+      `Hitters' plate-discipline lean vs league (level-adjusted).`),
+    _otBadge(gradP.label === "produces MLB value" ? "grad-value" : "grad-thin",
+      gradP.label && gradP.label !== "typical" ? gradP.label : null,
+      `Graduates average ${gradP.meanGradWar ?? "?"} career WAR; ~${gradP.gradsPerYear ?? "?"}/yr.`),
+    _otBadge(hp.label === "healthy pipeline" ? "healthy" : "high-il",
+      hp.label && hp.label !== "typical" ? hp.label : null,
+      `${hp.stintsPer100 ?? "?"} recorded IL stints per 100 active prospects.`),
   ].filter(Boolean).join("");
 
-  // ---- promotion card -------------------------------------------------------
-  const promoCard = _otCard("Promotion style",
-    "How young the org runs its levels + promotion rate, trailing year",
-    `<table class="detail-table" style="width:100%;">
-      <tr><td title="Mean (prospect age − level-average age) across the active roster - negative = young-for-level placement.">Age vs level</td>
-        <td style="text-align:right;">${promo.avlDiff != null ? (promo.avlDiff > 0 ? "+" : "") + promo.avlDiff + " yrs" : " - "}</td>
-        <td>${_otZBar(promo.zYoung != null ? -promo.zYoung : null)}</td></tr>
-      <tr><td title="Promotions per active prospect over the trailing 365 days.">Promotions / prospect</td>
-        <td style="text-align:right;">${promo.promoRate ?? " - "}</td>
-        <td>${_otZBar(promo.zPromo)}</td></tr>
-    </table>
-    <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">bars read vs league: right/green = more aggressive than the average org</div>`);
+  // ---- shared row helpers ---------------------------------------------------
+  const valRow = (label, val, z, tip) => `<tr><td title="${escapeHtml(tip || "")}">${label}</td>
+    <td style="text-align:right;">${val}</td><td>${_otZBar(z)}</td></tr>`;
+  const pctRow = (label, v, z, tip) => valRow(label, v != null ? (v * 100).toFixed(0) + "%" : " - ", z, tip);
 
-  // ---- draft cards ----------------------------------------------------------
-  const pctRow = (label, v, z, tip) => `<tr><td title="${escapeHtml(tip)}">${label}</td>
-    <td style="text-align:right;">${v != null ? (v * 100).toFixed(0) + "%" : " - "}</td><td>${_otZBar(z)}</td></tr>`;
+  // ---- promotion (now with debut age) --------------------------------------
+  const promoCard = _otCard("Promotion style",
+    "How young the org runs its levels, promotes, and how old its graduates debut",
+    `<table class="detail-table" style="width:100%;">
+      ${valRow("Age vs level", promo.avlDiff != null ? (promo.avlDiff > 0 ? "+" : "") + promo.avlDiff + " yrs" : " - ", promo.zYoung != null ? -promo.zYoung : null, "Mean (age − level-average); negative = young-for-level.")}
+      ${valRow("Promotions / prospect", promo.promoRate ?? " - ", promo.zPromo, "Promotions per active prospect, trailing 365d.")}
+      ${valRow("Pitcher debut age", promo.debutAgePit != null ? promo.debutAgePit + " yrs" : " - ", promo.zDebutAgePit != null ? -promo.zDebutAgePit : null, "Mean age at MLB debut for graduated pitchers (n=" + (promo.nDebutPit || 0) + ").")}
+      ${valRow("Hitter debut age", promo.debutAgeHit != null ? promo.debutAgeHit + " yrs" : " - ", promo.zDebutAgeHit != null ? -promo.zDebutAgeHit : null, "Mean age at MLB debut for graduated hitters (n=" + (promo.nDebutHit || 0) + ").")}
+    </table>
+    <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">bars read vs league: right/green = more aggressive (younger / faster)</div>`);
+
+  // ---- draft: what they take (now with college + position buckets) ---------
+  const POSB = { P: "Pitchers", C: "Catchers", MI: "Middle IF", CI: "Corner IF", OF: "Outfield" };
+  const bktRows = (dpos.posBuckets && Object.keys(dpos.posBuckets).length)
+    ? Object.keys(POSB).map(b => pctRow(POSB[b], dpos.posBuckets[b], (dpos.posBucketsZ || {})[b], "Share of signed picks fielding " + POSB[b] + ".")).join("")
+    : "";
   const draftCard = _otCard("Draft - what they take",
     `${dpos.n ?? 0} signed picks, ${T.windows ? T.windows.draft : "2021-present"}`,
     `<table class="detail-table" style="width:100%;">
       ${pctRow("Pitchers", dpos.pitchShare, dpos.zPitch, "Share of signed picks that are pitchers.")}
-      ${pctRow("Prep (HS)", dpos.prepShare, dpos.zPrep, "Share of signed picks out of high school (vs college).")}
-      ${pctRow("Up-the-middle", dpos.upMidShare, dpos.zUpMid, "Share at premium positions: C / SS / CF / 2B.")}
+      ${pctRow("Prep (HS)", dpos.prepShare, dpos.zPrep, "Share of signed picks out of high school.")}
+      ${pctRow("College", dpos.collShare, dpos.zColl, "Share of signed picks out of college.")}
+      ${pctRow("Up-the-middle", dpos.upMidShare, dpos.zUpMid, "Premium up-the-middle: C / SS / CF / 2B.")}
+    </table>
+    ${bktRows ? `<div style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);margin:9px 0 2px;">By position group</div><table class="detail-table" style="width:100%;">${bktRows}</table>` : ""}`);
+
+  // ---- draft: how they spend (NEW) -----------------------------------------
+  const spendCard = _otCard("Draft - how they spend",
+    "Bonus-pool allocation vs league",
+    `<table class="detail-table" style="width:100%;">
+      ${valRow("Pool concentration", slot.bonusHHI ?? " - ", slot.zBonusHHI, "HHI of bonus dollars across signed picks - higher = top-heavy spending.")}
+      ${pctRow("$ to prep (HS)", slot.prepDollarShare, slot.zPrepDollar, "Share of bonus dollars spent on high-schoolers.")}
+      ${pctRow("Over-slot signings", slot.overSlotShare, slot.zOver, "Share of slotted picks signed >5% over slot.")}
+      ${pctRow("R1 under-slot deals", slot.r1UnderShare, null, "Round-1 picks signed under slot to spread the pool later.")}
     </table>`);
+
+  // ---- draft traits ---------------------------------------------------------
   const traitRows = Object.entries((traits.tilts || {}))
     .filter(([, z]) => z != null).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1])).slice(0, 6)
     .map(([k, z]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td><td>${_otZBar(z)}</td></tr>`).join("");
@@ -39643,7 +39724,7 @@ function _renderOrgTendencies(orgCode) {
     traitRows ? `<table class="detail-table" style="width:100%;">${traitRows}</table>`
               : '<div style="color:var(--text-tertiary);font-size:12px;">Not enough graded draftees.</div>');
 
-  // ---- development cards ----------------------------------------------------
+  // ---- what they develop ----------------------------------------------------
   const devRows = Object.entries((dev.tools || {}))
     .sort((a, b) => (b[1].z ?? -9) - (a[1].z ?? -9))
     .map(([k, v]) => `<tr><td>${_OT_TOOL_LABELS[k] || k}</td>
@@ -39655,17 +39736,63 @@ function _renderOrgTendencies(orgCode) {
     "Grade drift per prospect-year IN this org, vs league - scouting-grade movement, not stat noise",
     (devRows ? `<table class="detail-table" style="width:100%;">${devRows}</table>` :
       '<div style="color:var(--text-tertiary);font-size:12px;">Not enough same-source grade pairs.</div>') + scLine);
-  const leanRows = (ars.lean || []).map(l =>
-    `<tr><td>${_OT_PITCH_NAMES[l.pt] || l.pt}</td>
-      <td style="text-align:right;" title="Usage share of this pitch across the org's developed MLB arms, as a multiple of the league share.">${l.x.toFixed(2)}× league</td></tr>`).join("");
-  const arsCard = _otCard("Pitch identity of their products",
-    `MLB arsenals of the ${ars.nArms ?? 0} arms this org developed - what they throw when they arrive`,
-    (leanRows ? `<table class="detail-table" style="width:100%;">${leanRows}</table>`
-              : '<div style="color:var(--text-tertiary);font-size:12px;">No developed MLB arms tracked yet.</div>')
-    + (ars.fbVelo != null ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Avg FB velo of developed arms: <strong>${ars.fbVelo}</strong> mph ${_otZBar(ars.zVelo)}</div>` : "")
-    + '<div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;">Per-pitch usage history isn\'t archived yet - pitch-conversion ledgers (four-seam → sinker) are a planned v2.</div>');
 
-  // ---- IFA + trades cards ---------------------------------------------------
+  // ---- pitch identity: full blended usage matrix ---------------------------
+  const usage = ars.usage || {};
+  const uRows = Object.keys(usage).map(pt => {
+    const c = usage[pt];
+    const rc = c.ratio == null ? "var(--text-secondary)" : c.ratio >= 1.1 ? "var(--up)" : c.ratio <= 0.9 ? "var(--down)" : "var(--text-secondary)";
+    return `<tr><td>${_OT_PITCH_NAMES[pt] || pt}</td>
+      <td style="text-align:right;">${(c.share * 100).toFixed(0)}%</td>
+      <td style="text-align:right;color:${rc};" title="Usage as a multiple of the league rate.">${c.ratio != null ? c.ratio.toFixed(2) + "×" : " - "}</td></tr>`;
+  }).join("");
+  const arsCard = _otCard("Pitch identity of their products",
+    `Blended arsenal of ${ars.nArms ?? 0} arms (${ars.nArmsMlb ?? 0} MLB + ${ars.nArmsAaa ?? 0} AAA) - usage vs league`,
+    (uRows ? `<table class="detail-table" style="width:100%;"><tr style="color:var(--text-tertiary);"><td style="font-size:10px;">Pitch</td><td style="text-align:right;font-size:10px;">Usage</td><td style="text-align:right;font-size:10px;">vs lg</td></tr>${uRows}</table>`
+           : '<div style="color:var(--text-tertiary);font-size:12px;">No arms tracked yet.</div>')
+    + (ars.fbVelo != null ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:6px;">Avg FB velo: <strong>${ars.fbVelo}</strong> mph ${_otZBar(ars.zVelo)}</div>` : ""));
+
+  // ---- pitch stuff: velo + movement per pitch (NEW) ------------------------
+  const sp = stuff.pitches || {};
+  const spRows = Object.keys(sp).map(pt => {
+    const c = sp[pt];
+    const brk = `${c.hBreak != null ? (c.hBreak > 0 ? "+" : "") + c.hBreak + '"H' : ""}${c.vBreak != null ? " / " + (c.vBreak > 0 ? "+" : "") + c.vBreak + '"V' : ""}`;
+    return `<tr><td>${_OT_PITCH_NAMES[pt] || pt}</td>
+      <td style="text-align:right;">${c.velo != null ? c.velo : " - "}</td>
+      <td>${_otZBar(c.zVelo)}</td>
+      <td style="text-align:right;font-size:11px;color:var(--text-secondary);" title="Arm-side horizontal / vertical break vs league (AAA Gameday).">${brk}</td></tr>`;
+  }).join("");
+  const stuffCard = Object.keys(sp).length ? _otCard("Pitch stuff (velo + shape)",
+    "Per-pitch velocity and break - developed + current AAA arms",
+    `<table class="detail-table" style="width:100%;">${spRows}</table>
+     <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;">velo bar = z vs league; break is arm-side H / V in inches</div>`) : "";
+
+  // ---- graduation track record (NEW) ---------------------------------------
+  const gradCard = _otCard("Graduation track record",
+    "How well the pipeline turns prospects into MLB value",
+    `<table class="detail-table" style="width:100%;">
+      ${valRow("Graduates / year", gradP.gradsPerYear ?? " - ", gradP.zGrads, "Mean MLB debuts per year (total " + (gradP.totalGrads || 0) + ").")}
+      ${valRow("Avg graduate WAR", gradP.meanGradWar ?? " - ", gradP.zWar, "Mean career WAR of graduates (n=" + (gradP.nWar || 0) + ").")}
+      ${valRow("Draft hit rate", gradP.draftHitRate != null ? (gradP.draftHitRate * 100).toFixed(1) + "%" : " - ", gradP.zHitRate, "Signed picks 2021+ reaching MLB (" + (gradP.nGradsFromDraft || 0) + "/" + (gradP.nSignedDraft || 0) + ").")}
+    </table>
+    <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;">2021+ classes have little runway - read the bar (relative), not the raw %</div>`);
+
+  // ---- hitter approach (NEW) -----------------------------------------------
+  const am = appr.metrics || {};
+  const apRow = (label, name, invert, tip) => {
+    const c = am[name]; if (!c) return "";
+    return valRow(label, c.adj != null ? (c.adj > 0 ? "+" : "") + c.adj + " pts" : " - ", invert && c.z != null ? -c.z : c.z, tip);
+  };
+  const approachCard = Object.keys(am).length ? _otCard("Hitter approach",
+    "Plate-discipline lean vs league, level-adjusted",
+    `<table class="detail-table" style="width:100%;">
+      ${apRow("Chase rate", "chase", true, "Out-of-zone swing rate vs level peers; lower (green) = more disciplined.")}
+      ${apRow("Zone contact", "zoneContact", false, "In-zone contact rate vs level peers; higher (green) = better.")}
+      ${apRow("Whiff rate", "whiff", true, "Swinging-strike rate vs level peers; lower (green) = more contact.")}
+    </table>
+    <div style="font-size:10px;color:var(--text-tertiary);margin-top:6px;">current lean only - zone-metric history isn't archived, so no dev drift yet</div>`) : "";
+
+  // ---- IFA + trades ---------------------------------------------------------
   const ifaCard = _otCard("International strategy",
     `${ifa.classes ?? 0} signing classes, 2021-present`,
     `<table class="detail-table" style="width:100%;">
@@ -39684,16 +39811,82 @@ function _renderOrgTendencies(orgCode) {
       <tr><td title="All trades involving this club where cash considerations appear in the transaction text.">Cash-involved (deals)</td><td style="text-align:right;">${tr.cashInvolved ?? " - "}</td><td></td></tr>
     </table>`);
 
+  // ---- similar farms (NEW) --------------------------------------------------
+  const sf = (T.similarFarms && T.similarFarms.orgs && T.similarFarms.orgs[orgCode] && T.similarFarms.orgs[orgCode].similar) || [];
+  const simHtml = sf.length ? `
+    <div class="detail-title" style="margin-top:18px;"><span data-term="org_tendencies">Most similar farms</span>
+      <span class="detail-title-sub">closest behavioral profiles by tendency overlap (cosine over the z-vectors)</span></div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:8px;">
+      ${sf.map(s => {
+        const pct = Math.max(0, Math.round(s.score * 100));
+        const shared = (s.shared || []).map(d => `<span style="display:inline-block;font-size:9px;background:var(--bg-tertiary);border:1px solid var(--border-light);color:var(--text-secondary);border-radius:3px;padding:1px 5px;margin:2px 3px 0 0;">${escapeHtml(d.label || d.feature)}</span>`).join("");
+        return `<a href="#farm-org=${escapeHtml(s.org)}&ftab=tendencies" style="display:block;border:1px solid var(--border);background:var(--bg-secondary);padding:10px;text-decoration:none;color:inherit;">
+          <div style="display:flex;align-items:center;gap:8px;">${teamLogoHTML(s.org, "sm", fullOrgName(s.org))}<strong style="font-size:13px;">${escapeHtml(fullOrgName(s.org))}</strong>
+            <span style="margin-left:auto;font-family:var(--font-mono);font-size:12px;color:var(--up);" title="tendency-vector cosine similarity">${pct}%</span></div>
+          <div style="margin-top:5px;">${shared || '<span style="font-size:10px;color:var(--text-tertiary);">broad profile match</span>'}</div>
+        </a>`;
+      }).join("")}
+    </div>` : "";
+
   mount.innerHTML = `
     <div class="detail-title"><span class="g-term" data-term="org_tendencies">Organization Tendencies</span>
       <span class="detail-title-sub">behavioral profile vs the league - every bar is a z-score across the 30 orgs; labels only fire at |z| ≥ 0.5</span></div>
-    <div style="margin:4px 0 12px;">${chips || '<span style="color:var(--text-tertiary);font-size:12px;">No strong tendencies - this org profiles league-typical on every axis.</span>'}</div>
+    <div style="margin:6px 0 14px;">${badges || '<span style="color:var(--text-tertiary);font-size:12px;">No strong tendencies - this org profiles league-typical on every axis.</span>'}</div>
     <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:12px;">
-      ${promoCard}${devCard}${arsCard}${draftCard}${traitCard}${ifaCard}${tradeCard}
+      ${promoCard}${devCard}${arsCard}${stuffCard}${draftCard}${spendCard}${traitCard}${gradCard}${approachCard}${ifaCard}${tradeCard}
     </div>
-    <div style="font-size:10px;color:var(--text-tertiary);margin-top:10px;">
+    ${simHtml}
+    <div style="font-size:10px;color:var(--text-tertiary);margin-top:12px;">
       ${(T.notes || []).map(escapeHtml).join(" · ")} · generated ${escapeHtml(T.generated_at || "")}
     </div>`;
+}
+
+// Warm the org_tendencies sidecar without rendering, so the farm GFX card can
+// stamp the identity strip even if the Tendencies tab was never opened. Uses a
+// SEPARATE guard from _orgTendenciesLoading so it never starves the lazy tab
+// renderer (which keys its re-render off its own fetch callback).
+function _ensureOrgTendencies() {
+  if (_orgTendencies || _orgTendenciesLoading || _orgTendenciesPrefetch) return;
+  _orgTendenciesPrefetch = true;
+  fetch("/data/org_tendencies.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(d => { if (d) _orgTendencies = d; })
+    .catch(() => {})
+    .finally(() => { _orgTendenciesPrefetch = false; });
+}
+
+// Compact farm-GFX identity strip: a one-line headline + the org's 3-4
+// strongest tendency badges (export-safe literal-hex fills via _OT_BADGE).
+// Returns "" when the sidecar isn't loaded or the org has no strong tendency.
+function _gfxTendencyStrip(orgCode, P) {
+  const T = _orgTendencies;
+  if (!T || !T.promotion || !T.promotion.orgs || !T.promotion.orgs[orgCode]) return "";
+  const gg = panel => (T[panel] && T[panel].orgs && T[panel].orgs[orgCode]) || {};
+  const promo = gg("promotion"), tr = gg("trades"), slot = gg("slot"), hp = gg("health"),
+        gradP = gg("graduation"), appr = gg("hitterApproach"), ars = gg("arsenal"), ifa = gg("ifa");
+  const cand = [];
+  const push = (kind, label, weight) => { if (label) cand.push([kind, label, Math.abs(weight || 0.6)]); };
+  if (promo.label && promo.label !== "typical") push(promo.label === "aggressive" ? "aggressive" : "conservative", promo.label + " promoter", promo.score);
+  if (tr.volLabel && tr.volLabel !== "typical") push(tr.volLabel === "trade-happy" ? "trade-happy" : "trade-reluctant", tr.volLabel, tr.zVolume);
+  if (slot.label && slot.label !== "typical") push(slot.label === "over-slot shoppers" ? "over-slot" : "slot-disciplined", slot.label, slot.zOver);
+  if (slot.spendLabel && slot.spendLabel !== "typical") push(slot.spendLabel === "top-heavy pool" ? "top-heavy" : "spread", slot.spendLabel, slot.zBonusHHI);
+  if (gradP.label && gradP.label !== "typical") push(gradP.label === "produces MLB value" ? "grad-value" : "grad-thin", gradP.label, gradP.zWar);
+  if (appr.label && appr.label !== "typical") push(appr.label === "disciplined approach" ? "disciplined" : "free-swing", appr.label, 0.8);
+  if (hp.label && hp.label !== "typical") push(hp.label === "healthy pipeline" ? "healthy" : "high-il", hp.label, hp.z);
+  if (ifa.label && ifa.label !== "balanced") push("ifa", "IFA: " + ifa.label, ifa.zConc);
+  if (ars.zVelo != null && Math.abs(ars.zVelo) >= 0.8) push("velo", ars.zVelo > 0 ? "power arms" : "finesse arms", ars.zVelo);
+  cand.sort((a, b) => b[2] - a[2]);
+  const top = cand.slice(0, 4);
+  if (!top.length) return "";
+  const headline = top.map(c => c[1]).join(" · ");
+  const pills = top.map(([kind, label]) => {
+    const b = _OT_BADGE[kind] || { g: "●", c: "#475569" };
+    return `<span style="display:inline-flex;align-items:center;gap:7px;background:${b.c};color:#fff;border-radius:999px;padding:6px 16px;font-family:var(--font-retro-mono);font-size:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;"><span style="font-size:16px;line-height:1;">${b.g}</span>${escapeHtml(label)}</span>`;
+  }).join("");
+  return `<div style="flex:none;display:flex;flex-direction:column;gap:11px;">
+    <div style="font-family:var(--font-mono);font-size:15px;color:${P.text3};letter-spacing:0.05em;text-transform:uppercase;">Org identity · ${escapeHtml(headline)}</div>
+    <div style="display:flex;flex-wrap:wrap;gap:9px;">${pills}</div>
+  </div>`;
 }
 
 // Positional depth vs league: a genuinely cross-org lens (the existing depth
@@ -39773,6 +39966,7 @@ function makeFarmGraduates(orgCode) {
     <div style="overflow-x:auto;"><table class="split-table"><thead><tr><th>Player</th><th>Debut</th><th style="text-align:center;">FV</th><th>WAG</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 function renderFarmDetail(orgCode) {
+  _ensureOrgTendencies();   // warm the sidecar for the GFX identity strip
   const org = findOrg(orgCode);
   const root = document.getElementById("farm-detail-body");
   if (!org) {
