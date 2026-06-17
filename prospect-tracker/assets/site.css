@@ -406,7 +406,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
   background: var(--iridescent); z-index: 2;
 }
+.team-mission { max-width: 760px; margin: 4px 0 20px; font-size: 15px; line-height: 1.6; color: var(--text-secondary); }
 .team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
+.team-card .team-school { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px;
+  font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+.team-card .team-school-mark { font-weight: 800; letter-spacing: .02em; font-size: 14px; }
+.team-card .team-school-logo { height: 26px; width: auto; display: block; }
 /* align-items:flex-end + container top headroom keep every badge box on one
    line (crowns float above uniformly) instead of crowned boxes sitting lower. */
 .team-card .team-notes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px; margin: 18px 0 2px; }

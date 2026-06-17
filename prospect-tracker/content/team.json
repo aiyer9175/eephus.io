@@ -1,6 +1,6 @@
 [
   { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",
-    "email": "arkndjl@gmail.com",
+    "email": "arkndjl@gmail.com", "school": "New York University",
     "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "Site Design"],
     "website": "https://arkndjl.net/", "github": "arkndjl" },
   { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396", "note": ["PROSPX Developer", "MLB Projections Developer"], "github": "willclq" },

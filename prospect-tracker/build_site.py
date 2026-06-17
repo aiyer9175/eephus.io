@@ -1759,6 +1759,29 @@ def build_team() -> str:
         return (f'<span class="{cls}" title="{label}" aria-label="{label}" '
                 f'style="--badge-accent:{accent}">{_CROWN if creator else ""}'
                 f'<span class="team-badge-mark">{mark}</span></span>')
+    # School affiliation: the school's wordmark mark (or an image at school_logo,
+    # if a member provides one) plus the full name. Add a school to _SCHOOL_MARKS
+    # to give its short mark a brand color.
+    _SCHOOL_MARKS = {"New York University": {"short": "NYU", "color": "#57068C", "logo": "nyu.png"}}
+    def _school_html(m: dict) -> str:
+        school = (m.get("school") or "").strip()
+        if not school:
+            return ""
+        sm = _SCHOOL_MARKS.get(school) or {}
+        # Logo image (explicit school_logo, or the school's default) is used ONLY
+        # when the file exists on disk - otherwise we fall back to the wordmark so
+        # a missing file never renders a broken icon. A bare filename resolves
+        # under assets/team/; an absolute path is used as given.
+        logo = (m.get("school_logo") or sm.get("logo") or "").strip()
+        mark = ""
+        if logo:
+            rel = logo.lstrip("/") if "/" in logo else f"assets/team/{logo}"
+            if (ROOT / rel).exists():
+                mark = (f'<img class="team-school-logo" src="/{html.escape(rel)}" '
+                        f'alt="{html.escape(school)} logo" loading="lazy">')
+        if not mark and sm.get("short"):
+            mark = f'<span class="team-school-mark" style="color:{sm["color"]};">{html.escape(sm["short"])}</span>'
+        return f'<div class="team-school" title="{html.escape(school)}">{mark}<span>{html.escape(school)}</span></div>'
     cards = []
     for m in team:
         handle = (m.get("handle") or "").lstrip("@")
@@ -1808,14 +1831,21 @@ def build_team() -> str:
         ) if notes else ""
         cards.append(
             f'<div class="card team-card" id="member-{_member_slug(m["name"])}">{photo_html}'
-            f'<p class="name">{html.escape(m["name"])}</p>{note_html}{socials_html}</div>'
+            f'<p class="name">{html.escape(m["name"])}</p>{note_html}{_school_html(m)}{socials_html}</div>'
         )
     follow = (
         '<div class="team-follow"><span class="team-follow-label">Follow</span>'
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
     )
+    mission = (
+        "<p class=\"team-mission\">We're all college students who came together to "
+        "build an all-in-one MLB scouting portal and sabermetric utility, with a "
+        "different module for each of our ideas. Prospect rankings, MLB projections, "
+        "free agency, and college data each started as one person's project.</p>"
+    )
     body = (
         '<div class="section-head"><h1>Developers</h1></div>'
+        f'{mission}'
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
     )
