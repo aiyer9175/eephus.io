@@ -26830,6 +26830,24 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
     </div>`;
 }
 
+// How many columns the list board splits into. Long lists (e.g. Top 100) get
+// MORE columns so the rows fill the canvas width instead of leaving a wide dead
+// strip per row, and so the board hits its format's aspect instead of growing
+// into a tall ribbon. Bounded by a comfortable min column width (names/values
+// must stay legible) and by the row count. Short non-wide lists stay 1 column;
+// anything past a short list keeps a floor of 2 (the prior behavior).
+function _gfxColumnCount(cap) {
+  const fmt = _GFX_FORMATS[_gfxOpts.format] || _GFX_FORMATS.wide;
+  const wide = _gfxOpts.format === "wide";
+  if (cap <= 12 && !wide) return 1;
+  const TARGET_PER_COL = 24;   // aim for readable column lengths
+  const MIN_COL_W = 360;       // rank + FV badge + photo + name (+ value) need ~360px
+  const GUT = 28;              // matches the grid column-gap below
+  const maxByWidth = Math.max(1, Math.floor((fmt.w + GUT) / (MIN_COL_W + GUT)));
+  let ncol = Math.max(2, Math.ceil(cap / TARGET_PER_COL));
+  ncol = Math.min(ncol, maxByWidth, cap);
+  return Math.max(1, ncol);
+}
 function buildGfxBoard() {
   const snap = _gfxSnapshot;
   // v40 - single-subject card modes (prospect / farm detail) branch out early;
@@ -26897,15 +26915,23 @@ function buildGfxBoard() {
         ${(showVal && (r.value || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : ""}</span>` : ""}
       </div>`;
   };
-  // Single column for short lists; two columns otherwise. The wide (16:9) format
-  // always uses two columns so it fills its horizontal space.
+  // Columns scale with the list length + canvas width (see _gfxColumnCount), so
+  // a long list fills the board instead of leaving dead horizontal space per row.
+  // Column-major fill: ranks read top-to-bottom down a column, then continue in
+  // the next column (left col = top of the list).
   let grid;
-  if (cap <= 12 && _gfxOpts.format !== "wide") {
+  const ncol = _gfxColumnCount(cap);
+  if (ncol <= 1) {
     grid = `<div>${shown.map((it, i) => rowHtml(it, i)).join("")}</div>`;
   } else {
-    const half = Math.ceil(cap / 2);
-    const col = (arr, off) => arr.map((it, i) => rowHtml(it, i + off)).join("");
-    grid = `<div style="display:grid;grid-template-columns:1fr 1fr;gap:0 28px;"><div>${col(shown.slice(0, half), 0)}</div><div>${col(shown.slice(half), half)}</div></div>`;
+    const per = Math.ceil(cap / ncol);
+    const cols = [];
+    for (let c = 0; c * per < cap; c++) {
+      const start = c * per;
+      const slice = shown.slice(start, start + per);
+      cols.push(`<div>${slice.map((it, i) => rowHtml(it, start + i)).join("")}</div>`);
+    }
+    grid = `<div style="display:grid;grid-template-columns:repeat(${cols.length},1fr);gap:0 28px;">${cols.join("")}</div>`;
   }
   // Fixed-canvas frame: pins to the format's min-height so short lists hit the
   // exact social aspect ratio (the footer rides the bottom edge); long lists
@@ -27036,11 +27062,14 @@ function openGfxModal() {
   if (!overlay) return;
   // Reset the title override each open so the derived title tracks the section.
   _gfxOpts.title = "";
-  // Card modes have natural canvas defaults: prospect = portrait (card), farm =
-  // wide (landscape; it carries more horizontal data). Both stay user-switchable.
-  if (_gfxSnapshot && _gfxSnapshot.kind === "prospect-card") _gfxOpts.format = _gfxVariantFormat(_gfxOpts.variant);
-  else if (_gfxSnapshot && _gfxSnapshot.kind === "farm-card") _gfxOpts.format = "wide";
-  else if (_gfxSnapshot && _gfxSnapshot.kind === "compare-card") _gfxOpts.format = "wide";
+  // Canvas defaults per mode (all stay user-switchable once open): prospect card
+  // = portrait, farm/compare cards = wide. LIST boards (the Top-100 et al.)
+  // default to WIDE so they open Twitter/X-ready and don't inherit a tall card
+  // geometry from a prior card export.
+  const _k = _gfxSnapshot && _gfxSnapshot.kind;
+  if (_k === "prospect-card") _gfxOpts.format = _gfxVariantFormat(_gfxOpts.variant);
+  else if (_k === "farm-card" || _k === "compare-card") _gfxOpts.format = "wide";
+  else _gfxOpts.format = "wide";   // list board → wide by default
   _gfxOrigTheme = document.documentElement.getAttribute("data-theme");
   overlay.classList.add("is-open");
   // Show the Share action only where the Web Share API exists (mobile + some

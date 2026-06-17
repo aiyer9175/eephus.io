@@ -34,14 +34,20 @@ Four export formats, all rendered at **2× (retina)** via `html2canvas`:
 | Story | 1080 × 1920 | 9:16 | IG/TikTok stories, Reels |
 | Wide | 1600 × 900 | 16:9 | X landscape, thumbnails, slides |
 
-Short lists (≤12) render a single column; longer lists use two columns. Wide
-always uses two columns to fill the horizontal space.
+**Columns scale with the list length and canvas width** (`_gfxColumnCount`): a
+short non-wide list is a single column; past that the board uses ≥2 columns, and
+long lists (e.g. Top 100) add more columns — bounded by a ~360px minimum column
+width — so the rows fill the canvas instead of leaving a wide dead strip per row
+and the board lands near its format's aspect instead of stretching into a tall
+ribbon. A Top 100 in Wide renders as four columns; narrower formats (portrait /
+square / story) cap at two. Fill is column-major: ranks read top-to-bottom down a
+column, then continue in the next.
 
 ## Customization (before export)
 
 The modal exposes a customization row — every control re-renders the live preview:
 
-- **Format** — portrait / square / story / wide (above). **Wide (16:9) is the default** — list graphics land Twitter/X-ready with no crop; prospect-card kinds keep their own portrait/tall geometry.
+- **Format** — portrait / square / story / wide (above). **Wide (16:9) is the default for every list board** — they open Twitter/X-ready with no crop and never inherit a tall card geometry from a prior export; prospect-card kinds keep their own portrait/tall geometry, farm/compare cards default wide.
 - **Theme** — `Auto (site)` / `Dark` / `Light`. Forces the board (and the open
   modal) to the chosen theme by flipping the root `data-theme` while the modal is
   open; the live site theme is restored on close. Both themes are first-class.
