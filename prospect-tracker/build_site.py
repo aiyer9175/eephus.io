@@ -1762,7 +1762,8 @@ def build_team() -> str:
     # School affiliation: the school's wordmark mark (or an image at school_logo,
     # if a member provides one) plus the full name. Add a school to _SCHOOL_MARKS
     # to give its short mark a brand color.
-    _SCHOOL_MARKS = {"New York University": {"short": "NYU", "color": "#57068C", "logo": "nyu.png"}}
+    _SCHOOL_MARKS = {"New York University": {"short": "NYU", "color": "#57068C", "logo": "nyu.png"},
+                     "University of Oklahoma": {"short": "OU", "color": "#841617", "logo": "ou.png"}}
     def _school_html(m: dict) -> str:
         school = (m.get("school") or "").strip()
         if not school:
