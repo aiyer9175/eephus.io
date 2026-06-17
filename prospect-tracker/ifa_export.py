@@ -38,6 +38,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import statistics
 from collections import defaultdict
 from datetime import date, datetime, timezone
@@ -67,7 +68,7 @@ def _bonus_bucket(bonus: int | None) -> str | None:
 def _fv_label(fv: float | None, is_plus: bool) -> str | None:
     if fv is None:
         return None
-    return f"{int(round(fv))}{'+' if is_plus else ''}"
+    return f"{int(math.ceil(fv))}{'+' if is_plus else ''}"   # FV rounds UP (55.3 -> 56)
 
 
 def _enrich(signing: dict, tp: dict | None) -> dict:

@@ -170,5 +170,61 @@ def test_idempotent_same_day_and_history_does_not_touch_live(tmp_path, monkeypat
     assert any(r["snapshot_label"] == "April 2026" for r in storage.load_tjstats_snapshots())
 
 
+def _named_ranks(sloan_rank):
+    # Made fixed at #1; Sloan's rank varies so we can manufacture a board mover.
+    return [
+        {"rank_value": "1", "player_id": "815908", "name": "Jesús Made",
+         "parent_org_id": "158", "position": "SS", "report": "Elite bat."},
+        {"rank_value": str(sloan_rank), "player_id": "815549", "name": "Ryan Sloan",
+         "parent_org_id": "136", "position": "P", "report": "Big arm."},
+    ]
+
+
+def _board_scrape(kind, label, eff_date, rankings, *, captured_at):
+    board = tjstats.build_board(rankings, _batters(), _pitchers(), _bio(), with_fv=True)
+    return {"kind": kind, "label": label, "effective_date": eff_date,
+            "captured_at": captured_at, "source_modified_at": None,
+            "snapshot_id": None, "source_url": tjstats.SOURCE_PAGE, "board": board}
+
+
+def test_export_movers_drop_day_diffs_month_over_month(tmp_path, monkeypatch):
+    # Regression for the monthly-drop tie: the new NAMED 'June 2026' board lands on
+    # the SAME effective_date as that day's LIVE capture. export_movers must still
+    # diff June-vs-May (the official month-over-month movers), never Live-vs-June
+    # (the same board twice -> an empty wire). The live row is given a LATER
+    # captured_at so the shared label ordering puts it first on the tie — the exact
+    # adversarial order that the old `newer = labs[0]` logic mishandled.
+    _fresh_db(tmp_path, monkeypatch)
+    tjstats.ingest_board(_board_scrape("named", "May 2026", "2026-05-12",
+                                       _named_ranks(30), captured_at="2026-05-12T12:00:00+00:00"))
+    tjstats.ingest_board(_board_scrape("named", "June 2026", "2026-06-17",
+                                       _named_ranks(5), captured_at="2026-06-17T12:00:00+00:00"))
+    tjstats.ingest_board(_board_scrape("live", "Live 2026-06-17", "2026-06-17",
+                                       _named_ranks(5), captured_at="2026-06-17T12:31:00+00:00"))
+
+    out = tjstats.export_movers(out_path=tmp_path / "movers.json")
+    assert out is not None
+    # the window is the two NAMED monthlies, not the same-date live board
+    assert out["older_board"] == "May 2026" and out["newer_board"] == "June 2026"
+    # Sloan rose 30 -> 5 (+25), comfortably clears the mover threshold -> in the wire
+    sloan = next(m for m in out["movers"] if m["name"] == "Ryan Sloan")
+    assert sloan["rank_delta"] == 25
+
+
+def test_export_movers_mid_month_diffs_live_vs_named(tmp_path, monkeypatch):
+    # Mid-month (a live capture dated AFTER the last named board): the window is the
+    # newest live board vs that named monthly, so in-month movement still surfaces.
+    _fresh_db(tmp_path, monkeypatch)
+    tjstats.ingest_board(_board_scrape("named", "June 2026", "2026-06-17",
+                                       _named_ranks(30), captured_at="2026-06-17T12:00:00+00:00"))
+    tjstats.ingest_board(_board_scrape("live", "Live 2026-06-20", "2026-06-20",
+                                       _named_ranks(5), captured_at="2026-06-20T12:00:00+00:00"))
+    out = tjstats.export_movers(out_path=tmp_path / "movers.json")
+    assert out is not None
+    assert out["older_board"] == "June 2026" and out["newer_board"] == "Live 2026-06-20"
+    sloan = next(m for m in out["movers"] if m["name"] == "Ryan Sloan")
+    assert sloan["rank_delta"] == 25
+
+
 if __name__ == "__main__":
     raise SystemExit(pytest.main([__file__, "-v"]))

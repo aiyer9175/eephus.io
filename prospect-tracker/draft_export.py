@@ -69,6 +69,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 import statistics
 from collections import defaultdict
 from datetime import date, datetime, timezone
@@ -282,7 +283,7 @@ def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
     """
     if fv is None:
         return None
-    n = int(round(fv))
+    n = int(math.ceil(fv))   # FV rounds UP (55.3 -> 56), consistent with display
     if n >= 70: return "70"
     if n >= 65: return "65"
     if n >= 60: return "60"
@@ -336,7 +337,7 @@ def _build_class(year: int,
         # the raw average around so Draft Stock+ and FV-bucket math can
         # still see fractional resolution.
         fv_raw = _consensus(plist, "fv")
-        fv = int(round(fv_raw)) if fv_raw is not None else None
+        fv = int(math.ceil(fv_raw)) if fv_raw is not None else None   # FV rounds UP (62.1 -> 63)
         # v26 - '+' upside flag: True if any source published "55+" etc.
         fv_plus = _consensus_fv_plus(plist)
         rank = consensus_ranks.get(pk)

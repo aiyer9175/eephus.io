@@ -9662,7 +9662,7 @@ function formatMetric(value, type = "int") {
   const sign = z > 0 ? "+" : (z < 0 ? "-" : "");          // zero is unsigned
   const abs = Math.abs(z);
   switch (type) {
-    case "fv":       return String(Math.round(z));
+    case "fv":       return String(Math.ceil(z));   // FV grades render rounded UP (62.1 -> 63)
     case "plus":     return String(Math.round(z));
     case "int":      return String(Math.round(z));
     case "war":      return z.toFixed(1);
@@ -9714,7 +9714,7 @@ function displayMetricFor(p) {
     return { metric: "WAG", value: `${s}${wr.toFixed(1)} WAG`, valueLong: `${s}${wr.toFixed(1)} WAG`, cls };
   }
   const fv = p && (p.fv_close != null ? p.fv_close : p.consensus_fv);
-  if (fv != null) return { metric: "FV", value: `FV ${Math.round(fv)}`, valueLong: `FV ${Math.round(fv)}`, cls: "flat" };
+  if (fv != null) return { metric: "FV", value: `FV ${fvCeil(fv)}`, valueLong: `FV ${fvCeil(fv)}`, cls: "flat" };
   return { metric: null, value: " - ", valueLong: " - ", cls: "flat" };
 }
 
@@ -11238,7 +11238,7 @@ function _sourceAgreementBlock(p) {
     rows.push({
       src,
       code: codeMap[src] || src.slice(0, 3).toUpperCase(),
-      fv: Math.round(fv),
+      fv: fvCeil(fv),   // per-source FV grades render rounded UP
     });
   }
   if (!rows.length) return "";
@@ -11843,7 +11843,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
       if (coords[i].fv < coords[loIdx].fv) loIdx = i;
     }
     const hi = coords[hiIdx], lo = coords[loIdx];
-    const hiFv = Math.round(hi.fv), loFv = Math.round(lo.fv);
+    const hiFv = fvCeil(hi.fv), loFv = fvCeil(lo.fv);   // chart endpoint FV labels round UP
     if (hiFv !== loFv) {
       // Clamp x position so end-aligned text near the chart edges still
       // fits inside the SVG; gives the label ~12 SVG-units of breathing
@@ -23181,7 +23181,7 @@ async function renderDraftDetail(key) {
     for (const k of _toolOrder) {
       const v = _consensusToolGrade(k);
       if (v == null) continue;
-      const rounded = Math.round(v);
+      const rounded = fvCeil(v);   // tool grades render rounded UP (55.3 -> 56)
       const tier = _toolTier(rounded);
       const code = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
       pills.push(`<span class="tool-grade-pill tg-total"
@@ -28745,7 +28745,7 @@ function makeToolGradeChips(p) {
   // single gradient band.
   const composite = (p.tools && p.tools.composite_overall);
   if (composite != null && isFinite(Number(composite))) {
-    const cv = Math.round(Number(composite));
+    const cv = fvCeil(composite);   // tool grades render rounded UP (55.3 -> 56)
     const ct = _toolTier(cv);
     pills.push(
       `<span class="tool-grade-pill tg-total"
@@ -28762,7 +28762,7 @@ function makeToolGradeChips(p) {
     if (v == null) continue;
     const n = Number(v);
     if (!isFinite(n)) continue;
-    const rounded = Math.round(n);
+    const rounded = fvCeil(n);   // tool grades render rounded UP (55.3 -> 56)
     const tier = _toolTier(rounded);
     const code = toolAbbrev(k);
     const full = toolFullName(k);

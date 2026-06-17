@@ -591,9 +591,31 @@ def export_movers(out_path: Path | None = None) -> dict | None:
     labs = tjstats_snapshot_labels()
     if not labs:
         return None
-    newer = labs[0]
-    named = [l for l in labs[1:] if l.get("snapshot_kind") == "named"]
-    older = named[0] if named else (labs[1] if len(labs) >= 2 else None)
+    # Pick the diff window EXPLICITLY by kind rather than by raw recency, because a
+    # monthly drop lands a NAMED board on the very same effective_date as that day's
+    # LIVE capture (e.g. 'June 2026' and 'Live 2026-06-17' both date 2026-06-17).
+    # Ordering ties on that date are not meaningful, so newer=labs[0] could pick the
+    # live board and end up diffing Live-vs-June (the same board twice -> no movers).
+    #   * Mid-month  — live captures are dated AFTER the last named board: diff the
+    #                  newest live board against that named board (movement so far).
+    #   * Drop day   — the freshest board is the new named monthly (no live is dated
+    #                  after it): diff it against the PREVIOUS named monthly, i.e. the
+    #                  official month-over-month movers (June vs May).
+    named = [l for l in labs if l.get("snapshot_kind") == "named"]
+    newest_named = named[0] if named else None
+    live_after_named = [
+        l for l in labs
+        if l.get("snapshot_kind") == "live"
+        and (newest_named is None or l["effective_date"] > newest_named["effective_date"])
+    ]
+    if live_after_named:
+        newer = live_after_named[0]
+        older = newest_named or (labs[1] if len(labs) >= 2 else None)
+    elif newest_named is not None:
+        newer = newest_named
+        older = named[1] if len(named) >= 2 else None
+    else:
+        newer, older = labs[0], (labs[1] if len(labs) >= 2 else None)
     if not older:
         return None
     diff = compute_snapshot_diff(older["snapshot_label"], newer["snapshot_label"])

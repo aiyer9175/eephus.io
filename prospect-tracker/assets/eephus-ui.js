@@ -319,7 +319,7 @@
     if (pts.length) { var l = pts[pts.length - 1]; return l.consensus_fv != null ? l.consensus_fv : l.consensus_fv_raw; }
     return p.fv_close != null ? p.fv_close : null;
   }
-  function fmtFv(v) { if (v == null) return " - "; return PX().formatMetric ? PX().formatMetric(v, "fv") : String(Math.round(v)); }
+  function fmtFv(v) { if (v == null) return " - "; return PX().formatMetric ? PX().formatMetric(v, "fv") : String(Math.ceil(v)); }  // FV rounds UP
   function fvSparkSVG(points) {
     var vals = (points || []).map(function (p) { return p.consensus_fv != null ? p.consensus_fv : p.consensus_fv_raw; }).filter(function (v) { return v != null && !isNaN(v); });
     if (vals.length < 2) return "";

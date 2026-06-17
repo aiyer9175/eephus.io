@@ -2985,7 +2985,11 @@ def tjstats_snapshot_labels() -> list[dict]:
                 "SELECT snapshot_label, snapshot_kind, effective_date, "
                 "       MAX(captured_at) AS captured_at, COUNT(*) AS n "
                 "FROM tjstats_snapshots GROUP BY snapshot_label "
-                "ORDER BY effective_date DESC").fetchall()]
+                # captured_at is the deterministic tiebreak when a named monthly and
+                # a live board share an effective_date (a drop day): without it the
+                # within-date order is undefined. Selection logic in export_movers
+                # keys off snapshot_kind explicitly and does not rely on this order.
+                "ORDER BY effective_date DESC, captured_at DESC").fetchall()]
     except sqlite3.OperationalError:
         return []
 

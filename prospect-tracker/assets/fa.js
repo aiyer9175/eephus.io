@@ -625,7 +625,7 @@
     const pts = arc.map((p, i) => `${x(i).toFixed(1)},${y(p[1]).toFixed(1)}`).join(" ");
     return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" role="img" aria-label="Consensus FV history">
       <polyline points="${pts}" fill="none" stroke="currentColor" stroke-width="1.5"/>
-      ${arc.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="2"><title>${p[0]} &middot; FV ${p[1]}</title></circle>`).join("")}
+      ${arc.map((p, i) => `<circle cx="${x(i).toFixed(1)}" cy="${y(p[1]).toFixed(1)}" r="2"><title>${p[0]} &middot; FV ${Math.ceil(p[1])}</title></circle>`).join("")}
     </svg>`;
   }
 

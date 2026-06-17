@@ -29,6 +29,7 @@ import functools
 import hashlib
 import html
 import json
+import math
 import re
 import unicodedata
 from datetime import date, datetime, timedelta
@@ -692,7 +693,7 @@ def _fv_label(p: dict) -> str:
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
     fv = p.get("fv_close")
-    return str(round(fv)) if fv is not None else " - "
+    return str(int(math.ceil(fv))) if fv is not None else " - "   # FV rounds UP (62.1 -> 63)
 
 def _fv_pill(p: dict) -> str:
     fv = p.get("fv_close")
@@ -901,7 +902,7 @@ def display_metric_for(p: dict) -> dict:
     if fv is not None:
         return {"metric": "FV", "cls": "flat",
                 "html": (f'<span class="row-meta" title="Final prospect FV - no MLB sample yet">'
-                         f'FV {int(round(fv))}</span>')}
+                         f'FV {int(math.ceil(fv))}</span>')}   # FV rounds UP (62.1 -> 63)
     return {"metric": None, "cls": "flat", "html": '<span class="row-meta">debut</span>'}
 
 

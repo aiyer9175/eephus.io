@@ -67,6 +67,7 @@ from __future__ import annotations
 
 import json
 import logging
+import math
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -279,7 +280,7 @@ def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
     Integer 45 with fv_plus=True → "45+"; without → "45"."""
     if fv is None:
         return None
-    n = int(round(fv))
+    n = int(math.ceil(fv))   # FV rounds UP (55.3 -> 56), consistent with display
     if n >= 60: return "60"
     if n >= 55: return "55" + ("+" if fv_plus else "")
     if n >= 50: return "50" + ("+" if fv_plus else "")
@@ -466,7 +467,7 @@ def _build_league(league: str,
             # frontend never has to render "55.5". _parse_fv keeps the
             # raw float internally for sort precision; only the export
             # surface gets coerced to int.
-            "consensus_fv":    int(round(fv)) if fv is not None else None,
+            "consensus_fv":    int(math.ceil(fv)) if fv is not None else None,   # FV rounds UP
             "consensus_fv_plus": fv_plus, # v26 - '+' upside flag
             "risk":            any_snap.get("risk"),
             "status":          status,
