@@ -27,6 +27,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import feed_cache as feed_cache_mod  # aliased: a local `feed_cache` dict shadows it below
+
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
@@ -940,7 +942,7 @@ def fetch_statcast_metrics_for_player(
         if feed_cache is not None and game_pk in feed_cache:
             data = feed_cache[game_pk]
         else:
-            data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
+            data = feed_cache_mod.get_game_feed(game_pk, game_date=split.get("date"))
         game_data = data.get("gameData") or {}
         venue = game_data.get("venue") or {}
         venue_key = str(venue.get("id") or venue.get("name") or "")
@@ -1153,12 +1155,20 @@ def fetch_statcast_metrics_for_players(
                           _p1_done, len(targets), _time.monotonic() - _p1_start)
 
     # ---- PASS 2: unique game-feed fetch (parallel, cached) ----
+    # Feeds go through the shared feed_cache (one on-disk dir keyed by
+    # game_pk, deduped across statcast/zone/etc). game_date_by_pk lets the
+    # cache give completed games a permanent TTL, so a monthly run only
+    # re-fetches the trailing few days of games.
     game_pks: set[int] = set()
+    game_date_by_pk: dict[int, str] = {}
     for logs in logs_by_key.values():
         for split in logs:
             gpk = int((split.get("game") or {}).get("gamePk") or 0)
             if gpk:
                 game_pks.add(gpk)
+                gd = split.get("date")
+                if gd and gpk not in game_date_by_pk:
+                    game_date_by_pk[gpk] = gd
     feed_cache: dict[int, dict] = {}
     if game_pks:
         _p2_start = _time.monotonic()
@@ -1166,13 +1176,13 @@ def fetch_statcast_metrics_for_players(
                   len(game_pks), sum(len(v) for v in logs_by_key.values()))
         def _fetch_feed(gpk):
             try:
-                return gpk, _get_json(f"{MLB_GAME_FEED_API}/{gpk}/feed/live", ttl_seconds=86400)
+                return gpk, feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
             except Exception as e:
                 _log.debug("statcast feed failed for game %s: %s", gpk, e)
                 return gpk, {}
         _p2_done = 0
-        # Feeds are large; cap workers so we don't slam the API.
-        feed_workers = max(1, min(max_workers, 12))
+        # Shared cache retries 429 with backoff, so a higher cap is safe.
+        feed_workers = max(1, min(max_workers, 20))
         with concurrent.futures.ThreadPoolExecutor(max_workers=feed_workers) as ex:
             for gpk, feed in ex.map(_fetch_feed, sorted(game_pks)):
                 feed_cache[gpk] = feed

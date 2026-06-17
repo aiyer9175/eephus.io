@@ -21,6 +21,8 @@ from typing import Iterable
 
 from statcast_metrics import MLB_GAME_FEED_API, _game_logs, _get_json
 
+import feed_cache
+
 
 HOME_PLATE_Y_FT = 17 / 12
 
@@ -119,7 +121,7 @@ def fetch_player_vaa_pitches(
         game_pk = int((split.get("game") or {}).get("gamePk") or 0)
         if not game_pk:
             continue
-        data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
+        data = feed_cache.get_game_feed(game_pk, game_date=split.get("date"))
         game_date = ((data.get("gameData") or {}).get("datetime") or {}).get("officialDate") or split.get("date")
         for play in ((data.get("liveData") or {}).get("plays") or {}).get("allPlays", []):
             matchup = play.get("matchup") or {}

@@ -20,6 +20,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import feed_cache
+
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
@@ -71,7 +73,12 @@ def _safe_float(v):
         return None
 
 
-def _schedule_game_pks(start_date: str, end_date: str, limit: int | None = None) -> list[int]:
+def _schedule_game_pks(start_date: str, end_date: str, limit: int | None = None) -> list[tuple[int, str | None]]:
+    """Return (gamePk, 'YYYY-MM-DD') for completed AAA games in the window.
+
+    The game date rides along so callers can hand it to the shared feed
+    cache, which gives completed (immutable) games a permanent TTL.
+    """
     data = _get_json(
         f"{MLB_STATS_API}/schedule",
         {
@@ -82,13 +89,14 @@ def _schedule_game_pks(start_date: str, end_date: str, limit: int | None = None)
         },
         ttl_seconds=86400,
     )
-    pks: list[int] = []
+    pks: list[tuple[int, str | None]] = []
     for day in data.get("dates", []):
+        day_date = day.get("date")
         for game in day.get("games", []):
             status = (game.get("status") or {}).get("detailedState", "")
             if status not in {"Final", "Completed Early"}:
                 continue
-            pks.append(int(game["gamePk"]))
+            pks.append((int(game["gamePk"]), game.get("officialDate") or day_date))
             if limit and len(pks) >= limit:
                 return pks
     return pks
@@ -125,8 +133,8 @@ def _tagged_hit_type(hit_data: dict, play: dict, details: dict) -> str:
     return str(event_type)
 
 
-def rows_from_game(game_pk: int) -> list[dict]:
-    data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
+def rows_from_game(game_pk: int, game_date: str | None = None) -> list[dict]:
+    data = feed_cache.get_game_feed(game_pk, game_date=game_date)
     game_data = data.get("gameData") or {}
     game_date = (game_data.get("datetime") or {}).get("officialDate")
     venue = game_data.get("venue") or {}
@@ -177,7 +185,7 @@ def rows_from_game(game_pk: int) -> list[dict]:
 
 
 def export_csv(start_date: str, end_date: str, output: Path, limit_games: int | None = None) -> int:
-    pks: list[int] = []
+    pks: list[tuple[int, str | None]] = []
     remaining = limit_games
     for start, end in _date_windows(start_date, end_date):
         batch = _schedule_game_pks(start, end, limit=remaining)
@@ -199,8 +207,8 @@ def export_csv(start_date: str, end_date: str, output: Path, limit_games: int | 
     with output.open("w", newline="", encoding="utf-8") as fh:
         writer = csv.DictWriter(fh, fieldnames=fieldnames)
         writer.writeheader()
-        for idx, game_pk in enumerate(pks, 1):
-            for row in rows_from_game(game_pk):
+        for idx, (game_pk, game_date) in enumerate(pks, 1):
+            for row in rows_from_game(game_pk, game_date):
                 writer.writerow(row)
                 count += 1
             if idx % 50 == 0:

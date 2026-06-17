@@ -829,6 +829,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
     run_id = start_run()
     log.info("started run %s", run_id)
 
+    # Keep the permanent game-feed cache bounded: completed games are cached
+    # ~forever (immutable), so prune by mtime instead of TTL. Best-effort.
+    try:
+        import feed_cache
+        feed_cache.prune_old_feeds()
+    except Exception as e:  # noqa: BLE001 — never let cache maintenance abort a run
+        log.warning("feed cache prune skipped: %s", e)
+
     new_count = 0
     stat_count = 0
     # v19 — Reset step timer for this run (don't accumulate across calls).

@@ -33,6 +33,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import feed_cache
+
 if TYPE_CHECKING:
     from sklearn.ensemble import RandomForestClassifier
 
@@ -301,8 +303,12 @@ def pitches_from_game(
     game_pk: int,
     batter_ids: set[int] | None = None,
     pitcher_ids: set[int] | None = None,
+    game_date: str | None = None,
 ) -> list[PitchRow]:
-    data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live")
+    # Shared, game_pk-keyed cache (deduped against statcast et al). game_date
+    # lets completed games be cached permanently; omit it (callers without a
+    # date in scope) and it falls back to the safe 24h TTL.
+    data = feed_cache.get_game_feed(game_pk, game_date=game_date)
     rows: list[PitchRow] = []
     for play in data.get("liveData", {}).get("plays", {}).get("allPlays", []):
         matchup = play.get("matchup") or {}
@@ -542,13 +548,15 @@ def player_zone_metrics(
 ) -> ZoneMetricRow:
     logs = game_log(player_id, season, level, is_pitcher=is_pitcher)
     game_pks = [int(s["game"]["gamePk"]) for s in logs if s.get("game", {}).get("gamePk")]
+    date_by_pk = {int(s["game"]["gamePk"]): s.get("date")
+                  for s in logs if s.get("game", {}).get("gamePk")}
     leagues = sorted({(s.get("league") or {}).get("name") for s in logs if (s.get("league") or {}).get("name")})
     rows: list[PitchRow] = []
     for pk in game_pks:
         if is_pitcher:
-            rows.extend(pitches_from_game(pk, pitcher_ids={player_id}))
+            rows.extend(pitches_from_game(pk, pitcher_ids={player_id}, game_date=date_by_pk.get(pk)))
         else:
-            rows.extend(pitches_from_game(pk, batter_ids={player_id}))
+            rows.extend(pitches_from_game(pk, batter_ids={player_id}, game_date=date_by_pk.get(pk)))
     taken_pitch_model = _train_taken_pitch_zone_model(rows) if level == "CPX" else None
     predicted = _predict_zone_ids(rows, clf, taken_pitch_model=taken_pitch_model)
     source = "mlb_stats_api_cpx_taken_pitch_rf" if taken_pitch_model is not None else "mlb_stats_api_gameday_rf"
@@ -618,6 +626,7 @@ def fetch_zone_metrics_for_players_with_model(
 
     game_to_batters: dict[int, set[int]] = {}
     game_to_pitchers: dict[int, set[int]] = {}
+    game_date_by_pk: dict[int, str] = {}
     game_to_player_levels: dict[int, set[tuple[str, str, bool]]] = {}
     leagues_by_split: dict[tuple[str, str, bool], set[str]] = {}
     games_by_split: dict[tuple[str, str, bool], set[int]] = {}
@@ -633,6 +642,9 @@ def fetch_zone_metrics_for_players_with_model(
             if not game_pk:
                 continue
             game_pk = int(game_pk)
+            gd = split.get("date")
+            if gd and game_pk not in game_date_by_pk:
+                game_date_by_pk[game_pk] = gd
             if is_pitcher:
                 game_to_pitchers.setdefault(game_pk, set()).add(mlbam_id)
             else:
@@ -651,6 +663,7 @@ def fetch_zone_metrics_for_players_with_model(
                 game_pk,
                 batter_ids=game_to_batters.get(game_pk),
                 pitcher_ids=game_to_pitchers.get(game_pk),
+                game_date=game_date_by_pk.get(game_pk),
             )
         except Exception:
             return game_pk, []
