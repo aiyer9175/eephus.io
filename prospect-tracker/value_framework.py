@@ -490,6 +490,37 @@ def fv_to_6yr_avg_war(fv: float | None) -> float | None:
     return pts[-1][1]
 
 
+def fv_to_prime_war(fv: float | None) -> float | None:
+    """PRIME/TALENT anchor: FV -> peak-season annual WAR for a prospect who
+    sticks and plays a full prime season (industry-style FV->WAR; a 60 FV ~ a
+    3-WAR regular at peak). DISPLAY ONLY -- drives the prospect prime path
+    (warPTH) + headline warPeak; never the expected-value/$ path, which stays on
+    `fv_to_6yr_avg_war`. Monotone interpolation, clamped; falls back to scaling
+    the realized anchor if the prime table is absent."""
+    if fv is None:
+        return None
+    try:
+        f = float(fv)
+    except (TypeError, ValueError):
+        return None
+    if not math.isfinite(f):
+        return None
+    table = _config().get("fv_to_prime_war")
+    if not table:
+        base = fv_to_6yr_avg_war(f)
+        return None if base is None else round(base * 1.85, 3)   # rough talent/realized ratio
+    pts = sorted((float(k), float(v)) for k, v in table.items())
+    if f <= pts[0][0]:
+        return pts[0][1]
+    if f >= pts[-1][0]:
+        return pts[-1][1]
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if x0 <= f <= x1:
+            t = (f - x0) / (x1 - x0)
+            return y0 * (1 - t) + y1 * t
+    return pts[-1][1]
+
+
 # =============================================================================
 # P(bucket | FV) -- the continuous, smooth, monotone mixture weights
 # =============================================================================
@@ -785,6 +816,83 @@ def _war_scale_for(fv: float | None, role: str) -> float:
         return _fv_war_scale(round(float(fv) * 2) / 2.0, role)
     except (TypeError, ValueError):
         return 1.0
+
+
+@lru_cache(maxsize=1024)
+def _prime_war_scale(fv_half: float, role: str) -> float:
+    """Prime analogue of `_fv_war_scale`: scales the bucket shape so the
+    P(bucket|FV)-weighted level reconciles to the PRIME anchor (fv_to_prime_war)
+    rather than the realized 6yr-avg. The higher anchor un-compresses the
+    ceiling -- a 62-FV 'star' returns to ~5 WAR instead of the ~2.8 the
+    realized-mean scale produces. DISPLAY path only; never used for $."""
+    is_pit = (role == "pitcher")
+    probs = p_bucket_given_fv(fv_half, is_pit)
+    base = _calibrated_midpoints(role)
+    if probs is None:
+        return 1.0
+    denom = sum(p * b for p, b in zip(probs, base))
+    anchor = fv_to_prime_war(fv_half)
+    if not denom or anchor is None:
+        return 1.0
+    return float(anchor) / float(denom)
+
+
+def _prime_war_scale_for(fv: float | None, role: str) -> float:
+    if fv is None:
+        return 1.0
+    try:
+        return _prime_war_scale(round(float(fv) * 2) / 2.0, role)
+    except (TypeError, ValueError):
+        return 1.0
+
+
+def prospect_prime_path(fv: float, is_pitcher: bool, debut_age: float | None = None,
+                        reliever: bool = False) -> dict | None:
+    """Prime/talent DISPLAY path: P(bucket|FV)-weighted per-season WAR with the
+    bucket levels reconciled to the PRIME anchor. Returns {mean, p10, p90, peak}
+    where p10/p90 are the 10th/90th-percentile bucket paths (realistic floor /
+    ceiling) and peak is the headline prime WAR. DISPLAY ONLY -- the expected
+    `war` path and surplus-$ stay on the realized anchor."""
+    role = _role_key(is_pitcher)
+    probs = p_bucket_given_fv(float(fv), is_pitcher)
+    if probs is None:
+        return None
+    scale = _prime_war_scale_for(float(fv), role)
+    paths = [_bucket_season_wars(role, i, reliever, debut_age, scale)
+             for i in range(_N_BUCKETS)]
+    n = len(paths[0])
+    mean = [sum(probs[b] * paths[b][t] for b in range(_N_BUCKETS)) for t in range(n)]
+
+    def _q_bucket(q: float) -> int:
+        c = 0.0
+        for i, p in enumerate(probs):
+            c += p
+            if c >= q:
+                return i
+        return _N_BUCKETS - 1
+
+    return {"mean": mean, "p10": paths[_q_bucket(0.10)], "p90": paths[_q_bucket(0.90)],
+            "peak": prospect_peak_war(float(fv), is_pitcher, debut_age)}
+
+
+def prospect_peak_war(fv: float, is_pitcher: bool, debut_age: float | None = None) -> float | None:
+    """Headline 'prime' WAR -- the prospect's projected best-season WAR at his
+    peak age (prime-anchored). For young debutants whose 6yr control window ends
+    before the peak, this surfaces the prime the window truncates."""
+    anchor = fv_to_prime_war(float(fv))
+    if anchor is None:
+        return None
+    cfg = _config()
+    aging = cfg.get("aging", {})
+    if debut_age is None or not aging.get("enabled", True):
+        return round(anchor, 1)
+    peak = float(aging["pitcher_peak_age" if is_pitcher else "hitter_peak_age"])
+    n_years = int(cfg["service_time"]["control_years"])
+    raw = [_aging_multiplier(float(debut_age) + k, peak, aging) for k in range(n_years)]
+    mean_raw = (sum(raw) / n_years) or 1.0
+    # anchor is the window-average level; the peak-age multiplier is 1.0, so the
+    # peak-age projection renormalizes by 1/mean_raw.
+    return round(anchor * (1.0 / mean_raw), 1)
 
 
 # =============================================================================
@@ -3054,6 +3162,9 @@ def build_snapshot() -> dict:
             "reliever": {b: round(v / 1e6, 3) for b, v in bucket_surplus_usd(True, "RP").items()},
         },
         "fv_to_6yr_avg_war": {str(k): float(v) for k, v in cfg["fv_to_6yr_avg_war"].items()},
+        # PRIME/TALENT FV->WAR (peak-season) for the display warPeak + FV-badge
+        # "WAR/yr"; separate from the realized 6yr-avg that prices surplus.
+        "fv_to_prime_war": {str(k): float(v) for k, v in cfg.get("fv_to_prime_war", {}).items()},
         "sv_curve": {
             "fv_min": float(snap_cfg["sv_curve_fv_min"]),
             "fv_max": float(snap_cfg["sv_curve_fv_max"]),

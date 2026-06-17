@@ -214,6 +214,18 @@ window.VALUE_FRAMEWORK = {
     "70": 2.6,
     "80": 3.8
   },
+  "fv_to_prime_war": {
+    "35": 0.3,
+    "40": 0.6,
+    "45": 1.1,
+    "50": 1.7,
+    "55": 2.3,
+    "60": 3.0,
+    "65": 3.8,
+    "70": 4.7,
+    "75": 5.5,
+    "80": 6.5
+  },
   "model": "career-path-mixture",
   "pitcher_roles": {
     "injury_hazard": 0.0,

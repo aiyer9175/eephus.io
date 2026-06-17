@@ -10043,9 +10043,10 @@ function fvToWarPeak(fv, isPitcher) {
   // the baked p.surplus block / org._active_surplus_net_mm now; this powers the
   // FV→WAR tooltip + the rare no-baked fallback.
   const _peak = vf.fv_to_war_peak;
-  const table = (_peak && _peak[isPitcher ? "pitcher" : "hitter"]) // legacy per-side
+  const table = vf.fv_to_prime_war                                 // restored PRIME/talent table (current)
+             || (_peak && _peak[isPitcher ? "pitcher" : "hitter"]) // legacy per-side
              || _peak                                              // legacy flat (unlikely)
-             || vf.fv_to_6yr_avg_war;                              // current flat, side-agnostic
+             || vf.fv_to_6yr_avg_war;                              // last-resort fallback (deflated)
   if (!table || typeof table !== "object") return null;
   const f = Number(fv);
   if (!isFinite(f)) return null;
@@ -34319,9 +34320,9 @@ function makeLevelPercentileBlock(p) {
 // xFIP/FIP/FIP-/ERA- + bWAR); Statcast contact quality at ANY tracked level
 // (Hawk-Eye game-feed reaches AAA and increasingly below, not just MLB); the
 // rolling-xwOBA trend; Swing+ (MLB bat tracking); and, when none of those are
-// available, a level-relative context grid (player vs level average). The
-// level-relative "+" index pills (HIT+/POW+/ISO+/PD+/pStuff+) already live in
-// the detail header, so they are deliberately NOT repeated here.
+// available, nothing advanced is shown here. The level-relative "+" index
+// pills (HIT+/POW+/ISO+/PD+/pStuff+) live in the detail header, so the old
+// level-relative context grid (player vs level average) was removed as redundant.
 function makeSabermetricsBlock(player) {
   const sm = player.sabermetrics;
   const sl = player.statline || {};
@@ -34374,34 +34375,12 @@ function makeSabermetricsBlock(player) {
     ]) });
   }
 
-  // --- 4. Fallback: level-relative context (no real saber / no Statcast) --
+  // --- 4. Fallback: nothing advanced to show -----------------------------
+  // The old level-relative context grid (player vs level average: OPS/ISO/
+  // BB%/K%) was removed as redundant - those level-relative "+" indices
+  // (HIT+/POW+/ISO+/PD+/pStuff+) already live in the detail header.
   if (!groups.length) {
-    const perf = ((DATA.level_norms || {})[sl.level] || {}).perf || {};
-    const ctxTiles = [];
-    const ctx = (label, pv, lv, hiGood, fmt) => {
-      if (pv == null || !isFinite(pv) || lv == null || !(lv !== 0)) return;
-      ctxTiles.push(tile(label, fmt(pv),
-        colorize(hiGood ? pv >= lv * 1.05 : pv <= lv * 0.95, hiGood ? pv <= lv * 0.95 : pv >= lv * 1.05),
-        `${label}: ${fmt(pv)} vs ${sl.level || "level"} average ${fmt(lv)}`));
-    };
-    const num = v => v != null ? Number(v) : null;
-    if (!isP) {
-      ctx("OPS", num(sl.ops), perf.avg_ops, true, f3);
-      ctx("ISO", num(sl.iso), perf.avg_iso, true, f3);
-      ctx("BB%", num(sl.bb_pct), perf.avg_bb_pct, true, f1);
-      ctx("K%", num(sl.k_pct), perf.avg_k_pct, false, f1);
-    } else {
-      ctx("ERA", num(sl.era), perf.avg_era, false, f2);
-      ctx("WHIP", num(sl.whip), perf.avg_whip, false, f2);
-      ctx("K/9", num(sl.k_per_9), perf.avg_k_per_9, true, f2);
-      ctx("BB/9", num(sl.bb_per_9), perf.avg_bb_per_9, false, f2);
-    }
-    if (ctxTiles.length) {
-      return subLabel(`${sl.level || "Level"}-relative context · player vs ${sl.level || "level"} average`)
-        + tileGrid(ctxTiles)
-        + `<div style="color:var(--text-tertiary);font-size:10px;margin-top:6px;font-style:italic;">Level-relative + indices (HIT+/POW+/ISO+) are in the header. ${isP ? "xFIP/FIP" : "wRC+/wOBA"} needs MLB data; Statcast needs a tracked level.</div>`;
-    }
-    return `<div style="color:var(--text-tertiary);font-size:12px;">No advanced stats available yet. ${isP ? "xFIP/FIP" : "wRC+/wOBA"} requires MLB-level data; Statcast requires a tracked level; level-relative proxies need enough ${isP ? "innings" : "PAs"} to stabilize.</div>`;
+    return `<div style="color:var(--text-tertiary);font-size:12px;">No advanced stats available yet. ${isP ? "xFIP/FIP" : "wRC+/wOBA"} requires MLB-level data; Statcast requires a tracked level; the level-relative "+" indices are in the header.</div>`;
   }
 
   return groups.map(g => subLabel(g.label) + g.html).join("");
@@ -37057,8 +37036,8 @@ function renderPlayerDetail(key) {
   const _sm = p.sabermetrics || {};
   const _hasRealSabr = (_sm.wrc_plus != null || _sm.xfip != null || _sm.fip != null
     || _sm.fip_minus != null || _sm.woba != null || _sm.era_minus != null);
-  const _sabrSub = _hasRealSabr ? "MLB sabermetrics" : "level-relative context";
-  const sabermetricsTitle = `Advanced stats <span class="detail-title-sub">${_sabrSub}</span>`;
+  const _sabrSub = _hasRealSabr ? "MLB sabermetrics" : "";
+  const sabermetricsTitle = `Advanced stats${_sabrSub ? ` <span class="detail-title-sub">${_sabrSub}</span>` : ""}`;
   const sabermetricsSection = `<div class="detail-title">${sabermetricsTitle}</div>${makeSabermetricsBlock(p)}`;
 
   // Surplus-value sidebar card - FV-implied trade value ($M) per the
