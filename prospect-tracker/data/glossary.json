@@ -3589,7 +3589,7 @@
    ],
    "priority": 6,
    "definition": "Export a shareable graphic - a prospect card, farm card, list, or card pack - as a PNG (or a short animated clip), with rarity treatment matching the list.",
-   "methodology": "Generate GFX rasterizes an on-theme graphic for sharing: single-prospect cards (compact / detailed / scouting / stats / card-back templates), farm cards, ranked-list boards, and multi-card 'packs'. Cards carry the FV-tier rarity frame, the FV history chart, tool radar, Statcast sliders, and surplus. Exports are 2× resolution; an animated WebM showcases the holographic foil. The blob is pre-rendered so Copy/Download/Share are near-instant.",
+   "methodology": "Generate GFX rasterizes an on-theme graphic for sharing: single-prospect cards (compact / detailed / scouting / stats / card-back templates), farm cards, ranked-list boards, and multi-card 'packs'. Cards carry the FV-tier rarity frame, the FV history chart, tool radar, Statcast sliders, and surplus. Exports are 2× resolution; an animated WebM shows the holographic foil. The blob is pre-rendered so Copy/Download/Share are near-instant.",
    "seeAlso": [
     "fv_rarity",
     "fv",
