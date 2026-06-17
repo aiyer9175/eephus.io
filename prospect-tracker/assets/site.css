@@ -1197,7 +1197,11 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .gl-app #gl-az a:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 .gl-app .gl-az-off { opacity: 0.3; }
 .gl-app .gl-count { color: var(--text-tertiary); font-size: 10px; margin-left: 3px; }
-.gl-app .gl-intro p { max-width: 78ch; font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 10px; }
+/* Two-column flow so the intro fills the page width on wide screens (instead of
+   stopping mid-page) while each column stays a readable ~65ch; collapses to one
+   column below ~880px. */
+.gl-app .gl-intro { columns: 2 420px; column-gap: 40px; }
+.gl-app .gl-intro p { break-inside: avoid; font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 12px; }
 .gl-app .state-message { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
 .gl-app input.gl-search { width: 100%; max-width: 460px; padding: 7px 10px; font-family: var(--font-retro-mono);
   font-size: 13px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
