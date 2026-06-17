@@ -407,7 +407,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   background: var(--iridescent); z-index: 2;
 }
 .team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
-.team-card .team-notes { display: flex; flex-wrap: wrap; gap: 11px; margin: 12px 0 2px; }
+/* align-items:flex-end + container top headroom keep every badge box on one
+   line (crowns float above uniformly) instead of crowned boxes sitting lower. */
+.team-card .team-notes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px; margin: 18px 0 2px; }
 /* Credit badge: a logo mark (no text), the role name surfaced on hover via the
    native title. A crown perches above "Creator" badges. The mark rides the
    per-module accent passed in as --badge-accent; the crown stays gold. */
@@ -424,7 +426,6 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .team-card .team-badge-mark { display: inline-flex; color: var(--badge-accent, var(--text-primary)); }
 .team-card .team-badge-mark svg { width: 24px; height: 24px; display: block; }
-.team-card .team-badge.is-creator { margin-top: 6px; }   /* headroom for the crown */
 .team-card .team-badge-crown {
   position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
   width: 20px; height: 12px; color: var(--accent-gold);
