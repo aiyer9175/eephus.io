@@ -3,7 +3,7 @@
     "email": "arkndjl@gmail.com", "school": "New York University",
     "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "Site Design"],
     "website": "https://arkndjl.net/", "github": "arkndjl" },
-  { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396", "note": ["PROSPX Developer", "MLB Projections Developer"], "school": "University of Utah", "github": "willclq" },
+  { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396", "note": ["PROSPX Developer", "MLB Projections Developer"], "school": "Utah College", "github": "willclq" },
   { "name": "Michael Behrens",    "handle": null,         "linkedin": "michael-behrens-", "note": "Webmaster", "school": "University of Oklahoma", "github": "baron-git" },
   { "name": "Anirudh Iyer",       "handle": null,         "linkedin": "anirudh-iyer-193086229", "note": ["PROSPX Developer", "CollegeSavant Developer"], "school": "University of California, Los Angeles", "github": "aiyer9175" },
   { "name": "Joseph Gillis",      "handle": null,         "linkedin": "josephdgil",                "note": "CollegeSavant Creator/Lead Developer", "school": "Boston University", "github": "jgillisBU" },

@@ -1766,7 +1766,7 @@ def build_team() -> str:
     _SCHOOL_MARKS = {"New York University": {"short": "NYU", "color": "#57068C", "logo": "nyu.png"},
                      "University of Oklahoma": {"short": "OU", "color": "#841617", "logo": "ou.png"},
                      "Boston University": {"short": "BU", "color": "#CC0000", "logo": "bu.png"},
-                     "University of Utah": {"short": "UTAH", "color": "#CC0000", "logo": "utah.png"},
+                     "Utah College": {"short": "UTAH", "color": "#CC0000", "logo": "utah.png"},
                      "University of California, Los Angeles": {"short": "UCLA", "color": "#2774AE", "logo": "ucla.png"},
                      "Merrimack College": {"short": "MACK", "color": "#003263", "logo": "merrimack.png"}}
     def _school_html(m: dict) -> str:
