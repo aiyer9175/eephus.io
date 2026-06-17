@@ -1839,10 +1839,10 @@ def build_team() -> str:
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
     )
     mission = (
-        "<p class=\"team-mission\">We're all college students who came together to "
-        "build an all-in-one MLB scouting portal and sabermetric utility, with a "
-        "different module for each of our ideas. Prospect rankings, MLB projections, "
-        "free agency, and college data each started as one person's project.</p>"
+        "<p class=\"team-mission\">eephus.io is a collaborative sabermetrics project "
+        "created by us, the development team (listed below). We are all college "
+        "students actively pursuing futures in baseball. Please contact any of us "
+        "for questions, feedback, or opportunities.</p>"
     )
     body = (
         '<div class="section-head"><h1>Developers</h1></div>'
