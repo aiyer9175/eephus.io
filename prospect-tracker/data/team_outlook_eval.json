@@ -1,11 +1,11 @@
 {
- "generated_at": "2026-06-16",
+ "generated_at": "2026-06-17",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 954.2,
+  "roster_war_sum": 954.5,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2384.8,
+  "raw_wins_sum": 2385.1,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 691,
@@ -13,7 +13,7 @@
    "n_unassigned": 506,
    "war_unassigned": 39.4
   },
-  "remainder_recenter_wins_per_team": 1.58,
+  "remainder_recenter_wins_per_team": 1.57,
   "coverage_decomposition_2025": {
    "returning_player_war": 940,
    "new_entrant_war": 61,
