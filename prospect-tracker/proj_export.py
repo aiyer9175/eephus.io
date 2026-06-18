@@ -62,6 +62,17 @@ HORIZON = 5                  # 2027..2031
 # signal, and the engine's reliability buckets were fitted above this).
 MIN_PA, MIN_IP = 100, 30
 
+# Two-way "if-healthy" calibration: a two-way player cannot hold a FULL
+# dedicated-starter inning load on top of a full hitting season, so naively
+# summing each side's playing-time-held (PTH) path double-books durability and
+# overstates the healthy ceiling (Ohtani read 10.7/11.56 WAR — above any season
+# he has ever posted). The pitching side's PTH is workload-discounted by this
+# factor (~a two-way ~130-IP load vs a ~180-IP dedicated starter) before
+# summing; hitting PTH (DH, ~full PA) is untouched, and the pricing `war` path
+# is unaffected (surplus/value/FA pricing unchanged). Tuned so the if-healthy
+# ceiling lands near Ohtani's realistic peak (~9.5, under any 10+ season).
+TWO_WAY_PIT_PTH_FACTOR = 0.48
+
 _BUCKET_ORDER = ("bust", "bench", "regular", "good", "star")
 
 
@@ -180,7 +191,17 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                 return [round((a[t] or 0) + (b[t] or 0), 2)
                         for t in range(min(HORIZON, len(a), len(b)))]
             war_arr = _sum_arr("war_by_year")
-            pth_arr = _sum_arr("war_by_year_pth")   # if-healthy display path
+            # If-healthy display path: workload-discount the pitching side's PTH
+            # (a two-way arm can't carry a full starter's innings on top of a
+            # full hitting season) before summing. See TWO_WAY_PIT_PTH_FACTOR.
+            _hit_pth = paths["hit"].get("war_by_year_pth")
+            _pit_pth = paths["pit"].get("war_by_year_pth")
+            if _hit_pth and _pit_pth:
+                pth_arr = [round((_hit_pth[t] or 0)
+                                 + TWO_WAY_PIT_PTH_FACTOR * (_pit_pth[t] or 0), 2)
+                           for t in range(min(HORIZON, len(_hit_pth), len(_pit_pth)))]
+            else:
+                pth_arr = _sum_arr("war_by_year_pth")   # if-healthy display path
             # Band combination at assumed cross-side correlation rho=0.5
             # (a player's hitting and pitching seasons share health/PT
             # shocks but not skill shocks - a documented assumption, less
