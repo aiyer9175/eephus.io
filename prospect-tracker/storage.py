@@ -8523,20 +8523,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         else:
             payload["boom_label"] = None
 
-        # Performance-anchored movement engine (replaces the FV-delta-only
-        # `stock_movement`). compute_movement reads statline / career_stats
-        # / age_vs_level / tools_consensus / acquisition / prospect_savant —
-        # all of which are stamped on the payload above. The legacy
-        # stock_movement is computed ONLY in the exception fallback — no
-        # point paying for a per-player computation the engine immediately
-        # overwrites on the happy path.
+        # De-noised movement engine. compute_genuine_movement measures the
+        # most-recent SAME-SOURCE consensus step (only sources grading the
+        # player at both endpoints count), so panel-composition changes and
+        # lone-outlier re-grades no longer masquerade as movement; on-field
+        # performance is the backup. Reads points[].per_source /
+        # sources_contributing / fv_spread / shrinkage_weight + statline /
+        # career_stats — all stamped on the payload above. Output is a
+        # backward-compatible superset of compute_movement's `stock` shape.
+        # Fallback chain on failure: compute_genuine_movement →
+        # compute_movement (bucket engine) → stock_movement (legacy FV delta).
         try:
-            from spotlights import compute_movement
-            payload["stock"] = compute_movement(payload)
+            from movement import compute_genuine_movement
+            payload["stock"] = compute_genuine_movement(payload)
         except Exception:
-            log.exception("compute_movement failed for %s — falling back to "
-                          "the legacy FV-delta stock signal", p.player_key)
-            payload["stock"] = stock_movement(p)
+            log.exception("compute_genuine_movement failed for %s — falling "
+                          "back to the bucket / legacy stock signal", p.player_key)
+            try:
+                from spotlights import compute_movement
+                payload["stock"] = compute_movement(payload)
+            except Exception:
+                payload["stock"] = stock_movement(p)
 
         return payload
 

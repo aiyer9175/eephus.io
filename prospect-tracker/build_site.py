@@ -815,6 +815,34 @@ def _save_wire_fv_ledger(ledger: dict, live_keys: set) -> None:
         pass
     _WIRE_FV_LEDGER.write_text(raw, encoding="utf-8")
 
+_HOME_MOVER_RECENCY_DAYS = 365
+
+def _genuine_mover_step(p: dict) -> int | None:
+    """Homepage Top Movers selector: the de-noised same-source FV step from the
+    movement engine (carried on `stock`), gated to genuine, recent moves.
+
+    Only same-source consensus steps count - the engine already excludes
+    panel-composition shifts and lone-outlier re-grades, so a source merely
+    re-publishing no longer registers. Confidence must be high/medium, and -
+    because the homepage module is a recency surface ("moving now") - the step
+    must have landed within the trailing year (mirrors the prior
+    _fv_window_delta window). Returns the signed integer grade step (>=2 in
+    magnitude) or None. The per-player stock chips keep showing each player's
+    last real move regardless of age; this module is the recent-movers view."""
+    st = p.get("stock") or {}
+    if (st.get("basis") != "same_source" or st.get("delta") is None
+            or st.get("direction") in ("flat", "debuted", None)
+            or st.get("confidence") not in ("high", "medium")):
+        return None
+    try:
+        moved = date.fromisoformat(str(st.get("to_date"))[:10])
+    except (TypeError, ValueError):
+        return None
+    if moved < date.today() - timedelta(days=_HOME_MOVER_RECENCY_DAYS):
+        return None
+    step = int(round(st["delta"]))
+    return step if abs(step) >= 2 else None
+
 def _row_mover(p: dict, d: int) -> str:
     up = d > 0
     # Mini FV-history sparkline - reinforces the stock-chart identity. Colored
@@ -995,15 +1023,33 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         nm = p.get("player_name") or ""
         key = p.get("player_key")
         org = p.get("org")
-        # FV news = the most recent REAL grade change, dated at FIRST SIGHT
-        # via the ledger (the raw change date rides the daily Live point and
-        # re-stamps to today on every run - see _latest_fv_change CAUTION).
-        # Never stock.delta - that's the movement engine's composite score
-        # stamped with the latest (daily Live) snapshot date, which flooded
-        # the wire with fake "▲ +N FV today" items for every top prospect.
-        chg = None if p.get("status") == "debuted" else _latest_fv_change(p)
-        if chg and abs(chg[1]) >= 2:
-            d_first = _wire_fv_first_seen(fv_ledger, key, chg[2], str(chg[0])[:10])
+        # FV news = the most recent GENUINE same-source consensus move now
+        # carried on stock (basis == "same_source"): only sources grading the
+        # player at both endpoints count, so panel-composition shifts (basis
+        # "panel_update") and thin samples (confidence "low") never reach the
+        # wire. Dated at FIRST SIGHT via the ledger (the raw change date rides
+        # the daily Live point and re-stamps to today every run - see
+        # _latest_fv_change CAUTION). When stock is absent (older payloads /
+        # tests), fall back to the raw grade-change detector.
+        mv = p.get("stock") or {}
+        chg = None
+        if p.get("status") != "debuted":
+            if (mv.get("basis") == "same_source" and mv.get("delta") is not None
+                    and mv.get("direction") not in ("flat", "debuted")
+                    and mv.get("confidence") in ("high", "medium")):
+                step = int(round(mv["delta"]))
+                try:
+                    new_grade = int(round(float(mv.get("to_label"))))
+                except (TypeError, ValueError):
+                    new_grade = None
+                if abs(step) >= 2 and new_grade is not None:
+                    chg = (str(mv.get("to_date"))[:10], step, new_grade)
+            elif "stock" not in p:
+                raw = _latest_fv_change(p)
+                if raw and abs(raw[1]) >= 2:
+                    chg = (str(raw[0])[:10], raw[1], raw[2])
+        if chg:
+            d_first = _wire_fv_first_seen(fv_ledger, key, chg[2], chg[0])
             fv_items.append((d_first, chg[1], nm, key, org))
         for lc in (p.get("level_changes") or []):
             if lc.get("kind") in ("promotion", "demotion"):
@@ -1116,12 +1162,13 @@ def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
             'stroke-linejoin="round" stroke-linecap="round"/></svg>')
 
 def _spotlight_html(players: list) -> str:
-    # Biggest riser with FV history - rendered as a baseball card. Ranked by
-    # the REAL trailing-1y grade change (label units), so the "+N FV" caption
-    # is a true FV statement (stock.delta is the engine's composite score).
+    # Biggest riser with FV history - rendered as a baseball card. Ranked by the
+    # de-noised genuine same-source move (the same selector the Top Movers
+    # module uses), so the "+N FV" caption is a true FV statement and the hero
+    # card never disagrees with the movers list or the per-player stock chips.
     cands = [(d, p) for p in players
              if p.get("status") != "debuted"
-             and (d := _fv_window_delta(p)) is not None and d > 0]
+             and (d := _genuine_mover_step(p)) is not None and d > 0]
     if not cands:
         return ""
     d, p = max(cands, key=lambda t: t[0])
@@ -1446,13 +1493,16 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>') if sec else ""
 
     # ---- live PROSPX modules ----
-    # Top Movers = biggest REAL grade changes over the trailing year (label
-    # units, ≥2 grade points), matching the FV sparkline drawn beside each
-    # row. The engine-flavored movers (performance-anchored, with driver
-    # chips) live on the PROSPX spotlights tab this module links to.
+    # Top Movers = biggest GENUINE moves from the de-noised movement engine
+    # (movement.compute_genuine_movement, carried on each player's `stock`):
+    # only same-source consensus steps count, so a source merely re-publishing
+    # or the panel changing no longer fires a fake mover. Gated to the trailing
+    # year so the homepage stays a "moving now" surface, matching the FV
+    # sparkline beside each row. The driver-chip view lives on the PROSPX
+    # spotlights tab this module links to.
     mv = [(d, p) for p in players
           if p.get("status") != "debuted"
-          and (d := _fv_window_delta(p)) is not None and abs(d) >= 2]
+          and (d := _genuine_mover_step(p)) is not None]
     risers = sorted((t for t in mv if t[0] > 0), key=lambda t: -t[0])[:5]
     fallers = sorted((t for t in mv if t[0] < 0), key=lambda t: t[0])[:4]
     movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)

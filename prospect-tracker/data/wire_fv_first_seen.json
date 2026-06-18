@@ -343,6 +343,10 @@
 "first_seen": "2025-07-31",
 "fv": 43
 },
+"axiel_plaz": {
+"first_seen": "2026-06-04",
+"fv": 40
+},
 "ayden_johnson": {
 "first_seen": "2026-02-12",
 "fv": 38
@@ -763,6 +767,10 @@
 "first_seen": "2026-02-12",
 "fv": 51
 },
+"charlie_condon": {
+"first_seen": "2026-02-12",
+"fv": 52
+},
 "charlie_szykowny": {
 "first_seen": "2026-06-05",
 "fv": 35
@@ -778,6 +786,10 @@
 "chase_hampton": {
 "first_seen": "2025-02-13",
 "fv": 45
+},
+"chase_harlan": {
+"first_seen": "2026-02-12",
+"fv": 42
 },
 "chase_jaworsky": {
 "first_seen": "2025-02-13",
@@ -1010,10 +1022,6 @@
 "daniel_eagen": {
 "first_seen": "2025-07-31",
 "fv": 45
-},
-"daniel_espino": {
-"first_seen": "2026-02-12",
-"fv": 40
 },
 "daniel_guilarte": {
 "first_seen": "2024-01-22",
@@ -1490,6 +1498,10 @@
 "frank_mozzicato": {
 "first_seen": "2025-02-13",
 "fv": 38
+},
+"franklin_arias": {
+"first_seen": "2026-05-22",
+"fv": 60
 },
 "franklin_rojas": {
 "first_seen": "2025-02-13",
@@ -2019,6 +2031,10 @@
 "first_seen": "2026-02-12",
 "fv": 40
 },
+"jefferson_rojas": {
+"first_seen": "2024-02-14",
+"fv": 52
+},
 "jeremy_rodriguez": {
 "first_seen": "2025-02-13",
 "fv": 38
@@ -2327,6 +2343,10 @@
 "first_seen": "2026-02-12",
 "fv": 38
 },
+"juneiker_caceres": {
+"first_seen": "2025-07-31",
+"fv": 46
+},
 "junior_ciprian": {
 "first_seen": "2026-02-12",
 "fv": 40
@@ -2630,6 +2650,10 @@
 "luis_lara": {
 "first_seen": "2026-01-22",
 "fv": 51
+},
+"luis_perales": {
+"first_seen": "2026-02-12",
+"fv": 47
 },
 "luis_r_rodriguez": {
 "first_seen": "2024-02-14",
