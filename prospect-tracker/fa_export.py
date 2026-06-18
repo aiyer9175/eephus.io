@@ -119,6 +119,76 @@ def _prospect_fv_history(keys: set) -> dict[str, dict]:
     return out
 
 
+# --- MLB projections bridge (future FA classes) -----------------------------
+# For class years beyond CLASS_YEAR the platform season hasn't happened yet, so
+# the Marcel engine rides stale history (every member flags thinPlatform). The
+# /projections/ module already runs the same FA engine forward (5-year war[]
+# from first_season), so for FUTURE classes we overlay its per-player WAR path
+# (joined by mlbam, then player_key) and let the market model re-price AAV /
+# guarantee / surplus off it. Falls back to the Marcel path when unprojected.
+_MLB_PROJ_CACHE: dict | None = None
+
+
+def _load_mlb_projections() -> dict:
+    global _MLB_PROJ_CACHE
+    if _MLB_PROJ_CACHE is None:
+        try:
+            d = json.loads((DATA_DIR / "mlb_projections.json").read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            d = {}
+        vets = d.get("vets") or []
+        _MLB_PROJ_CACHE = {
+            "first_season": d.get("first_season"),
+            "by_mlbam": {v["mlbam"]: v for v in vets if v.get("mlbam")},
+            "by_key": {v["key"]: v for v in vets if v.get("key")},
+        }
+    return _MLB_PROJ_CACHE
+
+
+def _apply_proj_override(path: dict, pv: dict, class_year: int,
+                         first_season: int | None) -> bool:
+    """Overlay the projection module's war[] onto `path` (mutates in place),
+    aligned so projection season == class_year maps to path year 1. Keeps the
+    Marcel-decayed tail for contract years the 5y projection doesn't reach.
+    Returns True when applied."""
+    if first_season is None:
+        return False
+    start = class_year - first_season
+    war = pv.get("war") or []
+    if start < 0 or start >= len(war):
+        return False
+    new = war[start:]
+
+    def _decay_ratio(seq: list) -> float:
+        # Continue the projection's own recent year-over-year decline; clamp to
+        # a sane aging band, default ~0.82 when it can't be inferred.
+        if len(seq) >= 2 and seq[-2] > 0:
+            return max(0.5, min(0.95, seq[-1] / seq[-2]))
+        return 0.82
+
+    def _overlay(key: str, src: list | None) -> None:
+        # Overlay the projected years, then EXTEND past the projection horizon
+        # by decaying the last projected value (not the stale Marcel tail, which
+        # collapses to ~0 for young stars on long future-class deals).
+        cur = path.get(key)
+        seq = (src or [])[start:]
+        if not seq or not isinstance(cur, list):
+            return
+        cur[:len(seq)] = seq
+        ratio = _decay_ratio(seq)
+        last = seq[-1]
+        for i in range(len(seq), len(cur)):
+            last = round(last * ratio, 2)
+            cur[i] = last
+
+    _overlay("war_by_year", war)        # mean path (always present)
+    path["war_y1"] = new[0]
+    _overlay("war_by_year_p10", pv.get("warP10"))
+    _overlay("war_by_year_p90", pv.get("warP90"))
+    path["war_total"] = round(sum(path["war_by_year"]), 2)
+    return True
+
+
 def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     corpus = fp.build_corpus()
     league = corpus["league"]
@@ -146,6 +216,7 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     dpw = fm.winter_dpw(dpw_series, class_year)
 
     overrides = _load_overrides()
+    proj = _load_mlb_projections()   # future-class WAR override source
     members = []
     full_fits: list[tuple[dict, list[dict]]] = []   # (member, all-org fits)
     n_proj = 0
@@ -206,6 +277,15 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                                             curves, war_map, league,
                                             in_progress=(class_year - 1, frac),
                                             use_ml=False)
+                if path and class_year > CLASS_YEAR:
+                    # Future class: overlay the projection module's WAR path
+                    # (the platform season hasn't happened; Marcel is stale).
+                    pv = (proj["by_mlbam"].get(mlbam)
+                          or proj["by_key"].get(row.get("player_key")))
+                    if pv and _apply_proj_override(path, pv, class_year,
+                                                   proj["first_season"]):
+                        m["warSource"] = "mlb_projections"
+                        m.pop("thinPlatform", None)
                 if path:
                     s = {**row, "_war_path": path, "_age": age, "class_year": class_year}
                     pred = model.predict(s)

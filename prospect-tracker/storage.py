@@ -7850,9 +7850,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     era = float(sl_out.get("era")) if sl_out.get("era") else None
                     avg_era = norms_perf.get("avg_era")
                     if era and avg_era and era > 0:
-                        era_minus = round(era / avg_era * 100)
+                        # Empirical-Bayes shrinkage toward the level mean by
+                        # sample size before indexing — a few-IP line no longer
+                        # reads as an extreme ERA-. K_IP ≈ ERA stabilization (IP).
+                        ip = float(sl_out.get("ip") or 0)
+                        K_IP = 50.0
+                        era_adj = (ip * era + K_IP * avg_era) / (ip + K_IP)
+                        era_minus = round(era_adj / avg_era * 100)
                         sl_out["era_minus_level"] = era_minus
-                        sl_out["level_plus_pct"] = round((avg_era - era) / avg_era * 100)
+                        sl_out["level_plus_pct"] = round((avg_era - era_adj) / avg_era * 100)
                     # Peripheral STF+ (K%, BB%, HR/9 vs level mean). Replaces
                     # the scouting-grade composite as the headline STF+ chip;
                     # the scouting composite is still computed in tools.* but
@@ -7865,9 +7871,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     ops = float(ops_str) if ops_str else None
                     avg_ops = norms_perf.get("avg_ops")
                     if ops and avg_ops and avg_ops > 0:
-                        ops_plus = round(ops / avg_ops * 100)
+                        # Empirical-Bayes shrinkage toward the level mean by
+                        # sample size before indexing — a 4-AB line no longer
+                        # reads OPS+ 374. K_AB ≈ OPS stabilization (AB units).
+                        ab = float(sl_out.get("ab") or 0)
+                        K_AB = 170.0
+                        ops_adj = (ab * ops + K_AB * avg_ops) / (ab + K_AB)
+                        ops_plus = round(ops_adj / avg_ops * 100)
                         sl_out["ops_plus_level"] = ops_plus
-                        sl_out["level_plus_pct"] = round((ops - avg_ops) / avg_ops * 100)
+                        sl_out["level_plus_pct"] = round((ops_adj - avg_ops) / avg_ops * 100)
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
 

@@ -16640,8 +16640,8 @@ const CHART_AXES = {
     { key: "overall_rank",   label: "Overall rank",       getter: p => p.overall_rank,                       fmt: v => "#" + v },
     { key: "rps_plus",       label: "RPS+",               getter: p => (p.statline && (p.statline.rps_plus ?? p.statline.ops_plus_level)), fmt: v => formatMetric(v, 'plus') },   // v-audit: rps_plus is unpopulated for actives; fall back to the level-relative OPS+ index (the actual relative-performance metric for the active pool)
     { key: "tool",           label: "Tool",               getter: p => p.tool,                               fmt: v => fvCeil(v).toString() },
-    { key: "height_in",      label: "Height (in)",        getter: p => _heightToInches(p.height || (p.player_info && p.player_info.height)),  fmt: v => v.toFixed(0) + '"' },
-    { key: "weight",         label: "Weight (lb)",        getter: p => parseInt(p.weight || (p.player_info && p.player_info.weight), 10) || null, fmt: v => v.toFixed(0) + "lb" },
+    { key: "height_in",      label: "Height (in)",        getter: p => _getPhysicalProfile(p).height_in,  fmt: v => v.toFixed(0) + '"' },
+    { key: "weight",         label: "Weight (lb)",        getter: p => _getPhysicalProfile(p).weight_lb, fmt: v => v.toFixed(0) + "lb" },
     { key: "eta_year",       label: "ETA year",           getter: p => (p.eta && p.eta.year),                fmt: v => v.toString() },
     { key: "hit",            label: "Hit grade",          getter: p => _tcOf(p, "hit"),                     fmt: v => v.toFixed(0) },
     { key: "pwr",            label: "Power",              getter: p => _tcOf(p, "pwr"),                     fmt: v => v.toFixed(0) },
@@ -25163,24 +25163,57 @@ function handednessChipPairHTML(p, overrideColor = null) {
 }
 
 
-function _getPhysicalProfile(p) {
+// Walk points newest -> oldest, applying `extract` to each matching source's
+// _extras blob (selected by `pick` on the source key). Returns the first
+// truthy extraction, or null. Lets bio / handedness prefer FanGraphs but fall
+// back to TJStats and any other source that carries the field.
+function _scanExtras(p, pick, extract) {
   const pts = (p && p.points) || [];
   for (let i = pts.length - 1; i >= 0; i--) {
-    const fg = pts[i] && pts[i].per_source && pts[i].per_source.fangraphs;
-    const ex = fg && fg.tools && fg.tools._extras;
-    if (!ex) continue;
-    const ht = _parseHtToInches(ex.height);
-    const wt = ex.weight != null ? Number(ex.weight) : null;
-    if (ht || wt) {
-      return {
-        height_in: ht,
-        weight_lb: wt && isFinite(wt) ? wt : null,
-        bmi: _computeBmi(ht, wt),
-        height_display: ex.height || (ht ? `${Math.floor(ht/12)}' ${ht%12}"` : null),
-      };
+    const psrc = (pts[i] && pts[i].per_source) || {};
+    for (const s of Object.keys(psrc)) {
+      if (!pick(s)) continue;
+      const ex = psrc[s] && psrc[s].tools && psrc[s].tools._extras;
+      const got = ex ? extract(ex) : null;
+      if (got) return got;
     }
   }
-  return { height_in: null, weight_lb: null, bmi: null, height_display: null };
+  return null;
+}
+
+// Physical profile from one _extras blob. FG and TJStats both key height +
+// weight identically; returns null when neither is present.
+function _physFromExtras(ex) {
+  const ht = _parseHtToInches(ex.height);
+  const wt = ex.weight != null ? Number(ex.weight) : null;
+  const wtOk = wt && isFinite(wt) ? wt : null;
+  if (!ht && !wtOk) return null;
+  return {
+    height_in: ht,
+    weight_lb: wtOk,
+    bmi: _computeBmi(ht, wt),
+    height_display: ex.height || (ht ? `${Math.floor(ht / 12)}' ${ht % 12}"` : null),
+  };
+}
+
+// Handedness from one _extras blob. FG keys bats/throws; TJStats keys
+// bat_side/throw_side (same L/R/S vocabulary). Null when neither side present.
+function _handFromExtras(ex) {
+  const bats = ex.bats || ex.bat_side || null;
+  const throws = ex.throws || ex.throw_side || null;
+  if (!bats && !throws) return null;
+  return { bats, throws };
+}
+
+// Bio (HT/WT/BMI) resolved FG-first, then TJStats, then any other source that
+// ships height/weight in _extras. FG omits these for some top prospects (Seth
+// Hernandez, Walker Jenkins) that TJStats does carry; same key + parse path.
+function _getPhysicalProfile(p) {
+  const PRIMARY = ["fangraphs", "tjstats"];
+  return _scanExtras(p, s => s === "fangraphs", _physFromExtras)
+      || _scanExtras(p, s => s === "tjstats", _physFromExtras)
+      || _scanExtras(p, s => !PRIMARY.includes(s), _physFromExtras)
+      || { height_in: null, weight_lb: null, bmi: null, height_display: null };
 }
 
 // Walk back through FG snapshots to find the most recent _extras blob
@@ -25195,11 +25228,14 @@ function _getFgExtras(p) {
   return null;
 }
 
-// Handedness from FG _extras. bats: L/R/S, throws: L/R.
+// Handedness, FG-first then TJStats (bat_side/throw_side) then any source.
+// bats: L/R/S, throws: L/R. Recovers handedness for prospects FG omits.
 function _getHandedness(p) {
-  const ex = _getFgExtras(p);
-  if (!ex) return { bats: null, throws: null };
-  return { bats: ex.bats || null, throws: ex.throws || null };
+  const PRIMARY = ["fangraphs", "tjstats"];
+  return _scanExtras(p, s => s === "fangraphs", _handFromExtras)
+      || _scanExtras(p, s => s === "tjstats", _handFromExtras)
+      || _scanExtras(p, s => !PRIMARY.includes(s), _handFromExtras)
+      || { bats: null, throws: null };
 }
 
 // Prettify a FanGraphs interval_label slug for display.
