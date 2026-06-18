@@ -30,6 +30,12 @@ data/pitch_plots/
 data/player_detail/
 # FanGraphs CSV drop folder — user-supplied exports + processed archive
 data/fangraphs_imports/
+# Tracked exception to the global *.csv ignore: scraped FanGraphs ARTICLE
+# boards (e.g. Marlins 2026 Top 53). FanGraphs is Cloudflare-blocked so the
+# deploy box can't re-scrape, and these aren't otherwise reproducible — commit
+# them so run_monthly._stage_fangraphs_articles re-ingests them every build.
+!data/fangraphs_articles/
+!data/fangraphs_articles/*.csv
 
 # --- Python -------------------------------------------------------------
 __pycache__/

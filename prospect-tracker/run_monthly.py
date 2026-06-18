@@ -217,6 +217,36 @@ def ingest_source_article_drops(out_dir: Path, log: logging.Logger) -> tuple[int
         return 0, 0
 
 
+def _stage_fangraphs_articles(log) -> None:
+    """Copy COMMITTED FG-article CSVs (tracked, reproducible) into the
+    gitignored FG drop folder so the standard ingest re-applies them on every
+    build. This is how scraped FanGraphs ARTICLE boards (e.g. the Marlins 2026
+    Top 53) reach the deploy box: its prospects.db is persistent but FanGraphs
+    is Cloudflare-blocked for re-scraping and data/fangraphs_imports/ is
+    gitignored, so without a tracked source the article would never propagate.
+    Idempotent — the snapshots UNIQUE(source,interval_label,player_key)
+    constraint dedupes, and the tracked originals stay put (only the drop-folder
+    copies move to processed/ after ingest)."""
+    import shutil
+    try:
+        from fangraphs_csv import DROP_DIR
+    except Exception:
+        return
+    art = Path(__file__).parent / "data" / "fangraphs_articles"
+    if not art.is_dir():
+        return
+    DROP_DIR.mkdir(parents=True, exist_ok=True)
+    staged = 0
+    for csv in sorted(art.glob("*.csv")):
+        try:
+            shutil.copy2(csv, DROP_DIR / csv.name)
+            staged += 1
+        except Exception:
+            log.exception("could not stage FG article CSV %s", csv.name)
+    if staged:
+        log.info("fangraphs_csv: staged %d committed article CSV(s) for ingest", staged)
+
+
 def rebuild_only(out_dir: Path = Path("data")) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
     from the current DB state, write `data/timeseries.json`. No scraping,
@@ -235,6 +265,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # in the DB before we rebuild. (The FG ingest internally routes
     # <year>draft slugs to draft_csv, so dropping a draft CSV set works
     # without a separate call.)
+    _stage_fangraphs_articles(log)   # committed FG-article boards -> drop folder
     try:
         from fangraphs_csv import ingest_drops as _fg_ingest_drops
         fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
