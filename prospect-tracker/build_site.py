@@ -1942,11 +1942,15 @@ def build_sources() -> str:
     rows = [
         ("FanGraphs", "https://www.fangraphs.com/",
          "Prospect rankings, FV grades, tool grades, and scouting reports (one of the "
-         "five PROSPX consensus inputs); league stats and park factors."),
+         "seven PROSPX consensus inputs); league stats and park factors."),
         ("MLB Pipeline", "https://www.mlb.com/prospects",
          "Prospect rankings and grades (consensus input); draft bonus pools and slot values."),
+        ("Baseball America", "https://www.baseballamerica.com/",
+         "Prospect rankings and grades (consensus input)."),
         ("ESPN", "https://www.espn.com/mlb/",
          "Prospect rankings (consensus input); team logo imagery on internal surfaces."),
+        ("The Athletic", "https://www.nytimes.com/athletic/",
+         "Prospect rankings (consensus input)."),
         ("Just Baseball", "https://www.justbaseball.com/",
          "Prospect rankings (consensus input)."),
         ("TJStats", "https://x.com/TJStats",
@@ -1972,7 +1976,7 @@ def build_sources() -> str:
         '<span class="section-sub">every upstream the platform reads, and how it is used</span></div>'
         '<div class="gl-intro">'
         "<p>eephus.io is a sabermetrics platform. PROSPX grades are a consensus "
-        "built across five independent industry sources - the value added is the aggregation, "
+        "built across seven independent industry sources - the value added is the aggregation, "
         "calibration, and track-record audit, not any single list. No source's rankings or "
         "reports are republished wholesale; excerpts appear with attribution in the spirit of "
         "commentary and analysis. All trademarks and data remain the property of their owners.</p>"
