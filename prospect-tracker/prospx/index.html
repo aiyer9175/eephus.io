@@ -9258,6 +9258,7 @@
       </div>
       <div class="filter-group">
         <span class="filter-label">Depth at level</span>
+        <button class="chip" data-farm-sort="level_all" title="Sort by total tracked-prospect depth across every level">All</button>
         <button class="chip" data-farm-sort="level_AAA">AAA</button>
         <button class="chip" data-farm-sort="level_AA">AA</button>
         <button class="chip" data-farm-sort="level_A+">A+</button>
@@ -32942,10 +32943,15 @@ function farmSortedOrgs() {
   // at the bottom rather than NaN-poisoning the comparator.
   if (s && s.startsWith("level_")) {
     const lvl = s.slice("level_".length);
-    orgs.sort((a, b) =>
-      ((b.level_counts || {})[lvl] ?? 0) -
-      ((a.level_counts || {})[lvl] ?? 0)
-      || b.total_fv - a.total_fv);
+    // "level_all" ranks by TOTAL tracked depth across every level; a specific
+    // level ranks by depth at that affiliate level.
+    const depthOf = (o) => {
+      const lc = o.level_counts || {};
+      return lvl === "all"
+        ? Object.values(lc).reduce((sum, n) => sum + (n || 0), 0)
+        : (lc[lvl] ?? 0);
+    };
+    orgs.sort((a, b) => depthOf(b) - depthOf(a) || b.total_fv - a.total_fv);
     return orgs;
   }
   // 3yr cumulative-dollar helper - used by both the IFA and Draft
