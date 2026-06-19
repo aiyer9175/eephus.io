@@ -1264,12 +1264,31 @@ def _debut_org(g: dict) -> str | None:
             break
     return org
 
+def _wag_badge(g: dict) -> str:
+    """A graduate's WAG (WAR Above Grade) as a signed, color-classed chip -
+    how the player has performed against their FV-implied expectation. Gated
+    on the WAG model's own meaningful-exposure flag (the same gate
+    display_metric_for() uses), so a thin sample shows nothing rather than a
+    misleading number. Returns "" when there's no settled WAG to show."""
+    wag = (g.get("debuted_value") or {}).get("wag") or {}
+    rw = wag.get("regressed_wag")
+    if rw is None or wag.get("below_meaningful_exposure"):
+        return ""
+    wag_r = round(rw, 1) + 0.0                # collapse -0.0
+    cls = "up" if wag_r > 0 else ("down" if wag_r < 0 else "flat")
+    sign = "+" if wag_r > 0 else ""           # negatives carry their own '-'; zero unsigned
+    return (f'<span class="otd-wag row-delta {cls}" '
+            f'title="WAR Above Grade - career WAR/yr vs the player\'s FV-implied expectation">'
+            f'{sign}{wag_r:.1f} WAG</span>')
+
+
 def _this_day_html(graduates: list, n: int = 5) -> str:
     """'This day in prospect history' - graduates who debuted on (or within a
     few days of) today's calendar date in past seasons. Up to `n` rows,
     exact-date anniversaries first, then by prominence (final FV, then WAG).
-    Shows the org each player DEBUTED with (point-in-time via _debut_org),
-    and links into Time Machine at the lead anniversary date."""
+    Shows the org each player DEBUTED with (point-in-time via _debut_org), the
+    WAG (how they've panned out vs. their grade), and links into Time Machine
+    at the lead anniversary date."""
     today = date.today()
     cands = []  # (date_proximity, -prominence, debut_date, grad)
     for g in graduates:
@@ -1307,6 +1326,7 @@ def _this_day_html(graduates: list, n: int = 5) -> str:
             f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
             f'<span class="otd-when">{html.escape(when)}</span>'
             f'<span class="otd-body"><strong>{nm}</strong> debuted - {meta}</span>'
+            f'{_wag_badge(g)}'
             f'<span class="otd-ago">{yrs}y ago</span></a>'
         )
     lead_date = cands[0][2]

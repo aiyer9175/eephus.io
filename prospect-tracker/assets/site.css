@@ -848,6 +848,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent-gold); text-transform: uppercase; }
 .otd-body { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .otd-body strong { color: var(--text-primary); }
+/* WAG chip - how the player panned out vs. their grade. Reuses .row-delta
+   coloring (up/down/flat); sits between the body and the "Ny ago" stamp. */
+.otd-wag { flex: none; font-size: 12px; min-width: 0; }
 .otd-ago { flex: none; font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); }
 
 /* Date-aware upcoming-event callout (draft / signing period). */

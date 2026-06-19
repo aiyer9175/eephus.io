@@ -11634,7 +11634,6 @@ const TRANSACTION_KINDS = {
   drafted:             { glyph: "●", color: "var(--neon-cyan)",  dash: "1,2",   pos: "bottom", label: "Drafted" },
   signed_ifa:          { glyph: "●", color: "var(--neon-amber)", dash: "1,2",   pos: "bottom", label: "Signed (Intl Amateur FA)" },
   debut:               { glyph: "★", color: "var(--neon-amber)", dash: "2,1.5", pos: "top",    label: "MLB debut" },
-  debut_marker:        { glyph: "✦", color: "var(--neon-violet)",dash: "2,1.5", pos: "top",    label: "MLB debut" },
   // Non-trade transactions (sourced from player.transactions). Same
   // shape so makeTransactionHistoryBlock can render them with one code
   // path; the chart filter (TRANSACTION_LEGEND_ORDER) leaves them out.
@@ -11703,7 +11702,7 @@ function reclassifyAcquisitionSigning(player, tx) {
 // Only the high-signal events get rendered on the FV trajectory line so
 // the chart doesn't turn into a curtain of glyphs for journeyman-y
 // prospects who've been claimed off waivers six times.
-const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "debut", "debut_marker"];
+const TRANSACTION_LEGEND_ORDER = ["trade", "promotion", "demotion", "debut"];
 
 // Event kinds that DON'T render as FV-chart markers. The chart's
 // X-axis starts at the player's first FV grade - which for drafted /
@@ -11719,7 +11718,8 @@ const CHART_HIDDEN_KINDS = new Set([
 //   trades         → kind:'trade'
 //   career_stats   → kind:'promotion' | 'demotion'
 //   acquisition    → kind:'signing'   (if signing_date is on file)
-//   debut_date    → kind:'debut_marker' (debuted only)
+//   debut_date    → kind:'debut' (debuted only; fallback when the
+//                   level-change scan didn't already emit a debut)
 //
 // Each event has: { date, kind, label } where `label` is the hover-text
 // content. Sorted ascending by date so renderers can iterate in order.
@@ -11752,12 +11752,14 @@ function transactionEvents(player) {
       label: tx.description || `${tx.date}: ${(TRANSACTION_KINDS[k] || {}).label || k}`,
     });
   }
+  let hasDebut = false;
   for (const ev of levelChangeEvents(player)) {
     // Prefer the full date when we have it (transactions-derived events);
     // fall back to just the season for the year-over-year heuristic path.
     const datePrefix = ev.date && ev.date.length >= 10 ? ev.date : ev.date.slice(0, 4);
     const toClause   = ev.to_team   ? ` (${ev.to_team})`   : "";
     if (ev.kind === "debut") {
+      hasDebut = true;
       out.push({
         date: ev.date,
         kind: "debut",
@@ -11792,10 +11794,15 @@ function transactionEvents(player) {
       label: `${acq.signing_date}: ${verb}${team}`,
     });
   }
-  if (player.debut_date) {
+  // MLB debut marker - a single gold ★. The level-change scan above is
+  // the preferred source (it carries the to-team for the tooltip); the
+  // definitive debut_date is the fallback so every debuted player still
+  // gets exactly one debut marker. We never emit the old duplicate violet
+  // ✦ (purple now reads exclusively as a trade signal).
+  if (player.debut_date && !hasDebut) {
     out.push({
       date: player.debut_date,
-      kind: "debut_marker",
+      kind: "debut",
       label: `${player.debut_date}: MLB debut`,
     });
   }

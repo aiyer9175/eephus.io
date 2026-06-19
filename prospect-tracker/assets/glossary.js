@@ -797,6 +797,16 @@ function _gxSurplus() {
 function _byId(id) { return document.getElementById(id); }
 function _setHTML(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
 
+// Window-scope the methodology widget handlers. The interactive cards wire
+// them via inline oninput / onclick / onchange attributes, which resolve
+// against the global scope - NOT this IIFE's closure. Without this the
+// sliders and number inputs silently no-op (ReferenceError swallowed by
+// the inline handler). Mirrors window._printMethodology above.
+window._gx2080 = _gx2080;
+window._gxConsensus = _gxConsensus;
+window._gxConsensusReset = _gxConsensusReset;
+window._gxSurplus = _gxSurplus;
+
 
 function _methInteractivesHTML() {
   return `
