@@ -3976,12 +3976,15 @@ def fetch_il_status(mlbam_id: int) -> dict | None:
 
     Returns None when the player is not on IL.
 
-    Cache TTL is 7 days — IL stints can flip more often than IFA records,
-    but daily refresh on a monthly pipeline is overkill.
+    Cache TTL is 12h. IL refresh runs on the DAILY job (and is chained into the
+    monthly run), so a 12h TTL means every nightly pass re-pulls the player's
+    transactions and catches new placements within a day. (The prior 7-day TTL
+    pre-dated the daily job and silently froze the IL section for up to a week —
+    e.g. "no new placements since June 11" — even while the job ran.)
     """
     url = f"{MLB_STATS_API}/transactions?playerId={mlbam_id}"
     try:
-        resp = requests.get(url, timeout=20, ttl=7 * 86400)
+        resp = requests.get(url, timeout=20, ttl=12 * 3600)
         resp.raise_for_status()
         data = resp.json()
     except Exception as e:

@@ -10,7 +10,10 @@ from __future__ import annotations
 
 import unittest
 
-from draft_export import _projected_round, build_draft_export, _consensus
+from draft_export import (
+    _projected_round, build_draft_export, _consensus,
+    _edit_distance_le1, _same_person, _name_part, _dedupe_merge_map,
+)
 
 
 class ProjectedRound(unittest.TestCase):
@@ -127,6 +130,55 @@ class WeightedConsensus(unittest.TestCase):
         w = {"mlb_pipeline_draft": 1.4}  # fangraphs absent -> 1.0
         got = _consensus(self._snaps(), "fv", weights=w)
         self.assertAlmostEqual(got, (1.4 * 65 + 1.0 * 55) / (1.4 + 1.0), places=2)
+
+
+class DraftDedupe(unittest.TestCase):
+    """Split name-variant duplicates (one real prospect listed under two name
+    forms) merge; genuinely distinct same-school players stay separate."""
+
+    @staticmethod
+    def _rep(name, school, pos):
+        parts = name.split()
+        return {"name": name, "first": _name_part(parts[0]),
+                "last": _name_part(parts[-1]), "school": _name_part(school), "pos": pos}
+
+    def test_edit_distance(self):
+        self.assertTrue(_edit_distance_le1("kaeden", "kaden"))   # one delete
+        self.assertTrue(_edit_distance_le1("issac", "isaac"))    # one swap-ish
+        self.assertFalse(_edit_distance_le1("camden", "cameron"))
+
+    def test_merges_nickname_and_spelling_variants(self):
+        # prefix (Chris/Christopher, Cam/Camden, Will/William) + edit-distance.
+        for a, b in [("Chris Hacopian", "Christopher Hacopian"),
+                     ("Cam Kozeal", "Camden Kozeal"),
+                     ("Will Taylor", "William Taylor")]:
+            self.assertTrue(_same_person(self._rep(a, "Texas A&M", "2B"),
+                                         self._rep(b, "Texas A&M", "3B")), f"{a}~{b}")
+        self.assertTrue(_same_person(self._rep("Kaeden Waechter", "Jesuit", "SP"),
+                                     self._rep("Kaden Waechter", "Jesuit", "RHP")))
+
+    def test_keeps_distinct_people_separate(self):
+        # Different first name AND hitter-vs-pitcher -> two real players.
+        self.assertFalse(_same_person(self._rep("Camden Johnson", "Oklahoma", "3B"),
+                                      self._rep("Cameron Johnson", "Oklahoma", "LHP")))
+        # Same name, different school -> separate.
+        self.assertFalse(_same_person(self._rep("Jacob Smith", "Vanderbilt", "SS"),
+                                      self._rep("Jacob Smith", "LSU", "SS")))
+
+    def test_merge_map_picks_fuller_name_as_canonical(self):
+        by_player = {
+            "draft_2026_chris_hacopian": [
+                {"player_key": "draft_2026_chris_hacopian", "player_name": "Chris Hacopian",
+                 "school": "Texas A&M", "position": "2B", "snapshot_date": "2026-06-18"}],
+            "draft_2026_christopher_hacopian": [
+                {"player_key": "draft_2026_christopher_hacopian", "player_name": "Christopher Hacopian",
+                 "school": "Texas A&M", "position": "3B", "snapshot_date": "2026-05-22"}],
+        }
+        merge_map, name_map = _dedupe_merge_map(by_player)
+        canon = merge_map["draft_2026_chris_hacopian"]
+        self.assertEqual(canon, "draft_2026_christopher_hacopian")
+        self.assertEqual(merge_map["draft_2026_christopher_hacopian"], canon)
+        self.assertEqual(name_map[canon], "Christopher Hacopian")
 
 
 if __name__ == "__main__":

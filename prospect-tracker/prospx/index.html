@@ -21044,6 +21044,32 @@ function _draftPosBucket(pos) {
 
 // v28 - Apply the per-page filter state to a draft-prospect array.
 // Returns a new filtered array; never mutates the input.
+// A draft prospect is no longer "upcoming" once they've been drafted or matched
+// into a pro (MiLB/MLB) system (a real promoted_key / milb_key link, or a signed
+// flag). Used to keep the current-class rankings board amateurs-only.
+function _draftAlreadyInSystem(p) {
+  return !!(p && (p.status === "drafted" || p.signed || p.promoted_key || p.milb_key));
+}
+
+// Per-source FV spread for a draft prospect: {min, max, spread, n} over the
+// latest published FV per source (mirrors the consensus disagreement signal on
+// the MiLB page). Drives the "wide spread" chip when sources disagree by >=10.
+function _draftFvSpread(p) {
+  const latestBySrc = {};
+  for (const pt of (p.points || [])) {
+    if (pt && pt.source && pt.fv != null && isFinite(pt.fv)) {
+      const prev = latestBySrc[pt.source];
+      if (!prev || String(pt.snapshot_date || "") >= String(prev.snapshot_date || "")) {
+        latestBySrc[pt.source] = pt;
+      }
+    }
+  }
+  const fvs = Object.values(latestBySrc).map(pt => +pt.fv);
+  if (fvs.length < 2) return null;
+  const min = Math.min(...fvs), max = Math.max(...fvs);
+  return { min, max, spread: max - min, n: fvs.length };
+}
+
 function _applyDraftFilters(prospects) {
   let pool = prospects.slice();
   // Global top-search filters draft prospects by name / school.
@@ -21187,7 +21213,15 @@ function _renderDraftRankings(host, cls) {
   // Position uses _draftPosBucket; Status matches p.status; FV
   // indicators read the upside flag via fvBadgeUpsideClass (which also
   // honors the FV-tier cap). Sort branches in _applyDraftSort.
-  const totalUnfiltered = (cls.prospects || []).length;
+  // Upcoming-draft board lists only still-eligible amateurs: a prospect who
+  // has already been drafted or matched into a pro (MiLB/MLB) system is dropped
+  // from the current class (past classes keep showing drafted players as the
+  // historical record). For 2026 this is a safety net - the scraped board is
+  // amateurs-only - but it guarantees the upcoming view never lists a player
+  // already in a system.
+  let basePool = (cls.prospects || []).slice();
+  if (cls.is_current) basePool = basePool.filter(p => !_draftAlreadyInSystem(p));
+  const totalUnfiltered = basePool.length;
   // v35 - Future class not scouted yet (e.g. the 2027 class months out
   // from the draft). Show a clear placeholder instead of a blank "0 of 0"
   // table. Order & Slots / Lottery sub-views still work (those project
@@ -21201,7 +21235,7 @@ function _renderDraftRankings(host, cls) {
     </div>`;
     return;
   }
-  const prospects = _applyDraftFilters((cls.prospects || []).slice());
+  const prospects = _applyDraftFilters(basePool);
   _applyDraftSort(prospects);
   prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
 
@@ -21238,6 +21272,13 @@ function _renderDraftCard(p) {
   const spColor = _stockPlusColor(sp);
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const pRound = p.projected_round ? `R${p.projected_round}` : " - ";
+  // Wide-spread indicator: sources disagree on this prospect's FV by >=10
+  // (mirrors the consensus disagreement signal on the MiLB page + the FV
+  // history table). Amber chip showing the per-source range.
+  const _spread = _draftFvSpread(p);
+  const wideSpreadChip = (_spread && _spread.spread >= 10)
+    ? `<span style="flex-shrink:0;font-size:9px;padding:1px 4px;border-radius:3px;border:1px solid var(--neon-amber);color:var(--neon-amber);background:rgba(255,215,0,0.12);font-weight:700;white-space:nowrap;letter-spacing:0.02em;" title="Wide spread — sources disagree by ${_spread.spread} FV points (${fvCeil(_spread.min)}–${fvCeil(_spread.max)} across ${_spread.n} sources)">↔ ${fvCeil(_spread.min)}–${fvCeil(_spread.max)}</span>`
+    : "";
   // v24 - Projected-round chip color. R1 is gold (premium), R2 silver,
   // R3-5 bronze, R6+ neutral; comp-balance rounds (1A/1B) ride R1's
   // gold treatment. Undrafted ( - / null) stays in the neutral track.
@@ -21397,6 +21438,7 @@ function _renderDraftCard(p) {
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
         FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}${fvBadgeChainMarks(p)}
       </span>
+      ${wideSpreadChip}
     </div>
     <!-- v19 - Single wrap-flex meta strip: no middot separators, chip
          backgrounds + gap visually divide entries. School name

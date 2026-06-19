@@ -70,7 +70,9 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 import statistics
+import unicodedata
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from pathlib import Path
@@ -322,6 +324,120 @@ def _fv_bucket(fv: float | None, fv_plus: bool = False) -> str | None:
     return "<40"
 
 
+def _name_part(s: str | None) -> str:
+    """Lowercased, accent- and punctuation-stripped alpha-only token."""
+    s = unicodedata.normalize("NFKD", s or "")
+    s = "".join(c for c in s if not unicodedata.combining(c)).lower()
+    return re.sub(r"[^a-z]", "", s)
+
+
+def _edit_distance_le1(a: str, b: str) -> bool:
+    """True when a and b differ by at most one insert/delete/substitution.
+    Catches spelling variants like Kaeden/Kaden, Issac/Isaac."""
+    if a == b:
+        return True
+    la, lb = len(a), len(b)
+    if abs(la - lb) > 1:
+        return False
+    if la == lb:                                   # one substitution
+        return sum(1 for x, y in zip(a, b) if x != y) == 1
+    short, lng = (a, b) if la < lb else (b, a)     # one insert/delete
+    i = j = diff = 0
+    while i < len(short) and j < len(lng):
+        if short[i] == lng[j]:
+            i += 1; j += 1
+        else:
+            diff += 1; j += 1
+            if diff > 1:
+                return False
+    return True
+
+
+def _pos_class(pos: str | None) -> str | None:
+    head = (pos or "").upper().split("/")[0].strip()
+    if head in {"P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP"}:
+        return "P"
+    return "H" if head else None
+
+
+def _same_person(a: dict, b: dict) -> bool:
+    """Conservative same-person test for two snapshot reprs {first,last,school,pos}.
+    Requires same last name, same (or one-missing) school, COMPATIBLE first name
+    (one a prefix of the other -> Chris/Christopher, Cam/Camden; or edit distance
+    <=1 -> Kaeden/Kaden), and a COMPATIBLE position class (both hitters / both
+    pitchers, or one unknown). The position guard is what keeps two genuinely
+    distinct same-school players apart (e.g. Camden Johnson 3B vs Cameron Johnson
+    LHP at Oklahoma stay separate)."""
+    if not a["last"] or a["last"] != b["last"]:
+        return False
+    if a["school"] and b["school"] and a["school"] != b["school"]:
+        return False
+    f1, f2 = a["first"], b["first"]
+    if f1 and f2:
+        prefix = f1.startswith(f2) or f2.startswith(f1)
+        if not (prefix or _edit_distance_le1(f1, f2)):
+            return False
+    ca, cb = _pos_class(a["pos"]), _pos_class(b["pos"])
+    if ca and cb and ca != cb:
+        return False
+    return True
+
+
+def _dedupe_merge_map(by_player: dict[str, list[dict]]) -> tuple[dict[str, str], dict[str, str]]:
+    """Detect split name-variant duplicates (one real prospect listed under two
+    name forms by different sources -> two player_keys) and return:
+      merge_map: raw player_key -> canonical player_key (canonical = the variant
+                 with the LONGEST display name, i.e. the fuller form)
+      name_map:  canonical player_key -> canonical display name.
+    Only keys that actually merge appear; everything else is untouched."""
+    # One representative per key (latest snapshot's bio fields).
+    reps: dict[str, dict] = {}
+    for pk, plist in by_player.items():
+        last_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
+        name = (last_snap.get("player_name") or "").strip()
+        parts = name.split()
+        reps[pk] = {
+            "name": name,
+            "first": _name_part(parts[0]) if parts else "",
+            "last": _name_part(parts[-1]) if len(parts) > 1 else "",
+            "school": _name_part(last_snap.get("school")),
+            "pos": last_snap.get("position"),
+        }
+    # Bucket by last name to keep the pairwise scan cheap, union same-person keys.
+    parent: dict[str, str] = {pk: pk for pk in by_player}
+
+    def find(x):
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    by_last: dict[str, list[str]] = defaultdict(list)
+    for pk, r in reps.items():
+        if r["last"]:
+            by_last[r["last"]].append(pk)
+    for keys in by_last.values():
+        for i in range(len(keys)):
+            for j in range(i + 1, len(keys)):
+                if _same_person(reps[keys[i]], reps[keys[j]]):
+                    parent[find(keys[i])] = find(keys[j])
+    # Resolve each union -> canonical key (longest display name; tiebreak: the
+    # key itself so the result is deterministic).
+    groups: dict[str, list[str]] = defaultdict(list)
+    for pk in by_player:
+        groups[find(pk)].append(pk)
+    merge_map: dict[str, str] = {}
+    name_map: dict[str, str] = {}
+    for members in groups.values():
+        if len(members) < 2:
+            continue
+        canon = max(members, key=lambda k: (len(reps[k]["name"]), k))
+        name_map[canon] = reps[canon]["name"]
+        for k in members:
+            merge_map[k] = canon
+    return merge_map, name_map
+
+
 def _build_class(year: int,
                  all_snaps: list[dict],
                  players_by_key: dict[str, dict],
@@ -332,9 +448,19 @@ def _build_class(year: int,
                  college_by_player: dict[str, list[dict]] | None = None) -> dict:
     """Build one draft-class payload."""
     snaps = [s for s in all_snaps if s.get("draft_year") == year]
-    by_player: dict[str, list[dict]] = defaultdict(list)
+    # Collapse split name-variant duplicates (e.g. a source calling a prospect
+    # "Chris Hacopian" and another "Christopher Hacopian") onto one canonical key
+    # so the class lists each real player once with all sources merged.
+    _raw_by_player: dict[str, list[dict]] = defaultdict(list)
     for s in snaps:
-        by_player[s["player_key"]].append(s)
+        _raw_by_player[s["player_key"]].append(s)
+    merge_map, dedupe_name = _dedupe_merge_map(_raw_by_player)
+    if merge_map:
+        log.info("draft %s: merged %d name-variant duplicate key(s)", year,
+                 sum(1 for k, v in merge_map.items() if k != v))
+    by_player: dict[str, list[dict]] = defaultdict(list)
+    for pk, plist in _raw_by_player.items():
+        by_player[merge_map.get(pk, pk)].extend(plist)
 
     # Consensus ranks for the whole class (used by stock+ normalization).
     consensus_ranks: dict[str, float] = {}
@@ -427,7 +553,7 @@ def _build_class(year: int,
             sp_boosted = max(60, min(140, sp + boost))
         prospects.append({
             "player_key":     pk,
-            "player_name":    any_snap.get("player_name"),
+            "player_name":    dedupe_name.get(pk) or any_snap.get("player_name"),
             "position":       any_snap.get("position") or player_meta.get("position"),
             "school":         any_snap.get("school") or player_meta.get("school"),
             "college_commit": any_snap.get("college_commit") or player_meta.get("college_commit"),

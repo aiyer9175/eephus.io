@@ -2261,6 +2261,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # v19 — Per-step duration table. Sorted by slowest first so the
         # biggest wall-time culprits surface at the top of the log.
         _log_step_summary(log, time.monotonic() - _run_start)
+        # The monthly run also performs the DAILY fast-moving refresh
+        # (transactions, IL, roster status, debuts/graduations, trades) so a
+        # plain `python run_monthly.py` never leaves them stale — the Injured
+        # List section in particular ONLY moves on the daily job, so without
+        # this a monthly-only cadence froze it between nightly runs. Runs after
+        # the monthly grade work so the rebuilt timeseries carries both the
+        # fresh monthly grades and the up-to-the-day transactions/IL. Best-effort
+        # + self-contained (own run_id + timeseries rebuild); a daily-side
+        # failure must not fail the already-completed monthly run.
+        try:
+            log.info("monthly run: chaining the daily fast-moving refresh")
+            run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache)
+        except Exception:
+            log.exception("chained daily refresh failed — monthly run already completed")
     except Exception:
         log.exception("run failed")
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
