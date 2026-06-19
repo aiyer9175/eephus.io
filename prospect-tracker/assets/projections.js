@@ -69,7 +69,10 @@
   }
 
   const state = { src: "all", pos: "all", team: "all", contract: "all", q: "", sort: "warTotal",
-                  dir: -1, limit: 100, player: null, view: "players", cmp: [] };
+                  dir: -1, limit: 100, player: null, view: "players", cmp: [],
+                  // Team Outlook column sort: teamSort = column key (null keeps
+                  // the export's roster-WAR order); teamDir = 1 natural / -1 reversed.
+                  teamSort: null, teamDir: 1 };
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
 
@@ -339,7 +342,43 @@
         : "Cost-controlled core lock-up";
       return `<span class="proj-ctrl" title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${spark}<span style="font-family:var(--font-mono);font-weight:600;color:${pctCol};">${pctStr}</span></span>`;
     };
-    const body = rows.map((r, i) => {
+    // Click-sortable columns. `natural` = first-click direction; clicking the
+    // same header again flips it (state.teamDir). Nulls always sink. Default
+    // (teamSort null) preserves the export's roster-WAR ranking.
+    const TEAM_SORTS = {
+      team:      { get: r => r.team || "", text: true, natural: "asc" },
+      war:       { get: r => r.war, natural: "desc" },
+      wins:      { get: r => r.wins, natural: "desc" },
+      control:   { get: r => r.lockedPct, natural: "desc" },
+      farm:      { get: r => (r.farm || {}).farmRank, natural: "asc" },
+      surplus:   { get: r => (r.farm || {}).farmSurplusMM, natural: "desc" },
+      prospect:  { get: r => ((r.farm || {}).topProspect || {}).fv, natural: "desc" },
+      projected: { get: r => ((r.top || [])[0] || {}).war, natural: "desc" },
+    };
+    const _sortAsc = (key) => {
+      const col = TEAM_SORTS[key];
+      const naturalAsc = col.natural === "asc";
+      return (state.teamDir === -1) ? !naturalAsc : naturalAsc;
+    };
+    let viewRows = rows.slice();
+    if (state.teamSort && TEAM_SORTS[state.teamSort]) {
+      const col = TEAM_SORTS[state.teamSort];
+      const asc = _sortAsc(state.teamSort);
+      viewRows.sort((a, b) => {
+        let av = col.get(a), bv = col.get(b);
+        if (col.text) {
+          const r = String(av || "").localeCompare(String(bv || ""));
+          return asc ? r : -r;
+        }
+        av = (av == null || isNaN(Number(av))) ? null : Number(av);
+        bv = (bv == null || isNaN(Number(bv))) ? null : Number(bv);
+        if (av == null && bv == null) return 0;
+        if (av == null) return 1;
+        if (bv == null) return -1;
+        return asc ? (av - bv) : (bv - av);
+      });
+    }
+    const body = viewRows.map((r, i) => {
       const f = r.farm || {};
       const farmCell = f.farmRank != null
         ? `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
@@ -368,10 +407,22 @@
     </tr>`;
     }).join("");
     const note = `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) — 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
+    // Sortable header: click to sort by it, click again to flip direction.
+    // The active column shows a ▲/▼ arrow reflecting the effective direction.
+    const _arrow = (key) => state.teamSort === key
+      ? ` <span style="font-size:0.8em;opacity:0.75;">${_sortAsc(key) ? "▲" : "▼"}</span>` : "";
+    const sth = (key, label, title) =>
+      `<th class="proj-sortable" data-team-sort="${key}"${title ? ` title="${esc(title)}"` : ""} style="cursor:pointer;user-select:none;white-space:nowrap;">${label}${_arrow(key)}</th>`;
     root.innerHTML = `<div class="fa-note" style="margin:8px 0;">${note}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th title="Projected record, league-recentered (depth allowance over the rostered universe)">Proj W-L</th>${hasControl ? `<th title="Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)">Core control</th>` : ""}${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
+      <thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
       <tbody>${body}</tbody></table>`;
+    root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
+      const k = h.dataset.teamSort;
+      if (state.teamSort === k) state.teamDir = state.teamDir === -1 ? 1 : -1;
+      else { state.teamSort = k; state.teamDir = 1; }
+      renderTeams();
+    });
     root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {
       ev.preventDefault();
       state.view = "players"; state.team = a.dataset.teamFilter;
