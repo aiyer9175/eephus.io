@@ -603,6 +603,13 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     """
     if payload.get("status") != "active":
         return None
+    # A prospect on the 60-day IL is shelved for an extended stretch (often the
+    # season) — a stale FV / tool / upside signal must not surface a live
+    # "Breakout" badge over a long-term injury. (Jarlin Susana: 60-day IL since
+    # March, consensus FV actually -2, was flagging via the upside path.)
+    _il = payload.get("il_status") or {}
+    if _il.get("is_on_il") and "60" in str(_il.get("type") or ""):
+        return None
     # v30.7 — Breakout / Faller mutual-exclusion gate. A prospect whose
     # CURRENT stock movement is a faller (or strong faller) is, by
     # definition, not breaking out — even if a stale FV/tool jump in

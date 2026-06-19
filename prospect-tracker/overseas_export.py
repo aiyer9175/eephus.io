@@ -594,7 +594,14 @@ def build_overseas_export() -> dict:
     for v in stats_by_player.values():
         v.sort(key=lambda r: r.get("season") or 0)
 
-    leagues = sorted({s["league"] for s in all_snaps if s.get("league")})
+    # Exclude MLB-family "leagues": these come from overseas players who have
+    # already graduated to the majors (overseas_mlb_* keys, league='MLB' — e.g.
+    # Senga, Yoshida). They are no longer international prospects and must not
+    # surface in the Overseas section (the dynamic league derivation previously
+    # spun up a stray "MLB" tab carrying them).
+    _MLB_LEAGUES = {"MLB", "AL", "NL"}
+    leagues = sorted({s["league"] for s in all_snaps
+                      if s.get("league") and s["league"] not in _MLB_LEAGUES})
     # Order leagues by total prospect count desc so NPB / KBO land first.
     counts = defaultdict(int)
     for s in all_snaps:
