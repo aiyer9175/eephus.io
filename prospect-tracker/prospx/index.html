@@ -12747,6 +12747,8 @@ const SORT_HEADER_MAP = [
   { datasetKey: "depthSort",     stateField: "depthSort",     rerender: () => { if (state.view && state.view.type === "farm") renderFarmDetail(state.view.org); } },
   { datasetKey: "careerSort",    stateField: "careerSort",    rerender: () => { if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key); } },
   { datasetKey: "sourceFvSort",  stateField: "sourceFvSort",  rerender: () => { if (state.view && state.view.type === "player") renderPlayerDetail(state.view.key); } },
+  { datasetKey: "ovsHitSort",    stateField: "ovsHitSort",    rerender: () => renderOverseas() },
+  { datasetKey: "ovsPitSort",    stateField: "ovsPitSort",    rerender: () => renderOverseas() },
 ];
 
 // v29 - Custom direction-pair map for sort keys that don't use the
@@ -13734,6 +13736,11 @@ const state = {
   overseasStatus: "all",  // all / overseas_active / posted / signed / mlb_promoted
   overseasFvIndicators: new Set(),
   overseasSort: "fv",
+  // Overseas Season-Stats column sort. Click-routed via SORT_HEADER_MAP;
+  // the hitter table defaults to wRC+ (desc), the pitcher table to FIP
+  // (asc - lower is better). Direction toggles via state.sortRev.
+  ovsHitSort: "wrc_plus",
+  ovsPitSort: "fip",
   // Charts tab sub-state. chartMode = "prospects" | "farms"; chartX /
   // chartY default to the first two entries of the active mode's axis
   // list (set lazily inside renderCharts).
@@ -22693,12 +22700,22 @@ async function renderOverseas() {
     : leagues.filter(l => l.league === state.overseasLeague);
   // Merged prospect list for views that don't care about league grouping.
   let prospects = selectedLeagues.flatMap(l => l.prospects.map(p => ({...p, _ctx: l.league_context})));
+  // Parallel signings list (graduated-to-MLB + committed-to-an-org players
+  // pulled out of the ranked pool by the export). Powers the Recently
+  // Signed view + the League Context track-record block.
+  let signings = selectedLeagues.flatMap(l => (l.signings || []).map(s => ({...s, _ctx: l.league_context})));
   // Global top-search filters overseas prospects by name / team / league.
   const _osq = (state.search || "").toLowerCase();
-  if (_osq) prospects = prospects.filter(p =>
-    (p.player_name || "").toLowerCase().includes(_osq)
-    || (p.current_team || "").toLowerCase().includes(_osq)
-    || (p.league || "").toLowerCase().includes(_osq));
+  if (_osq) {
+    prospects = prospects.filter(p =>
+      (p.player_name || "").toLowerCase().includes(_osq)
+      || (p.current_team || "").toLowerCase().includes(_osq)
+      || (p.league || "").toLowerCase().includes(_osq));
+    signings = signings.filter(s =>
+      (s.player_name || "").toLowerCase().includes(_osq)
+      || (s.signed_team || "").toLowerCase().includes(_osq)
+      || (s.league || "").toLowerCase().includes(_osq));
+  }
 
   // v28 - Hide the filter / sort accordion on non-Rankings sub-views,
   // matching the draft page's pattern. The chip filters only affect
@@ -22712,7 +22729,7 @@ async function renderOverseas() {
   switch (state.overseasView) {
     case "stats":       return _renderOverseasStats(host, prospects, selectedLeagues);
     case "posting":     return _renderOverseasPosting(host, prospects);
-    case "signed":      return _renderOverseasSigned(host, prospects);
+    case "signed":      return _renderOverseasSigned(host, signings);
     case "leaderboard": return _renderOverseasLeaderboard(host, prospects, leagues);
     case "league-context": return _renderOverseasLeagueContext(host, leagues, prospects);
     case "rankings":
@@ -23941,8 +23958,58 @@ function _renderOverseasStats(host, prospects, leagues) {
     const isP = (s.payload && (s.payload.era != null || s.payload.ip != null));
     (isP ? pitchers : hitters).push({ p, s });
   }
-  hitters.sort((a, b) => (b.s.payload?.wrc_plus || 0) - (a.s.payload?.wrc_plus || 0));
-  pitchers.sort((a, b) => (a.s.payload?.era ?? 99) - (b.s.payload?.era ?? 99));
+
+  // Click-sortable columns. Each entry maps a sort key -> {get, dir}:
+  //   get  = value extractor for a {p, s} row
+  //   dir  = natural (first-click) direction. "desc" = high first;
+  //          "asc" = low first (used for rate stats where lower wins,
+  //          e.g. ERA / FIP / hitter K%). The universal sort-header
+  //          handler flips direction on a repeat click via state.sortRev,
+  //          which _applySortDir() reverses post-sort.
+  const _num = v => (v == null || v === "" || Number.isNaN(Number(v))) ? null : Number(v);
+  const HIT_COLS = {
+    name:     { get: r => r.p.player_name || "", dir: "asc"  },
+    league:   { get: r => r.p.league || "",      dir: "asc"  },
+    season:   { get: r => _num(r.s.season),       dir: "desc" },
+    pa:       { get: r => _num(r.s.payload?.pa),  dir: "desc" },
+    avg:      { get: r => _num(r.s.payload?.avg), dir: "desc" },
+    obp:      { get: r => _num(r.s.payload?.obp), dir: "desc" },
+    slg:      { get: r => _num(r.s.payload?.slg), dir: "desc" },
+    hr:       { get: r => _num(r.s.payload?.hr),  dir: "desc" },
+    sb:       { get: r => _num(r.s.payload?.sb),  dir: "desc" },
+    bb_pct:   { get: r => _num(r.s.payload?.bb_pct), dir: "desc" },
+    k_pct:    { get: r => _num(r.s.payload?.k_pct),  dir: "asc"  },
+    wrc_plus: { get: r => _num(r.s.payload?.wrc_plus), dir: "desc" },
+  };
+  const PIT_COLS = {
+    name:    { get: r => r.p.player_name || "", dir: "asc"  },
+    league:  { get: r => r.p.league || "",      dir: "asc"  },
+    season:  { get: r => _num(r.s.season),       dir: "desc" },
+    ip:      { get: r => _num(r.s.payload?.ip),  dir: "desc" },
+    era:     { get: r => _num(r.s.payload?.era), dir: "asc"  },
+    fip:     { get: r => _num(r.s.payload?.fip), dir: "asc"  },
+    k_pct:   { get: r => _num(r.s.payload?.k_pct ?? r.s.payload?.k_per_9),  dir: "desc" },
+    bb_pct:  { get: r => _num(r.s.payload?.bb_pct ?? r.s.payload?.bb_per_9), dir: "asc"  },
+    war:     { get: r => _num(r.s.payload?.war), dir: "desc" },
+  };
+  // Comparator with nulls always sunk to the bottom of the natural order.
+  const _mkCmp = (col) => (a, b) => {
+    const av = col.get(a), bv = col.get(b);
+    if (typeof av === "string" || typeof bv === "string") {
+      const r = String(av ?? "").localeCompare(String(bv ?? ""));
+      return col.dir === "asc" ? r : -r;
+    }
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    return col.dir === "asc" ? (av - bv) : (bv - av);
+  };
+  const hitKey = HIT_COLS[state.ovsHitSort] ? state.ovsHitSort : "wrc_plus";
+  const pitKey = PIT_COLS[state.ovsPitSort] ? state.ovsPitSort : "fip";
+  hitters.sort(_mkCmp(HIT_COLS[hitKey]));
+  pitchers.sort(_mkCmp(PIT_COLS[pitKey]));
+  _applySortDir(hitters,  "ovsHitSort");
+  _applySortDir(pitchers, "ovsPitSort");
 
   const hitRows = hitters.map(({p, s}) => `<tr>
     <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
@@ -23990,16 +24057,20 @@ function _renderOverseasStats(host, prospects, leagues) {
       <h3>Hitters - most recent season (${hitters.length})</h3>
       <table class="draft-table">
         <thead><tr>
-          <th></th><th>Name</th><th>Lg</th><th>Year</th><th>Team</th>
-          <th style="text-align:right;">PA</th>
-          <th style="text-align:right;">AVG</th>
-          <th style="text-align:right;">OBP</th>
-          <th style="text-align:right;">SLG</th>
-          <th style="text-align:right;">HR</th>
-          <th style="text-align:right;">SB</th>
-          <th style="text-align:right;">BB%</th>
-          <th style="text-align:right;">K%</th>
-          <th style="text-align:right;" title="wRC+ (lg-adj, 100 = league avg)">wRC+</th>
+          <th></th>
+          <th class="sort-header" data-ovs-hit-sort="name" title="Sort by name (A-Z)">Name</th>
+          <th class="sort-header" data-ovs-hit-sort="league" title="Sort by league">Lg</th>
+          <th class="sort-header" data-ovs-hit-sort="season" title="Sort by season">Year</th>
+          <th>Team</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="pa" title="Sort by PA">PA</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="avg" title="Sort by AVG">AVG</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="obp" title="Sort by OBP">OBP</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="slg" title="Sort by SLG">SLG</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="hr" title="Sort by HR">HR</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="sb" title="Sort by SB">SB</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="bb_pct" title="Sort by BB%">BB%</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="k_pct" title="Sort by K% (low to high - fewer strikeouts first)">K%</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-hit-sort="wrc_plus" title="wRC+ (lg-adj, 100 = league avg) - default sort">wRC+</th>
         </tr></thead>
         <tbody>${hitRows || "<tr><td colspan='14' style='text-align:center;color:var(--text-tertiary);padding:14px;'>No hitters in this view.</td></tr>"}</tbody>
       </table>
@@ -24008,17 +24079,24 @@ function _renderOverseasStats(host, prospects, leagues) {
       <h3>Pitchers - most recent season (${pitchers.length})</h3>
       <table class="draft-table">
         <thead><tr>
-          <th></th><th>Name</th><th>Lg</th><th>Year</th><th>Team</th>
-          <th style="text-align:right;">IP</th>
-          <th style="text-align:right;">ERA</th>
-          <th style="text-align:right;">FIP</th>
-          <th style="text-align:right;">K%</th>
-          <th style="text-align:right;">BB%</th>
-          <th style="text-align:right;">WAR</th>
+          <th></th>
+          <th class="sort-header" data-ovs-pit-sort="name" title="Sort by name (A-Z)">Name</th>
+          <th class="sort-header" data-ovs-pit-sort="league" title="Sort by league">Lg</th>
+          <th class="sort-header" data-ovs-pit-sort="season" title="Sort by season">Year</th>
+          <th>Team</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="ip" title="Sort by IP">IP</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="era" title="Sort by ERA (low to high)">ERA</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="fip" title="Sort by FIP (low to high) - default sort">FIP</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="k_pct" title="Sort by K%">K%</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="bb_pct" title="Sort by BB% (low to high)">BB%</th>
+          <th class="sort-header" style="text-align:right;" data-ovs-pit-sort="war" title="Sort by WAR">WAR</th>
         </tr></thead>
         <tbody>${pitRows || "<tr><td colspan='13' style='text-align:center;color:var(--text-tertiary);padding:14px;'>No pitchers in this view.</td></tr>"}</tbody>
       </table>
     </div>`;
+  // Stamp the active-column highlight + direction arrow on first paint
+  // (the universal click handler re-syncs on every subsequent click).
+  syncSortHeaderActive();
 }
 
 function _renderOverseasPosting(host, prospects) {
@@ -24121,13 +24199,17 @@ function _renderOverseasPosting(host, prospects) {
   host.innerHTML = headerNote + activeHtml + historyHtml;
 }
 
-function _renderOverseasSigned(host, prospects) {
+function _renderOverseasSigned(host, signings) {
   // POSTING CLASSES view. Each posting year gets its own table with
   // a header rollup (count, total bonus, mean WAG, mean WAR/yr). WAG
   // + WAR/yr are sourced via the prospect's milb_key linking to the
   // graduate's MLB performance - both pulled through the same helpers
   // used by the graduate page + farm grade tree so numbers match.
-  const signed = prospects.filter(p => p.status === "mlb_promoted" || p.signed_team);
+  // The export routes graduated / committed players into the parallel
+  // `signings` list (they're pulled out of the ranked prospect pool);
+  // we still gate on status / signed_team so a stray reverse-migration
+  // record can never slip into the track record.
+  const signed = (signings || []).filter(p => p.status === "mlb_promoted" || p.signed_team);
   if (!signed.length) {
     host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
       No signed overseas free agents in the current data.
@@ -24454,7 +24536,10 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
   const cards = leagues.map(lg => {
     const ctx = lg.league_context || {};
     const lgProspects = (lg.prospects || []);
-    const signed = lgProspects.filter(p => p.status === "mlb_promoted" || p.signed_team);
+    // Signings live in the parallel `lg.signings` list (graduated /
+    // committed players pulled out of the ranked pool by the export);
+    // gate on status / signed_team to drop any reverse-migration record.
+    const signed = (lg.signings || []).filter(p => p.status === "mlb_promoted" || p.signed_team);
 
     // Signing track record.
     const totalBonus = signed.reduce((s, op) => s + (op.signed_bonus_usd || 0), 0);

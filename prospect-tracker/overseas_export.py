@@ -357,40 +357,90 @@ def _build_league(league: str,
         by_player[s["player_key"]].append(s)
 
     prospects: list[dict] = []
+    signings: list[dict] = []
     fv_dist: dict[str, int] = defaultdict(int)
     n_filtered_promoted = 0
     n_filtered_mlb_active = 0
+
+    # Status priority: mlb_promoted > signed > posted > overseas_active
+    status_priority = {"overseas_active": 0, "posted": 1,
+                       "signed": 2, "mlb_promoted": 3}
 
     for pk, plist in by_player.items():
         latest = _latest_per_source(plist)
         any_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
         player_meta = players_by_key.get(pk) or {}
 
-        # v7 - drop players who have already signed-and-promoted to MLB
-        # affiliated ball. Two filter layers:
+        fv = _consensus(plist, "fv")
+        fv_plus = _consensus_fv_plus(plist)  # v26
+        status = max((s.get("status") or "overseas_active" for s in plist),
+                     key=lambda x: status_priority.get(x, 0))
+        country = any_snap.get("country") or player_meta.get("country")
+        posted_date = player_meta.get("posted_date")
+
+        # v7 / v34 - A player who has reached MLB affiliated ball, or who
+        # has formally committed to an MLB org, is no longer a CURRENT
+        # overseas prospect - but we still want to TRACK the signing.
+        # Detection layers (mirrors the historical drop filter):
         # 1) Per-record status flagged mlb_promoted (the promotion
         #    pipeline flips this when the player joins a MiLB roster).
-        # 2) Catch-up: even when the per-record status didn't get
-        #    flipped (Anthony Kay-style name-normalization miss),
-        #    drop the player if they have MLB activity on file via
-        #    the imported career_stats / roster_status sources.
+        # 2) Catch-up: any MLB-level stat row on file (covers an
+        #    Anthony Kay-style name-normalization miss that left the
+        #    status un-flipped).
+        # 3) A signed_team on the player meta (committed but not yet
+        #    promoted - e.g. a winter signing before reporting).
+        # Such players are pulled OUT of the ranked `prospects` pool (so
+        # Rankings / Stats never surface graduates - the long-standing
+        # invariant) and routed into a parallel `signings` list that
+        # powers the Recently Signed + League Context track-record views.
         _statuses = {s.get("status") for s in plist}
-        if "mlb_promoted" in _statuses:
-            n_filtered_promoted += 1
-            continue
-        # Catch-up: drop if player has any MLB-level stat row this season
         _raw_stats = stats_by_player.get(pk) or []
         _has_mlb_activity = any(
             (row.get("league") in {"MLB", "AL", "NL"})
             or (row.get("payload") or {}).get("level") == "MLB"
             for row in _raw_stats
         )
+        _is_promoted = "mlb_promoted" in _statuses
+        _is_signed = bool(player_meta.get("signed_team"))
+        if _is_promoted or _is_signed:
+            # Genuine signing: graduated to MLB from this league, or
+            # formally committed to an org. Routed into `signings`.
+            if _is_promoted:
+                n_filtered_promoted += 1
+            signings.append({
+                "player_key":       pk,
+                "player_name":      any_snap.get("player_name"),
+                "position":         any_snap.get("position") or player_meta.get("position"),
+                "league":           league,
+                "country":          country,
+                "country_flag":     COUNTRY_FLAG.get(country, ""),
+                "country_code":     COUNTRY_CODE.get(country),
+                "country_flag_svg": country_flag_svg_url(COUNTRY_CODE.get(country)),
+                "consensus_fv":     int(math.ceil(fv)) if fv is not None else None,
+                "consensus_fv_plus": fv_plus,
+                "status":           status,
+                "posted_date":      posted_date,
+                "signed_team":      player_meta.get("signed_team"),
+                "signed_bonus_usd": player_meta.get("signed_bonus_usd"),
+                "signed_date":      player_meta.get("signed_date"),
+                "proj_team":        any_snap.get("proj_team") or player_meta.get("proj_team"),
+                "proj_bonus_usd":   any_snap.get("proj_bonus_usd") or player_meta.get("proj_bonus_usd"),
+                "eta_year":         any_snap.get("eta_year") or player_meta.get("eta_year"),
+                "milb_key":         canonical_keys.get(pk),
+            })
+            continue
+
+        # MLB stat rows on file but no promotion flag / signing meta - a
+        # reverse migration (MLB -> KBO / NPB, e.g. a former big-leaguer
+        # finishing his career overseas) or an un-flagged graduate. Either
+        # way not a current overseas prospect, and with no signing metadata
+        # to show it isn't a trackable signing - drop it from both pools
+        # (preserves the long-standing "no MLB-active players in Rankings"
+        # invariant).
         if _has_mlb_activity:
             n_filtered_mlb_active += 1
             continue
 
-        fv = _consensus(plist, "fv")
-        fv_plus = _consensus_fv_plus(plist)  # v26
         bucket = _fv_bucket(fv, fv_plus)
         if bucket:
             fv_dist[bucket] += 1
@@ -411,15 +461,6 @@ def _build_league(league: str,
                 "fv_plus":        bool(snap.get("fv_plus")),
                 "status":         snap.get("status"),
             })
-
-        # Status priority: mlb_promoted > signed > posted > overseas_active
-        status_priority = {"overseas_active": 0, "posted": 1,
-                           "signed": 2, "mlb_promoted": 3}
-        status = max((s.get("status") or "overseas_active" for s in plist),
-                     key=lambda x: status_priority.get(x, 0))
-
-        country = any_snap.get("country") or player_meta.get("country")
-        posted_date = player_meta.get("posted_date")
 
         # Per-prospect hitter/pitcher classification - look at the most
         # recent season payload. ERA/IP imply pitcher; otherwise hitter.
@@ -560,17 +601,29 @@ def _build_league(league: str,
                                   -(p.get("consensus_fv") or 0),
                                   -(1 if p.get("consensus_fv_plus") else 0)))
 
+    # Recently-signed first: by signing/posting date desc, then bonus desc,
+    # then name. The frontend re-groups by year, but a deterministic export
+    # order keeps diffs clean and the League Context "top bonus" stable.
+    signings.sort(key=lambda s: (
+        (s.get("signed_date") or s.get("posted_date") or ""),
+        (s.get("signed_bonus_usd") or 0),
+        s.get("player_name") or "",
+    ), reverse=True)
+
     if n_filtered_promoted or n_filtered_mlb_active:
-        log.info("overseas %s: filtered %d MLB-promoted + %d MLB-active "
-                 "records from overseas pool",
+        log.info("overseas %s: routed %d MLB-promoted records into the "
+                 "signings list; dropped %d MLB-active (reverse-migration) "
+                 "records from the ranked pool",
                  league, n_filtered_promoted, n_filtered_mlb_active)
 
     return {
         "league":          league,
         "n_prospects":     len(prospects),
+        "n_signings":      len(signings),
         "fv_distribution": dict(fv_dist),
         "league_context":  LEAGUE_CONTEXT.get(league, {}),
         "prospects":       prospects,
+        "signings":        signings,
     }
 
 
