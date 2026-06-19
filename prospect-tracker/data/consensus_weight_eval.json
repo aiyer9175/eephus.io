@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-19T13:02:31Z",
+ "generated_at": "2026-06-19T18:33:21Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -7,15 +7,15 @@
    "n": 657,
    "weights_vintage_max_base": 2017,
    "weights": {
-    "fangraphs": 0.8325,
-    "mlb_pipeline": 1.1675
+    "fangraphs": 0.8321,
+    "mlb_pipeline": 1.1679
    },
    "equal": {
-    "spearman": 0.2644,
+    "spearman": 0.264,
     "auc": 0.7127
    },
    "weighted": {
-    "spearman": 0.268,
+    "spearman": 0.2676,
     "auc": 0.7143
    }
   },
@@ -24,15 +24,15 @@
    "n": 680,
    "weights_vintage_max_base": 2018,
    "weights": {
-    "fangraphs": 0.8565,
-    "mlb_pipeline": 1.1435
+    "fangraphs": 0.8561,
+    "mlb_pipeline": 1.1439
    },
    "equal": {
-    "spearman": 0.3183,
+    "spearman": 0.3168,
     "auc": 0.7443
    },
    "weighted": {
-    "spearman": 0.3189,
+    "spearman": 0.3174,
     "auc": 0.7456
    }
   },
@@ -41,15 +41,15 @@
    "n": 728,
    "weights_vintage_max_base": 2019,
    "weights": {
-    "fangraphs": 0.8775,
-    "mlb_pipeline": 1.1225
+    "fangraphs": 0.8774,
+    "mlb_pipeline": 1.1226
    },
    "equal": {
-    "spearman": 0.2919,
+    "spearman": 0.2879,
     "auc": 0.7518
    },
    "weighted": {
-    "spearman": 0.2991,
+    "spearman": 0.2951,
     "auc": 0.7557
    }
   },
@@ -58,15 +58,15 @@
    "n": 783,
    "weights_vintage_max_base": 2020,
    "weights": {
-    "fangraphs": 0.8942,
-    "mlb_pipeline": 1.1058
+    "fangraphs": 0.8941,
+    "mlb_pipeline": 1.1059
    },
    "equal": {
-    "spearman": 0.2422,
+    "spearman": 0.2383,
     "auc": 0.7724
    },
    "weighted": {
-    "spearman": 0.233,
+    "spearman": 0.2294,
     "auc": 0.7668
    }
   }
@@ -74,18 +74,18 @@
  "pooled": {
   "pooled_n": 2848,
   "equal": {
-   "spearman": 0.2757,
+   "spearman": 0.2732,
    "auc": 0.7439
   },
   "weighted": {
-   "spearman": 0.2777,
+   "spearman": 0.2751,
    "auc": 0.751
   }
  },
  "ship": true,
  "live_weights": {
-  "fangraphs": 0.9403,
-  "mlb_pipeline": 1.0597
+  "fangraphs": 0.94,
+  "mlb_pipeline": 1.06
  },
  "live_weights_vintage_max_base": 2023,
  "notes": [
