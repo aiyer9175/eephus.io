@@ -349,3 +349,149 @@ def compute_genuine_movement(p: dict) -> dict:
         "n_sources_down": n_down,
         "drivers": normalized[:MAX_DRIVERS_PER_CARD],
     }
+
+
+# ===========================================================================
+# Farm-system RANK movement (an org climbing / falling in the 30-team farm
+# rankings). Same event-based "since last real change" philosophy as the
+# prospect engine, but the de-noising is simpler: a farm has exactly ONE
+# "source" — our composite farm_score — so there is no changing-panel noise to
+# cancel. The only noise is month-to-month rank churn driven by OTHER teams
+# moving (the rank is relative), which a plateau tolerance + a dead-band on the
+# reported move reject. Mirrors compute_genuine_movement's output contract: a
+# `stock`-like dict whose `direction` serializes to the frontend enum and whose
+# `delta` is the number of rank spots moved (positive = climbed toward #1).
+# ===========================================================================
+
+# Exact-rank plateau: only identical ranks count as "the same level" when
+# walking back, so a single-spot wobble registers as a step whose magnitude the
+# dead-band then judges. (Comparing each prior point to the anchor — not its
+# neighbour — means a wider tolerance could never reach past the anchor's
+# immediate neighbourhood anyway, so 0 is both the cleanest and the most honest
+# choice.)
+_FARM_PLATEAU_EPS = 0
+# Dead-band: a farm has to move at least this many spots to register a
+# direction. One spot is almost always relative churn (another org passed it),
+# not a genuine move; two-plus is a real shift in the standings.
+_FARM_RANK_DEADBAND = 2
+# Strong tier: a multi-spot leap in a 30-team ranking is a marquee move.
+_FARM_RANK_STRONG = 5
+
+
+def _farm_flat(history_pts: list, basis: str, confidence: str) -> dict:
+    """Flat / insufficient result. Carries the endpoints (when known) so the
+    chip can still say "held at #N" if it wants to."""
+    first = history_pts[0] if history_pts else {}
+    last = history_pts[-1] if history_pts else {}
+    return {
+        "direction": "flat",
+        "delta": None if basis == "insufficient" else 0,
+        "basis": basis,
+        "confidence": confidence,
+        "from_rank": first.get("farm_rank"),
+        "to_rank": last.get("farm_rank"),
+        "from_score": first.get("farm_score"),
+        "to_score": last.get("farm_score"),
+        "score_delta": None,
+        "from_date": first.get("snapshot_date", ""),
+        "to_date": last.get("snapshot_date", ""),
+        "n_points": len(history_pts),
+    }
+
+
+def compute_farm_movement(history: list) -> dict:
+    """De-noised farm-system RANK movement for one org.
+
+    `history` is that org's farm_rank_history rows — dicts carrying
+    `snapshot_date`, `farm_rank`, `farm_score` — typically loaded oldest-first
+    via storage.load_farm_rank_history, with the current run's freshly-computed
+    (rank, score) appended as the final point (the anchor). Out-of-order or
+    duplicate-date input is tolerated (sorted + de-duped here).
+
+    Walks back from the anchor to the most recent genuine rank STEP: the run of
+    consecutive earlier points at the anchor's exact rank is the current
+    plateau; the step that created it (anchor rank vs the first earlier point at
+    a different rank) is the move reported. A move smaller than the dead-band is
+    reported as flat.
+
+    Output keys (a superset compatible with the prospect `stock` shape):
+      direction : up_strong|up|flat|down|down_strong
+      delta     : rank spots moved (+ = climbed toward #1); None if insufficient
+      basis     : rank_step|held|insufficient
+      from_rank/to_rank, from_score/to_score, score_delta
+      from_date/to_date  : bracket the transition that produced the current level
+      confidence: high|medium|low
+      n_points  : dated points considered
+    """
+    # Keep the last row per date (a same-day re-run appends a fresh anchor),
+    # drop undated / rankless rows, then sort oldest-first.
+    by_date: dict = {}
+    for h in (history or []):
+        if not isinstance(h, dict):
+            continue
+        d = h.get("snapshot_date")
+        if not d or h.get("farm_rank") is None:
+            continue
+        by_date[d] = h
+    pts = [by_date[d] for d in sorted(by_date)]
+
+    if len(pts) < 2:
+        # Singleton (or empty): no measurable origin — forced flat, exactly like
+        # the prospect engine gates one-grade-ever players. Expected during the
+        # warm-up runs before history accrues.
+        return _farm_flat(pts, "insufficient", "low")
+
+    anchor = pts[-1]
+    a_rank = int(anchor["farm_rank"])
+    plateau_start = anchor          # earliest point still at the current rank
+    step_pt = None                  # the point just before the current level
+
+    for pt in reversed(pts[:-1]):
+        r = int(pt["farm_rank"])
+        if abs(r - a_rank) <= _FARM_PLATEAU_EPS:
+            plateau_start = pt
+            continue
+        step_pt = pt
+        break
+
+    # Confidence scales with how much history backs the call.
+    confidence = "high" if len(pts) >= 3 else "medium"
+
+    if step_pt is None:
+        # Rank held at the same value across all of history — genuinely flat.
+        return _farm_flat(pts, "held", confidence)
+
+    # +ve delta = climbed (rank number went DOWN toward #1).
+    delta = int(step_pt["farm_rank"]) - a_rank
+    if delta >= _FARM_RANK_STRONG:
+        direction = "up_strong"
+    elif delta >= _FARM_RANK_DEADBAND:
+        direction = "up"
+    elif delta <= -_FARM_RANK_STRONG:
+        direction = "down_strong"
+    elif delta <= -_FARM_RANK_DEADBAND:
+        direction = "down"
+    else:
+        direction = "flat"
+
+    from_score = step_pt.get("farm_score")
+    to_score = anchor.get("farm_score")
+    score_delta = (round(to_score - from_score, 2)
+                   if from_score is not None and to_score is not None else None)
+
+    return {
+        "direction": direction,
+        "delta": delta,
+        "basis": "rank_step",
+        "confidence": confidence,
+        "from_rank": int(step_pt["farm_rank"]),
+        "to_rank": a_rank,
+        "from_score": from_score,
+        "to_score": to_score,
+        "score_delta": score_delta,
+        # from_date = the pre-step point; to_date = when the current level was
+        # first reached (the plateau start). Together they bracket the move.
+        "from_date": step_pt.get("snapshot_date", ""),
+        "to_date": plateau_start.get("snapshot_date", ""),
+        "n_points": len(pts),
+    }

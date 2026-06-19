@@ -139,7 +139,7 @@ from storage import (
     upsert_roster_status, load_roster_status,
     upsert_source_events,
     export_timeseries_json, latest_run_summary,
-    snapshot_board_metrics, record_il_observation,
+    snapshot_board_metrics, snapshot_farm_ranks, record_il_observation,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -2171,8 +2171,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             _ts = json.loads(out_path.read_text(encoding="utf-8"))
             _n_metric = snapshot_board_metrics(_ts.get("players") or [])
             log.info("metric_snapshots: captured board state for %d players", _n_metric)
+            # Org-grain sibling: record the composite farm_rank so farm-system
+            # rank movement accrues a server-side history (the de-noised
+            # movement engine reads it on the NEXT export). Monthly-only, same
+            # as the board snapshot above; idempotent upsert-by-(org, date).
+            _n_farm = snapshot_farm_ranks(_ts.get("org_summary") or [])
+            log.info("farm_rank_history: captured rank for %d orgs", _n_farm)
         except Exception:
-            log.exception("metric_snapshots capture failed — continuing")
+            log.exception("metric_snapshots/farm_rank_history capture failed — continuing")
         # Source-vs-source predictive backtest (data/source_backtest.json for
         # the Methodology tab). Reads the just-written timeseries + debuts, so
         # it refreshes as new outcome WAR lands and 2024+ cohorts resolve.

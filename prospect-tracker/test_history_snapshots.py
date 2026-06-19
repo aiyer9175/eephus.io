@@ -58,6 +58,53 @@ class TestMetricSnapshots:
         assert len(storage.load_metric_snapshots(player_key="a_one")) == 2
 
 
+class TestFarmRankHistory:
+    def _orgs(self):
+        return [
+            {"org": "MIL", "farm_rank": 1, "farm_score": 128.4},
+            {"org": "SEA", "farm_rank": 2, "farm_score": 121.0},
+            {"org": "BAD", "farm_score": 99.0},   # no farm_rank → skipped
+            {"farm_rank": 5, "farm_score": 80.0},  # no org → skipped
+        ]
+
+    def test_capture_and_load(self, tmp_path, monkeypatch):
+        _fresh_db(tmp_path, monkeypatch)
+        n = storage.snapshot_farm_ranks(self._orgs(), snapshot_date="2026-06-01")
+        assert n == 2   # BAD (no rank) + orgless row dropped
+        rows = storage.load_farm_rank_history()
+        by_org = {r["org"]: r for r in rows}
+        assert by_org["MIL"]["farm_rank"] == 1
+        assert by_org["MIL"]["farm_score"] == 128.4
+        assert by_org["SEA"]["farm_rank"] == 2
+        assert "BAD" not in by_org
+
+    def test_idempotent_upsert_by_org_date(self, tmp_path, monkeypatch):
+        _fresh_db(tmp_path, monkeypatch)
+        storage.snapshot_farm_ranks(self._orgs(), snapshot_date="2026-06-01")
+        # Re-run same date with a changed rank → overwrite, not duplicate.
+        orgs = self._orgs()
+        orgs[0]["farm_rank"] = 3
+        storage.snapshot_farm_ranks(orgs, snapshot_date="2026-06-01")
+        rows = storage.load_farm_rank_history(org="MIL")
+        assert len(rows) == 1
+        assert rows[0]["farm_rank"] == 3
+        assert storage.farm_rank_history_dates() == ["2026-06-01"]
+
+    def test_series_feeds_compute_farm_movement(self, tmp_path, monkeypatch):
+        _fresh_db(tmp_path, monkeypatch)
+        storage.snapshot_farm_ranks([{"org": "MIL", "farm_rank": 18, "farm_score": 100.0}],
+                                    snapshot_date="2026-05-01")
+        storage.snapshot_farm_ranks([{"org": "MIL", "farm_rank": 15, "farm_score": 110.0}],
+                                    snapshot_date="2026-06-01")
+        hist = storage.load_farm_rank_history(org="MIL")
+        # Loaded oldest-first — the order the movement engine expects.
+        assert [r["snapshot_date"] for r in hist] == ["2026-05-01", "2026-06-01"]
+        import movement
+        m = movement.compute_farm_movement(hist)
+        assert m["direction"] == "up"
+        assert m["delta"] == 3
+
+
 class TestILHistory:
     def test_placement_then_activation(self, tmp_path, monkeypatch):
         _fresh_db(tmp_path, monkeypatch)

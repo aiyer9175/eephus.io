@@ -1121,6 +1121,24 @@ CREATE TABLE IF NOT EXISTS metric_snapshots (
 CREATE INDEX IF NOT EXISTS idx_metric_snap_date ON metric_snapshots(snapshot_date);
 CREATE INDEX IF NOT EXISTS idx_metric_snap_player ON metric_snapshots(player_key);
 
+-- One row per (org, snapshot calendar date): the composite farm-system rank
+-- and the farm_score it sorts on. Sibling to metric_snapshots, but at the ORG
+-- grain rather than the player grain — metric_snapshots never stored the
+-- derived org farm_rank over time, so farm-rank movement (an org climbing /
+-- falling in the 30-team rankings) had no history input. The de-noised farm
+-- movement engine (movement.compute_farm_movement) reads this. Like its
+-- sibling it cannot be back-filled: the track record begins the first run
+-- after this lands. Upsert-by-(org, date) is idempotent.
+CREATE TABLE IF NOT EXISTS farm_rank_history (
+    org           TEXT NOT NULL,
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    farm_rank     INTEGER,              -- composite farm-system rank (1 = best of 30)
+    farm_score    REAL,                 -- composite score the rank sorts on
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (org, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_farm_rank_hist_date ON farm_rank_history(snapshot_date);
+
 -- Append-only IL stint timeline. The il_status table is current-state only
 -- (overwritten each run); this records each placement once (keyed by the
 -- placement `since` date) and stamps the activation date when the player
@@ -3515,6 +3533,76 @@ def load_metric_snapshots(player_key: str | None = None,
                 pass
         out.append(d)
     return out
+
+
+def snapshot_farm_ranks(org_summary: Iterable[dict],
+                        snapshot_date: str | None = None) -> int:
+    """Capture the composite farm-system rank (+ farm_score) for every org,
+    one row per org per calendar date. Idempotent: re-running on the same date
+    overwrites that date's rows.
+
+    `org_summary` is the list of org dicts from the exported boot payload (each
+    carries `org`, `farm_rank`, `farm_score`). Entries with no org code or no
+    farm_rank are skipped (nothing to snapshot). This is the missing input
+    layer for movement.compute_farm_movement — it cannot be back-filled, so the
+    track record starts the first run after it lands.
+    """
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for e in org_summary:
+            if not isinstance(e, dict):
+                continue
+            org = e.get("org")
+            rank = e.get("farm_rank")
+            if not org or rank is None:
+                continue
+            con.execute(
+                """INSERT INTO farm_rank_history
+                     (org, snapshot_date, farm_rank, farm_score, inserted_at)
+                   VALUES (?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(org, snapshot_date) DO UPDATE SET
+                     farm_rank=excluded.farm_rank,
+                     farm_score=excluded.farm_score,
+                     inserted_at=excluded.inserted_at""",
+                (org, snapshot_date, rank, e.get("farm_score")),
+            )
+            n += 1
+    return n
+
+
+def load_farm_rank_history(org: str | None = None) -> list[dict]:
+    """Load farm_rank_history rows, optionally filtered to one org.
+
+    Returns flat dicts ordered by (org, snapshot_date ascending) so a caller can
+    group by org and read each org's series oldest-first (the order the movement
+    engine expects)."""
+    where, params = [], []
+    if org is not None:
+        where.append("org = ?"); params.append(org)
+    sql = ("SELECT org, snapshot_date, farm_rank, farm_score "
+           "FROM farm_rank_history")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY org, snapshot_date"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def farm_rank_history_dates() -> list[str]:
+    """Return the distinct snapshot dates present in farm_rank_history, ascending."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT snapshot_date FROM farm_rank_history ORDER BY snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [r[0] for r in rows]
 
 
 def record_il_observation(current_il_by_key: dict[str, dict],
@@ -12439,6 +12527,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # state to walk.
     for entry in org_summary:
         _attach_sub_leaves(entry)
+
+    # v41 — Server-side farm-rank movement chip. Replaces the old client-side
+    # "since your last visit" localStorage delta with an event-based "since the
+    # last real change" signal from the de-noised engine. Reads the
+    # farm_rank_history accrued by prior monthly runs, appends today's
+    # freshly-assigned (rank, score) as the anchor (dropping any same-day row so
+    # a re-run doesn't double-count), and walks back to the most recent genuine
+    # rank step. Until a few months of history accrue every org reads flat —
+    # expected, not a bug. Best-effort: a failure here must never abort the
+    # export, so each entry still gets a (null) rank_movement key.
+    try:
+        from movement import compute_farm_movement
+        _today_iso = date.today().isoformat()
+        _hist_by_org: dict[str, list[dict]] = {}
+        for _row in load_farm_rank_history():
+            _hist_by_org.setdefault(_row["org"], []).append(_row)
+        for entry in org_summary:
+            _org = entry.get("org")
+            _hist = [h for h in _hist_by_org.get(_org, [])
+                     if h.get("snapshot_date") != _today_iso]
+            _hist.append({"org": _org, "snapshot_date": _today_iso,
+                          "farm_rank": entry.get("farm_rank"),
+                          "farm_score": entry.get("farm_score")})
+            entry["rank_movement"] = compute_farm_movement(_hist)
+    except Exception:
+        for entry in org_summary:
+            entry.setdefault("rank_movement", None)
 
     # v31.1 — League pass that LETTER-GRADES selected sub-leaves so the
     # third tree column reads as another grade layer, not just a value
