@@ -24360,7 +24360,47 @@ function _renderOverseasSigned(host, signings) {
       </div>`;
   }).join("");
 
-  host.innerHTML = summaryStrip + sections;
+  // --- Context rail: org + player leaderboards across all signings ---
+  // (org SPEND would need contract dollars, which we don't store, so it's
+  // intentionally omitted - everything here comes from data we have.)
+  const _orgFull = (o) => (typeof fullOrgName === "function" ? fullOrgName(o) : o);
+  const ctxEmpty = `<div class="ctx-row" style="cursor:default;color:var(--text-tertiary);">No data yet</div>`;
+
+  const orgCounts = {};
+  for (const op of signed) {
+    const t = op.signed_team || op.proj_team;
+    if (t) orgCounts[t] = (orgCounts[t] || 0) + 1;
+  }
+  const orgRows = Object.entries(orgCounts)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 10)
+    .map(([org, n]) => `<div class="ctx-row" onclick="goToFarm('${escapeHtml(org)}')" title="${escapeHtml(_orgFull(org))} - ${n} signing${n !== 1 ? "s" : ""}">
+      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;">${teamLogoHTML(org, "sm")}<strong>${escapeHtml(org)}</strong></span>
+      <span class="ctx-row-tag">${n}</span>
+    </div>`).join("");
+
+  const _leaderRow = (op, val, color) => `<div class="ctx-row" style="cursor:default;" title="${escapeHtml(op.player_name)} - ${escapeHtml(op.signed_team || "")}">
+      <span style="display:inline-flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${teamLogoHTML(op.signed_team, "sm")}<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(op.player_name)}</span></span>
+      <span class="ctx-row-tag" style="font-family:var(--font-mono);color:${color};">${val}</span>
+    </div>`;
+  const warRows = signed.filter(op => op.career_war != null)
+    .sort((a, b) => b.career_war - a.career_war).slice(0, 10)
+    .map(op => _leaderRow(op, op.career_war.toFixed(1),
+      op.career_war >= 0 ? "var(--text-primary)" : "var(--down)")).join("");
+  const wpyRows = signed.filter(op => op.war_per_yr != null)
+    .sort((a, b) => b.war_per_yr - a.war_per_yr).slice(0, 10)
+    .map(op => _leaderRow(op, op.war_per_yr.toFixed(2),
+      op.war_per_yr >= 2.0 ? "var(--up)" : op.war_per_yr >= 0.5 ? "var(--text-primary)" : "var(--down)")).join("");
+
+  const rail = `
+    <div class="ctx-card"><div class="ctx-title">Top organizations · by signings</div>${orgRows || ctxEmpty}</div>
+    <div class="ctx-card"><div class="ctx-title">Career WAR leaders</div>${warRows || ctxEmpty}</div>
+    <div class="ctx-card"><div class="ctx-title">WAR / season leaders</div>${wpyRows || ctxEmpty}</div>`;
+
+  host.innerHTML = `<div class="detail-with-rail">
+    <div class="detail-with-rail-main">${summaryStrip}${sections}</div>
+    <aside class="detail-context-rail">${rail}</aside>
+  </div>`;
 }
 
 function _renderOverseasLeaderboard(host, prospects, allLeagues) {

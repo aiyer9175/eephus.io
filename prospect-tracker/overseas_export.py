@@ -416,6 +416,7 @@ def _load_mlb_career_index() -> dict[str, dict]:
         if n == 0:
             continue
         origin = rec.get("origin") or {}
+        season_years = [c.get("y") for c in (rec.get("career") or []) if c.get("y")]
         idx[pk] = {
             "position": rec.get("pos"),
             "sabermetrics": {"is_pitcher": bool(rec.get("isPit"))},
@@ -427,6 +428,11 @@ def _load_mlb_career_index() -> dict[str, dict]:
                 "seasons": seasons,
             },
             "career_stats": rows,
+            # Extra metadata used to synthesize curated-import signing records
+            # (players who never appeared on the overseas prospect board).
+            "name": rec.get("name"),
+            "team": rec.get("team"),
+            "first_season": min(season_years) if season_years else None,
         }
     return idx
 
@@ -471,6 +477,78 @@ def _signing_performance(entry: dict | None, position, consensus_fv) -> dict:
         out["wag"] = _grad_wag(payload)
     except Exception:
         out["wag"] = None
+    return out
+
+
+def _sort_signings(signings: list[dict]) -> None:
+    """Most-recent class first: arrival year desc, then realized career WAR,
+    then name. eta_year is the real signing class (signed_date is a backfill
+    stamp). Sorts in place."""
+    signings.sort(key=lambda s: (
+        (s.get("eta_year") or 0),
+        (s.get("career_war") if s.get("career_war") is not None else -99),
+        s.get("player_name") or "",
+    ), reverse=True)
+
+
+# Marquee overseas -> MLB imports that never appeared on the overseas prospect
+# board (signed straight out of NPB/KBO/Cuba before being tracked here, so the
+# board carries no snapshot for them). The MLB layer has no origin-league flag,
+# so which players are overseas imports is hand-curated; EVERYTHING shown
+# (team, career WAR, WAR/yr, WAG, arrival year) is pulled from the MLB career
+# layer. `team` is an optional override for the rare case the live roster team
+# is null in the source. Extend as new imports arrive.
+OVERSEAS_IMPORTS: dict[str, dict] = {
+    "roki_sasaki":       {"league": "NPB", "country": "Japan"},
+    "munetaka_murakami": {"league": "NPB", "country": "Japan"},
+    "shota_imanaga":     {"league": "NPB", "country": "Japan"},
+    "kodai_senga":       {"league": "NPB", "country": "Japan"},
+    "masataka_yoshida":  {"league": "NPB", "country": "Japan"},
+    "yariel_rodriguez":  {"league": "NPB", "country": "Cuba", "team": "TOR"},
+}
+
+
+def _build_import_signings(mlb_career_idx: dict[str, dict],
+                           existing_keys: set[str]) -> dict[str, list[dict]]:
+    """Synthesize signing records for the curated OVERSEAS_IMPORTS that aren't
+    already on the board. Returns {league: [signing, ...]}. Stats come from the
+    MLB career index; only league/country (and a rare team override) are
+    curated. Players with no MLB career on file are skipped."""
+    out: dict[str, list[dict]] = defaultdict(list)
+    for key, meta in OVERSEAS_IMPORTS.items():
+        if key in existing_keys:
+            continue
+        entry = mlb_career_idx.get(key)
+        if not entry or (entry.get("career_war") or {}).get("career_war") is None:
+            continue
+        country = meta.get("country")
+        fv = entry.get("fv_close")
+        perf = _signing_performance(entry, entry.get("position"), fv)
+        out[meta["league"]].append({
+            "player_key":       key,
+            "player_name":      entry.get("name") or key,
+            "position":         entry.get("position"),
+            "league":           meta["league"],
+            "country":          country,
+            "country_flag":     COUNTRY_FLAG.get(country, ""),
+            "country_code":     COUNTRY_CODE.get(country),
+            "country_flag_svg": country_flag_svg_url(COUNTRY_CODE.get(country)),
+            "consensus_fv":     int(math.ceil(fv)) if fv is not None else None,
+            "consensus_fv_plus": False,
+            "status":           "mlb_promoted",
+            "posted_date":      None,
+            "signed_team":      meta.get("team") or entry.get("team"),
+            "signed_bonus_usd": None,
+            "signed_date":      None,
+            "proj_team":        None,
+            "proj_bonus_usd":   None,
+            "eta_year":         entry.get("first_season"),
+            "milb_key":         key,
+            "career_war":       perf["career_war"],
+            "war_per_yr":       perf["war_per_yr"],
+            "wag":              perf["wag"],
+            "is_import":        True,
+        })
     return out
 
 
@@ -743,15 +821,9 @@ def _build_league(league: str,
                                   -(p.get("consensus_fv") or 0),
                                   -(1 if p.get("consensus_fv_plus") else 0)))
 
-    # Most recent class first: by arrival year (eta_year - the real signing
-    # class; signed_date is a backfill stamp, not the actual signing date),
-    # then by realized career WAR, then name. The frontend re-groups by
-    # eta_year, but a deterministic export order keeps diffs clean.
-    signings.sort(key=lambda s: (
-        (s.get("eta_year") or 0),
-        (s.get("career_war") if s.get("career_war") is not None else -99),
-        s.get("player_name") or "",
-    ), reverse=True)
+    # Most recent class first (eta_year is the real signing class; signed_date
+    # is a backfill stamp). Curated imports are merged + re-sorted later.
+    _sort_signings(signings)
 
     if n_filtered_promoted or n_filtered_mlb_active:
         log.info("overseas %s: routed %d MLB-promoted records into the "
@@ -810,6 +882,24 @@ def build_overseas_export() -> dict:
 
     league_blocks = [_build_league(l, all_snaps, players, stats_by_player,
                                     canonical, mlb_career_idx) for l in leagues]
+
+    # Merge curated overseas -> MLB imports (Sasaki, Murakami, Imanaga, ...)
+    # that never appeared on the prospect board. Add to the matching league
+    # block (spinning one up if the source league has no board presence).
+    existing_keys = {s.get("milb_key") for blk in league_blocks
+                     for s in blk["signings"] if s.get("milb_key")}
+    blocks_by_league = {blk["league"]: blk for blk in league_blocks}
+    for lg, extra in _build_import_signings(mlb_career_idx, existing_keys).items():
+        blk = blocks_by_league.get(lg)
+        if blk is None:
+            blk = {"league": lg, "n_prospects": 0, "n_signings": 0,
+                   "fv_distribution": {}, "league_context": LEAGUE_CONTEXT.get(lg, {}),
+                   "prospects": [], "signings": []}
+            blocks_by_league[lg] = blk
+            league_blocks.append(blk)
+        blk["signings"].extend(extra)
+        _sort_signings(blk["signings"])
+        blk["n_signings"] = len(blk["signings"])
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
