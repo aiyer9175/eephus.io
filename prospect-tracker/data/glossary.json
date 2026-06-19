@@ -4162,6 +4162,137 @@
    ]
   },
   {
+   "id": "model_accountability",
+   "term": "Model Accountability",
+   "category": "site-feature",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "model accountability",
+    "accountability",
+    "model registry"
+   ],
+   "priority": 84,
+   "definition": "The receipts tab on the MLB Projections module: every projection model's champion, the baseline it had to beat, the metric, the measured held-out result, and an honest note on what is not yet scoreable. The verdicts are read straight from the platform's model registry, refreshed monthly - no claim is shown that has not been graded against history.",
+   "methodology": "Each model is evaluated by forward-chaining: fit on data through year Y-1, score the untouched year Y, repeat, and report pooled and per-year accuracy against a stated baseline. A model only earns the validated verdict when that held-out backtest beats its baseline on the pre-registered metric; if a piece is only partially measured (short window, descriptive, or live-pending) it ships provisional and says so. The committed eval artifacts (data/*_eval.json) carry the full tables; the registry (data/model_registry.json) carries the one-line verdict and the methodology disclosures, and a test (test_methodology_freshness.py) forces every registry model to map to the glossary entry that documents it.",
+   "seeAlso": [
+    "model_verdict",
+    "backtest",
+    "forward_gate",
+    "mlb_projections"
+   ]
+  },
+  {
+   "id": "model_verdict",
+   "term": "Model verdict",
+   "category": "methodology",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "verdict",
+    "validated",
+    "provisional",
+    "unvalidated",
+    "deprecated"
+   ],
+   "priority": 44,
+   "definition": "The four-way honesty label every model in the registry carries: validated (a forward-chained backtest beats the baseline), provisional (measured, but only partially - short window or descriptive), unvalidated (a predictive claim with no measurement yet, listed so it cannot hide), or deprecated (failed validation, retired).",
+   "methodology": "Verdicts are hand-committed alongside their eval artifact, not auto-derived: validated requires the artifact to exist and beat its baseline on the pre-registered metric; unvalidated must NOT carry an artifact (it is the audit hit list). A monthly refresh re-stamps freshness (artifact age) but never silently upgrades a verdict.",
+   "seeAlso": [
+    "model_accountability",
+    "backtest",
+    "mlb_projections"
+   ]
+  },
+  {
+   "id": "backtest",
+   "term": "Backtest (forward-chained)",
+   "category": "methodology",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "backtest",
+    "retro backtest",
+    "forward-chained",
+    "forward chaining"
+   ],
+   "priority": 43,
+   "definition": "Grading a model on history it never saw at fit time: the model is trained only on seasons through year Y-1, then scored on the untouched year Y, walking forward one year at a time. No-lookahead by construction, so the measured error is what a user would actually have gotten in real time.",
+   "methodology": "Curves, weights and maps are refit per target year on data through Y-1 (the Gate-1 pattern), predictions are compared to realized outcomes, and accuracy is pooled across folds plus reported per year. A held-out season (one fold deliberately untouched during any tuning) is the cleanest read; the rest are dev folds. Team-level reads assign each player to his ACTUAL season team so the engine's error is isolated from roster churn (disclosed).",
+   "seeAlso": [
+    "holdout",
+    "model_verdict",
+    "mae",
+    "forward_gate"
+   ]
+  },
+  {
+   "id": "holdout",
+   "term": "Holdout season",
+   "category": "methodology",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "holdout",
+    "held-out",
+    "touched once"
+   ],
+   "priority": 42,
+   "definition": "A season (or fold) deliberately kept out of every tuning decision and looked at only once, at the very end, to confirm a model generalizes. Because it never influenced a single knob, its error is the most honest estimate of real-world accuracy; a model that wins on dev folds but loses the holdout does not ship.",
+   "methodology": "Distinct from cross-validation dev folds, which are used repeatedly while iterating. The projections engine reports a touched-once 2022-2024 holdout for veteran WAR paths and a held-out 2025 for team wins; out-years whose labels have not matured yet are flagged as not-yet-scoreable rather than counted.",
+   "seeAlso": [
+    "backtest",
+    "forward_gate",
+    "model_verdict"
+   ]
+  },
+  {
+   "id": "forward_gate",
+   "term": "Forward gate",
+   "category": "methodology",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "forward gate",
+    "forward validation",
+    "live gate"
+   ],
+   "priority": 41,
+   "definition": "The pending live scoreboard for a projection whose target has not happened yet: the model's number is logged now and graded later, when the real outcome lands, against a stated baseline. It is the difference between a backtest (history) and a genuine out-of-sample bet on the future.",
+   "methodology": "Team Outlook win totals are the standing example: only the first projected season is forward-gateable, scored as MAE versus actual standings when that season completes (baseline = prior-season wins carry-forward); out-years are a competitive trajectory, not a scored forecast. The gate status stays pending until the season finishes, then the result is committed whatever it says.",
+   "seeAlso": [
+    "backtest",
+    "holdout",
+    "mlb_projections"
+   ]
+  },
+  {
+   "id": "mae",
+   "term": "MAE (mean absolute error)",
+   "category": "general-stat",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "MAE",
+    "mean absolute error",
+    "absolute error"
+   ],
+   "priority": 40,
+   "definition": "The average size of a model's misses, in the units of whatever it predicts: the mean of |actual - predicted| across every case. Lower is better, and unlike a correlation it is in real units - a team-wins MAE of 7.7 means the projected record is off by about eight wins on average.",
+   "methodology": "Reported alongside bias (the average signed error - whether the model runs systematically high or low) and, for the bands, coverage (the share of actuals that land inside the P10-P90 interval, target ~80%). MAE penalizes large and small misses linearly, so it is robust to the heavy WAR tail that would dominate a squared-error metric.",
+   "seeAlso": [
+    "backtest",
+    "p10_p90_bands",
+    "war"
+   ]
+  },
+  {
    "id": "org_tendencies",
    "term": "Organization Tendencies",
    "category": "site-feature",

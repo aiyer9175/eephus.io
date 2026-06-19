@@ -76,7 +76,7 @@
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
     state.player = p.get("player") || null;
-    state.view = p.get("view") === "teams" ? "teams" : "players";
+    state.view = ["teams", "accountability"].includes(p.get("view")) ? p.get("view") : "players";
     state.cmp = (p.get("cmp") || "").split(",").filter(Boolean).slice(0, 2);
     if (p.has("src")) state.src = p.get("src");
     if (p.has("pos")) state.pos = p.get("pos");
@@ -88,7 +88,7 @@
   function syncToURL() {
     const p = new URLSearchParams();
     if (state.player) p.set("player", state.player);
-    if (state.view === "teams") p.set("view", "teams");
+    if (state.view !== "players") p.set("view", state.view);
     if (state.cmp.length) p.set("cmp", state.cmp.join(","));
     if (state.src !== "all") p.set("src", state.src);
     if (state.pos !== "all") p.set("pos", state.pos);
@@ -212,6 +212,20 @@
       tip: "No guaranteed multi-year deal on file: pre-arbitration or arbitration salary (the service-time split needs data not fetched league-wide), or an unsigned free agent. FA-class members carry their option / UFA kind in the Free Agency module." };
   }
 
+  // The three top-level projection views + the unified-glossary chip (mirrors
+  // the FA module's glossary link, deep-linked to the Platform & Methodology
+  // group). Rendered into the filter bar on every view so switching is one
+  // click and the glossary is always at hand.
+  const GLOSSARY_CHIP = ` <a class="chip" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Every projection and methodology term, defined - in the unified site glossary"><span class="chip-glyph" aria-hidden="true">§</span>Glossary</a>`;
+  function viewChips(active) {
+    const c = (v, label, title) =>
+      `<button class="chip${active === v ? " active" : ""}" data-pv="${v}"${title ? ` title="${esc(title)}"` : ""}>${label}</button>`;
+    return c("players", "Players")
+      + c("teams", "Team Outlook", "First-season roster WAR roll-up -> projected wins (pre-free-agency frame)")
+      + c("accountability", "Model Accountability", "How these projections are validated: held-out backtests, model verdicts, methodology")
+      + GLOSSARY_CHIP;
+  }
+
   function render() {
     const root = document.getElementById("proj-rows");
     const bar = document.getElementById("proj-filters");
@@ -220,6 +234,7 @@
     if (state.player) { renderPlayer(state.player); return; }
     if (state.cmp.length === 2) { renderCompare(); return; }
     if (state.view === "teams") { renderTeams(); return; }
+    if (state.view === "accountability") { renderAccountability(); return; }
     const first = DATA.first_season;
     const teams = [...new Set((DATA.vets || []).map(m => m.team).filter(Boolean))].sort();
 
@@ -237,7 +252,7 @@
 
     const chip = (label, key, field) =>
       `<button class="chip${state[field] === key ? " active" : ""}" data-pf="${field}:${key}">${label}</button>`;
-    bar.innerHTML = `<button class="chip active" data-pv="players">Players</button><button class="chip" data-pv="teams" title="First-season roster WAR roll-up -> projected wins (pre-free-agency frame)">Team Outlook</button>
+    bar.innerHTML = viewChips("players") + `
       <span class="filter-label" style="margin-left:10px;">Source</span>
       ${chip("All", "all", "src")}${chip("Veterans", "vet", "src")}${chip("Prospects", "prospect", "src")}
       <span class="filter-label" style="margin-left:10px;">Pos</span>
@@ -272,7 +287,7 @@
     const bar = document.getElementById("proj-filters");
     const banner = document.getElementById("proj-banner");
     const rows = DATA.team_outlook || [];
-    bar.innerHTML = `<button class="chip" data-pv="players">Players</button><button class="chip active" data-pv="teams">Team Outlook</button>`;
+    bar.innerHTML = viewChips("teams");
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
       state.view = b.dataset.pv; syncToURL(); render();
     });
@@ -363,6 +378,168 @@
       syncToURL(); render();
     });
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
+  }
+
+  // ===========================================================================
+  // Model Accountability (#view=accountability) - the projection models'
+  // owner-committed verdicts + methodology (data/model_registry.json) with the
+  // held-out backtest receipts read verbatim from the committed eval artifacts
+  // (proj_export._accountability_block). Pure surfacing: the audit ledger is the
+  // single source of truth, nothing is recomputed here. The numbers shown match
+  // the committed *_eval.json files byte-for-byte.
+  // ===========================================================================
+  const VERDICT_META = {
+    validated:   { label: "Validated",   col: "var(--accent-green)" },
+    provisional: { label: "Provisional", col: "var(--accent-gold)" },
+    unvalidated: { label: "Unvalidated", col: "var(--down)" },
+    deprecated:  { label: "Deprecated",  col: "var(--text-tertiary)" },
+  };
+  const VERDICT_DESC = {
+    validated: "forward-chained backtest beats the baseline",
+    provisional: "measured, but partially (short window or descriptive)",
+    unvalidated: "predictive claim with no measurement yet",
+    deprecated: "failed validation, retired",
+  };
+  function verdictBadge(v) {
+    const m = VERDICT_META[v] || { label: v || "?", col: "var(--text-tertiary)" };
+    return `<span class="proj-verdict" style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;letter-spacing:.02em;color:#0b0b0b;background:${m.col};">${esc(m.label)}</span>`;
+  }
+  function _num(v, d) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : Number(v).toFixed(d == null ? 2 : d);
+  }
+  function _signed(v, d) {
+    if (v == null || !Number.isFinite(Number(v))) return EM_DASH;
+    const n = Number(v);
+    return (n >= 0 ? "+" : "") + n.toFixed(d == null ? 2 : d);
+  }
+  function _pct0(v) {
+    return v == null || !Number.isFinite(Number(v)) ? EM_DASH : (Number(v) * 100).toFixed(0) + "%";
+  }
+
+  // Team win totals - the retro backtest per season (cohort-recentered roll-up
+  // vs the prior-wins carry-forward baseline) + the player-level pooled read,
+  // the ship gate, and the still-pending forward gate.
+  function teamWinsTable(tw) {
+    if (!tw || !(tw.per_season || []).length) return "";
+    const rows = tw.per_season.map(s => `<tr>
+      <td>${s.season}${s.is_holdout ? ` <span class="proj-tag" title="Held out of the cohort-intercept fit" data-gl="holdout">holdout</span>` : ""}</td>
+      <td>${s.n_assigned_players ?? EM_DASH}</td>
+      <td style="font-weight:700;">${_num(s.mae)}</td>
+      <td>${_num(s.r)}</td>
+      <td class="fa-sub">${_num(s.baseline_mae)}</td>
+    </tr>`).join("");
+    const fg = tw.forward_gate || {};
+    const pooled = tw.player_pooled || {};
+    const sd = tw.ship_decision || {};
+    const hm = sd.holdout_mae || {};
+    return `<table class="detail-table proj-table" style="margin-top:8px;">
+      <thead><tr><th>Season</th><th title="Players assigned to their actual season team">Roster n</th>
+        <th title="Mean absolute error in projected team wins, cohort-recentered roll-up (lower is better)"><span data-gl="mae">MAE</span> (wins)</th>
+        <th title="Correlation of projected vs actual wins">r</th>
+        <th title="Prior-season wins carry-forward baseline MAE">Baseline</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <div class="fa-sub" style="margin-top:6px;">Player-level engine pooled bias ${_signed(pooled.bias_act_minus_pred)} WAR, MAE ${_num(pooled.mae)} (n=${pooled.n ?? "?"}).${sd.holdout_season ? ` Ship gate on the ${sd.holdout_season} holdout: cohort-recentered ${_num(hm.cohort_recentered)} vs prior-wins baseline ${_num(hm.baseline_prior_wins)} - ${sd.challenger_wins ? "shipped" : "baseline retained"} (published either way).` : ""}</div>
+      <div class="fa-note" style="margin-top:6px;"><span data-gl="forward_gate">Forward gate</span>: ${esc(fg.status || "pending")} - ${esc(fg.scope || "first season only")}; first scoreable ${esc(fg.first_scoreable || "end of the 2027 season")}. ${esc(fg.metric || "")}</div>`;
+  }
+
+  // Veteran WAR paths - the touched-once 2022-24 holdout, champion vs baseline
+  // per horizon (MAE + bias + P10-P90 coverage). Holdout labels mature only
+  // through h4, so the table runs as deep as the artifact reports.
+  function vetHorizonsTable(vh) {
+    const ch = (vh && vh.champion && vh.champion.horizons) || [];
+    if (!ch.length) return "";
+    const bl = (vh.baseline && vh.baseline.horizons) || [];
+    const blByH = {}; bl.forEach(r => { blByH[r.h] = r; });
+    const rows = ch.map(r => {
+      const b = blByH[r.h] || {};
+      return `<tr>
+        <td>h${r.h}</td>
+        <td style="font-weight:700;">${_num(r.mae)}</td>
+        <td class="fa-sub">${b.mae != null ? _num(b.mae) : EM_DASH}</td>
+        <td>${_signed(r.bias)}</td>
+        <td>${_pct0(r.coverage)}</td>
+        <td class="fa-sub">${b.coverage != null ? _pct0(b.coverage) : EM_DASH}</td>
+      </tr>`;
+    }).join("");
+    return `<table class="detail-table proj-table" style="margin-top:8px;">
+      <thead><tr><th title="Projection horizon, seasons ahead">Horizon</th>
+        <th title="Champion mean absolute WAR error (lower is better)"><span data-gl="mae">MAE</span></th>
+        <th title="Baseline MAE" class="fa-sub">Baseline</th>
+        <th title="Mean error, actual minus predicted">Bias</th>
+        <th title="Share of actuals inside the P10-P90 band (target ~80%)"><span data-gl="p10_p90_bands">Coverage</span></th>
+        <th title="Baseline coverage" class="fa-sub">Baseline</th></tr></thead>
+      <tbody>${rows}</tbody></table>
+      <div class="fa-sub" style="margin-top:6px;">${esc(vh.frame || "")} Champion ${esc((vh.champion || {}).model || "")} vs prior baseline ${esc((vh.baseline || {}).model || "")}.</div>`;
+  }
+
+  // Prospect post-ETA paths - forward-chained debut cohorts: the FV-only
+  // scouting-consensus champion vs the MiLB-stats challenger that lost.
+  function prospectPathsTable(pp) {
+    if (!pp || !pp.champion) return "";
+    const c = pp.champion, ch = pp.challenger || {};
+    return `<table class="detail-table proj-table" style="margin-top:8px;">
+      <thead><tr><th>Model</th><th>n</th><th><span data-gl="mae">MAE</span> (WAR)</th><th title="Rank correlation vs realized first-3y WAR (the ship metric)">Spearman</th></tr></thead>
+      <tbody>
+        <tr><td>${esc(c.label || "champion")} <span class="proj-tag">champion</span></td><td>${c.n ?? EM_DASH}</td><td>${_num(c.mae)}</td><td style="font-weight:700;">${_num(c.spearman, 3)}</td></tr>
+        <tr><td class="fa-sub">${esc(ch.label || "challenger")}</td><td>${ch.n ?? EM_DASH}</td><td>${_num(ch.mae)}</td><td>${_num(ch.spearman, 3)}</td></tr>
+      </tbody></table>
+      <div class="fa-sub" style="margin-top:6px;">Forward-chained debut cohorts ${esc((pp.scored_years || []).join(", "))}. The scouting-consensus FV model ranks better (higher Spearman); stat-line challengers lost the pre-registered dual gate and are committed as losses.</div>`;
+  }
+
+  function renderAccountability() {
+    const root = document.getElementById("proj-rows");
+    const bar = document.getElementById("proj-filters");
+    const banner = document.getElementById("proj-banner");
+    const acct = DATA.accountability || {};
+    bar.innerHTML = viewChips("accountability");
+    bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
+      state.view = b.dataset.pv; syncToURL(); render();
+    });
+    if (banner) {
+      banner.innerHTML = `<div class="fa-note fa-sources">
+        How these projections are validated: held-out <span data-gl="backtest">backtests</span>, owner-committed model <span data-gl="model_verdict">verdicts</span>, and an honest note on what is not yet scoreable.
+        ${acct.registry_version ? `&middot; model registry ${esc(String(acct.registry_version))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}</div>`;
+    }
+    const models = acct.models || [];
+    if (!models.length) {
+      root.innerHTML = `<div class="state-message">Accountability data not exported yet - run <code>python proj_export.py</code>.</div>`;
+      if (window.EEPHUS_GL && banner) window.EEPHUS_GL.wire(banner);
+      return;
+    }
+    const bt = acct.backtests || {};
+    const tableFor = (art) => {
+      if (art === "data/team_outlook_eval.json") return teamWinsTable(bt[art]);
+      if (art === "data/proj_horizon_eval.json") return vetHorizonsTable(bt[art]);
+      if (art === "data/prospect_path_eval.json") return prospectPathsTable(bt[art]);
+      return "";
+    };
+    const legend = (acct.verdict_enum || []).map(v =>
+      VERDICT_META[v] ? `<span style="white-space:nowrap;margin-right:14px;display:inline-block;">${verdictBadge(v)} <span class="fa-sub">${esc(VERDICT_DESC[v] || "")}</span></span>` : "").join("");
+    const glHref = `/glossary/#cat=${encodeURIComponent("Platform & Methodology")}`;
+    const cards = models.map(m => {
+      const fresh = m.last_checked
+        ? `last checked ${esc(String(m.last_checked))}${m.artifact_age_days != null ? ` &middot; artifact ${m.artifact_age_days}d old` : ""}${m.stale ? ` &middot; <span class="proj-neg">stale</span>` : ""}`
+        : "";
+      return `<div class="mlbp-section" style="margin-top:14px;">
+        <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <span class="mlbp-section-title" style="margin:0;">${esc(m.label)}</span>${verdictBadge(m.verdict)}
+        </div>
+        <div class="fa-sub" style="margin-top:4px;">${esc(m.predicts || "")}</div>
+        <div style="margin-top:6px;font-size:13px;line-height:1.7;">
+          <strong>Champion</strong> ${esc(m.champion || "?")}<br>
+          <strong>Baseline</strong> <span class="fa-sub">${esc(m.baseline || "?")}</span><br>
+          <strong>Metric</strong> <span class="fa-sub">${esc(m.metric || "?")}</span>
+        </div>
+        ${tableFor(m.eval_artifact)}
+        ${m.notes ? `<details style="margin-top:8px;"><summary class="fa-sub" style="cursor:pointer;">Methodology and disclosures</summary><div class="fa-note" style="margin-top:6px;white-space:pre-wrap;">${esc(m.notes)}</div></details>` : ""}
+        ${fresh ? `<div class="fa-sub" style="margin-top:6px;font-size:11px;">${fresh} &middot; <a href="${glHref}">methodology glossary</a></div>` : ""}
+      </div>`;
+    }).join("");
+    root.innerHTML = `<div class="mlbp-page">
+      <div class="fa-note" style="margin:8px 0;">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and an honest note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
+      <div style="margin:10px 0;line-height:2;">${legend}</div>
+      ${cards}</div>`;
+    if (window.EEPHUS_GL) { if (banner) window.EEPHUS_GL.wire(banner); window.EEPHUS_GL.wire(root); }
   }
 
   function sortHead(label, key, title) {

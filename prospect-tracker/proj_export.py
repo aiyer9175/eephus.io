@@ -795,6 +795,124 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
         json.dumps(payload, indent=1), encoding="utf-8")
 
 
+# ============================================================================
+# Model Accountability (/projections/#view=accountability)
+# ============================================================================
+# Curated, ordered registry rows that power the projections surface, paired
+# with a friendly card label. The view renders each model's owner-committed
+# verdict + methodology straight from the audit ledger (model_registry.json),
+# never a re-derived claim, alongside the held-out backtest tables below.
+_ACCOUNTABILITY_MODELS = [
+    ("fa_war_paths_decay", "Veteran WAR paths"),
+    ("mlb_projections_prospects", "Prospect post-ETA paths"),
+    ("team_win_projections", "Team win totals"),
+    ("prospect_surplus", "Surplus pricing"),
+]
+
+
+def _read_data_json(name: str) -> dict:
+    """Best-effort read of a committed data/ artifact; missing or unparseable
+    degrades to {} so the accountability block surfaces whatever is present."""
+    try:
+        return json.loads((DATA_DIR / name).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+
+
+def _accountability_block() -> dict:
+    """The Model Accountability surface: the projection models' verdicts +
+    methodology from data/model_registry.json, plus the held-out backtest
+    'receipts' read verbatim from the committed eval artifacts. Pure
+    surfacing - no metric is computed here; the registry is the single source
+    of truth (refreshed monthly, gated by test_methodology_freshness.py).
+    Each backtest is keyed by its eval_artifact so the frontend can attach it
+    to the matching card. Missing artifacts degrade to empty."""
+    reg = _read_data_json("model_registry.json")
+    by_id = {m["model_id"]: m for m in reg.get("models", [])}
+    keep = ("model_id", "surface", "predicts", "champion", "baseline",
+            "metric", "verdict", "notes", "eval_artifact", "last_checked",
+            "artifact_age_days", "stale")
+    models = []
+    for mid, label in _ACCOUNTABILITY_MODELS:
+        m = by_id.get(mid)
+        if m:
+            models.append({"label": label, **{k: m.get(k) for k in keep}})
+
+    # Team win totals: the retro backtest (2022-25, holdout-gated) read
+    # straight from the committed artifact - per-season team-wins MAE/r for
+    # the shipped engine vs the prior-wins baseline, pooled player bias, the
+    # ship decision, and the still-pending forward gate.
+    to = _read_data_json("team_outlook_eval.json")
+    retro = to.get("retro_backtest") or {}
+    team_wins = {
+        "design": retro.get("design"),
+        "per_season": [
+            {"season": s.get("season"),
+             "n_assigned_players": s.get("n_assigned_players"),
+             "is_holdout": s.get("is_holdout"),
+             "mae": (s.get("cohort_recentered") or {}).get("mae"),
+             "r": (s.get("cohort_recentered") or {}).get("r"),
+             "baseline_mae": (s.get("baseline_prior_wins") or {}).get("mae"),
+             "baseline_r": (s.get("baseline_prior_wins") or {}).get("r")}
+            for s in (retro.get("team_level_per_season") or [])
+        ],
+        "player_pooled": (retro.get("player_level") or {}).get("pooled"),
+        "ship_decision": retro.get("ship_decision"),
+        "forward_gate": to.get("forward_gate"),
+    } if retro else {}
+
+    # Veteran WAR paths: the touched-once 2022-24 holdout - the shipped
+    # champion (proj_lgbm_v1) against the prior champion / baseline
+    # (marcel_decay_v2), per horizon. Holdout labels mature only through h4.
+    he = _read_data_json("proj_horizon_eval.json")
+    cb = he.get("challenger_blocks") or {}
+
+    def _horizon_rows(block) -> list[dict]:
+        hz = (block or {}).get("horizons") or {}
+        return [{"h": int(h), "n": v.get("n"), "mae": v.get("mae"),
+                 "bias": v.get("bias"), "coverage": v.get("coverage")}
+                for h, v in sorted(hz.items(), key=lambda kv: int(kv[0]))]
+
+    vet_horizons = {
+        "frame": "2022-2024 holdout (touched once; labels mature through h4)",
+        "champion": {"model": "proj_lgbm_v1",
+                     "horizons": _horizon_rows(cb.get("holdout_2022_2024"))},
+        "baseline": {"model": "marcel_decay_v2",
+                     "horizons": _horizon_rows(cb.get("holdout_2022_2024_champion"))},
+    } if cb.get("holdout_2022_2024") else {}
+
+    # Prospect post-ETA paths: forward-chained debut cohorts. The FV-only
+    # scouting-consensus model (the shipped champion, labeled "baseline" in
+    # the artifact's A/B) vs the MiLB-stats ridge challenger that lost its
+    # pre-registered gate - committed either way.
+    pe = _read_data_json("prospect_path_eval.json")
+    champ = pe.get("baseline_pooled_oos") or {}
+    chall = pe.get("challenger_pooled_oos") or {}
+    prospect_paths = {
+        "scored_years": pe.get("scored_years"),
+        "champion": {"label": "FV outcome model (scouting consensus)",
+                     "n": champ.get("n"), "mae": champ.get("mae"),
+                     "spearman": champ.get("spearman")},
+        "challenger": {"label": "MiLB-stats ridge (committed loss)",
+                       "n": chall.get("n"), "mae": chall.get("mae"),
+                       "spearman": chall.get("spearman")},
+        "ship_decision": pe.get("ship_decision"),
+    } if champ else {}
+
+    return {
+        "generated_at": date.today().isoformat(),
+        "registry_version": reg.get("version"),
+        "verdict_enum": reg.get("verdict_enum"),
+        "models": models,
+        # keyed by eval_artifact so the frontend attaches each table to its card
+        "backtests": {
+            "data/team_outlook_eval.json": team_wins,
+            "data/proj_horizon_eval.json": vet_horizons,
+            "data/prospect_path_eval.json": prospect_paths,
+        },
+    }
+
+
 def build_payload() -> dict:
     corpus = fp.build_corpus()
     names = _display_names()
@@ -821,6 +939,7 @@ def build_payload() -> dict:
         "n_vets": len(vets), "n_prospects": len(prospects),
         "vets": vets, "prospects": prospects,
         "team_outlook": team_outlook,
+        "accountability": _accountability_block(),
         "notes": [
             "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",
             "prospects: P(bucket|FV) x calibrated per-bucket WAR trajectories from projected debut age, starting at the PROSPX ETA; floor/ceiling = 10th/90th-percentile OUTCOME buckets",
