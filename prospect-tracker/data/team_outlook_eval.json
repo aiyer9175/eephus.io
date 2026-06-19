@@ -256,6 +256,7 @@
  "horizon": 5,
  "multi_year": {
   "kind": "controlled-core: each player counts only through his control window (_last_controlled_season); each season is independently recentered to the 2,430-win league sum",
+  "display_metric": "the surface shows year-1 W-L + WAR plus lockedPct = WAR-weighted control share (controlled / everyone-stays WAR over 2027-31); aging cancels, so it isolates cost control",
   "limitations": [
    "only the first season (2027) is forward-gateable; out-years (2028+) are a controlled-core competitive trajectory, NOT scored against actual standings",
    "control window = Spotrac signed_through where present, else an age-based proxy (no service time in the pipeline)",

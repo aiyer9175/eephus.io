@@ -159,6 +159,36 @@ def test_team_outlook_uses_champion_mean_not_display(monkeypatch):
     assert rows[0]["byYear"][0]["war"] == 5.0
 
 
+def test_team_outlook_locked_pct(monkeypatch):
+    """lockedPct = controlled WAR / everyone-stays WAR over the horizon. A core
+    locked through the horizon scores 1.0; a control cliff after year 1 scores
+    year1 / full."""
+    H, F = pe.HORIZON, pe.FIRST_SEASON
+    full_yr = F + H - 1
+    sus = _vet("SUS", [8.0] * H, full_yr, key="sus")   # locked through horizon
+    clf = _vet("CLF", [8.0] * H, F, key="clf")         # control ends after 2027
+    rows = _toy_team_outlook(monkeypatch, [sus, clf])
+    by = {r["team"]: r for r in rows}
+    assert by["SUS"]["lockedPct"] == 1.0
+    assert by["CLF"]["lockedPct"] == round(8.0 / (8.0 * H), 3)   # 0.2 @ H=5
+    assert by["SUS"]["lockedPct"] > by["CLF"]["lockedPct"]
+    # Absolute cost-controlled strength + the everyone-stays denominator.
+    assert by["SUS"]["ctrlWar5y"] == round(8.0 * H, 1)
+    assert by["CLF"]["ctrlWar5y"] == 8.0
+    assert by["CLF"]["fullWar5y"] == round(8.0 * H, 1)
+
+
+def test_team_outlook_prospects_count_as_locked(monkeypatch):
+    """A prospect is cost-controlled the whole horizon, so it lifts (never drags)
+    the lock-up %: adding one to an already-locked core keeps it at 1.0."""
+    H, F = pe.HORIZON, pe.FIRST_SEASON
+    vets = [_vet("AAA", [4.0] * H, F + H - 1)]
+    prospects = [{"team": "AAA", "name": "Pr", "key": "pr",
+                  "eta": F + 1, "war": [3.0, 3.0, 3.0, 3.0]}]
+    rows = _toy_team_outlook(monkeypatch, vets, prospects)
+    assert rows[0]["lockedPct"] == 1.0
+
+
 def test_team_outlook_prospect_eta_offset(monkeypatch):
     H, F = pe.HORIZON, pe.FIRST_SEASON
     vets = [_vet("AAA", [1.0] * H, F + H - 1)]

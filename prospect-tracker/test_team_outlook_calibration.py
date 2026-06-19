@@ -103,6 +103,19 @@ def test_team_outlook_multiyear_recenter():
             assert abs(s["wins"] + s["losses"] - 162) < 0.2
 
 
+def test_team_outlook_locked_pct_bounds():
+    """The cost-controlled lock-up % is a WAR-weighted share in [0,1], and the
+    controlled WAR never exceeds the everyone-stays denominator."""
+    rows = _load("mlb_projections.json")["team_outlook"]
+    have = [r for r in rows if r.get("lockedPct") is not None]
+    if not have:
+        pytest.skip("no lockedPct in export")
+    assert len(have) >= 25
+    for r in have:
+        assert 0.0 <= r["lockedPct"] <= 1.0, r["team"]
+        assert r["ctrlWar5y"] <= r["fullWar5y"] + 0.11, r["team"]
+
+
 def test_team_outlook_first_season_matches_byyear():
     """The back-compat top-level fields must equal byYear[0] (GFX + older
     consumers read them directly)."""

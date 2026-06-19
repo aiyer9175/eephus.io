@@ -568,13 +568,17 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
                   depth_team_war: dict | None = None,
                   depth_acct: dict | None = None,
                   intercepts: dict | None = None) -> list[dict]:
-    """First-season team WAR roll-up -> projected wins (47.7 replacement
-    baseline + roster WAR). PRE-FREE-AGENCY frame: the upcoming winter's
-    FA class is unassigned (their WAR sits on no roster), and players
-    below the exposure floors count as replacement - both stated on the
-    surface. Prospects contribute at their org when their ETA is the
-    first projected season. Forward gate: scored against the season's
-    actual standings when it completes (registry row carries the clock)."""
+    """Team WAR roll-up. The DISPLAY headline is the first projected season
+    (47.7 replacement baseline + roster WAR -> projected wins; PRE-FREE-AGENCY
+    frame, forward-gated against actual standings). On top of that, the
+    multi-year controlled-core machinery powers an organizational CONTROL
+    metric: `lockedPct` = the WAR-weighted share of the core's projected
+    2027-31 production that the team actually controls (controlled WAR / the
+    same players' everyone-stays WAR). Aging affects both numerator and
+    denominator, so it cancels — lockedPct isolates cost control: 1.0 = every
+    contributor locked through the horizon, low = a core about to leak to free
+    agency. `byYear[].war` (controlled WAR per season) drives the decline
+    sparkline. Prospects contribute at their org from their ETA forward."""
     REPLACEMENT_WINS = 47.7
     # bWAR is calibrated so the league's players sum to ~1000 WAR every
     # season (verified 1000/1000/1000 for 2023-25 in war_daily). The
@@ -589,9 +593,10 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
 
     def _team(tm: str) -> dict:
         return teams.setdefault(tm, {
-            "raw": [0.0] * HORIZON,   # champion-mean roster WAR, per season
-            "coh": [0.0] * HORIZON,   # cohort-intercept adjustment, per season
-            "n":   [0] * HORIZON,
+            "raw":  [0.0] * HORIZON,  # CONTROLLED champion-mean roster WAR/season
+            "full": [0.0] * HORIZON,  # everyone-stays WAR/season (control denominator)
+            "coh":  [0.0] * HORIZON,  # cohort-intercept adjustment, per season
+            "n":    [0] * HORIZON,
             "top": []})               # (year1_war, name, key) for the top-3 strip
 
     # Veterans contribute their champion MEAN per season (the displayed ML
@@ -607,10 +612,15 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
         age0 = m.get("age")
         t_ = _team(tm)
         for t in range(HORIZON):
-            if FIRST_SEASON + t > last_ctrl or t >= len(champ):
+            if t >= len(champ):
                 continue
             w = champ[t]
             if w is None:
+                continue
+            # Everyone-stays denominator counts every horizon season (the WAR
+            # the player would give THIS team if he never left).
+            t_["full"][t] += w
+            if FIRST_SEASON + t > last_ctrl:
                 continue
             t_["raw"][t] += w
             t_["n"][t] += 1
@@ -640,6 +650,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             idx = t - off
             if idx < len(war) and war[idx] is not None:
                 t_["raw"][t] += war[idx]
+                t_["full"][t] += war[idx]   # prospects are controlled all horizon
                 t_["n"][t] += 1
         if off <= 0 and war[0] is not None:
             t_["top"].append((war[0], m.get("name"), m.get("key")))
@@ -678,6 +689,11 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
                 "n": t_["n"][t],
             })
         y1 = by_year[0]
+        # Organizational CONTROL: WAR-weighted share of the core's projected
+        # 2027-31 production the team controls (controlled / everyone-stays).
+        ctrl5 = sum(t_["raw"])
+        full5 = sum(t_["full"])
+        locked = max(0.0, min(1.0, ctrl5 / full5)) if full5 > 0.01 else None
         out.append({
             "team": tm,
             # Back-compat year-1 top-level fields (GFX + older consumers read
@@ -685,6 +701,10 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             "war": y1["war"], "wins": y1["wins"], "losses": y1["losses"],
             "winsRaw": y1["winsRaw"], "depthWar": y1["depthWar"], "n": y1["n"],
             "byYear": by_year,
+            # Cost-controlled core strength + lock-up security.
+            "lockedPct": round(locked, 3) if locked is not None else None,
+            "ctrlWar5y": round(ctrl5, 1),   # controlled WAR banked over the horizon
+            "fullWar5y": round(full5, 1),   # everyone-stays WAR (the denominator)
             "top": [{"name": n, "key": k, "war": round(w, 1)}
                     for w, n, k in t_["top"][:3]],
             "farm": farm.get(tm),
@@ -753,6 +773,9 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
             "kind": "controlled-core: each player counts only through his control "
                     "window (_last_controlled_season); each season is independently "
                     "recentered to the 2,430-win league sum",
+            "display_metric": "the surface shows year-1 W-L + WAR plus lockedPct = "
+                    "WAR-weighted control share (controlled / everyone-stays WAR over "
+                    "2027-31); aging cancels, so it isolates cost control",
             "limitations": [
                 f"only the first season ({FIRST_SEASON}) is forward-gateable; "
                 "out-years (2028+) are a controlled-core competitive trajectory, "
