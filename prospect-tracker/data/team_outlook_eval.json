@@ -1,19 +1,55 @@
 {
- "generated_at": "2026-06-18",
+ "generated_at": "2026-06-19",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 954.9,
+  "roster_war_sum": 954.2,
+  "remainder_recenter_wins_per_team": 1.45,
+  "roster_war_sum_y1": 954.2,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2385.8,
+  "raw_wins_sum": 2385.2,
+  "raw_wins_sum_y1": 2385.2,
   "target_wins_sum": 2430,
   "depth_pool": {
-   "n_depth_players": 691,
-   "depth_war_sum": 41.0,
-   "n_unassigned": 508,
-   "war_unassigned": 39.8
+   "n_depth_players": 442,
+   "depth_war_y1": 45.4,
+   "depth_war_5y": 86.0,
+   "n_unassigned": 298,
+   "war_unassigned_y1": 56.3,
+   "war_unassigned_5y": 109.6
   },
-  "remainder_recenter_wins_per_team": 1.58,
+  "by_season": [
+   {
+    "season": 2027,
+    "roster_war_sum": 954.2,
+    "wins_sum": 2430.0,
+    "remainder_recenter_wins_per_team": 1.45
+   },
+   {
+    "season": 2028,
+    "roster_war_sum": 638.5,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 11.58
+   },
+   {
+    "season": 2029,
+    "roster_war_sum": 284.6,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": 24.17
+   },
+   {
+    "season": 2030,
+    "roster_war_sum": 223.4,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": 26.1
+   },
+   {
+    "season": 2031,
+    "roster_war_sum": 198.4,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 26.83
+   }
+  ],
   "coverage_decomposition_2025": {
    "returning_player_war": 940,
    "new_entrant_war": 61,
@@ -22,7 +58,7 @@
   }
  },
  "calibration": {
-  "kind": "v2: per-team sub-floor depth pool + cohort intercepts (side x age band, retro-backtest-fit 2022-24, holdout-gated) + small uniform remainder to the 2,430-win league sum",
+  "kind": "v2: per-team sub-floor depth pool + cohort intercepts (side x age band, retro-backtest-fit 2022-24, holdout-gated) + small uniform remainder to the 2,430-win league sum, applied per season",
   "limitations": [
    "depth-pool team assignment needs a contract row; unassigned depth WAR rides the uniform remainder",
    "spread stays projection-compressed (correct for a mean projection; bands carry the uncertainty)"
@@ -31,6 +67,7 @@
  "forward_gate": {
   "status": "pending",
   "first_scoreable": "end of the 2027 season",
+  "scope": "first season only; 2028+ are not gateable",
   "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"
  },
  "retro_backtest": {
@@ -215,5 +252,14 @@
     "baseline_prior_wins": 7.24
    }
   }
+ },
+ "horizon": 5,
+ "multi_year": {
+  "kind": "controlled-core: each player counts only through his control window (_last_controlled_season); each season is independently recentered to the 2,430-win league sum",
+  "limitations": [
+   "only the first season (2027) is forward-gateable; out-years (2028+) are a controlled-core competitive trajectory, NOT scored against actual standings",
+   "control window = Spotrac signed_through where present, else an age-based proxy (no service time in the pipeline)",
+   "cohort intercepts were fit on year-1 residuals; out-year application re-bands by age but is an approximation"
+  ]
  }
 }

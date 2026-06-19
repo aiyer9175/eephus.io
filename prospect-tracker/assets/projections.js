@@ -279,8 +279,13 @@
     // Banner + GFX button track the Team Outlook view (the Players banner is
     // rebuilt in render()), so Generate GFX exports the team board you're on.
     if (banner) {
+      const bMulti = rows.some(r => Array.isArray(r.byYear) && r.byYear.length > 1);
+      const bLast = bMulti ? rows.find(r => r.byYear && r.byYear.length).byYear.slice(-1)[0].season : DATA.first_season;
+      const frame = bMulti
+        ? `Multi-year projected records (${DATA.first_season}-${bLast}), controlled-core bWAR roll-up &rarr; wins per season`
+        : `First projected season (${DATA.first_season}) roster bWAR roll-up &rarr; projected wins (pre-free-agency frame)`;
       banner.innerHTML = `<div class="fa-note fa-sources">
-        ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}First projected season (${DATA.first_season}) roster bWAR roll-up &rarr; projected wins (pre-free-agency frame)
+        ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}${frame}
         &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Generate a shareable graphic of the Team Outlook board"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
       const tgfx = document.getElementById("proj-teams-gfx");
       if (tgfx) tgfx.onclick = () => {
@@ -296,6 +301,21 @@
     // top prospect, and the cross-module links. Rows without a baked
     // farm block (older exports) degrade to the original columns.
     const hasFarm = rows.some(r => r.farm);
+    // Multi-year (controlled-core) layout when byYear is present; older exports
+    // fall back to the single-season Roster WAR + Proj W-L columns.
+    const hasMulti = rows.some(r => Array.isArray(r.byYear) && r.byYear.length > 1);
+    const seasons = hasMulti
+      ? (rows.find(r => Array.isArray(r.byYear) && r.byYear.length)?.byYear || []).map(s => s.season)
+      : [DATA.first_season];
+    const seasonCell = (s) => {
+      if (!s || s.wins == null) return `<td>${EM_DASH}</td>`;
+      const w = Math.round(s.wins);
+      const col = s.wins >= 88 ? "var(--up)" : s.wins <= 74 ? "var(--down)" : "var(--text-primary)";
+      const tip = `${s.season}: ${s.war.toFixed(1)} controlled-core WAR`
+        + (s.depthWar != null ? ` + ${s.depthWar} depth/recenter` : "")
+        + (s.winsRaw != null ? ` (raw roster-only ${Math.round(s.winsRaw)} wins)` : "");
+      return `<td title="${esc(tip)}" style="font-variant-numeric:tabular-nums;color:${col};font-weight:600;">${w}-${162 - w}</td>`;
+    };
     const body = rows.map((r, i) => {
       const f = r.farm || {};
       const farmCell = f.farmRank != null
@@ -308,26 +328,38 @@
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
       const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
-      const w = Math.round(r.wins);
-      const wl = `${w}-${162 - w}`;
-      const wlTip = r.depthWar != null
-        ? `Roster WAR + ${r.depthWar} depth-allowance WAR over the 47.7 replacement baseline (league recentered to 2,430 total wins${r.winsRaw != null ? `; raw roster-only read ${Math.round(r.winsRaw)} wins` : ""})`
-        : `Roster WAR over the 47.7 replacement baseline`;
+      let recordCells;
+      if (hasMulti) {
+        const byYear = r.byYear || [];
+        recordCells = seasons.map((yr, t) => seasonCell(byYear[t])).join("");
+      } else {
+        const w = Math.round(r.wins);
+        const wl = `${w}-${162 - w}`;
+        const wlTip = r.depthWar != null
+          ? `Roster WAR + ${r.depthWar} depth-allowance WAR over the 47.7 replacement baseline (league recentered to 2,430 total wins${r.winsRaw != null ? `; raw roster-only read ${Math.round(r.winsRaw)} wins` : ""})`
+          : `Roster WAR over the 47.7 replacement baseline`;
+        recordCells = `<td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td><td title="${esc(wlTip)}"><strong>${wl}</strong></td>`;
+      }
       return `<tr>
       <td>${i + 1}</td>
       <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
-      <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
-      <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
-      <td>${r.n}</td>
+      ${recordCells}
       ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
       ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
     </tr>`;
     }).join("");
-    const recentered = rows.some(r => r.depthWar != null);
-    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline.${recentered ? ` Win totals are retro-backtested (2022-25, no lookahead): each roster sums the engine's mean projections plus a sub-floor depth pool and age-cohort corrections fit on past residuals, and the league sums to 2,430 wins with a near-zero remainder. Team MAE ran 7.3-10.2 wins across the backtest seasons, ahead of a prior-wins carry-forward in three of four.` : " PRE-FREE-AGENCY frame: the upcoming winter's class is unassigned, and sub-floor players count as replacement - read ranks, not absolute win totals."} Forward gate: scored against ${DATA.first_season} standings when the season completes (full accounting in team_outlook_eval.json).${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}</div>
+    const lastSeason = seasons[seasons.length - 1];
+    const note = hasMulti
+      ? `Multi-year projected records (${DATA.first_season}-${lastSeason}), each season's roster bWAR -> wins at the 47.7 replacement baseline, league-recentered to 2,430 wins. CONTROLLED-CORE frame: each player counts only through his contract / control window, so the out-years decline as players reach free agency (freed WAR + future entrants ride the recenter). Only ${DATA.first_season} is forward-gated against actual standings; ${DATA.first_season + 1}+ are a controlled-core competitive trajectory. Full accounting in team_outlook_eval.json.`
+      : `First projected season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline. Forward gate: scored against ${DATA.first_season} standings when the season completes.`;
+    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">${note}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th><th>Team</th><th>Roster WAR</th><th title="Projected record, league-recentered (depth allowance over the rostered universe)">Proj W-L</th><th>Players</th>${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
+      <thead><tr><th>#</th><th>Team</th>${
+        hasMulti
+          ? seasons.map(yr => `<th title="Projected W-L for ${yr}${yr === DATA.first_season ? " (forward-gated)" : " (controlled-core trajectory)"}">${yr}</th>`).join("")
+          : `<th>Roster WAR</th><th title="Projected record, league-recentered (depth allowance over the rostered universe)">Proj W-L</th>`
+      }${hasFarm ? `<th title="PROSPX farm-system rank + grade score">Farm</th><th title="Net control-window NPV over the org's active prospect pool">Farm surplus</th><th>Top prospect</th>` : ""}<th>Top projected</th>${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
       <tbody>${body}</tbody></table>`;
     root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {
       ev.preventDefault();
@@ -723,35 +755,57 @@
   // _projBoardSpec; this exports the team roll-up board instead).
   function _teamOutlookBoardSpec(rows) {
     const hasFarm = rows.some(r => r.farm);
+    const hasMulti = rows.some(r => Array.isArray(r.byYear) && r.byYear.length > 1);
+    const seasons = hasMulti
+      ? (rows.find(r => r.byYear && r.byYear.length).byYear).map(s => s.season)
+      : [DATA.first_season];
     const brows = rows.map((r, i) => {
       const f = r.farm || {};
-      const w = Math.round(r.wins);
-      const cells = [
-        { t: i + 1 },
-        { t: r.team },
-        { t: r.war != null ? r.war.toFixed(1) : "-", c: "accent" },
-        { t: `${w}-${162 - w}` },
-      ];
+      const cells = [{ t: i + 1 }, { t: r.team }];
+      if (hasMulti) {
+        const by = r.byYear || [];
+        seasons.forEach((yr, t) => {
+          const s = by[t];
+          if (!s || s.wins == null) { cells.push({ t: "-" }); return; }
+          const w = Math.round(s.wins);
+          const cell = { t: `${w}-${162 - w}` };
+          if (s.wins >= 88) cell.c = "pos"; else if (s.wins <= 74) cell.c = "neg";
+          cells.push(cell);
+        });
+      } else {
+        const w = Math.round(r.wins);
+        cells.push({ t: r.war != null ? r.war.toFixed(1) : "-", c: "accent" });
+        cells.push({ t: `${w}-${162 - w}` });
+      }
       cells.push(f.farmRank != null ? { t: `#${f.farmRank}` } : { t: "-" });
       cells.push(f.farmSurplusMM != null
         ? { t: `$${Math.round(f.farmSurplusMM)}M`, c: f.farmSurplusMM >= 0 ? "pos" : "neg" }
         : { t: "-" });
       return { cells };
     });
+    const cols = [{ label: "#", frac: 0.05 }, { label: "Team", frac: hasMulti ? 0.16 : 0.30 }];
+    if (hasMulti) {
+      const each = 0.62 / seasons.length;
+      seasons.forEach(yr => cols.push({ label: String(yr), frac: each }));
+    } else {
+      cols.push({ label: "Roster WAR", frac: 0.18 });
+      cols.push({ label: "Proj W-L", frac: 0.18 });
+    }
+    cols.push({ label: "Farm", frac: 0.09, wideOnly: true });
+    cols.push({ label: "Farm surplus", frac: 0.12, wideOnly: true });
+    const lastSeason = seasons[seasons.length - 1];
     return {
       kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
       title: "MLB Projections · Team Outlook",
-      subtitle: `First-season (${DATA.first_season}) roster bWAR → projected wins · ${rows.length} teams`,
+      subtitle: hasMulti
+        ? `Controlled-core projected records ${DATA.first_season}-${lastSeason} · ${rows.length} teams`
+        : `First-season (${DATA.first_season}) roster bWAR → projected wins · ${rows.length} teams`,
       url: "eephus.io/projections", filenameBase: "eephus-projections-team-outlook",
-      caption: "Roster WAR at the 47.7 replacement baseline · league-recentered" + (hasFarm ? " · farm rank + surplus from the PROSPX org models" : ""),
-      board: { defaultCount: 30, counts: [10, 30], columns: [
-        { label: "#", frac: 0.06 },
-        { label: "Team", frac: 0.30 },
-        { label: "Roster WAR", frac: 0.18 },
-        { label: "Proj W-L", frac: 0.18 },
-        { label: "Farm", frac: 0.13, wideOnly: true },
-        { label: "Farm surplus", frac: 0.15, wideOnly: true },
-      ], rows: brows },
+      caption: (hasMulti
+        ? `Controlled-core WAR per season at the 47.7 replacement baseline · league-recentered each year · only ${DATA.first_season} is forward-gated`
+        : "Roster WAR at the 47.7 replacement baseline · league-recentered")
+        + (hasFarm ? " · farm rank + surplus from the PROSPX org models" : ""),
+      board: { defaultCount: 30, counts: [10, 30], columns: cols, rows: brows },
     };
   }
 

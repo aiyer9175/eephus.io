@@ -191,6 +191,10 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                 return [round((a[t] or 0) + (b[t] or 0), 2)
                         for t in range(min(HORIZON, len(a), len(b)))]
             war_arr = _sum_arr("war_by_year")
+            # Champion MEAN path (both sides summed) for the team roll-up — the
+            # displayed war_arr may be the median-like ML quantile head, which
+            # must never be summed across a roster.
+            champ_arr = _sum_arr("war_by_year_champ") or war_arr
             # If-healthy display path: workload-discount the pitching side's PTH
             # (a two-way arm can't carry a full starter's innings on top of a
             # full hitting season) before summing. See TWO_WAY_PIT_PTH_FACTOR.
@@ -228,6 +232,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             path = paths[side]
             age = ages[side]
             war_arr = path["war_by_year"][:HORIZON]
+            champ_arr = (path.get("war_by_year_champ") or path["war_by_year"])[:HORIZON]
             pth_arr = (path.get("war_by_year_pth") or war_arr)[:HORIZON]   # if-healthy display path
             p10_arr = (path.get("war_by_year_p10") or [None])[:HORIZON] or None
             p90_arr = (path.get("war_by_year_p90") or [None])[:HORIZON] or None
@@ -242,6 +247,9 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
             "team": (ct or {}).get("team_code"),
             "war": war_arr,
+            # Champion MEAN path (5y) — the SUM basis for the Team Outlook
+            # multi-year roll-up (warChamp[0] == warY1Champ below).
+            "warChamp": [round(w, 2) for w in champ_arr],
             # If-healthy (playing-time-held) display path - shown on the board's
             # WAR cells; surplus/value below still price off `war` (expected value).
             "warPTH": (pth_arr or war_arr),
@@ -415,6 +423,42 @@ def _age_band(age) -> str:
     return "34-99"
 
 
+def _last_controlled_season(m: dict) -> int:
+    """Last season this player counts on his team's CONTROLLED roster — the
+    'control cliff' that makes the out-year team WAR decline as players reach
+    free agency.
+
+    - Prospect: controlled the full window from his ETA (6-year control >> the
+      5-year horizon), so he never cliffs inside the horizon.
+    - Veteran with a Spotrac contract: through ``signed_through`` (``thru``).
+    - Veteran without a contract row: an AGE-based proxy (the pipeline carries
+      no service time) — a pre-arb/arb player (age <= 24) holds the full horizon,
+      a likely pending free agent (age >= 29) holds only the first season.
+    """
+    last = FIRST_SEASON + HORIZON - 1
+    if m.get("src") == "prospect":
+        return last
+    thru = m.get("thru")
+    if thru:
+        try:
+            t = int(thru)
+            # A contract that still covers the first projected season governs
+            # the cliff. A stale / already-expired `thru` (option years, past
+            # deals on a still-rostered player) is ignored — the player is on
+            # the current roster, so fall through to the age proxy, which never
+            # drops the first season.
+            if t >= FIRST_SEASON:
+                return min(t, last)
+        except (TypeError, ValueError):
+            pass
+    try:
+        age = int(m.get("age"))
+    except (TypeError, ValueError):
+        age = 28
+    rem = max(0, min(HORIZON - 1, 29 - age))
+    return FIRST_SEASON + rem
+
+
 def _row_sides(m: dict) -> list[str]:
     if m.get("twoWay"):
         return ["hit", "pit"]              # two-way = both stat lines
@@ -423,13 +467,20 @@ def _row_sides(m: dict) -> list[str]:
 
 def _depth_pool(corpus: dict, names: dict[int, str],
                 contracts: dict[str, dict], vet_mlbams: set) -> tuple[dict, dict]:
-    """Year-1 WAR for every projectable player the exposure floors exclude
+    """Per-season WAR for every projectable player the exposure floors exclude
     from the display list - the retro backtest showed the floor-gated
     universe carries only ~560 of the league's ~1000 WAR while the full
     >=1-input-season population, on real rosters, sums to ~870-930. These
-    players never appear in the UI table; their year-1 WAR joins the Team
-    Outlook roll-up per team (contract team), shrinking the uniform depth
-    allowance to a small remainder. Returns ({org: war_sum}, accounting)."""
+    players never appear in the UI table; their WAR joins the Team Outlook
+    roll-up per team (contract team), shrinking the uniform depth allowance to
+    a small remainder.
+
+    Multi-year: champion MEANS (use_ml=False pins the champion path) are summed
+    season-by-season - the same mean basis the rostered roll-up uses - and each
+    depth player counts only through his control window
+    (_last_controlled_season; depth players are nearly all non-contracted, so
+    the age proxy dominates), so the depth pool also cliffs in the out-years.
+    Returns ({org: [war_2027..2031]}, accounting)."""
     league = corpus["league"]
     curves, war_map = fp.fitted_models(corpus, FIRST_SEASON - 1)
     in_prog = (FIRST_SEASON - 1, fp.season_fraction(league, FIRST_SEASON - 1))
@@ -439,11 +490,11 @@ def _depth_pool(corpus: dict, names: dict[int, str],
         for row in corpus[side]:
             if row.get("mlbam") and row["season"] >= FIRST_SEASON - 3:
                 by_player[side][row["mlbam"]][row["season"]] = row
-    team_war: dict[str, float] = defaultdict(float)
+    team_war: dict[str, list[float]] = defaultdict(lambda: [0.0] * HORIZON)
+    war_unassigned = [0.0] * HORIZON
     n = n_unassigned = 0
-    war_unassigned = 0.0
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
-        w1 = 0.0
+        champ = [0.0] * HORIZON
         age_any = None
         for side in ("hit", "pit"):
             seasons = by_player[side].get(mlbam) or {}
@@ -454,26 +505,36 @@ def _depth_pool(corpus: dict, names: dict[int, str],
             age_prev = next((h.get("age") for h in hist if h.get("age")), None)
             age = (age_prev + (FIRST_SEASON - hist[0]["season"])) if age_prev else None
             age_any = age or age_any
-            proj = fp.project_player(hist, side, FIRST_SEASON, curves, league,
-                                     age, in_progress=in_prog)
-            if proj is None:
+            cp = fm.contract_war_path(hist, side, FIRST_SEASON, HORIZON, age,
+                                      curves, war_map, league,
+                                      in_progress=in_prog, use_ml=False)
+            if cp is None:
                 continue
-            w1 += float(fp.war_from_projection(proj, side, war_map, league,
-                                               FIRST_SEASON) or 0.0)
-        if not w1:
+            arr = cp.get("war_by_year_champ") or cp.get("war_by_year") or []
+            for t in range(HORIZON):
+                if t < len(arr):
+                    champ[t] += float(arr[t] or 0.0)
+        if not any(champ):
             continue
         n += 1
         name = names.get(mlbam)
         ct = contracts.get(normalize_key(name)) if name else None
         org = (ct or {}).get("team_code")
-        if org:
-            team_war[org] += w1
-        else:
+        last_ctrl = _last_controlled_season(
+            {"src": "vet", "thru": (ct or {}).get("signed_through"), "age": age_any})
+        bucket = team_war[org] if org else war_unassigned
+        if not org:
             n_unassigned += 1
-            war_unassigned += w1
-    acct = {"n_depth_players": n, "depth_war_sum": round(sum(team_war.values()), 1),
-            "n_unassigned": n_unassigned, "war_unassigned": round(war_unassigned, 1)}
-    return dict(team_war), acct
+        for t in range(HORIZON):
+            if FIRST_SEASON + t <= last_ctrl:
+                bucket[t] += champ[t]
+    acct = {"n_depth_players": n,
+            "depth_war_y1": round(sum(v[0] for v in team_war.values()), 1),
+            "depth_war_5y": round(sum(sum(v) for v in team_war.values()), 1),
+            "n_unassigned": n_unassigned,
+            "war_unassigned_y1": round(war_unassigned[0], 1),
+            "war_unassigned_5y": round(sum(war_unassigned), 1)}
+    return {k: [round(x, 2) for x in v] for k, v in team_war.items()}, acct
 
 
 def _org_farm_blocks() -> dict[str, dict]:
@@ -520,98 +581,158 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     # rostered universe captures ~56% of that pool (Marcel regression +
     # shrunk playing time + exposure floors), which read as a ~15-win
     # negative bias on every team (the best team projected 83 wins).
-    LEAGUE_WAR_POOL = 1000.0
     LEAGUE_WINS = 2430.0
-    teams: dict[str, dict] = {}
-    for m in vets:
-        tm = m.get("team")
-        w = (m.get("war") or [None])[0]
-        if not tm or w is None:
-            continue
-        t_ = teams.setdefault(tm, {"war": 0.0, "n": 0, "top": []})
-        # Sum the champion MEAN (warY1Champ): the displayed ML quantile
-        # point is median-like and sums to ~half the league's WAR pool
-        # (measured 2026-06-12). Display ranking still uses the shown war.
-        t_["war"] += m.get("warY1Champ") if m.get("warY1Champ") is not None else w
-        t_["n"] += 1
-        t_["top"].append((w, m.get("name"), m.get("key")))
-    for m in prospects:
-        tm = m.get("team")
-        if not tm or m.get("eta") != FIRST_SEASON:
-            continue
-        w = (m.get("war") or [None])[0]
-        if w is None:
-            continue
-        t_ = teams.setdefault(tm, {"war": 0.0, "n": 0, "top": []})
-        t_["war"] += w
-        t_["n"] += 1
-        t_["top"].append((w, m.get("name"), m.get("key")))
-    farm = _org_farm_blocks()
-    # Calibration v2 (2026-06-12, retro-backtest-driven - proj_backtest.py):
-    #   1. cohort intercepts (side x age band, fit 2022-24, won the 2025
-    #      holdout) adjust each ROSTERED player's year-1 contribution;
-    #   2. the sub-floor DEPTH POOL joins per team (the floors hid ~40% of
-    #      the league's WAR from the roll-up - the original 83-win-Dodgers
-    #      level bug);
-    #   3. a small uniform remainder recenters the league to 2,430 wins
-    #      (new entrants ~61 WAR/season + unassigned depth). Ordering moves
-    #      only through measured, committed per-team terms.
     intercepts = intercepts or {}
     depth_team_war = depth_team_war or {}
-    coh_adj: dict[str, float] = defaultdict(float)
+
+    teams: dict[str, dict] = {}
+
+    def _team(tm: str) -> dict:
+        return teams.setdefault(tm, {
+            "raw": [0.0] * HORIZON,   # champion-mean roster WAR, per season
+            "coh": [0.0] * HORIZON,   # cohort-intercept adjustment, per season
+            "n":   [0] * HORIZON,
+            "top": []})               # (year1_war, name, key) for the top-3 strip
+
+    # Veterans contribute their champion MEAN per season (the displayed ML
+    # quantile head is median-like and must NOT be summed), only through their
+    # control window — the 'control cliff' that makes the out-years decline.
     for m in vets:
         tm = m.get("team")
-        if not tm or (m.get("war") or [None])[0] is None:
+        champ = m.get("warChamp") or []
+        if not tm or not champ:
             continue
-        for side in _row_sides(m):
-            coh_adj[tm] += intercepts.get(f"{side}:{_age_band(m.get('age'))}", 0.0)
-    for tm, t_ in teams.items():
-        t_["war_cal"] = (t_["war"] + coh_adj.get(tm, 0.0)
-                         + depth_team_war.get(tm, 0.0))
-    raw_wins_sum = 30 * REPLACEMENT_WINS + sum(t_["war"] for t_ in teams.values())
-    cal_wins_sum = 30 * REPLACEMENT_WINS + sum(t_["war_cal"] for t_ in teams.values())
-    remainder = (LEAGUE_WINS - cal_wins_sum) / max(len(teams), 1)
+        last_ctrl = _last_controlled_season(m)
+        sides = _row_sides(m)
+        age0 = m.get("age")
+        t_ = _team(tm)
+        for t in range(HORIZON):
+            if FIRST_SEASON + t > last_ctrl or t >= len(champ):
+                continue
+            w = champ[t]
+            if w is None:
+                continue
+            t_["raw"][t] += w
+            t_["n"][t] += 1
+            # Cohort intercept, re-banded by age-in-season (out-year application
+            # is an approximation — the fit was on year-1 residuals).
+            band = _age_band((age0 + t) if age0 is not None else None)
+            for side in sides:
+                t_["coh"][t] += intercepts.get(f"{side}:{band}", 0.0)
+        y1 = (m.get("war") or [None])[0]   # displayed year-1 WAR for the strip
+        if y1 is not None:
+            t_["top"].append((y1, m.get("name"), m.get("key")))
+
+    # Prospects join from their ETA season forward (their mean `war[]` is
+    # ETA-aligned, not calendar-aligned). 6-year control >> the horizon, so no
+    # in-horizon cliff.
+    for m in prospects:
+        tm = m.get("team")
+        eta = m.get("eta")
+        war = m.get("war") or []
+        if not tm or eta is None or not war:
+            continue
+        off = int(eta) - FIRST_SEASON
+        if off >= HORIZON:
+            continue
+        t_ = _team(tm)
+        for t in range(max(0, off), HORIZON):
+            idx = t - off
+            if idx < len(war) and war[idx] is not None:
+                t_["raw"][t] += war[idx]
+                t_["n"][t] += 1
+        if off <= 0 and war[0] is not None:
+            t_["top"].append((war[0], m.get("name"), m.get("key")))
+
+    farm = _org_farm_blocks()
+
+    # Per-season INDEPENDENT recenter to the 2,430-win league sum. Calibration
+    # mirrors year-1 (cohort intercepts + sub-floor depth pool + uniform
+    # remainder); applied to every season. In the out-years the freed
+    # control-cliff WAR + unassigned depth + future entrants ride the (growing)
+    # remainder, pulling teams toward .500 unless their controlled core sustains.
+    season_remainder = [0.0] * HORIZON
+    for t in range(HORIZON):
+        cal_sum = 30 * REPLACEMENT_WINS
+        for tm, t_ in teams.items():
+            depth_t = (depth_team_war.get(tm) or [0.0] * HORIZON)[t]
+            cal_sum += t_["raw"][t] + t_["coh"][t] + depth_t
+        season_remainder[t] = (LEAGUE_WINS - cal_sum) / max(len(teams), 1)
+
+    raw_wins_sum_y1 = 30 * REPLACEMENT_WINS + sum(t_["raw"][0] for t_ in teams.values())
     out = []
     for tm, t_ in teams.items():
         t_["top"].sort(reverse=True)
-        wins = round(REPLACEMENT_WINS + t_["war_cal"] + remainder, 1)
-        out.append({"team": tm, "war": round(t_["war"], 1),
-                    "wins": wins,
-                    "losses": round(162.0 - wins, 1),
-                    "winsRaw": round(REPLACEMENT_WINS + t_["war"], 1),
-                    "depthWar": round(t_["war_cal"] - t_["war"] + remainder, 1),
-                    "n": t_["n"],
-                    "top": [{"name": n, "key": k, "war": round(w, 1)}
-                            for w, n, k in t_["top"][:3]],
-                    "farm": farm.get(tm)})
+        depth_arr = depth_team_war.get(tm) or [0.0] * HORIZON
+        by_year = []
+        for t in range(HORIZON):
+            war_cal = t_["raw"][t] + t_["coh"][t] + depth_arr[t]
+            wins = round(REPLACEMENT_WINS + war_cal + season_remainder[t], 1)
+            by_year.append({
+                "season": FIRST_SEASON + t,
+                "war": round(t_["raw"][t], 1),
+                "wins": wins,
+                "losses": round(162.0 - wins, 1),
+                "winsRaw": round(REPLACEMENT_WINS + t_["raw"][t], 1),
+                "depthWar": round(war_cal - t_["raw"][t] + season_remainder[t], 1),
+                "n": t_["n"][t],
+            })
+        y1 = by_year[0]
+        out.append({
+            "team": tm,
+            # Back-compat year-1 top-level fields (GFX + older consumers read
+            # these directly; identical to the prior single-season output).
+            "war": y1["war"], "wins": y1["wins"], "losses": y1["losses"],
+            "winsRaw": y1["winsRaw"], "depthWar": y1["depthWar"], "n": y1["n"],
+            "byYear": by_year,
+            "top": [{"name": n, "key": k, "war": round(w, 1)}
+                    for w, n, k in t_["top"][:3]],
+            "farm": farm.get(tm),
+        })
     out.sort(key=lambda r: -r["wins"])
-    _write_team_outlook_eval(out, raw_wins_sum, remainder, depth_acct or {})
+    _write_team_outlook_eval(out, raw_wins_sum_y1, season_remainder, depth_acct or {})
     return out
 
 
-def _write_team_outlook_eval(rows: list[dict], raw_wins_sum: float,
-                             remainder: float, depth_acct: dict) -> None:
+def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
+                             season_remainder: list[float], depth_acct: dict) -> None:
     """data/team_outlook_eval.json - the league-sum accounting plus the
     shipped calibration composition, committed per the eval-artifact
     standing rule. The retro_backtest block (proj_backtest.py) is
     PRESERVED across re-exports - it is the measurement the calibration
     rests on. The forward gate (MAE vs actual wins) stays pending until
-    the first projected season completes."""
+    the first projected season completes; only the first season is
+    forward-gateable (out-years are a controlled-core trajectory)."""
     try:
         payload = json.loads((DATA_DIR / "team_outlook_eval.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         payload = {}
+    by_season = []
+    for t in range(HORIZON):
+        seas = [r["byYear"][t] for r in rows if t < len(r.get("byYear") or [])]
+        by_season.append({
+            "season": FIRST_SEASON + t,
+            "roster_war_sum": round(sum(s["war"] for s in seas), 1),
+            "wins_sum": round(sum(s["wins"] for s in seas), 1),  # recenters to 2,430
+            "remainder_recenter_wins_per_team": round(season_remainder[t], 2),
+        })
     payload.update({
         "generated_at": date.today().isoformat(),
         "first_season": FIRST_SEASON,
+        "horizon": HORIZON,
         "league_sum_accounting": {
+            # Year-1 aliases (back-compat with the calibration guards + external
+            # readers); the full series lives under by_season.
             "roster_war_sum": round(sum(r["war"] for r in rows), 1),
+            "remainder_recenter_wins_per_team": round(season_remainder[0], 2),
+            "roster_war_sum_y1": round(sum(r["war"] for r in rows), 1),
             "league_war_benchmark": 1000,
             "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-            "raw_wins_sum": round(raw_wins_sum, 1),
+            "raw_wins_sum": round(raw_wins_sum_y1, 1),
+            "raw_wins_sum_y1": round(raw_wins_sum_y1, 1),
             "target_wins_sum": 2430,
             "depth_pool": depth_acct,
-            "remainder_recenter_wins_per_team": round(remainder, 2),
+            "by_season": by_season,
             "coverage_decomposition_2025": {
                 "returning_player_war": 940, "new_entrant_war": 61,
                 "new_entrant_players": 253,
@@ -622,14 +743,29 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum: float,
         "calibration": {
             "kind": "v2: per-team sub-floor depth pool + cohort intercepts "
                     "(side x age band, retro-backtest-fit 2022-24, holdout-gated) "
-                    "+ small uniform remainder to the 2,430-win league sum",
+                    "+ small uniform remainder to the 2,430-win league sum, "
+                    "applied per season",
             "limitations": [
                 "depth-pool team assignment needs a contract row; unassigned depth WAR rides the uniform remainder",
                 "spread stays projection-compressed (correct for a mean projection; bands carry the uncertainty)"],
         },
+        "multi_year": {
+            "kind": "controlled-core: each player counts only through his control "
+                    "window (_last_controlled_season); each season is independently "
+                    "recentered to the 2,430-win league sum",
+            "limitations": [
+                f"only the first season ({FIRST_SEASON}) is forward-gateable; "
+                "out-years (2028+) are a controlled-core competitive trajectory, "
+                "NOT scored against actual standings",
+                "control window = Spotrac signed_through where present, else an "
+                "age-based proxy (no service time in the pipeline)",
+                "cohort intercepts were fit on year-1 residuals; out-year "
+                "application re-bands by age but is an approximation"],
+        },
         "forward_gate": {
             "status": "pending",
             "first_scoreable": f"end of the {FIRST_SEASON} season",
+            "scope": f"first season only; {FIRST_SEASON + 1}+ are not gateable",
             "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"},
     })
     (DATA_DIR / "team_outlook_eval.json").write_text(

@@ -73,3 +73,42 @@ def test_vets_carry_champion_year1_for_aggregation():
     assert n > len(d["vets"]) * 0.9, (
         f"only {n}/{len(d['vets'])} vets carry warY1Champ - team sums "
         "would fall back to the median-like displayed points")
+
+
+def test_vets_carry_champion_path_for_multiyear():
+    """The multi-year roll-up needs the full champion MEAN array, not just the
+    year-1 scalar; warChamp[0] must equal warY1Champ."""
+    d = _load("mlb_projections.json")
+    sample = [m for m in d["vets"] if m.get("warChamp")]
+    assert len(sample) > len(d["vets"]) * 0.9, (
+        f"only {len(sample)}/{len(d['vets'])} vets carry warChamp")
+    for m in sample[:300]:
+        assert len(m["warChamp"]) >= 1
+        if m.get("warY1Champ") is not None:
+            assert abs(m["warChamp"][0] - m["warY1Champ"]) < 0.06, m["name"]
+
+
+def test_team_outlook_multiyear_recenter():
+    """Every projected season independently recenters to the 2,430-win league
+    sum (W+L=162 per team), the multi-year analogue of the year-1 guard."""
+    rows = _load("mlb_projections.json")["team_outlook"]
+    if not any(r.get("byYear") for r in rows):
+        pytest.skip("single-season export (no byYear)")
+    horizon = max(len(r.get("byYear") or []) for r in rows)
+    for t in range(horizon):
+        seas = [r["byYear"][t] for r in rows if t < len(r.get("byYear") or [])]
+        total = sum(s["wins"] for s in seas)
+        assert abs(total - 2430) < 2, f"season idx {t} projects {total} wins"
+        for s in seas:
+            assert abs(s["wins"] + s["losses"] - 162) < 0.2
+
+
+def test_team_outlook_first_season_matches_byyear():
+    """The back-compat top-level fields must equal byYear[0] (GFX + older
+    consumers read them directly)."""
+    rows = _load("mlb_projections.json")["team_outlook"]
+    for r in rows:
+        if not r.get("byYear"):
+            continue
+        assert r["wins"] == r["byYear"][0]["wins"], r["team"]
+        assert r["war"] == r["byYear"][0]["war"], r["team"]

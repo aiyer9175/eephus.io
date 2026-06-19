@@ -183,6 +183,11 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
     a = age or 30
     path = _decay_path(war1, expo, side, decay_role, a, curves)
     out = {"war_by_year": [round(w, 2) for w in path],
+           # The champion MEAN path, carried alongside the (possibly ML)
+           # display path for team roll-up consumers that must sum MEANS, not
+           # the median-like ML quantile head (see the war_y1_champ note in the
+           # ML branch). Inherited unchanged into out_ml via {**out}.
+           "war_by_year_champ": [round(w, 2) for w in path],
            "war_total": round(sum(path[:years]), 2),
            "war_y1": round(path[0], 2) if path else 0.0,
            "role": role, "pt_y1": proj["pt_proj"]}
