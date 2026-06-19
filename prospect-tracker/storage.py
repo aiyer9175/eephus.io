@@ -13138,9 +13138,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     seen = by_src_seen_hashes.setdefault(src, set())
                     if h not in seen:
                         seen.add(h)
+                        # Label + date come from the PER-SOURCE entry, not the
+                        # point. The point's interval_label is just one source's
+                        # label (whichever sorted first that day), so using it
+                        # here mislabeled every other source's writeup on a
+                        # multi-source day - e.g. an MLB Pipeline report stamped
+                        # "TJ Pre-Season 2026" because TJStats shared the date.
                         by_src_entries.setdefault(src, []).append({
-                            "date": pt.get("snapshot_date"),
-                            "label": pt.get("interval_label"),
+                            "date": (info or {}).get("snapshot_date") or pt.get("snapshot_date"),
+                            "label": (info or {}).get("interval_label") or pt.get("interval_label"),
                             "text": rpt,
                             "hash": h,
                         })
