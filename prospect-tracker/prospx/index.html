@@ -10,20 +10,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>PROSPX βv1.0</title>
-  <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta name="description" content="Consensus FV tracker across five industry prospect-ranking sources.">
 
   <!-- Social cards + canonical (mirrors build_site.py's _social_meta block;
        this file is hand-edited so the tags are inlined here). -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="PROSPX - consensus prospect tracker">
-  <meta property="og:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta property="og:description" content="Consensus FV tracker across five industry prospect-ranking sources.">
   <meta property="og:site_name" content="eephus.io">
   <meta property="og:url" content="https://eephus.io/prospx/">
   <link rel="canonical" href="https://eephus.io/prospx/">
   <meta property="og:image" content="https://eephus.io/assets/share-default.png">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="PROSPX - consensus prospect tracker">
-  <meta name="twitter:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta name="twitter:description" content="Consensus FV tracker across five industry prospect-ranking sources.">
   <meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
 
   <!-- Favicons (committed artifacts; tools/generate_brand_assets.py) -->
@@ -9266,7 +9266,7 @@
         <button class="chip" data-farm-sort="level_DSL">DSL</button>
       </div>
       <div class="filter-group filter-group-tendency" style="flex-basis:100%;">
-        <span class="filter-label" title="Filter the board to organizations with a pronounced behavioral tendency (from the Org Tendencies model). Pick any combination - an org shows if it earns any selected badge.">Tendencies</span>
+        <span class="filter-label" title="Filter the board to organizations with a pronounced behavioral tendency (from the Org Tendencies model). Selecting multiple narrows to orgs that earn ALL of them.">Tendencies</span>
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
@@ -33291,7 +33291,8 @@ function renderFarmSystems() {
     } else {
       orgs = orgs.filter(o => {
         const kinds = new Set(orgBadgeSet(o.org).map(b => b.kind));
-        return [..._tendSel].some(k => kinds.has(k));
+        // AND semantics: an org must earn EVERY selected tendency badge.
+        return [..._tendSel].every(k => kinds.has(k));
       });
     }
   }

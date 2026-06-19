@@ -249,11 +249,10 @@ function _methProseHTML() {
     <h2 class="meth-h">How the consensus FV is built</h2>
     <p>Every source that publishes an explicit 20–80 Future Value grade contributes
     <strong>equally</strong> - there is no per-source weighting. The consensus FV is the
-    mean of those published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
-    and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
-    contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
-    any explicit FV exists, the grade mean wins and ranks become informational (the
-    <code>avg_rank</code> field).</p>
+    mean of those published grades from five industry sources (FanGraphs, ESPN,
+    Just Baseball, TJStats, and MLB Pipeline - domestic + International). When no source has
+    graded a player yet, a rank→implied-FV stands in; once any explicit FV exists, the grade
+    mean wins and ranks become informational (the <code>avg_rank</code> field).</p>
     <p>Grades are <strong>forward-filled</strong>: because sources publish on different dates,
     the consensus at any date uses the latest snapshot from <em>every</em> source up to that
     date, so a player isn't reduced to a single most-recent list. It is then
@@ -359,11 +358,27 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Data sources &amp; references</h2>
     <ul class="meth-refs">
-      <li><strong>Scouting grades / FV:</strong> FanGraphs, MLB Pipeline (domestic + international), ESPN, Just Baseball, TJStats; rank-only fallbacks from Baseball America and The Athletic.</li>
-      <li><strong>Performance &amp; tracked data:</strong> MLB Stats API (MLB + MiLB statlines), Baseball Savant (Statcast) where available for upper-level / debuted players.</li>
+      <li><strong>Scouting grades / FV:</strong> FanGraphs, MLB Pipeline (domestic + international), ESPN, Just Baseball, TJStats - five independent industry sources blended into the consensus.</li>
+      <li><strong>Performance &amp; tracked data:</strong> MLB Stats API (MLB + MiLB statlines), Baseball Savant (Statcast) where available for upper-level / debuted players, pulled via pybaseball.</li>
       <li><strong>Contracts &amp; bonuses:</strong> published MLB draft-pool and international bonus-pool figures; Spotrac for graduate contract/AAV data.</li>
       <li><strong>Framework anchors:</strong> the FanGraphs scouting primer (FV→WAR ranges) and public $/WAR estimates (tiered, rolling multi-year average). The surplus engine's outcome buckets and discount rate are documented in <code>value_framework.py</code>.</li>
     </ul>
+
+    <h2 class="meth-h">Data sources &amp; attribution</h2>
+    <p class="meth-note">PROSPX grades are a consensus built across five independent industry sources - the value added is the aggregation, calibration, and track-record audit, not any single list. No source's rankings or reports are republished wholesale; excerpts appear with attribution in the spirit of commentary and analysis. All trademarks and data remain the property of their owners. The full attribution page lives at <a href="/sources/">/sources/</a>.</p>
+    <div class="article-grid">
+      ${[
+        ["FanGraphs", "https://www.fangraphs.com/", "Prospect rankings, FV + tool grades, scouting reports (consensus input); league stats and park factors."],
+        ["MLB Pipeline", "https://www.mlb.com/prospects", "Prospect rankings and grades (consensus input); draft bonus pools and slot values."],
+        ["ESPN", "https://www.espn.com/mlb/", "Prospect rankings (consensus input); team logo imagery on internal surfaces."],
+        ["Just Baseball", "https://www.justbaseball.com/", "Prospect rankings (consensus input)."],
+        ["TJStats", "https://x.com/TJStats", "Prospect rankings (consensus input) and movers wire."],
+        ["MLB Stats API / Baseball Savant", "https://baseballsavant.mlb.com/", "Game logs, transactions, rosters, Statcast tracking data, and player headshots."],
+        ["Baseball-Reference", "https://www.baseball-reference.com/", "bWAR - the WAR framework used site-wide - plus historical player pages."],
+        ["pybaseball", "https://github.com/jldbc/pybaseball", "Open-source Python toolkit used to pull Statcast, FanGraphs, and Baseball-Reference data programmatically."],
+        ["Spotrac", "https://www.spotrac.com/", "Contracts, payrolls, free-agent classes, and international signing trackers."],
+      ].map(([nm, url, use]) => `<div class="card source-card"><h3><a href="${url}" target="_blank" rel="noopener noreferrer">${escapeHtml(nm)}</a></h3><p>${escapeHtml(use)}</p></div>`).join("")}
+    </div>
     <p class="meth-note">All grades remain the property of their publishers; the site stores them to compute a consensus and does not redistribute source lists wholesale.</p>
 
     <h2 class="meth-h">Methodology changelog</h2>
