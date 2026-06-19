@@ -223,6 +223,22 @@ _LEADING_VIDEO_REPORT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Leading scouting-BIO line — several sources (Just Baseball most visibly)
+# prepend a pipe-delimited vitals line before the prose, e.g.:
+#   "Height/Weight: 6'1", 190 | Bat/Throw: S/R | IFA: $950K - 2024 (MIL) | ETA: 2027"
+# It duplicates the structured bio our UI already renders above the writeup,
+# so it's noise inside the narrative. We detect it structurally (a leading
+# line carrying known vitals labels, usually pipe-separated) rather than
+# matching one source's exact wording, so every source is handled the same.
+# Each field label is "Label:" — count >=2 (or a pipe + >=1) to fire, which
+# real prose never trips.
+_BIO_FIELD_LABEL_RE = re.compile(
+    r"(?:Height\s*/\s*Weight|Ht\s*/\s*Wt|Bat\s*/\s*Throw|Bats?\s*/\s*Throws?"
+    r"|ETA|IFA|Drafted|Draft|Signed|Signing|Bonus|Age|DOB|Born|Position|Pos"
+    r"|Weight|Height)\s*:",
+    re.IGNORECASE,
+)
+
 
 def _clean_report_prose(text: str | None) -> str | None:
     """Centralized writeup cleaner — strips page-navigation cruft,
@@ -284,6 +300,20 @@ def _clean_report_prose(text: str | None) -> str | None:
     # 5. Strip leading section header artifacts.
     s = _LEADING_HEADER_RE.sub("", s).lstrip()
     s = _LEADING_VIDEO_REPORT_RE.sub("", s).lstrip()
+
+    # 5b. Strip a leading scouting-bio line (Height/Weight | Bat/Throw |
+    #     IFA/Draft | ETA ...). Look only at the first line; drop it (through
+    #     the following blank line / newline) when it carries >=2 vitals
+    #     labels, or a pipe plus >=1 - structural so it generalizes across
+    #     sources without matching prose. Loop in case two bio lines stack.
+    for _ in range(2):
+        nl = s.find("\n")
+        first_line = s if nl < 0 else s[:nl]
+        n_fields = len(_BIO_FIELD_LABEL_RE.findall(first_line))
+        looks_bio = n_fields >= 2 or ("|" in first_line and n_fields >= 1)
+        if not looks_bio:
+            break
+        s = (s[nl + 1:] if nl >= 0 else "").lstrip("\n").lstrip()
 
     # 6. Collapse non-breaking space + double spaces.
     s = s.replace(" ", " ")

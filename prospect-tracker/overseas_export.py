@@ -74,6 +74,9 @@ from pathlib import Path
 
 from player_images import country_flag_svg_url, player_headshot_url
 from storage import (
+    _grad_wag,
+    load_career_stats,
+    load_career_war,
     load_overseas_canonical_keys,
     load_overseas_players,
     load_overseas_snapshots,
@@ -346,11 +349,138 @@ def _posting_days_remaining(posted_date: str | None) -> int | None:
     return days
 
 
+def _load_mlb_career_index() -> dict[str, dict]:
+    """player_key -> a graduate-shaped payload sufficient for
+    storage._grad_wag: {position, sabermetrics.is_pitcher, fv_close,
+    career_war{...}, career_stats[...]}.
+
+    Two layers, last-write-wins:
+      1. The career_war / career_stats DB tables - the tracked-prospect
+         graduates (same source debuts.json uses), so they're always
+         available even on a fresh deploy.
+      2. data/mlb_player_detail.json - the BROAD MLB career-WAR layer
+         (war_daily keyed by mlbam), keyed by the same canonical
+         player_key. This is what covers established NPB/KBO imports who
+         were never tracked MiLB prospects (Suzuki, Sugano, Martinez...).
+
+    Best-effort: a missing/unreadable artifact or DB simply yields a
+    smaller index, so signings degrade to '-' rather than crashing the
+    export. The artifact is a build output (overseas_export runs before
+    the MLB-detail export in a full monthly), so it reads the previous
+    cycle's file - stale-by-one-run is fine for slow-moving career WAR."""
+    idx: dict[str, dict] = {}
+
+    # Layer 1 - DB tables (tracked-prospect graduates).
+    try:
+        cwar = load_career_war() or {}
+        cstats = load_career_stats() or {}
+    except Exception:
+        cwar, cstats = {}, {}
+    for pk, cw in cwar.items():
+        if not isinstance(cw, dict) or cw.get("career_war") is None:
+            continue
+        idx[pk] = {"career_war": cw, "career_stats": cstats.get(pk) or []}
+
+    # Layer 2 - mlb_player_detail.json (broad MLB coverage; wins on overlap).
+    # Resolve relative to THIS module, not the cwd: the export runs from the
+    # pipeline under varying working directories, and a cwd-relative path was
+    # silently missing the file (dropping career WAR for every non-DB player).
+    detail_path = Path(__file__).resolve().parent / "data" / "mlb_player_detail.json"
+    try:
+        detail = json.loads(detail_path.read_text(encoding="utf-8"))
+        players = (detail or {}).get("players") or {}
+    except (OSError, ValueError):
+        players = {}
+    for pk, rec in players.items():
+        if not isinstance(rec, dict):
+            continue
+        seasons: dict[str, float] = {}
+        rows: list[dict] = []
+        total = 0.0
+        n = 0
+        for row in (rec.get("career") or []):
+            y = row.get("y")
+            if y is None:
+                continue
+            w = row.get("war")
+            if isinstance(w, (int, float)):
+                seasons[str(y)] = w
+                total += w
+                n += 1
+            pa, ip = row.get("pa"), row.get("ip")
+            rows.append({
+                "level": "MLB", "season": y,
+                "pa": int(pa) if isinstance(pa, (int, float)) else None,
+                "ip": float(ip) if ip not in (None, "") else None,
+            })
+        if n == 0:
+            continue
+        origin = rec.get("origin") or {}
+        idx[pk] = {
+            "position": rec.get("pos"),
+            "sabermetrics": {"is_pitcher": bool(rec.get("isPit"))},
+            "fv_close": origin.get("fvClose"),
+            "career_war": {
+                "career_war": round(total, 2),
+                "war_seasons_count": n,
+                "war_per_yr": round(total / n, 2) if n else None,
+                "seasons": seasons,
+            },
+            "career_stats": rows,
+        }
+    return idx
+
+
+def _signing_performance(entry: dict | None, position, consensus_fv) -> dict:
+    """Realized career value for a signing: {career_war, war_per_yr, wag}.
+
+    career_war = total bWAR; war_per_yr = career WAR / MLB seasons (the same
+    per-season rate the WAG engine compares against - intentionally simpler
+    than the playing-time-weighted variant so the two columns stay
+    internally coherent). wag runs through the shared storage._grad_wag so it
+    matches every other WAG on the site; the grade is the graduate record's
+    own FV where present, else the overseas consensus FV. All-None when there
+    is no career WAR on file (a player who never reached MLB)."""
+    out = {"career_war": None, "war_per_yr": None, "wag": None}
+    if not entry:
+        return out
+    cw = entry.get("career_war") or {}
+    total = cw.get("career_war")
+    if total is None:
+        return out
+    try:
+        out["career_war"] = round(float(total), 1)
+    except (TypeError, ValueError):
+        return out
+    wpy = cw.get("war_per_yr")
+    if wpy is None and cw.get("war_seasons_count"):
+        wpy = total / cw["war_seasons_count"]
+    out["war_per_yr"] = round(float(wpy), 2) if wpy is not None else None
+
+    fv = entry.get("fv_close")
+    if fv is None:
+        fv = consensus_fv
+    payload = {
+        "position": entry.get("position") or position,
+        "sabermetrics": entry.get("sabermetrics") or {},
+        "fv_close": fv, "fv_close_raw": fv,
+        "career_war": cw,
+        "career_stats": entry.get("career_stats") or [],
+    }
+    try:
+        out["wag"] = _grad_wag(payload)
+    except Exception:
+        out["wag"] = None
+    return out
+
+
 def _build_league(league: str,
                   all_snaps: list[dict],
                   players_by_key: dict[str, dict],
                   stats_by_player: dict[str, list[dict]],
-                  canonical_keys: dict[str, str]) -> dict:
+                  canonical_keys: dict[str, str],
+                  mlb_career_idx: dict[str, dict] | None = None) -> dict:
+    mlb_career_idx = mlb_career_idx or {}
     snaps = [s for s in all_snaps if s.get("league") == league]
     by_player: dict[str, list[dict]] = defaultdict(list)
     for s in snaps:
@@ -407,6 +537,15 @@ def _build_league(league: str,
             # formally committed to an org. Routed into `signings`.
             if _is_promoted:
                 n_filtered_promoted += 1
+            milb_key = canonical_keys.get(pk)
+            consensus_fv = int(math.ceil(fv)) if fv is not None else None
+            # Realized MLB value (career WAR / WAR-per-yr / WAG), joined on
+            # the canonical key and embedded so the frontend never has to
+            # lazy-load the 100MB+ graduate payload to fill these columns.
+            perf = _signing_performance(
+                mlb_career_idx.get(milb_key),
+                any_snap.get("position") or player_meta.get("position"),
+                consensus_fv)
             signings.append({
                 "player_key":       pk,
                 "player_name":      any_snap.get("player_name"),
@@ -416,7 +555,7 @@ def _build_league(league: str,
                 "country_flag":     COUNTRY_FLAG.get(country, ""),
                 "country_code":     COUNTRY_CODE.get(country),
                 "country_flag_svg": country_flag_svg_url(COUNTRY_CODE.get(country)),
-                "consensus_fv":     int(math.ceil(fv)) if fv is not None else None,
+                "consensus_fv":     consensus_fv,
                 "consensus_fv_plus": fv_plus,
                 "status":           status,
                 "posted_date":      posted_date,
@@ -426,7 +565,10 @@ def _build_league(league: str,
                 "proj_team":        any_snap.get("proj_team") or player_meta.get("proj_team"),
                 "proj_bonus_usd":   any_snap.get("proj_bonus_usd") or player_meta.get("proj_bonus_usd"),
                 "eta_year":         any_snap.get("eta_year") or player_meta.get("eta_year"),
-                "milb_key":         canonical_keys.get(pk),
+                "milb_key":         milb_key,
+                "career_war":       perf["career_war"],
+                "war_per_yr":       perf["war_per_yr"],
+                "wag":              perf["wag"],
             })
             continue
 
@@ -601,12 +743,13 @@ def _build_league(league: str,
                                   -(p.get("consensus_fv") or 0),
                                   -(1 if p.get("consensus_fv_plus") else 0)))
 
-    # Recently-signed first: by signing/posting date desc, then bonus desc,
-    # then name. The frontend re-groups by year, but a deterministic export
-    # order keeps diffs clean and the League Context "top bonus" stable.
+    # Most recent class first: by arrival year (eta_year - the real signing
+    # class; signed_date is a backfill stamp, not the actual signing date),
+    # then by realized career WAR, then name. The frontend re-groups by
+    # eta_year, but a deterministic export order keeps diffs clean.
     signings.sort(key=lambda s: (
-        (s.get("signed_date") or s.get("posted_date") or ""),
-        (s.get("signed_bonus_usd") or 0),
+        (s.get("eta_year") or 0),
+        (s.get("career_war") if s.get("career_war") is not None else -99),
         s.get("player_name") or "",
     ), reverse=True)
 
@@ -662,8 +805,11 @@ def build_overseas_export() -> dict:
             counts[s["league"]] += 1
     leagues.sort(key=lambda l: -counts[l])
 
+    # Realized MLB career value, joined onto signings (loaded once).
+    mlb_career_idx = _load_mlb_career_index()
+
     league_blocks = [_build_league(l, all_snaps, players, stats_by_player,
-                                    canonical) for l in leagues]
+                                    canonical, mlb_career_idx) for l in leagues]
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),

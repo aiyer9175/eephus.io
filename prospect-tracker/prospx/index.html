@@ -9032,7 +9032,7 @@
       <button class="chip" data-overseas-view="posting"
               title="Players currently posted (KBO/NPB posting system) - days remaining in their MLB negotiation window">Posting Tracker</button>
       <button class="chip" data-overseas-view="signed"
-              title="Recently signed overseas free agents and where they landed">Recently Signed</button>
+              title="Overseas free agents who have signed with MLB clubs, grouped by arrival year, with how each signing has panned out">Past Signings</button>
       <button class="chip" data-overseas-view="leaderboard"
               title="Top by FV + per-position bests + biggest projected bonuses">Leaderboard</button>
       <button class="chip" data-overseas-view="league-context"
@@ -24207,13 +24207,13 @@ function _renderOverseasPosting(host, prospects) {
 }
 
 function _renderOverseasSigned(host, signings) {
-  // POSTING CLASSES view. Each posting year gets its own table with
-  // a header rollup (count, total bonus, mean WAG, mean WAR/yr). WAG
-  // + WAR/yr are sourced via the prospect's milb_key linking to the
-  // graduate's MLB performance - both pulled through the same helpers
-  // used by the graduate page + farm grade tree so numbers match.
-  // The export routes graduated / committed players into the parallel
-  // `signings` list (they're pulled out of the ranked prospect pool);
+  // SIGNING CLASSES view, grouped by the year the player actually reached
+  // MLB (eta_year - the real arrival class). career WAR / WAR-per-yr / WAG
+  // are computed in the export (overseas_export._signing_performance) by
+  // joining the canonical key to the MLB career-WAR layer and running the
+  // shared WAG engine, then embedded on each signing - so the numbers match
+  // the rest of the site and the 100MB+ graduate payload never has to load
+  // here. The export routes graduated / committed players into `signings`;
   // we still gate on status / signed_team so a stray reverse-migration
   // record can never slip into the track record.
   const signed = (signings || []).filter(p => p.status === "mlb_promoted" || p.signed_team);
@@ -24229,39 +24229,14 @@ function _renderOverseasSigned(host, signings) {
     return;
   }
 
-  // Lookup table from milb_key → graduate object. DATA.debuts is the
-  // canonical source for career WAR + boom-label metrics.
-  const gradsByKey = {};
-  for (const g of (DATA.debuts || [])) {
-    if (g.player_key) gradsByKey[g.player_key] = g;
-  }
-  // Active players (not yet graduated) also carry career_war for the
-  // mid-season case where Yamamoto/Imanaga are still "active" prospects
-  // by status flag but already accumulating MLB WAR.
-  const playersByKey = {};
-  for (const p of (DATA.players || [])) {
-    if (p.player_key) playersByKey[p.player_key] = p;
-  }
+  const mean = arr => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
+  const fmtSigned = v => v == null ? " - " : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
+  const fmtWpy = v => v == null ? " - " : `${v.toFixed(2)}`;
+  const fmtWar = v => v == null ? " - " : `${v >= 0 ? "" : ""}${v.toFixed(1)}`;
 
-  // Per-prospect WAG + WAR/yr via the canonical helpers. Returns
-  // {wag, war_per_yr} with nulls for sub-floor samples.
-  const perfFor = (op) => {
-    if (!op.milb_key) return { wag: null, war_per_yr: null };
-    const g = gradsByKey[op.milb_key] || playersByKey[op.milb_key];
-    if (!g) return { wag: null, war_per_yr: null };
-    const wpyObj = gradWarPerYr(g);
-    return {
-      wag: gradVsFvProjection(g),
-      war_per_yr: wpyObj ? wpyObj.war_per_yr : null,
-    };
-  };
-
-  // Group by posting year (or signed year fallback).
-  const yearOf = (op) => {
-    const d = op.posted_date || op.signed_date;
-    if (!d) return " - ";
-    return String(d).slice(0, 4);
-  };
+  // Group by MLB-arrival year (eta_year). signed_date is a backfill stamp,
+  // not the real signing date, so it can't drive the class label.
+  const yearOf = (op) => op.eta_year != null ? String(op.eta_year) : " - ";
   const byYear = {};
   for (const op of signed) {
     const yr = yearOf(op);
@@ -24274,10 +24249,6 @@ function _renderOverseasSigned(host, signings) {
     return b.localeCompare(a);
   });
 
-  const mean = arr => arr.length ? arr.reduce((s, v) => s + v, 0) / arr.length : null;
-  const fmtSigned = v => v == null ? " - " : `${v >= 0 ? "+" : ""}${v.toFixed(2)}`;
-  const fmtWpy = v => v == null ? " - " : `${v.toFixed(2)}`;
-
   // v30.7 - Per-league summary roll-up. The year-by-year cohort view
   // below tells the temporal story; this top strip tells the per-league
   // story (which leagues' bets have actually panned out).
@@ -24288,14 +24259,12 @@ function _renderOverseasSigned(host, signings) {
   }
   const leagueSummary = Object.keys(byLeague).sort().map(lg => {
     const ops = byLeague[lg];
-    const perfs = ops.map(perfFor);
-    const wags = perfs.map(x => x.wag).filter(v => v != null);
-    const wpys = perfs.map(x => x.war_per_yr).filter(v => v != null);
+    const wags = ops.map(op => op.wag).filter(v => v != null);
+    const wpys = ops.map(op => op.war_per_yr).filter(v => v != null);
     const meanWag = mean(wags);
     const meanWpy = mean(wpys);
     const hits = wags.filter(v => v >= 0).length;
     const hitRate = wags.length ? hits / wags.length : null;
-    const totalSpend = ops.reduce((s, op) => s + (op.signed_bonus_usd || 0), 0);
     const meanWagColor = meanWag == null ? "var(--text-tertiary)"
       : meanWag >= 0 ? "var(--up)" : "var(--down)";
     const hitColor = hitRate == null ? "var(--text-tertiary)"
@@ -24305,7 +24274,6 @@ function _renderOverseasSigned(host, signings) {
     return `<tr>
       <td><span style="color:${_leagueBadgeColor(lg)};font-weight:700;">${escapeHtml(lg)}</span></td>
       <td>${ops.length}</td>
-      <td style="font-variant-numeric:tabular-nums;">${_fmtUSD(totalSpend) || " - "}</td>
       <td style="font-variant-numeric:tabular-nums;color:${meanWagColor};">${fmtSigned(meanWag)}</td>
       <td style="font-variant-numeric:tabular-nums;">${fmtWpy(meanWpy)}</td>
       <td style="font-variant-numeric:tabular-nums;color:${hitColor};">${hitRate == null ? " - " : (hitRate*100).toFixed(0) + "% (" + hits + "/" + wags.length + ")"}</td>
@@ -24316,46 +24284,50 @@ function _renderOverseasSigned(host, signings) {
       <h3>By-league signing track record</h3>
       <table class="draft-table">
         <thead><tr>
-          <th>League</th><th>Signed</th><th>Total spend</th>
-          <th title="Mean WAR Above Grade - career WAR/yr minus FV-implied">Mean WAG</th>
+          <th>League</th><th>Signed</th>
+          <th title="Mean WAR Above Grade - career WAR per season minus FV-implied">Mean WAG</th>
           <th title="Mean career WAR per season">WAR/yr</th>
-          <th title="Share of signed prospects whose career WAR/yr ≥ FV-implied">Hit rate</th>
+          <th title="Share of signed players whose WAG ≥ 0 (met or beat their grade)">Hit rate</th>
         </tr></thead>
         <tbody>${leagueSummary}</tbody>
       </table>
     </div>` : "";
 
   const sections = years.map(yr => {
+    // Sort within a class by realized career WAR (nulls sink), then WAG.
     const ops = byYear[yr].slice().sort((a, b) =>
-      (b.signed_bonus_usd || b.proj_bonus_usd || 0)
-      - (a.signed_bonus_usd || a.proj_bonus_usd || 0));
-    const totalBonus = ops.reduce((s, op) =>
-      s + (op.signed_bonus_usd || op.proj_bonus_usd || 0), 0);
-    const perfs = ops.map(perfFor);
-    const wags = perfs.map(x => x.wag).filter(v => v != null);
-    const wpys = perfs.map(x => x.war_per_yr).filter(v => v != null);
+      ((b.career_war ?? -99) - (a.career_war ?? -99))
+      || ((b.wag ?? -99) - (a.wag ?? -99))
+      || (a.player_name || "").localeCompare(b.player_name || ""));
+    const wags = ops.map(op => op.wag).filter(v => v != null);
+    const wpys = ops.map(op => op.war_per_yr).filter(v => v != null);
     const meanWag = mean(wags);
     const meanWpy = mean(wpys);
+    const tracked = ops.filter(op => op.career_war != null).length;
 
-    const rows = ops.map((op, i) => {
-      const perf = perfs[i];
-      const wagColor = perf.wag == null ? "var(--text-tertiary)"
-                     : perf.wag >= 0   ? "var(--up)" : "var(--down)";
-      const wpyColor = perf.war_per_yr == null ? "var(--text-tertiary)"
-                     : perf.war_per_yr >= 2.0  ? "var(--up)"
-                     : perf.war_per_yr >= 0.5  ? "var(--text-primary)"
-                     :                            "var(--down)";
-      const milbLink = op.milb_key
-        ? ` <a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(op.milb_key)}');" style="font-size:10px;color:var(--neon-green);text-decoration:none;">→ MiLB</a>` : "";
+    const rows = ops.map(op => {
+      const wagColor = op.wag == null ? "var(--text-tertiary)"
+                     : op.wag >= 0    ? "var(--up)" : "var(--down)";
+      const wpyColor = op.war_per_yr == null ? "var(--text-tertiary)"
+                     : op.war_per_yr >= 2.0  ? "var(--up)"
+                     : op.war_per_yr >= 0.5  ? "var(--text-primary)"
+                     :                          "var(--down)";
+      const warColor = op.career_war == null ? "var(--text-tertiary)"
+                     : op.career_war >= 0    ? "var(--text-primary)" : "var(--down)";
       const leagueFlag = _flagImg(op.country_flag_svg, op.country_flag, op.country, { small: true });
+      const fvBadge = op.consensus_fv != null
+        ? ` <span class="fv-badge ${fvClass(String(fvCeil(op.consensus_fv)))}" style="font-size:9px;padding:0 4px;">${fvCeil(op.consensus_fv)}</span>` : "";
+      const team = op.signed_team || op.proj_team || "";
+      const teamCell = team
+        ? `<span style="display:inline-flex;align-items:center;gap:5px;">${teamLogoHTML(team, "sm", (typeof fullOrgName === "function" ? fullOrgName(team) : team))}<strong>${escapeHtml(team)}</strong></span>`
+        : `<span style="color:var(--text-tertiary);">?</span>`;
       return `<tr>
-        <td><strong>${escapeHtml(op.player_name)}</strong>${milbLink}</td>
+        <td><strong>${escapeHtml(op.player_name)}</strong>${fvBadge}</td>
         <td><span style="display:inline-flex;align-items:center;gap:3px;color:var(--text-secondary);">${escapeHtml(op.league || "?")}${leagueFlag ? ` ${leagueFlag}` : ""}</span></td>
-        <td><strong>${escapeHtml(op.signed_team || op.proj_team || "?")}</strong></td>
-        <td>${escapeHtml(op.signed_date || op.posted_date || " - ")}</td>
-        <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;">${_fmtUSD(op.signed_bonus_usd || op.proj_bonus_usd) || " - "}</td>
-        <td style="text-align:right;color:${wagColor};font-variant-numeric:tabular-nums;">${fmtSigned(perf.wag)}</td>
-        <td style="text-align:right;color:${wpyColor};font-variant-numeric:tabular-nums;">${fmtWpy(perf.war_per_yr)}</td>
+        <td>${teamCell}</td>
+        <td style="text-align:right;color:${warColor};font-variant-numeric:tabular-nums;">${fmtWar(op.career_war)}</td>
+        <td style="text-align:right;color:${wpyColor};font-variant-numeric:tabular-nums;">${fmtWpy(op.war_per_yr)}</td>
+        <td style="text-align:right;color:${wagColor};font-variant-numeric:tabular-nums;">${fmtSigned(op.wag)}</td>
       </tr>`;
     }).join("");
 
@@ -24363,13 +24335,13 @@ function _renderOverseasSigned(host, signings) {
       : `<span style="color:${meanWag >= 0 ? 'var(--up)' : 'var(--down)'};">${fmtSigned(meanWag)}</span>`;
     const meanWpyHtml = meanWpy == null ? " - "
       : `<span style="color:${meanWpy >= 1.0 ? 'var(--up)' : 'var(--text-primary)'};">${fmtWpy(meanWpy)}</span>`;
+    const classLabel = yr === " - " ? "UNDATED" : `${escapeHtml(yr)} ARRIVALS`;
     return `
       <div class="draft-panel" style="margin-bottom:18px;">
         <h3 style="font-family:var(--font-sans);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;font-weight:700;color:var(--text-secondary);margin-bottom:6px;">
-          ${escapeHtml(yr)} POSTING CLASS
+          ${classLabel}
           <span style="font-weight:500;color:var(--text-tertiary);text-transform:none;letter-spacing:0;margin-left:8px;">
-            ${ops.length} signed
-            · ${_fmtUSD(totalBonus) || " - "} total
+            ${ops.length} signed${tracked < ops.length ? ` · ${tracked} w/ MLB sample` : ""}
             · mean WAG ${meanWagHtml}
             · mean ${meanWpyHtml} WAR/yr
           </span>
@@ -24379,10 +24351,9 @@ function _renderOverseasSigned(host, signings) {
             <th>Player</th>
             <th>League</th>
             <th>Signed by</th>
-            <th>Date</th>
-            <th style="text-align:right;">Bonus</th>
-            <th style="text-align:right;" title="WAR Above Grade - career WAR/yr minus FV-implied expectation. Requires ≥1 full-season MLB sample (else ' - ').">Career WAG</th>
-            <th style="text-align:right;" title="Playing-time-weighted career WAR per season. Requires ≥1 full-season MLB sample (else ' - ').">WAR/yr</th>
+            <th style="text-align:right;" title="Total career bWAR since reaching MLB.">Career WAR</th>
+            <th style="text-align:right;" title="Career WAR per MLB season. Requires ≥1 full-season sample (else ' - ').">WAR/yr</th>
+            <th style="text-align:right;" title="WAR Above Grade - career WAR per season minus FV-implied expectation. Requires ≥1 full-season MLB sample (else ' - ').">WAG</th>
           </tr></thead>
           <tbody>${rows}</tbody>
         </table>
@@ -24521,25 +24492,11 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
 // (signed prospects + their grad WAG/WAR). Helps the user understand
 // WHY the same K% in NPB doesn't mean what it means in MLB.
 function _renderOverseasLeagueContext(host, leagues, prospects) {
-  // --- Lookup tables for the signing track-record block ---
-  const gradsByKey = {};
-  for (const g of (DATA.debuts || [])) {
-    if (g.player_key) gradsByKey[g.player_key] = g;
-  }
-  const playersByKey = {};
-  for (const p of (DATA.players || [])) {
-    if (p.player_key) playersByKey[p.player_key] = p;
-  }
-  const perfFor = (op) => {
-    if (!op.milb_key) return { wag: null, war_per_yr: null };
-    const g = gradsByKey[op.milb_key] || playersByKey[op.milb_key];
-    if (!g) return { wag: null, war_per_yr: null };
-    const wpyObj = (typeof gradWarPerYr === "function") ? gradWarPerYr(g) : null;
-    const wag = (typeof gradVsFvProjection === "function") ? gradVsFvProjection(g) : null;
-    return { wag, war_per_yr: wpyObj ? wpyObj.war_per_yr : null };
-  };
-
-  // Build per-league cards.
+  // Build per-league cards. The signing track-record block reads the
+  // career WAR / WAR-per-yr / WAG that the export embeds on each signing
+  // (overseas_export._signing_performance), so it needs no runtime
+  // graduate-payload lookup and stays consistent with the Recently Signed
+  // view + the rest of the site.
   const cards = leagues.map(lg => {
     const ctx = lg.league_context || {};
     const lgProspects = (lg.prospects || []);
@@ -24548,11 +24505,9 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
     // gate on status / signed_team to drop any reverse-migration record.
     const signed = (lg.signings || []).filter(p => p.status === "mlb_promoted" || p.signed_team);
 
-    // Signing track record.
-    const totalBonus = signed.reduce((s, op) => s + (op.signed_bonus_usd || 0), 0);
-    const perfs = signed.map(perfFor);
-    const wagVals = perfs.map(x => x.wag).filter(v => v != null);
-    const wpyVals = perfs.map(x => x.war_per_yr).filter(v => v != null);
+    // Signing track record (embedded perf fields).
+    const wagVals = signed.map(op => op.wag).filter(v => v != null);
+    const wpyVals = signed.map(op => op.war_per_yr).filter(v => v != null);
     const meanWag = wagVals.length ? wagVals.reduce((s, v) => s + v, 0) / wagVals.length : null;
     const meanWpy = wpyVals.length ? wpyVals.reduce((s, v) => s + v, 0) / wpyVals.length : null;
     const hits = wagVals.filter(v => v >= 0).length;
@@ -24564,9 +24519,11 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
     const elite = (fvDist["60"] || 0) + (fvDist["55"] || 0);
     const solid = (fvDist["50+"] || 0) + (fvDist["50"] || 0) + (fvDist["45+"] || 0);
 
-    // Most recent notable signing - biggest bonus.
-    const topRecent = signed.slice().sort((a, b) =>
-      (b.signed_bonus_usd || 0) - (a.signed_bonus_usd || 0))[0];
+    // Best outcome to date - the signing with the most career WAR (we
+    // don't carry real contract dollars, so WAR is the honest headline).
+    const topRecent = signed.slice()
+      .filter(op => op.career_war != null)
+      .sort((a, b) => (b.career_war ?? -99) - (a.career_war ?? -99))[0];
 
     // Translation factor color cue - factors << 1 mean stats deflate
     // hard going to MLB (KBO/CPBL more than NPB).
@@ -24646,9 +24603,9 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
           hitRateColor,
           "Share of signed prospects whose career WAR/yr met or beat their FV-implied projection.")}
       </div>
-      ${topRecent ? `<div style="font-size:11px;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);padding-top:6px;">
-        Top bonus to date: <strong style="color:var(--text-primary);">${escapeHtml(topRecent.player_name)}</strong>
-        → ${escapeHtml(topRecent.signed_team || "?")} · ${_fmtUSD(topRecent.signed_bonus_usd) || " - "}
+      ${topRecent ? `<div style="font-size:11px;color:var(--text-tertiary);border-top:1px solid var(--border-subtle);padding-top:6px;display:flex;align-items:center;gap:4px;flex-wrap:wrap;">
+        Best outcome to date: <strong style="color:var(--text-primary);">${escapeHtml(topRecent.player_name)}</strong>
+        →${topRecent.signed_team ? ` ${teamLogoHTML(topRecent.signed_team, "sm", (typeof fullOrgName === "function" ? fullOrgName(topRecent.signed_team) : topRecent.signed_team))}` : ""} ${escapeHtml(topRecent.signed_team || "?")} · ${topRecent.career_war.toFixed(1)} career WAR
       </div>` : ""}
       ${ctx.citation ? `<div style="font-size:10px;color:var(--text-tertiary);font-style:italic;">Sources: ${escapeHtml(ctx.citation)}</div>` : ""}
     </div>`;
