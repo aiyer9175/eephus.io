@@ -902,6 +902,14 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     """
     import re as _re_local
     from datetime import date as _date_local
+    # The live MLB Pipeline draft board (mlb.com/milb/prospects/draft) re-ranks
+    # semi-regularly through the spring, so always re-scrape the CURRENT draft
+    # year — every run_monthly surfaces the latest board. Prior-year draft
+    # boards are historical and stay on the long cache.
+    if cache_key.startswith("mlb_pipeline_draft_"):
+        m_dr = _re_local.search(r"(20\d{2})", cache_key)
+        if m_dr and int(m_dr.group(1)) >= _date_local.today().year:
+            return 0
     m = _re_local.search(r"(20\d{2})", cache_key)
     if m:
         try:
