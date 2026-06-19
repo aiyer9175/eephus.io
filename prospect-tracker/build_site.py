@@ -937,12 +937,12 @@ def display_metric_for(p: dict) -> dict:
 
 
 def _row_grad(g: dict) -> str:
-    # Recent graduates are MLB players now, so the shared value slot shows WAR
-    # (not WAG) via the single display_metric_for() escalation helper.
-    wtxt = display_metric_for(g)["html"]
+    # Show the graduate's final prospect FV (same pill as Top Prospects), not
+    # their MLB WAR - the homepage grad module reads as "who just graduated and
+    # at what grade." Career WAR / WAG still live on the player + Debuted pages.
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
             f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{wtxt}</a>')
+            f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{_fv_pill(g)}</a>')
 
 def _recent_trades_html(players: list, n: int = 6) -> str:
     """'Recent Trades' module - the latest prospect trades from the tracked
