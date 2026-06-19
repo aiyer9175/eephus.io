@@ -1182,6 +1182,114 @@
       background-position: right 8px center;
     }
     select.chip:focus { outline: none; border-color: var(--neon-cyan); }
+    /* Searchable org picker - a custom listbox that can show team logos
+       in its options (a native <select> can't). The trigger clones the
+       select.chip frame so it lines up inline in a .filter-group. */
+    .org-picker { position: relative; display: inline-block; }
+    .org-picker-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      cursor: pointer;
+      letter-spacing: 0.02em;
+      line-height: 1.2;
+    }
+    .org-picker.is-set .org-picker-trigger { border-color: var(--neon-amber); font-weight: 700; }
+    .org-picker.is-open .org-picker-trigger { border-color: var(--neon-cyan); }
+    .org-picker-trigger:focus { outline: none; border-color: var(--neon-cyan); }
+    .org-picker-trigger-logo:empty { display: none; }
+    .org-picker-trigger-logo .team-logo { width: 16px; height: 16px; vertical-align: middle; }
+    .org-picker-trigger-label { white-space: nowrap; }
+    .org-picker-caret { color: var(--text-tertiary); font-size: 9px; margin-left: 1px; }
+    .org-picker-panel {
+      position: absolute;
+      z-index: 60;
+      top: calc(100% + 4px);
+      left: 0;
+      min-width: 220px;
+      max-width: 300px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.32);
+      padding: 6px;
+    }
+    .org-picker-search {
+      width: 100%;
+      box-sizing: border-box;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      padding: 5px 8px;
+      margin-bottom: 5px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+    .org-picker-search:focus { outline: none; border-color: var(--neon-cyan); }
+    .org-picker-options { max-height: 280px; overflow-y: auto; }
+    .org-picker-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      text-align: left;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      padding: 5px 8px;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: transparent;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .org-picker-option:hover { background: var(--bg-tertiary); }
+    .org-picker-option.is-active { background: var(--bg-tertiary); font-weight: 700; }
+    .org-picker-option .team-logo { width: 18px; height: 18px; flex: none; }
+    .org-picker-opt-all {
+      width: 18px; flex: none; text-align: center;
+      color: var(--text-tertiary); font-size: 12px;
+    }
+    .org-picker-opt-code {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--text-secondary);
+      width: 30px;
+      flex: none;
+    }
+    .org-picker-opt-text {
+      color: var(--text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Farm-board org-tendency filter chips. */
+    .farm-tendency-chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+    .farm-tendency-chips .ft-glyph { font-size: 11px; }
+    .farm-tendency-chips .ft-loading {
+      font-size: 10px; color: var(--text-tertiary);
+      align-self: center; margin-left: 4px; font-style: italic;
+    }
+    /* IL severity-tier chips - active border picks up the row palette color
+       (7-day green -> 10/15-day amber -> 60-day red) for severity continuity. */
+    .chip[data-il-type="7"].active  { border-color: var(--up); }
+    .chip[data-il-type="10"].active { border-color: #d9b14b; }
+    .chip[data-il-type="15"].active { border-color: var(--neon-amber); }
+    .chip[data-il-type="60"].active { border-color: var(--down); }
+    /* Farm-detail roster filter rows stack vertically, so suppress the
+       horizontal-group left-border divider and keep their labels aligned. */
+    .filter-group.farm-roster-filter { flex-wrap: wrap; margin-top: 6px; }
+    .filter-group.farm-roster-filter + .filter-group.farm-roster-filter {
+      padding-left: 0; border-left: 0;
+    }
+    .filter-group.farm-roster-filter > .filter-label { min-width: 56px; }
     /* v45 - leaderboard custom-range date inputs share the chip frame. */
     input.lb-date-input {
       font-family: var(--font-mono);
@@ -8415,9 +8523,7 @@
       <span class="filter-cluster-label">WHO</span>
       <div class="filter-group">
         <span class="filter-label">Org</span>
-        <select class="chip" id="org-filter">
-          <option value="all">All organizations</option>
-        </select>
+        <div id="org-picker" class="org-picker"></div>
       </div>
       <div class="filter-group">
         <span class="filter-label">Acquired via</span>
@@ -8723,16 +8829,29 @@
       <span class="freshness-stamp" id="injured-freshness" data-fresh="transactions"></span>
     </div>
     <div id="whats-new-injured"></div>
-    <!-- v29 - Collapsed-by-default sort accordion for IL list. -->
+    <!-- v29 - Collapsed-by-default filter + sort accordion for IL list. -->
     <div class="filter-toggle-row">
       <button class="filter-toggle" type="button"
               data-collapse-target="injured-filter-bar" aria-expanded="false"
-              title="Show / hide sort options for the IL list">
-        <span class="filter-toggle-label">Sort</span>
+              title="Show / hide filter + sort options for the IL list">
+        <span class="filter-toggle-label">Filters &amp; sort</span>
         <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
       </button>
+      <div class="active-filters-strip" id="injured-active-filters"></div>
     </div>
     <div id="injured-filter-bar" class="filter-bar collapsible-filter-bar">
+      <div class="filter-group">
+        <span class="filter-label">Org</span>
+        <div id="il-org-picker" class="org-picker"></div>
+      </div>
+      <div class="filter-group">
+        <span class="filter-label" title="Filter by IL severity tier. 7-day (mild) through 60-day (long-term).">Length</span>
+        <button class="chip active" data-il-type="all">All</button>
+        <button class="chip" data-il-type="7"  title="7-day IL (concussion / mild)">7-day</button>
+        <button class="chip" data-il-type="10" title="10-day IL">10-day</button>
+        <button class="chip" data-il-type="15" title="15-day IL">15-day</button>
+        <button class="chip" data-il-type="60" title="60-day IL (long-term)">60-day</button>
+      </div>
       <div class="filter-group">
         <span class="filter-label">Sort</span>
         <button class="chip active" data-il-sort="days_asc"
@@ -8758,6 +8877,9 @@
           <option value="barrel_pct">Barrel %</option>
           <option value="fb_velo">FB velo (mph)</option>
         </select>
+      </div>
+      <div class="filter-group">
+        <button class="chip reset-chip" type="button" data-reset-page="injured" title="Reset Injured List filters back to defaults">↺ Reset filters</button>
       </div>
     </div>
     <!-- v31.9 - IL list now ships the right-side context rail. -->
@@ -9088,6 +9210,7 @@
         <span class="filter-toggle-label">Filters &amp; sort</span>
         <span class="filter-toggle-arrow" aria-hidden="true">▾</span>
       </button>
+      <div class="active-filters-strip" id="farm-active-filters"></div>
     </div>
     <div class="filter-bar collapsible-filter-bar" id="farm-sort-bar" style="flex-wrap:wrap;gap:6px;">
       <div class="filter-group">
@@ -9141,6 +9264,10 @@
         <button class="chip" data-farm-sort="level_A">A</button>
         <button class="chip" data-farm-sort="level_CPX">CPX</button>
         <button class="chip" data-farm-sort="level_DSL">DSL</button>
+      </div>
+      <div class="filter-group filter-group-tendency" style="flex-basis:100%;">
+        <span class="filter-label" title="Filter the board to organizations with a pronounced behavioral tendency (from the Org Tendencies model). Pick any combination - an org shows if it earns any selected badge.">Tendencies</span>
+        <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
         <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts. 6y is the principal signal.">Development window</span>
@@ -9219,7 +9346,7 @@
         </div>
         <div class="filter-group">
           <span class="filter-label">Org</span>
-          <select class="chip" id="lb-org-filter"><option value="all">All orgs</option></select>
+          <div id="lb-org-picker" class="org-picker"></div>
         </div>
         <div class="filter-group">
           <span class="filter-label" title="Cap the board to prospects at or below this current age - surfaces young-for-the-level leaders.">Age</span>
@@ -10412,18 +10539,6 @@ function fvCmpDesc(a, b) {
   return an.localeCompare(bn);
 }
 
-// point. Used inside the wide-spread "W" mark tooltip (how many sources
-// are currently grading the player). Falls back to recounting per_source
-// for cached payloads that pre-date avg_fv_n.
-function _fvSourceCount(player) {
-  const pts = player && player.points;
-  const last = pts && pts.length ? pts[pts.length - 1] : null;
-  if (!last) return null;
-  return last.avg_fv_n != null
-    ? last.avg_fv_n
-    : Object.values(last.per_source || {}).filter(v => v && v.fv_published != null).length;
-}
-
 // Returns the total (source, snapshot_date) instances where an explicit
 // FV exists across the player's full history. Drives the single-instance
 // shrinkage indicator: 1 instance ever → pulled toward FV 35; ≥2 → well-
@@ -10444,26 +10559,65 @@ function _fvTotalInstances(player) {
   return seen.size;
 }
 
-// Returns " is-wide" when the player has ≥2 sources disagreeing by
-// ≥10 grade points. Callers append to the FV badge's class list →
-// violet solid outline via CSS. Empty string otherwise.
+// Returns {min, max, spread, n} describing the player's per-source FV
+// disagreement at the latest snapshot, or null when fewer than two
+// sources have published a grade. Unifies the two payload shapes so the
+// wide-spread "W" badge + its hover tooltip behave identically site-wide:
+//   - MiLB pool      : latest point carries a per_source map + a server-
+//                      computed fv_spread.
+//   - Draft/Overseas : flat points[] with one {source, fv} row each
+//                      (delegated to _draftFvSpread).
+// min/max are the low/high published FVs (for the hover range); on the
+// MiLB side we keep the server-computed fv_spread as the spread so the
+// is-wide decision stays byte-identical to the prior behavior.
+function _fvWideSpread(player) {
+  const pts = (player && player.points) || [];
+  const last = pts.length ? pts[pts.length - 1] : null;
+  // MiLB pool: latest point carries a server-computed fv_spread (and
+  // usually fv_min/fv_max/avg_fv_n). Gating on fv_spread keeps the
+  // is-wide decision byte-identical to the prior behavior; the authoritative
+  // min/max feed the hover range (matching the detail-page disagreement
+  // line). per_source is the fallback for payloads pre-dating those fields.
+  if (last && last.fv_spread != null) {
+    let min = last.fv_min != null ? Number(last.fv_min) : null;
+    let max = last.fv_max != null ? Number(last.fv_max) : null;
+    let n = last.avg_fv_n != null ? last.avg_fv_n : null;
+    if ((min == null || max == null || n == null) && last.per_source) {
+      const fvs = Object.values(last.per_source)
+        .map(s => s && s.fv_published)
+        .filter(v => v != null && isFinite(v))
+        .map(Number);
+      if (min == null && fvs.length) min = Math.min(...fvs);
+      if (max == null && fvs.length) max = Math.max(...fvs);
+      if (n == null) n = fvs.length;
+    }
+    return { min, max, spread: last.fv_spread, n: n || 0 };
+  }
+  // Draft / Overseas: flat per-source points (no server fv_spread).
+  return _draftFvSpread(player);
+}
+
+// Returns " is-wide" when ≥2 sources disagree by ≥10 grade points.
+// Callers append to the FV badge's class list → violet solid outline via
+// CSS. Empty string otherwise.
 function fvBadgeWideClass(player) {
-  const pts = player && player.points;
-  const last = pts && pts.length ? pts[pts.length - 1] : null;
-  if (!last) return "";
-  if (last.fv_spread != null && last.fv_spread >= 10) return " is-wide";
-  return "";
+  const sp = _fvWideSpread(player);
+  return (sp && sp.spread >= 10) ? " is-wide" : "";
 }
 
 // Real-DOM "W" mark for wide-spread badges. Lives inside the badge so
 // the `title` attribute hovers. Returns "" when the badge isn't wide.
+// The tooltip spells out the actual spread on hover - the point gap plus
+// the low-high FV range across the disagreeing sources - so the reader
+// gets the discrepancy without opening the per-source breakdown.
 function fvBadgeWideMarkHTML(player) {
-  if (!fvBadgeWideClass(player)) return "";
-  const pts = player && player.points;
-  const last = pts && pts.length ? pts[pts.length - 1] : null;
-  const n = _fvSourceCount(player) || 0;
-  const sp = last && last.fv_spread != null ? last.fv_spread.toFixed(1) : "?";
-  return `<span class="fv-wide-mark" title="Wide source disagreement - sources differ by ${sp} grade points across ${n} sources. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
+  const sp = _fvWideSpread(player);
+  if (!sp || sp.spread < 10) return "";
+  const gap = (typeof sp.spread === "number") ? sp.spread.toFixed(1) : "?";
+  const range = (sp.min != null && sp.max != null)
+    ? ` (FV ${fvCeil(sp.min)}–${fvCeil(sp.max)} across ${sp.n} sources)`
+    : (sp.n ? ` across ${sp.n} sources` : "");
+  return `<span class="fv-wide-mark" title="Wide source disagreement - sources differ by ${gap} grade points${range}. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
 }
 
 // Returns " is-single-source" when the player has only ONE explicit-FV
@@ -12092,6 +12246,7 @@ function syncToURL() {
   if (state.search)                       p.set("q",     state.search);
   if (state.farmSort    !== "farm_rank") p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
+  if (state.farmTendencyFilter && state.farmTendencyFilter.size) p.set("ftend", [...state.farmTendencyFilter].join(","));
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTreeView && state.farmTreeView !== "expanded") p.set("ftree", state.farmTreeView);
@@ -12099,6 +12254,8 @@ function syncToURL() {
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
   if (state.debutSort    !== "date")       p.set("gsort", state.debutSort);
   if (state.ilSort      !== "days_asc")   p.set("ilsort", state.ilSort);
+  if (state.ilOrgFilter && state.ilOrgFilter !== "all") p.set("ilorg", state.ilOrgFilter);
+  if (state.ilTypeFilter && state.ilTypeFilter !== "all") p.set("iltype", state.ilTypeFilter);
   if (state.section === "timemachine") {
     if (state.tmMode !== "asof")          p.set("tmmode", state.tmMode);
     if (state.tmMode === "asof" && state.tmDate) p.set("tmd", state.tmDate);
@@ -12247,6 +12404,7 @@ function syncFromURL() {
   if (p.has("q"))     state.search      = p.get("q");
   if (p.has("farm"))  state.farmSort    = p.get("farm");
   if (p.has("farmview")) state.farmViewMode = p.get("farmview");
+  state.farmTendencyFilter = new Set(p.has("ftend") ? p.get("ftend").split(",").filter(Boolean) : []);
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
   if (p.has("formw")) {
     const v = p.get("formw");
@@ -12262,6 +12420,8 @@ function syncFromURL() {
   if (p.has("ftxd")) state.farmTxDir  = p.get("ftxd");
   if (p.has("gsort")) state.debutSort  = p.get("gsort");
   if (p.has("ilsort")) state.ilSort    = p.get("ilsort");
+  if (p.has("ilorg"))  state.ilOrgFilter  = p.get("ilorg");
+  if (p.has("iltype")) state.ilTypeFilter = p.get("iltype");
   if (p.has("tmmode")) state.tmMode    = (p.get("tmmode") === "diff" ? "diff" : "asof");
   if (p.has("tmd"))    state.tmDate    = p.get("tmd");
   if (p.has("tmda"))   state.tmDateA   = p.get("tmda");
@@ -12480,6 +12640,8 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.debutSort === state.debutSort));
   document.querySelectorAll("[data-il-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.ilSort === state.ilSort));
+  document.querySelectorAll("[data-il-type]").forEach(b =>
+    b.classList.toggle("active", b.dataset.ilType === (state.ilTypeFilter || "all")));
   document.querySelectorAll("[data-farm-sort]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmSort === state.farmSort));
   document.querySelectorAll("[data-form-window]").forEach(b =>
@@ -12500,10 +12662,9 @@ function restoreUIFromState() {
     b.classList.toggle("active", b.dataset.lbDir === (state.lbDir || "auto")));
   document.querySelectorAll("[data-lb-season]").forEach(b =>
     b.classList.toggle("active", b.dataset.lbSeason === state.lbSeason));
-  const orgSel = document.getElementById("org-filter");
-  if (orgSel) orgSel.value = state.orgFilter;
-  const lbOrgSel = document.getElementById("lb-org-filter");
-  if (lbOrgSel) lbOrgSel.value = state.lbOrg;
+  syncOrgPicker("org-picker", "orgFilter");
+  syncOrgPicker("lb-org-picker", "lbOrg");
+  syncOrgPicker("il-org-picker", "ilOrgFilter");
   const acqSel = document.getElementById("acq-filter");
   if (acqSel) acqSel.value = state.acqFilter;
   const sortSel = document.getElementById("sort-select");
@@ -13643,6 +13804,11 @@ const state = {
   // v17 - Default farm-list view back to table (was cards). Table is the
   // info-dense view; cards are an alternative for quick browsing.
   farmViewMode: "table",
+  // Farm-system board tendency filter. A Set of org-tendency badge kinds
+  // (e.g. "aggressive", "trade-happy", "over-slot", "high-il") sourced
+  // from org_tendencies.json. Empty = no filter; multiple selections use
+  // OR semantics (an org matches if it earns any selected badge).
+  farmTendencyFilter: new Set(),
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory". Default 6y - the
@@ -13676,6 +13842,12 @@ const state = {
   // "days" sorts descending (longest-out first); "fv" puts high-FV
   // injured prospects on top; "since" sorts by most-recent placement.
   ilSort: "days_asc",
+  // Injured-list filters. ilOrgFilter restricts the list to one org
+  // (searchable logo picker); ilTypeFilter narrows to one IL severity
+  // tier ("7" / "10" / "15" / "60", matched as a prefix of il.type).
+  // Both default to "all" (no restriction).
+  ilOrgFilter: "all",
+  ilTypeFilter: "all",
   // v30.8 - Per-Statcast-metric sort for the IL list. Same keys as
   // the actives statcastSortKey (sc_plus / avg_ev / max_ev /
   // hard_hit_pct / barrel_pct / fb_velo). When set, overrides ilSort.
@@ -19060,10 +19232,17 @@ function renderInjured() {
   // worst stale cases while preserving genuine multi-year IL grinds
   // that exist on the periphery (catastrophic ACL + TJ combos).
   const STALE_IL_DAYS = 540;
+  const _ilOrg  = state.ilOrgFilter || "all";
+  const _ilType = state.ilTypeFilter || "all";
   for (const arr of ["players"]) {
     for (const p of (DATA[arr] || [])) {
       const il = p.il_status || {};
       if (!il.is_on_il) continue;
+      // Org filter (searchable logo picker).
+      if (_ilOrg !== "all" && p.org !== _ilOrg) continue;
+      // IL severity-tier filter - match the chosen tier as a prefix of
+      // il.type so "10-day" / "10 day" both hit "10".
+      if (_ilType !== "all" && !String(il.type || "").trim().startsWith(_ilType)) continue;
       // Days elapsed since placement. Server fills `days` in il_status
       // for closed stints but the active stint's days field is often
       // null - derive from the `since` field.
@@ -19200,12 +19379,30 @@ function renderInjured() {
       </div>`;
   }).join("");
 
+  const _hasIlFilter = state.search || _ilOrg !== "all" || _ilType !== "all";
   document.getElementById("injured-rows").innerHTML = filtered.length
     ? header + rows
-    : (state.search
-        ? `<div class="state-message">No injured prospects match "${escapeHtml(state.search)}".</div>`
+    : (_hasIlFilter
+        ? `<div class="state-message">No injured prospects match the current filters.</div>`
         : `<div class="state-message">No tracked prospects are currently on the IL.</div>`);
+  renderInjuredActiveFilters();
   syncSortHeaderActive();
+}
+
+// Active-filters strip for the Injured List (mirrors the main-list strip).
+// Each chip clears its own dimension via the shared delegated clear handler.
+function renderInjuredActiveFilters() {
+  const el = document.getElementById("injured-active-filters");
+  if (!el) return;
+  const chips = [];
+  const chip = (axis, value, key) =>
+    chips.push(`<span class="active-filter-chip" data-clear-filter="${escapeHtml(key)}" title="Clear this filter">`
+      + `<span class="afc-axis">${escapeHtml(axis)}:</span><span>${escapeHtml(value)}</span><span class="afc-x">×</span></span>`);
+  if (state.ilOrgFilter && state.ilOrgFilter !== "all")
+    chip("Org", (typeof fullOrgName === "function" ? fullOrgName(state.ilOrgFilter) : state.ilOrgFilter), "il-org");
+  if (state.ilTypeFilter && state.ilTypeFilter !== "all")
+    chip("Length", state.ilTypeFilter + "-day", "il-type");
+  el.innerHTML = chips.join("");
 }
 
 // v31.8c - Lazy-load the mlb_trade_players sidecar exactly once on
@@ -21272,13 +21469,11 @@ function _renderDraftCard(p) {
   const spColor = _stockPlusColor(sp);
   const fvColor = _draftFvBucketColor(p.consensus_fv);
   const pRound = p.projected_round ? `R${p.projected_round}` : " - ";
-  // Wide-spread indicator: sources disagree on this prospect's FV by >=10
-  // (mirrors the consensus disagreement signal on the MiLB page + the FV
-  // history table). Amber chip showing the per-source range.
-  const _spread = _draftFvSpread(p);
-  const wideSpreadChip = (_spread && _spread.spread >= 10)
-    ? `<span style="flex-shrink:0;font-size:9px;padding:1px 4px;border-radius:3px;border:1px solid var(--neon-amber);color:var(--neon-amber);background:rgba(255,215,0,0.12);font-weight:700;white-space:nowrap;letter-spacing:0.02em;" title="Wide spread — sources disagree by ${_spread.spread} FV points (${fvCeil(_spread.min)}–${fvCeil(_spread.max)} across ${_spread.n} sources)">↔ ${fvCeil(_spread.min)}–${fvCeil(_spread.max)}</span>`
-    : "";
+  // Wide-spread indicator now rides the FV chip itself: the shared
+  // fvBadgeChainClasses/Marks add the violet "is-wide" outline + corner
+  // "W" mark (with the spread range in its hover tooltip), matching the
+  // active-prospect list. The standalone amber range chip was retired to
+  // reclaim the horizontal space it was eating in the card header.
   // v24 - Projected-round chip color. R1 is gold (premium), R2 silver,
   // R3-5 bronze, R6+ neutral; comp-balance rounds (1A/1B) ride R1's
   // gold treatment. Undrafted ( - / null) stays in the neutral track.
@@ -21438,7 +21633,6 @@ function _renderDraftCard(p) {
               ? ` (raw avg ${fvCeil(p.consensus_fv_raw)})` : ''}">
         FV ${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}${fvBadgeChainMarks(p)}
       </span>
-      ${wideSpreadChip}
     </div>
     <!-- v19 - Single wrap-flex meta strip: no middot separators, chip
          backgrounds + gap visually divide entries. School name
@@ -27725,6 +27919,13 @@ document.addEventListener("click", (e) => {
     case key === "toolsort":     state.toolSortKey     = "off"; break;
     case key === "statcastsort": state.statcastSortKey = "off"; break;
     case key === "sort":   state.sort = "fv"; break;
+    case key === "il-org":  state.ilOrgFilter  = "all"; break;
+    case key === "il-type": state.ilTypeFilter = "all"; break;
+    case key.startsWith("ften:"):
+      if (state.farmTendencyFilter && state.farmTendencyFilter.delete) {
+        state.farmTendencyFilter.delete(key.slice(5));
+      }
+      break;
     case key.startsWith("fv:"):
       if (state.fvIndicators && state.fvIndicators.delete) {
         state.fvIndicators.delete(key.slice(3));
@@ -27985,6 +28186,117 @@ function teamLogoHTML(org, size = "sm", title = null) {
   }
   const t = title != null ? title : org;
   return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${escapeHtml(org)}</span>';">`;
+}
+
+// =============================================================================
+// Searchable org picker (logo + name dropdown)
+// =============================================================================
+// A native <select> can't render <img> options, so the org filters use this
+// lightweight custom listbox: a chip-styled trigger that shows the selected
+// team's logo, and a searchable popover panel with one logo+code+name row per
+// org. One builder is reused for the main list, the Injured List, and the
+// Leaderboards (each keyed to its own state slot). Selection writes
+// state[stateKey] and fires an onChange callback so each surface re-renders
+// itself - the picker itself is pure UI.
+function _orgPickerOptionsHTML(allLabel) {
+  let html = `<button class="org-picker-option" type="button" role="option" data-org="all" data-search="all">
+    <span class="org-picker-opt-all" aria-hidden="true">◇</span>
+    <span class="org-picker-opt-text">${escapeHtml(allLabel)}</span></button>`;
+  for (const org of getAllOrgs()) {
+    const name = (typeof fullOrgName === "function") ? fullOrgName(org) : org;
+    const hay = escapeHtml((org + " " + name).toLowerCase());
+    html += `<button class="org-picker-option" type="button" role="option" data-org="${escapeHtml(org)}" data-search="${hay}">
+      ${teamLogoHTML(org, "sm")}
+      <span class="org-picker-opt-code">${escapeHtml(org)}</span>
+      <span class="org-picker-opt-text">${escapeHtml(name)}</span></button>`;
+  }
+  return html;
+}
+
+function _filterOrgPickerOptions(mount, q) {
+  const ql = (q || "").trim().toLowerCase();
+  mount.querySelectorAll(".org-picker-option").forEach(opt => {
+    if (opt.dataset.org === "all") { opt.style.display = ql ? "none" : ""; return; }
+    opt.style.display = (!ql || (opt.dataset.search || "").includes(ql)) ? "" : "none";
+  });
+}
+
+// Close every open picker except `keep` (pass null to close all).
+function _closeOrgPickers(keep) {
+  document.querySelectorAll(".org-picker.is-open").forEach(p => {
+    if (p === keep) return;
+    const pn = p.querySelector(".org-picker-panel");
+    const t  = p.querySelector(".org-picker-trigger");
+    if (pn) pn.hidden = true;
+    if (t)  t.setAttribute("aria-expanded", "false");
+    p.classList.remove("is-open");
+  });
+}
+
+function syncOrgPicker(mountId, stateKey) {
+  const mount = document.getElementById(mountId);
+  if (!mount) return;
+  const val = state[stateKey] || "all";
+  const allLabel = mount.dataset.allLabel || "All organizations";
+  const logoEl  = mount.querySelector(".org-picker-trigger-logo");
+  const labelEl = mount.querySelector(".org-picker-trigger-label");
+  if (val === "all") {
+    if (logoEl)  logoEl.innerHTML = "";
+    if (labelEl) labelEl.textContent = allLabel;
+    mount.classList.remove("is-set");
+  } else {
+    if (logoEl)  logoEl.innerHTML = teamLogoHTML(val, "sm");
+    if (labelEl) labelEl.textContent = (typeof fullOrgName === "function") ? fullOrgName(val) : val;
+    mount.classList.add("is-set");
+  }
+  mount.querySelectorAll(".org-picker-option").forEach(opt =>
+    opt.classList.toggle("is-active", opt.dataset.org === val));
+}
+
+function mountOrgPicker(mountId, stateKey, allLabel, onChange) {
+  const mount = document.getElementById(mountId);
+  if (!mount) return;
+  mount.classList.add("org-picker");
+  mount.dataset.stateKey = stateKey;
+  mount.dataset.allLabel = allLabel;
+  mount.innerHTML = `
+    <button class="org-picker-trigger" type="button" aria-haspopup="listbox" aria-expanded="false">
+      <span class="org-picker-trigger-logo" aria-hidden="true"></span>
+      <span class="org-picker-trigger-label"></span>
+      <span class="org-picker-caret" aria-hidden="true">▾</span>
+    </button>
+    <div class="org-picker-panel" role="listbox" hidden>
+      <input class="org-picker-search" type="text" placeholder="Search teams" aria-label="Search teams" autocomplete="off">
+      <div class="org-picker-options">${_orgPickerOptionsHTML(allLabel)}</div>
+    </div>`;
+  const trigger = mount.querySelector(".org-picker-trigger");
+  const panel   = mount.querySelector(".org-picker-panel");
+  const search  = mount.querySelector(".org-picker-search");
+  const close = () => { panel.hidden = true; trigger.setAttribute("aria-expanded", "false"); mount.classList.remove("is-open"); };
+  const open  = () => {
+    _closeOrgPickers(mount);
+    panel.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    mount.classList.add("is-open");
+    search.value = "";
+    _filterOrgPickerOptions(mount, "");
+    // Defer focus so the click that opened the panel doesn't immediately blur it.
+    setTimeout(() => { try { search.focus(); } catch (e) {} }, 0);
+  };
+  trigger.addEventListener("click", (e) => { e.stopPropagation(); if (panel.hidden) open(); else close(); });
+  search.addEventListener("click", (e) => e.stopPropagation());
+  search.addEventListener("input", () => _filterOrgPickerOptions(mount, search.value));
+  search.addEventListener("keydown", (e) => { if (e.key === "Escape") { e.stopPropagation(); close(); trigger.focus(); } });
+  panel.addEventListener("click", (e) => {
+    const opt = e.target.closest(".org-picker-option");
+    if (!opt) return;
+    e.stopPropagation();
+    state[stateKey] = opt.dataset.org;
+    syncOrgPicker(mountId, stateKey);
+    close();
+    if (typeof onChange === "function") onChange(state[stateKey]);
+  });
+  syncOrgPicker(mountId, stateKey);
 }
 
 
@@ -32872,11 +33184,28 @@ function makeToolDvmCell(org) {
 function renderFarmSystems() {
   let orgs = farmSortedOrgs();
   _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
+  // Tendency-filter chips (always rendered; active state from the Set).
+  renderFarmTendencyChips();
   // Global top-search filters farms by org code / full name.
   const _fq = (state.search || "").toLowerCase();
   if (_fq) orgs = orgs.filter(o =>
     (o.org || "").toLowerCase().includes(_fq)
     || ((typeof fullOrgName === "function" ? fullOrgName(o.org) : "") || "").toLowerCase().includes(_fq));
+  // Org-tendency badge filter. Needs the org_tendencies sidecar; if a
+  // filter is active but the sidecar hasn't loaded yet, warm it and
+  // re-render when it lands (skip filtering this pass so the board isn't
+  // momentarily emptied).
+  const _tendSel = state.farmTendencyFilter || new Set();
+  if (_tendSel.size) {
+    if (!_orgTendencies) {
+      _ensureOrgTendencies(() => { if (state.section === "farm" && !state.view) renderFarmSystems(); });
+    } else {
+      orgs = orgs.filter(o => {
+        const kinds = new Set(orgBadgeSet(o.org).map(b => b.kind));
+        return [..._tendSel].some(k => kinds.has(k));
+      });
+    }
+  }
   // Apply card-mode class based on state.farmViewMode. The class flips
   // #farm-section into a CSS grid of cards via the .farm-rows-cards
   // stylesheet rules; .table-mode is the default no-op.
@@ -32887,9 +33216,11 @@ function renderFarmSystems() {
   document.querySelectorAll("[data-farm-view]").forEach(b =>
     b.classList.toggle("active", b.dataset.farmView === (state.farmViewMode || "table")));
   if (!orgs.length) {
-    const msg = state.search
-      ? `No farm systems match “${escapeHtml(state.search)}”.`
-      : `No farm system data available.`;
+    const msg = (state.farmTendencyFilter && state.farmTendencyFilter.size)
+      ? `No farm systems match the selected tendency ${state.farmTendencyFilter.size > 1 ? "filters" : "filter"}.`
+      : state.search
+        ? `No farm systems match “${escapeHtml(state.search)}”.`
+        : `No farm system data available.`;
     document.getElementById("farm-rows").innerHTML =
       `<div class="state-message">${msg}</div>`;
     return;
@@ -40098,28 +40429,40 @@ function _renderOrgTendencies(orgCode) {
 // Warm the org_tendencies sidecar without rendering, so the farm GFX card can
 // stamp the identity strip even if the Tendencies tab was never opened. Uses a
 // SEPARATE guard from _orgTendenciesLoading so it never starves the lazy tab
-// renderer (which keys its re-render off its own fetch callback).
-function _ensureOrgTendencies() {
-  if (_orgTendencies || _orgTendenciesLoading || _orgTendenciesPrefetch) return;
+// renderer (which keys its re-render off its own fetch callback). An optional
+// callback fires once the sidecar is available (immediately if already loaded,
+// or after the in-flight fetch resolves) so callers like the farm-board
+// tendency filter can re-render when the data lands.
+let _orgTendenciesPendingCbs = [];
+function _ensureOrgTendencies(cb) {
+  if (_orgTendencies) { if (cb) cb(); return; }
+  if (cb) _orgTendenciesPendingCbs.push(cb);
+  if (_orgTendenciesLoading || _orgTendenciesPrefetch) return;
   _orgTendenciesPrefetch = true;
   fetch("/data/org_tendencies.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(d => { if (d) _orgTendencies = d; })
     .catch(() => {})
-    .finally(() => { _orgTendenciesPrefetch = false; });
+    .finally(() => {
+      _orgTendenciesPrefetch = false;
+      const cbs = _orgTendenciesPendingCbs; _orgTendenciesPendingCbs = [];
+      cbs.forEach(fn => { try { fn(); } catch (e) {} });
+    });
 }
 
-// Compact farm-GFX identity strip: a one-line headline + the org's 3-4
-// strongest tendency badges (export-safe literal-hex fills via _OT_BADGE).
-// Returns "" when the sidecar isn't loaded or the org has no strong tendency.
-function _gfxTendencyStrip(orgCode, P) {
+// Resolve the org-tendency badges an org has earned, from the same label
+// gates the GFX identity strip and Tendencies tab use. Returns an ordered
+// array of { kind, label, weight } (strongest first); empty when the sidecar
+// isn't loaded or the org profiles league-typical on every axis. Single
+// source of truth shared by _gfxTendencyStrip and the farm-board filter.
+function orgBadgeSet(orgCode) {
   const T = _orgTendencies;
-  if (!T || !T.promotion || !T.promotion.orgs || !T.promotion.orgs[orgCode]) return "";
+  if (!T || !T.promotion || !T.promotion.orgs || !T.promotion.orgs[orgCode]) return [];
   const gg = panel => (T[panel] && T[panel].orgs && T[panel].orgs[orgCode]) || {};
   const promo = gg("promotion"), tr = gg("trades"), slot = gg("slot"), hp = gg("health"),
         gradP = gg("graduation"), appr = gg("hitterApproach"), ars = gg("arsenal"), ifa = gg("ifa");
-  const cand = [];
-  const push = (kind, label, weight) => { if (label) cand.push([kind, label, Math.abs(weight || 0.6)]); };
+  const out = [];
+  const push = (kind, label, weight) => { if (label) out.push({ kind, label, weight: Math.abs(weight || 0.6) }); };
   if (promo.label && promo.label !== "typical") push(promo.label === "aggressive" ? "aggressive" : "conservative", promo.label + " promoter", promo.score);
   if (tr.volLabel && tr.volLabel !== "typical") push(tr.volLabel === "trade-happy" ? "trade-happy" : "trade-reluctant", tr.volLabel, tr.zVolume);
   if (slot.label && slot.label !== "typical") push(slot.label === "over-slot shoppers" ? "over-slot" : "slot-disciplined", slot.label, slot.zOver);
@@ -40129,11 +40472,40 @@ function _gfxTendencyStrip(orgCode, P) {
   if (hp.label && hp.label !== "typical") push(hp.label === "healthy pipeline" ? "healthy" : "high-il", hp.label, hp.z);
   if (ifa.label && ifa.label !== "balanced") push("ifa", "IFA: " + ifa.label, ifa.zConc);
   if (ars.zVelo != null && Math.abs(ars.zVelo) >= 0.8) push("velo", ars.zVelo > 0 ? "power arms" : "finesse arms", ars.zVelo);
-  cand.sort((a, b) => b[2] - a[2]);
-  const top = cand.slice(0, 4);
+  out.sort((a, b) => b.weight - a.weight);
+  return out;
+}
+
+// Catalogue for the farm-board tendency-filter chips: one entry per badge
+// kind an org can earn, in a sensible reading order. `kind` matches the keys
+// orgBadgeSet() emits + _OT_BADGE glyphs; `label` is the chip caption.
+const ALL_TENDENCY_BADGES = [
+  { kind: "aggressive",       label: "Aggressive promoter" },
+  { kind: "conservative",     label: "Conservative promoter" },
+  { kind: "trade-happy",      label: "Trade-happy" },
+  { kind: "trade-reluctant",  label: "Trade-reluctant" },
+  { kind: "over-slot",        label: "Over-slot spender" },
+  { kind: "slot-disciplined", label: "Slot-disciplined" },
+  { kind: "top-heavy",        label: "Top-heavy pool" },
+  { kind: "spread",           label: "Spreads the pool" },
+  { kind: "grad-value",       label: "Produces MLB value" },
+  { kind: "grad-thin",        label: "Grad-thin" },
+  { kind: "disciplined",      label: "Disciplined hitters" },
+  { kind: "free-swing",       label: "Free-swinging hitters" },
+  { kind: "healthy",          label: "Healthy pipeline" },
+  { kind: "high-il",          label: "High IL burden" },
+  { kind: "ifa",              label: "IFA-concentrated" },
+  { kind: "velo",             label: "Pronounced velo" },
+];
+
+// Compact farm-GFX identity strip: a one-line headline + the org's 3-4
+// strongest tendency badges (export-safe literal-hex fills via _OT_BADGE).
+// Returns "" when the sidecar isn't loaded or the org has no strong tendency.
+function _gfxTendencyStrip(orgCode, P) {
+  const top = orgBadgeSet(orgCode).slice(0, 4);
   if (!top.length) return "";
-  const headline = top.map(c => c[1]).join(" · ");
-  const pills = top.map(([kind, label]) => {
+  const headline = top.map(c => c.label).join(" · ");
+  const pills = top.map(({ kind, label }) => {
     const b = _OT_BADGE[kind] || { g: "●", c: "#475569" };
     return `<span style="display:inline-flex;align-items:center;gap:7px;background:${b.c};color:#fff;border-radius:999px;padding:6px 16px;font-family:var(--font-retro-mono);font-size:16px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;"><span style="font-size:16px;line-height:1;">${b.g}</span>${escapeHtml(label)}</span>`;
   }).join("");
@@ -40141,6 +40513,32 @@ function _gfxTendencyStrip(orgCode, P) {
     <div style="font-family:var(--font-mono);font-size:15px;color:${P.text3};letter-spacing:0.05em;text-transform:uppercase;">Org identity · ${escapeHtml(headline)}</div>
     <div style="display:flex;flex-wrap:wrap;gap:9px;">${pills}</div>
   </div>`;
+}
+
+// Render the farm-board tendency-filter chips into their mount. The catalogue
+// is fixed (independent of whether the sidecar is loaded); active state reads
+// from state.farmTendencyFilter. Clicks are handled by a delegated listener in
+// attachHandlers, so re-rendering the innerHTML here is safe.
+function renderFarmTendencyChips() {
+  const sel = state.farmTendencyFilter || new Set();
+  const mount = document.getElementById("farm-tendency-chips");
+  if (mount) {
+    const loading = sel.size > 0 && !_orgTendencies;
+    mount.innerHTML = ALL_TENDENCY_BADGES.map(({ kind, label }) => {
+      const b = _OT_BADGE[kind] || { g: "●", c: "#475569" };
+      const active = sel.has(kind);
+      return `<button class="chip is-multi${active ? " active" : ""}" type="button" data-farm-tendency="${escapeHtml(kind)}" title="${escapeHtml(label)} (org-tendency badge)"><span class="ft-glyph" aria-hidden="true">${b.g}</span> ${escapeHtml(label)}</button>`;
+    }).join("") + (loading ? `<span class="ft-loading">loading tendencies…</span>` : "");
+  }
+  // Active-filters strip (visible even when the filter bar is collapsed).
+  const strip = document.getElementById("farm-active-filters");
+  if (strip) {
+    const _label = k => (ALL_TENDENCY_BADGES.find(b => b.kind === k) || {}).label || k;
+    strip.innerHTML = [...sel].map(k =>
+      `<span class="active-filter-chip" data-clear-filter="ften:${escapeHtml(k)}" title="Clear this filter">`
+      + `<span class="afc-axis">Tendency:</span><span>${escapeHtml(_label(k))}</span><span class="afc-x">×</span></span>`
+    ).join("");
+  }
 }
 
 // Positional depth vs league: a genuinely cross-org lens (the existing depth
@@ -41515,8 +41913,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // Each chip shows its tally so the user knows whether selecting it
   // will yield anything before clicking.
   const filterStrip = (label, opts, activeVal, dataAttr, tallies) => `
-    <div style="display:flex;align-items:center;gap:6px;margin:6px 0 0;flex-wrap:wrap;">
-      <span style="font-size:10px;color:var(--text-tertiary);letter-spacing:0.10em;text-transform:uppercase;margin-right:4px;min-width:50px;">${escapeHtml(label)}</span>
+    <div class="filter-group farm-roster-filter">
+      <span class="filter-label">${escapeHtml(label)}</span>
       ${opts.map(([val, lbl]) => {
         const n = val === "all" ? rosterPlayersAll.length : (tallies[val] || 0);
         const active = activeVal === val;
@@ -42200,6 +42598,7 @@ const CHIP_GROUP_DEFAULTS = {
   "filter-health": "all",
   "filter-spread": "all",
   "farm-acq":      "all",
+  "il-type":       "all",
   // v28 - Draft + Overseas filter chip-group defaults.
   "filter-draft-pool":     "all",
   "filter-draft-side":     "all",
@@ -44134,6 +44533,13 @@ function attachHandlers() {
     render();
   });
 
+  // Close any open org picker on an outside click. The trigger / panel /
+  // search each stopPropagation, so this only fires for clicks elsewhere.
+  document.addEventListener("click", (e) => {
+    if (e.target && e.target.closest && e.target.closest(".org-picker")) return;
+    _closeOrgPickers(null);
+  });
+
   document.querySelectorAll("[data-filter-stock]").forEach(btn => {
     btn.addEventListener("click", () => {
       document.querySelectorAll("[data-filter-stock]").forEach(b => b.classList.remove("active"));
@@ -44277,6 +44683,9 @@ function attachHandlers() {
   attachChipGroup("debut-sort", "debutSort", () => renderDebuts());
   // IL sort chips.
   attachChipGroup("il-sort", "ilSort", () => renderInjured());
+  // IL severity-tier filter (7 / 10 / 15 / 60-day). Matched as a prefix
+  // of il.type inside renderInjured.
+  attachChipGroup("il-type", "ilTypeFilter", () => { renderInjured(); syncToURL(); });
 
   // Leaderboards chip groups - stat picker swaps the metric the board
   // is sorted by; level/pos chips narrow the qualifying pool. All three
@@ -44316,19 +44725,23 @@ function attachHandlers() {
   // ordering, embed contexts, or future markup changes) would otherwise
   // throw a TypeError that aborts attachHandlers and breaks every other
   // tab. Each selector wraps in `if (el)` like populateOrgFilter does.
-  const lbOrgEl = document.getElementById("lb-org-filter");
-  if (lbOrgEl) lbOrgEl.addEventListener("change", e => {
-    state.lbOrg = e.target.value;
-    resetPage("leaderboard");
-    renderLeaderboards();
+  // Farm-board tendency filter chips (multi-select, OR semantics). Stored
+  // as a Set on state.farmTendencyFilter; delegated so re-rendering the
+  // chip mount's innerHTML doesn't drop the listener.
+  const farmTendMount = document.getElementById("farm-tendency-chips");
+  if (farmTendMount) farmTendMount.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-farm-tendency]");
+    if (!btn) return;
+    const kind = btn.dataset.farmTendency;
+    if (!state.farmTendencyFilter) state.farmTendencyFilter = new Set();
+    if (state.farmTendencyFilter.has(kind)) state.farmTendencyFilter.delete(kind);
+    else state.farmTendencyFilter.add(kind);
+    renderFarmSystems();
     syncToURL();
   });
-  const orgEl = document.getElementById("org-filter");
-  if (orgEl) orgEl.addEventListener("change", e => {
-    state.orgFilter = e.target.value;
-    resetListPages();
-    render();
-  });
+
+  // Org filters (main list, Leaderboards, Injured List) are searchable
+  // logo pickers wired in mountOrgPicker(); no <select> change handler here.
   const acqEl = document.getElementById("acq-filter");
   if (acqEl) acqEl.addEventListener("change", e => {
     state.acqFilter = e.target.value;
@@ -44569,6 +44982,12 @@ function _resetPageFilters(page) {
     state.farmViewMode  = "table";
     state.farmCompareOrg = "";
     state.farmTreeView  = "expanded";
+    state.farmTendencyFilter = new Set();
+  } else if (page === "injured") {
+    state.ilOrgFilter   = "all";
+    state.ilTypeFilter  = "all";
+    state.ilSort        = "days_asc";
+    state.ilStatcastSort = "off";
   } else if (page === "spotlights") {
     state.spotlightBucket = "risers";
   } else if (page === "leaderboard") {
@@ -44603,18 +45022,15 @@ function _resetPageFilters(page) {
 
 
 function populateOrgFilter() {
-  // Active-list org filter + Leaderboards org filter share the same
-  // org enumeration. Two selects, same options.
-  for (const selId of ["org-filter", "lb-org-filter"]) {
-    const select = document.getElementById(selId);
-    if (!select) continue;
-    for (const org of getAllOrgs()) {
-      const opt = document.createElement("option");
-      opt.value = org;
-      opt.textContent = org;
-      select.appendChild(opt);
-    }
-  }
+  // Active-list org filter, Leaderboards org filter, and the Injured List
+  // org filter all share the same org enumeration. Each is a searchable
+  // logo picker (mountOrgPicker) keyed to its own state slot.
+  mountOrgPicker("org-picker", "orgFilter", "All organizations",
+    () => { resetListPages(); render(); syncToURL(); });
+  mountOrgPicker("lb-org-picker", "lbOrg", "All orgs",
+    () => { resetPage("leaderboard"); renderLeaderboards(); syncToURL(); });
+  mountOrgPicker("il-org-picker", "ilOrgFilter", "All organizations",
+    () => { renderInjured(); syncToURL(); });
   // "Class of" dropdown - populated from every observed acquisition
   // year across active prospects. Desc order so recent classes surface
   // first. Each option labels the year + the method bucket so a user
