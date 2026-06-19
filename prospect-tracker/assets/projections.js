@@ -270,11 +270,23 @@
   function renderTeams() {
     const root = document.getElementById("proj-rows");
     const bar = document.getElementById("proj-filters");
+    const banner = document.getElementById("proj-banner");
     const rows = DATA.team_outlook || [];
     bar.innerHTML = `<button class="chip" data-pv="players">Players</button><button class="chip active" data-pv="teams">Team Outlook</button>`;
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
       state.view = b.dataset.pv; syncToURL(); render();
     });
+    // Banner + GFX button track the Team Outlook view (the Players banner is
+    // rebuilt in render()), so Generate GFX exports the team board you're on.
+    if (banner) {
+      banner.innerHTML = `<div class="fa-note fa-sources">
+        ${DATA.generated_at ? `data as of ${esc(String(DATA.generated_at))} &middot; ` : ""}First projected season (${DATA.first_season}) roster bWAR roll-up &rarr; projected wins (pre-free-agency frame)
+        &middot; <button class="chip egfx-chip" id="proj-teams-gfx" title="Generate a shareable graphic of the Team Outlook board"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>`;
+      const tgfx = document.getElementById("proj-teams-gfx");
+      if (tgfx) tgfx.onclick = () => {
+        if (window.EEPHUS_GFX && rows.length) window.EEPHUS_GFX.open(_teamOutlookBoardSpec(rows));
+      };
+    }
     if (!rows.length) {
       root.innerHTML = `<div class="state-message">Team outlook not exported yet - run <code>python proj_export.py</code>.</div>`;
       return;
@@ -287,7 +299,7 @@
     const body = rows.map((r, i) => {
       const f = r.farm || {};
       const farmCell = f.farmRank != null
-        ? `<a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
+        ? `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}" title="PROSPX farm system detail">#${f.farmRank}</a> <span class="fa-sub">${f.farmScore != null ? Math.round(f.farmScore) : ""}</span>`
         : EM_DASH;
       const surCell = f.farmSurplusMM != null
         ? `<span class="${f.farmSurplusMM >= 0 ? "proj-pos" : "proj-neg"}" title="Net control-window NPV over the org's active prospect pool">$${Math.round(f.farmSurplusMM)}M</span>`
@@ -295,7 +307,7 @@
       const topCell = f.topProspect
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(f.topProspect.key || "")}">${esc(f.topProspect.name)}</a> <span class="fa-sub">FV ${esc(String(f.topProspect.fv || "?"))}</span>`
         : EM_DASH;
-      const openCell = `<a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#tab=farm&farm=${encodeURIComponent(r.team)}" title="Org Tendencies tab inside farm detail">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
+      const openCell = `<a href="/prospx/#farm-org=${encodeURIComponent(r.team)}">farm</a> · <a href="/prospx/#farm-org=${encodeURIComponent(r.team)}&ftab=tendencies" title="Open the Org Tendencies tab">tendencies</a> · <a href="/fa/#view=fits&team=${encodeURIComponent(r.team)}">FA fits</a> · <a href="#team=${encodeURIComponent(r.team)}" data-team-filter="${esc(r.team)}">roster</a>`;
       const w = Math.round(r.wins);
       const wl = `${w}-${162 - w}`;
       const wlTip = r.depthWar != null
@@ -703,6 +715,43 @@
         { label: "Range P10-P90", frac: 0.22, wideOnly: true },
         { label: "Surplus", frac: 0.15, wideOnly: true },
       ], rows },
+    };
+  }
+
+  // Board spec for the Generate GFX modal when the Team Outlook tab is active,
+  // so the graphic tracks the menu you're viewing (the Players tab exports
+  // _projBoardSpec; this exports the team roll-up board instead).
+  function _teamOutlookBoardSpec(rows) {
+    const hasFarm = rows.some(r => r.farm);
+    const brows = rows.map((r, i) => {
+      const f = r.farm || {};
+      const w = Math.round(r.wins);
+      const cells = [
+        { t: i + 1 },
+        { t: r.team },
+        { t: r.war != null ? r.war.toFixed(1) : "-", c: "accent" },
+        { t: `${w}-${162 - w}` },
+      ];
+      cells.push(f.farmRank != null ? { t: `#${f.farmRank}` } : { t: "-" });
+      cells.push(f.farmSurplusMM != null
+        ? { t: `$${Math.round(f.farmSurplusMM)}M`, c: f.farmSurplusMM >= 0 ? "pos" : "neg" }
+        : { t: "-" });
+      return { cells };
+    });
+    return {
+      kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
+      title: "MLB Projections · Team Outlook",
+      subtitle: `First-season (${DATA.first_season}) roster bWAR → projected wins · ${rows.length} teams`,
+      url: "eephus.io/projections", filenameBase: "eephus-projections-team-outlook",
+      caption: "Roster WAR at the 47.7 replacement baseline · league-recentered" + (hasFarm ? " · farm rank + surplus from the PROSPX org models" : ""),
+      board: { defaultCount: 30, counts: [10, 30], columns: [
+        { label: "#", frac: 0.06 },
+        { label: "Team", frac: 0.30 },
+        { label: "Roster WAR", frac: 0.18 },
+        { label: "Proj W-L", frac: 0.18 },
+        { label: "Farm", frac: 0.13, wideOnly: true },
+        { label: "Farm surplus", frac: 0.15, wideOnly: true },
+      ], rows: brows },
     };
   }
 

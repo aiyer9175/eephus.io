@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import unittest
 
-from draft_export import _projected_round, build_draft_export
+from draft_export import _projected_round, build_draft_export, _consensus
 
 
 class ProjectedRound(unittest.TestCase):
@@ -99,6 +99,34 @@ class LotteryPlumbing(unittest.TestCase):
             positions = [o["pick_pos"] for o in odds]
             self.assertEqual(positions, sorted(positions),
                              f"lottery odds for {klass['year']} not sorted by pick_pos")
+
+
+class WeightedConsensus(unittest.TestCase):
+    """The FV consensus is an accuracy-weighted mean when the draft backtest
+    ships weights (data/draft_source_weights.json); equal otherwise."""
+
+    def _snaps(self):
+        return [
+            {"source": "fangraphs", "snapshot_date": "2026-05-22", "fv": 55.0},
+            {"source": "mlb_pipeline_draft", "snapshot_date": "2026-06-18", "fv": 65.0},
+        ]
+
+    def test_equal_when_no_weights(self):
+        # No weights / empty weights -> plain mean (60.0).
+        self.assertEqual(_consensus(self._snaps(), "fv"), 60.0)
+        self.assertEqual(_consensus(self._snaps(), "fv", weights={}), 60.0)
+
+    def test_weighted_mean_pulls_toward_higher_weight(self):
+        # Up-weighting MLB Pipeline pulls the blend toward its 65.
+        w = {"mlb_pipeline_draft": 1.5, "fangraphs": 0.6}
+        got = _consensus(self._snaps(), "fv", weights=w)
+        self.assertAlmostEqual(got, (1.5 * 65 + 0.6 * 55) / (1.5 + 0.6), places=2)
+
+    def test_absent_source_votes_one(self):
+        # A source missing from the weights map votes at 1.0 (not dropped).
+        w = {"mlb_pipeline_draft": 1.4}  # fangraphs absent -> 1.0
+        got = _consensus(self._snaps(), "fv", weights=w)
+        self.assertAlmostEqual(got, (1.4 * 65 + 1.0 * 55) / (1.4 + 1.0), places=2)
 
 
 if __name__ == "__main__":

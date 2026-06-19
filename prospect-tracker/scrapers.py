@@ -2326,6 +2326,24 @@ MLB_PIPELINE_DRAFT_INTERVALS = [
      2026),
 ]
 
+# Prior-year MLB Pipeline draft boards (frozen pre-draft rankings) live at the
+# year-scoped URL /milb/prospects/<year>/draft/. Backfilled so the draft-source
+# accuracy backtest (draft_source_backtest.py) has a SECOND multi-year rater to
+# score FanGraphs against — without resolved historical grades from a second
+# source there is nothing to weight. The page's "draft"-titled writeup carries
+# that year's pre-draft Overall grade (the year-titled bios on these pages are
+# post-draft re-grades, so the same draft-first bio rule as the live board is
+# correct). Dated to {year}-07-01 (pre-draft) to sit in the right draft class;
+# prior-year pages stay on the 30d historical cache. 2018 is the first year MLB
+# Pipeline published a scrapable draft board in this shape.
+MLB_PIPELINE_DRAFT_HISTORY_INTERVALS = [
+    (f"https://www.mlb.com/milb/prospects/{_y}/draft/",
+     f"MLB Pipeline {_y} Draft Top 250",
+     f"{_y}-07-01",
+     _y)
+    for _y in range(2018, date.today().year)
+]
+
 
 def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
                               draft_year: int,
@@ -2423,21 +2441,33 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
         # Bio + tools + writeup from prospectBio (same shape as top-100)
         bios = list(re.finditer(
             r'"contentText":"((?:[^"\\]|\\.)*)","contentTitle":"([^"]*)"', chunk))
+        # Pick the CURRENT board's writeup. MLB Pipeline titles the live draft
+        # bio with the generic token "draft"/"Draft"; a prospect who appeared in
+        # an EARLIER draft also carries an older bio titled by that year
+        # ("2023"). The live grade/tools are the "draft"-titled one, so prefer
+        # it, then a bio titled with the draft year, then anything.
+        #   Matching on str(draft_year) never hits (the current board is not
+        #   year-titled), and blindly taking bios[0] grabbed the stale
+        #   prior-draft grade for re-entrants — e.g. Roch Cholowsky read 2023's
+        #   Overall 50 instead of 2026's Overall 65 (26 of the top 200 were
+        #   affected, all biased low).
+        _yr = str(draft_year)
+        def _bio_rank(bio):
+            t = (bio.group(2) or "").strip().lower()
+            return 0 if t == "draft" else 1 if t == _yr else 2
+        bios_ranked = sorted(bios, key=_bio_rank)
         overall: float | None = None
         bio_text: str | None = None
-        year_str = str(draft_year)
-        for bio in bios:
-            if bio.group(2) == year_str:
-                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
-                if m2:
-                    overall, _overall_plus = _parse_fv_full(m2.group(1))
-                    bio_text = bio.group(1)
-                    break
-        if bio_text is None and bios:
-            bio_text = bios[0].group(1)
-            m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio_text)
+        for bio in bios_ranked:
+            m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
             if m2:
                 overall, _overall_plus = _parse_fv_full(m2.group(1))
+                bio_text = bio.group(1)
+                break
+        # No bio carried an Overall grade — still keep the best-priority writeup
+        # so tools/prose extraction has something to work with.
+        if bio_text is None and bios_ranked:
+            bio_text = bios_ranked[0].group(1)
 
         tools = _parse_pipeline_tools(bio_text) if bio_text else None
         prose = _clean_pipeline_writeup(bio_text) if bio_text else None
@@ -2474,15 +2504,23 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
     return rows
 
 
-def scrape_all_draft(force: bool = False) -> list[DraftSnapshot]:
-    """Run all draft scrapers, return their combined output."""
+def scrape_all_draft(force: bool = False, history: bool = True) -> list[DraftSnapshot]:
+    """Run all draft scrapers, return their combined output.
+
+    `history` includes the prior-year MLB Pipeline draft boards (frozen, 30d
+    cache) so the source-accuracy backtest has resolved multi-source classes;
+    pass history=False to scrape only the live current-year boards.
+    """
     out: list[DraftSnapshot] = []
     for url, label, snap, year in ESPN_DRAFT_INTERVALS:
         try:
             out.extend(scrape_espn_draft(url, label, snap, year, force=force))
         except Exception as e:
             log.exception("espn_draft %s crashed: %s", label, e)
-    for url, label, snap, year in MLB_PIPELINE_DRAFT_INTERVALS:
+    pipeline_intervals = list(MLB_PIPELINE_DRAFT_INTERVALS)
+    if history:
+        pipeline_intervals += MLB_PIPELINE_DRAFT_HISTORY_INTERVALS
+    for url, label, snap, year in pipeline_intervals:
         try:
             out.extend(scrape_mlb_pipeline_draft(url, label, snap, year, force=force))
         except Exception as e:

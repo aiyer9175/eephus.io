@@ -40,7 +40,7 @@
    "notes": "SHIPPED 2026-06-11 under best-model-wins: dev bases + gate targets + touched-once 2022-2024 holdout all beat the champion (gate-targets h1 MAE 0.557 vs 0.627; holdout pooled coverage 0.81-0.82 vs 0.67-0.77; survived coverage 0.43-0.67 vs 0.32-0.44; pinball better everywhere). DISCLOSED: long-horizon star bias ~0.2 WAR deeper than champion (zero-inflated labels pull medians; star MAE equal) - follow-up: mean-head or star-slice recalibration. Bundle model/proj_lgbm hash 442428a6498b1426; historical (Gate-2) enrichment uses point-in-time bundles (proj_ml.train_cached), never the live bundle. STAR MEAN BLEND (2026-06-11 roadmap push): the disclosed long-h star miss is now half-corrected at h5 via a post-hoc quantile-implied-mean blend on the EX-ANTE star slice (lambda_5=1.0; dev bias -0.825 -> -0.743, star MAE down; heads untouched, train hash unchanged). PROTOCOL HONESTY: the dev-fitted h2 lambda FAILED holdout confirmation (star bias worsened OOW) and was dropped; h5 is unconfirmable on the 2022-24 holdout (immature labels) and ships dev-validated with that disclosure - first holdout look when 2027+ labels complete. data/proj_star_blend.json. MEAN BLEND (2026-06-13, owner: 'projections a bit low across the board'): the q50 head is MAE-optimal but, for the right-skewed/zero-inflated WAR label, sits ~0.15 WAR below the expected value at EVERY horizon - a systematic display lowness confirmed on the 2022-24 holdout (h1 bias -0.123). Added a GLOBAL LIFT-ONLY recenter (q50' = q50 + max(0, lambda_h*(implied_mean - q50))). v2 lambdas 1.0/1.0/1.0/0.5/0.5 (was 1.0/0.5/0.25/0.25/0.25): the median-vs-mean gap WIDENS at long horizons (attrition collapses the median), so the out-year lambdas were raised to the MAX that still beats the prior champion's holdout MAE - h1-h3 take the full implied mean (holdout MAE 0.559/0.514/0.467 all under champion 0.618/0.548/0.485), h4 caps at 0.5 (full 1.0 would exceed champion 0.424; 0.5 gives 0.412), h5=0.5 conservatively (labels immature). Holdout bias h1 -0.123->-0.027, h3 -0.201->-0.076, h4 -0.193->-0.143. LIFT-ONLY (never lowers a projection); the q90 band carries the downside. Live regen lifts out-year vet WAR (e.g. Ohtani h3 6.78->7.47), 879/1246 up, 0 down. Bands untouched. data/proj_mean_blend.json. DISCLOSED residual: this recenters the EXISTING heads, which are tail-light, so at the extreme out-years the implied mean can already equal the median - e.g. Paul Skenes' year-5 (age 29) sits at 1.72 expected WAR (q90 ceiling 3.32): a DEFENSIBLE expected value under 5-year pitcher attrition, but it reads low vs the if-healthy ceiling and the recenter cannot lift it (mean==median there). Raising it further requires a heads-level aging/tail refit (or a dedicated mean head) - the open follow-up.",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 7
   },
   {
    "model_id": "fa_market",
@@ -138,7 +138,7 @@
    "notes": "inherits the Phase-1 ship verdict; bands now from quantile heads (no zero floor). IF-HEALTHY DISPLAY (2026-06-13, owner ask after the Skenes year-5 report): /projections/ shows the PLAYING-TIME-HELD path - the q70 of the modelled outcome distribution (q70 = q50 + 0.8*(q75-q50), floored at the expected value) - so a star's out-years read at their healthy level (Skenes 2031 1.7 -> 3.0) instead of the attrition-discounted mean. This is a DISPLAY series only (proj_ml.predict_path war_by_year_pth -> proj_export warPTH/warTotalPTH -> projections.js cells/total, labeled). The expected-value path (war / surNpv) is BYTE-UNCHANGED and remains what surplus, FA rational value, and Team Outlook price off - confirmed surNpv identical post-change. The deeper L2 mean-head refit was attempted and REVERTED: it overshot the heavy WAR tail (Ohtani 13.9, impossible) and did not lift Skenes' year-5 (1.7->1.45), confirming ~1.7 is the genuine expected value and that the higher read is necessarily an if-healthy percentile, not the mean.",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 7
   },
   {
    "model_id": "mlb_projections_prospects",
@@ -152,7 +152,7 @@
    "notes": "Phase 4b WS-7 + 2026-06-11 improvement sweep: fv_outcome_v1 RETAINS against ridge, LightGBM, AND a linear mean recalibration - every challenger lost its pre-stated dual gate (the scouting consensus ranks better than any stat-line model tried; rho .210 vs .150-.156). The recalibration is MEASURED and committed unshipped: it fixes the mean bias (+0.29 -> +0.04, MAE -0.08) but the pooled forward-chained slope worsens (.78 -> .64; the thin 2019 fold's noisy fit dominates). Documented next candidate: intercept-only correction with a min-train-n guard, pre-registered before the next eval. Calibration block lives in the artifact (ship: false); proj_export applies NOTHING.",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 6
+   "artifact_age_days": 7
   },
   {
    "model_id": "prospect_surplus",
@@ -166,7 +166,7 @@
    "notes": "CALIBRATION v3 (2026-06-12, owner escalations x2): v1's per-player isotonic carried a degenerate $0 bottom block (every FV35-40 prospect -> $0.0M) AND priced realized targets at era $/WAR ($6.7-12.1M) while the model prices today (~$13.0M) - the apparent 0.64 raw slope was mostly dollar inflation. v3 = count-weighted binned PAVA (fit_isotonic_binned) on TODAY-PRICED realized targets: raw slope 1.02 / bias -2.9M, held-out LOYO slope 0.97 / bias -1.13M. Curve: FV40 $1.5M / 45 $6.9M / 50 $17.9M / 55 $31.9M / 60 $65.6M (hitters); elite tail extrapolates the last observed segment (documented). Surplus now reads 'expected realized value at current replacement cost' - consistent units with vet surplus in the trade machine and team fits. Fit block: data/surplus_calibration_fit.json; the committed artifact keeps the historical-dollars slice as cohort accounting.",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -180,7 +180,7 @@
    "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin WS-6 positional-stratification diagnostic measured + parked (see prospect_surplus row): per-position cells too thin above FV50 to beat the pooled+role fit.",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 11
+   "artifact_age_days": 12
   },
   {
    "model_id": "wag",
@@ -194,7 +194,7 @@
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
    "last_checked": "2026-06-18",
    "stale": false,
-   "artifact_age_days": 11
+   "artifact_age_days": 12
   },
   {
    "model_id": "consensus_fv",

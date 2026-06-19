@@ -15444,6 +15444,30 @@ function _farmDetailSidebarCards(org, activeTab) {
   ];
 }
 
+// Frontend mirror of build_site._genuine_mover_step. The de-noised movement
+// engine (movement.py) carries a same-source consensus FV step on p.stock;
+// this surfaces only GENUINE, recent moves for the "this update" movers
+// module - the same gate the homepage Top Movers uses. Panel-composition
+// shifts and lone-outlier re-grades are already excluded upstream (basis !=
+// "same_source", or direction collapsed to "flat"), so a source merely
+// re-publishing no longer registers. Returns the signed integer grade step
+// (>=2 in magnitude) or null. Per-player stock chips stay event-based /
+// ungated elsewhere; this module is the recent-movers view.
+const _HOME_MOVER_RECENCY_DAYS = 365;
+function _genuineMoverStep(p) {
+  const st = p && p.stock;
+  if (!st || st.basis !== "same_source" || st.delta == null) return null;
+  if (st.direction === "flat" || st.direction === "debuted" || st.direction == null) return null;
+  if (st.confidence !== "high" && st.confidence !== "medium") return null;
+  const to = st.to_date ? new Date(String(st.to_date).slice(0, 10)) : null;
+  if (!to || isNaN(to.getTime())) return null;
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - _HOME_MOVER_RECENCY_DAYS);
+  if (to < cutoff) return null;
+  const step = Math.round(st.delta);
+  return Math.abs(step) >= 2 ? step : null;
+}
+
 function renderActiveContextRail(railId = "active-context-rail") {
   // v31.9 - Accept a target railId so the same context cards can
   // also render into the Watchlist / Spotlights / Recently Traded /
@@ -15473,18 +15497,22 @@ function renderActiveContextRail(railId = "active-context-rail") {
   };
 
   // -------- Top movers card --------
-  // Chip toggle: All (|delta| sort) / Risers (delta desc) / Fallers (delta asc).
+  // Chip toggle: All (|step| sort) / Risers (step desc) / Fallers (step asc).
+  // Gated to GENUINE same-source moves via the de-noised movement engine
+  // (_genuineMoverStep mirrors the homepage Top Movers selector), so a
+  // changing source panel or a lone outlier re-grade no longer fakes a mover.
+  // Excludes debuted players, matching the homepage pool.
   const moverMode = state.moverFilter || "all";
-  let moverPool = players.filter(p => p.stock && p.stock.delta != null);
+  let moverPool = players
+    .filter(p => p && p.status !== "debuted" && !p.debut_date)
+    .map(p => ({ p, step: _genuineMoverStep(p) }))
+    .filter(x => x.step != null);
   if (moverMode === "up") {
-    moverPool = moverPool.filter(p => p.stock.delta >= 2.0)
-      .sort((a, b) => b.stock.delta - a.stock.delta);
+    moverPool = moverPool.filter(x => x.step > 0).sort((a, b) => b.step - a.step);
   } else if (moverMode === "down") {
-    moverPool = moverPool.filter(p => p.stock.delta <= -2.0)
-      .sort((a, b) => a.stock.delta - b.stock.delta);
+    moverPool = moverPool.filter(x => x.step < 0).sort((a, b) => a.step - b.step);
   } else {
-    moverPool = moverPool.filter(p => Math.abs(p.stock.delta) >= 2.0)
-      .sort((a, b) => Math.abs(b.stock.delta) - Math.abs(a.stock.delta));
+    moverPool = moverPool.sort((a, b) => Math.abs(b.step) - Math.abs(a.step));
   }
   const movers = moverPool.slice(0, 6);
   const _moverChip = (val, label) =>
@@ -15492,8 +15520,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const moverChips = `<div class="ctx-mover-chips">
     ${_moverChip("all", "All")}${_moverChip("up", "Risers")}${_moverChip("down", "Fallers")}
   </div>`;
-  const moverRows = movers.map(p => {
-    const d = p.stock.delta;
+  const moverRows = movers.map(({ p, step: d }) => {
     const cls = d > 0 ? "stock-up" : "stock-down";
     const arrow = d > 0 ? "▲" : "▼";
     const driverRaw = (p.stock.drivers && p.stock.drivers[0]);
@@ -15510,7 +15537,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
       level: _level,
       subline,
       teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
-      rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d.toFixed(1)}</span>`,
+      rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d}</span>`,
     });
   }).join("");
   const moversCard = `<div class="ctx-card">
@@ -23195,67 +23222,12 @@ async function renderDraftDetail(key) {
       <div class="tool-grade-strip" style="margin-bottom:12px;gap:5px;">${pills.join("")}</div>`;
   })();
 
-  // v19 - FV-by-source timeseries chart. Each source gets its own line
-  // (FV vs snapshot_date). When fewer than 2 distinct dates per source,
-  // renders a single dot. When < 2 sources OR < 2 total points, shows
-  // a placeholder note.
-  const fvTimeseriesChart = (() => {
-    const pts = (p.points || []).filter(pt => pt.fv != null && isFinite(pt.fv) && pt.snapshot_date);
-    if (pts.length < 2) {
-      return `<div class="detail-title">FV trajectory</div>
-        <div style="font-size:12px;color:var(--text-tertiary);padding:8px 0;">
-          Insufficient projection history to chart (need ≥2 snapshots).
-        </div>`;
-    }
-    // Group by source
-    const bySource = {};
-    for (const pt of pts) {
-      const src = pt.source || "unknown";
-      (bySource[src] = bySource[src] || []).push({ d: pt.snapshot_date, fv: Number(pt.fv) });
-    }
-    for (const src in bySource) bySource[src].sort((a, b) => a.d.localeCompare(b.d));
-    const allDates = pts.map(pt => pt.snapshot_date).sort();
-    const minD = allDates[0];
-    const maxD = allDates[allDates.length - 1];
-    const W = 320, H = 90, padL = 28, padR = 8, padT = 8, padB = 18;
-    const x = (d) => {
-      if (minD === maxD) return padL + (W - padL - padR) / 2;
-      const t0 = new Date(minD).getTime();
-      const t1 = new Date(maxD).getTime();
-      const tx = new Date(d).getTime();
-      return padL + ((tx - t0) / (t1 - t0)) * (W - padL - padR);
-    };
-    const FV_MIN = 35, FV_MAX = 75;
-    const y = (fv) => padT + ((FV_MAX - fv) / (FV_MAX - FV_MIN)) * (H - padT - padB);
-    const palette = ["#4AC8E0", "#A764FC", "#7EC880", "#E8A52F", "#D04A4A", "#7BA6CC", "#C99B6E"];
-    const lines = Object.entries(bySource).map(([src, series], i) => {
-      const color = palette[i % palette.length];
-      const pts2 = series.map(s => `${x(s.d).toFixed(1)},${y(s.fv).toFixed(1)}`).join(" ");
-      const line = series.length >= 2
-        ? `<polyline points="${pts2}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`
-        : "";
-      const dots = series.map(s => `<circle cx="${x(s.d).toFixed(1)}" cy="${y(s.fv).toFixed(1)}" r="2.5" fill="${color}"><title>${escapeHtml(src)}: FV ${s.fv} on ${s.d}</title></circle>`).join("");
-      return line + dots;
-    }).join("");
-    // Y-axis ticks
-    const yTicks = [35, 50, 65, 75].map(t =>
-      `<text x="${padL - 4}" y="${y(t) + 3}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${t}</text>
-       <line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2"/>`
-    ).join("");
-    // Source legend
-    const legend = Object.keys(bySource).map((src, i) => {
-      const color = palette[i % palette.length];
-      return `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--text-secondary);"><span style="width:8px;height:2px;background:${color};display:inline-block;"></span>${escapeHtml(src)}</span>`;
-    }).join('<span style="color:var(--text-tertiary);">·</span>');
-    return `<div class="detail-title">FV trajectory · per source</div>
-      <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:6px;">
-        <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;" preserveAspectRatio="xMidYMid meet">
-          ${yTicks}
-          ${lines}
-        </svg>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-family:var(--font-sans);">${legend}</div>
-      </div>`;
-  })();
+  // Source-by-source FV history (spread summary + per-source trajectory
+  // chart + grade table) from the flat points[] observation list. Shared
+  // with the Overseas detail page; replaces the older inline chart-only
+  // block so single-source draftees show a provenance table instead of an
+  // "insufficient history" placeholder.
+  const fvTimeseriesChart = makeSourceFvHistory(p.points);
 
   // v30.8 - Tools-vs-class-median deltas. For each tool the prospect
   // has graded, compute the median grade across all OTHER prospects
@@ -23676,7 +23648,8 @@ async function renderOverseasDetail(key) {
     ${arcHtml}`;
 
   const toolsScoutingHtml = `
-    <div class="detail-title flush">Tool grades · per source</div>
+    ${makeSourceFvHistory(p.points)}
+    <div class="detail-title">Tool grades · per source</div>
     ${_renderProspectToolsGrid(p)}
     <div class="detail-title">Scouting reports</div>
     ${_renderProspectScoutingReports(p)}`;
@@ -36430,6 +36403,184 @@ function makePerSourceHistory(points) {
   // sticks to the left edge so a wide-scrolled row still shows the date
   // anchor.
   return `<div class="per-source-scroll"><table class="detail-table per-source-table"><thead>${head}</thead><tbody>${body}</tbody></table></div>`;
+}
+
+// Source-by-source FV history for the Draft + Overseas detail pages.
+// Those pages carry a FLAT per-source observation list -
+//   points[] = [{snapshot_date, source, fv, fv_plus, rank?, interval_label}]
+// - rather than the consensus per_source dict the MiLB page groups by date
+// (makePerSourceHistory). So this renders a source-GROUPED variant: a spread
+// summary across sources, an optional per-source trajectory chart (when ≥2
+// dated grades land on ≥2 distinct dates), and one table row per ranking
+// source carrying its latest published FV / rank / list. Stable source→color
+// map keeps the chart line and the table dot in agreement.
+const _FV_HIST_SOURCES = {
+  fangraphs:          { label: "FanGraphs",        color: "#4AC8E0" },
+  fg:                 { label: "FanGraphs",        color: "#4AC8E0" },
+  espn_draft:         { label: "ESPN",             color: "#E0457A" },
+  espn:               { label: "ESPN",             color: "#E0457A" },
+  mlb_pipeline_draft: { label: "MLB Pipeline",     color: "#E8A52F" },
+  mlb_pipeline:       { label: "MLB Pipeline",     color: "#E8A52F" },
+  baseball_america:   { label: "Baseball America", color: "#7EC880" },
+  the_athletic:       { label: "The Athletic",     color: "#7BA6CC" },
+  tjstats:            { label: "TJStats",          color: "#D04A4A" },
+  just_baseball:      { label: "Just Baseball",    color: "#A764FC" },
+};
+const _FV_HIST_FALLBACK_COLORS = ["#7BA6CC", "#C99B6E", "#9B8CCC", "#6EA8A0"];
+function _fvHistSrcMeta(src, idx) {
+  const m = _FV_HIST_SOURCES[src];
+  if (m) return m;
+  const label = String(src || "").replace(/_/g, " ").replace(/\bdraft\b/i, "").trim()
+    .replace(/\b\w/g, c => c.toUpperCase()) || "Source";
+  return { label, color: _FV_HIST_FALLBACK_COLORS[idx % _FV_HIST_FALLBACK_COLORS.length] };
+}
+
+function makeSourceFvHistory(points, opts = {}) {
+  const pts = (points || []).filter(pt =>
+    pt && pt.snapshot_date &&
+    ((pt.fv != null && isFinite(pt.fv)) || pt.rank != null));
+  if (!pts.length) return "";
+  const title = opts.title || "FV history · per source";
+
+  // Group observations by source, chronological within each.
+  const bySource = {};
+  for (const pt of pts) {
+    const src = pt.source || "unknown";
+    (bySource[src] = bySource[src] || []).push(pt);
+  }
+  const srcKeys = Object.keys(bySource);
+  for (const s of srcKeys) {
+    bySource[s].sort((a, b) =>
+      String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+  }
+  const _last = (s) => bySource[s][bySource[s].length - 1];
+  const _lastFv = (s) => {
+    const v = _last(s).fv;
+    return (v != null && isFinite(v)) ? +v : -1;
+  };
+  // Highest grader leads; rank-only sources (FV -1) sink to the bottom.
+  srcKeys.sort((a, b) => _lastFv(b) - _lastFv(a));
+  const meta = {};
+  srcKeys.forEach((s, i) => { meta[s] = _fvHistSrcMeta(s, i); });
+
+  // --- Spread summary across the latest grade per source ----------------
+  const fvVals = srcKeys.map(_lastFv).filter(v => v >= 0);
+  let summary = "";
+  if (fvVals.length >= 2) {
+    const lo = Math.min(...fvVals), hi = Math.max(...fvVals);
+    const hiSrc = srcKeys.find(s => _lastFv(s) === hi);
+    const loSrc = [...srcKeys].reverse().find(s => _lastFv(s) === lo);
+    const wide = (hi - lo) >= 10
+      ? ` <span style="display:inline-block;margin-left:6px;padding:1px 6px;border:1px solid var(--neon-amber);border-radius:10px;color:var(--neon-amber);font-size:9px;letter-spacing:0.06em;text-transform:uppercase;">wide spread</span>`
+      : "";
+    const drift = (hi - lo) >= 5 && hiSrc !== loSrc
+      ? `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;">${escapeHtml(meta[hiSrc].label)} ${fvCeil(hi)} high · ${escapeHtml(meta[loSrc].label)} ${fvCeil(lo)} low</div>`
+      : "";
+    summary = `<div style="margin-bottom:8px;">
+      <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${fvVals.length} sources · range ${fvCeil(lo)}–${fvCeil(hi)}${wide}</span>
+      ${drift}
+    </div>`;
+  } else if (srcKeys.length === 1) {
+    summary = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">Single source on file — additional boards populate this as they publish.</div>`;
+  }
+
+  // --- Optional per-source trajectory chart -----------------------------
+  // Only meaningful with ≥2 dated grades spanning ≥2 distinct dates (else a
+  // chart is just co-located dots the table already lists).
+  const datedFv = pts.filter(pt => pt.fv != null && isFinite(pt.fv));
+  const distinctDates = new Set(datedFv.map(pt => pt.snapshot_date));
+  let chart = "";
+  if (datedFv.length >= 2 && distinctDates.size >= 2) {
+    const W = 320, H = 92, padL = 26, padR = 8, padT = 8, padB = 18;
+    const allDates = [...distinctDates].sort();
+    const minD = allDates[0], maxD = allDates[allDates.length - 1];
+    const x = (d) => {
+      const t0 = new Date(minD).getTime(), t1 = new Date(maxD).getTime();
+      const tx = new Date(d).getTime();
+      return t1 === t0 ? padL + (W - padL - padR) / 2
+                       : padL + ((tx - t0) / (t1 - t0)) * (W - padL - padR);
+    };
+    const FV_LO = 35, FV_HI = 75;
+    const y = (fv) => padT + ((FV_HI - Math.max(FV_LO, Math.min(FV_HI, fv))) / (FV_HI - FV_LO)) * (H - padT - padB);
+    const yTicks = [35, 50, 65, 75].map(t =>
+      `<text x="${padL - 4}" y="${(y(t) + 3).toFixed(1)}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${t}</text>
+       <line x1="${padL}" x2="${W - padR}" y1="${y(t).toFixed(1)}" y2="${y(t).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2"/>`).join("");
+    const seriesSvg = srcKeys.map(s => {
+      const obs = bySource[s].filter(o => o.fv != null && isFinite(o.fv));
+      if (!obs.length) return "";
+      const color = meta[s].color;
+      const coords = obs.map(o => `${x(o.snapshot_date).toFixed(1)},${y(+o.fv).toFixed(1)}`).join(" ");
+      const line = obs.length >= 2
+        ? `<polyline points="${coords}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linecap="round" vector-effect="non-scaling-stroke"/>`
+        : "";
+      const dots = obs.map(o => `<circle cx="${x(o.snapshot_date).toFixed(1)}" cy="${y(+o.fv).toFixed(1)}" r="2.6" fill="${color}"><title>${escapeHtml(meta[s].label)}: FV ${fvCeil(+o.fv)} on ${escapeHtml(o.snapshot_date)}</title></circle>`).join("");
+      return line + dots;
+    }).join("");
+    const legend = srcKeys
+      .filter(s => bySource[s].some(o => o.fv != null && isFinite(o.fv)))
+      .map(s => `<span style="display:inline-flex;align-items:center;gap:3px;font-size:10px;color:var(--text-secondary);"><span style="width:8px;height:2px;background:${meta[s].color};display:inline-block;"></span>${escapeHtml(meta[s].label)}</span>`)
+      .join('<span style="color:var(--text-tertiary);">·</span>');
+    chart = `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 10px;border-radius:6px;margin-bottom:10px;">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-width:${W}px;display:block;" preserveAspectRatio="xMidYMid meet">${yTicks}${seriesSvg}</svg>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;">${legend}</div>
+    </div>`;
+  }
+
+  // --- Per-source rows --------------------------------------------------
+  const _stripDate = (lbl) =>
+    String(lbl || "").replace(/\s*\(\d{4}-\d{2}-\d{2}\)\s*$/, "").trim();
+  const rows = srcKeys.map(s => {
+    const obs = bySource[s];
+    const last = obs[obs.length - 1];
+    const m = meta[s];
+    const fvNum = (last.fv != null && isFinite(last.fv)) ? +last.fv : null;
+    const fvText = fvNum != null
+      ? `${fvCeil(fvNum)}${last.fv_plus && _fvQualifiesForPlus(fvNum) ? "+" : ""}`
+      : null;
+    const fvCell = fvText != null
+      ? `<span class="fv-badge ${fvClass(String(Math.round(fvNum)))} size-sm">${fvText}</span>`
+      : `<span style="color:var(--text-tertiary);font-size:10px;">rank only</span>`;
+    // Trail when a source re-graded across snapshots (latest vs first dated grade).
+    let trail = "";
+    const fvObs = obs.filter(o => o.fv != null && isFinite(o.fv));
+    if (fvObs.length >= 2) {
+      const first = +fvObs[0].fv, lastF = +fvObs[fvObs.length - 1].fv;
+      if (Math.round(first) !== Math.round(lastF)) {
+        const dir = lastF > first ? "var(--up)" : "var(--down)";
+        trail = `<div style="font-size:9px;color:${dir};margin-top:2px;font-family:var(--font-mono);">${fvCeil(first)} → ${fvCeil(lastF)}</div>`;
+      }
+    }
+    const rankCell = last.rank != null
+      ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:11px;">#${last.rank}</span>`
+      : `<span style="color:var(--text-tertiary);"> - </span>`;
+    return `<tr>
+      <td style="padding:5px 8px 5px 0;border-bottom:1px solid var(--border-light);white-space:nowrap;">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${m.color};margin-right:6px;vertical-align:middle;"></span>
+        <span style="color:var(--text-primary);font-weight:600;font-size:12px;">${escapeHtml(m.label)}</span>
+      </td>
+      <td style="padding:5px 8px;border-bottom:1px solid var(--border-light);color:var(--text-secondary);font-size:11px;">${escapeHtml(_stripDate(last.interval_label) || " - ")}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid var(--border-light);text-align:center;">${rankCell}</td>
+      <td style="padding:5px 8px;border-bottom:1px solid var(--border-light);text-align:center;">${fvCell}${trail}</td>
+      <td style="padding:5px 0 5px 8px;border-bottom:1px solid var(--border-light);text-align:right;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);white-space:nowrap;">${escapeHtml(String(last.snapshot_date || "").slice(0, 10))}${obs.length > 1 ? ` <span title="${obs.length} updates on file">·${obs.length}</span>` : ""}</td>
+    </tr>`;
+  }).join("");
+  const table = `<div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:6px;overflow-x:auto;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead><tr>
+        <th style="text-align:left;padding:4px 8px 4px 0;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">Source</th>
+        <th style="text-align:left;padding:4px 8px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">List</th>
+        <th style="text-align:center;padding:4px 8px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">Rank</th>
+        <th style="text-align:center;padding:4px 8px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">FV</th>
+        <th style="text-align:right;padding:4px 0 4px 8px;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;border-bottom:1px solid var(--border);">As of</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  </div>`;
+
+  return `<div class="detail-title">${escapeHtml(title)}</div>
+    ${summary}
+    ${chart}
+    ${table}`;
 }
 
 function renderPlayerDetail(key) {

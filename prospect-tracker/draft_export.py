@@ -252,14 +252,41 @@ def _latest_per_source(snaps: list[dict]) -> dict[str, dict]:
     return by_source
 
 
-def _consensus(snaps: list[dict], field: str) -> float | None:
-    """Avg of latest non-null `field` per source across this player's snaps."""
+def _load_draft_source_weights() -> dict[str, float]:
+    """Accuracy-derived relative draft-FV vote weights, shipped behind the
+    backtest gate in data/draft_source_weights.json (draft_source_backtest.py).
+    Sources absent from the file vote at 1.0 — ESPN and any new source are never
+    punished for lacking resolved draft history. Missing file (the backtest did
+    not ship weights, e.g. the sources tested equally accurate) = equal
+    weighting everywhere. Mirrors consensus.load_source_weights."""
+    p = Path(__file__).parent / "data" / "draft_source_weights.json"
+    try:
+        d = json.loads(p.read_text(encoding="utf-8"))
+        return {k: float(v) for k, v in (d.get("weights") or {}).items()}
+    except (OSError, ValueError):
+        return {}
+
+
+# Loaded once per process; vintage-frozen (changes only when the backtest
+# re-ships). Empty = equal weighting (the current, ship=False state).
+_DRAFT_SOURCE_WEIGHTS = _load_draft_source_weights()
+
+
+def _consensus(snaps: list[dict], field: str,
+               weights: dict[str, float] | None = None) -> float | None:
+    """Mean of latest non-null `field` per source across this player's snaps.
+    When `weights` is given, sources vote by their relative weight (default 1.0
+    for any source not listed) — an accuracy-weighted mean instead of equal."""
     latest = _latest_per_source(snaps)
-    vals = [s.get(field) for s in latest.values() if s.get(field) is not None]
-    if not vals:
+    pairs = [(src, s.get(field)) for src, s in latest.items() if s.get(field) is not None]
+    if not pairs:
         return None
     try:
-        return round(sum(float(v) for v in vals) / len(vals), 2)
+        if weights:
+            num = sum(weights.get(src, 1.0) * float(v) for src, v in pairs)
+            den = sum(weights.get(src, 1.0) for src, _ in pairs)
+            return round(num / den, 2) if den else None
+        return round(sum(float(v) for _, v in pairs) / len(pairs), 2)
     except (TypeError, ValueError):
         return None
 
@@ -336,7 +363,10 @@ def _build_class(year: int,
         # Snap consensus FV to the nearest integer for display. Keep
         # the raw average around so Draft Stock+ and FV-bucket math can
         # still see fractional resolution.
-        fv_raw = _consensus(plist, "fv")
+        # Accuracy-weighted across sources when the backtest shipped weights;
+        # equal mean otherwise (the current, ship=False state). Rank stays
+        # unweighted — vote weights are a FV-accuracy result, not a rank one.
+        fv_raw = _consensus(plist, "fv", weights=_DRAFT_SOURCE_WEIGHTS)
         fv = int(math.ceil(fv_raw)) if fv_raw is not None else None   # FV rounds UP (62.1 -> 63)
         # v26 - '+' upside flag: True if any source published "55+" etc.
         fv_plus = _consensus_fv_plus(plist)

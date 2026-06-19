@@ -380,6 +380,43 @@
     };
   }
 
+  // Board spec for the Generate GFX modal when the Signing Tracker view is
+  // active, so the graphic tracks the menu you're viewing (each FA view exports
+  // its own board). Signed MLB deals ranked by guarantee, with the model's
+  // frozen ex-ante prediction and the miss.
+  function _faTrackerSpec(cls) {
+    const actGuar = m => m.signedGuarNpv ?? m.signedGuar;
+    const signed = cls.members
+      .filter(m => m.status === "signed" && !m.signedMilb && m.signedGuar != null)
+      .sort((a, b) => (b.signedGuar || 0) - (a.signedGuar || 0)).slice(0, 50);
+    const rows = signed.map((m, i) => {
+      const dGuar = m.projGuar != null ? (actGuar(m) - m.projGuar) / 1e6 : null;
+      return { cells: [
+        { t: i + 1 },
+        { t: m.name, sub: `${m.pos || ""} · ${m.from || ""} → ${m.signedTo || ""}` },
+        { t: `${m.signedYears ?? "?"}y / ${money(m.signedGuar)}`, c: "accent" },
+        { t: m.projGuar != null ? `${m.projYears}y / ${money(m.projGuar)}` : "-" },
+        { t: dGuar != null ? formatMetric(dGuar, "surplusM") : "-" },
+      ] };
+    });
+    const yy = `${cls.class_year - 1}-${String(cls.class_year).slice(2)}`;
+    const spent = signed.reduce((s, m) => s + (m.signedGuar || 0), 0);
+    return {
+      kind: "board", module: "MLB Free Agency", accentToken: "--accent-green",
+      title: `MLB Free Agency · ${yy} Signing Tracker`,
+      subtitle: `${signed.length} MLB deals · ${money(spent)} guaranteed`,
+      url: "eephus.io/fa", filenameBase: `fa-signing-tracker-${yy}`,
+      caption: "actual deal vs the model's frozen ex-ante prediction (NPV basis)",
+      board: { defaultCount: 25, counts: [10, 25, 50], columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.40 },
+        { label: "Actual", frac: 0.18 },
+        { label: "Predicted", frac: 0.19, wideOnly: true },
+        { label: "Δ Guar", frac: 0.16 },
+      ], rows },
+    };
+  }
+
   // Blocked-by chips: WHO and WHAT KIND ('prospect' = PROSPX near-ETA,
   // 'mlb' = a contracted incumbent already producing at the slot).
   function blockedText(blockedBy) {
@@ -648,8 +685,11 @@
       return `<tr><td>${e.date}</td><td><a href="#player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
     }).join("");
     const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.projGuar != null).slice(0, 10);
+    const trackerGfx = scored.length
+      ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Generate a shareable graphic of the signing tracker"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`
+      : "";
     rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker &mdash; live</span>
-      <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps</span></div>
+      <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps${trackerGfx}</span></div>
       ${sigRows ? `<table class="detail-table">
         <thead><tr><th><span data-gl="first_seen_dates">Seen</span></th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th><span data-gl="m_guarantee">Predicted</span></th><th>&Delta; Guar</th><th><span data-gl="deal_plus">Deal+</span> real</th></tr></thead>
         <tbody>${sigRows}</tbody></table>` : ""}
@@ -659,6 +699,10 @@
         <thead><tr><th>Player</th><th><span data-gl="m_years">projLength</span></th><th><span data-gl="m_guarantee">projGuarantee</span></th><th><span data-gl="m_aav">projAAV</span></th><th>Verdict</th></tr></thead>
         <tbody>${remaining.map(m => `<tr><td>${playerLink(m)} <span class="fa-sub">${esc(m.pos || "")}</span></td>
           <td>${m.projYears}</td><td>${money(m.projGuar)}</td><td>${money(m.projAav)}</td><td>${verdictChip(m)}</td></tr>`).join("")}</tbody></table>` : ""}`;
+    const tgfx = document.getElementById("fa-tracker-gfx");
+    if (tgfx) tgfx.onclick = () => {
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faTrackerSpec(cls));
+    };
   }
 
   // ---- FA player card (#player=<key>) ----------------------------------------

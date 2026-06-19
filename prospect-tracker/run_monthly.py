@@ -2194,6 +2194,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      _ab["ship"], _ab["live_weights"])
         except Exception:
             log.exception("consensus weight A/B failed — continuing")
+        # Draft analog — FanGraphs vs MLB Pipeline pre-draft FV accuracy on the
+        # resolved classes (2018-2021). Same ship discipline: only writes
+        # data/draft_source_weights.json (consumed by draft_export at import on
+        # the next rebuild) when the weighted blend beats equal. Reads
+        # draft_timeseries.json + debuts.json, both produced above.
+        try:
+            from draft_source_backtest import run_draft_weight_ab
+            _dab = run_draft_weight_ab(data_dir=out_dir, write=True)
+            log.info("draft weight A/B: ship=%s weights=%s resolved=%s",
+                     _dab["ship"], _dab["live_weights"], _dab["resolved_years"])
+        except Exception:
+            log.exception("draft weight A/B failed — continuing")
         # ETA backtest rerun (Phase 4b WS-8 — cheap, cache-only StatsAPI
         # reads). Rescores the live v39 bases as new debuts land; the
         # frozen v38 comparator keeps the before/after honest forever.
