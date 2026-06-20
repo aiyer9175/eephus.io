@@ -11,8 +11,12 @@ Anchored to the FanGraphs scouting primer:
 
 Design (v5)
 -----------
-Every source that publishes an explicit 20-80 FV grade contributes EQUALLY
-to the consensus. There is no per-source weighting. This includes:
+Sources that publish an explicit 20-80 FV grade are combined into an
+accuracy-weighted mean. Weights load from data/source_weights.json (shrunk
+toward equal from the resolved-outcome backtest) and default to 1.0 - one
+equal vote - unless that file overrides a source; today only FanGraphs (0.939)
+and MLB Pipeline (1.061) differ from equal, every other source votes at 1.0.
+Sources that publish an explicit FV grade:
 
   * FanGraphs            (Eric Longenhagen + team)
   * ESPN                 (McDaniel)
@@ -603,8 +607,8 @@ def compute_consensus_point(
     else:
         fv_min = fv_max = fv_spread = fv_stddev = None
 
-    # Consensus = unweighted mean of explicit FVs. Fall back to the
-    # rank-implied mean ONLY when no source published an FV grade —
+    # Consensus = the accuracy-weighted mean of explicit FVs computed above.
+    # Fall back to the rank-implied mean ONLY when no source published an FV grade —
     # otherwise a player ranked only by Baseball America / The Athletic
     # would have no consensus FV at all.
     pre_shrinkage = avg_fv if avg_fv is not None else rank_implied_fv

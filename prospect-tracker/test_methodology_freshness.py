@@ -35,6 +35,7 @@ MODEL_GLOSSARY = {
     "fv_to_war_anchors": ["fv_to_war_table"],
     "wag": ["wag", "warwag"],
     "consensus_fv": ["consensus_fv"],
+    "draft_consensus_weight": "internal",
     "source_track_record": ["single_source_mark"],
     "eta": ["eta"],
     "farm_grades": ["farm_report_card", "farm_rank"],

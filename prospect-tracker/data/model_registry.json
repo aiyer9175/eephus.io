@@ -199,8 +199,8 @@
   {
    "model_id": "consensus_fv",
    "surface": "every PROSPX surface",
-   "predicts": "consensus FV from source grades (equal-weight + Bayesian shrinkage)",
-   "champion": "accuracy-weighted blend (WS-5): FG 0.937 / MLB Pipeline 1.063, all other sources 1.0",
+   "predicts": "consensus FV from source grades (accuracy-weighted + Bayesian shrinkage)",
+   "champion": "accuracy-weighted blend (WS-5): FG 0.939 / MLB Pipeline 1.061, all other sources 1.0",
    "baseline": "best single source (FanGraphs)",
    "metric": "Spearman + AUC vs realized WAR, common-set head-to-head",
    "eval_artifact": "data/consensus_weight_eval.json",
@@ -211,10 +211,24 @@
    "artifact_age_days": 0
   },
   {
+   "model_id": "draft_consensus_weight",
+   "surface": "PROSPX draft board",
+   "predicts": "draft-board consensus FV from source draft grades (source-accuracy weighting test)",
+   "champion": "equal-weight (the accuracy-weighted blend did not beat equal on the resolved draft cohorts, so draft sources stay at 1.0)",
+   "baseline": "best single draft source (FanGraphs)",
+   "metric": "Spearman + AUC vs realized WAR/debut, LOO-CV on resolved draft cohorts",
+   "eval_artifact": "data/draft_consensus_weight_eval.json",
+   "verdict": "provisional",
+   "notes": "Draft analogue of the consensus_fv weighting. On 668 resolved draftees (2018-2021, 5-year lag) per-source ordering skill was near-identical (FG 0.167 / MLB Pipeline draft 0.165) and the LOO-CV weighted blend did NOT beat equal on pooled metrics (Spearman 0.177 vs 0.180; AUC tie 0.724), so equal-weight ships and the live draft weights stay ~1.0. Re-measured each monthly run; promote only if a weighted blend clears equal out-of-sample.",
+   "last_checked": "2026-06-20",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "source_track_record",
    "surface": "/glossary/ source comparison",
    "predicts": "per-source FV accuracy",
-   "champion": "source_backtest (2017-2024 bases)",
+   "champion": "source_backtest (2017-2023 bases)",
    "baseline": "n/a (measurement)",
    "metric": "Spearman/AUC/tier tables, resolved cohorts only",
    "eval_artifact": "data/source_backtest.json",

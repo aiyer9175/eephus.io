@@ -247,9 +247,12 @@ function _methProseHTML() {
   return `
   <div class="meth-prose">
     <h2 class="meth-h">How the consensus FV is built</h2>
-    <p>Every source that publishes an explicit 20–80 Future Value grade contributes
-    <strong>equally</strong> - there is no per-source weighting. The consensus FV is the
-    mean of those published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
+    <p>Every source that publishes an explicit 20–80 Future Value grade feeds an
+    <strong>accuracy-weighted</strong> consensus. Each source's vote weight comes from its
+    measured track record on resolved cohorts, shrunk hard toward equal and clamped, so the
+    weights barely move off one vote - today only MLB Pipeline (1.06) and FanGraphs (0.94)
+    differ; every other source votes at 1.0. The consensus FV is that weighted mean of the
+    published grades (FanGraphs, ESPN, Just Baseball, TJStats, MLB Pipeline,
     and MLB Pipeline International). Two rank-only sources (Baseball America, The Athletic)
     contribute a rank→implied-FV <em>only</em> when no source has graded a player yet; once
     any explicit FV exists, the grade mean wins and ranks become informational (the
@@ -299,10 +302,10 @@ function _methProseHTML() {
     </dl>
 
     <div class="meth-eg-card">
-      <div class="meth-eg-title">Worked examples · current board</div>
-      <div class="meth-eg-row"><b>Jesus Made</b> - SS · MIL · ${gTermLink("fv", "FV")} 62. ${gTermLink("dvm_plus", "$DvM+")} 109.6 (projected surplus dollars ~10% above the mean farm's development pace), ${gTermLink("k_pct", "K%")} 14.3 / ${gTermLink("bb_pct", "BB%")} 10.7, ${gTermLink("ops_plus", "OPS+ vs lvl")} 115 → published ${gTermLink("surplus_value", "surplus value")} <b>$154M</b>.</div>
-      <div class="meth-eg-row"><b>Seth Hernandez</b> - SP · PIT · ${gTermLink("fv", "FV")} 60. ${gTermLink("k_bb_pct", "K-BB%")} 18.0 (36.1 K − 18.1 BB), ${gTermLink("dvm_plus", "$DvM+")} 116.9 → published ${gTermLink("surplus_value", "surplus value")} <b>$131M</b>.</div>
-      <div class="meth-eg-note">Live figures from this month's board - the same numbers shown on each player's card.</div>
+      <div class="meth-eg-title">Worked example · how a grade becomes a dollar figure</div>
+      <div class="meth-eg-row">An <b>${gTermLink("fv", "FV")} 60</b> shortstop: the FV→WAR anchor maps the grade to a per-year WAR expectation, the position multiplier nudges it for the up-the-middle profile, and the six cost-controlled years are priced at the tiered ${gTermLink("dpw_tier", "$/WAR")} (about $7.7M / $9.7M / $15.1M by WAR level) minus the league-min-plus-arb cost basis, then probability-weighted across debut and bust outcomes and discounted to present value.</div>
+      <div class="meth-eg-row">The result is the published ${gTermLink("surplus_value", "surplus value")} on that player's card. A higher ${gTermLink("dvm_plus", "$DvM+")} (faster-than-mean development) and stronger underlying rates (${gTermLink("k_pct", "K%")} / ${gTermLink("bb_pct", "BB%")}, ${gTermLink("ops_plus", "OPS+ vs lvl")}) lift the expectation within the FV band.</div>
+      <div class="meth-eg-note">Illustrative - each player's card carries their own current figure, which moves with the FV→WAR table and the $/WAR market.</div>
     </div>
 
     <h2 class="meth-h">Surplus value - the economic model</h2>
@@ -386,7 +389,7 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Methodology changelog</h2>
     <ul class="meth-changelog">
-      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017–2020 boards (new-format CSVs) + MLB Pipeline 2017–2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021–2023 (3 base years) to 2017–2023 (7); the common scored set rose from ≈2,294 to ≈2,544 players. On the larger, further-resolved sample the consensus still outranks its best individual source (Spearman 0.31 vs 0.30; AUC 0.79 vs 0.78).</li>
+      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017–2020 boards (new-format CSVs) + MLB Pipeline 2017–2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021–2023 (3 base years) to 2017–2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
@@ -547,8 +550,45 @@ function _methArchetypeTable(bt) {
       <thead><tr><th>Archetype</th><th>n</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
     </table></div>
-    <p class="meth-note">Where the consensus leads (5 of 6 archetypes), the blend is the safe default. The one place a single source wins outright is <strong>college arms, where MLB Pipeline is best</strong> and FanGraphs grades pitching weakest. International arms are the hardest archetype to grade, with AUC barely above a coin flip.</p>
+    ${_methArchetypeNote(bt)}
   </div>`;
+}
+
+// Build the archetype takeaway sentence FROM the live by_archetype data so it
+// can never contradict the table above it (who leads, where a single source
+// wins outright, the hardest archetype). Replaces a hardcoded note that drifted.
+function _methArchetypeNote(bt) {
+  const ba = bt.accuracy && bt.accuracy.by_archetype;
+  const raters = bt.raters || [];
+  if (!ba || !ba.length || !raters.length) return "";
+  const CONS = "prospx_consensus";
+  let consWins = 0, total = 0;
+  const soleWinners = [];
+  let hardest = null;
+  ba.forEach(a => {
+    const entries = raters
+      .map(r => [r, (a.raters[r] || {}).auc])
+      .filter(([, v]) => v != null);
+    if (!entries.length) return;
+    total++;
+    const best = Math.max(...entries.map(([, v]) => v));
+    const winners = entries.filter(([, v]) => v === best).map(([r]) => r);
+    const consAuc = (a.raters[CONS] || {}).auc;
+    if (winners.includes(CONS)) consWins++;
+    else if (winners.length === 1) soleWinners.push({ label: a.label, rater: winners[0] });
+    if (consAuc != null && (hardest == null || consAuc < hardest.auc)) hardest = { label: a.label, auc: consAuc };
+  });
+  if (!total) return "";
+  const lead = consWins >= total
+    ? `The consensus leads or ties for best in all ${total} archetypes, so the blend is the safe default everywhere.`
+    : `The consensus leads or ties in ${consWins} of ${total} archetypes, so the blend is the safe default in most.`;
+  const sole = soleWinners.length
+    ? ` The one${soleWinners.length > 1 ? "s" : ""} a single source wins outright: ${soleWinners.map(s => `${escapeHtml(s.label)} (${escapeHtml(_raterMeta(s.rater).label)})`).join(", ")}.`
+    : ``;
+  const hard = hardest
+    ? ` ${escapeHtml(hardest.label)} is the hardest archetype to grade (consensus AUC ${hardest.auc.toFixed(3)}).`
+    : ``;
+  return `<p class="meth-note">${lead}${sole}${hard}</p>`;
 }
 
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,

@@ -69,9 +69,9 @@
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
   const VERDICT_META = {
-    value: ["VALUE", "Projected to be UNDERPAID - rational value runs well past the predicted price (Deal+ in the corpus top tercile, ≥185)."],
-    market: ["MARKET", "Priced about right - rational value and predicted price within the corpus middle tercile (Deal+ 85–185)."],
-    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price runs past rational value (Deal+ in the corpus bottom tercile, <85)."],
+    value: ["VALUE", "Projected to be UNDERPAID - rational value runs past the predicted price (Deal+ in the corpus top tercile, ≥160)."],
+    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 75–160)."],
+    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price runs past rational value (Deal+ in the corpus bottom tercile, <75)."],
   };
   function verdictChip(m) {
     const v = VERDICT_META[m.verdict];
@@ -470,7 +470,7 @@
       return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
-      <span class="newsprint-eyebrow-label">2026-27 Class Board</span>
+      <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
       <span class="newsprint-eyebrow-meta">${cls.members.length} constructed members &middot; ${cls.n_projected} projected &middot; winter $/WAR (ex-ante) ${money(cls.dpw_usd)}, escalating ${((cls.dpw_infl || 0.05) * 100).toFixed(0)}%/yr &middot; <button class="chip egfx-chip" id="fa-gfx-btn" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></span>
     </div>`;
     // Filter bar: Type (UFA vs the option family), position group, and verdict.

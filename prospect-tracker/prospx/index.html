@@ -10433,23 +10433,28 @@ function _stuffPlusTBS(p) {
   return (typeof v === "number" && isFinite(v)) ? v : null;
 }
 function _translatedOverseasPerf(p) {
-  // Returns {wrc, fip} with the league's translation_pct applied to
-  // the wRC+ headline (the canonical haircut crossing to MLB - 
-  // NPB ~-5%, KBO ~-10%, etc.). FIP isn't translated because the
-  // league-context factor is a hitter-side stat. Falls back to the
-  // raw values when no translation_pct is on file.
+  // Returns {wrc, fip} with the league's hitter wRC+ factor applied to the
+  // wRC+ headline - the MLB-equivalence haircut crossing to MLB (NPB 0.87 =
+  // -13%, KBO 0.70 = -30%, etc.). The factor is multiplicative on wRC+. FIP is
+  // passed through untranslated: the original design haircuts only the hitter
+  // side (a pitcher_era_factor exists in league_context if a pitcher-side
+  // haircut is added later). Falls back to raw values when no factor is on file.
+  // v33 - was reading ctx.translation_pct, a field that does not exist, so the
+  // haircut silently no-op'd; now reads the real ctx.hitter_wrc_factor.
   const { wrc, fip } = _overseasHeadline(p);
   if (wrc == null && fip == null) return { wrc, fip };
-  // Locate translation_pct on the leagues meta when available.
-  let pct = 0;
+  // Locate the hitter wRC+ factor on the leagues meta when available.
+  let wrcFactor = 1;
   try {
     const lg = p && p.league;
     const leagues = (DATA && DATA.overseas && DATA.overseas.leagues) || [];
     const ctx = (leagues.find(l => l && l.league === lg) || {}).league_context || {};
-    if (typeof ctx.translation_pct === "number") pct = ctx.translation_pct;
+    if (typeof ctx.hitter_wrc_factor === "number" && isFinite(ctx.hitter_wrc_factor)) {
+      wrcFactor = ctx.hitter_wrc_factor;
+    }
   } catch (e) { /* ignored */ }
-  const adj = (v) => (v == null) ? null : v * (1 + pct / 100);
-  return { wrc: adj(wrc), fip };  // fip pass-through (no hitter-style haircut)
+  const adjWrc = (wrc == null) ? null : wrc * wrcFactor;
+  return { wrc: adjWrc, fip };  // fip pass-through (hitter-side haircut only)
 }
 
 function tiebreakerScore(p) {
@@ -10494,7 +10499,8 @@ function tiebreakerScore(p) {
   } else if (_isOverseasProspect(p)) {
     const { wrc, fip } = _translatedOverseasPerf(p);
     const fipNorm = (fip != null) ? Math.max(0, Math.min(1, (4.50 - Number(fip)) / 2.00)) : null;
-    // OVERSEAS TBS - Tool+ + cohort RPS+ + translation-adjusted wRC+/FIP
+    // OVERSEAS TBS - Tool+ + cohort RPS+ + translation-adjusted wRC+ (hitter
+    // side, via hitter_wrc_factor) and raw FIP
     // (performance) carry the headline. Tool depth + age modulate.
     parts = [
       [_tbsNorm(toolPlus,      80, 130), 0.22],
@@ -19703,13 +19709,17 @@ function renderRecentlyTraded() {
   // v32.0 - $/WAR is now tier-aware via dollarsPerWar(). The flat
   // constant remains for career-WAR aggregates where tier-dispatching
   // doesn't make sense (multi-season aggregate spans multiple tiers).
-  // Sourced from window.VALUE_FRAMEWORK; falls back to 11.74 (rolling
-  // 3yr 2024-2026 overall avg) if the snapshot didn't load.
-  const _WAR_DOLLAR_VALUE = (window.VALUE_FRAMEWORK
-                              && window.VALUE_FRAMEWORK.dollars_per_war
-                              && window.VALUE_FRAMEWORK.dollars_per_war.tiers
-                              && window.VALUE_FRAMEWORK.dollars_per_war.tiers.overall)
-                              || 11.74;
+  // v33 - the snapshot emits dollars_per_war.flat_mm (with tiered_mm.{lt_1,
+  // 1_to_2,2plus}); an older snapshot exposed dollars_per_war.tiers.overall.
+  // Read the real key, keep the legacy path for back-compat, and fall back to
+  // the CURRENT live flat rate (not the pre-reanchor seed) so a load miss
+  // degrades to correct-as-of-now instead of silently ~11% low. This flat
+  // constant is for multi-season WAR aggregates; dollarsPerWar() does per-tier.
+  const _dpwSnap = (window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.dollars_per_war) || null;
+  const _WAR_DOLLAR_VALUE = (_dpwSnap && (
+                              (typeof _dpwSnap.flat_mm === "number" && isFinite(_dpwSnap.flat_mm) && _dpwSnap.flat_mm)
+                              || (_dpwSnap.tiers && _dpwSnap.tiers.overall)))
+                              || 13.0252;
   // Parse IBP + cash mentions from a trade description. Returns
   // {ibp_mm, cash_mm, recipient_hint} where recipient_hint is
   // either "from" / "to" / null (we use the canonical sender / receiver
@@ -20632,14 +20642,24 @@ function surplusPositionMult(position) {
 // Returns $M/WAR for a given projected per-year WAR, dispatching off
 // the 0-1 / 1-2 / 2+ tier boundaries.
 function dollarsPerWar(projWar) {
-  const vf = window.VALUE_FRAMEWORK;
-  const tiers = (vf && vf.dollars_per_war && vf.dollars_per_war.tiers)
-                || { "0-1": 6.97, "1-2": 8.76, "2+": 13.63, overall: 11.74 };
-  if (projWar == null || !isFinite(projWar)) return tiers["0-1"];
+  // v33 - the snapshot emits dollars_per_war.tiered_mm.{lt_1,1_to_2,2plus}; an
+  // older snapshot used dollars_per_war.tiers.{"0-1","1-2","2+"}. Read the real
+  // keys, keep the legacy path, and fall back to the CURRENT live rates (not the
+  // pre-reanchor seeds) so a load miss is correct-as-of-now, never silently low.
+  const dpw = (window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.dollars_per_war) || null;
+  const tm = (dpw && dpw.tiered_mm) || null;
+  const legacy = (dpw && dpw.tiers) || null;
+  const pick = (real, old, dflt) =>
+    (typeof real === "number" && isFinite(real)) ? real
+    : (typeof old === "number" && isFinite(old)) ? old : dflt;
+  const lt1 = pick(tm && tm.lt_1,      legacy && legacy["0-1"], 7.733);
+  const mid = pick(tm && tm["1_to_2"], legacy && legacy["1-2"], 9.7189);
+  const hi  = pick(tm && tm["2plus"],  legacy && legacy["2+"],  15.122);
+  if (projWar == null || !isFinite(projWar)) return lt1;
   const w = Number(projWar);
-  if (w < 1.0) return tiers["0-1"];
-  if (w < 2.0) return tiers["1-2"];
-  return tiers["2+"];
+  if (w < 1.0) return lt1;
+  if (w < 2.0) return mid;
+  return hi;
 }
 
 // v31.8 - Tiebreaker-score sub-adjustment for AAV. Within a single FV
@@ -38726,7 +38746,7 @@ function renderPlayerDetail(key) {
                 : surplusMM < -0.5 ? "var(--down)"
                 : "var(--text-tertiary)";
       const surplusSign = surplusMM > 0 ? "+" : "";
-      aavCompareRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border-light);margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Implied AAV = career WAR/yr × $9.5M (FanGraphs market multiplier). Surplus = team's gain (positive) or overpay (negative) per year.">
+      aavCompareRow = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-top:1px solid var(--border-light);margin-top:8px;font-size:11px;color:var(--text-secondary);" title="Implied AAV = career WAR/yr × the prevailing $/WAR (tiered by WAR level, ~$7.7M / $9.7M / $15.1M; see Methodology). Surplus = team's gain (positive) or overpay (negative) per year.">
         <span>Implied: <strong style="color:var(--text-primary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">$${impliedMM.toFixed(1)}M</strong></span>
         <span>Surplus: <strong style="color:${cls};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${surplusSign}$${surplusMM.toFixed(1)}M/yr</strong></span>
       </div>`;
@@ -42326,7 +42346,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         const aav = estimateMarketAavMM(warRate.war_per_yr);
         if (aav != null) {
           const fmtAav = aav >= 10 ? `$${aav.toFixed(0)}M` : `$${aav.toFixed(1)}M`;
-          aavLine = ` <span title="Realized market AAV - ${warRate.war_per_yr.toFixed(2)} WAR/yr × $9.5M/WAR" style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:10px;font-variant-numeric:tabular-nums;">${fmtAav}/yr</span>`;
+          aavLine = ` <span title="Realized market AAV - ${warRate.war_per_yr.toFixed(2)} WAR/yr × the prevailing $/WAR (tiered by WAR level; see Methodology)" style="color:var(--neon-cyan);font-family:var(--font-mono);font-size:10px;font-variant-numeric:tabular-nums;">${fmtAav}/yr</span>`;
         }
       }
       return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(g.player_key)}');">

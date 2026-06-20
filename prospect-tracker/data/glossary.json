@@ -851,8 +851,8 @@
    ],
    "priority": 4,
    "definition": "Future Value, the 20-80 scouting grade for a prospect's projected MLB ceiling.",
-   "methodology": "Every tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect. The site averages them into a consensus FV, with Bayesian shrinkage applied to single-instance grades. FV 50 is a projected MLB regular, FV 60 is a first-division regular or future star, FV 70+ is perennial all-star ceiling.",
-   "formula": "consensus_fv = mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
+   "methodology": "Every tracked source (FanGraphs, MLB Pipeline, ESPN, Just Baseball, TJStats, Baseball America, The Athletic) publishes a 20-80 grade per prospect. The site combines them into an accuracy-weighted consensus FV - per-source vote weights from each source's measured track record, shrunk hard toward equal so today only MLB Pipeline (1.06) and FanGraphs (0.94) differ from one vote - with Bayesian shrinkage applied to single-instance grades. FV 50 is a projected MLB regular, FV 60 is a first-division regular or future star, FV 70+ is perennial all-star ceiling.",
+   "formula": "consensus_fv = accuracy_weighted_mean(published_fvs) + shrinkage_pull · (FV_35 − mean) when only 1 instance exists",
    "example": "Jackson Holliday's FV 65 means scouts collectively see him as a future star, one tier above an everyday regular but below a perennial all-star.",
    "seeAlso": [
     "tool",
@@ -1369,15 +1369,15 @@
    ],
    "aliases": [],
    "priority": 8,
-   "definition": "The site-computed FV; averages all source publications and applies single-instance shrinkage.",
-   "methodology": "For every snapshot, the consensus FV is the mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted.",
+   "definition": "The site-computed FV; an accuracy-weighted mean of all source publications with single-instance shrinkage.",
+   "methodology": "For every snapshot, the consensus FV is an accuracy-weighted mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted.",
    "seeAlso": [
     "fv",
     "shrinkage",
     "wide_spread"
    ],
-   "formula": "consensus FV = mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
-   "example": "Jesus Made carries 60/62/65 grades across five sources: the consensus is their mean, 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. His rank-implied FV (68.3) reads higher than his published grades, a gap the Source Comparison tab surfaces."
+   "formula": "consensus FV = accuracy-weighted mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
+   "example": "A prospect carrying 60/62/65 grades across five sources lands at an accuracy-weighted consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces."
   },
   {
    "id": "stock",
