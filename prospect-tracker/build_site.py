@@ -1282,14 +1282,30 @@ def _wag_badge(g: dict) -> str:
             f'{sign}{wag_r:.1f} WAG</span>')
 
 
-def _this_day_html(graduates: list, n: int = 5) -> str:
+def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> str:
     """'This day in prospect history' - graduates who debuted on (or within a
-    few days of) today's calendar date in past seasons. Up to `n` rows,
-    exact-date anniversaries first, then by prominence (final FV, then WAG).
-    Shows the org each player DEBUTED with (point-in-time via _debut_org), the
-    WAG (how they've panned out vs. their grade), and links into Time Machine
-    at the lead anniversary date."""
+    few days of) today's calendar date in past seasons, plus prospect trades
+    that happened on the same calendar date. Up to `n` debut rows, exact-date
+    anniversaries first, then by prominence (final FV, then WAG); each row
+    carries the player's FV chip and (for debuts) their WAG. Shows the org each
+    player DEBUTED with / the trade's from->to orgs (point-in-time, not where
+    they play now - this is a history module). Links into Time Machine at the
+    lead anniversary date."""
     today = date.today()
+
+    def _anniv_prox(d: "date") -> int | None:
+        """Days between `d`'s anniversary this year and today; None if the
+        date is this year/later or doesn't map onto the current year."""
+        if d.year >= today.year:
+            return None
+        try:
+            anniv = date(today.year, d.month, d.day)
+        except ValueError:
+            return None
+        prox = abs((anniv - today).days)
+        return prox if prox <= 4 else None
+
+    # ---- Debuts on this day ----
     cands = []  # (date_proximity, -prominence, debut_date, grad)
     for g in graduates:
         dd = g.get("debut_date")
@@ -1299,20 +1315,13 @@ def _this_day_html(graduates: list, n: int = 5) -> str:
             d = date.fromisoformat(str(dd)[:10])
         except ValueError:
             continue
-        if d.year >= today.year:
-            continue
-        try:
-            anniv = date(today.year, d.month, d.day)
-        except ValueError:
-            continue
-        prox = abs((anniv - today).days)
-        if prox > 4:
+        prox = _anniv_prox(d)
+        if prox is None:
             continue
         prom = g.get("fv_close") or ((g.get("debuted_value") or {}).get("wag") or {}).get("regressed_wag") or 0
         cands.append((prox, -float(prom), d, g))
-    if not cands:
-        return ""
     cands.sort(key=lambda c: c[:2])
+
     rows = []
     for _, _, d, g in cands[:n]:
         yrs = today.year - d.year
@@ -1326,15 +1335,66 @@ def _this_day_html(graduates: list, n: int = 5) -> str:
             f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
             f'<span class="otd-when">{html.escape(when)}</span>'
             f'<span class="otd-body"><strong>{nm}</strong> debuted - {meta}</span>'
-            f'{_wag_badge(g)}'
+            f'{_fv_pill(g)}{_wag_badge(g)}'
             f'<span class="otd-ago">{yrs}y ago</span></a>'
         )
-    lead_date = cands[0][2]
+
+    # ---- Trades on this day ----
+    # Aggregate prospect trades across the active board (timeseries) + graduates,
+    # deduped by player_key (board wins, it's fresher). Only mlb_api trades carry
+    # an exact calendar date, so inferred-date trades are excluded by source.
+    entities = {}
+    for src in (players or [], graduates):
+        for p in src:
+            k = p.get("player_key")
+            if k and k not in entities:
+                entities[k] = p
+    trade_cands = []  # (prox, -fv, trade_date, entity, trade)
+    for p in entities.values():
+        for tr in (p.get("trades") or []):
+            if tr.get("source") != "mlb_api":
+                continue
+            td = str(tr.get("trade_date") or "")[:10]
+            try:
+                d = date.fromisoformat(td)
+            except ValueError:
+                continue
+            prox = _anniv_prox(d)
+            if prox is None:
+                continue
+            fv = p.get("fv_close") or 0
+            trade_cands.append((prox, -float(fv), d, p, tr))
+    trade_cands.sort(key=lambda c: c[:2])
+
+    trade_rows = []
+    for _, _, d, p, tr in trade_cands[:n]:
+        yrs = today.year - d.year
+        nm = html.escape(p.get("player_name") or "")
+        pos = p.get("position") or ""
+        logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
+                 f'<span class="otd-arrow">→</span>'
+                 f'{_team_logo(tr.get("to_org"), "otd-logo")}')
+        when = f"{d.strftime('%B')} {d.day}, {d.year}"
+        trade_rows.append(
+            f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}">'
+            f'<span class="otd-when">{html.escape(when)}</span>'
+            f'<span class="otd-body">{logos} <strong>{nm}</strong>{(" · " + html.escape(pos)) if pos else ""} traded</span>'
+            f'{_fv_pill(p)}'
+            f'<span class="otd-ago">{yrs}y ago</span></a>'
+        )
+
+    if not rows and not trade_rows:
+        return ""
+    lead_date = (cands[0][2] if cands else trade_cands[0][2])
+    trades_block = (
+        f'<div class="otd-subhead">Trades on this day</div>{"".join(trade_rows)}'
+        if trade_rows else ""
+    )
     return (
         '<section class="home-module otd-module">'
         '<div class="kicker"><h2>This Day in Prospect History</h2>'
         f'<a class="see-all" href="/prospx/#tab=timemachine&tm={lead_date.isoformat()}">Time Machine →</a></div>'
-        + "".join(rows) +
+        + "".join(rows) + trades_block +
         '</section>'
     )
 
@@ -1547,7 +1607,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                 f'<a href="/glossary/#g={slug}">Glossary →</a></div>')
 
     callout = _date_callout()
-    otd = _this_day_html(graduates)
+    otd = _this_day_html(graduates, players)
     trades_mod = _recent_trades_html(players)
     scatter = _scatter_teaser()
     cross = _cross_module_strip()
@@ -1695,6 +1755,10 @@ def build_glossary() -> str:
         '<button class="chip" data-glossary-view="guide">How to Read</button>'
         '<button class="chip" data-glossary-view="methodology">Methodology</button>'
         '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
+        # Outbound link (not a view toggle) to the full attribution page, so the
+        # Data Sources & Attribution page is reachable from this section, not just
+        # the footer. The trailing arrow signals it navigates away.
+        '<a class="chip gl-chip-out" href="/sources/">Data Sources &amp; Attribution →</a>'
         '</div>'
         '<div id="gl-termbar">'
         '<input id="gl-search" class="gl-search" type="search" placeholder="Search terms, abbreviations, definitions…" aria-label="Search glossary">'

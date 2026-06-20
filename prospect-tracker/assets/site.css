@@ -852,6 +852,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    coloring (up/down/flat); sits between the body and the "Ny ago" stamp. */
 .otd-wag { flex: none; font-size: 12px; min-width: 0; }
 .otd-ago { flex: none; font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); }
+/* FV chip sits a touch smaller in this dense history row than its default. */
+.otd-module .fv-pill { font-size: 12px; padding: 2px 7px; }
+/* "Trades on this day" sub-block divider + the from->to org logos. */
+.otd-subhead { margin: 10px 4px 2px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border-light); padding-top: 10px; }
+.otd-logo { height: 16px; width: 16px; object-fit: contain; vertical-align: middle; flex: none; }
+.otd-arrow { color: var(--text-tertiary); margin: 0 2px; font-size: 11px; }
 
 /* Date-aware upcoming-event callout (draft / signing period). */
 .home-callout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 9px 16px; border: 1px solid var(--accent-gold); background: color-mix(in srgb, var(--accent-gold) 10%, var(--bg-secondary)); text-decoration: none; color: var(--text-primary); font-family: var(--font-retro-mono); font-size: 13px; }
@@ -1213,6 +1220,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .gl-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer;
   border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
 .gl-app button.chip.active { color: var(--text-primary); border-color: var(--accent-gold); font-weight: 700; }
+/* Outbound link styled as a chip (Data Sources & Attribution) - navigates to a
+   separate page rather than toggling a view, so it never carries .active. */
+.gl-app a.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; text-decoration: none;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
+.gl-app a.chip.gl-chip-out { margin-left: auto; }
+.gl-app a.chip:hover { color: var(--text-primary); border-color: var(--accent-gold); }
 .gl-app /* === How to Read the Site (guide) === */
     .guide-wrap { max-width: 900px; }
 .gl-app .guide-intro { font-family: var(--font-serif); font-size: 14px; line-height: 1.6;
