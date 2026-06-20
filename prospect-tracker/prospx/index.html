@@ -9267,7 +9267,12 @@
         <button class="chip" data-farm-sort="level_DSL">DSL</button>
       </div>
       <div class="filter-group filter-group-tendency" style="flex-basis:100%;">
-        <span class="filter-label" title="Filter the board to organizations with a pronounced behavioral tendency (from the Org Tendencies model). Selecting multiple narrows to orgs that earn ALL of them.">Tendencies</span>
+        <span class="filter-label" title="Filter the board to organizations with a pronounced behavioral tendency (from the Org Tendencies model). Use ALL / ANY to choose whether multiple selections intersect or union.">Tendencies</span>
+        <span id="farm-tendency-mode" style="display:inline-flex;gap:2px;margin-right:4px;">
+          <button class="chip" type="button" data-tend-mode="and" title="Show orgs that earn ALL selected tendencies (intersection)">ALL</button>
+          <button class="chip" type="button" data-tend-mode="or" title="Show orgs that earn ANY selected tendency (union)">ANY</button>
+        </span>
+        <button class="chip" type="button" data-farm-sort="tendency" title="Sort the board by how pronounced each org's tendencies are (the selected ones when a filter is active)">↕ Strength</button>
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
@@ -12255,6 +12260,7 @@ function syncToURL() {
   if (state.farmSort    !== "farm_rank") p.set("farm",  state.farmSort);
   if (state.farmViewMode && state.farmViewMode !== "table") p.set("farmview", state.farmViewMode);
   if (state.farmTendencyFilter && state.farmTendencyFilter.size) p.set("ftend", [...state.farmTendencyFilter].join(","));
+  if (state.farmTendencyMode === "or") p.set("ftmode", "or");
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
   if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
   if (state.farmTreeView && state.farmTreeView !== "expanded") p.set("ftree", state.farmTreeView);
@@ -12413,6 +12419,7 @@ function syncFromURL() {
   if (p.has("farm"))  state.farmSort    = p.get("farm");
   if (p.has("farmview")) state.farmViewMode = p.get("farmview");
   state.farmTendencyFilter = new Set(p.has("ftend") ? p.get("ftend").split(",").filter(Boolean) : []);
+  state.farmTendencyMode = p.get("ftmode") === "or" ? "or" : "and";
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
   if (p.has("formw")) {
     const v = p.get("formw");
@@ -13821,9 +13828,11 @@ const state = {
   farmViewMode: "table",
   // Farm-system board tendency filter. A Set of org-tendency badge kinds
   // (e.g. "aggressive", "trade-happy", "over-slot", "high-il") sourced
-  // from org_tendencies.json. Empty = no filter; multiple selections use
-  // OR semantics (an org matches if it earns any selected badge).
+  // from org_tendencies.json. Empty = no filter. farmTendencyMode controls
+  // how multiple selections combine: "and" (default, intersection - earns
+  // ALL) or "or" (union - earns ANY), toggled by the ALL/ANY control.
   farmTendencyFilter: new Set(),
+  farmTendencyMode: "and",
   // Active form-bar window. Controls the farm-list sparkline (which
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory". Default 6y - the
@@ -32938,6 +32947,19 @@ function farmSortedOrgs() {
     );
   }
   const s = state.farmSort;
+  // "tendency" sorts by how pronounced an org's tendency profile is (sum of
+  // badge strengths) - scoped to the SELECTED tendencies when a filter is on,
+  // else the whole profile. No-ops gracefully until the sidecar is loaded.
+  if (s === "tendency") {
+    const sel = state.farmTendencyFilter || new Set();
+    const strength = (o) => {
+      const bs = orgBadgeSet(o.org);
+      const rel = sel.size ? bs.filter(b => sel.has(b.kind)) : bs;
+      return rel.reduce((sum, b) => sum + (b.weight || 0), 0);
+    };
+    orgs.sort((a, b) => strength(b) - strength(a) || (b.total_fv || 0) - (a.total_fv || 0));
+    return orgs;
+  }
   // "level_<LVL>" sorts by graded-prospect count at that affiliate level.
   // Defensive ?? 0 keeps orgs without a level-counts block (older exports)
   // at the bottom rather than NaN-poisoning the comparator.
@@ -33295,10 +33317,13 @@ function renderFarmSystems() {
     if (!_orgTendencies) {
       _ensureOrgTendencies(() => { if (state.section === "farm" && !state.view) renderFarmSystems(); });
     } else {
+      const _tendMode = state.farmTendencyMode || "and";
       orgs = orgs.filter(o => {
         const kinds = new Set(orgBadgeSet(o.org).map(b => b.kind));
-        // AND semantics: an org must earn EVERY selected tendency badge.
-        return [..._tendSel].every(k => kinds.has(k));
+        // ALL (AND, default) intersects; ANY (OR) unions the selected badges.
+        return _tendMode === "or"
+          ? [..._tendSel].some(k => kinds.has(k))
+          : [..._tendSel].every(k => kinds.has(k));
       });
     }
   }
@@ -40761,6 +40786,13 @@ function _gfxTendencyStrip(orgCode, P) {
 // attachHandlers, so re-rendering the innerHTML here is safe.
 function renderFarmTendencyChips() {
   const sel = state.farmTendencyFilter || new Set();
+  // ALL / ANY mode toggle active state (dim it when fewer than 2 are selected,
+  // since the mode only changes the result with a multi-select).
+  const _mode = state.farmTendencyMode || "and";
+  document.querySelectorAll("#farm-tendency-mode [data-tend-mode]").forEach(b => {
+    b.classList.toggle("active", b.dataset.tendMode === _mode);
+    b.style.opacity = sel.size >= 2 ? "" : "0.55";
+  });
   const mount = document.getElementById("farm-tendency-chips");
   if (mount) {
     const loading = sel.size > 0 && !_orgTendencies;
@@ -44978,6 +45010,15 @@ function attachHandlers() {
     if (!state.farmTendencyFilter) state.farmTendencyFilter = new Set();
     if (state.farmTendencyFilter.has(kind)) state.farmTendencyFilter.delete(kind);
     else state.farmTendencyFilter.add(kind);
+    renderFarmSystems();
+    syncToURL();
+  });
+  // ALL / ANY toggle for how multiple tendency selections combine.
+  const farmTendModeEl = document.getElementById("farm-tendency-mode");
+  if (farmTendModeEl) farmTendModeEl.addEventListener("click", (e) => {
+    const btn = e.target.closest("[data-tend-mode]");
+    if (!btn) return;
+    state.farmTendencyMode = btn.dataset.tendMode;
     renderFarmSystems();
     syncToURL();
   });
