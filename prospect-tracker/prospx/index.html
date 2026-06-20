@@ -4196,6 +4196,16 @@
       vertical-align: -5px;
       margin-right: 4px;
     }
+    /* On dark mode many college marks are dark/transparent (Iowa, Wake Forest)
+       and vanish against the near-black bg. A subtle light plate + hairline
+       outline gives every logo a consistent, visible chip. */
+    [data-theme="dark"] .college-logo {
+      background: rgba(245, 246, 238, 0.92);
+      border-radius: 3px;
+      padding: 1px;
+      box-sizing: border-box;
+      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+    }
     .school-initial {
       display: inline-block;
       width: 22px;
@@ -21042,7 +21052,17 @@ function _headshotImg(url, name, opts) {
 }
 
 // College logo <img> with graceful onerror fallback to a small initial chip.
-function _collegeLogoImg(url, school) {
+// True for high-school prospects (player_type HSh / HSp). HS players have no
+// real school logo, so their chip reads "HS" instead of a school abbreviation.
+function _isHSPlayer(p) {
+  return (p && (p.player_type || "")).toUpperCase().startsWith("HS");
+}
+function _collegeLogoImg(url, school, isHS) {
+  // High schoolers always get a generic "HS" chip rather than their specific
+  // school's abbreviation/logo.
+  if (isHS) {
+    return `<span class="school-initial" title="${escapeHtml(school || "High school")}">HS</span>`;
+  }
   if (!school) return "";
   const initial = (school.match(/[A-Z]/g) || school.slice(0, 2)).slice(0, 3).join("");
   if (!url) {
@@ -21669,7 +21689,7 @@ function _renderDraftCard(p) {
          truncates with ellipsis when the card is at min-width. -->
     <div class="draft-card-meta" style="display:flex;align-items:center;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs);color:var(--text-secondary);margin-top:4px;min-width:0;">
       <span style="padding:1px 5px;border-radius:3px;background:var(--bg-tertiary);font-weight:700;"><b>${escapeHtml(p.position || "?")}</b></span>
-      <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school)}${schoolLine}</span>
+      <span style="display:inline-flex;align-items:center;gap:3px;min-width:0;max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${schoolLine}</span>
       <span style="margin-left:auto;display:inline-flex;gap:4px;flex-shrink:0;">
         <span style="padding:1px 5px;border-radius:3px;background:${spColor}22;
               color:${spColor};font-weight:700;"
@@ -21705,7 +21725,7 @@ function _renderDraftOrder(host, cls) {
   const rows = order.map(o => {
     const pr = o.player_key ? byKey[o.player_key] : null;
     const collegeLogo = (isPost && pr && (pr.school_logo_url || pr.school))
-      ? _collegeLogoImg(pr.school_logo_url, pr.school) : "";
+      ? _collegeLogoImg(pr.school_logo_url, pr.school, _isHSPlayer(pr)) : "";
     const playerCell = isPost && o.player_name
       ? `<span class="draft-cell-ico">${collegeLogo}${escapeHtml(o.player_name)}</span>`
       : "<span style='color:var(--text-tertiary);'> - </span>";
@@ -21809,7 +21829,7 @@ function _renderDraftResults(host, cls) {
         <ul class="draft-list">
           ${biggest.map(p => `<li>
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
-            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}<strong>${escapeHtml(p.player_name)}</strong></span>
+            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
             <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
             <span style="float:right;">${_fmtUSD(p.signing_bonus)}</span>
           </li>`).join("")}
@@ -21818,7 +21838,7 @@ function _renderDraftResults(host, cls) {
         <ul class="draft-list">
           ${biggestOver.map(p => `<li>
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
-            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}<strong>${escapeHtml(p.player_name)}</strong></span>
+            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
             <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
             <span style="float:right;color:var(--neon-orange);">+${p.over_slot_pct}%</span>
           </li>`).join("")}
@@ -21920,7 +21940,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${i + 1}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
-    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}${escapeHtml(p.school || "?")}</span></td>
+    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.school || "?")}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
     <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
@@ -22137,7 +22157,7 @@ function _renderSigningTrends(host, classes) {
     const ovTxt = ov == null ? " - " : (ov > 0 ? "+" : "") + (ov * 100).toFixed(0) + "%";
     return `<tr>
       <td>${i + 1}</td>
-      <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}${escapeHtml(p.player_name)}</span></a></td>
+      <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.player_name)}</span></a></td>
       <td>${escapeHtml(p.position || "?")}</td>
       <td><span class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</span></td>
       <td style="font-family:var(--font-mono);">${usd(p.signing_bonus)}</td>
