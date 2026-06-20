@@ -21153,64 +21153,73 @@ async function renderDraft() {
   // class). Falls back to the most recent available class if 2026 isn't
   // in the export (e.g. mid-February before the next draft data lands).
   const PREFERRED_DRAFT_YEAR = 2026;
-  if (!state.draftYear || !classes.find(c => c.year === state.draftYear)) {
+  if (state.draftYear !== "overall" &&
+      (!state.draftYear || !classes.find(c => c.year === state.draftYear))) {
     const preferred = classes.find(c => c.year === PREFERRED_DRAFT_YEAR);
     state.draftYear = preferred ? preferred.year : classes[0].year;
   }
   if (!state.draftView) state.draftView = "rankings";
 
-  // Year chip strip
-  classChips.innerHTML = classes.map(c => `
+  // Class chip strip: an "Overall" pseudo-class (cross-year analytics) first,
+  // then one chip per draft year. state.draftYear is a year NUMBER or the
+  // string "overall".
+  const isOverall = state.draftYear === "overall";
+  classChips.innerHTML =
+    `<button class="chip ${isOverall ? "active" : ""}" data-draft-year="overall"
+            title="Cross-year analytics: class strength, signing trends, all-time org tendencies, overperformers">Overall</button>`
+    + classes.map(c => `
     <button class="chip ${c.year === state.draftYear ? "active" : ""}"
             data-draft-year="${c.year}"
             title="${c.n_prospects} prospects${c.is_current ? " · current class" : ""}">
       ${c.year}${c.is_current ? " ⏳" : ""}
-    </button>
-  `).join("");
+    </button>`).join("");
   classChips.querySelectorAll("[data-draft-year]").forEach(b => {
     b.addEventListener("click", () => {
-      state.draftYear = +b.dataset.draftYear;
+      const v = b.dataset.draftYear;
+      state.draftYear = v === "overall" ? "overall" : +v;
       resetPage("draft");
       renderDraft();
     });
   });
 
-  // Sub-view chips wire to draftView. The Lottery chip hides on
-  // classes whose lottery_odds is empty - those years are already
-  // drafted (or pre-projection), so the lottery view has nothing to
-  // show. If the user is currently on a hidden sub-view, snap them
-  // back to the Rankings default.
-  const _selectedCls = classes.find(c => c.year === state.draftYear);
+  // The sub-nav adapts to the class mode: a specific YEAR shows that draft's
+  // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
+  // both (per-year vs all-time). Lottery is a per-year view gated on that
+  // class carrying odds. The active view snaps into the current mode.
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "org-tendencies", "lottery"];
+  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers"];
+  const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   const _selectedHasLottery = !!(_selectedCls && _selectedCls.lottery_odds && _selectedCls.lottery_odds.length);
+  const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
+  if (!modeViews.includes(state.draftView) ||
+      (state.draftView === "lottery" && !_selectedHasLottery)) {
+    state.draftView = isOverall ? "class-strength" : "rankings";
+  }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
     const view = b.dataset.draftView;
-    if (view === "lottery" && !_selectedHasLottery) {
-      b.style.display = "none";
-      if (state.draftView === "lottery") state.draftView = "rankings";
-    } else {
-      b.style.display = "";
-    }
+    let show = modeViews.includes(view);
+    if (view === "lottery" && !_selectedHasLottery) show = false;
+    b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
-    b.onclick = () => {
-      state.draftView = b.dataset.draftView;
-      resetPage("draft");
-      renderDraft();
-    };
+    b.onclick = () => { state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); };
+  });
+  // Hide any sub-nav group label whose chips are all hidden in this mode.
+  document.querySelectorAll("#draft-subtab-bar .draft-subnav-group").forEach(g => {
+    const anyVisible = [...g.querySelectorAll("[data-draft-view]")].some(b => b.style.display !== "none");
+    g.style.display = anyVisible ? "" : "none";
   });
 
+  // Year-mode views need a single class; Overall views take the whole array.
   const cls = _selectedCls;
-  if (!cls) {
+  if (!isOverall && !cls) {
     host.innerHTML = `<div style="padding:14px;">Class ${state.draftYear} not found.</div>`;
     return;
   }
 
-  // v28 - Hide the filter / sort accordion on non-Rankings sub-views.
-  // The filter state only affects _renderDraftRankings; Order / Lottery
-  // / Class Strength / Leaderboard render from different upstream
-  // structures that filters wouldn't influence.
+  // The filter / sort accordion only applies to the Rankings view.
   const draftFilterRow = document.getElementById("draft-filter-toggle-row");
   const draftFilterBar = document.getElementById("draft-filter-bar");
-  const showDraftFilters = (state.draftView || "rankings") === "rankings";
+  const showDraftFilters = state.draftView === "rankings";
   if (draftFilterRow) draftFilterRow.style.display = showDraftFilters ? "" : "none";
   if (draftFilterBar && !showDraftFilters) draftFilterBar.classList.remove("is-open");
 
@@ -21221,7 +21230,7 @@ async function renderDraft() {
     case "lottery":        return _renderDraftLottery(host, cls);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes);
-    case "org-tendencies": return _renderDraftTendencies(host, classes);
+    case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
     case "overperformers": return _renderDraftOverperformers(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
@@ -23393,16 +23402,67 @@ function _renderProspectScoutingReports(p) {
 let _draftTendSort = { key: "zPitch", dir: -1 };
 const _OT_POS_COLORS = { P: "#B3261E", C: "#9A6700", MI: "#1E5FB4", CI: "#0E7490", OF: "#1F7A3A" };
 
-function _renderDraftTendencies(host, classes) {
-  if (!_orgTendencies || !(_orgTendencies.draftPos && _orgTendencies.draftPos.orgs)) {
-    host.innerHTML = `<div class="state-message is-loading">Loading org draft tendencies…</div>`;
-    _ensureOrgTendencies(() => { if (state.draftView === "org-tendencies") renderDraft(); });
-    return;
+// Per-year org draft tendencies, computed client-side from a class's SIGNED
+// picks (the org_tendencies sidecar only carries the all-time aggregate). Same
+// shape as draftPos.orgs: per-org shares + league z-scores + position buckets.
+function _computeYearDraftTendencies(cls) {
+  const _isPit = pos => /^(SP|RP|RHP|LHP|MIRP|SIRP|P)$/i.test(String(pos || "").split(/[\/,]/)[0].trim());
+  const _bucket = pos => {
+    const t = String(pos || "").split(/[\/,]/)[0].trim().toUpperCase();
+    if (_isPit(t)) return "P";
+    if (t === "C") return "C";
+    if (t === "SS" || t === "2B" || t === "MI") return "MI";
+    if (t === "1B" || t === "3B" || t === "CI") return "CI";
+    return "OF";
+  };
+  const acc = {};
+  for (const p of ((cls && cls.prospects) || [])) {
+    if (!p.drafted_team || !p.signed) continue;
+    const o = acc[p.drafted_team] || (acc[p.drafted_team] = { n: 0, pit: 0, prep: 0, coll: 0, upmid: 0, b: { P: 0, C: 0, MI: 0, CI: 0, OF: 0 } });
+    o.n++;
+    if (_isPit(p.position)) o.pit++;
+    const pt = (p.player_type || "").toUpperCase();
+    if (pt.startsWith("HS")) o.prep++; else if (pt.startsWith("COL") || pt.startsWith("JC")) o.coll++;
+    o.b[_bucket(p.position)]++;
+    const t = String(p.position || "").split(/[\/,]/)[0].trim().toUpperCase();
+    if (["C", "SS", "2B", "CF", "MI"].includes(t)) o.upmid++;
   }
-  const dp = _orgTendencies.draftPos.orgs;
+  const orgs = {};
+  for (const k in acc) {
+    const o = acc[k], n = o.n || 1;
+    orgs[k] = { n: o.n, pitchShare: o.pit / n, prepShare: o.prep / n, collShare: o.coll / n, upMidShare: o.upmid / n,
+      posBuckets: { P: o.b.P / n, C: o.b.C / n, MI: o.b.MI / n, CI: o.b.CI / n, OF: o.b.OF / n } };
+  }
+  const zk = { pitchShare: "zPitch", prepShare: "zPrep", collShare: "zColl", upMidShare: "zUpMid" };
+  const list = Object.values(orgs);
+  for (const key in zk) {
+    const vals = list.map(o => o[key]);
+    const mean = vals.reduce((s, v) => s + v, 0) / (vals.length || 1);
+    const sd = Math.sqrt(vals.reduce((s, v) => s + (v - mean) ** 2, 0) / (vals.length || 1)) || 1;
+    for (const o of list) o[zk[key]] = (o[key] - mean) / sd;
+  }
+  return { orgs };
+}
+
+function _renderDraftTendencies(host, classes, year) {
+  const isOverall = (year === "overall" || year == null);
+  let dp;
+  if (isOverall) {
+    if (!_orgTendencies || !(_orgTendencies.draftPos && _orgTendencies.draftPos.orgs)) {
+      host.innerHTML = `<div class="state-message is-loading">Loading org draft tendencies…</div>`;
+      _ensureOrgTendencies(() => { if (state.draftView === "org-tendencies") renderDraft(); });
+      return;
+    }
+    dp = _orgTendencies.draftPos.orgs;
+  } else {
+    const cls = classes.find(c => c.year === year);
+    dp = _computeYearDraftTendencies(cls).orgs;
+  }
   const orgs = Object.keys(dp).filter(o => dp[o] && dp[o].n);
   if (!orgs.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">Org draft-tendency data isn't available yet.</div>`;
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">${isOverall
+      ? "Org draft-tendency data isn't available yet."
+      : `No signed picks on file for the ${year} class yet.`}</div>`;
     return;
   }
   const sk = _draftTendSort.key, sd = _draftTendSort.dir;
@@ -23415,14 +23475,16 @@ function _renderDraftTendencies(host, classes) {
     : z >= 0.8 ? "var(--neon-cyan)" : z <= -0.8 ? "var(--neon-orange)" : "var(--text-secondary)";
   const pct = v => v == null ? " - " : Math.round(v * 100) + "%";
 
-  const _draftBadges = (o) => {
-    const set = ((typeof orgBadgeSet === "function" ? orgBadgeSet(o) : []) || [])
-      .filter(b => ["draft-pitch", "draft-college", "draft-prep", "draft-upmid"].includes(b.kind));
-    if (!set.length) return `<span style="color:var(--text-tertiary);">league-typical</span>`;
-    return set.map(b => {
-      const c = ((typeof _OT_BADGE !== "undefined" && _OT_BADGE[b.kind]) || {}).c || "var(--bg-tertiary)";
-      return `<span title="${escapeHtml(b.label)}" style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:3px;background:${c};color:#fff;font-size:9px;font-weight:700;white-space:nowrap;">${_otIcon(b.kind, 11, "#fff")}${escapeHtml(b.label)}</span>`;
-    }).join(" ");
+  // Bidirectional identity badges derived from THIS table's z-scores (works for
+  // both year + all-time, and flags below-league leans, not just above).
+  const _badges = (r) => {
+    const out = [];
+    const push = (z, hi, lo) => { if (z >= 0.8) out.push([hi, "var(--neon-cyan)"]); else if (z <= -0.8) out.push([lo, "var(--neon-orange)"]); };
+    push(r.zPitch, "pitching-heavy", "hitting-heavy");
+    push(r.zColl, "college-heavy", "prep-heavy");
+    push(r.zUpMid, "up-the-middle", "corner-heavy");
+    if (!out.length) return `<span style="color:var(--text-tertiary);">league-typical</span>`;
+    return out.map(([lbl, c]) => `<span style="display:inline-block;padding:1px 6px;border-radius:3px;background:${c};color:#0c0c0e;font-size:9px;font-weight:700;white-space:nowrap;">${lbl}</span>`).join(" ");
   };
   const _posBar = (pb) => {
     if (!pb) return "";
@@ -23432,6 +23494,8 @@ function _renderDraftTendencies(host, classes) {
         return v > 0 ? `<span title="${k} ${Math.round(v * 100)}%" style="width:${(v * 100).toFixed(1)}%;background:${_OT_POS_COLORS[k]};"></span>` : "";
       }).join("") + `</span>`;
   };
+  const posLegend = ["P", "C", "MI", "CI", "OF"].map(k =>
+    `<span style="display:inline-flex;align-items:center;gap:3px;margin-right:8px;"><span style="width:9px;height:9px;border-radius:2px;background:${_OT_POS_COLORS[k]};display:inline-block;"></span>${k}</span>`).join("");
   const _sortable = (key, label, title) => {
     const arrow = sk === key ? (sd < 0 ? " ▼" : " ▲") : "";
     return `<th class="dt-sortable" data-tend-sort="${key}" title="${escapeHtml(title || "")}" style="cursor:pointer;text-align:right;${sk === key ? "color:var(--neon-cyan);" : ""}">${label}${arrow}</th>`;
@@ -23445,14 +23509,20 @@ function _renderDraftTendencies(host, classes) {
     <td style="text-align:right;color:${_z(r.zPrep)};" title="z ${(r.zPrep ?? 0).toFixed(2)} vs league">${pct(r.prepShare)}</td>
     <td style="text-align:right;color:${_z(r.zUpMid)};" title="z ${(r.zUpMid ?? 0).toFixed(2)} vs league">${pct(r.upMidShare)}</td>
     <td style="text-align:center;">${_posBar(r.posBuckets)}</td>
-    <td>${_draftBadges(r.org)}</td>
+    <td>${_badges(r)}</td>
   </tr>`).join("");
 
+  const caption = isOverall
+    ? `<strong style="color:var(--text-primary);">How each organization drafts - all-time</strong>
+       · share of signed picks by type (2021-present), league-relative`
+    : `<strong style="color:var(--text-primary);">How each organization drafted in ${year}</strong>
+       · share of that class's signed picks, relative to the ${year} league mean (single-draft samples are small)`;
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
-      <strong style="color:var(--text-primary);">How each organization drafts</strong>
-      · share of signed picks by type, league-relative (color: <span style="color:var(--neon-cyan);">cyan</span> = above league, <span style="color:var(--neon-orange);">orange</span> = below) · signed picks 2021-present
-      · <a href="#" onclick="event.preventDefault();state.section='farm';render();syncToURL();" style="color:var(--neon-cyan);">full org profiles on the Farm Tendencies tab →</a>
+      ${caption}
+      · color: <span style="color:var(--neon-cyan);">cyan</span> = notably above league (≥0.8σ), <span style="color:var(--neon-orange);">orange</span> = below
+      · <a href="#" onclick="event.preventDefault();state.section='farm';render();syncToURL();" style="color:var(--neon-cyan);">full org farm profiles →</a>
+      <div style="margin-top:6px;font-size:11px;color:var(--text-tertiary);">Position mix: ${posLegend}</div>
     </div>
     <table class="draft-table">
       <thead><tr>
