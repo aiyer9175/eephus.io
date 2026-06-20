@@ -21875,24 +21875,31 @@ function _renderDraftResults(host, cls) {
 
 function _renderDraftLeaderboard(host, cls) {
   const prospects = (cls.prospects || []).slice();
-  prospects.sort((a, b) => (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0));
+  if (!prospects.length) {
+    host.innerHTML = `<div class="state-message">
+      <div class="state-message-title">The ${cls.year} draft class hasn't been scouted yet</div>
+      <div class="state-message-body">Leaderboards populate once prospects and Draft Stock+ land for this class.</div></div>`;
+    return;
+  }
+  // DS+ ties broken by consensus FV so #1 vs #2 is a real ranking, not insertion order.
+  prospects.sort((a, b) => (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0)
+    || (b.consensus_fv || 0) - (a.consensus_fv || 0));
   const top = prospects.slice(0, 50);
 
-  // Per-position bests
+  // Per-position bests, grouped by the canonical bucket (C/SS/INF/OF/SP/RP) the
+  // Rankings filter uses - not the raw position string (which spawned a row per
+  // hybrid label).
+  const POS_ORDER = ["C", "SS", "INF", "OF", "SP", "RP"];
   const byPos = {};
   for (const p of prospects) {
-    if (!p.position) continue;
-    const key = p.position;
-    if (!byPos[key] || (p.draft_stock_plus || 0) > (byPos[key].draft_stock_plus || 0)) {
-      byPos[key] = p;
-    }
+    const key = _draftPosBucket(p.position);
+    if (!key) continue;
+    if (!byPos[key] || (p.draft_stock_plus || 0) > (byPos[key].draft_stock_plus || 0)) byPos[key] = p;
   }
-  const posRows = Object.keys(byPos).sort().map(pos => {
+  const posRows = POS_ORDER.filter(k => byPos[k]).map(pos => {
     const p = byPos[pos];
-    return `<li><strong>${escapeHtml(pos)}</strong> - 
-      ${escapeHtml(p.player_name)} (${escapeHtml(p.school || "?")})
-      <span style="color:${_stockPlusColor(p.draft_stock_plus)};float:right;">
-        DS+ ${p.draft_stock_plus || " - "}</span></li>`;
+    return `<li><span class="draft-cell-ico"><strong>${escapeHtml(pos)}</strong> ${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');" style="color:inherit;text-decoration:none;">${escapeHtml(p.player_name)}</a></span>
+      <span style="color:${_stockPlusColor(p.draft_stock_plus)};float:right;">DS+ ${p.draft_stock_plus || " - "}</span></li>`;
   }).join("");
 
   // Per-tool bests - scan tool_grades and find the TOP 3 in each
@@ -21950,19 +21957,22 @@ function _renderDraftLeaderboard(host, cls) {
         .sort((a, b) => b.grade - a.grade)
         .slice(0, 3);
       const head = top3[0];
+      // Surname that skips generational suffixes (Jr./III) so the pill reads the
+      // family name, not "Jr.".
+      const _surname = nm => { const t = String(nm || "").trim().split(/\s+/).filter(x => !/^(jr\.?|sr\.?|ii|iii|iv|v)$/i.test(x)); return t[t.length - 1] || nm; };
       const restPills = top3.slice(1).map(({ player, grade }) => `
         <span style="display:inline-block;margin-left:6px;font-size:10px;color:var(--text-secondary);">
-          <span style="color:${_draftFvBucketColor(grade)};font-family:var(--font-mono);">${grade}</span>
-          ${escapeHtml(player.player_name.split(" ").slice(-1)[0])}
+          <span style="color:${_draftFvBucketColor(grade)};font-family:var(--font-mono);">${Math.round(grade)}</span>
+          ${escapeHtml(_surname(player.player_name))}
         </span>`).join("");
-      return `<li><strong>${escapeHtml(k.toUpperCase())}</strong>
-        <span style="color:${_draftFvBucketColor(head.grade)};">${head.grade}</span> - 
+      return `<li><strong title="${escapeHtml(toolFullName(k))}">${escapeHtml(toolAbbrev(k))}</strong>
+        <span style="color:${_draftFvBucketColor(head.grade)};">${Math.round(head.grade)}</span> -
         ${escapeHtml(head.player.player_name)}
         <small>(${escapeHtml(head.player.school || "?")})</small>
         ${restPills}</li>`;
     }).join("");
 
-  const topRows = top.map((p, i) => `<tr>
+  const topRows = top.map((p, i) => `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
     <td>${i + 1}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
@@ -21975,7 +21985,7 @@ function _renderDraftLeaderboard(host, cls) {
   host.innerHTML = `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
-        <h3>${cls.year} class top 50 by Draft Stock+</h3>
+        <h3>${cls.year} class top ${top.length} by Draft Stock+</h3>
         <table class="draft-table">
           <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
             <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
@@ -21998,7 +22008,10 @@ function _renderClassStrength(host, classes) {
   // strip up top so the cross-class story (which year is deepest, which
   // is top-heavy) reads at a glance instead of forcing the user to
   // visually compare six histograms.
-  const fvOrder = ["60","55","50+","50","45+","45","40+","40"];
+  // Full bucket set incl. the 35/35+ tiers (the largest share in older classes,
+  // e.g. 2019 has 185 at 35) - previously dropped, which understated class depth
+  // and contradicted the Mean FV column (which counts every prospect).
+  const fvOrder = ["60","55","50+","50","45+","45","40+","40","35+","35"];
   let max = 0;
   for (const c of classes) {
     for (const k of fvOrder) {
@@ -22032,7 +22045,7 @@ function _renderClassStrength(host, classes) {
   // Color-code the max in each column so the strongest class per metric
   // pops without requiring the user to mentally sort.
   const _maxOf = (key) => Math.max(...summary.map(r => r[key] || 0));
-  const m_elite = _maxOf("elite"), m_n = _maxOf("hit") + _maxOf("pit");
+  const m_elite = _maxOf("elite");
   const m_meanFv = Math.max(...summary.map(r => +r.meanFv || 0));
   const summaryStrip = `
     <div class="draft-panel" style="grid-column:1/-1;">
@@ -22040,7 +22053,7 @@ function _renderClassStrength(host, classes) {
       <table class="draft-table" style="margin-top:6px;">
         <thead><tr>
           <th>Year</th><th>Prospects</th><th>Hit / Pit</th>
-          <th>55+ FV</th><th>Mean FV</th><th>Stock+ mean</th>
+          <th>55+ FV</th><th>Mean FV</th>
         </tr></thead>
         <tbody>
           ${summary.map(r => {
@@ -22052,7 +22065,6 @@ function _renderClassStrength(host, classes) {
                   / <span style="color:var(--neon-orange);">${r.pit}</span></td>
               <td style="${r.elite === m_elite && m_elite > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.elite}</td>
               <td style="${(+r.meanFv) === m_meanFv && m_meanFv > 0 ? "color:var(--neon-cyan);font-weight:600;" : ""}">${r.meanFv}</td>
-              <td>${r.c.stock_plus_mean ?? " - "}</td>
             </tr>`;
           }).join("")}
         </tbody>
@@ -22069,8 +22081,8 @@ function _renderClassStrength(host, classes) {
       const h = max ? (v / max) * barH : 0;
       return `<g transform="translate(${i * (barW + gap)},0)">
         <rect x="0" y="${barH - h}" width="${barW}" height="${h}"
-              fill="${_draftFvBucketColor(parseFloat(k))}"
-              title="${k} FV - ${v} prospects"/>
+              fill="${_draftFvBucketColor(parseFloat(k))}" fill-opacity="${k.includes("+") ? 0.6 : 1}">
+          <title>${k} FV - ${v} prospects</title></rect>
         <text x="${barW/2}" y="${barH - h - 4}" text-anchor="middle"
               font-size="9" fill="var(--text-secondary)">${v || ""}</text>
         <text x="${barW/2}" y="${barH + 10}" text-anchor="middle"
@@ -22083,7 +22095,7 @@ function _renderClassStrength(host, classes) {
         ${bars}
       </svg>
       <div style="font-size:11px;color:var(--text-tertiary);">
-        ${c.n_prospects} ranked · stock+ mean ${c.stock_plus_mean || " - "}
+        ${c.n_prospects} ranked
       </div>
     </div>`;
   }).join("");
@@ -23477,13 +23489,19 @@ let _draftOverperfMode = "outcome";   // "outcome" | "value"
 
 function _renderDraftOverperformers(host, classes) {
   const completed = (classes || []).filter(c => !c.is_current);
-  // Pool drafted prospects across completed classes, deduped by player (some
-  // players recur across backfilled boards - keep the strongest entry).
+  // Pool drafted + SIGNED prospects across completed classes. Signed-only is
+  // what makes this view honest: it drops late-round non-signers (whose huge
+  // synthetic picks from the old 40-round drafts produced fake "steals") and
+  // the duplicate unsigned entry a player carries from an earlier class he
+  // didn't sign out of (e.g. Skubal's 2017 #862 non-sign vs his real 2018
+  // #255). Dedup by true identity (promoted/MiLB key, else normalized name) so
+  // the same human can't appear twice; keep the strongest entry.
+  const _norm = nm => String(nm || "").toLowerCase().replace(/[^a-z]/g, "");
   const seen = {};
   for (const c of completed) {
     for (const p of (c.prospects || [])) {
-      if (!p.drafted_pick) continue;
-      const k = p.player_key || (p.player_name + ":" + c.year);
+      if (!p.drafted_pick || !p.signed) continue;
+      const k = p.promoted_key || p.milb_key || _norm(p.player_name);
       const score = p.overperf_fv != null ? p.overperf_fv : -999;
       if (!seen[k] || score > seen[k]._score) seen[k] = Object.assign({}, p, { _year: c.year, _score: score });
     }
@@ -23503,9 +23521,12 @@ function _renderDraftOverperformers(host, classes) {
     : (p.consensus_rank != null ? Math.round(p.consensus_rank) : null);
 
   let table;
+  const _emptyLens = msg => `<div style="padding:14px;color:var(--text-tertiary);">${msg}</div>`;
   if (mode === "outcome") {
     const ranked = pool.filter(p => p.overperf_fv != null)
-      .sort((a, b) => b.overperf_fv - a.overperf_fv).slice(0, 50);
+      .sort((a, b) => b.overperf_fv - a.overperf_fv
+        || (b.career_war ?? -99) - (a.career_war ?? -99)
+        || (a.drafted_pick || 9999) - (b.drafted_pick || 9999)).slice(0, 50);
     const rows = ranked.map((p, i) => {
       const war = p.career_war;
       const warColor = war == null ? "var(--text-tertiary)" : war > 0 ? "var(--neon-green)" : "var(--neon-red)";
@@ -23521,14 +23542,14 @@ function _renderDraftOverperformers(host, classes) {
         <td style="text-align:right;color:${warColor};font-family:var(--font-mono);">${war == null ? " - " : (war > 0 ? "+" : "") + war.toFixed(1)}</td>
       </tr>`;
     }).join("");
-    table = `<table class="draft-table">
+    table = ranked.length ? `<table class="draft-table">
       <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
         <th style="text-align:right;">Drafted</th>
         <th style="text-align:center;" title="Latest prospect FV (current grade)">FV now</th>
         <th style="text-align:center;" title="Median FV for that pick band">Exp</th>
         <th style="text-align:right;" title="FV now minus expected-for-pick">ΔFV</th>
         <th style="text-align:right;" title="Career MLB bWAR (where they've reached the majors)">WAR</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
+      <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the realized-outcome lens yet.");
   } else {
     const ranked = pool.map(p => ({ p, slide: (p.drafted_pick != null && _consPick(p) != null) ? (p.drafted_pick - _consPick(p)) : null }))
       .filter(x => x.slide != null && x.slide > 0)
@@ -23546,13 +23567,13 @@ function _renderDraftOverperformers(host, classes) {
         <td style="text-align:center;">${_fvChip(p.current_fv != null ? p.current_fv : p.consensus_fv)}</td>
       </tr>`;
     }).join("");
-    table = `<table class="draft-table">
+    table = ranked.length ? `<table class="draft-table">
       <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
         <th style="text-align:right;" title="Where the consensus ranked them pre-draft">Cons. rank</th>
         <th style="text-align:right;">Drafted</th>
         <th style="text-align:right;" title="How far past their consensus rank they slid">Slide</th>
         <th style="text-align:center;">FV</th></tr></thead>
-      <tbody>${rows}</tbody></table>`;
+      <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the draft-day value lens yet.");
   }
 
   const _modeChip = (m, label, title) =>
@@ -23563,7 +23584,7 @@ function _renderDraftOverperformers(host, classes) {
       · ${mode === "outcome"
           ? "players whose CURRENT prospect FV most exceeds the median for their draft slot (career WAR shown where they've reached MLB)"
           : "players who slid furthest past their pre-draft consensus rank - value on draft day"}
-      · all completed classes, deduped
+      · signed picks across all completed classes, deduped by player
     </div>
     <div class="filter-bar" id="overperf-mode-bar" style="gap:6px;margin-bottom:10px;">
       <span class="filter-label">Lens</span>
