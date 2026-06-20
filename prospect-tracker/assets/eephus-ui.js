@@ -88,54 +88,14 @@
     setVote: function (cid, v) { var all = this.votes(); if (v === 0) delete all[cid]; else all[cid] = v; try { localStorage.setItem(this.KEY_VOTES, JSON.stringify(all)); } catch (e) {} }
   };
 
-  // Demo authors + a rich seeded thread so the checkpoint shows every feature.
+  // Pre-beta honesty: a PREVIEW discussion (no Supabase backend configured)
+  // starts EMPTY. The earlier fabricated demo threads/authors/comment-counts
+  // were removed so an unconfigured deploy never presents invented engagement
+  // as real activity. A preview user's own posts still persist locally via
+  // PV.saveComments; the thread simply starts at zero and shows the honest
+  // "No comments yet" empty state until someone posts.
   function seedThread(scope, key, entity) {
-    var now = Date.now();
-    var iso = function (minsAgo) { return new Date(now - minsAgo * 60000).toISOString(); };
-    var authors = {
-      scout_mendoza: { username: "scout_mendoza", role: "member", karma: 412, badges: ["beta_tester", "contributor"], fav_team: "LAD", fav_prospect: { name: "Roki Sasaki" } },
-      farm_report:   { username: "farm_report", role: "moderator", karma: 980, badges: ["beta_tester"], fav_team: "BAL", fav_prospect: { name: "Samuel Basallo" } },
-      pitchlab:      { username: "pitchlab", role: "member", karma: 57, badges: [], fav_team: "NYM", fav_prospect: { name: "Jett Williams" } }
-    };
-    var nm = (entity && (entity.player_name || entity.name)) || "this prospect";
-    if (scope === "article") {
-      return [
-        {
-          id: "seed1", parent_id: null, author: authors.pitchlab, score: 6, created_at: iso(220),
-          body_md: "Good piece. The framing around **plate discipline as the leading indicator** matches what the boards have been saying. @scout_mendoza curious if you'd weight it differently for arms?"
-        },
-        {
-          id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 3, created_at: iso(120),
-          body_md: "Fair - for pitchers I lean on the `command` proxy first, but the through-line holds. The [methodology](/glossary/#view=methodology) backs it up."
-        }
-      ];
-    }
-    if (scope === "farm") {
-      return [
-        {
-          id: "seed1", parent_id: null, author: authors.farm_report, score: 11, created_at: iso(520),
-          body_md: "System take: the upper levels finally have **real depth**, not just a top-heavy big-three.\n\n- two ready-now bats at AAA\n- a sleeper arm jumping a level\n- the [methodology page](/glossary/#view=methodology) likes the pipeline's calibration\n\n> Top-5 farm if the AA arms hold velo."
-        },
-        {
-          id: "seed2", parent_id: "seed1", author: authors.scout_mendoza, score: 4, created_at: iso(300),
-          body_md: "Agreed @farm_report - and the IFA class adds a second wave behind it. The `consensus FV` curve for the org is trending up."
-        }
-      ];
-    }
-    return [
-      {
-        id: "seed1", parent_id: null, author: authors.scout_mendoza, score: 14, created_at: iso(640),
-        body_md: "Quietly one of the cleaner risers on the board. The **swing decisions** finally caught up to the raw, and the FV trend says the room agrees:\n\n[[fv:THIS]]\n\nThree things I'm watching into next update:\n\n- in-zone contact holding above the org line\n- the [methodology page](/glossary/#view=methodology) backtest cohort\n- whether the power ticks from 55 → 60\n\n> If the hit tool is real, this is a top-15 name by July."
-      },
-      {
-        id: "seed2", parent_id: "seed1", author: authors.farm_report, score: 5, created_at: iso(415),
-        body_md: "Agreed @scout_mendoza - and the per-source spread is tightening, which usually precedes a consensus bump. `xwOBA` on the pull side is the tell."
-      },
-      {
-        id: "seed3", parent_id: null, author: authors.pitchlab, score: 8, created_at: iso(180),
-        body_md: "Tempering slightly. The surplus model still wants to see it against upper-level arms before I move off my number on " + nm + ".\n\nThat said, the dollar value is moving: $dvm:THIS\n\n[[poll:Where does his FV land by the next update?|Holds 60|Jumps to 65|Slips to 55]]"
-      }
-    ];
+    return [];
   }
 
   // ===========================================================================
@@ -369,7 +329,7 @@
     if (p) {
       if (/dvm/i.test(label)) { var d = p.dollar_dvm_plus != null ? p.dollar_dvm_plus : p.dvm_plus; val = d != null ? (PX().formatMetric ? PX().formatMetric(d, /\$/.test(label) ? "surplusM" : "plus") : String(d)) : " - "; }
       else val = fmtFv(latestFv(p));
-    } else val = esc(key);
+    } else val = " - ";  // unresolved key (e.g. "THIS" off the PROSPX shim) reads neutral, never the raw key
     return '<span class="eph-metric-chip"><span class="mk">' + esc(label) + "</span>" + val + "</span>";
   }
 
@@ -745,13 +705,11 @@
     });
   }
   var NOTIF_ICON = { reply: "↩", mention: "@", fv_change: "▲", follow: "✦", badge: "🏅" };
+  // Pre-beta honesty: no fabricated notifications. With no backend the bell
+  // shows the honest "No notifications yet" empty state instead of invented
+  // replies/mentions from made-up users. Real alerts arrive once LIVE.
   function previewNotifications() {
-    var now = Date.now();
-    return [
-      { id: "n1", type: "reply", read: false, created_at: new Date(now - 12 * 60000).toISOString(), payload: { from_name: "farm_report" } },
-      { id: "n2", type: "mention", read: false, created_at: new Date(now - 95 * 60000).toISOString(), payload: { from_name: "scout_mendoza" } },
-      { id: "n3", type: "fv_change", read: true, created_at: new Date(now - 3 * 86400000).toISOString(), payload: { player_name: "Jesús Made", old: 60, new: 62 } }
-    ];
+    return [];
   }
   function notifRowHTML(n) {
     return '<div class="eph-notif' + (n.read ? "" : " unread") + '"><span class="eph-notif-ico ' + esc(n.type) + '">' + (NOTIF_ICON[n.type] || "•") + "</span>" +
@@ -1201,10 +1159,9 @@
     var body = document.createElement("div");
     body.innerHTML = '<div class="eph-formmsg info">Loading…</div>';
     openModal("@" + username, body);
-    var demoAuthors = { scout_mendoza: { username: "scout_mendoza", role: "member", karma: 412, badges: ["beta_tester", "contributor"], fav_team: "LAD", fav_prospect: { name: "Roki Sasaki" } }, farm_report: { username: "farm_report", role: "moderator", karma: 980, badges: ["beta_tester"], fav_team: "BAL", fav_prospect: { name: "Samuel Basallo" } }, pitchlab: { username: "pitchlab", role: "member", karma: 57, badges: [], fav_team: "NYM", fav_prospect: { name: "Jett Williams" } } };
     var meProf = currentProfile();
     var profP = (LIVE() && A.profileByUsername) ? A.profileByUsername(username)
-      : Promise.resolve((meProf && meProf.username === username) ? meProf : (demoAuthors[username] || { username: username, karma: 0, badges: [] }));
+      : Promise.resolve((meProf && meProf.username === username) ? meProf : { username: username, karma: 0, badges: [] });
     profP.then(function (prof) {
       prof = prof || { username: username };
       var isSelf = meProf && (meProf.username === prof.username);
@@ -1243,12 +1200,10 @@
       });
     });
   }
+  // Pre-beta honesty: no fabricated post history. An unconfigured profile shows
+  // the honest "No recent posts." state instead of invented activity.
   function previewUserActivity(uname) {
-    var now = Date.now();
-    return [
-      { body_md: "Quietly one of the cleaner risers on the board…", created_at: new Date(now - 6 * 3600000).toISOString(), threads: { scope: "prospect", entity_key: "jesus_made", title: "Jesús Made" } },
-      { body_md: "Agreed - the per-source spread is tightening.", created_at: new Date(now - 2 * 86400000).toISOString(), threads: { scope: "farm", entity_key: "BAL", title: "BAL farm system" } }
-    ];
+    return [];
   }
   function activityRowHTML(r) {
     var t = r.threads || {}; var href = threadHref({ scope: t.scope, entity_key: t.entity_key, board_slug: t.board_slug });
@@ -1273,12 +1228,10 @@
         }).join("") + "</div>";
     });
   }
+  // Pre-beta honesty: no fabricated feed. Empty until the user follows people
+  // and watchlists prospects (the empty state explains how to fill it).
   function previewFeed() {
-    var now = Date.now();
-    return [
-      { author: "farm_report", profiles: { username: "farm_report" }, body_md: "System take: the upper levels finally have real depth.", created_at: new Date(now - 40 * 60000).toISOString(), threads: { scope: "farm", entity_key: "BAL", title: "BAL farm system" } },
-      { author: "scout_mendoza", profiles: { username: "scout_mendoza" }, body_md: "If the hit tool is real, this is a top-15 name by July.", created_at: new Date(now - 5 * 3600000).toISOString(), threads: { scope: "prospect", entity_key: "jesus_made", title: "Jesús Made" } }
-    ];
+    return [];
   }
 
   // ===========================================================================
@@ -1379,25 +1332,12 @@
       '<span class="eph-thread-title">' + esc(threadTitleText(t)) + "</span>" +
       '<span class="eph-thread-meta">' + n + " " + (n === 1 ? "comment" : "comments") + " · " + timeAgo(t.last_activity_at) + "</span></a>";
   }
+  // Pre-beta honesty: with no backend configured there is no real thread
+  // activity to aggregate, so the homepage Forums module and /forums index show
+  // an honest empty state instead of a fabricated "believable" thread list with
+  // invented comment counts. Returns the real list once LIVE.
   function previewThreads() {
-    var now = Date.now(), counts = [14, 9, 7, 5, 4, 3];
-    var pool = (PX().prospects ? PX().prospects() : []).slice().sort(function (a, b) { return (b.fv_close || 0) - (a.fv_close || 0); }).slice(0, 6);
-    if (pool.length) {
-      return pool.map(function (p, i) {
-        return { scope: "prospect", entity_key: p.player_key, title: p.player_name, comment_count: counts[i] || 2, hot_score: (p.fv_close || 50) + (counts[i] || 2), last_activity_at: new Date(now - (i + 1) * 37 * 60000).toISOString() };
-      });
-    }
-    // Editorial pages (home / forums index / article) have no PROSPX index - 
-    // fall back to a static believable set so the module reads as a destination.
-    var samples = [
-      { scope: "prospect", entity_key: "jesus_made", title: "Jesús Made", comment_count: 14 },
-      { scope: "prospect", entity_key: "roki_sasaki", title: "Roki Sasaki", comment_count: 11 },
-      { scope: "farm", entity_key: "BAL", title: "BAL farm system", comment_count: 9 },
-      { scope: "board", board_slug: "trades", title: "Trade deadline: who's actually available?", comment_count: 7 },
-      { scope: "board", board_slug: "draft", title: "2026 Draft class - early risers", comment_count: 5 },
-      { scope: "prospect", entity_key: "samuel_basallo", title: "Samuel Basallo", comment_count: 4 }
-    ];
-    return samples.map(function (s, i) { s.last_activity_at = new Date(now - (i + 1) * 41 * 60000).toISOString(); s.hot_score = s.comment_count * 3; return s; });
+    return [];
   }
   function loadThreads(order) {
     if (LIVE() && A.listThreads) return A.listThreads(order, 12);
@@ -1415,7 +1355,9 @@
       loadThreads(order).then(function (threads) {
         var list = qs(".eph-thread-list", el); if (!list) return;
         list.innerHTML = threads.length ? threads.map(threadRowHTML).join("")
-          : '<div class="eph-formmsg info">No discussions yet - start one from any prospect or farm page.</div>';
+          : '<div class="eph-formmsg info">' + (LIVE()
+              ? "No discussions yet - start one from any prospect or farm page."
+              : "Discussion opens at launch. Every prospect, farm, and article page will have its own thread.") + '</div>';
       });
     }
     on(el, "click", "[data-order]", function (e, b) { order = b.getAttribute("data-order"); draw(); });

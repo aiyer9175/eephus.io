@@ -831,6 +831,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .secondary-stories .s-kicker { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); }
 .secondary-stories h3 { font-family: var(--font-retro-mono); font-size: 1rem; line-height: 1.2; margin: 6px 0 0; color: var(--text-primary); }
 .secondary-stories a:hover h3 { color: var(--accent-navy); }
+/* single-piece front (one story so far): keep the broadsheet rule, no bare gap */
+.more-soon-strip { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0 14px; border-bottom: 3px double var(--border); font-family: var(--font-retro-mono); font-size: 12px; letter-spacing: .04em; color: var(--text-tertiary); text-transform: uppercase; }
+.more-soon-strip a { color: var(--accent-navy); text-decoration: none; font-weight: 700; }
 
 /* ---- front-page modules grid ---- */
 .module-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }

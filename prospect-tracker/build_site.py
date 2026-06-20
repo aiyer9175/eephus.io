@@ -971,6 +971,11 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
             dt = str(tr.get("trade_date") or "")[:10]
             if len(dt) == 10:
                 trs.append((dt, p, tr))
+    # Recency floor mirrors the Top Movers window so "Recent Trades" can't show a
+    # year-old deal as recent; ISO date strings compare lexicographically. With
+    # nothing recent the module returns "" and drops out of the grid entirely.
+    cutoff = (date.today() - timedelta(days=_HOME_MOVER_RECENCY_DAYS)).isoformat()
+    trs = [t for t in trs if t[0] >= cutoff]
     if not trs:
         return ""
     trs.sort(key=lambda t: t[0], reverse=True)
@@ -1719,9 +1724,18 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     else:
         lead = '<article class="lead-story no-img"><div><div class="lead-kicker">Latest</div><h1>No articles yet</h1></div></article>'
     sec = articles[1:4]
-    secondary = ('<div class="secondary-stories">' + "".join(
-        f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
-        f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>') if sec else ""
+    if sec:
+        secondary = ('<div class="secondary-stories">' + "".join(
+            f'<a href="/articles/{a["slug"]}/"><div class="s-kicker">{html.escape(a.get("date_disp", ""))}</div>'
+            f'<h3>{html.escape(a["title"])}</h3></a>' for a in sec) + '</div>')
+    elif latest:
+        # Single-piece front: only one story so far. Keep the broadsheet rhythm
+        # (the same double rule the secondary row carries) and say so plainly
+        # rather than leaving a bare gap under the lead.
+        secondary = ('<div class="more-soon-strip"><span>More analysis soon</span>'
+                     '<a href="/articles/">All articles →</a></div>')
+    else:
+        secondary = ""
 
     # ---- live PROSPX modules ----
     # Top Movers = biggest GENUINE moves from the de-noised movement engine
