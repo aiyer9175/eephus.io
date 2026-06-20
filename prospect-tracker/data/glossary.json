@@ -4314,6 +4314,27 @@
    ]
   },
   {
+   "id": "draft_overperformance",
+   "term": "Draft Overperformance",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "overperformers",
+    "draft steal",
+    "value vs slot",
+    "overperformance"
+   ],
+   "priority": 30,
+   "definition": "How far a drafted player has outrun his draft slot, on the Draft tab's Overperformers board. Two lenses: (1) realized outcome - the player's current prospect FV minus the median FV for his pick band, with career MLB WAR shown alongside; (2) draft-day value - how many picks past his pre-draft consensus rank he was actually selected.",
+   "methodology": "Realized outcome bins all signed picks 2021-present into pick bands (1-5, 6-10, 11-20, 21-40, 41-75, 76-150, 151+) and takes the MEDIAN current FV in each band as the expectation for that slot; overperformance is the player's current FV minus that median. Current value is joined from the live board / debuts via the promoted- / MiLB-key link, falling back to the draft-time grade when unmatched. Draft-day value is the actual overall pick minus the pre-draft consensus rank. Players are pooled across completed classes and deduped.",
+   "seeAlso": [
+    "org_tendencies",
+    "draft_ceiling_hits"
+   ]
+  },
+  {
    "id": "deferral_npv",
    "term": "Deferral-adjusted NPV",
    "category": "fa",

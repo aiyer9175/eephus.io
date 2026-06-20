@@ -23480,6 +23480,12 @@ function _renderDraftOverperformers(host, classes) {
     }
   }
   const pool = Object.values(seen);
+  if (!completed.length || !pool.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
+      No completed draft classes to rank yet - overperformers populate once a class
+      has been drafted and signed.</div>`;
+    return;
+  }
   const mode = _draftOverperfMode;
 
   const _fvChip = fv => fv == null ? "<span style='color:var(--text-tertiary);'> - </span>"
