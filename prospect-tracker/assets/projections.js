@@ -624,7 +624,7 @@
         ? `<a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`
         : `<a class="fa-player-link" href="#player=${encodeURIComponent(m.key)}"><strong>${esc(m.name)}</strong></a>`;
       const inCmp = state.cmp.includes(m.key);
-      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}" style="border:1px solid var(--border-color);background:${inCmp ? "var(--accent-cyan)" : "transparent"};color:${inCmp ? "#08222a" : "var(--text-tertiary)"};border-radius:5px;font-size:10px;line-height:1;padding:2px 5px;cursor:pointer;margin-left:4px;">⇄</button>`;
+      const cmpBtn = `<button class="proj-cmp-btn${inCmp ? " active" : ""}" data-cmp-key="${esc(m.key)}" type="button" title="${inCmp ? "Remove from compare" : "Compare head-to-head (pick two players)"}" style="border:1px solid var(--border);background:${inCmp ? "var(--accent-cyan)" : "transparent"};color:${inCmp ? "var(--text-on-accent)" : "var(--text-tertiary)"};border-radius:5px;font-size:10px;line-height:1;padding:2px 5px;cursor:pointer;margin-left:4px;">⇄</button>`;
       return `<tr>
         <td>${i + 1}</td>
         <td class="proj-player">${teamLogo(m.team)}${link} <span class="fa-sub">${esc(m.pos || "")} · ${m.age != null ? Math.floor(m.age) : "?"}${m.team ? "" : " · FA"}</span> ${tagFor(m)}<span class="proj-fa-slot" data-fa-key="${esc(m.key)}"></span>${cmpBtn}</td>
@@ -1033,7 +1033,7 @@
       tiles.push({ label: `${(p.proj.war || []).length}y WAR`, value: fmtWar(p.proj.warTotal) });
     if (p.proj && p.proj.surNpv != null)
       tiles.push({ label: "Surplus", value: money(p.proj.surNpv),
-                   color: p.proj.surNpv >= 0 ? undefined : "#FF6B6B" });
+                   color: p.proj.surNpv >= 0 ? undefined : "var(--down)" });
     if (p.swingPlus != null)
       tiles.push({ label: "Swing+", value: String(Math.round(p.swingPlus)) });
     if (p.aaaStuffPlus != null)

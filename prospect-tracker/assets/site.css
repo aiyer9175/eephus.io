@@ -38,6 +38,18 @@
   --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
                      "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
   --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
+  /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
+     and the homepage cross-module strip reference these. Without them at the
+     shared :root they fell back to UA serif/sans and lost the MS-Gothic
+     identity on shipped surfaces. Values mirror prospx/index.html. */
+  --font-sans:  var(--font-retro);
+  --font-serif: var(--font-retro);
+  --font-mono:  var(--font-retro-mono);
+  /* Spacing + type scale, shared with PROSPX so module shells use one scale. */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --fs-xs: 11px; --fs-sm: 12px; --fs-base: 13px; --fs-md: 14px; --fs-lg: 15px; --fs-xl: 18px; --fs-xxl: 24px;
+  --text-on-accent: #FBF8F0;          /* cream text on the navy band / dark accents */
+  --bg-hover: rgba(15, 27, 45, 0.05); /* subtle row / control hover on paper */
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -105,6 +117,8 @@
   --accent-orange: #FF9D42;   /* alpha/beta version chips (refractor orange) */
   --accent-cyan:   #00D9FF;
   --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
+  --text-on-accent: #05080F;            /* near-black text on the bright refractor accents */
+  --bg-hover: rgba(0, 217, 255, 0.08);  /* cyan-tinted hover on the dark surface */
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   --grain: rgba(255,255,255,.035);
   --grain2: rgba(120,200,224,.04);
