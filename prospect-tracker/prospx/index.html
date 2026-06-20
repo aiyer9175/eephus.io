@@ -8945,7 +8945,7 @@
         <button class="chip" data-draft-view="results"
                 title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
         <button class="chip" data-draft-view="lottery"
-                title="Lottery odds for the next draft (top 6 picks). Scraped from Tankathon based on current standings.">Lottery Odds</button>
+                title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -21243,7 +21243,12 @@ async function renderDraft() {
 // rendered table is the FULL projected first round + 12 comp picks
 // (1A / 1B), with the odds column blank for deterministic slots.
 function _renderDraftLottery(host, cls) {
-  const odds = cls.lottery_odds || [];
+  const allOdds = cls.lottery_odds || [];
+  // lottery_odds is a full time-series (one set of rows per scrape date).
+  // Keep ONLY the latest snapshot so the table isn't a duplicated, self-
+  // contradictory list of every historical update.
+  const latestSnap = allOdds.reduce((m, o) => (o.snapshot_date && o.snapshot_date > m) ? o.snapshot_date : m, "");
+  const odds = latestSnap ? allOdds.filter(o => o.snapshot_date === latestSnap) : allOdds;
   if (!odds.length) {
     host.innerHTML = `
       <div style="padding:18px;background:var(--bg-secondary);border-radius:6px;color:var(--text-secondary);font-size:13px;line-height:1.5;">
@@ -21263,14 +21268,18 @@ function _renderDraftLottery(host, cls) {
   const rlColor = lbl => lbl === "1A" ? "var(--neon-violet)"
                        : lbl === "1B" ? "var(--neon-amber)"
                        :                "var(--text-tertiary)";
+  // Sort by pick order so the latest snapshot reads top-to-bottom.
+  odds.sort((a, b) => (a.pick_pos || 0) - (b.pick_pos || 0));
   const rows = odds.map(o => {
     const rl = o.round_label || "1";
+    // Comp picks carry a synthetic pick_pos (31-42); show their round badge as
+    // the identifier rather than a misleading "overall #31".
+    const isComp = rl === "1A" || rl === "1B";
     return `<tr>
-      <td style="text-align:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${o.pick_pos}</td>
+      <td style="text-align:center;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${isComp ? "var(--text-tertiary)" : "var(--text-primary)"};">${isComp ? "-" : o.pick_pos}</td>
       <td><span style="display:inline-block;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:0.04em;color:${rlColor(rl)};border:1px solid ${rlColor(rl)};">${escapeHtml(rl)}</span></td>
-      <td><strong>${escapeHtml(o.team)}</strong></td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team)}</strong></span></td>
       <td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums;color:${oddsColor(o.odds_pct)};">${fmtOdds(o.odds_pct)}</td>
-      <td style="color:var(--text-tertiary);font-size:11px;">${escapeHtml(o.snapshot_date || "")}</td>
     </tr>`;
   }).join("");
 
@@ -21281,11 +21290,11 @@ function _renderDraftLottery(host, cls) {
     <div style="padding:12px 14px;background:var(--bg-secondary);
          border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
       <strong style="color:var(--text-primary);">${cls.year} MLB Draft projection</strong>
-      · ${odds.length} picks shown (round 1 + ${nComp} competitive-balance).
-      First ${nLottery} carry live lottery odds (% chance at #1 overall).
-      Slots 7-30 are deterministic by current standings; comp picks
-      (Round 1A / 1B) are slotted by revenue-sharing eligibility.
-      Source: Tankathon.
+      · ${odds.length} picks (round 1 + ${nComp} competitive-balance).
+      ${nLottery} lottery teams carry odds (% chance at the #1 pick);
+      the rest are slotted by current standings, comp picks (Round 1A / 1B) by
+      revenue-sharing eligibility.
+      Source: Tankathon${latestSnap ? ` · as of ${escapeHtml(latestSnap)}` : ""}.
     </div>
     <div class="draft-panel">
       <table class="draft-table">
@@ -21293,8 +21302,7 @@ function _renderDraftLottery(host, cls) {
           <th style="text-align:center;">Pick</th>
           <th>Round</th>
           <th>Team</th>
-          <th style="text-align:right;">% at #1</th>
-          <th>As of</th>
+          <th style="text-align:right;" title="Chance of winning the #1 overall pick in the lottery">% at #1</th>
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
