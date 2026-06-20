@@ -78,7 +78,8 @@
    kept here as clean CSS, no pixelation. Applies to PROSPX (.team-logo) + the
    editorial row logos (.row-logo). */
 [data-theme="dark"] .team-logo,
-[data-theme="dark"] .row-logo {
+[data-theme="dark"] .row-logo,
+[data-theme="dark"] .otd-logo {
   filter: drop-shadow(0 0 0.5px rgba(255,255,255,.55)) drop-shadow(0 0 1.6px rgba(255,255,255,.32));
 }
 
@@ -578,10 +579,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    (the round-shape exception is reserved for user avatars). */
 .home-ticker .ticker-track .tk-logo {
   width: 17px; height: 17px; object-fit: contain; vertical-align: -5px; margin-right: 7px;
-  background: rgba(245,246,238,0.92); border-radius: 3px; padding: 1px; box-sizing: content-box;
-  box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+  /* Faint glow (no plate) so dark marks read on the near-black bar without a box. */
+  filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
 }
-.home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; }
+.home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; background: rgba(245,246,238,0.92); border-radius: 3px; filter: none; }
 .home-ticker .ticker-track a:hover { text-decoration: underline; }
 .home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
 .home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
@@ -688,12 +689,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    Nearly-sharp corners; circles stay avatar-only. */
 .sb-feed .feed-item .feed-logo {
   width: 15px; height: 15px; flex: none; object-fit: contain;
-  background: rgba(245,246,238,0.92); border-radius: 3px; padding: 1px;
-  box-sizing: content-box; box-shadow: 0 0 0 1px rgba(255,255,255,0.18);
+  /* Faint glow (no plate) so dark marks read on the near-black feed without a box. */
+  filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
 }
 .sb-feed .feed-item span.feed-logo {
   width: auto; height: auto; font: 700 8px var(--font-retro-mono);
-  color: #1a1d12; padding: 1px 3px;
+  color: #1a1d12; padding: 1px 3px; background: rgba(245,246,238,0.92); border-radius: 3px;
 }
 .feed-item .g.up,    .feed-item .feed-val.up,
 .feed-item .g.promo, .feed-item .feed-val.promo { color: #6ee7a8; }

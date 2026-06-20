@@ -4206,14 +4206,11 @@
       margin-right: 4px;
     }
     /* On dark mode many college marks are dark/transparent (Iowa, Wake Forest)
-       and vanish against the near-black bg. A subtle light plate + hairline
-       outline gives every logo a consistent, visible chip. */
+       and vanish against the near-black bg. A faint glow (NOT a plate/box)
+       traces each logo's own shape so dark marks read while already-legible
+       logos stay clean. */
     [data-theme="dark"] .college-logo {
-      background: rgba(245, 246, 238, 0.92);
-      border-radius: 3px;
-      padding: 1px;
-      box-sizing: border-box;
-      box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.18);
+      filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
     }
     .school-initial {
       display: inline-block;
