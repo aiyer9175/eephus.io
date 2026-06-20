@@ -731,6 +731,91 @@ def _build_class(year: int,
     }
 
 
+# Pick buckets for the empirical "expected value by draft slot" curve. Picks
+# are noisy, so we bucket and take the MEDIAN realized FV within each band; a
+# player's overperformance is their realized FV minus their bucket's median.
+_OVERPERF_PICK_BUCKETS = [(1, 5), (6, 10), (11, 20), (21, 40),
+                          (41, 75), (76, 150), (151, 10 ** 9)]
+
+
+def _attach_overperformance(classes: list[dict]) -> None:
+    """Bake draft-overperformance fields onto each COMPLETED class's drafted
+    prospects, in place. For every drafted pick we resolve the player's CURRENT
+    value (latest prospect FV via promoted/milb key, plus career WAR where they
+    reached MLB) from the main timeseries + debuts payloads, then compare it to
+    the empirical median FV for that pick band:
+
+        current_fv, career_war, expected_fv_for_pick, overperf_fv
+
+    The frontend Overperformers leaderboard sorts on overperf_fv ("realized
+    outcome"); the "draft-day value" lens needs no baked field (it uses the
+    already-present consensus_pick vs drafted_pick). Players we can't resolve to
+    a board record fall back to their own consensus_fv (draft-time grade)."""
+    val: dict[str, dict] = {}   # player_key -> {"fv":..., "war":...}
+
+    def _ingest(path: str) -> None:
+        try:
+            d = json.loads(Path(path).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return
+        rows = d.get("players") if isinstance(d, dict) else d
+        for p in (rows or []):
+            k = p.get("player_key")
+            if not k:
+                continue
+            war = (p.get("career_war") or {}).get("career_war")
+            val[k] = {"fv": p.get("fv_close"), "war": war}
+
+    _ingest("data/timeseries.json")
+    _ingest("data/debuts.json")
+
+    pooled: list[tuple[int, float]] = []   # (drafted_pick, current_fv)
+    for cls in classes:
+        if cls.get("is_current"):
+            continue
+        for p in cls.get("prospects", []):
+            pick = p.get("drafted_pick")
+            if not pick:
+                continue
+            cand = None
+            for kk in (p.get("promoted_key"), p.get("milb_key"), p.get("player_key")):
+                if kk and kk in val:
+                    cand = val[kk]
+                    break
+            cur_fv = (cand or {}).get("fv")
+            if cur_fv is None:
+                cur_fv = p.get("consensus_fv")   # fall back to draft-time grade
+            p["current_fv"] = cur_fv
+            p["career_war"] = (cand or {}).get("war")
+            if cur_fv is not None:
+                pooled.append((int(pick), float(cur_fv)))
+
+    bucket_med: dict[tuple[int, int], float] = {}
+    for lo, hi in _OVERPERF_PICK_BUCKETS:
+        vals = [fv for pk, fv in pooled if lo <= pk <= hi]
+        if vals:
+            bucket_med[(lo, hi)] = statistics.median(vals)
+
+    def _expected(pick: int) -> float | None:
+        for (lo, hi), m in bucket_med.items():
+            if lo <= pick <= hi:
+                return m
+        return None
+
+    for cls in classes:
+        if cls.get("is_current"):
+            continue
+        for p in cls.get("prospects", []):
+            pick, cur = p.get("drafted_pick"), p.get("current_fv")
+            if not pick or cur is None:
+                continue
+            exp = _expected(int(pick))
+            if exp is None:
+                continue
+            p["expected_fv_for_pick"] = round(exp, 1)
+            p["overperf_fv"] = round(float(cur) - exp, 1)
+
+
 def build_draft_export() -> dict:
     """Build the in-memory draft export payload."""
     all_snaps = load_draft_snapshots()
@@ -772,6 +857,10 @@ def build_draft_export() -> dict:
                             order_by_year, canonical, lottery_by_year,
                             college_by_player=college_by_player)
                for y in years]
+
+    # Draft-overperformance fields (realized FV vs expected-for-pick) for the
+    # Overperformers leaderboard.
+    _attach_overperformance(classes)
 
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),

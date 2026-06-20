@@ -3973,6 +3973,15 @@
       color: var(--text-tertiary);
       margin-left: 4px;
     }
+    /* Draft sub-nav grouped into labeled clusters (Rankings & Tools / The
+       Draft / Trends & Tendencies). Each group's label doubles as a divider
+       via its left border; the whole bar still wraps as flex. */
+    .draft-subnav-group { display: inline-flex; align-items: center; gap: 6px; }
+    .draft-subnav-grouplabel {
+      font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: .08em; color: var(--text-tertiary);
+      padding-left: 8px; border-left: 2px solid var(--border); margin-left: 2px;
+    }
     /* Inline logo + text inside a draft table cell / list row, so team and
        college marks sit cleanly beside the name they belong to. */
     .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -8923,20 +8932,33 @@
     </div>
     <div id="draft-subtab-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label">View</span>
-      <button class="chip active" data-draft-view="rankings"
-              title="Consensus rankings across sources">Rankings</button>
-      <button class="chip" data-draft-view="order"
-              title="Pre-draft: draft order + slot values. Post-draft: every pick with team + slot + signing bonus.">Order &amp; Slots</button>
-      <button class="chip" data-draft-view="results"
-              title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
-      <button class="chip" data-draft-view="leaderboard"
-              title="Top of class by Draft Stock+, per-position bests, per-tool bests">Leaderboard</button>
-      <button class="chip" data-draft-view="lottery"
-              title="Lottery odds for the next draft (top 6 picks). Scraped from Tankathon based on current standings.">Lottery Odds</button>
-      <button class="chip" data-draft-view="class-strength"
-              title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
-      <button class="chip" data-draft-view="signing-trends"
-              title="Year-over-year signing patterns: pool vs spend, slot premiums, biggest bonuses, team spend leaders">Signing Trends</button>
+      <span class="draft-subnav-group">
+        <span class="draft-subnav-grouplabel">Rankings &amp; Tools</span>
+        <button class="chip active" data-draft-view="rankings"
+                title="Consensus rankings across sources">Rankings</button>
+        <button class="chip" data-draft-view="leaderboard"
+                title="Top of class by Draft Stock+, per-position bests, per-tool bests">Leaderboard</button>
+        <button class="chip" data-draft-view="class-strength"
+                title="FV distribution per class (60 FV count, 55 FV count, etc.) side-by-side across years">Class Strength</button>
+      </span>
+      <span class="draft-subnav-group">
+        <span class="draft-subnav-grouplabel">The Draft</span>
+        <button class="chip" data-draft-view="order"
+                title="Pre-draft: draft order + slot values. Post-draft: every pick with team + slot + signing bonus.">Order &amp; Slots</button>
+        <button class="chip" data-draft-view="results"
+                title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
+        <button class="chip" data-draft-view="lottery"
+                title="Lottery odds for the next draft (top 6 picks). Scraped from Tankathon based on current standings.">Lottery Odds</button>
+      </span>
+      <span class="draft-subnav-group">
+        <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
+        <button class="chip" data-draft-view="signing-trends"
+                title="Year-over-year signing patterns: pool vs spend, slot premiums, biggest bonuses, team spend leaders">Signing Trends</button>
+        <button class="chip" data-draft-view="org-tendencies"
+                title="How each organization drafts: position lean, college vs prep, pitching-heavy, plus draft-stock outcomes - all league-relative">Org Tendencies</button>
+        <button class="chip" data-draft-view="overperformers"
+                title="Players who outperformed their draft slot - by realized value vs pick, or by sliding past their pre-draft consensus rank">Overperformers</button>
+      </span>
     </div>
     <!-- v28 - Draft filter / sort accordion. Collapsed by default; the
          toggle button mirrors the actives page's pattern. Filters only
@@ -21202,6 +21224,8 @@ async function renderDraft() {
     case "lottery":        return _renderDraftLottery(host, cls);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes);
+    case "org-tendencies": return _renderDraftTendencies(host, classes);
+    case "overperformers": return _renderDraftOverperformers(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -23339,6 +23363,202 @@ function _renderProspectScoutingReports(p) {
       <div style="padding:0 12px 12px;font-size:12px;line-height:1.6;color:var(--text-primary);white-space:pre-wrap;">${escapeHtml(ext.report)}</div>
     </details>`;
   }).join("");
+}
+
+// ============================================================================
+// Org Draft Tendencies (Tranche 5): how each org drafts, league-relative.
+// Reads org_tendencies.json's draftPos panel + the shared org badge set.
+// ============================================================================
+let _draftTendSort = { key: "zPitch", dir: -1 };
+const _OT_POS_COLORS = { P: "#B3261E", C: "#9A6700", MI: "#1E5FB4", CI: "#0E7490", OF: "#1F7A3A" };
+
+function _renderDraftTendencies(host, classes) {
+  if (!_orgTendencies || !(_orgTendencies.draftPos && _orgTendencies.draftPos.orgs)) {
+    host.innerHTML = `<div class="state-message is-loading">Loading org draft tendencies…</div>`;
+    _ensureOrgTendencies(() => { if (state.draftView === "org-tendencies") renderDraft(); });
+    return;
+  }
+  const dp = _orgTendencies.draftPos.orgs;
+  const orgs = Object.keys(dp).filter(o => dp[o] && dp[o].n);
+  if (!orgs.length) {
+    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">Org draft-tendency data isn't available yet.</div>`;
+    return;
+  }
+  const sk = _draftTendSort.key, sd = _draftTendSort.dir;
+  const data = orgs.map(o => ({ org: o, ...dp[o] }));
+  data.sort((a, b) => sk === "org"
+    ? a.org.localeCompare(b.org) * sd
+    : (((a[sk] ?? -Infinity) - (b[sk] ?? -Infinity)) * sd));
+
+  const _z = z => z == null ? "var(--text-tertiary)"
+    : z >= 0.8 ? "var(--neon-cyan)" : z <= -0.8 ? "var(--neon-orange)" : "var(--text-secondary)";
+  const pct = v => v == null ? " - " : Math.round(v * 100) + "%";
+
+  const _draftBadges = (o) => {
+    const set = ((typeof orgBadgeSet === "function" ? orgBadgeSet(o) : []) || [])
+      .filter(b => ["draft-pitch", "draft-college", "draft-prep", "draft-upmid"].includes(b.kind));
+    if (!set.length) return `<span style="color:var(--text-tertiary);">league-typical</span>`;
+    return set.map(b => {
+      const c = ((typeof _OT_BADGE !== "undefined" && _OT_BADGE[b.kind]) || {}).c || "var(--bg-tertiary)";
+      return `<span title="${escapeHtml(b.label)}" style="display:inline-flex;align-items:center;gap:3px;padding:1px 6px;border-radius:3px;background:${c};color:#fff;font-size:9px;font-weight:700;white-space:nowrap;">${_otIcon(b.kind, 11, "#fff")}${escapeHtml(b.label)}</span>`;
+    }).join(" ");
+  };
+  const _posBar = (pb) => {
+    if (!pb) return "";
+    return `<span style="display:inline-flex;width:96px;height:11px;border-radius:2px;overflow:hidden;border:1px solid var(--border);vertical-align:middle;">`
+      + ["P", "C", "MI", "CI", "OF"].map(k => {
+        const v = pb[k] || 0;
+        return v > 0 ? `<span title="${k} ${Math.round(v * 100)}%" style="width:${(v * 100).toFixed(1)}%;background:${_OT_POS_COLORS[k]};"></span>` : "";
+      }).join("") + `</span>`;
+  };
+  const _sortable = (key, label, title) => {
+    const arrow = sk === key ? (sd < 0 ? " ▼" : " ▲") : "";
+    return `<th class="dt-sortable" data-tend-sort="${key}" title="${escapeHtml(title || "")}" style="cursor:pointer;text-align:right;${sk === key ? "color:var(--neon-cyan);" : ""}">${label}${arrow}</th>`;
+  };
+  const rows = data.map((r, i) => `<tr>
+    <td>${i + 1}</td>
+    <td><span class="draft-cell-ico">${teamLogoHTML(r.org, "sm")}<strong>${escapeHtml((typeof ORG_NAMES !== "undefined" && ORG_NAMES[r.org]) || r.org)}</strong></span></td>
+    <td style="text-align:right;color:var(--text-tertiary);">${r.n || " - "}</td>
+    <td style="text-align:right;color:${_z(r.zPitch)};" title="z ${(r.zPitch ?? 0).toFixed(2)} vs league">${pct(r.pitchShare)}</td>
+    <td style="text-align:right;color:${_z(r.zColl)};" title="z ${(r.zColl ?? 0).toFixed(2)} vs league">${pct(r.collShare)}</td>
+    <td style="text-align:right;color:${_z(r.zPrep)};" title="z ${(r.zPrep ?? 0).toFixed(2)} vs league">${pct(r.prepShare)}</td>
+    <td style="text-align:right;color:${_z(r.zUpMid)};" title="z ${(r.zUpMid ?? 0).toFixed(2)} vs league">${pct(r.upMidShare)}</td>
+    <td style="text-align:center;">${_posBar(r.posBuckets)}</td>
+    <td>${_draftBadges(r.org)}</td>
+  </tr>`).join("");
+
+  host.innerHTML = `
+    <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+      <strong style="color:var(--text-primary);">How each organization drafts</strong>
+      · share of signed picks by type, league-relative (color: <span style="color:var(--neon-cyan);">cyan</span> = above league, <span style="color:var(--neon-orange);">orange</span> = below) · signed picks 2021-present
+      · <a href="#" onclick="event.preventDefault();state.section='farm';render();syncToURL();" style="color:var(--neon-cyan);">full org profiles on the Farm Tendencies tab →</a>
+    </div>
+    <table class="draft-table">
+      <thead><tr>
+        <th>#</th>
+        <th class="dt-sortable" data-tend-sort="org" style="cursor:pointer;${sk === "org" ? "color:var(--neon-cyan);" : ""}">Org${sk === "org" ? (sd < 0 ? " ▼" : " ▲") : ""}</th>
+        ${_sortable("n", "Picks", "Signed picks on file")}
+        ${_sortable("zPitch", "Pitch%", "Share of picks that are pitchers (z vs league)")}
+        ${_sortable("zColl", "College%", "Share from 4-yr colleges (z vs league)")}
+        ${_sortable("zPrep", "Prep%", "Share that are high-schoolers (z vs league)")}
+        ${_sortable("zUpMid", "Up-mid%", "Share up-the-middle: C/SS/2B/CF (z vs league)")}
+        <th style="text-align:center;">Position mix</th>
+        <th>Identity</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  host.querySelectorAll("[data-tend-sort]").forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.tendSort;
+      if (_draftTendSort.key === k) _draftTendSort.dir *= -1;
+      else _draftTendSort = { key: k, dir: k === "org" ? 1 : -1 };
+      renderDraft();
+    };
+  });
+}
+
+// ============================================================================
+// Overperformers leaderboard (Tranche 6): players who beat their draft slot.
+// Two lenses: realized OUTCOME (current FV vs expected-for-pick, baked by
+// draft_export._attach_overperformance) and draft-day VALUE (pre-draft
+// consensus rank vs actual pick). Pools all completed classes, deduped.
+// ============================================================================
+let _draftOverperfMode = "outcome";   // "outcome" | "value"
+
+function _renderDraftOverperformers(host, classes) {
+  const completed = (classes || []).filter(c => !c.is_current);
+  // Pool drafted prospects across completed classes, deduped by player (some
+  // players recur across backfilled boards - keep the strongest entry).
+  const seen = {};
+  for (const c of completed) {
+    for (const p of (c.prospects || [])) {
+      if (!p.drafted_pick) continue;
+      const k = p.player_key || (p.player_name + ":" + c.year);
+      const score = p.overperf_fv != null ? p.overperf_fv : -999;
+      if (!seen[k] || score > seen[k]._score) seen[k] = Object.assign({}, p, { _year: c.year, _score: score });
+    }
+  }
+  const pool = Object.values(seen);
+  const mode = _draftOverperfMode;
+
+  const _fvChip = fv => fv == null ? "<span style='color:var(--text-tertiary);'> - </span>"
+    : `<span style="font-family:var(--font-mono);font-weight:700;padding:1px 6px;border-radius:3px;background:${_draftFvBucketColor(fv)}22;color:${_draftFvBucketColor(fv)};">${fvCeil(fv)}</span>`;
+  const _consPick = p => p.consensus_pick != null ? p.consensus_pick
+    : (p.consensus_rank != null ? Math.round(p.consensus_rank) : null);
+
+  let table;
+  if (mode === "outcome") {
+    const ranked = pool.filter(p => p.overperf_fv != null)
+      .sort((a, b) => b.overperf_fv - a.overperf_fv).slice(0, 50);
+    const rows = ranked.map((p, i) => {
+      const war = p.career_war;
+      const warColor = war == null ? "var(--text-tertiary)" : war > 0 ? "var(--neon-green)" : "var(--neon-red)";
+      return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+        <td>${i + 1}</td>
+        <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span></td>
+        <td>${escapeHtml(p.position || "?")}</td>
+        <td style="color:var(--text-tertiary);">${p._year}</td>
+        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${teamLogoHTML(p.drafted_team, "sm")}#${p.drafted_pick}</span></td>
+        <td style="text-align:center;">${_fvChip(p.current_fv)}</td>
+        <td style="text-align:center;color:var(--text-tertiary);">${p.expected_fv_for_pick != null ? fvCeil(p.expected_fv_for_pick) : " - "}</td>
+        <td style="text-align:right;color:var(--neon-cyan);font-family:var(--font-mono);font-weight:700;">+${p.overperf_fv}</td>
+        <td style="text-align:right;color:${warColor};font-family:var(--font-mono);">${war == null ? " - " : (war > 0 ? "+" : "") + war.toFixed(1)}</td>
+      </tr>`;
+    }).join("");
+    table = `<table class="draft-table">
+      <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
+        <th style="text-align:right;">Drafted</th>
+        <th style="text-align:center;" title="Latest prospect FV (current grade)">FV now</th>
+        <th style="text-align:center;" title="Median FV for that pick band">Exp</th>
+        <th style="text-align:right;" title="FV now minus expected-for-pick">ΔFV</th>
+        <th style="text-align:right;" title="Career MLB bWAR (where they've reached the majors)">WAR</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  } else {
+    const ranked = pool.map(p => ({ p, slide: (p.drafted_pick != null && _consPick(p) != null) ? (p.drafted_pick - _consPick(p)) : null }))
+      .filter(x => x.slide != null && x.slide > 0)
+      .sort((a, b) => b.slide - a.slide).slice(0, 50);
+    const rows = ranked.map((x, i) => {
+      const p = x.p;
+      return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
+        <td>${i + 1}</td>
+        <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span></td>
+        <td>${escapeHtml(p.position || "?")}</td>
+        <td style="color:var(--text-tertiary);">${p._year}</td>
+        <td style="text-align:right;" title="Pre-draft consensus rank">#${_consPick(p)}</td>
+        <td style="text-align:right;"><span class="draft-cell-ico" style="justify-content:flex-end;">${teamLogoHTML(p.drafted_team, "sm")}#${p.drafted_pick}</span></td>
+        <td style="text-align:right;color:var(--neon-orange);font-family:var(--font-mono);font-weight:700;" title="Picks past where the consensus ranked them">+${x.slide}</td>
+        <td style="text-align:center;">${_fvChip(p.current_fv != null ? p.current_fv : p.consensus_fv)}</td>
+      </tr>`;
+    }).join("");
+    table = `<table class="draft-table">
+      <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
+        <th style="text-align:right;" title="Where the consensus ranked them pre-draft">Cons. rank</th>
+        <th style="text-align:right;">Drafted</th>
+        <th style="text-align:right;" title="How far past their consensus rank they slid">Slide</th>
+        <th style="text-align:center;">FV</th></tr></thead>
+      <tbody>${rows}</tbody></table>`;
+  }
+
+  const _modeChip = (m, label, title) =>
+    `<button class="chip${mode === m ? " active" : ""}" data-overperf-mode="${m}" title="${escapeHtml(title)}">${label}</button>`;
+  host.innerHTML = `
+    <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+      <strong style="color:var(--text-primary);">Draft overperformers</strong>
+      · ${mode === "outcome"
+          ? "players whose CURRENT prospect FV most exceeds the median for their draft slot (career WAR shown where they've reached MLB)"
+          : "players who slid furthest past their pre-draft consensus rank - value on draft day"}
+      · all completed classes, deduped
+    </div>
+    <div class="filter-bar" id="overperf-mode-bar" style="gap:6px;margin-bottom:10px;">
+      <span class="filter-label">Lens</span>
+      ${_modeChip("outcome", "Realized outcome", "Current FV vs the median FV for that draft slot")}
+      ${_modeChip("value", "Draft-day value", "Pre-draft consensus rank vs actual pick")}
+    </div>
+    ${table}`;
+  host.querySelectorAll("[data-overperf-mode]").forEach(b => {
+    b.onclick = () => { _draftOverperfMode = b.dataset.overperfMode; renderDraft(); };
+  });
 }
 
 async function renderDraftDetail(key) {
