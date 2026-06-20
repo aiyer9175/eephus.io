@@ -15403,8 +15403,8 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
     p.projected_round ? { key: "Proj round", value: `R${p.projected_round}` } : null,
     p.signing_bonus ? { key: "Bonus", value: `$${(p.signing_bonus/1_000_000).toFixed(2)}M` } : null,
     p.over_slot_pct != null ? { key: "vs Slot",
-      value: (p.over_slot_pct > 0 ? "+" : "") + (p.over_slot_pct * 100).toFixed(0) + "%",
-      valColor: p.over_slot_pct > 0.05 ? "var(--neon-cyan)" : p.over_slot_pct < -0.05 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+      value: (p.over_slot_pct > 0 ? "+" : "") + Math.round(p.over_slot_pct) + "%",
+      valColor: p.over_slot_pct > 5 ? "var(--neon-cyan)" : p.over_slot_pct < -5 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
   ].filter(Boolean);
   return [
     adjPeers.length ? { type: "leaderboard", title: `${cls.year} · FV neighbors`, rows: adjPeers } : null,
@@ -21620,7 +21620,7 @@ function _renderDraftCard(p) {
   }
 
   const milbLink = p.milb_key
-    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}');"
+    ? `<a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.milb_key)}');"
          style="font-size:10px;color:var(--neon-green);text-decoration:none;
          margin-left:6px;">→ MiLB profile</a>`
     : "";
@@ -21743,54 +21743,59 @@ function _renderDraftOrder(host, cls) {
   // college/school logo beside their name.
   const byKey = {};
   (cls.prospects || []).forEach(p => { if (p.player_key) byKey[p.player_key] = p; });
+  // Round label: "R3.12" for numeric rounds; comp/PPI rounds carry alphanumeric
+  // labels (e.g. "CB-A") that should NOT get an "R" prefix.
+  const roundLbl = (o) => {
+    const rl = String(o.round_label || "?");
+    return /^\d+$/.test(rl) ? `R${rl}.${o.pick_in_round || "?"}` : rl;
+  };
   const rows = order.map(o => {
     const pr = o.player_key ? byKey[o.player_key] : null;
-    const collegeLogo = (isPost && pr && (pr.school_logo_url || pr.school))
-      ? _collegeLogoImg(pr.school_logo_url, pr.school, _isHSPlayer(pr)) : "";
-    const playerCell = isPost && o.player_name
-      ? `<span class="draft-cell-ico">${collegeLogo}${escapeHtml(o.player_name)}</span>`
-      : "<span style='color:var(--text-tertiary);'> - </span>";
-    return `
-    <tr>
+    const base = `
       <td style="text-align:center;font-weight:600;">${o.pick_overall}</td>
-      <td>R${o.round_label || "?"}.${o.pick_in_round || "?"}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team || "?")}</strong></span></td>
+      <td>${escapeHtml(roundLbl(o))}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team || "?")}</strong></span></td>`;
+    // Pre-draft: only the columns that have data (no empty Player/Bonus/Signed
+    // columns, and no misleading red "unsigned" cross before a draft happens).
+    if (!isPost) {
+      return `<tr>${base}<td style="text-align:right;color:var(--text-secondary);">${_fmtUSD(o.slot_usd)}</td></tr>`;
+    }
+    const collegeLogo = (pr && (pr.school_logo_url || pr.school))
+      ? _collegeLogoImg(pr.school_logo_url, pr.school, _isHSPlayer(pr)) : "";
+    const playerCell = o.player_name
+      ? `<span class="draft-cell-ico">${collegeLogo}${o.player_key
+          ? `<a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(o.player_key)}');" style="color:inherit;text-decoration:none;">${escapeHtml(o.player_name)}</a>`
+          : escapeHtml(o.player_name)}</span>`
+      : "<span style='color:var(--text-tertiary);'> - </span>";
+    const vsSlot = o.bonus_usd && o.slot_usd
+      ? `<span style="color:${o.bonus_usd > o.slot_usd ? "var(--neon-orange)" : "var(--neon-cyan)"};">${(o.bonus_usd > o.slot_usd ? "+" : "") + Math.round((o.bonus_usd / o.slot_usd - 1) * 100)}%</span>`
+      : "<span style='color:var(--text-tertiary);'> - </span>";
+    return `<tr>${base}
       <td>${playerCell}</td>
       <td style="text-align:right;color:var(--text-secondary);">${_fmtUSD(o.slot_usd)}</td>
       <td style="text-align:right;">${_fmtUSD(o.bonus_usd)}</td>
-      <td style="text-align:right;color:${o.bonus_usd && o.slot_usd
-        ? (o.bonus_usd > o.slot_usd ? "var(--neon-orange)" : "var(--neon-cyan)")
-        : "var(--text-tertiary)"};">
-        ${o.bonus_usd && o.slot_usd
-          ? ((o.bonus_usd > o.slot_usd ? "+" : "") +
-             Math.round((o.bonus_usd / o.slot_usd - 1) * 100) + "%")
-          : " - "}
-      </td>
-      <td style="text-align:center;">
-        ${o.signed ? "<span style='color:var(--neon-green);'>✓</span>"
-                   : "<span style='color:var(--neon-red);'>✗</span>"}
-      </td>
+      <td style="text-align:right;">${vsSlot}</td>
+      <td style="text-align:center;">${o.signed
+        ? "<span style='color:var(--neon-green);'>✓</span>"
+        : "<span style='color:var(--neon-orange);' title='Unsigned'>✗</span>"}</td>
     </tr>`;
   }).join("");
 
+  const head = isPost
+    ? `<tr><th>#</th><th>Round</th><th>Team</th><th>Player</th>
+         <th style="text-align:right;">Slot</th><th style="text-align:right;">Bonus</th>
+         <th style="text-align:right;">vs slot</th><th>Signed</th></tr>`
+    : `<tr><th>#</th><th>Round</th><th>Team</th><th style="text-align:right;">Slot</th></tr>`;
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
          border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
       <strong style="color:var(--text-primary);">${cls.year} draft order</strong>
       · ${order.length} picks on file
       · Slot values from MLB Stats API
-      ${isPost ? "· Bonuses + signings from MLB Stats API" : "· Pre-draft (no bonuses yet)"}
+      ${isPost ? "· Bonuses + signings from MLB Stats API" : "· Pre-draft - slot values only (bonuses + signings populate after the draft)"}
     </div>
     <table class="draft-table">
-      <thead>
-        <tr>
-          <th>#</th><th>Round</th><th>Team</th><th>Player</th>
-          <th style="text-align:right;">Slot</th>
-          <th style="text-align:right;">Bonus</th>
-          <th style="text-align:right;">vs slot</th>
-          <th>Signed</th>
-        </tr>
-      </thead>
+      <thead>${head}</thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
@@ -22173,9 +22178,9 @@ function _renderSigningTrends(host, classes) {
   const topBonusRows = topBonuses.length ? topBonuses.map((p, i) => {
     const ov = p.over_slot_pct;
     const ovColor = ov == null ? "var(--text-tertiary)"
-                  : ov > 0.10 ? "var(--neon-cyan)"
-                  : ov < -0.10 ? "var(--neon-orange)" : "var(--text-secondary)";
-    const ovTxt = ov == null ? " - " : (ov > 0 ? "+" : "") + (ov * 100).toFixed(0) + "%";
+                  : ov > 10 ? "var(--neon-cyan)"
+                  : ov < -10 ? "var(--neon-orange)" : "var(--text-secondary)";
+    const ovTxt = ov == null ? " - " : (ov > 0 ? "+" : "") + Math.round(ov) + "%";
     return `<tr>
       <td>${i + 1}</td>
       <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.player_name)}</span></a></td>
@@ -22223,16 +22228,23 @@ function _renderSigningTrends(host, classes) {
     }
   }
   const roundRows = Object.values(byRound)
-    .sort((a, b) => a.round - b.round)
+    // drafted_round is a string ("1", "2", ... plus comp labels like "CB-A").
+    // Sort numeric rounds ascending, with any non-numeric (comp) rounds last.
+    .sort((a, b) => {
+      const na = parseInt(a.round, 10), nb = parseInt(b.round, 10);
+      const va = isNaN(na) ? Infinity : na, vb = isNaN(nb) ? Infinity : nb;
+      return va - vb || String(a.round).localeCompare(String(b.round));
+    })
     .map(r => {
       const total = r.signed + r.unsigned;
       const meanOv = r.ovs.length ? r.ovs.reduce((s, v) => s + v, 0) / r.ovs.length : null;
-      const ovTxt = meanOv == null ? " - " : (meanOv > 0 ? "+" : "") + (meanOv * 100).toFixed(1) + "%";
+      const ovTxt = meanOv == null ? " - " : (meanOv > 0 ? "+" : "") + meanOv.toFixed(1) + "%";
       const ovColor = meanOv == null ? "var(--text-tertiary)"
-                    : meanOv > 0.05 ? "var(--neon-cyan)"
-                    : meanOv < -0.05 ? "var(--neon-orange)" : "var(--text-secondary)";
+                    : meanOv > 5 ? "var(--neon-cyan)"
+                    : meanOv < -5 ? "var(--neon-orange)" : "var(--text-secondary)";
+      const roundLabel = /^\d+$/.test(String(r.round)) ? "R" + r.round : String(r.round);
       return `<tr>
-        <td>R${r.round}</td>
+        <td>${escapeHtml(roundLabel)}</td>
         <td>${r.signed} / ${total}</td>
         <td style="color:${ovColor};font-family:var(--font-mono);">${ovTxt}</td>
       </tr>`;
@@ -23074,7 +23086,7 @@ function _renderOverseasCard(p) {
   }
 
   const milbLink = p.milb_key
-    ? `<a href="#tab=active" onclick="event.preventDefault();state.section='active';state.view={key:'${escapeHtml(p.milb_key)}');"
+    ? `<a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.milb_key)}');"
          style="font-size:10px;color:var(--neon-green);text-decoration:none;
          margin-left:6px;">→ MiLB profile</a>`
     : "";
