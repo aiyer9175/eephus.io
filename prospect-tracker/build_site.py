@@ -187,6 +187,7 @@ def _footer() -> str:
     year = date.today().year
     links = (
         f'<a href="/team/">About</a>'
+        f'<a href="/news/">Prospect News</a>'
         f'<a href="/sources/">Data Sources</a>'
         f'<a href="/glossary/">Glossary</a>'
         f'<a href="{FEEDBACK_MAILTO}">Report a bug</a>'
@@ -1110,26 +1111,38 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
     ev.sort(key=lambda e: (e[0], e[8]), reverse=True)
     return [e[:8] for e in ev]
 
+# Event type -> coarse filter category for the /news/ page filter chips.
+_EVENT_CAT = {"debut": "debut", "trade": "trade", "promo": "move", "demo": "move",
+              "il": "il", "up": "fv", "down": "fv", "signing": "signing"}
+
+def _feed_day_header(dt: str) -> str:
+    """One thin date header row that deep-links into Time Machine at that date
+    (the full board as of that day). Shared by the homepage feed + /news/."""
+    ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
+    return (f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
+            f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
+            f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
+
+def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "") -> str:
+    """One wire row: logo | name (ellipsized) | colored value chip. The type
+    glyph lives only in the value chip. `cat` (optional) tags the row for the
+    /news/ filter chips. Shared by the homepage feed + the /news/ page."""
+    logo = _team_logo(org, "feed-logo") if org else ""
+    data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
+    return (f'<a class="feed-item" href="{_player_href(key)}"{data_cat}>'
+            f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
+            f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
+
 def _feed_html(events: list, n: int = 12) -> str:
-    # Day-grouped wire: each date gets one thin header row that deep-links
-    # into Time Machine at that date (the full board as of that day), and the
-    # item rows drop the per-row timestamp the header now carries. Item rows
-    # stay structured: logo | name (ellipsized) | colored value chip - the
-    # type glyph lives only in the value chip.
+    # Day-grouped wire (homepage sidebar): a thin per-date header carries the
+    # timestamp + Time Machine link; rows are structured logo|name|value chip.
     out = []
     last_day = None
     for dt, typ, glyph, text, key, org, name, val in events[:n]:
         if dt != last_day:
             last_day = dt
-            ts = f"{dt[5:7]}/{dt[8:10]}" if len(dt) >= 10 else dt
-            out.append(
-                f'<div class="feed-day"><span class="feed-day-date">{ts}</span>'
-                f'<a class="feed-day-tm" href="/prospx/#tab=timemachine&tm={dt}" '
-                f'title="Time Machine - the full board as of {dt}">Time Machine →</a></div>')
-        logo = _team_logo(org, "feed-logo") if org else ""
-        out.append(f'<a class="feed-item" href="{_player_href(key)}">'
-                   f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
-                   f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
+            out.append(_feed_day_header(dt))
+        out.append(_feed_item_html(typ, glyph, text, key, org, name, val))
     return "".join(out)
 
 def _ticker_html(events: list, n: int = 14) -> str:
@@ -1148,6 +1161,92 @@ def _ticker_html(events: list, n: int = 14) -> str:
     if not items:
         items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
+
+def _news_feed_html(events: list, window_days: int = 30,
+                    max_items: int = 500, min_items: int = 60) -> str:
+    """Day-grouped feed for the standalone /news/ page: same row markup as the
+    homepage sidebar, but windowed to recent activity and tagged with data-cat
+    so the filter chips can show/hide by category. Each day is wrapped in a
+    .news-day block so a filtered-empty day hides cleanly. Falls back to the
+    most-recent `min_items` when the window is sparse (off-season)."""
+    cutoff = (date.today() - timedelta(days=window_days)).isoformat()
+    recent = [e for e in events if e[0] >= cutoff]
+    if len(recent) < min_items:
+        recent = events[:min_items]
+    recent = recent[:max_items]
+    out = []
+    last_day = None
+    open_day = False
+    for dt, typ, glyph, text, key, org, name, val in recent:
+        if dt != last_day:
+            if open_day:
+                out.append("</div>")
+            last_day = dt
+            out.append('<div class="news-day">')
+            out.append(_feed_day_header(dt))
+            open_day = True
+        out.append(_feed_item_html(typ, glyph, text, key, org, name, val,
+                                   _EVENT_CAT.get(typ, "")))
+    if open_day:
+        out.append("</div>")
+    return "".join(out)
+
+# Tiny dependency-free filter for the /news/ chips: toggles row visibility by
+# data-cat and hides any day block left with no visible items (mirrors the
+# glossary/FA static-page chip idiom).
+_NEWS_FILTER_JS = """<script>
+(function(){
+  var bar=document.getElementById('news-filter-bar'),feed=document.getElementById('news-feed');
+  if(!bar||!feed)return;
+  bar.addEventListener('click',function(e){
+    var b=e.target.closest('[data-news-filter]');if(!b)return;
+    var f=b.getAttribute('data-news-filter');
+    bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    feed.querySelectorAll('.news-day').forEach(function(day){
+      var any=false;
+      day.querySelectorAll('.feed-item').forEach(function(it){
+        var show=(f==='all')||it.getAttribute('data-cat')===f;
+        it.style.display=show?'':'none';if(show)any=true;
+      });
+      day.style.display=any?'':'none';
+    });
+  });
+})();
+</script>"""
+
+def build_news(data: dict | None = None) -> str:
+    """/news/ - the expanded Prospect News page: the full recent event feed
+    (debuts, trades, promotions/demotions, IL, FV grade changes, FA signings),
+    day-grouped with category filter chips. Same event pipeline + row markup as
+    the homepage sidebar feed, just a wider window. Reached by clicking the
+    Prospect News header (sidebar feed or top ticker) on the homepage."""
+    data = data or load_site_data() or {}
+    events = _collect_events(data.get("players") or [], data.get("graduates") or [],
+                             _load_fa_events_for_wire())
+    feed = _news_feed_html(events)
+    chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
+                 ("move", "Moves"), ("il", "IL"), ("fv", "FV"), ("signing", "Signings")]
+    chips = "".join(
+        f'<button class="chip{" active" if c == "all" else ""}" '
+        f'data-news-filter="{c}">{html.escape(lbl)}</button>'
+        for c, lbl in chip_defs)
+    body = (
+        '<div class="news-app">'
+        '<div class="section-head"><h1>Prospect News</h1>'
+        '<span class="section-sub">the full recent prospect wire - filterable by event type</span></div>'
+        '<p class="news-intro">Every move on the board - prospect debuts, trades, promotions and '
+        'demotions, IL placements, genuine FV grade changes, and Free Agency signings - newest first. '
+        'The homepage shows the latest dozen; this is the full recent feed (last ~30 days). Filter by '
+        'type, or jump into Time Machine on any date to see the whole board as it stood.</p>'
+        f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
+        f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
+        '</div>'
+        + _NEWS_FILTER_JS
+    )
+    return page("Prospect News - eephus.io", "news", body,
+                "The full recent eephus.io prospect wire: debuts, trades, promotions, IL moves, "
+                "FV grade changes, and Free Agency signings - filterable by type.",
+                url=f"{SITE_ORIGIN}/news/")
 
 def _fv_sparkline(points: list, color: str, w: int = 150, h: int = 34) -> str:
     vals = [pt.get("consensus_fv_raw") for pt in (points or []) if pt.get("consensus_fv_raw") is not None]
@@ -1534,7 +1633,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
         f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         f'{spotlight}'
-        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><span class="blip"></span>Prospect News</div>{feed}</div></div>'
+        f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All prospect news"><span class="blip"></span>Prospect News<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
         '</aside>'
     )
 
@@ -1542,7 +1641,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # Decorative scrolling marquee - duplicates the accessible Prospect Wire feed
     # in the sidebar, so it's hidden from assistive tech (aria-hidden) to avoid
     # reading the same items twice / announcing a moving region.
-    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><span class="blip"></span>News</span>'
+    ticker = (f'<div class="home-ticker" aria-hidden="true"><span class="ticker-tag"><a href="/news/"><span class="blip"></span>News</a></span>'
               f'<div class="ticker-track">{_ticker_html(events)}</div></div>')
 
     # ---- masthead ----
@@ -2095,6 +2194,7 @@ def build_sitemap(articles: list[dict]) -> str:
     today = date.today().isoformat()
     pages = [
         ("/", "daily", "1.0"),
+        ("/news/", "daily", "0.8"),
         ("/prospx/", "daily", "1.0"),
         ("/collegesavant/", "weekly", "0.8"),
         ("/collegesavant/pitcher_index.html", "weekly", "0.7"),
@@ -2155,6 +2255,7 @@ def main() -> None:
     print(" data layer:", "loaded" if data else "MISSING (run run_monthly) - modules will be empty")
 
     _write("index.html", build_home(articles, data))
+    _write("news/index.html", build_news(data))
     _write("articles/index.html", build_articles_index(articles))
     for a in articles:
         _write(f"articles/{a['slug']}/index.html", build_article_page(a))

@@ -540,6 +540,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   z-index: 1; pointer-events: none;
 }
 .home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
+/* The tag links to /news/ (mouse convenience; the ticker is aria-hidden, so
+   the accessible path is the sidebar feed header). Inherit the white-on-red. */
+.home-ticker .ticker-tag a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
 @keyframes ticker-blip { 50% { opacity: .25; } }
 .home-ticker .ticker-track {
   display: inline-flex; align-items: center; gap: 0; padding: 7px 0;
@@ -646,6 +649,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 [data-theme="dark"] .sb-feed { background: #0a0c06; }
 .sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
 .sb-feed .feed-head .blip { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
+/* Clickable section header -> /news/. Keeps the terminal-green color; an
+   "all ->" affordance trails the label and brightens on hover. */
+.sb-feed .feed-head a { display: inline-flex; align-items: center; gap: 7px; color: inherit; text-decoration: none; width: 100%; }
+.sb-feed .feed-head a:hover { color: #d6ffe7; }
+.sb-feed .feed-head .feed-head-more { margin-left: auto; color: #4ee0ff; letter-spacing: .04em; }
 /* Sidebar Prospect Wire - same palette as the top scrolling WIRE ticker
    (bright base text + matching per-type glyph colors) so the two read as one
    feed. */
@@ -690,6 +698,18 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
 .feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
 .feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; } /* FA winter wire - refractor violet */
+
+/* ---- /news/ expanded Prospect News page ---- */
+.news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }
+.news-app .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 14px; }
+.news-app .filter-label { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px; }
+.news-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); border-radius: var(--radius-sm); }
+.news-app button.chip:hover { border-color: var(--accent-gold); }
+.news-app button.chip.active { color: var(--text-primary); border-color: var(--accent-gold); font-weight: 700; }
+/* The feed reuses the .sb-feed terminal panel; just bound its width + give
+   each day block a hair of separation so the grouping reads on a full page. */
+.news-app .news-feed { max-width: 760px; }
+.news-app .news-feed .news-day + .news-day { margin-top: 2px; }
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
