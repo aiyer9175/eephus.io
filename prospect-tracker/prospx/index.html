@@ -3973,6 +3973,12 @@
       color: var(--text-tertiary);
       margin-left: 4px;
     }
+    /* Inline logo + text inside a draft table cell / list row, so team and
+       college marks sit cleanly beside the name they belong to. */
+    .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
+    .draft-cell-ico .team-logo, .draft-cell-ico .college-logo,
+    .draft-cell-ico .school-initial { flex: none; }
+    .draft-list li .draft-cell-ico { vertical-align: middle; }
     /* === Polish: images, flags, college logos ===================== */
     /* Square headshot - left-edge of every Draft / Overseas card.
        Sized so it doesn't dominate; falls back via JS onerror to a
@@ -21565,8 +21571,8 @@ function _renderDraftCard(p) {
       ? ` · ${_fmtUSD(p.signing_bonus)}${p.over_slot_pct != null
                  ? ` (${p.over_slot_pct > 0 ? "+" : ""}${p.over_slot_pct}% slot)` : ""}`
       : (p.signed ? "" : " · unsigned");
-    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);">
-      DRAFTED · R${p.drafted_round || "?"} #${p.drafted_pick} · ${escapeHtml(p.drafted_team)}${bonusStr}
+    statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-cyan);display:inline-flex;align-items:center;gap:5px;flex-wrap:wrap;">
+      ${teamLogoHTML(p.drafted_team, "sm")}DRAFTED · R${p.drafted_round || "?"} #${p.drafted_pick} · ${escapeHtml(p.drafted_team)}${bonusStr}
     </div>`;
   } else if (p.status === "unsigned") {
     statusBadge = `<div style="margin-top:6px;font-size:11px;color:var(--neon-orange);">UNSIGNED</div>`;
@@ -21692,12 +21698,23 @@ function _renderDraftOrder(host, cls) {
     return;
   }
   const isPost = !cls.is_current;
-  const rows = order.map(o => `
+  // player_key -> prospect, so post-draft rows can show the drafted player's
+  // college/school logo beside their name.
+  const byKey = {};
+  (cls.prospects || []).forEach(p => { if (p.player_key) byKey[p.player_key] = p; });
+  const rows = order.map(o => {
+    const pr = o.player_key ? byKey[o.player_key] : null;
+    const collegeLogo = (isPost && pr && (pr.school_logo_url || pr.school))
+      ? _collegeLogoImg(pr.school_logo_url, pr.school) : "";
+    const playerCell = isPost && o.player_name
+      ? `<span class="draft-cell-ico">${collegeLogo}${escapeHtml(o.player_name)}</span>`
+      : "<span style='color:var(--text-tertiary);'> - </span>";
+    return `
     <tr>
       <td style="text-align:center;font-weight:600;">${o.pick_overall}</td>
       <td>R${o.round_label || "?"}.${o.pick_in_round || "?"}</td>
-      <td><strong>${escapeHtml(o.team || "?")}</strong></td>
-      <td>${isPost && o.player_name ? escapeHtml(o.player_name) : "<span style='color:var(--text-tertiary);'> - </span>"}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(o.team, "sm")}<strong>${escapeHtml(o.team || "?")}</strong></span></td>
+      <td>${playerCell}</td>
       <td style="text-align:right;color:var(--text-secondary);">${_fmtUSD(o.slot_usd)}</td>
       <td style="text-align:right;">${_fmtUSD(o.bonus_usd)}</td>
       <td style="text-align:right;color:${o.bonus_usd && o.slot_usd
@@ -21712,7 +21729,8 @@ function _renderDraftOrder(host, cls) {
         ${o.signed ? "<span style='color:var(--neon-green);'>✓</span>"
                    : "<span style='color:var(--neon-red);'>✗</span>"}
       </td>
-    </tr>`).join("");
+    </tr>`;
+  }).join("");
 
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
@@ -21757,7 +21775,7 @@ function _renderDraftResults(host, cls) {
                     : pct > 0 ? "var(--neon-orange)"
                     : "var(--neon-cyan)";
     return `<tr>
-      <td><strong>${escapeHtml(t)}</strong></td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong></span></td>
       <td style="text-align:right;">${_fmtUSD(p)}</td>
       <td style="text-align:right;">${_fmtUSD(s)}</td>
       <td style="text-align:right;color:${overColor};">${pct == null ? " - " : (pct > 0 ? "+" : "") + pct + "%"}</td>
@@ -21791,8 +21809,8 @@ function _renderDraftResults(host, cls) {
         <ul class="draft-list">
           ${biggest.map(p => `<li>
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
-            <strong>${escapeHtml(p.player_name)}</strong>
-            <small>${escapeHtml(p.drafted_team || "?")}</small>
+            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}<strong>${escapeHtml(p.player_name)}</strong></span>
+            <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
             <span style="float:right;">${_fmtUSD(p.signing_bonus)}</span>
           </li>`).join("")}
         </ul>
@@ -21800,8 +21818,8 @@ function _renderDraftResults(host, cls) {
         <ul class="draft-list">
           ${biggestOver.map(p => `<li>
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
-            <strong>${escapeHtml(p.player_name)}</strong>
-            <small>${escapeHtml(p.drafted_team || "?")}</small>
+            <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}<strong>${escapeHtml(p.player_name)}</strong></span>
+            <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
             <span style="float:right;color:var(--neon-orange);">+${p.over_slot_pct}%</span>
           </li>`).join("")}
         </ul>
@@ -21902,7 +21920,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${i + 1}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
-    <td>${escapeHtml(p.school || "?")}</td>
+    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}${escapeHtml(p.school || "?")}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
     <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
@@ -22119,9 +22137,9 @@ function _renderSigningTrends(host, classes) {
     const ovTxt = ov == null ? " - " : (ov > 0 ? "+" : "") + (ov * 100).toFixed(0) + "%";
     return `<tr>
       <td>${i + 1}</td>
-      <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');">${escapeHtml(p.player_name)}</a></td>
+      <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school)}${escapeHtml(p.player_name)}</span></a></td>
       <td>${escapeHtml(p.position || "?")}</td>
-      <td>${escapeHtml(p.drafted_team || "?")}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</span></td>
       <td style="font-family:var(--font-mono);">${usd(p.signing_bonus)}</td>
       <td style="font-family:var(--font-mono);color:${ovColor};">${ovTxt}</td>
     </tr>`;
@@ -22142,7 +22160,7 @@ function _renderSigningTrends(host, classes) {
     .slice(0, 12)
     .map((r, i) => `<tr>
       <td>${i + 1}</td>
-      <td><strong>${escapeHtml(r.team)}</strong></td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(r.team, "sm")}<strong>${escapeHtml(r.team)}</strong></span></td>
       <td style="font-family:var(--font-mono);">${usd(r.spend)}</td>
       <td>${r.picks}</td>
     </tr>`).join("");
