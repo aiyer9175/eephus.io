@@ -23,6 +23,7 @@
   --accent-red:    #B91C1C;
   --accent-green:  #1F7A3A;
   --accent-navy:   #0E2B4D;
+  --accent-orange: #C2540A;   /* alpha/beta version chips (warm, AA on paper) */
   --radius-sm: 0;  /* corners sharpened site-wide (retro / newspaper theme) */
   --radius-md: 0;
   --radius-lg: 0;
@@ -100,6 +101,7 @@
   --accent-red:    #FF6B7A;   /* refractor down */
   --accent-green:  #4FFF9E;   /* refractor mint */
   --accent-navy: #4FD9FF; /* refractor cyan - links pop on black */
+  --accent-orange: #FF9D42;   /* alpha/beta version chips (refractor orange) */
   --accent-cyan:   #00D9FF;
   --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
@@ -226,8 +228,11 @@
 .eephus-beta {
   font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
   letter-spacing: .06em; line-height: 1; white-space: nowrap;
-  color: var(--text-tertiary); background: transparent;
-  border: 1px solid var(--border); padding: 3px 6px;
+  /* Alpha/beta version chips read in the warm orange accent so they're
+     distinct from links + neutral chrome across the site (incl. PROSPX,
+     which loads this stylesheet). */
+  color: var(--accent-orange); background: transparent;
+  border: 1px solid var(--accent-orange); padding: 3px 6px;
 }
 .eephus-nav .eephus-links {
   display: flex; align-items: center; gap: 0; flex-wrap: nowrap;
@@ -748,6 +753,21 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .eephus-logo-ball { fill: var(--bg-primary); }
 .eephus-logo-seam { opacity: .55; }
+/* The merged-wordmark ball is filled with the surface color so it masks the
+   arc passing behind it. In the sidebar brand the surface is the secondary-
+   tinted gradient top, not the page bg - fill it to match so the ball doesn't
+   read as an off-color disc beside the logo. */
+.sb-brand .eephus-logo-ball { fill: var(--bg-secondary); }
+
+/* ---- On-theme scrollbars (every page except PROSPX, which carries its own
+   stitched-leather bars in its inline styles). Subtle thumb on a transparent
+   track; brightens to the gold accent on hover. ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-corner { background: transparent; }
 .masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
 
 /* Shared on-theme X link: glyph + @handle. Sharp corners, opens in a new tab.
