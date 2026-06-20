@@ -21879,7 +21879,7 @@ function _renderDraftResults(host, cls) {
       <div class="draft-panel">
         <h3>Biggest bonuses</h3>
         <ul class="draft-list">
-          ${biggest.map(p => `<li>
+          ${biggest.map(p => `<li onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
             <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
             <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
@@ -21888,11 +21888,11 @@ function _renderDraftResults(host, cls) {
         </ul>
         <h3 style="margin-top:14px;">Biggest over-slot</h3>
         <ul class="draft-list">
-          ${biggestOver.map(p => `<li>
+          ${biggestOver.map(p => `<li onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
             <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
             <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
-            <span style="float:right;color:var(--neon-orange);">+${p.over_slot_pct}%</span>
+            <span style="float:right;color:var(--neon-orange);">${p.over_slot_usd != null ? "+" + _fmtUSD(p.over_slot_usd) + " " : ""}(+${Math.round(p.over_slot_pct)}%)</span>
           </li>`).join("")}
         </ul>
       </div>
