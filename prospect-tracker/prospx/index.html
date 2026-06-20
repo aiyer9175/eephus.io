@@ -12334,6 +12334,10 @@ function syncToURL() {
     if (state.chartYMax != null && state.chartYMax !== "")          p.set("chymax", state.chartYMax);
     if (state.chartHighlight)  p.set("chq", state.chartHighlight);
   }
+  if (state.section === "draft") {
+    if (state.draftYear != null) p.set("dyear", String(state.draftYear));
+    if (state.draftView && state.draftView !== "rankings") p.set("dview", state.draftView);
+  }
   if (state.ilStatcastSort && state.ilStatcastSort !== "off") p.set("ilssk", state.ilStatcastSort);
   if (state.debutStatcastSort && state.debutStatcastSort !== "off") p.set("dssk", state.debutStatcastSort);
   if (state.tradedSort  && state.tradedSort   !== "date")    p.set("tsort",  state.tradedSort);
@@ -12441,6 +12445,10 @@ function syncFromURL() {
     window.location.replace("/glossary/" + (q2.toString() ? "#" + q2.toString() : ""));
     return;
   }
+  // Draft section: selected class (year number or "overall") + sub-view, so the
+  // draft tab is deep-linkable / shareable / survives reload.
+  if (p.has("dyear")) { const dy = p.get("dyear"); state.draftYear = dy === "overall" ? "overall" : +dy; }
+  if (p.has("dview")) state.draftView = p.get("dview");
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("acq"))   state.acqFilter   = p.get("acq");
   if (p.has("class")) state.classFilter = p.get("class");
@@ -21179,6 +21187,7 @@ async function renderDraft() {
       state.draftYear = v === "overall" ? "overall" : +v;
       resetPage("draft");
       renderDraft();
+      syncToURL();
     });
   });
 
@@ -21201,7 +21210,7 @@ async function renderDraft() {
     if (view === "lottery" && !_selectedHasLottery) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
-    b.onclick = () => { state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); };
+    b.onclick = () => { state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL(); };
   });
   // Hide any sub-nav group label whose chips are all hidden in this mode.
   document.querySelectorAll("#draft-subtab-bar .draft-subnav-group").forEach(g => {
