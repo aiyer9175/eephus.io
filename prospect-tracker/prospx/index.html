@@ -40308,6 +40308,29 @@ function _otBadge(kind, label, tip) {
   return `<span title="${escapeHtml(tip || "")}" style="display:inline-flex;align-items:center;gap:5px;background:${b.c};color:#fff;border-radius:999px;padding:3px 11px 3px 8px;font-family:var(--font-retro-mono);font-size:10px;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;margin:3px 6px 3px 0;cursor:help;box-shadow:0 1px 2px rgba(0,0,0,0.28);white-space:nowrap;">${_otIcon(kind, 13, "#fff")}${escapeHtml(label)}</span>`;
 }
 
+// Standard-normal CDF (Abramowitz-Stegun 26.2.17) -> league percentile for a
+// z-score. Used to quantify how pronounced a tendency is (1.4σ above league =>
+// ~92nd pct of the 30 orgs), appended to each identity-badge tooltip.
+function _otNormCdf(z) {
+  const t = 1 / (1 + 0.2316419 * Math.abs(z));
+  const d = 0.3989423 * Math.exp(-z * z / 2);
+  const p = d * t * (0.3193815 + t * (-0.3565638 + t * (1.781478 + t * (-1.821256 + t * 1.330274))));
+  return z > 0 ? 1 - p : p;
+}
+function _otOrd(n) { const s = ["th", "st", "nd", "rd"], v = n % 100; return n + (s[(v - 20) % 10] || s[v] || s[0]); }
+// Quantified percentile phrase for a z-score: "~92nd pct of 30 orgs · 1.4σ above league".
+function _otPct(z) {
+  if (z == null || isNaN(Number(z))) return "";
+  z = Number(z);
+  const pct = Math.min(99, Math.max(1, Math.round(_otNormCdf(z) * 100)));
+  return `~${_otOrd(pct)} pct of 30 orgs · ${Math.abs(z).toFixed(1)}σ ${z >= 0 ? "above" : "below"} league`;
+}
+// Append the percentile phrase to a raw stat tip (skips cleanly when z is null).
+function _otTip(raw, z) {
+  const q = _otPct(z);
+  return q ? `${raw} · ${q}` : raw;
+}
+
 function _otCard(title, sub, bodyHtml) {
   return `<div style="border:1px solid var(--border);background:var(--bg-secondary);padding:12px 14px;min-width:0;">
     <div style="font-size:11px;letter-spacing:0.07em;text-transform:uppercase;font-weight:700;color:var(--text-tertiary);margin-bottom:2px;">${title}</div>
@@ -40339,48 +40362,61 @@ function _renderOrgTendencies(orgCode) {
         gradP = g("graduation"), appr = g("hitterApproach"), stuff = g("pitchStuff");
 
   // strongest position lean in the draft (for the identity badge)
-  let draftLeanLabel = null;
+  let draftLeanLabel = null, draftLeanZ = null;
   if (dpos.posBucketsZ) {
     const e = Object.entries(dpos.posBucketsZ).filter(([, z]) => z != null)
       .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0];
-    if (e && Math.abs(e[1]) >= 1.0)
+    if (e && Math.abs(e[1]) >= 1.0) {
       draftLeanLabel = "drafts " + ({ P: "pitching", MI: "middle-IF", CI: "corner-IF", OF: "outfield", C: "catchers" }[e[0]] || e[0]);
+      draftLeanZ = e[1];
+    }
   }
 
   // ---- identity strip: pronounced filled badges, one per earned verdict -----
+  const STRONG = 0.8;   // z gate for the secondary directional badges
   const badges = [
     _otBadge(promo.label === "aggressive" ? "aggressive" : "conservative",
       promo.label && promo.label !== "typical" ? promo.label + " promoter" : null,
-      `Runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average; ${promo.promoRate ?? "?"} promotions per prospect.`),
+      _otTip(`Runs prospects ${promo.avlDiff != null ? Math.abs(promo.avlDiff).toFixed(1) + " yrs " + (promo.avlDiff < 0 ? "YOUNGER" : "older") : "?"} than level-average; ${promo.promoRate ?? "?"} promotions per prospect.`, promo.zPromo)),
     _otBadge("ifa", ifa.label && ifa.label !== "balanced" ? "IFA: " + ifa.label : null,
-      `Top signing ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the pool; ${ifa.signingsPerClass ?? "?"} signings/class.`),
+      _otTip(`Top signing ${ifa.top1Share != null ? (ifa.top1Share * 100).toFixed(0) + "%" : "?"} of the pool; ${ifa.signingsPerClass ?? "?"} signings/class.`, ifa.zConc)),
     _otBadge(tr.volLabel === "trade-happy" ? "trade-happy" : "trade-reluctant",
       tr.volLabel && tr.volLabel !== "typical" ? tr.volLabel : null,
-      `${tr.volume ?? "?"} tracked-prospect trade moves since 2022 (${tr.in ?? "?"} in / ${tr.out ?? "?"} out).`),
+      _otTip(`${tr.volume ?? "?"} tracked-prospect trade moves since 2022 (${tr.in ?? "?"} in / ${tr.out ?? "?"} out).`, tr.zVolume)),
     _otBadge((tr.dirLabel || "").includes("acquirer") ? "acquirer" : "shipper",
       tr.dirLabel && tr.dirLabel !== "two-way" ? tr.dirLabel : null,
-      `Net prospect capital ${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "?"} since 2022.`),
+      _otTip(`Net prospect capital ${tr.netProspects > 0 ? "+" : ""}${tr.netProspects ?? "?"} since 2022.`, tr.zNet)),
     _otBadge((tr.qdLabel || "").includes("quality") ? "quality" : "depth",
       tr.qdLabel && tr.qdLabel !== "balanced" ? "targets " + ((tr.qdLabel || "").includes("quality") ? "quality" : "depth") : null,
-      `${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "?"} of graded acquisitions were FV 50+.`),
+      _otTip(`${tr.acqTopShare != null ? (tr.acqTopShare * 100).toFixed(0) + "%" : "?"} of graded acquisitions were FV 50+.`, tr.zQuality)),
     _otBadge(slot.label === "over-slot shoppers" ? "over-slot" : "slot-disciplined",
       slot.label && slot.label !== "typical" ? slot.label : null,
-      `${slot.overSlotShare != null ? (slot.overSlotShare * 100).toFixed(0) + "%" : "?"} of slotted picks signed over slot.`),
+      _otTip(`${slot.overSlotShare != null ? (slot.overSlotShare * 100).toFixed(0) + "%" : "?"} of slotted picks signed over slot.`, slot.zOver)),
     _otBadge(slot.spendLabel === "top-heavy pool" ? "top-heavy" : "spread",
       slot.spendLabel && slot.spendLabel !== "typical" ? slot.spendLabel : null,
-      `Bonus-pool concentration HHI ${slot.bonusHHI ?? "?"}; ${slot.prepDollarShare != null ? (slot.prepDollarShare * 100).toFixed(0) + "% of $ to prep" : ""}.`),
-    _otBadge("draft", draftLeanLabel, `Position lean in the draft vs league.`),
-    _otBadge("velo", ars.zVelo != null && Math.abs(ars.zVelo) >= 0.8 ? (ars.zVelo > 0 ? "power arms" : "finesse arms") : null,
-      `Developed/AAA arms average ${ars.fbVelo ?? "?"} mph (z ${ars.zVelo ?? "?"}).`),
+      _otTip(`Bonus-pool concentration HHI ${slot.bonusHHI ?? "?"}; ${slot.prepDollarShare != null ? (slot.prepDollarShare * 100).toFixed(0) + "% of $ to prep" : ""}.`, slot.zBonusHHI)),
+    _otBadge("draft", draftLeanLabel, _otTip(`Position lean in the draft vs league.`, draftLeanZ)),
+    _otBadge("velo", ars.zVelo != null && Math.abs(ars.zVelo) >= STRONG ? (ars.zVelo > 0 ? "power arms" : "finesse arms") : null,
+      _otTip(`Developed/AAA arms average ${ars.fbVelo ?? "?"} mph.`, ars.zVelo)),
     _otBadge(appr.label === "disciplined approach" ? "disciplined" : "free-swing",
       appr.label && appr.label !== "typical" ? appr.label : null,
       `Hitters' plate-discipline lean vs league (level-adjusted).`),
     _otBadge(gradP.label === "produces MLB value" ? "grad-value" : "grad-thin",
       gradP.label && gradP.label !== "typical" ? gradP.label : null,
-      `Graduates average ${gradP.meanGradWar ?? "?"} career WAR; ~${gradP.gradsPerYear ?? "?"}/yr.`),
+      _otTip(`Graduates average ${gradP.meanGradWar ?? "?"} career WAR; ~${gradP.gradsPerYear ?? "?"}/yr.`, gradP.zWar)),
     _otBadge(hp.label === "healthy pipeline" ? "healthy" : "high-il",
       hp.label && hp.label !== "typical" ? hp.label : null,
-      `${hp.stintsPer100 ?? "?"} recorded IL stints per 100 active prospects.`),
+      _otTip(`${hp.stintsPer100 ?? "?"} recorded IL stints per 100 active prospects.`, hp.z)),
+    // Secondary directional badges (gated at |z| >= 0.8), so the detail strip
+    // matches the filter + GFX vocabulary.
+    _otBadge("grad-volume", gradP.zGrads != null && gradP.zGrads >= STRONG ? "high graduation volume" : null,
+      _otTip(`~${gradP.gradsPerYear ?? "?"} graduates per year.`, gradP.zGrads)),
+    _otBadge("hit-rate", gradP.zHitRate != null && gradP.zHitRate >= STRONG ? "high draft hit-rate" : null,
+      _otTip(`${gradP.draftHitRate != null ? (gradP.draftHitRate * 100).toFixed(0) + "%" : "?"} of drafted prospects reached the majors.`, gradP.zHitRate)),
+    _otBadge("prep-dollars", slot.zPrepDollar != null && slot.zPrepDollar >= STRONG ? "invests in prep talent" : null,
+      _otTip(`${slot.prepDollarShare != null ? (slot.prepDollarShare * 100).toFixed(0) + "%" : "?"} of bonus dollars went to prep (HS) draftees.`, slot.zPrepDollar)),
+    _otBadge("ifa-volume", ifa.zVolume != null && ifa.zVolume >= STRONG ? "high-volume IFA signer" : null,
+      _otTip(`${ifa.signingsPerClass ?? "?"} international signings per class.`, ifa.zVolume)),
   ].filter(Boolean).join("");
 
   // ---- shared row helpers ---------------------------------------------------
