@@ -863,17 +863,18 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .scatter-teaser .st-go { flex: none; font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); }
 
 /* "This Day in Prospect History" module. */
-.otd-module .otd-row { display: flex; align-items: center; gap: 12px; text-decoration: none; padding: 10px 4px; }
+.otd-module .otd-row { display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 5px 4px; }
 .otd-module .otd-row:hover { background: var(--bg-tertiary); }
-.otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent-gold); text-transform: uppercase; }
+.otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent-gold); text-transform: uppercase; white-space: nowrap; }
 .otd-body { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .otd-body strong { color: var(--text-primary); }
 /* WAG chip - how the player panned out vs. their grade. Reuses .row-delta
    coloring (up/down/flat); sits between the body and the "Ny ago" stamp. */
 .otd-wag { flex: none; font-size: 12px; min-width: 0; }
-.otd-ago { flex: none; font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); }
-/* FV chip sits a touch smaller in this dense history row than its default. */
-.otd-module .fv-pill { font-size: 12px; padding: 2px 7px; }
+/* FV chip sits a touch smaller in this dense history row than its default,
+   with a fixed width + centered value so every row's chip lines up as a
+   clean right-hand column (the optional WAG chip sits to its left). */
+.otd-module .fv-pill { font-size: 12px; padding: 2px 7px; min-width: 22px; text-align: center; }
 /* "Trades on this day" sub-block divider + the from->to org logos. */
 .otd-subhead { margin: 10px 4px 2px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
   letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border-light); padding-top: 10px; }

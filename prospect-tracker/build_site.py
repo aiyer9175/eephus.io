@@ -945,10 +945,10 @@ def _row_grad(g: dict) -> str:
             f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{_fv_pill(g)}</a>')
 
-def _recent_trades_html(players: list, n: int = 6) -> str:
+def _recent_trades_html(players: list, n: int = 5) -> str:
     """'Recent Trades' module - the latest prospect trades from the tracked
-    pool, newest first. Fills the grid slot beside This Day in Prospect
-    History so the front page bottom row reads as a full spread."""
+    pool, newest first. Top 5, to sit level with Recent Graduates in the
+    bottom grid row."""
     trs = []
     for p in players:
         for tr in (p.get("trades") or []):
@@ -1336,10 +1336,14 @@ def _home_module(kicker: str, see_all_href: str, see_all: str, body: str, full: 
 def _debut_org(g: dict) -> str | None:
     """Org the player DEBUTED with - point-in-time, never the current org.
     Primary source: the debut-season MLB stat row (its first org is the debut
-    org by construction - the first MLB appearance IS the debut). Fallback:
-    fold the trade history back across every trade dated after the debut.
-    Mirrors the career-table rule: a historical event never silently wears
-    the current org."""
+    org by construction - the first MLB appearance IS the debut). If that exact
+    season isn't retained in career_stats (older debuts get trimmed - e.g.
+    Alzolay debuted 2019 with CHC but career_stats starts 2021, still CHC,
+    while his current org is NYM), use the EARLIEST retained MLB season as the
+    proxy - far closer to the debut than the current org. Only when there are
+    no MLB stat rows at all do we fold the trade history back from the current
+    org. Mirrors the career-table rule: a historical event never silently
+    wears the current org."""
     dd = str(g.get("debut_date") or "")[:10]
     if not dd:
         return g.get("org")
@@ -1347,13 +1351,25 @@ def _debut_org(g: dict) -> str | None:
         debut_year = int(dd[:4])
     except ValueError:
         return g.get("org")
-    for row in g.get("career_stats") or []:
-        if row.get("season") == debut_year and str(row.get("level") or "") == "MLB":
-            stints = [s for s in (row.get("stints") or []) if s.get("org")]
-            if stints:
-                return stints[0]["org"]
-            if row.get("org"):
-                return row["org"]
+
+    def _row_org(row: dict) -> str | None:
+        stints = [s for s in (row.get("stints") or []) if s.get("org")]
+        return stints[0]["org"] if stints else row.get("org")
+
+    mlb_rows = [r for r in (g.get("career_stats") or [])
+                if str(r.get("level") or "") == "MLB" and r.get("season") is not None]
+    # Exact debut-season row - the first MLB appearance IS the debut.
+    for row in mlb_rows:
+        if row.get("season") == debut_year:
+            o = _row_org(row)
+            if o:
+                return o
+    # Debut season trimmed: the earliest retained MLB season is the best proxy.
+    if mlb_rows:
+        o = _row_org(min(mlb_rows, key=lambda r: r["season"]))
+        if o:
+            return o
+    # No MLB stat rows at all: unwind post-debut trades from the current org.
     org = g.get("org")
     for tr in sorted((g.get("trades") or []), key=lambda t: t.get("trade_date") or "", reverse=True):
         td = str(tr.get("trade_date") or "")[:10]
@@ -1379,6 +1395,13 @@ def _wag_badge(g: dict) -> str:
     return (f'<span class="otd-wag row-delta {cls}" '
             f'title="WAR Above Grade - career WAR/yr vs the player\'s FV-implied expectation">'
             f'{sign}{wag_r:.1f} WAG</span>')
+
+
+def _otd_date(d: "date") -> str:
+    """Compact numeric mono date stamp for the This Day rows: "6/20/15".
+    Replaces the verbose "June 20, 2015" + separate "Ny ago" tag (the
+    two-digit year already says how long ago it was), tightening each row."""
+    return f"{d.month}/{d.day}/{d.strftime('%y')}"
 
 
 def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> str:
@@ -1423,19 +1446,21 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
 
     rows = []
     for _, _, d, g in cands[:n]:
-        yrs = today.year - d.year
         nm = html.escape(g.get("player_name") or "")
-        # The org shown is the one the player DEBUTED with, not where they
-        # play now - this is a history module.
+        pos = g.get("position") or ""
+        # The org shown is the one the player DEBUTED with, not where they play
+        # now (history module) - rendered as a logo, leading the row like the
+        # other homepage modules. The year lives in the compact date stamp, so
+        # there's no separate "Ny ago" tag.
         org_then = _debut_org(g)
-        meta = _meta(g.get("position"), org_then)
-        when = f"{d.strftime('%B')} {d.day}, {d.year}"   # no %-d (unsupported on Windows)
+        logo = _team_logo(org_then, "otd-logo")
         rows.append(
             f'<a class="otd-row" href="{_player_href(g.get("player_key"))}">'
-            f'<span class="otd-when">{html.escape(when)}</span>'
-            f'<span class="otd-body"><strong>{nm}</strong> debuted - {meta}</span>'
-            f'{_fv_pill(g)}{_wag_badge(g)}'
-            f'<span class="otd-ago">{yrs}y ago</span></a>'
+            f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
+            f'<span class="otd-body">{logo} <strong>{nm}</strong> debuted{(" · " + html.escape(pos)) if pos else ""}</span>'
+            # WAG sits LEFT of the FV chip so every row's FV chip lines up in
+            # the same right-hand column (trade rows have no WAG, FV-only).
+            f'{_wag_badge(g)}{_fv_pill(g)}</a>'
         )
 
     # ---- Trades on this day ----
@@ -1467,19 +1492,16 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
 
     trade_rows = []
     for _, _, d, p, tr in trade_cands[:n]:
-        yrs = today.year - d.year
         nm = html.escape(p.get("player_name") or "")
         pos = p.get("position") or ""
         logos = (f'{_team_logo(tr.get("from_org"), "otd-logo")}'
                  f'<span class="otd-arrow">→</span>'
                  f'{_team_logo(tr.get("to_org"), "otd-logo")}')
-        when = f"{d.strftime('%B')} {d.day}, {d.year}"
         trade_rows.append(
             f'<a class="otd-row otd-trade" href="{_player_href(p.get("player_key"))}">'
-            f'<span class="otd-when">{html.escape(when)}</span>'
+            f'<span class="otd-when">{html.escape(_otd_date(d))}</span>'
             f'<span class="otd-body">{logos} <strong>{nm}</strong>{(" · " + html.escape(pos)) if pos else ""} traded</span>'
-            f'{_fv_pill(p)}'
-            f'<span class="otd-ago">{yrs}y ago</span></a>'
+            f'{_fv_pill(p)}</a>'
         )
 
     if not rows and not trade_rows:
@@ -1682,22 +1704,22 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     mv = [(d, p) for p in players
           if p.get("status") != "debuted"
           and (d := _genuine_mover_step(p)) is not None]
-    risers = sorted((t for t in mv if t[0] > 0), key=lambda t: -t[0])[:5]
-    fallers = sorted((t for t in mv if t[0] < 0), key=lambda t: t[0])[:4]
+    # Top 5 movers: 3 biggest risers + 2 biggest fallers (the module shows both
+    # directions; the spotlights tab it links to carries the full list).
+    risers = sorted((t for t in mv if t[0] > 0), key=lambda t: -t[0])[:3]
+    fallers = sorted((t for t in mv if t[0] < 0), key=lambda t: t[0])[:2]
     movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
-    topN = sorted(players, key=lambda p: (p.get("fv_close") if p.get("fv_close") is not None else -1), reverse=True)[:8]
+    topN = sorted(players, key=lambda p: (p.get("fv_close") if p.get("fv_close") is not None else -1), reverse=True)[:5]
     top_body = "".join(_row_top(p, p.get("overall_rank") or i) for i, p in enumerate(topN, 1))
     topp = _home_module("Top Prospects", "/prospx/", "Full board", top_body) if top_body else ""
 
-    gr = sorted((g for g in graduates if g.get("debut_date")), key=lambda g: g["debut_date"], reverse=True)[:6]
+    gr = sorted((g for g in graduates if g.get("debut_date")), key=lambda g: g["debut_date"], reverse=True)[:5]
     grad_body = "".join(_row_grad(g) for g in gr)
     grads = _home_module("Recent Graduates", "/prospx/#tab=debuts", "All graduates", grad_body) if grad_body else ""
 
-    # Top 6 farms (was 4) so the module fills its grid cell instead of leaving
-    # dead space beside the six-row Recent Graduates column.
-    fm = sorted((o for o in org_summary if o.get("farm_rank")), key=lambda o: o["farm_rank"])[:6]
+    fm = sorted((o for o in org_summary if o.get("farm_rank")), key=lambda o: o["farm_rank"])[:5]
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
     farm = _home_module("Farm Spotlight", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
@@ -1717,7 +1739,10 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     main = (
         '<main class="home-main">'
         f'{masthead}{callout}{lead}{secondary}'
-        f'<div class="module-cols">{movers}{topp}{grads}{farm}{otd}{trades_mod}</div>'
+        # 2-col grid, paired by row: [This Day | Top Movers] (today's activity),
+        # [Top Prospects | Farm] (rankings), [Recent Graduates | Recent Trades]
+        # (recent transactions).
+        f'<div class="module-cols">{otd}{movers}{topp}{farm}{grads}{trades_mod}</div>'
         f'{cross}'
         f'{forums_mod}'
         f'<div class="teaser-row">{glossary}{scatter}</div>'
