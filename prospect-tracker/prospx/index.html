@@ -21392,7 +21392,11 @@ function _applyDraftFilters(prospects) {
     });
   }
   if (state.draftStatus && state.draftStatus !== "all") {
-    pool = pool.filter(p => p.status === state.draftStatus);
+    // "unsigned" isn't a status value (the data only carries drafted /
+    // draft_active); it's drafted-but-not-signed, keyed off the signed flag.
+    pool = state.draftStatus === "unsigned"
+      ? pool.filter(p => p.status === "drafted" && !p.signed)
+      : pool.filter(p => p.status === state.draftStatus);
   }
   if (state.draftFvIndicators && state.draftFvIndicators.size) {
     pool = pool.filter(p => {
