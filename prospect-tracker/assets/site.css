@@ -808,8 +808,11 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- section kicker ---- */
 .kicker { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--text-primary); padding: 14px 2px 6px; margin: 26px 0 14px; }
-.kicker h2 { font-family: var(--font-retro-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin: 0; }
-.kicker .see-all { font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); text-decoration: none; white-space: nowrap; }
+/* h2 stays on ONE line (ellipsizes if ever too long) so every module's
+   separator (the kicker's bottom border) sits at the same height and the
+   paired columns' rules line up across the grid. */
+.kicker h2 { font-family: var(--font-retro-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kicker .see-all { font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); text-decoration: none; white-space: nowrap; flex: none; }
 .kicker .see-all:hover { text-decoration: underline; }
 
 /* ---- lead story (featured article) ---- */
@@ -840,7 +843,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    module header. */
 .row-link { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 8px 12px 8px 4px; border-bottom: 1px solid var(--border-light); }
 .row-link:hover { background: var(--bg-tertiary); }
-.row-rank { font-family: var(--font-retro-mono); font-size: 14px; font-weight: 700; color: var(--text-tertiary); width: 24px; text-align: right; flex: none; }
+.row-rank { font-family: var(--font-retro-mono); font-size: 14px; font-weight: 700; color: var(--text-tertiary); width: 34px; text-align: right; flex: none; }
+/* "#" prefix on every non-empty homepage rank (Top Movers / Prospects / Farm /
+   Recent Debuts / Recent Trades). Empty rank slots (no overall rank) stay blank. */
+.row-rank:not(:empty)::before { content: "#"; opacity: .65; }
+/* Recent Trades from -> to team logos (reuses the .otd-logo / .otd-arrow marks). */
+.trade-logos { display: inline-flex; align-items: center; gap: 2px; flex: none; }
 .row-logo { width: 24px; height: 24px; flex: none; object-fit: contain; }
 .row-name { flex: 1; min-width: 0; font-family: var(--font-retro); font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-meta { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); flex: none; }

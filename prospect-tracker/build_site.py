@@ -944,12 +944,22 @@ def display_metric_for(p: dict) -> dict:
 
 
 def _row_grad(g: dict) -> str:
-    # Show the graduate's final prospect FV (same pill as Top Prospects), not
-    # their MLB WAR - the homepage grad module reads as "who just graduated and
-    # at what grade." Career WAR / WAG still live on the player + Debuted pages.
+    # "Recent Debuts": overall rank + the debut date (same compact gold stamp
+    # as Today in Prospect History) + the player's final prospect FV. Career
+    # WAR / WAG still live on the player + Debuted pages.
+    rank = g.get("overall_rank")
+    rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
+    date_html = ""
+    dd = g.get("debut_date")
+    if dd:
+        try:
+            date_html = f'<span class="otd-when">{html.escape(_otd_date(date.fromisoformat(str(dd)[:10])))}</span>'
+        except ValueError:
+            pass
     return (f'<a class="row-link" href="{_player_href(g.get("player_key"))}">'
-            f'{_team_logo(g.get("org"))}<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
-            f'<span class="row-meta">{_meta(g.get("position"), g.get("org"))}</span>{_fv_pill(g)}</a>')
+            f'{rank_html}{date_html}{_team_logo(g.get("org"))}'
+            f'<span class="row-name">{html.escape(g.get("player_name") or "")}</span>'
+            f'<span class="row-meta">{_meta(g.get("position"))}</span>{_fv_pill(g)}</a>')
 
 def _recent_trades_html(players: list, n: int = 5) -> str:
     """'Recent Trades' module - the latest prospect trades from the tracked
@@ -968,14 +978,21 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
     for dt, p, tr in trs[:n]:
         frm = html.escape(tr.get("from_org") or "?")
         to = html.escape(tr.get("to_org") or "?")
+        rank = p.get("overall_rank")
+        rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
+        # From -> to as team logos (same idiom as Today in Prospect History's
+        # trade rows), replacing the old "FRM ⇄ TO" text.
+        logos = (f'<span class="trade-logos" title="Traded {frm} → {to}">'
+                 f'{_team_logo(tr.get("from_org"), "otd-logo")}'
+                 f'<span class="otd-arrow">→</span>'
+                 f'{_team_logo(tr.get("to_org"), "otd-logo")}</span>')
         rows.append(
             f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{_team_logo(tr.get("to_org") or p.get("org"))}'
+            f'{rank_html}{logos}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"))}</span>'
-            f'<span class="row-meta" title="Traded {frm} → {to}">{frm} ⇄ {to}</span>'
             f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span>'
-            # FV chip trails the row so it lines up with the Recent Graduates
+            # FV chip trails the row so it lines up with the Recent Debuts
             # FV column beside it (both modules end with a flush-right pill).
             f'{_fv_pill(p)}</a>'
         )
@@ -1524,7 +1541,7 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     )
     return (
         '<section class="home-module otd-module">'
-        '<div class="kicker"><h2>This Day in Prospect History</h2>'
+        '<div class="kicker"><h2>Today in Prospect History</h2>'
         f'<a class="see-all" href="/prospx/#tab=timemachine&tm={lead_date.isoformat()}">Time Machine →</a></div>'
         + "".join(rows) + trades_block +
         '</section>'
@@ -1730,11 +1747,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
 
     gr = sorted((g for g in graduates if g.get("debut_date")), key=lambda g: g["debut_date"], reverse=True)[:5]
     grad_body = "".join(_row_grad(g) for g in gr)
-    grads = _home_module("Recent Graduates", "/prospx/#tab=debuts", "All graduates", grad_body) if grad_body else ""
+    grads = _home_module("Recent Debuts", "/prospx/#tab=debuts", "All debuts", grad_body) if grad_body else ""
 
     fm = sorted((o for o in org_summary if o.get("farm_rank")), key=lambda o: o["farm_rank"])[:5]
     farm_body = "".join(_row_farm(o, o.get("farm_rank") or i) for i, o in enumerate(fm, 1))
-    farm = _home_module("Farm Spotlight", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
+    farm = _home_module("Top Farm Systems", "/prospx/#tab=farm", "Farm systems", farm_body) if farm_body else ""
 
     slug, term, defn = _GLOSSARY_TERMS[datetime.now().timetuple().tm_yday % len(_GLOSSARY_TERMS)]
     glossary = (f'<div class="glossary-teaser"><span>Today\'s term: <strong>{html.escape(term)}</strong> - {html.escape(defn)}</span>'
