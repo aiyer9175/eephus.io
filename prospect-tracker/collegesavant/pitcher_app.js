@@ -477,10 +477,10 @@ function computePercentiles(pitchers) {
         values[metric.key] = null;
         continue;
       }
-      if ((metric.key === "barrel_pct" || metric.key === "hard_hit_pct") && value === 0) {
-        values[metric.key] = 99;
-        continue;
-      }
+      // No 0% -> 99th special case: a 0% barrel/hard-hit rate off a tiny batted-
+      // ball sample is not "elite," and the normal pool rank already places a
+      // true 0% near the top while correctly tying the many pitchers who share
+      // it (percentileFromPool handles ties) instead of crowning them all 99th.
       let percentile = percentileFromPool(pool, value);
       if (!metric.higherBetter) percentile = 100 - percentile;
       values[metric.key] = Math.max(1, Math.min(99, percentile));

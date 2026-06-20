@@ -13269,19 +13269,28 @@ function _milbBaselineEvChips(p) {
   const cq = ((p.statcast_metrics || {}).contact_quality || {});
   const avg = cq.avg_ev, mx = cq.max_ev;
   if (avg == null && mx == null) return "";
+  // EV tiers are read against the MLB pool, so a tiny batted-ball sample must
+  // not earn the elite color (max EV especially inflates with more swings).
+  // Below the floor the chip stays neutral and the tooltip shows the count.
+  const MIN_EV_BBE = 15;
+  const nbbe = cq.batted_balls;
+  const thinSample = nbbe != null && nbbe < MIN_EV_BBE;
+  const nNote = nbbe != null
+    ? (thinSample ? ` over ${nbbe} batted balls - too few to tier vs the MLB pool` : ` over ${nbbe} batted balls`)
+    : " over tracked batted balls";
   const _color = (v, eliteAt, weakAt) =>
-    v == null ? "var(--text-tertiary)"
+    v == null || thinSample ? "var(--text-tertiary)"
     : v >= eliteAt ? "var(--up)"
     : v <= weakAt  ? "var(--down)"
     : "var(--text-secondary)";
   const chips = [];
   if (avg != null) {
     const c = _color(avg, 90, 84);
-    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Avg exit velocity over ${cq.batted_balls || "tracked"} batted balls (MLB elite ≥90, weak ≤84)">EV ${avg.toFixed(1)}</span>`);
+    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Avg exit velocity${nNote} vs the MLB pool (elite ≥90, weak ≤84)">EV ${avg.toFixed(1)}</span>`);
   }
   if (mx != null) {
     const c = _color(mx, 112, 102);
-    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Maximum exit velocity (MLB elite ≥112, weak ≤102)">Max ${mx.toFixed(1)}</span>`);
+    chips.push(`<span class="milb-ev-chip" style="color:${c};border-color:${c};" title="Maximum exit velocity${nNote} vs the MLB pool (elite ≥112, weak ≤102)">Max ${mx.toFixed(1)}</span>`);
   }
   return chips.join("");
 }
@@ -17466,7 +17475,12 @@ function renderCharts() {
   // without consulting the caption below - gives the reader an instant
   // read on trend strength. Hover anywhere on the dashed line shows the
   // full equation as a tooltip.
-  let trend = trendOn ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  // Minimum points before a least-squares line is meaningful. Below this the
+  // R² is forced toward 1 and the slope is noise, so a 2-3 dot group (after
+  // tight filters or a brush-zoom) must NOT render a confident "strong" trend.
+  const MIN_TREND_N = 8;
+  let trend = (trendOn && dots.length >= MIN_TREND_N) ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  const tooFewForTrend = trendOn && dots.length < MIN_TREND_N;
   const _trendX0 = tinv(xLoT, logX), _trendX1 = tinv(xHiT, logX);
   const trendLine = trend
     ? `<line x1="${sx(_trendX0).toFixed(1)}" y1="${sy(trend.m * _trendX0 + trend.b).toFixed(1)}"
@@ -17495,6 +17509,19 @@ function renderCharts() {
             <text x="${(cx - 80).toFixed(1)}" y="${(cy + 2).toFixed(1)}"
                   font-family="var(--font-mono)" font-size="10" font-weight="700"
                   fill="${fill}">R² ${r2.toFixed(3)}</text>
+          </g>`;
+      })()
+    : tooFewForTrend
+    ? (() => {
+        const cx = ML + innerW - 8, cy = MT + 14, w = 170;
+        return `
+          <g style="cursor:help;">
+            <title>A linear fit needs at least ${MIN_TREND_N} points to mean anything; with ${dots.length} the R² is forced toward 1 and the slope is noise. Widen the filters or clear the zoom.</title>
+            <rect x="${(cx - w).toFixed(1)}" y="${(cy - 12).toFixed(1)}" width="${w - 2}" height="20"
+                  rx="0" fill="var(--bg-secondary)" stroke="var(--text-tertiary)" stroke-width="1"/>
+            <text x="${(cx - w + 8).toFixed(1)}" y="${(cy + 2).toFixed(1)}"
+                  font-family="var(--font-mono)" font-size="10" font-weight="700"
+                  fill="var(--text-tertiary)">n=${dots.length} · too few for a trend</text>
           </g>`;
       })()
     : "";
@@ -17722,6 +17749,8 @@ function renderCharts() {
   });
   document.getElementById("chart-stats").innerHTML = trend
     ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
+    : tooFewForTrend
+    ? `Too few points for a trend (n=${dots.length}; need ${MIN_TREND_N})`
     : "Trendline disabled";
 
   // Keep the URL in sync so the current plot+filter config is always
@@ -19549,6 +19578,12 @@ function _tmTotal(side) {
   return side.reduce((s, x) => s + (x.mm || 0), 0);
 }
 
+// One shared dead-band for "even" trade verdicts, used by BOTH the Trade
+// Machine and the Transactions Trade Audit so the two never disagree on what
+// counts as balanced. The wider $5M band is deliberate: surplus dollars carry
+// real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
+const BALANCED_THRESHOLD_MM = 5;
+
 function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
   if (!el) return;
@@ -19572,7 +19607,7 @@ function renderTradeMachine() {
   };
   const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
   const verdict = (_TM.a.length || _TM.b.length)
-    ? `<div class="tm-verdict">${Math.abs(dA - dB) < 5 ? "≈ balanced package"
+    ? `<div class="tm-verdict">${Math.abs(dA - dB) < BALANCED_THRESHOLD_MM ? "≈ balanced package"
         : (dA > dB ? `Side A receives +$${(dA - dB).toFixed(1)}M of value`
                    : `Side B receives +$${(dB - dA).toFixed(1)}M of value`)}
        <span class="fa-sub"> · prospect surplus (calibrated control-window NPV) vs MLB contract surplus (salary-known seasons) - one currency</span></div>`
@@ -20115,8 +20150,9 @@ function renderRecentlyTraded() {
     g.cash_mm = totalCash;
     g.aIbp = aIbp;   g.bIbp = bIbp;
     g.aCash = aCash; g.bCash = bCash;
-    // Verdict: who won + by how much.
-    if (Math.abs(g.netDeltaA) < 1.0) {
+    // Verdict: who won + by how much. Shared dead-band with the Trade Machine
+    // so a sub-$5M edge reads as balanced, not a precise winner.
+    if (Math.abs(g.netDeltaA) < BALANCED_THRESHOLD_MM) {
       g.verdict = "balanced";
       g.winner = null;
     } else if (g.netDeltaA > 0) {
@@ -27055,8 +27091,15 @@ function _gfxSurplusBlock(p, P) {
     ? ` <span style="font-family:var(--font-mono);font-size:11px;font-weight:700;color:${scarcity > 1 ? "var(--up)" : "var(--down)"};border:1px solid ${scarcity > 1 ? "var(--up)" : "var(--down)"};padding:1px 5px;border-radius:3px;">×${scarcity.toFixed(2)}</span>` : "";
   const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
   const metaBits = [];
+  // Lead with the model's own confidence band (epistemic CI) - the canonical
+  // uncertainty read - then the outcome distribution and risk meta.
+  if (baked.ci && baked.ci.lo_mm != null) {
+    const pct = baked.ci.cred != null ? Math.round(baked.ci.cred * 100) : 90;
+    metaBits.push(`${pct}% CI ${fmtUsd(baked.ci.lo_mm)}–${fmtUsd(baked.ci.hi_mm)}`);
+  }
   if (d.p10_mm != null) metaBits.push(`P10–P90 ${fmtUsd(d.p10_mm)}–${fmtUsd(d.p90_mm)}`);
   if (pb != null) metaBits.push(`P(bust) ${pb}%`);
+  if (d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
   if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
   return `<div style="background:${P.bg};border:1px solid ${P.border};border-radius:8px;padding:16px 18px;">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
@@ -28445,6 +28488,18 @@ function svBucketBand(key) {
 // (posterior for debuted players, FV prior otherwise) + the SV distribution fan
 // + a P(bust) tag. Everything reads p.surplus / p.debuted_value directly - no JS
 // recompute. Empty cell when the player has no baked surplus (keeps the grid).
+// The epistemic credible interval baked on the surplus block (s.ci): the
+// model's own confidence band around the EXPECTED surplus (the FV->$ mapping
+// uncertainty), distinct from the outcome distribution (dist p10-p90, how the
+// career itself could break). cred is the coverage (0.9 = 90% CI). Returns ""
+// when absent so callers can append it conditionally. Reuses fmtSvMM.
+function svCiText(s) {
+  const ci = s && s.ci;
+  if (!ci || ci.lo_mm == null || ci.hi_mm == null || typeof fmtSvMM !== "function") return "";
+  const pct = ci.cred != null ? Math.round(ci.cred * 100) : 90;
+  return `${pct}% CI ${fmtSvMM(ci.lo_mm)}–${fmtSvMM(ci.hi_mm)}`;
+}
+
 function makeSurplusCell(p) {
   const s = p.surplus;
   if (!s || s.value_mm == null) return `<div class="surplus-cell"></div>`;
@@ -28457,7 +28512,9 @@ function makeSurplusCell(p) {
   const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
   const svColor = s.value_mm >= 50 ? "var(--up)"
                 : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
+  const ciText = svCiText(s);
   const tip = `Expected surplus ${fmtSvMM(s.value_mm)} (FV ${s.fv_continuous != null ? Number(s.fv_continuous).toFixed(1) : "?"})`
+    + (ciText ? ` · ${ciText}` : "")
     + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}` : "")
     + (pb != null ? ` · P(bust) ${pb}%` : "")
     + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
