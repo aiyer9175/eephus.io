@@ -834,6 +834,10 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
 .fv-pill.holo { border: 2px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
 .fv-pill.gold { border-color: var(--accent-gold); color: var(--accent-gold); }
+/* Home-module trailing chips (Top Prospects/Recent Graduates FV, Farm grade,
+   Recent Trades FV) get a uniform fixed width + centered value via border-box
+   so every grid column ends in a clean, vertically-aligned chip column. */
+.home-module .row-link .fv-pill { box-sizing: border-box; min-width: 46px; text-align: center; }
 
 /* ---- spotlight prospect (baseball card) ---- */
 .spotlight { display: flex; gap: 14px; align-items: stretch; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary); }

@@ -141,7 +141,9 @@ PROSPX_SUBNAV = [
     ("Overseas",      "/prospx/#tab=overseas"),
     ("Time Machine",  "/prospx/#tab=timemachine"),
     ("Scatterplots",  "/prospx/#tab=charts"),
-    ("Glossary",      "/glossary/"),
+    # Glossary intentionally omitted - it's a top-level module of its own
+    # ("Glossary & Methodology" in the Modules nav), so listing it here too
+    # was redundant.
 ]
 
 # Site-wide theme: read the shared key PROSPX uses (prospect-tracker.theme) and
@@ -851,13 +853,17 @@ def _row_mover(p: dict, d: int) -> str:
     # chrome, not plotted lines).
     spark = _fv_sparkline(p.get("points"), "var(--accent-green)" if up else "var(--accent-red)", w=58, h=20)
     spark_html = f'<span class="row-spark">{spark}</span>' if spark else '<span class="row-spark"></span>'
-    # Team logo leads the row - same idiom as Top Prospects / Recent Graduates,
-    # so the org reads at a glance and the meta cell can drop the code.
+    # Rank + team logo lead the row (same idiom as Top Prospects); position +
+    # FV chip sit before the move delta so a mover reads like a ranked entry
+    # with its grade, not just an arrow. Rank slot stays present (blank) when a
+    # player has no overall rank so the columns line up.
+    rank = p.get("overall_rank")
+    rank_html = f'<span class="row-rank">{rank}</span>' if rank else '<span class="row-rank"></span>'
     return (f'<a class="row-link" href="{_player_href(p.get("player_key"))}">'
-            f'{_team_logo(p.get("org"))}'
+            f'{rank_html}{_team_logo(p.get("org"))}'
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"))}</span>'
-            f'{spark_html}'
+            f'{spark_html}{_fv_pill(p)}'
             f'<span class="row-delta {"up" if up else "down"}">{"▲" if up else "▼"} {"+" if up else ""}{d}</span></a>')
 
 def _row_top(p: dict, rank: int) -> str:
@@ -968,7 +974,10 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
             f'<span class="row-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="row-meta">{_meta(p.get("position"))}</span>'
             f'<span class="row-meta" title="Traded {frm} → {to}">{frm} ⇄ {to}</span>'
-            f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span></a>'
+            f'<span class="row-meta">{dt[5:7]}/{dt[8:10]}</span>'
+            # FV chip trails the row so it lines up with the Recent Graduates
+            # FV column beside it (both modules end with a flush-right pill).
+            f'{_fv_pill(p)}</a>'
         )
     return _home_module("Recent Trades", "/prospx/#tab=traded", "All transactions", "".join(rows))
 
@@ -1483,8 +1492,10 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
                 d = date.fromisoformat(td)
             except ValueError:
                 continue
+            # Trades must fall EXACTLY on today's calendar date (prox == 0),
+            # not merely near it - "Trades on this day" means this day.
             prox = _anniv_prox(d)
-            if prox is None:
+            if prox != 0:
                 continue
             fv = p.get("fv_close") or 0
             trade_cands.append((prox, -float(fv), d, p, tr))
@@ -1653,9 +1664,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="sb-account eephus-nav-controls"></div>'
         f'{search}'
         f'<div class="sb-group"><div class="sb-group-label">Modules</div><nav class="sb-nav">{"".join(nav)}</nav></div>'
-        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
-        f'{spotlight}'
+        # Prospect News feed sits high (where the PROSPX sub-nav used to be);
+        # the PROSPX sub-nav drops below the spotlight feature.
         f'<div class="sb-group"><div class="sb-feed"><div class="feed-head"><a href="/news/" title="All prospect news"><span class="blip"></span>Prospect News<span class="feed-head-more">all →</span></a></div>{feed}</div></div>'
+        f'{spotlight}'
+        f'<div class="sb-group"><div class="sb-group-label sb-group-label--lockup">{prospx_ball_logo("sbgrp", 14)}PROSPX</div><nav class="sb-subnav">{sub}</nav></div>'
         '</aside>'
     )
 
