@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-06-19T19:33:41Z",
+ "generated_at": "2026-06-20T16:07:43Z",
  "vintage_max_base_year": 2023,
  "weights": {
-  "fangraphs": 0.94,
-  "mlb_pipeline": 1.06
+  "fangraphs": 0.939,
+  "mlb_pipeline": 1.061
  },
  "note": "relative vote weights (1.0 = equal); sources absent here vote at 1.0"
 }
