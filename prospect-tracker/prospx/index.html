@@ -40293,6 +40293,9 @@ const _OT_BADGE = {
   "draft-upmid":     { c: "#1E5FB4", icon: '<path d="M12 3 L20.5 11 12 19.5 3.5 11 z"/><circle cx="12" cy="11" r="2.3" fill="currentColor" stroke="none"/>' },
   "prep-dollars":    { c: "#9A6700", icon: '<rect x="3" y="7" width="18" height="10" rx="1.5"/><circle cx="12" cy="12" r="2.6"/><path d="M6 9.8 h.01 M18 14.2 h.01"/>' },
   "ifa-volume":      { c: "#6D28D9", icon: '<circle cx="11" cy="13" r="6.8"/><path d="M4.2 13 H17.8 M11 6.2 C8 9.3 8 16.7 11 19.8 C14 16.7 14 9.3 11 6.2"/><path d="M18.5 3.5 V8 M16.2 5.7 H20.8"/>' },
+  // ── Tranche 4: arsenal-shape + tool-development (needs pitchStuff/toolDev) ──
+  "tool-dev":        { c: "#1F7A3A", icon: '<path d="M3 17 L9 11 13 14 21 5"/><path d="M21 5 H16 M21 5 V10"/>' },
+  "arsenal-mix":     { c: "#0E7490", icon: '<circle cx="9" cy="14" r="4.5"/><path d="M6.8 11.5 C7.6 12 8 13 8 14 M13 11 C17.5 8 19 9.5 20 5 M20 5 H16 M20 5 V9"/>' },
 };
 // Render a badge icon. `color` defaults to currentColor so it inherits the
 // surrounding text color (filter chips); pass an explicit hex on the colored
@@ -40417,6 +40420,10 @@ function _renderOrgTendencies(orgCode) {
       _otTip(`${slot.prepDollarShare != null ? (slot.prepDollarShare * 100).toFixed(0) + "%" : "?"} of bonus dollars went to prep (HS) draftees.`, slot.zPrepDollar)),
     _otBadge("ifa-volume", ifa.zVolume != null && ifa.zVolume >= STRONG ? "high-volume IFA signer" : null,
       _otTip(`${ifa.signingsPerClass ?? "?"} international signings per class.`, ifa.zVolume)),
+    (() => { const bt = _otBestTool(dev.tools, 1.7); return _otBadge("tool-dev", bt ? "develops " + _OT_TOOL_NAME[bt.k] : null,
+      _otTip(`Per-tool grade drift vs league - strongest on ${bt ? _OT_TOOL_NAME[bt.k] : "?"}.`, bt && bt.z)); })(),
+    (() => { const bp = _otBestPitch(ars.usage, 1.4); return _otBadge("arsenal-mix", bp ? _OT_PITCH_NAME[bp.pt] + "-heavy" : null,
+      _otTip(`Developed arms throw the ${bp ? _OT_PITCH_NAME[bp.pt].toLowerCase() : "?"} ${bp ? bp.ratio.toFixed(2) : "?"}x the league rate.`, bp && (bp.ratio - 1))); })(),
   ].filter(Boolean).join("");
 
   // ---- shared row helpers ---------------------------------------------------
@@ -40652,8 +40659,46 @@ function orgBadgeSet(orgCode) {
   // Slot $ to prep talent; IFA signing volume.
   if (slot.zPrepDollar != null && slot.zPrepDollar >= STRONG) push("prep-dollars", "invests in prep talent", slot.zPrepDollar);
   if (ifa.zVolume != null && ifa.zVolume >= STRONG) push("ifa-volume", "high-volume IFA signer", ifa.zVolume);
+  // ── Tranche 4: tool development (strongest developed tool) + arsenal shape
+  // (most over-used pitch vs league). Both read nested per-tool / per-pitch
+  // panels, so they need pitchStuff/toolDev populated in the export.
+  const td = gg("toolDev"), arMix = gg("arsenal");
+  const bestTool = _otBestTool(td.tools, 1.7);
+  if (bestTool) push("tool-dev", "develops " + _OT_TOOL_NAME[bestTool.k], bestTool.z);
+  const bestPitch = _otBestPitch(arMix.usage, 1.4);
+  if (bestPitch) push("arsenal-mix", _OT_PITCH_NAME[bestPitch.pt] + "-heavy", bestPitch.ratio - 1);
   out.sort((a, b) => b.weight - a.weight);
   return out;
+}
+
+// Tool / pitch display names + the "strongest" pickers shared by the badge
+// emitter and the detail strip (so both label a development / arsenal signal
+// identically). _otBestTool: highest-z tool above `gate`; _otBestPitch: most
+// over-used non-fastball pitch (usage ratio vs league) above `gate`.
+const _OT_TOOL_NAME = { fb: "fastballs", sl: "sliders", cb: "curveballs", ch: "changeups",
+  cmd: "command", ct: "control", hit: "the hit tool", game_pwr: "game power",
+  raw_pwr: "raw power", speed: "speed", field: "defense", pitch_sel: "plate discipline",
+  bat_ctrl: "bat control" };
+const _OT_PITCH_NAME = { FF: "Four-seam", FA: "Fastball", SI: "Sinker", FC: "Cutter",
+  SL: "Slider", ST: "Sweeper", CU: "Curveball", CB: "Curveball", KC: "Knuckle-curve",
+  CH: "Changeup", FS: "Splitter" };
+function _otBestTool(tools, gate) {
+  let best = null;
+  for (const k in (tools || {})) {
+    const z = tools[k] && tools[k].z;
+    if (z != null && z >= gate && _OT_TOOL_NAME[k] && (!best || z > best.z)) best = { k, z };
+  }
+  return best;
+}
+function _otBestPitch(usage, gate) {
+  let best = null;
+  for (const pt in (usage || {})) {
+    if (pt === "FF" || pt === "FA") continue;
+    const v = usage[pt] || {};
+    if (v.ratio != null && (v.share || 0) >= 0.06 && v.ratio >= gate && _OT_PITCH_NAME[pt]
+        && (!best || v.ratio > best.ratio)) best = { pt, ratio: v.ratio };
+  }
+  return best;
 }
 
 // Catalogue for the farm-board tendency-filter chips: one entry per badge
@@ -40689,6 +40734,8 @@ const ALL_TENDENCY_BADGES = [
   { kind: "draft-prep",       label: "Prep-focused draft" },
   { kind: "draft-upmid",      label: "Up-the-middle drafter" },
   { kind: "prep-dollars",     label: "Invests in prep talent" },
+  { kind: "tool-dev",         label: "Strong tool development" },
+  { kind: "arsenal-mix",      label: "Distinct arsenal mix" },
 ];
 
 // Compact farm-GFX identity strip: a one-line headline + the org's 3-4
