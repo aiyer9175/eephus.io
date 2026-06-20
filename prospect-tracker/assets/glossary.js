@@ -962,13 +962,20 @@ function _methRegistryHTML() {
       const art = m.eval_artifact
         ? `<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact.replace(/^data\//, ""))}</a>${m.stale ? " <em>(stale)</em>" : ""}`
         : " - ";
-      return `<tr>
+      const mainRow = `<tr>
         <td><strong>${escapeHtml(m.model_id)}</strong><br><span class="meth-note">${escapeHtml(m.surface || "")}</span></td>
         <td>${escapeHtml(m.champion || "")}</td>
         <td>${escapeHtml(m.baseline || "")}</td>
         <td>${_REG_VERDICT_GLYPH[m.verdict] || escapeHtml(m.verdict || "")}</td>
         <td>${art}</td>
       </tr>`;
+      // The registry's `notes` carry the real audit trail - A/B numbers, the
+      // surprise findings, the committed losing challengers. Render them in an
+      // expandable row so the strongest honesty signal isn't dropped.
+      const notesRow = m.notes
+        ? `<tr class="meth-registry-notes"><td colspan="5"><details><summary>methodology notes &amp; committed results</summary><div class="meth-note" style="margin-top:6px;white-space:normal;">${escapeHtml(m.notes)}</div></details></td></tr>`
+        : "";
+      return mainRow + notesRow;
     }).join("");
     body = `
       <p class="meth-note">Every predictive model on the platform, with an honest verdict and its committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
