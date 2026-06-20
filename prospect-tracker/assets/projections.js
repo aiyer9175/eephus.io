@@ -6,7 +6,7 @@
 // =============================================================================
 // eephus.io MLB Projections app (/projections/)
 // =============================================================================
-// The FA module's Gate-1-validated projection engine applied to the whole
+// The FA module's projection engine (proj_lgbm_v1) applied to the whole
 // league, plus PROSPX prospects joining at their projected ETA. One sidecar
 // (data/mlb_projections.json, proj_export.py); standalone by design - no
 // PROSPX boot payload, no FA sidecars. Every row carries floor/mean/ceiling
@@ -211,8 +211,8 @@
     if (m.thru && m.thru === first)
       return { key: "expiring", label: `Expiring ${m.thru}`, cls: "proj-ct-expiring",
         tip: "Final guaranteed year - reaches arbitration or free agency after this season" };
-    return { key: "controlled", label: "Cost-controlled", cls: "proj-ct-controlled",
-      tip: "No guaranteed multi-year deal on file: pre-arbitration or arbitration salary (the service-time split needs data not fetched league-wide), or an unsigned free agent. FA-class members carry their option / UFA kind in the Free Agency module." };
+    return { key: "controlled", label: "No multi-year deal", cls: "proj-ct-controlled",
+      tip: "No guaranteed multi-year deal on file: pre-arbitration or arbitration salary (the service-time split needs data not fetched league-wide), or an unsigned free agent (so it is not necessarily cost-controlled). FA-class members carry their option / UFA kind in the Free Agency module." };
   }
 
   // The three top-level projection views + the unified-glossary chip (mirrors
@@ -406,7 +406,7 @@
       ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
     </tr>`;
     }).join("");
-    const note = `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) — 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
+    const note = `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) - 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
@@ -766,7 +766,7 @@
         ],
         url: "eephus.io/projections",
         filename: `eephus-cmp-${a.key}-${b.key}.png`,
-        caption: "Gate-1-validated projection engine · season-aligned mean bWAR",
+        caption: "eephus projection engine (proj_lgbm_v1) · season-aligned mean bWAR",
       });
     };
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(root);
@@ -917,7 +917,7 @@
       ${faBlock(p)}
       ${careerTable(p)}
       ${p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : ""}
-      <div class="fa-note" style="margin-top:14px;">Projections: the FA module's Gate-1-validated engine (bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
+      <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
     // hub strip (cross-module identity) - lazy, never blocks the paint
     if (window.EEPHUS_HUB) {
@@ -1064,7 +1064,7 @@
       tiles, sections,
       url: `eephus.io/projections/#player=${p.key}`,
       filename: `eephus-${p.key}-mlb-card.png`,
-      caption: "Gate-1-validated projection engine · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",
+      caption: "eephus projection engine (proj_lgbm_v1) · bands = P10-P90 · Statcast percentiles vs qualified MLB pool",
     });
   }
 

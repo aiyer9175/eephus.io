@@ -65,7 +65,7 @@ MIN_PA, MIN_IP = 100, 30
 # Two-way "if-healthy" calibration: a two-way player cannot hold a FULL
 # dedicated-starter inning load on top of a full hitting season, so naively
 # summing each side's playing-time-held (PTH) path double-books durability and
-# overstates the healthy ceiling (Ohtani read 10.7/11.56 WAR — above any season
+# overstates the healthy ceiling (Ohtani read 10.7/11.56 WAR - above any season
 # he has ever posted). The pitching side's PTH is workload-discounted by this
 # factor (~a two-way ~130-IP load vs a ~180-IP dedicated starter) before
 # summing; hitting PTH (DH, ~full PA) is untouched, and the pricing `war` path
@@ -191,7 +191,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                 return [round((a[t] or 0) + (b[t] or 0), 2)
                         for t in range(min(HORIZON, len(a), len(b)))]
             war_arr = _sum_arr("war_by_year")
-            # Champion MEAN path (both sides summed) for the team roll-up — the
+            # Champion MEAN path (both sides summed) for the team roll-up - the
             # displayed war_arr may be the median-like ML quantile head, which
             # must never be summed across a roster.
             champ_arr = _sum_arr("war_by_year_champ") or war_arr
@@ -247,7 +247,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
             "team": (ct or {}).get("team_code"),
             "war": war_arr,
-            # Champion MEAN path (5y) — the SUM basis for the Team Outlook
+            # Champion MEAN path (5y) - the SUM basis for the Team Outlook
             # multi-year roll-up (warChamp[0] == warY1Champ below).
             "warChamp": [round(w, 2) for w in champ_arr],
             # If-healthy (playing-time-held) display path - shown on the board's
@@ -424,7 +424,7 @@ def _age_band(age) -> str:
 
 
 def _last_controlled_season(m: dict) -> int:
-    """Last season this player counts on his team's CONTROLLED roster — the
+    """Last season this player counts on his team's CONTROLLED roster - the
     'control cliff' that makes the out-year team WAR decline as players reach
     free agency.
 
@@ -432,7 +432,7 @@ def _last_controlled_season(m: dict) -> int:
       5-year horizon), so he never cliffs inside the horizon.
     - Veteran with a Spotrac contract: through ``signed_through`` (``thru``).
     - Veteran without a contract row: an AGE-based proxy (the pipeline carries
-      no service time) — a pre-arb/arb player (age <= 24) holds the full horizon,
+      no service time) - a pre-arb/arb player (age <= 24) holds the full horizon,
       a likely pending free agent (age >= 29) holds only the first season.
     """
     last = FIRST_SEASON + HORIZON - 1
@@ -444,7 +444,7 @@ def _last_controlled_season(m: dict) -> int:
             t = int(thru)
             # A contract that still covers the first projected season governs
             # the cliff. A stale / already-expired `thru` (option years, past
-            # deals on a still-rostered player) is ignored — the player is on
+            # deals on a still-rostered player) is ignored - the player is on
             # the current roster, so fall through to the age proxy, which never
             # drops the first season.
             if t >= FIRST_SEASON:
@@ -575,7 +575,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     metric: `lockedPct` = the WAR-weighted share of the core's projected
     2027-31 production that the team actually controls (controlled WAR / the
     same players' everyone-stays WAR). Aging affects both numerator and
-    denominator, so it cancels — lockedPct isolates cost control: 1.0 = every
+    denominator, so it cancels - lockedPct isolates cost control: 1.0 = every
     contributor locked through the horizon, low = a core about to leak to free
     agency. `byYear[].war` (controlled WAR per season) drives the decline
     sparkline. Prospects contribute at their org from their ETA forward."""
@@ -601,7 +601,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
 
     # Veterans contribute their champion MEAN per season (the displayed ML
     # quantile head is median-like and must NOT be summed), only through their
-    # control window — the 'control cliff' that makes the out-years decline.
+    # control window - the 'control cliff' that makes the out-years decline.
     for m in vets:
         tm = m.get("team")
         champ = m.get("warChamp") or []
@@ -625,7 +625,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             t_["raw"][t] += w
             t_["n"][t] += 1
             # Cohort intercept, re-banded by age-in-season (out-year application
-            # is an approximation — the fit was on year-1 residuals).
+            # is an approximation - the fit was on year-1 residuals).
             band = _age_band((age0 + t) if age0 is not None else None)
             for side in sides:
                 t_["coh"][t] += intercepts.get(f"{side}:{band}", 0.0)

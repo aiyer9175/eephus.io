@@ -15428,7 +15428,7 @@ function _draftDetailSidebarCards(p, cls, activeTab) {
     p.signing_bonus ? { key: "Bonus", value: `$${(p.signing_bonus/1_000_000).toFixed(2)}M` } : null,
     p.over_slot_pct != null ? { key: "vs Slot",
       value: (p.over_slot_pct > 0 ? "+" : "") + Math.round(p.over_slot_pct) + "%",
-      valColor: p.over_slot_pct > 5 ? "var(--neon-cyan)" : p.over_slot_pct < -5 ? "var(--neon-orange)" : "var(--text-primary)" } : null,
+      valColor: p.over_slot_pct > 0 ? "var(--neon-cyan)" : p.over_slot_pct < 0 ? "var(--text-secondary)" : "var(--text-primary)" } : null,
   ].filter(Boolean);
   return [
     adjPeers.length ? { type: "leaderboard", title: `${cls.year} · FV neighbors`, rows: adjPeers } : null,
@@ -22123,7 +22123,7 @@ function _renderDraftResults(host, cls) {
             <span style="color:var(--text-tertiary);">#${p.drafted_pick}</span>
             <span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}<strong>${escapeHtml(p.player_name)}</strong></span>
             <small class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</small>
-            <span style="float:right;color:var(--neon-orange);">${p.over_slot_usd != null ? "+" + _fmtUSD(p.over_slot_usd) + " " : ""}(+${Math.round(p.over_slot_pct)}%)</span>
+            <span style="float:right;color:var(--neon-cyan);">${p.over_slot_usd != null ? "+" + _fmtUSD(p.over_slot_usd) + " " : ""}(+${Math.round(p.over_slot_pct)}%)</span>
           </li>`).join("")}
         </ul>
       </div>
@@ -24079,7 +24079,7 @@ async function renderDraftDetail(key) {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
+        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Consensus FV</div>
         <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : " - "}</span>
         ${p.draft_stock_plus != null ? `<div style="margin-top:8px;font-family:var(--font-mono);font-size:11px;color:${stockColor};font-weight:700;" title="Draft Stock+ - z-normalized within the ${cls.year} class">DS+ ${p.draft_stock_plus}</div>` : ""}
         ${classRank ? `<div style="margin-top:4px;font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);" title="Rank within the ${cls.year} class by consensus FV">#${classRank} of ${classTotal}</div>` : ""}
@@ -24306,9 +24306,12 @@ async function renderDraftDetail(key) {
       </div>`);
     }
     if (p.over_slot_usd != null || p.over_slot_pct != null) {
-      const overColor = (p.over_slot_pct || 0) > 0 ? "var(--up)"
-                      : (p.over_slot_pct || 0) < 0 ? "var(--down)"
-                      : "var(--text-secondary)";
+      // Over-slot is informational, not good/bad: one neutral treatment site-wide
+      // (cyan = over slot, muted = under slot), never green/red. Matches the
+      // detail Value card and the Signing-Trends roll-up.
+      const overColor = (p.over_slot_pct || 0) > 0 ? "var(--neon-cyan)"
+                      : (p.over_slot_pct || 0) < 0 ? "var(--text-secondary)"
+                      : "var(--text-primary)";
       const sign = (p.over_slot_pct || 0) > 0 ? "+" : "";
       const amt = p.over_slot_usd != null ? `${sign}${_fmtUSD(p.over_slot_usd)}` : "";
       const pct = p.over_slot_pct != null ? `${sign}${p.over_slot_pct}%` : "";
@@ -24471,7 +24474,7 @@ async function renderOverseasDetail(key) {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Current FV</div>
+        <div style="font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">Consensus FV</div>
         <span class="fv-badge ${fvClass(String(fvInt || "40"))} size-lg" style="margin-top:4px;">${fvLbl != null ? fvLbl : " - "}</span>
       </div>
     </div>`;
@@ -37725,7 +37728,7 @@ function makeSourceFvHistory(points, opts = {}) {
       ${drift}
     </div>`;
   } else if (srcKeys.length === 1) {
-    summary = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">Single source on file — additional boards populate this as they publish.</div>`;
+    summary = `<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:8px;">Single source on file - additional boards populate this as they publish.</div>`;
   }
 
   // --- Optional per-source trajectory chart -----------------------------
@@ -38540,13 +38543,19 @@ function renderPlayerDetail(key) {
       const chipColor = scarcity > 1.0 ? "var(--up)" : "var(--down)";
       scarcityChip = `<span style="display:inline-block;margin-left:6px;font-family:var(--font-mono);font-size:9px;font-weight:700;color:${chipColor};border:1px solid ${chipColor};padding:1px 4px;border-radius:3px;letter-spacing:0.04em;" title="Position scarcity multiplier ×${scarcity.toFixed(2)} (${sign}${pct.toFixed(0)}% vs the league baseline). Up-the-middle defenders carry a premium; bat-only / reliever roles carry a discount.">×${scarcity.toFixed(2)}</span>`;
     }
+    // Cite the engine that actually produced the number on screen: the baked
+    // career-path mixture model when present, the FV-implied estimate fallback
+    // otherwise. (Was unconditionally citing the 2019 FanGraphs framework.)
+    const surplusTip = _baked
+      ? `Estimated MLB surplus over the 6-year cost-controlled window, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied. Real surplus depends on health, performance variance, and the $/WAR market.`
+      : `FV-implied estimate of MLB surplus over the 6-year cost-controlled window (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands. Real surplus depends on health, performance variance, and the $/WAR market.`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
              <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="Estimated MLB surplus value over the player's 6-year cost-controlled window. Derived from FV ${fvCeil(fv)} via the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split), then adjusted by position scarcity multiplier. Real surplus depends on health, performance variance, and changes in $/WAR market rate.">${fmtUsd(surplus)}</div>
+           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${surplusTip}">${fmtUsd(surplus)}</div>
          </div>`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.
@@ -41884,7 +41893,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (m >= 10)   return `$${m.toFixed(0)}M`;
     return `$${m.toFixed(1)}M`;
   };
-  const surplusTip = `Sum of FV-implied surplus value across this org's ${farmSurplusBreakdown.n} active prospects (debuts excluded). Each prospect's value derives from the FanGraphs / Craig Edwards 2019 framework (hitter/pitcher split). Real surplus depends on health, performance variance, and changes in $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Top contributor: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
+  const surplusTip = `Sum of FV-implied surplus value across this org's ${farmSurplusBreakdown.n} active prospects (debuts excluded). Each prospect's value comes from the eephus value framework (a career-path mixture model over the FV grade). Real surplus depends on health, performance variance, and changes in the $/WAR market rate.${farmSurplusBreakdown.topContributor ? ` Top contributor: ${farmSurplusBreakdown.topContributor.player_name} (${fmtSurplusUsd(farmSurplusBreakdown.topShare)}).` : ""}`;
   const surplusValue = farmSurplusBreakdown.total > 0
     ? fmtSurplusUsd(farmSurplusBreakdown.total)
     : " - ";

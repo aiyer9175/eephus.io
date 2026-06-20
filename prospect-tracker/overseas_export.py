@@ -863,7 +863,7 @@ def build_overseas_export() -> dict:
         v.sort(key=lambda r: r.get("season") or 0)
 
     # Exclude MLB-family "leagues": these come from overseas players who have
-    # already graduated to the majors (overseas_mlb_* keys, league='MLB' — e.g.
+    # already graduated to the majors (overseas_mlb_* keys, league='MLB' - e.g.
     # Senga, Yoshida). They are no longer international prospects and must not
     # surface in the Overseas section (the dynamic league derivation previously
     # spun up a stray "MLB" tab carrying them).

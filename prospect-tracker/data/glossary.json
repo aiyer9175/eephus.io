@@ -4285,7 +4285,7 @@
    ],
    "priority": 40,
    "definition": "The average size of a model's misses, in the units of whatever it predicts: the mean of |actual - predicted| across every case. Lower is better, and unlike a correlation it is in real units - a team-wins MAE of 7.7 means the projected record is off by about eight wins on average.",
-   "methodology": "Reported alongside bias (the average signed error - whether the model runs systematically high or low) and, for the bands, coverage (the share of actuals that land inside the P10-P90 interval, target ~80%). MAE penalizes large and small misses linearly, so it is robust to the heavy WAR tail that would dominate a squared-error metric.",
+   "methodology": "Reported alongside bias (the average signed error - whether the model runs systematically high or low) and, for the bands, coverage (the share of actuals that land inside the P10-P90 interval, target ~80%). MAE penalizes large and small misses linearly, so it resists the pull of the heavy WAR tail that would dominate a squared-error metric.",
    "seeAlso": [
     "backtest",
     "p10_p90_bands",

@@ -257,7 +257,7 @@ def _latest_per_source(snaps: list[dict]) -> dict[str, dict]:
 def _load_draft_source_weights() -> dict[str, float]:
     """Accuracy-derived relative draft-FV vote weights, shipped behind the
     backtest gate in data/draft_source_weights.json (draft_source_backtest.py).
-    Sources absent from the file vote at 1.0 — ESPN and any new source are never
+    Sources absent from the file vote at 1.0 - ESPN and any new source are never
     punished for lacking resolved draft history. Missing file (the backtest did
     not ship weights, e.g. the sources tested equally accurate) = equal
     weighting everywhere. Mirrors consensus.load_source_weights."""
@@ -278,7 +278,7 @@ def _consensus(snaps: list[dict], field: str,
                weights: dict[str, float] | None = None) -> float | None:
     """Mean of latest non-null `field` per source across this player's snaps.
     When `weights` is given, sources vote by their relative weight (default 1.0
-    for any source not listed) — an accuracy-weighted mean instead of equal."""
+    for any source not listed) - an accuracy-weighted mean instead of equal."""
     latest = _latest_per_source(snaps)
     pairs = [(src, s.get(field)) for src, s in latest.items() if s.get(field) is not None]
     if not pairs:
@@ -547,7 +547,7 @@ def _build_class(year: int,
         # still see fractional resolution.
         # Accuracy-weighted across sources when the backtest shipped weights;
         # equal mean otherwise (the current, ship=False state). Rank stays
-        # unweighted — vote weights are a FV-accuracy result, not a rank one.
+        # unweighted - vote weights are a FV-accuracy result, not a rank one.
         fv_raw = _consensus(plist, "fv", weights=_DRAFT_SOURCE_WEIGHTS)
         fv = int(math.ceil(fv_raw)) if fv_raw is not None else None   # FV rounds UP (62.1 -> 63)
         # v26 - '+' upside flag: True if any source published "55+" etc.
