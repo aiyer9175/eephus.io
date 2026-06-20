@@ -13,7 +13,38 @@ import unittest
 from draft_export import (
     _projected_round, build_draft_export, _consensus,
     _edit_distance_le1, _same_person, _name_part, _dedupe_merge_map,
+    _name_first_last, _canon_player_type,
 )
+
+
+class PlayerTypeCanon(unittest.TestCase):
+    """player_type canonicalization: casing folds, JuCo -> COL, untyped rows
+    (2Way / null) get pool+side backfilled from school + position."""
+
+    def test_casing_folds(self):
+        self.assertEqual(_canon_player_type("ColH"), "COLh")
+        self.assertEqual(_canon_player_type("Colp"), "COLp")
+        self.assertEqual(_canon_player_type("HsP"), "HSp")
+        self.assertEqual(_canon_player_type("COLh"), "COLh")   # already canonical
+
+    def test_juco_maps_to_college(self):
+        self.assertEqual(_canon_player_type("JCp"), "COLp")
+        self.assertEqual(_canon_player_type("JCh"), "COLh")
+
+    def test_backfills_null_from_school_and_position(self):
+        self.assertEqual(_canon_player_type(None, "Independence HS TN", "CF"), "HSh")
+        self.assertEqual(_canon_player_type(None, "Watson Chapel HS AR", "RHP"), "HSp")
+        self.assertEqual(_canon_player_type(None, "Duke", "C"), "COLh")
+        self.assertEqual(_canon_player_type(None, "Oklahoma State", "LHP"), "COLp")
+
+    def test_two_way_gets_bucketed(self):
+        # 2Way previously vanished under any pool/side filter; now it lands
+        # somewhere sane rather than dropping out entirely.
+        self.assertEqual(_canon_player_type("2Way", "Tennessee", "OF/RHP"), "COLh")
+
+    def test_unresolvable_left_alone(self):
+        self.assertIsNone(_canon_player_type(None, None, None))
+        self.assertEqual(_canon_player_type("2Way", None, None), "2Way")
 
 
 class ProjectedRound(unittest.TestCase):
@@ -179,6 +210,33 @@ class DraftDedupe(unittest.TestCase):
         self.assertEqual(canon, "draft_2026_christopher_hacopian")
         self.assertEqual(merge_map["draft_2026_christopher_hacopian"], canon)
         self.assertEqual(name_map[canon], "Christopher Hacopian")
+
+    def test_name_first_last_strips_suffixes_and_commas(self):
+        # Generational suffixes must not become the "last name" bucket key.
+        self.assertEqual(_name_first_last("Robert Hassell III"), ("robert", "hassell"))
+        self.assertEqual(_name_first_last("Robert Hassell"), ("robert", "hassell"))
+        self.assertEqual(_name_first_last("Michael Harris II"), ("michael", "harris"))
+        # Comma-mangled suffix form unmangles to the same parts.
+        self.assertEqual(_name_first_last("Lonnie, Jr. White"), ("lonnie", "white"))
+        self.assertEqual(_name_first_last("Lonnie White Jr."), ("lonnie", "white"))
+
+    def test_merges_generational_suffix_variants(self):
+        # The bug: "Robert Hassell" and "Robert Hassell III" bucketed apart and
+        # shipped as two records. They must now merge onto one canonical key.
+        by_player = {
+            "draft_2020_robert_hassell": [
+                {"player_key": "draft_2020_robert_hassell", "player_name": "Robert Hassell",
+                 "school": "Independence HS", "position": "OF", "snapshot_date": "2020-05-01"}],
+            "draft_2020_robert_hassell_iii": [
+                {"player_key": "draft_2020_robert_hassell_iii", "player_name": "Robert Hassell III",
+                 "school": "Independence HS", "position": "OF", "snapshot_date": "2020-06-10"}],
+        }
+        merge_map, name_map = _dedupe_merge_map(by_player)
+        self.assertTrue(merge_map, "suffix-variant twins should merge")
+        canon = merge_map["draft_2020_robert_hassell"]
+        self.assertEqual(merge_map["draft_2020_robert_hassell_iii"], canon)
+        # Canonical = fuller display name (carries the suffix).
+        self.assertEqual(name_map[canon], "Robert Hassell III")
 
 
 if __name__ == "__main__":

@@ -331,6 +331,28 @@ def _name_part(s: str | None) -> str:
     return re.sub(r"[^a-z]", "", s)
 
 
+_GEN_SUFFIX_RE = re.compile(r"^(jr|sr|ii|iii|iv|v)$")
+
+
+def _name_first_last(name: str | None) -> tuple[str, str]:
+    """Return (first, last) name parts with commas normalized and generational
+    suffixes (Jr/Sr/II..V) stripped, so suffix-variant twins bucket together.
+
+    The pipeline's old `parts[-1]` last-name pick put "Robert Hassell III" under
+    bucket "iii" and "Robert Hassell" under "hassell" - different buckets, never
+    compared - so the same player shipped as two records. Stripping the suffix
+    (and unmangling comma forms like "Lonnie, Jr. White") makes both bucket on
+    "hassell" / "white" and merge."""
+    toks = [t.strip(",.").strip() for t in (name or "").replace(",", " ").split()]
+    toks = [t for t in toks if t]
+    core = [t for t in toks if not _GEN_SUFFIX_RE.match(_name_part(t))]
+    if not core:
+        core = toks
+    first = _name_part(core[0]) if core else ""
+    last = _name_part(core[-1]) if len(core) > 1 else ""
+    return first, last
+
+
 def _edit_distance_le1(a: str, b: str) -> bool:
     """True when a and b differ by at most one insert/delete/substitution.
     Catches spelling variants like Kaeden/Kaden, Issac/Isaac."""
@@ -358,6 +380,30 @@ def _pos_class(pos: str | None) -> str | None:
     if head in {"P", "RHP", "LHP", "SP", "RP", "SIRP", "MIRP"}:
         return "P"
     return "H" if head else None
+
+
+def _canon_player_type(pt: str | None, school: str | None = None,
+                       position: str | None = None) -> str | None:
+    """Canonicalize player_type to one of COLh / COLp / HSh / HSp.
+
+    Folds the inconsistent casing the sources emit (ColH/Colh/HsP -> COLh/HSp),
+    maps JuCo ('JC*') into the COL pool, and backfills the pool/side for rows
+    that arrive untyped ('2Way', null) - HS vs college from the school string
+    (our school strings tag high schools with an 'HS' token), bat vs arm from
+    the position. Keeps Pool / Side filters from silently dropping these rows.
+    Returns the original value when neither pool nor side can be resolved."""
+    s = (pt or "").strip().lower()
+    pool = ("HS" if s.startswith("hs")
+            else "COL" if (s.startswith("col") or s.startswith("jc"))
+            else None)
+    side = ("p" if s.endswith("p") else "h" if s.endswith("h") else None)
+    if pool is None and school:
+        pool = "HS" if (re.search(r"\bHS\b", school)
+                        or re.search(r"high school", school, re.I)) else "COL"
+    if side is None and position:
+        pc = _pos_class(position)
+        side = "p" if pc == "P" else "h" if pc == "H" else None
+    return (pool + side) if (pool and side) else (pt or None)
 
 
 def _same_person(a: dict, b: dict) -> bool:
@@ -395,11 +441,11 @@ def _dedupe_merge_map(by_player: dict[str, list[dict]]) -> tuple[dict[str, str],
     for pk, plist in by_player.items():
         last_snap = sorted(plist, key=lambda r: r.get("snapshot_date") or "")[-1]
         name = (last_snap.get("player_name") or "").strip()
-        parts = name.split()
+        first, last = _name_first_last(name)
         reps[pk] = {
             "name": name,
-            "first": _name_part(parts[0]) if parts else "",
-            "last": _name_part(parts[-1]) if len(parts) > 1 else "",
+            "first": first,
+            "last": last,
             "school": _name_part(last_snap.get("school")),
             "pos": last_snap.get("position"),
         }
@@ -470,10 +516,20 @@ def _build_class(year: int,
             consensus_ranks[pk] = r
     class_rank_list = sorted(int(r) for r in consensus_ranks.values())
 
-    # Per-pick results for this class (by player_key for fast lookup).
+    # Per-pick results for this class (by player_key for fast lookup). Remap
+    # through merge_map so a pick recorded under a merged twin's key lands on the
+    # canonical key the prospect now lives under; when both halves carry a row,
+    # the one with an actual pick wins (the orphan twin's row is pick-less).
     results = results_by_year.get(year) or []
-    result_by_player: dict[str, dict] = {r["player_key"]: r
-                                          for r in results if r.get("player_key")}
+    result_by_player: dict[str, dict] = {}
+    for r in results:
+        pk = r.get("player_key")
+        if not pk:
+            continue
+        ck = merge_map.get(pk, pk)
+        cur = result_by_player.get(ck)
+        if cur is None or (r.get("pick_overall") and not cur.get("pick_overall")):
+            result_by_player[ck] = r
 
     prospects: list[dict] = []
     fv_dist: dict[str, int] = defaultdict(int)
@@ -551,13 +607,17 @@ def _build_class(year: int,
             # secondary confidence layer).
             boost = max(-6, min(6, round(cperf_z * 3.0)))
             sp_boosted = max(60, min(140, sp + boost))
+        _pos_val = any_snap.get("position") or player_meta.get("position")
+        _school_val = any_snap.get("school") or player_meta.get("school")
         prospects.append({
             "player_key":     pk,
             "player_name":    dedupe_name.get(pk) or any_snap.get("player_name"),
-            "position":       any_snap.get("position") or player_meta.get("position"),
-            "school":         any_snap.get("school") or player_meta.get("school"),
+            "position":       _pos_val,
+            "school":         _school_val,
             "college_commit": any_snap.get("college_commit") or player_meta.get("college_commit"),
-            "player_type":    any_snap.get("player_type") or player_meta.get("player_type"),
+            "player_type":    _canon_player_type(
+                                  any_snap.get("player_type") or player_meta.get("player_type"),
+                                  _school_val, _pos_val),
             "height":         player_meta.get("height"),
             "weight":         player_meta.get("weight"),
             "bats":           player_meta.get("bats"),

@@ -2776,16 +2776,19 @@ def upsert_draft_lottery_odds(rows: Iterable[dict]) -> int:
 
 def load_draft_lottery_odds(draft_year: int | None = None,
                             latest_only: bool = True) -> list[dict]:
-    """Return lottery odds rows. When latest_only=True, restrict to
-    the most recent snapshot_date per (draft_year, team, pick_pos)."""
+    """Return lottery odds rows. When latest_only=True, restrict to the single
+    most recent snapshot_date per draft_year (one full scrape).
+
+    The dedup key is the latest snapshot for the whole draft_year, NOT per
+    (team, pick_pos): teams move between projected slots from scrape to scrape,
+    so keying on (team, pick_pos) would keep a team's stale old slot AND its new
+    one - returning two rows at the same pick and self-contradictory odds."""
     if latest_only:
         q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
                FROM draft_lottery_odds o
                WHERE snapshot_date = (
                  SELECT MAX(snapshot_date) FROM draft_lottery_odds
                  WHERE draft_year = o.draft_year
-                   AND team       = o.team
-                   AND pick_pos   = o.pick_pos
                )"""
     else:
         q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source

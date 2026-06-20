@@ -8984,7 +8984,7 @@
         <button class="chip" data-filter-draft-side="p">Pitchers</button>
       </div>
       <div class="filter-group">
-        <span class="filter-label" title="Filter by position. INF rolls 2B/3B/SS/multi-pos; OF rolls CF/LF/RF/multi-OF; P rolls RHP/LHP.">Position</span>
+        <span class="filter-label" title="Filter by position. INF rolls 2B/3B/SS/multi-pos; OF rolls CF/LF/RF/multi-OF; SP rolls RHP/LHP/bare-P; RP rolls SIRP/MIRP.">Position</span>
         <button class="chip active" data-filter-draft-pos="all">All</button>
         <button class="chip" data-filter-draft-pos="C">C</button>
         <button class="chip" data-filter-draft-pos="SS">SS</button>
@@ -9024,12 +9024,13 @@
             <option value="tool:speed">Speed</option>
             <option value="tool:field">Field</option>
             <option value="tool:throw">Throw</option>
+            <option value="tool:bat_ctrl">Bat Ctrl</option>
+            <option value="tool:pitch_sel">Pitch Sel</option>
             <option value="tool:fb">Fastball</option>
             <option value="tool:sl">Slider</option>
             <option value="tool:cb">Curve</option>
             <option value="tool:ch">Change</option>
             <option value="tool:cmd">Command</option>
-            <option value="tool:ct">Cutter</option>
           </optgroup>
           <option value="name_asc">Name (A → Z)</option>
           <option value="name_desc">Name (Z → A)</option>
@@ -15118,7 +15119,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
     type: "link",
     title: "Org farm system",
     href: "#",
-    onclick: `event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(p.org || "")}');`,
+    onclick: `event.preventDefault();goToFarm('${escapeHtml(p.org || "")}');`,
     label: `View ${escapeHtml(p.org || " - ")} farm →`,
   };
 
@@ -21126,6 +21127,26 @@ function _draftFvBucketColor(fv) {
   return "var(--text-tertiary)";
 }
 
+// Shared draft empty-state - one consistent voice + look across every draft
+// sub-view (mirrors the canonical .state-message used by Rankings). `body`
+// is optional and may contain markup.
+function _draftEmpty(title, body) {
+  return `<div class="state-message">
+    <div class="state-message-title">${title}</div>
+    ${body ? `<div class="state-message-body">${body}</div>` : ""}
+  </div>`;
+}
+
+// Shared draft caption strip - the gray bg-secondary "what am I looking at /
+// where's the data from" header that leads every draft sub-view. `meta` is
+// optional trailing context (markup allowed).
+function _draftCaption(title, meta) {
+  return `<div style="padding:12px 14px;background:var(--bg-secondary);
+       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+    <strong style="color:var(--text-primary);">${title}</strong>${meta ? " · " + meta : ""}
+  </div>`;
+}
+
 async function renderDraft() {
   const host = document.getElementById("draft-rows");
   const classChips = document.getElementById("draft-class-chips");
@@ -21175,12 +21196,21 @@ async function renderDraft() {
   classChips.innerHTML =
     `<button class="chip ${isOverall ? "active" : ""}" data-draft-year="overall"
             title="Cross-year analytics: class strength, signing trends, all-time org tendencies, overperformers">Overall</button>`
-    + classes.map(c => `
-    <button class="chip ${c.year === state.draftYear ? "active" : ""}"
-            data-draft-year="${c.year}"
-            title="${c.n_prospects} prospects${c.is_current ? " · current class" : ""}">
-      ${c.year}${c.is_current ? " ⏳" : ""}
-    </button>`).join("");
+    + classes.map(c => {
+      // Two classes carry is_current (the upcoming draft being scouted, plus the
+      // next-draft lottery projection that has no prospects yet). Only the
+      // actively-scouted one gets the ⏳ "current class" marker so it's not
+      // ambiguous which draft is upcoming; the projection-only class is labeled
+      // as such.
+      const scouted   = c.is_current && (c.n_prospects || 0) > 0;
+      const projOnly  = c.is_current && (c.n_prospects || 0) === 0;
+      const title = projOnly
+        ? `${c.year} draft - lottery projection only (not yet scouted)`
+        : `${c.n_prospects} prospects${scouted ? " · upcoming draft, being scouted" : ""}`;
+      return `<button class="chip ${c.year === state.draftYear ? "active" : ""}"
+            data-draft-year="${c.year}" title="${title}">
+      ${c.year}${scouted ? " ⏳" : ""}</button>`;
+    }).join("");
   classChips.querySelectorAll("[data-draft-year]").forEach(b => {
     b.addEventListener("click", () => {
       const v = b.dataset.draftYear;
@@ -21198,16 +21228,23 @@ async function renderDraft() {
   const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "org-tendencies", "lottery"];
   const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
-  const _selectedHasLottery = !!(_selectedCls && _selectedCls.lottery_odds && _selectedCls.lottery_odds.length);
+  // Lottery is inherently next-draft data and lives on ONE class (the upcoming
+  // draft, e.g. 2027), NOT on whatever class the user is currently viewing. So
+  // surface the chip in any year mode whenever ANY class carries odds and render
+  // that lottery-bearing class regardless of the selected year - otherwise the
+  // tab is unreachable from the default landing (which has no odds of its own).
+  const _lotteryCls = classes.filter(c => c.lottery_odds && c.lottery_odds.length)
+                             .sort((a, b) => b.year - a.year)[0] || null;
+  const _anyLottery = !!_lotteryCls;
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
-      (state.draftView === "lottery" && !_selectedHasLottery)) {
+      (state.draftView === "lottery" && !_anyLottery)) {
     state.draftView = isOverall ? "class-strength" : "rankings";
   }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
     const view = b.dataset.draftView;
     let show = modeViews.includes(view);
-    if (view === "lottery" && !_selectedHasLottery) show = false;
+    if (view === "lottery" && !_anyLottery) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => { state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL(); };
@@ -21230,13 +21267,19 @@ async function renderDraft() {
   const draftFilterBar = document.getElementById("draft-filter-bar");
   const showDraftFilters = state.draftView === "rankings";
   if (draftFilterRow) draftFilterRow.style.display = showDraftFilters ? "" : "none";
-  if (draftFilterBar && !showDraftFilters) draftFilterBar.classList.remove("is-open");
+  if (draftFilterBar && !showDraftFilters) {
+    draftFilterBar.classList.remove("is-open");
+    // Keep the toggle arrow (driven purely by aria-expanded CSS) in sync with the
+    // force-collapsed panel, else it points "open" over a closed bar on return.
+    const _ft = document.getElementById("draft-filter-toggle");
+    if (_ft) _ft.setAttribute("aria-expanded", "false");
+  }
 
   switch (state.draftView) {
     case "order":          return _renderDraftOrder(host, cls);
     case "results":        return _renderDraftResults(host, cls);
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
-    case "lottery":        return _renderDraftLottery(host, cls);
+    case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
@@ -21259,11 +21302,10 @@ function _renderDraftLottery(host, cls) {
   const latestSnap = allOdds.reduce((m, o) => (o.snapshot_date && o.snapshot_date > m) ? o.snapshot_date : m, "");
   const odds = latestSnap ? allOdds.filter(o => o.snapshot_date === latestSnap) : allOdds;
   if (!odds.length) {
-    host.innerHTML = `
-      <div style="padding:18px;background:var(--bg-secondary);border-radius:6px;color:var(--text-secondary);font-size:13px;line-height:1.5;">
-        <strong style="color:var(--text-primary);font-size:14px;">Draft order is locked for ${cls.year}.</strong><br>
-        Lottery odds only apply to the upcoming draft (one season ahead). Switch to the <a href="#" onclick="event.preventDefault();state.draftView='order';renderDraft();syncToURL();" style="color:var(--neon-cyan);">Order &amp; Slots</a> sub-view to see the confirmed pick order for ${cls.year}.
-      </div>`;
+    host.innerHTML = _draftEmpty(
+      `Draft order is locked for ${cls.year}`,
+      `Lottery odds only apply to the upcoming draft (one season ahead). Switch to
+       <strong>Order &amp; Slots</strong> for the confirmed pick order.`);
     return;
   }
   // Highlight color for the odds cell: brighter when the % is higher.
@@ -21343,6 +21385,46 @@ function _draftPosBucket(pos) {
 // flag). Used to keep the current-class rankings board amateurs-only.
 function _draftAlreadyInSystem(p) {
   return !!(p && (p.status === "drafted" || p.signed || p.promoted_key || p.milb_key));
+}
+
+// Normalized identity key for a draftee name: comma-unflipped, generational
+// suffixes (Jr/Sr/II..V) stripped, non-alpha removed. Suffix-variant twins
+// ("Robert Hassell" / "Robert Hassell III", comma-mangled "Lonnie, Jr. White")
+// collapse to the same key here even though the pipeline's last-token dedup
+// missed them.
+function _draftNameKey(p) {
+  let nm = String((p && p.player_name) || "").toLowerCase().replace(/,/g, " ");
+  const toks = nm.split(/\s+/).filter(t => t && !/^(jr|sr|ii|iii|iv|v)\.?$/.test(t));
+  return toks.join(" ").replace(/[^a-z ]/g, "").replace(/\s+/g, " ").trim();
+}
+
+// Frontend defense for the suffix-mismatch duplicate records that survive the
+// pipeline's name-variant dedup on completed-class boards: the same player shows
+// twice, once as a pick-carrying record and once as an orphan (status='drafted'
+// but drafted_pick/team/bonus all null). Collapse ONLY the orphan duplicates -
+// crucially, two distinct same-name draftees each carry their own pick, so a
+// bucket with 2+ pick-carriers is left fully intact (never drop a real player).
+function _dedupeCompletedClassPool(prospects) {
+  const groups = new Map();
+  for (const p of prospects) {
+    const k = _draftNameKey(p) || (p.player_key || "");
+    if (!groups.has(k)) groups.set(k, []);
+    groups.get(k).push(p);
+  }
+  const drop = new Set();
+  for (const grp of groups.values()) {
+    if (grp.length < 2) continue;
+    const withPick = grp.filter(p => p.drafted_pick != null);
+    if (withPick.length >= 2) continue;   // distinct same-name draftees - keep all
+    if (withPick.length === 1) {
+      for (const p of grp) if (p.drafted_pick == null) drop.add(p);   // drop orphan twins
+    } else {
+      // all orphans (no pick anywhere): keep the highest-FV one.
+      const keep = grp.slice().sort((a, b) => (b.consensus_fv ?? -99) - (a.consensus_fv ?? -99))[0];
+      for (const p of grp) if (p !== keep) drop.add(p);
+    }
+  }
+  return prospects.filter(p => !drop.has(p));
 }
 
 // Per-source FV spread for a draft prospect: {min, max, spread, n} over the
@@ -21519,6 +21601,9 @@ function _renderDraftRankings(host, cls) {
   // already in a system.
   let basePool = (cls.prospects || []).slice();
   if (cls.is_current) basePool = basePool.filter(p => !_draftAlreadyInSystem(p));
+  // Completed classes: collapse suffix-variant duplicate records so a player
+  // never appears twice (once with his pick, once as a null-field orphan).
+  else basePool = _dedupeCompletedClassPool(basePool);
   const totalUnfiltered = basePool.length;
   // v35 - Future class not scouted yet (e.g. the 2027 class months out
   // from the draft). Show a clear placeholder instead of a blank "0 of 0"
@@ -21534,6 +21619,24 @@ function _renderDraftRankings(host, cls) {
     return;
   }
   const prospects = _applyDraftFilters(basePool);
+  // Filters reduced a scouted pool to nothing - show a message + a way out
+  // instead of a "0 of N" header floating over a blank grid. Older classes are
+  // missing player_type tags (HS/COL, bat/arm), so the Pool / Side filters can
+  // silently empty the board; call that out so it doesn't read as "no players".
+  if (!prospects.length && totalUnfiltered > 0) {
+    const nUnknownType = basePool.filter(p => !p.player_type).length;
+    const poolSideActive = (state.draftPool && state.draftPool !== "all")
+                        || (state.draftSide && state.draftSide !== "all");
+    const typeNote = (poolSideActive && nUnknownType > 0)
+      ? ` ${nUnknownType} of these picks predate our HS/college + bat/arm tagging, so the Pool / Side filters can't place them.`
+      : "";
+    host.innerHTML = _draftEmpty(
+      "No prospects match the current filters",
+      `All ${totalUnfiltered} ranked ${cls.year} prospects are filtered out.${typeNote}
+       <a href="#" onclick="event.preventDefault();_resetPageFilters('draft');restoreUIFromState();render();syncToURL();"
+          style="color:var(--neon-cyan);">Clear filters</a> to see the full board.`);
+    return;
+  }
   _applyDraftSort(prospects);
   prospects.forEach((p, i) => { p._fvSortRank = i + 1; });
 
@@ -21618,12 +21721,15 @@ function _renderDraftCard(p) {
       }
     }
   }
-  const toolKeys = Object.keys(tools).sort();
+  // v36 - Sort chips by grade DESC (was alphabetical), so when the row wraps
+  // the best tools lead and the weakest sit last - alphabetical order clipped
+  // throw/speed/raw_pwr before cb/ch/cmd, which was semantically arbitrary.
+  const toolKeys = Object.keys(tools).sort((a, b) => (tools[b] - tools[a]) || a.localeCompare(b));
   // v17 - Use toolAbbrev so chips read HIT / PWR / RUN / DEF / ARM (was
   // HIT / GAME_PWR / SPEED / FIELD / THROW). Matches the active-list
   // density-mode tool grids.
   const toolPills = toolKeys.length
-    ? `<div style="display:flex;flex-wrap:nowrap;gap:3px;margin-top:4px;overflow:hidden;">
+    ? `<div style="display:flex;flex-wrap:wrap;gap:3px;margin-top:4px;">
         ${toolKeys.map(k => {
           const label = (typeof toolAbbrev === "function" ? toolAbbrev(k) : k.toUpperCase());
           const full = (typeof toolFullName === "function" ? toolFullName(k) : k);
@@ -21674,7 +21780,7 @@ function _renderDraftCard(p) {
     ? `<div class="draft-report" style="margin-top:5px;font-size:var(--fs-xs);
           color:var(--text-secondary);line-height:1.35;
           max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
-        ${escapeHtml(report.slice(0, 140))}…</div>` : "";
+        ${escapeHtml(report.slice(0, 140))}${report.length > 140 ? "…" : ""}</div>` : "";
 
   // v31.7 - College / amateur stats chip strip. Renders the headline
   // chips from p.college_stats.headline (4 max, hitter or pitcher key
@@ -21759,16 +21865,56 @@ function _renderDraftCard(p) {
   </div>`;
 }
 
+// Click-to-sort for the Order & Slots table. Pick order is the default; the
+// value columns (slot / bonus / vs-slot) default to highest-first, and a
+// second click on the active column flips direction. Clicking "#" returns to
+// pick order.
+function _draftOrderSortBy(key) {
+  if (state.draftOrderSort === key) {
+    state.draftOrderRev = !state.draftOrderRev;
+  } else {
+    state.draftOrderSort = key;
+    state.draftOrderRev = false;
+  }
+  renderDraft();
+}
+
 function _renderDraftOrder(host, cls) {
   const order = cls.draft_order || [];
   if (!order.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No draft order data for ${cls.year}. ${cls.is_current
+    host.innerHTML = _draftEmpty(
+      `No draft order data for ${cls.year}`,
+      cls.is_current
         ? "Slot values + pick assignments will populate as MLB publishes them."
-        : "This class predates our draft-order ingest."}</div>`;
+        : "This class predates our draft-order ingest.");
     return;
   }
   const isPost = !cls.is_current;
+  // Slot-value attribution is data-driven: the pre-draft (current) board is
+  // scraped from Spotrac, post-draft order comes from the MLB Stats API.
+  const _srcCount = {};
+  order.forEach(o => { const s = o.source || "mlb"; _srcCount[s] = (_srcCount[s] || 0) + 1; });
+  const _domSrc = Object.keys(_srcCount).sort((a, b) => _srcCount[b] - _srcCount[a])[0] || "mlb";
+  const sourceLabel = _domSrc === "spotrac" ? "Spotrac" : "MLB Stats API";
+  // Apply the active column sort (default = pick order, as delivered).
+  const _sk = state.draftOrderSort;
+  let sortedOrder = order.slice();
+  if (_sk) {
+    const _val = o => _sk === "slot"  ? (o.slot_usd ?? -1)
+                    : _sk === "bonus" ? (o.bonus_usd ?? -1)
+                    : _sk === "vsslot" ? ((o.bonus_usd && o.slot_usd) ? o.bonus_usd / o.slot_usd - 1 : -1e9)
+                    :                    (o.pick_overall ?? 1e9);
+    const baseDesc = _sk !== "pick";
+    const dir = (baseDesc ? -1 : 1) * (state.draftOrderRev ? -1 : 1);
+    sortedOrder.sort((a, b) => (_val(a) - _val(b)) * dir || (a.pick_overall ?? 0) - (b.pick_overall ?? 0));
+  }
+  const _activeDir = () => {
+    const baseDesc = state.draftOrderSort !== "pick";
+    return (baseDesc ? -1 : 1) * (state.draftOrderRev ? -1 : 1);
+  };
+  const _oArrow = k => state.draftOrderSort === k ? (_activeDir() > 0 ? " ▲" : " ▼") : "";
+  const _oh = (key, label, align) =>
+    `<th style="text-align:${align};cursor:pointer;user-select:none;" onclick="_draftOrderSortBy('${key}')" title="Sort by ${label}">${label}${_oArrow(key)}</th>`;
   // player_key -> prospect, so post-draft rows can show the drafted player's
   // college/school logo beside their name.
   const byKey = {};
@@ -21779,7 +21925,7 @@ function _renderDraftOrder(host, cls) {
     const rl = String(o.round_label || "?");
     return /^\d+$/.test(rl) ? `R${rl}.${o.pick_in_round || "?"}` : rl;
   };
-  const rows = order.map(o => {
+  const rows = sortedOrder.map(o => {
     const pr = o.player_key ? byKey[o.player_key] : null;
     const base = `
       <td style="text-align:center;font-weight:600;">${o.pick_overall}</td>
@@ -21812,17 +21958,18 @@ function _renderDraftOrder(host, cls) {
   }).join("");
 
   const head = isPost
-    ? `<tr><th>#</th><th>Round</th><th>Team</th><th>Player</th>
-         <th style="text-align:right;">Slot</th><th style="text-align:right;">Bonus</th>
-         <th style="text-align:right;">vs slot</th><th>Signed</th></tr>`
-    : `<tr><th>#</th><th>Round</th><th>Team</th><th style="text-align:right;">Slot</th></tr>`;
+    ? `<tr>${_oh("pick", "#", "center")}<th>Round</th><th>Team</th><th>Player</th>
+         ${_oh("slot", "Slot", "right")}${_oh("bonus", "Bonus", "right")}
+         ${_oh("vsslot", "vs slot", "right")}<th style="text-align:center;">Signed</th></tr>`
+    : `<tr>${_oh("pick", "#", "center")}<th>Round</th><th>Team</th>${_oh("slot", "Slot", "right")}</tr>`;
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
          border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
       <strong style="color:var(--text-primary);">${cls.year} draft order</strong>
       · ${order.length} picks on file
-      · Slot values from MLB Stats API
+      · Slot values from ${sourceLabel}
       ${isPost ? "· Bonuses + signings from MLB Stats API" : "· Pre-draft - slot values only (bonuses + signings populate after the draft)"}
+      · click a column header to sort
     </div>
     <table class="draft-table">
       <thead>${head}</thead>
@@ -21831,15 +21978,37 @@ function _renderDraftOrder(host, cls) {
 }
 
 function _renderDraftResults(host, cls) {
-  if (cls.is_current) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      ${cls.year} draft hasn't happened yet. Results + bonuses populate
-      after July's draft day.</div>`;
-    return;
-  }
   // Per-team roll-up: pool vs. spend, surplus deployed, picks signed.
   const spend = cls.team_spend_usd || {};
   const pool  = cls.team_pool_usd || {};
+  if (cls.is_current) {
+    // Bonus pools are set BEFORE the draft, so for the current class we already
+    // know the pool ranking even though spend / signings don't land until July.
+    // Show the pool table now rather than discarding the populated data.
+    const poolTeams = Object.keys(pool);
+    if (!poolTeams.length) {
+      host.innerHTML = _draftEmpty(
+        `The ${cls.year} draft hasn't happened yet`,
+        "Bonus pools, team spend, and signings populate as draft day approaches.");
+      return;
+    }
+    const sortedTeams = poolTeams.slice().sort((a, b) => (pool[b] || 0) - (pool[a] || 0));
+    const totalPool = poolTeams.reduce((sm, t) => sm + (pool[t] || 0), 0);
+    const prows = sortedTeams.map(t => `<tr>
+      <td><span class="draft-cell-ico">${teamLogoHTML(t, "sm")}<strong>${escapeHtml(t)}</strong></span></td>
+      <td style="text-align:right;">${_fmtUSD(pool[t])}</td>
+    </tr>`).join("");
+    host.innerHTML = _draftCaption(`${cls.year} bonus pools`,
+        `${poolTeams.length} teams · ${_fmtUSD(totalPool)} total · spend + signings populate after July's draft day`)
+      + `<div class="draft-panel">
+        <h3>Team bonus pool</h3>
+        <table class="draft-table">
+          <thead><tr><th>Team</th><th style="text-align:right;">Pool</th></tr></thead>
+          <tbody>${prows}</tbody>
+        </table>
+      </div>`;
+    return;
+  }
   const teams = Array.from(new Set([...Object.keys(spend), ...Object.keys(pool)]));
   teams.sort((a, b) => (spend[b] || 0) - (spend[a] || 0));
 
@@ -21866,7 +22035,9 @@ function _renderDraftResults(host, cls) {
   overSlot.sort((a, b) => (b.over_slot_pct || 0) - (a.over_slot_pct || 0));
   const biggestOver = overSlot.slice(0, 5);
 
-  host.innerHTML = `
+  host.innerHTML = _draftCaption(`${cls.year} signing results`,
+      `${teams.length} teams · bonuses vs. slot, team spend vs. pool · source: MLB Stats API`)
+    + `
     <div class="draft-results-grid">
       <div class="draft-panel">
         <h3>Team pool spend</h3>
@@ -21906,9 +22077,9 @@ function _renderDraftResults(host, cls) {
 function _renderDraftLeaderboard(host, cls) {
   const prospects = (cls.prospects || []).slice();
   if (!prospects.length) {
-    host.innerHTML = `<div class="state-message">
-      <div class="state-message-title">The ${cls.year} draft class hasn't been scouted yet</div>
-      <div class="state-message-body">Leaderboards populate once prospects and Draft Stock+ land for this class.</div></div>`;
+    host.innerHTML = _draftEmpty(
+      `The ${cls.year} draft class hasn't been scouted yet`,
+      "Leaderboards populate once prospects and Draft Stock+ land for this class.");
     return;
   }
   // DS+ ties broken by consensus FV so #1 vs #2 is a real ranking, not insertion order.
@@ -21998,7 +22169,7 @@ function _renderDraftLeaderboard(host, cls) {
       return `<li><strong title="${escapeHtml(toolFullName(k))}">${escapeHtml(toolAbbrev(k))}</strong>
         <span style="color:${_draftFvBucketColor(head.grade)};">${Math.round(head.grade)}</span> -
         ${escapeHtml(head.player.player_name)}
-        <small>(${escapeHtml(head.player.school || "?")})</small>
+        <small class="draft-cell-ico">${_collegeLogoImg(head.player.school_logo_url, head.player.school, _isHSPlayer(head.player))}${escapeHtml(head.player.school || "?")}</small>
         ${restPills}</li>`;
     }).join("");
 
@@ -22012,7 +22183,9 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
   </tr>`).join("");
 
-  host.innerHTML = `
+  host.innerHTML = _draftCaption(`${cls.year} draft leaderboard`,
+      `${prospects.length} prospects · ranked by Draft Stock+ (100 = class median), then consensus FV`)
+    + `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
         <h3>${cls.year} class top ${top.length} by Draft Stock+</h3>
@@ -22054,11 +22227,19 @@ function _renderClassStrength(host, classes) {
   const gap = 4;
   const groupW = fvOrder.length * (barW + gap);
 
+  // Drop classes with no scouted prospects (e.g. the upcoming 2027 class
+  // months out, n_prospects:0, fv_distribution:{}) so they don't add a noise
+  // summary row + an all-zero histogram tile. Sorted year-DESC once and shared
+  // by BOTH the summary and the charts so the two never drift out of order.
+  const drawn = classes
+    .filter(c => (c.n_prospects || 0) > 0 && Object.keys(c.fv_distribution || {}).length)
+    .sort((a, b) => b.year - a.year);
+
   // --- Comparison strip: per-class summary stats ---
   // Walk prospects once per class to compute pitcher/hitter split, mean
-  // consensus FV, top-tier counts. Sorted by year DESC so the most
-  // recent class anchors the left edge (matches the chip strip ordering).
-  const summary = classes.slice().sort((a, b) => b.year - a.year).map(c => {
+  // consensus FV, top-tier counts. Year DESC so the most recent class anchors
+  // the left edge (matches the chip strip ordering).
+  const summary = drawn.map(c => {
     const ps = c.prospects || [];
     let hit = 0, pit = 0, sumFv = 0, nFv = 0;
     for (const p of ps) {
@@ -22104,7 +22285,7 @@ function _renderClassStrength(host, classes) {
       </div>
     </div>`;
 
-  const charts = classes.map(c => {
+  const charts = drawn.map(c => {
     const dist = c.fv_distribution || {};
     const bars = fvOrder.map((k, i) => {
       const v = dist[k] || 0;
@@ -22130,7 +22311,9 @@ function _renderClassStrength(host, classes) {
     </div>`;
   }).join("");
 
-  host.innerHTML = `
+  host.innerHTML = _draftCaption("Class strength",
+      `${drawn.length} scouted classes · FV distribution + hitter/pitcher split, year over year · click any class to open its board`)
+    + `
     <div class="draft-results-grid" style="grid-template-columns:repeat(auto-fill,minmax(220px,1fr));">
       ${summaryStrip}
       ${charts}
@@ -22174,22 +22357,51 @@ function _renderSigningTrends(host, classes) {
   });
   const validPool = poolRows.filter(r => r.pool != null && r.spend != null && r.pool > 0 && r.spend > 0);
   const maxPool = Math.max(1, ...validPool.map(r => Math.max(r.pool, r.spend)));
+
+  // Which class drives the detail tables (top bonuses / team spend / per round).
+  // Signing Trends is a cross-year (Overall) view, so there's no draftYear to
+  // lean on - default to the most recent class with signing data and let the
+  // user pick another by clicking a point on the pool/spend chart.
+  const _signingYears = validPool.map(r => r.year);
+  let selYear = state.signingYear;
+  if (selYear == null || !_signingYears.includes(selYear)) {
+    selYear = _signingYears.length ? _signingYears[_signingYears.length - 1] : null;
+  }
+  if (selYear == null) {
+    const _done = classes.filter(c => !c.is_current).sort((a, b) => b.year - a.year);
+    selYear = _done.length ? _done[0].year : null;
+  }
+  const selCls = classes.find(c => c.year === selYear);
+
   const chartW = 320, chartH = 140, leftPad = 40, botPad = 22;
   const innerW = chartW - leftPad - 8, innerH = chartH - botPad - 8;
   const _x = i => leftPad + (validPool.length > 1 ? i * innerW / (validPool.length - 1) : innerW / 2);
   const _y = v => chartH - botPad - (v / maxPool) * innerH;
   const poolLine = validPool.map((r, i) => `${_x(i)},${_y(r.pool)}`).join(" ");
   const spendLine = validPool.map((r, i) => `${_x(i)},${_y(r.spend)}`).join(" ");
-  const _dots = (rows, color, key) => rows.map((r, i) => `
-    <circle cx="${_x(i)}" cy="${_y(r[key])}" r="2.5" fill="${color}">
-      <title>${r.year}: ${usd(r[key])}</title></circle>`).join("");
+  // Selected year's points get a larger radius + outline; clicking any point
+  // (or x-axis label) re-points the detail tables at that class.
+  const _dots = (rows, color, key) => rows.map((r, i) => {
+    const isSel = r.year === selYear;
+    return `<circle cx="${_x(i)}" cy="${_y(r[key])}" r="${isSel ? 4 : 2.5}" fill="${color}"
+        ${isSel ? 'stroke="var(--text-primary)" stroke-width="1"' : ""}
+        style="cursor:pointer;" onclick="state.signingYear=${r.year};renderDraft();">
+      <title>${r.year}: ${usd(r[key])} (click for ${r.year} detail)</title></circle>`;
+  }).join("");
   const _xLabels = validPool.map((r, i) => `
-    <text x="${_x(i)}" y="${chartH - 6}" text-anchor="middle"
-          font-size="9" fill="var(--text-tertiary)">${r.year}</text>`).join("");
+    <text x="${_x(i)}" y="${chartH - 6}" text-anchor="middle" style="cursor:pointer;"
+          onclick="state.signingYear=${r.year};renderDraft();"
+          font-weight="${r.year === selYear ? "700" : "400"}"
+          font-size="9" fill="${r.year === selYear ? "var(--neon-cyan)" : "var(--text-tertiary)"}">${r.year}</text>`).join("");
+  const _selIdx = validPool.findIndex(r => r.year === selYear);
+  const _guide = _selIdx >= 0
+    ? `<line x1="${_x(_selIdx)}" y1="6" x2="${_x(_selIdx)}" y2="${chartH - botPad}"
+            stroke="var(--text-tertiary)" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>` : "";
   const poolChart = validPool.length ? `
     <div class="draft-panel">
       <h3>League bonus pool vs spend</h3>
       <svg width="${chartW}" height="${chartH}" style="display:block;margin:6px auto;">
+        ${_guide}
         <polyline points="${poolLine}" fill="none" stroke="var(--text-secondary)" stroke-width="1.5" stroke-dasharray="4 3"/>
         <polyline points="${spendLine}" fill="none" stroke="var(--neon-cyan)" stroke-width="1.8"/>
         ${_dots(validPool, "var(--text-secondary)", "pool")}
@@ -22204,12 +22416,11 @@ function _renderSigningTrends(host, classes) {
         <span style="display:inline-block;width:8px;height:2px;background:var(--text-secondary);vertical-align:middle;border-radius:1px;"></span> Pool cap
         &nbsp;·&nbsp;
         <span style="display:inline-block;width:8px;height:2px;background:var(--neon-cyan);vertical-align:middle;border-radius:1px;"></span> Actual spend
+        &nbsp;·&nbsp; click a year to load its detail below
       </div>
     </div>` : "";
 
   // --- Selected-class context: top 10 bonuses + team spend leaders ---
-  const selYear = state.draftYear;
-  const selCls = classes.find(c => c.year === selYear);
   const selProspects = (selCls && selCls.prospects) || [];
 
   // Top 10 bonuses for this class.
@@ -22219,9 +22430,11 @@ function _renderSigningTrends(host, classes) {
     .slice(0, 10);
   const topBonusRows = topBonuses.length ? topBonuses.map((p, i) => {
     const ov = p.over_slot_pct;
+    // Over slot = orange, under = cyan - matches Order & Slots / Results so the
+    // same concept reads the same color everywhere on the Draft page.
     const ovColor = ov == null ? "var(--text-tertiary)"
-                  : ov > 10 ? "var(--neon-cyan)"
-                  : ov < -10 ? "var(--neon-orange)" : "var(--text-secondary)";
+                  : ov > 10 ? "var(--neon-orange)"
+                  : ov < -10 ? "var(--neon-cyan)" : "var(--text-secondary)";
     const ovTxt = ov == null ? " - " : (ov > 0 ? "+" : "") + Math.round(ov) + "%";
     return `<tr>
       <td>${i + 1}</td>
@@ -22282,8 +22495,8 @@ function _renderSigningTrends(host, classes) {
       const meanOv = r.ovs.length ? r.ovs.reduce((s, v) => s + v, 0) / r.ovs.length : null;
       const ovTxt = meanOv == null ? " - " : (meanOv > 0 ? "+" : "") + meanOv.toFixed(1) + "%";
       const ovColor = meanOv == null ? "var(--text-tertiary)"
-                    : meanOv > 5 ? "var(--neon-cyan)"
-                    : meanOv < -5 ? "var(--neon-orange)" : "var(--text-secondary)";
+                    : meanOv > 5 ? "var(--neon-orange)"
+                    : meanOv < -5 ? "var(--neon-cyan)" : "var(--text-secondary)";
       const roundLabel = /^\d+$/.test(String(r.round)) ? "R" + r.round : String(r.round);
       return `<tr>
         <td>${escapeHtml(roundLabel)}</td>
@@ -22295,12 +22508,14 @@ function _renderSigningTrends(host, classes) {
   // Empty-state guard - pre-draft years won't have bonuses/teams.
   const isPostDraft = topBonuses.length > 0 || Object.keys(byTeam).length > 0;
   const preDraftNote = isPostDraft ? "" : `
-    <div class="draft-panel" style="grid-column:1/-1;color:var(--text-tertiary);font-size:13px;">
-      ${selYear} hasn't been drafted yet (or no signing data is on file).
-      Switch to a past class via the year chips to see signing patterns.
+    <div class="draft-panel" style="grid-column:1/-1;">
+      ${_draftEmpty(`No signing detail for ${selYear == null ? "any class" : selYear} yet`,
+        "Bonuses and team spend populate after a class is drafted and signed. Pick a past year on the chart above to see its detail.")}
     </div>`;
 
-  host.innerHTML = `
+  host.innerHTML = _draftCaption("Signing trends",
+      `League pool vs. spend year over year, plus ${selYear ?? "class"} detail (top bonuses, team spend, per-round over-slot)`)
+    + `
     <div class="draft-results-grid">
       ${poolChart}
       ${preDraftNote}
@@ -23146,7 +23361,7 @@ function _renderOverseasCard(p) {
     ? `<div class="draft-report" style="margin-top:5px;font-size:var(--fs-xs);
           color:var(--text-secondary);line-height:1.35;
           max-height:28px;overflow:hidden;mask-image:linear-gradient(to bottom,#000 60%,transparent);">
-        ${escapeHtml(report.slice(0, 140))}…</div>` : "";
+        ${escapeHtml(report.slice(0, 140))}${report.length > 140 ? "…" : ""}</div>` : "";
 
   // v31.7 - Overseas headline-stats chip strip. The overseas export
   // already provides per-season statlines on each prospect record
@@ -23470,6 +23685,14 @@ function _renderDraftTendencies(host, classes, year) {
   let dp;
   if (isOverall) {
     if (!_orgTendencies || !(_orgTendencies.draftPos && _orgTendencies.draftPos.orgs)) {
+      // If a prior fetch already failed, surface the error instead of spinning +
+      // refetching forever (the .finally cleared the in-flight guards, so the
+      // old spinner branch would re-arm a fetch every render cycle).
+      if (_orgTendenciesError) {
+        host.innerHTML = `<div class="state-message is-error">Org draft tendencies are unavailable.
+          Run <code>python org_tendencies.py</code> to regenerate <code>data/org_tendencies.json</code>.</div>`;
+        return;
+      }
       host.innerHTML = `<div class="state-message is-loading">Loading org draft tendencies…</div>`;
       _ensureOrgTendencies(() => { if (state.draftView === "org-tendencies") renderDraft(); });
       return;
@@ -23481,9 +23704,11 @@ function _renderDraftTendencies(host, classes, year) {
   }
   const orgs = Object.keys(dp).filter(o => dp[o] && dp[o].n);
   if (!orgs.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">${isOverall
-      ? "Org draft-tendency data isn't available yet."
-      : `No signed picks on file for the ${year} class yet.`}</div>`;
+    host.innerHTML = isOverall
+      ? _draftEmpty("Org draft-tendency data isn't available yet",
+          "Run <code>python org_tendencies.py</code> to generate it.")
+      : _draftEmpty(`No signed picks on file for the ${year} class yet`,
+          "Per-class tendencies populate once that draft's picks are signed.");
     return;
   }
   const sk = _draftTendSort.key, sd = _draftTendSort.dir;
@@ -23526,8 +23751,7 @@ function _renderDraftTendencies(host, classes, year) {
     <td><span class="draft-cell-ico">${teamLogoHTML(r.org, "sm")}<strong>${escapeHtml((typeof ORG_NAMES !== "undefined" && ORG_NAMES[r.org]) || r.org)}</strong></span></td>
     <td style="text-align:right;color:var(--text-tertiary);">${r.n || " - "}</td>
     <td style="text-align:right;color:${_z(r.zPitch)};" title="z ${(r.zPitch ?? 0).toFixed(2)} vs league">${pct(r.pitchShare)}</td>
-    <td style="text-align:right;color:${_z(r.zColl)};" title="z ${(r.zColl ?? 0).toFixed(2)} vs league">${pct(r.collShare)}</td>
-    <td style="text-align:right;color:${_z(r.zPrep)};" title="z ${(r.zPrep ?? 0).toFixed(2)} vs league">${pct(r.prepShare)}</td>
+    <td style="text-align:right;color:${_z(r.zColl)};" title="z ${(r.zColl ?? 0).toFixed(2)} vs league · prep% is the complement">${pct(r.collShare)}</td>
     <td style="text-align:right;color:${_z(r.zUpMid)};" title="z ${(r.zUpMid ?? 0).toFixed(2)} vs league">${pct(r.upMidShare)}</td>
     <td style="text-align:center;">${_posBar(r.posBuckets)}</td>
     <td>${_badges(r)}</td>
@@ -23551,8 +23775,7 @@ function _renderDraftTendencies(host, classes, year) {
         <th class="dt-sortable" data-tend-sort="org" style="cursor:pointer;${sk === "org" ? "color:var(--neon-cyan);" : ""}">Org${sk === "org" ? (sd < 0 ? " ▼" : " ▲") : ""}</th>
         ${_sortable("n", "Picks", "Signed picks on file")}
         ${_sortable("zPitch", "Pitch%", "Share of picks that are pitchers (z vs league)")}
-        ${_sortable("zColl", "College%", "Share from 4-yr colleges (z vs league)")}
-        ${_sortable("zPrep", "Prep%", "Share that are high-schoolers (z vs league)")}
+        ${_sortable("zColl", "College%", "Share from 4-yr colleges (z vs league) · prep% is the complement, shown as an identity badge")}
         ${_sortable("zUpMid", "Up-mid%", "Share up-the-middle: C/SS/2B/CF (z vs league)")}
         <th style="text-align:center;">Position mix</th>
         <th>Identity</th>
@@ -23577,6 +23800,7 @@ function _renderDraftTendencies(host, classes, year) {
 // consensus rank vs actual pick). Pools all completed classes, deduped.
 // ============================================================================
 let _draftOverperfMode = "outcome";   // "outcome" | "value"
+let _draftOverperfSort = { key: null, dir: -1 };   // null = default per-lens sort
 
 function _renderDraftOverperformers(host, classes) {
   const completed = (classes || []).filter(c => !c.is_current);
@@ -23599,9 +23823,8 @@ function _renderDraftOverperformers(host, classes) {
   }
   const pool = Object.values(seen);
   if (!completed.length || !pool.length) {
-    host.innerHTML = `<div style="padding:14px;color:var(--text-tertiary);">
-      No completed draft classes to rank yet - overperformers populate once a class
-      has been drafted and signed.</div>`;
+    host.innerHTML = _draftEmpty("No completed draft classes to rank yet",
+      "Overperformers populate once a class has been drafted and signed.");
     return;
   }
   const mode = _draftOverperfMode;
@@ -23612,12 +23835,27 @@ function _renderDraftOverperformers(host, classes) {
     : (p.consensus_rank != null ? Math.round(p.consensus_rank) : null);
 
   let table;
-  const _emptyLens = msg => `<div style="padding:14px;color:var(--text-tertiary);">${msg}</div>`;
+  const _emptyLens = msg => _draftEmpty(msg);
+  // Click-to-sort headers, mirroring Org Tendencies one tab over.
+  const _opSk = _draftOverperfSort.key, _opSd = _draftOverperfSort.dir;
+  const _sortableOP = (key, label, align, title) => {
+    const arrow = _opSk === key ? (_opSd < 0 ? " ▼" : " ▲") : "";
+    return `<th class="dt-sortable" data-op-sort="${key}" title="${escapeHtml(title || "")}" style="cursor:pointer;text-align:${align};${_opSk === key ? "color:var(--neon-cyan);" : ""}">${label}${arrow}</th>`;
+  };
   if (mode === "outcome") {
-    const ranked = pool.filter(p => p.overperf_fv != null)
-      .sort((a, b) => b.overperf_fv - a.overperf_fv
+    let ranked = pool.filter(p => p.overperf_fv != null);
+    if (_opSk) {
+      const _v = p => _opSk === "war" ? (p.career_war ?? -Infinity)
+                    : _opSk === "pick" ? (p.drafted_pick ?? Infinity)
+                    : _opSk === "year" ? (p._year ?? 0)
+                    : (p.overperf_fv ?? -Infinity);
+      ranked.sort((a, b) => (_v(a) - _v(b)) * _opSd || (b.overperf_fv ?? -99) - (a.overperf_fv ?? -99));
+    } else {
+      ranked.sort((a, b) => b.overperf_fv - a.overperf_fv
         || (b.career_war ?? -99) - (a.career_war ?? -99)
-        || (a.drafted_pick || 9999) - (b.drafted_pick || 9999)).slice(0, 50);
+        || (a.drafted_pick || 9999) - (b.drafted_pick || 9999));
+    }
+    ranked = ranked.slice(0, 50);
     const rows = ranked.map((p, i) => {
       const war = p.career_war;
       const warColor = war == null ? "var(--text-tertiary)" : war > 0 ? "var(--neon-green)" : "var(--neon-red)";
@@ -23634,17 +23872,27 @@ function _renderDraftOverperformers(host, classes) {
       </tr>`;
     }).join("");
     table = ranked.length ? `<table class="draft-table">
-      <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
-        <th style="text-align:right;">Drafted</th>
+      <thead><tr><th>#</th><th>Player</th><th>Pos</th>
+        ${_sortableOP("year", "Class", "left", "Draft class")}
+        ${_sortableOP("pick", "Drafted", "right", "Overall pick number")}
         <th style="text-align:center;" title="Latest prospect FV (current grade)">FV now</th>
         <th style="text-align:center;" title="Median FV for that pick band">Exp</th>
-        <th style="text-align:right;" title="FV now minus expected-for-pick">ΔFV</th>
-        <th style="text-align:right;" title="Career MLB bWAR (where they've reached the majors)">WAR</th></tr></thead>
+        ${_sortableOP("delta", "ΔFV", "right", "FV now minus expected-for-pick")}
+        ${_sortableOP("war", "WAR", "right", "Career MLB bWAR (where they've reached the majors)")}</tr></thead>
       <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the realized-outcome lens yet.");
   } else {
-    const ranked = pool.map(p => ({ p, slide: (p.drafted_pick != null && _consPick(p) != null) ? (p.drafted_pick - _consPick(p)) : null }))
-      .filter(x => x.slide != null && x.slide > 0)
-      .sort((a, b) => b.slide - a.slide).slice(0, 50);
+    let ranked = pool.map(p => ({ p, slide: (p.drafted_pick != null && _consPick(p) != null) ? (p.drafted_pick - _consPick(p)) : null }))
+      .filter(x => x.slide != null && x.slide > 0);
+    if (_opSk) {
+      const _v = x => _opSk === "pick" ? (x.p.drafted_pick ?? Infinity)
+                    : _opSk === "cons" ? (_consPick(x.p) ?? Infinity)
+                    : _opSk === "year" ? (x.p._year ?? 0)
+                    : (x.slide ?? -Infinity);
+      ranked.sort((a, b) => (_v(a) - _v(b)) * _opSd || (b.slide - a.slide));
+    } else {
+      ranked.sort((a, b) => b.slide - a.slide);
+    }
+    ranked = ranked.slice(0, 50);
     const rows = ranked.map((x, i) => {
       const p = x.p;
       return `<tr onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
@@ -23659,10 +23907,11 @@ function _renderDraftOverperformers(host, classes) {
       </tr>`;
     }).join("");
     table = ranked.length ? `<table class="draft-table">
-      <thead><tr><th>#</th><th>Player</th><th>Pos</th><th>Class</th>
-        <th style="text-align:right;" title="Where the consensus ranked them pre-draft">Cons. rank</th>
-        <th style="text-align:right;">Drafted</th>
-        <th style="text-align:right;" title="How far past their consensus rank they slid">Slide</th>
+      <thead><tr><th>#</th><th>Player</th><th>Pos</th>
+        ${_sortableOP("year", "Class", "left", "Draft class")}
+        ${_sortableOP("cons", "Cons. rank", "right", "Where the consensus ranked them pre-draft")}
+        ${_sortableOP("pick", "Drafted", "right", "Overall pick number")}
+        ${_sortableOP("slide", "Slide", "right", "How far past their consensus rank they slid")}
         <th style="text-align:center;">FV</th></tr></thead>
       <tbody>${rows}</tbody></table>` : _emptyLens("No qualifying players for the draft-day value lens yet.");
   }
@@ -23684,7 +23933,19 @@ function _renderDraftOverperformers(host, classes) {
     </div>
     ${table}`;
   host.querySelectorAll("[data-overperf-mode]").forEach(b => {
-    b.onclick = () => { _draftOverperfMode = b.dataset.overperfMode; renderDraft(); };
+    b.onclick = () => {
+      _draftOverperfMode = b.dataset.overperfMode;
+      _draftOverperfSort = { key: null, dir: -1 };   // lenses have different columns
+      renderDraft();
+    };
+  });
+  host.querySelectorAll("[data-op-sort]").forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.opSort;
+      if (_draftOverperfSort.key === k) _draftOverperfSort.dir *= -1;
+      else _draftOverperfSort = { key: k, dir: -1 };
+      renderDraft();
+    };
   });
 }
 
@@ -23998,12 +24259,6 @@ async function renderDraftDetail(key) {
       rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
         <span style="color:var(--text-secondary);">Over slot</span>
         <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${overColor};">${amt}${amt && pct ? '  ' : ''}${pct ? `(${pct})` : ''}</strong>
-      </div>`);
-    }
-    if (p.lottery_odds != null) {
-      rows.push(`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--border-light);">
-        <span style="color:var(--text-secondary);">Lottery odds</span>
-        <strong style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--neon-cyan);">${(p.lottery_odds * 100).toFixed(1)}%</strong>
       </div>`);
     }
     if (!rows.length) return "";
@@ -24568,7 +24823,7 @@ function _renderOverseasPosting(host, prospects) {
       : delta > 0 ? "var(--neon-cyan)"
       : delta < 0 ? "var(--neon-orange)" : "var(--text-secondary)";
     const milbLink = p.milb_key
-      ? `<a href="#" onclick="event.preventDefault();state.section='active';state.view={type:'player',key:'${escapeHtml(p.milb_key)}');" style="color:var(--neon-green);text-decoration:none;font-size:10px;">→ MLB</a>`
+      ? `<a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.milb_key)}');" style="color:var(--neon-green);text-decoration:none;font-size:10px;">→ MLB</a>`
       : "";
     return `<tr>
       <td>${_flagImg(p.country_flag_svg, p.country_flag, p.country)}</td>
@@ -33971,7 +34226,7 @@ function renderFarmSystems() {
     const dvm = ((org.dvm_plus || {})[win]);
     const heroHtml = `
       <div class="farm-card-hero card-only" style="display:none;">
-        <a href="#tab=farm&farm=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();state.section='farm';state.view={type:'farm',org:'${escapeHtml(org.org)}');">
+        <a href="#farm-org=${escapeHtml(org.org)}" class="hero-logo-link" onclick="event.preventDefault();goToFarm('${escapeHtml(org.org)}');">
           ${teamLogoHTML(org.org, "md", fullOrgName(org.org))}
         </a>
         <div class="hero-meta">
@@ -40641,6 +40896,7 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
 let _orgTendencies = null;
 let _orgTendenciesLoading = false;
 let _orgTendenciesPrefetch = false;
+let _orgTendenciesError = false;   // set when the sidecar fetch fails / 404s
 
 const _OT_TOOL_LABELS = {
   hit: "Hit", game_pwr: "Game Power", raw_pwr: "Raw Power", speed: "Speed",
@@ -41033,9 +41289,9 @@ function _ensureOrgTendencies(cb) {
   if (_orgTendenciesLoading || _orgTendenciesPrefetch) return;
   _orgTendenciesPrefetch = true;
   fetch("/data/org_tendencies.json", { cache: "no-cache" })
-    .then(r => (r.ok ? r.json() : null))
+    .then(r => { if (!r.ok) { _orgTendenciesError = true; return null; } return r.json(); })
     .then(d => { if (d) _orgTendencies = d; })
-    .catch(() => {})
+    .catch(() => { _orgTendenciesError = true; })
     .finally(() => {
       _orgTendenciesPrefetch = false;
       const cbs = _orgTendenciesPendingCbs; _orgTendenciesPendingCbs = [];
@@ -45299,6 +45555,10 @@ function attachHandlers() {
   const draftSortEl = document.getElementById("draft-sort-select");
   if (draftSortEl) draftSortEl.addEventListener("change", e => {
     state.draftSort = e.target.value;
+    // The card grid has no sort-header to toggle direction, so a stale srev=
+    // draftSort flag (from a deep link) would silently reverse every dropdown
+    // pick. Clear it whenever the user actively chooses a sort.
+    if (state.sortRev) state.sortRev.draftSort = false;
     resetPage("draft");
     renderDraft();
   });
@@ -45693,6 +45953,10 @@ function _resetPageFilters(page) {
     state.draftStatus        = "all";
     state.draftFvIndicators  = new Set();
     state.draftSort          = "fv";
+    if (state.sortRev) state.sortRev.draftSort = false;
+    state.draftOrderSort     = null;
+    state.draftOrderRev      = false;
+    state.signingYear        = null;
     state.pages.draft        = 1;
   } else if (page === "overseas") {
     state.overseasSide          = "all";
