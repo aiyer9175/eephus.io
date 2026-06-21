@@ -93,6 +93,57 @@ def test_collegesavant_app_loads_and_renders(app, kind):
         ctx.eval(f"location.hash='{h}'; window.location.hash='{h}'; render();")
 
 
+def test_new_features_actually_render():
+    """Capture the produced HTML and assert the overhaul's features are really
+    in it (not just 'no crash'): the CS+ pill, a resolved national team name,
+    the Projected Single-A translation block with its flags, and a wired
+    glossary term. Renders a real-shaped hitter through app.js + team_names.js."""
+    ctx = MiniRacer()
+    hitter = ('[{"hitter_name":"Condon, Charlie","team":"GEO_BUL","year":2024,"k_pct":14.8,'
+              '"bb_pct":18.6,"xwoba":0.45,"average_exit_velocity":98.5,'
+              '"90th_percentile_exit_velocity":112.0,"max_exit_velocity":118.0,"swing_pct":38,'
+              '"chase_pct":21,"whiff_pct":20,"zone_swing_pct":68,"zone_contact_pct":89,'
+              '"o_contact_pct":62,"sweet_spot_pct":49,"barrel_pct":17,"hard_hit_pct":69},'
+              '{"hitter_name":"Filler, Joe","team":"GEO_BUL","year":2024,"k_pct":24,"bb_pct":8,'
+              '"xwoba":0.30,"average_exit_velocity":88,"90th_percentile_exit_velocity":99,'
+              '"max_exit_velocity":105,"swing_pct":48,"chase_pct":33,"whiff_pct":28,'
+              '"zone_swing_pct":72,"zone_contact_pct":80,"o_contact_pct":55,"sweet_spot_pct":33,'
+              '"barrel_pct":6,"hard_hit_pct":35}]')
+    cap = r"""
+    var __html={};
+    function __el(id){return new Proxy(function(){return __el(id);},{
+      get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
+        if(k==='classList')return {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
+        if(k==='querySelectorAll')return function(){return [];};
+        if(k==='getAttribute')return function(){return null;};
+        if(k==='addEventListener'||k==='setAttribute'||k==='focus'||k==='setSelectionRange'||k==='removeEventListener')return function(){};
+        if(k==='querySelector'||k==='closest')return function(){return __el(id+'c');};
+        if(k==='value'||k==='textContent')return ''; if(k==='selectionStart')return 0; return __el(id);},
+      set:function(t,k,v){if(k==='innerHTML')__html[id]=v;return true;}, apply:function(){return __el(id);}});}
+    var location={hash:'#/'};
+    var localStorage={getItem:function(){return null;},setItem:function(){},removeItem:function(){}};
+    var document={querySelector:function(s){return __el(s==='#app'?'app':s);},querySelectorAll:function(){return [];},getElementById:function(id){return __el(id);},createElement:function(){return __el('t');},addEventListener:function(){},body:__el('b'),documentElement:__el('h'),head:__el('h')};
+    var GLwired=0;
+    var window={HITTER_DATA:__H__, CS_TRANSLATION:{translations:{"condon-charlie":{side:"hit",single_a:{k_pct:{exp:23.5,lo:15.2,hi:31.9},bb_pct:{exp:14.1,lo:8.1,hi:20.0,low_confidence:true},ops:{exp:0.84,lo:0.63,hi:1.05,experimental:true}}}}},
+      B1G_TEAMS:{}, location:location, localStorage:localStorage, document:document, addEventListener:function(){}, removeEventListener:function(){}, matchMedia:function(){return {matches:false,addEventListener:function(){},addListener:function(){}};}, requestAnimationFrame:function(){}, setTimeout:function(){}, clearTimeout:function(){}, devicePixelRatio:1, innerWidth:1200, scrollTo:function(){}, EEPHUS_GL:{wire:function(){GLwired++;}}, EEPHUS_HUB:null};
+    var console={log:function(){},warn:function(){},error:function(){}};
+    var navigator={userAgent:'verify'};
+    """.replace("__H__", hitter)
+    ctx.eval(cap)
+    ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
+    ctx.eval((CS / "app.js").read_text(encoding="utf-8"))
+    ctx.eval("location.hash='#/player/2024/condon-charlie';window.location.hash=location.hash;render();")
+    html = ctx.eval("__html['app']||''")
+    for needle in ["cs-plus-pill", "Georgia", "Projected Single-A", "23.5%",
+                   "low confidence", "experimental", "g-term"]:
+        assert needle in html, f"player page is missing {needle!r}"
+    assert ctx.eval("GLwired") > 0, "EEPHUS_GL.wire was never called"
+    ctx.eval("location.hash='#/leaders/cs_plus/2024';window.location.hash=location.hash;render();")
+    board = ctx.eval("__html['app']||''")
+    for needle in ["cs-plus-pill", "Georgia", "CS+ (pro profile)"]:
+        assert needle in board, f"leaderboard is missing {needle!r}"
+
+
 def test_shared_team_resolver_resolves_codes():
     ctx = MiniRacer()
     ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))

@@ -385,6 +385,19 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("ifa export crashed in rebuild_only — continuing")
 
+    # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
+    # against the just-refreshed Single-A statlines and rebuilds the per-player
+    # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
+    # vendored TrackMan data + the DB; the factor bands tighten as more
+    # college->Single-A pairs accrue. Best-effort; a failure must not abort.
+    try:
+        from college_translation import build as _build_college_translation
+        _ct = _build_college_translation(out_dir=out_dir)
+        log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
+                 len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
+    except Exception:
+        log.exception("CollegeSavant translation crashed in rebuild_only — continuing")
+
     # Organization Tendencies — pure aggregation over the DB + the
     # just-rebuilt sidecars (timeseries, ifa, debuts). Best-effort.
     try:
@@ -982,17 +995,6 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     log.info("overseas pipeline: exported %d prospects", n_ov)
                 except Exception:
                     log.exception("overseas pipeline crashed — continuing with MiLB run")
-
-            # CollegeSavant -> Single-A translation: re-fit the matched-pair
-            # factors and rebuild the per-player sidecar the CS player pages read.
-            # Reads CollegeSavant static data + the rebuilt DB; safe to fail.
-            try:
-                from college_translation import build as _build_college_translation
-                _ct = _build_college_translation(out_dir=out_dir)
-                log.info("college->Single-A translation: refit %d factor blocks",
-                         len(_ct.get("factors", {})))
-            except Exception:
-                log.exception("college translation build crashed — continuing")
 
         def _run_milb_scrape() -> tuple[int, dict]:
             with _step("1. Scrape MiLB rankings + insert snapshots", log):
