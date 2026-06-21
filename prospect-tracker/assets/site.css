@@ -37,6 +37,10 @@
                 "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
                      "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
+  /* The eephus.io wordmark is set in MS Gothic everywhere it appears (masthead,
+     nav, sidebar). MS-Gothic-first so the logo renders in the brand face wherever
+     it is installed; Roboto Mono (webfont) is the cross-platform fallback. */
+  --font-logo: "MS Gothic","MS UI Gothic","Osaka-Mono","Roboto Mono",ui-monospace,Consolas,monospace;
   --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
@@ -750,7 +754,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    spans the wordmark with the ball at apex (replaces the old mark-above-text
    lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
    the masthead (clamp 2.4–4rem) and the sidebar (20px) share one mark. */
-.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; }
+.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; font-family: var(--font-logo); }
 .eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
 .eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
 .masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
@@ -780,6 +784,32 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    tinted gradient top, not the page bg - fill it to match so the ball doesn't
    read as an off-color disc beside the logo. */
 .sb-brand .eephus-logo-ball { fill: var(--bg-secondary); }
+
+/* ---- Logo load animation: "the eephus" ----
+   Homepage hero only (.eephus-logo--animate). One short shot on load: the lob
+   arc traces in left to right, then the ball drops onto the apex and settles.
+   It never loops. The nav/sidebar lockups are static. The arc path carries
+   pathLength="100" (build_site.py) so the dash math is resolution-independent. */
+.eephus-logo--animate .ew-arc path {
+  stroke-dasharray: 100;
+  stroke-dashoffset: 100;
+  animation: ew-arc-draw .72s cubic-bezier(.22,.61,.36,1) forwards;
+}
+.eephus-logo--animate .ew-ball {
+  transform-origin: center bottom;
+  animation: ew-ball-settle .34s cubic-bezier(.34,1.56,.64,1) .58s backwards;
+}
+@keyframes ew-arc-draw { to { stroke-dashoffset: 0; } }
+@keyframes ew-ball-settle {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Show the final frame, no motion. */
+  .eephus-logo--animate .ew-arc path { animation: none; stroke-dashoffset: 0; }
+  .eephus-logo--animate .ew-ball { animation: none; }
+}
 
 /* ---- On-theme scrollbars (every page except PROSPX, which carries its own
    stitched-leather bars in its inline styles). Subtle thumb on a transparent

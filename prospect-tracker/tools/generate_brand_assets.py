@@ -196,6 +196,110 @@ def make_share_card() -> None:
     print("wrote assets/share-default.png")
 
 
+def _bez(t: float, p0, p1, p2):
+    """Point on a quadratic bezier at parameter t."""
+    u = 1 - t
+    return (u * u * p0[0] + 2 * u * t * p1[0] + t * t * p2[0],
+            u * u * p0[1] + 2 * u * t * p1[1] + t * t * p2[1])
+
+
+def _ramp_color(frac: float):
+    """Refractor-ramp color at horizontal fraction `frac` (0..1)."""
+    frac = max(0.0, min(1.0, frac))
+    for i in range(len(RAMP_DARK) - 1):
+        t0, c0 = RAMP_DARK[i]
+        t1, c1 = RAMP_DARK[i + 1]
+        if t0 <= frac <= t1:
+            f = (frac - t0) / max(1e-9, t1 - t0)
+            return tuple(int(a + (b - a) * f) for a, b in zip(c0, c1)) + (255,)
+    return RAMP_DARK[-1][1] + (255,)
+
+
+def _ease_out(t: float) -> float:
+    return 1 - (1 - t) ** 3
+
+
+def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
+    """One frame of the animated mark (dark variant, transparent bg). `prog` 0..1
+    is the whole-shot progress: arc draws over the first ~62%, the ball drops and
+    settles over ~55-85%, the wordmark fades in over ~25-65%."""
+    img = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    # Geometry in the 300x104 wordmark viewBox, scaled by sc.
+    p0, p1, p2 = (18, 56), (150, -18), (282, 56)
+    x_lo, x_hi = 18.0, 282.0
+    # --- arc: brush-stroke polyline up to the drawn fraction ---
+    arc_p = _ease_out(min(1.0, prog / 0.62))
+    w = max(2, int(2.2 * sc))
+    n = 130
+    for i in range(int(n * arc_p) + 1):
+        t = i / n
+        x, y = _bez(t, p0, p1, p2)
+        col = _ramp_color((x - x_lo) / (x_hi - x_lo))
+        cx, cy = x * sc, y * sc
+        d.ellipse([cx - w / 2, cy - w / 2, cx + w / 2, cy + w / 2], fill=col)
+    # --- wordmark fade-in (auto-fit to ~74% of the width; baseline raised so
+    #     the 'p' descender clears the bottom edge) ---
+    tp = max(0.0, min(1.0, (prog - 0.25) / 0.40))
+    if tp > 0:
+        layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        ld = ImageDraw.Draw(layer)
+        f10 = _font(40)
+        target_w = W * 0.74
+        fs = max(10, int(40 * target_w / max(1.0, ld.textlength("eephus.io", font=f10))))
+        f = _font(fs)
+        a = int(255 * tp)
+        total_w = ld.textlength("eephus.io", font=f)
+        x0 = (W - total_w) / 2
+        baseline = H - int(0.16 * fs) - 6
+        ld.text((x0, baseline), "eephus", font=f, anchor="ls", fill=DARK_FG[:3] + (a,))
+        w_e = ld.textlength("eephus", font=f)
+        ld.text((x0 + w_e, baseline), ".io", font=f, anchor="ls", fill=(255, 215, 0, a))
+        img = Image.alpha_composite(img, layer)
+    # --- ball drop + settle onto the apex ---
+    bp = max(0.0, min(1.0, (prog - 0.55) / 0.30))
+    if bp > 0:
+        # easeOutBack for a small overshoot
+        s = 1.70158
+        e = 1 + (s + 1) * (bp - 1) ** 3 + s * (bp - 1) ** 2
+        dy = (-12 * (1 - e)) * sc
+        r = int(9 * sc * (0.7 + 0.3 * min(1.0, bp * 1.3)))
+        bx, by = 150 * sc, 20 * sc + dy
+        ball = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        bd = ImageDraw.Draw(ball)
+        bd.ellipse([bx - r, by - r, bx + r, by + r], fill=(26, 26, 30, 255),
+                   outline=DARK_FG[:3] + (255,), width=max(1, int(1.6 * sc)))
+        ball.putalpha(ball.getchannel("A").point(lambda v: int(v * min(1.0, bp * 1.5))))
+        img = Image.alpha_composite(img, ball)
+    return img
+
+
+def make_animation() -> None:
+    """Render the animated mark as a transparent PNG frame sequence (the export
+    source for an alpha WebM/MP4 via ffmpeg - see branding/animated/EXPORT.md) and
+    a matted GIF (GIF only does 1-bit transparency, so it gets a dark matte)."""
+    out = ROOT / "branding" / "animated"
+    frames_dir = out / "frames"
+    frames_dir.mkdir(parents=True, exist_ok=True)
+    for old in frames_dir.glob("frame_*.png"):
+        old.unlink()
+    W, H, sc = 600, 208, 2.0
+    N_DRAW, N_HOLD = 30, 12
+    frames = []
+    for i in range(N_DRAW + N_HOLD):
+        prog = min(1.0, i / (N_DRAW - 1))
+        fr = _animation_frame(prog, W, H, sc)
+        fr.save(frames_dir / f"frame_{i:03d}.png")
+        # Matte onto the near-black field for the GIF.
+        matte = Image.new("RGB", (W, H), DARK_BG[:3])
+        matte.paste(fr, (0, 0), fr)
+        frames.append(matte)
+    durations = [40] * N_DRAW + [40] * (N_HOLD - 1) + [1600]  # hold the last frame
+    frames[0].save(out / "eephus-arc.gif", save_all=True, append_images=frames[1:],
+                   duration=durations, loop=0, optimize=True)
+    print(f"wrote branding/animated/frames/ ({N_DRAW + N_HOLD} frames) + eephus-arc.gif")
+
+
 def assemble_branding() -> None:
     """Copy the web-served artifacts into the documented branding/ bundle so the
     folder is a complete, self-contained export (the SVG marks under
@@ -225,4 +329,5 @@ if __name__ == "__main__":
     make_favicons()
     make_app_icons()
     make_share_card()
+    make_animation()
     assemble_branding()

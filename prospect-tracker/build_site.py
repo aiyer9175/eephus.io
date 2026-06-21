@@ -278,7 +278,7 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
         '<stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/>'
         '<stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/>'
         '</linearGradient></defs>'
-        f'<path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#{grad})" '
+        f'<path d="M 3 30 Q 50 -24 97 30" pathLength="100" fill="none" stroke="url(#{grad})" '
         'stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
         f'<svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true">'
         f'<circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#{grad})" stroke-width="3"/>'
@@ -320,7 +320,10 @@ def eephus_logo_lockup(badge: bool = True) -> str:
         f'<div class="eephus-logo-chips">{BETA_BADGE}'
         f'{_x_link("eephus_io", cls="eph-xlink--beta eph-xlink--live")}</div>'
     ) if badge else ""
-    return f'<div class="eephus-logo">{eephus_merged_wordmark("mast")}{chips}</div>'
+    # eephus-logo--animate plays the one-shot arc-draw + ball-settle on the
+    # homepage hero only (the nav/sidebar lockups stay static). Reduced-motion
+    # shows the final frame; see assets/site.css.
+    return f'<div class="eephus-logo eephus-logo--animate">{eephus_merged_wordmark("mast")}{chips}</div>'
 
 # --------------------------------------------------------------------------- #
 # Markdown + YouTube

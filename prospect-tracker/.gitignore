@@ -86,6 +86,8 @@ Thumbs.db
 !branding/social/*.png
 !branding/animated/*.png
 !branding/animated/*.gif
+!branding/animated/frames/
+!branding/animated/frames/*.png
 
 # --- Misc ---------------------------------------------------------------
 *.log
