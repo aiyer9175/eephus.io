@@ -454,6 +454,9 @@
 
   const boardState = { sort: "projGuar", dir: -1, type: "all", pos: "all", verdict: "all" };
 
+  // Which "biggest misses" category the Model Accountability table is showing.
+  let modelMissTab = "guar";   // guar | years | aav
+
   function renderBoard(rows, cls) {
     const sortKey = boardState.sort;
     let members = cls.members.slice();
@@ -951,10 +954,28 @@
     const g1 = meta.gate1, g2 = meta.gate2;
     const pooledRows = (pooled, fmt) => Object.entries(pooled).map(([k, v]) =>
       `<tr><td>${esc(k)}</td><td>${fmt(v.mae_model)}</td><td>${fmt(v.mae_base)}</td><td>${v.n}</td><td>${v.mae_model < v.mae_base ? "&#10003; beats baseline" : "&#10007; behind baseline"}</td></tr>`).join("");
-    const missRows = g2 && g2.biggest_misses ? g2.biggest_misses.map(m =>
+    // Three miss categories, each its own ranked list / Err column. One table,
+    // swapped by the small in-section tabs below; default is guarantee.
+    const MISS_TABS = [
+      ["guar", "Guarantee", "biggest_misses",
+        m => `${m.actual_years}y / $${m.actual_guar_mm}M`,
+        m => `${m.pred_years}y / $${m.pred_guar_mm}M`,
+        m => `${formatMetric(m.err_mm, "rate")}M`],
+      ["years", "Length", "biggest_misses_years",
+        m => `${m.actual_years}y`, m => `${m.pred_years}y`,
+        m => `${formatMetric(m.err_years, "rate")}y`],
+      ["aav", "AAV", "biggest_misses_aav",
+        m => `$${m.actual_aav_mm}M`, m => `$${m.pred_aav_mm}M`,
+        m => `${formatMetric(m.err_aav_mm, "rate")}M`],
+    ];
+    const missTab = MISS_TABS.find(t => t[0] === modelMissTab) || MISS_TABS[0];
+    const missList = (g2 && g2[missTab[2]]) || [];
+    const missRows = missList.map(m =>
       `<tr><td>${m.winter}</td><td>${esc(m.player)}</td><td>${esc(m.to_team || "")}</td>
-       <td>${m.actual_years}y / $${m.actual_guar_mm}M</td><td>${m.pred_years}y / $${m.pred_guar_mm}M</td>
-       <td>${formatMetric(m.err_mm, "rate")}M</td></tr>`).join("") : "";
+       <td>${missTab[3](m)}</td><td>${missTab[4](m)}</td>
+       <td>${missTab[5](m)}</td></tr>`).join("");
+    const missTabBar = MISS_TABS.map(t =>
+      `<button class="chip${t[0] === missTab[0] ? " active" : ""}" data-mtab="${t[0]}">${t[1]}</button>`).join("");
     rows.innerHTML = `
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
       <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts &mdash; misses and all &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
@@ -967,9 +988,15 @@
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>
       <h3>Biggest misses (published, not hidden)</h3>
+      <div class="fa-filter-bar" style="margin-bottom:8px;">${missTabBar}</div>
       <table class="detail-table"><thead><tr><th>Winter</th><th>Player</th><th>To</th><th>Actual</th><th>Model</th><th>Err</th></tr></thead>
       <tbody>${missRows}</tbody></table>
       <div class="fa-note" style="margin-top:8px;">${(g2.notes || []).map(esc).join(" &middot; ")}</div>` : ""}`;
+    rows.querySelectorAll("[data-mtab]").forEach(b => b.onclick = () => {
+      modelMissTab = b.dataset.mtab;
+      renderModel(rows, meta);
+      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    });
   }
 
   // The module glossary moved into the unified /glossary/ data layer

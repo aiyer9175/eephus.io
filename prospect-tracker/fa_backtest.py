@@ -338,12 +338,17 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
             wstats["aav"]["b"].append((b_aav / 1e6, act_a / 1e6))
             wstats["years"]["m"].append((float(pred["proj_years"]), act_y))
             wstats["years"]["b"].append((b_years, act_y))
+            actual_aav_mm = round(act_a / 1e6, 1)
+            pred_aav_mm = round(pred["proj_aav_usd"] / 1e6, 1)
             misses.append({"player": s["player_name"], "winter": W,
                            "to_team": s.get("to_team"), "qo": bool(s.get("qo")),
                            "actual_guar_mm": round(act_g / 1e6, 1),
                            "pred_guar_mm": round(pred["proj_guarantee_usd"] / 1e6, 1),
                            "actual_years": act_y, "pred_years": pred["proj_years"],
-                           "err_mm": round((pred["proj_guarantee_usd"] - act_g) / 1e6, 1)})
+                           "err_mm": round((pred["proj_guarantee_usd"] - act_g) / 1e6, 1),
+                           "actual_aav_mm": actual_aav_mm, "pred_aav_mm": pred_aav_mm,
+                           "err_years": pred["proj_years"] - act_y,
+                           "err_aav_mm": round(pred_aav_mm - actual_aav_mm, 1)})
         row = {"winter": W, "n": len(wstats["guarantee"]["m"])}
         for k in pooled:
             row[f"{k}_mae_model"] = _mae(wstats[k]["m"])
@@ -364,6 +369,8 @@ def run_market_gate(persist: bool = True, challenger: bool = False) -> dict:
                        "n": len(v["m"])} for k, v in pooled.items()},
         "per_winter": per_winter,
         "biggest_misses": misses[:12],
+        "biggest_misses_years": sorted(misses, key=lambda m: -abs(m["err_years"]))[:12],
+        "biggest_misses_aav": sorted(misses, key=lambda m: -abs(m["err_aav_mm"]))[:12],
         "deferral_coverage": fm.deferral_coverage_audit(enriched),
         "notes": [
             "forward-chained: trained on winters strictly before each test winter",
