@@ -1161,9 +1161,15 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app .fa-valmap > summary:hover { color: var(--text-primary); }
 .fa-app .fa-valmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
 .fa-app .fa-valmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
-.fa-app .fa-board-layout { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px;
+.fa-app .fa-board-layout { display: grid; grid-template-columns: 200px minmax(0, 1fr) 230px; gap: 14px;
   align-items: start; }
 .fa-app .fa-board-main { min-width: 0; overflow-x: auto; }
+.fa-app .fa-board-left { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 8px;
+  align-self: start; }
+.fa-app .fa-board-left .fa-rail-row.is-active { color: var(--text-primary); font-weight: 700;
+  background: var(--bg-tertiary); }
+.fa-app .fa-board-left a.fa-rail-row { cursor: pointer; color: var(--text-secondary); text-decoration: none; }
+.fa-app .fa-board-left a.fa-rail-row:hover { color: var(--text-primary); background: var(--bg-tertiary); }
 .fa-app .fa-board-rail { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 8px; }
 .fa-app .fa-rail-mod { border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 10px; }
 .fa-app .fa-rail-head { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
@@ -1189,11 +1195,20 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .fa-app .fa-block-prospect i { border-color: var(--accent-gold); color: var(--accent-gold); }
 @media (max-width: 1100px) {
   .fa-app .fa-board-layout { grid-template-columns: 1fr; }
-  .fa-app .fa-board-rail { position: static; flex-direction: row; flex-wrap: wrap; }
+  .fa-app .fa-board-rail, .fa-app .fa-board-left { position: static; flex-direction: row; flex-wrap: wrap; }
   .fa-app .fa-rail-mod { flex: 1 1 200px; }
 }
 
 /* ── MLB Projections (/projections/) - extends .fa-app ─────────────────── */
+/* Players view gets a LEFT rail (nav + scope + leaders): rail first, main second. */
+.proj-app .fa-board-layout { grid-template-columns: 210px minmax(0, 1fr); }
+.proj-app .fa-board-left a.fa-rail-row { cursor: pointer; color: var(--text-secondary); text-decoration: none; }
+.proj-app .fa-board-left a.fa-rail-row:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.proj-app .fa-board-left .fa-rail-row.is-active { color: var(--text-primary); font-weight: 700;
+  background: var(--bg-tertiary); }
+@media (max-width: 1100px) {
+  .proj-app .fa-board-layout { grid-template-columns: 1fr; }
+}
 .proj-app .proj-select, .proj-app .proj-search { font-family: var(--font-retro-mono);
   font-size: 12px; padding: 4px 8px; background: var(--bg-secondary);
   border: 1px solid var(--border); color: var(--text-primary); }
