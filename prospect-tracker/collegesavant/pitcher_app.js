@@ -624,6 +624,11 @@ function render() {
     afterRender();
     return;
   }
+  if (hash.startsWith("#/projections")) {
+    renderProjections();
+    afterRender();
+    return;
+  }
   renderHome();
   afterRender();
 }
@@ -874,6 +879,64 @@ function computeTeamTendencies(pitchers) {
     rows.push({ team, n: ps.length, agg });
   }
   return rows;
+}
+
+// ---- College -> Single-A Projections (pitchers) ----------------------------
+// Mirror of the hitter Pro Projections page: the methodology, the leave-one-out
+// backtest, and a board of every pitcher's projected Single-A K% / BB% (the only
+// two arms-side rates the matched-pair model carries), ranked by CS+.
+function renderProjections() {
+  const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
+  const T = (window.CS_TRANSLATION && window.CS_TRANSLATION.translations) || {};
+  const accRows = [["Proj Single-A K%", "pit_k"], ["Proj Single-A BB%", "pit_bb"]]
+    .map(([label, k]) => {
+      const f = E[k];
+      if (!f) return "";
+      const cov = f.coverage != null ? Math.round(f.coverage * 100) + "%" : " - ";
+      const flag = (f.r2 != null && f.r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
+      return `<tr><td class="tt-team">${label}${flag}</td>
+        <td class="tt-col">${f.r2 != null ? f.r2.toFixed(2) : " - "}</td>
+        <td class="tt-col">±${f.band_sd ?? " - "}</td>
+        <td class="tt-col">${f.mae ?? " - "}</td>
+        <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
+    }).join("");
+  const pband = (b) => b == null ? " - " : b.exp.toFixed(1) + "%";
+  const list = state.pitchers
+    .map((p) => ({ p, t: T[p.slug], cs: state.csPlus && state.csPlus.get(p.slug) }))
+    .filter((x) => x.t && x.t.single_a)
+    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity))
+    .slice(0, LEADERBOARD_LIMIT);
+  const body = list.map((x, i) => {
+    const sa = x.t.single_a;
+    const logo = x.p.team ? `<img class="tt-logo" src="logos/${escapeHtml(x.p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.pitcher_name))}</a></td>
+      <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
+      <td class="tt-col">${pband(sa.k_pct)}</td>
+      <td class="tt-col">${pband(sa.bb_pct)}</td></tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">${renderYearSelect()}</section>
+    <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
+    <ol class="proj-method">
+      <li><strong>Matched pairs.</strong> We take college pitchers who later reached Single-A, pair each one's college rate with the Single-A rate they actually posted, and fit how the two relate. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope shrunk for sample size. An extreme college number is moderated, never copied straight across.</li>
+      <li><strong>Honest bands.</strong> The P10-P90 band is the spread of the model's own misses on arms it was not fit on (leave-one-out). Coverage near 80% in the table below means the band is sized to reality, not for show.</li>
+      <li><strong>What to trust.</strong> Strikeout rate carries the signal here; walk rate largely washes out to the Single-A mean and is flagged. Read it as context, not a forecast.</li>
+      <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. Stuff+, CS+, and the tracked pitch shapes describe college stuff; they are not a scouting Future Value, which the tracked data does not predict.</li>
+    </ol>
+    <div class="panel-title" style="margin-top:18px;"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
+      <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
+    </table></div></section>
+    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} pitchers with a projection · ranked by CS+ (pro profile)</span></div>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="5" class="note-line">No projections for this year.</td></tr>`}</tbody>
+    </table></div></section>`;
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
 }
 
 function renderTeams() {

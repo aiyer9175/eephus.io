@@ -661,7 +661,15 @@ function renderProjections() {
   }).join("");
   app.innerHTML = `
     <section class="toolbar">${renderYearSelect()}</section>
-    <div class="panel-title"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
+    <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
+    <ol class="proj-method">
+      <li><strong>Matched pairs.</strong> We take college hitters who later reached Single-A, pair each one's college tracked rate with the Single-A rate they actually posted, and fit how the two relate.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope that is shrunk for sample size. An extreme college number is moderated, never copied straight across.</li>
+      <li><strong>Honest bands.</strong> The P10-P90 band is the spread of the model's own misses on players it was not fit on (leave-one-out). When coverage sits near 80% in the table below, the band is sized to reality rather than for show.</li>
+      <li><strong>What to trust.</strong> Strikeout rate carries real signal. Walk rate and OPS mostly wash out to the Single-A mean and are flagged; read them as context, not forecasts.</li>
+      <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. CS+ and the tracked skills describe college performance; they are not a scouting Future Value, which the tracked data does not predict.</li>
+    </ol>
+    <div class="panel-title" style="margin-top:18px;"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
