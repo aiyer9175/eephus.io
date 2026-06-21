@@ -55,6 +55,11 @@
   --fs-xs: 11px; --fs-sm: 12px; --fs-base: 13px; --fs-md: 14px; --fs-lg: 15px; --fs-xl: 18px; --fs-xxl: 24px;
   --text-on-accent: #FBF8F0;          /* cream text on the navy band / dark accents */
   --bg-hover: rgba(15, 27, 45, 0.05); /* subtle row / control hover on paper */
+  /* Scrollbars - one theme-aware token set drives BOTH surfaces (editorial +
+     PROSPX). Restrained thumb that reads on paper; a navy accent on hover. */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #BBB29C;
+  --scrollbar-thumb-hover: var(--accent-navy);
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -124,6 +129,11 @@
   --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
   --text-on-accent: #05080F;            /* near-black text on the bright refractor accents */
   --bg-hover: rgba(0, 217, 255, 0.08);  /* cyan-tinted hover on the dark surface */
+  /* Scrollbars (dark): charcoal thumb that reads on near-black, a faint track so
+     the star canvas barely shows through the gutter, refractor cyan on hover. */
+  --scrollbar-track: rgba(150,160,180,0.05);
+  --scrollbar-thumb: #3A3A42;
+  --scrollbar-thumb-hover: var(--accent-cyan);
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   --grain: rgba(255,255,255,.035);
   --grain2: rgba(120,200,224,.04);
@@ -817,14 +827,17 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .eephus-logo--animate .ew-ball { animation: none; }
 }
 
-/* ---- On-theme scrollbars (every page except PROSPX, which carries its own
-   stitched-leather bars in its inline styles). Subtle thumb on a transparent
-   track; brightens to the gold accent on hover. ---- */
-* { scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+/* ---- On-theme scrollbars (one token set, shared with PROSPX's inline copy).
+   Restrained rounded thumb that reads in both themes; a brand accent on hover
+   (navy on paper, refractor cyan on the dark field). The theme-aware
+   --scrollbar-* tokens flip automatically, so the dark editorial bars now match
+   the app instead of fading to dim charcoal-on-black. ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--border); border-radius: 999px; }
-::-webkit-scrollbar-thumb:hover { background: var(--text-tertiary); }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 6px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-corner { background: transparent; }
 .masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
 

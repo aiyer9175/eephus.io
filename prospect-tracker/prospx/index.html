@@ -614,29 +614,24 @@
        other in-page anchors are the section headers in the watchlist
        picker which already use scrollIntoView with the same behavior. */
     html { scroll-behavior: smooth; }
-    /* === Themed scrollbars - retro baseball-card / newspaper aesthetic ===
-       Paper-tan track with bracket-style end borders (echoes the
-       section banner double-rule); navy thumb with a thin off-white
-       inner "stitching" line for the baseball-leather feel. Hovers to
-       a stitching-red. Firefox parity via scrollbar-width/color. */
+    /* === Themed scrollbars - unified with the editorial pages ===
+       One theme-aware token set drives BOTH surfaces (defined once in
+       assets/site.css): a restrained rounded thumb that reads in light and
+       dark, a faint track, and a brand accent on hover (navy on paper,
+       refractor cyan on the dark field). Firefox parity via scrollbar-color. */
     * {
       scrollbar-width: thin;
-      scrollbar-color: var(--bg-header) var(--bg-secondary);
+      scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
     }
     *::-webkit-scrollbar { width: 12px; height: 12px; }
-    *::-webkit-scrollbar-track {
-      background: var(--bg-secondary);
-      border-left: 1px solid var(--border);
-      border-right: 1px solid var(--border);
-    }
+    *::-webkit-scrollbar-track { background: var(--scrollbar-track); }
     *::-webkit-scrollbar-thumb {
-      background: var(--bg-header);
-      border: 2px solid var(--bg-secondary);
+      background: var(--scrollbar-thumb);
       border-radius: 6px;
-      box-shadow: inset 0 0 0 1px rgba(245, 235, 220, 0.35);
     }
-    *::-webkit-scrollbar-thumb:hover { background: var(--down); }
-    *::-webkit-scrollbar-corner { background: var(--bg-secondary); }
+    *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+    *::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
+    *::-webkit-scrollbar-corner { background: transparent; }
     /* Marquee strips hide the scrollbar entirely; only the reduced-motion
        fallback (.ntk-scroll) restores a slim horizontal bar so the content
        stays reachable when the marquee is suppressed. */
@@ -8036,12 +8031,9 @@
        horizontally-scrollable pill rows + tables, and tightened spacing.
        =================================================================== */
 
-    /* --- Dark: scrollbar thumb was painted with --bg-header (near-black),
-       invisible against the deepened base. Repaint with a visible neutral
-       charcoal; refractor accent on hover. --- */
-    [data-theme="dark"] *::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); }
-    [data-theme="dark"] *::-webkit-scrollbar-thumb:hover { background: var(--neon-cyan); }
-    [data-theme="dark"] * { scrollbar-color: var(--scrollbar-thumb) var(--bg-secondary); }
+    /* Dark scrollbar repaint removed: the base scrollbar rules above now use the
+       theme-aware --scrollbar-* tokens (assets/site.css), which flip to the
+       charcoal thumb + faint track + cyan hover automatically. */
 
     /* --- Dark: bolder inline composite pills. The light-theme rgba washes
        read faint over true black; repaint with a richer dark-accent fill
