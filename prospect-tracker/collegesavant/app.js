@@ -679,6 +679,8 @@ const PROSPECT_COLS_HIT = [
   { key: "bb_pct", label: "BB%", get: (x) => x.box && x.box.bb_pct, t: "pct", hb: true },
   { key: "k_pct", label: "K%", get: (x) => x.box && x.box.k_pct, t: "pct", hb: false },
   { key: "pa", label: "PA", get: (x) => x.box && x.box.pa, t: "raw", hb: true },
+  { key: "proj_k", label: "Proj A K%", get: (x) => (x.proj && x.proj.k_pct ? x.proj.k_pct.exp : null), t: "pctval", hb: false },
+  { key: "proj_bb", label: "Proj A BB%", get: (x) => (x.proj && x.proj.bb_pct ? x.proj.bb_pct.exp : null), t: "pctval", hb: true },
 ];
 
 function renderProspects() {
@@ -695,6 +697,7 @@ function renderProspects() {
     if (t === "ceil") return Math.ceil(v);
     if (t === "dec3") return d3(v);
     if (t === "pct") return (v * 100).toFixed(1) + "%";
+    if (t === "pctval") return v.toFixed(1) + "%";
     if (t === "int") return Math.round(v);
     return v;
   };
@@ -729,7 +732,7 @@ function renderProspects() {
       </select>
     </section>
     <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
-    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Names link to a player's CollegeSavant page when they have tracking data. This board is box-score based; the tracked CS+ and percentile views cover only players with tracking data.</p>
+    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model (K% carries real signal, r-squared about 0.47; BB% is softer). Names link to a player's CollegeSavant page when they have tracking data.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>

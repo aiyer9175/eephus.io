@@ -214,7 +214,7 @@ def _draft_statlines(con):
     return hit, pit
 
 
-def _draft_prospect_export(con, box_hit, box_pit, pk_to_cs=None):
+def _draft_prospect_export(con, box_hit, box_pit, pk_to_cs=None, F=None):
     """The reverse of the tracking universe: draft prospects (each year) brought
     INTO CollegeSavant by their conventional college box score, for the ones we
     already hold stats for - including prospects with no TrackMan tracking. Keyed
@@ -245,6 +245,9 @@ def _draft_prospect_export(con, box_hit, box_pit, pk_to_cs=None):
             e["rank"] = fv[pk]["rank"]
         if pk in cs_links:  # this prospect also has a CollegeSavant tracked page
             e["cs"] = cs_links[pk]
+        proj = _box_project(box, F or {})  # Single-A projection from the college box
+        if proj:
+            e["proj"] = proj
         return e
 
     def _rank_key(x):
@@ -428,6 +431,23 @@ def _translate_pitcher(v, F):
     return out
 
 
+def _box_project(box, F):
+    """Project a Single-A K%/BB% line from a draft prospect's CONVENTIONAL college
+    box score (so prospects with no TrackMan tracking still get a projection). The
+    box bb%/k% are decimals; the box_k / box_bb factors are fit in percent, so
+    scale up before predicting. Returns None when no factor or no box rate."""
+    if not box:
+        return None
+    out = {}
+    if box.get("k_pct") is not None and F.get("box_k"):
+        out["k_pct"] = _band(_predict(F["box_k"], box["k_pct"] * 100), F["box_k"]["band_sd"], 0, 60)
+    if box.get("bb_pct") is not None and F.get("box_bb"):
+        b = _band(_predict(F["box_bb"], box["bb_pct"] * 100), F["box_bb"]["band_sd"], 0, 30)
+        b["low_confidence"] = F["box_bb"]["r2"] < 0.10
+        out["bb_pct"] = b
+    return out or None
+
+
 def build(out_dir: Path | None = None) -> dict:
     out_dir = out_dir or (ROOT / "data")
     with storage.connect() as con:
@@ -474,6 +494,26 @@ def build(out_dir: Path | None = None) -> dict:
         # onto its draft records with no rebuild. Additive and safe-when-empty.
         draft_keys = _draft_keys(con)
         box_hit, box_pit = _draft_statlines(con)
+
+        # Box-stat -> Single-A factors: project a Single-A line for the Draft
+        # Prospects board from a prospect's conventional college box (K%/BB%),
+        # matched by name to the same Single-A side the tracked model uses. Lets
+        # prospects with no TrackMan tracking still get an honest projection.
+        draft_name = {pk: norm_name(nm) for pk, nm in
+                      con.execute("SELECT player_key, player_name FROM draft_players")}
+        box_cs = {}
+        for pk, b in box_hit.items():
+            nm = draft_name.get(pk)
+            if nm and (b.get("k_pct") is not None or b.get("bb_pct") is not None):
+                box_cs[nm] = {"k_pct": b["k_pct"] * 100 if b.get("k_pct") is not None else None,
+                              "bb_pct": b["bb_pct"] * 100 if b.get("bb_pct") is not None else None}
+        for bkey, bck, bpi in [("box_k", "k_pct", 1), ("box_bb", "bb_pct", 2)]:
+            bxs, bys = _pairs(box_cs, sa_h, bck, bpi)
+            bf = _fit(bxs, bys)
+            if bf:
+                bf["loo"] = _loo_mae_cov(box_cs, sa_h, bck, bpi)
+                F[bkey] = bf
+
         translations, bridge = {}, {}
         pk_to_cs = {}  # draft player_key -> {slug, year, side}: prospects that ALSO
         n_box = 0      # have a CollegeSavant tracked page, so the board can link to it
@@ -543,7 +583,7 @@ def build(out_dir: Path | None = None) -> dict:
 
         # The reverse direction: draft prospects (each year) carried into
         # CollegeSavant by the college box scores we already hold, FV-ranked.
-        prospects = _draft_prospect_export(con, box_hit, box_pit, pk_to_cs)
+        prospects = _draft_prospect_export(con, box_hit, box_pit, pk_to_cs, F)
         prospects["generated_from"] = "college_translation.build"
         (out_dir / "collegesavant_draft_prospects.js").write_text(
             "window.CS_DRAFT_PROSPECTS = " + json.dumps(prospects) + ";\n", encoding="utf-8")
