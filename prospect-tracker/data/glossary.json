@@ -144,6 +144,28 @@
    "example": "A source publishing 45+ on a 19-year-old shortstop puts the soft-pink ^ on his FV badge: the outlet sees a grade above the number. A 55+ from the same outlet shows no marker because 55 already prices the upside (the cap keeps the mark meaningful below FV 50)."
   },
   {
+   "id": "cs_plus",
+   "term": "CS+ (CollegeSavant+)",
+   "category": "custom-index",
+   "module": [
+    "collegesavant"
+   ],
+   "aliases": [
+    "CS+",
+    "CollegeSavant+",
+    "college tracked-skill index"
+   ],
+   "priority": 16,
+   "definition": "CollegeSavant's tracked-skill index. 100 = the season's college pool average, +10 = one standard deviation better. A college-relative read on tracked skill, not a Single-A projection.",
+   "methodology": "A pool-anchored z-average of the TrackMan tracked skills, on the same 100 + 10 x z convention as SC+, computed against the same per-year college cohort the percentile sliders use.\n\nHitters: two equally-weighted families, contact quality (90th-percentile exit velocity / barrel% / hard-hit%) and plate discipline (zone-contact% / -whiff% / -chase%). Pitchers: stuff and whiffs (Stuff+ / swinging-strike% / induced chase%) and contact suppression (-barrel% / -hard-hit% / -xwOBA against). Components a player or year does not carry simply drop out.\n\nEach component is z-scored against its per-year cohort, sign-adjusted so higher is better, averaged within each family, then the two families are averaged so neither outvotes the other. Rescaled 100 + 10 x z and clamped to 40-160.\n\nIt is observation-only (no scouting prior) and college-relative: it says a player is better than the college pool on tracked skill, not that he will produce at Single-A. CollegeSavant's Stuff+ in particular does not predict pro outcomes in the matched data.",
+   "formula": "CS+ = 100 + 10 × avg(family means of z-scored tracked components vs the per-year college cohort)",
+   "example": "A hitter at 90th-percentile EV +1.2σ, barrel% +1σ, hard-hit% +0.8σ with average discipline lands near CS+ 115, well above the college pool on tracked skill.",
+   "seeAlso": [
+    "statcast_plus",
+    "rps_plus"
+   ]
+  },
+  {
    "id": "statcast_plus",
    "term": "Statcast+ (SC+)",
    "category": "custom-index",

@@ -440,6 +440,7 @@ function setActiveYear(year) {
   state.pitchers = state.allPitchers.filter((pitcher) => pitcher.year === state.year);
   state.pitches = state.allPitches.filter((pitch) => pitch.year === state.year);
   state.percentiles = computePercentiles(state.pitchers);
+  state.csPlus = computeCSPlus(state.pitchers);
   state.pitchPercentiles = computePitchPercentiles(state.pitches);
   if (!activeHeadlineMetrics().some((metric) => metric.key === state.sortKey)) {
     state.sortKey = "stuff_plus";
@@ -472,6 +473,69 @@ function computePitchPercentiles(pitches) {
     byPitch.set(pitchKey(pitch), Math.max(1, Math.min(99, percentile)));
   }
   return byPitch;
+}
+
+// ---- CS+ : the college pitcher tracked-skill index (eephus "+" family) ------
+// Pool-anchored z-average on the 100 + 10*z convention (100 = cohort average,
+// +10 = one standard deviation better), same as PROSPX SC+. Two balanced skill
+// families so neither outvotes the other. Components present vary by year
+// (shape-only years carry no swinging-strike / chase); absent parts drop out.
+// COLLEGE-RELATIVE index, NOT a Single-A projection (stuff in particular does
+// not translate to pro outcomes in our matched data).
+const CSPLUS_GROUPS = [
+  { name: "stuff & whiffs", parts: [
+    { key: "stuff_plus", dir: 1 },
+    { key: "swinging_strike_pct", dir: 1 },
+    { key: "chase_pct", dir: 1 },
+  ] },
+  { name: "contact suppression", parts: [
+    { key: "barrel_pct", dir: -1 },
+    { key: "hard_hit_pct", dir: -1 },
+    { key: "xwoba_against", dir: -1 },
+  ] },
+];
+
+function meanStd(values) {
+  const v = values.filter(Number.isFinite);
+  if (!v.length) return [0, 1];
+  const m = v.reduce((a, b) => a + b, 0) / v.length;
+  const sd = Math.sqrt(v.reduce((a, b) => a + (b - m) * (b - m), 0) / v.length);
+  return [m, sd || 1];
+}
+
+function computeCSPlus(pitchers) {
+  const stats = {};
+  for (const group of CSPLUS_GROUPS) {
+    for (const part of group.parts) {
+      if (!stats[part.key]) stats[part.key] = meanStd(pitchers.map((p) => p[part.key]));
+    }
+  }
+  const out = new Map();
+  for (const pitcher of pitchers) {
+    const groupZ = [];
+    for (const group of CSPLUS_GROUPS) {
+      const zs = [];
+      for (const part of group.parts) {
+        const value = pitcher[part.key];
+        if (!Number.isFinite(value)) continue;
+        const [m, sd] = stats[part.key];
+        zs.push(part.dir * (value - m) / sd);
+      }
+      if (zs.length) groupZ.push(zs.reduce((a, b) => a + b, 0) / zs.length);
+    }
+    if (!groupZ.length) { out.set(pitcher.slug, null); continue; }
+    const avgZ = groupZ.reduce((a, b) => a + b, 0) / groupZ.length;
+    out.set(pitcher.slug, Math.round(Math.max(40, Math.min(160, 100 + 10 * avgZ))));
+  }
+  return out;
+}
+
+// Pill markup for a "+" index, matching the site is-pos / is-neg thresholds.
+function plusPill(value, label) {
+  if (!Number.isFinite(value)) return "";
+  const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
+  const tip = `${label} ${value} - tracked-skill index, 100 = ${state.year} college pitcher average, +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
 function computePercentiles(pitchers) {
@@ -758,7 +822,7 @@ function renderPitcher(pitcher) {
           <a class="pill" href="#/">Back to leaderboard</a>
           <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
           <h1>${escapeHtml(displayName(pitcher.pitcher_name))}</h1>
-          <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${renderYearSelect(availablePlayerYears(pitcher))}</div>
+          <div class="profile-team">${teamBadge(pitcher, "mini")}<span>${escapeHtml(formatTeamName(pitcher.team))}</span>${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}${renderYearSelect(availablePlayerYears(pitcher))}</div>
           <p>${escapeHtml(profileSummaryText())}</p>
           <div class="driver-chips" style="margin-top: 12px">${topDriverChips(pitcher, 8)}</div>
         </div>

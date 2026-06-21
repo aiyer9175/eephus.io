@@ -197,6 +197,7 @@ function setActiveYear(year) {
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
   state.players = state.allPlayers.filter((player) => player.year === state.year);
   state.percentiles = computePercentiles(state.players);
+  state.csPlus = computeCSPlus(state.players);
 }
 
 function yearFromHash(hash) {
@@ -242,6 +243,69 @@ function percentileFromPool(pool, value) {
   const less = lowerBound(pool, value);
   const equal = upperBound(pool, value) - less;
   return Math.round(((less + 0.5 * equal) / pool.length) * 100);
+}
+
+// ---- CS+ : the college tracked-skill index, in the eephus "+" family --------
+// A pool-anchored z-average of the tracked skills, rescaled to 100 + 10*z, the
+// SAME convention as PROSPX SC+ (100 = cohort average, +10 = one standard
+// deviation better). Two equally-weighted skill families so neither outvotes
+// the other by carrying more components. This is a COLLEGE-RELATIVE index (vs
+// the same per-year pool the sliders use), NOT a Single-A projection.
+const CSPLUS_GROUPS = [
+  { name: "contact quality", parts: [
+    { key: "90th_percentile_exit_velocity", dir: 1 },
+    { key: "barrel_pct", dir: 1 },
+    { key: "hard_hit_pct", dir: 1 },
+  ] },
+  { name: "plate discipline", parts: [
+    { key: "zone_contact_pct", dir: 1 },
+    { key: "whiff_pct", dir: -1 },
+    { key: "chase_pct", dir: -1 },
+  ] },
+];
+
+function meanStd(values) {
+  const v = values.filter(Number.isFinite);
+  if (!v.length) return [0, 1];
+  const m = v.reduce((a, b) => a + b, 0) / v.length;
+  const sd = Math.sqrt(v.reduce((a, b) => a + (b - m) * (b - m), 0) / v.length);
+  return [m, sd || 1];
+}
+
+function computeCSPlus(players) {
+  const stats = {};
+  for (const group of CSPLUS_GROUPS) {
+    for (const part of group.parts) {
+      if (!stats[part.key]) stats[part.key] = meanStd(players.map((p) => p[part.key]));
+    }
+  }
+  const out = new Map();
+  for (const player of players) {
+    const groupZ = [];
+    for (const group of CSPLUS_GROUPS) {
+      const zs = [];
+      for (const part of group.parts) {
+        const value = player[part.key];
+        if (!Number.isFinite(value)) continue;
+        const [m, sd] = stats[part.key];
+        zs.push(part.dir * (value - m) / sd);
+      }
+      if (zs.length) groupZ.push(zs.reduce((a, b) => a + b, 0) / zs.length);
+    }
+    if (!groupZ.length) { out.set(player.slug, null); continue; }
+    const avgZ = groupZ.reduce((a, b) => a + b, 0) / groupZ.length;
+    out.set(player.slug, Math.round(Math.max(40, Math.min(160, 100 + 10 * avgZ))));
+  }
+  return out;
+}
+
+// Pill markup for a "+" index (CS+ or a component), matching the site is-pos /
+// is-neg thresholds (>=110 good, <=90 below). Returns "" for a missing value.
+function plusPill(value, label) {
+  if (!Number.isFinite(value)) return "";
+  const cls = value >= 110 ? "is-pos" : value <= 90 ? "is-neg" : "";
+  const tip = `${label} ${value} - tracked-skill index, 100 = ${state.year} college average, +10 = one standard deviation better. College-relative, not a Single-A projection.`;
+  return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
 function lowerBound(values, target) {
@@ -473,6 +537,11 @@ function renderPlayer(player) {
           <a class="pill" href="#/">Back to leaderboard</a>
           <button class="pill" id="cs-share" type="button" title="Download this profile as a PNG share card">&#8681; share card</button>
           <h1>${escapeHtml(displayName(player.hitter_name))}</h1>
+          <div class="profile-meta">
+            <span class="profile-school">${escapeHtml(formatTeamName(player.team))}</span>
+            <span class="profile-dot">·</span><span>${player.year} college hitter</span>
+            ${plusPill(state.csPlus && state.csPlus.get(player.slug), "CS+")}
+          </div>
           <div class="profile-team">${renderYearSelect(availablePlayerYears(player))}</div>
         </div>
       </div>

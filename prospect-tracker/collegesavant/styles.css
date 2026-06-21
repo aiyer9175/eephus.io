@@ -39,6 +39,25 @@
   box-sizing: border-box;
 }
 
+/* CS+ and component "+" pills - the eephus plus-stat family, on theme.
+   100 = cohort average, >=110 reads positive, <=90 below. */
+.cs-plus-pill {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--font-retro-mono, ui-monospace, monospace);
+  font-weight: 700; font-size: 12px; letter-spacing: .02em;
+  padding: 2px 8px; border: 1px solid var(--line); background: var(--chip);
+  color: var(--ink); vertical-align: middle;
+}
+.cs-plus-pill.is-pos { color: var(--green); border-color: var(--green); }
+.cs-plus-pill.is-neg { color: var(--red); border-color: var(--red); }
+.profile-meta {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
+  font-family: var(--font-retro-mono, ui-monospace, monospace);
+  font-size: 13px; color: var(--muted); margin: 4px 0 8px;
+}
+.profile-school { color: var(--ink); font-weight: 700; }
+.profile-dot { color: var(--line); }
+
 html {
   min-height: 100%;
   background: var(--paper);
