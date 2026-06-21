@@ -632,6 +632,9 @@
     *::-webkit-scrollbar-thumb {
       background: var(--scrollbar-thumb);
       border-radius: 0;            /* sharp pixel thumb - no rounded corners */
+      /* Y2K pixel bevel: brand-tinted highlight top-left + ink shadow bottom-right
+         (iridescent lilac on dark). Shared edge tokens with assets/site.css. */
+      box-shadow: inset 1.5px 1.5px 0 var(--scrollbar-hi), inset -1.5px -1.5px 0 var(--scrollbar-lo);
     }
     *::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
     *::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
@@ -5602,10 +5605,15 @@
       padding-right: 4px;
       /* Hide scrollbar visually but keep it functional */
       scrollbar-width: thin;
-      scrollbar-color: var(--border) transparent;
+      scrollbar-color: var(--scrollbar-thumb) transparent;
     }
-    .farm-side::-webkit-scrollbar { width: 6px; }
-    .farm-side::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    .farm-side::-webkit-scrollbar { width: 8px; }
+    /* Sharp + on-theme to match the site bars (was rounded 3px on --border). */
+    .farm-side::-webkit-scrollbar-thumb {
+      background: var(--scrollbar-thumb); border-radius: 0;
+      box-shadow: inset 1px 1px 0 var(--scrollbar-hi), inset -1px -1px 0 var(--scrollbar-lo);
+    }
+    .farm-side::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
     @media (max-width: 1023px) {
       .farm-side { position: static; max-height: none; overflow: visible; }
     }

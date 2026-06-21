@@ -79,6 +79,10 @@
   --scrollbar-track: transparent;
   --scrollbar-thumb: #BBB29C;
   --scrollbar-thumb-hover: var(--accent-navy);
+  /* Y2K pixel-bevel edges for the sharp thumb: a cream highlight top-left, a
+     navy ink shadow bottom-right (the newspaper read on paper). */
+  --scrollbar-hi: rgba(255, 250, 235, 0.55);
+  --scrollbar-lo: rgba(15, 27, 45, 0.28);
   /* Brand iridescent / lilac-blurple accent - the site THEME shade on both
      modes. Light is a deep violet (AA on cream), dark a brighter blurple
      (below). The logo .io and the decorative chrome take it; FV-tier gold stays
@@ -159,6 +163,10 @@
   --scrollbar-track: rgba(150,160,180,0.05);
   --scrollbar-thumb: #3A3A42;
   --scrollbar-thumb-hover: var(--accent-lilac);
+  /* Y2K pixel-bevel edges (dark): an iridescent lilac highlight top-left, a
+     near-black shadow bottom-right - the cybergothic/holo read. */
+  --scrollbar-hi: rgba(155, 140, 255, 0.42);
+  --scrollbar-lo: rgba(0, 0, 0, 0.55);
   /* Brand accent on dark = iridescent lilac / blurple (replaces the old yellow
      gold as the site's primary brand color). The logo .io takes it too. FV-tier
      gold stays gold - that is data, not chrome. */
@@ -903,16 +911,21 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 
 /* ---- On-theme scrollbars (one token set, shared with PROSPX's inline copy).
-   Restrained rounded thumb that reads in both themes; a brand accent on hover
-   (navy on paper, refractor cyan on the dark field). The theme-aware
-   --scrollbar-* tokens flip automatically, so the dark editorial bars now match
-   the app instead of fading to dim charcoal-on-black. ---- */
+   Sharp, rectangular thumb with a Y2K pixel bevel that reads in both themes; a
+   brand accent on hover (navy on paper, iridescent lilac on the dark field). The
+   theme-aware --scrollbar-* tokens flip automatically, so the dark editorial bars
+   match the app instead of fading to dim charcoal-on-black. ---- */
 * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-/* Sharp, pixel-square thumb (no radius - the site-wide sharp-corner directive
-   holds on the scrollbars too). Grabbable full 12px; brand accent on hover. */
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 0; }
+/* Sharp, pixel-square thumb (no radius) with a Y2K pixel bevel: a brand-tinted
+   highlight top-left + ink shadow bottom-right reads as a retro digital control,
+   on theme in both modes. Grabbable full 12px; fills with the brand accent on
+   hover (navy on paper, iridescent lilac on the dark field). */
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb); border-radius: 0;
+  box-shadow: inset 1.5px 1.5px 0 var(--scrollbar-hi), inset -1.5px -1.5px 0 var(--scrollbar-lo);
+}
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-corner { background: transparent; }
