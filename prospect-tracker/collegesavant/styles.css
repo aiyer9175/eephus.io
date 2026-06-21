@@ -113,6 +113,19 @@ td.tt-team { text-align: left; }
 .proj-name { color: var(--ink); font-weight: 700; text-decoration: none; }
 .proj-name:hover { color: var(--blue); text-decoration: underline; }
 
+/* College box score - real outcomes for players we hold FG/NCAA stats for. */
+.box-panel { margin: 14px 0; }
+.box-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(70px, 1fr));
+  gap: 1px; background: var(--line); border: 1px solid var(--line);
+}
+.box-stat { display: flex; flex-direction: column; gap: 2px; padding: 8px 10px; background: var(--paper-2); }
+.box-stat span { font-size: 10px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.box-stat strong {
+  font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 15px;
+  color: var(--ink); font-variant-numeric: tabular-nums;
+}
+
 html {
   min-height: 100%;
   background: var(--paper);

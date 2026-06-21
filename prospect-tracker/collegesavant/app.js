@@ -715,6 +715,28 @@ function renderTranslation(player, kind) {
     </section>`;
 }
 
+// Conventional college box score (real outcomes: AVG/OBP/SLG/ISO/wOBA/wRC+) for
+// the players we already hold FanGraphs / NCAA stats for, joined by name. The
+// tracked data CollegeSavant ships has no in-game outcomes, so this fills the
+// gap for draft-relevant players. Renders nothing when no box score is on file.
+function renderCollegeBox(player) {
+  const T = window.CS_TRANSLATION && window.CS_TRANSLATION.translations;
+  const b = T && T[player.slug] && T[player.slug].box;
+  if (!b) return "";
+  const d3 = (x) => (x == null ? " - " : x.toFixed(3).replace(/^0(?=\.)/, ""));
+  const pc = (x) => (x == null ? " - " : (x * 100).toFixed(1) + "%");  // box bb%/k% are decimals
+  const cells = [
+    ["AVG", d3(b.avg)], ["OBP", d3(b.obp)], ["SLG", d3(b.slg)], ["ISO", d3(b.iso)],
+    ["wOBA", d3(b.woba)], ["wRC+", b.wrc_plus != null ? Math.round(b.wrc_plus) : " - "],
+    ["BB%", pc(b.bb_pct)], ["K%", pc(b.k_pct)], ["HR", b.hr != null ? b.hr : " - "],
+    ["PA", b.pa != null ? b.pa : " - "],
+  ].map(([l, v]) => `<div class="box-stat"><span>${l}</span><strong>${v}</strong></div>`).join("");
+  return `<section class="panel box-panel">
+    <div class="panel-title"><span>College box score</span><span>${b.season || ""} ${escapeHtml(b.level || "NCAA")} · FanGraphs / NCAA</span></div>
+    <div class="box-grid">${cells}</div>
+  </section>`;
+}
+
 function renderPlayer(player) {
   if (!player) {
     app.innerHTML = `<section class="empty"><strong>Player not found.</strong><br><a class="pill" href="#/">Back to leaderboard</a></section>`;
@@ -740,6 +762,7 @@ function renderPlayer(player) {
       </div>
 
       ${renderTranslation(player, "hitter")}
+      ${renderCollegeBox(player)}
 
       <div class="profile-grid">
         <section class="panel">

@@ -155,6 +155,30 @@ def _draft_keys(con) -> dict:
     return out
 
 
+def _draft_statlines(con):
+    """player_key -> latest-season conventional COLLEGE box score (FG / NCAA),
+    split hit vs pit, so CollegeSavant can show real AVG/OBP/SLG/ISO (hitters) or
+    ERA/K9/BB9 (pitchers) for the players we already hold box scores for."""
+    hit, pit = {}, {}
+    for pk, pj in con.execute("SELECT player_key, payload_json FROM draft_statlines ORDER BY player_key, "
+                              "json_extract(payload_json, '$.season')"):
+        try:
+            d = json.loads(pj)
+        except ValueError:
+            continue
+        base = {"season": d.get("season"), "level": d.get("level"), "team": d.get("team")}
+        if d.get("avg") is not None or d.get("obp") is not None:
+            hit[pk] = {**base, "pa": d.get("pa"), "avg": d.get("avg"), "obp": d.get("obp"),
+                       "slg": d.get("slg"), "iso": d.get("iso"), "woba": d.get("woba"),
+                       "wrc_plus": d.get("wrc_plus"), "bb_pct": d.get("bb_pct"),
+                       "k_pct": d.get("k_pct"), "hr": d.get("hr"), "sb": d.get("sb")}
+        elif d.get("era") is not None or d.get("k_per_9") is not None:
+            pit[pk] = {**base, "ip": d.get("ip"), "era": d.get("era"), "fip": d.get("fip"),
+                       "xfip": d.get("xfip"), "k_per_9": d.get("k_per_9"),
+                       "bb_per_9": d.get("bb_per_9"), "w": d.get("w"), "l": d.get("l")}
+    return hit, pit
+
+
 def _equiv_headline(sa: dict, side: str) -> list[dict]:
     """The Single-A equivalent as PROSPX-renderable {label, value, band, flag}
     chips, mirroring the draft_export college_stats headline shape."""
@@ -373,25 +397,37 @@ def build(out_dir: Path | None = None) -> dict:
         # prospect's player_key, so PROSPX can merge a Single-A-equivalent block
         # onto its draft records with no rebuild. Additive and safe-when-empty.
         draft_keys = _draft_keys(con)
+        box_hit, box_pit = _draft_statlines(con)
         translations, bridge = {}, {}
+        n_box = 0
         for slug_norm, v in cs_h.items():
             t = _translate_hitter(v, F)
             if not t:
                 continue
-            translations[slugify_cs(v["name"])] = {"side": "hit", "single_a": t}
+            slug = slugify_cs(v["name"])
+            entry = {"side": "hit", "single_a": t}
             pk = draft_keys.get(slug_norm)
+            if pk and pk in box_hit:
+                entry["box"] = box_hit[pk]
+                n_box += 1
+            translations[slug] = entry
             if pk:
-                bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"),
-                              "name": v["name"]}
+                bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
         for slug_norm, v in cs_p.items():
             t = _translate_pitcher(v, F)
             if not t:
                 continue
-            translations.setdefault(slugify_cs(v["name"]), {"side": "pit", "single_a": t})
+            slug = slugify_cs(v["name"])
+            if slug not in translations:
+                entry = {"side": "pit", "single_a": t}
+                pk = draft_keys.get(slug_norm)
+                if pk and pk in box_pit:
+                    entry["box"] = box_pit[pk]
+                    n_box += 1
+                translations[slug] = entry
             pk = draft_keys.get(slug_norm)
             if pk and pk not in bridge:
-                bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"),
-                              "name": v["name"]}
+                bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
         # Compact backtest summary for the frontend "how accurate is this" panel.
         eval_summary = {k: {"r2": f.get("r2"), "n": f.get("n"), "band_sd": f.get("band_sd"),
                             "mae": (f.get("loo") or {}).get("mae"),
