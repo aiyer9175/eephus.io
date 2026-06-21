@@ -8955,6 +8955,8 @@
                 title="How each organization drafts: position lean, college vs prep, pitching-heavy, plus draft-stock outcomes - all league-relative">Org Tendencies</button>
         <button class="chip" data-draft-view="overperformers"
                 title="Players who outperformed their draft slot - by realized value vs pick, or by sliding past their pre-draft consensus rank">Overperformers</button>
+        <button class="chip" data-draft-view="state-pipelines"
+                title="Which US states produce the most MLB value from their high-school draftees - career MLB WAR, prospect counts, and top-tier (FV 55+) counts by home state">State Pipelines</button>
       </span>
     </div>
     <!-- v28 - Draft filter / sort accordion. Collapsed by default; the
@@ -21324,7 +21326,7 @@ async function renderDraft() {
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
   const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "lottery"];
-  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers"];
+  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "state-pipelines"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
   // draft, e.g. 2027), NOT on whatever class the user is currently viewing. So
@@ -21382,6 +21384,7 @@ async function renderDraft() {
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
     case "overperformers": return _renderDraftOverperformers(host, classes, isOverall ? null : state.draftYear);
+    case "state-pipelines": return _renderStatePipelines(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -23958,6 +23961,9 @@ function _renderDraftTendencies(host, classes, year) {
 // ============================================================================
 let _draftOverperfMode = "outcome";   // "outcome" | "value"
 let _draftOverperfSort = { key: null, dir: -1 };   // null = default per-lens sort
+// State Pipelines view sort. Default: total MLB WAR descending (the truest
+// "produced MLB value" signal). null key falls back to that default ordering.
+let _statePipeSort = { key: null, dir: -1 };
 
 function _renderDraftOverperformers(host, classes, year) {
   let completed = (classes || []).filter(c => !c.is_current);
@@ -24104,6 +24110,119 @@ function _renderDraftOverperformers(host, classes, year) {
       const k = th.dataset.opSort;
       if (_draftOverperfSort.key === k) _draftOverperfSort.dir *= -1;
       else _draftOverperfSort = { key: k, dir: -1 };
+      renderDraft();
+    };
+  });
+}
+
+// State Pipelines (Overall mode, cross-year aggregate). Ranks US states as
+// amateur pipelines by the pro outcomes of their high-school draftees. Only HS
+// prospects carry a meaningful home state (the school's trailing "(XX)" code);
+// college players are excluded because their listed school is not their origin.
+// career_war is baked onto drafted-and-signed players who reached pro ball, so
+// recent classes contribute little WAR yet.
+function _renderStatePipelines(host, classes) {
+  const MIN_HS = 5;   // states under this HS-prospect count are omitted (tiny samples)
+  const TOP_FV = 55;  // top-tier consensus-FV threshold
+
+  // Aggregate every HS prospect across all classes by parsed home state. The
+  // state key comes from _hsStateName, which returns null for non-US codes
+  // (e.g. Ontario) and unparseable schools, so the board stays US-states-only.
+  const byState = {};
+  for (const c of (classes || [])) {
+    for (const p of (c.prospects || [])) {
+      if (!_isHSPlayer(p)) continue;
+      const st = _hsStateName(p.school);
+      if (!st) continue;
+      const a = byState[st] || (byState[st] = { state: st, prospects: 0, topProspects: 0, sumFv: 0, nFv: 0, reachedMlb: 0, totalWar: 0 });
+      a.prospects++;
+      const fv = p.consensus_fv;
+      if (fv != null) { a.sumFv += +fv; a.nFv++; if (+fv >= TOP_FV) a.topProspects++; }
+      if (p.career_war != null) { a.reachedMlb++; a.totalWar += +p.career_war; }
+    }
+  }
+
+  let rows = Object.values(byState)
+    .filter(a => a.prospects >= MIN_HS)
+    .map(a => ({
+      state: a.state,
+      prospects: a.prospects,
+      topProspects: a.topProspects,
+      meanFv: a.nFv ? a.sumFv / a.nFv : null,
+      reachedMlb: a.reachedMlb,
+      totalWar: a.totalWar,
+      warPerProspect: a.totalWar / a.prospects,
+    }));
+
+  if (!rows.length) {
+    host.innerHTML = _draftEmpty("No state pipelines to rank yet",
+      "State pipelines populate once drafted high-school players carry a home-state code and accrue MLB time.");
+    return;
+  }
+
+  // Click-to-sort headers, mirroring the Overperformers tab one chip over.
+  const sk = _statePipeSort.key, sd = _statePipeSort.dir;
+  const _val = (r, key) => key === "state" ? r.state
+                         : key === "meanFv" ? (r.meanFv ?? -Infinity)
+                         : (r[key] ?? -Infinity);
+  if (sk) {
+    rows.sort((a, b) => {
+      const va = _val(a, sk), vb = _val(b, sk);
+      const cmp = typeof va === "string" ? va.localeCompare(vb) : (va - vb);
+      return cmp * sd || (b.totalWar - a.totalWar);
+    });
+  } else {
+    // Default: total MLB WAR descending (the truest produced-value signal),
+    // then prospect count as a tiebreaker.
+    rows.sort((a, b) => (b.totalWar - a.totalWar) || (b.prospects - a.prospects));
+  }
+
+  const _sortableSP = (key, label, align, title) => {
+    const arrow = sk === key ? (sd < 0 ? " ▼" : " ▲") : "";
+    return `<th class="dt-sortable" data-sp-sort="${key}" title="${escapeHtml(title || "")}" style="cursor:pointer;text-align:${align};${sk === key ? "color:var(--neon-cyan);" : ""}">${label}${arrow}</th>`;
+  };
+
+  const body = rows.map((r, i) => {
+    const warColor = r.totalWar > 0 ? "var(--neon-green)" : "var(--text-tertiary)";
+    return `<tr>
+      <td>${i + 1}</td>
+      <td><strong>${escapeHtml(r.state)}</strong></td>
+      <td style="text-align:right;">${r.prospects}</td>
+      <td style="text-align:right;">${r.topProspects}</td>
+      <td style="text-align:right;font-family:var(--font-mono);">${r.meanFv != null ? fvCeil(r.meanFv) : " - "}</td>
+      <td style="text-align:right;">${r.reachedMlb}</td>
+      <td style="text-align:right;color:${warColor};font-family:var(--font-mono);font-weight:700;">${r.totalWar > 0 ? "+" : ""}${r.totalWar.toFixed(1)}</td>
+      <td style="text-align:right;color:var(--text-secondary);font-family:var(--font-mono);">${r.warPerProspect.toFixed(2)}</td>
+    </tr>`;
+  }).join("");
+
+  const table = `<table class="draft-table">
+    <thead><tr>
+      <th>#</th>
+      ${_sortableSP("state", "State", "left", "US state / territory (home state of the high-school prospect)")}
+      ${_sortableSP("prospects", "HS Prospects", "right", "Count of high-school prospects from this state across all classes")}
+      ${_sortableSP("topProspects", "Top (FV 55+)", "right", "How many graded at consensus FV 55 or better")}
+      ${_sortableSP("meanFv", "Mean FV", "right", "Mean consensus FV of the state's high-school prospects")}
+      ${_sortableSP("reachedMlb", "Reached MLB", "right", "How many have accrued any MLB time")}
+      ${_sortableSP("totalWar", "Total MLB WAR", "right", "Sum of career MLB WAR over the state's high-school draftees")}
+      ${_sortableSP("warPerProspect", "WAR / Prospect", "right", "Total MLB WAR divided by HS prospect count")}
+    </tr></thead>
+    <tbody>${body}</tbody></table>`;
+
+  host.innerHTML = `
+    <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+      <strong style="color:var(--text-primary);">State pipelines</strong>
+      · this ranks US states as amateur pipelines by the pro outcomes of their drafted high-school players, measured in career MLB WAR, alongside prospect counts and top-tier (FV 55+) counts.
+      College players are excluded because their listed school is not their home state. States with fewer than ${MIN_HS} high-school prospects are omitted so tiny samples do not top the board.
+      WAR accrues over time, so recent classes contribute little yet. Sorted by total MLB WAR; click any header to re-sort.
+    </div>
+    ${table}`;
+
+  host.querySelectorAll("[data-sp-sort]").forEach(th => {
+    th.onclick = () => {
+      const k = th.dataset.spSort;
+      if (_statePipeSort.key === k) _statePipeSort.dir *= -1;
+      else _statePipeSort = { key: k, dir: (k === "state" ? 1 : -1) };
       renderDraft();
     };
   });
