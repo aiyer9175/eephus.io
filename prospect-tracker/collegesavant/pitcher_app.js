@@ -63,7 +63,7 @@ const PITCHER_HOME_WIDGET_METRICS = [
 const PITCHER_HOME_SECTIONS = [
   { route: "leaders", title: "Pitcher Leaderboard", note: "Every tracked arm, sortable across Stuff+, velo, whiffs, and CS+, with team and qualified filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college staffs throw the hardest, miss the most bats, and run the best team CS+." },
-  { route: "projections", title: "Pro Projections", note: "Each arm's projected Single-A K% / BB%, the matched-pair method, and its honest backtest." },
+  { route: "projections", title: "MiLB Projections", note: "Each arm's projected Single-A K% / BB%, the matched-pair method, and its honest backtest." },
 ];
 
 function dedupeMetrics(metrics) {
@@ -922,23 +922,55 @@ function computeTeamTendencies(pitchers) {
 // Draft-eligible pitchers carried INTO CollegeSavant by the conventional college
 // box scores we already hold, including prospects with no tracking. Box-score
 // based and FV-ranked, filterable by draft year.
+const PROSPECT_COLS_PIT = [
+  { key: "fv", label: "FV", get: (x) => x.fv, t: "ceil", hb: true },
+  { key: "year", label: "Yr", get: (x) => x.year, t: "raw", hb: true },
+  { key: "ip", label: "IP", get: (x) => x.box && x.box.ip, t: "dec1", hb: true },
+  { key: "era", label: "ERA", get: (x) => x.box && x.box.era, t: "dec2", hb: false },
+  { key: "fip", label: "FIP", get: (x) => x.box && x.box.fip, t: "dec2", hb: false },
+  { key: "k_per_9", label: "K/9", get: (x) => x.box && x.box.k_per_9, t: "dec2", hb: true },
+  { key: "bb_per_9", label: "BB/9", get: (x) => x.box && x.box.bb_per_9, t: "dec2", hb: false },
+];
+
 function renderProspects() {
   const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.pitchers) || [];
   const years = [...new Set(P.map((x) => x.year).filter(Boolean))].sort((a, b) => b - a);
   const yf = state.prospectYear != null ? state.prospectYear : (years[0] || "all");
-  const list = P.filter((x) => yf === "all" || x.year === yf);
-  const d2 = (x) => (x == null ? " - " : x.toFixed(2));
+  const cols = PROSPECT_COLS_PIT;
+  const sortKey = state.prospectSort || "fv";
+  const col = cols.find((c) => c.key === sortKey) || cols[0];
+  const dir = state.prospectDir != null ? state.prospectDir : (col.hb ? -1 : 1);
+  const fmt = (t, v) => {
+    if (v == null || Number.isNaN(v)) return " - ";
+    if (t === "ceil") return Math.ceil(v);
+    if (t === "dec1") return v.toFixed(1);
+    if (t === "dec2") return v.toFixed(2);
+    return v;
+  };
+  const list = P.filter((x) => yf === "all" || x.year === yf).slice();
+  list.sort((a, b) => {
+    const av = col.get(a), bv = col.get(b);
+    const an = av == null || Number.isNaN(av), bn = bv == null || Number.isNaN(bv);
+    if (an && bn) return 0;
+    if (an) return 1;
+    if (bn) return -1;
+    return dir * (av - bv);
+  });
+  const head = cols.map((c) => {
+    const on = c.key === sortKey;
+    const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${c.label}${caret}</th>`;
+  }).join("");
   const body = list.map((x, i) => {
     const b = x.box || {};
     const wl = (b.w != null || b.l != null) ? `${b.w == null ? 0 : b.w}-${b.l == null ? 0 : b.l}` : " - ";
+    const nameCell = x.cs
+      ? `<a class="proj-name" href="#/player/${x.cs.year}/${x.cs.slug}" title="Open CollegeSavant page">${escapeHtml(x.name || "")}</a>`
+      : `<strong>${escapeHtml(x.name || "")}</strong>`;
+    const cells = cols.map((c) => `<td class="tt-col${c.key === sortKey ? " is-sorted" : ""}">${fmt(c.t, c.get(x))}</td>`).join("");
     return `<tr><td class="tt-rank">${i + 1}</td>
-      <td class="tt-team"><strong>${escapeHtml(x.name || "")}</strong><span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
-      <td class="tt-col">${x.fv != null ? Math.ceil(x.fv) : " - "}</td>
-      <td class="tt-col">${x.year || " - "}</td>
-      <td class="tt-col">${b.ip != null ? b.ip.toFixed(1) : " - "}</td>
-      <td class="tt-col">${d2(b.era)}</td><td class="tt-col">${d2(b.fip)}</td>
-      <td class="tt-col">${d2(b.k_per_9)}</td><td class="tt-col">${d2(b.bb_per_9)}</td>
-      <td class="tt-col">${wl}</td></tr>`;
+      <td class="tt-team">${nameCell}<span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
+      ${cells}<td class="tt-col">${wl}</td></tr>`;
   }).join("");
   app.innerHTML = `
     <section class="toolbar">
@@ -947,12 +979,18 @@ function renderProspects() {
         ${years.map((y) => `<option value="${y}" ${y === yf ? "selected" : ""}>${y} draft</option>`).join("")}
       </select>
     </section>
-    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} pitching prospect${list.length === 1 ? "" : "s"} · conventional college stats, FV-ranked</span></div>
-    <p class="trans-note">Draft-eligible pitchers carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no tracking. FV is the consensus board grade, rounded up. This board is box-score based; the tracked CS+ and pitch-shape views cover only players with tracking data.</p>
+    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} pitching prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
+    <p class="trans-note">Draft-eligible pitchers carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no tracking. FV is the consensus board grade, rounded up. Names link to a player's CollegeSavant page when they have tracking data. This board is box-score based; the tracked CS+ and pitch-shape views cover only players with tracking data.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
-      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th><th class="tt-col">FV</th><th class="tt-col">Yr</th><th class="tt-col">IP</th><th class="tt-col">ERA</th><th class="tt-col">FIP</th><th class="tt-col">K/9</th><th class="tt-col">BB/9</th><th class="tt-col">W-L</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="10" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}<th class="tt-col">W-L</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="${cols.length + 3}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
     </table></div></section>`;
+  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+    const k = th.getAttribute("data-psort");
+    if (k === sortKey) { state.prospectDir = -dir; }
+    else { state.prospectSort = k; const c2 = cols.find((c) => c.key === k); state.prospectDir = (c2 && c2.hb) ? -1 : 1; }
+    renderProspects();
+  }));
   const ys = app.querySelector("[data-prospect-year]");
   if (ys) ys.addEventListener("change", (e) => {
     state.prospectYear = e.target.value === "all" ? "all" : Number(e.target.value);

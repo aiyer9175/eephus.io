@@ -26,7 +26,7 @@
   --red: var(--accent-red, #B91C1C);
   --gold: var(--accent-gold, #C9A227);
   --blue: var(--accent-navy, #0E2B4D);
-  --shadow: none;
+  --shadow: var(--shadow-card, none);
   /* Savant percentile semantics: hot = high percentile, cold = low. */
   --cs-hot: var(--accent-red, #B91C1C);
   --cs-cold: var(--accent-navy, #0E2B4D);
@@ -38,6 +38,28 @@
 * {
   box-sizing: border-box;
 }
+
+/* Compact CollegeSavant module bar: a thin horizontal strip under the shared
+   eephus nav (module name + hitters/pitchers toggle + section tabs + search),
+   so the content below runs full width. Sits at or under the eephus nav height. */
+.cs-bar {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 6px 16px; border-bottom: 1px solid var(--line); background: var(--paper-2);
+}
+.cs-bar-title {
+  font-family: var(--font-retro-mono, ui-monospace, monospace); font-weight: 700;
+  font-size: 15px; letter-spacing: .02em; color: var(--ink); white-space: nowrap;
+}
+.cs-tabs { display: flex; gap: 2px; flex-wrap: wrap; }
+.cs-tabs a {
+  font-family: var(--font-retro-mono, ui-monospace, monospace); font-size: 13px; font-weight: 600;
+  color: var(--muted); text-decoration: none; padding: 5px 10px; white-space: nowrap;
+  border-bottom: 2px solid transparent;
+}
+.cs-tabs a:hover { color: var(--ink); background: var(--chip); }
+.cs-tabs a.is-active { color: var(--ink); border-bottom-color: var(--gold); }
+.cs-bar .global-search { margin-left: auto; }
+.cs-bar .global-search input { width: 170px; max-width: 40vw; }
 
 /* CS+ and component "+" pills - the eephus plus-stat family, on theme.
    100 = cohort average, >=110 reads positive, <=90 below. */
@@ -92,8 +114,9 @@
 .tt-table { width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono, ui-monospace, monospace); }
 .tt-table th {
   position: sticky; top: 0; z-index: 1; background: var(--cs-head-bg); color: var(--cs-head-fg);
+  font-family: var(--font-retro-mono, ui-monospace, monospace);
   font-size: 10px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800;
-  padding: 6px 8px; border-bottom: 2px solid var(--red); text-align: right; white-space: nowrap;
+  padding: 6px 8px; border-bottom: 2px solid var(--gold); text-align: right; white-space: nowrap;
 }
 .tt-table th.tt-rank, .tt-table th.tt-team { text-align: left; }
 .tt-table td {
@@ -144,8 +167,10 @@ td.tt-team { text-align: left; }
 
 /* Home section hub - entry cards to each CollegeSavant view. */
 .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 10px 0; }
-.hub-card { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); background: var(--paper-2); text-decoration: none; color: var(--ink); transition: border-color .12s, transform .12s; }
-.hub-card:hover { border-color: var(--blue); transform: translateY(-1px); }
+.hub-card { position: relative; overflow: hidden; display: flex; flex-direction: column; gap: 6px; padding: 14px 16px 14px 19px; border: 1px solid var(--line); background: var(--paper-2); text-decoration: none; color: var(--ink); box-shadow: var(--shadow-card, none); transition: box-shadow .12s, transform .12s; }
+.hub-card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--blue); }
+.hub-card:nth-child(even)::before { background: var(--gold); }
+.hub-card:hover { box-shadow: var(--shadow-card-hover, none); transform: translateY(-1px); }
 .hub-card strong { font-size: 15px; }
 .hub-note { font-size: 12px; color: var(--muted); line-height: 1.45; flex: 1; }
 .hub-go { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--blue); font-weight: 700; }
@@ -175,66 +200,9 @@ select {
   font: inherit;
 }
 
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 62px;
-  padding: 10px 18px;
-  color: var(--ink);
-  background: var(--paper-2);
-  border-bottom: 3px double var(--ink);
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  min-width: 260px;
-}
-
-.brand-mark {
-  display: grid;
-  place-items: center;
-  width: 42px;
-  height: 36px;
-  color: var(--text-on-accent, #fff);
-  background: var(--red);
-  border: 1px solid var(--line);
-  border-radius: 3px;
-  font-weight: 900;
-  letter-spacing: 0;
-}
-
-.brand strong,
-.brand small {
-  display: block;
-}
-
-.brand strong {
-  font-size: 15px;
-}
-
-.brand small {
-  color: var(--muted);
-  font-size: 10px;
-}
-
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
 .global-search {
   position: relative;
-  min-width: 250px;
+  width: 100%;
 }
 
 .global-search input {
@@ -256,10 +224,10 @@ select {
 .global-results {
   position: absolute;
   top: calc(100% + 6px);
-  right: 0;
+  left: 0;
   z-index: 40;
   display: none;
-  width: min(430px, calc(100vw - 28px));
+  width: min(360px, calc(100vw - 40px));
   max-height: 360px;
   overflow: auto;
   border: 1px solid var(--line);
@@ -303,7 +271,6 @@ select {
   text-transform: uppercase;
 }
 
-.top-actions a,
 .control-button,
 .pill {
   border: 1px solid var(--line);
@@ -313,22 +280,12 @@ select {
   box-shadow: none;
 }
 
-.top-actions a {
-  padding: 6px 10px;
-  color: var(--ink);
-  background: var(--chip);
-  border-color: var(--line);
-}
-
-.top-actions a.is-active {
-  color: var(--bg-primary);
-  background: var(--text-primary);
-  border-color: var(--text-primary);
-}
-
-.app-shell {
-  width: min(1420px, calc(100vw - 24px));
-  margin: 14px auto 42px;
+/* The app shell now lives inside the shared .home-shell grid, so the grid
+   governs width and the sidebar sits to its left. Reset the stand-alone
+   centering the bespoke topbar layout relied on. */
+.app-shell.home-main {
+  width: auto;
+  margin: 0;
 }
 
 .loading-panel {
@@ -377,6 +334,7 @@ select {
 .top-widget {
   border: 1px solid var(--line);
   background: var(--paper-2);
+  box-shadow: var(--shadow-card, none);
 }
 
 .widget-title {
@@ -387,7 +345,7 @@ select {
   padding: 9px 10px;
   color: var(--cs-head-fg);
   background: var(--cs-head-bg);
-  border-bottom: 2px solid var(--red);
+  border-bottom: 2px solid var(--gold);
   font-family: var(--font-retro-mono, inherit);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -530,7 +488,8 @@ select {
   padding: 0 12px;
   color: var(--cs-head-fg);
   background: var(--cs-head-bg);
-  border-bottom: 2px solid var(--red);
+  border-bottom: 2px solid var(--gold);
+  font-family: var(--font-retro-mono, inherit);
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -579,11 +538,11 @@ select {
   border-radius: 4px;
   border: 1px solid var(--line);
   background:
-    linear-gradient(145deg, var(--team-a, #8ba3b9), var(--team-b, #284663)),
-    var(--team-b, #4b657e);
-  color: #fff;
+    linear-gradient(145deg, var(--team-a, var(--accent-navy)), var(--team-b, var(--blue))),
+    var(--team-b, var(--blue));
+  color: var(--text-on-accent, var(--paper));
   font-weight: 900;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.35);
+  text-shadow: var(--shadow-card, none);
 }
 
 .team-logo img {
@@ -593,7 +552,7 @@ select {
   width: 31px;
   height: 31px;
   object-fit: contain;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+  filter: drop-shadow(0 1px 2px color-mix(in srgb, var(--ink) 25%, transparent));
 }
 
 .team-logo::after {
@@ -603,7 +562,7 @@ select {
   height: 22px;
   top: 7px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.24);
+  background: color-mix(in srgb, var(--text-on-accent) 24%, transparent);
 }
 
 .team-logo span {
@@ -818,6 +777,7 @@ select {
 .panel {
   border: 1px solid var(--line);
   background: var(--paper-2);
+  box-shadow: var(--shadow-card, none);
 }
 
 .panel-title {
@@ -828,7 +788,8 @@ select {
   padding: 9px 12px;
   color: var(--cs-head-fg);
   background: var(--cs-head-bg);
-  border-bottom: 2px solid var(--red);
+  border-bottom: 2px solid var(--gold);
+  font-family: var(--font-retro-mono, inherit);
   font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
@@ -1197,7 +1158,7 @@ select {
 .driver-item.overall {
   color: var(--cs-head-fg);
   background: var(--cs-head-bg);
-  border-color: var(--red);
+  border-color: var(--gold);
 }
 
 .driver-graph-empty {
@@ -1341,23 +1302,9 @@ select {
     display: none;
   }
 
-  .topbar,
   .toolbar {
     grid-template-columns: 1fr;
     display: grid;
-  }
-
-  .brand {
-    min-width: 0;
-  }
-
-  .top-actions {
-    justify-content: flex-start;
-  }
-
-  .global-search {
-    width: 100%;
-    min-width: 0;
   }
 
   .global-results {
@@ -1390,10 +1337,10 @@ select {
   }
 }
 
-/* eephus.io theme refinements: headers ride the site's retro face */
+/* eephus.io theme refinements: headers ride the site's MS-Gothic face */
 .home-intro h1,
 .profile-title h1 {
-  font-family: var(--font-retro, inherit);
+  font-family: var(--font-retro-mono, inherit);
   letter-spacing: 0.01em;
 }
 

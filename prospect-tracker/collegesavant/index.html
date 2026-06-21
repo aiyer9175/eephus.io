@@ -45,28 +45,23 @@
         <button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode"><span class="theme-icon lbl-dark" aria-hidden="true">&#9790;</span><span class="theme-icon lbl-light" aria-hidden="true">&#9728;</span><span class="eephus-nav-ctrl-label"><span class="lbl-dark">Dark Mode</span><span class="lbl-light">Light Mode</span></span></button>
       </div>
     </header>
-    <header class="topbar">
-      <a class="brand" href="#/">
-        <span>
-          <strong>Eephus.io : CollegeSavant</strong>
-          <small>College baseball percentiles <span class="eephus-beta" title="CollegeSavant is in alpha - newly launched">&alpha; alpha</span></small>
-        </span>
-      </a>
-      <nav class="top-actions" aria-label="Views">
-        <div class="global-search" data-global-search>
-          <input type="search" placeholder="Search all players" aria-label="Search all players" data-global-search-input>
-          <div class="global-results" data-global-search-results></div>
-        </div>
-        <div class="hp-toggle" role="group" aria-label="Hitters or pitchers">
-          <a class="hp-seg is-active" href="#/" aria-current="page">Hitters</a>
-          <a class="hp-seg" href="pitcher_index.html#/" data-cross-page="pitcher_index.html">Pitchers</a>
-        </div>
+    <div class="cs-bar">
+      <span class="cs-bar-title">CollegeSavant <span class="eephus-beta" title="CollegeSavant is in alpha - newly launched">&alpha; alpha</span></span>
+      <div class="hp-toggle" role="group" aria-label="Hitters or pitchers">
+        <a class="hp-seg is-active" href="#/" aria-current="page">Hitters</a>
+        <a class="hp-seg" href="pitcher_index.html#/" data-cross-page="pitcher_index.html">Pitchers</a>
+      </div>
+      <nav class="cs-tabs" aria-label="Views">
         <a href="#/" data-route="home">Dashboard</a>
         <a href="#/teams" data-route="teams">Team Tendencies</a>
         <a href="#/prospects" data-route="prospects">Draft Prospects</a>
-        <a href="#/projections" data-route="projections">Pro Projections</a>
+        <a href="#/projections" data-route="projections">MiLB Projections</a>
       </nav>
-    </header>
+      <div class="global-search" data-global-search>
+        <input type="search" placeholder="Search players" aria-label="Search all players" data-global-search-input>
+        <div class="global-results" data-global-search-results></div>
+      </div>
+    </div>
 
     <main id="app" class="app-shell">
       <section class="loading-panel">

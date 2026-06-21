@@ -70,7 +70,7 @@ const HOME_WIDGET_METRICS = [
 const HOME_SECTIONS = [
   { route: "leaders", title: "Hitter Leaderboard", note: "Every tracked hitter, sortable across EV, discipline, and CS+, with team and qualified-PA filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college programs hit the ball hardest, chase the least, and run the best team CS+." },
-  { route: "projections", title: "Pro Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its honest backtest." },
+  { route: "projections", title: "MiLB Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its honest backtest." },
 ];
 
 const LEADERBOARD_LIMIT = 300;
@@ -667,24 +667,59 @@ function renderTeams() {
 // box scores we already hold, including prospects with no TrackMan tracking.
 // Box-score based and FV-ranked, filterable by draft year. Reads the server-built
 // window.CS_DRAFT_PROSPECTS sidecar (college_translation.build).
+const PROSPECT_COLS_HIT = [
+  { key: "fv", label: "FV", get: (x) => x.fv, t: "ceil", hb: true },
+  { key: "year", label: "Yr", get: (x) => x.year, t: "raw", hb: true },
+  { key: "avg", label: "AVG", get: (x) => x.box && x.box.avg, t: "dec3", hb: true },
+  { key: "obp", label: "OBP", get: (x) => x.box && x.box.obp, t: "dec3", hb: true },
+  { key: "slg", label: "SLG", get: (x) => x.box && x.box.slg, t: "dec3", hb: true },
+  { key: "iso", label: "ISO", get: (x) => x.box && x.box.iso, t: "dec3", hb: true },
+  { key: "woba", label: "wOBA", get: (x) => x.box && x.box.woba, t: "dec3", hb: true },
+  { key: "wrc_plus", label: "wRC+", get: (x) => x.box && x.box.wrc_plus, t: "int", hb: true },
+  { key: "bb_pct", label: "BB%", get: (x) => x.box && x.box.bb_pct, t: "pct", hb: true },
+  { key: "k_pct", label: "K%", get: (x) => x.box && x.box.k_pct, t: "pct", hb: false },
+  { key: "pa", label: "PA", get: (x) => x.box && x.box.pa, t: "raw", hb: true },
+];
+
 function renderProspects() {
   const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.hitters) || [];
   const years = [...new Set(P.map((x) => x.year).filter(Boolean))].sort((a, b) => b - a);
   const yf = state.prospectYear != null ? state.prospectYear : (years[0] || "all");
-  const list = P.filter((x) => yf === "all" || x.year === yf);
-  const d3 = (x) => (x == null ? " - " : x.toFixed(3).replace(/^0(?=\.)/, ""));
-  const pc = (x) => (x == null ? " - " : (x * 100).toFixed(1) + "%");
+  const cols = PROSPECT_COLS_HIT;
+  const sortKey = state.prospectSort || "fv";
+  const col = cols.find((c) => c.key === sortKey) || cols[0];
+  const dir = state.prospectDir != null ? state.prospectDir : (col.hb ? -1 : 1);
+  const d3 = (v) => v.toFixed(3).replace(/^0(?=\.)/, "");
+  const fmt = (t, v) => {
+    if (v == null || v === "" || Number.isNaN(v)) return " - ";
+    if (t === "ceil") return Math.ceil(v);
+    if (t === "dec3") return d3(v);
+    if (t === "pct") return (v * 100).toFixed(1) + "%";
+    if (t === "int") return Math.round(v);
+    return v;
+  };
+  const list = P.filter((x) => yf === "all" || x.year === yf).slice();
+  list.sort((a, b) => {
+    const av = col.get(a), bv = col.get(b);
+    const an = av == null || Number.isNaN(av), bn = bv == null || Number.isNaN(bv);
+    if (an && bn) return 0;
+    if (an) return 1;
+    if (bn) return -1;
+    return dir * (av - bv);
+  });
+  const head = cols.map((c) => {
+    const on = c.key === sortKey;
+    const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-psort="${c.key}" title="Sort by ${c.label}">${c.label}${caret}</th>`;
+  }).join("");
   const body = list.map((x, i) => {
-    const b = x.box || {};
+    const nameCell = x.cs
+      ? `<a class="proj-name" href="#/player/${x.cs.year}/${x.cs.slug}" title="Open CollegeSavant page">${escapeHtml(x.name || "")}</a>`
+      : `<strong>${escapeHtml(x.name || "")}</strong>`;
+    const cells = cols.map((c) => `<td class="tt-col${c.key === sortKey ? " is-sorted" : ""}">${fmt(c.t, c.get(x))}</td>`).join("");
     return `<tr><td class="tt-rank">${i + 1}</td>
-      <td class="tt-team"><strong>${escapeHtml(x.name || "")}</strong><span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
-      <td class="tt-col">${x.fv != null ? Math.ceil(x.fv) : " - "}</td>
-      <td class="tt-col">${x.year || " - "}</td>
-      <td class="tt-col">${d3(b.avg)}</td><td class="tt-col">${d3(b.obp)}</td><td class="tt-col">${d3(b.slg)}</td>
-      <td class="tt-col">${d3(b.iso)}</td><td class="tt-col">${d3(b.woba)}</td>
-      <td class="tt-col">${b.wrc_plus != null ? Math.round(b.wrc_plus) : " - "}</td>
-      <td class="tt-col">${pc(b.bb_pct)}</td><td class="tt-col">${pc(b.k_pct)}</td>
-      <td class="tt-col">${b.pa != null ? b.pa : " - "}</td></tr>`;
+      <td class="tt-team">${nameCell}<span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
+      ${cells}</tr>`;
   }).join("");
   app.innerHTML = `
     <section class="toolbar">
@@ -693,12 +728,18 @@ function renderProspects() {
         ${years.map((y) => `<option value="${y}" ${y === yf ? "selected" : ""}>${y} draft</option>`).join("")}
       </select>
     </section>
-    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, FV-ranked</span></div>
-    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. This board is box-score based; the tracked CS+ and percentile views cover only players with tracking data.</p>
+    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
+    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Names link to a player's CollegeSavant page when they have tracking data. This board is box-score based; the tracked CS+ and percentile views cover only players with tracking data.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
-      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th><th class="tt-col">FV</th><th class="tt-col">Yr</th><th class="tt-col">AVG</th><th class="tt-col">OBP</th><th class="tt-col">SLG</th><th class="tt-col">ISO</th><th class="tt-col">wOBA</th><th class="tt-col">wRC+</th><th class="tt-col">BB%</th><th class="tt-col">K%</th><th class="tt-col">PA</th></tr></thead>
-      <tbody>${body || `<tr><td colspan="13" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
+      <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
     </table></div></section>`;
+  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+    const k = th.getAttribute("data-psort");
+    if (k === sortKey) { state.prospectDir = -dir; }
+    else { state.prospectSort = k; const c2 = cols.find((c) => c.key === k); state.prospectDir = (c2 && c2.hb) ? -1 : 1; }
+    renderProspects();
+  }));
   const ys = app.querySelector("[data-prospect-year]");
   if (ys) ys.addEventListener("change", (e) => {
     state.prospectYear = e.target.value === "all" ? "all" : Number(e.target.value);

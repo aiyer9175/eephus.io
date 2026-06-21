@@ -129,6 +129,7 @@ def load_cs_pitchers() -> dict:
         if slug not in out or pc > out[slug]["pitch_count"]:
             out[slug] = {
                 "name": r.get("pitcher_name"),
+                "pitcher_id": r.get("pitcher_id"),
                 "team": r.get("team"),
                 "k_pct": r.get("k_pct"),
                 "bb_pct": r.get("bb_pct"),
@@ -172,6 +173,18 @@ def _ncaa_box_to_display(payload, season, school):
             "hr": p.get("hr"), "pa": p.get("pa")}
 
 
+def _rate_to_decimal(x):
+    """A walk/strikeout rate to the decimal convention (0.131), tolerant of values
+    stored as percentages (13.1). None passes through."""
+    if x is None:
+        return None
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    return v / 100.0 if v > 1 else v
+
+
 def _draft_statlines(con):
     """player_key -> latest-season conventional COLLEGE box score (FG / NCAA),
     split hit vs pit, so CollegeSavant can show real AVG/OBP/SLG/ISO (hitters) or
@@ -185,10 +198,15 @@ def _draft_statlines(con):
             continue
         base = {"season": d.get("season"), "level": d.get("level"), "team": d.get("team")}
         if d.get("avg") is not None or d.get("obp") is not None:
+            # draft_statlines bb%/k% arrive in MIXED units: FanGraphs as decimals
+            # (0.131) but the NCAA box pull as percentages (13.1). Normalize both to
+            # the decimal convention the box panel + Draft Prospects board expect, so
+            # a 13.1% walk rate never renders as 1310%. A real rate as a decimal is
+            # 0-1; anything above 1 is a stored percentage, so divide it down.
             hit[pk] = {**base, "pa": d.get("pa"), "avg": d.get("avg"), "obp": d.get("obp"),
                        "slg": d.get("slg"), "iso": d.get("iso"), "woba": d.get("woba"),
-                       "wrc_plus": d.get("wrc_plus"), "bb_pct": d.get("bb_pct"),
-                       "k_pct": d.get("k_pct"), "hr": d.get("hr"), "sb": d.get("sb")}
+                       "wrc_plus": d.get("wrc_plus"), "bb_pct": _rate_to_decimal(d.get("bb_pct")),
+                       "k_pct": _rate_to_decimal(d.get("k_pct")), "hr": d.get("hr"), "sb": d.get("sb")}
         elif d.get("era") is not None or d.get("k_per_9") is not None:
             pit[pk] = {**base, "ip": d.get("ip"), "era": d.get("era"), "fip": d.get("fip"),
                        "xfip": d.get("xfip"), "k_per_9": d.get("k_per_9"),
@@ -196,7 +214,7 @@ def _draft_statlines(con):
     return hit, pit
 
 
-def _draft_prospect_export(con, box_hit, box_pit):
+def _draft_prospect_export(con, box_hit, box_pit, pk_to_cs=None):
     """The reverse of the tracking universe: draft prospects (each year) brought
     INTO CollegeSavant by their conventional college box score, for the ones we
     already hold stats for - including prospects with no TrackMan tracking. Keyed
@@ -215,6 +233,8 @@ def _draft_prospect_export(con, box_hit, box_pit):
             "ORDER BY snapshot_date"):
         fv[pk] = {"fv": f, "rank": rk}
 
+    cs_links = pk_to_cs or {}
+
     def _entry(pk, box):
         m = meta.get(pk) or {}
         e = {"name": m.get("name"), "school": m.get("school"), "pos": m.get("pos"),
@@ -223,6 +243,8 @@ def _draft_prospect_export(con, box_hit, box_pit):
         if pk in fv:
             e["fv"] = fv[pk]["fv"]
             e["rank"] = fv[pk]["rank"]
+        if pk in cs_links:  # this prospect also has a CollegeSavant tracked page
+            e["cs"] = cs_links[pk]
         return e
 
     def _rank_key(x):
@@ -453,7 +475,8 @@ def build(out_dir: Path | None = None) -> dict:
         draft_keys = _draft_keys(con)
         box_hit, box_pit = _draft_statlines(con)
         translations, bridge = {}, {}
-        n_box = 0
+        pk_to_cs = {}  # draft player_key -> {slug, year, side}: prospects that ALSO
+        n_box = 0      # have a CollegeSavant tracked page, so the board can link to it
         for slug_norm, v in cs_h.items():
             t = _translate_hitter(v, F)
             if not t:
@@ -467,11 +490,15 @@ def build(out_dir: Path | None = None) -> dict:
             translations[slug] = entry
             if pk:
                 bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"), "name": v["name"]}
+                pk_to_cs.setdefault(pk, {"slug": slug, "year": v.get("year"), "side": "hit"})
         for slug_norm, v in cs_p.items():
             t = _translate_pitcher(v, F)
             if not t:
                 continue
-            slug = slugify_cs(v["name"])
+            # The pitcher frontend slug is slugify(name-pitcher_id) (it disambiguates
+            # same-named arms), so key pitcher translations the same way or the
+            # client-side T[pitcher.slug] lookup misses and the board renders empty.
+            slug = slugify_cs("{}-{}".format(v["name"], v.get("pitcher_id")))
             if slug not in translations:
                 entry = {"side": "pit", "single_a": t}
                 pk = draft_keys.get(slug_norm)
@@ -482,6 +509,8 @@ def build(out_dir: Path | None = None) -> dict:
             pk = draft_keys.get(slug_norm)
             if pk and pk not in bridge:
                 bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
+            if pk:
+                pk_to_cs.setdefault(pk, {"slug": slug, "year": v.get("year"), "side": "pit"})
         # CollegeSavant-universe NCAA box scores (tracked players who are NOT
         # draft prospects), attached by slug where we have no draft-prospect box.
         # NCAA bb%/k% arrive as percentages; rescale to the decimal convention the
@@ -514,7 +543,7 @@ def build(out_dir: Path | None = None) -> dict:
 
         # The reverse direction: draft prospects (each year) carried into
         # CollegeSavant by the college box scores we already hold, FV-ranked.
-        prospects = _draft_prospect_export(con, box_hit, box_pit)
+        prospects = _draft_prospect_export(con, box_hit, box_pit, pk_to_cs)
         prospects["generated_from"] = "college_translation.build"
         (out_dir / "collegesavant_draft_prospects.js").write_text(
             "window.CS_DRAFT_PROSPECTS = " + json.dumps(prospects) + ";\n", encoding="utf-8")
