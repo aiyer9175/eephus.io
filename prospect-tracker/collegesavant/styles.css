@@ -10,25 +10,29 @@
    ride --cs-hot/--cs-cold so red stays "hot" in both themes.
    Layout rules are untouched from v1. */
 :root {
-  --ink: var(--text-primary, #10243e);
-  --navy: var(--bg-secondary, #14395d);
-  --navy-2: var(--accent-navy, #1f5f98);
-  --paper: var(--bg-primary, #eef3f8);
-  --paper-2: var(--bg-secondary, #dfe8f1);
-  --line: var(--border, #c8d4df);
-  --muted: var(--text-tertiary, #627183);
-  --chip: var(--bg-tertiary, #edf3f9);
-  --green: var(--accent-green, #1f7a3a);
-  --red: var(--accent-red, #c63d3d);
-  --gold: var(--accent-gold, #8aa1b8);
-  --blue: var(--accent-navy, #2272b9);
+  /* These alias the shared site.css brand tokens. The fallbacks are the BRAND
+     values (warm newsprint + navy + gold), not a cool-blue substitute, so a
+     missing site.css can never render CollegeSavant off-brand. site.css loads
+     before this on both CS pages, so the var() normally wins. */
+  --ink: var(--text-primary, #0F1B2D);
+  --navy: var(--bg-secondary, #FBF8F0);
+  --navy-2: var(--accent-navy, #0E2B4D);
+  --paper: var(--bg-primary, #F4F0E6);
+  --paper-2: var(--bg-secondary, #FBF8F0);
+  --line: var(--border, #C9C1AE);
+  --muted: var(--text-tertiary, #706B5C);
+  --chip: var(--bg-tertiary, #ECE6D6);
+  --green: var(--accent-green, #1F7A3A);
+  --red: var(--accent-red, #B91C1C);
+  --gold: var(--accent-gold, #C9A227);
+  --blue: var(--accent-navy, #0E2B4D);
   --shadow: none;
   /* Savant percentile semantics: hot = high percentile, cold = low. */
-  --cs-hot: var(--accent-red, #c63d3d);
-  --cs-cold: var(--accent-navy, #2272b9);
+  --cs-hot: var(--accent-red, #B91C1C);
+  --cs-cold: var(--accent-navy, #0E2B4D);
   /* Plate header (cards / tables / panels) - the site's board idiom. */
-  --cs-head-bg: var(--bg-tertiary, #edf3f9);
-  --cs-head-fg: var(--text-primary, #10243e);
+  --cs-head-bg: var(--bg-tertiary, #ECE6D6);
+  --cs-head-fg: var(--text-primary, #0F1B2D);
 }
 
 * {

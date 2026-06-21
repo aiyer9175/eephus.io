@@ -15,24 +15,35 @@ function formatTeamName(team) {
   return TEAM_DISPLAY_NAMES[code] || code.replace(/_/g, " ");
 }
 
+// `gl` is the data/glossary.json slug for this metric, when one exists; it wires
+// the same site-wide hover tooltip the rest of eephus uses. Metrics with no slug
+// yet (xwOBA, the zone/contact family) stay plain until their entries land.
 const METRICS = [
   { key: "xwoba", label: "xwOBA", fmt: "decimal", higherBetter: true },
-  { key: "average_exit_velocity", label: "Avg EV", fmt: "mph", higherBetter: true },
-  { key: "90th_percentile_exit_velocity", label: "90th EV", fmt: "mph", higherBetter: true },
-  { key: "max_exit_velocity", label: "Max EV", fmt: "mph", higherBetter: true },
+  { key: "average_exit_velocity", label: "Avg EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
+  { key: "90th_percentile_exit_velocity", label: "90th EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
+  { key: "max_exit_velocity", label: "Max EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
   { key: "swing_pct", label: "Swing %", fmt: "pct", higherBetter: true },
-  { key: "chase_pct", label: "Chase %", fmt: "pct", higherBetter: false },
-  { key: "whiff_pct", label: "Whiff %", fmt: "pct", higherBetter: false },
+  { key: "chase_pct", label: "Chase %", fmt: "pct", higherBetter: false, gl: "chase_pct" },
+  { key: "whiff_pct", label: "Whiff %", fmt: "pct", higherBetter: false, gl: "whiff_pct" },
   { key: "zone_swing_pct", label: "Zone Swing %", fmt: "pct", higherBetter: true },
   { key: "zone_contact_pct", label: "Zone Contact %", fmt: "pct", higherBetter: true },
   { key: "o_contact_pct", label: "O-Contact %", fmt: "pct", higherBetter: true },
   { key: "sweet_spot_pct", label: "Sweet Spot %", fmt: "pct", higherBetter: true },
-  { key: "barrel_pct", label: "Barrel %", fmt: "pct", higherBetter: true },
-  { key: "hard_hit_pct", label: "Hard-Hit %", fmt: "pct", higherBetter: true },
-  { key: "k_pct", label: "K %", fmt: "pct", higherBetter: false },
-  { key: "bb_pct", label: "BB %", fmt: "pct", higherBetter: true },
-  { key: "k_minus_bb_pct", label: "K-BB %", fmt: "pct", higherBetter: false },
+  { key: "barrel_pct", label: "Barrel %", fmt: "pct", higherBetter: true, gl: "barrel_pct" },
+  { key: "hard_hit_pct", label: "Hard-Hit %", fmt: "pct", higherBetter: true, gl: "hard_hit_pct" },
+  { key: "k_pct", label: "K %", fmt: "pct", higherBetter: false, gl: "k_pct" },
+  { key: "bb_pct", label: "BB %", fmt: "pct", higherBetter: true, gl: "bb_pct" },
+  { key: "k_minus_bb_pct", label: "K-BB %", fmt: "pct", higherBetter: false, gl: "k_bb_pct" },
 ];
+
+// Render a metric's label, wrapped in a glossary term span when the site
+// glossary defines it (EEPHUS_GL.wire then attaches the tooltip). Returns
+// escaped plain text otherwise. HTML-safe; callers must NOT re-escape.
+function glLabel(metric) {
+  const text = escapeHtml(metric ? metric.label : "");
+  return metric && metric.gl ? `<span class="g-term" data-gl="${metric.gl}">${text}</span>` : text;
+}
 
 const TEAM_LOGOS = {
   ILL_ILL: "logos/ILL_ILL.png",
@@ -266,6 +277,7 @@ function render() {
     const slug = parts.length > 1 ? parts.slice(1).join("/") : parts[0];
     const player = state.players.find((p) => p.slug === slug);
     renderPlayer(player);
+    afterRender();
     return;
   }
 
@@ -273,10 +285,18 @@ function render() {
     const key = hash.replace("#/leaders/", "").split("/")[0];
     if (METRICS.some((metric) => metric.key === key)) state.sortKey = key;
     renderLeaderboard();
+    afterRender();
     return;
   }
 
   renderHome();
+  afterRender();
+}
+
+// Post-render hooks shared by every view. Lights up the site glossary tooltips
+// on any [data-gl] term spans the view emitted (no-op if eephus-gl.js absent).
+function afterRender() {
+  if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(app);
 }
 
 function updateNav(hash) {
@@ -318,7 +338,7 @@ function renderTopWidget(metric) {
   return `
     <article class="top-widget">
       <div class="widget-title">
-        <span>${escapeHtml(metric.label)}</span>
+        <span>${glLabel(metric)}</span>
         <a href="#/leaders/${metric.key}/${state.year}">View All</a>
       </div>
       <div class="widget-list">
@@ -369,7 +389,7 @@ function renderLeaderboard() {
       <div class="table-head">
         <div>#</div>
         <div>Player</div>
-        <div>${escapeHtml(sortMetric.label)}</div>
+        <div>${glLabel(sortMetric)}</div>
         <div>Avg EV</div>
         <div>90th EV</div>
         <div>Max EV</div>
@@ -561,7 +581,7 @@ function renderSlider(player, metric, percentile) {
   const pct = percentile ?? 0;
   return `
     <div class="slider-row">
-      <div class="slider-label">${metric.label}</div>
+      <div class="slider-label">${glLabel(metric)}</div>
       <div class="slider-value">${formatMetric(player[metric.key], metric.fmt)}</div>
       <div class="track" aria-label="${metric.label} percentile">
         <span class="thumb" style="left: ${pct}%"></span>

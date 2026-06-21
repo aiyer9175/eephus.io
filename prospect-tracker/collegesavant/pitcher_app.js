@@ -31,6 +31,23 @@ const ALL_METRICS = [
   ...dedupeMetrics([...PITCHER_SHAPE_METRICS, ...PITCHER_OUTCOME_METRICS_2024]),
 ];
 
+// metric key -> data/glossary.json slug, where one exists. Keyed centrally so
+// the duplicated shape/outcome arrays stay in sync. stuff_plus is deliberately
+// NOT mapped: CollegeSavant's Stuff+ is a college TrackMan model, distinct from
+// the MLB "Stuff grade+" the glossary defines, so it gets its own entry later.
+const GL_SLUGS = {
+  barrel_pct: "barrel_pct", hard_hit_pct: "hard_hit_pct", k_pct: "k_pct",
+  bb_pct: "bb_pct", chase_pct: "chase_pct", whiff_pct: "whiff_pct",
+  avg_extension: "extension", average_exit_velocity: "exit_velocity",
+};
+// Render a metric label, wrapped as a glossary term span when a slug exists so
+// EEPHUS_GL.wire() attaches the site tooltip. HTML-safe; do not re-escape.
+function glLabel(metric) {
+  const text = escapeHtml(metric ? metric.label : "");
+  const slug = metric && GL_SLUGS[metric.key];
+  return slug ? `<span class="g-term" data-gl="${slug}">${text}</span>` : text;
+}
+
 const LEADERBOARD_LIMIT = 300;
 
 const PITCHER_HOME_WIDGET_METRICS = [
@@ -527,15 +544,24 @@ function render() {
     const parts = hash.replace("#/player/", "").split("/");
     const slug = parts.length > 1 ? parts.slice(1).join("/") : parts[0];
     renderPitcher(state.pitchers.find((p) => p.slug === slug));
+    afterRender();
     return;
   }
   if (hash.startsWith("#/leaders/")) {
     const key = hash.replace("#/leaders/", "").split("/")[0];
     if (activeHeadlineMetrics().some((metric) => metric.key === key)) state.sortKey = key;
     renderLeaderboard();
+    afterRender();
     return;
   }
   renderHome();
+  afterRender();
+}
+
+// Light up the site glossary tooltips on any [data-gl] term spans the view
+// emitted (no-op if eephus-gl.js is absent).
+function afterRender() {
+  if (window.EEPHUS_GL && window.EEPHUS_GL.wire) window.EEPHUS_GL.wire(app);
 }
 
 function updateNav(hash) {
@@ -574,7 +600,7 @@ function renderTopWidget(metric) {
   return `
     <article class="top-widget">
       <div class="widget-title">
-        <span>${escapeHtml(metric.label)}</span>
+        <span>${glLabel(metric)}</span>
         <a href="#/leaders/${metric.key}/${state.year}">View All</a>
       </div>
       <div class="widget-list">
@@ -625,7 +651,7 @@ function renderLeaderboard() {
       <div class="table-head pitcher-head">
         <div>#</div>
         <div>Pitcher</div>
-        <div>${escapeHtml(getMetric(state.sortKey).label)}</div>
+        <div>${glLabel(getMetric(state.sortKey))}</div>
         <div>FB Velo</div>
         <div>xwOBA</div>
         <div>Avg EV</div>
@@ -1018,7 +1044,7 @@ function renderSlider(pitcher, metric, percentile) {
   if (percentile === null || percentile === undefined) {
     return `
       <div class="slider-row is-missing">
-        <div class="slider-label">${metric.label}</div>
+        <div class="slider-label">${glLabel(metric)}</div>
         <div class="slider-value">${formatMetric(pitcher[metric.key], metric.fmt)}</div>
         <div class="track" aria-label="${metric.label} unavailable"></div>
         <div class="percentile missing">--</div>
