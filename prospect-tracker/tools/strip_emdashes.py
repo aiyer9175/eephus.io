@@ -55,6 +55,7 @@ TARGETS: list[str] = [
     "data/model_registry.json",
     "data/cba_rules.json",
     "data/state_demographics.json",
+    "data/country_demographics.json",
     "data/draft_timeseries.json",
     "data/ifa_timeseries.json",
     "data/overseas_timeseries.json",

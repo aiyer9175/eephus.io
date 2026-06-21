@@ -1,0 +1,118 @@
+{
+ "_comment": "Static reference data for per-capita analysis of international amateur (IFA) signings by country. Not theming.",
+ "source": "Total resident population, recent UN/World Bank figures (rounded). Used as the per-capita denominator (signings per million residents).",
+ "note": "Keyed by the country name as it appears in data/ifa_timeseries.json (e.g. 'Korea, South').",
+ "countries": {
+  "Antigua and Barbuda": {
+   "population": 93000
+  },
+  "Aruba": {
+   "population": 107000
+  },
+  "Australia": {
+   "population": 26000000
+  },
+  "Brazil": {
+   "population": 215300000
+  },
+  "China": {
+   "population": 1412000000
+  },
+  "Colombia": {
+   "population": 52000000
+  },
+  "Costa Rica": {
+   "population": 5200000
+  },
+  "Cuba": {
+   "population": 11200000
+  },
+  "Curacao": {
+   "population": 191000
+  },
+  "Dominican Republic": {
+   "population": 11200000
+  },
+  "Ecuador": {
+   "population": 18000000
+  },
+  "France": {
+   "population": 68000000
+  },
+  "Germany": {
+   "population": 84000000
+  },
+  "Guatemala": {
+   "population": 17600000
+  },
+  "Haiti": {
+   "population": 11700000
+  },
+  "Honduras": {
+   "population": 10400000
+  },
+  "Italy": {
+   "population": 58900000
+  },
+  "Jamaica": {
+   "population": 2800000
+  },
+  "Japan": {
+   "population": 124500000
+  },
+  "Korea, South": {
+   "population": 51700000
+  },
+  "Mexico": {
+   "population": 128900000
+  },
+  "Netherlands": {
+   "population": 17600000
+  },
+  "New Zealand": {
+   "population": 5100000
+  },
+  "Nicaragua": {
+   "population": 6900000
+  },
+  "Panama": {
+   "population": 4400000
+  },
+  "Peru": {
+   "population": 34000000
+  },
+  "Puerto Rico": {
+   "population": 3200000
+  },
+  "Russia": {
+   "population": 144000000
+  },
+  "Saint Martin": {
+   "population": 32000
+  },
+  "South Africa": {
+   "population": 60000000
+  },
+  "Spain": {
+   "population": 47800000
+  },
+  "Taiwan": {
+   "population": 23400000
+  },
+  "The Bahamas": {
+   "population": 410000
+  },
+  "Uganda": {
+   "population": 47100000
+  },
+  "United Kingdom": {
+   "population": 67000000
+  },
+  "United States": {
+   "population": 333000000
+  },
+  "Venezuela": {
+   "population": 28300000
+  }
+ }
+}

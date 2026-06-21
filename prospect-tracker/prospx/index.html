@@ -9177,6 +9177,11 @@
       <span class="filter-label" title="IFA signing year (Jan 15 signing day opens each class)">Class</span>
       <span id="ifa-class-chips"></span>
     </div>
+    <div id="ifa-subnav" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
+      <span class="filter-label">View</span>
+      <button class="chip active" data-ifa-view="signings" title="Signing classes: the signings table, bonuses, and org spending">Signings</button>
+      <button class="chip" data-ifa-view="countries" title="Where signees come from: a ranked board by country, with a page per country">Countries</button>
+    </div>
     <div id="ifa-rows"></div>
   </div>
 
@@ -9723,6 +9728,10 @@
 
   <div id="college-detail-section" style="display: none;">
     <div id="college-detail-body"></div>
+  </div>
+
+  <div id="country-detail-section" style="display: none;">
+    <div id="country-detail-body"></div>
   </div>
 
 </template>
@@ -12306,6 +12315,7 @@ function syncToURL(push) {
   else if (state.view && state.view.type === "draftee") p.set("draft", state.view.key);
   else if (state.view && state.view.type === "overseas_player") p.set("overseas", state.view.key);
   else if (state.view && state.view.type === "college") p.set("college", state.view.key);
+  else if (state.view && state.view.type === "country") p.set("country", state.view.key);
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
   if (state.acqFilter   !== "all")        p.set("acq",   state.acqFilter);
@@ -12460,6 +12470,7 @@ function syncFromURL() {
   else if (p.has("draft"))    state.view = { type: "draftee", key: p.get("draft") };
   else if (p.has("overseas")) state.view = { type: "overseas_player", key: p.get("overseas") };
   else if (p.has("college")) state.view = { type: "college", key: p.get("college") };
+  else if (p.has("country")) state.view = { type: "country", key: p.get("country") };
   // Draft / overseas detail tab (shared `prospectTab` slot - both detail
   // page types use the same 3-tab schema). Default 'overview'.
   state.prospectTab = p.has("dttab") ? p.get("dttab")
@@ -23009,6 +23020,14 @@ async function renderIFA() {
     state.ifaCountry = "all"; state.ifaTracked = false; renderIFA();
   }));
 
+  // Sub-view toggle (Signings vs Countries board).
+  if (!state.ifaView) state.ifaView = "signings";
+  document.querySelectorAll("[data-ifa-view]").forEach(b => {
+    b.classList.toggle("active", b.dataset.ifaView === state.ifaView);
+    b.onclick = () => { state.ifaView = b.dataset.ifaView; renderIFA(); };
+  });
+  if (state.ifaView === "countries") { _renderIFACountries(host, classes); return; }
+
   // All-time aggregate view (classes ranked + cross-year leaders).
   if (state.ifaYear === "all") { _renderIFAAllTime(host, classes, usd); return; }
 
@@ -23084,7 +23103,7 @@ async function renderIFA() {
       : `<span style="color:var(--text-primary);">${escapeHtml(s.player_name)}</span>`;
     // Sub-line: pos · country, plus (tracked) age-at-signing and the Tool
     // composite's signing → current movement.
-    const sub = [`${escapeHtml(s.position || " - ")} · ${escapeHtml(s.country || " - ")}`];
+    const sub = [`${escapeHtml(s.position || " - ")} · ${s.country ? _countryLinkHTML(s.country) : " - "}`];
     if (s.age_at_signing != null) sub.push(`signed at ${s.age_at_signing}y/o`);
     if (s.tool_current != null || s.tool_signing != null) {
       const ts = s.tool_signing, tc = s.tool_current;
@@ -24808,6 +24827,7 @@ async function _renderHSEntityDetail(host, mode, key, classes) {
   const header = back
     + '<div class="detail-page-header" style="align-items:center;">'
     + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">' + (mode === "schools" ? "High school program" : (mode === "regions" ? "High school geography &middot; region" : "High school geography &middot; state")) + '</div>'
     + '<div class="player-display-name">' + escapeHtml(title) + '</div>'
     + '<div class="player-display-meta" style="margin-top:2px;">' + sub + (effYear === "all" ? '' : ' &middot; ' + effYear + ' class') + '</div>'
     + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + availChips + '</div>'
@@ -25217,6 +25237,7 @@ async function renderCollegeDetail(name) {
   const header = back
     + '<div class="detail-page-header" style="align-items:center;">'
     + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">College program</div>'
     + '<div class="player-display-name">' + logoHero + escapeHtml(name) + '</div>'
     + '<div class="player-display-meta" style="margin-top:2px;">'
     + players.length + ' distinct draftee' + (players.length === 1 ? '' : 's')
@@ -25282,6 +25303,310 @@ async function renderCollegeDetail(name) {
     + '<a href="/collegesavant/" style="color:var(--neon-cyan);">Open CollegeSavant</a>.</div>';
 
   root.innerHTML = header + '<div class="detail-title flush">Program</div>' + tiles + currentBlock + pastBlock + csNote;
+}
+
+
+// === Countries (International Amateurs) ===============================
+// Per-country pages + a ranked board for the IFA (J2) market, parallel to
+// the HS / College entity pages. A country page shows its signees (linked
+// to their prospect pages), the teams that buy there, position tendencies,
+// and how the market's grades have held up. Country names are clickable
+// from the IFA signings table (a capture-phase delegated handler routes
+// [data-country] clicks).
+//
+// Source: data/ifa_timeseries.json signings. FV / age / tool grades exist
+// only on the ~12% we track as prospects, so quality is over that subset
+// and labeled. Per-capita uses data/country_demographics.json (population).
+// Deferred (need the export-plumbing pass + method sign-off): realized
+// career-WAR outcome efficiency and WAR-per-bonus-dollar. A production-vs-
+// size residual is intentionally omitted - population does not predict
+// signings here (baseball culture does), so the fit would be meaningless.
+
+// Country name -> ISO 3166-1 alpha-2 (lowercase), keyed by the IFA
+// country strings (note "Korea, South"). Powers flagcdn SVG flags.
+const _IFA_COUNTRY_CC = {
+  "Dominican Republic": "do", "Venezuela": "ve", "Mexico": "mx", "Cuba": "cu",
+  "Panama": "pa", "Colombia": "co", "Nicaragua": "ni", "Curacao": "cw", "Curaçao": "cw",
+  "Aruba": "aw", "The Bahamas": "bs", "Bahamas": "bs", "Australia": "au", "Taiwan": "tw",
+  "Netherlands": "nl", "Brazil": "br", "Japan": "jp", "Korea, South": "kr", "South Korea": "kr",
+  "Germany": "de", "Haiti": "ht", "United States": "us", "USA": "us", "Italy": "it",
+  "Uganda": "ug", "Spain": "es", "Costa Rica": "cr", "New Zealand": "nz", "China": "cn",
+  "Russia": "ru", "Ecuador": "ec", "Jamaica": "jm", "France": "fr", "United Kingdom": "gb",
+  "Guatemala": "gt", "Honduras": "hn", "Peru": "pe", "Puerto Rico": "pr", "South Africa": "za",
+  "Antigua and Barbuda": "ag", "Saint Martin": "mf", "Czech Republic": "cz", "San Marino": "sm",
+  "South Sudan": "ss", "Bulgaria": "bg", "Switzerland": "ch", "Canada": "ca"
+};
+function _countryFlagHTML(name, opts) {
+  const cc = _IFA_COUNTRY_CC[name];
+  if (!cc) return "";
+  return _flagImg("https://flagcdn.com/" + cc + ".svg", "", name, opts || {});
+}
+// Country name as a link to its page (optionally with a flag).
+function _countryLinkHTML(name, withFlag) {
+  if (!name) return " - ";
+  const flag = withFlag ? (_countryFlagHTML(name) + " ") : "";
+  return '<a href="#" class="college-link" data-country="' + escapeHtml(name) + '" '
+    + 'title="' + escapeHtml(name) + ' page">' + flag + escapeHtml(name) + '</a>';
+}
+
+// Site-wide country-link router (capture phase, same pattern as colleges).
+document.addEventListener("click", function (e) {
+  const el = e.target && e.target.closest && e.target.closest("[data-country]");
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+  goToCountry(el.dataset.country);
+}, true);
+
+function goToCountry(name) {
+  const p = new URLSearchParams();
+  p.set("country", name);
+  _pushHash(p);
+}
+
+let _countrySort = { key: null, dir: -1 };
+
+async function _loadCountryDemographics() {
+  if (DATA.countryDemographics) return DATA.countryDemographics;
+  try {
+    const base = DATA_URL.replace(/[^/]+$/, "");
+    const resp = await fetch(base + "country_demographics.json", { cache: "no-cache" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    DATA.countryDemographics = await resp.json();
+  } catch (e) {
+    DATA.countryDemographics = { countries: {} };
+  }
+  return DATA.countryDemographics;
+}
+
+// Aggregate IFA signings into per-country rows for the selected class
+// (state.ifaYear; "all" = every class).
+function _countryAggregate(classes) {
+  const yr = (state.ifaYear == null || state.ifaYear === "all") ? "all" : +state.ifaYear;
+  const demo = (DATA.countryDemographics && DATA.countryDemographics.countries) || {};
+  const byC = {};
+  let sumFvAll = 0, nFvAll = 0, totN = 0;
+  for (const c of (classes || [])) {
+    if (yr !== "all" && c.year !== yr) continue;
+    for (const s of (c.signings || [])) {
+      const name = s.country;
+      if (!name) continue;
+      const a = byC[name] || (byC[name] = { name, n: 0, tracked: 0, sumFv: 0, nFv: 0, top: 0, sumBonus: 0, nBonus: 0, topBonus: 0, deltaSum: 0, nDelta: 0, orgs: {}, pos: {}, topSigning: null });
+      a.n++; totN++;
+      if (s.is_tracked) a.tracked++;
+      if (s.fv != null) { a.sumFv += +s.fv; a.nFv++; sumFvAll += +s.fv; nFvAll++; if (+s.fv >= 50) a.top++; }
+      if (s.bonus_usd != null) { a.sumBonus += +s.bonus_usd; a.nBonus++; if (+s.bonus_usd > a.topBonus) a.topBonus = +s.bonus_usd; }
+      if (s.fv != null && s.fv_signing != null) { a.deltaSum += (+s.fv - +s.fv_signing); a.nDelta++; }
+      if (s.org) a.orgs[s.org] = (a.orgs[s.org] || 0) + 1;
+      if (s.position) a.pos[s.position] = (a.pos[s.position] || 0) + 1;
+      if (s.bonus_usd != null && (!a.topSigning || +s.bonus_usd > a.topSigning.bonus)) a.topSigning = { name: s.player_name, bonus: +s.bonus_usd, key: s.player_key, tracked: !!s.is_tracked };
+    }
+  }
+  const grandMean = nFvAll ? sumFvAll / nFvAll : 0;
+  let totPop = 0;
+  for (const k in byC) { const d = demo[k]; if (d && d.population) totPop += d.population; }
+  const rows = Object.values(byC).map(a => {
+    const meanRaw = a.nFv ? a.sumFv / a.nFv : null;
+    const w = a.nFv / (a.nFv + _HS_SHRINK_K);
+    const meanShrunk = meanRaw != null ? w * meanRaw + (1 - w) * grandMean : null;
+    const d = demo[a.name];
+    const pop = d ? d.population : null;
+    const rate = (pop && a.n) ? a.n / (pop / 1e6) : null;
+    return Object.assign({}, a, {
+      meanRaw, meanShrunk, pop, rate,
+      meanBonus: a.nBonus ? a.sumBonus / a.nBonus : null,
+      fvDrift: a.nDelta ? a.deltaSum / a.nDelta : null
+    });
+  });
+  return { rows, grandMean, totN, totPop, nationalRate: totPop ? totN / (totPop / 1e6) : null, k: _HS_SHRINK_K };
+}
+
+// The Countries board (an IFA sub-view). Each row opens the country page.
+function _renderIFACountries(host, classes) {
+  const agg = _countryAggregate(classes);
+  if (!agg.rows.length) {
+    host.innerHTML = _draftEmpty("No countries to rank yet", "This board fills in once signings are on file for the selected class.");
+    return;
+  }
+  const demoOk = DATA.countryDemographics && DATA.countryDemographics.countries && Object.keys(DATA.countryDemographics.countries).length > 0;
+  const cols = [
+    { key: "name", label: "Country", align: "left", get: r => r.name,
+      fmt: r => '<span class="draft-cell-ico">' + _countryFlagHTML(r.name, { small: true }) + '<strong>' + escapeHtml(r.name) + '</strong></span>' },
+    { key: "n", label: "Signings", align: "right", get: r => r.n, fmt: r => String(r.n), title: "Signings in view" },
+    { key: "tracked", label: "Tracked", align: "right", get: r => r.tracked, fmt: r => String(r.tracked), title: "Signees we track as prospects (have a grade)" },
+    { key: "sumBonus", label: "Total bonus", align: "right", get: r => r.sumBonus, fmt: r => r.sumBonus ? _fmtUSD(r.sumBonus) : " - ", title: "Total reported signing bonuses" },
+    { key: "meanShrunk", label: "Shrunk FV", align: "right", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", title: "Mean FV of tracked signees, shrunk toward the global mean by sample size (K=" + agg.k + ")" }
+  ];
+  if (demoOk) cols.push({ key: "rate", label: "Per M pop", align: "right", get: r => r.rate, fmt: r => r.rate != null ? r.rate.toFixed(1) : " - ", title: "Signings per million residents" });
+  cols.push({ key: "fvDrift", label: "FV drift", align: "right", get: r => r.fvDrift, fmt: r => r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", title: "Mean current FV minus FV at first grade (how the market's grades held up)" });
+  cols.push({ key: "top1", label: "Top signing", align: "left", get: r => r.topSigning ? r.topSigning.bonus : -Infinity, fmt: r => r.topSigning ? escapeHtml(r.topSigning.name) + ' <span style="color:var(--text-tertiary);">' + (r.topSigning.bonus ? _fmtUSD(r.topSigning.bonus) : "") + '</span>' : " - " });
+
+  const sk = _countrySort.key && cols.some(c => c.key === _countrySort.key) ? _countrySort.key : "n";
+  const sd = _countrySort.dir;
+  const rows = agg.rows.slice().sort((a, b) => {
+    const ca = cols.find(c => c.key === sk);
+    let va = ca.get(a), vb = ca.get(b);
+    if (typeof va === "string") return (sd < 0 ? -1 : 1) * va.localeCompare(vb);
+    va = va == null ? -Infinity : va; vb = vb == null ? -Infinity : vb;
+    return (sd < 0 ? -1 : 1) * (va - vb) || (b.n - a.n);
+  });
+  const head = cols.map(c => {
+    const isA = c.key === sk;
+    return '<th class="dt-sortable" data-cty-sort="' + c.key + '" title="' + escapeHtml(c.title || "") + '" '
+      + 'style="cursor:pointer;text-align:' + c.align + ';' + (isA ? "color:var(--neon-cyan);" : "") + '">'
+      + escapeHtml(c.label) + (isA ? (sd < 0 ? " v" : " ^") : "") + '</th>';
+  }).join("");
+  const body = rows.map((r, i) =>
+    '<tr data-country="' + escapeHtml(r.name) + '" style="cursor:pointer;"><td style="color:var(--text-tertiary);">' + (i + 1) + '</td>'
+    + cols.map(c => '<td style="text-align:' + c.align + ';' + (c.align === "right" ? "font-family:var(--font-mono);" : "") + '">' + c.fmt(r) + '</td>').join("")
+    + '</tr>').join("");
+  const yr = (state.ifaYear == null || state.ifaYear === "all") ? "all" : state.ifaYear;
+  host.innerHTML = _draftCaption("Countries",
+    "where international amateur (J2) signees come from. FV and grade data exist only for the tracked-prospect subset, so quality is over those. "
+    + "Showing <strong>" + agg.rows.length + "</strong> countries, <strong>" + agg.totN + "</strong> signings"
+    + (yr === "all" ? " (all classes; pick a year in the class strip to narrow)" : " (" + yr + " class)")
+    + ". Click any country for its page.")
+    + '<table class="draft-table"><thead><tr><th>#</th>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  host.querySelectorAll("[data-cty-sort]").forEach(th => th.onclick = () => {
+    const k = th.dataset.ctySort;
+    if (_countrySort.key === k) _countrySort.dir *= -1;
+    else _countrySort = { key: k, dir: (k === "name" || k === "top1") ? 1 : -1 };
+    renderIFA();
+  });
+}
+
+function _findCountry(name) {
+  if (!name || !DATA.ifa || !DATA.ifa.classes) return null;
+  const signings = [];
+  for (const c of DATA.ifa.classes) {
+    for (const s of (c.signings || [])) {
+      if (s.country === name) signings.push(Object.assign({ _year: c.year }, s));
+    }
+  }
+  return signings.length ? signings : null;
+}
+
+// Per-country detail page: identity, lens tiles, comparison vs global,
+// signees (linked to their prospect pages), the teams buying there, and
+// position tendencies.
+async function renderCountryDetail(name) {
+  const root = document.getElementById("country-detail-body");
+  if (!root) return;
+  root.innerHTML = '<div class="state-message is-loading">Loading country...</div>';
+  if (!DATA.ifa) {
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "ifa_timeseries.json", { cache: "no-cache" });
+      DATA.ifa = await resp.json();
+    } catch (e) {
+      root.innerHTML = '<a href="#" onclick="event.preventDefault();goHome();" class="back-link">&larr; Back to list</a>'
+        + '<div class="state-message is-error">Could not load international-amateur data.</div>';
+      return;
+    }
+  }
+  await _loadCountryDemographics();
+  const back = '<a href="#" onclick="event.preventDefault();goHome();" class="back-link">&larr; Back to list</a>';
+  const agg = _countryAggregate(DATA.ifa.classes);
+  const r = agg.rows.find(x => x.name === name);
+  const signings = _findCountry(name);
+  if (!r || !signings) {
+    root.innerHTML = back + _draftEmpty("No international-amateur signings on file for " + escapeHtml(name), "");
+    return;
+  }
+
+  const rankOf = (key, higher) => {
+    const vals = agg.rows.map(x => x[key]).filter(v => v != null && isFinite(v));
+    const mine = r[key];
+    if (mine == null || !isFinite(mine)) return null;
+    return { rank: vals.filter(v => higher ? v > mine : v < mine).length + 1, of: vals.length };
+  };
+  const rankChip = (key, label, higher) => {
+    const rk = rankOf(key, higher);
+    if (!rk) return "";
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);">'
+      + escapeHtml(label) + ' <strong style="color:var(--text-primary);font-family:var(--font-mono);">#' + rk.rank + '</strong><span style="color:var(--text-tertiary);">/ ' + rk.of + '</span></span>';
+  };
+
+  const header = back
+    + '<div class="detail-page-header" style="align-items:center;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:2px;">International market &middot; country</div>'
+    + '<div class="player-display-name">' + _countryFlagHTML(name, { large: true }) + ' ' + escapeHtml(name) + '</div>'
+    + '<div class="player-display-meta" style="margin-top:2px;">'
+    + r.n + ' signing' + (r.n === 1 ? '' : 's') + ' &middot; ' + r.tracked + ' tracked'
+    + (r.sumBonus ? ' &middot; ' + _fmtUSD(r.sumBonus) + ' total bonus' : '')
+    + (r.pop ? ' &middot; ' + (r.pop / 1e6).toFixed(1) + 'M residents' : '')
+    + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">'
+    + rankChip("n", "Volume", true) + rankChip("meanShrunk", "Quality", true) + rankChip("rate", "Per-capita", true) + rankChip("sumBonus", "Spend", true)
+    + '</div></div></div>';
+
+  const tiles = '<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">'
+    + _statTileHTML("Signings", String(r.n))
+    + _statTileHTML("Tracked prospects", String(r.tracked))
+    + _statTileHTML("Top tier (FV 50+)", String(r.top))
+    + _statTileHTML("Mean FV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ")
+    + _statTileHTML("Mean FV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Pulled toward the global mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
+    + _statTileHTML("Per million pop", r.rate != null ? r.rate.toFixed(1) : " - ", { title: "Signings per million residents" })
+    + _statTileHTML("FV drift", r.fvDrift != null ? (r.fvDrift > 0 ? "+" : "") + r.fvDrift.toFixed(1) : " - ", { tone: r.fvDrift > 0 ? "pos" : "", title: "Mean current FV minus FV at first grade" })
+    + _statTileHTML("Total bonus", r.sumBonus ? _fmtUSD(r.sumBonus) : " - ")
+    + _statTileHTML("Mean bonus", r.meanBonus != null ? _fmtUSD(r.meanBonus) : " - ")
+    + '</div>';
+
+  // Comparison vs global.
+  const cmpRow = (label, mine, natl, fmt) => {
+    if (mine == null || natl == null) return "";
+    const diff = mine - natl;
+    return '<tr><td>' + escapeHtml(label) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);">' + fmt(mine) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">' + fmt(natl) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:' + (diff > 0 ? "var(--neon-green)" : "var(--text-tertiary)") + ';">' + (diff > 0 ? "+" : "") + fmt(diff) + '</td></tr>';
+  };
+  const globalDrift = (() => { let s = 0, n = 0; agg.rows.forEach(x => { if (x.fvDrift != null) { s += x.fvDrift; n++; } }); return n ? s / n : null; })();
+  const comparison = '<div class="detail-title">Versus global</div>'
+    + '<table class="draft-table"><thead><tr><th>Lens</th><th style="text-align:right;">This</th><th style="text-align:right;">Global</th><th style="text-align:right;">Diff</th></tr></thead><tbody>'
+    + cmpRow("Mean FV", r.meanRaw, agg.grandMean, v => v.toFixed(1))
+    + cmpRow("Per million pop", r.rate, agg.nationalRate, v => v.toFixed(1))
+    + cmpRow("FV drift", r.fvDrift, globalDrift, v => v.toFixed(1))
+    + '</tbody></table>';
+
+  // Signees (featured: tracked + top bonus), capped.
+  const CAP = 60;
+  const featured = signings.slice().sort((a, b) => (b.is_tracked ? 1 : 0) - (a.is_tracked ? 1 : 0) || (b.bonus_usd || 0) - (a.bonus_usd || 0));
+  const shown = featured.slice(0, CAP);
+  const sigRows = shown.map(s => {
+    const fvProg = (s.fv_signing != null || s.fv != null)
+      ? (s.fv_signing != null ? fvCeil(s.fv_signing) : "?") + (s.fv != null && s.fv !== s.fv_signing ? " &rarr; " + fvCeil(s.fv) : (s.fv != null && s.fv_signing == null ? fvCeil(s.fv) : ""))
+      : " - ";
+    const nm = (s.is_tracked && s.player_key)
+      ? '<a href="#" onclick="event.preventDefault();goToPlayer(\'' + escapeHtml(s.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(s.player_name) + '</strong></a>'
+      : '<strong>' + escapeHtml(s.player_name) + '</strong>';
+    return '<tr>'
+      + '<td>' + nm + '</td>'
+      + '<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + s._year + '</td>'
+      + '<td style="text-align:center;">' + escapeHtml(s.position || " - ") + '</td>'
+      + '<td style="text-align:center;font-family:var(--font-mono);">' + (s.age_at_signing != null ? s.age_at_signing : " - ") + '</td>'
+      + '<td style="text-align:center;font-family:var(--font-mono);">' + fvProg + '</td>'
+      + '<td style="text-align:left;">' + (s.org ? escapeHtml(s.org) : " - ") + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);">' + (s.bonus_usd != null ? _fmtUSD(s.bonus_usd) : " - ") + '</td>'
+      + '</tr>';
+  }).join("");
+  const sigTable = '<div class="detail-title">Signees (' + signings.length + (signings.length > CAP ? ", top " + CAP + " shown" : "") + ')</div>'
+    + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>'
+    + '<th style="text-align:center;" title="Age at signing">Age</th><th style="text-align:center;" title="FV at first grade then current">FV</th>'
+    + '<th>Signing team</th><th style="text-align:right;">Bonus</th></tr></thead><tbody>' + sigRows + '</tbody></table>';
+
+  // Side panel: teams buying here + position split.
+  const orgs = Object.keys(r.orgs).map(o => ({ o, n: r.orgs[o] })).sort((a, b) => b.n - a.n).slice(0, 12);
+  const posArr = Object.keys(r.pos).map(p => ({ p, n: r.pos[p] })).sort((a, b) => b.n - a.n).slice(0, 10);
+  const side = '<div class="detail-title">Top signing teams</div>'
+    + '<ul class="draft-list">' + (orgs.length ? orgs.map(o => '<li><strong>' + o.n + '</strong> &middot; ' + escapeHtml(fullOrgName ? (fullOrgName(o.o) || o.o) : o.o) + '</li>').join("") : '<li style="color:var(--text-tertiary);">None</li>') + '</ul>'
+    + '<div class="detail-title">Position split</div>'
+    + '<ul class="draft-list">' + (posArr.length ? posArr.map(p => '<li><strong>' + p.n + '</strong> &middot; ' + escapeHtml(p.p) + '</li>').join("") : '<li style="color:var(--text-tertiary);">None</li>') + '</ul>';
+
+  root.innerHTML = '<div class="player-detail-grid"><div>'
+    + header + '<div class="detail-title flush">Lenses</div>' + tiles + comparison + sigTable
+    + '</div><div class="player-detail-side">' + side + '</div></div>';
 }
 
 
@@ -44669,6 +44994,7 @@ function render() {
     draftDetail:  "draft-detail-section",
     overseasDetail: "overseas-detail-section",
     collegeDetail: "college-detail-section",
+    countryDetail: "country-detail-section",
   };
 
   // Detail view takes over: hide filter bar and search; keep section
@@ -44709,6 +45035,7 @@ function render() {
   else if (state.view && state.view.type === "draftee") active = "draftDetail";
   else if (state.view && state.view.type === "overseas_player") active = "overseasDetail";
   else if (state.view && state.view.type === "college") active = "collegeDetail";
+  else if (state.view && state.view.type === "country") active = "countryDetail";
   else active = state.section;
 
   // Dark-theme phosphor starfield ←→ FV linkage. Prospect detail views feed
@@ -44754,6 +45081,7 @@ function render() {
     draftDetail:    "draft-detail-body",
     overseasDetail: "overseas-detail-body",
     collegeDetail:  "college-detail-body",
+    countryDetail:  "country-detail-body",
   };
   const showLoading = (msg) => {
     const id = SECTION_BODY[active];
@@ -44806,6 +45134,7 @@ function render() {
   else if (active === "draftDetail")    renderDraftDetail(state.view.key);
   else if (active === "overseasDetail") renderOverseasDetail(state.view.key);
   else if (active === "collegeDetail")  renderCollegeDetail(state.view.key);
+  else if (active === "countryDetail")  renderCountryDetail(state.view.key);
   else if (active === "active")     renderActives();
   else if (active === "timemachine") renderTimeMachine();
   else if (active === "spotlights") renderSpotlights();
