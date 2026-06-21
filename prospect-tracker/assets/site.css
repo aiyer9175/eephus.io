@@ -9,6 +9,21 @@
    On the PROSPX page this file is loaded BEFORE its inline <style>, so PROSPX's
    own :root wins the cascade - here we only need it for `.eephus-nav`.
    ========================================================================== */
+
+/* DotGothic16 - the brand logo/display face. A pixel/bitmap gothic that
+   recreates the MS-Gothic look and renders identically on every device (real
+   MS Gothic is a Windows-only system font, often absent, and proprietary so it
+   can't be self-hosted). Self-hosted as a ~11KB Latin-subset woff2; SIL OFL,
+   license in branding/fonts/OFL.txt. The PIL brand generator uses the same
+   face, so the site logo and the share cards / animated gif match exactly. */
+@font-face {
+  font-family: "DotGothic16";
+  src: url("/assets/fonts/dotgothic16-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg-primary:    #F4F0E6;   /* warm paper */
   --bg-secondary:  #FAF5E6;   /* card surface - warm baseball-card cream (was near-white #FBF8F0) */
@@ -33,14 +48,19 @@
   --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
   --grain: rgba(15,27,45,.035);
   --grain2: rgba(139,132,116,.05);
-  --font-retro: "MS UI Gothic","MS Gothic","Osaka","Roboto Mono","VT323",
-                "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
-                     "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
-  /* The eephus.io wordmark + headings. MS Gothic preferred (it reads beautifully
-     at display sizes); MS UI Gothic next for the cases that need its hinting;
-     Roboto Mono (webfont) is the cross-platform fallback. */
-  --font-logo: "MS Gothic","MS UI Gothic","Osaka","Roboto Mono",ui-monospace,Consolas,monospace;
+  /* DotGothic16 (self-hosted, @font-face above) sits right after the MS Gothic
+     faces so NOTHING ever falls through to a generic system monospace: where MS
+     Gothic / MS UI Gothic exist they win; everywhere else the brand pixel-gothic
+     renders instead of Consolas/ui-monospace. */
+  --font-retro: "MS UI Gothic","MS Gothic","DotGothic16","Osaka","VT323",
+                "Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --font-retro-mono: "MS Gothic","MS UI Gothic","DotGothic16","Osaka-Mono","VT323","Press Start 2P",
+                     ui-monospace,"SF Mono",Consolas,monospace;
+  /* The eephus.io wordmark + headings. DotGothic16 (self-hosted pixel-gothic)
+     leads so the logo renders the MS-Gothic/Y2K look on EVERY device; real MS
+     Gothic / MS UI Gothic are honored next for anyone who has them; Roboto Mono
+     is the last cross-platform fallback. */
+  --font-logo: "DotGothic16","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
   --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
@@ -59,10 +79,12 @@
   --scrollbar-track: transparent;
   --scrollbar-thumb: #BBB29C;
   --scrollbar-thumb-hover: var(--accent-navy);
-  /* Brand iridescent / lilac-blurple accent. On light it's a deep violet; the
-     logo .io stays gold here. On dark (below) both shift to the blurple. */
+  /* Brand iridescent / lilac-blurple accent - the site THEME shade on both
+     modes. Light is a deep violet (AA on cream), dark a brighter blurple
+     (below). The logo .io and the decorative chrome take it; FV-tier gold stays
+     gold (that is data, not chrome). */
   --accent-lilac: #6E56CF;
-  --logo-dot: var(--accent-gold);
+  --logo-dot: var(--accent-lilac);
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -234,6 +256,18 @@
   text-rendering: optimizeLegibility;
   font-synthesis: none;
 }
+/* Light-mode paper texture: a faint newsprint halftone dot grid layered over the
+   grain so the background reads like cardstock / a newspaper section instead of a
+   flat fill. Light only - dark mode keeps the pixel starfield. Tunable via
+   --paper-dot; content sits on solid cards so legibility is untouched. */
+:root:not([data-theme="dark"]) .eephus-page {
+  background-image:
+    radial-gradient(var(--grain) 1px, transparent 1px),
+    radial-gradient(var(--grain2) 1px, transparent 1px),
+    radial-gradient(var(--paper-dot, rgba(15,27,45,.05)) 0.7px, transparent 0.8px);
+  background-size: 26px 26px, 13px 13px, 6px 6px;
+  background-position: 0 0, 13px 13px, 0 0;
+}
 .eephus-page a { color: var(--accent-navy); }
 .eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
 
@@ -371,7 +405,7 @@
 }
 a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
 .card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent-navy); }
-.card.module-card::before { background: var(--accent-gold); }
+.card.module-card::before { background: var(--accent-lilac); }
 .card .eyebrow {
   font-family: var(--font-retro); font-size: 10px; font-weight: 700;
   letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px;
@@ -415,7 +449,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .byline-author:hover, .byline-author:focus-visible { text-decoration: underline; }
 .byline-handle { color: var(--accent-navy); text-decoration: none; }
 .byline-handle:hover, .byline-handle:focus-visible { text-decoration: underline; }
-.article-summary { font-size: 1.05rem; color: var(--text-secondary); font-style: italic; border-left: 3px solid var(--accent-gold); padding-left: 14px; margin: 0 0 28px; }
+.article-summary { font-size: 1.05rem; color: var(--text-secondary); font-style: italic; border-left: 3px solid var(--accent-lilac); padding-left: 14px; margin: 0 0 28px; }
 .article-body { font-size: 1.05rem; line-height: 1.7; }
 .article-body p { margin: 0 0 1.1em; }
 .article-body h2, .article-body h3 { font-family: var(--font-retro-mono); margin: 1.6em 0 .5em; letter-spacing: .02em; }
@@ -833,10 +867,39 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
   100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
+/* Hover-replay: hovering ANY eephus.io wordmark (hero, nav, sidebar) re-traces
+   the arc and re-settles the ball, so the animation is always discoverable and
+   verifiable even if the one-shot on load was missed. Distinct keyframe names so
+   the hover actually re-triggers; works under reduced-motion since it is
+   user-initiated (a deliberate intent, not autoplay). */
+.eephus-wordmark-merged { cursor: pointer; }
+.eephus-wordmark-merged:hover .ew-arc path {
+  animation: ew-arc-redraw .8s cubic-bezier(.22,.61,.36,1) backwards;
+}
+.eephus-wordmark-merged:hover .ew-ball {
+  transform-origin: center bottom;
+  animation: ew-ball-resettle .42s cubic-bezier(.34,1.56,.64,1) .5s backwards;
+}
+@keyframes ew-arc-redraw {
+  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
+  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+}
+@keyframes ew-ball-resettle {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
 @media (prefers-reduced-motion: reduce) {
-  /* Proper fallback: the finished logo, no motion (nothing half-drawn). */
+  /* Proper fallback for the autoplay-on-load: the finished logo, no motion. The
+     hover-replay above stays (it is user-initiated). */
   .eephus-logo--animate .ew-arc path,
   .eephus-logo--animate .ew-ball { animation: none; }
+}
+
+/* Cybergothic dark masthead: a faint lilac/cyan neon glow on the nameplate so
+   the wordmark reads like backlit chrome on the holo field. Dark only. */
+[data-theme="dark"] .masthead .nameplate {
+  text-shadow: 0 0 10px rgba(155, 140, 255, 0.35), 0 0 3px rgba(0, 217, 255, 0.22);
 }
 
 /* ---- On-theme scrollbars (one token set, shared with PROSPX's inline copy).

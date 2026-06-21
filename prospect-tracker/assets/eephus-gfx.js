@@ -74,7 +74,7 @@
     var line = tok("--border", dark ? "#2B2B31" : "#C9C1AE");
     var accent = tok(accentToken(), dark ? "#00D9FF" : "#0E7C86");
     var pos = dark ? "#4FFF9E" : "#1F7A3A", neg = dark ? "#FF6B6B" : "#B91C1C";
-    var MONO = '"MS Gothic","Osaka-Mono","Roboto Mono",monospace';
+    var MONO = '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace';
     var colorOf = function (k) {
       var key = COLOR_KEYS[k] || k;
       return key === "green" ? pos : key === "red" ? neg : key === "accent" ? accent

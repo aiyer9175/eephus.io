@@ -99,7 +99,7 @@
     const sub = _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C");
     const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
     const accent = _tok(opts.accentToken || "--accent-cyan", dark ? "#00D9FF" : "#0E7C86");
-    const MONO = '"MS Gothic","Osaka-Mono","Roboto Mono",monospace';
+    const MONO = '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace';
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
 
     // header: brand + module eyebrow + date, iridescent rule under

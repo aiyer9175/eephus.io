@@ -139,7 +139,9 @@
   function draw(now) {
     var w = canvas.clientWidth, h = canvas.clientHeight;
     var dpr = canvas.width / Math.max(1, w);
-    var u = Math.max(1, Math.round(dpr));        // 1 css px in device px (the pixel grid)
+    // Chunky pixel-art grid: every star is drawn from BLK-sized blocks snapped to
+    // a shared lattice, so it reads as deliberate spritework, not noise.
+    var BLK = Math.max(2, Math.round(2 * dpr));
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     var alphaMax = Math.min(0.85, tokens.opacityMax * (1 + (tokens.opacityMult - 1) * fvT));
     for (var i = 0; i < stars.length; i++) {
@@ -148,36 +150,40 @@
       var tw = twinkle(st, now);
       var b = st.baseB * (1 - st.twAmp + st.twAmp * tw);
       var a = alphaMax * Math.max(0, Math.min(1, b));
-      if (a < 0.015) continue;
+      if (a < 0.02) continue;
       var rgb = holoColor(st, now);
       var x = (st.fx * w + pointerX * depth) % w; if (x < 0) x += w;
       var y = (st.fy * h + scrollOff * depth) % h; if (y < 0) y += h;
-      // snap to the device-pixel grid for crisp pixels
-      var px = Math.round(x * dpr), py = Math.round(y * dpr);
-      var core = st.size * u;
-      var half = (core - (core % 2)) / 2;
-      // soft square bloom (pixelated glow), two stepped steps
-      var g1 = (st.arm + 2) * u;
-      ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.08).toFixed(3) + ")";
-      ctx.fillRect(px - g1, py - g1, g1 * 2, g1 * 2);
-      var g2 = Math.round(g1 * 0.5);
-      ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.14).toFixed(3) + ")";
-      ctx.fillRect(px - g2, py - g2, g2 * 2, g2 * 2);
-      // sparkle arms (twinkle): length pulses with the twinkle
-      var arm = Math.max(0, Math.round(st.arm * (0.25 + 0.75 * tw))) * u;
-      if (arm >= u) {
-        ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.9).toFixed(3) + ")";
-        ctx.fillRect(px - arm, py - Math.floor(u / 2), arm * 2 + u, u);
-        ctx.fillRect(px - Math.floor(u / 2), py - arm, u, arm * 2 + u);
-        if (st.bright) {                          // 8-point: diagonal pixels on anchors
-          var d = Math.round(arm * 0.55);
-          ctx.fillRect(px + d, py + d, u, u); ctx.fillRect(px - d - u, py + d, u, u);
-          ctx.fillRect(px + d, py - d - u, u, u); ctx.fillRect(px - d - u, py - d - u, u, u);
-        }
+      // snap the star's origin to the block lattice
+      var px = Math.round(x * dpr / BLK) * BLK;
+      var py = Math.round(y * dpr / BLK) * BLK;
+      // arm length in BLOCKS, pulsing with the twinkle (the glimmer)
+      var arms = Math.round(st.arm * (0.3 + 0.7 * tw));
+      // soft square pixel-bloom
+      var glo = (arms + 1) * BLK;
+      ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.09).toFixed(3) + ")";
+      ctx.fillRect(px - glo, py - glo, glo * 2 + BLK, glo * 2 + BLK);
+      // 4-point sparkle: arm blocks N/S/E/W
+      ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.85).toFixed(3) + ")";
+      for (var k = 1; k <= arms; k++) {
+        ctx.fillRect(px + k * BLK, py, BLK, BLK);
+        ctx.fillRect(px - k * BLK, py, BLK, BLK);
+        ctx.fillRect(px, py + k * BLK, BLK, BLK);
+        ctx.fillRect(px, py - k * BLK, BLK, BLK);
       }
-      // core pixel(s) - the brightest part
-      ctx.fillStyle = "rgba(" + rgb + "," + Math.min(1, a * 1.4).toFixed(3) + ")";
-      ctx.fillRect(px - half, py - half, core, core);
+      // bright anchors get diagonal accent blocks (8-point sprite)
+      if (st.bright && arms >= 2) {
+        var dd = Math.max(1, Math.round(arms * 0.5));
+        ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.55).toFixed(3) + ")";
+        ctx.fillRect(px + dd * BLK, py + dd * BLK, BLK, BLK);
+        ctx.fillRect(px - dd * BLK, py + dd * BLK, BLK, BLK);
+        ctx.fillRect(px + dd * BLK, py - dd * BLK, BLK, BLK);
+        ctx.fillRect(px - dd * BLK, py - dd * BLK, BLK, BLK);
+      }
+      // core block(s) - the brightest pixel; bright stars get a 2x2 core
+      ctx.fillStyle = "rgba(" + rgb + "," + Math.min(1, a * 1.5).toFixed(3) + ")";
+      if (st.bright) ctx.fillRect(px - BLK, py - BLK, BLK * 2, BLK * 2);
+      else ctx.fillRect(px, py, BLK, BLK);
     }
   }
 

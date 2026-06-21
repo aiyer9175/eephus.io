@@ -1,7 +1,7 @@
 {
   "name": "eephus.io",
   "short_name": "eephus.io",
-  "description": "Sabermetric prospect analysis: PROSPX consensus board, MLB free agency, projections, CollegeSavant.",
+  "description": "Sabermetrics: PROSPX consensus board, MLB free agency, projections, CollegeSavant.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

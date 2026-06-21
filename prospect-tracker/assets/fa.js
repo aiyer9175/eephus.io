@@ -281,7 +281,7 @@
     const fg = _tok("--text-primary", dark ? "#ECEEF2" : "#0F1B2D");
     const sub = _tok("--text-tertiary", dark ? "#7C808A" : "#706B5C");
     const line = _tok("--border", dark ? "#2B2B31" : "#C9C1AE");
-    const MONO = '"MS Gothic","Osaka-Mono","Roboto Mono",monospace';
+    const MONO = '"DotGothic16","MS Gothic","MS UI Gothic","Osaka-Mono",monospace';
     g.fillStyle = bg; g.fillRect(0, 0, W, H);
     // iridescent rule - literal stops per theme (canvas can't read var())
     const ramp = g.createLinearGradient(PAD, 0, W - PAD, 0);

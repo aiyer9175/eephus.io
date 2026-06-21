@@ -109,6 +109,66 @@ def _font(px: int, bold: bool = True) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default(px)
 
 
+_LOGO_TTF = str(ROOT / "branding" / "fonts" / "DotGothic16-Regular.ttf")
+
+
+def _logo_font(px: int) -> ImageFont.FreeTypeFont:
+    """The brand wordmark face: self-hosted DotGothic16 (the same pixel-gothic the
+    site logo uses), so the cards / gif match the in-site logo exactly. Falls back
+    to the mono face if the vendored ttf is missing."""
+    try:
+        return ImageFont.truetype(_LOGO_TTF, px)
+    except OSError:
+        return _font(px)
+
+
+# Y2K / cybergothic dark field for the icons + social art: near-black with a soft
+# lilac/blurple radial glow and faint pixel scanlines.
+DARK_FIELD = (12, 12, 14)          # #0C0C0E
+LILAC_GLOW = (110, 92, 255)        # #6E5CFF
+
+
+def _y2k_field(W: int, H: int, origin=(0.5, 0.32), scan: bool = True) -> Image.Image:
+    """A dark holo field: near-black base, a soft lilac radial glow at `origin`
+    (fractional), and faint horizontal scanlines. The cybergothic icon/banner bg."""
+    img = Image.new("RGB", (W, H), DARK_FIELD)
+    glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    gd = ImageDraw.Draw(glow)
+    cx, cy = int(W * origin[0]), int(H * origin[1])
+    R = int(max(W, H) * 0.75)
+    for r in range(R, 0, -max(1, R // 90)):
+        a = int(46 * (1 - r / R) ** 2)
+        gd.ellipse([cx - r, cy - r, cx + r, cy + r], fill=LILAC_GLOW + (a,))
+    img = Image.alpha_composite(img.convert("RGBA"), glow).convert("RGB")
+    if scan:
+        sl = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        sd = ImageDraw.Draw(sl)
+        step = max(3, H // 220)
+        for y in range(0, H, step * 2):
+            sd.rectangle([0, y, W, y + step - 1], fill=(0, 0, 0, 26))
+        img = Image.alpha_composite(img.convert("RGBA"), sl).convert("RGB")
+    return img
+
+
+def _pixel_stars(d: ImageDraw.ImageDraw, W: int, H: int, n: int, seed_step: int = 1) -> None:
+    """Chunky pixel-art sparkle-stars in the holo palette, for the social banners.
+    Deterministic (no RNG - placed on a hashed lattice) so the artifact is stable."""
+    ramp = [(0, 217, 255), (91, 200, 255), (139, 127, 255), (180, 124, 255), (255, 79, 216)]
+    for i in range(n):
+        # cheap deterministic scatter
+        x = (i * 1973 * seed_step + (i * i) % 131) % W
+        y = (i * 769 * seed_step + (i * i) % 257) % H
+        col = ramp[(i * 7) % len(ramp)]
+        bright = (i % 9) == 0
+        bs = 3 if bright else 2
+        a = 150 if bright else 90
+        # plus-sparkle of chunky blocks
+        d.rectangle([x - bs, y - bs, x + bs, y + bs], fill=col + (a,))
+        arm = bs * (3 if bright else 2)
+        d.rectangle([x - arm, y - 1, x + arm, y + 1], fill=col + (a,))
+        d.rectangle([x - 1, y - arm, x + 1, y + arm], fill=col + (a,))
+
+
 def _gothic_font(px: int) -> ImageFont.FreeTypeFont:
     """The blackletter/old-style face for the P/X monogram, matching the in-app
     mark's "Old English Text MT" stack. Falls back to a bold serif so the
@@ -129,38 +189,43 @@ def _gothic_font(px: int) -> ImageFont.FreeTypeFont:
     return ImageFont.load_default(px)
 
 
+def _y2k_icon(size: int, ball_frac: float = 0.76, monogram: bool = True,
+              border: bool = True) -> Image.Image:
+    """A Y2K-gothic app icon: the cream ball + P/X monogram on a dark holo field
+    (near-black + lilac glow + faint scanlines) inside a thin lilac pixel border."""
+    img = _y2k_field(size, size, origin=(0.5, 0.42), scan=(size >= 120)).convert("RGBA")
+    if border:
+        d = ImageDraw.Draw(img)
+        bw = max(2, size // 44)
+        for i in range(bw):
+            d.rectangle([i, i, size - 1 - i, size - 1 - i], outline=LILAC[:3])
+    bs = int(size * ball_frac)
+    mark = _ball(bs, monogram=monogram)
+    off = (size - bs) // 2
+    img.alpha_composite(mark, (off, off))
+    return img.convert("RGB")
+
+
 def make_favicons() -> None:
+    # The tiny favicons stay the clean ball (legible at 16px on a browser tab).
     ico_sizes = [16, 32, 48]
     base = _ball(48)
     base.save(ROOT / "favicon.ico", sizes=[(s, s) for s in ico_sizes])
     _ball(32).save(ROOT / "assets" / "favicon-32.png")
-    # apple-touch-icon wants an opaque square; cream pads the mark like a card.
-    # At 180px the P/X monogram reads, so the home-screen pin shows the full mark.
-    touch = Image.new("RGBA", (180, 180), CREAM)
-    mark = _ball(150, monogram=True)
-    touch.paste(mark, (15, 15), mark)
-    touch.convert("RGB").save(ROOT / "assets" / "apple-touch-icon.png")
+    # apple-touch-icon: the Y2K-gothic dark-holo treatment (home-screen pin).
+    _y2k_icon(180, ball_frac=0.74).save(ROOT / "assets" / "apple-touch-icon.png")
     print("wrote favicon.ico, assets/favicon-32.png, assets/apple-touch-icon.png")
 
 
 def make_app_icons() -> None:
-    """PWA icons referenced by site.webmanifest. The 192/512 icons show the full
-    mark (ball + P/X monogram) on a cream card; the maskable variant keeps the
-    mark well inside the 80% safe area so platform masks never clip it."""
-    for px in (192, 512):
-        canvas = Image.new("RGBA", (px, px), CREAM)
-        mpx = int(px * 0.84)
-        mark = _ball(mpx, monogram=True)
-        off = (px - mpx) // 2
-        canvas.paste(mark, (off, off), mark)
-        canvas.convert("RGB").save(ROOT / "assets" / f"icon-{px}.png")
-    # Maskable: mark at ~62% so the platform's circular/squircle mask can crop
-    # the cream field without ever touching the ball.
-    msk = Image.new("RGBA", (512, 512), CREAM)
-    mmark = _ball(int(512 * 0.62), monogram=True)
-    moff = (512 - mmark.width) // 2
-    msk.paste(mmark, (moff, moff), mmark)
-    msk.convert("RGB").save(ROOT / "assets" / "icon-maskable-512.png")
+    """PWA icons referenced by site.webmanifest, in the Y2K-gothic dark-holo style
+    (ball + P/X monogram on a near-black lilac-glow field with a thin lilac
+    border). The maskable variant keeps the mark inside the safe area."""
+    _y2k_icon(192, ball_frac=0.74).save(ROOT / "assets" / "icon-192.png")
+    _y2k_icon(512, ball_frac=0.74).save(ROOT / "assets" / "icon-512.png")
+    # Maskable: dark field fills the square (so a platform mask crops the field,
+    # not the mark); the ball sits at ~58% well inside the 80% safe area.
+    _y2k_icon(512, ball_frac=0.56, border=False).save(ROOT / "assets" / "icon-maskable-512.png")
     print("wrote assets/icon-192.png, icon-512.png, icon-maskable-512.png")
 
 
@@ -180,26 +245,70 @@ def _ramp_rule(d: ImageDraw.ImageDraw, x0: int, x1: int, y: int, h: int) -> None
 
 def make_share_card() -> None:
     W, H, PAD = 1200, 630, 64
-    img = Image.new("RGB", (W, H), DARK_BG[:3])
-    d = ImageDraw.Draw(img)
-    # Wordmark + ramp rule + tagline, mirroring the canvas share card layout.
-    f_brand = _font(110)
-    f_tag = _font(34, bold=False)
+    img = _y2k_field(W, H, origin=(0.30, 0.18)).convert("RGBA")
+    d = ImageDraw.Draw(img, "RGBA")
+    _pixel_stars(d, W, H, 90)
+    # Wordmark (DotGothic16) + ramp rule + tagline.
+    f_brand = _logo_font(108)
+    f_tag = _logo_font(34)
     f_mods = _font(24, bold=False)
-    # "EEPHUS" cool-white, ".IO" in the lilac brand accent.
-    d.text((PAD, 200), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
+    d.text((PAD, 196), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
     we = d.textlength("EEPHUS", font=f_brand)
-    d.text((PAD + we, 200), ".IO", font=f_brand, fill=LILAC[:3])
-    _ramp_rule(d, PAD, W - PAD, 340, 5)
-    d.text((PAD, 372), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
-    d.text((PAD, 430),
+    d.text((PAD + we, 196), ".IO", font=f_brand, fill=LILAC[:3])
+    _ramp_rule(d, PAD, W - PAD, 348, 5)
+    d.text((PAD, 376), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
+    d.text((PAD, 436),
            "PROSPX consensus board / MLB free agency / projections / collegesavant",
            font=f_mods, fill=DARK_SUB[:3])
-    ball = _ball(170)
-    img.paste(ball, (W - PAD - 170, 96), ball)
-    d.text((PAD, H - 70), "eephus.io", font=_font(26), fill=DARK_SUB[:3])
-    img.save(ROOT / "assets" / "share-default.png")
+    ball = _ball(180, monogram=True)
+    img.alpha_composite(ball, (W - PAD - 180, 86))
+    d.text((PAD, H - 72), "eephus.io", font=_font(26), fill=DARK_SUB[:3])
+    img.convert("RGB").save(ROOT / "assets" / "share-default.png")
     print("wrote assets/share-default.png")
+
+
+def make_twitter() -> None:
+    """Twitter/X-ready art in the Y2K-gothic identity: square avatars (400x400)
+    and header banners (1500x500) for eephus.io and PROSPX."""
+    social = ROOT / "branding" / "social"
+    social.mkdir(parents=True, exist_ok=True)
+
+    # --- avatars (400x400): the mark on the dark holo field, lilac border ---
+    av = _y2k_icon(400, ball_frac=0.72, monogram=True)
+    av.save(social / "twitter-avatar-prospx.png")
+    av2 = _y2k_icon(400, ball_frac=0.72, monogram=False)  # eephus.io: clean ball
+    av2.save(social / "twitter-avatar-eephus.png")
+
+    # --- banners (1500x500): wordmark + tagline + ramp + ball, pixel stars ---
+    def _banner(path, title, accent_io, tagline, sub):
+        W, H = 1500, 500
+        img = _y2k_field(W, H, origin=(0.22, 0.3)).convert("RGBA")
+        d = ImageDraw.Draw(img, "RGBA")
+        _pixel_stars(d, W, H, 120)
+        # Twitter overlays the avatar bottom-left (~120px) + crops edges; keep the
+        # wordmark centered-left, clear of the bottom-left avatar zone.
+        f_brand = _logo_font(118)
+        f_tag = _logo_font(34)
+        f_sub = _font(22, bold=False)
+        x0, y0 = 90, 150
+        if accent_io:
+            d.text((x0, y0), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
+            we = d.textlength("EEPHUS", font=f_brand)
+            d.text((x0 + we, y0), ".IO", font=f_brand, fill=LILAC[:3])
+        else:
+            d.text((x0, y0), title, font=f_brand, fill=DARK_FG[:3])
+        _ramp_rule(d, x0, x0 + 720, y0 + 150, 5)
+        d.text((x0, y0 + 178), tagline, font=f_tag, fill=DARK_FG[:3])
+        d.text((x0, y0 + 232), sub, font=f_sub, fill=DARK_SUB[:3])
+        ball = _ball(230, monogram=True)
+        img.alpha_composite(ball, (W - 230 - 110, (H - 230) // 2))
+        img.convert("RGB").save(path)
+
+    _banner(social / "twitter-banner-eephus.png", "EEPHUS.IO", True, "sabermetrics",
+            "PROSPX / MLB free agency / projections / collegesavant")
+    _banner(social / "twitter-banner-prospx.png", "PROSPX", False,
+            "consensus prospect tracker", "seven industry sources, one FV  ·  eephus.io")
+    print("wrote branding/social/twitter-avatar-*.png + twitter-banner-*.png")
 
 
 def _bez(t: float, p0, p1, p2):
@@ -250,10 +359,10 @@ def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
     if tp > 0:
         layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
         ld = ImageDraw.Draw(layer)
-        f10 = _font(40)
+        f10 = _logo_font(40)
         target_w = W * 0.74
         fs = max(10, int(40 * target_w / max(1.0, ld.textlength("eephus.io", font=f10))))
-        f = _font(fs)
+        f = _logo_font(fs)
         a = int(255 * tp)
         total_w = ld.textlength("eephus.io", font=f)
         x0 = (W - total_w) / 2
@@ -296,8 +405,8 @@ def make_animation() -> None:
         prog = min(1.0, i / (N_DRAW - 1))
         fr = _animation_frame(prog, W, H, sc)
         fr.save(frames_dir / f"frame_{i:03d}.png")
-        # Matte onto the near-black field for the GIF.
-        matte = Image.new("RGB", (W, H), DARK_BG[:3])
+        # Matte onto the Y2K holo field for the GIF (GIF is 1-bit transparency).
+        matte = _y2k_field(W, H, origin=(0.5, 0.18), scan=True)
         matte.paste(fr, (0, 0), fr)
         frames.append(matte)
     durations = [40] * N_DRAW + [40] * (N_HOLD - 1) + [1600]  # hold the last frame
@@ -321,6 +430,7 @@ def assemble_branding() -> None:
         (ROOT / "assets" / "icon-maskable-512.png",  B / "icons" / "icon-maskable-512.png"),
         (ROOT / "assets" / "site.webmanifest",       B / "site.webmanifest"),
         (ROOT / "assets" / "share-default.png",      B / "social" / "share-default.png"),
+        (ROOT / "assets" / "fonts" / "dotgothic16-latin.woff2", B / "fonts" / "dotgothic16-latin.woff2"),
     ]
     n = 0
     for src, dst in pairs:
@@ -335,5 +445,6 @@ if __name__ == "__main__":
     make_favicons()
     make_app_icons()
     make_share_card()
+    make_twitter()
     make_animation()
     assemble_branding()

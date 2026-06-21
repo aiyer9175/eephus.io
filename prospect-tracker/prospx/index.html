@@ -218,14 +218,18 @@
          Long-form prose (scouting reports, glossary entries) keeps
          its readability tuning via per-element line-height + size
          tokens rather than a separate font family. */
-      --font-retro: "MS UI Gothic", "MS Gothic", "Osaka", "Roboto Mono",
-                    "VT323", "Courier Prime", "Press Start 2P",
+      /* DotGothic16 (self-hosted pixel-gothic, @font-face in site.css) sits
+         after the MS Gothic faces so nothing ever falls to a generic system
+         monospace - the brand pixel-gothic renders everywhere MS Gothic is
+         absent. Mirrors assets/site.css. */
+      --font-retro: "MS UI Gothic", "MS Gothic", "DotGothic16", "Osaka",
+                    "VT323", "Press Start 2P",
                     ui-monospace, "SF Mono", Menlo, Consolas, monospace;
       /* Blockier monospace variant - used on the iconic chrome
          elements (FV badges, farm-grade letters) where the strict
          monospace baseball-card look is the point. */
-      --font-retro-mono: "MS Gothic", "Osaka-Mono", "Roboto Mono",
-                         "VT323", "Press Start 2P", "Courier Prime",
+      --font-retro-mono: "MS Gothic", "MS UI Gothic", "DotGothic16", "Osaka-Mono",
+                         "VT323", "Press Start 2P",
                          ui-monospace, "SF Mono", Consolas, monospace;
       --font-serif: var(--font-retro);
       --font-sans:  var(--font-retro);
@@ -928,6 +932,7 @@
       display: inline-flex;
       flex-direction: column;
       justify-content: center;
+      font-family: var(--font-logo);   /* DotGothic16 pixel-gothic (site.css @font-face) */
     }
     /* Build / version banner - sits above the page H1 on every view.
        Small, lilac, single-line. Survives content overwrites because
