@@ -300,7 +300,9 @@ def make_twitter() -> None:
         _ramp_rule(d, x0, x0 + 720, y0 + 150, 5)
         d.text((x0, y0 + 178), tagline, font=f_tag, fill=DARK_FG[:3])
         d.text((x0, y0 + 232), sub, font=f_sub, fill=DARK_SUB[:3])
-        ball = _ball(230, monogram=True)
+        # eephus.io banner (accent_io) = the clean ball mark; PROSPX banner gets
+        # the ball + P/X monogram (the monogram is the PROSPX mark, not eephus).
+        ball = _ball(230, monogram=not accent_io)
         img.alpha_composite(ball, (W - 230 - 110, (H - 230) // 2))
         img.convert("RGB").save(path)
 

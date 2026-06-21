@@ -9282,6 +9282,16 @@
       <div class="filter-group">
         <span class="filter-label">Sort by</span>
         <button class="chip active" data-farm-sort="farm_rank" title="Composite farm grade (v31 tree): 12% Acquisition Strategy + 50% Development + 18% Financial + 20% MLB Production - letter-graded across the 30 orgs. Default sort.">Farm grade</button>
+        <!-- Canopy grades: the four top-level branch grades of the farm grade
+             tree (the "canopy" strip shown under each org's overall grade). Sort
+             by any single branch. The composite Farm grade above weights them
+             Development 50 / MLB Production 20 / Value 18 / Acquisition 12. The
+             sort/value/pill logic already exists (farmSortedOrgs / _farmSortVal);
+             these chips just expose it in the filter bar. -->
+        <button class="chip" data-farm-sort="development" title="Canopy grade: the Development branch of the farm grade tree (50% of the composite Farm grade) - the org's prospect-development signal, graded across the 30 orgs.">Development</button>
+        <button class="chip" data-farm-sort="mlb_production" title="Canopy grade: the MLB Production branch (20% of the composite) - realized MLB output from the org's recent graduates.">MLB Production</button>
+        <button class="chip" data-farm-sort="financial" title="Canopy grade: the Value branch (18% of the composite) - the cost-controlled value the system is generating.">Value</button>
+        <button class="chip" data-farm-sort="acquisition_strategy" title="Canopy grade: the Acquisition branch (12% of the composite) - how well the org acquires amateur and traded talent.">Acquisition</button>
         <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects - an 80 is worth ~100x a 40">Top-end</button>
         <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
         <!-- Single Trajectory chip - sorts by DvM+ for whichever window
