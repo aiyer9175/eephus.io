@@ -1,7 +1,7 @@
 [
   { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",
     "email": "arkndjl@gmail.com", "school": "New York University",
-    "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "Site Designer"],
+    "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "CollegeSavant Developer", "Site Designer"],
     "website": "https://arkndjl.net/", "github": "arkndjl" },
   { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396", "note": ["PROSPX Developer", "MLB Projections Developer", "MLB Free Agency Developer"], "school": "Utah College", "github": "willclq" },
   { "name": "Michael Behrens",    "handle": null,         "linkedin": "michael-behrens-", "note": "Webmaster", "school": "University of Oklahoma", "github": "baron-git" },
