@@ -31940,7 +31940,7 @@ function _toolHistoryChart(p) {
     const dots = pts.map(pt =>
       `<circle cx="${_x(pt.d).toFixed(1)}" cy="${_y(_clamp(pt.v)).toFixed(1)}"
         r="2.5" fill="${color}">
-        <title>${escapeHtml(lbl)} ${pt.v} on ${pt.d}</title></circle>`
+        <title>${escapeHtml(lbl)} ${fvCeil(pt.v)} on ${pt.d}</title></circle>`
     ).join("");
     lines.push(`<path d="${d}"
       fill="none" stroke="${color}" stroke-width="1.6"
@@ -31967,7 +31967,7 @@ function _toolHistoryChart(p) {
   const endLabelSvg = endLabels.map(e =>
     `<text x="${(W - padR + 3).toFixed(1)}" y="${(e.y + 3).toFixed(1)}"
        font-family="var(--font-mono)" font-size="9" font-weight="700"
-       fill="${e.color}" text-anchor="start">${e.v}</text>`
+       fill="${e.color}" text-anchor="start">${fvCeil(e.v)}</text>`
   ).join("");
 
   // Legend - chip per tool, showing current value.
@@ -31976,7 +31976,7 @@ function _toolHistoryChart(p) {
     return `<span style="display:inline-flex;align-items:baseline;gap:4px;font-size:10px;font-family:var(--font-mono);color:var(--text-secondary);margin-right:10px;">
       <span style="display:inline-block;width:10px;height:2px;background:${color};vertical-align:middle;border-radius:1px;"></span>
       <span style="color:${color};font-weight:700;">${escapeHtml(lbl)}</span>
-      <span style="color:var(--text-tertiary);">${latest.v}</span>
+      <span style="color:var(--text-tertiary);">${fvCeil(latest.v)}</span>
     </span>`;
   }).join("");
 
@@ -42749,13 +42749,18 @@ function renderPlayerDetail(key) {
       .map(k => {
         const info = td[k];
         const label = toolFullName(k);
-        const dir = info.delta > 0 ? "is-pos" : info.delta < 0 ? "is-neg" : "is-flat";
-        const arrow = info.delta > 0 ? "▲" : info.delta < 0 ? "▼" : "·";
+        // 20-80 tool grades display as the ceiling (62.5 -> 63); the delta is the
+        // difference of the ceil'd First/Latest so the shown numbers add up. The
+        // sort above stays on the raw delta (raw kept for math/sort).
+        const cFirst = fvCeil(info.first), cLast = fvCeil(info.last);
+        const cDelta = cLast - cFirst;
+        const dir = cDelta > 0 ? "is-pos" : cDelta < 0 ? "is-neg" : "is-flat";
+        const arrow = cDelta > 0 ? "▲" : cDelta < 0 ? "▼" : "·";
         return `<tr>
           <td style="padding:4px 8px;">${escapeHtml(label)}</td>
-          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${info.first}</td>
-          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${info.last}</td>
-          <td style="padding:4px 8px;text-align:center;"><span class="tool-delta ${dir}">${arrow}${Math.abs(info.delta)}</span></td>
+          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${cFirst}</td>
+          <td style="padding:4px 8px;text-align:center;font-family:var(--font-mono);">${cLast}</td>
+          <td style="padding:4px 8px;text-align:center;"><span class="tool-delta ${dir}">${arrow}${Math.abs(cDelta)}</span></td>
           <td style="padding:4px 8px;color:var(--text-tertiary);font-size:10px;">${info.first_date} → ${info.last_date} · ${info.n_obs} grades</td>
         </tr>`;
       }).join("");
