@@ -110,6 +110,8 @@ td.tt-team { text-align: left; }
 .tt-col.is-sorted { background: var(--chip); }
 .tt-pos { color: var(--green); font-weight: 700; }
 .tt-neg { color: var(--red); }
+.proj-name { color: var(--ink); font-weight: 700; text-decoration: none; }
+.proj-name:hover { color: var(--blue); text-decoration: underline; }
 
 html {
   min-height: 100%;

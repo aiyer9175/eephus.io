@@ -392,8 +392,13 @@ def build(out_dir: Path | None = None) -> dict:
             if pk and pk not in bridge:
                 bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"),
                               "name": v["name"]}
+        # Compact backtest summary for the frontend "how accurate is this" panel.
+        eval_summary = {k: {"r2": f.get("r2"), "n": f.get("n"), "band_sd": f.get("band_sd"),
+                            "mae": (f.get("loo") or {}).get("mae"),
+                            "coverage": (f.get("loo") or {}).get("p10_p90_coverage")}
+                        for k, f in F.items()}
         payload = {"generated_from": "college_translation.build", "translations": translations,
-                   "caveat": eval_doc["caveat"]}
+                   "eval": eval_summary, "caveat": eval_doc["caveat"]}
         (out_dir / "collegesavant_translation.js").write_text(
             "window.CS_TRANSLATION = " + json.dumps(payload) + ";\n", encoding="utf-8")
 

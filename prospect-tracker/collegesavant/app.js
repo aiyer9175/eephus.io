@@ -351,6 +351,12 @@ function render() {
     return;
   }
 
+  if (hash.startsWith("#/projections")) {
+    renderProjections();
+    afterRender();
+    return;
+  }
+
   renderHome();
   afterRender();
 }
@@ -610,6 +616,59 @@ function renderTeams() {
   if (sel) sel.addEventListener("change", (e) => { state.teamSort = e.target.value; renderTeams(); });
   const ys = app.querySelector(".year-select");
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderTeams(); });
+}
+
+// ---- College -> Single-A Projections section -------------------------------
+// A dedicated home for the translation: an honest "how accurate is this" panel
+// from the leave-one-out backtest, then a board of every hitter's projected
+// Single-A line (expected + P10-P90 band), ranked by CS+ (the pro profile).
+function renderProjections() {
+  const E = (window.CS_TRANSLATION && window.CS_TRANSLATION.eval) || {};
+  const T = (window.CS_TRANSLATION && window.CS_TRANSLATION.translations) || {};
+  const accRows = [["Proj Single-A K%", "hit_k"], ["Proj Single-A BB%", "hit_bb"], ["Proj Single-A OPS", "hit_ops"]]
+    .map(([label, k]) => {
+      const f = E[k];
+      if (!f) return "";
+      const cov = f.coverage != null ? Math.round(f.coverage * 100) + "%" : " - ";
+      const flag = k === "hit_ops" ? ` <span class="trans-flag">experimental</span>`
+                 : (f.r2 != null && f.r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
+      return `<tr><td class="tt-team">${label}${flag}</td>
+        <td class="tt-col">${f.r2 != null ? f.r2.toFixed(2) : " - "}</td>
+        <td class="tt-col">±${f.band_sd ?? " - "}</td>
+        <td class="tt-col">${f.mae ?? " - "}</td>
+        <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
+    }).join("");
+  const pband = (b, dec) => b == null ? " - " : (dec ? b.exp.toFixed(3).replace(/^0(?=\.)/, "") : b.exp.toFixed(1) + "%");
+  const list = state.players
+    .map((p) => ({ p, t: T[p.slug], cs: state.csPlus && state.csPlus.get(p.slug) }))
+    .filter((x) => x.t && x.t.single_a)
+    .sort((a, b) => (b.cs ?? -Infinity) - (a.cs ?? -Infinity))
+    .slice(0, LEADERBOARD_LIMIT);
+  const body = list.map((x, i) => {
+    const sa = x.t.single_a;
+    const logo = TEAM_LOGOS[x.p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[x.p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.hitter_name))}</a></td>
+      <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
+      <td class="tt-col">${pband(sa.k_pct)}</td>
+      <td class="tt-col">${pband(sa.bb_pct)}</td>
+      <td class="tt-col">${pband(sa.ops, true)}</td></tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">${renderYearSelect()}</section>
+    <div class="panel-title"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
+      <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
+    </table></div></section>
+    <p class="trans-note">Coverage near 80% means the P10-P90 bands are honestly sized. K% carries the real signal (r² ~0.38); BB% and OPS mostly regress to the Single-A mean (low r²) and are shown for context, flagged. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
+    <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters with a projection · ranked by CS+ (pro profile)</span></div>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th><th class="tt-col">Proj A OPS</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="6" class="note-line">No projections for this year.</td></tr>`}</tbody>
+    </table></div></section>`;
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderProjections(); });
 }
 
 // The college -> Single-A projection block (the module's through-line). Reads the
