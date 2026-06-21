@@ -207,9 +207,13 @@ def _footer() -> str:
         f'<a href="/report/">Report a bug</a>'
         f'<a href="https://x.com/ARKNDJL" target="_blank" rel="noopener noreferrer">@ARKNDJL</a>'
     )
+    # Footer carries the compact mark (the favicon ball) so the identity closes
+    # every page - it reads on both themes (cream face, navy outline).
+    mark = ('<img src="/assets/favicon.svg" alt="" aria-hidden="true" '
+            'style="width:18px;height:18px;vertical-align:-4px;margin-right:7px">')
     return (
         '<footer class="eephus-footer">\n'
-        f'  <span>eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
+        f'  <span>{mark}eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
         f'  <nav class="eephus-footer-links" aria-label="Footer">{links}</nav>\n'
         f'  <span>© {year} eephus.io</span>\n'
         '</footer>'
