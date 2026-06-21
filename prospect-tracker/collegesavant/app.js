@@ -345,6 +345,12 @@ function render() {
     return;
   }
 
+  if (hash.startsWith("#/teams")) {
+    renderTeams();
+    afterRender();
+    return;
+  }
+
   renderHome();
   afterRender();
 }
@@ -514,6 +520,96 @@ function renderPlayerRow(player, rank) {
       <div class="driver-chips">${chips}</div>
     </a>
   `;
+}
+
+// ---- College Team Tendencies -----------------------------------------------
+// Team-level aggregates over the year cohort: which college teams hit the ball
+// hardest, chase least, run the best team CS+, etc. Pure aggregation over the
+// tracked data we already hold (grouped by the team code on each hitter row).
+const TEAM_TENDENCY_METRICS = [
+  { key: "cs_plus", label: "Team CS+", fmt: "plus", agg: "mean" },
+  { key: "average_exit_velocity", label: "Avg EV", fmt: "mph", agg: "mean" },
+  { key: "90th_percentile_exit_velocity", label: "90th EV", fmt: "mph", agg: "mean" },
+  { key: "max_exit_velocity", label: "Top EV", fmt: "mph", agg: "max" },
+  { key: "barrel_pct", label: "Barrel %", fmt: "pct", agg: "mean" },
+  { key: "hard_hit_pct", label: "Hard-Hit %", fmt: "pct", agg: "mean" },
+  { key: "chase_pct", label: "Chase %", fmt: "pct", agg: "mean" },
+  { key: "whiff_pct", label: "Whiff %", fmt: "pct", agg: "mean" },
+  { key: "k_pct", label: "K %", fmt: "pct", agg: "mean" },
+  { key: "bb_pct", label: "BB %", fmt: "pct", agg: "mean" },
+];
+const TEAM_MIN_BATTERS = 3;  // need a few tracked batters before a team is meaningful
+
+function teamMetricValue(players, m) {
+  if (m.key === "cs_plus") {
+    const vs = players.map((p) => state.csPlus && state.csPlus.get(p.slug)).filter(Number.isFinite);
+    return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+  }
+  const vs = players.map((p) => p[m.key]).filter(Number.isFinite);
+  if (!vs.length) return null;
+  return m.agg === "max" ? Math.max(...vs) : vs.reduce((a, b) => a + b, 0) / vs.length;
+}
+
+function computeTeamTendencies(players) {
+  const byTeam = new Map();
+  for (const p of players) {
+    const t = p.team || "";
+    if (!t) continue;
+    if (!byTeam.has(t)) byTeam.set(t, []);
+    byTeam.get(t).push(p);
+  }
+  const rows = [];
+  for (const [team, ps] of byTeam) {
+    if (ps.length < TEAM_MIN_BATTERS) continue;
+    const agg = {};
+    for (const m of TEAM_TENDENCY_METRICS) agg[m.key] = teamMetricValue(ps, m);
+    rows.push({ team, n: ps.length, agg, sample: ps });
+  }
+  return rows;
+}
+
+function renderTeams() {
+  const sortKey = TEAM_TENDENCY_METRICS.some((m) => m.key === state.teamSort) ? state.teamSort : "cs_plus";
+  const rows = computeTeamTendencies(state.players)
+    .sort((a, b) => (b.agg[sortKey] ?? -Infinity) - (a.agg[sortKey] ?? -Infinity));
+  const fmtVal = (m, v) => {
+    if (v == null) return " - ";
+    if (m.fmt === "plus") return String(Math.round(v));
+    if (m.fmt === "mph") return v.toFixed(1);
+    return v.toFixed(1) + "%";
+  };
+  const head = TEAM_TENDENCY_METRICS.map((m) =>
+    `<th class="tt-col${m.key === sortKey ? " is-sorted" : ""}">${glLabel(m)}</th>`).join("");
+  const body = rows.map((r, i) => {
+    const cells = TEAM_TENDENCY_METRICS.map((m) => {
+      const v = r.agg[m.key];
+      const cls = m.fmt === "plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
+      return `<td class="tt-col ${cls}${m.key === sortKey ? " is-sorted" : ""}">${fmtVal(m, v)}</td>`;
+    }).join("");
+    const logo = TEAM_LOGOS[r.team]
+      ? `<img class="tt-logo" src="${TEAM_LOGOS[r.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team">${logo}<span>${escapeHtml(formatTeamName(r.team))}</span><span class="tt-n">${r.n} batters</span></td>
+      ${cells}</tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">
+      ${renderYearSelect()}
+      <select class="select-box" data-team-sort aria-label="Rank teams by">
+        ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
+      </select>
+    </section>
+    <p class="note-line">College team tendencies for ${state.year}: every team with at least ${TEAM_MIN_BATTERS} tracked batters, aggregated across its hitters. Team CS+ is the mean of its hitters' CS+ (100 = the college average). Top EV is the team's single hardest-hit ball; the rest are team averages.</p>
+    <section class="leaderboard tt-board">
+      <div class="tt-scroll"><table class="tt-table">
+        <thead><tr><th class="tt-rank">#</th><th class="tt-team">Team</th>${head}</tr></thead>
+        <tbody>${body || `<tr><td colspan="${TEAM_TENDENCY_METRICS.length + 2}" class="note-line">No teams with enough tracked batters this year.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+  const sel = app.querySelector("[data-team-sort]");
+  if (sel) sel.addEventListener("change", (e) => { state.teamSort = e.target.value; renderTeams(); });
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderTeams(); });
 }
 
 // The college -> Single-A projection block (the module's through-line). Reads the

@@ -619,6 +619,11 @@ function render() {
     afterRender();
     return;
   }
+  if (hash.startsWith("#/teams")) {
+    renderTeams();
+    afterRender();
+    return;
+  }
   renderHome();
   afterRender();
 }
@@ -809,6 +814,93 @@ function _wireCsShare(pitcher, pct) {
       caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
     });
   });
+}
+
+// ---- College Team Tendencies (pitching staffs) -----------------------------
+// Team-level aggregates over the year cohort: which college staffs throw the
+// hardest, miss the most bats, run the best team CS+. Pure aggregation over the
+// tracked data we already hold, grouped by the team code on each pitcher row.
+const TEAM_TENDENCY_METRICS = [
+  { key: "cs_plus", label: "Team CS+", fmt: "plus", agg: "mean" },
+  { key: "stuff_plus", label: "Stuff+", fmt: "num", agg: "mean" },
+  { key: "avg_fastball_velo", label: "FB Velo", fmt: "mph", agg: "mean" },
+  { key: "swinging_strike_pct", label: "SwStr %", fmt: "pct", agg: "mean" },
+  { key: "chase_pct", label: "Chase %", fmt: "pct", agg: "mean" },
+  { key: "k_pct", label: "K %", fmt: "pct", agg: "mean" },
+  { key: "bb_pct", label: "BB %", fmt: "pct", agg: "mean" },
+  { key: "barrel_pct", label: "Barrel% allowed", fmt: "pct", agg: "mean" },
+  { key: "hard_hit_pct", label: "HardHit% allowed", fmt: "pct", agg: "mean" },
+];
+const TEAM_MIN_ARMS = 3;
+
+function teamMetricValue(pitchers, m) {
+  if (m.key === "cs_plus") {
+    const vs = pitchers.map((p) => state.csPlus && state.csPlus.get(p.slug)).filter(Number.isFinite);
+    return vs.length ? vs.reduce((a, b) => a + b, 0) / vs.length : null;
+  }
+  const vs = pitchers.map((p) => p[m.key]).filter(Number.isFinite);
+  if (!vs.length) return null;
+  return m.agg === "max" ? Math.max(...vs) : vs.reduce((a, b) => a + b, 0) / vs.length;
+}
+
+function computeTeamTendencies(pitchers) {
+  const byTeam = new Map();
+  for (const p of pitchers) {
+    const t = p.team || "";
+    if (!t) continue;
+    if (!byTeam.has(t)) byTeam.set(t, []);
+    byTeam.get(t).push(p);
+  }
+  const rows = [];
+  for (const [team, ps] of byTeam) {
+    if (ps.length < TEAM_MIN_ARMS) continue;
+    const agg = {};
+    for (const m of TEAM_TENDENCY_METRICS) agg[m.key] = teamMetricValue(ps, m);
+    rows.push({ team, n: ps.length, agg });
+  }
+  return rows;
+}
+
+function renderTeams() {
+  const sortKey = TEAM_TENDENCY_METRICS.some((m) => m.key === state.teamSort) ? state.teamSort : "cs_plus";
+  const rows = computeTeamTendencies(state.pitchers)
+    .sort((a, b) => (b.agg[sortKey] ?? -Infinity) - (a.agg[sortKey] ?? -Infinity));
+  const fmtVal = (m, v) => {
+    if (v == null) return " - ";
+    if (m.fmt === "plus" || m.fmt === "num") return String(Math.round(v));
+    if (m.fmt === "mph") return v.toFixed(1);
+    return v.toFixed(1) + "%";
+  };
+  const head = TEAM_TENDENCY_METRICS.map((m) =>
+    `<th class="tt-col${m.key === sortKey ? " is-sorted" : ""}">${glLabel(m)}</th>`).join("");
+  const body = rows.map((r, i) => {
+    const cells = TEAM_TENDENCY_METRICS.map((m) => {
+      const v = r.agg[m.key];
+      const cls = m.fmt === "plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
+      return `<td class="tt-col ${cls}${m.key === sortKey ? " is-sorted" : ""}">${fmtVal(m, v)}</td>`;
+    }).join("");
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team"><span>${escapeHtml(formatTeamName(r.team))}</span><span class="tt-n">${r.n} arms</span></td>
+      ${cells}</tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">
+      ${renderYearSelect()}
+      <select class="select-box" data-team-sort aria-label="Rank staffs by">
+        ${TEAM_TENDENCY_METRICS.map((m) => `<option value="${m.key}" ${m.key === sortKey ? "selected" : ""}>Rank by ${m.label}</option>`).join("")}
+      </select>
+    </section>
+    <p class="note-line">College pitching-staff tendencies for ${state.year}: every staff with at least ${TEAM_MIN_ARMS} tracked arms, aggregated across its pitchers. Team CS+ is the mean of its arms' CS+ (100 = the college average).</p>
+    <section class="leaderboard tt-board">
+      <div class="tt-scroll"><table class="tt-table">
+        <thead><tr><th class="tt-rank">#</th><th class="tt-team">Staff</th>${head}</tr></thead>
+        <tbody>${body || `<tr><td colspan="${TEAM_TENDENCY_METRICS.length + 2}" class="note-line">No staffs with enough tracked arms this year.</td></tr>`}</tbody>
+      </table></div>
+    </section>`;
+  const sel = app.querySelector("[data-team-sort]");
+  if (sel) sel.addEventListener("change", (e) => { state.teamSort = e.target.value; renderTeams(); });
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderTeams(); });
 }
 
 // College -> Single-A projection block. Reads window.CS_TRANSLATION by slug and

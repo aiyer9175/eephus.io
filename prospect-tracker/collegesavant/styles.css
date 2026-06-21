@@ -86,6 +86,31 @@
 }
 .trans-note { font-size: 11px; color: var(--muted); line-height: 1.5; margin: 10px 0 0; }
 
+/* College Team Tendencies - a dense agate stat table (the broadsheet anchor). */
+.tt-board { margin-top: 4px; }
+.tt-scroll { overflow-x: auto; border: 1px solid var(--line); }
+.tt-table { width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono, ui-monospace, monospace); }
+.tt-table th {
+  position: sticky; top: 0; z-index: 1; background: var(--cs-head-bg); color: var(--cs-head-fg);
+  font-size: 10px; text-transform: uppercase; letter-spacing: .05em; font-weight: 800;
+  padding: 6px 8px; border-bottom: 2px solid var(--red); text-align: right; white-space: nowrap;
+}
+.tt-table th.tt-rank, .tt-table th.tt-team { text-align: left; }
+.tt-table td {
+  padding: 7px 8px; border-bottom: 1px solid var(--line); font-size: 12px; text-align: right;
+  font-variant-numeric: tabular-nums; color: var(--ink); white-space: nowrap;
+}
+.tt-table tr:nth-child(even) td { background: var(--paper-2); }
+.tt-rank { width: 34px; color: var(--muted); text-align: left; }
+td.tt-team { text-align: left; }
+.tt-team { display: flex; align-items: center; gap: 6px; }
+.tt-team > span:first-of-type { font-weight: 700; }
+.tt-logo { width: 20px; height: 20px; object-fit: contain; flex: none; }
+.tt-n { color: var(--muted); font-size: 10px; margin-left: 4px; }
+.tt-col.is-sorted { background: var(--chip); }
+.tt-pos { color: var(--green); font-weight: 700; }
+.tt-neg { color: var(--red); }
+
 html {
   min-height: 100%;
   background: var(--paper);
