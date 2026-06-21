@@ -89,7 +89,7 @@ def test_collegesavant_app_loads_and_renders(app, kind):
     # Home, leaderboard, AND the player page (which builds CS+ + the Single-A
     # translation block) must all render without throwing.
     player = "test-alpha" if kind == "hitter" else "arm-alpha"
-    for h in ["#/", "#/leaders/k_pct/2024", f"#/player/2024/{player}"]:
+    for h in ["#/", "#/leaders/k_pct/2024", "#/leaders/cs_plus/2024", f"#/player/2024/{player}"]:
         ctx.eval(f"location.hash='{h}'; window.location.hash='{h}'; render();")
 
 

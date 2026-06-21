@@ -339,7 +339,7 @@ function render() {
 
   if (hash.startsWith("#/leaders/")) {
     const key = hash.replace("#/leaders/", "").split("/")[0];
-    if (METRICS.some((metric) => metric.key === key)) state.sortKey = key;
+    if (key === "cs_plus" || METRICS.some((metric) => metric.key === key)) state.sortKey = key;
     renderLeaderboard();
     afterRender();
     return;
@@ -423,7 +423,7 @@ function renderLeaderboard() {
   const direction = sortMetric.higherBetter ? -1 : 1;
   const filtered = state.players
     .filter((player) => player.hitter_name.toLowerCase().includes(state.query.toLowerCase()))
-    .sort((a, b) => direction * compareNullable(a[state.sortKey], b[state.sortKey]));
+    .sort((a, b) => direction * compareNullable(sortVal(a, state.sortKey), sortVal(b, state.sortKey)));
   const visibleRows = filtered.slice(0, LEADERBOARD_LIMIT);
   const limitNote = filtered.length > visibleRows.length
     ? ` Showing top ${visibleRows.length.toLocaleString()} of ${filtered.length.toLocaleString()} rows; use search to narrow the list.`
@@ -434,6 +434,7 @@ function renderLeaderboard() {
       <input class="search-box" type="search" placeholder="Search hitter" value="${escapeHtml(state.query)}" aria-label="Search hitter">
       ${renderYearSelect()}
       <select class="select-box sort-select" aria-label="Sort leaderboard">
+        <option value="cs_plus" ${state.sortKey === "cs_plus" ? "selected" : ""}>Sort by CS+ (pro profile)</option>
         ${METRICS.map((metric) => `<option value="${metric.key}" ${metric.key === state.sortKey ? "selected" : ""}>Sort by ${metric.label}</option>`).join("")}
       </select>
       <button class="control-button" type="button" data-reset>Reset</button>
@@ -505,7 +506,7 @@ function renderPlayerRow(player, rank) {
           </div>
         </div>
       </div>
-      <div class="metric-main">${formatMetric(player[state.sortKey], getMetric(state.sortKey).fmt)}</div>
+      <div class="metric-main">${state.sortKey === "cs_plus" ? (sortVal(player, "cs_plus") ?? "--") : formatMetric(player[state.sortKey], getMetric(state.sortKey).fmt)}</div>
       <div>${formatMetric(player.average_exit_velocity, "mph")}</div>
       <div>${formatMetric(player["90th_percentile_exit_velocity"], "mph")}</div>
       <div>${formatMetric(player.max_exit_velocity, "mph")}</div>
@@ -747,7 +748,13 @@ function rankableCount(key) {
 }
 
 function getMetric(key) {
+  if (key === "cs_plus") return { key: "cs_plus", label: "CS+", fmt: "number", higherBetter: true };
   return METRICS.find((metric) => metric.key === key) || METRICS[0];
+}
+
+// Sort value for a key, including the computed CS+ (not a column on the row).
+function sortVal(player, key) {
+  return key === "cs_plus" ? (state.csPlus && state.csPlus.get(player.slug)) : player[key];
 }
 
 function compareNullable(a, b) {

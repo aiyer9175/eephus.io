@@ -506,7 +506,7 @@ function setActiveYear(year) {
   state.percentiles = computePercentiles(state.pitchers);
   state.csPlus = computeCSPlus(state.pitchers);
   state.pitchPercentiles = computePitchPercentiles(state.pitches);
-  if (!activeHeadlineMetrics().some((metric) => metric.key === state.sortKey)) {
+  if (state.sortKey !== "cs_plus" && !activeHeadlineMetrics().some((metric) => metric.key === state.sortKey)) {
     state.sortKey = "stuff_plus";
   }
 }
@@ -614,7 +614,7 @@ function render() {
   }
   if (hash.startsWith("#/leaders/")) {
     const key = hash.replace("#/leaders/", "").split("/")[0];
-    if (activeHeadlineMetrics().some((metric) => metric.key === key)) state.sortKey = key;
+    if (key === "cs_plus" || activeHeadlineMetrics().some((metric) => metric.key === key)) state.sortKey = key;
     renderLeaderboard();
     afterRender();
     return;
@@ -694,7 +694,7 @@ function renderLeaderboard() {
   const direction = metric.higherBetter ? -1 : 1;
   const filtered = state.pitchers
     .filter((pitcher) => pitcher.pitcher_name.toLowerCase().includes(state.query.toLowerCase()))
-    .sort((a, b) => compareMetric(a[state.sortKey], b[state.sortKey], direction));
+    .sort((a, b) => compareMetric(sortVal(a, state.sortKey), sortVal(b, state.sortKey), direction));
   const visibleRows = filtered.slice(0, LEADERBOARD_LIMIT);
   const limitNote = filtered.length > visibleRows.length
     ? ` Showing top ${visibleRows.length.toLocaleString()} of ${filtered.length.toLocaleString()} rows; use search to narrow the list.`
@@ -705,6 +705,7 @@ function renderLeaderboard() {
       <input class="search-box" type="search" placeholder="Search pitcher" value="${escapeHtml(state.query)}" aria-label="Search pitcher">
       ${renderYearSelect()}
       <select class="select-box sort-select" aria-label="Sort leaderboard">
+        <option value="cs_plus" ${state.sortKey === "cs_plus" ? "selected" : ""}>Sort by CS+ (pro profile)</option>
         ${activeHeadlineMetrics().map((m) => `<option value="${m.key}" ${m.key === state.sortKey ? "selected" : ""}>Sort by ${m.label}</option>`).join("")}
       </select>
       <button class="control-button" type="button" data-reset>Reset</button>
@@ -772,7 +773,7 @@ function renderPitcherRow(pitcher, rank) {
           </div>
         </div>
       </div>
-      <div class="metric-main">${formatMetric(pitcher[state.sortKey], getMetric(state.sortKey).fmt)}</div>
+      <div class="metric-main">${state.sortKey === "cs_plus" ? (sortVal(pitcher, "cs_plus") ?? "--") : formatMetric(pitcher[state.sortKey], getMetric(state.sortKey).fmt)}</div>
       <div>${formatMetric(pitcher.avg_fastball_velo, "mph")}</div>
       <div>${formatMetric(pitcher.xwoba_against, "decimal")}</div>
       <div>${formatMetric(pitcher.average_exit_velocity, "mph")}</div>
@@ -1246,7 +1247,13 @@ function teamBadge(pitcher, size = "") {
 }
 
 function getMetric(key) {
+  if (key === "cs_plus") return { key: "cs_plus", label: "CS+", fmt: "number", higherBetter: true };
   return ALL_METRICS.find((metric) => metric.key === key) || STUFF_METRIC;
+}
+
+// Sort value for a key, including the computed CS+ (not a column on the row).
+function sortVal(pitcher, key) {
+  return key === "cs_plus" ? (state.csPlus && state.csPlus.get(pitcher.slug)) : pitcher[key];
 }
 
 function compareMetric(a, b, direction) {
