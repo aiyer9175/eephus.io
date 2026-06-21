@@ -521,7 +521,7 @@
     }).join("");
     const _vm = faValueMap(members);
     const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap">${_vm}</div></details>` : "";
-    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout">${boardLeft(cls)}<div class="fa-board-main"><table class="detail-table">
+    rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
       ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor–ceiling buckets")}
@@ -590,35 +590,6 @@
       <text x="${(px(hi) - 4).toFixed(1)}" y="${(py(hi) + 14).toFixed(1)}" text-anchor="end" font-size="9" font-style="italic" fill="var(--text-tertiary)">fair value</text>
       ${dots}
     </svg>`;
-  }
-
-  // Left rail beside the board: the View nav (same targets as the top view
-  // chips) plus the Type / Position / Verdict filters laid out vertically.
-  // The filter rows reuse the SAME data-ffilter / data-fval contract the
-  // in-view filter bar uses, so the existing renderBoard click handler wires
-  // them with no second source of truth. The View links are plain hash
-  // anchors (the module's hashchange listener re-renders), mirroring how
-  // syncToURL writes the hash (board -> empty, others -> #view=<k>).
-  function boardLeft(cls) {
-    const nUfa = cls.members.filter(m => !isOption(m)).length;
-    const nOpt = cls.members.length - nUfa;
-    const navRow = (k, label) => {
-      const href = k === "board" ? "#" : `#view=${k}`;
-      return `<a class="fa-rail-row${state.view === k ? " is-active" : ""}" href="${href}">${esc(label)}</a>`;
-    };
-    const navMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Switch free-agency view">View</div>
-      ${VIEWS.map(([k, label]) => navRow(k, label)).join("")}</div>`;
-    const frow = (group, val, label, on) =>
-      `<div class="fa-rail-row${on ? " is-active" : ""}" data-ffilter="${group}" data-fval="${val}" style="cursor:pointer;"><span>${esc(label)}</span></div>`;
-    const typeMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="UFA vs the option / opt-out family">Type</div>
-      ${frow("type", "all", "All", boardState.type === "all")}
-      ${frow("type", "ufa", `UFA · ${nUfa}`, boardState.type === "ufa")}
-      ${frow("type", "options", `Options · ${nOpt}`, boardState.type === "options")}</div>`;
-    const posMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Position group">Position</div>
-      ${["all", "C", "IF", "OF", "SP", "RP", "DH"].map(p => frow("pos", p, p === "all" ? "All" : p, boardState.pos === p)).join("")}</div>`;
-    const verdictMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Value vs the predicted market price">Verdict</div>
-      ${["all", "value", "market", "overpay"].map(v => frow("verdict", v, v === "all" ? "All" : v[0].toUpperCase() + v.slice(1), boardState.verdict === v)).join("")}</div>`;
-    return `<aside class="fa-board-left">${navMod}${typeMod}${posMod}${verdictMod}</aside>`;
   }
 
   // Market-pulse rail beside the board: best values, biggest projected

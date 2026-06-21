@@ -636,21 +636,11 @@
     }).join("");
     const _wm = projWarMap(list);
     const warMap = _wm ? `<details class="proj-warmap"><summary>Talent by age &middot; year-1 WAR vs age (current filters)</summary><div class="proj-warmap-wrap">${_wm}</div></details>` : "";
-    // Left rail for the Players view. Rebuilt inside renderTable so the leaders
-    // and pool-supply modules track the CURRENT filtered/sorted rows. The View
-    // links are plain hash anchors (the hashchange listener re-renders),
-    // mirroring how syncToURL writes the hash (players -> empty, the others ->
-    // #view=<k>); the glossary points at the same group as the top chip.
+    // Right information rail for the Players view. Rebuilt inside renderTable so
+    // the leaders and pool-supply modules track the CURRENT filtered/sorted
+    // rows. View switching lives in the top filter-bar chips, so this rail is a
+    // pure read-out: scope/freshness, the WAR and surplus leaders, pool supply.
     function projBoardSidebar(curr) {
-      const navRow = (k, label, title) => {
-        const href = k === "players" ? "#" : `#view=${k}`;
-        return `<a class="fa-rail-row${state.view === k ? " is-active" : ""}" href="${href}"${title ? ` title="${esc(title)}"` : ""}>${esc(label)}</a>`;
-      };
-      const navMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Switch projections view">View</div>
-        ${navRow("players", "Players")}
-        ${navRow("teams", "Team Outlook", "First-season roster WAR roll-up -> projected wins")}
-        ${navRow("accountability", "Model Accountability", "Held-out backtests, model verdicts, methodology")}
-        <a class="fa-rail-row" href="/glossary/#cat=${encodeURIComponent("Platform & Methodology")}" title="Every projection term, defined - in the unified site glossary">Glossary</a></div>`;
       const stampMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Data freshness and scope">Scope</div>
         ${DATA.generated_at ? `<div class="fa-rail-row"><span>data as of</span><span class="fa-rail-num">${esc(String(DATA.generated_at))}</span></div>` : ""}
         <div class="fa-rail-row"><span>veterans</span><span class="fa-rail-num">${DATA.n_vets}</span></div>
@@ -670,16 +660,16 @@
       const supply = Object.entries(groups).sort((a, b) => b[1] - a[1])
         .map(([g, n]) => `<div class="fa-rail-row"><span>${esc(g)}</span><span class="fa-rail-num">${n}</span></div>`).join("");
       const supplyMod = supply ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="Current filtered pool by position group">Pool supply</div>${supply}</div>` : "";
-      return `<aside class="fa-board-left">${navMod}${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
+      return `<aside class="fa-board-rail">${stampMod}${warMod}${surMod}${supplyMod}</aside>`;
     }
-    root.innerHTML = `<div class="fa-board-layout">${projBoardSidebar(list)}<div class="fa-board-main">` + warMap + `<table class="detail-table proj-table">
+    root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + `<table class="detail-table proj-table">
       <thead><tr><th>#</th><th>Player</th>
       ${seasons.map((s, t) => sortHead(String(s), "y" + t, `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`)).join("")}
       ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
       <th>Contract</th>
       ${sortHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
       </tr></thead><tbody>${body || `<tr><td colspan="${5 + seasons.length}">No players match.</td></tr>`}</tbody></table>
-      ${list.length > state.limit ? `<div style="text-align:center;margin:10px 0;"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div></div>`;
+      ${list.length > state.limit ? `<div style="text-align:center;margin:10px 0;"><button class="chip" id="proj-more">show ${Math.min(100, list.length - state.limit)} more (${list.length - state.limit} hidden)</button></div>` : ""}</div>${projBoardSidebar(list)}</div>`;
     root.querySelectorAll("[data-psort]").forEach(h => h.onclick = () => {
       const k = h.dataset.psort;
       if (state.sort === k) state.dir = -state.dir;
