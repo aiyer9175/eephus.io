@@ -967,9 +967,14 @@ function renderProspects() {
     const nameCell = x.cs
       ? `<a class="proj-name" href="#/player/${x.cs.year}/${x.cs.slug}" title="Open CollegeSavant page">${escapeHtml(x.name || "")}</a>`
       : `<strong>${escapeHtml(x.name || "")}</strong>`;
+    // School links to its PROSPX college page (entity router canonicalizes the
+    // raw school string on its end, so no name mapping is needed here).
+    const schoolHtml = x.school
+      ? `<a class="cs-college-link" href="/prospx/#college=${encodeURIComponent(x.school)}" title="${escapeHtml(x.school)} on PROSPX">${escapeHtml(x.school)}</a>`
+      : "";
     const cells = cols.map((c) => `<td class="tt-col${c.key === sortKey ? " is-sorted" : ""}">${fmt(c.t, c.get(x))}</td>`).join("");
     return `<tr><td class="tt-rank">${i + 1}</td>
-      <td class="tt-team">${nameCell}<span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
+      <td class="tt-team">${nameCell}<span class="tt-n">${schoolHtml}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
       ${cells}<td class="tt-col">${wl}</td></tr>`;
   }).join("");
   app.innerHTML = `

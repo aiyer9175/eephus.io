@@ -310,7 +310,7 @@ def make_twitter() -> None:
     _banner(social / "twitter-banner-eephus.png", True, "EEPHUS.IO",
             "sabermetric / scouting analytics website", False)
     _banner(social / "twitter-banner-prospx.png", False, "PROSPX",
-            "consensus prospect tracker", True)
+            "eephus.io prospect tracker", True)
     print("wrote branding/social/twitter-avatar-*.png + twitter-banner-*.png")
 
 

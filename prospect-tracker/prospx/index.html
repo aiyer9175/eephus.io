@@ -25107,6 +25107,64 @@ function goToHSSchool(program) {
   syncToURL();
 }
 
+// ---- Prospect origin (player detail) ------------------------------------
+// Where the prospect came from, surfaced on the detail page and linked to the
+// entity pages. Draft school + draft details come straight off p.acquisition
+// (synchronous); the IFA signing country lives in the signings dataset, so it
+// is looked up there (lazy-loaded once, then the detail re-renders to fill it).
+function _playerOriginCountry(p) {
+  if (!DATA.ifa || !p) return null;
+  const key = p.key || p.milb_key;
+  if (!key) return null;
+  for (const c of ((DATA.ifa && DATA.ifa.classes) || [])) {
+    for (const s of (c.signings || [])) {
+      if (s.milb_key && s.milb_key === key) return s.country || null;
+    }
+  }
+  return null;
+}
+let _originIfaLoading = false;
+function _ensureIfaForOrigin(p) {
+  if (DATA.ifa || _originIfaLoading) return;
+  _originIfaLoading = true;
+  (async () => {
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "ifa_timeseries.json", { cache: "no-cache" });
+      DATA.ifa = await resp.json();
+      // Re-render the detail (still on the same player) so the country fills in.
+      if (state.view && state.view.type === "player" && state.view.key === (p.key || p.milb_key))
+        renderPlayerDetail(state.view.key);
+    } catch (e) { /* leave the country blank on failure */ }
+    finally { _originIfaLoading = false; }
+  })();
+}
+function _playerOriginHTML(p) {
+  const a = (p && p.acquisition) || {};
+  const bits = [];
+  if (a.method === "draft") {
+    if (a.school) bits.push(_draftSchoolLinkHTML({ school: a.school }));
+    const dr = [];
+    if (a.team_name || a.team_abbr) dr.push(escapeHtml(String(a.team_name || a.team_abbr)));
+    if (a.round_label) dr.push("R" + escapeHtml(String(a.round_label)));
+    if (a.pick_overall) dr.push("#" + escapeHtml(String(a.pick_overall)));
+    if (a.year) dr.push(escapeHtml(String(a.year)));
+    if (dr.length) bits.push("drafted " + dr.join(" "));
+  } else if (a.method === "international_fa") {
+    const ifa = [];
+    if (a.team_name || a.team_abbr) ifa.push(escapeHtml(String(a.team_name || a.team_abbr)));
+    if (a.year) ifa.push(escapeHtml(String(a.year)));
+    bits.push("signed (Intl FA)" + (ifa.length ? " " + ifa.join(" · ") : ""));
+    const country = _playerOriginCountry(p);
+    if (country) bits.push("from " + _countryLinkHTML(country));
+    else _ensureIfaForOrigin(p);   // lazy-load the signings, then re-render to fill it
+  }
+  if (!bits.length) return "";
+  return '<div class="player-display-meta player-origin" style="margin-top:3px;font-size:var(--fs-sm);color:var(--text-tertiary);">'
+    + '<span style="text-transform:uppercase;letter-spacing:.06em;font-size:10px;font-weight:700;">Origin</span> '
+    + bits.filter(Boolean).join(' <span style="opacity:.5;">·</span> ') + '</div>';
+}
+
 let _collegeSort = { key: null, dir: -1 };
 
 // Lazy-load the CollegeSavant per-player bridge (Proj Single-A lines keyed
@@ -25254,15 +25312,19 @@ function _renderColleges(host, classes) {
 // Find all draft rows for a canonical college, newest class first.
 function _findCollege(name) {
   if (!name || !DATA.draft || !DATA.draft.classes) return null;
+  // Canonicalize the incoming key so off-site links (e.g. CollegeSavant) can pass
+  // a RAW school string ("Louisiana State") and still resolve to the canonical
+  // entity ("LSU"). Idempotent for already-canonical keys from in-app links.
+  const canon = _collegeName(name) || name;
   const players = []; let logo = null;
   for (const c of DATA.draft.classes) {
     for (const p of (c.prospects || [])) {
-      if (_collegeKeyOf(p) !== name) continue;
+      if (_collegeKeyOf(p) !== canon) continue;
       players.push(Object.assign({ _year: c.year, _isCurrent: !!c.is_current }, p));
       if (!logo && p.school_logo_url) logo = p.school_logo_url;
     }
   }
-  return players.length ? { name, players, logo } : null;
+  return players.length ? { name: canon, players, logo } : null;
 }
 
 // Per-college detail page: identity, draft-history tiles, current draft
@@ -40133,6 +40195,7 @@ function renderPlayerDetail(key) {
             if (!bits.length) return "";
             return `<div class="player-display-meta" style="margin-top:2px;font-size:var(--fs-sm);color:var(--text-tertiary);" title="From FanGraphs scouting report">${bits.join(" · ")}</div>`;
           })()}
+          ${_playerOriginHTML(p)}
           ${(statusPill || tjPill) ? `<div style="display:flex;gap:4px;flex-wrap:wrap;margin-top:6px;">${statusPill}${tjPill}</div>` : ""}
           ${rankPills}
         </div>

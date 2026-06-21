@@ -142,6 +142,10 @@ td.tt-team { text-align: left; }
 .lb-pa input { width: 56px; }
 .proj-name { color: var(--ink); font-weight: 700; text-decoration: none; }
 .proj-name:hover { color: var(--blue); text-decoration: underline; }
+/* School -> PROSPX college entity page. Reads as the muted team text it sits in,
+   with a dotted underline to signal the link; brand blue on hover. */
+.cs-college-link { color: inherit; text-decoration: none; border-bottom: 1px dotted currentColor; }
+.cs-college-link:hover { color: var(--blue); border-bottom-color: var(--blue); }
 
 /* College box score - real outcomes for players we hold FG/NCAA stats for. */
 .box-panel { margin: 14px 0; }
