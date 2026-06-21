@@ -3991,6 +3991,8 @@
     tr[data-hs-drill]:hover { background: var(--bg-tertiary); }
     .college-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-tertiary); }
     .college-link:hover { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
+    table:not([data-no-sort]) th { cursor: pointer; }
+    th[data-gen-sorted] { color: var(--neon-cyan); }
     /* Inline logo + text inside a draft table cell / list row, so team and
        college marks sit cleanly beside the name they belong to. */
     .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -30532,6 +30534,84 @@ document.addEventListener("click", (e) => {
   restoreUIFromState();
   render();
   window.scrollTo({ top: 0, behavior: "instant" });
+});
+
+// Universal filter de-select: clicking a filter chip that is ALREADY active
+// resets that filter group to its default by re-clicking the group's "all"
+// sibling, reusing that chip's own handler (state reset + re-render). Works
+// for every filter chip group regardless of how it is wired. Capture phase
+// + stopPropagation so it intercepts before the clicked chip re-applies the
+// filter. Sort / view / mode chips carry no data-filter* attribute, so they
+// are ignored and always keep exactly one selection.
+document.addEventListener("click", (e) => {
+  const chip = e.target && e.target.closest && e.target.closest(".chip.active");
+  if (!chip) return;
+  const dsKey = Object.keys(chip.dataset).find(
+    k => /^filter/i.test(k) || k === "farmAcq" || k === "ilType");
+  if (!dsKey) return;
+  const attr = "data-" + dsKey.replace(/[A-Z]/g, m => "-" + m.toLowerCase());
+  if ((chip.getAttribute(attr) || "") === "all") return;   // already the default
+  const scope = chip.closest(".filter-bar") || chip.parentElement;
+  const def = scope && scope.querySelector("[" + attr + "='all']");
+  if (def && def !== chip) {
+    e.preventDefault();
+    e.stopPropagation();
+    def.click();   // the default chip's own handler resets state + re-renders
+  }
+}, true);
+
+// Universal click-to-sort for plain tables. Clicking a column header sorts
+// the table by that column; clicking again toggles direction (so a double-
+// click reverses). Numeric-aware (parses $/%/k/M/B). Tables that already
+// carry custom sort (any th.dt-sortable, which re-render data-side) are left
+// to their own handlers; opt out with data-no-sort on the table or th.
+function _genCellNum(txt) {
+  // Leading number only (commas tolerated). No unit scaling - generic sort
+  // runs on plain tables; the data-backed boards that carry $K/$M live on
+  // their own custom sort and are skipped, so scaling here would only risk
+  // mis-reading incidental letters ("95 mph", "10 BB").
+  const m = String(txt || "").replace(/,/g, "").match(/-?\d*\.?\d+/);
+  if (!m) return null;
+  const v = parseFloat(m[0]);
+  return isFinite(v) ? v : null;
+}
+function _genSortTable(th) {
+  const table = th.closest("table");
+  if (!table || !table.tBodies || !table.tBodies.length) return;
+  const tbody = table.tBodies[0];
+  const rows = Array.prototype.slice.call(tbody.rows).filter(r => r.cells && r.cells.length);
+  if (rows.length < 2) return;
+  const col = th.cellIndex;
+  if (col < 0) return;
+  const same = table.getAttribute("data-gen-col") === String(col);
+  const dir = (same && table.getAttribute("data-gen-dir") === "asc") ? "desc" : "asc";
+  table.setAttribute("data-gen-col", String(col));
+  table.setAttribute("data-gen-dir", dir);
+  const txt = r => (r.cells[col] ? (r.cells[col].textContent || "").trim() : "");
+  const numeric = rows.filter(r => _genCellNum(txt(r)) != null).length >= rows.length * 0.6;
+  const sign = dir === "asc" ? 1 : -1;
+  rows.sort((a, b) => {
+    if (numeric) {
+      const av = _genCellNum(txt(a)), bv = _genCellNum(txt(b));
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return sign * (av - bv);
+    }
+    return sign * txt(a).localeCompare(txt(b));
+  });
+  rows.forEach(r => tbody.appendChild(r));
+  if (table.tHead) table.tHead.querySelectorAll("th[data-gen-sorted]").forEach(h => h.removeAttribute("data-gen-sorted"));
+  th.setAttribute("data-gen-sorted", dir);
+}
+document.addEventListener("click", (e) => {
+  const th = e.target && e.target.closest && e.target.closest("th");
+  if (!th) return;
+  const table = th.closest("table");
+  if (!table) return;
+  if (table.hasAttribute("data-no-sort") || th.hasAttribute("data-no-sort")) return;
+  if (table.querySelector("th.dt-sortable")) return;  // custom-sort table - leave it alone
+  _genSortTable(th);
 });
 
 // "reset to all" behavior so the chip strip is a one-click escape
