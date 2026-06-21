@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-20T16:07:44Z",
+ "generated_at": "2026-06-21T03:39:39Z",
  "raters": [
   "fangraphs",
   "mlb_pipeline_draft"
@@ -11,74 +11,74 @@
   2020,
   2021
  ],
- "common_n": 668,
+ "common_n": 672,
  "per_source_spearman": {
-  "fangraphs": 0.1674,
-  "mlb_pipeline_draft": 0.1651
+  "fangraphs": 0.1645,
+  "mlb_pipeline_draft": 0.1618
  },
  "live_weights": {
-  "fangraphs": 1.0059,
-  "mlb_pipeline_draft": 0.9941
+  "fangraphs": 1.0068,
+  "mlb_pipeline_draft": 0.9932
  },
  "pooled": {
-  "n": 668,
+  "n": 672,
   "equal": {
-   "spearman": 0.1799,
-   "auc": 0.7244
+   "spearman": 0.1766,
+   "auc": 0.7262
   },
   "weighted": {
-   "spearman": 0.1771,
-   "auc": 0.7244
+   "spearman": 0.1737,
+   "auc": 0.7263
   }
  },
  "loo_cv": {
   "per_year": [
    {
     "year": 2018,
-    "n": 183,
+    "n": 185,
     "train_weights": {
-     "fangraphs": 0.9924,
-     "mlb_pipeline_draft": 1.0076
+     "fangraphs": 0.9932,
+     "mlb_pipeline_draft": 1.0068
     },
-    "debut_rate": 0.5027
+    "debut_rate": 0.5081
    },
    {
     "year": 2019,
     "n": 193,
     "train_weights": {
-     "fangraphs": 0.9794,
-     "mlb_pipeline_draft": 1.0206
+     "fangraphs": 0.9801,
+     "mlb_pipeline_draft": 1.0199
     },
     "debut_rate": 0.4508
    },
    {
     "year": 2020,
-    "n": 160,
+    "n": 162,
     "train_weights": {
-     "fangraphs": 1.0276,
-     "mlb_pipeline_draft": 0.9724
+     "fangraphs": 1.0275,
+     "mlb_pipeline_draft": 0.9725
     },
-    "debut_rate": 0.4062
+    "debut_rate": 0.4136
    },
    {
     "year": 2021,
     "n": 132,
     "train_weights": {
-     "fangraphs": 1.023,
-     "mlb_pipeline_draft": 0.977
+     "fangraphs": 1.0244,
+     "mlb_pipeline_draft": 0.9756
     },
     "debut_rate": 0.4697
    }
   ],
   "pooled": {
-   "n": 668,
+   "n": 672,
    "equal": {
-    "spearman": 0.1799,
-    "auc": 0.7244
+    "spearman": 0.1766,
+    "auc": 0.7262
    },
    "weighted": {
-    "spearman": 0.1808,
-    "auc": 0.7338
+    "spearman": 0.1778,
+    "auc": 0.7356
    }
   }
  },
