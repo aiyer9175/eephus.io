@@ -1170,6 +1170,48 @@ def _feed_item_html(typ, glyph, text, key, org, name, val, cat: str = "") -> str
             f'{logo}<span class="feed-name">{html.escape(name or text)}</span>'
             f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
 
+def _news_detail(p: dict, typ: str) -> str:
+    """Scouting line under a player's name on the /news/ page: position, age,
+    overall rank, and ETA - or career WAR for a debut. Empty when the event has
+    no resolved player record (e.g. FA signings, keyed off the PROSPX map)."""
+    if not p:
+        return ""
+    parts = []
+    if p.get("position"):
+        parts.append(str(p["position"]))
+    if p.get("age") is not None:
+        parts.append(f'{p["age"]:.1f} yo')
+    if p.get("overall_rank"):
+        parts.append(f'#{int(p["overall_rank"])}')
+    if typ == "debut":
+        cw = p.get("career_war")
+        war = cw.get("career_war") if isinstance(cw, dict) else cw
+        if war is not None and abs(war) >= 0.1:  # skip the +0.0 of a fresh debut
+            parts.append(f"{war:+.1f} career WAR")
+    else:
+        yr = (p.get("eta") or {}).get("year")
+        if yr:
+            parts.append(f"ETA {yr}")
+    return _meta(*parts)
+
+def _news_item_html(typ, glyph, text, key, org, name, val, cat, pmap) -> str:
+    """Richer /news/ row: logo | name + scouting line | current-FV chip | event
+    chip. Reuses _feed_item_html's classes so it inherits the wire palette; the
+    detail line + FV pill are scoped to .news-feed in CSS, so the homepage
+    sidebar wire is untouched. `pmap` maps player_key -> record (players +
+    graduates); rows with no match (FA signings) degrade to the plain layout."""
+    logo = _team_logo(org, "feed-logo") if org else ""
+    data_cat = f' data-cat="{html.escape(cat)}"' if cat else ""
+    p = pmap.get(key) if pmap else None
+    detail = _news_detail(p, typ)
+    meta = f'<span class="news-meta">{detail}</span>' if detail else ""
+    fv = _fv_pill(p) if (p and p.get("fv_close") is not None) else ""
+    return (f'<a class="feed-item news-item" href="{_player_href(key)}"{data_cat}>'
+            f'{logo}'
+            f'<span class="news-main"><span class="feed-name">{html.escape(name or text)}</span>{meta}</span>'
+            f'{fv}'
+            f'<span class="feed-val {typ}">{glyph} {html.escape(val)}</span></a>')
+
 def _feed_html(events: list, n: int = 12) -> str:
     # Day-grouped wire (homepage sidebar): a thin per-date header carries the
     # timestamp + Time Machine link; rows are structured logo|name|value chip.
@@ -1199,13 +1241,14 @@ def _ticker_html(events: list, n: int = 14) -> str:
         items = ['<span><span class="glyph">◆</span> PROSPX - live prospect wire</span>']
     return " ".join(items * 2)  # duplicated for seamless scroll
 
-def _news_feed_html(events: list, window_days: int = 30,
+def _news_feed_html(events: list, pmap: dict | None = None, window_days: int = 30,
                     max_items: int = 500, min_items: int = 60) -> str:
-    """Day-grouped feed for the standalone /news/ page: same row markup as the
-    homepage sidebar, but windowed to recent activity and tagged with data-cat
-    so the filter chips can show/hide by category. Each day is wrapped in a
-    .news-day block so a filtered-empty day hides cleanly. Falls back to the
-    most-recent `min_items` when the window is sparse (off-season)."""
+    """Day-grouped feed for the standalone /news/ page: a richer row than the
+    homepage sidebar (name + scouting line + current-FV chip), windowed to
+    recent activity and tagged with data-cat so the filter chips can show/hide
+    by category. Each day is wrapped in a .news-day block so a filtered-empty
+    day hides cleanly. Falls back to the most-recent `min_items` when the window
+    is sparse (off-season). `pmap` resolves player_key -> record for the detail."""
     cutoff = (date.today() - timedelta(days=window_days)).isoformat()
     recent = [e for e in events if e[0] >= cutoff]
     if len(recent) < min_items:
@@ -1222,8 +1265,8 @@ def _news_feed_html(events: list, window_days: int = 30,
             out.append('<div class="news-day">')
             out.append(_feed_day_header(dt))
             open_day = True
-        out.append(_feed_item_html(typ, glyph, text, key, org, name, val,
-                                   _EVENT_CAT.get(typ, "")))
+        out.append(_news_item_html(typ, glyph, text, key, org, name, val,
+                                   _EVENT_CAT.get(typ, ""), pmap))
     if open_day:
         out.append("</div>")
     return "".join(out)
@@ -1260,7 +1303,16 @@ def build_news(data: dict | None = None) -> str:
     data = data or load_site_data() or {}
     events = _collect_events(data.get("players") or [], data.get("graduates") or [],
                              _load_fa_events_for_wire())
-    feed = _news_feed_html(events)
+    # player_key -> record, so each row can carry the player's current FV chip
+    # and scouting line. Active prospects win ties; graduates fill the debuts.
+    pmap: dict = {}
+    for p in (data.get("players") or []):
+        if p.get("player_key"):
+            pmap[p["player_key"]] = p
+    for g in (data.get("graduates") or []):
+        if g.get("player_key") and g["player_key"] not in pmap:
+            pmap[g["player_key"]] = g
+    feed = _news_feed_html(events, pmap)
     chip_defs = [("all", "All"), ("debut", "Debuts"), ("trade", "Trades"),
                  ("move", "Moves"), ("il", "IL"), ("fv", "FV"), ("signing", "Signings")]
     chips = "".join(
@@ -1273,8 +1325,9 @@ def build_news(data: dict | None = None) -> str:
         '<span class="section-sub">the full recent prospect wire - filterable by event type</span></div>'
         '<p class="news-intro">Every move on the board - prospect debuts, trades, promotions and '
         'demotions, IL placements, genuine FV grade changes, and Free Agency signings - newest first. '
-        'The homepage shows the latest dozen; this is the full recent feed (last ~30 days). Filter by '
-        'type, or jump into Time Machine on any date to see the whole board as it stood.</p>'
+        'The homepage shows the latest dozen; this is the full recent feed (last ~30 days), with each '
+        "player's current FV grade and scouting line. Filter by type, or jump into Time Machine on any "
+        'date to see the whole board as it stood.</p>'
         f'<div class="filter-bar" id="news-filter-bar"><span class="filter-label">Filter</span>{chips}</div>'
         f'<div class="sb-feed news-feed" id="news-feed">{feed}</div>'
         '</div>'

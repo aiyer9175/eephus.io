@@ -730,6 +730,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    each day block a hair of separation so the grouping reads on a full page. */
 .news-app .news-feed { max-width: 760px; }
 .news-app .news-feed .news-day + .news-day { margin-top: 2px; }
+/* Enriched /news/ rows: stack the name over a scouting line and carry the
+   player's current FV chip beside the event chip. Scoped to .news-feed so the
+   homepage sidebar wire (sb-feed only, no .news-feed) is untouched. */
+.news-feed .news-main { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.news-feed .feed-item .feed-name { flex: none; }
+.news-feed .news-meta { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .01em; color: #8fb89b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.news-feed .feed-item .fv-pill { font-size: 11px; font-weight: 800; padding: 2px 7px; min-width: 30px; text-align: center; }
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
