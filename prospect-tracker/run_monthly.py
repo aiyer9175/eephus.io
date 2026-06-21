@@ -983,6 +983,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 except Exception:
                     log.exception("overseas pipeline crashed — continuing with MiLB run")
 
+            # CollegeSavant -> Single-A translation: re-fit the matched-pair
+            # factors and rebuild the per-player sidecar the CS player pages read.
+            # Reads CollegeSavant static data + the rebuilt DB; safe to fail.
+            try:
+                from college_translation import build as _build_college_translation
+                _ct = _build_college_translation(out_dir=out_dir)
+                log.info("college->Single-A translation: refit %d factor blocks",
+                         len(_ct.get("factors", {})))
+            except Exception:
+                log.exception("college translation build crashed — continuing")
+
         def _run_milb_scrape() -> tuple[int, dict]:
             with _step("1. Scrape MiLB rankings + insert snapshots", log):
                 snapshots, csv_birth_dates = scrape_all(force=force_refetch)

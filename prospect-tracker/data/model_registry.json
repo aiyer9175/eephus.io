@@ -295,6 +295,20 @@
    "artifact_age_days": 8
   },
   {
+   "model_id": "college_translation",
+   "surface": "CollegeSavant player pages (Projected Single-A block)",
+   "predicts": "Single-A K% / BB% (and experimental hitter OPS) from a college TrackMan line",
+   "champion": "matched-pair regression-to-the-mean (college.py): per-stat shrunk-slope fit on CollegeSavant-name -> draft_players -> Single-A (A/A+) statline pairs; hitter K% slope 0.57 r2 0.38 n77, BB% 0.16 r2 0.04, OPS 0.24 r2 0.01 (experimental); pitcher K% slope 0.24 r2 0.14 n61, BB% ~0",
+   "baseline": "predict-the-Single-A-mean (no college information)",
+   "metric": "leave-one-out MAE + P10-P90 coverage (target 0.80), matched pairs only",
+   "eval_artifact": "data/college_translation_eval.json",
+   "verdict": "provisional",
+   "notes": "Built college_translation.py 2026-06-20. ONLY K%/BB% live on both the college tracked side and the Single-A conventional side (the ~182 matched pairs; 77 hitter / 61 pitcher qualify), so those are the matched-pair translation. Hitter OPS (from college xwOBA) ships EXPERIMENTAL: r2 ~0.01, essentially the level mean with a wide band. Pitcher BB% has no signal (r2 ~0); Stuff+ does NOT predict Single-A outcomes (r ~0 in the matched data) so it stays a descriptive CS+ index, never an outcome forecast. LOO P10-P90 coverage 0.79-0.83 across stats - the bands are honest. NOT adjusted for strength of schedule or park (no conference/park table held; flagged in the UI). Pitcher K%/BB% derived from K/9, BB/9 via BF_PER_9=38.",
+   "last_checked": "2026-06-20",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "statcast_plus",
    "surface": "PROSPX SC+ pills + leaderboards",
    "predicts": "pool-relative contact/zone composite (descriptive, but consumed as signal)",

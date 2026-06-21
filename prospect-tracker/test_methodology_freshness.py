@@ -41,6 +41,7 @@ MODEL_GLOSSARY = {
     "farm_grades": ["farm_report_card", "farm_rank"],
     "draft_slot_curve": ["slot_value"],
     "overseas_translation": ["overseas_posting_class"],
+    "college_translation": ["single_a_equivalent"],
     "statcast_plus": ["statcast_plus"],
     "stuff_plus_external": ["stuff_grade_plus"],
     "stuff_plus_aaa": ["stuff_plus_aaa"],

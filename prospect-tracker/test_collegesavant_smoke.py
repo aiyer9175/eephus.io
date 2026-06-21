@@ -66,7 +66,11 @@ def _prelude(kind: str) -> str:
     var location={{hash:'#/',search:'',href:'http://x/'}};
     var localStorage={{getItem:function(){{return null;}},setItem:function(){{}},removeItem:function(){{}}}};
     var document={{querySelector:function(){{return __el();}},querySelectorAll:function(){{return [];}},getElementById:function(){{return __el();}},createElement:function(){{return __el();}},addEventListener:function(){{}},body:__el(),documentElement:__el(),head:__el()}};
-    var window={{{data_var}: {rows}, B1G_TEAMS:{{}}, B1G_TEAMS_PITCHERS:{{}}, location:location, localStorage:localStorage, document:document, addEventListener:function(){{}}, removeEventListener:function(){{}}, matchMedia:function(){{return {{matches:false,addEventListener:function(){{}},addListener:function(){{}}}};}}, requestAnimationFrame:function(){{}}, setTimeout:function(){{}}, clearTimeout:function(){{}}, devicePixelRatio:1, innerWidth:1200, scrollTo:function(){{}}, EEPHUS_GL:null, EEPHUS_HUB:null}};
+    var CS_TRANSLATION={{translations:{{
+      "test-alpha":{{side:"hit",single_a:{{k_pct:{{exp:22,lo:15,hi:29}},bb_pct:{{exp:11,lo:6,hi:16,low_confidence:true}},ops:{{exp:0.75,lo:0.6,hi:0.9,experimental:true}}}}}},
+      "arm-alpha":{{side:"pit",single_a:{{k_pct:{{exp:25,lo:18,hi:32}},bb_pct:{{exp:9,lo:4,hi:14,low_confidence:true}}}}}}
+    }}}};
+    var window={{{data_var}: {rows}, CS_TRANSLATION:CS_TRANSLATION, B1G_TEAMS:{{}}, B1G_TEAMS_PITCHERS:{{}}, location:location, localStorage:localStorage, document:document, addEventListener:function(){{}}, removeEventListener:function(){{}}, matchMedia:function(){{return {{matches:false,addEventListener:function(){{}},addListener:function(){{}}}};}}, requestAnimationFrame:function(){{}}, setTimeout:function(){{}}, clearTimeout:function(){{}}, devicePixelRatio:1, innerWidth:1200, scrollTo:function(){{}}, EEPHUS_GL:null, EEPHUS_HUB:null}};
     {extra}
     var navigator={{userAgent:'smoke'}};
     var requestAnimationFrame=window.requestAnimationFrame, setTimeout=window.setTimeout;
@@ -82,8 +86,10 @@ def test_collegesavant_app_loads_and_renders(app, kind):
     code = _prelude(kind) + shared + (CS / app).read_text(encoding="utf-8")
     # Load + init() must not throw (catches TDZ / undefined-reference crashes).
     ctx.eval(code)
-    # Both render branches must not throw either.
-    for h in ["#/", "#/leaders/k_pct/2024"]:
+    # Home, leaderboard, AND the player page (which builds CS+ + the Single-A
+    # translation block) must all render without throwing.
+    player = "test-alpha" if kind == "hitter" else "arm-alpha"
+    for h in ["#/", "#/leaders/k_pct/2024", f"#/player/2024/{player}"]:
         ctx.eval(f"location.hash='{h}'; window.location.hash='{h}'; render();")
 
 

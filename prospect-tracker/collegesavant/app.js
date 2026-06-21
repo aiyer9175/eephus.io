@@ -515,6 +515,50 @@ function renderPlayerRow(player, rank) {
   `;
 }
 
+// The college -> Single-A projection block (the module's through-line). Reads the
+// server-built window.CS_TRANSLATION sidecar (college_translation.py) by the
+// player's slug. Shows each projected Single-A rate as an expected value + a
+// P10-P90 band, with honest flags: K% is the reliable one, BB% carries little
+// signal, OPS is experimental. Renders nothing when no translation is on file.
+function renderTranslation(player, kind) {
+  const T = window.CS_TRANSLATION && window.CS_TRANSLATION.translations;
+  const t = T && T[player.slug];
+  if (!t || !t.single_a) return "";
+  const sa = t.single_a;
+  const pct = (x) => (x == null ? "--" : x.toFixed(1) + "%");
+  const dec = (x) => (x == null ? "--" : x.toFixed(3).replace(/^0(?=\.)/, ""));
+  const row = (label, b, fmt, flag) => {
+    if (!b) return "";
+    const tag = flag ? ` <span class="trans-flag">${escapeHtml(flag)}</span>` : "";
+    return `<div class="trans-row">
+      <span class="trans-label">${label}${tag}</span>
+      <span class="trans-val">${fmt(b.exp)}</span>
+      <span class="trans-band">${fmt(b.lo)} – ${fmt(b.hi)}</span>
+    </div>`;
+  };
+  const rows = [
+    row("Proj. Single-A K%", sa.k_pct, pct, null),
+    row("Proj. Single-A BB%", sa.bb_pct, pct, sa.bb_pct && sa.bb_pct.low_confidence ? "low confidence" : null),
+    row("Proj. Single-A OPS", sa.ops, dec, sa.ops && sa.ops.experimental ? "experimental" : null),
+  ].join("");
+  if (!rows.trim()) return "";
+  return `
+    <section class="panel trans-panel">
+      <div class="panel-title">
+        <span class="g-term" data-gl="single_a_equivalent">Projected Single-A</span>
+        <span>expected · P10-P90 band</span>
+      </div>
+      <div class="trans-grid">
+        <div class="trans-head"><span></span><span>Expected</span><span>P10 – P90</span></div>
+        ${rows}
+      </div>
+      <p class="trans-note">Matched-pair projection from this college line to a Single-A
+      expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
+      strength or park. The band is the P10-P90 range, so a wider band means less certain.
+      K% is the most reliable; BB% and OPS carry little signal yet and are shown for context.</p>
+    </section>`;
+}
+
 function renderPlayer(player) {
   if (!player) {
     app.innerHTML = `<section class="empty"><strong>Player not found.</strong><br><a class="pill" href="#/">Back to leaderboard</a></section>`;
@@ -538,6 +582,8 @@ function renderPlayer(player) {
           <div class="profile-team">${renderYearSelect(availablePlayerYears(player))}</div>
         </div>
       </div>
+
+      ${renderTranslation(player, "hitter")}
 
       <div class="profile-grid">
         <section class="panel">

@@ -810,6 +810,48 @@ function _wireCsShare(pitcher, pct) {
   });
 }
 
+// College -> Single-A projection block. Reads window.CS_TRANSLATION by slug and
+// shows projected Single-A K% / BB% (expected + P10-P90 band). BB% carries no
+// signal in the matched data, so it is flagged; stuff/shapes are descriptive
+// only (the CS+ index), never an outcome forecast. Empty when no translation.
+function renderTranslation(pitcher) {
+  const T = window.CS_TRANSLATION && window.CS_TRANSLATION.translations;
+  const t = T && T[pitcher.slug];
+  if (!t || !t.single_a) return "";
+  const sa = t.single_a;
+  const pct = (x) => (x == null ? "--" : x.toFixed(1) + "%");
+  const row = (label, b, flag) => {
+    if (!b) return "";
+    const tag = flag ? ` <span class="trans-flag">${escapeHtml(flag)}</span>` : "";
+    return `<div class="trans-row">
+      <span class="trans-label">${label}${tag}</span>
+      <span class="trans-val">${pct(b.exp)}</span>
+      <span class="trans-band">${pct(b.lo)} – ${pct(b.hi)}</span>
+    </div>`;
+  };
+  const rows = [
+    row("Proj. Single-A K%", sa.k_pct, null),
+    row("Proj. Single-A BB%", sa.bb_pct, sa.bb_pct && sa.bb_pct.low_confidence ? "low confidence" : null),
+  ].join("");
+  if (!rows.trim()) return "";
+  return `
+    <section class="panel trans-panel">
+      <div class="panel-title">
+        <span class="g-term" data-gl="single_a_equivalent">Projected Single-A</span>
+        <span>expected · P10-P90 band</span>
+      </div>
+      <div class="trans-grid">
+        <div class="trans-head"><span></span><span>Expected</span><span>P10 – P90</span></div>
+        ${rows}
+      </div>
+      <p class="trans-note">Matched-pair projection from this college K% / BB% to a Single-A
+      expectation, fit on our own college-to-Single-A pairs. Not adjusted for schedule
+      strength or park. The band is the P10-P90 range. K% is moderately reliable; BB%
+      carries little signal yet. Stuff+ and pitch shapes stay descriptive (the CS+ index),
+      not a pro outcome forecast.</p>
+    </section>`;
+}
+
 function renderPitcher(pitcher) {
   if (!pitcher) {
     app.innerHTML = `<section class="empty"><strong>Pitcher not found.</strong><br><a class="pill" href="#/">Back to leaderboard</a></section>`;
@@ -836,6 +878,8 @@ function renderPitcher(pitcher) {
           <div class="hero-stat"><span>Year</span><strong>${pitcher.year}</strong></div>
         </div>
       </div>
+
+      ${renderTranslation(pitcher)}
 
       <div class="profile-grid">
         <section class="panel">

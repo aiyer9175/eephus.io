@@ -166,6 +166,28 @@
    ]
   },
   {
+   "id": "single_a_equivalent",
+   "term": "Projected Single-A (college translation)",
+   "category": "custom-index",
+   "module": [
+    "collegesavant"
+   ],
+   "aliases": [
+    "Single-A equivalent",
+    "college translation",
+    "proj. Single-A"
+   ],
+   "priority": 16,
+   "definition": "What a college line projects to against Single-A pitching, shown as an expected value plus a P10-P90 uncertainty band. A matched-pair projection, not a precise forecast.",
+   "methodology": "Built from our own data: each CollegeSavant player is joined by name to draft_players and their later Single-A (A / A+) statline in prospects.db. Per stat, a regression-to-the-mean is fit over the matched pairs (predicted = the Single-A mean + a shrunk slope x (college value - the college mean)), so a weak relationship pulls hard toward the level mean. Only K% and BB% live on BOTH the college tracked side and the Single-A side, so those are the matched-pair translation; hitter OPS (from college xwOBA) is shipped EXPERIMENTAL because college tracked data barely forecasts Single-A production in the sample. The band is the P10-P90 residual range and widens with thinner support; leave-one-out coverage runs near the 80% target. NOT adjusted for strength of schedule or park (no conference / park table is held). K% is the most reliable output; BB% and OPS carry little signal and are flagged. Stuff+ does not predict Single-A outcomes in the matched data, so the pitcher translation is K% / BB% only and the tracked skills stay the descriptive CS+ index.",
+   "formula": "proj_single_a = single_a_mean + shrunk_slope x (college_value - college_mean); band = P10-P90 of the fit residuals",
+   "example": "A college hitter with a 12% strikeout rate projects to about a 19% Single-A rate with an 80% band near 11-27%: contact tends to erode against pro pitching, and the band reflects how much the jump varies player to player.",
+   "seeAlso": [
+    "cs_plus",
+    "statcast_plus"
+   ]
+  },
+  {
    "id": "statcast_plus",
    "term": "Statcast+ (SC+)",
    "category": "custom-index",
