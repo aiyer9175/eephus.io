@@ -161,7 +161,7 @@
   /* Scrollbars (dark): charcoal thumb that reads on near-black, a faint track so
      the star canvas barely shows through the gutter, iridescent lilac on hover. */
   --scrollbar-track: rgba(150,160,180,0.05);
-  --scrollbar-thumb: #3A3A42;
+  --scrollbar-thumb: #45405A;   /* blurple-charcoal: on-theme even on Firefox (which only honors scrollbar-color) */
   --scrollbar-thumb-hover: var(--accent-lilac);
   /* Y2K pixel-bevel edges (dark): an iridescent lilac highlight top-left, a
      near-black shadow bottom-right - the cybergothic/holo read. */

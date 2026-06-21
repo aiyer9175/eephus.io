@@ -103,13 +103,17 @@ Gothic, the `.io` in gold. It is live text plus inline SVG in the site
 `marks/eephus-wordmark.svg` (and `-dark`). Use it in mastheads, the nav, and
 footers.
 
-**Compact mark, the px-ball.** A vintage Topps baseball: cream face, navy
-outline, two seam arcs in the ramp. At 48px and up it carries the interlocking
-P/X gothic monogram (`marks/px-ball-monogram.svg`); below that it is ball-only
-(`marks/compact-mark.svg`) because the monogram muds at favicon sizes. The
-favicon and the whole app-icon set are derived from this mark. Use it where the
-full wordmark will not fit: the favicon, app icons, the mobile header, small
-chips, loaders.
+**Compact mark, the eephus.io ball.** A vintage Topps baseball: cream face, navy
+outline, two seam arcs in the ramp (`marks/compact-mark.svg`). This is the
+eephus.io compact mark, and the favicon and the whole app-icon set are derived
+from it - the CLEAN ball, no monogram. Use it where the full wordmark will not
+fit: the favicon, app icons, the mobile header, small chips, loaders.
+
+**PROSPX mark, the px-ball + monogram.** The same ball with the interlocking P/X
+gothic monogram (`marks/px-ball-monogram.svg`), at 48px and up. This is the
+PROSPX mark, reserved for PROSPX-specific things (the PROSPX app masthead, its
+Twitter avatar/banner). It is NOT the eephus.io site mark - the favicon, the PWA
+icons, and the default share card all use the clean ball above.
 
 **Clear space and minimums.** Keep at least the height of the ball as clear
 space around any lockup. Minimum sizes: full wordmark no smaller than 20px cap
@@ -181,14 +185,14 @@ branding/
     eephus-wordmark-dark.svg    full lockup, dark
     compact-mark.svg            px-ball, ball only (favicon twin), light
     compact-mark-dark.svg       px-ball, dark-surface variant
-    px-ball-monogram.svg        px-ball + P/X monogram, the >=48px mark
+    px-ball-monogram.svg        px-ball + P/X monogram - the PROSPX mark only
   icons/
     favicon.svg                 vector favicon (ball only)
     favicon.ico                 16/32/48 multi-res
     favicon-32.png              32px PNG
-    apple-touch-icon.png        180px, monogram, opaque cream
-    icon-192.png                PWA, full mark
-    icon-512.png                PWA, full mark
+    apple-touch-icon.png        180px, clean ball on the dark holo field
+    icon-192.png                PWA, clean ball (eephus.io)
+    icon-512.png                PWA, clean ball (eephus.io)
     icon-maskable-512.png       PWA maskable (mark inside the safe area)
   animated/
     eephus-arc.svg              the animated mark (CSS, the in-site source)

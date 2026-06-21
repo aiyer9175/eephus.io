@@ -213,19 +213,22 @@ def make_favicons() -> None:
     base.save(ROOT / "favicon.ico", sizes=[(s, s) for s in ico_sizes])
     _ball(32).save(ROOT / "assets" / "favicon-32.png")
     # apple-touch-icon: the Y2K-gothic dark-holo treatment (home-screen pin).
-    _y2k_icon(180, ball_frac=0.74).save(ROOT / "assets" / "apple-touch-icon.png")
+    # These represent eephus.io (the site), so they use the CLEAN ball - the
+    # P/X monogram is reserved for PROSPX-specific art.
+    _y2k_icon(180, ball_frac=0.74, monogram=False).save(ROOT / "assets" / "apple-touch-icon.png")
     print("wrote favicon.ico, assets/favicon-32.png, assets/apple-touch-icon.png")
 
 
 def make_app_icons() -> None:
     """PWA icons referenced by site.webmanifest, in the Y2K-gothic dark-holo style
-    (ball + P/X monogram on a near-black lilac-glow field with a thin lilac
-    border). The maskable variant keeps the mark inside the safe area."""
-    _y2k_icon(192, ball_frac=0.74).save(ROOT / "assets" / "icon-192.png")
-    _y2k_icon(512, ball_frac=0.74).save(ROOT / "assets" / "icon-512.png")
+    (the clean eephus.io ball on a near-black lilac-glow field with a thin lilac
+    border - NO P/X monogram, which is PROSPX-only). The maskable variant keeps
+    the mark inside the safe area."""
+    _y2k_icon(192, ball_frac=0.74, monogram=False).save(ROOT / "assets" / "icon-192.png")
+    _y2k_icon(512, ball_frac=0.74, monogram=False).save(ROOT / "assets" / "icon-512.png")
     # Maskable: dark field fills the square (so a platform mask crops the field,
     # not the mark); the ball sits at ~58% well inside the 80% safe area.
-    _y2k_icon(512, ball_frac=0.56, border=False).save(ROOT / "assets" / "icon-maskable-512.png")
+    _y2k_icon(512, ball_frac=0.56, border=False, monogram=False).save(ROOT / "assets" / "icon-maskable-512.png")
     print("wrote assets/icon-192.png, icon-512.png, icon-maskable-512.png")
 
 
@@ -260,7 +263,7 @@ def make_share_card() -> None:
     d.text((PAD, 436),
            "PROSPX consensus board / MLB free agency / projections / collegesavant",
            font=f_mods, fill=DARK_SUB[:3])
-    ball = _ball(180, monogram=True)
+    ball = _ball(180, monogram=False)   # eephus.io default card = the clean ball, not the PROSPX monogram
     img.alpha_composite(ball, (W - PAD - 180, 86))
     d.text((PAD, H - 72), "eephus.io", font=_font(26), fill=DARK_SUB[:3])
     img.convert("RGB").save(ROOT / "assets" / "share-default.png")
