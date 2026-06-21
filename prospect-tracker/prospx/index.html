@@ -9302,6 +9302,10 @@
         <button class="chip" data-farm-sort="mlb_production" title="Canopy grade: the MLB Production branch (20% of the composite) - realized MLB output from the org's recent graduates.">MLB Production</button>
         <button class="chip" data-farm-sort="financial" title="Canopy grade: the Value branch (18% of the composite) - the cost-controlled value the system is generating.">Value</button>
         <button class="chip" data-farm-sort="acquisition_strategy" title="Canopy grade: the Acquisition branch (12% of the composite) - how well the org acquires amateur and traded talent.">Acquisition</button>
+        <!-- Acquisition split into its draft vs international skill, ranked across
+             the 30 orgs (rank 1 = best). Sub-leaves of the Acquisition branch. -->
+        <button class="chip" data-farm-sort="acq_draft" title="Drafting skill: the org's league rank (1 = best of 30) on the Acquisition tree's Draft Performance leaf - pick value vs slot + ceiling-hit rate from draft graduates. Realized draft value, not spend.">Drafting skill</button>
+        <button class="chip" data-farm-sort="acq_ifa" title="IFA skill: the org's league rank (1 = best of 30) on the Acquisition tree's IFA Performance leaf - WAR/yr + cumulative WAR from international-FA graduates. Talent yield, not spend.">IFA skill</button>
         <button class="chip" data-farm-sort="top_end" title="Tiered-FV sum of the org's top 5 prospects - an 80 is worth ~100x a 40">Top-end</button>
         <button class="chip" data-farm-sort="depth" title="Tiered-FV sum of prospects #6-25">Depth</button>
         <!-- Single Trajectory chip - sorts by DvM+ for whichever window
@@ -35834,6 +35838,10 @@ function _farmSortVal(o, s) {
   if (s === "development")   return o.development_score;
   if (s === "financial")     return o.financial_score;
   if (s === "mlb_production") return o.mlb_production_score;
+  // Drafting / IFA skill = the org's league rank (1=best of 30) on the
+  // Acquisition tree's draft / IFA performance leaf (precomputed component_ranks).
+  if (s === "acq_draft")     return o.component_ranks ? o.component_ranks.acq_draft : null;
+  if (s === "acq_ifa")       return o.component_ranks ? o.component_ranks.acq_ifa : null;
   if (s === "tools_dvm_plus")  return o.tool_dev && o.tool_dev.tools_dvm_plus;
   if (s === "hitter_dvm_plus") return o.tree && o.tree.dev_hitter && o.tree.dev_hitter.dvm_plus;
   if (s === "pitcher_dvm_plus") return o.tree && o.tree.dev_pitcher && o.tree.dev_pitcher.dvm_plus;
@@ -35855,6 +35863,7 @@ const _FARM_SORT_PILL = {
   acquisition_strategy: { l: "Acq grade", f: v => String(Math.round(v)) }, acquisitions: { l: "Acq grade", f: v => String(Math.round(v)) }, transactions: { l: "Acq grade", f: v => String(Math.round(v)) },
   development: { l: "Dev grade", f: v => String(Math.round(v)) }, financial: { l: "Fin grade", f: v => String(Math.round(v)) },
   mlb_production: { l: "MLB prod", f: v => String(Math.round(v)) },
+  acq_draft: { l: "Draft skill", f: v => "#" + Math.round(v) }, acq_ifa: { l: "IFA skill", f: v => "#" + Math.round(v) },
   tools_dvm_plus: { l: "Tools DvM+", f: v => String(Math.round(v)) }, hitter_dvm_plus: { l: "Hit DvM+", f: v => String(Math.round(v)) },
   pitcher_dvm_plus: { l: "Pit DvM+", f: v => String(Math.round(v)) }, tendency: { l: "Tendency", f: v => String(Math.round(v)) }
 };
@@ -36075,6 +36084,11 @@ function farmSortedOrgs() {
     if (s === "development")    return ((b.development_score    ?? -1) - (a.development_score    ?? -1));
     if (s === "financial")      return ((b.financial_score      ?? -1) - (a.financial_score      ?? -1));
     if (s === "mlb_production") return ((b.mlb_production_score ?? -1) - (a.mlb_production_score ?? -1));
+    // Drafting / IFA skill: ascending by the Acquisition-leaf league rank
+    // (rank 1 = best of 30 at finding draft / IFA value), so the most skilled
+    // orgs sort first. Orgs without a graded leaf (??99) sink to the bottom.
+    if (s === "acq_draft") return (((a.component_ranks || {}).acq_draft ?? 99) - ((b.component_ranks || {}).acq_draft ?? 99)) || (a.farm_rank - b.farm_rank);
+    if (s === "acq_ifa")   return (((a.component_ranks || {}).acq_ifa   ?? 99) - ((b.component_ranks || {}).acq_ifa   ?? 99)) || (a.farm_rank - b.farm_rank);
     // Tool DvM+ composite sorts.
     if (s === "tools_dvm_plus")  return ((b.tool_dev?.tools_dvm_plus ?? -1) - (a.tool_dev?.tools_dvm_plus ?? -1));
     if (s === "hitter_dvm_plus") return ((b.tree?.dev_hitter?.dvm_plus  ?? -1) - (a.tree?.dev_hitter?.dvm_plus  ?? -1));
