@@ -3987,6 +3987,10 @@
     g[data-hs-state] { transition: filter .12s ease; }
     g[data-hs-state]:hover rect { stroke: var(--neon-cyan); stroke-width: 2; }
     tr[data-hs-state]:hover { background: var(--bg-tertiary); }
+    g[data-hs-tile]:hover rect { stroke: var(--neon-cyan); stroke-width: 2; }
+    tr[data-hs-drill]:hover { background: var(--bg-tertiary); }
+    .college-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-tertiary); }
+    .college-link:hover { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
     /* Inline logo + text inside a draft table cell / list row, so team and
        college marks sit cleanly beside the name they belong to. */
     .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -8962,6 +8966,8 @@
                 title="Players who outperformed their draft slot - by realized value vs pick, or by sliding past their pre-draft consensus rank">Overperformers</button>
         <button class="chip" data-draft-view="hs-details"
                 title="Geography of high-school talent: a tile-grid map and per-state pages across five lenses - per-capita rate, volume, shrunk quality, production vs population, and realized outcome vs draft slot (career MLB WAR included)">HS Details</button>
+        <button class="chip" data-draft-view="colleges"
+                title="College programs ranked by draftees, FV produced, and MLB outcomes - click any program for its page (draft history, current prospects, college stats, CollegeSavant)">Colleges</button>
       </span>
     </div>
     <!-- v28 - Draft filter / sort accordion. Collapsed by default; the
@@ -9713,6 +9719,10 @@
 
   <div id="overseas-detail-section" style="display: none;">
     <div id="overseas-detail-body"></div>
+  </div>
+
+  <div id="college-detail-section" style="display: none;">
+    <div id="college-detail-body"></div>
   </div>
 
 </template>
@@ -12295,6 +12305,7 @@ function syncToURL(push) {
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
   else if (state.view && state.view.type === "draftee") p.set("draft", state.view.key);
   else if (state.view && state.view.type === "overseas_player") p.set("overseas", state.view.key);
+  else if (state.view && state.view.type === "college") p.set("college", state.view.key);
   if (state.section     !== "active")     p.set("tab",   state.section);
   if (state.orgFilter   !== "all")        p.set("org",   state.orgFilter);
   if (state.acqFilter   !== "all")        p.set("acq",   state.acqFilter);
@@ -12448,6 +12459,7 @@ function syncFromURL() {
   else if (p.has("farm-org")) state.view = { type: "farm", org: p.get("farm-org") };
   else if (p.has("draft"))    state.view = { type: "draftee", key: p.get("draft") };
   else if (p.has("overseas")) state.view = { type: "overseas_player", key: p.get("overseas") };
+  else if (p.has("college")) state.view = { type: "college", key: p.get("college") };
   // Draft / overseas detail tab (shared `prospectTab` slot - both detail
   // page types use the same 3-tab schema). Default 'overview'.
   state.prospectTab = p.has("dttab") ? p.get("dttab")
@@ -21343,8 +21355,8 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "lottery"];
-  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery"];
+  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
   // draft, e.g. 2027), NOT on whatever class the user is currently viewing. So
@@ -21411,6 +21423,7 @@ async function renderDraft() {
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
     case "overperformers": return _renderDraftOverperformers(host, classes, isOverall ? null : state.draftYear);
     case "hs-details":     return _renderHSDetails(host, classes);
+    case "colleges":       return _renderColleges(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -21898,7 +21911,7 @@ function _renderDraftCard(p) {
     const _hsState = _isHSPlayer(p) ? _hsStateName(p.school) : null;
     schoolLine = _hsState
       ? `<span title="${escapeHtml(p.school)}">${escapeHtml(_hsState)}</span>${_commitSuffix}`
-      : `${escapeHtml(p.school)}${_commitSuffix}`;
+      : `${_collegeSchoolHTML(p)}${_commitSuffix}`;
   }
 
   // Report (first source's writeup, truncated). The full writeup lives
@@ -22334,7 +22347,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${i + 1}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
-    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.school || "?")}</span></td>
+    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${p.school ? _collegeSchoolHTML(p) : "?"}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
     <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
@@ -24918,6 +24931,368 @@ function _hsNationalMeanOverperf(agg) {
 }
 
 
+// === Colleges =========================================================
+// Per-college pages + a ranked board, parallel to the High School Details
+// geography but for college draftees. A college page shows the program's
+// draft history (deduped alumni with outcomes), its current draft
+// prospects, their college stat lines, and CollegeSavant projections
+// where available. College names are clickable site-wide (a capture-phase
+// delegated handler routes [data-college] clicks to the page).
+//
+// Source: data/draft_timeseries.json college players (player_type COLh /
+// COLp). career_war on the draft record already carries MLB outcomes, so
+// no cross-file join is needed for "reached MLB". CollegeSavant data is
+// joined per PLAYER (school-name matching is unreliable) via the
+// pipeline-built bridge data/collegesavant_milb_equiv.json (keyed by
+// draft player_key).
+
+// School-string variants collapse to one program. The source spells some
+// schools several ways across classes/sources; this curated map covers
+// the high-profile conflations. Junior-college state suffixes are handled
+// separately in _collegeName.
+const _COLLEGE_ALIASES = {
+  "Louisiana State": "LSU",
+  "Mississippi": "Ole Miss",
+  "Texas Christian": "TCU",
+  "North Carolina State": "NC State",
+  "North Carolina St": "NC State",
+  "Southern California": "USC",
+  "California": "Cal",
+  "UNC Charlotte": "Charlotte",
+  "Cal State Fullerton": "Fullerton",
+  "Florida International": "FIU",
+  "Central Florida": "UCF",
+  "Cal Poly San Luis Obispo": "Cal Poly"
+};
+
+// Canonical college name from a raw school string, or null when the string
+// is not a college (a high-school row mislabeled COL, a placeholder, or
+// empty). HS-out-of-college re-entries carry an HS name and a later class
+// has the real college, so dropping HS-token rows is correct.
+function _collegeName(school) {
+  let s = String(school || "").trim();
+  if (!s || s === "?" || s === "-") return null;
+  if (/\bHS\b|High School|\bAcademy\b|\bPrep\b/i.test(s)) return null;
+  // Junior-college variants carry a trailing state code ("Chipola JC FL").
+  if (/\b(JC|CC)\b/.test(s)) s = s.replace(/\s+[A-Z]{2}\s*$/, "").trim();
+  s = s.replace(/\s+/g, " ");
+  return _COLLEGE_ALIASES[s] || s;
+}
+
+// The canonical college key for a prospect, or null when not a linkable
+// college (HS players, unresolvable schools).
+function _collegeKeyOf(p) {
+  if (!p || _isHSPlayer(p)) return null;
+  return _collegeName(p.school);
+}
+
+// School name as a college-page link when linkable; otherwise plain text.
+// The link carries data-college; a capture-phase delegated handler (below)
+// routes the click so it works even inside a clickable row.
+function _collegeSchoolHTML(p) {
+  const school = p && p.school;
+  if (!school) return "";
+  const canon = _collegeKeyOf(p);
+  if (!canon) return escapeHtml(school);
+  return '<a href="#" class="college-link" data-college="' + escapeHtml(canon) + '" '
+    + 'title="' + escapeHtml(canon) + ' college page">' + escapeHtml(school) + '</a>';
+}
+
+// Site-wide college-link router. Capture phase so it fires before any
+// parent row/card onclick (e.g. goToDraftee) and can cancel it.
+document.addEventListener("click", function (e) {
+  const el = e.target && e.target.closest && e.target.closest("[data-college]");
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+  goToCollege(el.dataset.college);
+}, true);
+
+function goToCollege(name) {
+  const p = new URLSearchParams();
+  p.set("college", name);
+  _pushHash(p);
+}
+
+let _collegeSort = { key: null, dir: -1 };
+
+// Lazy-load the CollegeSavant per-player bridge (Proj Single-A lines keyed
+// by draft player_key). Caches an empty map on failure.
+async function _loadCsEquiv() {
+  if (DATA.csEquiv) return DATA.csEquiv;
+  try {
+    const base = DATA_URL.replace(/[^/]+$/, "");
+    const resp = await fetch(base + "collegesavant_milb_equiv.json", { cache: "no-cache" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    DATA.csEquiv = await resp.json();
+  } catch (e) {
+    DATA.csEquiv = { by_player_key: {} };
+  }
+  return DATA.csEquiv;
+}
+function _csEntry(playerKey) {
+  const bk = DATA.csEquiv && DATA.csEquiv.by_player_key;
+  return (bk && bk[playerKey]) || null;
+}
+
+// One college stat line from a college_stats.headline array.
+function _collegeStatsLine(cs) {
+  if (!cs || !cs.headline || !cs.headline.length) return " - ";
+  return cs.headline.map(h => escapeHtml(h.label) + " " + escapeHtml(String(h.value))).join(" &middot; ");
+}
+// CollegeSavant Proj Single-A chips for a bridge entry.
+function _csProjHTML(entry) {
+  if (!entry || !entry.headline || !entry.headline.length) return "";
+  return entry.headline.map(h => {
+    const tip = (h.band ? "range " + h.band : "") + (h.flag ? " (" + h.flag + ")" : "");
+    const label = String(h.label).replace(/^Proj A /, "");
+    return '<span title="' + escapeHtml(tip) + '" style="white-space:nowrap;">'
+      + escapeHtml(label) + ' <strong>' + escapeHtml(String(h.value)) + '</strong></span>';
+  }).join(' <span style="color:var(--text-tertiary);">&middot;</span> ');
+}
+
+// Effective draft year for the colleges board (the class strip is the
+// year control; Overall = all classes).
+function _collegeEffYear() {
+  return (typeof state === "undefined" || state.draftYear == null || state.draftYear === "overall")
+    ? "all" : +state.draftYear;
+}
+
+// Aggregate college draftees into per-college rows, deduped to distinct
+// players (re-entries appear across classes). The "best" row per player
+// keeps the highest FV and any realized career WAR.
+function _collegeAggregate(classes) {
+  const yr = _collegeEffYear();
+  const curYear = (classes.find(c => c.is_current && (c.n_prospects || 0) > 0) || {}).year;
+  const byCol = {};
+  for (const c of (classes || [])) {
+    if (yr !== "all" && c.year !== yr) continue;
+    for (const p of (c.prospects || [])) {
+      const name = _collegeKeyOf(p);
+      if (!name) continue;
+      const a = byCol[name] || (byCol[name] = { name, players: {}, logo: null, current: 0 });
+      if (!a.logo && p.school_logo_url) a.logo = p.school_logo_url;
+      if (c.year === curYear) a.current++;
+      const pk = p.milb_key || p.player_name;
+      const fv = p.consensus_fv != null ? +p.consensus_fv : null;
+      const war = p.career_war != null ? +p.career_war : null;
+      const prev = a.players[pk];
+      if (!prev) a.players[pk] = { p, fv, war, year: c.year };
+      else {
+        if (war != null) prev.war = prev.war == null ? war : Math.max(prev.war, war);
+        if (fv != null && (prev.fv == null || fv > prev.fv)) { prev.fv = fv; prev.p = p; prev.year = c.year; }
+      }
+    }
+  }
+  const rows = Object.values(byCol).map(a => {
+    const players = Object.values(a.players);
+    const fvs = players.map(x => x.fv).filter(v => v != null);
+    const wars = players.map(x => x.war).filter(v => v != null);
+    let topProspect = null;
+    for (const x of players) if (x.fv != null && (!topProspect || x.fv > topProspect.fv)) topProspect = { name: x.p.player_name, fv: x.fv };
+    return {
+      name: a.name, logo: a.logo, draftees: players.length, current: a.current,
+      top: players.filter(x => x.fv != null && x.fv >= 55).length,
+      meanFv: fvs.length ? fvs.reduce((s, x) => s + x, 0) / fvs.length : null,
+      reachedMlb: wars.length, totalWar: wars.reduce((s, x) => s + x, 0), topProspect
+    };
+  });
+  return { rows, curYear };
+}
+
+// The Colleges board: a ranked, sortable table of programs. Each row opens
+// that college's page.
+function _renderColleges(host, classes) {
+  const agg = _collegeAggregate(classes);
+  if (!agg.rows.length) {
+    host.innerHTML = _draftEmpty("No college programs to rank yet",
+      "This board fills in once college draft prospects are on file for the selected class.");
+    return;
+  }
+  const cols = [
+    { key: "name", label: "College", align: "left", get: r => r.name,
+      fmt: r => '<span class="draft-cell-ico">' + _collegeLogoImg(r.logo, r.name, false) + '<strong>' + escapeHtml(r.name) + '</strong></span>' },
+    { key: "draftees", label: "Draftees", align: "right", get: r => r.draftees, fmt: r => String(r.draftees), title: "Distinct players drafted out of this college (all classes in view)" },
+    { key: "current", label: "Current", align: "right", get: r => r.current, fmt: r => r.current ? String(r.current) : " - ", title: "Prospects in the current scouted class" },
+    { key: "top", label: "FV 55+", align: "right", get: r => r.top, fmt: r => String(r.top), title: "Distinct players graded consensus FV 55 or better" },
+    { key: "meanFv", label: "Mean FV", align: "right", get: r => r.meanFv, fmt: r => r.meanFv != null ? r.meanFv.toFixed(1) : " - ", title: "Mean consensus FV of the program's draftees" },
+    { key: "reachedMlb", label: "Reached MLB", align: "right", get: r => r.reachedMlb, fmt: r => String(r.reachedMlb), title: "How many have accrued MLB time" },
+    { key: "totalWar", label: "Total WAR", align: "right", get: r => r.totalWar, fmt: r => (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1), title: "Sum of career MLB WAR over the program's draftees" },
+    { key: "top1", label: "Top prospect", align: "left", get: r => r.topProspect ? r.topProspect.fv : -Infinity, fmt: r => r.topProspect ? escapeHtml(r.topProspect.name) + ' <span style="color:var(--text-tertiary);">' + fvCeil(r.topProspect.fv) + '</span>' : " - " }
+  ];
+  const sk = _collegeSort.key && cols.some(c => c.key === _collegeSort.key) ? _collegeSort.key : "draftees";
+  const sd = _collegeSort.dir;
+  const MIN = 2, CAP = 150;
+  let rows = agg.rows.filter(r => r.draftees >= MIN);
+  const dropped = agg.rows.length - rows.length;
+  rows.sort((a, b) => {
+    const ca = cols.find(c => c.key === sk);
+    let va = ca.get(a), vb = ca.get(b);
+    if (typeof va === "string") return (sd < 0 ? -1 : 1) * va.localeCompare(vb);
+    va = va == null ? -Infinity : va; vb = vb == null ? -Infinity : vb;
+    return (sd < 0 ? -1 : 1) * (va - vb) || (b.draftees - a.draftees);
+  });
+  const shown = rows.slice(0, CAP);
+  const head = cols.map(c => {
+    const isA = c.key === sk;
+    return '<th class="dt-sortable" data-col-sort="' + c.key + '" title="' + escapeHtml(c.title || "") + '" '
+      + 'style="cursor:pointer;text-align:' + c.align + ';' + (isA ? "color:var(--neon-cyan);" : "") + '">'
+      + escapeHtml(c.label) + (isA ? (sd < 0 ? " v" : " ^") : "") + '</th>';
+  }).join("");
+  const body = shown.map((r, i) =>
+    '<tr data-college="' + escapeHtml(r.name) + '" style="cursor:pointer;"><td style="color:var(--text-tertiary);">' + (i + 1) + '</td>'
+    + cols.map(c => '<td style="text-align:' + c.align + ';' + (c.align === "right" ? "font-family:var(--font-mono);" : "") + (c.key === "totalWar" && r.totalWar > 0 ? "color:var(--neon-green);font-weight:700;" : "") + '">' + c.fmt(r) + '</td>').join("")
+    + '</tr>').join("");
+  const yr = _collegeEffYear();
+  host.innerHTML = _draftCaption("Colleges",
+    "where college draft prospects come from. Counts are distinct players (a draft-eligible-not-signed re-entry is not double-counted). "
+    + "Showing <strong>" + rows.length + "</strong> programs with " + MIN + "+ draftees"
+    + (yr === "all" ? " (all classes; pick a year in the class strip to narrow)" : " (" + yr + " class)")
+    + (dropped ? "; " + dropped + " single-draftee programs omitted" : "") + ". Click any program for its page.")
+    + '<table class="draft-table"><thead><tr><th>#</th>' + head + '</tr></thead><tbody>' + body + '</tbody></table>';
+  host.querySelectorAll("[data-col-sort]").forEach(th => th.onclick = () => {
+    const k = th.dataset.colSort;
+    if (_collegeSort.key === k) _collegeSort.dir *= -1;
+    else _collegeSort = { key: k, dir: (k === "name" || k === "top1") ? 1 : -1 };
+    renderDraft();
+  });
+}
+
+// Find all draft rows for a canonical college, newest class first.
+function _findCollege(name) {
+  if (!name || !DATA.draft || !DATA.draft.classes) return null;
+  const players = []; let logo = null;
+  for (const c of DATA.draft.classes) {
+    for (const p of (c.prospects || [])) {
+      if (_collegeKeyOf(p) !== name) continue;
+      players.push(Object.assign({ _year: c.year, _isCurrent: !!c.is_current }, p));
+      if (!logo && p.school_logo_url) logo = p.school_logo_url;
+    }
+  }
+  return players.length ? { name, players, logo } : null;
+}
+
+// Per-college detail page: identity, draft-history tiles, current draft
+// prospects (with college stats + CollegeSavant projections), and the
+// program's past draftees with outcomes.
+async function renderCollegeDetail(name) {
+  const root = document.getElementById("college-detail-body");
+  if (!root) return;
+  root.innerHTML = '<div class="state-message is-loading">Loading college...</div>';
+  if (!DATA.draft) {
+    try {
+      const base = DATA_URL.replace(/[^/]+$/, "");
+      const resp = await fetch(base + "draft_timeseries.json", { cache: "no-cache" });
+      DATA.draft = await resp.json();
+    } catch (e) {
+      root.innerHTML = '<a href="#" onclick="event.preventDefault();goHome();" class="back-link">&larr; Back to list</a>'
+        + '<div class="state-message is-error">Could not load draft data.</div>';
+      return;
+    }
+  }
+  await _loadCsEquiv();
+  const hit = _findCollege(name);
+  const back = '<a href="#" onclick="event.preventDefault();goHome();" class="back-link">&larr; Back to list</a>';
+  if (!hit) {
+    root.innerHTML = back + _draftEmpty("No draft prospects on file for " + escapeHtml(name), "");
+    return;
+  }
+
+  const curYear = (DATA.draft.classes.find(c => c.is_current && (c.n_prospects || 0) > 0) || {}).year;
+  // Dedupe to distinct players for the history (best FV, any WAR).
+  const byPlayer = {};
+  for (const p of hit.players) {
+    const pk = p.milb_key || p.player_name;
+    const fv = p.consensus_fv != null ? +p.consensus_fv : null;
+    const war = p.career_war != null ? +p.career_war : null;
+    const prev = byPlayer[pk];
+    if (!prev) byPlayer[pk] = { p, fv, war, year: p._year };
+    else {
+      if (war != null) prev.war = prev.war == null ? war : Math.max(prev.war, war);
+      if (fv != null && (prev.fv == null || fv > prev.fv)) { prev.fv = fv; prev.p = p; prev.year = p._year; }
+    }
+  }
+  const players = Object.values(byPlayer);
+  const fvs = players.map(x => x.fv).filter(v => v != null);
+  const wars = players.map(x => x.war).filter(v => v != null);
+  const totalWar = wars.reduce((s, x) => s + x, 0);
+  const current = hit.players.filter(p => p._year === curYear)
+    .sort((a, b) => (b.consensus_fv || 0) - (a.consensus_fv || 0));
+
+  const logoHero = hit.logo
+    ? '<img src="' + escapeHtml(hit.logo) + '" alt="" loading="lazy" onerror="this.style.display=\'none\'" style="height:34px;width:auto;vertical-align:middle;margin-right:8px;">'
+    : '';
+  const header = back
+    + '<div class="detail-page-header" style="align-items:center;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div class="player-display-name">' + logoHero + escapeHtml(name) + '</div>'
+    + '<div class="player-display-meta" style="margin-top:2px;">'
+    + players.length + ' distinct draftee' + (players.length === 1 ? '' : 's')
+    + ' &middot; ' + wars.length + ' reached MLB'
+    + (totalWar ? ' &middot; ' + (totalWar > 0 ? '+' : '') + totalWar.toFixed(1) + ' career WAR' : '')
+    + (current.length ? ' &middot; ' + current.length + ' in the ' + curYear + ' class' : '')
+    + '</div></div></div>';
+
+  const tiles = '<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr));">'
+    + _statTileHTML("Draftees", String(players.length))
+    + _statTileHTML("FV 55+", String(players.filter(x => x.fv != null && x.fv >= 55).length))
+    + _statTileHTML("Mean FV", fvs.length ? (fvs.reduce((s, x) => s + x, 0) / fvs.length).toFixed(1) : " - ")
+    + _statTileHTML("Reached MLB", String(wars.length))
+    + _statTileHTML("Total MLB WAR", (totalWar > 0 ? "+" : "") + totalWar.toFixed(1), { tone: totalWar > 0 ? "pos" : "" })
+    + _statTileHTML("Current prospects", current.length ? String(current.length) : " - ")
+    + '</div>';
+
+  // Current draft prospects (with college stats + CollegeSavant proj).
+  let currentBlock = "";
+  if (current.length) {
+    const anyCs = current.some(p => _csEntry(p.player_key));
+    const rows = current.map(p => {
+      const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
+      const cs = _csEntry(p.player_key);
+      return '<tr>'
+        + '<td><a href="#" onclick="event.preventDefault();goToDraftee(\'' + escapeHtml(p.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(p.player_name) + '</strong></a></td>'
+        + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
+        + '<td style="text-align:right;"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+        + '<td style="font-size:11px;color:var(--text-secondary);">' + _collegeStatsLine(p.college_stats) + '</td>'
+        + (anyCs ? '<td style="font-size:11px;">' + _csProjHTML(cs) + '</td>' : '')
+        + '</tr>';
+    }).join("");
+    currentBlock = '<div class="detail-title">Current draft prospects (' + curYear + ')</div>'
+      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Pos</th><th style="text-align:right;">FV</th>'
+      + '<th>College stats</th>' + (anyCs ? '<th title="CollegeSavant projected Single-A line (small samples)">Proj A (CollegeSavant)</th>' : '') + '</tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  // Past draftees (deduped, newest first), with outcomes.
+  const past = players.filter(x => x.year !== curYear).sort((a, b) => b.year - a.year || (b.fv || 0) - (a.fv || 0));
+  let pastBlock = "";
+  if (past.length) {
+    const rows = past.map(x => {
+      const p = x.p;
+      const fvInt = x.fv != null ? fvCeil(x.fv) : null;
+      const drafted = p.drafted_pick != null ? escapeHtml((p.drafted_team || "") + " #" + p.drafted_pick) : " - ";
+      const war = x.war != null ? (x.war > 0 ? "+" : "") + x.war.toFixed(1) : " - ";
+      return '<tr>'
+        + '<td><a href="#" onclick="event.preventDefault();goToDraftee(\'' + escapeHtml(p.player_key) + '\');" style="color:inherit;text-decoration:none;"><strong>' + escapeHtml(p.player_name) + '</strong></a></td>'
+        + '<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + x.year + '</td>'
+        + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
+        + '<td style="text-align:right;font-family:var(--font-mono);">' + (fvInt != null ? fvInt : " - ") + '</td>'
+        + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + drafted + '</td>'
+        + '<td style="text-align:right;font-family:var(--font-mono);' + (x.war > 0 ? 'color:var(--neon-green);font-weight:700;' : '') + '">' + war + '</td>'
+        + '</tr>';
+    }).join("");
+    pastBlock = '<div class="detail-title">Draft history (' + past.length + ')</div>'
+      + '<table class="draft-table"><thead><tr><th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>'
+      + '<th style="text-align:right;">FV</th><th style="text-align:right;">Drafted</th><th style="text-align:right;">WAR</th></tr></thead><tbody>' + rows + '</tbody></table>';
+  }
+
+  const csNote = '<div style="font-size:11px;color:var(--text-tertiary);margin-top:10px;">'
+    + 'CollegeSavant projections are name-matched to tracked draft prospects and shown when available. '
+    + '<a href="/collegesavant/" style="color:var(--neon-cyan);">Open CollegeSavant</a>.</div>';
+
+  root.innerHTML = header + '<div class="detail-title flush">Program</div>' + tiles + currentBlock + pastBlock + csNote;
+}
+
+
 async function renderDraftDetail(key) {
   const root = document.getElementById("draft-detail-body");
   if (!root) return;
@@ -24980,7 +25355,7 @@ async function renderDraftDetail(key) {
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position || " - ")}</strong>
-            ${p.school ? ` · ${schoolLogoHero}${escapeHtml(p.school)}` : ""}
+            ${p.school ? ` · ${schoolLogoHero}${_collegeSchoolHTML(p)}` : ""}
             ${p.college_commit ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)} commit</span>` : ""}
           </div>
           <div class="player-display-meta" style="margin-top:4px;font-size:11px;color:var(--text-tertiary);">
@@ -44301,6 +44676,7 @@ function render() {
     farmDetail:   "farm-detail-section",
     draftDetail:  "draft-detail-section",
     overseasDetail: "overseas-detail-section",
+    collegeDetail: "college-detail-section",
   };
 
   // Detail view takes over: hide filter bar and search; keep section
@@ -44340,6 +44716,7 @@ function render() {
   else if (state.view && state.view.type === "farm") active = "farmDetail";
   else if (state.view && state.view.type === "draftee") active = "draftDetail";
   else if (state.view && state.view.type === "overseas_player") active = "overseasDetail";
+  else if (state.view && state.view.type === "college") active = "collegeDetail";
   else active = state.section;
 
   // Dark-theme phosphor starfield ←→ FV linkage. Prospect detail views feed
@@ -44384,6 +44761,7 @@ function render() {
     player:         "player-detail-body",
     draftDetail:    "draft-detail-body",
     overseasDetail: "overseas-detail-body",
+    collegeDetail:  "college-detail-body",
   };
   const showLoading = (msg) => {
     const id = SECTION_BODY[active];
@@ -44435,6 +44813,7 @@ function render() {
   else if (active === "farmDetail")     renderFarmDetail(state.view.org);
   else if (active === "draftDetail")    renderDraftDetail(state.view.key);
   else if (active === "overseasDetail") renderOverseasDetail(state.view.key);
+  else if (active === "collegeDetail")  renderCollegeDetail(state.view.key);
   else if (active === "active")     renderActives();
   else if (active === "timemachine") renderTimeMachine();
   else if (active === "spotlights") renderSpotlights();
