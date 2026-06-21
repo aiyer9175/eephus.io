@@ -626,6 +626,14 @@ def _build_class(year: int,
             _state_school = next((sn.get("school") for sn in plist
                                   if sn.get("school")
                                   and re.search(r"\([A-Z]{2}\)\s*$", sn["school"])), None)
+        # Deep-tail fallback: the MLB Stats API draft tracker (draft_results.
+        # school) carries every drafted player's HS + state, beyond MLB
+        # Pipeline's ~200-row boards, so the long tail of older-class HS
+        # draftees still gets a home state. Only used when no snapshot did.
+        if not _state_school:
+            _rs = result.get("school")
+            if _rs and re.search(r"\([A-Z]{2}\)\s*$", _rs):
+                _state_school = _rs
         _school_val = _state_school or any_snap.get("school") or player_meta.get("school")
         prospects.append({
             "player_key":     pk,

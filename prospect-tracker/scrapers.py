@@ -2567,6 +2567,25 @@ def scrape_all_draft(force: bool = False, history: bool = True) -> list[DraftSna
 MLB_DRAFT_API_TEMPLATE = "https://statsapi.mlb.com/api/v1/draft/{year}"
 
 
+def _draft_tracker_school(sc) -> str | None:
+    """School string from a draft-API pick's `school` object. The API gives
+    {name, state, city, country} for every pick across every round - far
+    deeper than the ~200-row MLB Pipeline boards. For high schools (and prep
+    academies) we append the state tag "(ST)" so the HS Details geography
+    section can read the home state on older classes; college names are left
+    plain (they carry no HS marker, so they never get tagged)."""
+    if not isinstance(sc, dict):
+        return None
+    name = sc.get("name")
+    if not name:
+        return None
+    state = sc.get("state")
+    if (state and re.search(r"\bHS\b|High School|\bAcademy\b|\bPrep\b", name)
+            and not re.search(r"\([A-Z]{2}\)\s*$", name)):
+        return f"{name} ({state})"
+    return name
+
+
 def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
     """Pull one year's draft results from the MLB Stats API.
 
@@ -2633,7 +2652,7 @@ def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
                 "team":         org,
                 "player_key":   _draft_player_key(year, name),
                 "player_name":  name,
-                "school":       (p.get("school") or {}).get("name") if isinstance(p.get("school"), dict) else None,
+                "school":       _draft_tracker_school(p.get("school")),
                 "slot_usd":     slot_int,
                 "bonus_usd":    bonus_int,
                 "signed":       signed,
