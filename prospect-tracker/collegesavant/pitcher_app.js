@@ -116,6 +116,7 @@ const TEAM_CODE_NAMES = {
   MIC_SPA: "Michigan State Spartans",
   MIC_WOL: "Michigan Wolverines",
   MID_GEO: "Middle Georgia State",
+  MIN_GOL: "Minnesota Gophers",
   MIS_COL1: "Mississippi College",
   MOU_OLV: "Mount Olive University",
   MSM_MTN: "Mt. St. Mary's",
