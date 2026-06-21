@@ -144,6 +144,19 @@
         if (tot && nums / tot >= 0.7) aligns[col] = "right";
       }
     }
+    // Drop anonymous empty columns (logo/headshot/icon-only cells with no text)
+    // so a scrape of a rich grid reads clean.
+    var keep = [];
+    for (var k = 0; k < w; k++) {
+      var emptyHead = (headers[k] || "") === "";
+      var emptyAll = rows.every(function (r) { return (r[k] || "") === ""; });
+      if (!(emptyHead && emptyAll)) keep.push(k);
+    }
+    if (keep.length && keep.length < w) {
+      headers = keep.map(function (i) { return headers[i]; });
+      aligns = keep.map(function (i) { return aligns[i]; });
+      rows = rows.map(function (r) { return keep.map(function (i) { return r[i]; }); });
+    }
     return { title: _title(host), headers: headers, rows: rows, aligns: aligns };
   }
 

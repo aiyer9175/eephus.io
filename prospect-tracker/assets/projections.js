@@ -635,7 +635,7 @@
       </tr>`;
     }).join("");
     const _wm = projWarMap(list);
-    const warMap = _wm ? `<details class="proj-warmap"><summary>Talent by age &middot; year-1 WAR vs age (current filters)</summary><div class="proj-warmap-wrap">${_wm}</div></details>` : "";
+    const warMap = _wm ? `<details class="proj-warmap"><summary>Talent by age &middot; year-1 WAR vs age (current filters)</summary><div class="proj-warmap-wrap" data-export-chart data-export-title="Talent by age - year-1 WAR vs age">${_wm}</div></details>` : "";
     // Right information rail for the Players view. Rebuilt inside renderTable so
     // the leaders and pool-supply modules track the CURRENT filtered/sorted
     // rows. View switching lives in the top filter-bar chips, so this rail is a

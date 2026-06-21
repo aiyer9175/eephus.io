@@ -919,7 +919,7 @@ function renderPlayer(player) {
 
         <section class="panel">
           <div class="panel-title"><span>Batted Balls</span><span>EV x Launch Angle</span></div>
-          ${renderBattedBallChart(player)}
+          <div data-export-chart data-export-title="Batted balls - EV x Launch Angle">${renderBattedBallChart(player)}</div>
         </section>
       </div>
     </section>

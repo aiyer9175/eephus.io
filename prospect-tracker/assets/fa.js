@@ -523,7 +523,7 @@
       </tr>`;
     }).join("");
     const _vm = faValueMap(members);
-    const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap">${_vm}</div></details>` : "";
+    const valMap = _vm ? `<details class="fa-valmap"><summary>Value map &middot; rational value vs predicted price (current filters)</summary><div class="fa-valmap-wrap" data-export-chart data-export-title="FA value map - rational value vs predicted price">${_vm}</div></details>` : "";
     rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}

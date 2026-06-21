@@ -1184,7 +1184,7 @@ function renderPitcher(pitcher) {
 
         <section class="panel">
           <div class="panel-title"><span>Model Summary</span><span>Stuff+</span></div>
-          ${renderPitchShapePlot(pitcher)}
+          <div data-export-chart data-export-title="Pitch shapes - Stuff+">${renderPitchShapePlot(pitcher)}</div>
           ${renderPitchMixSummary(pitcher)}
           <div class="slider-list">
             ${renderPitchTypeStuff(pitcher)}
