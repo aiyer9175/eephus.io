@@ -764,6 +764,7 @@ function renderPitcherRow(pitcher, rank) {
         <div>
           <span class="player-name">${escapeHtml(displayName(pitcher.pitcher_name))}</span>
           <div class="player-sub">
+            ${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}
             <span>Pitcher</span>
             <span class="badge">${escapeHtml(formatTeamName(pitcher.team))}</span>
             <span class="badge">${pitcher.year}</span>

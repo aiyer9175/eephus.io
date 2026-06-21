@@ -2,18 +2,9 @@ const CSV_PATH = "b1g_2025_hitter_xwoba_min30pa.csv";
 
 // Real school names for team codes (owner ask 2026-06-12: badges read
 // "Minnesota", never "MIN_GOL"). Unknown codes fall back to a cleaned slug.
-const TEAM_DISPLAY_NAMES = {
-  ILL_ILL: "Illinois", IU: "Indiana", IOW_HAW: "Iowa", MAR_TER: "Maryland",
-  MIC_SPA: "Michigan State", MIC_WOL: "Michigan", MIN_GOL: "Minnesota",
-  NEB: "Nebraska", NOR_CAT: "Northwestern", ORE_DUC: "Oregon",
-  OSU_BUC: "Ohio State", PEN_NIT: "Penn State", PUR_BOI: "Purdue",
-  RUT_SCA: "Rutgers", SOU_TRO: "USC", UCLA: "UCLA", WAS_HUS: "Washington",
-};
-function formatTeamName(team) {
-  const code = String(team || "").trim().toUpperCase();
-  if (!code) return "Team";
-  return TEAM_DISPLAY_NAMES[code] || code.replace(/_/g, " ");
-}
+// formatTeamName + the full national school-code dicts now live in the shared
+// collegesavant/team_names.js (loaded before this file on the hitter page), so
+// the 3,600-row national set resolves real school names instead of raw codes.
 
 // `gl` is the data/glossary.json slug for this metric, when one exists; it wires
 // the same site-wide hover tooltip the rest of eephus uses. Metrics with no slug
@@ -506,6 +497,7 @@ function renderPlayerRow(player, rank) {
         <div>
           <span class="player-name">${escapeHtml(displayName(player.hitter_name))}</span>
           <div class="player-sub">
+            ${plusPill(state.csPlus && state.csPlus.get(player.slug), "CS+")}
             <span>Hitter</span>
             <span class="badge">${escapeHtml(formatTeamName(player.team))}</span>
             <span class="badge">${player.year}</span>
