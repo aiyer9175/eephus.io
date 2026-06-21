@@ -32,6 +32,19 @@ Outputs (written by build()):
   data/collegesavant_translation.js    - window.CS_TRANSLATION, per-player
                                          translated lines keyed by name slug,
                                          lazily merged by the CollegeSavant apps
+  data/collegesavant_milb_equiv.json   - the PROSPX BRIDGE: by_player_key ->
+                                         {side, headline:[{label,value,band,flag}]}
+                                         for each college player that matches a
+                                         draft prospect (~476), keyed by the
+                                         draft player_key
+
+PROSPX consumption (the clean hook, owner-applied so PROSPX is not rebuilt here):
+PROSPX lazily fetches collegesavant_milb_equiv.json and, on a draft prospect
+detail, looks up by_player_key[p.player_key]; if present it renders the headline
+chips as a "Projected Single-A (CollegeSavant)" block in the existing College
+Stats tab (the same {label,value} chip path p.college_stats already uses). The
+file is additive and safe-when-empty: an absent or partial file leaves the draft
+section unchanged, and name-only matches that don't resolve are simply omitted.
 """
 from __future__ import annotations
 
@@ -131,6 +144,39 @@ def _key_to_name(con) -> dict:
     for k, nm in con.execute("SELECT player_key, player_name FROM players"):
         out[k] = norm_name(nm)
     return out
+
+
+def _draft_keys(con) -> dict:
+    """normalized college name -> the draft prospect's player_key, so a college
+    translation can be attached to the matching PROSPX draft record."""
+    out = {}
+    for pk, nm in con.execute("SELECT player_key, player_name FROM draft_players"):
+        out.setdefault(norm_name(nm), pk)
+    return out
+
+
+def _equiv_headline(sa: dict, side: str) -> list[dict]:
+    """The Single-A equivalent as PROSPX-renderable {label, value, band, flag}
+    chips, mirroring the draft_export college_stats headline shape."""
+    chips = []
+
+    def chip(label, b, fmt, flag):
+        if not b:
+            return
+        if fmt == "pct":
+            val = f"{b['exp']:.1f}%"
+            band = f"{round(b['lo'])}-{round(b['hi'])}%"
+        else:
+            val = f"{b['exp']:.3f}".lstrip("0")
+            band = f"{b['lo']:.3f}".lstrip("0") + "-" + f"{b['hi']:.3f}".lstrip("0")
+        chips.append({"label": label, "value": val, "band": band, "flag": flag})
+
+    chip("Proj A K%", sa.get("k_pct"), "pct", None)
+    chip("Proj A BB%", sa.get("bb_pct"), "pct",
+         "low confidence" if (sa.get("bb_pct") or {}).get("low_confidence") else None)
+    if side == "hit":
+        chip("Proj A OPS", sa.get("ops"), "dec", "experimental")
+    return chips
 
 
 def load_single_a(con, key_name: dict):
@@ -321,21 +367,44 @@ def build(out_dir: Path | None = None) -> dict:
         (out_dir / "college_translation_eval.json").write_text(
             json.dumps(eval_doc, indent=1), encoding="utf-8")
 
-        # Key the output by the frontend slug (slugify of the raw "Last, First"
-        # name) so each CollegeSavant player can look up their own translation.
-        translations = {}
-        for v in cs_h.values():
+        # Key the per-player sidecar by the frontend slug (slugify of the raw
+        # "Last, First" name) so each CollegeSavant player looks up their own.
+        # Also build the PROSPX BRIDGE sidecar keyed by the matching draft
+        # prospect's player_key, so PROSPX can merge a Single-A-equivalent block
+        # onto its draft records with no rebuild. Additive and safe-when-empty.
+        draft_keys = _draft_keys(con)
+        translations, bridge = {}, {}
+        for slug_norm, v in cs_h.items():
             t = _translate_hitter(v, F)
-            if t:
-                translations[slugify_cs(v["name"])] = {"side": "hit", "single_a": t}
-        for v in cs_p.values():
+            if not t:
+                continue
+            translations[slugify_cs(v["name"])] = {"side": "hit", "single_a": t}
+            pk = draft_keys.get(slug_norm)
+            if pk:
+                bridge[pk] = {"side": "hit", "headline": _equiv_headline(t, "hit"),
+                              "name": v["name"]}
+        for slug_norm, v in cs_p.items():
             t = _translate_pitcher(v, F)
-            if t:
-                translations.setdefault(slugify_cs(v["name"]), {"side": "pit", "single_a": t})
+            if not t:
+                continue
+            translations.setdefault(slugify_cs(v["name"]), {"side": "pit", "single_a": t})
+            pk = draft_keys.get(slug_norm)
+            if pk and pk not in bridge:
+                bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"),
+                              "name": v["name"]}
         payload = {"generated_from": "college_translation.build", "translations": translations,
                    "caveat": eval_doc["caveat"]}
         (out_dir / "collegesavant_translation.js").write_text(
             "window.CS_TRANSLATION = " + json.dumps(payload) + ";\n", encoding="utf-8")
+
+        # PROSPX bridge: keyed by draft prospect player_key. PROSPX lazily merges
+        # it onto its draft records. Additive; an absent/empty file changes nothing.
+        (out_dir / "collegesavant_milb_equiv.json").write_text(
+            json.dumps({"generated_from": "college_translation.build",
+                        "label": "Projected Single-A (CollegeSavant)",
+                        "caveat": eval_doc["caveat"],
+                        "by_player_key": bridge}, indent=1), encoding="utf-8")
+        eval_doc["bridge_count"] = len(bridge)
         return eval_doc
 
 
