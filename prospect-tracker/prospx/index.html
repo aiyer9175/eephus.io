@@ -9,7 +9,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PROSPX βv1.0</title>
+  <title>PROSPX - consensus prospect tracker - eephus.io</title>
   <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
 
   <!-- Social cards + canonical (mirrors build_site.py's _social_meta block;
@@ -26,10 +26,15 @@
   <meta name="twitter:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
   <meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
 
-  <!-- Favicons (committed artifacts; tools/generate_brand_assets.py) -->
+  <!-- Favicons + PWA + theme-color (committed artifacts; tools/generate_brand_assets.py).
+       Mirrors build_site.py FAVICON_LINKS - this file is hand-edited. -->
   <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
   <link rel="icon" href="/favicon.ico" sizes="32x32">
+  <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">
   <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+  <link rel="manifest" href="/assets/site.webmanifest">
+  <meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">
 
   <!--
     Standalone HTML build. Drop this directory on any static host

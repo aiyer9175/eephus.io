@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 104" role="img" aria-label="eephus.io">
+  <!-- Animated eephus mark: "the eephus" - the lob arc traces in left to right,
+       then the ball drops onto the apex and settles. One short shot (~1s), then
+       static; it never loops. Self-contained CSS (works as an <img>/<object> or
+       inlined). prefers-reduced-motion shows the final frame with no motion. -->
+  <defs>
+    <linearGradient id="ew-arc-anim" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%"  stop-color="#B91C1C"/>
+      <stop offset="38%" stop-color="#C9A227"/>
+      <stop offset="68%" stop-color="#1F7A3A"/>
+      <stop offset="100%" stop-color="#0E2B4D"/>
+    </linearGradient>
+    <style>
+      .arc {
+        stroke: url(#ew-arc-anim); stroke-width: 4; fill: none; stroke-linecap: round;
+        stroke-dasharray: 100; stroke-dashoffset: 100;
+        animation: arc-draw 0.72s cubic-bezier(.22,.61,.36,1) forwards;
+      }
+      .ball { transform-box: fill-box; transform-origin: center; opacity: 0;
+        animation: ball-settle 0.34s cubic-bezier(.34,1.56,.64,1) 0.62s forwards; }
+      .wm { opacity: 0; animation: wm-in 0.4s ease 0.3s forwards; }
+      @keyframes arc-draw { to { stroke-dashoffset: 0; } }
+      @keyframes ball-settle {
+        0%   { opacity: 0; transform: translateY(-10px) scale(.7); }
+        70%  { opacity: 1; transform: translateY(2px) scale(1.04); }
+        100% { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      @keyframes wm-in { to { opacity: 1; } }
+      @media (prefers-reduced-motion: reduce) {
+        .arc { animation: none; stroke-dashoffset: 0; }
+        .ball { animation: none; opacity: 1; }
+        .wm { animation: none; opacity: 1; }
+      }
+    </style>
+  </defs>
+  <path class="arc" pathLength="100" d="M 18 56 Q 150 -18 282 56"/>
+  <circle class="ball" cx="150" cy="20" r="9" fill="#F4F0E6" stroke="#0F1B2D" stroke-width="2"/>
+  <text class="wm" x="150" y="90" text-anchor="middle" font-family="'MS Gothic','MS UI Gothic','Osaka-Mono','Roboto Mono','VT323',monospace" font-weight="700" font-size="48" letter-spacing="2" fill="#0F1B2D">eephus<tspan fill="#C9A227">.io</tspan></text>
+</svg>

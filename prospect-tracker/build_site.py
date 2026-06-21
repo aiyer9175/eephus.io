@@ -161,14 +161,20 @@ THEME_BTN = (
     '<span class="lbl-dark">☾ Dark</span><span class="lbl-light">☀ Light</span></button>'
 )
 
-# Favicons - SVG primary (crisp at any size), ICO + PNG fallbacks, apple-touch
-# for home-screen pins. The artifacts are committed (tools/generate_brand_assets.py
+# Favicons + PWA + theme-color - SVG primary (crisp at any size), ICO + 32px PNG
+# fallbacks, apple-touch for home-screen pins, the web manifest (installable
+# identity), and theme-color for the mobile browser chrome (navy on light,
+# near-black on dark). The artifacts are committed (tools/generate_brand_assets.py
 # regenerates them when the brand changes); hand-edited pages (prospx,
 # collegesavant) carry the same literal block.
 FAVICON_LINKS = (
     '<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">\n'
     '<link rel="icon" href="/favicon.ico" sizes="32x32">\n'
-    '<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">'
+    '<link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32">\n'
+    '<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">\n'
+    '<link rel="manifest" href="/assets/site.webmanifest">\n'
+    '<meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)">\n'
+    '<meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)">'
 )
 
 # Default Open Graph / Twitter share image - every page emits social-card tags

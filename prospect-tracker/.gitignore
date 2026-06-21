@@ -74,6 +74,18 @@ Thumbs.db
 !assets/favicon-32.png
 !assets/apple-touch-icon.png
 !assets/share-default.png
+!assets/icon-192.png
+!assets/icon-512.png
+!assets/icon-maskable-512.png
+# Per-player Open Graph cards (Pass C) live under assets/share/.
+!assets/share/
+!assets/share/*.png
+# Branding bundle: the documented export folder (marks, icons, social cards,
+# manifest, brand guide). Its PNGs are copies of the committed assets above.
+!branding/icons/*.png
+!branding/social/*.png
+!branding/animated/*.png
+!branding/animated/*.gif
 
 # --- Misc ---------------------------------------------------------------
 *.log
