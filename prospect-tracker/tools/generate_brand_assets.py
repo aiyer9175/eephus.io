@@ -46,12 +46,15 @@ GOLD = (201, 162, 39, 255)       # #C9A227
 GREEN = (31, 122, 58, 255)       # #1F7A3A
 DEEPNAVY = (14, 43, 77, 255)     # #0E2B4D
 
-# Dark-theme share-card palette (matches eephus-hub.js shareCard fallbacks).
-DARK_BG = (16, 16, 20, 255)      # #101014
+# Dark-theme share-card palette. The dark brand accent is iridescent lilac /
+# blurple (replaces the old yellow gold); the ramp is the holo blue->purple->
+# magenta the pixel starfield shimmers through (matches site.css --star-holo-*).
+DARK_BG = (12, 12, 14, 255)      # #0C0C0E (near-black field)
 DARK_FG = (236, 238, 242, 255)   # #ECEEF2
 DARK_SUB = (124, 128, 138, 255)  # #7C808A
-RAMP_DARK = [(0.0, (0, 217, 255)), (0.30, (180, 124, 255)), (0.55, (255, 79, 216)),
-             (0.78, (255, 215, 0)), (1.0, (79, 255, 158))]
+LILAC = (155, 140, 255, 255)     # #9B8CFF (dark brand accent, the .io)
+RAMP_DARK = [(0.0, (0, 217, 255)), (0.34, (139, 127, 255)), (0.67, (180, 124, 255)),
+             (1.0, (255, 79, 216))]
 
 
 def _ball(size: int, pad_frac: float = 0.04, supersample: int = 4,
@@ -183,9 +186,12 @@ def make_share_card() -> None:
     f_brand = _font(110)
     f_tag = _font(34, bold=False)
     f_mods = _font(24, bold=False)
-    d.text((PAD, 200), "EEPHUS.IO", font=f_brand, fill=DARK_FG[:3])
+    # "EEPHUS" cool-white, ".IO" in the lilac brand accent.
+    d.text((PAD, 200), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
+    we = d.textlength("EEPHUS", font=f_brand)
+    d.text((PAD + we, 200), ".IO", font=f_brand, fill=LILAC[:3])
     _ramp_rule(d, PAD, W - PAD, 340, 5)
-    d.text((PAD, 372), "sabermetric analysis", font=f_tag, fill=DARK_FG[:3])
+    d.text((PAD, 372), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
     d.text((PAD, 430),
            "PROSPX consensus board / MLB free agency / projections / collegesavant",
            font=f_mods, fill=DARK_SUB[:3])
@@ -254,7 +260,7 @@ def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
         baseline = H - int(0.16 * fs) - 6
         ld.text((x0, baseline), "eephus", font=f, anchor="ls", fill=DARK_FG[:3] + (a,))
         w_e = ld.textlength("eephus", font=f)
-        ld.text((x0 + w_e, baseline), ".io", font=f, anchor="ls", fill=(255, 215, 0, a))
+        ld.text((x0 + w_e, baseline), ".io", font=f, anchor="ls", fill=LILAC[:3] + (a,))
         img = Image.alpha_composite(img, layer)
     # --- ball drop + settle onto the apex ---
     bp = max(0.0, min(1.0, (prog - 0.55) / 0.30))

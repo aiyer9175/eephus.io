@@ -11,7 +11,7 @@
    ========================================================================== */
 :root {
   --bg-primary:    #F4F0E6;   /* warm paper */
-  --bg-secondary:  #FBF8F0;   /* card surface */
+  --bg-secondary:  #FAF5E6;   /* card surface - warm baseball-card cream (was near-white #FBF8F0) */
   --bg-tertiary:   #ECE6D6;   /* alt panel */
   --bg-header:     #0E2B4D;   /* deep navy band */
   --text-primary:  #0F1B2D;
@@ -37,11 +37,10 @@
                 "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
                      "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
-  /* The eephus.io wordmark is set in MS UI Gothic everywhere it appears
-     (masthead, nav, sidebar). MS-UI-Gothic-first so the logo renders in the
-     brand face wherever it is installed; Roboto Mono (webfont) is the
-     cross-platform fallback. */
-  --font-logo: "MS UI Gothic","MS Gothic","Osaka","Roboto Mono",ui-monospace,Consolas,monospace;
+  /* The eephus.io wordmark + headings. MS Gothic preferred (it reads beautifully
+     at display sizes); MS UI Gothic next for the cases that need its hinting;
+     Roboto Mono (webfont) is the cross-platform fallback. */
+  --font-logo: "MS Gothic","MS UI Gothic","Osaka","Roboto Mono",ui-monospace,Consolas,monospace;
   --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
@@ -56,10 +55,14 @@
   --text-on-accent: #FBF8F0;          /* cream text on the navy band / dark accents */
   --bg-hover: rgba(15, 27, 45, 0.05); /* subtle row / control hover on paper */
   /* Scrollbars - one theme-aware token set drives BOTH surfaces (editorial +
-     PROSPX). Restrained thumb that reads on paper; a navy accent on hover. */
+     PROSPX). Sharp (no radius) thumb that reads on paper; navy accent on hover. */
   --scrollbar-track: transparent;
   --scrollbar-thumb: #BBB29C;
   --scrollbar-thumb-hover: var(--accent-navy);
+  /* Brand iridescent / lilac-blurple accent. On light it's a deep violet; the
+     logo .io stays gold here. On dark (below) both shift to the blurple. */
+  --accent-lilac: #6E56CF;
+  --logo-dot: var(--accent-gold);
 }
 
 /* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
@@ -130,10 +133,15 @@
   --text-on-accent: #05080F;            /* near-black text on the bright refractor accents */
   --bg-hover: rgba(0, 217, 255, 0.08);  /* cyan-tinted hover on the dark surface */
   /* Scrollbars (dark): charcoal thumb that reads on near-black, a faint track so
-     the star canvas barely shows through the gutter, refractor cyan on hover. */
+     the star canvas barely shows through the gutter, iridescent lilac on hover. */
   --scrollbar-track: rgba(150,160,180,0.05);
   --scrollbar-thumb: #3A3A42;
-  --scrollbar-thumb-hover: var(--accent-cyan);
+  --scrollbar-thumb-hover: var(--accent-lilac);
+  /* Brand accent on dark = iridescent lilac / blurple (replaces the old yellow
+     gold as the site's primary brand color). The logo .io takes it too. FV-tier
+     gold stays gold - that is data, not chrome. */
+  --accent-lilac: #9B8CFF;
+  --logo-dot: var(--accent-lilac);
   --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
   --grain: rgba(255,255,255,.035);
   --grain2: rgba(120,200,224,.04);
@@ -151,28 +159,27 @@
      minority (refractor mint #4FFF9E + gold #FFD700) so it still reads eephus
      - no new brand colors. */
   --bg-base: var(--bg-primary);        /* near-black field base (#0C0C0E) */
-  --bg-glow-color: var(--accent-green);
+  --bg-glow-color: #6A5CFF;            /* blurple glow pool (was mint) */
   --bg-glow-origin: 50% 0%; /* top-center - brightest above the fold */
   --bg-glow-radius: 120%;
   --bg-glow-strength: 0.05;            /* 0..1 alpha dial on the glow pool */
   --bg-vignette-strength: 0.35;        /* 0..1 corner darkening */
-  --bg-scanline-opacity: 0; /* opt-in CRT scanlines - default OFF */
-  /* Star temperature palette (the naturalistic majority) */
-  --star-color-cool: #EAF1FF;          /* cool white - most stars */
-  --star-color-blue: #BFD4FF;          /* blue-white - some */
-  --star-color-warm: #FFE6B8;          /* warm amber - a few */
-  /* Brand-tinted minority (refractor mint + gold) */
-  --star-color-primary: var(--accent-green);
-  --star-color-secondary: var(--accent-gold);
-  --star-brand-ratio: 0.16;            /* share of stars carrying the brand tint */
-  --star-density-base: 0.10;           /* stars per 1000px² (JS hard-caps total) */
-  --star-opacity-max: 0.5;
+  --bg-scanline-opacity: 0.03;         /* faint Y2K/CRT scanlines on the field */
+  /* Holo / chrome iridescent ramp (blue -> purple -> magenta) the pixel stars
+     shimmer through. Plus a white-blue for the bright anchor stars. */
+  --star-holo-1: #00D9FF;              /* cyan */
+  --star-holo-2: #5BC8FF;              /* sky blue */
+  --star-holo-3: #8B7FFF;              /* blurple */
+  --star-holo-4: #B47CFF;              /* violet */
+  --star-holo-5: #FF4FD8;              /* magenta */
+  --star-color-bright: #DDEBFF;        /* white-blue anchors */
+  --star-density-base: 0.12;           /* stars per 1000px² (JS hard-caps total) */
+  --star-opacity-max: 0.55;
   --star-twinkle-speed: 1;             /* global twinkle-rate multiplier */
+  --star-holo-speed: 1;                /* iridescent hue-shimmer rate */
   --star-parallax-layers: 3;           /* 2..3 depth layers (scroll/pointer only) */
-  --star-drift: 0;                     /* autonomous drift px budget (0 = off) */
   /* FV-linked escalation (PROSPX prospect views; t=1 at the 70 legendary tier) */
   --star-fv-density-mult: 1.6;
-  --star-fv-chroma-mult: 1.5;
   --star-fv-opacity-mult: 1.25;
 }
 
@@ -254,7 +261,7 @@
   color: var(--text-primary); text-decoration: none;
   display: inline-flex; align-items: flex-end; line-height: 1;
 }
-.eephus-nav .eephus-wordmark .dot { color: var(--accent-gold); }
+.eephus-nav .eephus-wordmark .dot { color: var(--logo-dot); }
 /* Wordmark + beta tag lockup. One version string lives in build_site.py
    (EEPHUS_VERSION); the badge is a platform-wide state, so it rides the
    eephus.io wordmark - never PROSPX. Subordinate to the wordmark, sharp, both
@@ -349,7 +356,7 @@
   font-size: clamp(2.2rem, 6vw, 3.6rem); letter-spacing: .03em;
   margin: 0 0 8px; line-height: 1.05;
 }
-.hero h1 .dot { color: var(--accent-gold); }
+.hero h1 .dot { color: var(--logo-dot); }
 .hero .hero-rule { height: 4px; width: 120px; background: var(--iridescent); border-radius: 2px; margin: 14px 0 18px; }
 .hero p { font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch; margin: 0; }
 
@@ -760,8 +767,8 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 
 /* ---- masthead ---- */
 .masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
-.masthead .nameplate { font-family: var(--font-retro-mono); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: .04em; line-height: 1; margin: 0; }
-.masthead .nameplate .dot { color: var(--accent-gold); }
+.masthead .nameplate { font-family: var(--font-logo); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: .04em; line-height: 1; margin: 0; }
+.masthead .nameplate .dot { color: var(--logo-dot); }
 /* eephus.io placeholder logo lockup (homepage hero). Swappable: the mark itself
    is EEPHUS_LOGO_MARK in build_site.py. Crisp vector, sharp container, theme-aware
    (arc gradient is fixed brand colors; baseline/seam ride currentColor; the ball
@@ -806,24 +813,29 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    arc traces in left to right, then the ball drops onto the apex and settles.
    It never loops. The nav/sidebar lockups are static. The arc path carries
    pathLength="100" (build_site.py) so the dash math is resolution-independent. */
+/* Robust by construction: the base path has NO dash (fully drawn), so if the
+   animation never runs - unsupported, reduced-motion, an odd browser - the arc
+   is simply visible. The keyframe sets the hidden start; `backwards` holds it
+   only while the animation is live. The logo can never get stuck invisible. */
 .eephus-logo--animate .ew-arc path {
-  stroke-dasharray: 100;
-  stroke-dashoffset: 100;
-  animation: ew-arc-draw .72s cubic-bezier(.22,.61,.36,1) forwards;
+  animation: ew-arc-draw .8s cubic-bezier(.22,.61,.36,1) backwards;
 }
 .eephus-logo--animate .ew-ball {
   transform-origin: center bottom;
-  animation: ew-ball-settle .34s cubic-bezier(.34,1.56,.64,1) .58s backwards;
+  animation: ew-ball-settle .36s cubic-bezier(.34,1.56,.64,1) .6s backwards;
 }
-@keyframes ew-arc-draw { to { stroke-dashoffset: 0; } }
+@keyframes ew-arc-draw {
+  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
+  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+}
 @keyframes ew-ball-settle {
   0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
   70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
   100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
 }
 @media (prefers-reduced-motion: reduce) {
-  /* Show the final frame, no motion. */
-  .eephus-logo--animate .ew-arc path { animation: none; stroke-dashoffset: 0; }
+  /* Proper fallback: the finished logo, no motion (nothing half-drawn). */
+  .eephus-logo--animate .ew-arc path,
   .eephus-logo--animate .ew-ball { animation: none; }
 }
 
@@ -835,7 +847,9 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 * { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
 ::-webkit-scrollbar { width: 12px; height: 12px; }
 ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
-::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 6px; }
+/* Sharp, pixel-square thumb (no radius - the site-wide sharp-corner directive
+   holds on the scrollbars too). Grabbable full 12px; brand accent on hover. */
+::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 0; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
 ::-webkit-scrollbar-corner { background: transparent; }

@@ -53,12 +53,17 @@ dark mode. Do not flatten it.
 | `--bg-secondary` | `#1A1A1E` | card surface |
 | `--bg-header` | `#08080A` | headline band |
 | `--text-primary` | `#ECEEF2` | cool white |
+| `--accent-lilac` | `#9B8CFF` | **the dark brand accent / the `.io`** (iridescent lilac-blurple, replaces the old gold here) |
 | `--accent-green` | `#4FFF9E` | refractor mint |
-| `--accent-gold` | `#FFD700` | refractor gold |
+| `--accent-gold` | `#FFD700` | refractor gold (FV-tier data only, not chrome) |
 | `--accent-navy` | `#4FD9FF` | refractor cyan (links) |
 | `--accent-cyan` | `#00D9FF` | terminal cyan |
 | `--neon-violet` | `#B47CFF` | refractor purple |
 | `--neon-magenta` | `#FF4FD8` | refractor magenta |
+
+On dark mode the brand accent is iridescent lilac/blurple (`--accent-lilac`), not
+yellow. Gold is kept only for the FV heat ramp, where it means "elite" and must
+stay gold. The wordmark `.io` is gold on light, lilac on dark (`--logo-dot`).
 
 ### The ramp (accent stripe)
 
@@ -122,20 +127,24 @@ height; px-ball no smaller than 16px (ball-only below 40px).
 
 ## The dark-mode starfield
 
-The canonical dark background is a real, gently twinkling night sky drawn on one
-fixed full-viewport canvas (`assets/eephus-bg.js`), mounted only under
-`data-theme="dark"` and torn down completely otherwise. Stars have a range of
-magnitudes (a few bright, many faint) and a spread of color temperature (mostly
-cool white, some blue-white, a few warm amber, and a small minority in the brand
-mint and gold so the field still ties to the refractor theme). Twinkle rate and
-phase vary star to star; drift is very slow. It stays a background: whisper
-opacity, `aria-hidden`, content surfaces always sit on solid cards above it.
+The canonical dark background is a Y2K / chrome-holo night sky drawn on one fixed
+full-viewport canvas (`assets/eephus-bg.js`), mounted only under
+`data-theme="dark"` and torn down completely otherwise. The stars are crisp
+PIXEL sparkles, not anti-aliased circles: a bright center pixel with a twinkling
+4-point "+" of pixels and a soft square bloom. They carry an iridescent holo
+palette (cyan, sky, blurple, violet, magenta) that slowly shimmers through the
+ramp like a hologram, with a few bright white-blue anchor stars. It stays a
+background: whisper opacity, `aria-hidden`, content always sits on solid cards
+above it.
 
 It is cheap by design: a hard star-count ceiling, device-pixel-ratio capped at
-2, the single animation loop paused on hidden tabs, and the twinkle greatly
-reduced under `prefers-reduced-motion`. Every dial lives in the
-`[data-theme="dark"]` token block in `site.css`. It also responds to a prospect
-page's headline FV through `EephusBG.setFV()`: better prospects, a richer field.
+2, one animation loop paused on hidden tabs. The twinkle always runs (a static
+star sky reads as dead); it is aria-hidden decoration, so it keeps twinkling even
+under `prefers-reduced-motion`, while the user-tracking parallax honors the OS
+motion preference. Every dial lives in the `[data-theme="dark"]` token block in
+`site.css` (`--star-holo-*`, `--star-density-base`, etc.). It also responds to a
+prospect page's headline FV through `EephusBG.setFV()`: better prospects, a
+denser, brighter field.
 
 ## Share cards
 

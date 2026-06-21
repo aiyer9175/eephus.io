@@ -209,7 +209,7 @@ def _footer() -> str:
     )
     return (
         '<footer class="eephus-footer">\n'
-        f'  <span>eephus.io - sabermetric analysis · {html.escape(EEPHUS_VERSION)}</span>\n'
+        f'  <span>eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
         f'  <nav class="eephus-footer-links" aria-label="Footer">{links}</nav>\n'
         f'  <span>© {year} eephus.io</span>\n'
         '</footer>'
@@ -605,8 +605,8 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "",
 
 def page(title: str, active: str, body: str, description: str = "",
          image: str = "", url: str = "", og_type: str = "website") -> str:
-    desc = html.escape(description or "eephus.io - sabermetric analysis")
-    social = _social_meta(title, description or "eephus.io - sabermetric analysis",
+    desc = html.escape(description or "eephus.io - sabermetrics")
+    social = _social_meta(title, description or "eephus.io - sabermetrics",
                           image, url, og_type)
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1403,8 +1403,8 @@ _GLOSSARY_TERMS = [
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
-    desc = html.escape(description or "eephus.io - sabermetric analysis")
-    social = _social_meta(title, description or "eephus.io - sabermetric analysis",
+    desc = html.escape(description or "eephus.io - sabermetrics")
+    social = _social_meta(title, description or "eephus.io - sabermetrics",
                           url=f"{SITE_ORIGIN}/")
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1861,7 +1861,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
-    return page_home("eephus.io - sabermetric analysis", inner,
+    return page_home("eephus.io - sabermetrics", inner,
                      "Live MiLB prospect movers, top prospects, graduates, and analysis.")
 
 def build_articles_index(articles: list[dict]) -> str:

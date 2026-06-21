@@ -13,5 +13,5 @@
   </defs>
   <path d="M 18 56 Q 150 -18 282 56" fill="none" stroke="url(#ew-arc-gd)" stroke-width="4" stroke-linecap="round"/>
   <circle cx="150" cy="20" r="9" fill="#1A1A1E" stroke="#ECEEF2" stroke-width="2"/>
-  <text x="150" y="90" text-anchor="middle" font-family="'MS Gothic','MS UI Gothic','Osaka-Mono','Roboto Mono','VT323',monospace" font-weight="700" font-size="48" letter-spacing="2" fill="#ECEEF2">eephus<tspan fill="#FFD700">.io</tspan></text>
+  <text x="150" y="90" text-anchor="middle" font-family="'MS Gothic','MS UI Gothic','Osaka-Mono','Roboto Mono','VT323',monospace" font-weight="700" font-size="48" letter-spacing="2" fill="#ECEEF2">eephus<tspan fill="#9B8CFF">.io</tspan></text>
 </svg>
