@@ -60,6 +60,7 @@ _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
+_EXPORT_VER = _asset_ver("assets/eephus-export.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
 # page. OPTIONAL by design: assets/eephus-config.js is git-ignored and absent on
@@ -75,7 +76,9 @@ ACCOUNT_SCRIPTS = (
     # per-page script block; inert (mounts nothing) under the light theme.
     f'<script src="/assets/eephus-bg.js?v={_BG_VER}" defer></script>\n'
     # Shared glossary runtime: data loader + ⌘K palette + term tooltips.
-    f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>'
+    f'<script src="/assets/eephus-gl.js?v={_GL_VER}" defer></script>\n'
+    # Universal copy/export: a quiet chip on every table + chart (text + image).
+    f'<script src="/assets/eephus-export.js?v={_EXPORT_VER}" defer></script>'
 )
 # Account/forum stylesheet - linked in <head> after site.css on every editorial
 # page (scoped under .eph-*; the circular avatar is the one sanctioned curve).
