@@ -37,10 +37,11 @@
                 "Courier Prime","Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   --font-retro-mono: "MS Gothic","Osaka-Mono","Roboto Mono","VT323","Press Start 2P",
                      "Courier Prime",ui-monospace,"SF Mono",Consolas,monospace;
-  /* The eephus.io wordmark is set in MS Gothic everywhere it appears (masthead,
-     nav, sidebar). MS-Gothic-first so the logo renders in the brand face wherever
-     it is installed; Roboto Mono (webfont) is the cross-platform fallback. */
-  --font-logo: "MS Gothic","MS UI Gothic","Osaka-Mono","Roboto Mono",ui-monospace,Consolas,monospace;
+  /* The eephus.io wordmark is set in MS UI Gothic everywhere it appears
+     (masthead, nav, sidebar). MS-UI-Gothic-first so the logo renders in the
+     brand face wherever it is installed; Roboto Mono (webfont) is the
+     cross-platform fallback. */
+  --font-logo: "MS UI Gothic","MS Gothic","Osaka","Roboto Mono",ui-monospace,Consolas,monospace;
   --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
   /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
      and the homepage cross-module strip reference these. Without them at the
@@ -129,31 +130,36 @@
   --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.4);
   --shadow-card-hover: 0 2px 8px rgba(0,0,0,.55), 0 0 0 1px rgba(0,217,255,.14);
 
-  /* ── Phosphor starfield background system (dark theme ONLY) ─────────────
+  /* ── Starfield background system (dark theme ONLY) ─────────────────────
      Single source of truth for BOTH surfaces: PROSPX loads this sheet before
      its inline <style> and never redefines these names, so the values below
      resolve identically on the editorial pages and inside the app. Consumed
      by assets/eephus-bg.js (the star canvas) + the #eephus-bg rule below
      (glow/vignette layers). None of these tokens exists outside this block,
-     so the treatment cannot leak into the light theme. Hues DERIVE from the
-     audited dark accents (--accent-green #4FFF9E refractor mint,
-     --accent-gold #FFD700 refractor gold) - no new brand colors. */
+     so the treatment cannot leak into the light theme. A real night sky: a
+     spread of magnitudes and color temperature, with a small brand-tinted
+     minority (refractor mint #4FFF9E + gold #FFD700) so it still reads eephus
+     - no new brand colors. */
   --bg-base: var(--bg-primary);        /* near-black field base (#0C0C0E) */
   --bg-glow-color: var(--accent-green);
   --bg-glow-origin: 50% 0%; /* top-center - brightest above the fold */
   --bg-glow-radius: 120%;
   --bg-glow-strength: 0.05;            /* 0..1 alpha dial on the glow pool */
-  --bg-vignette-strength: 0.35;        /* 0..1 corner darkening (CRT curvature) */
+  --bg-vignette-strength: 0.35;        /* 0..1 corner darkening */
   --bg-scanline-opacity: 0; /* opt-in CRT scanlines - default OFF */
+  /* Star temperature palette (the naturalistic majority) */
+  --star-color-cool: #EAF1FF;          /* cool white - most stars */
+  --star-color-blue: #BFD4FF;          /* blue-white - some */
+  --star-color-warm: #FFE6B8;          /* warm amber - a few */
+  /* Brand-tinted minority (refractor mint + gold) */
   --star-color-primary: var(--accent-green);
   --star-color-secondary: var(--accent-gold);
-  --star-mix-ratio: 0.85;              /* share of stars on the primary hue */
-  --star-density-base: 0.08;           /* stars per 1000px² (JS hard-caps total) */
-  --star-opacity-max: 0.45;
+  --star-brand-ratio: 0.16;            /* share of stars carrying the brand tint */
+  --star-density-base: 0.10;           /* stars per 1000px² (JS hard-caps total) */
+  --star-opacity-max: 0.5;
   --star-twinkle-speed: 1;             /* global twinkle-rate multiplier */
-  --star-twinkle-attack: 0.18;         /* fraction of cycle brightening; the
-                                          remainder is the slow phosphor decay */
   --star-parallax-layers: 3;           /* 2..3 depth layers (scroll/pointer only) */
+  --star-drift: 0;                     /* autonomous drift px budget (0 = off) */
   /* FV-linked escalation (PROSPX prospect views; t=1 at the 70 legendary tier) */
   --star-fv-density-mult: 1.6;
   --star-fv-chroma-mult: 1.5;

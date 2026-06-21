@@ -1,61 +1,60 @@
-// eephus.io - dark-theme phosphor starfield background (shared component).
+// eephus.io - dark-theme starfield background (shared component).
 // Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 //
 // One fixed, full-viewport <canvas id="eephus-bg"> behind all content, on BOTH
-// surfaces (editorial pages + the PROSPX app). The radial glow + corner
-// vignette are CSS background layers on the element itself (assets/site.css,
-// dark scope); this module draws only the stars - faint green/amber phosphor
-// points with a fast-brighten / slow-decay twinkle, like persistence on a CRT.
-// Every dial lives in the [data-theme="dark"] token block in site.css.
+// surfaces (editorial pages + the PROSPX app). The radial glow + corner vignette
+// are CSS background layers on the element itself (assets/site.css, dark scope);
+// this module draws the stars: a real night sky - a spread of magnitudes (a few
+// bright, many faint), a spread of color temperature (mostly cool white, some
+// blue-white, a few warm amber, and a small minority in the brand mint/gold so
+// the field still ties to the Topps-Chrome refractor theme), each twinkling at
+// its own rate and phase. Elegant and recessive: it stays a background.
 //
 // Dark-theme gating: a MutationObserver on <html data-theme> mounts the canvas
 // when the dark theme activates and FULLY tears it down (animation frame,
-// listeners, DOM node) on any other theme - this also catches programmatic
-// flips like the Generate GFX modal's theme override, not just the toggles.
-// Under any non-dark theme this module renders nothing and costs nothing.
+// listeners, DOM node) on any other theme - this also catches programmatic flips
+// like the Generate GFX modal's theme override, not just the toggles. Under any
+// non-dark theme this module renders nothing and costs nothing.
 //
 // Hard guardrails (constants, deliberately NOT dialable via tokens):
 //   • exactly one requestAnimationFrame loop, paused while document.hidden
 //   • absolute star-count ceiling regardless of viewport size
 //   • devicePixelRatio capped at 2
-//   • prefers-reduced-motion: reduce → one static draw, no loop, no parallax
-// • parallax is scroll/pointer-driven only, capped at a few px - no
-//     autonomous motion ("breathing" glow is a deliberate non-goal)
+//   • prefers-reduced-motion: reduce → greatly reduced twinkle (near-static),
+//     no parallax (this REPLACES the old FORCE_TWINKLE override; the owner ask
+//     for the real starfield is to respect the OS motion preference - one
+//     constant, REDUCED_TWINKLE_AMP, makes it reversible)
+//   • parallax is scroll/pointer-driven only, capped at a few px; autonomous
+//     drift is a token dial (--star-drift), off by default
 //
-// FV linkage (PROSPX prospect views): the app calls EephusBG.setFV(fv) on
-// route changes. Intensity t = clamp((fv - 45) / (70 - 45), 0, 1) - the floor
-// and ceiling are the audited card-rarity thresholds (rankNumRarityClass in
+// FV linkage (PROSPX prospect views): the app calls EephusBG.setFV(fv) on route
+// changes. Intensity t = clamp((fv - 45) / (70 - 45), 0, 1) - the floor and
+// ceiling are the audited card-rarity thresholds (rankNumRarityClass in
 // prospx/index.html: 45 shine … 70 legendary), NOT a parallel breakpoint set.
-// Below the lowest tier (and on list views / editorial pages) → base field.
+// Higher t = a richer field: more stars, brighter, more brand-tinted. Below the
+// lowest tier (and on list views / editorial pages) → base field.
 (function () {
   "use strict";
 
   var MAX_STARS = 240;        // absolute ceiling, any viewport, any FV
   var MAX_DPR = 2;            // retina fill-cost bound
-  var MAX_PARALLAX_PX = 6;    // total drift budget at the deepest layer
+  var MAX_PARALLAX_PX = 6;    // total scroll/pointer drift budget at the deepest layer
   var FV_FLOOR = 45;          // rankNumRarityClass: lowest rarity tier (shine)
   var FV_CEIL = 70;           // rankNumRarityClass: top rarity tier (legendary)
-  var LAYER_DEPTHS = [0.35, 0.65, 1.0];
+  var LAYER_DEPTHS = [0.4, 0.7, 1.0];
+  var REDUCED_TWINKLE_AMP = 0.06;  // twinkle amplitude ceiling under reduced-motion
 
   var canvas = null, ctx = null, rafId = null;
-  var stars = [];             // {fx, fy, size, layer, hue(0|1), dim, period, phase}
+  var stars = [];             // see buildStars() for the shape
   var tokens = null;          // parsed CSS token values (read at mount)
   var fvT = 0;                // 0..1 FV intensity (remembered across mounts)
   var scrollOff = 0, pointerX = 0, pointerY = 0;
-  var teardownFns = [];       // listener removers registered by mount()
+  var driftPhase = 0;         // autonomous drift accumulator (token-gated)
+  var teardownFns = [];
   var resizeTimer = null;
 
   var reducedMq = window.matchMedia ? window.matchMedia("(prefers-reduced-motion: reduce)") : null;
   function reducedMotion() { return !!(reducedMq && reducedMq.matches); }
-  // OWNER OVERRIDE (2026-06-09): the phosphor twinkle stays ON under
-  // prefers-reduced-motion - the same deliberate exemption the WIRE marquee
-  // carries in site.css. The field is aria-hidden decoration at whisper
-  // opacity with zero information content. The override is twinkle-only:
-  // pointer/scroll parallax still honors the OS preference (it tracks user
-  // motion, which reads very differently), and the hidden-tab pause is
-  // unconditional.
-  var FORCE_TWINKLE = true;
-  function twinkleFrozen() { return !FORCE_TWINKLE && reducedMotion(); }
   function isDark() { return document.documentElement.getAttribute("data-theme") === "dark"; }
 
   // ---- token plumbing ------------------------------------------------------
@@ -63,8 +62,6 @@
     var v = parseFloat(styles.getPropertyValue(name));
     return isFinite(v) ? v : fallback;
   }
-  // Custom properties come back var()-substituted, so the color tokens resolve
-  // to literal hex/rgb here. Parse both; fall back to the audited dark accents.
   function cssColor(styles, name, fallback) {
     var raw = (styles.getPropertyValue(name) || "").trim();
     var m = /^#([0-9a-f]{6})$/i.exec(raw);
@@ -83,32 +80,23 @@
   function readTokens() {
     var s = getComputedStyle(document.documentElement);
     tokens = {
-      primary:     cssColor(s, "--star-color-primary",   [79, 255, 158]),  // refractor mint
-      secondary:   cssColor(s, "--star-color-secondary", [255, 215, 0]),   // refractor gold
-      mixRatio:    cssNum(s, "--star-mix-ratio", 0.85),
-      density:     cssNum(s, "--star-density-base", 0.08),
-      opacityMax:  cssNum(s, "--star-opacity-max", 0.45),
+      // naturalistic temperature palette
+      cool:        cssColor(s, "--star-color-cool",      [234, 241, 255]),  // cool white
+      blue:        cssColor(s, "--star-color-blue",      [191, 212, 255]),  // blue-white
+      warm:        cssColor(s, "--star-color-warm",      [255, 230, 184]),  // warm amber
+      // brand-tinted minority (refractor mint + gold)
+      brandA:      cssColor(s, "--star-color-primary",   [79, 255, 158]),
+      brandB:      cssColor(s, "--star-color-secondary", [255, 215, 0]),
+      brandRatio:  cssNum(s, "--star-brand-ratio", 0.16),
+      density:     cssNum(s, "--star-density-base", 0.10),
+      opacityMax:  cssNum(s, "--star-opacity-max", 0.5),
       speed:       cssNum(s, "--star-twinkle-speed", 1) || 1,
-      attack:      Math.min(0.9, Math.max(0.02, cssNum(s, "--star-twinkle-attack", 0.18))),
       layers:      Math.max(2, Math.min(3, Math.round(cssNum(s, "--star-parallax-layers", 3)))),
+      drift:       Math.max(0, cssNum(s, "--star-drift", 0)),
       densityMult: cssNum(s, "--star-fv-density-mult", 1.6),
       chromaMult:  cssNum(s, "--star-fv-chroma-mult", 1.5),
       opacityMult: cssNum(s, "--star-fv-opacity-mult", 1.25),
     };
-  }
-
-  // Phosphor chroma: stars sit partway between a desaturated gray-green and the
-  // full accent; FV intensity pulls them toward full saturation (chromaMult).
-  function hueStyles() {
-    var sat = Math.min(1, 0.55 * (1 + (tokens.chromaMult - 1) * fvT));
-    function mix(c) {
-      var avg = (c[0] + c[1] + c[2]) / 3;
-      var r = Math.round(avg + (c[0] - avg) * sat);
-      var g = Math.round(avg + (c[1] - avg) * sat);
-      var b = Math.round(avg + (c[2] - avg) * sat);
-      return "rgb(" + r + "," + g + "," + b + ")";
-    }
-    return [mix(tokens.primary), mix(tokens.secondary)];
   }
 
   // ---- star field ----------------------------------------------------------
@@ -116,68 +104,92 @@
     var density = tokens.density * (1 + (tokens.densityMult - 1) * fvT);
     return Math.min(MAX_STARS, Math.round((w * h) / 1000 * density));
   }
+  // Pick a star color. A weighted draw over the temperature buckets, plus a
+  // small brand-tinted minority whose share grows with FV intensity (chromaMult).
+  function pickColor(r) {
+    var brand = Math.min(0.6, tokens.brandRatio * (1 + (tokens.chromaMult - 1) * fvT));
+    if (r < brand) return (r < brand * 0.55) ? tokens.brandA : tokens.brandB;
+    var t = (r - brand) / (1 - brand);   // 0..1 across the natural buckets
+    if (t < 0.70) return tokens.cool;     // mostly cool white
+    if (t < 0.90) return tokens.blue;     // some blue-white
+    return tokens.warm;                   // a few warm amber
+  }
   function buildStars(w, h) {
     var n = targetCount(w, h);
     stars.length = 0;
     for (var i = 0; i < n; i++) {
+      // Magnitude: cube of a uniform skews most stars faint/small, a few bright.
+      var u = Math.random();
+      var mag = u * u * u;                       // 0 faint .. 1 bright
       var layer = i % tokens.layers;
+      // Bright stars twinkle less (like the real sky); faint ones shimmer more,
+      // but most stars barely move - amplitude is small and varied.
+      var amp = (0.06 + Math.random() * 0.30) * (1 - 0.5 * mag);
       stars.push({
         fx: Math.random(),
         fy: Math.random(),
-        // deeper layers render smaller - cheap depth cue, all sharp squares
-        size: layer === tokens.layers - 1 ? 2 : 1,
+        radius: 0.5 + mag * 1.9 + (layer === tokens.layers - 1 ? 0.3 : 0),
+        baseB: 0.35 + 0.6 * mag + Math.random() * 0.1,   // base brightness
+        color: pickColor(Math.random()),
+        bright: mag > 0.78,                              // gets a soft halo
+        twAmp: amp,
+        twPeriod: (2600 + Math.random() * 5200) / tokens.speed,
+        twPhase: Math.random(),
         layer: layer,
-        hue: Math.random() < tokens.mixRatio ? 0 : 1,
-        dim: 0.55 + Math.random() * 0.45,
-        period: (2800 + Math.random() * 4200) / tokens.speed,
-        phase: Math.random(),
       });
     }
   }
 
-  // Phosphor envelope: linear fast rise over the attack fraction of the cycle,
-  // then exponential decay (bright drop, long tail) - never a global pulse,
-  // each star keeps its own random phase + period.
-  function brightness(star, now) {
-    var p = (now / star.period + star.phase) % 1;
-    if (p < tokens.attack) return p / tokens.attack;
-    return Math.exp(-3.2 * (p - tokens.attack) / (1 - tokens.attack));
+  // Gentle twinkle: a smooth shimmer at the star's own rate/phase, never a
+  // global pulse. Bright stars sit near full; faint ones breathe a little.
+  function brightness(star, now, ampCeil) {
+    var amp = Math.min(star.twAmp, ampCeil);
+    var s = 0.5 + 0.5 * Math.sin(6.2831853 * (now / star.twPeriod + star.twPhase));
+    return star.baseB * (1 - amp + amp * s);
   }
 
   function draw(now) {
     var w = canvas.clientWidth, h = canvas.clientHeight;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    var styles = hueStyles();
-    var alphaMax = Math.min(0.7, tokens.opacityMax * (1 + (tokens.opacityMult - 1) * fvT));
     var dpr = canvas.width / Math.max(1, w);
-    var stat = twinkleFrozen();
-    for (var hue = 0; hue < 2; hue++) {
-      ctx.fillStyle = styles[hue];
-      for (var i = 0; i < stars.length; i++) {
-        var st = stars[i];
-        if (st.hue !== hue) continue;
-        var b = stat ? st.phase : brightness(st, now);
-        ctx.globalAlpha = alphaMax * st.dim * (0.12 + 0.88 * b);
-        var depth = LAYER_DEPTHS[st.layer] || 1;
-        var x = (st.fx * w + (pointerX * depth)) % w; if (x < 0) x += w;
-        var y = (st.fy * h + (scrollOff * depth)) % h; if (y < 0) y += h;
-        var s = st.size * dpr;
-        ctx.fillRect(Math.round(x * dpr), Math.round(y * dpr), s, s);
-      }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    var alphaMax = Math.min(0.78, tokens.opacityMax * (1 + (tokens.opacityMult - 1) * fvT));
+    var ampCeil = reducedMotion() ? REDUCED_TWINKLE_AMP : 1;
+    var driftX = 0, driftY = 0;
+    if (tokens.drift > 0 && !reducedMotion()) {
+      driftX = Math.cos(driftPhase) * tokens.drift;
+      driftY = Math.sin(driftPhase * 0.6) * tokens.drift * 0.5;
     }
-    ctx.globalAlpha = 1;
+    for (var i = 0; i < stars.length; i++) {
+      var st = stars[i];
+      var depth = LAYER_DEPTHS[st.layer] || 1;
+      var b = brightness(st, now, ampCeil);
+      var a = alphaMax * Math.max(0, Math.min(1, b));
+      if (a < 0.01) continue;
+      var x = (st.fx * w + pointerX * depth + driftX * depth) % w; if (x < 0) x += w;
+      var y = (st.fy * h + scrollOff * depth + driftY * depth) % h; if (y < 0) y += h;
+      var px = x * dpr, py = y * dpr, r = st.radius * dpr;
+      var col = st.color;
+      var rgb = col[0] + "," + col[1] + "," + col[2];
+      if (st.bright) {
+        // soft halo for the few bright stars
+        ctx.fillStyle = "rgba(" + rgb + "," + (a * 0.16).toFixed(3) + ")";
+        ctx.beginPath(); ctx.arc(px, py, r * 2.6, 0, 6.2831853); ctx.fill();
+      }
+      ctx.fillStyle = "rgba(" + rgb + "," + a.toFixed(3) + ")";
+      ctx.beginPath(); ctx.arc(px, py, r, 0, 6.2831853); ctx.fill();
+    }
   }
 
   // ---- the one animation loop ----------------------------------------------
   function frame(now) {
     rafId = null;
     if (!canvas) return;
+    if (tokens.drift > 0) driftPhase += 0.0009;
     draw(now);
-    if (!twinkleFrozen() && !document.hidden) rafId = requestAnimationFrame(frame);
+    if (!document.hidden) rafId = requestAnimationFrame(frame);
   }
   function startLoop() {
     if (!canvas || rafId !== null) return;
-    if (twinkleFrozen()) { draw(performance.now()); return; }  // static field
     if (!document.hidden) rafId = requestAnimationFrame(frame);
   }
   function stopLoop() {
@@ -199,7 +211,7 @@
     if (!canvas) return;
     sizeCanvas();
     buildStars(canvas.clientWidth || window.innerWidth, canvas.clientHeight || window.innerHeight);
-    if (twinkleFrozen() || document.hidden) draw(performance.now());
+    if (document.hidden) draw(performance.now());
   }
   function mount() {
     if (canvas || !document.body) return;
@@ -227,7 +239,6 @@
       }, { passive: true });
     }
     if (reducedMq) {
-      // re-arm or freeze if the OS motion preference flips mid-session
       var onMqChange = function () { stopLoop(); rebuild(); startLoop(); };
       if (reducedMq.addEventListener) listen(reducedMq, "change", onMqChange);
     }
