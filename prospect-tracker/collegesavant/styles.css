@@ -135,6 +135,13 @@ td.tt-team { text-align: left; }
 .proj-method li { font-size: 13px; line-height: 1.5; color: var(--muted); }
 .proj-method strong { color: var(--ink); font-weight: 700; }
 
+/* Hitters / pitchers mode toggle - a segmented control, not a buried link. */
+.hp-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; }
+.hp-seg { padding: 4px 13px; font-size: 13px; font-weight: 700; text-decoration: none; color: var(--muted); background: var(--paper); line-height: 1.6; }
+.hp-seg + .hp-seg { border-left: 1px solid var(--line); }
+.hp-seg.is-active { background: var(--ink); color: var(--paper); }
+.hp-seg:not(.is-active):hover { background: var(--paper-2); color: var(--ink); }
+
 /* Home section hub - entry cards to each CollegeSavant view. */
 .hub-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 10px 0; }
 .hub-card { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: 1px solid var(--line); background: var(--paper-2); text-decoration: none; color: var(--ink); transition: border-color .12s, transform .12s; }

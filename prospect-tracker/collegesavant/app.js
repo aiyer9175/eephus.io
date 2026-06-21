@@ -381,6 +381,17 @@ function updateNav(hash) {
     const route = link.getAttribute("href");
     link.classList.toggle("is-active", route === hash || (hash === "#/" && route === "#/"));
   });
+  // The hitters/pitchers toggle lands you on the same section on the other side
+  // (Team Tendencies -> Team Tendencies, Pro Projections -> Pro Projections),
+  // not always the other page's home. Player/leaderboard views do not cross, so
+  // they fall back to home.
+  const cross = document.querySelector("[data-cross-page]");
+  if (cross) {
+    const base = cross.getAttribute("data-cross-page");
+    const section = hash.startsWith("#/teams") ? "#/teams"
+      : hash.startsWith("#/projections") ? "#/projections" : "#/";
+    cross.setAttribute("href", base + section);
+  }
 }
 
 function renderHome() {

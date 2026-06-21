@@ -57,8 +57,11 @@
           <input type="search" placeholder="Search all players" aria-label="Search all players" data-global-search-input>
           <div class="global-results" data-global-search-results></div>
         </div>
-        <a href="index.html#/">Hitters</a>
-        <a href="#/" data-route="home">Pitchers</a>
+        <div class="hp-toggle" role="group" aria-label="Hitters or pitchers">
+          <a class="hp-seg" href="index.html#/" data-cross-page="index.html">Hitters</a>
+          <a class="hp-seg is-active" href="#/" aria-current="page">Pitchers</a>
+        </div>
+        <a href="#/" data-route="home">Dashboard</a>
         <a href="#/teams" data-route="teams">Team Tendencies</a>
         <a href="#/projections" data-route="projections">Pro Projections</a>
       </nav>
