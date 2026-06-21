@@ -3993,6 +3993,9 @@
     .college-link:hover { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
     table:not([data-no-sort]) th { cursor: pointer; }
     th[data-gen-sorted] { color: var(--neon-cyan); }
+    .sort-stat-pill { display: inline-flex; align-items: baseline; gap: 3px; margin: 0 6px 0 0; padding: 1px 7px; border-radius: 999px; background: var(--bg-tertiary); border: 1px solid var(--neon-cyan); font-family: var(--font-mono); vertical-align: middle; }
+    .sort-stat-pill .ssp-k { color: var(--text-tertiary); font-size: 9px; text-transform: uppercase; letter-spacing: .04em; }
+    .sort-stat-pill .ssp-v { color: var(--neon-cyan); font-weight: 700; font-size: 11px; }
     /* Inline logo + text inside a draft table cell / list row, so team and
        college marks sit cleanly beside the name they belong to. */
     .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -31922,16 +31925,105 @@ function makeToolGradeChips(p) {
 // to the prose summary when no tool grades are on file so a thin
 // profile still shows *something* under the meta line. Detail page
 // still calls makeQuickReadSummary for the full prose narrative.
+// Statcast-metric value for the sorted-stat pill - mirrors the active-list
+// statcast sort extractor (the _scVal in the sort comparator).
+function _scZRowPill(p) {
+  const z = p.zone_metrics;
+  if (!z) return {};
+  if (Array.isArray(z.level_splits) && z.level_splits.length) {
+    return z.level_splits.reduce((a, b) => (a && (a.pitches || 0) >= (b.pitches || 0)) ? a : b, null) || {};
+  }
+  return z;
+}
+function _scValForPill(p, sk) {
+  if (sk === "sc_plus") return getStatcastPlus(p);
+  const cq = ((p.statcast_metrics || {}).contact_quality) || {};
+  const pm = ((p.statcast_metrics || {}).pitch_movement) || {};
+  const z = _scZRowPill(p);
+  switch (sk) {
+    case "xwoba_est": return cq.xwoba_est;
+    case "xwobacon_est": return cq.xwobacon_est;
+    case "avg_ev": return cq.avg_ev;
+    case "p90_ev": return cq.p90_ev;
+    case "max_ev": return cq.max_ev;
+    case "hard_hit_pct": case "hh_pct_allowed": return cq.hard_hit_pct;
+    case "barrel_pct": case "barrel_pct_allowed": return cq.barrel_pct;
+    case "pull_air_pct": return (cq.spray || {}).pull_air_pct;
+    case "z_contact_pct": return z.z_contact_pct;
+    case "whiff_pct": case "whiff_pct_pit": return z.whiff_pct;
+    case "chase_pct": case "chase_pct_pit": return z.chase_pct;
+    case "fb_velo": { const top = (pm.pitch_summary || [])[0]; return top ? top.avg_velo : null; }
+  }
+  return null;
+}
+const _SC_PILL = {
+  sc_plus: { l: "SC+", f: v => String(Math.round(v)) },
+  xwoba_est: { l: "xwOBA", f: v => v.toFixed(3).replace(/^0/, "") },
+  xwobacon_est: { l: "xwOBAcon", f: v => v.toFixed(3).replace(/^0/, "") },
+  avg_ev: { l: "avg EV", f: v => v.toFixed(1) }, p90_ev: { l: "90th EV", f: v => v.toFixed(1) },
+  max_ev: { l: "max EV", f: v => v.toFixed(1) }, hard_hit_pct: { l: "HardHit%", f: v => v.toFixed(0) + "%" },
+  barrel_pct: { l: "Barrel%", f: v => v.toFixed(0) + "%" }, pull_air_pct: { l: "PullAir%", f: v => v.toFixed(0) + "%" },
+  z_contact_pct: { l: "Z-Con%", f: v => v.toFixed(0) + "%" }, whiff_pct: { l: "Whiff%", f: v => v.toFixed(0) + "%" },
+  chase_pct: { l: "Chase%", f: v => v.toFixed(0) + "%" }, fb_velo: { l: "FB", f: v => v.toFixed(1) + " mph" },
+  whiff_pct_pit: { l: "Whiff%", f: v => v.toFixed(0) + "%" }, chase_pct_pit: { l: "Chase%", f: v => v.toFixed(0) + "%" },
+  hh_pct_allowed: { l: "HH%allow", f: v => v.toFixed(0) + "%" }, barrel_pct_allowed: { l: "Brl%allow", f: v => v.toFixed(0) + "%" }
+};
+function _pillHTML(label, val) {
+  if (val == null) return "";
+  return '<span class="sort-stat-pill" title="Sorted by ' + escapeHtml(label) + '">'
+    + '<span class="ssp-k">' + escapeHtml(label) + '</span><span class="ssp-v">' + escapeHtml(val) + '</span></span>';
+}
+// When the active prospects list is sorted by a specific stat, surface that
+// stat (and the player's value) on each card so the sort is legible at a
+// glance. Precedence matches the sort: statcast metric > tool grade > main
+// sort. Gated to the active section so sibling lists (debuts / IL / traded),
+// which sort on their own keys, are never mislabeled. Returns "" for the
+// default FV sort and for stats already shown elsewhere on the card.
+function _sortStatPill(p) {
+  if (typeof state === "undefined" || state.section !== "active" || state.view) return "";
+  const sk = state.statcastSortKey;
+  if (sk && sk !== "off") {
+    const meta = _SC_PILL[sk];
+    if (!meta) return "";
+    const v = _scValForPill(p, sk);
+    return _pillHTML(meta.l, (v == null || !isFinite(v)) ? null : meta.f(Number(v)));
+  }
+  const tk = state.toolSortKey;
+  if (tk && tk !== "off") {
+    const grades = (p.tools && p.tools.grades) || {};
+    const v = tk === "pwr" ? _resolvePwr(grades) : grades[tk];
+    return _pillHTML((typeof toolAbbrev === "function" ? toolAbbrev(tk) : tk.toUpperCase()),
+                     (v == null || !isFinite(Number(v))) ? null : String(fvCeil(Number(v))));
+  }
+  const surM = {
+    surplus_sv: ["Surplus", s => s && s.value_mm],
+    surplus_risk: ["Risk-adj", s => s && s.dist && s.dist.risk_adjusted_mm],
+    surplus_p10: ["P10 SV", s => s && s.dist && s.dist.p10_mm],
+    surplus_p90: ["P90 SV", s => s && s.dist && s.dist.p90_mm]
+  };
+  const s = state.sort;
+  if (s === "statcast_plus") { const v = getStatcastPlus(p); return _pillHTML("SC+", v == null ? null : String(Math.round(v))); }
+  if (surM[s]) { const v = surM[s][1](p.surplus); return _pillHTML(surM[s][0], v == null ? null : "$" + Number(v).toFixed(1) + "m"); }
+  if (s === "surplus_pbust") { const v = p.surplus && p.surplus.dist && p.surplus.dist.p_bust; return _pillHTML("P(bust)", v == null ? null : Math.round(v * 100) + "%"); }
+  if (s === "wag") { const v = p.debuted_value && p.debuted_value.wag && p.debuted_value.wag.regressed_wag; return _pillHTML("WAG", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
+  if (s === "age_vs_level") { const v = p.age_vs_level && p.age_vs_level.diff; return _pillHTML("Age vs level", v == null ? null : (v > 0 ? "+" : "") + Number(v).toFixed(1)); }
+  if (s === "eta") { const v = p.eta && p.eta.year; return _pillHTML("ETA", v == null ? null : String(v)); }
+  if (s === "stock_movers") { const v = (p.fv_close != null && p.fv_open != null) ? (p.fv_close - p.fv_open) : null; return _pillHTML("FV move", v == null ? null : (v > 0 ? "+" : "") + v); }
+  return "";
+}
+
 function makeListRowSummary(p) {
+  const sortPill = _sortStatPill(p);
   const chipStrip = makeToolGradeChips(p);
-  if (chipStrip) return chipStrip;
+  if (chipStrip) return sortPill + chipStrip;
   // listMode=true trims segments whose data already shows on sibling
   // cells of the same row (age/pos/level, FV badge, stock arrow, ETA,
   // B/T chip) - see makeQuickReadSummaryParts for the gating.
   const parts = makeQuickReadSummaryParts(p, { listMode: true });
-  if (!parts.length) return "";
-  return `<div class="player-row-summary">${parts.join(" · ")}</div>`;
+  if (!parts.length) return sortPill;
+  return sortPill + `<div class="player-row-summary">${parts.join(" · ")}</div>`;
 }
+
 
 function ilTagHTML(p) {
   const il = p && p.il_status;
