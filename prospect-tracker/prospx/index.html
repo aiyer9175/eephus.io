@@ -21367,9 +21367,12 @@ async function renderDraft() {
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
       // Entering HS Details from the sub-nav always lands on the map
-      // overview, never a stale drilled-in state page.
-      if (b.dataset.draftView === "hs-details") { _hsView.entity = null; state.draftYear = "overall"; }
-      state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL();
+      // overview, never a stale drilled-in state page. Push a history
+      // entry on entry so browser Back returns to the prior draft view
+      // instead of skipping the whole HS Details journey.
+      const _hsEnter = b.dataset.draftView === "hs-details";
+      if (_hsEnter) { _hsView.entity = null; state.draftYear = "overall"; }
+      state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL(_hsEnter);
     };
   });
   // Hide any sub-nav group label whose chips are all hidden in this mode.
@@ -24713,7 +24716,9 @@ function _hsWireOverview(host, classes) {
   const reRender = () => renderDraft();
   host.querySelectorAll("[data-hs-mode]").forEach(b => b.onclick = () => {
     _hsView.mode = b.dataset.hsMode; _hsView.entity = null; _hsView.sort = { key: null, dir: -1 };
-    syncToURL(); reRender();
+    // Push a history entry so browser Back steps mode-by-mode through the
+    // HS Details journey rather than jumping straight out of the section.
+    syncToURL(true); reRender();
   });
   host.querySelectorAll("[data-hs-metric]").forEach(b => b.onclick = () => { _hsView.metric = b.dataset.hsMetric; _hsView.sort = { key: null, dir: -1 }; reRender(); });
   host.querySelectorAll("[data-hs-scale]").forEach(b => b.onclick = () => { _hsView.scale = b.dataset.hsScale; reRender(); });
