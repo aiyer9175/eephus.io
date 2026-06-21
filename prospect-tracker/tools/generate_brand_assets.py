@@ -284,27 +284,47 @@ def make_twitter() -> None:
     # picture (which overlaps ~the left 200px / bottom 150px) never covers it. ---
     def _banner(path, accent_io, title, tagline, monogram):
         W, H = 1500, 500
-        img = _y2k_field(W, H, origin=(0.5, 0.30)).convert("RGBA")
+        img = _y2k_field(W, H, origin=(0.5, 0.28)).convert("RGBA")
         d = ImageDraw.Draw(img, "RGBA")
         _pixel_stars(d, W, H, 120)
         f_brand = _logo_font(120)
         f_tag = _logo_font(34)
-        ball_sz, gap, cy = 150, 40, 205
+        cy = 275
         wm_w = d.textlength(title, font=f_brand)
-        x0 = (W - (ball_sz + gap + wm_w)) / 2     # center the icon+wordmark group
-        # icon: eephus.io = clean ball; PROSPX = ball + P/X monogram
+        wm_x0 = (W - wm_w) / 2
+        wm_x1 = wm_x0 + wm_w
+        cxc = (wm_x0 + wm_x1) / 2
+        # The signature lob arc OVER the wordmark, painted in the brand ramp, with
+        # the ball at its apex (the merged eephus.io lockup as raster).
+        bbox = d.textbbox((wm_x0, cy), title, font=f_brand, anchor="lm")
+        wm_top = bbox[1]
+        end_y = wm_top + 2
+        peak_y = wm_top - 100
+        p0 = (wm_x0 - 18, end_y)
+        p1 = (cxc, 2 * peak_y - end_y)
+        p2 = (wm_x1 + 18, end_y)
+        span = max(1.0, p2[0] - p0[0])
+        bw, n = 6, 170
+        for i in range(n + 1):
+            t = i / n
+            x = (1 - t) ** 2 * p0[0] + 2 * (1 - t) * t * p1[0] + t * t * p2[0]
+            y = (1 - t) ** 2 * p0[1] + 2 * (1 - t) * t * p1[1] + t * t * p2[1]
+            col = _ramp_color((x - p0[0]) / span)
+            d.ellipse([x - bw / 2, y - bw / 2, x + bw / 2, y + bw / 2], fill=col)
+        # ball at the apex of the arc
+        ball_sz = 72
         ball = _ball(ball_sz, monogram=monogram)
-        img.alpha_composite(ball, (int(x0), int(cy - ball_sz / 2)))
-        tx = x0 + ball_sz + gap
+        img.alpha_composite(ball, (int(cxc - ball_sz / 2), int(peak_y - ball_sz / 2)))
+        # the wordmark
         if accent_io:
-            d.text((tx, cy), "EEPHUS", font=f_brand, fill=DARK_FG[:3], anchor="lm")
+            d.text((wm_x0, cy), "EEPHUS", font=f_brand, fill=DARK_FG[:3], anchor="lm")
             we = d.textlength("EEPHUS", font=f_brand)
-            d.text((tx + we, cy), ".IO", font=f_brand, fill=LILAC[:3], anchor="lm")
+            d.text((wm_x0 + we, cy), ".IO", font=f_brand, fill=LILAC[:3], anchor="lm")
         else:
-            d.text((tx, cy), title, font=f_brand, fill=DARK_FG[:3], anchor="lm")
-        _ramp_rule(d, int(tx), int(tx + wm_w), int(cy + 78), 5)
+            d.text((wm_x0, cy), title, font=f_brand, fill=DARK_FG[:3], anchor="lm")
+        # tagline centered below
         tag_w = d.textlength(tagline, font=f_tag)
-        d.text(((W - tag_w) / 2, cy + 108), tagline, font=f_tag, fill=DARK_FG[:3])
+        d.text(((W - tag_w) / 2, cy + 92), tagline, font=f_tag, fill=DARK_FG[:3])
         img.convert("RGB").save(path)
 
     _banner(social / "twitter-banner-eephus.png", True, "EEPHUS.IO",
