@@ -637,6 +637,11 @@ function render() {
     afterRender();
     return;
   }
+  if (hash.startsWith("#/prospects")) {
+    renderProspects();
+    afterRender();
+    return;
+  }
   renderHome();
   afterRender();
 }
@@ -911,6 +916,48 @@ function computeTeamTendencies(pitchers) {
     rows.push({ team, n: ps.length, agg });
   }
   return rows;
+}
+
+// ---- Draft Prospects section (the reverse direction) -----------------------
+// Draft-eligible pitchers carried INTO CollegeSavant by the conventional college
+// box scores we already hold, including prospects with no tracking. Box-score
+// based and FV-ranked, filterable by draft year.
+function renderProspects() {
+  const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.pitchers) || [];
+  const years = [...new Set(P.map((x) => x.year).filter(Boolean))].sort((a, b) => b - a);
+  const yf = state.prospectYear != null ? state.prospectYear : (years[0] || "all");
+  const list = P.filter((x) => yf === "all" || x.year === yf);
+  const d2 = (x) => (x == null ? " - " : x.toFixed(2));
+  const body = list.map((x, i) => {
+    const b = x.box || {};
+    const wl = (b.w != null || b.l != null) ? `${b.w == null ? 0 : b.w}-${b.l == null ? 0 : b.l}` : " - ";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team"><strong>${escapeHtml(x.name || "")}</strong><span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
+      <td class="tt-col">${x.fv != null ? Math.ceil(x.fv) : " - "}</td>
+      <td class="tt-col">${x.year || " - "}</td>
+      <td class="tt-col">${b.ip != null ? b.ip.toFixed(1) : " - "}</td>
+      <td class="tt-col">${d2(b.era)}</td><td class="tt-col">${d2(b.fip)}</td>
+      <td class="tt-col">${d2(b.k_per_9)}</td><td class="tt-col">${d2(b.bb_per_9)}</td>
+      <td class="tt-col">${wl}</td></tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">
+      <select class="select-box" data-prospect-year aria-label="Draft year">
+        <option value="all" ${yf === "all" ? "selected" : ""}>All draft years</option>
+        ${years.map((y) => `<option value="${y}" ${y === yf ? "selected" : ""}>${y} draft</option>`).join("")}
+      </select>
+    </section>
+    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} pitching prospect${list.length === 1 ? "" : "s"} · conventional college stats, FV-ranked</span></div>
+    <p class="trans-note">Draft-eligible pitchers carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no tracking. FV is the consensus board grade, rounded up. This board is box-score based; the tracked CS+ and pitch-shape views cover only players with tracking data.</p>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th><th class="tt-col">FV</th><th class="tt-col">Yr</th><th class="tt-col">IP</th><th class="tt-col">ERA</th><th class="tt-col">FIP</th><th class="tt-col">K/9</th><th class="tt-col">BB/9</th><th class="tt-col">W-L</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="10" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
+    </table></div></section>`;
+  const ys = app.querySelector("[data-prospect-year]");
+  if (ys) ys.addEventListener("change", (e) => {
+    state.prospectYear = e.target.value === "all" ? "all" : Number(e.target.value);
+    renderProspects();
+  });
 }
 
 // ---- College -> Single-A Projections (pitchers) ----------------------------

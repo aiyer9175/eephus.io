@@ -366,6 +366,12 @@ function render() {
     return;
   }
 
+  if (hash.startsWith("#/prospects")) {
+    renderProspects();
+    afterRender();
+    return;
+  }
+
   renderHome();
   afterRender();
 }
@@ -654,6 +660,50 @@ function renderTeams() {
   if (sel) sel.addEventListener("change", (e) => { state.teamSort = e.target.value; renderTeams(); });
   const ys = app.querySelector(".year-select");
   if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderTeams(); });
+}
+
+// ---- Draft Prospects section (the reverse direction) -----------------------
+// Draft-eligible hitters carried INTO CollegeSavant by the conventional college
+// box scores we already hold, including prospects with no TrackMan tracking.
+// Box-score based and FV-ranked, filterable by draft year. Reads the server-built
+// window.CS_DRAFT_PROSPECTS sidecar (college_translation.build).
+function renderProspects() {
+  const P = (window.CS_DRAFT_PROSPECTS && window.CS_DRAFT_PROSPECTS.hitters) || [];
+  const years = [...new Set(P.map((x) => x.year).filter(Boolean))].sort((a, b) => b - a);
+  const yf = state.prospectYear != null ? state.prospectYear : (years[0] || "all");
+  const list = P.filter((x) => yf === "all" || x.year === yf);
+  const d3 = (x) => (x == null ? " - " : x.toFixed(3).replace(/^0(?=\.)/, ""));
+  const pc = (x) => (x == null ? " - " : (x * 100).toFixed(1) + "%");
+  const body = list.map((x, i) => {
+    const b = x.box || {};
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team"><strong>${escapeHtml(x.name || "")}</strong><span class="tt-n">${escapeHtml(x.school || "")}${x.pos ? " · " + escapeHtml(x.pos) : ""}</span></td>
+      <td class="tt-col">${x.fv != null ? Math.ceil(x.fv) : " - "}</td>
+      <td class="tt-col">${x.year || " - "}</td>
+      <td class="tt-col">${d3(b.avg)}</td><td class="tt-col">${d3(b.obp)}</td><td class="tt-col">${d3(b.slg)}</td>
+      <td class="tt-col">${d3(b.iso)}</td><td class="tt-col">${d3(b.woba)}</td>
+      <td class="tt-col">${b.wrc_plus != null ? Math.round(b.wrc_plus) : " - "}</td>
+      <td class="tt-col">${pc(b.bb_pct)}</td><td class="tt-col">${pc(b.k_pct)}</td>
+      <td class="tt-col">${b.pa != null ? b.pa : " - "}</td></tr>`;
+  }).join("");
+  app.innerHTML = `
+    <section class="toolbar">
+      <select class="select-box" data-prospect-year aria-label="Draft year">
+        <option value="all" ${yf === "all" ? "selected" : ""}>All draft years</option>
+        ${years.map((y) => `<option value="${y}" ${y === yf ? "selected" : ""}>${y} draft</option>`).join("")}
+      </select>
+    </section>
+    <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, FV-ranked</span></div>
+    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. This board is box-score based; the tracked CS+ and percentile views cover only players with tracking data.</p>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th><th class="tt-col">FV</th><th class="tt-col">Yr</th><th class="tt-col">AVG</th><th class="tt-col">OBP</th><th class="tt-col">SLG</th><th class="tt-col">ISO</th><th class="tt-col">wOBA</th><th class="tt-col">wRC+</th><th class="tt-col">BB%</th><th class="tt-col">K%</th><th class="tt-col">PA</th></tr></thead>
+      <tbody>${body || `<tr><td colspan="13" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
+    </table></div></section>`;
+  const ys = app.querySelector("[data-prospect-year]");
+  if (ys) ys.addEventListener("change", (e) => {
+    state.prospectYear = e.target.value === "all" ? "all" : Number(e.target.value);
+    renderProspects();
+  });
 }
 
 // ---- College -> Single-A Projections section -------------------------------

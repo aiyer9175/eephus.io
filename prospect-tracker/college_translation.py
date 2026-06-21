@@ -179,6 +179,43 @@ def _draft_statlines(con):
     return hit, pit
 
 
+def _draft_prospect_export(con, box_hit, box_pit):
+    """The reverse of the tracking universe: draft prospects (each year) brought
+    INTO CollegeSavant by their conventional college box score, for the ones we
+    already hold stats for - including prospects with no TrackMan tracking. Keyed
+    nowhere; emitted as two ranked lists (hitters / pitchers) the frontend filters
+    by draft year. Carries the consensus FV + board rank so the section reads as a
+    draft board, not just a stat dump."""
+    meta = {}
+    for pk, name, pos, school, ptype, year, bats, throws in con.execute(
+            "SELECT player_key, player_name, position, school, player_type, draft_year, "
+            "bats, throws FROM draft_players"):
+        meta[pk] = {"name": name, "pos": pos, "school": school, "type": ptype,
+                    "year": year, "bats": bats, "throws": throws}
+    fv = {}  # latest consensus FV + board rank per player_key
+    for pk, f, rk in con.execute(
+            "SELECT player_key, fv, rank FROM draft_snapshots WHERE fv IS NOT NULL "
+            "ORDER BY snapshot_date"):
+        fv[pk] = {"fv": f, "rank": rk}
+
+    def _entry(pk, box):
+        m = meta.get(pk) or {}
+        e = {"name": m.get("name"), "school": m.get("school"), "pos": m.get("pos"),
+             "year": m.get("year"), "type": m.get("type"), "bats": m.get("bats"),
+             "throws": m.get("throws"), "box": box}
+        if pk in fv:
+            e["fv"] = fv[pk]["fv"]
+            e["rank"] = fv[pk]["rank"]
+        return e
+
+    def _rank_key(x):
+        return (-(x.get("fv") or 0), x.get("rank") or 99999, x.get("name") or "")
+
+    hitters = sorted((_entry(pk, b) for pk, b in box_hit.items() if pk in meta), key=_rank_key)
+    pitchers = sorted((_entry(pk, b) for pk, b in box_pit.items() if pk in meta), key=_rank_key)
+    return {"hitters": hitters, "pitchers": pitchers}
+
+
 def _equiv_headline(sa: dict, side: str) -> list[dict]:
     """The Single-A equivalent as PROSPX-renderable {label, value, band, flag}
     chips, mirroring the draft_export college_stats headline shape."""
@@ -437,6 +474,13 @@ def build(out_dir: Path | None = None) -> dict:
                    "eval": eval_summary, "caveat": eval_doc["caveat"]}
         (out_dir / "collegesavant_translation.js").write_text(
             "window.CS_TRANSLATION = " + json.dumps(payload) + ";\n", encoding="utf-8")
+
+        # The reverse direction: draft prospects (each year) carried into
+        # CollegeSavant by the college box scores we already hold, FV-ranked.
+        prospects = _draft_prospect_export(con, box_hit, box_pit)
+        prospects["generated_from"] = "college_translation.build"
+        (out_dir / "collegesavant_draft_prospects.js").write_text(
+            "window.CS_DRAFT_PROSPECTS = " + json.dumps(prospects) + ";\n", encoding="utf-8")
 
         # PROSPX bridge: keyed by draft prospect player_key. PROSPX lazily merges
         # it onto its draft records. Additive; an absent/empty file changes nothing.
