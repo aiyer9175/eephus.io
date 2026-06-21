@@ -9066,7 +9066,7 @@
       <button class="chip active" data-overseas-view="rankings"
               title="Rankings + tool grades + writeups, grouped by FV tier">Rankings</button>
       <button class="chip" data-overseas-view="stats"
-              title="Per-season KBO/NPB/CPBL stats scraped from FanGraphs player pages">Season Stats</button>
+              title="Latest-season KBO/NPB/CPBL stats scraped from FanGraphs player pages">Current Season Stats</button>
       <button class="chip" data-overseas-view="posting"
               title="Players currently posted (KBO/NPB posting system) - days remaining in their MLB negotiation window">Posting Tracker</button>
       <button class="chip" data-overseas-view="signed"
@@ -12383,6 +12383,7 @@ function syncToURL() {
   if (state.overseasPos    && state.overseasPos    !== "all") p.set("ovspos",    state.overseasPos);
   if (state.overseasStatus && state.overseasStatus !== "all") p.set("ovsstatus", state.overseasStatus);
   if (state.overseasSort   && state.overseasSort   !== "fv")  p.set("ovssort",   state.overseasSort);
+  if (state.overseasGroupBy && state.overseasGroupBy !== "league") p.set("ovsgroup", state.overseasGroupBy);
   if (state.lbStat      !== "ops")        p.set("lbstat",  state.lbStat);
   if (state.lbSide      !== "all")        p.set("lbside",  state.lbSide);
   if (state.lbLevel     !== "all")        p.set("lblvl",   state.lbLevel);
@@ -12540,6 +12541,7 @@ function syncFromURL() {
   if (p.has("ovspos"))    state.overseasPos   = p.get("ovspos");
   if (p.has("ovsstatus")) state.overseasStatus = p.get("ovsstatus");
   if (p.has("ovssort"))   state.overseasSort  = p.get("ovssort");
+  if (p.has("ovsgroup"))  state.overseasGroupBy = p.get("ovsgroup");
   // Leaderboards filters - round-tripped so org pre-fill from
   // farm-detail's "View org leaderboards →" link sticks.
   if (p.has("lbstat"))   state.lbStat   = p.get("lbstat");
@@ -13818,6 +13820,9 @@ const state = {
   overseasStatus: "all",  // all / overseas_active / posted / signed / mlb_promoted
   overseasFvIndicators: new Set(),
   overseasSort: "fv",
+  // Rankings grouping axis: "league" (default, flat FV-desc list) or
+  // "arrival" (section by eta_year - the arrival class - newest first).
+  overseasGroupBy: "league",
   // Overseas Season-Stats column sort. Click-routed via SORT_HEADER_MAP;
   // the hitter table defaults to wRC+ (desc), the pitcher table to FIP
   // (asc - lower is better). Direction toggles via state.sortRev.
@@ -23235,7 +23240,7 @@ async function renderOverseas() {
     case "stats":       return _renderOverseasStats(host, prospects, selectedLeagues);
     case "posting":     return _renderOverseasPosting(host, prospects);
     case "signed":      return _renderOverseasSigned(host, signings);
-    case "leaderboard": return _renderOverseasLeaderboard(host, prospects, leagues);
+    case "leaderboard": return _renderOverseasLeaderboard(host, prospects, selectedLeagues);
     case "league-context": return _renderOverseasLeagueContext(host, leagues, prospects);
     case "rankings":
     default:            return _renderOverseasRankings(host, selectedLeagues);
@@ -23392,19 +23397,64 @@ function _renderOverseasRankings(host, leagues) {
     : `${leagues.length} leagues`;
   const countFragment = totalItems !== totalUnfiltered
     ? `${totalItems} of ${totalUnfiltered}` : `${totalItems}`;
+  const groupBy = state.overseasGroupBy === "arrival" ? "arrival" : "league";
+  // Group-by toggle. "League" keeps the flat FV-desc list; "Arrival class"
+  // sections the (already FV-sorted) cards by eta_year, newest class first.
+  const groupToggle = `<div style="display:inline-flex;align-items:center;gap:6px;margin-left:auto;">
+      <span class="filter-label" style="margin:0;">Group by</span>
+      <button class="chip ${groupBy === "league" ? "active" : ""}" type="button" data-overseas-group="league"
+              title="Flat list, ranked by consensus FV">League</button>
+      <button class="chip ${groupBy === "arrival" ? "active" : ""}" type="button" data-overseas-group="arrival"
+              title="Section the ranked cards by arrival class (ETA year), newest first">Arrival class</button>
+    </div>`;
   const head = `<div style="padding:12px 14px;background:var(--bg-secondary);
-       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);">
-    <strong style="color:var(--text-primary);">${escapeHtml(leagueList)} - 
+       border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);
+       display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+    <span><strong style="color:var(--text-primary);">${escapeHtml(leagueList)} -
     ${countFragment} prospects</strong>, sorted by consensus FV.
-    Each card shows its league + country flag inline next to the team.
+    Each card shows its league + country flag inline next to the team.</span>
+    ${groupToggle}
   </div>`;
 
-  let html = head + `<div class="draft-grid">`;
-  for (const p of pagedItems) {
-    html += _renderOverseasCard(p);
+  let html;
+  if (groupBy === "arrival") {
+    // Section the current page's cards by arrival class (eta_year). Cards
+    // keep their FV-desc order inside each class; classes run newest first.
+    // Cards with no ETA sink into a trailing "Undated" group.
+    const byClass = {};
+    for (const p of pagedItems) {
+      const yr = p.eta_year != null ? String(p.eta_year) : "Undated";
+      (byClass[yr] = byClass[yr] || []).push(p);
+    }
+    const classKeys = Object.keys(byClass).sort((a, b) => {
+      if (a === "Undated") return 1;
+      if (b === "Undated") return -1;
+      return Number(b) - Number(a);
+    });
+    html = classKeys.map(yr => {
+      const cards = byClass[yr].map(p => _renderOverseasCard(p)).join("");
+      const label = yr === "Undated" ? "UNDATED" : `${escapeHtml(yr)} ARRIVAL CLASS`;
+      return `<div style="margin-bottom:18px;">
+        <h3 style="font-family:var(--font-sans);font-size:13px;letter-spacing:0.06em;text-transform:uppercase;font-weight:700;color:var(--text-secondary);margin:0 0 8px;border-bottom:1px solid var(--border-subtle);padding-bottom:5px;">
+          ${label}
+          <span style="font-weight:500;color:var(--text-tertiary);text-transform:none;letter-spacing:0;margin-left:8px;">${byClass[yr].length}</span>
+        </h3>
+        <div class="draft-grid">${cards}</div>
+      </div>`;
+    }).join("");
+  } else {
+    html = `<div class="draft-grid">` + pagedItems.map(p => _renderOverseasCard(p)).join("") + `</div>`;
   }
-  html += `</div>`;
-  host.innerHTML = paginationStripTop + html + paginationStrip;
+  host.innerHTML = paginationStripTop + head + html + paginationStrip;
+
+  // Wire the group-by toggle (re-rendered on every paint, so bind fresh).
+  host.querySelectorAll("[data-overseas-group]").forEach(b => {
+    b.addEventListener("click", () => {
+      state.overseasGroupBy = b.dataset.overseasGroup;
+      if (typeof syncToURL === "function") syncToURL();
+      renderOverseas();
+    });
+  });
 }
 
 function _renderOverseasCard(p) {
@@ -24993,7 +25043,7 @@ function _renderOverseasStats(host, prospects, leagues) {
 
   host.innerHTML = `
     <div class="draft-panel" style="margin-bottom:14px;">
-      <h3>Hitters - most recent season (${hitters.length})</h3>
+      <h3>Hitters - current season (${hitters.length})</h3>
       <table class="draft-table">
         <thead><tr>
           <th></th>
@@ -25015,7 +25065,7 @@ function _renderOverseasStats(host, prospects, leagues) {
       </table>
     </div>
     <div class="draft-panel">
-      <h3>Pitchers - most recent season (${pitchers.length})</h3>
+      <h3>Pitchers - current season (${pitchers.length})</h3>
       <table class="draft-table">
         <thead><tr>
           <th></th>
@@ -25432,6 +25482,29 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
     <td>${p.eta_year || " - "}</td>
   </tr>`).join("");
 
+  // WAR leaderboards - GRADUATES ONLY. Active overseas prospects carry no
+  // WAR (FG foreign-league pages publish none, so 0/41 have a value); WAR
+  // only exists for players who already came over, which the export embeds
+  // on each signing (overseas_export._signing_performance). We pool the
+  // signings from the active league scope (all leagues when no filter),
+  // gate to genuine graduates, and rank by realized MLB career value.
+  const signed = (allLeagues || []).flatMap(l => (l.signings || [])
+    .filter(s => s.status === "mlb_promoted" || s.signed_team));
+  const _warTeam = (op) => op.signed_team || op.proj_team || "";
+  const _gradRow = (op, val, color) => `<li>
+    ${_flagImg(op.country_flag_svg, op.country_flag, op.country)} <strong>${escapeHtml(op.player_name)}</strong>
+    <small>${escapeHtml(op.league || "?")}${_warTeam(op) ? ` · ${escapeHtml(_warTeam(op))}` : ""}</small>
+    <span style="float:right;font-family:var(--font-mono);color:${color};">${val}</span></li>`;
+  const careerWarRows = signed.filter(op => op.career_war != null)
+    .sort((a, b) => b.career_war - a.career_war).slice(0, 15)
+    .map(op => _gradRow(op, op.career_war.toFixed(1),
+      op.career_war >= 0 ? "var(--text-primary)" : "var(--down)")).join("");
+  const warPerSeasonRows = signed.filter(op => op.war_per_yr != null)
+    .sort((a, b) => b.war_per_yr - a.war_per_yr).slice(0, 15)
+    .map(op => _gradRow(op, op.war_per_yr.toFixed(2),
+      op.war_per_yr >= 2.0 ? "var(--up)" : op.war_per_yr >= 0.5 ? "var(--text-primary)" : "var(--down)")).join("");
+  const warEmpty = "<li style='color:var(--text-tertiary);'>No graduate WAR on file in this scope yet.</li>";
+
   host.innerHTML = `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
@@ -25453,6 +25526,20 @@ function _renderOverseasLeaderboard(host, prospects, allLeagues) {
       <div class="draft-panel">
         <h3>Biggest projected bonuses</h3>
         <ul class="draft-list">${bonusRows || "<li style='color:var(--text-tertiary);'>No projected bonuses on file yet.</li>"}</ul>
+      </div>
+      <div class="draft-panel">
+        <h3 title="Total career bWAR since reaching MLB, for players who already came over.">Career MLB WAR (graduates)</h3>
+        <ul class="draft-list">${careerWarRows || warEmpty}</ul>
+      </div>
+      <div class="draft-panel">
+        <h3 title="Career bWAR per MLB season, for players who already came over.">WAR per season (graduates)</h3>
+        <ul class="draft-list">${warPerSeasonRows || warEmpty}</ul>
+      </div>
+      <div class="draft-panel" style="grid-column:1/-1;">
+        <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5;">
+          WAR leaderboards cover graduates only - players who have already signed and reached MLB.
+          Active overseas prospects are not shown here because foreign-league pages do not publish a WAR figure to translate.
+        </div>
       </div>
     </div>`;
 }
@@ -25520,10 +25607,19 @@ function _renderOverseasLeagueContext(host, leagues, prospects) {
     const meanWagColor = meanWag == null ? "var(--text-tertiary)"
       : meanWag >= 0 ? "var(--up)" : "var(--down)";
 
+    // Country flag for the card header. Source from any record carrying
+    // country fields - prospects first, then signings (the signings
+    // fallback matters for Cuba, which can have 0 active prospects but
+    // still has graduate signings on file).
+    const flagSample = lgProspects[0] || (lg.signings || [])[0];
+    const lgFlag = flagSample
+      ? _flagImg(flagSample.country_flag_svg, flagSample.country_flag, flagSample.country, { small: true })
+      : "";
+
     return `<div class="draft-panel" style="display:flex;flex-direction:column;gap:8px;">
       <div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <h3 style="margin:0;">
-          <span style="color:${_leagueBadgeColor(lg.league)};font-weight:700;">${escapeHtml(lg.league)}</span>
+          <span style="color:${_leagueBadgeColor(lg.league)};font-weight:700;">${escapeHtml(lg.league)}</span>${lgFlag ? ` ${lgFlag}` : ""}
           <small style="color:var(--text-tertiary);font-weight:400;margin-left:6px;">${escapeHtml(ctx.name || lg.league)}</small>
         </h3>
         <span style="font-size:11px;color:var(--text-tertiary);">
@@ -46276,6 +46372,7 @@ function _resetPageFilters(page) {
     state.overseasStatus        = "all";
     state.overseasFvIndicators  = new Set();
     state.overseasSort          = "fv";
+    state.overseasGroupBy       = "league";
     state.pages.overseas        = 1;
   }
 }

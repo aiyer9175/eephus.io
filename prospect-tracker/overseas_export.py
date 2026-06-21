@@ -504,6 +504,7 @@ OVERSEAS_IMPORTS: dict[str, dict] = {
     "shota_imanaga":     {"league": "NPB", "country": "Japan"},
     "kodai_senga":       {"league": "NPB", "country": "Japan"},
     "masataka_yoshida":  {"league": "NPB", "country": "Japan"},
+    "kazuma_okamoto":    {"league": "NPB", "country": "Japan"},
     "yariel_rodriguez":  {"league": "NPB", "country": "Cuba", "team": "TOR"},
 }
 

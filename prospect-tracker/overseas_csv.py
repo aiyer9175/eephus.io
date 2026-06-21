@@ -78,6 +78,13 @@ def is_overseas_slug(slug: str) -> int | None:
 # new league shows up rather than silently disappearing).
 _KNOWN_LEAGUES = {"NPB", "NPBF", "KBO", "CPBL", "CUBA", "MLBR"}
 
+# Raw Player-Type codes that FG ships under a different label than our
+# canonical league key. "CNS" is the Cuban National Series (Serie
+# Nacional de Béisbol); we fold it into the single "CUBA" bucket so the
+# two surfaces (board + LEAGUE_CONTEXT) agree on one Cuba league. Applied
+# after upper-casing the raw value.
+_LEAGUE_ALIAS = {"CNS": "CUBA"}
+
 
 def overseas_player_key(league: str | None, player_name: str) -> str:
     """Canonical key for an overseas prospect:
@@ -123,6 +130,10 @@ def _parse_overseas_summary_row(raw: dict, snapshot_year: int) -> dict | None:
     league_raw = _str_or_none(row.get("player type"))
     # Normalize: FG occasionally writes 'npb' (lowercase) for farm teams
     league = league_raw.upper() if league_raw else None
+    # Fold known aliases onto the canonical key (CNS -> CUBA) so a Cuban
+    # National Series row lands in the same bucket as the Cuba context.
+    if league:
+        league = _LEAGUE_ALIAS.get(league, league)
     if league and league not in _KNOWN_LEAGUES:
         # Keep the verbatim value but surface a log so a new league
         # gets noticed and added to _KNOWN_LEAGUES if it's recurring.
