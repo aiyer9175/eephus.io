@@ -13791,6 +13791,12 @@ const state = {
   // Leaderboard / Class Strength sub-views inside the Draft panel.
   draftYear: null,
   draftView: "rankings",
+  // Draft list "show all" expanders (mirror the IFA / Transactions pattern):
+  // Results biggest-bonus + biggest-over-slot lists and the Leaderboard top
+  // rows render a short cap by default and flip true via their toggle.
+  draftBonusShowAll: false,
+  draftOverShowAll: false,
+  draftLeaderShowAll: false,
   // Overseas tab sub-state. overseasLeague defaults to "all"; overseasView
   // toggles Rankings / Season Stats / Posting Tracker / Recently Signed /
   // Leaderboard inside the Overseas panel.
@@ -15732,6 +15738,18 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const rail = document.getElementById(railId);
   if (!rail) return;
   const players = DATA.players || [];
+
+  // The "Recent debuts" + IL-returnee cards read DATA.debuts, but that slice is
+  // lazy-loaded (only fetched on demand) - on the active list it hasn't arrived
+  // yet, so the card rendered "No recent debuts on file." even when there ARE
+  // recent debuts. Kick the slice fetch off in the background and re-render this
+  // rail once it lands. Guarded so it fires once and never loops.
+  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._railGradLoading) {
+    DATA._railGradLoading = true;
+    loadSlice("debuts").then(() => {
+      if (document.getElementById(railId)) renderActiveContextRail(railId);
+    }).catch(() => {});
+  }
 
   // Shared row factory - consistent geometry across all cards.
   // rightHTML sits flush right (delta / FV / tool grade / days-back chip).
@@ -21141,6 +21159,30 @@ function _headshotImg(url, name, opts) {
 function _isHSPlayer(p) {
   return (p && (p.player_type || "")).toUpperCase().startsWith("HS");
 }
+// US state/territory reference (2-letter -> full name). Reference data, not
+// theming, so the literal strings are allowed. Used to surface the full state
+// name for a HS player's school on the rankings card.
+const _US_STATE_NAMES = {
+  AL: "Alabama", AK: "Alaska", AZ: "Arizona", AR: "Arkansas", CA: "California",
+  CO: "Colorado", CT: "Connecticut", DE: "Delaware", FL: "Florida", GA: "Georgia",
+  HI: "Hawaii", ID: "Idaho", IL: "Illinois", IN: "Indiana", IA: "Iowa",
+  KS: "Kansas", KY: "Kentucky", LA: "Louisiana", ME: "Maine", MD: "Maryland",
+  MA: "Massachusetts", MI: "Michigan", MN: "Minnesota", MS: "Mississippi", MO: "Missouri",
+  MT: "Montana", NE: "Nebraska", NV: "Nevada", NH: "New Hampshire", NJ: "New Jersey",
+  NM: "New Mexico", NY: "New York", NC: "North Carolina", ND: "North Dakota", OH: "Ohio",
+  OK: "Oklahoma", OR: "Oregon", PA: "Pennsylvania", RI: "Rhode Island", SC: "South Carolina",
+  SD: "South Dakota", TN: "Tennessee", TX: "Texas", UT: "Utah", VT: "Vermont",
+  VA: "Virginia", WA: "Washington", WV: "West Virginia", WI: "Wisconsin", WY: "Wyoming",
+  DC: "District of Columbia", PR: "Puerto Rico"
+};
+// Parse the trailing 2-letter state code from a HS school string like
+// "Foo High School (FL)" and map it to the full state name. Returns null when
+// no code parses (older classes that lack the parenthetical) so callers can
+// fall back to the full school string.
+function _hsStateName(school) {
+  const m = /\(([A-Z]{2})\)\s*$/.exec(String(school || ""));
+  return (m && _US_STATE_NAMES[m[1]]) || null;
+}
 function _collegeLogoImg(url, school, isHS) {
   // High schoolers always get a generic "HS" chip rather than their specific
   // school's abbreviation/logo.
@@ -21281,7 +21323,7 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "org-tendencies", "lottery"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "lottery"];
   const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
@@ -21337,9 +21379,9 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "class-strength": return _renderClassStrength(host, classes);
-    case "signing-trends": return _renderSigningTrends(host, classes);
+    case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
-    case "overperformers": return _renderDraftOverperformers(host, classes);
+    case "overperformers": return _renderDraftOverperformers(host, classes, isOverall ? null : state.draftYear);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -21817,10 +21859,18 @@ function _renderDraftCard(p) {
          margin-left:6px;">→ MiLB profile</a>`
     : "";
 
-  // School + commit line
-  const schoolLine = p.school
-    ? `${escapeHtml(p.school)}${p.college_commit ? ` · ${escapeHtml(p.college_commit)} commit` : ""}`
-    : "";
+  // School + commit line. For HS players the owner wants the FULL state name
+  // (e.g. "Florida") as the visible affiliation, with the full school string
+  // kept on hover. Falls back to the full school when no state code parses
+  // (older classes) and never shortens college players.
+  const _commitSuffix = p.college_commit ? ` · ${escapeHtml(p.college_commit)} commit` : "";
+  let schoolLine = "";
+  if (p.school) {
+    const _hsState = _isHSPlayer(p) ? _hsStateName(p.school) : null;
+    schoolLine = _hsState
+      ? `<span title="${escapeHtml(p.school)}">${escapeHtml(_hsState)}</span>${_commitSuffix}`
+      : `${escapeHtml(p.school)}${_commitSuffix}`;
+  }
 
   // Report (first source's writeup, truncated). The full writeup lives
   // in tool_grades[source]._extras.report; expose a "more" toggle later.
@@ -22084,12 +22134,19 @@ function _renderDraftResults(host, cls) {
   }).join("");
 
   // Class-level roll-up - find the biggest bonus + biggest over-slot.
+  // Each list shows a short cap by default with a "show all" expander (mirrors
+  // the IFA / Transactions lists) so the full ranking is reachable.
+  const RESULTS_CAP = 5;
   const prospects = (cls.prospects || []).filter(p => p.signing_bonus);
   prospects.sort((a, b) => (b.signing_bonus || 0) - (a.signing_bonus || 0));
-  const biggest = prospects.slice(0, 5);
+  const bonusShowAll = !!state.draftBonusShowAll;
+  const biggest = bonusShowAll ? prospects : prospects.slice(0, RESULTS_CAP);
+  const bonusHidden = prospects.length - biggest.length;
   const overSlot = (cls.prospects || []).filter(p => p.over_slot_pct != null);
   overSlot.sort((a, b) => (b.over_slot_pct || 0) - (a.over_slot_pct || 0));
-  const biggestOver = overSlot.slice(0, 5);
+  const overShowAll = !!state.draftOverShowAll;
+  const biggestOver = overShowAll ? overSlot : overSlot.slice(0, RESULTS_CAP);
+  const overHidden = overSlot.length - biggestOver.length;
 
   host.innerHTML = _draftCaption(`${cls.year} signing results`,
       `${teams.length} teams · bonuses vs. slot, team spend vs. pool · source: MLB Stats API`)
@@ -22117,6 +22174,9 @@ function _renderDraftResults(host, cls) {
             <span style="float:right;">${_fmtUSD(p.signing_bonus)}</span>
           </li>`).join("")}
         </ul>
+        ${(!bonusShowAll && bonusHidden > 0)
+          ? `<button class="chip" id="draft-bonus-show-all" type="button" style="margin-top:6px;">Show all ${prospects.length} (+${bonusHidden} more)</button>`
+          : ""}
         <h3 style="margin-top:14px;">Biggest over-slot</h3>
         <ul class="draft-list">
           ${biggestOver.map(p => `<li onclick="goToDraftee('${escapeHtml(p.player_key)}')" style="cursor:pointer;">
@@ -22126,8 +22186,15 @@ function _renderDraftResults(host, cls) {
             <span style="float:right;color:var(--neon-cyan);">${p.over_slot_usd != null ? "+" + _fmtUSD(p.over_slot_usd) + " " : ""}(+${Math.round(p.over_slot_pct)}%)</span>
           </li>`).join("")}
         </ul>
+        ${(!overShowAll && overHidden > 0)
+          ? `<button class="chip" id="draft-over-show-all" type="button" style="margin-top:6px;">Show all ${overSlot.length} (+${overHidden} more)</button>`
+          : ""}
       </div>
     </div>`;
+  const _bSa = document.getElementById("draft-bonus-show-all");
+  if (_bSa) _bSa.addEventListener("click", () => { state.draftBonusShowAll = true; renderDraft(); });
+  const _oSa = document.getElementById("draft-over-show-all");
+  if (_oSa) _oSa.addEventListener("click", () => { state.draftOverShowAll = true; renderDraft(); });
 }
 
 function _renderDraftLeaderboard(host, cls) {
@@ -22141,7 +22208,12 @@ function _renderDraftLeaderboard(host, cls) {
   // DS+ ties broken by consensus FV so #1 vs #2 is a real ranking, not insertion order.
   prospects.sort((a, b) => (b.draft_stock_plus || 0) - (a.draft_stock_plus || 0)
     || (b.consensus_fv || 0) - (a.consensus_fv || 0));
-  const top = prospects.slice(0, 50);
+  // Cap to the top 50 by default with a "show all" expander (mirrors the IFA /
+  // Transactions lists) so the rest of the class is reachable, not truncated.
+  const LEADER_CAP = 50;
+  const leaderShowAll = !!state.draftLeaderShowAll;
+  const top = leaderShowAll ? prospects : prospects.slice(0, LEADER_CAP);
+  const leaderHidden = prospects.length - top.length;
 
   // Per-position bests, grouped by the canonical bucket (C/SS/INF/OF/SP/RP) the
   // Rankings filter uses - not the raw position string (which spawned a row per
@@ -22244,12 +22316,15 @@ function _renderDraftLeaderboard(host, cls) {
     + `
     <div class="draft-results-grid">
       <div class="draft-panel" style="grid-column:1/-1;">
-        <h3>${cls.year} class top ${top.length} by Draft Stock+</h3>
+        <h3>${cls.year} class ${leaderShowAll ? `all ${top.length}` : `top ${top.length}`} by Draft Stock+</h3>
         <table class="draft-table">
           <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>School</th>
             <th>DS+</th><th>FV</th><th>Round</th></tr></thead>
           <tbody>${topRows}</tbody>
         </table>
+        ${(!leaderShowAll && leaderHidden > 0)
+          ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="draft-leader-show-all" type="button">Show all ${prospects.length} prospects (+${leaderHidden} more)</button></div>`
+          : ""}
       </div>
       <div class="draft-panel">
         <h3>Best at each position</h3>
@@ -22260,6 +22335,8 @@ function _renderDraftLeaderboard(host, cls) {
         <ul class="draft-list">${toolRows}</ul>
       </div>
     </div>`;
+  const _lbSa = document.getElementById("draft-leader-show-all");
+  if (_lbSa) _lbSa.addEventListener("click", () => { state.draftLeaderShowAll = true; renderDraft(); });
 }
 
 function _renderClassStrength(host, classes) {
@@ -22356,9 +22433,9 @@ function _renderClassStrength(host, classes) {
               font-size="9" fill="var(--text-tertiary)">${k}</text>
       </g>`;
     }).join("");
-    return `<div class="draft-panel" style="text-align:center;cursor:pointer;" data-jump-year="${c.year}">
+    return `<div class="draft-panel" style="text-align:center;cursor:pointer;overflow:hidden;min-width:0;" data-jump-year="${c.year}">
       <h3>${c.year}${c.is_current ? " ⏳" : ""}</h3>
-      <svg width="${groupW}" height="${barH + 20}" style="display:block;margin:8px auto;">
+      <svg viewBox="0 0 ${groupW} ${barH + 20}" width="${groupW}" height="${barH + 20}" preserveAspectRatio="xMidYMin meet" style="display:block;margin:8px auto;max-width:100%;height:auto;">
         ${bars}
       </svg>
       <div style="font-size:11px;color:var(--text-tertiary);">
@@ -22391,7 +22468,7 @@ function _renderClassStrength(host, classes) {
 // biggest bonuses for the selected class, and per-round slot premium
 // rate. All numbers come straight off the draft payload - no extra
 // fetch - so it's safe to render on any class.
-function _renderSigningTrends(host, classes) {
+function _renderSigningTrends(host, classes, year) {
   const usd = v => v == null ? " - " : (v >= 1_000_000
     ? "$" + (v/1_000_000).toFixed(1) + "M"
     : v >= 1_000 ? "$" + (v/1_000).toFixed(0) + "K" : "$" + v);
@@ -22419,7 +22496,10 @@ function _renderSigningTrends(host, classes) {
   // lean on - default to the most recent class with signing data and let the
   // user pick another by clicking a point on the pool/spend chart.
   const _signingYears = validPool.map(r => r.year);
-  let selYear = state.signingYear;
+  // In per-year mode the detail tables should land on the viewed class. Seed
+  // selYear from the active draft year (overriding the cross-year sticky pick)
+  // when that class actually carries signing data.
+  let selYear = (year != null && _signingYears.includes(year)) ? year : state.signingYear;
   if (selYear == null || !_signingYears.includes(selYear)) {
     selYear = _signingYears.length ? _signingYears[_signingYears.length - 1] : null;
   }
@@ -22428,6 +22508,16 @@ function _renderSigningTrends(host, classes) {
     selYear = _done.length ? _done[0].year : null;
   }
   const selCls = classes.find(c => c.year === selYear);
+
+  // Aggregate mode: in Overall (no active draft year) with no chart drill, the
+  // three detail tables roll up EVERY completed class instead of a single year.
+  // A chart click (state.signingYear) drops back to a single-year drill; per-
+  // year mode (year != null) is always single-year.
+  const aggMode = (year == null) &&
+    (state.signingYear == null || !_signingYears.includes(state.signingYear));
+  // The chart only highlights a year when the tables are single-year; in
+  // aggregate mode no dot/label is emphasized (all years feed the tables).
+  const chartSel = aggMode ? null : selYear;
 
   const chartW = 320, chartH = 140, leftPad = 40, botPad = 22;
   const innerW = chartW - leftPad - 8, innerH = chartH - botPad - 8;
@@ -22438,7 +22528,7 @@ function _renderSigningTrends(host, classes) {
   // Selected year's points get a larger radius + outline; clicking any point
   // (or x-axis label) re-points the detail tables at that class.
   const _dots = (rows, color, key) => rows.map((r, i) => {
-    const isSel = r.year === selYear;
+    const isSel = r.year === chartSel;
     return `<circle cx="${_x(i)}" cy="${_y(r[key])}" r="${isSel ? 4 : 2.5}" fill="${color}"
         ${isSel ? 'stroke="var(--text-primary)" stroke-width="1"' : ""}
         style="cursor:pointer;" onclick="state.signingYear=${r.year};renderDraft();">
@@ -22447,9 +22537,9 @@ function _renderSigningTrends(host, classes) {
   const _xLabels = validPool.map((r, i) => `
     <text x="${_x(i)}" y="${chartH - 6}" text-anchor="middle" style="cursor:pointer;"
           onclick="state.signingYear=${r.year};renderDraft();"
-          font-weight="${r.year === selYear ? "700" : "400"}"
-          font-size="9" fill="${r.year === selYear ? "var(--neon-cyan)" : "var(--text-tertiary)"}">${r.year}</text>`).join("");
-  const _selIdx = validPool.findIndex(r => r.year === selYear);
+          font-weight="${r.year === chartSel ? "700" : "400"}"
+          font-size="9" fill="${r.year === chartSel ? "var(--neon-cyan)" : "var(--text-tertiary)"}">${r.year}</text>`).join("");
+  const _selIdx = validPool.findIndex(r => r.year === chartSel);
   const _guide = _selIdx >= 0
     ? `<line x1="${_x(_selIdx)}" y1="6" x2="${_x(_selIdx)}" y2="${chartH - botPad}"
             stroke="var(--text-tertiary)" stroke-width="1" stroke-dasharray="2 2" opacity="0.5"/>` : "";
@@ -22477,9 +22567,14 @@ function _renderSigningTrends(host, classes) {
     </div>` : "";
 
   // --- Selected-class context: top 10 bonuses + team spend leaders ---
-  const selProspects = (selCls && selCls.prospects) || [];
+  // Single-year mode draws on the one class; aggregate mode flattens every
+  // completed class's prospects (each tagged with _year for the Year column).
+  const selProspects = aggMode
+    ? classes.filter(c => !c.is_current)
+             .flatMap(c => (c.prospects || []).map(p => Object.assign({ _year: c.year }, p)))
+    : ((selCls && selCls.prospects) || []);
 
-  // Top 10 bonuses for this class.
+  // Top 10 bonuses (this class, or all completed classes in aggregate mode).
   const topBonuses = selProspects
     .filter(p => p.signing_bonus != null)
     .sort((a, b) => b.signing_bonus - a.signing_bonus)
@@ -22495,6 +22590,7 @@ function _renderSigningTrends(host, classes) {
     return `<tr>
       <td>${i + 1}</td>
       <td><a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');"><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${escapeHtml(p.player_name)}</span></a></td>
+      ${aggMode ? `<td style="color:var(--text-tertiary);">${p._year}</td>` : ""}
       <td>${escapeHtml(p.position || "?")}</td>
       <td><span class="draft-cell-ico">${teamLogoHTML(p.drafted_team, "sm")}${escapeHtml(p.drafted_team || "?")}</span></td>
       <td style="font-family:var(--font-mono);">${usd(p.signing_bonus)}</td>
@@ -22563,36 +22659,41 @@ function _renderSigningTrends(host, classes) {
 
   // Empty-state guard - pre-draft years won't have bonuses/teams.
   const isPostDraft = topBonuses.length > 0 || Object.keys(byTeam).length > 0;
+  // Heading / caption scope label: aggregate mode says "all years", otherwise
+  // names the single class driving the tables.
+  const scopeLbl = aggMode ? "All years" : String(selYear ?? "class");
   const preDraftNote = isPostDraft ? "" : `
     <div class="draft-panel" style="grid-column:1/-1;">
-      ${_draftEmpty(`No signing detail for ${selYear == null ? "any class" : selYear} yet`,
+      ${_draftEmpty(`No signing detail for ${aggMode ? "any class" : (selYear == null ? "any class" : selYear)} yet`,
         "Bonuses and team spend populate after a class is drafted and signed. Pick a past year on the chart above to see its detail.")}
     </div>`;
 
   host.innerHTML = _draftCaption("Signing trends",
-      `League pool vs. spend year over year, plus ${selYear ?? "class"} detail (top bonuses, team spend, per-round over-slot)`)
+      aggMode
+        ? "League pool vs. spend year over year, plus all-years detail (top bonuses, team spend, per-round over-slot). Click a year on the chart to drill into a single class."
+        : `League pool vs. spend year over year, plus ${selYear ?? "class"} detail (top bonuses, team spend, per-round over-slot)`)
     + `
     <div class="draft-results-grid">
       ${poolChart}
       ${preDraftNote}
       ${isPostDraft ? `
       <div class="draft-panel">
-        <h3>${selYear} · top 10 bonuses</h3>
+        <h3>${scopeLbl} · top 10 bonuses</h3>
         <table class="draft-table">
-          <thead><tr><th>#</th><th>Name</th><th>Pos</th><th>Team</th>
+          <thead><tr><th>#</th><th>Name</th>${aggMode ? "<th>Year</th>" : ""}<th>Pos</th><th>Team</th>
             <th>Bonus</th><th>vs Slot</th></tr></thead>
           <tbody>${topBonusRows}</tbody>
         </table>
       </div>
       <div class="draft-panel">
-        <h3>${selYear} · team spend leaders</h3>
+        <h3>${scopeLbl} · team spend leaders</h3>
         <table class="draft-table">
           <thead><tr><th>#</th><th>Team</th><th>Spend</th><th>Picks</th></tr></thead>
           <tbody>${teamRows}</tbody>
         </table>
       </div>
       <div class="draft-panel">
-        <h3>${selYear} · sign rate &amp; avg over-slot by round</h3>
+        <h3>${scopeLbl} · sign rate &amp; avg over-slot by round</h3>
         <table class="draft-table">
           <thead><tr><th>Round</th><th>Signed</th><th>Avg vs Slot</th></tr></thead>
           <tbody>${roundRows}</tbody>
@@ -23858,8 +23959,11 @@ function _renderDraftTendencies(host, classes, year) {
 let _draftOverperfMode = "outcome";   // "outcome" | "value"
 let _draftOverperfSort = { key: null, dir: -1 };   // null = default per-lens sort
 
-function _renderDraftOverperformers(host, classes) {
-  const completed = (classes || []).filter(c => !c.is_current);
+function _renderDraftOverperformers(host, classes, year) {
+  let completed = (classes || []).filter(c => !c.is_current);
+  // When a specific draft year is active (per-year mode), scope the pool to
+  // that single class so the view reflects the class the user is viewing.
+  if (year != null) completed = completed.filter(c => c.year === year);
   // Pool drafted + SIGNED prospects across completed classes. Signed-only is
   // what makes this view honest: it drops late-round non-signers (whose huge
   // synthetic picks from the old 40-round drafts produced fake "steals") and
@@ -23980,7 +24084,7 @@ function _renderDraftOverperformers(host, classes) {
       · ${mode === "outcome"
           ? "players whose CURRENT prospect FV most exceeds the median for their draft slot (career WAR shown where they've reached MLB)"
           : "players who slid furthest past their pre-draft consensus rank - value on draft day"}
-      · signed picks across all completed classes, deduped by player
+      · signed picks ${year != null ? `from the ${year} class` : "across all completed classes"}, deduped by player
     </div>
     <div class="filter-bar" id="overperf-mode-bar" style="gap:6px;margin-bottom:10px;">
       <span class="filter-label">Lens</span>
@@ -46043,6 +46147,9 @@ function _resetPageFilters(page) {
     state.draftOrderSort     = null;
     state.draftOrderRev      = false;
     state.signingYear        = null;
+    state.draftBonusShowAll  = false;
+    state.draftOverShowAll   = false;
+    state.draftLeaderShowAll = false;
     state.pages.draft        = 1;
   } else if (page === "overseas") {
     state.overseasSide          = "all";
