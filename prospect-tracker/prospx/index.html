@@ -279,6 +279,10 @@
       /* Subtle hover tint applied over interactive surfaces. Light
          theme darkens slightly; dark theme lifts slightly. */
       --bg-hover: rgba(15, 27, 45, 0.05);
+      /* Scrollbar pixel-bevel edges (light) - cream highlight + navy ink shadow.
+         Defined here too so the bevel renders without a fresh site.css. */
+      --scrollbar-hi: rgba(255, 250, 235, 0.55);
+      --scrollbar-lo: rgba(15, 27, 45, 0.28);
 
       /* Standard transitions for interactive feedback. Components opt
          in by setting `transition: var(--transition-hover)` or via the
@@ -483,6 +487,11 @@
          (--bg-header was too dark to see). Tokenized so the shorthand
          below stays hex-free. */
       --scrollbar-thumb: #3A3A42;
+      /* Y2K pixel-bevel edges, defined HERE (not only in site.css) so the bevel
+         renders even if PROSPX served a cached site.css. Iridescent lilac
+         highlight + near-black shadow on the dark/holo field. */
+      --scrollbar-hi: rgba(155, 140, 255, 0.42);
+      --scrollbar-lo: rgba(0, 0, 0, 0.55);
     }
     [data-theme="dark"] .player-row:hover,
     [data-theme="dark"] .debut-row:hover,
