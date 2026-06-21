@@ -126,7 +126,7 @@ def make_share_card() -> None:
     f_mods = _font(24, bold=False)
     d.text((PAD, 200), "EEPHUS.IO", font=f_brand, fill=DARK_FG[:3])
     _ramp_rule(d, PAD, W - PAD, 340, 5)
-    d.text((PAD, 372), "sabermetrics", font=f_tag, fill=DARK_FG[:3])
+    d.text((PAD, 372), "sabermetric analysis", font=f_tag, fill=DARK_FG[:3])
     d.text((PAD, 430),
            "PROSPX consensus board / MLB free agency / projections / collegesavant",
            font=f_mods, fill=DARK_SUB[:3])

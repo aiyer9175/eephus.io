@@ -183,6 +183,12 @@ FEEDBACK_MAILTO = (
     "mailto:arkndjl@gmail.com?subject=eephus.io%20beta%20feedback"
 )
 
+# Google Form embed for the /report/ "Report a bug" page. Owner: paste the
+# embeddable form URL here (the .../viewform?embedded=true variant from the
+# form's Send > <> embed dialog). Left empty, /report/ shows an on-theme
+# placeholder card plus the mailto fallback until the form is wired up.
+BUG_FORM_URL = ""
+
 def _footer() -> str:
     """The shared page footer: identity line left, useful links right.
     Every editorial surface and the homepage emit the same block."""
@@ -192,12 +198,12 @@ def _footer() -> str:
         f'<a href="/news/">Prospect News</a>'
         f'<a href="/sources/">Data Sources</a>'
         f'<a href="/glossary/">Glossary</a>'
-        f'<a href="{FEEDBACK_MAILTO}">Report a bug</a>'
+        f'<a href="/report/">Report a bug</a>'
         f'<a href="https://x.com/ARKNDJL" target="_blank" rel="noopener noreferrer">@ARKNDJL</a>'
     )
     return (
         '<footer class="eephus-footer">\n'
-        f'  <span>eephus.io - sabermetrics · {html.escape(EEPHUS_VERSION)}</span>\n'
+        f'  <span>eephus.io - sabermetric analysis · {html.escape(EEPHUS_VERSION)}</span>\n'
         f'  <nav class="eephus-footer-links" aria-label="Footer">{links}</nav>\n'
         f'  <span>© {year} eephus.io</span>\n'
         '</footer>'
@@ -590,8 +596,8 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "",
 
 def page(title: str, active: str, body: str, description: str = "",
          image: str = "", url: str = "", og_type: str = "website") -> str:
-    desc = html.escape(description or "eephus.io - sabermetrics")
-    social = _social_meta(title, description or "eephus.io - sabermetrics",
+    desc = html.escape(description or "eephus.io - sabermetric analysis")
+    social = _social_meta(title, description or "eephus.io - sabermetric analysis",
                           image, url, og_type)
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1335,8 +1341,8 @@ _GLOSSARY_TERMS = [
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
-    desc = html.escape(description or "eephus.io - sabermetrics")
-    social = _social_meta(title, description or "eephus.io - sabermetrics",
+    desc = html.escape(description or "eephus.io - sabermetric analysis")
+    social = _social_meta(title, description or "eephus.io - sabermetric analysis",
                           url=f"{SITE_ORIGIN}/")
     return f"""<!DOCTYPE html>
 <html lang="en">
@@ -1705,7 +1711,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     masthead = (
         '<div class="masthead">'
         f'{eephus_logo_lockup()}'
-        '<div class="dateline"><span>Sabermetrics</span>'
+        '<div class="dateline"><span>Sabermetric Analysis</span>'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
 
@@ -1793,7 +1799,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '</main>'
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
-    return page_home("eephus.io - sabermetrics", inner,
+    return page_home("eephus.io - sabermetric analysis", inner,
                      "Live MiLB prospect movers, top prospects, graduates, and analysis.")
 
 def build_articles_index(articles: list[dict]) -> str:
@@ -2146,7 +2152,7 @@ def build_team() -> str:
         f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
     )
     mission = (
-        "<p class=\"team-mission\">eephus.io is a collaborative sabermetrics project "
+        "<p class=\"team-mission\">eephus.io is a collaborative sabermetric analysis project "
         "created by us, the development team (listed below). We are all college "
         "students actively pursuing futures in baseball. Please contact any of us "
         "for questions, feedback, or opportunities.</p>"
@@ -2207,7 +2213,7 @@ def build_sources() -> str:
         '<div class="section-head"><h1>Data Sources &amp; Attribution</h1>'
         '<span class="section-sub">every upstream the platform reads, and how it is used</span></div>'
         '<div class="gl-intro">'
-        "<p>eephus.io is a sabermetrics platform. PROSPX grades are a consensus "
+        "<p>eephus.io is a sabermetric analysis platform. PROSPX grades are a consensus "
         "built across seven independent industry sources - the value added is the aggregation, "
         "calibration, and track-record audit, not any single list. No source's rankings or "
         "reports are republished wholesale; excerpts appear with attribution in the spirit of "
@@ -2222,6 +2228,41 @@ def build_sources() -> str:
                 "Every data source behind eephus.io - prospect ranking inputs, Statcast and "
                 "league data, contracts - and how each is used.",
                 url=f"{SITE_ORIGIN}/sources/")
+
+
+def build_bug_report() -> str:
+    """/report/ - the "Report a bug" destination linked from every footer.
+    Embeds the owner's Google Form when BUG_FORM_URL is set; otherwise shows
+    an on-theme placeholder card with the mailto fallback so the page is never
+    a dead end during the Open Beta."""
+    intro = (
+        '<div class="gl-intro"><p>Found something off? Tell us what happened and we '
+        'will take a look. Please note which section the bug is in - the form below '
+        'has a picker for it.</p></div>'
+    )
+    if BUG_FORM_URL:
+        form = (
+            f'<iframe src="{html.escape(BUG_FORM_URL)}" width="100%" height="820" '
+            'style="border:0" title="Report a bug form">Loading the form...</iframe>'
+        )
+    else:
+        form = (
+            '<div class="card">'
+            '<h3>The bug report form will appear here once it is configured.</h3>'
+            '<p>In the meantime, email the details - including which section the bug is '
+            'in - to <a href="' + FEEDBACK_MAILTO + '">arkndjl@gmail.com</a> and we will '
+            'sort it out.</p>'
+            '</div>'
+        )
+    body = (
+        '<div class="section-head"><h1>Report a bug</h1>'
+        '<span class="section-sub">tell us what broke and where</span></div>'
+        f'{intro}{form}'
+    )
+    return page("Report a bug - eephus.io", "", body,
+                "Report a bug on eephus.io - tell us what happened and which section "
+                "it is in.",
+                url=f"{SITE_ORIGIN}/report/")
 
 
 def build_404() -> str:
@@ -2274,6 +2315,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/glossary/", "weekly", "0.7"),
         ("/sources/", "monthly", "0.3"),
         ("/team/", "monthly", "0.3"),
+        ("/report/", "monthly", "0.2"),
     ]
     urls = []
     for path, freq, prio in pages:
@@ -2335,6 +2377,7 @@ def main() -> None:
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())
     _write("sources/index.html", build_sources())
+    _write("report/index.html", build_bug_report())
     _write("404.html", build_404())
     _write("robots.txt", build_robots())
     _write("sitemap.xml", build_sitemap(articles))
