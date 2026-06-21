@@ -279,37 +279,38 @@ def make_twitter() -> None:
     av2 = _y2k_icon(400, ball_frac=0.72, monogram=False)  # eephus.io: clean ball
     av2.save(social / "twitter-avatar-eephus.png")
 
-    # --- banners (1500x500): wordmark + tagline + ramp + ball, pixel stars ---
-    def _banner(path, title, accent_io, tagline, sub):
+    # --- banners (1500x500): a simple CENTERED lockup (icon + wordmark) over a
+    # one-line tagline. Centered horizontally so Twitter's bottom-left profile
+    # picture (which overlaps ~the left 200px / bottom 150px) never covers it. ---
+    def _banner(path, accent_io, title, tagline, monogram):
         W, H = 1500, 500
-        img = _y2k_field(W, H, origin=(0.22, 0.3)).convert("RGBA")
+        img = _y2k_field(W, H, origin=(0.5, 0.30)).convert("RGBA")
         d = ImageDraw.Draw(img, "RGBA")
         _pixel_stars(d, W, H, 120)
-        # Twitter overlays the avatar bottom-left (~120px) + crops edges; keep the
-        # wordmark centered-left, clear of the bottom-left avatar zone.
-        f_brand = _logo_font(118)
+        f_brand = _logo_font(120)
         f_tag = _logo_font(34)
-        f_sub = _font(22, bold=False)
-        x0, y0 = 90, 150
+        ball_sz, gap, cy = 150, 40, 205
+        wm_w = d.textlength(title, font=f_brand)
+        x0 = (W - (ball_sz + gap + wm_w)) / 2     # center the icon+wordmark group
+        # icon: eephus.io = clean ball; PROSPX = ball + P/X monogram
+        ball = _ball(ball_sz, monogram=monogram)
+        img.alpha_composite(ball, (int(x0), int(cy - ball_sz / 2)))
+        tx = x0 + ball_sz + gap
         if accent_io:
-            d.text((x0, y0), "EEPHUS", font=f_brand, fill=DARK_FG[:3])
+            d.text((tx, cy), "EEPHUS", font=f_brand, fill=DARK_FG[:3], anchor="lm")
             we = d.textlength("EEPHUS", font=f_brand)
-            d.text((x0 + we, y0), ".IO", font=f_brand, fill=LILAC[:3])
+            d.text((tx + we, cy), ".IO", font=f_brand, fill=LILAC[:3], anchor="lm")
         else:
-            d.text((x0, y0), title, font=f_brand, fill=DARK_FG[:3])
-        _ramp_rule(d, x0, x0 + 720, y0 + 150, 5)
-        d.text((x0, y0 + 178), tagline, font=f_tag, fill=DARK_FG[:3])
-        d.text((x0, y0 + 232), sub, font=f_sub, fill=DARK_SUB[:3])
-        # eephus.io banner (accent_io) = the clean ball mark; PROSPX banner gets
-        # the ball + P/X monogram (the monogram is the PROSPX mark, not eephus).
-        ball = _ball(230, monogram=not accent_io)
-        img.alpha_composite(ball, (W - 230 - 110, (H - 230) // 2))
+            d.text((tx, cy), title, font=f_brand, fill=DARK_FG[:3], anchor="lm")
+        _ramp_rule(d, int(tx), int(tx + wm_w), int(cy + 78), 5)
+        tag_w = d.textlength(tagline, font=f_tag)
+        d.text(((W - tag_w) / 2, cy + 108), tagline, font=f_tag, fill=DARK_FG[:3])
         img.convert("RGB").save(path)
 
-    _banner(social / "twitter-banner-eephus.png", "EEPHUS.IO", True, "sabermetrics",
-            "PROSPX / MLB free agency / projections / collegesavant")
-    _banner(social / "twitter-banner-prospx.png", "PROSPX", False,
-            "consensus prospect tracker", "seven industry sources, one FV  ·  eephus.io")
+    _banner(social / "twitter-banner-eephus.png", True, "EEPHUS.IO",
+            "sabermetric / scouting analytics website", False)
+    _banner(social / "twitter-banner-prospx.png", False, "PROSPX",
+            "consensus prospect tracker", True)
     print("wrote branding/social/twitter-avatar-*.png + twitter-banner-*.png")
 
 
