@@ -3982,6 +3982,11 @@
       text-transform: uppercase; letter-spacing: .08em; color: var(--text-tertiary);
       padding-left: 8px; border-left: 2px solid var(--border); margin-left: 2px;
     }
+    /* High School Details: tile-grid map + leaderboard affordances.
+       Colors are token-only so the no-hardcoded-color guard stays green. */
+    g[data-hs-state] { transition: filter .12s ease; }
+    g[data-hs-state]:hover rect { stroke: var(--neon-cyan); stroke-width: 2; }
+    tr[data-hs-state]:hover { background: var(--bg-tertiary); }
     /* Inline logo + text inside a draft table cell / list row, so team and
        college marks sit cleanly beside the name they belong to. */
     .draft-cell-ico { display: inline-flex; align-items: center; gap: 6px; min-width: 0; }
@@ -8492,7 +8497,7 @@
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="debuts">Debuted</button>
-    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses.">MLB Draft</button>
+    <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from.">MLB Draft/HS</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort - no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
@@ -8919,7 +8924,7 @@
        environments don't share a cohort with MiLB. -->
   <div id="draft-section" style="display: none;">
     <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">MLB Draft Prospects</span>
+      <span class="newsprint-eyebrow-label">MLB Draft/HS Prospects</span>
       <span class="newsprint-eyebrow-meta">amateur draft pipeline · rankings, schools, slot values &amp; signing bonuses · isolated from MiLB</span>
     </div>
     <div id="draft-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
@@ -8955,8 +8960,8 @@
                 title="How each organization drafts: position lean, college vs prep, pitching-heavy, plus draft-stock outcomes - all league-relative">Org Tendencies</button>
         <button class="chip" data-draft-view="overperformers"
                 title="Players who outperformed their draft slot - by realized value vs pick, or by sliding past their pre-draft consensus rank">Overperformers</button>
-        <button class="chip" data-draft-view="state-pipelines"
-                title="Which US states produce the most MLB value from their high-school draftees - career MLB WAR, prospect counts, and top-tier (FV 55+) counts by home state">State Pipelines</button>
+        <button class="chip" data-draft-view="hs-details"
+                title="Geography of high-school talent: a tile-grid map and per-state pages across five lenses - per-capita rate, volume, shrunk quality, production vs population, and realized outcome vs draft slot (career MLB WAR included)">HS Details</button>
       </span>
     </div>
     <!-- v28 - Draft filter / sort accordion. Collapsed by default; the
@@ -12284,7 +12289,7 @@ function renderDetailTabs(tabs, activeKey, dataKey) {
 // Encode current filter state into the URL hash so the view is shareable.
 // Detail pages get a dedicated `player=KEY` or `farm=ORG` hash param;
 // when set they take precedence over the list-page filters at render time.
-function syncToURL() {
+function syncToURL(push) {
   const p = new URLSearchParams();
   if (state.view && state.view.type === "player") p.set("player", state.view.key);
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
@@ -12346,6 +12351,10 @@ function syncToURL() {
   if (state.section === "draft") {
     if (state.draftYear != null) p.set("dyear", String(state.draftYear));
     if (state.draftView && state.draftView !== "rankings") p.set("dview", state.draftView);
+    if (state.draftView === "hs-details") {
+      if (_hsView.mode && _hsView.mode !== "states") p.set("dhsmode", _hsView.mode);
+      if (_hsView.entity) p.set("dhsk", _hsView.entity);
+    }
   }
   if (state.ilStatcastSort && state.ilStatcastSort !== "off") p.set("ilssk", state.ilStatcastSort);
   if (state.debutStatcastSort && state.debutStatcastSort !== "off") p.set("dssk", state.debutStatcastSort);
@@ -12422,7 +12431,9 @@ function syncToURL() {
   if (compareKeys.length) p.set("cmp",  compareKeys.join(","));
   if (farmKeys.length)    p.set("fcmp", farmKeys.join(","));
   const hash = p.toString();
-  history.replaceState(null, "", hash ? "#" + hash : window.location.pathname + window.location.search);
+  const _surlTarget = hash ? "#" + hash : window.location.pathname + window.location.search;
+  if (push) history.pushState(null, "", _surlTarget);
+  else history.replaceState(null, "", _surlTarget);
 }
 
 // Read the URL hash and update state (called once on boot, and again on
@@ -12459,6 +12470,8 @@ function syncFromURL() {
   // draft tab is deep-linkable / shareable / survives reload.
   if (p.has("dyear")) { const dy = p.get("dyear"); state.draftYear = dy === "overall" ? "overall" : +dy; }
   if (p.has("dview")) state.draftView = p.get("dview");
+  _hsView.mode = p.get("dhsmode") || "states";
+  _hsView.entity = p.has("dhsk") ? p.get("dhsk") : null;
   if (p.has("org"))   state.orgFilter   = p.get("org");
   if (p.has("acq"))   state.acqFilter   = p.get("acq");
   if (p.has("class")) state.classFilter = p.get("class");
@@ -21330,8 +21343,8 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "lottery"];
-  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "state-pipelines"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "lottery"];
+  const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
   // draft, e.g. 2027), NOT on whatever class the user is currently viewing. So
@@ -21352,7 +21365,12 @@ async function renderDraft() {
     if (view === "lottery" && !_anyLottery) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
-    b.onclick = () => { state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL(); };
+    b.onclick = () => {
+      // Entering HS Details from the sub-nav always lands on the map
+      // overview, never a stale drilled-in state page.
+      if (b.dataset.draftView === "hs-details") { _hsView.entity = null; state.draftYear = "overall"; }
+      state.draftView = b.dataset.draftView; resetPage("draft"); renderDraft(); syncToURL();
+    };
   });
   // Hide any sub-nav group label whose chips are all hidden in this mode.
   document.querySelectorAll("#draft-subtab-bar .draft-subnav-group").forEach(g => {
@@ -21389,7 +21407,7 @@ async function renderDraft() {
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
     case "overperformers": return _renderDraftOverperformers(host, classes, isOverall ? null : state.draftYear);
-    case "state-pipelines": return _renderStatePipelines(host, classes);
+    case "hs-details":     return _renderHSDetails(host, classes);
     case "rankings":
     default:               return _renderDraftRankings(host, cls);
   }
@@ -24013,7 +24031,7 @@ let _draftOverperfMode = "outcome";   // "outcome" | "value"
 let _draftOverperfSort = { key: null, dir: -1 };   // null = default per-lens sort
 // State Pipelines view sort. Default: total MLB WAR descending (the truest
 // "produced MLB value" signal). null key falls back to that default ordering.
-let _statePipeSort = { key: null, dir: -1 };
+// State Pipelines retired; superseded by the High School Details view below.
 
 function _renderDraftOverperformers(host, classes, year) {
   let completed = (classes || []).filter(c => !c.is_current);
@@ -24171,112 +24189,729 @@ function _renderDraftOverperformers(host, classes, year) {
 // college players are excluded because their listed school is not their origin.
 // career_war is baked onto drafted-and-signed players who reached pro ball, so
 // recent classes contribute little WAR yet.
-function _renderStatePipelines(host, classes) {
-  const MIN_HS = 5;   // states under this HS-prospect count are omitted (tiny samples)
-  const TOP_FV = 55;  // top-tier consensus-FV threshold
+// === High School Details ("geography of talent") =====================
+// Where US high-school draft prospects come from, read through lenses
+// that are never blended: volume, shrunk quality, per-capita rate,
+// production-vs-size, and realized outcome vs draft slot. Three grouping
+// modes share one engine and one detail-page pattern:
+//   states   - per US state (the default); tile-grid map + state pages.
+//   schools  - per high-school program (name-normalized); ranked board
+//              + program pages. Shows where a single school stacks up.
+//   regions  - four geographic regions; region-shaded map + region pages.
+// The class strip is the year control (Overall = all classes). Reuses
+// _isHSPlayer / _hsStateName and the draft-table + entity-detail parts.
+//
+// Origin caveat: a prospect's state/region/program is the location of his
+// listed high school, NOT his birthplace. National academies (IMG in FL,
+// etc.) draw nationally, so they inflate their host state. Surfaced, not
+// hidden.
 
-  // Aggregate every HS prospect across all classes by parsed home state. The
-  // state key comes from _hsStateName, which returns null for non-US codes
-  // (e.g. Ontario) and unparseable schools, so the board stays US-states-only.
-  const byState = {};
+// Two-letter US code from a HS school string "Foo HS (FL)". Returns the
+// code only when it maps to a known US jurisdiction, mirroring
+// _hsStateName (so Ontario and unparseable schools drop out).
+function _hsStateAbbr(school) {
+  const m = /\(([A-Z]{2})\)\s*$/.exec(String(school || ""));
+  return (m && _US_STATE_NAMES[m[1]]) ? m[1] : null;
+}
+
+// Canonical program name from a raw school string. The source spells the
+// same school several ways - "IMG Academy (FL)", "IMG Academy HS (FL)",
+// "IMG Academy", "IMG Academy HS FL" - which would otherwise fragment the
+// program counts. Strip the trailing state tag (parenthesized or bare)
+// and the HS / High School suffix so the variants collapse to one program.
+function _hsProgramName(school) {
+  let s = String(school || "").trim();
+  if (!s) return null;
+  s = s.replace(/\s*\([A-Z]{2}\)\s*$/, "");                  // " (FL)"
+  s = s.replace(/\s+(HS|H\.S\.|High School)\s*$/i, "");      // trailing "HS"
+  s = s.replace(/\s+[A-Z]{2}\s*$/, "");                      // bare trailing " FL"
+  s = s.replace(/\s+(HS|H\.S\.|High School)\s*$/i, "");      // "X HS FL" -> after FL strip
+  s = s.replace(/\s+/g, " ").trim();
+  return s || null;
+}
+
+// Four geographic regions. Talent concentrates in a few giant states
+// (CA, FL, TX, GA), so perfectly even regions are impossible; this keeps
+// geographic adjacency while splitting the giants across West and
+// Southeast rather than piling them into one region. TX sits in the West
+// (Southwest convention) so the Southeast is not FL + GA + TX together.
+const _HS_REGIONS = {
+  Northeast: ["CT", "ME", "MA", "NH", "RI", "VT", "NJ", "NY", "PA", "MD", "DE", "DC"],
+  Midwest:   ["IL", "IN", "MI", "OH", "WI", "IA", "KS", "MN", "MO", "NE", "ND", "SD"],
+  Southeast: ["FL", "GA", "SC", "NC", "VA", "TN", "KY", "WV", "AL", "MS", "PR"],
+  West:      ["CA", "TX", "OK", "AR", "LA", "NM", "AZ", "CO", "NV", "UT", "WY", "MT", "ID", "OR", "WA", "AK", "HI"]
+};
+const _HS_STATE_REGION = (function () {
+  const m = {};
+  for (const r in _HS_REGIONS) for (const s of _HS_REGIONS[r]) m[s] = r;
+  return m;
+})();
+
+// Module-level UI state. `mode` is the grouping; `entity` is the drilled-
+// into key (state code / program name / region name), null on the
+// overview. Both round-trip through the URL (dhsmode / dhsk) so back /
+// forward and shareable links work.
+let _hsView = { mode: "states", metric: "rate", scale: "quantile", side: "all", sort: { key: null, dir: -1 }, entity: null };
+
+// Fixed empirical-Bayes shrinkage for the mean-FV lens: an entity's own
+// average earns half the weight at this many prospects (n / (n + K)).
+// Mirrors consensus.py's adjusted = (n/(n+k))*raw + (k/(n+k))*mean. Fixed,
+// not fitted - FV is a coarse 20-80 scale, so a fitted between-group
+// variance is near zero and would shrink everyone flat to the mean.
+const _HS_SHRINK_K = 10;
+
+// Tile-grid layout [row, col] for 50 states + DC + PR. Equal-size cells
+// (a "statebins" choropleth) so land area can't bias the read. Geographic
+// enough to be legible - NW top-left, FL bottom-right; AK / HI / ME / PR
+// anchor the corners.
+const _HS_TILE = {
+  AK: [0, 0], ME: [0, 10],
+  VT: [1, 9], NH: [1, 10],
+  WA: [2, 0], ID: [2, 1], MT: [2, 2], ND: [2, 3], MN: [2, 4], WI: [2, 5], MI: [2, 7], NY: [2, 9], MA: [2, 10],
+  OR: [3, 0], NV: [3, 1], WY: [3, 2], SD: [3, 3], IA: [3, 4], IL: [3, 5], IN: [3, 6], OH: [3, 7], PA: [3, 8], NJ: [3, 9], CT: [3, 10],
+  CA: [4, 0], UT: [4, 1], CO: [4, 2], NE: [4, 3], MO: [4, 4], KY: [4, 5], WV: [4, 6], VA: [4, 7], MD: [4, 8], DE: [4, 9], RI: [4, 10],
+  AZ: [5, 1], NM: [5, 2], KS: [5, 3], AR: [5, 4], TN: [5, 5], NC: [5, 6], SC: [5, 7], DC: [5, 8],
+  OK: [6, 3], LA: [6, 4], MS: [6, 5], AL: [6, 6], GA: [6, 7],
+  HI: [7, 0], TX: [7, 2], FL: [7, 7], PR: [7, 9]
+};
+
+// Academy-heavy states whose listed-HS location most overstates true
+// origin (national prep academies recruit nationally). Flagged in the UI.
+const _HS_ACADEMY_STATES = { FL: "IMG Academy and other national prep programs draw players from across the country, so Florida's listed-school totals overstate home-grown talent." };
+
+// The lenses. `val` reads an aggregate row; `fmt` formats it. `token` is
+// the map fill color. `modes` lists which grouping modes the lens applies
+// to (rate / residual need a population baseline; residual needs enough
+// points for a regression, so it is states-only).
+const _HS_METRICS = [
+  { key: "rate", label: "Per-capita rate", unit: "per 100k youth", token: "--neon-cyan", needsDemo: true, modes: ["states", "regions"],
+    val: r => r.rate, fmt: r => r.rate != null ? r.rate.toFixed(2) : " - ",
+    blurb: "High-school prospects per 100,000 residents age 0-18. Normalizes for size, so a small place with deep talent surfaces instead of just the most populous ones." },
+  { key: "volume", label: "Volume", unit: "prospects", token: "--neon-violet", modes: ["states", "regions", "schools"],
+    val: r => r.n, fmt: r => String(r.n),
+    blurb: "Raw count of high-school prospects across every class in view. The most literal lens; dominated by the biggest sources." },
+  { key: "quality", label: "Shrunk quality", unit: "mean FV", token: "--neon-green", modes: ["states", "regions", "schools"],
+    val: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ",
+    blurb: "Mean consensus FV pulled toward the national mean by sample size (empirical-Bayes, K=" + _HS_SHRINK_K + "). Stops a place with two lucky prospects from topping a quality board." },
+  { key: "residual", label: "Production vs size", unit: "vs expected", token: "--neon-amber", needsDemo: true, modes: ["states"],
+    val: r => r.residual, fmt: r => r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - ",
+    blurb: "Prospects above or below what youth population predicts (a straight-line fit of count on youth population). Positive means it overproduces talent for its size." },
+  { key: "outcome", label: "Outcome vs slot", unit: "mean FV gain", token: "--neon-cyan", needsOutcome: true, modes: ["states", "regions", "schools"],
+    val: r => r.meanOverperf, fmt: r => r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - ",
+    blurb: "Mean realized FV minus the FV expected for each drafted player's slot, pooled. Small samples, mature classes only: read it as a wide-band audit, not a confident ranking." }
+];
+
+function _hsMetric(key) { return _HS_METRICS.find(m => m.key === key) || _HS_METRICS[0]; }
+
+// Per-mode display config.
+const _HS_MODE_META = {
+  states:  { label: "States",       noun: "state",       plural: "states",        hasMap: true,  colKey: "State" },
+  schools: { label: "High Schools", noun: "high school", plural: "high schools",  hasMap: false, colKey: "High School" },
+  regions: { label: "Regions",      noun: "region",      plural: "regions",       hasMap: true,  colKey: "Region" }
+};
+
+// Lazy-load the demographics sidecar (Census 2020 population + youth).
+async function _hsLoadDemographics() {
+  if (DATA.stateDemographics) return DATA.stateDemographics;
+  try {
+    const base = DATA_URL.replace(/[^/]+$/, "");
+    const resp = await fetch(base + "state_demographics.json", { cache: "no-cache" });
+    if (!resp.ok) throw new Error("HTTP " + resp.status);
+    DATA.stateDemographics = await resp.json();
+  } catch (e) {
+    DATA.stateDemographics = { states: {}, _error: String(e.message || e) };
+  }
+  return DATA.stateDemographics;
+}
+
+// Hitter vs pitcher from player_type (HSh / HSp), falling back to position.
+function _hsSideOf(p) {
+  const pt = (p.player_type || "").toUpperCase();
+  if (pt.endsWith("P")) return "pitcher";
+  if (pt.endsWith("H")) return "hitter";
+  return /^(RHP|LHP|SP|RP|MIRP|SIRP|P)\b/.test(p.position || "") ? "pitcher" : "hitter";
+}
+
+function _hsStd(arr) {
+  if (!arr || arr.length < 2) return 0;
+  const m = arr.reduce((s, x) => s + x, 0) / arr.length;
+  return Math.sqrt(arr.reduce((s, x) => s + (x - m) * (x - m), 0) / (arr.length - 1));
+}
+
+// OLS of prospect count on youth population (100k units). Returns slope,
+// intercept, residual SE, r-squared, and predict(). Null under 3 points.
+function _hsFitProductionReg(byKey, demoStates) {
+  const pts = [];
+  for (const k in byKey) {
+    const dem = demoStates[k];
+    if (!dem || !dem.youth) continue;
+    pts.push([dem.youth / 100000, byKey[k].n]);
+  }
+  const n = pts.length;
+  if (n < 3) return null;
+  const mx = pts.reduce((s, p) => s + p[0], 0) / n;
+  const my = pts.reduce((s, p) => s + p[1], 0) / n;
+  let sxx = 0, sxy = 0;
+  for (const [x, y] of pts) { sxx += (x - mx) * (x - mx); sxy += (x - mx) * (y - my); }
+  const slope = sxx ? sxy / sxx : 0;
+  const intercept = my - slope * mx;
+  let ssRes = 0, ssTot = 0;
+  for (const [x, y] of pts) { const r = y - (intercept + slope * x); ssRes += r * r; ssTot += (y - my) * (y - my); }
+  const se = n > 2 ? Math.sqrt(ssRes / (n - 2)) : null;
+  return { slope, intercept, se, n, r2: ssTot ? 1 - ssRes / ssTot : 0, predict: youth => intercept + slope * (youth / 100000) };
+}
+
+// Effective class year. The draft section's class strip is the single
+// year control: "Overall" aggregates every class, a year chip narrows.
+function _hsEffYear() {
+  return (typeof state === "undefined" || state.draftYear == null || state.draftYear === "overall")
+    ? "all" : String(state.draftYear);
+}
+
+// The grouping key + display name for one prospect under a given mode.
+function _hsEntityKey(p, mode) {
+  const ab = _hsStateAbbr(p.school);
+  if (mode === "regions") return ab ? _HS_STATE_REGION[ab] || null : null;
+  if (mode === "schools") return _hsProgramName(p.school);
+  return ab;
+}
+
+// Most-common state code in a {code: count} tally (used to label a
+// program or to pick a representative state).
+function _hsDomState(states) {
+  let best = null, bn = -1;
+  for (const s in states) if (states[s] > bn) { bn = states[s]; best = s; }
+  return best;
+}
+
+// Aggregate every in-view HS prospect into per-entity rows for `mode`,
+// carrying all lenses plus supporting counts.
+function _hsAggregate(classes, demo, mode) {
+  mode = mode || _hsView.mode || "states";
+  const yr = _hsEffYear(), side = _hsView.side;
+  const byKey = {};
+  let sumFvAll = 0, nFvAll = 0, totN = 0;
   for (const c of (classes || [])) {
+    if (yr !== "all" && c.year !== +yr) continue;
     for (const p of (c.prospects || [])) {
       if (!_isHSPlayer(p)) continue;
-      const st = _hsStateName(p.school);
-      if (!st) continue;
-      const a = byState[st] || (byState[st] = { state: st, prospects: 0, topProspects: 0, sumFv: 0, nFv: 0, reachedMlb: 0, totalWar: 0 });
-      a.prospects++;
+      if (side !== "all" && _hsSideOf(p) !== side) continue;
+      const key = _hsEntityKey(p, mode);
+      if (!key) continue;
+      const ab = _hsStateAbbr(p.school);
+      const a = byKey[key] || (byKey[key] = {
+        key, name: (mode === "states" ? _US_STATE_NAMES[key] : key), n: 0, top: 0, sumFv: 0, nFv: 0,
+        drafted: 0, nBonus: 0, sumBonus: 0, overperf: [], reachedMlb: 0, totalWar: 0, programs: {}, states: {}, topProspect: null
+      });
+      a.n++; totN++;
       const fv = p.consensus_fv;
-      if (fv != null) { a.sumFv += +fv; a.nFv++; if (+fv >= TOP_FV) a.topProspects++; }
+      if (fv != null) {
+        a.sumFv += +fv; a.nFv++; sumFvAll += +fv; nFvAll++;
+        if (+fv >= 55) a.top++;
+        if (!a.topProspect || +fv > a.topProspect.fv) a.topProspect = { name: p.player_name, fv: +fv, key: p.player_key };
+      }
+      if (p.drafted_pick != null) a.drafted++;
+      if (p.signing_bonus != null) { a.sumBonus += +p.signing_bonus; a.nBonus++; }
+      if (p.overperf_fv != null && isFinite(p.overperf_fv)) a.overperf.push(+p.overperf_fv);
       if (p.career_war != null) { a.reachedMlb++; a.totalWar += +p.career_war; }
+      if (ab) a.states[ab] = (a.states[ab] || 0) + 1;
+      const prog = _hsProgramName(p.school) || " - ";
+      a.programs[prog] = (a.programs[prog] || 0) + 1;
     }
   }
+  const grandMean = nFvAll ? sumFvAll / nFvAll : 0;
+  const states = (demo && demo.states) || {};
+  const youthOf = a => {
+    if (mode === "states") { const d = states[a.key]; return d ? d.youth : null; }
+    if (mode === "regions") { let y = 0, has = false; for (const s of (_HS_REGIONS[a.key] || [])) { const d = states[s]; if (d && d.youth) { y += d.youth; has = true; } } return has ? y : null; }
+    return null;
+  };
+  const popOf = a => {
+    if (mode === "states") { const d = states[a.key]; return d ? d.population : null; }
+    if (mode === "regions") { let pp = 0, has = false; for (const s of (_HS_REGIONS[a.key] || [])) { const d = states[s]; if (d && d.population) { pp += d.population; has = true; } } return has ? pp : null; }
+    return null;
+  };
+  const reg = mode === "states" ? _hsFitProductionReg(byKey, states) : null;
+  let totYouth = 0;
+  for (const k in byKey) { const y = youthOf(byKey[k]); if (y) totYouth += y; }
+  const nationalRate = totYouth ? (totN / totYouth) * 100000 : null;
+  const rows = Object.values(byKey).map(a => {
+    const meanRaw = a.nFv ? a.sumFv / a.nFv : null;
+    const w = a.n / (a.n + _HS_SHRINK_K);
+    const meanShrunk = meanRaw != null ? w * meanRaw + (1 - w) * grandMean : null;
+    const youth = youthOf(a), pop = popOf(a);
+    const rate = (youth && a.n) ? (a.n / youth) * 100000 : null;
+    const pred = (reg && youth != null) ? reg.predict(youth) : null;
+    const residual = (pred != null) ? a.n - pred : null;
+    const meanOverperf = a.overperf.length ? a.overperf.reduce((s, x) => s + x, 0) / a.overperf.length : null;
+    return Object.assign({}, a, {
+      meanRaw, meanShrunk, shrinkW: w, youth, pop, rate, pred, residual,
+      meanOverperf, overperfN: a.overperf.length, warPerDraftee: a.drafted ? a.totalWar / a.drafted : 0,
+      nStates: Object.keys(a.states).length, domState: _hsDomState(a.states)
+    });
+  });
+  return { rows, grandMean, grandN: nFvAll, totN, totYouth, nationalRate, reg, k: _HS_SHRINK_K, mode };
+}
 
-  let rows = Object.values(byState)
-    .filter(a => a.prospects >= MIN_HS)
-    .map(a => ({
-      state: a.state,
-      prospects: a.prospects,
-      topProspects: a.topProspects,
-      meanFv: a.nFv ? a.sumFv / a.nFv : null,
-      reachedMlb: a.reachedMlb,
-      totalWar: a.totalWar,
-      warPerProspect: a.totalWar / a.prospects,
-    }));
+// Metrics available in this mode given what data is present.
+function _hsModeMetrics(mode, rows, demoOk) {
+  return _HS_METRICS.filter(m =>
+    m.modes.indexOf(mode) >= 0
+    && (!m.needsDemo || demoOk)
+    && (!m.needsOutcome || rows.some(r => r.meanOverperf != null)));
+}
 
+// Tile-grid map. In states mode each cell is its own value; in regions
+// mode each cell takes its region's value (so the map reads as four
+// shaded blocks). Fills use the metric token + data-driven fill-opacity
+// (no hardcoded colors, theme-aware). Cells with no value render muted.
+function _hsRenderMap(rows, metricKey, scale, mode) {
+  const M = _hsMetric(metricKey);
+  const rowByKey = {};
+  rows.forEach(r => { rowByKey[r.key] = r; });
+  const tileEntity = ab => mode === "regions" ? (_HS_STATE_REGION[ab] || null) : ab;
+  // Intensity computed over the entity rows (4 regions or 43 states), then
+  // mapped onto each tile.
+  const present = rows.map(r => ({ k: r.key, v: M.val(r) })).filter(o => o.v != null && isFinite(o.v));
+  const intensity = {};
+  if (present.length === 1) intensity[present[0].k] = 1;
+  else if (present.length > 1) {
+    if (scale === "quantile") {
+      const sorted = present.slice().sort((a, b) => a.v - b.v);
+      sorted.forEach((o, i) => { intensity[o.k] = i / (sorted.length - 1); });
+    } else if (scale === "log" && present.every(o => o.v > 0)) {
+      const ls = present.map(o => Math.log(o.v));
+      const mn = Math.min.apply(null, ls), mx = Math.max.apply(null, ls);
+      present.forEach(o => { intensity[o.k] = mx > mn ? (Math.log(o.v) - mn) / (mx - mn) : 1; });
+    } else {
+      const vs = present.map(o => o.v);
+      const mn = Math.min.apply(null, vs), mx = Math.max.apply(null, vs);
+      present.forEach(o => { intensity[o.k] = mx > mn ? (o.v - mn) / (mx - mn) : 1; });
+    }
+  }
+  const STEP = 40, SZ = 36, RAD = 4, W = 11 * STEP, H = 8 * STEP;
+  const cells = Object.keys(_HS_TILE).map(ab => {
+    const [row, col] = _HS_TILE[ab];
+    const x = col * STEP, y = row * STEP;
+    const ek = tileEntity(ab);
+    const r = ek ? rowByKey[ek] : null;
+    const v = r ? M.val(r) : null;
+    const has = v != null && isFinite(v);
+    const op = has ? (0.14 + 0.80 * (intensity[ek] || 0)) : 1;
+    const fill = has ? "var(" + M.token + ")" : "var(--bg-tertiary)";
+    const valTxt = has ? M.fmt(r) : "";
+    const label = mode === "regions" && r ? r.key : (_US_STATE_NAMES[ab] || ab);
+    const title = label + ": " + (has ? M.fmt(r) + " " + M.unit : "no data")
+      + (r ? " (" + r.n + " HS prospect" + (r.n === 1 ? "" : "s") + ")" : "");
+    const lowN = r && r.n < 5 && mode !== "regions";
+    return '<g data-hs-tile="' + ab + '" style="cursor:pointer;">'
+      + '<title>' + escapeHtml(title) + '</title>'
+      + '<rect x="' + x + '" y="' + y + '" width="' + SZ + '" height="' + SZ + '" rx="' + RAD + '" '
+      + 'style="fill:' + fill + ';fill-opacity:' + op.toFixed(3) + ';stroke:var(--border-light);stroke-width:1;"></rect>'
+      + '<text x="' + (x + SZ / 2) + '" y="' + (y + 14) + '" text-anchor="middle" '
+      + 'style="font:700 10px var(--font-mono);fill:var(--text-primary);pointer-events:none;' + (lowN ? 'opacity:0.55;' : '') + '">' + ab + '</text>'
+      + (valTxt ? '<text x="' + (x + SZ / 2) + '" y="' + (y + 27) + '" text-anchor="middle" '
+        + 'style="font:600 8px var(--font-mono);fill:var(--text-secondary);pointer-events:none;">' + escapeHtml(valTxt) + '</text>' : '')
+      + '</g>';
+  }).join("");
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" width="100%" '
+    + 'style="max-width:540px;height:auto;display:block;margin:4px auto 0;" role="img" '
+    + 'aria-label="US tile-grid map by ' + escapeHtml(M.label) + '">' + cells + '</svg>';
+}
+
+function _hsRenderLegend(metricKey) {
+  const M = _hsMetric(metricKey);
+  const stops = [0.14, 0.31, 0.48, 0.65, 0.82, 0.94].map(op =>
+    '<span style="display:inline-block;width:26px;height:12px;background:var(' + M.token + ');opacity:' + op + ';"></span>').join("");
+  return '<div style="display:flex;align-items:center;justify-content:center;gap:8px;margin-top:6px;'
+    + 'font-size:10px;color:var(--text-tertiary);font-family:var(--font-mono);">'
+    + '<span>lower</span><span style="display:inline-flex;border-radius:3px;overflow:hidden;">' + stops + '</span><span>higher</span>'
+    + '<span style="margin-left:8px;display:inline-block;width:14px;height:12px;background:var(--bg-tertiary);'
+    + 'border:1px solid var(--border-light);"></span><span>no data</span></div>';
+}
+
+function _hsChipRow(label, attr, items, active) {
+  const chips = items.map(it =>
+    '<button class="chip ' + (it.v === active ? 'active' : '') + '" ' + attr + '="' + escapeHtml(it.v) + '"'
+    + (it.title ? ' title="' + escapeHtml(it.title) + '"' : '') + '>' + escapeHtml(it.label) + '</button>').join("");
+  return '<div class="filter-group"><span class="filter-label">' + escapeHtml(label) + '</span>' + chips + '</div>';
+}
+
+// Push the current drill state into a real history entry so browser Back
+// returns to the overview (and the view is shareable). Drill-in only.
+function _hsDrillTo(key) {
+  _hsView.entity = key;
+  syncToURL(true);
+  renderDraft();
+}
+// In-page back to the current mode's overview. Reliable regardless of
+// history depth; browser Back also works via the pushed entry above.
+function _hsBackToOverview() {
+  _hsView.entity = null;
+  renderDraft();
+  syncToURL();
+}
+
+// Overview: mode + metric + scale + side controls, then (for states /
+// regions) the tile-grid map, then the ranked board. Dispatches to the
+// entity detail page when one is drilled into.
+async function _renderHSDetails(host, classes) {
+  if (_hsView.entity) return _renderHSEntityDetail(host, _hsView.mode, _hsView.entity, classes);
+
+  host.innerHTML = '<div class="state-message is-loading">Loading high-school geography...</div>';
+  const demo = await _hsLoadDemographics();
+  const mode = _HS_MODE_META[_hsView.mode] ? _hsView.mode : "states";
+  _hsView.mode = mode;
+  const meta = _HS_MODE_META[mode];
+  const agg = _hsAggregate(classes, demo, mode);
+  const rows = agg.rows;
   if (!rows.length) {
-    host.innerHTML = _draftEmpty("No state pipelines to rank yet",
-      "State pipelines populate once drafted high-school players carry a home-state code and accrue MLB time.");
+    host.innerHTML = _hsModeControls(mode, "rate", false) + _draftEmpty("No high-school geography to show yet",
+      "This view populates once drafted high-school prospects carry a home-state code in their school string.");
+    _hsWireOverview(host, classes);
     return;
   }
 
-  // Click-to-sort headers, mirroring the Overperformers tab one chip over.
-  const sk = _statePipeSort.key, sd = _statePipeSort.dir;
-  const _val = (r, key) => key === "state" ? r.state
-                         : key === "meanFv" ? (r.meanFv ?? -Infinity)
-                         : (r[key] ?? -Infinity);
-  if (sk) {
-    rows.sort((a, b) => {
-      const va = _val(a, sk), vb = _val(b, sk);
-      const cmp = typeof va === "string" ? va.localeCompare(vb) : (va - vb);
-      return cmp * sd || (b.totalWar - a.totalWar);
-    });
-  } else {
-    // Default: total MLB WAR descending (the truest produced-value signal),
-    // then prospect count as a tiebreaker.
-    rows.sort((a, b) => (b.totalWar - a.totalWar) || (b.prospects - a.prospects));
+  const demoOk = demo && demo.states && Object.keys(demo.states).length > 0;
+  const avail = _hsModeMetrics(mode, rows, demoOk);
+  let metric = _hsView.metric;
+  if (!avail.some(m => m.key === metric)) metric = avail.length ? avail[0].key : "volume";
+  _hsView.metric = metric;
+  const M = _hsMetric(metric);
+
+  const controls = _hsModeControls(mode, metric, demoOk, avail);
+
+  const effYear = _hsEffYear();
+  const bigN = rows.filter(r => r.n >= 10).length;
+  const academyNote = mode === "schools"
+    ? " A program's listed players are by school name; national academies recruit across state lines."
+    : "";
+  const caption = _draftCaption("High School Details",
+    "where high-school draft prospects come from, by the location of their listed high school (not birthplace). "
+    + "Each lens stands alone and is never blended. Grouped by <strong>" + escapeHtml(meta.label.toLowerCase()) + "</strong>. "
+    + (meta.hasMap ? "The map is a tile grid - every state is the same size, so population and land area do not bias the color. " : "")
+    + "Showing <strong>" + agg.totN + "</strong> high-school prospects across <strong>" + rows.length + "</strong> " + escapeHtml(meta.plural)
+    + (effYear === "all" ? " (all classes; pick a year in the class strip to narrow)" : " (" + effYear + " class)")
+    + (_hsView.side === "all" ? "" : ", " + _hsView.side + "s only") + "."
+    + (mode === "states" ? " Reliable for the " + bigN + " state" + (bigN === 1 ? "" : "s") + " with 10+ prospects; smaller states are dimmed and shrink toward the national mean on quality." : "")
+    + academyNote);
+
+  let mapBlock = "";
+  if (meta.hasMap) {
+    mapBlock =
+      '<div style="border:1px solid var(--border);background:var(--bg-secondary);border-radius:8px;padding:12px 12px 14px;margin-bottom:12px;">'
+      + '<div style="text-align:center;font-size:13px;color:var(--text-primary);font-weight:600;margin-bottom:2px;">' + escapeHtml(M.label) + '</div>'
+      + '<div style="text-align:center;font-size:11px;color:var(--text-secondary);max-width:560px;margin:0 auto 4px;line-height:1.45;">' + escapeHtml(M.blurb) + '</div>'
+      + _hsRenderMap(rows, metric, _hsView.scale, mode)
+      + _hsRenderLegend(metric)
+      + '<div style="text-align:center;font-size:10px;color:var(--text-tertiary);margin-top:6px;">Click any ' + (mode === "regions" ? "region" : "state") + ' for its prospects and lens detail.</div>'
+      + '</div>';
   }
 
-  const _sortableSP = (key, label, align, title) => {
-    const arrow = sk === key ? (sd < 0 ? " ▼" : " ▲") : "";
-    return `<th class="dt-sortable" data-sp-sort="${key}" title="${escapeHtml(title || "")}" style="cursor:pointer;text-align:${align};${sk === key ? "color:var(--neon-cyan);" : ""}">${label}${arrow}</th>`;
-  };
-
-  const body = rows.map((r, i) => {
-    const warColor = r.totalWar > 0 ? "var(--neon-green)" : "var(--text-tertiary)";
-    return `<tr>
-      <td>${i + 1}</td>
-      <td><strong>${escapeHtml(r.state)}</strong></td>
-      <td style="text-align:right;">${r.prospects}</td>
-      <td style="text-align:right;">${r.topProspects}</td>
-      <td style="text-align:right;font-family:var(--font-mono);">${r.meanFv != null ? fvCeil(r.meanFv) : " - "}</td>
-      <td style="text-align:right;">${r.reachedMlb}</td>
-      <td style="text-align:right;color:${warColor};font-family:var(--font-mono);font-weight:700;">${r.totalWar > 0 ? "+" : ""}${r.totalWar.toFixed(1)}</td>
-      <td style="text-align:right;color:var(--text-secondary);font-family:var(--font-mono);">${r.warPerProspect.toFixed(2)}</td>
-    </tr>`;
-  }).join("");
-
-  const table = `<table class="draft-table">
-    <thead><tr>
-      <th>#</th>
-      ${_sortableSP("state", "State", "left", "US state / territory (home state of the high-school prospect)")}
-      ${_sortableSP("prospects", "HS Prospects", "right", "Count of high-school prospects from this state across all classes")}
-      ${_sortableSP("topProspects", "Top (FV 55+)", "right", "How many graded at consensus FV 55 or better")}
-      ${_sortableSP("meanFv", "Mean FV", "right", "Mean consensus FV of the state's high-school prospects")}
-      ${_sortableSP("reachedMlb", "Reached MLB", "right", "How many have accrued any MLB time")}
-      ${_sortableSP("totalWar", "Total MLB WAR", "right", "Sum of career MLB WAR over the state's high-school draftees")}
-      ${_sortableSP("warPerProspect", "WAR / Prospect", "right", "Total MLB WAR divided by HS prospect count")}
-    </tr></thead>
-    <tbody>${body}</tbody></table>`;
-
-  host.innerHTML = `
-    <div style="padding:12px 14px;background:var(--bg-secondary);border-radius:6px;margin-bottom:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
-      <strong style="color:var(--text-primary);">State pipelines</strong>
-      · this ranks US states as amateur pipelines by the pro outcomes of their drafted high-school players, measured in career MLB WAR, alongside prospect counts and top-tier (FV 55+) counts.
-      College players are excluded because their listed school is not their home state. States with fewer than ${MIN_HS} high-school prospects are omitted so tiny samples do not top the board.
-      WAR accrues over time, so recent classes contribute little yet. Sorted by total MLB WAR; click any header to re-sort.
-    </div>
-    ${table}`;
-
-  host.querySelectorAll("[data-sp-sort]").forEach(th => {
-    th.onclick = () => {
-      const k = th.dataset.spSort;
-      if (_statePipeSort.key === k) _statePipeSort.dir *= -1;
-      else _statePipeSort = { key: k, dir: (k === "state" ? 1 : -1) };
-      renderDraft();
-    };
-  });
+  host.innerHTML = caption + controls + mapBlock + _hsRenderLeaderboard(rows, agg, metric, mode);
+  _hsWireOverview(host, classes);
 }
+
+// The control rows (mode / metric / scale / side). Split out so the empty
+// state can show the mode switch too.
+function _hsModeControls(mode, metric, demoOk, avail) {
+  const modeItems = Object.keys(_HS_MODE_META).map(k => ({ v: k, label: _HS_MODE_META[k].label }));
+  const metricItems = (avail || _HS_METRICS.filter(m => m.modes.indexOf(mode) >= 0))
+    .map(m => ({ v: m.key, label: m.label, title: m.blurb }));
+  const scaleItems = [
+    { v: "quantile", label: "Quantile", title: "Rank-based shading: spreads entities evenly so a couple of dominant ones do not wash out the rest." },
+    { v: "linear", label: "Linear", title: "Shade in proportion to the raw value." },
+    { v: "log", label: "Log", title: "Compress a long tail (useful for raw volume). Falls back to linear when values are not all positive." }
+  ];
+  const hasMap = _HS_MODE_META[mode].hasMap;
+  return '<div class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:8px;">'
+    + _hsChipRow("Group by", "data-hs-mode", modeItems, mode)
+    + _hsChipRow("Metric", "data-hs-metric", metricItems, metric)
+    + (hasMap ? _hsChipRow("Scale", "data-hs-scale", scaleItems, _hsView.scale) : "")
+    + '</div>'
+    + '<div class="filter-bar" style="flex-wrap:wrap;gap:8px;margin-bottom:10px;">'
+    + _hsChipRow("Side", "data-hs-side", [
+        { v: "all", label: "All" }, { v: "hitter", label: "Hitters" }, { v: "pitcher", label: "Pitchers" }
+      ], _hsView.side)
+    + '</div>';
+}
+
+// Mode-aware sortable board. Default sort = the active metric, descending.
+function _hsRenderLeaderboard(rows, agg, metric, mode) {
+  const isSchools = mode === "schools", isRegions = mode === "regions";
+  const cols = [];
+  cols.push({ key: "name", label: _HS_MODE_META[mode].colKey, align: "left", title: "Grouping", get: r => r.name,
+    fmt: r => isSchools
+      ? '<strong>' + escapeHtml(r.name) + '</strong>' + (r.domState ? ' <span style="color:var(--text-tertiary);">' + escapeHtml(r.domState) + (r.nStates > 1 ? "+" : "") + '</span>' : "")
+      : isRegions ? '<strong>' + escapeHtml(r.name) + '</strong>'
+      : '<strong>' + escapeHtml(r.key) + '</strong> <span style="color:var(--text-tertiary);">' + escapeHtml(r.name) + '</span>' });
+  if (isRegions) cols.push({ key: "nStates", label: "States", align: "right", title: "States with a prospect", get: r => r.nStates, fmt: r => String(r.nStates) });
+  cols.push({ key: "n", label: "Prospects", align: "right", title: "High-school prospects in view", get: r => r.n, fmt: r => String(r.n) });
+  cols.push({ key: "top", label: "FV 55+", align: "right", title: "How many graded consensus FV 55 or better", get: r => r.top, fmt: r => String(r.top) });
+  if (!isSchools) cols.push({ key: "rate", label: "Per 100k", align: "right", title: "Prospects per 100,000 residents age 0-18", get: r => r.rate, fmt: r => r.rate != null ? r.rate.toFixed(2) : " - " });
+  cols.push({ key: "meanRaw", label: "Mean FV", align: "right", title: "Raw mean consensus FV", get: r => r.meanRaw, fmt: r => r.meanRaw != null ? r.meanRaw.toFixed(1) : " - " });
+  cols.push({ key: "meanShrunk", label: "Shrunk FV", align: "right", title: "Mean FV shrunk toward the national mean by sample size (K=" + agg.k + ")", get: r => r.meanShrunk, fmt: r => r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - " });
+  if (mode === "states") cols.push({ key: "residual", label: "vs Size", align: "right", title: "Prospects above or below what youth population predicts", get: r => r.residual, fmt: r => r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - " });
+  cols.push({ key: "reachedMlb", label: "Reached MLB", align: "right", title: "How many drafted players have accrued MLB time", get: r => r.reachedMlb, fmt: r => String(r.reachedMlb) });
+  cols.push({ key: "totalWar", label: "Total WAR", align: "right", title: "Sum of career MLB WAR over the drafted players", get: r => r.totalWar, fmt: r => (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1) });
+  cols.push({ key: "meanOverperf", label: "vs Slot", align: "right", title: "Mean realized FV minus FV expected for draft slot (small samples)", get: r => r.meanOverperf, fmt: r => r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - " });
+
+  const metricCol = { rate: "rate", volume: "n", quality: "meanShrunk", residual: "residual", outcome: "meanOverperf" };
+  const sk = _hsView.sort.key, sd = _hsView.sort.dir;
+  const sortKey = (sk && cols.some(c => c.key === sk)) ? sk : (metricCol[metric] || "n");
+  let display = rows.slice();
+  // Schools mode has a long tail of single-prospect programs; the board
+  // shows multi-prospect programs (a program page is still reachable for
+  // any school via a roster link). States / regions show everything.
+  let tailNote = "";
+  if (isSchools) {
+    const before = display.length;
+    display = display.filter(r => r.n >= 2);
+    const CAP = 100;
+    const shown = Math.min(display.length, CAP);
+    tailNote = "Programs with 2+ prospects (" + display.length + " of " + before + "; " + (before - display.length) + " single-prospect schools not listed)" + (display.length > CAP ? ", top " + CAP + " shown" : "") + ".";
+    display = display.sort((a, b) => _hsSortCmp(a, b, cols, sortKey, sd)).slice(0, CAP);
+  } else {
+    display = display.sort((a, b) => _hsSortCmp(a, b, cols, sortKey, sd));
+  }
+  const head = cols.map(c => {
+    const isActive = c.key === sortKey;
+    const arrow = isActive ? (sd < 0 ? " v" : " ^") : "";
+    return '<th class="dt-sortable" data-hs-sort="' + c.key + '" title="' + escapeHtml(c.title) + '" '
+      + 'style="cursor:pointer;text-align:' + c.align + ';' + (isActive ? "color:var(--neon-cyan);" : "") + '">'
+      + escapeHtml(c.label) + arrow + '</th>';
+  }).join("");
+  const body = display.map((r, i) => {
+    const lowN = r.n < 5 && !isRegions;
+    const warColor = r.totalWar > 0 ? "var(--neon-green)" : "var(--text-tertiary)";
+    const tds = cols.map(c => {
+      let style = "text-align:" + c.align + ";";
+      if (c.align === "right") style += "font-family:var(--font-mono);";
+      if (c.key === "totalWar") style += "color:" + warColor + ";font-weight:700;";
+      if (c.key === "name" && lowN) style += "opacity:0.78;";
+      return '<td style="' + style + '">' + c.fmt(r) + '</td>';
+    }).join("");
+    return '<tr data-hs-drill="' + escapeHtml(r.key) + '" style="cursor:pointer;' + (lowN ? "opacity:0.74;" : "") + '">'
+      + '<td style="color:var(--text-tertiary);">' + (i + 1) + '</td>' + tds
+      + '<td style="text-align:center;color:var(--text-tertiary);">' + (lowN ? '<span title="Small sample (under 5 prospects)">low n</span>' : "") + '</td>'
+      + '</tr>';
+  }).join("");
+  const noteHtml = tailNote ? '<div style="font-size:11px;color:var(--text-tertiary);margin:6px 2px;">' + escapeHtml(tailNote) + '</div>' : "";
+  return noteHtml + '<table class="draft-table"><thead><tr><th>#</th>' + head + '<th></th></tr></thead><tbody>' + body + '</tbody></table>';
+}
+
+function _hsSortCmp(a, b, cols, sortKey, sd) {
+  const ca = cols.find(c => c.key === sortKey) || cols[1];
+  let va = ca.get(a), vb = ca.get(b);
+  if (typeof va === "string") return (sd < 0 ? -1 : 1) * va.localeCompare(vb);
+  va = (va == null ? -Infinity : va); vb = (vb == null ? -Infinity : vb);
+  return (sd < 0 ? -1 : 1) * (va - vb) || (b.n - a.n);
+}
+
+// Wire overview interactions. Every change re-runs the active view.
+function _hsWireOverview(host, classes) {
+  const reRender = () => renderDraft();
+  host.querySelectorAll("[data-hs-mode]").forEach(b => b.onclick = () => {
+    _hsView.mode = b.dataset.hsMode; _hsView.entity = null; _hsView.sort = { key: null, dir: -1 };
+    syncToURL(); reRender();
+  });
+  host.querySelectorAll("[data-hs-metric]").forEach(b => b.onclick = () => { _hsView.metric = b.dataset.hsMetric; _hsView.sort = { key: null, dir: -1 }; reRender(); });
+  host.querySelectorAll("[data-hs-scale]").forEach(b => b.onclick = () => { _hsView.scale = b.dataset.hsScale; reRender(); });
+  host.querySelectorAll("[data-hs-side]").forEach(b => b.onclick = () => { _hsView.side = b.dataset.hsSide; reRender(); });
+  host.querySelectorAll("[data-hs-sort]").forEach(th => th.onclick = () => {
+    const k = th.dataset.hsSort;
+    if (_hsView.sort.key === k) _hsView.sort.dir *= -1;
+    else _hsView.sort = { key: k, dir: (k === "name" ? 1 : -1) };
+    reRender();
+  });
+  const mode = _hsView.mode;
+  const drill = el => _hsDrillTo(mode === "regions" ? (_HS_STATE_REGION[el.dataset.hsTile] || el.dataset.hsTile) : el.dataset.hsTile);
+  host.querySelectorAll("[data-hs-tile]").forEach(el => el.addEventListener("click", () => drill(el)));
+  host.querySelectorAll("[data-hs-drill]").forEach(el => el.addEventListener("click", () => _hsDrillTo(el.dataset.hsDrill)));
+}
+
+// All in-view HS prospects for one entity, tagged with class year.
+function _hsCollectRoster(classes, mode, key) {
+  const yr = _hsEffYear(), side = _hsView.side, out = [];
+  for (const c of (classes || [])) {
+    if (yr !== "all" && c.year !== +yr) continue;
+    for (const p of (c.prospects || [])) {
+      if (!_isHSPlayer(p)) continue;
+      if (side !== "all" && _hsSideOf(p) !== side) continue;
+      if (_hsEntityKey(p, mode) !== key) continue;
+      out.push(Object.assign({ _year: c.year }, p));
+    }
+  }
+  out.sort((a, b) => (b.consensus_fv || 0) - (a.consensus_fv || 0) || b._year - a._year);
+  return out;
+}
+
+// One entity detail page (state / school / region) - rank chips, lens
+// tiles, comparison vs national, roster, and a context side panel.
+async function _renderHSEntityDetail(host, mode, key, classes) {
+  host.innerHTML = '<div class="state-message is-loading">Loading detail...</div>';
+  const demo = await _hsLoadDemographics();
+  const meta = _HS_MODE_META[mode] || _HS_MODE_META.states;
+  const agg = _hsAggregate(classes, demo, mode);
+  const r = agg.rows.find(x => x.key === key);
+  const title = mode === "states" ? (_US_STATE_NAMES[key] || key) : key;
+  const back = '<a href="#" onclick="event.preventDefault();_hsBackToOverview();" class="back-link">&larr; Back to ' + escapeHtml(meta.plural) + '</a>';
+  if (!r) {
+    host.innerHTML = back + _draftEmpty("No prospects for " + escapeHtml(title) + " in view", "Try widening the class or side filters.");
+    return;
+  }
+
+  const rankOf = mkey => {
+    const M = _hsMetric(mkey);
+    const vals = agg.rows.map(x => M.val(x)).filter(v => v != null && isFinite(v));
+    const mine = M.val(r);
+    if (mine == null || !isFinite(mine)) return null;
+    return { rank: vals.filter(v => v > mine).length + 1, of: vals.length };
+  };
+  const rankChip = (mkey, label) => {
+    const rk = rankOf(mkey);
+    if (!rk) return "";
+    return '<span style="display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:999px;'
+      + 'background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);">'
+      + escapeHtml(label) + ' <strong style="color:var(--text-primary);font-family:var(--font-mono);">#' + rk.rank + '</strong>'
+      + '<span style="color:var(--text-tertiary);">/ ' + rk.of + '</span></span>';
+  };
+  const availChips = _hsModeMetrics(mode, agg.rows, !!r.youth)
+    .map(m => rankChip(m.key, m.label.replace(" vs slot", " vs Slot"))).join("");
+
+  // Sub-line.
+  let sub;
+  if (mode === "schools") {
+    const stateList = Object.keys(r.states).sort((a, b) => r.states[b] - r.states[a]);
+    sub = r.n + ' high-school prospect' + (r.n === 1 ? '' : 's')
+      + (stateList.length ? ' &middot; ' + escapeHtml(stateList.map(s => s + " " + r.states[s]).join(", ")) : '')
+      + (stateList.length > 1 ? ' (multi-state program)' : '');
+  } else if (mode === "regions") {
+    sub = r.n + ' prospects across ' + r.nStates + ' state' + (r.nStates === 1 ? '' : 's')
+      + (r.pop ? ' &middot; ' + (r.pop / 1e6).toFixed(1) + 'M residents' : '');
+  } else {
+    sub = r.n + ' high-school prospect' + (r.n === 1 ? '' : 's')
+      + (r.pop ? ' &middot; ' + (r.pop / 1e6).toFixed(1) + 'M residents, ' + Math.round((r.youth || 0) / 1000) + 'k age 0-18' : '');
+  }
+  const effYear = _hsEffYear();
+  const academy = mode === "states" ? _HS_ACADEMY_STATES[key] : null;
+  const header = back
+    + '<div class="detail-page-header" style="align-items:center;">'
+    + '<div style="flex:1;min-width:0;">'
+    + '<div class="player-display-name">' + escapeHtml(title) + '</div>'
+    + '<div class="player-display-meta" style="margin-top:2px;">' + sub + (effYear === "all" ? '' : ' &middot; ' + effYear + ' class') + '</div>'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;">' + availChips + '</div>'
+    + '</div></div>'
+    + (academy ? '<div style="margin:8px 0;padding:8px 12px;border-left:3px solid var(--neon-amber);background:var(--bg-secondary);'
+        + 'font-size:11px;color:var(--text-secondary);border-radius:0 4px 4px 0;">Origin caveat: ' + escapeHtml(academy) + '</div>' : '');
+
+  // Lens tiles.
+  const tiles = ['<div class="rs-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">'
+    + _statTileHTML("Prospects", String(r.n))
+    + _statTileHTML("Top (FV 55+)", String(r.top))
+    + (mode !== "schools" ? _statTileHTML("Per 100k youth", r.rate != null ? r.rate.toFixed(2) : " - ", { title: "Prospects per 100,000 residents age 0-18" }) : "")
+    + _statTileHTML("Mean FV (raw)", r.meanRaw != null ? r.meanRaw.toFixed(1) : " - ")
+    + _statTileHTML("Mean FV (shrunk)", r.meanShrunk != null ? r.meanShrunk.toFixed(1) : " - ", { title: "Pulled toward the national mean " + agg.grandMean.toFixed(1) + " by sample size (K=" + agg.k + ")" })
+    + (mode === "states" ? _statTileHTML("Production vs size", r.residual != null ? (r.residual > 0 ? "+" : "") + r.residual.toFixed(1) : " - ", { tone: r.residual > 0 ? "pos" : "", title: "Actual minus expected prospects given youth population (expected " + (r.pred != null ? r.pred.toFixed(1) : "n/a") + ")" }) : "")
+    + _statTileHTML("Reached MLB", String(r.reachedMlb))
+    + _statTileHTML("Total MLB WAR", (r.totalWar > 0 ? "+" : "") + r.totalWar.toFixed(1), { tone: r.totalWar > 0 ? "pos" : "" })
+    + _statTileHTML("Mean FV vs slot", r.meanOverperf != null ? (r.meanOverperf > 0 ? "+" : "") + r.meanOverperf.toFixed(1) : " - ", { tone: r.meanOverperf > 0 ? "pos" : "", title: "Realized FV minus expected-for-slot, mean over " + r.overperfN + " drafted (small sample)" })
+    + '</div>'].join("");
+
+  // Comparison vs national.
+  const cmpRow = (label, mine, natl, fmt) => {
+    if (mine == null || natl == null) return "";
+    const diff = mine - natl;
+    const tone = diff > 0 ? "var(--neon-green)" : "var(--text-tertiary)";
+    return '<tr><td>' + escapeHtml(label) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);">' + fmt(mine) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-tertiary);">' + fmt(natl) + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:' + tone + ';">' + (diff > 0 ? "+" : "") + fmt(diff) + '</td></tr>';
+  };
+  const f1 = v => v.toFixed(1), f2 = v => v.toFixed(2);
+  const comparison = '<div class="detail-title">Versus national</div>'
+    + '<table class="draft-table"><thead><tr><th>Lens</th>'
+    + '<th style="text-align:right;">' + escapeHtml(mode === "states" ? r.key : "This") + '</th>'
+    + '<th style="text-align:right;">National</th><th style="text-align:right;">Diff</th></tr></thead><tbody>'
+    + cmpRow("Mean FV", r.meanRaw, agg.grandMean, f1)
+    + (mode !== "schools" ? cmpRow("Per 100k youth", r.rate, agg.nationalRate, f2) : "")
+    + cmpRow("Mean FV vs slot", r.meanOverperf, _hsNationalMeanOverperf(agg), f1)
+    + '</tbody></table>';
+
+  // Roster.
+  const roster = _hsCollectRoster(classes, mode, key);
+  const rosterRows = roster.map(p => {
+    const fvInt = p.consensus_fv != null ? fvCeil(p.consensus_fv) : null;
+    const drafted = p.drafted_pick != null ? escapeHtml((p.drafted_team || "") + " #" + p.drafted_pick) : " - ";
+    const over = p.overperf_fv != null ? (p.overperf_fv > 0 ? "+" : "") + (+p.overperf_fv).toFixed(0) : " - ";
+    const war = p.career_war != null ? (+p.career_war).toFixed(1) : " - ";
+    const schoolCol = mode === "states"
+      ? ('<td style="color:var(--text-secondary);font-size:11px;">' + escapeHtml(_hsProgramName(p.school) || " - ") + '</td>')
+      : (mode === "regions" ? ('<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + escapeHtml(_hsStateAbbr(p.school) || " - ") + '</td>') : "");
+    return '<tr>'
+      + '<td><a href="#" onclick="event.preventDefault();goToDraftee(\'' + escapeHtml(p.player_key) + '\');" style="color:inherit;text-decoration:none;">'
+      + '<span class="draft-cell-ico">' + _collegeLogoImg(p.school_logo_url, p.school, true) + '<strong>' + escapeHtml(p.player_name) + '</strong></span></a></td>'
+      + '<td style="text-align:center;color:var(--text-secondary);font-family:var(--font-mono);">' + p._year + '</td>'
+      + '<td style="text-align:center;">' + escapeHtml(p.position || " - ") + '</td>'
+      + schoolCol
+      + '<td style="text-align:right;"><span style="color:' + _draftFvBucketColor(p.consensus_fv) + ';font-family:var(--font-mono);font-weight:700;">' + (fvInt != null ? fvInt : " - ") + '</span></td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + drafted + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);">' + over + '</td>'
+      + '<td style="text-align:right;font-family:var(--font-mono);color:var(--text-secondary);">' + war + '</td>'
+      + '</tr>';
+  }).join("");
+  const schoolHead = mode === "states" ? '<th>High school</th>' : (mode === "regions" ? '<th style="text-align:center;">St</th>' : "");
+  const rosterTable = '<div class="detail-title">Prospects (' + roster.length + ')</div>'
+    + '<table class="draft-table"><thead><tr>'
+    + '<th>Player</th><th style="text-align:center;">Class</th><th style="text-align:center;">Pos</th>' + schoolHead
+    + '<th style="text-align:right;">FV</th><th style="text-align:right;">Drafted</th>'
+    + '<th style="text-align:right;" title="Realized FV minus FV expected for draft slot">vs Slot</th>'
+    + '<th style="text-align:right;">WAR</th></tr></thead><tbody>' + rosterRows + '</tbody></table>';
+
+  // Side panel - mode-specific context.
+  let side = "";
+  if (mode === "states") {
+    const progs = Object.keys(r.programs).map(name => ({ name, n: r.programs[name] })).filter(p => p.name !== " - " && p.n >= 2).sort((a, b) => b.n - a.n).slice(0, 12);
+    side = progs.length
+      ? '<div class="detail-title">Top programs</div>'
+        + '<div style="font-size:11px;color:var(--text-tertiary);margin-bottom:6px;">High schools sending 2 or more prospects. Click to open the program page.</div>'
+        + '<ul class="draft-list">' + progs.map(p => '<li data-hs-prog="' + escapeHtml(p.name) + '" style="cursor:pointer;"><strong>' + p.n + '</strong> &middot; ' + escapeHtml(p.name) + '</li>').join("") + '</ul>'
+      : '<div style="color:var(--text-tertiary);font-size:12px;">No program sent 2+ prospects in view.</div>';
+  } else if (mode === "regions") {
+    const st = Object.keys(r.states).map(s => ({ s, n: r.states[s] })).sort((a, b) => b.n - a.n);
+    side = '<div class="detail-title">States in ' + escapeHtml(r.key) + '</div>'
+      + '<ul class="draft-list">' + st.map(o => '<li data-hs-state-jump="' + o.s + '" style="cursor:pointer;"><strong>' + o.n + '</strong> &middot; ' + escapeHtml(_US_STATE_NAMES[o.s] || o.s) + '</li>').join("") + '</ul>';
+  } else {
+    const yrs = Array.from(new Set(roster.map(p => p._year))).sort((a, b) => b - a);
+    const stateList = Object.keys(r.states).sort((a, b) => r.states[b] - r.states[a]);
+    side = '<div class="detail-title">Program</div>'
+      + '<div class="rs-grid" style="grid-template-columns:1fr;">'
+      + _statTileHTML("Classes with a signee", yrs.length ? yrs.join(", ") : " - ")
+      + _statTileHTML("Listed states", stateList.length ? stateList.join(", ") : " - ", stateList.length > 1 ? { title: "A national academy draws players from several states." } : undefined)
+      + (r.topProspect ? _statTileHTML("Top prospect", escapeHtml(r.topProspect.name) + " (" + fvCeil(r.topProspect.fv) + ")") : "")
+      + '</div>';
+  }
+
+  host.innerHTML = '<div class="player-detail-grid"><div>'
+    + header + '<div class="detail-title flush">Lenses</div>' + tiles + comparison + rosterTable
+    + '</div><div class="player-detail-side">' + side + '</div></div>';
+
+  // Side-panel drill links.
+  host.querySelectorAll("[data-hs-prog]").forEach(el => el.addEventListener("click", () => {
+    _hsView.mode = "schools"; _hsDrillTo(el.dataset.hsProg);
+  }));
+  host.querySelectorAll("[data-hs-state-jump]").forEach(el => el.addEventListener("click", () => {
+    _hsView.mode = "states"; _hsDrillTo(el.dataset.hsStateJump);
+  }));
+}
+
+// National mean of the per-entity outcome lens (mean of entity means that
+// have a value), the comparison baseline.
+function _hsNationalMeanOverperf(agg) {
+  const vals = agg.rows.map(x => x.meanOverperf).filter(v => v != null && isFinite(v));
+  return vals.length ? vals.reduce((s, x) => s + x, 0) / vals.length : null;
+}
+
 
 async function renderDraftDetail(key) {
   const root = document.getElementById("draft-detail-body");
