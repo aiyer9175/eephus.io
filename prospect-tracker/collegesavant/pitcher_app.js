@@ -694,98 +694,113 @@ function topRowsForMetric(metric) {
     .sort((a, b) => compareMetric(a[metric.key], b[metric.key], direction));
 }
 
-function renderLeaderboard() {
-  const metric = getMetric(state.sortKey);
-  const direction = metric.higherBetter ? -1 : 1;
-  const filtered = state.pitchers
-    .filter((pitcher) => pitcher.pitcher_name.toLowerCase().includes(state.query.toLowerCase()))
-    .sort((a, b) => compareMetric(sortVal(a, state.sortKey), sortVal(b, state.sortKey), direction));
-  const visibleRows = filtered.slice(0, LEADERBOARD_LIMIT);
-  const limitNote = filtered.length > visibleRows.length
-    ? ` Showing top ${visibleRows.length.toLocaleString()} of ${filtered.length.toLocaleString()} rows; use search to narrow the list.`
-    : "";
+// Sortable stat columns on the pitcher leaderboard. For pitchers, more chase and
+// more swinging strikes are good while contact-allowed metrics are bad, so
+// higherBetter is set per column (it picks the natural first-click direction).
+const LB_COLUMNS = [
+  { key: "cs_plus", label: "CS+", fmt: "plus", higherBetter: true },
+  { key: "stuff_plus", label: "Stuff+", fmt: "plus", higherBetter: true },
+  { key: "avg_fastball_velo", label: "FB Velo", fmt: "mph", higherBetter: true },
+  { key: "avg_ivb", label: "IVB", fmt: "in", higherBetter: true },
+  { key: "swinging_strike_pct", label: "SwStr%", fmt: "pct", higherBetter: true, gl: "whiff_pct" },
+  { key: "chase_pct", label: "Chase%", fmt: "pct", higherBetter: true, gl: "chase_pct" },
+  { key: "z_contact_pct", label: "Z-Con%", fmt: "pct", higherBetter: false },
+  { key: "k_pct", label: "K%", fmt: "pct", higherBetter: true, gl: "k_pct" },
+  { key: "bb_pct", label: "BB%", fmt: "pct", higherBetter: false, gl: "bb_pct" },
+  { key: "xwoba_against", label: "xwOBA", fmt: "dec", higherBetter: false },
+  { key: "barrel_pct", label: "Barrel%", fmt: "pct", higherBetter: false, gl: "barrel_pct" },
+  { key: "hard_hit_pct", label: "HardHit%", fmt: "pct", higherBetter: false, gl: "hard_hit_pct" },
+];
 
+function lbFmt(fmt, v) {
+  if (v == null || Number.isNaN(v)) return " - ";
+  if (fmt === "plus") return String(Math.round(v));
+  if (fmt === "mph" || fmt === "in") return v.toFixed(1);
+  if (fmt === "dec") return v.toFixed(3).replace(/^0(?=\.)/, "");
+  return v.toFixed(1) + "%";
+}
+
+function renderLeaderboard() {
+  const col = LB_COLUMNS.find((c) => c.key === state.sortKey) || LB_COLUMNS[0];
+  state.sortKey = col.key;
+  const dir = state.sortDir != null ? state.sortDir : (col.higherBetter ? -1 : 1);
+  state.sortDir = dir;
+  const minPitch = state.minPitch || 0;
+  const teamF = state.teamFilter || "all";
+  const q = state.query.toLowerCase();
+  const filtered = state.pitchers.filter((p) =>
+    p.pitcher_name.toLowerCase().includes(q) &&
+    (minPitch <= 0 || (p.pitch_count || 0) >= minPitch) &&
+    (teamF === "all" || p.team === teamF));
+  filtered.sort((a, b) => {
+    const av = sortVal(a, state.sortKey), bv = sortVal(b, state.sortKey);
+    const an = av == null || Number.isNaN(av), bn = bv == null || Number.isNaN(bv);
+    if (an && bn) return 0;
+    if (an) return 1;
+    if (bn) return -1;
+    return dir * (av - bv);
+  });
+  const visible = filtered.slice(0, LEADERBOARD_LIMIT);
+  const teams = [...new Set(state.pitchers.map((p) => p.team).filter(Boolean))]
+    .sort((a, b) => formatTeamName(a).localeCompare(formatTeamName(b)));
+  const head = LB_COLUMNS.map((c) => {
+    const on = c.key === state.sortKey;
+    const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
+    const lbl = c.gl ? `<span class="g-term" data-gl="${c.gl}">${c.label}</span>` : c.label;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
+  }).join("");
+  const body = visible.map((p, i) => {
+    const cells = LB_COLUMNS.map((c) => {
+      const v = c.key === "cs_plus" ? (state.csPlus && state.csPlus.get(p.slug)) : p[c.key];
+      const cls = c.key === "cs_plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
+      return `<td class="tt-col ${cls}${c.key === state.sortKey ? " is-sorted" : ""}">${lbFmt(c.fmt, v)}</td>`;
+    }).join("");
+    const logo = p.team ? `<img class="tt-logo" src="logos/${escapeHtml(p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${p.year}/${p.slug}">${escapeHtml(displayName(p.pitcher_name))}</a><span class="tt-n">${escapeHtml(formatTeamName(p.team))}</span></td>
+      ${cells}</tr>`;
+  }).join("");
   app.innerHTML = `
     <section class="toolbar">
       <input class="search-box" type="search" placeholder="Search pitcher" value="${escapeHtml(state.query)}" aria-label="Search pitcher">
       ${renderYearSelect()}
-      <select class="select-box sort-select" aria-label="Sort leaderboard">
-        <option value="cs_plus" ${state.sortKey === "cs_plus" ? "selected" : ""}>Sort by CS+ (pro profile)</option>
-        ${activeHeadlineMetrics().map((m) => `<option value="${m.key}" ${m.key === state.sortKey ? "selected" : ""}>Sort by ${m.label}</option>`).join("")}
+      <select class="select-box" data-team-filter aria-label="Filter by team">
+        <option value="all">All teams</option>
+        ${teams.map((t) => `<option value="${escapeHtml(t)}" ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
+      <label class="lb-pa">Min pitches <input type="number" min="0" step="50" value="${minPitch}" data-min-pitch></label>
       <button class="control-button" type="button" data-reset>Reset</button>
     </section>
-
-    <p class="note-line">Filtered to pitchers with 50+ pitches. Percentiles compare each pitcher against the ${state.pitchers.length}-pitcher NCAA ${state.year} dataset. Red is good, blue is bad.${limitNote}</p>
-
-    <section class="leaderboard">
-      <div class="table-head pitcher-head">
-        <div>#</div>
-        <div>Pitcher</div>
-        <div>${glLabel(getMetric(state.sortKey))}</div>
-        <div>FB Velo</div>
-        <div>xwOBA</div>
-        <div>Avg EV</div>
-        <div>Hard Hit</div>
-        <div>Drivers</div>
-      </div>
-      ${visibleRows.map((pitcher, index) => renderPitcherRow(pitcher, index + 1)).join("")}
-    </section>
-  `;
-
-  app.querySelector(".search-box").addEventListener("input", (event) => {
-    state.query = event.target.value;
-    const cursor = event.target.selectionStart ?? state.query.length;
+    <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${minPitch > 0 ? ` with ${minPitch}+ pitches` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Pitcher</th>${head}</tr></thead>
+      <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No pitchers match these filters.</td></tr>`}</tbody>
+    </table></div></section>`;
+  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+    const k = th.getAttribute("data-sort");
+    if (k === state.sortKey) { state.sortDir = -dir; }
+    else { state.sortKey = k; const c2 = LB_COLUMNS.find((c) => c.key === k); state.sortDir = (c2 && c2.higherBetter) ? -1 : 1; }
     renderLeaderboard();
-    const searchBox = app.querySelector(".search-box");
-    searchBox.focus();
-    searchBox.setSelectionRange(cursor, cursor);
+  }));
+  const sb = app.querySelector(".search-box");
+  if (sb) sb.addEventListener("input", (e) => {
+    state.query = e.target.value;
+    const cursor = e.target.selectionStart ?? state.query.length;
+    renderLeaderboard();
+    const nb = app.querySelector(".search-box");
+    if (nb) { nb.focus(); nb.setSelectionRange(cursor, cursor); }
   });
-
-  app.querySelector(".sort-select").addEventListener("change", (event) => {
-    state.sortKey = event.target.value;
-    window.location.hash = `#/leaders/${state.sortKey}/${state.year}`;
-  });
-
-  app.querySelector(".year-select").addEventListener("change", (event) => {
-    setActiveYear(event.target.value);
-    window.location.hash = `#/leaders/${state.sortKey}/${state.year}`;
+  const tf = app.querySelector("[data-team-filter]");
+  if (tf) tf.addEventListener("change", (e) => { state.teamFilter = e.target.value; renderLeaderboard(); });
+  const mp = app.querySelector("[data-min-pitch]");
+  if (mp) mp.addEventListener("change", (e) => { state.minPitch = Number(e.target.value) || 0; renderLeaderboard(); });
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderLeaderboard(); });
+  const rb = app.querySelector("[data-reset]");
+  if (rb) rb.addEventListener("click", () => {
+    state.query = ""; state.minPitch = 0; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
     renderLeaderboard();
   });
-
-  app.querySelector("[data-reset]").addEventListener("click", () => {
-    state.query = "";
-    state.sortKey = "stuff_plus";
-    window.location.hash = "#/";
-    renderLeaderboard();
-  });
-}
-
-function renderPitcherRow(pitcher, rank) {
-  return `
-    <a class="player-row" href="#/player/${pitcher.year}/${pitcher.slug}">
-      <div class="rank">${rank}</div>
-      <div class="player-cell">
-        ${teamBadge(pitcher)}
-        <div>
-          <span class="player-name">${escapeHtml(displayName(pitcher.pitcher_name))}</span>
-          <div class="player-sub">
-            ${plusPill(state.csPlus && state.csPlus.get(pitcher.slug), "CS+")}
-            <span>Pitcher</span>
-            <span class="badge">${escapeHtml(formatTeamName(pitcher.team))}</span>
-            <span class="badge">${pitcher.year}</span>
-            <span class="badge">${pitcher.pitch_count} pitches</span>
-          </div>
-        </div>
-      </div>
-      <div class="metric-main">${state.sortKey === "cs_plus" ? (sortVal(pitcher, "cs_plus") ?? "--") : formatMetric(pitcher[state.sortKey], getMetric(state.sortKey).fmt)}</div>
-      <div>${formatMetric(pitcher.avg_fastball_velo, "mph")}</div>
-      <div>${formatMetric(pitcher.xwoba_against, "decimal")}</div>
-      <div>${formatMetric(pitcher.average_exit_velocity, "mph")}</div>
-      <div>${formatMetric(pitcher.hard_hit_pct, "pct")}</div>
-      <div class="driver-chips">${topDriverChips(pitcher)}</div>
-    </a>
-  `;
 }
 
 function _wireCsShare(pitcher, pct) {

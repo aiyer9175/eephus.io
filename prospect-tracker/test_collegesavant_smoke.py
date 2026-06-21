@@ -141,7 +141,10 @@ def test_new_features_actually_render():
     assert ctx.eval("GLwired") > 0, "EEPHUS_GL.wire was never called"
     ctx.eval("location.hash='#/leaders/cs_plus/2024';window.location.hash=location.hash;render();")
     board = ctx.eval("__html['app']||''")
-    for needle in ["cs-plus-pill", "Georgia", "CS+ (pro profile)"]:
+    # The leaderboard is now a sortable stat table: click-to-sort headers, a CS+
+    # column, the team/min-PA filters, and resolved national team names.
+    for needle in ["lb-th", 'data-sort="cs_plus"', "Georgia", "Click any column header",
+                   "data-team-filter", "Min PA"]:
         assert needle in board, f"leaderboard is missing {needle!r}"
 
 

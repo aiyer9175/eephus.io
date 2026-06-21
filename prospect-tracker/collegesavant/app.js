@@ -430,102 +430,107 @@ function topRowsForMetric(metric) {
     .sort((a, b) => direction * compareNullable(a[metric.key], b[metric.key]));
 }
 
-function renderLeaderboard() {
-  const sortMetric = getMetric(state.sortKey);
-  const direction = sortMetric.higherBetter ? -1 : 1;
-  const filtered = state.players
-    .filter((player) => player.hitter_name.toLowerCase().includes(state.query.toLowerCase()))
-    .sort((a, b) => direction * compareNullable(sortVal(a, state.sortKey), sortVal(b, state.sortKey)));
-  const visibleRows = filtered.slice(0, LEADERBOARD_LIMIT);
-  const limitNote = filtered.length > visibleRows.length
-    ? ` Showing top ${visibleRows.length.toLocaleString()} of ${filtered.length.toLocaleString()} rows; use search to narrow the list.`
-    : "";
+// Sortable stat columns on the hitter leaderboard. higherBetter sets the natural
+// sort direction the first time you click a column; clicking it again toggles.
+const LB_COLUMNS = [
+  { key: "cs_plus", label: "CS+", fmt: "plus", higherBetter: true },
+  { key: "xwoba", label: "xwOBA", fmt: "dec", higherBetter: true },
+  { key: "average_exit_velocity", label: "Avg EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
+  { key: "90th_percentile_exit_velocity", label: "90th EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
+  { key: "max_exit_velocity", label: "Max EV", fmt: "mph", higherBetter: true, gl: "exit_velocity" },
+  { key: "barrel_pct", label: "Barrel%", fmt: "pct", higherBetter: true, gl: "barrel_pct" },
+  { key: "hard_hit_pct", label: "HardHit%", fmt: "pct", higherBetter: true, gl: "hard_hit_pct" },
+  { key: "sweet_spot_pct", label: "SwSpot%", fmt: "pct", higherBetter: true },
+  { key: "zone_contact_pct", label: "Z-Con%", fmt: "pct", higherBetter: true },
+  { key: "o_contact_pct", label: "O-Con%", fmt: "pct", higherBetter: true },
+  { key: "chase_pct", label: "Chase%", fmt: "pct", higherBetter: false, gl: "chase_pct" },
+  { key: "whiff_pct", label: "Whiff%", fmt: "pct", higherBetter: false, gl: "whiff_pct" },
+  { key: "k_pct", label: "K%", fmt: "pct", higherBetter: false, gl: "k_pct" },
+  { key: "bb_pct", label: "BB%", fmt: "pct", higherBetter: true, gl: "bb_pct" },
+];
 
+function lbFmt(fmt, v) {
+  if (v == null) return " - ";
+  if (fmt === "plus") return String(Math.round(v));
+  if (fmt === "mph") return v.toFixed(1);
+  if (fmt === "dec") return v.toFixed(3).replace(/^0(?=\.)/, "");
+  return v.toFixed(1) + "%";
+}
+
+function renderLeaderboard() {
+  const col = LB_COLUMNS.find((c) => c.key === state.sortKey) || LB_COLUMNS[0];
+  state.sortKey = col.key;
+  const dir = state.sortDir != null ? state.sortDir : (col.higherBetter ? -1 : 1);
+  state.sortDir = dir;
+  const minPA = state.minPA || 0;
+  const teamF = state.teamFilter || "all";
+  const q = state.query.toLowerCase();
+  const filtered = state.players.filter((p) =>
+    p.hitter_name.toLowerCase().includes(q) &&
+    (minPA <= 0 || (p.pa || 0) >= minPA) &&
+    (teamF === "all" || p.team === teamF));
+  filtered.sort((a, b) => dir * compareNullable(sortVal(a, state.sortKey), sortVal(b, state.sortKey)));
+  const visible = filtered.slice(0, LEADERBOARD_LIMIT);
+  const teams = [...new Set(state.players.map((p) => p.team).filter(Boolean))]
+    .sort((a, b) => formatTeamName(a).localeCompare(formatTeamName(b)));
+  const head = LB_COLUMNS.map((c) => {
+    const on = c.key === state.sortKey;
+    const caret = on ? (dir < 0 ? " ▾" : " ▴") : "";
+    const lbl = c.gl ? `<span class="g-term" data-gl="${c.gl}">${c.label}</span>` : c.label;
+    return `<th class="tt-col lb-th${on ? " is-sorted" : ""}" data-sort="${c.key}" title="Sort by ${c.label}">${lbl}${caret}</th>`;
+  }).join("");
+  const body = visible.map((p, i) => {
+    const cells = LB_COLUMNS.map((c) => {
+      const v = c.key === "cs_plus" ? (state.csPlus && state.csPlus.get(p.slug)) : p[c.key];
+      const cls = c.key === "cs_plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
+      return `<td class="tt-col ${cls}${c.key === state.sortKey ? " is-sorted" : ""}">${lbFmt(c.fmt, v)}</td>`;
+    }).join("");
+    const logo = TEAM_LOGOS[p.team] ? `<img class="tt-logo" src="${TEAM_LOGOS[p.team]}" alt="" loading="lazy" onerror="this.remove()">` : "";
+    return `<tr><td class="tt-rank">${i + 1}</td>
+      <td class="tt-team">${logo}<a class="proj-name" href="#/player/${p.year}/${p.slug}">${escapeHtml(displayName(p.hitter_name))}</a><span class="tt-n">${escapeHtml(formatTeamName(p.team))}</span></td>
+      ${cells}</tr>`;
+  }).join("");
   app.innerHTML = `
     <section class="toolbar">
       <input class="search-box" type="search" placeholder="Search hitter" value="${escapeHtml(state.query)}" aria-label="Search hitter">
       ${renderYearSelect()}
-      <select class="select-box sort-select" aria-label="Sort leaderboard">
-        <option value="cs_plus" ${state.sortKey === "cs_plus" ? "selected" : ""}>Sort by CS+ (pro profile)</option>
-        ${METRICS.map((metric) => `<option value="${metric.key}" ${metric.key === state.sortKey ? "selected" : ""}>Sort by ${metric.label}</option>`).join("")}
+      <select class="select-box" data-team-filter aria-label="Filter by team">
+        <option value="all">All teams</option>
+        ${teams.map((t) => `<option value="${escapeHtml(t)}" ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
+      <label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>
       <button class="control-button" type="button" data-reset>Reset</button>
     </section>
-
-    <p class="note-line">Filtered to hitters above 30 PA. Percentiles compare each hitter against the ${state.players.length}-player ${state.year} dataset; chase, whiff, and K% are inverted so a higher percentile is better.${limitNote}</p>
-
-    <section class="leaderboard">
-      <div class="table-head">
-        <div>#</div>
-        <div>Player</div>
-        <div>${glLabel(sortMetric)}</div>
-        <div>Avg EV</div>
-        <div>90th EV</div>
-        <div>Max EV</div>
-        <div>Hard Hit</div>
-        <div>Drivers</div>
-      </div>
-      ${visibleRows.map((player, index) => renderPlayerRow(player, index + 1)).join("")}
-    </section>
-  `;
-
-  app.querySelector(".search-box").addEventListener("input", (event) => {
-    state.query = event.target.value;
-    const cursor = event.target.selectionStart ?? state.query.length;
+    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${minPA > 0 ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
+      <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th>${head}</tr></thead>
+      <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No hitters match these filters.</td></tr>`}</tbody>
+    </table></div></section>`;
+  app.querySelectorAll(".lb-th").forEach((th) => th.addEventListener("click", () => {
+    const k = th.getAttribute("data-sort");
+    if (k === state.sortKey) { state.sortDir = -dir; }
+    else { state.sortKey = k; const c2 = LB_COLUMNS.find((c) => c.key === k); state.sortDir = (c2 && c2.higherBetter) ? -1 : 1; }
     renderLeaderboard();
-    const searchBox = app.querySelector(".search-box");
-    searchBox.focus();
-    searchBox.setSelectionRange(cursor, cursor);
+  }));
+  const sb = app.querySelector(".search-box");
+  if (sb) sb.addEventListener("input", (e) => {
+    state.query = e.target.value;
+    const cursor = e.target.selectionStart ?? state.query.length;
+    renderLeaderboard();
+    const nb = app.querySelector(".search-box");
+    if (nb) { nb.focus(); nb.setSelectionRange(cursor, cursor); }
   });
-
-  app.querySelector(".sort-select").addEventListener("change", (event) => {
-    state.sortKey = event.target.value;
-    window.location.hash = `#/leaders/${state.sortKey}/${state.year}`;
-  });
-
-  const yearSelect = app.querySelector(".year-select");
-  if (yearSelect) {
-    yearSelect.addEventListener("change", (event) => {
-      setActiveYear(event.target.value);
-      window.location.hash = `#/leaders/${state.sortKey}/${state.year}`;
-      renderLeaderboard();
-    });
-  }
-
-  app.querySelector("[data-reset]").addEventListener("click", () => {
-    state.query = "";
-    state.sortKey = "xwoba";
-    window.location.hash = "#/";
+  const tf = app.querySelector("[data-team-filter]");
+  if (tf) tf.addEventListener("change", (e) => { state.teamFilter = e.target.value; renderLeaderboard(); });
+  const pa = app.querySelector("[data-min-pa]");
+  if (pa) pa.addEventListener("change", (e) => { state.minPA = Number(e.target.value) || 0; renderLeaderboard(); });
+  const ys = app.querySelector(".year-select");
+  if (ys) ys.addEventListener("change", (e) => { setActiveYear(e.target.value); renderLeaderboard(); });
+  const rb = app.querySelector("[data-reset]");
+  if (rb) rb.addEventListener("click", () => {
+    state.query = ""; state.minPA = 0; state.teamFilter = "all"; state.sortKey = "cs_plus"; state.sortDir = null;
     renderLeaderboard();
   });
-}
-
-function renderPlayerRow(player, rank) {
-  const chips = topDriverChips(player);
-  return `
-    <a class="player-row" href="#/player/${player.year}/${player.slug}">
-      <div class="rank">${rank}</div>
-      <div class="player-cell">
-        ${teamLogo(player)}
-        <div>
-          <span class="player-name">${escapeHtml(displayName(player.hitter_name))}</span>
-          <div class="player-sub">
-            ${plusPill(state.csPlus && state.csPlus.get(player.slug), "CS+")}
-            <span>Hitter</span>
-            <span class="badge">${escapeHtml(formatTeamName(player.team))}</span>
-            <span class="badge">${player.year}</span>
-            <span class="badge">30+ PA</span>
-          </div>
-        </div>
-      </div>
-      <div class="metric-main">${state.sortKey === "cs_plus" ? (sortVal(player, "cs_plus") ?? "--") : formatMetric(player[state.sortKey], getMetric(state.sortKey).fmt)}</div>
-      <div>${formatMetric(player.average_exit_velocity, "mph")}</div>
-      <div>${formatMetric(player["90th_percentile_exit_velocity"], "mph")}</div>
-      <div>${formatMetric(player.max_exit_velocity, "mph")}</div>
-      <div>${formatMetric(player.hard_hit_pct, "pct")}</div>
-      <div class="driver-chips">${chips}</div>
-    </a>
-  `;
 }
 
 // ---- College Team Tendencies -----------------------------------------------

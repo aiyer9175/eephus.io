@@ -110,6 +110,10 @@ td.tt-team { text-align: left; }
 .tt-col.is-sorted { background: var(--chip); }
 .tt-pos { color: var(--green); font-weight: 700; }
 .tt-neg { color: var(--red); }
+.lb-th { cursor: pointer; user-select: none; }
+.lb-th:hover { background: var(--chip); }
+.lb-pa { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; color: var(--muted); font-family: var(--font-retro-mono, ui-monospace, monospace); }
+.lb-pa input { width: 56px; }
 .proj-name { color: var(--ink); font-weight: 700; text-decoration: none; }
 .proj-name:hover { color: var(--blue); text-decoration: underline; }
 
