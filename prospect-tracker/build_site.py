@@ -286,8 +286,10 @@ def eephus_merged_wordmark(uid: str, tag: str = "h1") -> str:
         'stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>'
         f'<svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true">'
         f'<circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#{grad})" stroke-width="3"/>'
-        '<path class="eephus-logo-seam" d="M 6.5 10 Q 12 15.5 17.5 10" fill="none" '
-        'stroke="currentColor" stroke-width="1.5"/></svg>'
+        # Two seam arcs bulging outward (the px-ball / favicon read) so the apex
+        # ball is clearly a baseball, not a plain circle.
+        '<path class="eephus-logo-seam" d="M 16 5.6 Q 20.5 12 16 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/>'
+        '<path class="eephus-logo-seam" d="M 8 5.6 Q 3.5 12 8 18.4" fill="none" stroke="currentColor" stroke-width="1.3"/></svg>'
     )
     return (f'<{tag} class="nameplate eephus-wordmark-merged">{arc}'
             f'eephus<span class="dot">.io</span></{tag}>')

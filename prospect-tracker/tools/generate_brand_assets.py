@@ -382,12 +382,13 @@ def _animation_frame(prog: float, W: int, H: int, sc: float) -> Image.Image:
         dy = (-12 * (1 - e)) * sc
         r = int(9 * sc * (0.7 + 0.3 * min(1.0, bp * 1.3)))
         bx, by = 150 * sc, 20 * sc + dy
-        ball = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        bd = ImageDraw.Draw(ball)
-        bd.ellipse([bx - r, by - r, bx + r, by + r], fill=(26, 26, 30, 255),
-                   outline=DARK_FG[:3] + (255,), width=max(1, int(1.6 * sc)))
-        ball.putalpha(ball.getchannel("A").point(lambda v: int(v * min(1.0, bp * 1.5))))
-        img = Image.alpha_composite(img, ball)
+        # A real cream baseball (with seam arcs) at the apex, not a bare circle.
+        bsz = max(4, int(2 * r))
+        mark = _ball(bsz)
+        fade = min(1.0, bp * 1.5)
+        if fade < 1.0:
+            mark.putalpha(mark.getchannel("A").point(lambda v: int(v * fade)))
+        img.alpha_composite(mark, (int(bx - bsz / 2), int(by - bsz / 2)))
     return img
 
 

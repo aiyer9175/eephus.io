@@ -1019,6 +1019,12 @@
       padding-left: 12px;
       border-left: 1px solid var(--border-light);
     }
+    /* Farm sort bar carries ~20 sort chips in one group; let that group wrap to
+       multiple rows so the chips never bleed off the right edge. min-width:0 lets
+       the group shrink below its single-line content width so wrapping kicks in.
+       The label stays pinned left and the chips flow beneath it. */
+    #farm-sort-bar .filter-group { flex-wrap: wrap; min-width: 0; }
+    #farm-sort-bar .filter-group .filter-label { flex: 0 0 auto; }
     /* v30.8 - Three-cluster filter layout. The active-list filter bar
        used to be 13 flat groups; now they're organized into WHO /
        WHAT / HOW clusters that render as stacked rows separated by a

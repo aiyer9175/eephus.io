@@ -835,7 +835,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   background: var(--accent-navy); color: var(--bg-primary); border-color: var(--accent-navy);
 }
 .eephus-logo-ball { fill: var(--bg-primary); }
-.eephus-logo-seam { opacity: .55; }
+.eephus-logo-seam { opacity: .8; }
 /* The merged-wordmark ball is filled with the surface color so it masks the
    arc passing behind it. In the sidebar brand the surface is the secondary-
    tinted gradient top, not the page bg - fill it to match so the ball doesn't
