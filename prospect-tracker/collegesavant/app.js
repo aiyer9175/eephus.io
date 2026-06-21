@@ -56,12 +56,21 @@ const TEAM_LOGOS = {
 };
 
 const HOME_WIDGET_METRICS = [
+  { key: "cs_plus", label: "CS+ (pro profile)" },
   { key: "average_exit_velocity", label: "EV" },
   { key: "90th_percentile_exit_velocity", label: "90th Percentile EV" },
   { key: "zone_contact_pct", label: "Z Contact" },
   { key: "hard_hit_pct", label: "Hard-Hit %" },
   { key: "whiff_pct", label: "Whiff %" },
   { key: "k_minus_bb_pct", label: "K-BB %" },
+];
+
+// Section hub on the home page: orient the reader to every CollegeSavant view
+// instead of dropping them straight into one dashboard.
+const HOME_SECTIONS = [
+  { route: "leaders", title: "Hitter Leaderboard", note: "Every tracked hitter, sortable across EV, discipline, and CS+, with team and qualified-PA filters." },
+  { route: "teams", title: "Team Tendencies", note: "Which college programs hit the ball hardest, chase the least, and run the best team CS+." },
+  { route: "projections", title: "Pro Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its honest backtest." },
 ];
 
 const LEADERBOARD_LIMIT = 300;
@@ -375,17 +384,25 @@ function updateNav(hash) {
 }
 
 function renderHome() {
+  const hub = HOME_SECTIONS.map((s) => {
+    const href = s.route === "leaders" ? `#/leaders/cs_plus/${state.year}` : `#/${s.route}`;
+    return `<a class="hub-card" href="${href}">
+      <strong>${s.title}</strong>
+      <span class="hub-note">${s.note}</span>
+      <span class="hub-go">Open</span>
+    </a>`;
+  }).join("");
   app.innerHTML = `
-    <section class="toolbar home-toolbar">
-      ${renderYearSelect()}
-      <a class="control-button" href="#/leaders/xwoba/${state.year}">Full Hitter Leaderboard</a>
-    </section>
+    <section class="toolbar home-toolbar">${renderYearSelect()}</section>
 
     <section class="home-intro">
-      <h1>Hitter Dashboard</h1>
-      <p>Top 10 hitter snapshots for the ${state.year} college dataset.</p>
+      <h1>CollegeSavant - Hitters</h1>
+      <p>Tracked batted-ball quality and plate discipline, a pool-anchored CS+ index, and a college-to-Single-A projection for the ${state.year} college dataset.</p>
     </section>
 
+    <section class="hub-grid">${hub}</section>
+
+    <div class="panel-title" style="margin-top:20px;"><span>Top of the ${state.year} class</span><span>leaders by the metrics that travel to pro ball</span></div>
     <section class="widget-grid">
       ${HOME_WIDGET_METRICS.map((item) => renderTopWidget({ ...getMetric(item.key), label: item.label })).join("")}
     </section>
@@ -415,7 +432,7 @@ function renderTopWidget(metric) {
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(player.hitter_name))}</span>
             <span class="widget-team">${TEAM_LOGOS[player.team] ? `<img class="widget-logo" src="${TEAM_LOGOS[player.team]}" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(player.team))}</span>
-            <strong>${formatMetric(player[metric.key], metric.fmt)}</strong>
+            <strong>${metric.key === "cs_plus" ? Math.round(state.csPlus && state.csPlus.get(player.slug)) : formatMetric(player[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}
       </div>
@@ -425,6 +442,11 @@ function renderTopWidget(metric) {
 
 function topRowsForMetric(metric) {
   const direction = metric.higherBetter ? -1 : 1;
+  if (metric.key === "cs_plus") {
+    return state.players
+      .filter((player) => Number.isFinite(state.csPlus && state.csPlus.get(player.slug)))
+      .sort((a, b) => state.csPlus.get(b.slug) - state.csPlus.get(a.slug));
+  }
   return state.players
     .filter((player) => Number.isFinite(player[metric.key]))
     .sort((a, b) => direction * compareNullable(a[metric.key], b[metric.key]));
