@@ -35667,6 +35667,80 @@ function makeLevelDepth(levelCounts, activeLevel) {
   </span>`;
 }
 
+// Per-org value for the active farm sort - powers the farm-card sorted-stat
+// pill. Mirrors farmSortedOrgs's value sources (mostly direct org fields;
+// spend-% / level / tendency computed here). Server-computed statcast_quality
+// fields are read directly; the rare client-memo fallback the sort uses is
+// skipped (those orgs sit low on the sort and just show no pill).
+function _farmSortVal(o, s) {
+  if (!o || !s || s === "farm_rank") return null;
+  const sum3 = b => { if (!b) return 0; const c = new Date().getUTCFullYear() - 3; return Object.keys(b).filter(y => +y >= c).reduce((t, y) => t + ((b[y] && b[y].total_usd) || 0), 0); };
+  if (s === "ifa_spend_pct" || s === "ifa_spend") { const i = sum3(o.ifa_spending), g = i + sum3(o.draft_spending); return g > 0 ? i / g : 0; }
+  if (s === "draft_spend_pct") { const d = sum3(o.draft_spending), g = sum3(o.ifa_spending) + d; return g > 0 ? d / g : 0; }
+  if (s === "surplus")    return o._active_surplus_net_mm;
+  if (s === "total_fv")   return o.total_fv;
+  if (s === "top_end")    return o.top_end_points;
+  if (s === "depth")      return o.depth_points;
+  if (s.indexOf("trajectory") === 0) {
+    const w = s === "trajectory_1y" ? "1y" : s === "trajectory_3y" ? "3y"
+            : (s === "trajectory_6y" || s === "trajectory_5y") ? "6y" : (state.formWindow || "6y");
+    const dv = (o.dvm_plus || {})[w], da = (o.delta_above_mean || {})[w];
+    return dv != null ? dv : (da != null ? da : (o.trajectory_score != null ? o.trajectory_score : null));
+  }
+  if (s === "grad_pipeline") return o.grad_pipeline_score;
+  if (s === "count")      return o.count;
+  if (s === "tier_60")    return o.tier_60_plus;
+  if (s === "avg_age")    return o.avg_age;
+  if (s === "roi")        return (o.financial_roi || {}).war_per_million;
+  if (s === "stock_up")   return o.stock_up;
+  if (s === "upside_count")      return (o.statcast_quality || {}).upside_count;
+  if (s === "breakout_count")    return (o.statcast_quality || {}).breakout_count;
+  if (s === "statcast_plus_avg") return (o.statcast_quality || {}).mean;
+  if (s === "statcast_plus_hit") return (o.statcast_quality || {}).hitter_mean;
+  if (s === "statcast_plus_pit") return (o.statcast_quality || {}).pitcher_mean;
+  if (s === "acquisition_strategy" || s === "acquisitions" || s === "transactions") return o.acquisition_strategy_score;
+  if (s === "development")   return o.development_score;
+  if (s === "financial")     return o.financial_score;
+  if (s === "mlb_production") return o.mlb_production_score;
+  if (s === "tools_dvm_plus")  return o.tool_dev && o.tool_dev.tools_dvm_plus;
+  if (s === "hitter_dvm_plus") return o.tree && o.tree.dev_hitter && o.tree.dev_hitter.dvm_plus;
+  if (s === "pitcher_dvm_plus") return o.tree && o.tree.dev_pitcher && o.tree.dev_pitcher.dvm_plus;
+  if (s.indexOf("level_") === 0) { const lvl = s.slice(6); const lc = o.level_counts || {}; return lvl === "all" ? Object.keys(lc).reduce((t, k) => t + (lc[k] || 0), 0) : (lc[lvl] != null ? lc[lvl] : 0); }
+  if (s === "tendency") { const sel = state.farmTendencyFilter || new Set(); const bs = (typeof orgBadgeSet === "function" ? orgBadgeSet(o.org) : []) || []; const rel = sel.size ? bs.filter(b => sel.has(b.kind)) : bs; return rel.reduce((t, b) => t + (b.weight || 0), 0); }
+  return null;
+}
+const _FARM_SORT_PILL = {
+  ifa_spend_pct: { l: "IFA spend%", f: v => Math.round(v * 100) + "%" }, ifa_spend: { l: "IFA spend%", f: v => Math.round(v * 100) + "%" },
+  draft_spend_pct: { l: "Draft spend%", f: v => Math.round(v * 100) + "%" },
+  surplus: { l: "Surplus", f: v => "$" + Math.round(v) + "m" }, total_fv: { l: "Total FV", f: v => String(Math.round(v)) },
+  top_end: { l: "Top-end", f: v => String(Math.round(v)) }, depth: { l: "Depth", f: v => String(Math.round(v)) },
+  grad_pipeline: { l: "Grad pipe", f: v => String(Math.round(v)) }, count: { l: "Count", f: v => String(v) },
+  tier_60: { l: "60+ FV", f: v => String(v) }, avg_age: { l: "Avg age", f: v => Number(v).toFixed(1) },
+  roi: { l: "ROI", f: v => Number(v).toFixed(2) + " WAR/$M" }, stock_up: { l: "Rising", f: v => String(v) },
+  upside_count: { l: "Upside", f: v => String(v) }, breakout_count: { l: "Breakout", f: v => String(v) },
+  statcast_plus_avg: { l: "SC+ avg", f: v => String(Math.round(v)) }, statcast_plus_hit: { l: "SC+ hit", f: v => String(Math.round(v)) },
+  statcast_plus_pit: { l: "SC+ pit", f: v => String(Math.round(v)) },
+  acquisition_strategy: { l: "Acq grade", f: v => String(Math.round(v)) }, acquisitions: { l: "Acq grade", f: v => String(Math.round(v)) }, transactions: { l: "Acq grade", f: v => String(Math.round(v)) },
+  development: { l: "Dev grade", f: v => String(Math.round(v)) }, financial: { l: "Fin grade", f: v => String(Math.round(v)) },
+  mlb_production: { l: "MLB prod", f: v => String(Math.round(v)) },
+  tools_dvm_plus: { l: "Tools DvM+", f: v => String(Math.round(v)) }, hitter_dvm_plus: { l: "Hit DvM+", f: v => String(Math.round(v)) },
+  pitcher_dvm_plus: { l: "Pit DvM+", f: v => String(Math.round(v)) }, tendency: { l: "Tendency", f: v => String(Math.round(v)) }
+};
+// Sorted-stat pill for a farm org card (mirrors the player-card pill). Shown
+// only when the board is sorted by something other than the default Farm
+// grade; reuses _pillHTML.
+function _farmSortPill(o) {
+  const s = state.farmSort;
+  if (!s || s === "farm_rank") return "";
+  let label, fmt;
+  if (s.indexOf("trajectory") === 0) { label = "DvM+"; fmt = v => String(Math.round(v)); }
+  else if (s.indexOf("level_") === 0) { const lvl = s.slice(6); label = lvl === "all" ? "Depth" : lvl + " depth"; fmt = v => String(Math.round(v)); }
+  else { const m = _FARM_SORT_PILL[s]; if (!m) return ""; label = m.l; fmt = m.f; }
+  const v = _farmSortVal(o, s);
+  if (v == null || !isFinite(v)) return "";
+  return _pillHTML(label, fmt(Number(v)));
+}
+
 function farmSortedOrgs() {
   let orgs = (DATA.org_summary || []).slice();
   // Search filter: match against the 3-letter code OR full team name so
@@ -36308,6 +36382,7 @@ function renderFarmSystems() {
         <div class="hero-meta">
           <div class="hero-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="hero-rank">#${displayRank} · ${escapeHtml(org.org)}${alumniBadge}</div>
+          ${_farmSortPill(org)}
         </div>
         <div class="farm-grade-cell" title="Overall grade · farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}/100">
           <span class="fg-letter" style="color:${gradeColorVal};font-size:28px;">${escapeHtml(overall)}</span>${tbHtml}
