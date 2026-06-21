@@ -608,7 +608,25 @@ def _build_class(year: int,
             boost = max(-6, min(6, round(cperf_z * 3.0)))
             sp_boosted = max(60, min(140, sp + boost))
         _pos_val = any_snap.get("position") or player_meta.get("position")
-        _school_val = any_snap.get("school") or player_meta.get("school")
+        # Prefer a school string carrying the HS state tag "(XX)". MLB
+        # Pipeline supplies it for high-schoolers across all draft years,
+        # while older FanGraphs boards omit it and the latest-dated snapshot
+        # (any_snap) is often the FG one. Preferring the state-tagged school
+        # backfills home-state coverage for the HS Details geography section
+        # on older classes (and sharpens HS-vs-college typing below). College
+        # schools carry no "(XX)" tag, so they are unaffected.
+        _state_school = None
+        for _src in ("mlb_pipeline_draft", "espn_draft"):
+            _state_school = next((sn.get("school") for sn in plist
+                                  if sn.get("source") == _src and sn.get("school")
+                                  and re.search(r"\([A-Z]{2}\)\s*$", sn["school"])), None)
+            if _state_school:
+                break
+        if not _state_school:
+            _state_school = next((sn.get("school") for sn in plist
+                                  if sn.get("school")
+                                  and re.search(r"\([A-Z]{2}\)\s*$", sn["school"])), None)
+        _school_val = _state_school or any_snap.get("school") or player_meta.get("school")
         prospects.append({
             "player_key":     pk,
             "player_name":    dedupe_name.get(pk) or any_snap.get("player_name"),
@@ -638,7 +656,7 @@ def _build_class(year: int,
                 "mlbam_id":     player_meta.get("mlbam_id"),
                 "fg_player_id": player_meta.get("fg_player_id"),
             }),
-            "school_logo_url": college_logo_url(any_snap.get("school") or player_meta.get("school")),
+            "school_logo_url": college_logo_url(_school_val),
             "status":         status,
             "drafted_pick":   drafted_pick,
             "drafted_team":   drafted_team,
