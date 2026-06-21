@@ -4005,6 +4005,10 @@
     tr[data-hs-drill]:hover { background: var(--bg-tertiary); }
     .college-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-tertiary); }
     .college-link:hover { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
+    /* High-school program link (draft section) - same affordance as college-link,
+       deep-links into the High School Details view for that program. */
+    .hs-link { color: inherit; text-decoration: none; border-bottom: 1px dotted var(--text-tertiary); }
+    .hs-link:hover { color: var(--neon-cyan); border-bottom-color: var(--neon-cyan); }
     table:not([data-no-sort]) th { cursor: pointer; }
     th[data-gen-sorted] { color: var(--neon-cyan); }
     .sort-stat-pill { display: inline-flex; align-items: baseline; gap: 3px; margin: 0 6px 0 0; padding: 1px 7px; border-radius: 999px; background: var(--bg-tertiary); border: 1px solid var(--neon-cyan); font-family: var(--font-mono); vertical-align: middle; }
@@ -21956,7 +21960,7 @@ function _renderDraftCard(p) {
     const _hsState = _isHSPlayer(p) ? _hsStateName(p.school) : null;
     schoolLine = _hsState
       ? `<span title="${escapeHtml(p.school)}">${escapeHtml(_hsState)}</span>${_commitSuffix}`
-      : `${_collegeSchoolHTML(p)}${_commitSuffix}`;
+      : `${_draftSchoolLinkHTML(p)}${_commitSuffix}`;
   }
 
   // Report (first source's writeup, truncated). The full writeup lives
@@ -22392,7 +22396,7 @@ function _renderDraftLeaderboard(host, cls) {
     <td>${i + 1}</td>
     <td><strong>${escapeHtml(p.player_name)}</strong></td>
     <td>${escapeHtml(p.position || "?")}</td>
-    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${p.school ? _collegeSchoolHTML(p) : "?"}</span></td>
+    <td><span class="draft-cell-ico">${_collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p))}${p.school ? _draftSchoolLinkHTML(p) : "?"}</span></td>
     <td style="color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus || " - "}</td>
     <td>${p.consensus_fv != null ? `${fvCeil(p.consensus_fv)}` : " - "}</td>
     <td>${p.projected_round ? "R" + p.projected_round : " - "}</td>
@@ -25061,6 +25065,48 @@ function goToCollege(name) {
   _pushHash(p);
 }
 
+// School name as a link: college players -> the college entity page (existing
+// data-college route); HS players -> the High School Details program page
+// (data-hs-school, routed below). Non-linkable schools stay plain text. This is
+// the unified renderer for the draft section's school cells so high schools are
+// clickable too, not just colleges.
+function _draftSchoolLinkHTML(p) {
+  const school = p && p.school;
+  if (!school) return "";
+  if (_collegeKeyOf(p)) return _collegeSchoolHTML(p);   // college -> #college=
+  if (typeof _isHSPlayer === "function" && _isHSPlayer(p)) {
+    const prog = (typeof _hsProgramName === "function") ? _hsProgramName(school) : null;
+    if (prog) {
+      return '<a href="#" class="hs-link" data-hs-school="' + escapeHtml(prog) + '" '
+        + 'title="' + escapeHtml(prog) + ' high-school page">' + escapeHtml(school) + '</a>';
+    }
+  }
+  return escapeHtml(school);
+}
+
+// Site-wide HS-program link router (capture phase, mirrors the college router so
+// it fires before any parent row onclick).
+document.addEventListener("click", function (e) {
+  const el = e.target && e.target.closest && e.target.closest("[data-hs-school]");
+  if (!el) return;
+  e.preventDefault();
+  e.stopPropagation();
+  goToHSSchool(el.dataset.hsSchool);
+}, true);
+
+// Navigate to a high-school program's page: the High School Details draft view,
+// drilled into "schools" mode on that program. Mirrors the inline section-jump
+// pattern used elsewhere (set state + render + syncToURL).
+function goToHSSchool(program) {
+  if (!program) return;
+  state.section = "draft";
+  state.draftView = "hs-details";
+  _hsView.mode = "schools";
+  _hsView.entity = program;
+  render();
+  syncToURL();
+}
+
 let _collegeSort = { key: null, dir: -1 };
 
 // Lazy-load the CollegeSavant per-player bridge (Proj Single-A lines keyed
@@ -25871,7 +25917,7 @@ async function renderDraftDetail(key) {
           <div class="player-display-name">${escapeHtml(p.player_name)}</div>
           <div class="player-display-meta">
             <strong style="font-weight:600;color:var(--text-primary);">${escapeHtml(p.position || " - ")}</strong>
-            ${p.school ? ` · ${schoolLogoHero}${_collegeSchoolHTML(p)}` : ""}
+            ${p.school ? ` · ${schoolLogoHero}${_draftSchoolLinkHTML(p)}` : ""}
             ${p.college_commit ? ` · <span style="color:var(--neon-cyan);">${escapeHtml(p.college_commit)} commit</span>` : ""}
           </div>
           <div class="player-display-meta" style="margin-top:4px;font-size:11px;color:var(--text-tertiary);">
