@@ -171,6 +171,11 @@ CAREER_STATS_FRESH_DAYS = 0
 ZONE_METRICS_FRESH_DAYS = 0
 STATCAST_METRICS_FRESH_DAYS = 0
 
+# How many CollegeSavant teams the NCAA box-score pass renders per run (densest
+# tracked teams first). Bounded because each team is a headless-Chrome render;
+# raise once the first run is validated. 0 disables the pass.
+COLLEGESAVANT_MAX_TEAMS = 40
+
 
 def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     """True if a career_stats row is younger than max_age_days."""
@@ -976,6 +981,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         log.info("college fallback stats: %s", counts)
                     except Exception:
                         log.exception("college fallback stats crashed — continuing with draft export")
+                    # v34 — extend the NCAA capture to CollegeSavant's broader
+                    # tracked universe (players who are NOT draft prospects), so
+                    # those tracked players carry a real college box score too.
+                    # Bounded by COLLEGESAVANT_MAX_TEAMS; best-effort.
+                    if COLLEGESAVANT_MAX_TEAMS:
+                        try:
+                            from college_stats import refresh_collegesavant_stats
+                            cs_n = refresh_collegesavant_stats(
+                                this_year, force=force_refetch,
+                                max_teams=COLLEGESAVANT_MAX_TEAMS)
+                            log.info("collegesavant box scores: %d rows", cs_n)
+                        except Exception:
+                            log.exception("collegesavant stats crashed — continuing")
                     n_draft = export_draft_json(out_dir / "draft_timeseries.json")
                     log.info("draft pipeline: exported %d prospects across all classes",
                              n_draft)

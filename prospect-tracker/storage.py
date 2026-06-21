@@ -1578,6 +1578,20 @@ CREATE TABLE IF NOT EXISTS draft_statlines (
 );
 CREATE INDEX IF NOT EXISTS idx_draft_stats_player ON draft_statlines(player_key);
 
+-- College box scores for CollegeSavant's tracked universe (the reverse of
+-- draft_statlines: keyed by the CS frontend slug, not a draft player_key), so
+-- tracked players who are NOT draft prospects can still carry a real college
+-- line. Populated by college_stats.refresh_collegesavant_stats from NCAA D-I.
+CREATE TABLE IF NOT EXISTS collegesavant_box_scores (
+    player_slug  TEXT NOT NULL,           -- slugify_cs(name): the CS frontend key
+    season       INTEGER NOT NULL,
+    side         TEXT NOT NULL,           -- 'batting' | 'pitching'
+    school       TEXT,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_slug, season, side)
+);
+
 CREATE TABLE IF NOT EXISTS overseas_canonical_keys (
     overseas_key   TEXT PRIMARY KEY,
     milb_key       TEXT NOT NULL,
@@ -3211,6 +3225,50 @@ def load_draft_statlines(player_key: str | None = None) -> list[dict]:
                 d["payload"] = json.loads(d["payload_json"])
             except (ValueError, TypeError):
                 d["payload"] = {}
+        out.append(d)
+    return out
+
+
+def upsert_collegesavant_box_scores(rows: Iterable[dict]) -> int:
+    """Upsert NCAA box scores for CollegeSavant's tracked players, keyed by the
+    CS frontend slug. Each row: player_slug, season, side ('batting'|'pitching'),
+    school, payload."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO collegesavant_box_scores
+                     (player_slug, season, side, school, payload_json)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(player_slug, season, side) DO UPDATE SET
+                     school       = COALESCE(excluded.school, collegesavant_box_scores.school),
+                     payload_json = excluded.payload_json,
+                     fetched_at   = datetime('now')""",
+                (r["player_slug"], r["season"], r["side"], r.get("school"),
+                 json.dumps(r.get("payload") or {}, default=str)),
+            )
+            n += 1
+    return n
+
+
+def load_collegesavant_box_scores() -> list[dict]:
+    """All CollegeSavant box scores (latest season per player surfaces in the
+    frontend join). Empty list if the table does not exist yet."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_slug, season, side, school, payload_json "
+                "FROM collegesavant_box_scores ORDER BY player_slug ASC, season DESC"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["payload"] = json.loads(d["payload_json"]) if d.get("payload_json") else {}
+        except (ValueError, TypeError):
+            d["payload"] = {}
         out.append(d)
     return out
 

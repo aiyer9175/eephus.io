@@ -34,7 +34,7 @@ from __future__ import annotations
 import json
 import logging
 import re
-from collections import defaultdict
+from collections import Counter, defaultdict
 
 from bs4 import BeautifulSoup
 
@@ -43,6 +43,7 @@ from storage import (
     backfill_draft_player_fields,
     load_draft_players,
     load_draft_statlines,
+    upsert_collegesavant_box_scores,
     upsert_draft_statlines,
 )
 
@@ -590,6 +591,144 @@ def refresh_ncaa_stats(draft_year: int, force: bool = False,
             if payloads:
                 total += upsert_draft_statlines(payloads)
     log.info("ncaa stats %s: upserted %d season rows", draft_year, total)
+    return total
+
+
+# ---------------------------------------------------------------------------
+# 6. CollegeSavant tracked universe (the reverse of the draft-prospect pull):
+#    box scores for tracked players who are NOT draft prospects.
+# ---------------------------------------------------------------------------
+def _cs_universe() -> dict:
+    """CollegeSavant tracked players grouped by team code:
+    {team_code: [{nk, slug, side, name}]}. side is 'batting' for hitters,
+    'pitching' for pitchers. Empty if the CS payloads are unreadable."""
+    try:
+        from college_translation import load_cs_hitters, load_cs_pitchers, slugify_cs
+    except Exception:
+        return {}
+    by_code: dict[str, list] = defaultdict(list)
+    for side, loader in (("batting", load_cs_hitters), ("pitching", load_cs_pitchers)):
+        try:
+            rows = loader()
+        except Exception:
+            continue
+        for _k, v in rows.items():
+            code = (v.get("team") or "").strip()
+            name = v.get("name") or ""
+            if not code or not name:
+                continue
+            by_code[code].append({"nk": _normalize_name(name), "slug": slugify_cs(name),
+                                  "side": side, "name": name})
+    return by_code
+
+
+# A code->school inference is only trusted when its players vote clearly for one
+# school: a single colliding name (OSU_BUC drawing one "Arkansas" vote) or a weak
+# plurality (ORE_DUC at 2/5) is rejected, so we never render the wrong roster.
+# Correctness over coverage - a rejected code simply gets no CS-universe stats.
+_CS_SCHOOL_MIN_VOTES = 2
+_CS_SCHOOL_MIN_SHARE = 0.60
+
+
+def _learn_code_schools(by_code: dict) -> dict:
+    """Learn CS team_code -> NCAA school from the draft-prospect matches we already
+    trust: a CS player whose name matches a draft_player inherits that player's
+    school, and each code takes the majority school - but ONLY when that majority
+    is confident (>= _CS_SCHOOL_MIN_VOTES and >= _CS_SCHOOL_MIN_SHARE of the votes).
+    Data-driven, so we never hand-maintain a fragile code list; conservative, so a
+    name collision never maps a code to the wrong program."""
+    try:
+        from college_translation import norm_name as ct_norm
+    except Exception:
+        return {}
+    school_by_name = {}
+    for p in load_draft_players().values():
+        nm = ct_norm(p.get("player_name") or "")
+        if nm and p.get("school"):
+            school_by_name[nm] = p["school"]
+    out = {}
+    for code, players in by_code.items():
+        votes = Counter()
+        for pl in players:
+            sch = school_by_name.get(ct_norm(pl["name"]))
+            if sch:
+                votes[sch] += 1
+        if not votes:
+            continue
+        top, n_top = votes.most_common(1)[0]
+        total = sum(votes.values())
+        if n_top >= _CS_SCHOOL_MIN_VOTES and n_top / total >= _CS_SCHOOL_MIN_SHARE:
+            out[code] = top
+    return out
+
+
+def refresh_collegesavant_stats(year: int, force: bool = False,
+                                max_teams: int | None = 40) -> int:
+    """Fetch NCAA D-I box scores for CollegeSavant's tracked players (keyed by the
+    CS frontend slug), so tracked players who are not draft prospects still carry a
+    real college line. Reuses the draft pull's browser + grid machinery. Resolves
+    each CS team code to an NCAA team via the learned code->school map, renders the
+    teams with the most tracked players first (bounded by `max_teams`), and writes
+    the box score for every CS player found on those rosters. Returns rows upserted."""
+    by_code = _cs_universe()
+    if not by_code:
+        log.info("cs stats: no CollegeSavant universe loaded")
+        return 0
+    code_school = _learn_code_schools(by_code)
+    if not code_school:
+        log.info("cs stats: learned no code->school mappings")
+        return 0
+
+    total = 0
+    with _NcaaBrowser() as browser:
+        if not browser.available:
+            return 0
+        team_map = fetch_d1_team_map(year, force=force, browser=browser)
+        if not team_map:
+            return 0
+        targets = []  # (code, team_id, players)
+        unresolved = 0
+        for code, players in by_code.items():
+            school = code_school.get(code)
+            tid = team_map.get(_norm_school(school)) if school else None
+            if tid is None:
+                unresolved += 1
+                continue
+            targets.append((code, tid, players))
+        targets.sort(key=lambda t: len(t[2]), reverse=True)  # densest teams first
+        resolved = len(targets)
+        if max_teams is not None:
+            targets = targets[:max_teams]
+        log.info("cs stats %s: %d CS teams resolved (%d unresolved), rendering %d",
+                 year, resolved, unresolved, len(targets))
+
+        for code, tid, players in targets:
+            sides = {pl["side"] for pl in players}
+            batting, pitching = render_team_grids(tid, browser, force=force, sides=sides)
+            if not batting and not pitching:
+                continue
+            roster = parse_team_grids(batting, pitching, season=year)
+            payloads = []
+            for pl in players:
+                entry = roster.get(pl["nk"])
+                if not entry:
+                    continue
+                payload = entry.get(pl["side"])
+                if not payload:
+                    continue
+                if pl["side"] == "batting" and not payload.get("ab"):
+                    continue
+                if pl["side"] == "pitching" and not payload.get("ip"):
+                    continue
+                payload = dict(payload)
+                payload["source"] = "ncaa"
+                payload["ncaa_player_id"] = entry.get("ncaa_id")
+                payloads.append({"player_slug": pl["slug"], "season": year,
+                                 "side": pl["side"], "school": code_school.get(code),
+                                 "payload": payload})
+            if payloads:
+                total += upsert_collegesavant_box_scores(payloads)
+    log.info("cs stats %s: upserted %d CollegeSavant box scores", year, total)
     return total
 
 

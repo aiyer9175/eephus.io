@@ -109,6 +109,7 @@ def load_cs_hitters() -> dict:
     for r in sorted(rows, key=lambda x: x.get("year", 0)):
         out[norm_name(r.get("hitter_name"))] = {
             "name": r.get("hitter_name"),
+            "team": r.get("team"),
             "k_pct": r.get("k_pct"),
             "bb_pct": r.get("bb_pct"),
             "xwoba": r.get("xwoba"),
@@ -128,6 +129,7 @@ def load_cs_pitchers() -> dict:
         if slug not in out or pc > out[slug]["pitch_count"]:
             out[slug] = {
                 "name": r.get("pitcher_name"),
+                "team": r.get("team"),
                 "k_pct": r.get("k_pct"),
                 "bb_pct": r.get("bb_pct"),
                 "pitch_count": pc,
@@ -153,6 +155,21 @@ def _draft_keys(con) -> dict:
     for pk, nm in con.execute("SELECT player_key, player_name FROM draft_players"):
         out.setdefault(norm_name(nm), pk)
     return out
+
+
+def _ncaa_box_to_display(payload, season, school):
+    """An NCAA batting payload (from college_stats) -> the hitter player-page box
+    shape. NCAA bb%/k% arrive as percentages (12.5); the panel expects the decimal
+    convention (0.125) draft_statlines uses. woba/wRC+ are not derivable from box
+    rows, so they read blank."""
+    p = payload or {}
+    def _pct(x):
+        return x / 100 if x is not None else None
+    return {"season": season, "level": "NCAA", "team": school,
+            "avg": p.get("avg"), "obp": p.get("obp"), "slg": p.get("slg"),
+            "iso": p.get("iso"), "woba": None, "wrc_plus": None,
+            "bb_pct": _pct(p.get("bb_pct")), "k_pct": _pct(p.get("k_pct")),
+            "hr": p.get("hr"), "pa": p.get("pa")}
 
 
 def _draft_statlines(con):
@@ -465,6 +482,26 @@ def build(out_dir: Path | None = None) -> dict:
             pk = draft_keys.get(slug_norm)
             if pk and pk not in bridge:
                 bridge[pk] = {"side": "pit", "headline": _equiv_headline(t, "pit"), "name": v["name"]}
+        # CollegeSavant-universe NCAA box scores (tracked players who are NOT
+        # draft prospects), attached by slug where we have no draft-prospect box.
+        # NCAA bb%/k% arrive as percentages; rescale to the decimal convention the
+        # player-page panel uses. woba/wRC+ are not computable from box rows.
+        try:
+            from storage import load_collegesavant_box_scores
+            cs_box = {}
+            for r in load_collegesavant_box_scores():
+                cs_box.setdefault((r["player_slug"], r["side"]), r)
+
+            for slug, entry in translations.items():
+                if entry.get("box") or entry.get("side") != "hit":
+                    continue
+                r = cs_box.get((slug, "batting"))
+                if r:
+                    entry["box"] = _ncaa_box_to_display(r.get("payload"), r.get("season"),
+                                                        r.get("school"))
+        except Exception:
+            pass
+
         # Compact backtest summary for the frontend "how accurate is this" panel.
         eval_summary = {k: {"r2": f.get("r2"), "n": f.get("n"), "band_sd": f.get("band_sd"),
                             "mae": (f.get("loo") or {}).get("mae"),
