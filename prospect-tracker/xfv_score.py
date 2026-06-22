@@ -56,6 +56,39 @@ def score_report_path(side):
     return DATA_DIR / ("xfv_score_report_pitcher.json" if side == "pit" else "xfv_score_report.json")
 
 
+# Human labels for the per-prospect xFV explainer (which signals moved the grade off
+# the consensus-FV prior). Keys match the model feature names.
+_FACTOR_LABELS = {
+    "obp_rel": "On-base vs level", "k_rel": "Contact (K%) vs level",
+    "bb_rel": "Walk rate vs level", "iso_rel": "Power (ISO) vs level",
+    "age_rel_level": "Age for level", "level_rank": "Level reached",
+    "tool_hit": "Hit tool", "tool_speed": "Speed tool", "tool_game_pwr": "Power tool",
+    "tool_field": "Field tool", "peak_k_rel": "Peak K rate", "peak_bb_rel": "Peak walk rate",
+    "tool_fb": "Fastball", "tool_cmd": "Command", "tool_sl": "Slider",
+    "tool_ch": "Changeup", "tool_cb": "Curveball", "era_rel": "ERA vs level",
+    "n_sources": "Source coverage", "pick_overall": "Draft pedigree",
+    "bonus_log": "Signing bonus", "milb_missing": "Thin track record",
+    "fv_stddev": "Source disagreement", "il_stints_pre": "Injury history",
+}
+
+
+def _factors(ridge, feats, top: int = 4) -> list:
+    """Per-prospect explainer: the non-FV ridge contributions (weight * standardized
+    feature, in WAR units) that moved xFV off the consensus-FV prior, largest first.
+    Sum of these ~= the xFV-minus-consensus adjustment, so it literally explains the
+    delta. Returns [{label, dir, mag}]."""
+    contribs = []
+    for k, m, s, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
+        if k == "fv":
+            continue
+        c = w * ((feats.get(k, 0.0) - m) / (s or 1.0))
+        if abs(c) >= 0.05:
+            contribs.append((k, c))
+    contribs.sort(key=lambda kc: -abs(kc[1]))
+    return [{"label": _FACTOR_LABELS.get(k, k), "dir": "up" if c > 0 else "down",
+             "mag": round(abs(c), 2)} for k, c in contribs[:top]]
+
+
 def _age_at(birth_date, year):
     if not birth_date:
         return None
@@ -277,11 +310,19 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if not r.get("milb"):
             skipped_no_track += 1
             continue
-        xfv_war = max(-2.0, a + b * _predict(ridge, _vec(r, side)))
+        feats = _vec(r, side)
+        xfv_war = max(-2.0, a + b * _predict(ridge, feats))
         cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
+        factors = _factors(ridge, feats)                  # explainer: why xFV != consensus
         inj = _injury_factor(r)                           # owner-directed live injury penalty
         sc = _statcast_factor(r)                           # live Statcast+ quality tilt
+        if sc != 1.0:
+            factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
+                               "mag": round(abs(sc - 1) * 6, 2)})
+        if inj < 1.0:
+            factors.insert(0, {"label": "Injury penalty", "dir": "down",
+                               "mag": round((1 - inj) * 6, 2)})
         adj_factor = inj * sc
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = max(-2.0, xfv_war * adj_factor)
@@ -320,6 +361,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
             "injury_factor": inj if inj < 1.0 else None,
             "statcast_factor": sc if sc != 1.0 else None,
+            "factors": factors,
         })
 
     # headline grade -- rank-preserving quantile map of the GUARDED-BLEND ranking

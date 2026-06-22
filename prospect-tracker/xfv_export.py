@@ -45,6 +45,8 @@ def _entry(s, side, kind):
         e["injury_factor"] = s["injury_factor"]
     if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
         e["statcast_factor"] = s["statcast_factor"]
+    if s.get("factors"):                                 # per-prospect xFV explainer
+        e["factors"] = s["factors"]
     return e
 
 

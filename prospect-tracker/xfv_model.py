@@ -60,14 +60,18 @@ _FEATURES_HIT = [
     ("fv",             +1),   # consensus_fv_raw -- the dominant, regularized prior
     ("obp_rel",        +1),   # Phase-1: strongest hitter edge BEYOND FV (on-base skill)
     ("k_rel",          -1),   # contact: more whiffs worse (under-priced by scouts)
+    ("peak_k_rel",     -1),   # best-season contact (multi-season peak); helps OOS
     ("age_rel_level",  -1),   # younger-for-level better
     ("tool_hit",       +1),   # best single tool for WAR
     ("tool_speed",     +1),   # athletic up-side / defensive value
+    # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
+    # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]
 _FEATURES_PIT = [
     ("fv",             +1),   # consensus_fv_raw -- the dominant, regularized prior
     ("peak_k_rel",     +1),   # multi-season PEAK K-rate -- the lever that flipped pitchers
     ("k_rel",          +1),   # final-season K-rate (Phase-1 top adder)
+    ("bb_rel",         -1),   # walk rate -- completes the K-BB% edge (helps OOS; cmd does NOT)
     ("age_rel_level",  -1),
     ("tool_fb",        +1),   # fastball -- best pitcher tool adder
 ]

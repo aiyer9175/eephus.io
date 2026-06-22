@@ -28130,12 +28130,34 @@ function xfvDetailCard(p) {
           ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);text-align:right;margin-bottom:6px;">consensus FV surplus ${fmtSvMM(x.consensus_surplus_mm)}</div>` : "")
     : "";
   const pbust = x.p_bust != null ? `<span style="color:${x.p_bust >= 0.4 ? 'var(--down)' : 'var(--text-tertiary)'};">P(bust) ${Math.round(x.p_bust * 100)}%</span>` : "";
+  // Explainer: how the xFV model moved off the consensus-FV prior for THIS prospect.
+  // Each factor is a model contribution (signal that pushed the grade up/down); the bar
+  // scales with magnitude. Sum of factors ~= the xFV-minus-consensus adjustment.
+  const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
+  const xg = xfvGradeDisplay(x);
+  const d = x.xfv_minus_consensus;
+  const factorsHTML = (x.factors && x.factors.length) ? `
+      <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
+        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;">How xFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; xFV ${xg}` : ""}</div>
+        ${x.factors.map(f => {
+          const up = f.dir === "up";
+          const col = up ? "var(--up)" : "var(--down)";
+          const w = Math.min(100, Math.max(8, (Number(f.mag) / 1.6) * 100));
+          return `<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
+            <span style="color:${col};font-weight:700;width:10px;text-align:center;">${up ? "▲" : "▼"}</span>
+            <span style="flex:1;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(f.label)}</span>
+            <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
+          </div>`;
+        }).join("")}
+        <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;line-height:1.4;">Signals that moved xFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR).</div>
+      </div>` : "";
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
         <div class="detail-title" style="margin:0;">xFV · outcome-grounded grade</div>
         <span class="fv-badge ${fvClass(String(xfvGradeDisplay(x)))} size-sm" title="${escapeHtml(xfvTooltip(x))}">${xfvGradeDisplay(x)}</span>
       </div>
-      ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
+      ${factorsHTML}
+      ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
       ${svLine}
       ${fan}
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}xFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the surplus + outcome mix use the honest (typically lower) outcome-implied grade because scout FV runs optimistic. Provisional. <a href="/glossary/#xfv" style="color:var(--neon-cyan);">Methodology →</a></div>

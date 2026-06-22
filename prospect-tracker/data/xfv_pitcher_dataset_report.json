@@ -1,10 +1,10 @@
 {
- "generated_at": "2026-06-21",
+ "generated_at": "2026-06-22",
  "scope": "PITCHERS; debut 2017-2023 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2548,
+  "debuted_seen": 2549,
   "debuted_hitter": 1002,
   "debuted_no_pre_fv": 108,
   "debuted_no_war": 33,
