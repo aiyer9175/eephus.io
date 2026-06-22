@@ -49,6 +49,9 @@ MODEL_GLOSSARY = {
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],
     "team_win_projections": ["mlb_projections"],
+    "xfv_hitter": ["xfv"],
+    "xfv_pitcher": ["xfv"],
+    "xfv_tools": ["xfv_tools"],
 }
 
 

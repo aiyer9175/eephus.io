@@ -4436,6 +4436,50 @@
    "example": null,
    "seeAlso": [],
    "formula": null
+  },
+  {
+   "id": "xfv",
+   "term": "xFV",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "xFV",
+    "Expected FV",
+    "xFV grade"
+   ],
+   "priority": 9,
+   "definition": "Our own Future Value grade, grounded in what past prospects actually became rather than in scout consensus. xFV predicts a prospect's realized first-six-MLB-season bWAR distribution and summarizes it on the 20-80 FV scale, with consensus FV shown alongside for comparison.",
+   "methodology": "xFV is a prior-anchored, outcome-grounded model. The backbone prior is consensus FV (raw, pre-rounding); on top of it a regularized model (ridge plus a monotone gradient-boosted challenger, blended) nudges the grade using the few signals that add information beyond consensus: level-translated plate discipline and contact for hitters, strikeout rate for pitchers, age relative to level, and the hit and fastball tools. It is trained leakage-free on prospects from 2011-2023 (boards strictly before debut) against their realized 6-year bWAR, busts kept at zero, forward-chained out of time. The headline grade is rank-preserving onto the familiar 20-80 consensus distribution; a separate outcome-implied grade (honestly lower, since consensus FV is optimistic) drives the surplus and bucket distribution through the existing value engine. Honest standing: xFV ties consensus FV on out-of-sample ranking for hitters and trails it slightly for pitchers, so its flagship value is the calibrated outcome distribution, the uncertainty band, and the surplus translation rather than a ranking win. Provisional until a committed forward-chained backtest beats the consensus baseline.",
+   "formula": "xFV grade = rank-map( model E[6yr bWAR] ) onto consensus FV scale; surplus = value_framework(outcome-implied FV)",
+   "example": "A contact-and-discipline hitter consensus has at 45 can read 48 xFV when his translated MiLB walk and strikeout rates beat the level; a power-over-hit profile can read lower, since power adds less realized WAR than scouts price.",
+   "seeAlso": [
+    "consensus_fv",
+    "surplus_value",
+    "wag"
+   ]
+  },
+  {
+   "id": "xfv_tools",
+   "term": "Tool xFV",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Tool xFV",
+    "xFV tools"
+   ],
+   "priority": 11,
+   "definition": "Per-tool version of xFV: each 20-80 tool re-graded by how well it plus the prospect's relevant production predicts the realized MLB outcome that tool is supposed to forecast.",
+   "methodology": "For each tool with a clean realized target we ground it in the MLB stat it predicts: power in MLB ISO, hit in MLB average and contact, speed in steals, the fastball in MLB strikeout rate, command in walk rate. The tool xFV blends the consensus tool grade (a strong predictor on its own) with the pre-debut MiLB production only where that production adds signal beyond the grade. In practice the scout grades are already good (power grade to MLB ISO ranks at about 0.52), and production adds most for the fastball-to-strikeout case. Tools with no clean realized metric in our data (raw power, fielding, arm, individual breaking-ball shapes) pass the consensus grade through unchanged, disclosed as such.",
+   "formula": "tool xFV = rank-map( z(grade) + w*z(MiLB production) ), w from the production's partial correlation after the grade",
+   "example": "A pitcher whose fastball grades 55 but who already misses bats at an elite MiLB rate can carry a higher fastball xFV, because realized strikeout rate adds to the grade for predicting MLB strikeouts.",
+   "seeAlso": [
+    "xfv",
+    "tool"
+   ]
   }
  ]
 }

@@ -91,3 +91,9 @@ Thumbs.db
 
 # --- Misc ---------------------------------------------------------------
 *.log
+
+# xFV training intermediates (regenerable from the DB)
+data/xfv_hitter_matrix.json
+data/xfv_pitcher_matrix.json
+data/xfv_scored.json
+data/xfv_scored_pitcher.json

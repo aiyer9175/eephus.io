@@ -184,7 +184,11 @@ fv_to_prime_war: {35: 0.3, 40: 0.6, 45: 1.1, 50: 1.7, 55: 2.3, 60: 3.0, 65: 3.8,
 anchor_calibration:
   use_empirical: true            # read fitted empirical anchors when present
   resolved_lag_min: 6            # cohort = snapshots in [year-lag_max, year-lag_min]
-  resolved_lag_max: 9            #   (old enough that the 6-yr control window is ~complete)
+  resolved_lag_max: 12           #   (old enough that the 6-yr control window is ~complete)
+  # 2026-06-21: widened 9 -> 12 after the MLB Pipeline 2011-2016 backfill (xFV
+  # initiative) added ~1,000 fully-resolved players. Window is now [2014, 2020];
+  # boosts top-tier sample (FV60+) without the FV60-65 surplus discontinuity that
+  # the full [2011,2020] window introduced (failed the grade-boundary smoothness gate).
   min_cohort: 200                # below this many resolved players -> skip, keep seed
   min_n_robust: 40               # tier n>=this -> base blend weight; thinner -> more reference
   blend_weight_public: 0.5       # base weight toward the Edwards-implied reference

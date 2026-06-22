@@ -1,0 +1,806 @@
+{
+ "generated_at": "2026-06-21",
+ "model": "xFV pitcher v0",
+ "scope": "PITCHERS",
+ "conventions": {
+  "target": "first-6-season summed bWAR; KM-censored (rate-projected tail) + resolved sensitivity",
+  "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
+  "protocol": "forward-chained by decision-year cohort; pooled OOS",
+  "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
+  "gate": "beat consensus on BOTH pooled-OOS MAE and Spearman",
+  "features": [
+   "fv",
+   "n_sources",
+   "tool_fb",
+   "tool_cmd",
+   "tool_sl",
+   "tool_ch",
+   "tool_cb",
+   "age_rel_level",
+   "level_rank",
+   "k_rel",
+   "bb_rel",
+   "era_rel",
+   "milb_missing",
+   "pick_overall",
+   "pick_missing",
+   "bonus_log",
+   "il_stints_pre",
+   "fv_stddev"
+  ]
+ },
+ "evals": {
+  "debuted_km": {
+   "label": "debuted, KM-censored target",
+   "pooled_oos": {
+    "baseline": {
+     "n": 466,
+     "mae": 2.353,
+     "spearman": 0.2192,
+     "calibration": {
+      "slope": 0.989,
+      "bias": -0.085
+     }
+    },
+    "ridge": {
+     "n": 466,
+     "mae": 2.636,
+     "spearman": 0.1806,
+     "calibration": {
+      "slope": 0.625,
+      "bias": 0.33
+     }
+    },
+    "lgbm": {
+     "n": 466,
+     "mae": 2.666,
+     "spearman": 0.164,
+     "calibration": {
+      "slope": 0.542,
+      "bias": 0.462
+     }
+    },
+    "comps": {
+     "n": 466,
+     "mae": 2.861,
+     "spearman": 0.1169,
+     "calibration": {
+      "slope": 0.4,
+      "bias": 0.674
+     }
+    },
+    "ensemble": {
+     "n": 466,
+     "mae": 2.598,
+     "spearman": 0.1734,
+     "calibration": {
+      "slope": 0.643,
+      "bias": 0.396
+     }
+    },
+    "ridge_cal": {
+     "n": 466,
+     "mae": 2.495,
+     "spearman": 0.1624,
+     "calibration": {
+      "slope": 0.792,
+      "bias": 0.048
+     }
+    },
+    "ensemble_cal": {
+     "n": 466,
+     "mae": 2.452,
+     "spearman": 0.1577,
+     "calibration": {
+      "slope": 0.864,
+      "bias": 0.033
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 107,
+      "mae": 2.277,
+      "spearman": 0.2118,
+      "calibration": {
+       "slope": 0.731,
+       "bias": 0.282
+      }
+     },
+     "ridge": {
+      "n": 107,
+      "mae": 2.991,
+      "spearman": 0.0839,
+      "calibration": {
+       "slope": 0.294,
+       "bias": 1.193
+      }
+     },
+     "lgbm": {
+      "n": 107,
+      "mae": 2.908,
+      "spearman": 0.0908,
+      "calibration": {
+       "slope": 0.368,
+       "bias": 1.324
+      }
+     },
+     "comps": {
+      "n": 107,
+      "mae": 3.696,
+      "spearman": -0.0192,
+      "calibration": {
+       "slope": -0.129,
+       "bias": 1.904
+      }
+     },
+     "ensemble": {
+      "n": 107,
+      "mae": 2.935,
+      "spearman": 0.1053,
+      "calibration": {
+       "slope": 0.393,
+       "bias": 1.259
+      }
+     }
+    },
+    "2021": {
+     "baseline": {
+      "n": 112,
+      "mae": 2.279,
+      "spearman": 0.0758,
+      "calibration": {
+       "slope": 0.616,
+       "bias": -0.224
+      }
+     },
+     "ridge": {
+      "n": 112,
+      "mae": 2.408,
+      "spearman": 0.0746,
+      "calibration": {
+       "slope": 0.475,
+       "bias": -0.017
+      }
+     },
+     "lgbm": {
+      "n": 112,
+      "mae": 2.39,
+      "spearman": 0.1615,
+      "calibration": {
+       "slope": 0.47,
+       "bias": -0.075
+      }
+     },
+     "comps": {
+      "n": 112,
+      "mae": 2.566,
+      "spearman": 0.1132,
+      "calibration": {
+       "slope": 0.346,
+       "bias": 0.496
+      }
+     },
+     "ensemble": {
+      "n": 112,
+      "mae": 2.335,
+      "spearman": 0.1038,
+      "calibration": {
+       "slope": 0.531,
+       "bias": -0.046
+      }
+     }
+    },
+    "2022": {
+     "baseline": {
+      "n": 110,
+      "mae": 2.618,
+      "spearman": 0.2902,
+      "calibration": {
+       "slope": 1.512,
+       "bias": -0.505
+      }
+     },
+     "ridge": {
+      "n": 110,
+      "mae": 2.784,
+      "spearman": 0.2868,
+      "calibration": {
+       "slope": 1.151,
+       "bias": -0.164
+      }
+     },
+     "lgbm": {
+      "n": 110,
+      "mae": 2.791,
+      "spearman": 0.2553,
+      "calibration": {
+       "slope": 0.838,
+       "bias": 0.048
+      }
+     },
+     "comps": {
+      "n": 110,
+      "mae": 2.792,
+      "spearman": 0.1883,
+      "calibration": {
+       "slope": 1.314,
+       "bias": -0.115
+      }
+     },
+     "ensemble": {
+      "n": 110,
+      "mae": 2.728,
+      "spearman": 0.2659,
+      "calibration": {
+       "slope": 1.07,
+       "bias": -0.058
+      }
+     }
+    },
+    "2023": {
+     "baseline": {
+      "n": 137,
+      "mae": 2.261,
+      "spearman": 0.2648,
+      "calibration": {
+       "slope": 1.148,
+       "bias": 0.08
+      }
+     },
+     "ridge": {
+      "n": 137,
+      "mae": 2.426,
+      "spearman": 0.2602,
+      "calibration": {
+       "slope": 0.818,
+       "bias": 0.336
+      }
+     },
+     "lgbm": {
+      "n": 137,
+      "mae": 2.603,
+      "spearman": 0.151,
+      "calibration": {
+       "slope": 0.627,
+       "bias": 0.561
+      }
+     },
+     "comps": {
+      "n": 137,
+      "mae": 2.505,
+      "spearman": 0.1976,
+      "calibration": {
+       "slope": 0.899,
+       "bias": 0.491
+      }
+     },
+     "ensemble": {
+      "n": 137,
+      "mae": 2.445,
+      "spearman": 0.1991,
+      "calibration": {
+       "slope": 0.772,
+       "bias": 0.448
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    }
+   }
+  },
+  "debuted_resolved": {
+   "label": "debuted, resolved-only (sensitivity)",
+   "pooled_oos": {
+    "baseline": {
+     "n": 107,
+     "mae": 2.277,
+     "spearman": 0.2118,
+     "calibration": {
+      "slope": 0.731,
+      "bias": 0.282
+     }
+    },
+    "ridge": {
+     "n": 107,
+     "mae": 2.991,
+     "spearman": 0.0839,
+     "calibration": {
+      "slope": 0.294,
+      "bias": 1.193
+     }
+    },
+    "lgbm": {
+     "n": 107,
+     "mae": 2.908,
+     "spearman": 0.0908,
+     "calibration": {
+      "slope": 0.368,
+      "bias": 1.324
+     }
+    },
+    "comps": {
+     "n": 107,
+     "mae": 3.696,
+     "spearman": -0.0192,
+     "calibration": {
+      "slope": -0.129,
+      "bias": 1.904
+     }
+    },
+    "ensemble": {
+     "n": 107,
+     "mae": 2.935,
+     "spearman": 0.1053,
+     "calibration": {
+      "slope": 0.393,
+      "bias": 1.259
+     }
+    },
+    "ridge_cal": {
+     "n": 107,
+     "mae": 2.991,
+     "spearman": 0.0839,
+     "calibration": {
+      "slope": 0.294,
+      "bias": 1.193
+     }
+    },
+    "ensemble_cal": {
+     "n": 107,
+     "mae": 2.935,
+     "spearman": 0.1053,
+     "calibration": {
+      "slope": 0.393,
+      "bias": 1.259
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 107,
+      "mae": 2.277,
+      "spearman": 0.2118,
+      "calibration": {
+       "slope": 0.731,
+       "bias": 0.282
+      }
+     },
+     "ridge": {
+      "n": 107,
+      "mae": 2.991,
+      "spearman": 0.0839,
+      "calibration": {
+       "slope": 0.294,
+       "bias": 1.193
+      }
+     },
+     "lgbm": {
+      "n": 107,
+      "mae": 2.908,
+      "spearman": 0.0908,
+      "calibration": {
+       "slope": 0.368,
+       "bias": 1.324
+      }
+     },
+     "comps": {
+      "n": 107,
+      "mae": 3.696,
+      "spearman": -0.0192,
+      "calibration": {
+       "slope": -0.129,
+       "bias": 1.904
+      }
+     },
+     "ensemble": {
+      "n": 107,
+      "mae": 2.935,
+      "spearman": 0.1053,
+      "calibration": {
+       "slope": 0.393,
+       "bias": 1.259
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    }
+   }
+  },
+  "full_pool_km": {
+   "label": "full pool (debuted+busts), KM target [decision-year proxy]",
+   "pooled_oos": {
+    "baseline": {
+     "n": 894,
+     "mae": 1.221,
+     "spearman": 0.1812,
+     "calibration": {
+      "slope": 1.189,
+      "bias": -0.298
+     }
+    },
+    "ridge": {
+     "n": 894,
+     "mae": 1.812,
+     "spearman": 0.1791,
+     "calibration": {
+      "slope": 0.531,
+      "bias": -0.085
+     }
+    },
+    "lgbm": {
+     "n": 894,
+     "mae": 1.63,
+     "spearman": 0.146,
+     "calibration": {
+      "slope": 0.604,
+      "bias": 0.21
+     }
+    },
+    "comps": {
+     "n": 894,
+     "mae": 1.563,
+     "spearman": 0.1466,
+     "calibration": {
+      "slope": 0.644,
+      "bias": 0.277
+     }
+    },
+    "ensemble": {
+     "n": 894,
+     "mae": 1.665,
+     "spearman": 0.1676,
+     "calibration": {
+      "slope": 0.626,
+      "bias": 0.062
+     }
+    },
+    "ridge_cal": {
+     "n": 894,
+     "mae": 1.449,
+     "spearman": 0.1695,
+     "calibration": {
+      "slope": 1.0,
+      "bias": 0.103
+     }
+    },
+    "ensemble_cal": {
+     "n": 894,
+     "mae": 1.411,
+     "spearman": 0.1599,
+     "calibration": {
+      "slope": 0.974,
+      "bias": 0.09
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 211,
+      "mae": 1.12,
+      "spearman": 0.1336,
+      "calibration": {
+       "slope": 0.771,
+       "bias": -0.137
+      }
+     },
+     "ridge": {
+      "n": 211,
+      "mae": 2.189,
+      "spearman": 0.0927,
+      "calibration": {
+       "slope": 0.308,
+       "bias": -0.06
+      }
+     },
+     "lgbm": {
+      "n": 211,
+      "mae": 1.804,
+      "spearman": 0.0505,
+      "calibration": {
+       "slope": 0.344,
+       "bias": 0.327
+      }
+     },
+     "comps": {
+      "n": 211,
+      "mae": 1.661,
+      "spearman": 0.0477,
+      "calibration": {
+       "slope": 0.273,
+       "bias": 0.545
+      }
+     },
+     "ensemble": {
+      "n": 211,
+      "mae": 1.937,
+      "spearman": 0.0818,
+      "calibration": {
+       "slope": 0.358,
+       "bias": 0.134
+      }
+     }
+    },
+    "2021": {
+     "baseline": {
+      "n": 159,
+      "mae": 1.532,
+      "spearman": 0.0985,
+      "calibration": {
+       "slope": 0.851,
+       "bias": -0.58
+      }
+     },
+     "ridge": {
+      "n": 159,
+      "mae": 1.95,
+      "spearman": 0.1871,
+      "calibration": {
+       "slope": 0.492,
+       "bias": -0.421
+      }
+     },
+     "lgbm": {
+      "n": 159,
+      "mae": 1.779,
+      "spearman": 0.1419,
+      "calibration": {
+       "slope": 0.56,
+       "bias": -0.2
+      }
+     },
+     "comps": {
+      "n": 159,
+      "mae": 1.741,
+      "spearman": 0.1977,
+      "calibration": {
+       "slope": 0.579,
+       "bias": 0.04
+      }
+     },
+     "ensemble": {
+      "n": 159,
+      "mae": 1.817,
+      "spearman": 0.1691,
+      "calibration": {
+       "slope": 0.579,
+       "bias": -0.31
+      }
+     }
+    },
+    "2022": {
+     "baseline": {
+      "n": 245,
+      "mae": 1.231,
+      "spearman": 0.2272,
+      "calibration": {
+       "slope": 1.889,
+       "bias": -0.412
+      }
+     },
+     "ridge": {
+      "n": 245,
+      "mae": 1.762,
+      "spearman": 0.2353,
+      "calibration": {
+       "slope": 0.802,
+       "bias": -0.103
+      }
+     },
+     "lgbm": {
+      "n": 245,
+      "mae": 1.609,
+      "spearman": 0.2595,
+      "calibration": {
+       "slope": 0.872,
+       "bias": 0.213
+      }
+     },
+     "comps": {
+      "n": 245,
+      "mae": 1.516,
+      "spearman": 0.2013,
+      "calibration": {
+       "slope": 1.053,
+       "bias": 0.113
+      }
+     },
+     "ensemble": {
+      "n": 245,
+      "mae": 1.631,
+      "spearman": 0.2483,
+      "calibration": {
+       "slope": 0.93,
+       "bias": 0.055
+      }
+     }
+    },
+    "2023": {
+     "baseline": {
+      "n": 279,
+      "mae": 1.112,
+      "spearman": 0.2194,
+      "calibration": {
+       "slope": 1.341,
+       "bias": -0.16
+      }
+     },
+     "ridge": {
+      "n": 279,
+      "mae": 1.492,
+      "spearman": 0.1963,
+      "calibration": {
+       "slope": 0.757,
+       "bias": 0.103
+      }
+     },
+     "lgbm": {
+      "n": 279,
+      "mae": 1.432,
+      "spearman": 0.1263,
+      "calibration": {
+       "slope": 0.733,
+       "bias": 0.352
+      }
+     },
+     "comps": {
+      "n": 279,
+      "mae": 1.428,
+      "spearman": 0.1485,
+      "calibration": {
+       "slope": 0.915,
+       "bias": 0.354
+      }
+     },
+     "ensemble": {
+      "n": 279,
+      "mae": 1.403,
+      "spearman": 0.1688,
+      "calibration": {
+       "slope": 0.81,
+       "bias": 0.228
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    }
+   }
+  }
+ },
+ "feature_diagnostics_full_window": {
+  "ridge_std_weights": {
+   "fv": 1.432,
+   "n_sources": -0.284,
+   "tool_fb": 0.445,
+   "tool_cmd": 0.483,
+   "tool_sl": 0.152,
+   "tool_ch": 0.034,
+   "tool_cb": 0.003,
+   "age_rel_level": -0.052,
+   "level_rank": -0.055,
+   "k_rel": 0.272,
+   "bb_rel": 0.063,
+   "era_rel": 0.132,
+   "milb_missing": -0.213,
+   "pick_overall": -0.116,
+   "pick_missing": -0.172,
+   "bonus_log": -0.07,
+   "il_stints_pre": 0.0,
+   "fv_stddev": 0.134
+  },
+  "lgbm_gain_share": {
+   "tool_ch": 0.204,
+   "tool_cb": 0.149,
+   "fv": 0.126,
+   "tool_fb": 0.085,
+   "k_rel": 0.073,
+   "tool_cmd": 0.073,
+   "fv_stddev": 0.053,
+   "pick_overall": 0.047,
+   "n_sources": 0.037,
+   "age_rel_level": 0.031,
+   "bb_rel": 0.03,
+   "pick_missing": 0.029,
+   "tool_sl": 0.024,
+   "era_rel": 0.016,
+   "milb_missing": 0.015,
+   "level_rank": 0.005,
+   "bonus_log": 0.002,
+   "il_stints_pre": 0.0
+  }
+ },
+ "honest_note": "xFV's flagship case is the calibrated distribution + uncertainty + surplus, plus a small rank edge where the data supports it. The loser is committed either way."
+}
