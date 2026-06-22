@@ -12213,14 +12213,45 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
     );
   }
 
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" role="img" aria-label="FV trajectory">
+  // xFV-over-time overlay (data/xfv_history.json): the model's grade at each historical
+  // snapshot, on the same FV scale. xFV is the PRIMARY grade, so it draws BOLD and the
+  // consensus trajectory fades to a ghost behind it. Big charts get a legend; row
+  // sparklines keep both lines but lighter. Falls back to consensus-only when no history.
+  const _xfvHist = (typeof getXfvHistory === "function") ? getXfvHistory(player) : null;
+  let xfvLineSvg = "", consensusOpacity = 1, xfvLegend = "";
+  if (_xfvHist && _xfvHist.length >= 2) {
+    const xc = _xfvHist.map(h => ({ x: xScale(h.d), y: yScale(h.x) }))
+                       .filter(c => isFinite(c.x) && isFinite(c.y));
+    if (xc.length >= 2) {
+      let dpath = `M ${xc[0].x.toFixed(1)},${xc[0].y.toFixed(1)}`;
+      for (let i = 0; i < xc.length - 1; i++) {
+        const p0 = xc[i - 1] || xc[i], p1 = xc[i], p2 = xc[i + 1], p3 = xc[i + 2] || xc[i + 1];
+        dpath += ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(1)},${(p1.y + (p2.y - p0.y) / 6).toFixed(1)} ${(p2.x - (p3.x - p1.x) / 6).toFixed(1)},${(p2.y - (p3.y - p1.y) / 6).toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      }
+      const big = W > 240;
+      const x0 = _xfvHist[0].x, x1 = _xfvHist[_xfvHist.length - 1].x;
+      xfvLineSvg = `<path d="${dpath}" fill="none" stroke="var(--neon-cyan)" stroke-width="${big ? 2.2 : 1.6}" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><title>xFV trajectory · ${x0} → ${x1}</title></path>`;
+      consensusOpacity = big ? 0.3 : 0.5;
+      if (big) {
+        xfvLegend = `<g font-size="6.5" font-family="var(--font-mono)">
+          <line x1="${(X_LEFT).toFixed(1)}" y1="${(PAD + 3).toFixed(1)}" x2="${(X_LEFT + 9).toFixed(1)}" y2="${(PAD + 3).toFixed(1)}" stroke="var(--neon-cyan)" stroke-width="2.2" vector-effect="non-scaling-stroke"/>
+          <text x="${(X_LEFT + 11).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" fill="var(--text-secondary)">xFV</text>
+          <line x1="${(X_LEFT + 30).toFixed(1)}" y1="${(PAD + 3).toFixed(1)}" x2="${(X_LEFT + 39).toFixed(1)}" y2="${(PAD + 3).toFixed(1)}" stroke="var(--text-tertiary)" stroke-width="1.2" opacity="0.5" vector-effect="non-scaling-stroke"/>
+          <text x="${(X_LEFT + 41).toFixed(1)}" y="${(PAD + 5).toFixed(1)}" fill="var(--text-tertiary)">consensus</text>
+        </g>`;
+      }
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="100%" preserveAspectRatio="none" role="img" aria-label="FV trajectory (xFV + consensus)">
     ${yearSvg.join("")}
     <line x1="${X_LEFT}" y1="${yRef.toFixed(1)}" x2="${W - PAD}" y2="${yRef.toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,2" vector-effect="non-scaling-stroke" />
     ${yLabels}
     ${eventSvg.join("")}
     ${toolLineSvg}
-    ${segments.join("")}
+    <g style="opacity:${consensusOpacity};">${segments.join("")}</g>
+    ${xfvLineSvg}
     ${circles}
+    ${xfvLegend}
   </svg>`;
 }
 
@@ -27995,6 +28026,22 @@ function getXfv(p) {
   const key = p.player_key;
   if (!key) return null;
   return _XFV[key] || null;
+}
+// xFV-over-time sidecar (data/xfv_history.json): per player [{d: date, x: xFV, c: consensus}],
+// the shipped model re-scored at each historical board snapshot. Powers the FV-history chart
+// drawing xFV (primary) over consensus (ghost). Lazy; absent => charts fall back to consensus.
+let _XFV_HIST = null;
+(function loadXfvHistory() {
+  fetch("/data/xfv_history.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _XFV_HIST = (j && j.by_player) || {};
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .catch(() => { _XFV_HIST = {}; });
+})();
+function getXfvHistory(p) {
+  if (!p || !_XFV_HIST || !p.player_key) return null;
+  const s = _XFV_HIST[p.player_key];
+  return (s && s.length >= 2) ? s : null;
 }
 // xFV is the PRIMARY ranking signal. Its value where the player has a pro track record
 // (an xFV grade); consensus FV (fv_close) is the fallback so no-track-record players

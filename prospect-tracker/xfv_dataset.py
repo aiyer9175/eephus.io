@@ -184,7 +184,7 @@ def _season_rates(row, norms, side: str):
         }
     pa = _f(row.get("pa")) or 0.0
     so, bb = _f(row.get("so")), _f(row.get("bb"))
-    slg, avg, obp = _f(row.get("slg")), _f(row.get("avg")), _f(row.get("obp"))
+    slg, avg, obp, ops = _f(row.get("slg")), _f(row.get("avg")), _f(row.get("obp")), _f(row.get("ops"))
     iso = (slg - avg) if slg is not None and avg is not None else None
     w = pa / (pa + _K_REL_PA) if pa else 0.0
     return {
@@ -194,6 +194,9 @@ def _season_rates(row, norms, side: str):
         # Phase-1 sweep: peak-MiLB OBP is the strongest hitter edge BEYOND FV (+0.16
         # partial), under-priced by scouts. Not derivable from k/bb/iso (hits-on-base).
         "obp_rel": w * ((obp - (norms.get("obp") or 0.0)) if obp is not None and norms.get("obp") else 0.0),
+        # RPS+ family: full OPS vs the level mean (the site's level-relative production
+        # metric). Adds the batting-average / contact-quality component beyond OBP + ISO.
+        "ops_rel": w * ((ops - (norms.get("ops") or 0.0)) if ops is not None and norms.get("ops") else 0.0),
         "exposure": pa, "rates_missing": 0.0 if pa else 1.0,
     }
 
@@ -265,7 +268,7 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
         "n_milb_seasons": float(len(seasons)),
     }
     keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
-        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "rates_missing")
+        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "ops_rel", "rates_missing")
     base.update({k: final[k] for k in keep})
 
     # Multi-season PEAK across exposure-qualified seasons (best sustained production,
@@ -279,6 +282,12 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
         base["peak_obp_rel"] = max(s["obp_rel"] for s in qual)
         base["peak_k_rel"] = min(s["k_rel"] for s in qual)     # fewer Ks = better
         base["peak_iso_rel"] = max(s["iso_rel"] for s in qual)
+        base["peak_ops_rel"] = max(s["ops_rel"] for s in qual)
+    # A2: production TRAJECTORY -- latest vs earliest level-relative production (the primary
+    # rate per side). Positive = improving toward the decision point. Leakage-safe (all
+    # pre-decision). 0 when only one season is on record.
+    metric = "k_rel" if side == "pit" else "ops_rel"
+    base["prod_trend"] = (final[metric] - seasons[-1][metric]) if len(seasons) >= 2 else 0.0
     return base
 
 

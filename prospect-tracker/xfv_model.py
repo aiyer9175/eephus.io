@@ -242,6 +242,7 @@ def _vec(r, side: str = "hit") -> dict:
         "bb_rel": g(m.get("bb_rel")),
         "milb_missing": milb_missing,
         "n_milb_seasons": g(m.get("n_milb_seasons")),
+        "prod_trend": g(m.get("prod_trend")),
         "pos_prem": _pos_premium(r.get("position"), side),
         "pick_overall": float(pick) if pick is not None else 250.0,
         "pick_missing": 0.0 if pick is not None else 1.0,
@@ -260,9 +261,9 @@ def _vec(r, side: str = "hit") -> dict:
         out.update({
             "tool_hit": g(r.get("tool_hit"), 45.0), "tool_game_pwr": g(r.get("tool_game_pwr"), 45.0),
             "tool_speed": g(r.get("tool_speed"), 45.0), "tool_field": g(r.get("tool_field"), 45.0),
-            "obp_rel": g(m.get("obp_rel")),
+            "obp_rel": g(m.get("obp_rel")), "ops_rel": g(m.get("ops_rel")),
             "peak_obp_rel": g(m.get("peak_obp_rel")), "peak_k_rel": g(m.get("peak_k_rel")),
-            "peak_iso_rel": g(m.get("peak_iso_rel")),
+            "peak_iso_rel": g(m.get("peak_iso_rel")), "peak_ops_rel": g(m.get("peak_ops_rel")),
             "iso_rel": g(m.get("iso_rel")),
         })
     return out

@@ -268,6 +268,96 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     return report
 
 
+def history_path():
+    return DATA_DIR / "xfv_history.json"
+
+
+def _build_grade_map(side: str):
+    """Monotone rank_war -> display-grade lookup from the current live scored pool, so the
+    historical xFV grades land on the SAME 20-80 scale as the current board grade."""
+    try:
+        scored = json.loads(scored_live_path(side).read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return []
+    return sorted((s["rank_war"], s["xfv_grade_display"]) for s in scored
+                  if s.get("rank_war") is not None and s.get("xfv_grade_display") is not None)
+
+
+def _map_grade(grade_map, rank_war):
+    if not grade_map:
+        return None
+    import bisect
+    xs = [g[0] for g in grade_map]
+    i = bisect.bisect_left(xs, rank_war)
+    if i <= 0:
+        return grade_map[0][1]
+    if i >= len(grade_map):
+        return grade_map[-1][1]
+    (x0, y0), (x1, y1) = grade_map[i - 1], grade_map[i]
+    return y0 if x1 == x0 else y0 + (y1 - y0) * (rank_war - x0) / (x1 - x0)
+
+
+def score_history(persist: bool = True) -> dict:
+    """Backfill an xFV value at EACH historical board snapshot so the FV-history chart can
+    plot xFV over time (not just consensus). For every points[] entry we re-score the as-of
+    features (that snapshot's per-source FV + tools + production as-of that year) with the
+    shipped model and map onto the live grade scale. Honest caveat: this is today's model
+    scoring old snapshots (a retrospective), not the grade we would have shown then. Writes
+    data/xfv_history.json = {by_player: {key: [{d, x, c}]}}. Run after run_live (reuses its
+    scored pool for the grade scale)."""
+    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars,
+                             _injury_features, _side_match, _f, CURRENT_SEASON)
+    ts_path = DATA_DIR / "timeseries.json"
+    if not ts_path.exists():
+        return {"players": 0}
+    players = (json.loads(ts_path.read_text(encoding="utf-8")).get("players")) or []
+    fit = {s: _fit_production(s) for s in ("hit", "pit")}
+    lam = {s: blend_lambda(s) for s in ("hit", "pit")}
+    gmap = {s: _build_grade_map(s) for s in ("hit", "pit")}
+    acq, il = _load_sidecars({p.get("player_key") for p in players if p.get("player_key")})
+
+    out = {}
+    for rec in players:
+        pk = rec.get("player_key")
+        if not pk:
+            continue
+        side = "pit" if _side_match(rec, "pit") else "hit"
+        ridge, a, b, ols, _keys = fit[side]
+        pts = sorted((pt for pt in (rec.get("points") or [])
+                      if pt.get("snapshot_date") and _f(pt.get("consensus_fv_raw")) is not None),
+                     key=lambda pt: pt["snapshot_date"])
+        if len(pts) < 2:
+            continue
+        a_sc = acq.get(pk) or {}
+        ilf = _injury_features(il.get(pk), None)
+        series = []
+        for pt in pts:
+            cons_fv = _f(pt.get("consensus_fv_raw"))
+            if cons_fv is None:
+                continue
+            yr = int(pt["snapshot_date"][:4])
+            row = {"consensus_fv_raw": cons_fv, "pick_overall": a_sc.get("pick_overall"),
+                   "bonus_usd": a_sc.get("bonus_usd"), **ilf}
+            row.update(_prior_features(rec, pt, side))
+            row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
+                                         rec.get("birth_date"), side)
+            model_war = max(-2.0, a + b * _predict(ridge, _vec(row, side)))
+            cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else model_war
+            rank_war = (1 - lam[side]) * cons_war + lam[side] * model_war
+            grade = _map_grade(gmap[side], rank_war)
+            if grade is None:
+                continue
+            series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
+        if len(series) >= 2:
+            out[pk] = series
+
+    if persist:
+        history_path().write_text(json.dumps({"by_player": out}, separators=(",", ":")),
+                                  encoding="utf-8")
+        log.info("wrote %s (%d players)", history_path(), len(out))
+    return {"players": len(out)}
+
+
 def _fit_production(side: str):
     """Fit the shipped model (ridge + linear scale calibration + consensus-FV OLS anchor)
     on the FULL labeled matrix -- the same fit run() uses -- returning (ridge, a, b, ols, keys)."""

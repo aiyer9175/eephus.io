@@ -11,7 +11,7 @@
   "mean_abs_delta": 0.59,
   "max_up": 7.4,
   "max_down": -5.3,
-  "share_within_2_grades": 0.844
+  "share_within_2_grades": 0.841
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
@@ -26,7 +26,7 @@
  },
  "surplus_totals_mm": {
   "xfv": 6193.6,
-  "consensus": 12955.7
+  "consensus": 12955.6
  },
  "example_up_adjustments": [
   {

@@ -117,6 +117,7 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
     for side in ("hit", "pit"):
         xfv_score.run(persist, side)             # resolved cohort scores
         xfv_score.run_live(persist, side)        # live board scores (gated on track record)
+    xfv_score.score_history(persist)              # xFV-over-time per snapshot (FV history chart)
     xfv_tools.run(persist)                        # resolved tool xFVs
     xfv_tools.run_live(persist)                   # live tool xFVs
     return run(persist)
