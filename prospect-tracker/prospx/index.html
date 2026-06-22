@@ -27643,7 +27643,7 @@ function renderDebuts() {
           <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;">${xfvBadgeHTML(g)}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(g, { primary: "xfv" })}</div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
           const warSpark = makeWarChart(g);
@@ -28069,7 +28069,10 @@ function xfvGradeDisplay(x) {
 // Tooltip describing xFV vs consensus + the outcome read.
 function xfvTooltip(x) {
   if (!x || x.xfv_grade == null) return "";
-  const parts = [`xFV ${xfvGradeDisplay(x)} — our outcome-grounded grade (provisional)`];
+  const locked = x.kind === "debuted";
+  const parts = [locked
+    ? `xFV ${xfvGradeDisplay(x)} — FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
+    : `xFV ${xfvGradeDisplay(x)} — our outcome-grounded grade (provisional)`];
   if (x.consensus_fv != null) {
     const d = x.xfv_minus_consensus;
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
@@ -28107,7 +28110,11 @@ function xfvDeltaMark(d) {
 }
 // Board grade cell: leading grade (big badge) + the other grade as a muted subscript.
 // xFV leads by default; the toggle can make consensus lead. Two lines, no overflow.
-function xfvBadgeHTML(p) {
+function xfvBadgeHTML(p, opts) {
+  // opts.primary forces which grade leads ("xfv"/"fv"), overriding the board's Rank-by
+  // toggle. The Debuted tab passes "xfv": it has its own sort + is the retrospective
+  // xFV-vs-consensus view, so it should always lead with xFV regardless of the board toggle.
+  const primary = (opts && opts.primary) || _gradePrimary();
   const x = getXfv(p);
   const latest = p.points && p.points[p.points.length - 1];
   const consLabel = latest ? latest.consensus_fv_label : null;
@@ -28116,9 +28123,13 @@ function xfvBadgeHTML(p) {
   const xg = (x && x.xfv_grade != null) ? xfvGradeDisplay(x) : null;
   const inj = (x && x.injury_factor != null && x.injury_factor < 1)
     ? `<span title="xFV applies an injury penalty (factor ${x.injury_factor})" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
+  // Locked: once a prospect debuts, its xFV is frozen at the final pre-debut grade (the grade
+  // it carried into the majors) -- our last word on it as a prospect.
+  const lock = (x && x.kind === "debuted")
+    ? `<span title="Final xFV - locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}" style="color:var(--text-tertiary);font-size:9px;">🔒</span>` : "";
   // xFV leads (toggle = xFV and the player has an xFV grade)
-  if (xg != null && _gradePrimary() === "xfv") {
-    const line1 = `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${xfvDeltaMark(x.xfv_minus_consensus)}${inj}</div>`;
+  if (xg != null && primary === "xfv") {
+    const line1 = `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${xfvDeltaMark(x.xfv_minus_consensus)}${lock}${inj}</div>`;
     const sub = consNum != null ? _gradeSub("FV", fvCeil(consNum), `Consensus FV ${fvCeil(consNum)} (reference)`) : "";
     return line1 + sub;
   }
@@ -28876,7 +28887,7 @@ function _gfxSubtitle(total, cap) {
   const countNote = cap < total ? `top ${cap} of ${total}` : `${total} ${noun}${total === 1 ? "" : "s"}`;
   const parts = [];
   const SORT = {
-    fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
+    xfv: "by xFV", fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
     tool: "by tool grade", stock_movers: "biggest FV movers", source_confidence: "most-corroborated FV",
     surplus_sv: "by expected surplus value", surplus_risk: "by risk-adjusted SV",
     surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
@@ -28884,7 +28895,7 @@ function _gfxSubtitle(total, cap) {
     age_vs_level: "most young-for-level", eta: "earliest ETA",
   };
   if (snap.section === "active") {
-    parts.push("ranked " + (SORT[state.sort] || "by consensus FV"));
+    parts.push("ranked " + (SORT[state.sort] || "by xFV"));
     if (state.ageFilter && state.ageFilter !== "all") parts.push(`age ≤ ${state.ageFilter}`);
     if (state.etaFilter && state.etaFilter !== "all") parts.push(`ETA by ${state.etaFilter}`);
     if (state.acqFilter && state.acqFilter !== "all") parts.push(`${String(state.acqFilter).replace(/_/g, " ")}`);
@@ -48028,7 +48039,7 @@ function attachHandlers() {
         healthFilter: "all",
         acqFilter:    "all",
         classFilter:  "all",
-        sort:         "fv",
+        sort:         "xfv",   // xFV is the primary board ranking; reset returns to it, not consensus
         search:       "",
         tradedShowAll: false,
         debutsShowAll: false,

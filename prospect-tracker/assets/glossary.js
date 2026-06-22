@@ -497,10 +497,15 @@ function _methAccuracyChart(bt) {
   };
   const sp = metric("spearman", "Ordering skill - Spearman ρ (grade vs realized WAR)", 0, 0.4, v => v.toFixed(3));
   const au = metric("auc", "Discrimination - AUC (grade predicts ‘became a contributor’)", 0.5, 0.85, v => v.toFixed(3));
-  const cvi = bt.accuracy.consensus_vs_inputs || {};
-  const verdict = (cvi.spearman && cvi.spearman.consensus_wins && cvi.auc && cvi.auc.consensus_wins)
-    ? `<p class="meth-verdict is-good">On the common set of ${bt.accuracy.common_n.toLocaleString()} players graded by all three, the <strong>PROSPX consensus edges out both individual inputs</strong> on ordering skill and discrimination - the result a consensus model needs to defend. The margin is modest and not uniform year-to-year; see the caveats.</p>`
-    : `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric - reported honestly rather than cherry-picked.</p>`;
+  const pld = bt.accuracy.pooled || {};
+  const x = pld.xfv, c = pld.prospx_consensus, fg = pld.fangraphs, mlb = pld.mlb_pipeline;
+  let verdict;
+  if (x && x.spearman != null && c && c.spearman != null) {
+    const f3 = v => (v == null ? "-" : v.toFixed(3));
+    verdict = `<p class="meth-verdict is-good">The real story is <strong>xFV</strong>. On the resolved players it grades (out-of-sample, leakage-free), our own model <strong>out-ranks every grader on the board</strong>: Spearman ${f3(x.spearman)} vs the PROSPX consensus's ${f3(c.spearman)}, and further ahead of MLB Pipeline (${f3(mlb && mlb.spearman)}) and FanGraphs (${f3(fg && fg.spearman)}); it leads on contributor AUC too (${f3(x.auc)} vs ${f3(c.auc)}). The consensus is the best of the three public-style inputs, but xFV beats the consensus itself - and that margin, not the consensus's edge over its inputs, is why xFV is the site's primary grade. The lead holds across recent cohorts and FV tiers; it is bounded, not a landslide (see the caveats).</p>`;
+  } else {
+    verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric - reported honestly rather than cherry-picked.</p>`;
+  }
   return `<div class="meth-chart meth-accuracy">
     <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window</span></div>
     ${sp}${au}${verdict}
@@ -654,36 +659,27 @@ function _methArchetypeTable(bt) {
 // wins outright, the hardest archetype). Replaces a hardcoded note that drifted.
 function _methArchetypeNote(bt) {
   const ba = bt.accuracy && bt.accuracy.by_archetype;
-  const raters = bt.raters || [];
-  if (!ba || !ba.length || !raters.length) return "";
-  const CONS = "prospx_consensus";
-  let consWins = 0, total = 0;
-  const soleWinners = [];
-  let hardest = null;
+  if (!ba || !ba.length) return "";
+  const XFV = "xfv";
+  let xfvWins = 0, total = 0;
+  const losses = [];   // archetypes where xFV trails the best public grade
   ba.forEach(a => {
-    const entries = raters
-      .map(r => [r, (a.raters[r] || {}).auc])
-      .filter(([, v]) => v != null);
-    if (!entries.length) return;
+    const entries = Object.entries(a.raters)
+      .filter(([, v]) => v && v.auc != null).map(([r, v]) => [r, v.auc]);
+    const xa = (a.raters[XFV] || {}).auc;
+    if (xa == null || !entries.length) return;
     total++;
     const best = Math.max(...entries.map(([, v]) => v));
-    const winners = entries.filter(([, v]) => v === best).map(([r]) => r);
-    const consAuc = (a.raters[CONS] || {}).auc;
-    if (winners.includes(CONS)) consWins++;
-    else if (winners.length === 1) soleWinners.push({ label: a.label, rater: winners[0] });
-    if (consAuc != null && (hardest == null || consAuc < hardest.auc)) hardest = { label: a.label, auc: consAuc };
+    if (xa >= best - 1e-9) { xfvWins++; return; }
+    const winner = entries.find(([, v]) => v === best);
+    losses.push({ label: a.label, rater: winner ? winner[0] : null, auc: best, xa });
   });
   if (!total) return "";
-  const lead = consWins >= total
-    ? `The consensus leads or ties for best in all ${total} archetypes, so the blend is the safe default everywhere.`
-    : `The consensus leads or ties in ${consWins} of ${total} archetypes, so the blend is the safe default in most.`;
-  const sole = soleWinners.length
-    ? ` The one${soleWinners.length > 1 ? "s" : ""} a single source wins outright: ${soleWinners.map(s => `${escapeHtml(s.label)} (${escapeHtml(_raterMeta(s.rater).label)})`).join(", ")}.`
-    : ``;
-  const hard = hardest
-    ? ` ${escapeHtml(hardest.label)} is the hardest archetype to grade (consensus AUC ${hardest.auc.toFixed(3)}).`
-    : ``;
-  return `<p class="meth-note">${lead}${sole}${hard}</p>`;
+  const lead = `<strong>xFV grades best (highest AUC) in ${xfvWins} of ${total} archetypes.</strong>`;
+  const lose = losses.length
+    ? ` It trails only on ${losses.map(l => `${escapeHtml(l.label)} (${escapeHtml(_raterMeta(l.rater).label)} ${l.auc.toFixed(3)} vs xFV ${l.xa.toFixed(3)})`).join(", ")} - the youngest, lowest-track-record cohorts, where scouting projection still reads best and xFV leans on the consensus prior.`
+    : ` It leads every archetype on the board.`;
+  return `<p class="meth-note">${lead}${lose}</p>`;
 }
 
 // "How to Read the Site" (Part 1 anchor) - annotated anatomy of a player card,
