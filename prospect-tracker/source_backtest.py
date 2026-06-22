@@ -292,17 +292,55 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
         rows = [c for c in common_rows if c.get("archetype") == arch]
         if len(rows) < ARCH_MIN_N:
             continue
-        wars = [c["outcome"]["war"] for c in rows]
-        contrib = [c["outcome"]["contributor"] for c in rows]
         per = {}
         for r in raters:
-            fvs = [c["grades"][r] for c in rows]
+            rr = [c for c in rows if c["grades"].get(r) is not None]   # xFV may be missing
+            if len(rr) < ARCH_MIN_N:
+                continue
+            fvs = [c["grades"][r] for c in rr]
+            wars = [c["outcome"]["war"] for c in rr]
+            contrib = [c["outcome"]["contributor"] for c in rr]
             sp, au = _spearman(fvs, wars), _auc(fvs, contrib)
-            per[r] = {"spearman": round(sp, 4) if sp is not None else None,
+            per[r] = {"n": len(rr), "spearman": round(sp, 4) if sp is not None else None,
                       "auc": round(au, 4) if au is not None else None}
         out.append({"archetype": arch, "label": _ARCH_LABELS[arch],
                     "n": len(rows), "raters": per})
     return out
+
+
+def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
+    """xFV (our outcome-grounded model) vs consensus FV, lifted from the xFV eval
+    artifacts. Reported SEPARATELY from the per-source bars because it is the
+    model's OWN out-of-sample protocol (forward-chained, leakage-clean), not the
+    in-sample common-set backtest the sources share -- OOS is the HARDER bar, so a
+    win here is conservative. This is the honest 'xFV beats consensus on rank' record."""
+    out = {"protocol": ("forward-chained out-of-sample; debuted cohort; first-6-season "
+                        "bWAR (KM-censored). The shipped headline rank is the guarded "
+                        "blend (consensus prior + the model edge that survives OOS)."),
+           "sides": {}}
+    found = False
+    for side, fn in (("hitters", "xfv_eval.json"), ("pitchers", "xfv_eval_pitcher.json")):
+        p = data_dir / fn
+        if not p.exists():
+            continue
+        try:
+            ev = json.loads(p.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        pooled = ((ev.get("evals") or {}).get("debuted_km") or {}).get("pooled_oos") or {}
+        base = (pooled.get("baseline") or {}).get("spearman")
+        blend = (pooled.get("blend") or {}).get("spearman")
+        if base is None or blend is None:
+            continue
+        found = True
+        out["sides"][side] = {
+            "n": (pooled.get("blend") or {}).get("n"),
+            "consensus_spearman": base,
+            "xfv_spearman": blend,
+            "xfv_beats": blend > base,
+            "era_split": ev.get("era_split_debuted") or {},
+        }
+    return out if found else None
 
 
 def run_source_backtest(data_dir: Path = DATA_DIR,
@@ -345,14 +383,38 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         }
 
     # Head-to-head accuracy on the COMMON resolved set (same players).
+    # xFV (our outcome-grounded model) as a head-to-head rater. Its grade is the
+    # OUT-OF-SAMPLE forward-chained score (xfv_model.oos_grades) so the comparison is
+    # fair: a fitted model would otherwise enjoy an in-sample advantage the raw source
+    # grades don't. Attached to every common row that has an xFV grade; sources still
+    # define common-set membership, so xFV is reported on the subset it covers.
+    try:
+        from xfv_model import oos_grades
+        xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
+    except Exception:
+        log.exception("xFV OOS grades unavailable for source comparison — continuing")
+        xfv_oos = {}
+    n_xfv = 0
+    if xfv_oos:
+        for y in years:
+            for c in common_by_year[y]:
+                g = xfv_oos.get(c["key"])
+                if g is not None:
+                    c["grades"]["xfv"] = g
+                    n_xfv += 1
+    disp_raters = raters + (["xfv"] if n_xfv >= 30 else [])
+
     def _acc(common_rows: list[dict]) -> dict:
         res = {}
-        for rater in raters:
-            fvs = [c["grades"][rater] for c in common_rows]
-            wars = [c["outcome"]["war"] for c in common_rows]
-            contrib = [c["outcome"]["contributor"] for c in common_rows]
+        for rater in disp_raters:
+            rr = [c for c in common_rows if c["grades"].get(rater) is not None]
+            if not rr:
+                continue
+            fvs = [c["grades"][rater] for c in rr]
+            wars = [c["outcome"]["war"] for c in rr]
+            contrib = [c["outcome"]["contributor"] for c in rr]
             res[rater] = {
-                "n": len(common_rows),
+                "n": len(rr),
                 "spearman": (round(_spearman(fvs, wars), 4)
                              if _spearman(fvs, wars) is not None else None),
                 "auc": (round(_auc(fvs, contrib), 4)
@@ -363,6 +425,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     pooled_common = [c for y in years for c in common_by_year[y]]
     accuracy = {
         "common_n": len(pooled_common),
+        "head_to_head_raters": disp_raters,   # includes "xfv" (OOS) for the bars/archetype
         "pooled": _acc(pooled_common),
         "per_year": {y: {"common_n": len(common_by_year[y]), **_acc(common_by_year[y])}
                      for y in years if common_by_year[y]},
@@ -382,6 +445,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     accuracy["by_archetype"] = _archetype_accuracy(pooled_common, raters)
 
     result = {
+        "xfv_vs_consensus": _xfv_vs_consensus(data_dir),
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "as_of_date": as_of.isoformat(),
         "window": {

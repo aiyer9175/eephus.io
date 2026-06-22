@@ -29,7 +29,7 @@ def test_policy_present_and_enabled() -> None:
 def test_derivation_is_sane_and_monotone() -> None:
     res = ea.derive_empirical_war_anchors(policy=_POLICY, reference_year=2026)
     assert res is not None and res["anchors"]
-    assert res["cohort_window"] == [2017, 2020]              # 2026 - [9, 6]
+    assert res["cohort_window"] == [2014, 2020]              # 2026 - [12, 6] (lag_max widened to 12 for the 2011-2016 backfill)
     vals = [v for _, v in sorted(res["anchors"].items(), key=lambda kv: float(kv[0]))]
     assert vals == sorted(vals)                              # monotone in FV
     # bust-inclusive realized WAR is low at the fringe and rises with FV
@@ -43,7 +43,7 @@ def test_derivation_is_sane_and_monotone() -> None:
 @pytest.mark.skipif(not _HAS_DB, reason="needs prospects.db")
 def test_window_slides_with_reference_year() -> None:
     a = ea.derive_empirical_war_anchors(policy=_POLICY, reference_year=2025)
-    assert a["cohort_window"] == [2016, 2019]                # slides forward by year
+    assert a["cohort_window"] == [2013, 2019]                # slides forward by year (lag_max=12)
 
 
 def test_thin_cell_blends_toward_reference() -> None:

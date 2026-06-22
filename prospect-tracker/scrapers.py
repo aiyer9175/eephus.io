@@ -1647,10 +1647,13 @@ MLB_PIPELINE_INTERVALS = [
      f"MLB Pipeline {y} Top 100",
      f"{y}-01-22",
      y)
-    # 2017-2020 historical backfill — mlb.com serves these year-keyed pages
-    # directly (era-correct, with per-year bios carrying the point-in-time
-    # scouting grades). These resolved cohorts strengthen the backtest.
-    for y in (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
+    # 2011-2026 — mlb.com serves these year-keyed pages directly (era-correct,
+    # with per-year bios carrying the point-in-time scouting grades). The
+    # 2011-2016 backfill (xFV initiative, 2026-06-21) adds FULLY-RESOLVED
+    # cohorts — the binding constraint for the outcome-grounded model. Coverage
+    # by year: 2013-2016 full Top 100 with ~99% FV+tools; 2012 Top 100 ~73% FV
+    # (rest rank-only -> rank-implied FV); 2011 is a Top 50 with ~38% FV.
+    for y in range(2011, 2027)
 ]
 
 MLB_INTERNATIONAL_INTERVALS = [
@@ -1685,7 +1688,7 @@ MLB_PIPELINE_ORG_SLUGS = (
     "cubs", "reds", "brewers", "pirates", "cardinals",
     "dbacks", "rockies", "dodgers", "padres", "giants",
 )
-MLB_PIPELINE_ORG_YEARS = (2017, 2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026)
+MLB_PIPELINE_ORG_YEARS = tuple(range(2011, 2027))
 
 # Display labels — concatenated slugs (dbacks/redsox/bluejays/whitesox)
 # need explicit pretty names so interval_label still reads "Diamondbacks"

@@ -411,6 +411,20 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("org tendencies export crashed in rebuild_only — continuing")
 
+    # xFV — our outcome-grounded grade. Regenerates the labeled training matrix +
+    # the CURRENT active-board feature matrix from the just-written timeseries.json,
+    # fits the model, scores both cohorts (live board gated on a pro track record),
+    # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
+    # The forward-chained backtest eval (registry artifact) is stable -> not re-run
+    # here. Best-effort; a failure must not abort the run. Provisional grade.
+    try:
+        from xfv_export import regen_all as _regen_xfv
+        _xfv = _regen_xfv()
+        log.info("xFV (rebuild): %d players (%d live board) -> data/xfv.json",
+                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
+    except Exception:
+        log.exception("xFV regen crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)

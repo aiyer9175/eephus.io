@@ -186,82 +186,82 @@
   "bucket_midpoints": {
     "hitter": [
       0.0,
-      0.5999999999999996,
-      1.2000000000000004,
-      1.8000000000000005,
-      2.807225178583794
+      0.6000000000000006,
+      1.1999999999999995,
+      1.7999999999999987,
+      2.608541824944103
     ],
     "pitcher": [
       0.0,
-      0.6,
-      1.1999999999999997,
-      1.7999999999999998,
-      4.916497779879449
+      0.5999999999999998,
+      1.2000000000000006,
+      1.800000000000001,
+      4.798967597871142
     ]
   },
   "empirical_anchors": {
     "anchors": {
-      "40": 0.18,
-      "45": 0.33,
-      "50": 0.68,
-      "55": 0.96,
-      "60": 1.46,
-      "65": 1.93,
-      "70": 2.57,
+      "40": 0.19,
+      "45": 0.31,
+      "50": 0.67,
+      "55": 0.98,
+      "60": 1.44,
+      "65": 2.0,
+      "70": 2.52,
       "80": 3.5
     },
     "cohort_window": [
-      2017,
+      2014,
       2020
     ],
     "diagnostics": {
       "40": {
         "blend_w_public": 0.5,
-        "bust_pct": 86.4,
-        "empirical_war_yr": 0.067,
-        "n": 1225,
+        "bust_pct": 85.7,
+        "empirical_war_yr": 0.071,
+        "n": 1123,
         "reference_war_yr": 0.3
       },
       "45": {
         "blend_w_public": 0.5,
-        "bust_pct": 81.0,
-        "empirical_war_yr": 0.152,
-        "n": 749,
+        "bust_pct": 81.7,
+        "empirical_war_yr": 0.126,
+        "n": 1415,
         "reference_war_yr": 0.5
       },
       "50": {
         "blend_w_public": 0.5,
-        "bust_pct": 52.4,
-        "empirical_war_yr": 0.5,
-        "n": 206,
+        "bust_pct": 52.2,
+        "empirical_war_yr": 0.494,
+        "n": 337,
         "reference_war_yr": 0.85
       },
       "55": {
         "blend_w_public": 0.5,
-        "bust_pct": 43.0,
-        "empirical_war_yr": 0.774,
-        "n": 79,
+        "bust_pct": 37.7,
+        "empirical_war_yr": 0.808,
+        "n": 122,
         "reference_war_yr": 1.15
       },
       "60": {
-        "blend_w_public": 0.69,
-        "bust_pct": 19.0,
-        "empirical_war_yr": 1.357,
-        "n": 21,
+        "blend_w_public": 0.5,
+        "bust_pct": 16.0,
+        "empirical_war_yr": 1.38,
+        "n": 50,
         "reference_war_yr": 1.5
       },
       "65": {
-        "blend_w_public": 0.81,
+        "blend_w_public": 0.71,
         "bust_pct": 0.0,
-        "empirical_war_yr": 2.496,
-        "n": 9,
+        "empirical_war_yr": 2.483,
+        "n": 19,
         "reference_war_yr": 1.8
       },
       "70": {
-        "blend_w_public": 0.88,
-        "bust_pct": 0.0,
-        "empirical_war_yr": 3.82,
-        "n": 2,
+        "blend_w_public": 0.82,
+        "bust_pct": 12.5,
+        "empirical_war_yr": 3.061,
+        "n": 8,
         "reference_war_yr": 2.4
       },
       "80": {
@@ -272,8 +272,8 @@
         "reference_war_yr": 3.5
       }
     },
-    "generated_at": "2026-06-06T21:45:56",
-    "n_cohort": 2684,
+    "generated_at": "2026-06-21T23:34:13",
+    "n_cohort": 3460,
     "policy_digest": {
       "blend_thin_extra": 0.4,
       "blend_weight_public": 0.5,
@@ -370,46 +370,46 @@
   "reconciliation": {
     "hitter": {
       "45.0": {
-        "resid": 0.1412,
-        "target": 0.38,
-        "weighted_avg_war": 0.5212
+        "resid": 0.2091,
+        "target": 0.31,
+        "weighted_avg_war": 0.5191
       },
       "50.0": {
-        "resid": 0.1409,
-        "target": 0.7,
-        "weighted_avg_war": 0.8409
+        "resid": 0.236,
+        "target": 0.6,
+        "weighted_avg_war": 0.836
       },
       "55.0": {
-        "resid": 0.243,
-        "target": 0.95,
-        "weighted_avg_war": 1.193
+        "resid": 0.2115,
+        "target": 0.97,
+        "weighted_avg_war": 1.1815
       },
       "60.0": {
-        "resid": 0.0869,
-        "target": 1.45,
-        "weighted_avg_war": 1.5369
+        "resid": 0.1014,
+        "target": 1.41,
+        "weighted_avg_war": 1.5114
       }
     },
     "pitcher": {
       "45.0": {
-        "resid": 0.1109,
-        "target": 0.38,
-        "weighted_avg_war": 0.4909
+        "resid": 0.1806,
+        "target": 0.31,
+        "weighted_avg_war": 0.4906
       },
       "50.0": {
-        "resid": 0.0705,
-        "target": 0.7,
-        "weighted_avg_war": 0.7705
+        "resid": 0.1698,
+        "target": 0.6,
+        "weighted_avg_war": 0.7698
       },
       "55.0": {
-        "resid": 0.1347,
-        "target": 0.95,
-        "weighted_avg_war": 1.0847
+        "resid": 0.113,
+        "target": 0.97,
+        "weighted_avg_war": 1.083
       },
       "60.0": {
-        "resid": -0.044,
-        "target": 1.45,
-        "weighted_avg_war": 1.406
+        "resid": -0.0078,
+        "target": 1.41,
+        "weighted_avg_war": 1.4022
       }
     }
   },
