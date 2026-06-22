@@ -41,6 +41,10 @@ def _entry(s, side, kind):
         e["dist"] = s["dist"]
     if s.get("consensus_surplus_mm") is not None:
         e["consensus_surplus_mm"] = s["consensus_surplus_mm"]
+    if s.get("injury_factor") is not None:               # live injury penalty (<1.0 = hurt)
+        e["injury_factor"] = s["injury_factor"]
+    if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
+        e["statcast_factor"] = s["statcast_factor"]
     return e
 
 

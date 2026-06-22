@@ -16968,7 +16968,7 @@ function renderWatchlist() {
             <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
           </div>
           <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : " - "}</span></div>${rankTrendHTML(p)}</div>
-          <div style="text-align:center;">${latest ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);"> - </span>`}</div>
+          <div style="text-align:center;">${xfvBadgeHTML(p)}${fvTrendHTML(p)}</div>
           <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${p.points && p.points.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`}</div>
           ${makeMilbCell(p)}
           ${physClusterHTML(p)}
@@ -20456,9 +20456,7 @@ function renderRecentlyTraded() {
           ${methodPill}
           <span style="font-size:11px;">${contextLine}</span>
         </div>
-        <div style="text-align:center;">${latest.consensus_fv_label
-          ? `<span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}`
-          : `<span style="color:var(--text-tertiary);"> - </span>`}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell desktop-only">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`}</div>
       </div>
       ${(() => {
@@ -28019,42 +28017,61 @@ function xfvTooltip(x) {
   }
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
   if (x.surplus_mm != null) parts.push(`xFV surplus ${fmtSvMM(x.surplus_mm)}`);
+  if (x.statcast_factor != null) parts.push(`Statcast+ tilt ${x.statcast_factor > 1 ? "+" : ""}${Math.round((x.statcast_factor - 1) * 100)}%`);
+  if (x.injury_factor != null) parts.push(`injury penalty ${Math.round((1 - x.injury_factor) * 100)}%`);
   parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out; it out-ranks consensus out-of-sample. Open the player for the full mix.");
   return parts.join(" · ");
 }
-// Compact secondary chip: shows the CONSENSUS FV beside the (primary) xFV badge.
-function consensusChip(consFv) {
-  if (consFv == null) return "";
-  const g = fvCeil(consFv);
-  return `<span class="xfv-cons-chip" title="Consensus FV ${g} — the public scouting-grade aggregate (FanGraphs + MLB Pipeline + others). xFV is now the primary grade; this is the reference." style="display:inline-flex;align-items:center;gap:2px;font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.02em;cursor:help;vertical-align:middle;"><span style="opacity:0.7;">FV</span>${g}</span>`;
+// Which grade leads the board: follows the xFV/Consensus toggle (state.sort). Default xFV.
+function _gradePrimary() { return (typeof state !== "undefined" && state.sort === "fv") ? "fv" : "xfv"; }
+// One muted secondary line: "<prefix> <value>" (the non-leading grade). Single line, fixed
+// size, so the Rank and FV cells stay exactly two text rows tall and aligned.
+function _gradeSub(prefix, val, title) {
+  return `<div class="grade-sub" title="${escapeHtml(title)}" style="font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);line-height:1;margin-top:2px;letter-spacing:0.02em;cursor:help;white-space:nowrap;"><span style="opacity:0.65;">${prefix}</span> ${val}</div>`;
 }
-// PRIMARY grade badge for a board row: xFV where rated, consensus FV as the labeled
-// fallback (no pro track record). Consensus shown as a small reference chip beneath.
+// Small colored delta: how far xFV sits above/below consensus FV (the disagreement).
+function xfvDeltaMark(d) {
+  if (d == null || Math.abs(d) < 0.5) return "";
+  const up = d > 0, col = up ? "var(--up)" : "var(--down)";
+  return `<span title="xFV is ${Math.abs(d).toFixed(1)} grade points ${up ? "above" : "below"} consensus FV" style="font-family:var(--font-mono);font-size:9px;font-weight:700;color:${col};">${up ? "▲" : "▼"}${Math.abs(Math.round(d))}</span>`;
+}
+// Board grade cell: leading grade (big badge) + the other grade as a muted subscript.
+// xFV leads by default; the toggle can make consensus lead. Two lines, no overflow.
 function xfvBadgeHTML(p) {
   const x = getXfv(p);
   const latest = p.points && p.points[p.points.length - 1];
   const consLabel = latest ? latest.consensus_fv_label : null;
-  if (x && x.xfv_grade != null) {
-    const g = xfvGradeDisplay(x);
-    const cons = x.consensus_fv != null ? x.consensus_fv
-                 : (consLabel != null ? parseFloat(consLabel) : null);
-    return `<span class="fv-badge ${fvClass(String(g))}" title="${escapeHtml(xfvTooltip(x))}">${g}</span>`
-         + (cons != null ? `<div style="margin-top:2px;line-height:1;">${consensusChip(cons)}</div>` : "");
+  const consNum = (x && x.consensus_fv != null) ? x.consensus_fv
+                  : (consLabel != null ? parseFloat(consLabel) : null);
+  const xg = (x && x.xfv_grade != null) ? xfvGradeDisplay(x) : null;
+  const inj = (x && x.injury_factor != null && x.injury_factor < 1)
+    ? `<span title="xFV applies an injury penalty (factor ${x.injury_factor})" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
+  // xFV leads (toggle = xFV and the player has an xFV grade)
+  if (xg != null && _gradePrimary() === "xfv") {
+    const line1 = `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${xfvDeltaMark(x.xfv_minus_consensus)}${inj}</div>`;
+    const sub = consNum != null ? _gradeSub("FV", fvCeil(consNum), `Consensus FV ${fvCeil(consNum)} (reference)`) : "";
+    return line1 + sub;
   }
+  // consensus leads (toggle = consensus, or no xFV grade yet)
   if (consLabel != null) {
-    return `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))} · xFV not yet rated (no pro track record)">${consLabel}${fvBadgeChainMarks(p)}</span>`
-         + `<div style="font-size:8px;color:var(--text-tertiary);margin-top:1px;letter-spacing:0.04em;">consensus</div>`;
+    const line1 = `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${consLabel}${fvBadgeChainMarks(p)}</span>`;
+    const sub = (xg != null)
+      ? _gradeSub("xFV", xg, xfvTooltip(x))
+      : _gradeSub("xFV", "—", "xFV not yet rated (no pro track record)");
+    return line1 + sub;
   }
   return `<span style="color:var(--text-tertiary);"> - </span>`;
 }
-// PRIMARY rank number = xFV rank (falls back to consensus overall_rank when the board
-// hasn't ranked the player). Consensus overall_rank shown as a tiny reference beneath.
+// Board rank cell: leading rank (diamond) + the other rank as a muted subscript.
 function xfvRankNumHTML(p) {
-  const xr = getXfvRank(p);
-  const primary = xr != null ? "#" + xr : (p.overall_rank != null ? "#" + p.overall_rank : " - ");
-  const consRef = (xr != null && p.overall_rank != null)
-    ? `<div class="xfv-cons-rank" title="Consensus FV rank #${p.overall_rank}" style="font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);line-height:1;margin-top:1px;cursor:help;">FV #${p.overall_rank}</div>` : "";
-  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${primary}</span></div>${consRef}`;
+  const xr = getXfvRank(p), cr = p.overall_rank;
+  if (xr != null && _gradePrimary() === "xfv") {
+    const sub = cr != null ? _gradeSub("FV", "#" + cr, `Consensus FV rank #${cr}`) : "";
+    return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${xr}</span></div>${sub}`;
+  }
+  const prim = cr != null ? "#" + cr : (xr != null ? "#" + xr : " - ");
+  const sub = (cr != null && xr != null) ? _gradeSub("xFV", "#" + xr, `xFV rank #${xr}`) : "";
+  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${prim}</span></div>${sub}`;
 }
 // Detail-page header: xFV as the primary big grade, consensus FV as the reference line.
 // Falls back to the consensus fvBadge when xFV abstains (no pro track record).

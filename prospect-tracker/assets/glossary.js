@@ -238,6 +238,7 @@ const _RATER_META = {
   fangraphs:        { label: "FanGraphs",        color: "var(--neon-cyan)" },
   mlb_pipeline:     { label: "MLB Pipeline",     color: "var(--neon-amber)" },
   prospx_consensus: { label: "PROSPX consensus", color: "var(--up)" },
+  xfv:              { label: "xFV (ours, OOS)",  color: "var(--neon-violet)" },
 };
 const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
 function _raterMeta(r) {
@@ -474,8 +475,9 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
 function _methAccuracyChart(bt) {
   const acc = bt.accuracy && bt.accuracy.pooled;
   if (!acc) return "";
+  const h2hRaters = (bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters;
   const metric = (key, label, lo, hi, fmt) => {
-    const rows = bt.raters.map(r => ({ r, v: acc[r] ? acc[r][key] : null })).filter(x => x.v != null);
+    const rows = h2hRaters.map(r => ({ r, v: acc[r] ? acc[r][key] : null })).filter(x => x.v != null);
     if (!rows.length) return "";
     const best = Math.max(...rows.map(x => x.v));
     const bars = rows.map(x => {
@@ -564,7 +566,7 @@ function _methTierTable(bt, rater) {
 function _methArchetypeTable(bt) {
   const ba = bt.accuracy && bt.accuracy.by_archetype;
   if (!ba || !ba.length) return "";
-  const raters = bt.raters;
+  const raters = (bt.accuracy && bt.accuracy.head_to_head_raters) || bt.raters;
   const head = raters.map(r => `<th>${escapeHtml(_raterMeta(r).label)}</th>`).join("");
   const rows = ba.map(a => {
     const aucs = raters.map(r => (a.raters[r] || {}).auc).filter(v => v != null);

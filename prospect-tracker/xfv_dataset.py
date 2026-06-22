@@ -159,30 +159,41 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
     return out
 
 
+# Reliability shrink: a level-relative rate is shrunk toward 0 (league average) by its
+# sample size, w = exposure / (exposure + K). A small-sample cup-of-coffee (e.g. a 3-PA
+# AAA cameo with a fluky .98 OBP) collapses to ~0 instead of reading as elite; a full
+# season is barely touched. Without this, cameos produced absurd grades (a 37-FV org bat
+# read 53 xFV off a few AAA PA). K is roughly a quarter-season of exposure.
+_K_REL_PA = 100.0
+_K_REL_BF = 80.0
+
+
 def _season_rates(row, norms, side: str):
-    """Level-relative rate block + exposure (pa/bf) for one MiLB season. Side-specific:
-    hitters k/bb/obp/iso vs level median; pitchers k/bb/era vs level median. Norms are
-    season-and-level-specific (contemporaneous) so this is leakage-safe by construction."""
+    """Level-relative rate block + exposure (pa/bf) for one MiLB season, SAMPLE-SHRUNK.
+    Side-specific: hitters k/bb/obp/iso vs level median; pitchers k/bb/era vs level median.
+    Norms are season-and-level-specific (contemporaneous) so this is leakage-safe."""
     if side == "pit":
         bf = _f(row.get("bf")) or 0.0
         so, bb, era = _f(row.get("so")), _f(row.get("bb")), _f(row.get("era"))
+        w = bf / (bf + _K_REL_BF) if bf else 0.0
         return {
-            "k_rel": ((so / bf) - (norms.get("k_pct") or 0.0)) if so is not None and bf else 0.0,
-            "bb_rel": ((bb / bf) - (norms.get("bb_pct") or 0.0)) if bb is not None and bf else 0.0,
-            "era_rel": (era - (norms.get("era") or 4.5)) if era is not None else 0.0,
+            "k_rel": w * (((so / bf) - (norms.get("k_pct") or 0.0)) if so is not None and bf else 0.0),
+            "bb_rel": w * (((bb / bf) - (norms.get("bb_pct") or 0.0)) if bb is not None and bf else 0.0),
+            "era_rel": w * ((era - (norms.get("era") or 4.5)) if era is not None else 0.0),
             "exposure": bf, "rates_missing": 0.0 if bf else 1.0,
         }
     pa = _f(row.get("pa")) or 0.0
     so, bb = _f(row.get("so")), _f(row.get("bb"))
     slg, avg, obp = _f(row.get("slg")), _f(row.get("avg")), _f(row.get("obp"))
     iso = (slg - avg) if slg is not None and avg is not None else None
+    w = pa / (pa + _K_REL_PA) if pa else 0.0
     return {
-        "k_rel": ((so / pa) - (norms.get("k_pct") or 0.0)) if so is not None and pa else 0.0,
-        "bb_rel": ((bb / pa) - (norms.get("bb_pct") or 0.0)) if bb is not None and pa else 0.0,
-        "iso_rel": (iso - (norms.get("iso") or 0.0)) if iso is not None else 0.0,
+        "k_rel": w * (((so / pa) - (norms.get("k_pct") or 0.0)) if so is not None and pa else 0.0),
+        "bb_rel": w * (((bb / pa) - (norms.get("bb_pct") or 0.0)) if bb is not None and pa else 0.0),
+        "iso_rel": w * ((iso - (norms.get("iso") or 0.0)) if iso is not None else 0.0),
         # Phase-1 sweep: peak-MiLB OBP is the strongest hitter edge BEYOND FV (+0.16
         # partial), under-priced by scouts. Not derivable from k/bb/iso (hits-on-base).
-        "obp_rel": (obp - (norms.get("obp") or 0.0)) if obp is not None and norms.get("obp") else 0.0,
+        "obp_rel": w * ((obp - (norms.get("obp") or 0.0)) if obp is not None and norms.get("obp") else 0.0),
         "exposure": pa, "rates_missing": 0.0 if pa else 1.0,
     }
 
@@ -197,16 +208,31 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
     if not mlbam:
         return None
     group = "pitching" if side == "pit" else "hitting"
+    minpa = 60 if side == "pit" else 50
     seasons = []
     for season in range(decision_year - 1, 2013, -1):
         rows = [r for r in (mh.player_index(season, group).get(int(mlbam)) or [])
                 if r.get("level") != "MLB"]
         if not rows:
             continue
-        level = mh.highest_level(rows)
-        if level not in _LEVEL_RANK:
+        # PRIMARY level = the highest level where the player got meaningful exposure that
+        # season (not a cup-of-coffee). Sets level_rank + age_rel_level so a cameo can't
+        # make a 19-yo look like an established AAA bat. Rates come from this level too,
+        # and are sample-shrunk on top.
+        present = sorted({r.get("level") for r in rows if r.get("level") in _LEVEL_RANK},
+                         key=lambda lv: -_LEVEL_RANK[lv])
+        if not present:
             continue
-        row = mh.level_row(rows, level, group)
+        level, row = None, None
+        for lv in present:
+            lr = mh.level_row(rows, lv, group)
+            exp = (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
+            if exp >= minpa:
+                level, row = lv, lr
+                break
+        if level is None:                       # no meaningful level -> highest (rates shrink hard)
+            level = present[0]
+            row = mh.level_row(rows, level, group)
         norms = mh.league_norms(season, level, group, fetch=False) or {}
         rates = _season_rates(row, norms, side)
         age = _f(row.get("age"))
@@ -224,7 +250,11 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
 
     final = seasons[0]                 # most recent (descending loop)
     level, age = final["level"], final["age"]
+    # age-relative-to-level, CAPPED to +/-3.5: the model term is linear, so an extreme
+    # (a 19-yo cup-of-coffee in AAA -> -5) would over-extrapolate the young-for-level boost.
     age_rel = (age - _TYPICAL_LEVEL_AGE[level]) if age is not None else None
+    if age_rel is not None:
+        age_rel = max(-3.5, min(3.5, age_rel))
     base = {
         "milb_season": final["season"], "milb_level": level,
         "level_rank": final["level_rank"],
@@ -431,15 +461,30 @@ def build_live_matrix(side: str = "hit"):
             acct["live_no_fv"] += 1
             continue
         surplus = rec.get("surplus") or {}
+        il = rec.get("il_status") or {}
+        hp = rec.get("health_profile") or {}
         row = {"player_key": pk, "kind": "active", "debut_year": None,
                "is_pitcher": is_pit, "cutoff": None,
                "mlbam_id": rec.get("mlbam_id"), "birth_date": rec.get("birth_date"),
                "position": rec.get("position"),
                "age_now": _f(rec.get("age")),
                "eta_years": _f(surplus.get("eta_years")),
-               "consensus_surplus_mm": _f(surplus.get("value_mm"))}
+               "consensus_surplus_mm": _f(surplus.get("value_mm")),
+               # current injury signals (for the live injury penalty)
+               "il_on": 1 if il.get("is_on_il") else 0,
+               "il_type": il.get("type"),
+               "il_days_12mo": _f(hp.get("il_days_12mo")) or 0.0,
+               "il_stints_12mo": _f(hp.get("il_stints_12mo")) or 0.0,
+               "is_post_tj": bool(hp.get("is_post_tj")),
+               # Statcast+ (batted-ball quality / Stuff+) -- current-state only, upper-level;
+               # a live overlay tilt (no historical depth to train on). 100 = average.
+               "statcast_plus": _f(rec.get("statcast_plus"))}
         row.update(_prior_features(rec, pt, side))
-        row["milb"] = _milb_features(rec.get("mlbam_id"), CURRENT_SEASON,
+        # LIVE scoring includes the CURRENT season (no leakage -- current production IS the
+        # signal). decision_year = CURRENT_SEASON+1 so _milb_features' range starts at the
+        # current year. (Training stays strictly pre-outcome.) Without this, a 2026 breakout
+        # like Arias's .990 OPS was ignored and stale 2025 stats drove the grade.
+        row["milb"] = _milb_features(rec.get("mlbam_id"), CURRENT_SEASON + 1,
                                      rec.get("birth_date"), side)
         rows.append(row)
         acct["live_kept"] += 1

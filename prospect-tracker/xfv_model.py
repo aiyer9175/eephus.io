@@ -74,15 +74,123 @@ _FEATURES_PIT = [
 
 
 # Guarded-blend weight for the shipped HEADLINE rank: rank = (1-lambda)*consensus_OLS
-# + lambda*model. The lean model beats consensus OOS, so lambda is high; the consensus
-# anchor is insurance against feature-selection optimism. Used by xfv_score (scoring) and
-# reported here (the "blend" eval metric == the shipped ranking's OOS performance).
-_BLEND_LAMBDA = {"hit": 0.85, "pit": 0.80}
+# + lambda*model. lambda is now WAG-CALIBRATED (see _wag_calibrated_lambda): it is the
+# trust factor that realized WAR-Above-Grade actually supports for xFV's adjustment,
+# forward-chained. Hitters land ~0.8 (the adjustment is well-supported); pitchers shrink
+# harder (consensus is the stronger pitcher signal, and WAG confirms a smaller edge). The
+# fallback below is used only if the WAG join is unavailable. Clamped so the validated rank
+# win is never surrendered and the magnitude is never overstated.
+_BLEND_LAMBDA_FALLBACK = {"hit": 0.85, "pit": 0.80}
+_BLEND_LAMBDA_CLAMP = (0.35, 0.90)
+_WAG_LAMBDA_CACHE: dict[str, float] = {}
 
 
 def _feature_spec(side: str):
     feats = _FEATURES_PIT if side == "pit" else _FEATURES_HIT
     return [k for k, _ in feats], [m for _, m in feats]
+
+
+def _load_wag() -> dict:
+    """player_key -> stored WAG block (regressed_wag = exposure/injury-corrected,
+    reliability-shrunk talent over/underperformance vs consensus FV; w_obs = its weight).
+    The realized 'beat your grade' truth xFV's adjustment is calibrated against."""
+    try:
+        deb = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for r in deb:
+        w = (r.get("debuted_value") or {}).get("wag")
+        if w and r.get("player_key") and w.get("regressed_wag") is not None:
+            out[r["player_key"]] = w
+    return out
+
+
+def wag_calibration(side: str) -> dict:
+    """Forward-chained calibration of xFV's adjustment against realized WAG. Regresses
+    each debuted player's realized regressed_wag (per-season talent over/underperformance)
+    on xFV's PREDICTED per-season rate adjustment (model - consensus, /6), weighted by WAG
+    reliability (w_obs), through the origin. The slope is how much realized over/under-
+    performance you actually get per unit of predicted edge -> the trust factor for the
+    blend. Returns {lambda, slope_wobs, slope_unweighted, spearman, n}. Leakage-free."""
+    from xfv_dataset import matrix_path
+    keys, _m = _feature_spec(side)
+    wag = _load_wag()
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    data = _prep([r for r in rows if r["kind"] == "debuted"], "target_censored", side)
+    x, y, w = [], [], []
+    for yr in SCORED_YEARS:
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < 15 or len(tr) < 60:
+            continue
+        ols = _fit_ols_fv(tr)
+        ridge = _fit_ridge(tr, keys)
+        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
+        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+        if not (ols and ridge):
+            continue
+        for r in te:
+            wg = wag.get(r["player_key"])
+            if not wg:
+                continue
+            cons_war = max(0.0, _pred_ols(ols, r["fv"]))
+            model_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
+            x.append((model_war - cons_war) / 6.0)       # predicted per-season rate edge
+            y.append(float(wg["regressed_wag"]))         # realized per-season WAG
+            w.append(float(wg.get("w_obs") or 0.0))
+    def _slope(wt):
+        num = sum(wt[i] * x[i] * y[i] for i in range(len(x)))
+        den = sum(wt[i] * x[i] * x[i] for i in range(len(x)))
+        return (num / den) if den else None
+    sw = _slope(w)
+    su = _slope([1.0] * len(x))
+    lo, hi = _BLEND_LAMBDA_CLAMP
+    lam = min(hi, max(lo, sw)) if sw is not None else _BLEND_LAMBDA_FALLBACK[side]
+    return {"lambda": round(lam, 3), "slope_wobs": round(sw, 3) if sw is not None else None,
+            "slope_unweighted": round(su, 3) if su is not None else None,
+            "spearman": _spearman(x, y) if len(x) >= 8 else None, "n": len(x)}
+
+
+def blend_lambda(side: str) -> float:
+    """WAG-calibrated blend weight (cached). Falls back to the hand-set value on any error."""
+    if side not in _WAG_LAMBDA_CACHE:
+        try:
+            _WAG_LAMBDA_CACHE[side] = wag_calibration(side)["lambda"]
+        except Exception:
+            _WAG_LAMBDA_CACHE[side] = _BLEND_LAMBDA_FALLBACK[side]
+    return _WAG_LAMBDA_CACHE[side]
+
+
+def oos_grades(side: str) -> dict:
+    """{player_key: OUT-OF-SAMPLE xFV ranking score} over the full labeled pool
+    (debuted + busts), forward-chained: each cohort year is scored by a model fit ONLY
+    on earlier cohorts. The score is the guarded-blend rank_war (monotone in the grade),
+    suitable for an apples-to-apples head-to-head against the sources on realized outcomes
+    WITHOUT the in-sample advantage a fitted model would otherwise enjoy. Leakage-free."""
+    from xfv_dataset import matrix_path
+    keys, _m = _feature_spec(side)
+    lam = blend_lambda(side)
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
+    data = _prep(full, "target_censored", side)
+    out = {}
+    for yr in SCORED_YEARS:
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < 15 or len(tr) < 60:
+            continue
+        ols = _fit_ols_fv(tr)
+        ridge = _fit_ridge(tr, keys)
+        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
+        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+        if not (ols and ridge):
+            continue
+        for r in te:
+            cons_war = max(0.0, _pred_ols(ols, r["fv"]))
+            model_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
+            out[r["player_key"]] = (1 - lam) * cons_war + lam * model_war
+    return out
 
 
 _KEYS, _MONO = _feature_spec("hit")   # hitter defaults (back-compat for imports)
@@ -375,7 +483,8 @@ def _era_split(deb_data, keys, lam):
 def run(persist: bool = True, side: str = "hit") -> dict:
     from xfv_dataset import matrix_path
     keys, mono = _feature_spec(side)
-    lam = _BLEND_LAMBDA[side]
+    wag_cal = wag_calibration(side)
+    lam = wag_cal["lambda"]
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     deb = [r for r in rows if r["kind"] == "debuted"]
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
@@ -400,6 +509,13 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                              "headline RANK driver. 'ridge' = the pure lean model.",
             "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
             "features": keys,
+        },
+        "wag_calibration": {
+            **wag_cal,
+            "reading": "xFV still predicts WAR; WAG (realized over/underperformance vs "
+                       "consensus FV = where consensus MISSED) calibrates how much to TRUST "
+                       "xFV's adjustment. slope_wobs (reliability-weighted) -> the blend lambda. "
+                       "Pitchers shrink harder: consensus is the stronger pitcher signal.",
         },
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,

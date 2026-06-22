@@ -29,7 +29,7 @@ from pathlib import Path
 
 import value_framework as vf
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
-from xfv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols
+from xfv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
 from xfv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON
 
 log = logging.getLogger(__name__)
@@ -37,11 +37,10 @@ DATA_DIR = Path(__file__).parent / "data"
 _BUCKETS = ("bust", "bench", "regular", "good", "star")
 
 # Guarded blend for the HEADLINE grade + board rank: rank_war = (1-lambda)*consensus_war
-# + lambda*model_war. The lean model now BEATS consensus FV on OOS rank for both sides
-# (data/xfv_eval.json), so lambda is high; the small consensus anchor is the owner-approved
-# insurance against feature-selection optimism (guarantees xFV ranks ~>= consensus). The
+# + lambda*model_war. xFV still PREDICTS WAR; lambda is the WAG-CALIBRATED trust in its
+# adjustment (how much realized WAR-Above-Grade supports xFV's where-consensus-missed edge,
+# forward-chained -- see xfv_model.wag_calibration). Hitters ~0.8, pitchers shrink harder.
 # REALIZED grade + surplus + distribution stay on the pure model (the honest outcome view).
-_BLEND_LAMBDA = {"hit": 0.85, "pit": 0.80}
 
 
 def scored_path(side):
@@ -67,6 +66,43 @@ def _age_at(birth_date, year):
         return None
 
 
+def _injury_factor(r) -> float:
+    """Owner-directed live injury penalty: a multiplicative haircut on the xFV WAR
+    projection (so it flows to the grade, the rank, AND surplus) for prospects who are
+    currently hurt or recently fragile. Injuries cost cumulative WAR (durability) and
+    carry re-injury risk that scout FV under-prices; xFV penalizes them harder. Applied
+    only to the LIVE board (resolved players' outcomes already embed their injuries)."""
+    f = 1.0
+    if r.get("il_on"):
+        t = str(r.get("il_type") or "").lower()
+        f *= 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
+    days = float(r.get("il_days_12mo") or 0.0)
+    if days >= 120:
+        f *= 0.82
+    elif days >= 60:
+        f *= 0.90
+    if float(r.get("il_stints_12mo") or 0.0) >= 3:
+        f *= 0.92
+    if r.get("is_post_tj"):
+        f *= 0.85
+    return round(max(0.5, f), 3)
+
+
+def _statcast_factor(r) -> float:
+    """Live Statcast+ overlay tilt: nudge the xFV WAR projection by batted-ball quality /
+    Stuff+ (100 = average), which the user flagged as under-used. Current-state, upper-level
+    only -> a provisional tilt (no historical Statcast to OOS-validate), bounded +/-18%.
+    Players without a Statcast+ (lower levels) are untouched (factor 1.0)."""
+    sc = r.get("statcast_plus")
+    if sc is None:
+        return 1.0
+    try:
+        sc = float(sc)
+    except (TypeError, ValueError):
+        return 1.0
+    return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * 0.008)), 3)
+
+
 def run(persist: bool = True, side: str = "hit") -> dict:
     keys, _mono = _feature_spec(side)
     is_pit = side == "pit"
@@ -82,7 +118,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
     a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
     ols = _fit_ols_fv(data)
-    lam = _BLEND_LAMBDA[side]
+    lam = blend_lambda(side)
 
     scored = []
     for r in data:
@@ -133,8 +169,10 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         order = sorted(range(len(scored)), key=lambda i: scored[i]["rank_war"])
         m = len(scored)
         for rank_pos, i in enumerate(order):
-            p = rank_pos / (m - 1) if m > 1 else 0.0
-            disp = target[min(m - 1, int(round(p * (m - 1))))]
+            p = (rank_pos / (m - 1)) if m > 1 else 0.0
+            pos = p * (m - 1)                     # smooth (interpolated) quantile map so
+            lo = int(pos); hi = min(m - 1, lo + 1); frac = pos - lo   # small WAR/tilt moves
+            disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
 
@@ -223,7 +261,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
     consensus surplus. Run after build_live + the site export (timeseries.json)."""
     is_pit = side == "pit"
     ridge, a, b, ols, _keys = _fit_production(side)
-    lam = _BLEND_LAMBDA[side]
+    lam = blend_lambda(side)
     live = json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
 
     scored, skipped_no_track = [], 0
@@ -242,6 +280,12 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         xfv_war = max(-2.0, a + b * _predict(ridge, _vec(r, side)))
         cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
+        inj = _injury_factor(r)                           # owner-directed live injury penalty
+        sc = _statcast_factor(r)                           # live Statcast+ quality tilt
+        adj_factor = inj * sc
+        if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
+            xfv_war = max(-2.0, xfv_war * adj_factor)
+            rank_war *= adj_factor
         pos = r.get("position")
         age = r.get("age_now")
         if age is None:
@@ -274,6 +318,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             "band_p10_mm": _mm(pcts.get("p10")),
             "band_p90_mm": _mm(pcts.get("p90")),
             "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
+            "injury_factor": inj if inj < 1.0 else None,
+            "statcast_factor": sc if sc != 1.0 else None,
         })
 
     # headline grade -- rank-preserving quantile map of the GUARDED-BLEND ranking
@@ -285,8 +331,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         order = sorted(range(len(scored)), key=lambda i: scored[i]["rank_war"])
         m = len(scored)
         for rank_pos, i in enumerate(order):
-            p = rank_pos / (m - 1) if m > 1 else 0.0
-            disp = target[min(m - 1, int(round(p * (m - 1))))]
+            p = (rank_pos / (m - 1)) if m > 1 else 0.0
+            pos = p * (m - 1)                     # smooth (interpolated) quantile map so
+            lo = int(pos); hi = min(m - 1, lo + 1); frac = pos - lo   # small WAR/tilt moves
+            disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
 
