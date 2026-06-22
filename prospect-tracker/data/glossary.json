@@ -4439,18 +4439,19 @@
   },
   {
    "id": "xfv",
-   "term": "xFV",
+   "term": "prospxFV (xFV)",
    "category": "custom-index",
    "module": [
     "prospx"
    ],
    "aliases": [
     "xFV",
+    "prospxFV",
     "Expected FV",
     "xFV grade"
    ],
    "priority": 9,
-   "definition": "Our own Future Value grade and the site's PRIMARY prospect ranking, grounded in what past prospects actually became rather than in scout consensus. xFV predicts a prospect's realized first-six-MLB-season bWAR distribution and summarizes it on the 20-80 FV scale; consensus FV is shown alongside as a secondary reference. xFV needs a pro track record to grade, so very recent draftees and international signings show consensus FV until they have a season of production.",
+   "definition": "prospxFV (abbreviated xFV) is our own Future Value grade and the site's PRIMARY prospect ranking, grounded in what past prospects actually became rather than in scout consensus. xFV predicts a prospect's realized first-six-MLB-season bWAR distribution and summarizes it on the 20-80 FV scale; consensus FV is shown alongside as a secondary reference. xFV needs a pro track record to grade, so very recent draftees and international signings show consensus FV until they have a season of production.",
    "methodology": "xFV is a prior-anchored, outcome-grounded model. The backbone prior is consensus FV (raw, pre-rounding); a deliberately LEAN regularized model (ridge, with a guarded blend back toward consensus) nudges the grade using only the signals that actually add information beyond consensus out of sample: level-translated on-base skill (OBP) and contact (K-rate), age relative to level, and the hit and speed tools for hitters; multi-season peak strikeout rate, age, and the fastball for pitchers. Game power is deliberately excluded for hitters, because scouts over-price it relative to realized WAR - that omission is xFV's power-correction. It is trained leakage-free on prospects from 2011-2023 (boards strictly before debut) against their realized 6-year bWAR, busts kept at zero, forward-chained out of time. The headline grade is rank-preserving onto the familiar 20-80 consensus distribution; a separate outcome-implied grade (honestly lower, since consensus FV runs optimistic) drives the surplus and bucket distribution through the existing value engine. Honest standing: on this lean feature set xFV OUT-RANKS consensus FV out of sample for both hitters (Spearman ~0.34 vs 0.30 on the debuted cohort) and pitchers (~0.24 vs 0.22), and the edge holds and grows on the recent 2019-2023 cohorts - so it is not merely exploiting older, less-accurate scouting. It still trails consensus on absolute error (it predicts more spread; consensus regresses to the mean), and that loss is committed. The flagship case: the rank edge plus the calibrated outcome distribution, the uncertainty band, and the surplus translation. Provisional.",
    "formula": "xFV grade = rank-map( model E[6yr bWAR] ) onto consensus FV scale; surplus = value_framework(outcome-implied FV)",
    "example": "A contact-and-discipline hitter consensus has at 45 can read 48 xFV when his translated MiLB walk and strikeout rates beat the level; a power-over-hit profile can read lower, since power adds less realized WAR than scouts price.",

@@ -8718,6 +8718,13 @@
     <div class="filter-cluster">
       <span class="filter-cluster-label">HOW</span>
       <div class="filter-group">
+        <span class="filter-label">Rank by</span>
+        <div class="grade-toggle" role="group" aria-label="Rank the board by xFV or consensus FV" style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+          <button type="button" class="chip grade-toggle-btn" data-grade-toggle="xfv" title="Rank + lead with xFV (our outcome-grounded grade)" style="border:0;border-radius:0;">xFV</button>
+          <button type="button" class="chip grade-toggle-btn" data-grade-toggle="fv" title="Rank + lead with consensus FV (the public scouting aggregate)" style="border:0;border-radius:0;border-left:1px solid var(--border);">Consensus</button>
+        </div>
+      </div>
+      <div class="filter-group">
         <span class="filter-label">Sort</span>
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
@@ -12842,6 +12849,7 @@ function restoreUIFromState() {
   if (acqSel) acqSel.value = state.acqFilter;
   const sortSel = document.getElementById("sort-select");
   if (sortSel) sortSel.value = state.sort;
+  try { _syncGradeToggle(); } catch (e) { /* toggle not mounted yet */ }
   const tfKeySel = document.getElementById("tool-filter-key");
   if (tfKeySel) tfKeySel.value = state.toolFilterKey || "off";
   const tfMinSel = document.getElementById("tool-filter-min");
@@ -14541,9 +14549,13 @@ function getFilteredActives() {
     const _sk = state.sort;
     const _asc = (_sk === "surplus_pbust");
     const _sval = p => {
-      const s = p.surplus, d = s && s.dist;
+      // xFV is the primary surplus when present + the grade toggle is on xFV.
+      const xf = getXfv(p);
+      const useX = xf && xf.surplus_mm != null && _gradePrimary() === "xfv";
+      const s = useX ? { value_mm: xf.surplus_mm, dist: xf.dist || {} } : p.surplus;
+      const d = s && s.dist;
       if (_sk === "surplus_sv")    return s ? s.value_mm : null;
-      if (_sk === "surplus_risk")  return d ? d.risk_adjusted_mm : null;
+      if (_sk === "surplus_risk")  return d ? (d.risk_adjusted_mm != null ? d.risk_adjusted_mm : d.mean_mm) : null;
       if (_sk === "surplus_p10")   return d ? d.p10_mm : null;
       if (_sk === "surplus_p90")   return d ? d.p90_mm : null;
       if (_sk === "surplus_pbust") return d ? d.p_bust : null;
@@ -28024,6 +28036,17 @@ function xfvTooltip(x) {
 }
 // Which grade leads the board: follows the xFV/Consensus toggle (state.sort). Default xFV.
 function _gradePrimary() { return (typeof state !== "undefined" && state.sort === "fv") ? "fv" : "xfv"; }
+// Highlight the active "Rank by" toggle button to match _gradePrimary().
+function _syncGradeToggle() {
+  const pr = _gradePrimary();
+  document.querySelectorAll("[data-grade-toggle]").forEach(b => {
+    const on = b.dataset.gradeToggle === pr;
+    b.classList.toggle("active", on);
+    b.style.background = on ? "var(--accent-soft, var(--bg-tertiary))" : "transparent";
+    b.style.color = on ? "var(--text-primary)" : "var(--text-tertiary)";
+    b.style.fontWeight = on ? "700" : "500";
+  });
+}
 // One muted secondary line: "<prefix> <value>" (the non-leading grade). Single line, fixed
 // size, so the Rank and FV cells stay exactly two text rows tall and aligned.
 function _gradeSub(prefix, val, title) {
@@ -30657,19 +30680,32 @@ function svCiText(s) {
 }
 
 function makeSurplusCell(p) {
-  const s = p.surplus;
-  if (!s || s.value_mm == null) return `<div class="surplus-cell"></div>`;
-  const d = s.dist || {};
-  const buckets = (p.debuted_value && p.debuted_value.posterior)
-                  ? p.debuted_value.posterior : s.buckets;
+  // xFV is the primary FV site-wide, so surplus is the xFV surplus when available (and the
+  // grade toggle is on xFV). Consensus surplus (p.surplus) is the fallback / toggle option.
+  const xf = getXfv(p);
+  let s, d, buckets, isXfv = false;
+  if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") {
+    s = { value_mm: xf.surplus_mm, dist: xf.dist || {}, fv_continuous: xf.xfv_grade_realized != null ? xf.xfv_grade_realized : xf.xfv_grade };
+    d = xf.dist || {};
+    buckets = xf.p_bucket;
+    isXfv = true;
+  } else {
+    s = p.surplus;
+    if (!s || s.value_mm == null) return `<div class="surplus-cell"></div>`;
+    d = s.dist || {};
+    buckets = (p.debuted_value && p.debuted_value.posterior)
+                    ? p.debuted_value.posterior : s.buckets;
+  }
   const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
   const wag = (p.debuted_value && p.debuted_value.wag)
               ? p.debuted_value.wag.regressed_wag : null;
   const dvm = p.dollar_dvm_plus;   // per-player $DvM+ (surplus-development index)
   const svColor = s.value_mm >= 50 ? "var(--up)"
                 : s.value_mm >= 10 ? "var(--neon-cyan)" : "var(--text-primary)";
-  const ciText = svCiText(s);
-  const tip = `Expected surplus ${fmtSvMM(s.value_mm)} (FV ${s.fv_continuous != null ? Number(s.fv_continuous).toFixed(1) : "?"})`
+  const ciText = isXfv ? "" : svCiText(s);
+  const consSv = isXfv && xf && xf.consensus_surplus_mm != null ? xf.consensus_surplus_mm : null;
+  const tip = `${isXfv ? "xFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
+    + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
     + (ciText ? ` · ${ciText}` : "")
     + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}` : "")
     + (pb != null ? ` · P(bust) ${pb}%` : "")
@@ -41973,7 +42009,11 @@ function renderPlayerDetail(key) {
       { key: "just_baseball", label: "Just Baseball"},
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
-    if (sidecar === null && DATA._slices && DATA._slices.scout_reports) {
+    // Gate on whether the SLICE is loaded, not on this player's entry: a prospect
+    // with no scouting report (e.g. a fresh draftee) has no entry even after the
+    // slice loads, so keying the warm-load on `sidecar === null` re-fired
+    // loadSlice().then(render) forever -> infinite render loop -> site freeze.
+    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
       // First touch of any prospect detail page kicks off the sidecar
       // warm. After load, re-render so the section populates.
       loadSlice("scout_reports").then(() => {
@@ -48201,9 +48241,22 @@ function attachHandlers() {
     resetListPages();
     render();
   });
+  // xFV / Consensus "Rank by" toggle: sets the board sort (and, via _gradePrimary,
+  // which grade leads every cell). Sets state.sort to "xfv" or "fv".
+  document.querySelectorAll("[data-grade-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.sort = btn.dataset.gradeToggle;
+      _syncGradeToggle();
+      syncSortHeaderActive();
+      resetListPages();
+      render();
+      try { syncToURL(); } catch (e) { /* noop */ }
+    });
+  });
   const sortEl = document.getElementById("sort-select");
   if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
+    _syncGradeToggle();
     // Mirror dropdown-driven sort changes into the column-click sort
     // header indicator (the header carries .is-active when its
     // data-sort-key matches state.sort).
