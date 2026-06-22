@@ -8722,6 +8722,7 @@
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
             <option value="fv">Consensus FV</option>
+            <option value="xfv">xFV (our outcome-grounded grade)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
@@ -12247,6 +12248,11 @@ function fvTrendHTML(p) {
 }
 
 function liveTrendHTML(p) {
+  // RETIRED: the TJStats live-rankings UI (the "LIVE #rank" pills) was retired when xFV
+  // became the primary ranking signal. TJStats stays a folded CONSENSUS source; only the
+  // dedicated live-rank surface is gone. Neutralized here so no call site renders a pill.
+  return "";
+  /* eslint-disable no-unreachable */
   if (!p || p.live_overall_rank == null || p.live_rank_delta == null) return "";
   const delta = Number(p.live_rank_delta);
   const liveRank = Number(p.live_overall_rank);
@@ -12383,7 +12389,7 @@ function syncToURL(push) {
   if (state.classFilter && state.classFilter !== "all") p.set("class", state.classFilter);
   if (state.levelFilter !== "all")        p.set("lvl",   state.levelFilter);
   if (state.posFilter   !== "all")        p.set("pos",   state.posFilter);
-  if (state.sort        !== "fv")         p.set("sort",  state.sort);
+  if (state.sort        !== "xfv")        p.set("sort",  state.sort);
   if (state.stockFilter !== "all")        p.set("stock", state.stockFilter);
   if (state.spreadFilter && state.spreadFilter !== "all") p.set("spread", state.spreadFilter);
   if (state.density     && state.density !== "compact") p.set("density", state.density);
@@ -12772,7 +12778,7 @@ function goHome() {
   if (state.acqFilter !== "all")  p.set("acq", state.acqFilter);
   if (state.levelFilter !== "all") p.set("lvl", state.levelFilter);
   if (state.posFilter !== "all")   p.set("pos", state.posFilter);
-  if (state.sort !== "fv")        p.set("sort", state.sort);
+  if (state.sort !== "xfv")       p.set("sort", state.sort);
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
   if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
@@ -13954,7 +13960,7 @@ const state = {
   // infield" lookup doesn't need three checks); the per-prospect chip
   // still shows the precise published position.
   posFilter: "all",
-  sort: "fv",
+  sort: "xfv",   // xFV is the primary board ranking (consensus FV available via the menu)
   // v31 - Default sort flipped back to Farm Rank now that the v31 tree
   // overhaul gives the grade a richer signal mix (Health Mgmt + HOF-
   // track + Statcast Quality leaves added). The composite letter is
@@ -14519,6 +14525,11 @@ function getFilteredActives() {
       if (bs == null) return -1;
       return (bs - as) || fvCmpDesc(a, b);
     });
+  } else if (state.sort === "xfv") {
+    // xFV (our outcome-grounded grade) descending -- the PRIMARY board ranking.
+    // xfvRankValue falls back to consensus FV for players with no pro track record
+    // (where xFV abstains) so they interleave by consensus instead of vanishing.
+    pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || fvCmpDesc(a, b));
   } else if (state.sort === "surplus_sv" || state.sort === "surplus_risk"
              || state.sort === "surplus_p10" || state.sort === "surplus_p90"
              || state.sort === "surplus_pbust" || state.sort === "wag") {
@@ -16165,8 +16176,8 @@ function renderActives() {
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
   const header = `<div class="col-header">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="FV-derived overall rank - diamond border matches the prospect's rarity tier (same color as the headshot ring). Click to sort.">Rank</span>
-    <span class="sort-header" style="text-align:center;" data-sort-key="fv" title="Consensus Future Value · stock delta + direction below · click to sort">FV Grade</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="xFV rank - our outcome-grounded ranking (primary). Consensus FV rank shown beneath. Diamond border matches the rarity tier. Click to sort.">xFV Rank</span>
+    <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="xFV - our outcome-grounded Future Value (primary grade), with consensus FV beneath for reference. Click to sort by xFV.">xFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). B/T handedness now lives next to the age chip on each row, so the header reflects only what this column displays.">Ht · Wt · BMI</span>
@@ -16195,8 +16206,8 @@ function renderActives() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
         </div>
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : " - "}</span></div>${rankTrendHTML(p)}</div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(latest.consensus_fv_label)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${latest.consensus_fv_label}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}</div>
+        <div class="rank-cell-stack">${xfvRankNumHTML(p)}${rankTrendHTML(p)}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${lazyLineChartHTML(p)}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
@@ -27948,6 +27959,149 @@ function getAaaStuffPlus(p) {
   return _AAA_STUFF[String(mid)] || null;
 }
 
+// ===== xFV — our outcome-grounded Future Value grade (data/xfv.json) ========
+// Sidecar keyed by player_key (a prospect-centric slug), NOT mlbam_id — xFV is
+// a prospect grade. Each entry: headline xfv_grade (rank-preserving onto the
+// 20-80 consensus scale), xfv_grade_realized (deflated outcome-implied grade
+// that drives surplus/distribution), the 5-bucket outcome mix, surplus + a P10–P90
+// fan, and tool xFVs. Shown ALONGSIDE consensus FV (it ties/▾consensus on rank;
+// its value-add is the calibrated distribution + uncertainty + surplus). Live-board
+// players carry kind="active"; xFV abstains on players with no pro track record.
+let _XFV = null;
+let _XFV_RANK = null;     // player_key -> 1-based xFV rank over the active board (lazy)
+(function loadXfv() {
+  fetch("/data/xfv.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      _XFV = (j && j.by_player) || {};
+      _XFV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
+      // First paint can beat this fetch — repaint so xFV chips/cards appear.
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    })
+    .catch(() => { _XFV = {}; });
+})();
+function getXfv(p) {
+  if (!p || !_XFV) return null;
+  const key = p.player_key;
+  if (!key) return null;
+  return _XFV[key] || null;
+}
+// xFV is the PRIMARY ranking signal. Its value where the player has a pro track record
+// (an xFV grade); consensus FV (fv_close) is the fallback so no-track-record players
+// (recent draftees / IFA, where xFV abstains) still rank sensibly instead of vanishing.
+function xfvRankValue(p) {
+  const x = getXfv(p);
+  if (x && x.xfv_grade != null) return x.xfv_grade;
+  return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
+}
+function buildXfvRankMap() {
+  _XFV_RANK = {};
+  if (!DATA || !Array.isArray(DATA.players)) return;
+  const pool = DATA.players.filter(p => p && p.player_key);
+  pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || fvCmpDesc(a, b));
+  pool.forEach((p, i) => { _XFV_RANK[p.player_key] = i + 1; });
+}
+function getXfvRank(p) {
+  if (_XFV_RANK == null) buildXfvRankMap();
+  return (p && _XFV_RANK) ? (_XFV_RANK[p.player_key] || null) : null;
+}
+// Display grade rounded UP (owner rule: FV grades show the integer ceiling).
+function xfvGradeDisplay(x) {
+  return (x && x.xfv_grade != null) ? fvCeil(x.xfv_grade) : null;
+}
+// Tooltip describing xFV vs consensus + the outcome read.
+function xfvTooltip(x) {
+  if (!x || x.xfv_grade == null) return "";
+  const parts = [`xFV ${xfvGradeDisplay(x)} — our outcome-grounded grade (provisional)`];
+  if (x.consensus_fv != null) {
+    const d = x.xfv_minus_consensus;
+    parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
+  }
+  if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
+  if (x.surplus_mm != null) parts.push(`xFV surplus ${fmtSvMM(x.surplus_mm)}`);
+  parts.push("Predicts a calibrated 6-yr WAR outcome distribution from how comparable prospects actually turned out; it out-ranks consensus out-of-sample. Open the player for the full mix.");
+  return parts.join(" · ");
+}
+// Compact secondary chip: shows the CONSENSUS FV beside the (primary) xFV badge.
+function consensusChip(consFv) {
+  if (consFv == null) return "";
+  const g = fvCeil(consFv);
+  return `<span class="xfv-cons-chip" title="Consensus FV ${g} — the public scouting-grade aggregate (FanGraphs + MLB Pipeline + others). xFV is now the primary grade; this is the reference." style="display:inline-flex;align-items:center;gap:2px;font-family:var(--font-mono);font-size:8px;font-weight:700;color:var(--text-tertiary);letter-spacing:0.02em;cursor:help;vertical-align:middle;"><span style="opacity:0.7;">FV</span>${g}</span>`;
+}
+// PRIMARY grade badge for a board row: xFV where rated, consensus FV as the labeled
+// fallback (no pro track record). Consensus shown as a small reference chip beneath.
+function xfvBadgeHTML(p) {
+  const x = getXfv(p);
+  const latest = p.points && p.points[p.points.length - 1];
+  const consLabel = latest ? latest.consensus_fv_label : null;
+  if (x && x.xfv_grade != null) {
+    const g = xfvGradeDisplay(x);
+    const cons = x.consensus_fv != null ? x.consensus_fv
+                 : (consLabel != null ? parseFloat(consLabel) : null);
+    return `<span class="fv-badge ${fvClass(String(g))}" title="${escapeHtml(xfvTooltip(x))}">${g}</span>`
+         + (cons != null ? `<div style="margin-top:2px;line-height:1;">${consensusChip(cons)}</div>` : "");
+  }
+  if (consLabel != null) {
+    return `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))} · xFV not yet rated (no pro track record)">${consLabel}${fvBadgeChainMarks(p)}</span>`
+         + `<div style="font-size:8px;color:var(--text-tertiary);margin-top:1px;letter-spacing:0.04em;">consensus</div>`;
+  }
+  return `<span style="color:var(--text-tertiary);"> - </span>`;
+}
+// PRIMARY rank number = xFV rank (falls back to consensus overall_rank when the board
+// hasn't ranked the player). Consensus overall_rank shown as a tiny reference beneath.
+function xfvRankNumHTML(p) {
+  const xr = getXfvRank(p);
+  const primary = xr != null ? "#" + xr : (p.overall_rank != null ? "#" + p.overall_rank : " - ");
+  const consRef = (xr != null && p.overall_rank != null)
+    ? `<div class="xfv-cons-rank" title="Consensus FV rank #${p.overall_rank}" style="font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);line-height:1;margin-top:1px;cursor:help;">FV #${p.overall_rank}</div>` : "";
+  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${primary}</span></div>${consRef}`;
+}
+// Detail-page header: xFV as the primary big grade, consensus FV as the reference line.
+// Falls back to the consensus fvBadge when xFV abstains (no pro track record).
+function xfvDetailHeaderHTML(p, fvBadge) {
+  const labelStyle = "display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;";
+  const x = getXfv(p);
+  if (!(x && x.xfv_grade != null)) {
+    return `<div style="${labelStyle}"><span>Current FV (consensus)</span></div>${fvBadge}`;
+  }
+  const g = xfvGradeDisplay(x);
+  const d = x.xfv_minus_consensus;
+  const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
+  const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
+  return `<div style="${labelStyle}"><span>xFV</span></div>`
+    + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(xfvTooltip(x))}" style="margin-top:4px;">${g}</span>`
+    + `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
+    + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+    + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">xFV ${dtxt}</span>` : "") + `</div>`;
+}
+// Detail-page card: xFV's outcome read -- 5-bucket mix, expected surplus vs consensus,
+// and the simulated P10-P90 surplus fan. The honest (outcome-implied) view.
+function xfvDetailCard(p) {
+  const x = getXfv(p);
+  if (!(x && x.xfv_grade != null)) return "";
+  const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
+  const fan = (x.dist && x.dist.p50_mm != null) ? renderSvDistribution(x.dist, { height: 18, axis: true }) : "";
+  const svLine = (x.surplus_mm != null)
+    ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 4px;">
+         <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">xFV surplus</span>
+         <span style="font-family:var(--font-mono);font-weight:700;font-size:15px;color:${x.surplus_mm >= 30 ? 'var(--up)' : x.surplus_mm >= 5 ? 'var(--neon-cyan)' : 'var(--text-primary)'};">${fmtSvMM(x.surplus_mm)}</span>
+       </div>`
+       + (x.consensus_surplus_mm != null
+          ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);text-align:right;margin-bottom:6px;">consensus FV surplus ${fmtSvMM(x.consensus_surplus_mm)}</div>` : "")
+    : "";
+  const pbust = x.p_bust != null ? `<span style="color:${x.p_bust >= 0.4 ? 'var(--down)' : 'var(--text-tertiary)'};">P(bust) ${Math.round(x.p_bust * 100)}%</span>` : "";
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
+        <div class="detail-title" style="margin:0;">xFV · outcome-grounded grade</div>
+        <span class="fv-badge ${fvClass(String(xfvGradeDisplay(x)))} size-sm" title="${escapeHtml(xfvTooltip(x))}">${xfvGradeDisplay(x)}</span>
+      </div>
+      ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
+      ${svLine}
+      ${fan}
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}xFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the surplus + outcome mix use the honest (typically lower) outcome-implied grade because scout FV runs optimistic. Provisional. <a href="/glossary/#xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+    </div>`;
+}
+
 function getStatcastPlus(p) {
   if (!p) return null;
   // v29 - Prefer the server-computed Statcast+ when present. Storage
@@ -30797,7 +30951,7 @@ document.addEventListener("click", (e) => {
       break;
     case key === "toolsort":     state.toolSortKey     = "off"; break;
     case key === "statcastsort": state.statcastSortKey = "off"; break;
-    case key === "sort":   state.sort = "fv"; break;
+    case key === "sort":   state.sort = "xfv"; break;
     case key === "il-org":  state.ilOrgFilter  = "all"; break;
     case key === "il-type": state.ilTypeFilter = "all"; break;
     case key.startsWith("ften:"):
@@ -32204,7 +32358,7 @@ function activeFilterCount() {
   if (state.spreadFilter && state.spreadFilter !== "all") n++;
   if (state.orgFilter     !== "all")     n++;
   if (state.acqFilter     !== "all")     n++;
-  if (state.sort          !== "fv")      n++;
+  if (state.sort          !== "xfv")     n++;
   if (state.levelFilter   !== "all")     n++;
   if (state.posFilter     !== "all")     n++;
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) n++;
@@ -32260,7 +32414,7 @@ function renderActiveFiltersStrip() {
   if (state.statcastSortKey && state.statcastSortKey !== "off") {
     chip("Sort by SC", state.statcastSortKey, "statcastsort");
   }
-  if (state.sort && state.sort !== "fv") chip("Sort", state.sort, "sort");
+  if (state.sort && state.sort !== "xfv") chip("Sort", state.sort, "sort");
   const el = document.getElementById("active-filters-strip");
   if (el) el.innerHTML = chips.join("");
 }
@@ -40142,13 +40296,9 @@ function renderPlayerDetail(key) {
       }
     }
   }
-  const liveRankPill = (p.live_overall_rank != null && p.overall_rank != null && Math.abs(Number(p.live_rank_delta || 0)) >= 5)
-    ? rankPill(
-        "Live",
-        "#" + p.live_overall_rank + (p.live_rank_delta ? ` (${p.live_rank_delta > 0 ? "+" : ""}${p.live_rank_delta})` : ""),
-        Number(p.live_rank_delta || 0) > 0 ? "var(--up)" : "var(--down)"
-      )
-    : "";
+  // RETIRED with the TJStats live-rankings UI (xFV is now the primary ranking signal).
+  // TJStats remains a folded consensus source; the live-rank pill is gone.
+  const liveRankPill = "";
   const rankPills = (p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : ""}
@@ -40235,10 +40385,7 @@ function renderPlayerDetail(key) {
         </div>
       </div>
       <div style="text-align:right;">
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;">
-          <span>Current FV</span>
-        </div>
-        ${fvBadge}
+        ${xfvDetailHeaderHTML(p, fvBadge)}
         ${(() => {
           if (p.fv_high == null && p.fv_low == null && p.fv_open == null && p.fv_close == null) return "";
           const fmtFvDate = d => {
@@ -42921,7 +43068,8 @@ function renderPlayerDetail(key) {
   // back "Details" tab. The two financial cards stay together.
   const valuationHtml = [surplusValueSection, contractDetailsSection].filter(Boolean).join("");
   const playerNewsSection = makePlayerNewsSection(p);
-  const overviewHtml = [summaryGridHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const xfvCardHtml = xfvDetailCard(p);   // xFV outcome read (primary grade's distribution + surplus)
+  const overviewHtml = [summaryGridHtml, xfvCardHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When

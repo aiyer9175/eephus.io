@@ -175,7 +175,7 @@ def level_row(rows: list[dict], level: str, group: str) -> dict | None:
 def league_norms(season: int, level: str, group: str,
                  fetch: bool = True) -> dict | None:
     """Exposure-filtered league medians for rate translation: hitters
-    {ops, k_pct, bb_pct, iso}, pitchers {era, k_pct, bb_pct}. None when
+    {ops, obp, k_pct, bb_pct, iso}, pitchers {era, k_pct, bb_pct}. None when
     the level-season has too few qualifying lines."""
     rows: list[dict] = []
     for sport, lv in SPORT_LEVEL.items():
@@ -192,8 +192,11 @@ def league_norms(season: int, level: str, group: str,
             n += 1
             ab, so, bb = _f(r.get("ab")), _f(r.get("so")), _f(r.get("bb"))
             slg, avg, ops = _f(r.get("slg")), _f(r.get("avg")), _f(r.get("ops"))
+            obp = _f(r.get("obp"))
             if ops is not None:
                 vals.setdefault("ops", []).append(ops)
+            if obp is not None:
+                vals.setdefault("obp", []).append(obp)
             if so is not None and pa:
                 vals.setdefault("k_pct", []).append(so / pa)
             if bb is not None and pa:

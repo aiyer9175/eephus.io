@@ -29,16 +29,28 @@ from pathlib import Path
 
 import value_framework as vf
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
-from xfv_model import _prep, _feature_spec
-from xfv_dataset import matrix_path
+from xfv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols
+from xfv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 _BUCKETS = ("bust", "bench", "regular", "good", "star")
 
+# Guarded blend for the HEADLINE grade + board rank: rank_war = (1-lambda)*consensus_war
+# + lambda*model_war. The lean model now BEATS consensus FV on OOS rank for both sides
+# (data/xfv_eval.json), so lambda is high; the small consensus anchor is the owner-approved
+# insurance against feature-selection optimism (guarantees xFV ranks ~>= consensus). The
+# REALIZED grade + surplus + distribution stay on the pure model (the honest outcome view).
+_BLEND_LAMBDA = {"hit": 0.85, "pit": 0.80}
+
 
 def scored_path(side):
     return DATA_DIR / ("xfv_scored_pitcher.json" if side == "pit" else "xfv_scored.json")
+
+
+def scored_live_path(side):
+    return DATA_DIR / ("xfv_scored_live_pitcher.json" if side == "pit"
+                       else "xfv_scored_live.json")
 
 
 def score_report_path(side):
@@ -63,17 +75,20 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     data = _prep(pool, "target_censored", side)
     by_key = {r["player_key"]: r for r in pool}
 
-    # Final model: ridge on the full matrix + linear scale calibration (full-window).
+    # Final model: ridge on the full matrix + linear scale calibration (full-window) +
+    # the consensus-FV OLS anchor for the guarded blend.
     ridge = _fit_ridge(data, keys)
     raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
     cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
     a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+    ols = _fit_ols_fv(data)
+    lam = _BLEND_LAMBDA[side]
 
     scored = []
     for r in data:
         pk = r["player_key"]
         src = by_key[pk]
-        xfv_war = max(-2.0, a + b * raw[pk])              # calibrated 6yr summed WAR
+        xfv_war = max(-2.0, a + b * raw[pk])              # model E[6yr WAR] (honest)
         pos = src.get("position")
         dyear = src.get("debut_year") or 2020
         age = _age_at(src.get("birth_date"), dyear)
@@ -81,6 +96,8 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         cons_fv = src.get("consensus_fv_raw")
         if xfv_grade is None or cons_fv is None:
             continue
+        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
         xfv_surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=1.0)
         cons_surplus = vf.expected_surplus_usd(cons_fv, is_pit, pos, age=age, eta_years=1.0)
@@ -92,6 +109,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "xfv_grade": round(xfv_grade, 1),
             "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
             "xfv_war_6yr": round(xfv_war, 2),
+            "rank_war": round(rank_war, 3),
             "p_bucket": {b_: round(p, 3) for b_, p in zip(_BUCKETS, probs)},
             "surplus_mm": round(xfv_surplus / 1e6, 1) if xfv_surplus else None,
             "consensus_surplus_mm": round(cons_surplus / 1e6, 1) if cons_surplus else None,
@@ -106,12 +124,13 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     # The realized_implied_fv grade is honestly deflated (consensus FV is
     # optimistic) but floors at 20 and reads as jarringly low next to consensus.
     # The headline xfv_grade_display is a RANK-PRESERVING quantile map of the
-    # model's WAR ranking onto the consensus FV distribution of this pool: the
-    # ordering is xFV's outcome-grounded ranking (the value-add), the units match
-    # consensus (usable). Surplus/distribution stay on the honest realized grade.
+    # GUARDED-BLEND ranking (rank_war) onto the consensus FV distribution of this
+    # pool: the ordering is xFV's outcome-grounded ranking (the value-add, now
+    # beating consensus OOS), the units match consensus (usable). Surplus/
+    # distribution stay on the honest realized grade.
     if scored:
         target = sorted(s["consensus_fv"] for s in scored)
-        order = sorted(range(len(scored)), key=lambda i: scored[i]["xfv_war_6yr"])
+        order = sorted(range(len(scored)), key=lambda i: scored[i]["rank_war"])
         m = len(scored)
         for rank_pos, i in enumerate(order):
             p = rank_pos / (m - 1) if m > 1 else 0.0
@@ -178,8 +197,132 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     return report
 
 
+def _fit_production(side: str):
+    """Fit the shipped model (ridge + linear scale calibration + consensus-FV OLS anchor)
+    on the FULL labeled matrix -- the same fit run() uses -- returning (ridge, a, b, ols, keys)."""
+    keys, _mono = _feature_spec(side)
+    is_pit = side == "pit"
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit]
+    data = _prep(pool, "target_censored", side)
+    ridge = _fit_ridge(data, keys)
+    raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
+    cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
+    a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+    ols = _fit_ols_fv(data)
+    return ridge, a, b, ols, keys
+
+
+def run_live(persist: bool = True, side: str = "hit") -> dict:
+    """Score the CURRENT active prospect board (xfv_dataset.build_live_matrix) with the
+    model fit on the full labeled matrix. Same production seam as run() -- grade +
+    5-bucket distribution + surplus + uncertainty band via value_framework -- but these
+    players have no outcome label yet, so there is no validation block; they ARE the
+    grades the site shows next to consensus FV. Surplus/distribution use each player's
+    real timing (current age + ETA) so xFV prices on the same basis as the site's
+    consensus surplus. Run after build_live + the site export (timeseries.json)."""
+    is_pit = side == "pit"
+    ridge, a, b, ols, _keys = _fit_production(side)
+    lam = _BLEND_LAMBDA[side]
+    live = json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
+
+    scored, skipped_no_track = [], 0
+    for r in live:
+        try:
+            cons_fv = float(r.get("consensus_fv_raw"))
+        except (TypeError, ValueError):
+            continue
+        # xFV is outcome/production-grounded: it ABSTAINS on players with no pro
+        # track record. In training, milb_missing tagged untracked busts (large
+        # negative weight); applying that to a current draftee/IFA who simply hasn't
+        # played a pro season yet would wrongly crush them. Gate on MiLB production.
+        if not r.get("milb"):
+            skipped_no_track += 1
+            continue
+        xfv_war = max(-2.0, a + b * _predict(ridge, _vec(r, side)))
+        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
+        pos = r.get("position")
+        age = r.get("age_now")
+        if age is None:
+            age = _age_at(r.get("birth_date"), CURRENT_SEASON)
+        eta = r.get("eta_years")
+        eta = float(eta) if eta is not None else 1.0
+        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos)
+        if xfv_grade is None:
+            continue
+        probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
+        xfv_surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=eta)
+        dist = vf.sv_distribution(xfv_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        pcts = dist.get("percentiles") or {}
+        def _mm(v):
+            return round(float(v), 1) if v is not None else None
+        scored.append({
+            "player_key": r["player_key"], "kind": "active", "position": pos,
+            "consensus_fv": round(cons_fv, 1),
+            "xfv_grade": round(xfv_grade, 1),                 # realized-implied (deflated)
+            "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
+            "xfv_war_6yr": round(xfv_war, 2),
+            "rank_war": round(rank_war, 3),
+            "p_bucket": {k: round(p, 3) for k, p in zip(_BUCKETS, probs)},
+            "surplus_mm": _mm(xfv_surplus / 1e6) if xfv_surplus else None,
+            "consensus_surplus_mm": r.get("consensus_surplus_mm"),
+            "dist": {"p10_mm": _mm(pcts.get("p10")), "p25_mm": _mm(pcts.get("p25")),
+                     "p50_mm": _mm(pcts.get("p50")), "p75_mm": _mm(pcts.get("p75")),
+                     "p90_mm": _mm(pcts.get("p90")), "mean_mm": _mm(dist.get("mean")),
+                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
+            "band_p10_mm": _mm(pcts.get("p10")),
+            "band_p90_mm": _mm(pcts.get("p90")),
+            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
+        })
+
+    # headline grade -- rank-preserving quantile map of the GUARDED-BLEND ranking
+    # (rank_war) onto the LIVE pool's consensus FV distribution (units match consensus;
+    # order is xFV's outcome-grounded ranking, which beats consensus OOS). Mirrors run();
+    # surplus/distribution stay on the honest realized grade.
+    if scored:
+        target = sorted(s["consensus_fv"] for s in scored)
+        order = sorted(range(len(scored)), key=lambda i: scored[i]["rank_war"])
+        m = len(scored)
+        for rank_pos, i in enumerate(order):
+            p = rank_pos / (m - 1) if m > 1 else 0.0
+            disp = target[min(m - 1, int(round(p * (m - 1))))]
+            scored[i]["xfv_grade_display"] = round(disp, 1)
+            scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    xfv_tot = round(sum(s["surplus_mm"] or 0 for s in scored), 1)
+    cons_tot = round(sum(s["consensus_surplus_mm"] or 0 for s in scored), 1)
+    report = {
+        "generated_at": date.today().isoformat(),
+        "scope": f"LIVE {'PITCHERS' if is_pit else 'HITTERS'} (active board)",
+        "n_scored": len(scored),
+        "skipped_no_pro_track_record": skipped_no_track,
+        "calibration_scale": {"a": round(a, 3), "b": round(b, 3)},
+        "realized_grade_divergence_vs_consensus": {
+            "mean_abs_delta": round(statistics.mean(abs(s["xfv_minus_consensus"]) for s in scored), 2) if scored else None,
+            "mean_signed_delta": round(statistics.mean(s["xfv_minus_consensus"] for s in scored), 2) if scored else None,
+        },
+        "surplus_totals_mm": {"xfv": xfv_tot, "consensus": cons_tot,
+                              "xfv_share_of_consensus": round(xfv_tot / cons_tot, 3) if cons_tot else None},
+    }
+    if persist:
+        scored_live_path(side).write_text(json.dumps(scored, indent=0), encoding="utf-8")
+        log.info("wrote %s (%d players)", scored_live_path(side), len(scored))
+    return report
+
+
 if __name__ == "__main__":
     import sys as _sys
+    if "--live" in _sys.argv:
+        for _s in ("hit", "pit"):
+            logging.basicConfig(level=logging.INFO, format="%(message)s")
+            _rep = run_live(side=_s)
+            print(f"\n=== LIVE {_s} ===")
+            print("n scored:", _rep["n_scored"], "| skipped (no pro track record):",
+                  _rep["skipped_no_pro_track_record"], "| calibration:", _rep["calibration_scale"])
+            print("realized divergence vs consensus:", json.dumps(_rep["realized_grade_divergence_vs_consensus"]))
+            print("surplus totals ($M):", json.dumps(_rep["surplus_totals_mm"]))
+        _sys.exit(0)
     _SIDE = "pit" if "--pit" in _sys.argv else "hit"
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     rep = run(side=_SIDE)

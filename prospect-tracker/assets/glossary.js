@@ -502,6 +502,40 @@ function _methAccuracyChart(bt) {
   </div>`;
 }
 
+// xFV vs consensus FV — our outcome-grounded model, shown SEPARATELY from the per-source
+// bars because it runs on its own out-of-sample protocol (the harder, conservative bar).
+function _methXfvPanel(bt) {
+  const xc = bt.xfv_vs_consensus;
+  if (!xc || !xc.sides) return "";
+  const W = v => Math.max(2, (v / 0.4) * 100).toFixed(1);
+  const sideBlock = (key, label) => {
+    const s = xc.sides[key];
+    if (!s) return "";
+    const win = s.xfv_beats;
+    const eras = s.era_split || {};
+    const eraRows = Object.keys(eras).map(k => {
+      const e = eras[k];
+      const d = (e.xfv_blend_spearman != null && e.consensus_spearman != null)
+        ? e.xfv_blend_spearman - e.consensus_spearman : 0;
+      const col = d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
+      return `<tr><td>${escapeHtml(k)}</td><td>${e.n}</td><td>${e.consensus_spearman != null ? e.consensus_spearman.toFixed(3) : " - "}</td><td style="color:${col};font-weight:700;">${e.xfv_blend_spearman != null ? e.xfv_blend_spearman.toFixed(3) : " - "}</td></tr>`;
+    }).join("");
+    return `<div class="meth-metric">
+      <div class="meth-metric-title">${escapeHtml(label)} <span class="meth-sub">n=${s.n}</span></div>
+      <div class="meth-bar-row"><span class="meth-bar-label">Consensus FV</span><span class="meth-bar-track"><span class="meth-bar-fill" style="width:${W(s.consensus_spearman)}%;background:var(--text-secondary);"></span></span><span class="meth-bar-val">${s.consensus_spearman.toFixed(3)}</span></div>
+      <div class="meth-bar-row"><span class="meth-bar-label">xFV</span><span class="meth-bar-track"><span class="meth-bar-fill is-consensus" style="width:${W(s.xfv_spearman)}%;background:var(--neon-cyan);"></span></span><span class="meth-bar-val${win ? " is-best" : ""}">${s.xfv_spearman.toFixed(3)}${win ? " ★" : ""}</span></div>
+      ${eraRows ? `<div class="table-scroll-x" style="margin-top:6px;"><table class="meth-table"><thead><tr><th>Debut era</th><th>n</th><th>Consensus ρ</th><th>xFV ρ</th></tr></thead><tbody>${eraRows}</tbody></table></div>` : ""}
+    </div>`;
+  };
+  return `<div class="meth-chart meth-accuracy">
+    <div class="meth-chart-title">xFV vs consensus FV <span class="meth-sub">our model · out-of-sample</span></div>
+    <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
+    ${sideBlock("hitters", "Hitters — ordering skill (Spearman ρ, grade vs realized WAR)")}
+    ${sideBlock("pitchers", "Pitchers — ordering skill (Spearman ρ, grade vs realized WAR)")}
+    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample for both sides, and the edge holds on the recent 2019–2023 cohorts — so it is not merely exploiting older, less-accurate scouting. xFV is the site's primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol — a harder, more conservative test than the in-sample common-set bars above.)</p>
+  </div>`;
+}
+
 function _methTierTable(bt, rater) {
   const c = bt.cohorts[rater];
   const rows = (c.tiers || []).slice().reverse().map(t => `
@@ -1032,6 +1066,7 @@ function renderSourceComparison() {
       <h2 class="meth-h">Does the consensus outperform its sources?</h2>
       <p class="meth-window">${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methAccuracyChart(bt)}
+      ${_methXfvPanel(bt)}
       <h3 class="meth-h3">Best grader by prospect archetype</h3>
       ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">

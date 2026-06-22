@@ -15,42 +15,71 @@ import logging
 from datetime import date
 from pathlib import Path
 
-from xfv_score import scored_path
+from xfv_score import scored_path, scored_live_path
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "xfv.json"
 
 
+def _entry(s, side, kind):
+    e = {
+        "side": "P" if side == "pit" else "H",
+        "kind": kind,                                    # "active" (live board) | "resolved"
+        "xfv_grade": s.get("xfv_grade_display"),         # headline, 20-80 scale
+        "xfv_grade_realized": s.get("xfv_grade"),        # deflated, drives surplus
+        "consensus_fv": s.get("consensus_fv"),
+        "xfv_minus_consensus": s.get("xfv_minus_consensus_display"),
+        "xfv_war_6yr": s.get("xfv_war_6yr"),
+        "p_bucket": s.get("p_bucket"),
+        "surplus_mm": s.get("surplus_mm"),
+        "band_p10_mm": s.get("band_p10_mm"),
+        "band_p90_mm": s.get("band_p90_mm"),
+        "p_bust": s.get("p_bust"),
+    }
+    if s.get("dist") is not None:                        # live: full surplus fan + comparison
+        e["dist"] = s["dist"]
+    if s.get("consensus_surplus_mm") is not None:
+        e["consensus_surplus_mm"] = s["consensus_surplus_mm"]
+    return e
+
+
 def run(persist: bool = True) -> dict:
     by_player = {}
+    counts = {"resolved": 0, "active": 0}
+    # resolved (backtest cohort -- known outcomes; powers the Debuted views) FIRST, then
+    # the live board OVERWRITES any overlap so a current prospect shows its live grade.
     for side in ("hit", "pit"):
         for s in json.loads(scored_path(side).read_text(encoding="utf-8")):
-            by_player[s["player_key"]] = {
-                "side": "P" if side == "pit" else "H",
-                "xfv_grade": s.get("xfv_grade_display"),         # headline, 20-80 scale
-                "xfv_grade_realized": s.get("xfv_grade"),        # deflated, drives surplus
-                "consensus_fv": s.get("consensus_fv"),
-                "xfv_minus_consensus": s.get("xfv_minus_consensus_display"),
-                "xfv_war_6yr": s.get("xfv_war_6yr"),
-                "p_bucket": s.get("p_bucket"),
-                "surplus_mm": s.get("surplus_mm"),
-                "band_p10_mm": s.get("band_p10_mm"),
-                "band_p90_mm": s.get("band_p90_mm"),
-                "p_bust": s.get("p_bust"),
-            }
-    tools = json.loads((DATA_DIR / "xfv_tools.json").read_text(encoding="utf-8")).get("by_player", {})
-    for pk, tv in tools.items():
-        if pk in by_player:
-            by_player[pk]["tool_xfv"] = tv
+            by_player[s["player_key"]] = _entry(s, side, "resolved")
+            counts["resolved"] += 1
+    for side in ("hit", "pit"):
+        lp = scored_live_path(side)
+        if not lp.exists():
+            continue
+        for s in json.loads(lp.read_text(encoding="utf-8")):
+            by_player[s["player_key"]] = _entry(s, side, "active")
+            counts["active"] += 1
+
+    # tool xFVs: resolved first, then live overlays (live wins for board players).
+    for fn in ("xfv_tools.json", "xfv_tools_live.json"):
+        fp = DATA_DIR / fn
+        if not fp.exists():
+            continue
+        for pk, tv in json.loads(fp.read_text(encoding="utf-8")).get("by_player", {}).items():
+            if pk in by_player:
+                by_player[pk]["tool_xfv"] = tv
 
     out = {
         "meta": {
             "generated_at": date.today().isoformat(),
             "n_players": len(by_player),
+            "n_active": counts["active"],
             "grade_scale": "headline xfv_grade is rank-preserving onto the 20-80 consensus "
                            "distribution; xfv_grade_realized is the deflated outcome-implied "
-                           "grade that drives surplus + distribution",
+                           "grade that drives surplus + distribution. Live board players carry "
+                           "kind=active + a surplus dist; they require a pro track record (xFV "
+                           "abstains on players with no MiLB production).",
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
             "status": "provisional",
@@ -63,7 +92,36 @@ def run(persist: bool = True) -> dict:
     return out
 
 
+def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
+    """Run the whole xFV pipeline in dependency order and consolidate data/xfv.json:
+    training matrix -> live matrix -> resolved scores -> live scores -> tool xFVs ->
+    export. The forward-chained backtest eval (xfv_model, the governance artifact) is
+    heavy and stable, so it is OPT-IN (include_eval). Requires data/timeseries.json
+    (run after the site export). One call for what was five manual module runs."""
+    import xfv_dataset
+    import xfv_score
+    import xfv_tools
+    for side in ("hit", "pit"):
+        xfv_dataset.run(persist, side)          # labeled training matrix + baseline
+        xfv_dataset.build_live(persist, side)   # current active-board feature matrix
+    if include_eval:
+        import xfv_model
+        for side in ("hit", "pit"):
+            xfv_model.run(persist, side)         # forward-chained eval (registry artifact)
+    for side in ("hit", "pit"):
+        xfv_score.run(persist, side)             # resolved cohort scores
+        xfv_score.run_live(persist, side)        # live board scores (gated on track record)
+    xfv_tools.run(persist)                        # resolved tool xFVs
+    xfv_tools.run_live(persist)                   # live tool xFVs
+    return run(persist)
+
+
 if __name__ == "__main__":
+    import sys
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rep = run()
-    print("xFV consolidated export:", rep["meta"]["n_players"], "players ->", OUT_PATH)
+    if "--all" in sys.argv:
+        rep = regen_all(include_eval="--eval" in sys.argv)
+    else:
+        rep = run()
+    print("xFV consolidated export:", rep["meta"]["n_players"], "players",
+          f"({rep['meta']['n_active']} live board) ->", OUT_PATH)

@@ -175,8 +175,101 @@ def _z(v):
     return [(x - mu) / sd for x in v]
 
 
+def _mean_sd(v):
+    return statistics.mean(v), (statistics.pstdev(v) or 1.0)
+
+
+def _fit_blend(tool, spec, train_rows, realized):
+    """Re-derive a tool's blend params on the resolved debuted set (the same fit run()
+    does): production blend weight + the grade/production z-stats used to normalize."""
+    recs = []
+    for r in train_rows:
+        if r["kind"] != "debuted":
+            continue
+        g = r.get(spec["grade"])
+        st = (realized.get(r["player_key"]) or {}).get(spec["stat"])
+        if g is None or st is None:
+            continue
+        milb = (r.get("milb") or {}).get(spec["milb"]) if spec["milb"] else None
+        recs.append((float(g), milb, float(st)))
+    if len(recs) < 20:
+        return None
+    sign = 1.0 if spec["hi"] else -1.0
+    partial = None
+    if spec["milb"]:
+        sub = [(x[0], x[1], sign * x[2]) for x in recs if x[1] is not None]
+        if len(sub) >= 20:
+            partial = _partial_after_grade([s[0] for s in sub], [s[1] for s in sub],
+                                           [s[2] for s in sub])
+    w = max(0.0, min(0.5, (partial or 0.0) * 2.0)) if partial else 0.0
+    gmu, gsd = _mean_sd([x[0] for x in recs])
+    fmu, fsd = (_mean_sd([(x[1] if x[1] is not None else 0.0) for x in recs])
+                if spec["milb"] else (0.0, 1.0))
+    return {"sign": sign, "w": w, "gmu": gmu, "gsd": gsd, "fmu": fmu, "fsd": fsd}
+
+
+def run_live(persist: bool = True) -> dict:
+    """Tool xFVs for the CURRENT active prospect board. Apply the production blend weight
+    learned from resolved players (run()) to each live player's tool grade + pre-decision
+    MiLB production, then rank-map onto the LIVE pool's consensus grade distribution so the
+    units match the tool grades shown on the site. Modeled tools only (pass-through tools
+    have no realized target -> the site shows the consensus grade unchanged)."""
+    from xfv_dataset import live_matrix_path
+    realized = _realized_mlb()
+    train = {s: json.loads(matrix_path(s).read_text(encoding="utf-8")) for s in ("hit", "pit")}
+    live = {s: json.loads(live_matrix_path(s).read_text(encoding="utf-8")) for s in ("hit", "pit")}
+    tool_out, report = {}, {}
+    for tool, spec in _TOOLS.items():
+        side = spec["side"]
+        blend = _fit_blend(tool, spec, train[side], realized)
+        # live players gate on pro track record (milb present) -- same rule as the
+        # headline live grade -- so a tool xFV only exists where production grounds it.
+        lrows = [r for r in live[side]
+                 if r.get(spec["grade"]) is not None and r.get("milb")]
+        if blend is None or not lrows:
+            report[tool] = {"n_live": len(lrows), "note": "no blend or no live rows"}
+            continue
+        sign, w = blend["sign"], blend["w"]
+        live_grades = [float(r[spec["grade"]]) for r in lrows]
+
+        def _lscore(r):
+            gz = (float(r[spec["grade"]]) - blend["gmu"]) / blend["gsd"]
+            if spec["milb"]:
+                f = (r.get("milb") or {}).get(spec["milb"])
+                fz = ((float(f) if f is not None else 0.0) - blend["fmu"]) / blend["fsd"]
+            else:
+                fz = 0.0
+            return gz + (sign * w) * fz
+
+        scores = [_lscore(r) for r in lrows]
+        target = sorted(live_grades)
+        order = sorted(range(len(lrows)), key=lambda i: scores[i])
+        m = len(lrows)
+        for pos, i in enumerate(order):
+            p = pos / (m - 1) if m > 1 else 0.0
+            tool_out.setdefault(lrows[i]["player_key"], {})[tool] = round(
+                target[min(m - 1, int(round(p * (m - 1))))], 1)
+        report[tool] = {"n_live": len(lrows), "blend_weight_production": round(w, 3)}
+
+    out = {"generated_at": date.today().isoformat(), "scope": "LIVE active board",
+           "modeled_tools": report, "passthrough_tools": _PASSTHROUGH,
+           "n_players_with_tool_xfv": len(tool_out)}
+    if persist:
+        (DATA_DIR / "xfv_tools_live.json").write_text(
+            json.dumps({"meta": out, "by_player": tool_out}, indent=0), encoding="utf-8")
+        log.info("wrote %s (%d players)", DATA_DIR / "xfv_tools_live.json", len(tool_out))
+    return out
+
+
 if __name__ == "__main__":
+    import sys
     logging.basicConfig(level=logging.INFO, format="%(message)s")
+    if "--live" in sys.argv:
+        rep = run_live()
+        print("LIVE tool xFV:", rep["n_players_with_tool_xfv"], "players")
+        for t, d in rep["modeled_tools"].items():
+            print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_production')}")
+        sys.exit(0)
     rep = run()
     print("tool xFV validation (realized MLB stat):")
     for t, d in rep["modeled_tools"].items():

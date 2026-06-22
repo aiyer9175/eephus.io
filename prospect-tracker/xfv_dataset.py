@@ -76,6 +76,11 @@ def matrix_path(side: str = "hit"):
     return DATA_DIR / ("xfv_pitcher_matrix.json" if side == "pit" else "xfv_hitter_matrix.json")
 
 
+def live_matrix_path(side: str = "hit"):
+    return DATA_DIR / ("xfv_live_pitcher_matrix.json" if side == "pit"
+                       else "xfv_live_hitter_matrix.json")
+
+
 def report_path(side: str = "hit"):
     return DATA_DIR / ("xfv_pitcher_dataset_report.json" if side == "pit"
                        else "xfv_dataset_report.json")
@@ -127,6 +132,17 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
     n_src = sum(1 for s, v in per.items()
                 if s != "auto_detect" and _f(v.get("fv_published")) is not None)
     tools = pt.get("tools_consensus") or {}
+    # As-of consensus-FV trajectory (momentum): net movement in consensus FV across
+    # the player's snapshots up to AND INCLUDING the decision point. Leakage-free (only
+    # points dated <= the decision date). A rising grade signals scouts catching up to
+    # a breakout; orthogonal to the static FV level (the dominant feature).
+    cutoff_date = pt.get("snapshot_date") or "9999"
+    hist = sorted((p for p in (rec.get("points") or [])
+                   if p.get("snapshot_date") and p["snapshot_date"] <= cutoff_date
+                   and _f(p.get("consensus_fv_raw")) is not None),
+                  key=lambda p: p["snapshot_date"])
+    fv_trend = ((_f(hist[-1].get("consensus_fv_raw")) - _f(hist[0].get("consensus_fv_raw")))
+                if len(hist) >= 2 else 0.0)
     out = {
         "consensus_fv_raw": _f(pt.get("consensus_fv_raw")),
         "consensus_fv_pre_shrinkage": _f(pt.get("consensus_fv_pre_shrinkage")),
@@ -135,6 +151,7 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
         "n_sources": float(n_src),
         "fv_stddev": _f(pt.get("fv_stddev")),
         "fv_spread": _f(pt.get("fv_spread")),
+        "fv_trend": fv_trend,
         "asof_date": pt.get("snapshot_date"),
     }
     for k in (_PIT_TOOLS if side == "pit" else _HIT_TOOLS):
@@ -142,14 +159,45 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
     return out
 
 
+def _season_rates(row, norms, side: str):
+    """Level-relative rate block + exposure (pa/bf) for one MiLB season. Side-specific:
+    hitters k/bb/obp/iso vs level median; pitchers k/bb/era vs level median. Norms are
+    season-and-level-specific (contemporaneous) so this is leakage-safe by construction."""
+    if side == "pit":
+        bf = _f(row.get("bf")) or 0.0
+        so, bb, era = _f(row.get("so")), _f(row.get("bb")), _f(row.get("era"))
+        return {
+            "k_rel": ((so / bf) - (norms.get("k_pct") or 0.0)) if so is not None and bf else 0.0,
+            "bb_rel": ((bb / bf) - (norms.get("bb_pct") or 0.0)) if bb is not None and bf else 0.0,
+            "era_rel": (era - (norms.get("era") or 4.5)) if era is not None else 0.0,
+            "exposure": bf, "rates_missing": 0.0 if bf else 1.0,
+        }
+    pa = _f(row.get("pa")) or 0.0
+    so, bb = _f(row.get("so")), _f(row.get("bb"))
+    slg, avg, obp = _f(row.get("slg")), _f(row.get("avg")), _f(row.get("obp"))
+    iso = (slg - avg) if slg is not None and avg is not None else None
+    return {
+        "k_rel": ((so / pa) - (norms.get("k_pct") or 0.0)) if so is not None and pa else 0.0,
+        "bb_rel": ((bb / pa) - (norms.get("bb_pct") or 0.0)) if bb is not None and pa else 0.0,
+        "iso_rel": (iso - (norms.get("iso") or 0.0)) if iso is not None else 0.0,
+        # Phase-1 sweep: peak-MiLB OBP is the strongest hitter edge BEYOND FV (+0.16
+        # partial), under-priced by scouts. Not derivable from k/bb/iso (hits-on-base).
+        "obp_rel": (obp - (norms.get("obp") or 0.0)) if obp is not None and norms.get("obp") else 0.0,
+        "exposure": pa, "rates_missing": 0.0 if pa else 1.0,
+    }
+
+
 def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
-    """Translated production from the final MiLB season strictly before the decision
-    year (StatsAPI ladder; season-specific norms = contemporaneous = leakage-safe).
-    Mirrors prospect_path._features + a clean age-rel-level. Side-specific rates:
-    hitters k/bb/iso vs level median; pitchers k/bb/era vs level median."""
+    """Translated production from the MiLB ladder strictly before the decision year
+    (StatsAPI; season-and-level norms are contemporaneous = leakage-safe). Returns the
+    FINAL pre-decision season's rates (the current-state read) PLUS multi-season PEAK
+    production + season count (a fuller read than one snapshot -- a player who posted an
+    elite K-BB% two levels ago carries that signal). Mirrors prospect_path._features +
+    a clean age-rel-level."""
     if not mlbam:
         return None
     group = "pitching" if side == "pit" else "hitting"
+    seasons = []
     for season in range(decision_year - 1, 2013, -1):
         rows = [r for r in (mh.player_index(season, group).get(int(mlbam)) or [])
                 if r.get("level") != "MLB"]
@@ -160,6 +208,7 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
             continue
         row = mh.level_row(rows, level, group)
         norms = mh.league_norms(season, level, group, fetch=False) or {}
+        rates = _season_rates(row, norms, side)
         age = _f(row.get("age"))
         if age is None and birth_date:
             try:
@@ -167,39 +216,40 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
                 age = round((date(season, 6, 30) - b).days / 365.25, 1)
             except ValueError:
                 age = None
-        age_rel = (age - _TYPICAL_LEVEL_AGE[level]) if age is not None else None
-        base = {
-            "milb_season": season,
-            "milb_level": level,
-            "level_rank": float(_LEVEL_RANK[level]),
-            "stale": float(decision_year - 1 - season),
-            "age": age if age is not None else 23.0,
-            "age_missing": 1.0 if age is None else 0.0,
-            "age_rel_level": age_rel if age_rel is not None else 0.0,
-        }
-        if side == "pit":
-            bf = _f(row.get("bf")) or 0.0
-            so, bb = _f(row.get("so")), _f(row.get("bb"))
-            era = _f(row.get("era"))
-            base.update({
-                "k_rel": ((so / bf) - (norms.get("k_pct") or 0.0)) if so is not None and bf else 0.0,
-                "bb_rel": ((bb / bf) - (norms.get("bb_pct") or 0.0)) if bb is not None and bf else 0.0,
-                "era_rel": (era - (norms.get("era") or 4.5)) if era is not None else 0.0,
-                "rates_missing": 0.0 if bf else 1.0,
-            })
-        else:
-            pa = _f(row.get("pa")) or 0.0
-            so, bb = _f(row.get("so")), _f(row.get("bb"))
-            slg, avg = _f(row.get("slg")), _f(row.get("avg"))
-            iso = (slg - avg) if slg is not None and avg is not None else None
-            base.update({
-                "k_rel": ((so / pa) - (norms.get("k_pct") or 0.0)) if so is not None and pa else 0.0,
-                "bb_rel": ((bb / pa) - (norms.get("bb_pct") or 0.0)) if bb is not None and pa else 0.0,
-                "iso_rel": (iso - (norms.get("iso") or 0.0)) if iso is not None else 0.0,
-                "rates_missing": 0.0 if pa else 1.0,
-            })
-        return base
-    return None
+        rates.update({"season": season, "level": level,
+                      "level_rank": float(_LEVEL_RANK[level]), "age": age})
+        seasons.append(rates)
+    if not seasons:
+        return None
+
+    final = seasons[0]                 # most recent (descending loop)
+    level, age = final["level"], final["age"]
+    age_rel = (age - _TYPICAL_LEVEL_AGE[level]) if age is not None else None
+    base = {
+        "milb_season": final["season"], "milb_level": level,
+        "level_rank": final["level_rank"],
+        "stale": float(decision_year - 1 - final["season"]),
+        "age": age if age is not None else 23.0,
+        "age_missing": 1.0 if age is None else 0.0,
+        "age_rel_level": age_rel if age_rel is not None else 0.0,
+        "n_milb_seasons": float(len(seasons)),
+    }
+    keep = ("k_rel", "bb_rel", "era_rel", "rates_missing") if side == "pit" \
+        else ("k_rel", "bb_rel", "iso_rel", "obp_rel", "rates_missing")
+    base.update({k: final[k] for k in keep})
+
+    # Multi-season PEAK across exposure-qualified seasons (best sustained production,
+    # not just the latest line). Direction = the productive extreme of each rate.
+    minpa = 60 if side == "pit" else 50
+    qual = [s for s in seasons if (s.get("exposure") or 0) >= minpa] or seasons
+    if side == "pit":
+        base["peak_k_rel"] = max(s["k_rel"] for s in qual)
+        base["peak_bb_rel"] = min(s["bb_rel"] for s in qual)   # fewer walks = better
+    else:
+        base["peak_obp_rel"] = max(s["obp_rel"] for s in qual)
+        base["peak_k_rel"] = min(s["k_rel"] for s in qual)     # fewer Ks = better
+        base["peak_iso_rel"] = max(s["iso_rel"] for s in qual)
+    return base
 
 
 def _label_6yr(seasons: dict, debut_year: int):
@@ -342,6 +392,78 @@ def build_matrix(side: str = "hit"):
         r.update(_injury_features(il.get(r["player_key"]), r["cutoff"]))
 
     return rows, acct
+
+
+# ---------------------------------------------------------------------------
+# live cohort -- the CURRENT active prospect board (no labels; for scoring)
+# ---------------------------------------------------------------------------
+
+def build_live_matrix(side: str = "hit"):
+    """Feature rows for the CURRENT active prospect board so the trained model can
+    score the players the site actually shows. Same as-of feature construction as
+    build_matrix (the SAME _prior_features / _milb_features / sidecar helpers) but
+    sourced from the live board (data/timeseries.json `players[]`), with the
+    decision point = the latest snapshot (cutoff=None) and NO outcome label.
+
+    Reads timeseries.json (the export output) so the xFV grades line up exactly with
+    the consensus FV the site displays. Captures age + eta_years + the engine's
+    consensus surplus so the scorer can price xFV vs consensus on identical timing.
+    Run AFTER the site export (run_monthly / build_site) has written timeseries.json.
+    """
+    is_pit = side == "pit"
+    ts_path = DATA_DIR / "timeseries.json"
+    if not ts_path.exists():
+        log.warning("timeseries.json absent -- run the site export first; live matrix empty")
+        return [], {"live_seen": 0, "live_side": 0, "live_kept": 0, "live_no_fv": 0}
+
+    payload = json.loads(ts_path.read_text(encoding="utf-8"))
+    players = payload.get("players") or []
+    acct = {"live_seen": 0, "live_side": 0, "live_kept": 0, "live_no_fv": 0}
+    rows = []
+    for rec in players:
+        acct["live_seen"] += 1
+        pk = rec.get("player_key")
+        if not pk or not _side_match(rec, side):
+            continue
+        acct["live_side"] += 1
+        pt = _asof_point(rec, None)        # latest snapshot = current grade
+        if pt is None or _f(pt.get("consensus_fv_raw")) is None:
+            acct["live_no_fv"] += 1
+            continue
+        surplus = rec.get("surplus") or {}
+        row = {"player_key": pk, "kind": "active", "debut_year": None,
+               "is_pitcher": is_pit, "cutoff": None,
+               "mlbam_id": rec.get("mlbam_id"), "birth_date": rec.get("birth_date"),
+               "position": rec.get("position"),
+               "age_now": _f(rec.get("age")),
+               "eta_years": _f(surplus.get("eta_years")),
+               "consensus_surplus_mm": _f(surplus.get("value_mm"))}
+        row.update(_prior_features(rec, pt, side))
+        row["milb"] = _milb_features(rec.get("mlbam_id"), CURRENT_SEASON,
+                                     rec.get("birth_date"), side)
+        rows.append(row)
+        acct["live_kept"] += 1
+
+    acq, il = _load_sidecars({r["player_key"] for r in rows})
+    for r in rows:
+        a = acq.get(r["player_key"]) or {}
+        r["pick_overall"] = a.get("pick_overall")
+        r["bonus_usd"] = a.get("bonus_usd")
+        r.update(_injury_features(il.get(r["player_key"]), None))
+    return rows, acct
+
+
+def build_live(persist: bool = True, side: str = "hit") -> dict:
+    rows, acct = build_live_matrix(side)
+    rep = {"generated_at": date.today().isoformat(),
+           "scope": f"LIVE {'PITCHERS' if side == 'pit' else 'HITTERS'} (active board)",
+           "accounting": acct, "n_rows": len(rows),
+           "milb_coverage": _coverage(rows, "level_rank", sub="milb"),
+           "mlbam_coverage": _coverage(rows, "mlbam_id")}
+    if persist:
+        live_matrix_path(side).write_text(json.dumps(rows, indent=0), encoding="utf-8")
+        log.info("wrote %s (%d rows)", live_matrix_path(side), len(rows))
+    return rep
 
 
 # ---------------------------------------------------------------------------

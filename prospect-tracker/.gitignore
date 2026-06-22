@@ -92,8 +92,14 @@ Thumbs.db
 # --- Misc ---------------------------------------------------------------
 *.log
 
-# xFV training intermediates (regenerable from the DB)
+# xFV training + live-scoring intermediates (regenerable via xfv_export.regen_all;
+# the consumable artifact data/xfv.json is tracked).
 data/xfv_hitter_matrix.json
 data/xfv_pitcher_matrix.json
 data/xfv_scored.json
 data/xfv_scored_pitcher.json
+data/xfv_live_hitter_matrix.json
+data/xfv_live_pitcher_matrix.json
+data/xfv_scored_live.json
+data/xfv_scored_live_pitcher.json
+data/xfv_tools_live.json

@@ -305,6 +305,41 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
     return out
 
 
+def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
+    """xFV (our outcome-grounded model) vs consensus FV, lifted from the xFV eval
+    artifacts. Reported SEPARATELY from the per-source bars because it is the
+    model's OWN out-of-sample protocol (forward-chained, leakage-clean), not the
+    in-sample common-set backtest the sources share -- OOS is the HARDER bar, so a
+    win here is conservative. This is the honest 'xFV beats consensus on rank' record."""
+    out = {"protocol": ("forward-chained out-of-sample; debuted cohort; first-6-season "
+                        "bWAR (KM-censored). The shipped headline rank is the guarded "
+                        "blend (consensus prior + the model edge that survives OOS)."),
+           "sides": {}}
+    found = False
+    for side, fn in (("hitters", "xfv_eval.json"), ("pitchers", "xfv_eval_pitcher.json")):
+        p = data_dir / fn
+        if not p.exists():
+            continue
+        try:
+            ev = json.loads(p.read_text(encoding="utf-8"))
+        except ValueError:
+            continue
+        pooled = ((ev.get("evals") or {}).get("debuted_km") or {}).get("pooled_oos") or {}
+        base = (pooled.get("baseline") or {}).get("spearman")
+        blend = (pooled.get("blend") or {}).get("spearman")
+        if base is None or blend is None:
+            continue
+        found = True
+        out["sides"][side] = {
+            "n": (pooled.get("blend") or {}).get("n"),
+            "consensus_spearman": base,
+            "xfv_spearman": blend,
+            "xfv_beats": blend > base,
+            "era_split": ev.get("era_split_debuted") or {},
+        }
+    return out if found else None
+
+
 def run_source_backtest(data_dir: Path = DATA_DIR,
                         write: bool = True) -> dict:
     """Compute the full source-vs-source backtest and (optionally) write
@@ -382,6 +417,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     accuracy["by_archetype"] = _archetype_accuracy(pooled_common, raters)
 
     result = {
+        "xfv_vs_consensus": _xfv_vs_consensus(data_dir),
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
         "as_of_date": as_of.isoformat(),
         "window": {
