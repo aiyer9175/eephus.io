@@ -1,53 +1,53 @@
 {
- "generated_at": "2026-06-20",
+ "generated_at": "2026-06-22",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 953.2,
-  "remainder_recenter_wins_per_team": 1.52,
-  "roster_war_sum_y1": 953.2,
+  "roster_war_sum": 951.7,
+  "remainder_recenter_wins_per_team": 1.6,
+  "roster_war_sum_y1": 951.7,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2384.3,
-  "raw_wins_sum_y1": 2384.3,
+  "raw_wins_sum": 2382.6,
+  "raw_wins_sum_y1": 2382.6,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 442,
-   "depth_war_y1": 45.1,
-   "depth_war_5y": 85.2,
+   "depth_war_y1": 44.3,
+   "depth_war_5y": 83.7,
    "n_unassigned": 299,
-   "war_unassigned_y1": 56.6,
-   "war_unassigned_5y": 110.2
+   "war_unassigned_y1": 57.5,
+   "war_unassigned_5y": 112.1
   },
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 953.2,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 1.52
+    "roster_war_sum": 951.7,
+    "wins_sum": 2430.2,
+    "remainder_recenter_wins_per_team": 1.6
    },
    {
     "season": 2028,
     "roster_war_sum": 637.6,
     "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 11.65
+    "remainder_recenter_wins_per_team": 11.66
    },
    {
     "season": 2029,
-    "roster_war_sum": 287.7,
-    "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 24.08
+    "roster_war_sum": 286.1,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 24.13
    },
    {
     "season": 2030,
-    "roster_war_sum": 223.8,
-    "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 26.08
+    "roster_war_sum": 222.5,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 26.12
    },
    {
     "season": 2031,
-    "roster_war_sum": 199.6,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 26.79
+    "roster_war_sum": 198.1,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 26.85
    }
   ],
   "coverage_decomposition_2025": {
