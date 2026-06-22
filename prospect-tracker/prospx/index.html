@@ -18839,7 +18839,7 @@ function renderLeaderboards() {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
         </div>
         <div><span class="level-pill ${r.level === "MLB" ? "level-mlb" : "level-neutral"}">${escapeHtml(r.level || " - ")}</span></div>
-        <div style="text-align:center;">${fvLabel !== " - " ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>` : `<span style="color:var(--text-tertiary);"> - </span>`}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(p)}</div>
         <div style="text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:700;color:${heat.fg};background:${heat.bg};padding:4px 8px;border-radius:var(--radius-sm);">${cfg.fmt(v)}</div>
         <div style="text-align:center;" title="${trendVals.length} season${trendVals.length === 1 ? "" : "s"} of ${escapeHtml(cfg.label)} data">${trendCell}</div>
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${cfg.support(r)}</div>
@@ -19623,7 +19623,7 @@ function renderInjured() {
         <div><span class="debut-pill" style="background:${_pal.bg};color:${_pal.fg};border:1px solid ${_pal.bd};">${escapeHtml(il.type || "?")} IL</span></div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:12px;color:var(--text-secondary);">${escapeHtml(since || " - ")}</div>
         <div style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;color:${days > 60 ? 'var(--down)' : days > 14 ? 'var(--neon-amber)' : 'var(--text-secondary)'};font-weight:600;" title="${days > 60 ? 'Long-term IL (60+ days)' : days > 14 ? '15-60 day stint' : 'Short stint (≤14 days)'}">${days}d</div>
-        <div style="text-align:center;">${fv ? `<span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>` : `<span style="color:var(--text-tertiary);"> - </span>`}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(p)}</div>
         <div style="font-size:11px;color:var(--text-secondary);line-height:1.3;">${escapeHtml(reason)}</div>
       </div>`;
   }).join("");
@@ -44535,8 +44535,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <button class="compare-add-btn is-compact${compareHas(p.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(p.player_key)}" type="button" title="${compareHas(p.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(p.player_key) ? "✓" : "+"}</button>
           <button class="row-expand-btn" type="button" aria-label="Expand row" title="Show FV chart, MiLB stats, and ETA inline">▾</button></div>${arsenalLineHTML(p)}
         </div>
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${p.overall_rank != null ? "#" + p.overall_rank : (p.org_rank != null ? "#" + p.org_rank : " - ")}</span></div>${rankTrendHTML(p)}</div>
-        <div style="text-align:center;">${latest && latest.consensus_fv_label != null ? `<span class="fv-badge ${fvClass(fvLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${fvLabel}${fvBadgeChainMarks(p)}</span>${fvTrendHTML(p)}${liveTrendHTML(p)}` : `<span style="color:var(--text-tertiary);"> - </span>`}</div>
+        <div class="rank-cell-stack">${xfvRankNumHTML(p)}${rankTrendHTML(p)}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(p)}${fvTrendHTML(p)}</div>
         <div class="line-chart-cell" title="${escapeHtml(_ohlcTooltip(p))}">${pts.length >= 2 ? lazyLineChartHTML(p) : `<span style="color:var(--text-tertiary);font-size:11px;"> - </span>`}</div>
         ${makeMilbCell(p)}
         ${physClusterHTML(p)}
