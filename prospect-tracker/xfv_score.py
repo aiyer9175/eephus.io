@@ -491,6 +491,139 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
     return report
 
 
+def backgrade_path():
+    return DATA_DIR / "xfv_backgrade.json"
+
+
+def run_backgrade(persist: bool = True) -> dict:
+    """Backgrade EVERY graded prospect so the WHOLE site carries an xFV, not just the active
+    board (run_live) + the labeled-outcome matrix (run). For each universe player -- timeseries
+    actives + debuts.json graduates -- score the as-of features with the shipped model and map
+    onto the SAME live grade scale the board uses, so a graduate's xFV is directly comparable
+    to a current prospect's. Graduates are scored at their final pre-debut snapshot (the grade
+    xFV carried into the majors) and keep realized_war for the did-we-nail-it read. Players with
+    no pro track record are graded prior-anchored and flagged xfv_provisional. Fills the gap
+    run_live (active w/ track record) + run (matrix cohort) leave behind. Run AFTER run_live
+    (reuses its scored pool for the grade scale). Writes data/xfv_backgrade.json."""
+    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars,
+                             _injury_features, _side_match, _f, CURRENT_SEASON)
+    fit = {s: _fit_production(s) for s in ("hit", "pit")}
+    lam = {s: blend_lambda(s) for s in ("hit", "pit")}
+    gmap = {s: _build_grade_map(s) for s in ("hit", "pit")}
+    # Active-board players already have a richer live entry -- don't re-grade them here.
+    have_live = set()
+    for s in ("hit", "pit"):
+        lp = scored_live_path(s)
+        if lp.exists():
+            have_live |= {r["player_key"] for r in json.loads(lp.read_text(encoding="utf-8"))}
+
+    ts_path, deb_path = DATA_DIR / "timeseries.json", DATA_DIR / "debuts.json"
+    actives = ((json.loads(ts_path.read_text(encoding="utf-8")).get("players") or [])
+               if ts_path.exists() else [])
+    debuted = json.loads(deb_path.read_text(encoding="utf-8")) if deb_path.exists() else []
+    if isinstance(debuted, dict):
+        debuted = debuted.get("players") or []
+    # Debuted first so a recently-graduated player who lingers in timeseries is tagged debuted.
+    queue = [(rec, "debuted") for rec in debuted] + [(rec, "active") for rec in actives]
+    acq, il = _load_sidecars({rec.get("player_key") for rec, _ in queue if rec.get("player_key")})
+
+    def _mm(v):
+        return round(float(v), 1) if v is not None else None
+
+    scored, seen = [], set()
+    for rec, kind in queue:
+        pk = rec.get("player_key")
+        if not pk or pk in seen or pk in have_live:
+            continue
+        pts = sorted((pt for pt in (rec.get("points") or [])
+                      if pt.get("snapshot_date") and _f(pt.get("consensus_fv_raw")) is not None),
+                     key=lambda pt: pt["snapshot_date"])
+        if not pts:
+            continue
+        side = "pit" if _side_match(rec, "pit") else "hit"
+        is_pit = side == "pit"
+        ridge, a, b, ols, _keys = fit[side]
+        debut_date = rec.get("debut_date") if kind == "debuted" else None
+        # as-of point: graduate -> last snapshot before debut; active -> latest snapshot
+        cand = [pt for pt in pts if (not debut_date or pt["snapshot_date"] < debut_date)] or pts
+        pt = cand[-1]
+        cons_fv = _f(pt.get("consensus_fv_raw"))
+        if cons_fv is None:
+            continue
+        yr = int(pt["snapshot_date"][:4])
+        milb_yr = (int(debut_date[:4]) if (kind == "debuted" and debut_date and debut_date[:4].isdigit())
+                   else min(yr, CURRENT_SEASON) + 1)
+        a_sc = acq.get(pk) or {}
+        ilf = _injury_features(il.get(pk), None) if kind == "active" else {}
+        row = {"consensus_fv_raw": cons_fv, "pick_overall": a_sc.get("pick_overall"),
+               "bonus_usd": a_sc.get("bonus_usd"), **ilf}
+        row.update(_prior_features(rec, pt, side))
+        row["milb"] = _milb_features(rec.get("mlbam_id"), milb_yr, rec.get("birth_date"), side)
+        feats = _vec(row, side)
+        xfv_war = max(-2.0, a + b * _predict(ridge, feats))
+        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
+        factors = _factors(ridge, feats)
+        inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
+        if inj < 1.0:
+            factors.insert(0, {"label": "Injury penalty", "dir": "down", "mag": round((1 - inj) * 6, 2)})
+            xfv_war = max(-2.0, xfv_war * inj)
+            rank_war *= inj
+        disp = _map_grade(gmap[side], rank_war)
+        if disp is None:
+            continue
+        if kind == "debuted":
+            age, eta = _age_at(rec.get("birth_date"), milb_yr), 0.5
+        else:
+            age = rec.get("age_now") or _age_at(rec.get("birth_date"), CURRENT_SEASON)
+            eta = float(rec.get("eta_years")) if rec.get("eta_years") is not None else 1.0
+        pos = rec.get("position")
+        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos)
+        if xfv_grade is None:
+            continue
+        probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
+        surplus = vf.expected_surplus_usd(xfv_grade, is_pit, pos, age=age, eta_years=eta)
+        dist = vf.sv_distribution(xfv_grade, is_pit, pos, age=age, eta_years=eta) or {}
+        pcts = dist.get("percentiles") or {}
+        entry = {
+            "player_key": pk, "side": side, "kind": kind, "position": pos,
+            "consensus_fv": round(cons_fv, 1),
+            "xfv_grade": round(xfv_grade, 1),
+            "xfv_grade_display": round(disp, 1),
+            "xfv_minus_consensus_display": round(disp - cons_fv, 1),
+            "xfv_minus_consensus": round(xfv_grade - cons_fv, 1),
+            "xfv_war_6yr": round(xfv_war, 2),
+            "rank_war": round(rank_war, 3),
+            "p_bucket": {k: round(p, 3) for k, p in zip(_BUCKETS, probs)},
+            "surplus_mm": _mm(surplus / 1e6) if surplus else None,
+            "dist": {"p10_mm": _mm(pcts.get("p10")), "p25_mm": _mm(pcts.get("p25")),
+                     "p50_mm": _mm(pcts.get("p50")), "p75_mm": _mm(pcts.get("p75")),
+                     "p90_mm": _mm(pcts.get("p90")), "mean_mm": _mm(dist.get("mean")),
+                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
+            "band_p10_mm": _mm(pcts.get("p10")), "band_p90_mm": _mm(pcts.get("p90")),
+            "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
+            "factors": factors,
+        }
+        if not row.get("milb"):
+            entry["xfv_provisional"] = True          # prior-anchored (no pro track record)
+        if inj < 1.0:
+            entry["injury_factor"] = inj
+        if kind == "debuted":
+            cw = (rec.get("career_war") or {}).get("career_war")
+            if cw is not None:
+                entry["realized_war"] = round(float(cw), 1)
+        scored.append(entry)
+        seen.add(pk)
+
+    if persist:
+        backgrade_path().write_text(json.dumps({"scored": scored}, separators=(",", ":")),
+                                    encoding="utf-8")
+        log.info("wrote %s (%d players)", backgrade_path(), len(scored))
+    return {"players": len(scored),
+            "provisional": sum(1 for s in scored if s.get("xfv_provisional")),
+            "debuted": sum(1 for s in scored if s["kind"] == "debuted")}
+
+
 if __name__ == "__main__":
     import sys as _sys
     if "--live" in _sys.argv:

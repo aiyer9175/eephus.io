@@ -343,6 +343,61 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
     return out if found else None
 
 
+def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
+    """The head-to-head, broken down: xFV vs consensus FV by FV tier, plus the resolved
+    'receipts' -- the players the two disagreed on most, and who was closer to the outcome.
+    Uses the OUT-OF-SAMPLE xFV grade attached to the common set (so it is a fair contest)."""
+    rows = [c for c in common_rows
+            if c["grades"].get("xfv") is not None and c["grades"].get(CONSENSUS_KEY) is not None]
+    if len(rows) < 40:
+        return None
+
+    per_tier = []
+    for lo, hi, label in FV_TIERS:
+        tr = [c for c in rows if c["grades"][CONSENSUS_KEY] >= lo
+              and (hi is None or c["grades"][CONSENSUS_KEY] < hi)]
+        if len(tr) < 25:
+            continue
+        wars = [c["outcome"]["war"] for c in tr]
+        cr = _spearman([c["grades"][CONSENSUS_KEY] for c in tr], wars)
+        xr = _spearman([c["grades"]["xfv"] for c in tr], wars)
+        per_tier.append({"tier": label, "n": len(tr),
+                         "consensus_spearman": round(cr, 4) if cr is not None else None,
+                         "xfv_spearman": round(xr, 4) if xr is not None else None})
+
+    # Percentile each rater + the outcome over the common set; disagreement = the gap
+    # between xFV's and consensus's percentile placement; "right" = whose placement was
+    # closer to the realized-WAR placement. Receipts use resolved (debuted) players.
+    def _pct(vals):
+        order = sorted(range(len(vals)), key=lambda i: vals[i])
+        pr = [0.0] * len(vals)
+        for p, i in enumerate(order):
+            pr[i] = p / (len(vals) - 1) if len(vals) > 1 else 0.5
+        return pr
+    cons_pct = _pct([c["grades"][CONSENSUS_KEY] for c in rows])
+    xfv_pct = _pct([c["grades"]["xfv"] for c in rows])
+    war_pct = _pct([c["outcome"]["war"] for c in rows])
+    recs = []
+    for i, c in enumerate(rows):
+        if not c["outcome"]["debuted"]:
+            continue
+        recs.append({
+            "name": c.get("name") or c["key"], "key": c["key"],
+            "consensus_fv": round(c["grades"][CONSENSUS_KEY], 1),
+            "war": round(c["outcome"]["war"], 1),
+            "dir": "higher" if xfv_pct[i] > cons_pct[i] else "lower",
+            "disagree": abs(xfv_pct[i] - cons_pct[i]),
+            "xfv_right": abs(xfv_pct[i] - war_pct[i]) < abs(cons_pct[i] - war_pct[i]),
+        })
+    right_share = (round(sum(1 for r in recs if r["xfv_right"]) / len(recs), 3)
+                   if recs else None)
+    recs.sort(key=lambda r: -r["disagree"])
+    receipts = [{k: r[k] for k in ("name", "consensus_fv", "war", "dir", "xfv_right")}
+                for r in recs[:8]]
+    return {"n": len(rows), "per_tier": per_tier, "receipts": receipts,
+            "xfv_right_share_on_disagreements": right_share}
+
+
 def run_source_backtest(data_dir: Path = DATA_DIR,
                         write: bool = True) -> dict:
     """Compute the full source-vs-source backtest and (optionally) write
@@ -369,6 +424,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                                              "key": p.get("player_key")})
             if all(r in grades for r in raters):
                 common_by_year[y].append({"key": p.get("player_key"),
+                                          "name": p.get("player_name"),
                                           "grades": {r: grades[r] for r in raters},
                                           "outcome": out, "archetype": _archetype(p)})
 
@@ -400,8 +456,20 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
             for c in common_by_year[y]:
                 g = xfv_oos.get(c["key"])
                 if g is not None:
-                    c["grades"]["xfv"] = g
+                    c["grades"]["xfv"] = g          # raw rank-war score (for now)
                     n_xfv += 1
+        # Remap the raw xFV score onto a 20-80 grade via the common-set consensus-FV
+        # distribution, so xFV can be tier-binned + read on the familiar scale. Spearman/AUC
+        # are rank-based, so this monotone remap leaves the head-to-head numbers unchanged,
+        # but it lets xFV join the FV-tier graphs + cohort tables + archetype breakdown.
+        rows_x = [c for y in years for c in common_by_year[y] if "xfv" in c["grades"]]
+        if rows_x:
+            order = sorted(range(len(rows_x)), key=lambda i: rows_x[i]["grades"]["xfv"])
+            cons_sorted = sorted(c["grades"][CONSENSUS_KEY] for c in rows_x)
+            m = len(rows_x)
+            for rank_pos, i in enumerate(order):
+                pp = rank_pos / (m - 1) if m > 1 else 0.0
+                rows_x[i]["grades"]["xfv"] = round(cons_sorted[min(m - 1, int(round(pp * (m - 1))))], 1)
     disp_raters = raters + (["xfv"] if n_xfv >= 30 else [])
 
     def _acc(common_rows: list[dict]) -> dict:
@@ -423,6 +491,14 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         return res
 
     pooled_common = [c for y in years for c in common_by_year[y]]
+    # xFV cohort/calibration table (its OOS grade on the common set) so xFV joins the
+    # FV-tier graphs + cohort-outcome tables alongside the sources.
+    xfv_rows = [{"fv": c["grades"]["xfv"], "outcome": c["outcome"]}
+                for c in pooled_common if c["grades"].get("xfv") is not None]
+    if len(xfv_rows) >= 30:
+        cohorts["xfv"] = {"n": len(xfv_rows),
+                          "n_debuted": sum(1 for r in xfv_rows if r["outcome"]["debuted"]),
+                          "tiers": _tier_table(xfv_rows)}
     accuracy = {
         "common_n": len(pooled_common),
         "head_to_head_raters": disp_raters,   # includes "xfv" (OOS) for the bars/archetype
@@ -442,7 +518,8 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "spearman": _beats("spearman"),
         "auc": _beats("auc"),
     }
-    accuracy["by_archetype"] = _archetype_accuracy(pooled_common, raters)
+    accuracy["by_archetype"] = _archetype_accuracy(pooled_common, disp_raters)
+    accuracy["xfv_vs_consensus_detail"] = _xfv_vs_consensus_detail(pooled_common)
 
     result = {
         "xfv_vs_consensus": _xfv_vs_consensus(data_dir),

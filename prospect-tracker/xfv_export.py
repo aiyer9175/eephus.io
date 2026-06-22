@@ -47,6 +47,10 @@ def _entry(s, side, kind):
         e["statcast_factor"] = s["statcast_factor"]
     if s.get("factors"):                                 # per-prospect xFV explainer
         e["factors"] = s["factors"]
+    if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
+        e["xfv_provisional"] = True
+    if s.get("realized_war") is not None:                # backgraded graduate's actual career WAR
+        e["realized_war"] = s["realized_war"]
     return e
 
 
@@ -59,6 +63,16 @@ def run(persist: bool = True) -> dict:
         for s in json.loads(scored_path(side).read_text(encoding="utf-8")):
             by_player[s["player_key"]] = _entry(s, side, "resolved")
             counts["resolved"] += 1
+    # Backgrade: every other graded prospect (graduates + lingering/no-track-record actives),
+    # scored on the live grade scale. Overwrites the resolved-scale entry so the WHOLE site
+    # reads on one scale; the live board (next) wins for current prospects.
+    from xfv_score import backgrade_path
+    bp = backgrade_path()
+    if bp.exists():
+        for s in json.loads(bp.read_text(encoding="utf-8")).get("scored", []):
+            by_player[s["player_key"]] = _entry(s, s.get("side") == "pit" and "pit" or "hit",
+                                                s.get("kind", "backgrade"))
+            counts["backgrade"] = counts.get("backgrade", 0) + 1
     for side in ("hit", "pit"):
         lp = scored_live_path(side)
         if not lp.exists():
@@ -117,6 +131,7 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
     for side in ("hit", "pit"):
         xfv_score.run(persist, side)             # resolved cohort scores
         xfv_score.run_live(persist, side)        # live board scores (gated on track record)
+    xfv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
     xfv_score.score_history(persist)              # xFV-over-time per snapshot (FV history chart)
     xfv_tools.run(persist)                        # resolved tool xFVs
     xfv_tools.run_live(persist)                   # live tool xFVs

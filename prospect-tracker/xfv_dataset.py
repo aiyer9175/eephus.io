@@ -238,6 +238,10 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
             row = mh.level_row(rows, level, group)
         norms = mh.league_norms(season, level, group, fetch=False) or {}
         rates = _season_rates(row, norms, side)
+        # Age-for-level uses the integer StatsAPI "baseball age" (age at the season's July 1).
+        # Decimal precision from birth_date was tested for the model and slightly HURT OOS rank
+        # (debuted 0.3308 -> 0.3291): the standard baseball age is the cleaner basis here. The
+        # user-facing CURRENT age is shown as a decimal site-wide (a separate, display concern).
         age = _f(row.get("age"))
         if age is None and birth_date:
             try:

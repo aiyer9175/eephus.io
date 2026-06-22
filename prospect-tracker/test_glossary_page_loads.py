@@ -126,7 +126,7 @@ def test_all_four_views_render(server):
     empty = [v for v, n in results.items() if n < 200]
     assert not empty, f"views rendered (near-)empty: {empty} — {results}"
     assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
-    assert ("Does the consensus outperform" in sc_html
+    assert ("Does xFV outperform" in sc_html
             or "no resolved cohorts" in sc_html), "source comparison rendered neither data nor empty-state"
 
 

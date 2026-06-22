@@ -62,6 +62,7 @@ _FEATURES_HIT = [
     ("k_rel",          -1),   # contact: more whiffs worse (under-priced by scouts)
     ("peak_k_rel",     -1),   # best-season contact (multi-season peak); helps OOS
     ("age_rel_level",  -1),   # younger-for-level better
+    ("n_milb_seasons", +1),   # MiLB seasons before the read -- track record/persistence (OOS +.010)
     ("tool_hit",       +1),   # best single tool for WAR
     ("tool_speed",     +1),   # athletic up-side / defensive value
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it

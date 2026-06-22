@@ -1771,27 +1771,27 @@
 "player_key": "emmet_sheehan",
 "kind": "debuted",
 "position": "RHP",
-"consensus_fv": 48.0,
+"consensus_fv": 47.9,
 "xfv_grade": 49.9,
 "xfv_minus_consensus": 1.9,
 "xfv_war_6yr": 3.98,
-"rank_war": 3.007,
+"rank_war": 3.005,
 "p_bucket": {
 "bust": 0.319,
 "bench": 0.275,
-"regular": 0.257,
+"regular": 0.256,
 "good": 0.144,
 "star": 0.006
 },
 "surplus_mm": 17.4,
 "consensus_surplus_mm": 12.7,
 "band_p10_mm": 0.0,
-"band_p90_mm": 41.2,
+"band_p90_mm": 41.8,
 "p_bust": 0.319,
 "realized_war_6yr": 2.72,
 "censored": true,
 "xfv_grade_display": 51.7,
-"xfv_minus_consensus_display": 3.7
+"xfv_minus_consensus_display": 3.8
 },
 {
 "player_key": "matt_krook",
@@ -3565,11 +3565,11 @@
 "player_key": "anderson_espinoza",
 "kind": "debuted",
 "position": "RHP",
-"consensus_fv": 43.0,
+"consensus_fv": 42.9,
 "xfv_grade": 44.9,
 "xfv_minus_consensus": 2.0,
 "xfv_war_6yr": 1.84,
-"rank_war": 1.431,
+"rank_war": 1.428,
 "p_bucket": {
 "bust": 0.512,
 "bench": 0.254,
@@ -3580,12 +3580,12 @@
 "surplus_mm": 6.5,
 "consensus_surplus_mm": 4.6,
 "band_p10_mm": 0.0,
-"band_p90_mm": 17.3,
+"band_p90_mm": 17.4,
 "p_bust": 0.512,
 "realized_war_6yr": -0.03,
 "censored": true,
 "xfv_grade_display": 45.0,
-"xfv_minus_consensus_display": 2.0
+"xfv_minus_consensus_display": 2.1
 },
 {
 "player_key": "yerry_rodriguez",
@@ -6299,7 +6299,7 @@
 "xfv_grade": 20.0,
 "xfv_minus_consensus": -15.0,
 "xfv_war_6yr": 0.92,
-"rank_war": 0.42,
+"rank_war": 0.421,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -8847,7 +8847,7 @@
 "xfv_grade": 43.9,
 "xfv_minus_consensus": -1.4,
 "xfv_war_6yr": 1.7,
-"rank_war": 1.647,
+"rank_war": 1.648,
 "p_bucket": {
 "bust": 0.552,
 "bench": 0.242,
@@ -10355,7 +10355,7 @@
 "xfv_grade": 53.3,
 "xfv_minus_consensus": -9.3,
 "xfv_war_6yr": 5.26,
-"rank_war": 5.352,
+"rank_war": 5.353,
 "p_bucket": {
 "bust": 0.211,
 "bench": 0.243,
@@ -10979,7 +10979,7 @@
 "xfv_grade": 48.6,
 "xfv_minus_consensus": -1.4,
 "xfv_war_6yr": 3.39,
-"rank_war": 2.983,
+"rank_war": 2.984,
 "p_bucket": {
 "bust": 0.366,
 "bench": 0.277,
@@ -12177,7 +12177,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -13345,7 +13345,7 @@
 "xfv_grade": 49.4,
 "xfv_minus_consensus": 6.8,
 "xfv_war_6yr": 3.78,
-"rank_war": 2.28,
+"rank_war": 2.281,
 "p_bucket": {
 "bust": 0.335,
 "bench": 0.276,
@@ -13815,7 +13815,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -13841,7 +13841,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -14803,7 +14803,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -15453,7 +15453,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -15644,7 +15644,7 @@
 "surplus_mm": 34.7,
 "consensus_surplus_mm": 85.3,
 "band_p10_mm": 0.0,
-"band_p90_mm": 80.4,
+"band_p90_mm": 80.6,
 "p_bust": 0.132,
 "realized_war_6yr": 10.33,
 "censored": false,
@@ -16051,7 +16051,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -16285,7 +16285,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -16311,7 +16311,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17195,7 +17195,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17533,7 +17533,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17663,7 +17663,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17741,7 +17741,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17845,7 +17845,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17871,7 +17871,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -17906,7 +17906,7 @@
 "surplus_mm": 7.4,
 "consensus_surplus_mm": 15.4,
 "band_p10_mm": 0.0,
-"band_p90_mm": 21.1,
+"band_p90_mm": 21.3,
 "p_bust": 0.472,
 "realized_war_6yr": 9.77,
 "censored": false,
@@ -18183,7 +18183,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19002,8 +19002,8 @@
 "p_bust": 0.478,
 "realized_war_6yr": 1.07,
 "censored": false,
-"xfv_grade_display": 48.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 47.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "corey_knebel",
@@ -19041,7 +19041,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19093,7 +19093,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19145,7 +19145,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19210,8 +19210,8 @@
 "p_bust": 0.478,
 "realized_war_6yr": -0.3,
 "censored": false,
-"xfv_grade_display": 48.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 47.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "neil_ramirez",
@@ -19223,7 +19223,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19327,7 +19327,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19379,7 +19379,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19483,7 +19483,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19561,7 +19561,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19665,7 +19665,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -19743,7 +19743,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -20861,7 +20861,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -21186,8 +21186,8 @@
 "p_bust": 0.727,
 "realized_war_6yr": 5.01,
 "censored": false,
-"xfv_grade_display": 43.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 42.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "nick_tepesch",
@@ -21212,8 +21212,8 @@
 "p_bust": 0.727,
 "realized_war_6yr": 0.41,
 "censored": false,
-"xfv_grade_display": 43.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 42.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "alex_wood",
@@ -21238,8 +21238,8 @@
 "p_bust": 0.727,
 "realized_war_6yr": 11.83,
 "censored": false,
-"xfv_grade_display": 43.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 42.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "brian_flynn",
@@ -21290,8 +21290,8 @@
 "p_bust": 0.727,
 "realized_war_6yr": -0.79,
 "censored": false,
-"xfv_grade_display": 43.0,
-"xfv_minus_consensus_display": -2.0
+"xfv_grade_display": 42.9,
+"xfv_minus_consensus_display": -2.1
 },
 {
 "player_key": "seth_maness",
@@ -22057,7 +22057,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -22135,7 +22135,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -22395,7 +22395,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -24859,11 +24859,11 @@
 "player_key": "justin_lange",
 "kind": "bust",
 "position": "SP",
-"consensus_fv": 43.0,
+"consensus_fv": 42.9,
 "xfv_grade": 20.0,
-"xfv_minus_consensus": -23.0,
+"xfv_minus_consensus": -22.9,
 "xfv_war_6yr": 0.98,
-"rank_war": 1.037,
+"rank_war": 1.034,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -24872,14 +24872,14 @@
 "star": 0.0
 },
 "surplus_mm": 0.1,
-"consensus_surplus_mm": 5.1,
+"consensus_surplus_mm": 5.0,
 "band_p10_mm": 0.0,
 "band_p90_mm": 0.0,
 "p_bust": 0.984,
 "realized_war_6yr": 0.0,
 "censored": false,
 "xfv_grade_display": 42.6,
-"xfv_minus_consensus_display": -0.4
+"xfv_minus_consensus_display": -0.3
 },
 {
 "player_key": "luis_rodriguez",
@@ -27879,7 +27879,7 @@
 "xfv_grade": 20.0,
 "xfv_minus_consensus": -22.6,
 "xfv_war_6yr": 0.45,
-"rank_war": 0.756,
+"rank_war": 0.757,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -28811,11 +28811,11 @@
 "player_key": "franklin_perez",
 "kind": "bust",
 "position": "SP",
-"consensus_fv": 43.0,
+"consensus_fv": 42.9,
 "xfv_grade": 20.0,
-"xfv_minus_consensus": -23.0,
+"xfv_minus_consensus": -22.9,
 "xfv_war_6yr": 0.1,
-"rank_war": 0.635,
+"rank_war": 0.633,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -28831,17 +28831,17 @@
 "realized_war_6yr": 0.0,
 "censored": false,
 "xfv_grade_display": 40.3,
-"xfv_minus_consensus_display": -2.7
+"xfv_minus_consensus_display": -2.6
 },
 {
 "player_key": "burl_carraway",
 "kind": "bust",
 "position": "SIRP",
-"consensus_fv": 43.0,
+"consensus_fv": 42.9,
 "xfv_grade": 20.0,
-"xfv_minus_consensus": -23.0,
+"xfv_minus_consensus": -22.9,
 "xfv_war_6yr": 1.06,
-"rank_war": 1.072,
+"rank_war": 1.07,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -28857,7 +28857,7 @@
 "realized_war_6yr": 0.0,
 "censored": false,
 "xfv_grade_display": 42.6,
-"xfv_minus_consensus_display": -0.4
+"xfv_minus_consensus_display": -0.3
 },
 {
 "player_key": "nick_swiney",
@@ -38931,7 +38931,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -41321,7 +41321,7 @@
 "xfv_grade": 48.5,
 "xfv_minus_consensus": -4.2,
 "xfv_war_6yr": 3.36,
-"rank_war": 3.285,
+"rank_war": 3.286,
 "p_bucket": {
 "bust": 0.371,
 "bench": 0.277,
@@ -42129,7 +42129,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42207,7 +42207,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42233,7 +42233,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42545,7 +42545,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42675,7 +42675,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42701,7 +42701,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -42805,7 +42805,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -43605,11 +43605,11 @@
 "player_key": "jake_faria",
 "kind": "bust",
 "position": "RHP",
-"consensus_fv": 48.0,
+"consensus_fv": 47.9,
 "xfv_grade": 45.2,
 "xfv_minus_consensus": -2.7,
 "xfv_war_6yr": 1.92,
-"rank_war": 2.066,
+"rank_war": 2.064,
 "p_bucket": {
 "bust": 0.498,
 "bench": 0.258,
@@ -43625,7 +43625,7 @@
 "realized_war_6yr": 0.0,
 "censored": false,
 "xfv_grade_display": 47.6,
-"xfv_minus_consensus_display": -0.4
+"xfv_minus_consensus_display": -0.3
 },
 {
 "player_key": "brock_stewart",
@@ -43845,7 +43845,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -43975,7 +43975,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -45535,7 +45535,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -45665,7 +45665,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -45925,7 +45925,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -45977,7 +45977,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46003,7 +46003,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46107,7 +46107,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46159,7 +46159,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46289,7 +46289,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46549,7 +46549,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46575,7 +46575,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46601,7 +46601,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -46653,7 +46653,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -47511,7 +47511,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -47563,7 +47563,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -47667,7 +47667,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -47719,7 +47719,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -47901,7 +47901,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -48915,7 +48915,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -48941,7 +48941,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -48967,7 +48967,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49071,7 +49071,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49123,7 +49123,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49175,7 +49175,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49253,7 +49253,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49305,7 +49305,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49331,7 +49331,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -49357,7 +49357,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50709,7 +50709,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50761,7 +50761,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50787,7 +50787,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50865,7 +50865,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50891,7 +50891,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,
@@ -50917,7 +50917,7 @@
 "xfv_war_6yr": 1.4,
 "rank_war": 1.473,
 "p_bucket": {
-"bust": 0.634,
+"bust": 0.633,
 "bench": 0.21,
 "regular": 0.111,
 "good": 0.044,

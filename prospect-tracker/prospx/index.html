@@ -27643,7 +27643,7 @@ function renderDebuts() {
           <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;"><span class="fv-badge ${fvClass(String(fvLabel))}${fvBadgeChainClasses(g)}" title="${escapeHtml(fvBadgeTooltip(g))}">${fvLabel}${fvBadgeChainMarks(g)}</span></div>
+        <div style="text-align:center;">${xfvBadgeHTML(g)}</div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
           const warSpark = makeWarChart(g);

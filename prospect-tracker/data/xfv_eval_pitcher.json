@@ -85,11 +85,11 @@
     },
     "comps": {
      "n": 466,
-     "mae": 2.623,
-     "spearman": 0.1636,
+     "mae": 2.622,
+     "spearman": 0.1642,
      "calibration": {
-      "slope": 0.563,
-      "bias": 0.343
+      "slope": 0.565,
+      "bias": 0.342
      }
     },
     "ensemble": {
@@ -328,11 +328,11 @@
      },
      "comps": {
       "n": 137,
-      "mae": 2.361,
-      "spearman": 0.2435,
+      "mae": 2.359,
+      "spearman": 0.2467,
       "calibration": {
-       "slope": 0.918,
-       "bias": 0.326
+       "slope": 0.925,
+       "bias": 0.324
       }
      },
      "ensemble": {
@@ -597,11 +597,11 @@
     },
     "comps": {
      "n": 894,
-     "mae": 1.463,
+     "mae": 1.462,
      "spearman": 0.1861,
      "calibration": {
       "slope": 0.698,
-      "bias": 0.189
+      "bias": 0.187
      }
     },
     "ensemble": {
@@ -616,7 +616,7 @@
     "ridge_cal": {
      "n": 894,
      "mae": 1.403,
-     "spearman": 0.2025,
+     "spearman": 0.2024,
      "calibration": {
       "slope": 1.072,
       "bias": 0.101
@@ -672,11 +672,11 @@
      },
      "comps": {
       "n": 211,
-      "mae": 1.535,
-      "spearman": 0.1126,
+      "mae": 1.533,
+      "spearman": 0.1138,
       "calibration": {
        "slope": 0.414,
-       "bias": 0.578
+       "bias": 0.576
       }
      },
      "ensemble": {
@@ -728,11 +728,11 @@
      },
      "comps": {
       "n": 159,
-      "mae": 1.653,
-      "spearman": 0.1975,
+      "mae": 1.65,
+      "spearman": 0.1974,
       "calibration": {
-       "slope": 0.502,
-       "bias": -0.167
+       "slope": 0.503,
+       "bias": -0.17
       }
      },
      "ensemble": {
@@ -784,11 +784,11 @@
      },
      "comps": {
       "n": 245,
-      "mae": 1.452,
-      "spearman": 0.2359,
+      "mae": 1.453,
+      "spearman": 0.2356,
       "calibration": {
-       "slope": 1.128,
-       "bias": 0.01
+       "slope": 1.126,
+       "bias": 0.009
       }
      },
      "ensemble": {
@@ -841,7 +841,7 @@
      "comps": {
       "n": 279,
       "mae": 1.311,
-      "spearman": 0.2181,
+      "spearman": 0.218,
       "calibration": {
        "slope": 0.935,
        "bias": 0.254

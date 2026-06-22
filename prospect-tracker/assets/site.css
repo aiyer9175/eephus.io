@@ -1602,6 +1602,16 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
       letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-primary); margin-bottom: 8px; }
 .gl-app .meth-sub { font-family: var(--font-serif); font-style: italic; font-weight: 400;
       font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--text-tertiary); margin-left: 8px; }
+.gl-app .meth-findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px; margin: 4px 0 18px; }
+.gl-app .meth-find-card { background: var(--bg-secondary); border: 1px solid var(--border);
+      border-top: 2px solid var(--neon-cyan); padding: 12px 14px; }
+.gl-app .meth-find-stat { font-family: var(--font-retro-mono); font-size: 26px; font-weight: 700;
+      line-height: 1.05; color: var(--neon-cyan); }
+.gl-app .meth-find-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+      color: var(--text-primary); margin-top: 6px; line-height: 1.3; }
+.gl-app .meth-find-sub { font-family: var(--font-serif); font-style: italic; font-size: 11px;
+      color: var(--text-tertiary); margin-top: 4px; line-height: 1.35; }
 .gl-app .meth-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
 .gl-app .meth-legend-key { display: inline-flex; align-items: center; gap: 5px;
       font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
