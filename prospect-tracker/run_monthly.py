@@ -162,6 +162,9 @@ from trades import detect_trades
 from stat_flags import is_pitcher as _is_pitcher
 
 
+DAILY_STATCAST_TRACKED_LEVELS = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
+
+
 # v24 — Freshness gates dropped to 0 so every run refetches stats,
 # debuts, zone metrics, and statcast metrics. The 24h HTTP cache in
 # stats.py still absorbs duplicate-payload cost on same-day re-runs;
@@ -189,6 +192,82 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
         return False
     # Naive UTC subtraction — both sides are naive UTC timestamps.
     return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
+
+
+def _iso_date_prefix(value: object) -> str | None:
+    text = str(value or "").strip()
+    if len(text) < 10:
+        return None
+    prefix = text[:10]
+    if prefix[4:5] == "-" and prefix[7:8] == "-":
+        try:
+            date.fromisoformat(prefix)
+            return prefix
+        except ValueError:
+            return None
+    return None
+
+
+def _statcast_log_date(split: dict) -> str | None:
+    game = split.get("game") or {}
+    return (
+        _iso_date_prefix(split.get("date"))
+        or _iso_date_prefix(game.get("officialDate"))
+        or _iso_date_prefix((game.get("gameDate") if isinstance(game, dict) else None))
+    )
+
+
+def _latest_statcast_log_date(logs: list[dict] | None, level_hint: str | None = None) -> str | None:
+    dates: list[str] = []
+    for split in logs or []:
+        level = split.get("_level") or level_hint
+        if level not in DAILY_STATCAST_TRACKED_LEVELS:
+            continue
+        d = _statcast_log_date(split)
+        if d:
+            dates.append(d)
+    return max(dates) if dates else None
+
+
+def _latest_statcast_metric_game_date(metric: dict | None) -> str | None:
+    dates: list[str] = []
+
+    def add_rows(rows: object) -> None:
+        if not isinstance(rows, list):
+            return
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            d = _iso_date_prefix(row.get("date"))
+            if d:
+                dates.append(d)
+
+    def add_payload(payload: object) -> None:
+        if not isinstance(payload, dict):
+            return
+        add_rows(((payload.get("pitch_movement") or {}).get("outings") or []))
+        add_rows(((payload.get("pitch_plot") or {}).get("points") or []))
+        add_rows(((payload.get("contact_quality") or {}).get("hit_locations") or []))
+        add_rows(payload.get("standout_games") or [])
+        add_rows(payload.get("recent_games") or [])
+
+    add_payload(metric)
+    if isinstance(metric, dict):
+        for split in metric.get("level_splits") or []:
+            add_payload(split)
+    return max(dates) if dates else None
+
+
+def _statcast_logs_newer_than_metric(
+    logs: list[dict] | None,
+    metric: dict | None,
+    level_hint: str | None = None,
+) -> bool:
+    latest_log_date = _latest_statcast_log_date(logs, level_hint=level_hint)
+    if not latest_log_date:
+        return False
+    latest_metric_date = _latest_statcast_metric_game_date(metric)
+    return latest_metric_date is None or latest_log_date > latest_metric_date
 
 
 def _career_rows_need_org_stint_backfill(rows: list[dict] | None) -> bool:
@@ -436,6 +515,42 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("xFV proxy crashed in rebuild_only — continuing")
 
+    # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
+    try:
+        from grpo_prospect import export_grpo_scores
+        _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
+            if (out_dir / "graduates.json").exists() else []
+        _ts_for_grpo    = json.loads(out_path.read_text()).get("players") or []
+        _grpo_result    = export_grpo_scores(
+            _ts_for_grpo, _grads_for_grpo,
+            out_path=out_dir / "grpo_scores.json",
+            model_path=out_dir / "grpo_model.pkl",
+            level_norms=json.loads(out_path.read_text()).get("level_norms"),
+            retrain=True,
+        )
+        log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
+    except Exception:
+        log.exception("grpo scoring failed in rebuild_only — continuing")
+
+    # Bayesian trade values — runs after GRPO scores so priors are GRPO-informed.
+    # Includes active prospects (timeseries.json), debuted players (debuts.json),
+    # and full graduates (graduates.json) so the Trade Board is comprehensive.
+    try:
+        from bayes_trade_value import export_trade_values_json, _reset_cache
+        _reset_cache()   # clear GRPO cache so new scores are loaded
+        ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+        tv_players = list(ts_payload.get("players") or [])
+        lnorms     = ts_payload.get("level_norms")
+        for _sidecar in ("debuts.json", "graduates.json"):
+            _sp = out_dir / _sidecar
+            if _sp.exists():
+                tv_players += json.loads(_sp.read_text(encoding="utf-8"))
+        n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
+                                        level_norms=lnorms)
+        log.info("trade values (rebuild): exported %d players", n_tv)
+    except Exception:
+        log.exception("trade value export crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
@@ -522,6 +637,24 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 log.exception("mlb_pipeline daily capture crashed — continuing")
 
         # --- 1. Player set from existing snapshots (no scrape). -----------
+        # --- d0. MLBAM-anchored prospect discovery —————————————————————————
+        # Pulls qualified current-season performers at each MiLB level from
+        # the MLB Stats API and creates provisional player records for anyone
+        # not yet in the DB.  This is the fix for missing prospects like
+        # Franklin Primera: players with no scouting source coverage but who
+        # have an MLBAM ID and are producing in affiliated ball enter the DB
+        # here rather than waiting for a publication cycle.
+        with _step("d0. MLBAM prospect discovery (unranked actives)", log):
+            try:
+                from mlbam_ingest import ingest_unranked_active_prospects
+                _mlbam_summary = ingest_unranked_active_prospects(season=season)
+                _mlbam_total = sum(_mlbam_summary.values())
+                if _mlbam_total:
+                    log.info("mlbam_ingest: added %d new unranked prospects %s",
+                             _mlbam_total, _mlbam_summary)
+            except Exception:
+                log.exception("mlbam_ingest: discovery step failed — continuing")
+
         with _step("d1. Build player set from DB", log):
             all_snaps = load_all_snapshots()
             timeseries = build_timeseries(all_snaps)
@@ -600,6 +733,111 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     log.info("daily: refreshed %d current-season stat lines", n_sl)
             except Exception:
                 log.exception("daily: stat-line refresh failed — continuing")
+
+        # --- 5d. Incremental Statcast-style metrics ----------------------
+        # Game plots/tables need same-day starts, but re-running the full
+        # Statcast season scrape in daily would be wasteful. We first fetch
+        # cheap game logs with a short TTL, compare the newest tracked game
+        # date against the newest date already embedded in the cached metric
+        # payload, then rebuild full-season metrics only for players with
+        # newer games. The rebuild replaces that player's row, preserving the
+        # existing summary math without trying to merge partial pitch samples.
+        with _step("d5d. Incremental Statcast metrics", log):
+            try:
+                from statcast_metrics import _game_logs, fetch_statcast_metrics_for_players
+
+                statlines = load_statlines()
+                statcast_metric_cache = load_statcast_metrics()
+                statcast_metric_meta = load_statcast_metrics_meta()
+                eligible = []
+                for p in timeseries:
+                    mlbam = ids_by_key.get(p.player_key)
+                    if mlbam is None:
+                        continue
+                    sl = statlines.get(p.player_key) or {}
+                    level = sl.get("level")
+                    if level is not None and level not in DAILY_STATCAST_TRACKED_LEVELS:
+                        continue
+                    if p.player_key not in statcast_metric_meta and level != "MLB":
+                        continue
+                    is_pitcher = bool(sl.get("is_pitcher")) or _is_pitcher(p.position)
+                    eligible.append((p, mlbam, level, is_pitcher))
+
+                if not eligible:
+                    log.info("daily: no Statcast-eligible players")
+                else:
+                    max_w = max(1, min(workers or 16, len(eligible)))
+                    log_ttl = 0 if no_cache else 1800
+                    logs_by_key: dict[str, list[dict]] = {}
+
+                    def _fetch_daily_statcast_logs(item):
+                        p, mlbam, _level, is_pitcher = item
+                        try:
+                            return p.player_key, _game_logs(
+                                int(mlbam),
+                                season,
+                                is_pitcher=is_pitcher,
+                                ttl_seconds=log_ttl,
+                            )
+                        except Exception as e:
+                            log.debug("daily: Statcast game logs failed for %s: %s",
+                                      p.player_key, e)
+                            return p.player_key, []
+
+                    scan_start = time.monotonic()
+                    scan_done = 0
+                    log.info(
+                        "daily: scanning Statcast game logs for %d players (%d workers)",
+                        len(eligible),
+                        max_w,
+                    )
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
+                        for key, logs in ex.map(_fetch_daily_statcast_logs, eligible):
+                            logs_by_key[key] = logs
+                            scan_done += 1
+                            if scan_done % 250 == 0 or scan_done == len(eligible):
+                                log.info(
+                                    "daily: Statcast game-log scan %d/%d done (%.0fs)",
+                                    scan_done,
+                                    len(eligible),
+                                    time.monotonic() - scan_start,
+                                )
+
+                    refresh_players = []
+                    refresh_logs: dict[str, list[dict]] = {}
+                    for p, mlbam, level, is_pitcher in eligible:
+                        logs = logs_by_key.get(p.player_key) or []
+                        if not _statcast_logs_newer_than_metric(
+                            logs,
+                            statcast_metric_cache.get(p.player_key),
+                            level_hint=level,
+                        ):
+                            continue
+                        refresh_players.append((
+                            p.player_key,
+                            p.player_name,
+                            mlbam,
+                            level,
+                            is_pitcher,
+                        ))
+                        refresh_logs[p.player_key] = logs
+
+                    log.info(
+                        "daily: Statcast scan found %d/%d players with newer tracked games",
+                        len(refresh_players),
+                        len(eligible),
+                    )
+                    if refresh_players:
+                        new_statcast_metrics = fetch_statcast_metrics_for_players(
+                            refresh_players,
+                            season,
+                            workers=max_w,
+                            logs_by_key=refresh_logs,
+                        )
+                        n_sc = upsert_statcast_metrics(new_statcast_metrics, season) if new_statcast_metrics else 0
+                        log.info("daily: refreshed %d Statcast metric rows", n_sc)
+            except Exception:
+                log.exception("daily: incremental Statcast metrics failed — continuing")
 
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
@@ -2214,6 +2452,24 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _export_ot()
             except Exception:
                 log.exception("org tendencies export failed — continuing")
+
+        # --- 6d. Bayesian trade values (data/trade_values.json) ---
+        with _step("6d. Bayesian trade value export (trade_values.json)", log):
+            try:
+                from bayes_trade_value import export_trade_values_json
+                _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+                _tv_players = list(_ts_payload.get("players") or [])
+                _lnorms     = _ts_payload.get("level_norms")
+                for _sc in ("debuts.json", "graduates.json"):
+                    _sp = out_dir / _sc
+                    if _sp.exists():
+                        _tv_players += json.loads(_sp.read_text(encoding="utf-8"))
+                _n_tv = export_trade_values_json(
+                    _tv_players, out_dir / "trade_values.json", level_norms=_lnorms
+                )
+                log.info("trade values: exported %d players", _n_tv)
+            except Exception:
+                log.exception("trade value export failed — continuing")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")

@@ -1,0 +1,501 @@
+
+MAY RANK	PLAYER	POS	ORG	APRIL RANK	MOVEMENT	PROSPECT RANK
+1	Shohei Ohtani	UT/P	LAD	1	0	
+2	Juan Soto	OF	NYM	2	0	
+3	Bobby Witt Jr.	SS	KCR	3	0	
+4	Paul Skenes	SP	PIT	5	1	
+5	Elly De La Cruz	SS	CIN	6	1	
+6	Corbin Carroll	OF	ARI	8	2	
+7	Junior Caminero	3B	TBR	11	4	
+8	Gunnar Henderson	SS	BAL	7	-1	
+9	Tarik Skubal	SP	DET	4	-5	
+10	Julio Rodriguez	OF	SEA	9	-1	
+11	Aaron Judge	OF	NYY	10	-1	
+12	Jackson Chourio	OF	MIL	12	0	
+13	Nick Kurtz	1B	ATH	15	2	
+14	Fernando Tatis Jr.	OF	SDP	13	-1	
+15	Ronald Acuna Jr.	OF	ATL	17	2	
+16	Yordan Alvarez	OF	HOU	18	2	
+17	James Wood	OF	WAS	20	3	
+18	Konnor Griffin	SS	PIT	21	3	
+19	Kevin McGonigle	2B	DET	22	3	
+20	Vladimir Guerrero Jr.	1B	TOR	14	-6	
+21	Jose Ramirez	3B	CLE	16	-5	
+22	Roman Anthony	OF	BOS	19	-3	
+23	Yoshinobu Yamamoto	SP	LAD	27	4	
+24	Jacob Misiorowski	SP	MIL	63	39	
+25	Kyle Tucker	OF	LAD	25	0	
+26	Garrett Crochet	SP	BOS	24	-2	
+27	Wyatt Langford	OF	TEX	23	-4	
+28	Jesus Made	SS	MIL	49	21	1
+29	Zach Neto	SS	LAA	28	-1	
+30	Logan Gilbert	SP	SEA	29	-1	
+31	CJ Abrams	SS	WAS	30	-1	
+32	Cristopher Sanchez	SP	PHI	44	12	
+33	Bryce Harper	1B	PHI	33	0	
+34	JJ Wetherholt	SS	STL	35	1	
+35	Cam Schlittler	SP	NYY	70	35	
+36	Ketel Marte	2B	ARI	37	1	
+37	Francisco Lindor	SS	NYM	34	-3	
+38	Jazz Chisholm Jr.	2B	NYY	26	-12	
+39	Kyle Schwarber	UT	PHI	48	9	
+40	Nolan McLean	SP	NYM	40	0	
+41	Oneil Cruz	OF	PIT	42	1	
+42	Colt Emerson	SS	SEA	52	10	2
+43	Ben Rice	C	NYY	51	8	
+44	Chase Burns	SP	CIN	62	18	
+45	Trea Turner	SS	PHI	41	-4	
+46	Eury Perez	SP	MIA	46	0	
+47	Mookie Betts	SS	LAD	43	-4	
+48	Pete Alonso	1B	BAL	36	-12	
+49	Hunter Brown	SP	HOU	39	-10	
+50	Cal Raleigh	C	SEA	38	-12	
+51	Matt Olson	1B	ATL	53	2	
+52	Franklin Arias	SS	BOS	217	165	3
+53	Jackson Merrill	OF	SDP	31	-22	
+54	Riley Greene	OF	DET	54	0	
+55	Sal Stewart	1B	CIN	68	13	
+56	Leo De Vries	SS	ATH	71	15	4
+57	Manny Machado	3B	SDP	32	-25	
+58	Brice Turang	2B	MIL	69	11	
+59	Trey Yesavage	SP	TOR	87	28	5
+60	George Kirby	SP	SEA	58	-2	
+61	Bryan Woo	SP	SEA	61	0	
+62	Joe Ryan	SP	MIN	45	-17	
+63	Mason Miller	RP	SDP	65	2	
+64	A.J. Ewing	OF	NYM	287	223	6
+65	Shea Langeliers	C	ATH	81	16	
+66	Corey Seager	SS	TEX	50	-16	
+67	William Contreras	C	MIL	67	0	
+68	Walker Jenkins	OF	MIN	55	-13	7
+69	Logan Webb	SP	SFG	59	-10	
+70	Jacob deGrom	SP	TEX	57	-13	
+71	Rafael Devers	1B	SFG	47	-24	
+72	Andy Pages	OF	LAD	80	8	
+73	Drake Baldwin	C	ATL	95	22	
+74	Samuel Basallo	C	BAL	60	-14	
+75	Rainiel Rodriguez	C	STL	106	31	8
+76	Chris Sale	SP	ATL	56	-20	
+77	Freddie Freeman	1B	LAD	66	-11	
+78	Austin Riley	3B	ATL	74	-4	
+79	Randy Arozarena	OF	SEA	78	-1	
+80	Josue De Paula	OF	LAD	88	8	9
+81	Josh Naylor	1B	SEA	90	9	
+82	Chase DeLauter	OF	CLE	83	1	
+83	Michael Harris II	OF	ATL	103	20	
+84	Travis Bazzana	2B	CLE	166	82	10
+85	Freddy Peralta	SP	MIL	75	-10	
+86	Carson Benge	OF	NYM	84	-2	
+87	Cody Bellinger	OF	NYY	77	-10	
+88	Pete Crow-Armstrong	OF	CHC	86	-2	
+89	Ralphy Velazquez	1B	CLE	204	115	11
+90	Jackson Holliday	2B	BAL	72	-18	
+91	Dylan Cease	SP	TOR	101	10	
+92	Luis Pena	SS	MIL	89	-3	12
+93	Brent Rooker	OF	ATH	79	-14	
+94	Vinnie Pasquantino	1B	KCR	82	-12	
+95	Tyler Soderstrom	1B	ATH	93	-2	
+96	Aidan Miller	SS	PHI	97	1	13
+97	Jeremy Pena	SS	HOU	73	-24	
+98	Luke Keaschall	2B	MIN	76	-22	
+99	Ryan Waldschmidt	OF	ARI	164	65	14
+100	Geraldo Perdomo	SS	ARI	98	-2	
+101	Hunter Greene	SP	CIN	99	-2	
+102	Bo Bichette	SS	NYM	104	2	
+103	Josuar Gonzalez	SS	SFG	170	67	15
+104	Payton Tolle	SP	BOS	128	24	
+105	Munetaka Murakami	3B	CWS	155	50	
+106	Byron Buxton	OF	MIN	129	23	
+107	Edward Florentino	OF	PIT	121	14	16
+108	Gerrit Cole	SP	NYY	114	6	
+109	Spencer Strider	SP	ATL	118	9	
+110	Cade Smith	RP	CLE	140	30	
+111	Max Fried	SP	NYY	92	-19	
+112	Jesus Luzardo	SP	PHI	109	-3	
+113	Kade Anderson	SP	SEA	202	89	17
+114	Jose Altuve	2B	HOU	94	-20	
+115	Cole Ragans	SP	KCR	96	-19	
+116	Andres Munoz	RP	SEA	111	-5	
+117	Christian Yelich	OF	MIL	112	-5	
+118	Eli Willits	SS	WAS	288	170	18
+119	Tyler Glasnow	SP	LAD	113	-6	
+120	Michael Busch	1B	CHC	105	-15	
+121	Kyle Bradish	SP	BAL	108	-13	
+122	Max Clark	OF	DET	64	-58	19
+123	Nick Lodolo	SP	CIN	119	-4	
+124	Mike Trout	OF	LAA	137	13	
+125	Mike Sirota	OF	LAD	169	44	20
+126	Nico Hoerner	2B	CHC	144	18	
+127	Seiya Suzuki	OF	CHC	148	21	
+128	Cam Smith	OF	HOU	120	-8	
+129	Framber Valdez	SP	DET	122	-7	
+130	Emmet Sheehan	SP	LAD	146	16	
+131	Kevin Gausman	SP	TOR	123	-8	
+132	Willy Adames	SS	SFG	126	-6	
+133	Sebastian Walcott	SS	TEX	150	17	21
+134	Jarren Duran	OF	BOS	102	-32	
+135	Jacob Wilson	SS	ATH	131	-4	
+136	Ozzie Albies	2B	ATL	132	-4	
+137	Will Smith	C	LAD	134	-3	
+138	Jo Adell	OF	LAA	136	-2	
+139	Maikel Garcia	3B	KCR	125	-14	
+140	Alex Bregman	3B	CHC	127	-13	
+141	Ivan Herrera	C	STL	138	-3	
+142	Shane McClanahan	SP	TBR	139	-3	
+143	MacKenzie Gore	SP	TEX	116	-27	
+144	Noah Schultz	SP	CWS	203	59	22
+145	Agustin Ramirez	C	MIA	91	-54	
+146	Gavin Williams	SP	CLE	176	30	
+147	Blake Snell	SP	LAD	117	-30	
+148	Addison Barger	3B	TOR	142	-6	
+149	George Lombard Jr.	SS	NYY	298	149	23
+150	Teoscar Hernandez	OF	LAD	147	-3	
+151	Jhoan Duran	RP	PHI	124	-27	
+152	Sam Antonacci	OF	CWS	368	216	24
+153	Andrew Painter	SP	PHI	154	1	
+154	Jonathan Aranda	1B	TBR	197	43	
+155	Spencer Schwellenbach	SP	ATL	157	2	
+156	Ryan Sloan	SP	SEA	215	59	25
+157	Jac Caglianone	OF	KCR	158	1	
+158	Royce Lewis	3B	MIN	130	-28	
+159	Zack Wheeler	SP	PHI	159	0	
+160	Kyle Stowers	OF	MIA	160	0	
+161	Yandy Diaz	1B	TBR	161	0	
+162	Carlos Rodon	SP	NYY	162	0	
+163	Carter Jensen	C	KCR	153	-10	
+164	Bubba Chandler	SP	PIT	152	-12	
+165	Hunter Goodman	C	COL	188	23	
+166	Bryce Eldridge	1B	SFG	107	-59	26
+167	Francisco Alvarez	C	NYM	145	-22	
+168	Michael King	SP	SDP	115	-53	
+169	Thomas White	SP	MIA	156	-13	27
+170	Brett Baty	3B	NYM	196	26	
+171	Caleb Bonemer	SS	CWS	85	-86	28
+172	Shota Imanaga	SP	CHC	173	1	
+173	Connelly Early	SP	BOS	151	-22	
+174	Arjun Nimmala	SS	TOR	462	288	29
+175	Devin Fitz-Gerald	2B	WAS	301	126	30
+176	Eric Hartman	OF	ATL	501	325	31
+177	Ranger Suarez	SP	BOS	177	0	
+178	Tanner Bibee	SP	CLE	178	0	
+179	Braden Montgomery	OF	CWS	205	26	32
+180	Seth Hernandez	SP	PIT	165	-15	33
+181	Kyle Manzardo	1B	CLE	135	-46	
+182	Jordan Lawlar	SS	ARI	180	-2	
+183	Kazuma Okamoto	3B	TOR	222	39	
+184	Jhonny Level	SS	SFG	216	32	34
+185	Jose Soriano	SP	LAA	149	-36	
+186	Wilyer Abreu	OF	BOS	212	26	
+187	Emmanuel Rodriguez	OF	MIN	219	32	35
+188	Dylan Crews	OF	WAS	209	21	
+189	Xavier Edwards	2B	MIA	243	54	
+190	Theo Gillen	OF	TBR	300	110	36
+191	Brandon Nimmo	OF	TEX	183	-8	
+192	Mark Vientos	3B	NYM	184	-8	
+193	Zyhir Hope	OF	LAD	167	-26	37
+194	Otto Lopez	SS	MIA	229	35	
+195	Gage Jump	SP	ATH	302	107	38
+196	Nathan Eovaldi	SP	TEX	172	-24	
+197	Shane Bieber	SP	TOR	190	-7	
+198	Parker Messick	SP	CLE	218	20	
+199	Edward Cabrera	SP	CHC	191	-8	
+200	Sonny Gray	SP	BOS	193	-7	
+201	Jordan Walker	OF	STL	255	54	
+202	Isaac Paredes	3B	HOU	174	-28	
+203	Lazaro Montes	OF	SEA	307	104	39
+204	Grayson Rodriguez	SP	LAA	199	-5	
+205	Sandy Alcantara	SP	MIA	200	-5	
+206	Matt Shaw	3B	CHC	201	-5	
+207	Drew Rasmussen	SP	TBR	230	23	
+208	Ian Happ	OF	CHC	181	-27	
+209	Brandon Lowe	2B	PIT	223	14	
+210	Luis Hernandez	SS	SFG	304	94	40
+211	Shane Baz	SP	BAL	186	-25	
+212	Brandon Woodruff	SP	MIL	208	-4	
+213	Eugenio Suarez	3B	CIN	185	-28	
+214	Jordan Westburg	3B	BAL	110	-104	
+215	Jared Jones	SP	PIT	210	-5	
+216	Henry Bolte	OF	ATH	501	285	41
+217	Corbin Burnes	SP	ARI	211	-6	
+218	Willson Contreras	1B	BOS	240	22	
+219	Owen Caissie	OF	MIA	171	-48	
+220	Jonah Tong	SP	NYM	168	-52	42
+221	Bryce Miller	SP	SEA	213	-8	
+222	Dalton Rushing	C	LAD	234	12	
+223	Matt Chapman	3B	SFG	194	-29	
+224	Miguel Vargas	3B	CWS	324	100	
+225	Seaver King	SS	WAS	389	164	43
+226	Anthony Eyanson	SP	BOS	309	83	44
+227	Daylen Lile	OF	WAS	247	20	
+228	Edwin Diaz	RP	LAD	175	-53	
+229	Masyn Winn	SS	STL	224	-5	
+230	Adley Rutschman	C	BAL	225	-5	
+231	Robbie Ray	SP	SFG	198	-33	
+232	Brody Hopkins	SP	TBR	310	78	45
+233	Angel Genao	SS	CLE	424	191	46
+234	Dax Kilby	SS	NYY	283	49	47
+235	Joshua Baez	OF	STL	163	-72	48
+236	Kyle Teel	C	CWS	226	-10	
+237	Kaelen Culpepper	SS	MIN	220	-17	49
+238	Ceddanne Rafaela	OF	BOS	228	-10	
+239	Michael Arroyo	OF	SEA	336	97	50
+240	Jack Leiter	SP	TEX	264	24	
+241	Josiah Hartshorn	OF	CHC	438	197	51
+242	Ryan Weathers	SP	NYY	265	23	
+243	Roldy Brito	OF	COL	501	258	52
+244	Luis Lara	OF	MIL	501	257	53
+245	Anthony Volpe	SS	NYY	182	-63	
+246	Taylor Ward	OF	BAL	270	24	
+247	Xavier Neyens	SS	HOU	457	210	54
+248	Tyler Bremner	SP	LAA	313	65	55
+249	Jarlin Susana	SP	WAS	314	65	56
+250	Luis Castillo	SP	SEA	187	-63	
+251	George Springer	OF	TOR	189	-62	
+252	Carlos Lagrange	SP	NYY	285	33	57
+253	Taj Bradley	SP	MIN	237	-16	
+254	Alec Burleson	1B	STL	239	-15	
+255	Edwin Arroyo	SS	CIN	501	246	58
+256	Gleyber Torres	2B	DET	195	-61	
+257	Luis Robert Jr.	OF	CWS	143	-114	
+258	Steven Kwan	OF	CLE	141	-117	
+259	Charlie Condon	OF	COL	326	67	59
+260	Elmer Rodriguez-Cruz	SP	NYY	501	241	60
+261	Jack Flaherty	SP	DET	192	-69	
+262	Josh Hader	RP	HOU	241	-21	
+263	Moises Ballesteros	C	CHC	242	-21	
+264	Josh Hammond	SS	KCR	444	180	61
+265	Emil Morales	SS	LAD	305	40	62
+266	Heliot Ramos	OF	SFG	245	-21	
+267	Cooper Pratt	SS	MIL	344	77	63
+268	Bryson Stott	2B	PHI	248	-20	
+269	Braxton Ashcraft	SP	PIT	364	95	
+270	Alejandro Kirk	C	TOR	249	-21	
+271	Chandler Simpson	OF	TBR	281	10	
+272	Gage Wood	SP	PHI	316	44	64
+273	Alfredo Duno	C	CIN	331	58	65
+274	Yainer Diaz	C	HOU	253	-21	
+275	Liam Doyle	SP	STL	379	104	66
+276	Jamie Arnold	SP	ATH	308	32	67
+277	Justin Gonzales	OF	BOS	306	29	68
+278	Steele Hall	SS	CIN	353	75	69
+279	Dylan Beavers	OF	BAL	254	-25	
+280	Devin Williams	RP	NYM	233	-47	
+281	Gabriel Moreno	C	ARI	256	-25	
+282	Kyle Harrison	SP	MIL	435	153	
+283	Daulton Varsho	OF	TOR	284	1	
+284	Ezequiel Tovar	SS	COL	236	-48	
+285	Grant Taylor	RP	CWS	286	1	
+286	Justin Steele	SP	CHC	214	-72	
+287	Alec Bohm	3B	PHI	259	-28	
+288	Colson Montgomery	SS	CWS	311	23	
+289	Bryan Reynolds	OF	PIT	260	-29	
+290	Kris Bubic	SP	KCR	235	-55	
+291	Dansby Swanson	SS	CHC	262	-29	
+292	Will Warren	SP	NYY	292	0	
+293	Jackson Jobe	SP	DET	318	25	
+294	Max Muncy	3B	LAD	325	31	
+295	Marcelo Mayer	3B	BOS	263	-32	
+296	Matthew Boyd	SP	CHC	266	-30	
+297	Ryne Nelson	SP	ARI	267	-30	
+298	Zebby Matthews	SP	MIN	268	-30	
+299	Andrew Abbott	SP	CIN	269	-30	
+300	Ethan Holliday	SS	COL	447	147	70
+301	Braylon Payne	OF	MIL	385	84	71
+302	Ethan Salas	C	SD		-302	72
+303	Ronny Cruz	SS	WAS	299	-4	73
+304	Kerry Carpenter	OF	DET	244	-60	
+305	Josh Adamczewski	OF	MIL	439	134	74
+306	Connor Prielipp	SP	MIN	501	195	75
+307	Casey Mize	SP	DET	273	-34	
+308	Brendan Donovan	2B	SEA	251	-57	
+309	Sal Frelick	OF	MIL	275	-34	
+310	Colt Keith	2B	DET	277	-33	
+311	Daniel Palencia	RP	CHC	328	17	
+312	Luis Garcia Jr.	2B	WAS	278	-34	
+313	Jeff Hoffman	RP	TOR	231	-82	
+314	Taitn Gray	1B	TBR	489	175	76
+315	Jojo Parker	SS	TOR	221	-94	77
+316	Travis Sykora	SP	WAS	383	67	78
+317	Aaron Nola	SP	PHI	232	-85	
+318	Demetrio Crisantes	2B	ARI	386	68	79
+319	Tate Southisene	SS	ATL	501	182	80
+320	Spencer Torkelson	1B	DET	227	-93	
+321	Pedro Ramirez	3B	CHC	501	180	81
+322	Coby Mayo	3B	BAL	279	-43	
+323	Triston Casas	1B	BOS	280	-43	
+324	Xander Bogaerts	2B	SDP	261	-63	
+325	AJ Smith-Shawver	SP	ATL	290	-35	
+326	David Bednar	RP	NYY	291	-35	
+327	Charles Davalan	OF	LAD	501	174	82
+328	Cooper Flemming	SS	TBR	501	173	83
+329	Colton Cowser	OF	BAL	246	-83	
+330	Luis Perales	SP	WAS	347	17	84
+331	Austin Wells	C	NYY	252	-79	
+332	Cooper Ingle	C	CLE	501	169	85
+333	Max Meyer	SP	MIA	354	21	
+334	Josh Jung	3B	TEX	333	-1	
+335	Mickey Moniak	OF	COL	359	24	
+336	Tatsuya Imai	SP	HOU	207	-129	
+337	Lawrence Butler	OF	ATH	100	-237	
+338	River Ryan	SP	LAD	501	163	86
+339	Zac Gallen	SP	ARI	238	-101	
+340	Wei-En Lin	SP	ATH	501	161	87
+341	Aiva Arquette	SS	MIA	427	86	88
+342	Dillon Dingler	C	DET	338	-4	
+343	Wyatt Sanford	SS	PIT	501	158	89
+344	Quinn Priester	SP	MIL	271	-73	
+345	Nathan Flewelling	C	TBR	501	156	90
+346	Trevor Rogers	SP	BAL	272	-74	
+347	Landen Roupp	SP	SFG	373	26	
+348	Justin Wrobleski	SP	LAD	320	-28	
+349	Trevor Story	SS	BOS	250	-99	
+350	Caden Scarborough	SP	TEX	380	30	91
+351	John Gil	SS	ATL	501	150	92
+352	Joe Musgrove	SP	SDP	257	-95	
+353	Josue Briceno	C	DET	294	-59	93
+354	Roki Sasaki	SP	LAD	303	-51	
+355	Anderson Brito	SP	TBR	501	146	94
+356	Nolan Schanuel	1B	LAA	329	-27	
+357	Andrew Vaughn	1B	MIL	330	-27	
+358	Troy Melton	SP	DET	332	-26	
+359	Christian Walker	1B	HOU	334	-25	
+360	Luis Arraez	1B	SFG	335	-25	
+361	Ethan Petry	OF	WAS	501	140	95
+362	Justin Crawford	OF	PHI	341	-21	
+363	Esmerlyn Valdez	OF	PIT	501	138	96
+364	Robert Arias	OF	CLE	501	137	97
+365	Brandon Sproat	SP	MIL	342	-23	
+366	Karson Milbrandt	SP	MIA	501	135	98
+367	Ryan Helsley	SP	BAL	295	-72	
+368	Jakob Marsee	OF	MIA	321	-47	
+369	Ryan Pepiot	SP	TBR	258	-111	
+370	James Tibbs III	OF	LAD	501	131	99
+371	Yohendrick Pinango	OF	TOR	501	130	100
+372	Lars Nootbaar	OF	STL	366	-6	
+373	Hector Rodriguez	OF	CIN	501	128	101
+374	Caleb Durbin	2B	BOS	276	-98	
+375	Pete Fairbanks	RP	MIA	297	-78	
+376	Cade Cavalli	SP	WAS	376	0	
+377	Matt McLain	2B	CIN	179	-198	
+378	Salvador Perez	C	KCR	322	-56	
+379	Evan Carter	OF	TEX	345	-34	
+380	Jesus Sanchez	OF	TOR	348	-32	
+381	Logan Henderson	SP	MIL	423	42	
+382	Griffin Jax	RP	TBR	501	119	
+383	Giancarlo Stanton	OF	NYY	351	-32	
+384	Carson Williams	SS	TBR	357	-27	
+385	Brooks Lee	SS	MIN	410	25	
+386	Jung Hoo Lee	OF	SFG	339	-47	
+387	Brayan Bello	SP	BOS	293	-94	
+388	Jackson Kent	SP	WAS	501	113	102
+389	Edgar Quero	C	CWS	343	-46	
+390	Aroldis Chapman	RP	BOS	365	-25	
+391	Carlos Correa	SS	HOU	274	-117	
+392	Trevor Larnach	OF	MIN	397	5	
+393	Pablo Lopez	SP	MIN	367	-26	
+394	Brenton Doyle	OF	COL	289	-105	
+395	Kevin Alvarez	OF	HOU	487	92	103
+396	Johnny King	SP	TOR	495	99	104
+397	Jhostynxon Garcia	OF	PIT	445	48	105
+398	Eduardo Quintero	OF	LAD	133	-265	106
+399	Braylon Doughty	SP	CLE	441	42	107
+400	Jake Bennett	SP	BOS	317	-83	108
+401	Raisel Iglesias	RP	ATL	369	-32	
+402	Spencer Steer	1B	CIN	370	-32	
+403	Mike Burrows	SP	HOU	319	-84	
+404	Juneiker Caceres	OF	CLE	384	-20	109
+405	Ben Brown	SP	CHC	437	32	
+406	Ike Irish	1B	BAL	501	95	110
+407	Tanner Franklin	SP	STL	501	94	111
+408	Ramon Laureano	OF	SDP	327	-81	
+409	Jett Williams	SS	MIL	363	-46	112
+410	Joe Boyle	SP	TBR	401	-9	
+411	Daniel Pierce	SS	TBR	501	90	113
+412	Kumar Rocker	SP	TEX	352	-60	
+413	Alejandro Osuna	OF	TEX	428	15	
+414	Reid Detmers	SP	LAA	411	-3	
+415	Brandon Marsh	OF	PHI	404	-11	
+416	Jose Caballero	2B	NYY	415	-1	
+417	Gavin Fien	SS	WAS	381	-36	114
+418	Ryan Jeffers	C	MIN	460	42	
+419	Jonny Farmelo	OF	SEA	377	-42	115
+420	Matt Wallner	OF	MIN	282	-138	
+421	Ryan Clifford	1B	NYM	296	-125	116
+422	Noah Cameron	SP	KCR	387	-35	
+423	Zack Gelof	2B		501	78	
+424	Kristian Campbell	OF	BOS	392	-32	
+425	JD Dix	SS	ARI	494	69	117
+426	Cade Horton	SP	CHC	393	-33	
+427	Justin Lamkin	SP	KCR	501	74	118
+428	Spencer Jones	OF	NYY	501	73	119
+429	Mitch Keller	SP	PIT	395	-34	
+430	Jaxon Wiggins	SP	CHC	378	-52	120
+431	Adolis Garcia	OF	PHI	346	-85	
+432	Xavier Isaac	1B	TBR	501	69	121
+433	Felnin Celestin	SS	SEA	501	68	122
+434	Andres Gimenez	2B	TOR	398	-36	
+435	Spencer Horwitz	1B	PIT	399	-36	
+436	Lucas Giolito	SP	SDP	501	65	
+437	Jasson Dominguez	OF	NYY	433	-4	
+438	Marcus Semien	2B	NYM	374	-64	
+439	Kendall George	OF	LAD	501	62	123
+440	Miguel Sime Jr.	SP	WAS	443	3	124
+441	Andrew Fischer	3B	MIL	501	60	125
+442	Jordan Beck	OF	COL	358	-84	
+443	Bryce Rainer	SS	DET	312	-131	126
+444	Eduardo Tait	C	MIN	501	57	127
+445	Rhett Lowder	SP	CIN	400	-45	
+446	JR Ritchie	SP	ATL	340	-106	128
+447	TJ Friedl	OF	CIN	337	-110	
+448	Logan O’Hoppe	C	LAA	355	-93	
+449	Jake Burger	1B	TEX	403	-46	
+450	Didier Fuentes	SP	ATL	481	31	
+451	Tommy Edman	2B	LAD	405	-46	
+452	Ha-Seong Kim	SS	ATL	356	-96	
+453	Bo Davidson	OF	SFG	382	-71	129
+454	Louis Varland	RP	TOR	501	47	
+455	Chase Meidroth	SS	CWS	406	-49	
+456	Nick Pivetta	SP	SDP	409	-47	
+457	Trent Grisham	OF	NYY	315	-142	
+458	Luis Morales	SP	ATH	412	-46	
+459	Clay Holmes	SP	NYM	396	-63	
+460	Parker Meadows	OF	DET	413	-47	
+461	Brady House	3B	WAS	391	-70	
+462	Ryan O’Hearn	1B	PIT	414	-48	
+463	Noelvi Marte	3B	CIN	323	-140	
+464	Shane Smith	SP	CWS	416	-48	
+465	Joey Ortiz	SS	MIL	418	-47	
+466	Kodai Senga	SP	NYM	375	-91	
+467	Braxton Garrett	SP	MIA	420	-47	
+468	Chad Patrick	SP	MIL	421	-47	
+469	Grant Holmes	SP	ATL	501	32	
+470	Tanner Scott	RP	LAD	422	-48	
+471	J.T. Realmuto	C	PHI	425	-46	
+472	Cole Young	2B	SEA	426	-46	
+473	Curtis Mead	1B	CWS	473	0	
+474	Jorge Polanco	2B	NYM	408	-66	
+475	Josh Smith	3B	TEX	432	-43	
+476	Hurston Waldrep	SP	ATL	434	-42	
+477	Chase Dollander	SP	COL	436	-41	
+478	Brayan Rocchio	SS	CLE	474	-4	
+479	Brice Matthews	SS	HOU	501	22	
+480	Nolan Gorman	2B	STL	479	-1	
+481	Isaac Collins	OF	KCR	499	18	
+482	Victor Robles	OF	SEA	451	-31	
+483	Josh Lowe	OF	TBR	361	-122	
+484	Emerson Hancock	SP	SEA	452	-32	
+485	Dominic Canzone	OF	SEA	453	-32	
+486	Josh Owens	SS/SP	TEX	501	15	130
+487	Harrison Bader	OF	SFG	455	-32	
+488	Austin Hays	OF	CWS	456	-32	
+489	Tyler Freeman	OF	COL	459	-30	
+490	Carlos Narvaez	C	BOS	465	-25	
+491	Marcell Ozuna	UT	PIT	371	-120	
+492	Cole Carrigg	OF	COL	501	9	131
+493	Seth Lugo	SP	KCR	466	-27	
+494	Ronny Mauricio	2B	NYM	419	-75	
+495	Carlos Cortes	OF	ATH	501	6	
+496	Slade Cecconi	SP	CLE	470	-26	
+497	Ian Seymour	SP	TBR	501	4	
+498	Yolfran Castillo	SS	TEX	501	3	132
+499	Luke Raley	OF	SEA	501	2	

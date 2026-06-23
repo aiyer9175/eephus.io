@@ -1891,6 +1891,89 @@ def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
     return auto_debut_player(player_key, debut_date=grad_date)
 
 
+def upsert_unranked_active_player(
+    player_key: str,
+    player_name: str,
+    position: str | None,
+    org: str | None,
+    birth_date: str | None,
+    mlbam_id: int | None,
+    *,
+    source_label: str = "performance_ingest",
+    provisional_fv: float = 35.0,
+    season: int | None = None,
+) -> bool:
+    """Insert a player discovered via the MLB Stats API who has no FV snapshot.
+
+    Creates both a `players` row (the master record) and a minimal
+    `snapshots` row marked `source='performance_ingest'` so the consensus
+    engine can anchor on it.  Prospects without any grading source now enter
+    the DB once they accumulate qualifying PA/IP, rather than waiting for a
+    publication cycle.
+
+    Returns True if a new player row was created, False if already present.
+    """
+    import datetime as _dt
+    snap_date = (str(season) + "-01-01") if season else _dt.date.today().isoformat()
+    interval  = f"{season}_performance" if season else "performance"
+
+    with connect() as con:
+        # Check if player already exists
+        existing = con.execute(
+            "SELECT 1 FROM players WHERE player_key = ?", (player_key,)
+        ).fetchone()
+
+        # Create / update the master players record
+        con.execute(
+            """INSERT INTO players (player_key, player_name, position, org)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(player_key) DO UPDATE SET
+                 player_name = excluded.player_name,
+                 position    = COALESCE(excluded.position, players.position),
+                 org         = COALESCE(excluded.org,      players.org),
+                 updated_at  = datetime('now')""",
+            (player_key, player_name, position, org),
+        )
+
+        # Anchor a lightweight snapshot so consensus has something to work with.
+        # FV = provisional_fv (default 35 = "unranked but active").
+        # This never displaces a real FV from a scouting source because
+        # source='performance_ingest' is excluded from the consensus weights.
+        con.execute(
+            """INSERT INTO snapshots
+               (source, snapshot_date, interval_label, player_key,
+                player_name, position, org, rank, fv, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, 'active')
+               ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                 snapshot_date = excluded.snapshot_date,
+                 player_name   = excluded.player_name,
+                 position      = COALESCE(excluded.position, snapshots.position),
+                 org           = COALESCE(excluded.org, snapshots.org)""",
+            (source_label, snap_date, interval,
+             player_key, player_name, position, org, provisional_fv),
+        )
+
+        # Store birth_date if available
+        if birth_date:
+            con.execute(
+                """UPDATE players SET birth_date = ?
+                   WHERE player_key = ? AND birth_date IS NULL""",
+                (birth_date, player_key),
+            )
+        # Register MLBAM ID in player_photos so the pipeline resolves this player
+        # on subsequent runs (headshots, statcast, transactions).
+        if mlbam_id:
+            con.execute(
+                """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key)
+                   VALUES (?, 'milb', ?)
+                   ON CONFLICT(mlbam_id) DO UPDATE SET
+                     player_key = COALESCE(excluded.player_key, player_photos.player_key)""",
+                (mlbam_id, player_key),
+            )
+
+    return existing is None   # True = newly created
+
+
 def upsert_birth_date(player_key: str, birth_date: str,
                       overwrite: bool = False) -> None:
     """

@@ -1,0 +1,45 @@
+{
+  "_note": "Player opt-outs and club options not in Spotrac years_remaining. Sources: The Athletic, MLB Trade Rumors, Spotrac contract pages.",
+  "players": {
+    "bobby_witt_jr": {
+      "player_name": "Bobby Witt Jr.",
+      "player_options": [2030, 2031, 2032, 2033],
+      "club_options": [
+        {"year": 2035, "price_usd": 26252525},
+        {"year": 2036, "price_usd": 26252525},
+        {"year": 2037, "price_usd": 26252525}
+      ],
+      "note": "4 player opt-outs 2030-33; club holds 2035-37"
+    },
+    "juan_soto": {
+      "player_name": "Juan Soto",
+      "player_options": [2029, 2031, 2033],
+      "club_options": [],
+      "note": "Player opt-outs after 2029, 2031, 2033 in 15yr/$765M deal"
+    },
+    "julio_rodriguez": {
+      "player_name": "Julio Rodríguez",
+      "player_options": [2031, 2032, 2033],
+      "club_options": [],
+      "note": "Escalator/opt structure"
+    },
+    "corbin_carroll": {
+      "player_name": "Corbin Carroll",
+      "player_options": [2030, 2031],
+      "club_options": [],
+      "note": "Player opt-outs in extension"
+    },
+    "jackson_merrill": {
+      "player_name": "Jackson Merrill",
+      "player_options": [2031, 2032, 2033],
+      "club_options": [],
+      "note": "Player opt-outs in extension"
+    },
+    "shohei_ohtani": {
+      "player_name": "Shohei Ohtani",
+      "player_options": [2031, 2032, 2033],
+      "club_options": [],
+      "note": "Deferred contract structure; player opt-outs reported mid-deal"
+    }
+  }
+}
