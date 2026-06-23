@@ -52,6 +52,9 @@ MODEL_GLOSSARY = {
     "xfv_hitter": ["xfv"],
     "xfv_pitcher": ["xfv"],
     "xfv_tools": ["xfv_tools"],
+    # xFV proxy = the leading-indicator companion to the xFV family (predicts first-MLB
+    # Statcast quality); documented under the xFV entry + self-documented on the detail tile.
+    "xfv_proxy": ["xfv"],
 }
 
 

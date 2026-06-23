@@ -438,6 +438,20 @@
    "last_checked": "2026-06-22",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_proxy",
+   "surface": "/prospx player detail (leading-indicator tile)",
+   "predicts": "a prospect's FIRST-MLB-season Statcast quality (hitters: expected wOBA; pitchers: xwOBA-against) from the pre-debut profile -- a faster-resolving leading indicator, NOT xFV and NOT a WAR backtest",
+   "champion": "xfv_proxy_v0",
+   "baseline": "n/a (new leading indicator; publish-the-r)",
+   "metric": "forward-chained OOS Pearson r / Spearman rho vs first-MLB est_woba on 2024-2026 debut cohorts",
+   "eval_artifact": "data/xfv_proxy_eval.json",
+   "verdict": "provisional",
+   "notes": "Leakage-safe (pre-debut features, post-debut Savant target); never feeds xFV or its matrix. OOS hitters r=0.25/rho=0.24 (n=88), pitchers r=0.19/rho=0.18 (n=106); 1,719 active projections. Survivorship-limited (debut cohort) + small-n -> provisional. Resolves in ~1 season vs xFV's 6, so it is an earlier read + the empirical companion to the live Statcast tilt.",
+   "last_checked": "2026-06-22",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []
