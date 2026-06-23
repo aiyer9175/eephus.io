@@ -106,6 +106,15 @@ def feature_names(side: str) -> list[str]:
     return names
 
 
+# Short hash of the FEATURE SCHEMA (both sides). Folded into every
+# on-disk frame / point-in-time-bundle cache key so a feature change can
+# never silently serve a stale-shaped vector — the cache filename simply
+# misses and rebuilds.
+_SCHEMA_TAG = hashlib.sha256(
+    json.dumps({s: feature_names(s) for s in ("hit", "pit")},
+               sort_keys=True).encode()).hexdigest()[:8]
+
+
 def _league_mean(league: dict, season: int, side: str, comp: str):
     key = comp if side == "hit" else {"k_pct": "p_k_pct", "bb_pct": "p_bb_pct",
                                       "hr_bf": "p_hr_bf"}[comp]
@@ -209,7 +218,7 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
     requiring all five). Disk-cached per (first_base, max_label_season,
     corpus span) since assembly walks the full corpus."""
     cache = (fp.CACHE_DIR /
-             f"proj_ml_frame_{first_base}_{max_label_season}_{corpus['first']}_{corpus['last']}.pkl")
+             f"proj_ml_frame_{_SCHEMA_TAG}_{first_base}_{max_label_season}_{corpus['first']}_{corpus['last']}.pkl")
     if use_cache and cache.exists():
         import pickle
         with open(cache, "rb") as fh:
@@ -329,6 +338,15 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
     (tools/fit_star_blend.py) and committed in data/proj_star_blend.json."""
     if side not in models or not models[side]:
         return None
+    # Schema guard: a bundle trained on a DIFFERENT feature vector than the
+    # caller built (e.g. a live v1 bundle being served new-schema features
+    # mid-upgrade) must fall back to the champion, never mis-predict on a
+    # mismatched-width vector. Bundles carry their training schema in meta.
+    meta_feats = (models.get("meta") or {}).get("features", {}).get(side)
+    if meta_feats and len(feats) != len(meta_feats):
+        log.warning("proj_ml %s: feature width %d != bundle schema %d — "
+                    "falling back to champion", side, len(feats), len(meta_feats))
+        return None
     qs = tuple(models["meta"].get("quantiles") or QUANTILES)
     x = np.asarray(feats, dtype=float).reshape(1, -1)
     by_q = {q: [] for q in qs}
@@ -413,7 +431,7 @@ def train_cached(corpus: dict, max_label_season: int,
         return _PIT_CACHE[max_label_season]
     import joblib
     qtag = "".join(str(int(q * 100)) for q in quantiles)
-    cache = fp.CACHE_DIR / f"proj_ml_pit_{MODEL_VERSION}_{max_label_season}_{qtag}.joblib"
+    cache = fp.CACHE_DIR / f"proj_ml_pit_{MODEL_VERSION}_{_SCHEMA_TAG}_{max_label_season}_{qtag}.joblib"
     if cache.exists():
         _PIT_CACHE[max_label_season] = joblib.load(cache)
         return _PIT_CACHE[max_label_season]

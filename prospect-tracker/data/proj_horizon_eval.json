@@ -90,97 +90,6 @@
   }
  },
  "challenger_blocks": {
-  "dev": {
-   "model": "proj_lgbm_v1_dev",
-   "bases": [
-    2017,
-    2018,
-    2019,
-    2021
-   ],
-   "horizons": {
-    "1": {
-     "n": 8053,
-     "mae": 0.5841,
-     "bias": -0.1964,
-     "n_star": 201,
-     "mae_star": 1.877,
-     "bias_star": -0.1031,
-     "tail_pred_ge3": 160,
-     "tail_act_ge3": 499,
-     "tail_ratio": 0.321,
-     "coverage": 0.7448,
-     "coverage_survived": 0.5688,
-     "n_survived": 4719,
-     "pinball_q10": 0.1214,
-     "pinball_q90": 0.2188
-    },
-    "2": {
-     "n": 8053,
-     "mae": 0.4928,
-     "bias": -0.1444,
-     "n_star": 201,
-     "mae_star": 1.8787,
-     "bias_star": 0.5764,
-     "tail_pred_ge3": 126,
-     "tail_act_ge3": 328,
-     "tail_ratio": 0.384,
-     "coverage": 0.7947,
-     "coverage_survived": 0.5753,
-     "n_survived": 3838,
-     "pinball_q10": 0.1012,
-     "pinball_q90": 0.1989
-    },
-    "3": {
-     "n": 8053,
-     "mae": 0.4312,
-     "bias": -0.1564,
-     "n_star": 201,
-     "mae_star": 1.8673,
-     "bias_star": 0.2012,
-     "tail_pred_ge3": 85,
-     "tail_act_ge3": 306,
-     "tail_ratio": 0.278,
-     "coverage": 0.8114,
-     "coverage_survived": 0.5395,
-     "n_survived": 3264,
-     "pinball_q10": 0.0879,
-     "pinball_q90": 0.1856
-    },
-    "4": {
-     "n": 8053,
-     "mae": 0.3749,
-     "bias": -0.1169,
-     "n_star": 201,
-     "mae_star": 1.821,
-     "bias_star": -0.0418,
-     "tail_pred_ge3": 57,
-     "tail_act_ge3": 257,
-     "tail_ratio": 0.222,
-     "coverage": 0.8104,
-     "coverage_survived": 0.4554,
-     "n_survived": 2714,
-     "pinball_q10": 0.0779,
-     "pinball_q90": 0.1708
-    },
-    "5": {
-     "n": 8053,
-     "mae": 0.3575,
-     "bias": -0.1529,
-     "n_star": 201,
-     "mae_star": 1.8149,
-     "bias_star": -0.7884,
-     "tail_pred_ge3": 35,
-     "tail_act_ge3": 283,
-     "tail_ratio": 0.124,
-     "coverage": 0.8265,
-     "coverage_survived": 0.4112,
-     "n_survived": 2308,
-     "pinball_q10": 0.0737,
-     "pinball_q90": 0.1704
-    }
-   }
-  },
   "gate1_targets": {
    "model": "proj_lgbm_v1_gate1targets",
    "bases": [
@@ -499,6 +408,189 @@
      "pinball_q90": 0.1824
     }
    }
+  },
+  "dev": {
+   "model": "proj_lgbm_v1_dev",
+   "bases": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "horizons": {
+    "1": {
+     "n": 8053,
+     "mae": 0.5841,
+     "bias": -0.1964,
+     "n_star": 201,
+     "mae_star": 1.877,
+     "bias_star": -0.1031,
+     "tail_pred_ge3": 160,
+     "tail_act_ge3": 499,
+     "tail_ratio": 0.321,
+     "coverage": 0.7448,
+     "coverage_survived": 0.5688,
+     "n_survived": 4719,
+     "pinball_q10": 0.1214,
+     "pinball_q90": 0.2188
+    },
+    "2": {
+     "n": 8053,
+     "mae": 0.4928,
+     "bias": -0.1444,
+     "n_star": 201,
+     "mae_star": 1.8787,
+     "bias_star": 0.5764,
+     "tail_pred_ge3": 126,
+     "tail_act_ge3": 328,
+     "tail_ratio": 0.384,
+     "coverage": 0.7947,
+     "coverage_survived": 0.5753,
+     "n_survived": 3838,
+     "pinball_q10": 0.1012,
+     "pinball_q90": 0.1989
+    },
+    "3": {
+     "n": 8053,
+     "mae": 0.4312,
+     "bias": -0.1564,
+     "n_star": 201,
+     "mae_star": 1.8673,
+     "bias_star": 0.2012,
+     "tail_pred_ge3": 85,
+     "tail_act_ge3": 306,
+     "tail_ratio": 0.278,
+     "coverage": 0.8114,
+     "coverage_survived": 0.5395,
+     "n_survived": 3264,
+     "pinball_q10": 0.0879,
+     "pinball_q90": 0.1856
+    },
+    "4": {
+     "n": 8053,
+     "mae": 0.3749,
+     "bias": -0.1169,
+     "n_star": 201,
+     "mae_star": 1.821,
+     "bias_star": -0.0418,
+     "tail_pred_ge3": 57,
+     "tail_act_ge3": 257,
+     "tail_ratio": 0.222,
+     "coverage": 0.8104,
+     "coverage_survived": 0.4554,
+     "n_survived": 2714,
+     "pinball_q10": 0.0779,
+     "pinball_q90": 0.1708
+    },
+    "5": {
+     "n": 8053,
+     "mae": 0.3575,
+     "bias": -0.1529,
+     "n_star": 201,
+     "mae_star": 1.8149,
+     "bias_star": -0.7884,
+     "tail_pred_ge3": 35,
+     "tail_act_ge3": 283,
+     "tail_ratio": 0.124,
+     "coverage": 0.8265,
+     "coverage_survived": 0.4112,
+     "n_survived": 2308,
+     "pinball_q10": 0.0737,
+     "pinball_q90": 0.1704
+    }
+   }
+  },
+  "dev_statcast_v2_rejected": {
+   "model": "proj_lgbm_v1_dev",
+   "bases": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "horizons": {
+    "1": {
+     "n": 8053,
+     "mae": 0.5856,
+     "bias": -0.199,
+     "n_star": 201,
+     "mae_star": 1.8799,
+     "bias_star": -0.135,
+     "tail_pred_ge3": 155,
+     "tail_act_ge3": 499,
+     "tail_ratio": 0.311,
+     "coverage": 0.7426,
+     "coverage_survived": 0.5654,
+     "n_survived": 4719,
+     "pinball_q10": 0.1218,
+     "pinball_q90": 0.2176
+    },
+    "2": {
+     "n": 8053,
+     "mae": 0.4937,
+     "bias": -0.1449,
+     "n_star": 201,
+     "mae_star": 1.8831,
+     "bias_star": 0.557,
+     "tail_pred_ge3": 122,
+     "tail_act_ge3": 328,
+     "tail_ratio": 0.372,
+     "coverage": 0.7899,
+     "coverage_survived": 0.5662,
+     "n_survived": 3838,
+     "pinball_q10": 0.1017,
+     "pinball_q90": 0.1999
+    },
+    "3": {
+     "n": 8053,
+     "mae": 0.432,
+     "bias": -0.1582,
+     "n_star": 201,
+     "mae_star": 1.8591,
+     "bias_star": 0.1906,
+     "tail_pred_ge3": 82,
+     "tail_act_ge3": 306,
+     "tail_ratio": 0.268,
+     "coverage": 0.8114,
+     "coverage_survived": 0.5392,
+     "n_survived": 3264,
+     "pinball_q10": 0.088,
+     "pinball_q90": 0.1876
+    },
+    "4": {
+     "n": 8053,
+     "mae": 0.3755,
+     "bias": -0.1167,
+     "n_star": 201,
+     "mae_star": 1.821,
+     "bias_star": -0.0418,
+     "tail_pred_ge3": 56,
+     "tail_act_ge3": 257,
+     "tail_ratio": 0.218,
+     "coverage": 0.8115,
+     "coverage_survived": 0.4573,
+     "n_survived": 2714,
+     "pinball_q10": 0.0778,
+     "pinball_q90": 0.1717
+    },
+    "5": {
+     "n": 8053,
+     "mae": 0.3573,
+     "bias": -0.1523,
+     "n_star": 201,
+     "mae_star": 1.8149,
+     "bias_star": -0.7884,
+     "tail_pred_ge3": 35,
+     "tail_act_ge3": 283,
+     "tail_ratio": 0.124,
+     "coverage": 0.8249,
+     "coverage_survived": 0.4064,
+     "n_survived": 2308,
+     "pinball_q10": 0.0738,
+     "pinball_q90": 0.1711
+    }
+   },
+   "_verdict": "REJECTED 2026-06-23. Routed deep Baseball Savant (2015+) into the proj_lgbm challenger as versioned features: hitters +xwOBA, xwOBA-gap, EV, barrel% (38->42); pitchers +xwOBA/xISO/EV/barrel-against (31->36, first Statcast on that side). Forward-chained dev bases 2017-2021 vs the xISO-only v1 baseline ('dev' here): NO OOS lift - n-weighted mean MAE 0.4488 vs 0.4481 (worse at 4/5 horizons, tied at h5); coverage, survived-coverage and tail-ratio neutral-to-worse at every horizon; star MAE/bias tied; pinball noise-level. The contact-quality signal is redundant with the Marcel-regressed rates (iso/k/bb/babip/hr) + champion stack already in the vector, so the extra columns only add overfitting surface. Not shipped; live model unchanged (v1). Code on branch proj-statcast-v2 (features reverted; kept the experiment-independent hygiene fixes: proj_ml _SCHEMA_TAG cache-key versioning + predict_path feature-width guard)."
   }
  }
 }
