@@ -465,7 +465,13 @@ _xstats_mem: dict | None = None
 
 def _xstats() -> dict[tuple[int, int], float]:
     """{(mlbam, season): xISO} from Savant expected stats (2015+), disk-
-    cached. Empty dict when the fetch fails — the blend simply no-ops."""
+    cached. NaN expected-stats cells are dropped: pybaseball returns NaN
+    for absent est_slg/est_ba and float(nan) does NOT raise, so an
+    unguarded subtraction would store NaN and poison _blend_iso (and any
+    other consumer) for that player-season; a missing entry instead falls
+    through to the raw season line, the intended no-op. Empty dict when
+    the fetch fails — the blend simply no-ops. (Cache ``v`` bumped to 2 to
+    discard any NaN-contaminated cache written before this guard.)"""
     global _xstats_mem
     if _xstats_mem is not None:
         return _xstats_mem
@@ -476,7 +482,7 @@ def _xstats() -> dict[tuple[int, int], float]:
     if _XSTATS_CACHE.exists():
         with open(_XSTATS_CACHE, "rb") as fh:
             cached = pickle.load(fh)
-        if cached.get("last", 0) >= last - 1:
+        if cached.get("last", 0) >= last - 1 and cached.get("v") == 2:
             _xstats_mem = cached["data"]
             return _xstats_mem
     data: dict[tuple[int, int], float] = {}
@@ -490,15 +496,17 @@ def _xstats() -> dict[tuple[int, int], float]:
                 continue
             for row in df.itertuples(index=False):
                 try:
-                    data[(int(row.player_id), int(row.year))] = \
-                        float(row.est_slg) - float(row.est_ba)
+                    pid, yr = int(row.player_id), int(row.year)
+                    xiso = float(row.est_slg) - float(row.est_ba)
                 except (TypeError, ValueError):
                     continue
+                if xiso == xiso:                  # drop NaN (float(nan) doesn't raise)
+                    data[(pid, yr)] = xiso
     except Exception as e:                                 # noqa: BLE001
         log.warning("xstats unavailable (%s) — statcast blend no-ops", e)
     CACHE_DIR.mkdir(exist_ok=True)
     with open(_XSTATS_CACHE, "wb") as fh:
-        pickle.dump({"last": last, "data": data}, fh)
+        pickle.dump({"last": last, "v": 2, "data": data}, fh)
     _xstats_mem = data
     return data
 
