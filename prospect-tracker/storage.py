@@ -9141,6 +9141,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for _p in grads:
         _sc_plus_map[_p.player_key] = _sc_compute(_sc_mini(_p), _sc_pool)
 
+    # #1 RE-SOURCE: for AAA prospects, OVERRIDE the opportunistic MLB-game-feed SC+ with the
+    # cleaner Savant-MINORS AAA aggregate (full 2023+ coverage, park-consistent, is..tracked-
+    # gated). The Savant pool is AAA-gated by construction, so this only touches players whose
+    # highest MiLB level was AAA; everyone else keeps the game-feed value (or None). Best-effort
+    # + cached -- a Savant outage leaves SC+ untouched. (A/FSL 2021+ is a future extension.)
+    try:
+        import arkmetric_forward_eval as _afe
+        _cur_yr = date.today().year
+        _aaa_analog: dict[tuple[int, str], float] = {}
+        for _yr in range(_cur_yr, 2022, -1):                 # AAA Statcast tracking begins 2023
+            for _sd in ("batter", "pitcher"):
+                for _mid, _v in _afe.sc_analog_index(_yr, _sd).items():
+                    _aaa_analog.setdefault((_mid, _sd), _v)  # most-recent AAA season wins
+        if _aaa_analog:
+            _n_resourced = 0
+            for _p in actives + grads:
+                _mid = player_ids.get(_p.player_key)
+                if _mid is None:
+                    _mid = (statlines.get(_p.player_key) or {}).get("mlbam_id")
+                if _mid is None:
+                    continue
+                _sd = ("pitcher" if (_p.position and _p.position.split("/")[0] in PITCHER_POS_SET)
+                       else "batter")
+                _ov = _aaa_analog.get((int(_mid), _sd))
+                if _ov is not None:
+                    _sc_plus_map[_p.player_key] = int(round(_ov))
+                    _n_resourced += 1
+            log.info("SC+ re-sourced from Savant-minors AAA aggregate for %d prospects", _n_resourced)
+    except Exception:
+        log.exception("Savant-minors SC+ re-source failed — keeping game-feed SC+")
+
     # Sort actives by latest consensus_fv_raw (smoother than the snapped
     # value for tiebreaking). When two prospects are literally identical
     # on consensus FV (down to the decimal — happens with single-source
