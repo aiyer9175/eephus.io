@@ -425,6 +425,17 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("xFV regen crashed in rebuild_only — continuing")
 
+    # xFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
+    # quality), forward-validated on recent debut cohorts. Separate artifact, NOT xFV; pulls
+    # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
+    try:
+        import xfv_proxy as _xfv_proxy
+        _xp = _xfv_proxy.run()
+        log.info("xFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
+                 _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
+    except Exception:
+        log.exception("xFV proxy crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)

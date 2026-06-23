@@ -28046,6 +28046,38 @@ function getXfvHistory(p) {
   const s = _XFV_HIST[p.player_key];
   return (s && s.length >= 2) ? s : null;
 }
+// xFV PROXY (data/xfv_proxy_eval.json): a faster-resolving LEADING INDICATOR, not xFV. Projects
+// a prospect's first-MLB-season Statcast quality (hitters: xwOBA; pitchers: xwOBA-against) from
+// the pre-debut profile, forward-validated on recent debut cohorts. Shown as a small detail-page
+// tile, clearly labeled "leading indicator, not xFV". Lazy; degrades to nothing if absent.
+let _XFV_PROXY = null;
+(function loadXfvProxy() {
+  fetch("/data/xfv_proxy_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _XFV_PROXY = j || {};
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .catch(() => { _XFV_PROXY = {}; });
+})();
+function xfvProxyPanel(p) {
+  if (!p || !_XFV_PROXY || !_XFV_PROXY.projections || !p.player_key) return "";
+  const pr = _XFV_PROXY.projections[p.player_key];
+  if (!pr || pr.proj_xwoba == null) return "";
+  const side = pr.side === "pit" ? "pit" : "hit";
+  const r = ((_XFV_PROXY.sides || {})[side] || {}).r;
+  const isPit = side === "pit";
+  const label = isPit ? "Proj. first-MLB xwOBA-against" : "Proj. first-MLB xwOBA";
+  // MLB xwOBA context: ~.310 average; lower is better for pitchers (xwOBA-against).
+  const v = pr.proj_xwoba;
+  const col = isPit ? (v <= 0.300 ? "var(--up)" : v >= 0.330 ? "var(--down)" : "var(--text-primary)")
+                    : (v >= 0.340 ? "var(--up)" : v <= 0.300 ? "var(--down)" : "var(--text-primary)");
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${label}</div>
+        <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${col};">${v.toFixed(3)}</div>
+      </div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">Faster-resolving <strong>leading indicator</strong>, not xFV: predicts this prospect's debut-season Statcast quality from the pre-debut profile${r != null ? ` (out-of-sample r ${r.toFixed(2)} on recent debut cohorts)` : ""}. MLB average xwOBA ≈ .310. Survivorship-limited (debut cohort); provisional.</div>
+    </div>`;
+}
 // xFV is the PRIMARY ranking signal. Its value where the player has a pro track record
 // (an xFV grade); consensus FV (fv_close) is the fallback so no-track-record players
 // (recent draftees / IFA, where xFV abstains) still rank sensibly instead of vanishing.
@@ -43233,7 +43265,8 @@ function renderPlayerDetail(key) {
   const valuationHtml = [surplusValueSection, contractDetailsSection].filter(Boolean).join("");
   const playerNewsSection = makePlayerNewsSection(p);
   const xfvCardHtml = xfvDetailCard(p);   // xFV outcome read (primary grade's distribution + surplus)
-  const overviewHtml = [summaryGridHtml, xfvCardHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const xfvProxyHtml = (typeof xfvProxyPanel === "function") ? xfvProxyPanel(p) : "";  // leading indicator
+  const overviewHtml = [summaryGridHtml, xfvCardHtml, xfvProxyHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
