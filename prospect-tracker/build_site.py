@@ -660,6 +660,45 @@ ORG_NAMES = {
     "TOR": "Blue Jays", "WSN": "Nationals",
 }
 
+# --------------------------------------------------------------------------- #
+# xFV grade map (data/xfv.json -> {player_key: headline xfv_grade}).
+#
+# xFV is the flagship outcome-grounded FV model (the PROSPX primary grade). The
+# homepage Top Prospects module historically ranked + displayed CONSENSUS
+# `fv_close`; this map lets it lead with xFV instead, with consensus as the
+# fallback for any player xFV abstains on (no MiLB track record => absent from
+# by_player). Loaded once at module import - missing/corrupt file => empty map,
+# so the homepage behaves EXACTLY as before. The headline `xfv_grade` is the
+# rank-preserving grade onto the 20-80 consensus distribution (NOT the deflated
+# `xfv_grade_realized` that drives surplus).
+def _load_xfv_grades() -> dict:
+    try:
+        doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return {}
+    out = {}
+    for key, rec in (doc.get("by_player") or {}).items():
+        g = (rec or {}).get("xfv_grade")
+        if isinstance(g, (int, float)):
+            out[key] = float(g)
+    return out
+_XFV_GRADES = _load_xfv_grades()
+
+def _primary_fv(p: dict):
+    """RAW primary FV for a player: the xFV grade when xFV has a grade for this
+    player_key, else the consensus close. Consensus is the fallback EVERYWHERE
+    so players xFV abstains on are unchanged. Returns a float or None.
+
+    NB: raw (unrounded) - callers that DISPLAY a grade must ceil-round per the
+    repo's grades-round-UP rule; sort/tier logic uses the raw value."""
+    g = _XFV_GRADES.get(p.get("player_key"))
+    if g is not None:
+        return g
+    fv = p.get("fv_close")
+    if fv is None:
+        fv = p.get("consensus_fv")
+    return fv
+
 def _fmt_iso_date(s: str | None) -> str:
     if not s:
         return " - "
@@ -718,14 +757,22 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 def _fv_label(p: dict) -> str:
+    # Lead with the xFV grade when xFV has graded this player (ceil-rounded per
+    # the grades-round-UP rule, 62.1 -> 63). For players xFV abstains on, keep
+    # the EXACT prior behavior: the published consensus label off points[] (which
+    # carries snapping / '+' upside), else ceil(fv_close).
+    g = _XFV_GRADES.get(p.get("player_key"))
+    if g is not None:
+        return str(int(math.ceil(g)))   # FV rounds UP (62.1 -> 63)
     pts = p.get("points") or []
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
     fv = p.get("fv_close")
-    return str(int(math.ceil(fv))) if fv is not None else " - "   # FV rounds UP (62.1 -> 63)
+    return str(int(math.ceil(fv))) if fv is not None else " - "
 
 def _fv_pill(p: dict) -> str:
-    fv = p.get("fv_close")
+    # Tier styling keys off the PRIMARY (xFV) grade now, raw/unrounded.
+    fv = _primary_fv(p)
     cls = "fv-pill"
     if fv is not None and fv >= 61:
         cls += " holo"
@@ -958,8 +1005,10 @@ def display_metric_for(p: dict) -> dict:
         return {"metric": "WAG", "cls": cls,
                 "html": f'<span class="row-delta {cls}">{sign}{wag_r:.1f} WAG</span>'}
 
-    # 3) No meaningful on-field sample yet -> FV (the scouting-consensus projection).
-    fv = p.get("fv_close") or p.get("consensus_fv") or p.get("fv")
+    # 3) No meaningful on-field sample yet -> FV (PRIMARY: xFV when graded, else
+    #    the scouting consensus). `_primary_fv` already falls back fv_close ->
+    #    consensus_fv; keep `fv` as a last-ditch legacy fallback.
+    fv = _primary_fv(p) or p.get("fv")
     if fv is not None:
         return {"metric": "FV", "cls": "flat",
                 "html": (f'<span class="row-meta" title="Final prospect FV - no MLB sample yet">'
@@ -1832,7 +1881,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
-    topN = sorted(players, key=lambda p: (p.get("fv_close") if p.get("fv_close") is not None else -1), reverse=True)[:5]
+    # Rank by PRIMARY FV (xFV when graded, else consensus close), RAW/unrounded.
+    topN = sorted(players, key=lambda p: (_primary_fv(p) if _primary_fv(p) is not None else -1), reverse=True)[:5]
     top_body = "".join(_row_top(p, p.get("overall_rank") or i) for i, p in enumerate(topN, 1))
     topp = _home_module("Top Prospects", "/prospx/", "Full board", top_body) if top_body else ""
 
