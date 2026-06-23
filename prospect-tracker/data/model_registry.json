@@ -420,7 +420,7 @@
    "metric": "forward-chained OOS Spearman + MAE vs consensus",
    "eval_artifact": "data/xfv_eval_pitcher.json",
    "verdict": "provisional",
-   "notes": "LEAN model (multi-season PEAK K-rate + final K-rate + age-vs-level + fastball), guarded blend (lam=0.80). peak_k_rel flipped pitchers from trailing to BEATING consensus on OOS rank: debuted-KM blend 0.244 vs 0.219, full-pool 0.195 vs 0.181, edge holds on recent cohorts. Earlier kitchen-sink set lost (0.18 vs 0.22). Trails MAE (more spread); xFV deflates pitcher surplus reflecting realized bust rates (flagged). Live board gated on a pro track record. Provisional.",
+   "notes": "LEAN model (multi-season PEAK K-rate + final K-rate + bb_rel + age-vs-level + x_era_k + fastball), guarded blend. peak_k_rel flipped pitchers from trailing to BEATING consensus on OOS rank; bb_rel completed the K-BB edge. 2026-06-22 feature re-test added x_era_k = (-era_rel)*k_rel (run-prevention x missing-bats interaction): debuted-KM ridge 0.2739 -> 0.2823 (edge over consensus +0.063), full-pool 0.209 -> 0.215, blend +0.0074, sane calibration, robust 3/4 folds; era_rel alone fails (it is specifically the interaction). Re-test REJECTED milb_missing/level_rank (data-vintage/missingness artifacts) + every single production add (ceiling). Earlier kitchen-sink set lost. Trails MAE; xFV deflates pitcher surplus reflecting realized bust rates (flagged). Live board gated on a pro track record. Provisional.",
    "last_checked": "2026-06-22",
    "stale": false,
    "artifact_age_days": 0

@@ -74,6 +74,9 @@ _FEATURES_PIT = [
     ("k_rel",          +1),   # final-season K-rate (Phase-1 top adder)
     ("bb_rel",         -1),   # walk rate -- completes the K-BB% edge (helps OOS; cmd does NOT)
     ("age_rel_level",  -1),
+    ("x_era_k",        +1),   # (-era_rel)*k_rel: run-prevention x missing-bats interaction.
+                              # Feature re-test 2026-06-22: genuine OOS lift (debuted-km
+                              # 0.274->0.282, blend +0.0074, sane cal); era_rel alone fails.
     ("tool_fb",        +1),   # fastball -- best pitcher tool adder
 ]
 
@@ -257,6 +260,8 @@ def _vec(r, side: str = "hit") -> dict:
             "tool_sl": g(r.get("tool_sl"), 45.0), "tool_ch": g(r.get("tool_ch"), 45.0),
             "tool_cb": g(r.get("tool_cb"), 45.0), "era_rel": g(m.get("era_rel")),
             "peak_k_rel": g(m.get("peak_k_rel")), "peak_bb_rel": g(m.get("peak_bb_rel")),
+            # run-prevention x missing-bats interaction (final-season): (-era_rel)*k_rel.
+            "x_era_k": (-g(m.get("era_rel"))) * g(m.get("k_rel")),
         })
     else:
         out.update({
