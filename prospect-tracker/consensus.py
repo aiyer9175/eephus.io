@@ -958,6 +958,52 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
     }
 
 
+# Slug-collision detection thresholds. A genuine prospect is graded across a <=7-year window,
+# so the two signals that a player_key actually holds TWO different people are: (a) a gap too
+# long for one prospect career, or (b) a pitcher<->hitter flip across a multi-year gap (a person
+# does not switch sides). Same-side medium gaps are left ALONE -- they are usually one player who
+# fell off the boards and re-emerged (e.g. a slow-developing IFA), and we must not drop real
+# history. Conservative by design: only the unambiguous collisions are split.
+_GAP_BIG_DAYS = 8 * 365      # >8yr apart cannot be the same prospect-era player (different person)
+_GAP_FLIP_DAYS = 4 * 365     # >4yr apart AND a pitcher<->hitter flip = different person
+_PITCHER_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "P", "CL", "CP", "RHP/", "LHP/"}
+
+
+def _is_pitcher_pos(pos: str | None) -> bool:
+    return bool(pos) and pos.split("/")[0].strip().upper() in _PITCHER_TOKENS
+
+
+def _prune_collision_cluster(snaps: list[Snapshot]) -> list[Snapshot]:
+    """Same-name slug collisions merge two different people under one player_key (e.g. the late
+    RHP José Fernández + a current SS Jose Fernandez both slug to 'jose_fernandez', polluting the
+    live player with a decade-old FV-70). Keep only the most-recent cluster and drop everything
+    before the last gap that is UNAMBIGUOUSLY a different person: a gap > 8yr (too long for one
+    prospect career) OR a gap > 4yr that flips pitcher<->hitter. Same-side medium gaps are kept
+    (likely one re-emergent player). No-op otherwise."""
+    from datetime import date as _date
+    dated = []
+    for s in snaps:
+        try:
+            dated.append((_date.fromisoformat((s.snapshot_date or "")[:10]), s))
+        except ValueError:
+            continue
+    if len(dated) < 2:
+        return snaps
+    dated.sort(key=lambda t: t[0])
+    cut = None
+    for (d_prev, s_prev), (d_cur, s_cur) in zip(dated, dated[1:]):
+        gap = (d_cur - d_prev).days
+        if gap <= _GAP_FLIP_DAYS:
+            continue
+        flip = (s_prev.position and s_cur.position
+                and _is_pitcher_pos(s_prev.position) != _is_pitcher_pos(s_cur.position))
+        if gap > _GAP_BIG_DAYS or flip:
+            cut = s_cur.snapshot_date            # start of the most-recent (live) cluster
+    if cut is None:
+        return snaps
+    return [s for s in snaps if (not s.snapshot_date) or s.snapshot_date >= cut]
+
+
 def build_timeseries(
     snapshots: list[Snapshot],
     *,
@@ -992,6 +1038,9 @@ def build_timeseries(
 
     result: list[PlayerTimeseries] = []
     for player_key, player_snaps in by_player.items():
+        # Guard against same-name slug collisions (a retired player + a current prospect under
+        # one key): keep only the most-recent contiguous grading cluster. No-op for normal players.
+        player_snaps = _prune_collision_cluster(player_snaps)
         name, pos, org = _latest_meta(player_snaps)
         name = _canonical_player_name(player_key, name)
 

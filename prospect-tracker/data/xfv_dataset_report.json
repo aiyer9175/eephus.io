@@ -6,38 +6,38 @@
  "accounting": {
   "debuted_seen": 2549,
   "debuted_hitter": 924,
-  "debuted_no_pre_fv": 111,
+  "debuted_no_pre_fv": 112,
   "debuted_no_war": 16,
-  "debuted_kept": 797,
-  "bust_seen": 2531,
+  "debuted_kept": 796,
+  "bust_seen": 2532,
   "bust_hitter": 1330,
   "bust_no_fv": 84,
   "bust_kept": 1246,
   "bust_recent_flagged": 93
  },
  "counts": {
-  "rows_total": 2043,
-  "debuted": 797,
+  "rows_total": 2042,
+  "debuted": 796,
   "busts": 1246,
   "resolved_debuted": 461,
-  "censored_debuted": 336,
+  "censored_debuted": 335,
   "bust_recent_excluded_from_label": 93
  },
  "feature_coverage": {
-  "consensus_fv_raw": "2043/2043",
-  "fv_fangraphs": "1321/2043",
-  "fv_mlb_pipeline": "1617/2043",
-  "fv_stddev": "919/2043",
-  "tool_hit": "1774/2043",
-  "tool_game_pwr": "1774/2043",
-  "pick_overall": "767/2043",
-  "bonus_usd": "510/2043"
+  "consensus_fv_raw": "2042/2042",
+  "fv_fangraphs": "1321/2042",
+  "fv_mlb_pipeline": "1615/2042",
+  "fv_stddev": "918/2042",
+  "tool_hit": "1774/2042",
+  "tool_game_pwr": "1774/2042",
+  "pick_overall": "767/2042",
+  "bonus_usd": "510/2042"
  },
  "milb_feature_coverage": {
-  "level_rank": "852/2043",
-  "age_rel_level": "852/2043",
-  "k_rel": "852/2043",
-  "iso_rel": "852/2043"
+  "level_rank": "852/2042",
+  "age_rel_level": "852/2042",
+  "k_rel": "852/2042",
+  "iso_rel": "852/2042"
  },
  "war_distribution_resolved_debuted": {
   "n": 461,
@@ -55,15 +55,15 @@
   },
   "full_pool_resolved": {
    "n": 1614,
-   "spearman": 0.2836
+   "spearman": 0.2837
   },
   "full_pool_km_censored": {
-   "n": 1950,
-   "spearman": 0.2716
+   "n": 1949,
+   "spearman": 0.2725
   },
   "debuted_km_censored": {
-   "n": 797,
-   "spearman": 0.3721
+   "n": 796,
+   "spearman": 0.3722
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

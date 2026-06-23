@@ -11,22 +11,22 @@
   "mean_abs_delta": 0.58,
   "max_up": 7.7,
   "max_down": -5.0,
-  "share_within_2_grades": 0.855
+  "share_within_2_grades": 0.857
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 13.07,
+  "mean_abs_delta": 13.09,
   "max_up": 10.6,
   "max_down": -27.6
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0801,
+  "spearman_adj_vs_consensus_miss": 0.0802,
   "n": 502,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 6210.2,
-  "consensus": 12955.6
+  "xfv": 6205.3,
+  "consensus": 12947.9
  },
  "example_up_adjustments": [
   {

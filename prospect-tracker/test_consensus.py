@@ -1046,3 +1046,34 @@ class TestConsensusForwardFill:
         # FG latest = 60, Pipeline latest = 50, mean = 55.
         # The 50 from fg_old must NOT participate.
         assert latest_point.tools_consensus["hit"] == 55.0
+
+
+def _csnap(date, src, pos, fv, key="jose_fernandez", name="Jose Fernandez"):
+    return Snapshot(source=src, snapshot_date=date, interval_label="x",
+                    player_key=key, player_name=name, position=pos, org="ARI",
+                    rank=None, fv=fv, status="active", tools=None)
+
+
+def test_collision_guard_drops_pitcher_hitter_flip():
+    """Slug collision: the late RHP Jose Fernandez (2013, FV70) + a current SS Jose Fernandez
+    (2022+, FV~40) share one player_key. The pre-gap pitcher cluster must be dropped so the live
+    SS is not polluted with the stale FV-70 (the real Time-Machine bug)."""
+    ts = build_timeseries([
+        _csnap("2013-01-22", "mlb_pipeline", "RHP", 70.0),
+        _csnap("2022-02-24", "fangraphs", "SS", 40.0),
+        _csnap("2024-02-14", "fangraphs", "SS", 35.0),
+    ], single_source_k=0)
+    assert len(ts) == 1
+    p = ts[0]
+    assert p.position == "SS", "live player is the SS, not the colliding RHP"
+    assert all((pt.consensus_fv_raw or 0) < 60 for pt in p.points), "ace's FV-70 must be gone"
+
+
+def test_collision_guard_spares_same_side_re_emergence():
+    """A same-side player who fell off the boards <8yr and re-emerged (no pitcher/hitter flip)
+    keeps his full history -- the guard must not drop real grades."""
+    ts = build_timeseries([
+        _csnap("2019-02-01", "fangraphs", "CF", 45.0, key="kev", name="Kev"),
+        _csnap("2024-02-01", "fangraphs", "CF", 50.0, key="kev", name="Kev"),
+    ], single_source_k=0)
+    assert len(ts[0].points) >= 2, "both clusters kept for a same-side re-emergence"

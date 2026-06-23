@@ -1,7 +1,7 @@
 {
  "generated_at": "2026-06-22",
  "scope": "HITTERS",
- "n_scored": 2043,
+ "n_scored": 2042,
  "calibration_scale": {
   "a": -0.063,
   "b": 1.039
@@ -11,28 +11,28 @@
   "mean_abs_delta": 1.03,
   "max_up": 7.4,
   "max_down": -5.0,
-  "share_within_2_grades": 0.719
+  "share_within_2_grades": 0.718
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 10.7,
+  "mean_abs_delta": 10.69,
   "max_up": 8.0,
   "max_down": -25.3
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1142,
+  "spearman_adj_vs_consensus_miss": 0.115,
   "n": 461,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 20284.6,
-  "consensus": 21791.5
+  "xfv": 20286.5,
+  "consensus": 21774.5
  },
  "example_up_adjustments": [
   {
    "player_key": "luis_rengifo",
    "consensus_fv": 47.6,
-   "xfv_grade": 54.3,
+   "xfv_grade": 54.4,
    "delta": 6.7,
    "realized_war_6yr": 6.25
   },
