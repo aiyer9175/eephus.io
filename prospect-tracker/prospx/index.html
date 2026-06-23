@@ -16349,7 +16349,7 @@ function renderSpotlights() {
   const header = `<div class="spotlight-header">
     <span class="sort-header" data-spotlight-sort="rank" style="text-align:center;" title="Sort by spotlight rank within this bucket (default)">Rank</span>
     <span class="sort-header" data-spotlight-sort="name" title="Sort by player name (A-Z)">Player · pos · org · age</span>
-    <span class="sort-header" data-spotlight-sort="fv" style="text-align:center;" title="Sort by Consensus Future Value (high to low)">Consensus FV</span>
+    <span class="sort-header" data-spotlight-sort="fv" style="text-align:center;" title="Sort by xFV (high to low); consensus FV where xFV abstains">xFV</span>
     <span class="sort-header" data-spotlight-sort="level" title="Sort by level (A-Z)">Level · line</span>
     <span style="text-align:center;">FV history</span>
     <span>Drivers</span>
@@ -16382,7 +16382,7 @@ function renderSpotlights() {
         <button class="watch-btn${watchlistHas(s.player_key) ? " is-in" : ""}" data-watch-key="${escapeHtml(s.player_key)}" type="button" aria-label="Toggle watchlist" title="${watchlistHas(s.player_key) ? "Remove from watchlist" : "Add to watchlist"}">${watchlistHas(s.player_key) ? "★" : "☆"}</button>
         <button class="compare-add-btn is-compact${compareHas(s.player_key) ? " is-in" : ""}" data-compare-key="${escapeHtml(s.player_key)}" type="button" title="${compareHas(s.player_key) ? "Remove from compare" : "Add to compare"}" aria-label="Toggle compare">${compareHas(s.player_key) ? "✓" : "+"}</button>
       </div>
-      <div style="text-align:center;"><span class="fv-badge ${fvClass(s.fv || "40")}${fvBadgeChainClasses(_full)}" title="${escapeHtml(fvBadgeTooltip(_full))}">${escapeHtml(s.fv ?? " - ")}${fvBadgeChainMarks(_full)}</span></div>
+      <div style="text-align:center;">${xfvBadgeHTML(_full, { primary: "xfv" })}</div>
       <div class="milb-cell"><span class="level-pill level-neutral">${escapeHtml(s.level ?? " - ")}</span>${escapeHtml(s.line ?? " - ")}</div>
       <!-- v17 - Strength score column replaced with mini FV sparkline. -->
       <div class="line-chart-cell" style="text-align:center;" title="${escapeHtml(_ohlcTooltip(_full))}">${lazyLineChartHTML(_full)}</div>
@@ -43168,15 +43168,17 @@ function renderPlayerDetail(key) {
     return { label: "ETA", value: etaDisplayYear(eta), sub: eta.confidence ? `${eta.confidence} conf` : "" };
   })();
   const _ovSurplus = (() => {
-    // v39 - prefer the baked engine SV (matches the valuation card below);
-    // sub-line carries $DvM+ when present so the glance tile shows both.
-    const sv = (p.surplus && p.surplus.value_mm != null)
-      ? p.surplus.value_mm
+    // xFV surplus is primary (matches the Surplus-value card + the list); consensus baked SV is
+    // the fallback where xFV abstains. Mirrors makeSurplusCell so the tile never contradicts it.
+    const _xf = getXfv(p);
+    const _useX = _xf && _xf.surplus_mm != null && _gradePrimary() === "xfv";
+    const sv = _useX ? _xf.surplus_mm
+      : (p.surplus && p.surplus.value_mm != null) ? p.surplus.value_mm
       : (p.fv_close != null ? estimateSurplusValueMM(p.fv_close, !!(p.statline || {}).is_pitcher, p.position) : null);
     if (sv == null) return null;
     const dvm = p.dollar_dvm_plus;
     return {
-      label: "Surplus value",
+      label: _useX ? "xFV surplus" : "Surplus value",
       value: sv >= 1 ? `$${sv.toFixed(1)}M` : `$${(sv * 1000).toFixed(0)}k`,
       sub: (dvm != null && isFinite(dvm)) ? `$DvM+ ${Math.round(dvm)}` : "",
     };
