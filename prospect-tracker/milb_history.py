@@ -58,6 +58,28 @@ def _fetch(url: str) -> dict:
         return json.loads(r.read())
 
 
+def _level16(league: str) -> str:
+    """sportId-16 (rookie/complex) level by LEAGUE: DSL and VSL are the
+    foreign (Latin American) complex leagues — a distinct, much
+    lower-offense environment that must be normed on its own; everything
+    else (GCL/AZL/ACL/FCL/PIO/APP) is US complex -> CPX. The cached MLB
+    StatsAPI league name for the Dominican Summer League is literally
+    'DSL' (not 'Dominican'), so the old `"Dominican" in league` substring
+    check never fired and folded every DSL season into CPX — making DSL
+    norms unavailable and mis-norming DSL-heavy (int'l-bat) prospects."""
+    return "DSL" if (league or "").strip().upper() in ("DSL", "VSL") else "CPX"
+
+
+def _relevel(rows: list[dict], sport_id: int) -> list[dict]:
+    """Re-derive the sportId-16 level from the stored league name so the
+    DSL/CPX split is correct even on rows CACHED before the fix (the lean
+    row carries `league`, so we recompute `level` on read — no re-fetch)."""
+    if sport_id == 16:
+        for r in rows:
+            r["level"] = _level16(r.get("league") or "")
+    return rows
+
+
 def season_splits(sport_id: int, season: int, group: str,
                   fetch: bool = True) -> list[dict]:
     """All player season lines for one (sport, season, group), cached.
@@ -67,7 +89,7 @@ def season_splits(sport_id: int, season: int, group: str,
     path = CACHE_DIR / f"{group}_{sport_id}_{season}.json"
     if path.exists():
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            return _relevel(json.loads(path.read_text(encoding="utf-8")), sport_id)
         except ValueError:
             pass
     if not fetch:
@@ -95,9 +117,7 @@ def season_splits(sport_id: int, season: int, group: str,
     for s in splits:
         st = s.get("stat") or {}
         league = (s.get("league") or {}).get("name") or ""
-        level = SPORT_LEVEL.get(sport_id, "?")
-        if sport_id == 16 and "Dominican" in league:
-            level = "DSL"
+        level = _level16(league) if sport_id == 16 else SPORT_LEVEL.get(sport_id, "?")
         row = {"mlbam": (s.get("player") or {}).get("id"),
                "name": (s.get("player") or {}).get("fullName"),
                "season": season, "level": level, "league": league,
