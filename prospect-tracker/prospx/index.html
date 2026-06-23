@@ -14946,11 +14946,8 @@ function renderWhatsNew(rootId = "whats-new", kindFilter = null) {
   const chips = filteredEvents.slice(0, 40).map(ev => {
     const c = colorMap[ev.kind] || "var(--text-secondary)";
     const dateStr = new Date(ev.ts).toISOString().split("T")[0];
-    // FV badge inline so a glance carries quality context too.
-    const fvLbl = ev.p.fv_close != null ? Math.round(ev.p.fv_close) : null;
-    const fvChip = fvLbl != null
-      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
-      : "";
+    // xFV badge inline so a glance carries quality context too (consensus fallback).
+    const fvChip = xfvCompactBadge(ev.p, { size: "size-xs", style: "margin-right:5px;", fallback: ev.p.fv_close });
     return `<button class="chip" data-key="${escapeHtml(ev.p.player_key)}" type="button"
                     style="border-color:${c};color:${c};white-space:nowrap;">
       ${fvChip}<span style="font-weight:700;">${escapeHtml(ev.p.player_name)}</span>
@@ -15095,10 +15092,10 @@ function renderStandoutPerformances(rootId = "whats-standout-spotlights") {
     return _renderStandoutPerformancesFallback(root);
   }
   const chips = top.map(({ p, g }) => {
-    const fvLbl = p.fv_close != null ? Math.round(p.fv_close) : null;
-    const fvChip = fvLbl != null
-      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
-      : "";
+    const _xsd = getXfv(p);
+    const fvLbl = (_xsd && _xsd.xfv_grade != null) ? xfvGradeDisplay(_xsd)
+                : (p.fv_close != null ? Math.round(p.fv_close) : null);
+    const fvChip = xfvCompactBadge(p, { size: "size-xs", style: "margin-right:5px;", fallback: p.fv_close });
     // v30.8 - Border color now matches the FV tier so high-FV chips
     // pop visually next to mid-FV neighbors. The user explicitly
     // wanted top prospects to "lead" the ticker; coloring the chip
@@ -15181,10 +15178,7 @@ function _renderStandoutPerformancesFallback(root) {
   candidates.sort((a, b) => b.score - a.score);
   const top = candidates.slice(0, 8);
   const chips = top.map(({ p, headline }) => {
-    const fvLbl = p.fv_close != null ? Math.round(p.fv_close) : null;
-    const fvChip = fvLbl != null
-      ? `<span class="fv-badge ${fvClass(String(fvLbl))} size-xs" style="margin-right:5px;">${fvLbl}</span>`
-      : "";
+    const fvChip = xfvCompactBadge(p, { size: "size-xs", style: "margin-right:5px;", fallback: p.fv_close });
     return `<button class="chip" data-key="${escapeHtml(p.player_key)}" type="button"
                     style="border-color:var(--up);color:var(--up);white-space:nowrap;">
       ${fvChip}<span style="font-weight:700;">${escapeHtml(p.player_name)}</span>
@@ -16085,14 +16079,13 @@ function renderActiveContextRail(railId = "active-context-rail") {
   // Top 3 risers + top 3 rebounders from DATA.spotlights. Click → Spotlights tab.
   const _spotlights = DATA.spotlights || {};
   const _spotRow = (s) => {
-    const fv = s.fv != null ? fvCeil(Number(s.fv)) : null;
     return _ctxRow({
       key: s.player_key,
       name: s.player_name,
       pos: s.pos || (s.position ? String(s.position).split("/")[0] : null),
       level: s.level || null,
       teamLogoHTML: s.org ? teamLogoHTML(s.org, "sm", s.org) : "",
-      rightHTML: fv != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fv}</span>` : "",
+      rightHTML: xfvCompactBadge(s, { size: "size-sm", fallback: s.fv }),
     });
   };
   const _risers     = (_spotlights.risers     || []).slice(0, 3);
@@ -16115,6 +16108,18 @@ function renderActiveContextRail(railId = "active-context-rail") {
     const t = Math.max(20, Math.min(80, Math.floor(p.fv_close / 5) * 5));
     counts[t] = (counts[t] || 0) + 1;
   }
+  // Re-bin by xFV grade (the primary) where rated; consensus FV is the fallback.
+  for (const t of tiers) counts[t] = 0;
+  let _distN = 0;
+  for (const p of players) {
+    const _x = getXfv(p);
+    const g = (_x && _x.xfv_grade != null) ? xfvGradeDisplay(_x)
+              : (p.fv_close != null ? fvCeil(p.fv_close) : null);
+    if (g == null) continue;
+    const t = Math.max(20, Math.min(80, Math.floor(g / 5) * 5));
+    counts[t] = (counts[t] || 0) + 1;
+    _distN++;
+  }
   const maxCount = Math.max(1, ...Object.values(counts));
   const distRows = tiers.map(t => {
     const c = counts[t] || 0;
@@ -16128,7 +16133,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
     </div>`;
   }).join("");
   const distCard = `<div class="ctx-card">
-    <div class="ctx-title">FV distribution · ${players.filter(p => p.fv_close != null).length} graded</div>
+    <div class="ctx-title">xFV distribution · ${_distN} graded</div>
     ${distRows}
   </div>`;
 
@@ -16139,12 +16144,10 @@ function renderActiveContextRail(railId = "active-context-rail") {
     .sort((a, b) => (b.debut_date || "").localeCompare(a.debut_date || ""))
     .slice(0, 3);
   const gradRows = grads.map(g => {
-    const fv = g.fv_close != null ? fvCeil(g.fv_close) : null;
-    const fvLbl = fv != null ? `${fv}` : null;  // v26
     return `<div class="ctx-row" data-key="${escapeHtml(g.player_key)}">
       <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0;">${escapeHtml(g.player_name)}</span>
       <span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">${g.debut_date}</span>
-      ${fvLbl != null ? `<span class="fv-badge ${fvClass(String(fv))} size-sm">${fvLbl}</span>` : ""}
+      ${xfvCompactBadge(g, { size: "size-sm", fallback: g.fv_close })}
     </div>`;
   }).join("");
   // Card always renders so the rail stays anchored even when the debut
@@ -28127,32 +28130,50 @@ function xfvBadgeHTML(p, opts) {
   // it carried into the majors) -- our last word on it as a prospect.
   const lock = (x && x.kind === "debuted")
     ? `<span title="Final xFV - locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}" style="color:var(--text-tertiary);font-size:9px;">🔒</span>` : "";
-  // xFV leads (toggle = xFV and the player has an xFV grade)
+  // xFV ONLY (the default): clean single grade, no consensus subscript or delta. The board's
+  // "Rank by" toggle is how a user switches the whole list to consensus FV instead. consNum is
+  // unused here by design; full xFV-vs-consensus comparison lives on the player detail page.
+  void consNum;
   if (xg != null && primary === "xfv") {
-    const line1 = `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${xfvDeltaMark(x.xfv_minus_consensus)}${lock}${inj}</div>`;
-    const sub = consNum != null ? _gradeSub("FV", fvCeil(consNum), `Consensus FV ${fvCeil(consNum)} (reference)`) : "";
-    return line1 + sub;
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${lock}${inj}</div>`;
   }
-  // consensus leads (toggle = consensus, or no xFV grade yet)
+  // consensus ONLY (toggle = consensus, or xFV abstains and we fall back to consensus)
   if (consLabel != null) {
-    const line1 = `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${consLabel}${fvBadgeChainMarks(p)}</span>`;
-    const sub = (xg != null)
-      ? _gradeSub("xFV", xg, xfvTooltip(x))
-      : _gradeSub("xFV", "—", "xFV not yet rated (no pro track record)");
-    return line1 + sub;
+    return `<span class="fv-badge ${fvClass(consLabel)}${fvBadgeChainClasses(p)}" title="${escapeHtml(fvBadgeTooltip(p))}">${consLabel}${fvBadgeChainMarks(p)}</span>`;
   }
   return `<span style="color:var(--text-tertiary);"> - </span>`;
+}
+// Compact single-badge xFV for dense cards/strips (homepage peeks, wire chips, standout
+// strips) where there is no room for the two-line badge: shows the xFV grade where rated,
+// consensus fallback otherwise. opts: {size, style, fallback}. Tooltip carries the detail.
+function xfvCompactBadge(p, opts) {
+  opts = opts || {};
+  const sz = opts.size || "size-sm";
+  const style = opts.style ? ` style="${opts.style}"` : "";
+  const x = getXfv(p);
+  const xg = (x && x.xfv_grade != null) ? xfvGradeDisplay(x) : null;
+  if (xg != null) {
+    return `<span class="fv-badge ${fvClass(String(xg))} ${sz}"${style} title="${escapeHtml(xfvTooltip(x))}">${xg}</span>`;
+  }
+  let fv = opts.fallback;
+  if (fv == null) {
+    const l = p && p.points && p.points[p.points.length - 1];
+    fv = l ? l.consensus_fv_raw : (p ? p.fv_close : null);
+  }
+  if (fv == null) return "";
+  fv = fvCeil(Number(fv));
+  return `<span class="fv-badge ${fvClass(String(fv))} ${sz}"${style} title="Consensus FV ${fv} (xFV not yet rated)">${fv}</span>`;
 }
 // Board rank cell: leading rank (diamond) + the other rank as a muted subscript.
 function xfvRankNumHTML(p) {
   const xr = getXfvRank(p), cr = p.overall_rank;
+  // Single clean rank (no consensus-rank subscript): xFV rank by default, consensus rank when
+  // the board is toggled to consensus. Mirrors the xFV-only badge.
   if (xr != null && _gradePrimary() === "xfv") {
-    const sub = cr != null ? _gradeSub("FV", "#" + cr, `Consensus FV rank #${cr}`) : "";
-    return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${xr}</span></div>${sub}`;
+    return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${xr}</span></div>`;
   }
   const prim = cr != null ? "#" + cr : (xr != null ? "#" + xr : " - ");
-  const sub = (cr != null && xr != null) ? _gradeSub("xFV", "#" + xr, `xFV rank #${xr}`) : "";
-  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${prim}</span></div>${sub}`;
+  return `<div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">${prim}</span></div>`;
 }
 // Detail-page header: xFV as the primary big grade, consensus FV as the reference line.
 // Falls back to the consensus fvBadge when xFV abstains (no pro track record).
@@ -28178,15 +28199,8 @@ function xfvDetailCard(p) {
   const x = getXfv(p);
   if (!(x && x.xfv_grade != null)) return "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
-  const fan = (x.dist && x.dist.p50_mm != null) ? renderSvDistribution(x.dist, { height: 18, axis: true }) : "";
-  const svLine = (x.surplus_mm != null)
-    ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin:8px 0 4px;">
-         <span style="font-size:10px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">xFV surplus</span>
-         <span style="font-family:var(--font-mono);font-weight:700;font-size:15px;color:${x.surplus_mm >= 30 ? 'var(--up)' : x.surplus_mm >= 5 ? 'var(--neon-cyan)' : 'var(--text-primary)'};">${fmtSvMM(x.surplus_mm)}</span>
-       </div>`
-       + (x.consensus_surplus_mm != null
-          ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);text-align:right;margin-bottom:6px;">consensus FV surplus ${fmtSvMM(x.consensus_surplus_mm)}</div>` : "")
-    : "";
+  // The $ surplus + its P10-P90 fan now live ONLY in the single Surplus-value card below
+  // (which is xFV-driven), so this card stays the GRADE read: grade + explainer + outcome mix.
   const pbust = x.p_bust != null ? `<span style="color:${x.p_bust >= 0.4 ? 'var(--down)' : 'var(--text-tertiary)'};">P(bust) ${Math.round(x.p_bust * 100)}%</span>` : "";
   // Explainer: how the xFV model moved off the consensus-FV prior for THIS prospect.
   // Each factor is a model contribution (signal that pushed the grade up/down); the bar
@@ -28216,9 +28230,7 @@ function xfvDetailCard(p) {
       </div>
       ${factorsHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
-      ${svLine}
-      ${fan}
-      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}xFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the surplus + outcome mix use the honest (typically lower) outcome-implied grade because scout FV runs optimistic. Provisional. <a href="/glossary/#xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}xFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional. <a href="/glossary/#xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
 
@@ -41032,9 +41044,18 @@ function renderPlayerDetail(key) {
     // career-path mixture engine), rather than the legacy FV-anchored JS
     // recompute. Fall back to estimateSurplusValueMM only when no baked
     // surplus is on file (older payloads / pre-resolution prospects).
+    // xFV is the primary FV site-wide, so the headline surplus is the xFV surplus when the
+    // board is on xFV and the player is rated; consensus FV-implied surplus is the fallback /
+    // toggle option. This is the SINGLE surplus card (the xFV grade card above no longer shows
+    // its own dollar figure), so the xFV outcome fan rides along here too.
+    const _xf = getXfv(p);
+    const _useXfv = _xf && _xf.surplus_mm != null && _gradePrimary() === "xfv";
     const _baked = (p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
-    const surplus = _baked ? _baked.value_mm
-                           : estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
+    const surplus = _useXfv ? _xf.surplus_mm
+                  : _baked ? _baked.value_mm
+                  : estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
+    const _xfvFan = (_useXfv && _xf.dist && _xf.dist.p50_mm != null)
+      ? renderSvDistribution(_xf.dist, { height: 16, axis: true }) : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
       if (m >= 100) return `$${m.toFixed(0)}M`;
@@ -41064,14 +41085,18 @@ function renderPlayerDetail(key) {
     const surplusTip = _baked
       ? `Estimated MLB surplus over the 6-year cost-controlled window, from the eephus value framework (a career-path mixture model) on FV ${fvCeil(fv)}, with the position-scarcity multiplier applied. Real surplus depends on health, performance variance, and the $/WAR market.`
       : `FV-implied estimate of MLB surplus over the 6-year cost-controlled window (FV ${fvCeil(fv)}, hitter/pitcher split), shown only until the engine value lands. Real surplus depends on health, performance variance, and the $/WAR market.`;
+    const _surpLabel = _useXfv ? "xFV surplus" : (p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value");
+    const _surpSub = _useXfv
+      ? `xFV ${xfvGradeDisplay(_xf)} · 6yr cost-controlled (outcome-grounded)`
+      : `FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled`;
     const surplusRow = surplus != null
       ? `<div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:8px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
            <div>
-             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${p.status === "debuted" ? "Expected surplus (FV)" : "Surplus value"}${scarcityChip}</div>
-             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">FV ${fvCeil(fv)} ${_isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+             <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">${_surpLabel}${scarcityChip}</div>
+             <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${_surpSub}</div>
            </div>
-           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${surplusTip}">${fmtUsd(surplus)}</div>
-         </div>`
+           <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useXfv ? `xFV expected surplus over the 6-year cost-controlled window, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
+         </div>${_xfvFan ? `<div style="margin:-2px 0 8px;">${_xfvFan}</div>` : ""}`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.
     // Same projection logic the WAG metric uses, surfaced as a "what
