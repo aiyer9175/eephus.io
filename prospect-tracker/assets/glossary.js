@@ -247,8 +247,48 @@ function _raterMeta(r) {
 function _methProseHTML() {
   return `
   <div class="meth-prose">
-    <h2 class="meth-h">How the consensus FV is built</h2>
-    <p>Every source that publishes an explicit 20–80 Future Value grade feeds an
+    <h2 class="meth-h">How xFV is built <span class="meth-sub">the site's primary grade</span></h2>
+    <p><strong>xFV (prospxFV)</strong> is our own outcome-grounded Future Value grade, and the
+    primary grade + ranking signal across the site. Where a scout FV answers "how good is the
+    tool profile," xFV answers a harder, testable question: <em>given everything we know before a
+    prospect debuts, what major-league career is he actually likely to have?</em> It predicts a
+    calibrated distribution of first-6-MLB-season WAR outcomes and summarizes it back to the
+    familiar 20-80 scale.</p>
+    <p><strong>The model.</strong> xFV starts from the consensus FV as a regularized prior (see
+    below), then adds a small set of earned, outcome-validated adjustments - the signals that
+    historically carry WAR information <em>beyond</em> the grade and are under-priced by scouts.
+    Hitters: on-base vs level, contact (K%) vs level, a multi-season peak K-rate, age-for-level,
+    MiLB track-record length, and the hit + speed tools. Pitchers: a multi-season peak K-rate,
+    final-season K-rate, walk rate (the K-BB% completion), age-for-level, and fastball. Game power
+    is <em>deliberately omitted</em> for hitters - the data shows scouts over-price it and it
+    predicts ISO, not incremental WAR, so leaving it out is xFV's power-overpricing correction.
+    It is a regularized ridge fit on ~3,800 labeled prospects (2011-2023), rate features
+    sample-shrunk so a cup-of-coffee can't masquerade as a track record.</p>
+    <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
+    rank = (1-λ)·(consensus→WAR) + λ·(model→WAR), where λ is <em>WAG-calibrated</em>: the trust
+    that realized WAR-Above-Grade actually supports for xFV's adjustment, fit forward-chained
+    (hitters ~0.85; pitchers shrink harder, since consensus is the stronger pitcher signal). The
+    blend can't fall far below the consensus prior, and where xFV's edge is real it takes the wheel.</p>
+    <p><strong>Two grades, one model.</strong> The <em>headline</em> xFV is a rank-preserving
+    quantile map of that blended ranking onto the consensus 20-80 distribution (so it reads on the
+    scale you know); a deflated <em>realized-implied</em> grade - typically lower, because scout FV
+    runs optimistic - drives the surplus + the 5-bucket outcome mix. Live prospects also get two
+    bounded tilts: an injury penalty (current IL + recent IL load + post-TJ) and a Statcast+
+    quality tilt on upper-level prospects.</p>
+    <p><strong>Everywhere, and frozen at debut.</strong> Every graded prospect carries an xFV -
+    the active boards, graduates (backgraded at their final pre-debut snapshot and then
+    <em>locked</em>, our last word on them as a prospect), and the farm-system rankings, surplus,
+    DvM+, and movement engine all run on it. Players with no pro track record (recent draftees,
+    int'l signs) fall back to the consensus prior until they play.</p>
+    <p class="meth-verdict is-good">On out-of-sample, leakage-free, forward-chained tests of how
+    well each grade ordered what prospects actually became, xFV out-predicts every public source -
+    the PROSPX consensus, MLB Pipeline, and FanGraphs. The Source Comparison tab carries the
+    head-to-head receipts. xFV is <strong>provisional</strong> and near the data's rank ceiling,
+    and its historical track is a current-model retrospective, not the grade we showed at the time.</p>
+
+    <h2 class="meth-h">How the consensus FV (xFV's prior) is built</h2>
+    <p>The consensus FV is the scout-grade aggregate xFV anchors on, and the reference shown
+    alongside xFV everywhere. Every source that publishes an explicit 20–80 Future Value grade feeds an
     <strong>accuracy-weighted</strong> consensus. Each source's vote weight comes from its
     measured track record on resolved cohorts, shrunk hard toward equal and clamped, so the
     weights barely move off one vote - today only MLB Pipeline (1.06) and FanGraphs (0.94)
@@ -276,11 +316,13 @@ function _methProseHTML() {
       leans on.</dd>
 
       <dt>DvM+ - Development vs Mean <span class="meth-tag">farm system</span></dt>
-      <dd>A wRC+-style index of organizational development: an org's cumulative FV growth over a
-      1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 = one standard
-      deviation). Acquisitions are nullified and graduations don't subtract, so it measures only
-      development of prospects already in the system. The farm grade weights 6y / 3y / 1y at
-      60 / 30 / 10%.</dd>
+      <dd>A wRC+-style index of organizational development: an org's cumulative <strong>xFV</strong>
+      growth over a 1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 =
+      one standard deviation). Acquisitions are nullified and graduations don't subtract, so it
+      measures only development of prospects already in the system. The farm grade weights
+      6y / 3y / 1y at 60 / 30 / 10%. ($DvM+, the per-prospect surplus-development index, is also
+      xFV-based; ToolDvM+ stays on per-tool scout-grade growth, since the tool grades have no
+      separate xFV time series.)</dd>
 
       <dt>RPS+ - Rate Performance Score <span class="meth-tag">prospect</span></dt>
       <dd>A level-anchored rate index (OPS+ for hitters, ERA- for pitchers) normalized against
@@ -312,7 +354,9 @@ function _methProseHTML() {
     <h2 class="meth-h">Surplus value - the economic model</h2>
     <p>A prospect is an asset because the six years of team control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
-    above what they cost:</p>
+    above what they cost. The grade priced here is <strong>xFV</strong> (the consensus FV is the
+    fallback where xFV abstains); the pricing engine below is grade-agnostic - it takes whatever
+    grade leads and converts it to dollars:</p>
     <p class="meth-eq">surplus = (expected WAR × $/WAR) − cost basis, probability-weighted across outcomes and discounted to present value</p>
     <p>The build, in order: (1) the <strong>FV→WAR anchor</strong> converts the scouting grade to an
     expected ${gTermLink("war", "WAR")}/year over six controlled seasons (${gTermLink("fv_to_war_table", "the FV→WAR table")}).
