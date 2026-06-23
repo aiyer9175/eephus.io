@@ -66,6 +66,37 @@ def _src_label(src: str) -> str:
     return _SOURCE_LABELS.get(src) or str(src).replace("_", " ").title()
 
 
+def xfv_movement(series: list) -> dict | None:
+    """Movement from the xFV trajectory (xfv_history): the xFV grade's change since its last
+    real step (dead-band _EPS). This is the PRIMARY movement signal (owner: movement = xFV
+    delta); the consensus same-source step is the fallback when a player has no xFV history.
+    Returns the headline-override fields (same direction enum + sign convention as
+    compute_genuine_movement) or None when there is no usable series. `series` = [(date, grade)]."""
+    pts = sorted(((d, float(x)) for d, x in (series or []) if d and x is not None),
+                 key=lambda t: t[0])
+    if len(pts) < 2:
+        return None
+    latest_d, latest = pts[-1]
+    # Walk back to the last point whose xFV differs from the latest by >= the plateau EPS.
+    anchor_d, anchor = pts[0]
+    for d, x in reversed(pts[:-1]):
+        if abs(latest - x) >= _EPS:
+            anchor_d, anchor = d, x
+            break
+    delta = round(latest - anchor, 2)
+    direction = "up" if delta >= _EPS else "down" if delta <= -_EPS else "flat"
+    return {
+        "direction": direction,
+        "delta": delta,
+        "basis": "xfv",
+        "strength": round(min(1.0, abs(delta) / 5.0), 2),
+        "from_label": f"xFV {round(anchor, 1)}",
+        "to_label": f"xFV {round(latest, 1)}",
+        "from_date": anchor_d,
+        "to_date": latest_d,
+    }
+
+
 def _explicit_fv_map(pt: dict) -> dict:
     """Source -> published FV at this point, EXPLICIT grades only.
 
