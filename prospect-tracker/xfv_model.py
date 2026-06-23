@@ -271,6 +271,13 @@ def _vec(r, side: str = "hit") -> dict:
             "peak_obp_rel": g(m.get("peak_obp_rel")), "peak_k_rel": g(m.get("peak_k_rel")),
             "peak_iso_rel": g(m.get("peak_iso_rel")), "peak_ops_rel": g(m.get("peak_ops_rel")),
             "iso_rel": g(m.get("iso_rel")),
+            # NOTE: game power stays out of the hitter model. Beyond raw iso_rel + peak_iso_rel
+            # (both rejected earlier), the 2026-06-22 CONDITIONAL-power experiment tested power
+            # REALIZED in games + level-weighted / contact-paired (iso_x_level, iso_upper,
+            # iso_x_hit, iso_x_contact, peak_iso_x_level): all FAILED the OOS bar (best debuted-km
+            # -0.0016; replacing tool_speed with power cost -0.014). Third independent confirmation
+            # that power does not earn a place here -- the Witt-class power-star miss is the
+            # accepted cost of the population-level power-overpricing correction.
         })
     return out
 
