@@ -121,11 +121,32 @@ def _injury_factor(r) -> float:
     return round(max(0.5, f), 3)
 
 
-def _statcast_factor(r) -> float:
-    """Live Statcast+ overlay tilt: nudge the xFV WAR projection by batted-ball quality /
-    Stuff+ (100 = average), which the user flagged as under-used. Current-state, upper-level
-    only -> a provisional tilt (no historical Statcast to OOS-validate), bounded +/-18%.
-    Players without a Statcast+ (lower levels) are untouched (factor 1.0)."""
+# Statcast+ live-tilt slope, CALIBRATED from the measured forward-r (data/statcast_plus_eval.json)
+# rather than a hand-set constant. SC+ is a 100+10z index, so a PERFECTLY-predictive SC+ would
+# justify 0.01 / point (= 10% per 1σ); the actual, weak forward-r (~0.12 pit / ~0.15 hit) scales
+# that down so the tilt is evidence-sized, not a WAG. Per side; the +/-18% clamp stays (it now
+# rarely binds, because the calibrated slope is far gentler than the old 0.008).
+_SC_TILT_PER_PT_AT_R1 = 0.01
+
+
+def _sc_forward_r() -> dict:
+    try:
+        e = json.loads((DATA_DIR / "statcast_plus_eval.json").read_text(encoding="utf-8"))
+        return {"hit": float(e["hitters"]["r_sc_vs_mlb_ops"]),
+                "pit": float(e["pitchers"]["r_sc_vs_mlb_era_inv"])}
+    except Exception:
+        return {"hit": 0.15, "pit": 0.12}
+
+
+_SC_FWD_R = _sc_forward_r()
+
+
+def _statcast_factor(r, side: str = "hit") -> float:
+    """Live Statcast+ overlay tilt: nudge the xFV WAR projection by batted-ball quality / Stuff+
+    (100 = average). Current-state, upper-level only -> a provisional tilt (no historical Statcast
+    to OOS-validate), bounded +/-18%. The slope is the per-side forward-r times the
+    perfect-predictor slope (_SC_TILT_PER_PT_AT_R1), so a weak signal gets a small tilt. Players
+    without a Statcast+ (lower levels) are untouched (factor 1.0)."""
     sc = r.get("statcast_plus")
     if sc is None:
         return 1.0
@@ -133,7 +154,8 @@ def _statcast_factor(r) -> float:
         sc = float(sc)
     except (TypeError, ValueError):
         return 1.0
-    return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * 0.008)), 3)
+    slope = max(0.0, _SC_FWD_R.get(side, 0.13)) * _SC_TILT_PER_PT_AT_R1
+    return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * slope)), 3)
 
 
 def run(persist: bool = True, side: str = "hit") -> dict:
@@ -406,7 +428,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         factors = _factors(ridge, feats)                  # explainer: why xFV != consensus
         inj = _injury_factor(r)                           # owner-directed live injury penalty
-        sc = _statcast_factor(r)                           # live Statcast+ quality tilt
+        sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
                                "mag": round(abs(sc - 1) * 6, 2)})
