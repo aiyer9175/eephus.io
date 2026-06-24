@@ -575,6 +575,387 @@ league_min_by_year:
   2025: 0.760
   2026: 0.780
 
+# =============================================================================
+# Bayesian trade value engine (bayes_trade_value.py)
+# =============================================================================
+# All numbers here are consumed only by the trade-value module, never by the
+# core surplus-value pipeline above. They live here so tuning is one-file.
+trade_value:
+
+  # § SCARCITY ----------------------------------------------------------------
+  # Positional scarcity multiplier on posterior surplus. Captures the market
+  # premium above what WAR positional adjustments already encode — the thin
+  # supply of viable starters at C/SS/CF means even average production there
+  # commands a premium that a 1B with identical WAR does not.
+  # Calibrated to observed trade-market comps, NOT AAV (which double-counts).
+  positional_scarcity:
+    C:    1.22   # ~15 viable MLB starters; framing is irreplaceable
+    SS:   1.12   # ~25 viable starters
+    CF:   1.09   # ~20 viable starters; speed/range hard to sustain
+    "2B": 1.05
+    "3B": 1.04
+    RF:   0.97   # corner OF — DH-adjacent, highest supply of MLB-calibre bats
+    LF:   0.97   # corner OF — same logic; Soderstrom/corner-only players
+    "1B": 0.96
+    DH:   0.93   # no defensive value; pure offensive profile
+    SP:   1.13   # premium for true rotation depth — controllable SP are the most
+    RHP:  0.92   # generic pitcher tag — treated as RP by default; SP overrides via role
+    LHP:  0.92   # generic pitcher tag — treated as RP by default; SP overrides via role
+    RP:   0.92
+    CL:   0.92
+    SIRP: 0.94
+    MIRP: 0.94
+    P:    1.00
+
+  # § FLOOR -------------------------------------------------------------------
+  # Additive defensive-floor WAR per season at each position (elite grade,
+  # ~65+ on 20-80 scale). This WAR is real regardless of offensive output and
+  # makes the value distribution left-truncated — the floor is non-Gaussian.
+  # Present-valued over floor_control_years at floor_discount_rate.
+  defensive_floor_war:
+    C:    2.5   # elite framing: +2–3 WAR; midpoint
+    SS:   1.5
+    CF:   1.2
+    "2B": 0.8
+    "3B": 0.7
+    RF:   0.4
+    LF:   0.2
+    "1B": 0.1
+    DH:   0.0
+    SP:   0.0
+    RP:   0.0
+  floor_control_years: 5
+  floor_discount_rate: 0.09
+  floor_dollars_per_war_mm: 8.76   # 1-to-2 WAR tier; floor D is real but not star-tier
+  def_grade_above_avg: 55.0        # partial floor threshold (20-80 scale)
+  def_grade_elite:     65.0        # full floor threshold
+
+  # § PRIOR -------------------------------------------------------------------
+  # Prior precision = base × pedigree_strength × age_for_level_buffer × source_weight
+  # Higher precision → observation moves posterior less (prior is trusted more).
+  prior:
+    base_precision: 1.0
+
+    # § PEDIGREE: signing bonus / draft slot → prior trust
+    # IFA bonuses > $1M signal genuine elite evaluation; draft top-10 picks
+    # have survived the strictest pre-draft filter.  Log-scale: each 10× in
+    # bonus adds one unit of precision weight (so $1M vs $10k is +2 units).
+    pedigree:
+      ifa_log_scale: 2.0           # bonus_usd → log10(bonus/10000) × this
+      draft_top10_bonus: 0.8       # flat bonus for top-10 overall picks
+      draft_round1_bonus: 0.4      # flat bonus for round-1 picks (non top-10)
+      draft_round2_bonus: 0.15
+      max_pedigree_precision: 3.0  # cap so no single player is immovable
+
+    # § AGE_CURVE: how much each year young-for-level protects the prior
+    # A player who was young for every MiLB level has passed harder tests,
+    # so we demand more negative evidence before downgrading.
+    age_for_level:
+      buffer_per_year_young: 0.30  # each year young adds this to precision
+      max_buffer: 1.5              # cap — even perfect age profile isn't infinite
+
+    # Source count: more scouts grading → tighter consensus → tighter prior
+    n_sources:
+      per_source_weight: 0.15      # each source above 1 adds this
+      max_source_weight: 0.60
+
+  # § LIKELIHOOD / § ROLLING --------------------------------------------------
+  # Performance signal is a rolling-weighted composite of:
+  #   recent  (last 15 gamelog games)   — weight 0.35
+  #   season  (full current-season line) — weight 0.25
+  # plus, for MLB players, career context.
+  # Observation noise = base_noise / sqrt(sample / ref_sample)
+  rolling:
+    recent_weight: 0.35   # recent_games (last ~15 games)
+    season_weight: 0.65   # full current-season statline
+    # (career_weight for debuted players is handled separately in debuted_player_value)
+
+  obs_noise:
+    hitter_ref_pa:   300.0    # PA at which noise = base
+    pitcher_ref_ip:  100.0    # IP at which noise = base
+    base_noise:        2.5    # $M noise at the reference sample
+    min_noise_floor:   0.6    # irreducible noise even with huge sample
+
+  # § AUTHENTIC ---------------------------------------------------------------
+  # Skills-authenticity weight on the observation. If underlying metrics
+  # don't support the surface results, we discount the likelihood term.
+  # All thresholds are for the overall statline; level-adjusted internally.
+  authenticity:
+    hitter:
+      max_k_pct:          27.0   # K% above this hurts authenticity
+      min_bb_pct:          6.5   # BB% below this hurts authenticity
+      max_xwoba_woba_gap:  0.025 # wOBA − xwOBA > this = luck component
+      min_pa_for_full:   150     # below this PA, authenticity is capped at 0.7
+    pitcher:
+      max_bb_pct:         11.0
+      min_k_pct:          17.0
+      max_era_fip_gap:     0.60  # ERA − FIP > this = lucky ERA
+      min_ip_for_full:    40.0
+
+  # § FLASH -------------------------------------------------------------------
+  # Bimodal mixture model for players with explicit upside markers.
+  # P(value) = p_click × N(μ_elite, σ) + (1 − p_click) × N(μ_floor, σ)
+  # 'Flash' = a peak-window performance that updates p_click upward even
+  # when full-season results are mixed (the Detmers type).
+  flash:
+    hitter_peak_xwoba:    0.370  # peak-window xwOBA qualifying as a flash
+    pitcher_peak_k_pct:    28.0  # peak-window K% qualifying as a flash
+    pitcher_peak_era:       2.80 # peak-window ERA qualifying (low = good)
+    p_click_base:           0.20 # P(ceiling accessible) before any flash event
+    p_click_pedigree_bonus: 0.12 # bump for high-pedigree (bonus > $2M or top-10 pick)
+    p_click_flash_bonus:    0.22 # bump per confirmed flash event
+    p_click_max:            0.80 # cap
+    # Elite ceiling and floor surplus $M for the bimodal display arms
+    # (not used in the main Kalman update — only for the UI distribution viz)
+    elite_surplus_fv_bump:  10.0  # FV points to add for the "clicked" arm
+    floor_surplus_fv_drop:   8.0  # FV points to drop for the "didn't click" arm
+
+  # § WORRY -------------------------------------------------------------------
+  # Worriedness = P(skills_decay | trajectory). Decomposed by type:
+  #   approach_decay    (K%↑, BB%↓, chase%↑) — most concerning; hardest to fix
+  #   contact_quality   (EV↓, barrel%↓, stable approach) — mechanical; often fixable
+  worriedness:
+    # Minimum K% rise or BB% drop to register approach decay signal
+    approach_k_pct_threshold:   3.0  # pp rise in K% from baseline
+    approach_bb_pct_threshold:  2.0  # pp drop in BB%
+    approach_chase_threshold:   3.0  # pp rise in O-Swing%
+    # Contact-quality signal thresholds
+    contact_ev_drop_threshold:  2.0  # mph drop in avg_ev
+    contact_barrel_drop_threshold: 2.5  # pp drop in barrel_pct
+    # How much each signal type raises worriedness [0,1]
+    approach_weight:     0.65
+    contact_weight:      0.35
+    # Age-for-level buffer scales down worriedness for young-for-level players
+    age_buffer_discount: 0.25  # each year young reduces worriedness by this fraction
+
+  # § OPTIONS -----------------------------------------------------------------
+  # Additive $M premium per remaining option (roster flexibility value).
+  # More options = ability to shuttle without waivers = real competitive value.
+  options:
+    premium_per_option_mm:  0.9   # base value per option
+    max_options_in_system:    3   # MLB standard; clamp inputs
+
+  # § RULE5 -------------------------------------------------------------------
+  # Urgency premium when a player must be added to the 40-man or exposed to
+  # the Rule 5 draft. Accrues in the months before the deadline.
+  rule5:
+    deadline_month:  11           # November Rule 5 deadline
+    urgency_window_months: 4      # premium starts this many months before
+    urgency_premium_mm: 1.8       # full premium when inside the window
+    # Years in system before Rule 5 exposure (drafted/signed before college: 4;
+    # college: 3). We use 3 as a conservative default.
+    exposure_years_default: 3
+
+  # § AGE_CURVE (catcher bonus) -----------------------------------------------
+  # Catchers develop offensively later than other positions (peak age ~29 vs 27).
+  # A young catcher who shows any offensive ability gets an upside bonus because
+  # their offensive prime hasn't arrived yet.
+  catcher_dev:
+    late_peak_bonus:  0.08     # multiplicative bonus on posterior for catchers ≤ age_threshold
+    age_threshold:    24       # catchers at or under this age qualify
+
+  # § GROSS_FLOOR: minimum trade value for debuted players with real production.
+  # Even when contract_surplus == $0 (salary > production value), a productive
+  # veteran has real trade market value because gross WAR is scarce. The floor
+  # = PV(gross WAR over ctrl years) × fraction. Calibrated against BA dynasty
+  # top-500: fraction=0.22 lands expensive-contract elite producers (Tucker,
+  # Crochet) in the $25-35M range and leaves pure-surplus players unchanged.
+  # § AGING_CURVE: used by _aging_factor in bayes_trade_value.py.
+  # min_multiplier was previously hardcoded at 0.50, causing severe overvaluation
+  # of late-career players on cheap long contracts (Will Smith: age-37 credited
+  # as 2.0 WAR forever at $12M salary). Catchers age faster — physical toll
+  # accelerates decline past league average.
+  aging_curve:
+    hitter_peak_age:       27.0
+    hitter_decline_per_yr:  0.07
+    pitcher_peak_age:      25.0
+    pitcher_decline_per_yr: 0.07
+    catcher_peak_age:      25.0
+    catcher_decline_per_yr: 0.09   # faster than league average
+    min_multiplier:         0.25   # floor for hitters/pitchers (was hardcoded 0.50)
+    catcher_min_multiplier: 0.20   # catchers fall further in decline phase
+
+  gross_production_floor:
+    enabled: true
+    fraction: 0.22          # gross_war_pv × this = trade value floor
+    min_true_talent_war: 0.5  # only applies when player projects to real production
+    worry_war_scale: 0.40   # worriedness reduces the WAR used for the floor.
+                            # worry=0 → no reduction; worry=0.65 → WAR × (1 - 0.65×0.40)
+                            # Prevents Devers-type (long post-peak contract + declining
+                            # metrics) from getting a floor anchored on inflated career WAR.
+
+  # § ARCHETYPE_POLICY ---------------------------------------------------------
+  # Centralized group-level policy for the trade board. This is intentionally a
+  # small set of archetype knobs layered AFTER the base posterior but BEFORE the
+  # final trade-value assembly, so examples like Basallo/Vargas/Lile tune a
+  # shared policy instead of becoming player-specific patches.
+  archetype_policy:
+    enabled: true
+
+    stale_mlb_prior:
+      min_age: 28.0
+      min_pa: 1500.0
+
+    young_premium_confirming:
+      max_age: 22.5
+      min_fv: 55.0
+      min_control_years: 6.0
+      premium_positions: [C, SS, CF]
+      posterior_floor_prior_pct: 0.82
+
+    young_peak_plateau:
+      max_age: 24.5
+      min_fv: 58.0
+      min_control_years: 6.0
+      max_true_talent_war: 2.0
+      posterior_floor_prior_pct: 0.55
+
+    older_pedigree_breakout:
+      min_age: 25.0
+      max_age: 29.5
+      min_fv: 50.0
+      min_true_talent_war: 1.5
+      min_authenticity: 0.75
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      posterior_floor_prior_pct: 0.50
+
+    young_rookie_hitter_confirming:
+      max_age: 24.5
+      min_fv: 52.0
+      min_pa: 150.0
+      max_pa: 500.0
+      max_k_pct: 25.0
+      min_bb_pct: 6.0
+      min_iso: 0.120
+      min_barrel_pct: 8.0
+      posterior_floor_prior_pct: 0.65
+
+    cheap_control_breakout_hitter:
+      max_age: 28.0
+      min_control_years: 2.0
+      max_current_salary_mm: 5.0
+      min_true_talent_war: 1.5
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      posterior_multiplier: 1.15
+
+    older_low_prior_breakout:
+      min_age: 22.5
+      max_fv: 47.5
+      min_pa: 650.0
+      min_ip: 140.0
+      max_posterior_prior_pct_before_discount: 1.75
+      posterior_multiplier: 0.88
+
+    premium_position_breakout:
+      max_age: 29.5
+      min_true_talent_war: 2.2
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      positions: [C, SS, CF]
+      posterior_floor_prior_pct: 0.55
+
+    high_prior_mlb_underachiever:
+      min_fv: 55.0
+      min_pa: 1500.0
+      max_true_talent_war: 2.5
+      max_xwoba_est: 0.300
+      max_iso: 0.130
+      max_barrel_pct: 5.5
+      posterior_multiplier: 0.45
+
+    current_offense_not_supporting_prior:
+      min_fv: 55.0
+      min_pa: 300.0
+      max_xwoba_est: 0.300
+      max_iso: 0.130
+      max_barrel_pct: 5.5
+      posterior_multiplier: 0.72
+
+    productive_veteran_slugger:
+      min_age: 29.0
+      min_true_talent_war: 3.0
+      max_worriedness: 0.20
+      positions: [1B, LF, RF, OF, DH]
+      posterior_multiplier: 1.08
+
+    command_pitcher_small_sample:
+      min_age: 26.0
+      max_validated_ip: 240.0
+      max_fv: 50.0
+      max_weighted_stuff_plus: 100.0
+      max_composite_stuff_plus: 90.0
+      low_primary_stuff_plus: 95.0
+      posterior_multiplier: 0.82
+
+    stuff_supported_pitcher:
+      max_age: 28.5
+      min_fv: 50.0
+      min_primary_stuff_plus: 105.0
+      min_weighted_stuff_plus: 104.0
+      min_k_pct: 25.0
+      max_bb_pct: 8.0
+      posterior_floor_prior_pct: 1.05
+
+    injured_low_stuff_pitcher:
+      max_fv: 50.0
+      max_composite_stuff_plus: 95.0
+      max_primary_stuff_plus: 100.0
+      posterior_multiplier: 0.65
+
+    young_elite_stuff_pitcher:
+      max_age: 24.5
+      min_fv: 55.0
+      min_primary_stuff_plus: 105.0
+      min_composite_stuff_plus: 115.0
+      posterior_floor_prior_pct: 0.65
+
+    validated_late_pitcher:
+      min_age: 25.0
+      min_validated_ip: 155.0
+      min_true_talent_war: 2.0
+      min_primary_stuff_plus: 95.0
+      posterior_multiplier: 1.05
+
+    expensive_nonstar_veteran:
+      min_current_salary_mm: 30.0
+      max_true_talent_war: 3.0
+      posterior_multiplier: 0.65
+
+    post_peak_expensive_middle_infielder:
+      min_age: 30.0
+      positions: [SS, 2B]
+      min_control_years: 4.0
+      min_current_salary_mm: 20.0
+      max_true_talent_war: 3.3
+      posterior_multiplier: 0.20
+      suppress_additive_floors: true
+
+  # Level-average baselines for performance signal (fallback when level_norms absent)
+  level_baselines:
+    hitter:
+      MLB:  {k_pct: 22.5, bb_pct: 8.5,  woba: 0.318, xwoba: 0.318, avg_ev: 88.5, barrel_pct: 8.0}
+      AAA:  {k_pct: 23.0, bb_pct: 8.8,  woba: 0.330, xwoba: 0.328, avg_ev: 86.0, barrel_pct: 7.0}
+      AA:   {k_pct: 23.5, bb_pct: 8.0,  woba: 0.325, xwoba: 0.322, avg_ev: 84.5, barrel_pct: 6.5}
+      "A+": {k_pct: 24.0, bb_pct: 8.5,  woba: 0.330, xwoba: 0.326, avg_ev: 83.0, barrel_pct: 6.0}
+      A:    {k_pct: 25.0, bb_pct: 8.0,  woba: 0.330, xwoba: 0.325, avg_ev: 82.0, barrel_pct: 5.5}
+      CPX:  {k_pct: 28.0, bb_pct: 9.0,  woba: 0.330, xwoba: 0.323, avg_ev: 80.0, barrel_pct: 4.5}
+    pitcher:
+      MLB:  {k_pct: 22.5, bb_pct: 8.5,  era: 4.10, fip: 4.00}
+      AAA:  {k_pct: 22.0, bb_pct: 9.0,  era: 4.60, fip: 4.40}
+      AA:   {k_pct: 23.0, bb_pct: 9.5,  era: 4.30, fip: 4.20}
+      "A+": {k_pct: 22.5, bb_pct: 9.5,  era: 4.10, fip: 4.00}
+      A:    {k_pct: 21.0, bb_pct: 10.0, era: 4.20, fip: 4.10}
+      CPX:  {k_pct: 20.0, bb_pct: 11.0, era: 4.50, fip: 4.40}
+
+
 sources:
   buckets_and_probs: "Ben Clemens, 'How Do Prospect Grades Translate to Future Outcomes?', FanGraphs (2025)"
   fv_avg_annual_war: "'The New FanGraphs Scouting Primer' (2018); Prospect Week Primer calibration examples"

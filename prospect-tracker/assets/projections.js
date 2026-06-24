@@ -75,6 +75,8 @@
                   teamSort: null, teamDir: 1 };
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
+  let FIELDING = null;          // data/mlb_fielding_positions.json, lazy
+  let FIELDING_LOADING = false;
 
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
@@ -878,6 +880,41 @@
       <div class="mlbp-grid">${cells.map(([l, v]) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${l}</span><span class="mlbp-cell-val">${v}</span></div>`).join("")}</div>
       <div class="fa-sub" style="margin-top:6px;"><a class="fa-player-link" href="/fa/#player=${encodeURIComponent(p.key)}">market card on the class board →</a></div></div>`;
   }
+  function ensureFielding(key) {
+    if (FIELDING || FIELDING_LOADING) return;
+    FIELDING_LOADING = true;
+    fetch("/data/mlb_fielding_positions.json", { cache: "no-cache" })
+      .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+      .then(d => {
+        FIELDING = d || {};
+        FIELDING_LOADING = false;
+        if (state.player === key) renderPlayer(key);
+      })
+      .catch(() => { FIELDING = { players: {} }; FIELDING_LOADING = false; });
+  }
+  function positionGamesSummary(key) {
+    const entry = FIELDING && FIELDING.players && FIELDING.players[key];
+    const positions = entry && entry.positions;
+    if (!positions) return "";
+    const rows = Object.entries(positions)
+      .map(([pos, row]) => ({
+        pos,
+        games: Number(row && row.games),
+        starts: Number(row && row.games_started),
+        innings: Number(row && row.innings),
+      }))
+      .filter(r => Number.isFinite(r.games) && r.games > 0)
+      .sort((a, b) => (b.games - a.games) || (b.innings - a.innings) || a.pos.localeCompare(b.pos));
+    if (!rows.length) return "";
+    const season = FIELDING.season || "current";
+    return `<div class="position-usage-strip" title="${esc(String(season))} MLB games by position">
+      <span class="position-usage-label">${esc(String(season))} usage</span>
+      ${rows.map(r => {
+        const title = `${r.pos}: ${r.games} games${Number.isFinite(r.starts) ? `, ${r.starts} starts` : ""}${Number.isFinite(r.innings) ? `, ${r.innings} innings` : ""}`;
+        return `<span class="position-usage-chip" title="${esc(title)}"><span>${esc(r.pos)}</span>:${esc(String(r.games))}</span>`;
+      }).join("")}
+    </div>`;
+  }
   function renderPlayer(key) {
     const root = document.getElementById("proj-rows");
     const bar = document.getElementById("proj-filters");
@@ -902,6 +939,7 @@
       root.innerHTML = `<div class="state-message">No detail for "${esc(key)}". <a href="#" onclick="location.hash='';return false;">Back</a>.</div>`;
       return;
     }
+    ensureFielding(key);
     const photo = p.mlbam
       ? `<img class="mlbp-headshot" src="${headshotURL(p.mlbam, 240)}" alt="" onerror="this.style.visibility='hidden'">` : "";
     const tiles = [];
@@ -934,6 +972,7 @@
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
+      ${positionGamesSummary(key)}
       ${fanChart(p)}
       ${p.twoWay && p.proj && p.proj.warHit ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : ""}
       ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : ""}

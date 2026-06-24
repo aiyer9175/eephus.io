@@ -185,7 +185,12 @@ def _level_from_split(split: dict) -> str | None:
     return level
 
 
-def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
+def _game_logs(
+    player_id: int,
+    season: int,
+    is_pitcher: bool,
+    ttl_seconds: int = 86400,
+) -> list[dict]:
     """Fetch per-player game logs using sportId hydrates.
 
     The plain `leagueListId=milb_full` stats path misses some rookie-ball
@@ -207,7 +212,7 @@ def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
                     f"sportId={sport_id},gameType=[R]),hydrations"
                 )
             },
-            ttl_seconds=86400,
+            ttl_seconds=ttl_seconds,
         )
         people = data.get("people") or []
         stats = (people[0].get("stats") or []) if people else []
@@ -892,6 +897,7 @@ def fetch_statcast_metrics_for_player(
     level_hint: str | None,
     is_pitcher: bool,
     feed_cache: dict[int, dict] | None = None,
+    logs: list[dict] | None = None,
 ) -> StatcastMetricRow | None:
     """Build the Statcast metric row for one player.
 
@@ -907,7 +913,7 @@ def fetch_statcast_metrics_for_player(
     """
     if not mlbam_id:
         return None
-    logs = _game_logs(int(mlbam_id), season, is_pitcher=is_pitcher)
+    logs = logs if logs is not None else _game_logs(int(mlbam_id), season, is_pitcher=is_pitcher)
     logs = [s for s in logs if (s.get("_level") or level_hint) in TRACKED_LEVELS]
     if not logs:
         return None
@@ -1111,6 +1117,7 @@ def fetch_statcast_metrics_for_players(
     players: list[tuple[str, str, int | None, str | None, bool]],
     season: int,
     workers: int = 10,
+    logs_by_key: dict[str, list[dict]] | None = None,
 ) -> dict[str, StatcastMetricRow]:
     targets = [
         p for p in players
@@ -1134,25 +1141,30 @@ def fetch_statcast_metrics_for_players(
     # ============================================================
 
     # ---- PASS 1: game logs per player (parallel, cached) ----
-    logs_by_key: dict[str, list[dict]] = {}
+    fetched_logs_by_key: dict[str, list[dict]] = {}
     _p1_start = _time.monotonic()
-    _log.info("statcast pass 1/3: fetching game logs for %d players (%d workers)",
-              len(targets), max_workers)
-    def _fetch_logs(item):
-        key, _name, mlbam, _level, is_p = item
-        try:
-            return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
-        except Exception as e:
-            _log.debug("statcast logs failed for %s: %s", key, e)
-            return key, []
-    _p1_done = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for key, logs in ex.map(_fetch_logs, targets):
-            logs_by_key[key] = logs
-            _p1_done += 1
-            if _p1_done % 250 == 0 or _p1_done == len(targets):
-                _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
-                          _p1_done, len(targets), _time.monotonic() - _p1_start)
+    if logs_by_key is not None:
+        fetched_logs_by_key = {key: list(logs_by_key.get(key) or []) for key, *_ in targets}
+        _log.info("statcast pass 1/3: using preloaded game logs for %d players",
+                  len(targets))
+    else:
+        _log.info("statcast pass 1/3: fetching game logs for %d players (%d workers)",
+                  len(targets), max_workers)
+        def _fetch_logs(item):
+            key, _name, mlbam, _level, is_p = item
+            try:
+                return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
+            except Exception as e:
+                _log.debug("statcast logs failed for %s: %s", key, e)
+                return key, []
+        _p1_done = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+            for key, logs in ex.map(_fetch_logs, targets):
+                fetched_logs_by_key[key] = logs
+                _p1_done += 1
+                if _p1_done % 250 == 0 or _p1_done == len(targets):
+                    _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
+                              _p1_done, len(targets), _time.monotonic() - _p1_start)
 
     # ---- PASS 2: unique game-feed fetch (parallel, cached) ----
     # Feeds go through the shared feed_cache (one on-disk dir keyed by
@@ -1161,7 +1173,7 @@ def fetch_statcast_metrics_for_players(
     # re-fetches the trailing few days of games.
     game_pks: set[int] = set()
     game_date_by_pk: dict[int, str] = {}
-    for logs in logs_by_key.values():
+    for logs in fetched_logs_by_key.values():
         for split in logs:
             gpk = int((split.get("game") or {}).get("gamePk") or 0)
             if gpk:
@@ -1173,7 +1185,7 @@ def fetch_statcast_metrics_for_players(
     if game_pks:
         _p2_start = _time.monotonic()
         _log.info("statcast pass 2/3: fetching %d unique game feeds (deduped from %d player×game lookups)",
-                  len(game_pks), sum(len(v) for v in logs_by_key.values()))
+                  len(game_pks), sum(len(v) for v in fetched_logs_by_key.values()))
         def _fetch_feed(gpk):
             try:
                 return gpk, feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
@@ -1206,6 +1218,7 @@ def fetch_statcast_metrics_for_players(
                 fetch_statcast_metrics_for_player,
                 key, name, mlbam, season, level, is_pitcher,
                 feed_cache,
+                fetched_logs_by_key.get(key),
             ): key
             for key, name, mlbam, level, is_pitcher in targets
         }
