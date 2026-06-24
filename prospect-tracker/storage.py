@@ -5711,7 +5711,7 @@ def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
 
 def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
                            career_war=None, roster_status=None,
-                           contract=None, career_stats=None):
+                           contract=None, career_stats=None, wag_fv=None):
     """Bake the engine's DEBUTED-player split + WAG for a player who has reached the
     majors (Prompts D + M). REALIZED (consumed control years, sunk) + REMAINING
     (projected) trade value + their sum (total value), the Bayes-updated outcome
@@ -5771,7 +5771,12 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
         # above; it's None for many players and would otherwise fall this WAG call
         # back to PA-matching, inflating injury-limited rates.)
         season_count = len(seasons)
-        w = _engine_wag_result(fv, is_pitcher, position, observed_war,
+        # WAG is "WAR Above GRADE" — the grade baseline is now xFV (our outcome-grounded
+        # grade) where available, falling back to the consensus `fv` only where xFV
+        # abstains. Only the WAG baseline uses wag_fv; the debuted VALUE model above keeps
+        # the `fv` passed in (its surplus is priced from the consensus/xFV value pipeline).
+        _wag_baseline = wag_fv if wag_fv is not None else fv
+        w = _engine_wag_result(_wag_baseline, is_pitcher, position, observed_war,
                                age=age,
                                service_years=(float(season_count) if season_count else None),
                                career_stats=career_stats)
@@ -8682,13 +8687,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             latest_fv, _is_pitcher_vf, p.position,
             age=age, eta_years=_eta_years_from(eta, date.today().year),
             fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
+        # WAG baseline = the player's xFV grade (locked at debut for graduates) where
+        # available; None falls back to consensus inside _build_debuted_payload.
+        _wag_fv = (_xfv_by_key.get(p.player_key) or {}).get("xfv_grade")
         _debuted_value = (
             _build_debuted_payload(
                 latest_fv, _is_pitcher_vf, p.position, age=age,
                 career_war=career_war.get(p.player_key),
                 roster_status=roster_status.get(p.player_key),
                 contract=contracts_by_key.get(p.player_key),
-                career_stats=career_stats.get(p.player_key))
+                career_stats=career_stats.get(p.player_key),
+                wag_fv=_wag_fv)
             if p.status == "debuted" else None)
         payload = {
             "player_key": p.player_key,
@@ -10065,13 +10074,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         cw = (career_war or {}).get(gp.player_key) or {}
         fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
                         if gp.points else None)
+        # WAG baseline = xFV (WAR Above GRADE; the grade is now xFV), falling back to
+        # consensus where xFV abstains. _grad_wag reads fv_close_raw -> fv_close.
+        _gp_xfv = (_xfv_by_key.get(gp.player_key) or {}).get("xfv_grade")
+        _wag_fv_raw = _gp_xfv if _gp_xfv is not None else fv_close_raw
         gp_bd = birth_dates.get(gp.player_key)
         gp_age = compute_age_decimal(gp_bd)
         gp_current_level = roster_level_by_key.get(gp.player_key)
         wag = _grad_wag({
             "career_war":   cw,
-            "fv_close_raw": fv_close_raw,
-            "fv_close":     gp.fv_close,
+            "fv_close_raw": _wag_fv_raw,
+            "fv_close":     (_gp_xfv if _gp_xfv is not None else gp.fv_close),
             "position":     gp.position,
             "career_stats": career_stats.get(gp.player_key, []),
             "transactions": transactions_by_player.get(gp.player_key, []),
