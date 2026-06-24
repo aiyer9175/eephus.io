@@ -48,14 +48,17 @@
   --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
   --grain: rgba(15,27,45,.035);
   --grain2: rgba(139,132,116,.05);
-  /* DotGothic16 (self-hosted, @font-face above) sits right after the MS Gothic
-     faces so NOTHING ever falls through to a generic system monospace: where MS
-     Gothic / MS UI Gothic exist they win; everywhere else the brand pixel-gothic
-     renders instead of Consolas/ui-monospace. */
-  --font-retro: "MS UI Gothic","MS Gothic","DotGothic16","Osaka","VT323",
-                "Press Start 2P",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
-  --font-retro-mono: "MS Gothic","MS UI Gothic","DotGothic16","Osaka-Mono","VT323","Press Start 2P",
-                     ui-monospace,"SF Mono",Consolas,monospace;
+  /* LEGIBILITY FIX: MS UI Gothic / MS Gothic still lead (the brand pixel-gothic on
+     Windows), but where they're ABSENT (Mac / Linux / mobile) COPY now falls to a
+     clean technical MONOSPACE — on-theme + legible — instead of the DotGothic16
+     pixel face, which rendered body copy illegibly off-Windows. Pixel-gothic is
+     kept ONLY for the logo (--font-logo). Mirrors prospx/index.html. */
+  --font-retro: "MS UI Gothic","MS Gothic",
+                ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,
+                "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
+  --font-retro-mono: "MS Gothic","MS UI Gothic",
+                     ui-monospace,"SF Mono","SFMono-Regular",Consolas,Menlo,
+                     "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
   /* The eephus.io wordmark + headings. DotGothic16 (self-hosted pixel-gothic)
      leads so the logo renders the MS-Gothic/Y2K look on EVERY device; real MS
      Gothic / MS UI Gothic are honored next for anyone who has them; Roboto Mono

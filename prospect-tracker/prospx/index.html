@@ -218,19 +218,22 @@
          Long-form prose (scouting reports, glossary entries) keeps
          its readability tuning via per-element line-height + size
          tokens rather than a separate font family. */
-      /* DotGothic16 (self-hosted pixel-gothic, @font-face in site.css) sits
-         after the MS Gothic faces so nothing ever falls to a generic system
-         monospace - the brand pixel-gothic renders everywhere MS Gothic is
-         absent. Mirrors assets/site.css. */
-      --font-retro: "MS UI Gothic", "MS Gothic", "DotGothic16", "Osaka",
-                    "VT323", "Press Start 2P",
-                    ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+      /* LEGIBILITY FIX: on Windows the brand pixel-gothic (MS UI Gothic / MS
+         Gothic) still leads, but where it's ABSENT (Mac / Linux / mobile) COPY now
+         falls to a clean technical MONOSPACE — on-theme for an analytics tool and a
+         retro-terminal cousin of MS Gothic — instead of the self-hosted DotGothic16
+         pixel face, which was rendering body copy illegibly off-Windows. The pixel-
+         gothic is retained ONLY for the logo (var(--font-logo), DotGothic16).
+         Mirrors assets/site.css. */
+      --font-retro: "MS UI Gothic", "MS Gothic",
+                    ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas,
+                    "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       /* Blockier monospace variant - used on the iconic chrome
          elements (FV badges, farm-grade letters) where the strict
          monospace baseball-card look is the point. */
-      --font-retro-mono: "MS Gothic", "MS UI Gothic", "DotGothic16", "Osaka-Mono",
-                         "VT323", "Press Start 2P",
-                         ui-monospace, "SF Mono", Consolas, monospace;
+      --font-retro-mono: "MS Gothic", "MS UI Gothic",
+                         ui-monospace, "SF Mono", "SFMono-Regular", Consolas, Menlo,
+                         "Liberation Mono", "DejaVu Sans Mono", "Roboto Mono", monospace;
       --font-serif: var(--font-retro);
       --font-sans:  var(--font-retro);
       --font-mono:  var(--font-retro-mono);
