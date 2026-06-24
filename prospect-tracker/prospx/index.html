@@ -8789,6 +8789,7 @@
           <optgroup label="Grade">
             <option value="fv">Consensus FV</option>
             <option value="xfv">xFV (our outcome-grounded grade)</option>
+            <option value="xfv_delta">xFV − consensus gap (biggest first)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
@@ -14889,6 +14890,16 @@ function getFilteredActives() {
     // xfvRankValue falls back to consensus FV for players with no pro track record
     // (where xFV abstains) so they interleave by consensus instead of vanishing.
     pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || fvCmpDesc(a, b));
+  } else if (state.sort === "xfv_delta") {
+    // Biggest xFV-minus-consensus gap first: surfaces the prospects the outcome
+    // model rates furthest ABOVE the scouting consensus (the model's top "buys"),
+    // with the consensus-faders at the bottom. Players where xFV abstains (no gap)
+    // sink below all rated gaps; ties break on the xFV rank.
+    const _gap = p => {
+      const x = getXfv(p);
+      return (x && x.xfv_minus_consensus != null) ? Number(x.xfv_minus_consensus) : -Infinity;
+    };
+    pool.sort((a, b) => (_gap(b) - _gap(a)) || (xfvRankValue(b) - xfvRankValue(a)) || fvCmpDesc(a, b));
   } else if (state.sort === "surplus_sv" || state.sort === "surplus_risk"
              || state.sort === "surplus_p10" || state.sort === "surplus_p90"
              || state.sort === "surplus_pbust" || state.sort === "wag") {
