@@ -16434,18 +16434,16 @@ function renderActiveContextRail(railId = "active-context-rail") {
   </div>` : "";
 
   // -------- FV distribution histogram --------
+  // Binned by xFV grade (the primary) where rated, consensus FV as the fallback.
+  // Includes provisional (source-ungraded) prospects — they carry an inline xFV grade
+  // and are first-class members of the board, so the distribution matches the pool the
+  // board actually shows (was active-only, excluding the provisional tail).
   const tiers = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
   const counts = {};
   for (const t of tiers) counts[t] = 0;
-  for (const p of players) {
-    if (p.fv_close == null) continue;
-    const t = Math.max(20, Math.min(80, Math.floor(p.fv_close / 5) * 5));
-    counts[t] = (counts[t] || 0) + 1;
-  }
-  // Re-bin by xFV grade (the primary) where rated; consensus FV is the fallback.
-  for (const t of tiers) counts[t] = 0;
+  const _distPool = players.concat(typeof provPlayers === "function" ? provPlayers() : []);
   let _distN = 0;
-  for (const p of players) {
+  for (const p of _distPool) {
     const _x = getXfv(p);
     const g = (_x && _x.xfv_grade != null) ? xfvGradeDisplay(_x)
               : (p.fv_close != null ? fvCeil(p.fv_close) : null);
@@ -16467,7 +16465,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
     </div>`;
   }).join("");
   const distCard = `<div class="ctx-card">
-    <div class="ctx-title">xFV distribution · ${_distN} graded</div>
+    <div class="ctx-title">xFV distribution · ${_distN} rated</div>
     ${distRows}
   </div>`;
 
@@ -36928,8 +36926,12 @@ function makeFvHistogram(prospects, opts) {
   opts = opts || {};
   const counts = Object.fromEntries(FV_HIST_TIERS.map(t => [t, 0]));
   (prospects || []).forEach(p => {
-    const n = parseInt(p.fv_label || p.fv_raw, 10);
-    if (isNaN(n)) return;
+    // Bin by xFV (the primary grade) where rated — incl. provisional prospects, which
+    // carry an inline xFV grade — falling back to the consensus FV label/raw.
+    const _x = (typeof getXfv === "function") ? getXfv(p) : null;
+    const n = (_x && _x.xfv_grade != null) ? fvCeil(_x.xfv_grade)
+              : parseInt(p.fv_label != null ? p.fv_label : p.fv_raw, 10);
+    if (n == null || isNaN(n)) return;
     const tier = FV_HIST_TIERS.find(t => n >= t) ?? 40;
     counts[tier]++;
   });
@@ -46085,8 +46087,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     </div>` : ' - '}
   </div>`;
   const fvDistCard = `<div class="farm-side-card">
-    <div class="side-title">FV distribution <span class="side-count">${(org.prospects || []).length} graded</span></div>
-    ${makeFvHistogram(org.prospects)}
+    <div class="side-title">xFV distribution <span class="side-count">${rosterPlayersAll.length} rated</span></div>
+    ${makeFvHistogram(rosterPlayersAll)}
   </div>`;
   const acqMixCard = `<div class="farm-side-card">
     <div class="side-title">Acquired via <span class="side-count">${rosterPlayersAll.length} tracked</span></div>
