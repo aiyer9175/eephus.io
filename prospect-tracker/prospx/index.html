@@ -8382,7 +8382,7 @@
            CSS gradients aren't required on `stroke`). The stitching
            dashes overlay the seam to evoke a real ball without
            cluttering the silhouette. -->
-      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="PROSPX baseball logo">
+      <svg class="h1-logo" viewBox="0 0 44 44" role="img" aria-label="PROSPX baseball logo" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">
         <defs>
           <linearGradient id="ball-seam-gradient" x1="0" y1="0" x2="1" y2="0">
             <stop offset="0%"   stop-color="#B91C1C"/>
@@ -8407,7 +8407,7 @@
           <text class="mono-letter mono-x" x="26"   y="30">X</text>
         </g>
       </svg>
-      <span class="h1-title">PROSPX<span class="h1-rule" aria-hidden="true"></span></span>
+      <span class="h1-title" style="cursor:pointer;" title="Back to MiLB Prospects" onclick="goToProspectsBoard()">PROSPX<span class="h1-rule" aria-hidden="true"></span></span>
       <span class="eephus-beta h1-stage" title="PROSPX is in beta">&beta; beta</span>
       <!-- @MLBPROSPX lives in the title space the beta tag vacated (the badge
            moved to the eephus.io wordmark). Opens in a new tab. -->
@@ -12884,6 +12884,16 @@ function goHome() {
   if (state.formWindow !== "3y")          p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
+}
+
+// Masthead logo click → the MiLB Prospects (active) board. Reuses the canonical
+// section-tab nav path (clears the detail view + resets filters + re-renders) so the
+// logo behaves exactly like clicking the "MiLB Prospects" tab, from anywhere on the site.
+function goToProspectsBoard() {
+  const tab = document.querySelector('.section-tab[data-section="active"]');
+  if (tab) { tab.click(); }
+  else { state.section = "active"; state.view = null; syncToURL(); restoreUIFromState(); render(); }
+  window.scrollTo({ top: 0, behavior: "instant" });
 }
 
 // Reflect state back into DOM controls after restoring from a URL.
@@ -44727,7 +44737,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${org.farm_rank ?? ' - '} of 30</span>
-      <span class="newsprint-eyebrow-meta">${org.count} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : " - "}</span>
+      <span class="newsprint-eyebrow-meta">${rosterPlayersAll.length} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : " - "}</span>
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
       <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
@@ -44736,7 +44746,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${org.count} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="45% top-end talent · 25% depth · 15% trajectory · 15% debut pipeline (each rescaled 0-100 across the 30 orgs)">#${org.farm_rank}</strong> of 30 · ${rosterPlayersAll.length} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
           </div>
         </div>
       </div>
@@ -45056,13 +45066,30 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // top prospect first (most clicked), distribution charts next (always
   // visible while scrolling), leaderboards + grads + trades at the end.
   const tp = org.top_prospect;
-  const yp = org.youngest;
   // Look up the full player objects (rosterPlayersAll, not the filtered
   // rosterPlayers) so the headshot resolves regardless of active
   // chip-filter state. Top prospect = highest-FV row in the org's
-  // tracked set; youngest = the org_summary's pre-resolved pointer.
+  // tracked set.
   const tpPlayer = rosterPlayersAll.find(rp => rp.player_name === (tp && tp.name)) || rosterPlayersAll[0];
-  const ypPlayer = yp ? rosterPlayersAll.find(rp => rp.player_name === yp.name) : null;
+  // Youngest prospect across the FULL org pool — graded board players AND provisional
+  // (source-ungraded) prospects (rosterPlayersAll already folds both in via provPlayers),
+  // so the very young DSL/CPX sleepers are eligible too (owner ask). Computed client-side
+  // rather than reading the graded-only baked org.youngest pointer.
+  const _ypCands = rosterPlayersAll.filter(rp => rp && rp.age != null && isFinite(rp.age));
+  const ypPlayer = _ypCands.length
+    ? _ypCands.reduce((a, b) => (b.age < a.age ? b : a))
+    : null;
+  const _ypX = ypPlayer ? getXfv(ypPlayer) : null;
+  const _ypFvNum = (_ypX && _ypX.xfv_grade != null) ? _ypX.xfv_grade
+    : (ypPlayer && ypPlayer.points && ypPlayer.points.length
+        ? ypPlayer.points[ypPlayer.points.length - 1].consensus_fv_raw
+        : (ypPlayer && ypPlayer.fv_close != null ? ypPlayer.fv_close : null));
+  const yp = ypPlayer ? {
+    name: ypPlayer.player_name,
+    pos: ypPlayer.position,
+    age: ypPlayer.age,
+    fv_label: _ypFvNum != null ? String(fvCeil(_ypFvNum)) : " - ",
+  } : null;
   const topProspectCard = `<div class="farm-side-card">
     <div class="side-title">Top prospect</div>
     ${tp ? `<div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="goToPlayer('${escapeHtml((tpPlayer || {}).player_key || '')}');">
