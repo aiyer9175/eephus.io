@@ -968,7 +968,7 @@
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div style="margin-top:8px;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button></div>
+          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button><a class="chip" href="/prospx/#tab=trademachine&amp;tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (xFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a></div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>

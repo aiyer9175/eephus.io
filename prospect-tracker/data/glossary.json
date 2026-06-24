@@ -4529,6 +4529,28 @@
     "era",
     "k_pct_pitcher"
    ]
+  },
+  {
+   "id": "trade_machine",
+   "term": "Trade Machine",
+   "category": "site-feature",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Trade Machine",
+    "Trade Board",
+    "trade evaluator"
+   ],
+   "priority": 11,
+   "definition": "Top-level module to value a trade both ways in one surplus currency: prospects priced on xFV surplus (calibrated control-window NPV), MLB players on projection surplus (NPV of projected production minus salary over salary-known seasons). Build a package per side; the verdict reads net surplus, with a $5M dead-band for 'balanced'.",
+   "methodology": "The module pairs a build-a-package evaluator with the Bayesian trade-value board. Each player carries the SAME surplus the rest of the site shows: a prospect's xFV-driven control-window surplus (value_mm) or an MLB player's projection surplus (proj.surNpv, the MLB Projections engine's NPV of convex production value minus salary on salary-known seasons). That shared currency is what lets a prospect and a veteran sit on one ledger. Cross-links run both ways: an MLB Projections player page deep-links into the evaluator and pre-loads that player; evaluator rows link back to the player's projections / prospect page. The 'balanced' dead-band is $5M, shared with the Transactions Trade Audit so the two never disagree. Board ranks are contract-aware (surplus over remaining controlled years), positional-scarcity and opt-out adjusted. Module by Anirudh Iyer.",
+   "seeAlso": [
+    "surplus_value",
+    "tvi",
+    "mlb_projections",
+    "dpw_tier"
+   ]
   }
  ]
 }

@@ -20100,8 +20100,31 @@ function _tmEnsureDetail() {
   fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _TM.detail = (j && j.players) || {};
-      if (state.section === "traded") renderRecentlyTraded(); })
+      if (state.section === "trademachine" || state.section === "tradeboard") renderTradeMachine(); })
     .catch(() => { _TM.detail = {}; });
+}
+
+// Translatability with MLB Projections: a "⇄ Trade Machine" link on a player's
+// /projections/ page deep-links here as #tab=trademachine&tm=<kind>:<key>, which
+// pre-loads that player into Side A so you can value him against a package.
+function _tmSeedFromURL() {
+  if (_TM.seeded) return;
+  const seed = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("tm");
+  if (!seed) { _TM.seeded = true; return; }
+  const ci = seed.indexOf(":");
+  const kind = seed.slice(0, ci), key = seed.slice(ci + 1);
+  if (kind === "prospect") {
+    const p = (DATA.players || []).find(x => x.player_key === key);
+    const sv = p && p.surplus && p.surplus.value_mm;
+    if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name,
+      sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`, mm: sv }); _TM.seeded = true; }
+  } else if (kind === "mlb") {
+    if (!_TM.detail) return;                 // detail still loading; seed on the re-render
+    const d = _TM.detail[key];
+    if (d && d.proj && d.proj.surNpv != null) _TM.a.push({ kind: "mlb", key, name: d.name,
+      sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`, mm: d.proj.surNpv / 1e6 });
+    _TM.seeded = true;
+  } else { _TM.seeded = true; }
 }
 
 function _tmSearch(q) {
@@ -20145,6 +20168,7 @@ function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
   if (!el) return;
   _tmEnsureDetail();
+  _tmSeedFromURL();
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => `
       <div class="tm-row">
