@@ -1,0 +1,41 @@
+{
+ "generated_at": "2026-06-24",
+ "min_mlb_games": 40,
+ "note": "MiLB final-season level-relative rate -> first-MLB rate. K% real signal; BB% modest (flagged); OPS/xwOBA do not translate (not projected).",
+ "fits": {
+  "hit_k": {
+   "x_mean": -0.011,
+   "y_mean": 22.131,
+   "slope": 76.5776,
+   "ols_slope": 82.4909,
+   "band_sd": 5.124,
+   "r2": 0.347,
+   "n": 259
+  },
+  "hit_bb": {
+   "x_mean": 0.003,
+   "y_mean": 9.4,
+   "slope": 51.4233,
+   "ols_slope": 55.3942,
+   "band_sd": 3.21,
+   "r2": 0.153,
+   "n": 259
+  }
+ },
+ "validation": {
+  "hit_k": {
+   "mae": 4.01,
+   "p10_p90_coverage": 0.811,
+   "target_coverage": 0.8,
+   "r2": 0.347,
+   "n": 259
+  },
+  "hit_bb": {
+   "mae": 2.617,
+   "p10_p90_coverage": 0.78,
+   "target_coverage": 0.8,
+   "r2": 0.153,
+   "n": 259
+  }
+ }
+}

@@ -504,6 +504,16 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("xFV regen crashed in rebuild_only — continuing")
 
+    # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
+    # Needs the xFV matrices (built above) + debuts.json. Best-effort.
+    try:
+        import milb_translation
+        _mt = milb_translation.build()
+        log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
+                 len(_mt["fits"]))
+    except Exception:
+        log.exception("milb_translation crashed in rebuild_only - continuing")
+
     # xFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
     # quality), forward-validated on recent debut cohorts. Separate artifact, NOT xFV; pulls
     # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
