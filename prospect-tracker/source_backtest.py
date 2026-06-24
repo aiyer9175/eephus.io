@@ -581,7 +581,22 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "auc": _beats("auc"),
     }
     accuracy["by_archetype"] = _archetype_accuracy(pooled_common, disp_raters)
-    accuracy["xfv_vs_consensus_detail"] = _xfv_vs_consensus_detail(pooled_common)
+    # The xFV-vs-CONSENSUS detail (per-FV-tier + biggest disagreements) runs on the
+    # BROADER consensus + xFV pool - every player BOTH graded, not the all-source common
+    # set. Only two graders are compared, so also requiring FanGraphs + Pipeline needlessly
+    # shrinks (and skews) the sample; the wider pool is more precise. (The 4-source
+    # head-to-head bars above keep the common set - all four on identical players.)
+    _names = {p.get("player_key"): p.get("player_name") for p in universe}
+    cons_xfv_rows = []
+    for r in rows_by_rater[CONSENSUS_KEY]:
+        g = xfv_oos.get(r["key"])
+        if g is not None:
+            cons_xfv_rows.append({"key": r["key"], "name": _names.get(r["key"]),
+                                  "year": r["year"],
+                                  "grades": {CONSENSUS_KEY: r["fv"], "xfv": g},
+                                  "outcome": r["outcome"]})
+    accuracy["xfv_vs_consensus_detail"] = _xfv_vs_consensus_detail(
+        cons_xfv_rows if len(cons_xfv_rows) >= 50 else pooled_common)
 
     result = {
         "xfv_vs_consensus": _xfv_vs_consensus(data_dir),
