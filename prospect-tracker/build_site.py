@@ -122,7 +122,6 @@ def _headshot_url(mlbam, px: int = 180) -> str | None:
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
-    ("trademachine", "Trade Machine", "/prospx/#tab=trademachine"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     ("fa",       "Free Agency",      "/fa/"),
     ("projections", "Projections",   "/projections/"),
@@ -1773,13 +1772,13 @@ def _cross_module_strip() -> str:
         top = sorted((p for p in tv.get("players") or [] if p.get("trade_value_mm") is not None),
                      key=lambda p: -p["trade_value_mm"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/prospx/#tab=trademachine">'
+            f'<a class="xmod-row" href="/projections/#view=trademachine">'
             f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
             for p in top)
         if rows:
-            cards.append(('⇄ Trade Machine', '/prospx/#tab=trademachine',
+            cards.append(('⇄ Trade Machine', '/projections/#view=trademachine',
                           'surplus trade value, prospects + MLB', rows))
     except (OSError, ValueError, KeyError):
         pass
