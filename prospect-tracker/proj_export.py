@@ -326,9 +326,22 @@ def _prospect_rows(dpw: float) -> list[dict]:
         log.warning("mlb projections: timeseries.json unavailable - no prospects")
         return []
     cal_shift = _prospect_calibration_shift()
+    try:
+        xfv_by = (json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
+                  .get("by_player") or {})
+    except (OSError, ValueError):
+        xfv_by = {}
     out: list[dict] = []
     for p in players:
-        fv = p.get("fv_close")
+        cons_fv = p.get("fv_close")
+        # xFV sweep: price the prospect projection on the xFV grade - rank-mapped onto
+        # the consensus 20-80 scale, so it carries xFV's OOS-better ordering (Spearman
+        # 0.349 vs consensus 0.285) while preserving the aggregate calibration (active
+        # pool total WAR within 0.2% of consensus). Fall back to consensus FV where xFV
+        # abstains (recent draftees / int'l signs with no pro track record yet).
+        _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade")
+        fv = _xg if _xg is not None else cons_fv
+        fv_source = "xfv" if _xg is not None else "consensus"
         eta = (p.get("eta") or {}).get("year")
         if (fv is None or fv < 45 or not eta or p.get("status") != "active"
                 or eta > FIRST_SEASON + HORIZON - 1):
@@ -374,7 +387,8 @@ def _prospect_rows(dpw: float) -> list[dict]:
         prime = vf.prospect_prime_path(float(fv), is_pit, debut_age, reliever)
         out.append(_clean({
             "key": p.get("player_key"), "name": p.get("player_name"),
-            "age": age, "src": "prospect", "fv": fv, "eta": eta_yr,
+            "age": age, "src": "prospect", "fv": fv, "consensus_fv": cons_fv,
+            "fv_source": fv_source, "eta": eta_yr,
             "pos": pos, "team": p.get("org"),
             "war": [round(w, 2) for w in mean_path],
             "warP10": [round(w, 2) for w in paths[lo_b]],

@@ -184,8 +184,17 @@ def _blockers(class_year: int) -> dict[tuple[str, str], list[dict]]:
     except (OSError, ValueError):
         log.warning("fit blockers: timeseries.json unavailable")
         return {}
+    try:
+        xfv_by = (json.loads((Path(__file__).parent / "data" / "xfv.json")
+                  .read_text(encoding="utf-8")).get("by_player") or {})
+    except (OSError, ValueError):
+        xfv_by = {}
     for p in d.get("players") or []:
-        fv = p.get("fv_close")
+        # xFV sweep: a near-ETA prospect blocks on the xFV grade (the OOS-better
+        # prospect read) where present, consensus FV otherwise. Read-only join, same
+        # platform invariant as the timeseries read above.
+        _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade")
+        fv = _xg if _xg is not None else p.get("fv_close")
         eta = (p.get("eta") or {}).get("year")
         if (fv is not None and fv >= cfg["blocker_fv_min"] and p.get("org")
                 and eta is not None and eta <= class_year + cfg["blocker_eta_horizon"]):
