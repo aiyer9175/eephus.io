@@ -9,21 +9,21 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PROSPX - consensus prospect tracker - eephus.io</title>
-  <meta name="description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <title>PROSPX - prospect analytics - eephus.io</title>
+  <meta name="description" content="Prospect analytics: outcome-grounded xFV grades, surplus value, and scouting consensus across the minors.">
 
   <!-- Social cards + canonical (mirrors build_site.py's _social_meta block;
        this file is hand-edited so the tags are inlined here). -->
   <meta property="og:type" content="website">
-  <meta property="og:title" content="PROSPX - consensus prospect tracker">
-  <meta property="og:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta property="og:title" content="PROSPX - prospect analytics">
+  <meta property="og:description" content="Prospect analytics: outcome-grounded xFV grades, surplus value, and scouting consensus across the minors.">
   <meta property="og:site_name" content="eephus.io">
   <meta property="og:url" content="https://eephus.io/prospx/">
   <link rel="canonical" href="https://eephus.io/prospx/">
   <meta property="og:image" content="https://eephus.io/assets/share-default.png">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="PROSPX - consensus prospect tracker">
-  <meta name="twitter:description" content="Consensus FV tracker across seven industry prospect-ranking sources.">
+  <meta name="twitter:title" content="PROSPX - prospect analytics">
+  <meta name="twitter:description" content="Prospect analytics: outcome-grounded xFV grades, surplus value, and scouting consensus across the minors.">
   <meta name="twitter:image" content="https://eephus.io/assets/share-default.png">
 
   <!-- Favicons + PWA + theme-color (committed artifacts; tools/generate_brand_assets.py).
@@ -29277,7 +29277,7 @@ function xfvDetailCard(p) {
   const d = x.xfv_minus_consensus;
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
-        <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;">How xFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; xFV ${xg}` : ""}</div>
+        <div title="Signals that moved xFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How xFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; xFV ${xg}` : ""}</div>
         ${x.factors.map(f => {
           const up = f.dir === "up";
           const col = up ? "var(--up)" : "var(--down)";
@@ -29288,7 +29288,6 @@ function xfvDetailCard(p) {
             <span style="width:56px;height:5px;background:var(--bg-tertiary);border-radius:3px;overflow:hidden;flex-shrink:0;"><span style="display:block;height:100%;width:${w.toFixed(0)}%;background:${col};"></span></span>
           </div>`;
         }).join("")}
-        <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;line-height:1.4;">Signals that moved xFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR).</div>
       </div>` : "";
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
