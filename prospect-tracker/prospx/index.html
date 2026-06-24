@@ -29012,6 +29012,23 @@ let _XFV_RANK = null;     // player_key -> 1-based xFV rank over the active boar
     })
     .catch(() => { _XFV = {}; });
 })();
+// MiLB -> first-MLB rate translation (data/milb_translation.json): per-hitter projected
+// first-MLB K% / BB% with bands. Async; repaint on land so chips appear.
+let _MILBTR = null;
+(function loadMilbTr() {
+  fetch("/data/milb_translation.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _MILBTR = j || {}; try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .catch(() => { _MILBTR = {}; });
+})();
+function milbProjHTML(p) {
+  // Proj first-MLB K% / BB% (matched-pair MiLB->MLB translation, hitters only). Bands
+  // are P10-P90; BB% is flagged (*) where the signal is modest. K% is the reliable one.
+  const pr = _MILBTR && _MILBTR.projections && _MILBTR.projections[p && p.player_key];
+  if (!pr) return "";
+  const cell = (lbl, o) => o ? `<span class="rps-plus-pill is-neutral g-term" data-term="milb_translation" title="Projected first-MLB-season ${lbl} from a MiLB->MLB matched-pair translation of this prospect's level-relative rate. P10-P90 ${o.lo}-${o.hi}%${o.low_confidence ? "; modest signal, read as context" : ""}.">Proj ${lbl} ${o.exp}%${o.low_confidence ? "*" : ""}</span>` : "";
+  return cell("K%", pr.k_pct) + cell("BB%", pr.bb_pct);
+}
 function getXfv(p) {
   if (!p) return null;
   // Provisional (source-ungraded) players carry their xFV entry inline so every xFV helper
@@ -48735,6 +48752,7 @@ function scoutRatesHTML(p) {
     stuffPlusPillHTML(p),
     aaaStuffPlusPillHTML(p),
     krpPlusPillHTML(p),
+    milbProjHTML(p),
     tradeValuePillHTML(p),
   ].filter(Boolean).join("");
 }

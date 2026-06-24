@@ -100,6 +100,35 @@ def _loo(pairs: list) -> dict | None:
             "target_coverage": 0.80, "r2": full["r2"] if full else None, "n": n}
 
 
+def _project_actives(fits: dict) -> dict:
+    """Apply the fits to active prospects (live-matrix k_rel / bb_rel) -> per-player
+    projected first-MLB K% / BB% with P10-P90 bands. Hitter rates only (the only side
+    with a fit). BB% carries low_confidence when r2 is weak."""
+    out: dict = {}
+    try:
+        import xfv_score
+    except ImportError:
+        return out
+    try:
+        rows = json.loads(xfv_score.live_matrix_path("hit").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    for r in rows:
+        mb = r.get("milb") or {}
+        proj = {}
+        if mb.get("k_rel") is not None and fits.get("hit_k"):
+            f = fits["hit_k"]
+            proj["k_pct"] = ct._band(ct._predict(f, mb["k_rel"]), f["band_sd"], 0, 60)
+        if mb.get("bb_rel") is not None and fits.get("hit_bb"):
+            f = fits["hit_bb"]
+            b = ct._band(ct._predict(f, mb["bb_rel"]), f["band_sd"], 0, 30)
+            b["low_confidence"] = f["r2"] < 0.25
+            proj["bb_pct"] = b
+        if proj and r.get("player_key"):
+            out[r["player_key"]] = proj
+    return out
+
+
 def build(persist: bool = True) -> dict:
     pairs = _load_pairs()
     fits, validation = {}, {}
@@ -117,6 +146,7 @@ def build(persist: bool = True) -> dict:
                  "signal; BB% modest (flagged); OPS/xwOBA do not translate (not projected)."),
         "fits": fits,
         "validation": validation,
+        "projections": _project_actives(fits),
     }
     if persist:
         OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")

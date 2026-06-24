@@ -4551,6 +4551,29 @@
     "mlb_projections",
     "dpw_tier"
    ]
+  },
+  {
+   "id": "milb_translation",
+   "term": "Proj first-MLB K% / BB%",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Proj first-MLB",
+    "MiLB-to-MLB translation",
+    "Proj K%",
+    "Proj BB%"
+   ],
+   "priority": 36,
+   "definition": "A hitting prospect's projected first-MLB-season K% and BB%, translated from his final pre-debut level-relative MiLB rate. K% is the reliable read (r2 ~0.35); BB% is modest and flagged. Production (OPS/xwOBA) does not translate across the jump and is deliberately not projected.",
+   "methodology": "Matched-pair regression-to-the-mean (the CollegeSavant college-to-Single-A method, applied MiLB-to-MLB): each debuted hitter's final pre-debut level-relative rate (k_rel / bb_rel vs the level mean) is paired with his realized first-MLB-season rate, and a shrunk slope is fit over the pairs. Leave-one-out validated: K% LOO MAE ~4.0, P10-P90 coverage 0.81 (r2 0.35); BB% MAE ~2.6, coverage 0.78 (r2 0.15, flagged with *). The band is the residual spread. OPS / xwOBA were tested and do NOT translate (r2 ~0.02): first-MLB production level is selection/survivorship-dominated, so only the sticky plate-skill rates are projected. Descriptive rate translation, not a value forecast; xFV is the prospect-to-MLB value signal.",
+   "seeAlso": [
+    "single_a_equivalent",
+    "xfv",
+    "k_pct",
+    "bb_pct"
+   ]
   }
  ]
 }
