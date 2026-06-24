@@ -58,6 +58,8 @@ _FA_VER = _asset_ver("assets/fa.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
+_TM_VER = _asset_ver("assets/trademachine.js")
+_TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
@@ -2025,25 +2027,165 @@ def build_fa() -> str:
                 url=f"{SITE_ORIGIN}/fa/")
 
 
+# Trade Machine view, relocated to live under MLB Projections (was a PROSPX module
+# by Anirudh Iyer). The board + evaluator run from assets/trademachine.js on the
+# standalone data files; this is just the markup the module mounts into.
+_TRADE_MACHINE_VIEW = """<div id="proj-view-trademachine" style="display:none;">
+  <div class="newsprint-eyebrow">
+    <span class="newsprint-eyebrow-label">Trade Machine</span>
+    <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on xFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
+  </div>
+  <div id="trade-machine"></div>
+  <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
+  <div class="filter-toggle-row">
+    <button class="filter-toggle" type="button" data-collapse-target="tradeboard-filter-bar" aria-expanded="false" title="Show / hide Trade Board filters">
+      <span class="filter-toggle-label">Filter &amp; Sort</span>
+      <span class="filter-toggle-arrow" aria-hidden="true">&#9662;</span>
+    </button>
+  </div>
+  <div id="tradeboard-filter-bar" class="filter-bar collapsible-filter-bar">
+    <div class="filter-group"><span class="filter-label">Pool</span>
+      <button class="chip active" data-tb-pool="all" type="button">All</button>
+      <button class="chip" data-tb-pool="milb" type="button">MiLB</button>
+      <button class="chip" data-tb-pool="mlb" type="button">MLB</button>
+    </div>
+    <div class="filter-group"><span class="filter-label">Tier</span>
+      <button class="chip active" data-tb-tier="all" type="button">All tiers</button>
+      <button class="chip" data-tb-tier="elite" type="button">Elite ($40M+)</button>
+      <button class="chip" data-tb-tier="high" type="button">High ($20-40M)</button>
+      <button class="chip" data-tb-tier="mid" type="button">Mid ($8-20M)</button>
+    </div>
+    <div class="filter-group"><span class="filter-label">Position</span>
+      <button class="chip active" data-tb-pos="all" type="button">All</button>
+      <button class="chip" data-tb-pos="C" type="button">C</button>
+      <button class="chip" data-tb-pos="1B" type="button">1B</button>
+      <button class="chip" data-tb-pos="2B" type="button">2B</button>
+      <button class="chip" data-tb-pos="SS" type="button">SS</button>
+      <button class="chip" data-tb-pos="3B" type="button">3B</button>
+      <button class="chip" data-tb-pos="LF" type="button">LF</button>
+      <button class="chip" data-tb-pos="CF" type="button">CF</button>
+      <button class="chip" data-tb-pos="RF" type="button">RF</button>
+      <button class="chip" data-tb-pos="SP" type="button">SP</button>
+      <button class="chip" data-tb-pos="RP" type="button">RP</button>
+    </div>
+    <div class="filter-group"><span class="filter-label">Org</span>
+      <select class="chip" id="tb-org-filter" title="Filter Trade Board by organization"><option value="all">All orgs</option></select>
+    </div>
+    <div class="filter-group"><span class="filter-label">Exact pos</span>
+      <select class="chip" id="tb-exact-pos-filter" title="Filter Trade Board by primary position"><option value="all">All positions</option></select>
+    </div>
+    <div class="filter-group"><span class="filter-label">Sort</span>
+      <select class="chip" id="tb-sort-select" title="Sort Trade Board">
+        <option value="trade_desc">Trade value</option>
+        <option value="age_asc">Youngest</option>
+        <option value="age_desc">Oldest</option>
+        <option value="fv_desc">FV</option>
+        <option value="org_asc">Org</option>
+        <option value="pos_asc">Position</option>
+      </select>
+    </div>
+  </div>
+  <div style="padding:8px 0 4px;">
+    <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;" autocomplete="off" spellcheck="false">
+  </div>
+  <div style="margin-top:12px;margin-bottom:18px;">
+    <div class="newsprint-eyebrow" style="margin-top:0;">
+      <span class="newsprint-eyebrow-label">Mock Trade Builder</span>
+      <span class="newsprint-eyebrow-meta">add players to each side &middot; grader gives accept / reject verdict</span>
+    </div>
+    <div id="mock-trade-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
+      <div class="mock-trade-side" id="mock-side-a">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--neon-cyan);">Team A gives</div>
+        <input class="mock-trade-search" data-side="a" type="search" placeholder="Add player..." style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:12px;box-sizing:border-box;" autocomplete="off">
+        <div class="mock-trade-suggestions" data-side="a" style="display:none;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:5px;max-height:180px;overflow-y:auto;font-size:12px;margin-top:2px;z-index:10;position:relative;"></div>
+        <ul class="mock-trade-list" data-side="a" style="list-style:none;margin:6px 0 0;padding:0;"></ul>
+        <div class="mock-trade-total" data-side="a" style="margin-top:6px;font-size:13px;font-weight:700;color:var(--neon-cyan);">$0M</div>
+      </div>
+      <div class="mock-trade-side" id="mock-side-b">
+        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--neon-magenta);">Team B gives</div>
+        <input class="mock-trade-search" data-side="b" type="search" placeholder="Add player..." style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:12px;box-sizing:border-box;" autocomplete="off">
+        <div class="mock-trade-suggestions" data-side="b" style="display:none;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:5px;max-height:180px;overflow-y:auto;font-size:12px;margin-top:2px;z-index:10;position:relative;"></div>
+        <ul class="mock-trade-list" data-side="b" style="list-style:none;margin:6px 0 0;padding:0;"></ul>
+        <div class="mock-trade-total" data-side="b" style="margin-top:6px;font-size:13px;font-weight:700;color:var(--neon-magenta);">$0M</div>
+      </div>
+    </div>
+    <div id="mock-trade-verdict" style="margin-top:10px;padding:10px 14px;border-radius:7px;font-size:13px;background:var(--bg-secondary);border:1px solid var(--border-subtle);display:none;text-align:center;"></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="mock-trade-clear" class="chip" type="button">Clear</button>
+      <button id="mock-trade-export" class="chip" type="button">Copy as text</button>
+    </div>
+  </div>
+  <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <span id="tb-group-title" style="font-weight:700;font-size:13px;"></span>
+      <button onclick="document.getElementById('tb-group-panel').style.display='none';" style="background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:16px;">&#10005;</button>
+    </div>
+    <div id="tb-group-body"></div>
+  </div>
+  <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>
+</div>"""
+
+# Switcher: toggles the Projections table vs. the Trade Machine view, mounting the
+# module the first time its tab is shown. Deep-links (#view=trademachine, the legacy
+# #tab=trademachine, or any #tm=<seed> from a player page) open straight onto it.
+_PROJ_VIEW_SWITCHER = """<script>
+(function(){
+  function show(v){
+    var pv=document.getElementById('proj-view-projections'),
+        tv=document.getElementById('proj-view-trademachine'),
+        nav=document.querySelector('.proj-viewnav');
+    if(!pv||!tv) return;
+    var tm=v==='trademachine';
+    pv.style.display=tm?'none':''; tv.style.display=tm?'':'none';
+    if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){ b.classList.toggle('active', b.dataset.projview===v); });
+    if(tm && window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount();
+  }
+  function init(){
+    var nav=document.querySelector('.proj-viewnav');
+    if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){
+      b.addEventListener('click', function(){
+        var v=b.dataset.projview; show(v);
+        try{ history.replaceState(null,'', v==='trademachine'?'#view=trademachine':location.pathname); }catch(e){}
+      });
+    });
+    var h=location.hash||'';
+    if(/(?:^|[#&])(?:view|tab)=trademachine/.test(h) || /[#&]tm=/.test(h)) show('trademachine');
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+})();
+</script>"""
+
+
 def build_projections() -> str:
     """The /projections/ MLB Projections app - the FA module's projection
     engine applied to the whole league plus post-ETA PROSPX prospects.
     Static shell + assets/projections.js, which fetches the proj_export.py
     sidecar (data/mlb_projections.json). Styles ride the .fa-app block plus
-    a small .proj-app extension in site.css."""
+    a small .proj-app extension in site.css. Also hosts the Trade Machine view
+    (assets/trademachine.js), relocated here from PROSPX."""
     body = (
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
+        '<div class="proj-viewnav" role="tablist">'
+        '<button type="button" class="proj-viewbtn active" data-projview="projections" role="tab">Projections</button>'
+        '<button type="button" class="proj-viewbtn" data-projview="trademachine" role="tab">⇄ Trade Machine</button>'
+        '</div>'
+        '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
         '<div class="filter-bar" id="proj-filters"></div>'
         '<div id="proj-rows"></div>'
         '</div>'
+        + _TRADE_MACHINE_VIEW +
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
+        f'<script src="/assets/trademachine.js?v={_TM_VER}" defer></script>'
+        + _PROJ_VIEW_SWITCHER
     )
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year bWAR projections for every MLB player - floor/mean/ceiling probability "
