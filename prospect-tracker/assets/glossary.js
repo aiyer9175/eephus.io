@@ -599,7 +599,7 @@ function _methXfvPanel(bt) {
         <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "xFV ✓" : "consensus ✓"}</td></tr>`;
     }).join("");
     const share = det.xfv_right_share_on_disagreements;
-    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; xFV closer on ${share != null ? Math.round(share * 100) : "?"}% of all disagreements</span></div>
+    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; on ${det.n_disagreements || "?"} clear grade disagreements (xFV vs consensus &ge;15 percentile apart), xFV was closer ${share != null ? Math.round(share * 100) : "?"}% of the time</span></div>
       <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>xFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
   }
   return `<div class="meth-chart meth-accuracy">

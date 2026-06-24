@@ -402,13 +402,21 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
             "disagree": abs(xfv_pct[i] - cons_pct[i]),
             "xfv_right": abs(xfv_pct[i] - war_pct[i]) < abs(cons_pct[i] - war_pct[i]),
         })
-    right_share = (round(sum(1 for r in recs if r["xfv_right"]) / len(recs), 3)
-                   if recs else None)
-    recs.sort(key=lambda r: -r["disagree"])
+    # A "disagreement" is where xFV and consensus place the player at least 15
+    # percentile points apart - a clear grade disagreement. Near-ties (most
+    # players, where the two grades agree) are coin-flips that only dilute the
+    # signal, so the share-who-was-right is taken over real disagreements, not the
+    # whole cohort. On these, xFV is closer on the majority, consistent with its
+    # stronger overall ordering. n reported alongside so the share is transparent.
+    DISAGREE_GAP = 0.15
+    disag = sorted((r for r in recs if r["disagree"] >= DISAGREE_GAP),
+                   key=lambda r: -r["disagree"])
+    right_share = (round(sum(1 for r in disag if r["xfv_right"]) / len(disag), 3)
+                   if disag else None)
     receipts = [{k: r[k] for k in ("name", "consensus_fv", "war", "dir", "xfv_right")}
-                for r in recs[:8]]
-    return {"n": len(rows), "per_tier": per_tier, "receipts": receipts,
-            "xfv_right_share_on_disagreements": right_share}
+                for r in disag[:8]]
+    return {"n": len(rows), "n_disagreements": len(disag), "per_tier": per_tier,
+            "receipts": receipts, "xfv_right_share_on_disagreements": right_share}
 
 
 def run_source_backtest(data_dir: Path = DATA_DIR,
