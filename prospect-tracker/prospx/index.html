@@ -9723,6 +9723,7 @@
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
           <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
           <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - K/9 + BB/9 + HR/9 normalized to level mean (100 = average peripherals). Pitchers only.">pStuff+</button>
+          <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
         </div>
 
         <div class="filter-group">
@@ -13704,6 +13705,19 @@ function makeMilbCell(p) {
                 :             "var(--text-secondary)";
     return `<span class="stat-pill" style="color:${color};border-color:${color};" title="Statcast+ composite (100 = pool average; ≥105 above, ≤95 below, ≥120 elite)">SC+ ${sp}</span>`;
   })();
+  // KRP+ (K-backed Run Prevention) pill on pitcher rows: the xFV run-prevention x
+  // missing-bats index, baked into xfv.json. Pitchers the model scored only.
+  const krpPill = (() => {
+    if (!isPitcher) return "";
+    const x = (typeof getXfv === "function") ? getXfv(p) : null;
+    const v = x && x.krp_plus != null ? x.krp_plus : null;
+    if (v == null) return "";
+    const color = v >= 120 ? "var(--neon-cyan)"
+                : v >= 110 ? "var(--up)"
+                : v <= 90  ? "var(--down)"
+                :            "var(--text-secondary)";
+    return `<span class="stat-pill g-term" data-term="krp_plus" style="color:${color};border-color:${color};" title="KRP+ ${v}: K-backed run prevention, a below-level ERA an above-level strikeout rate supports. 100 = pool average, 10 pts ≈ 1 std-dev.">KRP+ ${v}</span>`;
+  })();
   // v30.7 - Baseline EV chips (hitters with tracked contact_quality).
   // Always-on whenever statcast_metrics has data - not gated on
   // outlier ±1σ tiers - so the user always sees raw avg / max EV
@@ -13714,7 +13728,7 @@ function makeMilbCell(p) {
     + (evChips        ? `<span class="milb-ev-chip-strip">${evChips}</span>` : "")
     + (scOutlierChips ? `<span class="milb-sc-chip-strip">${scOutlierChips}</span>` : "");
   return `<div class="milb-cell milb-cell-wrap"${tipAttr}>
-    <span class="milb-pill-row"><span class="level-pill ${levelClass}"${levelTip}>${displayLevel}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${headline}</span>
+    <span class="milb-pill-row"><span class="level-pill ${levelClass}"${levelTip}>${displayLevel}</span>${seasonTag}${plusPill}${rpsPill}${scPlusPill}${krpPill}${headline}</span>
     <br/><span style="color: var(--text-primary);">${slashLine}</span>
     <br/><span style="color: var(--text-tertiary);">${detailWithSc}</span>
   </div>`;
@@ -17245,6 +17259,11 @@ const LB_STATS = {
   // v44 - pitcher peripherals index, one entry per player.
   pstuff_plus: { label: "pStuff+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
                  minIP: 15, support: _lbPitcherSupport, side: "pit", getter: p => computeStuffPlus(p) },
+  // KRP+ (K-backed Run Prevention): xFV run-prevention x missing-bats index, baked
+  // per-pitcher in xfv.json (100 = active-pool average, +10 = +1σ). Pitchers only.
+  krp_plus: { label: "KRP+", hi: true, fmt: v => v != null ? Math.round(v).toString() : " - ",
+              minIP: 15, support: _lbPitcherSupport, side: "pit",
+              getter: p => { const x = (typeof getXfv === "function") ? getXfv(p) : null; return x && x.krp_plus != null ? x.krp_plus : null; } },
   zone_z_contact: { label: "Z-Con%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
                     source: "zone", side: "hit", field: "z_contact_pct", minPitches: 200, support: _lbZoneSupport },
   zone_z_swing: { label: "Z-Swing%", hi: true, fmt: v => v != null ? Number(v).toFixed(1) + "%" : " - ",
