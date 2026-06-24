@@ -70,7 +70,7 @@ const HOME_WIDGET_METRICS = [
 const HOME_SECTIONS = [
   { route: "leaders", title: "Hitter Leaderboard", note: "Every tracked hitter, sortable across EV, discipline, and CS+, with team and qualified-PA filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college programs hit the ball hardest, chase the least, and run the best team CS+." },
-  { route: "projections", title: "MiLB Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its honest backtest." },
+  { route: "projections", title: "MiLB Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its leave-one-out backtest." },
 ];
 
 const LEADERBOARD_LIMIT = 300;
@@ -737,7 +737,7 @@ function renderProspects() {
       </select>
     </section>
     <div class="panel-title"><span>Draft Prospects in college</span><span>${list.length} hitter prospect${list.length === 1 ? "" : "s"} · conventional college stats, click a column to sort</span></div>
-    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model (K% carries real signal, r-squared about 0.47; BB% is softer). Names link to a player's CollegeSavant page when they have tracking data.</p>
+    <p class="trans-note">Draft-eligible hitters carried into CollegeSavant by the college box scores we hold (FanGraphs / NCAA), including prospects with no TrackMan tracking. FV is the consensus board grade, rounded up. Proj A K% / BB% project a Single-A line straight from the college box via a matched-pair model (K% carries signal, r-squared about 0.47; BB% is softer). Names link to a player's CollegeSavant page when they have tracking data.</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Prospect</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${cols.length + 2}" class="note-line">No draft prospects with college stats for this year.</td></tr>`}</tbody>
@@ -796,9 +796,9 @@ function renderProjections() {
     <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
     <ol class="proj-method">
       <li><strong>Matched pairs.</strong> We take college hitters who later reached Single-A, pair each one's college tracked rate with the Single-A rate they actually posted, and fit how the two relate.</li>
-      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope that is shrunk for sample size. An extreme college number is moderated, never copied straight across.</li>
-      <li><strong>Honest bands.</strong> The P10-P90 band is the spread of the model's own misses on players it was not fit on (leave-one-out). When coverage sits near 80% in the table below, the band is sized to reality rather than for show.</li>
-      <li><strong>What to trust.</strong> Strikeout rate carries real signal. Walk rate and OPS mostly wash out to the Single-A mean and are flagged; read them as context, not forecasts.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope that is shrunk for sample size. An extreme college number is moderated, not copied straight across.</li>
+      <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on players it was not fit on (leave-one-out). When coverage sits near 80% in the table below, the band is sized to the data.</li>
+      <li><strong>What to trust.</strong> Strikeout rate carries the signal. Walk rate and OPS mostly wash out to the Single-A mean and are flagged; read them as context, not forecasts.</li>
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. CS+ and the tracked skills describe college performance; they are not a scouting Future Value, which the tracked data does not predict.</li>
     </ol>
     <div class="panel-title" style="margin-top:18px;"><span class="g-term" data-gl="single_a_equivalent">How accurate is this</span><span>leave-one-out backtest on the matched college-to-Single-A pairs</span></div>
@@ -806,7 +806,7 @@ function renderProjections() {
       <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
     </table></div></section>
-    <p class="trans-note">Coverage near 80% means the P10-P90 bands are honestly sized. K% carries the real signal (r² ~0.38); BB% and OPS mostly regress to the Single-A mean (low r²) and are shown for context, flagged. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
+    <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. K% carries the signal (r² ~0.38); BB% and OPS mostly regress to the Single-A mean (low r²) and are shown for context, flagged. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
     <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters with a projection · ranked by CS+ (pro profile)</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th><th class="tt-col">Proj A OPS</th></tr></thead>

@@ -63,7 +63,7 @@ const PITCHER_HOME_WIDGET_METRICS = [
 const PITCHER_HOME_SECTIONS = [
   { route: "leaders", title: "Pitcher Leaderboard", note: "Every tracked arm, sortable across Stuff+, velo, whiffs, and CS+, with team and qualified filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college staffs throw the hardest, miss the most bats, and run the best team CS+." },
-  { route: "projections", title: "MiLB Projections", note: "Each arm's projected Single-A K% / BB%, the matched-pair method, and its honest backtest." },
+  { route: "projections", title: "MiLB Projections", note: "Each arm's projected Single-A K% / BB%, the matched-pair method, and its leave-one-out backtest." },
 ];
 
 function dedupeMetrics(metrics) {
@@ -1042,8 +1042,8 @@ function renderProjections() {
     <div class="panel-title"><span>How the projection works</span><span>college-to-Single-A statistical translation</span></div>
     <ol class="proj-method">
       <li><strong>Matched pairs.</strong> We take college pitchers who later reached Single-A, pair each one's college rate with the Single-A rate they actually posted, and fit how the two relate. Strikeout and walk rates are read from K/9 and BB/9 over batters faced.</li>
-      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope shrunk for sample size. An extreme college number is moderated, never copied straight across.</li>
-      <li><strong>Honest bands.</strong> The P10-P90 band is the spread of the model's own misses on arms it was not fit on (leave-one-out). Coverage near 80% in the table below means the band is sized to reality, not for show.</li>
+      <li><strong>Regression to the mean.</strong> A college rate is pulled toward the Single-A average by an amount set from how strongly the two levels track in the data, a fitted slope shrunk for sample size. An extreme college number is moderated, not copied straight across.</li>
+      <li><strong>Bands.</strong> The P10-P90 band is the spread of the model's misses on arms it was not fit on (leave-one-out). Coverage near 80% in the table below means the band is sized to the data.</li>
       <li><strong>What to trust.</strong> Strikeout rate carries the signal here; walk rate largely washes out to the Single-A mean and is flagged. Read it as context, not a forecast.</li>
       <li><strong>What it does not do.</strong> No schedule-strength or park adjustment, since no college conference or park table is held. Stuff+, CS+, and the tracked pitch shapes describe college stuff; they are not a scouting Future Value, which the tracked data does not predict.</li>
     </ol>

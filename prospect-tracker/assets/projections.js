@@ -550,7 +550,7 @@
     });
     if (banner) {
       banner.innerHTML = `<div class="fa-note fa-sources">
-        How these projections are validated: held-out <span data-gl="backtest">backtests</span>, owner-committed model <span data-gl="model_verdict">verdicts</span>, and an honest note on what is not yet scoreable.
+        How these projections are validated: held-out <span data-gl="backtest">backtests</span>, owner-committed model <span data-gl="model_verdict">verdicts</span>, and a note on what is not yet scoreable.
         ${acct.registry_version ? `&middot; model registry ${esc(String(acct.registry_version))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}</div>`;
     }
     const models = acct.models || [];
@@ -589,7 +589,7 @@
       </div>`;
     }).join("");
     root.innerHTML = `<div class="mlbp-page">
-      <div class="fa-note" style="margin:8px 0;">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and an honest note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
+      <div class="fa-note" style="margin:8px 0;">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and a note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
       <div style="margin:10px 0;line-height:2;">${legend}</div>
       ${cards}</div>`;
     if (window.EEPHUS_GL) { if (banner) window.EEPHUS_GL.wire(banner); window.EEPHUS_GL.wire(root); }

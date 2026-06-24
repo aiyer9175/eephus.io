@@ -69,9 +69,9 @@
   // Deal verdict chip - the plain-English read of Deal+ (band edges are the
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
   const VERDICT_META = {
-    value: ["VALUE", "Projected to be UNDERPAID - rational value runs past the predicted price (Deal+ in the corpus top tercile, ≥160)."],
+    value: ["VALUE", "Projected to be UNDERPAID - rational value exceeds the predicted price (Deal+ in the corpus top tercile, ≥160)."],
     market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 75–160)."],
-    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price runs past rational value (Deal+ in the corpus bottom tercile, <75)."],
+    overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price exceeds rational value (Deal+ in the corpus bottom tercile, <75)."],
   };
   function verdictChip(m) {
     const v = VERDICT_META[m.verdict];
@@ -978,7 +978,7 @@
       `<button class="chip${t[0] === missTab[0] ? " active" : ""}" data-mtab="${t[0]}">${t[1]}</button>`).join("");
     rows.innerHTML = `
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
-      <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts &mdash; misses and all &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
+      <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
       ${g1 ? `<h3>Gate 1 &mdash; projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">train &le; N&minus;1, predict N, ten held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; P10&ndash;P90 coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75&ndash;0.85)</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
