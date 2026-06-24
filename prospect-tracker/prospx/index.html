@@ -10769,15 +10769,22 @@ function fvBadgeWideMarkHTML(player) {
 // the trigger is now player-level instance count, not per-point source
 // count. A single-source player who has been re-graded across multiple
 // snapshots is well-observed and does NOT carry the indicator.
+// Thin-or-absent source coverage. Fires for BOTH single-observation graded players AND
+// provisional (source-ungraded) prospects -- the owner merged these into one indicator since
+// they signal the same thing (the grade rests on little-to-no scouting input). Provisional
+// players carry _is_provisional; single-observation players have exactly one published grade.
 function fvBadgeSingleClass(player) {
-  return _fvTotalInstances(player) === 1 ? " is-single-source" : "";
+  return (player && (player._is_provisional || _fvTotalInstances(player) === 1)) ? " is-single-source" : "";
 }
 
-// Real-DOM "1" mark for single-instance badges. Lives at the top-left of
-// the badge (the wide W lives at top-right) so the two can co-exist
-// visually if they ever fire together. `title` explains the FV-35 pull.
+// Real-DOM mark for thin/absent-source badges. Lives at the top-left of the badge (the wide W
+// lives at top-right) so the two can co-exist visually. Glyph "p" = provisional (no source grade
+// yet); "1" = single observation. `title` explains each.
 function fvBadgeSingleMarkHTML(player) {
   if (!fvBadgeSingleClass(player)) return "";
+  if (player && player._is_provisional) {
+    return `<span class="fv-single-mark" title="Provisional - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards).">p</span>`;
+  }
   return `<span class="fv-single-mark" title="Single observation - only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
 }
 
@@ -13932,6 +13939,7 @@ const state = {
   stockFilter: "all",
   orgFilter: "all",
   acqFilter: "all",
+
   // Draft tab sub-state. draftYear defaults to the most recent class on
   // first load (resolved inside renderDraft when DATA.draft is loaded);
   // draftView toggles between Rankings / Order & Slots / Results /
@@ -14316,6 +14324,13 @@ function getFilteredActives() {
   // in MLB.
   let pool = (DATA.players || []).filter(p =>
     p && p.status !== "debuted" && !p.debut_date);
+  // Provisional (source-ungraded) prospects are first-class members of the active pool: they
+  // are ALWAYS folded in (no toggle), ranked among the graded board by their xFV grade. They
+  // pass through the org / level / position / search filters (they carry those fields) and are
+  // naturally excluded by the scout-only filters (tools / Statcast / class / acq). The ungraded
+  // file lazy-loads here on first board render; the board paints graded-first then folds them in.
+  if (typeof ensureXfvUngraded === "function") ensureXfvUngraded();
+  pool = pool.concat(provPlayers());
   if (state.search) {
     const q = state.search.toLowerCase();
     pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
@@ -28025,7 +28040,11 @@ let _XFV_RANK = null;     // player_key -> 1-based xFV rank over the active boar
     .catch(() => { _XFV = {}; });
 })();
 function getXfv(p) {
-  if (!p || !_XFV) return null;
+  if (!p) return null;
+  // Provisional (source-ungraded) players carry their xFV entry inline so every xFV helper
+  // (badge / tooltip / rank / detail card) works on them without a flagship xfv.json row.
+  if (p._xfv_entry) return p._xfv_entry;
+  if (!_XFV) return null;
   const key = p.player_key;
   if (!key) return null;
   return _XFV[key] || null;
@@ -28059,9 +28078,33 @@ function ensureXfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _XFV_UNG = j || { by_player: {}, by_mlbam: {} };
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _XFV_RANK = null;   // rebuild w/ provisional
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
     .catch(() => { _XFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
+// Synthesize first-class player objects for the provisional (source-ungraded) prospects so they
+// can rank into the board, surface in the list, and get full detail pages. Each carries its
+// ungraded entry inline as _xfv_entry (getXfv reads it). Cached; rebuilt when _XFV_UNG lands.
+let _PROV_PLAYERS = null, _PROV_BY_KEY = null;
+function _buildProvPlayers() {
+  _PROV_PLAYERS = []; _PROV_BY_KEY = {};
+  if (!_XFV_UNG || !_XFV_UNG.by_player) return;
+  for (const pk in _XFV_UNG.by_player) {
+    const e = _XFV_UNG.by_player[pk];
+    const p = {
+      player_key: pk, player_name: e.player_name || e.name || pk,
+      position: e.position || null, org: e.org || null,
+      age: (e.age != null) ? e.age : null, mlbam_id: (e.mlbam_id != null) ? e.mlbam_id : null,
+      status: "active", _is_provisional: true, fv_close: null, points: [],
+      statline: e.statline || null, career_stats: e.career_stats || null, level: e.level || null,
+      surplus: (e.surplus_mm != null) ? { value_mm: e.surplus_mm } : null,
+      _xfv_entry: e,
+    };
+    _PROV_PLAYERS.push(p); _PROV_BY_KEY[pk] = p;
+  }
+}
+function provPlayers() { if (_PROV_PLAYERS === null) _buildProvPlayers(); return _PROV_PLAYERS || []; }
+function provPlayerByKey(key) { if (_PROV_BY_KEY === null) _buildProvPlayers(); return (_PROV_BY_KEY && _PROV_BY_KEY[key]) || null; }
 // Provisional xFV grade for an ungraded roster entry (rosters_by_org row carries mlbam_id +
 // player_key). Returns the entry {xfv_grade, factors, ...} or null.
 function getUngradedXfv(rosterEntry) {
@@ -28119,8 +28162,12 @@ function xfvRankValue(p) {
 function buildXfvRankMap() {
   _XFV_RANK = {};
   if (!DATA || !Array.isArray(DATA.players)) return;
-  const pool = DATA.players.filter(p => p && p.player_key);
-  pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || fvCmpDesc(a, b));
+  // Provisional (source-ungraded) prospects are first-class members of the active pool: they
+  // ALWAYS rank among the graded board by their xFV grade (no toggle). provPlayers() is empty
+  // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
+  let pool = DATA.players.filter(p => p && p.player_key).concat(provPlayers());
+  pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a)
+    || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _XFV_RANK[p.player_key] = i + 1; });
 }
 function getXfvRank(p) {
@@ -28197,7 +28244,12 @@ function xfvBadgeHTML(p, opts) {
   // unused here by design; full xFV-vs-consensus comparison lives on the player detail page.
   void consNum;
   if (xg != null && primary === "xfv") {
-    return `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}" title="${escapeHtml(xfvTooltip(x))}">${xg}</span>${lock}${inj}</div>`;
+    // The breakout / upside (+) / wide-source / single-source indicators belong on the xFV chip
+    // too (they describe the prospect, independent of which grade leads) -- carried via the same
+    // chain helpers the consensus badge uses. The provisional (source-ungraded) marker is MERGED
+    // into the single-source indicator (the "p" glyph), so a provisional prospect's chip reads
+    // like any other active prospect's, just flagged for thin/absent source coverage.
+    return `<div style="display:flex;align-items:center;justify-content:center;gap:3px;"><span class="fv-badge ${fvClass(String(xg))}${fvBadgeChainClasses(p)}" title="${escapeHtml(xfvTooltip(x))}">${xg}${fvBadgeChainMarks(p)}</span>${lock}${inj}</div>`;
   }
   // consensus ONLY (toggle = consensus, or xFV abstains and we fall back to consensus)
   if (consLabel != null) {
@@ -28249,17 +28301,27 @@ function xfvDetailHeaderHTML(p, fvBadge) {
   const d = x.xfv_minus_consensus;
   const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
   const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
-  return `<div style="${labelStyle}"><span>xFV</span></div>`
-    + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(xfvTooltip(x))}" style="margin-top:4px;">${g}</span>`
-    + `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
-    + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
-    + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">xFV ${dtxt}</span>` : "") + `</div>`;
+  // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
+  // reference line (there is no source grade to compare against).
+  const prov = !!x.xfv_ungraded;
+  return `<div style="${labelStyle}"><span>${prov ? "Provisional xFV" : "xFV"}</span></div>`
+    + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(xfvTooltip(x))}" style="margin-top:4px;${prov ? "border-style:dashed;" : ""}">${g}</span>`
+    + (prov
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
+        : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
+          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">xFV ${dtxt}</span>` : "") + `</div>`);
 }
 // Detail-page card: xFV's outcome read -- 5-bucket mix, expected surplus vs consensus,
 // and the simulated P10-P90 surplus fan. The honest (outcome-implied) view.
 function xfvDetailCard(p) {
   const x = getXfv(p);
   if (!(x && x.xfv_grade != null)) return "";
+  // Provisional (source-ungraded) prospects get a clear banner: this is a production-only
+  // leading indicator, not a source-anchored grade.
+  const provBanner = x.xfv_ungraded
+    ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional xFV</strong> — no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored xFV. <a href="/glossary/#xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
+    : "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
   // The $ surplus + its P10-P90 fan now live ONLY in the single Surplus-value card below
   // (which is xFV-driven), so this card stays the GRADE read: grade + explainer + outcome mix.
@@ -28286,9 +28348,10 @@ function xfvDetailCard(p) {
         <div style="font-size:9px;color:var(--text-tertiary);margin-top:5px;line-height:1.4;">Signals that moved xFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR).</div>
       </div>` : "";
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;">xFV · outcome-grounded grade</div>
-        <span class="fv-badge ${fvClass(String(xfvGradeDisplay(x)))} size-sm" title="${escapeHtml(xfvTooltip(x))}">${xfvGradeDisplay(x)}</span>
+        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional xFV · production-only" : "xFV · outcome-grounded grade"}</div>
+        <span class="fv-badge ${fvClass(String(xfvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(xfvTooltip(x))}">${xfvGradeDisplay(x)}</span>
       </div>
       ${factorsHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
@@ -35594,7 +35657,9 @@ function makeAgeFvScatter(prospects) {
   const points = (prospects || []).map(p => {
     const age = p.age;
     const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-    const fv = latest ? latest.consensus_fv_raw : null;
+    // xFV grade (incl. provisional players), consensus fallback, so the scatter plots every prospect.
+    const _sx = (typeof getXfv === "function") ? getXfv(p) : null;
+    const fv = (_sx && _sx.xfv_grade != null) ? _sx.xfv_grade : (latest ? latest.consensus_fv_raw : null);
     if (age == null || fv == null) return null;
     const toolGrade = (p.tools || {}).composite_overall;
     return {
@@ -36048,7 +36113,9 @@ function makeFarmRosterPyramid(rosterPlayersAll) {
   for (const p of rosterPlayersAll) {
     const lvl = (p.statline && p.statline.level) || null;
     if (!lvl || !LEVELS.includes(lvl)) continue;
-    const fv = p.fv_close;
+    // xFV grade (incl. provisional players), consensus fallback.
+    const _px = (typeof getXfv === "function") ? getXfv(p) : null;
+    const fv = (_px && _px.xfv_grade != null) ? _px.xfv_grade : p.fv_close;
     if (fv == null) continue;
     for (let i = 0; i < TIERS.length; i++) {
       if (fv >= TIERS[i].lo) {
@@ -37024,11 +37091,12 @@ function renderFarmSystems() {
 // DETAIL PAGES
 // =============================================================================
 
-// Find a player (active, graduate, or inactive) by key.
+// Find a player (active, graduate, inactive, or provisional/source-ungraded) by key.
 function findPlayer(key) {
   return (DATA.players || []).find(p => p.player_key === key)
       || (DATA.debuts || []).find(g => g.player_key === key)
       || (DATA.inactive || []).find(p => p.player_key === key)
+      || (typeof provPlayerByKey === "function" ? provPlayerByKey(key) : null)
       || null;
 }
 
@@ -40450,6 +40518,13 @@ function renderPlayerDetail(key) {
   const p = findPlayer(key);
   const root = document.getElementById("player-detail-body");
   if (!p) {
+    // Might be a provisional (source-ungraded) prospect whose data file hasn't loaded yet
+    // (e.g. a direct link). Kick off the lazy load; it re-renders when it lands.
+    if (typeof ensureXfvUngraded === "function" && _XFV_UNG === null) {
+      ensureXfvUngraded();
+      root.innerHTML = `<div class="state-message">Loading prospect…</div>`;
+      return;
+    }
     root.innerHTML = `<div class="state-message">Unknown prospect: ${escapeHtml(key)}. <a href="#" onclick="goHome();return false;">Back to list</a>.</div>`;
     return;
   }
@@ -43482,7 +43557,13 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
     else if (head === "RP" || head === "MIRP" || head === "SIRP") col = "RP";
     if (col) buckets[col].push(p);
   }
-  const fvOf = p => p.points.length ? p.points[p.points.length - 1].consensus_fv_raw : 0;
+  // Effective grade = xFV (incl. provisional players, who have no points) with a consensus
+  // fallback, so the depth chart ranks every prospect on the same primary grade as the board.
+  const fvOf = p => {
+    const x = (typeof getXfv === "function") ? getXfv(p) : null;
+    if (x && x.xfv_grade != null) return x.xfv_grade;
+    return (p.points && p.points.length) ? p.points[p.points.length - 1].consensus_fv_raw : 0;
+  };
   const etaOf = p => (p.eta && p.eta.year != null) ? p.eta.year : 9999;
   const ageOf = p => p.age ?? 99;
   // v23 - Level sort: AAA → AA → A+ → A → CPX → DSL → unknown. Mirrors
@@ -43574,8 +43655,11 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   return `<div class="pos-depth-grid">${ROWS.map(([key, label]) => {
     const players = buckets[key];
     const cards = players.map((p, idx) => {
-      const latest = p.points.length ? p.points[p.points.length - 1] : null;
-      const fvLabel = latest ? latest.consensus_fv_label : " - ";
+      const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+      // xFV grade (incl. provisional players), consensus-label fallback.
+      const _dx = (typeof getXfv === "function") ? getXfv(p) : null;
+      const _dxg = (_dx && _dx.xfv_grade != null) ? xfvGradeDisplay(_dx) : null;
+      const fvLabel = _dxg != null ? String(_dxg) : (latest ? latest.consensus_fv_label : " - ");
       const sl = p.statline || {};
       const lvl = sl.level || " - ";
       const overflow = idx >= TOP_N ? " is-overflow" : "";
@@ -44322,7 +44406,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // filters all share state with the main prospect list so toggling
   // chips on the list page carries through when the user clicks into
   // a farm - same prospects, same lens.
-  const rosterPlayersAll = (DATA.players || []).filter(p => p.org === orgCode);
+  // Provisional (source-ungraded) prospects are first-class members of the org's pool too --
+  // fold this org's provisional players in so the depth chart, roster, pyramid and scatter all
+  // treat them like any other active prospect (ranked by their xFV grade).
+  if (typeof ensureXfvUngraded === "function") ensureXfvUngraded();
+  const rosterPlayersAll = (DATA.players || []).filter(p => p.org === orgCode)
+    .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === orgCode));
   let rosterPlayers = rosterPlayersAll.slice();
   if (state.acqFilter !== "all") {
     rosterPlayers = rosterPlayers.filter(p =>
@@ -45569,7 +45658,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     }).join("");
     return `
       <div class="detail-title">Ungraded standouts
-        <span class="detail-title-sub">provisional xFV · production-only leading indicator · sources haven't graded these yet</span>
+        <span class="detail-title-sub">provisional xFV · production-only leading indicator · sources haven't graded these yet · breakouts now count toward this farm's depth score</span>
       </div>
       <div class="graded-by-level-grid"><div class="graded-level-block">${items}</div></div>`;
   })();

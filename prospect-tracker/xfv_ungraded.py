@@ -60,6 +60,7 @@ log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "xfv_ungraded.json"
 EVAL_PATH = DATA_DIR / "xfv_ungraded_eval.json"
+_BUCKETS = ("bust", "bench", "regular", "good", "star")
 
 # No-FV production feature sets (see module docstring + data/xfv_ungraded_eval.json).
 # Hitters KEEP level_rank (reaching a high level is predictive); pitchers DROP it (it
@@ -69,14 +70,24 @@ _NOFV_HIT = ["obp_rel", "ops_rel", "k_rel", "peak_k_rel", "peak_obp_rel",
 _NOFV_PIT = ["k_rel", "peak_k_rel", "bb_rel", "era_rel", "x_era_k",
              "age_rel_level", "n_milb_seasons"]
 
-# Conventional capped grade map: grade = clamp(BASE + SLOPE*war_pred, FLOOR, CAP).
+# Conventional grade map with a SOFT ceiling: grade = BASE + SLOPE*war_pred, floored at
+# FLOOR, then compressed above KNEE toward CEIL: g' = KNEE + (CEIL-KNEE)*(1-exp(-(g-KNEE)/SOFT)).
 # Spec-calibrated (owner: "low, 20-30 for most, breakouts higher") + validated to match
 # conventional FV semantics on the real roster cohort (hitters median ~23 / 77% <=30;
-# pitchers median ~24 / 87% <=30). The CAP is the hard rail: an un-scouted player cannot
-# be graded as a real prospect.
+# pitchers median ~24 / 87% <=30). WHY SOFT, not a HARD CAP (cap test, 2026-06-23):
+#   HITTERS  uncapped grade carries REAL forward-chained signal above 43 (realized 6yr WAR
+#            bins: [43,48) mean 3.43, [48+) mean 6.10; Spearman 0.29 among grade>=40), so a
+#            hard cap at 43 DISCARDS signal -- the genuine young-for-level breakouts (an 18-yo
+#            holding AA) deserve mid-to-high-40s. KNEE 43 / CEIL 49 lets them through while
+#            bounding the extreme (an un-scouted player still can't claim top-prospect status
+#            without scout corroboration; ungraded-selection risk caps the magnitude).
+#   PITCHERS signal above 40 is NOISE (Spearman 0.077; bins flat) -- the top uncapped arms are
+#            small-sample high-K complex-ball spikes. KNEE 38 / CEIL 42 compresses hard.
+# Soft (not hard) so ORDER is preserved above the knee -- it matters now that these grades fold
+# into the flagship board rank + farm composite.
 _GRADE_MAP = {
-    "hit": {"BASE": 27.0, "SLOPE": 3.8, "CAP": 43.0, "FLOOR": 20.0},
-    "pit": {"BASE": 25.0, "SLOPE": 4.5, "CAP": 40.0, "FLOOR": 20.0},
+    "hit": {"BASE": 27.0, "SLOPE": 3.8, "FLOOR": 20.0, "KNEE": 43.0, "CEIL": 49.0, "SOFT": 4.0},
+    "pit": {"BASE": 25.0, "SLOPE": 4.5, "FLOOR": 20.0, "KNEE": 38.0, "CEIL": 42.0, "SOFT": 2.5},
 }
 
 # Default ETA (years to MLB) by level, for the surplus seam -- ungraded low-minors players
@@ -138,8 +149,118 @@ def _war(ridge, a, b, feats) -> float:
 
 
 def _grade(war: float, side: str) -> float:
+    """war_pred -> provisional FV: linear below the KNEE, soft-compressed toward CEIL above it
+    (order-preserving, so breakouts stay ranked while the magnitude is bounded)."""
+    import math
     m = _GRADE_MAP[side]
-    return round(max(m["FLOOR"], min(m["CAP"], m["BASE"] + m["SLOPE"] * war)), 1)
+    g = max(m["FLOOR"], m["BASE"] + m["SLOPE"] * war)
+    knee, ceil, soft = m["KNEE"], m["CEIL"], m["SOFT"]
+    if g > knee:
+        g = knee + (ceil - knee) * (1.0 - math.exp(-(g - knee) / soft))
+    return round(g, 1)
+
+
+def _display_statline(mlbam, milb_block, side: str, org: str | None):
+    """A frontend-shaped statline (the final pre-decision MiLB season line that drove the
+    grade) so a provisional player's board row + detail page can show the production behind
+    the grade. Best-effort: reads the warm milb_history cache (no network)."""
+    import milb_history as mh
+    season = milb_block.get("milb_season")
+    level = milb_block.get("milb_level")
+    if not (season and level and mlbam):
+        return None
+    group = "pitching" if side == "pit" else "hitting"
+    try:
+        rows = mh.player_index(int(season), group, fetch=False).get(int(mlbam)) or []
+        row = mh.level_row(rows, level, group)
+    except Exception:
+        return None
+    if not row:
+        return None
+    def fl(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+    out = {"mlbam_id": mlbam, "level": level, "level_label": row.get("league"),
+           "season": int(season), "is_prior_season": int(season) < CURRENT_SEASON, "org": org}
+    if side == "pit":
+        bf, ip, so, bb = fl(row.get("bf")), fl(row.get("ip")), fl(row.get("so")), fl(row.get("bb"))
+        out.update({
+            "is_pitcher": True, "ip": row.get("ip"), "era": row.get("era"), "games": row.get("g"),
+            "tbf": int(bf) if bf else None,
+            "k_pct": round(so / bf * 100, 1) if (so is not None and bf) else None,
+            "bb_pct": round(bb / bf * 100, 1) if (bb is not None and bf) else None,
+            "k_per_9": round(so / ip * 9, 2) if (so is not None and ip) else None,
+            "bb_per_9": round(bb / ip * 9, 2) if (bb is not None and ip) else None,
+        })
+    else:
+        pa, so, bb = fl(row.get("pa")), fl(row.get("so")), fl(row.get("bb"))
+        slg, avg = fl(row.get("slg")), fl(row.get("avg"))
+        out.update({
+            "is_pitcher": False, "ab": row.get("ab"), "avg": row.get("avg"), "obp": row.get("obp"),
+            "slg": row.get("slg"), "ops": row.get("ops"), "hr": row.get("hr"),
+            "pa": int(pa) if pa else None,
+            "k_pct": round(so / pa * 100, 1) if (so is not None and pa) else None,
+            "bb_pct": round(bb / pa * 100, 1) if (bb is not None and pa) else None,
+            "iso": round(slg - avg, 3) if (slg is not None and avg is not None) else None,
+        })
+    return out
+
+
+def _career_row(r, side: str, org: str | None):
+    """One season-and-level MiLB stat row in the site's career_stats shape (the detail-page
+    stats table reads career_stats)."""
+    def fl(v):
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+    base = {"season": r.get("season"), "level": r.get("level"), "level_label": r.get("league"),
+            "org": org, "is_pitcher": side == "pit"}
+    if side == "pit":
+        bf, ip, so, bb = fl(r.get("bf")), fl(r.get("ip")), fl(r.get("so")), fl(r.get("bb"))
+        base.update({
+            "games": r.get("g"), "era": r.get("era"), "ip": r.get("ip"),
+            "tbf": int(bf) if bf else None,
+            "k_per_9": round(so / ip * 9, 2) if (so is not None and ip) else None,
+            "bb_per_9": round(bb / ip * 9, 2) if (bb is not None and ip) else None,
+            "k_pct": round(so / bf * 100, 1) if (so is not None and bf) else None,
+            "bb_pct": round(bb / bf * 100, 1) if (bb is not None and bf) else None,
+        })
+    else:
+        pa, so, bb = fl(r.get("pa")), fl(r.get("so")), fl(r.get("bb"))
+        slg, avg = fl(r.get("slg")), fl(r.get("avg"))
+        base.update({
+            "games": None, "ab": r.get("ab"), "avg": r.get("avg"), "obp": r.get("obp"),
+            "slg": r.get("slg"), "ops": r.get("ops"), "hr": r.get("hr"),
+            "iso": round(slg - avg, 3) if (slg is not None and avg is not None) else None,
+            "k_pct": round(so / pa * 100, 1) if (so is not None and pa) else None,
+            "bb_pct": round(bb / pa * 100, 1) if (bb is not None and pa) else None,
+        })
+    return base
+
+
+def _career_stats(mlbam, side: str, org: str | None, max_seasons: int = 5):
+    """Multi-season MiLB stat rows (one per season-and-level) for the provisional player's
+    detail-page stats table -- the production behind the grade. Best-effort, warm cache only."""
+    import milb_history as mh
+    group = "pitching" if side == "pit" else "hitting"
+    out = []
+    for season in range(CURRENT_SEASON, CURRENT_SEASON - max_seasons, -1):
+        try:
+            rows = mh.player_index(int(season), group, fetch=False).get(int(mlbam)) or []
+        except Exception:
+            continue
+        for r in rows:
+            lvl = r.get("level")
+            if not lvl or lvl == "MLB":
+                continue
+            out.append(_career_row(r, side, org))
+    # newest first, higher level first within a season (matches the site's ordering)
+    _ord = {"AAA": 5, "AA": 4, "A+": 3, "A": 2, "CPX": 1, "DSL": 0}
+    out.sort(key=lambda x: (-(x.get("season") or 0), -_ord.get(x.get("level"), -1)))
+    return out
 
 
 def _factors(ridge, feats, top: int = 3) -> list:
@@ -238,15 +359,29 @@ def build(persist: bool = True) -> dict:
                 surplus = vf.expected_surplus_usd(grade, is_pit, pos, age=age, eta_years=eta)
                 dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta) or {}
                 pcts = dist.get("percentiles") or {}
+                probs = vf.p_bucket_given_fv(grade, is_pit) or []
                 pk = p.get("player_key") or f"mlbam_{mid}"
+                statline = _display_statline(mid, m, side, p.get("team_name"))
+                career_stats = _career_stats(mid, side, p.get("team_name"))
+                def _mm(v):
+                    return round(float(v), 1) if v is not None else None
                 entry = {
                     "player_key": pk, "mlbam_id": mid, "name": p.get("fullName"),
+                    "player_name": p.get("fullName"),
                     "side": "P" if is_pit else "H", "org": org, "level": level,
                     "position": pos, "age": age,
+                    "statline": statline,
+                    "career_stats": career_stats or None,
                     "xfv_grade": grade, "xfv_war_6yr": round(war, 2),
+                    "consensus_fv": None,                     # ungraded -> no source FV
                     "surplus_mm": round(surplus / 1e6, 1) if surplus else None,
-                    "band_p10_mm": round(pcts["p10"], 1) if pcts.get("p10") is not None else None,
-                    "band_p90_mm": round(pcts["p90"], 1) if pcts.get("p90") is not None else None,
+                    "p_bucket": {k: round(pv, 3) for k, pv in zip(_BUCKETS, probs)} if probs else None,
+                    "dist": {"p10_mm": _mm(pcts.get("p10")), "p25_mm": _mm(pcts.get("p25")),
+                             "p50_mm": _mm(pcts.get("p50")), "p75_mm": _mm(pcts.get("p75")),
+                             "p90_mm": _mm(pcts.get("p90")), "mean_mm": _mm(dist.get("mean")),
+                             "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None},
+                    "band_p10_mm": _mm(pcts.get("p10")),
+                    "band_p90_mm": _mm(pcts.get("p90")),
                     "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
                     "factors": _factors(ridge, feats),
                     "xfv_ungraded": True, "xfv_provisional": True,

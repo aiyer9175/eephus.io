@@ -4148,6 +4148,30 @@ def _load_xfv_join() -> tuple[dict, dict]:
     return _read("xfv.json"), _read("xfv_history.json")
 
 
+def _load_ungraded_by_org() -> dict[str, list[dict]]:
+    """Provisional (source-UNGRADED) prospects grouped by org, as lightweight prospect-dicts
+    for the farm depth/top-end pool (xfv_ungraded.json, one-run lag like the xFV join). Each
+    carries an xfv_grade so _eff_grade ranks it alongside graded prospects; filler (FV 20-30)
+    ranks out of the top-25 (FV_POINTS ~0) and the genuine breakouts add bounded depth. We do
+    NOT add these to any raw-sum / DvM+ / surplus accumulator -- only the rank-and-tier pool."""
+    base = Path(__file__).parent / "data"
+    out: dict[str, list[dict]] = {}
+    try:
+        by_player = json.loads((base / "xfv_ungraded.json").read_text(encoding="utf-8")).get("by_player") or {}
+    except Exception:
+        return out
+    for e in by_player.values():
+        org = e.get("org")
+        g = e.get("xfv_grade")
+        if not org or g is None:
+            continue
+        out.setdefault(org, []).append({
+            "name": e.get("name"), "player_key": e.get("player_key"), "pos": e.get("position"),
+            "age": e.get("age"), "fv_raw": None, "xfv_grade": float(g), "provisional": True,
+        })
+    return out
+
+
 # Hardcoded industry-standard FV → expected career WAR mapping.
 # Anchored to FanGraphs / public research:
 # https://blogs.fangraphs.com/the-new-fangraphs-scouting-primer/
@@ -6662,6 +6686,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # today's rank at serialize time; reads flat until rank history accrues.
     _rank_hist_by_key = load_rank_history()
     _today_iso = date.today().isoformat()
+
+    # Provisional (source-ungraded) prospects grouped by org -- folded into the farm
+    # top-end/depth ranking pool below (one-run lag). Filler ranks out; breakouts add
+    # bounded depth. NOT added to any raw-sum / DvM+ / surplus accumulator.
+    _prov_by_org = _load_ungraded_by_org()
 
     def _rank_movement(pk, today_rank):
         from movement import compute_rank_movement
@@ -11601,8 +11630,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # blended farm_score lands in.
     today_iso = date.today()
     for entry in org_summary:
-        entry["top_end_points"] = _top_end_points(entry["prospects"])
-        entry["depth_points"]   = _depth_points(entry["prospects"])
+        # Fold provisional (source-ungraded) prospects into the rank-and-tier pool so the
+        # genuine breakouts (xFV ~44-49) count toward top-end/depth alongside graded
+        # prospects; filler (FV 20-30, ~0 tier points) ranks out. The displayed
+        # entry["prospects"] list is NOT mutated -- only the scoring pool is augmented.
+        _prov = _prov_by_org.get(entry["org"], [])
+        _pool = entry["prospects"] + _prov if _prov else entry["prospects"]
+        entry["top_end_points"] = _top_end_points(_pool)
+        entry["depth_points"]   = _depth_points(_pool)
+        # Count of provisional sleepers that crack the org's scored top-25 (for the
+        # farm-detail "includes N provisional sleepers" note).
+        if _prov:
+            _ranked25 = sorted(_pool, key=lambda p: (_eff_grade(p) or 0), reverse=True)[:FARM_DEPTH_END]
+            entry["provisional_in_pool"] = sum(1 for p in _ranked25 if p.get("provisional"))
         # Trajectory at each available window. The blended score (60% 6y
         # + 30% 3y + 10% 1y) is also surfaced as `trajectory_score` so
         # the report-card grading anchors on the principal multi-cycle
