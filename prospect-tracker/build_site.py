@@ -1765,6 +1765,22 @@ def _cross_module_strip() -> str:
                           'five-year bWAR leaders', rows))
     except (OSError, ValueError, KeyError):
         pass
+    # Trade Machine - top surplus trade values (prospects + MLB, one currency)
+    try:
+        tv = _cached_data_json("trade_values.json")
+        top = sorted((p for p in tv.get("players") or [] if p.get("trade_value_mm") is not None),
+                     key=lambda p: -p["trade_value_mm"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/prospx/#tab=trademachine">'
+            f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
+            f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
+            for p in top)
+        if rows:
+            cards.append(('⇄ Trade Machine', '/prospx/#tab=trademachine',
+                          'surplus trade value, prospects + MLB', rows))
+    except (OSError, ValueError, KeyError):
+        pass
     # CollegeSavant - static teaser (its data bundles stay in-module)
     cards.append(('✪ CollegeSavant', '/collegesavant/',
                   'college baseball percentiles',

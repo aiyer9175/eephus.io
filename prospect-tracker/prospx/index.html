@@ -12898,6 +12898,7 @@ function syncFromURL() {
                     : p.has("ostab") ? p.get("ostab")
                     : "overview";
   if (p.has("tab"))   state.section     = p.get("tab");
+  if (state.section === "tradeboard") state.section = "trademachine";   // legacy deep-link
   // Free Agency moved to its own surface - redirect legacy #tab=fa deep links.
   if (state.section === "fa") { window.location.replace("/fa/"); return; }
   // Glossary/Methodology moved to /glossary/ - redirect legacy deep links,
@@ -47424,7 +47425,6 @@ function render() {
     ifa:          "ifa-section",
     debuts:       "debuts-section",
     trademachine: "tradeboard-section",   // Trade Machine module (board + evaluator)
-    tradeboard:   "tradeboard-section",   // legacy deep-link alias (#tab=tradeboard)
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
     charts:       "charts-section",
