@@ -6980,6 +6980,21 @@
       min-width: 0;
       align-items: center;
     }
+    /* Full-width rule between position rows so each position reads as its own
+       band. `.is-group` marks the family boundaries (C | infield | outfield |
+       pitchers) with a heavier accent line. Spans all grid columns. */
+    .pos-depth-divider {
+      grid-column: 1 / -1;
+      height: 0;
+      border-top: 1px solid var(--border-light);
+      margin: 1px 0;
+      opacity: 0.7;
+    }
+    .pos-depth-divider.is-group {
+      border-top: 2px solid var(--border);
+      margin: 4px 0;
+      opacity: 1;
+    }
     .pos-depth-row-prospects > .pos-depth-card.is-overflow { display: none; }
     /* v23 - Selector must match the actual DOM: the same <div> carries
        BOTH `.pos-depth-row-prospects` and `.pos-depth-row` classes (see
@@ -43790,7 +43805,16 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
   // Five is a sensible "starting depth" - covers a typical lineup spot
   // plus a couple of backups; click "show all" to reveal the rest.
   const TOP_N = 5;
-  return `<div class="pos-depth-grid">${ROWS.map(([key, label]) => {
+  // Position groups for the divider rules: a thin rule separates every position,
+  // and a heavier accent rule marks the group boundaries (C | infield | outfield |
+  // pitchers) so the chart reads as four clear position families at a glance.
+  const POS_GROUP = {
+    C: "C",
+    "1B": "IF", "2B": "IF", SS: "IF", "3B": "IF",
+    LF: "OF", CF: "OF", RF: "OF",
+    SP: "P", RP: "P",
+  };
+  return `<div class="pos-depth-grid">${ROWS.map(([key, label], ri) => {
     const players = buckets[key];
     const cards = players.map((p, idx) => {
       const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
@@ -43823,11 +43847,17 @@ function makePositionDepthChart(rosterPlayersAll, sortMode) {
       ? `<button class="pos-depth-row-expand is-expanded" data-pos-row-expand="${escapeHtml(key)}" type="button">show top ${TOP_N}</button>`
       : `<span style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);">${count}</span>`;
     const rowCls = count === 0 ? "pos-depth-row is-empty" : "pos-depth-row";
+    // Full-width divider after each position (except the last). Heavier accent
+    // rule when the NEXT position opens a new group (infield/outfield/pitchers).
+    const nextKey = ri < ROWS.length - 1 ? ROWS[ri + 1][0] : null;
+    const divider = nextKey
+      ? `<div class="pos-depth-divider${POS_GROUP[nextKey] !== POS_GROUP[key] ? " is-group" : ""}" aria-hidden="true"></div>`
+      : "";
     return `<span class="pos-depth-row-label">${label}<span class="pos-count">(${count})</span></span>
       <div class="pos-depth-row-prospects ${rowCls} is-expanded" data-pos-row="${escapeHtml(key)}">
         ${cards || "no tracked prospects"}
       </div>
-      ${expandBtn}`;
+      ${expandBtn}${divider}`;
   }).join("")}</div>`;
 }
 
