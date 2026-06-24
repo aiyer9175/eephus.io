@@ -2139,6 +2139,10 @@ _PROJ_VIEW_SWITCHER = """<script>
     if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){ b.classList.toggle('active', b.dataset.projview===v); });
     if(tm && window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount();
   }
+  function hashWantsTM(){
+    var h=location.hash||'';
+    return /(?:^|[#&])(?:view|tab)=trademachine/.test(h) || /[#&]tm=/.test(h);
+  }
   function init(){
     var nav=document.querySelector('.proj-viewnav');
     if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){
@@ -2147,8 +2151,10 @@ _PROJ_VIEW_SWITCHER = """<script>
         try{ history.replaceState(null,'', v==='trademachine'?'#view=trademachine':location.pathname); }catch(e){}
       });
     });
-    var h=location.hash||'';
-    if(/(?:^|[#&])(?:view|tab)=trademachine/.test(h) || /[#&]tm=/.test(h)) show('trademachine');
+    // In-page deep links (e.g. a player page's 'Trade Machine' chip -> #view=trademachine&tm=...)
+    // change only the hash; react so the view actually switches and re-seeds.
+    window.addEventListener('hashchange', function(){ if(hashWantsTM()) show('trademachine'); else show('projections'); });
+    if(hashWantsTM()) show('trademachine');
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
