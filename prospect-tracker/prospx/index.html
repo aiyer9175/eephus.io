@@ -10576,7 +10576,7 @@ function _translatedOverseasPerf(p) {
   return { wrc: adjWrc, fip };  // fip pass-through (hitter-side haircut only)
 }
 
-function tiebreakerScore(p) {
+function tiebreakerScore(p, opts) {
   if (!p) return 0;
   // v31.13 - Three-cohort TBS tuned for MLB-SUCCESS PROJECTION. The
   // weights lean on FV-anchored scout signals (Tool composite, DS+,
@@ -10648,6 +10648,19 @@ function tiebreakerScore(p) {
       [moveBoost,                0.06],
     ];
   }
+  // v41 - xFV decimal is the DOMINANT tiebreaker input where the prospect is
+  // xFV-rated (our outcome-grounded grade). Among prospects tied on surfaced
+  // consensus FV (the higher-level sort in fvCmpDesc), the higher xFV wins, with
+  // tools/perf as the remaining secondary tiebreakers. Backtested as a gain, not a
+  // loss: within-consensus-FV-tier Spearman(xFV decimal, realized WAR) = +0.054
+  // (strongest in the populous FV 40-60 tiers), and xFV >= consensus globally
+  // (0.337 vs 0.331) on the debuted backgrade cohort (tools/tbs_xfv_backtest.py).
+  // opts.noXfv excludes it on the surplus-multiplier path so xFV isn't double-
+  // counted into the already-xFV-derived surplus value. Draft / overseas cohorts
+  // have no xFV, so this term drops out and their TBS is unchanged.
+  const _xf = (!(opts && opts.noXfv) && typeof getXfv === "function") ? getXfv(p) : null;
+  const _xfvG = (_xf && _xf.xfv_grade != null) ? Number(_xf.xfv_grade) : null;
+  if (_xfvG != null) parts.push([_tbsNorm(_xfvG, 35, 62), 0.90]);
   let presentSum = 0, presentWeight = 0;
   for (const [v, w] of parts) {
     if (v != null) { presentSum += v * w; presentWeight += w; }
@@ -21065,7 +21078,9 @@ function _tbsOptMult(opts) {
   if (!opts || typeof opts !== "object") return 1.0;
   if (typeof opts.tbs === "number") return _tbsSurplusMult(opts.tbs);
   if (opts.player && typeof tiebreakerScore === "function") {
-    return _tbsSurplusMult(tiebreakerScore(opts.player));
+    // noXfv: the surplus value is already xFV-derived, so the TBS surplus nudge
+    // must use the perf/tools-only TBS (no xFV term) to avoid double-counting xFV.
+    return _tbsSurplusMult(tiebreakerScore(opts.player, { noXfv: true }));
   }
   return 1.0;
 }
