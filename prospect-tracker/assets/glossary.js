@@ -556,7 +556,7 @@ function _methAccuracyChart(bt) {
   </div>`;
 }
 
-// xFV vs consensus FV — our outcome-grounded model, shown SEPARATELY from the per-source
+// xFV vs consensus FV - our outcome-grounded model, shown SEPARATELY from the per-source
 // bars because it runs on its own out-of-sample protocol (the harder, conservative bar).
 function _methXfvPanel(bt) {
   const xc = bt.xfv_vs_consensus;
@@ -601,15 +601,15 @@ function _methXfvPanel(bt) {
         <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "xFV ✓" : "consensus ✓"}</td></tr>`;
     }).join("");
     const share = det.xfv_right_share_on_disagreements;
-    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements — who was right <span class="meth-sub">resolved players; xFV closer on ${share != null ? Math.round(share * 100) : "?"}% of all disagreements</span></div>
+    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; xFV closer on ${share != null ? Math.round(share * 100) : "?"}% of all disagreements</span></div>
       <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>xFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
   }
   return `<div class="meth-chart meth-accuracy">
     <div class="meth-chart-title">xFV vs consensus FV <span class="meth-sub">our model · out-of-sample</span></div>
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
-    ${sideBlock("hitters", "Hitters — ordering skill (Spearman ρ, grade vs realized WAR)")}
-    ${sideBlock("pitchers", "Pitchers — ordering skill (Spearman ρ, grade vs realized WAR)")}
-    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample for both sides, and the edge holds on the recent 2019–2023 cohorts — so it is not merely exploiting older, less-accurate scouting. xFV is the site's primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol — a harder, more conservative test than the in-sample common-set bars above.)</p>
+    ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
+    ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
+    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample for both sides, and the edge holds on the recent 2019–2023 cohorts - so it is not merely exploiting older, less-accurate scouting. xFV is the site's primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol - a harder, more conservative test than the in-sample common-set bars above.)</p>
     ${tierTable}
     ${receipts}
   </div>`;

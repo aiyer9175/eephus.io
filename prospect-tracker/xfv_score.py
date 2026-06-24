@@ -66,6 +66,7 @@ _FACTOR_LABELS = {
     "tool_field": "Field tool", "peak_k_rel": "Peak K rate", "peak_bb_rel": "Peak walk rate",
     "tool_fb": "Fastball", "tool_cmd": "Command", "tool_sl": "Slider",
     "tool_ch": "Changeup", "tool_cb": "Curveball", "era_rel": "ERA vs level",
+    "x_era_k": "K-backed run prevention",                 # KRP+: (-era_rel)*k_rel
     "n_sources": "Source coverage", "pick_overall": "Draft pedigree",
     "bonus_log": "Signing bonus", "milb_missing": "Thin track record",
     "fv_stddev": "Source disagreement", "il_stints_pre": "Injury history",
@@ -410,6 +411,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
     live = json.loads(live_matrix_path(side).read_text(encoding="utf-8"))
 
     scored, skipped_no_track = [], 0
+    krp_raw = {}                                          # KRP+ pool: player_key -> x_era_k (pitchers w/ exposure)
     for r in live:
         try:
             cons_fv = float(r.get("consensus_fv_raw"))
@@ -454,6 +456,8 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         pcts = dist.get("percentiles") or {}
         def _mm(v):
             return round(float(v), 1) if v is not None else None
+        if is_pit and feats.get("x_era_k"):              # nonzero => has IP exposure (w>0 + era/k on file)
+            krp_raw[r["player_key"]] = feats["x_era_k"]
         scored.append({
             "player_key": r["player_key"], "kind": "active", "position": pos,
             "consensus_fv": round(cons_fv, 1),
@@ -491,6 +495,19 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    # KRP+ (K-backed Run Prevention): standardize the model's x_era_k = (-era_rel)*k_rel
+    # interaction over the live pitcher pool onto the harmonized "+" scale (100 + 10*z,
+    # population sigma, clamped 40-160). High = a below-level ERA that missing bats support.
+    if is_pit and len(krp_raw) >= 2:
+        vals = list(krp_raw.values())
+        mu = statistics.mean(vals)
+        sd = statistics.pstdev(vals)
+        if sd > 0:
+            for s in scored:
+                x = krp_raw.get(s["player_key"])
+                if x is not None:
+                    s["krp_plus"] = round(min(160.0, max(40.0, 100 + 10 * (x - mu) / sd)), 1)
 
     xfv_tot = round(sum(s["surplus_mm"] or 0 for s in scored), 1)
     cons_tot = round(sum(s["consensus_surplus_mm"] or 0 for s in scored), 1)

@@ -50,7 +50,7 @@
   --grain2: rgba(139,132,116,.05);
   /* LEGIBILITY FIX: MS UI Gothic / MS Gothic still lead (the brand pixel-gothic on
      Windows), but where they're ABSENT (Mac / Linux / mobile) COPY now falls to a
-     clean technical MONOSPACE — on-theme + legible — instead of the DotGothic16
+     clean technical MONOSPACE - on-theme + legible - instead of the DotGothic16
      pixel face, which rendered body copy illegibly off-Windows. Pixel-gothic is
      kept ONLY for the logo (--font-logo). Mirrors prospx/index.html. */
   --font-retro: "MS UI Gothic","MS Gothic",

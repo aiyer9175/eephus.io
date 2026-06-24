@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-23",
+ "generated_at": "2026-06-24",
  "vintage_years": [
   2018,
   2019,
@@ -12,13 +12,13 @@
   "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3726,
-  "level_from_statsapi": 3407,
-  "level_from_career_stats": 1457,
-  "debuted": 4136,
-  "censored_active": 2340,
+  "no_level_age_fallback": 3725,
+  "level_from_statsapi": 3410,
+  "level_from_career_stats": 1455,
+  "debuted": 4139,
+  "censored_active": 2337,
   "washed_out": 751,
-  "overdue": 891
+  "overdue": 888
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,44 +28,44 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4136,
-  "mae": 1.425,
-  "bias": 1.03,
+  "n": 4139,
+  "mae": 1.426,
+  "bias": 1.027,
   "within_1y": 0.585,
   "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3416,
-  "mae": 1.981,
-  "bias": 1.769,
+  "n": 3419,
+  "mae": 1.982,
+  "bias": 1.765,
   "within_1y": 0.379,
   "exact": 0.168
  },
  "champion_on_baseline_rows": {
-  "n": 3416,
-  "mae": 1.443,
-  "bias": 1.107,
-  "within_1y": 0.577,
+  "n": 3419,
+  "mae": 1.444,
+  "bias": 1.104,
+  "within_1y": 0.576,
   "exact": 0.212
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2872,
-  "mae": 0.847,
-  "bias": 0.218,
-  "within_1y": 0.819,
+  "n": 2875,
+  "mae": 0.85,
+  "bias": 0.213,
+  "within_1y": 0.818,
   "exact": 0.375
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2778,
-  "mae": 1.455,
-  "bias": 1.149,
-  "within_1y": 0.57,
+  "n": 2781,
+  "mae": 1.457,
+  "bias": 1.145,
+  "within_1y": 0.569,
   "exact": 0.198
  },
  "v38_frozen_on_km_rows": {
-  "n": 2778,
+  "n": 2781,
   "mae": 2.006,
-  "bias": 1.852,
+  "bias": 1.849,
   "within_1y": 0.407,
   "exact": 0.136
  },
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 791,
-  "km_recalibrated": 891,
-  "censored_n": 2340
+  "v38": 788,
+  "km_recalibrated": 888,
+  "censored_n": 2337
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -134,11 +134,11 @@
    "exact": 0.224
   },
   "A": {
-   "n": 903,
-   "mae": 1.597,
-   "bias": 1.218,
-   "within_1y": 0.524,
-   "exact": 0.182
+   "n": 904,
+   "mae": 1.598,
+   "bias": 1.213,
+   "within_1y": 0.523,
+   "exact": 0.181
   },
   "A+": {
    "n": 719,
@@ -148,10 +148,10 @@
    "exact": 0.156
   },
   "AA": {
-   "n": 904,
-   "mae": 1.219,
-   "bias": 0.907,
-   "within_1y": 0.656,
+   "n": 906,
+   "mae": 1.222,
+   "bias": 0.9,
+   "within_1y": 0.655,
    "exact": 0.223
   },
   "AAA": {
@@ -171,23 +171,23 @@
    "exact": 0.275
   },
   "2019": {
-   "n": 770,
-   "mae": 1.264,
-   "bias": 0.664,
+   "n": 771,
+   "mae": 1.266,
+   "bias": 0.659,
    "within_1y": 0.649,
-   "exact": 0.255
+   "exact": 0.254
   },
   "2020": {
-   "n": 724,
-   "mae": 1.209,
-   "bias": 0.775,
-   "within_1y": 0.667,
-   "exact": 0.256
+   "n": 725,
+   "mae": 1.211,
+   "bias": 0.77,
+   "within_1y": 0.666,
+   "exact": 0.255
   },
   "2021": {
-   "n": 715,
+   "n": 716,
    "mae": 1.923,
-   "bias": 1.699,
+   "bias": 1.694,
    "within_1y": 0.408,
    "exact": 0.109
   },
@@ -218,9 +218,9 @@
    "median": 1.0
   },
   "A": {
-   "n": 903,
-   "mean": 1.218,
-   "median": 1
+   "n": 904,
+   "mean": 1.213,
+   "median": 1.0
   },
   "A+": {
    "n": 719,
@@ -228,8 +228,8 @@
    "median": 1
   },
   "AA": {
-   "n": 904,
-   "mean": 0.907,
+   "n": 906,
+   "mean": 0.9,
    "median": 1.0
   },
   "AAA": {
@@ -239,8 +239,8 @@
   }
  },
  "censoring": {
-  "censored_active": 2340,
-  "overdue_rate": 0.381,
+  "censored_active": 2337,
+  "overdue_rate": 0.38,
   "washed_out": 751,
   "washed_out_share_of_listed": 0.104
  },
@@ -254,7 +254,7 @@
    "AAA": 0
   },
   "2020": {
-   "A": 3,
+   "A": 3.0,
    "A+": 2.0,
    "AA": 1,
    "CPX": 4.0,
@@ -262,15 +262,15 @@
    "DSL": 4
   },
   "2021": {
-   "A": 3.0,
+   "A": 3,
    "A+": 2,
-   "AA": 1.0,
+   "AA": 1,
    "CPX": 4,
    "AAA": 0.0,
    "DSL": 4.0
   },
   "2022": {
-   "A": 2,
+   "A": 2.0,
    "A+": 2.0,
    "AA": 1.0,
    "CPX": 3.0,
@@ -278,7 +278,7 @@
    "DSL": 4
   },
   "2023": {
-   "A": 2.0,
+   "A": 2,
    "A+": 1.0,
    "AA": 1,
    "CPX": 3.0,
@@ -304,10 +304,10 @@
    0.2524,
    0.2117,
    0.2012,
-   0.1979,
-   0.1908,
-   0.1908,
-   0.1908
+   0.1962,
+   0.1875,
+   0.1875,
+   0.1875
   ],
   "A+": [
    0.9,
@@ -321,15 +321,15 @@
    0.3775
   ],
   "A": [
-   0.9688,
-   0.8169,
-   0.6033,
-   0.4483,
-   0.3258,
-   0.2679,
-   0.2441,
-   0.2344,
-   0.2344
+   0.9689,
+   0.817,
+   0.6036,
+   0.4487,
+   0.3264,
+   0.2686,
+   0.2449,
+   0.2333,
+   0.2333
   ],
   "CPX": [
    0.9891,

@@ -1893,7 +1893,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     # Rank by PRIMARY FV (xFV when graded, else consensus close), RAW/unrounded.
     # Tie-break to MATCH the PROSPX active board (buildXfvRankMap -> xfvRankValue,
     # ties broken by fvCmpDesc: consensus FV, then the '+' upside flag). Without
-    # this the homepage and the active list disagreed on xFV ties — e.g. Anderson
+    # this the homepage and the active list disagreed on xFV ties - e.g. Anderson
     # & De Vries both xFV 60: the board ranks De Vries above (consensus 62 > 58),
     # so the homepage must too. The displayed rank is the xFV-sorted POSITION (the
     # board's xFV rank for the top 5), not the consensus overall_rank, so the two

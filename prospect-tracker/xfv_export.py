@@ -45,6 +45,8 @@ def _entry(s, side, kind):
         e["injury_factor"] = s["injury_factor"]
     if s.get("statcast_factor") is not None:             # live Statcast+ tilt (!=1.0)
         e["statcast_factor"] = s["statcast_factor"]
+    if s.get("krp_plus") is not None:                    # KRP+ (K-backed Run Prevention), pitchers
+        e["krp_plus"] = s["krp_plus"]
     if s.get("factors"):                                 # per-prospect xFV explainer
         e["factors"] = s["factors"]
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
