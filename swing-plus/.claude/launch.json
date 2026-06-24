@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "swing-plus-web",
+      "runtimeExecutable": ".venv/bin/uvicorn",
+      "runtimeArgs": ["web.app:app", "--reload", "--log-level", "warning"],
+      "port": 8000,
+      "autoPort": false
+    }
+  ]
+}

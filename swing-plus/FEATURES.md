@@ -1,0 +1,118 @@
+# Features
+
+Each feature ships with a **spec** (what / inputs / outputs / definition of done), an
+**owner**, and a **data-dependency list**. Template at the bottom — copy it for every new feature.
+
+Default owner: **@willclq** (reassign per feature as the team grows).
+
+---
+
+## Swing+ — bat-path quality
+- **What:** Grades a hitter's swing-generated power / contact-quality potential from 9 Statcast bat-tracking features. 100 = league avg, SD 10, reliability-shrunk by sample.
+- **Inputs:** competitive swings with bat-tracking (`bat_speed`, `attack_angle`, `swing_length`, `attack_direction`, `swing_path_tilt`, contact-point intercepts, std terms).
+- **Outputs:** `swing_plus` (+ `swing_plus_raw`, `reliability`) per (batter, window) on the leaderboards.
+- **Definition of done:** half-to-half reliability ≥ 0.85; calibration slope ~1.0; no leakage (inputs only). ✅ audited B+.
+- **Owner:** @willclq
+- **Data deps:** `swing_plus_model_v1.joblib`; `data/raw/statcast_*.parquet`; produced by `run_leaderboard.py`.
+
+## Decision+ — swing/take selection (MLB-native)
+- **What:** Run value of each swing/take decision vs league, base-out-count aware (`delta_run_exp`), tailored to the hitter's own swing outcomes. 100 = avg.
+- **Inputs:** all pitches (location, count, base-out, `delta_run_exp`, description); per-hitter whiff/contact rates by group×zone.
+- **Outputs:** `decision_plus_mlb`, run-value drivers `dec100_chase/zone/2k/early`; rolling `decision_traj.parquet`.
+- **Definition of done:** split-half r ≥ 0.75; face-valid (Belt/Choi top, Báez bottom); selectivity (not abstinence) explains ≥ 0.8 of the grade. ✅ audited A−.
+- **Owner:** @willclq
+- **Data deps:** `data/raw/statcast_*.parquet`; built by `mlb_decision.py` → `mlb_decision.parquet`; rolling graph by `decision_drivers.py` → `decision_traj.parquet`.
+
+## B2B+ — bat-to-ball / contact quality
+- **What:** External 12-module Bat-to-Ball+ framework's headline (= Bayesian damage-conversion). Third orthogonal axis (~r0 with Swing+/Decision+, +0.32 with OPS).
+- **Inputs:** per-batter-season artifact from the external framework; for 2026, BIP scored through the framework's opportunity LightGBM models + calibration.
+- **Outputs:** `b2b_plus` (+ `contact_plus_b2b`, `dc_plus_b2b`) joined onto the boards.
+- **Definition of done:** joins by (batter, season); 2026 calibrated to framework scale (R²≥0.65) and low-sample-shrunk. ✅
+- **Owner:** @willclq  (external model owner: bat-to-ball framework maintainer)
+- **Data deps:** `data/processed/bat_to_ball_plus.parquet` (external artifact); `b2b_2026.py` also needs the framework's `models/opportunity_*_v2.lgb.joblib` (external) + `data/raw/statcast_2026_H1.parquet`.
+
+## Savant collision dataset — bat-ball collision geometry (NEW)
+- **What:** Per-(batter, season) collision measurements from Savant's swing-timing-miss-distance leaderboard: avg miss distance, perfect/flawed contact %, horizontal alignment (tied-up/centered/flailed), timing (early/on-time/late), vertical alignment (over/lined-up/under) + engineered biases/entropies. Audited per the universal framework before any model use — full results in `COLLISION_REPORT.md`.
+- **Inputs:** Savant `leaderboard/bat-tracking/swing-timing-miss-distance` CSV endpoint (2023 ASG onward; supports season + dateStart/dateEnd).
+- **Outputs:** `data/processed/savant_collision.parquet` (full seasons) + `savant_collision_halves.parquet` (split-half reliability panels).
+- **Definition of done:** reliability (split-half ≥ 0.5, y2y up to 0.82) ✅; projectability (next-whiff r up to 0.73) ✅; leakage LOW ✅; per-model incremental verdicts documented ✅.
+- **Owner:** @willclq
+- **Data deps:** Baseball Savant CSV endpoint (external API); `savant_collision.py`.
+
+## Contact+ v2 — collision-aware contact-frequency axis
+- **What:** Upgraded contact-FREQUENCY axis: ridge on [Contact+ v1, perfect/flawed %, vertical-alignment entropy, lined-up/over %, collision entropy, miss distance] fit to next-season whiff; 100 = avg, SD 10, shrunk K = 150 swings. Replaced v1 as the displayed/blended axis (v1 fallback where collision data missing).
+- **Inputs:** `savant_collision.parquet` + v1 `contact_plus` (external framework artifact).
+- **Outputs:** `data/processed/contact_v2.parquet` → `contact_axis` (+ `contact2_plus`) on boards; leaderboard "Contact+" column.
+- **Definition of done:** beats champion v1 out-of-sample on next-whiff (ΔR² +0.089, leave-transition-year-out; r −0.854 vs −0.799) and next-K% (+0.032); robust per fold, archetype, bat side, strict thresholds; 2026 scored directly (463 hitters). ✅
+- **Owner:** @willclq  (v1 external model owner: bat-to-ball / contact framework maintainer)
+- **Data deps:** `savant_collision.parquet`, `bat_to_ball_plus.parquet` (external artifact); built by `contact_v2.py` (audit: `collision_audit.py`). Legacy 2026 v1 calibration: `contact_2026.py` + framework `difficulty_contact.lgb.joblib`.
+
+## DCV+ — damage-geometry / pull-air axis
+- **What:** External Damage Conversion+ framework's composite: converts contact into pulled-air damage (pull-air rate 0.20 / spray-SLG bonus 0.02 / HR-window 0.13 blend, 100±10). The ISO/HR-geometry axis; orthogonal to all other axes (max |r| 0.21 vs Swing+; B2B+ carries no pull-air info, r −0.14 — cannibalization check passed).
+- **Inputs:** framework artifact (2023-25); for 2026, raw damage-geometry rates (pulled-air, pulled-barrel, HR-window, pull) computed from raw Statcast with the framework's exact cuts (replication r = 1.000), calibrated to the dcv_plus scale.
+- **Outputs:** `data/processed/dcv_plus.parquet` → `dcv_plus` on boards; leaderboard "DCV+" column.
+- **Definition of done:** OPS-optimal weight ≠ 0 in the 5-axis blend (0.13 ✅); lifts Hitter+ same-season ISO 0.69→0.81 and next-ISO 0.58→0.64 (5-fold CV); 2026 calibration R² ≥ 0.9 (0.985 ✅), K=100 BIP shrink.
+- **Owner:** @willclq  (external model owner: damage-conversion framework maintainer)
+- **Data deps:** `~/damage_conversion_plus/data/processed/{damage_conversion_plus,batter_season_damage}.parquet` (external artifacts); `data/raw/statcast_*.parquet`; built by `dcv_2026.py`.
+
+## Hitter+ — complete-hitter metric (5-axis)
+- **What:** OPS-optimal blend of all five orthogonal axes — Swing+ (0.31) · Decision+ (0.16) · B2B+ (0.23) · Contact+ v2 (0.17) · DCV+ (0.13) — standardized to 100/SD 10; decomposes into the five axes.
+- **Inputs:** `swing_plus`, `decision_plus_mlb`, `b2b_plus`, `contact_axis`, `dcv_plus` on a board.
+- **Outputs:** `hitter_plus` + `h_swing_part`, `h_dec_part`, `h_b2b_part`, `h_contact_part`, `h_dcv_part`.
+- **Definition of done:** beats SEAGER, SwingDecision+, and the 3/4-axis versions out-of-sample (same-season ISO r 0.81, K% 0.88, OPS 0.69; next-OPS 0.51 vs SEAGER 0.34, next-ISO 0.64, next-K% 0.79). ✅
+- **Owner:** @willclq
+- **Data deps:** all five axis columns on the board; computed by `hitter_plus.py` (and `combo_plus.py` for the 2-axis SwingDecision+).
+
+## Per-pitch swing grades / Matchup / Aging / Model report cards
+- **What:** swing-grade tab (per-swing 20-90 grades + percentiles), hitter-vs-pitcher arsenal matchup, aging projection, and in-app model audit cards.
+- **Inputs:** `swing_grades.parquet`, `pitcher_arsenal.parquet`, drift estimates, board rows.
+- **Outputs:** modal tabs in the web app; `web/static/*_report_card.png` (generated).
+- **Definition of done:** endpoints return for all covered hitters; cards regenerate from `report_card_*.py`.
+- **Owner:** @willclq
+- **Data deps:** `swing_grades.parquet`, `pitcher_arsenal.parquet`, `swing_grade_models.joblib`, MLB StatsAPI (birthdates) — all external/generated.
+
+## Skill-vs-Luck layer — variance/regression model
+- **What:** Per-batter-season skill estimates and luck decomposition from the external variance model (M0–M12): `skill = e2 + PA/(PA+k) × residual`, where e2 is a cross-fitted, PA-weighted expectation from the five composites + sprint speed, and k is the model's calibrated shrinkage table (posterior slopes 1.00–1.07). `luck = observed − skill` is the part projected to vanish. Defense/weather/pitcher-quality/lineup/teammates were adjudicated and EXCLUDED by the source model (≤1% of season-grain residual variance); park retained only inside BABIP.
+- **Inputs:** variance-model handoff artifacts (`variance_model_output.parquet`, `shrinkage_constants.csv`, `engine_adjustments.json`); five composite columns + Savant sprint-speed leaderboard; observed 2026 stats from boards/`obs_rates.parquet`.
+- **Outputs:** `data/processed/variance_layer.parquet` → `sk_woba`, `luck_woba`, `sk_iso`, `luck_iso` on boards (all-time view shows current-season values); "Skill vs luck" leaderboard group.
+- **Definition of done:** beats naive stat-carry on the untouched 2025→2026 holdout — next-wOBA r 0.255→0.328, MAE −11%; next-ISO 0.435→0.491; next-AVG 0.205→0.310; 2026 e2 refit reproduces handoff expectations (wOBA r 0.91, ISO 0.99) and matches gold holdout performance. ✅ 397 hitters scored for 2026.
+- **Owner:** @willclq  (external model owner: variance-model maintainer)
+- **Data deps:** `~/variance_model_handoff.zip` artifacts (copied to `data/processed/variance_handoff/`); Savant sprint-speed CSV endpoint; built by `variance_layer.py`. Engine TODOs deferred by design: multi-year pooling, aging, league renorm, elite-tail (see `engine_adjustments.json`).
+
+## Hitter+ next — future-skill projection (aging framework, v2 with cascades)
+- **What:** Next-season projected skill per axis (`proj_next = a + b·current + validated terms`), blended into a projected Hitter+. Reversion `b` per axis (under cascade: Swing+ 0.75, Contact+ 0.76, Decision+ 0.66, B2B+ 0.51, DCV+ 0.51). Validated terms only: Swing+ quadratic age (+0.9 pts at 23 → −0.4 at 34, clipped 22–36) and the **bat-speed cascade** (AGE-M8 joint audit: bat speed today leads other skills tomorrow — sustains Swing+/B2B+, erodes Contact+; OOS +0.062/+0.044/+0.031). Decision+/DCV+ pure reversion; chase%/z-swing% aging, age-driven pitch-context shift, and the full 5×5 cross-skill matrix all REJECTED (pitchers challenge DAMAGE decline, −0.29pp zone-seen per mph EV90, not age; cross-matrix overfits). "Contact ages up" shown to be survivor composition. Full audit: `~/aging_curves/reports/AGING_REPORT.md`.
+- **Inputs:** longitudinal skill panel (5 axes + bat speed/EV90 subcomponents, 2023–26, ages from birthdates + MLB Stats API); discipline/context panel from raw Statcast.
+- **Outputs:** `data/processed/aging_projection.parquet` → `hitter_plus_proj` on boards; "Hitter+ next" column (all-time shows current-season projection).
+- **Definition of done:** anti-overlap LOW for all five models ✅; every shipped term OOS-positive at leave-transition-out (cascade gains are the largest in the framework) ✅; survivorship documented (survival 86%→63% by 35+, skill-selected) ✅; reproducible (deterministic, transition-year CV) ✅.
+- **Owner:** @willclq
+- **Data deps:** `~/aging_curves/` pipeline + panel; `birthdates.json` + MLB Stats API; all five axis sources; `data/raw/statcast_*.parquet` (discipline panel). Constraint: do NOT stack with the variance engine's outcome-aging bias terms (double-count) or sum with the app's feature-level Swing+ aging tab.
+
+## Projected (next yr) — projection engine v2 (deep-history fusion)
+- **What:** Next-season stat projections. Realized stats (wOBA/K%/BB%/ISO/AVG/OPS) = **FUSION**: deep-history backbone (ridge on 5,852 MLB transitions 2000–2022 from the MLB Stats API, era-relative, multi-year weights + aging + AAA/AA rookie translations learned at scale) + the five skill axes. x-stats (xwOBA primary) = skills + compact own-stat priors (no pre-2015 x-stat history). Frozen backbone matches published ZiPS/Steamer accuracy on K%/BB% (K% 23→24: r .850/MAE 2.3%/RMSE 3.0% vs ZiPS .844/2.4%/3.0%); fusion then beats both backbone-only and skills-only on every realized target OOS. Era-relative scoring retires the league-renorm TODO. Full audit: `~/projection_engine/PROJECTION_REPORT.md`.
+- **Inputs:** deep MLB/minors panels (statsapi, 24k + 38k player-seasons); outcomes panel from raw Statcast; skill panel (axes + bat speed + age).
+- **Outputs:** `data/processed/stat_projections.parquet` → `proj_xwoba/proj_woba/proj_k_pct/proj_bb_pct/proj_iso` on boards; "Projected (next yr)" group.
+- **Definition of done:** fusion wins/ties all 10 realized targets OOS (wOBA r .494, OPS .521, BB% .688, K% .823); backbone trained fully disjoint from eval folds; leakage LOW; calibration |err| ≤ .019/decile. ✅
+- **Owner:** @willclq
+- **Data deps:** `~/projection_engine/` pipeline; MLB Stats API (season hitting, sportIds 1/11/12); `data/raw/statcast_*.parquet`; skill panel (`~/aging_curves`). Open: park factors, playing-time model, elite-tail term, in-season updating.
+
+## Translation layer — park / handedness / environment (portability tool)
+- **What:** Translates NEUTRAL projections into park-specific realized projections without touching talent: `translated = neutral × pf_stat(park, stand)`; exactly reversible. Park factors per (venue, stand) from 2023–26 home/road contrasts, EB-shrunk K=8,000 PA (HR factor split-half .49 — the reliable one). **Approved for translation only, NOT in the accuracy path** — park/platoon/weather all failed the incremental accuracy gate on top of engine v2 (whose neutrals proved already park-clean: corr with park factor −0.00). Weather discarded (event-real, season-nil — variance M5); league environment already era-relative in the backbone; platoon splits = real separate talent (own-split r .57 vs cross .20) shipped as a view concept, exposure adds nothing. Portability PASS (Soto: talent + xwOBA frozen across 5 parks; realized wOBA .343 SEA → .378 COL); reversibility PASS (err .0001). Full audit: `~/translation_layer/TRANSLATION_REPORT.md`.
+- **Inputs:** `~/translation_layer/data/park_factors.parquet` (+ platoon panel, league platoon table); engine-v2 neutral projections.
+- **Outputs:** `translate.py` (`translate`/`reverse` + portability demo). Board projections stay NEUTRAL by design.
+- **Definition of done:** anti-contamination LOW (talent metrics provably invariant); portability + reversibility PASS; honest accuracy verdict documented (no translation variable promoted to the accuracy path). ✅
+- **Owner:** @willclq
+- **Data deps:** raw Statcast (park/platoon contrasts); engine v2; variance-model weather adjudication (external).
+
+---
+
+## Feature template (copy for every new feature)
+
+```
+## <Feature name>
+- **What:** one-line description.
+- **Inputs:** data / params it consumes.
+- **Outputs:** columns / files / endpoints it produces.
+- **Definition of done:** measurable acceptance criteria (validation thresholds, coverage).
+- **Owner:** @github-handle
+- **Data deps:** tables / files / APIs / external datasets / services it needs (cross-ref DATA_DEPENDENCIES.md).
+```
