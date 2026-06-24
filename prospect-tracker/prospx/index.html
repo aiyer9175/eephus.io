@@ -14375,9 +14375,9 @@ function getFilteredActives() {
     pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
   }
   if (state.stockFilter === "up") {
-    pool = pool.filter(p => p.stock && (p.stock.direction === "up" || p.stock.direction === "up_strong"));
+    pool = pool.filter(p => xfvStockDir(p) === "up");
   } else if (state.stockFilter === "down") {
-    pool = pool.filter(p => p.stock && (p.stock.direction === "down" || p.stock.direction === "down_strong"));
+    pool = pool.filter(p => xfvStockDir(p) === "down");
   }
   if (state.healthFilter === "healthy") {
     pool = pool.filter(p => !(p.il_status && p.il_status.is_on_il));
@@ -16288,13 +16288,10 @@ function renderActives() {
 
   const rows = pagedRows.map((p, i) => {
     const latest = p.points[p.points.length - 1];
-    // Snap FV to the nearest 5-grade tier so data-fv-tier matches the
-    // CSS rules (which are tier-anchored at 80/75/.../20). Previously
-    // rounded to the nearest integer, leaving any prospect off the
-    // tier breakpoints (e.g. FV=42 → tier "42") without a tint rule.
-    const fvTier = latest && latest.consensus_fv != null
-      ? String(Math.round(latest.consensus_fv / 5) * 5)
-      : "";
+    // Snap FV to the nearest 5-grade tier so data-fv-tier matches the CSS rules (tier-anchored at
+    // 80/75/.../20). Sourced via fvTierAttr -> rarityFvOf so the border tier keys off xFV (the
+    // primary grade), consistent with the xFV rank + badge in this same row.
+    const fvTier = fvTierAttr(p);
     return `
       <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
@@ -16421,9 +16418,9 @@ function renderSpotlights() {
   const rows = pagedRows.map((s, i) => {
     const _full = _spotPlayerByKey[s.player_key] || s;
     // v18 - Tier-tagged row so the .rank-num circle inherits the FV-color
-    // border treatment shared with the active list.
-    const _fvNum = Number(s.fv);
-    const _fvTier = Number.isFinite(_fvNum) ? String(Math.round(_fvNum / 5) * 5) : "";
+    // border treatment shared with the active list. Sourced via fvTierAttr -> rarityFvOf so the
+    // border tier keys off xFV (primary), in lockstep with the rank-num glow (rankNumRarityClass).
+    const _fvTier = fvTierAttr(_full);
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
       <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
@@ -16778,6 +16775,12 @@ const _lbStatcastSupport = row => {
 // (render() → EephusBG.setFV) can never drift from the border-tier signal.
 function rarityFvOf(player) {
   if (!player) return null;
+  // xFV is the primary grade, so the canonical rarity ramp (rank-num border tier + glow, headshot
+  // rings, dark-theme phosphor starfield) keys off it. Consensus FV is the fallback when xFV
+  // abstains - which keeps draft / overseas / not-yet-xFV-rated prospects on their published grade
+  // (getXfv returns null for those cohorts and for synthetic {fv_close:...} callers).
+  const x = (typeof getXfv === "function") ? getXfv(player) : null;
+  if (x && x.xfv_grade != null) return Number(x.xfv_grade);
   let fv = player.fv_close;
   if (fv == null) fv = player.consensus_fv;
   if (fv == null) {
@@ -16786,6 +16789,13 @@ function rarityFvOf(player) {
     if (last) fv = last.consensus_fv_raw != null ? last.consensus_fv_raw : last.consensus_fv;
   }
   return fv != null && isFinite(fv) ? fv : null;
+}
+// data-fv-tier attribute (the row's rank-num border COLOR) sourced from the SAME canonical FV the
+// rarity glow uses (rarityFvOf -> xFV primary, consensus fallback), so border color, rank-num glow,
+// headshot ring and starfield all escalate off one xFV-first value instead of drifting apart.
+function fvTierAttr(player) {
+  const f = rarityFvOf(player);
+  return (f != null && isFinite(f)) ? String(Math.round(f / 5) * 5) : "";
 }
 function rankNumRarityClass(player) {
   const fv = rarityFvOf(player);
@@ -17053,9 +17063,7 @@ function renderWatchlist() {
     </div>`;
     const pRows = pagedPlayers.map((p, i) => {
       const latest = p.points && p.points.length ? p.points[p.points.length - 1] : null;
-      const fvTier = latest && latest.consensus_fv != null
-        ? String(Math.round(latest.consensus_fv / 5) * 5)
-        : "";
+      const fvTier = fvTierAttr(p);
       return `
         <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
           <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
@@ -28111,6 +28119,30 @@ function getXfvHistory(p) {
   const s = _XFV_HIST[p.player_key];
   return (s && s.length >= 2) ? s : null;
 }
+// Direction of a prospect's xFV movement for the active-list "Up / Down" filter (owner: stock =
+// xFV delta). PRIMARY = the xFV "since last real change" step computed from getXfvHistory (mirrors
+// movement.py xfv_movement: walk back to the last point differing by >= the 0.5-grade dead-band).
+// This keeps the filter xFV-true even for provisional prospects (who carry an inline xFV history
+// but no baked stock object) and regardless of a payload predating the server-side xFV override.
+// Falls back to the baked p.stock.direction (itself xFV-overridden in storage.py) when there's no
+// usable xFV series. Returns "up" | "down" | "flat" | null.
+const _XFV_STEP_EPS = 0.5;
+function xfvStockDir(p) {
+  const hist = (typeof getXfvHistory === "function") ? getXfvHistory(p) : null;
+  if (hist && hist.length >= 2) {
+    const latest = hist[hist.length - 1].x;
+    let anchor = hist[0].x;
+    for (let i = hist.length - 2; i >= 0; i--) {
+      if (Math.abs(latest - hist[i].x) >= _XFV_STEP_EPS) { anchor = hist[i].x; break; }
+    }
+    const delta = latest - anchor;
+    return delta >= _XFV_STEP_EPS ? "up" : delta <= -_XFV_STEP_EPS ? "down" : "flat";
+  }
+  const d = p && p.stock && p.stock.direction;
+  if (d === "up" || d === "up_strong") return "up";
+  if (d === "down" || d === "down_strong") return "down";
+  return (d != null) ? "flat" : null;
+}
 // UNGRADED xFV (data/xfv_ungraded.json): a PROVISIONAL, production-only leading indicator
 // for the ~6k source-UNGRADED roster players (DSL/CPX breakout bats + arms the sources are
 // behind on, plus org filler). Keyed by_player + by_mlbam. Distinct from the flagship xFV;
@@ -37414,14 +37446,44 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
     sourceLinesSvg = lines.join("");
   }
 
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory">
+  // xFV-over-time overlay (data/xfv_history.json, or the inline xfv_history a provisional
+  // prospect carries): the model's grade re-scored at each historical snapshot, on the same FV
+  // scale. xFV is the PRIMARY grade, so it draws BOLD (cyan) and the consensus trajectory fades
+  // to a ghost behind it - mirrors the row sparkline (makeLineChart). Falls back to consensus-only
+  // when the prospect has no xFV history (draft / overseas cohorts xFV doesn't grade, or a board
+  // player not yet xFV-rated).
+  const _xfvHist = (player && typeof getXfvHistory === "function") ? getXfvHistory(player) : null;
+  let xfvLineSvg = "", consensusOpacity = 1, xfvLegend = "";
+  if (_xfvHist && _xfvHist.length >= 2) {
+    const xc = _xfvHist.map(h => ({ x: xScale(h.d), y: yScale(h.x) }))
+                       .filter(c => isFinite(c.x) && isFinite(c.y));
+    if (xc.length >= 2) {
+      let dpath = `M ${xc[0].x.toFixed(1)},${xc[0].y.toFixed(1)}`;
+      for (let i = 0; i < xc.length - 1; i++) {
+        const p0 = xc[i - 1] || xc[i], p1 = xc[i], p2 = xc[i + 1], p3 = xc[i + 2] || xc[i + 1];
+        dpath += ` C ${(p1.x + (p2.x - p0.x) / 6).toFixed(1)},${(p1.y + (p2.y - p0.y) / 6).toFixed(1)} ${(p2.x - (p3.x - p1.x) / 6).toFixed(1)},${(p2.y - (p3.y - p1.y) / 6).toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
+      }
+      const xv0 = _xfvHist[0].x, xv1 = _xfvHist[_xfvHist.length - 1].x;
+      xfvLineSvg = `<path d="${dpath}" fill="none" stroke="var(--neon-cyan)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"><title>xFV trajectory · ${xv0} → ${xv1}</title></path>`;
+      consensusOpacity = 0.32;
+      xfvLegend = `<g font-size="10" font-family="var(--font-mono)">
+        <line x1="${(PAD_L + 2).toFixed(1)}" y1="${(PAD_T + 4).toFixed(1)}" x2="${(PAD_L + 16).toFixed(1)}" y2="${(PAD_T + 4).toFixed(1)}" stroke="var(--neon-cyan)" stroke-width="2.6" vector-effect="non-scaling-stroke"/>
+        <text x="${(PAD_L + 20).toFixed(1)}" y="${(PAD_T + 7).toFixed(1)}" fill="var(--text-secondary)">xFV</text>
+        <line x1="${(PAD_L + 48).toFixed(1)}" y1="${(PAD_T + 4).toFixed(1)}" x2="${(PAD_L + 62).toFixed(1)}" y2="${(PAD_T + 4).toFixed(1)}" stroke="var(--text-tertiary)" stroke-width="1.4" opacity="0.6" vector-effect="non-scaling-stroke"/>
+        <text x="${(PAD_L + 66).toFixed(1)}" y="${(PAD_T + 7).toFixed(1)}" fill="var(--text-tertiary)">consensus</text>
+      </g>`;
+    }
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" height="${H}" role="img" aria-label="FV trajectory (xFV + consensus)">
     ${yTicks.join("")}
     ${yearSvg.join("")}
     ${eventSvg.join("")}
     ${sourceLinesSvg}
     ${toolLineSvg}
-    ${segments.join("")}
+    <g style="opacity:${consensusOpacity};">${segments.join("")}</g>
+    ${xfvLineSvg}
     ${circles}
+    ${xfvLegend}
   </svg>`;
 }
 
@@ -44506,11 +44568,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // the bottom (sort key isn't applicable means "doesn't qualify").
   const ROSTER_SORTERS = {
     fv: (a, b) => {
-      const ap = (a && a.points) || [];
-      const bp = (b && b.points) || [];
-      const fa = ap.length ? ap[ap.length - 1].consensus_fv_raw : -1;
-      const fb = bp.length ? bp[bp.length - 1].consensus_fv_raw : -1;
-      return fb - fa;
+      // xFV is the primary grade, so the default roster sort ranks by xFV (consensus FV is the
+      // fallback only where xFV abstains; see xfvRankValue). This is also what folds provisional
+      // (source-ungraded) prospects into the list properly: they carry an inline xFV grade but
+      // empty points[], so the old consensus_fv_raw path scored them -1 and sank them all to the
+      // bottom (past the page-size cut) - why they "weren't showing" on the roster at all.
+      return xfvRankValue(b) - xfvRankValue(a);
     },
     avg_rank: (a, b) => {
       const ap = (a && a.points) || [];
@@ -44858,9 +44921,9 @@ function _renderFarmDetailBody(orgCode, org, root) {
   let rosterRows = _rosterPaged.map((p, i) => {
     const pts = (p && p.points) || [];
     const latest = pts.length ? pts[pts.length - 1] : null;
-    const fvTier = latest && latest.consensus_fv != null
-      ? String(Math.round(latest.consensus_fv / 5) * 5)
-      : "";
+    // Border tier keys off xFV (primary) via fvTierAttr -> rarityFvOf, matching the xFV rank/badge
+    // in the row; provisional prospects (empty points[]) get their inline xFV tier this way too.
+    const fvTier = fvTierAttr(p);
     const fvLabel = (latest && latest.consensus_fv_label != null)
       ? latest.consensus_fv_label : " - ";
     return `
@@ -44912,7 +44975,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const rosterHeader = rosterEyebrow + `<div class="col-header">
     <span class="sort-header" data-roster-sort="name" title="Player name + meta · click to sort">Player · pos · age · B/T</span>
     <span class="sort-header" data-roster-sort="avg_rank" title="Sort by rank" style="text-align:center;">Rank</span>
-    <span class="sort-header" data-roster-sort="fv" title="Sort by consensus FV (high to low)" style="text-align:center;">FV Grade</span>
+    <span class="sort-header" data-roster-sort="fv" title="Sort by xFV (high to low) - our outcome-grounded grade (consensus FV fallback where xFV abstains)" style="text-align:center;">FV Grade</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline">FV history</span>
     <span class="desktop-only" style="text-align:center;">MiLB · age vs. level</span>
     <span class="desktop-only" style="text-align:center;">Ht · Wt · BMI</span>
@@ -45858,7 +45921,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       ${posFilterBar}
       <div class="filter-bar" style="padding:6px 10px;">
         <span class="filter-label">Sort roster</span>
-        <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="Consensus FV (default)">FV</button>
+        <button class="chip${(state.rosterSort || "fv") === "fv" ? " active" : ""}" data-roster-sort="fv" type="button" title="xFV (default) - our outcome-grounded grade, consensus FV fallback">FV</button>
         <button class="chip${state.rosterSort === "avg_rank" ? " active" : ""}" data-roster-sort="avg_rank" type="button" title="Average rank across sources">Avg rank</button>
         <button class="chip${state.rosterSort === "age" ? " active" : ""}" data-roster-sort="age" type="button" title="Youngest first">Age</button>
         <button class="chip${state.rosterSort === "eta" ? " active" : ""}" data-roster-sort="eta" type="button" title="Soonest ETA first">ETA</button>
