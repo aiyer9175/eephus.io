@@ -512,11 +512,52 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         return res
 
     pooled_common = [c for y in years for c in common_by_year[y]]
-    # xFV cohort/calibration table (its OOS grade on the common set) so xFV joins the
-    # FV-tier graphs + cohort-outcome tables alongside the sources.
-    xfv_rows = [{"fv": c["grades"]["xfv"], "outcome": c["outcome"]}
-                for c in pooled_common if c["grades"].get("xfv") is not None]
-    if len(xfv_rows) >= 30:
+    # xFV cohort-outcomes table: built over the FULL oos-graded pool (debuted + busts),
+    # NOT the common resolved set, so its debut rate + tier outcomes sit on the same
+    # population basis as the per-source tables above. The common set is ~fully debuted
+    # (never-debuted busts are rarely graded by EVERY source), which made the xFV cohort
+    # read 100% debut and not comparable to the sources. (The head-to-head Spearman/AUC
+    # stay on the common set - those need identical players to be a fair contest.)
+    import xfv_dataset
+    uni_out = {p.get("player_key"): _outcome(p) for p in universe}
+    m_cons: dict[str, float] = {}
+    m_info: dict[str, tuple] = {}      # key -> (realized war, debuted?) from the xFV matrix
+    for _side in ("hit", "pit"):
+        try:
+            for r in json.loads(xfv_dataset.matrix_path(_side).read_text(encoding="utf-8")):
+                if r.get("consensus_fv_raw") is None:
+                    continue
+                k = r["player_key"]
+                m_cons[k] = float(r["consensus_fv_raw"])
+                war = r.get("target_resolved")
+                war = float(war) if war is not None else float(r.get("target_censored") or 0.0)
+                m_info[k] = (war, r.get("kind") == "debuted")
+        except (OSError, ValueError):
+            pass
+    # Debuted players take the universe's full outcome (war/yr, pace flags); the
+    # never-debuted busts (in the xFV matrix, not the source-comparison universe) take
+    # a non-debuted outcome from the matrix war target - so the pool is debuted + busts.
+    fullp = []
+    for k in xfv_oos:
+        if k not in m_cons:
+            continue
+        if k in uni_out:
+            fullp.append((k, xfv_oos[k], m_cons[k], uni_out[k]))
+        else:
+            war, deb = m_info.get(k, (0.0, False))
+            fullp.append((k, xfv_oos[k], m_cons[k],
+                          {"debuted": deb, "war": war, "war_per_yr": None,
+                           "contributor": war >= CONTRIBUTOR_WAR, "star": war >= STAR_WAR,
+                           "regular_pace": False, "allstar_pace": False}))
+    if len(fullp) >= 30:
+        order = sorted(range(len(fullp)), key=lambda i: fullp[i][1])
+        cons_sorted = sorted(x[2] for x in fullp)
+        mlen = len(fullp)
+        xfv_rows = []
+        for rp, i in enumerate(order):
+            pp = rp / (mlen - 1) if mlen > 1 else 0.0
+            fv = cons_sorted[min(mlen - 1, int(round(pp * (mlen - 1))))]
+            xfv_rows.append({"fv": round(fv, 1), "outcome": fullp[i][3]})
         cohorts["xfv"] = {"n": len(xfv_rows),
                           "n_debuted": sum(1 for r in xfv_rows if r["outcome"]["debuted"]),
                           "tiers": _tier_table(xfv_rows)}
