@@ -25510,8 +25510,16 @@ function goToCollege(name) {
 function _draftSchoolLinkHTML(p) {
   const school = p && p.school;
   if (!school) return "";
-  if (_collegeKeyOf(p)) return _collegeSchoolHTML(p);   // college -> #college=
-  if (typeof _isHSPlayer === "function" && _isHSPlayer(p)) {
+  if (_collegeKeyOf(p)) return _collegeSchoolHTML(p);   // recognized college -> #college=
+  // HS detection. The draft board carries player_type (_isHSPlayer); the player-detail
+  // origin objects do NOT, so also detect a HS from the school STRING — a state-code
+  // suffix "(FL)" / trailing " FL", or a "High School" / "HS" token. Anything that's
+  // neither a known college nor HS-patterned stays plain text (no wrong HS link).
+  const looksHS = (typeof _isHSPlayer === "function" && _isHSPlayer(p))
+    || /\([A-Z]{2}\)\s*$/.test(school)
+    || /\b(HS|H\.S\.|High\s+School)\b/i.test(school)
+    || /\s[A-Z]{2}\s*$/.test(school);
+  if (looksHS) {
     const prog = (typeof _hsProgramName === "function") ? _hsProgramName(school) : null;
     if (prog) {
       return '<a href="#" class="hs-link" data-hs-school="' + escapeHtml(prog) + '" '
@@ -25580,7 +25588,10 @@ function _playerOriginHTML(p) {
   const a = (p && p.acquisition) || {};
   const bits = [];
   if (a.method === "draft") {
-    if (a.school) bits.push(_draftSchoolLinkHTML({ school: a.school }));
+    // Pass the FULL player context (not just {school}) so HS detection works:
+    // _draftSchoolLinkHTML -> _isHSPlayer reads p.player_type, which the stripped
+    // object dropped, so HS schools rendered as plain text instead of links.
+    if (a.school) bits.push(_draftSchoolLinkHTML({ ...p, school: a.school }));
     const dr = [];
     if (a.team_name || a.team_abbr) dr.push(escapeHtml(String(a.team_name || a.team_abbr)));
     if (a.round_label) dr.push("R" + escapeHtml(String(a.round_label)));
