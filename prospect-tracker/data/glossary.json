@@ -4481,6 +4481,29 @@
     "xfv",
     "tool"
    ]
+  },
+  {
+   "id": "xfv_ungraded",
+   "term": "Provisional xFV (ungraded)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "provisional xFV",
+    "ungraded xFV",
+    "prov xFV"
+   ],
+   "priority": 6,
+   "definition": "A PROVISIONAL Future Value grade for prospects who have played pro ball but have NOT yet received a grade from any scouting source -- the DSL/CPX breakout bats and arms the prospect cycle is behind on, plus deep-system org depth. Shown on farm-detail rosters with a dashed badge and a small 'p', so it never reads as a real (source-anchored) xFV grade. Most land 20-30; only genuine production breakouts reach the mid-40s, where a hard cap keeps an un-scouted player from masquerading as a top prospect.",
+   "methodology": "The flagship xFV model is anchored on consensus FV and abstains when there is no source grade, so ungraded players need a dedicated, production-only model. We re-fit a ridge on the SAME translated MiLB production substrate the flagship uses (level-relative K/BB/OBP/ISO vs contemporaneous norms, age-for-level, multi-season peaks, track record) but WITHOUT the consensus-FV feature, so the production signals carry the full WAR prediction. Forward-chained out-of-sample on the low-minors cohort it ranks realized WAR about as well as scout grades do for graded low-minors players (hitters keep level reached; pitchers drop it because it rewards quad-A org arms). The WAR prediction maps through a conventional, capped, absolute grade curve calibrated so a typical org filler reads ~22-25 and a real breakout reaches the cap. It is a leading indicator -- not the flagship grade -- and is not folded into the board rank or the farm-system rank composite.",
+   "formula": "ungraded xFV = clamp( BASE + SLOPE * model E[6yr bWAR] , 20 , cap )  (no consensus-FV anchor; hit cap 43 / pit cap 40)",
+   "example": "Franklin Primera (CPX, age 19) has no source grade yet but a strong on-base line for his level -> a provisional xFV of 43, flagging him as a breakout candidate a development cycle before the boards catch up.",
+   "seeAlso": [
+    "xfv",
+    "consensus_fv",
+    "farm_report_card"
+   ]
   }
  ]
 }

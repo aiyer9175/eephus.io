@@ -892,21 +892,30 @@ def _save_wire_fv_ledger(ledger: dict, live_keys: set) -> None:
 _HOME_MOVER_RECENCY_DAYS = 365
 
 def _genuine_mover_step(p: dict) -> int | None:
-    """Homepage Top Movers selector: the de-noised same-source FV step from the
-    movement engine (carried on `stock`), gated to genuine, recent moves.
+    """Homepage Top Movers selector: the de-noised grade step from the movement
+    engine (carried on `stock`), gated to genuine, recent moves.
 
-    Only same-source consensus steps count - the engine already excludes
-    panel-composition shifts and lone-outlier re-grades, so a source merely
-    re-publishing no longer registers. Confidence must be high/medium, and -
-    because the homepage module is a recency surface ("moving now") - the step
-    must have landed within the trailing year (mirrors the prior
-    _fv_window_delta window). Returns the signed integer grade step (>=2 in
-    magnitude) or None. The per-player stock chips keep showing each player's
-    last real move regardless of age; this module is the recent-movers view."""
+    xFV is the site's primary grade, so the PRIMARY mover signal is the xFV
+    "since last real change" step (basis="xfv"): the xFV trajectory already
+    de-bands (walks back to the last >=0.5 step), so an xFV move IS a genuine
+    move and needs no source-confidence gate. Where a player has no xFV history
+    the engine falls back to the de-noised same-source consensus step
+    (basis="same_source"), which DOES keep its confidence gate (it excludes
+    panel-composition shifts and lone-outlier re-grades). Because the homepage
+    module is a recency surface ("moving now"), the step must have landed within
+    the trailing year. Returns the signed integer grade step (>=2 in magnitude)
+    or None. The per-player stock chips keep showing each player's last real move
+    regardless of age; this module is the recent-movers view."""
     st = p.get("stock") or {}
-    if (st.get("basis") != "same_source" or st.get("delta") is None
-            or st.get("direction") in ("flat", "debuted", None)
-            or st.get("confidence") not in ("high", "medium")):
+    basis = st.get("basis")
+    if st.get("delta") is None or st.get("direction") in ("flat", "debuted", None):
+        return None
+    if basis == "xfv":
+        pass                                          # xFV step is self-de-noised
+    elif basis == "same_source":
+        if st.get("confidence") not in ("high", "medium"):
+            return None
+    else:
         return None
     try:
         moved = date.fromisoformat(str(st.get("to_date"))[:10])

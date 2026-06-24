@@ -28046,6 +28046,36 @@ function getXfvHistory(p) {
   const s = _XFV_HIST[p.player_key];
   return (s && s.length >= 2) ? s : null;
 }
+// UNGRADED xFV (data/xfv_ungraded.json): a PROVISIONAL, production-only leading indicator
+// for the ~6k source-UNGRADED roster players (DSL/CPX breakout bats + arms the sources are
+// behind on, plus org filler). Keyed by_player + by_mlbam. Distinct from the flagship xFV;
+// shown on farm-detail rosters with a "prov" marker. Lazy; absent => no ungraded grades.
+let _XFV_UNG = null, _XFV_UNG_LOADING = false;
+// LAZY: ~2.6MB, only needed on farm-detail pages — load on first request (not page boot)
+// so the homepage / board path stays lean. Re-renders once it lands.
+function ensureXfvUngraded() {
+  if (_XFV_UNG !== null || _XFV_UNG_LOADING) return;
+  _XFV_UNG_LOADING = true;
+  fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _XFV_UNG = j || { by_player: {}, by_mlbam: {} };
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .catch(() => { _XFV_UNG = { by_player: {}, by_mlbam: {} }; });
+}
+// Provisional xFV grade for an ungraded roster entry (rosters_by_org row carries mlbam_id +
+// player_key). Returns the entry {xfv_grade, factors, ...} or null.
+function getUngradedXfv(rosterEntry) {
+  if (!_XFV_UNG || !rosterEntry) return null;
+  const byM = _XFV_UNG.by_mlbam || {};
+  const byP = _XFV_UNG.by_player || {};
+  const mid = rosterEntry.mlbam_id;
+  if (mid != null && byM[String(mid)] != null) {
+    const pk = rosterEntry.player_key;
+    return (pk && byP[pk]) ? byP[pk] : { xfv_grade: byM[String(mid)] };
+  }
+  const pk = rosterEntry.player_key;
+  return (pk && byP[pk]) ? byP[pk] : null;
+}
 // xFV PROXY (data/xfv_proxy_eval.json): a faster-resolving LEADING INDICATOR, not xFV. Projects
 // a prospect's first-MLB-season Statcast quality (hitters: xwOBA; pitchers: xwOBA-against) from
 // the pre-debut profile, forward-validated on recent debut cohorts. Shown as a small detail-page
@@ -29012,8 +29042,12 @@ function _gfxRow(item, kind, meta) {
   if (kind === "leader") {
     const p = item.p || {}, r = item.r || {};
     const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    const _lx = getXfv(p);
+    const _lxg = (_lx && _lx.xfv_grade != null) ? xfvGradeDisplay(_lx) : null;
     return {
-      fv: (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+      // xFV badge (consensus FV fallback).
+      fv: _lxg != null ? String(_lxg)
+          : (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
           : (p.fv_close != null ? String(Math.round(p.fv_close)) : null),
       name: p.player_name || "",
       mlbam: p.mlbam_id, org: p.org,
@@ -29047,9 +29081,14 @@ function _gfxRow(item, kind, meta) {
   const p = item.p || item;
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const isDO = (kind === "draftee" || kind === "overseas");
+  // xFV badge for board prospects + graduates (consensus FV fallback); draft/overseas
+  // stay on consensus (xFV does not grade those cohorts).
+  const _px = isDO ? null : getXfv(p);
+  const _pxg = (_px && _px.xfv_grade != null) ? xfvGradeDisplay(_px) : null;
   const fv = isDO
     ? (p.consensus_fv != null ? String(Math.round(p.consensus_fv)) : null)
-    : ((latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+    : (_pxg != null ? String(_pxg)
+       : (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
        : (p.fv_close != null ? String(Math.round(p.fv_close)) : null));
   const metaBits = [p.position];
   if (kind === "draftee") metaBits.push(p.school || p.commit_school || p.commit);
@@ -29172,11 +29211,11 @@ function _gfxAvatar(r, P) {
 // Footer legend per kind.
 function _gfxFooterNote(kind) {
   return {
-    prospect: "$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = consensus FV",
-    graduate: "WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = final prospect FV",
+    prospect: "$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = xFV (consensus FV fallback)",
+    graduate: "WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = final xFV (locked at debut)",
     draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
     overseas: "badge = consensus FV",
-    leader: "value = the selected stat · badge = consensus FV",
+    leader: "value = the selected stat · badge = xFV (consensus FV fallback)",
     farm: "grade = composite farm-system grade · # = farm rank",
     spotlight: "FV Δ = recent consensus-FV movement · badge = current FV",
     ifa: "$ = signing bonus · badge = consensus FV",
@@ -30045,9 +30084,16 @@ function _gfxRadarOverlay(series, P, size) {
   const polys = series.map(s => `<polygon points="${s.items.map((it, i) => pt(i, it.value != null ? it.value : FMIN).map(x => x.toFixed(1)).join(",")).join(" ")}" fill="${s.color}" fill-opacity="0.1" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round"/>`).join("");
   return `<svg viewBox="0 0 ${S} ${S}" style="width:${S}px;height:${S}px;display:block;overflow:visible;">${rings}${spokes}${polys}${labels}</svg>`;
 }
-// Multi-series FV history overlay - one consensus-FV line per player.
+// Multi-series FV history overlay - one xFV line per player (consensus FV fallback
+// where a player has no xFV trajectory).
 function _gfxFvOverlay(data, P) {
-  const series = data.map(d => ({ color: d.color, pts: (d.p.points || []).map(pt => ({ t: new Date(pt.snapshot_date).getTime(), fv: pt.consensus_fv_raw })).filter(x => x.fv != null && isFinite(x.t)) })).filter(s => s.pts.length >= 2);
+  const series = data.map(d => {
+    const xh = (typeof getXfvHistory === "function") ? getXfvHistory(d.p) : null;
+    const pts = xh
+      ? xh.map(h => ({ t: new Date(h.d).getTime(), fv: h.x })).filter(x => x.fv != null && isFinite(x.t))
+      : (d.p.points || []).map(pt => ({ t: new Date(pt.snapshot_date).getTime(), fv: pt.consensus_fv_raw })).filter(x => x.fv != null && isFinite(x.t));
+    return { color: d.color, pts };
+  }).filter(s => s.pts.length >= 2);
   if (!series.length) return "";
   const allT = series.flatMap(s => s.pts.map(p => p.t));
   const minT = Math.min(...allT), maxT = Math.max(...allT), span = (maxT - minT) || 1;
@@ -30077,12 +30123,17 @@ function buildCompareCard(snap) {
   const fmtSurp = m => (m == null) ? " - " : (typeof fmtSvMM === "function" ? fmtSvMM(m) : "$" + Math.round(m) + "M");
   const data = players.map((p, i) => {
     const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-    const fvLabel = (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label) : (p.fv_close != null ? String(Math.round(p.fv_close)) : " - ");
+    // xFV leads (consensus FV fallback where xFV abstains).
+    const _x = getXfv(p);
+    const _xg = (_x && _x.xfv_grade != null) ? xfvGradeDisplay(_x) : null;
+    const fvLabel = _xg != null ? String(_xg)
+                  : (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
+                  : (p.fv_close != null ? String(Math.round(p.fv_close)) : " - ");
     const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
     const grades = (p.tools && p.tools.grades) || {}; const ltc = (latest && latest.tools_consensus) || {};
     const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
     const rpsObj = (typeof getRpsPlus === "function") ? getRpsPlus(p) : null;
-    return { p, i, color: COL[i], latest, fvLabel, fvNum: p.fv_close, isPit, getT, sl: p.statline || {},
+    return { p, i, color: COL[i], latest, fvLabel, fvNum: xfvRankValue(p), isPit, getT, sl: p.statline || {},
              sc: (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null,
              rps: rpsObj ? rpsObj.plus : null,
              dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
@@ -30113,7 +30164,7 @@ function buildCompareCard(snap) {
 
   // Comparison stat table (best per row highlighted in that player's color).
   const rows = [
-    ["Consensus FV", d => d.fvNum, "high", v => v != null ? Math.round(v) : " - "],
+    ["xFV", d => d.fvNum, "high", v => v != null ? fvCeil(v) : " - "],
     ["Statcast+", d => d.sc, "high", v => v != null ? v : " - "],
     ["RPS+", d => d.rps, "high", v => v != null ? v : " - "],
     ["$DvM+", d => d.dvm, "high", v => v != null ? v : " - "],
@@ -44242,6 +44293,8 @@ function renderFarmDetail(orgCode) {
   // optional org field (tool_dev / financial_breakdown / etc.) doesn't
   // leave the user stranded on a half-rendered page - surface the
   // actual error string so the next debug session has the cause pinned.
+  // Provisional ungraded xFV (DSL/CPX sleepers) is shown on this page only — lazy-load it.
+  if (typeof ensureXfvUngraded === "function") ensureXfvUngraded();
   try {
     return _renderFarmDetailBody(orgCode, org, root);
   } catch (err) {
@@ -44491,15 +44544,19 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // same data the page renders, so the header .gfx-card-btn graphics this org.
   {
     const _top5 = rosterPlayersAll.slice()
-      .sort((a, b) => (b.fv_close || 0) - (a.fv_close || 0))
+      .sort((a, b) => xfvRankValue(b) - xfvRankValue(a))
       .slice(0, 5)
       .map(p => {
         const lt = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+        const _x = getXfv(p);
+        const _xg = (_x && _x.xfv_grade != null) ? xfvGradeDisplay(_x) : null;
         return {
           name: p.player_name, pos: p.position, mlbam: p.mlbam_id,
-          fvLabel: (lt && lt.consensus_fv_label != null) ? String(lt.consensus_fv_label)
+          // xFV leads (consensus FV fallback where xFV abstains).
+          fvLabel: _xg != null ? String(_xg)
+                 : (lt && lt.consensus_fv_label != null) ? String(lt.consensus_fv_label)
                  : (p.fv_close != null ? String(Math.round(p.fv_close)) : " - "),
-          fv: p.fv_close,
+          fv: xfvRankValue(p),
         };
       });
     let _dist = org.fv_distribution;
@@ -45386,9 +45443,20 @@ function _renderFarmDetailBody(orgCode, org, root) {
       const nameCell = pl.player_key
         ? `<span style="color:var(--neon-cyan);">${escapeHtml(pl.fullName)}</span>`
         : escapeHtml(pl.fullName);
-      const fvCell = pl.fv_label
-        ? `<span class="fv-badge ${fvClass(pl.fv_label)} size-sm">${pl.fv_label}</span>`
-        : `<span style="color:var(--text-tertiary);"> - </span>`;
+      let fvCell;
+      if (pl.fv_label) {
+        fvCell = `<span class="fv-badge ${fvClass(pl.fv_label)} size-sm">${pl.fv_label}</span>`;
+      } else {
+        // Source-ungraded: show the PROVISIONAL xFV (production-only leading indicator)
+        // with a dashed badge + tooltip so it reads clearly as not-yet-source-graded.
+        const _ung = (typeof getUngradedXfv === "function") ? getUngradedXfv(pl) : null;
+        if (_ung && _ung.xfv_grade != null) {
+          const _g = fvCeil(_ung.xfv_grade);
+          fvCell = `<span class="fv-badge ${fvClass(String(_g))} size-sm" style="border-style:dashed;opacity:0.82;" title="Provisional xFV ${_g} — production-only leading indicator (no source grade yet)">${_g}<sup style="font-size:7px;font-weight:700;opacity:0.75;margin-left:1px;">p</sup></span>`;
+        } else {
+          fvCell = `<span style="color:var(--text-tertiary);"> - </span>`;
+        }
+      }
       return `<tr${gradedClick}>
         <td>${nameCell}</td>
         <td style="color:var(--text-secondary);">${escapeHtml(pl.position || " - ")}</td>
@@ -45469,6 +45537,42 @@ function _renderFarmDetailBody(orgCode, org, root) {
       <span class="detail-title-sub">MiLB only · ${totalGraded} total · sorted by FV within each level</span>
     </div>
     ${gradedByLevel}`;
+
+  // Ungraded standouts — the production-only BREAKOUT candidates the scouting
+  // sources have not graded yet (provisional xFV >= 35), so the deep-system
+  // sleepers (DSL/CPX bats + arms) are visible a development cycle ahead of the
+  // boards. Provisional, capped, dashed-badge — clearly the leading indicator it is.
+  const ungradedStandoutsSection = (() => {
+    if (!_XFV_UNG) return "";
+    const cands = [];
+    for (const lvl of affilLevels) {
+      if (lvl === "MLB") continue;
+      for (const pl of (orgRosters[lvl] || [])) {
+        if (pl.fv_label) continue;                 // source-graded — not here
+        const ung = (typeof getUngradedXfv === "function") ? getUngradedXfv(pl) : null;
+        if (ung && ung.xfv_grade != null && ung.xfv_grade >= 35) {
+          cands.push({ pl, lvl, g: ung.xfv_grade, factors: ung.factors || [] });
+        }
+      }
+    }
+    if (!cands.length) return "";
+    cands.sort((a, b) => b.g - a.g);
+    const items = cands.slice(0, 10).map(c => {
+      const g = fvCeil(c.g);
+      const click = c.pl.player_key ? ` onclick="goToPlayer('${escapeHtml(c.pl.player_key)}');" style="cursor:pointer;"` : "";
+      const topF = (c.factors || []).filter(f => f.dir === "up").slice(0, 2).map(f => f.label).join(" · ");
+      return `<div class="graded-prospect-row"${click}>
+        <span class="fv-badge ${fvClass(String(g))} size-sm" style="border-style:dashed;opacity:0.85;" title="Provisional xFV ${g} — production-only, no source grade yet">${g}<sup style="font-size:7px;font-weight:700;">p</sup></span>
+        <span style="color:${c.pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(c.pl.fullName)}</span>
+        <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(c.pl.position || "")} · ${escapeHtml(c.lvl)}${c.pl.age != null ? ` · ${c.pl.age.toFixed(1)}` : ""}${topF ? ` · ${escapeHtml(topF)}` : ""}</span>
+      </div>`;
+    }).join("");
+    return `
+      <div class="detail-title">Ungraded standouts
+        <span class="detail-title-sub">provisional xFV · production-only leading indicator · sources haven't graded these yet</span>
+      </div>
+      <div class="graded-by-level-grid"><div class="graded-level-block">${items}</div></div>`;
+  })();
 
   // Acquisition filter chip bar - same as before but visually paired
   // with the acquisition-mix chart in the sidebar (which acts as a
@@ -45595,7 +45699,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${makePositionDepthChart(rosterPlayersAll, state.depthSort || "level")}
     <div class="detail-title">Age vs FV scatter <span class="detail-title-sub">Each dot is one prospect - point size scales with composite Tool grade when published, hue encodes position bucket</span></div>
     ${makeAgeFvScatter(rosterPlayersAll)}
-    ${gradedSection}`;
+    ${gradedSection}
+    ${ungradedStandoutsSection}`;
 
   // v27 - Development tab fleshed out with multi-window DvM+ panel,
   // Hitter/Pitcher cohort split, growth chart (window-chip driven), the
@@ -47566,8 +47671,11 @@ function makeFarmCompareSideBySide(farms) {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
     const grade = (o.grades && o.grades.overall) || " - ";
     const tp = o.top_prospect;
+    // Lead with xFV (consensus FV fallback); top_prospect carries `name` + `xfv_grade`.
+    const tpFv = tp ? (tp.xfv_grade != null ? fvCeil(tp.xfv_grade)
+                       : (tp.fv_raw != null ? fvCeil(tp.fv_raw) : null)) : null;
     const tpHtml = tp
-      ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.player_name || " - ")}</span>${tp.fv ? ` <span class="fv-badge size-sm ${fvClass(String(tp.fv))}" style="margin-left:4px;">${tp.fv}</span>` : ""}</div>`
+      ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.name || tp.player_name || " - ")}</span>${tpFv != null ? ` <span class="fv-badge size-sm ${fvClass(String(tpFv))}" style="margin-left:4px;">${tpFv}</span>` : ""}</div>`
       : "";
     return `<div class="csbs-player" style="--csbs-color:${color};">
       <button class="csbs-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button" title="Remove from compare">×</button>

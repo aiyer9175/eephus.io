@@ -55,6 +55,9 @@ MODEL_GLOSSARY = {
     # xFV proxy = the leading-indicator companion to the xFV family (predicts first-MLB
     # Statcast quality); documented under the xFV entry + self-documented on the detail tile.
     "xfv_proxy": ["xfv"],
+    # xFV ungraded = the provisional production-only leading indicator for source-ungraded
+    # roster players (DSL/CPX sleepers); its own glossary entry documents the methodology.
+    "xfv_ungraded": ["xfv_ungraded"],
 }
 
 

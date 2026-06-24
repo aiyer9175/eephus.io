@@ -3596,6 +3596,28 @@ def load_metric_snapshots(player_key: str | None = None,
     return out
 
 
+def load_rank_history() -> dict[str, list[dict]]:
+    """Per-player overall board-rank history from metric_snapshots, grouped by
+    player_key and ordered oldest-first: {player_key: [{snapshot_date, rank}, ...]}.
+    The input layer for movement.compute_rank_movement (overall_rank becomes the
+    xFV rank once _active_key ranks by xFV, so this measures xFV-rank movement).
+    One query for the whole board (per-player queries in the export loop would be
+    ~1,700 round-trips)."""
+    out: dict[str, list[dict]] = {}
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, snapshot_date, overall_rank FROM metric_snapshots "
+                "WHERE overall_rank IS NOT NULL ORDER BY player_key, snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return out
+    for r in rows:
+        out.setdefault(r["player_key"], []).append(
+            {"snapshot_date": r["snapshot_date"], "rank": r["overall_rank"]})
+    return out
+
+
 def snapshot_farm_ranks(org_summary: Iterable[dict],
                         snapshot_date: str | None = None) -> int:
     """Capture the composite farm-system rank (+ farm_score) for every org,
@@ -6634,6 +6656,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # wherever xFV abstains, so nothing goes null.
     _xfv_by_key, _xfv_hist_by_key = _load_xfv_join()
 
+    # Per-player overall board-RANK history (metric_snapshots). Drives the
+    # de-noised rank_movement chip (movement.compute_rank_movement). overall_rank
+    # is computed below (after the _active_key sort), so the closure appends
+    # today's rank at serialize time; reads flat until rank history accrues.
+    _rank_hist_by_key = load_rank_history()
+    _today_iso = date.today().isoformat()
+
+    def _rank_movement(pk, today_rank):
+        from movement import compute_rank_movement
+        hist = list(_rank_hist_by_key.get(pk) or [])
+        if today_rank is not None:
+            hist = [h for h in hist if h.get("snapshot_date") != _today_iso]
+            hist.append({"snapshot_date": _today_iso, "rank": int(today_rank)})
+        if len(hist) < 2:
+            return None
+        mv = compute_rank_movement(hist)
+        return mv if mv.get("basis") == "rank_step" else None
+
     def _xg(pk, cons):
         """xFV display grade for a player_key; consensus FV fallback where xFV abstains."""
         g = (_xfv_by_key.get(pk) or {}).get("xfv_grade")
@@ -6654,6 +6694,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return None
         out = [(pt.get("d"), pt.get("x")) for pt in h if pt.get("d") and pt.get("x") is not None]
         return out if len(out) >= 2 else None
+
+    def _xfv_at(pk, snap_date, cons):
+        """xFV grade as-of a past snapshot date (latest history point dated <= snap_date);
+        consensus FV fallback. Keeps the prev-rank trend arrow on the same xFV basis as the
+        current rank."""
+        h = _xfv_hist_by_key.get(pk)
+        if h and snap_date:
+            cand = [pt.get("x") for pt in h
+                    if pt.get("d") and pt.get("x") is not None and pt["d"] <= snap_date]
+            if cand:
+                return float(cand[-1])
+        return float(cons) if cons is not None else None
 
     # v17 — Merge in manual contract overrides from
     # data/contract_overrides.json. These take precedence over Spotrac
@@ -8515,6 +8567,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # the player's org. None for graduated/inactive (the maps below
             # only carry actives). Drives the rank pills on prospect detail.
             "overall_rank": overall_rank_by_key.get(p.player_key),
+            # De-noised "since last real change" board-rank movement (xFV rank
+            # once _active_key ranks by xFV). None until rank history accrues or
+            # when the move is within the dead-band; the xFV grade move on
+            # `stock` carries the immediate signal. Best-effort.
+            "rank_movement": _rank_movement(p.player_key, overall_rank_by_key.get(p.player_key)),
             # Position in the same FV-sorted list, but computed off the
             # second-to-last snapshot. Drives the rank-trend ▲/▼/—
             # under the diamond on list rows. None for players with
@@ -9217,19 +9274,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
-        # Rank by the SURFACED (snapped/displayed) consensus FV — so a 56.3 and
-        # a 56.6 that both display as the same grade are TIED here and the
-        # Tiebreaker-Score proxy arbitrates, rather than the higher decimal
-        # auto-winning. The '+' upside flag is the only sub-FV distinction kept
-        # ahead of TBS (a 45+ outranks a 45 but stays below 46).
-        surfaced_fv = (latest.consensus_fv if latest.consensus_fv is not None
-                       else (round(latest.consensus_fv_raw)
-                             if latest.consensus_fv_raw is not None else 0))
+        # xFV is the PRIMARY board-rank driver (consensus FV fallback where xFV
+        # abstains, via _xg). Rank by the SURFACED (snapped/displayed) grade — so
+        # a 56.3 and a 56.6 that both display as the same integer are TIED here
+        # and the Tiebreaker-Score proxy arbitrates, rather than the higher
+        # decimal auto-winning. The '+' upside flag (a consensus concept) is the
+        # only sub-grade distinction kept ahead of TBS.
+        _xg_val = _xg(p.player_key, latest.consensus_fv_raw)
+        surfaced_fv = (round(_xg_val) if _xg_val is not None
+                       else (latest.consensus_fv if latest.consensus_fv is not None
+                             else (round(latest.consensus_fv_raw)
+                                   if latest.consensus_fv_raw is not None else 0)))
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -surfaced_fv,        # surfaced (rounded) FV desc — primary
-            -upside,             # '+' upside flag — ranks above same-FV non-'+'
-            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced FV
+            -surfaced_fv,        # surfaced (rounded) xFV grade desc — primary
+            -upside,             # '+' upside flag — ranks above same-grade non-'+'
+            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced grade
             rank_key,            # avg_rank asc — final stable separator
         )
     actives.sort(key=_active_key)
@@ -9265,7 +9325,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if len(pts) < 2:
             return (999, 999, 999)
         prior = pts[-2]
-        prior_fv = prior.consensus_fv_raw if prior.consensus_fv_raw is not None else None
+        # xFV grade as-of the prior snapshot (consensus fallback), so the rank-delta
+        # arrow is on the same xFV basis as the current xFV-driven rank.
+        prior_fv = _xfv_at(p.player_key, prior.snapshot_date, prior.consensus_fv_raw)
         prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
         # Same FV-then-Tools-then-rank tiebreak the current snapshot
         # uses, but reading the prior snapshot's tools_consensus so the

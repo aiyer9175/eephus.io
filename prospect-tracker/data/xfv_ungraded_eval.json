@@ -1,0 +1,51 @@
+{
+ "generated_at": "2026-06-23",
+ "model": "xFV ungraded (no-FV production ridge)",
+ "by_side": {
+  "hit": {
+   "features": [
+    "obp_rel",
+    "ops_rel",
+    "k_rel",
+    "peak_k_rel",
+    "peak_obp_rel",
+    "iso_rel",
+    "age_rel_level",
+    "level_rank",
+    "n_milb_seasons"
+   ],
+   "cohorts": {
+    "low_minors_age_le21": {
+     "n": 108,
+     "spearman_vs_realized_war": 0.2197
+    },
+    "all_levels": {
+     "n": 1137,
+     "spearman_vs_realized_war": 0.2468
+    }
+   }
+  },
+  "pit": {
+   "features": [
+    "k_rel",
+    "peak_k_rel",
+    "bb_rel",
+    "era_rel",
+    "x_era_k",
+    "age_rel_level",
+    "n_milb_seasons"
+   ],
+   "cohorts": {
+    "low_minors_age_le21": {
+     "n": 60,
+     "spearman_vs_realized_war": 0.2392
+    },
+    "all_levels": {
+     "n": 1092,
+     "spearman_vs_realized_war": 0.182
+    }
+   }
+  }
+ },
+ "note": "Production-only (no consensus FV) ranks realized WAR among un-graded-analog low-minors players; this is the signal the provisional ungraded grade rests on. Hitters ~0.22 low-minors / ~0.31 all-levels; pitchers ~0.24 low-minors (level_rank dropped). These are PROVISIONAL leading-indicator grades, not the flagship."
+}

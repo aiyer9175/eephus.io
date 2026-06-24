@@ -526,3 +526,114 @@ def compute_farm_movement(history: list) -> dict:
         "to_date": plateau_start.get("snapshot_date", ""),
         "n_points": len(pts),
     }
+
+
+# ===========================================================================
+# Per-prospect BOARD-RANK movement (a player climbing / falling the overall
+# PROSPX rank). Same event-based "since last real change" philosophy as the
+# farm engine, applied at the player grain. The input is the player's
+# overall_rank over time (metric_snapshots) -- which becomes the xFV rank once
+# _active_key ranks by xFV, so this measures xFV-rank movement going forward.
+# The board has ~1,700 ranked players, so the rank is far noisier than the
+# 30-team farm rank (a player's number shifts whenever neighbours re-grade); a
+# generous plateau tolerance + dead-band reject that relative churn. Like the
+# farm engine it cannot be back-filled, so it reads flat until a few runs of
+# rank history accrue (expected, not a bug -- the xFV GRADE move on `stock`
+# carries the immediate signal in the meantime).
+# ===========================================================================
+
+# Ranks within this many spots of the anchor are the "same level" when walking
+# back -- absorbs the day-to-day churn from neighbouring players re-grading.
+_RANK_PLATEAU = 10
+# A board move has to clear this many spots to register a direction (smaller is
+# relative churn, not a genuine climb/fall); a big leap is a marquee move.
+_RANK_DEADBAND = 25
+_RANK_STRONG = 100
+
+
+def _rank_flat(pts: list, basis: str, confidence: str) -> dict:
+    first = pts[0] if pts else {}
+    last = pts[-1] if pts else {}
+    return {
+        "direction": "flat",
+        "delta": None if basis == "insufficient" else 0,
+        "basis": basis,
+        "confidence": confidence,
+        "from_rank": first.get("rank"),
+        "to_rank": last.get("rank"),
+        "from_date": first.get("snapshot_date", ""),
+        "to_date": last.get("snapshot_date", ""),
+        "n_points": len(pts),
+    }
+
+
+def compute_rank_movement(history: list) -> dict:
+    """De-noised overall board-RANK movement for one prospect.
+
+    `history` is the player's rank stream -- dicts carrying `snapshot_date` and
+    `rank` (the overall board rank, 1 = best), typically loaded oldest-first
+    with the current run's rank appended as the final point (the anchor).
+    Out-of-order / duplicate-date input is tolerated.
+
+    Walks back from the anchor to the most recent genuine rank STEP (a point
+    more than _RANK_PLATEAU spots off the anchor); the move reported is that
+    point's rank vs the anchor's. A move smaller than the dead-band is flat.
+
+    Output (a `stock`-compatible superset):
+      direction : up_strong|up|flat|down|down_strong
+      delta     : rank spots moved (+ = climbed toward #1); None if insufficient
+      basis     : rank_step|held|insufficient
+      from_rank/to_rank, from_date/to_date, confidence, n_points
+    """
+    by_date: dict = {}
+    for h in (history or []):
+        if not isinstance(h, dict):
+            continue
+        d = h.get("snapshot_date")
+        r = h.get("rank")
+        if not d or r is None:
+            continue
+        by_date[d] = {"snapshot_date": d, "rank": int(r)}
+    pts = [by_date[d] for d in sorted(by_date)]
+
+    if len(pts) < 2:
+        return _rank_flat(pts, "insufficient", "low")
+
+    anchor = pts[-1]
+    a_rank = anchor["rank"]
+    plateau_start = anchor
+    step_pt = None
+    for pt in reversed(pts[:-1]):
+        if abs(pt["rank"] - a_rank) <= _RANK_PLATEAU:
+            plateau_start = pt
+            continue
+        step_pt = pt
+        break
+
+    confidence = "high" if len(pts) >= 3 else "medium"
+    if step_pt is None:
+        return _rank_flat(pts, "held", confidence)
+
+    delta = step_pt["rank"] - a_rank          # + = climbed (number went down)
+    if delta >= _RANK_STRONG:
+        direction = "up_strong"
+    elif delta >= _RANK_DEADBAND:
+        direction = "up"
+    elif delta <= -_RANK_STRONG:
+        direction = "down_strong"
+    elif delta <= -_RANK_DEADBAND:
+        direction = "down"
+    else:
+        direction = "flat"
+
+    return {
+        "direction": direction,
+        "delta": delta,
+        "basis": "rank_step",
+        "confidence": confidence,
+        "from_rank": step_pt["rank"],
+        "to_rank": a_rank,
+        "from_date": step_pt.get("snapshot_date", ""),
+        "to_date": plateau_start.get("snapshot_date", ""),
+        "n_points": len(pts),
+    }

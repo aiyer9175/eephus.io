@@ -135,6 +135,15 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
     xfv_score.score_history(persist)              # xFV-over-time per snapshot (FV history chart)
     xfv_tools.run(persist)                        # resolved tool xFVs
     xfv_tools.run_live(persist)                   # live tool xFVs
+    # UNGRADED prospects -- production-only leading indicator for the source-ungraded roster
+    # players (DSL/CPX breakouts etc.). Separate model + artifact (data/xfv_ungraded.json);
+    # NOT folded into the flagship xfv.json or the farm-rank composite. Needs rosters_by_org.json
+    # (written by the site export) + the labeled matrix (built above). Best-effort.
+    try:
+        import xfv_ungraded
+        xfv_ungraded.build(persist)
+    except Exception:
+        log.exception("xfv_ungraded.build failed -- continuing without ungraded grades")
     return run(persist)
 
 
