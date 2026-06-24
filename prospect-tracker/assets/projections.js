@@ -951,6 +951,13 @@
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
     if (p.aaaStuffPlus != null) tile("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${p.aaaStuffSeason}</span>`, p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "");
     if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
+    // Two-way: surface the hitting vs pitching WAR split (the path above sums both).
+    if (p.twoWay && p.proj && p.proj.warHit)
+      tile("Hitting WAR", fmtWar((p.proj.warHit || []).reduce((a, b) => a + b, 0)), null,
+        "Projected bWAR from the hitting side over the window (the headline path sums both sides).");
+    if (p.twoWay && p.proj && p.proj.warPit)
+      tile("Pitching WAR", fmtWar((p.proj.warPit || []).reduce((a, b) => a + b, 0)), null,
+        "Projected bWAR from the pitching side over the window (the headline path sums both sides).");
     const contract = p.proj && p.proj.thru
       ? `signed thru ${p.proj.thru}${p.proj.aav ? ` · ${money(p.proj.aav)}/y` : ""}`
       : (p.fa ? `free agent${p.fa.type ? ` · ${esc(p.fa.type)}` : ""}` : "arb / pre-arb");
@@ -958,7 +965,7 @@
     // debut date - the hub strip carries the link to the full arc.
     const org = p.origin;
     const originLine = (org && org.prospx)
-      ? `<div class="fa-sub" style="margin-top:4px;">ex-PROSPX prospect${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} → ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}</div>`
+      ? `<div class="fa-sub" style="margin-top:4px;"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, xFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} → ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}</div>`
       : "";
     root.innerHTML = `<div class="mlbp-page">
       <div id="mlbp-hub"></div>
