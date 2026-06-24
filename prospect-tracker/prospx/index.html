@@ -9418,7 +9418,7 @@
         <button class="chip"        data-form-window="4y">4y</button>
         <button class="chip"        data-form-window="5y">5y</button>
         <button class="chip"        data-form-window="6y">6y</button>
-        <button class="chip active" data-form-window="7y">7y</button>
+        <button class="chip active" data-form-window="7y" title="Default - the empirically-optimal trailing window (best predicts realized graduate output)">7y <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span></button>
         <button class="chip"        data-form-window="8y">8y</button>
       </div>
       <div class="filter-group">
@@ -12501,7 +12501,7 @@ function syncToURL(push) {
   if (state.farmTendencyFilter && state.farmTendencyFilter.size) p.set("ftend", [...state.farmTendencyFilter].join(","));
   if (state.farmTendencyMode === "or") p.set("ftmode", "or");
   if (state.rosterSort  && state.rosterSort  !== "fv")    p.set("rsort", state.rosterSort);
-  if (state.formWindow  !== "1y")         p.set("formw", state.formWindow);
+  if (state.formWindow  !== "7y")         p.set("formw", state.formWindow);
   if (state.farmTreeView && state.farmTreeView !== "expanded") p.set("ftree", state.farmTreeView);
   if (state.farmTxKind  !== "all")        p.set("ftxk",  state.farmTxKind);
   if (state.farmTxDir   !== "all")        p.set("ftxd",  state.farmTxDir);
@@ -12883,7 +12883,7 @@ function goHome() {
   if (state.stockFilter !== "all") p.set("stock", state.stockFilter);
   if (state.search)               p.set("q", state.search);
   if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
-  if (state.formWindow !== "3y")          p.set("formw", state.formWindow);
+  if (state.formWindow !== "7y")          p.set("formw", state.formWindow);
   if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
 }
@@ -34201,8 +34201,11 @@ function makeFarmReportCard(org) {
   // historical roll-ups, not windowed development trajectories), so
   // changing the window only affects the DvM+ family of leaves.
   const _winActive = state.formWindow || '7y';
-  const _winChip = (lbl, val) =>
-    `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}" style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}</button>`;
+  const _winChip = (lbl, val) => {
+    const star = val === '7y' ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : '';
+    const tip = val === '7y' ? ' title="Default - the empirically-optimal trailing window"' : '';
+    return `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}"${tip} style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}${star}</button>`;
+  };
   const _windowSelector = `
     <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
       <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Grade window</span>
@@ -45500,7 +45503,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     // and acquisition-strategy cultural signal. The dimensions are
     // pre-normalized into 0-N scales so cosine similarity isn't
     // dominated by any single high-magnitude axis.
-    const win = state.formWindow || "3y";
+    const win = state.formWindow || "7y";
     const featureVec = (o) => {
       const v = [];
       // FV histogram - 5 buckets, raw counts.
@@ -46042,12 +46045,10 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${makeFarmDvmMultiWindowPanel(org)}
     ${makeFarmDevCohortSplit(org)}
     ${makeFarmPosBucketGrades(org)}
-    <div class="detail-title">${(state.formWindow || "7y")} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 6y is the principal signal.</span></div>
+    <div class="detail-title">${(state.formWindow || "7y")} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 7y is the principal (default) signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
-      <button class="chip${(state.formWindow || "7y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-      <button class="chip${(state.formWindow || "7y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-      <button class="chip${(state.formWindow || "7y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
+      ${["3y","4y","5y","6y","7y","8y"].map(w => `<button class="chip${(state.formWindow || "7y") === w ? " active" : ""}" data-form-window="${w}" type="button"${w === "7y" ? ' title="Default - empirically-optimal window"' : ''}>${w}${w === "7y" ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : ''}</button>`).join("")}
     </div>
     ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "7y"] ?? 0), state.formWindow || "7y")}
     ${makeFarmCohortGrowthPanel(org, state.formWindow || "7y")}

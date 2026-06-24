@@ -6138,6 +6138,31 @@ def _grad_pipeline_score(fv_events: list[dict],
     return round(total, 2)
 
 
+def _grad_pace_score(fv_events: list[dict],
+                     window_years: int = 7,
+                     fv_floor: float = 50.0,
+                     as_of: "date | None" = None) -> "float | None":
+    """Sustained graduation PACE: FV>=`fv_floor` debuts per YEAR over the trailing
+    `window_years`. Complements `_grad_pipeline_score` (FV-weighted POINTS in the
+    trailing 12mo) by measuring the RHYTHM of quality graduations — a steady stream
+    of MLB-quality grads vs. one lumpy class. Returns grads/yr (0.0 when the org has
+    events but no qualifying grads); None only when there are no events at all."""
+    if not fv_events:
+        return None
+    today = as_of or date.today()
+    cutoff = (today - timedelta(days=window_years * 365)).isoformat()
+    n = 0
+    for e in fv_events:
+        if e.get("kind") != "debut_marker":
+            continue
+        if (e.get("date") or "") < cutoff:
+            continue
+        fv = e.get("fv")
+        if fv is not None and fv >= fv_floor:
+            n += 1
+    return round(n / window_years, 3) if window_years else None
+
+
 def _rank_percentile(values: list[float]) -> list[float]:
     """Convert a list of scores to rank percentiles in [0, 1] where 1.0 is
     the best (highest input). Ties get the average percentile of the tied
@@ -11683,6 +11708,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["grad_pipeline_score"] = _grad_pipeline_score(
             entry["fv_events"], as_of=today_iso,
         )
+        # v41 — Graduation-pace leaf: FV>=50 debuts/yr over the principal window
+        # (the RHYTHM of quality graduations, vs. the trailing-12mo POINTS above).
+        _gp_win_yrs = int(str(FARM_PRINCIPAL_WINDOW).rstrip("y"))
+        entry.setdefault("tree", {})["mlb_production_grad_pace"] = {
+            "grad_pace": _grad_pace_score(entry.get("fv_events") or [],
+                                          window_years=_gp_win_yrs, as_of=today_iso),
+            "window_years": _gp_win_yrs,
+        }
 
     # Mean trajectory per window across all orgs. The list-page chart
     # subtracts a linear baseline of `mean * t/window_days` from each
@@ -12508,6 +12541,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "mlb_production_conviction": [
             ("star_count", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("star_count")),
         ],
+        # v41 — Graduation PACE. Complements the FV-weighted grad-pipeline POINTS
+        # (a trailing-12mo snapshot) with the RHYTHM of quality graduations:
+        # FV>=50 debuts per year over the principal window. Rewards a steady
+        # MLB-quality stream over one lumpy class; a sustainable-throughput tell.
+        "mlb_production_grad_pace": [
+            ("grad_pace", lambda e: (e["tree"].get("mlb_production_grad_pace") or {}).get("grad_pace")),
+        ],
         # v4 leaf, v32.1 — Now 2-input blend with fv_per_m_pool. The two
         # signals share the same denominator (pool $) but have different
         # numerators: WAR is lagging realized (grads), FV is fast-cycle
@@ -12650,6 +12690,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                   "mlb_production_bust_pct",
                                   "mlb_production_top_grads",
                                   "mlb_production_conviction",
+                                  "mlb_production_grad_pace",  # v41 — FV>=50 grads/yr (pace)
                                   "mlb_production_hof_track"],
     }
     # Legacy parent aliases — kept so any UI or test still reading
@@ -13208,6 +13249,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     z = (v - mu) / sd
                     wmap[leaf_key] = _z_to_letter(z)
+                # Stamp the windowed value on the tree node so the per-window
+                # COMPOSITE bake can re-score the Acquisition branch per window.
+                node = (entry.get("tree") or {}).get(leaf_key) or {}
+                node.setdefault("career_war_by_window", {})[win_label] = v
     # Pop the scratch fields so they don't bloat the exported JSON.
     for entry in org_summary:
         entry.pop("_top_grads_raw", None)
@@ -13215,57 +13260,83 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry.pop("_ifa_grads_raw", None)
 
     # ── Per-window COMPOSITE farm_score + overall letter ──────────────────
-    # The user-selectable trailing window drives the WHOLE grade, not just the
-    # dev sub-leaves. Re-score the DEVELOPMENT branch at each window (org-wide
-    # DvM+[W] at weight 2 blended with the per-window tool DvM+[W] at weight 1,
-    # matching the dev-leaf spec), hold the other three branches at their
-    # canonical scores (Financial / MLB-Production / Acquisition are recency
-    # filters, not the dev trailing window), re-blend the 4-branch composite +
-    # stretch, and rank to a letter. The frontend reads farm_score_by_window[W]
-    # / letter_by_window[W] when the user picks window W; the canonical
-    # farm_score / overall letter stay anchored on FARM_PRINCIPAL_WINDOW.
-    _dev_health_100 = leaf_100.get("dev_health_mgmt")     or [None] * len(org_summary)
-    _dev_statc_100  = leaf_100.get("dev_statcast_quality") or [None] * len(org_summary)
+    # The user-selectable trailing window drives the WHOLE grade, re-scoring
+    # EVERY legitimately-windowed branch at the selected window:
+    #   • Development  — org DvM+[W] (weight 2) blended with per-window tool DvM+[W]
+    #                    (weight 1), matching the dev-leaf spec.
+    #   • MLB-Production — the windowed graduate-WAR/yr leaves (hitter+pitcher)
+    #                    re-z-scored at W; the roll-up leaves (boom/bust/top/
+    #                    conviction/grad-pace/HOF) stay at their canonical scores.
+    #   • Acquisition  — the windowed draft/IFA graduate-WAR leaves re-z-scored at W;
+    #                    trade/waiver leaves stay canonical.
+    # Only FINANCIAL is held fixed: it's aggregate CURRENT surplus (a snapshot, not
+    # a trailing window), so it's window-invariant by construction. Because Financial
+    # is 65% of the composite the rank moves modestly across windows — that's honest:
+    # the grade is value-anchored, and the window re-grades the ~35% development /
+    # production / acquisition trajectory mass. Frontend reads farm_score_by_window
+    # [W] / letter_by_window[W]; canonical farm_score stays on FARM_PRINCIPAL_WINDOW.
+    _n_orgs = len(org_summary)
+    _dev_health_100 = leaf_100.get("dev_health_mgmt")      or [None] * _n_orgs
+    _dev_statc_100  = leaf_100.get("dev_statcast_quality")  or [None] * _n_orgs
+    _PROD_STATIC = ["mlb_production_boom_pct", "mlb_production_bust_pct",
+                    "mlb_production_top_grads", "mlb_production_conviction",
+                    "mlb_production_grad_pace", "mlb_production_hof_track"]
+    _ACQ_STATIC  = ["tx_trades", "tx_waivers"]
     _w_acq  = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
     _w_dev  = FARM_TREE_WEIGHT_DEVELOPMENT
     _w_fin  = FARM_TREE_WEIGHT_FINANCIAL
     _w_prod = FARM_TREE_WEIGHT_MLB_PRODUCTION
+
+    def _node_win(leaf_key, by_window_key, win):
+        return _zscore_to_100(
+            [(((e.get("tree") or {}).get(leaf_key) or {}).get(by_window_key) or {}).get(win)
+             for e in org_summary],
+            higher_is_better=True)
+
+    def _mean_present(vals):
+        present = [v for v in vals if v is not None]
+        return (sum(present) / len(present)) if present else None
+
     for entry in org_summary:
         entry["farm_score_by_window"] = {}
         entry["letter_by_window"] = {}
     for win in FARM_TRAJECTORY_WINDOWS:
-        # org-wide DvM+ at this window (the heavier dev-leaf sub-input, weight 2)
-        z_org = _zscore_to_100(
-            [(e.get("dvm_plus") or {}).get(win) for e in org_summary],
-            higher_is_better=True)
+        # Development leaves at W.
+        z_org = _zscore_to_100([(e.get("dvm_plus") or {}).get(win) for e in org_summary],
+                               higher_is_better=True)
         dev_leaf_w = {}
         for leaf_key in ("dev_hitter", "dev_pitcher"):
-            z_tool = _zscore_to_100(
-                [(((e.get("tree") or {}).get(leaf_key) or {}).get("dvm_plus_by_window") or {}).get(win)
-                 for e in org_summary],
-                higher_is_better=True)
+            z_tool = _node_win(leaf_key, "dvm_plus_by_window", win)
             vals = []
-            for i in range(len(org_summary)):
+            for i in range(_n_orgs):
                 num = den = 0.0
                 if z_org[i] is not None:  num += z_org[i] * 2.0; den += 2.0
                 if z_tool[i] is not None: num += z_tool[i] * 1.0; den += 1.0
                 vals.append(round(num / den, 1) if den > 0 else None)
             dev_leaf_w[leaf_key] = vals
+        # Production windowed leaves (graduate WAR/yr) + Acquisition windowed leaves.
+        z_prod_hit = _node_win("mlb_hitter_production",  "war_per_yr_by_window", win)
+        z_prod_pit = _node_win("mlb_pitcher_production", "war_per_yr_by_window", win)
+        z_acq_drf  = _node_win("acq_draft", "career_war_by_window", win)
+        z_acq_ifa  = _node_win("acq_ifa",   "career_war_by_window", win)
         farm_scores_w = []
         for i, entry in enumerate(org_summary):
-            dev_present = [v for v in (dev_leaf_w["dev_hitter"][i], dev_leaf_w["dev_pitcher"][i],
-                                       _dev_health_100[i], _dev_statc_100[i]) if v is not None]
-            dev_parent = (sum(dev_present) / len(dev_present)) if dev_present else None
-            comp = (_w_acq  * (entry.get("acquisition_strategy_score") if entry.get("acquisition_strategy_score") is not None else 100.0)
-                    + _w_dev  * (dev_parent if dev_parent is not None else 100.0)
+            dev_parent = _mean_present([dev_leaf_w["dev_hitter"][i], dev_leaf_w["dev_pitcher"][i],
+                                        _dev_health_100[i], _dev_statc_100[i]])
+            prod_parent = _mean_present([z_prod_hit[i], z_prod_pit[i]]
+                                        + [(leaf_100.get(k) or [None] * _n_orgs)[i] for k in _PROD_STATIC])
+            acq_parent = _mean_present([z_acq_drf[i], z_acq_ifa[i]]
+                                       + [(leaf_100.get(k) or [None] * _n_orgs)[i] for k in _ACQ_STATIC])
+            comp = (_w_acq  * (acq_parent  if acq_parent  is not None else 100.0)
+                    + _w_dev  * (dev_parent  if dev_parent  is not None else 100.0)
                     + _w_fin  * (entry.get("financial_score") if entry.get("financial_score") is not None else 100.0)
-                    + _w_prod * (entry.get("mlb_production_score") if entry.get("mlb_production_score") is not None else 100.0))
+                    + _w_prod * (prod_parent if prod_parent is not None else 100.0))
             fs = _stretch_composite(round(comp, 1), factor=1.20)
             entry["farm_score_by_window"][win] = fs
             farm_scores_w.append(fs)
         ranks_w = _rank_descending(farm_scores_w)
         for i, entry in enumerate(org_summary):
-            entry["letter_by_window"][win] = _letter_grade(ranks_w[i], len(org_summary))
+            entry["letter_by_window"][win] = _letter_grade(ranks_w[i], _n_orgs)
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
