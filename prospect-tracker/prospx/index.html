@@ -16190,9 +16190,23 @@ function _farmDetailSidebarCards(org, activeTab) {
 const _HOME_MOVER_RECENCY_DAYS = 365;
 function _genuineMoverStep(p) {
   const st = p && p.stock;
-  if (!st || st.basis !== "same_source" || st.delta == null) return null;
+  if (!st || st.delta == null) return null;
   if (st.direction === "flat" || st.direction === "debuted" || st.direction == null) return null;
-  if (st.confidence !== "high" && st.confidence !== "medium") return null;
+  // xFV is the primary grade, so the PRIMARY mover signal is the xFV "since last real change"
+  // step (basis="xfv"): the trajectory already de-bands (walks back to the last >=0.5 step), so
+  // it's self-de-noised and needs NO source-confidence gate. The consensus same-source step
+  // (basis="same_source", the fallback where xFV has no history) DOES keep its confidence gate.
+  // (Was rejecting everything: the backend now stamps basis="xfv" on most players, but this gate
+  // only accepted "same_source" -> the active-list Top Movers card went empty. Mirrors
+  // build_site._genuine_mover_step.)
+  const basis = st.basis;
+  if (basis === "xfv") {
+    /* self-de-noised, no confidence gate */
+  } else if (basis === "same_source") {
+    if (st.confidence !== "high" && st.confidence !== "medium") return null;
+  } else {
+    return null;
+  }
   const to = st.to_date ? new Date(String(st.to_date).slice(0, 10)) : null;
   if (!to || isNaN(to.getTime())) return null;
   const cutoff = new Date();
