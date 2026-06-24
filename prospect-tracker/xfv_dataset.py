@@ -233,8 +233,17 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
             if exp >= minpa:
                 level, row = lv, lr
                 break
-        if level is None:                       # no meaningful level -> highest (rates shrink hard)
-            level = present[0]
+        if level is None:
+            # No level cleared the exposure threshold -> use the MOST-EXPOSED level (the
+            # player's real home), NOT the highest. A cup-of-coffee at a high level (e.g. an
+            # 18-yo's 3-PA AA cameo) must not set level_rank / age_rel_level as if he were
+            # established there: those level features are NOT exposure-shrunk the way the rate
+            # features are, so a cameo at a high level otherwise manufactures a huge
+            # young-for-level + level-reached boost off zero real playing time.
+            def _lv_exp(lv):
+                lr = mh.level_row(rows, lv, group)
+                return (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
+            level = max(present, key=_lv_exp)
             row = mh.level_row(rows, level, group)
         norms = mh.league_norms(season, level, group, fetch=False) or {}
         rates = _season_rates(row, norms, side)

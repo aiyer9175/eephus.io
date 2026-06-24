@@ -17,11 +17,11 @@
    "cohorts": {
     "low_minors_age_le21": {
      "n": 108,
-     "spearman_vs_realized_war": 0.2197
+     "spearman_vs_realized_war": 0.2326
     },
     "all_levels": {
      "n": 1137,
-     "spearman_vs_realized_war": 0.2468
+     "spearman_vs_realized_war": 0.245
     }
    }
   },
@@ -37,12 +37,12 @@
    ],
    "cohorts": {
     "low_minors_age_le21": {
-     "n": 60,
-     "spearman_vs_realized_war": 0.2392
+     "n": 61,
+     "spearman_vs_realized_war": 0.2507
     },
     "all_levels": {
      "n": 1092,
-     "spearman_vs_realized_war": 0.182
+     "spearman_vs_realized_war": 0.1801
     }
    }
   }

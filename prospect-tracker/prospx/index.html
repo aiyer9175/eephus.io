@@ -8661,7 +8661,7 @@
       <div class="filter-group">
         <span class="filter-label" title="Toggle one or more FV-badge indicators. Empty = show all. Multiple selected = OR (union).">FV indicators</span>
         <button class="chip is-multi" data-filter-fvind="wide" title="Wide FV spread - ≥2 sources disagree by at least 10 grade points">W spread</button>
-        <button class="chip is-multi" data-filter-fvind="single" title="Single-source FV - only one outlet has graded this prospect">Single src</button>
+        <button class="chip is-multi" data-filter-fvind="single" title="Thinly sourced - the grade rests on little-to-no published scouting input: a provisional (source-ungraded) prospect OR a single published grade">~ Thinly sourced</button>
         <button class="chip is-multi" data-filter-fvind="breakout" title="Breakout - DvM+ / FV velocity ≥ threshold AND a strong performance gate (RPS+ ≥ 110 for hitters, Stuff+ ≥ 105 or FIP- ≤ 90 for pitchers)">Breakout ★</button>
         <button class="chip is-multi" data-filter-fvind="upside" title="Upside (^) - at least one source published a '+' upside mark on the latest snapshot (capped at FV ≤ 50; 55+/60+ are suppressed since those tiers have already realized their upside). Rendered on the FV chip as a ^ glyph so it doesn't collide with the health '+' pill.">Upside ^</button>
       </div>
@@ -10777,15 +10777,15 @@ function fvBadgeSingleClass(player) {
   return (player && (player._is_provisional || _fvTotalInstances(player) === 1)) ? " is-single-source" : "";
 }
 
-// Real-DOM mark for thin/absent-source badges. Lives at the top-left of the badge (the wide W
-// lives at top-right) so the two can co-exist visually. Glyph "p" = provisional (no source grade
-// yet); "1" = single observation. `title` explains each.
+// "Thinly sourced" mark (glyph ~): one indicator for grades that rest on little-to-no published
+// scouting input -- provisional (no source grade yet) OR single-observation (one published grade).
+// Lives at the top-left of the badge (the wide W lives at top-right) so the two can co-exist.
 function fvBadgeSingleMarkHTML(player) {
   if (!fvBadgeSingleClass(player)) return "";
-  if (player && player._is_provisional) {
-    return `<span class="fv-single-mark" title="Provisional - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards).">p</span>`;
-  }
-  return `<span class="fv-single-mark" title="Single observation - only one published grade across this player's history. Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.">1</span>`;
+  const tip = (player && player._is_provisional)
+    ? "Thinly sourced - no scouting source has graded this prospect yet; the grade is a production-only leading indicator from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards)."
+    : "Thinly sourced - only one published grade across this player's history (single observation). Pulled 1/3 toward FV 35 (Bayesian shrinkage, k=0.5); the pull lifts as soon as a second grade update lands, even from the same source.";
+  return `<span class="fv-single-mark" title="${tip}">~</span>`;
 }
 
 // v14 - Returns " is-breakout" when the prospect carries the active-
@@ -14388,7 +14388,8 @@ function getFilteredActives() {
         if (last && last.fv_spread != null && last.fv_spread >= 10) return true;
       }
       if (state.fvIndicators.has("single")) {
-        if ((p.fv_total_instances || 0) === 1) return true;
+        // "Thinly sourced": single published grade OR provisional (source-ungraded) prospect.
+        if ((p.fv_total_instances || 0) === 1 || p._is_provisional) return true;
       }
       if (state.fvIndicators.has("breakout")) {
         if (p.breakout_flag) return true;
