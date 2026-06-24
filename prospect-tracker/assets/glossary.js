@@ -248,43 +248,41 @@ function _methProseHTML() {
   return `
   <div class="meth-prose">
     <h2 class="meth-h">How xFV is built <span class="meth-sub">the site's primary grade</span></h2>
-    <p><strong>xFV (prospxFV)</strong> is our own outcome-grounded Future Value grade, and the
-    primary grade + ranking signal across the site. Where a scout FV answers "how good is the
-    tool profile," xFV answers a harder, testable question: <em>given everything we know before a
-    prospect debuts, what major-league career is he actually likely to have?</em> It predicts a
-    calibrated distribution of first-6-MLB-season WAR outcomes and summarizes it back to the
-    familiar 20-80 scale.</p>
+    <p><strong>xFV (prospxFV)</strong> is our outcome-grounded Future Value grade, and the
+    primary grade and ranking signal site-wide. A scout FV grades the tool profile; xFV predicts
+    the career it produces: <em>given everything known before a prospect debuts, his distribution
+    of first-6-MLB-season WAR</em>, summarized back onto the familiar 20-80 scale.</p>
     <p><strong>The model.</strong> xFV starts from the consensus FV as a regularized prior (see
-    below), then adds a small set of earned, outcome-validated adjustments - the signals that
-    historically carry WAR information <em>beyond</em> the grade and are under-priced by scouts.
-    Hitters: on-base vs level, contact (K%) vs level, a multi-season peak K-rate, age-for-level,
-    MiLB track-record length, and the hit + speed tools. Pitchers: a multi-season peak K-rate,
-    final-season K-rate, walk rate (the K-BB% completion), age-for-level, and fastball. Game power
-    is <em>deliberately omitted</em> for hitters - the data shows scouts over-price it and it
-    predicts ISO, not incremental WAR, so leaving it out is xFV's power-overpricing correction.
-    It is a regularized ridge fit on ~3,800 labeled prospects (2011-2023), rate features
-    sample-shrunk so a cup-of-coffee can't masquerade as a track record.</p>
+    below), then adds a small set of outcome-validated adjustments: the signals that carry WAR
+    information <em>beyond</em> the grade and are under-priced by scouts. Hitters: on-base vs level,
+    contact (K%) vs level, a multi-season peak K-rate, age-for-level, MiLB track-record length, the
+    hit and speed tools. Pitchers: a multi-season peak K-rate, final-season K-rate, walk rate (the
+    K-BB% completion), age-for-level, fastball. Game power is <em>omitted</em> for hitters on
+    purpose: the data shows scouts over-price it and it predicts ISO, not incremental WAR, so
+    leaving it out is xFV's power-overpricing correction. It is a regularized ridge on ~3,800
+    labeled prospects (2011-2023), rate features sample-shrunk so a cup of coffee does not read as
+    a track record.</p>
     <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
     rank = (1-λ)·(consensus→WAR) + λ·(model→WAR), where λ is <em>WAG-calibrated</em>: the trust
-    that realized WAR-Above-Grade actually supports for xFV's adjustment, fit forward-chained
+    that realized WAR-Above-Grade supports for xFV's adjustment, fit forward-chained
     (hitters ~0.85; pitchers shrink harder, since consensus is the stronger pitcher signal). The
-    blend can't fall far below the consensus prior, and where xFV's edge is real it takes the wheel.</p>
+    blend cannot fall far below the consensus prior, and leans on xFV where its edge is real.</p>
     <p><strong>Two grades, one model.</strong> The <em>headline</em> xFV is a rank-preserving
     quantile map of that blended ranking onto the consensus 20-80 distribution (so it reads on the
     scale you know); a deflated <em>realized-implied</em> grade - typically lower, because scout FV
     runs optimistic - drives the surplus + the 5-bucket outcome mix. Live prospects also get two
     bounded tilts: an injury penalty (current IL + recent IL load + post-TJ) and a Statcast+
     quality tilt on upper-level prospects.</p>
-    <p><strong>Everywhere, and frozen at debut.</strong> Every graded prospect carries an xFV -
-    the active boards, graduates (backgraded at their final pre-debut snapshot and then
-    <em>locked</em>, our last word on them as a prospect), and the farm-system rankings, surplus,
-    DvM+, and movement engine all run on it. Players with no pro track record (recent draftees,
-    int'l signs) fall back to the consensus prior until they play.</p>
+    <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an xFV: the
+    active boards, graduates (backgraded at their final pre-debut snapshot, then <em>locked</em>),
+    and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no
+    pro track record (recent draftees, int'l signs) fall back to the consensus prior until they
+    play.</p>
     <p class="meth-verdict is-good">On out-of-sample, leakage-free, forward-chained tests of how
-    well each grade ordered what prospects actually became, xFV out-predicts every public source -
-    the PROSPX consensus, MLB Pipeline, and FanGraphs. The Source Comparison tab carries the
-    head-to-head receipts. xFV is <strong>provisional</strong> and near the data's rank ceiling,
-    and its historical track is a current-model retrospective, not the grade we showed at the time.</p>
+    well each grade ordered what prospects became, xFV out-predicts every public source: the PROSPX
+    consensus, MLB Pipeline, and FanGraphs. The Source Comparison tab has the head-to-head numbers.
+    xFV is <strong>provisional</strong> and near the data's rank ceiling; its historical track is a
+    current-model retrospective, not the grade we showed at the time.</p>
 
     <h2 class="meth-h">How the consensus FV (xFV's prior) is built</h2>
     <p>The consensus FV is the scout-grade aggregate xFV anchors on, and the reference shown
@@ -546,9 +544,9 @@ function _methAccuracyChart(bt) {
   let verdict;
   if (x && x.spearman != null && c && c.spearman != null) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
-    verdict = `<p class="meth-verdict is-good">The real story is <strong>xFV</strong>. On the resolved players it grades (out-of-sample, leakage-free), our own model <strong>out-ranks every grader on the board</strong>: Spearman ${f3(x.spearman)} vs the PROSPX consensus's ${f3(c.spearman)}, and further ahead of MLB Pipeline (${f3(mlb && mlb.spearman)}) and FanGraphs (${f3(fg && fg.spearman)}); it leads on contributor AUC too (${f3(x.auc)} vs ${f3(c.auc)}). The consensus is the best of the three public-style inputs, but xFV beats the consensus itself - and that margin, not the consensus's edge over its inputs, is why xFV is the site's primary grade. The lead holds across recent cohorts and FV tiers; it is bounded, not a landslide (see the caveats).</p>`;
+    verdict = `<p class="meth-verdict is-good">Out of sample, leakage-free, on the players it grades, <strong>xFV orders realized WAR better than every grade on the board</strong>: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline, ${f3(fg && fg.spearman)} for FanGraphs; it also leads on contributor AUC, ${f3(x.auc)} to ${f3(c.auc)}. The consensus is the strongest public-style input, but xFV beats the consensus itself, and that gap is the reason it is the primary grade, not the consensus's edge over its inputs. The lead holds across recent cohorts and FV tiers; it is bounded, a few Spearman points (see caveats).</p>`;
   } else {
-    verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric - reported honestly rather than cherry-picked.</p>`;
+    verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }
   return `<div class="meth-chart meth-accuracy">
     <div class="meth-chart-title">Head-to-head predictive accuracy <span class="meth-sub">same players, same outcome, same window</span></div>
@@ -609,7 +607,7 @@ function _methXfvPanel(bt) {
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
     ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
     ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
-    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample for both sides, and the edge holds on the recent 2019–2023 cohorts - so it is not merely exploiting older, less-accurate scouting. xFV is the site's primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol - a harder, more conservative test than the in-sample common-set bars above.)</p>
+    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019–2023 cohorts, so it is not merely exploiting older, less-accurate scouting. xFV is the primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
     ${tierTable}
     ${receipts}
   </div>`;
@@ -1165,13 +1163,13 @@ function renderSourceComparison() {
     const od = bt.outcome_defs || {};
     backtestHTML = `
       <h2 class="meth-h">Does xFV outperform its sources?</h2>
-      <p class="meth-window">xFV is the site's primary grade -- our own outcome-grounded model. This is the receipt: a leakage-free, forward-chained backtest of xFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus on how well each grade ordered what prospects actually became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
+      <p class="meth-window">xFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of xFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methXfvFindings(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
       ${_methAccuracyChart(bt)}
       ${_methXfvPanel(bt)}
       <h3 class="meth-h3">Where each grade wins, by prospect archetype</h3>
-      <p class="meth-note">xFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. We audited the losers: the obvious adds (signing bonus, draft slot) are already priced into consensus FV, so they cost more than they returned out-of-sample. Honest, not cherry-picked.</p>
+      <p class="meth-note">xFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
       ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">
         ${_methCalibrationChart(bt, "mean_war", "Mean career WAR")}
@@ -1186,7 +1184,7 @@ function renderSourceComparison() {
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
-          <li><strong>xFV's edge is real but bounded.</strong> xFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). But it trails the consensus on a couple of young, low-track-record archetypes, and the margins are Spearman points, not landslides. The honest read: a calibrated grade that out-ranks the field by a steady, defensible amount, not a crystal ball.</li>
+          <li><strong>xFV's edge is real but bounded.</strong> xFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). It trails the consensus on a couple of young, low-track-record archetypes, and the margins are a few Spearman points: a calibrated grade that out-ranks the field by a steady, defensible amount, not a perfect predictor.</li>
           <li><strong>xFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
         </ul>
       </div>`;
