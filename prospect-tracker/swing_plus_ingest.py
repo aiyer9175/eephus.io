@@ -184,7 +184,15 @@ def score_pool(pool: dict[int, str], fetch: bool = True,
     pitches = pd.concat(frames, ignore_index=True)
     # group_by=[] pools every season's swings into ONE per-batter score
     # (the model's reliability shrink handles small samples).
-    board = model.score_pitch_level(pitches, group_by=[])
+    # The vendored pipelines score on df[features].values: df[features] preserves the
+    # FITTED column order, so the predictions are correct even though the array carries
+    # no names. The "X does not have valid feature names" UserWarning (and the cross-
+    # version unpickle notice, which can re-fire on first predict) are precautionary
+    # only - scores are validated ~100-centered. Suppress at this boundary, matching
+    # the load wrap above; a genuine break would surface as out-of-range scores, not here.
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        board = model.score_pitch_level(pitches, group_by=[])
     out: dict[str, dict] = {}
     for row in board.itertuples(index=False):
         mid = int(row.batter)
