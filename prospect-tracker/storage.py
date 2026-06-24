@@ -3947,17 +3947,31 @@ FARM_TRAJECTORY_LOOKBACK_DAYS = 365
 FARM_TRAJECTORY_SMOOTH_WINDOW = 3   # avg last 3 fv_history points vs 3 near cutoff
 FARM_GRAD_PIPELINE_MONTHS     = 12
 
-# Multi-window trajectories. The list page lets the user toggle between
-# these to ask "who's been developing prospects best over the last X?".
-# The 1y entry matches FARM_TRAJECTORY_LOOKBACK_DAYS and feeds the
-# canonical `trajectory_score` (which keeps the report-card grading
-# anchored to the 1y window). Longer windows surface orgs whose growth
-# only shows up over a draft cycle or two.
+# Multi-window trajectories. The farm pages let the user toggle between these
+# to ask "who's been developing prospects best over the last X?". Every window
+# here is baked per-org (DvM+ + the per-window composite farm_score), so the
+# frontend selector can switch the WHOLE grade tree to any of these windows.
+# Empirically validated: a 7-year trailing window predicts realized graduate
+# output best (beats 6y in all 4 backtest vintages; 8y regresses) — see the
+# window-sweep analysis. 7y is therefore the principal (default) window.
 FARM_TRAJECTORY_WINDOWS = {
     "1y": 365,
+    "2y": 365 * 2,
     "3y": 365 * 3,
+    "4y": 365 * 4,
+    "5y": 365 * 5,
     "6y": 365 * 6,
+    "7y": 365 * 7,
+    "8y": 365 * 8,
 }
+
+# The principal (default) trailing window — the empirically-optimal window the
+# farm grade tree anchors on (composite letter, DvM+ headline, tiebreaker). The
+# user-facing window selector defaults here and can switch to any baked window.
+# ONE constant so every windowed grade/subgrade shares the same default.
+FARM_PRINCIPAL_WINDOW = "7y"
+# Windows offered in the frontend selector (subset of FARM_TRAJECTORY_WINDOWS).
+FARM_SELECTABLE_WINDOWS = ["3y", "4y", "5y", "6y", "7y", "8y"]
 
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
@@ -4636,7 +4650,7 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
 # "principal window" metric on the site lives on the same horizon.
 _CONVICTION_WAR_PER_YR_THRESHOLD = 4.0   # legacy — superseded by STAR_*
 _CONVICTION_CAREER_WAR_THRESHOLD = 12.0  # legacy — superseded by STAR_*
-_CONVICTION_RECENCY_YEARS        = 6   # was 5 (v6 — align with 6y DvM+)
+_CONVICTION_RECENCY_YEARS        = 7   # was 6 — unified to FARM_PRINCIPAL_WINDOW (7y)
 # v30.7 — Conviction reframed as "star count." A graduate the org
 # developed qualifies as a STAR when EITHER:
 #   * career WAR/yr ≥ 3.0 (sustained above-average MLB regular), OR
@@ -4886,7 +4900,7 @@ def _attach_sub_leaves(entry: dict) -> None:
         pb = node.get("pos_buckets") or {}
         if pb:
             for bucket, v in pb.items():
-                blend = (v.get("blend_by_window") or {}).get("6y")
+                blend = (v.get("blend_by_window") or {}).get(FARM_PRINCIPAL_WINDOW)
                 n     = v.get("active_count") or 0
                 subs.append({
                     "label":  f"{bucket} bucket",
@@ -5823,9 +5837,9 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
 # Per-tool DvM+ window — earliest tool observation feeding the
 # (latest − earliest) delta is re-resolved to the oldest snapshot still
 # inside this window from `as_of`. Keeps per-tool dev signal consistent
-# with the org-level 6y DvM+ window. Tunable in one place; tests pin the
-# constant value.
-FARM_TOOL_DELTA_LOOKBACK_DAYS = 365 * 6
+# with the org-level principal DvM+ window (7y). Tunable in one place; tests
+# pin the constant value.
+FARM_TOOL_DELTA_LOOKBACK_DAYS = 365 * 7
 
 
 def _compute_tool_deltas(player_points: list[dict],
@@ -11656,8 +11670,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             for key, days in FARM_TRAJECTORY_WINDOWS.items()
         }
         _T = entry["trajectories"]
+        # Recency-tilted multi-horizon blend anchored on the principal window
+        # (60% principal / 30% 3y / 10% 1y) — the principal carries sustained
+        # development, the shorter horizons weight recent movement so a stale
+        # multi-year regime can't fully mask a current hot (or cold) cycle.
         entry["trajectory_score"] = round(
-            0.60 * (_T.get("6y") or 0)
+            0.60 * (_T.get(FARM_PRINCIPAL_WINDOW) or 0)
             + 0.30 * (_T.get("3y") or 0)
             + 0.10 * (_T.get("1y") or 0),
             3,
@@ -12108,7 +12126,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if pit_by_window[win] is None:
                 pit_by_window[win] = _blend_dvm_3way(pit_overall.get(win), tool_pit, pit_sc)
         # Stamp tree node + new pos_buckets sub-payload for UI.
-        entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get("6y")
+        entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get(FARM_PRINCIPAL_WINDOW)
         entry["tree"]["dev_hitter"]["dvm_plus_by_window"]  = hit_by_window
         entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
         entry["tree"]["dev_hitter"]["statcast_dvm_plus"]   = hit_sc
@@ -12130,7 +12148,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             }
             for bucket in _HIT_BUCKETS
         }
-        entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get("6y")
+        entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get(FARM_PRINCIPAL_WINDOW)
         entry["tree"]["dev_pitcher"]["dvm_plus_by_window"] = pit_by_window
         entry["tree"]["dev_pitcher"]["overall_dvm_plus"]   = dict(pit_overall)
         entry["tree"]["dev_pitcher"]["statcast_dvm_plus"]  = pit_sc
@@ -12405,15 +12423,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # tool-development still shows through. Each leaf now has two
         # inputs blended equally inside leaf_100 normalization; the 6y
         # signal effectively dominates because it has wider stdev.
+        # v41 — Org-wide principal-window DvM+ is the PRINCIPAL dev signal at an
+        # explicit 2.0 weight vs the per-tool DvM+ at 1.0 (the same ~2/3 dominance
+        # the old code got by DOUBLE-COUNTING the 6y getter; now stated as a real
+        # weight, no duplication). Anchored on FARM_PRINCIPAL_WINDOW so the dev
+        # leaf moves with the selected window.
         "dev_hitter":  [
-            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),  # double-count = 2/3 weight
-            ("dvm_plus", lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus")),
+            ("principal_dvm", lambda e: (e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW), 2.0),
+            ("tool_dvm",      lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus"), 1.0),
         ],
         "dev_pitcher": [
-            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus")),
+            ("principal_dvm", lambda e: (e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW), 2.0),
+            ("tool_dvm",      lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus"), 1.0),
         ],
         # Financial — single-input each (v18 + active-surplus leaf below)
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
@@ -12554,15 +12575,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     leaf_raw: dict[str, list[float | None]] = {}  # back-compat for tests
     for leaf_key, specs in LEAF_SPECS.items():
         sub_z_lists = []
-        for _, getter in specs:
+        sub_weights = []
+        for spec in specs:
+            getter = spec[1]
+            # Optional 3rd element = explicit sub-input weight (defaults 1.0).
+            # Lets a leaf weight one sub-input heavier WITHOUT the old
+            # double-count hack (listing the same getter twice). Backward-
+            # compatible: 2-tuples keep equal weight.
+            w = spec[2] if len(spec) > 2 else 1.0
             raw = [getter(e) for e in org_summary]
             sub_z_lists.append(_zscore_to_100(raw, higher_is_better=True))
-        # Per-org leaf score = mean of present sub-input z-scores.
+            sub_weights.append(w)
+        # Per-org leaf score = WEIGHTED mean of present sub-input z-scores.
         per_org_scores: list[float | None] = []
         for i in range(len(org_summary)):
-            present = [z[i] for z in sub_z_lists if z[i] is not None]
-            per_org_scores.append(round(sum(present) / len(present), 1)
-                                  if present else None)
+            num = 0.0
+            den = 0.0
+            for zl, w in zip(sub_z_lists, sub_weights):
+                if zl[i] is not None:
+                    num += zl[i] * w
+                    den += w
+            per_org_scores.append(round(num / den, 1) if den > 0 else None)
         leaf_100[leaf_key] = per_org_scores
         # Back-compat: leaf_raw[k] points to the FIRST sub-input's raw
         # values (used by some legacy test inspections).
@@ -12699,7 +12732,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         return [((v - mu) / sd if v is not None else 0.0) for v in vals]
 
     _surp_z = _farm_z([e.get("_active_surplus_net_mm") for e in org_summary])
-    _dvm_z  = _farm_z([(e.get("dvm_plus") or {}).get("6y") for e in org_summary])
+    _dvm_z  = _farm_z([(e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW) for e in org_summary])
     _gwar_z = _farm_z([e.get("_grad_war_total") for e in org_summary])
     _TB_W = {"surplus": 0.40, "dvm6y": 0.25, "grad_war": 0.35}
     for i, entry in enumerate(org_summary):
@@ -13046,7 +13079,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # falls back to the canonical `grades[leaf]` (which anchors on 6y).
     for entry in org_summary:
         entry["grades_by_window"] = {}
-    for win in ("1y", "3y", "6y"):
+    for win in FARM_TRAJECTORY_WINDOWS:
         for leaf_key in ("dev_hitter", "dev_pitcher"):
             vals = []
             for entry in org_summary:
@@ -13079,7 +13112,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # carries the per-prospect year. We re-aggregate per-window then
     # z-score-grade across the league.
     _now_yr = date.today().year
-    _WINDOWS = {"1y": 1, "3y": 3, "6y": 6}
+    # Unified to the full trailing-window set so MLB-production / acquisition
+    # recency filters track the SAME windows as DvM+ (year-rounded from days).
+    _WINDOWS = {k: max(1, round(d / 365)) for k, d in FARM_TRAJECTORY_WINDOWS.items()}
     # Production windowing: aggregate WAR/yr from grads whose
     # last_mlb_year is within the window, per side (hitter vs pitcher).
     _PROD_LEAF_BY_SIDE = {False: "mlb_hitter_production",
@@ -13178,6 +13213,59 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry.pop("_top_grads_raw", None)
         entry.pop("_draft_pool_grads_raw", None)
         entry.pop("_ifa_grads_raw", None)
+
+    # ── Per-window COMPOSITE farm_score + overall letter ──────────────────
+    # The user-selectable trailing window drives the WHOLE grade, not just the
+    # dev sub-leaves. Re-score the DEVELOPMENT branch at each window (org-wide
+    # DvM+[W] at weight 2 blended with the per-window tool DvM+[W] at weight 1,
+    # matching the dev-leaf spec), hold the other three branches at their
+    # canonical scores (Financial / MLB-Production / Acquisition are recency
+    # filters, not the dev trailing window), re-blend the 4-branch composite +
+    # stretch, and rank to a letter. The frontend reads farm_score_by_window[W]
+    # / letter_by_window[W] when the user picks window W; the canonical
+    # farm_score / overall letter stay anchored on FARM_PRINCIPAL_WINDOW.
+    _dev_health_100 = leaf_100.get("dev_health_mgmt")     or [None] * len(org_summary)
+    _dev_statc_100  = leaf_100.get("dev_statcast_quality") or [None] * len(org_summary)
+    _w_acq  = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+    _w_dev  = FARM_TREE_WEIGHT_DEVELOPMENT
+    _w_fin  = FARM_TREE_WEIGHT_FINANCIAL
+    _w_prod = FARM_TREE_WEIGHT_MLB_PRODUCTION
+    for entry in org_summary:
+        entry["farm_score_by_window"] = {}
+        entry["letter_by_window"] = {}
+    for win in FARM_TRAJECTORY_WINDOWS:
+        # org-wide DvM+ at this window (the heavier dev-leaf sub-input, weight 2)
+        z_org = _zscore_to_100(
+            [(e.get("dvm_plus") or {}).get(win) for e in org_summary],
+            higher_is_better=True)
+        dev_leaf_w = {}
+        for leaf_key in ("dev_hitter", "dev_pitcher"):
+            z_tool = _zscore_to_100(
+                [(((e.get("tree") or {}).get(leaf_key) or {}).get("dvm_plus_by_window") or {}).get(win)
+                 for e in org_summary],
+                higher_is_better=True)
+            vals = []
+            for i in range(len(org_summary)):
+                num = den = 0.0
+                if z_org[i] is not None:  num += z_org[i] * 2.0; den += 2.0
+                if z_tool[i] is not None: num += z_tool[i] * 1.0; den += 1.0
+                vals.append(round(num / den, 1) if den > 0 else None)
+            dev_leaf_w[leaf_key] = vals
+        farm_scores_w = []
+        for i, entry in enumerate(org_summary):
+            dev_present = [v for v in (dev_leaf_w["dev_hitter"][i], dev_leaf_w["dev_pitcher"][i],
+                                       _dev_health_100[i], _dev_statc_100[i]) if v is not None]
+            dev_parent = (sum(dev_present) / len(dev_present)) if dev_present else None
+            comp = (_w_acq  * (entry.get("acquisition_strategy_score") if entry.get("acquisition_strategy_score") is not None else 100.0)
+                    + _w_dev  * (dev_parent if dev_parent is not None else 100.0)
+                    + _w_fin  * (entry.get("financial_score") if entry.get("financial_score") is not None else 100.0)
+                    + _w_prod * (entry.get("mlb_production_score") if entry.get("mlb_production_score") is not None else 100.0))
+            fs = _stretch_composite(round(comp, 1), factor=1.20)
+            entry["farm_score_by_window"][win] = fs
+            farm_scores_w.append(fs)
+        ranks_w = _rank_descending(farm_scores_w)
+        for i, entry in enumerate(org_summary):
+            entry["letter_by_window"][win] = _letter_grade(ranks_w[i], len(org_summary))
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──

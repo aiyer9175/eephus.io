@@ -9413,10 +9413,13 @@
         <span id="farm-tendency-chips" class="farm-tendency-chips"></span>
       </div>
       <div class="filter-group" style="margin-left:auto;">
-        <span class="filter-label" title="Window used by the development sparkline + Trajectory sort. The line shows each org's prospect FV growth above (or below) the league mean over the same window, with incoming acquisitions (trades, draft, IFA) excluded so only true development counts. 6y is the principal signal.">Development window</span>
-        <button class="chip"        data-form-window="1y">1y</button>
+        <span class="filter-label" title="Trailing window the WHOLE farm grade is computed over (composite letter, DvM+, sub-grades). Excludes incoming acquisitions so only true development counts. 7y is the empirically-optimal default (best predicts realized graduate output); pick any window to re-grade every farm.">Grade window</span>
         <button class="chip"        data-form-window="3y">3y</button>
-        <button class="chip active" data-form-window="6y">6y</button>
+        <button class="chip"        data-form-window="4y">4y</button>
+        <button class="chip"        data-form-window="5y">5y</button>
+        <button class="chip"        data-form-window="6y">6y</button>
+        <button class="chip active" data-form-window="7y">7y</button>
+        <button class="chip"        data-form-window="8y">8y</button>
       </div>
       <div class="filter-group">
         <span class="filter-label">View</span>
@@ -12679,9 +12682,8 @@ function syncFromURL() {
   if (p.has("rsort")) state.rosterSort   = p.get("rsort");
   if (p.has("formw")) {
     const v = p.get("formw");
-    if (v === "1y" || v === "3y" || v === "6y") state.formWindow = v;
-    // Back-compat: old URLs may still carry formw=5y. Map to 6y.
-    if (v === "5y") state.formWindow = "6y";
+    // Any baked trailing window (1y..8y) is selectable now.
+    if (/^[1-8]y$/.test(v)) state.formWindow = v;
   }
   if (p.has("ftree")) {
     const v = p.get("ftree");
@@ -14124,7 +14126,7 @@ const state = {
   // plots growth above the league mean over the same window) and the
   // value used when sorting by "Trajectory". Default 6y - the
   // principal multi-cycle dev signal.
-  formWindow: "6y",
+  formWindow: "7y",
   // v31.3 - Farm grade tree view mode: "collapsed" / "simple" / "expanded".
   //   collapsed: tree hidden; only composite header + roster snapshot shown
   //   simple:    canopy only (root + 4 branch circles), no leaves (default)
@@ -17128,13 +17130,15 @@ function renderWatchlist() {
     return;
   }
   if (fEmpty) fEmpty.style.display = "none";
-  // Sort starred farms by overall farm grade (highest first), matching
-  // the spirit of the prospect sort (highest-stakes pin surfaces first).
-  orgs.sort((a, b) => (b.farm_score ?? -1) - (a.farm_score ?? -1) || a.org.localeCompare(b.org));
+  const win = state.formWindow || "7y";
+  // Sort starred farms by overall farm grade (highest first) at the SELECTED
+  // window so order matches the window-reactive letter; canonical farm_score
+  // is the fallback when the per-window bake is absent.
+  const _wScore = o => (o.farm_score_by_window || {})[win] ?? o.farm_score ?? -1;
+  orgs.sort((a, b) => (_wScore(b) - _wScore(a)) || a.org.localeCompare(b.org));
   const fRows = orgs.map((org, i) => {
     const tp = org.top_prospect;
-    const overall = (org.grades && org.grades.overall) || " - ";
-    const win = state.formWindow || "3y";
+    const overall = ((org.letter_by_window || {})[win]) || (org.grades && org.grades.overall) || " - ";
     const dvm = (org.dvm_plus || {})[win];
     return `
       <div class="player-row" data-org="${escapeHtml(org.org)}" style="${orgStripe(org.org)};display:flex;align-items:center;gap:12px;cursor:pointer;">
@@ -32900,7 +32904,7 @@ const TIER_BUCKETS = [80, 75, 70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
 // what the sort chip and grade signal also key off.
 const FORM_BAR_W = 130;
 const FORM_BAR_H = 26;
-const FORM_WINDOW_DAYS = { "1y": 365, "3y": 365 * 3, "6y": 365 * 6 };
+const FORM_WINDOW_DAYS = { "1y": 365, "2y": 365 * 2, "3y": 365 * 3, "4y": 365 * 4, "5y": 365 * 5, "6y": 365 * 6, "7y": 365 * 7, "8y": 365 * 8 };
 
 // === ToolDvM+ proxy aggregation (per-snapshot) ===
 // Backend doesn't export per-snapshot ToolDvM+ history - derive it at
@@ -33397,7 +33401,7 @@ function makeFarmReportCard(org) {
   // so the reader can see WHY the blended value lands where it does.
   // Missing-signal: when one side is None the other takes 100%
   // weight (matches the backend `_blend_dvm`).
-  const _devActiveWindow = state.formWindow || "6y";
+  const _devActiveWindow = state.formWindow || "7y";
   const _devHitterLeaf  = t.dev_hitter  || {};
   const _devPitcherLeaf = t.dev_pitcher || {};
   const _devHitterValue  = (_devHitterLeaf.dvm_plus_by_window  || {})[_devActiveWindow]  ?? _devHitterLeaf.dvm_plus;
@@ -34196,24 +34200,38 @@ function makeFarmReportCard(org) {
   // Health Mgmt, HOF-track, etc. are window-agnostic (they measure
   // historical roll-ups, not windowed development trajectories), so
   // changing the window only affects the DvM+ family of leaves.
-  const _winActive = state.formWindow || '6y';
+  const _winActive = state.formWindow || '7y';
   const _winChip = (lbl, val) =>
     `<button class="chip${_winActive === val ? ' active' : ''}" data-form-window="${val}" style="font-size:10px;padding:2px 7px;letter-spacing:0.04em;">${lbl}</button>`;
   const _windowSelector = `
-    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Development window - applies to Hitter DvM+, Pitcher DvM+, and their per-bucket sub-leaves. Other leaves (Health, Production, Acquisition, Financial) are window-agnostic.">
-      <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">DvM+ window</span>
-      ${_winChip('1y', '1y')}${_winChip('3y', '3y')}${_winChip('6y', '6y')}
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;font-size:10px;color:var(--text-tertiary);" title="Trailing window the WHOLE farm grade is computed over - composite letter + farm_score + DvM+ family of sub-leaves all re-grade to the selected window. 7y is the empirically-optimal default.">
+      <span style="letter-spacing:0.06em;text-transform:uppercase;font-weight:600;">Grade window</span>
+      ${_winChip('3y', '3y')}${_winChip('4y', '4y')}${_winChip('5y', '5y')}${_winChip('6y', '6y')}${_winChip('7y', '7y')}${_winChip('8y', '8y')}
     </div>`;
+  // Window-reactive composite: the selected window re-grades the WHOLE farm
+  // (letter + farm_score + rank) off the baked per-window composite. Falls back
+  // to the canonical (principal-window) values when the per-window bake is
+  // absent (older payload). Rank is recomputed across orgs for the window.
+  const _winOverall = ((org.letter_by_window || {})[_winActive]) || g.overall || ' - ';
+  const _winScore   = ((org.farm_score_by_window || {})[_winActive]);
+  const _winScoreShown = _winScore != null ? _winScore : org.farm_score;
+  const _winRank = (() => {
+    const all = (DATA.org_summary || [])
+      .map(o => (o.farm_score_by_window || {})[_winActive])
+      .filter(v => v != null);
+    if (_winScore == null || !all.length) return org.farm_rank;
+    return all.filter(v => v > _winScore).length + 1;
+  })();
   return `
     <div class="grade-tree">
-      <div class="grade-tree-composite" style="border-color:${gradeColor(g.overall)}66;background:linear-gradient(135deg, ${gradeColor(g.overall)}12, transparent);">
+      <div class="grade-tree-composite" style="border-color:${gradeColor(_winOverall)}66;background:linear-gradient(135deg, ${gradeColor(_winOverall)}12, transparent);">
         <div class="gt-comp-eyebrow" style="display:flex;align-items:center;gap:8px;">Overall farm grade · weighted composite of the 4 branches below
           ${_windowSelector}
         </div>
         <div class="gt-comp-row">
-          <span class="gt-comp-letter" style="color:${gradeColor(g.overall)};">${escapeHtml(g.overall || ' - ')}</span>
-          <span class="gt-comp-rank">#${org.farm_rank ?? ' - '} of ${n}</span>
-          <span class="gt-comp-score">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '} / 100</span>
+          <span class="gt-comp-letter" style="color:${gradeColor(_winOverall)};">${escapeHtml(_winOverall || ' - ')}</span>
+          <span class="gt-comp-rank">#${_winRank ?? ' - '} of ${n}</span>
+          <span class="gt-comp-score">farm_score ${_winScoreShown != null ? _winScoreShown.toFixed(1) : ' - '} / 100</span>
           ${cappedBadge}
         </div>
         <div class="gt-comp-foot">ACQ ${W.acquisition_strategy}% · DEV ${W.development}% · FIN ${W.financial}% · PROD ${W.mlb_production}%</div>
@@ -34383,7 +34401,7 @@ function makeFarmDevCohortSplit(org) {
   const t = (org && org.tree) || {};
   const dh = t.dev_hitter  || {};
   const dp = t.dev_pitcher || {};
-  const win = state.formWindow || "6y";
+  const win = state.formWindow || "7y";
   const valOf = leaf => (leaf.dvm_plus_by_window || {})[win] ?? leaf.dvm_plus;
   if (valOf(dh) == null && valOf(dp) == null) return "";
   const cell = (label, leaf) => {
@@ -34429,7 +34447,7 @@ function makeFarmPosBucketGrades(org) {
   const hitBuckets = dh.pos_buckets || {};
   const pitBuckets = dp.pos_buckets || {};
   if (!Object.keys(hitBuckets).length && !Object.keys(pitBuckets).length) return "";
-  const win = state.formWindow || "6y";
+  const win = state.formWindow || "7y";
   const _cell = (bucket, v, side) => {
     const blend = (v.blend_by_window || {})[win];
     const fv    = (v.fv_dvm_plus_by_window || {})[win];
@@ -36407,7 +36425,7 @@ function _farmSortVal(o, s) {
   if (s === "depth")      return o.depth_points;
   if (s.indexOf("trajectory") === 0) {
     const w = s === "trajectory_1y" ? "1y" : s === "trajectory_3y" ? "3y"
-            : (s === "trajectory_6y" || s === "trajectory_5y") ? "6y" : (state.formWindow || "6y");
+            : (s === "trajectory_6y" || s === "trajectory_5y") ? "6y" : (state.formWindow || "7y");
     const dv = (o.dvm_plus || {})[w], da = (o.delta_above_mean || {})[w];
     return dv != null ? dv : (da != null ? da : (o.trajectory_score != null ? o.trajectory_score : null));
   }
@@ -36597,7 +36615,7 @@ function farmSortedOrgs() {
       if (s === "trajectory_1y") w = "1y";
       else if (s === "trajectory_3y") w = "3y";
       else if (s === "trajectory_6y" || s === "trajectory_5y") w = "6y";
-      else w = state.formWindow || "6y";
+      else w = state.formWindow || "7y";
       const ad = (a.dvm_plus || {})[w] ?? (a.delta_above_mean || {})[w] ?? a.trajectory_score ?? 0;
       const bd = (b.dvm_plus || {})[w] ?? (b.delta_above_mean || {})[w] ?? b.trajectory_score ?? 0;
       return bd - ad;
@@ -36681,7 +36699,16 @@ function farmSortedOrgs() {
     if (s === "tools_dvm_plus")  return ((b.tool_dev?.tools_dvm_plus ?? -1) - (a.tool_dev?.tools_dvm_plus ?? -1));
     if (s === "hitter_dvm_plus") return ((b.tree?.dev_hitter?.dvm_plus  ?? -1) - (a.tree?.dev_hitter?.dvm_plus  ?? -1));
     if (s === "pitcher_dvm_plus")return ((b.tree?.dev_pitcher?.dvm_plus ?? -1) - (a.tree?.dev_pitcher?.dvm_plus ?? -1));
-    return a.farm_rank - b.farm_rank; // default (farm_score-derived server-side)
+    // Default rank: follows the SELECTED window's composite so picking a window
+    // re-ranks the whole board (not just the displayed letter). Falls back to
+    // the server-side farm_rank when the per-window bake is absent.
+    {
+      const _w = state.formWindow || "7y";
+      const _sa = (a.farm_score_by_window || {})[_w];
+      const _sb = (b.farm_score_by_window || {})[_w];
+      if (_sa != null && _sb != null) return (_sb - _sa) || (a.farm_rank - b.farm_rank);
+    }
+    return a.farm_rank - b.farm_rank; // fallback (farm_score-derived server-side)
   });
   // v29 - Universal direction-flip honored after sort.
   _applySortDir(orgs, "farmSort");
@@ -36963,10 +36990,10 @@ function renderFarmSystems() {
   // the same render cycle doesn't compare against itself.
   const lastVisitRanks = loadLastVisitFarmRanks();
 
-  const win = state.formWindow || "6y";
+  const win = state.formWindow || "7y";
   const means = (DATA.farm_trajectory_means || {});
   const meanBaseline = means[win] ?? 0;
-  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "6-year";
+  const winLabel = String(win).replace("y", "") + "-year";
 
   // v18 - every column header is now clickable to sort by that column
   // (Grade, DvM+, Tool DvM+, trajectory, Top prospects, etc.). Reuses
@@ -36998,7 +37025,9 @@ function renderFarmSystems() {
 
   const buildRow = (org, displayRank) => {
     const tp = org.top_prospect;
-    const overall = (org.grades && org.grades.overall) || ' - ';
+    // Window-reactive letter: the selected grade window re-grades the org
+    // (letter_by_window), falling back to the canonical overall letter.
+    const overall = ((org.letter_by_window || {})[win]) || (org.grades && org.grades.overall) || ' - ';
     const gradeColorVal = gradeColor(overall);
     // v40 - continuous tiebreaker score, surfaced under the letter so same-grade
     // farms are visibly differentiated (0.40 total surplus + 0.25 6yDvM+ + 0.35
@@ -46013,15 +46042,15 @@ function _renderFarmDetailBody(orgCode, org, root) {
     ${makeFarmDvmMultiWindowPanel(org)}
     ${makeFarmDevCohortSplit(org)}
     ${makeFarmPosBucketGrades(org)}
-    <div class="detail-title">${(state.formWindow || "6y")} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 6y is the principal signal.</span></div>
+    <div class="detail-title">${(state.formWindow || "7y")} development vs mean farm <span class="detail-title-sub">pure-development metric - debuts + acquisitions (trades, draft, IFA) nullified, so only the FV gained while a prospect was in the org counts. 6y is the principal signal.</span></div>
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">Window</span>
-      <button class="chip${(state.formWindow || "6y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-      <button class="chip${(state.formWindow || "6y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-      <button class="chip${(state.formWindow || "6y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
+      <button class="chip${(state.formWindow || "7y") === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
+      <button class="chip${(state.formWindow || "7y") === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
+      <button class="chip${(state.formWindow || "7y") === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
     </div>
-    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "6y"] ?? 0), state.formWindow || "6y")}
-    ${makeFarmCohortGrowthPanel(org, state.formWindow || "6y")}
+    ${makeFarmGrowthChart(org, ((DATA.farm_trajectory_means || {})[state.formWindow || "7y"] ?? 0), state.formWindow || "7y")}
+    ${makeFarmCohortGrowthPanel(org, state.formWindow || "7y")}
     ${makeFarmToolDevCard(org)}
     ${makeFarmDevTopMovers(rosterPlayersAll)}
     ${makeFarmGraduates(orgCode)}`;
@@ -48000,8 +48029,8 @@ function makeFarmCompareSideBySide(farms) {
   // The window selector sits at the top and stays synced with the
   // farm-detail page via state.formWindow. DvM+ already appears in the
   // chart caption (see makeFarmGrowthChart), so no extra label here.
-  const win = state.formWindow || "6y";
-  const winLabel = win === "1y" ? "1-year" : win === "3y" ? "3-year" : "6-year";
+  const win = state.formWindow || "7y";
+  const winLabel = String(win).replace("y", "") + "-year";
   const meanBaseline = (DATA.farm_trajectory_means || {})[win] ?? 0;
   // Heuristic responsive width: the compare-card viewport is ~880px on
   // a typical workspace; subtract per-cell gap then divide by N. Floor
