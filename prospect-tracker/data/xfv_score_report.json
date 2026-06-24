@@ -1,38 +1,38 @@
 {
- "generated_at": "2026-06-22",
+ "generated_at": "2026-06-23",
  "scope": "HITTERS",
- "n_scored": 2042,
+ "n_scored": 2041,
  "calibration_scale": {
   "a": -0.063,
-  "b": 1.039
+  "b": 1.038
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 1.03,
+  "mean_abs_delta": 1.06,
   "max_up": 7.4,
   "max_down": -5.0,
-  "share_within_2_grades": 0.718
+  "share_within_2_grades": 0.715
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
   "mean_abs_delta": 10.69,
-  "max_up": 8.0,
+  "max_up": 7.9,
   "max_down": -25.3
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.115,
+  "spearman_adj_vs_consensus_miss": 0.1169,
   "n": 461,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 20286.5,
-  "consensus": 21774.5
+  "xfv": 20255.5,
+  "consensus": 21775.0
  },
  "example_up_adjustments": [
   {
    "player_key": "luis_rengifo",
    "consensus_fv": 47.6,
-   "xfv_grade": 54.4,
+   "xfv_grade": 54.3,
    "delta": 6.7,
    "realized_war_6yr": 6.25
   },
@@ -46,29 +46,29 @@
   {
    "player_key": "tommy_edman",
    "consensus_fv": 42.6,
-   "xfv_grade": 48.3,
-   "delta": 5.7,
+   "xfv_grade": 48.5,
+   "delta": 5.9,
    "realized_war_6yr": 18.03
   },
   {
    "player_key": "isaac_paredes",
    "consensus_fv": 50.0,
-   "xfv_grade": 55.3,
-   "delta": 5.3,
+   "xfv_grade": 55.4,
+   "delta": 5.4,
    "realized_war_6yr": 11.27
   },
   {
    "player_key": "leody_taveras",
    "consensus_fv": 47.6,
-   "xfv_grade": 52.9,
-   "delta": 5.3,
+   "xfv_grade": 53.1,
+   "delta": 5.4,
    "realized_war_6yr": 4.7
   },
   {
    "player_key": "jake_bauers",
    "consensus_fv": 52.6,
    "xfv_grade": 57.8,
-   "delta": 5.1,
+   "delta": 5.2,
    "realized_war_6yr": -1.53
   }
  ],
@@ -86,13 +86,6 @@
    "xfv_grade": 20.0,
    "delta": -22.6,
    "realized_war_6yr": -0.68
-  },
-  {
-   "player_key": "david_fletcher",
-   "consensus_fv": 42.6,
-   "xfv_grade": 20.0,
-   "delta": -22.6,
-   "realized_war_6yr": 10.25
   },
   {
    "player_key": "jd_hammer",
@@ -114,6 +107,13 @@
    "xfv_grade": 20.0,
    "delta": -21.7,
    "realized_war_6yr": 1.75
+  },
+  {
+   "player_key": "grayson_greiner",
+   "consensus_fv": 41.7,
+   "xfv_grade": 20.0,
+   "delta": -21.7,
+   "realized_war_6yr": -0.89
   }
  ],
  "note": "xfv_grade is monotone in the model prediction, so it inherits the OOS rank edge over consensus FV in data/xfv_eval.json. Surplus reuses the engine's isotonic calibration (no double-correction)."

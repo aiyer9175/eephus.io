@@ -49,6 +49,7 @@ from __future__ import annotations
 import json
 import logging
 import statistics
+from datetime import date, timedelta
 from pathlib import Path
 
 import value_framework as vf
@@ -363,15 +364,35 @@ def build(persist: bool = True) -> dict:
                 pk = p.get("player_key") or f"mlbam_{mid}"
                 statline = _display_statline(mid, m, side, p.get("team_name"))
                 career_stats = _career_stats(mid, side, p.get("team_name"))
+                # xFV TRAJECTORY: the provisional grade as-of each MiLB season (re-score
+                # production through that season only) so the detail page can plot an
+                # xFV-over-time chart for a prospect the sources have never graded.
+                xfv_hist = []
+                for _S in sorted({r.get("season") for r in (career_stats or []) if r.get("season")}):
+                    _ms = _milb_features(mid, int(_S) + 1, None, side)
+                    if not _ms or _ms.get("k_rel") is None:
+                        continue
+                    _ws = _war(ridge, a, b, _vec({"consensus_fv_raw": _GRADE_MAP[side]["BASE"],
+                                                  "position": p.get("position"), "milb": _ms}, side))
+                    xfv_hist.append({"d": f"{int(_S)}-07-01", "x": _grade(_ws, side)})
+                # Approximate birth_date from the roster age so the detail-page stats table can
+                # show age-vs-level (no extra fetch; ~+/- a few months, fine for display).
+                birth_date = None
+                if age is not None:
+                    try:
+                        birth_date = (date.today() - timedelta(days=age * 365.25)).isoformat()
+                    except Exception:
+                        birth_date = None
                 def _mm(v):
                     return round(float(v), 1) if v is not None else None
                 entry = {
                     "player_key": pk, "mlbam_id": mid, "name": p.get("fullName"),
-                    "player_name": p.get("fullName"),
+                    "player_name": p.get("fullName"), "birth_date": birth_date,
                     "side": "P" if is_pit else "H", "org": org, "level": level,
                     "position": pos, "age": age,
                     "statline": statline,
                     "career_stats": career_stats or None,
+                    "xfv_history": xfv_hist if len(xfv_hist) >= 2 else None,
                     "xfv_grade": grade, "xfv_war_6yr": round(war, 2),
                     "consensus_fv": None,                     # ungraded -> no source FV
                     "surplus_mm": round(surplus / 1e6, 1) if surplus else None,

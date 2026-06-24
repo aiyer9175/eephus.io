@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-22",
+ "generated_at": "2026-06-23",
  "scope": "PITCHERS",
  "n_scored": 2012,
  "calibration_scale": {
@@ -8,25 +8,25 @@
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.58,
+  "mean_abs_delta": 0.63,
   "max_up": 7.7,
   "max_down": -5.0,
-  "share_within_2_grades": 0.857
+  "share_within_2_grades": 0.846
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 13.09,
+  "mean_abs_delta": 13.02,
   "max_up": 10.6,
   "max_down": -27.6
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.0802,
+  "spearman_adj_vs_consensus_miss": 0.0815,
   "n": 502,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 6205.3,
-  "consensus": 12947.9
+  "xfv": 6219.1,
+  "consensus": 12948.7
  },
  "example_up_adjustments": [
   {
@@ -54,7 +54,7 @@
    "player_key": "james_karinchak",
    "consensus_fv": 42.6,
    "xfv_grade": 49.5,
-   "delta": 6.8,
+   "delta": 6.9,
    "realized_war_6yr": 3.02
   },
   {

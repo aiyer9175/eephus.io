@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-22T22:42:54Z",
+ "generated_at": "2026-06-24T00:37:14Z",
  "min_lag_years": 5,
  "resolved_years": [
   2018,
@@ -8,8 +8,8 @@
   2021
  ],
  "weights": {
-  "fangraphs": 0.9966,
-  "mlb_pipeline_draft": 1.0034
+  "fangraphs": 0.9991,
+  "mlb_pipeline_draft": 1.0009
  },
  "note": "relative draft-FV vote weights (1.0 = equal); sources absent here vote at 1.0"
 }

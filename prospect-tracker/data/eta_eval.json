@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-22",
+ "generated_at": "2026-06-23",
  "vintage_years": [
   2018,
   2019,
@@ -12,9 +12,9 @@
   "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3728,
+  "no_level_age_fallback": 3726,
   "level_from_statsapi": 3407,
-  "level_from_career_stats": 1455,
+  "level_from_career_stats": 1457,
   "debuted": 4136,
   "censored_active": 2340,
   "washed_out": 751,
@@ -29,44 +29,44 @@
  },
  "champion_heuristic": {
   "n": 4136,
-  "mae": 1.394,
-  "bias": 0.992,
-  "within_1y": 0.592,
-  "exact": 0.223
+  "mae": 1.425,
+  "bias": 1.03,
+  "within_1y": 0.585,
+  "exact": 0.218
  },
  "baseline_naive_level_table": {
   "n": 3416,
-  "mae": 1.948,
-  "bias": 1.737,
-  "within_1y": 0.382,
-  "exact": 0.169
+  "mae": 1.981,
+  "bias": 1.769,
+  "within_1y": 0.379,
+  "exact": 0.168
  },
  "champion_on_baseline_rows": {
   "n": 3416,
-  "mae": 1.405,
-  "bias": 1.061,
-  "within_1y": 0.585,
-  "exact": 0.217
+  "mae": 1.443,
+  "bias": 1.107,
+  "within_1y": 0.577,
+  "exact": 0.212
  },
  "challenger_empirical_table_forward_chained": {
   "n": 2872,
-  "mae": 0.845,
-  "bias": 0.214,
-  "within_1y": 0.82,
-  "exact": 0.376
+  "mae": 0.847,
+  "bias": 0.218,
+  "within_1y": 0.819,
+  "exact": 0.375
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2797,
-  "mae": 1.439,
-  "bias": 1.128,
-  "within_1y": 0.574,
-  "exact": 0.202
+  "n": 2778,
+  "mae": 1.455,
+  "bias": 1.149,
+  "within_1y": 0.57,
+  "exact": 0.198
  },
  "v38_frozen_on_km_rows": {
-  "n": 2797,
-  "mae": 2.001,
-  "bias": 1.847,
-  "within_1y": 0.406,
+  "n": 2778,
+  "mae": 2.006,
+  "bias": 1.852,
+  "within_1y": 0.407,
   "exact": 0.136
  },
  "km_base_years_full_window": {
@@ -119,12 +119,19 @@
   }
  },
  "by_level": {
+  "DSL": {
+   "n": 56,
+   "mae": 3.571,
+   "bias": 3.571,
+   "within_1y": 0.125,
+   "exact": 0.036
+  },
   "CPX": {
-   "n": 378,
-   "mae": 1.558,
-   "bias": 1.114,
-   "within_1y": 0.54,
-   "exact": 0.243
+   "n": 322,
+   "mae": 1.606,
+   "bias": 1.177,
+   "within_1y": 0.528,
+   "exact": 0.224
   },
   "A": {
    "n": 903,
@@ -158,51 +165,56 @@
  "by_vintage": {
   "2018": {
    "n": 648,
-   "mae": 1.207,
-   "bias": 0.528,
-   "within_1y": 0.642,
-   "exact": 0.282
+   "mae": 1.256,
+   "bias": 0.596,
+   "within_1y": 0.633,
+   "exact": 0.275
   },
   "2019": {
    "n": 770,
-   "mae": 1.232,
-   "bias": 0.617,
-   "within_1y": 0.658,
-   "exact": 0.26
+   "mae": 1.264,
+   "bias": 0.664,
+   "within_1y": 0.649,
+   "exact": 0.255
   },
   "2020": {
    "n": 724,
-   "mae": 1.188,
-   "bias": 0.749,
-   "within_1y": 0.673,
-   "exact": 0.261
+   "mae": 1.209,
+   "bias": 0.775,
+   "within_1y": 0.667,
+   "exact": 0.256
   },
   "2021": {
    "n": 715,
-   "mae": 1.888,
-   "bias": 1.662,
-   "within_1y": 0.415,
-   "exact": 0.11
+   "mae": 1.923,
+   "bias": 1.699,
+   "within_1y": 0.408,
+   "exact": 0.109
   },
   "2022": {
    "n": 712,
-   "mae": 1.426,
-   "bias": 1.173,
-   "within_1y": 0.577,
-   "exact": 0.218
+   "mae": 1.466,
+   "bias": 1.213,
+   "within_1y": 0.57,
+   "exact": 0.212
   },
   "2023": {
    "n": 567,
-   "mae": 1.429,
-   "bias": 1.27,
+   "mae": 1.434,
+   "bias": 1.275,
    "within_1y": 0.582,
    "exact": 0.203
   }
  },
  "residual_by_level": {
+  "DSL": {
+   "n": 56,
+   "mean": 3.571,
+   "median": 4.0
+  },
   "CPX": {
-   "n": 378,
-   "mean": 1.114,
+   "n": 322,
+   "mean": 1.177,
    "median": 1.0
   },
   "A": {
@@ -237,36 +249,41 @@
    "A+": 2,
    "A": 3,
    "AA": 1,
-   "CPX": 4.0,
+   "CPX": 4,
+   "DSL": 4,
    "AAA": 0
   },
   "2020": {
    "A": 3,
    "A+": 2.0,
    "AA": 1,
-   "CPX": 4,
-   "AAA": 0.0
+   "CPX": 4.0,
+   "AAA": 0.0,
+   "DSL": 4
   },
   "2021": {
    "A": 3.0,
    "A+": 2,
    "AA": 1.0,
    "CPX": 4,
-   "AAA": 0.0
+   "AAA": 0.0,
+   "DSL": 4.0
   },
   "2022": {
    "A": 2,
    "A+": 2.0,
    "AA": 1.0,
-   "CPX": 3,
-   "AAA": 0.0
+   "CPX": 3.0,
+   "AAA": 0.0,
+   "DSL": 4
   },
   "2023": {
    "A": 2.0,
    "A+": 1.0,
    "AA": 1,
-   "CPX": 3,
-   "AAA": 0.0
+   "CPX": 3.0,
+   "AAA": 0.0,
+   "DSL": 3
   }
  },
  "km_survival_by_level": {
@@ -305,36 +322,36 @@
   ],
   "A": [
    0.9688,
-   0.8167,
-   0.603,
-   0.4479,
-   0.3255,
-   0.2676,
-   0.2439,
-   0.2342,
-   0.2342
+   0.8169,
+   0.6033,
+   0.4483,
+   0.3258,
+   0.2679,
+   0.2441,
+   0.2344,
+   0.2344
   ],
   "CPX": [
-   0.9884,
+   0.9891,
    0.9283,
-   0.7849,
-   0.5659,
-   0.3075,
-   0.1895,
-   0.116,
-   0.1116,
-   0.1069
+   0.7891,
+   0.5804,
+   0.3291,
+   0.2094,
+   0.1396,
+   0.1343,
+   0.1287
   ],
   "DSL": [
-   1.0,
-   1.0,
-   1.0,
-   1.0,
-   1.0,
-   1.0,
-   1.0,
-   1.0,
-   1.0
+   0.9945,
+   0.978,
+   0.9231,
+   0.8297,
+   0.6658,
+   0.5978,
+   0.5381,
+   0.5381,
+   0.5381
   ]
  }
 }
