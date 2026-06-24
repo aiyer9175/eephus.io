@@ -10658,9 +10658,18 @@ function tiebreakerScore(p, opts) {
   // opts.noXfv excludes it on the surplus-multiplier path so xFV isn't double-
   // counted into the already-xFV-derived surplus value. Draft / overseas cohorts
   // have no xFV, so this term drops out and their TBS is unchanged.
+  // The dominant xFV input is xfv_war_6yr (the xFV-implied expected 6-year WAR) —
+  // a finer, outcome-calibrated projection than the grade decimal. Backtest: it
+  // orders same-consensus-FV prospects by realized WAR better than the grade
+  // (within-tier weighted-mean Spearman +0.066 vs +0.054; tools/tbs_xfv_backtest.py).
+  // Falls back to the grade decimal where the WAR projection is absent.
   const _xf = (!(opts && opts.noXfv) && typeof getXfv === "function") ? getXfv(p) : null;
-  const _xfvG = (_xf && _xf.xfv_grade != null) ? Number(_xf.xfv_grade) : null;
-  if (_xfvG != null) parts.push([_tbsNorm(_xfvG, 35, 62), 0.90]);
+  let _xfvInput = null;
+  if (_xf) {
+    if (_xf.xfv_war_6yr != null)   _xfvInput = _tbsNorm(Number(_xf.xfv_war_6yr), 0.1, 2.6);
+    else if (_xf.xfv_grade != null) _xfvInput = _tbsNorm(Number(_xf.xfv_grade), 35, 62);
+  }
+  if (_xfvInput != null) parts.push([_xfvInput, 0.90]);
   let presentSum = 0, presentWeight = 0;
   for (const [v, w] of parts) {
     if (v != null) { presentSum += v * w; presentWeight += w; }

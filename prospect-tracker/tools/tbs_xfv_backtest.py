@@ -73,19 +73,42 @@ def run() -> dict:
     tiers: dict[int, list] = defaultdict(list)
     for s in rows:
         tiers[round(s["consensus_fv"] / TIER_SNAP) * TIER_SNAP].append(s)
-    per_tier = {}
-    within, weights = [], []
-    for fv, grp in sorted(tiers.items()):
-        if len(grp) < MIN_TIER_N:
-            continue
-        rho = _spearman([s["xfv_grade"] for s in grp],
-                        [s["realized_war"] for s in grp])
-        if rho is not None:
-            per_tier[fv] = {"n": len(grp), "spearman_xfv_vs_war": round(rho, 4)}
-            within.append(rho)
-            weights.append(len(grp))
-    wmean = (sum(r * w for r, w in zip(within, weights)) / sum(weights)
-             if weights else None)
+
+    # Candidate within-tier TBS signals: the xFV grade decimal vs the finer
+    # xFV-implied expected WAR (xfv_war_6yr). The chosen TBS input is whichever
+    # orders same-consensus-FV prospects by realized WAR best.
+    candidates = {
+        "xfv_grade":   lambda s: s.get("xfv_grade"),
+        "xfv_war_6yr": lambda s: s.get("xfv_war_6yr"),
+    }
+
+    def _within_tier_mean(getter) -> tuple[float | None, dict]:
+        per: dict[int, dict] = {}
+        within, weights = [], []
+        for fv, grp in sorted(tiers.items()):
+            if len(grp) < MIN_TIER_N:
+                continue
+            xs = [getter(s) for s in grp]
+            pairs = [(x, s["realized_war"]) for x, s in zip(xs, grp) if x is not None]
+            if len(pairs) < MIN_TIER_N:
+                continue
+            rho = _spearman([a for a, _ in pairs], [b for _, b in pairs])
+            if rho is not None:
+                per[fv] = {"n": len(pairs), "spearman": round(rho, 4)}
+                within.append(rho)
+                weights.append(len(pairs))
+        wm = (sum(r * w for r, w in zip(within, weights)) / sum(weights)
+              if weights else None)
+        return (round(wm, 4) if wm is not None else None), per
+
+    sig_means = {}
+    per_tier_by_sig = {}
+    for name, getter in candidates.items():
+        wm, per = _within_tier_mean(getter)
+        sig_means[name] = wm
+        per_tier_by_sig[name] = per
+    chosen = max((k for k, v in sig_means.items() if v is not None),
+                 key=lambda k: sig_means[k], default=None)
 
     out = {
         "n_rows": len(rows),
@@ -93,9 +116,11 @@ def run() -> dict:
             "consensus_fv": round(cons, 4) if cons is not None else None,
             "xfv": round(xfv, 4) if xfv is not None else None,
         },
-        "within_tier_spearman_xfv_vs_war": per_tier,
-        "within_tier_weighted_mean": round(wmean, 4) if wmean is not None else None,
-        "verdict_gain": bool(wmean is not None and wmean > 0
+        "within_tier_weighted_mean_by_signal": sig_means,
+        "within_tier_per_tier": per_tier_by_sig,
+        "chosen_tbs_signal": chosen,
+        "within_tier_weighted_mean": sig_means.get(chosen),
+        "verdict_gain": bool(chosen is not None and sig_means.get(chosen, 0) > 0
                              and xfv is not None and cons is not None and xfv >= cons),
     }
     return out
@@ -104,6 +129,6 @@ def run() -> dict:
 if __name__ == "__main__":
     rep = run()
     print(json.dumps(rep, indent=2))
-    print("\nGAIN" if rep["verdict_gain"] else "\nNOT A CLEAR GAIN",
-          "- within-tier weighted-mean Spearman(xFV, realized WAR) =",
-          rep["within_tier_weighted_mean"])
+    print(f"\nchosen TBS signal: {rep['chosen_tbs_signal']}  "
+          f"(within-tier weighted-mean Spearman vs realized WAR = {rep['within_tier_weighted_mean']})")
+    print("GAIN" if rep["verdict_gain"] else "NOT A CLEAR GAIN")
