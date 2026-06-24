@@ -349,6 +349,19 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
     Uses the OUT-OF-SAMPLE xFV grade attached to the common set (so it is a fair contest)."""
     rows = [c for c in common_rows
             if c["grades"].get("xfv") is not None and c["grades"].get(CONSENSUS_KEY) is not None]
+    # Dedup to ONE row per player: the LATEST pre-debut read. The pooled common set
+    # carries a row per base year, so an early read can show a stale consensus that
+    # later caught up (e.g. Francisco Alvarez graded 40 as a young prospect, 63 by
+    # graduation). The disagreements table should reflect the grades as they LAST
+    # stood before debut, so it surfaces real xFV-vs-consensus gaps, not catch-up.
+    latest: dict = {}
+    for c in rows:
+        k = c.get("key")
+        if k is None:
+            continue
+        if k not in latest or (c.get("year") or 0) > (latest[k].get("year") or 0):
+            latest[k] = c
+    rows = list(latest.values())
     if len(rows) < 40:
         return None
 
@@ -424,7 +437,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                                              "key": p.get("player_key")})
             if all(r in grades for r in raters):
                 common_by_year[y].append({"key": p.get("player_key"),
-                                          "name": p.get("player_name"),
+                                          "name": p.get("player_name"), "year": y,
                                           "grades": {r: grades[r] for r in raters},
                                           "outcome": out, "archetype": _archetype(p)})
 
