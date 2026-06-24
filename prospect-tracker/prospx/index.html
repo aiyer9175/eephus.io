@@ -41693,12 +41693,18 @@ function renderPlayerDetail(key) {
   const liveRankPill = "";
   // Provisional prospects have no server ranks; compute their xFV ranks client-side so they
   // still see their overall board rank + their place within their farm system.
-  const _provOverall = (p._is_provisional && typeof getXfvRank === "function") ? getXfvRank(p) : null;
+  // The canonical board rank is the xFV rank (getXfvRank -> buildXfvRankMap: xFV grade ->
+  // fvCmpDesc -> TBS), IDENTICAL to the active list, so the detail page NEVER disagrees with
+  // the board (was showing the consensus overall_rank, e.g. Caden Hunter #35 here vs #34 on
+  // the list). Consensus rank shown as a secondary pill when it differs. Works for provisional
+  // prospects too (getXfvRank computes their rank client-side).
+  const _xfvOverall = (typeof getXfvRank === "function") ? getXfvRank(p) : null;
   const _provOrg = (p._is_provisional && typeof provOrgRank === "function") ? provOrgRank(p) : null;
-  const rankPills = (p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill || _provOverall || _provOrg)
+  const rankPills = (_xfvOverall != null || p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
-        ${p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)")
-          : (_provOverall ? rankPill("Overall xFV", "#" + _provOverall, "var(--neon-violet)") : "")}
+        ${_xfvOverall != null ? rankPill("Overall xFV", "#" + _xfvOverall, "var(--neon-violet)")
+          : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
+        ${(_xfvOverall != null && p.overall_rank != null && p.overall_rank !== _xfvOverall) ? rankPill("Consensus", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
         ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
           : (_provOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _provOrg.rank + " of " + _provOrg.total, "var(--neon-cyan)") : "")}
@@ -41734,7 +41740,7 @@ function renderPlayerDetail(key) {
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">Prospect Card · ${escapeHtml(p.org || ' - ')} · ${escapeHtml(p.position || ' - ')}${p.overall_rank != null ? ` · #${p.overall_rank}` : ''}</span>
+      <span class="newsprint-eyebrow-label">Prospect Card · ${escapeHtml(p.org || ' - ')} · ${escapeHtml(p.position || ' - ')}${_xfvOverall != null ? ` · #${_xfvOverall}` : (p.overall_rank != null ? ` · #${p.overall_rank}` : '')}</span>
       <span class="newsprint-eyebrow-meta">${_fvForEyebrow != null ? `Consensus FV ${_fvForEyebrow}` : 'Consensus FV unavailable'}</span>
     </div>
     <div id="px-hub"></div>
