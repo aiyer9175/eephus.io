@@ -32306,8 +32306,20 @@ const ESPN_LOGO_SLUGS = {
   PHI: "phi", PIT: "pit", SDP: "sd",  SEA: "sea", SFG: "sf",
   STL: "stl", TBR: "tb",  TEX: "tex", TOR: "tor", WSN: "wsh",
 };
+// MiLB affiliate abbreviations occasionally leak into an org field (a debuted
+// player optioned to AAA can read "TOL"); resolve them to the MLB parent so the
+// logo + name render. Only abbreviations that do NOT collide with an MLB code.
+const AFFILIATE_PARENT = {
+  TOL: "DET", BUF: "TOR", TAC: "SEA", DUR: "TBR", NAS: "MIL", LOU: "CIN", ROC: "WSN",
+  ALB: "COL", JAC: "MIA", LEH: "PHI", REN: "ARI", SUG: "HOU", SAC: "SFG", IND: "PIT",
+  WOR: "BOS", OMA: "KCR", MEM: "STL", NOR: "BAL", ELP: "SDP", OKC: "LAD", GWN: "ATL",
+  CLT: "CHW", IOW: "CHC", STP: "MIN", SWB: "NYY", RR: "TEX", SLC: "LAA",
+  HAR: "WSN", BIR: "CHW", AMA: "ARI", ARK: "SEA", EVE: "SEA",
+};
+function _orgForLogo(org) { return (org && AFFILIATE_PARENT[org]) || org; }
 function teamLogoURL(org) {
   if (!org) return null;
+  org = _orgForLogo(org);                  // resolve MiLB affiliate -> MLB parent
   // Clean ESPN CDN team logos.
   if (ESPN_LOGO_SLUGS[org]) return `https://a.espncdn.com/i/teamlogos/mlb/500/${ESPN_LOGO_SLUGS[org]}.png`;
   return `https://a.espncdn.com/i/teamlogos/mlb/500/${org.toLowerCase()}.png`;
@@ -32493,12 +32505,16 @@ function headshotHTML(player, sizePx = 36) {
 // must match a CSS class suffix (sm, md, lg, xl).
 function teamLogoHTML(org, size = "sm", title = null) {
   if (!org) return "";
+  org = _orgForLogo(org);                  // MiLB affiliate -> MLB parent
   const url = teamLogoURL(org);
+  // Only show a text fallback for plausible org codes; league codes / long
+  // strings ("Office of the Commissioner") render as a neutral blank chip.
+  const fb = (ESPN_LOGO_SLUGS[org] || (org.length <= 4 && !/\s/.test(org))) ? escapeHtml(org) : "";
   if (!url) {
-    return `<span class="team-logo team-logo-${size} team-logo-fallback">${escapeHtml(org)}</span>`;
+    return `<span class="team-logo team-logo-${size} team-logo-fallback">${fb}</span>`;
   }
   const t = title != null ? title : org;
-  return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${escapeHtml(org)}</span>';">`;
+  return `<img class="team-logo team-logo-${size}" src="${url}" alt="${escapeHtml(org)}" title="${escapeHtml(t)}" loading="lazy" onerror="this.outerHTML='<span class=&quot;team-logo team-logo-${size} team-logo-fallback&quot;>${fb}</span>';">`;
 }
 
 // =============================================================================
