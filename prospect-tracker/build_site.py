@@ -1891,8 +1891,19 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
     # Rank by PRIMARY FV (xFV when graded, else consensus close), RAW/unrounded.
-    topN = sorted(players, key=lambda p: (_primary_fv(p) if _primary_fv(p) is not None else -1), reverse=True)[:5]
-    top_body = "".join(_row_top(p, p.get("overall_rank") or i) for i, p in enumerate(topN, 1))
+    # Tie-break to MATCH the PROSPX active board (buildXfvRankMap -> xfvRankValue,
+    # ties broken by fvCmpDesc: consensus FV, then the '+' upside flag). Without
+    # this the homepage and the active list disagreed on xFV ties — e.g. Anderson
+    # & De Vries both xFV 60: the board ranks De Vries above (consensus 62 > 58),
+    # so the homepage must too. The displayed rank is the xFV-sorted POSITION (the
+    # board's xFV rank for the top 5), not the consensus overall_rank, so the two
+    # surfaces show the same number.
+    def _top_key(p):
+        return (_primary_fv(p) if _primary_fv(p) is not None else -1,
+                p.get("fv_close") if p.get("fv_close") is not None else -1,
+                1 if p.get("fv_close_plus") else 0)
+    topN = sorted(players, key=_top_key, reverse=True)[:5]
+    top_body = "".join(_row_top(p, i) for i, p in enumerate(topN, 1))
     topp = _home_module("Top Prospects", "/prospx/", "Full board", top_body) if top_body else ""
 
     gr = sorted((g for g in graduates if g.get("debut_date")), key=lambda g: g["debut_date"], reverse=True)[:5]
