@@ -387,7 +387,7 @@ function _methProseHTML() {
     surplus dollars (the authoritative engine aggregate, <code>_active_surplus_net_mm</code>); the farm
     list, the detail Surplus tile, and the Finances tab all read that one number. DvM+ / ToolDvM+
     aggregate per-tool development across the org's actives with acquisitions nullified (so a trade
-    doesn't masquerade as development) and graduations not subtracted (so promoting a star doesn't read
+    doesn't read as development) and graduations not subtracted (so promoting a star doesn't read
     as a loss). The "+" indices (DvM+, RPS+, SC+, OrgSur+) are all built to the wRC+/OPS+ convention - 
     100 = the relevant mean, ±10 ≈ one standard deviation - so they share one mental scale.</p>
 
@@ -449,7 +449,7 @@ function _methProseHTML() {
       <dt>How are sources weighted?</dt>
       <dd>Accuracy-weighted, as of June 2026: per-source weights come from measured track records on resolved cohorts, shrunk heavily toward equal (so a thin history can't dominate), clamped, and frozen per vintage so grades don't jitter month to month. The weighted blend shipped only after beating equal-weight in a no-lookahead A/B on both rank correlation and AUC; sources without enough resolved history stay at exactly 1.0. The interactive below lets you test any weighting yourself.</dd>
       <dt>How often does it update?</dt>
-      <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board honestly stamps its own cadence.</dd>
+      <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board stamps its own cadence.</dd>
       <dt>What's the track record - and its limits?</dt>
       <dd>The evaluation window spans seven preseason base years (2017–2023): the 2017–2020 cohorts are fully resolved while 2021–2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40–70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
@@ -1111,7 +1111,7 @@ function _methRegistryHTML() {
       return mainRow + notesRow;
     }).join("");
     body = `
-      <p class="meth-note">Every predictive model on the platform, with an honest verdict and its committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
+      <p class="meth-note">Every predictive model on the platform, with its verdict and committed eval artifact. <strong>${counts.validated || 0} validated · ${counts.provisional || 0} provisional · ${counts.unvalidated || 0} unvalidated · ${counts.deprecated || 0} deprecated</strong>${reg.checked_at ? ` · last checked ${escapeHtml(reg.checked_at)}` : ""}. Unvalidated rows are listed precisely so they can't hide; losing challengers stay committed.</p>
       <div class="meth-tables"><table class="meth-tier-table meth-registry-table">
         <thead><tr><th>Model · surface</th><th>Champion</th><th>Baseline</th><th>Verdict</th><th>Eval artifact</th></tr></thead>
         <tbody>${rows}</tbody>
