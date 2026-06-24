@@ -1654,6 +1654,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("merged bulk season-stats into career_cache for %d players",
                      len(bulk_updates))
             _STEP_TIMES.append(("3a-i. Bulk season-stats fetch + merge", time.monotonic() - _step_3a_bulk_start))
+        # --- 3a-ii. Game-data positional versatility (fielding) -----------
+        # Per-position career games/starts from the StatsAPI fielding group ->
+        # versa (positions with >=10 G or >=5 GS each). Position players only;
+        # monthly cadence (per-player network fetch). Frontend loads the sidecar
+        # and surfaces the game-data versa, preferring it over the FG-reported one.
+        if not skip_stats:
+            with _step("3a-ii. Positional versatility (fielding)", log):
+                try:
+                    from fielding_positions import build_positions_played
+                    versa_input = [
+                        {"player_key": p.player_key,
+                         "mlbam_id": ids_by_key.get(p.player_key),
+                         "statline": {"is_pitcher": _is_pitcher(p.position)}}
+                        for p in timeseries
+                        if p.status != "debuted" and ids_by_key.get(p.player_key)
+                    ]
+                    build_positions_played(versa_input, log_=log)
+                except Exception:
+                    log.exception("positions_played build failed — continuing")
         _step_3a_per_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
             level_changes_for_stats = _derive_all_level_changes()

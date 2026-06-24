@@ -11144,6 +11144,27 @@ function acqTooltip(p, method) {
 // compact ▲N ▼N chip. Hidden when the prospect has no flags. Hover
 // reveals the comma-separated list of flag names so the reader can
 // audit the count without opening the detail page.
+// Game-data positional versatility (data/positions_played.json): per player
+// {by_pos:{POS:{g,gs}}, versa:[POS,...]} where versa = the positions the prospect
+// QUALIFIES at — >= 10 games OR >= 5 starts each (DH/PH excluded), most-played first.
+// Lazy-loaded on first board render; degrades to the FG-reported versa string when
+// absent. Built by fielding_positions.py from the StatsAPI fielding group.
+let _POS_PLAYED = null;
+(function loadPositionsPlayed() {
+  fetch("/data/positions_played.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _POS_PLAYED = (j && j.players) || {};
+      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .catch(() => { _POS_PLAYED = {}; });
+})();
+// Game-data versa list for a prospect (>= 10 G or >= 5 GS at each, most-played first);
+// null when there's no sidecar entry.
+function getVersaPositions(p) {
+  if (!_POS_PLAYED || !p || !p.player_key) return null;
+  const e = _POS_PLAYED[p.player_key];
+  return (e && Array.isArray(e.versa) && e.versa.length) ? e.versa : null;
+}
+
 // Derive additional green/red flags from FanGraphs scout-only signals
 // (Versa multi-position eligibility, FG-reported TJ Date, elite FB
 // velocity from Tops, plus-plus hard-hit rate). Returns an array of
@@ -11152,6 +11173,25 @@ function acqTooltip(p, method) {
 // rendering can tag them with a small "*" if desired.
 function computeFgFlags(p) {
   if (!p) return [];
+  const flags = [];
+
+  // Versa - multi-position eligibility. PREFER game-data versa (positions with
+  // >= 10 G or >= 5 GS each); fall back to the FG-reported string only when the
+  // sidecar has no entry. Game-data versa surfaces for ALL prospects, independent
+  // of whether FanGraphs published scout extras.
+  const _gdVersa = (typeof getVersaPositions === "function") ? getVersaPositions(p) : null;
+  if (_gdVersa && _gdVersa.length >= 2) {
+    flags.push({
+      stat:          "Versa",
+      direction:     "green",
+      value_display: _gdVersa.join("/"),
+      category:      "defense",
+      polarity:      "above_good",
+      note: "Multi-position eligible from game data (≥10 G or ≥5 GS at each) - adds defensive value.",
+      _origin:       "game",
+    });
+  }
+
   // Walk newest -> oldest to find the latest FG snapshot with extras.
   let ex = null;
   for (let i = ((p.points || [])).length - 1; i >= 0; i--) {
@@ -11159,11 +11199,10 @@ function computeFgFlags(p) {
     const e = fg && fg.tools && fg.tools._extras;
     if (e) { ex = e; break; }
   }
-  if (!ex) return [];
-  const flags = [];
+  if (!ex) return flags;
 
-  // Versa - multi-position eligibility (≥3 distinct positions).
-  if (ex.versa) {
+  // FG-reported versa - FALLBACK only when game data didn't already supply it.
+  if (!_gdVersa && ex.versa) {
     const parts = String(ex.versa).split(/[\/,]/).map(s => s.trim()).filter(Boolean);
     if (parts.length >= 3) {
       flags.push({
