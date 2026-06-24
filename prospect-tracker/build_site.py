@@ -120,6 +120,7 @@ def _headshot_url(mlbam, px: int = 180) -> str | None:
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
+    ("trademachine", "Trade Machine", "/prospx/#tab=trademachine"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
     ("fa",       "Free Agency",      "/fa/"),
     ("projections", "Projections",   "/projections/"),
@@ -241,6 +242,7 @@ BETA_BADGE = (
 # browse). The homepage hero keeps the site-wide chip (eephus.io is in beta).
 MODULE_STAGE = {
     "prospx": ("β", "PROSPX is in beta"),
+    "trademachine": ("α", "Trade Machine is in alpha - newly launched"),
     "fa": ("α", "MLB Free Agency is in alpha - newly launched; numbers may shift as the model matures"),
     "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
     "forums": ("α", "Forums is in alpha - newly launched"),

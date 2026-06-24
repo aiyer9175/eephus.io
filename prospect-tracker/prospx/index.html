@@ -8384,6 +8384,7 @@
   <nav class="eephus-links">
     <a href="/">Home</a>
     <a href="/prospx/" class="is-active">PROSPX</a>
+    <a href="/prospx/#tab=trademachine">Trade Machine</a>
     <a href="/collegesavant/">CollegeSavant</a>
     <a href="/fa/">Free Agency</a>
     <a href="/projections/">Projections</a>
@@ -8599,7 +8600,6 @@
     <button class="section-tab" data-section="injured" title="Active MiLB prospects currently on the IL">Injured List</button>
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="debuts">Debuted</button>
-    <button class="section-tab" data-section="tradeboard" title="Bayesian trade value rankings - surplus value over remaining controlled years, positional scarcity, contract opt-outs, and defensive floor.">Trade Board</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from.">MLB Draft/HS</button>
     <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort - no shared RPS+ with MiLB.">Overseas</button>
@@ -9040,9 +9040,11 @@
        ═══════════════════════════════════════════════════════════════════ -->
   <div id="tradeboard-section" style="display: none;">
     <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">Trade Board</span>
-      <span class="newsprint-eyebrow-meta">Bayesian surplus value · contract-aware · positional scarcity · opt-out adjusted</span>
+      <span class="newsprint-eyebrow-label">Trade Machine</span>
+      <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on xFV surplus, MLB players on projection surplus · then the full Bayesian trade-value board · module by Anirudh Iyer</span>
     </div>
+    <div id="trade-machine"></div>
+    <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
     <div class="filter-toggle-row">
       <button class="filter-toggle" type="button"
               data-collapse-target="tradeboard-filter-bar" aria-expanded="false"
@@ -21028,10 +21030,10 @@ function renderRecentlyTraded() {
   const _txExpander = _txHidden > 0
     ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="traded-show-all" type="button">Show all ${_txFullCount} transactions (+${_txHidden} more)</button></div>`
     : "";
-  document.getElementById("traded-rows").innerHTML = `<div id="trade-machine"></div>` + (_txFullCount
+  document.getElementById("traded-rows").innerHTML = (_txFullCount
     ? header + rows + _txExpander
     : `<div class="state-message">No acquired prospects match these filters.</div>`);
-  try { renderTradeMachine(); } catch (e) { /* silent */ }
+  // Trade Machine evaluator moved to its own module (#tab=trademachine).
   const _txSa = document.getElementById("traded-show-all");
   if (_txSa) _txSa.addEventListener("click", () => { state.tradedShowAll = true; renderRecentlyTraded(); });
   syncSortHeaderActive();
@@ -47360,7 +47362,8 @@ function render() {
     timemachine:  "timemachine-section",
     ifa:          "ifa-section",
     debuts:       "debuts-section",
-    tradeboard:   "tradeboard-section",
+    trademachine: "tradeboard-section",   // Trade Machine module (board + evaluator)
+    tradeboard:   "tradeboard-section",   // legacy deep-link alias (#tab=tradeboard)
     farm:         "farm-section",
     leaderboards: "leaderboards-section",
     charts:       "charts-section",
@@ -47382,7 +47385,10 @@ function render() {
   // easier to navigate the site").
   const isDetail = !!state.view;
   const sectionTabs = document.getElementById("section-tabs");
-  if (sectionTabs) sectionTabs.style.display = "";
+  // Trade Machine is its own top-level module (reached from the site nav), so it
+  // hides the PROSPX section-tab strip and reads as a separate surface.
+  const _isTradeModule = (state.section === "trademachine" || state.section === "tradeboard");
+  if (sectionTabs) sectionTabs.style.display = _isTradeModule ? "none" : "";
   const searchBar = document.querySelector(".search-bar");
   if (searchBar) searchBar.style.display = isDetail ? "none" : "";
   const filterBar = document.getElementById("filter-bar");
@@ -47525,7 +47531,7 @@ function render() {
   else if (active === "overseas")   renderOverseas();
   else if (active === "ifa")        renderIFA();
   else if (active === "debuts")     renderDebuts();
-  else if (active === "tradeboard") renderTradeBoard();
+  else if (active === "trademachine" || active === "tradeboard") { renderTradeMachine(); renderTradeBoard(); }
   else if (active === "farm")       renderFarmSystems();
   else if (active === "leaderboards") renderLeaderboards();
   else if (active === "charts")     renderCharts();
