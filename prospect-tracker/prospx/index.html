@@ -9454,6 +9454,13 @@
     </div>
     <div id="debuts-filter-bar" class="filter-bar collapsible-filter-bar">
       <div class="filter-group">
+        <span class="filter-label">Lead grade</span>
+        <div class="grade-toggle" role="group" aria-label="Lead the Debuted list with xFV or consensus FV" style="display:inline-flex;border:1px solid var(--border);border-radius:6px;overflow:hidden;">
+          <button type="button" class="chip grade-toggle-btn" data-debut-grade-toggle="xfv" title="Lead with the final (locked) xFV grade" style="border:0;border-radius:0;">xFV</button>
+          <button type="button" class="chip grade-toggle-btn" data-debut-grade-toggle="fv" title="Lead with the consensus FV at debut" style="border:0;border-radius:0;border-left:1px solid var(--border);">Consensus</button>
+        </div>
+      </div>
+      <div class="filter-group">
         <span class="filter-label">Sort</span>
         <button class="chip active" data-debut-sort="date"
                 title="Most recent debut first">Debut date</button>
@@ -14332,6 +14339,7 @@ const state = {
   // still shows the precise published position.
   posFilter: "all",
   sort: "xfv",   // xFV is the primary board ranking (consensus FV available via the menu)
+  debutGrade: "xfv",   // Debuted list lead grade (xfv | fv), via its own grade toggle
   // v31 - Default sort flipped back to Farm Rank now that the v31 tree
   // overhaul gives the grade a richer signal mix (Health Mgmt + HOF-
   // track + Statcast Quality leaves added). The composite letter is
@@ -28419,6 +28427,7 @@ function _tbShowGroup(playerKey) {
 
 function renderDebuts() {
   renderWhatsNew("whats-new-debuts", kind => kind === "debuted");
+  try { _syncDebutGradeToggle(); } catch (e) { /* toggle not mounted yet */ }
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
@@ -28625,7 +28634,7 @@ function renderDebuts() {
           <span class="${pillClass}" title="${escapeHtml(`MLB debut on ${g.debut_date}`)}">${g.debut_date}</span>
           ${sublabel || (isRecent ? `<span style="font-size:10px;color:var(--text-tertiary);margin-left:6px;">recent</span>` : "")}
         </div>
-        <div style="text-align:center;">${xfvBadgeHTML(g, { primary: "xfv" })}</div>
+        <div style="text-align:center;">${xfvBadgeHTML(g, { primary: state.debutGrade || "xfv" })}</div>
         <div class="desktop-only" style="padding-right:6px;">${chartHtml}</div>
         <div class="desktop-only" style="text-align:center;">${(function(){
           const warSpark = makeWarChart(g);
@@ -29216,6 +29225,17 @@ function _syncGradeToggle() {
   const pr = _gradePrimary();
   document.querySelectorAll("[data-grade-toggle]").forEach(b => {
     const on = b.dataset.gradeToggle === pr;
+    b.classList.toggle("active", on);
+    b.style.background = on ? "var(--accent-soft, var(--bg-tertiary))" : "transparent";
+    b.style.color = on ? "var(--text-primary)" : "var(--text-tertiary)";
+    b.style.fontWeight = on ? "700" : "500";
+  });
+}
+// Mirror of the board toggle, scoped to the Debuted list (state.debutGrade).
+function _syncDebutGradeToggle() {
+  const pr = state.debutGrade || "xfv";
+  document.querySelectorAll("[data-debut-grade-toggle]").forEach(b => {
+    const on = b.dataset.debutGradeToggle === pr;
     b.classList.toggle("active", on);
     b.style.background = on ? "var(--accent-soft, var(--bg-tertiary))" : "transparent";
     b.style.color = on ? "var(--text-primary)" : "var(--text-tertiary)";
@@ -49881,6 +49901,13 @@ function attachHandlers() {
       resetListPages();
       render();
       try { syncToURL(); } catch (e) { /* noop */ }
+    });
+  });
+  document.querySelectorAll("[data-debut-grade-toggle]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      state.debutGrade = btn.dataset.debutGradeToggle;
+      _syncDebutGradeToggle();
+      render();
     });
   });
   const sortEl = document.getElementById("sort-select");
