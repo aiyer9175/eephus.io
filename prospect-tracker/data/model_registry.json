@@ -448,7 +448,7 @@
    "metric": "forward-chained OOS Pearson r / Spearman rho vs first-MLB est_woba on 2024-2026 debut cohorts",
    "eval_artifact": "data/xfv_proxy_eval.json",
    "verdict": "provisional",
-   "notes": "Leakage-safe (pre-debut features, post-debut Savant target); never feeds xFV or its matrix. OOS hitters r=0.25/rho=0.24 (n=88), pitchers r=0.19/rho=0.18 (n=106); 1,719 active projections. Survivorship-limited (debut cohort) + small-n -> provisional. Resolves in ~1 season vs xFV's 6, so it is an earlier read + the empirical companion to the live Statcast tilt.",
+   "notes": "Leakage-safe (pre-debut features, post-debut Savant target); never feeds xFV or its matrix. OOS hitters r=0.25/rho=0.24 (n=88), pitchers r=0.19/rho=0.18 (n=106); 1,719 active projections. Survivorship-limited (debut cohort) + small-n -> provisional. Resolves in ~1 season vs xFV's 6, so it is an earlier read + the empirical companion to the live Statcast tilt. POWER FEATURES REJECTED (2026-06-25, committed loss): the audit hypothesised production power (iso_rel/peak_iso_rel) would help since the proxy TARGET is Statcast contact quality (not WAR, which omits power). Tested forward-chained on the debut cohorts: EVERY variant DROPPED Spearman - +iso_rel r 0.264->0.270 but rho 0.253->0.219; +peak_iso_rel rho->0.230; +tool_game_pwr both down; +iso_rel+peak_iso_rel rho->0.211. The marginal Pearson bump comes with a clear rank-metric loss; on n=88 the power rates add noise, and consensus FV + the existing contact features already carry the signal. Not shipped.",
    "last_checked": "2026-06-25",
    "stale": false,
    "artifact_age_days": 0
