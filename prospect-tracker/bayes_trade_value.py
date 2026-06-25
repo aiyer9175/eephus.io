@@ -3944,6 +3944,13 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
 
         xe = xfv.get(pk) or {}
         x_sur = xe.get("surplus_mm")
+        # Carry the raw xFV grade through to the board: the convex-$/WAR + $0-floor
+        # surplus transform compresses within-tier ordering (the backtest shows the
+        # grade orders realized WAR better than the $ value it is derived from), so
+        # the board uses xfv_grade as the within-tier tie-break for the bunched
+        # low/floored block. Display value stays trade_value_mm.
+        if xe.get("xfv_grade") is not None:
+            r["xfv_grade"] = xe.get("xfv_grade")
         new, src = None, None
         if is_pros:
             if x_sur is not None:

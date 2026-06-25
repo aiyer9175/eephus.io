@@ -372,6 +372,10 @@ function _tbSortRows(rows) {
   const [col, dir] = _tbSortParts();
   const sign = dir === "asc" ? 1 : -1;
   const tv = p => { const v = Number(p.trade_value_mm); return Number.isFinite(v) ? v : -1e9; };
+  // xFV grade tiebreak: the convex-$/WAR + $0-floor surplus transform bunches a
+  // large low/fringe block at the same value with no internal order; the raw
+  // xfv_grade orders realized WAR better, so it breaks surplus ties sensibly.
+  const xg = p => { const v = Number(p.xfv_grade); return Number.isFinite(v) ? v : -1e9; };
   rows.sort((a, b) => {
     const av = _tbSortVal(a, col), bv = _tbSortVal(b, col);
     let c;
@@ -383,7 +387,7 @@ function _tbSortRows(rows) {
       else if (bv.n == null) c = -1;
       else c = (av.n - bv.n) * sign;
     }
-    return c || (tv(b) - tv(a));                 // stable tiebreak: surplus desc
+    return c || (tv(b) - tv(a)) || (xg(b) - xg(a));   // surplus desc, then xFV grade desc
   });
   return rows;
 }

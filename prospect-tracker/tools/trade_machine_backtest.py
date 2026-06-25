@@ -99,12 +99,21 @@ def _slice_a(by_player: dict) -> dict:
             "surplus": float(sur),
             "realized": float(rw),
             "consensus_fv": v.get("consensus_fv"),
+            "xfv_grade": v.get("xfv_grade"),
             "side": v.get("side"),
             "tier": _platform_tier(float(sur)),
         })
 
     surp = [r["surplus"] for r in rows]
     real = [r["realized"] for r in rows]
+
+    # Diagnostic: the raw xfv_grade the surplus $ is derived FROM. The convex-$/WAR
+    # + $0-floor transform compresses ordering, so xfv_grade orders realized WAR
+    # better than surplus_mm (it is the board's within-tier tie-break). Reported,
+    # not shipped-on: the board's headline value is intentionally the $ surplus.
+    xg_rows = [r for r in rows if r.get("xfv_grade") is not None]
+    xfv_pooled = _rnd(_spearman([float(r["xfv_grade"]) for r in xg_rows],
+                                [r["realized"] for r in xg_rows])) if len(xg_rows) >= 4 else None
 
     # Baseline: does raw consensus FV order realized WAR as well as the board surplus?
     cfv_rows = [r for r in rows if r.get("consensus_fv") is not None]
@@ -126,7 +135,10 @@ def _slice_a(by_player: dict) -> dict:
         btr = [r for r in tr if r.get("consensus_fv") is not None]
         b = _rnd(_spearman([float(r["consensus_fv"]) for r in btr],
                            [r["realized"] for r in btr])) if len(btr) >= 4 else None
-        by_tier[t] = {"n": len(tr), "spearman": m, "baseline_spearman": b}
+        xtr = [r for r in tr if r.get("xfv_grade") is not None]
+        xg = _rnd(_spearman([float(r["xfv_grade"]) for r in xtr],
+                            [r["realized"] for r in xtr])) if len(xtr) >= 4 else None
+        by_tier[t] = {"n": len(tr), "spearman": m, "baseline_spearman": b, "xfv_grade_spearman": xg}
         if m is not None and b is not None:
             tiers_compared += 1
             if m >= b:
@@ -154,6 +166,9 @@ def _slice_a(by_player: dict) -> dict:
         "target": "realized_war (full career bWAR) - RANK only",
         "pooled": {"spearman": pooled, "auc_useful_asset": auc, "useful_war_threshold": USEFUL_WAR},
         "baseline_consensus_fv": {"spearman": baseline, "n": len(cfv_rows)},
+        "xfv_grade_orderer": {"spearman": xfv_pooled, "n": len(xg_rows),
+                              "note": "the raw grade the surplus is derived from; orders realized "
+                                      "WAR better than the $-transform (board within-tier tie-break)"},
         "by_tier": by_tier,
         "by_side": by_side,
         "tiers_won_vs_baseline": f"{tiers_won}/{tiers_compared}",

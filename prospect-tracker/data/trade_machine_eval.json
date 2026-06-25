@@ -12,34 +12,43 @@
     "predictor": "xfv.json surplus_mm (the value the board shows for prospects + the MLB backgrade fallback)",
     "target": "realized_war (full career bWAR) - RANK only",
     "pooled": {
-      "spearman": 0.329,
+      "spearman": 0.3289,
       "auc_useful_asset": 0.7707,
       "useful_war_threshold": 6.0
     },
     "baseline_consensus_fv": {
-      "spearman": 0.3314,
+      "spearman": 0.3312,
       "n": 2333
+    },
+    "xfv_grade_orderer": {
+      "spearman": 0.3433,
+      "n": 2333,
+      "note": "the raw grade the surplus is derived from; orders realized WAR better than the $-transform (board within-tier tie-break)"
     },
     "by_tier": {
       "elite": {
         "n": 211,
-        "spearman": 0.1509,
-        "baseline_spearman": 0.323
+        "spearman": 0.149,
+        "baseline_spearman": 0.323,
+        "xfv_grade_spearman": 0.2328
       },
       "high": {
-        "n": 264,
-        "spearman": 0.1501,
-        "baseline_spearman": 0.2189
+        "n": 263,
+        "spearman": 0.1507,
+        "baseline_spearman": 0.2203,
+        "xfv_grade_spearman": 0.2485
       },
       "mid": {
         "n": 558,
-        "spearman": 0.0857,
-        "baseline_spearman": 0.2714
+        "spearman": 0.082,
+        "baseline_spearman": 0.2676,
+        "xfv_grade_spearman": 0.2536
       },
       "low": {
-        "n": 1300,
-        "spearman": 0.0842,
-        "baseline_spearman": 0.0665
+        "n": 1301,
+        "spearman": 0.0816,
+        "baseline_spearman": 0.0661,
+        "xfv_grade_spearman": 0.0683
       }
     },
     "by_side": {
@@ -49,29 +58,29 @@
       },
       "P": {
         "n": 1238,
-        "spearman": 0.3009
+        "spearman": 0.3001
       }
     },
     "tiers_won_vs_baseline": "1/4",
     "ship": false
   },
   "slice_a_prime_by_source": {
-    "n_matched": 1721,
-    "generated_at": "2026-06-24",
+    "n_matched": 1322,
+    "generated_at": "2026-06-25",
     "predictor": "trade_values.json trade_value_mm (post apply_platform_surplus)",
     "by_source": {
       "projection": {
         "n": 621,
-        "spearman": 0.0157
+        "spearman": 0.0152
       },
       "xfv_backgrade": {
-        "n": 1100,
-        "spearman": 0.2129
+        "n": 701,
+        "spearman": 0.5596
       }
     },
     "pooled": {
-      "n": 1721,
-      "spearman": 0.1889
+      "n": 1322,
+      "spearman": 0.3205
     }
   },
   "ship": false,
