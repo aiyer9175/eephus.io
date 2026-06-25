@@ -149,7 +149,7 @@
    "metric": "first-3y WAR MAE / Spearman / calibration, forward-chained debut cohorts 2019-21 (pre-debut grade vintages)",
    "eval_artifact": "data/prospect_path_eval.json",
    "verdict": "provisional",
-   "notes": "Phase 4b WS-7 + 2026-06-11 improvement sweep: fv_outcome_v1 RETAINS against ridge, LightGBM, AND a linear mean recalibration - every challenger lost its pre-stated dual gate (the scouting consensus ranks better than any stat-line model tried; rho .210 vs .150-.156). The recalibration is MEASURED and committed unshipped: it fixes the mean bias (+0.29 -> +0.04, MAE -0.08) but the pooled forward-chained slope worsens (.78 -> .64; the thin 2019 fold's noisy fit dominates). Documented next candidate: intercept-only correction with a min-train-n guard, pre-registered before the next eval. Calibration block lives in the artifact (ship: false); proj_export applies NOTHING.",
+   "notes": "Phase 4b WS-7 + 2026-06-11 improvement sweep: fv_outcome_v1 RETAINS against ridge, LightGBM, AND a linear mean recalibration - every challenger lost its pre-stated dual gate (the scouting consensus ranks better than any stat-line model tried; rho .210 vs .150-.156). The recalibration is MEASURED and committed unshipped: it fixes the mean bias (+0.29 -> +0.04, MAE -0.08) but the pooled forward-chained slope worsens (.78 -> .64; the thin 2019 fold's noisy fit dominates). Documented next candidate: intercept-only correction with a min-train-n guard, pre-registered before the next eval. CALIBRATION SHIPPED (note corrected 2026-06-25): the intercept-only candidate #2 ships - prospect_path_eval.calibration_intercept_only ship:true, full_window_shift 0.2673; proj_export._prospect_calibration_shift applies -shift/3 to the first 3 prospect seasons (bias +0.29->+0.11, slope held 0.726, MAE 1.587->1.384 on the n>=250 folds).",
    "last_checked": "2026-06-25",
    "stale": false,
    "artifact_age_days": 13
@@ -158,7 +158,7 @@
    "model_id": "prospect_surplus",
    "surface": "PROSPX Sur+/OrgSur+ + trade lookup",
    "predicts": "control-window NPV surplus from FV (bucket mixture, service path, convex pricing)",
-   "champion": "career-path mixture + isotonic-real-v1 calibration (WS-6)",
+   "champion": "career-path mixture + isotonic-real-v3 calibration (WS-6; v3 today-priced binned-PAVA, 2026-06-12)",
    "baseline": "calibration correction = IDENTITY",
    "metric": "calibration slope/bias/PIT on resolved cohorts",
    "eval_artifact": "data/surplus_backtest_real.json",
@@ -219,7 +219,7 @@
    "metric": "Spearman + AUC vs realized WAR/debut, LOO-CV on resolved draft cohorts",
    "eval_artifact": "data/draft_consensus_weight_eval.json",
    "verdict": "provisional",
-   "notes": "Draft analogue of the consensus_fv weighting. On 668 resolved draftees (2018-2021, 5-year lag) per-source ordering skill was near-identical (FG 0.167 / MLB Pipeline draft 0.165) and the LOO-CV weighted blend did NOT beat equal on pooled metrics (Spearman 0.177 vs 0.180; AUC tie 0.724), so equal-weight ships and the live draft weights stay ~1.0. Re-measured each monthly run; promote only if a weighted blend clears equal out-of-sample.",
+   "notes": "Draft analogue of the consensus_fv weighting. On 668 resolved draftees (2018-2021, 5-year lag) per-source ordering skill was near-identical (FG 0.167 / MLB Pipeline draft 0.165) and the LOO-CV weighted blend did NOT beat equal on pooled metrics (Spearman 0.177 vs 0.180; AUC tie 0.724), (corrected 2026-06-25) the regenerated artifact now narrowly clears the both-metrics gate (ship:true, weighted Spearman 0.1642 vs equal 0.1635, AUC 0.7198 vs 0.7196, n=672), so the live draft weights are near-equal (FG 0.9935 / MLB 1.0065) - but the +0.0007 edge is within noise; a minimum-margin ship gate (a la consensus_fv's hard shrink) would be the honest guard before trusting any non-equal vote. Re-measured each monthly run; promote only if a weighted blend clears equal out-of-sample.",
    "last_checked": "2026-06-25",
    "stale": false,
    "artifact_age_days": 0
