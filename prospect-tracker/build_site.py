@@ -2359,16 +2359,21 @@ def build_team() -> str:
     _M_WEB = ('<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" '
               'stroke="currentColor" stroke-width="1.9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15.5 0 18M12 3c-2.5 '
               '2.5-2.5 15.5 0 18" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>')
+    # Trade Machine: two opposing arrows (the ⇄ swap glyph the module wears site-wide),
+    # so the Trade Machine creator no longer shares the generic star with Writer/Analyst.
+    _M_TRADE = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13M14 6l3 3-3 3M20 15H7M10 12l-3 3 3 3" '
+                'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>')
     def _badge_for(note: str, uid: str) -> str:
         n = note.lower()
         if "prospx" in n:                         mark, accent = prospx_ball_logo(uid, 24), "var(--accent-gold)"
         elif "projection" in n:                   mark, accent = _M_PROJ, "var(--accent-cyan)"
         elif "free agency" in n:                  mark, accent = _M_FA, "var(--accent-green)"
-        elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-gold)"
+        elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-lilac)"
         elif "webmaster" in n or "web" in n:      mark, accent = _M_WEB, "var(--accent-navy)"
         elif "design" in n:                       mark, accent = _M_PEN, "var(--text-secondary)"
-        else:                                     mark, accent = _M_STAR, "var(--accent-gold)"
-        creator = "creator" in n
+        elif "trade" in n:                        mark, accent = _M_TRADE, "var(--accent-orange)"
+        else:                                     mark, accent = _M_STAR, "var(--accent-red)"   # Writer/Analyst + any unmapped role
+        creator = "creator" in n or "lead" in n   # crown any lead/creator role
         cls = "team-badge" + (" is-creator" if creator else "")
         label = html.escape(note)
         return (f'<span class="{cls}" title="{label}" aria-label="{label}" '
