@@ -613,7 +613,7 @@ def qo_tax_usd(payor_tier: str, as_of) -> dict:
 # Predicted market price — transparent two-stage OLS + empirical bands
 # ============================================================================
 
-def _features_years(s: dict, comps_my: float) -> list[float]:
+def _features_years(s: dict, comps_my: float, comps_my75: float | None = None) -> list[float]:
     """log-years stage. Years is skewed-discrete (1-year deals dominate;
     long deals are rare and young-star-only), so the stage models
     log(years) with curvature (WAR², age×WAR) AND stacks the
@@ -622,14 +622,25 @@ def _features_years(s: dict, comps_my: float) -> list[float]:
     stacking, not a black box."""
     g = _pos_group(s.get("position"))
     w1 = s["_war_path"]["war_y1"]
+    prime = max(0.0, 30.0 - s["_age"])
+    qo = 1.0 if s.get("qo") else 0.0
+    if comps_my75 is None:
+        comps_my75 = comps_my
     return [1.0, s["_age"], w1, w1 * w1, s["_age"] * w1,
             1.0 if g == "SP" else 0.0, 1.0 if g == "RP" else 0.0,
-            1.0 if g == "C" else 0.0, 1.0 if s.get("qo") else 0.0,
+            1.0 if g == "C" else 0.0, qo,
             comps_my,
             # prime years remaining — the term structure behind long deals:
             # teams buy seasons through ~30; a 26-year-old's market simply
             # has more buyable years in it (v2 feature, gate-measured).
-            max(0.0, 30.0 - s["_age"])]
+            prime,
+            # v3 decade-deal tail (gate-measured): (1) the 75th-pct comps years,
+            # the long-deal anchor the median washes out (Seager/Bogaerts-type
+            # 10yr prints live in a star's comps); (2) QO x prime x quality - the
+            # franchise-cornerstone marker that signs the surprise decade deal
+            # the prime term alone (flat ~0-3 for a 27-30yo star) misses.
+            comps_my75,
+            qo * prime * w1]
 
 
 def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
@@ -704,8 +715,9 @@ class MarketModel:
                 and s.get("guarantee_usd")]
         self.train_pool = rows
         self._comps_my_cache: dict[int, float] = {}
-        self.coef_years = _ols([_features_years(s, self._comps_my(s)) for s in rows],
-                               [math.log(float(s["years"])) for s in rows])
+        self.coef_years = _ols(
+            [_features_years(s, (_cs := self._comps_stats(s))[0], _cs[3]) for s in rows],
+            [math.log(float(s["years"])) for s in rows])
         Xg, yg = [], []
         for s in rows:
             dpw = winter_dpw(dpw_series, s["class_year"])
@@ -732,14 +744,19 @@ class MarketModel:
              _supply([s], s["class_year"])).get(_pos_group(s.get("position")), 0.0)
         return (c - self.sup_mean) / (self.sup_sd or 1.0)
 
-    def _comps_stats(self, s: dict) -> tuple[float, float]:
-        """(median comps years, log median trend-inflated comps guarantee)
-        — computed once per row, the anchor features both stages stack."""
+    def _comps_stats(self, s: dict) -> tuple[float, float, float, float]:
+        """(median comps years, log median trend-inflated comps guarantee, median
+        comps AAV, 75th-pct comps years) — computed once per row, the anchor
+        features both stages stack. The p75-years anchor is the long-deal signal
+        the median washes out: a star's nearest comps include the rare 10yr
+        prints, and the median collapses them (the years-stage decade-deal miss)."""
         key = id(s)
         if key not in self._comps_my_cache:
             cs = comps_for(s, self.train_pool)
             if cs:
-                my = statistics.median(c["years"] for c in cs)
+                yrs = sorted(c["years"] for c in cs)
+                my = statistics.median(yrs)
+                my75 = yrs[min(len(yrs) - 1, int(round(0.75 * (len(yrs) - 1))))]
                 infl = _dpw_inflation()
                 # comps anchor on the NPV basis too — the anchor and the
                 # target must speak the same currency.
@@ -753,8 +770,8 @@ class MarketModel:
                     * ((1 + infl) ** (s["class_year"] - c["class_year"]))
                     for c in cs)
             else:
-                my, mg, ma = 1.0, 1_000_000.0, 1_000_000.0
-            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)), ma)
+                my, mg, ma, my75 = 1.0, 1_000_000.0, 1_000_000.0, 1.0
+            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)), ma, my75)
         return self._comps_my_cache[key]
 
     def _comps_my(self, s: dict) -> float:
@@ -770,7 +787,8 @@ class MarketModel:
         return max(0.0, 30.0 - s["_age"]) * max(0.0, s["_war_path"]["war_y1"])
 
     def _point(self, s: dict) -> tuple[float, float]:
-        fy = _features_years(s, self._comps_my(s))
+        _cs = self._comps_stats(s)
+        fy = _features_years(s, _cs[0], _cs[3])
         years = math.exp(float(sum(c * x for c, x in zip(self.coef_years, fy))))
         # FA mega-deal tail (2026-06-25): the 13-yr cap structurally truncated
         # record terms (Soto 15 -> 13, $765M deal -> $520M pred). Raised to 15,
