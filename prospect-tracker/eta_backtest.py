@@ -394,19 +394,23 @@ def _km_table(train: list[dict], min_n: int = 50) -> dict[str, float]:
 
 
 def _heuristic_rescore(rows: list[dict], base_tables: dict[int, dict],
-                       today_year: int) -> dict[int, dict[str, int]]:
+                       today_year: int,
+                       bias_adj_by_vintage: dict[int, dict] | None = None
+                       ) -> dict[int, dict[str, int]]:
     """Re-run estimate_eta per row with the vintage's candidate base
-    table (forward-chained). {id(row): pred} keyed by row index."""
+    table (forward-chained). {id(row): pred} keyed by row index. Optional
+    per-vintage per-level bias-shave applied as the final intercept."""
     preds: dict[int, int] = {}
     for i, r in enumerate(rows):
         table = base_tables.get(r["vintage"])
         if not table or r["level"] not in table:
             continue
         merged = dict(BASE_YEARS) | table
+        adj = (bias_adj_by_vintage or {}).get(r["vintage"])
         res = estimate_eta(current_level=r["level"], age=r["age"],
                            is_pitcher=r["is_pitcher"], fv=r["fv"],
                            stats=r.get("srow"), snapshot_date=r.get("date"),
-                           base_years=merged)
+                           base_years=merged, level_bias_adj=adj)
         if res.eta_year is not None:
             preds[i] = r["vintage"] + (res.eta_year - today_year)
     return preds
@@ -480,6 +484,41 @@ def run(persist: bool = True) -> dict:
                               "mean": round(statistics.mean(errs), 3),
                               "median": statistics.median(errs)}
 
+    # Per-level bias-shave challenger (2026-06-25): residual_by_level shows the
+    # heuristic runs ~1yr LATE; a conservative shrunk forward-chained -0.5 shave
+    # at every minor level pulls debuted ETAs earlier. Champion vs shaved are
+    # BOTH via _heuristic_rescore (live base) so the shave is the only diff.
+    _BIAS_CAP, _BIAS_K, _BIAS_KMIN = 0.5, 10, 8
+
+    def _fit_bias_adj(rows_pool):
+        adj = {}
+        for lv in {r["level"] for r in rows_pool if r["level"]}:
+            rs = [r["pred"] - r["actual"] for r in rows_pool if r["level"] == lv]
+            if len(rs) >= _BIAS_KMIN:
+                a = max(0.0, min(_BIAS_CAP, (len(rs) / (len(rs) + _BIAS_K)) * statistics.median(rs)))
+                if a > 0.01:
+                    adj[lv] = round(a, 3)
+        return adj
+
+    _live_tables = {vy: dict(BASE_YEARS) for vy in VINTAGE_YEARS}
+    _bias_adj_bv = {vy: _fit_bias_adj([r for r in deb if r["vintage"] < vy]) for vy in VINTAGE_YEARS}
+    _champ_rs_preds = _heuristic_rescore(rows, _live_tables, today_year)
+    _bias_preds = _heuristic_rescore(rows, _live_tables, today_year, bias_adj_by_vintage=_bias_adj_bv)
+    _idx = [i for i, r in enumerate(rows) if r["outcome"] == "debuted"
+            and i in _champ_rs_preds and i in _bias_preds]
+    _ov = lambda preds: sum(1 for i, r in enumerate(rows) if r["outcome"] == "censored_active"
+                            and preds.get(i, 10 ** 9) <= LAST_FULL_SEASON)
+    bias_corrected_block = {
+        "champion_rescore": _score([(_champ_rs_preds[i], rows[i]["actual"]) for i in _idx]),
+        "bias_corrected": _score([(_bias_preds[i], rows[i]["actual"]) for i in _idx]),
+        "overdue": {"champion": _ov(_champ_rs_preds), "bias_corrected": _ov(_bias_preds)},
+        "shippable_level_bias_adj": _fit_bias_adj(deb),
+        "cap": _BIAS_CAP, "shrink_k": _BIAS_K, "min_n": _BIAS_KMIN,
+        "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), "
+                "applied by the live caller (storage.py); champion backtest UNtouched. "
+                "MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101).",
+    }
+
     censored = [r for r in rows if r["outcome"] == "censored_active"]
     washed = [r for r in rows if r["outcome"] == "washed_out"]
     out = {
@@ -529,6 +568,7 @@ def run(persist: bool = True) -> dict:
         "by_level": by_level,
         "by_vintage": {str(k): v for k, v in by_vintage.items()},
         "residual_by_level": resid_by_level,
+        "bias_corrected_forward_chained": bias_corrected_block,
         "censoring": {
             "censored_active": len(censored),
             "overdue_rate": round(sum(1 for r in censored if r.get("overdue")) /

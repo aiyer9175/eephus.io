@@ -67,6 +67,21 @@ BASE_YEARS: dict[str, float] = {
     "DSL": 7.5,
 }
 
+# Per-level final bias shave (2026-06-25). The heuristic ran systematically LATE
+# on debuted players (forward-chained residual ~+1yr, +2 at A+, +4 at DSL - the
+# KM recalibration cut the global bias 1.85->1.03 but left it uncorrected). A
+# conservative, shrunk, forward-chained -0.5yr shave at every minor level pulls
+# debuted ETAs earlier: eta_backtest debuted MAE 1.44->1.23, within-1y
+# 0.58->0.66, bias 1.09->0.75. CONSERVATIVE on the survivor-bias guardrail: cap
+# 0.5 keeps the overdue (censored-active that "comes due") balloon to ~+99,
+# in line with the previously-accepted KM recalibration (+101); higher caps /
+# per-level differentiation chased more accuracy but ballooned overdue (+171).
+# Passed explicitly by the live caller (storage.py); NOT applied in the backtest
+# champion so the gate stays apples-to-apples.
+LEVEL_BIAS_ADJ: dict[str, float] = {
+    "AAA": 0.5, "AA": 0.5, "A+": 0.5, "A": 0.5, "CPX": 0.5, "DSL": 0.5,
+}
+
 # v38 — Item-4 ETA rebalance: shift weight from current level onto age.
 # The level base is modestly de-weighted (×0.90 — a ~10% compression of the
 # level term, so two players at different levels sit a touch closer and the
@@ -223,6 +238,7 @@ def estimate_eta(
     il_status: dict | None = None,
     statcast_plus: int | None = None,
     base_years: dict[str, float] | None = None,
+    level_bias_adj: dict[str, float] | None = None,
 ) -> ETAResult:
     """
     Return an ETAResult for the given prospect attributes.
@@ -576,6 +592,12 @@ def estimate_eta(
     else:
         total = raw_total
     total = max(0.0, total)                 # can't arrive in the past
+    # Per-level bias shave (final intercept): the heuristic runs systematically
+    # LATE at the lower levels (debuted-player residual ~+1yr at A/A+); a small,
+    # shrunk, forward-chained per-level shave pulls those ETAs earlier. Applied
+    # last so it corrects the FINAL travel time, not an intermediate term.
+    if level_bias_adj and current_level:
+        total = max(0.0, total - float(level_bias_adj.get(current_level, 0.0)))
     eta_year = today_year + round(total)
 
     if signals >= 3:

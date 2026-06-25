@@ -6892,7 +6892,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     birth_dates = load_birth_dates()
     from stats import compute_age_decimal
     from age_level import score_age_vs_level
-    from eta import estimate_eta
+    from eta import estimate_eta, LEVEL_BIAS_ADJ as ETA_LEVEL_BIAS_ADJ
     from trades import canonical_org
     from level_norms import (
         compute_level_norms,
@@ -8256,6 +8256,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # out for the year" — without this, the ETA model only
             # tracked rolling-12mo health signals, not active IL.
             il_status=il_status.get(p.player_key) or {},
+            # Per-level bias shave (forward-chained, gate-validated): the
+            # heuristic ran ~1yr LATE on debuted players; LEVEL_BIAS_ADJ pulls
+            # minor-level ETAs earlier (eta_backtest MAE 1.44->1.23).
+            level_bias_adj=ETA_LEVEL_BIAS_ADJ,
         )
         # Performance-vs-level-median enrichment. wRC+/xFIP aren't on the
         # MLB Stats API, so we compute their conceptual cousins from the
