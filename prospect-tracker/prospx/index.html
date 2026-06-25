@@ -38178,12 +38178,29 @@ function renderFarmSystems() {
 // =============================================================================
 
 // Find a player (active, graduate, inactive, or provisional/source-ungraded) by key.
-function findPlayer(key) {
+function _findPlayerExact(key) {
   return (DATA.players || []).find(p => p.player_key === key)
       || (DATA.debuts || []).find(g => g.player_key === key)
       || (DATA.inactive || []).find(p => p.player_key === key)
       || (typeof provPlayerByKey === "function" ? provPlayerByKey(key) : null)
       || null;
+}
+// Generational-suffix aliasing. Some boards key a player from a name source
+// that keeps "Jr./Sr./II/III/IV" while the rest of the platform keys him from
+// StatsAPI without it - e.g. the IFA international-amateur board's
+// `angel_nunez_jr` is the graded prospect `angel_nunez`. When an exact key has
+// no page, retry against the suffix-stripped base key, but ONLY accept it when
+// that base key resolves to a real player, so an orphaned link can never
+// mis-route to an unrelated person.
+function findPlayer(key) {
+  let p = _findPlayerExact(key);
+  if (p) return p;
+  const m = /^(.*?)_(jr|sr|ii|iii|iv)$/.exec(String(key || ""));
+  if (m) {
+    p = _findPlayerExact(m[1]);
+    if (p) return p;
+  }
+  return null;
 }
 
 function findOrg(org) {

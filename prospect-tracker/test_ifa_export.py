@@ -130,3 +130,29 @@ def test_bonus_bucket_edges():
 def test_empty_signings_safe():
     out = build_ifa_export([], {}, today=_today())
     assert out == {"classes": []}
+
+
+def test_lookup_tracked_generational_suffix_alias():
+    # The signing tracker keeps "Jr."; StatsAPI-keyed prospects drop it. An
+    # exact miss must fall back to the suffix-stripped key, but never invent a
+    # match where the base key does not exist.
+    pbk = {"angel_nunez": {"player_key": "angel_nunez", "fv_close_raw": 40.0}}
+    assert ifa_export._lookup_tracked(pbk, "angel_nunez_jr") is pbk["angel_nunez"]
+    assert ifa_export._lookup_tracked(pbk, "angel_nunez") is pbk["angel_nunez"]
+    assert ifa_export._lookup_tracked(pbk, "carlos_jr") is None
+    assert ifa_export._lookup_tracked(pbk, None) is None
+
+
+def test_generational_suffix_signing_is_enriched():
+    # Regression: Angel Nunez Jr (IFA key `angel_nunez_jr`) is the graded
+    # prospect `angel_nunez` - the alias must make him tracked + carry his FV.
+    signings = [{"year": 2026, "player_name": "Angel Nunez Jr.",
+                 "player_key": "angel_nunez_jr", "position": "CF", "org": "CIN",
+                 "country": "Dominican Republic", "bonus_usd": 600_000, "pool_pct": 10.0}]
+    pbk = {"angel_nunez": {"player_key": "angel_nunez", "fv_close_raw": 40.0,
+                           "fv_close_plus": True, "overall_rank": 465,
+                           "mlbam_id": 836585, "org": "CIN", "position": "CF"}}
+    s = build_ifa_export(signings, pbk, today=_today())["classes"][0]["signings"][0]
+    assert s["is_tracked"] is True
+    assert s["fv"] == 40.0 and s["fv_label"] == "40+"
+    assert s["overall_rank"] == 465 and s["mlbam_id"] == 836585

@@ -39,6 +39,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 import statistics
 from collections import defaultdict
 from datetime import date, datetime, timezone
@@ -71,11 +72,35 @@ def _fv_label(fv: float | None, is_plus: bool) -> str | None:
     return f"{int(math.ceil(fv))}{'+' if is_plus else ''}"   # FV rounds UP (55.3 -> 56)
 
 
-def _enrich(signing: dict, tp: dict | None) -> dict:
+_GEN_SUFFIX = re.compile(r"_(jr|sr|ii|iii|iv)$")
+
+
+def _lookup_tracked(players_by_key: dict, key: str | None) -> dict | None:
+    """Resolve a signing's player_key to its tracked-prospect record. Exact
+    match first; then a generational-suffix alias, because the Spotrac signing
+    tracker keeps "Jr./Sr./III" while StatsAPI-keyed prospects drop it - so the
+    IFA signing `angel_nunez_jr` is the graded prospect `angel_nunez`. Only the
+    suffix is stripped (never a bare prefix), so it can't collapse two distinct
+    players onto one record."""
+    if not key:
+        return None
+    tp = players_by_key.get(key)
+    if tp is not None:
+        return tp
+    base = _GEN_SUFFIX.sub("", key)
+    return players_by_key.get(base) if base != key else None
+
+
+def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> dict:
     """Merge one Spotrac signing with the tracked-prospect record (if we
     have one). Signing-team `org` always comes from Spotrac (the signing
     period's team); the tracked record only adds FV / rank / headshot and
-    the player's CURRENT org (shown as a 'now' note when traded since)."""
+    the player's CURRENT org (shown as a 'now' note when traded since).
+
+    The displayed CURRENT grade is xFV (the platform-primary, outcome-grounded
+    grade) when we have one for this player, falling back to consensus FV
+    otherwise - so the IFA list matches the grade every other PROSPX surface
+    shows. `fv_basis` records which was used."""
     out = {
         "player_name": signing.get("player_name"),
         "player_key":  signing.get("player_key"),
@@ -87,6 +112,7 @@ def _enrich(signing: dict, tp: dict | None) -> dict:
         "is_tracked":  False,
         "fv":          None,
         "fv_label":    None,
+        "fv_basis":    None,
         "fv_signing":  None,
         "fv_signing_label": None,
         "age_at_signing": None,
@@ -98,14 +124,19 @@ def _enrich(signing: dict, tp: dict | None) -> dict:
         "current_org": None,
     }
     if tp:
-        fv = tp.get("fv_close_raw")
-        if fv is None:
-            fv = tp.get("fv_close")
+        cons_fv = tp.get("fv_close_raw")
+        if cons_fv is None:
+            cons_fv = tp.get("fv_close")
+        # xFV primary, consensus fallback. The "+" upside marker is a consensus
+        # concept, so only carry it on the consensus path.
+        use_xfv = xfv_grade is not None
+        fv = xfv_grade if use_xfv else cons_fv
         fv_open = tp.get("fv_open")
         out.update({
             "is_tracked":   True,
-            "fv":           fv,                                  # CURRENT FV
-            "fv_label":     _fv_label(fv, bool(tp.get("fv_close_plus"))),
+            "fv":           fv,                                  # CURRENT grade (xFV or consensus)
+            "fv_label":     _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv),
+            "fv_basis":     "xfv" if use_xfv else "consensus",
             # FV at signing ≈ the earliest grade we have on file (fv_open).
             "fv_signing":       fv_open,
             "fv_signing_label": _fv_label(fv_open, False),
@@ -144,9 +175,17 @@ def _enrich(signing: dict, tp: dict | None) -> dict:
 
 
 def _build_class(year: int, rows: list[dict], players_by_key: dict,
-                 today: date) -> dict:
+                 today: date, xfv_by_key: dict | None = None) -> dict:
     """Assemble one signing-year class block from its Spotrac rows."""
-    signings = [_enrich(r, players_by_key.get(r.get("player_key"))) for r in rows]
+    xfv_by_key = xfv_by_key or {}
+
+    def _enrich_row(r):
+        tp = _lookup_tracked(players_by_key, r.get("player_key"))
+        # Look up xFV by the TRACKED (canonical) key, not the signing key.
+        xg = (xfv_by_key.get(tp["player_key"]) or {}).get("xfv_grade") if tp else None
+        return _enrich(r, tp, xg)
+
+    signings = [_enrich_row(r) for r in rows]
     # Bonus-desc, then tracked-first, then name - deterministic.
     signings.sort(key=lambda s: (
         -(s["bonus_usd"] or 0), not s["is_tracked"], s["player_name"] or ""))
@@ -226,9 +265,11 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
 
 
 def build_ifa_export(signings: list[dict], players_by_key: dict | None = None,
-                     today: date | None = None) -> dict:
+                     today: date | None = None, xfv_by_key: dict | None = None) -> dict:
     """Pure builder: group Spotrac IFA signings by year into class blocks
-    enriched with tracked-prospect data. Newest year first."""
+    enriched with tracked-prospect data. Newest year first. `xfv_by_key` (the
+    xfv.json by_player map) lets the displayed grade be xFV, matching the rest
+    of the platform."""
     players_by_key = players_by_key or {}
     today = today or date.today()
     by_year: dict[int, list[dict]] = defaultdict(list)
@@ -238,9 +279,22 @@ def build_ifa_export(signings: list[dict], players_by_key: dict | None = None,
         # row-years Spotrac occasionally tags (re-signings, fixture quirks).
         if y is not None and 2021 <= y <= today.year:
             by_year[y].append(s)
-    classes = [_build_class(y, by_year[y], players_by_key, today)
+    classes = [_build_class(y, by_year[y], players_by_key, today, xfv_by_key)
                for y in sorted(by_year, reverse=True)]
     return {"classes": classes}
+
+
+def _xfv_by_key_from_sibling(path: Path) -> dict:
+    """Load the sibling xfv.json by_player map so the IFA list can show the
+    platform-primary xFV grade. Returns {} when absent (consensus fallback)."""
+    xf = path.parent / "xfv.json"
+    if not xf.exists():
+        return {}
+    try:
+        with xf.open(encoding="utf-8") as fp:
+            return json.load(fp).get("by_player", {}) or {}
+    except (OSError, ValueError):
+        return {}
 
 
 def _players_by_key_from_sibling(path: Path) -> dict:
@@ -272,7 +326,8 @@ def export_ifa_json(path, players_by_key: dict | None = None,
     signings = scrape_spotrac_ifa_range(years, force=force)
     if players_by_key is None:
         players_by_key = _players_by_key_from_sibling(path)
-    payload = build_ifa_export(signings, players_by_key)
+    xfv_by_key = _xfv_by_key_from_sibling(path)
+    payload = build_ifa_export(signings, players_by_key, xfv_by_key=xfv_by_key)
     payload["generated_at"] = datetime.now(timezone.utc).isoformat()
     with path.open("w", encoding="utf-8") as fp:
         json.dump(payload, fp, separators=(",", ":"), ensure_ascii=False)
