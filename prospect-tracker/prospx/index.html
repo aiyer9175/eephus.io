@@ -44012,6 +44012,7 @@ function renderPlayerDetail(key) {
     // tools branch. Since toolsPanelHTML is scoped inside that IIFE, we
     // wrap a thin helper here that builds the same content from p.points.
     if (!p || !p.points || !p.points.length) return "";
+    const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
     // Walk p.points latest snapshot per source and emit a per-source
     // tool grades table - mirrors the inner tools panel from above.
     const latestBySource = {};
