@@ -174,13 +174,31 @@
 /* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
 #proj-view-trademachine button.chip.active { border-color: var(--accent-cyan); }
 
-/* Mock Trade Builder: give each side the same card treatment as the evaluator sides */
-#proj-view-trademachine .mock-trade-side {
-  background: var(--bg-secondary); border: 1px solid var(--border);
-  border-radius: 8px; padding: 10px 12px; min-width: 0;
+/* evaluator grader verdict colors + Clear/Copy controls */
+.tm-balverdict.is-warn { color: var(--neon-amber); }
+.tm-balverdict.is-bad { color: var(--down, #e05c5c); }
+.tm-controls { display: flex; gap: 8px; margin-top: 9px; }
+
+/* pagination strip (the relocation lost this CSS -> the pager rendered as big
+   default buttons). Ported on-theme: compact chips, cyan active page. */
+.pg-strip {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 10px 0; margin-top: 10px; border-top: 1px solid var(--border-light);
 }
-#proj-view-trademachine .mock-trade-search:focus { outline: none; border-color: var(--accent-cyan); }
-#proj-view-trademachine #mock-trade-clear, #proj-view-trademachine #mock-trade-export { cursor: pointer; }
+.pg-chip, .pg-nav {
+  font-family: var(--font-mono); font-size: var(--fs-sm, 12px);
+  font-variant-numeric: tabular-nums; padding: 3px 9px;
+  border-radius: var(--radius-sm, 4px); border: 1px solid var(--border);
+  background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.pg-chip:hover:not(.active), .pg-nav:hover:not(:disabled) {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+.pg-chip.active { background: var(--neon-cyan); color: var(--bg-primary); border-color: var(--neon-cyan); cursor: default; }
+.pg-nav[disabled] { opacity: 0.4; cursor: not-allowed; }
+.pg-ellipsis { padding: 0 4px; color: var(--text-tertiary); font-family: var(--font-mono); font-size: var(--fs-sm, 12px); }
+.pg-count { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 
 /* Projections-page view switcher (Projections | Trade Machine) */
 .proj-viewnav{display:flex;gap:4px;margin:12px 0 14px;border-bottom:1px solid var(--border-subtle);}

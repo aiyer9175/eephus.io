@@ -18,6 +18,30 @@
   // Evaluator prospect search/seed pool, filled from trade_values.json prospects.
   const DATA = { players: [] };
 
+  // The PROSPX->/projections/ relocation dropped resetPage() + the global page-chip
+  // delegation, so the Trade Board's filters reset nothing and its pager did nothing.
+  // Both are restored here, self-contained.
+  function resetPage(key) {
+    if (state.pages && (state.pages[key] || 1) !== 1) state.pages[key] = 1;
+  }
+  document.addEventListener("click", (e) => {
+    const btn = e.target && e.target.closest && e.target.closest("[data-tradeboard-page]");
+    if (!btn || btn.disabled) return;
+    const n = Math.max(1, parseInt(btn.getAttribute("data-tradeboard-page"), 10) || 1);
+    state.pages = state.pages || {};
+    if ((state.pages.tradeboard || 1) === n) return;
+    const clicked = btn.closest(".pg-strip");
+    const before = Array.from(document.querySelectorAll(".pg-strip"));
+    const idx = clicked ? before.indexOf(clicked) : -1;
+    state.pages.tradeboard = n;
+    _renderTBRows();
+    requestAnimationFrame(() => {
+      const after = document.querySelectorAll(".pg-strip");
+      const t = (idx >= 0 && idx < after.length) ? after[idx] : after[0];
+      if (t && t.scrollIntoView) t.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    });
+  });
+
   // In PROSPX, clicking a board player opens an in-app detail; here we deep-link
   // back to that prospect's PROSPX page.
   function renderPlayerDetail(key) {
@@ -191,11 +215,23 @@ function renderTradeMachine() {
   };
   const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
   const have = _TM.a.length || _TM.b.length;
-  const sum = Math.max(1e-6, Math.max(0, dA) + Math.max(0, dB));
-  const aPct = Math.round(100 * Math.max(0, dA) / sum);
+  const bothSides = _TM.a.length && _TM.b.length;
+  const posSum = Math.max(0, dA) + Math.max(0, dB);
+  const aPct = posSum > 0 ? Math.round(100 * Math.max(0, dA) / posSum) : 50;
   const diff = Math.abs(dA - dB);
-  const bal = diff < BALANCED_THRESHOLD_MM;
-  const lead = dA > dB ? "A" : "B";
+  const lead = dA >= dB ? "A" : "B";
+  const behind = lead === "A" ? "B" : "A";
+  const pct = diff / Math.max(1, Math.abs(dA), Math.abs(dB)) * 100;
+  // Graduated accept/reject grader (merged in from the old Mock Trade Builder), in the
+  // evaluator's "receives" framing: the side that RECEIVES less value is the one giving up
+  // the edge, so it is the side that hesitates / rejects.
+  let vClass = "is-bal", vText = "";
+  if (!bothSides) { vText = "Add players to both sides for the grader verdict."; vClass = ""; }
+  else if (diff < BALANCED_THRESHOLD_MM) { vText = `✓ Likely fair: both sides within $${BALANCED_THRESHOLD_MM}M.`; vClass = "is-bal"; }
+  else if (pct < 15) { vText = `✓ Fair: Side ${lead} +$${diff.toFixed(1)}M (${pct.toFixed(0)}% edge).`; vClass = "is-bal"; }
+  else if (pct < 40) { vText = `⚠ Side ${behind} may hesitate: $${diff.toFixed(1)}M short (${pct.toFixed(0)}% gap).`; vClass = "is-warn"; }
+  else if (pct < 70) { vText = `✗ Side ${behind} likely rejects: $${diff.toFixed(1)}M gap (${pct.toFixed(0)}%).`; vClass = "is-bad"; }
+  else { vText = `✗✗ Lopsided: Side ${behind} won't do this (${pct.toFixed(0)}% gap).`; vClass = "is-bad"; }
   const verdict = have
     ? `<div class="tm-verdict">
          <div class="tm-balbar" title="value split A vs B">
@@ -203,8 +239,12 @@ function renderTradeMachine() {
            <div class="tm-balbar-b" style="width:${100 - aPct}%"></div>
          </div>
          <div class="tm-balrow">
-           <span class="tm-balverdict${bal ? " is-bal" : ""}">${bal ? "≈ balanced package" : `Side ${lead} receives +$${diff.toFixed(1)}M of value`}</span>
+           <span class="tm-balverdict ${vClass}">${vText}</span>
            <span class="fa-sub">one currency: prospect surplus (control-window NPV) + MLB contract surplus</span>
+         </div>
+         <div class="tm-controls">
+           <button class="chip" data-tm-clear type="button">Clear</button>
+           <button class="chip" data-tm-copy type="button">Copy as text</button>
          </div>
        </div>`
     : "";
@@ -243,6 +283,18 @@ function renderTradeMachine() {
       renderTradeMachine();
     };
   });
+  const clearB = el.querySelector("[data-tm-clear]");
+  if (clearB) clearB.onclick = () => { _TM.a = []; _TM.b = []; renderTradeMachine(); };
+  const copyB = el.querySelector("[data-tm-copy]");
+  if (copyB) copyB.onclick = () => {
+    const fmt = side => _TM[side].map(x =>
+      ` ${x.name} (${[x.pos, x.org].filter(Boolean).join(", ")}${x.org || x.pos ? ", " : ""}${x.kind === "prospect" ? "prospect" : "MLB"}) ${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M`
+    ).join("\n");
+    const text = `=== Trade Machine (eephus.io) ===\n\nSide A receives:\n${fmt("a") || "  (none)"}\n  Total: $${dA.toFixed(1)}M\n\nSide B receives:\n${fmt("b") || "  (none)"}\n  Total: $${dB.toFixed(1)}M\n\nGap: $${Math.abs(dA - dB).toFixed(1)}M`;
+    const done = () => { copyB.textContent = "Copied!"; setTimeout(() => { copyB.textContent = "Copy as text"; }, 1300); };
+    if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => prompt("Copy this trade:", text));
+    else prompt("Copy this trade:", text);
+  };
 }
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
@@ -254,9 +306,6 @@ let _tbOrg    = "all";
 let _tbExactPos = "all";
 let _tbSort   = "trade_desc";
 let _tbQ      = "";        // free-text search
-
-// Mock trade state: two sides, each an array of player objects from _tbData
-const _mockTrade = { a: [], b: [] };
 
 const _TB_POS_BUCKETS = {
   C:  p => _tbPrimaryPos(p) === "C",
@@ -285,7 +334,9 @@ function _tbPrimaryPos(pos) {
   return order.find(x => parts.includes(x)) || parts[0] || "";
 }
 function _tbSortRows(rows) {
-  const num = v => Number.isFinite(Number(v)) ? Number(v) : null;
+  // null/undefined/"" -> null (NOT 0). Number(null)===0 is finite, which used to make
+  // age-less MLB players sort as "age 0" -> 33-yo vets appeared under "Youngest".
+  const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
   const cmpText = (a, b) => String(a || "").localeCompare(String(b || ""));
   const withTradeTiebreak = (cmp, a, b) => cmp || ((num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1));
   rows.sort((a, b) => {
@@ -484,7 +535,9 @@ function _renderTBRows() {
 
 // ── Filter chip wiring (called once after first load) ──────────────────────
 function _tbWireFilters() {
-  const sec = document.getElementById("tradeboard-section");
+  // The Trade Machine view scaffold root (was #tradeboard-section in PROSPX; the
+  // relocation renamed it, which silently broke every filter -- sec was null here).
+  const sec = document.getElementById("proj-view-trademachine");
   if (!sec) return;
 
   sec.querySelectorAll("[data-tb-pool]").forEach(btn => btn.addEventListener("click", () => {
@@ -515,29 +568,6 @@ function _tbWireFilters() {
   if (exactPosSel) exactPosSel.addEventListener("change", () => { _tbExactPos = exactPosSel.value || "all"; resetPage("tradeboard"); _renderTBRows(); });
   const sortSel = document.getElementById("tb-sort-select");
   if (sortSel) sortSel.addEventListener("change", () => { _tbSort = sortSel.value || "trade_desc"; resetPage("tradeboard"); _renderTBRows(); });
-
-  // Mock trade: search boxes
-  sec.querySelectorAll(".mock-trade-search").forEach(inp => {
-    const side = inp.dataset.side;
-    const sug  = sec.querySelector(`.mock-trade-suggestions[data-side="${side}"]`);
-    inp.addEventListener("input", () => _mtSearchInput(side, inp.value, sug));
-    inp.addEventListener("blur", () => setTimeout(() => { if (sug) sug.style.display = "none"; }, 200));
-  });
-
-  // Clear + export buttons
-  const clearBtn = document.getElementById("mock-trade-clear");
-  if (clearBtn) clearBtn.addEventListener("click", () => {
-    _mockTrade.a = []; _mockTrade.b = [];
-    ["a","b"].forEach(s => {
-      const li = sec.querySelector(`.mock-trade-list[data-side="${s}"]`);
-      if (li) li.innerHTML = "";
-      const inp = sec.querySelector(`.mock-trade-search[data-side="${s}"]`);
-      if (inp) inp.value = "";
-    });
-    _mtUpdateVerdict();
-  });
-  const expBtn = document.getElementById("mock-trade-export");
-  if (expBtn) expBtn.addEventListener("click", _mtExport);
 }
 
 // ── Main entry point ────────────────────────────────────────────────────────
@@ -562,126 +592,6 @@ function renderTradeBoard() {
   _renderTBRows();
 }
 
-// ── Mock Trade Builder logic ────────────────────────────────────────────────
-function _mtPlayerByKey(key) {
-  return (_tbData && _tbData.players || []).find(p => p.player_key === key) || null;
-}
-
-function _mtAdd(side, key) {
-  const p = _mtPlayerByKey(key);
-  if (!p) return;
-  if (_mockTrade[side].some(x => x.player_key === key)) return; // no dupes
-  _mockTrade[side].push(p);
-  _mtRenderList(side);
-  _mtUpdateVerdict();
-}
-
-function _mtRemove(side, key) {
-  _mockTrade[side] = _mockTrade[side].filter(p => p.player_key !== key);
-  _mtRenderList(side);
-  _mtUpdateVerdict();
-}
-
-function _mtRenderList(side) {
-  const sec = document.getElementById("tradeboard-section");
-  if (!sec) return;
-  const ul    = sec.querySelector(`.mock-trade-list[data-side="${side}"]`);
-  const total = sec.querySelector(`.mock-trade-total[data-side="${side}"]`);
-  if (!ul) return;
-  const players = _mockTrade[side];
-  ul.innerHTML = players.map(p => {
-    const tv  = p.trade_value_mm;
-    const col = _TB_TIER_COLORS[p.trade_value_tier || "low"] || "var(--text-secondary)";
-    const isMlb = _tbIsMlb(p);
-    return `<li style="display:flex;justify-content:space-between;align-items:center;
-                        padding:5px 0;border-bottom:1px solid var(--border-subtle);font-size:12px;">
-      <span>
-        <strong>${escapeHtml(p.player_name || "?")}</strong>
-        <span style="color:var(--text-secondary);margin-left:4px;">${escapeHtml(p.position||"")} · ${escapeHtml(p.org||"")} · ${isMlb?"MLB":"MiLB"} · ${_tbCtrlBadge(p)}</span>
-      </span>
-      <span style="display:flex;align-items:center;gap:8px;">
-        <span style="font-weight:700;color:${col};">${_tbFmt(tv)}</span>
-        <button class="chip" style="padding:1px 6px;font-size:10px;"
-          onclick="_mtRemove('${escapeHtml(side)}','${escapeHtml(p.player_key||"")}')">✕</button>
-      </span>
-    </li>`;
-  }).join("");
-  const sum = players.reduce((acc, p) => acc + (p.trade_value_mm || 0), 0);
-  if (total) total.textContent = _tbFmt(sum);
-}
-
-function _mtUpdateVerdict() {
-  const sec = document.getElementById("tradeboard-section");
-  const vd  = document.getElementById("mock-trade-verdict");
-  if (!vd) return;
-  const sumA = _mockTrade.a.reduce((a, p) => a + (p.trade_value_mm || 0), 0);
-  const sumB = _mockTrade.b.reduce((a, p) => a + (p.trade_value_mm || 0), 0);
-
-  if (!_mockTrade.a.length && !_mockTrade.b.length) { vd.style.display = "none"; return; }
-  vd.style.display = "block";
-
-  const diff  = sumA - sumB;   // positive = Team A gives more, so Team A receives less value
-  const pctDiff = Math.abs(diff) / Math.max(1, Math.min(sumA || 0, sumB || 0)) * 100;
-
-  let verdict = "", color = "var(--neon-green)";
-
-  if (_mockTrade.a.length === 0 || _mockTrade.b.length === 0) {
-    verdict = "Add players to both sides to see the grader verdict.";
-    color = "var(--text-secondary)";
-  } else if (pctDiff < 10) {
-    verdict = "✓ Likely fair - both sides within 10% of equal value.";
-    color = "var(--neon-green)";
-  } else if (pctDiff < 25) {
-    if (diff > 0) verdict = `⚠ Team A may hesitate - giving ${_tbFmt(Math.abs(diff))} more than it receives (${pctDiff.toFixed(0)}% gap).`;
-    else verdict = `⚠ Team B may hesitate - giving ${_tbFmt(Math.abs(diff))} more than it receives (${pctDiff.toFixed(0)}% gap).`;
-    color = "var(--neon-amber)";
-  } else if (pctDiff < 60) {
-    if (diff > 0) verdict = `✗ Team A likely rejects - giving ${_tbFmt(Math.abs(diff))} more than it receives (${pctDiff.toFixed(0)}% gap). Significant imbalance.`;
-    else verdict = `✗ Team B likely rejects - giving ${_tbFmt(Math.abs(diff))} more than it receives (${pctDiff.toFixed(0)}% gap). Significant imbalance.`;
-    color = "var(--neon-red)";
-  } else {
-    if (diff > 0) verdict = `✗✗ Team A definitively rejects - massive overpay (${pctDiff.toFixed(0)}% gap). Trade as structured is not viable.`;
-    else verdict = `✗✗ Team B definitively rejects - massive overpay (${pctDiff.toFixed(0)}% gap). Trade as structured is not viable.`;
-    color = "var(--neon-red)";
-  }
-
-  vd.innerHTML = `<div style="color:${color};font-weight:600;margin-bottom:4px;">${verdict}</div>
-    <div style="font-size:11px;color:var(--text-secondary);">
-      Team A gives: ${_tbFmt(sumA)} · Team B gives: ${_tbFmt(sumB)} · Gap: ${_tbFmt(Math.abs(diff))}
-    </div>`;
-}
-
-function _mtSearchInput(side, query, sugEl) {
-  if (!sugEl) return;
-  const q = (query || "").toLowerCase().trim();
-  if (!q || !_tbData) { sugEl.style.display = "none"; return; }
-  const matches = (_tbData.players || [])
-    .filter(p => (p.player_name || "").toLowerCase().includes(q))
-    .slice(0, 12);
-  if (!matches.length) { sugEl.style.display = "none"; return; }
-  sugEl.style.display = "block";
-  sugEl.innerHTML = matches.map(p => {
-    const isMlb = _tbIsMlb(p);
-    return `<div style="padding:6px 8px;cursor:pointer;border-bottom:1px solid var(--border-subtle);"
-                 onmousedown="event.preventDefault();_mtAdd('${escapeHtml(side)}','${escapeHtml(p.player_key||"")}');
-                              this.closest('.mock-trade-suggestions').style.display='none';
-                              document.querySelector('.mock-trade-search[data-side=\\'${escapeHtml(side)}\\']').value='';">
-      <strong>${escapeHtml(p.player_name||"")}</strong>
-      <span style="color:var(--text-secondary);font-size:10px;"> ${escapeHtml(p.position||"")} · ${escapeHtml(p.org||"")} · ${isMlb?"MLB":"MiLB"} · ${_tbFmt(p.trade_value_mm)}</span>
-    </div>`;
-  }).join("");
-}
-
-function _mtExport() {
-  const fmtSide = (side) => _mockTrade[side].map(p =>
-    ` ${p.player_name} (${p.position}, ${p.org}, ${_tbIsMlb(p)?"MLB":"MiLB"}) - ${_tbFmt(p.trade_value_mm)}`
-  ).join("\n");
-  const sumA = _mockTrade.a.reduce((a,p)=>a+(p.trade_value_mm||0),0);
-  const sumB = _mockTrade.b.reduce((a,p)=>a+(p.trade_value_mm||0),0);
-  const text = `=== Mock Trade (eephus.io Trade Board) ===\n\nTeam A receives:\n${fmtSide("b")||"  (none)"}\n  Total: ${_tbFmt(sumB)}\n\nTeam B receives:\n${fmtSide("a")||"  (none)"}\n  Total: ${_tbFmt(sumA)}\n\nGap: ${_tbFmt(Math.abs(sumA-sumB))}`;
-  navigator.clipboard ? navigator.clipboard.writeText(text).then(() => alert("Copied to clipboard!"))
-                      : prompt("Copy this trade:", text);
-}
 // ── GRPO Group Panel ────────────────────────────────────────────────────────
 // Shows the "profile group" for a given player - all active prospects sharing
 // the same position × level × age_tier × power_tier cluster.

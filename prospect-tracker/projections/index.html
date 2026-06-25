@@ -88,33 +88,6 @@
   <div style="padding:8px 0 4px;">
     <input id="tb-search" type="search" placeholder="Search player name..." style="width:100%;max-width:340px;padding:7px 10px;border-radius:6px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:13px;" autocomplete="off" spellcheck="false">
   </div>
-  <div style="margin-top:12px;margin-bottom:18px;">
-    <div class="newsprint-eyebrow" style="margin-top:0;">
-      <span class="newsprint-eyebrow-label">Mock Trade Builder</span>
-      <span class="newsprint-eyebrow-meta">add players to each side &middot; grader gives accept / reject verdict</span>
-    </div>
-    <div id="mock-trade-wrap" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;">
-      <div class="mock-trade-side" id="mock-side-a">
-        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--neon-cyan);">Team A gives</div>
-        <input class="mock-trade-search" data-side="a" type="search" placeholder="Add player..." style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:12px;box-sizing:border-box;" autocomplete="off">
-        <div class="mock-trade-suggestions" data-side="a" style="display:none;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:5px;max-height:180px;overflow-y:auto;font-size:12px;margin-top:2px;z-index:10;position:relative;"></div>
-        <ul class="mock-trade-list" data-side="a" style="list-style:none;margin:6px 0 0;padding:0;"></ul>
-        <div class="mock-trade-total" data-side="a" style="margin-top:6px;font-size:13px;font-weight:700;color:var(--neon-cyan);">$0M</div>
-      </div>
-      <div class="mock-trade-side" id="mock-side-b">
-        <div style="font-weight:700;font-size:13px;margin-bottom:6px;color:var(--neon-magenta);">Team B gives</div>
-        <input class="mock-trade-search" data-side="b" type="search" placeholder="Add player..." style="width:100%;padding:6px 8px;border-radius:5px;border:1px solid var(--border-subtle);background:var(--bg-secondary);color:var(--text-primary);font-size:12px;box-sizing:border-box;" autocomplete="off">
-        <div class="mock-trade-suggestions" data-side="b" style="display:none;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:5px;max-height:180px;overflow-y:auto;font-size:12px;margin-top:2px;z-index:10;position:relative;"></div>
-        <ul class="mock-trade-list" data-side="b" style="list-style:none;margin:6px 0 0;padding:0;"></ul>
-        <div class="mock-trade-total" data-side="b" style="margin-top:6px;font-size:13px;font-weight:700;color:var(--neon-magenta);">$0M</div>
-      </div>
-    </div>
-    <div id="mock-trade-verdict" style="margin-top:10px;padding:10px 14px;border-radius:7px;font-size:13px;background:var(--bg-secondary);border:1px solid var(--border-subtle);display:none;text-align:center;"></div>
-    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button id="mock-trade-clear" class="chip" type="button">Clear</button>
-      <button id="mock-trade-export" class="chip" type="button">Copy as text</button>
-    </div>
-  </div>
   <div id="tb-group-panel" style="display:none;margin:8px 0;padding:12px 16px;background:var(--bg-secondary);border:1px solid var(--border-subtle);border-radius:8px;">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
       <span id="tb-group-title" style="font-weight:700;font-size:13px;"></span>
@@ -123,7 +96,7 @@
     <div id="tb-group-body"></div>
   </div>
   <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>
-</div></div><link rel="stylesheet" href="/assets/trademachine.css?v=3a965e54"><script src="/assets/eephus-hub.js?v=c47c1dd7" defer></script><script src="/assets/eephus-gfx.js?v=8d2baa35" defer></script><script src="/assets/projections.js?v=eaf7e2d3" defer></script><script src="/assets/trademachine.js?v=cf460a8a" defer></script><script>
+</div></div><link rel="stylesheet" href="/assets/trademachine.css?v=53c3e672"><script src="/assets/eephus-hub.js?v=c47c1dd7" defer></script><script src="/assets/eephus-gfx.js?v=8d2baa35" defer></script><script src="/assets/projections.js?v=eaf7e2d3" defer></script><script src="/assets/trademachine.js?v=9dc44e12" defer></script><script>
 (function(){
   function show(v){
     var pv=document.getElementById('proj-view-projections'),
