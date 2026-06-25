@@ -1,9 +1,15 @@
+# Copyright (C) 2026 Will Cahoon (@willcolqhn) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Will Cahoon (@willcolqhn), 2026
+
 """Score 2026 Contact+ via the framework's difficulty-contact model, calibrated to the
 framework Contact+ scale (2024-25), low-sample shrunk. Updates bat_to_ball_plus.parquet 2026 rows."""
 import warnings; warnings.filterwarnings("ignore")
 import numpy as np, pandas as pd, glob, joblib
+from pathlib import Path
 from sklearn.linear_model import LinearRegression
-BM="/tmp/b2b/bat_to_ball_plus/models"
+BM=str(Path(__file__).parent.parent / "bat_to_ball_plus" / "models")
 NUM=["plate_x","plate_z","release_speed","pfx_x","pfx_z","release_spin_rate","spin_axis","balls","strikes",
      "release_pos_x","release_pos_z","release_extension","arm_angle","effective_speed"]
 CAT=["pitch_type","stand","p_throws"]; COMMON={"FF","SI","SL","CH","FC","ST","CU","FS","KC"}

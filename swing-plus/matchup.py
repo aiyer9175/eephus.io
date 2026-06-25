@@ -51,7 +51,7 @@ TYPE_LABEL = {"FF": "4-Seam", "SI": "Sinker", "FC": "Cutter", "SL": "Slider",
               "ST": "Sweeper", "CU": "Curveball", "KC": "Knuckle-Curve", "SV": "Slurve",
               "CS": "Slow Curve", "KN": "Knuckleball", "CH": "Changeup", "FS": "Splitter",
               "FO": "Forkball", "SC": "Screwball"}
-MIN_PITCHES = 25
+MIN_PITCHES = 5
 KP_WH, KP_CON = 40, 25       # pitcher shrink (swings / BIP)
 KH_WH, KH_CON = 150, 60      # hitter shrink
 
@@ -275,6 +275,31 @@ def matchup(batter, pitcher, stand=None, form="career"):
             "proj_xwoba_swing": round(proj_xwoba_sw, 3),
             "projected_k_pct": round(dec["projected_k_pct"], 1) if dec and dec.get("projected_k_pct") is not None else None,
             "pitches": pitches}
+
+
+def top_matchups(batter: int, stand: str | None = None, n: int = 5):
+    """Return the n best and n worst pitcher matchups for a batter (by overall grade)."""
+    ars = pd.read_parquet(ARSENAL)
+    pitchers = ars["pitcher"].unique()
+    results = []
+    for pid in pitchers:
+        try:
+            r = matchup(batter, int(pid), stand=stand, form="career")
+        except Exception:
+            continue
+        if r:
+            results.append({
+                "pitcher": r["pitcher"],
+                "name": r["pitcher_name"],
+                "throws": r["throws"],
+                "overall_grade": r["overall_grade"],
+                "swing_fit": r["swing_fit"],
+                "decision_grade": r["decision_grade"],
+                "proj_whiff": r["proj_whiff"],
+                "proj_xwobacon": r["proj_xwobacon"],
+            })
+    results.sort(key=lambda x: x["overall_grade"])
+    return {"worst": results[:n], "best": list(reversed(results[-n:]))}
 
 
 _SC = None

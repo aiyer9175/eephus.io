@@ -37,6 +37,7 @@ app.mount("/static", StaticFiles(directory=WEB / "static"), name="static")
 templates = Jinja2Templates(directory=WEB / "templates")
 
 _CACHE: dict[str, tuple[float, pd.DataFrame]] = {}
+_META_CACHE: dict = {}
 
 # What-if adjustment tool
 from whatif import WhatIfScorer, STAT_FMT
@@ -124,6 +125,16 @@ def api_matchup(batter: int, pitcher: int, stand: str | None = None, form: str =
         raise HTTPException(status_code=404, detail="no matchup (missing hitter path or pitcher arsenal vs this hand)")
     res["form"] = form
     return res
+
+
+@app.get("/api/matchup_top/{batter}")
+def api_matchup_top(batter: int, stand: str | None = None, n: int = 5):
+    """Top-n best and worst pitcher matchups for a hitter (all arsenal pitchers)."""
+    try:
+        res = _matchup.top_matchups(batter, stand=stand, n=n)
+        return res
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
 
 
 @app.get("/api/pitchtype/{batter}")
@@ -348,8 +359,22 @@ def _load(view: str) -> pd.DataFrame:
     if cached and cached[0] == mtime:
         return cached[1]
     df = pd.read_parquet(path)
+    meta = _load_meta()
+    if meta is not None and "batter" in df.columns:
+        df = df.merge(meta, on="batter", how="left")
     _CACHE[view] = (mtime, df)
     return df
+
+
+def _load_meta() -> pd.DataFrame | None:
+    p = PROCESSED / "player_meta.parquet"
+    if not p.exists():
+        return None
+    mt = p.stat().st_mtime
+    if _META_CACHE.get("mt") != mt:
+        _META_CACHE["mt"] = mt
+        _META_CACHE["df"] = pd.read_parquet(p)[["batter", "team", "position"]]
+    return _META_CACHE["df"]
 
 
 def _records(df: pd.DataFrame) -> list[dict]:
@@ -492,6 +517,24 @@ def api_player(batter: int, stand: str | None = None):
             residual["n_bip"] = int(ar["n_bip"]) if pd.notna(ar.get("n_bip")) else 0
     except HTTPException:
         pass
+    # per-season skill-axis values (from the season leaderboard) — for season-aware cards + bar charts
+    skill_by_season: dict[str, dict] = {}
+    _SK_COLS = ["swing_plus", "decision_plus_mlb", "b2b_plus", "contact_axis", "dcv_plus",
+                "hitter_plus", "h_swing_part", "h_dec_part", "h_b2b_part", "h_contact_part",
+                "h_dcv_part", "dec100_chase", "dec100_zone", "dec100_2k", "swingdecision_plus",
+                "projected_k_pct", "sk_woba", "luck_woba", "sk_iso", "luck_iso"]
+    try:
+        sb2 = _load("season")
+        ps2 = by_stand(sb2)
+        for _, r in ps2.iterrows():
+            s = str(int(r["season"]))
+            skill_by_season[s] = {
+                c: (round(float(r[c]), 3) if pd.notna(r.get(c)) else None)
+                for c in _SK_COLS if c in sb2.columns
+            }
+    except HTTPException:
+        pass
+
     # rolling Decision+ driver trajectory (per game-date), for the drivers graph
     dec_series = {}
     try:
@@ -501,14 +544,61 @@ def api_player(batter: int, stand: str | None = None):
             if not dt or dt[0] != dtp.stat().st_mtime:
                 dt = (dtp.stat().st_mtime, pd.read_parquet(dtp)); _CACHE["dec_traj"] = dt
             dd = dt[1][dt[1]["batter"] == batter]
+            # canonical per-season Decision+ (re-anchored to board scale) so modal == board
+            dps_map = {}
+            try:
+                dpsp = PROCESSED / "decision_plus_season.parquet"
+                if dpsp.exists():
+                    dps_c = _CACHE.get("dec_season")
+                    if not dps_c or dps_c[0] != dpsp.stat().st_mtime:
+                        dps_c = (dpsp.stat().st_mtime, pd.read_parquet(dpsp)); _CACHE["dec_season"] = dps_c
+                    dr = dps_c[1][dps_c[1]["batter"] == batter]
+                    dps_map = {str(int(r.season)): round(float(r.decision_plus_mlb), 1) for r in dr.itertuples()}
+            except Exception:
+                pass
             for season, g in dd.groupby("season"):
+                gs = g.sort_values("game_date")
                 dec_series[str(season)] = [
                     {"date": r.game_date, "dp": round(float(r.dp), 1),
                      "parts": {"oze": float(r.b_oze), "ozl": float(r.b_ozl),
                                "ize": float(r.b_ize), "izl": float(r.b_izl)}}
+                    for r in gs.itertuples()]
+                # Override career-level decision_plus_mlb with canonical per-season value
+                s = str(int(season))
+                season_dp = dps_map.get(s, round(float(gs["dp"].mean()), 1))
+                if s in skill_by_season:
+                    skill_by_season[s]["decision_plus_mlb"] = season_dp
+                else:
+                    skill_by_season[s] = {"decision_plus_mlb": season_dp}
+    except Exception:
+        pass
+    # rolling B2B+ / Contact+ / DCV+ trajectories with driver decomposition
+    axis_series: dict[str, list] = {}
+    try:
+        atp = PROCESSED / "axis_traj.parquet"
+        if atp.exists():
+            at = _CACHE.get("axis_traj")
+            if not at or at[0] != atp.stat().st_mtime:
+                at = (atp.stat().st_mtime, pd.read_parquet(atp)); _CACHE["axis_traj"] = at
+            ad = at[1][at[1]["batter"] == batter]
+            for season, g in ad.groupby("season"):
+                def _f(row, col):
+                    v = row.get(col)
+                    return round(float(v), 3) if v is not None and not (isinstance(v, float) and np.isnan(v)) else None
+                axis_series[str(int(season))] = [
+                    {"date": r.game_date,
+                     "b2b": _f(r._asdict(), "b2b"), "b_ev": _f(r._asdict(), "b_ev"),
+                     "b_xw": _f(r._asdict(), "b_xw"), "b_ba": _f(r._asdict(), "b_ba"),
+                     "b_su": _f(r._asdict(), "b_su"),
+                     "con": _f(r._asdict(), "con"), "c_zone": _f(r._asdict(), "c_zone"),
+                     "c_chase": _f(r._asdict(), "c_chase"),
+                     "dcv": _f(r._asdict(), "dcv"), "d_pa": _f(r._asdict(), "d_pa"),
+                     "d_pb": _f(r._asdict(), "d_pb"), "d_hw": _f(r._asdict(), "d_hw"),
+                     "d_pr": _f(r._asdict(), "d_pr")}
                     for r in g.sort_values("game_date").itertuples()]
     except Exception:
         pass
+
     # SwingDecision+ / Decision+ driver decomposition (from the all-time board row)
     decomp = {}
     if len(arows):
@@ -520,11 +610,132 @@ def api_player(batter: int, stand: str | None = None):
                   # Decision+ run-value components (runs/100 pitches; sum ≈ total decision RV/100)
                   "dec_chase": g("dec100_chase"), "dec_zone": g("dec100_zone"),
                   "dec_2k": g("dec100_2k"), "dec_early": g("dec100_early")}
+    # Variance+ risk card (2027 forward distribution + 3-year fan projection)
+    risk_card = None
+    try:
+        vpp = PROCESSED / "variance_plus_2027.parquet"
+        if vpp.exists():
+            vp_cached = _CACHE.get("variance_plus")
+            if not vp_cached or vp_cached[0] != vpp.stat().st_mtime:
+                vp_cached = (vpp.stat().st_mtime, pd.read_parquet(vpp))
+                _CACHE["variance_plus"] = vp_cached
+            vp_row = vp_cached[1][vp_cached[1]["batter"] == str(batter)]
+            if len(vp_row):
+                r = vp_row.iloc[0]
+                # Multi-year projection using 2.6yr wOBA half-life (λ ≈ 0.767/yr)
+                LAMBDA, MU = 0.767, 0.310
+                frag = str(r["fragility"])
+                ff = 1.35 if "fragile" in frag else (1.10 if "mid" in frag else 0.85)
+                c1 = float(r["center"])
+                hw = (float(r["wp90"]) - float(r["wp10"])) / 2
+                c2 = MU + LAMBDA * (c1 - MU)
+                c3 = MU + LAMBDA**2 * (c1 - MU)
+                # Band grows ~sqrt(t); fragile asymmetry widens downside
+                def band(c, hw_mult, ff):
+                    return (round(c - hw * hw_mult * ff, 4),
+                            round(c, 4),
+                            round(c + hw * hw_mult / ff * 1.05, 4))
+                risk_card = {
+                    "center": round(c1, 4),
+                    "wp10": round(float(r["wp10"]), 4), "wp50": round(float(r["wp50"]), 4),
+                    "wp90": round(float(r["wp90"]), 4),
+                    "y2": band(c2, 1.35, ff), "y3": band(c3, 1.65, ff),
+                    "p_collapse": round(float(r["p_collapse"]), 4),
+                    "p_jobloss": round(float(r["p_jobloss"]), 4),
+                    "p_bad": round(float(r["p_bad"]), 4),
+                    "p_elite": round(float(r["p_elite"]), 4),
+                    "fragility": frag,
+                    "total_runs": round(float(r["total_runs"]), 1),
+                    "def_runs": round(float(r["def_runs"]), 1),
+                    "def_source": str(r["def_source"]),
+                    "def_sd": (round(float(r["def_sd"]), 1) if "def_sd" in vp_row.columns and pd.notna(r.get("def_sd")) else None),
+                    "def_parts": {k: (round(float(r[c]), 1) if c in vp_row.columns and pd.notna(r.get(c)) else None)
+                                  for k, c in [("oaa", "d_oaa"), ("drs", "d_drs"), ("frp", "d_frp"), ("framing", "d_framing")]},
+                    "pos": str(r["pos"]) if "pos" in vp_row.columns else None,
+                }
+                # historical track record: past projected bands vs realized wOBA
+                hp = PROCESSED / "variance_plus_history.parquet"
+                if hp.exists():
+                    h_cached = _CACHE.get("variance_history")
+                    if not h_cached or h_cached[0] != hp.stat().st_mtime:
+                        h_cached = (hp.stat().st_mtime, pd.read_parquet(hp)); _CACHE["variance_history"] = h_cached
+                    hr = h_cached[1][h_cached[1]["batter"] == batter].sort_values("proj_year")
+                    risk_card["history"] = [
+                        {"year": int(x.proj_year), "p10": round(float(x.p10), 3), "p50": round(float(x.p50), 3),
+                         "p90": round(float(x.p90), 3), "actual": round(float(x.actual_woba), 3),
+                         "covered": bool(x.covered)}
+                        for x in hr.itertuples()]
+    except Exception:
+        pass
+
+    # zone-coverage vulnerability (DESCRIPTIVE only — whiff vs expected by pitch height)
+    coverage = None
+    try:
+        cvp = PROCESSED / "coverage_profile.parquet"
+        if cvp.exists():
+            cv_cached = _CACHE.get("coverage")
+            if not cv_cached or cv_cached[0] != cvp.stat().st_mtime:
+                cv_cached = (cvp.stat().st_mtime, pd.read_parquet(cvp))
+                _CACHE["coverage"] = cv_cached
+            cr = cv_cached[1][cv_cached[1]["batter"] == batter]
+            if len(cr):
+                coverage = {z: round(float(cr[f"cover_{z}"].mean()), 3) for z in ("low", "mid", "high")}
+    except Exception:
+        pass
+
+    # pitch-type vulnerability profile (DESCRIPTIVE — whiff vs league by pitch family)
+    pitch_vuln = None
+    try:
+        pvp = PROCESSED / "pitch_vuln_profile.parquet"
+        if pvp.exists():
+            pv_c = _CACHE.get("pitch_vuln")
+            if not pv_c or pv_c[0] != pvp.stat().st_mtime:
+                pv_c = (pvp.stat().st_mtime, pd.read_parquet(pvp)); _CACHE["pitch_vuln"] = pv_c
+            pr = pv_c[1][pv_c[1]["batter"] == batter]
+            if len(pr):
+                r0 = pr.iloc[0]
+                fams = {"fb": "Fastball", "sl": "Slider", "cu": "Curve", "ch": "Off-speed"}
+                pitch_vuln = {"worst": (None if pd.isna(r0.get("worst_fam")) else str(r0["worst_fam"])),
+                              "fams": {f: {"label": lab,
+                                           "whiff": (round(float(r0[f"whiff_shrunk_{f}"]), 3) if pd.notna(r0.get(f"whiff_shrunk_{f}")) else None),
+                                           "lg": round(float(r0.get(f"lg_{f}", 0)), 3),
+                                           "vuln": (round(float(r0[f"vuln_{f}"]), 3) if pd.notna(r0.get(f"vuln_{f}")) else None),
+                                           "n": (int(r0[f"n_{f}"]) if pd.notna(r0.get(f"n_{f}")) else 0)}
+                                       for f, lab in fams.items()}}
+    except Exception:
+        pass
+
+    # injury card (DESCRIPTIVE only — calibrated risk tier + group-level drag-by-type context)
+    injury_card = None
+    try:
+        icp = PROCESSED / "injury_card.parquet"
+        if icp.exists():
+            ic_cached = _CACHE.get("injury_card")
+            if not ic_cached or ic_cached[0] != icp.stat().st_mtime:
+                ic_cached = (icp.stat().st_mtime, pd.read_parquet(icp)); _CACHE["injury_card"] = ic_cached
+            ir = ic_cached[1][ic_cached[1]["batter"] == batter]
+            if len(ir):
+                r0 = ir.iloc[0]
+                injury_card = {
+                    "risk_pct": round(float(r0["risk_pct"]), 3),
+                    "risk_tier": str(r0["risk_tier"]),
+                    "risk_season": (int(r0["risk_season"]) if "risk_season" in ir.columns and pd.notna(r0.get("risk_season")) else None),
+                    "il_2026": (int(r0["il_2026"]) if "il_2026" in ir.columns and pd.notna(r0.get("il_2026")) else 0),
+                    "drag_region": (None if pd.isna(r0["drag_region"]) else str(r0["drag_region"])),
+                    "drag_value": (None if pd.isna(r0["drag_value"]) else round(float(r0["drag_value"]), 4)),
+                    "drag_sig": bool(r0["drag_sig"]),
+                }
+    except Exception:
+        pass
+
     return {"batter": int(batter), "name": name, "stand": stand,
             "seasons": sorted(series, reverse=True),
             "series": series, "meta": meta, "league": league,
             "profiles": profiles, "residual": residual, "decomp": decomp,
-            "dec_series": dec_series, "bounds": _BOUNDS}
+            "dec_series": dec_series, "axis_series": axis_series, "skill_by_season": skill_by_season,
+            "risk_card": risk_card, "coverage": coverage, "injury_card": injury_card,
+            "pitch_vuln": pitch_vuln,
+            "bounds": _BOUNDS}
 
 
 @app.get("/api/whatif")

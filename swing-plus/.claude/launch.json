@@ -4,8 +4,9 @@
     {
       "name": "swing-plus-web",
       "runtimeExecutable": ".venv/bin/uvicorn",
-      "runtimeArgs": ["web.app:app", "--host", "127.0.0.1", "--port", "8000", "--reload", "--log-level", "warning"],
-      "port": 8000
+      "runtimeArgs": ["web.app:app", "--reload", "--log-level", "warning"],
+      "port": 8000,
+      "autoPort": false
     }
   ]
 }

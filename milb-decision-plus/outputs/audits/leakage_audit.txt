@@ -1,0 +1,6 @@
+next-season pairs median age delta = 1.0 (expect 1.0): PASS
+duplicate (player,season,level) feature rows: 0: PASS
+duplicate decision+ rows: 0: PASS
+training window ends 2023; 2026 partial-season rows excluded from training by construction: PASS
+Decision+ composite weights trained on seasons <= 2023 only (build_decision_plus.py): PASS
+MLB Decision+ model never used as input/target for MiLB->MLB translation (statline regressions only): PASS

@@ -95,6 +95,14 @@ Default owner: **@willclq** (reassign per feature as the team grows).
 - **Owner:** @willclq
 - **Data deps:** `~/projection_engine/` pipeline; MLB Stats API (season hitting, sportIds 1/11/12); `data/raw/statcast_*.parquet`; skill panel (`~/aging_curves`). Open: park factors, playing-time model, elite-tail term, in-season updating.
 
+## Translation layer — park / handedness / environment (portability tool)
+- **What:** Translates NEUTRAL projections into park-specific realized projections without touching talent: `translated = neutral × pf_stat(park, stand)`; exactly reversible. Park factors per (venue, stand) from 2023–26 home/road contrasts, EB-shrunk K=8,000 PA (HR factor split-half .49 — the reliable one). **Approved for translation only, NOT in the accuracy path** — park/platoon/weather all failed the incremental accuracy gate on top of engine v2 (whose neutrals proved already park-clean: corr with park factor −0.00). Weather discarded (event-real, season-nil — variance M5); league environment already era-relative in the backbone; platoon splits = real separate talent (own-split r .57 vs cross .20) shipped as a view concept, exposure adds nothing. Portability PASS (Soto: talent + xwOBA frozen across 5 parks; realized wOBA .343 SEA → .378 COL); reversibility PASS (err .0001). Full audit: `~/translation_layer/TRANSLATION_REPORT.md`.
+- **Inputs:** `~/translation_layer/data/park_factors.parquet` (+ platoon panel, league platoon table); engine-v2 neutral projections.
+- **Outputs:** `translate.py` (`translate`/`reverse` + portability demo). Board projections stay NEUTRAL by design.
+- **Definition of done:** anti-contamination LOW (talent metrics provably invariant); portability + reversibility PASS; honest accuracy verdict documented (no translation variable promoted to the accuracy path). ✅
+- **Owner:** @willclq
+- **Data deps:** raw Statcast (park/platoon contrasts); engine v2; variance-model weather adjudication (external).
+
 ---
 
 ## Feature template (copy for every new feature)

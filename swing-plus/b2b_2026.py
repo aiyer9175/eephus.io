@@ -7,8 +7,9 @@
 models, calibrated to the framework's existing B2B+ scale. Low-sample shrunk (2026 = H1 only)."""
 import warnings; warnings.filterwarnings("ignore")
 import numpy as np, pandas as pd, glob, joblib
+from pathlib import Path
 from sklearn.linear_model import LinearRegression
-BMODELS = "/tmp/b2b/bat_to_ball_plus/models"
+BMODELS = str(Path(__file__).parent.parent / "bat_to_ball_plus" / "models")
 NUM = ["plate_x","plate_z","release_speed","pfx_x","pfx_z","release_spin_rate","spin_axis","balls","strikes",
        "release_pos_x","release_pos_z","release_extension","arm_angle","effective_speed"]
 CAT = ["pitch_type","stand","p_throws"]

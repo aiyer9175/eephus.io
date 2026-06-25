@@ -523,6 +523,63 @@ tbody tr.prow { cursor: pointer; }
 .chart .axt { fill: #444; font-size: 11px; }
 .chart .axtitle { fill: #333; font-size: 12px; font-weight: 600; }
 
+/* Variance+ risk panel */
+.risk-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 16px; padding: 14px 16px;
+  background: var(--panel); border-radius: 8px; border: 1px solid var(--border); }
+.risk-stat-group { display: flex; flex-direction: column; gap: 6px; }
+.risk-stat-head { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.risk-chip { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 12px; font-weight: 700; }
+.risk-gauge { display: flex; flex-direction: column; gap: 4px; }
+.risk-gauge-top { display: flex; justify-content: space-between; align-items: baseline; }
+.risk-gauge-label { font-size: 11px; color: var(--muted); font-weight: 600; }
+.risk-gauge-bar-wrap { height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+.risk-gauge-bar { height: 100%; border-radius: 4px; transition: width .3s; }
+.risk-gauge-val { font-size: 16px; font-weight: 800; }
+.risk-gauge-sub { font-size: 10.5px; color: var(--muted); }
+.risk-total { font-size: 16px; font-weight: 800; color: var(--text); }
+.risk-total .muted { font-size: 12px; font-weight: 600; margin-left: 4px; }
+.risk-def { font-size: 10.5px; color: var(--muted); line-height: 1.4; margin-top: 2px; }
+.risk-def b { color: var(--text); font-weight: 600; }
+.risk-track { margin-top: 14px; padding: 12px 16px; background: var(--panel); border-radius: 8px; border: 1px solid var(--border); }
+.risk-track-tbl { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; margin-top: 6px; }
+.risk-track-tbl th { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; text-align: right; padding: 3px 8px; }
+.risk-track-tbl th:first-child { text-align: left; }
+.risk-track-tbl td { font-size: 12px; color: var(--text); text-align: right; padding: 3px 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+.risk-track-tbl td:first-child { text-align: left; color: var(--muted); }
+
+/* Zone-coverage vulnerability strip (descriptive, matchup view) */
+.cov-wrap { margin: 12px 0 4px; }
+.cov-title { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 5px; text-transform: uppercase; letter-spacing: .04em; }
+.cov-strip { display: flex; flex-direction: column; width: 160px; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+.cov-cell { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.cov-cell:last-child { border-bottom: none; }
+.cov-z { font-size: 12px; font-weight: 700; color: var(--text); }
+.cov-tag { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+
+/* Scatter axis selectors */
+.scatter-axes { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+.scatter-axes select { background: var(--panel); color: var(--text); border: 1px solid var(--border);
+  border-radius: 5px; padding: 5px 8px; font-size: 12px; cursor: pointer; }
+.scatter-axes select:hover { border-color: #3a4660; }
+.decision .cards { grid-template-columns: repeat(5, 1fr); }
+
+/* Top/worst matchups table */
+.mu-top { margin-bottom: 20px; }
+.mu-top-hd { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.mu-top-hd h4 { margin: 0; font-size: 13px; color: var(--text); }
+.mu-top-hd span { font-size: 11px; color: var(--muted); }
+.mu-top-row { display: grid; grid-template-columns: 2fr 60px 60px 52px 64px 68px; align-items: center;
+  gap: 0 8px; padding: 7px 10px; border-radius: 5px; cursor: pointer; font-size: 12.5px; }
+.mu-top-row:hover { background: var(--panel); }
+.mu-top-row.mu-hdr { font-size: 10.5px; color: var(--muted); text-transform: uppercase;
+  letter-spacing: .04em; cursor: default; border-bottom: 1px solid var(--border); border-radius: 0; padding: 4px 10px 6px; }
+.mu-top-row.mu-hdr:hover { background: none; }
+.mu-top-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.mu-top-g { font-weight: 800; font-size: 14px; }
+.mu-top-name { font-weight: 600; }
+.mu-top-hand { font-size: 10px; color: var(--muted); }
+.mu-loading { color: var(--muted); font-size: 12px; padding: 10px 2px; }
+
 footer {
   margin-top: 28px;
   padding-top: 16px;

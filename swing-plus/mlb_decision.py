@@ -192,7 +192,25 @@ DCOLS = ["decision_plus_mlb", "decision_scout", "dec_rv100_tailored", "damage_de
 def add_to_boards(board: pd.DataFrame) -> pd.DataFrame:
     if not OUT.exists(): return board
     md = pd.read_parquet(OUT)[["batter"] + DCOLS]
-    return board.merge(md, on="batter", how="left")
+    board = board.merge(md, on="batter", how="left")     # career value = fallback + sub-components
+
+    # Override the headline with the PER-SEASON value (same swing-tailored model,
+    # re-anchored to this scale) so season/half boards aren't a static career number.
+    seas_p = PROC / "decision_plus_season.parquet"
+    if seas_p.exists():
+        ps = pd.read_parquet(seas_p)[["batter", "season", "decision_plus_mlb"]].rename(
+            columns={"decision_plus_mlb": "_dp_season"})
+        key = None
+        if "season" in board.columns:
+            board["_jseason"] = board["season"].astype(str)
+        elif "half" in board.columns:
+            board["_jseason"] = board["half"].astype(str).str[:4]
+        if "_jseason" in board.columns:
+            ps["season"] = ps["season"].astype(str)
+            board = board.merge(ps.rename(columns={"season": "_jseason"}), on=["batter", "_jseason"], how="left")
+            board["decision_plus_mlb"] = board["_dp_season"].combine_first(board["decision_plus_mlb"])
+            board = board.drop(columns=["_dp_season", "_jseason"])
+    return board
 
 
 if __name__ == "__main__":

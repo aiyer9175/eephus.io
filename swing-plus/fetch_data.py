@@ -45,6 +45,7 @@ NEEDED = [
     "variance_layer.parquet", "variance_handoff/variance_model_output.parquet",
     "variance_handoff/shrinkage_constants.csv", "variance_handoff/engine_adjustments.json",
     "aging_projection.parquet", "stat_projections.parquet",
+    "variance_plus_2027.parquet",  # Variance+ risk card (P(bad)/bands/total value); see variance_plus/INTEGRATION.md
 ]
 
 
