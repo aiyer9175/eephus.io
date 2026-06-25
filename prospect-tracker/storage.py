@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 SQLite storage for the prospect tracker (v3).
 
@@ -8,8 +13,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
 import sqlite3
+import copy
 from contextlib import contextmanager
 from dataclasses import asdict
 from datetime import date, datetime, timedelta, timezone
@@ -36,6 +43,7 @@ from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
 
 DB_PATH = Path(__file__).parent / "prospects.db"
+_LEVEL_SORT_ORDER = {"MLB": 0, "AAA": 1, "AA": 2, "A+": 3, "A": 4, "CPX": 5, "DSL": 6}
 
 # Prospects whose most recent ranking update is older than this many months are
 # classified as "inactive" rather than "active". They fell off prospect lists
@@ -595,6 +603,13 @@ def _compute_breakout_flag(payload: dict) -> dict | None:
     """
     if payload.get("status") != "active":
         return None
+    # A prospect on the 60-day IL is shelved for an extended stretch (often the
+    # season) — a stale FV / tool / upside signal must not surface a live
+    # "Breakout" badge over a long-term injury. (Jarlin Susana: 60-day IL since
+    # March, consensus FV actually -2, was flagging via the upside path.)
+    _il = payload.get("il_status") or {}
+    if _il.get("is_on_il") and "60" in str(_il.get("type") or ""):
+        return None
     # v30.7 — Breakout / Faller mutual-exclusion gate. A prospect whose
     # CURRENT stock movement is a faller (or strong faller) is, by
     # definition, not breaking out — even if a stale FV/tool jump in
@@ -965,6 +980,23 @@ CREATE TABLE IF NOT EXISTS statcast_metrics (
     fetched_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+CREATE TABLE IF NOT EXISTS source_events (
+    event_key     TEXT PRIMARY KEY,
+    player_key    TEXT NOT NULL,
+    player_name   TEXT NOT NULL,
+    source        TEXT NOT NULL,
+    event_date    TEXT NOT NULL,
+    event_type    TEXT NOT NULL,
+    rank_before   INTEGER,
+    rank_after    INTEGER,
+    confidence    REAL NOT NULL DEFAULT 0.5,
+    payload_json  TEXT NOT NULL DEFAULT '{}',
+    excerpt       TEXT,
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_source_events_player ON source_events(player_key);
+CREATE INDEX IF NOT EXISTS idx_source_events_date ON source_events(event_date);
+
 CREATE TABLE IF NOT EXISTS career_stats (
     player_key   TEXT PRIMARY KEY,
     payload_json TEXT NOT NULL,       -- list of per-season stat rows (most recent first)
@@ -1051,6 +1083,90 @@ CREATE TABLE IF NOT EXISTS runs (
     new_snapshots INTEGER DEFAULT 0,
     stat_lines    INTEGER DEFAULT 0,
     notes         TEXT
+);
+
+-- ===========================================================================
+-- Forward-looking history tables (added 2026-06). The per-source `snapshots`
+-- table already retains grade/rank history per published list, but the
+-- DERIVED state — the PROSPX consensus board rank and the Arkmetric family
+-- (DvM+/SC+/$DvM+/Tool/live composite) — was only ever stored as the CURRENT
+-- value (keyed by player_key, overwritten each run). These two tables capture
+-- that derived state over time so the time-travel board (Part 2) and the
+-- Arkmetric-vs-outcome backtest (Part 4) compound going forward. They cannot
+-- be back-filled — the track record begins the first run after this lands.
+-- ===========================================================================
+
+-- One row per (player, snapshot calendar date): the full DERIVED board state.
+-- Written at the end of every full run_monthly (and standalone --rebuild-only).
+-- Upsert-by-date is idempotent: re-running on the same day overwrites that
+-- day's row, so cadence is governed entirely by how often run_monthly runs
+-- (monthly via the scheduled job → one row per player per month).
+CREATE TABLE IF NOT EXISTS metric_snapshots (
+    player_key    TEXT NOT NULL,
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    overall_rank  INTEGER,              -- PROSPX consensus board rank as-of
+    consensus_fv  REAL,                 -- headline consensus FV (fv_close)
+    fv_plus       INTEGER NOT NULL DEFAULT 0,
+    fv_tier       TEXT,                 -- bucket label ('60','55',… ) for cohorting
+    org           TEXT,
+    position      TEXT,
+    status        TEXT,                 -- active | debuted | inactive
+    is_pitcher    INTEGER NOT NULL DEFAULT 0,
+    age           REAL,
+    payload_json  TEXT NOT NULL,        -- {dollar_dvm_plus, statcast_plus, live_score,
+                                        --  tool, surplus_mm, …} — the Arkmetric family
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_metric_snap_date ON metric_snapshots(snapshot_date);
+CREATE INDEX IF NOT EXISTS idx_metric_snap_player ON metric_snapshots(player_key);
+
+-- One row per (org, snapshot calendar date): the composite farm-system rank
+-- and the farm_score it sorts on. Sibling to metric_snapshots, but at the ORG
+-- grain rather than the player grain — metric_snapshots never stored the
+-- derived org farm_rank over time, so farm-rank movement (an org climbing /
+-- falling in the 30-team rankings) had no history input. The de-noised farm
+-- movement engine (movement.compute_farm_movement) reads this. Like its
+-- sibling it cannot be back-filled: the track record begins the first run
+-- after this lands. Upsert-by-(org, date) is idempotent.
+CREATE TABLE IF NOT EXISTS farm_rank_history (
+    org           TEXT NOT NULL,
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    farm_rank     INTEGER,              -- composite farm-system rank (1 = best of 30)
+    farm_score    REAL,                 -- composite score the rank sorts on
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (org, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_farm_rank_hist_date ON farm_rank_history(snapshot_date);
+
+-- Append-only IL stint timeline. The il_status table is current-state only
+-- (overwritten each run); this records each placement once (keyed by the
+-- placement `since` date) and stamps the activation date when the player
+-- next appears OFF the IL. Built by the daily job so IL track record accrues.
+CREATE TABLE IF NOT EXISTS il_history (
+    player_key     TEXT NOT NULL,
+    since          TEXT NOT NULL,       -- IL placement date per the API (stint id)
+    il_type        TEXT,                -- '7-day' | '10-day' | '60-day' | …
+    description    TEXT,
+    placed_seen    TEXT NOT NULL,       -- first run-date we observed this stint
+    activated_seen TEXT,                -- first run-date we observed them OFF it (NULL while ongoing)
+    inserted_at    TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, since)
+);
+CREATE INDEX IF NOT EXISTS idx_il_history_player ON il_history(player_key);
+
+-- Resolved+validated headshot context per MLBAM id (added 2026-06). The MLB
+-- CDN serves headshots keyed by player id under a context segment: '67' is the
+-- MLB roster set (empty for many prospects → silhouette), 'milb' is the MiLB
+-- set (fills most of those gaps). We HEAD-probe both (no generic fallback so a
+-- missing photo 404s) and cache the first that returns a real image; 'none'
+-- means neither resolved. Keyed by mlbam_id because the photo follows the id
+-- (a player keeps it across the active→debuted transition).
+CREATE TABLE IF NOT EXISTS player_photos (
+    mlbam_id     INTEGER PRIMARY KEY,
+    headshot_ctx TEXT NOT NULL,            -- '67' | 'milb' | 'none'
+    player_key   TEXT,                     -- last-seen key (for reference/reporting)
+    checked_at   TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
 -- ===========================================================================
@@ -1220,6 +1336,48 @@ CREATE INDEX IF NOT EXISTS idx_overseas_snap_league ON overseas_snapshots(league
 CREATE INDEX IF NOT EXISTS idx_overseas_snap_player ON overseas_snapshots(player_key);
 CREATE INDEX IF NOT EXISTS idx_overseas_snap_date   ON overseas_snapshots(snapshot_date);
 
+-- TJStats (Thomas Nestico) per-(MLBAM id, snapshot) point-in-time sidecar.
+-- The consensus-relevant rank/FV/tools ALSO land in the generic `snapshots`
+-- table (source='tjstats', name-slug player_key) so TJStats merges into
+-- consensus like every other source; THIS table is the authoritative MLBAM-keyed
+-- grain that carries the full provenance + writeup + raw grades for Time Machine
+-- + Source Comparison, without bloating the shared snapshots row. captured_at is
+-- the real UTC scrape moment (the source of truth for "when we saw this");
+-- effective_date is TJStats's own pushed_at for named snapshots, or the capture
+-- date for the Live board. Upsert grain = (mlbam_id, snapshot_label): a same-day
+-- Live re-run (same date-stamped label) updates in place; a new day or a new
+-- named snapshot creates a new row.
+CREATE TABLE IF NOT EXISTS tjstats_snapshots (
+    id                 INTEGER PRIMARY KEY AUTOINCREMENT,
+    mlbam_id           TEXT NOT NULL,
+    player_key         TEXT,                    -- resolved eephus key (name-slug)
+    snapshot_label     TEXT NOT NULL,           -- verbatim: 'May 2026' | 'Live 2026-06-08'
+    snapshot_kind      TEXT NOT NULL,           -- 'live' | 'named'
+    snapshot_id        TEXT,                    -- TJStats major-snapshot id (named only)
+    effective_date     TEXT,                    -- TJStats pushed_at date | Live capture date
+    captured_at        TEXT NOT NULL,           -- UTC ISO 8601 — actual scrape moment
+    source_modified_at TEXT,                    -- page article:modified_time (cross-check)
+    source_url         TEXT,
+    name               TEXT,
+    position           TEXT,
+    org                TEXT,                    -- eephus org key
+    type               TEXT,                    -- 'batter' | 'pitcher'
+    rank               INTEGER,
+    prev_rank          INTEGER,
+    fv                 REAL,                    -- NULL on snapshots older than current scout grades
+    eta                TEXT,
+    risk               TEXT,
+    grades_json        TEXT,                    -- raw TJStats 20-80 pv/fv grades
+    tools_json         TEXT,                    -- eephus-keyed tool grades
+    writeup            TEXT,                    -- TJStats scouting report (attributed)
+    with_fv            INTEGER NOT NULL DEFAULT 0,
+    inserted_at        TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(mlbam_id, snapshot_label)
+);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_label ON tjstats_snapshots(snapshot_label);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_key   ON tjstats_snapshots(player_key);
+CREATE INDEX IF NOT EXISTS idx_tjstats_snap_date  ON tjstats_snapshots(effective_date);
+
 CREATE TABLE IF NOT EXISTS overseas_players (
     player_key       TEXT PRIMARY KEY,
     player_name      TEXT NOT NULL,
@@ -1277,9 +1435,130 @@ CREATE TABLE IF NOT EXISTS mlb_trade_players (
     last_team      TEXT,             -- current / last MLB team abbrev
     is_pitcher     INTEGER NOT NULL DEFAULT 0,
     fetched_at     TEXT NOT NULL DEFAULT (datetime('now')),
-    resolve_status TEXT              -- "resolved" | "ambiguous" | "not_found"
+    resolve_status TEXT,             -- "resolved" | "ambiguous" | "not_found"
+    -- v31.9c — Contract-based surplus columns. When a Spotrac match
+    -- is on file, current_aav_usd + years_remaining + projected_war
+    -- combine into surplus_mm via the projected-remaining-WAR × $8M
+    -- minus sum-of-remaining-AAV formula. Surplus_mm trumps the
+    -- naive career_war × $8M valuation on the frontend trade audit
+    -- (more accurate when a team is acquiring future value, not
+    -- realized historical value). NULL when no contract data found.
+    current_aav_usd     INTEGER,
+    years_remaining     INTEGER,
+    contract_total_usd  INTEGER,
+    age                 INTEGER,
+    projected_war_remaining REAL,    -- aging-curve adjusted future WAR
+    surplus_mm          REAL         -- (projected_war × $8M) − (aav × yrs) in $M
 );
 CREATE INDEX IF NOT EXISTS idx_mlb_trade_players_status ON mlb_trade_players(resolve_status);
+
+-- =========================================================================
+-- MLB Free Agency module (additive — fa_* tables only; nothing here is
+-- read by the prospect pool, farm grades, or surplus aggregates).
+-- payload_json pattern throughout, matching career_war / mlb_trade_players.
+-- =========================================================================
+-- One row per (player, FA class winter); payload is the POINT-IN-TIME
+-- class-construction record (age, from_team, option flags, enter_prob,
+-- QO status) — frozen at build, never backfilled from current state.
+CREATE TABLE IF NOT EXISTS fa_class_players (
+    player_key   TEXT NOT NULL,
+    class_year   INTEGER NOT NULL,        -- 2027 = the 2026-27 offseason
+    mlbam_id     INTEGER,
+    position     TEXT,
+    status       TEXT,                    -- locked | pending_option | signed | ...
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_class_status ON fa_class_players(class_year, status);
+
+-- Historical + live signings ledger (2014-15 winter onward). payload
+-- carries terms (years/guarantee/aav), from/to teams, qo flags, the
+-- mlb_deal flag, and — once elapsed seasons exist — the retrospective
+-- ledger block (realized WAR x per-season $/WAR vs paid).
+CREATE TABLE IF NOT EXISTS fa_signings (
+    player_key   TEXT NOT NULL,
+    class_year   INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_signings_year ON fa_signings(class_year);
+
+-- Spotrac CBT/payroll ledgers per (team, season).
+CREATE TABLE IF NOT EXISTS fa_team_payroll (
+    team         TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (team, season)
+);
+
+-- Editorial flags logged AT EMIT TIME (model-audit WS-0c): spotlights /
+-- movement-engine buckets persisted with matched-control sampling keys
+-- (FV band x level x age band) so 30/60-day forward hit rates can be
+-- scored once cohorts mature. Append-only per (player, flag, run date);
+-- monthly cadence (rides the monthly export, never the daily job).
+CREATE TABLE IF NOT EXISTS editorial_flags (
+    player_key  TEXT NOT NULL,
+    flag_type   TEXT NOT NULL,          -- riser | rebound | faller
+    emitted_at  TEXT NOT NULL,          -- run date (YYYY-MM-DD)
+    score       REAL,
+    fv          REAL,                   -- consensus FV at emit time
+    fv_band     TEXT,
+    level       TEXT,
+    age_band    TEXT,
+    inserted_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, flag_type, emitted_at)
+);
+
+-- Stage-2+ artifacts: projections / market predictions / gate evals are
+-- versioned by model_version so backtests and live runs never collide.
+CREATE TABLE IF NOT EXISTS fa_projections (
+    player_key    TEXT NOT NULL,
+    class_year    INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year, model_version)
+);
+CREATE TABLE IF NOT EXISTS fa_market_preds (
+    player_key    TEXT NOT NULL,
+    class_year    INTEGER NOT NULL,
+    model_version TEXT NOT NULL,
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, class_year, model_version)
+);
+CREATE TABLE IF NOT EXISTS fa_model_eval (
+    model_version TEXT NOT NULL,
+    gate          TEXT NOT NULL,          -- 'projection' | 'market'
+    payload_json  TEXT NOT NULL,
+    computed_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (model_version, gate)
+);
+CREATE TABLE IF NOT EXISTS fa_park_factors (
+    venue        TEXT NOT NULL,
+    season       INTEGER NOT NULL,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (venue, season)
+);
+
+-- Append-only winter event ledger. event_date is the FIRST-SEEN date —
+-- Spotrac publishes no per-signing dates, so the pipeline stamps each
+-- transition when it observes it (ex-ante, consistent with the module's
+-- no-lookahead rule) and never updates it afterward. Feeds the homepage
+-- WIRE and the /fa/ Signing Tracker.
+CREATE TABLE IF NOT EXISTS fa_events (
+    class_year   INTEGER NOT NULL,
+    player_key   TEXT NOT NULL,
+    event_type   TEXT NOT NULL,            -- 'signing' | 'option_exercised' | 'option_declined' | 'qo_offered'
+    event_date   TEXT NOT NULL,            -- first observed (yyyy-mm-dd)
+    payload_json TEXT NOT NULL DEFAULT '{}',
+    PRIMARY KEY (class_year, player_key, event_type)
+);
+CREATE INDEX IF NOT EXISTS idx_fa_events_year ON fa_events(class_year, event_date);
 
 -- v31.7 — Per-player season stats from FG player pages for DRAFT
 -- prospects (college + HS). FG hosts amateur stats at the same
@@ -1299,6 +1578,20 @@ CREATE TABLE IF NOT EXISTS draft_statlines (
 );
 CREATE INDEX IF NOT EXISTS idx_draft_stats_player ON draft_statlines(player_key);
 
+-- College box scores for CollegeSavant's tracked universe (the reverse of
+-- draft_statlines: keyed by the CS frontend slug, not a draft player_key), so
+-- tracked players who are NOT draft prospects can still carry a real college
+-- line. Populated by college_stats.refresh_collegesavant_stats from NCAA D-I.
+CREATE TABLE IF NOT EXISTS collegesavant_box_scores (
+    player_slug  TEXT NOT NULL,           -- slugify_cs(name): the CS frontend key
+    season       INTEGER NOT NULL,
+    side         TEXT NOT NULL,           -- 'batting' | 'pitching'
+    school       TEXT,
+    payload_json TEXT NOT NULL,
+    fetched_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_slug, season, side)
+);
+
 CREATE TABLE IF NOT EXISTS overseas_canonical_keys (
     overseas_key   TEXT PRIMARY KEY,
     milb_key       TEXT NOT NULL,
@@ -1310,7 +1603,13 @@ CREATE INDEX IF NOT EXISTS idx_overseas_canon_milb ON overseas_canonical_keys(mi
 
 @contextmanager
 def connect():
-    con = sqlite3.connect(DB_PATH)
+    # timeout=30s: the monthly run executes draft + overseas + milb pipelines
+    # CONCURRENTLY (ThreadPoolExecutor, run_monthly._run_*_pipeline) against this
+    # one SQLite file. A reader that lands while another thread holds the write
+    # lock must WAIT it out, not fail. The Python-level `timeout` plus the
+    # matching PRAGMA busy_timeout below give a hard 30s budget before SQLITE_BUSY
+    # is raised — long enough to ride out any single batch write in the pipeline.
+    con = sqlite3.connect(DB_PATH, timeout=30.0)
     con.row_factory = sqlite3.Row
     # v19 — Performance pragmas. WAL mode gives 2-5x faster writes plus
     # concurrent readers (the prior rollback-journal mode serialized
@@ -1324,6 +1623,7 @@ def connect():
         con.execute("PRAGMA synchronous=NORMAL")
         con.execute("PRAGMA temp_store=MEMORY")
         con.execute("PRAGMA cache_size=-65536")  # 64 MB page cache (negative = KB)
+        con.execute("PRAGMA busy_timeout=30000")  # wait up to 30s on a locked DB (concurrent pipeline) instead of erroring
     except sqlite3.OperationalError:
         # Pragmas can fail on a corrupt / read-only DB; that's surfaced
         # downstream by the actual query. Don't block connection here.
@@ -1368,6 +1668,20 @@ def init_db():
             con.execute("ALTER TABLE draft_lottery_odds ADD COLUMN round_label TEXT NOT NULL DEFAULT '1'")
         except sqlite3.OperationalError:
             pass  # column already exists
+        # v31.9c — Migration: add contract-based surplus columns to
+        # mlb_trade_players. Existing rows default to NULL.
+        for _col, _ddl in (
+            ("current_aav_usd",          "INTEGER"),
+            ("years_remaining",          "INTEGER"),
+            ("contract_total_usd",       "INTEGER"),
+            ("age",                      "INTEGER"),
+            ("projected_war_remaining",  "REAL"),
+            ("surplus_mm",               "REAL"),
+        ):
+            try:
+                con.execute(f"ALTER TABLE mlb_trade_players ADD COLUMN {_col} {_ddl}")
+            except sqlite3.OperationalError:
+                pass  # column already exists
         # Migration: relax odds_pct NOT NULL constraint so picks 7+ on
         # the projected order (no published odds) can be stored. SQLite
         # doesn't support ALTER COLUMN — rebuild the table preserving
@@ -1575,6 +1889,89 @@ def _resolve_first_mlb_game_date(player_key: str) -> str | None:
 # `grad_date` is also accepted for symmetry with the old signature.
 def auto_graduate_player(player_key: str, grad_date: str | None = None) -> None:
     return auto_debut_player(player_key, debut_date=grad_date)
+
+
+def upsert_unranked_active_player(
+    player_key: str,
+    player_name: str,
+    position: str | None,
+    org: str | None,
+    birth_date: str | None,
+    mlbam_id: int | None,
+    *,
+    source_label: str = "performance_ingest",
+    provisional_fv: float = 35.0,
+    season: int | None = None,
+) -> bool:
+    """Insert a player discovered via the MLB Stats API who has no FV snapshot.
+
+    Creates both a `players` row (the master record) and a minimal
+    `snapshots` row marked `source='performance_ingest'` so the consensus
+    engine can anchor on it.  Prospects without any grading source now enter
+    the DB once they accumulate qualifying PA/IP, rather than waiting for a
+    publication cycle.
+
+    Returns True if a new player row was created, False if already present.
+    """
+    import datetime as _dt
+    snap_date = (str(season) + "-01-01") if season else _dt.date.today().isoformat()
+    interval  = f"{season}_performance" if season else "performance"
+
+    with connect() as con:
+        # Check if player already exists
+        existing = con.execute(
+            "SELECT 1 FROM players WHERE player_key = ?", (player_key,)
+        ).fetchone()
+
+        # Create / update the master players record
+        con.execute(
+            """INSERT INTO players (player_key, player_name, position, org)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(player_key) DO UPDATE SET
+                 player_name = excluded.player_name,
+                 position    = COALESCE(excluded.position, players.position),
+                 org         = COALESCE(excluded.org,      players.org),
+                 updated_at  = datetime('now')""",
+            (player_key, player_name, position, org),
+        )
+
+        # Anchor a lightweight snapshot so consensus has something to work with.
+        # FV = provisional_fv (default 35 = "unranked but active").
+        # This never displaces a real FV from a scouting source because
+        # source='performance_ingest' is excluded from the consensus weights.
+        con.execute(
+            """INSERT INTO snapshots
+               (source, snapshot_date, interval_label, player_key,
+                player_name, position, org, rank, fv, status)
+               VALUES (?, ?, ?, ?, ?, ?, ?, NULL, ?, 'active')
+               ON CONFLICT(source, interval_label, player_key) DO UPDATE SET
+                 snapshot_date = excluded.snapshot_date,
+                 player_name   = excluded.player_name,
+                 position      = COALESCE(excluded.position, snapshots.position),
+                 org           = COALESCE(excluded.org, snapshots.org)""",
+            (source_label, snap_date, interval,
+             player_key, player_name, position, org, provisional_fv),
+        )
+
+        # Store birth_date if available
+        if birth_date:
+            con.execute(
+                """UPDATE players SET birth_date = ?
+                   WHERE player_key = ? AND birth_date IS NULL""",
+                (birth_date, player_key),
+            )
+        # Register MLBAM ID in player_photos so the pipeline resolves this player
+        # on subsequent runs (headshots, statcast, transactions).
+        if mlbam_id:
+            con.execute(
+                """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key)
+                   VALUES (?, 'milb', ?)
+                   ON CONFLICT(mlbam_id) DO UPDATE SET
+                     player_key = COALESCE(excluded.player_key, player_photos.player_key)""",
+                (mlbam_id, player_key),
+            )
+
+    return existing is None   # True = newly created
 
 
 def upsert_birth_date(player_key: str, birth_date: str,
@@ -1855,6 +2252,113 @@ def load_statcast_metrics_meta() -> dict[str, str]:
     except sqlite3.OperationalError:
         return {}
     return {r["player_key"]: r["fetched_at"] for r in rows if r["fetched_at"]}
+
+
+def upsert_source_events(events: list[dict]) -> int:
+    """Upsert manually/article-derived source events.
+
+    Events are non-consensus annotations: BA movement, article statcast
+    callouts, injury notes, and similar fast-moving signals.
+    """
+    if not events:
+        return 0
+    n = 0
+    with connect() as con:
+        for event in events:
+            payload = event.get("payload") or event.get("payload_json") or {}
+            if isinstance(payload, str):
+                payload_json = payload
+            else:
+                payload_json = json.dumps(payload)
+            con.execute(
+                """INSERT INTO source_events
+                   (event_key, player_key, player_name, source, event_date, event_type,
+                    rank_before, rank_after, confidence, payload_json, excerpt)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                   ON CONFLICT(event_key) DO UPDATE SET
+                     player_key=excluded.player_key,
+                     player_name=excluded.player_name,
+                     source=excluded.source,
+                     event_date=excluded.event_date,
+                     event_type=excluded.event_type,
+                     rank_before=excluded.rank_before,
+                     rank_after=excluded.rank_after,
+                     confidence=excluded.confidence,
+                     payload_json=excluded.payload_json,
+                     excerpt=excluded.excerpt""",
+                (
+                    event["event_key"],
+                    event["player_key"],
+                    event.get("player_name") or event["player_key"],
+                    event.get("source") or "manual",
+                    event.get("event_date") or date.today().isoformat(),
+                    event.get("event_type") or "note",
+                    event.get("rank_before"),
+                    event.get("rank_after"),
+                    float(event.get("confidence") if event.get("confidence") is not None else 0.5),
+                    payload_json,
+                    event.get("excerpt") or "",
+                ),
+            )
+            n += 1
+    return n
+
+
+def load_source_events() -> dict[str, list[dict]]:
+    """Return article/list source events grouped by player_key."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                """SELECT event_key, player_key, player_name, source, event_date,
+                          event_type, rank_before, rank_after, confidence,
+                          payload_json, excerpt
+                   FROM source_events
+                   ORDER BY event_date DESC, source, event_type"""
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    out: dict[str, list[dict]] = {}
+    for r in rows:
+        try:
+            payload = json.loads(r["payload_json"] or "{}")
+        except json.JSONDecodeError:
+            payload = {}
+        event = {
+            "event_key": r["event_key"],
+            "player_key": r["player_key"],
+            "player_name": r["player_name"],
+            "source": r["source"],
+            "event_date": r["event_date"],
+            "event_type": r["event_type"],
+            "rank_before": r["rank_before"],
+            "rank_after": r["rank_after"],
+            "confidence": r["confidence"],
+            "payload": payload,
+            "excerpt": r["excerpt"],
+        }
+        out.setdefault(r["player_key"], []).append(event)
+    return out
+
+
+def load_player_news() -> dict[str, list[dict]]:
+    """Return optional static news sidecar rows grouped by player_key."""
+    path = Path(__file__).parent / "data" / "player_news.json"
+    if not path.exists():
+        return {}
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8") or "{}")
+    except (OSError, json.JSONDecodeError):
+        return {}
+    if not isinstance(raw, dict):
+        return {}
+    out: dict[str, list[dict]] = {}
+    for key, rows in raw.items():
+        if not isinstance(rows, list):
+            continue
+        clean = [r for r in rows if isinstance(r, dict)]
+        clean.sort(key=lambda r: str(r.get("published_at") or r.get("date") or ""), reverse=True)
+        out[str(key)] = clean[:8]
+    return out
 
 
 def upsert_sabermetrics(metrics: dict[str, "Sabermetrics"], season: int) -> int:
@@ -2309,6 +2813,30 @@ def link_draft_to_milb(draft_key: str, milb_key: str) -> None:
         )
 
 
+def backfill_draft_player_fields(rows: Iterable[dict]) -> int:
+    """COALESCE-merge identity fields onto existing draft_players rows
+    (used by the MLB-API identity backfill). Each row needs player_key plus
+    any of mlbam_id / fg_player_id / school; existing non-null values win.
+    Returns the number of rows touched."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            pk = r.get("player_key")
+            if not pk:
+                continue
+            cur = con.execute(
+                """UPDATE draft_players SET
+                     mlbam_id     = COALESCE(mlbam_id, ?),
+                     fg_player_id = COALESCE(fg_player_id, ?),
+                     school       = COALESCE(school, ?),
+                     updated_at   = datetime('now')
+                   WHERE player_key = ?""",
+                (r.get("mlbam_id"), r.get("fg_player_id"), r.get("school"), pk),
+            )
+            n += cur.rowcount or 0
+    return n
+
+
 def load_draft_canonical_keys() -> dict[str, str]:
     try:
         with connect() as con:
@@ -2345,16 +2873,19 @@ def upsert_draft_lottery_odds(rows: Iterable[dict]) -> int:
 
 def load_draft_lottery_odds(draft_year: int | None = None,
                             latest_only: bool = True) -> list[dict]:
-    """Return lottery odds rows. When latest_only=True, restrict to
-    the most recent snapshot_date per (draft_year, team, pick_pos)."""
+    """Return lottery odds rows. When latest_only=True, restrict to the single
+    most recent snapshot_date per draft_year (one full scrape).
+
+    The dedup key is the latest snapshot for the whole draft_year, NOT per
+    (team, pick_pos): teams move between projected slots from scrape to scrape,
+    so keying on (team, pick_pos) would keep a team's stale old slot AND its new
+    one - returning two rows at the same pick and self-contradictory odds."""
     if latest_only:
         q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
                FROM draft_lottery_odds o
                WHERE snapshot_date = (
                  SELECT MAX(snapshot_date) FROM draft_lottery_odds
                  WHERE draft_year = o.draft_year
-                   AND team       = o.team
-                   AND pick_pos   = o.pick_pos
                )"""
     else:
         q = """SELECT draft_year, team, pick_pos, odds_pct, round_label, snapshot_date, source
@@ -2468,8 +2999,16 @@ def load_overseas_snapshots(league: str | None = None) -> list[dict]:
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()
-    except sqlite3.OperationalError:
-        return []
+    except sqlite3.OperationalError as e:
+        # A MISSING TABLE on a fresh DB is a legitimate empty result. Any other
+        # operational error — notably "database is locked" under the concurrent
+        # monthly pipeline — must NOT be swallowed into []: that turns a transient
+        # lock into a permanently-empty overseas export (the 2026-06 leagues:[]
+        # regression). Re-raise so the caller aborts instead of clobbering a good
+        # sidecar; the export floor in export_overseas_json then preserves it.
+        if "no such table" in str(e).lower():
+            return []
+        raise
     out: list[dict] = []
     for r in rows:
         d = dict(r)
@@ -2482,6 +3021,102 @@ def load_overseas_snapshots(league: str | None = None) -> list[dict]:
             d["tools"] = None
         out.append(d)
     return out
+
+
+def overseas_snapshot_count() -> int:
+    """Row count of the overseas_snapshots table (0 if the table is missing).
+    Used by export_overseas_json's floor guard to tell a genuinely-empty source
+    apart from a transient read that returned nothing — so a 0-prospect export
+    can never silently overwrite a known-good sidecar."""
+    try:
+        with connect() as con:
+            return int(con.execute("SELECT COUNT(*) FROM overseas_snapshots").fetchone()[0])
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return 0
+        raise
+
+
+# ── TJStats per-(MLBAM id, snapshot) sidecar ─────────────────────────────────
+def upsert_tjstats_snapshots(rows: Iterable[dict]) -> int:
+    """Upsert TJStats point-in-time rows. Grain = (mlbam_id, snapshot_label) so a
+    same-label re-run (the date-stamped Live label gives per-day idempotency)
+    updates in place, while a new day or named snapshot inserts. fv/grades/writeup
+    use COALESCE so a re-run that lacks them (e.g. a historical board with FV NULL)
+    never wipes values already on file."""
+    con_rows = list(rows)
+    if not con_rows:
+        return 0
+    n = 0
+    with connect() as con:
+        for r in con_rows:
+            cur = con.execute(
+                """INSERT INTO tjstats_snapshots
+                   (mlbam_id, player_key, snapshot_label, snapshot_kind, snapshot_id,
+                    effective_date, captured_at, source_modified_at, source_url,
+                    name, position, org, type, rank, prev_rank, fv, eta, risk,
+                    grades_json, tools_json, writeup, with_fv)
+                   VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                   ON CONFLICT(mlbam_id, snapshot_label) DO UPDATE SET
+                       player_key=excluded.player_key, snapshot_kind=excluded.snapshot_kind,
+                       snapshot_id=excluded.snapshot_id, effective_date=excluded.effective_date,
+                       captured_at=excluded.captured_at,
+                       source_modified_at=excluded.source_modified_at,
+                       source_url=excluded.source_url, name=excluded.name,
+                       position=COALESCE(excluded.position, tjstats_snapshots.position),
+                       org=COALESCE(excluded.org, tjstats_snapshots.org),
+                       type=excluded.type, rank=excluded.rank, prev_rank=excluded.prev_rank,
+                       fv=COALESCE(excluded.fv, tjstats_snapshots.fv),
+                       eta=COALESCE(excluded.eta, tjstats_snapshots.eta),
+                       risk=COALESCE(excluded.risk, tjstats_snapshots.risk),
+                       grades_json=COALESCE(excluded.grades_json, tjstats_snapshots.grades_json),
+                       tools_json=COALESCE(excluded.tools_json, tjstats_snapshots.tools_json),
+                       writeup=COALESCE(excluded.writeup, tjstats_snapshots.writeup),
+                       with_fv=excluded.with_fv""",
+                (str(r["mlbam_id"]), r.get("player_key"), r["snapshot_label"],
+                 r["snapshot_kind"], r.get("snapshot_id"), r.get("effective_date"),
+                 r["captured_at"], r.get("source_modified_at"), r.get("source_url"),
+                 r.get("name"), r.get("position"), r.get("org"), r.get("type"),
+                 r.get("rank"), r.get("prev_rank"), r.get("fv"), r.get("eta"),
+                 r.get("risk"), r.get("grades_json"), r.get("tools_json"),
+                 r.get("writeup"), 1 if r.get("with_fv") else 0),
+            )
+            n += cur.rowcount
+    return n
+
+
+def load_tjstats_snapshots(snapshot_label: str | None = None) -> list[dict]:
+    q = "SELECT * FROM tjstats_snapshots"
+    params: tuple = ()
+    if snapshot_label is not None:
+        q += " WHERE snapshot_label = ?"
+        params = (snapshot_label,)
+    q += " ORDER BY snapshot_label DESC, rank ASC"
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(q, params).fetchall()]
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return []
+        raise
+
+
+def tjstats_snapshot_labels() -> list[dict]:
+    """Distinct snapshot labels with kind, effective date, latest capture, and
+    count — for Time Machine wiring and the scraper health check."""
+    try:
+        with connect() as con:
+            return [dict(r) for r in con.execute(
+                "SELECT snapshot_label, snapshot_kind, effective_date, "
+                "       MAX(captured_at) AS captured_at, COUNT(*) AS n "
+                "FROM tjstats_snapshots GROUP BY snapshot_label "
+                # captured_at is the deterministic tiebreak when a named monthly and
+                # a live board share an effective_date (a drop day): without it the
+                # within-date order is undefined. Selection logic in export_movers
+                # keys off snapshot_kind explicitly and does not rely on this order.
+                "ORDER BY effective_date DESC, captured_at DESC").fetchall()]
+    except sqlite3.OperationalError:
+        return []
 
 
 def load_overseas_players(league: str | None = None) -> dict[str, dict]:
@@ -2498,8 +3133,12 @@ def load_overseas_players(league: str | None = None) -> dict[str, dict]:
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()
-    except sqlite3.OperationalError:
-        return {}
+    except sqlite3.OperationalError as e:
+        # See load_overseas_snapshots: only a missing table is a legit empty;
+        # a transient lock must propagate, not silently zero the overseas pool.
+        if "no such table" in str(e).lower():
+            return {}
+        raise
     return {r["player_key"]: dict(r) for r in rows}
 
 
@@ -2563,7 +3202,8 @@ def _name_slug(name: str | None) -> str:
 
 
 def upsert_mlb_trade_player(row: dict) -> int:
-    """Upsert one MLB trade player. Returns 1 on insert/update."""
+    """Upsert one MLB trade player. Returns 1 on insert/update.
+    v31.9c — Accepts contract + surplus fields."""
     slug = _name_slug(row.get("player_name"))
     if not slug:
         return 0
@@ -2572,23 +3212,34 @@ def upsert_mlb_trade_player(row: dict) -> int:
             """INSERT INTO mlb_trade_players
                  (name_slug, player_name, mlbam_id, primary_position,
                   career_war, war_seasons, last_team, is_pitcher,
-                  resolve_status)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                  resolve_status,
+                  current_aav_usd, years_remaining, contract_total_usd,
+                  age, projected_war_remaining, surplus_mm)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                ON CONFLICT(name_slug) DO UPDATE SET
-                 player_name      = excluded.player_name,
-                 mlbam_id         = COALESCE(excluded.mlbam_id, mlb_trade_players.mlbam_id),
-                 primary_position = COALESCE(excluded.primary_position, mlb_trade_players.primary_position),
-                 career_war       = COALESCE(excluded.career_war, mlb_trade_players.career_war),
-                 war_seasons      = COALESCE(excluded.war_seasons, mlb_trade_players.war_seasons),
-                 last_team        = COALESCE(excluded.last_team, mlb_trade_players.last_team),
-                 is_pitcher       = excluded.is_pitcher,
-                 resolve_status   = excluded.resolve_status,
-                 fetched_at       = datetime('now')""",
+                 player_name             = excluded.player_name,
+                 mlbam_id                = COALESCE(excluded.mlbam_id, mlb_trade_players.mlbam_id),
+                 primary_position        = COALESCE(excluded.primary_position, mlb_trade_players.primary_position),
+                 career_war              = COALESCE(excluded.career_war, mlb_trade_players.career_war),
+                 war_seasons             = COALESCE(excluded.war_seasons, mlb_trade_players.war_seasons),
+                 last_team               = COALESCE(excluded.last_team, mlb_trade_players.last_team),
+                 is_pitcher              = excluded.is_pitcher,
+                 resolve_status          = excluded.resolve_status,
+                 current_aav_usd         = COALESCE(excluded.current_aav_usd, mlb_trade_players.current_aav_usd),
+                 years_remaining         = COALESCE(excluded.years_remaining, mlb_trade_players.years_remaining),
+                 contract_total_usd      = COALESCE(excluded.contract_total_usd, mlb_trade_players.contract_total_usd),
+                 age                     = COALESCE(excluded.age, mlb_trade_players.age),
+                 projected_war_remaining = COALESCE(excluded.projected_war_remaining, mlb_trade_players.projected_war_remaining),
+                 surplus_mm              = COALESCE(excluded.surplus_mm, mlb_trade_players.surplus_mm),
+                 fetched_at              = datetime('now')""",
             (slug, row["player_name"], row.get("mlbam_id"),
              row.get("primary_position"), row.get("career_war"),
              row.get("war_seasons"), row.get("last_team"),
              1 if row.get("is_pitcher") else 0,
-             row.get("resolve_status") or "resolved"),
+             row.get("resolve_status") or "resolved",
+             row.get("current_aav_usd"), row.get("years_remaining"),
+             row.get("contract_total_usd"), row.get("age"),
+             row.get("projected_war_remaining"), row.get("surplus_mm")),
         )
     return 1
 
@@ -2600,7 +3251,10 @@ def load_mlb_trade_players() -> dict[str, dict]:
             rows = con.execute(
                 """SELECT name_slug, player_name, mlbam_id, primary_position,
                           career_war, war_seasons, last_team, is_pitcher,
-                          resolve_status, fetched_at
+                          resolve_status, fetched_at,
+                          current_aav_usd, years_remaining,
+                          contract_total_usd, age,
+                          projected_war_remaining, surplus_mm
                    FROM mlb_trade_players"""
             ).fetchall()
     except sqlite3.OperationalError:
@@ -2654,6 +3308,50 @@ def load_draft_statlines(player_key: str | None = None) -> list[dict]:
                 d["payload"] = json.loads(d["payload_json"])
             except (ValueError, TypeError):
                 d["payload"] = {}
+        out.append(d)
+    return out
+
+
+def upsert_collegesavant_box_scores(rows: Iterable[dict]) -> int:
+    """Upsert NCAA box scores for CollegeSavant's tracked players, keyed by the
+    CS frontend slug. Each row: player_slug, season, side ('batting'|'pitching'),
+    school, payload."""
+    n = 0
+    with connect() as con:
+        for r in rows:
+            con.execute(
+                """INSERT INTO collegesavant_box_scores
+                     (player_slug, season, side, school, payload_json)
+                   VALUES (?, ?, ?, ?, ?)
+                   ON CONFLICT(player_slug, season, side) DO UPDATE SET
+                     school       = COALESCE(excluded.school, collegesavant_box_scores.school),
+                     payload_json = excluded.payload_json,
+                     fetched_at   = datetime('now')""",
+                (r["player_slug"], r["season"], r["side"], r.get("school"),
+                 json.dumps(r.get("payload") or {}, default=str)),
+            )
+            n += 1
+    return n
+
+
+def load_collegesavant_box_scores() -> list[dict]:
+    """All CollegeSavant box scores (latest season per player surfaces in the
+    frontend join). Empty list if the table does not exist yet."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_slug, season, side, school, payload_json "
+                "FROM collegesavant_box_scores ORDER BY player_slug ASC, season DESC"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out: list[dict] = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["payload"] = json.loads(d["payload_json"]) if d.get("payload_json") else {}
+        except (ValueError, TypeError):
+            d["payload"] = {}
         out.append(d)
     return out
 
@@ -2849,6 +3547,371 @@ def load_roster_status() -> dict[str, dict]:
     return {r["player_key"]: json.loads(r["payload_json"]) for r in rows}
 
 
+# ---------------------------------------------------------------------------
+# Derived-state history (metric_snapshots + il_history) — added 2026-06.
+# ---------------------------------------------------------------------------
+# Fields pulled from each serialized timeseries player into the snapshot
+# payload. These are the Arkmetric family + value signals that are reliably
+# present at the player top level (raw dvm_plus/rps_plus live on graduate/org
+# records, not the active board, so we capture the surfaced "+" versions).
+_METRIC_SNAPSHOT_PAYLOAD_FIELDS = (
+    "dollar_dvm_plus",   # $DvM+
+    "statcast_plus",     # SC+
+    "live_score",        # live composite
+    "tool",              # tool composite (ToolDvM+ base)
+    "live_overall_rank",
+)
+
+
+def _fv_tier_label(fv, fv_plus) -> str | None:
+    """Coarse FV-tier bucket label used for cohorting ('60','55','50'…).
+
+    Mirrors the 5-point grade ladder; the trailing '+' upside marker is kept
+    so a 55+ cohort can be split from a flat 55 if desired downstream.
+    """
+    if fv is None:
+        return None
+    base = int(round(float(fv) / 5.0) * 5)
+    return f"{base}+" if fv_plus else str(base)
+
+
+def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = None) -> int:
+    """Capture the DERIVED board state (consensus rank/FV + Arkmetric family)
+    for every player in a built timeseries, one row per player per calendar
+    date. Idempotent: re-running on the same date overwrites that date's rows.
+
+    `players` is the list of serialized player dicts from timeseries.json
+    (or the in-memory equivalent). Players with no consensus FV and no rank
+    are skipped (nothing meaningful to snapshot).
+    """
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for p in players:
+            if not isinstance(p, dict):
+                continue
+            key = p.get("player_key")
+            if not key:
+                continue
+            fv = p.get("fv_close")
+            rank = p.get("overall_rank")
+            if fv is None and rank is None:
+                continue
+            fv_plus = 1 if p.get("fv_close_plus") else 0
+            surplus = p.get("surplus") or {}
+            payload = {f: p.get(f) for f in _METRIC_SNAPSHOT_PAYLOAD_FIELDS
+                       if p.get(f) is not None}
+            if surplus.get("value_mm") is not None:
+                payload["surplus_mm"] = surplus.get("value_mm")
+            con.execute(
+                """INSERT INTO metric_snapshots
+                     (player_key, snapshot_date, overall_rank, consensus_fv,
+                      fv_plus, fv_tier, org, position, status, is_pitcher,
+                      age, payload_json, inserted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(player_key, snapshot_date) DO UPDATE SET
+                     overall_rank=excluded.overall_rank,
+                     consensus_fv=excluded.consensus_fv,
+                     fv_plus=excluded.fv_plus,
+                     fv_tier=excluded.fv_tier,
+                     org=excluded.org,
+                     position=excluded.position,
+                     status=excluded.status,
+                     is_pitcher=excluded.is_pitcher,
+                     age=excluded.age,
+                     payload_json=excluded.payload_json,
+                     inserted_at=excluded.inserted_at""",
+                (key, snapshot_date, rank, fv, fv_plus,
+                 _fv_tier_label(fv, fv_plus), p.get("org"), p.get("position"),
+                 p.get("status"),
+                 1 if (p.get("position") or "").upper() in ("SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP") else 0,
+                 p.get("age"), json.dumps(payload)),
+            )
+            n += 1
+    return n
+
+
+def metric_snapshot_dates() -> list[str]:
+    """Return the distinct snapshot dates present in metric_snapshots, ascending."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT snapshot_date FROM metric_snapshots ORDER BY snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [r[0] for r in rows]
+
+
+def load_metric_snapshots(player_key: str | None = None,
+                          snapshot_date: str | None = None) -> list[dict]:
+    """Load metric_snapshots rows, optionally filtered by player and/or date.
+
+    Returns a list of flat dicts with the board columns plus the unpacked
+    Arkmetric payload (dollar_dvm_plus, statcast_plus, …).
+    """
+    where, params = [], []
+    if player_key is not None:
+        where.append("player_key = ?"); params.append(player_key)
+    if snapshot_date is not None:
+        where.append("snapshot_date = ?"); params.append(snapshot_date)
+    sql = ("SELECT player_key, snapshot_date, overall_rank, consensus_fv, fv_plus, "
+           "fv_tier, org, position, status, is_pitcher, age, payload_json "
+           "FROM metric_snapshots")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY snapshot_date, overall_rank"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    out = []
+    for r in rows:
+        d = dict(r)
+        payload = d.pop("payload_json", None)
+        if payload:
+            try:
+                d.update(json.loads(payload))
+            except (TypeError, ValueError):
+                pass
+        out.append(d)
+    return out
+
+
+def load_rank_history() -> dict[str, list[dict]]:
+    """Per-player overall board-rank history from metric_snapshots, grouped by
+    player_key and ordered oldest-first: {player_key: [{snapshot_date, rank}, ...]}.
+    The input layer for movement.compute_rank_movement (overall_rank becomes the
+    xFV rank once _active_key ranks by xFV, so this measures xFV-rank movement).
+    One query for the whole board (per-player queries in the export loop would be
+    ~1,700 round-trips)."""
+    out: dict[str, list[dict]] = {}
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT player_key, snapshot_date, overall_rank FROM metric_snapshots "
+                "WHERE overall_rank IS NOT NULL ORDER BY player_key, snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return out
+    for r in rows:
+        out.setdefault(r["player_key"], []).append(
+            {"snapshot_date": r["snapshot_date"], "rank": r["overall_rank"]})
+    return out
+
+
+def snapshot_farm_ranks(org_summary: Iterable[dict],
+                        snapshot_date: str | None = None) -> int:
+    """Capture the composite farm-system rank (+ farm_score) for every org,
+    one row per org per calendar date. Idempotent: re-running on the same date
+    overwrites that date's rows.
+
+    `org_summary` is the list of org dicts from the exported boot payload (each
+    carries `org`, `farm_rank`, `farm_score`). Entries with no org code or no
+    farm_rank are skipped (nothing to snapshot). This is the missing input
+    layer for movement.compute_farm_movement — it cannot be back-filled, so the
+    track record starts the first run after it lands.
+    """
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for e in org_summary:
+            if not isinstance(e, dict):
+                continue
+            org = e.get("org")
+            rank = e.get("farm_rank")
+            if not org or rank is None:
+                continue
+            con.execute(
+                """INSERT INTO farm_rank_history
+                     (org, snapshot_date, farm_rank, farm_score, inserted_at)
+                   VALUES (?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(org, snapshot_date) DO UPDATE SET
+                     farm_rank=excluded.farm_rank,
+                     farm_score=excluded.farm_score,
+                     inserted_at=excluded.inserted_at""",
+                (org, snapshot_date, rank, e.get("farm_score")),
+            )
+            n += 1
+    return n
+
+
+def load_farm_rank_history(org: str | None = None) -> list[dict]:
+    """Load farm_rank_history rows, optionally filtered to one org.
+
+    Returns flat dicts ordered by (org, snapshot_date ascending) so a caller can
+    group by org and read each org's series oldest-first (the order the movement
+    engine expects)."""
+    where, params = [], []
+    if org is not None:
+        where.append("org = ?"); params.append(org)
+    sql = ("SELECT org, snapshot_date, farm_rank, farm_score "
+           "FROM farm_rank_history")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY org, snapshot_date"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def farm_rank_history_dates() -> list[str]:
+    """Return the distinct snapshot dates present in farm_rank_history, ascending."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT snapshot_date FROM farm_rank_history ORDER BY snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [r[0] for r in rows]
+
+
+def record_il_observation(current_il_by_key: dict[str, dict],
+                          observed_date: str | None = None) -> dict[str, int]:
+    """Append-only IL stint timeline update. Call after refreshing IL status.
+
+    `current_il_by_key` is the {player_key: il_dict} of everyone CURRENTLY on
+    the IL (i.e. the output of load_il_status()). For each, record the stint
+    once keyed by its placement `since` date; for any previously-open stint
+    whose player is no longer on the IL, stamp the activation date.
+
+    Idempotent within a day. Returns {placed, activated} counts.
+    """
+    observed_date = observed_date or date.today().isoformat()
+    placed = activated = 0
+    with connect() as con:
+        try:
+            con.execute("SELECT 1 FROM il_history LIMIT 1")
+        except sqlite3.OperationalError:
+            con.executescript(SCHEMA)
+        # 1. Record / refresh currently-open stints.
+        for key, rec in (current_il_by_key or {}).items():
+            since = (rec or {}).get("since")
+            if not since:
+                # No placement date from the API — fall back to first-observed
+                # date so the stint still gets a stable key.
+                since = observed_date
+            cur = con.execute(
+                """INSERT INTO il_history
+                     (player_key, since, il_type, description, placed_seen, activated_seen)
+                   VALUES (?, ?, ?, ?, ?, NULL)
+                   ON CONFLICT(player_key, since) DO UPDATE SET
+                     il_type=excluded.il_type,
+                     description=excluded.description,
+                     -- a player reappearing on a stint we'd marked activated
+                     -- means it never really ended; clear the activation.
+                     activated_seen=NULL""",
+                (key, since, (rec or {}).get("type"), (rec or {}).get("description"),
+                 observed_date),
+            )
+            if cur.rowcount:
+                placed += 1
+        # 2. Close out stints whose player is no longer on the IL.
+        current_keys = set(current_il_by_key or {})
+        open_rows = con.execute(
+            "SELECT player_key, since FROM il_history WHERE activated_seen IS NULL"
+        ).fetchall()
+        for r in open_rows:
+            if r["player_key"] not in current_keys:
+                con.execute(
+                    "UPDATE il_history SET activated_seen = ? "
+                    "WHERE player_key = ? AND since = ? AND activated_seen IS NULL",
+                    (observed_date, r["player_key"], r["since"]),
+                )
+                activated += 1
+    return {"placed": placed, "activated": activated}
+
+
+def load_il_history(player_key: str | None = None) -> list[dict]:
+    """Return IL stint rows (placement + activation timeline), newest first."""
+    sql = ("SELECT player_key, since, il_type, description, placed_seen, "
+           "activated_seen FROM il_history")
+    params: list = []
+    if player_key is not None:
+        sql += " WHERE player_key = ?"; params.append(player_key)
+    sql += " ORDER BY since DESC"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+# ---------------------------------------------------------------------------
+# Headshot context cache (player_photos) — added 2026-06.
+# ---------------------------------------------------------------------------
+def load_photo_ctx() -> dict[int, str]:
+    """Return {mlbam_id: headshot_ctx} for every resolved photo."""
+    try:
+        with connect() as con:
+            rows = con.execute("SELECT mlbam_id, headshot_ctx FROM player_photos").fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {int(r["mlbam_id"]): r["headshot_ctx"] for r in rows}
+
+
+def load_photo_meta() -> dict[int, str]:
+    """Return {mlbam_id: checked_at_iso} so the resolver can TTL-skip fresh rows."""
+    try:
+        with connect() as con:
+            rows = con.execute("SELECT mlbam_id, checked_at FROM player_photos").fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {int(r["mlbam_id"]): r["checked_at"] for r in rows}
+
+
+def load_mlbam_player_keys() -> dict[str, str]:
+    """Return {mlbam_id(str): player_key} from player_photos — the available
+    MLBAM->eephus-key index. Used by the TJStats ingest for the exact-id join
+    (name-slug is the fallback). Keys are strings to match scraped payloads."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT mlbam_id, player_key FROM player_photos "
+                "WHERE player_key IS NOT NULL AND player_key <> ''"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {str(r["mlbam_id"]): r["player_key"] for r in rows}
+
+
+def known_player_keys() -> set[str]:
+    """Every player_key eephus already knows (the players table). The TJStats
+    ingest logs any scraped player whose resolved key is NOT in here as a
+    fall-through for manual review."""
+    try:
+        with connect() as con:
+            return {r[0] for r in con.execute("SELECT player_key FROM players").fetchall()}
+    except sqlite3.OperationalError:
+        return set()
+
+
+def upsert_photo_ctx(by_id: dict[int, dict]) -> int:
+    """Upsert resolved headshot contexts. by_id = {mlbam_id: {ctx, player_key}}."""
+    n = 0
+    with connect() as con:
+        for mid, rec in by_id.items():
+            if mid is None or not rec or not rec.get("ctx"):
+                continue
+            con.execute(
+                """INSERT INTO player_photos (mlbam_id, headshot_ctx, player_key, checked_at)
+                   VALUES (?, ?, ?, datetime('now'))
+                   ON CONFLICT(mlbam_id) DO UPDATE SET
+                     headshot_ctx = excluded.headshot_ctx,
+                     player_key   = COALESCE(excluded.player_key, player_photos.player_key),
+                     checked_at   = excluded.checked_at""",
+                (int(mid), rec["ctx"], rec.get("player_key")),
+            )
+            n += 1
+    return n
+
+
 def load_career_stats_meta() -> dict[str, str]:
     """Return {player_key: fetched_at_iso} for every stored career_stats row.
 
@@ -2894,6 +3957,46 @@ def latest_run_summary() -> dict | None:
         return None
 
 
+def data_freshness() -> dict:
+    """Return the two-track freshness stamps the site uses for data-aware
+    'as of' labels:
+
+      • grades_updated_at  — finish time of the last MONTHLY run (full
+        pipeline: grades, tool evals, Arkmetrics, farm grades, rankings).
+      • transactions_updated_at — finish time of the last run of ANY kind
+        (a daily run refreshes transactions/IL/roster; a monthly run does
+        both, so the latest run always reflects the freshest fast-moving
+        data).
+      • last_run_kind — 'daily' | 'monthly' for the most recent run.
+
+    Daily runs are tagged with a notes prefix of 'DAILY:' by run_daily();
+    everything else is treated as a monthly/full run.
+    """
+    out = {"grades_updated_at": None, "transactions_updated_at": None,
+           "last_run_kind": None}
+    try:
+        with connect() as con:
+            latest = con.execute(
+                "SELECT finished_at, started_at, notes FROM runs "
+                "WHERE finished_at IS NOT NULL ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+            monthly = con.execute(
+                "SELECT finished_at, started_at FROM runs "
+                "WHERE finished_at IS NOT NULL "
+                "AND COALESCE(notes,'') NOT LIKE 'DAILY:%' "
+                "ORDER BY id DESC LIMIT 1"
+            ).fetchone()
+    except sqlite3.OperationalError:
+        return out
+    if latest:
+        out["transactions_updated_at"] = latest["finished_at"] or latest["started_at"]
+        out["last_run_kind"] = ("daily" if (latest["notes"] or "").startswith("DAILY:")
+                                else "monthly")
+    if monthly:
+        out["grades_updated_at"] = monthly["finished_at"] or monthly["started_at"]
+    return out
+
+
 # ---------------------------------------------------------------------------
 # Farm-system grading
 # ---------------------------------------------------------------------------
@@ -2927,17 +4030,31 @@ FARM_TRAJECTORY_LOOKBACK_DAYS = 365
 FARM_TRAJECTORY_SMOOTH_WINDOW = 3   # avg last 3 fv_history points vs 3 near cutoff
 FARM_GRAD_PIPELINE_MONTHS     = 12
 
-# Multi-window trajectories. The list page lets the user toggle between
-# these to ask "who's been developing prospects best over the last X?".
-# The 1y entry matches FARM_TRAJECTORY_LOOKBACK_DAYS and feeds the
-# canonical `trajectory_score` (which keeps the report-card grading
-# anchored to the 1y window). Longer windows surface orgs whose growth
-# only shows up over a draft cycle or two.
+# Multi-window trajectories. The farm pages let the user toggle between these
+# to ask "who's been developing prospects best over the last X?". Every window
+# here is baked per-org (DvM+ + the per-window composite farm_score), so the
+# frontend selector can switch the WHOLE grade tree to any of these windows.
+# Empirically validated: a 7-year trailing window predicts realized graduate
+# output best (beats 6y in all 4 backtest vintages; 8y regresses) — see the
+# window-sweep analysis. 7y is therefore the principal (default) window.
 FARM_TRAJECTORY_WINDOWS = {
     "1y": 365,
+    "2y": 365 * 2,
     "3y": 365 * 3,
+    "4y": 365 * 4,
+    "5y": 365 * 5,
     "6y": 365 * 6,
+    "7y": 365 * 7,
+    "8y": 365 * 8,
 }
+
+# The principal (default) trailing window — the empirically-optimal window the
+# farm grade tree anchors on (composite letter, DvM+ headline, tiebreaker). The
+# user-facing window selector defaults here and can switch to any baked window.
+# ONE constant so every windowed grade/subgrade shares the same default.
+FARM_PRINCIPAL_WINDOW = "7y"
+# Windows offered in the frontend selector (subset of FARM_TRAJECTORY_WINDOWS).
+FARM_SELECTABLE_WINDOWS = ["3y", "4y", "5y", "6y", "7y", "8y"]
 
 FARM_TOP_END_COUNT  = 5             # top N prospects feeding the "stars" score
 FARM_DEPTH_START    = 5             # prospects #6 ...
@@ -3007,10 +4124,19 @@ MLB_30_ORGS: set[str] = {
 # Financial drops 25% → 20% to absorb the rest of the shift;
 # Acquisition Strategy unchanged.
 # Weights sum to 1.00.
-FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.12    # v31: 0.10 → 0.12 (deeper acq tree)
-FARM_TREE_WEIGHT_DEVELOPMENT          = 0.50    # v31: 0.55 → 0.50 (Health Mgmt joins; share spread)
-FARM_TREE_WEIGHT_FINANCIAL            = 0.18    # v31: 0.20 → 0.18 (small trim)
-FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.20    # v31: 0.15 → 0.20 (HOF-track adds forward signal)
+# v40 — VALUE-TRACKING REWEIGHT. The grade is now PRIMARILY driven by aggregate
+# risk-adjusted controlled surplus (the Financial branch, reframed as "Value" in the
+# UI). The prior split (Development 0.50, Financial 0.18) made the grade a per-prospect
+# tool-development index decoupled from aggregate value: a farm could be 3rd in total
+# surplus (TBR, $264M) yet grade 15th, below a 25th-in-surplus farm (NYM). Aggregate
+# surplus already prices elite ceiling non-linearly (the recalibrated value_framework),
+# so it captures top-end-vs-depth on its own — no opaque top-heavy weighting. MLB
+# Production rises (realized graduate WAR proof); Development drops to a secondary
+# controllable-skill signal. Sum = 1.00.
+FARM_TREE_WEIGHT_ACQUISITION_STRATEGY = 0.08    # v40: 0.12 → 0.08
+FARM_TREE_WEIGHT_DEVELOPMENT          = 0.09    # v40: 0.50 → 0.09 (secondary skill signal)
+FARM_TREE_WEIGHT_FINANCIAL            = 0.65    # v40: 0.18 → 0.65 (the Value branch — DOMINANT)
+FARM_TREE_WEIGHT_MLB_PRODUCTION       = 0.18    # v40: 0.20 → 0.18 (raw graduate WAR — secondary check)
 # Back-compat aliases — anything that imported the v2 constants still
 # works. The composite blend below uses the v3 names exclusively.
 FARM_TREE_WEIGHT_ACQUISITIONS = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
@@ -3018,23 +4144,41 @@ FARM_TREE_WEIGHT_TRANSACTIONS = 0.0   # rolled into Acquisition Strategy
 # Sub-grades inside each parent — 50/50 for all parents in v1.
 FARM_TREE_SUB_WEIGHT_EQUAL = 0.5
 
-# v9 — Per-leaf weights for the Financial branch. Surplus dominant:
-# fin_active_surplus (current actives' FV-implied surplus) carries the
-# biggest single chunk because it's the most forward-looking metric on
-# this axis. fin_contract_surplus (grad realized surplus vs cost) is
-# the historical companion. Pure-ROI leaves (war_per_m, draft_pool,
-# IFA_roi) are noisy small-sample ratios that overpenalize orgs whose
-# grads got high signing bonuses BUT have outperformed already; they
-# stay in the blend but at reduced weight. Weights normalize to 1.0
-# across present leaves at compute time, so a sparse-data org just
-# weighted-means whatever leaves it has.
+# v32.1 — Per-leaf weights for the Financial branch. active_surplus
+# promoted 0.35 → 0.40 now that it's the most defensible signal on the
+# axis (re-derived through value_framework's transparent FV→WAR×$/WAR
+# formula, with fast-cycle surplus_per_fv_pt_mm joining as a graded
+# sub-input). contract_surplus trimmed 0.25 → 0.20 in exchange. The
+# pure-ROI leaves (war_per_m, draft_pool, IFA) hold the lower weights;
+# draft_pool itself now blends war_per_m_pool + fv_per_m_pool internally
+# so it's denser per-leaf without changing the leaf weight. Weights
+# normalize to 1.0 across present leaves at compute time, so a sparse-
+# data org just weighted-means whatever leaves it has.
 FARM_LEAF_WEIGHTS = {
+    # v38 — Item-7 reweight. Now that surplus value is re-derived through the
+    # transparent value_framework FV→WAR×$/WAR core AND $DvM+ adds a
+    # development-trajectory lens, the surplus grades carry more of the
+    # financial axis and the simpler per-$ ROI leaves (war_per_m,
+    # draft_pool_efficiency, ifa_roi) — which $DvM+ now partly supersedes as a
+    # forward "are these prospects appreciating?" signal — are trimmed.
+    #   fin_active_surplus   0.40 → 0.42   (↑ surplus)
+    #   fin_dollar_dvm       NEW    0.18   (surplus-dev vs FV-tier mean)
+    #   fin_contract_surplus 0.20 → 0.18
+    #   fin_war_per_m        0.10 → 0.07   (↓ superseded ROI)
+    #   fin_draft_pool_eff   0.15 → 0.08   (↓ superseded ROI)
+    #   fin_ifa_roi          0.15 → 0.07   (↓ superseded ROI)
+    # Sum = 1.00. (Weights renormalize across present leaves at compute time,
+    # so a sparse-data org just weighted-means whatever leaves it has.)
+    # v40 — Value branch leaf weights. fin_active_surplus (now AGGREGATE controlled
+    # surplus, not per-prospect) is the dominant leaf; the value-development +
+    # per-$ ROI leaves provide secondary texture. Sum = 1.00.
     "financial": {
-        "fin_active_surplus":        0.35,
-        "fin_contract_surplus":      0.25,
-        "fin_war_per_m":             0.10,
-        "fin_draft_pool_efficiency": 0.15,
-        "fin_ifa_roi":               0.15,
+        "fin_active_surplus":        0.68,   # v40: AGGREGATE controlled value — dominant
+        "fin_dollar_dvm":            0.10,
+        "fin_contract_surplus":      0.10,
+        "fin_war_per_m":             0.04,
+        "fin_draft_pool_efficiency": 0.04,
+        "fin_ifa_roi":               0.04,
     },
 }
 
@@ -3081,6 +4225,48 @@ def _fv_to_points(fv: float | int | None) -> float:
     hi_pts = FV_POINTS.get(hi, lo_pts)
     frac = (v - lo) / 5.0
     return round(lo_pts + (hi_pts - lo_pts) * frac, 3)
+
+
+# ── xFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
+# movement metrics (owner directive). Reads the PRIOR run's committed data/xfv.json
+# (per-player xfv_grade + surplus_mm + tool_xfv) and data/xfv_history.json (per-snapshot
+# xFV series, for the appreciation + movement signals). ONE-RUN LAG is intentional and
+# unavoidable: export_timeseries_json runs BEFORE xfv_export.regen_all in run_monthly, and
+# xfv_export reads timeseries.json — reordering would be circular. This mirrors the frontend,
+# which already consumes xfv.json with a consensus fallback. Where xFV abstains (no pro track
+# record), every consumer falls back to consensus FV so nothing goes null.
+def _load_xfv_join() -> tuple[dict, dict]:
+    base = Path(__file__).parent / "data"
+    def _read(name):
+        try:
+            return (json.loads((base / name).read_text(encoding="utf-8")).get("by_player") or {})
+        except Exception:
+            return {}
+    return _read("xfv.json"), _read("xfv_history.json")
+
+
+def _load_ungraded_by_org() -> dict[str, list[dict]]:
+    """Provisional (source-UNGRADED) prospects grouped by org, as lightweight prospect-dicts
+    for the farm depth/top-end pool (xfv_ungraded.json, one-run lag like the xFV join). Each
+    carries an xfv_grade so _eff_grade ranks it alongside graded prospects; filler (FV 20-30)
+    ranks out of the top-25 (FV_POINTS ~0) and the genuine breakouts add bounded depth. We do
+    NOT add these to any raw-sum / DvM+ / surplus accumulator -- only the rank-and-tier pool."""
+    base = Path(__file__).parent / "data"
+    out: dict[str, list[dict]] = {}
+    try:
+        by_player = json.loads((base / "xfv_ungraded.json").read_text(encoding="utf-8")).get("by_player") or {}
+    except Exception:
+        return out
+    for e in by_player.values():
+        org = e.get("org")
+        g = e.get("xfv_grade")
+        if not org or g is None:
+            continue
+        out.setdefault(org, []).append({
+            "name": e.get("name"), "player_key": e.get("player_key"), "pos": e.get("position"),
+            "age": e.get("age"), "fv_raw": None, "xfv_grade": float(g), "provisional": True,
+        })
+    return out
 
 
 # Hardcoded industry-standard FV → expected career WAR mapping.
@@ -3131,10 +4317,15 @@ def _fv_to_expected_war(fv: float | int | None) -> float | None:
     return None
 
 
-# FV → expected WAR-per-year (the FanGraphs scouting-primer "lower bound"
-# rate). Mirrors the JS `FV_WAR_ANCHORS` + `fvExpectedWarPerYr` in
-# [index.html] so the boom/bust label the backend stamps matches the WAG
-# pill the frontend already shows on every graduate page.
+# FV → expected WAR-per-year — the SURVIVOR expectation WAG measures graduates
+# against. v-arkmetric-audit: this is now DERIVED from value_framework's
+# `survivor_expected_war` (the same calibrated bucket model the surplus uses,
+# conditioned on non-bust), so WAG and the surplus model can no longer drift onto
+# inconsistent FV->WAR assumptions. The tables below are a STALE FanGraphs-primer
+# fallback used only if the engine is unavailable; they ran ~2-3x over realized
+# graduate outcomes (mean 0.34/0.77/0.94/1.23 WAR/yr at FV 45/50/55/60), which is
+# exactly why graduates read as systematically negative-WAG before this fix. The
+# frontend `FV_WAR_ANCHORS` mirror is synced to the derived survivor curve.
 FV_EXPECTED_WAR_PER_YR_HITTER = {
     30: -0.1, 40: 0.0, 45: 0.8, 50: 1.6, 55: 2.5, 60: 3.4, 70: 5.0, 80: 7.0,
 }
@@ -3144,13 +4335,23 @@ FV_EXPECTED_WAR_PER_YR_PITCHER = {
 
 
 def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
-    """Linear-interpolate FV → expected WAR/yr. None for None / out-of-range."""
+    """FV → SURVIVOR expected WAR/yr, derived from the surplus model
+    (value_framework.survivor_expected_war) so WAG is measured on the SAME FV->WAR
+    calibration as the surplus. Falls back to the legacy primer table only if the
+    engine can't price it. None for None / out-of-range."""
     if fv is None:
         return None
     try:
         v = float(fv)
     except (TypeError, ValueError):
         return None
+    try:
+        import value_framework as _vf
+        derived = _vf.survivor_expected_war(v, is_pitcher)
+        if derived is not None:
+            return round(float(derived), 3)
+    except Exception:
+        pass
     table = FV_EXPECTED_WAR_PER_YR_PITCHER if is_pitcher else FV_EXPECTED_WAR_PER_YR_HITTER
     keys = sorted(table.keys())
     if v <= keys[0]:
@@ -3165,14 +4366,17 @@ def _fv_to_expected_war_per_yr(fv, is_pitcher: bool = False) -> float | None:
     return None
 
 
-# Industry-standard draft pick-slot value curve (career WAR expectations
-# based on FanGraphs / Baseball America surplus-value research). A
-# 1st-overall pick has historically averaged ~9 career WAR; the curve
-# decays steeply through the supplemental + 2nd round and tails to ~0
-# by the late rounds. Used to compute "draft pick value above
-# expectation" = actual_war − slot_expected_war, which credits orgs
-# that beat the market at each pick slot (e.g., a 28th-rounder making
-# the majors counts more than a #1 overall reaching the same outcome).
+# FALLBACK draft pick-slot value table (hand-set, career-WAR basis,
+# "industry research" provenance). Model-audit Phase 4b measured it
+# against realized outcomes (data/draft_slot_curve.json): it UNDERSHOOTS
+# realized career means ~3x at every slot (e.g. pick 1: realized 28.4
+# vs 9.0 here on resolved 2005-14 cohorts). The live lookup now uses
+# the fitted first-six-season curve (_fitted_slot_curve); this table
+# only serves when the committed artifact is missing. Consumer:
+# "draft pick value above expectation" = actual_war − slot_expected_war,
+# which credits orgs that beat the market at each pick slot (e.g., a
+# 28th-rounder making the majors counts more than a #1 overall reaching
+# the same outcome).
 _PICK_SLOT_EXPECTED_WAR: list[tuple[int, float]] = [
     (1,    9.00),   # 1st overall — historical Trout-tier ceiling
     (5,    6.00),   # top 5 — All-Star floor
@@ -3190,8 +4394,36 @@ _PICK_SLOT_EXPECTED_WAR: list[tuple[int, float]] = [
 ]
 
 
+_FITTED_SLOT_CURVE: list[tuple[int, float]] | None = None
+_FITTED_SLOT_LOADED = False
+
+
+def _fitted_slot_curve() -> list[tuple[int, float]] | None:
+    """The REALIZED slot curve (model-audit Phase 4b, WS-8): expected
+    FIRST-SIX-MLB-SEASON bWAR by pick, fitted by decreasing isotonic on
+    StatsAPI draft history 2005-2014 x war_daily (signed picks; never-MLB
+    scores 0). Committed in data/draft_slot_curve.json by
+    tools/fit_draft_slot_curve.py. The first-6 window matches how the
+    leaf consumes it (graduates' career-to-date WAR, almost always <= 6
+    MLB seasons) and the QO tax's control-window basis. The hand-set
+    table below remains the fallback when the artifact is absent."""
+    global _FITTED_SLOT_CURVE, _FITTED_SLOT_LOADED
+    if not _FITTED_SLOT_LOADED:
+        _FITTED_SLOT_LOADED = True
+        try:
+            d = json.loads((Path(__file__).parent / "data" /
+                            "draft_slot_curve.json").read_text(encoding="utf-8"))
+            steps = [(int(b), float(w)) for b, w in d["first6_step_curve"]
+                     if w is not None]
+            _FITTED_SLOT_CURVE = steps or None
+        except (OSError, ValueError, KeyError, TypeError):
+            _FITTED_SLOT_CURVE = None
+    return _FITTED_SLOT_CURVE
+
+
 def _pick_slot_expected_war(pick_overall) -> float | None:
-    """Step-lookup the historical expected career WAR for a draft slot.
+    """Step-lookup the expected first-six-season bWAR for a draft slot
+    (fitted realized curve; hand-set career-WAR steps as fallback).
     Returns None when the pick number is missing/invalid (e.g., IFA
     signing with no overall pick). The step function is a deliberate
     simplification over the smooth power curve — pick slots already
@@ -3205,10 +4437,11 @@ def _pick_slot_expected_war(pick_overall) -> float | None:
         return None
     if p < 1:
         return None
-    for threshold, war in _PICK_SLOT_EXPECTED_WAR:
+    table = _fitted_slot_curve() or _PICK_SLOT_EXPECTED_WAR
+    for threshold, war in table:
         if p <= threshold:
             return war
-    return _PICK_SLOT_EXPECTED_WAR[-1][1]
+    return table[-1][1]
 
 
 def _grad_wag_cumulative(graduate_payload: dict) -> float | None:
@@ -3335,6 +4568,38 @@ def _career_pa_ip(graduate_payload: dict) -> tuple[int, float]:
     return total_pa, total_ip
 
 
+def _graduate_outcome_penalty(graduate_payload: dict) -> float:
+    """Dampen positive WAG for older churn profiles.
+
+    WAG is meant to surface genuinely surprising MLB outcomes, not simply
+    low-FV players who briefly banked WAR and then fell into the DFA/outright
+    loop. This only affects positive WAG; underperformance is not softened.
+    """
+
+    txs = graduate_payload.get("transactions") or []
+    churn_kinds = {"dfa", "outrighted", "released"}
+    churn_count = sum(1 for tx in txs if (tx.get("kind") or "").lower() in churn_kinds)
+    age = graduate_payload.get("age")
+    try:
+        age = float(age) if age is not None else None
+    except (TypeError, ValueError):
+        age = None
+    current_level = (graduate_payload.get("current_level")
+                     or graduate_payload.get("level")
+                     or "").upper()
+    in_minors_now = current_level and current_level != "MLB"
+    penalty = 1.0
+    if churn_count >= 2:
+        penalty *= 0.45
+    elif churn_count == 1:
+        penalty *= 0.72
+    if age is not None and age >= 26.0:
+        penalty *= 0.85
+    if in_minors_now:
+        penalty *= 0.85
+    return max(0.25, min(1.0, penalty))
+
+
 def _grad_wag(graduate_payload: dict) -> float | None:
     """v14 WAG (WAR Above Grade) — role-adjusted full-season-equivalent.
 
@@ -3382,28 +4647,23 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     except (TypeError, ValueError):
         war_per_yr = None
 
+    # v16 — WAG matched to SEASONS, not PA / rate of production: the per-season WAR
+    # (career WAR over the number of MLB seasons) vs the FV-implied WAR/season. An
+    # injury-shortened season still counts as a season, so WAG reflects accumulation
+    # over time rather than a small-sample rate projected up to a full season (which
+    # over-credited injury-limited / partial-season grads like Evan Carter). The
+    # PA/IP floor still gates cup-of-coffee samples below the sample minimum.
+    season_count = (cw.get("war_seasons_count")
+                    or len(cw.get("seasons") or {})
+                    or len({s.get("season")
+                            for s in (graduate_payload.get("career_stats") or [])
+                            if s.get("level") == "MLB" and s.get("season") is not None}))
+    floor_ok = (total_ip >= 50.0) if is_pitcher else (total_pa >= 150)
     full_season_war: float | None = None
-    if is_pitcher:
-        role = _pitcher_role(graduate_payload)
-        target = _ROLE_BASELINES.get(f"{role}_ip_target",
-                                     _ROLE_BASELINES["mirp_ip_target"])
-        if target <= 0:
-            return None
-        if total_ip >= 50.0:
-            full_season_war = (career_war / total_ip) * target
-        elif war_per_yr is not None:
-            # Pitcher full-season fallback: use war_per_yr as the projected
-            # season rate. (Equivalent to treating one rate-season as a
-            # full-target-IP season.)
-            full_season_war = war_per_yr
-    else:
-        target = _ROLE_BASELINES.get("hitter_pa_target", 612.0)
-        if target <= 0:
-            return None
-        if total_pa >= 150:
-            full_season_war = (career_war / total_pa) * target
-        elif war_per_yr is not None:
-            full_season_war = war_per_yr
+    if season_count and floor_ok:
+        full_season_war = career_war / season_count
+    elif war_per_yr is not None:
+        full_season_war = war_per_yr
 
     if full_season_war is None:
         return None
@@ -3411,7 +4671,14 @@ def _grad_wag(graduate_payload: dict) -> float | None:
     expected = _fv_to_expected_war_per_yr(fv_close, is_pitcher=is_pitcher)
     if expected is None:
         return None
-    return round(full_season_war - expected, 2)
+    delta = full_season_war - expected
+    if delta > 0:
+        # Positive surprise should still require current MLB production.
+        # Blend WAG with actual WAR/yr, then dampen churn/older-minors
+        # profiles so DFA-circus players do not top the leaderboard.
+        delta = (delta * 0.70 + full_season_war * 0.30)
+        delta *= _graduate_outcome_penalty(graduate_payload)
+    return round(delta, 2)
 
 
 def _compute_boom_bust(graduate_payload: dict) -> str:
@@ -3466,7 +4733,7 @@ def _compute_boom_bust(graduate_payload: dict) -> str:
 # "principal window" metric on the site lives on the same horizon.
 _CONVICTION_WAR_PER_YR_THRESHOLD = 4.0   # legacy — superseded by STAR_*
 _CONVICTION_CAREER_WAR_THRESHOLD = 12.0  # legacy — superseded by STAR_*
-_CONVICTION_RECENCY_YEARS        = 6   # was 5 (v6 — align with 6y DvM+)
+_CONVICTION_RECENCY_YEARS        = 7   # was 6 — unified to FARM_PRINCIPAL_WINDOW (7y)
 # v30.7 — Conviction reframed as "star count." A graduate the org
 # developed qualifies as a STAR when EITHER:
 #   * career WAR/yr ≥ 3.0 (sustained above-average MLB regular), OR
@@ -3716,7 +4983,7 @@ def _attach_sub_leaves(entry: dict) -> None:
         pb = node.get("pos_buckets") or {}
         if pb:
             for bucket, v in pb.items():
-                blend = (v.get("blend_by_window") or {}).get("6y")
+                blend = (v.get("blend_by_window") or {}).get(FARM_PRINCIPAL_WINDOW)
                 n     = v.get("active_count") or 0
                 subs.append({
                     "label":  f"{bucket} bucket",
@@ -4165,12 +5432,17 @@ def _attach_sub_leaves(entry: dict) -> None:
 def _compute_draft_pool_efficiency(gagg: dict,
                                    draft_pools: dict | None,
                                    org_code: str) -> dict:
-    """Per-org WAR-per-$M-draft-pool over a 3-year rolling window.
+    """Per-org draft-pool efficiency over a 3-year rolling window.
 
-    Numerator: sum of grad career WAR for grads drafted in years
-    (T-5)…(T-2) — gives at least 3 development years before counting WAR.
-    Denominator: sum of draft-pool spend across the same years.
-    Gates at ≥3 contributing grads."""
+    Two signals on the same denominator (pool $ spent in T-5..T-2):
+      * war_per_m_pool — sum of grad career WAR / pool $M. Lagging
+        but realized: WAR only accrues after the prospect debuts.
+      * fv_per_m_pool  — sum of CURRENT FV across drafted-actives /
+        pool $M. v32.0 fast-cycle companion: doesn't wait for WAR
+        maturation, so the signal is responsive within ~2yr of draft.
+
+    Gates: war_per_m_pool requires ≥3 grads; fv_per_m_pool requires
+    pool_total > 0 (active count gating happens upstream)."""
     draft_pools = draft_pools or {}
     grads = gagg.get("_draft_pool_grads") or []
     today_year = date.today().year
@@ -4179,23 +5451,31 @@ def _compute_draft_pool_efficiency(gagg: dict,
 
     relevant = [g for g in grads
                 if start_year <= g["draft_year"] <= end_year]
-    if len(relevant) < 3:
-        return {"war_per_m_pool": None, "grad_count": len(relevant),
-                "war_total": 0.0, "pool_total_usd": 0}
-    war_total = sum(g["career_war"] for g in relevant)
+    war_total = sum(g["career_war"] for g in relevant) if relevant else 0.0
     pool_total = 0
     for y in range(start_year, end_year + 1):
         pools_y = (draft_pools.get(y) or {}).get("team_pools") or {}
         pool_total += int(pools_y.get(org_code) or 0)
-    if pool_total <= 0:
-        return {"war_per_m_pool": None, "grad_count": len(relevant),
-                "war_total": round(war_total, 2), "pool_total_usd": 0}
-    war_per_m = round(war_total / (pool_total / 1_000_000.0), 3)
+    # FV-side (v32.0) — active prospects' current FV, accumulated in
+    # the main per-prospect loop (see _draft_pool_active_fv_total).
+    fv_total_active = float(gagg.get("_draft_pool_active_fv_total") or 0.0)
+
+    war_per_m = None
+    fv_per_m  = None
+    if pool_total > 0:
+        pool_total_mm = pool_total / 1_000_000.0
+        if len(relevant) >= 3:
+            war_per_m = round(war_total / pool_total_mm, 3)
+        if fv_total_active > 0:
+            fv_per_m = round(fv_total_active / pool_total_mm, 3)
+
     return {
-        "war_per_m_pool": war_per_m,
-        "grad_count":     len(relevant),
-        "war_total":      round(war_total, 2),
-        "pool_total_usd": pool_total,
+        "war_per_m_pool":   war_per_m,
+        "fv_per_m_pool":    fv_per_m,
+        "grad_count":       len(relevant),
+        "war_total":        round(war_total, 2),
+        "fv_total_active":  round(fv_total_active, 1),
+        "pool_total_usd":   pool_total,
     }
 
 
@@ -4250,59 +5530,280 @@ def _compute_ifa_roi(gagg: dict, ifa_org_spending: dict) -> dict:
     }
 
 
-# v18 — FV-implied 6yr surplus value table ($M). Mirrors the frontend
-# SURPLUS_VALUE_MM at index.html:10100 so backend and UI agree on the
-# per-FV cost-controlled surplus estimate. Anchored to the FanGraphs /
-# Craig Edwards 2019 framework (hitters carry more than pitchers at
-# equal FV because pitchers face higher injury / role-conversion risk).
-_SURPLUS_VALUE_MM_HITTER  = {80: 200, 75: 130, 70: 80, 65: 50, 60: 35,
-                             55: 20,  50: 10,  45: 5,  40: 2,  35: 1}
-_SURPLUS_VALUE_MM_PITCHER = {80: 100, 75: 80,  70: 55, 65: 35, 60: 25,
-                             55: 12,  50: 7,   45: 4,  40: 1.5, 35: 1}
+# v32.0 — Surplus value now comes from value_framework, a single source
+# of truth anchored to the 2026 FanGraphs scouting primer (FV->WAR ranges)
+# and the 2026 $/WAR FA-market article (non-linear 3-tier model, rolling
+# 3yr avg). Formula is now transparent: WAR_peak * 6 * ramp * p_success
+# * $/WAR_tier minus cost basis, all factors auditable in
+# value_framework.py. Position multipliers ALSO live there (resolving
+# a prior backend/frontend divergence bug where the two had different
+# values for SS / CF / RP etc).
+from value_framework import (
+    surplus_value_mm as _estimate_surplus_mm,
+    position_multiplier as _surplus_position_mult,
+    is_pitcher_position as _vf_is_pitcher_position,
+    dollars_per_war_flat as _dollars_per_war_flat,
+    dollars_per_war as _dollars_per_war,
+    # v34 — richer per-prospect engine outputs baked into the export so the
+    # frontend shows the SAME timing/uncertainty the engine computes (Prompts
+    # H/G/I) and a per-org system rollup (Prompt K), rather than a timing-naive
+    # client-side curve lookup.
+    sv_distribution as _sv_distribution,
+    sv_credible_interval as _sv_credible_interval,
+    system_surplus_distribution as _system_surplus_distribution,
+    # v35 — full per-prospect contract: outcome-bucket probabilities, the
+    # debuted-player split (trade vs total vs realized), and the engine WAG, so
+    # the frontend reads EVERY new engine output rather than recomputing any of
+    # it in JS (single source of truth).
+    p_bucket_given_fv as _p_bucket_given_fv,
+    debuted_player_value as _debuted_player_value,
+    wag as _engine_wag,
+    wag_boom_bust as _engine_wag_boom_bust,
+    realized_consumed_seasons as _realized_consumed_seasons,
+    _BUCKETS as _SV_BUCKET_ORDER,
+)
 
-# Position multipliers — up-the-middle defenders carry a premium, bat-
-# only positions / fungible relievers carry a discount. Mirrors
-# SURPLUS_POSITION_MULT at index.html:10112.
-_SURPLUS_POSITION_MULT = {
-    "C":    1.05, "SS":   1.10, "2B":   1.00, "3B":   0.95,
-    "1B":   0.90, "CF":   1.05, "LF":   0.95, "RF":   0.95,
-    "OF":   0.97, "DH":   0.85,
-    "SP":   1.00, "RHP":  1.00, "LHP":  1.00,
-    "RP":   0.70, "MIRP": 0.85, "SIRP": 0.75,
-}
-
-_PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
+# Per-prospect Monte-Carlo draw counts for the baked surplus enrichment
+# (`_build_surplus_payload`). These were referenced but never defined, so the
+# `ci`/`dist` enrichment threw NameError and was silently swallowed by its
+# `except: pass` — every player shipped with `surplus` but no distribution
+# (no P10–P90 fan, no P(bust)). Modest counts keep the ~2k-player export fast
+# while giving stable percentiles + P(bust); the engine's config defaults
+# (10000 dist / 4000 CI) are reserved for one-off analysis. Pass None to fall
+# back to those config defaults instead.
+_SURPLUS_DIST_DRAWS = 4000   # outcome distribution (percentiles, P(bust), risk-adj)
+_SURPLUS_CI_DRAWS   = 2000   # epistemic credible interval on expected SV
 
 
-def _estimate_surplus_mm(fv: float | None, is_pitcher: bool,
-                          position: str | None = None) -> float | None:
-    """FV → estimated 6yr cost-controlled surplus value in $M.
+def _eta_years_from(eta, today_year):
+    """Years from now to projected debut, from the ETA estimate (half-season
+    aware). None when no ETA year is known -> the engine uses its config default."""
+    yr = getattr(eta, "eta_year", None) if eta is not None else None
+    if yr is None:
+        return None
+    yrs = float(yr) - float(today_year)
+    if getattr(eta, "eta_half", None) == "late":
+        yrs += 0.5
+    return max(0.0, yrs)
 
-    Linear-interpolated between the 5-grade anchors above; clamped to
-    $0.5M below FV 35, capped at the elite-tier value above FV 80.
-    Multiplied by the position-scarcity factor (1.0 default).
-    """
+
+def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None,
+                           fv_dispersion=None, n_sources=None):
+    """Bake value_framework's per-prospect engine outputs into the export so the
+    frontend renders the SAME numbers the engine computes -- not a timing-naive
+    client-side curve lookup:
+      * value_mm -- the TIMING-aware expected surplus (Prompt H: age + ETA shape
+        the aging curve and discount the control window from projected debut);
+      * ci       -- the epistemic CREDIBLE INTERVAL on expected surplus (Prompt G);
+      * dist     -- the SOURCE-DISAGREEMENT-widened outcome distribution (Prompt I:
+        fv_dispersion = the across-source FV stddev widens the spread, same mean).
+    Returns None when FV is missing/invalid. The ci/dist enrichment is wrapped so a
+    numerical hiccup degrades to the bare point value rather than sinking the export."""
     if fv is None:
         return None
+    point = _estimate_surplus_mm(fv, is_pitcher, position, age=age, eta_years=eta_years)
+    if point is None:
+        return None
+    # Store the is_pitcher the value was actually baked with, so the K rollup
+    # reuses the EXACT same classification (no re-derivation drift -> the system
+    # figure reconciles with the per-player headline). `fv_used` is the EXACT
+    # continuous FV the engine priced, so the frontend can show "FV the engine
+    # used" with zero drift (validation: displayed FV == engine FV).
+    out = {
+        "value_mm": point,
+        "is_pitcher": bool(is_pitcher),
+        "fv_used": round(float(fv), 2),
+        "fv_continuous": round(float(fv), 2),
+    }
+    if eta_years is not None:
+        out["eta_years"] = round(float(eta_years), 2)
+    # Outcome-bucket probabilities P(bucket|FV) over the five career buckets
+    # (bust/bench/regular/good/star) -- the prior shown as the stacked bar for a
+    # prospect (debuted players override this with the Bayes posterior).
     try:
-        fv_f = float(fv)
+        probs = _p_bucket_given_fv(float(fv), is_pitcher)
+        if probs is not None:
+            out["buckets"] = {b: round(float(pp), 4)
+                              for b, pp in zip(_SV_BUCKET_ORDER, probs)}
+    except Exception:
+        pass
+    try:
+        ci = _sv_credible_interval(fv, is_pitcher, position, age=age,
+                                   eta_years=eta_years, draws=_SURPLUS_CI_DRAWS)
+        if ci and ci.get("point_mm") is not None:
+            out["ci"] = {"lo_mm": ci["lo_mm"], "median_mm": ci["median_mm"],
+                         "hi_mm": ci["hi_mm"], "cred": ci["cred"], "regime": ci.get("regime")}
+        dist = _sv_distribution(fv, is_pitcher, position, age=age, eta_years=eta_years,
+                                fv_dispersion=fv_dispersion, n_sources=n_sources,
+                                draws=_SURPLUS_DIST_DRAWS)
+        if dist:
+            pcts = dist.get("percentiles", {})
+            # Carry the FULL percentile set the engine emits (p10/p25/p50/p75/p90
+            # at the shipped config) so the frontend can draw a percentile fan,
+            # plus the mean, spread, downside CVaR and the risk-adjusted score
+            # (mean - lambda*(mean - downside)) at the configured risk-aversion
+            # lambda. The frontend reads these directly -- it never re-runs MC.
+            out["dist"] = {
+                "p10_mm": pcts.get("p10"), "p25_mm": pcts.get("p25"),
+                "p50_mm": pcts.get("p50"), "p75_mm": pcts.get("p75"),
+                "p90_mm": pcts.get("p90"),
+                "percentiles": {k: round(float(v), 2) for k, v in pcts.items()},
+                "mean_mm": dist.get("mean"),
+                "std_mm": dist.get("std"),
+                "p_bust": dist.get("p_bust"), "downside_mm": dist.get("downside_metric"),
+                "risk_adjusted_mm": dist.get("risk_adjusted_score"),
+                "risk_lambda": dist.get("risk_aversion_lambda"),
+                "p_above_threshold": dist.get("p_above_threshold"),
+                "threshold_mm": dist.get("threshold_mm"),
+                "fv_dispersion": dist.get("fv_dispersion"),
+            }
+    except Exception:
+        pass   # enrichment only -- never let a MC/numerical hiccup sink the build
+    return out
+
+
+def _mlb_exposure_pa_ip(career_stats) -> tuple[float, float]:
+    """Sum MLB-level PA / IP across a player's career_stats rows -> a WAG exposure
+    fallback when no service-time decimal is on file."""
+    pa = ip = 0.0
+    for row in (career_stats or []):
+        if str(row.get("level") or "").upper() != "MLB":
+            continue
+        try:
+            p = row.get("pa")
+            pa += float(p) if p is not None else (float(row.get("ab") or 0) * 1.1)
+        except (TypeError, ValueError):
+            pass
+        try:
+            ip += float(row.get("ip") or 0)
+        except (TypeError, ValueError):
+            pass
+    return pa, ip
+
+
+def _engine_wag_result(fv, is_pitcher, position, observed_war, *, age=None,
+                       service_years=None, career_stats=None):
+    """The ONE engine-WAG computation path (value_framework.wag, Prompt M).
+    Resolves exposure from the service-time decimal (preferred) or summed MLB
+    PA/IP. Returns the full wag dict or None. Shared by the baked
+    debuted_value.wag, the boom/bust label, and the farm-grade WAG rollup so every
+    WAG figure on the site agrees (single source of truth -- replaces _grad_wag)."""
+    if fv is None or observed_war is None:
+        return None
+    try:
+        ow = float(observed_war)
     except (TypeError, ValueError):
         return None
-    table = _SURPLUS_VALUE_MM_PITCHER if is_pitcher else _SURPLUS_VALUE_MM_HITTER
-    if fv_f >= 80:
-        base = table[80]
-    elif fv_f <= 35:
-        base = 0.5
-    else:
-        lo = int(fv_f // 5) * 5
-        hi = lo + 5
-        t = (fv_f - lo) / 5.0
-        base = table[lo] * (1 - t) + table[hi] * t
-    mult = 1.0
-    if position:
-        primary = str(position).split("/")[0].strip().upper()
-        mult = _SURPLUS_POSITION_MULT.get(primary, 1.0)
-    return round(base * mult, 1)
+    try:
+        # Expected baseline matched to MLB SEASONS (service_years); the gate +
+        # reliability use the REAL accumulated MLB PA/IP (passed alongside so a
+        # thin multi-season sample is still gated + regressed).
+        pa, ip = _mlb_exposure_pa_ip(career_stats)
+        if service_years is not None:
+            return _engine_wag(fv, is_pitcher, ow, position=position,
+                               service_years=float(service_years),
+                               exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
+        return _engine_wag(fv, is_pitcher, ow, position=position,
+                           exposure_pa=(pa or None), exposure_ip=(ip or None), age=age)
+    except Exception:
+        return None
+
+
+def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
+                           career_war=None, roster_status=None,
+                           contract=None, career_stats=None, wag_fv=None):
+    """Bake the engine's DEBUTED-player split + WAG for a player who has reached the
+    majors (Prompts D + M). REALIZED (consumed control years, sunk) + REMAINING
+    (projected) trade value + their sum (total value), the Bayes-updated outcome
+    posterior, and the FV-vs-realized WAG. Every figure comes straight from
+    value_framework, so the frontend renders these directly -- this RETIRES the
+    prior JS realized-surplus salary model + grad-WAG recompute. Returns None when
+    there is no usable MLB WAR record (so a 0-MLB prospect carries no debuted block
+    and the UI hides every debuted-only field)."""
+    if fv is None:
+        return None
+    cw = career_war or {}
+    seasons = cw.get("seasons") or {}
+    observed_war = cw.get("career_war")
+    if observed_war is None or not seasons:
+        return None
+    rs = roster_status or {}
+    sy = rs.get("service_years_decimal")
+    service_years = float(sy) if sy is not None else None
+    salary_by_year = (contract or {}).get("salary_by_year") or {}
+    # Observed MLB exposure (the Bayes-update SAMPLE for Prompt D + WAG). Without
+    # it the bucket posterior would never move off the FV prior.
+    _obs_pa, _obs_ip = _mlb_exposure_pa_ip(career_stats)
+    out = {}
+    try:
+        consumed = _realized_consumed_seasons(seasons, salary_by_year=salary_by_year)
+        dv = _debuted_player_value(
+            fv, is_pitcher, position, observed_war=float(observed_war),
+            observed_pa=(_obs_pa or None), observed_ip=(_obs_ip or None),
+            service_time=(service_years if service_years is not None else 0.0),
+            age=age, consumed_seasons=consumed)
+        if dv:
+            rem = dv.get("remaining") or {}
+            rpct = rem.get("percentiles", {})
+            out.update({
+                "trade_value_mm": dv.get("trade_value_mm"),    # remaining control yrs (consumed = sunk)
+                "total_value_mm": dv.get("total_value_mm"),    # realized banked + remaining
+                "realized_mm": dv.get("realized_mm"),          # market value of consumed WAR - salary paid
+                "true_talent_war": dv.get("true_talent_war"),
+                "consumed_control_years": dv.get("consumed_control_years"),
+                "remaining_control_years": dv.get("remaining_control_years"),
+                # Bayes-updated outcome distribution -- the stacked bucket bar for a
+                # debuted player uses this posterior (vs the FV prior for prospects).
+                "posterior": dv.get("posterior"),
+                "prior": dv.get("prior"),
+                "remaining_dist": {
+                    "p10_mm": rpct.get("p10"), "p50_mm": rpct.get("p50"),
+                    "p90_mm": rpct.get("p90"), "p_bust": rem.get("p_bust"),
+                },
+            })
+    except Exception:
+        pass   # enrichment only -- a numerical hiccup must not sink the export
+    try:
+        # WAG is matched to the number of MLB SEASONS the player has been in the
+        # majors (not PA / rate of production): an injury-shortened season still
+        # counts as a season, so WAR-above-grade reflects accumulation over time.
+        # (service_years_decimal still feeds the realized/consumed-control value
+        # above; it's None for many players and would otherwise fall this WAG call
+        # back to PA-matching, inflating injury-limited rates.)
+        season_count = len(seasons)
+        # WAG is "WAR Above GRADE" — the grade baseline is now xFV (our outcome-grounded
+        # grade) where available, falling back to the consensus `fv` only where xFV
+        # abstains. Only the WAG baseline uses wag_fv; the debuted VALUE model above keeps
+        # the `fv` passed in (its surplus is priced from the consensus/xFV value pipeline).
+        _wag_baseline = wag_fv if wag_fv is not None else fv
+        w = _engine_wag_result(_wag_baseline, is_pitcher, position, observed_war,
+                               age=age,
+                               service_years=(float(season_count) if season_count else None),
+                               career_stats=career_stats)
+        if w:
+            out["wag"] = {
+                "regressed_wag": w.get("regressed_wag"),
+                "regressed_lo": w.get("regressed_lo"),
+                "regressed_hi": w.get("regressed_hi"),
+                "counting_wag": w.get("counting_wag"),
+                "rate_wag": w.get("rate_wag"),
+                "percentile": w.get("percentile"),
+                "z": w.get("z"),
+                "expected_war": w.get("expected_war"),
+                "observed_war": w.get("observed_war"),
+                "true_talent_war": w.get("true_talent_war"),
+                "w_obs": w.get("w_obs"),
+                "below_meaningful_exposure": w.get("below_meaningful_exposure"),
+                # Standardized boom/bust label (percentile-keyed) -- the canonical
+                # categorical grade signal, replacing the legacy _compute_boom_bust.
+                "boom_label": _engine_wag_boom_bust(w),
+            }
+    except Exception:
+        pass
+    return out or None
+
+
+_PITCHER_POS_RE = re.compile(r"^(RHP|LHP|SP|RP|MIRP|SIRP|P)")
 
 
 def _finalize_active_surplus_leaf(m: dict) -> dict:
@@ -4323,6 +5824,7 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     n = m.get("_active_surplus_count") or 0
     total_surplus = m.get("_active_surplus_net_mm") or 0.0
     cost_basis = m.get("_active_surplus_cost_mm") or 0.0
+    fv_total = m.get("_active_surplus_fv_total") or 0.0
     # v31.5 — Per-side stats. Each side gates at ≥3 contributing
     # prospects (looser than the parent's ≥5 since splitting a small
     # cohort 50/50 makes ≥5 unrealistic on one side).
@@ -4330,8 +5832,21 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
     n_pit = m.get("_active_surplus_count_pit") or 0
     surplus_hit = m.get("_active_surplus_net_mm_hit") or 0.0
     surplus_pit = m.get("_active_surplus_net_mm_pit") or 0.0
+    fv_total_hit = m.get("_active_surplus_fv_total_hit") or 0.0
+    fv_total_pit = m.get("_active_surplus_fv_total_pit") or 0.0
     per_prospect_hit = round(surplus_hit / n_hit, 2) if n_hit >= 3 else None
     per_prospect_pit = round(surplus_pit / n_pit, 2) if n_pit >= 3 else None
+    # v32.0 — $ surplus per FV-point. Higher = star/premium-position
+    # loaded; lower = depth-heavy. Gated at ≥5 prospects AND fv_total>0.
+    surplus_per_fv_pt = (round(total_surplus / fv_total, 3)
+                         if n >= 5 and fv_total > 0 else None)
+    # v32.1 — Per-side $/FV-pt asymmetry: orgs with strong-bats-thin-arms
+    # (or vice versa) read very differently when split by side. Gated
+    # ≥3 per side AND positive fv_total on that side.
+    per_fv_pt_hit_mm = (round(surplus_hit / fv_total_hit, 3)
+                       if n_hit >= 3 and fv_total_hit > 0 else None)
+    per_fv_pt_pit_mm = (round(surplus_pit / fv_total_pit, 3)
+                       if n_pit >= 3 and fv_total_pit > 0 else None)
     if n < 5:
         return {
             "surplus_total_mm":        None,
@@ -4342,7 +5857,42 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
             "per_prospect_pit_mm":     per_prospect_pit,
             "active_count_hit":        n_hit,
             "active_count_pit":        n_pit,
+            "surplus_per_fv_pt_mm":    None,
+            "per_fv_pt_hit_mm":        per_fv_pt_hit_mm,
+            "per_fv_pt_pit_mm":        per_fv_pt_pit_mm,
+            "fv_total":                round(fv_total, 1) if fv_total else None,
+            "fv_total_hit":            round(fv_total_hit, 1) if fv_total_hit else None,
+            "fv_total_pit":            round(fv_total_pit, 1) if fv_total_pit else None,
         }
+    # v32.1 — Per-acquisition-method $/FV efficiency. Buckets accumulated
+    # in the per-prospect loop; we compute the per-method ratios here.
+    # Gated at ≥3 contributing actives per method (small-sample channels
+    # render '—' rather than a misleading single-prospect ratio).
+    method_eff: dict[str, dict] = {}
+    for label, bucket in (m.get("_method_surplus") or {}).items():
+        bn = bucket.get("count") or 0
+        bfv = bucket.get("fv_total") or 0.0
+        bnet = bucket.get("net_mm") or 0.0
+        bcost = bucket.get("cost_mm") or 0.0
+        if bn >= 3 and bfv > 0:
+            method_eff[label] = {
+                "surplus_per_fv_pt_mm": round(bnet / bfv, 3),
+                "surplus_total_mm":    round(bnet, 1),
+                "fv_total":            round(bfv, 1),
+                "count":               bn,
+                "cost_basis_mm":       round(bcost, 1),
+                "surplus_per_prospect_mm": round(bnet / bn, 2),
+            }
+        else:
+            method_eff[label] = {
+                "surplus_per_fv_pt_mm": None,
+                "surplus_total_mm":    round(bnet, 1) if bn else None,
+                "fv_total":            round(bfv, 1) if bn else None,
+                "count":               bn,
+                "cost_basis_mm":       round(bcost, 1) if bn else None,
+                "surplus_per_prospect_mm": None,
+            }
+
     return {
         "surplus_total_mm":        round(total_surplus, 1),
         "surplus_per_prospect_mm": round(total_surplus / n, 2),
@@ -4352,6 +5902,15 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
         "per_prospect_pit_mm":     per_prospect_pit,
         "active_count_hit":        n_hit,
         "active_count_pit":        n_pit,
+        "surplus_per_fv_pt_mm":    surplus_per_fv_pt,
+        "per_fv_pt_hit_mm":        per_fv_pt_hit_mm,
+        "per_fv_pt_pit_mm":        per_fv_pt_pit_mm,
+        "fv_total":                round(fv_total, 1),
+        "fv_total_hit":            round(fv_total_hit, 1),
+        "fv_total_pit":            round(fv_total_pit, 1),
+        # v32.1 — Per-channel $/FV efficiency (draft / IFA / trade).
+        # Helps identify which acquisition pathway is best for an org.
+        "method_efficiency":       method_eff,
     }
 
 
@@ -4366,9 +5925,9 @@ def _finalize_active_surplus_leaf(m: dict) -> dict:
 # Per-tool DvM+ window — earliest tool observation feeding the
 # (latest − earliest) delta is re-resolved to the oldest snapshot still
 # inside this window from `as_of`. Keeps per-tool dev signal consistent
-# with the org-level 6y DvM+ window. Tunable in one place; tests pin the
-# constant value.
-FARM_TOOL_DELTA_LOOKBACK_DAYS = 365 * 6
+# with the org-level principal DvM+ window (7y). Tunable in one place; tests
+# pin the constant value.
+FARM_TOOL_DELTA_LOOKBACK_DAYS = 365 * 7
 
 
 def _compute_tool_deltas(player_points: list[dict],
@@ -4466,6 +6025,87 @@ TOOL_GROUPS: dict[str, list[str]] = {
 }
 
 
+# Position-bucket tool-importance matrix for the composite ToolDvM+. Within
+# each bucket the tools that *define* the position carry more weight (a
+# catcher's Field/Arm matter more than its Speed; a starter's FB/Command
+# more than a fourth pitch). Buckets mirror the tool-dev pass's
+# _ALL_BUCKETS (C / INF / OF / SP / RP); 1B/2B/3B/SS roll into INF. Weights
+# are relative WITHIN a bucket and are tunable.
+_BUCKET_TOOL_IMPORTANCE: dict[str, dict[str, float]] = {
+    "C":   {"field": 3.0, "arm": 3.0, "hit": 2.0, "bat_ctrl": 1.0,
+            "pitch_sel": 1.0, "pwr": 1.0, "speed": 0.5},
+    "INF": {"field": 3.0, "arm": 2.0, "hit": 2.0, "speed": 1.5,
+            "pwr": 1.5, "bat_ctrl": 1.0, "pitch_sel": 1.0},
+    "OF":  {"speed": 2.5, "hit": 2.0, "pwr": 2.0, "field": 2.0,
+            "arm": 1.5, "bat_ctrl": 1.0, "pitch_sel": 1.0},
+    "SP":  {"fb": 3.0, "cmd": 3.0, "sl": 1.5, "cb": 1.5, "ch": 1.5, "ct": 1.0},
+    "RP":  {"fb": 3.0, "cmd": 2.0, "sl": 2.0, "cb": 1.0, "ch": 1.0, "ct": 1.0},
+}
+
+
+def _bucket_weighted_tool_dvm(per_grp: dict, by_bucket: dict,
+                              counts_by_bucket: dict) -> int | None:
+    """Composite ToolDvM+ for one org: a position-bucket importance-weighted
+    blend of per-tool DvM+ values.
+
+    For each bucket (C/INF/OF/SP/RP) we take a weighted mean of that bucket's
+    own per-tool DvM+ (``by_bucket[bucket]``), weighting each tool by its
+    position importance and falling back to the org-wide value
+    (``per_grp[tool]``) when a bucket cell is sparse/None. The per-bucket
+    composites are then blended by how many prospects the org develops in
+    each bucket (``counts_by_bucket[bucket][tool]["n_prospects"]``), so the
+    org's composite leans toward the positions it actually has.
+
+    Falls back to the legacy unweighted org-wide mean when no bucket data
+    exists (tiny / sparse orgs). Returns ``None`` when the org has no
+    per-tool DvM+ at all.
+
+    Args:
+        per_grp: org-wide ``per_tool_dvm_plus`` {tool_group: dvm_plus|None}.
+        by_bucket: ``per_tool_dvm_plus_by_bucket`` {bucket: {tool: dvm|None}}.
+        counts_by_bucket: ``per_tool_by_bucket`` {bucket: {tool: {n_prospects}}}.
+    """
+    per_grp = per_grp or {}
+    by_bucket = by_bucket or {}
+    counts_by_bucket = counts_by_bucket or {}
+
+    bucket_blend: list[tuple[float, float]] = []  # (composite, blend weight)
+    for bucket, weights in _BUCKET_TOOL_IMPORTANCE.items():
+        # Only blend buckets the org actually develops prospects in. The
+        # per-tool hybrid fallback below fills sparse cells WITHIN an
+        # existing bucket from the org-wide value, but a bucket with no
+        # data at all is skipped (not synthesized from org-wide grades) so
+        # the legacy unweighted-mean fallback stays reachable.
+        if bucket not in by_bucket:
+            continue
+        cell = by_bucket.get(bucket) or {}
+        num = den = 0.0
+        for tk, w in weights.items():
+            if w <= 0:
+                continue
+            v = cell.get(tk)
+            if v is None:                  # hybrid fallback to org-wide
+                v = per_grp.get(tk)
+            if v is None:
+                continue
+            num += w * v
+            den += w
+        if den <= 0:
+            continue
+        bucket_comp = num / den
+        cnt_cell = counts_by_bucket.get(bucket) or {}
+        bw = sum((cnt_cell.get(tk) or {}).get("n_prospects", 0) for tk in weights)
+        bucket_blend.append((bucket_comp, float(max(bw, 1))))
+
+    if bucket_blend:
+        tot_w = sum(w for _, w in bucket_blend)
+        return int(round(sum(c * w for c, w in bucket_blend) / tot_w))
+
+    # Legacy unweighted org-wide mean fallback (tiny / sparse orgs).
+    vs = [v for v in per_grp.values() if v is not None]
+    return int(round(sum(vs) / len(vs))) if vs else None
+
+
 # Statcast pitch-type code → TOOL_GROUPS pitcher-tool key. Used by the
 # league-pitch-usage aggregator to roll per-prospect arsenal usage_pct
 # rows into a single per-tool weight. Pitch codes that don't have a
@@ -4516,18 +6156,24 @@ def _league_pitch_usage(pitch_arsenals: dict[str, dict]) -> dict[str, float]:
     return {k: round(v / total, 4) for k, v in raw.items()}
 
 
+def _eff_grade(p: dict):
+    """The org-ranking grade for a prospect dict: xFV where rated, consensus FV otherwise."""
+    g = p.get("xfv_grade")
+    return g if g is not None else p.get("fv_raw")
+
+
 def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
-    """Sum of tiered points for the org's top N prospects (FV-sorted).
-    Prospects list is expected pre-sorted by fv_raw descending — that
-    matches how `m["prospects"]` is populated in `export_timeseries_json`."""
-    return round(sum(_fv_to_points(p.get("fv_raw")) for p in prospects[:n]), 2)
+    """Sum of tiered points for the org's top N prospects, ranked by xFV (consensus fallback)."""
+    ranked = sorted(prospects, key=lambda p: (_eff_grade(p) or 0), reverse=True)
+    return round(sum(_fv_to_points(_eff_grade(p)) for p in ranked[:n]), 2)
 
 
 def _depth_points(prospects: list[dict],
                   start: int = FARM_DEPTH_START,
                   end: int = FARM_DEPTH_END) -> float:
-    """Sum of tiered points for prospects ranked `start+1` through `end`."""
-    return round(sum(_fv_to_points(p.get("fv_raw")) for p in prospects[start:end]), 2)
+    """Sum of tiered points for prospects ranked `start+1` through `end`, by xFV (fallback FV)."""
+    ranked = sorted(prospects, key=lambda p: (_eff_grade(p) or 0), reverse=True)
+    return round(sum(_fv_to_points(_eff_grade(p)) for p in ranked[start:end]), 2)
 
 
 def _trajectory_score(fv_history: list[dict],
@@ -4580,6 +6226,31 @@ def _grad_pipeline_score(fv_events: list[dict],
     return round(total, 2)
 
 
+def _grad_pace_score(fv_events: list[dict],
+                     window_years: int = 7,
+                     fv_floor: float = 50.0,
+                     as_of: "date | None" = None) -> "float | None":
+    """Sustained graduation PACE: FV>=`fv_floor` debuts per YEAR over the trailing
+    `window_years`. Complements `_grad_pipeline_score` (FV-weighted POINTS in the
+    trailing 12mo) by measuring the RHYTHM of quality graduations — a steady stream
+    of MLB-quality grads vs. one lumpy class. Returns grads/yr (0.0 when the org has
+    events but no qualifying grads); None only when there are no events at all."""
+    if not fv_events:
+        return None
+    today = as_of or date.today()
+    cutoff = (today - timedelta(days=window_years * 365)).isoformat()
+    n = 0
+    for e in fv_events:
+        if e.get("kind") != "debut_marker":
+            continue
+        if (e.get("date") or "") < cutoff:
+            continue
+        fv = e.get("fv")
+        if fv is not None and fv >= fv_floor:
+            n += 1
+    return round(n / window_years, 3) if window_years else None
+
+
 def _rank_percentile(values: list[float]) -> list[float]:
     """Convert a list of scores to rank percentiles in [0, 1] where 1.0 is
     the best (highest input). Ties get the average percentile of the tied
@@ -4628,6 +6299,168 @@ def _normalize_to_100(values: list[float]) -> list[float]:
     if rng <= 0:
         return [50.0] * len(values)
     return [round(max(0.0, min(100.0, (v - lo) / rng * 100.0)), 1) for v in values]
+
+
+def _clamp(value: float, lo: float, hi: float) -> float:
+    return max(lo, min(hi, value))
+
+
+def _safe_float(value) -> float | None:
+    if value is None:
+        return None
+    try:
+        if isinstance(value, str):
+            value = value.strip().replace("%", "")
+            if not value or value == "—":
+                return None
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _live_signal_for_player(
+    *,
+    statline: dict | None,
+    statcast: dict | None,
+    zone: dict | None,
+    health: dict | None,
+    il_row: dict | None,
+    source_events: list[dict],
+) -> dict | None:
+    """Fast-moving overlay separate from source consensus."""
+    drivers: list[dict] = []
+    raw = 0.0
+    sample_weight = 0.0
+    sl = statline or {}
+    is_pitcher = bool(sl.get("is_pitcher"))
+    if sl:
+        if is_pitcher:
+            bf = _safe_float(sl.get("tbf"))
+            ip = _safe_float(sl.get("ip"))
+            if bf is None and ip is not None:
+                bf = ip * 4.25
+            sample_weight = (bf or 0.0) / ((bf or 0.0) + 180.0) if bf else 0.0
+            level_plus = _safe_float(sl.get("level_plus_pct"))
+            stf = _safe_float(sl.get("stf_plus_periph"))
+            if level_plus is not None:
+                v = _clamp(level_plus / 18.0, -3.0, 3.0)
+                raw += 0.8 * v
+                if abs(v) >= 0.8:
+                    drivers.append({"label": "level run prevention", "value": round(level_plus, 1), "impact": round(0.8 * v, 2)})
+            if stf is not None:
+                v = _clamp((stf - 100.0) / 12.0, -2.0, 2.0)
+                raw += 0.5 * v
+                if abs(v) >= 0.7:
+                    drivers.append({"label": "peripheral stuff", "value": round(stf, 1), "impact": round(0.5 * v, 2)})
+        else:
+            pa = _safe_float(sl.get("pa"))
+            if pa is None:
+                ab = _safe_float(sl.get("ab"))
+                games = _safe_float(sl.get("games"))
+                pa = ab if ab is not None else (games * 4.1 if games is not None else None)
+            sample_weight = (pa or 0.0) / ((pa or 0.0) + 120.0) if pa else 0.0
+            ops_plus = _safe_float(sl.get("ops_plus_level"))
+            if ops_plus is not None:
+                v = _clamp((ops_plus - 100.0) / 18.0, -3.0, 3.0)
+                raw += 0.9 * v
+                if abs(v) >= 0.8:
+                    drivers.append({"label": "level-adjusted offense", "value": round(ops_plus, 1), "impact": round(0.9 * v, 2)})
+    cq = ((statcast or {}).get("contact_quality") or {})
+    if cq and not is_pitcher:
+        bbe = _safe_float(cq.get("batted_balls"))
+        bbe_w = (bbe or 0.0) / ((bbe or 0.0) + 75.0) if bbe else 0.0
+        xwoba = _safe_float(cq.get("xwoba_est"))
+        xwobacon = _safe_float(cq.get("xwobacon_est"))
+        p90 = _safe_float(cq.get("p90_ev"))
+        sc_raw = 0.0
+        if xwoba is not None:
+            sc_raw += _clamp((xwoba - 0.330) / 0.035, -2.5, 2.5)
+        if xwobacon is not None:
+            sc_raw += 0.6 * _clamp((xwobacon - 0.390) / 0.045, -2.0, 2.0)
+        if p90 is not None:
+            sc_raw += 0.4 * _clamp((p90 - 104.0) / 4.0, -2.0, 2.0)
+        if sc_raw:
+            impact = 0.75 * bbe_w * sc_raw
+            raw += impact
+            sample_weight = max(sample_weight, bbe_w)
+            if abs(impact) >= 0.6:
+                drivers.append({"label": "contact quality", "value": round(sc_raw, 2), "impact": round(impact, 2)})
+    z = zone or {}
+    if z and not is_pitcher:
+        pitches = _safe_float(z.get("pitches"))
+        zone_w = (pitches or 0.0) / ((pitches or 0.0) + 250.0) if pitches else 0.0
+        zc = _safe_float(z.get("z_contact_pct"))
+        chase = _safe_float(z.get("o_swing_pct"))
+        zone_raw = 0.0
+        if zc is not None:
+            zone_raw += _clamp((zc - 82.0) / 7.0, -2.0, 2.0)
+        if chase is not None:
+            zone_raw += _clamp((27.0 - chase) / 6.0, -2.0, 2.0)
+        if zone_raw:
+            impact = 0.45 * zone_w * zone_raw
+            raw += impact
+            sample_weight = max(sample_weight, zone_w)
+            if abs(impact) >= 0.5:
+                drivers.append({"label": "zone discipline", "value": round(zone_raw, 2), "impact": round(impact, 2)})
+    source_raw = 0.0
+    latest_rank = None
+    for ev in source_events or []:
+        et = ev.get("event_type")
+        conf = float(ev.get("confidence") or 0.5)
+        payload = ev.get("payload") or {}
+        if et == "top100_rank" and ev.get("rank_after"):
+            latest_rank = ev.get("rank_after") if latest_rank is None else min(latest_rank, ev.get("rank_after"))
+            source_raw += conf * _clamp((101 - float(ev["rank_after"])) / 30.0, 0.4, 3.2)
+        elif et == "top100_joined":
+            source_raw += 4.0 * conf
+        elif et == "top100_dropped":
+            source_raw -= 4.0 * conf
+        elif et == "top100_movement":
+            diff = _safe_float(payload.get("june_diff"))
+            token = payload.get("june_token")
+            if token == "Dr.":
+                source_raw -= 4.0 * conf
+            elif diff is not None:
+                source_raw += conf * _clamp(diff / 8.0, -4.0, 4.0)
+        elif et == "statcast_by_age_standout":
+            source_raw += 1.5 * conf
+        elif et == "injury_note":
+            source_raw -= 1.0 * conf
+    if source_raw:
+        source_impact = _clamp(source_raw, -7.0, 7.0)
+        raw += source_impact
+        label = "BA/source movement"
+        if latest_rank is not None:
+            label = f"BA Top 100 #{latest_rank}"
+        drivers.append({"label": label, "impact": round(source_impact, 2)})
+    h = health or {}
+    il = il_row or {}
+    injury_penalty = 0.0
+    if il.get("is_on_il"):
+        injury_penalty -= 1.5
+        if str(il.get("type") or "").startswith("60"):
+            injury_penalty -= 1.0
+    days = _safe_float(h.get("il_days_12mo"))
+    stints = _safe_float(h.get("il_stints_12mo"))
+    if days and days >= 60:
+        injury_penalty -= 1.0
+    if stints and stints >= 2:
+        injury_penalty -= 1.25
+    if injury_penalty:
+        raw += injury_penalty
+        drivers.append({"label": "injury drag", "value": round(days or 0), "impact": round(injury_penalty, 2)})
+    if not drivers:
+        return None
+    final = _clamp(raw * max(0.45, min(1.0, 0.55 + sample_weight)), -8.0, 8.0)
+    if abs(final) < 0.35:
+        return None
+    return {
+        "delta": round(final, 2),
+        "sample_weight": round(sample_weight, 3),
+        "rank_pressure": round(-final * 8),
+        "tier": "up" if final >= 2.0 else "down" if final <= -2.0 else "watch",
+        "drivers": sorted(drivers, key=lambda d: abs(d.get("impact") or 0), reverse=True)[:5],
+    }
 
 
 # Letter-grade buckets calibrated for ~30 orgs (v6 — harsher curve).
@@ -4710,6 +6543,7 @@ def _build_org_fv_history(
     players: list[PlayerTimeseries],
     filter_real_trades,
     trades_by_player: dict[str, list[dict]],
+    xfv_hist_by_key: dict | None = None,
 ) -> dict[str, dict]:
     """
     Build per-org cumulative **development** FV time series + events.
@@ -4800,8 +6634,15 @@ def _build_org_fv_history(
         # the source's view as of the publication date), then the trade.
         # Each entry: (date, "snapshot", fv) | (date, "trade", from, to)
         stream: list[tuple] = []
+        # xFV development credit: use the xFV grade at each snapshot (joined by date),
+        # consensus FV fallback where xFV has no value for that snapshot. Dates match because
+        # xfv_history is built from the same points[].snapshot_date.
+        _xmap = {pt.get("d"): pt.get("x")
+                 for pt in ((xfv_hist_by_key or {}).get(p.player_key) or [])
+                 if pt.get("d") and pt.get("x") is not None}
         for pt in sorted_points:
-            stream.append((pt.snapshot_date, "snapshot", pt.consensus_fv_raw))
+            _fv = _xmap.get(pt.snapshot_date, pt.consensus_fv_raw)
+            stream.append((pt.snapshot_date, "snapshot", _fv))
         for t in trades:
             stream.append((t["date"], "trade", t["from"], t["to"]))
         if p.status == "debuted" and p.debut_date:
@@ -4956,6 +6797,71 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     roster_status = roster_status or {}
     ifa_spending_by_org = ifa_spending_by_org or {}
     contracts_by_key = dict(contracts_by_key or {})
+    source_events_by_key = load_source_events()
+    player_news_by_key = load_player_news()
+
+    # ── xFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
+    # farm / DvM+ / movement metrics. Loaded once here so every consumer below (the per-player
+    # movement `stock`, the $DvM+ pre-pass, the org dev-FV history) reads one consistent value.
+    # See _load_xfv_join for the one-run-lag rationale. Closures fall back to consensus FV
+    # wherever xFV abstains, so nothing goes null.
+    _xfv_by_key, _xfv_hist_by_key = _load_xfv_join()
+
+    # Per-player overall board-RANK history (metric_snapshots). Drives the
+    # de-noised rank_movement chip (movement.compute_rank_movement). overall_rank
+    # is computed below (after the _active_key sort), so the closure appends
+    # today's rank at serialize time; reads flat until rank history accrues.
+    _rank_hist_by_key = load_rank_history()
+    _today_iso = date.today().isoformat()
+
+    # Provisional (source-ungraded) prospects grouped by org -- folded into the farm
+    # top-end/depth ranking pool below (one-run lag). Filler ranks out; breakouts add
+    # bounded depth. NOT added to any raw-sum / DvM+ / surplus accumulator.
+    _prov_by_org = _load_ungraded_by_org()
+
+    def _rank_movement(pk, today_rank):
+        from movement import compute_rank_movement
+        hist = list(_rank_hist_by_key.get(pk) or [])
+        if today_rank is not None:
+            hist = [h for h in hist if h.get("snapshot_date") != _today_iso]
+            hist.append({"snapshot_date": _today_iso, "rank": int(today_rank)})
+        if len(hist) < 2:
+            return None
+        mv = compute_rank_movement(hist)
+        return mv if mv.get("basis") == "rank_step" else None
+
+    def _xg(pk, cons):
+        """xFV display grade for a player_key; consensus FV fallback where xFV abstains."""
+        g = (_xfv_by_key.get(pk) or {}).get("xfv_grade")
+        if g is not None:
+            return float(g)
+        return float(cons) if cons is not None else None
+
+    def _xsurplus(pk, cons_mm):
+        """xFV expected surplus ($M); consensus-surplus fallback where xFV abstains."""
+        s = (_xfv_by_key.get(pk) or {}).get("surplus_mm")
+        return float(s) if s is not None else cons_mm
+
+    def _xfv_series(pk):
+        """[(date, xFV grade)] from xfv_history for appreciation/movement; None when absent
+        (callers then fall back to the consensus snapshot stream)."""
+        h = _xfv_hist_by_key.get(pk)
+        if not h or len(h) < 2:
+            return None
+        out = [(pt.get("d"), pt.get("x")) for pt in h if pt.get("d") and pt.get("x") is not None]
+        return out if len(out) >= 2 else None
+
+    def _xfv_at(pk, snap_date, cons):
+        """xFV grade as-of a past snapshot date (latest history point dated <= snap_date);
+        consensus FV fallback. Keeps the prev-rank trend arrow on the same xFV basis as the
+        current rank."""
+        h = _xfv_hist_by_key.get(pk)
+        if h and snap_date:
+            cand = [pt.get("x") for pt in h
+                    if pt.get("d") and pt.get("x") is not None and pt["d"] <= snap_date]
+            if cand:
+                return float(cand[-1])
+        return float(cons) if cons is not None else None
 
     # v17 — Merge in manual contract overrides from
     # data/contract_overrides.json. These take precedence over Spotrac
@@ -4996,6 +6902,289 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     )
     from stat_flags import compute_stat_flags, compute_tool_flags
 
+    _ZONE_PERCENTILE_MIN_PITCHES = 100
+    _ZONE_HITTER_PERCENTILE_METRICS = {
+        "zone_rate": True,
+        "z_swing_pct": True,
+        "o_swing_pct": False,
+        "z_contact_pct": True,
+        "o_contact_pct": True,
+        "overall_contact_pct": True,
+        "whiff_pct": False,
+    }
+    _ZONE_PITCHER_PERCENTILE_METRICS = {
+        "zone_rate": True,
+        "z_swing_pct": False,
+        "o_swing_pct": True,
+        "z_contact_pct": False,
+        "o_contact_pct": False,
+        "overall_contact_pct": False,
+        "whiff_pct": True,
+    }
+    _STATCAST_CONTACT_MIN_BBE = 10
+    _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS = {
+        "xwoba_est": True,
+        "xwobacon_est": True,
+        "avg_ev": True,
+        "p90_ev": True,
+        "max_ev": True,
+        "hard_hit_pct": True,
+        "barrel_pct": True,
+        "pull_air_pct": True,
+    }
+    _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS = {
+        "xwoba_est": False,
+        "xwobacon_est": False,
+        "avg_ev": False,
+        "p90_ev": False,
+        "max_ev": False,
+        "hard_hit_pct": False,
+        "barrel_pct": False,
+    }
+
+    def _zone_num(v):
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    def _percentile_rank_100(value: float, values: list[float], higher_is_better: bool) -> float:
+        if not values:
+            return 0.0
+        if higher_is_better:
+            count = sum(1 for v in values if v <= value)
+        else:
+            count = sum(1 for v in values if v >= value)
+        return round(100.0 * count / len(values), 1)
+
+    def _normalize_zone_percentiles_for_export(zm_by_key: dict[str, dict]) -> dict[str, dict]:
+        """Recompute zone percentiles from the full stored level cohort.
+
+        Stored zone payloads carry embedded percentiles from the fetch batch.
+        Promotion-only refreshes can make an old-level split compare against a
+        tiny batch, e.g. one A-level promoted player. The export should always
+        compare each level split against every qualified stored peer at that
+        same level.
+        """
+        out = copy.deepcopy(zm_by_key or {})
+        rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
+        row_refs: list[dict] = []
+        seen: set[tuple[str, str, bool]] = set()
+        for key, payload in out.items():
+            if not isinstance(payload, dict):
+                continue
+            rows = payload.get("level_splits") or [payload]
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                level = row.get("level")
+                if not level:
+                    continue
+                is_pitcher = bool(row.get("is_pitcher"))
+                dedupe_key = (key, level, is_pitcher)
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                row_refs.append(row)
+                row["qualified"] = bool((row.get("pitches") or 0) >= _ZONE_PERCENTILE_MIN_PITCHES)
+                row["qualifier_min_pitches"] = _ZONE_PERCENTILE_MIN_PITCHES
+                row["percentile_sample_size"] = None
+                row["percentiles"] = {}
+                if row["qualified"]:
+                    rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
+
+        for (_level, is_pitcher), level_rows in rows_by_level_side.items():
+            metric_directions = (
+                _ZONE_PITCHER_PERCENTILE_METRICS
+                if is_pitcher else _ZONE_HITTER_PERCENTILE_METRICS
+            )
+            n = len(level_rows)
+            for row in level_rows:
+                row["qualified"] = True
+                row["percentile_sample_size"] = n
+                for metric, higher_is_better in metric_directions.items():
+                    value = _zone_num(row.get(metric))
+                    if value is None:
+                        continue
+                    vals = [
+                        _zone_num(peer.get(metric))
+                        for peer in level_rows
+                        if _zone_num(peer.get(metric)) is not None
+                    ]
+                    row["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
+
+        for payload in out.values():
+            if not isinstance(payload, dict):
+                continue
+            split_map = {
+                (row.get("level"), bool(row.get("is_pitcher"))): row
+                for row in payload.get("level_splits") or []
+                if isinstance(row, dict)
+            }
+            own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
+            normalized_primary = split_map.get(own_key)
+            if normalized_primary:
+                for field in (
+                    "qualified",
+                    "percentile_sample_size",
+                    "qualifier_min_pitches",
+                    "percentiles",
+                ):
+                    payload[field] = copy.deepcopy(normalized_primary.get(field))
+        return out
+
+    zone_metrics = _normalize_zone_percentiles_for_export(zone_metrics)
+
+    def _num(v):
+        if v is None or v == "":
+            return None
+        try:
+            return float(v)
+        except (TypeError, ValueError):
+            return None
+
+    def _pa_adjust_xwoba_from_rates(xwobacon: float | None, stat_row: dict | None) -> float | None:
+        """Convert contact-only xwOBAcon to PA-level xwOBA when BB/K exist."""
+        if xwobacon is None or not stat_row:
+            return xwobacon
+        bb_pct = _num(stat_row.get("bb_pct"))
+        k_pct = _num(stat_row.get("k_pct"))
+        if bb_pct is None or k_pct is None:
+            return xwobacon
+        bb_rate = max(0.0, min(0.45, bb_pct / 100.0))
+        k_rate = max(0.0, min(0.55, k_pct / 100.0))
+        bip_rate = max(0.0, min(1.0, 1.0 - bb_rate - k_rate))
+        # 2023 unintentional BB weight was ~0.69; HBP is unavailable in
+        # several MiLB statline rows, so leave it out instead of guessing.
+        est = bb_rate * 0.69 + bip_rate * xwobacon
+        return round(max(0.02, min(1.20, est)), 3)
+
+    def _adjust_statcast_xwoba_for_export(scm: dict | None, sl: dict | None, season_rows: list[dict]) -> dict | None:
+        if not scm:
+            return scm
+        out = copy.deepcopy(scm)
+        rows_by_level = {
+            r.get("level"): r for r in (season_rows or [])
+            if isinstance(r, dict) and r.get("level")
+        }
+
+        def _apply(block: dict | None, stat_row: dict | None) -> None:
+            cq = (block or {}).get("contact_quality") or {}
+            if not cq:
+                return
+            raw = _num(cq.get("xwobacon_est"))
+            if raw is None:
+                raw = _num(cq.get("xwoba_est"))
+            if raw is None:
+                return
+            cq["xwobacon_est"] = round(raw, 3)
+            cq["xwoba_est"] = _pa_adjust_xwoba_from_rates(raw, stat_row)
+            if cq.get("xwoba_est") != cq.get("xwobacon_est"):
+                cq["xwoba_model"] = "knn_ev_la_pa_adjusted"
+
+        _apply(out, sl)
+        for split in out.get("level_splits") or []:
+            if not isinstance(split, dict):
+                continue
+            stat_row = rows_by_level.get(split.get("level")) or sl
+            _apply(split, stat_row)
+        return out
+
+    def _statcast_contact_metric(cq: dict, metric: str) -> float | None:
+        if metric == "pull_air_pct":
+            return _num((cq.get("spray") or {}).get("pull_air_pct"))
+        return _num(cq.get(metric))
+
+    def _normalize_statcast_contact_percentiles_for_export(scm_by_key: dict[str, dict]) -> dict[str, dict]:
+        """Attach level/side contact-quality percentiles from stored rows.
+
+        This is export-only and uses already-fetched Statcast contact_quality
+        payloads, so it does not require another MLB API pass.
+        """
+        out = copy.deepcopy(scm_by_key or {})
+        rows_by_level_side: dict[tuple[str, bool], list[dict]] = {}
+        seen: set[tuple[str, str, bool]] = set()
+        for key, payload in out.items():
+            if not isinstance(payload, dict):
+                continue
+            rows = payload.get("level_splits") or [payload]
+            for row in rows:
+                if not isinstance(row, dict):
+                    continue
+                level = row.get("level")
+                if not level:
+                    continue
+                is_pitcher = bool(row.get("is_pitcher"))
+                dedupe_key = (key, level, is_pitcher)
+                if dedupe_key in seen:
+                    continue
+                seen.add(dedupe_key)
+                cq = row.get("contact_quality") or {}
+                bbe = int(cq.get("batted_balls") or 0)
+                cq["qualified"] = bool(bbe >= _STATCAST_CONTACT_MIN_BBE)
+                cq["qualifier_min_bbe"] = _STATCAST_CONTACT_MIN_BBE
+                cq["percentile_sample_size"] = None
+                cq["percentiles"] = {}
+                if cq["qualified"]:
+                    rows_by_level_side.setdefault((level, is_pitcher), []).append(row)
+
+        for (_level, is_pitcher), level_rows in rows_by_level_side.items():
+            metric_directions = (
+                _STATCAST_PITCHER_CONTACT_PERCENTILE_METRICS
+                if is_pitcher else _STATCAST_HITTER_CONTACT_PERCENTILE_METRICS
+            )
+            n = len(level_rows)
+            for row in level_rows:
+                cq = row.get("contact_quality") or {}
+                cq["percentile_sample_size"] = n
+                for metric, higher_is_better in metric_directions.items():
+                    value = _statcast_contact_metric(cq, metric)
+                    if value is None:
+                        continue
+                    vals = [
+                        _statcast_contact_metric(peer.get("contact_quality") or {}, metric)
+                        for peer in level_rows
+                    ]
+                    vals = [v for v in vals if v is not None]
+                    if len(vals) < 5:
+                        continue
+                    cq["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
+
+        for payload in out.values():
+            if not isinstance(payload, dict):
+                continue
+            split_map = {
+                (row.get("level"), bool(row.get("is_pitcher"))): row
+                for row in payload.get("level_splits") or []
+                if isinstance(row, dict)
+            }
+            own_key = (payload.get("level"), bool(payload.get("is_pitcher")))
+            normalized_primary = split_map.get(own_key)
+            if normalized_primary:
+                payload["contact_quality"] = copy.deepcopy(normalized_primary.get("contact_quality") or {})
+        return out
+
+    statcast_metrics = _normalize_statcast_contact_percentiles_for_export(statcast_metrics)
+
+    def _prefer_metric_current_level(metric: dict | None, current_level: str | None) -> dict | None:
+        if not metric or not current_level:
+            return metric
+        splits = metric.get("level_splits") or []
+        match = next(
+            (row for row in splits
+             if isinstance(row, dict) and row.get("level") == current_level),
+            None,
+        )
+        if not match:
+            return metric
+        out = copy.deepcopy(metric)
+        keep_splits = out.get("level_splits") or []
+        out.update(copy.deepcopy(match))
+        out["level_splits"] = keep_splits
+        return out
+
     # Empirical level baselines computed from the career_stats payload we
     # already have. age_baselines / ops_norms / era_norms feed into the
     # per-player ETA + age-vs-level calls below.
@@ -5014,12 +7203,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 graduate_mlb_org_by_key[key] = org_code
 
     roster_org_by_key: dict[str, str] = {}
+    roster_level_by_key: dict[str, str] = {}
     for org_code, levels in rosters_by_org.items():
-        for recs in levels.values():
+        for level_name, recs in levels.items():
             for rec in recs or []:
                 key = rec.get("player_key")
                 if key and key not in roster_org_by_key:
                     roster_org_by_key[key] = org_code
+                if key and key not in roster_level_by_key:
+                    roster_level_by_key[key] = level_name
 
     # ── Per-org promotion-phase tendency (H1 vs H2) ───────────────────────
     # Walks every promotion event across every prospect (active +
@@ -5070,6 +7262,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     org_h1[org] = org_h1.get(org, 0) + 1
         out: dict[str, dict] = {}
+        per_org_n: dict[str, int] = {}
         for org in set(list(org_h1) + list(org_h2)):
             h1 = org_h1.get(org, 0)
             h2 = org_h2.get(org, 0)
@@ -5078,11 +7271,29 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # Too few events to anchor a rate; skip — the player's
                 # ETA falls back to the league-default half-season adj.
                 continue
+            per_org_n[org] = n
             out[org] = {
                 "h1_rate":   round(h1 / n, 3),
                 "h2_rate":   round(h2 / n, 3),
                 "sample_n":  n,
             }
+        # v31.11 — Org promotion aggressiveness. Index is the org's
+        # rolling-3yr promotion+debut count divided by the league
+        # median count over that same window. >1.0 = more aggressive
+        # promoter than the median org (LAD/TBR profile), <1.0 = more
+        # conservative (PIT/CIN profile). Consumed by eta.py as a
+        # floor multiplier — aggressive orgs let quality cluster
+        # compress further; conservative orgs hold the line.
+        if per_org_n:
+            sorted_n = sorted(per_org_n.values())
+            mid = len(sorted_n) // 2
+            if len(sorted_n) % 2 == 1:
+                median_n = sorted_n[mid]
+            else:
+                median_n = (sorted_n[mid - 1] + sorted_n[mid]) / 2
+            if median_n > 0:
+                for org, n in per_org_n.items():
+                    out[org]["aggressiveness_index"] = round(n / median_n, 3)
         return out
 
     org_promotion_tendencies = _compute_org_promotion_tendencies()
@@ -5906,11 +8117,83 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                   if "is_pitcher" in _mlb_row
                                   else _sl_existing.get("is_pitcher"),
                 }
-        level = sl.get("level") if sl else None
+        _scm_pre = statcast_metrics.get(p.player_key)
+        _latest_played_level_pre = None
+        for _g in ((_scm_pre or {}).get("recent_games") or []):
+            _lvl = str((_g or {}).get("level") or "").strip()
+            if _lvl:
+                _latest_played_level_pre = _lvl
+                break
+        _level_changes_pre = _level_changes_with_debut(p.player_key)
+        _latest_level_event_pre = None
+        for _lc in _level_changes_pre:
+            _lc_date = _lc.get("date") or ""
+            if _lc_date and _lc_date > date.today().isoformat():
+                continue
+            if _lc.get("to_level"):
+                _latest_level_event_pre = _lc
+        _statline_level_pre = sl.get("level") if sl else None
+        _current_level_pre = None
+        if p.status == "debuted" or (roster_status.get(p.player_key) or {}).get("mlb_debut_date"):
+            _rs_pre = roster_status.get(p.player_key) or {}
+            _debut_date_pre = _rs_pre.get("mlb_debut_date") or p.debut_date or ""
+            _post_debut_move_pre = None
+            _debut_event_pre = None
+            for _lc in reversed(_level_changes_pre):
+                _lc_date = _lc.get("date") or ""
+                if (
+                    _lc.get("kind") in {"promotion", "demotion"}
+                    and _lc.get("to_level")
+                    and _debut_date_pre
+                    and _lc_date > _debut_date_pre
+                ):
+                    _post_debut_move_pre = _lc
+                    break
+                if _debut_event_pre is None and _lc.get("kind") == "debut" and _lc.get("to_level"):
+                    _debut_event_pre = _lc
+            _current_level_pre = (
+                _latest_played_level_pre
+                or ((_post_debut_move_pre or {}).get("to_level"))
+                or ((_debut_event_pre or {}).get("to_level"))
+                or "MLB"
+            )
+        else:
+            _current_level_pre = (
+                _latest_played_level_pre
+                or roster_level_by_key.get(p.player_key)
+                or ((_latest_level_event_pre or {}).get("to_level"))
+                or _statline_level_pre
+            )
+        # If a player has multiple same-season level rows, use the current
+        # assignment's row for the headline statline when it exists. The
+        # full set is exported below as current_season_statlines so the UI
+        # can show AA + AAA instead of implying one slash covers both.
+        _cy_pre = date.today().year
+        _rows_for_p_pre = (career_stats or {}).get(p.player_key, []) or []
+        _current_level_row_pre = next(
+            (r for r in _rows_for_p_pre
+             if r.get("season") == _cy_pre and r.get("level") == _current_level_pre),
+            None,
+        )
+        if _current_level_row_pre and sl:
+            sl = {
+                **sl,
+                **_current_level_row_pre,
+                "level": _current_level_pre,
+                "season": _cy_pre,
+                "is_prior_season": False,
+                "mlbam_id": _current_level_row_pre.get("mlbam_id") or sl.get("mlbam_id"),
+                "is_pitcher": _current_level_row_pre.get("is_pitcher")
+                              if "is_pitcher" in _current_level_row_pre
+                              else sl.get("is_pitcher"),
+            }
+        level = sl.get("level") if sl else _current_level_pre
         avl = score_age_vs_level(age, level, baselines=age_baselines)
         pa = pitch_arsenals.get(p.player_key)
         zm = zone_metrics.get(p.player_key)
-        scm = statcast_metrics.get(p.player_key)
+        scm = _scm_pre
+        zm = _prefer_metric_current_level(zm, _current_level_pre)
+        scm = _prefer_metric_current_level(scm, _current_level_pre)
         sm = sabermetrics.get(p.player_key)
         is_pitcher = bool(p.position and p.position.split("/")[0] in PITCHER_POS_SET)
         latest_fv = p.points[-1].consensus_fv_raw if p.points else None
@@ -5991,9 +8274,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     era = float(sl_out.get("era")) if sl_out.get("era") else None
                     avg_era = norms_perf.get("avg_era")
                     if era and avg_era and era > 0:
-                        era_minus = round(era / avg_era * 100)
+                        # Empirical-Bayes shrinkage toward the level mean by
+                        # sample size before indexing — a few-IP line no longer
+                        # reads as an extreme ERA-. K_IP ≈ ERA stabilization (IP).
+                        ip = float(sl_out.get("ip") or 0)
+                        K_IP = 50.0
+                        era_adj = (ip * era + K_IP * avg_era) / (ip + K_IP)
+                        era_minus = round(era_adj / avg_era * 100)
                         sl_out["era_minus_level"] = era_minus
-                        sl_out["level_plus_pct"] = round((avg_era - era) / avg_era * 100)
+                        sl_out["level_plus_pct"] = round((avg_era - era_adj) / avg_era * 100)
                     # Peripheral STF+ (K%, BB%, HR/9 vs level mean). Replaces
                     # the scouting-grade composite as the headline STF+ chip;
                     # the scouting composite is still computed in tools.* but
@@ -6006,11 +8295,46 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     ops = float(ops_str) if ops_str else None
                     avg_ops = norms_perf.get("avg_ops")
                     if ops and avg_ops and avg_ops > 0:
-                        ops_plus = round(ops / avg_ops * 100)
+                        # Empirical-Bayes shrinkage toward the level mean by
+                        # sample size before indexing — a 4-AB line no longer
+                        # reads OPS+ 374. K_AB ≈ OPS stabilization (AB units).
+                        ab = float(sl_out.get("ab") or 0)
+                        K_AB = 170.0
+                        ops_adj = (ab * ops + K_AB * avg_ops) / (ab + K_AB)
+                        ops_plus = round(ops_adj / avg_ops * 100)
                         sl_out["ops_plus_level"] = ops_plus
-                        sl_out["level_plus_pct"] = round((ops - avg_ops) / avg_ops * 100)
+                        sl_out["level_plus_pct"] = round((ops_adj - avg_ops) / avg_ops * 100)
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
+
+        _current_season_statlines = []
+        for _r in (career_stats or {}).get(p.player_key, []) or []:
+            if _r.get("season") != date.today().year:
+                continue
+            _rr = dict(_r)
+            _lvl = _rr.get("level")
+            _norms_perf = (level_norms.get(_lvl) or {}).get("perf") or {} if _lvl else {}
+            try:
+                if _rr.get("is_pitcher"):
+                    _era = float(_rr.get("era")) if _rr.get("era") and _rr.get("era") != "—" else None
+                    _avg_era = _norms_perf.get("avg_era")
+                    if _era and _avg_era and _era > 0:
+                        _rr["era_minus_level"] = round(_era / _avg_era * 100)
+                else:
+                    _ops = float(_rr.get("ops")) if _rr.get("ops") and _rr.get("ops") != "—" else None
+                    _avg_ops = _norms_perf.get("avg_ops")
+                    if _ops and _avg_ops and _avg_ops > 0:
+                        _rr["ops_plus_level"] = round(_ops / _avg_ops * 100)
+            except (TypeError, ValueError, ZeroDivisionError):
+                pass
+            _current_season_statlines.append(_rr)
+        _current_season_statlines.sort(
+            key=lambda r: (
+                0 if r.get("level") == _current_level_pre else 1,
+                _LEVEL_SORT_ORDER.get(r.get("level"), 99),
+            )
+        )
+        scm = _adjust_statcast_xwoba_for_export(scm, sl_out, _current_season_statlines)
 
         # Scouting flags — green/red rate-stat indicators driven by the
         # current statline + the level norms we already built. Skipped for
@@ -6279,6 +8603,102 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _mlbam = player_ids.get(p.player_key)
         if _mlbam is None and sl_out:
             _mlbam = sl_out.get("mlbam_id")
+        _latest_played_level = None
+        for _g in ((scm or {}).get("recent_games") or []):
+            _lvl = str((_g or {}).get("level") or "").strip()
+            if _lvl:
+                _latest_played_level = _lvl
+                break
+        _level_changes = _level_changes_with_debut(p.player_key)
+        _latest_level_event = None
+        for _lc in _level_changes:
+            _lc_date = _lc.get("date") or ""
+            if _lc_date and _lc_date > date.today().isoformat():
+                continue
+            if _lc.get("to_level"):
+                _latest_level_event = _lc
+        _statline_level = sl_out.get("level") if sl_out else None
+        _current_level = None
+        if p.status == "debuted" or (rs.get("mlb_debut_date")):
+            _debut_date_current = rs.get("mlb_debut_date") or p.debut_date or ""
+            _post_debut_move = None
+            _debut_event = None
+            for _lc in reversed(_level_changes):
+                _lc_date = _lc.get("date") or ""
+                if (
+                    _lc.get("kind") in {"promotion", "demotion"}
+                    and _lc.get("to_level")
+                    and _debut_date_current
+                    and _lc_date > _debut_date_current
+                ):
+                    _post_debut_move = _lc
+                    break
+                if _debut_event is None and _lc.get("kind") == "debut" and _lc.get("to_level"):
+                    _debut_event = _lc
+            _current_level = (
+                _latest_played_level
+                or ((_post_debut_move or {}).get("to_level"))
+                or ((_debut_event or {}).get("to_level"))
+                or "MLB"
+            )
+        else:
+            _current_level = (
+                _latest_played_level
+                or roster_level_by_key.get(p.player_key)
+                or ((_latest_level_event or {}).get("to_level"))
+                or _statline_level
+            )
+        _live_signal = _live_signal_for_player(
+            statline=sl_out,
+            statcast=scm,
+            zone=zm,
+            health=health,
+            il_row=il_status.get(p.player_key) or {},
+            source_events=source_events_by_key.get(p.player_key, []),
+        )
+        _source_events = source_events_by_key.get(p.player_key, [])
+        _event_priority = {
+            "statcast_by_age_standout": 0,
+            "injury_note": 1,
+            "top100_rank": 2,
+            "top100_movement": 3,
+            "top100_joined": 4,
+            "top100_dropped": 5,
+        }
+        def _event_date_sort(ev: dict) -> int:
+            raw = str(ev.get("event_date") or "").replace("-", "")
+            try:
+                return -int(raw)
+            except ValueError:
+                return 0
+        _source_events_export = sorted(
+            _source_events,
+            key=lambda ev: (
+                _event_priority.get(ev.get("event_type"), 9),
+                _event_date_sort(ev),
+            ),
+        )[:10]
+        # v34/v35 — baked engine surplus: timing-aware expected SV ($M) + the
+        # outcome-bucket probabilities + the disagreement-widened distribution +
+        # (for debuted players) the trade/total/realized split + WAG. The frontend
+        # reads this block directly instead of recomputing a timing-naive curve.
+        _is_pitcher_vf = _vf_is_pitcher_position(p.position)
+        _surplus = _build_surplus_payload(
+            latest_fv, _is_pitcher_vf, p.position,
+            age=age, eta_years=_eta_years_from(eta, date.today().year),
+            fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
+        # WAG baseline = the player's xFV grade (locked at debut for graduates) where
+        # available; None falls back to consensus inside _build_debuted_payload.
+        _wag_fv = (_xfv_by_key.get(p.player_key) or {}).get("xfv_grade")
+        _debuted_value = (
+            _build_debuted_payload(
+                latest_fv, _is_pitcher_vf, p.position, age=age,
+                career_war=career_war.get(p.player_key),
+                roster_status=roster_status.get(p.player_key),
+                contract=contracts_by_key.get(p.player_key),
+                career_stats=career_stats.get(p.player_key),
+                wag_fv=_wag_fv)
+            if p.status == "debuted" else None)
         payload = {
             "player_key": p.player_key,
             "player_name": p.player_name,
@@ -6286,6 +8706,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "position": p.position,
             "org": display_org,
             "status": p.status,
+            # Current roster/assignment level for display context. Kept
+            # separate from statline.level, which remains the level where
+            # the exported season stat row was accumulated. This avoids
+            # showing a promoted player as "AA" when their latest stats are
+            # AA but their current affiliate is AAA.
+            "current_level": _current_level,
+            "statline_level": _statline_level,
             # v20 — Consolidated to a single `debut_date` field. Was a
             # pair (graduation_date + mlb_debut_date) under the old
             # threshold-based graduation model. With debut_date now
@@ -6300,6 +8727,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # the player's org. None for graduated/inactive (the maps below
             # only carry actives). Drives the rank pills on prospect detail.
             "overall_rank": overall_rank_by_key.get(p.player_key),
+            # De-noised "since last real change" board-rank movement (xFV rank
+            # once _active_key ranks by xFV). None until rank history accrues or
+            # when the move is within the dead-band; the xFV grade move on
+            # `stock` carries the immediate signal. Best-effort.
+            "rank_movement": _rank_movement(p.player_key, overall_rank_by_key.get(p.player_key)),
             # Position in the same FV-sorted list, but computed off the
             # second-to-last snapshot. Drives the rank-trend ▲/▼/—
             # under the diamond on list rows. None for players with
@@ -6316,6 +8748,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "fv_low_date": p.fv_low_date,
             "fv_open": p.fv_open,
             "fv_close": p.fv_close,
+            "surplus": _surplus,
+            "debuted_value": _debuted_value,
             # v26 — '+' upside flag on the latest observation. Used by
             # frontend sort comparators (42+ ranks above 42 < 43) and
             # for rendering "42+" on aggregate displays anchored on fv_close.
@@ -6334,8 +8768,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # multiple snapshots. Frontend `is-single-source` outline +
             # corner mark read off this field.
             "fv_total_instances": getattr(p, "fv_total_instances", 0),
-            "stock": stock_movement(p),
+            # `stock` is stamped below by the movement engine (compute_movement),
+            # with consensus.stock_movement as the exception-path fallback.
+            "live_signal": _live_signal,
+            "source_events": _source_events_export,
+            "player_news": player_news_by_key.get(p.player_key, []),
             "statline": sl_out,
+            "current_season_statlines": _current_season_statlines,
             "stat_flags": flags,
             # Scouting tool grades — consensus per-tool 20-80 grades,
             # three composites (offensive/defensive/overall for hitters;
@@ -6385,7 +8824,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # (kind == "debut") so the transaction-history block can
             # render it distinctly. Drives promotion/demotion markers on
             # the FV chart.
-            "level_changes": _level_changes_with_debut(p.player_key),
+            "level_changes": _level_changes,
             # MLB roster status: debut, options used, 40-man state,
             # accumulated service time, arb cycle bucket. Empty dict if
             # the player has not yet appeared in the majors.
@@ -6491,6 +8930,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     # already includes a "+" suffix when this is True; the
                     # separate boolean lets sort comparators tie-break.
                     "consensus_fv_plus": bool(getattr(pt, "consensus_fv_plus", False)),
+                    # Point-in-time org for the Time Machine (the org as of this
+                    # snapshot, not "now"). None on a gap → neutral placeholder.
+                    "org": getattr(pt, "org", None),
                     "shrinkage_weight": pt.shrinkage_weight,
                     "avg_rank": pt.avg_rank,
                     "avg_fv": pt.avg_fv,
@@ -6526,18 +8968,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         else:
             payload["boom_label"] = None
 
-        # Performance-anchored movement engine (replaces the FV-delta-only
-        # `stock_movement`). compute_movement reads statline / career_stats
-        # / age_vs_level / tools_consensus / acquisition / prospect_savant —
-        # all of which are stamped on the payload above. Falls back to the
-        # legacy `stock_movement` output (already in payload["stock"]) if
-        # the engine raises.
+        # De-noised movement engine. compute_genuine_movement measures the
+        # most-recent SAME-SOURCE consensus step (only sources grading the
+        # player at both endpoints count), so panel-composition changes and
+        # lone-outlier re-grades no longer masquerade as movement; on-field
+        # performance is the backup. Reads points[].per_source /
+        # sources_contributing / fv_spread / shrinkage_weight + statline /
+        # career_stats — all stamped on the payload above. Output is a
+        # backward-compatible superset of compute_movement's `stock` shape.
+        # Fallback chain on failure: compute_genuine_movement →
+        # compute_movement (bucket engine) → stock_movement (legacy FV delta).
         try:
-            from spotlights import compute_movement
-            payload["stock"] = compute_movement(payload)
+            from movement import compute_genuine_movement, xfv_movement
+            _stock = compute_genuine_movement(payload)
+            # Owner: movement is the xFV delta where xFV has a trajectory. Override the
+            # headline move (direction/delta/basis/endpoints) with the xFV "since last real
+            # change" step; keep the consensus perf/skills drivers as supporting context.
+            # Falls back to the consensus same-source step when xFV has no history.
+            _xm = xfv_movement(_xfv_series(p.player_key))
+            if _xm:
+                _stock.update(_xm)
+            payload["stock"] = _stock
         except Exception:
-            log.exception("compute_movement failed for %s — keeping legacy "
-                          "FV-delta stock signal", p.player_key)
+            log.exception("compute_genuine_movement failed for %s — falling "
+                          "back to the bucket / legacy stock signal", p.player_key)
+            try:
+                from spotlights import compute_movement
+                payload["stock"] = compute_movement(payload)
+            except Exception:
+                payload["stock"] = stock_movement(p)
 
         return payload
 
@@ -6577,6 +9036,35 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # source-noise but still excise the obvious garbage. Players below
     # this floor fall into `inactives` and stay out of farm rollups.
     MIN_PROSPECT_FV = 30
+
+    # ── HISTORICAL-LEAK FIX (active-prospect recency ceiling) ─────────────
+    # A player not ranked by ANY prospect source in HARD_FV_STALE_YEARS years
+    # has aged out of prospect status → INACTIVE regardless of whether they're
+    # still grinding in the minors or sitting on an IL. The fv_stale gate below
+    # only deactivates stale players who ALSO stopped playing (`fv_stale AND
+    # play_stale`), which let players who keep playing affiliated ball linger in
+    # the active pool indefinitely with a years-old grade. The 2017-2020
+    # historical backfill exposed this: it introduced players whose ENTIRE
+    # ranking history is 5+ years old (still active in MiLB, never debuted) →
+    # they defaulted to "active" and leaked into current farm pools, shifting
+    # farm rankings. This ceiling makes the current pool independent of any
+    # historical ingestion (past OR future) — a purely-historical cohort can
+    # never enter the current active pool. (Time Machine / backtest read the
+    # full snapshot history directly and are unaffected.)
+    # Calendar-year basis (not a rolling day cutoff): a grade dated in the
+    # current year OR within HARD_FV_STALE_YEARS prior calendar years keeps a
+    # prospect active; anything older = aged out. Calendar years match how
+    # prospect sources actually publish (annual preseason + midseason cycles),
+    # and the rolling cutoff had a boundary artifact - an Aug-2023 grade
+    # survived a "3 years ago" test that a Jan-2023 grade failed. Lowered 5 -> 2
+    # (2026-06): the old 5y ceiling only caught the obvious 2017-2020 historical
+    # backfill and let still-grinding prospects linger on a years-old grade
+    # (e.g. Cristopher Larez, last NYM grade 2023-08). Sources re-grade every
+    # prospect of note at least annually, so 2+ idle calendar years = the
+    # industry has dropped them.
+    HARD_FV_STALE_YEARS = int(os.environ.get("HARD_FV_STALE_YEARS", "2"))
+    hard_fv_min_year = today.year - HARD_FV_STALE_YEARS
+    _audit_aged_out = 0
 
     actives: list[PlayerTimeseries] = []
     inactives: list[PlayerTimeseries] = []
@@ -6639,6 +9127,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _resolved_org = _active_display_org(p)
         if _resolved_org not in MLB_30_ORGS:
             inactives.append(p)
+            continue
+
+        # ── Active-prospect recency ceiling ────────────────────────────────
+        # No source has graded this player in HARD_FV_STALE_YEARS+ calendar
+        # years → aged out of prospect status → INACTIVE, even if still playing
+        # affiliated ball or sitting on an IL. This is the ONE FV-staleness gate
+        # that fires regardless of play: the softer fv_stale gate below requires
+        # play-staleness too, which let still-grinding prospects linger forever
+        # on a years-old grade (the Cristopher Larez case - last graded 2023,
+        # still in the minors). Takes precedence over the IL bypass + the softer
+        # gates, and also subsumes the 2017-2020 historical-backfill leak this
+        # ceiling first fixed. (Time Machine / backtest read the full snapshot
+        # history directly and are unaffected.)
+        if latest_date.year < hard_fv_min_year:
+            inactives.append(p)
+            _audit_aged_out += 1
             continue
 
         # v19 — Compute play-staleness up front so the new gates can use
@@ -6743,9 +9247,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # log so the magnitude of each gate's contribution is visible at a
     # glance. Pre-dedup counts (mlbam_id dedup runs below).
     log.info(
-        "active-pool cleanup: %d low-FV (<%d), %d play-2yr-stale, %d stale-IL, %d FV+play stale "
-        "-> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
-        _audit_low_fv, MIN_PROSPECT_FV, _audit_play2yr, _audit_stale_il, _audit_fv_play_stale,
+        "active-pool cleanup: %d low-FV (<%d), %d aged-out (no grade in %d+ cal-yr), %d play-2yr-stale, "
+        "%d stale-IL, %d FV+play stale -> actives=%d, debuts=%d, inactives=%d (pre-dedup)",
+        _audit_low_fv, MIN_PROSPECT_FV, _audit_aged_out, HARD_FV_STALE_YEARS, _audit_play2yr,
+        _audit_stale_il, _audit_fv_play_stale,
         len(actives), len(grads), len(inactives),
     )
 
@@ -6762,7 +9267,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         by_mlbid: dict = {}
         drop_count = 0
         for cand in bucket:
-            mid = player_ids.get(cand.player_key) if player_ids else None
+            # Resolve the MLBAM id the SAME way _serialize does — fall back to the
+            # statline's mlbam_id when player_ids lacks the key. Without this,
+            # name-only "__noid" variant records (whose id is resolved later, at
+            # serialization) bypass the dedup and the same player is double-counted
+            # in the pool, org counts, rankings, and surplus.
+            mid = (player_ids.get(cand.player_key) if player_ids else None) \
+                  or ((statlines or {}).get(cand.player_key) or {}).get("mlbam_id")
             if not mid:
                 by_mlbid[("nokey", cand.player_key)] = cand
                 continue
@@ -6770,9 +9281,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if existing is None:
                 by_mlbid[mid] = cand
                 continue
-            ex_latest = max((s.snapshot_date for s in (existing.points or [])), default="")
-            new_latest = max((s.snapshot_date for s in (cand.points or [])), default="")
-            if new_latest > ex_latest:
+            # Keep the RICHER record (more snapshots), tie-broken by recency, so
+            # the fuller multi-source entry wins over a sparse variant.
+            ex_score = (len(existing.points or []),
+                        max((s.snapshot_date for s in (existing.points or [])), default=""))
+            new_score = (len(cand.points or []),
+                         max((s.snapshot_date for s in (cand.points or [])), default=""))
+            if new_score > ex_score:
                 keep, drop = cand, existing
             else:
                 keep, drop = existing, cand
@@ -6792,6 +9307,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     actives = _dedup_by_mlbam(actives, "actives")
     grads = _dedup_by_mlbam(grads, "graduates")
     inactives = _dedup_by_mlbam(inactives, "inactives")
+
+    # ── DATA-INTEGRITY GUARD (historical-leak tripwire) ───────────────────
+    # The active pool must contain only current prospects: none graduated, none
+    # FV-stale beyond the aged-out ceiling. This catches regressions if a future
+    # change weakens the cascade or a new historical ingestion sneaks players in.
+    # Non-fatal: log loudly so the rebuild surfaces it (the pipeline still runs).
+    _leak_graduated = [p.player_key for p in actives if p.status == "debuted"]
+    _leak_aged_out = [
+        p.player_key for p in actives
+        if p.points and p.points[-1].snapshot_date
+        and int(p.points[-1].snapshot_date[:4]) < hard_fv_min_year
+    ]
+    if _leak_graduated or _leak_aged_out:
+        log.error(
+            "INTEGRITY GUARD: active pool leak detected — %d graduated, %d aged-out "
+            "(no grade in %d+ cal-yr). Examples: %s",
+            len(_leak_graduated), len(_leak_aged_out), HARD_FV_STALE_YEARS,
+            (_leak_graduated + _leak_aged_out)[:5],
+        )
+    else:
+        log.info("integrity guard: active pool clean (0 graduated, 0 aged-out).")
 
     # v29 — Statcast+ map: per-player composite indexed by player_key,
     # populated from the active prospect set (the side-aware pool). Has
@@ -6822,6 +9358,37 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for _p in grads:
         _sc_plus_map[_p.player_key] = _sc_compute(_sc_mini(_p), _sc_pool)
 
+    # #1 RE-SOURCE: for AAA prospects, OVERRIDE the opportunistic MLB-game-feed SC+ with the
+    # cleaner Savant-MINORS AAA aggregate (full 2023+ coverage, park-consistent, is..tracked-
+    # gated). The Savant pool is AAA-gated by construction, so this only touches players whose
+    # highest MiLB level was AAA; everyone else keeps the game-feed value (or None). Best-effort
+    # + cached -- a Savant outage leaves SC+ untouched. (A/FSL 2021+ is a future extension.)
+    try:
+        import arkmetric_forward_eval as _afe
+        _cur_yr = date.today().year
+        _aaa_analog: dict[tuple[int, str], float] = {}
+        for _yr in range(_cur_yr, 2022, -1):                 # AAA Statcast tracking begins 2023
+            for _sd in ("batter", "pitcher"):
+                for _mid, _v in _afe.sc_analog_index(_yr, _sd).items():
+                    _aaa_analog.setdefault((_mid, _sd), _v)  # most-recent AAA season wins
+        if _aaa_analog:
+            _n_resourced = 0
+            for _p in actives + grads:
+                _mid = player_ids.get(_p.player_key)
+                if _mid is None:
+                    _mid = (statlines.get(_p.player_key) or {}).get("mlbam_id")
+                if _mid is None:
+                    continue
+                _sd = ("pitcher" if (_p.position and _p.position.split("/")[0] in PITCHER_POS_SET)
+                       else "batter")
+                _ov = _aaa_analog.get((int(_mid), _sd))
+                if _ov is not None:
+                    _sc_plus_map[_p.player_key] = int(round(_ov))
+                    _n_resourced += 1
+            log.info("SC+ re-sourced from Savant-minors AAA aggregate for %d prospects", _n_resourced)
+    except Exception:
+        log.exception("Savant-minors SC+ re-source failed — keeping game-feed SC+")
+
     # Sort actives by latest consensus_fv_raw (smoother than the snapped
     # value for tiebreaking). When two prospects are literally identical
     # on consensus FV (down to the decimal — happens with single-source
@@ -6841,13 +9408,49 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(comp["composite_overall"])
         return 0.0  # ungraded sinks below any graded tiebreaker
 
+    # v38 — Item-5: server-side Tiebreaker-Score proxy. Mirrors the front-end
+    # tiebreakerScore intent (talent/performance base from Tool composite + SC+,
+    # LIFTED by the upside "+" flag, DRAGGED sharply by current injury) and is
+    # used ONLY to order prospects who share the same SURFACED (rounded)
+    # consensus FV. The raw decimal no longer decides the rank.
+    def _tbs_proxy(p: PlayerTimeseries) -> float:
+        latest = p.points[-1]
+        tool = _tool_overall(p)                                   # 20-80
+        tool_n = max(0.0, min(1.0, (tool - 40.0) / 30.0)) if tool else None
+        sc = _sc_plus_map.get(p.player_key)                       # 100 = pool avg
+        sc_n = (max(0.0, min(1.0, (float(sc) - 80.0) / 50.0))
+                if sc is not None else None)
+        s = w = 0.0
+        for v, wt in ((tool_n, 0.6), (sc_n, 0.4)):                # perf-weighted base
+            if v is not None:
+                s += v * wt; w += wt
+        score = (s / w) if w else 0.0
+        if getattr(latest, "consensus_fv_plus", False):
+            score *= 1.06                                         # upside (+) lift
+        if (il_status.get(p.player_key) or {}).get("is_on_il"):
+            score *= 0.70                                         # currently injured — sharp drag
+        return score
+
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
+        # xFV is the PRIMARY board-rank driver (consensus FV fallback where xFV
+        # abstains, via _xg). Rank by the SURFACED (snapped/displayed) grade — so
+        # a 56.3 and a 56.6 that both display as the same integer are TIED here
+        # and the Tiebreaker-Score proxy arbitrates, rather than the higher
+        # decimal auto-winning. The '+' upside flag (a consensus concept) is the
+        # only sub-grade distinction kept ahead of TBS.
+        _xg_val = _xg(p.player_key, latest.consensus_fv_raw)
+        surfaced_fv = (round(_xg_val) if _xg_val is not None
+                       else (latest.consensus_fv if latest.consensus_fv is not None
+                             else (round(latest.consensus_fv_raw)
+                                   if latest.consensus_fv_raw is not None else 0)))
+        upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -latest.consensus_fv_raw,   # FV desc — primary
-            -_tool_overall(p),          # Tools desc — FV tiebreaker
-            rank_key,                   # avg_rank asc — final separator
+            -surfaced_fv,        # surfaced (rounded) xFV grade desc — primary
+            -upside,             # '+' upside flag — ranks above same-grade non-'+'
+            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced grade
+            rank_key,            # avg_rank asc — final stable separator
         )
     actives.sort(key=_active_key)
     if top_n_active is not None:
@@ -6882,7 +9485,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if len(pts) < 2:
             return (999, 999, 999)
         prior = pts[-2]
-        prior_fv = prior.consensus_fv_raw if prior.consensus_fv_raw is not None else None
+        # xFV grade as-of the prior snapshot (consensus fallback), so the rank-delta
+        # arrow is on the same xFV basis as the current xFV-driven rank.
+        prior_fv = _xfv_at(p.player_key, prior.snapshot_date, prior.consensus_fv_raw)
         prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
         # Same FV-then-Tools-then-rank tiebreak the current snapshot
         # uses, but reading the prior snapshot's tools_consensus so the
@@ -6893,9 +9498,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           and p.position.split("/")[0] in PITCHER_POS_SET)
         comp = _compute_tool_composites(dict(prior_tools), is_pitcher)
         prior_tool = float(comp["composite_overall"]) if (comp and comp.get("composite_overall") is not None) else 0.0
+        # v37 — apply the same on-IL tiebreak so the rank-delta arrow
+        # reflects FV / tools movement rather than a one-time jump when a
+        # player goes on or off the IL (current IL status cancels out of
+        # both the current and prior keys).
+        _il = il_status.get(p.player_key) or {}
+        on_il = 1 if _il.get("is_on_il") else 0
+        # v38 — Item-5: round the prior FV too, so the rank-delta arrow is
+        # computed on the same surfaced-FV basis as the current rank (else a
+        # sub-decimal FV drift would manufacture a phantom rank change).
         return (
-            -prior_fv if prior_fv is not None else 999,
+            -round(prior_fv) if prior_fv is not None else 999,
             -prior_tool,
+            on_il,
             prior_rank,
         )
     prior_actives = sorted(
@@ -6972,6 +9587,79 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #    talent_translation / MLB production / WAG / WAR-per-year ONLY
     #    counts debuted players."
     # ────────────────────────────────────────────────────────────────────
+    # ── $DvM+ (Surplus Development vs Mean) — item-6 league pre-pass ─────────
+    # Per-prospect SURPLUS-VALUE DEVELOPMENT TRAJECTORY, indexed against the
+    # mean prospect at the SAME FV tier (100 = tier mean, +10 = 1σ better).
+    # Surplus value is a monotonic function of FV, so the trajectory is built
+    # from the RATE of FV movement over the tracked history (the dominant
+    # signal — stat/tool breakouts manifest as FV jumps and are captured here)
+    # plus the age-relative-to-level standing (younger-for-level = developing
+    # ahead of peers). Computed once here so BOTH the org financial grade
+    # (fin_dollar_dvm, below) and the per-prospect payload (stamped after
+    # serialization) read one consistent value. Z-scored WITHIN FV tier; tiers
+    # with <4 members borrow the global spread so a sparse tier can't manufacture
+    # extreme scores.
+    # xFV join + closures (_xg / _xsurplus / _xfv_series) were loaded once at the top of
+    # export_timeseries_json; reused here for the $DvM+ trajectory + tier.
+    _ddvm_raw_by_key: dict[str, float] = {}
+    _ddvm_tier_by_key: dict[str, int] = {}
+    for p in actives:
+        pts = p.points or []
+        if not pts or pts[-1].consensus_fv_raw is None:
+            continue
+        cons_close = float(pts[-1].consensus_fv_raw)
+        cons_open = float(pts[0].consensus_fv_raw) if pts[0].consensus_fv_raw is not None else cons_close
+        # Appreciation RATE on xFV (owner: everything xFV). xFV's trajectory is the xfv_history
+        # series (a current-model retrospective); consensus history is the fallback where xFV
+        # has no series. The peer TIER is the xFV grade.
+        _xs = _xfv_series(p.player_key)
+        if _xs:
+            fv_close, fv_open = float(_xs[-1][1]), float(_xs[0][1])
+            try:
+                _d0 = date.fromisoformat(_xs[0][0]); _d1 = date.fromisoformat(_xs[-1][0])
+                _yrs = max(0.5, (_d1 - _d0).days / 365.0)
+            except Exception:
+                _yrs = 1.0
+        else:
+            fv_close, fv_open = cons_close, cons_open
+            try:
+                _d0 = date.fromisoformat(pts[0].snapshot_date)
+                _d1 = date.fromisoformat(pts[-1].snapshot_date)
+                _yrs = max(0.5, (_d1 - _d0).days / 365.0)
+            except Exception:
+                _yrs = 1.0
+        fv_move_rate = (fv_close - fv_open) / _yrs              # grade-pts / yr (xFV where rated)
+        _bd = birth_dates.get(p.player_key)
+        _age = compute_age_decimal(_bd)
+        _sl = statlines.get(p.player_key)
+        _lvl = _sl.get("level") if _sl else None
+        _avl = score_age_vs_level(_age, _lvl, baselines=age_baselines)
+        age_term = (-float(_avl.diff)) if (_avl and _avl.diff is not None) else 0.0
+        # trajectory = grade-movement rate (primary) + 0.5 × age-for-level standing
+        _ddvm_raw_by_key[p.player_key] = fv_move_rate + 0.5 * age_term
+        _tier_grade = _xg(p.player_key, cons_close)
+        _ddvm_tier_by_key[p.player_key] = int(round((_tier_grade if _tier_grade is not None else cons_close) / 5.0) * 5)
+    import statistics as _stats
+    _all_traj = list(_ddvm_raw_by_key.values())
+    _g_mu = _stats.fmean(_all_traj) if _all_traj else 0.0
+    _g_sd = (_stats.pstdev(_all_traj) if len(_all_traj) > 1 else 0.0) or 1.0
+    _ddvm_by_tier: dict[int, list[float]] = {}
+    for _k, _t in _ddvm_tier_by_key.items():
+        _ddvm_by_tier.setdefault(_t, []).append(_ddvm_raw_by_key[_k])
+    _tier_stats: dict[int, tuple[float, float]] = {}
+    for _t, _vals in _ddvm_by_tier.items():
+        if len(_vals) >= 4:
+            _mu = _stats.fmean(_vals)
+            _sd = (_stats.pstdev(_vals) or _g_sd) or 1.0
+        else:
+            _mu, _sd = _g_mu, _g_sd
+        _tier_stats[_t] = (_mu, _sd)
+    _dollar_dvm_by_key: dict[str, float] = {}
+    for _k, _traj in _ddvm_raw_by_key.items():
+        _mu, _sd = _tier_stats.get(_ddvm_tier_by_key[_k], (_g_mu, _g_sd))
+        _z = (_traj - _mu) / (_sd or 1.0)
+        _dollar_dvm_by_key[_k] = round(max(40.0, min(160.0, 100.0 + 10.0 * _z)), 1)
+
     org_map: dict[str, dict] = {}
     for idx, p in enumerate(actives):
         # Skip prospects with no resolved org — they fall through every source
@@ -7080,6 +9768,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_active_surplus_count_hit":   0,
                 "_active_surplus_net_mm_pit":  0.0,
                 "_active_surplus_count_pit":   0,
+                # v32.0 — FV-points-spent accumulator. Sums fv_raw across
+                # the same set of prospects contributing to surplus_net_mm,
+                # enabling the surplus_per_fv_pt_mm efficiency metric
+                # (how much $ surplus this org is generating per FV point
+                # of active prospect capital). High = star-loaded /
+                # premium-position; low = depth-heavy but flat.
+                "_active_surplus_fv_total":  0.0,
+                # v32.1 — Per-side FV totals so the leaf can surface
+                # hitter $/FV-pt vs pitcher $/FV-pt. Pairs with the
+                # existing per-side surplus_net_mm_{hit,pit} totals.
+                "_active_surplus_fv_total_hit":  0.0,
+                "_active_surplus_fv_total_pit":  0.0,
+                # v32.1 — Per-acquisition-method buckets feeding the
+                # new acquisition_method_efficiency sub-leaf. Tracks
+                # which channel (draft / IFA / trade) is the most $-efficient
+                # at producing FV. Keyed by method label; each holds
+                # net surplus ($M), fv-pts, count, and cost basis ($M).
+                "_method_surplus": {
+                    "draft":             {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                    "international_fa":  {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                    "trade":             {"net_mm": 0.0, "fv_total": 0.0, "count": 0, "cost_mm": 0.0},
+                },
                 # v29 — Statcast+ + indicator-count accumulators feeding
                 # the new `statcast_quality` farm-grade leaf. _sc_plus
                 # collects every active prospect's SC+ when tracked;
@@ -7099,8 +9809,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "_sc_plus_pit":     [],
                 "_upside_count":     0,
                 "_breakout_count":   0,
+                # v38 — Item-6: per-prospect $DvM+ values for this org. Org
+                # $DvM+ = mean of these; feeds the fin_dollar_dvm financial leaf.
+                "_ddvm_vals":        [],
             }
         m = org_map[org]
+        _pdvm = _dollar_dvm_by_key.get(p.player_key)
+        if _pdvm is not None:
+            m["_ddvm_vals"].append(_pdvm)
+        # xFV is the org composite + tier-count + top-end basis (consensus fallback). Carried
+        # on the prospect dict so _top_end_points sums xFV grade-points.
+        _xfvg = _xg(p.player_key, fv_raw)
+        _xfvg_eff = _xfvg if _xfvg is not None else fv_raw
         m["prospects"].append({
             "name": p.player_name,
             "player_key": p.player_key,
@@ -7108,10 +9828,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "age": age,
             "fv_label": fv_lab,
             "fv_raw": round(fv_raw, 1),
+            "xfv_grade": round(_xfvg, 1) if _xfvg is not None else None,
             "rank": idx + 1,
         })
-        m["total_fv"] += fv_raw
-        fv_int = int(fv_raw)
+        m["total_fv"] += _xfvg_eff
+        fv_int = int(_xfvg_eff)
         if fv_int >= 60:
             m["tier_60_plus"] += 1
         elif fv_int >= 55:
@@ -7199,13 +9920,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # bonus (full amount, since the 6yr surplus is the gross figure).
         # Feeds the new fin_active_surplus leaf. Skip players without a
         # usable FV or position (the table requires both).
-        _surplus_mm = _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position)
+        # xFV is the primary grade for the farm Value core: surplus is the xFV expected
+        # surplus (consensus-surplus fallback). _xfvg (the player's xFV grade, consensus
+        # fallback) was computed at the prospect-dict build above and is reused here + for
+        # draft-ceiling + method buckets, so the FV-pt totals stay consistent with the surplus.
+        _surplus_mm = _xsurplus(p.player_key, _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position))
         if _surplus_mm is not None:
             _bonus_mm = (float(acq_rec.get("bonus_usd") or 0) / 1_000_000.0)
             _net_mm = _surplus_mm - _bonus_mm
             m["_active_surplus_net_mm"]  += _net_mm
             m["_active_surplus_cost_mm"] += _bonus_mm
             m["_active_surplus_count"]   += 1
+            # v32.0 — Track FV-pts (xFV) contributing to surplus_net so
+            # surplus_per_fv_pt_mm can be computed in finalize.
+            # v32.1 — Per-side FV totals (hit / pit) for the asymmetry
+            # display in the active_surplus leaf.
+            if _xfvg is not None:
+                m["_active_surplus_fv_total"] += float(_xfvg)
+                if is_pitcher_p:
+                    m["_active_surplus_fv_total_pit"] += float(_xfvg)
+                else:
+                    m["_active_surplus_fv_total_hit"] += float(_xfvg)
             # v31.5 — Per-side split.
             if is_pitcher_p:
                 m["_active_surplus_net_mm_pit"] += _net_mm
@@ -7213,20 +9948,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             else:
                 m["_active_surplus_net_mm_hit"] += _net_mm
                 m["_active_surplus_count_hit"]  += 1
+            # v32.1 — Per-acquisition-method tracking. `method` is one of
+            # "draft" / "international_fa" / "trade" / "rule_5" / "waiver"
+            # / "purchase" / "free_agent" / None. We only bucket the
+            # three major channels — the rest aggregate as 'other'.
+            _method = acq_rec.get("method")
+            _method_bucket = (_method if _method in ("draft", "international_fa", "trade")
+                              else None)
+            if _method_bucket is not None and _xfvg is not None:
+                _mb = m["_method_surplus"][_method_bucket]
+                _mb["net_mm"]    += _net_mm
+                _mb["cost_mm"]   += _bonus_mm
+                _mb["fv_total"]  += float(_xfvg)
+                _mb["count"]     += 1
         # Tree v3 — Draft Ceiling Hits: count drafted actives whose
-        # current consensus FV ≥ 60 and whose draft year is within the
-        # last 3 years. Captures whether the org's recent draft classes
-        # produced high-ceiling prospects (not just whether grads beat
-        # the slot in retrospect). Denominator: all drafted actives.
+        # current xFV ≥ 60 and whose draft year is within the last 3 years.
+        # Captures whether the org's recent draft classes produced high-ceiling
+        # prospects (not just whether grads beat the slot in retrospect).
+        # Denominator: all drafted actives.
         if acq_rec.get("method") == "draft":
             m["_draft_actives_count"] = m.get("_draft_actives_count", 0) + 1
             draft_yr = acq_rec.get("year")
             today_yr = date.today().year
             if (draft_yr is not None
                     and today_yr - int(draft_yr) <= 3
-                    and fv_raw is not None
-                    and fv_raw >= 60.0):
+                    and _xfvg is not None
+                    and _xfvg >= 60.0):
                 m["_draft_ceiling_hits"] = m.get("_draft_ceiling_hits", 0) + 1
+            # v32.0 — Track FV-pts (xFV) produced by active drafted prospects
+            # in the same 3yr (T-5..T-2) window the war_per_m_pool leaf
+            # uses for grads. This feeds the new fv_per_m_pool metric,
+            # which gives a fast-cycle (no 5yr WAR maturation needed)
+            # signal of draft-spending efficiency.
+            if (draft_yr is not None
+                    and today_yr - 5 <= int(draft_yr) <= today_yr - 2
+                    and _xfvg is not None):
+                m.setdefault("_draft_pool_active_fv_total", 0.0)
+                m["_draft_pool_active_fv_total"] += float(_xfvg)
         # Health profile (reuse the same helper the per-prospect path uses).
         rs_player = (roster_status or {}).get(p.player_key) or {}
         hp = _derive_health_profile(rs_player.get("injury_history") or [])
@@ -7316,11 +10074,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         cw = (career_war or {}).get(gp.player_key) or {}
         fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
                         if gp.points else None)
+        # WAG baseline = xFV (WAR Above GRADE; the grade is now xFV), falling back to
+        # consensus where xFV abstains. _grad_wag reads fv_close_raw -> fv_close.
+        _gp_xfv = (_xfv_by_key.get(gp.player_key) or {}).get("xfv_grade")
+        _wag_fv_raw = _gp_xfv if _gp_xfv is not None else fv_close_raw
+        gp_bd = birth_dates.get(gp.player_key)
+        gp_age = compute_age_decimal(gp_bd)
+        gp_current_level = roster_level_by_key.get(gp.player_key)
         wag = _grad_wag({
             "career_war":   cw,
-            "fv_close_raw": fv_close_raw,
-            "fv_close":     gp.fv_close,
+            "fv_close_raw": _wag_fv_raw,
+            "fv_close":     (_gp_xfv if _gp_xfv is not None else gp.fv_close),
             "position":     gp.position,
+            "career_stats": career_stats.get(gp.player_key, []),
+            "transactions": transactions_by_player.get(gp.player_key, []),
+            "age":          gp_age,
+            "current_level": gp_current_level,
         })
         career_war_val = cw.get("career_war")
         gp_acq = (acquisitions or {}).get(gp.player_key, {}) or {}
@@ -7729,6 +10498,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # agent without a published bonus doesn't drag the ratio down).
         bonus_sum = gagg.get("bonus_sum") or 0
         war_sum = gagg.get("war_sum") or 0.0
+        # v40 — total realized graduate WAR (raw MLB production) exposed for the
+        # farm tiebreaker score. Sum of career bWAR across the org's graduates.
+        m["_grad_war_total"] = round(war_sum, 2)
         m["financial_roi"] = {
             "war_per_million": (round(war_sum / (bonus_sum / 1_000_000), 3)
                                 if bonus_sum >= 1_000_000 else None),
@@ -8160,6 +10932,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # bonus paid. Surfaces orgs whose current crop projects to
             # generate more cost-controlled WAR than they spent.
             "fin_active_surplus": _finalize_active_surplus_leaf(m),
+            # v38 — Item-6/7: org $DvM+ leaf. Mean of member prospects'
+            # surplus-development indices (100 = league mean prospect at the
+            # same FV tier). Surfaces alongside surplus on the financial detail
+            # page and feeds the reweighted financial grade as fin_dollar_dvm.
+            "fin_dollar_dvm": (lambda _v=m["_ddvm_vals"]: {
+                "dollar_dvm_plus": (round(sum(_v) / len(_v), 1) if _v else None),
+                "n": len(_v),
+            })(),
             # v31 — Health Management leaf under Development. Captures
             # how well the org keeps prospects healthy / available —
             # composite of IL%-current (share of actives sidelined
@@ -8229,6 +11009,17 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # the same dict as the new production leaves.
         m["tree"]["mlb_hitter_wag"]  = m["tree"]["mlb_hitter_production"]
         m["tree"]["mlb_pitcher_wag"] = m["tree"]["mlb_pitcher_production"]
+
+        # v32.1 — Lift the active-roster $/FV-pt efficiency to the org
+        # top level so it's sortable on the farm leaderboard alongside
+        # `total_fv` / `surplus_total_mm`. Sourced from the active
+        # surplus leaf (gated at ≥5 contributing actives upstream).
+        # Reads as a portfolio-quality dial: high = star/premium-position
+        # loaded; low = depth-heavy but flat.
+        _asl = m["tree"].get("fin_active_surplus") or {}
+        m["dollars_per_fv_active"] = _asl.get("surplus_per_fv_pt_mm")
+        m["surplus_per_fv_pt_hit_mm"] = _asl.get("per_fv_pt_hit_mm")
+        m["surplus_per_fv_pt_pit_mm"] = _asl.get("per_fv_pt_pit_mm")
 
         # v17 — IFA ROI fallback. When the leaf's primary metric
         # (`war_per_m_ifa`, requires bonus dollars on file) is None, fall
@@ -8412,14 +11203,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     _entry["tool_dev"]["per_tool_dvm_plus_by_bucket"] \
                         .setdefault(bucket, {})[grp_name] = int(round(stretched_b))
 
-    # Composite ToolsDvM+ — unweighted mean of the per-group DvM+ values
-    # an org actually has. Orgs missing every group entry get None.
+    # Composite ToolDvM+ — position-bucket importance-weighted blend of the
+    # per-tool DvM+ values (see `_bucket_weighted_tool_dvm`). Rewards orgs
+    # that develop the tools that MATTER for a position over ones that pad
+    # the average with off-position gains. The internal storage key stays
+    # `tools_dvm_plus`; the front-end label is "ToolDvM+".
     _composite_vals: list[tuple[str, int | None]] = []
     for entry in org_summary:
-        per_grp = entry["tool_dev"].get("per_tool_dvm_plus") or {}
-        vs = [v for v in per_grp.values() if v is not None]
-        composite = int(round(sum(vs) / len(vs))) if vs else None
-        entry["tool_dev"]["tools_dvm_plus"] = composite
+        td = entry["tool_dev"]
+        composite = _bucket_weighted_tool_dvm(
+            td.get("per_tool_dvm_plus"),
+            td.get("per_tool_dvm_plus_by_bucket"),
+            td.get("per_tool_by_bucket"),
+        )
+        td["tools_dvm_plus"] = composite
         _composite_vals.append((entry["org"], composite))
 
     # Rank for the composite — descending (higher composite = rank 1).
@@ -8524,6 +11321,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # a productive farm isn't punished for promoting its top prospects.
     org_fv_history = _build_org_fv_history(
         actives + grads + inactives, _filter_real_trades, trades_by_player,
+        xfv_hist_by_key=_xfv_hist_by_key,
     )
     for entry in org_summary:
         hist = org_fv_history.get(entry["org"], {})
@@ -8546,8 +11344,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     all_players_for_cohort = actives + grads + inactives
     hitter_players  = [p for p in all_players_for_cohort if not _primary_is_pitcher(p.position)]
     pitcher_players = [p for p in all_players_for_cohort if     _primary_is_pitcher(p.position)]
-    hitter_fv_history  = _build_org_fv_history(hitter_players,  _filter_real_trades, trades_by_player)
-    pitcher_fv_history = _build_org_fv_history(pitcher_players, _filter_real_trades, trades_by_player)
+    hitter_fv_history  = _build_org_fv_history(hitter_players,  _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key)
+    pitcher_fv_history = _build_org_fv_history(pitcher_players, _filter_real_trades, trades_by_player, xfv_hist_by_key=_xfv_hist_by_key)
     for entry in org_summary:
         entry["hitter_fv_history"]  = hitter_fv_history.get(entry["org"],  {}).get("series", [])
         entry["pitcher_fv_history"] = pitcher_fv_history.get(entry["org"], {}).get("series", [])
@@ -8588,6 +11386,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                if _pos_bucket_for(p.position) == bucket]
         _bucket_fv_history[bucket] = _build_org_fv_history(
             sub, _filter_real_trades, trades_by_player,
+            xfv_hist_by_key=_xfv_hist_by_key,
         )
     for entry in org_summary:
         # Per-bucket series stays on the entry so the trajectory pass
@@ -8640,14 +11439,16 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
 
     # v31.8 — Per-trade SURPLUS evaluator. Parallel to the existing
     # WAR delta computation. For each trade event:
-    #   * If the player is debuted → value = career_war × $8M/WAR
-    #     (matches the FA market WAR price)
+    #   * If the player is debuted → value = career_war × $/WAR_overall
+    #     (the FA market WAR price; overall rate, not tier, since
+    #     career WAR aggregates multi-season output at varying tiers)
     #   * Else (still a prospect) → value = _estimate_surplus_mm(
     #     fv_at_trade, is_pitcher, position) — same FV-anchored
-    #     surplus estimator the active_surplus leaf uses
+    #     surplus estimator the active_surplus leaf uses, now sourced
+    #     from value_framework with the 2026-anchored non-linear tiers.
     # Recency-weighted same as war_delta. Drives the new
     # surplus_delta sub-input on the Trade Acumen leaf.
-    _WAR_DOLLAR_VALUE_M = 8.0
+    _WAR_DOLLAR_VALUE_M = _dollars_per_war_flat()
     # Build a small lookup of player_key → position so we can
     # estimate surplus when career WAR isn't on file.
     _player_pos_by_key: dict[str, tuple[bool, str | None]] = {}
@@ -8658,14 +11459,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _is_pit = bool(_pos and _pos.split("/")[0] in PITCHER_POS)
                 _player_pos_by_key[_p.player_key] = (_is_pit, _pos)
 
-    def _trade_player_value(pkey: str, fv: float | None) -> float | None:
-        """Surplus $M value of one player in one trade. Debuted players
-        use realized WAR × $8M/WAR; prospects use FV-anchored surplus."""
+    def _trade_player_value(pkey: str, fv: float | None) -> tuple[float | None, str | None]:
+        """Surplus $M value of one player in one trade, plus the kind.
+
+        v32.1 — Returns (value, kind) where kind is:
+          * "vet"      — debuted player, value = career_war × $/WAR_overall
+          * "prospect" — pre-debut, value = FV-anchored surplus from value_framework
+          * None       — no usable signal (returns (None, None))
+
+        Honors the project-wide principle: prospects flow through FV→
+        projected WAR→projected $, debutants/MLB players flow through
+        actual WAR→actual $.
+        """
         cw = ((career_war or {}).get(pkey) or {}).get("career_war")
         if cw is not None and float(cw) > 0:
-            return round(float(cw) * _WAR_DOLLAR_VALUE_M, 2)
+            return (round(float(cw) * _WAR_DOLLAR_VALUE_M, 2), "vet")
         is_pit, pos = _player_pos_by_key.get(pkey, (False, None))
-        return _estimate_surplus_mm(fv, is_pit, pos)
+        v = _estimate_surplus_mm(fv, is_pit, pos)
+        return (v, "prospect" if v is not None else None)
 
     for entry in org_summary:
         in_fv = 0.0;  out_fv = 0.0
@@ -8676,19 +11487,44 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Recency-weighted sums (drive leaf scoring).
         in_war_w  = 0.0;   out_war_w   = 0.0
         # v31.8 — Recency-weighted SURPLUS sums (parallel signal).
+        # Includes BOTH vet (career_war × $/WAR) AND prospect (FV→$)
+        # contributors — feeds the headline surplus_delta input.
         in_surplus_w  = 0.0;  out_surplus_w  = 0.0
         in_surplus_n  = 0;    out_surplus_n  = 0
+        # v32.1 — Prospect-only and vet-only surplus splits. Honors the
+        # site-wide principle that FV-projected $ (prospects) and
+        # realized-WAR $ (debutants/MLB) are different measurements
+        # and shouldn't be mixed in a $/FV-pt ratio. Prospect-side
+        # surplus pairs with prospect-side FV (which is meaningful);
+        # vet-side surplus is just realized $-value (no FV-pt rate).
+        in_surplus_w_prospect  = 0.0;  out_surplus_w_prospect  = 0.0
+        in_surplus_n_prospect  = 0;    out_surplus_n_prospect  = 0
+        in_fv_prospect = 0.0;          out_fv_prospect = 0.0
+        in_surplus_w_vet  = 0.0;       out_surplus_w_vet  = 0.0
+        in_surplus_n_vet  = 0;         out_surplus_n_vet  = 0
         # Top weighted-contributor trades for the tooltip story.
         weighted_trades: list[dict] = []
+        # Count each player's participation in a given trade ONCE per org.
+        # `fv_events` is built from actives+grads+inactives, so a player who
+        # appears in more than one bucket (e.g. a debuted prospect still
+        # listed as active) would otherwise have the same trade summed twice
+        # into this org's inbound/outbound totals. The (player, date,
+        # counterparty, direction) tuple uniquely identifies one player's
+        # leg of one trade — mirrors the frontend trade-audit dedup key.
+        _seen_trade_legs: set = set()
         for ev in (entry["fv_events"] or []):
             if ev.get("kind") != "trade":
                 continue
             fv = ev.get("fv") or 0.0
             pkey = ev.get("player_key")
+            _leg = (pkey, ev.get("date"), ev.get("other_org"), ev.get("direction"))
+            if _leg in _seen_trade_legs:
+                continue
+            _seen_trade_legs.add(_leg)
             cw = ((career_war or {}).get(pkey) or {}).get("career_war")
             w = _trade_recency_weight(ev.get("date"))
-            # v31.8 — Compute per-player surplus value.
-            psurplus = _trade_player_value(pkey, fv)
+            # v32.1 — Per-player surplus value + kind ("vet" / "prospect").
+            psurplus, ptype = _trade_player_value(pkey, fv)
             if ev.get("direction") == "in":
                 in_fv += fv; in_n += 1
                 if cw is not None:
@@ -8703,6 +11539,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if psurplus is not None:
                     in_surplus_w += psurplus * w
                     in_surplus_n += 1
+                    if ptype == "prospect":
+                        in_surplus_w_prospect += psurplus * w
+                        in_surplus_n_prospect += 1
+                        in_fv_prospect += fv
+                    elif ptype == "vet":
+                        in_surplus_w_vet += psurplus * w
+                        in_surplus_n_vet += 1
             elif ev.get("direction") == "out":
                 out_fv += fv; out_n += 1
                 if cw is not None:
@@ -8717,6 +11560,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if psurplus is not None:
                     out_surplus_w += psurplus * w
                     out_surplus_n += 1
+                    if ptype == "prospect":
+                        out_surplus_w_prospect += psurplus * w
+                        out_surplus_n_prospect += 1
+                        out_fv_prospect += fv
+                    elif ptype == "vet":
+                        out_surplus_w_vet += psurplus * w
+                        out_surplus_n_vet += 1
         entry["tree"]["tx_trades"] = {
             "net_fv":    round(in_fv - out_fv, 1) if (in_n + out_n) else None,
             "fv_in":     round(in_fv, 1),
@@ -8744,6 +11594,38 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "surplus_out":   round(out_surplus_w, 2),
             "surplus_in_count":  in_surplus_n,
             "surplus_out_count": out_surplus_n,
+            # v32.1 — Per-side $/FV-pt, PROSPECT-ONLY. Honors the
+            # principle that FV-projected $ (prospects) and realized-WAR
+            # $ (vets) can't share a $/FV-pt ratio: FV is a prospect-time
+            # grade with no direct vet analog. The ratio uses only the
+            # prospect contributors on each side. Vet $ is exposed
+            # separately as in_vet_value_mm / out_vet_value_mm so the
+            # trade audit can show both signals side-by-side.
+            "in_per_fv_mm":  (round(in_surplus_w_prospect  / in_fv_prospect, 3)
+                              if in_fv_prospect  > 0 and in_surplus_n_prospect  > 0 else None),
+            "out_per_fv_mm": (round(out_surplus_w_prospect / out_fv_prospect, 3)
+                              if out_fv_prospect > 0 and out_surplus_n_prospect > 0 else None),
+            "per_fv_delta_mm": (
+                round((in_surplus_w_prospect / in_fv_prospect if in_fv_prospect > 0 else 0)
+                      - (out_surplus_w_prospect / out_fv_prospect if out_fv_prospect > 0 else 0), 3)
+                if (in_fv_prospect > 0 and out_fv_prospect > 0
+                    and in_surplus_n_prospect > 0 and out_surplus_n_prospect > 0) else None),
+            # v32.1 — Prospect-side vs vet-side surplus splits exposed
+            # so the trade audit UI can show "X FV @ $Y/FV (prospects)
+            # + $Z (vet realized)" rather than a mixed apples/oranges
+            # ratio. fv_prospect totals are summed RAW (no recency
+            # weight) since FV is a snapshot grade; surplus totals are
+            # recency-weighted to match the headline surplus_delta.
+            "in_surplus_prospect_mm":  round(in_surplus_w_prospect, 2),
+            "out_surplus_prospect_mm": round(out_surplus_w_prospect, 2),
+            "in_fv_prospect":          round(in_fv_prospect, 1),
+            "out_fv_prospect":         round(out_fv_prospect, 1),
+            "in_vet_value_mm":         round(in_surplus_w_vet, 2),
+            "out_vet_value_mm":        round(out_surplus_w_vet, 2),
+            "in_vet_count":            in_surplus_n_vet,
+            "out_vet_count":           out_surplus_n_vet,
+            "in_prospect_count":       in_surplus_n_prospect,
+            "out_prospect_count":      out_surplus_n_prospect,
             # Top weighted contributors for the tooltip (sorted by
             # absolute weighted_war desc, max 5).
             "top_weighted_trades": sorted(
@@ -8777,9 +11659,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _player_fv_history: dict[str, list[tuple[str, float]]] = {}
     for p in actives + grads + inactives:
         hist: list[tuple[str, float]] = []
+        _xh = {pt2.get("d"): pt2.get("x")
+               for pt2 in (_xfv_hist_by_key.get(p.player_key) or [])
+               if pt2.get("d") and pt2.get("x") is not None}
         for pt in (p.points or []):
-            if pt.consensus_fv_raw is not None:
-                hist.append((pt.snapshot_date, float(pt.consensus_fv_raw)))
+            _fv = _xh.get(pt.snapshot_date)              # xFV at this snapshot (consensus fallback)
+            if _fv is None and pt.consensus_fv_raw is not None:
+                _fv = float(pt.consensus_fv_raw)
+            if _fv is not None:
+                hist.append((pt.snapshot_date, float(_fv)))
         if hist:
             # points are already date-ordered upstream, but sort
             # defensively in case of out-of-order ingest.
@@ -8877,8 +11765,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # blended farm_score lands in.
     today_iso = date.today()
     for entry in org_summary:
-        entry["top_end_points"] = _top_end_points(entry["prospects"])
-        entry["depth_points"]   = _depth_points(entry["prospects"])
+        # Fold provisional (source-ungraded) prospects into the rank-and-tier pool so the
+        # genuine breakouts (xFV ~44-49) count toward top-end/depth alongside graded
+        # prospects; filler (FV 20-30, ~0 tier points) ranks out. The displayed
+        # entry["prospects"] list is NOT mutated -- only the scoring pool is augmented.
+        _prov = _prov_by_org.get(entry["org"], [])
+        _pool = entry["prospects"] + _prov if _prov else entry["prospects"]
+        entry["top_end_points"] = _top_end_points(_pool)
+        entry["depth_points"]   = _depth_points(_pool)
+        # Count of provisional sleepers that crack the org's scored top-25 (for the
+        # farm-detail "includes N provisional sleepers" note).
+        if _prov:
+            _ranked25 = sorted(_pool, key=lambda p: (_eff_grade(p) or 0), reverse=True)[:FARM_DEPTH_END]
+            entry["provisional_in_pool"] = sum(1 for p in _ranked25 if p.get("provisional"))
         # Trajectory at each available window. The blended score (60% 6y
         # + 30% 3y + 10% 1y) is also surfaced as `trajectory_score` so
         # the report-card grading anchors on the principal multi-cycle
@@ -8892,8 +11791,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             for key, days in FARM_TRAJECTORY_WINDOWS.items()
         }
         _T = entry["trajectories"]
+        # Recency-tilted multi-horizon blend anchored on the principal window
+        # (60% principal / 30% 3y / 10% 1y) — the principal carries sustained
+        # development, the shorter horizons weight recent movement so a stale
+        # multi-year regime can't fully mask a current hot (or cold) cycle.
         entry["trajectory_score"] = round(
-            0.60 * (_T.get("6y") or 0)
+            0.60 * (_T.get(FARM_PRINCIPAL_WINDOW) or 0)
             + 0.30 * (_T.get("3y") or 0)
             + 0.10 * (_T.get("1y") or 0),
             3,
@@ -8901,6 +11804,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         entry["grad_pipeline_score"] = _grad_pipeline_score(
             entry["fv_events"], as_of=today_iso,
         )
+        # v41 — Graduation-pace leaf: FV>=50 debuts/yr over the principal window
+        # (the RHYTHM of quality graduations, vs. the trailing-12mo POINTS above).
+        _gp_win_yrs = int(str(FARM_PRINCIPAL_WINDOW).rstrip("y"))
+        entry.setdefault("tree", {})["mlb_production_grad_pace"] = {
+            "grad_pace": _grad_pace_score(entry.get("fv_events") or [],
+                                          window_years=_gp_win_yrs, as_of=today_iso),
+            "window_years": _gp_win_yrs,
+        }
 
     # Mean trajectory per window across all orgs. The list-page chart
     # subtracts a linear baseline of `mean * t/window_days` from each
@@ -9180,21 +12091,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # up to absorb the difference). Statcast layers on top at a
     # fixed 20%.
     def _blend_dvm_3way(fv_dvm, tool_dvm, sc_dvm):
-        """User-specified 50/30/20 weights (FV / Tool / Statcast).
-        Adaptive penalty fires only on the FV+Tool sub-blend so the
-        existing test suite (test_dvm_disparity_penalty.py) still
-        passes — `_blend_dvm` is untouched and re-used here."""
+        """FV / Tool / Statcast development blend. v-arkmetric-audit (finding 9 —
+        CIRCULARITY): scouting tool grades feed BOTH the consensus FV (so FV-DvM)
+        AND ToolDvM+, so the tool signal enters this blend via two correlated paths
+        (measured org-level corr(FV-DvM, Tool-DvM) ≈ 0.30 — modest but real double-
+        count). The FV+Tool slice is trimmed 0.80 → 0.75 and the ORTHOGONAL Statcast
+        axis (independent tracked-data signal) raised 0.20 → 0.25, proportionate to
+        the shared variance — reducing the tool double-exposure without overcorrecting.
+        Adaptive penalty fires only on the FV+Tool sub-blend so test_dvm_disparity_
+        penalty.py still passes (`_blend_dvm` untouched, re-used in the SC-missing path)."""
         # All three present — apply the precise weight allocation.
         if fv_dvm is not None and tool_dvm is not None and sc_dvm is not None:
             tool_w_in_slice = _adaptive_tool_weight(fv_dvm, tool_dvm)
-            # FV + Tool combined = 80% of total; the existing
-            # tool-weight-in-slice (baseline 30%, up to 60% under
-            # penalty) governs how the 80% splits between FV and Tool.
-            tool_w_total = 0.80 * tool_w_in_slice
-            fv_w_total   = 0.80 - tool_w_total
+            # FV + Tool combined = 75% of total (was 80%); the tool-weight-in-slice
+            # (baseline 30%, up to 60% under penalty) governs how the 75% splits.
+            tool_w_total = 0.75 * tool_w_in_slice
+            fv_w_total   = 0.75 - tool_w_total
             return int(round(fv_w_total * fv_dvm
                              + tool_w_total * tool_dvm
-                             + 0.20 * sc_dvm))
+                             + 0.25 * sc_dvm))
         # Missing-axis fallbacks. SC missing → original 2-way blend.
         if sc_dvm is None:
             return _blend_dvm(fv_dvm, tool_dvm)
@@ -9340,7 +12255,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             if pit_by_window[win] is None:
                 pit_by_window[win] = _blend_dvm_3way(pit_overall.get(win), tool_pit, pit_sc)
         # Stamp tree node + new pos_buckets sub-payload for UI.
-        entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get("6y")
+        entry["tree"]["dev_hitter"]["dvm_plus"]            = hit_by_window.get(FARM_PRINCIPAL_WINDOW)
         entry["tree"]["dev_hitter"]["dvm_plus_by_window"]  = hit_by_window
         entry["tree"]["dev_hitter"]["overall_dvm_plus"]    = dict(hit_overall)
         entry["tree"]["dev_hitter"]["statcast_dvm_plus"]   = hit_sc
@@ -9362,7 +12277,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             }
             for bucket in _HIT_BUCKETS
         }
-        entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get("6y")
+        entry["tree"]["dev_pitcher"]["dvm_plus"]           = pit_by_window.get(FARM_PRINCIPAL_WINDOW)
         entry["tree"]["dev_pitcher"]["dvm_plus_by_window"] = pit_by_window
         entry["tree"]["dev_pitcher"]["overall_dvm_plus"]   = dict(pit_overall)
         entry["tree"]["dev_pitcher"]["statcast_dvm_plus"]  = pit_sc
@@ -9637,15 +12552,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # tool-development still shows through. Each leaf now has two
         # inputs blended equally inside leaf_100 normalization; the 6y
         # signal effectively dominates because it has wider stdev.
+        # v41 — Org-wide principal-window DvM+ is the PRINCIPAL dev signal at an
+        # explicit 2.0 weight vs the per-tool DvM+ at 1.0 (the same ~2/3 dominance
+        # the old code got by DOUBLE-COUNTING the 6y getter; now stated as a real
+        # weight, no duplication). Anchored on FARM_PRINCIPAL_WINDOW so the dev
+        # leaf moves with the selected window.
         "dev_hitter":  [
-            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),  # double-count = 2/3 weight
-            ("dvm_plus", lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus")),
+            ("principal_dvm", lambda e: (e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW), 2.0),
+            ("tool_dvm",      lambda e: (e["tree"]["dev_hitter"]  or {}).get("dvm_plus"), 1.0),
         ],
         "dev_pitcher": [
-            ("six_y_dvm", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("six_y_dvm_b", lambda e: (e.get("dvm_plus") or {}).get("6y")),
-            ("dvm_plus", lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus")),
+            ("principal_dvm", lambda e: (e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW), 2.0),
+            ("tool_dvm",      lambda e: (e["tree"]["dev_pitcher"] or {}).get("dvm_plus"), 1.0),
         ],
         # Financial — single-input each (v18 + active-surplus leaf below)
         "fin_war_per_m":        [("war_per_m", lambda e: (e["tree"]["fin_war_per_m"]        or {}).get("value"))],
@@ -9654,10 +12572,25 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # orgs don't auto-win on raw aggregate (they DO win on raw
         # totals, but per-prospect surfaces "this org's actives are
         # net-profitable signings" as a distinct signal from "this org
-        # has lots of actives"). Falls back to the raw total if per-
-        # prospect is None and total is present (transitional cases).
+        # has lots of actives").
+        # v32.1 — Now 2-input blend with surplus_per_fv_pt_mm: $/prospect
+        # captures "average prospect is net-profitable" while $/FV-pt
+        # captures "FV is concentrated in high-leverage spots." Equal
+        # 50/50 weight inside the leaf z-blend (the framework averages
+        # the two z-scores), so both signals carry the leaf together.
+        # v38 — Item-6/7: org $DvM+ graded league-relative (higher = the org's
+        # prospects develop faster than peers at the same FV tier).
+        "fin_dollar_dvm": [
+            ("dollar_dvm_plus", lambda e: (e["tree"].get("fin_dollar_dvm") or {}).get("dollar_dvm_plus")),
+        ],
+        # v40 — PRIMARY value signal = AGGREGATE risk-adjusted controlled surplus
+        # (total $ across the active pool). Pure aggregate (the prior per-prospect
+        # spec deliberately normalized aggregate AWAY, v18, which is exactly why a
+        # high-total-surplus farm couldn't grade up). The recalibrated value_framework
+        # already prices elite ceiling non-linearly, so the total captures top-end-
+        # vs-depth without an opaque premium.
         "fin_active_surplus": [
-            ("per_prospect", lambda e: (e["tree"]["fin_active_surplus"] or {}).get("surplus_per_prospect_mm")),
+            ("total_surplus", lambda e: e.get("_active_surplus_net_mm")),
         ],
         # MLB Production — v17: renamed mlb_hitter_wag/mlb_pitcher_wag
         # leaves to mlb_hitter_production/mlb_pitcher_production. Primary
@@ -9704,9 +12637,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "mlb_production_conviction": [
             ("star_count", lambda e: (e["tree"]["mlb_production_conviction"] or {}).get("star_count")),
         ],
-        # v4 NEW leaves under Financial.
+        # v41 — Graduation PACE. Complements the FV-weighted grad-pipeline POINTS
+        # (a trailing-12mo snapshot) with the RHYTHM of quality graduations:
+        # FV>=50 debuts per year over the principal window. Rewards a steady
+        # MLB-quality stream over one lumpy class; a sustainable-throughput tell.
+        "mlb_production_grad_pace": [
+            ("grad_pace", lambda e: (e["tree"].get("mlb_production_grad_pace") or {}).get("grad_pace")),
+        ],
+        # v4 leaf, v32.1 — Now 2-input blend with fv_per_m_pool. The two
+        # signals share the same denominator (pool $) but have different
+        # numerators: WAR is lagging realized (grads), FV is fast-cycle
+        # current (actives from the same draft window). 50/50 weight
+        # inside the leaf z-blend so the leaf is responsive to recent
+        # drafts (FV side) AND anchored to realized outcomes (WAR side).
         "fin_draft_pool_efficiency": [
             ("war_per_m_pool", lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("war_per_m_pool")),
+            ("fv_per_m_pool",  lambda e: (e["tree"]["fin_draft_pool_efficiency"] or {}).get("fv_per_m_pool")),
         ],
         # v17 — IFA ROI: primary input still WAR/$M IFA spend, but with a
         # fallback to acq_ifa's WAR/yr signal when no bonus dollars are on
@@ -9765,15 +12711,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     leaf_raw: dict[str, list[float | None]] = {}  # back-compat for tests
     for leaf_key, specs in LEAF_SPECS.items():
         sub_z_lists = []
-        for _, getter in specs:
+        sub_weights = []
+        for spec in specs:
+            getter = spec[1]
+            # Optional 3rd element = explicit sub-input weight (defaults 1.0).
+            # Lets a leaf weight one sub-input heavier WITHOUT the old
+            # double-count hack (listing the same getter twice). Backward-
+            # compatible: 2-tuples keep equal weight.
+            w = spec[2] if len(spec) > 2 else 1.0
             raw = [getter(e) for e in org_summary]
             sub_z_lists.append(_zscore_to_100(raw, higher_is_better=True))
-        # Per-org leaf score = mean of present sub-input z-scores.
+            sub_weights.append(w)
+        # Per-org leaf score = WEIGHTED mean of present sub-input z-scores.
         per_org_scores: list[float | None] = []
         for i in range(len(org_summary)):
-            present = [z[i] for z in sub_z_lists if z[i] is not None]
-            per_org_scores.append(round(sum(present) / len(present), 1)
-                                  if present else None)
+            num = 0.0
+            den = 0.0
+            for zl, w in zip(sub_z_lists, sub_weights):
+                if zl[i] is not None:
+                    num += zl[i] * w
+                    den += w
+            per_org_scores.append(round(num / den, 1) if den > 0 else None)
         leaf_100[leaf_key] = per_org_scores
         # Back-compat: leaf_raw[k] points to the FIRST sub-input's raw
         # values (used by some legacy test inspections).
@@ -9813,18 +12771,22 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Together they cover the full pipeline rather than only the
         # historical grad side.
         "financial":            ["fin_war_per_m", "fin_contract_surplus",
-                                  "fin_active_surplus",
+                                  "fin_active_surplus", "fin_dollar_dvm",
                                   "fin_draft_pool_efficiency", "fin_ifa_roi"],
         # v31 — HOF-track count joins MLB Production. Ceiling signal
         # complement to Conviction (which fires on the lower star
         # threshold).
-        "mlb_production":       ["mlb_hitter_production",   # v17 renamed (was mlb_hitter_wag)
-                                  "mlb_pitcher_production",  # v17 renamed (was mlb_pitcher_wag)
-                                  "talent_translation",      # v17 NEW — WAG-based sibling leaf
+        # v40 — talent_translation (WAG) DROPPED from the rollup: raw realized
+        # graduate WAR is the production signal we grade on, not WAR-above-grade
+        # (MLB translation matters far less than raw MLB output). The WAG leaf is
+        # still computed for display/tooltip, just no longer in the grade.
+        "mlb_production":       ["mlb_hitter_production",   # raw WAR/yr (v17)
+                                  "mlb_pitcher_production",  # raw WAR/yr (v17)
                                   "mlb_production_boom_pct",
                                   "mlb_production_bust_pct",
                                   "mlb_production_top_grads",
                                   "mlb_production_conviction",
+                                  "mlb_production_grad_pace",  # v41 — FV>=50 grads/yr (pace)
                                   "mlb_production_hof_track"],
     }
     # Legacy parent aliases — kept so any UI or test still reading
@@ -9886,6 +12848,53 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # value so any UI reading the old keys still gets a number.
         entry["acquisitions_score"] = entry.get("acquisition_strategy_score")
         entry["transactions_score"] = entry.get("acquisition_strategy_score")
+
+    # ── v40 — Continuous TIEBREAKER score ─────────────────────────────────
+    # Differentiates farms that land on the same letter grade (coarse grades
+    # collapse real value gaps). A normalized z-blend across the 30 orgs of the
+    # three value dimensions, anchored DvM+-style (100 + 10·z):
+    #   • total surplus      0.40 — aggregate risk-adjusted controlled value ($)
+    #   • 6yDvM+             0.25 — the indexed view of the same controlled value
+    #   • raw graduate WAR   0.35 — REALIZED MLB production (not WAG) over the grad pool
+    # Surplus and 6yDvM+ are the dollar/indexed views of one controlled-value
+    # concept, so they share weight rather than double-count; raw grad WAR adds the
+    # realized-output axis the paper-value measures can't see. The score gives a
+    # finer continuous ordering and orders within-grade ties on the list.
+    def _farm_z(vals: list[float | None]) -> list[float]:
+        present = [v for v in vals if v is not None]
+        if len(present) < 2:
+            return [0.0] * len(vals)
+        mu = sum(present) / len(present)
+        sd = (sum((v - mu) ** 2 for v in present) / len(present)) ** 0.5 or 1.0
+        return [((v - mu) / sd if v is not None else 0.0) for v in vals]
+
+    _surp_z = _farm_z([e.get("_active_surplus_net_mm") for e in org_summary])
+    _dvm_z  = _farm_z([(e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW) for e in org_summary])
+    _gwar_z = _farm_z([e.get("_grad_war_total") for e in org_summary])
+    _TB_W = {"surplus": 0.40, "dvm6y": 0.25, "grad_war": 0.35}
+    for i, entry in enumerate(org_summary):
+        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm6y"] * _dvm_z[i]
+                  + _TB_W["grad_war"] * _gwar_z[i])
+        entry["farm_tiebreaker"] = {
+            "score": round(100 + 10 * _blend, 1),
+            "weights": _TB_W,
+            "components": {
+                "surplus_z":  round(_surp_z[i], 2),
+                "dvm6y_z":    round(_dvm_z[i], 2),
+                "grad_war_z": round(_gwar_z[i], 2),
+            },
+            "inputs": {
+                "total_surplus_mm": round(entry.get("_active_surplus_net_mm") or 0.0, 1),
+                "dvm_plus_6y":      (entry.get("dvm_plus") or {}).get("6y"),
+                "grad_war_total":   entry.get("_grad_war_total"),
+            },
+        }
+    # Continuous "true rank" 1–30 by the tiebreaker score (finer than the letter
+    # grade); the letter grade still comes from farm_score's rank bucket below.
+    _tb_order = sorted(range(len(org_summary)),
+                       key=lambda i: -(org_summary[i]["farm_tiebreaker"]["score"]))
+    for _r, _i in enumerate(_tb_order, start=1):
+        org_summary[_i]["farm_tiebreaker"]["rank"] = _r
 
     # v18 — Conviction cap removed. The 75th-percentile farm_score cap
     # for orgs without a star-tier graduate in the last 6 years was a
@@ -9983,6 +12992,33 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # state to walk.
     for entry in org_summary:
         _attach_sub_leaves(entry)
+
+    # v41 — Server-side farm-rank movement chip. Replaces the old client-side
+    # "since your last visit" localStorage delta with an event-based "since the
+    # last real change" signal from the de-noised engine. Reads the
+    # farm_rank_history accrued by prior monthly runs, appends today's
+    # freshly-assigned (rank, score) as the anchor (dropping any same-day row so
+    # a re-run doesn't double-count), and walks back to the most recent genuine
+    # rank step. Until a few months of history accrue every org reads flat —
+    # expected, not a bug. Best-effort: a failure here must never abort the
+    # export, so each entry still gets a (null) rank_movement key.
+    try:
+        from movement import compute_farm_movement
+        _today_iso = date.today().isoformat()
+        _hist_by_org: dict[str, list[dict]] = {}
+        for _row in load_farm_rank_history():
+            _hist_by_org.setdefault(_row["org"], []).append(_row)
+        for entry in org_summary:
+            _org = entry.get("org")
+            _hist = [h for h in _hist_by_org.get(_org, [])
+                     if h.get("snapshot_date") != _today_iso]
+            _hist.append({"org": _org, "snapshot_date": _today_iso,
+                          "farm_rank": entry.get("farm_rank"),
+                          "farm_score": entry.get("farm_score")})
+            entry["rank_movement"] = compute_farm_movement(_hist)
+    except Exception:
+        for entry in org_summary:
+            entry.setdefault("rank_movement", None)
 
     # v31.1 — League pass that LETTER-GRADES selected sub-leaves so the
     # third tree column reads as another grade layer, not just a value
@@ -10180,7 +13216,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # falls back to the canonical `grades[leaf]` (which anchors on 6y).
     for entry in org_summary:
         entry["grades_by_window"] = {}
-    for win in ("1y", "3y", "6y"):
+    for win in FARM_TRAJECTORY_WINDOWS:
         for leaf_key in ("dev_hitter", "dev_pitcher"):
             vals = []
             for entry in org_summary:
@@ -10213,7 +13249,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # carries the per-prospect year. We re-aggregate per-window then
     # z-score-grade across the league.
     _now_yr = date.today().year
-    _WINDOWS = {"1y": 1, "3y": 3, "6y": 6}
+    # Unified to the full trailing-window set so MLB-production / acquisition
+    # recency filters track the SAME windows as DvM+ (year-rounded from days).
+    _WINDOWS = {k: max(1, round(d / 365)) for k, d in FARM_TRAJECTORY_WINDOWS.items()}
     # Production windowing: aggregate WAR/yr from grads whose
     # last_mlb_year is within the window, per side (hitter vs pitcher).
     _PROD_LEAF_BY_SIDE = {False: "mlb_hitter_production",
@@ -10307,11 +13345,94 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 else:
                     z = (v - mu) / sd
                     wmap[leaf_key] = _z_to_letter(z)
+                # Stamp the windowed value on the tree node so the per-window
+                # COMPOSITE bake can re-score the Acquisition branch per window.
+                node = (entry.get("tree") or {}).get(leaf_key) or {}
+                node.setdefault("career_war_by_window", {})[win_label] = v
     # Pop the scratch fields so they don't bloat the exported JSON.
     for entry in org_summary:
         entry.pop("_top_grads_raw", None)
         entry.pop("_draft_pool_grads_raw", None)
         entry.pop("_ifa_grads_raw", None)
+
+    # ── Per-window COMPOSITE farm_score + overall letter ──────────────────
+    # The user-selectable trailing window drives the WHOLE grade, re-scoring
+    # EVERY legitimately-windowed branch at the selected window:
+    #   • Development  — org DvM+[W] (weight 2) blended with per-window tool DvM+[W]
+    #                    (weight 1), matching the dev-leaf spec.
+    #   • MLB-Production — the windowed graduate-WAR/yr leaves (hitter+pitcher)
+    #                    re-z-scored at W; the roll-up leaves (boom/bust/top/
+    #                    conviction/grad-pace/HOF) stay at their canonical scores.
+    #   • Acquisition  — the windowed draft/IFA graduate-WAR leaves re-z-scored at W;
+    #                    trade/waiver leaves stay canonical.
+    # Only FINANCIAL is held fixed: it's aggregate CURRENT surplus (a snapshot, not
+    # a trailing window), so it's window-invariant by construction. Because Financial
+    # is 65% of the composite the rank moves modestly across windows — that's honest:
+    # the grade is value-anchored, and the window re-grades the ~35% development /
+    # production / acquisition trajectory mass. Frontend reads farm_score_by_window
+    # [W] / letter_by_window[W]; canonical farm_score stays on FARM_PRINCIPAL_WINDOW.
+    _n_orgs = len(org_summary)
+    _dev_health_100 = leaf_100.get("dev_health_mgmt")      or [None] * _n_orgs
+    _dev_statc_100  = leaf_100.get("dev_statcast_quality")  or [None] * _n_orgs
+    _PROD_STATIC = ["mlb_production_boom_pct", "mlb_production_bust_pct",
+                    "mlb_production_top_grads", "mlb_production_conviction",
+                    "mlb_production_grad_pace", "mlb_production_hof_track"]
+    _ACQ_STATIC  = ["tx_trades", "tx_waivers"]
+    _w_acq  = FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+    _w_dev  = FARM_TREE_WEIGHT_DEVELOPMENT
+    _w_fin  = FARM_TREE_WEIGHT_FINANCIAL
+    _w_prod = FARM_TREE_WEIGHT_MLB_PRODUCTION
+
+    def _node_win(leaf_key, by_window_key, win):
+        return _zscore_to_100(
+            [(((e.get("tree") or {}).get(leaf_key) or {}).get(by_window_key) or {}).get(win)
+             for e in org_summary],
+            higher_is_better=True)
+
+    def _mean_present(vals):
+        present = [v for v in vals if v is not None]
+        return (sum(present) / len(present)) if present else None
+
+    for entry in org_summary:
+        entry["farm_score_by_window"] = {}
+        entry["letter_by_window"] = {}
+    for win in FARM_TRAJECTORY_WINDOWS:
+        # Development leaves at W.
+        z_org = _zscore_to_100([(e.get("dvm_plus") or {}).get(win) for e in org_summary],
+                               higher_is_better=True)
+        dev_leaf_w = {}
+        for leaf_key in ("dev_hitter", "dev_pitcher"):
+            z_tool = _node_win(leaf_key, "dvm_plus_by_window", win)
+            vals = []
+            for i in range(_n_orgs):
+                num = den = 0.0
+                if z_org[i] is not None:  num += z_org[i] * 2.0; den += 2.0
+                if z_tool[i] is not None: num += z_tool[i] * 1.0; den += 1.0
+                vals.append(round(num / den, 1) if den > 0 else None)
+            dev_leaf_w[leaf_key] = vals
+        # Production windowed leaves (graduate WAR/yr) + Acquisition windowed leaves.
+        z_prod_hit = _node_win("mlb_hitter_production",  "war_per_yr_by_window", win)
+        z_prod_pit = _node_win("mlb_pitcher_production", "war_per_yr_by_window", win)
+        z_acq_drf  = _node_win("acq_draft", "career_war_by_window", win)
+        z_acq_ifa  = _node_win("acq_ifa",   "career_war_by_window", win)
+        farm_scores_w = []
+        for i, entry in enumerate(org_summary):
+            dev_parent = _mean_present([dev_leaf_w["dev_hitter"][i], dev_leaf_w["dev_pitcher"][i],
+                                        _dev_health_100[i], _dev_statc_100[i]])
+            prod_parent = _mean_present([z_prod_hit[i], z_prod_pit[i]]
+                                        + [(leaf_100.get(k) or [None] * _n_orgs)[i] for k in _PROD_STATIC])
+            acq_parent = _mean_present([z_acq_drf[i], z_acq_ifa[i]]
+                                       + [(leaf_100.get(k) or [None] * _n_orgs)[i] for k in _ACQ_STATIC])
+            comp = (_w_acq  * (acq_parent  if acq_parent  is not None else 100.0)
+                    + _w_dev  * (dev_parent  if dev_parent  is not None else 100.0)
+                    + _w_fin  * (entry.get("financial_score") if entry.get("financial_score") is not None else 100.0)
+                    + _w_prod * (prod_parent if prod_parent is not None else 100.0))
+            fs = _stretch_composite(round(comp, 1), factor=1.20)
+            entry["farm_score_by_window"][win] = fs
+            farm_scores_w.append(fs)
+        ranks_w = _rank_descending(farm_scores_w)
+        for i, entry in enumerate(org_summary):
+            entry["letter_by_window"][win] = _letter_grade(ranks_w[i], _n_orgs)
     # ────────────────────────────────────────────────────────────────────────
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
@@ -10362,6 +13483,31 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     active_payload = [_serialize(p) for p in actives]
     inactive_payload = [_serialize(p) for p in inactives]
     graduate_payload = [_serialize(p) for p in grads]
+    # v38 — Item-6: stamp the per-prospect $DvM+ (computed in the league pre-pass
+    # above) onto each active payload so the farm financial detail can surface it
+    # alongside the prospect's surplus value.
+    for _pl in active_payload:
+        _pl["dollar_dvm_plus"] = _dollar_dvm_by_key.get(_pl.get("player_key"))
+    _live_ranked = []
+    for _pl in active_payload:
+        _base = _safe_float(_pl.get("fv_close_raw"))
+        if _base is None:
+            _base = _safe_float(_pl.get("fv_close"))
+        _delta = _safe_float(((_pl.get("live_signal") or {}).get("delta")))
+        if _base is None:
+            continue
+        _live_score = round(_base + (_delta or 0.0), 2)
+        _pl["live_score"] = _live_score
+        _live_ranked.append(_pl)
+    _live_ranked.sort(key=lambda _pl: (
+        -(_safe_float(_pl.get("live_score")) or -999),
+        -(_safe_float(_pl.get("fv_close_raw")) or -999),
+        _pl.get("player_name") or "",
+    ))
+    for _idx, _pl in enumerate(_live_ranked, start=1):
+        _pl["live_overall_rank"] = _idx
+        if _pl.get("overall_rank") is not None:
+            _pl["live_rank_delta"] = int(_pl["overall_rank"]) - _idx
     graduate_payload.sort(key=lambda p: p.get("debut_date") or "", reverse=True)
     # Stamp the precomputed Statcast+ onto each payload so downstream
     # consumers (UI badge, breakout gate, farm-grade rollup) can pull
@@ -10474,6 +13620,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     from spotlights import build_spotlights
     spotlight_payload = build_spotlights(active_payload, graduate_payload)
 
+    # Model-audit WS-0c — log editorial flags AT EMIT TIME so 30/60-day
+    # forward hit rates can be scored once cohorts mature (Phase 5).
+    # Numeric FV comes from the player payload (the entry carries a label).
+    try:
+        _fv_of = {p.get("player_key"): (p.get("points") or [{}])[-1].get("consensus_fv_raw")
+                  for p in active_payload}
+        _today = date.today().isoformat()
+        _flags = [{"player_key": e.get("player_key"), "flag_type": e.get("bucket"),
+                   "score": e.get("score"), "fv": _fv_of.get(e.get("player_key")),
+                   "level": e.get("level"), "age": e.get("age")}
+                  for key in ("risers", "rebounders", "fallers")
+                  for e in (spotlight_payload.get(key) or [])]
+        _n_flags = insert_editorial_flags(_today, _flags)
+        log.info("editorial flags: logged %d new (of %d emitted)", _n_flags, len(_flags))
+    except Exception:                                      # noqa: BLE001 — additive, never aborts
+        log.exception("editorial flag logging failed — continuing")
+
     # Split the export into a boot-critical file plus three lazy-loaded
     # sidecars so a first-paint download doesn't drag along ~40MB of
     # graduate / inactive / affiliate-roster data that the user typically
@@ -10525,9 +13688,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     seen = by_src_seen_hashes.setdefault(src, set())
                     if h not in seen:
                         seen.add(h)
+                        # Label + date come from the PER-SOURCE entry, not the
+                        # point. The point's interval_label is just one source's
+                        # label (whichever sorted first that day), so using it
+                        # here mislabeled every other source's writeup on a
+                        # multi-source day - e.g. an MLB Pipeline report stamped
+                        # "TJ Pre-Season 2026" because TJStats shared the date.
                         by_src_entries.setdefault(src, []).append({
-                            "date": pt.get("snapshot_date"),
-                            "label": pt.get("interval_label"),
+                            "date": (info or {}).get("snapshot_date") or pt.get("snapshot_date"),
+                            "label": (info or {}).get("interval_label") or pt.get("interval_label"),
                             "text": rpt,
                             "hash": h,
                         })
@@ -10545,10 +13714,164 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for p in inactive_payload:
         _harvest_and_strip_reports(p)
 
+    # v31.12 — pitch_plot sidecar harvest. The per-player pitch_plot
+    # blob (raw per-pitch coordinates rendered by the player-detail
+    # pitch-movement chart) is the single biggest contributor to the
+    # boot payload (~36 MB combined: 17.8 MB at the top level + 18.8
+    # MB nested inside level_splits[].pitch_plot). It's also used in
+    # exactly one place — `makePitchMovementPlot` on the player detail
+    # page — so it's a textbook lazy-load candidate. Extract into a
+    # sidecar keyed by player_key; the boot dict carries only
+    # `statcast_metrics` minus the pitch_plot fields.
+    pitch_plots_sidecar: dict[str, dict] = {}
+    def _harvest_and_strip_pitch_plots(player_payload):
+        pkey = player_payload.get("player_key")
+        sc = player_payload.get("statcast_metrics") or {}
+        if not sc:
+            return
+        captured: dict = {}
+        top_plot = sc.get("pitch_plot")
+        if top_plot:
+            captured["top"] = top_plot
+            sc["pitch_plot"] = {}
+        ls = sc.get("level_splits") or []
+        if ls:
+            level_plots = {}
+            for row in ls:
+                if not isinstance(row, dict):
+                    continue
+                rp = row.get("pitch_plot")
+                if rp:
+                    lvl = row.get("level") or "_"
+                    level_plots[lvl] = rp
+                    row["pitch_plot"] = {}
+            if level_plots:
+                captured["level_splits"] = level_plots
+        if captured and pkey:
+            pitch_plots_sidecar[pkey] = captured
+    for p in active_payload:
+        _harvest_and_strip_pitch_plots(p)
+    for p in graduate_payload:
+        _harvest_and_strip_pitch_plots(p)
+    for p in inactive_payload:
+        _harvest_and_strip_pitch_plots(p)
+
+    # v33 — player_detail per-player sidecar (Open Beta payload diet). After
+    # the pitch-plot split the boot file's residual weight was (a) raw
+    # batted-ball coordinates (contact_quality.hit_locations + rolling_xwoba,
+    # duplicated per level split) feeding the spray chart + rolling-xwOBA
+    # sparkline, (b) per-game logs (recent_games / standout_games), and
+    # (c) HISTORICAL per_source tool grades + extras on old points. All are
+    # card-only consumers, so they move to data/player_detail/{key}.json and
+    # the card lazy-merges them back in (mirrors the v32 pitch_plots
+    # pattern). What stays in boot, by consumer contract:
+    #   • per-source SCALARS (fv_published / fv_plus / rank / status …) on
+    #     EVERY point — the source-divergence chart + point tooltips read
+    #     them across the whole history.
+    #   • the full observation (tools + extras) on each source's NEWEST
+    #     point, plus the newest point per source that carries
+    #     tools._extras — newest→oldest walkers (_getFgExtras,
+    #     computeFgFlags, _getPhysicalProfile) find identical data.
+    #   • level_splits' scalar metrics — card percentile cohorts walk every
+    #     player's splits, so those can never leave boot.
+    # p90_ev is precomputed before hit_locations leave so the cohort
+    # fallback (_p90EvOf) never needs the raw coordinates.
+    player_detail_sidecar: dict[str, dict] = {}
+
+    def _p90_from_locations(cq: dict) -> None:
+        if not isinstance(cq, dict) or cq.get("p90_ev") is not None:
+            return
+        evs = []
+        for loc in cq.get("hit_locations") or []:
+            try:
+                v = float(loc.get("launch_speed"))
+            except (TypeError, ValueError, AttributeError):
+                continue
+            if v == v:  # not NaN
+                evs.append(v)
+        if evs:
+            evs.sort()
+            idx = min(len(evs) - 1, max(0, round((len(evs) - 1) * 0.90)))
+            cq["p90_ev"] = round(evs[idx], 1)
+
+    def _strip_statcast_heavy(holder: dict) -> dict:
+        """Move hit_locations / rolling_xwoba / recent_games / standout_games
+        out of a statcast block (top level or one level-split row). Returns
+        the moved fields ({} when the block had none)."""
+        moved: dict = {}
+        cq = holder.get("contact_quality")
+        if isinstance(cq, dict):
+            _p90_from_locations(cq)
+            cq_moved = {}
+            for f in ("hit_locations", "rolling_xwoba"):
+                if cq.get(f):
+                    cq_moved[f] = cq[f]
+                    cq[f] = []
+            if cq_moved:
+                moved["contact_quality"] = cq_moved
+        for f in ("recent_games", "standout_games"):
+            if holder.get(f):
+                moved[f] = holder[f]
+                holder[f] = []
+        return moved
+
+    def _harvest_player_detail(player_payload: dict) -> None:
+        pkey = player_payload.get("player_key")
+        if not pkey:
+            return
+        detail: dict = {}
+        sc = player_payload.get("statcast_metrics") or {}
+        if sc:
+            top = _strip_statcast_heavy(sc)
+            levels: dict = {}
+            for row in sc.get("level_splits") or []:
+                if not isinstance(row, dict):
+                    continue
+                lvl_moved = _strip_statcast_heavy(row)
+                if lvl_moved:
+                    levels[row.get("level") or "_"] = lvl_moved
+            if top or levels:
+                detail["statcast"] = {"top": top, "level_splits": levels}
+        pts = player_payload.get("points") or []
+        newest_any: set[str] = set()
+        newest_extras: set[str] = set()
+        moved_ps: dict[str, dict] = {}
+        for pt in reversed(pts):              # newest → oldest
+            for src, obs in (pt.get("per_source") or {}).items():
+                if not isinstance(obs, dict):
+                    continue
+                tools = obs.get("tools") or {}
+                has_extras = bool(isinstance(tools, dict) and tools.get("_extras"))
+                keep = src not in newest_any or (has_extras and src not in newest_extras)
+                newest_any.add(src)
+                if has_extras:
+                    newest_extras.add(src)
+                if keep:
+                    continue
+                moved = {}
+                for f in ("tools", "extras"):
+                    if obs.get(f):
+                        moved[f] = obs[f]
+                        obs[f] = None
+                if moved:
+                    pt_key = f"{pt.get('snapshot_date')}|{pt.get('interval_label')}"
+                    moved_ps.setdefault(pt_key, {})[src] = moved
+        if moved_ps:
+            detail["points_per_source"] = moved_ps
+        if detail:
+            player_detail_sidecar[pkey] = detail
+
+    for p in active_payload:
+        _harvest_player_detail(p)
+    for p in graduate_payload:
+        _harvest_player_detail(p)
+    for p in inactive_payload:
+        _harvest_player_detail(p)
+
     boot = {
         "generated_at": _utcnow_iso() + "Z",
         "run": latest_run_summary(),
-        "total_tracked": len(timeseries),
+        "total_tracked": len(active_payload) + len(graduate_payload) + len(inactive_payload),
         "active_count": len(actives),
         "inactive_count": len(inactives),
         "debut_count": len(grads),
@@ -10581,7 +13904,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "rosters_by_org":     "rosters_by_org.json",
             "scout_reports":      "scout_reports.json",
             "mlb_trade_players":  "mlb_trade_players.json",
+            # NB: the Free Agency sidecars (fa_class/fa_archive/fa_meta,
+            # written by fa_export.py) are NOT advertised here — the FA
+            # module is its own surface (/fa/, assets/fa.js) and fetches
+            # them from /data/ directly. PROSPX carries zero FA bytes.
         },
+        # v32 — pitch_plot coordinates ship PER PLAYER under
+        # data/pitch_plots/{player_key}.json (the monolithic sidecar
+        # reached 411MB and one card open pulled all of it). The key
+        # list keeps absent players from ever fetching; the directory
+        # contract is advertised separately from the single-file slices.
+        # v33 — player_detail/{player_key}.json rides the same contract
+        # (spray/rolling-xwOBA coordinates, game logs, historical
+        # per-source tool grades; lazy-merged when a card opens).
+        "_slices_dir": {"pitch_plots": "pitch_plots/",
+                        "player_detail": "player_detail/"},
+        "pitch_plots_keys": sorted(pitch_plots_sidecar),
+        "player_detail_keys": sorted(player_detail_sidecar),
     }
     out_dir = out_path.parent
     # Compact JSON (no indent, no spaces in separators) — cuts the boot
@@ -10610,6 +13949,38 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # v31.8c — mlb_trade_players sidecar (lazy-loaded when the
     # Transactions tab opens, not part of initial boot).
     _dump(load_mlb_trade_players(), out_dir / "mlb_trade_players.json")
+    # v32 — pitch_plots split per player (see _slices_dir above). Stale
+    # per-player files from departed players are removed; the legacy
+    # monolithic pitch_plots.json is deleted if present so the deploy
+    # artifact never ships 411MB of coordinates again.
+    pp_dir = out_dir / "pitch_plots"
+    pp_dir.mkdir(parents=True, exist_ok=True)
+    existing = {f.stem for f in pp_dir.glob("*.json")}
+    for k, v in pitch_plots_sidecar.items():
+        _dump(v, pp_dir / f"{k}.json")
+    for stale in existing - set(pitch_plots_sidecar):
+        try:
+            (pp_dir / f"{stale}.json").unlink()
+        except OSError:
+            pass
+    # v33 — player_detail per-player sidecar files (same lifecycle rules
+    # as pitch_plots: write current, remove departed players' files).
+    pd_dir = out_dir / "player_detail"
+    pd_dir.mkdir(parents=True, exist_ok=True)
+    pd_existing = {f.stem for f in pd_dir.glob("*.json")}
+    for k, v in player_detail_sidecar.items():
+        _dump(v, pd_dir / f"{k}.json")
+    for stale in pd_existing - set(player_detail_sidecar):
+        try:
+            (pd_dir / f"{stale}.json").unlink()
+        except OSError:
+            pass
+    legacy_pp = out_dir / "pitch_plots.json"
+    if legacy_pp.exists():
+        try:
+            legacy_pp.unlink()
+        except OSError:
+            pass
     return out_path
 
 
@@ -10626,15 +13997,235 @@ def load_export_unified(boot_path: Path) -> dict:
     payload = json.loads(boot_path.read_text())
     out_dir = boot_path.parent
     for slice_name in ("debuts", "inactive", "rosters_by_org",
-                        "scout_reports", "mlb_trade_players"):
+                        "scout_reports", "mlb_trade_players",
+                        "pitch_plots"):
         if slice_name in payload:
             continue
         sidecar = out_dir / f"{slice_name}.json"
         if sidecar.exists():
             payload[slice_name] = json.loads(sidecar.read_text())
+        elif slice_name == "pitch_plots" and (out_dir / "pitch_plots").is_dir():
+            # v32 split-per-player layout: re-assemble the unified shape.
+            payload[slice_name] = {
+                f.stem: json.loads(f.read_text())
+                for f in sorted((out_dir / "pitch_plots").glob("*.json"))}
         else:
             # Empty default keeps test assertions like `for g in
             # payload["debuts"]` from raising KeyError when the slice
             # is genuinely empty for this run.
             payload[slice_name] = [] if slice_name in ("debuts", "inactive") else {}
+    # v31.12 — re-inline pitch_plots into the statcast_metrics block
+    # for tests + ad-hoc callers that expect the unified shape. The
+    # frontend lazy-loads + merges separately.
+    pp = payload.get("pitch_plots") or {}
+    if pp:
+        for cohort_key in ("players", "debuts", "inactive"):
+            for p in payload.get(cohort_key) or []:
+                pkey = p.get("player_key")
+                if pkey not in pp:
+                    continue
+                sc = p.get("statcast_metrics") or {}
+                if not sc:
+                    continue
+                entry = pp[pkey]
+                if entry.get("top"):
+                    sc["pitch_plot"] = entry["top"]
+                level_map = entry.get("level_splits") or {}
+                if level_map:
+                    for row in sc.get("level_splits") or []:
+                        lvl = row.get("level") or "_"
+                        if lvl in level_map:
+                            row["pitch_plot"] = level_map[lvl]
     return payload
+
+
+# ============================================================================
+# Editorial flag logging (model-audit WS-0c) — flags persisted AT EMIT TIME
+# with matched-control sampling keys so 30/60-day forward hit rates can be
+# scored once cohorts mature (Phase 5). Lives ABOVE the FA section: the FA
+# accessors below are guarded to fa_* tables only.
+# ============================================================================
+
+def _editorial_band(fv: float | None, age: float | None) -> tuple[str | None, str | None]:
+    """Matched-control sampling keys for editorial-flag scoring: a flagged
+    player's forward performance only means something against UNFLAGGED
+    players of the same FV band x level x age band."""
+    fv_band = None
+    if fv is not None:
+        fv_band = ("<45" if fv < 45 else "45" if fv < 50 else "50" if fv < 55
+                   else "55" if fv < 60 else "60+")
+    age_band = None
+    if age is not None:
+        age_band = ("<19" if age < 19 else "19-21" if age < 21 else "21-23"
+                    if age < 23 else "23-25" if age < 25 else "25+")
+    return fv_band, age_band
+
+
+def insert_editorial_flags(emitted_at: str, flags: list[dict]) -> int:
+    """Persist editorial flags AT EMIT TIME (model-audit WS-0c). Each flag:
+    {player_key, flag_type, score?, fv?, level?, age?}. Append-only per
+    (player, flag, date) — re-running an export the same day is a no-op,
+    so the forward-evaluation cohorts can't be contaminated by reruns."""
+    n = 0
+    with connect() as con:
+        for f in flags:
+            if not (f.get("player_key") and f.get("flag_type")):
+                continue
+            fv_band, age_band = _editorial_band(f.get("fv"), f.get("age"))
+            cur = con.execute(
+                """INSERT OR IGNORE INTO editorial_flags
+                   (player_key, flag_type, emitted_at, score, fv, fv_band,
+                    level, age_band)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?)""",
+                (f["player_key"], f["flag_type"], emitted_at, f.get("score"),
+                 f.get("fv"), fv_band, f.get("level"), age_band))
+            n += cur.rowcount
+    return n
+
+
+def load_editorial_flags(flag_type: str | None = None) -> list[dict]:
+    """All logged flags (oldest first) — the editorial forward-evaluation
+    (model-audit WS-10) scores these against matured outcomes."""
+    where = " WHERE flag_type = ?" if flag_type else ""
+    args = (flag_type,) if flag_type else ()
+    with connect() as con:
+        cur = con.execute(
+            "SELECT player_key, flag_type, emitted_at, score, fv, fv_band, "
+            "level, age_band FROM editorial_flags" + where +
+            " ORDER BY emitted_at, player_key", args)
+        cols = [d[0] for d in cur.description]
+        return [dict(zip(cols, r)) for r in cur.fetchall()]
+
+
+# ============================================================================
+# MLB Free Agency module — storage accessors (additive; fa_* tables only).
+# Generic (key1, key2) payload_json upsert/load pairs in the career_war
+# style. Nothing here touches prospect tables; the FA module's PROSPX
+# consumption is read-only by construction.
+# ============================================================================
+
+def _fa_upsert(table: str, key_cols: tuple[str, str], rows: dict, extra_cols=None) -> int:
+    """Shared two-key payload upsert. ``rows`` maps (k1, k2) -> payload
+    dict; ``extra_cols`` optionally maps column name -> per-row getter so
+    queryable columns (status, position…) ride alongside the payload."""
+    extra_cols = extra_cols or {}
+    n = 0
+    cols = [key_cols[0], key_cols[1], *extra_cols.keys(), "payload_json"]
+    placeholders = ", ".join("?" for _ in cols)
+    updates = ", ".join(f"{c}=excluded.{c}" for c in [*extra_cols.keys(), "payload_json"])
+    sql = (f"INSERT INTO {table} ({', '.join(cols)}, fetched_at) "
+           f"VALUES ({placeholders}, datetime('now')) "
+           f"ON CONFLICT({key_cols[0]}, {key_cols[1]}) DO UPDATE SET "
+           f"{updates}, fetched_at=excluded.fetched_at")
+    with connect() as con:
+        for (k1, k2), payload in rows.items():
+            if not payload:
+                continue
+            vals = [k1, k2, *(get(payload) for get in extra_cols.values()), json.dumps(payload)]
+            con.execute(sql, vals)
+            n += 1
+    return n
+
+
+def _fa_load(table: str, key_cols: tuple[str, str], where: str = "", args: tuple = ()) -> dict:
+    try:
+        with connect() as con:
+            rows = con.execute(
+                f"SELECT {key_cols[0]}, {key_cols[1]}, payload_json FROM {table} {where}", args
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return {}
+    return {(r[0], r[1]): json.loads(r[2]) for r in rows}
+
+
+def upsert_fa_class_players(class_year: int, players: list[dict]) -> int:
+    rows = {(p["player_key"], class_year): p for p in players if p.get("player_key")}
+    return _fa_upsert("fa_class_players", ("player_key", "class_year"), rows,
+                      extra_cols={"mlbam_id": lambda p: p.get("mlbam_id"),
+                                  "position": lambda p: p.get("position"),
+                                  "status": lambda p: p.get("status")})
+
+
+def load_fa_class_players(class_year: int | None = None) -> dict:
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    return _fa_load("fa_class_players", ("player_key", "class_year"), where, args)
+
+
+def upsert_fa_signings(class_year: int, signings: list[dict]) -> int:
+    rows = {(s["player_key"], class_year): s for s in signings if s.get("player_key")}
+    return _fa_upsert("fa_signings", ("player_key", "class_year"), rows)
+
+
+def load_fa_signings(class_year: int | None = None) -> dict:
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    return _fa_load("fa_signings", ("player_key", "class_year"), where, args)
+
+
+def upsert_fa_team_payroll(season: int, teams: list[dict]) -> int:
+    rows = {(t["team"], season): t for t in teams if t.get("team")}
+    return _fa_upsert("fa_team_payroll", ("team", "season"), rows)
+
+
+def load_fa_team_payroll(season: int | None = None) -> dict:
+    where, args = ("WHERE season = ?", (season,)) if season else ("", ())
+    return _fa_load("fa_team_payroll", ("team", "season"), where, args)
+
+
+def insert_fa_events_first_seen(class_year: int, events: list[dict]) -> int:
+    """Append-only event insert. Each event is {player_key, event_type,
+    payload?}. The event_date stamps as today ONLY on first insert —
+    re-observing the same transition on later refreshes is a no-op, so
+    first-seen dates never drift."""
+    n = 0
+    with connect() as con:
+        for e in events:
+            if not (e.get("player_key") and e.get("event_type")):
+                continue
+            cur = con.execute(
+                """INSERT OR IGNORE INTO fa_events
+                   (class_year, player_key, event_type, event_date, payload_json)
+                   VALUES (?, ?, ?, date('now'), ?)""",
+                (class_year, e["player_key"], e["event_type"],
+                 json.dumps(e.get("payload") or {})))
+            n += cur.rowcount
+    return n
+
+
+def load_fa_events(class_year: int | None = None) -> list[dict]:
+    """Events newest-first; each row carries class_year/player_key/
+    event_type/event_date plus the payload fields."""
+    where, args = ("WHERE class_year = ?", (class_year,)) if class_year else ("", ())
+    try:
+        with connect() as con:
+            rows = con.execute(
+                f"""SELECT class_year, player_key, event_type, event_date, payload_json
+                    FROM fa_events {where} ORDER BY event_date DESC, player_key""",
+                args).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [{"class_year": r[0], "player_key": r[1], "event_type": r[2],
+             "event_date": r[3], **json.loads(r[4])} for r in rows]
+
+
+def set_fa_class_player_status(class_year: int, player_key: str, status: str) -> None:
+    """Flip one class member's queryable status column (e.g. → 'signed'
+    when the winter tracker observes a deal). The payload keeps the raw
+    as-scraped row; status is the pipeline's reconciled view."""
+    with connect() as con:
+        con.execute(
+            "UPDATE fa_class_players SET status = ? WHERE class_year = ? AND player_key = ?",
+            (status, class_year, player_key))
+
+
+def upsert_fa_model_eval(model_version: str, gate: str, payload: dict) -> None:
+    with connect() as con:
+        con.execute(
+            """INSERT INTO fa_model_eval (model_version, gate, payload_json, computed_at)
+               VALUES (?, ?, ?, datetime('now'))
+               ON CONFLICT(model_version, gate) DO UPDATE SET
+                 payload_json=excluded.payload_json, computed_at=excluded.computed_at""",
+            (model_version, gate, json.dumps(payload)))
+
+
+def load_fa_model_eval() -> dict:
+    return _fa_load("fa_model_eval", ("model_version", "gate"))

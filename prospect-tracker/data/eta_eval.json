@@ -1,0 +1,357 @@
+{
+ "generated_at": "2026-06-24",
+ "vintage_years": [
+  2018,
+  2019,
+  2020,
+  2021,
+  2022,
+  2023
+ ],
+ "accounting": {
+  "listed": 9210,
+  "excluded_post_debut": 620,
+  "excluded_no_bio": 0,
+  "no_level_age_fallback": 3725,
+  "level_from_statsapi": 3410,
+  "level_from_career_stats": 1455,
+  "debuted": 4139,
+  "censored_active": 2337,
+  "washed_out": 751,
+  "overdue": 888
+ },
+ "conventions": {
+  "vintage_fv": "median of each source's earliest same-year snapshot",
+  "inputs": "level/stats = season Y-1 at then-highest level (A- -> A, Rk/ROK/FRk -> CPX); age at snapshot date; STATIC norm tables",
+  "unscored_live_signals": "statcast_plus, health/IL, org promotion tendencies (not reconstructable per vintage)",
+  "actual": "debuts.json debut_date, else first career_war / career_stats MLB season",
+  "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
+ },
+ "champion_heuristic": {
+  "n": 4139,
+  "mae": 1.426,
+  "bias": 1.027,
+  "within_1y": 0.585,
+  "exact": 0.218
+ },
+ "baseline_naive_level_table": {
+  "n": 3419,
+  "mae": 1.982,
+  "bias": 1.765,
+  "within_1y": 0.379,
+  "exact": 0.168
+ },
+ "champion_on_baseline_rows": {
+  "n": 3419,
+  "mae": 1.444,
+  "bias": 1.104,
+  "within_1y": 0.576,
+  "exact": 0.212
+ },
+ "challenger_empirical_table_forward_chained": {
+  "n": 2875,
+  "mae": 0.85,
+  "bias": 0.213,
+  "within_1y": 0.818,
+  "exact": 0.375
+ },
+ "challenger_km_recalibrated_heuristic": {
+  "n": 2781,
+  "mae": 1.457,
+  "bias": 1.145,
+  "within_1y": 0.569,
+  "exact": 0.198
+ },
+ "v38_frozen_on_km_rows": {
+  "n": 2781,
+  "mae": 2.006,
+  "bias": 1.849,
+  "within_1y": 0.407,
+  "exact": 0.136
+ },
+ "km_base_years_full_window": {
+  "AAA": 0.75,
+  "AA": 1.5,
+  "A+": 3.0,
+  "A": 3.75,
+  "CPX": 4.25
+ },
+ "live_base_years": {
+  "AAA": 0.75,
+  "AA": 1.5,
+  "A+": 3.0,
+  "A": 3.75,
+  "CPX": 4.25,
+  "DSL": 7.5
+ },
+ "v38_frozen_base_years": {
+  "AAA": 0.5,
+  "AA": 2.0,
+  "A+": 3.5,
+  "A": 5.0,
+  "CPX": 6.5,
+  "DSL": 7.5
+ },
+ "overdue_v38_vs_km": {
+  "v38": 788,
+  "km_recalibrated": 888,
+  "censored_n": 2337
+ },
+ "ship_decision": {
+  "date": "2026-06-11",
+  "decision": "SHIP \u2014 eta.BASE_YEARS recalibrated to the censoring-aware KM medians (v39); DSL keeps the hand-set 7.5 (curve never crosses 50% debut probability \u2014 cure fraction dominates)",
+  "criteria": "forward-chained debuted MAE and within-1y must beat the v38 bases on identical rows; overdue shift disclosed (conditional-accuracy trade, accepted: KM is censoring-aware, not a survivor median)",
+  "measured_2026_06_11": {
+   "km_recalibrated": {
+    "mae": 1.448,
+    "within_1y": 0.571
+   },
+   "v38_incumbent": {
+    "mae": 1.993,
+    "within_1y": 0.405
+   },
+   "rows": 2778,
+   "overdue": {
+    "v38": 803,
+    "km": 904,
+    "censored_n": 2345
+   }
+  }
+ },
+ "by_level": {
+  "DSL": {
+   "n": 56,
+   "mae": 3.571,
+   "bias": 3.571,
+   "within_1y": 0.125,
+   "exact": 0.036
+  },
+  "CPX": {
+   "n": 322,
+   "mae": 1.606,
+   "bias": 1.177,
+   "within_1y": 0.528,
+   "exact": 0.224
+  },
+  "A": {
+   "n": 904,
+   "mae": 1.598,
+   "bias": 1.213,
+   "within_1y": 0.523,
+   "exact": 0.181
+  },
+  "A+": {
+   "n": 719,
+   "mae": 1.638,
+   "bias": 1.408,
+   "within_1y": 0.476,
+   "exact": 0.156
+  },
+  "AA": {
+   "n": 906,
+   "mae": 1.222,
+   "bias": 0.9,
+   "within_1y": 0.655,
+   "exact": 0.223
+  },
+  "AAA": {
+   "n": 512,
+   "mae": 0.957,
+   "bias": 0.527,
+   "within_1y": 0.754,
+   "exact": 0.336
+  }
+ },
+ "by_vintage": {
+  "2018": {
+   "n": 648,
+   "mae": 1.256,
+   "bias": 0.596,
+   "within_1y": 0.633,
+   "exact": 0.275
+  },
+  "2019": {
+   "n": 771,
+   "mae": 1.266,
+   "bias": 0.659,
+   "within_1y": 0.649,
+   "exact": 0.254
+  },
+  "2020": {
+   "n": 725,
+   "mae": 1.211,
+   "bias": 0.77,
+   "within_1y": 0.666,
+   "exact": 0.255
+  },
+  "2021": {
+   "n": 716,
+   "mae": 1.923,
+   "bias": 1.694,
+   "within_1y": 0.408,
+   "exact": 0.109
+  },
+  "2022": {
+   "n": 712,
+   "mae": 1.466,
+   "bias": 1.213,
+   "within_1y": 0.57,
+   "exact": 0.212
+  },
+  "2023": {
+   "n": 567,
+   "mae": 1.434,
+   "bias": 1.275,
+   "within_1y": 0.582,
+   "exact": 0.203
+  }
+ },
+ "residual_by_level": {
+  "DSL": {
+   "n": 56,
+   "mean": 3.571,
+   "median": 4.0
+  },
+  "CPX": {
+   "n": 322,
+   "mean": 1.177,
+   "median": 1.0
+  },
+  "A": {
+   "n": 904,
+   "mean": 1.213,
+   "median": 1.0
+  },
+  "A+": {
+   "n": 719,
+   "mean": 1.408,
+   "median": 1
+  },
+  "AA": {
+   "n": 906,
+   "mean": 0.9,
+   "median": 1.0
+  },
+  "AAA": {
+   "n": 512,
+   "mean": 0.527,
+   "median": 1.0
+  }
+ },
+ "censoring": {
+  "censored_active": 2337,
+  "overdue_rate": 0.38,
+  "washed_out": 751,
+  "washed_out_share_of_listed": 0.104
+ },
+ "empirical_tables_by_vintage": {
+  "2019": {
+   "A+": 2,
+   "A": 3,
+   "AA": 1,
+   "CPX": 4,
+   "DSL": 4,
+   "AAA": 0
+  },
+  "2020": {
+   "A": 3.0,
+   "A+": 2.0,
+   "AA": 1,
+   "CPX": 4.0,
+   "AAA": 0.0,
+   "DSL": 4
+  },
+  "2021": {
+   "A": 3,
+   "A+": 2,
+   "AA": 1,
+   "CPX": 4,
+   "AAA": 0.0,
+   "DSL": 4.0
+  },
+  "2022": {
+   "A": 2.0,
+   "A+": 2.0,
+   "AA": 1.0,
+   "CPX": 3.0,
+   "AAA": 0.0,
+   "DSL": 4
+  },
+  "2023": {
+   "A": 2,
+   "A+": 1.0,
+   "AA": 1,
+   "CPX": 3.0,
+   "AAA": 0.0,
+   "DSL": 3
+  }
+ },
+ "km_survival_by_level": {
+  "AAA": [
+   0.392,
+   0.2379,
+   0.1742,
+   0.1524,
+   0.1403,
+   0.1373,
+   0.1373,
+   0.1373,
+   0.1373
+  ],
+  "AA": [
+   0.6457,
+   0.3596,
+   0.2524,
+   0.2117,
+   0.2012,
+   0.1962,
+   0.1875,
+   0.1875,
+   0.1875
+  ],
+  "A+": [
+   0.9,
+   0.6856,
+   0.5068,
+   0.4314,
+   0.3977,
+   0.3803,
+   0.3775,
+   0.3775,
+   0.3775
+  ],
+  "A": [
+   0.9689,
+   0.817,
+   0.6036,
+   0.4487,
+   0.3264,
+   0.2686,
+   0.2449,
+   0.2333,
+   0.2333
+  ],
+  "CPX": [
+   0.9891,
+   0.9283,
+   0.7891,
+   0.5804,
+   0.3291,
+   0.2094,
+   0.1396,
+   0.1343,
+   0.1287
+  ],
+  "DSL": [
+   0.9945,
+   0.978,
+   0.9231,
+   0.8297,
+   0.6658,
+   0.5978,
+   0.5381,
+   0.5381,
+   0.5381
+  ]
+ }
+}

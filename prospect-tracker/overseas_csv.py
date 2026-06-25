@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Overseas (KBO/NPB/CPBL) CSV ingest — mirror of draft_csv.py.
 
 The overseas FG board CSVs share the same 4-file shape as the standard
@@ -73,6 +78,13 @@ def is_overseas_slug(slug: str) -> int | None:
 # new league shows up rather than silently disappearing).
 _KNOWN_LEAGUES = {"NPB", "NPBF", "KBO", "CPBL", "CUBA", "MLBR"}
 
+# Raw Player-Type codes that FG ships under a different label than our
+# canonical league key. "CNS" is the Cuban National Series (Serie
+# Nacional de Béisbol); we fold it into the single "CUBA" bucket so the
+# two surfaces (board + LEAGUE_CONTEXT) agree on one Cuba league. Applied
+# after upper-casing the raw value.
+_LEAGUE_ALIAS = {"CNS": "CUBA"}
+
 
 def overseas_player_key(league: str | None, player_name: str) -> str:
     """Canonical key for an overseas prospect:
@@ -118,6 +130,10 @@ def _parse_overseas_summary_row(raw: dict, snapshot_year: int) -> dict | None:
     league_raw = _str_or_none(row.get("player type"))
     # Normalize: FG occasionally writes 'npb' (lowercase) for farm teams
     league = league_raw.upper() if league_raw else None
+    # Fold known aliases onto the canonical key (CNS -> CUBA) so a Cuban
+    # National Series row lands in the same bucket as the Cuba context.
+    if league:
+        league = _LEAGUE_ALIAS.get(league, league)
     if league and league not in _KNOWN_LEAGUES:
         # Keep the verbatim value but surface a log so a new league
         # gets noticed and added to _KNOWN_LEAGUES if it's recurring.
@@ -385,11 +401,37 @@ def _process_one_set(grp: dict,
                 snap_date = date.today().isoformat()
         else:
             snap_date = date.today().isoformat()
+        # Era guard (2026-06-12): historical sets dropped years later get
+        # the file MTIME above, which lands the snapshot in the wrong era
+        # and scrambles point-in-time ordering. When the detected year
+        # disagrees with the slug year, pin to the board's publication
+        # convention (FG posts these late Jan / early Feb - the 2026 set
+        # auto-detected 2026-02-05).
+        if snap_date[:4] != str(year):
+            snap_date = f"{year}-02-01"
 
     interval_label = f"FG {year} Overseas ({snap_date})"
 
     snap_payloads = [_merged_to_snapshot_dict(m, snap_date, interval_label)
                      for m in merged]
+    # INT'L AMATEUR rows are July-2-class prospects, not overseas pros
+    # (owner directive 2026-06-12): route their FVs onto the matching
+    # tracked prospects and keep them out of the overseas store entirely.
+    try:
+        from intl_amateur import is_ifa_league, attach_fv_snapshots
+        ifa_rows = [p for p in snap_payloads if is_ifa_league(p.get("league"))]
+        if ifa_rows:
+            snap_payloads = [p for p in snap_payloads
+                             if not is_ifa_league(p.get("league"))]
+            attach = [{**r, "interval_label":
+                       (r.get("interval_label") or "").replace("Overseas", "Int'l Board")}
+                      for r in ifa_rows]
+            n_att, unm = attach_fv_snapshots(attach, source="fangraphs")
+            log.info("overseas_csv: '%s' routed %d Int'l Amateur rows to "
+                     "prospects (%d attached, %d unmatched)",
+                     slug, len(ifa_rows), n_att, len(unm))
+    except Exception:
+        log.exception("overseas_csv: intl_amateur routing failed — rows kept overseas")
     n = insert_overseas_snapshots(snap_payloads)
     log.info("overseas_csv: '%s' -> %d snapshots (year=%d, date=%s)",
              slug, n, year, snap_date)

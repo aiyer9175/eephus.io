@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Consensus engine — v5 (forward-filled, Bayesian-shrunk).
 
@@ -6,8 +11,12 @@ Anchored to the FanGraphs scouting primer:
 
 Design (v5)
 -----------
-Every source that publishes an explicit 20-80 FV grade contributes EQUALLY
-to the consensus. There is no per-source weighting. This includes:
+Sources that publish an explicit 20-80 FV grade are combined into an
+accuracy-weighted mean. Weights load from data/source_weights.json (shrunk
+toward equal from the resolved-outcome backtest) and default to 1.0 - one
+equal vote - unless that file overrides a source; today only FanGraphs (0.939)
+and MLB Pipeline (1.061) differ from equal, every other source votes at 1.0.
+Sources that publish an explicit FV grade:
 
   * FanGraphs            (Eric Longenhagen + team)
   * ESPN                 (McDaniel)
@@ -148,6 +157,20 @@ PLAYER_KEY_ALIASES = {
         "player_key": "yeremy_cabrera",
         "player_name": "Yeremy Cabrera",
     },
+    "george_lombard": {
+        "player_key": "george_lombard_jr",
+        "player_name": "George Lombard Jr.",
+    },
+    "leonardo_bernal": {
+        "player_key": "leo_bernal",
+        "player_name": "Leo Bernal",
+    },
+}
+
+CANONICAL_PLAYER_NAMES = {
+    alias["player_key"]: alias["player_name"]
+    for alias in PLAYER_KEY_ALIASES.values()
+    if alias.get("player_key") and alias.get("player_name")
 }
 
 
@@ -160,6 +183,10 @@ def _canonicalize_player_snapshot(s: Snapshot) -> Snapshot:
         player_key=alias["player_key"],
         player_name=alias.get("player_name") or s.player_name,
     )
+
+
+def _canonical_player_name(player_key: str, fallback: str) -> str:
+    return CANONICAL_PLAYER_NAMES.get(player_key) or fallback
 
 
 def _dedupe_source_aliases(day_snaps: list[Snapshot]) -> list[Snapshot]:
@@ -307,6 +334,14 @@ class ConsensusPoint:
     # comparators can break ties (42+ > 42).
     consensus_fv_plus: bool = False
 
+    # Point-in-time org — the MLB org the prospect was in AS OF this snapshot.
+    # The Time Machine (an explicitly point-in-time view) resolves its logo from
+    # this, not the player's current org. FanGraphs records the historical org
+    # per snapshot; other sources stamp the current org, so we don't trust theirs.
+    # None on a genuine gap — the UI shows a neutral placeholder, never a wrong
+    # current-org logo. Live/Statcast surfaces ignore this (they want current org).
+    org: str | None = None
+
 
 @dataclass
 class PlayerTimeseries:
@@ -351,6 +386,61 @@ class PlayerTimeseries:
 # Core compute — one (player, date) bucket
 # ---------------------------------------------------------------------------
 
+def _pit_org(day_snaps, event_date):
+    """Point-in-time org for a consensus point: the org the prospect was actually
+    in AS OF this snapshot, not their current org.
+
+    Two trustworthy point-in-time signals: FanGraphs records the historical org
+    per snapshot (every other source stamps "now"), and a per-team list LABEL
+    names the org ("… Astros Top 30" → HOU). We prefer signals published AT this
+    snapshot date over stale forward-fills, so a just-published team list reflects
+    a recent trade (e.g. a Jan list that already moved a prospect to his new org)
+    rather than the last FanGraphs ranking. Returns None on a genuine gap so the
+    Time Machine shows a neutral placeholder, never a wrong current-org logo."""
+    from trades import canonical_org           # lazy import — avoid a cycle
+
+    def _ok(o):                                     # a real 2-4 char org code
+        return o if (o and len(o) <= 4 and o.isupper()) else None
+
+    def _fg(snaps):
+        fg = [s for s in snaps if s.source == "fangraphs" and s.org]
+        if not fg:
+            return None
+        # FanGraphs abbreviates some orgs mixed-case ("StL"); upper-case first so
+        # canonical_org's code path normalizes it (StL → STL).
+        return _ok(canonical_org(max(fg, key=lambda s: s.snapshot_date or "").org.upper()))
+
+    def _label(snaps):
+        for s in snaps:
+            o = _ok(canonical_org(getattr(s, "interval_label", "") or ""))
+            if o:                                   # a team name in the label resolved
+                return o
+        return None
+
+    fresh = [s for s in day_snaps if s.snapshot_date == event_date]
+    return _fg(fresh) or _label(fresh) or _fg(day_snaps) or _label(day_snaps)
+
+
+def load_source_weights() -> dict[str, float]:
+    """Accuracy-derived relative vote weights (model-audit WS-5, shipped
+    behind the vintage-disciplined A/B in data/consensus_weight_eval.json).
+    Sources absent from the file vote at 1.0 — new sources are never
+    punished for being new. Missing file = equal weighting everywhere."""
+    import json as _json
+    from pathlib import Path as _Path
+    p = _Path(__file__).parent / "data" / "source_weights.json"
+    try:
+        d = _json.loads(p.read_text(encoding="utf-8"))
+        return {k: float(v) for k, v in (d.get("weights") or {}).items()}
+    except (OSError, ValueError):
+        return {}
+
+
+# Loaded once per process — the weights file is vintage-frozen (it only
+# changes when a new base year resolves), so no within-run jitter.
+_SOURCE_WEIGHTS = load_source_weights()
+
+
 def compute_consensus_point(
     day_snaps: list[Snapshot],
     *,
@@ -359,6 +449,7 @@ def compute_consensus_point(
     single_source_k: float = SINGLE_SOURCE_K,
     total_fv_instances: int | None = None,
     dropped_off_pairs: set[tuple[str, str]] | None = None,
+    source_weights: dict[str, float] | None = None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -387,6 +478,7 @@ def compute_consensus_point(
     day_snaps = _dedupe_source_aliases(day_snaps)
 
     explicit_fvs: list[float] = []
+    _fv_weights: list[float] = []     # WS-5: per-vote relative weights (1.0 = equal)
     ranks: list[int] = []
     rank_implied_fvs: list[float] = []
 
@@ -444,6 +536,7 @@ def compute_consensus_point(
             per_source[s.source] = entry
             if fv_for_consensus is not None:
                 explicit_fvs.append(fv_for_consensus)
+                _fv_weights.append((source_weights or {}).get(s.source, 1.0))
                 contributing_sources.add(s.source)
         else:
             # Same-date same-source duplicate. Surface in `extras` so
@@ -485,7 +578,14 @@ def compute_consensus_point(
     if not explicit_fvs and not rank_implied_fvs:
         return None
 
-    avg_fv = sum(explicit_fvs) / len(explicit_fvs) if explicit_fvs else None
+    # WS-5 — accuracy-weighted mean (weights are all 1.0 unless the
+    # shipped source_weights file says otherwise; the dispersion stats
+    # below stay unweighted — disagreement is disagreement).
+    if explicit_fvs:
+        _wsum = sum(_fv_weights) or float(len(explicit_fvs))
+        avg_fv = sum(w * v for w, v in zip(_fv_weights, explicit_fvs)) / _wsum
+    else:
+        avg_fv = None
     avg_rank = sum(ranks) / len(ranks) if ranks else None
     rank_implied_fv = (
         sum(rank_implied_fvs) / len(rank_implied_fvs)
@@ -507,8 +607,8 @@ def compute_consensus_point(
     else:
         fv_min = fv_max = fv_spread = fv_stddev = None
 
-    # Consensus = unweighted mean of explicit FVs. Fall back to the
-    # rank-implied mean ONLY when no source published an FV grade —
+    # Consensus = the accuracy-weighted mean of explicit FVs computed above.
+    # Fall back to the rank-implied mean ONLY when no source published an FV grade —
     # otherwise a player ranked only by Baseball America / The Athletic
     # would have no consensus FV at all.
     pre_shrinkage = avg_fv if avg_fv is not None else rank_implied_fv
@@ -636,6 +736,7 @@ def compute_consensus_point(
         tools_spread=tools_spread,
         dropped_off_sources=sorted(set(dropped_off_in_point)),
         consensus_fv_plus=consensus_fv_plus,
+        org=_pit_org(day_snaps, event_date),
     )
 
 
@@ -857,6 +958,52 @@ def _candle_fields(points: list[ConsensusPoint]) -> dict:
     }
 
 
+# Slug-collision detection thresholds. A genuine prospect is graded across a <=7-year window,
+# so the two signals that a player_key actually holds TWO different people are: (a) a gap too
+# long for one prospect career, or (b) a pitcher<->hitter flip across a multi-year gap (a person
+# does not switch sides). Same-side medium gaps are left ALONE -- they are usually one player who
+# fell off the boards and re-emerged (e.g. a slow-developing IFA), and we must not drop real
+# history. Conservative by design: only the unambiguous collisions are split.
+_GAP_BIG_DAYS = 8 * 365      # >8yr apart cannot be the same prospect-era player (different person)
+_GAP_FLIP_DAYS = 4 * 365     # >4yr apart AND a pitcher<->hitter flip = different person
+_PITCHER_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "P", "CL", "CP", "RHP/", "LHP/"}
+
+
+def _is_pitcher_pos(pos: str | None) -> bool:
+    return bool(pos) and pos.split("/")[0].strip().upper() in _PITCHER_TOKENS
+
+
+def _prune_collision_cluster(snaps: list[Snapshot]) -> list[Snapshot]:
+    """Same-name slug collisions merge two different people under one player_key (e.g. the late
+    RHP José Fernández + a current SS Jose Fernandez both slug to 'jose_fernandez', polluting the
+    live player with a decade-old FV-70). Keep only the most-recent cluster and drop everything
+    before the last gap that is UNAMBIGUOUSLY a different person: a gap > 8yr (too long for one
+    prospect career) OR a gap > 4yr that flips pitcher<->hitter. Same-side medium gaps are kept
+    (likely one re-emergent player). No-op otherwise."""
+    from datetime import date as _date
+    dated = []
+    for s in snaps:
+        try:
+            dated.append((_date.fromisoformat((s.snapshot_date or "")[:10]), s))
+        except ValueError:
+            continue
+    if len(dated) < 2:
+        return snaps
+    dated.sort(key=lambda t: t[0])
+    cut = None
+    for (d_prev, s_prev), (d_cur, s_cur) in zip(dated, dated[1:]):
+        gap = (d_cur - d_prev).days
+        if gap <= _GAP_FLIP_DAYS:
+            continue
+        flip = (s_prev.position and s_cur.position
+                and _is_pitcher_pos(s_prev.position) != _is_pitcher_pos(s_cur.position))
+        if gap > _GAP_BIG_DAYS or flip:
+            cut = s_cur.snapshot_date            # start of the most-recent (live) cluster
+    if cut is None:
+        return snaps
+    return [s for s in snaps if (not s.snapshot_date) or s.snapshot_date >= cut]
+
+
 def build_timeseries(
     snapshots: list[Snapshot],
     *,
@@ -891,7 +1038,11 @@ def build_timeseries(
 
     result: list[PlayerTimeseries] = []
     for player_key, player_snaps in by_player.items():
+        # Guard against same-name slug collisions (a retired player + a current prospect under
+        # one key): keep only the most-recent contiguous grading cluster. No-op for normal players.
+        player_snaps = _prune_collision_cluster(player_snaps)
         name, pos, org = _latest_meta(player_snaps)
+        name = _canonical_player_name(player_key, name)
 
         by_date: dict[str, list[Snapshot]] = defaultdict(list)
         for s in player_snaps:
@@ -957,6 +1108,7 @@ def build_timeseries(
                 single_source_k=single_source_k,
                 total_fv_instances=total_fv_instances,
                 dropped_off_pairs=dropped_off,
+                source_weights=_SOURCE_WEIGHTS,
             )
             if pt is not None:
                 points.append(pt)

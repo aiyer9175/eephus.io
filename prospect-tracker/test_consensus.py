@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Tests for the v3 consensus engine.
 
@@ -29,6 +34,30 @@ def _snap(source, name, *, rank=None, fv=None, date_="2026-02-16",
     )
 
 
+@pytest.fixture(autouse=True)
+def _equal_weights(monkeypatch):
+    """These tests pin the blend MECHANICS under equal weighting. The live
+    accuracy weights (WS-5, data/source_weights.json) are vintage-frozen
+    data, not mechanics — neutralized here so the mechanical contracts
+    stay exact; the weighted path has its own explicit test below."""
+    import consensus as _c
+    monkeypatch.setattr(_c, "_SOURCE_WEIGHTS", {})
+
+
+def test_weighted_consensus_applies_source_weights():
+    """WS-5 — accuracy weights tilt the blend; absent sources vote at 1.0;
+    dispersion stats stay UNWEIGHTED (disagreement is disagreement)."""
+    snaps = [_snap("fangraphs", "A", fv=50.0), _snap("mlb_pipeline", "A", fv=60.0)]
+    pt = compute_consensus_point(snaps, source_weights={"fangraphs": 0.5,
+                                                        "mlb_pipeline": 1.5})
+    expected = (0.5 * 50.0 + 1.5 * 60.0) / 2.0
+    assert pt.consensus_fv_pre_shrinkage == pytest.approx(expected)
+    assert pt.fv_spread == pytest.approx(10.0)        # unweighted dispersion
+    # unknown sources default to weight 1.0
+    pt2 = compute_consensus_point(snaps, source_weights={"espn": 9.9})
+    assert pt2.consensus_fv_pre_shrinkage == pytest.approx(55.0)
+
+
 # ---------------------------------------------------------------------------
 # FV parsing (covers TJStats PV/FV format)
 # ---------------------------------------------------------------------------
@@ -56,6 +85,15 @@ class TestParseFV:
         assert _parse_fv_full("55+") == (55.0, True)
         assert _parse_fv_full("55") == (55.0, False)
         assert _parse_fv_full("45/55+") == (55.0, True)
+
+    def test_single_digit_pvfv_scales_to_20_80(self):
+        assert _parse_fv("4/5") == 50.0
+
+    def test_concatenated_tool_and_fv_cell_recovers_trailing_grade(self):
+        assert _parse_fv("560") == 60.0
+
+    def test_out_of_scale_fv_is_rejected(self):
+        assert _parse_fv("99") is None
 
     def test_empty(self):
         assert _parse_fv("") is None
@@ -880,6 +918,75 @@ class TestCutterCanonical:
         assert "ct" in ALL_TOOL_KEYS
 
 
+class TestPlayerAliases:
+    def test_ingest_normalize_key_collapses_known_name_variants(self):
+        from scrapers import normalize_key
+        assert normalize_key("George Lombard") == "george_lombard_jr"
+        assert normalize_key("George Lombard Jr.") == "george_lombard_jr"
+        assert normalize_key("Leonardo Bernal") == "leo_bernal"
+        assert normalize_key("Leo Bernal") == "leo_bernal"
+
+    def test_build_timeseries_merges_lombard_suffix_variant(self):
+        snaps = [
+            Snapshot(
+                source="just_baseball", snapshot_date="2026-03-01",
+                interval_label="JB 2026",
+                player_key="george_lombard", player_name="George Lombard",
+                position="SS", org="NYY", rank=90, fv=50.0, status="active",
+            ),
+            Snapshot(
+                source="fangraphs", snapshot_date="2026-05-01",
+                interval_label="FG 2026",
+                player_key="george_lombard_jr", player_name="George Lombard Jr.",
+                position="SS", org="NYY", rank=45, fv=55.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "george_lombard_jr"
+        assert ts[0].player_name == "George Lombard Jr."
+        assert set(ts[0].points[-1].per_source) == {
+            "just_baseball", "fangraphs"
+        }
+
+    def test_build_timeseries_merges_bernal_given_name_variant(self):
+        snaps = [
+            Snapshot(
+                source="baseball_america", snapshot_date="2026-03-01",
+                interval_label="BA 2026",
+                player_key="leonardo_bernal", player_name="Leonardo Bernal",
+                position="C", org="STL", rank=120, fv=45.0, status="active",
+            ),
+            Snapshot(
+                source="fangraphs", snapshot_date="2026-05-01",
+                interval_label="FG 2026",
+                player_key="leo_bernal", player_name="Leo Bernal",
+                position="C", org="STL", rank=80, fv=50.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "leo_bernal"
+        assert ts[0].player_name == "Leo Bernal"
+        assert set(ts[0].points[-1].per_source) == {
+            "baseball_america", "fangraphs"
+        }
+
+    def test_canonical_key_with_raw_alias_name_uses_preferred_display_name(self):
+        snaps = [
+            Snapshot(
+                source="baseball_america", snapshot_date="2026-06-03",
+                interval_label="BA source article",
+                player_key="leo_bernal", player_name="Leonardo Bernal",
+                position="C", org="STL", rank=75, fv=50.0, status="active",
+            ),
+        ]
+        ts = build_timeseries(snaps, single_source_k=0)
+        assert len(ts) == 1
+        assert ts[0].player_key == "leo_bernal"
+        assert ts[0].player_name == "Leo Bernal"
+
+
 # ---------------------------------------------------------------------------
 # Forward-fill verification — the Tool composite uses each source's
 # MOST RECENT publication. This is the latest-only rule the UI source-
@@ -939,3 +1046,34 @@ class TestConsensusForwardFill:
         # FG latest = 60, Pipeline latest = 50, mean = 55.
         # The 50 from fg_old must NOT participate.
         assert latest_point.tools_consensus["hit"] == 55.0
+
+
+def _csnap(date, src, pos, fv, key="jose_fernandez", name="Jose Fernandez"):
+    return Snapshot(source=src, snapshot_date=date, interval_label="x",
+                    player_key=key, player_name=name, position=pos, org="ARI",
+                    rank=None, fv=fv, status="active", tools=None)
+
+
+def test_collision_guard_drops_pitcher_hitter_flip():
+    """Slug collision: the late RHP Jose Fernandez (2013, FV70) + a current SS Jose Fernandez
+    (2022+, FV~40) share one player_key. The pre-gap pitcher cluster must be dropped so the live
+    SS is not polluted with the stale FV-70 (the real Time-Machine bug)."""
+    ts = build_timeseries([
+        _csnap("2013-01-22", "mlb_pipeline", "RHP", 70.0),
+        _csnap("2022-02-24", "fangraphs", "SS", 40.0),
+        _csnap("2024-02-14", "fangraphs", "SS", 35.0),
+    ], single_source_k=0)
+    assert len(ts) == 1
+    p = ts[0]
+    assert p.position == "SS", "live player is the SS, not the colliding RHP"
+    assert all((pt.consensus_fv_raw or 0) < 60 for pt in p.points), "ace's FV-70 must be gone"
+
+
+def test_collision_guard_spares_same_side_re_emergence():
+    """A same-side player who fell off the boards <8yr and re-emerged (no pitcher/hitter flip)
+    keeps his full history -- the guard must not drop real grades."""
+    ts = build_timeseries([
+        _csnap("2019-02-01", "fangraphs", "CF", 45.0, key="kev", name="Kev"),
+        _csnap("2024-02-01", "fangraphs", "CF", 50.0, key="kev", name="Kev"),
+    ], single_source_k=0)
+    assert len(ts[0].points) >= 2, "both clusters kept for a same-side re-emergence"

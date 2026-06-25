@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Smoke tests for scrape_mlb_draft_tracker — the MLB Stats API
 draft-results scraper. Uses cached JSON from .cache/ so the tests
 run offline."""

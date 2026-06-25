@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Draft prospect CSV ingest — mirror of fangraphs_csv.py for amateurs.
 
 The draft-class FG board CSVs have the SAME 4-file shape as the standard
@@ -93,16 +98,30 @@ def draft_player_key(draft_year: int, player_name: str) -> str:
 #   Post-draft: Rank, Top 100, Pick,  Name, Pos, Player Type, Age, Ht, Wt, B, T,
 #               School, College Commit, FV, Risk, Report, Video, PlayerId
 # `Pick` column carries "<overall>/<org>" (e.g. "7/STL").
-_PICK_RE = re.compile(r"^\s*(\d{1,3})\s*/\s*([A-Z]{2,4})\s*$")
+# FG draft summary "Pick" cell encodes the overall pick + drafting org, but the
+# token ORDER differs across FG's own export years:
+#   2019 boards:        "<overall>/<TEAM>"  e.g. "1/BAL"
+#   2018 & 2020 boards: "<TEAM>/<overall>"  e.g. "DET/1", "CHW/4"
+# Parse order-agnostically: one token is the numeric overall pick (up to 4 digits
+# for deep late-round selections), the other the 2-4 letter org code. Empty
+# tokens are dropped first so a stray "116//SFG" still resolves. Pre-draft boards
+# leave the cell blank and "---" markers carry no pick -> (None, None).
+_PICK_NUM_RE = re.compile(r"^\d{1,4}$")
+_PICK_TEAM_RE = re.compile(r"^[A-Z]{2,4}$")
 
 
 def _parse_pick_cell(cell: str | None) -> tuple[int | None, str | None]:
     if not cell:
         return (None, None)
-    m = _PICK_RE.match(str(cell).strip())
-    if not m:
+    parts = [p.strip() for p in str(cell).strip().split("/") if p.strip()]
+    if len(parts) != 2:
         return (None, None)
-    return (int(m.group(1)), m.group(2))
+    a, b = parts
+    if _PICK_NUM_RE.match(a) and _PICK_TEAM_RE.match(b.upper()):
+        return (int(a), b.upper())
+    if _PICK_TEAM_RE.match(a.upper()) and _PICK_NUM_RE.match(b):
+        return (int(b), a.upper())
+    return (None, None)
 
 
 def _parse_draft_summary_row(raw: dict, draft_year: int) -> dict | None:
@@ -221,10 +240,14 @@ def _merged_to_snapshot_dict(m: dict,
         if v is not None:
             extras[k] = v
 
-    # Physical extras
+    # Physical extras. New-format (2017-2020) draft boards fold Athl/Frame/Perf
+    # into the position/pitching CSVs instead of a standalone physical CSV, so
+    # fall back to those blocks when no physical row is present.
     phys = m.get("_physical") or {}
     for k in ("frame", "athl", "levers", "arm", "perf", "delivery"):
         v = phys.get(k)
+        if v is None and k in ("frame", "athl", "perf"):
+            v = pos.get(k) if pos.get(k) is not None else pit.get(k)
         if v is not None:
             extras[k] = v
 
@@ -404,9 +427,22 @@ def _process_one_set(grp: dict,
         folder = grp.get("_folder")
         if folder:
             snap_date = date.fromtimestamp(folder.stat().st_mtime).isoformat()
+        elif "__" in grp["summary"].parent.name:
+            snap_date = grp["summary"].parent.name.split("__")[-1]
         else:
-            snap_date = grp["summary"].parent.name.split("__")[-1] if "__" in grp["summary"].parent.name \
-                        else date.today().isoformat()
+            # Flat layout (loose <type>-<year>draft.csv at the drop root): pin the
+            # snapshot_date to the summary CSV's own mtime, NOT date.today(). These
+            # are static historical boards; a today() date would mint a fresh
+            # interval_label on every re-ingest day and duplicate the whole board
+            # in draft_snapshots (the export reads latest-per-source, so the JSON
+            # stayed correct, but the table grew one copy per run). mtime is the
+            # same stable publish-date proxy the slug-folder path already uses.
+            snap_date = date.fromtimestamp(grp["summary"].stat().st_mtime).isoformat()
+        # Era guard (2026-06-12): a historical board dropped years later
+        # carries a recent mtime - pin to draft week instead (the
+        # auto-detected 2021-25 sets all landed July 11-18).
+        if snap_date[:4] != str(year):
+            snap_date = f"{year}-07-10"
 
     interval_label = f"FG {year} Draft ({snap_date})"
 
@@ -430,6 +466,21 @@ def _process_one_set(grp: dict,
         except OSError as e:
             log.warning("draft_csv: could not move '%s' to processed/: %s",
                         slug, e)
+    elif processed_dir:
+        # Flat layout: archive the loose <type>-<slug>.csv files too (the
+        # folder path above never fired for them, so 2017-20 boards sat in
+        # the drop root forever - 2026-06-12).
+        dest = processed_dir / f"{slug}__{snap_date}"
+        try:
+            flat_files = [grp[k] for k in ("summary", "position", "pitching", "physical")
+                          if grp.get(k) is not None and getattr(grp[k], "exists", lambda: False)()]
+            dest.mkdir(parents=True, exist_ok=True)
+            for f in flat_files:
+                shutil.move(str(f), str(dest / f.name))
+            if flat_files:
+                log.info("draft_csv: archived flat-layout '%s' to processed/", slug)
+        except OSError as e:
+            log.warning("draft_csv: could not archive flat '%s': %s", slug, e)
 
     return (n_snap, n_res)
 

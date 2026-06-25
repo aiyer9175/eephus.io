@@ -1,0 +1,13 @@
+{
+  "_note": "MLB current-season primary positions for graduated/debuted players whose DB position reflects their minor league history rather than current MLB deployment. Updated manually when players change defensive roles.",
+  "players": {
+    "tyler_soderstrom":    {"position": "LF",  "note": "Moved from C to LF by ATH; Jacob Bart holds C"},
+    "aj_ewing":            {"position": "OF",  "note": "Plays all 3 OF positions in MLB, not SS"},
+    "brice_turang":        {"position": "2B",  "note": "Primary 2B in 2026, not SS/2B/OF"},
+    "dominic_canzone":     {"position": "OF",  "note": "MLB OF, not SS prospect position"},
+    "nick_gonzales":       {"position": "2B",  "note": "Primary 2B, not SS in MLB"},
+    "gavin_cross":         {"position": "LF",  "note": "Corner OF in MLB"},
+    "owen_caissie":        {"position": "RF",  "note": "Corner OF in MLB, not projection position"},
+    "kristian_robinson":   {"position": "LF",  "note": "Corner OF in MLB after return from injuries"}
+  }
+}

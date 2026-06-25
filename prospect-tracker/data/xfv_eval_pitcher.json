@@ -1,0 +1,931 @@
+{
+ "generated_at": "2026-06-24",
+ "model": "xFV pitcher v1 (lean + guarded blend)",
+ "scope": "PITCHERS",
+ "conventions": {
+  "target": "first-6-season summed bWAR; KM-censored (rate-projected tail) + resolved sensitivity",
+  "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
+  "protocol": "forward-chained by decision-year cohort; pooled OOS",
+  "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
+  "shipped_model": "'blend' = (1-0.479)*consensus_OLS + 0.479*lean-ridge; this is the headline RANK driver. 'ridge' = the pure lean model.",
+  "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
+  "features": [
+   "fv",
+   "peak_k_rel",
+   "k_rel",
+   "bb_rel",
+   "age_rel_level",
+   "x_era_k",
+   "tool_fb",
+   "ifa_x_era",
+   "col_x_k",
+   "fb_x_k"
+  ]
+ },
+ "wag_calibration": {
+  "lambda": 0.479,
+  "slope_wobs": 0.479,
+  "slope_unweighted": 0.199,
+  "spearman": 0.0525,
+  "n": 466,
+  "reading": "xFV still predicts WAR; WAG (realized over/underperformance vs consensus FV = where consensus MISSED) calibrates how much to TRUST xFV's adjustment. slope_wobs (reliability-weighted) -> the blend lambda. Pitchers shrink harder: consensus is the stronger pitcher signal."
+ },
+ "era_split_debuted": {
+  "<=2018": {
+   "n": 108,
+   "consensus_spearman": 0.4737,
+   "xfv_blend_spearman": 0.4289
+  },
+  "2019-2021": {
+   "n": 291,
+   "consensus_spearman": 0.1569,
+   "xfv_blend_spearman": 0.1924
+  },
+  "2022-2023": {
+   "n": 247,
+   "consensus_spearman": 0.2723,
+   "xfv_blend_spearman": 0.3764
+  }
+ },
+ "evals": {
+  "debuted_km": {
+   "label": "debuted, KM-censored target",
+   "pooled_oos": {
+    "baseline": {
+     "n": 466,
+     "mae": 2.353,
+     "spearman": 0.2192,
+     "calibration": {
+      "slope": 0.989,
+      "bias": -0.085
+     }
+    },
+    "ridge": {
+     "n": 466,
+     "mae": 2.46,
+     "spearman": 0.2953,
+     "calibration": {
+      "slope": 0.744,
+      "bias": 0.113
+     }
+    },
+    "blend": {
+     "n": 466,
+     "mae": 2.362,
+     "spearman": 0.2847,
+     "calibration": {
+      "slope": 0.925,
+      "bias": 0.01
+     }
+    },
+    "lgbm": {
+     "n": 466,
+     "mae": 2.531,
+     "spearman": 0.2798,
+     "calibration": {
+      "slope": 0.586,
+      "bias": 0.381
+     }
+    },
+    "comps": {
+     "n": 466,
+     "mae": 2.656,
+     "spearman": 0.19,
+     "calibration": {
+      "slope": 0.558,
+      "bias": 0.461
+     }
+    },
+    "ensemble": {
+     "n": 466,
+     "mae": 2.451,
+     "spearman": 0.2972,
+     "calibration": {
+      "slope": 0.7,
+      "bias": 0.247
+     }
+    },
+    "ridge_cal": {
+     "n": 466,
+     "mae": 2.373,
+     "spearman": 0.2863,
+     "calibration": {
+      "slope": 0.954,
+      "bias": 0.048
+     }
+    },
+    "ensemble_cal": {
+     "n": 466,
+     "mae": 2.359,
+     "spearman": 0.2832,
+     "calibration": {
+      "slope": 0.922,
+      "bias": 0.024
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 107,
+      "mae": 2.277,
+      "spearman": 0.2118,
+      "calibration": {
+       "slope": 0.731,
+       "bias": 0.282
+      }
+     },
+     "ridge": {
+      "n": 107,
+      "mae": 2.537,
+      "spearman": 0.2583,
+      "calibration": {
+       "slope": 0.477,
+       "bias": 0.46
+      }
+     },
+     "blend": {
+      "n": 107,
+      "mae": 2.351,
+      "spearman": 0.2539,
+      "calibration": {
+       "slope": 0.619,
+       "bias": 0.367
+      }
+     },
+     "lgbm": {
+      "n": 107,
+      "mae": 2.888,
+      "spearman": 0.2054,
+      "calibration": {
+       "slope": 0.327,
+       "bias": 1.175
+      }
+     },
+     "comps": {
+      "n": 107,
+      "mae": 3.116,
+      "spearman": 0.1138,
+      "calibration": {
+       "slope": 0.248,
+       "bias": 1.376
+      }
+     },
+     "ensemble": {
+      "n": 107,
+      "mae": 2.627,
+      "spearman": 0.246,
+      "calibration": {
+       "slope": 0.43,
+       "bias": 0.817
+      }
+     }
+    },
+    "2021": {
+     "baseline": {
+      "n": 112,
+      "mae": 2.279,
+      "spearman": 0.0758,
+      "calibration": {
+       "slope": 0.616,
+       "bias": -0.224
+      }
+     },
+     "ridge": {
+      "n": 112,
+      "mae": 2.368,
+      "spearman": 0.1042,
+      "calibration": {
+       "slope": 0.646,
+       "bias": -0.162
+      }
+     },
+     "blend": {
+      "n": 112,
+      "mae": 2.294,
+      "spearman": 0.1028,
+      "calibration": {
+       "slope": 0.693,
+       "bias": -0.194
+      }
+     },
+     "lgbm": {
+      "n": 112,
+      "mae": 2.349,
+      "spearman": 0.165,
+      "calibration": {
+       "slope": 0.434,
+       "bias": -0.163
+      }
+     },
+     "comps": {
+      "n": 112,
+      "mae": 2.439,
+      "spearman": 0.139,
+      "calibration": {
+       "slope": 0.313,
+       "bias": 0.189
+      }
+     },
+     "ensemble": {
+      "n": 112,
+      "mae": 2.307,
+      "spearman": 0.131,
+      "calibration": {
+       "slope": 0.559,
+       "bias": -0.162
+      }
+     }
+    },
+    "2022": {
+     "baseline": {
+      "n": 110,
+      "mae": 2.618,
+      "spearman": 0.2902,
+      "calibration": {
+       "slope": 1.512,
+       "bias": -0.505
+      }
+     },
+     "ridge": {
+      "n": 110,
+      "mae": 2.647,
+      "spearman": 0.4214,
+      "calibration": {
+       "slope": 1.137,
+       "bias": -0.181
+      }
+     },
+     "blend": {
+      "n": 110,
+      "mae": 2.575,
+      "spearman": 0.4107,
+      "calibration": {
+       "slope": 1.486,
+       "bias": -0.35
+      }
+     },
+     "lgbm": {
+      "n": 110,
+      "mae": 2.555,
+      "spearman": 0.4549,
+      "calibration": {
+       "slope": 0.88,
+       "bias": 0.056
+      }
+     },
+     "comps": {
+      "n": 110,
+      "mae": 2.681,
+      "spearman": 0.2995,
+      "calibration": {
+       "slope": 1.204,
+       "bias": -0.072
+      }
+     },
+     "ensemble": {
+      "n": 110,
+      "mae": 2.582,
+      "spearman": 0.4469,
+      "calibration": {
+       "slope": 1.044,
+       "bias": -0.063
+      }
+     }
+    },
+    "2023": {
+     "baseline": {
+      "n": 137,
+      "mae": 2.261,
+      "spearman": 0.2648,
+      "calibration": {
+       "slope": 1.147,
+       "bias": 0.08
+      }
+     },
+     "ridge": {
+      "n": 137,
+      "mae": 2.324,
+      "spearman": 0.3431,
+      "calibration": {
+       "slope": 0.878,
+       "bias": 0.303
+      }
+     },
+     "blend": {
+      "n": 137,
+      "mae": 2.256,
+      "spearman": 0.3367,
+      "calibration": {
+       "slope": 1.066,
+       "bias": 0.187
+      }
+     },
+     "lgbm": {
+      "n": 137,
+      "mae": 2.383,
+      "spearman": 0.2983,
+      "calibration": {
+       "slope": 0.73,
+       "bias": 0.467
+      }
+     },
+     "comps": {
+      "n": 137,
+      "mae": 2.454,
+      "spearman": 0.2577,
+      "calibration": {
+       "slope": 0.722,
+       "bias": 0.395
+      }
+     },
+     "ensemble": {
+      "n": 137,
+      "mae": 2.325,
+      "spearman": 0.322,
+      "calibration": {
+       "slope": 0.839,
+       "bias": 0.385
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "blend": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    }
+   }
+  },
+  "debuted_resolved": {
+   "label": "debuted, resolved-only (sensitivity)",
+   "pooled_oos": {
+    "baseline": {
+     "n": 107,
+     "mae": 2.277,
+     "spearman": 0.2118,
+     "calibration": {
+      "slope": 0.731,
+      "bias": 0.282
+     }
+    },
+    "ridge": {
+     "n": 107,
+     "mae": 2.537,
+     "spearman": 0.2583,
+     "calibration": {
+      "slope": 0.477,
+      "bias": 0.46
+     }
+    },
+    "blend": {
+     "n": 107,
+     "mae": 2.351,
+     "spearman": 0.2539,
+     "calibration": {
+      "slope": 0.619,
+      "bias": 0.367
+     }
+    },
+    "lgbm": {
+     "n": 107,
+     "mae": 2.888,
+     "spearman": 0.2054,
+     "calibration": {
+      "slope": 0.327,
+      "bias": 1.175
+     }
+    },
+    "comps": {
+     "n": 107,
+     "mae": 3.116,
+     "spearman": 0.1138,
+     "calibration": {
+      "slope": 0.248,
+      "bias": 1.376
+     }
+    },
+    "ensemble": {
+     "n": 107,
+     "mae": 2.627,
+     "spearman": 0.246,
+     "calibration": {
+      "slope": 0.43,
+      "bias": 0.817
+     }
+    },
+    "ridge_cal": {
+     "n": 107,
+     "mae": 2.537,
+     "spearman": 0.2583,
+     "calibration": {
+      "slope": 0.477,
+      "bias": 0.46
+     }
+    },
+    "ensemble_cal": {
+     "n": 107,
+     "mae": 2.627,
+     "spearman": 0.246,
+     "calibration": {
+      "slope": 0.43,
+      "bias": 0.817
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 107,
+      "mae": 2.277,
+      "spearman": 0.2118,
+      "calibration": {
+       "slope": 0.731,
+       "bias": 0.282
+      }
+     },
+     "ridge": {
+      "n": 107,
+      "mae": 2.537,
+      "spearman": 0.2583,
+      "calibration": {
+       "slope": 0.477,
+       "bias": 0.46
+      }
+     },
+     "blend": {
+      "n": 107,
+      "mae": 2.351,
+      "spearman": 0.2539,
+      "calibration": {
+       "slope": 0.619,
+       "bias": 0.367
+      }
+     },
+     "lgbm": {
+      "n": 107,
+      "mae": 2.888,
+      "spearman": 0.2054,
+      "calibration": {
+       "slope": 0.327,
+       "bias": 1.175
+      }
+     },
+     "comps": {
+      "n": 107,
+      "mae": 3.116,
+      "spearman": 0.1138,
+      "calibration": {
+       "slope": 0.248,
+       "bias": 1.376
+      }
+     },
+     "ensemble": {
+      "n": 107,
+      "mae": 2.627,
+      "spearman": 0.246,
+      "calibration": {
+       "slope": 0.43,
+       "bias": 0.817
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "blend": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    }
+   }
+  },
+  "full_pool_km": {
+   "label": "full pool (debuted+busts), KM target [decision-year proxy]",
+   "pooled_oos": {
+    "baseline": {
+     "n": 893,
+     "mae": 1.223,
+     "spearman": 0.1812,
+     "calibration": {
+      "slope": 1.188,
+      "bias": -0.298
+     }
+    },
+    "ridge": {
+     "n": 893,
+     "mae": 1.662,
+     "spearman": 0.2231,
+     "calibration": {
+      "slope": 0.665,
+      "bias": -0.408
+     }
+    },
+    "blend": {
+     "n": 893,
+     "mae": 1.4,
+     "spearman": 0.2177,
+     "calibration": {
+      "slope": 0.947,
+      "bias": -0.351
+     }
+    },
+    "lgbm": {
+     "n": 893,
+     "mae": 1.467,
+     "spearman": 0.2107,
+     "calibration": {
+      "slope": 0.611,
+      "bias": 0.195
+     }
+    },
+    "comps": {
+     "n": 893,
+     "mae": 1.498,
+     "spearman": 0.1708,
+     "calibration": {
+      "slope": 0.665,
+      "bias": 0.266
+     }
+    },
+    "ensemble": {
+     "n": 893,
+     "mae": 1.512,
+     "spearman": 0.2201,
+     "calibration": {
+      "slope": 0.69,
+      "bias": -0.106
+     }
+    },
+    "ridge_cal": {
+     "n": 893,
+     "mae": 1.389,
+     "spearman": 0.2185,
+     "calibration": {
+      "slope": 1.083,
+      "bias": 0.103
+     }
+    },
+    "ensemble_cal": {
+     "n": 893,
+     "mae": 1.353,
+     "spearman": 0.2152,
+     "calibration": {
+      "slope": 0.979,
+      "bias": 0.066
+     }
+    }
+   },
+   "per_year": {
+    "2020": {
+     "baseline": {
+      "n": 211,
+      "mae": 1.12,
+      "spearman": 0.1336,
+      "calibration": {
+       "slope": 0.771,
+       "bias": -0.136
+      }
+     },
+     "ridge": {
+      "n": 211,
+      "mae": 1.751,
+      "spearman": 0.1752,
+      "calibration": {
+       "slope": 0.465,
+       "bias": -0.335
+      }
+     },
+     "blend": {
+      "n": 211,
+      "mae": 1.39,
+      "spearman": 0.1751,
+      "calibration": {
+       "slope": 0.639,
+       "bias": -0.231
+      }
+     },
+     "lgbm": {
+      "n": 211,
+      "mae": 1.62,
+      "spearman": 0.1345,
+      "calibration": {
+       "slope": 0.311,
+       "bias": 0.5
+      }
+     },
+     "comps": {
+      "n": 211,
+      "mae": 1.593,
+      "spearman": 0.0932,
+      "calibration": {
+       "slope": 0.36,
+       "bias": 0.628
+      }
+     },
+     "ensemble": {
+      "n": 211,
+      "mae": 1.641,
+      "spearman": 0.1597,
+      "calibration": {
+       "slope": 0.418,
+       "bias": 0.083
+      }
+     }
+    },
+    "2021": {
+     "baseline": {
+      "n": 159,
+      "mae": 1.532,
+      "spearman": 0.0985,
+      "calibration": {
+       "slope": 0.851,
+       "bias": -0.58
+      }
+     },
+     "ridge": {
+      "n": 159,
+      "mae": 1.938,
+      "spearman": 0.1373,
+      "calibration": {
+       "slope": 0.62,
+       "bias": -0.654
+      }
+     },
+     "blend": {
+      "n": 159,
+      "mae": 1.705,
+      "spearman": 0.1432,
+      "calibration": {
+       "slope": 0.815,
+       "bias": -0.616
+      }
+     },
+     "lgbm": {
+      "n": 159,
+      "mae": 1.638,
+      "spearman": 0.2046,
+      "calibration": {
+       "slope": 0.573,
+       "bias": -0.131
+      }
+     },
+     "comps": {
+      "n": 159,
+      "mae": 1.676,
+      "spearman": 0.2141,
+      "calibration": {
+       "slope": 0.628,
+       "bias": -0.048
+      }
+     },
+     "ensemble": {
+      "n": 159,
+      "mae": 1.736,
+      "spearman": 0.1713,
+      "calibration": {
+       "slope": 0.651,
+       "bias": -0.393
+      }
+     }
+    },
+    "2022": {
+     "baseline": {
+      "n": 244,
+      "mae": 1.236,
+      "spearman": 0.2274,
+      "calibration": {
+       "slope": 1.889,
+       "bias": -0.413
+      }
+     },
+     "ridge": {
+      "n": 244,
+      "mae": 1.595,
+      "spearman": 0.327,
+      "calibration": {
+       "slope": 0.934,
+       "bias": -0.473
+      }
+     },
+     "blend": {
+      "n": 244,
+      "mae": 1.363,
+      "spearman": 0.3097,
+      "calibration": {
+       "slope": 1.415,
+       "bias": -0.442
+      }
+     },
+     "lgbm": {
+      "n": 244,
+      "mae": 1.384,
+      "spearman": 0.3155,
+      "calibration": {
+       "slope": 0.917,
+       "bias": 0.102
+      }
+     },
+     "comps": {
+      "n": 244,
+      "mae": 1.469,
+      "spearman": 0.2107,
+      "calibration": {
+       "slope": 1.088,
+       "bias": 0.142
+      }
+     },
+     "ensemble": {
+      "n": 244,
+      "mae": 1.442,
+      "spearman": 0.3249,
+      "calibration": {
+       "slope": 1.0,
+       "bias": -0.185
+      }
+     }
+    },
+    "2023": {
+     "baseline": {
+      "n": 279,
+      "mae": 1.112,
+      "spearman": 0.2194,
+      "calibration": {
+       "slope": 1.34,
+       "bias": -0.16
+      }
+     },
+     "ridge": {
+      "n": 279,
+      "mae": 1.497,
+      "spearman": 0.2198,
+      "calibration": {
+       "slope": 0.702,
+       "bias": -0.267
+      }
+     },
+     "blend": {
+      "n": 279,
+      "mae": 1.265,
+      "spearman": 0.2185,
+      "calibration": {
+       "slope": 1.011,
+       "bias": -0.211
+      }
+     },
+     "lgbm": {
+      "n": 279,
+      "mae": 1.325,
+      "spearman": 0.1817,
+      "calibration": {
+       "slope": 0.703,
+       "bias": 0.232
+      }
+     },
+     "comps": {
+      "n": 279,
+      "mae": 1.351,
+      "spearman": 0.1861,
+      "calibration": {
+       "slope": 0.761,
+       "bias": 0.279
+      }
+     },
+     "ensemble": {
+      "n": 279,
+      "mae": 1.348,
+      "spearman": 0.1991,
+      "calibration": {
+       "slope": 0.759,
+       "bias": -0.017
+      }
+     }
+    }
+   },
+   "verdict_vs_consensus": {
+    "ridge": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "blend": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "lgbm": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "comps": {
+     "beats_mae": false,
+     "beats_spearman": false,
+     "rank_win": false
+    },
+    "ensemble": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ridge_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    },
+    "ensemble_cal": {
+     "beats_mae": false,
+     "beats_spearman": true,
+     "rank_win": false
+    }
+   }
+  }
+ },
+ "feature_diagnostics_full_window": {
+  "ridge_std_weights": {
+   "fv": 1.439,
+   "peak_k_rel": 0.11,
+   "k_rel": 0.206,
+   "bb_rel": -0.16,
+   "age_rel_level": -0.132,
+   "x_era_k": 0.197,
+   "tool_fb": 0.436,
+   "ifa_x_era": -0.231,
+   "col_x_k": 0.28,
+   "fb_x_k": -0.166
+  },
+  "lgbm_gain_share": {
+   "col_x_k": 0.287,
+   "fv": 0.139,
+   "ifa_x_era": 0.137,
+   "bb_rel": 0.108,
+   "tool_fb": 0.089,
+   "k_rel": 0.087,
+   "x_era_k": 0.063,
+   "age_rel_level": 0.048,
+   "fb_x_k": 0.033,
+   "peak_k_rel": 0.009
+  }
+ },
+ "honest_note": "The lean feature set (Phase-1-earned signals only) lets xFV BEAT consensus FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent 2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, less-accurate scouting. xFV still trails on MAE (it predicts more spread; consensus regresses to the mean) -- that loss is committed. The flagship case: rank edge + calibrated distribution + uncertainty + surplus + power-correction."
+}

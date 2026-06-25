@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """v6 farm-grade overhaul — covers:
 
   * Harsher letter scale: F at the bottom, D- in the 93-97% band, A
@@ -167,20 +172,31 @@ class TestSixYearWindow(unittest.TestCase):
         self.assertIn("6y", FARM_TRAJECTORY_WINDOWS)
         self.assertEqual(FARM_TRAJECTORY_WINDOWS["6y"], 365 * 6)
 
-    def test_trajectory_windows_no_5y(self):
-        # 5y was renamed wholesale to 6y in v6.
-        self.assertNotIn("5y", FARM_TRAJECTORY_WINDOWS)
+    def test_trajectory_windows_full_set(self):
+        # v41 — windows expanded to a full 1y..8y set so the frontend selector
+        # can switch the WHOLE grade tree to any window (default = 7y).
+        for k in ("3y", "5y", "6y", "7y", "8y"):
+            self.assertIn(k, FARM_TRAJECTORY_WINDOWS)
+        self.assertEqual(FARM_TRAJECTORY_WINDOWS["7y"], 365 * 7)
+
+    def test_principal_window_is_7y(self):
+        # v41 — empirically optimal trailing window (window-sweep: 7y beats 6y
+        # in all 4 backtest vintages; 8y regresses).
+        from storage import FARM_PRINCIPAL_WINDOW
+        self.assertEqual(FARM_PRINCIPAL_WINDOW, "7y")
 
     def test_trajectory_windows_keeps_1y_3y(self):
         # The shorter windows still exist for the blended trajectory.
         self.assertIn("1y", FARM_TRAJECTORY_WINDOWS)
         self.assertIn("3y", FARM_TRAJECTORY_WINDOWS)
 
-    def test_conviction_recency_is_6_years(self):
-        self.assertEqual(_CONVICTION_RECENCY_YEARS, 6)
+    def test_conviction_recency_is_7_years(self):
+        # v41 — unified to FARM_PRINCIPAL_WINDOW (7y); was 6.
+        self.assertEqual(_CONVICTION_RECENCY_YEARS, 7)
 
-    def test_tool_delta_lookback_constant_is_6_years(self):
-        self.assertEqual(FARM_TOOL_DELTA_LOOKBACK_DAYS, 365 * 6)
+    def test_tool_delta_lookback_constant_is_7_years(self):
+        # v41 — unified to FARM_PRINCIPAL_WINDOW (7y); was 365*6.
+        self.assertEqual(FARM_TOOL_DELTA_LOOKBACK_DAYS, 365 * 7)
 
 
 # ---------------------------------------------------------------------------
@@ -209,10 +225,10 @@ class TestToolDeltasSixYearWindow(unittest.TestCase):
         self.assertEqual(out["hit"]["last"], 55.0)
 
     def test_out_of_window_snapshots_dropped(self):
-        # The 7-year-old observation falls outside the 6y window and
+        # The 9-year-old observation falls outside the 7y window and
         # is ignored → only 1 in-window observation → no delta.
         today = self._today()
-        too_old = self._iso(today - timedelta(days=365 * 7))
+        too_old = self._iso(today - timedelta(days=365 * 9))
         in_window = self._iso(today - timedelta(days=30))
         out = _compute_tool_deltas([
             {"snapshot_date": too_old,    "tools_consensus": {"hit": 40.0}},

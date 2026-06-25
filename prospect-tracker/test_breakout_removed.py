@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Asserts the legacy breakout indicator has been removed.
 
 The old `breakout_score` composite was replaced by the WAG-anchored
@@ -38,7 +43,7 @@ def test_no_breakout_score_field_in_export():
 def test_no_breakout_pill_function_active():
     """The JS `breakoutPillHTML` function must not be active in index.html.
     Tolerates a REMOVED- or DELETED- prefixed stub comment."""
-    src = (REPO / "index.html").read_text(encoding="utf-8")
+    src = (REPO / "prospx" / "index.html").read_text(encoding="utf-8")
     # Active function definition: `function breakoutPillHTML(` (not inside a comment).
     matches = re.findall(r"^\s*function\s+breakoutPillHTML\s*\(", src, re.MULTILINE)
     assert not matches, "breakoutPillHTML still defined (active) in index.html"
@@ -49,7 +54,7 @@ def test_no_boom_bust_pill_function_active():
     itself retired in v19 (graduates page now surfaces over/underperformers
     via WAG-high / WAG-low sort dimensions instead of a chip). Guard
     against accidental reintroduction."""
-    src = (REPO / "index.html").read_text(encoding="utf-8")
+    src = (REPO / "prospx" / "index.html").read_text(encoding="utf-8")
     matches = re.findall(r"^\s*function\s+boomBustPillHTML\s*\(", src, re.MULTILINE)
     assert not matches, "boomBustPillHTML still defined (active) in index.html"
 

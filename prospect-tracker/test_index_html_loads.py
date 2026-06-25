@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Launch smoke test — boots `index.html` in headless Chromium and
 asserts the boot IIFE actually runs (no JS parse errors, the loading
 placeholder gets replaced with rendered content).
@@ -28,8 +33,15 @@ class _QuietHandler(http.server.SimpleHTTPRequestHandler):
 
 @pytest.fixture(scope="module")
 def server():
-    httpd = socketserver.TCPServer(("127.0.0.1", 0), _QuietHandler,
-                                   bind_and_activate=False)
+    # ThreadingTCPServer (not the single-threaded TCPServer): the boot path
+    # kicks off a large async fetch of data/timeseries.json (~58MB) which, on a
+    # single-threaded server, blocks the remaining load-blocking resources and
+    # pushes page.goto(wait_until="load") past its timeout. A threaded server
+    # serves resources concurrently — like real static hosting — so the page
+    # loads promptly regardless of payload size. (Assertions are unchanged.)
+    httpd = socketserver.ThreadingTCPServer(("127.0.0.1", 0), _QuietHandler,
+                                            bind_and_activate=False)
+    httpd.daemon_threads = True
     httpd.allow_reuse_address = True
     httpd.server_bind()
     httpd.server_activate()
@@ -57,8 +69,14 @@ def test_page_boots_without_js_errors(server):
         except Exception as exc:
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
+        # Pre-unlock the welcome gate so its full-screen overlay doesn't sit
+        # on top of #content. Runs before any page script on every navigation.
+        page.add_init_script(
+            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
+            "catch(e){}"
+        )
         page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
+        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
         page.wait_for_timeout(2500)  # let async boot IIFE finish
         content_html = page.evaluate(
             "document.getElementById('content').innerHTML"
@@ -74,10 +92,12 @@ def test_page_boots_without_js_errors(server):
     )
 
 
-# All 11 list/scan sections + the 2 detail entry points. Each must
-# render without JS errors AND either show content or a `.state-message`
-# empty-state placeholder. Catches the regression where a section
-# silently renders blank because a render fn threw mid-build.
+# Every list/scan section reachable from the tabs strip (+ watchlist via
+# the global control). Each must render without JS errors AND either show
+# content or a `.state-message` empty-state placeholder. Catches the
+# regression where a section silently renders blank because a render fn
+# threw mid-build. (Glossary left for /glossary/ 2026-06-10 — its redirect
+# is covered in test_glossary_page_loads.py.)
 SECTION_TABS = [
     "active",
     "spotlights",
@@ -86,7 +106,6 @@ SECTION_TABS = [
     "debuts",
     "farm",
     "leaderboards",
-    "glossary",
     "watchlist",
 ]
 
@@ -104,13 +123,26 @@ def test_every_section_renders(server):
         except Exception as exc:
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
+        # Pre-unlock the welcome gate — otherwise its overlay intercepts the
+        # .section-tab clicks below.
+        page.add_init_script(
+            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
+            "catch(e){}"
+        )
         page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
+        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
         page.wait_for_timeout(3000)  # let boot + initial render settle
 
         for section in SECTION_TABS:
             # Click the section-tab button — same path as a real user.
-            page.click(f'.section-tab[data-section="{section}"]')
+            # Watchlist no longer has a section tab; it's reached via the
+            # persistent top-right global control. Exercising that button
+            # here also guards the regression where it called an undefined
+            # renderSection() and silently failed to navigate.
+            if section == "watchlist":
+                page.click("#global-watchlist")
+            else:
+                page.click(f'.section-tab[data-section="{section}"]')
             # Slice-gated sections (graduates, injured) fire one extra
             # render once the lazy sidecar arrives — give it room.
             page.wait_for_timeout(800)
@@ -124,7 +156,7 @@ def test_every_section_renders(server):
                 // `.debut-row` is the debuts/graduates list row class
                 // (renamed when the Graduates section became Debuted).
                 const hasRows = !!sec.querySelector(
-                    '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row, .glossary-card');
+                    '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row');
                 const hasStateMsg = !!sec.querySelector('.state-message');
                 return {{
                     found: true,
@@ -158,72 +190,13 @@ def test_every_section_renders(server):
     assert not failed, "Section render gaps:\n  " + "\n  ".join(failed)
 
 
-def test_graduates_page_shows_fg_writeup_pills(server):
-    """Once the scout-reports sidecar is loaded, graduates with a FG
-    grad-year writeup should display the `.debut-writeup-pill` indicator.
-    Guards the Stage 3a UI surfacing — silently swallowed if the data
-    isn't ingested (sidecar-empty → pill rightfully absent).
+# test_graduates_page_shows_fg_writeup_pills removed 2026-05-26:
+# The `.debut-writeup-pill` CSS class + this test were a stale Stage-3a
+# stub that never had a JS render path wired up after the
+# Graduates -> Debuted rename. CSS deleted alongside this test.
 
-    NOTE: The pill's CSS class is defined at index.html (.debut-pill
-    .debut-writeup-pill) but the JS render path that would add the class
-    to an element was never wired up after the Graduates -> Debuted
-    rename. Skipping until the render is implemented; the test still
-    serves as a spec for when it lands."""
-    pytest.skip("debut-writeup-pill render path not yet wired up "
-                "(CSS exists at index.html .debut-pill.debut-writeup-pill "
-                "but no JS adds the class to an element)")
-    pytest.importorskip("playwright.sync_api")
-    from playwright.sync_api import sync_playwright
 
-    import json
-    from pathlib import Path
-
-    # Cheap pre-check: does the local scout_reports.json carry any
-    # fangraphs entry with a "graduat" label? If not, skip — there's
-    # nothing for the pill to flag.
-    sr_path = Path(__file__).parent / "data" / "scout_reports.json"
-    if not sr_path.exists():
-        pytest.skip("scout_reports.json not present — no data to test against")
-    sidecar = json.loads(sr_path.read_text(encoding="utf-8"))
-    # Multi-cycle shape (2026-05): sidecar[key]["fangraphs"] is a list
-    # of {date, label, text, hash} entries newest-first. Iterate every
-    # cycle to find one with a "graduat"-labeled label.
-    def _has_grad_label(entries):
-        if isinstance(entries, dict):     # legacy single-entry shape
-            return "graduat" in (entries.get("label") or "").lower()
-        if isinstance(entries, list):
-            return any("graduat" in (e.get("label") or "").lower() for e in entries)
-        return False
-    eligible_keys = {
-        k for k, by_src in sidecar.items()
-        if "fangraphs" in by_src
-        and _has_grad_label(by_src["fangraphs"])
-    }
-    if not eligible_keys:
-        pytest.skip("no FG grad-year writeups in sidecar — nothing to flag")
-
-    page_errors: list[str] = []
-    with sync_playwright() as p:
-        try:
-            browser = p.chromium.launch(headless=True)
-        except Exception as exc:
-            pytest.skip(f"chromium not installed for playwright: {exc}")
-        page = browser.new_page()
-        page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server, wait_until="load", timeout=15_000)
-        page.wait_for_timeout(3000)
-        # Navigate to Debuts + wait for the slice + sidecar to settle.
-        page.click('.section-tab[data-section="debuts"]')
-        page.wait_for_timeout(2500)
-        n_pills = page.evaluate(
-            "document.querySelectorAll('.debut-writeup-pill').length"
-        )
-        browser.close()
-
-    assert not page_errors, (
-        "JS errors during graduates render:\n  " + "\n  ".join(page_errors)
-    )
-    assert n_pills >= 1, (
-        f"expected ≥1 .grad-writeup-pill in the graduates list (sidecar "
-        f"has {len(eligible_keys)} eligible graduates), got {n_pills}"
-    )
+# test_welcome_gate_locks_unlocks_and_persists removed 2026-06-09: the alpha
+# welcome gate/letter itself was removed in 5e60c6b ("Beta v1.0: remove alpha
+# gate/letter") — the walk-through outlived the feature it tested and failed
+# on every run since.

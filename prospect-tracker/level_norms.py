@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Empirical age + performance benchmarks per MiLB / MLB level.
 
@@ -62,6 +67,7 @@ class LevelAgeNorm:
 class LevelPerfNorm:
     # Hitter rate stats — averages across qualified hitters at the level.
     avg_ops:    float | None
+    avg_avg:    float | None       # batting average — hit-tool baseline (HIT+)
     avg_iso:    float | None       # SLG - AVG
     avg_bb_pct: float | None
     avg_k_pct:  float | None
@@ -107,6 +113,12 @@ FALLBACK_ERA_NORM: dict[str, float] = {
 # get better at punishing pitches.
 FALLBACK_ISO_NORM: dict[str, float] = {
     "DSL": .115, "CPX": .125, "A": .130, "A+": .135, "AA": .140, "AAA": .155, "MLB": .165,
+}
+# Hitter batting-average norms — the hit-tool baseline consumed by HIT+.
+# Batting average dips through the upper minors as pitching sharpens, then
+# settles near the MLB league line.
+FALLBACK_AVG_NORM: dict[str, float] = {
+    "DSL": .255, "CPX": .255, "A": .250, "A+": .248, "AA": .246, "AAA": .252, "MLB": .248,
 }
 FALLBACK_BB_PCT_NORM: dict[str, float] = {
     "DSL": 11.0, "CPX": 9.5, "A": 9.0, "A+": 8.8, "AA": 8.5, "AAA": 8.5, "MLB": 8.4,
@@ -183,6 +195,7 @@ def compute_level_norms(
     ages_by_level: dict[str, list[float]] = defaultdict(list)
     # Hitter rate-stat distributions per level.
     ops_by_level:    dict[str, list[float]] = defaultdict(list)
+    avg_by_level:    dict[str, list[float]] = defaultdict(list)
     iso_by_level:    dict[str, list[float]] = defaultdict(list)
     bb_pct_by_level: dict[str, list[float]] = defaultdict(list)
     k_pct_by_level:  dict[str, list[float]] = defaultdict(list)
@@ -261,6 +274,8 @@ def compute_level_norms(
                 # drops the sample, same as for any other rate stat.
                 slg = _parse_float(r.get("slg"))
                 avg = _parse_float(r.get("avg"))
+                if avg is not None and 0 <= avg < 1.0:
+                    avg_by_level[level].append(avg)
                 if slg is not None and avg is not None and 0 <= slg < 1.0 and 0 <= avg < 1.0:
                     iso_by_level[level].append(slg - avg)
                 bb_pct = _parse_float(r.get("bb_pct"))
@@ -289,7 +304,7 @@ def compute_level_norms(
     out: dict[str, dict] = {}
     all_levels = (
         set(ages_by_level)
-        | set(ops_by_level) | set(iso_by_level)
+        | set(ops_by_level) | set(avg_by_level) | set(iso_by_level)
         | set(bb_pct_by_level) | set(k_pct_by_level)
         | set(era_by_level) | set(whip_by_level)
         | set(k9_by_level) | set(bb9_by_level) | set(hr9_by_level)
@@ -298,6 +313,7 @@ def compute_level_norms(
     for level in all_levels:
         mean, med, p25, p75, n_age = _summarize(ages_by_level.get(level, []))
         ops_values    = ops_by_level.get(level, [])
+        avg_values    = avg_by_level.get(level, [])
         iso_values    = iso_by_level.get(level, [])
         bb_pct_values = bb_pct_by_level.get(level, [])
         k_pct_values  = k_pct_by_level.get(level, [])
@@ -331,6 +347,7 @@ def compute_level_norms(
             "perf": {
                 # Hitter norms
                 "avg_ops":    _avg_or_fallback(ops_values,    FALLBACK_OPS_NORM,    level, 3),
+                "avg_avg":    _avg_or_fallback(avg_values,    FALLBACK_AVG_NORM,    level, 3),
                 "avg_iso":    _avg_or_fallback(iso_values,    FALLBACK_ISO_NORM,    level, 3),
                 "avg_bb_pct": _avg_or_fallback(bb_pct_values, FALLBACK_BB_PCT_NORM, level, 1),
                 "avg_k_pct":  _avg_or_fallback(k_pct_values,  FALLBACK_K_PCT_NORM,  level, 1),
@@ -344,6 +361,7 @@ def compute_level_norms(
                 "avg_pitcher_bb_pct": _avg_or_fallback(pitcher_bb_pct_values, FALLBACK_PITCHER_BB_PCT_NORM, level, 1),
                 # Sample counts — let the UI hide noisy fallback comparisons.
                 "sample_n_ops":      len(ops_values),
+                "sample_n_avg":      len(avg_values),
                 "sample_n_iso":      len(iso_values),
                 "sample_n_bb_pct":   len(bb_pct_values),
                 "sample_n_k_pct":    len(k_pct_values),

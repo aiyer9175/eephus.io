@@ -1,20 +1,31 @@
-name: Deploy prospect-tracker to GitHub Pages
+name: Build & deploy eephus.io
 
-# Runs the prospect-tracker pipeline and publishes the rendered site
-# (index.html + the four data/*.json files) to GitHub Pages.
+# Nightly data refresh + full-site publish to GitHub Pages.
 #
-# Triggers:
-#   - push to main that touches anything in prospect-tracker/
-#   - manual run from the Actions tab (workflow_dispatch)
-#   - monthly schedule at 11:00 UTC on the 1st (matches the cadence
-#     baked into the prospect-ranking sources we ingest)
+#   - 07:30 UTC daily = 3:30am EDT / 2:30am EST — inside the owner's
+#     2-4am ET window, after the MLB transaction wire settles.
+#   - The 1st of the month (or a manual run with full=true, or a cold
+#     runner with no cached DB) runs the FULL monthly pipeline: grades,
+#     Arkmetrics, farm grades, rankings, snapshots. Every other night
+#     runs the fast --daily refresh (transactions / IL / roster /
+#     debuts / trades + live board captures).
+#   - Pushes to main that touch prospect-tracker/ also deploy, so a
+#     merged feature is live in minutes.
 #
-# Manual setup (one-time):
-#   Repo Settings → Pages → Source: "GitHub Actions"
+# State: prospects.db + .cache/ persist between runs via actions/cache
+# (GitHub evicts after ~7 idle days; the cold-start path then rebuilds
+# from sources via the full pipeline). The deploy is gated on pytest.
 #
-# The job pulls Live data each run, so the deployed artifact reflects
-# whatever's in data/manual_rankings.csv at trigger time. No commit-back
-# to main is needed — Pages artifacts are independent of git history.
+# PRODUCTION NOTE (2026-06-12 audit): eephus.io serves from an nginx
+# box. Two auto-refresh paths, both documented in
+# prospect-tracker/deploy/README.md:
+#   1. The server builds itself nightly (deploy/nightly-build.sh + cron)
+#      - then this workflow is just CI + an optional Pages mirror.
+#   2. This workflow rsyncs the built site to the server over SSH -
+#      activates automatically once the DEPLOY_SSH_KEY /
+#      DEPLOY_SSH_HOST / DEPLOY_WEBROOT secrets exist.
+# The GitHub Pages steps are continue-on-error so a repo with Pages
+# disabled still builds, gates, and SSH-publishes.
 
 on:
   push:
@@ -23,16 +34,20 @@ on:
       - 'prospect-tracker/**'
       - '.github/workflows/deploy-prospect-tracker.yml'
   workflow_dispatch:
+    inputs:
+      full:
+        description: "Run the FULL monthly pipeline (grades, rankings, snapshots)"
+        type: boolean
+        default: false
   schedule:
-    - cron: '0 11 1 * *'
+    - cron: '30 7 * * *'
 
 permissions:
   contents: read
   pages: write
   id-token: write
 
-# Only one Pages deploy in flight at a time; in-progress runs get
-# cancelled if a fresh commit lands during the build.
+# One deploy in flight; a fresh push supersedes an in-progress build.
 concurrency:
   group: pages-prospect-tracker
   cancel-in-progress: true
@@ -40,6 +55,7 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 150
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -58,33 +74,93 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Run pipeline (regenerates data/*.json)
-        # Hits live MLB Stats API + BBRef for the WAR aggregate. The
-        # pipeline is idempotent and tolerates partial-failure paths
-        # (warnings logged, no exit), so a flaky third-party endpoint
-        # won't fail the deploy.
-        run: python run_monthly.py
+      - name: Restore pipeline state (DB + HTTP cache)
+        uses: actions/cache@v4
+        with:
+          path: |
+            prospect-tracker/prospects.db
+            prospect-tracker/.cache
+          key: prospx-state-${{ github.run_id }}
+          restore-keys: |
+            prospx-state-
 
-      - name: Run test suite
-        # Gate the deploy on pytest so a broken export shape doesn't
-        # publish to Pages. Fast (~2s); no live network needed.
+      - name: Run pipeline
+        # Full monthly on the 1st, on demand, or on a cold runner (no
+        # cached DB); fast --daily refresh otherwise. The pipeline
+        # tolerates partial-failure paths (warnings logged, no exit),
+        # so one flaky source never kills the nightly deploy.
+        run: |
+          if [ "${{ inputs.full }}" = "true" ] || [ "$(date -u +%d)" = "01" ] || [ ! -f prospects.db ]; then
+            echo "FULL monthly pipeline"
+            python run_monthly.py
+          else
+            echo "daily refresh"
+            python run_monthly.py --daily
+          fi
+
+      - name: Build editorial pages
+        run: python build_site.py
+
+      - name: Gate on the test suite
+        # Browser-dependent tests importorskip-skip without playwright;
+        # everything else (artifact shapes, registry honesty, export
+        # contracts, calibration guards) must be green to publish.
         run: python -m pytest -q
 
       - name: Stage site for Pages
-        # Only ship what the browser actually needs: the HTML + the
-        # split JSON payloads. Keeps the artifact small and avoids
-        # accidentally publishing the prospects.db / .cache directory.
+        # Ship exactly what the browser needs: the page directories,
+        # shared assets, and the data sidecars (pitch plots are split
+        # per player - the 411MB monolith never ships). Python sources,
+        # tests, caches, the DB, and model binaries stay out.
         run: |
           mkdir -p _site
           cp index.html _site/
+          for f in 404.html robots.txt sitemap.xml favicon.ico; do
+            [ -f "$f" ] && cp "$f" _site/
+          done
+          for d in articles assets collegesavant fa forums glossary player projections prospx sources team teams; do
+            [ -d "$d" ] && cp -r "$d" "_site/$d"
+          done
           mkdir -p _site/data
-          cp data/timeseries.json data/graduates.json data/inactive.json data/rosters_by_org.json _site/data/
+          find data -maxdepth 1 -name '*.json' -exec cp {} _site/data/ \;
+          [ -d data/pitch_plots ] && cp -r data/pitch_plots _site/data/pitch_plots
+          [ -d data/player_detail ] && cp -r data/player_detail _site/data/player_detail
+          # Precompress text assets so nginx (gzip_static on) serves the
+          # .gz twins - mirrors deploy/nightly-build.sh.
+          find _site -type f \( -name '*.json' -o -name '*.js' -o -name '*.css'               -o -name '*.html' -o -name '*.svg' -o -name '*.xml' -o -name '*.txt' \)               -size +1k -exec gzip -9 -k -f {} +
+          du -sh _site
 
+      - name: Publish to server over SSH (Option 2 - see deploy/README.md)
+        # Activates only when the deploy secrets exist; otherwise logs a
+        # skip. rsync --delete keeps the webroot an exact mirror of the
+        # staged site (and ONLY the staged site - never the repo).
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_WEBROOT: ${{ secrets.DEPLOY_WEBROOT }}
+        run: |
+          if [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_SSH_HOST" ] || [ -z "$DEPLOY_WEBROOT" ]; then
+            echo "SSH deploy secrets not configured - skipping server publish."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/eephus_deploy
+          chmod 600 ~/.ssh/eephus_deploy
+          ssh-keyscan -H "${DEPLOY_SSH_HOST#*@}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/eephus_deploy -o StrictHostKeyChecking=accept-new" \
+            _site/ "$DEPLOY_SSH_HOST:$DEPLOY_WEBROOT/"
+          echo "published to $DEPLOY_SSH_HOST:$DEPLOY_WEBROOT"
+
+      # Optional Pages mirror - tolerant of Pages being disabled.
       - uses: actions/configure-pages@v5
+        continue-on-error: true
 
       - uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
         with:
           path: prospect-tracker/_site
 
       - id: deployment
         uses: actions/deploy-pages@v4
+        continue-on-error: true

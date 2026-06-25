@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the financial scrapers — MLB.com draft bonus pool parser
 and Spotrac team contract parser. These exercise the pure HTML/text
 parsing functions with hardcoded fixtures so no network access is

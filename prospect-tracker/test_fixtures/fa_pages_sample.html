@@ -1,0 +1,69 @@
+<!-- Synthetic Spotrac FA page fixtures — minimal tables exercising every
+     parser branch: header-order shuffle, QO <small> marker, money forms
+     ($210,000,000 and $55.3M), milb deals (Value "-"), org normalization
+     (CWS->CHW, WSH->WSN), conditional option types. Shapes mirror the live
+     pages cached June 2026 (see fa_sources.py docstring). -->
+<html><body>
+
+<!-- signed-class table (tables[0] on /mlb/free-agents/_/year/Y) -->
+<table class="signed">
+  <thead><tr><th>From</th><th></th><th>To</th><th>Player  (3)</th><th>Pos</th><th>Yrs</th><th>Value $1,234</th><th>AAV $99</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>DET</td><td></td><td>WSH</td>
+      <td class="text-left"><a class="link" href="https://www.spotrac.com/mlb/player/_/id/12345/max-scherzer">Max Scherzer</a><small class="ms-1">QO</small></td>
+      <td>SP</td><td>7</td><td>$210,000,000</td><td>$30,000,000</td>
+    </tr>
+    <tr>
+      <td>CWS</td><td></td><td>SD</td>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/67890/jose-utility">José Utility</a></td>
+      <td>2B</td><td>1</td><td>-</td><td>-</td>
+    </tr>
+    <tr>
+      <td>TB</td><td></td><td>KC</td>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/11111/sample-reliever">Sample Reliever</a></td>
+      <td>RP</td><td>2</td><td>$14,500,000</td><td>$7,250,000</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- available table, ORDER A (the /available/ page layout) -->
+<table id="table" class="avail-a">
+  <thead><tr><th>Player (2)</th><th>Pos</th><th>Age</th><th>Prev Team</th><th>Prev AAV</th><th>Type</th><th>Market Value AAV</th><th>Arm Bat/Throw</th><th>Prev WAR</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/19942/bo-bichette">Bo Bichette</a></td>
+      <td>3B</td><td>28.2</td><td>NYM</td><td>$42,000,000</td><td>OPT-OUT / $55.3M</td><td></td><td>R</td><td>3.1</td>
+    </tr>
+    <tr>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/22222/plain-ufa">Plain Ufa</a></td>
+      <td>SP</td><td>33.0</td><td>CWS</td><td>-</td><td>UFA</td><td>$12.0M</td><td>L</td><td>-</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- available table, ORDER B (the shuffled remaining-unsigned layout) -->
+<table id="table" class="avail-b">
+  <thead><tr><th>Player (2)</th><th>Pos</th><th>Age</th><th>Arm Bat/Throw</th><th>Prev WAR</th><th>Prev Team</th><th>Prev AAV</th><th>Type</th><th>Market Value</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/33333/shuffled-vet">Shuffled Vet</a></td>
+      <td>C</td><td>35.4</td><td>R</td><td>0.8</td><td>WSH</td><td>$8,000,000</td><td>MUTUAL / $6.5M</td><td>-</td>
+    </tr>
+    <tr>
+      <td><a href="https://www.spotrac.com/mlb/player/_/id/44444/cond-club">Cond Club</a></td>
+      <td>SP</td><td>30.1</td><td>L</td><td>2.2</td><td>SF</td><td>$18,000,000</td><td>CONDITIONAL-CLUB / $20.0M</td><td>$19.5M</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- tax ledger -->
+<table class="tax">
+  <thead><tr><th>Rank</th><th>Team</th><th>Record</th><th>Roster</th><th>Status</th><th>Tax Payroll</th><th>Space</th><th>Tax Bill Estimated</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>LAD LAD</td><td>42-24</td><td>40</td><td>3+-Time</td><td>$421,772,931</td><td>$-177,772,931</td><td>$170,950,224</td></tr>
+    <tr><td>2</td><td>CWS CWS</td><td>20-46</td><td>38</td><td>-</td><td>$95,000,000</td><td>$149,000,000</td><td>-</td></tr>
+  </tbody>
+</table>
+
+</body></html>

@@ -1,0 +1,964 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+#
+# =============================================================================
+# Surplus-Value engine config -- SINGLE EDITABLE SOURCE OF TRUTH
+# =============================================================================
+# Every number the surplus-value model uses lives here. value_framework.py reads
+# this file (plus the generated data/value_framework_fitted.json) and contains NO
+# hardcoded valuation constants -- tune the model by editing this file, never the
+# logic.
+#
+# Model in one line (see docs + glossary): a prospect's value is the
+# probability-weighted surplus across discrete career-outcome buckets, where each
+# bucket's surplus is built season-by-season (WAR -> tiered $/WAR market value
+# minus service-time salary), discounted to present value, and aggregated LAST.
+# This is the fix for E[f(X)] != f(E[X]): we transform at the finest granularity
+# (bucket x season) and only then sum across years and weight across buckets.
+#
+# Provenance for every block is in `sources` at the bottom and in the overhaul
+# spec (docs/sv-audit.md describes the OLD model this replaces).
+# -----------------------------------------------------------------------------
+
+version: "v2.0-career-path-mixture"
+
+# =============================================================================
+# Outcome buckets -- per-SEASON WAR talent bands (Clemens 2025)
+# =============================================================================
+# Bands are per-season projected talent (normalized 600 PA / 200 IP), NOT 6-year
+# accumulations. `midpoint_war` is a PRIOR/seed only; the engine CALIBRATES the
+# realized per-bucket WAR levels (`fitted.bucket_midpoints_*`) so that the
+# P(bucket|FV)-weighted six-year-average annual WAR reconciles to
+# `fv_to_6yr_avg_war`. Bucket order is the ordinal response for the §1 fit:
+#   bust < bench < regular < good < star
+buckets:
+  order: [bust, bench, regular, good, star]
+  bust:    {band: "<0.5",    midpoint_war: 0.0, surplus_floor_usd: 0}   # release/non-tender -> $0
+  bench:   {band: "0.5-1.5", midpoint_war: 1.0, surplus_floor_usd: 0}
+  regular: {band: "1.5-2.5", midpoint_war: 2.0, surplus_floor_usd: 0}
+  good:    {band: "2.5-4.0", midpoint_war: 3.2, surplus_floor_usd: 0}
+  star:    {band: "4.0+",    midpoint_war: 5.0, surplus_floor_usd: 0}   # open-ended / right-skewed
+
+# Within-career WAR trajectory SHAPE per bucket, length = control_years. These
+# are RELATIVE weights with mean 1.0; the engine multiplies each by the
+# calibrated bucket midpoint to get that bucket's per-season WAR. Shape affects
+# only the per-season $/WAR tier classification (a convex, nonlinear step), NOT
+# the six-year average (which equals the midpoint by construction, so
+# reconciliation is shape-invariant). "Need not be linear": modest ramp to a
+# year 3-5 plateau, slight year-6 decline. bust stays flat at 0 (overridden).
+bucket_trajectory_shape:
+  default: [0.80, 0.95, 1.05, 1.10, 1.10, 1.00]   # mean = 1.0
+  # Per-bucket overrides may be added here (same length, mean ~1.0).
+  bust:    [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+# =============================================================================
+# P(bucket | FV) TRAINING DATA -- Clemens 2025 (2019-22 lists, proj 3 yrs out)
+# =============================================================================
+# These tables are the TRAINING DATA for the §1 continuous ordered-logit fit.
+# They are NOT consumed at runtime by rounding an FV to the nearest grade. The
+# fit reconstructs integer counts (count = round(pct * n)) and expands to one
+# row per player, then the runtime evaluates the SMOOTH fitted curve at any FV.
+p_bucket_given_fv_hitter:
+  "45":  {n: 295, bust: .51, bench: .25, regular: .17, good: .06, star: .01}
+  "45+": {n: 91,  bust: .52, bench: .18, regular: .19, good: .11, star: .01}   # axis 47.5
+  "50":  {n: 197, bust: .23, bench: .24, regular: .30, good: .21, star: .02}
+  "55":  {n: 54,  bust: .17, bench: .17, regular: .30, good: .31, star: .06}
+  "60":  {n: 42,  bust: .14, bench: .12, regular: .19, good: .38, star: .17}
+  # FV >= 65: n <= 3 -> excluded from fit, rely on extrapolation
+
+p_bucket_given_fv_pitcher:
+  "45":  {n: 230, bust: .53, bench: .26, regular: .16, good: .05, star: .00}
+  "45+": {n: 68,  bust: .38, bench: .24, regular: .25, good: .13, star: .00}   # axis 47.5
+  "50":  {n: 96,  bust: .27, bench: .27, regular: .24, good: .20, star: .02}
+  "55":  {n: 30,  bust: .17, bench: .20, regular: .37, good: .27, star: .00}
+  "60":  {n: 12,  bust: .17, bench: .33, regular: .25, good: .25, star: .00}
+  # FV >= 65: n <= 2 -> excluded from fit, rely on extrapolation
+
+# Sub-45 ESTIMATES -- NO published 5-bucket table. SUPERSEDED at runtime by the
+# §1 fitted curve extrapolated down + the FV<=40 dollar anchor below. Retained
+# here only as documentation / a seed for a future fit on proprietary data.
+p_bucket_given_fv_LOWTIER_ESTIMATE:
+  hitter:
+    "40+": {bust: .68, bench: .19, regular: .10, good: .03, star: .00}   # axis 42.5
+    "40":  {bust: .80, bench: .14, regular: .05, good: .01, star: .00}
+    "35":  {bust: .92, bench: .06, regular: .02, good: .00, star: .00}
+  pitcher:
+    "40+": {bust: .72, bench: .18, regular: .08, good: .02, star: .00}   # axis 42.5
+    "40":  {bust: .83, bench: .13, regular: .04, good: .00, star: .00}
+    "35":  {bust: .94, bench: .05, regular: .01, good: .00, star: .00}
+
+# "+" grade placement on the continuous FV axis (training-row axis values).
+plus_grade_axis: {"40+": 42.5, "45+": 47.5, "50+": 52.5, "55+": 57.5}
+
+# §1 fit controls.
+fit:
+  role_axes:
+    # FV axis value used for each training-row key (so "45+" -> 47.5 etc.)
+    "45": 45.0
+    "45+": 47.5
+    "50": 50.0
+    "55": 55.0
+    "60": 60.0
+  exclude_n_le: 3            # drop training rows with n <= this from the fit
+  support_fv: [35.0, 70.0]   # fit support; clamp/extrapolate cautiously beyond
+  parallel_lines_tol: 0.35   # max abs slope spread across cumulative-logit
+                             # thresholds before we declare proportional-odds
+                             # FAILED and fall back to per-threshold + isotonic
+  method_preference: [proportional_odds, per_threshold_isotonic, pchip]
+  # --- G: hierarchical Bayesian P(bucket|FV) (replaces the point-estimate logit) ---
+  # A joint hitter+pitcher proportional-odds model with PARTIAL POOLING, fit by
+  # MAP + Laplace posterior. The thin cells (e.g. the n=12 60-FV pitcher row)
+  # shrink toward their cross-role / cross-tier neighbors and carry honest
+  # uncertainty; the Laplace covariance propagates to credible intervals on
+  # P(bucket|FV) and on SV that widen for thin cells and in extrapolation. The
+  # posterior MAP supersedes the independent-MLE logit as the point estimate
+  # (means ~ the prior fit where samples are large).
+  bayes:
+    enabled: true
+    role_pool_sd_slope: 0.04     # partial-pooling sd pulling hitter/pitcher SLOPES together
+    role_pool_sd_cut: 1.5        # partial-pooling sd pulling the CUTPOINTS together
+    slope_prior_sd: 1.0          # weakly-informative level prior on each slope
+    cutpoint_prior_sd: 25.0      # weakly-informative level prior on each cutpoint
+    posterior_draws: 4000        # Laplace-posterior draws for credible intervals
+    credible_mass: 0.90          # central credible interval (e.g. P5-P95 at 0.90)
+    seed: 20260531
+    extrapolation_extra_sd_per_fv: 0.01  # extra logit sd per FV-pt beyond the [45,60] data range
+  # Bucket-midpoint calibration (the "level" calibration of §3). Midpoints are
+  # solved to reconcile the P(bucket|FV)-weighted six-year avg WAR to
+  # fv_to_6yr_avg_war, kept near the band-center priors (strong ridge) and
+  # forced distinct (min_gap) so a "bench" outcome can't collapse onto "good".
+  midpoint_priors: [1.0, 2.0, 3.2, 5.0]   # bench, regular, good, star (bust pinned 0)
+  midpoint_ridge: 0.04                     # pull toward priors (higher = closer to bands)
+  midpoint_min_gap: 0.6                    # minimum WAR gap between consecutive buckets
+  reconcile_weight_named: 3.0              # extra weight on the named targets below
+  reconcile_weight_fvs: [50, 55, 60]       # the named validation targets (weighted heavier)
+  reconcile_tol: 0.15                      # documented reconciliation tolerance (named FVs)
+  degenerate_logit_intercept: 50.0         # flat near-0/1 logit for a degenerate threshold
+  # NOTE on calibrated midpoints vs the Clemens band labels: reconciling the
+  # bust-inclusive distribution (bust pinned at 0 WAR) to the higher primer
+  # avg-annual anchor forces the surviving buckets' calibrated WAR ABOVE their
+  # band labels (e.g. calibrated "bench" ~2.1 WAR vs its 0.5-1.5 band). This is
+  # intentional and spec-directed ("treat the bands as outcome SHAPE, calibrate
+  # WAR LEVELS to the primer/Edwards anchors"): the band names are shape
+  # descriptors; the calibrated midpoints are the primer-reconciled levels.
+
+# =============================================================================
+# Calibration anchor: FV -> 6-YEAR AVERAGE annual WAR (FanGraphs primer; NOT peak)
+# =============================================================================
+# v47 — EMPIRICALLY RECALIBRATED to realized outcomes. These are the bust-INCLUSIVE
+# six-year-avg controlled WAR by FV, grounded in the resolved 2017-2020 cohorts
+# (n=2,684; realized first-6-MLB-season WAR, never-debuted=0), lightly blended with
+# the public Edwards scale at the thin/censored tiers (45-50 and 60+). The prior
+# anchors (45->1.5 ... 60->3.0) were the FanGraphs primer's survivor/ceiling values
+# and ran the model ~3-4x over realized AND public; the 2017-20 cohorts produced
+# only ~0.15/0.50/0.77/1.36 WAR/yr at 45/50/55/60 (bust rates 81/52/43/~20%). With
+# the FV-DEPENDENT bucket midpoints (§ _fv_war_scale), the bucket-weighted WAR
+# reconciles EXACTLY to these anchors at EVERY FV, so there is no longer a high-FV
+# ceiling and no bimodal-split smoothness problem. See docs/surplus-recalibration.md
+# for the empirical distributions, out-of-sample validation, and benchmark check.
+fv_to_6yr_avg_war: {35: 0.12, 40: 0.22, 45: 0.38, 50: 0.70, 55: 0.95, 60: 1.45, 65: 1.95, 70: 2.60, 80: 3.80}
+# reconcile_fvs is now vestigial (the FV-dependent scale reconciles at every FV);
+# retained for the diagnostic midpoint-solve provenance in the fit file.
+reconcile_fvs: [45, 50, 55, 60]
+
+# PRIME / TALENT anchor (FV -> peak-season annual WAR for a player who STICKS and
+# plays a full prime season). This is the industry-style FV->WAR people carry in
+# their heads (a 60 FV ~ a 3-WAR regular at peak), roughly the FanGraphs board
+# scale. It is a DISPLAY anchor only: it drives the prospect "prime" WAR path
+# (warPTH) and the headline warPeak shown on the projections board / player FV
+# badge. It deliberately does NOT touch surplus-$ pricing or the expected-value
+# (war) path, which stay reconciled to the realized `fv_to_6yr_avg_war` above so
+# the dollar calibration and pin tests are unchanged. The two differ by the
+# playing-time ramp + survival + bust mass that separates "what he is at his
+# prime if he makes it" from "expected WAR averaged over his first 6 years".
+fv_to_prime_war: {35: 0.3, 40: 0.6, 45: 1.1, 50: 1.7, 55: 2.3, 60: 3.0, 65: 3.8, 70: 4.7, 75: 5.5, 80: 6.5}
+
+# CONTINUOUS CALIBRATION (empirical_anchors.py, run during --fit) -- the anchors
+# above are the SEED/fallback; when use_empirical is on AND the fit file carries
+# `empirical_anchors`, fv_to_6yr_avg_war reads those instead, re-derived from the
+# resolved historical cohorts so the model self-updates as cohorts resolve. The
+# resolved window slides forward automatically (reference_year = current year).
+# (Named anchor_calibration to avoid the post-hoc `calibration` shrinkage layer.)
+anchor_calibration:
+  use_empirical: true            # read fitted empirical anchors when present
+  resolved_lag_min: 6            # cohort = snapshots in [year-lag_max, year-lag_min]
+  resolved_lag_max: 12           #   (old enough that the 6-yr control window is ~complete)
+  # 2026-06-21: widened 9 -> 12 after the MLB Pipeline 2011-2016 backfill (xFV
+  # initiative) added ~1,000 fully-resolved players. Window is now [2014, 2020];
+  # boosts top-tier sample (FV60+) without the FV60-65 surplus discontinuity that
+  # the full [2011,2020] window introduced (failed the grade-boundary smoothness gate).
+  min_cohort: 200                # below this many resolved players -> skip, keep seed
+  min_n_robust: 40               # tier n>=this -> base blend weight; thinner -> more reference
+  blend_weight_public: 0.5       # base weight toward the Edwards-implied reference
+  blend_thin_extra: 0.4          # extra public weight as n -> 0 (thin/censored cells)
+  tiers: [40, 45, 50, 55, 60, 65, 70, 80]
+  # Edwards-scale-implied six-year-avg WAR/yr (the WAR that reproduces the public
+  # surplus scale in THIS engine's cost/PV machinery) -- the blend reference + the
+  # value used where the cohort has no data (70/80, beyond the resolved sample).
+  public_reference: {35: 0.20, 40: 0.30, 45: 0.50, 50: 0.85, 55: 1.15, 60: 1.50, 65: 1.80, 70: 2.40, 80: 3.50}
+
+# =============================================================================
+# FV <= 40 dollar anchor (Edwards) -- SUPERSEDES the bucket pipeline below cutover
+# =============================================================================
+# A 40-FV position player is worth ~$2.5M of surplus (Edwards 2018 $2M @ $9M/WAR,
+# scaled to the current overall $/WAR). Below the cutover we use this direct
+# anchor (decaying with FV); between the anchor point and the lowest reliable
+# fitted FV we bridge linearly so expected SV is continuous and monotone.
+lowtier_anchor:
+  anchor_usd_40fv_position: 2.0e+6   # v47: lowered to the recalibrated scale (was 2.5e6;
+                                     #   the old value sat above the recal 45-FV RP pipeline)
+  anchor_fv: 40.0
+  decay_per_point: 0.16      # anchor *= exp(-decay * (40 - fv)) for fv < 40
+  cutover_fv: 40.0           # fv <= this uses the anchor
+  bridge_to_fv: 45.0         # (cutover, bridge) linearly interpolates anchor->pipeline
+  pitcher_scale: 0.90        # pitcher 40-FV anchor relative to position player
+
+# =============================================================================
+# Market $/WAR -- TIERED (2025-26 actual FA signings; FanGraphs 2026)
+# =============================================================================
+# Convex: a season is classified by ITS OWN WAR into a tier, and the whole
+# season's WAR is valued at that tier's rate (a star season costs more per win
+# -- a flat rate underpays stars ~$10M/contract). Applied PER bucket-season,
+# NEVER to a blended/averaged WAR. The 0-1 / 1-2 / 2+ breakpoints are a
+# different cut than the outcome buckets.
+dollars_per_war:
+  # v44 — switched from the single-2026 row to a TRAILING 3-YEAR AVERAGE
+  # (2024-2026) of historical_dollars_per_war, per this block's own
+  # recommendation ("3-yr-average rates preferred"). Smooths offseason
+  # variance; the 2plus tier (highest backtest sensitivity, elasticity ~1.0)
+  # firms up. Recompute the means here whenever a new year is appended below.
+  flat: 11.74e+6                       # mean(overall 2024-26): (12.08+11.92+11.23)/3
+  tiered:
+    breakpoints: [1.0, 2.0]            # WAR thresholds: [<1 -> lt_1, <2 -> 1_to_2, else 2plus]
+    rates: {lt_1: 6.97e+6, "1_to_2": 8.76e+6, "2plus": 13.63e+6}   # 3-yr means (2024-26)
+  note: "trailing 3-yr average (2024-2026) of historical_dollars_per_war; re-average annually as new years are appended"
+  # v3 — surplus re-anchor to the FA module's signings-implied $/WAR series
+  # (data/fa_dpw_series.json: per-winter total guarantee over total
+  # DISCOUNTED projected contract WAR — what clubs actually paid per win on
+  # the OPEN MARKET, the Gate-2-validated estimator). When enabled, the
+  # LEVEL above (flat + tier rates, convex shape preserved) rescales at
+  # config load to the trailing-N mean of that series; the curated table
+  # stays as the documented fallback when the series file is absent.
+  # Open-market $/WAR is the right basis for surplus: surplus prices what
+  # the wins would otherwise cost to BUY.
+  fa_implied:
+    enabled: true
+    trailing_years: 3
+
+# =============================================================================
+# Time value & input calibration
+# =============================================================================
+discount_rate: 0.09          # annual PV discount on future surplus (Swartz ~9-10%; DL 9.3%)
+# projection_haircut applies ONLY when WAR inputs are raw projections fed in
+# directly. In THIS pipeline the WAR level is set by the bucket-midpoint
+# calibration to the primer anchor, so the haircut is OFF by default to avoid
+# stacking two calibrations on the same WAR (per spec). Flip `apply` to true only
+# if you bypass the calibration and feed raw projection WAR.
+projection_haircut: {value: 0.85, apply: false}
+
+# =============================================================================
+# Timing -- ETA / age / $/WAR inflation (the largest hidden precision leak)
+# =============================================================================
+# Surplus accrues only from DEBUT, and discounting/aging depend on a prospect's
+# age and projected debut, not just FV. Two same-FV prospects with different
+# ETAs/ages must differ: the more distant one eats extra discounting before any
+# surplus accrues, and a player whose control window sits earlier vs later on
+# the aging curve banks WAR at different (discounted) times.
+discount_from: debut         # "debut" => discount the control window from PROJECTED
+                             #   debut (adds ETA-gap discounting). "now" => debut is
+                             #   immediate (the prior, timing-flat behavior).
+default_eta_years: 0.0       # years-to-debut assumed when a prospect's ETA isn't supplied
+# Expected annual $/WAR growth. Future control seasons are valued at today's rate
+# grown by (1+inflation)^years_out, then discounted at discount_rate. The two NET
+# to a real factor ((1+inflation)/(1+discount_rate))^years_out -- so do NOT also
+# lower discount_rate to reflect growth (that double-counts). discount_rate is the
+# NOMINAL rate; this is the growth that partially offsets it.
+dollars_per_war_inflation: 0.05
+aging:
+  enabled: true              # false => fixed bucket_trajectory_shape (prior behavior)
+  hitter_peak_age: 27        # empirical WAR peak age (hitters)
+  pitcher_peak_age: 25       # empirical WAR peak age (pitchers)
+  climb_per_year_before_peak: 0.04   # ~4%/yr below peak (younger = less developed)
+  decline_per_year_after_peak: 0.07  # ~7%/yr past peak (decline steeper than the climb)
+  min_multiplier: 0.25       # floor on the relative-to-peak aging multiplier
+  # The aging multipliers across a player's six control seasons are renormalized
+  # to mean 1.0, so the six-year-AVERAGE WAR still reconciles to the bucket
+  # midpoint (the FV anchor); aging only redistributes WAR ACROSS the seasons
+  # (where on the curve the control years sit), which the discounting then prices.
+
+# =============================================================================
+# Service-time / salary structure (performance-adaptive arbitration)
+# =============================================================================
+service_time:
+  control_years: 6           # years of team control before free agency
+  league_min_usd: 0.76e+6     # pre-arb salary per year (~MLB minimum)
+  # Standard service path: 3 pre-arb (league min) + 3 arb (escalating % of that
+  # season's MARKET value). Super-Two converts one pre-arb year into an extra
+  # (earlier, cheaper) arb year -> 2 pre-arb + 4 arb across the SAME 6 control
+  # years (more salary, less surplus). We blend the two paths by `fraction`.
+  pre_arb_years: 3
+  arb_model:
+    fractions_of_fa_value: [0.40, 0.60, 0.80]   # arb1/arb2/arb3 share of season market value
+    super_two_first_fraction: 0.25              # the extra early arb year (super-two only)
+  super_two: {enabled: true, fraction: 0.22}    # ~top 22% of 2+ service reach arb a year early
+
+# =============================================================================
+# Positional adjustment -- NO double-count (see docs/sv-audit.md FLAG 7)
+# =============================================================================
+# WAR ALREADY contains a defensive positional adjustment by construction, so the
+# core surplus applies NO market $/position multiplier (the old AAV-derived
+# multipliers double-counted the positional value already in WAR). `market_scarcity`
+# is the documented hook for a TRUE trade-market-scarcity premium that WAR does
+# NOT capture -- left at 1.0 for every position pending a clean (non-AAV-confounded)
+# calibration. The ONE position effect we DO apply is a WAR-INPUT correction for
+# relievers (next block), not a dollar multiplier.
+position:
+  apply_market_scarcity: false
+  market_scarcity: {}        # e.g. {SS: 1.05} once cleanly estimated; empty -> all 1.0
+  # Reliever WAR is inflated by the 200-IP normalization of the Clemens bands.
+  # Normalize a reliever's per-bucket WAR to a full BULLPEN season and cap it:
+  # reliever WAR = min(reliever_war_ceiling, band_WAR * reliever_full_season_ip /
+  # pitcher_band_ip). E.g. a 3.6-WAR/200-IP band -> 3.6*65/200 = 1.17 ~ 1.2 WAR.
+  # (Supersedes the old flat relief_war_haircut, kept only as a fallback.)
+  relief_war_haircut: 0.50          # legacy fallback if the IP keys are absent
+  reliever_full_season_ip: 65       # a full bullpen season
+  reliever_war_ceiling: 1.5         # cap on a reliever's full-season WAR
+  pitcher_band_ip: 200              # IP the Clemens pitcher WAR bands are normalized to
+  reliever_positions: [RP, SIRP, MIRP, CL]
+  pitcher_positions: [RHP, LHP, SP, RP, MIRP, SIRP, P, CL]
+
+# =============================================================================
+# Pitcher role structure (Prompt J) -- SP / RP / bust role-outcome layer
+# =============================================================================
+# Pitchers are role-bifurcated: even a starter prospect has a real chance of
+# ending up in the bullpen, where actual WAR is far below the 200-IP band. So a
+# pitcher bucket's EFFECTIVE surplus blends the full-SP value and the capped-RP
+# value by P(reliever|bucket): failed starters relieve more at LOWER quality,
+# while elite (star) arms stick as starters. This deflates generic/SP pitcher SV
+# that the 200-IP normalization previously inflated. Hitters are unaffected.
+pitcher_roles: [sp, rp, bust]
+pitcher_role_mix:
+  # P(reliever | non-bust bucket) for a GENERIC (untagged) pitcher prospect.
+  p_rp_by_bucket: {bench: 0.60, regular: 0.45, good: 0.20, star: 0.05}
+  starter_tag_multiplier: 0.40   # an SP-tagged prospect relieves less (scale the probs down)
+  # an RP-tagged prospect -> P(reliever)=1 on every non-bust bucket (handled in code)
+  injury_hazard: 0.0             # optional extra pitcher attrition toward bust (0 = off)
+
+# =============================================================================
+# Snapshot / frontend
+# =============================================================================
+# The emitted snapshot ships a DENSE precomputed expected-SV curve so the
+# frontend interpolates a curve instead of re-implementing the model in JS.
+snapshot:
+  sv_curve_fv_min: 20.0
+  sv_curve_fv_max: 80.0
+  sv_curve_step: 0.5
+
+# =============================================================================
+# Surplus-value DISTRIBUTION -- the standard output contract
+# =============================================================================
+# The mixture model produces a DISTRIBUTION, not just a mean: P(bucket|FV) over
+# five bucket-level surpluses. We expose the whole thing. Monte Carlo samples a
+# bucket ~ P(bucket|FV) then a within-bucket SV -- each bucket's SV is a RANGE,
+# not a point (a "star" outcome is itself a fat right tail). Within-bucket SV ~
+# Gamma(mean = bucket_SV, cv = within_bucket_cv[bucket]): positive, right-skewed,
+# and MEAN-PRESERVING, so the distribution's mean equals the deterministic
+# point-estimate SV by construction (the bucket means are first scaled so the
+# mixture mean matches the anchor-adjusted expected surplus at any FV).
+distribution:
+  monte_carlo_draws: 20000
+  seed: 1234567                  # fixed -> reproducible draws (tests, snapshots)
+  risk_aversion_lambda: 0.0      # 0 => rank by mean; >0 => penalize downside (CVaR)
+  sv_threshold_mm: 50.0          # P(SV > threshold), in $M
+  percentiles: [5, 10, 25, 50, 75, 90, 95]
+  downside_quantile: 0.25        # CVaR averaged over the worst quartile of outcomes
+  within_bucket_cv:              # coefficient of variation of within-bucket SV
+    bust: 0.0                    # point mass at the bust floor ($0)
+    bench: 0.30
+    regular: 0.38
+    good: 0.48
+    star: 0.70                   # widest -- the star outcome is itself a distribution
+
+# =============================================================================
+# Output / risk contract (Prompt E) -- the standard surfaced distribution summary
+# =============================================================================
+# Prompt E pins the STANDARD output contract. These keys are the SOURCE OF TRUTH
+# and SUPERSEDE the overlapping keys in `distribution` above: the engine reads the
+# Monte-Carlo draw count, the percentile set, the downside metric and the risk
+# lambda from HERE (via the _output_cfg / _mc_draws / _percentiles /
+# _downside_quantile / _risk_lambda accessors), while `distribution` retains seed /
+# sv_threshold_mm / within_bucket_cv and stands as the fallback. `report` is the
+# headline-metric list the surfacing layer prints; `downside_metric: cvar_25`
+# parses to the 0.25 CVaR quantile (mean over the worst quarter of outcomes).
+output:
+  percentiles: [10, 25, 50, 75, 90]
+  report: [mean, p_bust, prob_sv_gt_threshold]
+  monte_carlo_draws: 10000
+  downside_metric: cvar_25
+risk_aversion_lambda: 0.0          # top-level (Prompt E); 0 => rank by mean, >0 => penalize downside. Supersedes distribution.risk_aversion_lambda.
+
+# =============================================================================
+# Surfacing (Prompt L) + WAG (Prompt M) -- CONFIG + LOADER ONLY
+# =============================================================================
+# Loaded at startup (yaml.safe_load picks up every top-level key) but NOT yet read
+# by any engine logic -- these forward-declare the L/M feature surface so their
+# values live in config (never hardcoded) when those features get built. The engine
+# remains the single source of truth for the numbers the UI surfaces
+# (`source_of_truth: engine`).
+ui:
+  show: [expected_sv, sv_p10, sv_p50, sv_p90, p_bust, risk_adjusted_sv, bucket_probs, wag, wag_pct]
+  debuted_extra: [trade_value, total_value, realized_to_date]
+  source_of_truth: engine
+wag:
+  forms: [counting, rate]
+  standardized: percentile
+  meaningful_exposure: {hitter_pa: 200, pitcher_ip: 80}
+  baseline_fv: pre_debut
+  # Boom/Bust label keyed on the STANDARDIZED WAG -- the player's percentile (PIT)
+  # in the FV's predicted outcome distribution AT HIS EXPOSURE -- not a raw WAR
+  # delta. boom = clearly ahead of grade, bust = clearly behind; the middle band
+  # is "settled". Below meaningful_exposure (or no WAG) stays "unsettled" -- too
+  # thin to call. Distribution-aware + exposure-aware, so it's comparable across
+  # FVs and doesn't punish a strong rookie for a partial first season.
+  boom_bust: {boom_percentile: 0.80, bust_percentile: 0.20}
+
+# =============================================================================
+# Source-disagreement uncertainty (Prompt I) -- mine the SPREAD across scouting
+# sources as a free uncertainty signal. The consensus FV is a mean over several
+# industry sources; how much they DISAGREE is uncertainty about the prospect's
+# true FV. We map that dispersion to INCREMENTAL OUTCOME VARIANCE: a disagreement
+# magnitude (in FV points) inflates every within-bucket coefficient of variation
+# in quadrature (cv_eff = sqrt(cv^2 + (fv_sd_to_cv * magnitude)^2)). The bucket
+# PROBABILITIES stay at the consensus, so each bucket mean -- and the mixture mean
+# -- is EXACTLY unchanged, while the spread grows MONOTONICALLY at every FV (no
+# FV-resampling mean-shift to undo, hence no narrowing artifact in the steep
+# low-tier region). Result: two prospects with identical consensus FV but
+# different source spread share the same MEAN SV but the contested one has a
+# WIDER distribution (worse downside / CVaR, fatter upper tail). Disagreement = 0
+# (or disabled, or < min_sources) reproduces the plain Prompt-E distribution.
+source_disagreement:
+  enabled: true
+  dispersion_stat: stddev        # 'stddev' (population SD of per-source FVs) | 'spread' (max-min)
+  fv_sd_per_stddev: 1.0          # disagreement magnitude = this * (source FV stddev), in FV points
+  spread_to_sd: 0.5              # if dispersion_stat='spread': magnitude = this * (max-min)
+  min_sources: 2                 # need >=2 grading sources to have a dispersion
+  max_fv_sd: 6.0                 # cap the magnitude (a 40/60 two-source split shouldn't explode)
+  fv_sd_to_cv: 0.12              # extra within-bucket CV per FV-point of disagreement (added in quadrature)
+  # OPTIONAL aggregation refinements (default identity, used only by
+  # aggregate_source_fvs when raw per-source FVs are passed):
+  source_scale_offsets: {}       # per-source FV offset subtracted before aggregating (hotter graders)
+  source_weights: {}             # backtested predictive weights; empty -> equal weight
+# Master gate for the Prompt-I spread. SUPERSEDES source_disagreement.enabled as the
+# on/off switch: true => the detailed parameters above apply; false => the engine
+# reproduces the plain Prompt-E distribution (no widening) regardless of dispersion.
+source_uncertainty: {use_dispersion: true}
+
+# =============================================================================
+# System / portfolio rollup (Prompt K) -- a farm system is NOT a sum of point
+# estimates. Two effects bend the rollup below/around the naive sum of means:
+#   (1) OUTCOME CORRELATION: prospects share org/development effects (coaching,
+#       park, philosophy, health luck), so their outcomes co-move. We induce a
+#       single-factor equicorrelation via a Gaussian copula that REORDERS each
+#       prospect's own Monte-Carlo draws -- exactly preserving every marginal
+#       (so the system MEAN is always the sum of individual means), while giving
+#       the SUM the correct (wider, for rho>0) spread.
+#   (2) ROSTER-REALIZATION / LOGJAM: only ~26 roster spots + trade convert
+#       prospect surplus to value, so a system stacked at one position cannot
+#       realize all of it. Per Monte-Carlo draw we group prospects by roster
+#       slot, keep the top `position_slots[group]` at full value, and realize the
+#       blocked excess at `trade_recovery` (they must be traded, not played).
+# rho = 0 AND cap disabled reduces EXACTLY to the sum of individual mean SVs.
+portfolio:
+  outcome_correlation: 0.10      # pairwise rho across prospects (shared org/dev effects); [0,1)
+  roster_realization_cap: true   # apply the positional logjam discount
+  trade_recovery: 0.5            # blocked (excess) prospects realize this fraction of their SV
+  default_slots: 2               # roster spots for a position group not listed below
+  position_slots:                # full-value spots per roster group (excess is logjammed)
+    C: 1
+    "1B": 1
+    "2B": 1
+    "3B": 1
+    SS: 1
+    OF: 3
+    DH: 1
+    SP: 5
+    RP: 4
+
+# =============================================================================
+# Debuted-player mode (Prompt D) -- value recorded MLB time, don't re-project
+# =============================================================================
+# A debuted player's value = REALIZED (consumed control years, ACTUAL WAR+salary)
+# + REMAINING (control years still ahead, projected). Recorded WAR plays two
+# distinct, non-overlapping roles: banked production (the realized ledger) and
+# EVIDENCE that Bayes-updates the bucket prior P(bucket|FV) for the remaining
+# years. Reduces EXACTLY to the prospect model at 0 MLB PA/IP.
+graduation_limits: {ab: 130, ip: 50, roster_days: 45}   # rookie-eligibility thresholds (informational)
+use_pre_debut_fv: true        # prefer the FV from BEFORE MLB exposure as the Bayes prior
+reliability:                  # Marcel-style regression of observed WAR -> true talent
+  hitter_regression_pa: 600   # PA of prior-mean added to observed (offense stabilization)
+  pitcher_regression_ip: 250  # IP of prior-mean added (pitcher WAR noisier -> regress harder)
+  defense_seasons_to_stabilize: 3   # hitter WAR's defensive component is ~noise before this
+debuted:
+  full_season_pa: 600         # reference full season (hitter) for rate-normalizing observed WAR
+  full_season_ip: 200         # reference full season (pitcher)
+  obs_war_sd_per_full_season: {hitter: 1.3, pitcher: 1.6}   # likelihood SD of one full-season WAR vs talent
+  graduation_sample: {hitter_pa: 1200, pitcher_ip: 400}     # sample where continuous-projection weight = 0.5
+  defense_early_penalty: 0.5  # extra observed down-weight for hitters below defense_seasons_to_stabilize
+  continuous_cv: 0.35         # within-talent spread of the graduated continuous-projection component
+
+# =============================================================================
+# Calibration correction (Prompt F backtest) -- empirical shrinkage layer
+# =============================================================================
+# A documented, REVERSIBLE, VERSIONED mapping from the model's raw predicted SV
+# to a calibrated SV, fit by backtest.py against realized completed-window
+# outcomes. DEFAULT = IDENTITY (disabled): the model ships UNCALIBRATED until a
+# backtest on REAL completed-window cohorts is run and its params are written
+# here. The harness validates itself on SYNTHETIC data; synthetic fits are NOT
+# committed to production -- only a real-data fit should flip enabled: true.
+calibration:
+  enabled: true
+  version: "isotonic-real-v3-todaypriced-2026-06-12"
+  method: isotonic            # linear | isotonic
+  linear: {slope: 1.0, intercept_mm: 0.0}
+  isotonic:
+    x_mm: [1.75, 5.31, 8.98, 9.33, 15.33, 22.55, 27.48, 48.43, 140.0]
+    y_mm: [1.44, 2.51, 4.66, 6.59, 14.99, 17.87, 23.99, 50.94, 168.74]
+  fit_provenance: "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2239): raw slope 1.02 / bias -2.9M corrected to held-out slope 0.97 / bias -1.13M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 8 knots. Tail knot (140 -> 168.74) continues the last observed segment so elite raws keep ordering instead of clipping at the top bin."
+
+# =============================================================================
+# Source-calibration loop (Prompt N) -- learn per-source bias & reliability
+# =============================================================================
+# DISTINCT from the Prompt-F `calibration` block above (which calibrates the model's
+# SV OUTPUT). This governs how per-SOURCE scouting grades are de-biased and
+# reliability-weighted (GLS) before they feed the consensus FV that the Prompt-I
+# spread + the FV-projection core consume. Consumed by value_framework.fit_source_
+# calibration / calibrated_consensus_fv (the historical realized outcomes are
+# reconstructed by Prompt F and passed in). Complements Prompt I: I uses cross-
+# source DISAGREEMENT for uncertainty; N uses each source's TRACK RECORD.
+source_calibration:
+  estimate_bias: true                      # learn a per-source FV offset (hotter/colder graders)
+  reliability_weighting: covariance_aware  # weight sources by reliability, accounting for cross-source covariance
+  conditional_by: [role, fv_tier]          # estimate bias/reliability within role x FV-tier cells
+  shrink_thin_history: true                # shrink sources with little track record toward the pool
+  out_of_sample: true                      # fit/evaluate out-of-sample to avoid overfitting a source's own history
+  update: rolling                          # re-estimate on a rolling basis as new outcomes land
+  # --- numeric params (consumed by the N implementation) ---
+  fv_tiers: [47.5, 55.0]        # FV-tier edges for conditional cells: <47.5 | 47.5-55 | >=55
+  bias_shrink_pseudocount: 30   # players of prior pulling a source's bias toward 0 (thin history)
+  cell_shrink_pseudocount: 20   # players pooling a (role,tier) cell toward the source overall bias
+  min_players_for_source: 5     # below this a source gets equal weight + no bias (too thin to trust)
+  rolling_halflife_years: 4     # recency half-life (cohort-yrs) down-weighting stale outcomes; 0 = off
+  ridge: 0.05                   # covariance ridge (x default var) -> invertibility + shrink toward independence
+
+# Historical market $/WAR by year ($M/WAR) -- the backtest values REALIZED
+# production at the rate that prevailed in the year it was produced.
+historical_dollars_per_war:
+  2020: {overall: 10.85, lt_1: 10.93, "1_to_2": 8.52, "2plus": 11.99}
+  2021: {overall:  6.70, lt_1:  4.09, "1_to_2": 6.31, "2plus":  7.22}
+  2022: {overall: 11.24, lt_1:  9.46, "1_to_2": 8.77, "2plus": 12.15}
+  2023: {overall: 10.34, lt_1:  6.87, "1_to_2": 9.77, "2plus": 10.81}
+  2024: {overall: 12.08, lt_1:  8.22, "1_to_2": 8.83, "2plus": 14.13}
+  2025: {overall: 11.92, lt_1:  5.96, "1_to_2": 8.95, "2plus": 13.91}
+  2026: {overall: 11.23, lt_1:  6.74, "1_to_2": 8.51, "2plus": 12.84}
+
+# League-minimum salary schedule by year ($M), for pre-arb realized seasons.
+league_min_by_year:
+  2018: 0.545
+  2019: 0.555
+  2020: 0.563
+  2021: 0.571
+  2022: 0.700
+  2023: 0.720
+  2024: 0.740
+  2025: 0.760
+  2026: 0.780
+
+# =============================================================================
+# Bayesian trade value engine (bayes_trade_value.py)
+# =============================================================================
+# All numbers here are consumed only by the trade-value module, never by the
+# core surplus-value pipeline above. They live here so tuning is one-file.
+trade_value:
+
+  # § SCARCITY ----------------------------------------------------------------
+  # Positional scarcity multiplier on posterior surplus. Captures the market
+  # premium above what WAR positional adjustments already encode — the thin
+  # supply of viable starters at C/SS/CF means even average production there
+  # commands a premium that a 1B with identical WAR does not.
+  # Calibrated to observed trade-market comps, NOT AAV (which double-counts).
+  positional_scarcity:
+    C:    1.22   # ~15 viable MLB starters; framing is irreplaceable
+    SS:   1.12   # ~25 viable starters
+    CF:   1.09   # ~20 viable starters; speed/range hard to sustain
+    "2B": 1.05
+    "3B": 1.04
+    RF:   0.97   # corner OF — DH-adjacent, highest supply of MLB-calibre bats
+    LF:   0.97   # corner OF — same logic; Soderstrom/corner-only players
+    "1B": 0.96
+    DH:   0.93   # no defensive value; pure offensive profile
+    SP:   1.13   # premium for true rotation depth — controllable SP are the most
+    RHP:  0.92   # generic pitcher tag — treated as RP by default; SP overrides via role
+    LHP:  0.92   # generic pitcher tag — treated as RP by default; SP overrides via role
+    RP:   0.92
+    CL:   0.92
+    SIRP: 0.94
+    MIRP: 0.94
+    P:    1.00
+
+  # § FLOOR -------------------------------------------------------------------
+  # Additive defensive-floor WAR per season at each position (elite grade,
+  # ~65+ on 20-80 scale). This WAR is real regardless of offensive output and
+  # makes the value distribution left-truncated — the floor is non-Gaussian.
+  # Present-valued over floor_control_years at floor_discount_rate.
+  defensive_floor_war:
+    C:    2.5   # elite framing: +2–3 WAR; midpoint
+    SS:   1.5
+    CF:   1.2
+    "2B": 0.8
+    "3B": 0.7
+    RF:   0.4
+    LF:   0.2
+    "1B": 0.1
+    DH:   0.0
+    SP:   0.0
+    RP:   0.0
+  floor_control_years: 5
+  floor_discount_rate: 0.09
+  floor_dollars_per_war_mm: 8.76   # 1-to-2 WAR tier; floor D is real but not star-tier
+  def_grade_above_avg: 55.0        # partial floor threshold (20-80 scale)
+  def_grade_elite:     65.0        # full floor threshold
+
+  # § PRIOR -------------------------------------------------------------------
+  # Prior precision = base × pedigree_strength × age_for_level_buffer × source_weight
+  # Higher precision → observation moves posterior less (prior is trusted more).
+  prior:
+    base_precision: 1.0
+
+    # § PEDIGREE: signing bonus / draft slot → prior trust
+    # IFA bonuses > $1M signal genuine elite evaluation; draft top-10 picks
+    # have survived the strictest pre-draft filter.  Log-scale: each 10× in
+    # bonus adds one unit of precision weight (so $1M vs $10k is +2 units).
+    pedigree:
+      ifa_log_scale: 2.0           # bonus_usd → log10(bonus/10000) × this
+      draft_top10_bonus: 0.8       # flat bonus for top-10 overall picks
+      draft_round1_bonus: 0.4      # flat bonus for round-1 picks (non top-10)
+      draft_round2_bonus: 0.15
+      max_pedigree_precision: 3.0  # cap so no single player is immovable
+
+    # § AGE_CURVE: how much each year young-for-level protects the prior
+    # A player who was young for every MiLB level has passed harder tests,
+    # so we demand more negative evidence before downgrading.
+    age_for_level:
+      buffer_per_year_young: 0.30  # each year young adds this to precision
+      max_buffer: 1.5              # cap — even perfect age profile isn't infinite
+
+    # Source count: more scouts grading → tighter consensus → tighter prior
+    n_sources:
+      per_source_weight: 0.15      # each source above 1 adds this
+      max_source_weight: 0.60
+
+  # § LIKELIHOOD / § ROLLING --------------------------------------------------
+  # Performance signal is a rolling-weighted composite of:
+  #   recent  (last 15 gamelog games)   — weight 0.35
+  #   season  (full current-season line) — weight 0.25
+  # plus, for MLB players, career context.
+  # Observation noise = base_noise / sqrt(sample / ref_sample)
+  rolling:
+    recent_weight: 0.35   # recent_games (last ~15 games)
+    season_weight: 0.65   # full current-season statline
+    # (career_weight for debuted players is handled separately in debuted_player_value)
+
+  obs_noise:
+    hitter_ref_pa:   300.0    # PA at which noise = base
+    pitcher_ref_ip:  100.0    # IP at which noise = base
+    base_noise:        2.5    # $M noise at the reference sample
+    min_noise_floor:   0.6    # irreducible noise even with huge sample
+
+  # § AUTHENTIC ---------------------------------------------------------------
+  # Skills-authenticity weight on the observation. If underlying metrics
+  # don't support the surface results, we discount the likelihood term.
+  # All thresholds are for the overall statline; level-adjusted internally.
+  authenticity:
+    hitter:
+      max_k_pct:          27.0   # K% above this hurts authenticity
+      min_bb_pct:          6.5   # BB% below this hurts authenticity
+      max_xwoba_woba_gap:  0.025 # wOBA − xwOBA > this = luck component
+      min_pa_for_full:   150     # below this PA, authenticity is capped at 0.7
+    pitcher:
+      max_bb_pct:         11.0
+      min_k_pct:          17.0
+      max_era_fip_gap:     0.60  # ERA − FIP > this = lucky ERA
+      min_ip_for_full:    40.0
+
+  # § FLASH -------------------------------------------------------------------
+  # Bimodal mixture model for players with explicit upside markers.
+  # P(value) = p_click × N(μ_elite, σ) + (1 − p_click) × N(μ_floor, σ)
+  # 'Flash' = a peak-window performance that updates p_click upward even
+  # when full-season results are mixed (the Detmers type).
+  flash:
+    hitter_peak_xwoba:    0.370  # peak-window xwOBA qualifying as a flash
+    pitcher_peak_k_pct:    28.0  # peak-window K% qualifying as a flash
+    pitcher_peak_era:       2.80 # peak-window ERA qualifying (low = good)
+    p_click_base:           0.20 # P(ceiling accessible) before any flash event
+    p_click_pedigree_bonus: 0.12 # bump for high-pedigree (bonus > $2M or top-10 pick)
+    p_click_flash_bonus:    0.22 # bump per confirmed flash event
+    p_click_max:            0.80 # cap
+    # Elite ceiling and floor surplus $M for the bimodal display arms
+    # (not used in the main Kalman update — only for the UI distribution viz)
+    elite_surplus_fv_bump:  10.0  # FV points to add for the "clicked" arm
+    floor_surplus_fv_drop:   8.0  # FV points to drop for the "didn't click" arm
+
+  # § WORRY -------------------------------------------------------------------
+  # Worriedness = P(skills_decay | trajectory). Decomposed by type:
+  #   approach_decay    (K%↑, BB%↓, chase%↑) — most concerning; hardest to fix
+  #   contact_quality   (EV↓, barrel%↓, stable approach) — mechanical; often fixable
+  worriedness:
+    # Minimum K% rise or BB% drop to register approach decay signal
+    approach_k_pct_threshold:   3.0  # pp rise in K% from baseline
+    approach_bb_pct_threshold:  2.0  # pp drop in BB%
+    approach_chase_threshold:   3.0  # pp rise in O-Swing%
+    # Contact-quality signal thresholds
+    contact_ev_drop_threshold:  2.0  # mph drop in avg_ev
+    contact_barrel_drop_threshold: 2.5  # pp drop in barrel_pct
+    # How much each signal type raises worriedness [0,1]
+    approach_weight:     0.65
+    contact_weight:      0.35
+    # Age-for-level buffer scales down worriedness for young-for-level players
+    age_buffer_discount: 0.25  # each year young reduces worriedness by this fraction
+
+  # § OPTIONS -----------------------------------------------------------------
+  # Additive $M premium per remaining option (roster flexibility value).
+  # More options = ability to shuttle without waivers = real competitive value.
+  options:
+    premium_per_option_mm:  0.9   # base value per option
+    max_options_in_system:    3   # MLB standard; clamp inputs
+
+  # § RULE5 -------------------------------------------------------------------
+  # Urgency premium when a player must be added to the 40-man or exposed to
+  # the Rule 5 draft. Accrues in the months before the deadline.
+  rule5:
+    deadline_month:  11           # November Rule 5 deadline
+    urgency_window_months: 4      # premium starts this many months before
+    urgency_premium_mm: 1.8       # full premium when inside the window
+    # Years in system before Rule 5 exposure (drafted/signed before college: 4;
+    # college: 3). We use 3 as a conservative default.
+    exposure_years_default: 3
+
+  # § AGE_CURVE (catcher bonus) -----------------------------------------------
+  # Catchers develop offensively later than other positions (peak age ~29 vs 27).
+  # A young catcher who shows any offensive ability gets an upside bonus because
+  # their offensive prime hasn't arrived yet.
+  catcher_dev:
+    late_peak_bonus:  0.08     # multiplicative bonus on posterior for catchers ≤ age_threshold
+    age_threshold:    24       # catchers at or under this age qualify
+
+  # § GROSS_FLOOR: minimum trade value for debuted players with real production.
+  # Even when contract_surplus == $0 (salary > production value), a productive
+  # veteran has real trade market value because gross WAR is scarce. The floor
+  # = PV(gross WAR over ctrl years) × fraction. Calibrated against BA dynasty
+  # top-500: fraction=0.22 lands expensive-contract elite producers (Tucker,
+  # Crochet) in the $25-35M range and leaves pure-surplus players unchanged.
+  # § AGING_CURVE: used by _aging_factor in bayes_trade_value.py.
+  # min_multiplier was previously hardcoded at 0.50, causing severe overvaluation
+  # of late-career players on cheap long contracts (Will Smith: age-37 credited
+  # as 2.0 WAR forever at $12M salary). Catchers age faster — physical toll
+  # accelerates decline past league average.
+  aging_curve:
+    hitter_peak_age:       27.0
+    hitter_decline_per_yr:  0.07
+    pitcher_peak_age:      25.0
+    pitcher_decline_per_yr: 0.07
+    catcher_peak_age:      25.0
+    catcher_decline_per_yr: 0.09   # faster than league average
+    min_multiplier:         0.25   # floor for hitters/pitchers (was hardcoded 0.50)
+    catcher_min_multiplier: 0.20   # catchers fall further in decline phase
+
+  gross_production_floor:
+    enabled: true
+    fraction: 0.22          # gross_war_pv × this = trade value floor
+    min_true_talent_war: 0.5  # only applies when player projects to real production
+    worry_war_scale: 0.40   # worriedness reduces the WAR used for the floor.
+                            # worry=0 → no reduction; worry=0.65 → WAR × (1 - 0.65×0.40)
+                            # Prevents Devers-type (long post-peak contract + declining
+                            # metrics) from getting a floor anchored on inflated career WAR.
+
+  # § ARCHETYPE_POLICY ---------------------------------------------------------
+  # Centralized group-level policy for the trade board. This is intentionally a
+  # small set of archetype knobs layered AFTER the base posterior but BEFORE the
+  # final trade-value assembly, so examples like Basallo/Vargas/Lile tune a
+  # shared policy instead of becoming player-specific patches.
+  archetype_policy:
+    enabled: true
+
+    stale_mlb_prior:
+      min_age: 28.0
+      min_pa: 1500.0
+
+    young_premium_confirming:
+      max_age: 22.5
+      min_fv: 55.0
+      min_control_years: 6.0
+      premium_positions: [C, SS, CF]
+      posterior_floor_prior_pct: 0.82
+
+    young_peak_plateau:
+      max_age: 24.5
+      min_fv: 58.0
+      min_control_years: 6.0
+      max_true_talent_war: 2.0
+      posterior_floor_prior_pct: 0.55
+
+    older_pedigree_breakout:
+      min_age: 25.0
+      max_age: 29.5
+      min_fv: 50.0
+      min_true_talent_war: 1.5
+      min_authenticity: 0.75
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      posterior_floor_prior_pct: 0.50
+
+    young_rookie_hitter_confirming:
+      max_age: 24.5
+      min_fv: 52.0
+      min_pa: 150.0
+      max_pa: 500.0
+      max_k_pct: 25.0
+      min_bb_pct: 6.0
+      min_iso: 0.120
+      min_barrel_pct: 8.0
+      posterior_floor_prior_pct: 0.65
+
+    cheap_control_breakout_hitter:
+      max_age: 28.0
+      min_control_years: 2.0
+      max_current_salary_mm: 5.0
+      min_true_talent_war: 1.5
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      posterior_multiplier: 1.15
+
+    older_low_prior_breakout:
+      min_age: 22.5
+      max_fv: 47.5
+      min_pa: 650.0
+      min_ip: 140.0
+      max_posterior_prior_pct_before_discount: 1.75
+      posterior_multiplier: 0.88
+
+    premium_position_breakout:
+      max_age: 29.5
+      min_true_talent_war: 2.2
+      min_xwoba_est: 0.315
+      min_iso: 0.120
+      min_barrel_pct: 6.0
+      min_supported_metrics: 2
+      positions: [C, SS, CF]
+      posterior_floor_prior_pct: 0.55
+
+    high_prior_mlb_underachiever:
+      min_fv: 55.0
+      min_pa: 1500.0
+      max_true_talent_war: 2.5
+      max_xwoba_est: 0.300
+      max_iso: 0.130
+      max_barrel_pct: 5.5
+      posterior_multiplier: 0.45
+
+    current_offense_not_supporting_prior:
+      min_fv: 55.0
+      min_pa: 300.0
+      max_xwoba_est: 0.300
+      max_iso: 0.130
+      max_barrel_pct: 5.5
+      posterior_multiplier: 0.72
+
+    productive_veteran_slugger:
+      min_age: 29.0
+      min_true_talent_war: 3.0
+      max_worriedness: 0.20
+      positions: [1B, LF, RF, OF, DH]
+      posterior_multiplier: 1.08
+
+    command_pitcher_small_sample:
+      min_age: 26.0
+      max_validated_ip: 240.0
+      max_fv: 50.0
+      max_weighted_stuff_plus: 100.0
+      max_composite_stuff_plus: 90.0
+      low_primary_stuff_plus: 95.0
+      posterior_multiplier: 0.82
+
+    stuff_supported_pitcher:
+      max_age: 28.5
+      min_fv: 50.0
+      min_primary_stuff_plus: 105.0
+      min_weighted_stuff_plus: 104.0
+      min_k_pct: 25.0
+      max_bb_pct: 8.0
+      posterior_floor_prior_pct: 1.05
+
+    injured_low_stuff_pitcher:
+      max_fv: 50.0
+      max_composite_stuff_plus: 95.0
+      max_primary_stuff_plus: 100.0
+      posterior_multiplier: 0.65
+
+    young_elite_stuff_pitcher:
+      max_age: 24.5
+      min_fv: 55.0
+      min_primary_stuff_plus: 105.0
+      min_composite_stuff_plus: 115.0
+      posterior_floor_prior_pct: 0.65
+
+    validated_late_pitcher:
+      min_age: 25.0
+      min_validated_ip: 155.0
+      min_true_talent_war: 2.0
+      min_primary_stuff_plus: 95.0
+      posterior_multiplier: 1.05
+
+    expensive_nonstar_veteran:
+      min_current_salary_mm: 30.0
+      max_true_talent_war: 3.0
+      posterior_multiplier: 0.65
+
+    post_peak_expensive_middle_infielder:
+      min_age: 30.0
+      positions: [SS, 2B]
+      min_control_years: 4.0
+      min_current_salary_mm: 20.0
+      max_true_talent_war: 3.3
+      posterior_multiplier: 0.20
+      suppress_additive_floors: true
+
+  # Level-average baselines for performance signal (fallback when level_norms absent)
+  level_baselines:
+    hitter:
+      MLB:  {k_pct: 22.5, bb_pct: 8.5,  woba: 0.318, xwoba: 0.318, avg_ev: 88.5, barrel_pct: 8.0}
+      AAA:  {k_pct: 23.0, bb_pct: 8.8,  woba: 0.330, xwoba: 0.328, avg_ev: 86.0, barrel_pct: 7.0}
+      AA:   {k_pct: 23.5, bb_pct: 8.0,  woba: 0.325, xwoba: 0.322, avg_ev: 84.5, barrel_pct: 6.5}
+      "A+": {k_pct: 24.0, bb_pct: 8.5,  woba: 0.330, xwoba: 0.326, avg_ev: 83.0, barrel_pct: 6.0}
+      A:    {k_pct: 25.0, bb_pct: 8.0,  woba: 0.330, xwoba: 0.325, avg_ev: 82.0, barrel_pct: 5.5}
+      CPX:  {k_pct: 28.0, bb_pct: 9.0,  woba: 0.330, xwoba: 0.323, avg_ev: 80.0, barrel_pct: 4.5}
+    pitcher:
+      MLB:  {k_pct: 22.5, bb_pct: 8.5,  era: 4.10, fip: 4.00}
+      AAA:  {k_pct: 22.0, bb_pct: 9.0,  era: 4.60, fip: 4.40}
+      AA:   {k_pct: 23.0, bb_pct: 9.5,  era: 4.30, fip: 4.20}
+      "A+": {k_pct: 22.5, bb_pct: 9.5,  era: 4.10, fip: 4.00}
+      A:    {k_pct: 21.0, bb_pct: 10.0, era: 4.20, fip: 4.10}
+      CPX:  {k_pct: 20.0, bb_pct: 11.0, era: 4.50, fip: 4.40}
+
+
+sources:
+  buckets_and_probs: "Ben Clemens, 'How Do Prospect Grades Translate to Future Outcomes?', FanGraphs (2025)"
+  fv_avg_annual_war: "'The New FanGraphs Scouting Primer' (2018); Prospect Week Primer calibration examples"
+  lowtier_dollar_anchor: "Craig Edwards, prospect-valuation series, FanGraphs (2018-19); 40-FV position ~ $2M @ $9M/WAR"
+  dollars_per_war: "Ben Clemens, 'What Are Teams Paying For A Win In Free Agency? 2026 Edition', FanGraphs (2026)"
+  discount_and_haircut: "Driveline Baseball, 'What is the Value of a Prospect? An Updated Methodology' (2019), on Matt Swartz's $/WAR work"

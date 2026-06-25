@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Guards for the Phase 1 design-system tokens.
 
 The UI restructure landed a 6-step spacing scale, 7-step type scale, and
@@ -17,12 +22,18 @@ from pathlib import Path
 
 import pytest
 
-INDEX = Path(__file__).parent / "index.html"
+INDEX = Path(__file__).parent / "prospx" / "index.html"
+SITE_CSS = Path(__file__).parent / "assets" / "site.css"
 
 
 @pytest.fixture(scope="module")
 def html_text() -> str:
     return INDEX.read_text(encoding="utf-8")
+
+
+@pytest.fixture(scope="module")
+def css_text() -> str:
+    return SITE_CSS.read_text(encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -38,7 +49,6 @@ REQUIRED_TOKENS = [
     "--fs-lg", "--fs-xl", "--fs-xxl",
     # Interaction + theme-aware text tokens (P1-C, P1-D)
     "--text-on-accent",
-    "--text-on-dark-muted",
     "--bg-hover",
     "--transition-hover",
 ]
@@ -90,18 +100,17 @@ def test_dark_theme_overrides_bg_hover(html_text):
 
 def test_fractional_font_sizes_bounded(html_text):
     # The legacy file shipped ~15 fractional sizes (8.5, 9.5, 10.5, 11.5,
-    # 12.5). Phase 1 stops the bleed: every NEW font-size should snap to
-    # the 7-step px scale. Allow a small grandfathered count so we don't
-    # block Phase 1 from shipping while Phase 2 cleans up the rest.
+    # 12.5) and the count crept to 73 across UI iterations. The 2026-06-12
+    # cleanup snapped ALL of them: 10.5/11.5/12.5 -> var(--fs-xs/sm/base),
+    # sub-scale micros (7.5/8.5/9.5) -> 8/9/10px. The cap is now 0: new
+    # font-sizes use the 7-step scale (or an integer px for micros the
+    # scale doesn't cover). Bumping this UP requires intent.
     fractional_pattern = re.compile(r"font-size:\s*\d+\.\d+px")
     matches = fractional_pattern.findall(html_text)
-    # Tighten this cap each cleanup pass. 70 is the post-Phase-1 floor
-    # after the v8 UI iteration (was 50; current count ~61). Phase 2
-    # per-page polish should bring this under 40, then to 0. Bumping
-    # it UP requires intent (new code shouldn't introduce more).
-    assert len(matches) <= 70, (
-        f"found {len(matches)} fractional font-sizes — Phase 1 caps this "
-        f"at 70. Snap new sizes to var(--fs-*). Examples: {matches[:5]}"
+    assert len(matches) == 0, (
+        f"found {len(matches)} fractional font-sizes — the 2026-06-12 "
+        f"cleanup brought this to 0. Snap new sizes to var(--fs-*). "
+        f"Examples: {matches[:5]}"
     )
 
 
@@ -122,7 +131,7 @@ def test_no_em_or_rem_for_font_size_in_new_rules(html_text):
 # ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize("token", [
-    "--text-on-accent", "--text-on-dark-muted",
+    "--text-on-accent",
 ])
 def test_token_is_referenced_somewhere(html_text, token):
     # A defined-but-unused token = dead weight. After Phase 1 each of
@@ -132,4 +141,55 @@ def test_token_is_referenced_somewhere(html_text, token):
     assert var_ref.search(html_text), (
         f"{token} is defined but never referenced via var(); migrate at "
         "least one callsite or remove the token."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Shared site.css :root coverage - the cross-surface drift the audit caught.
+# The editorial pages, the /projections/ .mlbp player cards, and the homepage
+# cross-module strip all reference these tokens off the SHARED site.css, not
+# prospx's scoped block. They were missing at site.css :root, so those shipped
+# surfaces fell back to UA serif/sans. These guards keep them defined.
+# ---------------------------------------------------------------------------
+
+SITE_CSS_REQUIRED_TOKENS = [
+    "--font-sans", "--font-serif", "--font-mono",   # the MS-Gothic aliases
+    "--space-1", "--space-6",                       # spacing scale endpoints
+    "--fs-xs", "--fs-xxl",                           # type scale endpoints
+    "--text-on-accent", "--bg-hover",
+]
+
+
+@pytest.mark.parametrize("token", SITE_CSS_REQUIRED_TOKENS)
+def test_site_css_token_defined(css_text, token):
+    pattern = re.compile(rf"{re.escape(token)}\s*:", re.MULTILINE)
+    assert pattern.search(css_text), (
+        f"shared design token {token} is not defined in assets/site.css. "
+        "Module shells (/projections/, homepage strip, editorial pages) "
+        "reference it; without it they fall back to UA defaults."
+    )
+
+
+def test_site_css_dark_overrides_theme_tokens(css_text):
+    blocks = re.findall(r'\[data-theme="dark"\]\s*\{([^}]*)\}', css_text, re.DOTALL)
+    assert blocks, 'missing a bare [data-theme="dark"] token block in site.css'
+    joined = "\n".join(blocks)
+    for t in ("--text-on-accent", "--bg-hover"):
+        assert t in joined, (
+            f'site.css [data-theme="dark"] must override {t} (theme-aware token).'
+        )
+
+
+def test_no_undefined_border_color_token():
+    # The token is --border; --border-color was never defined anywhere and left
+    # the /projections/ compare button AND the PROSPX Trade Machine cards
+    # borderless. Guard the shared CSS, prospx, and the module JS against its
+    # return.
+    root = Path(__file__).parent
+    scanned = [root / "assets" / "site.css", root / "prospx" / "index.html",
+               *(root / "assets").glob("*.js")]
+    offenders = [str(p.relative_to(root)) for p in scanned
+                 if p.is_file() and "var(--border-color)" in p.read_text(encoding="utf-8")]
+    assert not offenders, (
+        f"use var(--border), not the undefined var(--border-color), in: {offenders}"
     )

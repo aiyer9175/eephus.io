@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Monthly run entry point.
 
@@ -89,6 +94,31 @@ def _log_step_summary(log: logging.Logger, total_runtime: float) -> None:
     log.info("%-44s %10s %7.1f%%", "TOTAL", _fmt_duration(total), 100.0)
     log.info("=" * 64)
 
+
+def _patch_export_run_summary(out_path: Path, log: logging.Logger) -> None:
+    """Refresh boot JSON's run summary after finish_run() has completed.
+
+    Also stamps the two-track `data_freshness` block (grades = last monthly
+    run, transactions/IL = last run of any kind) so the front-end can render
+    data-aware 'as of' labels that distinguish daily-fresh fast-moving data
+    from monthly grade data.
+    """
+    try:
+        payload = json.loads(out_path.read_text(encoding="utf-8"))
+        payload["run"] = latest_run_summary()
+        try:
+            from storage import data_freshness as _data_freshness
+            payload["data_freshness"] = _data_freshness()
+        except Exception:
+            log.exception("could not compute data_freshness for %s", out_path)
+        try:
+            import orjson as _orjson
+            out_path.write_bytes(_orjson.dumps(payload, option=_orjson.OPT_NON_STR_KEYS))
+        except ImportError:
+            out_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
+    except Exception:
+        log.exception("could not patch latest run summary into %s", out_path)
+
 from scrapers import scrape_all, probe
 from storage import (
     init_db, insert_snapshots, start_run, finish_run,
@@ -107,7 +137,9 @@ from storage import (
     upsert_player_transactions, load_player_transactions,
     load_player_transactions_meta,
     upsert_roster_status, load_roster_status,
-    export_timeseries_json,
+    upsert_source_events,
+    export_timeseries_json, latest_run_summary,
+    snapshot_board_metrics, snapshot_farm_ranks, record_il_observation,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -130,6 +162,9 @@ from trades import detect_trades
 from stat_flags import is_pitcher as _is_pitcher
 
 
+DAILY_STATCAST_TRACKED_LEVELS = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
+
+
 # v24 — Freshness gates dropped to 0 so every run refetches stats,
 # debuts, zone metrics, and statcast metrics. The 24h HTTP cache in
 # stats.py still absorbs duplicate-payload cost on same-day re-runs;
@@ -138,6 +173,11 @@ from stat_flags import is_pitcher as _is_pitcher
 CAREER_STATS_FRESH_DAYS = 0
 ZONE_METRICS_FRESH_DAYS = 0
 STATCAST_METRICS_FRESH_DAYS = 0
+
+# How many CollegeSavant teams the NCAA box-score pass renders per run (densest
+# tracked teams first). Bounded because each team is a headless-Chrome render;
+# raise once the first run is validated. 0 disables the pass.
+COLLEGESAVANT_MAX_TEAMS = 40
 
 
 def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
@@ -154,6 +194,143 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
     return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
 
 
+def _iso_date_prefix(value: object) -> str | None:
+    text = str(value or "").strip()
+    if len(text) < 10:
+        return None
+    prefix = text[:10]
+    if prefix[4:5] == "-" and prefix[7:8] == "-":
+        try:
+            date.fromisoformat(prefix)
+            return prefix
+        except ValueError:
+            return None
+    return None
+
+
+def _statcast_log_date(split: dict) -> str | None:
+    game = split.get("game") or {}
+    return (
+        _iso_date_prefix(split.get("date"))
+        or _iso_date_prefix(game.get("officialDate"))
+        or _iso_date_prefix((game.get("gameDate") if isinstance(game, dict) else None))
+    )
+
+
+def _latest_statcast_log_date(logs: list[dict] | None, level_hint: str | None = None) -> str | None:
+    dates: list[str] = []
+    for split in logs or []:
+        level = split.get("_level") or level_hint
+        if level not in DAILY_STATCAST_TRACKED_LEVELS:
+            continue
+        d = _statcast_log_date(split)
+        if d:
+            dates.append(d)
+    return max(dates) if dates else None
+
+
+def _latest_statcast_metric_game_date(metric: dict | None) -> str | None:
+    dates: list[str] = []
+
+    def add_rows(rows: object) -> None:
+        if not isinstance(rows, list):
+            return
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            d = _iso_date_prefix(row.get("date"))
+            if d:
+                dates.append(d)
+
+    def add_payload(payload: object) -> None:
+        if not isinstance(payload, dict):
+            return
+        add_rows(((payload.get("pitch_movement") or {}).get("outings") or []))
+        add_rows(((payload.get("pitch_plot") or {}).get("points") or []))
+        add_rows(((payload.get("contact_quality") or {}).get("hit_locations") or []))
+        add_rows(payload.get("standout_games") or [])
+        add_rows(payload.get("recent_games") or [])
+
+    add_payload(metric)
+    if isinstance(metric, dict):
+        for split in metric.get("level_splits") or []:
+            add_payload(split)
+    return max(dates) if dates else None
+
+
+def _statcast_logs_newer_than_metric(
+    logs: list[dict] | None,
+    metric: dict | None,
+    level_hint: str | None = None,
+) -> bool:
+    latest_log_date = _latest_statcast_log_date(logs, level_hint=level_hint)
+    if not latest_log_date:
+        return False
+    latest_metric_date = _latest_statcast_metric_game_date(metric)
+    return latest_metric_date is None or latest_log_date > latest_metric_date
+
+
+def _career_rows_need_org_stint_backfill(rows: list[dict] | None) -> bool:
+    """True for legacy career-cache rows that predate org/stint preservation.
+
+    The old bulk path stored combined level rows with neither `org` nor
+    `stints`. That loses cases like Cole Ragans 2023, where both MLB and AAA
+    had TEX/KCR stints. A per-player yearByYear refresh repairs those rows by
+    carrying single-stint orgs and multi-org `stints` payloads.
+    """
+    for row in rows or []:
+        if not isinstance(row, dict):
+            continue
+        if row.get("org") is None and not row.get("stints"):
+            return True
+    return False
+
+
+def ingest_source_article_drops(out_dir: Path, log: logging.Logger) -> tuple[int, int]:
+    """Ingest local source article text drops into snapshots + source_events."""
+    try:
+        from source_articles import parse_source_article_drops
+        snapshots, events = parse_source_article_drops(out_dir)
+        n_snap = insert_snapshots(snapshots) if snapshots else 0
+        n_events = upsert_source_events(events) if events else 0
+        if snapshots or events:
+            log.info("source articles: ingested %d snapshots + %d events", n_snap, n_events)
+        return n_snap, n_events
+    except Exception:
+        log.exception("source article ingest failed — continuing")
+        return 0, 0
+
+
+def _stage_fangraphs_articles(log) -> None:
+    """Copy COMMITTED FG-article CSVs (tracked, reproducible) into the
+    gitignored FG drop folder so the standard ingest re-applies them on every
+    build. This is how scraped FanGraphs ARTICLE boards (e.g. the Marlins 2026
+    Top 53) reach the deploy box: its prospects.db is persistent but FanGraphs
+    is Cloudflare-blocked for re-scraping and data/fangraphs_imports/ is
+    gitignored, so without a tracked source the article would never propagate.
+    Idempotent — the snapshots UNIQUE(source,interval_label,player_key)
+    constraint dedupes, and the tracked originals stay put (only the drop-folder
+    copies move to processed/ after ingest)."""
+    import shutil
+    try:
+        from fangraphs_csv import DROP_DIR
+    except Exception:
+        return
+    art = Path(__file__).parent / "data" / "fangraphs_articles"
+    if not art.is_dir():
+        return
+    DROP_DIR.mkdir(parents=True, exist_ok=True)
+    staged = 0
+    for csv in sorted(art.glob("*.csv")):
+        try:
+            shutil.copy2(csv, DROP_DIR / csv.name)
+            staged += 1
+        except Exception:
+            log.exception("could not stage FG article CSV %s", csv.name)
+    if staged:
+        log.info("fangraphs_csv: staged %d committed article CSV(s) for ingest", staged)
+
+
 def rebuild_only(out_dir: Path = Path("data")) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
     from the current DB state, write `data/timeseries.json`. No scraping,
@@ -166,11 +343,13 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     )
     log = logging.getLogger("rebuild_only")
     init_db()
+    ingest_source_article_drops(out_dir, log)
 
     # First: drain the FanGraphs drop folder so any waiting CSVs land
     # in the DB before we rebuild. (The FG ingest internally routes
     # <year>draft slugs to draft_csv, so dropping a draft CSV set works
     # without a separate call.)
+    _stage_fangraphs_articles(log)   # committed FG-article boards -> drop folder
     try:
         from fangraphs_csv import ingest_drops as _fg_ingest_drops
         fg_inserted, fg_files = _fg_ingest_drops(called_from_run_monthly=True)
@@ -280,9 +459,482 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         player_ids={},
     )
 
+    # International Amateurs sidecar — IFA signing classes (2021–current)
+    # from the cached Spotrac tracker, enriched against the freshly-written
+    # timeseries.json. Best-effort; a failure here must not abort the run.
+    try:
+        from ifa_export import export_ifa_json
+        n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
+        log.info("ifa pipeline (rebuild): exported %d signings", n_ifa)
+    except Exception:
+        log.exception("ifa export crashed in rebuild_only — continuing")
+
+    # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
+    # against the just-refreshed Single-A statlines and rebuilds the per-player
+    # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
+    # vendored TrackMan data + the DB; the factor bands tighten as more
+    # college->Single-A pairs accrue. Best-effort; a failure must not abort.
+    try:
+        from college_translation import build as _build_college_translation
+        _ct = _build_college_translation(out_dir=out_dir)
+        log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
+                 len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
+    except Exception:
+        log.exception("CollegeSavant translation crashed in rebuild_only — continuing")
+
+    # Organization Tendencies — pure aggregation over the DB + the
+    # just-rebuilt sidecars (timeseries, ifa, debuts). Best-effort.
+    try:
+        from org_tendencies import export as _export_ot
+        _export_ot()
+    except Exception:
+        log.exception("org tendencies export crashed in rebuild_only — continuing")
+
+    # xFV — our outcome-grounded grade. Regenerates the labeled training matrix +
+    # the CURRENT active-board feature matrix from the just-written timeseries.json,
+    # fits the model, scores both cohorts (live board gated on a pro track record),
+    # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
+    # The forward-chained backtest eval (registry artifact) is stable -> not re-run
+    # here. Best-effort; a failure must not abort the run. Provisional grade.
+    try:
+        from xfv_export import regen_all as _regen_xfv
+        _xfv = _regen_xfv()
+        log.info("xFV (rebuild): %d players (%d live board) -> data/xfv.json",
+                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
+    except Exception:
+        log.exception("xFV regen crashed in rebuild_only — continuing")
+
+    # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
+    # Needs the xFV matrices (built above) + debuts.json. Best-effort.
+    try:
+        import milb_translation
+        _mt = milb_translation.build()
+        log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
+                 len(_mt["fits"]))
+    except Exception:
+        log.exception("milb_translation crashed in rebuild_only - continuing")
+
+    # xFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
+    # quality), forward-validated on recent debut cohorts. Separate artifact, NOT xFV; pulls
+    # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
+    try:
+        import xfv_proxy as _xfv_proxy
+        _xp = _xfv_proxy.run()
+        log.info("xFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
+                 _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
+    except Exception:
+        log.exception("xFV proxy crashed in rebuild_only — continuing")
+
+    # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
+    try:
+        from grpo_prospect import export_grpo_scores
+        _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
+            if (out_dir / "graduates.json").exists() else []
+        _ts_for_grpo    = json.loads(out_path.read_text()).get("players") or []
+        _grpo_result    = export_grpo_scores(
+            _ts_for_grpo, _grads_for_grpo,
+            out_path=out_dir / "grpo_scores.json",
+            model_path=out_dir / "grpo_model.pkl",
+            level_norms=json.loads(out_path.read_text()).get("level_norms"),
+            retrain=True,
+        )
+        log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
+    except Exception:
+        log.exception("grpo scoring failed in rebuild_only — continuing")
+
+    # Bayesian trade values — runs after GRPO scores so priors are GRPO-informed.
+    # Includes active prospects (timeseries.json), debuted players (debuts.json),
+    # and full graduates (graduates.json) so the Trade Board is comprehensive.
+    try:
+        from bayes_trade_value import export_trade_values_json, _reset_cache
+        _reset_cache()   # clear GRPO cache so new scores are loaded
+        ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+        tv_players = list(ts_payload.get("players") or [])
+        lnorms     = ts_payload.get("level_norms")
+        for _sidecar in ("debuts.json", "graduates.json"):
+            _sp = out_dir / _sidecar
+            if _sp.exists():
+                tv_players += json.loads(_sp.read_text(encoding="utf-8"))
+        n_tv = export_trade_values_json(tv_players, out_dir / "trade_values.json",
+                                        level_norms=lnorms)
+        log.info("trade values (rebuild): exported %d players", n_tv)
+    except Exception:
+        log.exception("trade value export crashed in rebuild_only — continuing")
+
     # Post-export sanity: surface what landed in the JSON so the user
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
+
+
+def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
+              no_cache: bool = False) -> None:
+    """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
+
+    Pulls and updates ONLY data that changes between monthly grade releases:
+      • player transactions (drives promotions/demotions + the move timeline)
+      • Injured-List stints (+ append-only il_history timeline)
+      • roster status (debut / 40-man / options / service phase)
+      • debuts & graduations
+      • trades
+
+    It then rebuilds data/timeseries.json from the refreshed DB via the same
+    no-scrape `rebuild_only()` path. It deliberately does NOT touch grades,
+    tool evaluations, Arkmetrics, farm grades, or the full ranking — those
+    stay on the monthly cadence in `main()`. The two jobs write disjoint
+    tables (run_daily: transactions/il_status/il_history/roster_status/trades;
+    run_monthly: snapshots/sabermetrics/statcast/metric_snapshots/…), so they
+    never double-write the same row. Every step is idempotent; a failure in
+    one fetch logs and continues so a single flaky endpoint can't strand the
+    rebuild.
+    """
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s %(levelname)s %(name)s: %(message)s",
+        stream=sys.stdout,
+    )
+    log = logging.getLogger("run_daily")
+    import stats as stats_mod
+    stats_mod.FORCE_REFETCH = no_cache
+
+    init_db()
+    run_id = start_run()
+    log.info("started DAILY run %s", run_id)
+    season = date.today().year
+    _STEP_TIMES.clear()
+    _run_start = time.monotonic()
+    n_il = n_debuts = n_trades = 0
+
+    try:
+        # --- d0. TJStats Live board (daily point-in-time capture) ---------
+        # TJStats updates continuously, so a daily Live pull gives finer Time
+        # Machine resolution AND keeps TJStats's present-day consensus contribution
+        # fresh between monthly runs. Live only (named historical snapshots are a
+        # monthly concern). Date-stamped label -> a same-day re-run updates in
+        # place; a new day creates a new point-in-time row. Never aborts the run.
+        with _step("d0. TJStats Live capture", log):
+            try:
+                import tjstats
+                _tj = tjstats.run_tjstats_pipeline(live=True, history=False)
+                if _tj.get("live"):
+                    log.info("tjstats: daily Live %d players @ %s",
+                             _tj["live"]["n_players"], _tj["live"]["captured_at"])
+                    tjstats.export_movers()   # wire sidecar + source events
+                elif _tj.get("health"):
+                    log.error("tjstats: health check failed, skipped: %s", _tj["health"])
+            except Exception:
+                log.exception("tjstats daily capture crashed — continuing")
+
+        # --- d0b. MLB Pipeline Live board (daily point-in-time capture) ---
+        # Same rationale as d0: Pipeline re-ranks in-season (graduations,
+        # FV moves), but the monthly scrape overwrites one fixed preseason
+        # interval. The live capture writes a date-stamped interval behind
+        # a parse-health gate (validate_pipeline_live_board) so an MLB.com
+        # redesign can't zero or pollute ingestion. Never aborts the run.
+        with _step("d0b. MLB Pipeline Live capture", log):
+            try:
+                from scrapers import run_mlb_pipeline_live
+                _pl = run_mlb_pipeline_live()
+                if _pl.get("live"):
+                    log.info("mlb_pipeline: daily Live %d players @ %s",
+                             _pl["live"]["n_players"], _pl["live"]["captured_at"])
+                elif _pl.get("health"):
+                    log.error("mlb_pipeline: health gate refused, skipped: %s",
+                              _pl["health"])
+                else:
+                    log.error("mlb_pipeline: live capture failed: %s",
+                              _pl.get("error"))
+            except Exception:
+                log.exception("mlb_pipeline daily capture crashed — continuing")
+
+        # --- 1. Player set from existing snapshots (no scrape). -----------
+        # --- d0. MLBAM-anchored prospect discovery —————————————————————————
+        # Pulls qualified current-season performers at each MiLB level from
+        # the MLB Stats API and creates provisional player records for anyone
+        # not yet in the DB.  This is the fix for missing prospects like
+        # Franklin Primera: players with no scouting source coverage but who
+        # have an MLBAM ID and are producing in affiliated ball enter the DB
+        # here rather than waiting for a publication cycle.
+        with _step("d0. MLBAM prospect discovery (unranked actives)", log):
+            try:
+                from mlbam_ingest import ingest_unranked_active_prospects
+                _mlbam_summary = ingest_unranked_active_prospects(season=season)
+                _mlbam_total = sum(_mlbam_summary.values())
+                if _mlbam_total:
+                    log.info("mlbam_ingest: added %d new unranked prospects %s",
+                             _mlbam_total, _mlbam_summary)
+            except Exception:
+                log.exception("mlbam_ingest: discovery step failed — continuing")
+
+        with _step("d1. Build player set from DB", log):
+            all_snaps = load_all_snapshots()
+            timeseries = build_timeseries(all_snaps)
+            log.info("daily: %d tracked players", len(timeseries))
+
+        # --- 2. Resolve MLBAM IDs + PlayerIndex (disk-cached, fast). ------
+        with _step("d2. Resolve IDs (warm PlayerIndex)", log):
+            prospects = [(p.player_key, p.player_name, p.position) for p in timeseries]
+            ids_by_key, _bds, player_index = bulk_resolve_ids(
+                prospects, season=season, force_rebuild_index=no_cache,
+            )
+
+        # --- 3. Team affiliations (cached) — needed for level_changes. ----
+        with _step("d3. Team affiliations", log):
+            try:
+                team_affil = fetch_team_affiliations(season)
+            except Exception:
+                log.exception("daily: team affiliations fetch failed — promotions "
+                              "may be stale this run")
+                team_affil = {}
+
+        # --- 4. Transactions (promotions/demotions + move timeline). ------
+        with _step("d4. Player transactions", log):
+            try:
+                tx_tasks = [(p.player_key, ids_by_key.get(p.player_key))
+                            for p in timeseries
+                            if ids_by_key.get(p.player_key) is not None]
+                if tx_tasks:
+                    max_w = (max(1, min(workers, len(tx_tasks))) if workers is not None
+                             else min(24, max(1, len(tx_tasks))))
+                    new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
+                    if new_tx:
+                        upsert_player_transactions(new_tx)
+                    log.info("daily: refreshed transactions for %d players", len(new_tx))
+            except Exception:
+                log.exception("daily: transactions refresh failed — continuing")
+
+        # --- 5. IL status (+ append-only il_history timeline). ------------
+        with _step("d5. IL status", log):
+            try:
+                il_mids = {p.player_key: ids_by_key.get(p.player_key)
+                           for p in timeseries
+                           if ids_by_key.get(p.player_key) is not None
+                           and p.status != "debuted"}
+                il_by_mid = bulk_fetch_il_status(il_mids.values())
+                il_updates = {k: il_by_mid.get(m) for k, m in il_mids.items()}
+                upsert_il_status(il_updates)
+                n_il = sum(1 for v in il_updates.values() if v)
+                hist = record_il_observation(load_il_status())
+                log.info("daily: %d on IL (il_history +%d placed / %d activated)",
+                         n_il, hist["placed"], hist["activated"])
+            except Exception:
+                log.exception("daily: IL refresh failed — continuing")
+
+        # --- 5c. Current-season stat lines (fast stats refresh) -----------
+        # The board's current-season numbers used to wait for the monthly
+        # run; the daily job now refreshes every ACTIVE prospect's
+        # current-season stat line (24h HTTP TTL means each daily run pulls
+        # fresh data; graduates stay frozen - their MiLB line is final).
+        # Grades/tools/Arkmetrics still move ONLY monthly, so the graded
+        # board's cadence stamp stays honest; this keeps OPS/ERA columns
+        # and level pills no more than a day old.
+        with _step("d5c. Current-season stat lines", log):
+            try:
+                from stats import fetch_statlines_for
+                from storage import upsert_statlines
+                active = [(p.player_key, p.player_name, _is_pitcher(p.position))
+                          for p in timeseries
+                          if p.status != "debuted"
+                          and ids_by_key.get(p.player_key) is not None]
+                if active:
+                    sl = fetch_statlines_for(active, season,
+                                             max_workers=workers or 24,
+                                             id_cache=ids_by_key)
+                    n_sl = upsert_statlines(sl, season) if sl else 0
+                    log.info("daily: refreshed %d current-season stat lines", n_sl)
+            except Exception:
+                log.exception("daily: stat-line refresh failed — continuing")
+
+        # --- 5d. Incremental Statcast-style metrics ----------------------
+        # Game plots/tables need same-day starts, but re-running the full
+        # Statcast season scrape in daily would be wasteful. We first fetch
+        # cheap game logs with a short TTL, compare the newest tracked game
+        # date against the newest date already embedded in the cached metric
+        # payload, then rebuild full-season metrics only for players with
+        # newer games. The rebuild replaces that player's row, preserving the
+        # existing summary math without trying to merge partial pitch samples.
+        with _step("d5d. Incremental Statcast metrics", log):
+            try:
+                from statcast_metrics import _game_logs, fetch_statcast_metrics_for_players
+
+                statlines = load_statlines()
+                statcast_metric_cache = load_statcast_metrics()
+                statcast_metric_meta = load_statcast_metrics_meta()
+                eligible = []
+                for p in timeseries:
+                    mlbam = ids_by_key.get(p.player_key)
+                    if mlbam is None:
+                        continue
+                    sl = statlines.get(p.player_key) or {}
+                    level = sl.get("level")
+                    if level is not None and level not in DAILY_STATCAST_TRACKED_LEVELS:
+                        continue
+                    if p.player_key not in statcast_metric_meta and level != "MLB":
+                        continue
+                    is_pitcher = bool(sl.get("is_pitcher")) or _is_pitcher(p.position)
+                    eligible.append((p, mlbam, level, is_pitcher))
+
+                if not eligible:
+                    log.info("daily: no Statcast-eligible players")
+                else:
+                    max_w = max(1, min(workers or 16, len(eligible)))
+                    log_ttl = 0 if no_cache else 1800
+                    logs_by_key: dict[str, list[dict]] = {}
+
+                    def _fetch_daily_statcast_logs(item):
+                        p, mlbam, _level, is_pitcher = item
+                        try:
+                            return p.player_key, _game_logs(
+                                int(mlbam),
+                                season,
+                                is_pitcher=is_pitcher,
+                                ttl_seconds=log_ttl,
+                            )
+                        except Exception as e:
+                            log.debug("daily: Statcast game logs failed for %s: %s",
+                                      p.player_key, e)
+                            return p.player_key, []
+
+                    scan_start = time.monotonic()
+                    scan_done = 0
+                    log.info(
+                        "daily: scanning Statcast game logs for %d players (%d workers)",
+                        len(eligible),
+                        max_w,
+                    )
+                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
+                        for key, logs in ex.map(_fetch_daily_statcast_logs, eligible):
+                            logs_by_key[key] = logs
+                            scan_done += 1
+                            if scan_done % 250 == 0 or scan_done == len(eligible):
+                                log.info(
+                                    "daily: Statcast game-log scan %d/%d done (%.0fs)",
+                                    scan_done,
+                                    len(eligible),
+                                    time.monotonic() - scan_start,
+                                )
+
+                    refresh_players = []
+                    refresh_logs: dict[str, list[dict]] = {}
+                    for p, mlbam, level, is_pitcher in eligible:
+                        logs = logs_by_key.get(p.player_key) or []
+                        if not _statcast_logs_newer_than_metric(
+                            logs,
+                            statcast_metric_cache.get(p.player_key),
+                            level_hint=level,
+                        ):
+                            continue
+                        refresh_players.append((
+                            p.player_key,
+                            p.player_name,
+                            mlbam,
+                            level,
+                            is_pitcher,
+                        ))
+                        refresh_logs[p.player_key] = logs
+
+                    log.info(
+                        "daily: Statcast scan found %d/%d players with newer tracked games",
+                        len(refresh_players),
+                        len(eligible),
+                    )
+                    if refresh_players:
+                        new_statcast_metrics = fetch_statcast_metrics_for_players(
+                            refresh_players,
+                            season,
+                            workers=max_w,
+                            logs_by_key=refresh_logs,
+                        )
+                        n_sc = upsert_statcast_metrics(new_statcast_metrics, season) if new_statcast_metrics else 0
+                        log.info("daily: refreshed %d Statcast metric rows", n_sc)
+            except Exception:
+                log.exception("daily: incremental Statcast metrics failed — continuing")
+
+        # --- 6. Roster status (fresh tx + cached career stats). -----------
+        with _step("d6. Roster status", log):
+            try:
+                career_cache = load_career_stats()
+                tx_cache = load_player_transactions()
+                roster_status_by_key: dict[str, dict] = {}
+                for p in timeseries:
+                    tx_rows = tx_cache.get(p.player_key, [])
+                    cs_rows = career_cache.get(p.player_key, [])
+                    mid = ids_by_key.get(p.player_key)
+                    api_debut = player_index.get_debut_date(mid) if mid else None
+                    roster_status_by_key[p.player_key] = derive_roster_status(
+                        tx_rows, cs_rows, api_debut_date=api_debut)
+                if roster_status_by_key:
+                    upsert_roster_status(roster_status_by_key)
+                log.info("daily: roster_status for %d players", len(roster_status_by_key))
+            except Exception:
+                log.exception("daily: roster_status derivation failed — continuing")
+
+        # --- 7. Debut / graduation detection. -----------------------------
+        with _step("d7. Auto-debut detection", log):
+            try:
+                active_for_debut = [
+                    (p.player_key, p.player_name, _is_pitcher(p.position))
+                    for p in timeseries if p.status != "debuted"
+                ]
+                debuts_found = detect_debuts_from_index(
+                    load_career_stats(), active_for_debut,
+                    player_index=player_index, id_cache=ids_by_key,
+                    statlines=load_statlines() or None,
+                )
+                for pkey, debut_date in (debuts_found or {}).items():
+                    auto_debut_player(pkey, debut_date=debut_date)
+                n_debuts = len(debuts_found or {})
+                if n_debuts:
+                    log.info("daily: auto-debuted %d players", n_debuts)
+                    all_snaps = load_all_snapshots()  # refresh statuses for trades
+            except Exception:
+                log.exception("daily: debut detection failed — continuing")
+
+        # --- 8. Trade detection. ------------------------------------------
+        with _step("d8. Trade detection", log):
+            try:
+                tracked = {p.player_key: (p.player_name, ids_by_key.get(p.player_key))
+                           for p in timeseries}
+                new_trades = detect_trades(all_snaps, tracked_players=tracked,
+                                           skip_api=False)
+                n_trades = insert_trades(new_trades)
+                log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
+            except Exception:
+                log.exception("daily: trade detection failed — continuing")
+
+        # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
+        with _step("d9. Rebuild timeseries (no scrape)", log):
+            rebuild_only(out_dir)
+
+        # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
+        # In-winter the class moves daily (signings, option decisions, QO
+        # acceptances), so the daily job re-scrapes the current class and
+        # re-exports the fa_* sidecars. Outside the window the FA refresh
+        # rides the monthly run only — June payrolls don't move daily.
+        if date.today().month in (11, 12, 1, 2, 3):
+            with _step("d10. FA signing-window refresh", log):
+                try:
+                    import fa_pipeline
+                    from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+                    from fa_export import export_all as _export_fa
+                    fa_pipeline.refresh_current_class(_FA_CLASS_YEAR,
+                                                      force=no_cache)
+                    _export_fa()
+                except Exception:
+                    log.exception("daily: FA refresh failed — continuing")
+
+        finish_run(run_id, new_snapshots=0, stat_lines=0,
+                   notes=f"DAILY: {n_il} on IL, {n_debuts} debuts, {n_trades} new trades")
+        # Patch the just-written run summary into timeseries.json so the
+        # site's "as of" reflects this daily refresh.
+        _patch_export_run_summary(out_dir / "timeseries.json", log)
+        total = time.monotonic() - _run_start
+        log.info("DAILY run %s complete in %.1fs", run_id, total)
+        for label, secs in _STEP_TIMES:
+            log.info("  %-34s %6.1fs", label, secs)
+    except Exception:
+        log.exception("DAILY run %s failed", run_id)
+        finish_run(run_id, new_snapshots=0, stat_lines=0, notes="DAILY: failed")
+        raise
 
 
 def _load_draft_pools_for_rebuild() -> dict:
@@ -309,6 +961,38 @@ def _load_draft_pools_for_rebuild() -> dict:
         return {}
 
 
+def _affil_by_year_for_transactions(tx_cache: dict, log) -> dict[int, dict]:
+    """Point-in-time team-affiliation maps keyed by event YEAR, covering every
+    year that appears in the cached transactions.
+
+    fetch_team_affiliations is season-aware (the MLB Stats API returns the
+    era-correct team name + league per season), so resolving each move against
+    the map for ITS OWN year fixes the 2021-reorg nomenclature: a 2019 complex
+    move reads 'AZL Rangers' / Rookie, not the post-reorg 'ACL Rangers' / CPX.
+    Each season's map is cached on disk for 7 days, so warm reruns do no network.
+    No fallback to current naming — a year that fails to fetch stays empty, so
+    moves that year surface unlabeled rather than mislabeled."""
+    from stats import fetch_team_affiliations
+    years: set[int] = set()
+    for rows in tx_cache.values():
+        for tx in (rows or []):
+            d = tx.get("date") or ""
+            if len(d) >= 4 and d[:4].isdigit():
+                years.add(int(d[:4]))
+    affil_by_year: dict[int, dict] = {}
+    for yr in sorted(years):
+        try:
+            affil_by_year[yr] = fetch_team_affiliations(yr)
+        except Exception as e:
+            log.warning("team_affil fetch failed for %d (%s) — moves that year "
+                        "stay unlabeled (no fallback to current naming)", yr, e)
+            affil_by_year[yr] = {}
+    log.info("point-in-time team affiliations: %d seasons (%s..%s)",
+             len(affil_by_year), min(years) if years else "-",
+             max(years) if years else "-")
+    return affil_by_year
+
+
 def _derive_all_level_changes() -> dict:
     """Helper: rebuild level_changes_by_key from the cached transactions
     table. Mirrors the per-player loop in main(). Used by rebuild_only().
@@ -329,18 +1013,11 @@ def _derive_all_level_changes() -> dict:
     tx_cache = load_player_transactions()
     if not tx_cache:
         return {}
-    from datetime import date as _date
-    season = _date.today().year
-    try:
-        team_affil = fetch_team_affiliations(season)
-    except Exception as e:
-        _log.warning("team_affil fetch failed (%s) — promotions will be "
-                     "unlabeled by level", e)
-        team_affil = {}
+    affil_by_year = _affil_by_year_for_transactions(tx_cache, _log)
     out: dict = {}
     for key, tx_rows in tx_cache.items():
         try:
-            evs = derive_level_changes(tx_rows, team_affil)
+            evs = derive_level_changes(tx_rows, affil_by_year)
             if evs:
                 out[key] = evs
         except Exception as e:
@@ -474,6 +1151,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
     run_id = start_run()
     log.info("started run %s", run_id)
 
+    # Keep the permanent game-feed cache bounded: completed games are cached
+    # ~forever (immutable), so prune by mtime instead of TTL. Best-effort.
+    try:
+        import feed_cache
+        feed_cache.prune_old_feeds()
+    except Exception as e:  # noqa: BLE001 — never let cache maintenance abort a run
+        log.warning("feed cache prune skipped: %s", e)
+
     new_count = 0
     stat_count = 0
     # v19 — Reset step timer for this run (don't accumulate across calls).
@@ -532,7 +1217,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         n_d = insert_draft_snapshots(draft_snaps)
                         log.info("inserted %d draft snapshot rows", n_d)
                     this_year = date.today().year
-                    for y in range(2021, this_year + 1):
+                    # 2017+ so the historical classes stay authoritative: the FG
+                    # 2017 board is pre-draft (no picks) and the 2018/2020 FG CSVs
+                    # encode Pick as <TEAM>/<overall>, so the tracker is the org
+                    # source of record for those years. Idempotent upsert.
+                    for y in range(2017, this_year + 1):
                         rows = scrape_mlb_draft_tracker(y, force=force_refetch)
                         if rows:
                             upsert_draft_results(rows)
@@ -555,6 +1244,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                         refresh_draft_stats(force=force_refetch, workers=8)
                     except Exception:
                         log.exception("draft_stats fetch crashed — continuing with draft export")
+                    # v33 — Second-source gap-fill for prospects FanGraphs can't
+                    # cover (the ~88% with no FG id). MLB-API identity backfill
+                    # then NCAA D-I box scores (headless render of stats.ncaa.org).
+                    # Best-effort: a source failing must not abort the export.
+                    try:
+                        from college_stats import refresh_college_fallback_stats
+                        counts = refresh_college_fallback_stats(force=force_refetch)
+                        log.info("college fallback stats: %s", counts)
+                    except Exception:
+                        log.exception("college fallback stats crashed — continuing with draft export")
+                    # v34 — extend the NCAA capture to CollegeSavant's broader
+                    # tracked universe (players who are NOT draft prospects), so
+                    # those tracked players carry a real college box score too.
+                    # Bounded by COLLEGESAVANT_MAX_TEAMS; best-effort.
+                    if COLLEGESAVANT_MAX_TEAMS:
+                        try:
+                            from college_stats import refresh_collegesavant_stats
+                            cs_n = refresh_collegesavant_stats(
+                                this_year, force=force_refetch,
+                                max_teams=COLLEGESAVANT_MAX_TEAMS)
+                            log.info("collegesavant box scores: %d rows", cs_n)
+                        except Exception:
+                            log.exception("collegesavant stats crashed — continuing")
                     n_draft = export_draft_json(out_dir / "draft_timeseries.json")
                     log.info("draft pipeline: exported %d prospects across all classes",
                              n_draft)
@@ -581,6 +1293,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("scraped %d total snapshot rows", len(snapshots))
                 _new = insert_snapshots(snapshots)
                 log.info("inserted %d new snapshot rows", _new)
+                ingest_source_article_drops(out_dir, log)
                 for key, bd in csv_birth_dates.items():
                     upsert_birth_date(key, bd)
                 if csv_birth_dates:
@@ -598,6 +1311,28 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 new_count, _ = _f_milb.result()
                 for _f in (_f_draft, _f_overseas):
                     _f.result()  # propagate any unexpected exception
+
+        # --- 1c. TJStats Top-100 (Thomas Nestico) ----------------------
+        # The Live board is scraped at the real moment and feeds TJStats's
+        # contribution to PRESENT-DAY consensus (it lands in the shared snapshots
+        # table with today's date -> newest tjstats snapshot -> drives current).
+        # Named historical snapshots land in the point-in-time sidecar
+        # (tjstats_snapshots) only, never the shared table, so they can't move
+        # current consensus/farm rankings. Runs SEQUENTIALLY (not in the parallel
+        # block) to avoid DB-lock contention, and BEFORE the consensus build below.
+        with _step("1c. TJStats Top-100 (Live + history)", log):
+            try:
+                import tjstats
+                _tj = tjstats.run_tjstats_pipeline(live=True, history=True)
+                if _tj.get("health"):
+                    log.error("tjstats: health check failed, skipped ingest: %s", _tj["health"])
+                elif _tj.get("live"):
+                    log.info("tjstats: Live %d players @ %s + %d historical snapshot(s)",
+                             _tj["live"]["n_players"], _tj["live"]["captured_at"],
+                             len(_tj["history"]))
+                    tjstats.export_movers()   # wire sidecar + source events
+            except Exception:
+                log.exception("tjstats pipeline crashed — continuing")
 
         # --- 2. Build consensus ----------------------------------------
         with _step("2. Build consensus timeseries", log):
@@ -633,21 +1368,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             if bds_from_index:
                 log.info("upserted %d birth dates from PlayerIndex", len(bds_from_index))
 
-        # --- 2b. Bulk fetch draft data for the rolling window of years a
-        # current prospect could plausibly have been drafted in. One call
-        # per year (~10 total) returns thousands of picks each; matching to
-        # tracked prospects happens in-memory via mlbam_id. Players with no
-        # draft match are labeled 'international_fa' since the user's
-        # convention is to treat undrafted prospects as IFA signings.
-        # /draft/{year} payloads are cached on disk for 30 days, so reruns
-        # within a month cost nothing beyond reading the local cache.
-        with _step("2b. Bulk fetch draft data (10-year window)", log):
-            draft_years = list(range(season - 9, season + 1))
+        # --- 2b. Bulk fetch draft data for the full window of years a tracked
+        # prospect could plausibly have been drafted in. One call per year
+        # returns thousands of picks each; matching to tracked prospects happens
+        # in-memory via mlbam_id. A no-draft-match is NOT defaulted to IFA — it is
+        # classified from data below (acquisition_classify). The window spans a
+        # full career length so older prospects/recent grads (e.g. a 2016 R1 pick)
+        # still resolve to Draft instead of falling through. /draft/{year} payloads
+        # are cached on disk for 30 days, so reruns within a month are near-free.
+        with _step("2b. Bulk fetch draft data (career-span window)", log):
+            draft_years = list(range(season - 20, season + 1))
             log.info("fetching draft picks for years %s", draft_years)
             draft_by_id = bulk_fetch_drafts(draft_years)
 
         acquisitions: dict[str, dict] = {}
-        ifa_mids_by_key: dict[str, int] = {}
+        unresolved_by_key: dict[str, int] = {}  # no draft match → classify from data below
         for p in timeseries:
             mid = ids_by_key.get(p.player_key)
             if mid is None:
@@ -666,43 +1401,38 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     "signing_date": None,
                 }
             else:
-                # No draft record across the lookback window — treat as IFA.
-                # We enrich below with the original signing transaction.
-                ifa_mids_by_key[p.player_key] = mid
-                acquisitions[p.player_key] = {
-                    "method":       "international_fa",
-                    "year":         None,
-                    "round_label":  None,
-                    "pick_round":   None,
-                    "pick_overall": None,
-                    "bonus_usd":    None,
-                    "team_name":    None,
-                    "school":       None,
-                    "signing_date": None,
-                }
+                # No draft match — do NOT default to IFA. Collect for the
+                # data-derived classification below (signing window + explicit
+                # ifa_timeseries match); unresolved entries become 'unknown'.
+                unresolved_by_key[p.player_key] = mid
 
-        # --- 2b.ii Enrich IFA records with original signing transaction.
-        # One /transactions call per IFA prospect returns the SFA/SGN event
-        # that records the signing team + date. The MLB Stats API doesn't
-        # publish signing-bonus dollars; we layer in Spotrac (below) to
-        # fill the bonus_usd field where they have a row for the player.
-        with _step("2b.ii. IFA signing enrichment (MLB transactions)", log):
-            if ifa_mids_by_key:
-                log.info("fetching IFA signing info for %d prospects",
-                         len(ifa_mids_by_key))
-                ifa_by_id = bulk_fetch_ifa_signings(ifa_mids_by_key.values())
-                n_enriched = 0
-                for key, mid in ifa_mids_by_key.items():
-                    sig = ifa_by_id.get(mid)
-                    if not sig:
-                        continue
-                    rec = acquisitions[key]
-                    rec["year"]         = sig.get("year")
-                    rec["team_name"]    = sig.get("team_name")
-                    rec["signing_date"] = sig.get("signing_date")
-                    n_enriched += 1
-                log.info("IFA enrichment: %d/%d signings resolved",
-                         n_enriched, len(ifa_mids_by_key))
+        # --- 2b.ii Classify the no-draft-match prospects from DATA — never a
+        # default. One /transactions call per prospect returns the SFA/SGN signing
+        # (team + date, the MLB API doesn't expose bonus dollars). A prospect is
+        # international_fa ONLY on positive evidence — an explicit ifa_timeseries
+        # signing, or a signing in the international window (Jan-Apr) — otherwise
+        # 'unknown' ("Entry type not on file"). Spotrac (2b.iii) fills bonus_usd.
+        with _step("2b.ii. Acquisition classification (no-draft-match)", log):
+            if unresolved_by_key:
+                from acquisition_classify import (classify_acquisition,
+                                                  load_ifa_signing_ids)
+                log.info("classifying %d no-draft-match prospects",
+                         len(unresolved_by_key))
+                signings = bulk_fetch_ifa_signings(unresolved_by_key.values())
+                ifa_mids, ifa_keys = load_ifa_signing_ids(out_dir / "ifa_timeseries.json")
+                n_ifa = n_unknown = 0
+                for key, mid in unresolved_by_key.items():
+                    rec = classify_acquisition(
+                        None, signings.get(mid),
+                        (key in ifa_keys) or (mid in ifa_mids))
+                    acquisitions[key] = rec
+                    if rec["method"] == "international_fa":
+                        n_ifa += 1
+                    else:
+                        n_unknown += 1
+                log.info("acquisition classify: %d international_fa, %d unknown "
+                         "(of %d no-draft-match)", n_ifa, n_unknown,
+                         len(unresolved_by_key))
 
         # --- 2b.iii Spotrac IFA tracker — bonus dollars + per-org cycle
         # spending. Scrapes 2021-current; cached per year on disk so
@@ -779,8 +1509,18 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             for key, mid in il_mids_by_key.items():
                 il_updates[key] = il_by_mid.get(mid)
             upsert_il_status(il_updates)
-            log.info("IL: %d prospects currently on IL",
-                     sum(1 for v in il_updates.values() if v))
+            # Append-only IL stint timeline (records placements once, stamps
+            # activation when a player comes off). Idempotent; runs here too
+            # so the timeline accrues even on monthly-only cadence.
+            try:
+                _ilh = record_il_observation(load_il_status())
+                log.info("IL: %d currently on IL (il_history +%d placed / %d activated)",
+                         sum(1 for v in il_updates.values() if v),
+                         _ilh["placed"], _ilh["activated"])
+            except Exception:
+                log.exception("il_history update failed — continuing")
+                log.info("IL: %d prospects currently on IL",
+                         sum(1 for v in il_updates.values() if v))
 
         # --- 2c. Affiliate roster map. ~6 HTTP calls (one per sport level)
         # returns every MLB + MiLB team with its parent_org_id, which lets
@@ -894,16 +1634,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # (1) Bulk pass — hitting + pitching across MLB + 5 MiLB levels.
             bulk_hitting  = bulk_fetch_season_stats(season, group="hitting")
             bulk_pitching = bulk_fetch_season_stats(season, group="pitching")
-            # Merge: a two-way player would show in both endpoints; pick
-            # the highest-level row (LEVEL_ORDER index ascending).
+            # Merge: a two-way player can show in both endpoints; retain
+            # every current-season row so multi-level / multi-org seasons
+            # keep their per-level career-table detail.
             from stats import LEVEL_ORDER
-            bulk_by_mlbam: dict[int, dict] = dict(bulk_hitting)
-            for pid, row in bulk_pitching.items():
-                existing = bulk_by_mlbam.get(pid)
-                if (existing is None
-                        or LEVEL_ORDER.index(row["level"])
-                        < LEVEL_ORDER.index(existing["level"])):
-                    bulk_by_mlbam[pid] = row
+            bulk_by_mlbam: dict[int, list[dict]] = {
+                pid: (rows if isinstance(rows, list) else [rows])
+                for pid, rows in bulk_hitting.items()
+            }
+            for pid, rows in bulk_pitching.items():
+                incoming = rows if isinstance(rows, list) else [rows]
+                bulk_by_mlbam.setdefault(pid, []).extend(incoming)
+            for rows in bulk_by_mlbam.values():
+                rows.sort(key=lambda r: (-int(r.get("season") or 0),
+                                         LEVEL_ORDER.index(r["level"])))
             log.info("bulk season-stats: %d distinct players across hitting+pitching",
                      len(bulk_by_mlbam))
 
@@ -920,16 +1664,47 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("merged bulk season-stats into career_cache for %d players",
                      len(bulk_updates))
             _STEP_TIMES.append(("3a-i. Bulk season-stats fetch + merge", time.monotonic() - _step_3a_bulk_start))
+        # --- 3a-ii. Game-data positional versatility (fielding) -----------
+        # Per-position career games/starts from the StatsAPI fielding group ->
+        # versa (positions with >=10 G or >=5 GS each). Position players only;
+        # monthly cadence (per-player network fetch). Frontend loads the sidecar
+        # and surfaces the game-data versa, preferring it over the FG-reported one.
+        if not skip_stats:
+            with _step("3a-ii. Positional versatility (fielding)", log):
+                try:
+                    from fielding_positions import build_positions_played
+                    versa_input = [
+                        {"player_key": p.player_key,
+                         "mlbam_id": ids_by_key.get(p.player_key),
+                         "statline": {"is_pitcher": _is_pitcher(p.position)}}
+                        for p in timeseries
+                        if p.status != "debuted" and ids_by_key.get(p.player_key)
+                    ]
+                    build_positions_played(versa_input, log_=log)
+                except Exception:
+                    log.exception("positions_played build failed — continuing")
         _step_3a_per_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
+            level_changes_for_stats = _derive_all_level_changes()
+            current_year_level_change_keys = {
+                key for key, evs in level_changes_for_stats.items()
+                if any(str(ev.get("date") or "").startswith(str(season))
+                       and ev.get("to_level") for ev in (evs or []))
+            }
             non_grad_players = [
                 (p.player_key, p.player_name, _is_pitcher(p.position))
                 for p in timeseries if p.status != "debuted"
             ]
+            graduated_repair_players = [
+                (p.player_key, p.player_name, _is_pitcher(p.position))
+                for p in timeseries
+                if p.status == "debuted"
+                and _career_rows_need_org_stint_backfill(career_cache.get(p.player_key))
+            ]
             cs_tasks: list[tuple[str, int, bool]] = []
             skipped_fresh = 0
             skipped_bulk = 0
-            for key, _name, is_p in non_grad_players:
+            for key, _name, is_p in non_grad_players + graduated_repair_players:
                 mlbam = ids_by_key.get(key)
                 if mlbam is None:
                     continue
@@ -938,23 +1713,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # would just refresh data we already have — skip. Players
                 # in the bulk WITHOUT prior-season rows fall through so
                 # yearByYear can backfill the detail-page career history.
+                has_current_year_level_change = key in current_year_level_change_keys
                 if (key in keys_with_bulk_2026
+                        and not has_current_year_level_change
                         and len(career_cache.get(key, [])) > 1):
                     skipped_bulk += 1
                     continue
                 if not force_refetch and _is_career_fresh(
-                        career_meta.get(key), CAREER_STATS_FRESH_DAYS):
+                        career_meta.get(key), CAREER_STATS_FRESH_DAYS
+                ) and not has_current_year_level_change:
                     skipped_fresh += 1
                     continue
                 cs_tasks.append((key, mlbam, is_p))
             log.info(
-                "fetching career stats for %d players (skipped %d graduated, "
-                "%d covered-by-bulk, %d fresh-cached, %d unresolved)",
+                "fetching career stats for %d players (%d graduated legacy-org "
+                "repairs; skipped %d graduated, %d covered-by-bulk, "
+                "%d fresh-cached, %d unresolved)",
                 len(cs_tasks),
-                len(timeseries) - len(non_grad_players),
+                len(graduated_repair_players),
+                len(timeseries) - len(non_grad_players) - len(graduated_repair_players),
                 skipped_bulk,
                 skipped_fresh,
-                len(non_grad_players) - skipped_bulk - skipped_fresh - len(cs_tasks),
+                len(non_grad_players) + len(graduated_repair_players)
+                - skipped_bulk - skipped_fresh - len(cs_tasks),
             )
             new_career: dict = {}
             if cs_tasks:
@@ -984,6 +1765,46 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.info("fetched career stats for %d players", len(new_career))
             if _step_3a_per_start is not None:
                 _STEP_TIMES.append(("3a-ii. Per-player career stats fetch (parallel)", time.monotonic() - _step_3a_per_start))
+
+            # --- 3a-iii. Self-heal graduates frozen pre-org-feature ----------
+            # Graduates are otherwise frozen (their MiLB career is over), but a
+            # pre-feature freeze left their cached career_stats with NO `org`
+            # key at all — so the detail-page career table couldn't attribute
+            # per-season orgs (e.g. Cole Ragans's 2022 read as his current org
+            # and his 2023 Texas->KC split was lost). Re-fetch only those
+            # stale-shape graduates; once rebuilt with `org` (+ split stints)
+            # they stop matching, so this is a bounded one-time catch-up that
+            # respects the freeze. The active backfill is covered above.
+            grad_heal = [
+                (p.player_key, ids_by_key[p.player_key], _is_pitcher(p.position))
+                for p in timeseries
+                if p.status == "debuted"
+                and ids_by_key.get(p.player_key)
+                and (career_cache.get(p.player_key))
+                and all("org" not in r for r in career_cache[p.player_key])
+            ]
+            if grad_heal:
+                log.info("self-healing per-season org for %d graduates frozen "
+                         "before the org/split-stints feature", len(grad_heal))
+                healed: dict = {}
+                heal_workers = min(24, max(1, len(grad_heal)))
+                with concurrent.futures.ThreadPoolExecutor(max_workers=heal_workers) as ex:
+                    heal_futs = {
+                        ex.submit(fetch_career_stats, k, m, is_pitcher=ip): k
+                        for k, m, ip in grad_heal
+                    }
+                    for fut in concurrent.futures.as_completed(heal_futs):
+                        try:
+                            rows = fut.result()
+                            if rows:
+                                healed[heal_futs[fut]] = rows
+                        except Exception as e:
+                            log.debug("graduate career heal failed for %s: %s",
+                                      heal_futs[fut], e)
+                if healed:
+                    upsert_career_stats(healed)
+                    career_cache.update(healed)
+                log.info("healed per-season org for %d graduates", len(healed))
 
         # --- 3b. Derive current-season stat lines (top-level digest) ------
         # Skips already-graduated prospects since their graduation snapshot
@@ -1199,33 +2020,47 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 log.info("--fast: skipping approximate MiLB zone metrics")
             else:
                 # v19 — Freshness gate. If a meaningful fraction of the
-                # active hitter pool already has a recent zone-metric
+                # active player pool already has a recent zone-metric
                 # row (within ZONE_METRICS_FRESH_DAYS), skip the whole
                 # step. Avoids a ~2-3 minute rebuild on weekly re-runs
                 # when nothing material has changed. --force overrides.
                 #
                 # Eligibility set MUST mirror what the fetcher actually
-                # processes — non-pitchers at AAA/AA/A+/A. The prior
-                # version counted every non-pitcher with an mlbam_id
-                # including CPX/DSL and statline-less prospects, which
-                # diluted the pool and kept the gate below 90% even
-                # when every reachable hitter was fresh.
-                # v20 — MLB added so debuted hitters who have both AAA
-                # + MLB tape get level_splits for both levels. The
-                # eligibility check trusts the statline's `level` field,
-                # which is set to "MLB" for debuted players once their
-                # roster status flips.
-                _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A"}
+                # processes — hitters and pitchers at tracked levels. A
+                # hitter-only gate can skip the whole refresh while pitcher
+                # splits are stale, e.g. an MLB-debut arm with a stored MLB
+                # zone row but newly available AAA tape.
+                _zone_tracked_levels = {"MLB", "AAA", "AA", "A+", "A", "CPX"}
                 _zone_meta = load_zone_metrics_meta()
                 _zone_eligible_keys = [
                     p.player_key for p in timeseries
-                    if not _is_pitcher(p.position)
-                       and ids_by_key.get(p.player_key) is not None
+                    if ids_by_key.get(p.player_key) is not None
                        and (statlines.get(p.player_key) or {}).get("level") in _zone_tracked_levels
                 ]
+                _zone_metric_cache = load_zone_metrics()
+                def _zone_has_statcast_levels(player_key: str) -> bool:
+                    """Rows missing known Statcast split levels are stale."""
+                    zm = _zone_metric_cache.get(player_key) or {}
+                    sc = statcast_metric_cache.get(player_key) or {}
+                    sc_levels = {
+                        row.get("level")
+                        for row in (sc.get("level_splits") or [])
+                        if isinstance(row, dict) and row.get("level") in _zone_tracked_levels
+                    }
+                    if not sc_levels:
+                        return True
+                    zone_levels = {
+                        row.get("level")
+                        for row in (zm.get("level_splits") or [])
+                        if isinstance(row, dict) and row.get("level") in _zone_tracked_levels
+                    }
+                    if not zone_levels and zm.get("level") in _zone_tracked_levels:
+                        zone_levels.add(zm.get("level"))
+                    return sc_levels.issubset(zone_levels)
                 _zone_fresh_count = sum(
                     1 for k in _zone_eligible_keys
                     if _is_career_fresh(_zone_meta.get(k), ZONE_METRICS_FRESH_DAYS)
+                    and _zone_has_statcast_levels(k)
                 )
                 _zone_fresh_pct = (_zone_fresh_count / max(1, len(_zone_eligible_keys))) * 100
                 _zone_should_skip = (
@@ -1234,7 +2069,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     and _zone_fresh_pct >= 90
                 )
                 if _zone_should_skip:
-                    log.info("zone metrics: SKIP (%d/%d eligible hitters fresh within %dd, %.0f%%)",
+                    log.info("zone metrics: SKIP (%d/%d eligible players fresh within %dd, %.0f%%)",
                              _zone_fresh_count, len(_zone_eligible_keys),
                              ZONE_METRICS_FRESH_DAYS, _zone_fresh_pct)
                 else:
@@ -1263,7 +2098,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                 key: asdict(value)
                                 for key, value in new_zone_metrics.items()
                             })
-                        log.info("fetched approximate zone metrics for %d hitters",
+                        log.info("fetched approximate zone metrics for %d players",
                                  len(new_zone_metrics))
                     except Exception:
                         log.exception("approximate zone metrics failed — continuing")
@@ -1401,8 +2236,9 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # work, no I/O), and Python's GIL serializes thread execution
         # anyway. Removing the pool eliminates the per-task submit /
         # collect overhead and the worker startup cost.
+        affil_by_year = _affil_by_year_for_transactions(tx_cache, log)
         for key, tx_rows in tx_cache.items():
-            evs = derive_level_changes(tx_rows, team_affil)
+            evs = derive_level_changes(tx_rows, affil_by_year)
             txs = derive_transactions(tx_rows)
             if evs:
                 level_changes_by_key[key] = evs
@@ -1552,13 +2388,240 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                player_ids=ids_by_key)
         log.info("wrote %s", out_path)
         _post_export_summary(out_path, all_snaps, log)
+        # International Amateurs sidecar — IFA signing classes from the
+        # cached Spotrac tracker, enriched against the just-written
+        # timeseries.json. Best-effort; never aborts the run.
+        try:
+            from ifa_export import export_ifa_json
+            n_ifa = export_ifa_json(out_dir / "ifa_timeseries.json")
+            log.info("ifa pipeline: exported %d signings", n_ifa)
+        except Exception:
+            log.exception("ifa export crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
+
+        # --- 6. Free Agency module (the standalone /fa/ surface) --------
+        # Refresh the constructed class (Spotrac, page-cached) + payroll
+        # ledger, then re-export the fa_* sidecars assets/fa.js consumes.
+        # Best-effort: the FA module is additive by contract and must
+        # never abort the prospect pipeline.
+        with _step("6. FA refresh + export (fa_* sidecars)", log):
+            try:
+                import fa_pipeline
+                from fa_export import CLASS_YEAR as _FA_CLASS_YEAR
+                from fa_export import FUTURE_CLASS_YEARS as _FA_FUTURE
+                from fa_export import export_all as _export_fa
+                fa_pipeline.refresh_current_class(_FA_CLASS_YEAR,
+                                                  force=force_refetch)
+                # Future winters (year selector on the board) - the same
+                # constructed-class pipeline per Spotrac forward page;
+                # best-effort, the current class never waits on them.
+                for _fy in _FA_FUTURE:
+                    try:
+                        fa_pipeline.refresh_current_class(_fy,
+                                                          force=force_refetch)
+                    except Exception:
+                        log.exception("fa future class %d failed — continuing", _fy)
+                fa_pipeline.refresh_payroll(force=force_refetch)
+                _export_fa()
+            except Exception:
+                log.exception("fa pipeline failed — continuing")
+
+        # --- 6b. MLB Projections module (the /projections/ surface) -----
+        # The FA engine over the whole league + post-ETA prospects. Reads
+        # the corpus cache, Spotrac contract pages (cached) and the
+        # just-written timeseries.json. Additive; never aborts the run.
+        with _step("6b. MLB projections export (mlb_projections.json)", log):
+            try:
+                from proj_export import export as _export_proj
+                _export_proj()
+            except Exception:
+                log.exception("mlb projections export failed — continuing")
+
+        # --- 6b2. Swing+ scoring (Will Cahoon's model, vendored) ---------
+        # Per-player MLB bat-tracking pulls (cached; closed seasons
+        # immutable, current season on a short TTL) scored to
+        # data/swing_plus.json. MLB-only by data boundary. Best-effort.
+        with _step("6b2. Swing+ scoring (swing_plus.json)", log):
+            try:
+                from swing_plus_ingest import run as _swing_run
+                _sw = _swing_run()
+                log.info("swing+: %d hitters scored", _sw.get("n_scored", 0))
+            except Exception:
+                log.exception("swing+ scoring failed — continuing")
+
+        # --- 6b2b. AAA Stuff+ re-score (in-house pitch-quality model) ----
+        # Incremental current-season pitch fetch (closed seasons immutable
+        # in cache, current season on a 14-day TTL) + re-score against the
+        # committed model artifact. Never retrains here - the shipping fit
+        # is hand-run with its season-out eval. Best-effort.
+        with _step("6b2b. AAA Stuff+ re-score (stuff_plus_aaa.json)", log):
+            try:
+                from stuff_plus_aaa import refresh as _aaa_stuff_refresh
+                _st = _aaa_stuff_refresh()
+                log.info("aaa stuff+: %d pitchers scored", _st.get("n_scored", 0))
+            except Exception:
+                log.exception("aaa stuff+ re-score failed — continuing")
+
+        # --- 6b3. MLB player detail export (player pages) ----------------
+        # The /projections/#player= + FA-card-linked per-player payloads:
+        # careers (StatsAPI + war_daily), Savant percentiles, arsenals,
+        # Swing+, AAA Stuff+, FA market fields. Reads the exports above.
+        with _step("6b3. MLB player detail export (mlb_player_detail.json)", log):
+            try:
+                from mlb_player_export import export as _export_mlbp
+                _export_mlbp()
+            except Exception:
+                log.exception("mlb player detail export failed — continuing")
+
+        # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
+        # Pure aggregation over the DB + just-written sidecars; additive.
+        with _step("6c. Org tendencies export (org_tendencies.json)", log):
+            try:
+                from org_tendencies import export as _export_ot
+                _export_ot()
+            except Exception:
+                log.exception("org tendencies export failed — continuing")
+
+        # --- 6d. Bayesian trade values (data/trade_values.json) ---
+        with _step("6d. Bayesian trade value export (trade_values.json)", log):
+            try:
+                from bayes_trade_value import export_trade_values_json
+                _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+                _tv_players = list(_ts_payload.get("players") or [])
+                _lnorms     = _ts_payload.get("level_norms")
+                for _sc in ("debuts.json", "graduates.json"):
+                    _sp = out_dir / _sc
+                    if _sp.exists():
+                        _tv_players += json.loads(_sp.read_text(encoding="utf-8"))
+                _n_tv = export_trade_values_json(
+                    _tv_players, out_dir / "trade_values.json", level_norms=_lnorms
+                )
+                log.info("trade values: exported %d players", _n_tv)
+            except Exception:
+                log.exception("trade value export failed — continuing")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
+        _patch_export_run_summary(out_path, log)
+        # Capture the DERIVED board state (consensus rank/FV + Arkmetric
+        # family) for the active board so the time-travel board (Part 2) and
+        # the Arkmetric-vs-outcome backtest (Part 4) accrue monthly history.
+        # Monthly-only: the daily job does NOT snapshot here (grades/rankings
+        # only change on the monthly cadence). Idempotent (upsert-by-date).
+        try:
+            _ts = json.loads(out_path.read_text(encoding="utf-8"))
+            _n_metric = snapshot_board_metrics(_ts.get("players") or [])
+            log.info("metric_snapshots: captured board state for %d players", _n_metric)
+            # Org-grain sibling: record the composite farm_rank so farm-system
+            # rank movement accrues a server-side history (the de-noised
+            # movement engine reads it on the NEXT export). Monthly-only, same
+            # as the board snapshot above; idempotent upsert-by-(org, date).
+            _n_farm = snapshot_farm_ranks(_ts.get("org_summary") or [])
+            log.info("farm_rank_history: captured rank for %d orgs", _n_farm)
+        except Exception:
+            log.exception("metric_snapshots/farm_rank_history capture failed — continuing")
+        # Source-vs-source predictive backtest (data/source_backtest.json for
+        # the Methodology tab). Reads the just-written timeseries + debuts, so
+        # it refreshes as new outcome WAR lands and 2024+ cohorts resolve.
+        try:
+            from source_backtest import run_source_backtest
+            _bt = run_source_backtest(data_dir=out_dir, write=True)
+            log.info("source_backtest: %d resolved base years, common_n=%d",
+                     len(_bt["window"]["years"]), _bt["accuracy"]["common_n"])
+        except Exception:
+            log.exception("source_backtest failed — continuing")
+        # WS-5 — consensus weight A/B + vintage-frozen source weights. The
+        # weights only move when a NEW base year resolves (yearly), so the
+        # monthly rerun is a freshness pass, not a jitter source; they take
+        # effect on the NEXT rebuild (consensus loads them at import).
+        try:
+            from source_backtest import run_consensus_weight_ab
+            _ab = run_consensus_weight_ab(data_dir=out_dir, write=True)
+            log.info("consensus weight A/B: ship=%s weights=%s",
+                     _ab["ship"], _ab["live_weights"])
+        except Exception:
+            log.exception("consensus weight A/B failed — continuing")
+        # Draft analog — FanGraphs vs MLB Pipeline pre-draft FV accuracy on the
+        # resolved classes (2018-2021). Same ship discipline: only writes
+        # data/draft_source_weights.json (consumed by draft_export at import on
+        # the next rebuild) when the weighted blend beats equal. Reads
+        # draft_timeseries.json + debuts.json, both produced above.
+        try:
+            from draft_source_backtest import run_draft_weight_ab
+            _dab = run_draft_weight_ab(data_dir=out_dir, write=True)
+            log.info("draft weight A/B: ship=%s weights=%s resolved=%s",
+                     _dab["ship"], _dab["live_weights"], _dab["resolved_years"])
+        except Exception:
+            log.exception("draft weight A/B failed — continuing")
+        # ETA backtest rerun (Phase 4b WS-8 — cheap, cache-only StatsAPI
+        # reads). Rescores the live v39 bases as new debuts land; the
+        # frozen v38 comparator keeps the before/after honest forever.
+        try:
+            from eta_backtest import run as _eta_bt
+            _er = _eta_bt()
+            log.info("eta_backtest: champion MAE %.3f within-1y %.3f (n=%d)",
+                     _er["champion_heuristic"]["mae"],
+                     _er["champion_heuristic"]["within_1y"],
+                     _er["champion_heuristic"]["n"])
+        except Exception:
+            log.exception("eta_backtest failed — continuing")
+        # Editorial forward-validation (Phase 5 WS-10). Scores matured
+        # 30/60-day flag cohorts vs matched controls; WITHHOLDS the
+        # artifact until the first cohort matures (registry honesty —
+        # an empty eval would let spotlights masquerade as measured).
+        # NB once it first writes data/editorial_eval.json, the standing
+        # rule test goes red until the owner registers the verdict —
+        # that forcing function is the design.
+        try:
+            from editorial_eval import run as _ed_eval
+            _ed = _ed_eval()
+            log.info("editorial_eval: %s matured, %s pending, written=%s",
+                     _ed.get("flags_matured", _ed.get("matured", 0)),
+                     _ed.get("flags_pending", _ed.get("pending", 0)),
+                     _ed.get("written"))
+        except Exception:
+            log.exception("editorial_eval failed — continuing")
+        # Model registry freshness pass (data/model_registry.json) — restamps
+        # artifact ages + re-validates references. Verdicts are hand-committed
+        # with their evals; this only keeps the accountability ledger honest
+        # about staleness. Best-effort.
+        try:
+            from model_registry import refresh_stamps
+            _reg = refresh_stamps()
+            if _reg.get("problems"):
+                log.warning("model registry problems: %s", _reg["problems"])
+        except Exception:
+            log.exception("model registry refresh failed — continuing")
+        # Headshot resolution (data/photo_ctx.json for the photo fallback chain).
+        # Incremental: TTL-skips already-resolved ids and only re-probes new or
+        # still-missing players, so steady-state runs are cheap. Best-effort —
+        # a network hiccup must not fail the pipeline (the front-end falls back
+        # to the legacy 67+generic URL for any unresolved id).
+        try:
+            from headshots import backfill as _backfill_headshots
+            _hs = _backfill_headshots(data_dir=out_dir, workers=16, write_json=True)
+            log.info("headshots: %.1f%% coverage (%d/%d) — %d probed this run, %d still missing",
+                     _hs["pct"], _hs["with_photo"], _hs["total"],
+                     _hs.get("probed_this_run", 0), _hs["missing_count"])
+        except Exception:
+            log.exception("headshot resolution failed — continuing")
         # v19 — Per-step duration table. Sorted by slowest first so the
         # biggest wall-time culprits surface at the top of the log.
         _log_step_summary(log, time.monotonic() - _run_start)
+        # The monthly run also performs the DAILY fast-moving refresh
+        # (transactions, IL, roster status, debuts/graduations, trades) so a
+        # plain `python run_monthly.py` never leaves them stale — the Injured
+        # List section in particular ONLY moves on the daily job, so without
+        # this a monthly-only cadence froze it between nightly runs. Runs after
+        # the monthly grade work so the rebuilt timeseries carries both the
+        # fresh monthly grades and the up-to-the-day transactions/IL. Best-effort
+        # + self-contained (own run_id + timeseries rebuild); a daily-side
+        # failure must not fail the already-completed monthly run.
+        try:
+            log.info("monthly run: chaining the daily fast-moving refresh")
+            run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache)
+        except Exception:
+            log.exception("chained daily refresh failed — monthly run already completed")
     except Exception:
         log.exception("run failed")
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
@@ -1597,9 +2660,19 @@ if __name__ == "__main__":
                          "data/timeseries.json from the current DB state. "
                          "Use after dropping new FG CSVs to push the data "
                          "to the website without rerunning the full pipeline.")
+    ap.add_argument("--daily", action="store_true",
+                    help="DAILY fast-moving refresh only: transactions, IL, "
+                         "roster status, debuts/graduations, and trades, then "
+                         "rebuild data/timeseries.json. Grades, tool evals, "
+                         "Arkmetrics, farm grades and the ranking stay on the "
+                         "monthly cadence (a plain `python run_monthly.py`). "
+                         "Run this nightly.")
     args = ap.parse_args()
     if args.dry_run:
         probe(force=args.force)
+        sys.exit(0)
+    if args.daily:
+        run_daily(out_dir=args.out_dir, workers=args.workers, no_cache=args.no_cache)
         sys.exit(0)
     if args.rebuild_only:
         rebuild_only(out_dir=args.out_dir)

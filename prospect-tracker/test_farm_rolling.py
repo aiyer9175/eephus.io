@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the farm-system grading helpers introduced in the
 report-card overhaul that replaced the 60/30/10 composite + 90-day form.
 The trajectory window was later widened from 90 days to 1 year and the

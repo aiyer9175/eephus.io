@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Approximate MiLB hitter zone metrics from MLB Stats API pitch feeds.
 
 This is an experimental implementation of the workflow described by Thomas
@@ -28,6 +33,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import feed_cache
+
 if TYPE_CHECKING:
     from sklearn.ensemble import RandomForestClassifier
 
@@ -46,8 +53,17 @@ OUT_ZONE = {11, 12, 13, 14}
 # iterates level_splits with per-level chips, so adding MLB here
 # surfaces it automatically on the player detail page once the
 # pipeline re-runs.
-ZONE_LEVELS = ("MLB", "AAA", "AA", "A+", "A")
-PERCENTILE_MIN_PITCHES = 200
+ZONE_LEVELS = ("MLB", "AAA", "AA", "A+", "A", "CPX")
+SPORT_LEVELS = {
+    1: "MLB",
+    11: "AAA",
+    12: "AA",
+    13: "A+",
+    14: "A",
+    16: "CPX",
+    17: "DSL",
+}
+PERCENTILE_MIN_PITCHES = 100
 HITTER_PERCENTILE_METRICS = {
     "zone_rate": True,
     "z_swing_pct": True,
@@ -78,6 +94,9 @@ SWING_CODES = {
     "E",   # in play, runs
 }
 WHIFF_CODES = {"S", "W", "M"}
+TAKEN_IN_ZONE_CODES = {"C"}
+TAKEN_OUT_ZONE_CODES = {"B", "I", "H"}
+CPX_PSEUDO_ZONE_MIN_TAKES = 80
 
 
 SESSION = requests.Session()
@@ -179,26 +198,79 @@ def game_log(player_id: int, season: int, level: str = "AAA", is_pitcher: bool =
 
 def all_game_logs(player_id: int, season: int, is_pitcher: bool = False) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
-    # v20 — Drop the `leagueListId=milb_full` filter so MLB game logs
-    # come back alongside MiLB ones. The per-split `split.sport.abbreviation`
-    # check downstream already gates which levels actually enter the
-    # classifier (ZONE_LEVELS now includes MLB), so this just unlocks
-    # the MLB rows that the prior filter excluded. Without this, debuted
-    # players never picked up MLB zone metrics regardless of any other
-    # change.
-    data = _get_json(
-        f"{MLB_STATS_API}/people/{player_id}/stats",
-        {
-            "stats": "gameLog",
-            "group": group,
-            "season": str(season),
-        },
-        ttl_seconds=86400,
-    )
-    stats = data.get("stats") or []
-    if not stats:
-        return []
-    return stats[0].get("splits", [])
+    base_params = {
+        "stats": "gameLog",
+        "group": group,
+        "season": str(season),
+    }
+    # The Stats API does not reliably expose MLB + MiLB game logs through a
+    # single query for players who moved levels. Merge all known shapes.
+    param_sets = [
+        base_params | {"leagueListId": "mlb_milb"},
+        base_params | {"leagueListId": "milb_full"},
+        base_params,
+    ]
+    out: list[dict] = []
+    seen: set[tuple] = set()
+    for params in param_sets:
+        try:
+            data = _get_json(
+                f"{MLB_STATS_API}/people/{player_id}/stats",
+                params,
+                ttl_seconds=86400,
+            )
+        except Exception:
+            continue
+        for block in data.get("stats") or []:
+            for split in block.get("splits", []) or []:
+                game_pk = (split.get("game") or {}).get("gamePk")
+                level = _normalized_game_log_level(split)
+                date_value = split.get("date")
+                key = (game_pk, level, date_value)
+                if key in seen:
+                    continue
+                seen.add(key)
+                split.setdefault("sport", {})["abbreviation"] = level
+                out.append(split)
+    for sport_id, fallback_level in SPORT_LEVELS.items():
+        if fallback_level not in ZONE_LEVELS:
+            continue
+        try:
+            data = _get_json(
+                f"{MLB_STATS_API}/people/{player_id}",
+                {
+                    "hydrate": (
+                        f"stats(group={group},type=gameLog,season={season},"
+                        f"sportId={sport_id},gameType=[R]),hydrations"
+                    )
+                },
+                ttl_seconds=86400,
+            )
+        except Exception:
+            continue
+        people = data.get("people") or []
+        stats = (people[0].get("stats") or []) if people else []
+        for block in stats:
+            for split in block.get("splits", []) or []:
+                game_pk = (split.get("game") or {}).get("gamePk")
+                level = _normalized_game_log_level(split, fallback_level)
+                date_value = split.get("date")
+                key = (game_pk, level, date_value)
+                if key in seen:
+                    continue
+                seen.add(key)
+                split.setdefault("sport", {})["abbreviation"] = level
+                out.append(split)
+    return out
+
+
+def _normalized_game_log_level(split: dict, fallback_level: str | None = None) -> str | None:
+    league_name = ((split.get("league") or {}).get("name") or "").lower()
+    raw = (split.get("sport") or {}).get("abbreviation") or fallback_level
+    if raw == "ROK":
+        if "complex" in league_name or "arizona" in league_name or "florida" in league_name:
+            return "CPX"
+    return raw
 
 
 def mlb_game_pks(season: int, limit: int, start_date: str | None = None) -> list[int]:
@@ -231,8 +303,12 @@ def pitches_from_game(
     game_pk: int,
     batter_ids: set[int] | None = None,
     pitcher_ids: set[int] | None = None,
+    game_date: str | None = None,
 ) -> list[PitchRow]:
-    data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live")
+    # Shared, game_pk-keyed cache (deduped against statcast et al). game_date
+    # lets completed games be cached permanently; omit it (callers without a
+    # date in scope) and it falls back to the safe 24h TTL.
+    data = feed_cache.get_game_feed(game_pk, game_date=game_date)
     rows: list[PitchRow] = []
     for play in data.get("liveData", {}).get("plays", {}).get("allPlays", []):
         matchup = play.get("matchup") or {}
@@ -350,6 +426,62 @@ def _metric_set(rows: list[tuple[PitchRow, int | None]], use_predicted: bool) ->
     }
 
 
+def _train_taken_pitch_zone_model(
+    rows: list[PitchRow],
+    *,
+    min_samples: int = CPX_PSEUDO_ZONE_MIN_TAKES,
+) -> "RandomForestClassifier | None":
+    """Fit a CPX in/out-zone model from called strikes and called balls.
+
+    CPX feeds expose Gameday pitch coordinates but often omit official
+    `pitchData.zone`. Their coordinate scale also differs from MLB, so the
+    MLB-trained classifier can classify every pitch as out of zone. Taken
+    pitches give us same-feed labels: called strikes are in-zone, called balls
+    are out-zone.
+    """
+    try:
+        from sklearn.ensemble import RandomForestClassifier
+    except ImportError:
+        return None
+
+    labeled: list[tuple[PitchRow, int]] = []
+    for row in rows:
+        if row.actual_zone in IN_ZONE | OUT_ZONE:
+            continue
+        if row.call_code in TAKEN_IN_ZONE_CODES:
+            labeled.append((row, 1))
+        elif row.call_code in TAKEN_OUT_ZONE_CODES:
+            labeled.append((row, 0))
+
+    labels = [label for _row, label in labeled]
+    if len(labeled) < min_samples or len(set(labels)) < 2:
+        return None
+
+    clf = RandomForestClassifier(
+        n_estimators=150,
+        max_depth=8,
+        min_samples_leaf=4,
+        random_state=42,
+        n_jobs=-1,
+        class_weight="balanced_subsample",
+    )
+    clf.fit([row.features for row, _label in labeled], labels)
+    return clf
+
+
+def _predict_zone_ids(
+    rows: list[PitchRow],
+    clf: "RandomForestClassifier",
+    *,
+    taken_pitch_model: "RandomForestClassifier | None" = None,
+) -> list[int]:
+    if not rows:
+        return []
+    if taken_pitch_model is not None:
+        return [5 if int(label) == 1 else 14 for label in taken_pitch_model.predict([r.features for r in rows])]
+    return [int(z) for z in clf.predict([r.features for r in rows])]
+
+
 def _build_metric_row(
     *,
     player_key: str | None,
@@ -362,10 +494,15 @@ def _build_metric_row(
     games: int,
     rows: list[PitchRow],
     predicted: list[int],
+    source: str = "mlb_stats_api_gameday_rf",
 ) -> ZoneMetricRow:
     pairs = list(zip(rows, predicted))
     pred_metrics = _metric_set(pairs, use_predicted=True)
     actual_metrics = _metric_set(pairs, use_predicted=False)
+    display_metrics = {
+        key: actual_metrics.get(key) if actual_metrics.get(key) is not None else pred_metrics.get(key)
+        for key in pred_metrics
+    }
     labeled = [(r, p) for r, p in pairs if r.actual_zone in IN_ZONE | OUT_ZONE]
     zone_acc = _rate(sum(1 for r, p in labeled if r.actual_zone == p), len(labeled))
     in_zone_acc = _rate(
@@ -389,14 +526,14 @@ def _build_metric_row(
         actual_o_swing_pct=actual_metrics["o_swing_pct"],
         actual_z_contact_pct=actual_metrics["z_contact_pct"],
         actual_o_contact_pct=actual_metrics["o_contact_pct"],
-        source="mlb_stats_api_gameday_rf",
+        source=source,
         fetched_at=date.today().isoformat(),
         qualified=len(rows) >= PERCENTILE_MIN_PITCHES,
         percentile_sample_size=None,
         qualifier_min_pitches=PERCENTILE_MIN_PITCHES,
         percentiles={},
         level_splits=[],
-        **pred_metrics,
+        **display_metrics,
     )
 
 
@@ -411,14 +548,18 @@ def player_zone_metrics(
 ) -> ZoneMetricRow:
     logs = game_log(player_id, season, level, is_pitcher=is_pitcher)
     game_pks = [int(s["game"]["gamePk"]) for s in logs if s.get("game", {}).get("gamePk")]
+    date_by_pk = {int(s["game"]["gamePk"]): s.get("date")
+                  for s in logs if s.get("game", {}).get("gamePk")}
     leagues = sorted({(s.get("league") or {}).get("name") for s in logs if (s.get("league") or {}).get("name")})
     rows: list[PitchRow] = []
     for pk in game_pks:
         if is_pitcher:
-            rows.extend(pitches_from_game(pk, pitcher_ids={player_id}))
+            rows.extend(pitches_from_game(pk, pitcher_ids={player_id}, game_date=date_by_pk.get(pk)))
         else:
-            rows.extend(pitches_from_game(pk, batter_ids={player_id}))
-    predicted = [int(z) for z in clf.predict([r.features for r in rows])] if rows else []
+            rows.extend(pitches_from_game(pk, batter_ids={player_id}, game_date=date_by_pk.get(pk)))
+    taken_pitch_model = _train_taken_pitch_zone_model(rows) if level == "CPX" else None
+    predicted = _predict_zone_ids(rows, clf, taken_pitch_model=taken_pitch_model)
+    source = "mlb_stats_api_cpx_taken_pitch_rf" if taken_pitch_model is not None else "mlb_stats_api_gameday_rf"
     return _build_metric_row(
         player_key=player_key,
         player_name=player_name,
@@ -430,6 +571,7 @@ def player_zone_metrics(
         games=len(game_pks),
         rows=rows,
         predicted=predicted,
+        source=source,
     )
 
 
@@ -484,6 +626,7 @@ def fetch_zone_metrics_for_players_with_model(
 
     game_to_batters: dict[int, set[int]] = {}
     game_to_pitchers: dict[int, set[int]] = {}
+    game_date_by_pk: dict[int, str] = {}
     game_to_player_levels: dict[int, set[tuple[str, str, bool]]] = {}
     leagues_by_split: dict[tuple[str, str, bool], set[str]] = {}
     games_by_split: dict[tuple[str, str, bool], set[int]] = {}
@@ -499,6 +642,9 @@ def fetch_zone_metrics_for_players_with_model(
             if not game_pk:
                 continue
             game_pk = int(game_pk)
+            gd = split.get("date")
+            if gd and game_pk not in game_date_by_pk:
+                game_date_by_pk[game_pk] = gd
             if is_pitcher:
                 game_to_pitchers.setdefault(game_pk, set()).add(mlbam_id)
             else:
@@ -517,6 +663,7 @@ def fetch_zone_metrics_for_players_with_model(
                 game_pk,
                 batter_ids=game_to_batters.get(game_pk),
                 pitcher_ids=game_to_pitchers.get(game_pk),
+                game_date=game_date_by_pk.get(game_pk),
             )
         except Exception:
             return game_pk, []
@@ -555,12 +702,27 @@ def fetch_zone_metrics_for_players_with_model(
                         if matched:
                             pitches_by_split.setdefault((key, split_level, is_pitcher), []).append(row)
 
+    taken_pitch_models: dict[str, RandomForestClassifier | None] = {}
+    for level in allowed_levels:
+        if level != "CPX":
+            continue
+        level_rows: list[PitchRow] = []
+        for (_key, split_level, _is_pitcher), rows in pitches_by_split.items():
+            if split_level == level:
+                level_rows.extend(rows)
+        taken_pitch_models[level] = _train_taken_pitch_zone_model(level_rows)
+
     split_rows: dict[tuple[str, str, bool], ZoneMetricRow] = {}
     for (key, level, is_pitcher), rows in pitches_by_split.items():
         if not rows:
             continue
         name, mlbam_id, _current_level, _is_pitcher = meta_by_key[key]
-        predicted = [int(z) for z in clf.predict([r.features for r in rows])]
+        taken_pitch_model = taken_pitch_models.get(level)
+        predicted = _predict_zone_ids(
+            rows,
+            clf,
+            taken_pitch_model=taken_pitch_model,
+        )
         split_rows[(key, level, is_pitcher)] = _build_metric_row(
             player_key=key,
             player_name=name,
@@ -572,6 +734,11 @@ def fetch_zone_metrics_for_players_with_model(
             games=len(games_by_split.get((key, level, is_pitcher), set())),
             rows=rows,
             predicted=predicted,
+            source=(
+                "mlb_stats_api_cpx_taken_pitch_rf"
+                if taken_pitch_model is not None
+                else "mlb_stats_api_gameday_rf"
+            ),
         )
 
     _attach_level_percentiles(split_rows)

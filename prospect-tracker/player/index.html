@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Player - eephus.io</title>
+<link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="32x32">
+<link rel="apple-touch-icon" href="/assets/apple-touch-icon.png">
+<meta name="robots" content="noindex">
+<script>
+// Unified player router: /player/#<key-or-mlbam> resolves through
+// data/player_links.json to the richest surface for that player
+// (PROSPX prospect card when tracked, else the MLB player page, else
+// the FA market card). Share one link without knowing the module.
+(function () {
+  var q = (location.hash || "").replace(/^#/, "").trim();
+  if (!q) { location.replace("/"); return; }
+  fetch("/data/player_links.json", { cache: "no-cache" })
+    .then(function (r) { return r.ok ? r.json() : null; })
+    .then(function (L) {
+      var row = L && ((L.byKey || {})[q] || (L.byMlbam || {})[q]);
+      if (!row) { location.replace("/prospx/#player=" + encodeURIComponent(q)); return; }
+      if (row.prospx) location.replace("/prospx/#player=" + encodeURIComponent(row.prospx));
+      else if (row.key) location.replace("/projections/#player=" + encodeURIComponent(row.key));
+      else if (row.fa) location.replace("/fa/#player=" + encodeURIComponent(row.key));
+      else location.replace("/");
+    })
+    .catch(function () { location.replace("/"); });
+})();
+</script></head>
+<body><p style="font-family:monospace;padding:2rem;">resolving player&hellip;</p></body></html>

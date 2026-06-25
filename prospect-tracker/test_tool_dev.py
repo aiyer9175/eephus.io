@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the prospect tool-development tracking system.
 
 Covers:
@@ -21,7 +26,12 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from storage import TOOL_GROUPS, _compute_tool_deltas
+from storage import (
+    TOOL_GROUPS,
+    _BUCKET_TOOL_IMPORTANCE,
+    _bucket_weighted_tool_dvm,
+    _compute_tool_deltas,
+)
 
 _TIMESERIES = Path(__file__).parent / "data" / "timeseries.json"
 
@@ -127,6 +137,68 @@ class TestToolGroups:
         for keys in TOOL_GROUPS.values():
             all_grouped.update(keys)
         assert all_grouped <= all_canonical
+
+
+# ---------------------------------------------------------------------------
+# _bucket_weighted_tool_dvm — position-importance-weighted ToolDvM+ composite
+# ---------------------------------------------------------------------------
+
+class TestBucketWeightedToolDvm:
+    def test_none_when_no_data(self):
+        assert _bucket_weighted_tool_dvm({}, {}, {}) is None
+        assert _bucket_weighted_tool_dvm(None, None, None) is None
+
+    def test_falls_back_to_unweighted_mean_without_buckets(self):
+        # No bucket data → legacy unweighted org-wide mean of per_grp.
+        per_grp = {"hit": 110, "pwr": 90, "fb": 100}
+        assert _bucket_weighted_tool_dvm(per_grp, {}, {}) == 100
+
+    def test_position_importance_weights_dominant_tools(self):
+        # A catcher-only org: Field=120, Arm=120 (high importance), but
+        # Speed=80 (low importance, weight 0.5). The weighted composite
+        # should sit far above the unweighted mean (which would be dragged
+        # down by Speed). C weights: field 3, arm 3, hit 2, speed 0.5.
+        per_grp = {"field": 120, "arm": 120, "hit": 100, "speed": 80}
+        by_bucket = {"C": {"field": 120, "arm": 120, "hit": 100, "speed": 80}}
+        counts = {"C": {"field": {"n_prospects": 5}, "arm": {"n_prospects": 5},
+                        "hit": {"n_prospects": 5}, "speed": {"n_prospects": 5}}}
+        out = _bucket_weighted_tool_dvm(per_grp, by_bucket, counts)
+        unweighted = round((120 + 120 + 100 + 80) / 4)  # = 105
+        assert out > unweighted  # importance weighting lifts the dominant tools
+        # Exact: (3*120 + 3*120 + 2*100 + 0.5*80) / (3+3+2+0.5) = 960/8.5 ≈ 112.9
+        assert out == 113
+
+    def test_hybrid_fallback_to_org_wide_for_sparse_cell(self):
+        # Bucket cell missing `arm` → falls back to org-wide per_grp value.
+        per_grp = {"field": 100, "arm": 130}
+        by_bucket = {"C": {"field": 100}}  # arm absent in the bucket cell
+        counts = {"C": {"field": {"n_prospects": 4}}}
+        out = _bucket_weighted_tool_dvm(per_grp, by_bucket, counts)
+        # C weights present: field 3, arm 3, hit 2, bat_ctrl 1, pitch_sel 1,
+        # pwr 1, speed 0.5 — only field (100) + arm (130 via fallback) resolve.
+        # (3*100 + 3*130) / (3+3) = 690/6 = 115
+        assert out == 115
+
+    def test_bucket_blend_leans_toward_populated_bucket(self):
+        # Two buckets: SP composite high with many prospects, C low with one.
+        # The blend should land closer to SP than a flat bucket average.
+        per_grp = {}
+        by_bucket = {
+            "SP": {"fb": 120, "cmd": 120},
+            "C":  {"field": 80, "arm": 80},
+        }
+        counts = {
+            "SP": {"fb": {"n_prospects": 20}, "cmd": {"n_prospects": 20}},
+            "C":  {"field": {"n_prospects": 1}, "arm": {"n_prospects": 1}},
+        }
+        out = _bucket_weighted_tool_dvm(per_grp, by_bucket, counts)
+        flat = round((120 + 80) / 2)  # = 100 if buckets weighted equally
+        assert out > flat  # SP's larger prospect count pulls the blend up
+
+    def test_matrix_only_references_canonical_tool_groups(self):
+        valid = set(TOOL_GROUPS.keys())
+        for bucket, weights in _BUCKET_TOOL_IMPORTANCE.items():
+            assert set(weights) <= valid, f"{bucket} references unknown tool groups"
 
 
 # ---------------------------------------------------------------------------

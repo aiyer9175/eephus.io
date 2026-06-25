@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the rookie-eligibility graduation rules + MLB-debut marker
 injected into level_changes."""
 
@@ -50,13 +55,17 @@ class TestRosterStatusGraduationGates:
 
     def test_single_mlb_game_below_threshold_stays_active(self):
         """The whole point of this rewrite — one MLB game must not flip
-        a prospect to graduated."""
+        a prospect to graduated. `today` is PINNED 5 days after the
+        selection so the (correct) 45-active-roster-day gate can't fire —
+        the unpinned fixture started failing once the wall clock drifted
+        past 45 days from the hardcoded selection date."""
+        from datetime import date as _date
         txs = [self._select_contract_tx("2026-04-15")]
         career = [
             {"season": 2026, "level": "MLB",  "is_pitcher": False, "ab": 4,  "games": 1},
             {"season": 2026, "level": "AAA",  "is_pitcher": False, "ab": 110, "games": 30},
         ]
-        rs = derive_roster_status(txs, career)
+        rs = derive_roster_status(txs, career, _date(2026, 4, 20))
         assert rs["mlb_debut_date"] == "2026-04-15"
         assert rs["rookie_exhausted"] is False
         assert rs["graduation_reason"] is None
@@ -71,10 +80,13 @@ class TestRosterStatusGraduationGates:
 
     def test_at_bat_exactly_at_threshold_does_not_graduate(self):
         """The rule is `> 130 AB`, not `>= 130`. A player with exactly the
-        threshold AB is still a rookie."""
+        threshold AB is still a rookie. `today` pinned (see above) so only
+        the AB boundary is under test, not the active-days gate."""
+        from datetime import date as _date
         career = [{"season": 2026, "level": "MLB", "is_pitcher": False,
                    "ab": ROOKIE_AB_THRESHOLD, "games": 40}]
-        rs = derive_roster_status([self._select_contract_tx("2026-04-15")], career)
+        rs = derive_roster_status([self._select_contract_tx("2026-04-15")], career,
+                                  _date(2026, 4, 20))
         assert rs["rookie_exhausted"] is False
         assert rs["graduation_reason"] is None
 
@@ -93,10 +105,18 @@ class TestRosterStatusGraduationGates:
         player has accumulated >45 days on the active roster. Both gates
         are valid "this player is graduated" signals; the test just
         verifies that SOMETHING triggers (options is the legacy proxy
-        but the new days gate is more faithful to the MLB rule)."""
+        but the new days gate is more faithful to the MLB rule).
+
+        v31.13 — option events must occur AFTER the contract selection
+        for the option year to count (gating on on_40_man state). The
+        original test had a 2024-05-05 OPT before the 2024-09-01 SE,
+        which is impossible per MLB rules. Selection moved to
+        2024-01-15 so all three OPTs land while the player is on the
+        40-man, and each option year accumulates ≥20 days on optional
+        assignment (closed by subsequent year's OPT or by today)."""
         txs = [
-            self._select_contract_tx("2024-09-01"),
-            self._option_tx("2024-05-05"),
+            self._select_contract_tx("2024-01-15"),
+            self._option_tx("2024-04-05"),
             self._option_tx("2025-06-10"),
             self._option_tx("2026-04-15"),
         ]
@@ -108,10 +128,106 @@ class TestRosterStatusGraduationGates:
         assert rs["graduation_reason"] in ("options_exhausted",
                                            "active_days_threshold")
 
+    def test_pre_debut_prospect_keeps_all_options(self):
+        """v31.13 — pre-debut gate. A prospect added to the 40-man
+        (Rule 5 protection) and optioned to AAA for the full season
+        without a single MLB game must still show 3/3 options. This
+        is the Edwin Arroyo case: Rule 5 protected Nov 2025, optioned
+        March 2026, currently at AAA. Per MLB rules the option year
+        is technically burned, but for prospect-tracking UI we surface
+        3/3 until the player actually debuts."""
+        from datetime import date as _date
+        txs = [
+            # Nov 18 2025: Rule 5 protection — added to 40-man.
+            {"date": "2025-11-18", "type_code": "SE",
+             "description": "Cincinnati Reds selected the contract of SS Edwin Arroyo"},
+            # March 6 2026: optioned to AAA to start the season.
+            {"date": "2026-03-06", "type_code": "OPT",
+             "description": "Cincinnati Reds optioned SS Edwin Arroyo to Louisville Bats"},
+        ]
+        # Anchor today well past 20 days into the optional assignment
+        # so the canonical-rule check WOULD fire — but the pre-debut
+        # gate overrides.
+        rs = derive_roster_status(txs, [], today=_date(2026, 5, 26))
+        assert rs["mlb_debut_date"] is None
+        assert rs["on_40_man"] is True
+        assert rs["options_used"] == 0
+        assert rs["options_remaining"] == DEFAULT_OPTIONS
+        assert rs["rookie_exhausted"] is False
+
+    def test_post_debut_prospect_burns_options_normally(self):
+        """v31.13 — the pre-debut gate releases once the player has
+        an MLB debut. A player who debuted last year and was optioned
+        for 60+ days this year shows the burned option."""
+        from datetime import date as _date
+        txs = [
+            {"date": "2025-04-01", "type_code": "SE",
+             "description": "Selected the contract of Player"},
+            {"date": "2025-09-15", "type_code": "OPT",
+             "description": "Optioned to AAA"},
+            {"date": "2026-04-01", "type_code": "OPT",
+             "description": "Optioned to AAA"},
+        ]
+        career = [
+            {"season": 2025, "level": "MLB", "is_pitcher": False,
+             "ab": 30, "games": 12},
+        ]
+        rs = derive_roster_status(txs, career, today=_date(2026, 7, 1))
+        assert rs["mlb_debut_date"] == "2025-04-01"
+        assert rs["options_used"] == 2
+        assert rs["options_remaining"] == 1
+        assert 2025 in rs["options_used_years"]
+        assert 2026 in rs["options_used_years"]
+
+    def test_sub_20_day_option_does_not_count(self):
+        """v31.13 — the 20-day rule. A player optioned to AAA on
+        April 5 and selected back to MLB on April 18 (13 days) does
+        NOT burn an option for that season. Mirrors MLB's post-2020
+        clarification."""
+        txs = [
+            self._select_contract_tx("2024-01-15"),     # on 40-man
+            self._option_tx("2024-04-05"),              # opt starts
+            # Re-selected after 13 days — closes window short of 20.
+            {"date": "2024-04-18", "type_code": "SE",
+             "description": "Selected the contract of Player"},
+        ]
+        rs = derive_roster_status(txs, [])
+        # Even though there was an OPT event in 2024, the window only
+        # accumulated 13 days — under the 20-day floor, so it doesn't
+        # count as a used option year.
+        assert rs["options_used"] == 0
+        assert rs["options_remaining"] == DEFAULT_OPTIONS
+        assert 2024 not in rs["options_used_years"]
+
+    def test_phantom_optioned_desc_on_non_40_man_does_not_burn(self):
+        """v31.13 — the Edwin Arroyo case. A prospect who has never
+        been added to the 40-man roster cannot burn an option, even
+        when the MLB transactions feed surfaces a row whose description
+        contains the word "optioned" (e.g. a minor-league assignment
+        misclassified by the upstream API)."""
+        txs = [
+            # No SE / contract selection — player is not on 40-man.
+            {"date": "2025-03-15", "type_code": "ASN",
+             "description": "Optioned to Triple-A Louisville"},
+            {"date": "2025-07-01", "type_code": "ASN",
+             "description": "Optioned to Triple-A Louisville"},
+        ]
+        rs = derive_roster_status(txs, [])
+        assert rs["on_40_man"] is False
+        assert rs["options_used"] == 0
+        assert rs["options_remaining"] == DEFAULT_OPTIONS
+        assert rs["options_used_years"] == []
+
     def test_options_exhausted_without_debut_does_not_graduate(self):
         """A prospect with three option years but no MLB debut hasn't
         been on the active roster — options-exhaustion alone is meaningless
-        without a debut."""
+        without a debut.
+
+        v31.13 — option events without a prior contract selection
+        no longer count at all (you can't burn an option you don't
+        have because you're not on the 40-man). This test now asserts
+        the stricter behavior: options_used stays at 0 and the
+        rookie_exhausted gate stays False."""
         txs = [
             self._option_tx("2024-05-05"),
             self._option_tx("2025-06-10"),
@@ -119,6 +235,8 @@ class TestRosterStatusGraduationGates:
         ]
         rs = derive_roster_status(txs, [])
         assert rs["mlb_debut_date"] is None
+        assert rs["options_used"] == 0
+        assert rs["options_remaining"] == DEFAULT_OPTIONS
         assert rs["rookie_exhausted"] is False
         assert rs["graduation_reason"] is None
 

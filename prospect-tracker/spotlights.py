@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Prospect spotlight scoring.
 
@@ -19,15 +24,15 @@ from statistics import mean
 
 
 TOP_N = 60
-MAX_DRIVERS_PER_CARD = 8   # v15 — was 4 (cycle 14)
+MAX_DRIVERS_PER_CARD = 8 # v15 - was 4 (cycle 14)
 
 
-# v15 — Per-stat polarity table. "up_good" means the stat is better when it
+# v15 - Per-stat polarity table. "up_good" means the stat is better when it
 # goes UP (OPS, K% for pitchers, wRC+); "down_good" means better when it goes
 # DOWN (ERA, FIP-, K% for hitters, BB% for pitchers). Stats not listed default
 # to "up_good" since most numeric stats follow that convention.
 _STAT_POLARITY = {
-    # hitter rate stats — higher = better
+    # hitter rate stats - higher = better
     "ops": "up_good", "ops_plus": "up_good", "wrc_plus": "up_good",
     "iso": "up_good", "babip": "up_good", "avg": "up_good",
     "obp": "up_good", "slg": "up_good", "hard_hit_pct": "up_good",
@@ -35,14 +40,14 @@ _STAT_POLARITY = {
     "ev_90": "up_good", "ps_score": "up_good", "max_velo": "up_good",
     "fb_velo": "up_good", "hr": "up_good", "sb": "up_good",
     "bb_pct_hitter": "up_good",
-    # hitter rate stats — lower = better
+    # hitter rate stats - lower = better
     "k_pct_hitter": "down_good", "whiff_pct_hitter": "down_good",
     "chase_pct": "down_good",
-    # pitcher rate stats — higher = better
+    # pitcher rate stats - higher = better
     "k_pct_pitcher": "up_good", "whiff_pct_pitcher": "up_good",
     "stf_plus": "up_good", "stf_plus_periph": "up_good",
     "k_per_9": "up_good", "gb_pct": "up_good", "swstr_pct": "up_good",
-    # pitcher rate stats — lower = better
+    # pitcher rate stats - lower = better
     "era": "down_good", "era_minus": "down_good", "fip": "down_good",
     "fip_minus": "down_good", "xfip": "down_good", "whip": "down_good",
     "bb_pct_pitcher": "down_good", "bb_per_9": "down_good",
@@ -52,10 +57,10 @@ _STAT_POLARITY = {
 
 def _stat_valence(stat_key: str, delta: float | None) -> str:
     """Return "good" / "bad" / "neutral" based on the polarity table.
-    The polarity decides whether a positive delta is good or bad — e.g. a
+    The polarity decides whether a positive delta is good or bad - e.g. a
     pitcher's ERA going down (negative delta) is "good".
 
-    v17 — Neutral is now reserved only for null/exactly-zero deltas.
+    v17 - Neutral is now reserved only for null/exactly-zero deltas.
     Any directional delta (positive or negative) gets polarized to
     good or bad. This widens the green/red coverage so neutral becomes
     rare (only triggered when we genuinely don't know the direction)."""
@@ -69,7 +74,7 @@ def _stat_valence(stat_key: str, delta: float | None) -> str:
     return "good" if delta < 0 else "bad"
 
 
-# v15 — back-compat parser for legacy string-shaped drivers. Walks the
+# v15 - back-compat parser for legacy string-shaped drivers. Walks the
 # label looking for known stat tokens and a directional verb (up/down) so
 # we can stamp a valence even without a full _mk_driver call. Keeps the
 # entire driver-emission codebase (50+ append sites) functional with a
@@ -103,7 +108,7 @@ def _infer_polarity_key(label: str, *, is_pitcher_context: bool = False) -> str 
     for token, key in _DRIVER_TOKEN_POLARITY.items():
         if token in lc:
             return key
-    # K% / BB% — polarity depends on hitter vs pitcher context.
+    # K% / BB% - polarity depends on hitter vs pitcher context.
     if "k%" in lc or "k pct" in lc:
         return "k_pct_pitcher" if is_pitcher_context else "k_pct_hitter"
     if "bb%" in lc or "bb pct" in lc:
@@ -111,14 +116,14 @@ def _infer_polarity_key(label: str, *, is_pitcher_context: bool = False) -> str 
     return None
 
 
-# v18 — Intrinsic-polarity table for narrative drivers (no numeric delta,
+# v18 - Intrinsic-polarity table for narrative drivers (no numeric delta,
 # no up/down verb, but the phrase itself carries clear positive/negative
 # meaning). Without this, legacy string drivers like "first-round pedigree"
 # or "major skills decline" fall through to neutral → yellow chip. Match by
 # lowercase substring so the embedded round number / FV / level doesn't
 # break the lookup. Order is irrelevant since we just return on first hit.
 _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
-    # — positive narratives (drivers.append sites in this file) —
+    # - positive narratives (drivers.append sites in this file) - 
     "first-round pedigree":          "good",
     "top-100 pick pedigree":         "good",
     "draft pedigree":                "good",
@@ -134,8 +139,8 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "rank up":                       "good",
     "rank rising":                   "good",
     "repeating level + improving":   "good",
-    "vs level mean":                 "good",   # signed-by-direction; positive default — overridden below for "-" prefix
-    # v19 — additional positive narratives surfaced in cycles 16-19.
+    "vs level mean": "good", # signed-by-direction; positive default - overridden below for "-" prefix
+    # v19 - additional positive narratives surfaced in cycles 16-19.
     "breakout":                      "good",
     "elite":                         "good",
     "plus tool":                     "good",
@@ -150,7 +155,7 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "returns from il":               "good",
     "off the il":                    "good",
     "off il":                        "good",
-    # — negative narratives —
+    # - negative narratives - 
     "major skills decline":          "bad",
     "underlying data weak":          "bad",
     "limited runway":                "bad",
@@ -158,7 +163,7 @@ _INTRINSIC_DRIVER_POLARITY: dict[str, str] = {
     "skills broken":                 "bad",
     "high-fv decline":               "bad",
     "unsupported by x-metrics":      "bad",
-    # v19 — additional negative narratives.
+    # v19 - additional negative narratives.
     "demotion":                      "bad",
     "demoted":                       "bad",
     "sent down":                     "bad",
@@ -221,14 +226,14 @@ def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
         if "tooltip" not in out:
             out["tooltip"] = out["label"]
         return out
-    # String driver — infer everything from the label.
+    # String driver - infer everything from the label.
     label = str(d)
     lc = label.lower()
     polarity_key = _infer_polarity_key(label, is_pitcher_context=is_pitcher_context)
     # Direction inferred from (in priority order):
     #   1. "up" / "down" verbs in the label
     #   2. Signed delta "+0.245" or "-1.5" anywhere in the label
-    #   3. "X.XX vs Y.YY prior" comparison — current vs prior
+    # 3. "X.XX vs Y.YY prior" comparison - current vs prior
     # The sign/comparison branch fixes drivers like
     #   "OPS +0.245 vs '24-25"   (sign → up)
     #   "ERA 0.81 vs 3.25 prior" (comparison → 0.81 < 3.25 → down)
@@ -246,7 +251,7 @@ def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
         if m_sign:
             direction = "up" if m_sign.group(1) == "+" else "down"
     if direction is None:
-        # Comparison: "0.81 vs 3.25 prior" — current first, prior second.
+        # Comparison: "0.81 vs 3.25 prior" - current first, prior second.
         m_cmp = _re.search(
             r"(\d+(?:\.\d+)?)\s+vs\s+(\d+(?:\.\d+)?)\s*(?:prior|recent\s+prior|recent\s+seasons?)",
             lc,
@@ -260,7 +265,7 @@ def _normalize_driver(d, *, is_pitcher_context: bool = False) -> dict:
                     direction = "down"
             except ValueError:
                 pass
-    # v18 — intrinsic polarity wins when present; otherwise fall back to
+    # v18 - intrinsic polarity wins when present; otherwise fall back to
     # direction + stat-polarity inference (the original v15/v17 path).
     intrinsic = _infer_intrinsic_polarity(label)
     if intrinsic is not None:
@@ -323,7 +328,7 @@ def _mk_driver(label: str, *, stat: str | None = None,
 
 
 def _num(v, default: float | None = None) -> float | None:
-    if v in (None, "", "—"):
+    if v in (None, "", " - "):
         return default
     try:
         return float(v)
@@ -467,7 +472,7 @@ def _surface_score(p: dict) -> tuple[float, list[str]]:
     row = _career_row(p, sl.get("season"))
     drivers: list[str] = []
     if sl.get("is_pitcher"):
-        # v22 — Prefer K% / BB% (per-batter rates) over K/9 / BB/9
+        # v22 - Prefer K% / BB% (per-batter rates) over K/9 / BB/9
         # (per-inning). MLB-equivalent benchmarks: ~23% K is league
         # average, 30%+ elite; 8% BB is average, sub-6% elite. Fall
         # back to per-9 when per-batter rate is missing.
@@ -633,7 +638,7 @@ def _change_drivers(p: dict) -> list[str]:
             diff = mean(prior_eras) - current_era
             if diff >= 0.50:
                 drivers.append(f"ERA down {diff:.2f} vs recent prior seasons")
-        # v22 — Prefer K% / BB% deltas (per-batter rates) over K/9 / BB/9
+        # v22 - Prefer K% / BB% deltas (per-batter rates) over K/9 / BB/9
         # (per-inning). Sensitivity reset: K% jumps of 4pp / BB% drops of
         # 2pp are the per-batter equivalents of the old 1.5 K/9 / 1.0
         # BB/9 thresholds. Fall back to per-9 deltas when neither prior
@@ -675,7 +680,7 @@ def _entry(bucket: str, p: dict, score: float, drivers: list) -> dict:
     sl = p.get("statline") or {}
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}
-    # v15 — Normalize drivers (strings → dict) and cap at 8. The pitcher-vs-
+    # v15 - Normalize drivers (strings → dict) and cap at 8. The pitcher-vs-
     # hitter context helps the K%/BB% polarity resolution: if the sl flags
     # is_pitcher, K% UP is good (and BB% DOWN is good); for hitters it's
     # inverted.
@@ -703,12 +708,12 @@ def _line_text(sl: dict) -> str:
     if not sl:
         return "No current line"
     if sl.get("is_pitcher"):
-        # v22 — Prefer K% when present; fall back to K/9 only when it isn't.
+        # v22 - Prefer K% when present; fall back to K/9 only when it isn't.
         kpct = sl.get("k_pct")
         k_str = (f"{float(kpct):.1f}% K" if kpct is not None
-                 else f"{sl.get('k_per_9', '—')} K/9")
-        return f"{sl.get('era', '—')} ERA, {sl.get('ip', '—')} IP, {k_str}"
-    return f"{sl.get('avg', '—')}/{sl.get('obp', '—')}/{sl.get('slg', '—')}, {sl.get('hr') or 0} HR, {sl.get('sb') or 0} SB"
+                 else f"{sl.get('k_per_9', ' - ')} K/9")
+        return f"{sl.get('era', ' - ')} ERA, {sl.get('ip', ' - ')} IP, {k_str}"
+    return f"{sl.get('avg', ' - ')}/{sl.get('obp', ' - ')}/{sl.get('slg', ' - ')}, {sl.get('hr') or 0} HR, {sl.get('sb') or 0} SB"
 
 
 def _mlb_exposure(p: dict) -> tuple[int, int, float]:
@@ -739,7 +744,7 @@ def _has_minor_rebound_case(p: dict, sc_score: float) -> tuple[bool, list[str]]:
             ip = _ip(r)
             kpct = _num(r.get("k_pct"))
             k9 = _num(r.get("k_per_9"))
-            # v22 — Trigger on either K% ≥ 28 (elite per-batter) or K/9 ≥ 10.5
+            # v22 - Trigger on either K% ≥ 28 (elite per-batter) or K/9 ≥ 10.5
             # (legacy threshold). Driver label prefers the K% form.
             k_qual = (kpct is not None and kpct >= 28.0) or (k9 is not None and k9 >= 10.5)
             if ip >= 20 and ((era is not None and era <= 3.75) or k_qual):
@@ -811,7 +816,7 @@ def _is_rebound_candidate(p: dict) -> bool:
 
 
 # ===========================================================================
-# Movement engine (2026-05 overhaul) — performance-anchored composite that
+# Movement engine (2026-05 overhaul) - performance-anchored composite that
 # drives both spotlights (Risers / Rebounders / Fallers) and the main-list
 # "Top movers" + stockFilter chips. Replaces the FV-delta-only `stock_movement`
 # in consensus.py.
@@ -865,7 +870,7 @@ def _perf_delta(p: dict) -> tuple[float | None, str | None]:
 
 
 def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
-    """Rate-stat delta — K%/BB% for hitters, K/9 + BB/9 for pitchers.
+    """Rate-stat delta - K%/BB% for hitters, K/9 + BB/9 for pitchers.
 
     Score is integer-scaled: +1 per material improvement, -1 per material
     decline. Captures Bryce Rainer's K-rate jump (22.1% → 43.7% = -7 to
@@ -879,7 +884,7 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
     score = 0.0
     drivers: list[str] = []
     if sl.get("is_pitcher"):
-        # v22 — Per-batter rates (K% / BB%) preferred; fall back to per-9
+        # v22 - Per-batter rates (K% / BB%) preferred; fall back to per-9
         # rates when the per-batter value is missing. Thresholds reset to
         # the per-batter scale: 3pp K% jump (was 1.5 K/9), 2pp BB% drop
         # (was 0.8 BB/9). Same ±3-point cap.
@@ -908,7 +913,7 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
                 direction = "down" if diff < 0 else "up"
                 drivers.append(f"{label} {direction} {abs(diff):.1f}{suffix}")
         # Per-9 fallback runs only for rates that the per-batter loop
-        # didn't see (rare — legacy career rows without TBF).
+        # didn't see (rare - legacy career rows without TBF).
         for key, label, _, lower_better, threshold in per_9_specs:
             sibling_key = "k_pct" if key == "k_per_9" else "bb_pct"
             if sibling_key in used_keys:
@@ -952,7 +957,7 @@ def _skills_delta(p: dict) -> tuple[float | None, list[str]]:
 
 
 def _tools_flash_floor(p: dict) -> bool:
-    """Returns True when the prospect has any non-bat tool graded 70+ —
+    """Returns True when the prospect has any non-bat tool graded 70+ - 
     Starlyn Caba's 80 field, for example. Used to lower the OPS bar for
     Risers since the bat doesn't need to carry the profile."""
     pts = p.get("points") or []
@@ -975,23 +980,23 @@ def _level_repeat(p: dict) -> bool:
     return any(r.get("level") == cur_level for r in priors)
 
 
-# Age cap above level-mean — gates excessively-old prospects out of
+# Age cap above level-mean - gates excessively-old prospects out of
 # every spotlight bucket (riser / rebound / faller). Anchored on a
-# PROSPECT-aspirational baseline by level (NOT the empirical median —
+# PROSPECT-aspirational baseline by level (NOT the empirical median - 
 # the empirical AAA pool is ~25.7 because it includes the journeymen
 # we want to filter, so anchoring on empirical means defeats the
 # purpose). The static baselines below match the scouting convention
 # (FanGraphs primer):
 #   A=21, A+=22, AA=23, AAA=24, MLB=26
-# Caps (years above the baseline, INCLUSIVE on the threshold) — v6
+# Caps (years above the baseline, INCLUSIVE on the threshold) - v6
 # tightened these from the original 2.0 / 3.0 to drop more journeymen:
 #   hitters  → disqualified when (age − baseline) >= +1.5
 #   pitchers → disqualified when (age − baseline) >= +2.0  (later debut)
-# The complement is _LEVEL_TIER_BOOST below — surviving upper-level
+# The complement is _LEVEL_TIER_BOOST below - surviving upper-level
 # prospects get a smaller score boost than sub-AAA breakouts, so the
 # net effect is "fewer journeymen AND lower-level prospects rank higher".
 # Players at rookie levels (DSL / CPX / ROK) or with missing age/level
-# pass through (cap doesn't fire) — those levels don't have a clean
+# pass through (cap doesn't fire) - those levels don't have a clean
 # prospect-aspirational anchor.
 _SPOTLIGHT_AGE_BASELINES: dict[str, float] = {
     "A":   21.0,
@@ -1000,14 +1005,14 @@ _SPOTLIGHT_AGE_BASELINES: dict[str, float] = {
     "AAA": 24.0,
     "MLB": 26.0,
 }
-# Tightened in v6 (was 2.0 / 3.0) — more journeymen now drop out. The
+# Tightened in v6 (was 2.0 / 3.0) - more journeymen now drop out. The
 # complement is the new _LEVEL_TIER_BOOST below, which surfaces true
 # sub-AAA prospects above marginal upper-level survivors.
 _AGE_CAP_HITTER = 1.5
 _AGE_CAP_PITCHER = 2.0
 
 # Per-level scoring boost. Surfaces lower-level prospects above marginal
-# upper-level ones with similar performance — a real A+ breakout should
+# upper-level ones with similar performance - a real A+ breakout should
 # outrank a borderline AAA depth-piece rebound. Applied to RISER +
 # REBOUND paths only; fallers stay level-agnostic so the decline
 # ranking remains clean.
@@ -1027,7 +1032,7 @@ def _level_score_boost(level: str | None) -> float:
     return _LEVEL_TIER_BOOST.get(level, 0.0)
 
 
-# Pitcher role classification — derived from the position string the
+# Pitcher role classification - derived from the position string the
 # consensus pipeline lands on. Position tokens come from FanGraphs +
 # MLB Pipeline + others; SP / SIRP / MIRP are the role-tagged values
 # we trust, RP is a generic relief tag, RHP / LHP / P are
@@ -1049,7 +1054,7 @@ def _pitcher_role(position: str | None) -> str | None:
         return "RP"
     if head in _PITCHER_START_TOKENS:
         return "SP"
-    return None  # RHP / LHP / P — role-agnostic, treat as unknown
+    return None # RHP / LHP / P - role-agnostic, treat as unknown
 
 
 def _player_consensus_fv(p: dict) -> float | None:
@@ -1071,13 +1076,13 @@ def _player_consensus_fv(p: dict) -> float | None:
 
 
 def _fv_rebound_prior(fv: float | None) -> float:
-    """Normalized 0-1 prior — 'how likely is this player a real prospect
+    """Normalized 0-1 prior - 'how likely is this player a real prospect
     whose rebound is meaningful?' Anchored to the standard 20-80 scale:
       FV 40 → 0.00  (org-filler, weak prior)
       FV 45 → 0.25
       FV 50 → 0.50  (MLB regular projection, neutral prior)
       FV 55 → 0.75
-      FV 60 → 1.00  (plus prospect — full prior weight)
+      FV 60 → 1.00 (plus prospect - full prior weight)
     Linear interpolation between anchors; clipped at endpoints. Returns
     0.0 for missing FV (no prior signal → observation alone)."""
     if fv is None or fv <= 40.0:
@@ -1090,7 +1095,7 @@ def _fv_rebound_prior(fv: float | None) -> float:
 
 
 def _faller_fv_multiplier(fv: float) -> float:
-    """Steeper decline weighting for higher-FV prospects — a plus
+    """Steeper decline weighting for higher-FV prospects - a plus
     prospect falling off is a much bigger signal than a 45-FV depth
     piece declining at the same rate. Pairs with the FV-45 floor."""
     if fv >= 60.0:
@@ -1120,7 +1125,7 @@ def _exceeds_age_cap(age, level, is_pitcher: bool) -> bool:
     return diff >= cap
 
 
-# v12 — xMetric verification gate. AAA prospects have Statcast data on
+# v12 - xMetric verification gate. AAA prospects have Statcast data on
 # file (via prospect_savant CSVs at prospect_savant.py:101-131). Use
 # wOBA-vs-xWOBA gap (hitters) and xFIP-vs-ERA gap (pitchers) to verify
 # whether the surface signal is supported by the underlying contact /
@@ -1163,7 +1168,7 @@ def _xmetric_verification(p: dict, direction: str) -> str:
             if gap >= _XMETRIC_PITCHER_XFIP_GAP_HOT:
                 return "unsupported"
             return "verified"
-        # Faller — ERA rose. If xFIP is much lower, the bad ERA is luck.
+        # Faller - ERA rose. If xFIP is much lower, the bad ERA is luck.
         if gap <= _XMETRIC_PITCHER_XFIP_GAP_COLD:
             return "unsupported"
         return "verified"
@@ -1214,7 +1219,7 @@ def _check_possible_regressor(p: dict) -> tuple[float, list[str]] | None:
             return None
         drivers = [
             f"ERA {era:.2f} / xFIP {xfip:.2f} (gap +{gap:.2f})",
-            "xFIP above ERA — unsustainable run prevention",
+            "xFIP above ERA - unsustainable run prevention",
         ]
         return (round(gap, 2), drivers)
     # Hitter path.
@@ -1229,7 +1234,7 @@ def _check_possible_regressor(p: dict) -> tuple[float, list[str]] | None:
         return None
     drivers = [
         f"wOBA {woba:.3f} / xWOBA {xwoba:.3f} (gap +{gap:.3f})",
-        "wOBA over xWOBA — unsustainable production",
+        "wOBA over xWOBA - unsustainable production",
     ]
     return (round(gap, 3), drivers)
 
@@ -1237,11 +1242,11 @@ def _check_possible_regressor(p: dict) -> tuple[float, list[str]] | None:
 def _classify_movement(p: dict, perf_delta, skills_delta,
                        list_jump_score, pedigree) -> tuple[str, float, list[str]]:
     """Return (bucket, composite_score, drivers). Bucket is one of:
-      'riser'              — broad surface-jump cases
-      'rebound'            — pedigree-comeback narrative (Southisene)
-      'faller'             — decline cases (with tight disqualify gates)
-      'possible_regressor' — AAA over-performer flagged by xMetric gap
-      'none'               — uneventful / insufficient data
+      'riser' - broad surface-jump cases
+      'rebound' - pedigree-comeback narrative (Southisene)
+      'faller' - decline cases (with tight disqualify gates)
+      'possible_regressor' - AAA over-performer flagged by xMetric gap
+      'none' - uneventful / insufficient data
     """
     drivers: list[str] = []
     sl = p.get("statline") or {}
@@ -1249,7 +1254,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     age = p.get("age_vs_level") or {}
     tier = age.get("tier")
     # Age-cap gate (per-level + per-side). Anchored on the prospect-
-    # aspirational baseline by level (see _SPOTLIGHT_AGE_BASELINES) —
+    # aspirational baseline by level (see _SPOTLIGHT_AGE_BASELINES) - 
     # NOT the empirical median, which is dragged up by the journeymen
     # we're trying to filter. Returns "none" before any bucket
     # classification so capped prospects never reach the riser /
@@ -1261,10 +1266,10 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # The user wants risers + rebounders + fallers to all carry the
     # same journeymen / RP / FV filter set so the three buckets
     # surface consistently. Two gates apply uniformly here:
-    #   (1) FV ≥ 45 hard floor — drops org-fillers across the board
+    # (1) FV ≥ 45 hard floor - drops org-fillers across the board
     #       (no FV-40 riser breakout, no FV-40 comeback story, no
-    #       FV-40 collapse — bucket is reserved for graded prospects)
-    #   (2) RP age < 23 — SIRP / MIRP / bare-RP must be very young to
+    # FV-40 collapse - bucket is reserved for graded prospects)
+    # (2) RP age < 23 - SIRP / MIRP / bare-RP must be very young to
     #       appear in ANY bucket (used to only gate rebounders;
     #       extended to risers + fallers per user ask). The
     #       "prospect-evolution" narrative only fits very young
@@ -1286,7 +1291,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     ps = p.get("prospect_savant") or {}
     ps_score = _num(ps.get("ps_score"))
 
-    # Thresholds — hitter vs pitcher
+    # Thresholds - hitter vs pitcher
     PERF_RISER_BAR = 0.080 if is_pitcher else 0.100
     PERF_FALLER_BAR = -0.30 if is_pitcher else -0.080
     SOFT_PERF_FALLER = -0.20 if is_pitcher else -0.060
@@ -1308,10 +1313,10 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # season was weak. Skills_delta ≥ 0 (or None when no rate stats
     # prior) keeps us from rewarding pure BABIP rebounds. The level-
     # repeat path used to be a hard gate but excluded the Cunningham
-    # case (advancing levels + huge jump) — kept as a tie-breaker bonus.
+    # case (advancing levels + huge jump) - kept as a tie-breaker bonus.
     # Hitter / SP age cap stays at 25 here (the shared RP age<23 gate
     # above already excludes older relievers from every bucket).
-    # v17 — Loosened from prior cycles: weak_prior thresholds eased
+    # v17 - Loosened from prior cycles: weak_prior thresholds eased
     # (4.50→3.80 ERA / 0.700→0.770 OPS), perf_delta floor 0.080→0.045,
     # pedigree floor 1.5→0.8, age cap 25→26 for hitters. Previously only
     # ~9 rebounders surfaced league-wide; target is now ~25-40.
@@ -1351,7 +1356,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         )
         skills_ok = (skills_delta is None) or (skills >= 0)
         if weak_prior and skills_ok and not stable_top100:
-            # Bayesian rebound score — weighted blend of FV prior
+            # Bayesian rebound score - weighted blend of FV prior
             # (pedigree) and the current observation (perf + skills
             # uptick). Higher-FV prospects get pulled up as stronger
             # rebound candidates even at the same observed bump,
@@ -1367,11 +1372,11 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
                 obs_score += min(2.0, max(0.0, skills * 0.5))
             posterior = (PRIOR_WEIGHT * prior_score
                          + (1.0 - PRIOR_WEIGHT) * obs_score)
-            score = 3.0 + posterior  # 3.0 floor — rebounders are events
+            score = 3.0 + posterior # 3.0 floor - rebounders are events
             if _level_repeat(p):
                 score += 1.0
                 drivers.append("repeating level + improving")
-            # Sub-AAA level boost — same complement to the tighter age
+            # Sub-AAA level boost - same complement to the tighter age
             # cap that applies on the riser path. Surfaces real low-level
             # rebound narratives above marginal AAA ones.
             lvl_boost = _level_score_boost(sl.get("level"))
@@ -1381,7 +1386,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             if _fv is not None and _fv >= 55.0:
                 drivers.append(f"high-FV pedigree ({int(_fv)})")
             drivers.append("pedigree comeback")
-            # v30.5 — Statcast+ rebounder confirmation. Tier breakpoints
+            # v30.5 - Statcast+ rebounder confirmation. Tier breakpoints
             # match the _statcast_drivers schedule so the score effect
             # tracks the chip color the user sees.
             _scp_r = p.get("statcast_plus")
@@ -1394,7 +1399,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
                     score += 2.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} confirms rebound",
                                     "valence": "good",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥120, elite) strongly supports the rebound — underlying contact / pitch quality is back to peak."})
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≥120, elite) strongly supports the rebound - underlying contact / pitch quality is back to peak."})
                 elif _scpv_r >= 105:
                     score += 1.0
                     drivers.append({"label": f"SC+ {int(_scpv_r)} supports rebound",
@@ -1404,8 +1409,8 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
                     score -= 1.5
                     drivers.append({"label": f"SC+ {int(_scpv_r)} undercuts rebound",
                                     "valence": "bad",
-                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤95, below pool) undercuts the rebound — surface bounce isn't backed by tracked data."})
-            # v12 — same xMetric gate as risers. AAA-only.
+                                    "tooltip": f"Statcast+ {int(_scpv_r)} (≤95, below pool) undercuts the rebound - surface bounce isn't backed by tracked data."})
+            # v12 - same xMetric gate as risers. AAA-only.
             verif = _xmetric_verification(p, "up")
             if verif == "unsupported":
                 reg_signal = _check_possible_regressor(p)
@@ -1420,7 +1425,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # --- Riser: perf jumped meaningfully OR list-jump fired ---
     is_riser_perf = perf_delta is not None and perf >= PERF_RISER_BAR
     is_riser_jump = list_jump_score >= 2.0
-    # v27 — "+" upside added: any source ADDED a "+" upside marker in
+    # v27 - "+" upside added: any source ADDED a "+" upside marker in
     # the player's recent history (within the last 6 months, matching
     # the breakout window). A "55 → 55+" event is a real scout-noted
     # upside note even without a numeric FV change.
@@ -1437,7 +1442,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # take over. Tunable; sized to admit "the bat slumped a little but
     # scout still likes the upside" while rejecting "perf collapsed."
     _upside_perf_floor = -0.04
-    # v30.5 — FV ≤ 50 cap (matches the upside-indicator behavior on
+    # v30.5 - FV ≤ 50 cap (matches the upside-indicator behavior on
     # FV badges). The "+" upside marker only signals untapped potential
     # for sub-50 grades; 55+ / 60+ tiers have already realized their
     # upside, so flagging a "+ upside" driver on a 52-FV prospect
@@ -1499,13 +1504,13 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         if is_riser_continuing:
             score += 2.5
         if is_riser_upside:
-            # v27 — Each added "+" event contributes 1.5 score (capped
+            # v27 - Each added "+" event contributes 1.5 score (capped
             # at 4.5 across multiple sources). A single FG "+ added" is
             # a real qualitative upside note; multiple sources agreeing
             # ("+ added" from FG AND BA) is a stronger signal that
             # outranks a single-source "+ added" without breakout-class
             # FV velocity.
-            # v29 — Driver chip simplified to a "+ upside" pink pill that
+            # v29 - Driver chip simplified to a "+ upside" pink pill that
             # matches the upside indicator color used everywhere else on
             # the site. The source list moves to the tooltip so the chip
             # stays compact + the dict-driver shape lets the UI key off
@@ -1523,13 +1528,13 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             drivers.append("young for level")
         if skills_delta is not None and skills > 0:
             score += min(2.0, skills * 0.4)
-        # Sub-AAA level boost — complements the tighter age cap so true
+        # Sub-AAA level boost - complements the tighter age cap so true
         # low-level breakouts outrank marginal upper-level survivors.
         lvl_boost = _level_score_boost(sl.get("level"))
         if lvl_boost > 0:
             score += lvl_boost
             drivers.append(f"sub-AAA prospect ({sl.get('level')})")
-        # v12 — current-season vs level-mean amplifier. statline carries
+        # v12 - current-season vs level-mean amplifier. statline carries
         # `level_plus_pct` (signed: positive = better than the level's
         # cohort mean). Strong above-mean performance lifts the riser
         # score; near-mean performance leaves it alone. Caps at ±3.0
@@ -1539,7 +1544,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             bonus = min(3.0, (lp - 15) / 10.0 + 1.0)  # 15%→1.0, 25%→2.0, 35%→3.0
             score += bonus
             drivers.append(f"+{lp:.0f}% vs level mean")
-        # v29 / v30 — Statcast+ riser amplifier. Top-quintile composite
+        # v29 / v30 - Statcast+ riser amplifier. Top-quintile composite
         # (≥115) adds 1.0; elite-tier (≥130) adds 2.0. Caps at 2.0 so
         # it can break ties between two surface-comparable risers
         # without dominating the score. The actual driver CHIPS are
@@ -1555,7 +1560,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
                 score += 2.0
             elif _scpv >= 115:
                 score += 1.0
-        # v12 — xMetric verification gate for AAA risers. If the
+        # v12 - xMetric verification gate for AAA risers. If the
         # surface jump isn't supported by underlying Statcast (wOBA
         # over xWOBA, ERA under xFIP), demote to Possible Regressor
         # rather than letting the unsustainable surge headline Risers.
@@ -1577,8 +1582,8 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # multiplier below.
     # Disqualify gates:
     #   - very-young: ALWAYS disqualified, NO rescue path. The user's
-    #     Lombard Jr / Florentino examples — very-young + (often)
-    #     pedigreed — should never surface as fallers even with bad
+    # Lombard Jr / Florentino examples - very-young + (often)
+    # pedigreed - should never surface as fallers even with bad
     #     surface stats. They're playing way above their age cohort.
     #   - young + pedigreed: disqualified, but a Bryce Rainer-style
     #     skills crater (K% jumping 20+ pts in one season) can rescue.
@@ -1608,7 +1613,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # ≥ 24 at AAA = the Melton case: K% blew up, repeated AAA, surface
     # OPS is technically not much worse than the prior AAA stint, but
     # the trajectory is broken. Force-faller this path. Skills_crater
-    # OR a single-category K% jump ≥ 10pp triggers — Melton's net
+    # OR a single-category K% jump ≥ 10pp triggers - Melton's net
     # skills_delta is mild (-0.5) because BB% gains offset, but the
     # raw K% jump (+15pp from 25%→40%) is the real red flag.
     age_val = p.get("age")
@@ -1638,7 +1643,7 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
     # tier (FV 60+ ×2.0, 55 ×1.5, 50 ×1.25, 45 ×1.0) so a plus prospect
     # falling off is a much bigger signal than a 45-FV depth piece
     # declining at the same rate. Structural-breakdown penalties
-    # (skills crater, age, K-rate spike) stay unweighted — they're
+    # (skills crater, age, K-rate spike) stay unweighted - they're
     # categorical red flags, not pure performance decline.
     fv_mult = _faller_fv_multiplier(_fv_for_floor)
     score = 0.0
@@ -1664,14 +1669,14 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
         drivers.append("skills broken at upper levels")
     if _fv_for_floor >= 55.0:
         drivers.append(f"high-FV decline ({int(_fv_for_floor)})")
-    # v12 — current-season vs level-mean amplifier. Strong below-mean
+    # v12 - current-season vs level-mean amplifier. Strong below-mean
     # performance deepens the faller score. Caps at -3.0 points.
     lp = _num(sl.get("level_plus_pct"))
     if lp is not None and lp <= -15:
         penalty = max(-3.0, (lp + 15) / 10.0 - 1.0)  # -15→-1.0, -25→-2.0, -35→-3.0
         score += penalty
         drivers.append(f"{lp:.0f}% vs level mean")
-    # v30.5 — Statcast+ adjustment on the faller path. Tracked-data
+    # v30.5 - Statcast+ adjustment on the faller path. Tracked-data
     # signal either CONFIRMS or COUNTERS the surface decline:
     #   - SC+ ≤ 95 (below pool): underlying contact / pitch quality is
     #     also below mean → deepen the faller score (decline is real).
@@ -1690,15 +1695,15 @@ def _classify_movement(p: dict, perf_delta, skills_delta,
             score -= 1.0
             drivers.append({"label": f"SC+ {int(_scpv_f)} confirms decline",
                             "valence": "bad",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤95, below pool mean) reinforces the surface decline — underlying contact / pitch quality is below pool too."})
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≤95, below pool mean) reinforces the surface decline - underlying contact / pitch quality is below pool too."})
         elif _scpv_f >= 105:
             score += 1.5
             drivers.append({"label": f"SC+ {int(_scpv_f)} counters decline",
                             "valence": "good",
-                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥105, above pool mean) counters the surface dip — tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
-    # v12 — xMetric verification gate for AAA fallers. If the surface
+                            "tooltip": f"Statcast+ {int(_scpv_f)} (≥105, above pool mean) counters the surface dip - tracked-data signal suggests the slump is BABIP / sequencing noise rather than a real decline."})
+    # v12 - xMetric verification gate for AAA fallers. If the surface
     # dip isn't supported by underlying Statcast (wOBA under xWOBA,
-    # ERA over xFIP), demote to "none" — the cold streak is bad luck
+    # ERA over xFIP), demote to "none" - the cold streak is bad luck
     # rather than a real prospect drop. Drivers stay so the next
     # rebuild can revisit the call.
     verif = _xmetric_verification(p, "down")
@@ -1718,7 +1723,7 @@ def _direction_from_delta(delta: float) -> str:
     return "flat"
 
 
-# v30 — Statcast drivers. Always emits the composite SC+ chip when the
+# v30 - Statcast drivers. Always emits the composite SC+ chip when the
 # prospect has tracked data, plus per-component standouts when an
 # individual metric reaches an "elite" bar. Surfaces ACROSS every
 # spotlight bucket (riser / rebound / faller / possible_regressor)
@@ -1732,7 +1737,7 @@ def _statcast_drivers(p: dict) -> list[dict]:
     if sc_plus is not None:
         try:
             v = int(sc_plus)
-            # v30.5 — Tighter color thresholds per user feedback: even
+            # v30.5 - Tighter color thresholds per user feedback: even
             # mild above-pool / below-pool values should read green /
             # red instead of falling into the neutral band. Anything
             # ≥ 105 is meaningfully above mean (the user's example:
@@ -1750,7 +1755,7 @@ def _statcast_drivers(p: dict) -> list[dict]:
             out.append({
                 "label":   f"SC+ {v}",
                 "valence": valence,
-                "tooltip": f"Statcast+ {v} — {tone} mean (100 = pool average, σ × 15)",
+                "tooltip": f"Statcast+ {v} - {tone} mean (100 = pool average, σ × 15)",
             })
         except (TypeError, ValueError):
             pass
@@ -1809,7 +1814,7 @@ def _statcast_drivers(p: dict) -> list[dict]:
 
 
 def compute_movement(p: dict) -> dict:
-    """Centralized movement engine — performance-anchored composite.
+    """Centralized movement engine - performance-anchored composite.
 
     Drives both the spotlights buckets (via _classify_movement) and the
     main-list "Top movers" / stockFilter chips (via the same {direction,
@@ -1817,7 +1822,7 @@ def compute_movement(p: dict) -> dict:
     if (p.get("status") or "") == "debuted":
         return {
             "direction": "debuted", "delta": 0.0,
-            "from_label": "—", "to_label": "—",
+            "from_label": " - ", "to_label": " - ",
             "from_date": "", "to_date": "",
             "perf_delta": None, "skills_delta": None,
             "drivers": [],
@@ -1836,12 +1841,12 @@ def compute_movement(p: dict) -> dict:
     drivers.extend(skills_drivers or [])
     drivers.extend(list_jump_drivers or [])
     drivers.extend(gate_drivers)
-    # v30 — Statcast drivers (composite SC+ + elite component standouts).
+    # v30 - Statcast drivers (composite SC+ + elite component standouts).
     # Surface for every bucket so the user always sees the underlying
     # tracked-data signal regardless of which way the prospect's
     # surface stats moved.
     drivers.extend(_statcast_drivers(p))
-    # Dedup while preserving order. v29 — drivers now mix strings AND
+    # Dedup while preserving order. v29 - drivers now mix strings AND
     # dicts (the "+ upside" pink-pill driver is appended as a dict so
     # the UI can color it by valence); both shapes have to dedup. Key
     # by the dict's "label" when it's a dict, otherwise by the string
@@ -1855,13 +1860,13 @@ def compute_movement(p: dict) -> dict:
         seen.add(key)
         _deduped.append(d)
     drivers = _deduped
-    # v30.7 — SC+ chip dedup. The bucket-specific path (faller /
+    # v30.7 - SC+ chip dedup. The bucket-specific path (faller /
     # rebound) emits a contextual SC+ chip like "SC+ 105 counters
     # decline" / "SC+ 110 confirms rebound" that already names the
     # composite. _statcast_drivers then emits the plain "SC+ 105"
     # chip on every bucket. Fallers were showing BOTH side-by-side
     # ("SC+ 105 · SC+ 105 counters decline"). Drop the plain chip
-    # when a contextual one carrying the same SC+ value is present —
+    # when a contextual one carrying the same SC+ value is present - 
     # they say the same thing.
     import re as _scre
     _contextual_sc_vals: set[int] = set()
@@ -1893,7 +1898,7 @@ def compute_movement(p: dict) -> dict:
     pts = p.get("points") or []
     latest = pts[-1] if pts else {}
     prior_pt = pts[-2] if len(pts) >= 2 else latest
-    # v15 — Normalize to dict shape + bump cap to 8 (was 5).
+    # v15 - Normalize to dict shape + bump cap to 8 (was 5).
     sl_for_ctx = p.get("statline") or {}
     is_pitcher_ctx = bool(sl_for_ctx.get("is_pitcher"))
     normalized = [_normalize_driver(d, is_pitcher_context=is_pitcher_ctx)
@@ -1901,8 +1906,8 @@ def compute_movement(p: dict) -> dict:
     return {
         "direction": _direction_from_delta(score),
         "delta": round(score, 2),
-        "from_label": prior_pt.get("consensus_fv_label") or "—",
-        "to_label": latest.get("consensus_fv_label") or "—",
+        "from_label": prior_pt.get("consensus_fv_label") or " - ",
+        "to_label": latest.get("consensus_fv_label") or " - ",
         "from_date": prior_pt.get("snapshot_date") or "",
         "to_date":   latest.get("snapshot_date") or "",
         "perf_delta": round(perf, 3) if perf is not None else None,
@@ -1917,7 +1922,7 @@ def build_spotlights(players: list[dict], graduates: list[dict]) -> dict:
 
     All buckets feed off the centralized compute_movement engine. The
     legacy `hot` key is aliased to `risers` for one release so cached
-    payloads still render. v16 dropped `possible_regressors` — it never
+    payloads still render. v16 dropped `possible_regressors` - it never
     populated meaningfully and was just empty noise on the UI."""
     risers: list[dict] = []
     rebounders: list[dict] = []
@@ -1949,7 +1954,7 @@ def build_spotlights(players: list[dict], graduates: list[dict]) -> dict:
         "risers":     risers_sorted,
         "rebounders": rebounders_sorted,
         "fallers":    fallers_sorted,
-        # Back-compat alias — older cached payloads / pre-rebuild frontends
+        # Back-compat alias - older cached payloads / pre-rebuild frontends
         # read `.hot`. Drop after one rebuild cycle.
         "hot":        risers_sorted,
     }

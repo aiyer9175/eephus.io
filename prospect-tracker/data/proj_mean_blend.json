@@ -1,0 +1,23 @@
+{
+ "fitted_at": "2026-06-13",
+ "model": "proj_lgbm_v1",
+ "what": "GLOBAL mean-blend recenter, LIFT-ONLY. The q50 head is MAE-optimal but, for the right-skewed/zero-inflated WAR label, sits below the EXPECTED value - and the gap WIDENS at long horizons, where attrition (esp. pitcher injury) collapses the median while the surviving-star mass keeps the mean up. So the displayed out-year path cliffed for stars (the owner's Lindor + Skenes reports). shift = lambda_h * (implied_mean - q50); q50' = q50 + max(0, shift). implied_mean = trapezoid of the five quantile heads. LIFT-ONLY: under-projected rows recenter UP toward expected value; a projection is NEVER pulled down (the q90 band carries the downside). Bands untouched; coverage/pinball preserved. Self-scaling by skew.",
+ "mode": "lift_only",
+ "protocol": "forward-chained dev fit + 2022-2024 HOLDOUT confirmation. Per-horizon lambda chosen to maximize the recenter (minimize |bias|) subject to MAE staying BELOW the prior champion (marcel_decay_v2) at every validatable horizon. h1-h3 take the FULL implied mean (1.0) - holdout MAE still beats champion; h4 caps at 0.5 (full 1.0 would exceed champion MAE there); h5 set to 0.5 conservatively (labels immature on the holdout - dev-validated, first holdout look when 2027+ seasons complete). The star h2 mean-blend that FAILED this same holdout was the cautionary precedent. Pairs with the in-progress-season fix (registry: fa_projection_marcel) that lifts limited/injured veterans.",
+ "lambda_by_horizon": {
+  "1": 1.0,
+  "2": 1.0,
+  "3": 1.0,
+  "4": 0.5,
+  "5": 0.5
+ },
+ "holdout_2022_2024": {
+  "note": "LIFT-ONLY. bias_before = unblended q50 head; bias_after = this blend. Beats champion (marcel_decay_v2) MAE at every horizon shown. h5 (and h4 from base 2024) omitted where labels have not matured.",
+  "champion_mae": {"1": 0.618, "2": 0.548, "3": 0.485, "4": 0.424},
+  "1": {"bias_before": -0.123, "bias_after": -0.027, "mae_before": 0.539, "mae_after": 0.559, "n": 6611},
+  "2": {"bias_before": -0.164, "bias_after": -0.046, "mae_before": 0.486, "mae_after": 0.514, "n": 6611},
+  "3": {"bias_before": -0.201, "bias_after": -0.076, "mae_before": 0.438, "mae_after": 0.467, "n": 4285},
+  "4": {"bias_before": -0.193, "bias_after": -0.143, "mae_before": 0.399, "mae_after": 0.412, "n": 2103}
+ },
+ "disclosed_residual": "Still a recenter of the EXISTING heads, which are tail-light (predict ~25-35% of actual >=3-WAR seasons), so even the implied mean trails the true mean at the extreme top. A heads-level tail refit (or a dedicated mean head) is the open follow-up; this blend closes most of the visible gap without retraining."
+}

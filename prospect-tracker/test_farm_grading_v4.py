@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """v4 farm-grading-system tests — steepened FV_POINTS curve, 5 new
 leaves (top-3 grad WAR, conviction, boom% leaf, draft-pool efficiency,
 IFA ROI), rebalanced branch weights, conviction cap."""

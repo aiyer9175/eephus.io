@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the v3 farm grade tree (4 main grades, 10 leaf sub-grades).
 
 v3 changes vs v2:
@@ -56,21 +61,21 @@ class TestTreeWeights:
             f"Main weights must sum to 1.0; got {total}"
         )
 
-    def test_development_is_solo_top_weighted(self):
-        # v8 weights — Development bumped to 0.55 (solo top, current-farm
-        # signal). MLB Production at 0.15. Financial at 0.20 (tier-2 input,
-        # outweighs Acquisition Strategy). Acquisition Strategy at 0.10
-        # (smallest input — acquisition luck distorts year-over-year).
-        # The "development-first" thesis: sustained per-tool growth is the
-        # highest-conviction org signal, least confounded by acquisition
-        # luck or upper-league streaks.
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
-            "v8: Development is solo top, MLB Production is below Financial"
+    def test_value_is_dominant_weighted(self):
+        # v40 — VALUE-TRACKING recalibration. The Value branch (Financial key:
+        # aggregate risk-adjusted controlled surplus) is the DOMINANT input (0.65),
+        # reversing the old development-first thesis that decoupled the grade from a
+        # system's total value. MLB Production (raw graduate WAR) is the secondary
+        # check; Development + Acquisition are minor. The grade should principally
+        # reflect the total risk-adjusted value of the active prospect pool.
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_MLB_PRODUCTION, (
+            "v40: Value (aggregate surplus) is the dominant branch"
         )
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
-        assert FARM_TREE_WEIGHT_DEVELOPMENT > FARM_TREE_WEIGHT_FINANCIAL
-        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY, (
-            "v8: Financial outweighs Acquisition Strategy (0.20 > 0.10)"
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_DEVELOPMENT
+        assert FARM_TREE_WEIGHT_FINANCIAL > FARM_TREE_WEIGHT_ACQUISITION_STRATEGY
+        assert FARM_TREE_WEIGHT_FINANCIAL >= 0.5, "v40: Value carries the plurality of the grade"
+        assert FARM_TREE_WEIGHT_MLB_PRODUCTION > FARM_TREE_WEIGHT_DEVELOPMENT, (
+            "v40: realized production outweighs per-tool development"
         )
 
     def test_sub_weight_is_50_percent(self):
@@ -162,9 +167,11 @@ class TestPickSlotExpectedWar:
         assert _pick_slot_expected_war(-5) is None
 
     def test_huge_pick_returns_tail_value(self):
-        # Picks past the table's last threshold get the tail value
-        # (currently 0.03).
-        assert _pick_slot_expected_war(99_999) == 0.03
+        # Picks past the table's last threshold get the tail value (the
+        # fitted realized curve since Phase 4b; 0.03 on the hand-set
+        # fallback) — pin the invariant, not the provenance.
+        assert _pick_slot_expected_war(99_999) == _pick_slot_expected_war(500)
+        assert _pick_slot_expected_war(99_999) > 0
 
     def test_pick_string_coerces(self):
         # CSV ingest sometimes leaves pick_overall as a string.

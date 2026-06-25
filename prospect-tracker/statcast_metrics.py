@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """MiLB Statcast-style pitch movement and contact-quality aggregates.
 
 The MLB Stats API game feed exposes Statcast-like fields for some non-MLB
@@ -11,6 +16,8 @@ from __future__ import annotations
 import concurrent.futures
 import hashlib
 import json
+import math
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import date
@@ -20,9 +27,23 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import feed_cache as feed_cache_mod  # aliased: a local `feed_cache` dict shadows it below
+
 
 MLB_STATS_API = "https://statsapi.mlb.com/api/v1"
 MLB_GAME_FEED_API = "https://statsapi.mlb.com/api/v1.1/game"
+# v31.12 — Cache version is appended to the hash key, so bumping it
+# auto-invalidates every cached response without manual cleanup. Bump
+# when the upstream API response shape changes or when this module
+# starts consuming additional fields that older cached payloads lack.
+# Current bumps:
+#   v1 — original
+#   v2 — added gameLog standout/recent_games piggyback (v30.7/.8)
+#   v3 — switched zone-metric aggregation to per-level splits (v20)
+#   v4 — added hitter batted-ball coordinates, spray buckets, and
+#        rolling estimated xwOBA from the same game feed.
+#   v5 — added pitch acceleration / release-side fields for tjStuff+.
+CACHE_VERSION = "v5"
 CACHE_DIR = Path(__file__).parent / ".cache" / "statcast_metrics"
 CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -80,7 +101,9 @@ class StatcastMetricRow:
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
     key = requests.Request("GET", url, params=params).prepare().url or url
-    safe = hashlib.md5(key.encode("utf-8")).hexdigest()
+    # Cache version goes INTO the hash so a bump invalidates everything.
+    versioned_key = f"{CACHE_VERSION}|{key}"
+    safe = hashlib.md5(versioned_key.encode("utf-8")).hexdigest()
     path = CACHE_DIR / f"{safe}.json"
     if path.exists() and time.time() - path.stat().st_mtime <= ttl_seconds:
         return json.loads(path.read_text(encoding="utf-8"))
@@ -104,6 +127,37 @@ def _safe_float(v) -> float | None:
 def _mean(vals: list[float]) -> float | None:
     vals = [v for v in vals if v is not None]
     return round(sum(vals) / len(vals), 1) if vals else None
+
+
+def _mean_round(vals: list[float], digits: int = 1) -> float | None:
+    vals = [v for v in vals if v is not None]
+    return round(sum(vals) / len(vals), digits) if vals else None
+
+
+HOME_PLATE_Y_FT = 17 / 12
+
+
+def _calculate_vaa_from_coords(coords: dict) -> float | None:
+    """Vertical approach angle at the front of home plate, in degrees."""
+    try:
+        vy0 = float(coords["vY0"])
+        vz0 = float(coords["vZ0"])
+        ay = float(coords["aY"])
+        az = float(coords["aZ"])
+        y0 = float(coords.get("y0") or 50.0)
+        if ay == 0:
+            return None
+        discriminant = vy0 * vy0 - (2 * ay * (y0 - HOME_PLATE_Y_FT))
+        if discriminant < 0:
+            return None
+        vy_f = -math.sqrt(discriminant)
+        t = (vy_f - vy0) / ay
+        vz_f = vz0 + (az * t)
+        if vy_f == 0:
+            return None
+        return round(-math.degrees(math.atan(vz_f / vy_f)), 2)
+    except (KeyError, TypeError, ValueError):
+        return None
 
 
 def _rounded_pct_parts(counts: dict[str, int]) -> dict[str, float]:
@@ -131,7 +185,12 @@ def _level_from_split(split: dict) -> str | None:
     return level
 
 
-def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
+def _game_logs(
+    player_id: int,
+    season: int,
+    is_pitcher: bool,
+    ttl_seconds: int = 86400,
+) -> list[dict]:
     """Fetch per-player game logs using sportId hydrates.
 
     The plain `leagueListId=milb_full` stats path misses some rookie-ball
@@ -153,7 +212,7 @@ def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
                     f"sportId={sport_id},gameType=[R]),hydrations"
                 )
             },
-            ttl_seconds=86400,
+            ttl_seconds=ttl_seconds,
         )
         people = data.get("people") or []
         stats = (people[0].get("stats") or []) if people else []
@@ -170,14 +229,26 @@ def _game_logs(player_id: int, season: int, is_pitcher: bool) -> list[dict]:
 def _extract_standout_games(
     logs: list[dict],
     is_pitcher: bool,
-    limit: int = 5,
+    limit: int = 8,
+    window_days: int = 14,
 ) -> list[dict]:
     """Pick the player's top standout single-game performances from the
     raw `_game_logs` output. Score each game on raw box-line achievement
     (hitters: hits + HR + XBH; pitchers: K + scoreless IP + low hits) and
     return the top `limit`, sorted newest-first. v30.7 — feeds the
     'Standout performances' widget on the Spotlights page.
+
+    v31.10 — Trailing `window_days` filter (default 14d). Also widened
+    inclusion floors per user calibration ("moderate loosening"):
+      Hitters: 3+ XBH OR 4+ hits OR 6+ RBI OR multi-HR game
+      Pitchers: 10+ K OR 7+ IP no-ER OR per-game FIP ≤ 2.50
+        (FIP outing is approximated from the in-game line: see helper).
+    Limit bumped to 8 (from 5) to push more per-player history into
+    the FV-weighted ticker layer, which still de-dupes per player.
     """
+    from datetime import date as _date, timedelta as _td
+    cutoff = (_date.today() - _td(days=window_days)).isoformat()
+
     scored: list[tuple[float, dict]] = []
     for split in logs:
         st = split.get("stat") or {}
@@ -186,10 +257,12 @@ def _extract_standout_games(
         date = split.get("date") or (game.get("officialDate"))
         if not date:
             continue
+        if date < cutoff:
+            continue
         level = split.get("_level")
         score = 0.0
         # Hitter scoring — raw counting stats from gameLog. Higher is
-        # better; 3+H game is the baseline standout floor (score ≥ 3.0).
+        # better; floors below set inclusion.
         if not is_pitcher:
             h    = _safe_int(st.get("hits"))
             ab   = _safe_int(st.get("atBats"))
@@ -212,8 +285,19 @@ def _extract_standout_games(
                 + (sb or 0) * 0.5
                 - (so or 0) * 0.2
             )
-            # 3-hit game floor (or 1 HR floor) before we even consider it.
-            if (h or 0) < 3 and (hr or 0) < 1 and (rbi or 0) < 3:
+            # v31.10 inclusion floor — any of:
+            #   * 4+ hits (high-volume night)
+            #   * 3+ XBH (doubles + triples + HR combined)
+            #   * 6+ RBI (productive RBI night)
+            #   * multi-HR game (2+)
+            xbh = (doub or 0) + (trip or 0) + (hr or 0)
+            qualifies = (
+                (h or 0) >= 4
+                or xbh >= 3
+                or (rbi or 0) >= 6
+                or (hr or 0) >= 2
+            )
+            if not qualifies:
                 continue
             line_parts = []
             line_parts.append(f"{h}-for-{ab}")
@@ -226,7 +310,6 @@ def _extract_standout_games(
             line = " · ".join(line_parts)
         else:
             # Pitcher scoring — IP, K, scoreless game, low H, no BB.
-            # 5+ IP shutout or 8+ K outing is the floor for inclusion.
             ip   = _safe_float(st.get("inningsPitched"))
             k    = _safe_int(st.get("strikeOuts"))
             er   = _safe_int(st.get("earnedRuns"))
@@ -236,14 +319,23 @@ def _extract_standout_games(
             hra  = _safe_int(st.get("homeRuns"))
             if ip is None or ip < 2.0:
                 continue
-            # Standout floors:
-            #   * 8+ K outing
-            #   * 5+ IP with 0 ER
-            #   * 7+ IP with ≤1 ER
+            # v31.10 inclusion floor — any of:
+            #   * 10+ K outing
+            #   * 7+ IP with 0 ER (long scoreless start)
+            #   * per-game FIP ≤ 2.50 (any of the rare clean lines that
+            #     don't trip the K-threshold but are clearly dominant —
+            #     e.g. 6 IP, 1 H, 0 ER, 1 BB, 5 K — that's a sub-2 FIP
+            #     outing even without 10 K).
+            # Per-game FIP approximation: (13*HR + 3*BB - 2*K) / IP + 3.10
+            fip_outing = None
+            if ip > 0:
+                fip_outing = (
+                    13.0 * (hra or 0) + 3.0 * (bb or 0) - 2.0 * (k or 0)
+                ) / ip + 3.10
             qualifies = (
-                (k is not None and k >= 8)
-                or (ip >= 5.0 and (er or 0) == 0)
-                or (ip >= 7.0 and (er or 0) <= 1)
+                (k is not None and k >= 10)
+                or (ip >= 7.0 and (er or 0) == 0)
+                or (fip_outing is not None and fip_outing <= 2.50 and ip >= 4.0)
             )
             if not qualifies:
                 continue
@@ -334,6 +426,10 @@ def _extract_recent_games(
             h    = _safe_int(st.get("hits")) or 0
             bb   = _safe_int(st.get("baseOnBalls")) or 0
             hra  = _safe_int(st.get("homeRuns")) or 0
+            # battersFaced lets a date-windowed leaderboard recompute K% / BB%
+            # (strikeouts / walks per batter) off the raw box line. None when
+            # the feed omits it; the consumer falls back to per-9 rates.
+            bf   = _safe_int(st.get("battersFaced"))
             entry = {
                 "date": date,
                 "level": level,
@@ -342,6 +438,7 @@ def _extract_recent_games(
                                  else (split.get("game") or {}).get("isHome")),
                 "is_pitcher": True,
                 "ip": ip, "k": k, "er": er, "r": r, "h": h, "bb": bb, "hr": hra,
+                "bf": bf,
             }
         rows.append(entry)
     # Newest first; take limit.
@@ -377,6 +474,211 @@ def _is_barrel(ev: float | None, la: float | None) -> bool:
     return lower <= la <= min(50, upper)
 
 
+def _percentile(vals: list[float], pct: float) -> float | None:
+    vals = sorted(v for v in vals if v is not None)
+    if not vals:
+        return None
+    if len(vals) == 1:
+        return vals[0]
+    rank = (len(vals) - 1) * pct
+    lo = int(math.floor(rank))
+    hi = int(math.ceil(rank))
+    if lo == hi:
+        return vals[lo]
+    return vals[lo] + (vals[hi] - vals[lo]) * (rank - lo)
+
+
+_BIP_WOBA_WEIGHTS = {
+    "out": 0.0,
+    "single": 0.88,
+    "double": 1.25,
+    "triple": 1.58,
+    "hr": 2.03,
+}
+_XWOBA_K = 61
+_XWOBA_EPS = 0.75
+_XWOBA_EV_SCALE = 4.0
+_XWOBA_LA_SCALE = 8.0
+_XWOBA_KNN_POINTS: list[tuple[float, float, float]] | None = None
+
+
+def _add_xwoba_knn_point(points: list[tuple[float, float, float]], ev: float, la: float, outcome: str, reps: int = 1) -> None:
+    val = _BIP_WOBA_WEIGHTS[outcome]
+    for _ in range(reps):
+        points.append((float(ev), float(la), val))
+
+
+def _xwoba_knn_points() -> list[tuple[float, float, float]]:
+    """Synthetic EV/LA outcome cloud used by the KNN contact model.
+
+    The shape follows the TJStats article approach: predict total-base
+    outcome probabilities from launch speed + launch angle, then convert
+    those probabilities to an expected wOBA value. We do not ship MLB's
+    historical Statcast training data in this repo, so this deterministic
+    cloud encodes broad public baseball priors: soft/low/high contact is
+    mostly out value, soft liners can be singles, hard low liners carry
+    single/double value, and the 98+ mph / 20-35 degree band carries the
+    highest extra-base/HR probability.
+    """
+
+    global _XWOBA_KNN_POINTS
+    if _XWOBA_KNN_POINTS is not None:
+        return _XWOBA_KNN_POINTS
+    points: list[tuple[float, float, float]] = []
+    for ev in range(50, 116, 5):
+        for la in (-50, -35, -25, -15, 35, 45, 55, 65, 75):
+            _add_xwoba_knn_point(points, ev, la, "out", reps=5)
+    for ev in range(70, 106, 5):
+        for la in (-8, -3, 0, 25, 30, 35):
+            _add_xwoba_knn_point(points, ev, la, "out", reps=2)
+    for ev in (88, 94, 100, 106):
+        for la in (-7, -3, 1, 5):
+            _add_xwoba_knn_point(points, ev, la, "single")
+    for ev in (70, 76, 82, 88, 94):
+        for la in (6, 10, 14, 18):
+            _add_xwoba_knn_point(points, ev, la, "single", reps=3)
+    for ev in (92, 97, 102, 107):
+        for la in (14, 18, 22, 26, 30):
+            _add_xwoba_knn_point(points, ev, la, "double")
+    for ev in (96, 102):
+        for la in (16, 22):
+            _add_xwoba_knn_point(points, ev, la, "triple")
+    for ev in (99, 103, 107, 111, 115):
+        for la in (23, 28, 33):
+            _add_xwoba_knn_point(points, ev, la, "hr")
+    _XWOBA_KNN_POINTS = points
+    return points
+
+
+def _estimate_xwoba(ev: float | None, la: float | None) -> float | None:
+    """KNN-style expected wOBA on contact from launch speed + angle."""
+
+    if ev is None or la is None:
+        return None
+    neighbors: list[tuple[float, float]] = []
+    for ref_ev, ref_la, value in _xwoba_knn_points():
+        dist = ((ev - ref_ev) / _XWOBA_EV_SCALE) ** 2 + ((la - ref_la) / _XWOBA_LA_SCALE) ** 2
+        neighbors.append((dist, value))
+    neighbors.sort(key=lambda row: row[0])
+    top = neighbors[:_XWOBA_K]
+    denom = sum(1.0 / (dist + _XWOBA_EPS) for dist, _value in top)
+    if denom <= 0:
+        return None
+    xwoba = sum(value / (dist + _XWOBA_EPS) for dist, value in top) / denom
+    return round(max(0.02, min(1.60, xwoba)), 3)
+
+
+def _spray_angle(coord_x: float | None, coord_y: float | None) -> float | None:
+    if coord_x is None or coord_y is None:
+        return None
+    # MLB Gameday coordinates use a 250-ish px field canvas. Treat home as
+    # bottom-center and center field as top-center, then compute horizontal
+    # spray angle where negative is LF-side and positive is RF-side.
+    dx = coord_x - 125.0
+    dy = 200.0 - coord_y
+    if dy <= 0:
+        return None
+    import math
+    return round(math.degrees(math.atan2(dx, dy)), 1)
+
+
+def _spray_bucket(angle: float | None, batter_side: str | None) -> str | None:
+    if angle is None:
+        return None
+    if angle <= -15:
+        field = "lf"
+    elif angle >= 15:
+        field = "rf"
+    else:
+        field = "cf"
+    side = (batter_side or "").upper()
+    if side == "R":
+        return "pull" if field == "lf" else ("oppo" if field == "rf" else "center")
+    if side == "L":
+        return "pull" if field == "rf" else ("oppo" if field == "lf" else "center")
+    return {"lf": "left", "cf": "center", "rf": "right"}[field]
+
+
+def _is_air_ball(la: float | None) -> bool:
+    return la is not None and la >= 10.0
+
+
+def _is_pull_air_type(row: dict, la: float | None) -> bool:
+    """Return True for FB/LD/popup batted-ball events.
+
+    Pull-air% is defined as pull-side fly balls + line drives + popups
+    divided by total batted-ball events. Prefer the tagged trajectory
+    from the feed; launch angle is only a fallback for older rows that
+    predate storing the trajectory label.
+    """
+    raw = (
+        row.get("bb_type")
+        or row.get("batted_ball_type")
+        or row.get("trajectory")
+        or row.get("hit_type")
+        or ""
+    )
+    kind = re.sub(r"[^a-z]", "", str(raw).lower())
+    if kind in {"flyball", "linedrive", "popup", "popupbunt"}:
+        return True
+    if kind in {"groundball", "groundout", "groundedintodoubleplay"}:
+        return False
+    return _is_air_ball(la)
+
+
+def _xwobacon_profile_adjustment(
+    xwobacon: float | None,
+    avg_ev: float | None,
+    p90_ev: float | None,
+    hard_hit_pct: float | None,
+    barrel_pct: float | None,
+    _pull_air_pct: float | None,
+    avg_la: float | None,
+    bbe: int,
+) -> float:
+    if xwobacon is None or bbe < 25:
+        return 0.0
+    lift = 0.0
+    # MLB's public xwOBA is deliberately context-neutral: EV/LA drive the
+    # contact estimate, while spray/park/weather are excluded. Keep this
+    # aggregate correction tied to EV/LA-derived contact quality only.
+    if (
+        barrel_pct is not None and barrel_pct >= 10.0
+        and hard_hit_pct is not None and hard_hit_pct >= 45.0
+    ):
+        lift += max(0.0, barrel_pct - 8.0) * 0.005
+        if p90_ev is not None:
+            lift += max(0.0, p90_ev - 104.0) * 0.0025
+        if avg_la is not None and avg_la >= 18.0:
+            lift += min(0.018, (avg_la - 18.0) * 0.006)
+    # Hard-contact grounder/liner profiles are not barrel monsters, but a
+    # .340-ish contact estimate is too light when the player is sustaining
+    # 50%+ hard-hit contact with a 90+ mph average EV.
+    if (
+        xwobacon < 0.365
+        and hard_hit_pct is not None and hard_hit_pct >= 50.0
+        and avg_ev is not None and avg_ev >= 90.0
+        and avg_la is not None and avg_la <= 8.0
+    ):
+        lift += max(0.0, hard_hit_pct - 45.0) * 0.003
+        lift += max(0.0, avg_ev - 90.0) * 0.006
+    # The EV/LA surface can over-credit soft line-drive batches because
+    # those batted balls often become singles in small samples. If the
+    # aggregate profile has no real hard-contact support, pull the contact
+    # estimate back down instead of letting batting-average contact masquerade
+    # as power contact.
+    if (
+        avg_ev is not None and avg_ev < 86.0
+        and p90_ev is not None and p90_ev < 100.0
+        and hard_hit_pct is not None and hard_hit_pct < 30.0
+        and (barrel_pct or 0.0) <= 2.0
+        and xwobacon > 0.330
+    ):
+        soft_cap = 0.325 - max(0.0, 86.0 - avg_ev) * 0.008
+        lift = min(lift, soft_cap - xwobacon)
+    return round(max(-0.45, min(0.08, lift)), 3)
+
+
 def _finalize_contact(rows: list[dict], is_pitcher: bool) -> dict:
     evs = [_safe_float(r.get("launch_speed")) for r in rows]
     las = [_safe_float(r.get("launch_angle")) for r in rows]
@@ -386,15 +688,108 @@ def _finalize_contact(rows: list[dict], is_pitcher: bool) -> dict:
         return {}
     hard = sum(1 for ev, _la in paired if ev >= 95)
     barrels = sum(1 for ev, la in paired if _is_barrel(ev, la))
-    return {
+    avg_ev = _mean([ev for ev, _la in paired])
+    p90_ev = round(_percentile([ev for ev, _la in paired], 0.90), 1)
+    avg_la = _mean([la for _ev, la in paired if la is not None])
+    hard_hit_pct = round(hard / bbe * 100, 1)
+    barrel_pct = round(barrels / bbe * 100, 1)
+    xwobas = [_estimate_xwoba(ev, la) for ev, la in paired]
+    xwobas = [v for v in xwobas if v is not None]
+    xwoba_base = round(sum(xwobas) / len(xwobas), 3) if xwobas else None
+
+    spray_counts = {"pull": 0, "center": 0, "oppo": 0}
+    air_pull = air_total = 0
+    locs: list[dict] = []
+    dated_for_roll: list[dict] = []
+    for r in rows:
+        ev = _safe_float(r.get("launch_speed"))
+        la = _safe_float(r.get("launch_angle"))
+        if ev is None:
+            continue
+        x = _safe_float(r.get("coord_x"))
+        y = _safe_float(r.get("coord_y"))
+        angle = _spray_angle(x, y)
+        bucket = _spray_bucket(angle, r.get("batter_side"))
+        if bucket not in spray_counts and r.get("spray") in spray_counts:
+            bucket = r.get("spray")
+        if bucket in spray_counts:
+            spray_counts[bucket] += 1
+        if _is_pull_air_type(r, la):
+            air_total += 1
+            if bucket == "pull":
+                air_pull += 1
+        xwoba = _estimate_xwoba(ev, la)
+        if xwoba is not None:
+            dated_for_roll.append({"date": r.get("date"), "xwoba": xwoba})
+        if x is not None and y is not None:
+            locs.append({
+                "game_pk": r.get("game_pk"),
+                "date": r.get("date"),
+                "x": round(x, 1),
+                "y": round(y, 1),
+                "launch_speed": ev,
+                "launch_angle": la,
+                "distance_ft": _safe_float(r.get("total_distance")),
+                "xwoba_est": xwoba,
+                "hit_type": r.get("hit_type") or r.get("event") or "batted_ball",
+                "bb_type": r.get("bb_type") or r.get("batted_ball_type") or r.get("trajectory"),
+                "spray": bucket,
+                "spray_angle": angle,
+            })
+    locs = locs[-450:]
+
+    rolling: list[dict] = []
+    dated_for_roll = [r for r in dated_for_roll if r.get("date")]
+    dated_for_roll.sort(key=lambda r: r["date"])
+    win = 25
+    for i in range(len(dated_for_roll)):
+        chunk = dated_for_roll[max(0, i - win + 1):i + 1]
+        if len(chunk) < 5:
+            continue
+        rolling.append({
+            "date": dated_for_roll[i]["date"],
+            "bbe": len(chunk),
+            "xwoba": round(sum(r["xwoba"] for r in chunk) / len(chunk), 3),
+        })
+
+    out = {
         "batted_balls": bbe,
-        "avg_ev": _mean([ev for ev, _la in paired]),
+        "avg_ev": avg_ev,
         "max_ev": round(max(ev for ev, _la in paired), 1),
-        "avg_la": _mean([la for _ev, la in paired if la is not None]),
-        "hard_hit_pct": round(hard / bbe * 100, 1),
-        "barrel_pct": round(barrels / bbe * 100, 1),
+        "p90_ev": p90_ev,
+        "avg_la": avg_la,
+        "hard_hit_pct": hard_hit_pct,
+        "barrel_pct": barrel_pct,
+        "xwoba_est": xwoba_base,
+        "xwobacon_est": xwoba_base,
+        "spray": {
+            "pull_pct": round(spray_counts["pull"] / bbe * 100, 1) if bbe else None,
+            "center_pct": round(spray_counts["center"] / bbe * 100, 1) if bbe else None,
+            "oppo_pct": round(spray_counts["oppo"] / bbe * 100, 1) if bbe else None,
+            "pull_air_pct": round(air_pull / bbe * 100, 1) if bbe else None,
+            "pull_air_bbe": air_pull,
+            "air_bbe": air_total,
+        },
+        "rolling_xwoba": rolling[-60:],
+        "hit_locations": locs,
         "direction": "allowed" if is_pitcher else "hit",
     }
+    adj = _xwobacon_profile_adjustment(
+        xwoba_base,
+        avg_ev,
+        p90_ev,
+        hard_hit_pct,
+        barrel_pct,
+        out["spray"]["pull_air_pct"],
+        avg_la,
+        bbe,
+    )
+    if adj and xwoba_base is not None:
+        out["xwobacon_raw"] = xwoba_base
+        out["xwobacon_adjustment"] = adj
+        out["xwoba_est"] = round(max(0.02, min(1.60, xwoba_base + adj)), 3)
+        out["xwobacon_est"] = out["xwoba_est"]
+    return out
 
 
 def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict]:
@@ -404,6 +799,11 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
     ]
     if not tracked:
         return {}, {}
+    try:
+        from mlb_stuff_plus import score_pitch_points
+        tracked = score_pitch_points(tracked)
+    except Exception:
+        tracked = [dict(p) for p in tracked]
     by_type: dict[str, list[dict]] = {}
     totals_by_side: dict[str, int] = {}
     for p in tracked:
@@ -442,6 +842,11 @@ def _finalize_pitch(points: list[dict], outings: list[dict]) -> tuple[dict, dict
             "avg_hb": _mean([r.get("hb") for r in rows]),
             "avg_ivb": _mean([r.get("ivb") for r in rows]),
             "avg_spin": _mean([r.get("spin") for r in rows]),
+            "avg_stuff_plus": _mean_round([r.get("tj_stuff_plus") for r in rows], 0),
+            "avg_extension": _mean([r.get("extension") for r in rows]),
+            "avg_release_height": _mean([r.get("release_height") for r in rows]),
+            "avg_plate_height": _mean([r.get("plate_height") for r in rows]),
+            "avg_vaa": _mean_round([r.get("vaa") for r in rows], 2),
             "usage_by_batter_side": side_usage,
         })
     summary.sort(key=lambda r: -r["count"])
@@ -492,6 +897,7 @@ def fetch_statcast_metrics_for_player(
     level_hint: str | None,
     is_pitcher: bool,
     feed_cache: dict[int, dict] | None = None,
+    logs: list[dict] | None = None,
 ) -> StatcastMetricRow | None:
     """Build the Statcast metric row for one player.
 
@@ -507,7 +913,7 @@ def fetch_statcast_metrics_for_player(
     """
     if not mlbam_id:
         return None
-    logs = _game_logs(int(mlbam_id), season, is_pitcher=is_pitcher)
+    logs = logs if logs is not None else _game_logs(int(mlbam_id), season, is_pitcher=is_pitcher)
     logs = [s for s in logs if (s.get("_level") or level_hint) in TRACKED_LEVELS]
     if not logs:
         return None
@@ -542,7 +948,7 @@ def fetch_statcast_metrics_for_player(
         if feed_cache is not None and game_pk in feed_cache:
             data = feed_cache[game_pk]
         else:
-            data = _get_json(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", ttl_seconds=86400)
+            data = feed_cache_mod.get_game_feed(game_pk, game_date=split.get("date"))
         game_data = data.get("gameData") or {}
         venue = game_data.get("venue") or {}
         venue_key = str(venue.get("id") or venue.get("name") or "")
@@ -568,6 +974,7 @@ def fetch_statcast_metrics_for_player(
                 pitch_type = (details.get("type") or {}).get("code")
                 pitch_name = (details.get("type") or {}).get("description") or pitch_type
                 breaks = pitch_data.get("breaks") or {}
+                coords = pitch_data.get("coordinates") or {}
                 if is_pitcher:
                     pitch_count += 1
                     if pitch_type:
@@ -580,11 +987,18 @@ def fetch_statcast_metrics_for_player(
                         "pitch_type": pitch_type,
                         "pitch_name": pitch_name,
                         "batter_side": (matchup.get("batSide") or {}).get("code"),
+                        "pitcher_hand": (matchup.get("pitchHand") or {}).get("code"),
                         "velo": _safe_float(pitch_data.get("startSpeed")),
                         "hb": _safe_float(breaks.get("breakHorizontal")),
                         "ivb": _safe_float(breaks.get("breakVerticalInduced")),
                         "spin": _safe_float(breaks.get("spinRate")),
                         "extension": _safe_float(pitch_data.get("extension")),
+                        "ax": _safe_float(coords.get("aX")),
+                        "az": _safe_float(coords.get("aZ")),
+                        "x0": _safe_float(coords.get("x0")),
+                        "release_height": _safe_float(coords.get("z0")),
+                        "plate_height": _safe_float(coords.get("pZ")),
+                        "vaa": _calculate_vaa_from_coords(coords),
                     }
                     if point["hb"] is not None and point["ivb"] is not None:
                         tracked_pitch_count += 1
@@ -594,19 +1008,32 @@ def fetch_statcast_metrics_for_player(
                 launch_speed = _safe_float(hit_data.get("launchSpeed"))
                 launch_angle = _safe_float(hit_data.get("launchAngle"))
                 if launch_speed is not None:
+                    coords = hit_data.get("coordinates") or {}
+                    coord_x = _safe_float(coords.get("coordX"))
+                    coord_y = _safe_float(coords.get("coordY"))
+                    batted_ball_type = (hit_data.get("trajectory") or "").title().replace("_", "")
+                    hit_type = (
+                        details.get("eventType")
+                        or details.get("event")
+                        or (play.get("result") or {}).get("eventType")
+                        or (play.get("result") or {}).get("event")
+                    )
+                    batter_side = (matchup.get("batSide") or {}).get("code")
                     contact_count += 1
-                    contact_rows.append({
+                    contact_row = {
                         "game_pk": game_pk,
                         "date": game_date,
                         "launch_speed": launch_speed,
                         "launch_angle": launch_angle,
-                    })
-                    level_bucket["contact_rows"].append({
-                        "game_pk": game_pk,
-                        "date": game_date,
-                        "launch_speed": launch_speed,
-                        "launch_angle": launch_angle,
-                    })
+                        "total_distance": _safe_float(hit_data.get("totalDistance")),
+                        "coord_x": coord_x,
+                        "coord_y": coord_y,
+                        "hit_type": hit_type,
+                        "bb_type": batted_ball_type,
+                        "batter_side": batter_side,
+                    }
+                    contact_rows.append(contact_row)
+                    level_bucket["contact_rows"].append(contact_row)
         if tracked_pitch_count:
             games_with_pitch += 1
             level_bucket["games_with_pitch"] += 1
@@ -672,10 +1099,13 @@ def fetch_statcast_metrics_for_player(
         pitch_movement=pitch_movement,
         pitch_plot=pitch_plot,
         level_splits=level_splits,
-        # v30.7 — Pull top 5 standout single-game performances off the
+        # v30.7 — Pull top 8 standout single-game performances off the
         # same `logs` we already walked above. Free piggyback — no
         # extra HTTP, just an extra pass over the per-game stat dicts.
-        standout_games=_extract_standout_games(logs, is_pitcher, limit=5),
+        # v31.10 — limit bumped to 8 (was 5), trailing-14d window now
+        # applied inside _extract_standout_games so the ticker leads
+        # with the past two weeks of activity.
+        standout_games=_extract_standout_games(logs, is_pitcher, limit=8),
         # v30.8 — Last 15 game rows for the prospect-detail "Recent
         # gameLogs" viz. Same `logs` we already walked above (free
         # piggyback, no extra HTTP).
@@ -687,6 +1117,7 @@ def fetch_statcast_metrics_for_players(
     players: list[tuple[str, str, int | None, str | None, bool]],
     season: int,
     workers: int = 10,
+    logs_by_key: dict[str, list[dict]] | None = None,
 ) -> dict[str, StatcastMetricRow]:
     targets = [
         p for p in players
@@ -710,47 +1141,60 @@ def fetch_statcast_metrics_for_players(
     # ============================================================
 
     # ---- PASS 1: game logs per player (parallel, cached) ----
-    logs_by_key: dict[str, list[dict]] = {}
+    fetched_logs_by_key: dict[str, list[dict]] = {}
     _p1_start = _time.monotonic()
-    _log.info("statcast pass 1/3: fetching game logs for %d players (%d workers)",
-              len(targets), max_workers)
-    def _fetch_logs(item):
-        key, _name, mlbam, _level, is_p = item
-        try:
-            return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
-        except Exception as e:
-            _log.debug("statcast logs failed for %s: %s", key, e)
-            return key, []
-    _p1_done = 0
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
-        for key, logs in ex.map(_fetch_logs, targets):
-            logs_by_key[key] = logs
-            _p1_done += 1
-            if _p1_done % 250 == 0 or _p1_done == len(targets):
-                _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
-                          _p1_done, len(targets), _time.monotonic() - _p1_start)
+    if logs_by_key is not None:
+        fetched_logs_by_key = {key: list(logs_by_key.get(key) or []) for key, *_ in targets}
+        _log.info("statcast pass 1/3: using preloaded game logs for %d players",
+                  len(targets))
+    else:
+        _log.info("statcast pass 1/3: fetching game logs for %d players (%d workers)",
+                  len(targets), max_workers)
+        def _fetch_logs(item):
+            key, _name, mlbam, _level, is_p = item
+            try:
+                return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
+            except Exception as e:
+                _log.debug("statcast logs failed for %s: %s", key, e)
+                return key, []
+        _p1_done = 0
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+            for key, logs in ex.map(_fetch_logs, targets):
+                fetched_logs_by_key[key] = logs
+                _p1_done += 1
+                if _p1_done % 250 == 0 or _p1_done == len(targets):
+                    _log.info("statcast pass 1/3: %d/%d game-log fetches done (%.0fs)",
+                              _p1_done, len(targets), _time.monotonic() - _p1_start)
 
     # ---- PASS 2: unique game-feed fetch (parallel, cached) ----
+    # Feeds go through the shared feed_cache (one on-disk dir keyed by
+    # game_pk, deduped across statcast/zone/etc). game_date_by_pk lets the
+    # cache give completed games a permanent TTL, so a monthly run only
+    # re-fetches the trailing few days of games.
     game_pks: set[int] = set()
-    for logs in logs_by_key.values():
+    game_date_by_pk: dict[int, str] = {}
+    for logs in fetched_logs_by_key.values():
         for split in logs:
             gpk = int((split.get("game") or {}).get("gamePk") or 0)
             if gpk:
                 game_pks.add(gpk)
+                gd = split.get("date")
+                if gd and gpk not in game_date_by_pk:
+                    game_date_by_pk[gpk] = gd
     feed_cache: dict[int, dict] = {}
     if game_pks:
         _p2_start = _time.monotonic()
         _log.info("statcast pass 2/3: fetching %d unique game feeds (deduped from %d player×game lookups)",
-                  len(game_pks), sum(len(v) for v in logs_by_key.values()))
+                  len(game_pks), sum(len(v) for v in fetched_logs_by_key.values()))
         def _fetch_feed(gpk):
             try:
-                return gpk, _get_json(f"{MLB_GAME_FEED_API}/{gpk}/feed/live", ttl_seconds=86400)
+                return gpk, feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
             except Exception as e:
                 _log.debug("statcast feed failed for game %s: %s", gpk, e)
                 return gpk, {}
         _p2_done = 0
-        # Feeds are large; cap workers so we don't slam the API.
-        feed_workers = max(1, min(max_workers, 12))
+        # Shared cache retries 429 with backoff, so a higher cap is safe.
+        feed_workers = max(1, min(max_workers, 20))
         with concurrent.futures.ThreadPoolExecutor(max_workers=feed_workers) as ex:
             for gpk, feed in ex.map(_fetch_feed, sorted(game_pks)):
                 feed_cache[gpk] = feed
@@ -774,6 +1218,7 @@ def fetch_statcast_metrics_for_players(
                 fetch_statcast_metrics_for_player,
                 key, name, mlbam, season, level, is_pitcher,
                 feed_cache,
+                fetched_logs_by_key.get(key),
             ): key
             for key, name, mlbam, level, is_pitcher in targets
         }

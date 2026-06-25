@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Tests for the MLB-equivalent translation overlay on overseas stats."""
 
 from __future__ import annotations
@@ -31,9 +36,10 @@ class TranslationFactors(unittest.TestCase):
         # Hitter: 145 wRC+ → 145 * 0.87 = 126
         hit = _mlb_translate({"wrc_plus": 145}, ctx, is_pitcher=False)
         self.assertEqual(hit["wrc_plus_mlbe"], 126)
-        # Pitcher: 1.61 ERA → 1.61 * 1.25 = 2.01
+        # Pitcher: 1.61 ERA → 1.61 * 1.54 = 2.48 (Phase-4b refit factor,
+        # data/overseas_translation_eval.json)
         pit = _mlb_translate({"era": 1.61}, ctx, is_pitcher=True)
-        self.assertEqual(pit["era_mlbe"], 2.01)
+        self.assertEqual(pit["era_mlbe"], 2.48)
 
     def test_kbo_factors(self):
         ctx = LEAGUE_CONTEXT["KBO"]

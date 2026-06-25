@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """Confirm DvM+ math is now WAR-tail-weighted.
 
 The user's intent: a 70→75 FV lift counts much more than a 40→45 FV lift.

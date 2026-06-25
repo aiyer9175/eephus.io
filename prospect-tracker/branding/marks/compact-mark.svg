@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" role="img" aria-label="eephus.io">
+  <!-- eephus.io compact mark (light) - the px-ball: cream face, navy outline,
+       two seam arcs painted in the brand ramp (cardinal -> gold -> green -> navy).
+       This is the canonical small mark; the favicon is its twin. No P/X monogram
+       at this size on purpose - it muds below ~40px. Colors are hardcoded because
+       this ships as a standalone asset (favicons can't read CSS custom properties). -->
+  <defs>
+    <linearGradient id="seam" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#B91C1C"/>
+      <stop offset="35%" stop-color="#C9A227"/>
+      <stop offset="65%" stop-color="#1F7A3A"/>
+      <stop offset="100%" stop-color="#0E2B4D"/>
+    </linearGradient>
+  </defs>
+  <circle cx="22" cy="22" r="19" fill="#F6F1E4" stroke="#0F1B2D" stroke-width="3"/>
+  <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#seam)" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#seam)" stroke-width="3.4" stroke-linecap="round"/>
+</svg>

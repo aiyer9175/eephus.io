@@ -1,3 +1,8 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
 """
 Scrapers — honest v3.2 rewrite.
 
@@ -218,6 +223,22 @@ _LEADING_VIDEO_REPORT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Leading scouting-BIO line — several sources (Just Baseball most visibly)
+# prepend a pipe-delimited vitals line before the prose, e.g.:
+#   "Height/Weight: 6'1", 190 | Bat/Throw: S/R | IFA: $950K - 2024 (MIL) | ETA: 2027"
+# It duplicates the structured bio our UI already renders above the writeup,
+# so it's noise inside the narrative. We detect it structurally (a leading
+# line carrying known vitals labels, usually pipe-separated) rather than
+# matching one source's exact wording, so every source is handled the same.
+# Each field label is "Label:" — count >=2 (or a pipe + >=1) to fire, which
+# real prose never trips.
+_BIO_FIELD_LABEL_RE = re.compile(
+    r"(?:Height\s*/\s*Weight|Ht\s*/\s*Wt|Bat\s*/\s*Throw|Bats?\s*/\s*Throws?"
+    r"|ETA|IFA|Drafted|Draft|Signed|Signing|Bonus|Age|DOB|Born|Position|Pos"
+    r"|Weight|Height)\s*:",
+    re.IGNORECASE,
+)
+
 
 def _clean_report_prose(text: str | None) -> str | None:
     """Centralized writeup cleaner — strips page-navigation cruft,
@@ -230,6 +251,12 @@ def _clean_report_prose(text: str | None) -> str | None:
     if not text:
         return None
     s = text
+
+    # 0. Owner copy rule (2026-06-11, enforced site-wide by
+    # tools/strip_emdashes.py): no em-dashes in user-facing prose. Source
+    # writeups arrive with them; swap to the house plain hyphen at the
+    # ingest boundary so generated exports never trip the copy check.
+    s = s.replace(" — ", " - ").replace("—", " - ").replace("  ", " ")
 
     # 1. Encoding fix only — explicitly DO NOT call fix_mojibake because
     # its whitespace pass collapses runs of newlines (including the
@@ -273,6 +300,20 @@ def _clean_report_prose(text: str | None) -> str | None:
     # 5. Strip leading section header artifacts.
     s = _LEADING_HEADER_RE.sub("", s).lstrip()
     s = _LEADING_VIDEO_REPORT_RE.sub("", s).lstrip()
+
+    # 5b. Strip a leading scouting-bio line (Height/Weight | Bat/Throw |
+    #     IFA/Draft | ETA ...). Look only at the first line; drop it (through
+    #     the following blank line / newline) when it carries >=2 vitals
+    #     labels, or a pipe plus >=1 - structural so it generalizes across
+    #     sources without matching prose. Loop in case two bio lines stack.
+    for _ in range(2):
+        nl = s.find("\n")
+        first_line = s if nl < 0 else s[:nl]
+        n_fields = len(_BIO_FIELD_LABEL_RE.findall(first_line))
+        looks_bio = n_fields >= 2 or ("|" in first_line and n_fields >= 1)
+        if not looks_bio:
+            break
+        s = (s[nl + 1:] if nl >= 0 else "").lstrip("\n").lstrip()
 
     # 6. Collapse non-breaking space + double spaces.
     s = s.replace(" ", " ")
@@ -433,6 +474,11 @@ _CANONICAL_KEYS: dict[str, str] = {
     # JoJo Parker (TOR 3B/SS). TJStats pre-season + Just Baseball listed him as
     # "Joseph Parker" without a team; FanGraphs uses "JoJo Parker" (TOR).
     "joseph_parker": "jojo_parker",
+    # MLB/Statcast and current rosters use the suffix/nickname forms below.
+    # Some ranking/editorial sources omit the suffix or use the given name,
+    # which otherwise creates a headshot-less duplicate card.
+    "george_lombard": "george_lombard_jr",
+    "leonardo_bernal": "leo_bernal",
 }
 
 
@@ -466,15 +512,35 @@ def _parse_fv_full(raw) -> tuple[float | None, bool]:
     raw = str(raw).strip()
     if not raw:
         return None, False
-    if "/" in raw:  # PV/FV format — take the right side (the FV)
-        raw = raw.split("/")[-1].strip()
+    # PV/FV format — take the right side (the FV). Some older Pipeline
+    # bios use the 2-8 scouting shorthand ("4/5") instead of 20-80
+    # ("40/50"); scale those single-digit grades before returning.
+    if "/" in raw:
+        parts = [p.strip() for p in raw.split("/") if p.strip()]
+        if len(parts) >= 2 and all(re.fullmatch(r"\d(?:\+)?", p) for p in parts[:2]):
+            right = parts[-1].rstrip("+")
+            return float(right) * 10.0, parts[-1].endswith("+")
+        raw = parts[-1] if parts else raw
     has_plus = raw.endswith("+")
     if has_plus:
         raw = raw[:-1]
     try:
-        return float(raw), has_plus
+        fv = float(raw)
     except ValueError:
         return None, False
+    # JB table extraction can occasionally concatenate the preceding
+    # future tool grade with the FV cell ("55" + "60" => "560"). Recover
+    # the trailing 20-80 grade when that shape is obvious; otherwise
+    # reject out-of-scale FVs so they cannot poison consensus.
+    if fv > 80 and raw.isdigit() and len(raw) >= 3:
+        tail = float(raw[-2:])
+        if 20 <= tail <= 80:
+            fv = tail
+    if 2 <= fv <= 8:
+        fv *= 10.0
+    if fv < 20 or fv > 80:
+        return None, False
+    return fv, has_plus
 
 
 # MLB Pipeline labels its tool grades with words/abbreviations that
@@ -866,6 +932,14 @@ def _cache_ttl_for_key(cache_key: str) -> int:
     """
     import re as _re_local
     from datetime import date as _date_local
+    # The live MLB Pipeline draft board (mlb.com/milb/prospects/draft) re-ranks
+    # semi-regularly through the spring, so always re-scrape the CURRENT draft
+    # year — every run_monthly surfaces the latest board. Prior-year draft
+    # boards are historical and stay on the long cache.
+    if cache_key.startswith("mlb_pipeline_draft_"):
+        m_dr = _re_local.search(r"(20\d{2})", cache_key)
+        if m_dr and int(m_dr.group(1)) >= _date_local.today().year:
+            return 0
     m = _re_local.search(r"(20\d{2})", cache_key)
     if m:
         try:
@@ -1397,6 +1471,146 @@ def scrape_just_baseball(url: str, label: str, snap_date: str,
     return rows
 
 
+# FanGraphs org-list tool-label → canonical key. The org Top-N articles render
+# each prospect as a TheBoard "tool-item" card with a present/future grade
+# table; map FG's full-word labels onto the same canonical keys every other
+# source uses so the grades aggregate cross-source. Velocity ("Sits/Tops") and
+# bio fields are NOT 20-80 tool grades and are skipped.
+FG_TOOL_KEY = {
+    "hit": "hit",
+    "game power": "game_pwr", "power": "game_pwr",
+    "raw power": "raw_pwr",
+    "run": "speed", "speed": "speed",
+    "fielding": "field", "field": "field",
+    "throw": "throw", "throws": "throw", "arm": "throw",
+    "pitch selection": "pitch_sel", "selection": "pitch_sel",
+    "bat control": "bat_ctrl",
+    "fastball": "fb", "sinker": "fb",
+    "slider": "sl",
+    "curveball": "cb", "curve": "cb",
+    "changeup": "ch", "change": "ch",
+    "cutter": "ct",
+    "command": "cmd", "control": "cmd",
+}
+
+# Heading inside each .tool-item: "1. Konnor Griffin , SS".
+_FG_HEAD_RE = re.compile(r"^\s*(\d{1,3})\.\s+(.+?)\s*,\s*([A-Za-z0-9/]+)\s*$")
+# FV-tier section header: "70 FV Prospects" / "45+ FV Prospects".
+_FG_TIER_RE = re.compile(r"^\s*(\d{2})(\+)?\s*FV\b", re.I)
+
+
+def _parse_fg_tool_table(table) -> dict[str, float] | None:
+    """Parse a FanGraphs 2-row tool table (header-label row + present/future
+    value row, e.g. 'Hit' → '40/60'). Returns canonical-keyed FUTURE grades,
+    range-validated via sanitize_fv. Bio/velocity columns are skipped."""
+    trs = table.find_all("tr")
+    if len(trs) < 2:
+        return None
+    headers = [c.get_text(" ", strip=True).lower() for c in trs[0].find_all(["td", "th"])]
+    values = [c.get_text(" ", strip=True) for c in trs[1].find_all(["td", "th"])]
+    if not headers or not values:
+        return None
+    tools: dict[str, float] = {}
+    for hdr, raw in zip(headers, values):
+        key = FG_TOOL_KEY.get(hdr.strip())
+        if not key:
+            continue
+        # "40/60" → future 60; "70" → 70. Two-digit grades only (skips velo).
+        m = re.search(r"(\d{2})(?:\s*/\s*(\d{2}))?", raw)
+        if not m:
+            continue
+        try:
+            grade = float(m.group(2) or m.group(1))
+        except ValueError:
+            continue
+        if 20.0 <= grade <= 80.0:   # range-validate (drop typos/velocity), as JB tools do
+            tools[key] = grade
+    return tools or None
+
+
+def scrape_fangraphs_org_list(url: str, label: str, snap_date: str,
+                              org: str, force: bool = False) -> list[Snapshot]:
+    """Scrape a FanGraphs org Top-N prospect article (TheBoard 'tool-item'
+    cards): FV (bio table, falling back to the FV-tier header), present/future
+    tool grades, and the prose writeup. Stored under source='fangraphs'.
+
+    `org` is the canonical org code stamped on every prospect — org lists
+    don't repeat the team per player. Mirrors scrape_just_baseball's contract.
+    """
+    if date.fromisoformat(snap_date) > date.today():
+        return []
+    cache_key = "fg_" + re.sub(r"[^a-z0-9]+", "_", label.lower())
+    fr = _fetch(url, cache_key, force=force)
+    if fr.status != 200:
+        log.error("fangraphs %s: HTTP %d", label, fr.status)
+        return []
+    soup = BeautifulSoup(fr.body, "html.parser")
+    rows: list[Snapshot] = []
+    seen: set[str] = set()
+    n_with_tools = 0
+    for item in soup.select("div.tool-item"):
+        hdr = item.find(["h2", "h3", "h4"])
+        if not hdr:
+            continue
+        m = _FG_HEAD_RE.match(hdr.get_text(" ", strip=True))
+        if not m:
+            continue
+        rank = int(m.group(1))
+        name = m.group(2).strip()
+        position = m.group(3).strip().split("/")[0]
+        if not (1 <= rank <= 200) or name in seen:
+            continue
+        seen.add(name)
+        # FV-tier header preceding this card → tier FV + '+' marker.
+        tier_fv = None
+        fv_plus = False
+        for prev in hdr.find_all_previous(["h1", "h2", "h3", "h4"]):
+            tm = _FG_TIER_RE.match(prev.get_text(" ", strip=True))
+            if tm:
+                tier_fv = float(tm.group(1))
+                fv_plus = bool(tm.group(2))
+                break
+        # Bio table FV (preferred) + the tool-grade table(s).
+        fv = None
+        tools: dict | None = None
+        for tbl in item.find_all("table"):
+            cells = [c.get_text(" ", strip=True) for c in tbl.find_all(["td", "th"])]
+            low = [c.lower() for c in cells]
+            if "fv" in low:                       # bio key/value table
+                i = low.index("fv")
+                if i + 1 < len(cells):
+                    fvv, fp = _parse_fv_full(cells[i + 1])
+                    if fvv is not None:
+                        fv = fvv
+                    fv_plus = fv_plus or fp
+                continue
+            t = _parse_fg_tool_table(tbl)          # tool-grade table
+            if t:
+                tools = {**(tools or {}), **t}
+        if fv is None and tier_fv is not None and 20.0 <= tier_fv <= 80.0:
+            fv = tier_fv
+        if tools:
+            n_with_tools += 1
+        # Writeup — prose paragraphs inside the card.
+        paragraphs = [fix_mojibake(p.get_text(" ", strip=True))
+                      for p in item.find_all("p") if p.get_text(strip=True)]
+        prose = "\n\n".join(p for p in paragraphs if p).strip()
+        if prose and len(prose) > 60:
+            tools = tools or {}
+            cleaned = _clean_report_prose(prose)
+            if cleaned:
+                tools.setdefault("_extras", {})["report"] = cleaned[:8000]
+        rows.append(Snapshot(
+            source="fangraphs", snapshot_date=snap_date, interval_label=label,
+            player_key=normalize_key(name), player_name=name,
+            position=position, org=org, rank=rank, fv=fv, status="active",
+            tools=tools, fv_plus=fv_plus,
+        ))
+    log.info("fangraphs %s -> %d players (%d with tools)%s", label, len(rows), n_with_tools,
+             "" if rows else " (parser returned 0 rows — page structure may have changed)")
+    return rows
+
+
 # --- MLB Pipeline (mlb.com/milb/prospects/<year>/top100/) -----------------
 # Each year's archived Top 100 page is server-rendered HTML with the full
 # ranking embedded as an Apollo Client cache (HTML-encoded JSON inside the
@@ -1433,7 +1647,13 @@ MLB_PIPELINE_INTERVALS = [
      f"MLB Pipeline {y} Top 100",
      f"{y}-01-22",
      y)
-    for y in (2021, 2022, 2023, 2024, 2025, 2026)
+    # 2011-2026 — mlb.com serves these year-keyed pages directly (era-correct,
+    # with per-year bios carrying the point-in-time scouting grades). The
+    # 2011-2016 backfill (xFV initiative, 2026-06-21) adds FULLY-RESOLVED
+    # cohorts — the binding constraint for the outcome-grounded model. Coverage
+    # by year: 2013-2016 full Top 100 with ~99% FV+tools; 2012 Top 100 ~73% FV
+    # (rest rank-only -> rank-implied FV); 2011 is a Top 50 with ~38% FV.
+    for y in range(2011, 2027)
 ]
 
 MLB_INTERNATIONAL_INTERVALS = [
@@ -1468,7 +1688,7 @@ MLB_PIPELINE_ORG_SLUGS = (
     "cubs", "reds", "brewers", "pirates", "cardinals",
     "dbacks", "rockies", "dodgers", "padres", "giants",
 )
-MLB_PIPELINE_ORG_YEARS = (2021, 2022, 2023, 2024, 2025, 2026)
+MLB_PIPELINE_ORG_YEARS = tuple(range(2011, 2027))
 
 # Display labels — concatenated slugs (dbacks/redsox/bluejays/whitesox)
 # need explicit pretty names so interval_label still reads "Diamondbacks"
@@ -1637,17 +1857,17 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
         # Prefer the bio whose contentTitle matches the page year.
         for bio in bios:
             if bio.group(2) == year_str:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
                 if m2:
-                    overall = float(m2.group(1))
+                    overall, _overall_plus = _parse_fv_full(m2.group(1))
                     bio_text = bio.group(1)
                     break
         # Fallback: any bio with an Overall grade line.
         if overall is None:
             for bio in bios:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
+                m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
                 if m2:
-                    overall = float(m2.group(1))
+                    overall, _overall_plus = _parse_fv_full(m2.group(1))
                     bio_text = bio.group(1)
                     break
 
@@ -1687,8 +1907,74 @@ def scrape_mlb_pipeline(url: str, label: str, snap_date: str, year: int,
     return rows
 
 
+def validate_pipeline_live_board(rows: list[Snapshot]) -> list[str]:
+    """Health gate for the LIVE Pipeline capture (the tjstats.health_check
+    pattern): refuse to ingest a degraded parse so a silent MLB.com
+    redesign surfaces loudly instead of polluting the time series with a
+    near-empty or grade-less board. Returns human-readable problems
+    (empty = healthy)."""
+    problems: list[str] = []
+    if len(rows) < 90:
+        problems.append(f"top100: only {len(rows)} parsed rows")
+        return problems
+    ranks = [s.rank for s in rows if s.rank is not None]
+    if len(set(ranks)) != len(ranks):
+        problems.append("top100: duplicate ranks")
+    if not ranks or min(ranks) != 1 or max(ranks) > 105:
+        problems.append(f"top100: rank span {min(ranks) if ranks else '-'}"
+                        f"..{max(ranks) if ranks else '-'}")
+    n = len(rows)
+    fv_cov = sum(1 for s in rows if s.fv is not None) / n
+    if fv_cov < 0.8:
+        problems.append(f"top100: FV coverage {fv_cov:.0%} (<80% — grades "
+                        "line may have moved)")
+    org_cov = sum(1 for s in rows if s.org) / n
+    if org_cov < 0.7:
+        problems.append(f"top100: org coverage {org_cov:.0%} (<70% — Apollo "
+                        "Team refs may have changed)")
+    placeholder = sum(1 for s in rows if s.player_name.startswith("Person "))
+    if placeholder > 2:
+        problems.append(f"top100: {placeholder} unresolved player names")
+    return problems
+
+
+def run_mlb_pipeline_live(snap_date: str | None = None) -> dict:
+    """Daily LIVE capture of MLB Pipeline's current Top 100 (the TJStats
+    pattern, step d0b in run_daily). The monthly scrape writes each year's
+    board to ONE fixed preseason interval ("MLB Pipeline {y} Top 100",
+    snap 01-22), so in-season re-ranks/FV changes overwrite that single
+    point instead of accruing history. This capture force-fetches the
+    current page and writes a DATE-STAMPED interval — a same-day re-run
+    upserts in place (insert_snapshots' (source, interval_label,
+    player_key) conflict key); a new day creates a new point-in-time row,
+    giving the Time Machine and the consensus the same daily resolution
+    TJStats gets. Vintage discipline holds: backtests key on the earliest
+    same-year snapshot, which stays the preseason archive page.
+
+    Returns {"live": {...}} on ingest, {"health": [problems]} when the
+    gate refuses, {"error": "..."} on fetch/parse failure."""
+    from storage import insert_snapshots
+
+    snap_date = snap_date or date.today().isoformat()
+    year = int(snap_date[:4])
+    url = f"https://www.mlb.com/milb/prospects/{year}/top100/"
+    label = f"MLB Pipeline Live {snap_date}"
+    try:
+        rows = scrape_mlb_pipeline(url, label, snap_date, year, force=True)
+    except Exception as e:                                    # noqa: BLE001
+        return {"error": f"fetch/parse failed: {e}"}
+    problems = validate_pipeline_live_board(rows)
+    if problems:
+        return {"health": problems}
+    n = insert_snapshots(rows)
+    log.info("mlb_pipeline live: %d players ingested @ %s", len(rows), snap_date)
+    return {"live": {"n_players": len(rows), "n_upserts": n,
+                     "label": label, "captured_at": snap_date}}
+
+
 def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
-                             force: bool = False) -> list[Snapshot]:
+                             force: bool = False,
+                             skip_unaffiliated: bool = True) -> list[Snapshot]:
     """Parse MLB Pipeline's international ranking table.
 
     The static page exposes rank/name/position but not signing org. We emit
@@ -1750,15 +2036,18 @@ def scrape_mlb_international(url: str, label: str, snap_date: str, year: int,
         if not name:
             continue
         org = teams.get(person.get("team_id"))
-        if not org:
+        if not org and skip_unaffiliated:
             # The IFA merge is intentionally stateside/affiliate-aware:
             # players without a current roster assignment stay out until
-            # MLB exposes a team for them.
+            # MLB exposes a team for them. (The historical backfill passes
+            # skip_unaffiliated=False and classifies these rows itself -
+            # unaffiliated names on the intl list are often KBO/NPB pros
+            # who belong in the Overseas section, not dropped.)
             continue
         overall = None
-        overall_m = re.search(r'Overall:\s*(\d+)', chunk)
+        overall_m = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', chunk)
         if overall_m:
-            overall = float(overall_m.group(1))
+            overall, _overall_plus = _parse_fv_full(overall_m.group(1))
         apollo_rows.append(Snapshot(
             source="mlb_pipeline_international",
             snapshot_date=snap_date,
@@ -2070,6 +2359,24 @@ MLB_PIPELINE_DRAFT_INTERVALS = [
      2026),
 ]
 
+# Prior-year MLB Pipeline draft boards (frozen pre-draft rankings) live at the
+# year-scoped URL /milb/prospects/<year>/draft/. Backfilled so the draft-source
+# accuracy backtest (draft_source_backtest.py) has a SECOND multi-year rater to
+# score FanGraphs against — without resolved historical grades from a second
+# source there is nothing to weight. The page's "draft"-titled writeup carries
+# that year's pre-draft Overall grade (the year-titled bios on these pages are
+# post-draft re-grades, so the same draft-first bio rule as the live board is
+# correct). Dated to {year}-07-01 (pre-draft) to sit in the right draft class;
+# prior-year pages stay on the 30d historical cache. 2018 is the first year MLB
+# Pipeline published a scrapable draft board in this shape.
+MLB_PIPELINE_DRAFT_HISTORY_INTERVALS = [
+    (f"https://www.mlb.com/milb/prospects/{_y}/draft/",
+     f"MLB Pipeline {_y} Draft Top 250",
+     f"{_y}-07-01",
+     _y)
+    for _y in range(2018, date.today().year)
+]
+
 
 def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
                               draft_year: int,
@@ -2167,21 +2474,33 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
         # Bio + tools + writeup from prospectBio (same shape as top-100)
         bios = list(re.finditer(
             r'"contentText":"((?:[^"\\]|\\.)*)","contentTitle":"([^"]*)"', chunk))
+        # Pick the CURRENT board's writeup. MLB Pipeline titles the live draft
+        # bio with the generic token "draft"/"Draft"; a prospect who appeared in
+        # an EARLIER draft also carries an older bio titled by that year
+        # ("2023"). The live grade/tools are the "draft"-titled one, so prefer
+        # it, then a bio titled with the draft year, then anything.
+        #   Matching on str(draft_year) never hits (the current board is not
+        #   year-titled), and blindly taking bios[0] grabbed the stale
+        #   prior-draft grade for re-entrants — e.g. Roch Cholowsky read 2023's
+        #   Overall 50 instead of 2026's Overall 65 (26 of the top 200 were
+        #   affected, all biased low).
+        _yr = str(draft_year)
+        def _bio_rank(bio):
+            t = (bio.group(2) or "").strip().lower()
+            return 0 if t == "draft" else 1 if t == _yr else 2
+        bios_ranked = sorted(bios, key=_bio_rank)
         overall: float | None = None
         bio_text: str | None = None
-        year_str = str(draft_year)
-        for bio in bios:
-            if bio.group(2) == year_str:
-                m2 = re.search(r'Overall:\s*(\d+)', bio.group(1))
-                if m2:
-                    overall = float(m2.group(1))
+        for bio in bios_ranked:
+            m2 = re.search(r'Overall:\s*([0-9]+(?:\s*/\s*[0-9]+)?\+?)', bio.group(1))
+            if m2:
+                overall, _overall_plus = _parse_fv_full(m2.group(1))
                 bio_text = bio.group(1)
                 break
-        if bio_text is None and bios:
-            bio_text = bios[0].group(1)
-            m2 = re.search(r'Overall:\s*(\d+)', bio_text)
-            if m2:
-                overall = float(m2.group(1))
+        # No bio carried an Overall grade — still keep the best-priority writeup
+        # so tools/prose extraction has something to work with.
+        if bio_text is None and bios_ranked:
+            bio_text = bios_ranked[0].group(1)
 
         tools = _parse_pipeline_tools(bio_text) if bio_text else None
         prose = _clean_pipeline_writeup(bio_text) if bio_text else None
@@ -2218,15 +2537,23 @@ def scrape_mlb_pipeline_draft(url: str, label: str, snap_date: str,
     return rows
 
 
-def scrape_all_draft(force: bool = False) -> list[DraftSnapshot]:
-    """Run all draft scrapers, return their combined output."""
+def scrape_all_draft(force: bool = False, history: bool = True) -> list[DraftSnapshot]:
+    """Run all draft scrapers, return their combined output.
+
+    `history` includes the prior-year MLB Pipeline draft boards (frozen, 30d
+    cache) so the source-accuracy backtest has resolved multi-source classes;
+    pass history=False to scrape only the live current-year boards.
+    """
     out: list[DraftSnapshot] = []
     for url, label, snap, year in ESPN_DRAFT_INTERVALS:
         try:
             out.extend(scrape_espn_draft(url, label, snap, year, force=force))
         except Exception as e:
             log.exception("espn_draft %s crashed: %s", label, e)
-    for url, label, snap, year in MLB_PIPELINE_DRAFT_INTERVALS:
+    pipeline_intervals = list(MLB_PIPELINE_DRAFT_INTERVALS)
+    if history:
+        pipeline_intervals += MLB_PIPELINE_DRAFT_HISTORY_INTERVALS
+    for url, label, snap, year in pipeline_intervals:
         try:
             out.extend(scrape_mlb_pipeline_draft(url, label, snap, year, force=force))
         except Exception as e:
@@ -2241,6 +2568,25 @@ def scrape_all_draft(force: bool = False) -> list[DraftSnapshot]:
 # pickValue (slot), and a scoutingReport blurb. No HTML scraping needed.
 
 MLB_DRAFT_API_TEMPLATE = "https://statsapi.mlb.com/api/v1/draft/{year}"
+
+
+def _draft_tracker_school(sc) -> str | None:
+    """School string from a draft-API pick's `school` object. The API gives
+    {name, state, city, country} for every pick across every round - far
+    deeper than the ~200-row MLB Pipeline boards. For high schools (and prep
+    academies) we append the state tag "(ST)" so the HS Details geography
+    section can read the home state on older classes; college names are left
+    plain (they carry no HS marker, so they never get tagged)."""
+    if not isinstance(sc, dict):
+        return None
+    name = sc.get("name")
+    if not name:
+        return None
+    state = sc.get("state")
+    if (state and re.search(r"\bHS\b|High School|\bAcademy\b|\bPrep\b", name)
+            and not re.search(r"\([A-Z]{2}\)\s*$", name)):
+        return f"{name} ({state})"
+    return name
 
 
 def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
@@ -2309,7 +2655,7 @@ def scrape_mlb_draft_tracker(year: int, force: bool = False) -> list[dict]:
                 "team":         org,
                 "player_key":   _draft_player_key(year, name),
                 "player_name":  name,
-                "school":       (p.get("school") or {}).get("name") if isinstance(p.get("school"), dict) else None,
+                "school":       _draft_tracker_school(p.get("school")),
                 "slot_usd":     slot_int,
                 "bonus_usd":    bonus_int,
                 "signed":       signed,

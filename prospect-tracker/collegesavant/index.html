@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CollegeSavant - Hitters - eephus.io</title>
+    <meta name="description" content="Statcast-style percentile profiles for college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CollegeSavant - Hitters" />
+    <meta property="og:description" content="Statcast-style percentile profiles for college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta property="og:site_name" content="eephus.io" />
+    <meta property="og:url" content="https://eephus.io/collegesavant/" />
+    <link rel="canonical" href="https://eephus.io/collegesavant/" />
+    <meta property="og:image" content="https://eephus.io/assets/share-default.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="CollegeSavant - Hitters" />
+    <meta name="twitter:description" content="Statcast-style percentile profiles for college hitters - batted-ball quality, plate discipline, and year-over-year trends." />
+    <meta name="twitter:image" content="https://eephus.io/assets/share-default.png" />
+    <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/assets/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="apple-touch-icon" href="/assets/apple-touch-icon.png" />
+    <link rel="manifest" href="/assets/site.webmanifest" />
+    <meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)" />
+    <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
+    <link rel="stylesheet" href="/assets/site.css" />
+    <link rel="stylesheet" href="/assets/eephus-account.css" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- Site-wide nav - mirrors build_site.py NAV_ITEMS (keep in sync) -->
+    <header class="eephus-nav">
+      <span class="eephus-brand"><a class="eephus-wordmark" href="/" aria-label="eephus.io home"><span class="nameplate eephus-wordmark-merged"><svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="eephus-arc-csnav" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/><stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/></linearGradient></defs><path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#eephus-arc-csnav)" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true"><circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#eephus-arc-csnav)" stroke-width="3"/><path class="eephus-logo-seam" d="M 6.5 10 Q 12 15.5 17.5 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>eephus<span class="dot">.io</span></span></a></span>
+      <nav class="eephus-links">
+        <a href="/">Home</a>
+        <a href="/prospx/">PROSPX</a>
+        <a href="/collegesavant/" class="is-active">CollegeSavant</a>
+        <a href="/fa/">Free Agency</a>
+        <a href="/projections/">Projections</a>
+        <a href="/articles/">Articles</a>
+        <a href="/forums/">Forums</a>
+        <a href="/glossary/">Glossary</a>
+        <a href="/team/">Developers</a>
+      </nav>
+      <div class="eephus-nav-controls">
+        <button class="eephus-nav-ctrl" type="button" data-qk-open aria-label="Quick search (Ctrl+K)" title="Search any term or metric - Ctrl+K / Cmd+K"><span aria-hidden="true">&#8984;K</span><span class="eephus-nav-ctrl-label">Search</span></button>
+        <a class="eephus-nav-ctrl" href="/prospx/#tab=watchlist" aria-label="Watchlist"><span aria-hidden="true">&#9733;</span><span class="eephus-nav-ctrl-label">Watchlist</span></a>
+        <button class="eephus-nav-ctrl" type="button" data-theme-toggle onclick="eephusToggleTheme()" aria-label="Toggle dark mode"><span class="theme-icon lbl-dark" aria-hidden="true">&#9790;</span><span class="theme-icon lbl-light" aria-hidden="true">&#9728;</span><span class="eephus-nav-ctrl-label"><span class="lbl-dark">Dark Mode</span><span class="lbl-light">Light Mode</span></span></button>
+      </div>
+    </header>
+    <div class="cs-bar">
+      <span class="cs-bar-title">CollegeSavant <span class="eephus-beta" title="CollegeSavant is in alpha - newly launched">&alpha; alpha</span></span>
+      <div class="hp-toggle" role="group" aria-label="Hitters or pitchers">
+        <a class="hp-seg is-active" href="#/" aria-current="page">Hitters</a>
+        <a class="hp-seg" href="pitcher_index.html#/" data-cross-page="pitcher_index.html">Pitchers</a>
+      </div>
+      <nav class="cs-tabs" aria-label="Views">
+        <a href="#/" data-route="home">Dashboard</a>
+        <a href="#/teams" data-route="teams">Team Tendencies</a>
+        <a href="#/prospects" data-route="prospects">Draft Prospects</a>
+        <a href="#/projections" data-route="projections">MiLB Projections</a>
+      </nav>
+      <div class="global-search" data-global-search>
+        <input type="search" placeholder="Search players" aria-label="Search all players" data-global-search-input>
+        <div class="global-results" data-global-search-results></div>
+      </div>
+    </div>
+
+    <main id="app" class="app-shell">
+      <section class="loading-panel">
+        <div class="loader"></div>
+        <p>Loading hitter percentiles...</p>
+      </section>
+    </main>
+
+    <!-- Data + app, deferred: the page paints before the payloads parse.
+         pitcher_data.js (16MB) is NOT loaded here - the global search
+         lazy-injects it on first use (global_search.js ensureFullIndex). -->
+    <script src="data.js" defer></script>
+    <script src="hitter_year_data.js" defer></script>
+    <script src="team_names.js" defer></script>
+    <script src="/data/collegesavant_translation.js" defer></script>
+    <script src="/data/collegesavant_draft_prospects.js" defer></script>
+    <script src="global_search.js" defer></script>
+    <script src="table_sort.js" defer></script>
+    <script src="app.js" defer></script>
+    <script src="/assets/eephus-config.js" defer></script>
+    <script src="/assets/eephus-account.js" defer></script>
+    <script src="/assets/eephus-ui.js" defer></script>
+    <script src="/assets/eephus-bg.js" defer></script>
+    <script src="/assets/eephus-gl.js" defer></script>
+    <script src="/assets/eephus-hub.js" defer></script>
+    <script src="/assets/eephus-export.js" defer></script>
+  </body>
+</html>
