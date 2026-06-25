@@ -111,6 +111,77 @@
       font-size: var(--fs-base); font-weight: 600; color: var(--text-primary);
     }
 @media (max-width: 720px) { #trade-machine .tm-grid { grid-template-columns: 1fr; } }
+/* --- Re-theme (2026-06-24): team logos, tier-colored values, balance bar, mobile --- */
+.tm-logo { width: 16px; height: 16px; object-fit: contain; flex: none; vertical-align: middle; }
+#trade-machine .tm-row { align-items: center; }
+#trade-machine .tm-name {
+  font-weight: 600; color: var(--text-primary); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+#trade-machine .tm-name:hover { color: var(--accent-cyan); }
+#trade-machine .tm-kind--prospect { color: var(--neon-green); border-color: var(--neon-green); }
+#trade-machine .tm-kind--mlb { color: var(--neon-violet); border-color: var(--neon-violet); }
+#trade-machine .tm-total { font-weight: 700; }
+#trade-machine .tm-side-head { align-items: center; }
+
+/* board Org cell: logo + faint abbreviation */
+.tm-org-cell { display: inline-flex; align-items: center; gap: 4px; }
+.tm-org-cell .tm-logo { width: 15px; height: 15px; }
+.tm-org-abbr { color: var(--text-tertiary); font-size: 10px; }
+
+/* evaluator value-split balance bar */
+.tm-balbar {
+  display: flex; height: 7px; border-radius: 4px; overflow: hidden;
+  background: var(--bg-primary); border: 1px solid var(--border); margin-bottom: 7px;
+}
+.tm-balbar-a { background: var(--accent-cyan, #2ea0c4); }
+.tm-balbar-b { background: var(--neon-amber, #e0a23c); }
+.tm-balrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tm-balverdict { font-weight: 700; color: var(--text-primary); }
+.tm-balverdict.is-bal { color: var(--neon-green); }
+
+/* mobile: let the wide board scroll horizontally rather than squash 9 columns */
+@media (max-width: 720px) {
+  #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #tradeboard-content table { min-width: 620px; }
+  .tm-org-abbr { display: none; }   /* the logo carries the team on small screens */
+}
+
+/* --- Trade Board filter bar: theme the native <select>s + toggle to match the chips
+   and tie the active state to the view's cyan accent (was OS-default selects + gold). --- */
+#proj-view-trademachine select.chip {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
+  padding: 4px 26px 4px 10px; cursor: pointer; border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border); background-color: var(--bg-secondary); color: var(--text-secondary);
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 9px;
+}
+#proj-view-trademachine select.chip:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+#proj-view-trademachine select.chip:focus { outline: none; border-color: var(--accent-cyan); }
+
+#proj-view-trademachine .filter-toggle-row { margin: 12px 0 6px; }
+#proj-view-trademachine .filter-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro); font-size: 12px; font-weight: 600;
+  padding: 5px 12px; cursor: pointer; border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+}
+#proj-view-trademachine .filter-toggle:hover { color: var(--text-primary); border-color: var(--accent-cyan); }
+#proj-view-trademachine .filter-toggle-arrow { font-size: 10px; transition: transform .15s ease; }
+#proj-view-trademachine .filter-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
+
+/* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
+#proj-view-trademachine button.chip.active { border-color: var(--accent-cyan); }
+
+/* Mock Trade Builder: give each side the same card treatment as the evaluator sides */
+#proj-view-trademachine .mock-trade-side {
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: 8px; padding: 10px 12px; min-width: 0;
+}
+#proj-view-trademachine .mock-trade-search:focus { outline: none; border-color: var(--accent-cyan); }
+#proj-view-trademachine #mock-trade-clear, #proj-view-trademachine #mock-trade-export { cursor: pointer; }
+
 /* Projections-page view switcher (Projections | Trade Machine) */
 .proj-viewnav{display:flex;gap:4px;margin:12px 0 14px;border-bottom:1px solid var(--border-subtle);}
 .proj-viewbtn{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);font:inherit;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer;margin-bottom:-1px;}

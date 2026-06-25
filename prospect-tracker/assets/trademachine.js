@@ -67,7 +67,32 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, c => ({
     "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
   }[c]));
-}const _TM = { a: [], b: [], detail: null, detailLoading: false };
+}
+// ORG abbreviation -> ESPN logo slug (same map as projections.js / build_site / prospx).
+const _TM_ESPN_SLUGS = {
+  ARI: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
+  CHC: "chc", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
+  DET: "det", HOU: "hou", KCR: "kc", LAA: "laa", LAD: "lad",
+  MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy",
+  PHI: "phi", PIT: "pit", SDP: "sd", SEA: "sea", SFG: "sf",
+  STL: "stl", TBR: "tb", TEX: "tex", TOR: "tor", WSN: "wsh",
+};
+function _tmTeamLogo(org) {
+  if (!org) return "";
+  const slug = _TM_ESPN_SLUGS[org] || String(org).toLowerCase();
+  return `<img class="tm-logo" src="https://a.espncdn.com/i/teamlogos/mlb/500/${slug}.png" `
+       + `alt="${escapeHtml(org)}" loading="lazy" onerror="this.style.display='none'">`;
+}
+// Surplus-$ magnitude -> tier color (evaluator; mirrors the board's _TB_TIER_COLORS feel).
+function _tmValColor(mm) {
+  const v = Math.abs(mm || 0);
+  if (mm < 0) return "var(--down, #e05c5c)";
+  if (v >= 80) return "var(--card-gold)";
+  if (v >= 35) return "var(--neon-green)";
+  if (v >= 12) return "var(--neon-cyan, var(--accent-cyan))";
+  return "var(--text-secondary)";
+}
+const _TM = { a: [], b: [], detail: null, detailLoading: false };
 
 function _tmEnsureDetail() {
   if (_TM.detail || _TM.detailLoading) return;
@@ -111,7 +136,8 @@ function _tmSearch(q) {
     if ((p.player_name || "").toLowerCase().includes(q)) {
       const sv = p.surplus && p.surplus.value_mm;
       if (sv != null) out.push({ kind: "prospect", key: p.player_key,
-        name: p.player_name, sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
+        name: p.player_name, org: p.org || "", pos: p.position || "",
+        sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`,
         mm: sv });
     }
   }
@@ -121,6 +147,7 @@ function _tmSearch(q) {
       const d = _TM.detail[k];
       if ((d.name || "").toLowerCase().includes(q) && d.proj && d.proj.surNpv != null) {
         out.push({ kind: "mlb", key: k, name: d.name,
+          org: d.team || "", pos: d.pos || "",
           sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`,
           mm: d.proj.surNpv / 1e6 });
       }
@@ -147,26 +174,39 @@ function renderTradeMachine() {
   const sideHtml = (side, label) => {
     const list = _TM[side].map((x, i) => `
       <div class="tm-row">
-        <span class="tm-kind">${x.kind === "prospect" ? "P" : "M"}</span>
-        <a class="fa-player-link" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
-        <span class="tm-sub">${escapeHtml(x.sub)}</span>
-        <span class="tm-val">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
+        <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (xFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
+        ${_tmTeamLogo(x.org)}
+        <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
+        <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
+        <span class="tm-val" style="color:${_tmValColor(x.mm)};">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
         <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
       </div>`).join("");
     const tot = _tmTotal(_TM[side]);
     return `<div class="tm-side">
-      <div class="tm-side-head">${label} receives <span class="tm-total ${tot >= 0 ? "proj-pos" : "proj-neg"}">$${tot.toFixed(1)}M</span></div>
+      <div class="tm-side-head"><span>${label} receives</span> <span class="tm-total" style="color:${_tmValColor(tot)};">$${tot.toFixed(1)}M</span></div>
       <input class="tm-search" type="search" placeholder="Add player (prospect or MLB)…" data-tm-search="${side}" autocomplete="off">
       <div class="tm-results" data-tm-results="${side}"></div>
       ${list || '<div class="tm-empty">no players yet</div>'}
     </div>`;
   };
   const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
-  const verdict = (_TM.a.length || _TM.b.length)
-    ? `<div class="tm-verdict">${Math.abs(dA - dB) < BALANCED_THRESHOLD_MM ? "≈ balanced package"
-        : (dA > dB ? `Side A receives +$${(dA - dB).toFixed(1)}M of value`
-                   : `Side B receives +$${(dB - dA).toFixed(1)}M of value`)}
-       <span class="fa-sub"> · prospect surplus (calibrated control-window NPV) vs MLB contract surplus (salary-known seasons) - one currency</span></div>`
+  const have = _TM.a.length || _TM.b.length;
+  const sum = Math.max(1e-6, Math.max(0, dA) + Math.max(0, dB));
+  const aPct = Math.round(100 * Math.max(0, dA) / sum);
+  const diff = Math.abs(dA - dB);
+  const bal = diff < BALANCED_THRESHOLD_MM;
+  const lead = dA > dB ? "A" : "B";
+  const verdict = have
+    ? `<div class="tm-verdict">
+         <div class="tm-balbar" title="value split A vs B">
+           <div class="tm-balbar-a" style="width:${aPct}%"></div>
+           <div class="tm-balbar-b" style="width:${100 - aPct}%"></div>
+         </div>
+         <div class="tm-balrow">
+           <span class="tm-balverdict${bal ? " is-bal" : ""}">${bal ? "≈ balanced package" : `Side ${lead} receives +$${diff.toFixed(1)}M of value`}</span>
+           <span class="fa-sub">one currency: prospect surplus (control-window NPV) + MLB contract surplus</span>
+         </div>
+       </div>`
     : "";
   el.innerHTML = `<div class="tm-wrap">
     <div class="detail-title" style="font-size:13px;">Trade Machine
@@ -232,7 +272,7 @@ const _TB_POS_BUCKETS = {
 };
 const _TB_TIER_COLORS = {
   elite:"var(--card-gold)", high:"var(--neon-green)",
-  mid:"var(--text-secondary)", low:"var(--text-secondary)", minimal:"var(--text-secondary)",
+  mid:"var(--neon-cyan, var(--accent-cyan))", low:"var(--text-secondary)", minimal:"var(--text-tertiary)",
 };
 function _tbIsMlb(p) {
   return p && (p.status === "graduated" || p.status === "debuted");
@@ -431,9 +471,9 @@ function _renderTBRows() {
       <td style="padding:4px 3px;font-weight:600;font-size:13px;">${name}</td>
       <td style="padding:4px 3px;text-align:right;font-size:11px;color:var(--text-secondary);">${p.age != null ? Number(p.age).toFixed(1) : " - "}</td>
       <td style="padding:4px 3px;color:var(--text-secondary);font-size:11px;">${pos}</td>
-      <td style="padding:4px 3px;color:var(--text-secondary);font-size:11px;">${org}</td>
+      <td style="padding:4px 3px;font-size:11px;"><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
       <td style="padding:4px 3px;text-align:right;font-size:11px;">${fv}</td>
-      <td style="padding:4px 3px;text-align:right;font-weight:700;color:${tvCol};">${_tbFmt(tv)}</td>
+      <td style="padding:4px 3px;text-align:right;font-weight:800;font-size:13px;color:${tvCol};font-variant-numeric:tabular-nums;">${_tbFmt(tv)}</td>
       <td style="padding:4px 3px;">${_tbCtrlBadge(p)}</td>
       <td style="padding:4px 3px;">${signals}</td>
     </tr>`;

@@ -3748,12 +3748,45 @@ def compute_all_trade_values(
     return results
 
 
+# Per-player detail fields that the COMPUTE produces (and the policy tests inspect in
+# memory) but NO frontend code reads off the written file -- ~2.4MB of dead weight that
+# made the Trade Machine view fetch+parse a 7.6MB JSON before painting. Dropped from the
+# WRITTEN file only; the in-memory compute result is untouched (tests use it directly).
+_BOARD_DROP = (
+    # heavy detail blocks (~2.4MB)
+    "archetype_policy", "worriedness", "inputs_available", "position_usage",
+    # per-player breakdown scalars the compute emits but NO frontend file reads (verified
+    # by grep across assets/*.js + prospx + build_site): the model internals, not display.
+    "kalman_gain", "authenticity", "trial_factor", "true_talent_war", "scarcity_mult",
+    "gross_floor_mm", "prior_surplus_mm", "catcher_dev_bonus", "defensive_floor_mm",
+    "multiposition_bonus_mm", "options_premium_mm", "rule5_urgency_mm",
+    "control_years_source", "rolling_label", "computed_at", "fv_effective",
+)  # posterior_surplus_mm is KEPT (the evaluator's prospect-pool currency)
+_FLASH_KEEP = ("is_bimodal", "p_click")                       # board ceiling flag + tooltip
+_CONTRACT_KEEP = ("phase", "current_salary_mm", "signed_through", "fa_year", "aav_mm",
+                  "player_opt_years", "club_opt_years")        # _tbCtrlBadge consumes these
+
+
+def board_slim(r: dict) -> dict:
+    """Slim one trade-value record for the board/evaluator payload: drop the unconsumed
+    detail fields and trim flash/contract to the sub-fields the frontend reads. Returns a
+    NEW dict (never mutates the compute result)."""
+    out = {k: v for k, v in r.items() if k not in _BOARD_DROP}
+    fl = r.get("flash")
+    if isinstance(fl, dict):
+        out["flash"] = {k: fl[k] for k in _FLASH_KEEP if k in fl}
+    cc = r.get("contract")
+    if isinstance(cc, dict):
+        out["contract"] = {k: cc[k] for k in _CONTRACT_KEEP if k in cc}
+    return out
+
+
 def export_trade_values_json(
     players: list[dict],
     out_path: Path | str,
     level_norms: dict | None = None,
 ) -> int:
-    """Compute and write data/trade_values.json.
+    """Compute and write data/trade_values.json (board-slim payload).
 
     Returns the number of players exported.
     """
@@ -3766,7 +3799,7 @@ def export_trade_values_json(
     payload = {
         "generated_at": date.today().isoformat(),
         "count":         len(results),
-        "players":       results,
+        "players":       [board_slim(r) for r in results],
     }
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(
