@@ -12501,6 +12501,30 @@ function liveTrendHTML(p) {
 // renders nothing for new-to-list prospects.
 function rankTrendHTML(p) {
   if (!p) return "";
+  // When the board is xFV-primary (the default), the rank diamond shows the xFV
+  // rank -- so the trend beneath it must reflect xFV movement (owner: movement =
+  // xFV delta), NOT the consensus overall_rank delta. Driving it off the consensus
+  // rank produced the contradiction the diamond can't have: e.g. Jesus Made, #1
+  // overall by xFV, showing "v -1" because his CONSENSUS rank slipped one spot.
+  // xfvStockDir is the same xFV "since last real change" signal the rest of the
+  // board uses (history-based, falls back to the xFV-overridden p.stock).
+  if (typeof _gradePrimary === "function" && _gradePrimary() === "xfv") {
+    // Spots climbed/fallen on the xFV board since the player's last real grade move.
+    // ALWAYS a rank-delta number (or flat) -- never a bare "up/down xFV" direction: a
+    // held rank (incl. the #1 prospect, who cannot climb higher) reads "flat", and only
+    // a genuine rank move shows ▲ +N / ▼ -N.
+    const delta = (typeof getXfvRankDelta === "function") ? getXfvRankDelta(p) : null;
+    if (delta == null) return "";       // player not in the xFV rank map yet
+    if (delta === 0) {
+      return `<div class="fv-stock-line"><span class="stock-flat"> - flat</span></div>`;
+    }
+    const cls = delta > 0 ? "stock-up" : "stock-down";
+    const glyph = delta > 0 ? "▲" : "▼";
+    const sign = delta > 0 ? "+" : "";
+    const n = Math.abs(delta);
+    return `<div class="fv-stock-line" title="${delta > 0 ? "Up" : "Down"} ${n} spot${n === 1 ? "" : "s"} on the xFV board since its last grade move"><span class="${cls}">${glyph} ${sign}${delta}</span></div>`;
+  }
+  // Consensus board (toggled): rank-spots trend from the consensus rank stream.
   const cur = p.overall_rank, prev = p.prev_overall_rank;
   if (cur == null || prev == null) return "";
   const delta = prev - cur;  // positive = improved
@@ -28868,12 +28892,13 @@ function getAaaStuffPlus(p) {
 // players carry kind="active"; xFV abstains on players with no pro track record.
 let _XFV = null;
 let _XFV_RANK = null;     // player_key -> 1-based xFV rank over the active board (lazy)
+let _XFV_PREV_RANK = null; // player_key -> xFV rank by PREVIOUS grade (drives the rank-spot delta chip)
 (function loadXfv() {
   fetch("/data/xfv.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _XFV = (j && j.by_player) || {};
-      _XFV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
+      _XFV_RANK = null; _XFV_PREV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
       // First paint can beat this fetch - repaint so xFV chips/cards appear.
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
     })
@@ -28914,6 +28939,7 @@ let _XFV_HIST = null;
   fetch("/data/xfv_history.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _XFV_HIST = (j && j.by_player) || {};
+      _XFV_PREV_RANK = null;   // rank-delta chips need history -> rebuild the prev-grade rank map now that it loaded
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
     .catch(() => { _XFV_HIST = {}; });
 })();
@@ -28965,7 +28991,7 @@ function ensureXfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _XFV_UNG = j || { by_player: {}, by_mlbam: {} };
-      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _XFV_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _XFV_RANK = null; _XFV_PREV_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
     .catch(() => { _XFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
@@ -29067,6 +29093,7 @@ function xfvRankValue(p) {
 }
 function buildXfvRankMap() {
   _XFV_RANK = {};
+  _XFV_PREV_RANK = {};
   if (!DATA || !Array.isArray(DATA.players)) return;
   // Provisional (source-ungraded) prospects are first-class members of the active pool: they
   // ALWAYS rank among the graded board by their xFV grade (no toggle). provPlayers() is empty
@@ -29075,10 +29102,36 @@ function buildXfvRankMap() {
   pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _XFV_RANK[p.player_key] = i + 1; });
+  // PREVIOUS-grade xFV rank: rank the SAME pool by each player's xFV grade BEFORE its most
+  // recent real step (the xfvStockDir anchor), so the rank chip can show how many SPOTS a
+  // player climbed/fell on the xFV board since that move. Flat / no-history players keep their
+  // current grade, so they hold their slot (delta 0) and only genuine movers shift.
+  const prevVal = p => { const pv = xfvPrevGrade(p); return pv != null ? pv : xfvRankValue(p); };
+  pool.slice().sort((a, b) => prevVal(b) - prevVal(a)
+    || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)))
+    .forEach((p, i) => { _XFV_PREV_RANK[p.player_key] = i + 1; });
 }
 function getXfvRank(p) {
   if (_XFV_RANK == null) buildXfvRankMap();
   return (p && _XFV_RANK) ? (_XFV_RANK[p.player_key] || null) : null;
+}
+// xFV grade BEFORE this player's most recent real step (mirrors xfvStockDir's walk-back).
+function xfvPrevGrade(p) {
+  const hist = (typeof getXfvHistory === "function") ? getXfvHistory(p) : null;
+  if (!(hist && hist.length >= 2)) return null;
+  const latest = hist[hist.length - 1].x;
+  let anchor = hist[0].x;
+  for (let i = hist.length - 2; i >= 0; i--) {
+    if (Math.abs(latest - hist[i].x) >= _XFV_STEP_EPS) { anchor = hist[i].x; break; }
+  }
+  return anchor;
+}
+// Spots climbed (+) / fallen (-) on the xFV board since the player's last real grade move.
+function getXfvRankDelta(p) {
+  if (_XFV_RANK == null || _XFV_PREV_RANK == null) buildXfvRankMap();
+  if (!(p && _XFV_RANK && _XFV_PREV_RANK)) return null;
+  const cur = _XFV_RANK[p.player_key], prev = _XFV_PREV_RANK[p.player_key];
+  return (cur == null || prev == null) ? null : (prev - cur);
 }
 // Display grade rounded UP (owner rule: FV grades show the integer ceiling).
 function xfvGradeDisplay(x) {
