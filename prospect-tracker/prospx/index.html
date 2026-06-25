@@ -12522,7 +12522,7 @@ function rankTrendHTML(p) {
     const glyph = delta > 0 ? "▲" : "▼";
     const sign = delta > 0 ? "+" : "";
     const n = Math.abs(delta);
-    return `<div class="fv-stock-line" title="${delta > 0 ? "Up" : "Down"} ${n} spot${n === 1 ? "" : "s"} on the xFV board since its last grade move"><span class="${cls}">${glyph} ${sign}${delta}</span></div>`;
+    return `<div class="fv-stock-line" title="${delta > 0 ? "Up" : "Down"} ${n} spot${n === 1 ? "" : "s"} on the xFV board in the last 30 days"><span class="${cls}">${glyph} ${sign}${delta}</span></div>`;
   }
   // Consensus board (toggled): rank-spots trend from the consensus rank stream.
   const cur = p.overall_rank, prev = p.prev_overall_rank;
@@ -29102,10 +29102,10 @@ function buildXfvRankMap() {
   pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _XFV_RANK[p.player_key] = i + 1; });
-  // PREVIOUS-grade xFV rank: rank the SAME pool by each player's xFV grade BEFORE its most
-  // recent real step (the xfvStockDir anchor), so the rank chip can show how many SPOTS a
-  // player climbed/fell on the xFV board since that move. Flat / no-history players keep their
-  // current grade, so they hold their slot (delta 0) and only genuine movers shift.
+  // PREVIOUS-grade xFV rank: rank the SAME pool by each player's xFV grade ~30 days ago
+  // (xfvPrevGrade), so the rank chip shows how many SPOTS a player climbed/fell on the xFV
+  // board over the last update window. Players flat over that window keep their slot (delta 0),
+  // so only genuine recent movers shift -- no lifetime climbs.
   const prevVal = p => { const pv = xfvPrevGrade(p); return pv != null ? pv : xfvRankValue(p); };
   pool.slice().sort((a, b) => prevVal(b) - prevVal(a)
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)))
@@ -29115,16 +29115,21 @@ function getXfvRank(p) {
   if (_XFV_RANK == null) buildXfvRankMap();
   return (p && _XFV_RANK) ? (_XFV_RANK[p.player_key] || null) : null;
 }
-// xFV grade BEFORE this player's most recent real step (mirrors xfvStockDir's walk-back).
+// xFV grade as of ~one board update (RANK_WINDOW_DAYS) ago -- a FIXED recent window, so the
+// rank-delta reads "movement since the last update", not a lifetime climb. An event-based
+// "since last real step" walk-back reaches back past a plateau (Jesus Made sat at ~62 for a
+// year but his step traced to his pre-breakout 52, reading a spurious +37); taking the grade
+// AT the cutoff date (plateau included) bounds it. 30d ~= the monthly board cadence.
+const _XFV_RANK_WINDOW_DAYS = 30;
 function xfvPrevGrade(p) {
   const hist = (typeof getXfvHistory === "function") ? getXfvHistory(p) : null;
   if (!(hist && hist.length >= 2)) return null;
-  const latest = hist[hist.length - 1].x;
-  let anchor = hist[0].x;
-  for (let i = hist.length - 2; i >= 0; i--) {
-    if (Math.abs(latest - hist[i].x) >= _XFV_STEP_EPS) { anchor = hist[i].x; break; }
+  const cutoff = Date.parse(hist[hist.length - 1].d) - _XFV_RANK_WINDOW_DAYS * 86400000;
+  let prev = hist[0].x;                                  // fallback: earliest known grade
+  for (let i = hist.length - 1; i >= 0; i--) {
+    if (Date.parse(hist[i].d) <= cutoff) { prev = hist[i].x; break; }
   }
-  return anchor;
+  return prev;
 }
 // Spots climbed (+) / fallen (-) on the xFV board since the player's last real grade move.
 function getXfvRankDelta(p) {
