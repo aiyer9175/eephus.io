@@ -139,7 +139,7 @@ from storage import (
     upsert_roster_status, load_roster_status,
     upsert_source_events,
     export_timeseries_json, latest_run_summary,
-    snapshot_board_metrics, snapshot_farm_ranks, record_il_observation,
+    snapshot_board_metrics, snapshot_trade_values, snapshot_farm_ranks, record_il_observation,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -2497,6 +2497,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     _tv_players, out_dir / "trade_values.json", level_norms=_lnorms
                 )
                 log.info("trade values: exported %d players", _n_tv)
+                # Snapshot the board surplus values so a TRUE forward backtest of
+                # the Trade Machine becomes possible (the eval is rank-only today
+                # because trade_values.json was never snapshotted). Cannot be
+                # back-filled; the track record begins this run. Idempotent.
+                try:
+                    _tv_written = json.loads((out_dir / "trade_values.json").read_text(encoding="utf-8"))
+                    _n_tvh = snapshot_trade_values(_tv_written.get("players") or [])
+                    log.info("trade_value_history: snapshotted %d board records", _n_tvh)
+                except Exception:
+                    log.exception("trade_value snapshot failed — continuing")
             except Exception:
                 log.exception("trade value export failed — continuing")
 

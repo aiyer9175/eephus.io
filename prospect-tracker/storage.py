@@ -1121,6 +1121,28 @@ CREATE TABLE IF NOT EXISTS metric_snapshots (
 CREATE INDEX IF NOT EXISTS idx_metric_snap_date ON metric_snapshots(snapshot_date);
 CREATE INDEX IF NOT EXISTS idx_metric_snap_player ON metric_snapshots(player_key);
 
+-- One row per (player_key, snapshot date): the Trade Machine board surplus
+-- value as-of. Enables a TRUE forward backtest of the board ordering (the
+-- trade_machine_surplus eval is currently rank-only/hindsight because
+-- trade_values.json was never snapshotted). Cannot be back-filled - the track
+-- record begins the first run after this lands. Idempotent upsert-by-date.
+CREATE TABLE IF NOT EXISTS trade_value_history (
+    player_key        TEXT NOT NULL,
+    snapshot_date     TEXT NOT NULL,
+    trade_value_mm    REAL,
+    surplus_source    TEXT,               -- xfv | projection | xfv_backgrade
+    trade_value_tier  TEXT,
+    trade_value_grade TEXT,
+    xfv_grade         REAL,
+    status            TEXT,               -- active | debuted | graduated
+    age               REAL,
+    position          TEXT,
+    org               TEXT,
+    inserted_at       TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (player_key, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_tradeval_date ON trade_value_history(snapshot_date);
+
 -- One row per (org, snapshot calendar date): the composite farm-system rank
 -- and the farm_score it sorts on. Sibling to metric_snapshots, but at the ORG
 -- grain rather than the player grain — metric_snapshots never stored the
@@ -3626,6 +3648,48 @@ def snapshot_board_metrics(players: Iterable[dict], snapshot_date: str | None = 
                  p.get("status"),
                  1 if (p.get("position") or "").upper() in ("SP", "RP", "P", "SIRP", "MIRP", "RHP", "LHP") else 0,
                  p.get("age"), json.dumps(payload)),
+            )
+            n += 1
+    return n
+
+
+def snapshot_trade_values(players: Iterable[dict], snapshot_date: str | None = None) -> int:
+    """Capture each Trade Machine board record's surplus value as-of date, one
+    row per player per calendar date. This is the INSTRUMENT that enables a true
+    FORWARD backtest of the board ordering (the trade_machine_surplus eval is
+    currently rank-only / hindsight because trade_values.json was never
+    snapshotted). Cannot be back-filled - the track record begins the first run
+    after this lands. Idempotent: re-running on a date overwrites that date.
+
+    `players` is the trade_values.json `players` list (post apply_platform_surplus).
+    Players with no trade_value_mm are skipped (nothing to snapshot)."""
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        for p in players:
+            if not isinstance(p, dict):
+                continue
+            key = p.get("player_key")
+            if not key or p.get("trade_value_mm") is None:
+                continue
+            con.execute(
+                """INSERT INTO trade_value_history
+                     (player_key, snapshot_date, trade_value_mm, surplus_source,
+                      trade_value_tier, trade_value_grade, xfv_grade, status,
+                      age, position, org, inserted_at)
+                   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(player_key, snapshot_date) DO UPDATE SET
+                     trade_value_mm=excluded.trade_value_mm,
+                     surplus_source=excluded.surplus_source,
+                     trade_value_tier=excluded.trade_value_tier,
+                     trade_value_grade=excluded.trade_value_grade,
+                     xfv_grade=excluded.xfv_grade,
+                     status=excluded.status, age=excluded.age,
+                     position=excluded.position, org=excluded.org,
+                     inserted_at=excluded.inserted_at""",
+                (key, snapshot_date, p.get("trade_value_mm"), p.get("surplus_source"),
+                 p.get("trade_value_tier"), p.get("trade_value_grade"), p.get("xfv_grade"),
+                 p.get("status"), p.get("age"), p.get("position"), p.get("org")),
             )
             n += 1
     return n
