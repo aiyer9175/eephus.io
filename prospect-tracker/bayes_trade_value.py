@@ -3827,6 +3827,49 @@ def _trade_value_grade(mm: float | None) -> str | None:
     return "F"
 
 
+def _roster_seasons_index(data_dir: Path) -> dict:
+    """player_key -> (last_mlb_season, n_mlb_seasons) from debuts.json's
+    roster_status.mlb_seasons. Used to (a) drop players who have not appeared in
+    MLB for 2+ seasons (no longer active assets - e.g. restricted-list / retired
+    players) and (b) date how established a debuted player is so the prospect-era
+    backgrade can be tempered toward his realized MLB performance."""
+    out: dict = {}
+    try:
+        d = json.loads((Path(data_dir) / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    players = d.get("players") if isinstance(d, dict) else d
+    if isinstance(players, dict):
+        players = list(players.values())
+    for p in (players or []):
+        pk = p.get("player_key")
+        seasons = ((p.get("roster_status") or {}).get("mlb_seasons")) or []
+        if pk and seasons:
+            out[pk] = (max(seasons), len(seasons))
+    return out
+
+
+def _backgrade_realized_factor(age, realized_war, proj_war_6yr, n_seasons) -> float:
+    """Discount-only factor in [0,1] that tempers a DEBUTED player's prospect-era
+    backgrade surplus toward his realized MLB performance. The backgrade prices
+    `xfv_war_6yr` (the projection from his PROSPECT profile), so a former top
+    prospect who busted (Hiura: proj 10.3 WAR, realized 0.8) is otherwise valued
+    like the prospect he never became. Trust realized more the more established
+    the player is (by MLB seasons OR age); never inflates (cap at 1.0)."""
+    if proj_war_6yr is None or realized_war is None or n_seasons is None:
+        return 1.0
+    proj_rate = float(proj_war_6yr) / 6.0
+    if proj_rate <= 0:
+        return 1.0
+    n = max(1, int(n_seasons))
+    f_seasons = min(1.0, n / 4.0)                                  # ~4 MLB seasons -> realized dominates
+    f_age = 0.0 if age is None else max(0.0, min(1.0, (float(age) - 24.0) / 5.0))
+    f = max(f_seasons, f_age)                                      # most-established signal wins
+    realized_rate = max(0.0, float(realized_war) / n)             # floored at replacement
+    eff_rate = (1.0 - f) * proj_rate + f * realized_rate
+    return max(0.0, min(1.0, eff_rate / proj_rate))
+
+
 def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
@@ -3867,10 +3910,38 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         if v.get("age") is not None:
             ages.setdefault(k, v["age"])
 
-    stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0, "age_backfilled": 0}
+    roster = _roster_seasons_index(dd)                       # pk -> (last_mlb_season, n_seasons)
+    current_season = max((ls for ls, _ in roster.values()), default=None)
+
+    stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0,
+             "age_backfilled": 0, "inactive_dropped": 0, "backgrade_tempered": 0}
     for r in records:
         pk = r.get("player_key")
         is_pros = r.get("status") == "active"
+        # Resolve age up front (backfilled from the projection artifacts) - the
+        # backgrade temper below reads it.
+        age = r.get("age")
+        if age is None and pk in ages:
+            age = ages[pk]
+            r["age"] = age
+            stats["age_backfilled"] += 1
+
+        # Drop debuted players who have not appeared in MLB for 2+ seasons: they
+        # are no longer active trade assets (restricted-list / retired / released
+        # - e.g. Wander Franco, last MLB season 2023). Active prospects are never
+        # dropped, and neither are players the projection system still models (an
+        # injured star with a forward projection stays). trade_value_mm=None ->
+        # the board's null filter omits them.
+        if not is_pros and pk not in proj_sur and pk in roster and current_season is not None \
+                and roster[pk][0] <= current_season - 2:
+            r["trade_value_mm"] = None
+            r["posterior_surplus_mm"] = None
+            r["trade_value_grade"] = None
+            r["trade_value_tier"] = None
+            r["surplus_source"] = "inactive_dropped"
+            stats["inactive_dropped"] += 1
+            continue
+
         xe = xfv.get(pk) or {}
         x_sur = xe.get("surplus_mm")
         new, src = None, None
@@ -3881,7 +3952,16 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             if pk in proj_sur:
                 new, src = proj_sur[pk], "projection"
             elif x_sur is not None:
-                new, src = x_sur, "xfv_backgrade"
+                # Temper the prospect-era backgrade toward realized MLB outcomes
+                # for established debuted players (a busted former top prospect
+                # otherwise carries the value of the prospect he never became).
+                rs = roster.get(pk)
+                factor = _backgrade_realized_factor(
+                    age, xe.get("realized_war"), xe.get("xfv_war_6yr"),
+                    rs[1] if rs else None)
+                new, src = x_sur * factor, "xfv_backgrade"
+                if factor < 0.999:
+                    stats["backgrade_tempered"] += 1
         if new is not None:
             mm = round(float(new), 1)
             r["trade_value_mm"] = mm
@@ -3889,17 +3969,17 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             r["trade_value_tier"] = _platform_tier(mm)
             r["surplus_source"] = src
             lo, hi = xe.get("band_p10_mm"), xe.get("band_p90_mm")
-            r["trade_value_lo"] = round(float(lo), 1) if lo is not None else None
-            r["trade_value_hi"] = round(float(hi), 1) if hi is not None else None
+            # Bands are the xFV credible interval; scale them with a tempered
+            # backgrade so they stay consistent with the shown value.
+            scale = (mm / float(x_sur)) if (src == "xfv_backgrade" and x_sur) else 1.0
+            r["trade_value_lo"] = round(float(lo) * scale, 1) if lo is not None else None
+            r["trade_value_hi"] = round(float(hi) * scale, 1) if hi is not None else None
             stats[src] += 1
         else:
             stats["unchanged"] += 1
         # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
         # every board row carries a letter; survives board_slim automatically.
         r["trade_value_grade"] = _trade_value_grade(r.get("trade_value_mm"))
-        if r.get("age") is None and pk in ages:
-            r["age"] = ages[pk]
-            stats["age_backfilled"] += 1
     return stats
 
 
@@ -3919,6 +3999,10 @@ def export_trade_values_json(
     # ages, then sort by the ALIGNED value.
     st = apply_platform_surplus(results, out_path.parent)
     _log.info("trade_values platform-surplus: %s", st)
+    # Drop players apply_platform_surplus flagged inactive (no MLB appearance in
+    # 2+ seasons - restricted-list / retired / released); they are not tradeable
+    # assets and shouldn't appear on the board.
+    results = [r for r in results if r.get("surplus_source") != "inactive_dropped"]
     results.sort(key=lambda r: r.get("trade_value_mm") if r.get("trade_value_mm") is not None else -1e9, reverse=True)
 
     payload = {

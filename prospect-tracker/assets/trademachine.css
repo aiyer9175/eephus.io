@@ -171,6 +171,9 @@
 .tm-board-table .tm-grade { text-align: right; }
 .tm-board-table .tm-grade .tm-grade-chip { font-size: 11px; padding: 1px 5px; }
 .tm-board-table .tm-col-div { border-left: 1px solid var(--border-light); }
+.tm-board-table th.tm-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.tm-board-table th.tm-sortable:hover { color: var(--neon-cyan, var(--accent-cyan)); }
+.tm-board-table th.tm-sorted { color: var(--neon-cyan, var(--accent-cyan)); }
 
 /* mobile: let the wide board scroll horizontally rather than squash 9 columns */
 @media (max-width: 720px) {

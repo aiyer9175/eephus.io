@@ -9,7 +9,34 @@ from bayes_trade_value import (
     _exposure_weighted_career_war,
     _contract_surplus_mm,
     multiposition_bonus_mm,
+    _backgrade_realized_factor,
 )
+
+
+# ── debuted-player backgrade temper (former-prospect over-valuation fix) ──────
+def test_backgrade_factor_busted_veteran_heavily_discounted():
+    # Hiura-like: projected ~10 WAR over 6yr from his prospect profile, but ~0.8
+    # realized across 4 MLB seasons at age ~30 -> trust realized, big discount.
+    f = _backgrade_realized_factor(age=29.9, realized_war=0.8, proj_war_6yr=10.3, n_seasons=4)
+    assert 0.0 <= f < 0.2
+
+
+def test_backgrade_factor_young_recent_debut_mostly_retained():
+    # Campbell-like: 24 y/o, 1 rough MLB season -> projection still trusted.
+    f = _backgrade_realized_factor(age=24.0, realized_war=-0.8, proj_war_6yr=10.7, n_seasons=1)
+    assert f > 0.6
+
+
+def test_backgrade_factor_discount_only_never_inflates():
+    # A player out-performing his projection is never marked UP (cap at 1.0).
+    f = _backgrade_realized_factor(age=27.0, realized_war=30.0, proj_war_6yr=10.0, n_seasons=4)
+    assert f == 1.0
+
+
+def test_backgrade_factor_missing_data_is_noop():
+    assert _backgrade_realized_factor(None, None, None, None) == 1.0
+    assert _backgrade_realized_factor(28.0, 5.0, None, 3) == 1.0      # no projection
+    assert _backgrade_realized_factor(28.0, 5.0, 0.0, 3) == 1.0       # non-positive projection
 
 
 def _base_debuted_player(**overrides):

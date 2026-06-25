@@ -47,6 +47,16 @@
   function renderPlayerDetail(key) {
     if (key) location.href = "/prospx/#player=" + encodeURIComponent(key);
   }
+  // Board / group-panel navigation. MLB players (debuted/graduated) deep-link to
+  // their MLB Projections page; prospects to their PROSPX page. The board rows
+  // used to call goToPlayer(), a PROSPX global that does not exist in the
+  // /projections/ app, so clicks silently no-op'd - this gives every row a
+  // working, correctly-routed destination.
+  function _tmNavPlayer(key, isMlb) {
+    if (!key) return;
+    location.href = (isMlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(key);
+  }
+  window._tmNavPlayer = _tmNavPlayer;   // referenced from inline row onclick handlers
 // Pagination window helper (transitive dep of renderPaginationStrip), from PROSPX.
 function computePageWindow(cur, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -337,21 +347,68 @@ function _tbPrimaryPos(pos) {
   const order = ["C","SS","CF","2B","3B","1B","LF","RF","OF","SP","RP","CL","RHP","LHP","P","DH"];
   return order.find(x => parts.includes(x)) || parts[0] || "";
 }
-function _tbSortRows(rows) {
-  // null/undefined/"" -> null (NOT 0). Number(null)===0 is finite, which used to make
-  // age-less MLB players sort as "age 0" -> 33-yo vets appeared under "Youngest".
+// Parse the _tbSort string into [column, direction]. "trade_desc" (the legacy
+// default + dropdown value) maps to the surplus column so header clicks and the
+// dropdown share one model.
+function _tbSortParts() {
+  if (_tbSort === "trade_desc" || !_tbSort) return ["surplus", "desc"];
+  const i = _tbSort.lastIndexOf("_");
+  if (i < 0) return [_tbSort, "desc"];
+  return [_tbSort.slice(0, i), _tbSort.slice(i + 1)];
+}
+// Per-column accessor (numeric -> null when absent so nulls always sort last;
+// text -> string). Grade sorts by the same surplus value it is derived from.
+function _tbSortVal(p, col) {
   const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
-  const cmpText = (a, b) => String(a || "").localeCompare(String(b || ""));
-  const withTradeTiebreak = (cmp, a, b) => cmp || ((num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1));
+  if (col === "age") return { n: num(p.age) };
+  if (col === "fv")  return { n: num(p.fv) };
+  if (col === "org") return { t: String(p.org || "") };
+  if (col === "pos") return { t: _tbPrimaryPos(p.position) };
+  if (col === "name") return { t: String(p.player_name || "") };
+  if (col === "contract") return { n: num(p.remaining_control_years) };
+  return { n: num(p.trade_value_mm) };          // surplus | grade (default)
+}
+function _tbSortRows(rows) {
+  const [col, dir] = _tbSortParts();
+  const sign = dir === "asc" ? 1 : -1;
+  const tv = p => { const v = Number(p.trade_value_mm); return Number.isFinite(v) ? v : -1e9; };
   rows.sort((a, b) => {
-    if (_tbSort === "age_asc") return withTradeTiebreak((num(a.age) ?? 999) - (num(b.age) ?? 999), a, b);
-    if (_tbSort === "age_desc") return withTradeTiebreak((num(b.age) ?? -1) - (num(a.age) ?? -1), a, b);
-    if (_tbSort === "fv_desc") return withTradeTiebreak((num(b.fv) ?? -1) - (num(a.fv) ?? -1), a, b);
-    if (_tbSort === "org_asc") return withTradeTiebreak(cmpText(a.org, b.org), a, b);
-    if (_tbSort === "pos_asc") return withTradeTiebreak(cmpText(_tbPrimaryPos(a.position), _tbPrimaryPos(b.position)), a, b);
-    return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
+    const av = _tbSortVal(a, col), bv = _tbSortVal(b, col);
+    let c;
+    if ("t" in av) {                             // text column
+      c = av.t.localeCompare(bv.t) * sign;
+    } else {                                     // numeric column - nulls always last
+      if (av.n == null && bv.n == null) c = 0;
+      else if (av.n == null) c = 1;
+      else if (bv.n == null) c = -1;
+      else c = (av.n - bv.n) * sign;
+    }
+    return c || (tv(b) - tv(a));                 // stable tiebreak: surplus desc
   });
   return rows;
+}
+// Render a clickable, sort-aware column header with an active-direction arrow.
+function _tbTh(label, col, cls, title) {
+  const [scol, sdir] = _tbSortParts();
+  const active = scol === col;
+  const arrow = active ? (sdir === "asc" ? " ▲" : " ▼") : "";
+  const classes = ["tm-sortable", cls, active ? "tm-sorted" : ""].filter(Boolean).join(" ");
+  const tt = (title ? title + " · " : "") + "click to sort";
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}">${label}${arrow}</th>`;
+}
+// Column header click: toggle direction if already sorted by it, else pick a
+// sensible default (text asc, numeric desc).
+function _tbSortByCol(col) {
+  const [scol, sdir] = _tbSortParts();
+  // First click default: ascending for text + age (youngest first is the useful
+  // default on a prospect board); descending for value-like columns (best first).
+  const dir = (scol === col) ? (sdir === "asc" ? "desc" : "asc")
+            : (["name", "org", "pos", "age"].includes(col) ? "asc" : "desc");
+  _tbSort = `${col}_${dir}`;
+  const sel = document.getElementById("tb-sort-select");
+  if (sel) sel.value = (_tbSort === "surplus_desc") ? "trade_desc" : _tbSort;
+  resetPage("tradeboard");
+  _renderTBRows();
 }
 function _tbPopulateSelectFilters() {
   if (!_tbData) return;
@@ -497,14 +554,14 @@ function _renderTBRows() {
   <table class="stats-table tm-board-table">
   <thead><tr>
     <th>#</th>
-    <th>Player</th>
-    <th class="tm-num" title="Current age (decimal years)">Age</th>
-    <th>Pos</th>
-    <th>Org</th>
-    <th class="tm-num" title="Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)">FV</th>
-    <th class="tm-num tm-col-div" title="Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. Ranks how valuable a player is to ACQUIRE in trade; the surplus already nets salary out of projected production over the years of control.">Grade</th>
-    <th class="tm-num" title="Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use">Surplus</th>
-    <th title="Contract: phase · salary · free agency year (MLB) or remaining controlled seasons (MiLB)">Contract</th>
+    ${_tbTh("Player", "name")}
+    ${_tbTh("Age", "age", "tm-num", "Current age (decimal years)")}
+    ${_tbTh("Pos", "pos")}
+    ${_tbTh("Org", "org")}
+    ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
+    ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale; ranks how valuable a player is to ACQUIRE in trade")}
+    ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
+    ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
 
@@ -530,10 +587,10 @@ function _renderTBRows() {
     const flash = p.flash || {};
     const injD  = p.injury_discount || 0;
 
-    // Navigate to player detail using goToPlayer (correct path for both
-    // MiLB and graduated players). If no key, no navigation.
+    // Navigate to player detail: MLB players -> their MLB Projections page,
+    // prospects -> their PROSPX page. If no key, no navigation.
     const rowClick = p.player_key
-      ? `onclick="event.preventDefault();goToPlayer('${escapeHtml(p.player_key)}');" style="cursor:pointer;"`
+      ? `onclick="event.preventDefault();_tmNavPlayer('${escapeHtml(p.player_key)}',${isMlb});" style="cursor:pointer;"`
       : "";
 
     // Signals: status badge + ceiling flag + injury warning + GRPO breakout badge.
@@ -568,6 +625,9 @@ function _renderTBRows() {
   });
   html += `</tbody></table>${topPager}`;
   wrap.innerHTML = html;
+  // Sortable column headers (the table is rebuilt each render, so rewire here).
+  wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th =>
+    th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol)));
 }
 
 // ── Filter chip wiring (called once after first load) ──────────────────────
@@ -659,7 +719,7 @@ function _tbShowGroup(playerKey) {
       const bsCol = (m.breakout_score || 0) >= 0.60 ? "var(--neon-green)" : (m.breakout_score || 0) >= 0.45 ? "var(--neon-amber)" : "var(--text-secondary)";
       const avl = m.age_vs_level != null ? `${m.age_vs_level > 0 ? "+" : ""}${Number(m.age_vs_level).toFixed(1)}yr` : " - ";
       return `<tr style="font-size:12px;" class="prospect-row"
-                  onclick="goToPlayer('${escapeHtml(m.player_key||'')}');"
+                  onclick="_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);"
                   style="cursor:pointer;">
         <td style="padding:4px 6px;color:var(--text-secondary);">${i + 1}</td>
         <td style="padding:4px 6px;font-weight:600;">${escapeHtml(m.player_name || "?")}</td>
