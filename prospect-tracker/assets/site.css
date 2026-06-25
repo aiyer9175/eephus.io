@@ -48,6 +48,11 @@
   --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
   --grain: rgba(15,27,45,.035);
   --grain2: rgba(139,132,116,.05);
+  /* Light-mode background-texture dials (baseball-card cardstock + vintage
+     newspaper sports-page halftone). Light only; dark keeps the starfield. */
+  --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
+  --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
+  --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
   /* LEGIBILITY FIX: MS UI Gothic / MS Gothic still lead (the brand pixel-gothic on
      Windows), but where they're ABSENT (Mac / Linux / mobile) COPY now falls to a
      clean technical MONOSPACE - on-theme + legible - instead of the DotGothic16
@@ -267,17 +272,22 @@
   text-rendering: optimizeLegibility;
   font-synthesis: none;
 }
-/* Light-mode paper texture: a faint newsprint halftone dot grid layered over the
-   grain so the background reads like cardstock / a newspaper section instead of a
-   flat fill. Light only - dark mode keeps the pixel starfield. Tunable via
-   --paper-dot; content sits on solid cards so legibility is untouched. */
+/* Light-mode paper texture: leans into the baseball-card cardstock + vintage
+   newspaper sports-page look. Four layers, back to front: (1) faint vertical
+   baseball pinstripes / newspaper column rules; (2+3) a two-tone offset
+   newsprint HALFTONE screen (navy + warm registration dot) - the dotted photo
+   screen of an old sports section; (4) fine cardstock grain. Light only - dark
+   keeps the pixel starfield. Tunable via the --paper-* dials; content sits on
+   solid cards so legibility is untouched. */
 :root:not([data-theme="dark"]) .eephus-page {
   background-image:
-    radial-gradient(var(--grain) 1px, transparent 1px),
-    radial-gradient(var(--grain2) 1px, transparent 1px),
-    radial-gradient(var(--paper-dot, rgba(15,27,45,.05)) 0.7px, transparent 0.8px);
-  background-size: 26px 26px, 13px 13px, 6px 6px;
-  background-position: 0 0, 13px 13px, 0 0;
+    repeating-linear-gradient(90deg, transparent 0 15px, var(--paper-pinstripe) 15px 16px),
+    radial-gradient(var(--paper-dot)  0.9px, transparent 1.4px),
+    radial-gradient(var(--paper-dot2) 0.9px, transparent 1.4px),
+    radial-gradient(var(--grain2) 1px, transparent 1px);
+  background-size: 16px 100%, 9px 9px, 9px 9px, 13px 13px;
+  background-position: 0 0, 0 0, 4px 5px, 13px 13px;
+  background-attachment: fixed, fixed, fixed, scroll;
 }
 .eephus-page a { color: var(--accent-navy); }
 .eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }

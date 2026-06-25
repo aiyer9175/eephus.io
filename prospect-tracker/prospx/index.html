@@ -81,6 +81,12 @@
       --bg-primary:       #F4F0E6;     /* main page (warm paper)   */
       --bg-secondary:     #FBF8F0;     /* card surface             */
       --bg-tertiary:      #ECE6D6;     /* alt rows / muted panels  */
+      /* Light-mode background-texture dials - leans into the baseball-card
+         cardstock + vintage newspaper sports-page look. Light only; the dark
+         theme keeps its refractor/starfield. Raise alphas for more presence. */
+      --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
+      --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
+      --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
       --bg-header:        #0E2B4D;     /* deep navy headline band  */
       --text-primary:     #0F1B2D;     /* near-black navy          */
       --text-secondary:   #4A5468;     /* slate                    */
@@ -858,14 +864,23 @@
     body {
       margin: 0;
       font-family: var(--font-sans);
-      background: var(--bg-primary);
-      /* Faint newsprint texture - two overlaid radial gradients give the
-         paper a subtle dotted-grain feel without needing an image. */
+      background-color: var(--bg-primary);
+      /* Baseball-card cardstock + vintage newspaper sports-page texture (LIGHT
+         only - the [data-theme="dark"] body rule above overrides this with the
+         deep-ink grain that sits under the refractor). Four layers, back to
+         front: (1) faint vertical baseball pinstripes / newspaper column rules;
+         (2+3) a two-tone offset newsprint HALFTONE screen (navy + a warm
+         registration dot) - the dotted photo screen of an old sports section;
+         (4) fine cardstock grain. All tunable via the --paper-* dials. Content
+         sits on solid cream cards, so legibility is untouched. */
       background-image:
-        radial-gradient(rgba(15, 27, 45, 0.035) 1px, transparent 1px),
+        repeating-linear-gradient(90deg, transparent 0 15px, var(--paper-pinstripe) 15px 16px),
+        radial-gradient(var(--paper-dot)  0.9px, transparent 1.4px),
+        radial-gradient(var(--paper-dot2) 0.9px, transparent 1.4px),
         radial-gradient(rgba(139, 132, 116, 0.05) 1px, transparent 1px);
-      background-size: 26px 26px, 13px 13px;
-      background-position: 0 0, 13px 13px;
+      background-size: 16px 100%, 9px 9px, 9px 9px, 13px 13px;
+      background-position: 0 0, 0 0, 4px 5px, 13px 13px;
+      background-attachment: fixed, fixed, fixed, scroll;
       color: var(--text-primary);
       /* Bumped 1.5 → 1.55 for the MS Gothic stack - Japanese-Latin
          fonts pack tighter vertically and benefit from slightly more
