@@ -63,34 +63,24 @@
 "game_pwr": 45.0,
 "speed": 20.0
 },
-"juan_corniel": {
-"hit": 30.0,
-"game_pwr": 30.0,
-"speed": 60.0
-},
-"richard_matic": {
-"hit": 30.0,
-"game_pwr": 55.0,
-"speed": 30.0
-},
 "benny_montgomery": {
 "hit": 30.0,
 "game_pwr": 45.0,
 "speed": 65.0
 },
-"rio_foster": {
+"enderson_delgado": {
 "hit": 30.0,
-"game_pwr": 55.0,
-"speed": 45.0
-},
-"mikey_romero": {
-"hit": 30.0,
-"game_pwr": 55.0,
-"speed": 40.0
+"game_pwr": 30.0,
+"speed": 30.0
 },
 "marvin_alcantara": {
 "hit": 30.0,
 "game_pwr": 35.0,
+"speed": 60.0
+},
+"juan_corniel": {
+"hit": 30.0,
+"game_pwr": 30.0,
 "speed": 60.0
 },
 "kevin_kilpatrick_jr": {
@@ -102,6 +92,11 @@
 "hit": 30.0,
 "game_pwr": 50.0,
 "speed": 60.0
+},
+"richard_matic": {
+"hit": 30.0,
+"game_pwr": 55.0,
+"speed": 30.0
 },
 "starlyn_nunez": {
 "hit": 30.0,
@@ -158,20 +153,20 @@
 "game_pwr": 55.0,
 "speed": 30.0
 },
-"enderson_delgado": {
+"rio_foster": {
 "hit": 30.0,
-"game_pwr": 30.0,
-"speed": 30.0
+"game_pwr": 55.0,
+"speed": 45.0
+},
+"mikey_romero": {
+"hit": 30.0,
+"game_pwr": 55.0,
+"speed": 40.0
 },
 "sir_jamison_jones": {
 "hit": 30.0,
 "game_pwr": 40.0,
 "speed": 30.0
-},
-"eric_bitonti": {
-"hit": 32.5,
-"game_pwr": 55.0,
-"speed": 35.0
 },
 "antonio_gomez": {
 "hit": 32.5,
@@ -182,6 +177,11 @@
 "hit": 32.5,
 "game_pwr": 47.5,
 "speed": 55.0
+},
+"eric_bitonti": {
+"hit": 32.5,
+"game_pwr": 55.0,
+"speed": 35.0
 },
 "caden_powell": {
 "hit": 32.5,
@@ -213,25 +213,15 @@
 "game_pwr": 47.5,
 "speed": 57.5
 },
-"tai_peete": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 60.0
-},
 "druw_jones": {
 "hit": 35.0,
 "game_pwr": 40.0,
 "speed": 70.0
 },
-"chase_harlan": {
+"kristian_robinson": {
 "hit": 35.0,
-"game_pwr": 57.5,
-"speed": 42.5
-},
-"juan_flores": {
-"hit": 35.0,
-"game_pwr": 42.5,
-"speed": 30.0
+"game_pwr": 55.0,
+"speed": 55.0
 },
 "miguel_bleis": {
 "hit": 35.0,
@@ -258,125 +248,10 @@
 "game_pwr": 50.0,
 "speed": 40.0
 },
-"javier_mogollon": {
+"tai_peete": {
 "hit": 35.0,
-"game_pwr": 50.0,
+"game_pwr": 55.0,
 "speed": 60.0
-},
-"andrew_pinckney": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 80.0
-},
-"brock_wilken": {
-"hit": 35.0,
-"game_pwr": 54.0,
-"speed": 35.0
-},
-"kristian_robinson": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 55.0
-},
-"pedro_catuy": {
-"hit": 35.0,
-"game_pwr": 50.0,
-"speed": 60.0
-},
-"kalai_rosario": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 45.0
-},
-"cutter_coffey": {
-"hit": 35.0,
-"game_pwr": 45.0,
-"speed": 47.5
-},
-"alfonsin_rosario": {
-"hit": 35.0,
-"game_pwr": 56.0,
-"speed": 50.0
-},
-"austin_charles": {
-"hit": 35.0,
-"game_pwr": 47.5,
-"speed": 52.5
-},
-"tj_white": {
-"hit": 35.0,
-"game_pwr": 57.5,
-"speed": 45.0
-},
-"darwing_ozuna": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 52.5
-},
-"aeverson_arteaga": {
-"hit": 35.0,
-"game_pwr": 40.0,
-"speed": 52.5
-},
-"thomas_sosa": {
-"hit": 35.0,
-"game_pwr": 52.5,
-"speed": 47.5
-},
-"maui_ahuna": {
-"hit": 35.0,
-"game_pwr": 42.5,
-"speed": 52.5
-},
-"eduardo_garcia": {
-"hit": 35.0,
-"game_pwr": 40.0,
-"speed": 47.5
-},
-"roderick_arias": {
-"hit": 35.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"estuar_suero": {
-"hit": 35.0,
-"game_pwr": 52.5,
-"speed": 47.5
-},
-"tony_blanco_jr": {
-"hit": 35.0,
-"game_pwr": 60.0,
-"speed": 30.0
-},
-"jose_anderson": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 45.0
-},
-"wilfred_veras": {
-"hit": 35.0,
-"game_pwr": 51.5,
-"speed": 45.0
-},
-"camilo_diaz": {
-"hit": 35.0,
-"game_pwr": 55.0,
-"speed": 50.0
-},
-"izaac_pacheco": {
-"hit": 35.0,
-"game_pwr": 54.0,
-"speed": 40.0
-},
-"nolan_schubart": {
-"hit": 35.0,
-"game_pwr": 60.0,
-"speed": 30.0
-},
-"connor_burns": {
-"hit": 35.0,
-"game_pwr": 40.0,
-"speed": 40.0
 },
 "jose_ramos": {
 "hit": 35.0,
@@ -388,45 +263,135 @@
 "game_pwr": 50.0,
 "speed": 52.5
 },
-"joendry_vargas": {
+"brock_wilken": {
 "hit": 35.0,
-"game_pwr": 50.0,
-"speed": 47.5
+"game_pwr": 54.0,
+"speed": 35.0
 },
 "vance_honeycutt": {
 "hit": 35.0,
 "game_pwr": 47.5,
 "speed": 62.5
 },
-"ariel_armas": {
+"juan_flores": {
 "hit": 35.0,
-"game_pwr": 30.0,
-"speed": 35.0
+"game_pwr": 42.5,
+"speed": 30.0
 },
-"coy_james": {
+"chase_harlan": {
 "hit": 35.0,
-"game_pwr": 50.0,
-"speed": 60.0
+"game_pwr": 57.5,
+"speed": 42.5
+},
+"kalai_rosario": {
+"hit": 35.0,
+"game_pwr": 55.0,
+"speed": 45.0
+},
+"cutter_coffey": {
+"hit": 35.0,
+"game_pwr": 45.0,
+"speed": 47.5
 },
 "pablo_aliendo": {
 "hit": 35.0,
 "game_pwr": 45.0,
 "speed": 40.0
 },
+"alfonsin_rosario": {
+"hit": 35.0,
+"game_pwr": 56.0,
+"speed": 50.0
+},
+"tj_white": {
+"hit": 35.0,
+"game_pwr": 57.5,
+"speed": 45.0
+},
+"aeverson_arteaga": {
+"hit": 35.0,
+"game_pwr": 40.0,
+"speed": 52.5
+},
+"roderick_arias": {
+"hit": 35.0,
+"game_pwr": 45.0,
+"speed": 55.0
+},
+"eduardo_garcia": {
+"hit": 35.0,
+"game_pwr": 40.0,
+"speed": 47.5
+},
+"estuar_suero": {
+"hit": 35.0,
+"game_pwr": 52.5,
+"speed": 47.5
+},
+"javier_mogollon": {
+"hit": 35.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
+"tony_blanco_jr": {
+"hit": 35.0,
+"game_pwr": 60.0,
+"speed": 30.0
+},
+"wilfred_veras": {
+"hit": 35.0,
+"game_pwr": 51.5,
+"speed": 45.0
+},
+"izaac_pacheco": {
+"hit": 35.0,
+"game_pwr": 54.0,
+"speed": 40.0
+},
+"andrew_pinckney": {
+"hit": 35.0,
+"game_pwr": 55.0,
+"speed": 80.0
+},
+"joendry_vargas": {
+"hit": 35.0,
+"game_pwr": 50.0,
+"speed": 47.5
+},
+"ariel_armas": {
+"hit": 35.0,
+"game_pwr": 30.0,
+"speed": 35.0
+},
+"pedro_catuy": {
+"hit": 35.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
 "richard_ramirez": {
 "hit": 35.0,
 "game_pwr": 50.0,
+"speed": 35.0
+},
+"austin_charles": {
+"hit": 35.0,
+"game_pwr": 47.5,
+"speed": 52.5
+},
+"kavares_tears": {
+"hit": 35.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"randy_guzman": {
+"hit": 35.0,
+"game_pwr": 60.0,
 "speed": 35.0
 },
 "jacob_cozart": {
 "hit": 35.0,
 "game_pwr": 42.5,
 "speed": 30.0
-},
-"randy_guzman": {
-"hit": 35.0,
-"game_pwr": 60.0,
-"speed": 35.0
 },
 "jairo_pomares": {
 "hit": 35.0,
@@ -437,6 +402,11 @@
 "hit": 35.0,
 "game_pwr": 30.0,
 "speed": 70.0
+},
+"darwing_ozuna": {
+"hit": 35.0,
+"game_pwr": 55.0,
+"speed": 52.5
 },
 "jalin_flores__sa3031465": {
 "hit": 35.0,
@@ -452,6 +422,16 @@
 "hit": 35.0,
 "game_pwr": 47.5,
 "speed": 50.0
+},
+"maui_ahuna": {
+"hit": 35.0,
+"game_pwr": 42.5,
+"speed": 52.5
+},
+"thomas_sosa": {
+"hit": 35.0,
+"game_pwr": 52.5,
+"speed": 47.5
 },
 "sean_gamble": {
 "hit": 35.0,
@@ -473,6 +453,16 @@
 "game_pwr": 45.0,
 "speed": 50.0
 },
+"jose_anderson": {
+"hit": 35.0,
+"game_pwr": 55.0,
+"speed": 45.0
+},
+"camilo_diaz": {
+"hit": 35.0,
+"game_pwr": 55.0,
+"speed": 50.0
+},
 "jj_dorazio": {
 "hit": 35.0,
 "game_pwr": 40.0,
@@ -483,15 +473,25 @@
 "game_pwr": 55.0,
 "speed": 30.0
 },
+"nolan_schubart": {
+"hit": 35.0,
+"game_pwr": 60.0,
+"speed": 30.0
+},
 "cesar_acosta": {
 "hit": 35.0,
 "game_pwr": 50.0,
 "speed": 20.0
 },
-"kavares_tears": {
+"connor_burns": {
+"hit": 35.0,
+"game_pwr": 40.0,
+"speed": 40.0
+},
+"coy_james": {
 "hit": 35.0,
 "game_pwr": 50.0,
-"speed": 50.0
+"speed": 60.0
 },
 "victor_figueroa": {
 "hit": 35.0,
@@ -518,50 +518,40 @@
 "game_pwr": 60.0,
 "speed": 35.0
 },
-"willy_vasquez": {
-"hit": 37.5,
-"game_pwr": 45.0,
-"speed": 50.0
-},
-"rafael_ramirez_jr": {
-"hit": 37.5,
-"game_pwr": 47.5,
-"speed": 50.0
-},
-"yoeilin_cespedes": {
-"hit": 37.5,
-"game_pwr": 50.0,
-"speed": 45.0
-},
-"walker_janek": {
-"hit": 37.5,
-"game_pwr": 45.0,
-"speed": 45.0
-},
-"tyson_lewis": {
-"hit": 37.5,
-"game_pwr": 54.0,
-"speed": 65.0
-},
 "dakota_jordan": {
 "hit": 37.5,
 "game_pwr": 55.0,
 "speed": 65.0
-},
-"joseph_sullivan": {
-"hit": 37.5,
-"game_pwr": 50.0,
-"speed": 55.0
 },
 "vaun_brown": {
 "hit": 37.5,
 "game_pwr": 47.5,
 "speed": 70.0
 },
-"yohandy_morales": {
+"walker_janek": {
 "hit": 37.5,
-"game_pwr": 55.0,
-"speed": 42.5
+"game_pwr": 45.0,
+"speed": 45.0
+},
+"alexander_vargas": {
+"hit": 37.5,
+"game_pwr": 35.0,
+"speed": 60.0
+},
+"dasan_brown": {
+"hit": 37.5,
+"game_pwr": 37.5,
+"speed": 80.0
+},
+"tyson_lewis": {
+"hit": 37.5,
+"game_pwr": 54.0,
+"speed": 65.0
+},
+"joseph_sullivan": {
+"hit": 37.5,
+"game_pwr": 50.0,
+"speed": 55.0
 },
 "ryan_burrowes": {
 "hit": 37.5,
@@ -578,6 +568,11 @@
 "game_pwr": 47.5,
 "speed": 65.0
 },
+"willy_vasquez": {
+"hit": 37.5,
+"game_pwr": 45.0,
+"speed": 50.0
+},
 "jack_hurley": {
 "hit": 37.5,
 "game_pwr": 47.5,
@@ -592,11 +587,6 @@
 "hit": 37.5,
 "game_pwr": 52.5,
 "speed": 40.0
-},
-"robert_calaz": {
-"hit": 37.5,
-"game_pwr": 50.0,
-"speed": 42.5
 },
 "yasser_mercedes": {
 "hit": 37.5,
@@ -618,40 +608,35 @@
 "game_pwr": 60.0,
 "speed": 30.0
 },
+"rafael_ramirez_jr": {
+"hit": 37.5,
+"game_pwr": 47.5,
+"speed": 50.0
+},
 "carson_roccaforte": {
 "hit": 37.5,
 "game_pwr": 47.5,
 "speed": 57.5
 },
-"yovanny_rodriguez": {
-"hit": 37.5,
-"game_pwr": 45.0,
-"speed": 35.0
-},
-"alexander_vargas": {
-"hit": 37.5,
-"game_pwr": 35.0,
-"speed": 60.0
-},
-"dasan_brown": {
-"hit": 37.5,
-"game_pwr": 37.5,
-"speed": 80.0
-},
-"juan_tomas": {
+"yoeilin_cespedes": {
 "hit": 37.5,
 "game_pwr": 50.0,
-"speed": 60.0
+"speed": 45.0
 },
 "quentin_young": {
 "hit": 37.5,
 "game_pwr": 55.0,
 "speed": 45.0
 },
-"gian_zapata": {
+"yohandy_morales": {
 "hit": 37.5,
 "game_pwr": 55.0,
-"speed": 50.0
+"speed": 42.5
+},
+"yerlin_confidan": {
+"hit": 37.5,
+"game_pwr": 50.0,
+"speed": 45.0
 },
 "max_belyeu": {
 "hit": 37.5,
@@ -678,15 +663,20 @@
 "game_pwr": 42.5,
 "speed": 35.0
 },
-"rosman_verdugo": {
-"hit": 37.5,
-"game_pwr": 40.0,
-"speed": 45.0
-},
 "john_rhodes": {
 "hit": 37.5,
 "game_pwr": 46.0,
 "speed": 52.5
+},
+"robert_calaz": {
+"hit": 37.5,
+"game_pwr": 50.0,
+"speed": 42.5
+},
+"mat_nelson": {
+"hit": 37.5,
+"game_pwr": 45.0,
+"speed": 30.0
 },
 "jace_bohrofen": {
 "hit": 37.5,
@@ -723,15 +713,25 @@
 "game_pwr": 55.0,
 "speed": 45.0
 },
+"yovanny_rodriguez": {
+"hit": 37.5,
+"game_pwr": 45.0,
+"speed": 35.0
+},
 "francisco_vilorio": {
 "hit": 37.5,
 "game_pwr": 50.0,
 "speed": 52.5
 },
-"yerlin_confidan": {
+"juan_tomas": {
 "hit": 37.5,
 "game_pwr": 50.0,
-"speed": 45.0
+"speed": 60.0
+},
+"gian_zapata": {
+"hit": 37.5,
+"game_pwr": 55.0,
+"speed": 50.0
 },
 "devin_saltiban": {
 "hit": 37.5,
@@ -753,10 +753,10 @@
 "game_pwr": 50.0,
 "speed": 57.5
 },
-"mat_nelson": {
+"rosman_verdugo": {
 "hit": 37.5,
-"game_pwr": 45.0,
-"speed": 30.0
+"game_pwr": 40.0,
+"speed": 45.0
 },
 "gavin_turley": {
 "hit": 37.5,
@@ -778,44 +778,44 @@
 "game_pwr": 55.0,
 "speed": 25.0
 },
-"luke_stevenson": {
-"hit": 40.0,
-"game_pwr": 52.5,
-"speed": 30.0
-},
 "bo_davidson": {
 "hit": 40.0,
 "game_pwr": 55.0,
 "speed": 55.0
 },
-"cameron_cauley": {
+"luke_stevenson": {
 "hit": 40.0,
-"game_pwr": 45.0,
-"speed": 70.0
+"game_pwr": 52.5,
+"speed": 30.0
+},
+"alex_lodise": {
+"hit": 40.0,
+"game_pwr": 47.5,
+"speed": 52.5
+},
+"jace_laviolette": {
+"hit": 40.0,
+"game_pwr": 57.5,
+"speed": 55.0
+},
+"dominic_keegan": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 30.0
 },
 "aidan_smith": {
 "hit": 40.0,
 "game_pwr": 47.5,
 "speed": 60.0
 },
-"luke_dickerson": {
+"cameron_cauley": {
 "hit": 40.0,
-"game_pwr": 52.5,
+"game_pwr": 45.0,
 "speed": 70.0
 },
-"darell_morel": {
+"carlos_de_la_cruz": {
 "hit": 40.0,
-"game_pwr": 55.0,
-"speed": 52.5
-},
-"paulino_santana": {
-"hit": 40.0,
-"game_pwr": 52.5,
-"speed": 55.0
-},
-"jorge_quintana": {
-"hit": 40.0,
-"game_pwr": 47.5,
+"game_pwr": 57.5,
 "speed": 50.0
 },
 "austin_overn": {
@@ -828,54 +828,24 @@
 "game_pwr": 55.0,
 "speed": 60.0
 },
-"jhomnardo_reyes": {
-"hit": 40.0,
-"game_pwr": 62.5,
-"speed": 50.0
-},
-"sean_keys": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 35.0
-},
 "andres_arias": {
 "hit": 40.0,
 "game_pwr": 55.0,
 "speed": 50.0
-},
-"alex_lodise": {
-"hit": 40.0,
-"game_pwr": 47.5,
-"speed": 52.5
-},
-"raudi_rodriguez": {
-"hit": 40.0,
-"game_pwr": 52.5,
-"speed": 55.0
-},
-"jace_laviolette": {
-"hit": 40.0,
-"game_pwr": 57.5,
-"speed": 55.0
 },
 "leonardo_pineda": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 60.0
 },
-"dominic_keegan": {
+"brennen_davis": {
 "hit": 40.0,
-"game_pwr": 50.0,
-"speed": 30.0
+"game_pwr": 55.0,
+"speed": 46.5
 },
-"warel_solano": {
+"luke_dickerson": {
 "hit": 40.0,
-"game_pwr": 45.0,
-"speed": 50.0
-},
-"isaiah_drake": {
-"hit": 40.0,
-"game_pwr": 45.0,
+"game_pwr": 52.5,
 "speed": 70.0
 },
 "sammy_stafura": {
@@ -883,15 +853,35 @@
 "game_pwr": 42.5,
 "speed": 62.5
 },
-"will_bush": {
+"sean_keys": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 35.0
+},
+"korbyn_dickerson": {
 "hit": 40.0,
 "game_pwr": 47.5,
-"speed": 30.0
+"speed": 60.0
+},
+"reed_trimble": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 62.5
 },
 "lizandro_espinoza": {
 "hit": 40.0,
 "game_pwr": 32.5,
 "speed": 55.0
+},
+"mac_horvath": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
+"ernesto_martinez_jr": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 45.0
 },
 "cristian_hernandez": {
 "hit": 40.0,
@@ -903,20 +893,15 @@
 "game_pwr": 50.0,
 "speed": 70.0
 },
-"fernando_peguero": {
+"cayden_wallace": {
 "hit": 40.0,
-"game_pwr": 40.0,
-"speed": 70.0
+"game_pwr": 50.0,
+"speed": 50.0
 },
-"edgardo_de_leon": {
+"darell_morel": {
 "hit": 40.0,
 "game_pwr": 55.0,
-"speed": 45.0
-},
-"carlos_de_la_cruz": {
-"hit": 40.0,
-"game_pwr": 57.5,
-"speed": 50.0
+"speed": 52.5
 },
 "peyton_graham": {
 "hit": 40.0,
@@ -928,15 +913,35 @@
 "game_pwr": 47.5,
 "speed": 50.0
 },
+"rubel_cespedes": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 40.0
+},
+"paulino_santana": {
+"hit": 40.0,
+"game_pwr": 52.5,
+"speed": 55.0
+},
 "elvin_garcia": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 45.0
 },
-"hyun_seung_lee": {
+"carlos_jimenez": {
+"hit": 40.0,
+"game_pwr": 45.0,
+"speed": 55.0
+},
+"jorge_quintana": {
 "hit": 40.0,
 "game_pwr": 47.5,
-"speed": 55.0
+"speed": 50.0
+},
+"ivan_melendez": {
+"hit": 40.0,
+"game_pwr": 59.0,
+"speed": 30.0
 },
 "derek_bernard": {
 "hit": 40.0,
@@ -958,24 +963,29 @@
 "game_pwr": 50.0,
 "speed": 45.0
 },
-"maykel_coret": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 57.5
-},
 "waner_luciano": {
 "hit": 40.0,
 "game_pwr": 52.5,
 "speed": 45.0
 },
-"jaron_elkins": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 70.0
-},
 "angel_cepeda": {
 "hit": 40.0,
 "game_pwr": 45.0,
+"speed": 50.0
+},
+"isaiah_drake": {
+"hit": 40.0,
+"game_pwr": 45.0,
+"speed": 70.0
+},
+"brett_callahan": {
+"hit": 40.0,
+"game_pwr": 52.5,
+"speed": 60.0
+},
+"jhomnardo_reyes": {
+"hit": 40.0,
+"game_pwr": 62.5,
 "speed": 50.0
 },
 "wilberson_de_pena": {
@@ -983,15 +993,25 @@
 "game_pwr": 52.5,
 "speed": 60.0
 },
+"luis_rives": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 55.0
+},
 "diego_hernandez": {
 "hit": 40.0,
 "game_pwr": 32.5,
 "speed": 65.0
 },
-"jhorman_bravo": {
+"gleider_figuereo": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 40.0
+},
+"pascanel_ferreras": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 55.0
+"speed": 50.0
 },
 "jace_avina": {
 "hit": 40.0,
@@ -1003,15 +1023,15 @@
 "game_pwr": 30.0,
 "speed": 50.0
 },
-"korbyn_dickerson": {
+"raudi_rodriguez": {
+"hit": 40.0,
+"game_pwr": 52.5,
+"speed": 55.0
+},
+"will_bush": {
 "hit": 40.0,
 "game_pwr": 47.5,
-"speed": 60.0
-},
-"stiven_martinez": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 42.5
+"speed": 30.0
 },
 "kevin_made": {
 "hit": 40.0,
@@ -1023,29 +1043,19 @@
 "game_pwr": 37.5,
 "speed": 60.0
 },
-"fernando_graterol": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 35.0
-},
-"brennen_davis": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 46.5
-},
 "randy_de_jesus": {
 "hit": 40.0,
 "game_pwr": 50.0,
 "speed": 50.0
 },
-"reed_trimble": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 62.5
-},
 "kehden_hettiger": {
 "hit": 40.0,
 "game_pwr": 45.0,
+"speed": 40.0
+},
+"leandro_pineda": {
+"hit": 40.0,
+"game_pwr": 50.0,
 "speed": 40.0
 },
 "johanfran_garcia": {
@@ -1053,105 +1063,60 @@
 "game_pwr": 50.0,
 "speed": 20.0
 },
-"miguel_caraballo": {
+"warel_solano": {
 "hit": 40.0,
-"game_pwr": 55.0,
-"speed": 40.0
-},
-"truitt_madonna": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 40.0
+"game_pwr": 45.0,
+"speed": 50.0
 },
 "elis_cuevas": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"jose_alpuria": {
+"fernando_peguero": {
 "hit": 40.0,
-"game_pwr": 47.5,
+"game_pwr": 40.0,
 "speed": 70.0
 },
-"mac_horvath": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 60.0
-},
-"ernesto_martinez_jr": {
+"edgardo_de_leon": {
 "hit": 40.0,
 "game_pwr": 55.0,
 "speed": 45.0
-},
-"cayden_wallace": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 50.0
-},
-"nelly_taylor": {
-"hit": 40.0,
-"game_pwr": 44.0,
-"speed": 60.0
-},
-"yovanny_duran": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 50.0
-},
-"fernando_cruz": {
-"hit": 40.0,
-"game_pwr": 47.5,
-"speed": 60.0
 },
 "oswaldo_osorio": {
 "hit": 40.0,
 "game_pwr": 50.0,
 "speed": 40.0
 },
-"andrew_pintar": {
-"hit": 40.0,
-"game_pwr": 42.5,
-"speed": 60.0
-},
 "alfredo_alcantara": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 52.5
 },
-"rubel_cespedes": {
+"andrew_pintar": {
 "hit": 40.0,
-"game_pwr": 50.0,
-"speed": 40.0
+"game_pwr": 42.5,
+"speed": 60.0
 },
 "ruben_castillo": {
 "hit": 40.0,
 "game_pwr": 50.0,
 "speed": 60.0
 },
-"carlos_jimenez": {
-"hit": 40.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
 "logan_wagner": {
 "hit": 40.0,
 "game_pwr": 52.5,
 "speed": 42.5
 },
-"ivan_melendez": {
+"hyun_seung_lee": {
 "hit": 40.0,
-"game_pwr": 59.0,
-"speed": 30.0
+"game_pwr": 47.5,
+"speed": 55.0
 },
 "fenwick_trimble": {
 "hit": 40.0,
 "game_pwr": 42.5,
 "speed": 55.0
-},
-"joshua_liranzo": {
-"hit": 40.0,
-"game_pwr": 47.5,
-"speed": 40.0
 },
 "yamal_encarnacion": {
 "hit": 40.0,
@@ -1168,29 +1133,14 @@
 "game_pwr": 42.5,
 "speed": 50.0
 },
-"kamuel_villar": {
-"hit": 40.0,
-"game_pwr": 45.0,
-"speed": 50.0
-},
 "nick_monistere": {
 "hit": 40.0,
 "game_pwr": 47.5,
 "speed": 52.5
 },
-"colin_yeaman": {
-"hit": 40.0,
-"game_pwr": 37.5,
-"speed": 47.5
-},
 "max_wagner": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 47.5
-},
-"jose_manon": {
-"hit": 40.0,
-"game_pwr": 47.5,
 "speed": 47.5
 },
 "myles_naylor": {
@@ -1198,30 +1148,30 @@
 "game_pwr": 50.0,
 "speed": 40.0
 },
-"max_williams": {
+"billy_amick": {
 "hit": 40.0,
-"game_pwr": 52.5,
-"speed": 45.0
+"game_pwr": 50.0,
+"speed": 42.5
 },
 "hansel_jimenez": {
 "hit": 40.0,
 "game_pwr": 47.5,
 "speed": 42.5
 },
-"billy_amick": {
+"maykel_coret": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 57.5
+},
+"jaron_elkins": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 70.0
+},
+"avery_owusuasiedu": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 42.5
-},
-"brett_callahan": {
-"hit": 40.0,
-"game_pwr": 52.5,
-"speed": 60.0
-},
-"luis_rives": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 55.0
+"speed": 70.0
 },
 "mark_coley_ii": {
 "hit": 40.0,
@@ -1233,20 +1183,10 @@
 "game_pwr": 55.0,
 "speed": 50.0
 },
-"gleider_figuereo": {
-"hit": 40.0,
-"game_pwr": 55.0,
-"speed": 40.0
-},
-"brendan_tunink": {
+"jhorman_bravo": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 60.0
-},
-"pascanel_ferreras": {
-"hit": 40.0,
-"game_pwr": 50.0,
-"speed": 50.0
+"speed": 55.0
 },
 "rodney_green_jr": {
 "hit": 40.0,
@@ -1268,15 +1208,20 @@
 "game_pwr": 57.5,
 "speed": 30.0
 },
+"stiven_martinez": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 42.5
+},
 "cameron_leary": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"leandro_pineda": {
+"fernando_graterol": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 40.0
+"speed": 35.0
 },
 "braedon_karpathios": {
 "hit": 40.0,
@@ -1288,9 +1233,19 @@
 "game_pwr": 50.0,
 "speed": 55.0
 },
+"miguel_caraballo": {
+"hit": 40.0,
+"game_pwr": 55.0,
+"speed": 40.0
+},
 "calvin_harris": {
 "hit": 40.0,
 "game_pwr": 40.0,
+"speed": 40.0
+},
+"truitt_madonna": {
+"hit": 40.0,
+"game_pwr": 50.0,
 "speed": 40.0
 },
 "robert_hipwell": {
@@ -1303,10 +1258,30 @@
 "game_pwr": 55.0,
 "speed": 50.0
 },
+"jose_alpuria": {
+"hit": 40.0,
+"game_pwr": 47.5,
+"speed": 70.0
+},
 "scott_bandura": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 55.0
+},
+"yovanny_duran": {
+"hit": 40.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"nelly_taylor": {
+"hit": 40.0,
+"game_pwr": 44.0,
+"speed": 60.0
+},
+"fernando_cruz": {
+"hit": 40.0,
+"game_pwr": 47.5,
+"speed": 60.0
 },
 "angel_ramirez": {
 "hit": 40.0,
@@ -1328,25 +1303,50 @@
 "game_pwr": 55.0,
 "speed": 42.5
 },
+"joshua_liranzo": {
+"hit": 40.0,
+"game_pwr": 47.5,
+"speed": 40.0
+},
 "keith_jones_ii": {
 "hit": 40.0,
 "game_pwr": 50.0,
 "speed": 40.0
+},
+"kamuel_villar": {
+"hit": 40.0,
+"game_pwr": 45.0,
+"speed": 50.0
+},
+"colin_yeaman": {
+"hit": 40.0,
+"game_pwr": 37.5,
+"speed": 47.5
 },
 "jack_wheeler": {
 "hit": 40.0,
 "game_pwr": 50.0,
 "speed": 40.0
 },
+"jose_manon": {
+"hit": 40.0,
+"game_pwr": 47.5,
+"speed": 47.5
+},
+"max_williams": {
+"hit": 40.0,
+"game_pwr": 52.5,
+"speed": 45.0
+},
 "angel_carmona": {
 "hit": 40.0,
 "game_pwr": 45.0,
 "speed": 50.0
 },
-"avery_owusuasiedu": {
+"brendan_tunink": {
 "hit": 40.0,
 "game_pwr": 50.0,
-"speed": 70.0
+"speed": 60.0
 },
 "maxton_martin": {
 "hit": 40.0,
@@ -1383,6 +1383,11 @@
 "game_pwr": 62.5,
 "speed": 42.5
 },
+"cam_collier": {
+"hit": 42.5,
+"game_pwr": 55.0,
+"speed": 35.0
+},
 "carlos_jorge": {
 "hit": 42.5,
 "game_pwr": 42.5,
@@ -1393,45 +1398,35 @@
 "game_pwr": 62.5,
 "speed": 45.0
 },
-"cam_collier": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 35.0
-},
 "dillon_lewis": {
 "hit": 42.5,
 "game_pwr": 55.0,
 "speed": 57.5
 },
-"conor_essenburg": {
+"marco_dinges": {
 "hit": 42.5,
 "game_pwr": 50.0,
-"speed": 52.5
-},
-"joswa_lugo": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 55.0
-},
-"liberts_aponte": {
-"hit": 42.5,
-"game_pwr": 42.5,
-"speed": 55.0
+"speed": 45.0
 },
 "victor_arias": {
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 57.5
 },
+"liberts_aponte": {
+"hit": 42.5,
+"game_pwr": 42.5,
+"speed": 55.0
+},
+"roc_riggio": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 42.5
+},
 "wehiwa_aloy": {
 "hit": 42.5,
 "game_pwr": 45.0,
 "speed": 47.5
-},
-"brooks_brannon": {
-"hit": 42.5,
-"game_pwr": 57.5,
-"speed": 32.5
 },
 "yordany_de_los_santos": {
 "hit": 42.5,
@@ -1443,21 +1438,6 @@
 "game_pwr": 45.0,
 "speed": 52.5
 },
-"kenny_fenelon": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 57.5
-},
-"marco_dinges": {
-"hit": 42.5,
-"game_pwr": 50.0,
-"speed": 45.0
-},
-"yandel_ricardo": {
-"hit": 42.5,
-"game_pwr": 45.0,
-"speed": 47.5
-},
 "arnaldo_lantigua": {
 "hit": 42.5,
 "game_pwr": 53.5,
@@ -1468,20 +1448,35 @@
 "game_pwr": 55.0,
 "speed": 42.5
 },
-"roc_riggio": {
+"joswa_lugo": {
 "hit": 42.5,
-"game_pwr": 50.0,
-"speed": 42.5
+"game_pwr": 55.0,
+"speed": 55.0
 },
-"yeremy_cabrera": {
+"jhonny_severino": {
+"hit": 42.5,
+"game_pwr": 55.0,
+"speed": 52.5
+},
+"edward_duran": {
+"hit": 42.5,
+"game_pwr": 40.0,
+"speed": 35.0
+},
+"yandel_ricardo": {
 "hit": 42.5,
 "game_pwr": 45.0,
-"speed": 60.0
+"speed": 47.5
 },
 "yorger_bautista": {
 "hit": 42.5,
 "game_pwr": 56.0,
 "speed": 60.0
+},
+"conor_essenburg": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 52.5
 },
 "josh_owens": {
 "hit": 42.5,
@@ -1498,39 +1493,39 @@
 "game_pwr": 52.5,
 "speed": 47.5
 },
-"romeli_espinosa": {
+"gavin_cross": {
 "hit": 42.5,
 "game_pwr": 50.0,
-"speed": 55.0
-},
-"jhonny_severino": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 52.5
+"speed": 50.0
 },
 "yiddi_cappe": {
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 47.5
 },
-"dj_layton": {
+"damiano_palmegiani": {
 "hit": 42.5,
-"game_pwr": 40.0,
-"speed": 60.0
+"game_pwr": 52.5,
+"speed": 40.0
 },
 "wonbin_cho": {
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 50.0
 },
-"anthony_gutierrez": {
+"rayne_doncon": {
 "hit": 42.5,
-"game_pwr": 42.5,
-"speed": 57.5
+"game_pwr": 55.0,
+"speed": 47.5
 },
 "tim_piasentin": {
 "hit": 42.5,
 "game_pwr": 54.0,
+"speed": 40.0
+},
+"edgleen_perez": {
+"hit": 42.5,
+"game_pwr": 35.0,
 "speed": 40.0
 },
 "kenni_gomez": {
@@ -1538,15 +1533,15 @@
 "game_pwr": 47.5,
 "speed": 57.5
 },
-"edgleen_perez": {
-"hit": 42.5,
-"game_pwr": 35.0,
-"speed": 40.0
-},
 "ben_ross": {
 "hit": 42.5,
 "game_pwr": 42.5,
 "speed": 55.0
+},
+"brooks_brannon": {
+"hit": 42.5,
+"game_pwr": 57.5,
+"speed": 32.5
 },
 "echedry_vargas": {
 "hit": 42.5,
@@ -1558,45 +1553,50 @@
 "game_pwr": 50.0,
 "speed": 57.5
 },
-"daiverson_gutierrez": {
-"hit": 42.5,
-"game_pwr": 40.0,
-"speed": 35.0
-},
 "capri_ortiz": {
 "hit": 42.5,
 "game_pwr": 30.0,
 "speed": 70.0
+},
+"kenny_fenelon": {
+"hit": 42.5,
+"game_pwr": 55.0,
+"speed": 57.5
+},
+"yeremy_cabrera": {
+"hit": 42.5,
+"game_pwr": 45.0,
+"speed": 60.0
 },
 "malcolm_moore": {
 "hit": 42.5,
 "game_pwr": 47.5,
 "speed": 30.0
 },
-"daniel_vazquez": {
-"hit": 42.5,
-"game_pwr": 35.0,
-"speed": 55.0
-},
-"edward_duran": {
-"hit": 42.5,
-"game_pwr": 40.0,
-"speed": 35.0
-},
 "royelny_strop": {
 "hit": 42.5,
 "game_pwr": 47.5,
 "speed": 57.5
 },
-"eduardo_beltre": {
+"daniel_vazquez": {
 "hit": 42.5,
-"game_pwr": 52.5,
-"speed": 52.5
+"game_pwr": 35.0,
+"speed": 55.0
+},
+"zach_levenson": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 45.0
 },
 "ty_harvey": {
 "hit": 42.5,
 "game_pwr": 55.0,
 "speed": 35.0
+},
+"cristian_santana": {
+"hit": 42.5,
+"game_pwr": 45.0,
+"speed": 45.0
 },
 "ruben_santana": {
 "hit": 42.5,
@@ -1607,11 +1607,6 @@
 "hit": 42.5,
 "game_pwr": 42.5,
 "speed": 30.0
-},
-"jd_gonzalez": {
-"hit": 42.5,
-"game_pwr": 50.0,
-"speed": 40.0
 },
 "wilfredo_lara": {
 "hit": 42.5,
@@ -1648,11 +1643,6 @@
 "game_pwr": 40.0,
 "speed": 57.5
 },
-"lisbel_diaz": {
-"hit": 42.5,
-"game_pwr": 45.0,
-"speed": 52.5
-},
 "cesar_hernandez": {
 "hit": 42.5,
 "game_pwr": 45.0,
@@ -1668,11 +1658,6 @@
 "game_pwr": 40.0,
 "speed": 55.0
 },
-"gavin_cross": {
-"hit": 42.5,
-"game_pwr": 50.0,
-"speed": 50.0
-},
 "brock_rodden": {
 "hit": 42.5,
 "game_pwr": 42.5,
@@ -1682,6 +1667,11 @@
 "hit": 42.5,
 "game_pwr": 35.0,
 "speed": 65.0
+},
+"romeli_espinosa": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 55.0
 },
 "allan_castro": {
 "hit": 42.5,
@@ -1693,65 +1683,75 @@
 "game_pwr": 50.0,
 "speed": 47.5
 },
-"nazzan_zanetello": {
-"hit": 42.5,
-"game_pwr": 52.5,
-"speed": 57.5
-},
-"damiano_palmegiani": {
-"hit": 42.5,
-"game_pwr": 52.5,
-"speed": 40.0
-},
 "carson_rucker": {
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 42.5
 },
-"elian_de_la_cruz": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 45.0
-},
-"rayne_doncon": {
-"hit": 42.5,
-"game_pwr": 55.0,
-"speed": 47.5
-},
-"jesus_galiz": {
+"dj_layton": {
 "hit": 42.5,
 "game_pwr": 40.0,
-"speed": 30.0
+"speed": 60.0
 },
 "ronald_hernandez": {
 "hit": 42.5,
 "game_pwr": 40.0,
 "speed": 35.0
 },
+"jesus_galiz": {
+"hit": 42.5,
+"game_pwr": 40.0,
+"speed": 30.0
+},
+"haydn_mcgeary": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 30.0
+},
+"miguel_palma": {
+"hit": 42.5,
+"game_pwr": 37.5,
+"speed": 30.0
+},
+"anthony_gutierrez": {
+"hit": 42.5,
+"game_pwr": 42.5,
+"speed": 57.5
+},
 "armando_cruz": {
 "hit": 42.5,
 "game_pwr": 30.0,
 "speed": 55.0
+},
+"daiverson_gutierrez": {
+"hit": 42.5,
+"game_pwr": 40.0,
+"speed": 35.0
 },
 "mason_neville": {
 "hit": 42.5,
 "game_pwr": 55.0,
 "speed": 55.0
 },
-"zach_levenson": {
+"eduardo_beltre": {
 "hit": 42.5,
-"game_pwr": 50.0,
-"speed": 45.0
-},
-"cristian_santana": {
-"hit": 42.5,
-"game_pwr": 45.0,
-"speed": 45.0
+"game_pwr": 52.5,
+"speed": 52.5
 },
 "nick_montgomery": {
 "hit": 42.5,
 "game_pwr": 52.5,
 "speed": 40.0
+},
+"jd_gonzalez": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 40.0
+},
+"lisbel_diaz": {
+"hit": 42.5,
+"game_pwr": 45.0,
+"speed": 52.5
 },
 "landon_hodge": {
 "hit": 42.5,
@@ -1763,25 +1763,25 @@
 "game_pwr": 50.0,
 "speed": 42.5
 },
+"nazzan_zanetello": {
+"hit": 42.5,
+"game_pwr": 52.5,
+"speed": 57.5
+},
 "luis_suisbel": {
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 35.0
 },
+"elian_de_la_cruz": {
+"hit": 42.5,
+"game_pwr": 55.0,
+"speed": 45.0
+},
 "alejandro_cruz": {
 "hit": 42.5,
 "game_pwr": 45.0,
 "speed": 47.5
-},
-"haydn_mcgeary": {
-"hit": 42.5,
-"game_pwr": 50.0,
-"speed": 30.0
-},
-"miguel_palma": {
-"hit": 42.5,
-"game_pwr": 37.5,
-"speed": 30.0
 },
 "joshua_baez": {
 "hit": 43.5,
@@ -1813,9 +1813,19 @@
 "game_pwr": 57.5,
 "speed": 58.0
 },
+"ethan_holliday": {
+"hit": 45.0,
+"game_pwr": 64.0,
+"speed": 46.0
+},
 "arjun_nimmala": {
 "hit": 45.0,
 "game_pwr": 55.0,
+"speed": 50.0
+},
+"emil_morales": {
+"hit": 45.0,
+"game_pwr": 57.5,
 "speed": 50.0
 },
 "tate_southisene": {
@@ -1823,15 +1833,10 @@
 "game_pwr": 52.5,
 "speed": 60.0
 },
-"ethan_holliday": {
+"ramon_ramirez": {
 "hit": 45.0,
-"game_pwr": 64.0,
-"speed": 46.0
-},
-"emil_morales": {
-"hit": 45.0,
-"game_pwr": 57.5,
-"speed": 50.0
+"game_pwr": 52.5,
+"speed": 37.5
 },
 "nathan_flewelling": {
 "hit": 45.0,
@@ -1843,14 +1848,29 @@
 "game_pwr": 60.0,
 "speed": 31.0
 },
-"ramon_ramirez": {
+"andrew_fischer": {
+"hit": 45.0,
+"game_pwr": 60.0,
+"speed": 42.5
+},
+"max_anderson": {
 "hit": 45.0,
 "game_pwr": 52.5,
-"speed": 37.5
+"speed": 40.0
 },
 "francisco_renteria": {
 "hit": 45.0,
 "game_pwr": 57.5,
+"speed": 52.5
+},
+"luke_adams": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 35.0
+},
+"samuel_zavala": {
+"hit": 45.0,
+"game_pwr": 42.5,
 "speed": 52.5
 },
 "adbiel_feliz": {
@@ -1862,26 +1882,6 @@
 "hit": 45.0,
 "game_pwr": 55.0,
 "speed": 50.0
-},
-"andrew_fischer": {
-"hit": 45.0,
-"game_pwr": 60.0,
-"speed": 42.5
-},
-"max_anderson": {
-"hit": 45.0,
-"game_pwr": 52.5,
-"speed": 40.0
-},
-"luke_adams": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 35.0
-},
-"samuel_zavala": {
-"hit": 45.0,
-"game_pwr": 42.5,
-"speed": 52.5
 },
 "wilton_guerrero_jr": {
 "hit": 45.0,
@@ -1923,35 +1923,10 @@
 "game_pwr": 40.0,
 "speed": 50.0
 },
-"enmanuel_merlo": {
+"nathan_hickey": {
 "hit": 45.0,
 "game_pwr": 55.0,
-"speed": 50.0
-},
-"keiner_delgado": {
-"hit": 45.0,
-"game_pwr": 35.0,
-"speed": 55.0
-},
-"elian_rosario": {
-"hit": 45.0,
-"game_pwr": 58.5,
-"speed": 45.0
-},
-"emanuel_luna": {
-"hit": 45.0,
-"game_pwr": 57.5,
-"speed": 52.5
-},
-"sam_petersen": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 60.0
-},
-"jose_pena": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 60.0
+"speed": 30.0
 },
 "edgar_montero": {
 "hit": 45.0,
@@ -1963,15 +1938,30 @@
 "game_pwr": 50.0,
 "speed": 50.0
 },
-"adrian_santana": {
-"hit": 45.0,
-"game_pwr": 40.0,
-"speed": 62.5
-},
-"shotaro_morii": {
+"jesus_baez": {
 "hit": 45.0,
 "game_pwr": 50.0,
-"speed": 50.0
+"speed": 40.0
+},
+"keiner_delgado": {
+"hit": 45.0,
+"game_pwr": 35.0,
+"speed": 55.0
+},
+"sam_petersen": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
+"paxton_kling": {
+"hit": 45.0,
+"game_pwr": 51.0,
+"speed": 60.0
+},
+"justice_bigbie": {
+"hit": 45.0,
+"game_pwr": 42.5,
+"speed": 40.0
 },
 "randy_santana": {
 "hit": 45.0,
@@ -1988,39 +1978,29 @@
 "game_pwr": 45.0,
 "speed": 65.0
 },
-"anthony_millan": {
-"hit": 45.0,
-"game_pwr": 47.5,
-"speed": 60.0
-},
 "santiago_solarte": {
 "hit": 45.0,
 "game_pwr": 60.0,
 "speed": 50.0
-},
-"ethan_anderson": {
-"hit": 45.0,
-"game_pwr": 42.5,
-"speed": 40.0
-},
-"jesus_baez": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 40.0
 },
 "dawel_joseph": {
 "hit": 45.0,
 "game_pwr": 45.0,
 "speed": 62.5
 },
-"sebastian_dos_santos": {
-"hit": 45.0,
-"game_pwr": 52.5,
-"speed": 50.0
-},
 "aj_vukovich": {
 "hit": 45.0,
 "game_pwr": 50.0,
+"speed": 50.0
+},
+"adrian_santana": {
+"hit": 45.0,
+"game_pwr": 40.0,
+"speed": 62.5
+},
+"elijah_hainline": {
+"hit": 45.0,
+"game_pwr": 40.0,
 "speed": 50.0
 },
 "victor_acosta": {
@@ -2028,25 +2008,10 @@
 "game_pwr": 30.0,
 "speed": 57.5
 },
-"elijah_hainline": {
-"hit": 45.0,
-"game_pwr": 40.0,
-"speed": 50.0
-},
 "homer_bush_jr": {
 "hit": 45.0,
 "game_pwr": 30.0,
 "speed": 80.0
-},
-"jase_mitchell": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 40.0
-},
-"filippo_di_turi": {
-"hit": 45.0,
-"game_pwr": 32.5,
-"speed": 47.5
 },
 "blake_burke": {
 "hit": 45.0,
@@ -2073,15 +2038,15 @@
 "game_pwr": 30.0,
 "speed": 50.0
 },
-"ryan_wideman": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 65.0
-},
 "jemone_nuel": {
 "hit": 45.0,
 "game_pwr": 40.0,
 "speed": 70.0
+},
+"ryan_wideman": {
+"hit": 45.0,
+"game_pwr": 45.0,
+"speed": 65.0
 },
 "josiah_ragsdale": {
 "hit": 45.0,
@@ -2093,10 +2058,20 @@
 "game_pwr": 40.0,
 "speed": 70.0
 },
+"daniel_guilarte": {
+"hit": 45.0,
+"game_pwr": 30.0,
+"speed": 60.0
+},
 "wilson_rodriguez": {
 "hit": 45.0,
 "game_pwr": 50.0,
 "speed": 55.0
+},
+"dylan_campbell": {
+"hit": 45.0,
+"game_pwr": 42.5,
+"speed": 52.5
 },
 "matthew_etzel": {
 "hit": 45.0,
@@ -2108,11 +2083,6 @@
 "game_pwr": 50.0,
 "speed": 50.0
 },
-"eli_pitts": {
-"hit": 45.0,
-"game_pwr": 46.5,
-"speed": 65.0
-},
 "jeyson_horton": {
 "hit": 45.0,
 "game_pwr": 40.0,
@@ -2123,14 +2093,19 @@
 "game_pwr": 40.0,
 "speed": 40.0
 },
+"kaeden_kent": {
+"hit": 45.0,
+"game_pwr": 45.0,
+"speed": 50.0
+},
 "abimelec_ortiz": {
 "hit": 45.0,
 "game_pwr": 55.0,
 "speed": 20.0
 },
-"trey_snyder": {
+"enmanuel_merlo": {
 "hit": 45.0,
-"game_pwr": 40.0,
+"game_pwr": 55.0,
 "speed": 50.0
 },
 "jared_serna": {
@@ -2142,6 +2117,16 @@
 "hit": 45.0,
 "game_pwr": 47.5,
 "speed": 42.5
+},
+"elian_rosario": {
+"hit": 45.0,
+"game_pwr": 58.5,
+"speed": 45.0
+},
+"emanuel_luna": {
+"hit": 45.0,
+"game_pwr": 57.5,
+"speed": 52.5
 },
 "yassel_soler": {
 "hit": 45.0,
@@ -2173,16 +2158,6 @@
 "game_pwr": 40.0,
 "speed": 40.0
 },
-"paxton_kling": {
-"hit": 45.0,
-"game_pwr": 51.0,
-"speed": 60.0
-},
-"nathan_hickey": {
-"hit": 45.0,
-"game_pwr": 55.0,
-"speed": 30.0
-},
 "caleb_cali": {
 "hit": 45.0,
 "game_pwr": 47.5,
@@ -2193,10 +2168,25 @@
 "game_pwr": 45.0,
 "speed": 45.0
 },
-"justice_bigbie": {
+"hyungchan_um": {
 "hit": 45.0,
-"game_pwr": 42.5,
-"speed": 40.0
+"game_pwr": 47.5,
+"speed": 32.5
+},
+"shotaro_morii": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"jose_pena": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
+"jacob_burke": {
+"hit": 45.0,
+"game_pwr": 37.5,
+"speed": 55.0
 },
 "ricky_cabrera": {
 "hit": 45.0,
@@ -2218,20 +2208,25 @@
 "game_pwr": 50.0,
 "speed": 50.0
 },
+"anthony_millan": {
+"hit": 45.0,
+"game_pwr": 47.5,
+"speed": 60.0
+},
 "matthew_wood": {
 "hit": 45.0,
 "game_pwr": 40.0,
 "speed": 30.0
 },
-"dexters_peralta": {
-"hit": 45.0,
-"game_pwr": 52.5,
-"speed": 60.0
-},
 "andres_valor": {
 "hit": 45.0,
 "game_pwr": 50.0,
 "speed": 60.0
+},
+"ethan_anderson": {
+"hit": 45.0,
+"game_pwr": 42.5,
+"speed": 40.0
 },
 "felix_morrobel": {
 "hit": 45.0,
@@ -2248,6 +2243,11 @@
 "game_pwr": 45.0,
 "speed": 52.5
 },
+"sebastian_dos_santos": {
+"hit": 45.0,
+"game_pwr": 52.5,
+"speed": 50.0
+},
 "jack_gurevitch": {
 "hit": 45.0,
 "game_pwr": 52.5,
@@ -2258,35 +2258,30 @@
 "game_pwr": 42.5,
 "speed": 55.0
 },
-"handelfry_encarnacion": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 45.0
-},
 "sabin_ceballos": {
 "hit": 45.0,
 "game_pwr": 42.5,
 "speed": 35.0
 },
-"mani_cedeno": {
+"jase_mitchell": {
 "hit": 45.0,
 "game_pwr": 45.0,
-"speed": 55.0
+"speed": 40.0
 },
 "angel_feliz": {
 "hit": 45.0,
 "game_pwr": 40.0,
 "speed": 42.5
 },
+"filippo_di_turi": {
+"hit": 45.0,
+"game_pwr": 32.5,
+"speed": 47.5
+},
 "kyle_debarge": {
 "hit": 45.0,
 "game_pwr": 40.0,
 "speed": 60.0
-},
-"gustavo_melendez": {
-"hit": 45.0,
-"game_pwr": 40.0,
-"speed": 55.0
 },
 "david_mccabe": {
 "hit": 45.0,
@@ -2298,20 +2293,10 @@
 "game_pwr": 52.5,
 "speed": 47.5
 },
-"richard_de_los_santos": {
+"andrew_navigato": {
 "hit": 45.0,
-"game_pwr": 47.5,
-"speed": 47.5
-},
-"eddie_rynders": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 50.0
-},
-"eliomar_garces": {
-"hit": 45.0,
-"game_pwr": 30.0,
-"speed": 50.0
+"game_pwr": 45.0,
+"speed": 45.0
 },
 "walker_martin": {
 "hit": 45.0,
@@ -2333,45 +2318,45 @@
 "game_pwr": 40.0,
 "speed": 60.0
 },
-"daniel_guilarte": {
+"trevor_werner": {
 "hit": 45.0,
-"game_pwr": 30.0,
-"speed": 60.0
+"game_pwr": 60.0,
+"speed": 50.0
 },
 "lorenzo_meola": {
 "hit": 45.0,
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"oliver_tejada": {
-"hit": 45.0,
-"game_pwr": 55.0,
-"speed": 50.0
-},
 "matthew_ferrara": {
 "hit": 45.0,
 "game_pwr": 40.0,
 "speed": 70.0
 },
-"dylan_campbell": {
-"hit": 45.0,
-"game_pwr": 42.5,
-"speed": 52.5
-},
-"kaeden_kent": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 50.0
-},
-"tanner_thach": {
+"oliver_tejada": {
 "hit": 45.0,
 "game_pwr": 55.0,
-"speed": 20.0
+"speed": 50.0
+},
+"eli_pitts": {
+"hit": 45.0,
+"game_pwr": 46.5,
+"speed": 65.0
+},
+"trey_snyder": {
+"hit": 45.0,
+"game_pwr": 40.0,
+"speed": 50.0
 },
 "cole_messina": {
 "hit": 45.0,
 "game_pwr": 45.0,
 "speed": 40.0
+},
+"tanner_thach": {
+"hit": 45.0,
+"game_pwr": 55.0,
+"speed": 20.0
 },
 "cam_fisher": {
 "hit": 45.0,
@@ -2383,6 +2368,11 @@
 "game_pwr": 55.0,
 "speed": 55.0
 },
+"dixon_williams": {
+"hit": 45.0,
+"game_pwr": 40.0,
+"speed": 60.0
+},
 "juan_rujano": {
 "hit": 45.0,
 "game_pwr": 50.0,
@@ -2393,15 +2383,15 @@
 "game_pwr": 50.0,
 "speed": 50.0
 },
-"dixon_williams": {
-"hit": 45.0,
-"game_pwr": 40.0,
-"speed": 60.0
-},
 "marcos_torres": {
 "hit": 45.0,
 "game_pwr": 55.0,
 "speed": 50.0
+},
+"nick_dumesnil": {
+"hit": 45.0,
+"game_pwr": 45.0,
+"speed": 55.0
 },
 "peyton_williams": {
 "hit": 45.0,
@@ -2418,25 +2408,15 @@
 "game_pwr": 52.5,
 "speed": 50.0
 },
-"nick_dumesnil": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"core_jackson": {
-"hit": 45.0,
-"game_pwr": 45.0,
-"speed": 50.0
-},
 "deniel_ortiz": {
 "hit": 45.0,
 "game_pwr": 55.0,
 "speed": 40.0
 },
-"hyungchan_um": {
+"core_jackson": {
 "hit": 45.0,
-"game_pwr": 47.5,
-"speed": 32.5
+"game_pwr": 45.0,
+"speed": 50.0
 },
 "kai_roberts": {
 "hit": 45.0,
@@ -2453,19 +2433,39 @@
 "game_pwr": 40.0,
 "speed": 30.0
 },
-"jacob_burke": {
-"hit": 45.0,
-"game_pwr": 37.5,
-"speed": 55.0
-},
 "luis_merejo": {
 "hit": 45.0,
 "game_pwr": 50.0,
 "speed": 40.0
 },
+"jakob_christian": {
+"hit": 45.0,
+"game_pwr": 55.0,
+"speed": 45.0
+},
+"caleb_ricketts": {
+"hit": 45.0,
+"game_pwr": 40.0,
+"speed": 40.0
+},
+"dexters_peralta": {
+"hit": 45.0,
+"game_pwr": 52.5,
+"speed": 60.0
+},
 "brenner_cox": {
 "hit": 45.0,
 "game_pwr": 42.5,
+"speed": 55.0
+},
+"handelfry_encarnacion": {
+"hit": 45.0,
+"game_pwr": 45.0,
+"speed": 45.0
+},
+"mani_cedeno": {
+"hit": 45.0,
+"game_pwr": 45.0,
 "speed": 55.0
 },
 "ryan_stafford": {
@@ -2473,35 +2473,35 @@
 "game_pwr": 30.0,
 "speed": 50.0
 },
-"andrew_navigato": {
+"gustavo_melendez": {
 "hit": 45.0,
-"game_pwr": 45.0,
-"speed": 45.0
+"game_pwr": 40.0,
+"speed": 55.0
+},
+"richard_de_los_santos": {
+"hit": 45.0,
+"game_pwr": 47.5,
+"speed": 47.5
+},
+"eddie_rynders": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"eliomar_garces": {
+"hit": 45.0,
+"game_pwr": 30.0,
+"speed": 50.0
 },
 "jalvin_arias": {
 "hit": 45.0,
 "game_pwr": 52.5,
 "speed": 50.0
 },
-"trevor_werner": {
-"hit": 45.0,
-"game_pwr": 60.0,
-"speed": 50.0
-},
 "carter_mathison": {
 "hit": 45.0,
 "game_pwr": 47.5,
 "speed": 60.0
-},
-"caleb_ricketts": {
-"hit": 45.0,
-"game_pwr": 40.0,
-"speed": 40.0
-},
-"jakob_christian": {
-"hit": 45.0,
-"game_pwr": 55.0,
-"speed": 45.0
 },
 "jett_williams": {
 "hit": 46.0,
@@ -2533,25 +2533,20 @@
 "game_pwr": 52.5,
 "speed": 70.0
 },
-"steele_hall": {
-"hit": 47.5,
-"game_pwr": 47.5,
-"speed": 70.0
-},
 "leo_bernal": {
 "hit": 47.5,
 "game_pwr": 47.5,
 "speed": 30.0
 },
+"steele_hall": {
+"hit": 47.5,
+"game_pwr": 47.5,
+"speed": 70.0
+},
 "billy_carlson": {
 "hit": 47.5,
 "game_pwr": 52.5,
 "speed": 53.5
-},
-"enddy_azocar": {
-"hit": 47.5,
-"game_pwr": 52.5,
-"speed": 55.0
 },
 "slade_caldwell": {
 "hit": 47.5,
@@ -2568,6 +2563,21 @@
 "game_pwr": 50.0,
 "speed": 57.5
 },
+"enddy_azocar": {
+"hit": 47.5,
+"game_pwr": 52.5,
+"speed": 55.0
+},
+"leo_balcazar": {
+"hit": 47.5,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"cooper_kinney": {
+"hit": 47.5,
+"game_pwr": 50.0,
+"speed": 37.5
+},
 "asbel_gonzalez": {
 "hit": 47.5,
 "game_pwr": 37.5,
@@ -2583,30 +2593,15 @@
 "game_pwr": 47.5,
 "speed": 60.0
 },
-"jared_thomas": {
-"hit": 47.5,
-"game_pwr": 47.5,
-"speed": 52.5
-},
 "wyatt_sanford": {
 "hit": 47.5,
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"leo_balcazar": {
+"jared_thomas": {
 "hit": 47.5,
-"game_pwr": 40.0,
-"speed": 50.0
-},
-"cooper_kinney": {
-"hit": 47.5,
-"game_pwr": 50.0,
-"speed": 37.5
-},
-"juan_sanchez": {
-"hit": 47.5,
-"game_pwr": 55.0,
-"speed": 40.0
+"game_pwr": 47.5,
+"speed": 52.5
 },
 "dillon_head": {
 "hit": 47.5,
@@ -2618,10 +2613,25 @@
 "game_pwr": 47.5,
 "speed": 52.5
 },
+"alexis_hernandez": {
+"hit": 47.5,
+"game_pwr": 42.5,
+"speed": 57.5
+},
 "franyerber_montilla": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 55.0
+},
+"kyle_lodise": {
+"hit": 47.5,
+"game_pwr": 42.5,
+"speed": 55.0
+},
+"cade_doughty": {
+"hit": 47.5,
+"game_pwr": 50.0,
+"speed": 45.0
 },
 "duce_gourson": {
 "hit": 47.5,
@@ -2638,7 +2648,7 @@
 "game_pwr": 50.0,
 "speed": 35.0
 },
-"rj_schreck": {
+"eddys_leonard": {
 "hit": 47.5,
 "game_pwr": 45.0,
 "speed": 47.5
@@ -2648,45 +2658,65 @@
 "game_pwr": 45.0,
 "speed": 50.0
 },
+"rj_schreck": {
+"hit": 47.5,
+"game_pwr": 45.0,
+"speed": 47.5
+},
 "nathan_martorella": {
 "hit": 47.5,
 "game_pwr": 47.5,
 "speed": 30.0
 },
-"alexander_frias": {
-"hit": 47.5,
-"game_pwr": 52.5,
-"speed": 47.5
-},
-"kyle_lodise": {
+"christian_franklin": {
 "hit": 47.5,
 "game_pwr": 42.5,
-"speed": 55.0
-},
-"marlon_quintero": {
-"hit": 47.5,
-"game_pwr": 40.0,
-"speed": 40.0
+"speed": 50.0
 },
 "andy_perez": {
 "hit": 47.5,
 "game_pwr": 40.0,
 "speed": 50.0
 },
+"kevin_bazzell": {
+"hit": 47.5,
+"game_pwr": 37.5,
+"speed": 35.0
+},
 "wilfri_de_la_cruz": {
 "hit": 47.5,
 "game_pwr": 52.5,
 "speed": 52.5
+},
+"alexander_frias": {
+"hit": 47.5,
+"game_pwr": 52.5,
+"speed": 47.5
+},
+"caleb_roberts": {
+"hit": 47.5,
+"game_pwr": 47.5,
+"speed": 40.0
 },
 "jake_fox": {
 "hit": 47.5,
 "game_pwr": 35.0,
 "speed": 60.0
 },
-"yulian_barreto": {
+"eduardo_valencia": {
 "hit": 47.5,
-"game_pwr": 32.5,
+"game_pwr": 50.0,
+"speed": 20.0
+},
+"colin_barber": {
+"hit": 47.5,
+"game_pwr": 45.0,
 "speed": 50.0
+},
+"juan_sanchez": {
+"hit": 47.5,
+"game_pwr": 55.0,
+"speed": 40.0
 },
 "jacob_berry": {
 "hit": 47.5,
@@ -2696,11 +2726,6 @@
 "victor_hurtado": {
 "hit": 47.5,
 "game_pwr": 55.0,
-"speed": 45.0
-},
-"bralyn_brazoban": {
-"hit": 47.5,
-"game_pwr": 50.0,
 "speed": 45.0
 },
 "dean_moss": {
@@ -2713,14 +2738,14 @@
 "game_pwr": 47.5,
 "speed": 52.5
 },
-"brayan_cortesia": {
+"brock_vradenburg": {
 "hit": 47.5,
-"game_pwr": 40.0,
-"speed": 50.0
+"game_pwr": 45.0,
+"speed": 45.0
 },
-"christian_franklin": {
+"adriel_radney": {
 "hit": 47.5,
-"game_pwr": 42.5,
+"game_pwr": 52.5,
 "speed": 50.0
 },
 "noah_miller": {
@@ -2738,89 +2763,94 @@
 "game_pwr": 35.0,
 "speed": 55.0
 },
-"alexis_hernandez": {
-"hit": 47.5,
-"game_pwr": 42.5,
-"speed": 57.5
-},
 "jhonayker_ugarte": {
 "hit": 47.5,
 "game_pwr": 52.5,
 "speed": 42.5
 },
-"cade_doughty": {
+"shalin_polanco": {
 "hit": 47.5,
-"game_pwr": 50.0,
-"speed": 45.0
+"game_pwr": 52.5,
+"speed": 47.5
+},
+"alex_mooney": {
+"hit": 47.5,
+"game_pwr": 45.0,
+"speed": 55.0
 },
 "callan_moss": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 40.0
 },
-"eddys_leonard": {
+"jhoan_de_la_cruz": {
 "hit": 47.5,
-"game_pwr": 45.0,
-"speed": 47.5
+"game_pwr": 40.0,
+"speed": 55.0
 },
 "cobb_hightower": {
 "hit": 47.5,
 "game_pwr": 35.0,
 "speed": 57.5
 },
-"jhoan_de_la_cruz": {
-"hit": 47.5,
-"game_pwr": 40.0,
-"speed": 55.0
-},
 "dario_laverde": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 30.0
+},
+"yahil_melendez": {
+"hit": 47.5,
+"game_pwr": 45.0,
+"speed": 42.5
 },
 "adrian_pinto": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 57.5
 },
+"will_simpson": {
+"hit": 47.5,
+"game_pwr": 55.0,
+"speed": 32.5
+},
 "kendry_martinez": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 45.0
 },
-"kevin_bazzell": {
+"eddinson_paulino": {
 "hit": 47.5,
-"game_pwr": 37.5,
-"speed": 35.0
+"game_pwr": 45.0,
+"speed": 47.5
+},
+"marlon_quintero": {
+"hit": 47.5,
+"game_pwr": 40.0,
+"speed": 40.0
 },
 "stiven_marinez": {
 "hit": 47.5,
 "game_pwr": 42.5,
 "speed": 60.0
 },
-"caleb_roberts": {
-"hit": 47.5,
-"game_pwr": 47.5,
-"speed": 40.0
-},
 "travis_honeyman": {
 "hit": 47.5,
 "game_pwr": 45.0,
 "speed": 55.0
+},
+"nate_nankil": {
+"hit": 47.5,
+"game_pwr": 40.0,
+"speed": 42.5
 },
 "jaider_suarez": {
 "hit": 47.5,
 "game_pwr": 47.5,
 "speed": 55.0
 },
-"eduardo_valencia": {
+"yulian_barreto": {
 "hit": 47.5,
-"game_pwr": 50.0,
-"speed": 20.0
-},
-"colin_barber": {
-"hit": 47.5,
-"game_pwr": 45.0,
+"game_pwr": 32.5,
 "speed": 50.0
 },
 "lamar_king_jr": {
@@ -2833,11 +2863,6 @@
 "game_pwr": 50.0,
 "speed": 42.5
 },
-"jose_perdomo": {
-"hit": 47.5,
-"game_pwr": 42.5,
-"speed": 47.5
-},
 "romeo_sanabria": {
 "hit": 47.5,
 "game_pwr": 45.0,
@@ -2848,55 +2873,30 @@
 "game_pwr": 37.5,
 "speed": 55.0
 },
-"kade_snell": {
+"jose_perdomo": {
+"hit": 47.5,
+"game_pwr": 42.5,
+"speed": 47.5
+},
+"bralyn_brazoban": {
+"hit": 47.5,
+"game_pwr": 50.0,
+"speed": 45.0
+},
+"brayan_cortesia": {
 "hit": 47.5,
 "game_pwr": 40.0,
 "speed": 50.0
-},
-"adriel_radney": {
-"hit": 47.5,
-"game_pwr": 52.5,
-"speed": 50.0
-},
-"shalin_polanco": {
-"hit": 47.5,
-"game_pwr": 52.5,
-"speed": 47.5
-},
-"alex_mooney": {
-"hit": 47.5,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"yahil_melendez": {
-"hit": 47.5,
-"game_pwr": 45.0,
-"speed": 42.5
-},
-"will_simpson": {
-"hit": 47.5,
-"game_pwr": 55.0,
-"speed": 32.5
-},
-"eddinson_paulino": {
-"hit": 47.5,
-"game_pwr": 45.0,
-"speed": 47.5
-},
-"nate_nankil": {
-"hit": 47.5,
-"game_pwr": 40.0,
-"speed": 42.5
 },
 "marcos_castanon": {
 "hit": 47.5,
 "game_pwr": 47.5,
 "speed": 30.0
 },
-"brock_vradenburg": {
+"kade_snell": {
 "hit": 47.5,
-"game_pwr": 45.0,
-"speed": 45.0
+"game_pwr": 40.0,
+"speed": 50.0
 },
 "jonny_farmelo": {
 "hit": 48.5,
@@ -2928,15 +2928,15 @@
 "game_pwr": 55.0,
 "speed": 55.0
 },
-"taitn_gray": {
-"hit": 49.0,
-"game_pwr": 60.0,
-"speed": 46.0
-},
 "josue_briceno": {
 "hit": 49.0,
 "game_pwr": 62.5,
 "speed": 27.5
+},
+"taitn_gray": {
+"hit": 49.0,
+"game_pwr": 60.0,
+"speed": 46.0
 },
 "ethan_salas": {
 "hit": 50.0,
@@ -2958,45 +2958,35 @@
 "game_pwr": 52.5,
 "speed": 51.5
 },
-"josh_adamczewski": {
-"hit": 50.0,
-"game_pwr": 52.5,
-"speed": 50.0
-},
 "ike_irish": {
 "hit": 50.0,
 "game_pwr": 55.0,
 "speed": 40.0
 },
-"angeibel_gomez": {
+"josh_adamczewski": {
 "hit": 50.0,
-"game_pwr": 57.5,
-"speed": 57.5
+"game_pwr": 52.5,
+"speed": 50.0
 },
 "dorian_soto": {
 "hit": 50.0,
 "game_pwr": 55.0,
 "speed": 47.5
 },
-"franklin_rojas": {
+"angeibel_gomez": {
 "hit": 50.0,
-"game_pwr": 45.0,
-"speed": 30.0
-},
-"elian_pena": {
-"hit": 50.0,
-"game_pwr": 53.5,
-"speed": 35.0
+"game_pwr": 57.5,
+"speed": 57.5
 },
 "belfi_rivera": {
 "hit": 50.0,
 "game_pwr": 50.0,
 "speed": 60.0
 },
-"brady_ebel": {
+"franklin_rojas": {
 "hit": 50.0,
 "game_pwr": 45.0,
-"speed": 47.5
+"speed": 30.0
 },
 "jd_dix": {
 "hit": 50.0,
@@ -3008,10 +2998,30 @@
 "game_pwr": 55.0,
 "speed": 42.5
 },
+"dyan_jorge": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 57.5
+},
+"abdias_de_la_cruz": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
 "dante_nori": {
 "hit": 50.0,
 "game_pwr": 35.0,
 "speed": 67.5
+},
+"mitch_voit": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 60.0
+},
+"elian_pena": {
+"hit": 50.0,
+"game_pwr": 53.5,
+"speed": 35.0
 },
 "raymer_medina": {
 "hit": 50.0,
@@ -3028,6 +3038,41 @@
 "game_pwr": 45.0,
 "speed": 40.0
 },
+"termarr_johnson": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 50.0
+},
+"brady_ebel": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 47.5
+},
+"wilder_dalis": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 55.0
+},
+"angel_guzman": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"carlos_virahonda": {
+"hit": 50.0,
+"game_pwr": 42.5,
+"speed": 30.0
+},
+"byron_chourio": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 55.0
+},
+"haritzon_castillo": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 55.0
+},
 "chinghsien_ko": {
 "hit": 50.0,
 "game_pwr": 47.5,
@@ -3038,24 +3083,9 @@
 "game_pwr": 55.0,
 "speed": 27.5
 },
-"termarr_johnson": {
+"braylin_tavera": {
 "hit": 50.0,
 "game_pwr": 45.0,
-"speed": 50.0
-},
-"ty_southisene": {
-"hit": 50.0,
-"game_pwr": 20.0,
-"speed": 57.5
-},
-"dyan_jorge": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 57.5
-},
-"abdias_de_la_cruz": {
-"hit": 50.0,
-"game_pwr": 50.0,
 "speed": 60.0
 },
 "albert_fermin": {
@@ -3063,49 +3093,39 @@
 "game_pwr": 50.0,
 "speed": 47.5
 },
-"owen_carey": {
+"gregory_barrios": {
 "hit": 50.0,
-"game_pwr": 42.5,
+"game_pwr": 30.0,
+"speed": 57.5
+},
+"alberto_barriga": {
+"hit": 50.0,
+"game_pwr": 37.5,
 "speed": 55.0
-},
-"breyson_guedez": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 47.5
-},
-"wilder_dalis": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"carlos_virahonda": {
-"hit": 50.0,
-"game_pwr": 42.5,
-"speed": 30.0
-},
-"mitch_voit": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 60.0
 },
 "blaine_bullard": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 60.0
 },
-"haritzon_castillo": {
+"brennan_milone": {
 "hit": 50.0,
 "game_pwr": 45.0,
-"speed": 55.0
+"speed": 40.0
 },
-"braylin_tavera": {
+"ty_southisene": {
 "hit": 50.0,
-"game_pwr": 45.0,
-"speed": 60.0
+"game_pwr": 20.0,
+"speed": 57.5
 },
 "ashly_andujar": {
 "hit": 50.0,
 "game_pwr": 42.5,
+"speed": 55.0
+},
+"yilver_de_paula": {
+"hit": 50.0,
+"game_pwr": 45.0,
 "speed": 55.0
 },
 "andrew_salas": {
@@ -3113,34 +3133,14 @@
 "game_pwr": 45.0,
 "speed": 57.5
 },
-"luis_cova": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 57.5
-},
-"byron_chourio": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 55.0
-},
-"tommy_white": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 35.0
-},
-"yilver_de_paula": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"carlos_caro": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 50.0
-},
 "brendan_summerhill": {
 "hit": 50.0,
 "game_pwr": 47.5,
+"speed": 55.0
+},
+"owen_carey": {
+"hit": 50.0,
+"game_pwr": 42.5,
 "speed": 55.0
 },
 "drew_cavanaugh": {
@@ -3153,45 +3153,35 @@
 "game_pwr": 50.0,
 "speed": 45.0
 },
+"hudson_haskin": {
+"hit": 50.0,
+"game_pwr": 42.5,
+"speed": 60.0
+},
+"breyson_guedez": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 47.5
+},
 "nauris_de_la_cruz": {
 "hit": 50.0,
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"santiago_leon": {
+"noah_cardenas": {
 "hit": 50.0,
-"game_pwr": 42.5,
-"speed": 47.5
-},
-"edward_lantigua": {
-"hit": 50.0,
-"game_pwr": 47.5,
-"speed": 47.5
+"game_pwr": 37.5,
+"speed": 30.0
 },
 "ramcell_medina": {
 "hit": 50.0,
 "game_pwr": 45.0,
 "speed": 50.0
 },
-"gregory_barrios": {
-"hit": 50.0,
-"game_pwr": 30.0,
-"speed": 57.5
-},
 "ronny_munoz": {
 "hit": 50.0,
 "game_pwr": 52.5,
 "speed": 60.0
-},
-"angel_guzman": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 50.0
-},
-"alberto_barriga": {
-"hit": 50.0,
-"game_pwr": 37.5,
-"speed": 55.0
 },
 "tj_ford": {
 "hit": 50.0,
@@ -3208,20 +3198,20 @@
 "game_pwr": 40.0,
 "speed": 62.5
 },
-"johan_geraldo": {
-"hit": 50.0,
-"game_pwr": 55.0,
-"speed": 50.0
-},
-"spencer_nivens": {
+"luis_cova": {
 "hit": 50.0,
 "game_pwr": 50.0,
-"speed": 50.0
+"speed": 57.5
 },
 "carlos_pacheco": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 60.0
+},
+"spencer_nivens": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 50.0
 },
 "warren_calcano": {
 "hit": 50.0,
@@ -3233,35 +3223,40 @@
 "game_pwr": 45.0,
 "speed": 60.0
 },
-"anderson_araujo": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 30.0
-},
 "jose_ortiz": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 60.0
-},
-"davis_diaz": {
-"hit": 50.0,
-"game_pwr": 35.0,
-"speed": 45.0
 },
 "johan_rodriguez": {
 "hit": 50.0,
 "game_pwr": 45.0,
 "speed": 50.0
 },
-"svert_reinoso": {
+"davis_diaz": {
 "hit": 50.0,
-"game_pwr": 50.0,
+"game_pwr": 35.0,
 "speed": 45.0
+},
+"aiden_taurek": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"tommy_white": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 35.0
 },
 "jude_warwick": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 57.5
+},
+"svert_reinoso": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 45.0
 },
 "jancel_villarroel": {
 "hit": 50.0,
@@ -3272,6 +3267,11 @@
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 35.0
+},
+"tjayy_walton": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 55.0
 },
 "juan_parra": {
 "hit": 50.0,
@@ -3288,24 +3288,14 @@
 "game_pwr": 45.0,
 "speed": 55.0
 },
-"erick_lara": {
-"hit": 50.0,
-"game_pwr": 55.0,
-"speed": 45.0
-},
-"ryan_campos": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 40.0
-},
 "cade_mcgee": {
 "hit": 50.0,
 "game_pwr": 45.0,
 "speed": 40.0
 },
-"brennan_milone": {
+"ryan_campos": {
 "hit": 50.0,
-"game_pwr": 45.0,
+"game_pwr": 40.0,
 "speed": 40.0
 },
 "sami_manzueta": {
@@ -3313,10 +3303,10 @@
 "game_pwr": 40.0,
 "speed": 40.0
 },
-"jose_dickson": {
+"andrew_cossetti": {
 "hit": 50.0,
-"game_pwr": 40.0,
-"speed": 50.0
+"game_pwr": 45.0,
+"speed": 30.0
 },
 "esmith_pineda": {
 "hit": 50.0,
@@ -3348,6 +3338,11 @@
 "game_pwr": 20.0,
 "speed": 60.0
 },
+"carlos_caro": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 50.0
+},
 "alberto_rios": {
 "hit": 50.0,
 "game_pwr": 42.5,
@@ -3368,20 +3363,70 @@
 "game_pwr": 40.0,
 "speed": 40.0
 },
+"adrian_sugastey": {
+"hit": 50.0,
+"game_pwr": 30.0,
+"speed": 25.0
+},
+"santiago_leon": {
+"hit": 50.0,
+"game_pwr": 42.5,
+"speed": 47.5
+},
+"edward_lantigua": {
+"hit": 50.0,
+"game_pwr": 47.5,
+"speed": 47.5
+},
+"dylan_fien": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 40.0
+},
+"john_wimmer": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 55.0
+},
+"johan_geraldo": {
+"hit": 50.0,
+"game_pwr": 55.0,
+"speed": 50.0
+},
+"nick_mclain": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 50.0
+},
+"anderson_araujo": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 30.0
+},
+"erick_lara": {
+"hit": 50.0,
+"game_pwr": 55.0,
+"speed": 45.0
+},
+"jose_dickson": {
+"hit": 50.0,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"charlie_szykowny": {
+"hit": 50.0,
+"game_pwr": 45.0,
+"speed": 40.0
+},
 "eduardo_rojas": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 30.0
 },
-"hudson_haskin": {
+"aidan_west": {
 "hit": 50.0,
-"game_pwr": 42.5,
-"speed": 60.0
-},
-"adrian_sugastey": {
-"hit": 50.0,
-"game_pwr": 30.0,
-"speed": 25.0
+"game_pwr": 47.5,
+"speed": 50.0
 },
 "andy_mata": {
 "hit": 50.0,
@@ -3393,60 +3438,15 @@
 "game_pwr": 47.5,
 "speed": 40.0
 },
-"noah_cardenas": {
-"hit": 50.0,
-"game_pwr": 37.5,
-"speed": 30.0
-},
-"eriandys_ramon": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 40.0
-},
-"dylan_fien": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 40.0
-},
-"aiden_taurek": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 50.0
-},
-"tjayy_walton": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 55.0
-},
-"andrew_cossetti": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 30.0
-},
-"charlie_szykowny": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 40.0
-},
-"aidan_west": {
-"hit": 50.0,
-"game_pwr": 47.5,
-"speed": 50.0
-},
 "heriberto_caraballo": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 45.0
 },
-"john_wimmer": {
+"eriandys_ramon": {
 "hit": 50.0,
-"game_pwr": 40.0,
-"speed": 55.0
-},
-"nick_mclain": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 50.0
+"game_pwr": 45.0,
+"speed": 40.0
 },
 "rainiel_rodriguez": {
 "hit": 51.0,
@@ -3498,25 +3498,20 @@
 "game_pwr": 50.0,
 "speed": 50.0
 },
+"enrique_bradfield_jr": {
+"hit": 52.5,
+"game_pwr": 30.0,
+"speed": 75.0
+},
 "starlyn_caba": {
 "hit": 52.5,
 "game_pwr": 30.0,
 "speed": 60.0
 },
-"kendall_george": {
-"hit": 52.5,
-"game_pwr": 30.0,
-"speed": 75.0
-},
 "hayden_alvarez": {
 "hit": 52.5,
 "game_pwr": 45.0,
 "speed": 57.5
-},
-"enrique_bradfield_jr": {
-"hit": 52.5,
-"game_pwr": 30.0,
-"speed": 75.0
 },
 "jordan_yost": {
 "hit": 52.5,
@@ -3528,6 +3523,11 @@
 "game_pwr": 45.0,
 "speed": 42.5
 },
+"kendall_george": {
+"hit": 52.5,
+"game_pwr": 30.0,
+"speed": 75.0
+},
 "jaison_chourio": {
 "hit": 52.5,
 "game_pwr": 40.0,
@@ -3537,6 +3537,16 @@
 "hit": 52.5,
 "game_pwr": 51.5,
 "speed": 50.0
+},
+"tre_morgan": {
+"hit": 52.5,
+"game_pwr": 42.5,
+"speed": 50.0
+},
+"eric_brown_jr": {
+"hit": 52.5,
+"game_pwr": 40.0,
+"speed": 60.0
 },
 "diego_tornes": {
 "hit": 52.5,
@@ -3553,75 +3563,10 @@
 "game_pwr": 55.0,
 "speed": 47.5
 },
-"emaarion_boyd": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 70.0
-},
-"tre_morgan": {
-"hit": 52.5,
-"game_pwr": 42.5,
-"speed": 50.0
-},
-"eric_brown_jr": {
-"hit": 52.5,
-"game_pwr": 40.0,
-"speed": 60.0
-},
-"jirvin_morillo": {
-"hit": 52.5,
-"game_pwr": 46.5,
-"speed": 40.0
-},
-"marconi_german": {
-"hit": 52.5,
-"game_pwr": 42.5,
-"speed": 55.0
-},
-"henry_godbout": {
-"hit": 52.5,
-"game_pwr": 45.0,
-"speed": 45.0
-},
-"brett_bateman": {
-"hit": 52.5,
-"game_pwr": 25.0,
-"speed": 65.0
-},
-"sebastian_blanco": {
-"hit": 52.5,
-"game_pwr": 40.0,
-"speed": 50.0
-},
 "douglas_glod": {
 "hit": 52.5,
 "game_pwr": 45.0,
 "speed": 47.5
-},
-"payton_eeles": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 55.0
-},
-"samil_serrano": {
-"hit": 52.5,
-"game_pwr": 52.5,
-"speed": 45.0
-},
-"diego_frontado": {
-"hit": 52.5,
-"game_pwr": 45.0,
-"speed": 52.5
-},
-"mitch_jebb": {
-"hit": 52.5,
-"game_pwr": 32.5,
-"speed": 67.5
-},
-"adrian_placencia": {
-"hit": 52.5,
-"game_pwr": 40.0,
-"speed": 45.0
 },
 "sammy_siani": {
 "hit": 52.5,
@@ -3633,30 +3578,100 @@
 "game_pwr": 40.0,
 "speed": 52.5
 },
+"emaarion_boyd": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 70.0
+},
 "frederick_bencosme": {
 "hit": 52.5,
 "game_pwr": 35.0,
 "speed": 47.5
+},
+"jirvin_morillo": {
+"hit": 52.5,
+"game_pwr": 46.5,
+"speed": 40.0
+},
+"henry_godbout": {
+"hit": 52.5,
+"game_pwr": 45.0,
+"speed": 45.0
+},
+"payton_eeles": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 55.0
+},
+"adrian_placencia": {
+"hit": 52.5,
+"game_pwr": 40.0,
+"speed": 45.0
+},
+"brett_bateman": {
+"hit": 52.5,
+"game_pwr": 25.0,
+"speed": 65.0
+},
+"onil_perez": {
+"hit": 52.5,
+"game_pwr": 30.0,
+"speed": 30.0
+},
+"manuel_beltre": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 55.0
+},
+"austin_gauthier": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 55.0
+},
+"samil_serrano": {
+"hit": 52.5,
+"game_pwr": 52.5,
+"speed": 45.0
+},
+"sebastian_blanco": {
+"hit": 52.5,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"diego_frontado": {
+"hit": 52.5,
+"game_pwr": 45.0,
+"speed": 52.5
+},
+"mitch_jebb": {
+"hit": 52.5,
+"game_pwr": 32.5,
+"speed": 67.5
 },
 "mike_boeve": {
 "hit": 52.5,
 "game_pwr": 40.0,
 "speed": 40.0
 },
-"juan_baez": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 42.5
-},
 "esmil_valencia": {
 "hit": 52.5,
 "game_pwr": 45.0,
 "speed": 52.5
 },
+"juan_baez": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 42.5
+},
 "keaton_anthony": {
 "hit": 52.5,
 "game_pwr": 42.5,
 "speed": 32.5
+},
+"marconi_german": {
+"hit": 52.5,
+"game_pwr": 42.5,
+"speed": 55.0
 },
 "daniel_dickinson": {
 "hit": 52.5,
@@ -3673,30 +3688,15 @@
 "game_pwr": 40.0,
 "speed": 55.0
 },
-"onil_perez": {
+"peyton_stovall": {
 "hit": 52.5,
-"game_pwr": 30.0,
-"speed": 30.0
+"game_pwr": 40.0,
+"speed": 42.5
 },
 "carter_johnson": {
 "hit": 52.5,
 "game_pwr": 40.0,
 "speed": 47.5
-},
-"austin_gauthier": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 55.0
-},
-"manuel_beltre": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 55.0
-},
-"peyton_stovall": {
-"hit": 52.5,
-"game_pwr": 40.0,
-"speed": 42.5
 },
 "josuar_gonzalez": {
 "hit": 54.0,
@@ -3723,11 +3723,6 @@
 "game_pwr": 42.5,
 "speed": 65.0
 },
-"nelson_rada": {
-"hit": 55.0,
-"game_pwr": 30.0,
-"speed": 60.0
-},
 "kevin_alvarez": {
 "hit": 55.0,
 "game_pwr": 57.5,
@@ -3743,19 +3738,29 @@
 "game_pwr": 47.5,
 "speed": 49.0
 },
+"nelson_rada": {
+"hit": 55.0,
+"game_pwr": 30.0,
+"speed": 60.0
+},
 "marek_houston": {
 "hit": 55.0,
 "game_pwr": 40.0,
 "speed": 55.0
+},
+"cam_cannarella": {
+"hit": 55.0,
+"game_pwr": 37.5,
+"speed": 57.5
 },
 "johan_de_los_santos": {
 "hit": 55.0,
 "game_pwr": 42.5,
 "speed": 62.5
 },
-"luis_arana": {
+"gabriel_rodriguez": {
 "hit": 55.0,
-"game_pwr": 40.0,
+"game_pwr": 45.0,
 "speed": 52.5
 },
 "djean_macares": {
@@ -3763,15 +3768,10 @@
 "game_pwr": 40.0,
 "speed": 50.0
 },
-"dylan_orae": {
+"josh_kasevich": {
 "hit": 55.0,
-"game_pwr": 20.0,
-"speed": 65.0
-},
-"cam_cannarella": {
-"hit": 55.0,
-"game_pwr": 37.5,
-"speed": 57.5
+"game_pwr": 35.0,
+"speed": 47.5
 },
 "james_triantos": {
 "hit": 55.0,
@@ -3783,35 +3783,45 @@
 "game_pwr": 35.0,
 "speed": 55.0
 },
-"cristian_arguelles": {
+"dylan_orae": {
 "hit": 55.0,
-"game_pwr": 42.5,
-"speed": 47.5
+"game_pwr": 20.0,
+"speed": 65.0
 },
-"pedro_ibarguen": {
+"luis_arana": {
 "hit": 55.0,
-"game_pwr": 42.5,
+"game_pwr": 40.0,
 "speed": 52.5
 },
-"gabriel_rodriguez": {
+"aaron_zavala": {
 "hit": 55.0,
-"game_pwr": 45.0,
-"speed": 52.5
+"game_pwr": 37.5,
+"speed": 50.0
+},
+"garret_forrester": {
+"hit": 55.0,
+"game_pwr": 50.0,
+"speed": 35.0
+},
+"jake_cook": {
+"hit": 55.0,
+"game_pwr": 30.0,
+"speed": 80.0
 },
 "trevor_cohen": {
 "hit": 55.0,
 "game_pwr": 30.0,
 "speed": 57.5
 },
-"josh_kasevich": {
+"jorge_ruiz": {
 "hit": 55.0,
-"game_pwr": 35.0,
-"speed": 47.5
+"game_pwr": 30.0,
+"speed": 52.5
 },
-"dashyll_tejeda": {
+"hector_osorio": {
 "hit": 55.0,
-"game_pwr": 40.0,
-"speed": 50.0
+"game_pwr": 47.5,
+"speed": 45.0
 },
 "juan_matheus": {
 "hit": 55.0,
@@ -3823,15 +3833,35 @@
 "game_pwr": 35.0,
 "speed": 55.0
 },
+"danny_serretti": {
+"hit": 55.0,
+"game_pwr": 37.5,
+"speed": 40.0
+},
+"dashyll_tejeda": {
+"hit": 55.0,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"jeral_toledo": {
+"hit": 55.0,
+"game_pwr": 40.0,
+"speed": 50.0
+},
+"samuel_munoz": {
+"hit": 55.0,
+"game_pwr": 42.5,
+"speed": 42.5
+},
+"anyelo_marquez": {
+"hit": 55.0,
+"game_pwr": 42.5,
+"speed": 40.0
+},
 "luke_hill": {
 "hit": 55.0,
 "game_pwr": 47.5,
 "speed": 45.0
-},
-"elaineiker_coronado": {
-"hit": 55.0,
-"game_pwr": 30.0,
-"speed": 60.0
 },
 "angel_brachi": {
 "hit": 55.0,
@@ -3843,65 +3873,45 @@
 "game_pwr": 45.0,
 "speed": 47.5
 },
+"cristian_arguelles": {
+"hit": 55.0,
+"game_pwr": 42.5,
+"speed": 47.5
+},
 "sam_shaw": {
 "hit": 55.0,
 "game_pwr": 35.0,
 "speed": 45.0
+},
+"pedro_ibarguen": {
+"hit": 55.0,
+"game_pwr": 42.5,
+"speed": 52.5
 },
 "jaden_fauske": {
 "hit": 55.0,
 "game_pwr": 45.0,
 "speed": 50.0
 },
-"samuel_munoz": {
-"hit": 55.0,
-"game_pwr": 42.5,
-"speed": 42.5
-},
-"sebastian_romero": {
-"hit": 55.0,
-"game_pwr": 50.0,
-"speed": 47.5
-},
-"luiyin_alastre": {
+"luke_waddell": {
 "hit": 55.0,
 "game_pwr": 30.0,
-"speed": 40.0
+"speed": 45.0
 },
 "ryan_mitchell": {
 "hit": 55.0,
 "game_pwr": 50.0,
 "speed": 60.0
 },
-"aaron_zavala": {
-"hit": 55.0,
-"game_pwr": 37.5,
-"speed": 50.0
-},
 "diego_velasquez": {
 "hit": 55.0,
 "game_pwr": 35.0,
 "speed": 47.5
 },
-"anyelo_marquez": {
-"hit": 55.0,
-"game_pwr": 42.5,
-"speed": 40.0
-},
 "elorky_rodriguez": {
 "hit": 55.0,
 "game_pwr": 42.5,
 "speed": 47.5
-},
-"garret_forrester": {
-"hit": 55.0,
-"game_pwr": 50.0,
-"speed": 35.0
-},
-"junior_suriel": {
-"hit": 55.0,
-"game_pwr": 45.0,
-"speed": 40.0
 },
 "dameury_pena": {
 "hit": 55.0,
@@ -3913,20 +3923,10 @@
 "game_pwr": 35.0,
 "speed": 47.5
 },
-"bruin_agbayani": {
-"hit": 55.0,
-"game_pwr": 37.5,
-"speed": 50.0
-},
 "jaims_martinez": {
 "hit": 55.0,
 "game_pwr": 45.0,
 "speed": 60.0
-},
-"jake_cook": {
-"hit": 55.0,
-"game_pwr": 30.0,
-"speed": 80.0
 },
 "yeiker_reyes": {
 "hit": 55.0,
@@ -3938,40 +3938,25 @@
 "game_pwr": 30.0,
 "speed": 20.0
 },
-"jorge_ruiz": {
-"hit": 55.0,
-"game_pwr": 30.0,
-"speed": 52.5
-},
 "jaiden_lo_re": {
 "hit": 55.0,
 "game_pwr": 40.0,
 "speed": 55.0
 },
-"hector_osorio": {
+"vladimir_asencio": {
 "hit": 55.0,
-"game_pwr": 47.5,
-"speed": 45.0
+"game_pwr": 45.0,
+"speed": 55.0
 },
 "ryan_sprock": {
 "hit": 55.0,
 "game_pwr": 30.0,
 "speed": 40.0
 },
-"danny_serretti": {
-"hit": 55.0,
-"game_pwr": 37.5,
-"speed": 40.0
-},
 "abrahan_ramirez": {
 "hit": 55.0,
 "game_pwr": 35.0,
 "speed": 55.0
-},
-"jeral_toledo": {
-"hit": 55.0,
-"game_pwr": 40.0,
-"speed": 50.0
 },
 "jose_monzon": {
 "hit": 55.0,
@@ -3983,6 +3968,16 @@
 "game_pwr": 35.0,
 "speed": 50.0
 },
+"gage_miller": {
+"hit": 55.0,
+"game_pwr": 50.0,
+"speed": 40.0
+},
+"elaineiker_coronado": {
+"hit": 55.0,
+"game_pwr": 30.0,
+"speed": 60.0
+},
 "roynier_hernandez": {
 "hit": 55.0,
 "game_pwr": 30.0,
@@ -3993,30 +3988,50 @@
 "game_pwr": 30.0,
 "speed": 60.0
 },
-"juan_mateo": {
+"maick_collado": {
 "hit": 55.0,
 "game_pwr": 40.0,
-"speed": 55.0
+"speed": 30.0
+},
+"sebastian_romero": {
+"hit": 55.0,
+"game_pwr": 50.0,
+"speed": 47.5
+},
+"luiyin_alastre": {
+"hit": 55.0,
+"game_pwr": 30.0,
+"speed": 40.0
 },
 "anthony_marquez": {
 "hit": 55.0,
 "game_pwr": 30.0,
 "speed": 60.0
 },
-"almen_tolentino": {
+"juan_mateo": {
 "hit": 55.0,
-"game_pwr": 45.0,
-"speed": 30.0
+"game_pwr": 40.0,
+"speed": 55.0
 },
 "bryant_betancourt": {
 "hit": 55.0,
 "game_pwr": 37.5,
 "speed": 20.0
 },
+"junior_suriel": {
+"hit": 55.0,
+"game_pwr": 45.0,
+"speed": 40.0
+},
 "raudelis_martinez": {
 "hit": 55.0,
 "game_pwr": 30.0,
 "speed": 40.0
+},
+"bruin_agbayani": {
+"hit": 55.0,
+"game_pwr": 37.5,
+"speed": 50.0
 },
 "spencer_packard": {
 "hit": 55.0,
@@ -4028,35 +4043,20 @@
 "game_pwr": 30.0,
 "speed": 50.0
 },
-"vladimir_asencio": {
-"hit": 55.0,
-"game_pwr": 45.0,
-"speed": 55.0
-},
-"gage_miller": {
-"hit": 55.0,
-"game_pwr": 50.0,
-"speed": 40.0
-},
-"maick_collado": {
-"hit": 55.0,
-"game_pwr": 40.0,
-"speed": 30.0
-},
 "jose_cerice": {
 "hit": 55.0,
 "game_pwr": 37.5,
 "speed": 40.0
 },
-"luke_waddell": {
-"hit": 55.0,
-"game_pwr": 30.0,
-"speed": 45.0
-},
 "dallas_macias": {
 "hit": 55.0,
 "game_pwr": 40.0,
 "speed": 45.0
+},
+"almen_tolentino": {
+"hit": 55.0,
+"game_pwr": 45.0,
+"speed": 30.0
 },
 "luis_aguilera": {
 "hit": 55.0,
@@ -4103,21 +4103,6 @@
 "game_pwr": 40.0,
 "speed": 45.0
 },
-"dax_kilby": {
-"hit": 57.5,
-"game_pwr": 50.0,
-"speed": 59.0
-},
-"gavin_kilen": {
-"hit": 57.5,
-"game_pwr": 45.0,
-"speed": 52.5
-},
-"robert_arias": {
-"hit": 57.5,
-"game_pwr": 40.0,
-"speed": 62.5
-},
 "caden_bodine": {
 "hit": 57.5,
 "game_pwr": 42.5,
@@ -4133,15 +4118,30 @@
 "game_pwr": 40.0,
 "speed": 60.0
 },
-"cristofer_torin": {
+"gavin_kilen": {
 "hit": 57.5,
-"game_pwr": 30.0,
-"speed": 40.0
+"game_pwr": 45.0,
+"speed": 52.5
+},
+"dax_kilby": {
+"hit": 57.5,
+"game_pwr": 50.0,
+"speed": 59.0
 },
 "jadher_areinamo": {
 "hit": 57.5,
 "game_pwr": 40.0,
 "speed": 45.0
+},
+"robert_arias": {
+"hit": 57.5,
+"game_pwr": 40.0,
+"speed": 62.5
+},
+"cristofer_torin": {
+"hit": 57.5,
+"game_pwr": 30.0,
+"speed": 40.0
 },
 "dauri_fernandez": {
 "hit": 57.5,
@@ -4193,40 +4193,30 @@
 "game_pwr": 45.0,
 "speed": 57.5
 },
-"juneiker_caceres": {
-"hit": 60.0,
-"game_pwr": 50.0,
-"speed": 47.5
-},
 "cristopher_polanco": {
 "hit": 60.0,
 "game_pwr": 40.0,
 "speed": 60.0
 },
-"william_bergolla": {
+"juneiker_caceres": {
 "hit": 60.0,
-"game_pwr": 20.0,
-"speed": 50.0
+"game_pwr": 50.0,
+"speed": 47.5
 },
 "yoffry_solano": {
 "hit": 60.0,
 "game_pwr": 30.0,
 "speed": 50.0
 },
+"william_bergolla": {
+"hit": 60.0,
+"game_pwr": 20.0,
+"speed": 50.0
+},
 "nikau_pouakagrego": {
 "hit": 60.0,
 "game_pwr": 35.0,
 "speed": 47.5
-},
-"josueth_quinonez": {
-"hit": 60.0,
-"game_pwr": 30.0,
-"speed": 55.0
-},
-"johan_machado": {
-"hit": 60.0,
-"game_pwr": 32.5,
-"speed": 60.0
 },
 "javier_vaz": {
 "hit": 60.0,
@@ -4236,6 +4226,16 @@
 "nate_furman": {
 "hit": 60.0,
 "game_pwr": 30.0,
+"speed": 60.0
+},
+"josueth_quinonez": {
+"hit": 60.0,
+"game_pwr": 30.0,
+"speed": 55.0
+},
+"johan_machado": {
+"hit": 60.0,
+"game_pwr": 32.5,
 "speed": 60.0
 },
 "christian_knapczyk": {

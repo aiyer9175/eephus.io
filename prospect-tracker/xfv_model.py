@@ -65,6 +65,16 @@ _FEATURES_HIT = [
     ("n_milb_seasons", +1),   # MiLB seasons before the read -- track record/persistence (OOS +.010)
     ("tool_hit",       +1),   # best single tool for WAR
     ("tool_speed",     +1),   # athletic up-side / defensive value
+    # milb_missing: indicator that the production block is IMPUTED (no pre-decision MiLB
+    # track record). Re-validated 2026-06-24: ALONE on the lean set it is a clean OOS gain
+    # (blend 0.339->0.362, FV-45 tier 0.012->0.093) -- the model needs to tell imputed-zero
+    # production from average production, which is exactly the thin-record fringe cohort the
+    # old kitchen-sink rejection (milb_missing BUNDLED with n_sources/pick) hid.
+    ("milb_missing",   -1),
+    # Acquisition-cohort indicators -- the ridge re-centers each cohort's intercept, lifting
+    # cross-tier ordering in EVERY tier (sweep: stacks with milb_missing to blend 0.367).
+    ("is_ifa",          0),
+    ("is_college",      0),
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
     # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]
@@ -78,6 +88,12 @@ _FEATURES_PIT = [
                               # Feature re-test 2026-06-22: genuine OOS lift (debuted-km
                               # 0.274->0.282, blend +0.0074, sane cal); era_rel alone fails.
     ("tool_fb",        +1),   # fastball -- best pitcher tool adder
+    # Cohort-conditional + fastball-led signals (xFV sweep 2026-06-24): blend 0.263->0.278,
+    # IFA-arm cohort +0.032, all four folds positive. is_ifa*era_rel localizes the IFA fix;
+    # is_college*k_rel nudges college arms; fb_x_k = (tool_fb-45)/10 * peak_k_rel.
+    ("ifa_x_era",       0),
+    ("col_x_k",         0),
+    ("fb_x_k",         +1),
 ]
 
 
@@ -253,6 +269,10 @@ def _vec(r, side: str = "hit") -> dict:
         "bonus_log": math.log1p(float(bonus)) if bonus else 0.0,
         "il_stints_pre": g(r.get("il_stints_pre")),
         "fv_stddev": g(r.get("fv_stddev")),
+        # Acquisition-cohort indicators (xfv_dataset._cohort_flags). The ridge re-centers
+        # each cohort's intercept -> sharper cross-tier ordering (OOS gain, both sides).
+        "is_ifa": g(r.get("is_ifa")),
+        "is_college": g(r.get("is_college")),
     }
     if side == "pit":
         out.update({
@@ -262,6 +282,11 @@ def _vec(r, side: str = "hit") -> dict:
             "peak_k_rel": g(m.get("peak_k_rel")), "peak_bb_rel": g(m.get("peak_bb_rel")),
             # run-prevention x missing-bats interaction (final-season): (-era_rel)*k_rel.
             "x_era_k": (-g(m.get("era_rel"))) * g(m.get("k_rel")),
+            # Cohort-conditional + fastball-led signals the xFV sweep validated (pit blend
+            # +0.015 OOS, IFA-arm cohort +0.032, all folds positive). is_ifa/is_college in `out`.
+            "ifa_x_era": g(r.get("is_ifa")) * g(m.get("era_rel")),
+            "col_x_k": g(r.get("is_college")) * g(m.get("k_rel")),
+            "fb_x_k": ((g(r.get("tool_fb"), 45.0) - 45.0) / 10.0) * g(m.get("peak_k_rel")),
         })
     else:
         out.update({

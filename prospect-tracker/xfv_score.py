@@ -328,7 +328,7 @@ def score_history(persist: bool = True) -> dict:
     scoring old snapshots (a retrospective), not the grade we would have shown then. Writes
     data/xfv_history.json = {by_player: {key: [{d, x, c}]}}. Run after run_live (reuses its
     scored pool for the grade scale)."""
-    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars,
+    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
                              _injury_features, _side_match, _f, CURRENT_SEASON)
     ts_path = DATA_DIR / "timeseries.json"
     if not ts_path.exists():
@@ -361,6 +361,7 @@ def score_history(persist: bool = True) -> dict:
             yr = int(pt["snapshot_date"][:4])
             row = {"consensus_fv_raw": cons_fv, "pick_overall": a_sc.get("pick_overall"),
                    "bonus_usd": a_sc.get("bonus_usd"), **ilf}
+            row["is_ifa"], row["is_college"] = _cohort_flags(a_sc.get("method"), a_sc.get("year"), rec.get("birth_date"))
             row.update(_prior_features(rec, pt, side))
             row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
                                          rec.get("birth_date"), side)
@@ -544,7 +545,7 @@ def run_backgrade(persist: bool = True) -> dict:
     no pro track record are graded prior-anchored and flagged xfv_provisional. Fills the gap
     run_live (active w/ track record) + run (matrix cohort) leave behind. Run AFTER run_live
     (reuses its scored pool for the grade scale). Writes data/xfv_backgrade.json."""
-    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars,
+    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
                              _injury_features, _side_match, _f, CURRENT_SEASON)
     fit = {s: _fit_production(s) for s in ("hit", "pit")}
     lam = {s: blend_lambda(s) for s in ("hit", "pit")}
@@ -596,6 +597,7 @@ def run_backgrade(persist: bool = True) -> dict:
         ilf = _injury_features(il.get(pk), None) if kind == "active" else {}
         row = {"consensus_fv_raw": cons_fv, "pick_overall": a_sc.get("pick_overall"),
                "bonus_usd": a_sc.get("bonus_usd"), **ilf}
+        row["is_ifa"], row["is_college"] = _cohort_flags(a_sc.get("method"), a_sc.get("year"), rec.get("birth_date"))
         row.update(_prior_features(rec, pt, side))
         row["milb"] = _milb_features(rec.get("mlbam_id"), milb_yr, rec.get("birth_date"), side)
         feats = _vec(row, side)

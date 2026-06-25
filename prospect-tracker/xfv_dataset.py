@@ -332,14 +332,32 @@ def _load_sidecars(player_keys: set[str]):
         ph = ",".join("?" for _ in player_keys)
         pk = tuple(player_keys)
         for r in con.execute(
-                f"SELECT player_key, method, pick_overall, bonus_usd FROM acquisitions "
+                f"SELECT player_key, method, pick_overall, bonus_usd, year FROM acquisitions "
                 f"WHERE player_key IN ({ph})", pk):
             acq[r["player_key"]] = {"pick_overall": r["pick_overall"],
-                                    "bonus_usd": r["bonus_usd"], "method": r["method"]}
+                                    "bonus_usd": r["bonus_usd"], "method": r["method"],
+                                    "year": r["year"]}
         for r in con.execute(
                 f"SELECT player_key, since FROM il_history WHERE player_key IN ({ph})", pk):
             il.setdefault(r["player_key"], []).append(r["since"])
     return acq, il
+
+
+def _cohort_flags(method, year, birth_date) -> tuple[float, float]:
+    """Acquisition-cohort indicators used as model features. is_ifa = signed as an
+    international free agent; is_college = drafted out of college (age>=21 in the draft
+    year, the leakage-free split the xFV sweep validated). HS draftees / unknown are (0,0).
+    The ridge re-centers each cohort's intercept -> sharper CROSS-tier ordering (OOS gain:
+    hit +0.024, pit cohort-interactions +0.011)."""
+    is_ifa = 1.0 if method == "international_fa" else 0.0
+    is_college = 0.0
+    if method == "draft" and year and birth_date:
+        try:
+            if int(year) - int(str(birth_date)[:4]) >= 21:
+                is_college = 1.0
+        except (ValueError, TypeError):
+            pass
+    return is_ifa, is_college
 
 
 def _injury_features(il_dates, cutoff: str | None):
@@ -441,6 +459,7 @@ def build_matrix(side: str = "hit"):
         a = acq.get(r["player_key"]) or {}
         r["pick_overall"] = a.get("pick_overall")
         r["bonus_usd"] = a.get("bonus_usd")
+        r["is_ifa"], r["is_college"] = _cohort_flags(a.get("method"), a.get("year"), r.get("birth_date"))
         r.update(_injury_features(il.get(r["player_key"]), r["cutoff"]))
 
     return rows, acct
@@ -516,6 +535,7 @@ def build_live_matrix(side: str = "hit"):
         a = acq.get(r["player_key"]) or {}
         r["pick_overall"] = a.get("pick_overall")
         r["bonus_usd"] = a.get("bonus_usd")
+        r["is_ifa"], r["is_college"] = _cohort_flags(a.get("method"), a.get("year"), r.get("birth_date"))
         r.update(_injury_features(il.get(r["player_key"]), None))
     return rows, acct
 
