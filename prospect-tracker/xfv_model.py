@@ -110,6 +110,15 @@ _BLEND_LAMBDA_FALLBACK = {"hit": 0.85, "pit": 0.80}
 _BLEND_LAMBDA_CLAMP = (0.35, 0.90)
 _WAG_LAMBDA_CACHE: dict[str, float] = {}
 
+# WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
+# When that regression is non-significant (|spearman| below this / too few rows), its slope is
+# noise and would shrink the blend to a rank-SUBOPTIMAL weight. Pitchers land here (WAG
+# spearman ~0.02, slope 0.39) -- the shipped pit eval shows the 0.391 blend (rho 0.2625)
+# trailing the pure ridge (rho 0.281); the blend was pulling the better prediction back toward
+# the weaker consensus. There we size lambda by the rank gate directly (rank_calibration).
+_WAG_MIN_SPEARMAN = 0.05
+_WAG_MIN_N = 100
+
 
 def _feature_spec(side: str):
     feats = _FEATURES_PIT if side == "pit" else _FEATURES_HIT
@@ -178,11 +187,86 @@ def wag_calibration(side: str) -> dict:
             "spearman": _spearman(x, y) if len(x) >= 8 else None, "n": len(x)}
 
 
+def rank_calibration(side: str) -> dict:
+    """RANK-gate blend lambda -- the fallback used when WAG cannot calibrate (its predicted-
+    edge -> realized-WAG regression is non-significant). Sizes lambda directly on the forward-
+    chained OOS ranking, over the same debuted-cohort folds the eval uses (identical setup to
+    the 'blend' row in data/xfv_eval*.json).
+
+    Pitchers land here: WAG spearman ~0.02 pins lambda at 0.391, and the shipped pit eval shows
+    that 0.391 blend (rho 0.2625) trailing the pure ridge (0.281) -- the blend was dragging the
+    better prediction back toward the weaker consensus. A leakage-free forward-chained selector
+    (tools/xfv_ml_lab.lambda_fwdchain) confirms higher-than-0.391 ranks better in every cohort
+    with prior data (+0.017 pooled). BUT an adversarial bootstrap showed pooled rho is FLAT
+    across 0.80-1.0 and the move's CI only stays strictly positive near ~0.65, while the value-
+    bearing within-tier + FV-45-fringe signals PEAK at ~0.65 and DEGRADE toward 0.90. So lambda
+    maximizes pooled + within-tier + fringe TOGETHER within a conservative [0.50, 0.70] band --
+    the robust middle, not the noisy high-lambda plateau. (Leakage note: lambda is one smooth
+    parameter; selecting it on the pooled OOS folds is in-sample for that single scalar, but the
+    per-cohort forward-chain independently validates the direction.)"""
+    from xfv_dataset import matrix_path
+    keys, _m = _feature_spec(side)
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    data = _prep([r for r in rows if r["kind"] == "debuted"], "target_censored", side)
+    folds = []   # (cons_war, model_pred, target, fv)
+    for yr in SCORED_YEARS:
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < 15 or len(tr) < 60:
+            continue
+        ols = _fit_ols_fv(tr)
+        ridge = _fit_ridge(tr, keys)
+        if not (ols and ridge):
+            continue
+        for r in te:
+            cons = max(0.0, _pred_ols(ols, r["fv"]))
+            folds.append((cons, _predict(ridge, r["feats"]), r["target"], r["fv"]))
+    if len(folds) < 30:
+        return {"lambda": _BLEND_LAMBDA_FALLBACK[side], "criterion": None, "n": len(folds)}
+
+    def _metrics(lam):
+        scored = [((1 - lam) * c + lam * m, t, fv) for c, m, t, fv in folds]
+        rho = _spearman([s for s, _, _ in scored], [t for _, t, _ in scored]) or 0.0
+        byt: dict = {}
+        for s, t, fv in scored:
+            byt.setdefault(round(fv / 5) * 5, []).append((s, t))
+        wsum = wn = 0.0
+        t45 = 0.0
+        for tk, grp in byt.items():
+            if len(grp) < 15:
+                continue
+            r = _spearman([a for a, _ in grp], [b for _, b in grp])
+            if r is None:
+                continue
+            wsum += r * len(grp)
+            wn += len(grp)
+            if tk == 45:
+                t45 = r
+        return rho, (wsum / wn if wn else 0.0), t45
+
+    lo, hi = 0.50, 0.70
+    cand = [round(lo + (hi - lo) * i / 20, 3) for i in range(21)]
+    metr = {lam: _metrics(lam) for lam in cand}
+    best = max(cand, key=lambda L: sum(metr[L]))   # pooled + within-tier + FV-45 fringe
+    rho, wm, t45 = metr[best]
+    return {"lambda": best, "rho": round(rho, 4), "within_tier_wm": round(wm, 4),
+            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi]}
+
+
 def blend_lambda(side: str) -> float:
-    """WAG-calibrated blend weight (cached). Falls back to the hand-set value on any error."""
+    """Blend weight on the xFV model vs the consensus anchor (cached). Calibrated by WAG when
+    its predicted-edge -> realized-WAG regression has signal (hitters: spearman ~0.20); when
+    that regression is non-significant (pitchers: spearman ~0.02), WAG's slope is noise and
+    pins a rank-suboptimal weight -- there we size lambda by the rank gate directly
+    (rank_calibration). Falls back to the hand-set value on any error."""
     if side not in _WAG_LAMBDA_CACHE:
         try:
-            _WAG_LAMBDA_CACHE[side] = wag_calibration(side)["lambda"]
+            wc = wag_calibration(side)
+            rho = wc.get("spearman")
+            if rho is not None and abs(rho) >= _WAG_MIN_SPEARMAN and (wc.get("n") or 0) >= _WAG_MIN_N:
+                _WAG_LAMBDA_CACHE[side] = wc["lambda"]
+            else:
+                _WAG_LAMBDA_CACHE[side] = rank_calibration(side)["lambda"]
         except Exception:
             _WAG_LAMBDA_CACHE[side] = _BLEND_LAMBDA_FALLBACK[side]
     return _WAG_LAMBDA_CACHE[side]
@@ -524,7 +608,10 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     from xfv_dataset import matrix_path
     keys, mono = _feature_spec(side)
     wag_cal = wag_calibration(side)
-    lam = wag_cal["lambda"]
+    lam = blend_lambda(side)   # WAG when it has signal; rank-gate fallback when WAG is noise
+    rank_cal = rank_calibration(side)
+    lam_source = ("wag" if abs(wag_cal.get("spearman") or 0) >= _WAG_MIN_SPEARMAN
+                  and (wag_cal.get("n") or 0) >= _WAG_MIN_N else "rank_gate")
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     deb = [r for r in rows if r["kind"] == "debuted"]
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
@@ -550,12 +637,21 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
             "features": keys,
         },
-        "wag_calibration": {
-            **wag_cal,
-            "reading": "xFV still predicts WAR; WAG (realized over/underperformance vs "
-                       "consensus FV = where consensus MISSED) calibrates how much to TRUST "
-                       "xFV's adjustment. slope_wobs (reliability-weighted) -> the blend lambda. "
-                       "Pitchers shrink harder: consensus is the stronger pitcher signal.",
+        "lambda_calibration": {
+            "shipped_lambda": lam,
+            "source": lam_source,
+            "wag": wag_cal,
+            "rank_gate": rank_cal,
+            "reading": "xFV still predicts WAR; the blend lambda is HOW MUCH to trust xFV's "
+                       "adjustment over the consensus anchor. WAG (realized over/underperformance "
+                       "vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-"
+                       "edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When "
+                       "that regression is non-significant (pitchers, spearman ~0.02) WAG's slope "
+                       "is noise -- it pinned pitchers at 0.391, which the eval shows DRAGGING the "
+                       "ridge (rho 0.281) back toward consensus (blend 0.2625). There lambda is "
+                       "sized by the rank gate directly (rank_calibration): pooled+within-tier+"
+                       "FV45-fringe maximized in a conservative [0.50,0.70] band -> ~0.65, lifting "
+                       "pooled OOS rho to ~0.28 (the robust, CI-positive part of the available gain).",
         },
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,

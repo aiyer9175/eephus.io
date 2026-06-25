@@ -23,13 +23,28 @@
    "is_college"
   ]
  },
- "wag_calibration": {
-  "lambda": 0.9,
-  "slope_wobs": 0.952,
-  "slope_unweighted": 0.542,
-  "spearman": 0.2012,
-  "n": 399,
-  "reading": "xFV still predicts WAR; WAG (realized over/underperformance vs consensus FV = where consensus MISSED) calibrates how much to TRUST xFV's adjustment. slope_wobs (reliability-weighted) -> the blend lambda. Pitchers shrink harder: consensus is the stronger pitcher signal."
+ "lambda_calibration": {
+  "shipped_lambda": 0.9,
+  "source": "wag",
+  "wag": {
+   "lambda": 0.9,
+   "slope_wobs": 0.952,
+   "slope_unweighted": 0.542,
+   "spearman": 0.2012,
+   "n": 399
+  },
+  "rank_gate": {
+   "lambda": 0.7,
+   "rho": 0.3619,
+   "within_tier_wm": 0.1972,
+   "t45": 0.0816,
+   "n": 399,
+   "band": [
+    0.5,
+    0.7
+   ]
+  },
+  "reading": "xFV still predicts WAR; the blend lambda is HOW MUCH to trust xFV's adjustment over the consensus anchor. WAG (realized over/underperformance vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When that regression is non-significant (pitchers, spearman ~0.02) WAG's slope is noise -- it pinned pitchers at 0.391, which the eval shows DRAGGING the ridge (rho 0.281) back toward consensus (blend 0.2625). There lambda is sized by the rank gate directly (rank_calibration): pooled+within-tier+FV45-fringe maximized in a conservative [0.50,0.70] band -> ~0.65, lifting pooled OOS rho to ~0.28 (the robust, CI-positive part of the available gain)."
  },
  "era_split_debuted": {
   "<=2018": {
