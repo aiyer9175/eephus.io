@@ -222,15 +222,32 @@ def run(bases=None, with_ml=False, persist=True):
     if with_ml:
         import proj_ml
 
+        # To measure the LIVE (shipped) path, the point-in-time bundle needs (a) the
+        # full 5 quantiles (predict_path gates both blends on full_qs) AND (b) the
+        # lift-only mean/star blend lambdas attached to meta (train_cached does NOT
+        # carry them - they're fit separately + injected onto the live bundle). We
+        # attach the SHIPPED lambdas; CAVEAT: those lambdas were fit on dev/holdout
+        # incl. these seasons, so this is "what the live model outputs", a mild
+        # optimism vs a fully point-in-time blend (disclosed in the artifact).
+        _mb = json.loads((ROOT / "data" / "proj_mean_blend.json").read_text(encoding="utf-8")).get("lambda_by_horizon") or {}
+        _sb = json.loads((ROOT / "data" / "proj_star_blend.json").read_text(encoding="utf-8")).get("lambda_by_horizon") or {}
+
         def ml_fn(hist, side, base, age, curves, war_map, league):
-            models = proj_ml.train_cached(fp.build_corpus(), base - 1)
+            models = proj_ml.train_cached(fp.build_corpus(), base - 1, quantiles=proj_ml.QUANTILES)
+            models["meta"]["mean_blend"] = _mb     # lift-only global recenter (live)
+            models["meta"]["star_blend"] = _sb     # ex-ante star top-up (live)
             feats = proj_ml.build_features(hist, side, base, age, curves, war_map, league)
             if feats is None:
                 return None
             return proj_ml.predict_path(models, feats, side)
         ml_tagged, ml_n = _collect(bases, ml_fn)
-        artifact["proj_lgbm"] = {"label": "proj_lgbm_v1 (point-in-time per base; NOT the live bundle)",
-                                 "n_players": ml_n, "cohorts": _aggregate(ml_tagged)}
+        artifact["proj_lgbm"] = {
+            "label": "proj_lgbm_v1 LIVE PATH (point-in-time heads + shipped mean/star blends; "
+                     "NOT the live bundle - per-base PIT training)",
+            "blend_caveat": "the lift-only mean/star blend lambdas attached are the SHIPPED values "
+                            "(fit on dev/holdout incl. these seasons), so this is 'what the live model "
+                            "outputs', a mild optimism vs a fully point-in-time blend",
+            "n_players": ml_n, "cohorts": _aggregate(ml_tagged)}
     if persist:
         ARTIFACT.write_text(json.dumps(artifact, indent=1), encoding="utf-8")
         log.info("war_cohort_diagnostic: champion n=%d%s -> %s", champ_n,
