@@ -234,11 +234,13 @@
 // smoke test now asserts rendered content, not just a non-empty body).
 // _raterMeta() is the safe accessor: unknown raters (new sources join the
 // backtest as their cohorts resolve) get a neutral fallback, never a throw.
+// Owner palette (2026-06-24): FanGraphs dark green, MLB Pipeline blue, PROSPX consensus pink,
+// xFV the site lilac (its identity color, theme-aware via --accent-lilac).
 const _RATER_META = {
-  fangraphs:        { label: "FanGraphs",        color: "var(--neon-cyan)" },
-  mlb_pipeline:     { label: "MLB Pipeline",     color: "var(--neon-amber)" },
-  prospx_consensus: { label: "PROSPX consensus", color: "var(--up)" },
-  xfv:              { label: "xFV (ours, OOS)",  color: "var(--neon-violet)" },
+  fangraphs:        { label: "FanGraphs",        color: "#2E8B57" },
+  mlb_pipeline:     { label: "MLB Pipeline",     color: "#4F9DFF" },
+  prospx_consensus: { label: "PROSPX consensus", color: "#FF6FB3" },
+  xfv:              { label: "xFV (ours, OOS)",  color: "var(--accent-lilac)" },
 };
 const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
 function _raterMeta(r) {
