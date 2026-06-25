@@ -246,6 +246,48 @@ const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
 function _raterMeta(r) {
   return _RATER_META[r] || { label: String(r), color: "var(--text-tertiary)" };
 }
+// WAR-capture (lift) curve: share of all realized career WAR sitting in the top N% of each
+// board. A sharper-ordering grade concentrates WAR earlier -> a higher curve. Replaces the
+// confounded mean-WAR-by-tier chart (where BETTER ordering paradoxically lowers the middle mean).
+function _methCaptureCurve(bt) {
+  const cc = bt.accuracy && bt.accuracy.capture_curve;
+  if (!cc || !cc.xfv || !cc.consensus) return "";
+  const W = 460, H = 230, ML = 40, MR = 12, MT = 16, MB = 30, iW = W - ML - MR, iH = H - MT - MB;
+  const sx = p => ML + p * iW, sy = v => MT + iH - v * iH;
+  const grid = [];
+  for (let i = 0; i <= 4; i++) {
+    const v = i / 4, y = sy(v).toFixed(1);
+    grid.push(`<line x1="${ML}" y1="${y}" x2="${ML + iW}" y2="${y}" stroke="var(--border-light)" stroke-width="0.5" stroke-dasharray="2,3"/>`,
+      `<text x="${ML - 6}" y="${y}" dy="3" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${Math.round(v * 100)}%</text>`);
+  }
+  const xlabels = [0, 0.2, 0.4, 0.6, 0.8, 1].map(p =>
+    `<text x="${sx(p).toFixed(1)}" y="${MT + iH + 15}" text-anchor="middle" font-size="9" fill="var(--text-secondary)">${Math.round(p * 100)}%</text>`).join("");
+  const diag = `<line x1="${sx(0)}" y1="${sy(0)}" x2="${sx(1)}" y2="${sy(1)}" stroke="var(--text-tertiary)" stroke-width="0.8" stroke-dasharray="4,4"/>`;
+  const line = (pts, col, wdt) => {
+    let d = `M ${sx(0).toFixed(1)},${sy(0).toFixed(1)}`;
+    pts.forEach(p => { d += ` L ${sx(p.pct).toFixed(1)},${sy(p.captured).toFixed(1)}`; });
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${wdt}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  };
+  const xfvCol = "var(--accent-lilac)", consCol = _raterMeta("prospx_consensus").color;
+  const t20x = Math.round((cc.xfv.top20 || 0) * 100), t20c = Math.round((cc.consensus.top20 || 0) * 100);
+  return `<div class="meth-chart">
+    <div class="meth-chart-title">Career WAR captured by the top of the board <span class="meth-sub">share of all realized WAR sitting in each board's top N% — higher = sharper ordering</span></div>
+    <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="WAR capture curve">
+      ${grid.join("")}${diag}
+      <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
+      ${line(cc.consensus.points, consCol, 2.2)}${line(cc.xfv.points, xfvCol, 2.8)}
+      ${xlabels}
+      <text x="${ML + iW}" y="${MT + iH + 15}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">top % of board</text>
+    </svg>
+    <div class="meth-legend">
+      <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${xfvCol};"></span>xFV</span>
+      <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${consCol};"></span>PROSPX consensus</span>
+      <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);"></span>random</span>
+    </div>
+    <p class="meth-note">xFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus — it sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is xFV against the consensus it is built to upgrade.</p>
+  </div>`;
+}
 function _methProseHTML() {
   return `
   <div class="meth-prose">
@@ -627,10 +669,20 @@ function _methXfvFindings(bt) {
   cards.push({ stat: f3(x.spearman), label: "xFV ranking skill (Spearman ρ vs realized WAR)",
     sub: `best of every grader &middot; consensus ${f3(c && c.spearman)} &middot; FanGraphs ${f3(fg && fg.spearman)} &middot; MLB ${f3(mlb && mlb.spearman)}` });
   if (det && det.per_tier) {
-    const t = det.per_tier.find(t => t.tier === "50");
-    if (t && t.xfv_spearman != null && t.consensus_spearman != null)
+    // Surface the tier where xFV finds the STRONGEST real ordering the consensus misses
+    // (highest xFV ρ among tiers it beats consensus). Dynamic, so it tracks the model rather
+    // than hardcoding one tier -- after the cohort+milb_missing upgrade that is the FV-55 band
+    // (consensus near-random ~0.06 -> xFV ~0.20), not the FV-50 middle.
+    const beats = det.per_tier.filter(t => t.xfv_spearman != null && t.consensus_spearman != null
+      && t.xfv_spearman > t.consensus_spearman)
+      .sort((a, b) => b.xfv_spearman - a.xfv_spearman);
+    const t = beats[0];
+    if (t)
       cards.push({ stat: `${t.consensus_spearman.toFixed(2)}→${t.xfv_spearman.toFixed(2)}`,
-        label: "Biggest gain in the FV-50 middle", sub: "where consensus is near-random, xFV finds real ordering" });
+        label: `Sharpest edge: the FV-${t.tier} tier`,
+        sub: Math.abs(t.consensus_spearman) < 0.12
+          ? "consensus is near-random there; xFV finds real ordering"
+          : "xFV sharpens the ordering consensus leaves on the table" });
   }
   if (det && det.xfv_right_share_on_disagreements != null)
     cards.push({ stat: `${Math.round(det.xfv_right_share_on_disagreements * 100)}%`,
@@ -1174,7 +1226,7 @@ function renderSourceComparison() {
       <p class="meth-note">xFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
       ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">
-        ${_methCalibrationChart(bt, "mean_war", "Mean career WAR")}
+        ${_methCaptureCurve(bt)}
         ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}
       </div>
       <h3 class="meth-h3">Cohort outcomes by FV tier</h3>

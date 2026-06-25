@@ -88,12 +88,14 @@ _FEATURES_PIT = [
                               # Feature re-test 2026-06-22: genuine OOS lift (debuted-km
                               # 0.274->0.282, blend +0.0074, sane cal); era_rel alone fails.
     ("tool_fb",        +1),   # fastball -- best pitcher tool adder
-    # Cohort-conditional + fastball-led signals (xFV sweep 2026-06-24): blend 0.263->0.278,
-    # IFA-arm cohort +0.032, all four folds positive. is_ifa*era_rel localizes the IFA fix;
-    # is_college*k_rel nudges college arms; fb_x_k = (tool_fb-45)/10 * peak_k_rel.
-    ("ifa_x_era",       0),
-    ("col_x_k",         0),
-    ("fb_x_k",         +1),
+    # NOTE: pitcher cohort interactions (ifa_x_era / col_x_k / fb_x_k) were tested + REVERTED
+    # 2026-06-24. They lifted OOS rank only marginally (blend 0.269->0.285, "marginally above
+    # noise" per the sweep) AND col_x_k = is_college*k_rel is a SPARSE column (nonzero only for
+    # college arms), so standardizing it against a mostly-zero distribution handed thin-sample
+    # college draftees extreme boosts at LIVE time (Caden Hunter +6; Moore/Root/Quick jumping to
+    # 50 on col_x_k alone). Bare indicators don't help pitchers (0.267 < 0.269). A ranking gain
+    # that wrecks absolute-grade robustness is not a clean gain -> reverted. (Hitter cohort
+    # indicators stay -- bounded 0/1, robust +0.030 gain.)
 ]
 
 
@@ -282,11 +284,6 @@ def _vec(r, side: str = "hit") -> dict:
             "peak_k_rel": g(m.get("peak_k_rel")), "peak_bb_rel": g(m.get("peak_bb_rel")),
             # run-prevention x missing-bats interaction (final-season): (-era_rel)*k_rel.
             "x_era_k": (-g(m.get("era_rel"))) * g(m.get("k_rel")),
-            # Cohort-conditional + fastball-led signals the xFV sweep validated (pit blend
-            # +0.015 OOS, IFA-arm cohort +0.032, all folds positive). is_ifa/is_college in `out`.
-            "ifa_x_era": g(r.get("is_ifa")) * g(m.get("era_rel")),
-            "col_x_k": g(r.get("is_college")) * g(m.get("k_rel")),
-            "fb_x_k": ((g(r.get("tool_fb"), 45.0) - 45.0) / 10.0) * g(m.get("peak_k_rel")),
         })
     else:
         out.update({

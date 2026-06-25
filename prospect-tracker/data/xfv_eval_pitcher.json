@@ -7,7 +7,7 @@
   "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
   "protocol": "forward-chained by decision-year cohort; pooled OOS",
   "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
-  "shipped_model": "'blend' = (1-0.479)*consensus_OLS + 0.479*lean-ridge; this is the headline RANK driver. 'ridge' = the pure lean model.",
+  "shipped_model": "'blend' = (1-0.391)*consensus_OLS + 0.391*lean-ridge; this is the headline RANK driver. 'ridge' = the pure lean model.",
   "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
   "features": [
    "fv",
@@ -16,17 +16,14 @@
    "bb_rel",
    "age_rel_level",
    "x_era_k",
-   "tool_fb",
-   "ifa_x_era",
-   "col_x_k",
-   "fb_x_k"
+   "tool_fb"
   ]
  },
  "wag_calibration": {
-  "lambda": 0.479,
-  "slope_wobs": 0.479,
-  "slope_unweighted": 0.199,
-  "spearman": 0.0525,
+  "lambda": 0.391,
+  "slope_wobs": 0.391,
+  "slope_unweighted": 0.148,
+  "spearman": 0.0229,
   "n": 466,
   "reading": "xFV still predicts WAR; WAG (realized over/underperformance vs consensus FV = where consensus MISSED) calibrates how much to TRUST xFV's adjustment. slope_wobs (reliability-weighted) -> the blend lambda. Pitchers shrink harder: consensus is the stronger pitcher signal."
  },
@@ -34,17 +31,17 @@
   "<=2018": {
    "n": 108,
    "consensus_spearman": 0.4737,
-   "xfv_blend_spearman": 0.4289
+   "xfv_blend_spearman": 0.4344
   },
   "2019-2021": {
    "n": 291,
    "consensus_spearman": 0.1569,
-   "xfv_blend_spearman": 0.1924
+   "xfv_blend_spearman": 0.191
   },
   "2022-2023": {
    "n": 247,
    "consensus_spearman": 0.2723,
-   "xfv_blend_spearman": 0.3764
+   "xfv_blend_spearman": 0.3492
   }
  },
  "evals": {
@@ -62,65 +59,65 @@
     },
     "ridge": {
      "n": 466,
-     "mae": 2.46,
-     "spearman": 0.2953,
+     "mae": 2.457,
+     "spearman": 0.281,
      "calibration": {
-      "slope": 0.744,
-      "bias": 0.113
+      "slope": 0.739,
+      "bias": 0.07
      }
     },
     "blend": {
      "n": 466,
-     "mae": 2.362,
-     "spearman": 0.2847,
+     "mae": 2.363,
+     "spearman": 0.2625,
      "calibration": {
-      "slope": 0.925,
-      "bias": 0.01
+      "slope": 0.932,
+      "bias": -0.024
      }
     },
     "lgbm": {
      "n": 466,
-     "mae": 2.531,
-     "spearman": 0.2798,
+     "mae": 2.523,
+     "spearman": 0.2805,
      "calibration": {
-      "slope": 0.586,
-      "bias": 0.381
+      "slope": 0.579,
+      "bias": 0.362
      }
     },
     "comps": {
      "n": 466,
-     "mae": 2.656,
-     "spearman": 0.19,
+     "mae": 2.612,
+     "spearman": 0.2067,
      "calibration": {
-      "slope": 0.558,
-      "bias": 0.461
+      "slope": 0.613,
+      "bias": 0.404
      }
     },
     "ensemble": {
      "n": 466,
-     "mae": 2.451,
-     "spearman": 0.2972,
+     "mae": 2.45,
+     "spearman": 0.2891,
      "calibration": {
-      "slope": 0.7,
-      "bias": 0.247
+      "slope": 0.689,
+      "bias": 0.216
      }
     },
     "ridge_cal": {
      "n": 466,
-     "mae": 2.373,
-     "spearman": 0.2863,
+     "mae": 2.394,
+     "spearman": 0.2712,
      "calibration": {
-      "slope": 0.954,
-      "bias": 0.048
+      "slope": 0.931,
+      "bias": 0.037
      }
     },
     "ensemble_cal": {
      "n": 466,
-     "mae": 2.359,
-     "spearman": 0.2832,
+     "mae": 2.368,
+     "spearman": 0.2772,
      "calibration": {
-      "slope": 0.922,
-      "bias": 0.024
+      "slope": 0.914,
+      "bias": 0.017
      }
     }
    },
@@ -137,47 +134,47 @@
      },
      "ridge": {
       "n": 107,
-      "mae": 2.537,
-      "spearman": 0.2583,
+      "mae": 2.523,
+      "spearman": 0.2173,
       "calibration": {
-       "slope": 0.477,
-       "bias": 0.46
+       "slope": 0.448,
+       "bias": 0.328
       }
      },
      "blend": {
       "n": 107,
-      "mae": 2.351,
-      "spearman": 0.2539,
+      "mae": 2.32,
+      "spearman": 0.2238,
       "calibration": {
-       "slope": 0.619,
-       "bias": 0.367
+       "slope": 0.621,
+       "bias": 0.3
       }
      },
      "lgbm": {
       "n": 107,
-      "mae": 2.888,
-      "spearman": 0.2054,
+      "mae": 2.878,
+      "spearman": 0.1998,
       "calibration": {
-       "slope": 0.327,
-       "bias": 1.175
+       "slope": 0.342,
+       "bias": 1.205
       }
      },
      "comps": {
       "n": 107,
-      "mae": 3.116,
-      "spearman": 0.1138,
+      "mae": 3.019,
+      "spearman": 0.1338,
       "calibration": {
-       "slope": 0.248,
-       "bias": 1.376
+       "slope": 0.296,
+       "bias": 1.285
       }
      },
      "ensemble": {
       "n": 107,
-      "mae": 2.627,
-      "spearman": 0.246,
+      "mae": 2.613,
+      "spearman": 0.2204,
       "calibration": {
-       "slope": 0.43,
-       "bias": 0.817
+       "slope": 0.423,
+       "bias": 0.767
       }
      }
     },
@@ -193,47 +190,47 @@
      },
      "ridge": {
       "n": 112,
-      "mae": 2.368,
-      "spearman": 0.1042,
+      "mae": 2.343,
+      "spearman": 0.11,
       "calibration": {
-       "slope": 0.646,
-       "bias": -0.162
+       "slope": 0.645,
+       "bias": -0.19
       }
      },
      "blend": {
       "n": 112,
-      "mae": 2.294,
-      "spearman": 0.1028,
+      "mae": 2.288,
+      "spearman": 0.0978,
       "calibration": {
-       "slope": 0.693,
-       "bias": -0.194
+       "slope": 0.668,
+       "bias": -0.21
       }
      },
      "lgbm": {
       "n": 112,
-      "mae": 2.349,
-      "spearman": 0.165,
+      "mae": 2.323,
+      "spearman": 0.1826,
       "calibration": {
-       "slope": 0.434,
-       "bias": -0.163
+       "slope": 0.444,
+       "bias": -0.178
       }
      },
      "comps": {
       "n": 112,
-      "mae": 2.439,
-      "spearman": 0.139,
+      "mae": 2.457,
+      "spearman": 0.1215,
       "calibration": {
-       "slope": 0.313,
-       "bias": 0.189
+       "slope": 0.33,
+       "bias": 0.16
       }
      },
      "ensemble": {
       "n": 112,
-      "mae": 2.307,
-      "spearman": 0.131,
+      "mae": 2.286,
+      "spearman": 0.139,
       "calibration": {
-       "slope": 0.559,
-       "bias": -0.162
+       "slope": 0.555,
+       "bias": -0.184
       }
      }
     },
@@ -249,47 +246,47 @@
      },
      "ridge": {
       "n": 110,
-      "mae": 2.647,
-      "spearman": 0.4214,
+      "mae": 2.657,
+      "spearman": 0.4112,
       "calibration": {
-       "slope": 1.137,
-       "bias": -0.181
+       "slope": 1.235,
+       "bias": -0.172
       }
      },
      "blend": {
       "n": 110,
-      "mae": 2.575,
-      "spearman": 0.4107,
+      "mae": 2.598,
+      "spearman": 0.3774,
       "calibration": {
-       "slope": 1.486,
-       "bias": -0.35
+       "slope": 1.524,
+       "bias": -0.375
       }
      },
      "lgbm": {
       "n": 110,
-      "mae": 2.555,
-      "spearman": 0.4549,
+      "mae": 2.562,
+      "spearman": 0.4408,
       "calibration": {
-       "slope": 0.88,
-       "bias": 0.056
+       "slope": 0.907,
+       "bias": 0.048
       }
      },
      "comps": {
       "n": 110,
-      "mae": 2.681,
-      "spearman": 0.2995,
+      "mae": 2.679,
+      "spearman": 0.3118,
       "calibration": {
-       "slope": 1.204,
-       "bias": -0.072
+       "slope": 1.215,
+       "bias": -0.063
       }
      },
      "ensemble": {
       "n": 110,
-      "mae": 2.582,
-      "spearman": 0.4469,
+      "mae": 2.593,
+      "spearman": 0.4308,
       "calibration": {
-       "slope": 1.044,
-       "bias": -0.063
+       "slope": 1.09,
+       "bias": -0.062
       }
      }
     },
@@ -305,47 +302,47 @@
      },
      "ridge": {
       "n": 137,
-      "mae": 2.324,
-      "spearman": 0.3431,
+      "mae": 2.339,
+      "spearman": 0.3388,
       "calibration": {
-       "slope": 0.878,
-       "bias": 0.303
+       "slope": 0.841,
+       "bias": 0.277
       }
      },
      "blend": {
       "n": 137,
-      "mae": 2.256,
-      "spearman": 0.3367,
+      "mae": 2.268,
+      "spearman": 0.3202,
       "calibration": {
-       "slope": 1.066,
-       "bias": 0.187
+       "slope": 1.062,
+       "bias": 0.157
       }
      },
      "lgbm": {
       "n": 137,
-      "mae": 2.383,
-      "spearman": 0.2983,
+      "mae": 2.379,
+      "spearman": 0.2796,
       "calibration": {
-       "slope": 0.73,
-       "bias": 0.467
+       "slope": 0.696,
+       "bias": 0.397
       }
      },
      "comps": {
       "n": 137,
-      "mae": 2.454,
-      "spearman": 0.2577,
+      "mae": 2.367,
+      "spearman": 0.2319,
       "calibration": {
-       "slope": 0.722,
-       "bias": 0.395
+       "slope": 0.936,
+       "bias": 0.288
       }
      },
      "ensemble": {
       "n": 137,
-      "mae": 2.325,
-      "spearman": 0.322,
+      "mae": 2.343,
+      "spearman": 0.3164,
       "calibration": {
-       "slope": 0.839,
-       "bias": 0.385
+       "slope": 0.789,
+       "bias": 0.337
       }
      }
     }
@@ -402,65 +399,65 @@
     },
     "ridge": {
      "n": 107,
-     "mae": 2.537,
-     "spearman": 0.2583,
+     "mae": 2.523,
+     "spearman": 0.2173,
      "calibration": {
-      "slope": 0.477,
-      "bias": 0.46
+      "slope": 0.448,
+      "bias": 0.328
      }
     },
     "blend": {
      "n": 107,
-     "mae": 2.351,
-     "spearman": 0.2539,
+     "mae": 2.32,
+     "spearman": 0.2238,
      "calibration": {
-      "slope": 0.619,
-      "bias": 0.367
+      "slope": 0.621,
+      "bias": 0.3
      }
     },
     "lgbm": {
      "n": 107,
-     "mae": 2.888,
-     "spearman": 0.2054,
+     "mae": 2.878,
+     "spearman": 0.1998,
      "calibration": {
-      "slope": 0.327,
-      "bias": 1.175
+      "slope": 0.342,
+      "bias": 1.205
      }
     },
     "comps": {
      "n": 107,
-     "mae": 3.116,
-     "spearman": 0.1138,
+     "mae": 3.019,
+     "spearman": 0.1338,
      "calibration": {
-      "slope": 0.248,
-      "bias": 1.376
+      "slope": 0.296,
+      "bias": 1.285
      }
     },
     "ensemble": {
      "n": 107,
-     "mae": 2.627,
-     "spearman": 0.246,
+     "mae": 2.613,
+     "spearman": 0.2204,
      "calibration": {
-      "slope": 0.43,
-      "bias": 0.817
+      "slope": 0.423,
+      "bias": 0.767
      }
     },
     "ridge_cal": {
      "n": 107,
-     "mae": 2.537,
-     "spearman": 0.2583,
+     "mae": 2.523,
+     "spearman": 0.2173,
      "calibration": {
-      "slope": 0.477,
-      "bias": 0.46
+      "slope": 0.448,
+      "bias": 0.328
      }
     },
     "ensemble_cal": {
      "n": 107,
-     "mae": 2.627,
-     "spearman": 0.246,
+     "mae": 2.613,
+     "spearman": 0.2204,
      "calibration": {
-      "slope": 0.43,
-      "bias": 0.817
+      "slope": 0.423,
+      "bias": 0.767
      }
     }
    },
@@ -477,47 +474,47 @@
      },
      "ridge": {
       "n": 107,
-      "mae": 2.537,
-      "spearman": 0.2583,
+      "mae": 2.523,
+      "spearman": 0.2173,
       "calibration": {
-       "slope": 0.477,
-       "bias": 0.46
+       "slope": 0.448,
+       "bias": 0.328
       }
      },
      "blend": {
       "n": 107,
-      "mae": 2.351,
-      "spearman": 0.2539,
+      "mae": 2.32,
+      "spearman": 0.2238,
       "calibration": {
-       "slope": 0.619,
-       "bias": 0.367
+       "slope": 0.621,
+       "bias": 0.3
       }
      },
      "lgbm": {
       "n": 107,
-      "mae": 2.888,
-      "spearman": 0.2054,
+      "mae": 2.878,
+      "spearman": 0.1998,
       "calibration": {
-       "slope": 0.327,
-       "bias": 1.175
+       "slope": 0.342,
+       "bias": 1.205
       }
      },
      "comps": {
       "n": 107,
-      "mae": 3.116,
-      "spearman": 0.1138,
+      "mae": 3.019,
+      "spearman": 0.1338,
       "calibration": {
-       "slope": 0.248,
-       "bias": 1.376
+       "slope": 0.296,
+       "bias": 1.285
       }
      },
      "ensemble": {
       "n": 107,
-      "mae": 2.627,
-      "spearman": 0.246,
+      "mae": 2.613,
+      "spearman": 0.2204,
       "calibration": {
-       "slope": 0.43,
-       "bias": 0.817
+       "slope": 0.423,
+       "bias": 0.767
       }
      }
     }
@@ -574,65 +571,65 @@
     },
     "ridge": {
      "n": 893,
-     "mae": 1.662,
-     "spearman": 0.2231,
+     "mae": 1.646,
+     "spearman": 0.2141,
      "calibration": {
-      "slope": 0.665,
-      "bias": -0.408
+      "slope": 0.672,
+      "bias": -0.422
      }
     },
     "blend": {
      "n": 893,
-     "mae": 1.4,
-     "spearman": 0.2177,
+     "mae": 1.362,
+     "spearman": 0.205,
      "calibration": {
-      "slope": 0.947,
-      "bias": -0.351
+      "slope": 0.996,
+      "bias": -0.347
      }
     },
     "lgbm": {
      "n": 893,
-     "mae": 1.467,
-     "spearman": 0.2107,
+     "mae": 1.459,
+     "spearman": 0.2334,
      "calibration": {
-      "slope": 0.611,
-      "bias": 0.195
+      "slope": 0.609,
+      "bias": 0.186
      }
     },
     "comps": {
      "n": 893,
-     "mae": 1.498,
-     "spearman": 0.1708,
+     "mae": 1.468,
+     "spearman": 0.1936,
      "calibration": {
-      "slope": 0.665,
-      "bias": 0.266
+      "slope": 0.713,
+      "bias": 0.213
      }
     },
     "ensemble": {
      "n": 893,
      "mae": 1.512,
-     "spearman": 0.2201,
+     "spearman": 0.2169,
      "calibration": {
-      "slope": 0.69,
-      "bias": -0.106
+      "slope": 0.685,
+      "bias": -0.118
      }
     },
     "ridge_cal": {
      "n": 893,
-     "mae": 1.389,
-     "spearman": 0.2185,
+     "mae": 1.399,
+     "spearman": 0.212,
      "calibration": {
-      "slope": 1.083,
-      "bias": 0.103
+      "slope": 1.068,
+      "bias": 0.097
      }
     },
     "ensemble_cal": {
      "n": 893,
-     "mae": 1.353,
-     "spearman": 0.2152,
+     "mae": 1.361,
+     "spearman": 0.2109,
      "calibration": {
-      "slope": 0.979,
-      "bias": 0.066
+      "slope": 0.971,
+      "bias": 0.061
      }
     }
    },
@@ -649,47 +646,47 @@
      },
      "ridge": {
       "n": 211,
-      "mae": 1.751,
-      "spearman": 0.1752,
+      "mae": 1.738,
+      "spearman": 0.1706,
       "calibration": {
-       "slope": 0.465,
-       "bias": -0.335
+       "slope": 0.46,
+       "bias": -0.382
       }
      },
      "blend": {
       "n": 211,
-      "mae": 1.39,
-      "spearman": 0.1751,
+      "mae": 1.33,
+      "spearman": 0.1616,
       "calibration": {
-       "slope": 0.639,
-       "bias": -0.231
+       "slope": 0.662,
+       "bias": -0.232
       }
      },
      "lgbm": {
       "n": 211,
-      "mae": 1.62,
-      "spearman": 0.1345,
+      "mae": 1.616,
+      "spearman": 0.1419,
       "calibration": {
-       "slope": 0.311,
-       "bias": 0.5
+       "slope": 0.312,
+       "bias": 0.523
       }
      },
      "comps": {
       "n": 211,
-      "mae": 1.593,
-      "spearman": 0.0932,
+      "mae": 1.539,
+      "spearman": 0.1066,
       "calibration": {
-       "slope": 0.36,
-       "bias": 0.628
+       "slope": 0.399,
+       "bias": 0.574
       }
      },
      "ensemble": {
       "n": 211,
-      "mae": 1.641,
-      "spearman": 0.1597,
+      "mae": 1.634,
+      "spearman": 0.1501,
       "calibration": {
-       "slope": 0.418,
-       "bias": 0.083
+       "slope": 0.414,
+       "bias": 0.071
       }
      }
     },
@@ -705,47 +702,47 @@
      },
      "ridge": {
       "n": 159,
-      "mae": 1.938,
-      "spearman": 0.1373,
+      "mae": 1.883,
+      "spearman": 0.1308,
       "calibration": {
-       "slope": 0.62,
-       "bias": -0.654
+       "slope": 0.641,
+       "bias": -0.7
       }
      },
      "blend": {
       "n": 159,
-      "mae": 1.705,
-      "spearman": 0.1432,
+      "mae": 1.658,
+      "spearman": 0.1251,
       "calibration": {
-       "slope": 0.815,
-       "bias": -0.616
+       "slope": 0.834,
+       "bias": -0.627
       }
      },
      "lgbm": {
       "n": 159,
-      "mae": 1.638,
-      "spearman": 0.2046,
+      "mae": 1.635,
+      "spearman": 0.1983,
       "calibration": {
-       "slope": 0.573,
-       "bias": -0.131
+       "slope": 0.587,
+       "bias": -0.18
       }
      },
      "comps": {
       "n": 159,
-      "mae": 1.676,
-      "spearman": 0.2141,
+      "mae": 1.664,
+      "spearman": 0.213,
       "calibration": {
-       "slope": 0.628,
-       "bias": -0.048
+       "slope": 0.584,
+       "bias": -0.118
       }
      },
      "ensemble": {
       "n": 159,
-      "mae": 1.736,
-      "spearman": 0.1713,
+      "mae": 1.713,
+      "spearman": 0.175,
       "calibration": {
-       "slope": 0.651,
-       "bias": -0.393
+       "slope": 0.66,
+       "bias": -0.44
       }
      }
     },
@@ -761,47 +758,47 @@
      },
      "ridge": {
       "n": 244,
-      "mae": 1.595,
-      "spearman": 0.327,
+      "mae": 1.578,
+      "spearman": 0.3052,
       "calibration": {
-       "slope": 0.934,
-       "bias": -0.473
+       "slope": 0.976,
+       "bias": -0.466
       }
      },
      "blend": {
       "n": 244,
-      "mae": 1.363,
-      "spearman": 0.3097,
+      "mae": 1.338,
+      "spearman": 0.2898,
       "calibration": {
-       "slope": 1.415,
-       "bias": -0.442
+       "slope": 1.528,
+       "bias": -0.434
       }
      },
      "lgbm": {
       "n": 244,
-      "mae": 1.384,
-      "spearman": 0.3155,
+      "mae": 1.372,
+      "spearman": 0.3576,
       "calibration": {
-       "slope": 0.917,
-       "bias": 0.102
+       "slope": 0.945,
+       "bias": 0.107
       }
      },
      "comps": {
       "n": 244,
-      "mae": 1.469,
-      "spearman": 0.2107,
+      "mae": 1.426,
+      "spearman": 0.2573,
       "calibration": {
-       "slope": 1.088,
-       "bias": 0.142
+       "slope": 1.173,
+       "bias": 0.084
       }
      },
      "ensemble": {
       "n": 244,
-      "mae": 1.442,
-      "spearman": 0.3249,
+      "mae": 1.446,
+      "spearman": 0.3199,
       "calibration": {
-       "slope": 1.0,
-       "bias": -0.185
+       "slope": 1.016,
+       "bias": -0.179
       }
      }
     },
@@ -817,47 +814,47 @@
      },
      "ridge": {
       "n": 279,
-      "mae": 1.497,
-      "spearman": 0.2198,
+      "mae": 1.499,
+      "spearman": 0.2164,
       "calibration": {
-       "slope": 0.702,
-       "bias": -0.267
+       "slope": 0.689,
+       "bias": -0.256
       }
      },
      "blend": {
       "n": 279,
-      "mae": 1.265,
-      "spearman": 0.2185,
+      "mae": 1.239,
+      "spearman": 0.218,
       "calibration": {
-       "slope": 1.011,
-       "bias": -0.211
+       "slope": 1.06,
+       "bias": -0.198
       }
      },
      "lgbm": {
       "n": 279,
-      "mae": 1.325,
-      "spearman": 0.1817,
+      "mae": 1.316,
+      "spearman": 0.212,
       "calibration": {
-       "slope": 0.703,
-       "bias": 0.232
+       "slope": 0.701,
+       "bias": 0.208
       }
      },
      "comps": {
       "n": 279,
-      "mae": 1.351,
-      "spearman": 0.1861,
+      "mae": 1.34,
+      "spearman": 0.1877,
       "calibration": {
-       "slope": 0.761,
-       "bias": 0.279
+       "slope": 0.877,
+       "bias": 0.242
       }
      },
      "ensemble": {
       "n": 279,
-      "mae": 1.348,
-      "spearman": 0.1991,
+      "mae": 1.362,
+      "spearman": 0.2015,
       "calibration": {
-       "slope": 0.759,
-       "bias": -0.017
+       "slope": 0.737,
+       "bias": -0.024
       }
      }
     }
@@ -880,7 +877,7 @@
     },
     "comps": {
      "beats_mae": false,
-     "beats_spearman": false,
+     "beats_spearman": true,
      "rank_win": false
     },
     "ensemble": {
@@ -903,28 +900,22 @@
  },
  "feature_diagnostics_full_window": {
   "ridge_std_weights": {
-   "fv": 1.439,
-   "peak_k_rel": 0.11,
-   "k_rel": 0.206,
-   "bb_rel": -0.16,
-   "age_rel_level": -0.132,
-   "x_era_k": 0.197,
-   "tool_fb": 0.436,
-   "ifa_x_era": -0.231,
-   "col_x_k": 0.28,
-   "fb_x_k": -0.166
+   "fv": 1.441,
+   "peak_k_rel": 0.014,
+   "k_rel": 0.362,
+   "bb_rel": -0.208,
+   "age_rel_level": -0.096,
+   "x_era_k": 0.238,
+   "tool_fb": 0.386
   },
   "lgbm_gain_share": {
-   "col_x_k": 0.287,
-   "fv": 0.139,
-   "ifa_x_era": 0.137,
-   "bb_rel": 0.108,
-   "tool_fb": 0.089,
-   "k_rel": 0.087,
-   "x_era_k": 0.063,
-   "age_rel_level": 0.048,
-   "fb_x_k": 0.033,
-   "peak_k_rel": 0.009
+   "fv": 0.211,
+   "bb_rel": 0.202,
+   "k_rel": 0.184,
+   "tool_fb": 0.148,
+   "x_era_k": 0.11,
+   "age_rel_level": 0.106,
+   "peak_k_rel": 0.038
   }
  },
  "honest_note": "The lean feature set (Phase-1-earned signals only) lets xFV BEAT consensus FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent 2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, less-accurate scouting. xFV still trails on MAE (it predicts more spread; consensus regresses to the mean) -- that loss is committed. The flagship case: rank edge + calibrated distribution + uncertainty + surplus + power-correction."

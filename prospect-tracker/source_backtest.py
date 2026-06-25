@@ -549,6 +549,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                           {"debuted": deb, "war": war, "war_per_yr": None,
                            "contributor": war >= CONTRIBUTOR_WAR, "star": war >= STAR_WAR,
                            "regular_pace": False, "allstar_pace": False}))
+    capture_curve = None
     if len(fullp) >= 30:
         order = sorted(range(len(fullp)), key=lambda i: fullp[i][1])
         cons_sorted = sorted(x[2] for x in fullp)
@@ -561,7 +562,24 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         cohorts["xfv"] = {"n": len(xfv_rows),
                           "n_debuted": sum(1 for r in xfv_rows if r["outcome"]["debuted"]),
                           "tiers": _tier_table(xfv_rows)}
+        # WAR-capture (lift) curve: the share of the pool's total realized WAR that sits in the
+        # top N% of each board. Better ordering concentrates WAR earlier -> a higher curve. xFV
+        # vs the consensus it upgrades, over the FULL graded population (incl. the busts xFV
+        # correctly buries). A clean discrimination metric; replaces the confounded
+        # mean-WAR-by-tier chart (where better ordering paradoxically LOWERS the middle mean).
+        _tot = sum(max(0.0, x[3]["war"]) for x in fullp) or 1.0
+        _PCTS = [0.05, 0.1, 0.15, 0.2, 0.25, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        def _capture(idx):
+            ordr = sorted(fullp, key=lambda x: -x[idx]); n = len(ordr)
+            cum = [0.0] * (n + 1)
+            for i, x in enumerate(ordr, 1):
+                cum[i] = cum[i - 1] + max(0.0, x[3]["war"])
+            return {"points": [{"pct": p, "captured": round(cum[max(1, int(round(p * n)))] / _tot, 4)} for p in _PCTS],
+                    "area": round(sum(cum[1:]) / n / _tot, 4),
+                    "top20": round(cum[max(1, int(round(0.2 * n)))] / _tot, 4)}
+        capture_curve = {"pool_n": len(fullp), "xfv": _capture(1), "consensus": _capture(2)}
     accuracy = {
+        "capture_curve": capture_curve,
         "common_n": len(pooled_common),
         "head_to_head_raters": disp_raters,   # includes "xfv" (OOS) for the bars/archetype
         "pooled": _acc(pooled_common),
