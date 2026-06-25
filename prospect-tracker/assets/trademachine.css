@@ -140,6 +140,25 @@
 .tm-balverdict { font-weight: 700; color: var(--text-primary); }
 .tm-balverdict.is-bal { color: var(--neon-green); }
 
+/* Trade Board table: finished column treatment (header band, row dividers, hover,
+   right-aligned numerics, and group dividers separating identity | value | signals). */
+.tm-board-table { width: 100%; border-collapse: collapse; }
+.tm-board-table thead th {
+  background: var(--bg-secondary); border-bottom: 2px solid var(--border);
+  text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+  font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+  padding: 7px 8px; text-align: left;
+}
+.tm-board-table td { padding: 6px 8px; font-size: 12px; vertical-align: middle; }
+.tm-board-table tbody tr { border-bottom: 1px solid var(--border-light); }
+.tm-board-table tbody tr:hover { background: var(--bg-secondary); }
+.tm-board-table .tm-num { text-align: right; font-variant-numeric: tabular-nums; }
+.tm-board-table .tm-dim { color: var(--text-secondary); font-size: 11px; }
+.tm-board-table .tm-rank { color: var(--text-tertiary); font-size: 11px; }
+.tm-board-table .tm-player { font-weight: 600; font-size: 13px; }
+.tm-board-table .tm-surplus { font-weight: 800; font-size: 13px; }
+.tm-board-table .tm-col-div { border-left: 1px solid var(--border-light); }
+
 /* mobile: let the wide board scroll horizontally rather than squash 9 columns */
 @media (max-width: 720px) {
   #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }

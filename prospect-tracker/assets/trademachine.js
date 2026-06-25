@@ -419,8 +419,10 @@ function _tbCtrlBadge(p) {
   return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts}</span>`;
 }
 function _tbFmt(mm) {
-  if (mm == null) return " - ";
-  return mm >= 100 ? `$${Number(mm).toFixed(0)}M` : `$${Number(mm).toFixed(1)}M`;
+  if (mm == null) return "–";
+  const a = Math.abs(Number(mm));
+  const sign = mm < 0 ? "-$" : "$";   // surplus can be negative (overpaid MLB contracts)
+  return a >= 100 ? `${sign}${a.toFixed(0)}M` : `${sign}${a.toFixed(1)}M`;
 }
 
 // ── Leaderboard render ──────────────────────────────────────────────────────
@@ -460,17 +462,17 @@ function _renderTBRows() {
 
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
   ${topPager}
-  <table class="stats-table" style="width:100%;border-collapse:collapse;">
-  <thead><tr style="font-size:11px;color:var(--text-secondary);">
-    <th style="padding:5px 3px 3px;">#</th>
-    <th style="padding:5px 3px 3px;">Player</th>
-    <th style="padding:5px 3px 3px;text-align:right;" title="Current age (decimal years)">Age</th>
-    <th style="padding:5px 3px 3px;">Pos</th>
-    <th style="padding:5px 3px 3px;">Org</th>
-    <th style="padding:5px 3px 3px;text-align:right;" title="Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)">FV</th>
-    <th style="padding:5px 3px 3px;text-align:right;" title="Trade value point estimate">Trade $</th>
-    <th style="padding:5px 3px 3px;" title="Contract: phase · salary · free agency year (MLB) or remaining controlled seasons (MiLB)">Contract</th>
-    <th style="padding:5px 3px 3px;">Signals</th>
+  <table class="stats-table tm-board-table">
+  <thead><tr>
+    <th>#</th>
+    <th>Player</th>
+    <th class="tm-num" title="Current age (decimal years)">Age</th>
+    <th>Pos</th>
+    <th>Org</th>
+    <th class="tm-num" title="Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)">FV</th>
+    <th class="tm-num tm-col-div" title="Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use">Surplus</th>
+    <th title="Contract: phase · salary · free agency year (MLB) or remaining controlled seasons (MiLB)">Contract</th>
+    <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
 
   pagedRows.forEach((p, i) => {
@@ -503,30 +505,29 @@ function _renderTBRows() {
     let signals = `<span style="color:${statusCol};font-size:10px;">${statusLbl}</span>`;
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
     if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
-    // GRPO breakout badge - shows group comps panel on click
+    // GRPO breakout badge - a within-cohort breakout SIGNAL (display only; it no longer
+    // shifts the surplus, which is now the platform xFV/Projections value). Click -> group.
     const grpoSc = p.grpo_breakout_score;
-    const grpoAdj = p.grpo_fv_adj;
-    if (grpoSc != null) {
-      const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : grpoSc >= 0.50 ? "var(--neon-amber)" : "var(--text-secondary)";
-      const adjStr  = grpoAdj != null && Math.abs(grpoAdj) >= 0.5 ? ` ${grpoAdj > 0 ? "+" : ""}${grpoAdj.toFixed(1)}FV` : "";
+    if (grpoSc != null && grpoSc >= 0.55) {   // only flag genuine breakout signals
+      const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";
       signals += ` <button class="chip" style="padding:1px 5px;font-size:9px;color:${grpoCol};border-color:${grpoCol};"
         onclick="event.stopPropagation();_tbShowGroup('${escapeHtml(p.player_key||'')}');"
-        title="GRPO breakout score ${(grpoSc*100).toFixed(0)}%${adjStr ? ' · FV adj'+adjStr : ''} - click to see profile group">
-        G${(grpoSc*100).toFixed(0)}${adjStr}
+        title="Breakout signal: ${(grpoSc*100).toFixed(0)}% within-cohort breakout score (provisional; does not change the surplus) - click to see the profile group">
+        ▲${(grpoSc*100).toFixed(0)}
       </button>`;
     }
     const addBtns = "";
 
     html += `<tr class="prospect-row" ${rowClick} title="${rangeTip}">
-      <td style="padding:4px 3px;color:var(--text-secondary);font-size:11px;">${rank}</td>
-      <td style="padding:4px 3px;font-weight:600;font-size:13px;">${name}</td>
-      <td style="padding:4px 3px;text-align:right;font-size:11px;color:var(--text-secondary);">${p.age != null ? Number(p.age).toFixed(1) : " - "}</td>
-      <td style="padding:4px 3px;color:var(--text-secondary);font-size:11px;">${pos}</td>
-      <td style="padding:4px 3px;font-size:11px;"><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
-      <td style="padding:4px 3px;text-align:right;font-size:11px;">${fv}</td>
-      <td style="padding:4px 3px;text-align:right;font-weight:800;font-size:13px;color:${tvCol};font-variant-numeric:tabular-nums;">${_tbFmt(tv)}</td>
-      <td style="padding:4px 3px;">${_tbCtrlBadge(p)}</td>
-      <td style="padding:4px 3px;">${signals}</td>
+      <td class="tm-rank">${rank}</td>
+      <td class="tm-player">${name}</td>
+      <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "–"}</td>
+      <td class="tm-dim">${pos}</td>
+      <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
+      <td class="tm-num tm-dim">${fv}</td>
+      <td class="tm-num tm-col-div tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
+      <td class="tm-contract">${_tbCtrlBadge(p)}</td>
+      <td class="tm-col-div tm-signals">${signals}</td>
     </tr>`;
   });
   html += `</tbody></table>${topPager}`;

@@ -3781,6 +3781,95 @@ def board_slim(r: dict) -> dict:
     return out
 
 
+def _platform_tier(mm: float | None) -> str:
+    """Tier label from a surplus $M, matching the board filter thresholds
+    (Elite $40M+ / High $20-40M / Mid $8-20M)."""
+    if mm is None:
+        return "low"
+    if mm >= 40:
+        return "elite"
+    if mm >= 20:
+        return "high"
+    if mm >= 8:
+        return "mid"
+    if mm >= 0:
+        return "low"
+    return "minimal"
+
+
+def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
+    """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
+    of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
+    number that the owner flagged as out of line:
+
+      active prospects -> PROSPX xFV surplus      (data/xfv.json by_player[key].surplus_mm)
+      MLB (modeled)    -> MLB Projections surNpv  (data/mlb_projections.json vets/prospects)
+      MLB (unmodeled)  -> xFV backgrade surplus   (universal fallback; ~99.5% MLB coverage)
+
+    Also backfills null ages from the projection artifacts (player_key join). All sources are
+    value_framework-priced, so this makes Trade Machine == PROSPX/Projections. Defensive: if an
+    artifact is missing/stale, the record keeps its existing bayes value. Mutates in place;
+    returns a small stats dict. GRPO breakout (grpo_breakout_score) is left as a DISPLAY signal
+    only -- it no longer drives the shown value (that was a source of the misalignment)."""
+    dd = Path(data_dir)
+
+    def _load(name):
+        try:
+            return json.loads((dd / name).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    xfv = (_load("xfv.json") or {}).get("by_player", {}) or {}
+    mp = _load("mlb_projections.json") or {}
+    det = (_load("mlb_player_detail.json") or {}).get("players", {}) or {}
+
+    proj_sur, ages = {}, {}
+    for grp in ("vets", "prospects"):
+        for r in (mp.get(grp) or []):
+            k = r.get("key")
+            if not k:
+                continue
+            if r.get("surNpv") is not None:
+                proj_sur[k] = r["surNpv"] / 1e6        # surNpv is raw $; board surplus is $M
+            if r.get("age") is not None:
+                ages.setdefault(k, r["age"])
+    for k, v in det.items():
+        if v.get("age") is not None:
+            ages.setdefault(k, v["age"])
+
+    stats = {"xfv": 0, "projection": 0, "xfv_backgrade": 0, "unchanged": 0, "age_backfilled": 0}
+    for r in records:
+        pk = r.get("player_key")
+        is_pros = r.get("status") == "active"
+        xe = xfv.get(pk) or {}
+        x_sur = xe.get("surplus_mm")
+        new, src = None, None
+        if is_pros:
+            if x_sur is not None:
+                new, src = x_sur, "xfv"
+        else:
+            if pk in proj_sur:
+                new, src = proj_sur[pk], "projection"
+            elif x_sur is not None:
+                new, src = x_sur, "xfv_backgrade"
+        if new is not None:
+            mm = round(float(new), 1)
+            r["trade_value_mm"] = mm
+            r["posterior_surplus_mm"] = mm
+            r["trade_value_tier"] = _platform_tier(mm)
+            r["surplus_source"] = src
+            lo, hi = xe.get("band_p10_mm"), xe.get("band_p90_mm")
+            r["trade_value_lo"] = round(float(lo), 1) if lo is not None else None
+            r["trade_value_hi"] = round(float(hi), 1) if hi is not None else None
+            stats[src] += 1
+        else:
+            stats["unchanged"] += 1
+        if r.get("age") is None and pk in ages:
+            r["age"] = ages[pk]
+            stats["age_backfilled"] += 1
+    return stats
+
+
 def export_trade_values_json(
     players: list[dict],
     out_path: Path | str,
@@ -3793,8 +3882,11 @@ def export_trade_values_json(
     out_path = Path(out_path)
     results  = compute_all_trade_values(players, level_norms=level_norms)
 
-    # Sort by trade value descending
-    results.sort(key=lambda r: r.get("trade_value_mm") or 0.0, reverse=True)
+    # Re-point surplus to the platform-standard value (PROSPX xFV / MLB Projections) + backfill
+    # ages, then sort by the ALIGNED value.
+    st = apply_platform_surplus(results, out_path.parent)
+    _log.info("trade_values platform-surplus: %s", st)
+    results.sort(key=lambda r: r.get("trade_value_mm") if r.get("trade_value_mm") is not None else -1e9, reverse=True)
 
     payload = {
         "generated_at": date.today().isoformat(),
