@@ -711,11 +711,13 @@ def _build_snapshot(merged: dict, slug: str, snapshot_date: str) -> Snapshot:
 
     extras: dict = {}
 
-    # Summary extras.
+    # Summary extras. fg_player_id_str is carried alongside the int id so the
+    # "View on FanGraphs" source link resolves for minor leaguers too - their
+    # FG ids are alphanumeric ("sa3007992"), which _to_int collapses to None.
     for k in ("risk", "trend", "eta_year", "current_level", "org_rank",
               "age", "height", "weight", "bats", "throws",
               "sign_year", "sign_market", "sign_org", "bonus",
-              "signed_from", "video_url", "fg_player_id"):
+              "signed_from", "video_url", "fg_player_id", "fg_player_id_str"):
         v = merged.get(k)
         if v is not None and v != "":
             extras[k] = v

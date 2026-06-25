@@ -772,7 +772,12 @@ class MarketModel:
     def _point(self, s: dict) -> tuple[float, float]:
         fy = _features_years(s, self._comps_my(s))
         years = math.exp(float(sum(c * x for c, x in zip(self.coef_years, fy))))
-        years = min(max(years, 1.0), 13.0)
+        # FA mega-deal tail (2026-06-25): the 13-yr cap structurally truncated
+        # record terms (Soto 15 -> 13, $765M deal -> $520M pred). Raised to 15,
+        # the modern record length; only the OLS-predicted 13+ players (the
+        # megastars) are affected. Gate-validated (fa_gate2): ship only if the
+        # mega slice improves AND pooled guarantee/aav/years MAE do not regress.
+        years = min(max(years, 1.0), 15.0)
         dpw = winter_dpw(self.dpw_series, s["class_year"])
         fg = _features_guar(s, years, dpw, self._supply_z(s), self._comps_stats(s)[1],
                             self._log_rational(s, years, dpw), self._prime_war(s))

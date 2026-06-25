@@ -3797,6 +3797,36 @@ def _platform_tier(mm: float | None) -> str:
     return "minimal"
 
 
+# Trade Value Grade thresholds ($M of contract-adjusted surplus -> letter). The
+# surplus already nets salary out of projected production over the control window,
+# so the grade reads "how valuable is this player to ACQUIRE in trade." A finer-
+# grained, on-brand companion to the farm letter grades; the board/evaluator JS
+# mirror these exact cutoffs in `_tbGrade` so server and client agree.
+_TRADE_GRADE_CUTS = (
+    (100.0, "A+"),   # franchise cornerstone
+    (60.0,  "A"),
+    (40.0,  "A-"),   # = Elite tier floor
+    (25.0,  "B+"),
+    (15.0,  "B"),
+    (8.0,   "B-"),   # = Mid tier floor
+    (3.0,   "C"),
+    (0.0,   "D"),
+    (float("-inf"), "F"),   # negative surplus = contract liability
+)
+
+
+def _trade_value_grade(mm: float | None) -> str | None:
+    """Letter grade (A+ .. F) for a contract-adjusted surplus $M. None passes
+    through (no grade for players with no computed value)."""
+    if mm is None:
+        return None
+    v = float(mm)
+    for thr, g in _TRADE_GRADE_CUTS:
+        if v >= thr:
+            return g
+    return "F"
+
+
 def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
@@ -3864,6 +3894,9 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             stats[src] += 1
         else:
             stats["unchanged"] += 1
+        # Trade Value Grade off the FINAL value (re-pointed or bayes fallback) so
+        # every board row carries a letter; survives board_slim automatically.
+        r["trade_value_grade"] = _trade_value_grade(r.get("trade_value_mm"))
         if r.get("age") is None and pk in ages:
             r["age"] = ages[pk]
             stats["age_backfilled"] += 1

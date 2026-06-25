@@ -13678,10 +13678,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # Walk in date order, collecting unique report texts per source.
         by_src_seen_hashes: dict[str, set[str]] = {}
         by_src_entries: dict[str, list[dict]] = {}
+        # Per-source external player ids, used to build "View on <source>" links
+        # on the writeups + source-comparison panels. Currently the FanGraphs
+        # player id (prefer the alphanumeric string form so minor-league "sa..."
+        # ids survive). Date-ordered walk -> latest non-empty id wins.
+        src_ids: dict[str, str] = {}
         for pt in (player_payload.get("points") or []):
             for src, info in (pt.get("per_source") or {}).items():
                 tools = (info or {}).get("tools") or {}
                 ex = tools.get("_extras") or {}
+                if src == "fangraphs":
+                    fgid = ex.get("fg_player_id_str") or ex.get("fg_player_id")
+                    if fgid is not None and str(fgid).strip():
+                        src_ids["fangraphs"] = str(fgid).strip()
                 rpt = ex.get("report")
                 if rpt:
                     h = hashlib.sha1(rpt.strip().encode("utf-8")).hexdigest()[:12]
@@ -13703,9 +13712,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     # Strip the inline report so it doesn't bloat boot.
                     ex["report"] = None
         # Reverse each list so newest is first (the walk was oldest-first).
-        if by_src_entries:
+        if by_src_entries or src_ids:
             for src in by_src_entries:
                 by_src_entries[src].reverse()
+            # _ids rides as a reserved sub-key alongside the per-source report
+            # lists; the frontend reads sidecar._ids and only ever looks up known
+            # source keys, so this never collides with a source's entry list.
+            if src_ids:
+                by_src_entries["_ids"] = src_ids
             scout_reports_sidecar[pkey] = by_src_entries
     for p in active_payload:
         _harvest_and_strip_reports(p)

@@ -98,6 +98,17 @@
       font-variant-numeric: tabular-nums; font-size: 12px;
       color: var(--text-primary);
     }
+/* Trade Value Grade chip - shared by the evaluator rows and the board cell.
+   Color + border-color are set inline (per-grade ramp); this is just the shape. */
+.tm-grade-chip {
+      display: inline-block; flex: none;
+      font-family: var(--font-mono); font-weight: 800; font-size: 11px;
+      line-height: 1; letter-spacing: 0.3px;
+      padding: 2px 5px; border: 1px solid currentColor; border-radius: 4px;
+    }
+/* In the evaluator row the grade chip + value float right together. */
+#trade-machine .tm-row .tm-grade-chip { margin-left: auto; }
+#trade-machine .tm-row .tm-grade-chip + .tm-val { margin-left: 6px; }
 #trade-machine .tm-x {
       flex: none; background: none; border: none; cursor: pointer;
       color: var(--text-tertiary); font-size: 14px; line-height: 1;
@@ -157,6 +168,8 @@
 .tm-board-table .tm-rank { color: var(--text-tertiary); font-size: 11px; }
 .tm-board-table .tm-player { font-weight: 600; font-size: 13px; }
 .tm-board-table .tm-surplus { font-weight: 800; font-size: 13px; }
+.tm-board-table .tm-grade { text-align: right; }
+.tm-board-table .tm-grade .tm-grade-chip { font-size: 11px; padding: 1px 5px; }
 .tm-board-table .tm-col-div { border-left: 1px solid var(--border-light); }
 
 /* mobile: let the wide board scroll horizontally rather than squash 9 columns */

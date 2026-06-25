@@ -6,48 +6,48 @@
  "caveat": "Not adjusted for strength of schedule or park (no conference/park table held). Bands are P10-P90 and widen with thinner support. hit_ops is experimental: college tracked data barely forecasts Single-A production in our matched sample.",
  "factors": {
   "hit_k": {
-   "x_mean": 18.137,
-   "y_mean": 25.541,
-   "slope": 0.6283,
-   "ols_slope": 0.6865,
-   "band_sd": 7.014,
+   "x_mean": 18.131,
+   "y_mean": 25.516,
+   "slope": 0.629,
+   "ols_slope": 0.687,
+   "band_sd": 7.005,
    "r2": 0.316,
-   "n": 216,
+   "n": 217,
    "loo": {
-    "mae": 5.529,
-    "p10_p90_coverage": 0.815,
+    "mae": 5.524,
+    "p10_p90_coverage": 0.816,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "hit_bb": {
-   "x_mean": 12.332,
-   "y_mean": 13.298,
-   "slope": 0.2467,
-   "ols_slope": 0.2696,
-   "band_sd": 5.216,
-   "r2": 0.056,
-   "n": 216,
+   "x_mean": 12.363,
+   "y_mean": 13.318,
+   "slope": 0.2499,
+   "ols_slope": 0.2729,
+   "band_sd": 5.206,
+   "r2": 0.058,
+   "n": 217,
    "loo": {
-    "mae": 3.792,
-    "p10_p90_coverage": 0.847,
+    "mae": 3.786,
+    "p10_p90_coverage": 0.848,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "hit_ops": {
    "x_mean": 0.39,
-   "y_mean": 0.745,
-   "slope": 0.2359,
-   "ols_slope": 0.2578,
-   "band_sd": 0.18,
+   "y_mean": 0.744,
+   "slope": 0.2328,
+   "ols_slope": 0.2542,
+   "band_sd": 0.179,
    "r2": 0.007,
-   "n": 216,
+   "n": 217,
    "loo": {
     "mae": 0.124,
-    "p10_p90_coverage": 0.87,
+    "p10_p90_coverage": 0.871,
     "target_coverage": 0.8,
-    "n": 216
+    "n": 217
    }
   },
   "pit_k": {
@@ -82,7 +82,7 @@
   }
  },
  "matched_pairs": {
-  "hitters_with_single_a": 216,
+  "hitters_with_single_a": 217,
   "pitchers_with_single_a": 233
  }
 }

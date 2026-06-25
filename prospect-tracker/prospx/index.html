@@ -5998,6 +5998,14 @@
       color: var(--text-tertiary);
       margin-bottom: 6px;
     }
+    /* Source attribution link ("View on FanGraphs ↗") on writeups + the
+       per-source comparison panel. Subtle by default, accent on hover. */
+    .src-attr-link {
+      font-family: var(--font-sans); font-size: 10px;
+      color: var(--text-tertiary); text-decoration: none;
+      white-space: nowrap; opacity: 0.85;
+    }
+    .src-attr-link:hover { color: var(--neon-cyan, var(--accent-cyan)); opacity: 1; text-decoration: underline; }
     .sr-prose {
       font-size: 12px; color: var(--text-secondary);
       line-height: 1.6; white-space: pre-wrap;
@@ -12114,6 +12122,23 @@ function transactionEvents(player) {
 // grade and ends at debut_date (for graduates) or the last snapshot.
 const FV_MIN = 35, FV_MAX = 75;
 
+// Adaptive FV-axis floor. The line charts default to the 35 floor above so a
+// 50 FV sits in a consistent vertical position from prospect to prospect, but
+// we now publish prospects graded BELOW 30 FV (sub-30 xFV/consensus grades) -
+// a fixed 35 floor pushed those points off the bottom of the chart entirely.
+// When a series actually carries sub-35 grades, drop the floor (snapped down to
+// a 5-grade tick, hard-floored at the 20 bottom of the scale) just enough to
+// fit them; when every value is >=35 the floor stays 35 and nothing changes for
+// the common case. Returns a multiple of 5 in [20, FV_MIN].
+function fvAxisFloor(values) {
+  let lo = FV_MIN;
+  for (const v of (values || [])) {
+    const n = Number(v);
+    if (isFinite(n) && n < lo) lo = n;
+  }
+  return Math.max(20, Math.min(FV_MIN, Math.floor(lo / 5) * 5));
+}
+
 // Ceiling-round any FV-style decimal value to an integer. User
 // prefers "hard round up" semantics - 50.2 reads as 51, not 50 - 
 // since FV grades are conventionally integers and a fractional
@@ -12200,8 +12225,10 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
   // X-axis starts after the Y-label margin so the 20/80 markers don't
   // overlap the line's left edge.
   const X_LEFT = PAD + Y_LABEL_W;
+  // Floor adapts down toward 20 only when this prospect carries sub-35 grades.
+  const fvLo = fvAxisFloor(points.map(pt => pt.consensus_fv_raw));
   const xScale = d => X_LEFT + ((new Date(d).getTime() - minT) / timeSpan) * (W - X_LEFT - PAD);
-  const yScale = fv => CHART_BOTTOM - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * (CHART_BOTTOM - PAD);
+  const yScale = fv => CHART_BOTTOM - ((fv - fvLo) / (FV_MAX - fvLo)) * (CHART_BOTTOM - PAD);
 
   // Per-segment direction coloring - each consecutive pair of points
   // gets its own colored Catmull-Rom Bezier curve so the line reads as
@@ -12343,7 +12370,7 @@ function makeLineChart(points, fvOpen, fvClose, gradDate, trades, player, dims) 
   }
   const yLabels = `
     <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MAX) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MAX}</text>
-    <text x="${(PAD).toFixed(1)}" y="${(yScale(FV_MIN) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${FV_MIN}</text>
+    <text x="${(PAD).toFixed(1)}" y="${(yScale(fvLo) + 3).toFixed(1)}" font-size="6.5" fill="var(--text-tertiary)" font-family="var(--font-mono)">${fvLo}</text>
     ${hlLabels}`;
 
   // Year boundary lines + labels
@@ -26417,17 +26444,19 @@ async function renderDraftDetail(key) {
   // Helps the reader see where the prospect sits in their class shape.
   const classContextCard = (() => {
     if (!classRank || classTotal < 3) return "";
-    const tiers = [70, 65, 60, 55, 50, 45, 40, 35, 30];
+    // Floor extends to 20 (was 30) now that we publish sub-30-FV prospects;
+    // empty low tiers simply render as zero-height bars.
+    const tiers = [70, 65, 60, 55, 50, 45, 40, 35, 30, 25, 20];
     const counts = Object.fromEntries(tiers.map(t => [t, 0]));
     for (const cp of classProspects) {
       const f = cp.consensus_fv;
       if (f == null) continue;
-      const tier = Math.max(30, Math.min(70, Math.floor(f / 5) * 5));
+      const tier = Math.max(20, Math.min(70, Math.floor(f / 5) * 5));
       counts[tier] = (counts[tier] || 0) + 1;
     }
     const maxC = Math.max(1, ...Object.values(counts));
     const myBin = p.consensus_fv != null
-      ? Math.max(30, Math.min(70, Math.floor(p.consensus_fv / 5) * 5))
+      ? Math.max(20, Math.min(70, Math.floor(p.consensus_fv / 5) * 5))
       : null;
     const bars = tiers.slice().reverse().map(t => {
       const c = counts[t] || 0;
@@ -28675,6 +28704,36 @@ const SOURCE_LABELS = {
   mlb_pipeline: "MLB Pipeline", the_athletic: "The Athletic",
   auto_detect: "Auto-detect"
 };
+
+// Source attribution links. Given a scouting source key + the player object +
+// the per-source id map (DATA.scout_reports[key]._ids, harvested in storage.py),
+// return the URL of that source's page for the player, or null when we can't
+// build a real one. FanGraphs uses the stored player id (the "/players/x/{id}/"
+// slug accepts both numeric and "sa..." minor-league ids); MLB Pipeline uses the
+// player's mlbam id; ESPN / Just Baseball expose no per-player id we store, so we
+// fall back to the publisher's homepage rather than a brittle name search.
+function sourcePlayerUrl(src, p, ids) {
+  ids = ids || {};
+  if (src === "fangraphs" && ids.fangraphs)
+    return `https://www.fangraphs.com/players/x/${encodeURIComponent(ids.fangraphs)}/stats`;
+  if (src === "mlb_pipeline" && p && p.mlbam_id)
+    return `https://www.mlb.com/player/${encodeURIComponent(p.mlbam_id)}`;
+  if (src === "espn")          return "https://www.espn.com/mlb/";
+  if (src === "just_baseball") return "https://www.justbaseball.com/";
+  return null;
+}
+// Inline "View on <source> ↗" anchor; empty string when no link is available.
+function sourceLinkHtml(src, p, ids, label) {
+  const u = sourcePlayerUrl(src, p, ids);
+  if (!u) return "";
+  const lbl = label || SOURCE_LABELS[src] || src;
+  return ` <a class="src-attr-link" href="${escapeHtml(u)}" target="_blank" rel="noopener" title="Open ${escapeHtml(lbl)} page in a new tab">View on ${escapeHtml(lbl)} ↗</a>`;
+}
+// Pull the per-source id map for a player from the scout_reports sidecar.
+function sourceIdsFor(p) {
+  return (p && DATA.scout_reports && DATA.scout_reports[p.player_key]
+          && DATA.scout_reports[p.player_key]._ids) || {};
+}
 
 // Parse a FanGraphs height string ("6' 4\"" or "6'4" or just `74`) into
 // total inches. Returns null when the value is unparseable.
@@ -31001,9 +31060,11 @@ function buildFarmCard(snap) {
   // FV distribution - glanceable horizontal bars by tier.
   const dist = meta.dist || org.fv_distribution || {};
   const bucket = (lo, hi) => Object.keys(dist).reduce((s, k) => { const n = Number(k); return s + ((n >= lo && n <= hi) ? (dist[k] || 0) : 0); }, 0);
-  const tiers = [["60+", bucket(60, 200)], ["55", bucket(55, 59)], ["50", bucket(50, 54)], ["45", bucket(45, 49)], ["40", bucket(40, 44)], ["≤35", bucket(0, 39)]];
+  // Sub-40 broken out into 35 and ≤30 now that orgs carry sub-30-FV prospects
+  // (was a single "≤35" lump that hid the difference between depth and fliers).
+  const tiers = [["60+", bucket(60, 200)], ["55", bucket(55, 59)], ["50", bucket(50, 54)], ["45", bucket(45, 49)], ["40", bucket(40, 44)], ["35", bucket(35, 39)], ["≤30", bucket(0, 34)]];
   const maxC = Math.max(1, ...tiers.map(t => t[1]));
-  const tierColor = { "60+": "var(--up)", "55": "var(--neon-cyan)", "50": "var(--neon-cyan)", "45": "var(--neon-amber)", "40": "var(--neon-amber)", "≤35": "var(--text-tertiary)" };
+  const tierColor = { "60+": "var(--up)", "55": "var(--neon-cyan)", "50": "var(--neon-cyan)", "45": "var(--neon-amber)", "40": "var(--neon-amber)", "35": "var(--text-tertiary)", "≤30": "var(--text-tertiary)" };
   const distHTML = `<div style="display:flex;flex-direction:column;gap:8px;">${tiers.map(([lab, c]) => `
     <div style="display:flex;align-items:center;gap:10px;">
       <span style="width:42px;flex:none;font-family:var(--font-mono);font-size:13px;color:${P.text2};text-align:right;">${lab}</span>
@@ -38155,7 +38216,10 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
   const maxT = new Date(endDate).getTime();
   const timeSpan = maxT - minT || 1;
   const xScale = d => PAD_L + ((new Date(d).getTime() - minT) / timeSpan) * innerW;
-  const yScale = fv => PAD_T + innerH - ((fv - FV_MIN) / (FV_MAX - FV_MIN)) * innerH;
+  // Floor adapts down toward 20 only when this prospect carries sub-35 grades
+  // (we now grade prospects below 30 FV); stays at 35 for the common case.
+  const fvLo = fvAxisFloor(points.map(pt => pt.consensus_fv_raw));
+  const yScale = fv => PAD_T + innerH - ((fv - fvLo) / (FV_MAX - fvLo)) * innerH;
 
   // Per-segment direction coloring + non-scaling strokes - same
   // pattern as the minichart. Each consecutive pair of points gets
@@ -38165,10 +38229,10 @@ function makeBigLineChart(points, fvOpen, fvClose, gradDate, trades, careerStats
                           : delta < 0 ? "var(--down)"
                                       : "var(--text-tertiary)";
 
-  // Y-axis ticks every 5 FV. Starts at FV_MIN (35) since prospects
-  // graded below that don't make it onto the lists/rankings.
+  // Y-axis ticks every 5 FV. Starts at the adaptive floor (35 for most
+  // prospects, dropping toward 20 for sub-30-FV grades).
   const yTicks = [];
-  for (let fv = FV_MIN; fv <= FV_MAX; fv += 5) {
+  for (let fv = fvLo; fv <= FV_MAX; fv += 5) {
     const y = yScale(fv).toFixed(1);
     yTicks.push(
       `<line x1="${PAD_L}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="var(--border-light)" stroke-width="0.4" stroke-dasharray="2,3" vector-effect="non-scaling-stroke"/>`,
@@ -43444,6 +43508,7 @@ function renderPlayerDetail(key) {
       { key: "just_baseball", label: "Just Baseball"},
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
+    const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
     // Gate on whether the SLICE is loaded, not on this player's entry: a prospect
     // with no scouting report (e.g. a fresh draftee) has no entry even after the
     // slice loads, so keying the warm-load on `sidecar === null` re-fired
@@ -43534,7 +43599,7 @@ function renderPlayerDetail(key) {
       // swaps which one is visible.
       const renderedCycles = list.map((e, i) => `
         <div class="sr-cycle-body${i === 0 ? '' : ' is-hidden'}" data-sr-cycle="${i}">
-          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}</div>
+          <div class="sr-meta">${escapeHtml(s.label)} · published ${escapeHtml(e.date)}${e.label ? ` (${escapeHtml(e.label)})` : ""}${sourceLinkHtml(s.key, p, srIds, s.label)}</div>
           <div class="sr-prose">${escapeHtml(e.text)}</div>
         </div>`).join("");
       return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">
@@ -43753,6 +43818,7 @@ function renderPlayerDetail(key) {
     if (!latestPt || !latestPt.per_source) return "";
     const entries = Object.entries(latestPt.per_source);
     if (!entries.length) return "";
+    const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
     // FV panel ----------------------------------------------------------
     const sortedFvEntries = entries.slice().sort(([, av], [, bv]) => {
       const ax = av.fv_published ?? -1;
@@ -43775,7 +43841,7 @@ function renderPlayerDetail(key) {
         ? `<span style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);font-size:10px;">#${rank}</span>`
         : "";
       return `<tr>
-        <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}</td>
+        <td style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:3px 6px 3px 0;border-bottom:1px solid var(--border-light);">${escapeHtml(lbl)}${sourceLinkHtml(src, p, srIds, lbl)}</td>
         <td style="padding:3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${rankCell}</td>
         <td style="padding:3px 0 3px 6px;border-bottom:1px solid var(--border-light);text-align:right;">${fvCell}</td>
       </tr>`;
@@ -44002,7 +44068,7 @@ function renderPlayerDetail(key) {
         const v = resolveCell(info.tools, k);
         return `<td style="text-align:center;font-variant-numeric:tabular-nums;">${v != null ? v : " - "}</td>`;
       }).join("");
-      return `<tr><td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span></td>${cells}</tr>`;
+      return `<tr><td><span class="src-tag">${escapeHtml(SOURCE_LABELS[src] || src)}</span>${sourceLinkHtml(src, p, srIds, SOURCE_LABELS[src] || src)}</td>${cells}</tr>`;
     }).join("");
     return `<div class="detail-title" style="margin-top:14px;">Per-source tool grades <span class="detail-title-sub">latest published grade per source</span></div>
       <div style="overflow-x:auto;">

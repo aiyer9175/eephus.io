@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-06-24",
+ "generated_at": "2026-06-25",
  "scope": "PITCHERS",
- "n_scored": 2038,
+ "n_scored": 2040,
  "calibration_scale": {
   "a": -0.04,
   "b": 1.041
@@ -11,7 +11,7 @@
   "mean_abs_delta": 0.91,
   "max_up": 12.4,
   "max_down": -5.3,
-  "share_within_2_grades": 0.768
+  "share_within_2_grades": 0.769
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
@@ -25,8 +25,8 @@
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 6221.3,
-  "consensus": 12969.5
+  "xfv": 6223.1,
+  "consensus": 12971.1
  },
  "example_up_adjustments": [
   {

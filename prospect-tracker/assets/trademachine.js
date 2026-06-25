@@ -196,15 +196,19 @@ function renderTradeMachine() {
   _tmEnsureDetail();
   _tmSeedFromURL();
   const sideHtml = (side, label) => {
-    const list = _TM[side].map((x, i) => `
+    const list = _TM[side].map((x, i) => {
+      const g = _tbGrade(x.mm), gc = _tbGradeColor(g);   // contract-adjusted surplus -> letter
+      return `
       <div class="tm-row">
         <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (xFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
         ${_tmTeamLogo(x.org)}
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
+        ${g ? `<span class="tm-grade-chip" style="color:${gc};border-color:${gc};" title="Trade Value Grade ${g} (contract-adjusted surplus)">${g}</span>` : ""}
         <span class="tm-val" style="color:${_tmValColor(x.mm)};">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
         <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
-      </div>`).join("");
+      </div>`;
+    }).join("");
     const tot = _tmTotal(_TM[side]);
     return `<div class="tm-side">
       <div class="tm-side-head"><span>${label} receives</span> <span class="tm-total" style="color:${_tmValColor(tot)};">$${tot.toFixed(1)}M</span></div>
@@ -425,6 +429,34 @@ function _tbFmt(mm) {
   return a >= 100 ? `${sign}${a.toFixed(0)}M` : `${sign}${a.toFixed(1)}M`;
 }
 
+// Trade Value Grade. Contract-adjusted surplus $M -> letter (A+ .. F). The
+// surplus already nets salary out of projected production, so the grade reads
+// "how valuable is this player to acquire in trade." Mirrors the Python
+// bayes_trade_value._trade_value_grade cutoffs exactly; computed client-side off
+// trade_value_mm so it stays in lock-step with the displayed Surplus even if a
+// shipped artifact predates the server-side trade_value_grade field.
+function _tbGrade(mm) {
+  if (mm == null || !isFinite(Number(mm))) return "";
+  const v = Number(mm);
+  if (v >= 100) return "A+";
+  if (v >= 60)  return "A";
+  if (v >= 40)  return "A-";
+  if (v >= 25)  return "B+";
+  if (v >= 15)  return "B";
+  if (v >= 8)   return "B-";
+  if (v >= 3)   return "C";
+  if (v >= 0)   return "D";
+  return "F";
+}
+function _tbGradeColor(g) {
+  if (g === "A+" || g === "A") return "var(--card-gold)";
+  if (g === "A-")              return "var(--neon-green)";
+  if (g && g.charAt(0) === "B") return "var(--neon-cyan, var(--accent-cyan))";
+  if (g === "C" || g === "D")  return "var(--text-secondary)";
+  if (g === "F")               return "var(--neon-red)";
+  return "var(--text-tertiary)";
+}
+
 // ── Leaderboard render ──────────────────────────────────────────────────────
 function _renderTBRows() {
   const wrap = document.getElementById("tradeboard-content");
@@ -470,7 +502,8 @@ function _renderTBRows() {
     <th>Pos</th>
     <th>Org</th>
     <th class="tm-num" title="Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)">FV</th>
-    <th class="tm-num tm-col-div" title="Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use">Surplus</th>
+    <th class="tm-num tm-col-div" title="Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. Ranks how valuable a player is to ACQUIRE in trade; the surplus already nets salary out of projected production over the years of control.">Grade</th>
+    <th class="tm-num" title="Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use">Surplus</th>
     <th title="Contract: phase · salary · free agency year (MLB) or remaining controlled seasons (MiLB)">Contract</th>
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
@@ -480,6 +513,8 @@ function _renderTBRows() {
     const tv    = p.trade_value_mm;
     const tier  = p.trade_value_tier || "low";
     const tvCol = _TB_TIER_COLORS[tier] || "var(--text-secondary)";
+    const grade = _tbGrade(tv);              // contract-adjusted surplus -> letter
+    const gradeCol = _tbGradeColor(grade);
     // FV only meaningful for active MiLB prospects - hide for MLB players
     const isProspect = p.status === "active";
     const fv    = isProspect && p.fv != null ? Number(p.fv).toFixed(0) : "";
@@ -525,7 +560,8 @@ function _renderTBRows() {
       <td class="tm-dim">${pos}</td>
       <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
       <td class="tm-num tm-dim">${fv}</td>
-      <td class="tm-num tm-col-div tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
+      <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${gradeCol};border-color:${gradeCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
+      <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
       <td class="tm-contract">${_tbCtrlBadge(p)}</td>
       <td class="tm-col-div tm-signals">${signals}</td>
     </tr>`;

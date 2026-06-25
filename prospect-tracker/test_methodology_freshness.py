@@ -58,6 +58,13 @@ MODEL_GLOSSARY = {
     # xFV ungraded = the provisional production-only leading indicator for source-ungraded
     # roster players (DSL/CPX sleepers); its own glossary entry documents the methodology.
     "xfv_ungraded": ["xfv_ungraded"],
+    # Trade Machine surplus = the board/evaluator surplus ordering (= the platform surplus_value
+    # the Trade Machine shows); first outcome-validated 2026-06-25. Documented under the trade
+    # machine + surplus-value glossary entries.
+    "trade_machine_surplus": ["trade_machine", "surplus_value"],
+    # WAR cohort diagnostic = model-dev artifact rendered nowhere (audits the WAR engine's
+    # per-cohort residuals); no user-facing methodology surface.
+    "war_cohort_diagnostic": "internal",
 }
 
 

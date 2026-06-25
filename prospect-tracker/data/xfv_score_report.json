@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-24",
+ "generated_at": "2026-06-25",
  "scope": "HITTERS",
  "n_scored": 2053,
  "calibration_scale": {
@@ -8,10 +8,10 @@
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 1.45,
+  "mean_abs_delta": 1.38,
   "max_up": 10.0,
-  "max_down": -7.4,
-  "share_within_2_grades": 0.633
+  "max_down": -5.0,
+  "share_within_2_grades": 0.644
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",

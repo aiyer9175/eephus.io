@@ -1,0 +1,79 @@
+{
+  "generated_at": "",
+  "model": "trade_machine_surplus",
+  "conventions": {
+    "predictor": "trade_values.json trade_value_mm = apply_platform_surplus (xfv.surplus_mm for prospects, mlb_projections surNpv/1e6 for MLB, xfv backgrade fallback)",
+    "target": "xfv.realized_war = full career bWAR (xfv_score.py) - RANK only, NOT unit-comparable to remaining-control surplus $",
+    "metric": "rank-Spearman + AUC(useful-asset); higher is better",
+    "ship_rule": "board surplus Spearman >= consensus_fv pooled AND wins within-tier ordering in a majority of comparable tiers"
+  },
+  "slice_a": {
+    "n": 2333,
+    "predictor": "xfv.json surplus_mm (the value the board shows for prospects + the MLB backgrade fallback)",
+    "target": "realized_war (full career bWAR) - RANK only",
+    "pooled": {
+      "spearman": 0.329,
+      "auc_useful_asset": 0.7707,
+      "useful_war_threshold": 6.0
+    },
+    "baseline_consensus_fv": {
+      "spearman": 0.3314,
+      "n": 2333
+    },
+    "by_tier": {
+      "elite": {
+        "n": 211,
+        "spearman": 0.1509,
+        "baseline_spearman": 0.323
+      },
+      "high": {
+        "n": 264,
+        "spearman": 0.1501,
+        "baseline_spearman": 0.2189
+      },
+      "mid": {
+        "n": 558,
+        "spearman": 0.0857,
+        "baseline_spearman": 0.2714
+      },
+      "low": {
+        "n": 1300,
+        "spearman": 0.0842,
+        "baseline_spearman": 0.0665
+      }
+    },
+    "by_side": {
+      "H": {
+        "n": 1095,
+        "spearman": 0.3833
+      },
+      "P": {
+        "n": 1238,
+        "spearman": 0.3009
+      }
+    },
+    "tiers_won_vs_baseline": "1/4",
+    "ship": false
+  },
+  "slice_a_prime_by_source": {
+    "n_matched": 1721,
+    "generated_at": "2026-06-24",
+    "predictor": "trade_values.json trade_value_mm (post apply_platform_surplus)",
+    "by_source": {
+      "projection": {
+        "n": 621,
+        "spearman": 0.0157
+      },
+      "xfv_backgrade": {
+        "n": 1100,
+        "spearman": 0.2129
+      }
+    },
+    "pooled": {
+      "n": 1721,
+      "spearman": 0.1889
+    }
+  },
+  "ship": false,
+  "honest_note": "NOT a forward backtest: trade_values.json was never snapshotted, so we cannot measure what the board said then vs what happened. Slice A uses CURRENT grades on ALREADY-graduated players (survivorship + hindsight) and a career-vs-control-window unit mismatch, so it proves ORDERING only, never live trade-price accuracy. The displayed surplus is a passthrough of xfv (xfv_eval, provisional) and projections (proj_horizon_eval), so this validates the ORDERING + the apply_platform_surplus join/fallback, not new model machinery. Verdict stays provisional until a genuine forward cohort accrues - start snapshotting trade_values.json now. Slice B (bounded-window calibration via surplus_backtest_real on 2017-2019 resolved cohorts) is the documented next extension."
+}
