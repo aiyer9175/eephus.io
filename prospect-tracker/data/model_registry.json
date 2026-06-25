@@ -434,7 +434,7 @@
    "metric": "Spearman vs realized MLB tool stat; production partial after grade",
    "eval_artifact": "data/xfv_tools.json",
    "verdict": "provisional",
-   "notes": "Tool grades already strong (power->ISO 0.52). Production adds beyond the grade mainly for fastball->K% (+0.22 partial, 0.28->0.32). Field/arm/pitch-shapes pass through (no realized target).",
+   "notes": "Tool grades already strong (power->ISO 0.52). Production adds beyond the grade mainly for fastball->K% (+0.22 partial, 0.28->0.32). Field/arm/pitch-shapes pass through (no realized target). OOS-GATED BLEND WEIGHTS (2026-06-25): the blend weight + adds_over_grade were computed IN-SAMPLE (train==test) - a violation of the platform's own forward-chained OOS bar. Added _oos_validate (forward-chained by decision-year cohort) and GATED the applied weight (both run() + run_live) on it: a tool blends in MiLB production only where it beats grade-only OUT-of-sample. Result: fb SURVIVES (OOS blend rho 0.309 > grade 0.244, w stays 0.5) but game_pwr's in-sample w=0.136 does NOT survive (OOS blend 0.5017 < grade 0.5029) -> GATED to 0 (the in-sample partial was optimistic; live game_pwr grades revert to grade-only). hit/speed/cmd already at w=0. Credibility/correctness fix, not a metric gain - brings the tool blend to the OOS bar every other xFV model is held to.",
    "last_checked": "2026-06-25",
    "stale": false,
    "artifact_age_days": 0

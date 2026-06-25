@@ -28,6 +28,7 @@ from pathlib import Path
 import storage
 from prospect_path import _spearman
 from xfv_dataset import matrix_path
+from xfv_model import SCORED_YEARS, _decision_year
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -101,6 +102,46 @@ def _partial_after_grade(grade, feat, realized):
     return round(float(cov / ((vf * vy) ** 0.5)) if vf and vy else 0.0, 4)
 
 
+def _oos_validate(tool, spec, rows, realized) -> dict | None:
+    """Forward-chained OOS check: fit the blend on cohorts < test year, score the
+    test year, pool. Returns OOS blend-rho vs grade-only-rho so the platform's
+    own OOS bar (not the in-sample partial) decides whether the production blend
+    earns a non-zero weight. The blend weight stays the full-window fit; this
+    only GATES whether it is applied."""
+    sign = 1.0 if spec["hi"] else -1.0
+    recs = []
+    for r in rows:
+        if r["kind"] != "debuted":
+            continue
+        g = r.get(spec["grade"])
+        st = (realized.get(r["player_key"]) or {}).get(spec["stat"])
+        if g is None or st is None:
+            continue
+        milb = (r.get("milb") or {}).get(spec["milb"]) if spec["milb"] else None
+        recs.append((_decision_year(r), float(g), milb, sign * float(st)))
+    oos_score, oos_grade, oos_y = [], [], []
+    for ty in SCORED_YEARS:
+        tr = [r for r in rows if r["kind"] == "debuted" and _decision_year(r) < ty]
+        params = _fit_blend(tool, spec, tr, realized)
+        if not params:
+            continue
+        for dy, g, milb, sy in recs:
+            if dy != ty:
+                continue
+            gz = (g - params["gmu"]) / params["gsd"]
+            fz = (((milb if milb is not None else 0.0) - params["fmu"]) / params["fsd"]
+                  if spec["milb"] else 0.0)
+            oos_score.append(gz + params["sign"] * params["w"] * fz)
+            oos_grade.append(g)
+            oos_y.append(sy)
+    if len(oos_y) < 15:
+        return None
+    br = _spearman(oos_score, oos_y)
+    gr = _spearman(oos_grade, oos_y)
+    return {"n": len(oos_y), "blend_rho": br, "grade_rho": gr,
+            "validated": bool(br is not None and gr is not None and br > gr)}
+
+
 def run(persist: bool = True) -> dict:
     realized = _realized_mlb()
     matrices = {s: json.loads(matrix_path(s).read_text(encoding="utf-8")) for s in ("hit", "pit")}
@@ -131,8 +172,13 @@ def run(persist: bool = True) -> dict:
             if len(sub) >= 20:
                 partial = _partial_after_grade([s[0] for s in sub],
                                                [s[1] for s in sub], [s[2] for s in sub])
-        # tool xFV score = z(grade) + w*z(milb), w from the partial (cap 0.5)
-        w = max(0.0, min(0.5, (partial or 0.0) * 2.0)) if partial else 0.0
+        # tool xFV score = z(grade) + w*z(milb), w from the partial (cap 0.5).
+        # The partial is IN-SAMPLE, so GATE the applied weight on a forward-chained
+        # OOS check (the platform's own bar): keep the blend only where it beats
+        # grade-only out-of-sample; otherwise zero it (grade-only).
+        w_insample = max(0.0, min(0.5, (partial or 0.0) * 2.0)) if partial else 0.0
+        oos = _oos_validate(tool, spec, rows, realized)
+        w = w_insample if (oos and oos["validated"]) else 0.0
         gz = _z([x[1] for x in recs])
         fz = _z([(x[2] if x[2] is not None else 0.0) for x in recs]) if spec["milb"] else [0.0] * len(recs)
         score = [gz[i] + (sign * w) * fz[i] for i in range(len(recs))]
@@ -148,9 +194,11 @@ def run(persist: bool = True) -> dict:
             "n": len(recs), "realized_stat": spec["stat"],
             "grade_only_spearman": base_rho,
             "production_partial_after_grade": partial,
-            "blend_weight_production": round(w, 3),
+            "blend_weight_insample": round(w_insample, 3),
+            "blend_weight_applied": round(w, 3),
             "tool_xfv_spearman": blend_rho,
-            "adds_over_grade": bool(blend_rho is not None and base_rho is not None and blend_rho > base_rho),
+            "oos_validation": oos,
+            "adds_over_grade_oos": bool(oos and oos["validated"]),
         }
 
     out = {
@@ -229,7 +277,12 @@ def run_live(persist: bool = True) -> dict:
         if blend is None or not lrows:
             report[tool] = {"n_live": len(lrows), "note": "no blend or no live rows"}
             continue
-        sign, w = blend["sign"], blend["w"]
+        # Gate the applied production weight on the forward-chained OOS check, so
+        # the LIVE displayed tool grade only blends in MiLB production where it
+        # beats grade-only out-of-sample (not just in-sample).
+        oos = _oos_validate(tool, spec, train[side], realized)
+        sign = blend["sign"]
+        w = blend["w"] if (oos and oos["validated"]) else 0.0
         live_grades = [float(r[spec["grade"]]) for r in lrows]
 
         def _lscore(r):
@@ -249,7 +302,8 @@ def run_live(persist: bool = True) -> dict:
             p = pos / (m - 1) if m > 1 else 0.0
             tool_out.setdefault(lrows[i]["player_key"], {})[tool] = round(
                 target[min(m - 1, int(round(p * (m - 1))))], 1)
-        report[tool] = {"n_live": len(lrows), "blend_weight_production": round(w, 3)}
+        report[tool] = {"n_live": len(lrows), "blend_weight_applied": round(w, 3),
+                        "adds_over_grade_oos": bool(oos and oos["validated"])}
 
     out = {"generated_at": date.today().isoformat(), "scope": "LIVE active board",
            "modeled_tools": report, "passthrough_tools": _PASSTHROUGH,
