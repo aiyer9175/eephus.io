@@ -41377,6 +41377,19 @@ function makeInjuryHistoryBlock(history) {
 
 // Per-source FV history - shows the full breakdown of how each ranking
 // source has graded the player over time.
+// Expand/collapse a folded group of no-FV-change Live captures in the
+// per-source FV history table (the grouped rows carry data-foldgrp=<id>).
+var _pshFoldCounter = 0;
+function _pshToggleFold(el) {
+  const gid = el.getAttribute("data-fold");
+  const open = el.getAttribute("data-open") === "1";
+  el.setAttribute("data-open", open ? "0" : "1");
+  document.querySelectorAll('[data-foldgrp="' + gid + '"]').forEach(function (r) {
+    r.style.display = open ? "none" : "";
+  });
+  const caret = el.querySelector(".psh-fold-caret");
+  if (caret) caret.textContent = open ? "▸" : "▾";
+}
 function makePerSourceHistory(points) {
   // Collect every source that ever appeared, plus the most recent FV they
   // assigned at each snapshot date.
@@ -41434,14 +41447,16 @@ function makePerSourceHistory(points) {
 
   const head = `<tr>${_sh("date", "Date")}${_sh("update", "Update")}${sortedSources.map(s => _sh(`src:${s}`, escapeHtml(SOURCE_LABELS[s] || s))).join("")}${_sh("consensus", "Consensus")}</tr>`;
 
-  // v45 - Hide daily Live check-ins that changed nothing (owner ask). The
-  // TJStats Live board is captured every day; each capture appends a snapshot
-  // point even when every source re-published identical grades. A capture that
-  // moved no grade is not news, so it earns no row at all (v44 collapsed these
-  // into an expandable summary; the table now omits them entirely). A Live
-  // capture that DID move a grade stays a normal row, and named releases
-  // (BA Top 100, TJ May, …) are never hidden.
-  const _liveLabelRe = /^Live \d{4}-\d{2}-\d{2}$/;
+  // v46 - Fold daily Live check-ins that changed nothing into expandable
+  // groups (owner ask). The Live boards (TJStats / MLB Pipeline / …) are
+  // captured every day; each capture appends a snapshot point even when every
+  // source re-published identical grades. A capture that moved no grade is not
+  // news, so consecutive runs of them collapse behind one "N live updates with
+  // no FV change" toggle row (click to expand). A Live capture that DID move a
+  // grade stays a normal row, and named releases (BA Top 100, TJ May, …) are
+  // never folded. Matches any Live-type label, not just bare "Live YYYY-MM-DD"
+  // (so "MLB Pipeline Live YYYY-MM-DD" daily captures fold too).
+  const _isLiveLabel = (l) => /\blive\b/i.test(String(l || ""));
   const _rawLabelsOf = (pt) => {
     const labels = [];
     for (const info of Object.values(pt.per_source || {})) {
@@ -41467,7 +41482,7 @@ function makePerSourceHistory(points) {
     for (let i = 1; i < chrono.length; i++) {
       const pt = chrono[i], prev = chrono[i - 1];
       const labels = _rawLabelsOf(pt);
-      if (!labels.every(l => _liveLabelRe.test(l))) continue;       // named release → always a row
+      if (!labels.every(_isLiveLabel)) continue;                   // any named release → always a row
       if (String(pt.consensus_fv_label) !== String(prev.consensus_fv_label)) continue;
       if (_gradeSig(pt) !== _gradeSig(prev)) continue;              // a grade moved → real news
       hidden.add(pt);
@@ -41545,12 +41560,24 @@ function makePerSourceHistory(points) {
     </tr>`;
   };
 
-  // No-change Live check-ins are omitted entirely (see the v45 note above);
-  // only rows that moved a grade or were a named release reach the table.
+  // No-change Live check-ins fold into expandable groups (see the v46 note
+  // above): a run of consecutive hidden points collapses behind one toggle row.
+  const _cols = 2 + sortedSources.length + 1;   // date + update + sources + consensus
   let body = "";
-  for (const pt of sortedPoints) {
-    if (hidden.has(pt)) continue;
-    body += rowHtml(pt);
+  let _i = 0;
+  while (_i < sortedPoints.length) {
+    const pt = sortedPoints[_i];
+    if (!hidden.has(pt)) { body += rowHtml(pt); _i++; continue; }
+    const run = [];
+    while (_i < sortedPoints.length && hidden.has(sortedPoints[_i])) { run.push(sortedPoints[_i]); _i++; }
+    const gid = "pf" + (++_pshFoldCounter);
+    const ds = run.map(p => p.snapshot_date).filter(Boolean);
+    const lo = ds.length ? ds[ds.length - 1] : "", hi = ds.length ? ds[0] : "";
+    const span = lo && hi ? (lo === hi ? lo : `${lo} to ${hi}`) : "";
+    body += `<tr class="psh-fold-row" data-fold="${gid}" data-open="0" onclick="_pshToggleFold(this)" style="cursor:pointer;">`
+          + `<td colspan="${_cols}" style="color:var(--text-tertiary);font-size:11px;font-style:italic;padding:6px 10px;">`
+          + `<span class="psh-fold-caret">▸</span> ${run.length} live update${run.length !== 1 ? "s" : ""} with no FV change${span ? ` · ${span}` : ""}</td></tr>`;
+    for (const hp of run) body += rowHtml(hp, ` class="psh-folded" data-foldgrp="${gid}" style="display:none;"`);
   }
   // Per-source cells keep their compact badges so the reader can spot
   // source agreement at a glance; the consensus column drops the badge
