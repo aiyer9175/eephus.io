@@ -271,7 +271,7 @@ function _methCaptureCurve(bt) {
   const xfvCol = "var(--accent-lilac)", consCol = _raterMeta("prospx_consensus").color;
   const t20x = Math.round((cc.xfv.top20 || 0) * 100), t20c = Math.round((cc.consensus.top20 || 0) * 100);
   return `<div class="meth-chart">
-    <div class="meth-chart-title">Career WAR captured by the top of the board <span class="meth-sub">share of all realized WAR sitting in each board's top N% — higher = sharper ordering</span></div>
+    <div class="meth-chart-title">Career WAR captured by the top of the board <span class="meth-sub">share of all realized WAR sitting in each board's top N%, higher = sharper ordering</span></div>
     <svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="WAR capture curve">
       ${grid.join("")}${diag}
       <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
@@ -285,7 +285,7 @@ function _methCaptureCurve(bt) {
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${consCol};"></span>PROSPX consensus</span>
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);"></span>random</span>
     </div>
-    <p class="meth-note">xFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus — it sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is xFV against the consensus it is built to upgrade.</p>
+    <p class="meth-note">xFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. It sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is xFV against the consensus it is built to upgrade.</p>
   </div>`;
 }
 function _methProseHTML() {
@@ -414,17 +414,19 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Farm-system grades - how the org letter is built</h2>
     <p>The org grade is a weighted tree (${gTermLink("farm_report_card", "Farm grade tree")}), not a single
-    formula, so each letter is auditable down to its leaves. Four branches:
-    <strong>Development</strong> (40% - per-tool growth of prospects the org already had, ${gTermLink("dvm_plus", "DvM+")} /
-    ${gTermLink("tools_dvm_plus", "ToolDvM+")}), <strong>MLB Production</strong> (25% - does the system produce
+    formula, so each letter is auditable down to its leaves. Four branches, value-led (v40):
+    <strong>Value</strong> (65% - the org's aggregate risk-adjusted controlled surplus, the total $ value of
+    the active prospect pool from the recalibrated value framework, which already prices elite ceiling
+    non-linearly; ${gTermLink("fin_war_per_m", "WAR per $M")}, ${gTermLink("fin_contract_surplus", "grad-contract surplus")},
+    ${gTermLink("fin_dollar_dvm", "Org $DvM+")}, ${gTermLink("fin_draft_pool_efficiency", "draft-pool efficiency")},
+    ${gTermLink("fin_ifa_roi", "IFA ROI")}), <strong>MLB Production</strong> (18% - does the system produce
     big-leaguers, boom/bust rates, top-3 graduate WAR, a star-presence ${gTermLink("mlb_production_conviction", "Conviction")}
-    flag), <strong>Acquisition Strategy</strong> (Draft / IFA / Trade / Waiver channels), and
-    <strong>Financial</strong> (capital efficiency - ${gTermLink("fin_war_per_m", "WAR per $M")},
-    ${gTermLink("fin_contract_surplus", "grad-contract surplus")}, ${gTermLink("fin_dollar_dvm", "Org $DvM+")},
-    ${gTermLink("fin_draft_pool_efficiency", "draft-pool efficiency")}, ${gTermLink("fin_ifa_roi", "IFA ROI")}).
+    flag), <strong>Development</strong> (9% - per-tool growth of prospects the org already had,
+    ${gTermLink("dvm_plus", "DvM+")} / ${gTermLink("tools_dvm_plus", "ToolDvM+")}), and
+    <strong>Acquisition Strategy</strong> (8% - Draft / IFA / Trade / Waiver channels).
     Every leaf is z-scored across the 30 orgs and anchored so the composite reads on a 100 = league-mean
-    scale; sparse leaves return " - " rather than guessing. Surplus enters here twice - as realized capital
-    efficiency (Financial) and as the development of surplus dollars (Org $DvM+).</p>
+    scale; sparse leaves return " - " rather than guessing. Surplus enters the Value branch as realized
+    capital efficiency and again via the development of surplus dollars (Org $DvM+).</p>
 
     <h2 class="meth-h">Aggregation - player level to farm level</h2>
     <p>Roll-ups are explicit, not implied. Org surplus is the sum of its active prospects' per-player
@@ -479,6 +481,7 @@ function _methProseHTML() {
       <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017–2020 boards (new-format CSVs) + MLB Pipeline 2017–2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021–2023 (3 base years) to 2017–2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
+      <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
       <li><span class="mc-date">2026-05</span> Farm grade tree v7: MLB Production added a Bust-Rate (negative) leaf and a Conviction star-presence cap; Development promoted to the 40% top weight.</li>
       <li><span class="mc-date">2026-06</span> Consensus FV moved to ACCURACY-WEIGHTED source blending after a vintage-disciplined A/B beat equal-weight on both Spearman and AUC (weights shrunk toward equal, clamped, frozen per vintage; sources without resolved history stay at 1.0). The model accountability registry below records the eval.</li>
       <li><span class="mc-date">2026-05</span> Source-vs-source backtest published (resolved cohorts only) as the Source Comparison area.</li>
@@ -828,7 +831,7 @@ function renderGuide() {
 
   const farmAnatomy = [
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--text-secondary);">A+ tree</span>`, "farm_report_card",
-      "The org letter grade is a weighted tree: Development, MLB Production, Acquisition Strategy, and Financial branches, each built from auditable leaves."),
+      "The org letter grade is a weighted tree, value-led: a Value branch (aggregate risk-adjusted surplus), then MLB Production, Development, and Acquisition Strategy, each built from auditable leaves."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-violet);">DvM+ 112</span>`, "dvm_plus",
       "Development vs Mean - how fast the org grows the FV of prospects it already had (acquisitions nullified), 100 = league mean."),
     anat(`<span style="font-family:var(--font-mono);font-size:12px;color:var(--neon-cyan);">ToolDvM+ 108</span>`, "tools_dvm_plus",
@@ -884,6 +887,7 @@ function renderGuide() {
       </div>
     </div>
   </div>`;
+  if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
 }
 
 // ---- Part 5: interactive teaching widgets ---------------------------------
@@ -1040,6 +1044,7 @@ function _gxSurplus() {
     <div class="gx-step"><span class="gx-step-n">4</span><span class="gx-step-t">− cost (3×$${lgMin}M pre-arb + arb ${arbFr.map(f => f).join("/")})</span><span class="gx-step-v">−${_fmtMM2(cost)}</span></div>
     <div class="gx-step gx-step-sum"><span class="gx-step-n">=</span><span class="gx-step-t">framework surplus</span><span class="gx-step-v">${_fmtMM2(framework)}</span></div>
     <div class="gx-surplus-final">Published surplus value <b>${_fmtMM2(published)}</b><div class="gx-surplus-note">The published figure additionally probability-weights the outcome distribution and discounts future years at ${((vf.discount_rate || 0.09) * 100).toFixed(0)}%/yr, so it differs slightly from the flat framework walk above.</div></div>`);
+  if (window.EEPHUS_GL) { const _o = document.getElementById("gx-surplus-out"); if (_o) window.EEPHUS_GL.wire(_o); }
 }
 function _byId(id) { return document.getElementById(id); }
 function _setHTML(id, html) { const e = document.getElementById(id); if (e) e.innerHTML = html; }
@@ -1126,6 +1131,7 @@ function renderMethodology() {
   const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
   el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methInteractivesHTML();
+  if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
 }

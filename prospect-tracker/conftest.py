@@ -41,3 +41,47 @@ def _raw_surplus_engine(request):
         yield
     finally:
         cfg["enabled"] = saved
+
+
+@pytest.fixture(scope="session", autouse=True)
+def _restore_committed_build_artifacts():
+    """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +
+    generated HTML pages).
+
+    Many tests invoke generators whose output path DEFAULTS to the real tree:
+    build_site rewrites the homepage + module shells (index.html, 404.html,
+    fa/, projections/, glossary/, news/, ...) and the wire ledger; eval/export
+    helpers rewrite data/*.json (model_registry, trade_values, the *_eval
+    sidecars, collegesavant_*, etc.). That leaves the working tree dirty after
+    a run, and one writer can overwrite data/scout_reports.json - which a
+    SIBLING test (test_scout_report_history) validates - leaving a corrupted
+    file that fails on the NEXT run even though the suite was green.
+    (prospx/index.html is hand-maintained source and build_site never writes
+    it, so it is never touched here.)
+
+    Snapshot which tracked files are clean at session start, then `git checkout`
+    any the suite dirtied at session end. Files the dev/user had ALREADY
+    modified (uncommitted source edits, a fresh run_monthly regen) are detected
+    as dirty-at-start and left untouched - so this only reverts churn the TESTS
+    introduced. No-ops cleanly when git is unavailable. `--relative` restricts
+    the scope to this project subtree."""
+    import subprocess
+    from pathlib import Path
+    here = Path(__file__).resolve().parent
+
+    def _dirty() -> set[str]:
+        try:
+            out = subprocess.run(
+                ["git", "diff", "--name-only", "--relative"],
+                cwd=here, capture_output=True, text=True, check=False)
+        except (FileNotFoundError, OSError):
+            return set()  # no git in this environment -> guard is a no-op
+        return {ln.strip() for ln in out.stdout.splitlines() if ln.strip()}
+
+    dirty_at_start = _dirty()
+    yield
+    polluted = sorted(p for p in (_dirty() - dirty_at_start)
+                      if not p.startswith("..") and "/.." not in p)
+    if polluted:
+        subprocess.run(["git", "checkout", "--", *polluted],
+                       cwd=here, check=False)

@@ -275,6 +275,9 @@
   }
   function latestFv(p) {
     if (!p) return null;
+    var key = p.player_key || p.key;
+    var x = (PX().xfv && key) ? PX().xfv(key) : null;   // prospxFV is the primary grade
+    if (x && x.xfv_grade != null) return x.xfv_grade;
     var pts = p.points || [];
     if (pts.length) { var l = pts[pts.length - 1]; return l.consensus_fv != null ? l.consensus_fv : l.consensus_fv_raw; }
     return p.fv_close != null ? p.fv_close : null;
@@ -347,7 +350,7 @@
     return '<div class="eph-poll" data-poll-cid="' + escAttr(cid) + '" data-poll-opts="' + escAttr(encodeURIComponent(JSON.stringify(opts))) + '">' +
       '<div class="eph-poll-q">' + esc(q) + "</div>" + optHtml + '<div class="eph-poll-foot" data-poll-total></div></div>';
   }
-  function pvPoll(cid) { try { var s = localStorage.getItem("eph-preview.poll:" + cid); if (s) return JSON.parse(s); } catch (e) {} return { counts: { 0: 7, 1: 4, 2: 2 }, mine: null }; }
+  function pvPoll(cid) { try { var s = localStorage.getItem("eph-preview.poll:" + cid); if (s) return JSON.parse(s); } catch (e) {} return { counts: {}, mine: null }; }
   function pvSetPoll(cid, choice) {
     var p = pvPoll(cid), counts = Object.assign({}, p.counts);
     if (p.mine != null) counts[p.mine] = Math.max(0, (counts[p.mine] || 1) - 1);

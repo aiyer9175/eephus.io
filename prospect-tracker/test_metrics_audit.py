@@ -200,12 +200,13 @@ class TestPhaseB1BreakoutSignal:
 
 class TestPhaseB4ClassStrength:
     def test_class_strength_data_supports_strip(self):
-        """The Class Strength Index UI strip reads data/graduates.json
-        for per-year median FV-at-graduation. Confirm the data shape +
-        coverage is sufficient for the strip to render meaningfully."""
-        g_path = Path(__file__).parent / "data" / "graduates.json"
+        """The Class Strength Index UI strip reads data/debuts.json
+        (the graduate payload) for per-year median FV-at-graduation.
+        Confirm the data shape + coverage is sufficient for the strip
+        to render meaningfully."""
+        g_path = Path(__file__).parent / "data" / "debuts.json"
         if not g_path.exists():
-            pytest.skip("data/graduates.json not present")
+            pytest.skip("data/debuts.json not present")
         import json
         grads = json.loads(g_path.read_text(encoding="utf-8"))
         from collections import defaultdict

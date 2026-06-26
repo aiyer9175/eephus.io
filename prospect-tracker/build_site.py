@@ -1140,14 +1140,16 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         nm = p.get("player_name") or ""
         key = p.get("player_key")
         org = p.get("org")
-        # FV news = the most recent GENUINE same-source consensus move now
-        # carried on stock (basis == "same_source"): only sources grading the
-        # player at both endpoints count, so panel-composition shifts (basis
-        # "panel_update") and thin samples (confidence "low") never reach the
-        # wire. Dated at FIRST SIGHT via the ledger (the raw change date rides
-        # the daily Live point and re-stamps to today every run - see
-        # _latest_fv_change CAUTION). When stock is absent (older payloads /
-        # tests), fall back to the raw grade-change detector.
+        # FV news = the most recent GENUINE grade move carried on stock. Two
+        # bases qualify: "xfv" (the live PRIMARY grade - movement.py emits a
+        # numeric delta with a string "xFV NN.N" to_label) and the legacy
+        # "same_source" consensus move (only sources grading the player at both
+        # endpoints count, gated on high/medium confidence). Panel-composition
+        # shifts (basis "panel_update") and thin samples (confidence "low")
+        # never reach the wire. Dated at FIRST SIGHT via the ledger (the raw
+        # change date rides the daily Live point and re-stamps to today every
+        # run - see _latest_fv_change CAUTION). When stock is absent (older
+        # payloads / tests), fall back to the raw grade-change detector.
         mv = p.get("stock") or {}
         chg = None
         if p.get("status") != "debuted":
@@ -1157,6 +1159,18 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
                 step = int(round(mv["delta"]))
                 try:
                     new_grade = int(round(float(mv.get("to_label"))))
+                except (TypeError, ValueError):
+                    new_grade = None
+                if abs(step) >= 2 and new_grade is not None:
+                    chg = (str(mv.get("to_date"))[:10], step, new_grade)
+            elif (mv.get("basis") == "xfv" and mv.get("delta") is not None
+                    and mv.get("direction") not in ("flat", "debuted")):
+                step = int(round(mv["delta"]))
+                # to_label is the string "xFV NN.N" for the xfv basis; pull the
+                # number out and ceil it (owner rule: display grades round up).
+                _m = re.search(r"-?\d+(?:\.\d+)?", str(mv.get("to_label") or ""))
+                try:
+                    new_grade = int(math.ceil(float(_m.group()))) if _m else None
                 except (TypeError, ValueError):
                     new_grade = None
                 if abs(step) >= 2 and new_grade is not None:
@@ -1440,7 +1454,7 @@ def _spotlight_html(players: list) -> str:
     if not cands:
         return ""
     d, p = max(cands, key=lambda t: t[0])
-    fv = p.get("fv_close")
+    fv = _primary_fv(p)   # tier the holo border off the PRIMARY (xFV) grade, matching _fv_pill
     holo = " holo" if (fv is not None and fv >= 61) else ""
     url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""

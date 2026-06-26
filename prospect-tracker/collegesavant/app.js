@@ -506,10 +506,11 @@ function renderLeaderboard() {
   const q = state.query.toLowerCase();
   const filtered = state.players.filter((p) =>
     p.hitter_name.toLowerCase().includes(q) &&
-    (minPA <= 0 || (p.pa || 0) >= minPA) &&
+    (minPA <= 0 || p.pa == null || p.pa >= minPA) &&
     (teamF === "all" || p.team === teamF));
   filtered.sort((a, b) => dir * compareNullable(sortVal(a, state.sortKey), sortVal(b, state.sortKey)));
   const visible = filtered.slice(0, LEADERBOARD_LIMIT);
+  const hasPa = state.players.some((p) => p.pa != null);
   const teams = [...new Set(state.players.map((p) => p.team).filter(Boolean))]
     .sort((a, b) => formatTeamName(a).localeCompare(formatTeamName(b)));
   const head = LB_COLUMNS.map((c) => {
@@ -540,7 +541,7 @@ function renderLeaderboard() {
       <label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>
       <button class="control-button" type="button" data-reset>Reset</button>
     </section>
-    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${minPA > 0 ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
+    <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${(hasPa && minPA > 0) ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th>${head}</tr></thead>
       <tbody>${body || `<tr><td colspan="${LB_COLUMNS.length + 2}" class="note-line">No hitters match these filters.</td></tr>`}</tbody>
@@ -806,7 +807,7 @@ function renderProjections() {
       <thead><tr><th class="tt-team">Projection</th><th class="tt-col">r²</th><th class="tt-col">±band</th><th class="tt-col">MAE</th><th class="tt-col">P10-P90 cover</th><th class="tt-col">n pairs</th></tr></thead>
       <tbody>${accRows || `<tr><td colspan="6" class="note-line">No backtest on file.</td></tr>`}</tbody>
     </table></div></section>
-    <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. K% carries the signal (r² ~0.38); BB% and OPS mostly regress to the Single-A mean (low r²) and are shown for context, flagged. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
+    <p class="trans-note">Coverage near 80% means the P10-P90 bands are sized to the data. K% carries the signal (r² ${E.hit_k && E.hit_k.r2 != null ? "~" + E.hit_k.r2.toFixed(2) : "modest"}); BB% and OPS mostly regress to the Single-A mean (low r²) and are shown for context, flagged. Not adjusted for schedule strength or park (no conference / park table held). Stuff and tracked skills are descriptive (the CS+ index), not pro outcome forecasts.</p>
     <div class="panel-title" style="margin-top:18px;"><span>Projected Single-A board</span><span>${list.length} hitters with a projection · ranked by CS+ (pro profile)</span></div>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
       <thead><tr><th class="tt-rank">#</th><th class="tt-team">Player</th><th class="tt-col">CS+</th><th class="tt-col">Proj A K%</th><th class="tt-col">Proj A BB%</th><th class="tt-col">Proj A OPS</th></tr></thead>

@@ -565,6 +565,10 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # doesn't have to grep the file.
     _post_export_summary(out_path, all_snaps, log)
 
+    # Stamp run + data_freshness so a manual --rebuild-only produces the same
+    # "as of" freshness block as daily/monthly runs (mirrors run_daily / main).
+    _patch_export_run_summary(out_path, log)
+
 
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False) -> None:

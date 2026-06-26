@@ -150,12 +150,12 @@ function _tmSeedFromURL() {
   if (kind === "prospect") {
     const p = (DATA.players || []).find(x => x.player_key === key);
     const sv = p && p.surplus && p.surplus.value_mm;
-    if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name,
+    if (sv != null) { _TM.a.push({ kind: "prospect", key, name: p.player_name, pos: p.position || "", org: p.org || "",
       sub: `${p.position || ""} · ${p.org || ""} · FV ${p.fv_close ?? "?"}`, mm: sv }); _TM.seeded = true; }
   } else if (kind === "mlb") {
     if (!_TM.detail) return;                 // detail still loading; seed on the re-render
     const d = _TM.detail[key];
-    if (d && d.proj && d.proj.surNpv != null) _TM.a.push({ kind: "mlb", key, name: d.name,
+    if (d && d.proj && d.proj.surNpv != null) _TM.a.push({ kind: "mlb", key, name: d.name, pos: d.pos || "", org: d.team || "",
       sub: `${d.pos || ""} · ${d.team || "FA"} · contract surplus`, mm: d.proj.surNpv / 1e6 });
     _TM.seeded = true;
   } else { _TM.seeded = true; }
@@ -683,7 +683,15 @@ function renderTradeBoard() {
     wrap.innerHTML = '<div class="spinner-wrap"><span class="spinner"></span></div>';
     fetch(base + "trade_values.json" + vp, { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => { _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters(); })
+      .then(d => {
+        _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
+        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
+        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
+        fetch(base + "grpo_scores.json" + vp, { cache: "no-cache" })
+          .then(r => r.ok ? r.json() : null)
+          .then(g => { if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; } })
+          .catch(() => {});
+      })
       .catch(e => {
         wrap.innerHTML = `<div class="empty-state">Trade Board data not found (<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code> to generate it.<br><small>${e}</small></div>`;
       });

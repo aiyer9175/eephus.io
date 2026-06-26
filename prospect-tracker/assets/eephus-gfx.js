@@ -312,7 +312,7 @@
   function open(spec) {
     if (!spec || !window.EEPHUS_HUB) return;
     _spec = spec;
-    _opts.format = spec.kind === "card" ? "wide" : "wide";
+    _opts.format = "wide";
     _opts.accent = null;            // default to the module's own accent
     _opts.count = (spec.board && spec.board.defaultCount) || 25;
     _origTheme = document.documentElement.getAttribute("data-theme");

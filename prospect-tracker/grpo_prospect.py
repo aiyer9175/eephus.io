@@ -639,7 +639,8 @@ if __name__ == "__main__":
     args = ap.parse_args()
 
     ts    = json.loads(Path("data/timeseries.json").read_text())
-    grads = json.loads(Path("data/graduates.json").read_text())
+    gpath = Path("data/graduates.json")
+    grads = json.loads((gpath if gpath.exists() else Path("data/debuts.json")).read_text())
     players  = ts.get("players") or []
     lnorms   = ts.get("level_norms")
 

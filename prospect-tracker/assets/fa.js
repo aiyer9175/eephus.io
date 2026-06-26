@@ -145,7 +145,7 @@
     // Winter selector - current class is the default; future winters are
     // the SAME constructed-class pipeline run on Spotrac's forward pages
     // (projected members; the signing tracker goes live with the winter).
-    const curYear = (D.fa_class && D.fa_class.class_year) || new Date().getFullYear() + 1;
+    const curYear = (D.fa_meta && D.fa_meta.class_year) || (D.fa_class && D.fa_class.class_year) || new Date().getFullYear() + 1;
     const winters = [null, curYear + 1, curYear + 2];
     const wchips = winters.map(y => {
       const label = y ? `${y - 1}-${String(y).slice(2)}` : `${curYear - 1}-${String(curYear).slice(2)}`;
@@ -761,7 +761,7 @@
       <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
       ${m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)} (${money(m.signedAav)} AAV)`}
       ${m.signedDate ? `<span class="fa-sub"> &middot; first seen ${m.signedDate}</span>` : ""}
-      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &mdash; miss ${formatMetric((m.signedGuar - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / m.signedGuar)}` : ""}</p>` : "";
+      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &mdash; miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
     const arcBlock = m.fvArc ? `
       <h3>Prospect to payday</h3>
       <div class="fa-arc">${_fvArcSvg(m.fvArc)}</div>

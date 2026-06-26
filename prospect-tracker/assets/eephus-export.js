@@ -329,7 +329,7 @@
     {
       menu.appendChild(el("div", "ex-menu-sep"));
       var imgActions = [
-        { action: "copy", label: "Copy image", note: "paste into Twitter / Discord" },
+        { action: "copy", label: "Copy image", note: "paste into X / Discord" },
         { action: "download", label: "Download image", note: "PNG" },
       ];
       if (navigator.canShare) imgActions.splice(1, 0, { action: "share", label: "Share…", note: "system share sheet" });
