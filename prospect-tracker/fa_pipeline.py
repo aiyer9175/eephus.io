@@ -185,6 +185,14 @@ def refresh_current_class(class_year: int, force: bool = False) -> dict:
             log.info("fa events %d: %s", class_year, ev)
     except Exception:                                    # noqa: BLE001 — tracker is additive
         log.exception("fa winter event tracking failed — continuing")
+    # The class page was re-fetched this run, so signings were re-confirmed even
+    # when the quiet in-season market produced no NEW signing rows. Record that
+    # check so the freshness stamp tracks "last checked", not "last NEW signing"
+    # (which can be months stale in-season and falsely trip the UI 14-day flag).
+    try:
+        storage.touch_fa_signings(class_year)
+    except Exception:                                    # noqa: BLE001
+        log.exception("fa signings freshness touch failed — continuing")
     return cls
 
 

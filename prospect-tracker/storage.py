@@ -14243,6 +14243,19 @@ def load_fa_signings(class_year: int | None = None) -> dict:
     return _fa_load("fa_signings", ("player_key", "class_year"), where, args)
 
 
+def touch_fa_signings(class_year: int) -> int:
+    """Bump fetched_at on the current class's signings to record that the FA
+    pipeline re-checked them this run. A quiet in-season market produces no NEW
+    signing rows, so without this the freshness stamp would freeze at the last
+    actual signing and the UI's source-staleness check would read 'stale' even
+    though the signings are current. Returns the number of rows touched."""
+    with connect() as con:
+        cur = con.execute(
+            "UPDATE fa_signings SET fetched_at = datetime('now') WHERE class_year = ?",
+            (class_year,))
+        return cur.rowcount
+
+
 def upsert_fa_team_payroll(season: int, teams: list[dict]) -> int:
     rows = {(t["team"], season): t for t in teams if t.get("team")}
     return _fa_upsert("fa_team_payroll", ("team", "season"), rows)
