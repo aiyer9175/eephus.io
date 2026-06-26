@@ -574,22 +574,31 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
               no_cache: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
 
-    Pulls and updates ONLY data that changes between monthly grade releases:
-      • player transactions (drives promotions/demotions + the move timeline)
-      • Injured-List stints (+ append-only il_history timeline)
-      • roster status (debut / 40-man / options / service phase)
-      • debuts & graduations
-      • trades
+    Pulls and updates the data that moves between monthly grade releases, so
+    the outcome-grounded xFV grade (re-scored at the end via rebuild_only)
+    tracks it day to day. Every input xFV consumes is refreshed here:
+      • daily Live board captures (TJStats / MLB Pipeline) -> consensus FV
+      • current-season stat lines (d5c) -> the MiLB rate features xFV uses
+        (k_rel / obp_rel / ops_rel / era_rel, derived from the statline)
+      • incremental Statcast metrics (d5d) -> the Statcast tilt, for players
+        with newly tracked games at Statcast levels
+      • Injured-List stints (+ append-only il_history) -> the injury tilt
+      • player transactions, roster status, debuts & graduations, trades
 
-    It then rebuilds data/timeseries.json from the refreshed DB via the same
-    no-scrape `rebuild_only()` path. It deliberately does NOT touch grades,
-    tool evaluations, Arkmetrics, farm grades, or the full ranking — those
-    stay on the monthly cadence in `main()`. The two jobs write disjoint
-    tables (run_daily: transactions/il_status/il_history/roster_status/trades;
-    run_monthly: snapshots/sabermetrics/statcast/metric_snapshots/…), so they
-    never double-write the same row. Every step is idempotent; a failure in
-    one fetch logs and continues so a single flaky endpoint can't strand the
-    rebuild.
+    It then rebuilds data/timeseries.json from the refreshed DB via the
+    no-scrape `rebuild_only()` path, which re-runs the xFV pipeline
+    (xfv_export.regen_all) against the fresh consensus / stats / injuries, so a
+    consensus move, a new stat line, or an IL change all flow into xFV the same
+    night.
+
+    The HEAVY, slow-HTTP work stays monthly in `main()`: full career-stat
+    backfill, the full Statcast season scrape, the MLB-only sabermetrics
+    endpoint (wRC+/xFIP, NOT an xFV input), scout-grade snapshots, Arkmetrics,
+    farm grades, and the full ranking. run_daily and run_monthly run on
+    different nights (deploy: `--daily` most nights, full on the 1st), so a row
+    the daily incremental path writes is simply overwritten by the monthly full
+    pass; never simultaneously. Every step is idempotent; a failure in one
+    fetch logs and continues so a single flaky endpoint can't strand the run.
     """
     logging.basicConfig(
         level=logging.INFO,
