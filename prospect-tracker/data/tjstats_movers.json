@@ -1,6 +1,17 @@
 {
- "as_of": "2026-06-25",
+ "as_of": "2026-06-26",
  "older_board": "June 2026",
- "newer_board": "Live 2026-06-25",
- "movers": []
+ "newer_board": "Live 2026-06-26",
+ "movers": [
+  {
+   "player_key": "josh_adamczewski",
+   "name": "Josh Adamczewski",
+   "mlbam_id": "815304",
+   "rank": 100,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  }
+ ]
 }
