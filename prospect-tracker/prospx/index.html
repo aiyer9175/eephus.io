@@ -38035,9 +38035,13 @@ function renderFarmSystems() {
     // (event-based "since the last real change", from farm_rank_history), and
     // falls back to the client last-visit delta only when no server payload is
     // present yet (older data builds). delta > 0 = climbed toward #1.
+    // Shown ONLY at the default 7y window: movement is tracked against the
+    // canonical org.farm_rank (7y), but the displayed rank re-ranks per the
+    // selected grade window, so the chip would contradict the rank beside it
+    // at any other window (e.g. a #30-at-3y card carrying its +2-at-7y chip).
     const rm = org.rank_movement;
     let deltaChip = "";
-    if (rm && typeof rm === "object") {
+    if (win === "7y" && rm && typeof rm === "object") {
       if (rm.delta != null && rm.direction && rm.direction !== "flat") {
         const up = rm.delta > 0;
         const since = _freshDateLabel(rm.from_date);
@@ -38046,7 +38050,7 @@ function renderFarmSystems() {
         deltaChip = `<div class="farm-rank-delta ${up ? 'stock-up' : 'stock-down'}" title="${escapeHtml(tip)}">${up ? '+' : ''}${rm.delta}${up ? '↑' : '↓'}</div>`;
       }
       // rm present but flat → no chip (history hasn't moved / is still warming up).
-    } else {
+    } else if (win === "7y") {
       // Legacy fallback: last-visit delta from localStorage (G21).
       const prev = lastVisitRanks[org.org];
       const rankDelta = (prev != null && org.farm_rank != null) ? (prev - org.farm_rank) : null;
