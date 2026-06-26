@@ -600,6 +600,12 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 40px; }
   .eephus-wrap { padding: 0 1rem 3rem; }
   .hero { padding: 36px 0 24px; }
+  /* Module masthead: stack the title block above the description on phones so
+     the title isn't crushed into a ~80px column beside the italic subtitle
+     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each. */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .section-head--byline { align-items: flex-start; }
+  .section-head .section-sub { font-size: .8rem; }
 }
 
 /* ===========================================================================
