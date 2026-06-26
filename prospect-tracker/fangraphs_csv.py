@@ -505,6 +505,14 @@ _FG_SLUG_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Explicit publish dates for TEAM-ARTICLE boards (slug -> ISO date). These
+# articles don't match the FG board calendar, and the age-back-solve fallback
+# can land a few days off the actual drop, so when we know the publish date we
+# pin it here. Add an entry per ingested team article.
+_ARTICLE_PUBLISH_DATES: dict[str, str] = {
+    "tampa_bay_rays_2026": "2026-06-26",
+}
+
 
 def _resolve_calendar_date(slug: str) -> str | None:
     """Try to resolve `slug` to an FG publish date via the calendar
@@ -557,6 +565,11 @@ def _detect_publish_date(slug: str,
         log.info("fangraphs_csv: publish date %s for slug '%s' via "
                  "FG calendar table", cal, slug)
         return cal
+    pinned = _ARTICLE_PUBLISH_DATES.get(slug)
+    if pinned is not None:
+        log.info("fangraphs_csv: publish date %s for slug '%s' via "
+                 "article-publish-date override", pinned, slug)
+        return pinned
     earliest = date(2018, 1, 1)
     estimates: list[date] = []
     for row in summary_rows:
