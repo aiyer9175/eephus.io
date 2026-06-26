@@ -21295,6 +21295,16 @@ function playerSurplusMM(p) {
   return estimateSurplusValueMM(p.fv_close, isP, p.position, { player: p });
 }
 
+// xFV-aware surplus $ for GFX / share cards, so they match the on-screen board
+// (makeSurplusCell / the surplus sort lead with the xFV surplus when xFV is the
+// primary grade). Falls back to the baked consensus surplus (playerSurplusMM)
+// when xFV has no value or the grade toggle is on consensus.
+function displaySurplusMM(p) {
+  const xf = (typeof getXfv === "function") ? getXfv(p) : null;
+  if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") return xf.surplus_mm;
+  return playerSurplusMM(p);
+}
+
 function estimateSurplusValueMM(fv, isPitcher, position, opts) {
   if (fv == null) return null;
   const f = Number(fv);
@@ -30236,7 +30246,8 @@ function _gfxRow(item, kind, meta) {
   } else if (kind === "draftee") {
     if (p.draft_stock_plus != null) value = "Stk+ " + Math.round(p.draft_stock_plus);
   } else if (kind === "prospect") {
-    if (p.surplus && p.surplus.value_mm != null && typeof fmtSvMM === "function") value = fmtSvMM(p.surplus.value_mm);
+    const _sv = displaySurplusMM(p);
+    if (_sv != null && typeof fmtSvMM === "function") value = fmtSvMM(_sv);
   }
   return { fv, name: p.player_name || "", mlbam: p.mlbam_id,
            org: (kind === "draftee" || kind === "overseas") ? null : p.org,
@@ -30860,8 +30871,9 @@ function buildProspectCard(snap) {
     // Rank leads the rail (Open Beta priority: rankings up top, once -
     // the eyebrow no longer repeats it).
     if (p.overall_rank != null) tile("Rank", `#${p.overall_rank}`, accent);
-    if (p.surplus && p.surplus.value_mm != null && typeof fmtSvMM === "function") {
-      tile("Surplus", fmtSvMM(p.surplus.value_mm), accent);
+    const _heroSv = displaySurplusMM(p);
+    if (_heroSv != null && typeof fmtSvMM === "function") {
+      tile("Surplus", fmtSvMM(_heroSv), accent);
     }
     if (p.statcast_plus != null && isFinite(p.statcast_plus)) {
       const v = Math.round(p.statcast_plus);
@@ -31270,7 +31282,7 @@ function buildCompareCard(snap) {
              sc: (typeof getStatcastPlus === "function") ? getStatcastPlus(p) : null,
              rps: rpsObj ? rpsObj.plus : null,
              dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
-             surplus: (p.surplus && p.surplus.value_mm != null) ? p.surplus.value_mm : null };
+             surplus: displaySurplusMM(p) };
   });
   const allPit = data.every(d => d.isPit), allHit = data.every(d => !d.isPit);
 
