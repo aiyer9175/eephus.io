@@ -16124,7 +16124,7 @@ function _farmDetailSidebarCards(org, activeTab) {
   }
   // Overview (default) - composite signals + league peer ranks + SC+.
   const signals = [
-    org.farm_rank != null ? { key: "Farm rank", value: `#${org.farm_rank}`, valColor: org.farm_rank <= 5 ? "var(--up)" : org.farm_rank >= 25 ? "var(--down)" : "var(--text-primary)" } : null,
+    (() => { const _fr = farmWindowRank(org); return _fr != null ? { key: "Farm rank", value: `#${_fr}`, valColor: _fr <= 5 ? "var(--up)" : _fr >= 25 ? "var(--down)" : "var(--text-primary)" } : null; })(),
     org.acquisition_strategy_score != null ? { key: "Acquisition", value: org.acquisition_strategy_score } : null,
     org.development_score != null ? { key: "Development", value: org.development_score } : null,
     org.financial_score != null ? { key: "Value", value: org.financial_score } : null,
@@ -16134,13 +16134,13 @@ function _farmDetailSidebarCards(org, activeTab) {
   // Top 5 farms by rank (so the user sees where they're being measured against).
   const topFarms = (DATA.org_summary || [])
     .slice()
-    .sort((a, b) => (a.farm_rank ?? 99) - (b.farm_rank ?? 99))
+    .sort((a, b) => (farmWindowRank(a) ?? 99) - (farmWindowRank(b) ?? 99))
     .slice(0, 5)
     .map(e => ({
       key: e.org,
       name: e.org,
       tag: "",
-      value: e.farm_rank != null ? `#${e.farm_rank}` : " - ",
+      value: farmWindowRank(e) != null ? `#${farmWindowRank(e)}` : " - ",
     }));
   return [
     { type: "signals", title: "System grades", signals },
@@ -17509,7 +17509,7 @@ const CHART_AXES = {
     { key: "signed_bonus_usd", label: "Bonus ($M)",       getter: p => { const b = p.signed_bonus_usd || p.proj_bonus_usd; return b ? b / 1e6 : null; }, fmt: v => "$" + v.toFixed(2) + "M" },
   ],
   farms: [
-    { key: "farm_rank",      label: "Farm rank",          getter: o => o.farm_rank,                          fmt: v => "#" + v },
+    { key: "farm_rank",      label: "Farm rank",          getter: o => farmWindowRank(o),                    fmt: v => "#" + v },
     { key: "tiebreaker",     label: "Tiebreaker score",   getter: o => (o.farm_tiebreaker || {}).score,       fmt: v => v.toFixed(1) },
     { key: "dvm_plus_3y",    label: "DvM+ (3y)",          getter: o => (o.dvm_plus || {})["3y"],            fmt: v => formatMetric(v, 'plus') },
     { key: "top_end",        label: "Top-end points",     getter: o => o.top_end_points,                     fmt: v => v.toFixed(1) },
@@ -30176,9 +30176,14 @@ function _gfxRow(item, kind, meta) {
   const ageStr = a => (a != null && isFinite(a)) ? "Age " + Number(a).toFixed(1) : null;
   if (kind === "farm") {
     const o = item || {};
-    return { rank: o.farm_rank, fv: null, org: o.org, mlbam: null,
+    // Window-aware rank + letter so the GFX matches the board (which sorts +
+    // grades on farm_score_by_window[activeWindow]); the canonical farm_rank /
+    // grades.overall diverge from that order and produced "#25 at position 30".
+    const _w = state.formWindow || "7y";
+    const _winLetter = ((o.letter_by_window || {})[_w]) || (o.grades && o.grades.overall) || "";
+    return { rank: farmWindowRank(o), fv: null, org: o.org, mlbam: null,
              name: (typeof fullOrgName === "function" ? fullOrgName(o.org) : o.org) || o.org || " - ",
-             meta: "", value: (o.grades && o.grades.overall) ? o.grades.overall : "" };
+             meta: "", value: _winLetter };
   }
   if (kind === "leader") {
     const p = item.p || {}, r = item.r || {};
@@ -31201,7 +31206,7 @@ function buildFarmCard(snap) {
         <div style="display:flex;align-items:center;justify-content:center;height:64px;min-width:64px;">${logo}</div>
         <div style="min-width:0;">
           <div style="font-family:var(--font-retro);font-size:40px;font-weight:700;line-height:1.02;color:${P.text};">${escapeHtml(orgName)} <span style="font-size:21px;color:${P.text3};font-weight:700;">Farm System</span></div>
-          <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (org.farm_rank != null ? org.farm_rank : " - ")))} of 30 · ${escapeHtml(String(org.count != null ? org.count : (meta.gradedCount || " - ")))} prospects tracked</div>
+          <div style="font-family:var(--font-mono);font-size:16px;color:${P.text2};margin-top:8px;">Farm rank #${escapeHtml(String(meta.farmRank != null ? meta.farmRank : (farmWindowRank(org) != null ? farmWindowRank(org) : " - ")))} of 30 · ${escapeHtml(String(org.count != null ? org.count : (meta.gradedCount || " - ")))} prospects tracked</div>
         </div>
       </div>
       <div style="text-align:center;flex:none;">
@@ -34818,7 +34823,13 @@ function makeFarmReportCard(org) {
     const svgW = COL_SUB_LEFT + SUB_W + PAD_L;
     const rootY = svgH / 2;
 
-    const rootColor = gradeColor(g.overall);
+    // Window-aware root so the tree headline (letter · rank · score) matches the
+    // report header + composite, which grade on farm_score_by_window[activeWindow].
+    // The branches below remain the static 4-branch composite breakdown.
+    const _frWin = state.formWindow || "7y";
+    const _frLetter = ((org.letter_by_window || {})[_frWin]) || g.overall || ' - ';
+    const _frScore = (org.farm_score_by_window || {})[_frWin];
+    const rootColor = gradeColor(_frLetter);
 
     // Root → branch elbow paths. Stroke colored by branch grade.
     const rootBranchPaths = branchLayouts.map(b => {
@@ -34867,9 +34878,9 @@ function makeFarmReportCard(org) {
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY - 18}" text-anchor="middle"
             style="font-family:var(--font-sans);font-size:9px;letter-spacing:0.10em;text-transform:uppercase;font-weight:600;fill:var(--text-tertiary);">FARM GRADE</text>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 7}" text-anchor="middle"
-            style="font-family:var(--font-serif);font-size:30px;font-weight:700;fill:${rootColor};">${escapeHtml(g.overall || ' - ')}</text>
+            style="font-family:var(--font-serif);font-size:30px;font-weight:700;fill:${rootColor};">${escapeHtml(_frLetter)}</text>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootY + 24}" text-anchor="middle"
-            style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">#${org.farm_rank ?? ' - '} of ${n} · ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}</text>`;
+            style="font-family:var(--font-mono);font-size:10px;fill:var(--text-secondary);">#${farmWindowRank(org) ?? ' - '} of ${n} · ${_frScore != null ? _frScore.toFixed(1) : (org.farm_score != null ? org.farm_score.toFixed(1) : ' - ')}</text>`;
 
     // Branch circles + labels (condensed v31.3).
     const branchNodes = branchLayouts.map(b => {
@@ -35071,7 +35082,11 @@ function makeFarmReportCard(org) {
     );
     const cSvgH = yMid + ROOT_H / 2 + PAD_T + 14;
     const cSvgW = branchXs[branchXs.length - 1] + BRANCH_R + PAD_L + 8;
-    const cRootColor = gradeColor(g.overall);
+    // Window-aware root (see tree 1) so the composite headline matches the header.
+    const _cfWin = state.formWindow || "7y";
+    const _cfLetter = ((org.letter_by_window || {})[_cfWin]) || g.overall || ' - ';
+    const _cfScore = (org.farm_score_by_window || {})[_cfWin];
+    const cRootColor = gradeColor(_cfLetter);
 
     // Top eyebrow ribbon - newspaper section header style.
     const ribbon = `
@@ -35099,13 +35114,13 @@ function makeFarmReportCard(org) {
       <line x1="${PAD_L + 18}" y1="${rootTopY + 24}" x2="${PAD_L + ROOT_W - 18}" y2="${rootTopY + 24}"
             stroke="${cRootColor}" stroke-width="0.5" opacity="0.5"/>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 70}" text-anchor="middle"
-            style="font-family:var(--font-serif);font-size:54px;font-weight:700;fill:${cRootColor};">${escapeHtml(g.overall || ' - ')}</text>
+            style="font-family:var(--font-serif);font-size:54px;font-weight:700;fill:${cRootColor};">${escapeHtml(_cfLetter)}</text>
       <line x1="${PAD_L + 18}" y1="${rootTopY + 80}" x2="${PAD_L + ROOT_W - 18}" y2="${rootTopY + 80}"
             stroke="${cRootColor}" stroke-width="0.5" opacity="0.5"/>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 95}" text-anchor="middle"
-            style="font-family:var(--font-serif);font-style:italic;font-size:11px;fill:var(--text-secondary);">#${org.farm_rank ?? ' - '} of ${n}</text>
+            style="font-family:var(--font-serif);font-style:italic;font-size:11px;fill:var(--text-secondary);">#${farmWindowRank(org) ?? ' - '} of ${n}</text>
       <text x="${PAD_L + ROOT_W / 2}" y="${rootTopY + 108}" text-anchor="middle"
-            style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);letter-spacing:0.06em;">farm_score ${org.farm_score != null ? org.farm_score.toFixed(1) : ' - '}</text>`;
+            style="font-family:var(--font-mono);font-size:9px;fill:var(--text-tertiary);letter-spacing:0.06em;">farm_score ${_cfScore != null ? _cfScore.toFixed(1) : (org.farm_score != null ? org.farm_score.toFixed(1) : ' - ')}</text>`;
 
     // Connector "double rule" lines from root to each branch.
     const cPaths = _branchOrder.map((k, i) => {
@@ -35189,13 +35204,10 @@ function makeFarmReportCard(org) {
   const _winOverall = ((org.letter_by_window || {})[_winActive]) || g.overall || ' - ';
   const _winScore   = ((org.farm_score_by_window || {})[_winActive]);
   const _winScoreShown = _winScore != null ? _winScore : org.farm_score;
-  const _winRank = (() => {
-    const all = (DATA.org_summary || [])
-      .map(o => (o.farm_score_by_window || {})[_winActive])
-      .filter(v => v != null);
-    if (_winScore == null || !all.length) return org.farm_rank;
-    return all.filter(v => v > _winScore).length + 1;
-  })();
+  // Exact board-order rank at the active window (ties broken deterministically),
+  // so the report card "#N" matches the board + GFX rather than a count-based
+  // tally that double-assigns on score ties.
+  const _winRank = farmWindowRank(org, _winActive);
   return `
     <div class="grade-tree">
       <div class="grade-tree-composite" style="border-color:${gradeColor(_winOverall)}66;background:linear-gradient(135deg, ${gradeColor(_winOverall)}12, transparent);">
@@ -35804,10 +35816,13 @@ function makeFarmCompareBlock(currentOrg) {
   const _HIT_BKTS = ["C", "INF", "OF"];
   const _PIT_BKTS = ["SP", "RP"];
   // Header row.
-  const overallRowA = ranksA.overall ?? currentOrg.farm_rank;
-  const overallRowB = ranksB.overall ?? otherOrg.farm_rank;
-  const overallGA = gradesA.overall || " - ";
-  const overallGB = gradesB.overall || " - ";
+  // Overall = the window-aware rank + letter (matches the board + report header);
+  // the per-branch rows below keep the canonical component_ranks / branch grades.
+  const _cmpWin = state.formWindow || "7y";
+  const overallRowA = farmWindowRank(currentOrg) ?? ranksA.overall;
+  const overallRowB = farmWindowRank(otherOrg) ?? ranksB.overall;
+  const overallGA = ((currentOrg.letter_by_window || {})[_cmpWin]) || gradesA.overall || " - ";
+  const overallGB = ((otherOrg.letter_by_window || {})[_cmpWin]) || gradesB.overall || " - ";
   const _overallRow = (() => {
     const pctA = overallRowA != null ? Math.round(100 * (n - overallRowA + 1) / n) : null;
     const pctB = overallRowB != null ? Math.round(100 * (n - overallRowB + 1) / n) : null;
@@ -35879,7 +35894,7 @@ function makeFarmComparePicker(currentOrg) {
   if (!currentOrg) return "";
   const others = ((DATA && DATA.org_summary) || [])
     .filter(o => o && o.org && o.org !== currentOrg.org)
-    .map(o => ({ org: o.org, rank: o.farm_rank ?? " - " }))
+    .map(o => ({ org: o.org, rank: farmWindowRank(o) ?? " - " }))
     .sort((a, b) => (a.rank === " - " ? 99 : a.rank) - (b.rank === " - " ? 99 : b.rank));
   if (!others.length) return "";
   const opts = others.map(o =>
@@ -35926,8 +35941,11 @@ function makeFarmLeagueRankBar(org) {
       <span style="font-family:var(--font-retro-mono);font-variant-numeric:tabular-nums;color:var(--text-tertiary);text-align:right;font-size:11px;">#${rank ?? ' - '} of ${n}</span>
     </div>`;
   };
-  const overallLetter = grades.overall || ' - ';
-  const overallRank = ranks.overall ?? org.farm_rank;
+  // Overall = the window-aware rank + letter (matches the board + report header);
+  // the per-branch rows below stay on the canonical component_ranks / branch grades.
+  const _lrWin = state.formWindow || "7y";
+  const overallLetter = ((org.letter_by_window || {})[_lrWin]) || grades.overall || ' - ';
+  const overallRank = farmWindowRank(org) ?? ranks.overall;
   const overallPct = overallRank != null ? Math.round(100 * (n - overallRank + 1) / n) : 0;
   const overallTone = overallLetter === ' - ' ? 'var(--text-tertiary)' : gradeColor(overallLetter);
   return `<div class="detail-title">League rank vs the 30-org field <span class="detail-title-sub">Percentile bars across each branch grade. Longer bar = better rank. Click into a tab for the per-leaf breakdown.</span></div>
@@ -37466,6 +37484,42 @@ function _farmSortPill(o) {
   return _pillHTML(label, fmt(Number(v)));
 }
 
+// ── Farm rank, window-aware (single source of truth for the "#N") ───────────
+// The displayed farm rank must match the order the board + GFX present orgs in.
+// The board sorts (and grades + scores) on farm_score_by_window[activeWindow];
+// the SERVER farm_rank is computed off the legacy canonical farm_score, which
+// uses different leaf scoring and so diverges from the per-window composite (at
+// 7y it disagreed with the board order for 24/30 orgs). Showing that server rank
+// next to the per-window order produced contradictions - e.g. an org sorted dead
+// last at 7y still badged "#25". This ranks all 30 orgs by the SAME per-window
+// composite the board sorts on (ties broken by the server rank so the order is
+// deterministic and identical to farmSortedOrgs's default branch), so the "#N"
+// equals the board position at every window. Falls back to the server farm_rank
+// only when the per-window bake is absent (older payload).
+let _farmRankByWin = {};
+function _farmRankMap(win) {
+  if (_farmRankByWin[win]) return _farmRankByWin[win];
+  const list = (DATA.org_summary || []).filter(o => o && o.org);
+  const scored = list.slice().sort((a, b) => {
+    const sa = (a.farm_score_by_window || {})[win];
+    const sb = (b.farm_score_by_window || {})[win];
+    if (sa != null && sb != null && sb !== sa) return sb - sa;
+    if (sa == null && sb != null) return 1;
+    if (sb == null && sa != null) return -1;
+    return (a.farm_rank ?? 99) - (b.farm_rank ?? 99);
+  });
+  const map = {};
+  scored.forEach((o, i) => { map[o.org] = i + 1; });
+  if (list.length) _farmRankByWin[win] = map;   // don't memoize a pre-load empty map
+  return map;
+}
+function farmWindowRank(org, win) {
+  if (!org || !org.org) return org && org.farm_rank;
+  win = win || state.formWindow || "7y";
+  if ((org.farm_score_by_window || {})[win] == null) return org.farm_rank;
+  return _farmRankMap(win)[org.org] ?? org.farm_rank;
+}
+
 function farmSortedOrgs() {
   let orgs = (DATA.org_summary || []).slice();
   // Search filter: match against the 3-letter code OR full team name so
@@ -38210,8 +38264,11 @@ function renderFarmSystems() {
   // orgs they care about regardless of sort.
   const pinned = orgs.filter(o => farmWatchlistHas(o.org));
   const rest   = orgs.filter(o => !farmWatchlistHas(o.org));
-  const pinnedRows = pinned.map((o, i) => buildRow(o, i + 1)).join("");
-  const restRows   = rest.map((o, i) => buildRow(o, i + 1)).join("");
+  // Rank cell = the org's TRUE window rank (not the list position), so it stays
+  // correct under search/tendency filters, ascending sort, pinned-to-top, and
+  // non-composite sort dimensions (the "Rank" column always reads the farm rank).
+  const pinnedRows = pinned.map((o) => buildRow(o, farmWindowRank(o))).join("");
+  const restRows   = rest.map((o) => buildRow(o, farmWindowRank(o))).join("");
   const dividerRow = (pinned.length && rest.length)
     ? `<div class="farm-divider">All farms</div>`
     : "";
@@ -45933,7 +45990,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
   const header = `
     <a href="#" onclick="event.preventDefault();goHome();" class="back-link">← Back to list</a>
     <div class="newsprint-eyebrow">
-      <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${org.farm_rank ?? ' - '} of 30</span>
+      <span class="newsprint-eyebrow-label">Farm System Report · ${escapeHtml(org.org)} · #${farmWindowRank(org) ?? ' - '} of 30</span>
       <span class="newsprint-eyebrow-meta">${rosterPlayersAll.length} prospects tracked · ${org.total_fv != null ? org.total_fv.toFixed(0) + " total FV" : " - "}</span>
     </div>
     <div class="detail-page-header" style="${orgStripe(org.org)}">
@@ -45943,7 +46000,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           <div class="player-display-name">${escapeHtml(fullOrgName(org.org))}</div>
           <div class="player-display-meta">
             <span style="font-family:var(--font-mono);color:var(--text-tertiary);letter-spacing:0.08em;margin-right:8px;font-weight:600;">${escapeHtml(org.org)}</span>
-            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${org.farm_rank}</strong> of 30 · ${rosterPlayersAll.length} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
+            Farm rank <strong style="font-family:var(--font-mono);color:var(--text-primary);" title="v40 composite: 65% Value (aggregate risk-adjusted surplus) · 18% MLB Production (raw graduate WAR) · 9% Development · 8% Acquisition">#${farmWindowRank(org)}</strong> of 30 · ${rosterPlayersAll.length} prospects tracked · Total FV <strong style="font-family:var(--font-mono);color:var(--text-primary);">${org.total_fv != null ? org.total_fv.toFixed(1) : " - "}</strong>
           </div>
         </div>
       </div>
@@ -46035,7 +46092,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .sort((a, b) => b.mm - a.mm)
       .slice(0, 6);
     _gfxSet("farm-detail", "farm-card", [org], {
-      top5: _top5, dist: _dist, farmRank: org.farm_rank,
+      top5: _top5, dist: _dist, farmRank: farmWindowRank(org),
       surplusStr: surplusValue, surplusMM: farmSurplusBreakdown.total,
       dvm: (org.dvm_plus || {}), grades: (org.grades || {}),
       gradedCount: (org.prospects || []).length, topSurplus: _topSurplus,
@@ -49198,7 +49255,7 @@ function makeFarmCompareSideBySide(farms) {
           <div class="csbs-name" onclick="closeCompareAndGoFarm('${escapeHtml(o.org)}');">${escapeHtml(fullOrgName(o.org))}
             <span style="margin-left:6px;font-family:var(--font-mono);color:${gradeColor(grade)};font-weight:700;">${escapeHtml(grade)}</span>
           </div>
-          <div class="csbs-meta">#${o.farm_rank ?? " - "} of 30 · ${o.count ?? 0} tracked · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : " - "}</div>
+          <div class="csbs-meta">#${farmWindowRank(o) ?? " - "} of 30 · ${o.count ?? 0} tracked · Total FV ${o.total_fv != null ? o.total_fv.toFixed(1) : " - "}</div>
           ${tpHtml}
         </div>
       </div>
@@ -49253,7 +49310,7 @@ function makeFarmCompareSideBySide(farms) {
     return `<span style="color:${color};font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${sign}${v.toFixed(1)}</span>`;
   };
   const rows = [
-    ["Farm rank", o => o.farm_rank != null ? `#${o.farm_rank}` : " - ", true],
+    ["Farm rank", o => farmWindowRank(o) != null ? `#${farmWindowRank(o)}` : " - ", true],
     ["Total FV", o => o.total_fv != null ? o.total_fv.toFixed(1) : " - ", true],
     ["Prospects tracked", o => String(o.count ?? 0), true],
     ["Avg age", o => o.avg_age != null ? o.avg_age.toFixed(1) : " - ", true],
