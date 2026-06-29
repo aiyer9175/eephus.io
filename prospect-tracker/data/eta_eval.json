@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-25",
+ "generated_at": "2026-06-29",
  "vintage_years": [
   2018,
   2019,
@@ -10,14 +10,14 @@
  ],
  "accounting": {
   "listed": 9210,
-  "excluded_post_debut": 611,
+  "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3753,
-  "level_from_statsapi": 3242,
-  "level_from_career_stats": 1604,
-  "debuted": 4148,
-  "censored_active": 2337,
-  "washed_out": 751,
+  "no_level_age_fallback": 3723,
+  "level_from_statsapi": 3413,
+  "level_from_career_stats": 1454,
+  "debuted": 4145,
+  "censored_active": 2332,
+  "washed_out": 750,
   "overdue": 888
  },
  "conventions": {
@@ -28,44 +28,44 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4148,
-  "mae": 1.419,
-  "bias": 1.016,
-  "within_1y": 0.588,
+  "n": 4145,
+  "mae": 1.425,
+  "bias": 1.026,
+  "within_1y": 0.586,
   "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3400,
-  "mae": 1.975,
-  "bias": 1.752,
+  "n": 3422,
+  "mae": 1.982,
+  "bias": 1.765,
   "within_1y": 0.379,
   "exact": 0.168
  },
  "champion_on_baseline_rows": {
-  "n": 3400,
-  "mae": 1.439,
-  "bias": 1.092,
-  "within_1y": 0.578,
-  "exact": 0.211
+  "n": 3422,
+  "mae": 1.443,
+  "bias": 1.102,
+  "within_1y": 0.577,
+  "exact": 0.212
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2874,
-  "mae": 0.858,
-  "bias": 0.233,
-  "within_1y": 0.822,
-  "exact": 0.36
+  "n": 2878,
+  "mae": 0.851,
+  "bias": 0.212,
+  "within_1y": 0.818,
+  "exact": 0.375
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2779,
-  "mae": 1.479,
-  "bias": 1.172,
-  "within_1y": 0.56,
-  "exact": 0.192
+  "n": 2784,
+  "mae": 1.456,
+  "bias": 1.143,
+  "within_1y": 0.57,
+  "exact": 0.198
  },
  "v38_frozen_on_km_rows": {
-  "n": 2779,
-  "mae": 1.995,
-  "bias": 1.836,
+  "n": 2784,
+  "mae": 2.005,
+  "bias": 1.848,
   "within_1y": 0.407,
   "exact": 0.136
  },
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 788,
+  "v38": 789,
   "km_recalibrated": 888,
-  "censored_n": 2337
+  "censored_n": 2332
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -120,149 +120,149 @@
  },
  "by_level": {
   "DSL": {
-   "n": 55,
-   "mae": 3.564,
-   "bias": 3.564,
-   "within_1y": 0.127,
+   "n": 56,
+   "mae": 3.571,
+   "bias": 3.571,
+   "within_1y": 0.125,
    "exact": 0.036
   },
   "CPX": {
-   "n": 314,
-   "mae": 1.573,
-   "bias": 1.14,
-   "within_1y": 0.535,
-   "exact": 0.226
+   "n": 323,
+   "mae": 1.604,
+   "bias": 1.17,
+   "within_1y": 0.529,
+   "exact": 0.223
   },
   "A": {
-   "n": 894,
-   "mae": 1.582,
-   "bias": 1.192,
-   "within_1y": 0.53,
-   "exact": 0.181
+   "n": 906,
+   "mae": 1.596,
+   "bias": 1.21,
+   "within_1y": 0.524,
+   "exact": 0.182
   },
   "A+": {
-   "n": 727,
-   "mae": 1.649,
-   "bias": 1.413,
-   "within_1y": 0.472,
-   "exact": 0.151
+   "n": 719,
+   "mae": 1.638,
+   "bias": 1.408,
+   "within_1y": 0.476,
+   "exact": 0.156
   },
   "AA": {
-   "n": 895,
+   "n": 906,
    "mae": 1.222,
-   "bias": 0.894,
-   "within_1y": 0.656,
-   "exact": 0.222
+   "bias": 0.9,
+   "within_1y": 0.655,
+   "exact": 0.223
   },
   "AAA": {
-   "n": 515,
-   "mae": 0.961,
-   "bias": 0.518,
-   "within_1y": 0.751,
-   "exact": 0.334
+   "n": 512,
+   "mae": 0.957,
+   "bias": 0.527,
+   "within_1y": 0.754,
+   "exact": 0.336
   }
  },
  "by_vintage": {
   "2018": {
-   "n": 650,
-   "mae": 1.255,
-   "bias": 0.566,
-   "within_1y": 0.638,
-   "exact": 0.266
+   "n": 648,
+   "mae": 1.256,
+   "bias": 0.596,
+   "within_1y": 0.633,
+   "exact": 0.275
   },
   "2019": {
-   "n": 775,
-   "mae": 1.25,
-   "bias": 0.649,
-   "within_1y": 0.653,
-   "exact": 0.258
+   "n": 771,
+   "mae": 1.266,
+   "bias": 0.659,
+   "within_1y": 0.649,
+   "exact": 0.254
   },
   "2020": {
-   "n": 728,
-   "mae": 1.201,
-   "bias": 0.758,
-   "within_1y": 0.668,
+   "n": 726,
+   "mae": 1.211,
+   "bias": 0.77,
+   "within_1y": 0.667,
    "exact": 0.255
   },
   "2021": {
-   "n": 716,
-   "mae": 1.916,
-   "bias": 1.687,
+   "n": 717,
+   "mae": 1.922,
+   "bias": 1.693,
    "within_1y": 0.409,
    "exact": 0.109
   },
   "2022": {
-   "n": 712,
-   "mae": 1.463,
-   "bias": 1.211,
-   "within_1y": 0.572,
-   "exact": 0.212
+   "n": 714,
+   "mae": 1.465,
+   "bias": 1.21,
+   "within_1y": 0.571,
+   "exact": 0.211
   },
   "2023": {
-   "n": 567,
-   "mae": 1.434,
-   "bias": 1.275,
-   "within_1y": 0.582,
-   "exact": 0.203
+   "n": 569,
+   "mae": 1.431,
+   "bias": 1.269,
+   "within_1y": 0.583,
+   "exact": 0.204
   }
  },
  "residual_by_level": {
   "DSL": {
-   "n": 55,
-   "mean": 3.564,
-   "median": 4
+   "n": 56,
+   "mean": 3.571,
+   "median": 4.0
   },
   "CPX": {
-   "n": 314,
-   "mean": 1.14,
-   "median": 1.0
+   "n": 323,
+   "mean": 1.17,
+   "median": 1
   },
   "A": {
-   "n": 894,
-   "mean": 1.192,
+   "n": 906,
+   "mean": 1.21,
    "median": 1.0
   },
   "A+": {
-   "n": 727,
-   "mean": 1.413,
-   "median": 2
+   "n": 719,
+   "mean": 1.408,
+   "median": 1
   },
   "AA": {
-   "n": 895,
-   "mean": 0.894,
-   "median": 1
+   "n": 906,
+   "mean": 0.9,
+   "median": 1.0
   },
   "AAA": {
-   "n": 515,
-   "mean": 0.518,
-   "median": 1
+   "n": 512,
+   "mean": 0.527,
+   "median": 1.0
   }
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3400,
-   "mae": 1.439,
-   "bias": 1.092,
-   "within_1y": 0.578,
-   "exact": 0.211
+   "n": 3422,
+   "mae": 1.443,
+   "bias": 1.102,
+   "within_1y": 0.577,
+   "exact": 0.212
   },
   "bias_corrected": {
-   "n": 3400,
-   "mae": 1.232,
-   "bias": 0.75,
+   "n": 3422,
+   "mae": 1.233,
+   "bias": 0.737,
    "within_1y": 0.659,
-   "exact": 0.26
+   "exact": 0.262
   },
   "overdue": {
    "champion": 328,
-   "bias_corrected": 427
+   "bias_corrected": 426
   },
   "shippable_level_bias_adj": {
-   "A": 0.5,
-   "DSL": 0.5,
-   "A+": 0.5,
-   "CPX": 0.5,
    "AAA": 0.5,
+   "CPX": 0.5,
+   "DSL": 0.5,
+   "A": 0.5,
+   "A+": 0.5,
    "AA": 0.5
   },
   "cap": 0.5,
@@ -271,9 +271,9 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2337,
-  "overdue_rate": 0.38,
-  "washed_out": 751,
+  "censored_active": 2332,
+  "overdue_rate": 0.381,
+  "washed_out": 750,
   "washed_out_share_of_listed": 0.104
  },
  "empirical_tables_by_vintage": {
@@ -282,108 +282,108 @@
    "A": 3,
    "AA": 1,
    "CPX": 4,
-   "DSL": 4.0,
-   "AAA": 1.0
+   "DSL": 4,
+   "AAA": 0
   },
   "2020": {
-   "A": 3,
+   "A": 3.0,
    "A+": 2.0,
-   "AA": 1,
-   "CPX": 4,
-   "AAA": 0.0,
-   "DSL": 4.0
-  },
-  "2021": {
-   "A": 3,
-   "A+": 2,
    "AA": 1,
    "CPX": 4.0,
    "AAA": 0.0,
    "DSL": 4
   },
-  "2022": {
-   "A": 2.0,
+  "2021": {
+   "A": 3,
    "A+": 2,
    "AA": 1,
-   "CPX": 3.0,
-   "AAA": 0,
+   "CPX": 4,
+   "AAA": 0.0,
    "DSL": 4.0
+  },
+  "2022": {
+   "A": 2.0,
+   "A+": 2.0,
+   "AA": 1.0,
+   "CPX": 3.0,
+   "AAA": 0.0,
+   "DSL": 4
   },
   "2023": {
    "A": 2,
    "A+": 1.0,
-   "AA": 1.0,
-   "CPX": 3.0,
-   "AAA": 0,
-   "DSL": 3.0
+   "AA": 1,
+   "CPX": 3,
+   "AAA": 0.0,
+   "DSL": 3
   }
  },
  "km_survival_by_level": {
   "AAA": [
-   0.4,
-   0.24,
-   0.1733,
-   0.1517,
-   0.1396,
-   0.1366,
-   0.1366,
-   0.1366,
-   0.1366
+   0.392,
+   0.2379,
+   0.1742,
+   0.1524,
+   0.1403,
+   0.1373,
+   0.1373,
+   0.1373,
+   0.1373
   ],
   "AA": [
-   0.6476,
-   0.3623,
-   0.2549,
-   0.2138,
-   0.2032,
-   0.1982,
-   0.1893,
-   0.1893,
-   0.1893
+   0.6457,
+   0.3596,
+   0.2524,
+   0.2117,
+   0.2012,
+   0.1962,
+   0.1875,
+   0.1875,
+   0.1875
   ],
   "A+": [
-   0.8981,
-   0.6827,
-   0.5025,
-   0.4301,
-   0.3946,
-   0.3774,
-   0.3746,
-   0.3746,
-   0.3746
+   0.9,
+   0.6856,
+   0.5068,
+   0.4314,
+   0.3977,
+   0.3803,
+   0.3775,
+   0.3775,
+   0.3775
   ],
   "A": [
-   0.9702,
-   0.8217,
-   0.609,
-   0.4507,
-   0.3293,
-   0.271,
-   0.2471,
-   0.2355,
-   0.2355
+   0.9689,
+   0.817,
+   0.6036,
+   0.4472,
+   0.3253,
+   0.2677,
+   0.2441,
+   0.2325,
+   0.2325
   ],
   "CPX": [
-   0.9934,
-   0.9358,
-   0.7987,
-   0.5885,
-   0.3324,
-   0.2099,
-   0.1431,
-   0.1376,
-   0.1319
+   0.9892,
+   0.9286,
+   0.79,
+   0.5823,
+   0.3284,
+   0.209,
+   0.1393,
+   0.134,
+   0.1284
   ],
   "DSL": [
    0.9945,
-   0.9779,
-   0.9282,
-   0.8343,
-   0.6695,
-   0.6012,
-   0.541,
-   0.541,
-   0.541
+   0.978,
+   0.9231,
+   0.8297,
+   0.6658,
+   0.5978,
+   0.5381,
+   0.5381,
+   0.5381
   ]
  }
 }

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-25T13:09:08Z",
+ "generated_at": "2026-06-29T17:38:12Z",
  "raters": [
   "fangraphs",
   "mlb_pipeline_draft"
@@ -13,22 +13,22 @@
  ],
  "common_n": 672,
  "per_source_spearman": {
-  "fangraphs": 0.148,
-  "mlb_pipeline_draft": 0.1504
+  "fangraphs": 0.1485,
+  "mlb_pipeline_draft": 0.1477
  },
  "live_weights": {
-  "fangraphs": 0.9935,
-  "mlb_pipeline_draft": 1.0065
+  "fangraphs": 1.002,
+  "mlb_pipeline_draft": 0.998
  },
  "pooled": {
   "n": 672,
   "equal": {
-   "spearman": 0.1635,
-   "auc": 0.7196
+   "spearman": 0.1612,
+   "auc": 0.7288
   },
   "weighted": {
-   "spearman": 0.1642,
-   "auc": 0.7198
+   "spearman": 0.1585,
+   "auc": 0.7299
   }
  },
  "loo_cv": {
@@ -37,8 +37,8 @@
     "year": 2018,
     "n": 185,
     "train_weights": {
-     "fangraphs": 0.9794,
-     "mlb_pipeline_draft": 1.0206
+     "fangraphs": 0.9853,
+     "mlb_pipeline_draft": 1.0147
     },
     "debut_rate": 0.5081
    },
@@ -46,8 +46,8 @@
     "year": 2019,
     "n": 193,
     "train_weights": {
-     "fangraphs": 0.9579,
-     "mlb_pipeline_draft": 1.0421
+     "fangraphs": 0.9798,
+     "mlb_pipeline_draft": 1.0202
     },
     "debut_rate": 0.456
    },
@@ -55,8 +55,8 @@
     "year": 2020,
     "n": 162,
     "train_weights": {
-     "fangraphs": 1.0294,
-     "mlb_pipeline_draft": 0.9706
+     "fangraphs": 1.0226,
+     "mlb_pipeline_draft": 0.9774
     },
     "debut_rate": 0.4136
    },
@@ -64,8 +64,8 @@
     "year": 2021,
     "n": 132,
     "train_weights": {
-     "fangraphs": 1.0141,
-     "mlb_pipeline_draft": 0.9859
+     "fangraphs": 1.03,
+     "mlb_pipeline_draft": 0.97
     },
     "debut_rate": 0.4697
    }
@@ -73,16 +73,16 @@
   "pooled": {
    "n": 672,
    "equal": {
-    "spearman": 0.1635,
-    "auc": 0.7196
+    "spearman": 0.1612,
+    "auc": 0.7288
    },
    "weighted": {
-    "spearman": 0.1647,
-    "auc": 0.7303
+    "spearman": 0.1626,
+    "auc": 0.7365
    }
   }
  },
- "ship": true,
+ "ship": false,
  "notes": [
   "two-source A/B (FanGraphs vs MLB Pipeline); ESPN + any other source vote at 1.0 (no resolved draft history)",
   "resolved class = (today - draft_year) >= 5; outcome = cumulative MLB bWAR (0 if never debuted)",
