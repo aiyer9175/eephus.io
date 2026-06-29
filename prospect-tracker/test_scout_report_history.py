@@ -23,16 +23,25 @@ class ScoutReportHistory(unittest.TestCase):
             raise unittest.SkipTest("scout_reports.json missing — run rebuild_only first")
         cls.sidecar = json.loads(SR_PATH.read_text(encoding="utf-8"))
 
+    @staticmethod
+    def _sources(by_src):
+        """(src, entries) for real per-source report lists, SKIPPING reserved
+        underscore-prefixed metadata keys. The builder rides `_ids` (the
+        source-id alias map the frontend reads as sidecar._ids) alongside the
+        report lists as a reserved sub-key — see storage.py — so it is metadata,
+        not a report list."""
+        return [(s, e) for s, e in by_src.items() if not s.startswith("_")]
+
     def test_entries_are_lists(self):
         """Every per-source entry must be a list (not the legacy dict shape)."""
         for pkey, by_src in self.sidecar.items():
-            for src, entries in by_src.items():
+            for src, entries in self._sources(by_src):
                 self.assertIsInstance(entries, list,
                     f"{pkey}/{src} should be a list, got {type(entries).__name__}")
 
     def test_entries_newest_first(self):
         for pkey, by_src in self.sidecar.items():
-            for src, entries in by_src.items():
+            for src, entries in self._sources(by_src):
                 if len(entries) < 2:
                     continue
                 dates = [e.get("date") for e in entries]
@@ -43,7 +52,7 @@ class ScoutReportHistory(unittest.TestCase):
         """Dedup invariant: no two cycles for the same source should
         carry the same SHA1 hash (i.e. identical text)."""
         for pkey, by_src in self.sidecar.items():
-            for src, entries in by_src.items():
+            for src, entries in self._sources(by_src):
                 hashes = [e.get("hash") for e in entries if e.get("hash")]
                 self.assertEqual(len(hashes), len(set(hashes)),
                     f"{pkey}/{src} has duplicate hashes — dedup broken")
