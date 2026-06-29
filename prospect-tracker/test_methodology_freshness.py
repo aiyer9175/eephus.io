@@ -23,6 +23,7 @@ ROOT = Path(__file__).parent
 MODEL_GLOSSARY = {
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
+    "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
     "fa_market": ["fa_projection_engine", "deal_plus"],
     "fa_rational_value": ["rational_value", "contract_surplus"],
     "fa_dpw_series": ["winter_dpw", "dpw_tier"],

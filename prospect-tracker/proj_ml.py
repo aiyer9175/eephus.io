@@ -57,6 +57,72 @@ MODEL_DIR = Path(__file__).parent / "model" / "proj_lgbm"
 MODEL_VERSION = "proj_lgbm_v1"
 HORIZONS = 5
 QUANTILES = (0.10, 0.25, 0.50, 0.75, 0.90)
+
+# --- Defensive prior (HIT-ONLY), from the bWAR defensive split -------------
+# Forward read of sustainable defensive value, separated from the noisy single-
+# season defensive component embedded in the total-WAR lags. The total WAR lags
+# (war_l1/l2/l3) already carry defense, but a REGRESSED, position-anchored read
+# is more stable than one fluky dWAR season -- the hypothesis the audit flagged
+# (wills-models-for-xfv-audit: defense is a real WAR component for MLB players,
+# unlike the offense-dominated prospect WAR target, where it was rejected).
+#
+# SHIPPED 2026-06-29: pos_adj_prior ALONE -- the positional-adjustment prior
+# ("where the org trusts them to play"), the report's thesis (position, not
+# noisy fielding rates). Gated forward-chained (tools/def_feature_backtest.py ->
+# data/proj_def_feature_eval.json): HOLDOUT pooled hit MAE -0.0027, star slice
+# -0.0285; dev improves too; the gain concentrates in established regulars
+# (base WAR >= 4) whose defensive value is real and persistent. Ablation:
+# def_war_prior gains similarly (collinear -- DON'T stack, "+both" is worse);
+# the def_missing flag is INERT (0.0000, redundant with the war_l*_missing
+# flags) and is dropped. () = dormant. Candidate set: DEF_FEATURE_CANDIDATES.
+DEF_FEATURE_CANDIDATES = ("def_war_prior", "pos_adj_prior", "def_missing")
+DEF_FEATURE_KEYS: tuple = ("pos_adj_prior",)
+_DEF_SHRINK_PA = 600.0
+_DEF_HIST_PATH = Path(__file__).parent / "data" / "mlb_def_history.json"
+_DEF_HIST_CACHE: dict | None = None
+
+
+def _def_history() -> dict:
+    """{ 'mlbam:season': {war_def, runs_position, pa} } from data/mlb_def_history.json
+    (built by tools/build_def_history.py off the same bWAR pull as the corpus)."""
+    global _DEF_HIST_CACHE
+    if _DEF_HIST_CACHE is None:
+        try:
+            _DEF_HIST_CACHE = (json.loads(_DEF_HIST_PATH.read_text(encoding="utf-8"))
+                               .get("rows", {}))
+        except (OSError, ValueError):
+            _DEF_HIST_CACHE = {}
+    return _DEF_HIST_CACHE
+
+
+def _def_prior(mlbam, base: int) -> dict:
+    """Reliability-shrunk defensive prior from COMPLETED seasons base-1..3 ONLY
+    (leakage-free -- the same window the war lags read). Position players only.
+
+      def_war_prior  WAR_def per 650 PA, shrunk toward 0 (league-average) by the
+                     window's PA exposure -- the full defensive-value read.
+      pos_adj_prior  positional adjustment (runs) per 650 PA, shrunk -- the stable
+                     "where the org trusts them to play" signal (the report's
+                     thesis: position, not noisy fielding rates).
+      def_missing    1.0 when the player has no MLB defensive history in the window
+                     (rookies / pre-debut), so the tree can gate the read."""
+    hist = _def_history()
+    swd = spos = spa = 0.0
+    if mlbam:
+        for k in (1, 2, 3):
+            r = hist.get(f"{int(mlbam)}:{base - k}")
+            if r:
+                swd += r["war_def"]
+                spos += r["runs_position"]
+                spa += r["pa"]
+    if spa <= 0:
+        return {"def_war_prior": 0.0, "pos_adj_prior": 0.0, "def_missing": 1.0}
+    denom = spa + _DEF_SHRINK_PA
+    return {"def_war_prior": round(swd * 650.0 / denom, 4),
+            "pos_adj_prior": round(spos * 650.0 / denom, 4),
+            "def_missing": 0.0}
+
+
 SEED = 20260611
 
 # Feature schema — versioned; order matters (LightGBM is positional).
@@ -102,6 +168,7 @@ def feature_names(side: str) -> list[str]:
         names += [f"m_{c}", f"rel_{c}"]          # Marcel-regressed + league-relative lag1
     if side == "hit":
         names += ["xiso_l1", "xiso_gap_l1", "xiso_missing"]
+        names += list(DEF_FEATURE_KEYS)
     names += [f"champ_h{h}" for h in range(1, HORIZONS + 1)]
     return names
 
@@ -204,6 +271,9 @@ def build_features(hist: list[dict], side: str, base: int, age: float | None,
         feats += [x if x is not None else 0.0,
                   (x - iso1) if (x is not None and iso1 is not None) else 0.0,
                   1.0 if x is None else 0.0]
+        if DEF_FEATURE_KEYS:
+            dvals = _def_prior(mlbam, base)
+            feats += [dvals[k] for k in DEF_FEATURE_KEYS]
     feats += [champ["war_by_year"][h - 1] for h in range(1, HORIZONS + 1)]
     return feats
 

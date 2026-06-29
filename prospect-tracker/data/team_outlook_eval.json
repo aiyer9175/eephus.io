@@ -2,13 +2,13 @@
  "generated_at": "2026-06-29",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 976.3,
-  "remainder_recenter_wins_per_team": 0.91,
-  "roster_war_sum_y1": 976.3,
+  "roster_war_sum": 977.0,
+  "remainder_recenter_wins_per_team": 0.89,
+  "roster_war_sum_y1": 977.0,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2407.4,
-  "raw_wins_sum_y1": 2407.4,
+  "raw_wins_sum": 2407.9,
+  "raw_wins_sum_y1": 2407.9,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 438,
@@ -21,32 +21,32 @@
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 976.3,
-    "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 0.91
+    "roster_war_sum": 977.0,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": 0.89
    },
    {
     "season": 2028,
-    "roster_war_sum": 646.7,
+    "roster_war_sum": 647.0,
     "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 11.48
+    "remainder_recenter_wins_per_team": 11.46
    },
    {
     "season": 2029,
-    "roster_war_sum": 279.2,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 24.33
+    "roster_war_sum": 279.7,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 24.32
    },
    {
     "season": 2030,
-    "roster_war_sum": 222.6,
+    "roster_war_sum": 222.7,
     "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 26.1
+    "remainder_recenter_wins_per_team": 26.09
    },
    {
     "season": 2031,
-    "roster_war_sum": 195.4,
-    "wins_sum": 2430.1,
+    "roster_war_sum": 195.2,
+    "wins_sum": 2429.9,
     "remainder_recenter_wins_per_team": 26.93
    }
   ],

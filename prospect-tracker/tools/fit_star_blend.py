@@ -131,7 +131,7 @@ def fit() -> dict:
                          "lambda": best[0]}
     ship = any(v > 0 for v in blend.values())
     out = {
-        "fitted_at": "2026-06-11",
+        "fitted_at": "2026-06-29",
         "protocol": "forward-chained dev bases 2017-2021; star slice = "
                     "base-season WAR >= 4 (ex-ante star_l1); lambda grid "
                     f"{list(LAMBDA_GRID)}; guard: star MAE +{MAE_GUARD} max; "
@@ -141,6 +141,21 @@ def fit() -> dict:
         "dev_table": table,
         "ship": ship,
     }
+    # Carry forward the holdout_confirmation disclosure across dev refits. It is a
+    # SEPARATE validation (a holdout run + recorded verdicts), NOT produced by this dev
+    # fit, so a routine refit (e.g. after a feature-schema change) would otherwise drop
+    # it -- test_star_blend_pinned_to_artifact enforces its presence. Only carried when
+    # the SHIPPED (positive) lambdas are unchanged; a lambda change demands a fresh
+    # holdout look, so we deliberately let the test fail until that re-confirmation runs.
+    if OUT.exists():
+        try:
+            prev = json.loads(OUT.read_text(encoding="utf-8"))
+            prev_lam = {k: v for k, v in (prev.get("lambda_by_horizon") or {}).items() if v > 0}
+            new_lam = {k: v for k, v in blend.items() if v > 0}
+            if "holdout_confirmation" in prev and prev_lam == new_lam:
+                out["holdout_confirmation"] = prev["holdout_confirmation"]
+        except (OSError, ValueError):
+            pass
     OUT.write_text(json.dumps(out, indent=1), encoding="utf-8")
     log.info("wrote %s", OUT)
     return out

@@ -66,6 +66,37 @@ def test_no_population_drift_vs_champion(fitted):
                                   corpus["league"]) is None
 
 
+def test_def_prior_leakage_shrink_and_missing(monkeypatch):
+    """The defensive prior reads ONLY completed seasons base-1..3 (leakage-free,
+    same window as the WAR lags), reliability-shrinks per-650 by PA exposure, and
+    flags players with no MLB defensive history."""
+    hist = {
+        "10:2023": {"war_def": 2.0, "runs_position": 3.0, "pa": 600},
+        "10:2022": {"war_def": 2.0, "runs_position": 3.0, "pa": 600},
+        "10:2021": {"war_def": 2.0, "runs_position": 3.0, "pa": 600},
+        # base-year season: a (fake) collapse that must NEVER enter a base-2024 read
+        "10:2024": {"war_def": -9.0, "runs_position": -9.0, "pa": 600},
+    }
+    monkeypatch.setattr(proj_ml, "_DEF_HIST_CACHE", hist)
+    p = proj_ml._def_prior(10, 2024)            # reads 2023/2022/2021 only
+    assert p["def_missing"] == 0.0
+    # leakage trap: the negative 2024 season must not pull the prior down
+    assert p["pos_adj_prior"] > 1.0
+    # exact shrink: sum_pos 9 * 650 / (sum_pa 1800 + shrink 600)
+    assert abs(p["pos_adj_prior"] - (9 * 650.0 / (1800 + proj_ml._DEF_SHRINK_PA))) < 1e-6
+    # no history -> missing flag, zero prior
+    assert proj_ml._def_prior(999, 2024) == {
+        "def_war_prior": 0.0, "pos_adj_prior": 0.0, "def_missing": 1.0}
+
+
+def test_def_prior_is_hit_only_and_shipped():
+    """pos_adj_prior is in the HIT schema only (defense ~ irrelevant to the pitcher
+    WAR target), and ships in DEF_FEATURE_KEYS (gate-validated 2026-06-29)."""
+    assert "pos_adj_prior" in proj_ml.feature_names("hit")
+    assert "pos_adj_prior" not in proj_ml.feature_names("pit")
+    assert proj_ml.DEF_FEATURE_KEYS == ("pos_adj_prior",)
+
+
 def test_predict_path_quantiles_monotone_and_unfloored(fitted):
     """Quantile heads must come back sorted (q10<=...<=q90) and the floor
     contract is NO floor: synthetic models that cross + go negative are
