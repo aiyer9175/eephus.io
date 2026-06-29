@@ -948,6 +948,28 @@ def build_draft_export() -> dict:
     # Overperformers leaderboard.
     _attach_overperformance(classes)
 
+    # Tendency-driven mock draft for the current pre-draft class. Build the
+    # three draft tendency panels FRESH from the DB here (rather than reading the
+    # org_tendencies.json sidecar, which the pipeline regenerates AFTER this
+    # export, so the file would always be one generation stale and absent on a
+    # first-ever run). attach_mock_draft falls back to the sidecar, then to pure
+    # best-player-available, if this fresh build is unavailable.
+    try:
+        import storage
+        from org_tendencies import draft_panels
+        with storage.connect() as con:
+            _dpos, _dtraits, _dslot = draft_panels(con)
+        _tendencies = {"draftPos": _dpos, "draftTraits": _dtraits, "slot": _dslot}
+    except Exception:
+        log.exception("mock_draft: fresh tendency build failed - "
+                      "falling back to the org_tendencies.json sidecar")
+        _tendencies = None
+    try:
+        from mock_draft import attach_mock_draft
+        attach_mock_draft(classes, _tendencies)
+    except Exception:
+        log.exception("mock_draft attach crashed - continuing without it")
+
     return {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "classes":      classes,

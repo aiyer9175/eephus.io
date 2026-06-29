@@ -9091,6 +9091,8 @@
                 title="Post-draft signing tracker: bonus vs. slot, team spend vs. pool, unsigned picks">Results &amp; Bonuses</button>
         <button class="chip" data-draft-view="lottery"
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
+        <button class="chip" data-draft-view="mock-draft"
+                title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -21854,7 +21856,7 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft"];
   const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
@@ -21865,15 +21867,23 @@ async function renderDraft() {
   const _lotteryCls = classes.filter(c => c.lottery_odds && c.lottery_odds.length)
                              .sort((a, b) => b.year - a.year)[0] || null;
   const _anyLottery = !!_lotteryCls;
+  // Mock Draft, like Lottery, is inherently next-draft data living on ONE class
+  // (the upcoming pre-draft board). Surface it in any year mode whenever a class
+  // carries a mock and render that class regardless of the selected year.
+  const _mockCls = classes.filter(c => c.mock_draft && c.mock_draft.picks && c.mock_draft.picks.length)
+                          .sort((a, b) => b.year - a.year)[0] || null;
+  const _anyMock = !!_mockCls;
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
-      (state.draftView === "lottery" && !_anyLottery)) {
+      (state.draftView === "lottery" && !_anyLottery) ||
+      (state.draftView === "mock-draft" && !_anyMock)) {
     state.draftView = isOverall ? "class-strength" : "rankings";
   }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
     const view = b.dataset.draftView;
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
+    if (view === "mock-draft" && !_anyMock) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
@@ -21917,6 +21927,7 @@ async function renderDraft() {
     case "results":        return _renderDraftResults(host, cls);
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
+    case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
@@ -22620,6 +22631,97 @@ function _renderDraftOrder(host, cls) {
     </div>
     <table class="draft-table">
       <thead>${head}</thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+}
+
+// Mock Draft - our pick-by-pick projection of the upcoming draft. The board
+// (consensus rank + Draft Stock+) anchors each pick; org tendencies, bonus-pool
+// behavior, and signability nudge the fit within a small window of best-
+// available. All of this is baked in mock_draft.py; here we just render it.
+function _renderMockDraft(host, cls) {
+  const mock = cls && cls.mock_draft;
+  const picks = (mock && mock.picks) || [];
+  if (!picks.length) {
+    host.innerHTML = _draftEmpty(
+      `No mock draft for ${cls ? cls.year : "this class"}`,
+      "A mock is built only for the upcoming, not-yet-drafted class once its pick order and a ranked board are both on file.");
+    return;
+  }
+  // Pick-type chip (HS vs COL, side-agnostic) beside the position.
+  const _poolChip = (p) => {
+    const hs = _isHSPlayer(p);
+    return `<span style="font-size:9px;font-weight:700;letter-spacing:.3px;padding:0 4px;border-radius:2px;
+      background:${hs ? "rgba(224,64,160,.16)" : "rgba(90,200,250,.14)"};
+      color:${hs ? "var(--spend-draft)" : "var(--neon-cyan)"};">${hs ? "HS" : "COL"}</span>`;
+  };
+  // Value vs. board: a prospect ranked higher than this slot is "value" (they
+  // slid to the org); ranked lower is a "reach". 0 = on slot.
+  const _valueCell = (p) => {
+    const d = p.value_delta || 0;
+    if (d <= -3) {
+      return `<span style="color:var(--neon-cyan);" title="Board #${p.consensus_pick} taken at pick ${p.pick_overall} - ${Math.abs(d)} spots of value">Value +${Math.abs(d)}</span>`;
+    }
+    if (d >= 3) {
+      return `<span style="color:var(--neon-orange);" title="Board #${p.consensus_pick} taken at pick ${p.pick_overall} - ${d} spots early">Reach ${d}</span>`;
+    }
+    return `<span style="color:var(--text-tertiary);" title="Board #${p.consensus_pick}, on slot">on slot</span>`;
+  };
+  const _fitChips = (p) => {
+    const tags = p.fit_tags || [];
+    let chips = tags.map(t =>
+      `<span style="font-size:9px;padding:0 5px;border-radius:2px;background:var(--bg-tertiary);
+        color:var(--text-secondary);white-space:nowrap;">${escapeHtml(t)}</span>`).join(" ");
+    if (p.bpa_passed && p.bpa_passed.player_name) {
+      chips += ` <span style="font-size:9px;color:var(--text-tertiary);" title="Best player still on the board at this pick">over ${escapeHtml(p.bpa_passed.player_name)}</span>`;
+    }
+    return chips || "<span style='color:var(--text-tertiary);font-size:9px;'>best available</span>";
+  };
+
+  let rows = "";
+  let lastRound = null;
+  for (const p of picks) {
+    const rl = String(p.round_label || "");
+    if (rl !== lastRound) {
+      lastRound = rl;
+      const label = /^\d+$/.test(rl) ? `Round ${rl}` : rl;
+      rows += `<tr><td colspan="8" style="padding:8px 8px 4px;font-size:11px;font-weight:700;
+        letter-spacing:.4px;text-transform:uppercase;color:var(--text-tertiary);
+        background:var(--bg-secondary);">${escapeHtml(label)}</td></tr>`;
+    }
+    const fv = (p.consensus_fv_raw != null) ? fvCeil(p.consensus_fv_raw) : p.consensus_fv;
+    const logo = _collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p));
+    const nameCell = p.player_key
+      ? `<a href="#" onclick="event.preventDefault();goToDraftee('${escapeHtml(p.player_key)}');" style="color:inherit;text-decoration:none;">${escapeHtml(p.player_name || "")}</a>`
+      : escapeHtml(p.player_name || "");
+    rows += `<tr>
+      <td style="text-align:center;font-weight:600;">${p.pick_overall}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(p.team, "sm")}<strong>${escapeHtml(p.team || "?")}</strong></span></td>
+      <td><span class="draft-cell-ico">${logo}${nameCell}</span></td>
+      <td style="white-space:nowrap;">${escapeHtml(p.position || "")} ${_poolChip(p)}</td>
+      <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}${p.consensus_fv_plus ? "<span style='font-size:9px;'>+</span>" : ""}</td>
+      <td style="text-align:center;font-weight:700;color:${_stockPlusColor(p.draft_stock_plus)};">${p.draft_stock_plus != null ? p.draft_stock_plus : "-"}</td>
+      <td style="text-align:center;font-size:11px;">${_valueCell(p)}</td>
+      <td style="font-size:10px;">${_fitChips(p)}</td>
+    </tr>`;
+  }
+
+  const nDev = picks.filter(p => p.bpa_passed).length;
+  // mock.basis (from mock_draft.py) is the single source of truth for the
+  // methodology sentence; the rest is per-render stats so the two never drift.
+  const meta = `${escapeHtml(mock.basis || "")}`
+    + ` · ${picks.length} picks`
+    + ` · ${nDev} pick${nDev === 1 ? "" : "s"} differ from straight best-available`
+    + ` · DS+ = Draft Stock+ (100 = class median)`
+    + ` · a projection, not a prediction`;
+  host.innerHTML = `
+    ${_draftCaption(`${cls.year} mock draft`, meta)}
+    <table class="draft-table">
+      <thead><tr>
+        <th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
+        <th style="text-align:center;">FV</th><th style="text-align:center;" title="Draft Stock+ - class-normalized rank index, 100 = median">DS+</th>
+        <th style="text-align:center;">Value</th><th>Why</th>
+      </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
 }
