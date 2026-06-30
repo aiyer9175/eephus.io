@@ -2494,24 +2494,43 @@ def _expected_control_war(fv, is_pitcher, exposure_seasons, age=None, position=N
     return ew["mean"] if ew else None
 
 
+# Concave exponent for the FanGraphs-shaped re-spread of the FV 20-45 low end (see
+# realized_implied_fv). <1 makes FV rise fast off zero WAR (FanGraphs' 30/40/45 ladder
+# spans only a small WAR band), so a positive-but-low projection reads up-down/bench,
+# not org. 0.45 lands a ~0.6 6yr-WAR breakout (e.g. a CPX masher) in the mid-30s.
+_LOWEND_FG_EXP = 0.45
+
+
 def realized_implied_fv(realized_war, is_pitcher: bool, *, exposure_seasons=None,
                         age=None, position=None) -> float | None:
     """Invert the FV-projection core: the FV whose FV-implied expected control-window
-    WAR equals `realized_war` over the same exposure. This is the per-player target
-    each source's FV is scored against -- reuses expected_war (no separate lookup).
-    Monotone -> bisection; clamps to the [20, 80] grade range."""
+    WAR equals `realized_war` over the same exposure. Monotone -> bisection on the upper
+    range; clamps to the [20, 80] grade range.
+
+    LOW END (FV 20-45): the bucket-inversion COLLAPSES here. The org-guy outcome tail
+    (even a 20-FV prospect becomes a real player ~1% of the time) inflates
+    expected_control_war(<=~44) to ~1 WAR, so every positive-but-low projection maps to the
+    FV-20 floor and the FanGraphs 30/40/45 ladder (org -> up-down -> bench -> low reg) is
+    unreachable. Instead we re-spread the [0, war45] WAR range across FV [20, 45] with a
+    concave (FanGraphs-shaped) curve, so a genuine breakout reads up-down/bench, not org.
+    This is MONOTONE in realized_war, so the model's OOS ranking (Spearman) is unchanged --
+    it only adds low-end display granularity to match the industry FV->WAR scale."""
     if realized_war is None:
         return None
     cy = exposure_seasons if exposure_seasons is not None else int(_config()["service_time"]["control_years"])
-    lo, hi = 20.0, 80.0
-    elo = _expected_control_war(lo, is_pitcher, cy, age, position)
-    ehi = _expected_control_war(hi, is_pitcher, cy, age, position)
-    if elo is None or ehi is None:
+    ehi = _expected_control_war(80.0, is_pitcher, cy, age, position)
+    war45 = _expected_control_war(45.0, is_pitcher, cy, age, position)
+    if ehi is None or war45 is None:
         return None
-    if realized_war <= elo:
-        return lo
     if realized_war >= ehi:
-        return hi
+        return 80.0
+    # Low end: FanGraphs-shaped re-spread of FV 20-45 (the bucket curve is flat/unusable here)
+    if war45 > 0 and realized_war < war45:
+        if realized_war <= 0:
+            return 20.0
+        return 20.0 + 25.0 * ((realized_war / war45) ** _LOWEND_FG_EXP)
+    # High end: bisection FV 45-80 (where the bucket curve resolves cleanly)
+    lo, hi = 45.0, 80.0
     for _ in range(40):
         mid = 0.5 * (lo + hi)
         em = _expected_control_war(mid, is_pitcher, cy, age, position)
