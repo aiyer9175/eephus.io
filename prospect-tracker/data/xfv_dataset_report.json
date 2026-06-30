@@ -4,7 +4,7 @@
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2623,
+  "debuted_seen": 2627,
   "debuted_hitter": 934,
   "debuted_no_pre_fv": 122,
   "debuted_no_war": 16,

@@ -4,27 +4,27 @@
 "scope": "LIVE active board",
 "modeled_tools": {
 "hit": {
-"n_live": 845,
+"n_live": 844,
 "blend_weight_applied": 0.0,
 "adds_over_grade_oos": true
 },
 "game_pwr": {
-"n_live": 845,
+"n_live": 844,
 "blend_weight_applied": 0.0,
 "adds_over_grade_oos": false
 },
 "speed": {
-"n_live": 845,
+"n_live": 844,
 "blend_weight_applied": 0.0,
 "adds_over_grade_oos": true
 },
 "fb": {
-"n_live": 773,
+"n_live": 771,
 "blend_weight_applied": 0.5,
 "adds_over_grade_oos": true
 },
 "cmd": {
-"n_live": 769,
+"n_live": 767,
 "blend_weight_applied": 0.0,
 "adds_over_grade_oos": true
 }
@@ -35,7 +35,7 @@
 "throw (arm)",
 "sl/cb/ch pitch shapes"
 ],
-"n_players_with_tool_xfv": 1619
+"n_players_with_tool_xfv": 1616
 },
 "by_player": {
 "kyle_henley": {
@@ -373,15 +373,15 @@
 "game_pwr": 52.5,
 "speed": 47.5
 },
-"roderick_arias": {
-"hit": 35.0,
-"game_pwr": 47.5,
-"speed": 55.0
-},
 "eduardo_garcia": {
 "hit": 35.0,
 "game_pwr": 42.5,
 "speed": 47.5
+},
+"roderick_arias": {
+"hit": 35.0,
+"game_pwr": 47.5,
+"speed": 55.0
 },
 "maui_ahuna": {
 "hit": 35.0,
@@ -848,11 +848,6 @@
 "game_pwr": 50.0,
 "speed": 30.0
 },
-"cameron_cauley": {
-"hit": 40.0,
-"game_pwr": 45.0,
-"speed": 70.0
-},
 "sammy_stafura": {
 "hit": 40.0,
 "game_pwr": 42.5,
@@ -1228,15 +1223,15 @@
 "game_pwr": 50.0,
 "speed": 40.0
 },
-"yamal_encarnacion": {
-"hit": 40.0,
-"game_pwr": 45.0,
-"speed": 60.0
-},
 "jose_castro": {
 "hit": 40.0,
 "game_pwr": 55.0,
 "speed": 45.0
+},
+"yamal_encarnacion": {
+"hit": 40.0,
+"game_pwr": 45.0,
+"speed": 60.0
 },
 "enmanuel_bonilla": {
 "hit": 40.0,
@@ -1503,15 +1498,15 @@
 "game_pwr": 55.0,
 "speed": 35.0
 },
-"victor_arias": {
-"hit": 42.5,
-"game_pwr": 50.0,
-"speed": 57.5
-},
 "aaron_walton": {
 "hit": 42.5,
 "game_pwr": 47.5,
 "speed": 60.0
+},
+"victor_arias": {
+"hit": 42.5,
+"game_pwr": 50.0,
+"speed": 57.5
 },
 "brooks_brannon": {
 "hit": 42.5,
@@ -2333,15 +2328,15 @@
 "game_pwr": 40.0,
 "speed": 55.0
 },
-"ryan_stafford": {
-"hit": 45.0,
-"game_pwr": 30.0,
-"speed": 50.0
-},
 "filippo_di_turi": {
 "hit": 45.0,
 "game_pwr": 32.5,
 "speed": 47.5
+},
+"ryan_stafford": {
+"hit": 45.0,
+"game_pwr": 30.0,
+"speed": 50.0
 },
 "david_mccabe": {
 "hit": 45.0,
@@ -2428,15 +2423,15 @@
 "game_pwr": 42.5,
 "speed": 55.0
 },
-"marcos_torres": {
-"hit": 45.0,
-"game_pwr": 55.0,
-"speed": 50.0
-},
 "peyton_williams": {
 "hit": 45.0,
 "game_pwr": 60.0,
 "speed": 20.0
+},
+"marcos_torres": {
+"hit": 45.0,
+"game_pwr": 55.0,
+"speed": 50.0
 },
 "anthony_scull": {
 "hit": 45.0,
@@ -2632,6 +2627,11 @@
 "hit": 47.5,
 "game_pwr": 52.5,
 "speed": 52.5
+},
+"wandy_asigen": {
+"hit": 47.5,
+"game_pwr": 60.0,
+"speed": 57.5
 },
 "dillon_head": {
 "hit": 47.5,
@@ -3733,24 +3733,19 @@
 "game_pwr": 40.0,
 "speed": 55.0
 },
-"devin_fitzgerald": {
-"hit": 55.0,
-"game_pwr": 46.0,
-"speed": 49.0
-},
 "cam_cannarella": {
 "hit": 55.0,
 "game_pwr": 37.5,
 "speed": 57.5
 },
+"devin_fitzgerald": {
+"hit": 55.0,
+"game_pwr": 46.0,
+"speed": 49.0
+},
 "yolfran_castillo": {
 "hit": 55.0,
 "game_pwr": 47.5,
-"speed": 55.0
-},
-"joshua_kurodagrauer": {
-"hit": 55.0,
-"game_pwr": 35.0,
 "speed": 55.0
 },
 "johan_de_los_santos": {
@@ -4175,7 +4170,7 @@
 },
 "eli_willits": {
 "hit": 60.0,
-"game_pwr": 44.0,
+"game_pwr": 45.0,
 "speed": 59.0
 },
 "demetrio_crisantes": {
@@ -6687,10 +6682,6 @@
 "fb": 60.0,
 "cmd": 40.0
 },
-"jhancarlos_lara": {
-"fb": 60.0,
-"cmd": 37.5
-},
 "christian_foutch": {
 "fb": 60.0,
 "cmd": 40.0
@@ -7000,11 +6991,11 @@
 "cmd": 52.5
 },
 "joey_oakie": {
-"fb": 61.0,
+"fb": 60.0,
 "cmd": 42.5
 },
 "dylan_ross": {
-"fb": 61.5,
+"fb": 61.0,
 "cmd": 37.5
 },
 "sam_knowlton": {
@@ -7016,7 +7007,7 @@
 "cmd": 45.0
 },
 "luis_perales": {
-"fb": 62.5,
+"fb": 61.5,
 "cmd": 38.5
 },
 "daniel_guerra": {
@@ -7192,7 +7183,7 @@
 "cmd": 40.0
 },
 "jaxon_wiggins": {
-"fb": 67.5,
+"fb": 68.5,
 "cmd": 43.5
 },
 "allen_facundo": {
@@ -7200,7 +7191,7 @@
 "cmd": 42.5
 },
 "cam_leiter": {
-"fb": 68.5,
+"fb": 69.0,
 "cmd": 40.0
 },
 "moises_chace": {
@@ -7212,7 +7203,7 @@
 "cmd": 40.0
 },
 "christian_zazueta": {
-"fb": 69.0,
+"fb": 70.0,
 "cmd": 56.5
 },
 "kifraidy_encarnacion": {
@@ -7246,10 +7237,6 @@
 "kade_anderson": {
 "fb": 70.0,
 "cmd": 51.0
-},
-"miguel_ullola": {
-"fb": 70.0,
-"cmd": 35.0
 },
 "miguel_sime_jr": {
 "fb": 70.0,

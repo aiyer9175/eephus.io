@@ -2,52 +2,52 @@
  "generated_at": "2026-06-30",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 1001.2,
-  "remainder_recenter_wins_per_team": 0.07,
-  "roster_war_sum_y1": 1001.2,
+  "roster_war_sum": 999.8,
+  "remainder_recenter_wins_per_team": 0.1,
+  "roster_war_sum_y1": 999.8,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2432.4,
-  "raw_wins_sum_y1": 2432.4,
+  "raw_wins_sum": 2430.9,
+  "raw_wins_sum_y1": 2430.9,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 438,
-   "depth_war_y1": 40.5,
-   "depth_war_5y": 77.8,
-   "n_unassigned": 308,
-   "war_unassigned_y1": 60.1,
-   "war_unassigned_5y": 117.6
+   "depth_war_y1": 41.1,
+   "depth_war_5y": 78.8,
+   "n_unassigned": 304,
+   "war_unassigned_y1": 59.5,
+   "war_unassigned_5y": 115.6
   },
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 1001.2,
+    "roster_war_sum": 999.8,
     "wins_sum": 2430.1,
-    "remainder_recenter_wins_per_team": 0.07
+    "remainder_recenter_wins_per_team": 0.1
    },
    {
     "season": 2028,
-    "roster_war_sum": 685.2,
-    "wins_sum": 2430.3,
-    "remainder_recenter_wins_per_team": 10.19
+    "roster_war_sum": 683.9,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 10.22
    },
    {
     "season": 2029,
-    "roster_war_sum": 322.4,
-    "wins_sum": 2429.9,
-    "remainder_recenter_wins_per_team": 22.88
+    "roster_war_sum": 323.2,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 22.85
    },
    {
     "season": 2030,
-    "roster_war_sum": 270.0,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 24.52
+    "roster_war_sum": 271.7,
+    "wins_sum": 2430.2,
+    "remainder_recenter_wins_per_team": 24.46
    },
    {
     "season": 2031,
-    "roster_war_sum": 245.8,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 25.25
+    "roster_war_sum": 247.5,
+    "wins_sum": 2429.9,
+    "remainder_recenter_wins_per_team": 25.19
    }
   ],
   "coverage_decomposition_2025": {

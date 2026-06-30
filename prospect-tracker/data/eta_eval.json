@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-06-29",
+ "generated_at": "2026-06-30",
  "vintage_years": [
   2018,
   2019,
@@ -12,11 +12,11 @@
   "listed": 9210,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3723,
-  "level_from_statsapi": 3413,
-  "level_from_career_stats": 1454,
-  "debuted": 4145,
-  "censored_active": 2332,
+  "no_level_age_fallback": 3721,
+  "level_from_statsapi": 3417,
+  "level_from_career_stats": 1452,
+  "debuted": 4150,
+  "censored_active": 2327,
   "washed_out": 750,
   "overdue": 888
  },
@@ -28,44 +28,44 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4145,
+  "n": 4150,
   "mae": 1.425,
   "bias": 1.026,
   "within_1y": 0.586,
   "exact": 0.218
  },
  "baseline_naive_level_table": {
-  "n": 3422,
+  "n": 3426,
   "mae": 1.982,
-  "bias": 1.765,
-  "within_1y": 0.379,
+  "bias": 1.766,
+  "within_1y": 0.378,
   "exact": 0.168
  },
  "champion_on_baseline_rows": {
-  "n": 3422,
+  "n": 3426,
   "mae": 1.443,
   "bias": 1.102,
   "within_1y": 0.577,
   "exact": 0.212
  },
  "challenger_empirical_table_forward_chained": {
-  "n": 2878,
+  "n": 2882,
   "mae": 0.851,
-  "bias": 0.212,
-  "within_1y": 0.818,
-  "exact": 0.375
+  "bias": 0.21,
+  "within_1y": 0.819,
+  "exact": 0.374
  },
  "challenger_km_recalibrated_heuristic": {
-  "n": 2784,
-  "mae": 1.456,
-  "bias": 1.143,
+  "n": 2788,
+  "mae": 1.454,
+  "bias": 1.142,
   "within_1y": 0.57,
-  "exact": 0.198
+  "exact": 0.199
  },
  "v38_frozen_on_km_rows": {
-  "n": 2784,
-  "mae": 2.005,
-  "bias": 1.848,
+  "n": 2788,
+  "mae": 2.006,
+  "bias": 1.849,
   "within_1y": 0.407,
   "exact": 0.136
  },
@@ -95,7 +95,7 @@
  "overdue_v38_vs_km": {
   "v38": 789,
   "km_recalibrated": 888,
-  "censored_n": 2332
+  "censored_n": 2327
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -127,17 +127,17 @@
    "exact": 0.036
   },
   "CPX": {
-   "n": 323,
-   "mae": 1.604,
-   "bias": 1.17,
-   "within_1y": 0.529,
-   "exact": 0.223
+   "n": 325,
+   "mae": 1.6,
+   "bias": 1.169,
+   "within_1y": 0.532,
+   "exact": 0.222
   },
   "A": {
-   "n": 906,
-   "mae": 1.596,
-   "bias": 1.21,
-   "within_1y": 0.524,
+   "n": 908,
+   "mae": 1.595,
+   "bias": 1.209,
+   "within_1y": 0.525,
    "exact": 0.182
   },
   "A+": {
@@ -185,25 +185,25 @@
    "exact": 0.255
   },
   "2021": {
-   "n": 717,
+   "n": 718,
    "mae": 1.922,
-   "bias": 1.693,
-   "within_1y": 0.409,
+   "bias": 1.694,
+   "within_1y": 0.408,
    "exact": 0.109
   },
   "2022": {
-   "n": 714,
-   "mae": 1.465,
-   "bias": 1.21,
-   "within_1y": 0.571,
+   "n": 716,
+   "mae": 1.464,
+   "bias": 1.209,
+   "within_1y": 0.573,
    "exact": 0.211
   },
   "2023": {
-   "n": 569,
-   "mae": 1.431,
-   "bias": 1.269,
-   "within_1y": 0.583,
-   "exact": 0.204
+   "n": 571,
+   "mae": 1.429,
+   "bias": 1.268,
+   "within_1y": 0.585,
+   "exact": 0.203
   }
  },
  "residual_by_level": {
@@ -213,13 +213,13 @@
    "median": 4.0
   },
   "CPX": {
-   "n": 323,
-   "mean": 1.17,
+   "n": 325,
+   "mean": 1.169,
    "median": 1
   },
   "A": {
-   "n": 906,
-   "mean": 1.21,
+   "n": 908,
+   "mean": 1.209,
    "median": 1.0
   },
   "A+": {
@@ -240,30 +240,30 @@
  },
  "bias_corrected_forward_chained": {
   "champion_rescore": {
-   "n": 3422,
+   "n": 3426,
    "mae": 1.443,
    "bias": 1.102,
    "within_1y": 0.577,
    "exact": 0.212
   },
   "bias_corrected": {
-   "n": 3422,
-   "mae": 1.233,
-   "bias": 0.737,
+   "n": 3426,
+   "mae": 1.232,
+   "bias": 0.736,
    "within_1y": 0.659,
-   "exact": 0.262
+   "exact": 0.263
   },
   "overdue": {
    "champion": 328,
    "bias_corrected": 426
   },
   "shippable_level_bias_adj": {
-   "AAA": 0.5,
-   "CPX": 0.5,
-   "DSL": 0.5,
    "A": 0.5,
    "A+": 0.5,
-   "AA": 0.5
+   "CPX": 0.5,
+   "AAA": 0.5,
+   "AA": 0.5,
+   "DSL": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,8 +271,8 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2332,
-  "overdue_rate": 0.381,
+  "censored_active": 2327,
+  "overdue_rate": 0.382,
   "washed_out": 750,
   "washed_out_share_of_listed": 0.104
  },
@@ -356,23 +356,23 @@
    0.9689,
    0.817,
    0.6036,
-   0.4472,
-   0.3253,
-   0.2677,
-   0.2441,
-   0.2325,
-   0.2325
+   0.4457,
+   0.3242,
+   0.2668,
+   0.2433,
+   0.2318,
+   0.2318
   ],
   "CPX": [
    0.9892,
-   0.9286,
-   0.79,
-   0.5823,
-   0.3284,
-   0.209,
-   0.1393,
-   0.134,
-   0.1284
+   0.9289,
+   0.7909,
+   0.5841,
+   0.3261,
+   0.2075,
+   0.1384,
+   0.133,
+   0.1275
   ],
   "DSL": [
    0.9945,

@@ -65,7 +65,7 @@
 ],
 "xfv_grade_display": 60.0,
 "xfv_minus_consensus_display": 2.9,
-"krp_plus": 157.7
+"krp_plus": 157.5
 },
 {
 "player_key": "seth_hernandez",
@@ -128,7 +128,7 @@
 ],
 "xfv_grade_display": 59.1,
 "xfv_minus_consensus_display": -0.9,
-"krp_plus": 113.7
+"krp_plus": 113.6
 },
 {
 "player_key": "ryan_sloan",
@@ -821,7 +821,7 @@
 ],
 "xfv_grade_display": 51.3,
 "xfv_minus_consensus_display": 1.1,
-"krp_plus": 99.9
+"krp_plus": 99.8
 },
 {
 "player_key": "johnny_slawinski",
@@ -884,7 +884,7 @@
 ],
 "xfv_grade_display": 50.2,
 "xfv_minus_consensus_display": 4.9,
-"krp_plus": 118.0
+"krp_plus": 117.9
 },
 {
 "player_key": "reinold_navarro",
@@ -947,7 +947,7 @@
 ],
 "xfv_grade_display": 47.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 135.4
+"krp_plus": 135.3
 },
 {
 "player_key": "jacob_kmatz",
@@ -957,7 +957,7 @@
 "xfv_grade": 48.7,
 "xfv_minus_consensus": 7.1,
 "xfv_war_6yr": 3.48,
-"rank_war": 2.578,
+"rank_war": 2.581,
 "p_bucket": {
 "bust": 0.36,
 "bench": 0.277,
@@ -965,27 +965,27 @@
 "good": 0.123,
 "star": 0.005
 },
-"surplus_mm": 4.4,
+"surplus_mm": 4.5,
 "consensus_surplus_mm": 1.5,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
-"p50_mm": 2.8,
-"p75_mm": 6.6,
-"p90_mm": 11.5,
-"mean_mm": 4.4,
+"p50_mm": 2.9,
+"p75_mm": 6.7,
+"p90_mm": 11.6,
+"mean_mm": 4.5,
 "p_bust": 0.36
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 11.5,
+"band_p90_mm": 11.6,
 "p_bust": 0.36,
 "injury_factor": null,
-"statcast_factor": 1.017,
+"statcast_factor": 1.018,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.1
+"mag": 0.11
 },
 {
 "label": "Contact (K%) vs level",
@@ -1199,7 +1199,7 @@
 ],
 "xfv_grade_display": 50.1,
 "xfv_minus_consensus_display": 5.1,
-"krp_plus": 115.6
+"krp_plus": 115.5
 },
 {
 "player_key": "liam_doyle",
@@ -1388,7 +1388,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 7.3,
-"krp_plus": 128.2
+"krp_plus": 128.1
 },
 {
 "player_key": "kash_mayfield",
@@ -1766,7 +1766,7 @@
 ],
 "xfv_grade_display": 47.7,
 "xfv_minus_consensus_display": -3.4,
-"krp_plus": 129.7
+"krp_plus": 129.6
 },
 {
 "player_key": "riley_quick",
@@ -2333,7 +2333,7 @@
 ],
 "xfv_grade_display": 47.5,
 "xfv_minus_consensus_display": 7.5,
-"krp_plus": 131.2
+"krp_plus": 131.1
 },
 {
 "player_key": "kendry_chourio",
@@ -2459,7 +2459,7 @@
 ],
 "xfv_grade_display": 47.7,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 125.4
+"krp_plus": 125.3
 },
 {
 "player_key": "weien_lin",
@@ -2658,7 +2658,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 107.4
+"krp_plus": 107.3
 },
 {
 "player_key": "miguel_sime_jr",
@@ -2910,7 +2910,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 7.3,
-"krp_plus": 133.1
+"krp_plus": 133.0
 },
 {
 "player_key": "owen_murphy",
@@ -3661,7 +3661,7 @@
 ],
 "xfv_grade_display": 47.7,
 "xfv_minus_consensus_display": -0.7,
-"krp_plus": 110.6
+"krp_plus": 110.5
 },
 {
 "player_key": "anderson_brito",
@@ -3787,7 +3787,7 @@
 ],
 "xfv_grade_display": 45.3,
 "xfv_minus_consensus_display": 3.6,
-"krp_plus": 113.8
+"krp_plus": 113.7
 },
 {
 "player_key": "maximin_medina",
@@ -3845,7 +3845,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 10.0,
-"krp_plus": 138.5
+"krp_plus": 138.4
 },
 {
 "player_key": "tyson_hardin",
@@ -3971,7 +3971,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 7.3,
-"krp_plus": 134.9
+"krp_plus": 134.8
 },
 {
 "player_key": "dasan_hill",
@@ -4402,7 +4402,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 110.7
+"krp_plus": 110.6
 },
 {
 "player_key": "winston_santos",
@@ -4722,7 +4722,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 102.2
+"krp_plus": 102.1
 },
 {
 "player_key": "bryce_mayer",
@@ -5168,7 +5168,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 4.4,
-"krp_plus": 121.2
+"krp_plus": 121.1
 },
 {
 "player_key": "kevin_defrank",
@@ -5808,7 +5808,7 @@
 ],
 "xfv_grade_display": 43.3,
 "xfv_minus_consensus_display": 8.3,
-"krp_plus": 125.3
+"krp_plus": 125.2
 },
 {
 "player_key": "alexis_marinez",
@@ -5832,13 +5832,13 @@
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 2.5,
-"p75_mm": 6.9,
-"p90_mm": 17.4,
+"p75_mm": 6.8,
+"p90_mm": 17.2,
 "mean_mm": 6.2,
 "p_bust": 0.484
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 17.4,
+"band_p90_mm": 17.2,
 "p_bust": 0.484,
 "injury_factor": null,
 "statcast_factor": null,
@@ -5866,7 +5866,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 119.7
+"krp_plus": 119.6
 },
 {
 "player_key": "kelvin_zapata",
@@ -5924,7 +5924,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 129.0
+"krp_plus": 128.9
 },
 {
 "player_key": "yunior_jerez",
@@ -5982,7 +5982,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 127.3
+"krp_plus": 127.2
 },
 {
 "player_key": "charlee_soto",
@@ -6103,7 +6103,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 101.4
+"krp_plus": 101.3
 },
 {
 "player_key": "luis_perales",
@@ -6360,7 +6360,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 135.4
+"krp_plus": 135.3
 },
 {
 "player_key": "alexander_alberto",
@@ -6791,7 +6791,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 119.4
+"krp_plus": 119.3
 },
 {
 "player_key": "angel_jimenez",
@@ -7033,7 +7033,7 @@
 ],
 "xfv_grade_display": 43.0,
 "xfv_minus_consensus_display": -0.3,
-"krp_plus": 88.5
+"krp_plus": 88.6
 },
 {
 "player_key": "cade_crossland",
@@ -7096,7 +7096,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 111.9
+"krp_plus": 111.8
 },
 {
 "player_key": "ethan_pecko",
@@ -7406,7 +7406,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 134.1
+"krp_plus": 134.0
 },
 {
 "player_key": "abner_meza",
@@ -7522,7 +7522,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 118.9
+"krp_plus": 118.8
 },
 {
 "player_key": "omar_damian",
@@ -7638,7 +7638,7 @@
 ],
 "xfv_grade_display": 42.3,
 "xfv_minus_consensus_display": 7.3,
-"krp_plus": 123.5
+"krp_plus": 123.4
 },
 {
 "player_key": "jose_navarrete",
@@ -7696,7 +7696,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 107.7
+"krp_plus": 107.6
 },
 {
 "player_key": "geremias_pena",
@@ -7754,7 +7754,7 @@
 ],
 "xfv_grade_display": 42.3,
 "xfv_minus_consensus_display": 7.3,
-"krp_plus": 115.4
+"krp_plus": 115.3
 },
 {
 "player_key": "daiverson_blanco",
@@ -7812,7 +7812,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 117.4
+"krp_plus": 117.3
 },
 {
 "player_key": "hendrick_cana",
@@ -7870,7 +7870,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 7.7,
-"krp_plus": 113.3
+"krp_plus": 113.2
 },
 {
 "player_key": "manuel_gamez",
@@ -7986,7 +7986,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 6.7,
-"krp_plus": 126.7
+"krp_plus": 126.6
 },
 {
 "player_key": "blake_morgan",
@@ -8175,7 +8175,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.7
+"krp_plus": 103.6
 },
 {
 "player_key": "nate_lavender",
@@ -8563,7 +8563,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 109.8
+"krp_plus": 109.7
 },
 {
 "player_key": "boston_bateman",
@@ -8810,7 +8810,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 109.3
+"krp_plus": 109.2
 },
 {
 "player_key": "brooks_auger",
@@ -8946,7 +8946,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 6.7,
-"krp_plus": 133.9
+"krp_plus": 133.8
 },
 {
 "player_key": "brody_brecht",
@@ -9193,7 +9193,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": -2.6,
-"krp_plus": 107.5
+"krp_plus": 107.4
 },
 {
 "player_key": "mathias_lacombe",
@@ -9382,7 +9382,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 117.5
+"krp_plus": 117.4
 },
 {
 "player_key": "freddy_contreras",
@@ -9566,7 +9566,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 120.2
+"krp_plus": 120.1
 },
 {
 "player_key": "ryan_lambert",
@@ -9755,7 +9755,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 128.3
+"krp_plus": 128.2
 },
 {
 "player_key": "hyunseok_jang",
@@ -9823,7 +9823,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 91.7
+"krp_plus": 91.8
 },
 {
 "player_key": "nate_payne",
@@ -10007,7 +10007,7 @@
 ],
 "xfv_grade_display": 40.3,
 "xfv_minus_consensus_display": 0.3,
-"krp_plus": 147.7
+"krp_plus": 147.6
 },
 {
 "player_key": "wenhui_pan",
@@ -10075,7 +10075,7 @@
 ],
 "xfv_grade_display": 42.3,
 "xfv_minus_consensus_display": -0.4,
-"krp_plus": 102.8
+"krp_plus": 102.7
 },
 {
 "player_key": "khal_stephen",
@@ -10201,7 +10201,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 101.6
+"krp_plus": 101.5
 },
 {
 "player_key": "jhosneyker_colina",
@@ -10573,10 +10573,10 @@
 "consensus_fv": 45.0,
 "xfv_grade": 42.0,
 "xfv_minus_consensus": -3.0,
-"xfv_war_6yr": 1.39,
-"rank_war": 1.445,
+"xfv_war_6yr": 1.4,
+"rank_war": 1.448,
 "p_bucket": {
-"bust": 0.629,
+"bust": 0.628,
 "bench": 0.212,
 "regular": 0.113,
 "good": 0.045,
@@ -10588,21 +10588,21 @@
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 5.1,
-"p90_mm": 12.2,
+"p75_mm": 5.2,
+"p90_mm": 12.3,
 "mean_mm": 3.9,
-"p_bust": 0.629
+"p_bust": 0.628
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 12.2,
-"p_bust": 0.629,
+"band_p90_mm": 12.3,
+"p_bust": 0.628,
 "injury_factor": null,
-"statcast_factor": 1.002,
+"statcast_factor": 1.004,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.01
+"mag": 0.02
 },
 {
 "label": "Peak K rate",
@@ -10628,69 +10628,6 @@
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": -2.3,
 "krp_plus": 95.9
-},
-{
-"player_key": "miguel_ullola",
-"kind": "active",
-"position": "SIRP",
-"consensus_fv": 40.0,
-"xfv_grade": 42.4,
-"xfv_minus_consensus": 2.4,
-"xfv_war_6yr": 1.46,
-"rank_war": 1.118,
-"p_bucket": {
-"bust": 0.61,
-"bench": 0.22,
-"regular": 0.12,
-"good": 0.048,
-"star": 0.002
-},
-"surplus_mm": 2.0,
-"consensus_surplus_mm": 1.5,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.5,
-"p90_mm": 6.7,
-"mean_mm": 2.0,
-"p_bust": 0.61
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 6.7,
-"p_bust": 0.61,
-"injury_factor": null,
-"statcast_factor": 1.006,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.04
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.7
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.51
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.26
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.19
-}
-],
-"xfv_grade_display": 40.3,
-"xfv_minus_consensus_display": 0.3,
-"krp_plus": 91.4
 },
 {
 "player_key": "trevor_harrison",
@@ -10873,7 +10810,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.6,
-"krp_plus": 112.7
+"krp_plus": 112.6
 },
 {
 "player_key": "braden_nett",
@@ -11624,7 +11561,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 125.0
+"krp_plus": 124.9
 },
 {
 "player_key": "jose_silvestre",
@@ -11682,7 +11619,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 128.4
+"krp_plus": 128.3
 },
 {
 "player_key": "mavis_graves",
@@ -11997,7 +11934,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.5
+"krp_plus": 111.4
 },
 {
 "player_key": "pierce_coppola",
@@ -12186,7 +12123,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 121.9
+"krp_plus": 121.8
 },
 {
 "player_key": "kelvis_salcedo",
@@ -12748,7 +12685,7 @@
 ],
 "xfv_grade_display": 40.3,
 "xfv_minus_consensus_display": -1.4,
-"krp_plus": 105.1
+"krp_plus": 105.0
 },
 {
 "player_key": "caden_favors",
@@ -14001,7 +13938,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 114.7
+"krp_plus": 114.6
 },
 {
 "player_key": "wilmer_flores",
@@ -14127,7 +14064,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 102.5
+"krp_plus": 102.4
 },
 {
 "player_key": "oliver_gonzalez",
@@ -14384,7 +14321,70 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 117.4
+"krp_plus": 117.3
+},
+{
+"player_key": "melvin_pineda",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 40.0,
+"xfv_minus_consensus": 5.0,
+"xfv_war_6yr": 1.13,
+"rank_war": 0.747,
+"p_bucket": {
+"bust": 0.7,
+"bench": 0.179,
+"regular": 0.087,
+"good": 0.033,
+"star": 0.001
+},
+"surplus_mm": 1.6,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 1.8,
+"p90_mm": 4.7,
+"mean_mm": 1.6,
+"p_bust": 0.7
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 4.7,
+"p_bust": 0.7,
+"injury_factor": null,
+"statcast_factor": 1.024,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.14
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.9
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.7
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.57
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.28
+}
+],
+"xfv_grade_display": 40.0,
+"xfv_minus_consensus_display": 5.0,
+"krp_plus": 117.0
 },
 {
 "player_key": "braeden_sloan",
@@ -14450,69 +14450,6 @@
 "krp_plus": 119.0
 },
 {
-"player_key": "melvin_pineda",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 40.0,
-"xfv_minus_consensus": 5.0,
-"xfv_war_6yr": 1.13,
-"rank_war": 0.746,
-"p_bucket": {
-"bust": 0.7,
-"bench": 0.179,
-"regular": 0.087,
-"good": 0.033,
-"star": 0.001
-},
-"surplus_mm": 1.6,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 1.8,
-"p90_mm": 4.6,
-"mean_mm": 1.6,
-"p_bust": 0.7
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 4.6,
-"p_bust": 0.7,
-"injury_factor": null,
-"statcast_factor": 1.023,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.14
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.9
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.7
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.57
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.28
-}
-],
-"xfv_grade_display": 40.0,
-"xfv_minus_consensus_display": 5.0,
-"krp_plus": 117.1
-},
-{
 "player_key": "isaac_gallegos",
 "kind": "active",
 "position": "P",
@@ -14573,7 +14510,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 117.2
+"krp_plus": 117.1
 },
 {
 "player_key": "liomar_martinez",
@@ -14636,7 +14573,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 85.3
+"krp_plus": 85.4
 },
 {
 "player_key": "elier_morillo",
@@ -14951,7 +14888,70 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 111.3
+"krp_plus": 111.2
+},
+{
+"player_key": "justin_campbell",
+"kind": "active",
+"position": "SP",
+"consensus_fv": 42.3,
+"xfv_grade": 40.4,
+"xfv_minus_consensus": -2.0,
+"xfv_war_6yr": 1.18,
+"rank_war": 1.106,
+"p_bucket": {
+"bust": 0.686,
+"bench": 0.186,
+"regular": 0.091,
+"good": 0.035,
+"star": 0.001
+},
+"surplus_mm": 2.3,
+"consensus_surplus_mm": 2.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 3.2,
+"p90_mm": 7.3,
+"mean_mm": 2.3,
+"p_bust": 0.686
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 7.3,
+"p_bust": 0.686,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.25
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.18
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.15
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.15
+}
+],
+"xfv_grade_display": 40.3,
+"xfv_minus_consensus_display": -2.0,
+"krp_plus": 103.7
 },
 {
 "player_key": "griffin_herring",
@@ -15014,70 +15014,7 @@
 ],
 "xfv_grade_display": 40.3,
 "xfv_minus_consensus_display": -2.4,
-"krp_plus": 87.3
-},
-{
-"player_key": "justin_campbell",
-"kind": "active",
-"position": "SP",
-"consensus_fv": 42.3,
-"xfv_grade": 40.4,
-"xfv_minus_consensus": -2.0,
-"xfv_war_6yr": 1.18,
-"rank_war": 1.104,
-"p_bucket": {
-"bust": 0.687,
-"bench": 0.185,
-"regular": 0.091,
-"good": 0.035,
-"star": 0.001
-},
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 2.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 3.1,
-"p90_mm": 7.2,
-"mean_mm": 2.2,
-"p_bust": 0.687
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 7.2,
-"p_bust": 0.687,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.25
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.18
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.15
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.15
-}
-],
-"xfv_grade_display": 40.0,
-"xfv_minus_consensus_display": -2.3,
-"krp_plus": 103.7
+"krp_plus": 87.4
 },
 {
 "player_key": "matthew_fisher",
@@ -15130,7 +15067,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -1.7,
-"krp_plus": 98.1
+"krp_plus": 98.0
 },
 {
 "player_key": "leonard_garcia",
@@ -15217,13 +15154,13 @@
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.4,
-"p90_mm": 6.2,
+"p75_mm": 2.3,
+"p90_mm": 6.1,
 "mean_mm": 2.0,
 "p_bust": 0.682
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 6.2,
+"band_p90_mm": 6.1,
 "p_bust": 0.682,
 "injury_factor": null,
 "statcast_factor": 1.011,
@@ -15319,7 +15256,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.6,
-"krp_plus": 113.6
+"krp_plus": 113.5
 },
 {
 "player_key": "josh_grosz",
@@ -16060,7 +15997,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 108.6
+"krp_plus": 108.5
 },
 {
 "player_key": "bayant_melo",
@@ -16181,7 +16118,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 112.7
+"krp_plus": 112.6
 },
 {
 "player_key": "yunior_marte",
@@ -16307,7 +16244,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 106.9
+"krp_plus": 106.8
 },
 {
 "player_key": "blake_wehunt",
@@ -16801,7 +16738,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 116.7
+"krp_plus": 116.6
 },
 {
 "player_key": "marty_gair",
@@ -16939,12 +16876,12 @@
 "kind": "active",
 "position": "P",
 "consensus_fv": 35.0,
-"xfv_grade": 38.6,
-"xfv_minus_consensus": 3.6,
+"xfv_grade": 38.7,
+"xfv_minus_consensus": 3.7,
 "xfv_war_6yr": 0.97,
-"rank_war": 0.639,
+"rank_war": 0.64,
 "p_bucket": {
-"bust": 0.744,
+"bust": 0.743,
 "bench": 0.157,
 "regular": 0.072,
 "good": 0.027,
@@ -16956,21 +16893,21 @@
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 1.2,
-"p90_mm": 3.3,
+"p75_mm": 1.0,
+"p90_mm": 3.2,
 "mean_mm": 1.2,
-"p_bust": 0.744
+"p_bust": 0.743
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 3.3,
-"p_bust": 0.744,
+"band_p90_mm": 3.2,
+"p_bust": 0.743,
 "injury_factor": null,
-"statcast_factor": 1.002,
+"statcast_factor": 1.004,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.01
+"mag": 0.02
 },
 {
 "label": "Contact (K%) vs level",
@@ -16995,7 +16932,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 107.1
+"krp_plus": 107.0
 },
 {
 "player_key": "joe_whitman",
@@ -17406,19 +17343,19 @@
 "good": 0.03,
 "star": 0.001
 },
-"surplus_mm": 1.3,
+"surplus_mm": 1.2,
 "consensus_surplus_mm": 1.4,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
 "p75_mm": 1.4,
-"p90_mm": 3.6,
+"p90_mm": 3.5,
 "mean_mm": 1.2,
 "p_bust": 0.721
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 3.6,
+"band_p90_mm": 3.5,
 "p_bust": 0.721,
 "injury_factor": null,
 "statcast_factor": null,
@@ -17683,7 +17620,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 108.5
+"krp_plus": 108.4
 },
 {
 "player_key": "hancel_rincon",
@@ -17872,7 +17809,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 109.2
+"krp_plus": 109.1
 },
 {
 "player_key": "jhonan_coba",
@@ -17890,19 +17827,19 @@
 "good": 0.024,
 "star": 0.001
 },
-"surplus_mm": 1.1,
+"surplus_mm": 1.2,
 "consensus_surplus_mm": 1.4,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
 "p75_mm": 0.0,
-"p90_mm": 3.3,
-"mean_mm": 1.1,
+"p90_mm": 3.4,
+"mean_mm": 1.2,
 "p_bust": 0.764
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 3.3,
+"band_p90_mm": 3.4,
 "p_bust": 0.764,
 "injury_factor": null,
 "statcast_factor": 1.006,
@@ -17935,7 +17872,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 105.0
+"krp_plus": 104.9
 },
 {
 "player_key": "jose_paulino",
@@ -18114,7 +18051,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 98.0
+"krp_plus": 97.9
 },
 {
 "player_key": "mason_molina",
@@ -18177,7 +18114,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 2.3,
-"krp_plus": 105.6
+"krp_plus": 105.5
 },
 {
 "player_key": "ryjeteri_merite",
@@ -18235,7 +18172,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 109.5
+"krp_plus": 109.4
 },
 {
 "player_key": "brandon_clarke",
@@ -18298,7 +18235,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 89.9
+"krp_plus": 90.0
 },
 {
 "player_key": "jonas_uzcategui",
@@ -18424,7 +18361,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 111.3
+"krp_plus": 111.2
 },
 {
 "player_key": "davis_polo",
@@ -19301,7 +19238,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.2
+"krp_plus": 102.1
 },
 {
 "player_key": "roberto_castellanos",
@@ -19326,12 +19263,12 @@
 "p25_mm": 0.0,
 "p50_mm": 0.0,
 "p75_mm": 0.0,
-"p90_mm": 2.7,
+"p90_mm": 2.6,
 "mean_mm": 1.0,
 "p_bust": 0.762
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 2.7,
+"band_p90_mm": 2.6,
 "p_bust": 0.762,
 "injury_factor": null,
 "statcast_factor": null,
@@ -19601,7 +19538,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 101.1
+"krp_plus": 101.0
 },
 {
 "player_key": "jacob_wallace",
@@ -20110,7 +20047,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 115.5
+"krp_plus": 115.4
 },
 {
 "player_key": "jordan_valenzuela",
@@ -20173,7 +20110,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 117.9
+"krp_plus": 117.8
 },
 {
 "player_key": "anderson_cardenas",
@@ -20551,7 +20488,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 111.3
+"krp_plus": 111.2
 },
 {
 "player_key": "hudson_leach",
@@ -20614,7 +20551,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.3
+"krp_plus": 116.2
 },
 {
 "player_key": "jesus_tillero",
@@ -20677,7 +20614,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.6
+"krp_plus": 101.5
 },
 {
 "player_key": "trent_harris",
@@ -21151,7 +21088,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 5.0,
-"krp_plus": 112.4
+"krp_plus": 112.3
 },
 {
 "player_key": "sheroky_rodriguez",
@@ -21265,9 +21202,9 @@
 "mag": 0.22
 }
 ],
-"xfv_grade_display": 40.0,
-"xfv_minus_consensus_display": 5.0,
-"krp_plus": 113.3
+"xfv_grade_display": 39.8,
+"xfv_minus_consensus_display": 4.8,
+"krp_plus": 113.2
 },
 {
 "player_key": "luis_delgado",
@@ -21771,7 +21708,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.6,
-"krp_plus": 98.9
+"krp_plus": 98.8
 },
 {
 "player_key": "ashton_izzi",
@@ -21896,7 +21833,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.6,
-"krp_plus": 106.7
+"krp_plus": 106.6
 },
 {
 "player_key": "rj_petit",
@@ -21954,7 +21891,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.6,
-"krp_plus": 109.0
+"krp_plus": 108.9
 },
 {
 "player_key": "garrett_stratton",
@@ -22148,7 +22085,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 83.9
+"krp_plus": 84.0
 },
 {
 "player_key": "jesus_colina",
@@ -22274,7 +22211,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 102.6
+"krp_plus": 102.5
 },
 {
 "player_key": "brady_parker",
@@ -22531,7 +22468,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 112.5
+"krp_plus": 112.4
 },
 {
 "player_key": "sabier_marte",
@@ -22846,7 +22783,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.0
+"krp_plus": 99.9
 },
 {
 "player_key": "lucas_braun",
@@ -23165,7 +23102,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 90.0
+"krp_plus": 90.1
 },
 {
 "player_key": "josh_bostick",
@@ -23654,7 +23591,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 113.7
+"krp_plus": 113.6
 },
 {
 "player_key": "cameron_millar",
@@ -23896,7 +23833,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 104.8
+"krp_plus": 104.7
 },
 {
 "player_key": "brooks_caple",
@@ -24327,7 +24264,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 115.3
+"krp_plus": 115.2
 },
 {
 "player_key": "carlos_rey",
@@ -24516,7 +24453,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.0
+"krp_plus": 119.9
 },
 {
 "player_key": "eric_loomis",
@@ -25774,8 +25711,8 @@
 "mag": 0.07
 }
 ],
-"xfv_grade_display": 39.8,
-"xfv_minus_consensus_display": -0.2,
+"xfv_grade_display": 38.3,
+"xfv_minus_consensus_display": -1.7,
 "krp_plus": 102.7
 },
 {
@@ -26316,6 +26253,402 @@
 "krp_plus": 104.7
 },
 {
+"player_key": "angel_vizcaino",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.93,
+"rank_war": -0.614,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.94
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.69
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.67
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.21
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 129.5
+},
+{
+"player_key": "joelvis_perez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.89,
+"rank_war": -0.589,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.11
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.08
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.2
+},
+{
+"player_key": "luis_ghisays",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.74,
+"rank_war": -0.486,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.12
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.11
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 97.1
+},
+{
+"player_key": "cesar_espinal",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.21,
+"rank_war": -0.141,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.33
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.16
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 103.1
+},
+{
+"player_key": "cesar_sanchez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.07,
+"rank_war": -0.047,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.38
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.24
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 93.4
+},
+{
+"player_key": "henderson_hernandez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 24.1,
+"xfv_minus_consensus": -10.9,
+"xfv_war_6yr": 0.03,
+"rank_war": 0.022,
+"p_bucket": {
+"bust": 0.969,
+"bench": 0.021,
+"regular": 0.008,
+"good": 0.003,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.969
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.969,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.82
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.43
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.3
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.22
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 112.1
+},
+{
+"player_key": "luis_vasquez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.84,
+"rank_war": -0.555,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.54
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.5
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.34
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.28
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 79.3
+},
+{
 "player_key": "yordan_rodriguez",
 "kind": "active",
 "position": "SP",
@@ -26434,7 +26767,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 111.6
+"krp_plus": 111.5
 },
 {
 "player_key": "luis_r_rodriguez",
@@ -26812,7 +27145,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 110.0
+"krp_plus": 109.9
 },
 {
 "player_key": "hunter_hodges",
@@ -26875,7 +27208,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 111.6
+"krp_plus": 111.5
 },
 {
 "player_key": "todd_kniebbe",
@@ -26938,70 +27271,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 108.7
-},
-{
-"player_key": "adrian_ardines",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 33.9,
-"xfv_minus_consensus": -1.1,
-"xfv_war_6yr": 0.5,
-"rank_war": 0.331,
-"p_bucket": {
-"bust": 0.863,
-"bench": 0.089,
-"regular": 0.035,
-"good": 0.012,
-"star": 0.0
-},
-"surplus_mm": 0.6,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 1.6,
-"mean_mm": 0.6,
-"p_bust": 0.863
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 1.6,
-"p_bust": 0.863,
-"injury_factor": null,
-"statcast_factor": 1.007,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.04
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.67
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.25
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.11
-}
-],
-"xfv_grade_display": 37.7,
-"xfv_minus_consensus_display": 2.7,
-"krp_plus": 100.2
+"krp_plus": 108.6
 },
 {
 "player_key": "jayden_dubanewicz",
@@ -27251,6 +27521,64 @@
 "krp_plus": 109.4
 },
 {
+"player_key": "adrian_ardines",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 33.8,
+"xfv_minus_consensus": -1.2,
+"xfv_war_6yr": 0.5,
+"rank_war": 0.329,
+"p_bucket": {
+"bust": 0.864,
+"bench": 0.088,
+"regular": 0.035,
+"good": 0.012,
+"star": 0.0
+},
+"surplus_mm": 0.6,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 1.6,
+"mean_mm": 0.6,
+"p_bust": 0.864
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 1.6,
+"p_bust": 0.864,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.67
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.25
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.11
+}
+],
+"xfv_grade_display": 37.7,
+"xfv_minus_consensus_display": 2.7,
+"krp_plus": 100.2
+},
+{
 "player_key": "stharlin_torres",
 "kind": "active",
 "position": "RHP",
@@ -27306,7 +27634,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 115.8
+"krp_plus": 115.7
 },
 {
 "player_key": "juan_de_la_cruz",
@@ -27427,7 +27755,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 127.3
+"krp_plus": 127.2
 },
 {
 "player_key": "connor_ohara",
@@ -27747,7 +28075,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": -1.7,
-"krp_plus": 99.2
+"krp_plus": 99.1
 },
 {
 "player_key": "drew_beam",
@@ -27815,7 +28143,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 114.0
+"krp_plus": 113.9
 },
 {
 "player_key": "luis_carrasco",
@@ -27989,7 +28317,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 85.1
+"krp_plus": 85.2
 },
 {
 "player_key": "josias_figuereo",
@@ -28047,7 +28375,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 87.1
+"krp_plus": 87.2
 },
 {
 "player_key": "isaias_acosta",
@@ -29098,7 +29426,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 102.2
+"krp_plus": 102.1
 },
 {
 "player_key": "dylan_wilson",
@@ -29781,7 +30109,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -0.6,
-"krp_plus": 109.0
+"krp_plus": 108.9
 },
 {
 "player_key": "eric_silva",
@@ -31539,7 +31867,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": -1.7,
-"krp_plus": 87.0
+"krp_plus": 87.1
 },
 {
 "player_key": "blake_wolters",
@@ -31602,7 +31930,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": -1.7,
-"krp_plus": 121.6
+"krp_plus": 121.5
 },
 {
 "player_key": "juan_carela",
@@ -32094,6 +32422,69 @@
 "krp_plus": 97.9
 },
 {
+"player_key": "dylan_lesko",
+"kind": "active",
+"position": "SP",
+"consensus_fv": 40.0,
+"xfv_grade": 30.8,
+"xfv_minus_consensus": -9.2,
+"xfv_war_6yr": 0.29,
+"rank_war": 0.346,
+"p_bucket": {
+"bust": 0.912,
+"bench": 0.058,
+"regular": 0.022,
+"good": 0.008,
+"star": 0.0
+},
+"surplus_mm": 0.4,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.4,
+"p_bust": 0.912
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.912,
+"injury_factor": null,
+"statcast_factor": 1.018,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.11
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.38
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.23
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Fastball",
+"dir": "up",
+"mag": 0.06
+}
+],
+"xfv_grade_display": 38.3,
+"xfv_minus_consensus_display": -1.7,
+"krp_plus": 96.7
+},
+{
 "player_key": "pete_hansen",
 "kind": "active",
 "position": "SP",
@@ -32218,69 +32609,6 @@
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
 "krp_plus": 102.1
-},
-{
-"player_key": "dylan_lesko",
-"kind": "active",
-"position": "SP",
-"consensus_fv": 40.0,
-"xfv_grade": 30.8,
-"xfv_minus_consensus": -9.2,
-"xfv_war_6yr": 0.29,
-"rank_war": 0.346,
-"p_bucket": {
-"bust": 0.912,
-"bench": 0.058,
-"regular": 0.022,
-"good": 0.008,
-"star": 0.0
-},
-"surplus_mm": 0.4,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.4,
-"p_bust": 0.912
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.912,
-"injury_factor": null,
-"statcast_factor": 1.017,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.1
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.38
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.23
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-},
-{
-"label": "Fastball",
-"dir": "up",
-"mag": 0.06
-}
-],
-"xfv_grade_display": 38.3,
-"xfv_minus_consensus_display": -1.7,
-"krp_plus": 96.7
 },
 {
 "player_key": "mason_morris",
@@ -32598,8 +32926,8 @@
 "mag": 0.08
 }
 ],
-"xfv_grade_display": 38.3,
-"xfv_minus_consensus_display": -2.0,
+"xfv_grade_display": 37.7,
+"xfv_minus_consensus_display": -2.6,
 "krp_plus": 99.2
 },
 {
@@ -32799,7 +33127,7 @@
 ],
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 99.6
+"krp_plus": 99.5
 },
 {
 "player_key": "alfredo_zarraga",
@@ -33245,7 +33573,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 111.0
+"krp_plus": 110.9
 },
 {
 "player_key": "santiago_castellanos",
@@ -33656,7 +33984,7 @@
 "band_p90_mm": 0.0,
 "p_bust": 0.904,
 "injury_factor": 0.9,
-"statcast_factor": 1.031,
+"statcast_factor": 1.033,
 "factors": [
 {
 "label": "Injury penalty",
@@ -33666,7 +33994,7 @@
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.19
+"mag": 0.2
 },
 {
 "label": "Contact (K%) vs level",
@@ -34341,7 +34669,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 98.8
+"krp_plus": 98.7
 },
 {
 "player_key": "braden_davis",
@@ -35097,7 +35425,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 107.5
+"krp_plus": 107.4
 },
 {
 "player_key": "jacob_mayers",
@@ -35415,69 +35743,6 @@
 "krp_plus": 110.5
 },
 {
-"player_key": "jhancarlos_lara",
-"kind": "active",
-"position": "SIRP",
-"consensus_fv": 40.0,
-"xfv_grade": 29.5,
-"xfv_minus_consensus": -10.5,
-"xfv_war_6yr": 0.21,
-"rank_war": 0.295,
-"p_bucket": {
-"bust": 0.928,
-"bench": 0.048,
-"regular": 0.018,
-"good": 0.006,
-"star": 0.0
-},
-"surplus_mm": 0.3,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.3,
-"p_bust": 0.928
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.928,
-"injury_factor": null,
-"statcast_factor": 1.007,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.04
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.82
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.56
-},
-{
-"label": "Fastball",
-"dir": "up",
-"mag": 0.09
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 37.7,
-"xfv_minus_consensus_display": -2.3,
-"krp_plus": 98.0
-},
-{
 "player_key": "hansel_rincon",
 "kind": "active",
 "position": "P",
@@ -35735,6 +36000,69 @@
 "krp_plus": 99.5
 },
 {
+"player_key": "diego_lanzosa",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 29.5,
+"xfv_minus_consensus": -5.5,
+"xfv_war_6yr": 0.21,
+"rank_war": 0.141,
+"p_bucket": {
+"bust": 0.928,
+"bench": 0.048,
+"regular": 0.018,
+"good": 0.006,
+"star": 0.0
+},
+"surplus_mm": 0.3,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.3,
+"p_bust": 0.928
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.928,
+"injury_factor": null,
+"statcast_factor": 0.999,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.51
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.18
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.14
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 102.5
+},
+{
 "player_key": "brandon_birdsell",
 "kind": "active",
 "position": "SP",
@@ -35786,69 +36114,6 @@
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.3,
 "krp_plus": 96.2
-},
-{
-"player_key": "diego_lanzosa",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 29.5,
-"xfv_minus_consensus": -5.5,
-"xfv_war_6yr": 0.21,
-"rank_war": 0.141,
-"p_bucket": {
-"bust": 0.928,
-"bench": 0.048,
-"regular": 0.018,
-"good": 0.006,
-"star": 0.0
-},
-"surplus_mm": 0.3,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.3,
-"p_bust": 0.928
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.928,
-"injury_factor": null,
-"statcast_factor": 0.998,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.01
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.51
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.18
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.14
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.5
 },
 {
 "player_key": "luke_albright",
@@ -36206,7 +36471,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 109.5
+"krp_plus": 109.4
 },
 {
 "player_key": "tyson_neighbors",
@@ -36274,7 +36539,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.6,
-"krp_plus": 70.0
+"krp_plus": 70.1
 },
 {
 "player_key": "samuel_gonzalez",
@@ -36337,7 +36602,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.3
+"krp_plus": 120.2
 },
 {
 "player_key": "alex_santos_ii",
@@ -36526,7 +36791,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 112.2
+"krp_plus": 112.1
 },
 {
 "player_key": "dale_stanavich",
@@ -37471,7 +37736,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 91.5
+"krp_plus": 91.6
 },
 {
 "player_key": "samuel_sanchez",
@@ -37922,7 +38187,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 88.5
+"krp_plus": 88.6
 },
 {
 "player_key": "denis_samudio",
@@ -39074,7 +39339,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
-"krp_plus": 102.7
+"krp_plus": 102.6
 },
 {
 "player_key": "zach_messinger",
@@ -39384,7 +39649,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 107.8
+"krp_plus": 107.7
 },
 {
 "player_key": "german_arvayo",
@@ -39699,7 +39964,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 95.1
+"krp_plus": 95.2
 },
 {
 "player_key": "sem_robberse",
@@ -39830,7 +40095,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 134.1
+"krp_plus": 134.0
 },
 {
 "player_key": "felipe_de_la_cruz",
@@ -39893,7 +40158,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.2
+"krp_plus": 106.1
 },
 {
 "player_key": "cory_lewis",
@@ -40402,7 +40667,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.3
+"krp_plus": 104.2
 },
 {
 "player_key": "blake_burkhalter",
@@ -40576,7 +40841,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 96.3
+"krp_plus": 96.2
 },
 {
 "player_key": "jb_middleton",
@@ -41249,12 +41514,12 @@
 "band_p90_mm": 0.0,
 "p_bust": 0.964,
 "injury_factor": null,
-"statcast_factor": 1.014,
+"statcast_factor": 1.011,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.08
+"mag": 0.07
 },
 {
 "label": "Contact (K%) vs level",
@@ -41342,7 +41607,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.7
+"krp_plus": 102.6
 },
 {
 "player_key": "nelson_keljo",
@@ -41594,7 +41859,7 @@
 ],
 "xfv_grade_display": 37.7,
 "xfv_minus_consensus_display": -2.3,
-"krp_plus": 95.2
+"krp_plus": 95.3
 },
 {
 "player_key": "trey_mcloughlin",
@@ -42413,7 +42678,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 107.7
+"krp_plus": 107.6
 },
 {
 "player_key": "luis_fonseca",
@@ -42476,7 +42741,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.9
+"krp_plus": 101.8
 },
 {
 "player_key": "tyler_laporte",
@@ -42660,7 +42925,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.4
+"krp_plus": 106.3
 },
 {
 "player_key": "twine_palmer",
@@ -43053,7 +43318,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.9
+"krp_plus": 105.8
 },
 {
 "player_key": "jose_t_perez",
@@ -43179,7 +43444,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 101.9
+"krp_plus": 101.8
 },
 {
 "player_key": "ricky_castro",
@@ -43648,7 +43913,7 @@
 "band_p90_mm": 0.0,
 "p_bust": 0.977,
 "injury_factor": null,
-"statcast_factor": 0.988,
+"statcast_factor": 0.989,
 "factors": [
 {
 "label": "Statcast+ quality",
@@ -43993,7 +44258,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 71.0
+"krp_plus": 71.1
 },
 {
 "player_key": "eliazar_dishmey",
@@ -44497,7 +44762,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.3
+"krp_plus": 100.2
 },
 {
 "player_key": "raimon_gomez",
@@ -44875,7 +45140,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.4
+"krp_plus": 96.3
 },
 {
 "player_key": "will_hynes",
@@ -45001,7 +45266,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.3
+"krp_plus": 98.2
 },
 {
 "player_key": "jp_wheat",
@@ -45306,7 +45571,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.6
+"krp_plus": 120.5
 },
 {
 "player_key": "adrian_rodriguez",
@@ -45669,7 +45934,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.0
+"krp_plus": 105.9
 },
 {
 "player_key": "franyer_herrera",
@@ -45979,7 +46244,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 144.5
+"krp_plus": 144.4
 },
 {
 "player_key": "jhoniel_serrano",
@@ -46473,7 +46738,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 90.4
+"krp_plus": 90.5
 },
 {
 "player_key": "camden_lohman",
@@ -46783,7 +47048,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.1
+"krp_plus": 116.0
 },
 {
 "player_key": "blake_aita",
@@ -47461,7 +47726,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.8
+"krp_plus": 104.7
 },
 {
 "player_key": "jose_chirinos",
@@ -47769,6 +48034,69 @@
 "krp_plus": 101.1
 },
 {
+"player_key": "reynaldo_yean",
+"kind": "active",
+"position": "SIRP",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.65,
+"rank_war": -0.431,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.9
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.59
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.26
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.2
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 106.3
+},
+{
 "player_key": "reidis_sena",
 "kind": "active",
 "position": "SIRP",
@@ -48018,7 +48346,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.4
+"krp_plus": 120.3
 },
 {
 "player_key": "dalton_rogers",
@@ -48202,7 +48530,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 99.2
+"krp_plus": 99.1
 },
 {
 "player_key": "gregory_sanchez",
@@ -48260,7 +48588,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 56.3
+"krp_plus": 56.4
 },
 {
 "player_key": "richard_gallardo",
@@ -48449,7 +48777,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.0
+"krp_plus": 100.9
 },
 {
 "player_key": "jack_hartman",
@@ -48575,70 +48903,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 118.0
-},
-{
-"player_key": "reynaldo_yean",
-"kind": "active",
-"position": "SIRP",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.65,
-"rank_war": -0.43,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.9
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.59
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.26
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.2
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.4
+"krp_plus": 117.9
 },
 {
 "player_key": "connor_noland",
@@ -49133,64 +49398,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 101.0
-},
-{
-"player_key": "skylar_hales",
-"kind": "active",
-"position": "SIRP",
-"consensus_fv": 37.7,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -17.7,
-"xfv_war_6yr": -0.12,
-"rank_war": -0.077,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.11
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.08
-},
-{
-"label": "Fastball",
-"dir": "up",
-"mag": 0.06
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": -2.7,
-"krp_plus": 94.0
 },
 {
 "player_key": "justin_king",
@@ -49752,7 +49959,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.0
+"krp_plus": 104.9
 },
 {
 "player_key": "santiago_rojas",
@@ -52285,7 +52492,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 86.0
+"krp_plus": 86.1
 },
 {
 "player_key": "alex_pham",
@@ -53094,7 +53301,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 133.4
+"krp_plus": 133.3
 },
 {
 "player_key": "grant_umberger",
@@ -54112,7 +54319,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.9
+"krp_plus": 121.8
 },
 {
 "player_key": "kevin_abel",
@@ -54568,7 +54775,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 118.3
+"krp_plus": 118.2
 },
 {
 "player_key": "garrett_horn",
@@ -55208,7 +55415,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 90.2
+"krp_plus": 90.3
 },
 {
 "player_key": "ethan_young",
@@ -55403,6 +55610,137 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 97.8
+},
+{
+"player_key": "skylar_hales",
+"kind": "active",
+"position": "SIRP",
+"consensus_fv": 37.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -17.7,
+"xfv_war_6yr": -0.11,
+"rank_war": -0.07,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": 0.9,
+"statcast_factor": 1.002,
+"factors": [
+{
+"label": "Injury penalty",
+"dir": "down",
+"mag": 0.6
+},
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.11
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.08
+},
+{
+"label": "Fastball",
+"dir": "up",
+"mag": 0.06
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": -2.7,
+"krp_plus": 94.0
+},
+{
+"player_key": "patrick_reilly",
+"kind": "active",
+"position": "SIRP",
+"consensus_fv": 40.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -20.0,
+"xfv_war_6yr": -0.08,
+"rank_war": 0.045,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": 0.63,
+"statcast_factor": 1.01,
+"factors": [
+{
+"label": "Injury penalty",
+"dir": "down",
+"mag": 2.22
+},
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.06
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.37
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.22
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.19
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.11
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": -5.0,
+"krp_plus": 99.7
 },
 {
 "player_key": "joander_suarez",
@@ -55654,7 +55992,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 119.1
+"krp_plus": 119.0
 },
 {
 "player_key": "andy_rodriguez",
@@ -55844,74 +56182,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
 "krp_plus": 97.7
-},
-{
-"player_key": "patrick_reilly",
-"kind": "active",
-"position": "SIRP",
-"consensus_fv": 40.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -20.0,
-"xfv_war_6yr": -0.08,
-"rank_war": 0.044,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": 0.63,
-"statcast_factor": 1.008,
-"factors": [
-{
-"label": "Injury penalty",
-"dir": "down",
-"mag": 2.22
-},
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.05
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.37
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.22
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.19
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.11
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": -5.0,
-"krp_plus": 99.7
 },
 {
 "player_key": "walvin_mena",
@@ -56498,7 +56768,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.1
+"krp_plus": 98.0
 },
 {
 "player_key": "jose_olivares",
@@ -56624,7 +56894,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 115.7
+"krp_plus": 115.6
 },
 {
 "player_key": "justin_armbruester",
@@ -58165,7 +58435,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.7
+"krp_plus": 101.6
 },
 {
 "player_key": "riley_gowens",
@@ -58301,7 +58571,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 107.6
+"krp_plus": 107.5
 },
 {
 "player_key": "francis_texido",
@@ -58562,7 +58832,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -2.7,
-"krp_plus": 113.4
+"krp_plus": 113.3
 },
 {
 "player_key": "drew_dowd",
@@ -59565,7 +59835,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 83.3
+"krp_plus": 83.4
 },
 {
 "player_key": "accimias_morales",
@@ -59629,6 +59899,69 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 94.5
+},
+{
+"player_key": "ty_bothwell",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.96,
+"rank_war": -0.635,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.019,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.11
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.37
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.22
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.19
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 85.1
 },
 {
 "player_key": "raminel_almonte",
@@ -60185,7 +60518,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.5
+"krp_plus": 103.4
 },
 {
 "player_key": "ettore_giulianelli",
@@ -60251,14 +60584,14 @@
 "krp_plus": 96.2
 },
 {
-"player_key": "ty_bothwell",
+"player_key": "angel_peralta",
 "kind": "active",
 "position": "P",
 "consensus_fv": 35.0,
 "xfv_grade": 20.0,
 "xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.96,
-"rank_war": -0.634,
+"xfv_war_6yr": -0.66,
+"rank_war": -0.434,
 "p_bucket": {
 "bust": 0.984,
 "bench": 0.011,
@@ -60289,19 +60622,19 @@
 "mag": 0.1
 },
 {
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.37
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.22
-},
-{
 "label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.2
+},
+{
+"label": "Walk rate vs level",
 "dir": "up",
-"mag": 0.19
+"mag": 0.15
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.14
 },
 {
 "label": "Fastball",
@@ -60311,7 +60644,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 85.1
+"krp_plus": 94.4
 },
 {
 "player_key": "cesar_familia",
@@ -60501,69 +60834,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 97.8
-},
-{
-"player_key": "chenhsun_lee",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.44,
-"rank_war": -0.292,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.016,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.1
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.28
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.22
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.15
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.5
 },
 {
 "player_key": "lucas_gordon",
@@ -60881,6 +61151,127 @@
 "krp_plus": 105.1
 },
 {
+"player_key": "chenhsun_lee",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.44,
+"rank_war": -0.291,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.014,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.08
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.28
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.22
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.15
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 97.4
+},
+{
+"player_key": "edinzo_marquez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.54,
+"rank_war": -0.359,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.014,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.08
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.13
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 99.2
+},
+{
 "player_key": "micah_dallas",
 "kind": "active",
 "position": "P",
@@ -61193,7 +61584,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 99.6
+"krp_plus": 99.5
 },
 {
 "player_key": "francisco_frias",
@@ -61440,7 +61831,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 99.1
+"krp_plus": 99.0
 },
 {
 "player_key": "erick_batista",
@@ -63010,7 +63401,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 54.7
+"krp_plus": 54.8
 },
 {
 "player_key": "fidel_ulloa",
@@ -63199,7 +63590,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.6
+"krp_plus": 106.5
 },
 {
 "player_key": "juanmi_vasquez",
@@ -64081,7 +64472,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.5
+"krp_plus": 96.4
 },
 {
 "player_key": "lewis_sifontes",
@@ -64207,7 +64598,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 76.2
+"krp_plus": 76.3
 },
 {
 "player_key": "cameron_nohos",
@@ -64333,7 +64724,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 89.0
+"krp_plus": 89.1
 },
 {
 "player_key": "manuel_perez",
@@ -65026,7 +65417,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.1
+"krp_plus": 104.0
 },
 {
 "player_key": "camron_hill",
@@ -65278,7 +65669,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.6
+"krp_plus": 96.5
 },
 {
 "player_key": "gavin_adams",
@@ -65400,64 +65791,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 99.5
-},
-{
-"player_key": "edinzo_marquez",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.54,
-"rank_war": -0.357,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.008,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.05
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.13
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 99.2
 },
 {
 "player_key": "michael_watson",
@@ -66271,7 +66604,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 133.6
+"krp_plus": 133.5
 },
 {
 "player_key": "stanly_alcantara",
@@ -66334,7 +66667,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.9
+"krp_plus": 121.8
 },
 {
 "player_key": "manuel_cruz",
@@ -66886,7 +67219,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.5
+"krp_plus": 96.4
 },
 {
 "player_key": "nic_swanson",
@@ -67453,7 +67786,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 138.2
+"krp_plus": 138.1
 },
 {
 "player_key": "edwardo_melendez",
@@ -67831,7 +68164,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.8
+"krp_plus": 103.7
 },
 {
 "player_key": "mitch_mueller",
@@ -67962,7 +68295,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.0
+"krp_plus": 120.9
 },
 {
 "player_key": "leonardo_rossell",
@@ -68665,7 +68998,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.9
+"krp_plus": 100.8
 },
 {
 "player_key": "ryan_bourassa",
@@ -68975,7 +69308,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.3
+"krp_plus": 121.2
 },
 {
 "player_key": "ruben_menes",
@@ -69222,7 +69555,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.3
+"krp_plus": 105.2
 },
 {
 "player_key": "harry_blum",
@@ -69852,7 +70185,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 91.7
+"krp_plus": 91.8
 },
 {
 "player_key": "kade_brown",
@@ -70175,69 +70508,6 @@
 "krp_plus": 92.6
 },
 {
-"player_key": "angel_peralta",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.65,
-"rank_war": -0.429,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.005,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.03
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.2
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.15
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.14
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.4
-},
-{
 "player_key": "roberto_perez",
 "kind": "active",
 "position": "P",
@@ -70298,7 +70568,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.5
+"krp_plus": 98.4
 },
 {
 "player_key": "luis_mata",
@@ -70865,7 +71135,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 91.1
+"krp_plus": 91.2
 },
 {
 "player_key": "luke_young",
@@ -71110,6 +71380,69 @@
 "krp_plus": 96.7
 },
 {
+"player_key": "kelly_austin",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.41,
+"rank_war": -0.27,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.22
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.16
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.15
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 97.1
+},
+{
 "player_key": "aaron_munson",
 "kind": "active",
 "position": "P",
@@ -71171,6 +71504,132 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.7
+},
+{
+"player_key": "everett_catlett",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.44,
+"rank_war": -0.292,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.16
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.15
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 97.0
+},
+{
+"player_key": "nick_conte",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.58,
+"rank_war": -1.044,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.41
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.3
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.18
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 95.8
 },
 {
 "player_key": "dakota_hawkins",
@@ -71297,6 +71756,132 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 93.5
+},
+{
+"player_key": "riley_huge",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.99,
+"rank_war": -0.653,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.41
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.41
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.18
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 93.0
+},
+{
+"player_key": "nate_wohlgemuth",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.1,
+"rank_war": -0.727,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.004,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.02
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.82
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.38
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.32
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.32
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 125.5
 },
 {
 "player_key": "tyler_schmitt",
@@ -71848,7 +72433,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.4
+"krp_plus": 100.3
 },
 {
 "player_key": "antoni_cuello",
@@ -72347,7 +72932,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.9
+"krp_plus": 95.0
 },
 {
 "player_key": "efrailin_ramos",
@@ -72647,7 +73232,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.4
+"krp_plus": 116.3
 },
 {
 "player_key": "win_scott",
@@ -72965,69 +73550,6 @@
 "krp_plus": 100.8
 },
 {
-"player_key": "kelly_austin",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.41,
-"rank_war": -0.269,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.22
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.16
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.15
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.1
-},
-{
 "player_key": "ben_grable",
 "kind": "active",
 "position": "P",
@@ -73154,69 +73676,6 @@
 "krp_plus": 99.8
 },
 {
-"player_key": "everett_catlett",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.44,
-"rank_war": -0.291,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.16
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.15
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.0
-},
-{
 "player_key": "abraham_parra",
 "kind": "active",
 "position": "P",
@@ -73341,69 +73800,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 97.5
-},
-{
-"player_key": "nick_conte",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.58,
-"rank_war": -1.042,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.41
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.3
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.18
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.8
 },
 {
 "player_key": "reid_easterly",
@@ -73719,132 +74115,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 96.4
-},
-{
-"player_key": "riley_huge",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.99,
-"rank_war": -0.652,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.41
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.41
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.18
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 93.0
-},
-{
-"player_key": "nate_wohlgemuth",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.1,
-"rank_war": -0.726,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.82
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.38
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.32
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.32
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 125.5
 },
 {
 "player_key": "ty_van_dyke",
@@ -74222,65 +74492,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 91.1
-},
-{
-"player_key": "brandon_cain",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.41,
-"rank_war": -0.93,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.33
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.26
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.2
+"krp_plus": 91.2
 },
 {
 "player_key": "jholbran_herder",
@@ -74406,7 +74618,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.9
+"krp_plus": 106.8
 },
 {
 "player_key": "carter_lovasz",
@@ -74469,7 +74681,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.3
+"krp_plus": 103.2
 },
 {
 "player_key": "matthew_tippie",
@@ -74590,7 +74802,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 86.0
+"krp_plus": 86.1
 },
 {
 "player_key": "brendan_parks",
@@ -74779,7 +74991,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 69.2
+"krp_plus": 69.3
 },
 {
 "player_key": "matthew_desmarets",
@@ -75206,64 +75418,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 103.3
-},
-{
-"player_key": "angelo_ladera",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.48,
-"rank_war": -0.316,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 1.002,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.27
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.08
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.8
 },
 {
 "player_key": "orlando_suarez",
@@ -75757,7 +75911,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 146.6
+"krp_plus": 146.5
 },
 {
 "player_key": "trent_baker",
@@ -76072,7 +76226,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 107.3
+"krp_plus": 107.2
 },
 {
 "player_key": "casey_anderson",
@@ -76513,7 +76667,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.6
+"krp_plus": 100.5
 },
 {
 "player_key": "jake_curtis",
@@ -77403,6 +77557,64 @@
 "krp_plus": 98.8
 },
 {
+"player_key": "brandon_cain",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.41,
+"rank_war": -0.929,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.001,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.33
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.26
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.2
+},
+{
 "player_key": "brennan_stuprich",
 "kind": "active",
 "position": "P",
@@ -78157,6 +78369,64 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 96.1
+},
+{
+"player_key": "angelo_ladera",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.48,
+"rank_war": -0.315,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.001,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.27
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.08
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 94.8
 },
 {
 "player_key": "cristian_aray",
@@ -80059,7 +80329,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.5
+"krp_plus": 104.4
 },
 {
 "player_key": "pat_gallagher",
@@ -81039,7 +81309,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.6
+"krp_plus": 101.5
 },
 {
 "player_key": "hoss_brewer",
@@ -81276,7 +81546,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.7
+"krp_plus": 96.6
 },
 {
 "player_key": "xavier_martinez",
@@ -81448,6 +81718,64 @@
 "krp_plus": 96.8
 },
 {
+"player_key": "reed_moring",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.84,
+"rank_war": -0.553,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.18
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.16
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 95.4
+},
+{
 "player_key": "jonathan_stevens",
 "kind": "active",
 "position": "P",
@@ -81503,7 +81831,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.1
+"krp_plus": 102.0
 },
 {
 "player_key": "lisnerkin_lantigua",
@@ -81793,7 +82121,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.8
+"krp_plus": 116.7
 },
 {
 "player_key": "andrew_pogue",
@@ -81851,7 +82179,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 114.3
+"krp_plus": 114.2
 },
 {
 "player_key": "jaiker_garcia",
@@ -82257,7 +82585,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.7
+"krp_plus": 120.6
 },
 {
 "player_key": "riley_stanford",
@@ -82373,7 +82701,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.5
+"krp_plus": 121.4
 },
 {
 "player_key": "justin_militello",
@@ -82946,64 +83274,6 @@
 "krp_plus": 95.1
 },
 {
-"player_key": "luis_cesar",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.32,
-"rank_war": -0.873,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": null,
-"factors": [
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.35
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.11
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.6
-},
-{
 "player_key": "jarol_baez",
 "kind": "active",
 "position": "P",
@@ -83060,64 +83330,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 97.7
-},
-{
-"player_key": "omar_victorino",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.94,
-"rank_war": -0.62,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": null,
-"factors": [
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.17
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.16
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.4
 },
 {
 "player_key": "josbel_garcia",
@@ -83412,7 +83624,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
-"krp_plus": 72.5
+"krp_plus": 72.6
 },
 {
 "player_key": "jaron_deberry",
@@ -83727,7 +83939,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 93.0
+"krp_plus": 93.1
 },
 {
 "player_key": "devereaux_harrison",
@@ -84536,7 +84748,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.0
+"krp_plus": 105.9
 },
 {
 "player_key": "luke_gabrysh",
@@ -84972,7 +85184,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 107.2
+"krp_plus": 107.1
 },
 {
 "player_key": "matt_lanzendorfer",
@@ -85655,7 +85867,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.8
+"krp_plus": 100.7
 },
 {
 "player_key": "joel_lara",
@@ -85782,69 +85994,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.5
-},
-{
-"player_key": "yadiel_batista",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.79,
-"rank_war": -0.524,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.999,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.01
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.2
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.12
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.12
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.3
 },
 {
 "player_key": "scott_rouse",
@@ -86033,7 +86182,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 128.7
+"krp_plus": 128.6
 },
 {
 "player_key": "josh_tiedemann",
@@ -86411,7 +86560,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.0
+"krp_plus": 94.1
 },
 {
 "player_key": "zack_mack",
@@ -86532,7 +86681,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.0
+"krp_plus": 96.9
 },
 {
 "player_key": "cole_tolbert",
@@ -86658,7 +86807,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.4
+"krp_plus": 101.3
 },
 {
 "player_key": "yeraldo_salcedo",
@@ -87278,7 +87427,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 108.7
+"krp_plus": 108.6
 },
 {
 "player_key": "gregori_ramirez",
@@ -87463,6 +87612,132 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.8
+},
+{
+"player_key": "luis_cesar",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.32,
+"rank_war": -0.872,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.999,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.35
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.11
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.6
+},
+{
+"player_key": "omar_victorino",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.94,
+"rank_war": -0.619,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.999,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.17
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.16
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.4
 },
 {
 "player_key": "eudry_alcantara",
@@ -88170,7 +88445,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.1
+"krp_plus": 120.0
 },
 {
 "player_key": "collin_baumgartner",
@@ -88485,7 +88760,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.8
+"krp_plus": 103.7
 },
 {
 "player_key": "domenic_picone",
@@ -89241,7 +89516,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.6
+"krp_plus": 97.5
 },
 {
 "player_key": "yeriel_santos",
@@ -90060,7 +90335,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.3
+"krp_plus": 106.2
 },
 {
 "player_key": "drew_conover",
@@ -90123,7 +90398,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.9
+"krp_plus": 101.8
 },
 {
 "player_key": "nate_williams",
@@ -90375,7 +90650,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.3
+"krp_plus": 111.2
 },
 {
 "player_key": "will_mccausland",
@@ -91182,6 +91457,69 @@
 "krp_plus": 97.3
 },
 {
+"player_key": "yadiel_batista",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.79,
+"rank_war": -0.523,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.998,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.2
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.12
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 95.3
+},
+{
 "player_key": "joseph_herrera",
 "kind": "active",
 "position": "P",
@@ -91368,7 +91706,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 117.4
+"krp_plus": 117.3
 },
 {
 "player_key": "aneudis_mejia",
@@ -91749,6 +92087,69 @@
 "krp_plus": 101.5
 },
 {
+"player_key": "makale_holden",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.08,
+"rank_war": -0.71,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.998,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.26
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.09
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.08
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 94.7
+},
+{
 "player_key": "julio_valdez",
 "kind": "active",
 "position": "P",
@@ -91809,70 +92210,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.2
-},
-{
-"player_key": "pedro_peralta",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.0,
-"rank_war": -0.662,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.998,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.01
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.11
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.09
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 92.8
+"krp_plus": 111.1
 },
 {
 "player_key": "jean_robles",
@@ -92061,7 +92399,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.3
+"krp_plus": 97.2
 },
 {
 "player_key": "yander_maria",
@@ -92361,7 +92699,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.8
+"krp_plus": 101.7
 },
 {
 "player_key": "melvin_rodriguez",
@@ -92671,7 +93009,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
-"krp_plus": 100.3
+"krp_plus": 100.2
 },
 {
 "player_key": "brian_holiday",
@@ -92991,7 +93329,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 87.7
+"krp_plus": 87.8
 },
 {
 "player_key": "christian_romero",
@@ -93117,7 +93455,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 112.7
+"krp_plus": 112.6
 },
 {
 "player_key": "josh_hendrickson",
@@ -94251,7 +94589,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.5
+"krp_plus": 106.4
 },
 {
 "player_key": "brayan_mendoza",
@@ -95060,7 +95398,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 110.4
+"krp_plus": 110.3
 },
 {
 "player_key": "troy_guthrie",
@@ -95501,7 +95839,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 135.9
+"krp_plus": 135.8
 },
 {
 "player_key": "ubert_mejias",
@@ -96116,7 +96454,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 122.8
+"krp_plus": 122.7
 },
 {
 "player_key": "aiden_moffett",
@@ -96305,7 +96643,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 127.1
+"krp_plus": 127.0
 },
 {
 "player_key": "cesar_aquino",
@@ -96431,7 +96769,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.3
+"krp_plus": 100.2
 },
 {
 "player_key": "blake_gillespie",
@@ -96497,69 +96835,6 @@
 "krp_plus": 95.5
 },
 {
-"player_key": "makale_holden",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.07,
-"rank_war": -0.708,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.996,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.02
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.26
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.09
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.08
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.7
-},
-{
 "player_key": "luis_gamez",
 "kind": "active",
 "position": "P",
@@ -96623,6 +96898,69 @@
 "krp_plus": 98.4
 },
 {
+"player_key": "pedro_peralta",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.0,
+"rank_war": -0.66,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.996,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.02
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.11
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.09
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 92.8
+},
+{
 "player_key": "ryan_mcdonagh",
 "kind": "active",
 "position": "P",
@@ -96679,69 +97017,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 96.7
-},
-{
-"player_key": "caleb_nieman",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.55,
-"rank_war": -1.02,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.996,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.02
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.43
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.38
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.17
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.5
 },
 {
 "player_key": "edwin_marte",
@@ -96804,7 +97079,70 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 83.1
+"krp_plus": 83.2
+},
+{
+"player_key": "merlin_bido",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.56,
+"rank_war": -1.03,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.996,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.02
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.59
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.3
 },
 {
 "player_key": "bryan_regalado",
@@ -96867,7 +97205,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 130.5
+"krp_plus": 130.4
 },
 {
 "player_key": "brad_rudis",
@@ -97182,7 +97520,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 113.4
+"krp_plus": 113.3
 },
 {
 "player_key": "ian_medina",
@@ -98210,7 +98548,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 93.0
+"krp_plus": 93.1
 },
 {
 "player_key": "luke_lacourse",
@@ -99576,7 +99914,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 113.0
+"krp_plus": 112.9
 },
 {
 "player_key": "zack_lee",
@@ -100584,7 +100922,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.1
+"krp_plus": 101.0
 },
 {
 "player_key": "ben_bybee",
@@ -100773,7 +101111,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.0
+"krp_plus": 104.9
 },
 {
 "player_key": "brady_afthim",
@@ -100965,69 +101303,6 @@
 "krp_plus": 106.1
 },
 {
-"player_key": "brody_fowler",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.68,
-"rank_war": -0.448,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.995,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.03
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.25
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.18
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.08
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.0
-},
-{
 "player_key": "connor_gehr",
 "kind": "active",
 "position": "P",
@@ -101147,69 +101422,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.7
-},
-{
-"player_key": "lazaro_mena",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.49,
-"rank_war": -0.985,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.995,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.03
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.44
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.38
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.31
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.31
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 108.3
 },
 {
 "player_key": "marwys_cabrera",
@@ -101399,69 +101611,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.5
-},
-{
-"player_key": "merlin_bido",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.56,
-"rank_war": -1.029,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.995,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.03
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.59
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.12
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.3
 },
 {
 "player_key": "raymon_rosario",
@@ -101834,7 +101983,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 109.8
+"krp_plus": 109.7
 },
 {
 "player_key": "camilo_hernandez",
@@ -102019,6 +102168,69 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
 "krp_plus": 90.6
+},
+{
+"player_key": "alexander_almonte",
+"kind": "active",
+"position": "MIRP",
+"consensus_fv": 38.3,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -18.3,
+"xfv_war_6yr": -0.33,
+"rank_war": -0.193,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.995,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.03
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.53
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.28
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.16
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.06
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": -3.3,
+"krp_plus": 107.1
 },
 {
 "player_key": "garrett_schoenle",
@@ -102731,7 +102943,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.6
+"krp_plus": 103.5
 },
 {
 "player_key": "brady_choban",
@@ -103109,7 +103321,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.3
+"krp_plus": 120.2
 },
 {
 "player_key": "logan_mercado",
@@ -103424,7 +103636,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.6
+"krp_plus": 111.5
 },
 {
 "player_key": "nolan_sparks",
@@ -103928,7 +104140,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.7
+"krp_plus": 97.6
 },
 {
 "player_key": "enderson_mercado",
@@ -104117,7 +104329,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 117.9
+"krp_plus": 117.8
 },
 {
 "player_key": "jesus_carrera",
@@ -104813,6 +105025,69 @@
 "krp_plus": 95.5
 },
 {
+"player_key": "brody_fowler",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.68,
+"rank_war": -0.448,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.994,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.25
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.18
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.08
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 97.0
+},
+{
 "player_key": "franco_zabaleta",
 "kind": "active",
 "position": "P",
@@ -104873,7 +105148,70 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 113.9
+"krp_plus": 113.8
+},
+{
+"player_key": "lazaro_mena",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.49,
+"rank_war": -0.984,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.994,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.44
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.38
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.31
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.31
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 108.2
 },
 {
 "player_key": "wuilinyer_tovar",
@@ -105002,6 +105340,69 @@
 "krp_plus": 93.0
 },
 {
+"player_key": "caleb_nieman",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.54,
+"rank_war": -1.018,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.994,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.43
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.38
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.17
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 103.5
+},
+{
 "player_key": "keisther_castillo",
 "kind": "active",
 "position": "P",
@@ -105062,7 +105463,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 89.3
+"krp_plus": 89.4
 },
 {
 "player_key": "moises_meza",
@@ -105833,7 +106234,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.5
+"krp_plus": 98.4
 },
 {
 "player_key": "tanner_gillis",
@@ -106589,7 +106990,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.6
+"krp_plus": 111.5
 },
 {
 "player_key": "blaze_pontes",
@@ -106715,7 +107116,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 125.6
+"krp_plus": 125.5
 },
 {
 "player_key": "reese_dutton",
@@ -108085,7 +108486,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.8
+"krp_plus": 104.7
 },
 {
 "player_key": "riely_hunsaker",
@@ -108151,69 +108552,6 @@
 "krp_plus": 97.7
 },
 {
-"player_key": "reed_moring",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.75,
-"rank_war": -0.497,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": 0.9,
-"statcast_factor": null,
-"factors": [
-{
-"label": "Injury penalty",
-"dir": "down",
-"mag": 0.6
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.18
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.16
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.4
-},
-{
 "player_key": "peyton_havard",
 "kind": "active",
 "position": "P",
@@ -108274,7 +108612,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.6
+"krp_plus": 102.5
 },
 {
 "player_key": "jhonny_jimenez",
@@ -108904,7 +109242,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.3
+"krp_plus": 101.2
 },
 {
 "player_key": "sergio_villa",
@@ -109345,7 +109683,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -5.0,
-"krp_plus": 118.9
+"krp_plus": 118.8
 },
 {
 "player_key": "ian_mejia",
@@ -109408,7 +109746,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
-"krp_plus": 132.0
+"krp_plus": 131.9
 },
 {
 "player_key": "carson_dorsey",
@@ -109615,69 +109953,6 @@
 "krp_plus": 95.7
 },
 {
-"player_key": "alexander_almonte",
-"kind": "active",
-"position": "MIRP",
-"consensus_fv": 38.3,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -18.3,
-"xfv_war_6yr": -0.33,
-"rank_war": -0.191,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.53
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.28
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.16
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.06
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": -3.3,
-"krp_plus": 107.1
-},
-{
 "player_key": "ty_langenberg",
 "kind": "active",
 "position": "P",
@@ -109739,69 +110014,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 96.2
-},
-{
-"player_key": "aidan_anderson",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.12,
-"rank_war": -0.741,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.992,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.05
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.52
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.26
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.22
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.6
 },
 {
 "player_key": "connor_wietgrefe",
@@ -109990,7 +110202,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.6
+"krp_plus": 106.5
 },
 {
 "player_key": "nate_peterson",
@@ -110557,7 +110769,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.6
+"krp_plus": 121.5
 },
 {
 "player_key": "nate_garkow",
@@ -111003,7 +111215,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 106.4
+"krp_plus": 106.3
 },
 {
 "player_key": "justin_long",
@@ -111951,69 +112163,6 @@
 "krp_plus": 100.1
 },
 {
-"player_key": "jeury_espinal",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.58,
-"rank_war": -0.381,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.992,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.05
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.62
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.46
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.23
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 90.0
-},
-{
 "player_key": "frenny_grant",
 "kind": "active",
 "position": "P",
@@ -112779,6 +112928,69 @@
 "xfv_minus_consensus_display": 0.0
 },
 {
+"player_key": "aidan_anderson",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.12,
+"rank_war": -0.739,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.99,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.06
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.52
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.26
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.22
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.6
+},
+{
 "player_key": "greg_farone",
 "kind": "active",
 "position": "P",
@@ -113086,7 +113298,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.5
+"krp_plus": 98.4
 },
 {
 "player_key": "justin_sinibaldi",
@@ -113212,7 +113424,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.5
+"krp_plus": 121.4
 },
 {
 "player_key": "dylan_howard",
@@ -113275,7 +113487,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 131.0
+"krp_plus": 130.9
 },
 {
 "player_key": "aiden_jimenez",
@@ -113590,7 +113802,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 110.6
+"krp_plus": 110.5
 },
 {
 "player_key": "jay_allmer",
@@ -113906,6 +114118,69 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 92.3
+},
+{
+"player_key": "jeury_espinal",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.58,
+"rank_war": -0.381,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.99,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.06
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.62
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.46
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.23
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 90.0
 },
 {
 "player_key": "david_sanchez",
@@ -114404,7 +114679,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.6
+"krp_plus": 102.5
 },
 {
 "player_key": "will_varmette",
@@ -114472,7 +114747,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.1
+"krp_plus": 105.0
 },
 {
 "player_key": "inmer_lobo",
@@ -114603,7 +114878,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.9
+"krp_plus": 100.8
 },
 {
 "player_key": "isaac_coffey",
@@ -114875,7 +115150,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 114.4
+"krp_plus": 114.3
 },
 {
 "player_key": "bryce_jenkins",
@@ -115344,6 +115619,69 @@
 "krp_plus": 99.3
 },
 {
+"player_key": "peyton_stumbo",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.04,
+"rank_war": -0.686,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.44
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.14
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.09
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 100.7
+},
+{
 "player_key": "brett_gillis",
 "kind": "active",
 "position": "P",
@@ -115656,7 +115994,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.9
+"krp_plus": 120.8
 },
 {
 "player_key": "sean_matson",
@@ -115782,7 +116120,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.3
+"krp_plus": 103.2
 },
 {
 "player_key": "hayden_minton",
@@ -115911,6 +116249,69 @@
 "krp_plus": 100.7
 },
 {
+"player_key": "john_west",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.97,
+"rank_war": -1.303,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.43
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.29
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.23
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.18
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 88.0
+},
+{
 "player_key": "rayner_castillo",
 "kind": "active",
 "position": "P",
@@ -115971,7 +116372,70 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 99.8
+"krp_plus": 99.7
+},
+{
+"player_key": "travis_smith",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.2,
+"rank_war": -0.793,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.5
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.49
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.46
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 114.2
 },
 {
 "player_key": "anthony_cruz",
@@ -116218,7 +116682,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 124.6
+"krp_plus": 124.5
 },
 {
 "player_key": "alexander_meckley",
@@ -116281,7 +116745,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.7
+"krp_plus": 101.6
 },
 {
 "player_key": "conor_steinbaugh",
@@ -116470,7 +116934,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.6
+"krp_plus": 103.5
 },
 {
 "player_key": "blaine_wynk",
@@ -116533,7 +116997,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 82.3
+"krp_plus": 82.4
 },
 {
 "player_key": "andy_basora",
@@ -116722,7 +117186,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 113.0
+"krp_plus": 112.9
 },
 {
 "player_key": "jose_guzman",
@@ -116914,6 +117378,69 @@
 "krp_plus": 96.2
 },
 {
+"player_key": "corey_braun",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.89,
+"rank_war": -0.587,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.18
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.12
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.1
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 93.6
+},
+{
 "player_key": "aaron_savary",
 "kind": "active",
 "position": "P",
@@ -116974,7 +117501,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.5
+"krp_plus": 105.4
 },
 {
 "player_key": "jake_jekielek",
@@ -117040,6 +117567,64 @@
 "krp_plus": 99.8
 },
 {
+"player_key": "francisco_pazos",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -0.27,
+"rank_war": -0.177,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.23
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.15
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 98.7
+},
+{
 "player_key": "augie_mojica",
 "kind": "active",
 "position": "P",
@@ -117100,7 +117685,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 123.5
+"krp_plus": 123.4
 },
 {
 "player_key": "michael_fowler",
@@ -117285,6 +117870,74 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
 "krp_plus": 96.7
+},
+{
+"player_key": "ike_buxton",
+"kind": "active",
+"position": "RHP",
+"consensus_fv": 38.3,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -18.3,
+"xfv_war_6yr": -0.7,
+"rank_war": -0.439,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": 0.738,
+"statcast_factor": 0.994,
+"factors": [
+{
+"label": "Injury penalty",
+"dir": "down",
+"mag": 1.57
+},
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.47
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.23
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.22
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": -3.3,
+"krp_plus": 95.5
 },
 {
 "player_key": "konner_eaton",
@@ -117889,69 +118542,6 @@
 "krp_plus": 105.6
 },
 {
-"player_key": "peyton_stumbo",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.04,
-"rank_war": -0.685,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.44
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.14
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.09
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.7
-},
-{
 "player_key": "nico_tellache",
 "kind": "active",
 "position": "P",
@@ -118076,132 +118666,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 100.0
-},
-{
-"player_key": "john_west",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.97,
-"rank_war": -1.301,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.43
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.29
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.23
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.18
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 87.9
-},
-{
-"player_key": "travis_smith",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.2,
-"rank_war": -0.793,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.5
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.49
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.46
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 114.3
 },
 {
 "player_key": "luke_stofel",
@@ -118642,7 +119106,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 103.6
+"krp_plus": 103.5
 },
 {
 "player_key": "leuris_portorreal",
@@ -118768,7 +119232,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 115.2
+"krp_plus": 115.1
 },
 {
 "player_key": "nick_weyrich",
@@ -118897,127 +119361,6 @@
 "krp_plus": 90.5
 },
 {
-"player_key": "corey_braun",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.89,
-"rank_war": -0.587,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.18
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.12
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.1
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 93.6
-},
-{
-"player_key": "francisco_pazos",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -0.27,
-"rank_war": -0.177,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.988,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.07
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.23
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.15
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.7
-},
-{
 "player_key": "marco_vega",
 "kind": "active",
 "position": "P",
@@ -119079,74 +119422,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 97.9
-},
-{
-"player_key": "ike_buxton",
-"kind": "active",
-"position": "RHP",
-"consensus_fv": 38.3,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -18.3,
-"xfv_war_6yr": -0.69,
-"rank_war": -0.438,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": 0.738,
-"statcast_factor": 0.99,
-"factors": [
-{
-"label": "Injury penalty",
-"dir": "down",
-"mag": 1.57
-},
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.06
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.47
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.23
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.22
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": -3.3,
-"krp_plus": 95.5
 },
 {
 "player_key": "frank_camarillo",
@@ -119748,7 +120023,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 112.5
+"krp_plus": 112.4
 },
 {
 "player_key": "jackson_kelley",
@@ -119937,7 +120212,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 109.0
+"krp_plus": 108.9
 },
 {
 "player_key": "lucas_mahlstedt",
@@ -120063,7 +120338,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.6
+"krp_plus": 97.5
 },
 {
 "player_key": "alaska_abney",
@@ -120126,7 +120401,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 100.8
+"krp_plus": 100.7
 },
 {
 "player_key": "evan_truitt",
@@ -120504,7 +120779,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 102.6
+"krp_plus": 102.5
 },
 {
 "player_key": "evan_siary",
@@ -120567,7 +120842,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 90.9
+"krp_plus": 91.0
 },
 {
 "player_key": "luke_johnson",
@@ -120756,7 +121031,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.7
+"krp_plus": 101.6
 },
 {
 "player_key": "deiker_pineda",
@@ -121144,7 +121419,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.2
+"krp_plus": 98.1
 },
 {
 "player_key": "trey_pooser",
@@ -121721,7 +121996,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 141.0
+"krp_plus": 140.9
 },
 {
 "player_key": "matthew_watson",
@@ -122163,6 +122438,69 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 109.6
+},
+{
+"player_key": "mathieu_curtis",
+"kind": "active",
+"position": "P",
+"consensus_fv": 35.0,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -15.0,
+"xfv_war_6yr": -1.23,
+"rank_war": -0.811,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 0.0,
+"mean_mm": 0.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 0.0,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.986,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.08
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.38
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.32
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.16
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 35.0,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.3
 },
 {
 "player_key": "bryan_rivera",
@@ -122613,7 +122951,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 129.9
+"krp_plus": 129.8
 },
 {
 "player_key": "stu_flesland_iii",
@@ -122802,7 +123140,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 108.7
+"krp_plus": 108.6
 },
 {
 "player_key": "ethan_sloan",
@@ -123185,70 +123523,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 111.7
-},
-{
-"player_key": "mathieu_curtis",
-"kind": "active",
-"position": "P",
-"consensus_fv": 35.0,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -15.0,
-"xfv_war_6yr": -1.23,
-"rank_war": -0.809,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 0.0,
-"mean_mm": 0.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 0.0,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.984,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.1
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.38
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.32
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.16
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 35.0,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.3
+"krp_plus": 111.6
 },
 {
 "player_key": "luis_martinezgomez",
@@ -123515,7 +123790,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 80.9
+"krp_plus": 81.0
 },
 {
 "player_key": "sam_armstrong",
@@ -123767,7 +124042,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 147.7
+"krp_plus": 147.6
 },
 {
 "player_key": "jesus_escobar",
@@ -123830,7 +124105,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.0
+"krp_plus": 119.9
 },
 {
 "player_key": "jake_brooks",
@@ -124212,7 +124487,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 128.8
+"krp_plus": 128.7
 },
 {
 "player_key": "tyrelle_chadwick",
@@ -124280,7 +124555,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 108.6
+"krp_plus": 108.5
 },
 {
 "player_key": "samuel_dutton",
@@ -124343,7 +124618,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 83.5
+"krp_plus": 83.6
 },
 {
 "player_key": "dominic_niman",
@@ -124910,7 +125185,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 88.6
+"krp_plus": 88.7
 },
 {
 "player_key": "denton_biller",
@@ -125225,7 +125500,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 49.4
+"krp_plus": 49.5
 },
 {
 "player_key": "raudi_perez",
@@ -125341,7 +125616,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 53.2
+"krp_plus": 53.3
 },
 {
 "player_key": "alvin_veras",
@@ -125515,7 +125790,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 81.3
+"krp_plus": 81.4
 },
 {
 "player_key": "freddy_hernandez",
@@ -125689,7 +125964,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 82.2
+"krp_plus": 82.3
 },
 {
 "player_key": "juan_medina",
@@ -125805,7 +126080,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 63.0
+"krp_plus": 63.1
 },
 {
 "player_key": "brayan_cabello",
@@ -125921,7 +126196,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 74.3
+"krp_plus": 74.4
 },
 {
 "player_key": "rodrigo_ramirez",
@@ -125979,7 +126254,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 75.7
+"krp_plus": 75.8
 },
 {
 "player_key": "yoan_valdez",
@@ -126158,7 +126433,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 68.9
+"krp_plus": 69.0
 },
 {
 "player_key": "randry_de_leon",
@@ -126216,7 +126491,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 48.3
+"krp_plus": 48.4
 },
 {
 "player_key": "jose_menes",
@@ -126274,7 +126549,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 68.0
+"krp_plus": 68.1
 },
 {
 "player_key": "ranger_sarit",
@@ -126332,7 +126607,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 85.0
+"krp_plus": 85.1
 },
 {
 "player_key": "steven_garcia",
@@ -126448,7 +126723,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 40.0
+"krp_plus": 40.1
 },
 {
 "player_key": "mario_gonzalez",
@@ -126506,7 +126781,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 70.7
+"krp_plus": 70.8
 },
 {
 "player_key": "julio_m_rossi",
@@ -126564,6 +126839,6 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 62.5
+"krp_plus": 62.6
 }
 ]
