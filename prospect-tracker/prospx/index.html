@@ -42695,6 +42695,12 @@ function renderPlayerDetail(key) {
     // toggle option. This is the SINGLE surplus card (the xFV grade card above no longer shows
     // its own dollar figure), so the xFV outcome fan rides along here too.
     const _xf = getXfv(p);
+    // De-dupe the outcome-mix bar: the xFV GRADE card above already renders the canonical
+    // 5-bucket "Projected outcome mix" (x.p_bucket, from the honest outcome-implied grade).
+    // So the surplus card here suppresses its own (separately-anchored) "Outcome mix" bar
+    // when the grade card shows one -- keeping just the $ "Simulated outcome range" (its
+    // unique view). Only standalone (no xFV) surplus cards still show their bucket bar.
+    const _gradeCardHasMix = !!(_xf && _xf.p_bucket);
     const _useXfv = _xf && _xf.surplus_mm != null && _gradePrimary() === "xfv";
     const _baked = (p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
     const surplus = _useXfv ? _xf.surplus_mm
@@ -42920,7 +42926,7 @@ function renderPlayerDetail(key) {
       if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {
         bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
-            ${bk ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
+            ${(bk && !_gradeCardHasMix) ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
             ${d.p10_mm != null ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
             ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:8px;">${metaBits.join(" · ")}</div>` : ""}
           </div>`;
