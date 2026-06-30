@@ -33,5 +33,28 @@
   },
   "verdict": "REJECTED (loss, not shipped): def_value REGRESSES the shipped lean xFV model on every gate (pooled rho -0.0040, within-tier -0.0208, fringe -0.0201). Even a far better defensive predictor (0.68 vs FG 0.28) is flat-to-negative on xFV's offense-dominated first-6yr-WAR target -- the binding constraint is the TARGET, not measurement quality (re-confirms wills-models-for-xfv-audit + the 2026-06-29 def-feature-class re-test)."
  },
- "alternative_use": "def_value validates as a better-than-FG prospect-defense predictor; its lane is the surfaces where defense IS a measured WAR component (MLB Projections / farm / display), NOT the offense-dominated xFV ranker. See def-prior-mlb-projections."
+ "alternative_use": "def_value validates as a better-than-FG prospect-defense predictor; its lane is the surfaces where defense IS a measured WAR component (MLB Projections / farm / display), NOT the offense-dominated xFV ranker. See def-prior-mlb-projections.",
+ "proj_lgbm_swap_gate": {
+  "protocol": "forward-chained OOS (tools/def_feature_backtest.py), joined by mlbam as a pre-MLB prior on top of the shipped pos_adj_prior; coverage 14.7% of corpus hitters",
+  "baseline_pos_adj": {
+   "holdout_pooled_mae": 0.5554,
+   "holdout_star_mae": 1.7433
+  },
+  "plus_def_value_delta": {
+   "dev_pooled": -0.0001,
+   "holdout_pooled": 0.0028,
+   "holdout_star": 0.0345
+  },
+  "plus_entropy_delta": {
+   "dev_pooled": -0.0005,
+   "holdout_pooled": 0.0009,
+   "holdout_star": 0.0293
+  },
+  "plus_both_delta": {
+   "dev_pooled": -0.0006,
+   "holdout_pooled": 0.0028,
+   "holdout_star": 0.0247
+  },
+  "verdict": "REJECTED (loss, not shipped): every variant REGRESSES the holdout (pooled +0.0009..+0.0028, star +0.025..+0.035) with dev ~flat -- inconsistent sign = noise. For MLB players the REALIZED positional value (shipped pos_adj_prior, bWAR runs_position) already captures def_value; the prospect-era prediction is redundant + low-coverage (14.7%), and the entropy signal does not help. def_value's positional-value core is thus ALREADY in the projection model via pos_adj_prior."
+ }
 }
