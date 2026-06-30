@@ -36,6 +36,7 @@
   };
   // Accent swatches -> safe, theme-aware tokens (defined in site.css :root).
   var ACCENTS = {
+    lilac: "--accent-lilac",   // signature brand color (default)
     cyan:  "--accent-cyan", green: "--accent-green", gold: "--accent-gold",
     navy:  "--accent-navy", red:   "--accent-red",
   };
@@ -58,7 +59,7 @@
   }
   function accentToken() {
     if (_opts.accent && ACCENTS[_opts.accent]) return ACCENTS[_opts.accent];
-    return (_spec && _spec.accentToken) || "--accent-cyan";
+    return (_spec && _spec.accentToken) || "--accent-lilac";
   }
 
   // ---- canvas board renderer -------------------------------------------------
@@ -281,7 +282,7 @@
   function _specAccentKey() {
     var t = (_spec && _spec.accentToken) || "";
     for (var k in ACCENTS) { if (ACCENTS[k] === t) return k; }
-    return "cyan";
+    return "lilac";
   }
 
   async function refresh() {

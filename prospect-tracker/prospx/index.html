@@ -8554,7 +8554,8 @@
       </label>
       <span class="gfx-ctrl">Accent
         <span class="gfx-accents">
-          <button class="gfx-swatch is-active" data-gfx-accent="cyan"    type="button" title="Cyan"    style="background:var(--neon-cyan);"></button>
+          <button class="gfx-swatch is-active" data-gfx-accent="lilac"   type="button" title="Lilac (signature)" style="background:var(--accent-lilac);"></button>
+          <button class="gfx-swatch"           data-gfx-accent="cyan"    type="button" title="Cyan"    style="background:var(--neon-cyan);"></button>
           <button class="gfx-swatch"           data-gfx-accent="green"   type="button" title="Green"   style="background:var(--up);"></button>
           <button class="gfx-swatch"           data-gfx-accent="amber"   type="button" title="Amber"   style="background:var(--neon-amber);"></button>
           <button class="gfx-swatch"           data-gfx-accent="violet"  type="button" title="Violet"  style="background:var(--neon-violet);"></button>
@@ -11086,6 +11087,30 @@ function getVersaPositions(p) {
   if (!_POS_PLAYED || !p || !p.player_key) return null;
   const e = _POS_PLAYED[p.player_key];
   return (e && Array.isArray(e.versa) && e.versa.length) ? e.versa : null;
+}
+
+// Game-data reality-check on the PRIMARY position. The consensus position prefers
+// FanGraphs, which forward-PROJECTS a slot the player may never have played (e.g.
+// an athletic SS tagged "CF"). When the resolved position is an outfield slot but
+// the player's actual fielding log (positions_played) shows ZERO outfield games and
+// a clear most-played infield/catcher slot, surface where he ACTUALLY plays. Scoped
+// to OF labels so pitcher role tags (SP/SIRP/MIRP) and real OFs are untouched.
+const _OF_SLOTS = new Set(["OF", "CF", "LF", "RF"]);
+function displayPosition(p) {
+  const pos = p && p.position;
+  if (!pos || !_OF_SLOTS.has(String(pos).toUpperCase())) return pos;
+  const e = _POS_PLAYED && p.player_key && _POS_PLAYED[p.player_key];
+  const byPos = e && e.by_pos;
+  if (!byPos) return pos;                                  // no game data -> trust the resolved label
+  const ofGames = ["OF", "CF", "LF", "RF"].reduce((s, k) => s + ((byPos[k] && byPos[k].g) || 0), 0);
+  if (ofGames > 0) return pos;                             // he HAS played OF -> the OF label is legit
+  let best = null;                                         // zero OF games: use his most-played real slot
+  for (const k in byPos) {
+    if (k === "DH" || k === "PH") continue;
+    const g = (byPos[k] && byPos[k].g) || 0;
+    if (g > 0 && (!best || g > best.g)) best = { k, g };
+  }
+  return best ? best.k : pos;
 }
 
 // Derive additional green/red flags from FanGraphs scout-only signals
@@ -14617,6 +14642,19 @@ function getFilteredActives() {
   // file lazy-loads here on first board render; the board paints graded-first then folds them in.
   if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
   pool = pool.concat(provPlayers());
+  // Game-data reality-check on primary position (corrects FG-projected OF labels for
+  // players who have never played the outfield). One-time per player, only once the
+  // fielding sidecar has loaded; mutates the shared record so the fix is consistent
+  // across the board, filters, grouping, and the detail page.
+  if (_POS_PLAYED) {
+    for (const p of pool) {
+      if (p && !p._gdPosChecked) {
+        p._gdPosChecked = true;
+        const dp = displayPosition(p);
+        if (dp && dp !== p.position) p.position = dp;
+      }
+    }
+  }
   if (state.search) {
     const q = state.search.toLowerCase();
     pool = pool.filter(p => (p.player_name || "").toLowerCase().includes(q));
@@ -30163,7 +30201,7 @@ const _GFX_FORMATS = {
 // v45 - default format is WIDE (1600×900, 16:9): graphics land Twitter/X-ready
 // with no crop. Prospect-card kinds still force their own portrait/tall
 // geometry via _gfxVariantFormat.
-const _gfxOpts = { count: 50, title: "", accent: "", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false };
+const _gfxOpts = { count: 50, title: "", accent: "lilac", showValue: true, format: "wide", theme: "auto", photos: true, logos: true, variant: "compact", frame: "rarity", pack: false };
 let _gfxOrigTheme = null;
 // v38 - Force the GFX board (+ the open modal) to a chosen light/dark theme by
 // flipping the root data-theme. The board inherits ALL tokens + fv-badge tints
@@ -30181,6 +30219,7 @@ function _gfxApplyTheme() {
   }
 }
 const _GFX_ACCENTS = {
+  lilac: "--accent-lilac",   // signature brand color (default)
   cyan: "--neon-cyan", green: "--up", amber: "--neon-amber",
   violet: "--neon-violet", magenta: "--neon-magenta",
 };
@@ -31740,7 +31779,7 @@ function _gfxSyncControls() {
   const frm = document.getElementById("gfx-frame");
   if (frm) frm.value = _gfxOpts.frame || "rarity";
   document.querySelectorAll("[data-gfx-accent]").forEach(b =>
-    b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "cyan")));
+    b.classList.toggle("is-active", b.dataset.gfxAccent === (_gfxOpts.accent || "lilac")));
 }
 // Default canvas format for a prospect-card variant (compact is shorter).
 function _gfxVariantFormat(variant) {
@@ -37451,7 +37490,7 @@ function makeFarmRosterPyramid(rosterPlayersAll) {
       // the tooltip stays bounded for deep cells.
       const ranked = names[lvl][i].slice().sort((a, b) => b.fv - a.fv);
       const TOP_N = 6;
-      const top = ranked.slice(0, TOP_N).map(n => `${n.name} (${fvCeil(n.fv)})`);
+      const top = ranked.slice(0, TOP_N).map(n => `${n.name} (${Math.round(n.fv)})`);
       const more = ranked.length > TOP_N ? `\n…+${ranked.length - TOP_N} more` : "";
       const tip = `${row[i]} prospect${row[i] === 1 ? "" : "s"} at FV ${t.label}, ${lvl}\n${top.join("\n")}${more}`;
       return `<div class="rp-seg fv-${t.fvClass}"
@@ -42173,7 +42212,9 @@ function renderPlayerDetail(key) {
   // 60+ holo) also get a "rarity" border treatment - the FV ramp from
   // trading-card grading lore.
   const _fvTierClass = (() => {
-    const fv = p.fv_close;
+    // Source the rarity from the eFV-primary canonical value (rarityFvOf) so the
+    // header glow agrees with the rank diamond / starfield on the same page.
+    const fv = (typeof rarityFvOf === "function") ? rarityFvOf(p) : p.fv_close;
     if (fv == null) return "";
     const buckets = [80, 70, 65, 60, 55, 50, 45, 40];
     let pick = 50;
@@ -42187,6 +42228,8 @@ function renderPlayerDetail(key) {
     const rarity = fv >= 70 ? "card-rarity-legendary"
                  : fv >= 61 ? "card-rarity-holo"
                  : fv >= 55 ? "card-rarity-chrome"
+                 : fv >= 50 ? "card-rarity-foil"
+                 : fv >= 45 ? "card-rarity-shine"
                  : "";
     return `fv-tier-${pick}${rarity ? " " + rarity : ""}`;
   })();
@@ -43020,7 +43063,7 @@ function renderPlayerDetail(key) {
     }
     const inner = surplusRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
-    const _srcLabel = _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
+    const _srcLabel = _useEfv ? "eFV · outcome-grounded" : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>
       <div class="detail-card">${inner}</div>`;
   })();
@@ -49420,7 +49463,7 @@ function makeFarmCompareSideBySide(farms) {
   const cols = `repeat(${farms.length}, minmax(0, 1fr))`;
   const heads = farms.map((o, i) => {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
-    const grade = (o.grades && o.grades.overall) || " - ";
+    const grade = ((o.letter_by_window || {})[state.formWindow || "7y"]) || (o.grades && o.grades.overall) || " - ";
     const tp = o.top_prospect;
     // Lead with eFV (consensus FV fallback); top_prospect carries `name` + `xfv_grade`.
     const tpFv = tp ? (tp.xfv_grade != null ? Math.round(tp.xfv_grade)
@@ -49465,10 +49508,8 @@ function makeFarmCompareSideBySide(farms) {
   const chartRow = `<div style="margin-top:14px;">
     <div class="filter-bar" style="margin-bottom:8px;padding:6px 10px;">
       <span class="filter-label">${escapeHtml(winLabel)} development vs mean</span>
-      <button class="chip${win === "1y" ? " active" : ""}" data-form-window="1y" type="button">1y</button>
-      <button class="chip${win === "3y" ? " active" : ""}" data-form-window="3y" type="button">3y</button>
-      <button class="chip${win === "6y" ? " active" : ""}" data-form-window="6y" type="button">6y</button>
-      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified · 6y is the principal window</span>
+      ${["3y", "4y", "5y", "6y", "7y", "8y"].map(w => `<button class="chip${win === w ? " active" : ""}" data-form-window="${w}" type="button">${w}${w === "7y" ? ' <span aria-hidden="true" style="color:var(--card-gold, var(--neon-amber));">★</span>' : ''}</button>`).join("")}
+      <span style="margin-left:auto;font-size:10px;color:var(--text-tertiary);letter-spacing:0.04em;">DvM+ · 100 = league mean · 10 pts = 1 std-dev · debuts + acquisitions nullified · 7y is the principal window</span>
     </div>
     <div style="display:grid;grid-template-columns:${cols};gap:10px;align-items:start;">${chartCells}</div>
   </div>`;
