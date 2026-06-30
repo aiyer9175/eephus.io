@@ -30714,10 +30714,18 @@ function _gfxSurplusBlock(p, P) {
   const baked = (p && p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
   if (!baked || typeof renderBucketBar !== "function") return "";
   const isPit = !!(p.position && /^(RHP|LHP|SP|RP|MIRP|SIRP)/.test(p.position));
-  const fv = p.fv_close;
-  const surplus = baked.value_mm;
-  const d = baked.dist || {};
-  const bk = (p.debuted_value && p.debuted_value.posterior) ? p.debuted_value.posterior : baked.buckets;
+  // Lead with eFV (the platform-primary grade) and its surplus so this section
+  // matches the hero Surplus tile, the board GFX rows, and the compare card.
+  // displaySurplusMM() returns the eFV surplus when eFV is primary (else baked).
+  const _xf = (typeof getEfv === "function") ? getEfv(p) : null;
+  const _useEfv = !!(_xf && _xf.xfv_grade != null && (typeof _gradePrimary === "function") && _gradePrimary() === "xfv");
+  const _efvG = (_useEfv && typeof efvGradeDisplay === "function") ? efvGradeDisplay(_xf) : null;
+  const fv = _efvG != null ? _efvG : p.fv_close;       // eFV grade (already nearest-rounded) or consensus
+  const _fvIsEfv = _efvG != null;
+  const surplus = (typeof displaySurplusMM === "function") ? displaySurplusMM(p) : baked.value_mm;
+  const d = (_useEfv && _xf.dist) ? _xf.dist : (baked.dist || {});
+  const bk = (p.debuted_value && p.debuted_value.posterior) ? p.debuted_value.posterior
+           : (_useEfv && _xf.buckets) ? _xf.buckets : baked.buckets;
   const fmtUsd = m => (typeof fmtSvMM === "function") ? fmtSvMM(m) : ("$" + Math.round(m) + "M");
   const surplusColor = surplus >= 50 ? "var(--up)" : surplus >= 10 ? "var(--neon-cyan)" : P.text;
   const scarcity = (typeof surplusPositionMult === "function") ? surplusPositionMult(p.position) : 1;
@@ -30727,11 +30735,12 @@ function _gfxSurplusBlock(p, P) {
   const metaBits = [];
   // Lead with the model's own confidence band (epistemic CI) - the canonical
   // uncertainty read - then the outcome distribution and risk meta.
-  if (baked.ci && baked.ci.lo_mm != null) {
-    const pct = baked.ci.cred != null ? Math.round(baked.ci.cred * 100) : 90;
-    metaBits.push(`${pct}% CI ${fmtUsd(baked.ci.lo_mm)}–${fmtUsd(baked.ci.hi_mm)}`);
+  const _ci = (_useEfv && _xf.ci) ? _xf.ci : baked.ci;
+  if (_ci && _ci.lo_mm != null) {
+    const pct = _ci.cred != null ? Math.round(_ci.cred * 100) : 90;
+    metaBits.push(`${pct}% CI ${fmtUsd(_ci.lo_mm)}-${fmtUsd(_ci.hi_mm)}`);
   }
-  if (d.p10_mm != null) metaBits.push(`P10–P90 ${fmtUsd(d.p10_mm)}–${fmtUsd(d.p90_mm)}`);
+  if (d.p10_mm != null) metaBits.push(`P10-P90 ${fmtUsd(d.p10_mm)}-${fmtUsd(d.p90_mm)}`);
   if (pb != null) metaBits.push(`P(bust) ${pb}%`);
   if (d.p_above_threshold != null && d.threshold_mm != null) metaBits.push(`P(>$${Math.round(d.threshold_mm)}M) ${Math.round(d.p_above_threshold * 100)}%`);
   if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtUsd(d.risk_adjusted_mm)}`);
@@ -30739,7 +30748,7 @@ function _gfxSurplusBlock(p, P) {
     <div style="display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:11px;border-bottom:1px solid ${P.border};margin-bottom:13px;">
       <div style="min-width:0;">
         <div style="font-family:var(--font-sans);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:${P.text3};font-weight:700;">Surplus value${scChip}</div>
-        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">FV ${fv != null ? fvCeil(fv) : " - "} ${isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
+        <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};margin-top:4px;font-style:italic;">${_fvIsEfv ? "eFV" : "FV"} ${fv != null ? (_fvIsEfv ? fv : fvCeil(fv)) : " - "} ${isPit ? "pitcher" : "hitter"} · 6yr cost-controlled</div>
       </div>
       <div style="font-family:var(--font-mono);font-size:30px;font-weight:800;color:${surplusColor};line-height:1;">${escapeHtml(fmtUsd(surplus))}</div>
     </div>
@@ -30787,9 +30796,17 @@ function buildProspectCard(snap) {
   }
   const fmtAvg = v => (v == null) ? null : Number(v).toFixed(3).replace(/^0(?=\.)/, "");
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-  const fvLabel = (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
+  // Lead the headline badge with eFV (platform-primary grade) so the single-
+  // player card matches the board GFX rows, compare card, and on-screen board.
+  // Falls back to consensus when eFV abstains or the user is in consensus mode.
+  const _xC = (typeof getEfv === "function") ? getEfv(p) : null;
+  const _useEfvC = !!(_xC && _xC.xfv_grade != null && (typeof _gradePrimary === "function") && _gradePrimary() === "xfv");
+  const _xgC = _useEfvC ? efvGradeDisplay(_xC) : null;
+  const fvLabel = _xgC != null ? String(_xgC)
+                : (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
                 : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
-  const fvNum = (p.fv_close != null) ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null);
+  const fvNum = (_xgC != null) ? efvRankValue(p)
+              : (p.fv_close != null ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null));
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
@@ -32074,10 +32091,14 @@ document.addEventListener("change", (e) => {
     _gfxRefresh();
   }
 });
+let _gfxTitleTimer = null;
 document.addEventListener("input", (e) => {
   if (e.target.id === "gfx-title-input") {
     _gfxOpts.title = e.target.value;
-    _gfxRefresh();
+    // Debounce the expensive (html2canvas) re-render: typing a title should not
+    // re-render the whole graphic on every keystroke - refresh once typing pauses.
+    clearTimeout(_gfxTitleTimer);
+    _gfxTitleTimer = setTimeout(_gfxRefresh, 300);
   }
 });
 document.addEventListener("keydown", (e) => {
