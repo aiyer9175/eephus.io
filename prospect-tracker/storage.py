@@ -13503,6 +13503,43 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             entry["letter_by_window"][win] = _letter_grade(ranks_w[i], _n_orgs)
     # ────────────────────────────────────────────────────────────────────────
 
+    # ── Unify farm_rank with the DEFAULT (7y) display window ──────────────
+    # The board ranks orgs by farm_score_by_window["7y"] (farmWindowRank) for both the
+    # #N and the letter, but the canonical `farm_rank` above was assigned off the separate
+    # `farm_score` leaf basis -- so the two DIVERGED for 29/30 orgs. `farm_rank` only feeds
+    # the snapshot, the de-noised movement chip, and the build_site top-5, so the board
+    # showed e.g. NYY at #29 (7y window) while the movement chip read +2 off the canonical
+    # #25 -- an impossible-looking combination. Re-rank farm_rank to the 7y window so the
+    # displayed #N, the movement chip, the snapshot, and farmWindowRank("7y") all agree.
+    # (The chip only renders at the 7y default window; other windows hide it.)
+    _DEFAULT_FARM_WIN = "7y"
+    if all((e.get("farm_score_by_window") or {}).get(_DEFAULT_FARM_WIN) is not None
+           for e in org_summary):
+        org_summary.sort(key=lambda x: (-(x["farm_score_by_window"][_DEFAULT_FARM_WIN]),
+                                        -(x.get("top_end_points") or 0)))
+        for rank_i, entry in enumerate(org_summary, start=1):
+            entry["farm_rank"] = rank_i
+        # Re-derive the movement chip off the corrected (7y) rank (overwrites the earlier
+        # canonical-rank pass). NOTE: farm_rank_history accrued on the OLD basis, so the
+        # chip may read a transient basis-change artifact until ~2 monthly runs of 7y-rank
+        # history accrue -- the engine's documented warm-up, not an impossible value.
+        try:
+            from movement import compute_farm_movement as _cfm
+            _today_iso2 = date.today().isoformat()
+            _hist_by_org2: dict[str, list[dict]] = {}
+            for _row in load_farm_rank_history():
+                _hist_by_org2.setdefault(_row["org"], []).append(_row)
+            for entry in org_summary:
+                _org = entry.get("org")
+                _h = [h for h in _hist_by_org2.get(_org, [])
+                      if h.get("snapshot_date") != _today_iso2]
+                _h.append({"org": _org, "snapshot_date": _today_iso2,
+                           "farm_rank": entry.get("farm_rank"),
+                           "farm_score": entry.get("farm_score")})
+                entry["rank_movement"] = _cfm(_h)
+        except Exception:
+            pass
+
     # ── Per-org draft spending (computed from our acquisitions table) ──
     # The acquisitions table records `bonus_usd` for every drafted player
     # we know about — sum by org × year to produce a comparison set for
