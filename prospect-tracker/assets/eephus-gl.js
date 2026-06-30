@@ -95,6 +95,9 @@
           });
         }
         _qkPlayers = rows;
+        const ov = document.getElementById("qk-overlay");
+        const inp = document.getElementById("qk-input");
+        if (inp && ov && ov.classList.contains("is-open")) qkSearch(inp.value);
       })
       .catch(() => { _qkPlayers = []; })
       .finally(() => { _qkPlayersLoading = false; });

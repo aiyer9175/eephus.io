@@ -110,19 +110,25 @@
                      e.short + " " + (e.long || "")).toLowerCase();
         if (!hay.includes(q)) continue;
       }
+      // Tolerate unknown categories: lazily create the bucket so a stray
+      // category surfaces in its own chip instead of vanishing. Increments
+      // live inside the bucketing path so counts can never exceed what renders.
+      if (!byGroup.has(grp)) byGroup.set(grp, []);
+      byGroup.get(grp).push([slug, e]);
       counts.all++;
       counts[grp] = (counts[grp] || 0) + 1;
-      if (byGroup.has(grp)) byGroup.get(grp).push([slug, e]);
     }
+    // Union the defined group order with any orphan groups discovered above.
+    const allGroups = groups.concat([...byGroup.keys()].filter(g => !groups.includes(g)));
     const chips = [`<button class="chip${_S.cat === "all" ? " active" : ""}" data-gl-cat="all">All <span class="gl-count">${counts.all}</span></button>`]
-      .concat(groups.map(g =>
+      .concat(allGroups.map(g =>
         `<button class="chip${_S.cat === g ? " active" : ""}" data-gl-cat="${escapeHtml(g)}">${escapeHtml(g)} <span class="gl-count">${counts[g] || 0}</span></button>`));
     document.getElementById("gl-cats").innerHTML = chips.join("");
     document.querySelectorAll("[data-gl-cat]").forEach(b => b.onclick = () => {
       _S.cat = b.dataset.glCat; syncToURL(); render();
     });
     // entries: alphabetical within the active scope
-    const active = _S.cat === "all" ? groups : [_S.cat];
+    const active = _S.cat === "all" ? allGroups : [_S.cat];
     const flat = [];
     for (const g of active) {
       for (const [slug, e] of (byGroup.get(g) || [])) flat.push([slug, e, g]);

@@ -615,7 +615,13 @@
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
         return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
       }).join("");
-      const tot = `${fmtWar(m.warTotalPTH ?? m.warTotal)}${m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}–${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
+      // For prospects the per-season cells render only the fixed calendar window,
+      // which can drop ETA-shifted prime seasons; sum the SHOWN cells so the Total
+      // column agrees with what is visible. Vets keep their full warTotalPTH.
+      const totV = m.src === "prospect"
+        ? seasons.map((s, t) => warAt(m, t)).filter(v => v != null).reduce((a, b) => a + b, 0)
+        : (m.warTotalPTH ?? m.warTotal);
+      const tot = `${fmtWar(totV)}${m.src !== "prospect" && m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}–${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
       const cs = contractStatus(m);
       const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
         + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
@@ -738,7 +744,7 @@
     const all = wA.concat(wB).filter(v => v != null);
     const W = 560, H = 180, PX = 36, PY = 16;
     const mn = Math.min(0, ...all), mx = Math.max(1, ...all);
-    const x = t => PX + t * (W - PX - 8) / (seasons.length - 1);
+    const x = t => PX + t * (W - PX - 8) / Math.max(1, seasons.length - 1);
     const y = v => PY + (mx - v) * (H - PY - 24) / (mx - mn || 1);
     const line = (w, color) => {
       const pts = w.map((v, t) => v != null ? `${x(t)},${y(v)}` : null).filter(Boolean).join(" ");

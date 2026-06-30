@@ -10542,11 +10542,12 @@ function _perToolMax(p) {
 // Cuba / TWN leagues as an overseas prospect for tiebreaker
 // purposes - they don't have MiLB RPS+ or SC+, so we substitute
 // their FG-side stat headlines instead.
-const _OVERSEAS_LEAGUES = new Set(["NPB", "NPBF", "KBO", "CPBL", "Cuba", "TWN"]);
+const _OVERSEAS_LEAGUES = new Set(["NPB", "NPBF", "KBO", "CPBL", "CUBA", "TWN"]);
 function _isOverseasProspect(p) {
   if (!p) return false;
   if (p.league && _OVERSEAS_LEAGUES.has(p.league)) return true;
-  const rows = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+  const rows = (p.stats && p.stats.length) ? p.stats
+             : (p.stat_rows && p.stat_rows.length) ? p.stat_rows
              : (p.career_stats && p.career_stats.length) ? p.career_stats
              : null;
   if (!rows) return false;
@@ -10557,7 +10558,8 @@ function _isOverseasProspect(p) {
 }
 function _overseasHeadline(p) {
   // Return {wrc, fip} for the player's latest overseas season.
-  const rows = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+  const rows = (p.stats && p.stats.length) ? p.stats
+             : (p.stat_rows && p.stat_rows.length) ? p.stat_rows
              : (p.career_stats && p.career_stats.length) ? p.career_stats
              : null;
   if (!rows) return { wrc: null, fip: null };
@@ -24243,7 +24245,8 @@ function _renderOverseasCard(p) {
   // (p.stat_rows or p.career_stats - varies by source). Build a
   // headline-chip strip mirroring the draft-card pattern. Falls back
   // silently when no stats are on file (HS overseas prospects, etc).
-  const _ovStats = (p.stat_rows && p.stat_rows.length) ? p.stat_rows
+  const _ovStats = (p.stats && p.stats.length) ? p.stats
+                  : (p.stat_rows && p.stat_rows.length) ? p.stat_rows
                   : (p.career_stats && p.career_stats.length) ? p.career_stats
                   : null;
   let overseasChips = "";
@@ -26108,8 +26111,8 @@ async function _loadCountryDemographics() {
 
 // Aggregate IFA signings into per-country rows for the selected class
 // (state.ifaYear; "all" = every class).
-function _countryAggregate(classes) {
-  const yr = (state.ifaYear == null || state.ifaYear === "all") ? "all" : +state.ifaYear;
+function _countryAggregate(classes, opts) {
+  const yr = (opts && opts.allTime) ? "all" : ((state.ifaYear == null || state.ifaYear === "all") ? "all" : +state.ifaYear);
   const demo = (DATA.countryDemographics && DATA.countryDemographics.countries) || {};
   const byC = {};
   let sumFvAll = 0, nFvAll = 0, totN = 0;
@@ -26233,7 +26236,9 @@ async function renderCountryDetail(name) {
   }
   await _loadCountryDemographics();
   const back = '<a href="#" onclick="event.preventDefault();goHome();" class="back-link">&larr; Back to list</a>';
-  const agg = _countryAggregate(DATA.ifa.classes);
+  // All-time aggregate so the header counts/tiles/rank chips match the all-time
+  // signees table below (signings = _findCountry, which is year-agnostic).
+  const agg = _countryAggregate(DATA.ifa.classes, { allTime: true });
   const r = agg.rows.find(x => x.name === name);
   const signings = _findCountry(name);
   if (!r || !signings) {

@@ -410,7 +410,7 @@ function _tbSortByCol(col) {
             : (["name", "org", "pos", "age"].includes(col) ? "asc" : "desc");
   _tbSort = `${col}_${dir}`;
   const sel = document.getElementById("tb-sort-select");
-  if (sel) sel.value = (_tbSort === "surplus_desc") ? "trade_desc" : _tbSort;
+  if (sel) { const opt = (_tbSort === "surplus_desc") ? "trade_desc" : _tbSort; sel.value = opt; if (sel.value !== opt) sel.selectedIndex = -1; }
   resetPage("tradeboard");
   _renderTBRows();
 }
@@ -730,9 +730,8 @@ function _tbShowGroup(playerKey) {
       const bs = m.breakout_score != null ? (m.breakout_score * 100).toFixed(0) + "%" : " - ";
       const bsCol = (m.breakout_score || 0) >= 0.60 ? "var(--neon-green)" : (m.breakout_score || 0) >= 0.45 ? "var(--neon-amber)" : "var(--text-secondary)";
       const avl = m.age_vs_level != null ? `${m.age_vs_level > 0 ? "+" : ""}${Number(m.age_vs_level).toFixed(1)}yr` : " - ";
-      return `<tr style="font-size:12px;" class="prospect-row"
-                  onclick="_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);"
-                  style="cursor:pointer;">
+      return `<tr style="font-size:12px;cursor:pointer;" class="prospect-row"
+                  onclick="_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);">
         <td style="padding:4px 6px;color:var(--text-secondary);">${i + 1}</td>
         <td style="padding:4px 6px;font-weight:600;">${escapeHtml(m.player_name || "?")}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.position || "")}</td>
@@ -798,6 +797,22 @@ function _tbShowGroup(playerKey) {
       }));
   }
 
+  // Wire the "Filter & Sort" collapsible toggle on the /projections/ page (the
+  // generic [data-collapse-target] handler only ships inside the PROSPX app).
+  // Scoped to #proj-view-trademachine so prospx is untouched.
+  let _filterToggleWired = false;
+  function _tbWireFilterToggle() {
+    if (_filterToggleWired) return;
+    const tBtn = document.querySelector('#proj-view-trademachine [data-collapse-target]');
+    if (!tBtn) return;
+    _filterToggleWired = true;
+    tBtn.addEventListener('click', () => {
+      const t = document.getElementById(tBtn.dataset.collapseTarget);
+      if (!t) return;
+      const open = t.classList.toggle('is-open');
+      tBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  }
   let _mounted = false;
   function mount() {
     if (_mounted) { renderTradeMachine(); _renderTBRows(); return; }
@@ -812,6 +827,13 @@ function _tbShowGroup(playerKey) {
         _renderTBRows();
         _tbWireFilters();
         renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
+        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
+        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
+        fetch(DATA_BASE + "grpo_scores.json", { cache: "no-cache" })
+          .then(r => r.ok ? r.json() : null)
+          .then(g => { if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; } })
+          .catch(() => {});
+        _tbWireFilterToggle();
       })
       .catch(() => {
         const w = document.getElementById("tradeboard-content");

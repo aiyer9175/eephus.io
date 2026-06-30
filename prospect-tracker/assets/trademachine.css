@@ -205,6 +205,9 @@
 #proj-view-trademachine .filter-toggle:hover { color: var(--text-primary); border-color: var(--accent-cyan); }
 #proj-view-trademachine .filter-toggle-arrow { font-size: 10px; transition: transform .15s ease; }
 #proj-view-trademachine .filter-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
+/* Collapsible filter bar: default collapsed, revealed on .is-open (toggle wired in trademachine.js mount). */
+#proj-view-trademachine .collapsible-filter-bar { display: none; }
+#proj-view-trademachine .collapsible-filter-bar.is-open { display: flex; flex-wrap: wrap; gap: 6px; }
 
 /* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
 #proj-view-trademachine button.chip.active { border-color: var(--accent-cyan); }

@@ -4422,7 +4422,7 @@
   {
    "id": "collegesavant",
    "term": "CollegeSavant",
-   "category": "module",
+   "category": "site-feature",
    "module": [
     "collegesavant"
    ],

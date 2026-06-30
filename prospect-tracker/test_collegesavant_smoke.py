@@ -100,7 +100,7 @@ def test_new_features_actually_render():
     the Projected Single-A translation block with its flags, and a wired
     glossary term. Renders a real-shaped hitter through app.js + team_names.js."""
     ctx = MiniRacer()
-    hitter = ('[{"hitter_name":"Condon, Charlie","team":"GEO_BUL","year":2024,"k_pct":14.8,'
+    hitter = ('[{"hitter_name":"Condon, Charlie","team":"GEO_BUL","year":2024,"k_pct":14.8,"pa":280,'
               '"bb_pct":18.6,"xwoba":0.45,"average_exit_velocity":98.5,'
               '"90th_percentile_exit_velocity":112.0,"max_exit_velocity":118.0,"swing_pct":38,'
               '"chase_pct":21,"whiff_pct":20,"zone_swing_pct":68,"zone_contact_pct":89,'

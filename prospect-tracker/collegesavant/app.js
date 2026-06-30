@@ -385,7 +385,10 @@ function afterRender() {
 function updateNav(hash) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const route = link.getAttribute("href");
-    link.classList.toggle("is-active", route === hash || (hash === "#/" && route === "#/"));
+    const section = hash.startsWith("#/teams") ? "#/teams"
+      : hash.startsWith("#/projections") ? "#/projections"
+      : hash.startsWith("#/prospects") ? "#/prospects" : "#/";
+    link.classList.toggle("is-active", route === section);
   });
   // The hitters/pitchers toggle lands you on the same section on the other side
   // (Team Tendencies -> Team Tendencies, Pro Projections -> Pro Projections),
@@ -538,7 +541,7 @@ function renderLeaderboard() {
         <option value="all">All teams</option>
         ${teams.map((t) => `<option value="${escapeHtml(t)}" ${t === teamF ? "selected" : ""}>${escapeHtml(formatTeamName(t))}</option>`).join("")}
       </select>
-      <label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>
+      ${hasPa ? `<label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>` : ""}
       <button class="control-button" type="button" data-reset>Reset</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${(hasPa && minPA > 0) ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>

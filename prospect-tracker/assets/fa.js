@@ -916,7 +916,7 @@
 
   function renderArchive(rows) {
     const arc = D.fa_archive;
-    if (!arc || !arc.winters) {
+    if (!arc || !arc.winters || !arc.winters.length) {
       rows.innerHTML = `<div class="state-message">Archive not exported yet.</div>`;
       return;
     }

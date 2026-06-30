@@ -83,6 +83,14 @@ function activeHeadlineMetrics() {
   return [STUFF_METRIC, ...activePitcherMetrics()];
 }
 
+// Only these team codes have a logo PNG in collegesavant/logos/; gate <img>
+// emission on this set so non-listed schools do not fire 404 image requests.
+const TEAM_LOGOS = new Set([
+  "ILL_ILL", "IOW_HAW", "IU", "MAR_TER", "MIC_SPA", "MIC_WOL", "MIN_GOL",
+  "NEB", "NOR_CAT", "ORE_DUC", "OSU_BUC", "PEN_NIT", "PUR_BOI", "RUT_SCA",
+  "SOU_TRO", "WAS_HUS",
+]);
+
 const TEAM_CODE_NAMES = {
   ALV_CCO: "Alvin Community College",
   ANG_STA: "Angelo State University",
@@ -655,7 +663,12 @@ function afterRender() {
 function updateNav(hash) {
   document.querySelectorAll("[data-route]").forEach((link) => {
     const route = link.getAttribute("href");
-    link.classList.toggle("is-active", route === hash || (hash === "#/" && route === "#/"));
+    // Section-aware: leaderboard (#/leaders/*) and player (#/player/*) views
+    // belong to the Dashboard tab, so it lights up instead of leaving the bar blank.
+    const section = hash.startsWith("#/teams") ? "#/teams"
+      : hash.startsWith("#/projections") ? "#/projections"
+      : hash.startsWith("#/prospects") ? "#/prospects" : "#/";
+    link.classList.toggle("is-active", route === section);
   });
   // The hitters/pitchers toggle lands you on the same section on the other side
   // (Team Tendencies -> Team Tendencies, Pro Projections -> Pro Projections),
@@ -715,7 +728,7 @@ function renderTopWidget(metric) {
           <a class="widget-row" href="#/player/${pitcher.year}/${pitcher.slug}">
             <span class="widget-rank">${index + 1}</span>
             <span class="widget-name">${escapeHtml(displayName(pitcher.pitcher_name))}</span>
-            <span class="widget-team">${pitcher.team ? `<img class="widget-logo" src="logos/${escapeHtml(pitcher.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(pitcher.team))}</span>
+            <span class="widget-team">${pitcher.team && TEAM_LOGOS.has(pitcher.team) ? `<img class="widget-logo" src="logos/${escapeHtml(pitcher.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : ""}${escapeHtml(formatTeamName(pitcher.team))}</span>
             <strong>${metric.key === "cs_plus" ? Math.round(state.csPlus && state.csPlus.get(pitcher.slug)) : formatMetric(pitcher[metric.key], metric.fmt)}</strong>
           </a>
         `).join("")}
@@ -797,7 +810,7 @@ function renderLeaderboard() {
       const cls = c.key === "cs_plus" && Number.isFinite(v) ? (v >= 110 ? "tt-pos" : v <= 90 ? "tt-neg" : "") : "";
       return `<td class="tt-col ${cls}${c.key === state.sortKey ? " is-sorted" : ""}">${lbFmt(c.fmt, v)}</td>`;
     }).join("");
-    const logo = p.team ? `<img class="tt-logo" src="logos/${escapeHtml(p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = p.team && TEAM_LOGOS.has(p.team) ? `<img class="tt-logo" src="logos/${escapeHtml(p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${p.year}/${p.slug}">${escapeHtml(displayName(p.pitcher_name))}</a><span class="tt-n">${escapeHtml(formatTeamName(p.team))}</span></td>
       ${cells}</tr>`;
@@ -1030,7 +1043,7 @@ function renderProjections() {
     .slice(0, LEADERBOARD_LIMIT);
   const body = list.map((x, i) => {
     const sa = x.t.single_a;
-    const logo = x.p.team ? `<img class="tt-logo" src="logos/${escapeHtml(x.p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
+    const logo = x.p.team && TEAM_LOGOS.has(x.p.team) ? `<img class="tt-logo" src="logos/${escapeHtml(x.p.team)}.png" alt="" loading="lazy" onerror="this.remove()">` : "";
     return `<tr><td class="tt-rank">${i + 1}</td>
       <td class="tt-team">${logo}<a class="proj-name" href="#/player/${x.p.year}/${x.p.slug}">${escapeHtml(displayName(x.p.pitcher_name))}</a></td>
       <td class="tt-col">${plusPill(x.cs, "CS+")}</td>
