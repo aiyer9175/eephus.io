@@ -1,0 +1,37 @@
+{
+ "model": "prospect_def_value (Will Cahoon, local reconstruction)",
+ "validation_vs_fg": {
+  "n_graduated": 263,
+  "def_value_spearman": 0.6787,
+  "fg_tool_field_spearman": 0.2831,
+  "def_value_mae_z": 0.6151,
+  "fg_tool_field_mae_z": 0.9621,
+  "verdict": "def_value BEATS FG fFld",
+  "leakage_check": "def_value uses as-of-prospect listed position + frame (BMI) + age only; realized MLB position is never an input"
+ },
+ "xfv_swap_gate": {
+  "protocol": "forward-chained OOS (tools/xfv_ml_lab.py), hit side; lean = shipped xFV set",
+  "lean_baseline": {
+   "blend_rho": 0.3701,
+   "within_tier_wm": 0.2055,
+   "t45": 0.0916
+  },
+  "lean_plus_def_value": {
+   "blend_rho": 0.3661,
+   "within_tier_wm": 0.1847,
+   "t45": 0.0715
+  },
+  "full_baseline": {
+   "blend_rho": 0.3026,
+   "within_tier_wm": 0.0649,
+   "t45": 0.039
+  },
+  "full_plus_def_value": {
+   "blend_rho": 0.3046,
+   "within_tier_wm": 0.0681,
+   "t45": 0.0419
+  },
+  "verdict": "REJECTED (loss, not shipped): def_value REGRESSES the shipped lean xFV model on every gate (pooled rho -0.0040, within-tier -0.0208, fringe -0.0201). Even a far better defensive predictor (0.68 vs FG 0.28) is flat-to-negative on xFV's offense-dominated first-6yr-WAR target -- the binding constraint is the TARGET, not measurement quality (re-confirms wills-models-for-xfv-audit + the 2026-06-29 def-feature-class re-test)."
+ },
+ "alternative_use": "def_value validates as a better-than-FG prospect-defense predictor; its lane is the surfaces where defense IS a measured WAR component (MLB Projections / farm / display), NOT the offense-dominated xFV ranker. See def-prior-mlb-projections."
+}

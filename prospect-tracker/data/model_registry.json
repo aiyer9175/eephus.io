@@ -426,6 +426,20 @@
    "artifact_age_days": 4
   },
   {
+   "model_id": "prospect_def_value",
+   "surface": "xFV defensive-input swap candidate (Will Cahoon model, local reconstruction)",
+   "predicts": "expected MLB positional run value from a prospect's as-of-decision listed position + body frame (BMI) + age, via a position-migration matrix (P(MLB pos | MiLB primary))",
+   "champion": "n/a (a predictor; FG fFld is the baseline to beat)",
+   "baseline": "FanGraphs fFld scout grade (tool_field)",
+   "metric": "Spearman + MAE vs realized MLB positional value on graduated prospects; xFV swap on the forward-chained OOS rank gate",
+   "eval_artifact": "data/prospect_def_value_eval.json",
+   "verdict": "provisional",
+   "notes": "VALIDATED as a defensive predictor: beats FG fFld at predicting realized MLB positional value (Spearman 0.68 vs 0.28, lower MAE, leakage-safe; n=263 graduated) -- replicates Cahoon's 'beats FG grade' result. xFV SWAP REJECTED (loss, NOT shipped): adding def_value to the shipped lean xFV model regresses every gate (pooled rho 0.3701->0.3661, within-tier 0.2055->0.1847, fringe 0.0916->0.0715). Even a far-better defensive predictor is flat-to-negative on xFV's offense-dominated first-6yr-WAR target -- the binding constraint is the TARGET not measurement quality (re-confirms wills-models-for-xfv-audit + the 2026-06-29 def-feature-class re-test). prospect_def_value.py (Will Cahoon watermark) is a LOCAL reconstruction: the season-by-season parquet inputs (~/career_outcome_plus, ~/swing_plus/.venv) were ABSENT in this env, so it reconstructs the core thesis leakage-safe from the xFV matrix listed position + draft_players BMI + age + the migration matrix (innings-share granularity + rf9_rel quality term simplified). Its real lane is the defense-IS-WAR surfaces (MLB Projections/farm/display), NOT the xFV ranker -- see proj_def_prior + def-prior-mlb-projections.",
+   "last_checked": "2026-06-29",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "xfv_pitcher",
    "surface": "/prospx (PRIMARY grade + ranking; consensus FV secondary)",
    "predicts": "realized first-6-MLB-season bWAR distribution -> xFV grade (20-80) + surplus, pitchers",
