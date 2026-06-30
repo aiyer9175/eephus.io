@@ -44,6 +44,7 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
+import warnings
 from pathlib import Path
 
 import numpy as np
@@ -52,6 +53,16 @@ import fa_market as fm
 import fa_projection as fp
 
 log = logging.getLogger(__name__)
+
+# LightGBM's sklearn wrapper records feature names even when fit on a bare ndarray,
+# then nags "X does not have valid feature names" on every ndarray predict. proj_ml
+# predicts on ndarrays by design (deterministic positional schema, predict_path) -- so
+# this fires once PER HEAD PER PLAYER (~32k times in a single proj_export, millions in a
+# backtest), spamming logs (58MB seen) for zero signal. Filter the one message at import
+# (scoped to the message + category, so real warnings still surface). Mirrors the
+# context-managed suppressions already in xfv_model / prospect_path / swing_plus_ingest.
+warnings.filterwarnings("ignore", message="X does not have valid feature names",
+                        category=UserWarning)
 
 MODEL_DIR = Path(__file__).parent / "model" / "proj_lgbm"
 MODEL_VERSION = "proj_lgbm_v1"
@@ -386,6 +397,16 @@ def train(corpus: dict, max_label_season: int, first_base: int = 2003,
 _STAR_FLAG_IDX = 10
 
 
+def _predict1(head, x) -> float:
+    """Single-row predict via the raw LightGBM Booster -- ~7x faster than the
+    LGBMRegressor sklearn wrapper (which re-validates the ndarray on every call),
+    byte-identical output (verified max-abs-diff 0.0). predict_path scores ONE player
+    at a time, so a single proj_export issues 38k+ single-row predicts where the wrapper
+    overhead dominated (~25s -> ~3.5s). Falls back to the wrapper if booster_ is absent."""
+    b = getattr(head, "booster_", None)
+    return float((b.predict(x) if b is not None else head.predict(x))[0])
+
+
 def _implied_mean(q10, q25, q50, q75, q90) -> float:
     """Distribution mean implied by the five quantile heads (trapezoid
     quadrature). The median ignores the right-tail mass; for the star
@@ -424,7 +445,7 @@ def predict_path(models: dict, feats: list[float], side: str) -> dict | None:
         heads = models[side].get(h)
         if not heads:
             return None
-        preds = sorted(float(heads[q].predict(x)[0]) for q in qs)
+        preds = sorted(_predict1(heads[q], x) for q in qs)
         for q, v in zip(sorted(qs), preds):
             by_q[q].append(v)
     full_qs = all(q in by_q for q in QUANTILES)
