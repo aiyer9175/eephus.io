@@ -192,8 +192,10 @@ def _blockers(class_year: int) -> dict[tuple[str, str], list[dict]]:
     for p in d.get("players") or []:
         # xFV sweep: a near-ETA prospect blocks on the xFV grade (the OOS-better
         # prospect read) where present, consensus FV otherwise. Read-only join, same
-        # platform invariant as the timeseries read above.
-        _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade")
+        # platform invariant as the timeseries read above. Uses the CONSENSUS-SCALE
+        # xfv_grade_quantile (NOT the now-realized headline xfv_grade): blocker_fv_min is
+        # a consensus-scale threshold, so the grade fed to it must stay on that scale.
+        _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade_quantile")
         fv = _xg if _xg is not None else p.get("fv_close")
         eta = (p.get("eta") or {}).get("year")
         if (fv is not None and fv >= cfg["blocker_fv_min"] and p.get("org")

@@ -366,9 +366,10 @@ def score_history(persist: bool = True) -> dict:
             row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
                                          rec.get("birth_date"), side)
             model_war = max(-2.0, a + b * _predict(ridge, _vec(row, side)))
-            cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else model_war
-            rank_war = (1 - lam[side]) * cons_war + lam[side] * model_war
-            grade = _map_grade(gmap[side], rank_war)
+            # Pure-model (realized) grade at this snapshot -- the same realized_implied_fv
+            # transform the headline now uses, so the xFV-history chart is on ONE scale
+            # with the current grade (no quantile-remapped discontinuity at the live point).
+            grade = vf.realized_implied_fv(model_war, side == "pit")
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})

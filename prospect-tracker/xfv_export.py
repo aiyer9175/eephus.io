@@ -26,10 +26,16 @@ def _entry(s, side, kind):
     e = {
         "side": "P" if side == "pit" else "H",
         "kind": kind,                                    # "active" (live board) | "resolved"
-        "xfv_grade": s.get("xfv_grade_display"),         # headline, 20-80 scale
-        "xfv_grade_realized": s.get("xfv_grade"),        # deflated, drives surplus
+        # HEADLINE = the pure-model (realized) grade: realized_implied_fv(E[6yr WAR]), NO
+        # consensus blend / NO quantile remap. The model is the source of truth (OOS-better
+        # than consensus + individual sources), so the site shows the true outcome-implied
+        # grade -- the SAME grade that drives surplus + the outcome distribution.
+        "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) -- headline
+        "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
+        "xfv_grade_quantile": s.get("xfv_grade_display"),# preserved: prior rank->consensus-scale map (projection pricing + backtests)
         "consensus_fv": s.get("consensus_fv"),
-        "xfv_minus_consensus": s.get("xfv_minus_consensus_display"),
+        "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # realized - consensus (matches headline)
+        "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # preserved (quantile - consensus)
         "xfv_war_6yr": s.get("xfv_war_6yr"),
         "p_bucket": s.get("p_bucket"),
         "surplus_mm": s.get("surplus_mm"),
@@ -97,9 +103,12 @@ def run(persist: bool = True) -> dict:
             "generated_at": date.today().isoformat(),
             "n_players": len(by_player),
             "n_active": counts["active"],
-            "grade_scale": "headline xfv_grade is rank-preserving onto the 20-80 consensus "
-                           "distribution; xfv_grade_realized is the deflated outcome-implied "
-                           "grade that drives surplus + distribution. Live board players carry "
+            "grade_scale": "headline xfv_grade is the pure-model outcome-implied (realized) "
+                           "grade -- realized_implied_fv(E[6yr WAR]), no consensus blend; it is "
+                           "the SAME grade that drives surplus + the outcome distribution "
+                           "(xfv_grade_realized is an identical alias). xfv_grade_quantile "
+                           "preserves the prior rank-preserving map onto the 20-80 consensus "
+                           "scale (projection pricing + backtests). Live board players carry "
                            "kind=active + a surplus dist; they require a pro track record (xFV "
                            "abstains on players with no MiLB production).",
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",

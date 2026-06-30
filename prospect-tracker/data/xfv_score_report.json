@@ -1,38 +1,38 @@
 {
- "generated_at": "2026-06-29",
+ "generated_at": "2026-06-30",
  "scope": "HITTERS",
- "n_scored": 2058,
+ "n_scored": 2053,
  "calibration_scale": {
   "a": -0.064,
   "b": 1.04
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 1.41,
+  "mean_abs_delta": 1.4,
   "max_up": 10.0,
   "max_down": -7.3,
-  "share_within_2_grades": 0.639
+  "share_within_2_grades": 0.643
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 11.09,
+  "mean_abs_delta": 11.13,
   "max_up": 10.7,
   "max_down": -25.3
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.135,
+  "spearman_adj_vs_consensus_miss": 0.1352,
   "n": 461,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 20486.9,
-  "consensus": 21797.6
+  "xfv": 20478.6,
+  "consensus": 21790.4
  },
  "example_up_adjustments": [
   {
    "player_key": "tommy_edman",
    "consensus_fv": 42.7,
-   "xfv_grade": 50.6,
+   "xfv_grade": 50.7,
    "delta": 8.0,
    "realized_war_6yr": 18.03
   },
@@ -47,15 +47,8 @@
    "player_key": "nathaniel_lowe",
    "consensus_fv": 47.7,
    "xfv_grade": 54.7,
-   "delta": 7.0,
+   "delta": 7.1,
    "realized_war_6yr": 12.3
-  },
-  {
-   "player_key": "austin_hays",
-   "consensus_fv": 48.0,
-   "xfv_grade": 54.5,
-   "delta": 6.6,
-   "realized_war_6yr": 7.33
   },
   {
    "player_key": "nicky_lopez",
@@ -63,6 +56,13 @@
    "xfv_grade": 54.2,
    "delta": 6.5,
    "realized_war_6yr": 5.97
+  },
+  {
+   "player_key": "austin_hays",
+   "consensus_fv": 48.0,
+   "xfv_grade": 54.5,
+   "delta": 6.5,
+   "realized_war_6yr": 7.33
   },
   {
    "player_key": "daniel_johnson",

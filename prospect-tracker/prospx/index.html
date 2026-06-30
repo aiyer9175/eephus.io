@@ -17035,7 +17035,11 @@ function rarityFvOf(player) {
   // abstains - which keeps draft / overseas / not-yet-xFV-rated prospects on their published grade
   // (getXfv returns null for those cohorts and for synthetic {fv_close:...} callers).
   const x = (typeof getXfv === "function") ? getXfv(player) : null;
-  if (x && x.xfv_grade != null) return Number(x.xfv_grade);
+  // Key the rarity tier off the DISPLAYED (ceil) grade via xfvGradeDisplay, NOT the raw
+  // grade -- otherwise two prospects that both show e.g. 63 can land in different border
+  // tiers when their raw grades straddle a boundary (Arias 62.3 vs De Vries 62.5 both -> 63,
+  // both holo). Same shown grade => same border holo.
+  if (x && x.xfv_grade != null) return xfvGradeDisplay(x);
   let fv = player.fv_close;
   if (fv == null) fv = player.consensus_fv;
   if (fv == null) {
