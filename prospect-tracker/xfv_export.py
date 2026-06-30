@@ -1,10 +1,10 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 
-"""xFV Pass 6 -- consolidate the per-side scores + tool xFVs into one artifact the
+"""eFV Pass 6 -- consolidate the per-side scores + tool eFVs into one artifact the
 site can consume (data/xfv.json): per player the headline grade (re-anchored to the
 20-80 scale), the realized 6yr-WAR projection, the 5-bucket distribution, surplus $,
-the uncertainty band, the consensus FV for side-by-side comparison, and tool xFVs.
+the uncertainty band, the consensus FV for side-by-side comparison, and tool eFVs.
 
 Run: python xfv_export.py   (after xfv_score for both sides + xfv_tools)
 """
@@ -53,7 +53,7 @@ def _entry(s, side, kind):
         e["statcast_factor"] = s["statcast_factor"]
     if s.get("krp_plus") is not None:                    # KRP+ (K-backed Run Prevention), pitchers
         e["krp_plus"] = s["krp_plus"]
-    if s.get("factors"):                                 # per-prospect xFV explainer
+    if s.get("factors"):                                 # per-prospect eFV explainer
         e["factors"] = s["factors"]
     if s.get("xfv_provisional"):                          # prior-anchored (no pro track record)
         e["xfv_provisional"] = True
@@ -89,7 +89,7 @@ def run(persist: bool = True) -> dict:
             by_player[s["player_key"]] = _entry(s, side, "active")
             counts["active"] += 1
 
-    # tool xFVs: resolved first, then live overlays (live wins for board players).
+    # tool eFVs: resolved first, then live overlays (live wins for board players).
     for fn in ("xfv_tools.json", "xfv_tools_live.json"):
         fp = DATA_DIR / fn
         if not fp.exists():
@@ -109,7 +109,7 @@ def run(persist: bool = True) -> dict:
                            "(xfv_grade_realized is an identical alias). xfv_grade_quantile "
                            "preserves the prior rank-preserving map onto the 20-80 consensus "
                            "scale (projection pricing + backtests). Live board players carry "
-                           "kind=active + a surplus dist; they require a pro track record (xFV "
+                           "kind=active + a surplus dist; they require a pro track record (eFV "
                            "abstains on players with no MiLB production).",
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
@@ -124,8 +124,8 @@ def run(persist: bool = True) -> dict:
 
 
 def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
-    """Run the whole xFV pipeline in dependency order and consolidate data/xfv.json:
-    training matrix -> live matrix -> resolved scores -> live scores -> tool xFVs ->
+    """Run the whole eFV pipeline in dependency order and consolidate data/xfv.json:
+    training matrix -> live matrix -> resolved scores -> live scores -> tool eFVs ->
     export. The forward-chained backtest eval (xfv_model, the governance artifact) is
     heavy and stable, so it is OPT-IN (include_eval). Requires data/timeseries.json
     (run after the site export). One call for what was five manual module runs."""
@@ -143,9 +143,9 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
         xfv_score.run(persist, side)             # resolved cohort scores
         xfv_score.run_live(persist, side)        # live board scores (gated on track record)
     xfv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
-    xfv_score.score_history(persist)              # xFV-over-time per snapshot (FV history chart)
-    xfv_tools.run(persist)                        # resolved tool xFVs
-    xfv_tools.run_live(persist)                   # live tool xFVs
+    xfv_score.score_history(persist)              # eFV-over-time per snapshot (FV history chart)
+    xfv_tools.run(persist)                        # resolved tool eFVs
+    xfv_tools.run_live(persist)                   # live tool eFVs
     # UNGRADED prospects -- production-only leading indicator for the source-ungraded roster
     # players (DSL/CPX breakouts etc.). Separate model + artifact (data/xfv_ungraded.json);
     # NOT folded into the flagship xfv.json or the farm-rank composite. Needs rosters_by_org.json
@@ -165,5 +165,5 @@ if __name__ == "__main__":
         rep = regen_all(include_eval="--eval" in sys.argv)
     else:
         rep = run()
-    print("xFV consolidated export:", rep["meta"]["n_players"], "players",
+    print("eFV consolidated export:", rep["meta"]["n_players"], "players",
           f"({rep['meta']['n_active']} live board) ->", OUT_PATH)

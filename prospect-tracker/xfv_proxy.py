@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 
-"""xFV PROXY -- a faster-resolving LEADING INDICATOR, NOT xFV and NOT a WAR backtest.
+"""eFV PROXY -- a faster-resolving LEADING INDICATOR, NOT eFV and NOT a WAR backtest.
 
-xFV predicts first-6-MLB-season WAR (resolves in ~6 years). This proxy predicts a prospect's
+eFV predicts first-6-MLB-season WAR (resolves in ~6 years). This proxy predicts a prospect's
 FIRST-MLB-season Statcast quality -- hitters: expected wOBA (est_woba); pitchers: expected
 wOBA-AGAINST -- from the SAME pre-debut profile, forward-validated on the 2024-2026 debut
 cohorts. It resolves in ~1 season, so it is an earlier signal of "is the contact/stuff
@@ -11,9 +11,9 @@ major-league quality" and the empirical companion to the live Statcast tilt.
 
 Leakage-safe by construction: features are the as-of-debut profile (consensus FV + tools +
 translated MiLB rates, all dated before the debut), and the TARGET is the player's own
-first-MLB-season Savant line (after debut) -- so this never feeds xFV or its training matrix.
+first-MLB-season Savant line (after debut) -- so this never feeds eFV or its training matrix.
 Survivorship caveat: the cohort is DEBUTS ONLY, so it answers "among players good enough to
-debut, whose MLB contact/stuff is strong," a different (and easier) question than xFV's
+debut, whose MLB contact/stuff is strong," a different (and easier) question than eFV's
 bust-inclusive WAR target. Provisional; publish-the-r.
 
 Writes data/xfv_proxy_eval.json (forward-chained r/rho + coefficients + per-active projections).
@@ -136,7 +136,7 @@ def _project_active(pairs: list[dict], keys: list[str], side: str) -> dict:
 
 
 def run(persist: bool = True) -> dict:
-    report = {"model": "xFV proxy (pre-debut -> first-MLB Statcast quality)",
+    report = {"model": "eFV proxy (pre-debut -> first-MLB Statcast quality)",
               "kind": "leading_indicator_not_xfv", "cohort_years": list(COHORT_YEARS),
               "min_pa": MIN_PA, "sides": {}}
     projections = {}
@@ -154,7 +154,7 @@ def run(persist: bool = True) -> dict:
                  side, len(pairs), ev.get("r"), ev.get("spearman"), ev.get("n"))
     report["projections"] = projections
     report["note"] = ("Forward-chained on debut cohorts; survivorship-limited (debuts only) and "
-                      "small-n -- provisional leading indicator, NOT the xFV WAR backtest.")
+                      "small-n -- provisional leading indicator, NOT the eFV WAR backtest.")
     if persist:
         (DATA_DIR / "xfv_proxy_eval.json").write_text(json.dumps(report, separators=(",", ":")),
                                                       encoding="utf-8")

@@ -67,9 +67,9 @@ def _src_label(src: str) -> str:
 
 
 def xfv_movement(series: list) -> dict | None:
-    """Movement from the xFV trajectory (xfv_history): the xFV grade's change since its last
-    real step (dead-band _EPS). This is the PRIMARY movement signal (owner: movement = xFV
-    delta); the consensus same-source step is the fallback when a player has no xFV history.
+    """Movement from the eFV trajectory (xfv_history): the eFV grade's change since its last
+    real step (dead-band _EPS). This is the PRIMARY movement signal (owner: movement = eFV
+    delta); the consensus same-source step is the fallback when a player has no eFV history.
     Returns the headline-override fields (same direction enum + sign convention as
     compute_genuine_movement) or None when there is no usable series. `series` = [(date, grade)]."""
     pts = sorted(((d, float(x)) for d, x in (series or []) if d and x is not None),
@@ -77,7 +77,7 @@ def xfv_movement(series: list) -> dict | None:
     if len(pts) < 2:
         return None
     latest_d, latest = pts[-1]
-    # Walk back to the last point whose xFV differs from the latest by >= the plateau EPS.
+    # Walk back to the last point whose eFV differs from the latest by >= the plateau EPS.
     anchor_d, anchor = pts[0]
     for d, x in reversed(pts[:-1]):
         if abs(latest - x) >= _EPS:
@@ -90,8 +90,8 @@ def xfv_movement(series: list) -> dict | None:
         "delta": delta,
         "basis": "xfv",
         "strength": round(min(1.0, abs(delta) / 5.0), 2),
-        "from_label": f"xFV {round(anchor, 1)}",
-        "to_label": f"xFV {round(latest, 1)}",
+        "from_label": f"eFV {round(anchor, 1)}",
+        "to_label": f"eFV {round(latest, 1)}",
         "from_date": anchor_d,
         "to_date": latest_d,
     }
@@ -532,13 +532,13 @@ def compute_farm_movement(history: list) -> dict:
 # Per-prospect BOARD-RANK movement (a player climbing / falling the overall
 # PROSPX rank). Same event-based "since last real change" philosophy as the
 # farm engine, applied at the player grain. The input is the player's
-# overall_rank over time (metric_snapshots) -- which becomes the xFV rank once
-# _active_key ranks by xFV, so this measures xFV-rank movement going forward.
+# overall_rank over time (metric_snapshots) -- which becomes the eFV rank once
+# _active_key ranks by eFV, so this measures eFV-rank movement going forward.
 # The board has ~1,700 ranked players, so the rank is far noisier than the
 # 30-team farm rank (a player's number shifts whenever neighbours re-grade); a
 # generous plateau tolerance + dead-band reject that relative churn. Like the
 # farm engine it cannot be back-filled, so it reads flat until a few runs of
-# rank history accrue (expected, not a bug -- the xFV GRADE move on `stock`
+# rank history accrue (expected, not a bug -- the eFV GRADE move on `stock`
 # carries the immediate signal in the meantime).
 # ===========================================================================
 

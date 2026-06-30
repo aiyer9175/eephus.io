@@ -190,7 +190,7 @@ def _blockers(class_year: int) -> dict[tuple[str, str], list[dict]]:
     except (OSError, ValueError):
         xfv_by = {}
     for p in d.get("players") or []:
-        # xFV sweep: a near-ETA prospect blocks on the xFV grade (the OOS-better
+        # eFV sweep: a near-ETA prospect blocks on the eFV grade (the OOS-better
         # prospect read) where present, consensus FV otherwise. Read-only join, same
         # platform invariant as the timeseries read above. Uses the CONSENSUS-SCALE
         # xfv_grade_quantile (NOT the now-realized headline xfv_grade): blocker_fv_min is

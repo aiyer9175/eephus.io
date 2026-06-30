@@ -294,7 +294,7 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
             continue
         per = {}
         for r in raters:
-            rr = [c for c in rows if c["grades"].get(r) is not None]   # xFV may be missing
+            rr = [c for c in rows if c["grades"].get(r) is not None]   # eFV may be missing
             if len(rr) < ARCH_MIN_N:
                 continue
             fvs = [c["grades"][r] for c in rr]
@@ -309,11 +309,11 @@ def _archetype_accuracy(common_rows: list[dict], raters: list[str]) -> list[dict
 
 
 def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
-    """xFV (our outcome-grounded model) vs consensus FV, lifted from the xFV eval
+    """eFV (our outcome-grounded model) vs consensus FV, lifted from the eFV eval
     artifacts. Reported SEPARATELY from the per-source bars because it is the
     model's OWN out-of-sample protocol (forward-chained, leakage-clean), not the
     in-sample common-set backtest the sources share -- OOS is the HARDER bar, so a
-    win here is conservative. This is the honest 'xFV beats consensus on rank' record."""
+    win here is conservative. This is the honest 'eFV beats consensus on rank' record."""
     out = {"protocol": ("forward-chained out-of-sample; debuted cohort; first-6-season "
                         "bWAR (KM-censored). The shipped headline rank is the guarded "
                         "blend (consensus prior + the model edge that survives OOS)."),
@@ -344,16 +344,16 @@ def _xfv_vs_consensus(data_dir: Path = DATA_DIR) -> dict | None:
 
 
 def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
-    """The head-to-head, broken down: xFV vs consensus FV by FV tier, plus the resolved
+    """The head-to-head, broken down: eFV vs consensus FV by FV tier, plus the resolved
     'receipts' -- the players the two disagreed on most, and who was closer to the outcome.
-    Uses the OUT-OF-SAMPLE xFV grade attached to the common set (so it is a fair contest)."""
+    Uses the OUT-OF-SAMPLE eFV grade attached to the common set (so it is a fair contest)."""
     rows = [c for c in common_rows
             if c["grades"].get("xfv") is not None and c["grades"].get(CONSENSUS_KEY) is not None]
     # Dedup to ONE row per player: the LATEST pre-debut read. The pooled common set
     # carries a row per base year, so an early read can show a stale consensus that
     # later caught up (e.g. Francisco Alvarez graded 40 as a young prospect, 63 by
     # graduation). The disagreements table should reflect the grades as they LAST
-    # stood before debut, so it surfaces real xFV-vs-consensus gaps, not catch-up.
+    # stood before debut, so it surfaces real eFV-vs-consensus gaps, not catch-up.
     latest: dict = {}
     for c in rows:
         k = c.get("key")
@@ -379,7 +379,7 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
                          "xfv_spearman": round(xr, 4) if xr is not None else None})
 
     # Percentile each rater + the outcome over the common set; disagreement = the gap
-    # between xFV's and consensus's percentile placement; "right" = whose placement was
+    # between eFV's and consensus's percentile placement; "right" = whose placement was
     # closer to the realized-WAR placement. Receipts use resolved (debuted) players.
     def _pct(vals):
         order = sorted(range(len(vals)), key=lambda i: vals[i])
@@ -402,11 +402,11 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
             "disagree": abs(xfv_pct[i] - cons_pct[i]),
             "xfv_right": abs(xfv_pct[i] - war_pct[i]) < abs(cons_pct[i] - war_pct[i]),
         })
-    # A "disagreement" is where xFV and consensus place the player at least 15
+    # A "disagreement" is where eFV and consensus place the player at least 15
     # percentile points apart - a clear grade disagreement. Near-ties (most
     # players, where the two grades agree) are coin-flips that only dilute the
     # signal, so the share-who-was-right is taken over real disagreements, not the
-    # whole cohort. On these, xFV is closer on the majority, consistent with its
+    # whole cohort. On these, eFV is closer on the majority, consistent with its
     # stronger overall ordering. n reported alongside so the share is transparent.
     DISAGREE_GAP = 0.15
     disag = sorted((r for r in recs if r["disagree"] >= DISAGREE_GAP),
@@ -460,16 +460,16 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         }
 
     # Head-to-head accuracy on the COMMON resolved set (same players).
-    # xFV (our outcome-grounded model) as a head-to-head rater. Its grade is the
+    # eFV (our outcome-grounded model) as a head-to-head rater. Its grade is the
     # OUT-OF-SAMPLE forward-chained score (xfv_model.oos_grades) so the comparison is
     # fair: a fitted model would otherwise enjoy an in-sample advantage the raw source
-    # grades don't. Attached to every common row that has an xFV grade; sources still
-    # define common-set membership, so xFV is reported on the subset it covers.
+    # grades don't. Attached to every common row that has an eFV grade; sources still
+    # define common-set membership, so eFV is reported on the subset it covers.
     try:
         from xfv_model import oos_grades
         xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
     except Exception:
-        log.exception("xFV OOS grades unavailable for source comparison — continuing")
+        log.exception("eFV OOS grades unavailable for source comparison — continuing")
         xfv_oos = {}
     n_xfv = 0
     if xfv_oos:
@@ -479,10 +479,10 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                 if g is not None:
                     c["grades"]["xfv"] = g          # raw rank-war score (for now)
                     n_xfv += 1
-        # Remap the raw xFV score onto a 20-80 grade via the common-set consensus-FV
-        # distribution, so xFV can be tier-binned + read on the familiar scale. Spearman/AUC
+        # Remap the raw eFV score onto a 20-80 grade via the common-set consensus-FV
+        # distribution, so eFV can be tier-binned + read on the familiar scale. Spearman/AUC
         # are rank-based, so this monotone remap leaves the head-to-head numbers unchanged,
-        # but it lets xFV join the FV-tier graphs + cohort tables + archetype breakdown.
+        # but it lets eFV join the FV-tier graphs + cohort tables + archetype breakdown.
         rows_x = [c for y in years for c in common_by_year[y] if "xfv" in c["grades"]]
         if rows_x:
             order = sorted(range(len(rows_x)), key=lambda i: rows_x[i]["grades"]["xfv"])
@@ -512,16 +512,16 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         return res
 
     pooled_common = [c for y in years for c in common_by_year[y]]
-    # xFV cohort-outcomes table: built over the FULL oos-graded pool (debuted + busts),
+    # eFV cohort-outcomes table: built over the FULL oos-graded pool (debuted + busts),
     # NOT the common resolved set, so its debut rate + tier outcomes sit on the same
     # population basis as the per-source tables above. The common set is ~fully debuted
-    # (never-debuted busts are rarely graded by EVERY source), which made the xFV cohort
+    # (never-debuted busts are rarely graded by EVERY source), which made the eFV cohort
     # read 100% debut and not comparable to the sources. (The head-to-head Spearman/AUC
     # stay on the common set - those need identical players to be a fair contest.)
     import xfv_dataset
     uni_out = {p.get("player_key"): _outcome(p) for p in universe}
     m_cons: dict[str, float] = {}
-    m_info: dict[str, tuple] = {}      # key -> (realized war, debuted?) from the xFV matrix
+    m_info: dict[str, tuple] = {}      # key -> (realized war, debuted?) from the eFV matrix
     for _side in ("hit", "pit"):
         try:
             for r in json.loads(xfv_dataset.matrix_path(_side).read_text(encoding="utf-8")):
@@ -535,7 +535,7 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         except (OSError, ValueError):
             pass
     # Debuted players take the universe's full outcome (war/yr, pace flags); the
-    # never-debuted busts (in the xFV matrix, not the source-comparison universe) take
+    # never-debuted busts (in the eFV matrix, not the source-comparison universe) take
     # a non-debuted outcome from the matrix war target - so the pool is debuted + busts.
     fullp = []
     for k in xfv_oos:
@@ -563,8 +563,8 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
                           "n_debuted": sum(1 for r in xfv_rows if r["outcome"]["debuted"]),
                           "tiers": _tier_table(xfv_rows)}
         # WAR-capture (lift) curve: the share of the pool's total realized WAR that sits in the
-        # top N% of each board. Better ordering concentrates WAR earlier -> a higher curve. xFV
-        # vs the consensus it upgrades, over the FULL graded population (incl. the busts xFV
+        # top N% of each board. Better ordering concentrates WAR earlier -> a higher curve. eFV
+        # vs the consensus it upgrades, over the FULL graded population (incl. the busts eFV
         # correctly buries). A clean discrimination metric; replaces the confounded
         # mean-WAR-by-tier chart (where better ordering paradoxically LOWERS the middle mean).
         _tot = sum(max(0.0, x[3]["war"]) for x in fullp) or 1.0
@@ -599,8 +599,8 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
         "auc": _beats("auc"),
     }
     accuracy["by_archetype"] = _archetype_accuracy(pooled_common, disp_raters)
-    # The xFV-vs-CONSENSUS detail (per-FV-tier + biggest disagreements) runs on the
-    # BROADER consensus + xFV pool - every player BOTH graded, not the all-source common
+    # The eFV-vs-CONSENSUS detail (per-FV-tier + biggest disagreements) runs on the
+    # BROADER consensus + eFV pool - every player BOTH graded, not the all-source common
     # set. Only two graders are compared, so also requiring FanGraphs + Pipeline needlessly
     # shrinks (and skews) the sample; the wider pool is more precise. (The 4-source
     # head-to-head bars above keep the common set - all four on identical players.)

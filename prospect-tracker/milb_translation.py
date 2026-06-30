@@ -13,7 +13,7 @@ debuted cohort.
 Signal (measured): K% translates with real signal (r2 ~ 0.35); BB% is modest
 (r2 ~ 0.15, flagged); OPS / xwOBA do NOT translate across the MiLB->MLB jump
 (r2 ~ 0.02), so they are DELIBERATELY not projected - the first-MLB production
-level is dominated by selection + survivorship the rates do not carry. xFV is the
+level is dominated by selection + survivorship the rates do not carry. eFV is the
 prospect->MLB signal for value; this is a descriptive rate translation only.
 """
 

@@ -1649,7 +1649,7 @@ MLB_PIPELINE_INTERVALS = [
      y)
     # 2011-2026 — mlb.com serves these year-keyed pages directly (era-correct,
     # with per-year bios carrying the point-in-time scouting grades). The
-    # 2011-2016 backfill (xFV initiative, 2026-06-21) adds FULLY-RESOLVED
+    # 2011-2016 backfill (eFV initiative, 2026-06-21) adds FULLY-RESOLVED
     # cohorts — the binding constraint for the outcome-grounded model. Coverage
     # by year: 2013-2016 full Top 100 with ~99% FV+tools; 2012 Top 100 ~73% FV
     # (rest rank-only -> rank-implied FV); 2011 is a Top 50 with ~38% FV.

@@ -3747,7 +3747,7 @@ def load_rank_history() -> dict[str, list[dict]]:
     """Per-player overall board-rank history from metric_snapshots, grouped by
     player_key and ordered oldest-first: {player_key: [{snapshot_date, rank}, ...]}.
     The input layer for movement.compute_rank_movement (overall_rank becomes the
-    xFV rank once _active_key ranks by xFV, so this measures xFV-rank movement).
+    eFV rank once _active_key ranks by eFV, so this measures eFV-rank movement).
     One query for the whole board (per-player queries in the export loop would be
     ~1,700 round-trips)."""
     out: dict[str, list[dict]] = {}
@@ -4291,13 +4291,13 @@ def _fv_to_points(fv: float | int | None) -> float:
     return round(lo_pts + (hi_pts - lo_pts) * frac, 3)
 
 
-# ── xFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
+# ── eFV join: the site's primary grade replaces consensus FV across the farm / DvM+ /
 # movement metrics (owner directive). Reads the PRIOR run's committed data/xfv.json
 # (per-player xfv_grade + surplus_mm + tool_xfv) and data/xfv_history.json (per-snapshot
-# xFV series, for the appreciation + movement signals). ONE-RUN LAG is intentional and
+# eFV series, for the appreciation + movement signals). ONE-RUN LAG is intentional and
 # unavoidable: export_timeseries_json runs BEFORE xfv_export.regen_all in run_monthly, and
 # xfv_export reads timeseries.json — reordering would be circular. This mirrors the frontend,
-# which already consumes xfv.json with a consensus fallback. Where xFV abstains (no pro track
+# which already consumes xfv.json with a consensus fallback. Where eFV abstains (no pro track
 # record), every consumer falls back to consensus FV so nothing goes null.
 def _load_xfv_join() -> tuple[dict, dict]:
     base = Path(__file__).parent / "data"
@@ -4311,7 +4311,7 @@ def _load_xfv_join() -> tuple[dict, dict]:
 
 def _load_ungraded_by_org() -> dict[str, list[dict]]:
     """Provisional (source-UNGRADED) prospects grouped by org, as lightweight prospect-dicts
-    for the farm depth/top-end pool (xfv_ungraded.json, one-run lag like the xFV join). Each
+    for the farm depth/top-end pool (xfv_ungraded.json, one-run lag like the eFV join). Each
     carries an xfv_grade so _eff_grade ranks it alongside graded prospects; filler (FV 20-30)
     ranks out of the top-25 (FV_POINTS ~0) and the genuine breakouts add bounded depth. We do
     NOT add these to any raw-sum / DvM+ / surplus accumulator -- only the rank-and-tier pool."""
@@ -5835,10 +5835,10 @@ def _build_debuted_payload(fv, is_pitcher, position, *, age=None,
         # above; it's None for many players and would otherwise fall this WAG call
         # back to PA-matching, inflating injury-limited rates.)
         season_count = len(seasons)
-        # WAG is "WAR Above GRADE" — the grade baseline is now xFV (our outcome-grounded
-        # grade) where available, falling back to the consensus `fv` only where xFV
+        # WAG is "WAR Above GRADE" — the grade baseline is now eFV (our outcome-grounded
+        # grade) where available, falling back to the consensus `fv` only where eFV
         # abstains. Only the WAG baseline uses wag_fv; the debuted VALUE model above keeps
-        # the `fv` passed in (its surplus is priced from the consensus/xFV value pipeline).
+        # the `fv` passed in (its surplus is priced from the consensus/eFV value pipeline).
         _wag_baseline = wag_fv if wag_fv is not None else fv
         w = _engine_wag_result(_wag_baseline, is_pitcher, position, observed_war,
                                age=age,
@@ -6221,13 +6221,13 @@ def _league_pitch_usage(pitch_arsenals: dict[str, dict]) -> dict[str, float]:
 
 
 def _eff_grade(p: dict):
-    """The org-ranking grade for a prospect dict: xFV where rated, consensus FV otherwise."""
+    """The org-ranking grade for a prospect dict: eFV where rated, consensus FV otherwise."""
     g = p.get("xfv_grade")
     return g if g is not None else p.get("fv_raw")
 
 
 def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float:
-    """Sum of tiered points for the org's top N prospects, ranked by xFV (consensus fallback)."""
+    """Sum of tiered points for the org's top N prospects, ranked by eFV (consensus fallback)."""
     ranked = sorted(prospects, key=lambda p: (_eff_grade(p) or 0), reverse=True)
     return round(sum(_fv_to_points(_eff_grade(p)) for p in ranked[:n]), 2)
 
@@ -6235,7 +6235,7 @@ def _top_end_points(prospects: list[dict], n: int = FARM_TOP_END_COUNT) -> float
 def _depth_points(prospects: list[dict],
                   start: int = FARM_DEPTH_START,
                   end: int = FARM_DEPTH_END) -> float:
-    """Sum of tiered points for prospects ranked `start+1` through `end`, by xFV (fallback FV)."""
+    """Sum of tiered points for prospects ranked `start+1` through `end`, by eFV (fallback FV)."""
     ranked = sorted(prospects, key=lambda p: (_eff_grade(p) or 0), reverse=True)
     return round(sum(_fv_to_points(_eff_grade(p)) for p in ranked[start:end]), 2)
 
@@ -6698,8 +6698,8 @@ def _build_org_fv_history(
         # the source's view as of the publication date), then the trade.
         # Each entry: (date, "snapshot", fv) | (date, "trade", from, to)
         stream: list[tuple] = []
-        # xFV development credit: use the xFV grade at each snapshot (joined by date),
-        # consensus FV fallback where xFV has no value for that snapshot. Dates match because
+        # eFV development credit: use the eFV grade at each snapshot (joined by date),
+        # consensus FV fallback where eFV has no value for that snapshot. Dates match because
         # xfv_history is built from the same points[].snapshot_date.
         _xmap = {pt.get("d"): pt.get("x")
                  for pt in ((xfv_hist_by_key or {}).get(p.player_key) or [])
@@ -6864,11 +6864,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     source_events_by_key = load_source_events()
     player_news_by_key = load_player_news()
 
-    # ── xFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
+    # ── eFV join (one-run lag): the site's PRIMARY grade replaces consensus FV across the
     # farm / DvM+ / movement metrics. Loaded once here so every consumer below (the per-player
     # movement `stock`, the $DvM+ pre-pass, the org dev-FV history) reads one consistent value.
     # See _load_xfv_join for the one-run-lag rationale. Closures fall back to consensus FV
-    # wherever xFV abstains, so nothing goes null.
+    # wherever eFV abstains, so nothing goes null.
     _xfv_by_key, _xfv_hist_by_key = _load_xfv_join()
 
     # Per-player overall board-RANK history (metric_snapshots). Drives the
@@ -6895,19 +6895,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         return mv if mv.get("basis") == "rank_step" else None
 
     def _xg(pk, cons):
-        """xFV display grade for a player_key; consensus FV fallback where xFV abstains."""
+        """eFV display grade for a player_key; consensus FV fallback where eFV abstains."""
         g = (_xfv_by_key.get(pk) or {}).get("xfv_grade")
         if g is not None:
             return float(g)
         return float(cons) if cons is not None else None
 
     def _xsurplus(pk, cons_mm):
-        """xFV expected surplus ($M); consensus-surplus fallback where xFV abstains."""
+        """eFV expected surplus ($M); consensus-surplus fallback where eFV abstains."""
         s = (_xfv_by_key.get(pk) or {}).get("surplus_mm")
         return float(s) if s is not None else cons_mm
 
     def _xfv_series(pk):
-        """[(date, xFV grade)] from xfv_history for appreciation/movement; None when absent
+        """[(date, eFV grade)] from xfv_history for appreciation/movement; None when absent
         (callers then fall back to the consensus snapshot stream)."""
         h = _xfv_hist_by_key.get(pk)
         if not h or len(h) < 2:
@@ -6916,8 +6916,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         return out if len(out) >= 2 else None
 
     def _xfv_at(pk, snap_date, cons):
-        """xFV grade as-of a past snapshot date (latest history point dated <= snap_date);
-        consensus FV fallback. Keeps the prev-rank trend arrow on the same xFV basis as the
+        """eFV grade as-of a past snapshot date (latest history point dated <= snap_date);
+        consensus FV fallback. Keeps the prev-rank trend arrow on the same eFV basis as the
         current rank."""
         h = _xfv_hist_by_key.get(pk)
         if h and snap_date:
@@ -8755,7 +8755,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             latest_fv, _is_pitcher_vf, p.position,
             age=age, eta_years=_eta_years_from(eta, date.today().year),
             fv_dispersion=(p.points[-1].fv_stddev if p.points else None))
-        # WAG baseline = the player's xFV grade (locked at debut for graduates) where
+        # WAG baseline = the player's eFV grade (locked at debut for graduates) where
         # available; None falls back to consensus inside _build_debuted_payload.
         _wag_fv = (_xfv_by_key.get(p.player_key) or {}).get("xfv_grade")
         _debuted_value = (
@@ -8795,9 +8795,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # the player's org. None for graduated/inactive (the maps below
             # only carry actives). Drives the rank pills on prospect detail.
             "overall_rank": overall_rank_by_key.get(p.player_key),
-            # De-noised "since last real change" board-rank movement (xFV rank
-            # once _active_key ranks by xFV). None until rank history accrues or
-            # when the move is within the dead-band; the xFV grade move on
+            # De-noised "since last real change" board-rank movement (eFV rank
+            # once _active_key ranks by eFV). None until rank history accrues or
+            # when the move is within the dead-band; the eFV grade move on
             # `stock` carries the immediate signal. Best-effort.
             "rank_movement": _rank_movement(p.player_key, overall_rank_by_key.get(p.player_key)),
             # Position in the same FV-sorted list, but computed off the
@@ -9049,10 +9049,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         try:
             from movement import compute_genuine_movement, xfv_movement
             _stock = compute_genuine_movement(payload)
-            # Owner: movement is the xFV delta where xFV has a trajectory. Override the
-            # headline move (direction/delta/basis/endpoints) with the xFV "since last real
+            # Owner: movement is the eFV delta where eFV has a trajectory. Override the
+            # headline move (direction/delta/basis/endpoints) with the eFV "since last real
             # change" step; keep the consensus perf/skills drivers as supporting context.
-            # Falls back to the consensus same-source step when xFV has no history.
+            # Falls back to the consensus same-source step when eFV has no history.
             _xm = xfv_movement(_xfv_series(p.player_key))
             if _xm:
                 _stock.update(_xm)
@@ -9502,7 +9502,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     def _active_key(p: PlayerTimeseries):
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
-        # xFV is the PRIMARY board-rank driver (consensus FV fallback where xFV
+        # eFV is the PRIMARY board-rank driver (consensus FV fallback where eFV
         # abstains, via _xg). Rank by the SURFACED (snapped/displayed) grade — so
         # a 56.3 and a 56.6 that both display as the same integer are TIED here
         # and the Tiebreaker-Score proxy arbitrates, rather than the higher
@@ -9515,7 +9515,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                                    if latest.consensus_fv_raw is not None else 0)))
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -surfaced_fv,        # surfaced (rounded) xFV grade desc — primary
+            -surfaced_fv,        # surfaced (rounded) eFV grade desc — primary
             -upside,             # '+' upside flag — ranks above same-grade non-'+'
             -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced grade
             rank_key,            # avg_rank asc — final stable separator
@@ -9553,8 +9553,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         if len(pts) < 2:
             return (999, 999, 999)
         prior = pts[-2]
-        # xFV grade as-of the prior snapshot (consensus fallback), so the rank-delta
-        # arrow is on the same xFV basis as the current xFV-driven rank.
+        # eFV grade as-of the prior snapshot (consensus fallback), so the rank-delta
+        # arrow is on the same eFV basis as the current eFV-driven rank.
         prior_fv = _xfv_at(p.player_key, prior.snapshot_date, prior.consensus_fv_raw)
         prior_rank = prior.avg_rank if prior.avg_rank is not None else 999
         # Same FV-then-Tools-then-rank tiebreak the current snapshot
@@ -9667,7 +9667,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # serialization) read one consistent value. Z-scored WITHIN FV tier; tiers
     # with <4 members borrow the global spread so a sparse tier can't manufacture
     # extreme scores.
-    # xFV join + closures (_xg / _xsurplus / _xfv_series) were loaded once at the top of
+    # eFV join + closures (_xg / _xsurplus / _xfv_series) were loaded once at the top of
     # export_timeseries_json; reused here for the $DvM+ trajectory + tier.
     _ddvm_raw_by_key: dict[str, float] = {}
     _ddvm_tier_by_key: dict[str, int] = {}
@@ -9677,9 +9677,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             continue
         cons_close = float(pts[-1].consensus_fv_raw)
         cons_open = float(pts[0].consensus_fv_raw) if pts[0].consensus_fv_raw is not None else cons_close
-        # Appreciation RATE on xFV (owner: everything xFV). xFV's trajectory is the xfv_history
-        # series (a current-model retrospective); consensus history is the fallback where xFV
-        # has no series. The peer TIER is the xFV grade.
+        # Appreciation RATE on eFV (owner: everything eFV). eFV's trajectory is the xfv_history
+        # series (a current-model retrospective); consensus history is the fallback where eFV
+        # has no series. The peer TIER is the eFV grade.
         _xs = _xfv_series(p.player_key)
         if _xs:
             fv_close, fv_open = float(_xs[-1][1]), float(_xs[0][1])
@@ -9696,7 +9696,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _yrs = max(0.5, (_d1 - _d0).days / 365.0)
             except Exception:
                 _yrs = 1.0
-        fv_move_rate = (fv_close - fv_open) / _yrs              # grade-pts / yr (xFV where rated)
+        fv_move_rate = (fv_close - fv_open) / _yrs              # grade-pts / yr (eFV where rated)
         _bd = birth_dates.get(p.player_key)
         _age = compute_age_decimal(_bd)
         _sl = statlines.get(p.player_key)
@@ -9885,8 +9885,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _pdvm = _dollar_dvm_by_key.get(p.player_key)
         if _pdvm is not None:
             m["_ddvm_vals"].append(_pdvm)
-        # xFV is the org composite + tier-count + top-end basis (consensus fallback). Carried
-        # on the prospect dict so _top_end_points sums xFV grade-points.
+        # eFV is the org composite + tier-count + top-end basis (consensus fallback). Carried
+        # on the prospect dict so _top_end_points sums eFV grade-points.
         _xfvg = _xg(p.player_key, fv_raw)
         _xfvg_eff = _xfvg if _xfvg is not None else fv_raw
         m["prospects"].append({
@@ -9988,8 +9988,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # bonus (full amount, since the 6yr surplus is the gross figure).
         # Feeds the new fin_active_surplus leaf. Skip players without a
         # usable FV or position (the table requires both).
-        # xFV is the primary grade for the farm Value core: surplus is the xFV expected
-        # surplus (consensus-surplus fallback). _xfvg (the player's xFV grade, consensus
+        # eFV is the primary grade for the farm Value core: surplus is the eFV expected
+        # surplus (consensus-surplus fallback). _xfvg (the player's eFV grade, consensus
         # fallback) was computed at the prospect-dict build above and is reused here + for
         # draft-ceiling + method buckets, so the FV-pt totals stay consistent with the surplus.
         _surplus_mm = _xsurplus(p.player_key, _estimate_surplus_mm(fv_raw, is_pitcher_p, p.position))
@@ -9999,7 +9999,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             m["_active_surplus_net_mm"]  += _net_mm
             m["_active_surplus_cost_mm"] += _bonus_mm
             m["_active_surplus_count"]   += 1
-            # v32.0 — Track FV-pts (xFV) contributing to surplus_net so
+            # v32.0 — Track FV-pts (eFV) contributing to surplus_net so
             # surplus_per_fv_pt_mm can be computed in finalize.
             # v32.1 — Per-side FV totals (hit / pit) for the asymmetry
             # display in the active_surplus leaf.
@@ -10030,7 +10030,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 _mb["fv_total"]  += float(_xfvg)
                 _mb["count"]     += 1
         # Tree v3 — Draft Ceiling Hits: count drafted actives whose
-        # current xFV ≥ 60 and whose draft year is within the last 3 years.
+        # current eFV ≥ 60 and whose draft year is within the last 3 years.
         # Captures whether the org's recent draft classes produced high-ceiling
         # prospects (not just whether grads beat the slot in retrospect).
         # Denominator: all drafted actives.
@@ -10043,7 +10043,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     and _xfvg is not None
                     and _xfvg >= 60.0):
                 m["_draft_ceiling_hits"] = m.get("_draft_ceiling_hits", 0) + 1
-            # v32.0 — Track FV-pts (xFV) produced by active drafted prospects
+            # v32.0 — Track FV-pts (eFV) produced by active drafted prospects
             # in the same 3yr (T-5..T-2) window the war_per_m_pool leaf
             # uses for grads. This feeds the new fv_per_m_pool metric,
             # which gives a fast-cycle (no 5yr WAR maturation needed)
@@ -10142,8 +10142,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         cw = (career_war or {}).get(gp.player_key) or {}
         fv_close_raw = (round(gp.points[-1].consensus_fv_raw, 2)
                         if gp.points else None)
-        # WAG baseline = xFV (WAR Above GRADE; the grade is now xFV), falling back to
-        # consensus where xFV abstains. _grad_wag reads fv_close_raw -> fv_close.
+        # WAG baseline = eFV (WAR Above GRADE; the grade is now eFV), falling back to
+        # consensus where eFV abstains. _grad_wag reads fv_close_raw -> fv_close.
         _gp_xfv = (_xfv_by_key.get(gp.player_key) or {}).get("xfv_grade")
         _wag_fv_raw = _gp_xfv if _gp_xfv is not None else fv_close_raw
         gp_bd = birth_dates.get(gp.player_key)
@@ -11731,7 +11731,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                for pt2 in (_xfv_hist_by_key.get(p.player_key) or [])
                if pt2.get("d") and pt2.get("x") is not None}
         for pt in (p.points or []):
-            _fv = _xh.get(pt.snapshot_date)              # xFV at this snapshot (consensus fallback)
+            _fv = _xh.get(pt.snapshot_date)              # eFV at this snapshot (consensus fallback)
             if _fv is None and pt.consensus_fv_raw is not None:
                 _fv = float(pt.consensus_fv_raw)
             if _fv is not None:
@@ -11834,7 +11834,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     today_iso = date.today()
     for entry in org_summary:
         # Fold provisional (source-ungraded) prospects into the rank-and-tier pool so the
-        # genuine breakouts (xFV ~44-49) count toward top-end/depth alongside graded
+        # genuine breakouts (eFV ~44-49) count toward top-end/depth alongside graded
         # prospects; filler (FV 20-30, ~0 tier points) ranks out. The displayed
         # entry["prospects"] list is NOT mutated -- only the scoring pool is augmented.
         _prov = _prov_by_org.get(entry["org"], [])

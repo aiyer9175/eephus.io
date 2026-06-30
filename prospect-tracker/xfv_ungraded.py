@@ -3,14 +3,14 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""xFV for UNGRADED prospects -- a production-only leading indicator for the players the
+"""eFV for UNGRADED prospects -- a production-only leading indicator for the players the
 scouting sources have NOT graded yet (the DSL/CPX/A breakout bats + arms the prospect
 cycle is behind on, plus the org-depth fillers).
 
-THE PROBLEM the flagship xFV model can't touch: it is anchored on consensus FV (the
+THE PROBLEM the flagship eFV model can't touch: it is anchored on consensus FV (the
 dominant feature) and ABSTAINS on players with no source grade. But ~6,300 players on
 40-man org rosters have real MiLB production and zero source FV -- and among them are
-the genuine sleepers (a 18-yo posting an elite line in the DSL) that xFV could flag a
+the genuine sleepers (a 18-yo posting an elite line in the DSL) that eFV could flag a
 cycle ahead of the sources.
 
 THE MODEL (deliberately separate, NOT the flagship): a dedicated NO-FV ridge -- the same
@@ -281,7 +281,7 @@ def evaluate(persist: bool = True) -> dict:
     (the governance artifact -- proves the no-FV production model carries OOS signal where
     there is no consensus FV). Mirrors the flagship eval protocol."""
     out = {"generated_at": __import__("datetime").date.today().isoformat(),
-           "model": "xFV ungraded (no-FV production ridge)", "by_side": {}}
+           "model": "eFV ungraded (no-FV production ridge)", "by_side": {}}
     for side in ("hit", "pit"):
         is_pit = side == "pit"
         rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -325,7 +325,7 @@ def build(persist: bool = True) -> dict:
     (rosters_by_org.json must exist)."""
     rost_path = DATA_DIR / "rosters_by_org.json"
     if not rost_path.exists():
-        log.warning("rosters_by_org.json absent -- run the site export first; ungraded xFV empty")
+        log.warning("rosters_by_org.json absent -- run the site export first; ungraded eFV empty")
         return {"players": 0}
     rosters = json.loads(rost_path.read_text(encoding="utf-8"))
     fits = {s: fit_nofv(s) for s in ("hit", "pit")}
@@ -364,9 +364,9 @@ def build(persist: bool = True) -> dict:
                 pk = p.get("player_key") or f"mlbam_{mid}"
                 statline = _display_statline(mid, m, side, p.get("team_name"))
                 career_stats = _career_stats(mid, side, p.get("team_name"))
-                # xFV TRAJECTORY: the provisional grade as-of each MiLB season (re-score
+                # eFV TRAJECTORY: the provisional grade as-of each MiLB season (re-score
                 # production through that season only) so the detail page can plot an
-                # xFV-over-time chart for a prospect the sources have never graded.
+                # eFV-over-time chart for a prospect the sources have never graded.
                 xfv_hist = []
                 for _S in sorted({r.get("season") for r in (career_stats or []) if r.get("season")}):
                     _ms = _milb_features(mid, int(_S) + 1, None, side)
@@ -424,7 +424,7 @@ def build(persist: bool = True) -> dict:
                        "n_breakout_ge35": sum(1 for g in grades if g >= 35)},
         "grade_map": _GRADE_MAP, "eval": "data/xfv_ungraded_eval.json", "status": "provisional",
         "note": ("Production-only leading indicator for source-UNGRADED roster players. "
-                 "Conventional capped FV map; most 20-30, breakouts to the cap. NOT the flagship xFV."),
+                 "Conventional capped FV map; most 20-30, breakouts to the cap. NOT the flagship eFV."),
     }
     out = {"meta": meta, "by_player": by_player, "by_mlbam": by_mlbam}
     if persist:
@@ -445,5 +445,5 @@ if __name__ == "__main__":
                 print(f"  {c:22s} n={v['n']:5d} Spearman vs realized WAR = {v['spearman_vs_realized_war']}")
     else:
         meta = build()
-        print("ungraded xFV:", meta["n_players"], "players", json.dumps(meta["counts"]))
+        print("ungraded eFV:", meta["n_players"], "players", json.dumps(meta["counts"]))
         print("grade dist:", json.dumps(meta["grade_dist"]))

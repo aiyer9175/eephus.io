@@ -3,9 +3,9 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""xFV Pass 2 -- the HITTER model + leakage-free out-of-time backtest vs consensus FV.
+"""eFV Pass 2 -- the HITTER model + leakage-free out-of-time backtest vs consensus FV.
 
-Trains the xFV hitter model on the Pass-1 matrix (data/xfv_hitter_matrix.json) and scores
+Trains the eFV hitter model on the Pass-1 matrix (data/xfv_hitter_matrix.json) and scores
 it forward-chained against the consensus-FV-only baseline (the bar established in Pass 1).
 Honest by mandate: the loser is committed either way (program rule), and we expect a TIE
 on rank per the Phase-1 verdict -- the flagship case rests on the distribution/surplus
@@ -19,7 +19,7 @@ on rank per the Phase-1 verdict -- the flagship case rests on the distribution/s
              prospect_path protocol) and FULL-POOL (debuted + busts; the rank-the-board task,
              with the decision-year-proxy caveat stated).
   MODELS     baseline = within-fold OLS WAR~consensus_fv_raw (Spearman == FV's rank corr);
-             xFV-core = prior-anchored ridge (FV dominant, standardized, alpha tuned in-fold);
+             eFV-core = prior-anchored ridge (FV dominant, standardized, alpha tuned in-fold);
              challenger = monotone LightGBM; comps = distance-weighted k-NN (also the UI
              feature); ensemble = mean(ridge, lgbm).
   GATE       a model beats consensus only if it wins BOTH pooled-OOS MAE and Spearman.
@@ -55,7 +55,7 @@ SCORED_YEARS = (2020, 2021, 2022, 2023)
 # it -- this lean model beats consensus FV on out-of-sample rank for BOTH cuts and BOTH
 # sides, and the edge holds (grows) on recent 2019-2023 cohorts (see data/xfv_eval.json
 # era_split). Power is DELIBERATELY absent for hitters (Phase-1: over-priced by scouts,
-# anti-signal for incremental WAR) -- that omission IS xFV's power-overpricing correction.
+# anti-signal for incremental WAR) -- that omission IS eFV's power-overpricing correction.
 _FEATURES_HIT = [
     ("fv",             +1),   # consensus_fv_raw -- the dominant, regularized prior
     ("obp_rel",        +1),   # Phase-1: strongest hitter edge BEYOND FV (on-base skill)
@@ -101,7 +101,7 @@ _FEATURES_PIT = [
 
 # Guarded-blend weight for the shipped HEADLINE rank: rank = (1-lambda)*consensus_OLS
 # + lambda*model. lambda is now WAG-CALIBRATED (see _wag_calibrated_lambda): it is the
-# trust factor that realized WAR-Above-Grade actually supports for xFV's adjustment,
+# trust factor that realized WAR-Above-Grade actually supports for eFV's adjustment,
 # forward-chained. Hitters land ~0.8 (the adjustment is well-supported); pitchers shrink
 # harder (consensus is the stronger pitcher signal, and WAG confirms a smaller edge). The
 # fallback below is used only if the WAG join is unavailable. Clamped so the validated rank
@@ -128,7 +128,7 @@ def _feature_spec(side: str):
 def _load_wag() -> dict:
     """player_key -> stored WAG block (regressed_wag = exposure/injury-corrected,
     reliability-shrunk talent over/underperformance vs consensus FV; w_obs = its weight).
-    The realized 'beat your grade' truth xFV's adjustment is calibrated against."""
+    The realized 'beat your grade' truth eFV's adjustment is calibrated against."""
     try:
         deb = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -142,9 +142,9 @@ def _load_wag() -> dict:
 
 
 def wag_calibration(side: str) -> dict:
-    """Forward-chained calibration of xFV's adjustment against realized WAG. Regresses
+    """Forward-chained calibration of eFV's adjustment against realized WAG. Regresses
     each debuted player's realized regressed_wag (per-season talent over/underperformance)
-    on xFV's PREDICTED per-season rate adjustment (model - consensus, /6), weighted by WAG
+    on eFV's PREDICTED per-season rate adjustment (model - consensus, /6), weighted by WAG
     reliability (w_obs), through the origin. The slope is how much realized over/under-
     performance you actually get per unit of predicted edge -> the trust factor for the
     blend. Returns {lambda, slope_wobs, slope_unweighted, spearman, n}. Leakage-free."""
@@ -254,7 +254,7 @@ def rank_calibration(side: str) -> dict:
 
 
 def blend_lambda(side: str) -> float:
-    """Blend weight on the xFV model vs the consensus anchor (cached). Calibrated by WAG when
+    """Blend weight on the eFV model vs the consensus anchor (cached). Calibrated by WAG when
     its predicted-edge -> realized-WAG regression has signal (hitters: spearman ~0.20); when
     that regression is non-significant (pitchers: spearman ~0.02), WAG's slope is noise and
     pins a rank-suboptimal weight -- there we size lambda by the rank gate directly
@@ -273,7 +273,7 @@ def blend_lambda(side: str) -> float:
 
 
 def oos_grades(side: str) -> dict:
-    """{player_key: OUT-OF-SAMPLE xFV ranking score} over the full labeled pool
+    """{player_key: OUT-OF-SAMPLE eFV ranking score} over the full labeled pool
     (debuted + busts), forward-chained: each cohort year is scored by a model fit ONLY
     on earlier cohorts. The score is the guarded-blend rank_war (monotone in the grade),
     suitable for an apples-to-apples head-to-head against the sources on realized outcomes
@@ -576,7 +576,7 @@ def _importances(data, keys=None, mono=None):
 
 def _era_split(deb_data, keys, lam):
     """Honest record of the 'scouting got more accurate over time' question: forward-chained
-    consensus vs shipped-blend rank by debut era. If xFV's edge lived only in old cohorts it
+    consensus vs shipped-blend rank by debut era. If eFV's edge lived only in old cohorts it
     would not transfer to today; this shows whether it holds on RECENT cohorts."""
     eras = {"<=2018": [], "2019-2021": [], "2022-2023": []}
     cons = {k: [] for k in eras}
@@ -625,7 +625,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     }
     out = {
         "generated_at": date.today().isoformat(),
-        "model": f"xFV {'pitcher' if side == 'pit' else 'hitter'} v1 (lean + guarded blend)",
+        "model": f"eFV {'pitcher' if side == 'pit' else 'hitter'} v1 (lean + guarded blend)",
         "scope": "PITCHERS" if side == "pit" else "HITTERS",
         "conventions": {
             "target": "first-6-season summed bWAR; KM-censored (rate-projected tail) + resolved sensitivity",
@@ -642,7 +642,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "source": lam_source,
             "wag": wag_cal,
             "rank_gate": rank_cal,
-            "reading": "xFV still predicts WAR; the blend lambda is HOW MUCH to trust xFV's "
+            "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's "
                        "adjustment over the consensus anchor. WAG (realized over/underperformance "
                        "vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-"
                        "edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When "
@@ -656,10 +656,10 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,
         "feature_diagnostics_full_window": _importances(_prep(deb, "target_censored", side), keys, mono),
-        "honest_note": ("The lean feature set (Phase-1-earned signals only) lets xFV BEAT consensus "
+        "honest_note": ("The lean feature set (Phase-1-earned signals only) lets eFV BEAT consensus "
                         "FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent "
                         "2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, "
-                        "less-accurate scouting. xFV still trails on MAE (it predicts more spread; "
+                        "less-accurate scouting. eFV still trails on MAE (it predicts more spread; "
                         "consensus regresses to the mean) -- that loss is committed. The flagship case: "
                         "rank edge + calibrated distribution + uncertainty + surplus + power-correction."),
     }

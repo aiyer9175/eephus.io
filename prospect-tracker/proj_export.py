@@ -334,10 +334,10 @@ def _prospect_rows(dpw: float) -> list[dict]:
     out: list[dict] = []
     for p in players:
         cons_fv = p.get("fv_close")
-        # xFV sweep: price the prospect projection on the xFV grade - rank-mapped onto
-        # the consensus 20-80 scale, so it carries xFV's OOS-better ordering (Spearman
+        # eFV sweep: price the prospect projection on the eFV grade - rank-mapped onto
+        # the consensus 20-80 scale, so it carries eFV's OOS-better ordering (Spearman
         # 0.349 vs consensus 0.285) while preserving the aggregate calibration (active
-        # pool total WAR within 0.2% of consensus). Fall back to consensus FV where xFV
+        # pool total WAR within 0.2% of consensus). Fall back to consensus FV where eFV
         # abstains (recent draftees / int'l signs with no pro track record yet).
         _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade")
         fv = _xg if _xg is not None else cons_fv

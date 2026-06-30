@@ -210,7 +210,7 @@ function renderTradeMachine() {
       const g = _tbGrade(x.mm), gc = _tbGradeColor(g);   // contract-adjusted surplus -> letter
       return `
       <div class="tm-row">
-        <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (xFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
+        <span class="tm-kind tm-kind--${x.kind}" title="${x.kind === "prospect" ? "Prospect (eFV surplus)" : "MLB (contract surplus)"}">${x.kind === "prospect" ? "P" : "M"}</span>
         ${_tmTeamLogo(x.org)}
         <a class="fa-player-link tm-name" href="${x.kind === "prospect" ? `/prospx/#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.pos || "")}</span>
@@ -372,7 +372,7 @@ function _tbSortRows(rows) {
   const [col, dir] = _tbSortParts();
   const sign = dir === "asc" ? 1 : -1;
   const tv = p => { const v = Number(p.trade_value_mm); return Number.isFinite(v) ? v : -1e9; };
-  // xFV grade tiebreak: the convex-$/WAR + $0-floor surplus transform bunches a
+  // eFV grade tiebreak: the convex-$/WAR + $0-floor surplus transform bunches a
   // large low/fringe block at the same value with no internal order; the raw
   // xfv_grade orders realized WAR better, so it breaks surplus ties sensibly.
   const xg = p => { const v = Number(p.xfv_grade); return Number.isFinite(v) ? v : -1e9; };
@@ -387,7 +387,7 @@ function _tbSortRows(rows) {
       else if (bv.n == null) c = -1;
       else c = (av.n - bv.n) * sign;
     }
-    return c || (tv(b) - tv(a)) || (xg(b) - xg(a));   // surplus desc, then xFV grade desc
+    return c || (tv(b) - tv(a)) || (xg(b) - xg(a));   // surplus desc, then eFV grade desc
   });
   return rows;
 }
@@ -602,7 +602,7 @@ function _renderTBRows() {
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
     if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
     // GRPO breakout badge - a within-cohort breakout SIGNAL (display only; it no longer
-    // shifts the surplus, which is now the platform xFV/Projections value). Click -> group.
+    // shifts the surplus, which is now the platform eFV/Projections value). Click -> group.
     const grpoSc = p.grpo_breakout_score;
     if (grpoSc != null && grpoSc >= 0.55) {   // only flag genuine breakout signals
       const grpoCol = grpoSc >= 0.70 ? "var(--neon-green)" : "var(--neon-amber)";

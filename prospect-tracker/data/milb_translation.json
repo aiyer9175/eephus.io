@@ -2730,6 +2730,32 @@
     "low_confidence": true
    }
   },
+  "dauri_fernandez": {
+   "k_pct": {
+    "exp": 21.4,
+    "lo": 14.9,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 8.6,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "dakota_jordan": {
+   "k_pct": {
+    "exp": 26.5,
+    "lo": 20.0,
+    "hi": 33.1
+   },
+   "bb_pct": {
+    "exp": 7.9,
+    "lo": 3.8,
+    "hi": 12.0,
+    "low_confidence": true
+   }
+  },
   "cameron_cauley": {
    "k_pct": {
     "exp": 22.3,
@@ -3055,6 +3081,32 @@
     "low_confidence": true
    }
   },
+  "brayden_taylor": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "cristian_arguelles": {
+   "k_pct": {
+    "exp": 18.0,
+    "lo": 11.5,
+    "hi": 24.6
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
   "tyson_lewis": {
    "k_pct": {
     "exp": 27.2,
@@ -3065,32 +3117,6 @@
     "exp": 7.7,
     "lo": 3.5,
     "hi": 11.8,
-    "low_confidence": true
-   }
-  },
-  "dauri_fernandez": {
-   "k_pct": {
-    "exp": 21.4,
-    "lo": 14.9,
-    "hi": 28.0
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.5,
-    "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "dakota_jordan": {
-   "k_pct": {
-    "exp": 26.5,
-    "lo": 20.0,
-    "hi": 33.1
-   },
-   "bb_pct": {
-    "exp": 7.9,
-    "lo": 3.8,
-    "hi": 12.0,
     "low_confidence": true
    }
   },
@@ -3156,6 +3182,19 @@
     "exp": 10.0,
     "lo": 5.8,
     "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "roc_riggio": {
+   "k_pct": {
+    "exp": 25.5,
+    "lo": 18.9,
+    "hi": 32.1
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.4,
+    "hi": 13.6,
     "low_confidence": true
    }
   },
@@ -3260,6 +3299,19 @@
     "exp": 7.3,
     "lo": 3.2,
     "hi": 11.5,
+    "low_confidence": true
+   }
+  },
+  "leo_balcazar": {
+   "k_pct": {
+    "exp": 21.4,
+    "lo": 14.9,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.5,
+    "hi": 13.8,
     "low_confidence": true
    }
   },
@@ -3380,32 +3432,6 @@
     "low_confidence": true
    }
   },
-  "brayden_taylor": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "cristian_arguelles": {
-   "k_pct": {
-    "exp": 18.0,
-    "lo": 11.5,
-    "hi": 24.6
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
   "wilfri_de_la_cruz": {
    "k_pct": {
     "exp": 22.8,
@@ -3442,6 +3468,19 @@
     "exp": 9.9,
     "lo": 5.7,
     "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "abdias_de_la_cruz": {
+   "k_pct": {
+    "exp": 22.1,
+    "lo": 15.5,
+    "hi": 28.7
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
     "low_confidence": true
    }
   },
@@ -3484,16 +3523,16 @@
     "low_confidence": true
    }
   },
-  "roc_riggio": {
+  "blake_burke": {
    "k_pct": {
-    "exp": 25.5,
-    "lo": 18.9,
-    "hi": 32.1
+    "exp": 22.0,
+    "lo": 15.4,
+    "hi": 28.5
    },
    "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.4,
-    "hi": 13.6,
+    "exp": 8.6,
+    "lo": 4.4,
+    "hi": 12.7,
     "low_confidence": true
    }
   },
@@ -3510,6 +3549,32 @@
     "low_confidence": true
    }
   },
+  "dillon_head": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "ryan_wideman": {
+   "k_pct": {
+    "exp": 19.6,
+    "lo": 13.1,
+    "hi": 26.2
+   },
+   "bb_pct": {
+    "exp": 7.7,
+    "lo": 3.6,
+    "hi": 11.9,
+    "low_confidence": true
+   }
+  },
   "adrian_santana": {
    "k_pct": {
     "exp": 16.1,
@@ -3520,6 +3585,19 @@
     "exp": 8.1,
     "lo": 3.9,
     "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "ben_ross": {
+   "k_pct": {
+    "exp": 24.1,
+    "lo": 17.5,
+    "hi": 30.7
+   },
+   "bb_pct": {
+    "exp": 11.3,
+    "lo": 7.2,
+    "hi": 15.5,
     "low_confidence": true
    }
   },
@@ -3536,16 +3614,16 @@
     "low_confidence": true
    }
   },
-  "leo_balcazar": {
+  "aron_estrada": {
    "k_pct": {
-    "exp": 21.4,
-    "lo": 14.9,
-    "hi": 28.0
+    "exp": 19.7,
+    "lo": 13.2,
+    "hi": 26.3
    },
    "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.5,
-    "hi": 13.8,
+    "exp": 7.1,
+    "lo": 2.9,
+    "hi": 11.2,
     "low_confidence": true
    }
   },
@@ -3559,6 +3637,19 @@
     "exp": 10.2,
     "lo": 6.0,
     "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "cooper_kinney": {
+   "k_pct": {
+    "exp": 28.0,
+    "lo": 21.4,
+    "hi": 34.5
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.3,
+    "hi": 12.6,
     "low_confidence": true
    }
   },
@@ -3601,19 +3692,6 @@
     "low_confidence": true
    }
   },
-  "abdias_de_la_cruz": {
-   "k_pct": {
-    "exp": 22.1,
-    "lo": 15.5,
-    "hi": 28.7
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
   "darell_morel": {
    "k_pct": {
     "exp": 26.2,
@@ -3637,6 +3715,19 @@
     "exp": 11.4,
     "lo": 7.2,
     "hi": 15.5,
+    "low_confidence": true
+   }
+  },
+  "elorky_rodriguez": {
+   "k_pct": {
+    "exp": 23.5,
+    "lo": 16.9,
+    "hi": 30.1
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.3,
     "low_confidence": true
    }
   },
@@ -3666,19 +3757,6 @@
     "low_confidence": true
    }
   },
-  "blake_burke": {
-   "k_pct": {
-    "exp": 22.0,
-    "lo": 15.4,
-    "hi": 28.5
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
   "nauris_de_la_cruz": {
    "k_pct": {
     "exp": 20.6,
@@ -3705,19 +3783,6 @@
     "low_confidence": true
    }
   },
-  "dillon_head": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
   "davis_diaz": {
    "k_pct": {
     "exp": 18.3,
@@ -3741,19 +3806,6 @@
     "exp": 11.6,
     "lo": 7.5,
     "hi": 15.8,
-    "low_confidence": true
-   }
-  },
-  "ryan_wideman": {
-   "k_pct": {
-    "exp": 19.6,
-    "lo": 13.1,
-    "hi": 26.2
-   },
-   "bb_pct": {
-    "exp": 7.7,
-    "lo": 3.6,
-    "hi": 11.9,
     "low_confidence": true
    }
   },
@@ -3809,19 +3861,6 @@
     "low_confidence": true
    }
   },
-  "ben_ross": {
-   "k_pct": {
-    "exp": 24.1,
-    "lo": 17.5,
-    "hi": 30.7
-   },
-   "bb_pct": {
-    "exp": 11.3,
-    "lo": 7.2,
-    "hi": 15.5,
-    "low_confidence": true
-   }
-  },
   "dawvris_brito": {
    "k_pct": {
     "exp": 26.4,
@@ -3835,6 +3874,19 @@
     "low_confidence": true
    }
   },
+  "jeyson_horton": {
+   "k_pct": {
+    "exp": 29.3,
+    "lo": 22.7,
+    "hi": 35.8
+   },
+   "bb_pct": {
+    "exp": 12.4,
+    "lo": 8.3,
+    "hi": 16.6,
+    "low_confidence": true
+   }
+  },
   "kaeden_kent": {
    "k_pct": {
     "exp": 18.8,
@@ -3845,19 +3897,6 @@
     "exp": 7.6,
     "lo": 3.5,
     "hi": 11.7,
-    "low_confidence": true
-   }
-  },
-  "aron_estrada": {
-   "k_pct": {
-    "exp": 19.7,
-    "lo": 13.2,
-    "hi": 26.3
-   },
-   "bb_pct": {
-    "exp": 7.1,
-    "lo": 2.9,
-    "hi": 11.2,
     "low_confidence": true
    }
   },
@@ -3936,19 +3975,6 @@
     "exp": 9.4,
     "lo": 5.3,
     "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "cooper_kinney": {
-   "k_pct": {
-    "exp": 28.0,
-    "lo": 21.4,
-    "hi": 34.5
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.3,
-    "hi": 12.6,
     "low_confidence": true
    }
   },
@@ -4043,16 +4069,16 @@
     "low_confidence": true
    }
   },
-  "elorky_rodriguez": {
+  "dj_layton": {
    "k_pct": {
-    "exp": 23.5,
-    "lo": 16.9,
-    "hi": 30.1
+    "exp": 24.8,
+    "lo": 18.3,
+    "hi": 31.4
    },
    "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.3,
+    "exp": 11.6,
+    "lo": 7.5,
+    "hi": 15.8,
     "low_confidence": true
    }
   },
@@ -4074,6 +4100,19 @@
     "exp": 22.2,
     "lo": 15.6,
     "hi": 28.7
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "jesus_castillo": {
+   "k_pct": {
+    "exp": 23.2,
+    "lo": 16.6,
+    "hi": 29.7
    },
    "bb_pct": {
     "exp": 8.5,
@@ -4160,19 +4199,6 @@
     "low_confidence": true
    }
   },
-  "jeyson_horton": {
-   "k_pct": {
-    "exp": 29.3,
-    "lo": 22.7,
-    "hi": 35.8
-   },
-   "bb_pct": {
-    "exp": 12.4,
-    "lo": 8.3,
-    "hi": 16.6,
-    "low_confidence": true
-   }
-  },
   "antonio_anderson": {
    "k_pct": {
     "exp": 23.2,
@@ -4196,6 +4222,19 @@
     "exp": 14.4,
     "lo": 10.3,
     "hi": 18.6,
+    "low_confidence": true
+   }
+  },
+  "will_bush": {
+   "k_pct": {
+    "exp": 27.4,
+    "lo": 20.9,
+    "hi": 34.0
+   },
+   "bb_pct": {
+    "exp": 11.1,
+    "lo": 6.9,
+    "hi": 15.2,
     "low_confidence": true
    }
   },
@@ -4225,6 +4264,19 @@
     "low_confidence": true
    }
   },
+  "pedro_ibarguen": {
+   "k_pct": {
+    "exp": 22.6,
+    "lo": 16.1,
+    "hi": 29.2
+   },
+   "bb_pct": {
+    "exp": 10.9,
+    "lo": 6.8,
+    "hi": 15.0,
+    "low_confidence": true
+   }
+  },
   "ashly_andujar": {
    "k_pct": {
     "exp": 19.1,
@@ -4251,16 +4303,42 @@
     "low_confidence": true
    }
   },
-  "dj_layton": {
+  "mitch_jebb": {
    "k_pct": {
-    "exp": 24.8,
-    "lo": 18.3,
-    "hi": 31.4
+    "exp": 20.1,
+    "lo": 13.5,
+    "hi": 26.6
    },
    "bb_pct": {
-    "exp": 11.6,
-    "lo": 7.5,
-    "hi": 15.8,
+    "exp": 9.9,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "jase_mitchell": {
+   "k_pct": {
+    "exp": 25.7,
+    "lo": 19.1,
+    "hi": 32.2
+   },
+   "bb_pct": {
+    "exp": 15.4,
+    "lo": 11.3,
+    "hi": 19.6,
+    "low_confidence": true
+   }
+  },
+  "yohendry_sanchez": {
+   "k_pct": {
+    "exp": 18.1,
+    "lo": 11.6,
+    "hi": 24.7
+   },
+   "bb_pct": {
+    "exp": 10.7,
+    "lo": 6.5,
+    "hi": 14.8,
     "low_confidence": true
    }
   },
@@ -4277,42 +4355,29 @@
     "low_confidence": true
    }
   },
-  "jesus_castillo": {
+  "jaims_martinez": {
    "k_pct": {
-    "exp": 23.2,
-    "lo": 16.6,
-    "hi": 29.7
+    "exp": 28.7,
+    "lo": 22.2,
+    "hi": 35.3
    },
    "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.3,
-    "hi": 12.6,
+    "exp": 12.4,
+    "lo": 8.3,
+    "hi": 16.5,
     "low_confidence": true
    }
   },
-  "will_bush": {
+  "jemone_nuel": {
    "k_pct": {
-    "exp": 27.4,
-    "lo": 20.9,
-    "hi": 34.0
+    "exp": 21.1,
+    "lo": 14.6,
+    "hi": 27.7
    },
    "bb_pct": {
-    "exp": 11.1,
-    "lo": 6.9,
-    "hi": 15.2,
-    "low_confidence": true
-   }
-  },
-  "mitch_jebb": {
-   "k_pct": {
-    "exp": 20.1,
-    "lo": 13.5,
-    "hi": 26.6
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.7,
-    "hi": 14.0,
+    "exp": 12.2,
+    "lo": 8.1,
+    "hi": 16.4,
     "low_confidence": true
    }
   },
@@ -4329,6 +4394,32 @@
     "low_confidence": true
    }
   },
+  "miguel_rodriguez": {
+   "k_pct": {
+    "exp": 18.5,
+    "lo": 11.9,
+    "hi": 25.1
+   },
+   "bb_pct": {
+    "exp": 11.0,
+    "lo": 6.9,
+    "hi": 15.1,
+    "low_confidence": true
+   }
+  },
+  "luis_guanipa": {
+   "k_pct": {
+    "exp": 14.9,
+    "lo": 8.3,
+    "hi": 21.5
+   },
+   "bb_pct": {
+    "exp": 7.6,
+    "lo": 3.5,
+    "hi": 11.8,
+    "low_confidence": true
+   }
+  },
   "carlos_virahonda": {
    "k_pct": {
     "exp": 19.4,
@@ -4339,6 +4430,32 @@
     "exp": 7.3,
     "lo": 3.2,
     "hi": 11.4,
+    "low_confidence": true
+   }
+  },
+  "danny_serretti": {
+   "k_pct": {
+    "exp": 21.5,
+    "lo": 14.9,
+    "hi": 28.1
+   },
+   "bb_pct": {
+    "exp": 12.3,
+    "lo": 8.2,
+    "hi": 16.4,
+    "low_confidence": true
+   }
+  },
+  "juan_flores": {
+   "k_pct": {
+    "exp": 22.0,
+    "lo": 15.4,
+    "hi": 28.6
+   },
+   "bb_pct": {
+    "exp": 7.8,
+    "lo": 3.7,
+    "hi": 12.0,
     "low_confidence": true
    }
   },
@@ -4355,6 +4472,916 @@
     "low_confidence": true
    }
   },
+  "malcolm_moore": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.3,
+    "hi": 27.4
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.2,
+    "hi": 12.5,
+    "low_confidence": true
+   }
+  },
+  "ty_harvey": {
+   "k_pct": {
+    "exp": 22.7,
+    "lo": 16.1,
+    "hi": 29.3
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.4,
+    "hi": 14.6,
+    "low_confidence": true
+   }
+  },
+  "jason_schiavone": {
+   "k_pct": {
+    "exp": 25.3,
+    "lo": 18.7,
+    "hi": 31.8
+   },
+   "bb_pct": {
+    "exp": 10.9,
+    "lo": 6.8,
+    "hi": 15.1,
+    "low_confidence": true
+   }
+  },
+  "max_belyeu": {
+   "k_pct": {
+    "exp": 27.8,
+    "lo": 21.2,
+    "hi": 34.4
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "jacob_berry": {
+   "k_pct": {
+    "exp": 18.3,
+    "lo": 11.8,
+    "hi": 24.9
+   },
+   "bb_pct": {
+    "exp": 10.9,
+    "lo": 6.8,
+    "hi": 15.1,
+    "low_confidence": true
+   }
+  },
+  "juan_matheus": {
+   "k_pct": {
+    "exp": 18.0,
+    "lo": 11.5,
+    "hi": 24.6
+   },
+   "bb_pct": {
+    "exp": 8.0,
+    "lo": 3.9,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "johan_rodriguez": {
+   "k_pct": {
+    "exp": 21.6,
+    "lo": 15.0,
+    "hi": 28.1
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.1,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "leandro_arias": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.1,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.1,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "deniel_ortiz": {
+   "k_pct": {
+    "exp": 21.4,
+    "lo": 14.8,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.2,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "tres_gonzalez": {
+   "k_pct": {
+    "exp": 20.0,
+    "lo": 13.4,
+    "hi": 26.5
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "jake_munroe": {
+   "k_pct": {
+    "exp": 19.3,
+    "lo": 12.8,
+    "hi": 25.9
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "miguel_caraballo": {
+   "k_pct": {
+    "exp": 24.7,
+    "lo": 18.1,
+    "hi": 31.3
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 5.9,
+    "hi": 14.2,
+    "low_confidence": true
+   }
+  },
+  "cade_mcgee": {
+   "k_pct": {
+    "exp": 24.6,
+    "lo": 18.1,
+    "hi": 31.2
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.2,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "payton_eeles": {
+   "k_pct": {
+    "exp": 20.9,
+    "lo": 14.3,
+    "hi": 27.5
+   },
+   "bb_pct": {
+    "exp": 10.7,
+    "lo": 6.6,
+    "hi": 14.9,
+    "low_confidence": true
+   }
+  },
+  "kendry_martinez": {
+   "k_pct": {
+    "exp": 31.6,
+    "lo": 25.0,
+    "hi": 38.2
+   },
+   "bb_pct": {
+    "exp": 15.7,
+    "lo": 11.6,
+    "hi": 19.8,
+    "low_confidence": true
+   }
+  },
+  "sami_manzueta": {
+   "k_pct": {
+    "exp": 28.4,
+    "lo": 21.8,
+    "hi": 35.0
+   },
+   "bb_pct": {
+    "exp": 12.2,
+    "lo": 8.0,
+    "hi": 16.3,
+    "low_confidence": true
+   }
+  },
+  "sam_shaw": {
+   "k_pct": {
+    "exp": 20.9,
+    "lo": 14.3,
+    "hi": 27.5
+   },
+   "bb_pct": {
+    "exp": 12.9,
+    "lo": 8.8,
+    "hi": 17.1,
+    "low_confidence": true
+   }
+  },
+  "yilver_de_paula": {
+   "k_pct": {
+    "exp": 20.6,
+    "lo": 14.0,
+    "hi": 27.1
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.1,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "travis_honeyman": {
+   "k_pct": {
+    "exp": 18.1,
+    "lo": 11.6,
+    "hi": 24.7
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "yohandy_morales": {
+   "k_pct": {
+    "exp": 25.1,
+    "lo": 18.6,
+    "hi": 31.7
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "peyton_graham": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.3,
+    "hi": 27.4
+   },
+   "bb_pct": {
+    "exp": 11.2,
+    "lo": 7.0,
+    "hi": 15.3,
+    "low_confidence": true
+   }
+  },
+  "griffin_burkholder": {
+   "k_pct": {
+    "exp": 22.5,
+    "lo": 15.9,
+    "hi": 29.1
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.6,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "victor_arias": {
+   "k_pct": {
+    "exp": 21.9,
+    "lo": 15.3,
+    "hi": 28.4
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.1,
+    "hi": 12.3,
+    "low_confidence": true
+   }
+  },
+  "aaron_walton": {
+   "k_pct": {
+    "exp": 25.7,
+    "lo": 19.1,
+    "hi": 32.3
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "douglas_glod": {
+   "k_pct": {
+    "exp": 30.1,
+    "lo": 23.5,
+    "hi": 36.6
+   },
+   "bb_pct": {
+    "exp": 10.4,
+    "lo": 6.2,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "cristopher_acosta": {
+   "k_pct": {
+    "exp": 30.3,
+    "lo": 23.8,
+    "hi": 36.9
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "braylon_whitaker": {
+   "k_pct": {
+    "exp": 17.3,
+    "lo": 10.7,
+    "hi": 23.8
+   },
+   "bb_pct": {
+    "exp": 10.4,
+    "lo": 6.3,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "spencer_nivens": {
+   "k_pct": {
+    "exp": 17.6,
+    "lo": 11.1,
+    "hi": 24.2
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.3,
+    "hi": 14.6,
+    "low_confidence": true
+   }
+  },
+  "dylan_campbell": {
+   "k_pct": {
+    "exp": 22.5,
+    "lo": 15.9,
+    "hi": 29.0
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "brooks_brannon": {
+   "k_pct": {
+    "exp": 26.7,
+    "lo": 20.1,
+    "hi": 33.3
+   },
+   "bb_pct": {
+    "exp": 9.6,
+    "lo": 5.5,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "rafael_ramirez_jr": {
+   "k_pct": {
+    "exp": 22.3,
+    "lo": 15.7,
+    "hi": 28.8
+   },
+   "bb_pct": {
+    "exp": 12.1,
+    "lo": 7.9,
+    "hi": 16.2,
+    "low_confidence": true
+   }
+  },
+  "yeremy_cabrera": {
+   "k_pct": {
+    "exp": 25.7,
+    "lo": 19.2,
+    "hi": 32.3
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "callan_moss": {
+   "k_pct": {
+    "exp": 23.1,
+    "lo": 16.5,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.6,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "alex_mooney": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.9,
+    "hi": 30.0
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.6,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "adonys_guzman": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "brennan_milone": {
+   "k_pct": {
+    "exp": 25.8,
+    "lo": 19.3,
+    "hi": 32.4
+   },
+   "bb_pct": {
+    "exp": 12.1,
+    "lo": 7.9,
+    "hi": 16.2,
+    "low_confidence": true
+   }
+  },
+  "justin_thomas_jr": {
+   "k_pct": {
+    "exp": 27.6,
+    "lo": 21.0,
+    "hi": 34.1
+   },
+   "bb_pct": {
+    "exp": 10.9,
+    "lo": 6.7,
+    "hi": 15.0,
+    "low_confidence": true
+   }
+  },
+  "nick_mitchell": {
+   "k_pct": {
+    "exp": 19.8,
+    "lo": 13.3,
+    "hi": 26.4
+   },
+   "bb_pct": {
+    "exp": 11.7,
+    "lo": 7.5,
+    "hi": 15.8,
+    "low_confidence": true
+   }
+  },
+  "ethan_hedges": {
+   "k_pct": {
+    "exp": 25.2,
+    "lo": 18.6,
+    "hi": 31.8
+   },
+   "bb_pct": {
+    "exp": 7.9,
+    "lo": 3.8,
+    "hi": 12.1,
+    "low_confidence": true
+   }
+  },
+  "aaron_zavala": {
+   "k_pct": {
+    "exp": 23.6,
+    "lo": 17.0,
+    "hi": 30.1
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.3,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "sebastian_dos_santos": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.4,
+    "hi": 14.7,
+    "low_confidence": true
+   }
+  },
+  "ivan_luciano": {
+   "k_pct": {
+    "exp": 18.7,
+    "lo": 12.1,
+    "hi": 25.3
+   },
+   "bb_pct": {
+    "exp": 10.6,
+    "lo": 6.5,
+    "hi": 14.7,
+    "low_confidence": true
+   }
+  },
+  "adolfo_sanchez": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 7.6,
+    "lo": 3.5,
+    "hi": 11.7,
+    "low_confidence": true
+   }
+  },
+  "kyle_debarge": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "hector_ramos": {
+   "k_pct": {
+    "exp": 24.2,
+    "lo": 17.7,
+    "hi": 30.8
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "victor_hurtado": {
+   "k_pct": {
+    "exp": 21.0,
+    "lo": 14.4,
+    "hi": 27.6
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "fenwick_trimble": {
+   "k_pct": {
+    "exp": 22.0,
+    "lo": 15.4,
+    "hi": 28.6
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.2,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "bruin_agbayani": {
+   "k_pct": {
+    "exp": 18.0,
+    "lo": 11.4,
+    "hi": 24.6
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "ramcell_medina": {
+   "k_pct": {
+    "exp": 21.1,
+    "lo": 14.6,
+    "hi": 27.7
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.2,
+    "hi": 12.5,
+    "low_confidence": true
+   }
+  },
+  "andrew_pinckney": {
+   "k_pct": {
+    "exp": 27.7,
+    "lo": 21.2,
+    "hi": 34.3
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "ely_brown": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.2,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 12.0,
+    "lo": 7.9,
+    "hi": 16.1,
+    "low_confidence": true
+   }
+  },
+  "angel_cepeda": {
+   "k_pct": {
+    "exp": 25.3,
+    "lo": 18.8,
+    "hi": 31.9
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "yeiker_reyes": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.0,
+    "hi": 12.3,
+    "low_confidence": true
+   }
+  },
+  "johan_geraldo": {
+   "k_pct": {
+    "exp": 29.2,
+    "lo": 22.6,
+    "hi": 35.8
+   },
+   "bb_pct": {
+    "exp": 11.5,
+    "lo": 7.4,
+    "hi": 15.7,
+    "low_confidence": true
+   }
+  },
+  "wilberson_de_pena": {
+   "k_pct": {
+    "exp": 19.7,
+    "lo": 13.2,
+    "hi": 26.3
+   },
+   "bb_pct": {
+    "exp": 6.9,
+    "lo": 2.8,
+    "hi": 11.1,
+    "low_confidence": true
+   }
+  },
+  "jacob_friend": {
+   "k_pct": {
+    "exp": 25.5,
+    "lo": 19.0,
+    "hi": 32.1
+   },
+   "bb_pct": {
+    "exp": 12.0,
+    "lo": 7.8,
+    "hi": 16.1,
+    "low_confidence": true
+   }
+  },
+  "eli_pitts": {
+   "k_pct": {
+    "exp": 19.8,
+    "lo": 13.2,
+    "hi": 26.3
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "cade_doughty": {
+   "k_pct": {
+    "exp": 25.8,
+    "lo": 19.2,
+    "hi": 32.3
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.6,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "kristian_robinson": {
+   "k_pct": {
+    "exp": 27.1,
+    "lo": 20.6,
+    "hi": 33.7
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.1,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "coy_james": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.7,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.1,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "jude_warwick": {
+   "k_pct": {
+    "exp": 23.9,
+    "lo": 17.4,
+    "hi": 30.5
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.2,
+    "hi": 12.5,
+    "low_confidence": true
+   }
+  },
+  "royelny_strop": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.3,
+    "hi": 29.4
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "carson_roccaforte": {
+   "k_pct": {
+    "exp": 27.8,
+    "lo": 21.2,
+    "hi": 34.3
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "jhoan_de_la_cruz": {
+   "k_pct": {
+    "exp": 33.3,
+    "lo": 26.8,
+    "hi": 39.9
+   },
+   "bb_pct": {
+    "exp": 8.1,
+    "lo": 4.0,
+    "hi": 12.3,
+    "low_confidence": true
+   }
+  },
+  "cobb_hightower": {
+   "k_pct": {
+    "exp": 22.3,
+    "lo": 15.7,
+    "hi": 28.8
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "caleb_lomavita": {
+   "k_pct": {
+    "exp": 20.7,
+    "lo": 14.2,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "john_peck": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.7,
+    "hi": 29.8
+   },
+   "bb_pct": {
+    "exp": 7.2,
+    "lo": 3.0,
+    "hi": 11.3,
+    "low_confidence": true
+   }
+  },
+  "fernando_graterol": {
+   "k_pct": {
+    "exp": 26.5,
+    "lo": 19.9,
+    "hi": 33.0
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "yoeilin_cespedes": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.7,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 7.8,
+    "lo": 3.7,
+    "hi": 12.0,
+    "low_confidence": true
+   }
+  },
+  "truitt_madonna": {
+   "k_pct": {
+    "exp": 24.9,
+    "lo": 18.4,
+    "hi": 31.5
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.4,
+    "hi": 13.7,
+    "low_confidence": true
+   }
+  },
   "maykel_coret": {
    "k_pct": {
     "exp": 30.8,
@@ -4365,6 +5392,2632 @@
     "exp": 12.6,
     "lo": 8.5,
     "hi": 16.8,
+    "low_confidence": true
+   }
+  },
+  "bryan_rincon": {
+   "k_pct": {
+    "exp": 21.0,
+    "lo": 14.5,
+    "hi": 27.6
+   },
+   "bb_pct": {
+    "exp": 10.7,
+    "lo": 6.6,
+    "hi": 14.9,
+    "low_confidence": true
+   }
+  },
+  "sebastian_romero": {
+   "k_pct": {
+    "exp": 31.1,
+    "lo": 24.5,
+    "hi": 37.7
+   },
+   "bb_pct": {
+    "exp": 10.9,
+    "lo": 6.8,
+    "hi": 15.0,
+    "low_confidence": true
+   }
+  },
+  "vaun_brown": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.7,
+    "hi": 29.8
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.4,
+    "hi": 13.7,
+    "low_confidence": true
+   }
+  },
+  "dawel_joseph": {
+   "k_pct": {
+    "exp": 33.5,
+    "lo": 27.0,
+    "hi": 40.1
+   },
+   "bb_pct": {
+    "exp": 14.4,
+    "lo": 10.3,
+    "hi": 18.5,
+    "low_confidence": true
+   }
+  },
+  "deivid_coronil": {
+   "k_pct": {
+    "exp": 26.5,
+    "lo": 19.9,
+    "hi": 33.1
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "santiago_leon": {
+   "k_pct": {
+    "exp": 22.1,
+    "lo": 15.5,
+    "hi": 28.7
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.4,
+    "hi": 14.6,
+    "low_confidence": true
+   }
+  },
+  "dayber_cruceta": {
+   "k_pct": {
+    "exp": 26.5,
+    "lo": 19.9,
+    "hi": 33.0
+   },
+   "bb_pct": {
+    "exp": 11.5,
+    "lo": 7.4,
+    "hi": 15.6,
+    "low_confidence": true
+   }
+  },
+  "edgleen_perez": {
+   "k_pct": {
+    "exp": 17.5,
+    "lo": 10.9,
+    "hi": 24.1
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "esmil_valencia": {
+   "k_pct": {
+    "exp": 25.9,
+    "lo": 19.3,
+    "hi": 32.5
+   },
+   "bb_pct": {
+    "exp": 7.7,
+    "lo": 3.6,
+    "hi": 11.9,
+    "low_confidence": true
+   }
+  },
+  "warren_calcano": {
+   "k_pct": {
+    "exp": 31.9,
+    "lo": 25.3,
+    "hi": 38.4
+   },
+   "bb_pct": {
+    "exp": 12.0,
+    "lo": 7.8,
+    "hi": 16.1,
+    "low_confidence": true
+   }
+  },
+  "byron_chourio": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.5,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "jose_ortiz": {
+   "k_pct": {
+    "exp": 21.5,
+    "lo": 15.0,
+    "hi": 28.1
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "bobby_boser": {
+   "k_pct": {
+    "exp": 27.9,
+    "lo": 21.3,
+    "hi": 34.4
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "caleb_cali": {
+   "k_pct": {
+    "exp": 27.4,
+    "lo": 20.9,
+    "hi": 34.0
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.1,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "johanfran_garcia": {
+   "k_pct": {
+    "exp": 24.0,
+    "lo": 17.4,
+    "hi": 30.6
+   },
+   "bb_pct": {
+    "exp": 7.2,
+    "lo": 3.0,
+    "hi": 11.3,
+    "low_confidence": true
+   }
+  },
+  "jacob_cozart": {
+   "k_pct": {
+    "exp": 22.5,
+    "lo": 15.9,
+    "hi": 29.1
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "samuel_munoz": {
+   "k_pct": {
+    "exp": 20.3,
+    "lo": 13.7,
+    "hi": 26.9
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "aj_vukovich": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.1,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "jake_fox": {
+   "k_pct": {
+    "exp": 19.0,
+    "lo": 12.5,
+    "hi": 25.6
+   },
+   "bb_pct": {
+    "exp": 12.2,
+    "lo": 8.1,
+    "hi": 16.3,
+    "low_confidence": true
+   }
+  },
+  "creed_willems": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.5,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "max_williams": {
+   "k_pct": {
+    "exp": 20.0,
+    "lo": 13.5,
+    "hi": 26.6
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "franklin_primera": {
+   "k_pct": {
+    "exp": 16.6,
+    "lo": 10.1,
+    "hi": 23.2
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "edian_espinal": {
+   "k_pct": {
+    "exp": 17.6,
+    "lo": 11.0,
+    "hi": 24.1
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "patrick_clohisy": {
+   "k_pct": {
+    "exp": 21.2,
+    "lo": 14.7,
+    "hi": 27.8
+   },
+   "bb_pct": {
+    "exp": 8.1,
+    "lo": 3.9,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "alberto_barriga": {
+   "k_pct": {
+    "exp": 22.3,
+    "lo": 15.7,
+    "hi": 28.9
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "landyn_vidourek": {
+   "k_pct": {
+    "exp": 29.6,
+    "lo": 23.0,
+    "hi": 36.2
+   },
+   "bb_pct": {
+    "exp": 11.8,
+    "lo": 7.6,
+    "hi": 15.9,
+    "low_confidence": true
+   }
+  },
+  "anderson_araujo": {
+   "k_pct": {
+    "exp": 19.7,
+    "lo": 13.1,
+    "hi": 26.3
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.5,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "jhonayker_ugarte": {
+   "k_pct": {
+    "exp": 20.1,
+    "lo": 13.5,
+    "hi": 26.7
+   },
+   "bb_pct": {
+    "exp": 8.6,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "tanner_thach": {
+   "k_pct": {
+    "exp": 16.3,
+    "lo": 9.7,
+    "hi": 22.9
+   },
+   "bb_pct": {
+    "exp": 8.0,
+    "lo": 3.9,
+    "hi": 12.1,
+    "low_confidence": true
+   }
+  },
+  "alirio_ferrebus": {
+   "k_pct": {
+    "exp": 16.5,
+    "lo": 9.9,
+    "hi": 23.0
+   },
+   "bb_pct": {
+    "exp": 6.9,
+    "lo": 2.8,
+    "hi": 11.0,
+    "low_confidence": true
+   }
+  },
+  "dixon_williams": {
+   "k_pct": {
+    "exp": 25.6,
+    "lo": 19.1,
+    "hi": 32.2
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "chris_arroyo": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.6,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "core_jackson": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.1,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "yulian_barreto": {
+   "k_pct": {
+    "exp": 23.7,
+    "lo": 17.1,
+    "hi": 30.2
+   },
+   "bb_pct": {
+    "exp": 7.4,
+    "lo": 3.2,
+    "hi": 11.5,
+    "low_confidence": true
+   }
+  },
+  "quentin_young": {
+   "k_pct": {
+    "exp": 33.9,
+    "lo": 27.3,
+    "hi": 40.4
+   },
+   "bb_pct": {
+    "exp": 8.1,
+    "lo": 4.0,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "cayden_wallace": {
+   "k_pct": {
+    "exp": 18.2,
+    "lo": 11.7,
+    "hi": 24.8
+   },
+   "bb_pct": {
+    "exp": 7.9,
+    "lo": 3.8,
+    "hi": 12.0,
+    "low_confidence": true
+   }
+  },
+  "jaider_suarez": {
+   "k_pct": {
+    "exp": 28.8,
+    "lo": 22.2,
+    "hi": 35.4
+   },
+   "bb_pct": {
+    "exp": 13.6,
+    "lo": 9.5,
+    "hi": 17.7,
+    "low_confidence": true
+   }
+  },
+  "axiel_plaz": {
+   "k_pct": {
+    "exp": 20.5,
+    "lo": 13.9,
+    "hi": 27.1
+   },
+   "bb_pct": {
+    "exp": 7.9,
+    "lo": 3.7,
+    "hi": 12.0,
+    "low_confidence": true
+   }
+  },
+  "anyelo_marquez": {
+   "k_pct": {
+    "exp": 25.8,
+    "lo": 19.2,
+    "hi": 32.4
+   },
+   "bb_pct": {
+    "exp": 8.1,
+    "lo": 3.9,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "cole_mathis": {
+   "k_pct": {
+    "exp": 22.6,
+    "lo": 16.0,
+    "hi": 29.1
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "jhonny_severino": {
+   "k_pct": {
+    "exp": 22.4,
+    "lo": 15.8,
+    "hi": 28.9
+   },
+   "bb_pct": {
+    "exp": 7.1,
+    "lo": 3.0,
+    "hi": 11.2,
+    "low_confidence": true
+   }
+  },
+  "hyun_seung_lee": {
+   "k_pct": {
+    "exp": 26.8,
+    "lo": 20.2,
+    "hi": 33.3
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "andruw_musett": {
+   "k_pct": {
+    "exp": 20.3,
+    "lo": 13.8,
+    "hi": 26.9
+   },
+   "bb_pct": {
+    "exp": 11.1,
+    "lo": 6.9,
+    "hi": 15.2,
+    "low_confidence": true
+   }
+  },
+  "nolan_schubart": {
+   "k_pct": {
+    "exp": 28.7,
+    "lo": 22.2,
+    "hi": 35.3
+   },
+   "bb_pct": {
+    "exp": 12.7,
+    "lo": 8.6,
+    "hi": 16.8,
+    "low_confidence": true
+   }
+  },
+  "bennett_thompson": {
+   "k_pct": {
+    "exp": 19.2,
+    "lo": 12.7,
+    "hi": 25.8
+   },
+   "bb_pct": {
+    "exp": 13.7,
+    "lo": 9.6,
+    "hi": 17.9,
+    "low_confidence": true
+   }
+  },
+  "alexander_albertus": {
+   "k_pct": {
+    "exp": 20.4,
+    "lo": 13.8,
+    "hi": 26.9
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.3,
+    "hi": 14.6,
+    "low_confidence": true
+   }
+  },
+  "joe_lampe": {
+   "k_pct": {
+    "exp": 23.9,
+    "lo": 17.3,
+    "hi": 30.4
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.3,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "brett_callahan": {
+   "k_pct": {
+    "exp": 20.9,
+    "lo": 14.3,
+    "hi": 27.5
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.7,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "noah_miller": {
+   "k_pct": {
+    "exp": 19.6,
+    "lo": 13.0,
+    "hi": 26.1
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "angel_abreu": {
+   "k_pct": {
+    "exp": 21.2,
+    "lo": 14.6,
+    "hi": 27.8
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "franyerber_montilla": {
+   "k_pct": {
+    "exp": 22.7,
+    "lo": 16.1,
+    "hi": 29.2
+   },
+   "bb_pct": {
+    "exp": 10.7,
+    "lo": 6.6,
+    "hi": 14.8,
+    "low_confidence": true
+   }
+  },
+  "carlos_pacheco": {
+   "k_pct": {
+    "exp": 27.6,
+    "lo": 21.0,
+    "hi": 34.1
+   },
+   "bb_pct": {
+    "exp": 8.0,
+    "lo": 3.9,
+    "hi": 12.1,
+    "low_confidence": true
+   }
+  },
+  "cole_messina": {
+   "k_pct": {
+    "exp": 23.7,
+    "lo": 17.1,
+    "hi": 30.3
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "aiden_taurek": {
+   "k_pct": {
+    "exp": 20.7,
+    "lo": 14.1,
+    "hi": 27.2
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "stiven_martinez": {
+   "k_pct": {
+    "exp": 27.9,
+    "lo": 21.3,
+    "hi": 34.5
+   },
+   "bb_pct": {
+    "exp": 7.5,
+    "lo": 3.4,
+    "hi": 11.6,
+    "low_confidence": true
+   }
+  },
+  "jose_salas": {
+   "k_pct": {
+    "exp": 27.5,
+    "lo": 21.0,
+    "hi": 34.1
+   },
+   "bb_pct": {
+    "exp": 8.1,
+    "lo": 4.0,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "eddson_martinez": {
+   "k_pct": {
+    "exp": 20.6,
+    "lo": 14.1,
+    "hi": 27.2
+   },
+   "bb_pct": {
+    "exp": 11.2,
+    "lo": 7.0,
+    "hi": 15.3,
+    "low_confidence": true
+   }
+  },
+  "lizandro_espinoza": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "andreimi_antunez": {
+   "k_pct": {
+    "exp": 18.4,
+    "lo": 11.8,
+    "hi": 25.0
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "kevin_bazzell": {
+   "k_pct": {
+    "exp": 19.7,
+    "lo": 13.1,
+    "hi": 26.3
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "cristian_hernandez": {
+   "k_pct": {
+    "exp": 22.2,
+    "lo": 15.6,
+    "hi": 28.7
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "griff_oferrall": {
+   "k_pct": {
+    "exp": 20.5,
+    "lo": 14.0,
+    "hi": 27.1
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "joniel_hernandez": {
+   "k_pct": {
+    "exp": 27.8,
+    "lo": 21.2,
+    "hi": 34.3
+   },
+   "bb_pct": {
+    "exp": 12.9,
+    "lo": 8.7,
+    "hi": 17.0,
+    "low_confidence": true
+   }
+  },
+  "jack_gurevitch": {
+   "k_pct": {
+    "exp": 25.9,
+    "lo": 19.3,
+    "hi": 32.5
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.2,
+    "hi": 12.5,
+    "low_confidence": true
+   }
+  },
+  "sabin_ceballos": {
+   "k_pct": {
+    "exp": 21.1,
+    "lo": 14.5,
+    "hi": 27.6
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "john_spikerman": {
+   "k_pct": {
+    "exp": 22.8,
+    "lo": 16.2,
+    "hi": 29.3
+   },
+   "bb_pct": {
+    "exp": 11.2,
+    "lo": 7.0,
+    "hi": 15.3,
+    "low_confidence": true
+   }
+  },
+  "junior_suriel": {
+   "k_pct": {
+    "exp": 28.8,
+    "lo": 22.2,
+    "hi": 35.3
+   },
+   "bb_pct": {
+    "exp": 12.1,
+    "lo": 7.9,
+    "hi": 16.2,
+    "low_confidence": true
+   }
+  },
+  "damiano_palmegiani": {
+   "k_pct": {
+    "exp": 25.6,
+    "lo": 19.0,
+    "hi": 32.2
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "brayan_cortesia": {
+   "k_pct": {
+    "exp": 24.9,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 5.0,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "eric_bitonti": {
+   "k_pct": {
+    "exp": 29.0,
+    "lo": 22.4,
+    "hi": 35.5
+   },
+   "bb_pct": {
+    "exp": 11.1,
+    "lo": 6.9,
+    "hi": 15.2,
+    "low_confidence": true
+   }
+  },
+  "pj_morlando": {
+   "k_pct": {
+    "exp": 24.3,
+    "lo": 17.8,
+    "hi": 30.9
+   },
+   "bb_pct": {
+    "exp": 10.6,
+    "lo": 6.5,
+    "hi": 14.8,
+    "low_confidence": true
+   }
+  },
+  "michael_martinez": {
+   "k_pct": {
+    "exp": 26.6,
+    "lo": 20.0,
+    "hi": 33.2
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "ariel_armas": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.3,
+    "hi": 29.4
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "jace_avina": {
+   "k_pct": {
+    "exp": 26.2,
+    "lo": 19.6,
+    "hi": 32.7
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "rodney_green_jr": {
+   "k_pct": {
+    "exp": 28.7,
+    "lo": 22.1,
+    "hi": 35.3
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "tjayy_walton": {
+   "k_pct": {
+    "exp": 23.9,
+    "lo": 17.3,
+    "hi": 30.4
+   },
+   "bb_pct": {
+    "exp": 11.6,
+    "lo": 7.5,
+    "hi": 15.8,
+    "low_confidence": true
+   }
+  },
+  "jesus_pinto": {
+   "k_pct": {
+    "exp": 20.7,
+    "lo": 14.2,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "randy_de_jesus": {
+   "k_pct": {
+    "exp": 29.0,
+    "lo": 22.5,
+    "hi": 35.6
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "jeral_perez": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.2,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "kehden_hettiger": {
+   "k_pct": {
+    "exp": 28.9,
+    "lo": 22.3,
+    "hi": 35.5
+   },
+   "bb_pct": {
+    "exp": 10.6,
+    "lo": 6.5,
+    "hi": 14.8,
+    "low_confidence": true
+   }
+  },
+  "jackson_strong": {
+   "k_pct": {
+    "exp": 27.8,
+    "lo": 21.2,
+    "hi": 34.4
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.9,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "jose_dickson": {
+   "k_pct": {
+    "exp": 25.7,
+    "lo": 19.2,
+    "hi": 32.3
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.2,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "ricky_cabrera": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.2,
+    "hi": 31.3
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.7,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "angel_de_los_santos": {
+   "k_pct": {
+    "exp": 20.7,
+    "lo": 14.1,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 6.7,
+    "lo": 2.5,
+    "hi": 10.8,
+    "low_confidence": true
+   }
+  },
+  "stiven_marinez": {
+   "k_pct": {
+    "exp": 28.9,
+    "lo": 22.4,
+    "hi": 35.5
+   },
+   "bb_pct": {
+    "exp": 13.9,
+    "lo": 9.8,
+    "hi": 18.0,
+    "low_confidence": true
+   }
+  },
+  "fernando_peguero": {
+   "k_pct": {
+    "exp": 24.3,
+    "lo": 17.8,
+    "hi": 30.9
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "ryan_burrowes": {
+   "k_pct": {
+    "exp": 22.5,
+    "lo": 16.0,
+    "hi": 29.1
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "mani_cedeno": {
+   "k_pct": {
+    "exp": 33.0,
+    "lo": 26.5,
+    "hi": 39.6
+   },
+   "bb_pct": {
+    "exp": 13.6,
+    "lo": 9.5,
+    "hi": 17.7,
+    "low_confidence": true
+   }
+  },
+  "ruben_castillo": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "dameury_pena": {
+   "k_pct": {
+    "exp": 12.1,
+    "lo": 5.5,
+    "hi": 18.7
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "billy_amick": {
+   "k_pct": {
+    "exp": 26.7,
+    "lo": 20.1,
+    "hi": 33.2
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "daniel_guilarte": {
+   "k_pct": {
+    "exp": 25.9,
+    "lo": 19.3,
+    "hi": 32.4
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.2,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "anthony_depino": {
+   "k_pct": {
+    "exp": 21.6,
+    "lo": 15.0,
+    "hi": 28.2
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "wilson_rodriguez": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.2,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 10.4,
+    "lo": 6.3,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "matthew_ferrara": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "vance_honeycutt": {
+   "k_pct": {
+    "exp": 32.8,
+    "lo": 26.2,
+    "hi": 39.4
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "christian_cairo__sa3010028": {
+   "k_pct": {
+    "exp": 19.0,
+    "lo": 12.4,
+    "hi": 25.5
+   },
+   "bb_pct": {
+    "exp": 12.0,
+    "lo": 7.8,
+    "hi": 16.1,
+    "low_confidence": true
+   }
+  },
+  "jancel_villarroel": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 7.2,
+    "lo": 3.1,
+    "hi": 11.3,
+    "low_confidence": true
+   }
+  },
+  "eduardo_beltre": {
+   "k_pct": {
+    "exp": 23.5,
+    "lo": 16.9,
+    "hi": 30.1
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.2,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "kai_roberts": {
+   "k_pct": {
+    "exp": 28.1,
+    "lo": 21.5,
+    "hi": 34.6
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "fabian_lopez": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.9,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "reed_trimble": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "yovanny_rodriguez": {
+   "k_pct": {
+    "exp": 25.0,
+    "lo": 18.4,
+    "hi": 31.6
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "jake_cunningham": {
+   "k_pct": {
+    "exp": 28.2,
+    "lo": 21.7,
+    "hi": 34.8
+   },
+   "bb_pct": {
+    "exp": 9.6,
+    "lo": 5.4,
+    "hi": 13.7,
+    "low_confidence": true
+   }
+  },
+  "anthony_millan": {
+   "k_pct": {
+    "exp": 27.3,
+    "lo": 20.8,
+    "hi": 33.9
+   },
+   "bb_pct": {
+    "exp": 13.2,
+    "lo": 9.1,
+    "hi": 17.3,
+    "low_confidence": true
+   }
+  },
+  "mac_horvath": {
+   "k_pct": {
+    "exp": 24.9,
+    "lo": 18.3,
+    "hi": 31.5
+   },
+   "bb_pct": {
+    "exp": 7.4,
+    "lo": 3.2,
+    "hi": 11.5,
+    "low_confidence": true
+   }
+  },
+  "jesus_baez": {
+   "k_pct": {
+    "exp": 19.0,
+    "lo": 12.4,
+    "hi": 25.5
+   },
+   "bb_pct": {
+    "exp": 7.6,
+    "lo": 3.5,
+    "hi": 11.8,
+    "low_confidence": true
+   }
+  },
+  "willy_vasquez": {
+   "k_pct": {
+    "exp": 28.4,
+    "lo": 21.8,
+    "hi": 34.9
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "richard_de_los_santos": {
+   "k_pct": {
+    "exp": 29.6,
+    "lo": 23.1,
+    "hi": 36.2
+   },
+   "bb_pct": {
+    "exp": 14.7,
+    "lo": 10.5,
+    "hi": 18.8,
+    "low_confidence": true
+   }
+  },
+  "derek_bernard": {
+   "k_pct": {
+    "exp": 22.6,
+    "lo": 16.1,
+    "hi": 29.2
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.8,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "kade_snell": {
+   "k_pct": {
+    "exp": 23.9,
+    "lo": 17.3,
+    "hi": 30.4
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "brailer_guerrero": {
+   "k_pct": {
+    "exp": 25.5,
+    "lo": 19.0,
+    "hi": 32.1
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.2,
+    "low_confidence": true
+   }
+  },
+  "jacob_burke": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.5,
+    "hi": 29.6
+   },
+   "bb_pct": {
+    "exp": 7.5,
+    "lo": 3.4,
+    "hi": 11.6,
+    "low_confidence": true
+   }
+  },
+  "boston_smith": {
+   "k_pct": {
+    "exp": 24.6,
+    "lo": 18.0,
+    "hi": 31.2
+   },
+   "bb_pct": {
+    "exp": 12.9,
+    "lo": 8.8,
+    "hi": 17.1,
+    "low_confidence": true
+   }
+  },
+  "adrian_pinto": {
+   "k_pct": {
+    "exp": 18.6,
+    "lo": 12.0,
+    "hi": 25.1
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "kavares_tears": {
+   "k_pct": {
+    "exp": 27.5,
+    "lo": 20.9,
+    "hi": 34.1
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.7,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "christian_cerda": {
+   "k_pct": {
+    "exp": 21.1,
+    "lo": 14.5,
+    "hi": 27.6
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.6,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "andy_perez": {
+   "k_pct": {
+    "exp": 16.3,
+    "lo": 9.7,
+    "hi": 22.9
+   },
+   "bb_pct": {
+    "exp": 6.3,
+    "lo": 2.1,
+    "hi": 10.4,
+    "low_confidence": true
+   }
+  },
+  "johan_machado": {
+   "k_pct": {
+    "exp": 28.9,
+    "lo": 22.3,
+    "hi": 35.4
+   },
+   "bb_pct": {
+    "exp": 12.2,
+    "lo": 8.0,
+    "hi": 16.3,
+    "low_confidence": true
+   }
+  },
+  "diego_velasquez": {
+   "k_pct": {
+    "exp": 19.3,
+    "lo": 12.7,
+    "hi": 25.8
+   },
+   "bb_pct": {
+    "exp": 9.1,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "gustavo_melendez": {
+   "k_pct": {
+    "exp": 23.8,
+    "lo": 17.2,
+    "hi": 30.3
+   },
+   "bb_pct": {
+    "exp": 13.0,
+    "lo": 8.8,
+    "hi": 17.1,
+    "low_confidence": true
+   }
+  },
+  "elian_de_la_cruz": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "frederick_bencosme": {
+   "k_pct": {
+    "exp": 17.4,
+    "lo": 10.8,
+    "hi": 24.0
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.5,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "hector_osorio": {
+   "k_pct": {
+    "exp": 19.4,
+    "lo": 12.8,
+    "hi": 26.0
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "javier_sanchez": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 11.0,
+    "lo": 6.8,
+    "hi": 15.1,
+    "low_confidence": true
+   }
+  },
+  "reyli_mariano": {
+   "k_pct": {
+    "exp": 23.5,
+    "lo": 16.9,
+    "hi": 30.1
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.6,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "jhorman_bravo": {
+   "k_pct": {
+    "exp": 18.2,
+    "lo": 11.7,
+    "hi": 24.8
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "will_turner": {
+   "k_pct": {
+    "exp": 21.5,
+    "lo": 15.0,
+    "hi": 28.1
+   },
+   "bb_pct": {
+    "exp": 13.1,
+    "lo": 9.0,
+    "hi": 17.2,
+    "low_confidence": true
+   }
+  },
+  "juan_rujano": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.2,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 7.5,
+    "lo": 3.4,
+    "hi": 11.6,
+    "low_confidence": true
+   }
+  },
+  "daniel_vazquez": {
+   "k_pct": {
+    "exp": 24.6,
+    "lo": 18.0,
+    "hi": 31.2
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "cutter_coffey": {
+   "k_pct": {
+    "exp": 29.0,
+    "lo": 22.4,
+    "hi": 35.5
+   },
+   "bb_pct": {
+    "exp": 8.5,
+    "lo": 4.4,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "zach_levenson": {
+   "k_pct": {
+    "exp": 22.6,
+    "lo": 16.1,
+    "hi": 29.2
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.1,
+    "hi": 14.4,
+    "low_confidence": true
+   }
+  },
+  "gavin_cross": {
+   "k_pct": {
+    "exp": 27.0,
+    "lo": 20.4,
+    "hi": 33.5
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.1,
+    "hi": 12.3,
+    "low_confidence": true
+   }
+  },
+  "romeli_espinosa": {
+   "k_pct": {
+    "exp": 20.5,
+    "lo": 14.0,
+    "hi": 27.1
+   },
+   "bb_pct": {
+    "exp": 7.1,
+    "lo": 3.0,
+    "hi": 11.2,
+    "low_confidence": true
+   }
+  },
+  "michael_oliveto": {
+   "k_pct": {
+    "exp": 21.4,
+    "lo": 14.8,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "kamuel_villar": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.3,
+    "hi": 27.4
+   },
+   "bb_pct": {
+    "exp": 11.9,
+    "lo": 7.8,
+    "hi": 16.0,
+    "low_confidence": true
+   }
+  },
+  "edward_lantigua": {
+   "k_pct": {
+    "exp": 23.8,
+    "lo": 17.3,
+    "hi": 30.4
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "boston_baro": {
+   "k_pct": {
+    "exp": 22.9,
+    "lo": 16.3,
+    "hi": 29.4
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "jaron_elkins": {
+   "k_pct": {
+    "exp": 24.1,
+    "lo": 17.5,
+    "hi": 30.7
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "lucas_spence": {
+   "k_pct": {
+    "exp": 20.8,
+    "lo": 14.3,
+    "hi": 27.4
+   },
+   "bb_pct": {
+    "exp": 8.6,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "jack_winnay": {
+   "k_pct": {
+    "exp": 21.3,
+    "lo": 14.7,
+    "hi": 27.8
+   },
+   "bb_pct": {
+    "exp": 12.6,
+    "lo": 8.4,
+    "hi": 16.7,
+    "low_confidence": true
+   }
+  },
+  "kalai_rosario": {
+   "k_pct": {
+    "exp": 26.0,
+    "lo": 19.4,
+    "hi": 32.5
+   },
+   "bb_pct": {
+    "exp": 11.7,
+    "lo": 7.5,
+    "hi": 15.8,
+    "low_confidence": true
+   }
+  },
+  "jared_dickey": {
+   "k_pct": {
+    "exp": 18.7,
+    "lo": 12.1,
+    "hi": 25.2
+   },
+   "bb_pct": {
+    "exp": 10.5,
+    "lo": 6.4,
+    "hi": 14.6,
+    "low_confidence": true
+   }
+  },
+  "yassel_soler": {
+   "k_pct": {
+    "exp": 22.6,
+    "lo": 16.1,
+    "hi": 29.2
+   },
+   "bb_pct": {
+    "exp": 7.0,
+    "lo": 2.9,
+    "hi": 11.2,
+    "low_confidence": true
+   }
+  },
+  "santiago_figueroa": {
+   "k_pct": {
+    "exp": 27.9,
+    "lo": 21.3,
+    "hi": 34.5
+   },
+   "bb_pct": {
+    "exp": 12.7,
+    "lo": 8.6,
+    "hi": 16.8,
+    "low_confidence": true
+   }
+  },
+  "angel_brachi": {
+   "k_pct": {
+    "exp": 21.5,
+    "lo": 14.9,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "tanner_schobel": {
+   "k_pct": {
+    "exp": 23.8,
+    "lo": 17.2,
+    "hi": 30.3
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "caden_powell": {
+   "k_pct": {
+    "exp": 25.9,
+    "lo": 19.4,
+    "hi": 32.5
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "max_wagner": {
+   "k_pct": {
+    "exp": 26.7,
+    "lo": 20.1,
+    "hi": 33.3
+   },
+   "bb_pct": {
+    "exp": 9.6,
+    "lo": 5.4,
+    "hi": 13.7,
+    "low_confidence": true
+   }
+  },
+  "jose_manon": {
+   "k_pct": {
+    "exp": 26.9,
+    "lo": 20.3,
+    "hi": 33.4
+   },
+   "bb_pct": {
+    "exp": 12.3,
+    "lo": 8.2,
+    "hi": 16.5,
+    "low_confidence": true
+   }
+  },
+  "juan_baez": {
+   "k_pct": {
+    "exp": 21.4,
+    "lo": 14.9,
+    "hi": 28.0
+   },
+   "bb_pct": {
+    "exp": 8.8,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "abrahan_ramirez": {
+   "k_pct": {
+    "exp": 21.0,
+    "lo": 14.5,
+    "hi": 27.6
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "wes_clarke": {
+   "k_pct": {
+    "exp": 26.7,
+    "lo": 20.1,
+    "hi": 33.3
+   },
+   "bb_pct": {
+    "exp": 11.4,
+    "lo": 7.3,
+    "hi": 15.6,
+    "low_confidence": true
+   }
+  },
+  "kaleb_freeman": {
+   "k_pct": {
+    "exp": 25.4,
+    "lo": 18.8,
+    "hi": 32.0
+   },
+   "bb_pct": {
+    "exp": 12.5,
+    "lo": 8.4,
+    "hi": 16.6,
+    "low_confidence": true
+   }
+  },
+  "aaron_parker": {
+   "k_pct": {
+    "exp": 25.6,
+    "lo": 19.0,
+    "hi": 32.2
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "calvin_harris": {
+   "k_pct": {
+    "exp": 20.2,
+    "lo": 13.7,
+    "hi": 26.8
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "ruben_santana": {
+   "k_pct": {
+    "exp": 26.0,
+    "lo": 19.5,
+    "hi": 32.6
+   },
+   "bb_pct": {
+    "exp": 9.6,
+    "lo": 5.5,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "marlon_quintero": {
+   "k_pct": {
+    "exp": 17.1,
+    "lo": 10.5,
+    "hi": 23.7
+   },
+   "bb_pct": {
+    "exp": 6.9,
+    "lo": 2.8,
+    "hi": 11.0,
+    "low_confidence": true
+   }
+  },
+  "carter_johnson": {
+   "k_pct": {
+    "exp": 24.6,
+    "lo": 18.0,
+    "hi": 31.1
+   },
+   "bb_pct": {
+    "exp": 9.9,
+    "lo": 5.8,
+    "hi": 14.0,
+    "low_confidence": true
+   }
+  },
+  "cristhian_vaquero": {
+   "k_pct": {
+    "exp": 24.4,
+    "lo": 17.8,
+    "hi": 31.0
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "dylan_fien": {
+   "k_pct": {
+    "exp": 24.5,
+    "lo": 18.0,
+    "hi": 31.1
+   },
+   "bb_pct": {
+    "exp": 8.0,
+    "lo": 3.9,
+    "hi": 12.2,
+    "low_confidence": true
+   }
+  },
+  "jace_bohrofen": {
+   "k_pct": {
+    "exp": 27.8,
+    "lo": 21.3,
+    "hi": 34.4
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "michael_dattalo": {
+   "k_pct": {
+    "exp": 16.4,
+    "lo": 9.8,
+    "hi": 23.0
+   },
+   "bb_pct": {
+    "exp": 9.6,
+    "lo": 5.4,
+    "hi": 13.7,
+    "low_confidence": true
+   }
+  },
+  "emilio_sanchez": {
+   "k_pct": {
+    "exp": 21.8,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.1,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "gavin_conticello": {
+   "k_pct": {
+    "exp": 21.2,
+    "lo": 14.6,
+    "hi": 27.7
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "kien_vu": {
+   "k_pct": {
+    "exp": 25.0,
+    "lo": 18.4,
+    "hi": 31.5
+   },
+   "bb_pct": {
+    "exp": 10.2,
+    "lo": 6.1,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "jay_mcqueen": {
+   "k_pct": {
+    "exp": 25.0,
+    "lo": 18.4,
+    "hi": 31.6
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.1,
+    "hi": 13.4,
+    "low_confidence": true
+   }
+  },
+  "brando_mayea": {
+   "k_pct": {
+    "exp": 24.7,
+    "lo": 18.2,
+    "hi": 31.3
+   },
+   "bb_pct": {
+    "exp": 7.8,
+    "lo": 3.7,
+    "hi": 12.0,
+    "low_confidence": true
+   }
+  },
+  "teilon_serrano": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 12.9,
+    "lo": 8.8,
+    "hi": 17.1,
+    "low_confidence": true
+   }
+  },
+  "brennen_davis": {
+   "k_pct": {
+    "exp": 23.0,
+    "lo": 16.4,
+    "hi": 29.5
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "erick_lara": {
+   "k_pct": {
+    "exp": 26.9,
+    "lo": 20.3,
+    "hi": 33.4
+   },
+   "bb_pct": {
+    "exp": 11.4,
+    "lo": 7.3,
+    "hi": 15.5,
+    "low_confidence": true
+   }
+  },
+  "nick_montgomery": {
+   "k_pct": {
+    "exp": 27.1,
+    "lo": 20.6,
+    "hi": 33.7
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.8,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "josueth_quinonez": {
+   "k_pct": {
+    "exp": 19.3,
+    "lo": 12.7,
+    "hi": 25.8
+   },
+   "bb_pct": {
+    "exp": 8.6,
+    "lo": 4.5,
+    "hi": 12.7,
+    "low_confidence": true
+   }
+  },
+  "juan_tomas": {
+   "k_pct": {
+    "exp": 26.6,
+    "lo": 20.0,
+    "hi": 33.1
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.3,
+    "low_confidence": true
+   }
+  },
+  "andrew_pintar": {
+   "k_pct": {
+    "exp": 23.1,
+    "lo": 16.5,
+    "hi": 29.7
+   },
+   "bb_pct": {
+    "exp": 9.8,
+    "lo": 5.6,
+    "hi": 13.9,
+    "low_confidence": true
+   }
+  },
+  "angel_feliz": {
+   "k_pct": {
+    "exp": 21.8,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.2,
+    "low_confidence": true
+   }
+  },
+  "bralyn_brazoban": {
+   "k_pct": {
+    "exp": 25.3,
+    "lo": 18.7,
+    "hi": 31.8
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "ayden_johnson": {
+   "k_pct": {
+    "exp": 30.7,
+    "lo": 24.2,
+    "hi": 37.3
+   },
+   "bb_pct": {
+    "exp": 12.8,
+    "lo": 8.7,
+    "hi": 16.9,
+    "low_confidence": true
+   }
+  },
+  "yeiner_fernandez": {
+   "k_pct": {
+    "exp": 22.0,
+    "lo": 15.4,
+    "hi": 28.5
+   },
+   "bb_pct": {
+    "exp": 9.0,
+    "lo": 4.9,
+    "hi": 13.1,
+    "low_confidence": true
+   }
+  },
+  "nick_monistere": {
+   "k_pct": {
+    "exp": 23.3,
+    "lo": 16.7,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 10.1,
+    "lo": 6.0,
+    "hi": 14.2,
+    "low_confidence": true
+   }
+  },
+  "pedro_catuy": {
+   "k_pct": {
+    "exp": 24.8,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 7.7,
+    "lo": 3.5,
+    "hi": 11.8,
+    "low_confidence": true
+   }
+  },
+  "kale_fountain": {
+   "k_pct": {
+    "exp": 23.5,
+    "lo": 17.0,
+    "hi": 30.1
+   },
+   "bb_pct": {
+    "exp": 8.7,
+    "lo": 4.6,
+    "hi": 12.9,
+    "low_confidence": true
+   }
+  },
+  "jacob_mccombs": {
+   "k_pct": {
+    "exp": 21.7,
+    "lo": 15.2,
+    "hi": 28.3
+   },
+   "bb_pct": {
+    "exp": 7.0,
+    "lo": 2.9,
+    "hi": 11.1,
+    "low_confidence": true
+   }
+  },
+  "kasen_wells": {
+   "k_pct": {
+    "exp": 21.6,
+    "lo": 15.0,
+    "hi": 28.1
+   },
+   "bb_pct": {
+    "exp": 10.0,
+    "lo": 5.9,
+    "hi": 14.1,
+    "low_confidence": true
+   }
+  },
+  "luis_rives": {
+   "k_pct": {
+    "exp": 20.3,
+    "lo": 13.7,
+    "hi": 26.9
+   },
+   "bb_pct": {
+    "exp": 11.6,
+    "lo": 7.5,
+    "hi": 15.7,
+    "low_confidence": true
+   }
+  },
+  "justice_bigbie": {
+   "k_pct": {
+    "exp": 19.3,
+    "lo": 12.7,
+    "hi": 25.9
+   },
+   "bb_pct": {
+    "exp": 9.2,
+    "lo": 5.0,
+    "hi": 13.3,
+    "low_confidence": true
+   }
+  },
+  "elis_cuevas": {
+   "k_pct": {
+    "exp": 24.7,
+    "lo": 18.2,
+    "hi": 31.3
+   },
+   "bb_pct": {
+    "exp": 7.0,
+    "lo": 2.9,
+    "hi": 11.2,
+    "low_confidence": true
+   }
+  },
+  "carlos_gutierrez": {
+   "k_pct": {
+    "exp": 22.0,
+    "lo": 15.4,
+    "hi": 28.5
+   },
+   "bb_pct": {
+    "exp": 8.3,
+    "lo": 4.2,
+    "hi": 12.4,
+    "low_confidence": true
+   }
+  },
+  "brock_rodden": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 8.6,
+    "lo": 4.5,
+    "hi": 12.8,
+    "low_confidence": true
+   }
+  },
+  "yiddi_cappe": {
+   "k_pct": {
+    "exp": 21.6,
+    "lo": 15.0,
+    "hi": 28.2
+   },
+   "bb_pct": {
+    "exp": 8.2,
+    "lo": 4.0,
+    "hi": 12.3,
+    "low_confidence": true
+   }
+  },
+  "javier_mogollon": {
+   "k_pct": {
+    "exp": 25.7,
+    "lo": 19.2,
+    "hi": 32.3
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "daniel_bucciero": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 9.3,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "luis_escudero": {
+   "k_pct": {
+    "exp": 20.7,
+    "lo": 14.1,
+    "hi": 27.3
+   },
+   "bb_pct": {
+    "exp": 13.0,
+    "lo": 8.9,
+    "hi": 17.1,
+    "low_confidence": true
+   }
+  },
+  "esmith_pineda": {
+   "k_pct": {
+    "exp": 25.1,
+    "lo": 18.5,
+    "hi": 31.7
+   },
+   "bb_pct": {
+    "exp": 8.4,
+    "lo": 4.3,
+    "hi": 12.6,
+    "low_confidence": true
+   }
+  },
+  "ryan_lasko": {
+   "k_pct": {
+    "exp": 24.9,
+    "lo": 18.3,
+    "hi": 31.4
+   },
+   "bb_pct": {
+    "exp": 6.8,
+    "lo": 2.7,
+    "hi": 11.0,
+    "low_confidence": true
+   }
+  },
+  "jakob_christian": {
+   "k_pct": {
+    "exp": 26.5,
+    "lo": 20.0,
+    "hi": 33.1
+   },
+   "bb_pct": {
+    "exp": 9.7,
+    "lo": 5.5,
+    "hi": 13.8,
+    "low_confidence": true
+   }
+  },
+  "jose_perdomo": {
+   "k_pct": {
+    "exp": 23.4,
+    "lo": 16.8,
+    "hi": 29.9
+   },
+   "bb_pct": {
+    "exp": 8.9,
+    "lo": 4.7,
+    "hi": 13.0,
+    "low_confidence": true
+   }
+  },
+  "vladimir_asencio": {
+   "k_pct": {
+    "exp": 23.6,
+    "lo": 17.1,
+    "hi": 30.2
+   },
+   "bb_pct": {
+    "exp": 6.5,
+    "lo": 2.3,
+    "hi": 10.6,
+    "low_confidence": true
+   }
+  },
+  "easton_shelton": {
+   "k_pct": {
+    "exp": 28.7,
+    "lo": 22.2,
+    "hi": 35.3
+   },
+   "bb_pct": {
+    "exp": 9.5,
+    "lo": 5.3,
+    "hi": 13.6,
+    "low_confidence": true
+   }
+  },
+  "freiker_betencourt": {
+   "k_pct": {
+    "exp": 24.9,
+    "lo": 18.4,
+    "hi": 31.5
+   },
+   "bb_pct": {
+    "exp": 10.3,
+    "lo": 6.2,
+    "hi": 14.5,
+    "low_confidence": true
+   }
+  },
+  "yahil_melendez": {
+   "k_pct": {
+    "exp": 26.4,
+    "lo": 19.9,
+    "hi": 33.0
+   },
+   "bb_pct": {
+    "exp": 9.4,
+    "lo": 5.2,
+    "hi": 13.5,
+    "low_confidence": true
+   }
+  },
+  "robert_hipwell": {
+   "k_pct": {
+    "exp": 31.2,
+    "lo": 24.6,
+    "hi": 37.8
+   },
+   "bb_pct": {
+    "exp": 11.5,
+    "lo": 7.4,
+    "hi": 15.7,
     "low_confidence": true
    }
   },
@@ -4407,45 +8060,6 @@
     "low_confidence": true
    }
   },
-  "angel_brachi": {
-   "k_pct": {
-    "exp": 21.5,
-    "lo": 14.9,
-    "hi": 28.0
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.3,
-    "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "nick_mitchell": {
-   "k_pct": {
-    "exp": 19.8,
-    "lo": 13.3,
-    "hi": 26.4
-   },
-   "bb_pct": {
-    "exp": 11.7,
-    "lo": 7.5,
-    "hi": 15.8,
-    "low_confidence": true
-   }
-  },
-  "marlon_quintero": {
-   "k_pct": {
-    "exp": 17.1,
-    "lo": 10.5,
-    "hi": 23.7
-   },
-   "bb_pct": {
-    "exp": 6.9,
-    "lo": 2.8,
-    "hi": 11.0,
-    "low_confidence": true
-   }
-  },
   "deinys_gonzalez": {
    "k_pct": {
     "exp": 21.2,
@@ -4472,19 +8086,6 @@
     "low_confidence": true
    }
   },
-  "andreimi_antunez": {
-   "k_pct": {
-    "exp": 18.4,
-    "lo": 11.8,
-    "hi": 25.0
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
   "anthony_marquez": {
    "k_pct": {
     "exp": 21.9,
@@ -4495,19 +8096,6 @@
     "exp": 9.2,
     "lo": 5.1,
     "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "andy_perez": {
-   "k_pct": {
-    "exp": 16.3,
-    "lo": 9.7,
-    "hi": 22.9
-   },
-   "bb_pct": {
-    "exp": 6.3,
-    "lo": 2.1,
-    "hi": 10.4,
     "low_confidence": true
    }
   },
@@ -4576,45 +8164,6 @@
     "low_confidence": true
    }
   },
-  "josueth_quinonez": {
-   "k_pct": {
-    "exp": 19.3,
-    "lo": 12.7,
-    "hi": 25.8
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.5,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "anthony_millan": {
-   "k_pct": {
-    "exp": 27.3,
-    "lo": 20.8,
-    "hi": 33.9
-   },
-   "bb_pct": {
-    "exp": 13.2,
-    "lo": 9.1,
-    "hi": 17.3,
-    "low_confidence": true
-   }
-  },
-  "johan_machado": {
-   "k_pct": {
-    "exp": 28.9,
-    "lo": 22.3,
-    "hi": 35.4
-   },
-   "bb_pct": {
-    "exp": 12.2,
-    "lo": 8.0,
-    "hi": 16.3,
-    "low_confidence": true
-   }
-  },
   "kyle_henley": {
    "k_pct": {
     "exp": 27.0,
@@ -4625,32 +8174,6 @@
     "exp": 7.7,
     "lo": 3.6,
     "hi": 11.9,
-    "low_confidence": true
-   }
-  },
-  "bryan_rincon": {
-   "k_pct": {
-    "exp": 21.0,
-    "lo": 14.5,
-    "hi": 27.6
-   },
-   "bb_pct": {
-    "exp": 10.7,
-    "lo": 6.6,
-    "hi": 14.9,
-    "low_confidence": true
-   }
-  },
-  "pedro_ibarguen": {
-   "k_pct": {
-    "exp": 22.6,
-    "lo": 16.1,
-    "hi": 29.2
-   },
-   "bb_pct": {
-    "exp": 10.9,
-    "lo": 6.8,
-    "hi": 15.0,
     "low_confidence": true
    }
   },
@@ -4680,19 +8203,6 @@
     "low_confidence": true
    }
   },
-  "sam_shaw": {
-   "k_pct": {
-    "exp": 20.9,
-    "lo": 14.3,
-    "hi": 27.5
-   },
-   "bb_pct": {
-    "exp": 12.9,
-    "lo": 8.8,
-    "hi": 17.1,
-    "low_confidence": true
-   }
-  },
   "jose_alpuria": {
    "k_pct": {
     "exp": 23.4,
@@ -4719,19 +8229,6 @@
     "low_confidence": true
    }
   },
-  "mac_horvath": {
-   "k_pct": {
-    "exp": 24.9,
-    "lo": 18.3,
-    "hi": 31.5
-   },
-   "bb_pct": {
-    "exp": 7.4,
-    "lo": 3.2,
-    "hi": 11.5,
-    "low_confidence": true
-   }
-  },
   "jose_cerice": {
    "k_pct": {
     "exp": 19.4,
@@ -4742,19 +8239,6 @@
     "exp": 8.1,
     "lo": 4.0,
     "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "kevin_bazzell": {
-   "k_pct": {
-    "exp": 19.7,
-    "lo": 13.1,
-    "hi": 26.3
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
     "low_confidence": true
    }
   },
@@ -4784,32 +8268,6 @@
     "low_confidence": true
    }
   },
-  "angel_de_los_santos": {
-   "k_pct": {
-    "exp": 20.7,
-    "lo": 14.1,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 6.7,
-    "lo": 2.5,
-    "hi": 10.8,
-    "low_confidence": true
-   }
-  },
-  "juan_tomas": {
-   "k_pct": {
-    "exp": 26.6,
-    "lo": 20.0,
-    "hi": 33.1
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
   "luke_waddell": {
    "k_pct": {
     "exp": 15.4,
@@ -4823,19 +8281,6 @@
     "low_confidence": true
    }
   },
-  "stiven_marinez": {
-   "k_pct": {
-    "exp": 28.9,
-    "lo": 22.4,
-    "hi": 35.5
-   },
-   "bb_pct": {
-    "exp": 13.9,
-    "lo": 9.8,
-    "hi": 18.0,
-    "low_confidence": true
-   }
-  },
   "charlie_szykowny": {
    "k_pct": {
     "exp": 20.9,
@@ -4846,19 +8291,6 @@
     "exp": 7.8,
     "lo": 3.7,
     "hi": 12.0,
-    "low_confidence": true
-   }
-  },
-  "yulian_barreto": {
-   "k_pct": {
-    "exp": 23.7,
-    "lo": 17.1,
-    "hi": 30.2
-   },
-   "bb_pct": {
-    "exp": 7.4,
-    "lo": 3.2,
-    "hi": 11.5,
     "low_confidence": true
    }
   },
@@ -4901,45 +8333,6 @@
     "low_confidence": true
    }
   },
-  "yilver_de_paula": {
-   "k_pct": {
-    "exp": 20.6,
-    "lo": 14.0,
-    "hi": 27.1
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.1,
-    "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "cristian_hernandez": {
-   "k_pct": {
-    "exp": 22.2,
-    "lo": 15.6,
-    "hi": 28.7
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "samuel_munoz": {
-   "k_pct": {
-    "exp": 20.3,
-    "lo": 13.7,
-    "hi": 26.9
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.3,
-    "hi": 13.6,
-    "low_confidence": true
-   }
-  },
   "peyton_stovall": {
    "k_pct": {
     "exp": 21.5,
@@ -4953,19 +8346,6 @@
     "low_confidence": true
    }
   },
-  "sebastian_romero": {
-   "k_pct": {
-    "exp": 31.1,
-    "lo": 24.5,
-    "hi": 37.7
-   },
-   "bb_pct": {
-    "exp": 10.9,
-    "lo": 6.8,
-    "hi": 15.0,
-    "low_confidence": true
-   }
-  },
   "ernesto_martinez_jr": {
    "k_pct": {
     "exp": 25.5,
@@ -4976,32 +8356,6 @@
     "exp": 9.1,
     "lo": 5.0,
     "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "quentin_young": {
-   "k_pct": {
-    "exp": 33.9,
-    "lo": 27.3,
-    "hi": 40.4
-   },
-   "bb_pct": {
-    "exp": 8.1,
-    "lo": 4.0,
-    "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "carter_johnson": {
-   "k_pct": {
-    "exp": 24.6,
-    "lo": 18.0,
-    "hi": 31.1
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.0,
     "low_confidence": true
    }
   },
@@ -5057,19 +8411,6 @@
     "low_confidence": true
    }
   },
-  "vaun_brown": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.7,
-    "hi": 29.8
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.4,
-    "hi": 13.7,
-    "low_confidence": true
-   }
-  },
   "yerlin_confidan": {
    "k_pct": {
     "exp": 22.1,
@@ -5122,45 +8463,6 @@
     "low_confidence": true
    }
   },
-  "travis_honeyman": {
-   "k_pct": {
-    "exp": 18.1,
-    "lo": 11.6,
-    "hi": 24.7
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 14.0,
-    "low_confidence": true
-   }
-  },
-  "yohandy_morales": {
-   "k_pct": {
-    "exp": 25.1,
-    "lo": 18.6,
-    "hi": 31.7
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "jesus_baez": {
-   "k_pct": {
-    "exp": 19.0,
-    "lo": 12.4,
-    "hi": 25.5
-   },
-   "bb_pct": {
-    "exp": 7.6,
-    "lo": 3.5,
-    "hi": 11.8,
-    "low_confidence": true
-   }
-  },
   "jeremy_rodriguez": {
    "k_pct": {
     "exp": 23.8,
@@ -5200,32 +8502,6 @@
     "low_confidence": true
    }
   },
-  "cayden_wallace": {
-   "k_pct": {
-    "exp": 18.2,
-    "lo": 11.7,
-    "hi": 24.8
-   },
-   "bb_pct": {
-    "exp": 7.9,
-    "lo": 3.8,
-    "hi": 12.0,
-    "low_confidence": true
-   }
-  },
-  "ethan_hedges": {
-   "k_pct": {
-    "exp": 25.2,
-    "lo": 18.6,
-    "hi": 31.8
-   },
-   "bb_pct": {
-    "exp": 7.9,
-    "lo": 3.8,
-    "hi": 12.1,
-    "low_confidence": true
-   }
-  },
   "yovanny_duran": {
    "k_pct": {
     "exp": 22.4,
@@ -5236,32 +8512,6 @@
     "exp": 9.6,
     "lo": 5.5,
     "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "fernando_peguero": {
-   "k_pct": {
-    "exp": 24.3,
-    "lo": 17.8,
-    "hi": 30.9
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "dawel_joseph": {
-   "k_pct": {
-    "exp": 33.5,
-    "lo": 27.0,
-    "hi": 40.1
-   },
-   "bb_pct": {
-    "exp": 14.4,
-    "lo": 10.3,
-    "hi": 18.5,
     "low_confidence": true
    }
   },
@@ -5330,19 +8580,6 @@
     "low_confidence": true
    }
   },
-  "aaron_zavala": {
-   "k_pct": {
-    "exp": 23.6,
-    "lo": 17.0,
-    "hi": 30.1
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.3,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "rj_austin": {
    "k_pct": {
     "exp": 21.2,
@@ -5408,19 +8645,6 @@
     "low_confidence": true
    }
   },
-  "griff_oferrall": {
-   "k_pct": {
-    "exp": 20.5,
-    "lo": 14.0,
-    "hi": 27.1
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
   "chase_jaworsky": {
    "k_pct": {
     "exp": 22.7,
@@ -5444,19 +8668,6 @@
     "exp": 9.3,
     "lo": 5.1,
     "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "jaider_suarez": {
-   "k_pct": {
-    "exp": 28.8,
-    "lo": 22.2,
-    "hi": 35.4
-   },
-   "bb_pct": {
-    "exp": 13.6,
-    "lo": 9.5,
-    "hi": 17.7,
     "low_confidence": true
    }
   },
@@ -5499,19 +8710,6 @@
     "low_confidence": true
    }
   },
-  "diego_velasquez": {
-   "k_pct": {
-    "exp": 19.3,
-    "lo": 12.7,
-    "hi": 25.8
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
   "jay_allen_ii": {
    "k_pct": {
     "exp": 22.1,
@@ -5525,32 +8723,6 @@
     "low_confidence": true
    }
   },
-  "aj_vukovich": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.1,
-    "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "carlos_gutierrez": {
-   "k_pct": {
-    "exp": 22.0,
-    "lo": 15.4,
-    "hi": 28.5
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.2,
-    "hi": 12.4,
-    "low_confidence": true
-   }
-  },
   "christian_knapczyk": {
    "k_pct": {
     "exp": 28.3,
@@ -5561,32 +8733,6 @@
     "exp": 9.1,
     "lo": 4.9,
     "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "ryan_burrowes": {
-   "k_pct": {
-    "exp": 22.5,
-    "lo": 16.0,
-    "hi": 29.1
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "jake_fox": {
-   "k_pct": {
-    "exp": 19.0,
-    "lo": 12.5,
-    "hi": 25.6
-   },
-   "bb_pct": {
-    "exp": 12.2,
-    "lo": 8.1,
-    "hi": 16.3,
     "low_confidence": true
    }
   },
@@ -5616,32 +8762,6 @@
     "low_confidence": true
    }
   },
-  "peyton_graham": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.3,
-    "hi": 27.4
-   },
-   "bb_pct": {
-    "exp": 11.2,
-    "lo": 7.0,
-    "hi": 15.3,
-    "low_confidence": true
-   }
-  },
-  "axiel_plaz": {
-   "k_pct": {
-    "exp": 20.5,
-    "lo": 13.9,
-    "hi": 27.1
-   },
-   "bb_pct": {
-    "exp": 7.9,
-    "lo": 3.7,
-    "hi": 12.0,
-    "low_confidence": true
-   }
-  },
   "fernando_cruz": {
    "k_pct": {
     "exp": 28.5,
@@ -5655,19 +8775,6 @@
     "low_confidence": true
    }
   },
-  "deivid_coronil": {
-   "k_pct": {
-    "exp": 26.5,
-    "lo": 19.9,
-    "hi": 33.1
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
   "gerardo_rodriguez": {
    "k_pct": {
     "exp": 18.3,
@@ -5678,19 +8785,6 @@
     "exp": 7.1,
     "lo": 2.9,
     "hi": 11.2,
-    "low_confidence": true
-   }
-  },
-  "joniel_hernandez": {
-   "k_pct": {
-    "exp": 27.8,
-    "lo": 21.2,
-    "hi": 34.3
-   },
-   "bb_pct": {
-    "exp": 12.9,
-    "lo": 8.7,
-    "hi": 17.0,
     "low_confidence": true
    }
   },
@@ -5717,19 +8811,6 @@
     "exp": 8.1,
     "lo": 4.0,
     "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "jack_gurevitch": {
-   "k_pct": {
-    "exp": 25.9,
-    "lo": 19.3,
-    "hi": 32.5
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.2,
-    "hi": 12.5,
     "low_confidence": true
    }
   },
@@ -5798,19 +8879,6 @@
     "low_confidence": true
    }
   },
-  "sabin_ceballos": {
-   "k_pct": {
-    "exp": 21.1,
-    "lo": 14.5,
-    "hi": 27.6
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
   "alex_de_jesus": {
    "k_pct": {
     "exp": 26.8,
@@ -5876,58 +8944,6 @@
     "low_confidence": true
    }
   },
-  "sebastian_dos_santos": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.4,
-    "hi": 14.7,
-    "low_confidence": true
-   }
-  },
-  "ivan_luciano": {
-   "k_pct": {
-    "exp": 18.7,
-    "lo": 12.1,
-    "hi": 25.3
-   },
-   "bb_pct": {
-    "exp": 10.6,
-    "lo": 6.5,
-    "hi": 14.7,
-    "low_confidence": true
-   }
-  },
-  "griffin_burkholder": {
-   "k_pct": {
-    "exp": 22.5,
-    "lo": 15.9,
-    "hi": 29.1
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.6,
-    "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "creed_willems": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.5,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
   "bryant_betancourt": {
    "k_pct": {
     "exp": 17.8,
@@ -5980,45 +8996,6 @@
     "low_confidence": true
    }
   },
-  "mani_cedeno": {
-   "k_pct": {
-    "exp": 33.0,
-    "lo": 26.5,
-    "hi": 39.6
-   },
-   "bb_pct": {
-    "exp": 13.6,
-    "lo": 9.5,
-    "hi": 17.7,
-    "low_confidence": true
-   }
-  },
-  "andrew_pintar": {
-   "k_pct": {
-    "exp": 23.1,
-    "lo": 16.5,
-    "hi": 29.7
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.6,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "max_belyeu": {
-   "k_pct": {
-    "exp": 27.8,
-    "lo": 21.2,
-    "hi": 34.4
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
   "juan_villavicencio": {
    "k_pct": {
     "exp": 22.8,
@@ -6058,32 +9035,6 @@
     "low_confidence": true
    }
   },
-  "anyelo_marquez": {
-   "k_pct": {
-    "exp": 25.8,
-    "lo": 19.2,
-    "hi": 32.4
-   },
-   "bb_pct": {
-    "exp": 8.1,
-    "lo": 3.9,
-    "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "adolfo_sanchez": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 7.6,
-    "lo": 3.5,
-    "hi": 11.7,
-    "low_confidence": true
-   }
-  },
   "devin_saltiban": {
    "k_pct": {
     "exp": 24.8,
@@ -6110,19 +9061,6 @@
     "low_confidence": true
    }
   },
-  "ruben_castillo": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
   "cesar_hernandez": {
    "k_pct": {
     "exp": 24.1,
@@ -6146,45 +9084,6 @@
     "exp": 8.7,
     "lo": 4.6,
     "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "victor_arias": {
-   "k_pct": {
-    "exp": 21.9,
-    "lo": 15.3,
-    "hi": 28.4
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.1,
-    "hi": 12.3,
-    "low_confidence": true
-   }
-  },
-  "angel_feliz": {
-   "k_pct": {
-    "exp": 21.8,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "aaron_walton": {
-   "k_pct": {
-    "exp": 25.7,
-    "lo": 19.1,
-    "hi": 32.3
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 5.0,
-    "hi": 13.3,
     "low_confidence": true
    }
   },
@@ -6224,32 +9123,6 @@
     "exp": 9.1,
     "lo": 5.0,
     "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "kyle_debarge": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "tanner_schobel": {
-   "k_pct": {
-    "exp": 23.8,
-    "lo": 17.2,
-    "hi": 30.3
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.2,
-    "hi": 13.5,
     "low_confidence": true
    }
   },
@@ -6331,19 +9204,6 @@
     "low_confidence": true
    }
   },
-  "willy_vasquez": {
-   "k_pct": {
-    "exp": 28.4,
-    "lo": 21.8,
-    "hi": 34.9
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
   "benny_montgomery": {
    "k_pct": {
     "exp": 28.9,
@@ -6370,19 +9230,6 @@
     "low_confidence": true
    }
   },
-  "douglas_glod": {
-   "k_pct": {
-    "exp": 30.1,
-    "lo": 23.5,
-    "hi": 36.6
-   },
-   "bb_pct": {
-    "exp": 10.4,
-    "lo": 6.2,
-    "hi": 14.5,
-    "low_confidence": true
-   }
-  },
   "lamar_king_jr": {
    "k_pct": {
     "exp": 22.5,
@@ -6393,32 +9240,6 @@
     "exp": 9.5,
     "lo": 5.3,
     "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "gavin_cross": {
-   "k_pct": {
-    "exp": 27.0,
-    "lo": 20.4,
-    "hi": 33.5
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.1,
-    "hi": 12.3,
-    "low_confidence": true
-   }
-  },
-  "brock_rodden": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.5,
-    "hi": 12.8,
     "low_confidence": true
    }
   },
@@ -6461,32 +9282,6 @@
     "low_confidence": true
    }
   },
-  "john_spikerman": {
-   "k_pct": {
-    "exp": 22.8,
-    "lo": 16.2,
-    "hi": 29.3
-   },
-   "bb_pct": {
-    "exp": 11.2,
-    "lo": 7.0,
-    "hi": 15.3,
-    "low_confidence": true
-   }
-  },
-  "romeli_espinosa": {
-   "k_pct": {
-    "exp": 20.5,
-    "lo": 14.0,
-    "hi": 27.1
-   },
-   "bb_pct": {
-    "exp": 7.1,
-    "lo": 3.0,
-    "hi": 11.2,
-    "low_confidence": true
-   }
-  },
   "alberto_hernandez": {
    "k_pct": {
     "exp": 22.4,
@@ -6510,45 +9305,6 @@
     "exp": 6.8,
     "lo": 2.6,
     "hi": 10.9,
-    "low_confidence": true
-   }
-  },
-  "hector_ramos": {
-   "k_pct": {
-    "exp": 24.2,
-    "lo": 17.7,
-    "hi": 30.8
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
-  "cole_mathis": {
-   "k_pct": {
-    "exp": 22.6,
-    "lo": 16.0,
-    "hi": 29.1
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "jhonny_severino": {
-   "k_pct": {
-    "exp": 22.4,
-    "lo": 15.8,
-    "hi": 28.9
-   },
-   "bb_pct": {
-    "exp": 7.1,
-    "lo": 3.0,
-    "hi": 11.2,
     "low_confidence": true
    }
   },
@@ -6617,32 +9373,6 @@
     "low_confidence": true
    }
   },
-  "bralyn_brazoban": {
-   "k_pct": {
-    "exp": 25.3,
-    "lo": 18.7,
-    "hi": 31.8
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "gustavo_melendez": {
-   "k_pct": {
-    "exp": 23.8,
-    "lo": 17.2,
-    "hi": 30.3
-   },
-   "bb_pct": {
-    "exp": 13.0,
-    "lo": 8.8,
-    "hi": 17.1,
-    "low_confidence": true
-   }
-  },
   "chase_davis": {
    "k_pct": {
     "exp": 22.9,
@@ -6653,19 +9383,6 @@
     "exp": 10.9,
     "lo": 6.8,
     "hi": 15.1,
-    "low_confidence": true
-   }
-  },
-  "jase_mitchell": {
-   "k_pct": {
-    "exp": 25.7,
-    "lo": 19.1,
-    "hi": 32.2
-   },
-   "bb_pct": {
-    "exp": 15.4,
-    "lo": 11.3,
-    "hi": 19.6,
     "low_confidence": true
    }
   },
@@ -6747,19 +9464,6 @@
     "low_confidence": true
    }
   },
-  "michael_oliveto": {
-   "k_pct": {
-    "exp": 21.4,
-    "lo": 14.8,
-    "hi": 28.0
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.3,
-    "hi": 13.6,
-    "low_confidence": true
-   }
-  },
   "tucker_toman": {
    "k_pct": {
     "exp": 24.3,
@@ -6799,32 +9503,6 @@
     "low_confidence": true
    }
   },
-  "yiddi_cappe": {
-   "k_pct": {
-    "exp": 21.6,
-    "lo": 15.0,
-    "hi": 28.2
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.0,
-    "hi": 12.3,
-    "low_confidence": true
-   }
-  },
-  "jacob_berry": {
-   "k_pct": {
-    "exp": 18.3,
-    "lo": 11.8,
-    "hi": 24.9
-   },
-   "bb_pct": {
-    "exp": 10.9,
-    "lo": 6.8,
-    "hi": 15.1,
-    "low_confidence": true
-   }
-  },
   "eduardo_garcia": {
    "k_pct": {
     "exp": 23.4,
@@ -6838,19 +9516,6 @@
     "low_confidence": true
    }
   },
-  "junior_suriel": {
-   "k_pct": {
-    "exp": 28.8,
-    "lo": 22.2,
-    "hi": 35.3
-   },
-   "bb_pct": {
-    "exp": 12.1,
-    "lo": 7.9,
-    "hi": 16.2,
-    "low_confidence": true
-   }
-  },
   "enrique_jimenez": {
    "k_pct": {
     "exp": 20.8,
@@ -6861,19 +9526,6 @@
     "exp": 11.6,
     "lo": 7.5,
     "hi": 15.8,
-    "low_confidence": true
-   }
-  },
-  "hyun_seung_lee": {
-   "k_pct": {
-    "exp": 26.8,
-    "lo": 20.2,
-    "hi": 33.3
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 13.9,
     "low_confidence": true
    }
   },
@@ -6903,19 +9555,6 @@
     "low_confidence": true
    }
   },
-  "jose_perdomo": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
   "maui_ahuna": {
    "k_pct": {
     "exp": 29.9,
@@ -6926,19 +9565,6 @@
     "exp": 8.8,
     "lo": 4.6,
     "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "victor_hurtado": {
-   "k_pct": {
-    "exp": 21.0,
-    "lo": 14.4,
-    "hi": 27.6
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 13.9,
     "low_confidence": true
    }
   },
@@ -6955,32 +9581,6 @@
     "low_confidence": true
    }
   },
-  "damiano_palmegiani": {
-   "k_pct": {
-    "exp": 25.6,
-    "lo": 19.0,
-    "hi": 32.2
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "ayden_johnson": {
-   "k_pct": {
-    "exp": 30.7,
-    "lo": 24.2,
-    "hi": 37.3
-   },
-   "bb_pct": {
-    "exp": 12.8,
-    "lo": 8.7,
-    "hi": 16.9,
-    "low_confidence": true
-   }
-  },
   "sean_gamble": {
    "k_pct": {
     "exp": 22.5,
@@ -6991,19 +9591,6 @@
     "exp": 8.8,
     "lo": 4.7,
     "hi": 13.0,
-    "low_confidence": true
-   }
-  },
-  "fenwick_trimble": {
-   "k_pct": {
-    "exp": 22.0,
-    "lo": 15.4,
-    "hi": 28.6
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.2,
-    "hi": 12.4,
     "low_confidence": true
    }
   },
@@ -7072,19 +9659,6 @@
     "low_confidence": true
    }
   },
-  "dameury_pena": {
-   "k_pct": {
-    "exp": 12.1,
-    "lo": 5.5,
-    "hi": 18.7
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
   "romeo_sanabria": {
    "k_pct": {
     "exp": 23.1,
@@ -7137,19 +9711,6 @@
     "low_confidence": true
    }
   },
-  "elian_de_la_cruz": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
   "john_rhodes": {
    "k_pct": {
     "exp": 24.4,
@@ -7173,19 +9734,6 @@
     "exp": 9.0,
     "lo": 4.9,
     "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "richard_de_los_santos": {
-   "k_pct": {
-    "exp": 29.6,
-    "lo": 23.1,
-    "hi": 36.2
-   },
-   "bb_pct": {
-    "exp": 14.7,
-    "lo": 10.5,
-    "hi": 18.8,
     "low_confidence": true
    }
   },
@@ -7264,19 +9812,6 @@
     "exp": 10.2,
     "lo": 6.1,
     "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "brayan_cortesia": {
-   "k_pct": {
-    "exp": 24.9,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 5.0,
-    "hi": 13.2,
     "low_confidence": true
    }
   },
@@ -7384,19 +9919,6 @@
     "low_confidence": true
    }
   },
-  "caden_powell": {
-   "k_pct": {
-    "exp": 25.9,
-    "lo": 19.4,
-    "hi": 32.5
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.0,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
   "omar_alfonzo": {
    "k_pct": {
     "exp": 25.8,
@@ -7407,19 +9929,6 @@
     "exp": 9.6,
     "lo": 5.5,
     "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "yohendry_sanchez": {
-   "k_pct": {
-    "exp": 18.1,
-    "lo": 11.6,
-    "hi": 24.7
-   },
-   "bb_pct": {
-    "exp": 10.7,
-    "lo": 6.5,
-    "hi": 14.8,
     "low_confidence": true
    }
   },
@@ -7446,32 +9955,6 @@
     "exp": 8.3,
     "lo": 4.1,
     "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "derek_bernard": {
-   "k_pct": {
-    "exp": 22.6,
-    "lo": 16.1,
-    "hi": 29.2
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "santiago_leon": {
-   "k_pct": {
-    "exp": 22.1,
-    "lo": 15.5,
-    "hi": 28.7
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.4,
-    "hi": 14.6,
     "low_confidence": true
    }
   },
@@ -7540,19 +10023,6 @@
     "low_confidence": true
    }
   },
-  "kamuel_villar": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.3,
-    "hi": 27.4
-   },
-   "bb_pct": {
-    "exp": 11.9,
-    "lo": 7.8,
-    "hi": 16.0,
-    "low_confidence": true
-   }
-  },
   "enmanuel_bonilla": {
    "k_pct": {
     "exp": 25.0,
@@ -7576,45 +10046,6 @@
     "exp": 11.1,
     "lo": 6.9,
     "hi": 15.2,
-    "low_confidence": true
-   }
-  },
-  "eric_bitonti": {
-   "k_pct": {
-    "exp": 29.0,
-    "lo": 22.4,
-    "hi": 35.5
-   },
-   "bb_pct": {
-    "exp": 11.1,
-    "lo": 6.9,
-    "hi": 15.2,
-    "low_confidence": true
-   }
-  },
-  "bruin_agbayani": {
-   "k_pct": {
-    "exp": 18.0,
-    "lo": 11.4,
-    "hi": 24.6
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.0,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "ramcell_medina": {
-   "k_pct": {
-    "exp": 21.1,
-    "lo": 14.6,
-    "hi": 27.7
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.2,
-    "hi": 12.5,
     "low_confidence": true
    }
   },
@@ -7657,45 +10088,6 @@
     "low_confidence": true
    }
   },
-  "yeiner_fernandez": {
-   "k_pct": {
-    "exp": 22.0,
-    "lo": 15.4,
-    "hi": 28.5
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "edward_lantigua": {
-   "k_pct": {
-    "exp": 23.8,
-    "lo": 17.3,
-    "hi": 30.4
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "pj_morlando": {
-   "k_pct": {
-    "exp": 24.3,
-    "lo": 17.8,
-    "hi": 30.9
-   },
-   "bb_pct": {
-    "exp": 10.6,
-    "lo": 6.5,
-    "hi": 14.8,
-    "low_confidence": true
-   }
-  },
   "ronald_hernandez": {
    "k_pct": {
     "exp": 24.4,
@@ -7722,45 +10114,6 @@
     "low_confidence": true
    }
   },
-  "nick_monistere": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.7,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.2,
-    "low_confidence": true
-   }
-  },
-  "kade_snell": {
-   "k_pct": {
-    "exp": 23.9,
-    "lo": 17.3,
-    "hi": 30.4
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.3,
-    "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "cristhian_vaquero": {
-   "k_pct": {
-    "exp": 24.4,
-    "lo": 17.8,
-    "hi": 31.0
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
   "spencer_packard": {
    "k_pct": {
     "exp": 19.3,
@@ -7771,19 +10124,6 @@
     "exp": 10.1,
     "lo": 6.0,
     "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "max_wagner": {
-   "k_pct": {
-    "exp": 26.7,
-    "lo": 20.1,
-    "hi": 33.3
-   },
-   "bb_pct": {
-    "exp": 9.6,
-    "lo": 5.4,
-    "hi": 13.7,
     "low_confidence": true
    }
   },
@@ -7823,19 +10163,6 @@
     "exp": 9.1,
     "lo": 5.0,
     "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "andruw_musett": {
-   "k_pct": {
-    "exp": 20.3,
-    "lo": 13.8,
-    "hi": 26.9
-   },
-   "bb_pct": {
-    "exp": 11.1,
-    "lo": 6.9,
-    "hi": 15.2,
     "low_confidence": true
    }
   },
@@ -7943,19 +10270,6 @@
     "low_confidence": true
    }
   },
-  "brailer_guerrero": {
-   "k_pct": {
-    "exp": 25.5,
-    "lo": 19.0,
-    "hi": 32.1
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.2,
-    "low_confidence": true
-   }
-  },
   "adam_zebrowski": {
    "k_pct": {
     "exp": 24.3,
@@ -7966,19 +10280,6 @@
     "exp": 9.0,
     "lo": 4.8,
     "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "boston_baro": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.3,
-    "hi": 29.4
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
     "low_confidence": true
    }
   },
@@ -7995,32 +10296,6 @@
     "low_confidence": true
    }
   },
-  "cristopher_acosta": {
-   "k_pct": {
-    "exp": 30.3,
-    "lo": 23.8,
-    "hi": 36.9
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "jose_manon": {
-   "k_pct": {
-    "exp": 26.9,
-    "lo": 20.3,
-    "hi": 33.4
-   },
-   "bb_pct": {
-    "exp": 12.3,
-    "lo": 8.2,
-    "hi": 16.5,
-    "low_confidence": true
-   }
-  },
   "mat_nelson": {
    "k_pct": {
     "exp": 25.6,
@@ -8034,19 +10309,6 @@
     "low_confidence": true
    }
   },
-  "max_williams": {
-   "k_pct": {
-    "exp": 20.0,
-    "lo": 13.5,
-    "hi": 26.6
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 5.0,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
   "charlie_pagliarini": {
    "k_pct": {
     "exp": 25.7,
@@ -8057,32 +10319,6 @@
     "exp": 11.0,
     "lo": 6.9,
     "hi": 15.1,
-    "low_confidence": true
-   }
-  },
-  "dylan_fien": {
-   "k_pct": {
-    "exp": 24.5,
-    "lo": 18.0,
-    "hi": 31.1
-   },
-   "bb_pct": {
-    "exp": 8.0,
-    "lo": 3.9,
-    "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "jace_bohrofen": {
-   "k_pct": {
-    "exp": 27.8,
-    "lo": 21.3,
-    "hi": 34.4
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
     "low_confidence": true
    }
   },
@@ -8177,19 +10413,6 @@
     "low_confidence": true
    }
   },
-  "javier_mogollon": {
-   "k_pct": {
-    "exp": 25.7,
-    "lo": 19.2,
-    "hi": 32.3
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "miguel_palma": {
    "k_pct": {
     "exp": 21.6,
@@ -8252,32 +10475,6 @@
     "exp": 10.4,
     "lo": 6.2,
     "hi": 14.5,
-    "low_confidence": true
-   }
-  },
-  "nolan_schubart": {
-   "k_pct": {
-    "exp": 28.7,
-    "lo": 22.2,
-    "hi": 35.3
-   },
-   "bb_pct": {
-    "exp": 12.7,
-    "lo": 8.6,
-    "hi": 16.8,
-    "low_confidence": true
-   }
-  },
-  "billy_amick": {
-   "k_pct": {
-    "exp": 26.7,
-    "lo": 20.1,
-    "hi": 33.2
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.1,
     "low_confidence": true
    }
   },
@@ -8554,19 +10751,6 @@
     "low_confidence": true
    }
   },
-  "andrew_pinckney": {
-   "k_pct": {
-    "exp": 27.7,
-    "lo": 21.2,
-    "hi": 34.3
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
   "douglas_hodo_iii": {
    "k_pct": {
     "exp": 23.1,
@@ -8655,19 +10839,6 @@
     "exp": 8.8,
     "lo": 4.7,
     "hi": 13.0,
-    "low_confidence": true
-   }
-  },
-  "braylon_whitaker": {
-   "k_pct": {
-    "exp": 17.3,
-    "lo": 10.7,
-    "hi": 23.8
-   },
-   "bb_pct": {
-    "exp": 10.4,
-    "lo": 6.3,
-    "hi": 14.5,
     "low_confidence": true
    }
   },
@@ -9412,19 +11583,6 @@
     "low_confidence": true
    }
   },
-  "bennett_thompson": {
-   "k_pct": {
-    "exp": 19.2,
-    "lo": 12.7,
-    "hi": 25.8
-   },
-   "bb_pct": {
-    "exp": 13.7,
-    "lo": 9.6,
-    "hi": 17.9,
-    "low_confidence": true
-   }
-  },
   "samuel_gil": {
    "k_pct": {
     "exp": 18.6,
@@ -9604,19 +11762,6 @@
     "exp": 8.6,
     "lo": 4.5,
     "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "ely_brown": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.2,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 12.0,
-    "lo": 7.9,
-    "hi": 16.1,
     "low_confidence": true
    }
   },
@@ -9851,19 +11996,6 @@
     "exp": 11.8,
     "lo": 7.7,
     "hi": 15.9,
-    "low_confidence": true
-   }
-  },
-  "jaims_martinez": {
-   "k_pct": {
-    "exp": 28.7,
-    "lo": 22.2,
-    "hi": 35.3
-   },
-   "bb_pct": {
-    "exp": 12.4,
-    "lo": 8.3,
-    "hi": 16.5,
     "low_confidence": true
    }
   },
@@ -10140,19 +12272,6 @@
     "low_confidence": true
    }
   },
-  "franklin_primera": {
-   "k_pct": {
-    "exp": 16.6,
-    "lo": 10.1,
-    "hi": 23.2
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
   "bo_walker": {
    "k_pct": {
     "exp": 25.1,
@@ -10345,19 +12464,6 @@
     "exp": 8.3,
     "lo": 4.2,
     "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "jacob_mccombs": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 7.0,
-    "lo": 2.9,
-    "hi": 11.1,
     "low_confidence": true
    }
   },
@@ -10605,84 +12711,6 @@
     "exp": 10.3,
     "lo": 6.2,
     "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "jaron_elkins": {
-   "k_pct": {
-    "exp": 24.1,
-    "lo": 17.5,
-    "hi": 30.7
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.5,
-    "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "lucas_spence": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.3,
-    "hi": 27.4
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.5,
-    "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "angel_cepeda": {
-   "k_pct": {
-    "exp": 25.3,
-    "lo": 18.8,
-    "hi": 31.9
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
-  "jemone_nuel": {
-   "k_pct": {
-    "exp": 21.1,
-    "lo": 14.6,
-    "hi": 27.7
-   },
-   "bb_pct": {
-    "exp": 12.2,
-    "lo": 8.1,
-    "hi": 16.4,
-    "low_confidence": true
-   }
-  },
-  "alexander_albertus": {
-   "k_pct": {
-    "exp": 20.4,
-    "lo": 13.8,
-    "hi": 26.9
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.3,
-    "hi": 14.6,
-    "low_confidence": true
-   }
-  },
-  "michael_martinez": {
-   "k_pct": {
-    "exp": 26.6,
-    "lo": 20.0,
-    "hi": 33.2
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
     "low_confidence": true
    }
   },
@@ -10946,19 +12974,6 @@
     "low_confidence": true
    }
   },
-  "daniel_bucciero": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "luis_lameda": {
    "k_pct": {
     "exp": 20.2,
@@ -10972,32 +12987,6 @@
     "low_confidence": true
    }
   },
-  "edian_espinal": {
-   "k_pct": {
-    "exp": 17.6,
-    "lo": 11.0,
-    "hi": 24.1
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "michael_dattalo": {
-   "k_pct": {
-    "exp": 16.4,
-    "lo": 9.8,
-    "hi": 23.0
-   },
-   "bb_pct": {
-    "exp": 9.6,
-    "lo": 5.4,
-    "hi": 13.7,
-    "low_confidence": true
-   }
-  },
   "henry_hunter": {
    "k_pct": {
     "exp": 28.1,
@@ -11008,19 +12997,6 @@
     "exp": 9.9,
     "lo": 5.8,
     "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "luis_escudero": {
-   "k_pct": {
-    "exp": 20.7,
-    "lo": 14.1,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 13.0,
-    "lo": 8.9,
-    "hi": 17.1,
     "low_confidence": true
    }
   },
@@ -11177,32 +13153,6 @@
     "exp": 10.2,
     "lo": 6.0,
     "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "patrick_clohisy": {
-   "k_pct": {
-    "exp": 21.2,
-    "lo": 14.7,
-    "hi": 27.8
-   },
-   "bb_pct": {
-    "exp": 8.1,
-    "lo": 3.9,
-    "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "yeiker_reyes": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 8.2,
-    "lo": 4.0,
-    "hi": 12.3,
     "low_confidence": true
    }
   },
@@ -11411,19 +13361,6 @@
     "exp": 10.6,
     "lo": 6.4,
     "hi": 14.7,
-    "low_confidence": true
-   }
-  },
-  "jack_winnay": {
-   "k_pct": {
-    "exp": 21.3,
-    "lo": 14.7,
-    "hi": 27.8
-   },
-   "bb_pct": {
-    "exp": 12.6,
-    "lo": 8.4,
-    "hi": 16.7,
     "low_confidence": true
    }
   },
@@ -11765,71 +13702,6 @@
     "low_confidence": true
    }
   },
-  "alberto_barriga": {
-   "k_pct": {
-    "exp": 22.3,
-    "lo": 15.7,
-    "hi": 28.9
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "dayber_cruceta": {
-   "k_pct": {
-    "exp": 26.5,
-    "lo": 19.9,
-    "hi": 33.0
-   },
-   "bb_pct": {
-    "exp": 11.5,
-    "lo": 7.4,
-    "hi": 15.6,
-    "low_confidence": true
-   }
-  },
-  "frederick_bencosme": {
-   "k_pct": {
-    "exp": 17.4,
-    "lo": 10.8,
-    "hi": 24.0
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.5,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "miguel_rodriguez": {
-   "k_pct": {
-    "exp": 18.5,
-    "lo": 11.9,
-    "hi": 25.1
-   },
-   "bb_pct": {
-    "exp": 11.0,
-    "lo": 6.9,
-    "hi": 15.1,
-    "low_confidence": true
-   }
-  },
-  "johan_geraldo": {
-   "k_pct": {
-    "exp": 29.2,
-    "lo": 22.6,
-    "hi": 35.8
-   },
-   "bb_pct": {
-    "exp": 11.5,
-    "lo": 7.4,
-    "hi": 15.7,
-    "low_confidence": true
-   }
-  },
   "jorge_ruiz": {
    "k_pct": {
     "exp": 20.9,
@@ -11840,32 +13712,6 @@
     "exp": 7.5,
     "lo": 3.3,
     "hi": 11.6,
-    "low_confidence": true
-   }
-  },
-  "wilberson_de_pena": {
-   "k_pct": {
-    "exp": 19.7,
-    "lo": 13.2,
-    "hi": 26.3
-   },
-   "bb_pct": {
-    "exp": 6.9,
-    "lo": 2.8,
-    "hi": 11.1,
-    "low_confidence": true
-   }
-  },
-  "luis_guanipa": {
-   "k_pct": {
-    "exp": 14.9,
-    "lo": 8.3,
-    "hi": 21.5
-   },
-   "bb_pct": {
-    "exp": 7.6,
-    "lo": 3.5,
-    "hi": 11.8,
     "low_confidence": true
    }
   },
@@ -12074,19 +13920,6 @@
     "exp": 11.0,
     "lo": 6.9,
     "hi": 15.2,
-    "low_confidence": true
-   }
-  },
-  "kasen_wells": {
-   "k_pct": {
-    "exp": 21.6,
-    "lo": 15.0,
-    "hi": 28.1
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.9,
-    "hi": 14.1,
     "low_confidence": true
    }
   },
@@ -12532,19 +14365,6 @@
     "low_confidence": true
    }
   },
-  "joe_lampe": {
-   "k_pct": {
-    "exp": 23.9,
-    "lo": 17.3,
-    "hi": 30.4
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.3,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "lorenzo_meola": {
    "k_pct": {
     "exp": 24.2,
@@ -12555,19 +14375,6 @@
     "exp": 8.4,
     "lo": 4.2,
     "hi": 12.5,
-    "low_confidence": true
-   }
-  },
-  "edgleen_perez": {
-   "k_pct": {
-    "exp": 17.5,
-    "lo": 10.9,
-    "hi": 24.1
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.7,
-    "hi": 14.0,
     "low_confidence": true
    }
   },
@@ -12597,32 +14404,6 @@
     "low_confidence": true
    }
   },
-  "brett_callahan": {
-   "k_pct": {
-    "exp": 20.9,
-    "lo": 14.3,
-    "hi": 27.5
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.7,
-    "hi": 14.0,
-    "low_confidence": true
-   }
-  },
-  "daniel_guilarte": {
-   "k_pct": {
-    "exp": 25.9,
-    "lo": 19.3,
-    "hi": 32.4
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.2,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
   "jack_brannigan": {
    "k_pct": {
     "exp": 28.9,
@@ -12636,32 +14417,6 @@
     "low_confidence": true
    }
   },
-  "esmith_pineda": {
-   "k_pct": {
-    "exp": 25.1,
-    "lo": 18.5,
-    "hi": 31.7
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "hector_osorio": {
-   "k_pct": {
-    "exp": 19.4,
-    "lo": 12.8,
-    "hi": 26.0
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "adriel_radney": {
    "k_pct": {
     "exp": 24.4,
@@ -12672,32 +14427,6 @@
     "exp": 6.8,
     "lo": 2.7,
     "hi": 11.0,
-    "low_confidence": true
-   }
-  },
-  "luis_rives": {
-   "k_pct": {
-    "exp": 20.3,
-    "lo": 13.7,
-    "hi": 26.9
-   },
-   "bb_pct": {
-    "exp": 11.6,
-    "lo": 7.5,
-    "hi": 15.7,
-    "low_confidence": true
-   }
-  },
-  "noah_miller": {
-   "k_pct": {
-    "exp": 19.6,
-    "lo": 13.0,
-    "hi": 26.1
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.9,
-    "hi": 13.1,
     "low_confidence": true
    }
   },
@@ -12841,19 +14570,6 @@
     "exp": 9.7,
     "lo": 5.5,
     "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "anthony_depino": {
-   "k_pct": {
-    "exp": 21.6,
-    "lo": 15.0,
-    "hi": 28.2
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.3,
     "low_confidence": true
    }
   },
@@ -13208,19 +14924,6 @@
     "low_confidence": true
    }
   },
-  "angel_abreu": {
-   "k_pct": {
-    "exp": 21.2,
-    "lo": 14.6,
-    "hi": 27.8
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
   "victor_santana": {
    "k_pct": {
     "exp": 19.3,
@@ -13403,19 +15106,6 @@
     "low_confidence": true
    }
   },
-  "javier_sanchez": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 11.0,
-    "lo": 6.8,
-    "hi": 15.1,
-    "low_confidence": true
-   }
-  },
   "brady_cerkownyk": {
    "k_pct": {
     "exp": 21.8,
@@ -13455,19 +15145,6 @@
     "low_confidence": true
    }
   },
-  "wilson_rodriguez": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.2,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 10.4,
-    "lo": 6.3,
-    "hi": 14.5,
-    "low_confidence": true
-   }
-  },
   "joendry_vargas": {
    "k_pct": {
     "exp": 20.6,
@@ -13478,19 +15155,6 @@
     "exp": 6.6,
     "lo": 2.5,
     "hi": 10.7,
-    "low_confidence": true
-   }
-  },
-  "juan_matheus": {
-   "k_pct": {
-    "exp": 18.0,
-    "lo": 11.5,
-    "hi": 24.6
-   },
-   "bb_pct": {
-    "exp": 8.0,
-    "lo": 3.9,
-    "hi": 12.2,
     "low_confidence": true
    }
   },
@@ -13507,19 +15171,6 @@
     "low_confidence": true
    }
   },
-  "vladimir_asencio": {
-   "k_pct": {
-    "exp": 23.6,
-    "lo": 17.1,
-    "hi": 30.2
-   },
-   "bb_pct": {
-    "exp": 6.5,
-    "lo": 2.3,
-    "hi": 10.6,
-    "low_confidence": true
-   }
-  },
   "diego_hernandez": {
    "k_pct": {
     "exp": 25.5,
@@ -13530,19 +15181,6 @@
     "exp": 7.5,
     "lo": 3.4,
     "hi": 11.7,
-    "low_confidence": true
-   }
-  },
-  "landyn_vidourek": {
-   "k_pct": {
-    "exp": 29.6,
-    "lo": 23.0,
-    "hi": 36.2
-   },
-   "bb_pct": {
-    "exp": 11.8,
-    "lo": 7.6,
-    "hi": 15.9,
     "low_confidence": true
    }
   },
@@ -13569,32 +15207,6 @@
     "exp": 7.0,
     "lo": 2.8,
     "hi": 11.1,
-    "low_confidence": true
-   }
-  },
-  "matthew_ferrara": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "jacob_friend": {
-   "k_pct": {
-    "exp": 25.5,
-    "lo": 19.0,
-    "hi": 32.1
-   },
-   "bb_pct": {
-    "exp": 12.0,
-    "lo": 7.8,
-    "hi": 16.1,
     "low_confidence": true
    }
   },
@@ -14326,58 +15938,6 @@
     "low_confidence": true
    }
   },
-  "eli_pitts": {
-   "k_pct": {
-    "exp": 19.8,
-    "lo": 13.2,
-    "hi": 26.3
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "spencer_nivens": {
-   "k_pct": {
-    "exp": 17.6,
-    "lo": 11.1,
-    "hi": 24.2
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.3,
-    "hi": 14.6,
-    "low_confidence": true
-   }
-  },
-  "franyerber_montilla": {
-   "k_pct": {
-    "exp": 22.7,
-    "lo": 16.1,
-    "hi": 29.2
-   },
-   "bb_pct": {
-    "exp": 10.7,
-    "lo": 6.6,
-    "hi": 14.8,
-    "low_confidence": true
-   }
-  },
-  "dylan_campbell": {
-   "k_pct": {
-    "exp": 22.5,
-    "lo": 15.9,
-    "hi": 29.0
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
   "leonel_espinoza": {
    "k_pct": {
     "exp": 22.8,
@@ -14401,32 +15961,6 @@
     "exp": 8.7,
     "lo": 4.6,
     "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "reyli_mariano": {
-   "k_pct": {
-    "exp": 23.5,
-    "lo": 16.9,
-    "hi": 30.1
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.6,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "vance_honeycutt": {
-   "k_pct": {
-    "exp": 32.8,
-    "lo": 26.2,
-    "hi": 39.4
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
     "low_confidence": true
    }
   },
@@ -14456,19 +15990,6 @@
     "low_confidence": true
    }
   },
-  "emilio_sanchez": {
-   "k_pct": {
-    "exp": 21.8,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.1,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
   "alexis_hernandez": {
    "k_pct": {
     "exp": 21.6,
@@ -14495,45 +16016,6 @@
     "low_confidence": true
    }
   },
-  "gavin_conticello": {
-   "k_pct": {
-    "exp": 21.2,
-    "lo": 14.6,
-    "hi": 27.7
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.0,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
-  "esmil_valencia": {
-   "k_pct": {
-    "exp": 25.9,
-    "lo": 19.3,
-    "hi": 32.5
-   },
-   "bb_pct": {
-    "exp": 7.7,
-    "lo": 3.6,
-    "hi": 11.9,
-    "low_confidence": true
-   }
-  },
-  "warren_calcano": {
-   "k_pct": {
-    "exp": 31.9,
-    "lo": 25.3,
-    "hi": 38.4
-   },
-   "bb_pct": {
-    "exp": 12.0,
-    "lo": 7.8,
-    "hi": 16.1,
-    "low_confidence": true
-   }
-  },
   "nehomar_ochoa_jr": {
    "k_pct": {
     "exp": 27.7,
@@ -14544,19 +16026,6 @@
     "exp": 6.9,
     "lo": 2.8,
     "hi": 11.0,
-    "low_confidence": true
-   }
-  },
-  "juan_baez": {
-   "k_pct": {
-    "exp": 21.4,
-    "lo": 14.9,
-    "hi": 28.0
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.7,
-    "hi": 13.0,
     "low_confidence": true
    }
   },
@@ -14752,19 +16221,6 @@
     "exp": 8.1,
     "lo": 3.9,
     "hi": 12.2,
-    "low_confidence": true
-   }
-  },
-  "kien_vu": {
-   "k_pct": {
-    "exp": 25.0,
-    "lo": 18.4,
-    "hi": 31.5
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.1,
-    "hi": 14.3,
     "low_confidence": true
    }
   },
@@ -15067,19 +16523,6 @@
     "low_confidence": true
    }
   },
-  "jay_mcqueen": {
-   "k_pct": {
-    "exp": 25.0,
-    "lo": 18.4,
-    "hi": 31.6
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
   "anderson_areinamo": {
    "k_pct": {
     "exp": 21.4,
@@ -15103,19 +16546,6 @@
     "exp": 8.4,
     "lo": 4.3,
     "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "freiker_betencourt": {
-   "k_pct": {
-    "exp": 24.9,
-    "lo": 18.4,
-    "hi": 31.5
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.2,
-    "hi": 14.5,
     "low_confidence": true
    }
   },
@@ -15249,32 +16679,6 @@
     "low_confidence": true
    }
   },
-  "anderson_araujo": {
-   "k_pct": {
-    "exp": 19.7,
-    "lo": 13.1,
-    "hi": 26.3
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.5,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "kalai_rosario": {
-   "k_pct": {
-    "exp": 26.0,
-    "lo": 19.4,
-    "hi": 32.5
-   },
-   "bb_pct": {
-    "exp": 11.7,
-    "lo": 7.5,
-    "hi": 15.8,
-    "low_confidence": true
-   }
-  },
   "ian_petrutz": {
    "k_pct": {
     "exp": 18.8,
@@ -15301,45 +16705,6 @@
     "low_confidence": true
    }
   },
-  "jhorman_bravo": {
-   "k_pct": {
-    "exp": 18.2,
-    "lo": 11.7,
-    "hi": 24.8
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.3,
-    "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "brando_mayea": {
-   "k_pct": {
-    "exp": 24.7,
-    "lo": 18.2,
-    "hi": 31.3
-   },
-   "bb_pct": {
-    "exp": 7.8,
-    "lo": 3.7,
-    "hi": 12.0,
-    "low_confidence": true
-   }
-  },
-  "danny_serretti": {
-   "k_pct": {
-    "exp": 21.5,
-    "lo": 14.9,
-    "hi": 28.1
-   },
-   "bb_pct": {
-    "exp": 12.3,
-    "lo": 8.2,
-    "hi": 16.4,
-    "low_confidence": true
-   }
-  },
   "nick_mclain": {
    "k_pct": {
     "exp": 23.1,
@@ -15353,19 +16718,6 @@
     "low_confidence": true
    }
   },
-  "carlos_pacheco": {
-   "k_pct": {
-    "exp": 27.6,
-    "lo": 21.0,
-    "hi": 34.1
-   },
-   "bb_pct": {
-    "exp": 8.0,
-    "lo": 3.9,
-    "hi": 12.1,
-    "low_confidence": true
-   }
-  },
   "armando_cruz": {
    "k_pct": {
     "exp": 22.6,
@@ -15376,32 +16728,6 @@
     "exp": 7.0,
     "lo": 2.9,
     "hi": 11.2,
-    "low_confidence": true
-   }
-  },
-  "brooks_brannon": {
-   "k_pct": {
-    "exp": 26.7,
-    "lo": 20.1,
-    "hi": 33.3
-   },
-   "bb_pct": {
-    "exp": 9.6,
-    "lo": 5.5,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "jhonayker_ugarte": {
-   "k_pct": {
-    "exp": 20.1,
-    "lo": 13.5,
-    "hi": 26.7
-   },
-   "bb_pct": {
-    "exp": 8.6,
-    "lo": 4.5,
-    "hi": 12.8,
     "low_confidence": true
    }
   },
@@ -15428,32 +16754,6 @@
     "exp": 9.0,
     "lo": 4.8,
     "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "byron_chourio": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.5,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
-  "juan_flores": {
-   "k_pct": {
-    "exp": 22.0,
-    "lo": 15.4,
-    "hi": 28.6
-   },
-   "bb_pct": {
-    "exp": 7.8,
-    "lo": 3.7,
-    "hi": 12.0,
     "low_confidence": true
    }
   },
@@ -15509,32 +16809,6 @@
     "low_confidence": true
    }
   },
-  "jose_ortiz": {
-   "k_pct": {
-    "exp": 21.5,
-    "lo": 15.0,
-    "hi": 28.1
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "cade_doughty": {
-   "k_pct": {
-    "exp": 25.8,
-    "lo": 19.2,
-    "hi": 32.3
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.6,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
   "mario_camilletti": {
    "k_pct": {
     "exp": 23.2,
@@ -15571,19 +16845,6 @@
     "exp": 9.2,
     "lo": 5.1,
     "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "jared_dickey": {
-   "k_pct": {
-    "exp": 18.7,
-    "lo": 12.1,
-    "hi": 25.2
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.4,
-    "hi": 14.6,
     "low_confidence": true
    }
   },
@@ -16133,58 +17394,6 @@
     "low_confidence": true
    }
   },
-  "johan_rodriguez": {
-   "k_pct": {
-    "exp": 21.6,
-    "lo": 15.0,
-    "hi": 28.1
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.1,
-    "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "tanner_thach": {
-   "k_pct": {
-    "exp": 16.3,
-    "lo": 9.7,
-    "hi": 22.9
-   },
-   "bb_pct": {
-    "exp": 8.0,
-    "lo": 3.9,
-    "hi": 12.1,
-    "low_confidence": true
-   }
-  },
-  "leandro_arias": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.1,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.1,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "cole_messina": {
-   "k_pct": {
-    "exp": 23.7,
-    "lo": 17.1,
-    "hi": 30.3
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
   "capri_ortiz": {
    "k_pct": {
     "exp": 23.4,
@@ -16250,19 +17459,6 @@
     "low_confidence": true
    }
   },
-  "aiden_taurek": {
-   "k_pct": {
-    "exp": 20.7,
-    "lo": 14.1,
-    "hi": 27.2
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
   "john_cruz": {
    "k_pct": {
     "exp": 21.7,
@@ -16276,19 +17472,6 @@
     "low_confidence": true
    }
   },
-  "abrahan_ramirez": {
-   "k_pct": {
-    "exp": 21.0,
-    "lo": 14.5,
-    "hi": 27.6
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
   "carter_mathison": {
    "k_pct": {
     "exp": 30.3,
@@ -16299,58 +17482,6 @@
     "exp": 8.7,
     "lo": 4.6,
     "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "kristian_robinson": {
-   "k_pct": {
-    "exp": 27.1,
-    "lo": 20.6,
-    "hi": 33.7
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.1,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "coy_james": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.7,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.1,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "deniel_ortiz": {
-   "k_pct": {
-    "exp": 21.4,
-    "lo": 14.8,
-    "hi": 28.0
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.2,
-    "hi": 14.5,
-    "low_confidence": true
-   }
-  },
-  "will_turner": {
-   "k_pct": {
-    "exp": 21.5,
-    "lo": 15.0,
-    "hi": 28.1
-   },
-   "bb_pct": {
-    "exp": 13.1,
-    "lo": 9.0,
-    "hi": 17.2,
     "low_confidence": true
    }
   },
@@ -16442,110 +17573,6 @@
     "exp": 8.3,
     "lo": 4.1,
     "hi": 12.4,
-    "low_confidence": true
-   }
-  },
-  "jude_warwick": {
-   "k_pct": {
-    "exp": 23.9,
-    "lo": 17.4,
-    "hi": 30.5
-   },
-   "bb_pct": {
-    "exp": 8.4,
-    "lo": 4.2,
-    "hi": 12.5,
-    "low_confidence": true
-   }
-  },
-  "jacob_burke": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.5,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 7.5,
-    "lo": 3.4,
-    "hi": 11.6,
-    "low_confidence": true
-   }
-  },
-  "ariel_armas": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.3,
-    "hi": 29.4
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.3,
-    "hi": 12.6,
-    "low_confidence": true
-   }
-  },
-  "pedro_catuy": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 7.7,
-    "lo": 3.5,
-    "hi": 11.8,
-    "low_confidence": true
-   }
-  },
-  "jace_avina": {
-   "k_pct": {
-    "exp": 26.2,
-    "lo": 19.6,
-    "hi": 32.7
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.5,
-    "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "rodney_green_jr": {
-   "k_pct": {
-    "exp": 28.7,
-    "lo": 22.1,
-    "hi": 35.3
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.0,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "christian_cairo__sa3010028": {
-   "k_pct": {
-    "exp": 19.0,
-    "lo": 12.4,
-    "hi": 25.5
-   },
-   "bb_pct": {
-    "exp": 12.0,
-    "lo": 7.8,
-    "hi": 16.1,
-    "low_confidence": true
-   }
-  },
-  "jancel_villarroel": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.2,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 7.2,
-    "lo": 3.1,
-    "hi": 11.3,
     "low_confidence": true
    }
   },
@@ -16913,45 +17940,6 @@
     "low_confidence": true
    }
   },
-  "juan_rujano": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.2,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 7.5,
-    "lo": 3.4,
-    "hi": 11.6,
-    "low_confidence": true
-   }
-  },
-  "alirio_ferrebus": {
-   "k_pct": {
-    "exp": 16.5,
-    "lo": 9.9,
-    "hi": 23.0
-   },
-   "bb_pct": {
-    "exp": 6.9,
-    "lo": 2.8,
-    "hi": 11.0,
-    "low_confidence": true
-   }
-  },
-  "ryan_lasko": {
-   "k_pct": {
-    "exp": 24.9,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 6.8,
-    "lo": 2.7,
-    "hi": 11.0,
-    "low_confidence": true
-   }
-  },
   "kyle_nevin": {
    "k_pct": {
     "exp": 19.9,
@@ -17017,45 +18005,6 @@
     "low_confidence": true
    }
   },
-  "royelny_strop": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.3,
-    "hi": 29.4
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "bobby_boser": {
-   "k_pct": {
-    "exp": 27.9,
-    "lo": 21.3,
-    "hi": 34.4
-   },
-   "bb_pct": {
-    "exp": 8.9,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
-  "daniel_vazquez": {
-   "k_pct": {
-    "exp": 24.6,
-    "lo": 18.0,
-    "hi": 31.2
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
   "jeral_toledo": {
    "k_pct": {
     "exp": 22.9,
@@ -17066,19 +18015,6 @@
     "exp": 9.2,
     "lo": 5.0,
     "hi": 13.3,
-    "low_confidence": true
-   }
-  },
-  "tjayy_walton": {
-   "k_pct": {
-    "exp": 23.9,
-    "lo": 17.3,
-    "hi": 30.4
-   },
-   "bb_pct": {
-    "exp": 11.6,
-    "lo": 7.5,
-    "hi": 15.8,
     "low_confidence": true
    }
   },
@@ -17095,19 +18031,6 @@
     "low_confidence": true
    }
   },
-  "malcolm_moore": {
-   "k_pct": {
-    "exp": 20.8,
-    "lo": 14.3,
-    "hi": 27.4
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.2,
-    "hi": 12.5,
-    "low_confidence": true
-   }
-  },
   "pablo_aliendo": {
    "k_pct": {
     "exp": 25.9,
@@ -17121,32 +18044,6 @@
     "low_confidence": true
    }
   },
-  "rafael_ramirez_jr": {
-   "k_pct": {
-    "exp": 22.3,
-    "lo": 15.7,
-    "hi": 28.8
-   },
-   "bb_pct": {
-    "exp": 12.1,
-    "lo": 7.9,
-    "hi": 16.2,
-    "low_confidence": true
-   }
-  },
-  "yassel_soler": {
-   "k_pct": {
-    "exp": 22.6,
-    "lo": 16.1,
-    "hi": 29.2
-   },
-   "bb_pct": {
-    "exp": 7.0,
-    "lo": 2.9,
-    "hi": 11.2,
-    "low_confidence": true
-   }
-  },
   "marcos_torres": {
    "k_pct": {
     "exp": 24.5,
@@ -17157,19 +18054,6 @@
     "exp": 8.6,
     "lo": 4.4,
     "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "dixon_williams": {
-   "k_pct": {
-    "exp": 25.6,
-    "lo": 19.1,
-    "hi": 32.2
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
     "low_confidence": true
    }
   },
@@ -17209,19 +18093,6 @@
     "exp": 11.1,
     "lo": 7.0,
     "hi": 15.3,
-    "low_confidence": true
-   }
-  },
-  "yeremy_cabrera": {
-   "k_pct": {
-    "exp": 25.7,
-    "lo": 19.2,
-    "hi": 32.3
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.0,
-    "hi": 13.3,
     "low_confidence": true
    }
   },
@@ -17602,19 +18473,6 @@
     "low_confidence": true
    }
   },
-  "teilon_serrano": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.3,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 12.9,
-    "lo": 8.8,
-    "hi": 17.1,
-    "low_confidence": true
-   }
-  },
   "justin_capellan": {
    "k_pct": {
     "exp": 24.8,
@@ -17706,19 +18564,6 @@
     "low_confidence": true
    }
   },
-  "cutter_coffey": {
-   "k_pct": {
-    "exp": 29.0,
-    "lo": 22.4,
-    "hi": 35.5
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
   "jose_monzon": {
    "k_pct": {
     "exp": 25.2,
@@ -17732,32 +18577,6 @@
     "low_confidence": true
    }
   },
-  "chris_arroyo": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.6,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "callan_moss": {
-   "k_pct": {
-    "exp": 23.1,
-    "lo": 16.5,
-    "hi": 29.6
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.6,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
   "anthony_scull": {
    "k_pct": {
     "exp": 25.3,
@@ -17768,32 +18587,6 @@
     "exp": 7.6,
     "lo": 3.5,
     "hi": 11.7,
-    "low_confidence": true
-   }
-  },
-  "alex_mooney": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.9,
-    "hi": 30.0
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.6,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "carson_roccaforte": {
-   "k_pct": {
-    "exp": 27.8,
-    "lo": 21.2,
-    "hi": 34.3
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.3,
-    "hi": 13.6,
     "low_confidence": true
    }
   },
@@ -17820,32 +18613,6 @@
     "exp": 9.5,
     "lo": 5.4,
     "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "tres_gonzalez": {
-   "k_pct": {
-    "exp": 20.0,
-    "lo": 13.4,
-    "hi": 26.5
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "stiven_martinez": {
-   "k_pct": {
-    "exp": 27.9,
-    "lo": 21.3,
-    "hi": 34.5
-   },
-   "bb_pct": {
-    "exp": 7.5,
-    "lo": 3.4,
-    "hi": 11.6,
     "low_confidence": true
    }
   },
@@ -17979,19 +18746,6 @@
     "low_confidence": true
    }
   },
-  "jake_munroe": {
-   "k_pct": {
-    "exp": 19.3,
-    "lo": 12.8,
-    "hi": 25.9
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
   "luis_almeyda": {
    "k_pct": {
     "exp": 21.1,
@@ -18015,19 +18769,6 @@
     "exp": 8.6,
     "lo": 4.5,
     "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "wes_clarke": {
-   "k_pct": {
-    "exp": 26.7,
-    "lo": 20.1,
-    "hi": 33.3
-   },
-   "bb_pct": {
-    "exp": 11.4,
-    "lo": 7.3,
-    "hi": 15.6,
     "low_confidence": true
    }
   },
@@ -18447,32 +19188,6 @@
     "low_confidence": true
    }
   },
-  "jesus_pinto": {
-   "k_pct": {
-    "exp": 20.7,
-    "lo": 14.2,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.8,
-    "hi": 13.1,
-    "low_confidence": true
-   }
-  },
-  "jhoan_de_la_cruz": {
-   "k_pct": {
-    "exp": 33.3,
-    "lo": 26.8,
-    "hi": 39.9
-   },
-   "bb_pct": {
-    "exp": 8.1,
-    "lo": 4.0,
-    "hi": 12.3,
-    "low_confidence": true
-   }
-  },
   "brayan_buelvas": {
    "k_pct": {
     "exp": 25.0,
@@ -18483,19 +19198,6 @@
     "exp": 7.9,
     "lo": 3.7,
     "hi": 12.0,
-    "low_confidence": true
-   }
-  },
-  "eduardo_beltre": {
-   "k_pct": {
-    "exp": 23.5,
-    "lo": 16.9,
-    "hi": 30.1
-   },
-   "bb_pct": {
-    "exp": 8.3,
-    "lo": 4.2,
-    "hi": 12.4,
     "low_confidence": true
    }
   },
@@ -18590,19 +19292,6 @@
     "low_confidence": true
    }
   },
-  "cobb_hightower": {
-   "k_pct": {
-    "exp": 22.3,
-    "lo": 15.7,
-    "hi": 28.8
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
   "dayan_frias": {
    "k_pct": {
     "exp": 23.9,
@@ -18613,19 +19302,6 @@
     "exp": 9.2,
     "lo": 5.1,
     "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "caleb_lomavita": {
-   "k_pct": {
-    "exp": 20.7,
-    "lo": 14.2,
-    "hi": 27.3
-   },
-   "bb_pct": {
-    "exp": 9.0,
-    "lo": 4.8,
-    "hi": 13.1,
     "low_confidence": true
    }
   },
@@ -18668,45 +19344,6 @@
     "low_confidence": true
    }
   },
-  "randy_de_jesus": {
-   "k_pct": {
-    "exp": 29.0,
-    "lo": 22.5,
-    "hi": 35.6
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "kai_roberts": {
-   "k_pct": {
-    "exp": 28.1,
-    "lo": 21.5,
-    "hi": 34.6
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 4.9,
-    "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "john_peck": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.7,
-    "hi": 29.8
-   },
-   "bb_pct": {
-    "exp": 7.2,
-    "lo": 3.0,
-    "hi": 11.3,
-    "low_confidence": true
-   }
-  },
   "cameron_leary": {
    "k_pct": {
     "exp": 24.7,
@@ -18717,19 +19354,6 @@
     "exp": 8.5,
     "lo": 4.4,
     "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "jose_salas": {
-   "k_pct": {
-    "exp": 27.5,
-    "lo": 21.0,
-    "hi": 34.1
-   },
-   "bb_pct": {
-    "exp": 8.1,
-    "lo": 4.0,
-    "hi": 12.2,
     "low_confidence": true
    }
   },
@@ -18837,19 +19461,6 @@
     "low_confidence": true
    }
   },
-  "boston_smith": {
-   "k_pct": {
-    "exp": 24.6,
-    "lo": 18.0,
-    "hi": 31.2
-   },
-   "bb_pct": {
-    "exp": 12.9,
-    "lo": 8.8,
-    "hi": 17.1,
-    "low_confidence": true
-   }
-  },
   "tayden_hall": {
    "k_pct": {
     "exp": 24.8,
@@ -18860,19 +19471,6 @@
     "exp": 10.3,
     "lo": 6.1,
     "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "kaleb_freeman": {
-   "k_pct": {
-    "exp": 25.4,
-    "lo": 18.8,
-    "hi": 32.0
-   },
-   "bb_pct": {
-    "exp": 12.5,
-    "lo": 8.4,
-    "hi": 16.6,
     "low_confidence": true
    }
   },
@@ -19162,71 +19760,6 @@
     "low_confidence": true
    }
   },
-  "core_jackson": {
-   "k_pct": {
-    "exp": 21.7,
-    "lo": 15.1,
-    "hi": 28.3
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.7,
-    "hi": 13.0,
-    "low_confidence": true
-   }
-  },
-  "caleb_cali": {
-   "k_pct": {
-    "exp": 27.4,
-    "lo": 20.9,
-    "hi": 34.0
-   },
-   "bb_pct": {
-    "exp": 10.2,
-    "lo": 6.1,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "fernando_graterol": {
-   "k_pct": {
-    "exp": 26.5,
-    "lo": 19.9,
-    "hi": 33.0
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.1,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "jeral_perez": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.2,
-    "hi": 31.4
-   },
-   "bb_pct": {
-    "exp": 9.3,
-    "lo": 5.2,
-    "hi": 13.4,
-    "low_confidence": true
-   }
-  },
-  "adonys_guzman": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 14.0,
-    "low_confidence": true
-   }
-  },
   "enderson_delgado": {
    "k_pct": {
     "exp": 18.4,
@@ -19250,110 +19783,6 @@
     "exp": 10.1,
     "lo": 6.0,
     "hi": 14.2,
-    "low_confidence": true
-   }
-  },
-  "kehden_hettiger": {
-   "k_pct": {
-    "exp": 28.9,
-    "lo": 22.3,
-    "hi": 35.5
-   },
-   "bb_pct": {
-    "exp": 10.6,
-    "lo": 6.5,
-    "hi": 14.8,
-    "low_confidence": true
-   }
-  },
-  "brennen_davis": {
-   "k_pct": {
-    "exp": 23.0,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
-  "justice_bigbie": {
-   "k_pct": {
-    "exp": 19.3,
-    "lo": 12.7,
-    "hi": 25.9
-   },
-   "bb_pct": {
-    "exp": 9.2,
-    "lo": 5.0,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
-  "fabian_lopez": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.9,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "zach_levenson": {
-   "k_pct": {
-    "exp": 22.6,
-    "lo": 16.1,
-    "hi": 29.2
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.1,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "jackson_strong": {
-   "k_pct": {
-    "exp": 27.8,
-    "lo": 21.2,
-    "hi": 34.4
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.9,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "reed_trimble": {
-   "k_pct": {
-    "exp": 23.4,
-    "lo": 16.8,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 8.5,
-    "lo": 4.4,
-    "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "yoeilin_cespedes": {
-   "k_pct": {
-    "exp": 23.3,
-    "lo": 16.7,
-    "hi": 29.9
-   },
-   "bb_pct": {
-    "exp": 7.8,
-    "lo": 3.7,
-    "hi": 12.0,
     "low_confidence": true
    }
   },
@@ -19422,32 +19851,6 @@
     "low_confidence": true
    }
   },
-  "erick_lara": {
-   "k_pct": {
-    "exp": 26.9,
-    "lo": 20.3,
-    "hi": 33.4
-   },
-   "bb_pct": {
-    "exp": 11.4,
-    "lo": 7.3,
-    "hi": 15.5,
-    "low_confidence": true
-   }
-  },
-  "yahil_melendez": {
-   "k_pct": {
-    "exp": 26.4,
-    "lo": 19.9,
-    "hi": 33.0
-   },
-   "bb_pct": {
-    "exp": 9.4,
-    "lo": 5.2,
-    "hi": 13.5,
-    "low_confidence": true
-   }
-  },
   "phillip_glasser": {
    "k_pct": {
     "exp": 18.8,
@@ -19471,19 +19874,6 @@
     "exp": 9.8,
     "lo": 5.6,
     "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "aaron_parker": {
-   "k_pct": {
-    "exp": 25.6,
-    "lo": 19.0,
-    "hi": 32.2
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.0,
     "low_confidence": true
    }
   },
@@ -19708,19 +20098,6 @@
     "low_confidence": true
    }
   },
-  "eddson_martinez": {
-   "k_pct": {
-    "exp": 20.6,
-    "lo": 14.1,
-    "hi": 27.2
-   },
-   "bb_pct": {
-    "exp": 11.2,
-    "lo": 7.0,
-    "hi": 15.3,
-    "low_confidence": true
-   }
-  },
   "jack_mathey": {
    "k_pct": {
     "exp": 23.7,
@@ -19731,19 +20108,6 @@
     "exp": 9.1,
     "lo": 5.0,
     "hi": 13.2,
-    "low_confidence": true
-   }
-  },
-  "ty_harvey": {
-   "k_pct": {
-    "exp": 22.7,
-    "lo": 16.1,
-    "hi": 29.3
-   },
-   "bb_pct": {
-    "exp": 10.5,
-    "lo": 6.4,
-    "hi": 14.6,
     "low_confidence": true
    }
   },
@@ -19799,45 +20163,6 @@
     "low_confidence": true
    }
   },
-  "miguel_caraballo": {
-   "k_pct": {
-    "exp": 24.7,
-    "lo": 18.1,
-    "hi": 31.3
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 5.9,
-    "hi": 14.2,
-    "low_confidence": true
-   }
-  },
-  "adrian_pinto": {
-   "k_pct": {
-    "exp": 18.6,
-    "lo": 12.0,
-    "hi": 25.1
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "kavares_tears": {
-   "k_pct": {
-    "exp": 27.5,
-    "lo": 20.9,
-    "hi": 34.1
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
   "luke_mann": {
    "k_pct": {
     "exp": 28.5,
@@ -19874,97 +20199,6 @@
     "exp": 9.7,
     "lo": 5.5,
     "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "johanfran_garcia": {
-   "k_pct": {
-    "exp": 24.0,
-    "lo": 17.4,
-    "hi": 30.6
-   },
-   "bb_pct": {
-    "exp": 7.2,
-    "lo": 3.0,
-    "hi": 11.3,
-    "low_confidence": true
-   }
-  },
-  "cade_mcgee": {
-   "k_pct": {
-    "exp": 24.6,
-    "lo": 18.1,
-    "hi": 31.2
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.2,
-    "hi": 14.4,
-    "low_confidence": true
-   }
-  },
-  "lizandro_espinoza": {
-   "k_pct": {
-    "exp": 22.9,
-    "lo": 16.4,
-    "hi": 29.5
-   },
-   "bb_pct": {
-    "exp": 10.1,
-    "lo": 6.0,
-    "hi": 14.3,
-    "low_confidence": true
-   }
-  },
-  "calvin_harris": {
-   "k_pct": {
-    "exp": 20.2,
-    "lo": 13.7,
-    "hi": 26.8
-   },
-   "bb_pct": {
-    "exp": 9.9,
-    "lo": 5.8,
-    "hi": 14.1,
-    "low_confidence": true
-   }
-  },
-  "jose_dickson": {
-   "k_pct": {
-    "exp": 25.7,
-    "lo": 19.2,
-    "hi": 32.3
-   },
-   "bb_pct": {
-    "exp": 10.3,
-    "lo": 6.2,
-    "hi": 14.5,
-    "low_confidence": true
-   }
-  },
-  "brennan_milone": {
-   "k_pct": {
-    "exp": 25.8,
-    "lo": 19.3,
-    "hi": 32.4
-   },
-   "bb_pct": {
-    "exp": 12.1,
-    "lo": 7.9,
-    "hi": 16.2,
-    "low_confidence": true
-   }
-  },
-  "payton_eeles": {
-   "k_pct": {
-    "exp": 20.9,
-    "lo": 14.3,
-    "hi": 27.5
-   },
-   "bb_pct": {
-    "exp": 10.7,
-    "lo": 6.6,
-    "hi": 14.9,
     "low_confidence": true
    }
   },
@@ -20082,19 +20316,6 @@
     "exp": 8.2,
     "lo": 4.1,
     "hi": 12.3,
-    "low_confidence": true
-   }
-  },
-  "justin_thomas_jr": {
-   "k_pct": {
-    "exp": 27.6,
-    "lo": 21.0,
-    "hi": 34.1
-   },
-   "bb_pct": {
-    "exp": 10.9,
-    "lo": 6.7,
-    "hi": 15.0,
     "low_confidence": true
    }
   },
@@ -20280,19 +20501,6 @@
     "low_confidence": true
    }
   },
-  "truitt_madonna": {
-   "k_pct": {
-    "exp": 24.9,
-    "lo": 18.4,
-    "hi": 31.5
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.4,
-    "hi": 13.7,
-    "low_confidence": true
-   }
-  },
   "ramon_rodriguez": {
    "k_pct": {
     "exp": 19.6,
@@ -20384,19 +20592,6 @@
     "low_confidence": true
    }
   },
-  "kendry_martinez": {
-   "k_pct": {
-    "exp": 31.6,
-    "lo": 25.0,
-    "hi": 38.2
-   },
-   "bb_pct": {
-    "exp": 15.7,
-    "lo": 11.6,
-    "hi": 19.8,
-    "low_confidence": true
-   }
-  },
   "cristian_santana": {
    "k_pct": {
     "exp": 24.4,
@@ -20420,19 +20615,6 @@
     "exp": 9.5,
     "lo": 5.4,
     "hi": 13.6,
-    "low_confidence": true
-   }
-  },
-  "sami_manzueta": {
-   "k_pct": {
-    "exp": 28.4,
-    "lo": 21.8,
-    "hi": 35.0
-   },
-   "bb_pct": {
-    "exp": 12.2,
-    "lo": 8.0,
-    "hi": 16.3,
     "low_confidence": true
    }
   },
@@ -20696,32 +20878,6 @@
     "low_confidence": true
    }
   },
-  "yovanny_rodriguez": {
-   "k_pct": {
-    "exp": 25.0,
-    "lo": 18.4,
-    "hi": 31.6
-   },
-   "bb_pct": {
-    "exp": 9.1,
-    "lo": 5.0,
-    "hi": 13.3,
-    "low_confidence": true
-   }
-  },
-  "ricky_cabrera": {
-   "k_pct": {
-    "exp": 24.8,
-    "lo": 18.2,
-    "hi": 31.3
-   },
-   "bb_pct": {
-    "exp": 8.8,
-    "lo": 4.7,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
   "daniel_jose_lopez": {
    "k_pct": {
     "exp": 24.6,
@@ -20797,19 +20953,6 @@
     "exp": 6.7,
     "lo": 2.6,
     "hi": 10.8,
-    "low_confidence": true
-   }
-  },
-  "jacob_cozart": {
-   "k_pct": {
-    "exp": 22.5,
-    "lo": 15.9,
-    "hi": 29.1
-   },
-   "bb_pct": {
-    "exp": 9.8,
-    "lo": 5.7,
-    "hi": 14.0,
     "low_confidence": true
    }
   },
@@ -21099,32 +21242,6 @@
     "low_confidence": true
    }
   },
-  "kale_fountain": {
-   "k_pct": {
-    "exp": 23.5,
-    "lo": 17.0,
-    "hi": 30.1
-   },
-   "bb_pct": {
-    "exp": 8.7,
-    "lo": 4.6,
-    "hi": 12.9,
-    "low_confidence": true
-   }
-  },
-  "jakob_christian": {
-   "k_pct": {
-    "exp": 26.5,
-    "lo": 20.0,
-    "hi": 33.1
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.5,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
   "jairo_pomares": {
    "k_pct": {
     "exp": 24.8,
@@ -21138,45 +21255,6 @@
     "low_confidence": true
    }
   },
-  "ruben_santana": {
-   "k_pct": {
-    "exp": 26.0,
-    "lo": 19.5,
-    "hi": 32.6
-   },
-   "bb_pct": {
-    "exp": 9.6,
-    "lo": 5.5,
-    "hi": 13.8,
-    "low_confidence": true
-   }
-  },
-  "christian_cerda": {
-   "k_pct": {
-    "exp": 21.1,
-    "lo": 14.5,
-    "hi": 27.6
-   },
-   "bb_pct": {
-    "exp": 9.7,
-    "lo": 5.6,
-    "hi": 13.9,
-    "low_confidence": true
-   }
-  },
-  "elis_cuevas": {
-   "k_pct": {
-    "exp": 24.7,
-    "lo": 18.2,
-    "hi": 31.3
-   },
-   "bb_pct": {
-    "exp": 7.0,
-    "lo": 2.9,
-    "hi": 11.2,
-    "low_confidence": true
-   }
-  },
   "derek_datil": {
    "k_pct": {
     "exp": 24.7,
@@ -21187,32 +21265,6 @@
     "exp": 8.6,
     "lo": 4.5,
     "hi": 12.8,
-    "low_confidence": true
-   }
-  },
-  "jason_schiavone": {
-   "k_pct": {
-    "exp": 25.3,
-    "lo": 18.7,
-    "hi": 31.8
-   },
-   "bb_pct": {
-    "exp": 10.9,
-    "lo": 6.8,
-    "hi": 15.1,
-    "low_confidence": true
-   }
-  },
-  "jake_cunningham": {
-   "k_pct": {
-    "exp": 28.2,
-    "lo": 21.7,
-    "hi": 34.8
-   },
-   "bb_pct": {
-    "exp": 9.6,
-    "lo": 5.4,
-    "hi": 13.7,
     "low_confidence": true
    }
   },
@@ -21515,19 +21567,6 @@
     "low_confidence": true
    }
   },
-  "robert_hipwell": {
-   "k_pct": {
-    "exp": 31.2,
-    "lo": 24.6,
-    "hi": 37.8
-   },
-   "bb_pct": {
-    "exp": 11.5,
-    "lo": 7.4,
-    "hi": 15.7,
-    "low_confidence": true
-   }
-  },
   "aj_soldra": {
    "k_pct": {
     "exp": 26.6,
@@ -21694,19 +21733,6 @@
     "exp": 10.8,
     "lo": 6.7,
     "hi": 14.9,
-    "low_confidence": true
-   }
-  },
-  "nick_montgomery": {
-   "k_pct": {
-    "exp": 27.1,
-    "lo": 20.6,
-    "hi": 33.7
-   },
-   "bb_pct": {
-    "exp": 10.0,
-    "lo": 5.8,
-    "hi": 14.1,
     "low_confidence": true
    }
   },
@@ -22032,19 +22058,6 @@
     "exp": 8.5,
     "lo": 4.4,
     "hi": 12.7,
-    "low_confidence": true
-   }
-  },
-  "easton_shelton": {
-   "k_pct": {
-    "exp": 28.7,
-    "lo": 22.2,
-    "hi": 35.3
-   },
-   "bb_pct": {
-    "exp": 9.5,
-    "lo": 5.3,
-    "hi": 13.6,
     "low_confidence": true
    }
   },
@@ -22539,19 +22552,6 @@
     "exp": 14.1,
     "lo": 9.9,
     "hi": 18.2,
-    "low_confidence": true
-   }
-  },
-  "santiago_figueroa": {
-   "k_pct": {
-    "exp": 27.9,
-    "lo": 21.3,
-    "hi": 34.5
-   },
-   "bb_pct": {
-    "exp": 12.7,
-    "lo": 8.6,
-    "hi": 16.8,
     "low_confidence": true
    }
   },

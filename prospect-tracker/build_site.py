@@ -664,12 +664,12 @@ ORG_NAMES = {
 }
 
 # --------------------------------------------------------------------------- #
-# xFV grade map (data/xfv.json -> {player_key: headline xfv_grade}).
+# eFV grade map (data/xfv.json -> {player_key: headline xfv_grade}).
 #
-# xFV is the flagship outcome-grounded FV model (the PROSPX primary grade). The
+# eFV is the flagship outcome-grounded FV model (the PROSPX primary grade). The
 # homepage Top Prospects module historically ranked + displayed CONSENSUS
-# `fv_close`; this map lets it lead with xFV instead, with consensus as the
-# fallback for any player xFV abstains on (no MiLB track record => absent from
+# `fv_close`; this map lets it lead with eFV instead, with consensus as the
+# fallback for any player eFV abstains on (no MiLB track record => absent from
 # by_player). Loaded once at module import - missing/corrupt file => empty map,
 # so the homepage behaves EXACTLY as before. The headline `xfv_grade` is the
 # rank-preserving grade onto the 20-80 consensus distribution (NOT the deflated
@@ -685,16 +685,16 @@ def _load_xfv_grades() -> dict:
         if isinstance(g, (int, float)):
             out[key] = float(g)
     return out
-_XFV_GRADES = _load_xfv_grades()
+_EFV_GRADES = _load_xfv_grades()
 
 def _primary_fv(p: dict):
-    """RAW primary FV for a player: the xFV grade when xFV has a grade for this
+    """RAW primary FV for a player: the eFV grade when eFV has a grade for this
     player_key, else the consensus close. Consensus is the fallback EVERYWHERE
-    so players xFV abstains on are unchanged. Returns a float or None.
+    so players eFV abstains on are unchanged. Returns a float or None.
 
     NB: raw (unrounded) - callers that DISPLAY a grade must ceil-round per the
     repo's grades-round-UP rule; sort/tier logic uses the raw value."""
-    g = _XFV_GRADES.get(p.get("player_key"))
+    g = _EFV_GRADES.get(p.get("player_key"))
     if g is not None:
         return g
     fv = p.get("fv_close")
@@ -760,13 +760,13 @@ def _team_logo(org: str | None, cls: str = "row-logo") -> str:
             f"onerror=\"this.outerHTML='<span class=&quot;{cls}&quot; style=&quot;font:700 9px var(--font-retro-mono);display:inline-flex;align-items:center;justify-content:center&quot;>{o}</span>'\">")
 
 def _fv_label(p: dict) -> str:
-    # Lead with the xFV grade when xFV has graded this player (ceil-rounded per
-    # the grades-round-UP rule, 62.1 -> 63). For players xFV abstains on, keep
-    # the EXACT prior behavior: the published consensus label off points[] (which
-    # carries snapping / '+' upside), else ceil(fv_close).
-    g = _XFV_GRADES.get(p.get("player_key"))
+    # Lead with the eFV grade when eFV has graded this player (round-to-NEAREST: eFV is the
+    # true-model grade, so it rounds nearest, not up). For players eFV abstains on, keep the
+    # EXACT prior behavior: the published consensus label off points[] (which carries
+    # snapping / '+' upside), else ceil(fv_close) (consensus FV still rounds up).
+    g = _EFV_GRADES.get(p.get("player_key"))
     if g is not None:
-        return str(int(math.ceil(g)))   # FV rounds UP (62.1 -> 63)
+        return str(int(round(g)))   # eFV rounds to NEAREST (true-model, unbiased)
     pts = p.get("points") or []
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
@@ -774,7 +774,7 @@ def _fv_label(p: dict) -> str:
     return str(int(math.ceil(fv))) if fv is not None else " - "
 
 def _fv_pill(p: dict) -> str:
-    # Tier styling keys off the PRIMARY (xFV) grade now, raw/unrounded.
+    # Tier styling keys off the PRIMARY (eFV) grade now, raw/unrounded.
     fv = _primary_fv(p)
     cls = "fv-pill"
     if fv is not None and fv >= 61:
@@ -898,10 +898,10 @@ def _genuine_mover_step(p: dict) -> int | None:
     """Homepage Top Movers selector: the de-noised grade step from the movement
     engine (carried on `stock`), gated to genuine, recent moves.
 
-    xFV is the site's primary grade, so the PRIMARY mover signal is the xFV
-    "since last real change" step (basis="xfv"): the xFV trajectory already
-    de-bands (walks back to the last >=0.5 step), so an xFV move IS a genuine
-    move and needs no source-confidence gate. Where a player has no xFV history
+    eFV is the site's primary grade, so the PRIMARY mover signal is the eFV
+    "since last real change" step (basis="xfv"): the eFV trajectory already
+    de-bands (walks back to the last >=0.5 step), so an eFV move IS a genuine
+    move and needs no source-confidence gate. Where a player has no eFV history
     the engine falls back to the de-noised same-source consensus step
     (basis="same_source"), which DOES keep its confidence gate (it excludes
     panel-composition shifts and lone-outlier re-grades). Because the homepage
@@ -914,7 +914,7 @@ def _genuine_mover_step(p: dict) -> int | None:
     if st.get("delta") is None or st.get("direction") in ("flat", "debuted", None):
         return None
     if basis == "xfv":
-        pass                                          # xFV step is self-de-noised
+        pass                                          # eFV step is self-de-noised
     elif basis == "same_source":
         if st.get("confidence") not in ("high", "medium"):
             return None
@@ -1017,14 +1017,14 @@ def display_metric_for(p: dict) -> dict:
         return {"metric": "WAG", "cls": cls,
                 "html": f'<span class="row-delta {cls}">{sign}{wag_r:.1f} WAG</span>'}
 
-    # 3) No meaningful on-field sample yet -> FV (PRIMARY: xFV when graded, else
+    # 3) No meaningful on-field sample yet -> FV (PRIMARY: eFV when graded, else
     #    the scouting consensus). `_primary_fv` already falls back fv_close ->
     #    consensus_fv; keep `fv` as a last-ditch legacy fallback.
     fv = _primary_fv(p) or p.get("fv")
     if fv is not None:
         return {"metric": "FV", "cls": "flat",
                 "html": (f'<span class="row-meta" title="Final prospect FV - no MLB sample yet">'
-                         f'FV {int(math.ceil(fv))}</span>')}   # FV rounds UP (62.1 -> 63)
+                         f'FV {int(round(fv))}</span>')}   # eFV-primary -> rounds to NEAREST
     return {"metric": None, "cls": "flat", "html": '<span class="row-meta">debut</span>'}
 
 
@@ -1142,7 +1142,7 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
         org = p.get("org")
         # FV news = the most recent GENUINE grade move carried on stock. Two
         # bases qualify: "xfv" (the live PRIMARY grade - movement.py emits a
-        # numeric delta with a string "xFV NN.N" to_label) and the legacy
+        # numeric delta with a string "eFV NN.N" to_label) and the legacy
         # "same_source" consensus move (only sources grading the player at both
         # endpoints count, gated on high/medium confidence). Panel-composition
         # shifts (basis "panel_update") and thin samples (confidence "low")
@@ -1166,11 +1166,11 @@ def _collect_events(players: list, graduates: list, fa_events: list | None = Non
             elif (mv.get("basis") == "xfv" and mv.get("delta") is not None
                     and mv.get("direction") not in ("flat", "debuted")):
                 step = int(round(mv["delta"]))
-                # to_label is the string "xFV NN.N" for the xfv basis; pull the
-                # number out and ceil it (owner rule: display grades round up).
+                # to_label is the string "eFV NN.N" for the xfv basis; pull the
+                # number out and round it to nearest (eFV is the true-model grade).
                 _m = re.search(r"-?\d+(?:\.\d+)?", str(mv.get("to_label") or ""))
                 try:
-                    new_grade = int(math.ceil(float(_m.group()))) if _m else None
+                    new_grade = int(round(float(_m.group()))) if _m else None
                 except (TypeError, ValueError):
                     new_grade = None
                 if abs(step) >= 2 and new_grade is not None:
@@ -1454,7 +1454,7 @@ def _spotlight_html(players: list) -> str:
     if not cands:
         return ""
     d, p = max(cands, key=lambda t: t[0])
-    fv = _primary_fv(p)   # tier the holo border off the PRIMARY (xFV) grade, matching _fv_pill
+    fv = _primary_fv(p)   # tier the holo border off the PRIMARY (eFV) grade, matching _fv_pill
     holo = " holo" if (fv is not None and fv >= 61) else ""
     url = _headshot_url(p.get("mlbam_id"), 180)   # unified chain (resolves milb-only ids)
     photo = f"background-image:url('{url}');" if url else ""
@@ -1923,13 +1923,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
-    # Rank by PRIMARY FV (xFV when graded, else consensus close), RAW/unrounded.
-    # Tie-break to MATCH the PROSPX active board (buildXfvRankMap -> xfvRankValue,
+    # Rank by PRIMARY FV (eFV when graded, else consensus close), RAW/unrounded.
+    # Tie-break to MATCH the PROSPX active board (buildEfvRankMap -> efvRankValue,
     # ties broken by fvCmpDesc: consensus FV, then the '+' upside flag). Without
-    # this the homepage and the active list disagreed on xFV ties - e.g. Anderson
-    # & De Vries both xFV 60: the board ranks De Vries above (consensus 62 > 58),
-    # so the homepage must too. The displayed rank is the xFV-sorted POSITION (the
-    # board's xFV rank for the top 5), not the consensus overall_rank, so the two
+    # this the homepage and the active list disagreed on eFV ties - e.g. Anderson
+    # & De Vries both eFV 60: the board ranks De Vries above (consensus 62 > 58),
+    # so the homepage must too. The displayed rank is the eFV-sorted POSITION (the
+    # board's eFV rank for the top 5), not the consensus overall_rank, so the two
     # surfaces show the same number.
     def _top_key(p):
         return (_primary_fv(p) if _primary_fv(p) is not None else -1,
@@ -2046,7 +2046,7 @@ def build_fa() -> str:
 _TRADE_MACHINE_VIEW = """<div id="proj-view-trademachine" style="display:none;">
   <div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
-    <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on xFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
+    <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
   </div>
   <div id="trade-machine"></div>
   <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>

@@ -276,7 +276,7 @@
   function latestFv(p) {
     if (!p) return null;
     var key = p.player_key || p.key;
-    var x = (PX().xfv && key) ? PX().xfv(key) : null;   // prospxFV is the primary grade
+    var x = (PX().xfv && key) ? PX().xfv(key) : null;   // eephusFV is the primary grade
     if (x && x.xfv_grade != null) return x.xfv_grade;
     var pts = p.points || [];
     if (pts.length) { var l = pts[pts.length - 1]; return l.consensus_fv != null ? l.consensus_fv : l.consensus_fv_raw; }

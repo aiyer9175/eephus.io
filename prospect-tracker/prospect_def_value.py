@@ -8,7 +8,7 @@
 # MiLB innings-by-position TIME SERIES + body frame, beating FanGraphs' fFld grade at
 # predicting realized MLB defensive value. The season-by-season parquet inputs
 # (milb_fielding_full.parquet, milb_def_features.parquet) are NOT present in this repo,
-# so this reconstructs the CORE THESIS leakage-safe from data the xFV pipeline already
+# so this reconstructs the CORE THESIS leakage-safe from data the eFV pipeline already
 # has: the prospect's AS-OF-DECISION listed position (dated at the scouting snapshot)
 # + BODY FRAME (BMI, from draft_players height/weight) + age -> P(MLB position) via the
 # migration matrix -> expected positional run value. The full innings-share granularity
@@ -29,17 +29,17 @@ risk flag.
   def_home_entropy  Shannon entropy of P(MLB pos) -- uncertainty/versatility risk flag
   p_<pos>           the P(MLB position) vector
 
-A DROP-IN replacement for the FanGraphs fFld defensive grade in the xFV pipeline.
+A DROP-IN replacement for the FanGraphs fFld defensive grade in the eFV pipeline.
 
 VERDICT 2026-06-29 (data/prospect_def_value_eval.json):
   * VALIDATED as a predictor -- beats FG fFld at predicting realized MLB positional
     value (Spearman 0.68 vs 0.28, lower MAE, leakage-safe; n=263 graduated). `--validate`.
-  * xFV SWAP REJECTED (loss, NOT shipped) -- adding def_value to the shipped lean xFV
+  * eFV SWAP REJECTED (loss, NOT shipped) -- adding def_value to the shipped lean eFV
     model regresses every gate (pooled rho 0.3701->0.3661, within-tier + fringe worse).
-    Even a far better defensive predictor is flat-to-negative on xFV's offense-dominated
+    Even a far better defensive predictor is flat-to-negative on eFV's offense-dominated
     first-6yr-WAR target: the binding constraint is the TARGET, not measurement quality.
   * The real lane for this signal is the defense-IS-WAR surfaces (MLB Projections / farm
-    / display), NOT the xFV ranker.
+    / display), NOT the eFV ranker.
 """
 from __future__ import annotations
 
@@ -172,7 +172,7 @@ def _parse_height_in(h) -> int | None:
 
 
 def frame_map() -> dict[str, dict]:
-    """player_key (xFV-style, draft prefix stripped) -> {h_in, wt, bmi} from the
+    """player_key (eFV-style, draft prefix stripped) -> {h_in, wt, bmi} from the
     draft_players + overseas_players DB tables (height '6\\' 2', weight lbs)."""
     out: dict[str, dict] = {}
     try:
@@ -218,7 +218,7 @@ def _up_mid_share_map() -> dict[str, float]:
 
 def build(out_path: Path | None = None) -> dict:
     """Emit data/prospect_def_value.json keyed by mlbam: {def_value, def_home_entropy,
-    p_<pos>}. Built from the xFV hitter matrix's AS-OF-DECISION listed position + age +
+    p_<pos>}. Built from the eFV hitter matrix's AS-OF-DECISION listed position + age +
     BMI (draft_players frame) + the current up-mid-share quality multiplier."""
     rows = json.loads((DATA / "xfv_hitter_matrix.json").read_text(encoding="utf-8"))
     ums = _up_mid_share_map()

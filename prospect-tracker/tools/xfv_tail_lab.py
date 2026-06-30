@@ -1,9 +1,9 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
-"""xFV HIGH-END tail lab. Question (owner): can a tail fix improve xFV for the
+"""eFV HIGH-END tail lab. Question (owner): can a tail fix improve eFV for the
 best players (ex. Bobby Witt Jr.)?
 
-The xFV rank gate is Spearman, which is INVARIANT to any monotone tail transform
+The eFV rank gate is Spearman, which is INVARIANT to any monotone tail transform
 - so a tail fix can only ever be a CALIBRATION (magnitude) change, not a rank
 change. This harness measures, on the EXACT forward-chained leakage-clean
 protocol data/xfv_eval.json uses (reusing xfv_lab_runner's machinery):

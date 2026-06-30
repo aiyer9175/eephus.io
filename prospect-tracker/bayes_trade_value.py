@@ -3875,9 +3875,9 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
     number that the owner flagged as out of line:
 
-      active prospects -> PROSPX xFV surplus      (data/xfv.json by_player[key].surplus_mm)
+      active prospects -> PROSPX eFV surplus      (data/xfv.json by_player[key].surplus_mm)
       MLB (modeled)    -> MLB Projections surNpv  (data/mlb_projections.json vets/prospects)
-      MLB (unmodeled)  -> xFV backgrade surplus   (universal fallback; ~99.5% MLB coverage)
+      MLB (unmodeled)  -> eFV backgrade surplus   (universal fallback; ~99.5% MLB coverage)
 
     Also backfills null ages from the projection artifacts (player_key join). All sources are
     value_framework-priced, so this makes Trade Machine == PROSPX/Projections. Defensive: if an
@@ -3944,7 +3944,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
 
         xe = xfv.get(pk) or {}
         x_sur = xe.get("surplus_mm")
-        # Carry the raw xFV grade through to the board: the convex-$/WAR + $0-floor
+        # Carry the raw eFV grade through to the board: the convex-$/WAR + $0-floor
         # surplus transform compresses within-tier ordering (the backtest shows the
         # grade orders realized WAR better than the $ value it is derived from), so
         # the board uses xfv_grade as the within-tier tie-break for the bunched
@@ -3976,7 +3976,7 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             r["trade_value_tier"] = _platform_tier(mm)
             r["surplus_source"] = src
             lo, hi = xe.get("band_p10_mm"), xe.get("band_p90_mm")
-            # Bands are the xFV credible interval; scale them with a tempered
+            # Bands are the eFV credible interval; scale them with a tempered
             # backgrade so they stay consistent with the shown value.
             scale = (mm / float(x_sur)) if (src == "xfv_backgrade" and x_sur) else 1.0
             r["trade_value_lo"] = round(float(lo) * scale, 1) if lo is not None else None
@@ -4002,7 +4002,7 @@ def export_trade_values_json(
     out_path = Path(out_path)
     results  = compute_all_trade_values(players, level_norms=level_norms)
 
-    # Re-point surplus to the platform-standard value (PROSPX xFV / MLB Projections) + backfill
+    # Re-point surplus to the platform-standard value (PROSPX eFV / MLB Projections) + backfill
     # ages, then sort by the ALIGNED value.
     st = apply_platform_surplus(results, out_path.parent)
     _log.info("trade_values platform-surplus: %s", st)

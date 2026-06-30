@@ -490,7 +490,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("org tendencies export crashed in rebuild_only — continuing")
 
-    # xFV — our outcome-grounded grade. Regenerates the labeled training matrix +
+    # eFV — our outcome-grounded grade. Regenerates the labeled training matrix +
     # the CURRENT active-board feature matrix from the just-written timeseries.json,
     # fits the model, scores both cohorts (live board gated on a pro track record),
     # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
@@ -499,13 +499,13 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     try:
         from xfv_export import regen_all as _regen_xfv
         _xfv = _regen_xfv()
-        log.info("xFV (rebuild): %d players (%d live board) -> data/xfv.json",
+        log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
                  _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
     except Exception:
-        log.exception("xFV regen crashed in rebuild_only — continuing")
+        log.exception("eFV regen crashed in rebuild_only — continuing")
 
     # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
-    # Needs the xFV matrices (built above) + debuts.json. Best-effort.
+    # Needs the eFV matrices (built above) + debuts.json. Best-effort.
     try:
         import milb_translation
         _mt = milb_translation.build()
@@ -514,16 +514,16 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("milb_translation crashed in rebuild_only - continuing")
 
-    # xFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
-    # quality), forward-validated on recent debut cohorts. Separate artifact, NOT xFV; pulls
+    # eFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
+    # quality), forward-validated on recent debut cohorts. Separate artifact, NOT eFV; pulls
     # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
     try:
         import xfv_proxy as _xfv_proxy
         _xp = _xfv_proxy.run()
-        log.info("xFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
+        log.info("eFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
                  _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
     except Exception:
-        log.exception("xFV proxy crashed in rebuild_only — continuing")
+        log.exception("eFV proxy crashed in rebuild_only — continuing")
 
     # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
     try:
@@ -575,10 +575,10 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
 
     Pulls and updates the data that moves between monthly grade releases, so
-    the outcome-grounded xFV grade (re-scored at the end via rebuild_only)
-    tracks it day to day. Every input xFV consumes is refreshed here:
+    the outcome-grounded eFV grade (re-scored at the end via rebuild_only)
+    tracks it day to day. Every input eFV consumes is refreshed here:
       • daily Live board captures (TJStats / MLB Pipeline) -> consensus FV
-      • current-season stat lines (d5c) -> the MiLB rate features xFV uses
+      • current-season stat lines (d5c) -> the MiLB rate features eFV uses
         (k_rel / obp_rel / ops_rel / era_rel, derived from the statline)
       • incremental Statcast metrics (d5d) -> the Statcast tilt, for players
         with newly tracked games at Statcast levels
@@ -586,14 +586,14 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
       • player transactions, roster status, debuts & graduations, trades
 
     It then rebuilds data/timeseries.json from the refreshed DB via the
-    no-scrape `rebuild_only()` path, which re-runs the xFV pipeline
+    no-scrape `rebuild_only()` path, which re-runs the eFV pipeline
     (xfv_export.regen_all) against the fresh consensus / stats / injuries, so a
-    consensus move, a new stat line, or an IL change all flow into xFV the same
+    consensus move, a new stat line, or an IL change all flow into eFV the same
     night.
 
     The HEAVY, slow-HTTP work stays monthly in `main()`: full career-stat
     backfill, the full Statcast season scrape, the MLB-only sabermetrics
-    endpoint (wRC+/xFIP, NOT an xFV input), scout-grade snapshots, Arkmetrics,
+    endpoint (wRC+/xFIP, NOT an eFV input), scout-grade snapshots, Arkmetrics,
     farm grades, and the full ranking. run_daily and run_monthly run on
     different nights (deploy: `--daily` most nights, full on the 1st), so a row
     the daily incremental path writes is simply overwritten by the monthly full

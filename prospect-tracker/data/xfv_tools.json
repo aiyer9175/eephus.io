@@ -90,7 +90,7 @@
 "sl/cb/ch pitch shapes"
 ],
 "passthrough_reason": "no clean realized MLB metric in our data; consensus grade used as-is",
-"method": "tool xFV = consensus grade (prior) + pre-debut MiLB production where it adds signal beyond the grade (rank-partial), mapped onto the 20-80 grade scale. Validated vs grade-only on realized MLB stats.",
+"method": "tool eFV = consensus grade (prior) + pre-debut MiLB production where it adds signal beyond the grade (rank-partial), mapped onto the 20-80 grade scale. Validated vs grade-only on realized MLB stats.",
 "n_players_with_tool_xfv": 1088
 },
 "by_player": {

@@ -97,7 +97,7 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
     period's team); the tracked record only adds FV / rank / headshot and
     the player's CURRENT org (shown as a 'now' note when traded since).
 
-    The displayed CURRENT grade is xFV (the platform-primary, outcome-grounded
+    The displayed CURRENT grade is eFV (the platform-primary, outcome-grounded
     grade) when we have one for this player, falling back to consensus FV
     otherwise - so the IFA list matches the grade every other PROSPX surface
     shows. `fv_basis` records which was used."""
@@ -127,14 +127,14 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
         cons_fv = tp.get("fv_close_raw")
         if cons_fv is None:
             cons_fv = tp.get("fv_close")
-        # xFV primary, consensus fallback. The "+" upside marker is a consensus
+        # eFV primary, consensus fallback. The "+" upside marker is a consensus
         # concept, so only carry it on the consensus path.
         use_xfv = xfv_grade is not None
         fv = xfv_grade if use_xfv else cons_fv
         fv_open = tp.get("fv_open")
         out.update({
             "is_tracked":   True,
-            "fv":           fv,                                  # CURRENT grade (xFV or consensus)
+            "fv":           fv,                                  # CURRENT grade (eFV or consensus)
             "fv_label":     _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv),
             "fv_basis":     "xfv" if use_xfv else "consensus",
             # FV at signing ≈ the earliest grade we have on file (fv_open).
@@ -181,7 +181,7 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
 
     def _enrich_row(r):
         tp = _lookup_tracked(players_by_key, r.get("player_key"))
-        # Look up xFV by the TRACKED (canonical) key, not the signing key.
+        # Look up eFV by the TRACKED (canonical) key, not the signing key.
         xg = (xfv_by_key.get(tp["player_key"]) or {}).get("xfv_grade") if tp else None
         return _enrich(r, tp, xg)
 
@@ -268,7 +268,7 @@ def build_ifa_export(signings: list[dict], players_by_key: dict | None = None,
                      today: date | None = None, xfv_by_key: dict | None = None) -> dict:
     """Pure builder: group Spotrac IFA signings by year into class blocks
     enriched with tracked-prospect data. Newest year first. `xfv_by_key` (the
-    xfv.json by_player map) lets the displayed grade be xFV, matching the rest
+    xfv.json by_player map) lets the displayed grade be eFV, matching the rest
     of the platform."""
     players_by_key = players_by_key or {}
     today = today or date.today()
@@ -286,7 +286,7 @@ def build_ifa_export(signings: list[dict], players_by_key: dict | None = None,
 
 def _xfv_by_key_from_sibling(path: Path) -> dict:
     """Load the sibling xfv.json by_player map so the IFA list can show the
-    platform-primary xFV grade. Returns {} when absent (consensus fallback)."""
+    platform-primary eFV grade. Returns {} when absent (consensus fallback)."""
     xf = path.parent / "xfv.json"
     if not xf.exists():
         return {}

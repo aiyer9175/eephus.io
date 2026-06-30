@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 
-"""xFV Pass 3 -- the production seam: turn the hitter model's WAR prediction into
+"""eFV Pass 3 -- the production seam: turn the hitter model's WAR prediction into
 the flagship outputs (grade + 5-bucket distribution + surplus $ + uncertainty),
 reusing the existing value_framework engine end to end.
 
@@ -37,8 +37,8 @@ DATA_DIR = Path(__file__).parent / "data"
 _BUCKETS = ("bust", "bench", "regular", "good", "star")
 
 # Guarded blend for the HEADLINE grade + board rank: rank_war = (1-lambda)*consensus_war
-# + lambda*model_war. xFV still PREDICTS WAR; lambda is the WAG-CALIBRATED trust in its
-# adjustment (how much realized WAR-Above-Grade supports xFV's where-consensus-missed edge,
+# + lambda*model_war. eFV still PREDICTS WAR; lambda is the WAG-CALIBRATED trust in its
+# adjustment (how much realized WAR-Above-Grade supports eFV's where-consensus-missed edge,
 # forward-chained -- see xfv_model.wag_calibration). Hitters ~0.8, pitchers shrink harder.
 # REALIZED grade + surplus + distribution stay on the pure model (the honest outcome view).
 
@@ -56,7 +56,7 @@ def score_report_path(side):
     return DATA_DIR / ("xfv_score_report_pitcher.json" if side == "pit" else "xfv_score_report.json")
 
 
-# Human labels for the per-prospect xFV explainer (which signals moved the grade off
+# Human labels for the per-prospect eFV explainer (which signals moved the grade off
 # the consensus-FV prior). Keys match the model feature names.
 _FACTOR_LABELS = {
     "obp_rel": "On-base vs level", "k_rel": "Contact (K%) vs level",
@@ -75,8 +75,8 @@ _FACTOR_LABELS = {
 
 def _factors(ridge, feats, top: int = 4) -> list:
     """Per-prospect explainer: the non-FV ridge contributions (weight * standardized
-    feature, in WAR units) that moved xFV off the consensus-FV prior, largest first.
-    Sum of these ~= the xFV-minus-consensus adjustment, so it literally explains the
+    feature, in WAR units) that moved eFV off the consensus-FV prior, largest first.
+    Sum of these ~= the eFV-minus-consensus adjustment, so it literally explains the
     delta. Returns [{label, dir, mag}]."""
     contribs = []
     for k, m, s, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
@@ -101,10 +101,10 @@ def _age_at(birth_date, year):
 
 
 def _injury_factor(r) -> float:
-    """Owner-directed live injury penalty: a multiplicative haircut on the xFV WAR
+    """Owner-directed live injury penalty: a multiplicative haircut on the eFV WAR
     projection (so it flows to the grade, the rank, AND surplus) for prospects who are
     currently hurt or recently fragile. Injuries cost cumulative WAR (durability) and
-    carry re-injury risk that scout FV under-prices; xFV penalizes them harder. Applied
+    carry re-injury risk that scout FV under-prices; eFV penalizes them harder. Applied
     only to the LIVE board (resolved players' outcomes already embed their injuries)."""
     f = 1.0
     if r.get("il_on"):
@@ -143,7 +143,7 @@ _SC_FWD_R = _sc_forward_r()
 
 
 def _statcast_factor(r, side: str = "hit") -> float:
-    """Live Statcast+ overlay tilt: nudge the xFV WAR projection by batted-ball quality / Stuff+
+    """Live Statcast+ overlay tilt: nudge the eFV WAR projection by batted-ball quality / Stuff+
     (100 = average). Current-state, upper-level only -> a provisional tilt (no historical Statcast
     to OOS-validate), bounded +/-18%. The slope is the per-side forward-r times the
     perfect-predictor slope (_SC_TILT_PER_PT_AT_R1), so a weak signal gets a small tilt. Players
@@ -217,7 +217,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     # optimistic) but floors at 20 and reads as jarringly low next to consensus.
     # The headline xfv_grade_display is a RANK-PRESERVING quantile map of the
     # GUARDED-BLEND ranking (rank_war) onto the consensus FV distribution of this
-    # pool: the ordering is xFV's outcome-grounded ranking (the value-add, now
+    # pool: the ordering is eFV's outcome-grounded ranking (the value-add, now
     # beating consensus OOS), the units match consensus (usable). Surplus/
     # distribution stay on the honest realized grade.
     if scored:
@@ -270,7 +270,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "adjustment_direction_check": {
             "spearman_adj_vs_consensus_miss": dir_rho,
             "n": len(adj),
-            "reading": "positive => xFV up/down-adjustments point toward where consensus "
+            "reading": "positive => eFV up/down-adjustments point toward where consensus "
                        "FV under/over-shot realized WAR (illustrative, in-sample).",
         },
         "surplus_totals_mm": {
@@ -297,7 +297,7 @@ def history_path():
 
 def _build_grade_map(side: str):
     """Monotone rank_war -> display-grade lookup from the current live scored pool, so the
-    historical xFV grades land on the SAME 20-80 scale as the current board grade."""
+    historical eFV grades land on the SAME 20-80 scale as the current board grade."""
     try:
         scored = json.loads(scored_live_path(side).read_text(encoding="utf-8"))
     except (OSError, ValueError):
@@ -321,8 +321,8 @@ def _map_grade(grade_map, rank_war):
 
 
 def score_history(persist: bool = True) -> dict:
-    """Backfill an xFV value at EACH historical board snapshot so the FV-history chart can
-    plot xFV over time (not just consensus). For every points[] entry we re-score the as-of
+    """Backfill an eFV value at EACH historical board snapshot so the FV-history chart can
+    plot eFV over time (not just consensus). For every points[] entry we re-score the as-of
     features (that snapshot's per-source FV + tools + production as-of that year) with the
     shipped model and map onto the live grade scale. Honest caveat: this is today's model
     scoring old snapshots (a retrospective), not the grade we would have shown then. Writes
@@ -367,7 +367,7 @@ def score_history(persist: bool = True) -> dict:
                                          rec.get("birth_date"), side)
             model_war = max(-2.0, a + b * _predict(ridge, _vec(row, side)))
             # Pure-model (realized) grade at this snapshot -- the same realized_implied_fv
-            # transform the headline now uses, so the xFV-history chart is on ONE scale
+            # transform the headline now uses, so the eFV-history chart is on ONE scale
             # with the current grade (no quantile-remapped discontinuity at the live point).
             grade = vf.realized_implied_fv(model_war, side == "pit")
             if grade is None:
@@ -405,7 +405,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
     5-bucket distribution + surplus + uncertainty band via value_framework -- but these
     players have no outcome label yet, so there is no validation block; they ARE the
     grades the site shows next to consensus FV. Surplus/distribution use each player's
-    real timing (current age + ETA) so xFV prices on the same basis as the site's
+    real timing (current age + ETA) so eFV prices on the same basis as the site's
     consensus surplus. Run after build_live + the site export (timeseries.json)."""
     is_pit = side == "pit"
     ridge, a, b, ols, _keys = _fit_production(side)
@@ -419,7 +419,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             cons_fv = float(r.get("consensus_fv_raw"))
         except (TypeError, ValueError):
             continue
-        # xFV is outcome/production-grounded: it ABSTAINS on players with no pro
+        # eFV is outcome/production-grounded: it ABSTAINS on players with no pro
         # track record. In training, milb_missing tagged untracked busts (large
         # negative weight); applying that to a current draftee/IFA who simply hasn't
         # played a pro season yet would wrongly crush them. Gate on MiLB production.
@@ -430,7 +430,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         xfv_war = max(-2.0, a + b * _predict(ridge, feats))
         cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
-        factors = _factors(ridge, feats)                  # explainer: why xFV != consensus
+        factors = _factors(ridge, feats)                  # explainer: why eFV != consensus
         inj = _injury_factor(r)                           # owner-directed live injury penalty
         sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
@@ -484,7 +484,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
 
     # headline grade -- rank-preserving quantile map of the GUARDED-BLEND ranking
     # (rank_war) onto the LIVE pool's consensus FV distribution (units match consensus;
-    # order is xFV's outcome-grounded ranking, which beats consensus OOS). Mirrors run();
+    # order is eFV's outcome-grounded ranking, which beats consensus OOS). Mirrors run();
     # surplus/distribution stay on the honest realized grade.
     if scored:
         target = sorted(s["consensus_fv"] for s in scored)
@@ -537,12 +537,12 @@ def backgrade_path():
 
 
 def run_backgrade(persist: bool = True) -> dict:
-    """Backgrade EVERY graded prospect so the WHOLE site carries an xFV, not just the active
+    """Backgrade EVERY graded prospect so the WHOLE site carries an eFV, not just the active
     board (run_live) + the labeled-outcome matrix (run). For each universe player -- timeseries
     actives + debuts.json graduates -- score the as-of features with the shipped model and map
-    onto the SAME live grade scale the board uses, so a graduate's xFV is directly comparable
+    onto the SAME live grade scale the board uses, so a graduate's eFV is directly comparable
     to a current prospect's. Graduates are scored at their final pre-debut snapshot (the grade
-    xFV carried into the majors) and keep realized_war for the did-we-nail-it read. Players with
+    eFV carried into the majors) and keep realized_war for the did-we-nail-it read. Players with
     no pro track record are graded prior-anchored and flagged xfv_provisional. Fills the gap
     run_live (active w/ track record) + run (matrix cohort) leave behind. Run AFTER run_live
     (reuses its scored pool for the grade scale). Writes data/xfv_backgrade.json."""
@@ -686,9 +686,9 @@ if __name__ == "__main__":
     print("realized divergence:", json.dumps(rep["realized_grade_divergence_vs_consensus"]))
     print("adjustment direction check:", json.dumps(rep["adjustment_direction_check"]))
     print("surplus totals ($M):", json.dumps(rep["surplus_totals_mm"]))
-    print("\nexample UP adjustments (xFV > consensus):")
+    print("\nexample UP adjustments (eFV > consensus):")
     for e in rep["example_up_adjustments"]:
         print(f"  {e['player_key'][:24]:24s} cons={e['consensus_fv']:4} -> xfv={e['xfv_grade']:4} (+{e['delta']}) | realized 6yr WAR={e['realized_war_6yr']}")
-    print("example DOWN adjustments (xFV < consensus):")
+    print("example DOWN adjustments (eFV < consensus):")
     for e in rep["example_down_adjustments"]:
         print(f"  {e['player_key'][:24]:24s} cons={e['consensus_fv']:4} -> xfv={e['xfv_grade']:4} ({e['delta']}) | realized 6yr WAR={e['realized_war_6yr']}")

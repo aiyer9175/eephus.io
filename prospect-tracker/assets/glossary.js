@@ -235,12 +235,12 @@
 // _raterMeta() is the safe accessor: unknown raters (new sources join the
 // backtest as their cohorts resolve) get a neutral fallback, never a throw.
 // Owner palette (2026-06-24): FanGraphs dark green, MLB Pipeline blue, PROSPX consensus pink,
-// xFV the site lilac (its identity color, theme-aware via --accent-lilac).
+// eFV the site lilac (its identity color, theme-aware via --accent-lilac).
 const _RATER_META = {
   fangraphs:        { label: "FanGraphs",        color: "#2E8B57" },
   mlb_pipeline:     { label: "MLB Pipeline",     color: "#4F9DFF" },
   prospx_consensus: { label: "PROSPX consensus", color: "#FF6FB3" },
-  xfv:              { label: "xFV (ours, OOS)",  color: "var(--accent-lilac)" },
+  xfv:              { label: "eFV (ours, OOS)",  color: "var(--accent-lilac)" },
 };
 const _TIER_ORDER = ["<45", "45", "50", "55", "60+"];
 function _raterMeta(r) {
@@ -268,7 +268,7 @@ function _methCaptureCurve(bt) {
     pts.forEach(p => { d += ` L ${sx(p.pct).toFixed(1)},${sy(p.captured).toFixed(1)}`; });
     return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${wdt}" stroke-linecap="round" stroke-linejoin="round"/>`;
   };
-  const xfvCol = "var(--accent-lilac)", consCol = _raterMeta("prospx_consensus").color;
+  const efvCol = "var(--accent-lilac)", consCol = _raterMeta("prospx_consensus").color;
   const t20x = Math.round((cc.xfv.top20 || 0) * 100), t20c = Math.round((cc.consensus.top20 || 0) * 100);
   return `<div class="meth-chart">
     <div class="meth-chart-title">Career WAR captured by the top of the board <span class="meth-sub">share of all realized WAR sitting in each board's top N%, higher = sharper ordering</span></div>
@@ -276,61 +276,61 @@ function _methCaptureCurve(bt) {
       ${grid.join("")}${diag}
       <line x1="${ML}" y1="${MT + iH}" x2="${ML + iW}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
       <line x1="${ML}" y1="${MT}" x2="${ML}" y2="${MT + iH}" stroke="var(--text-secondary)" stroke-width="1"/>
-      ${line(cc.consensus.points, consCol, 2.2)}${line(cc.xfv.points, xfvCol, 2.8)}
+      ${line(cc.consensus.points, consCol, 2.2)}${line(cc.xfv.points, efvCol, 2.8)}
       ${xlabels}
       <text x="${ML + iW}" y="${MT + iH + 15}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">top % of board</text>
     </svg>
     <div class="meth-legend">
-      <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${xfvCol};"></span>xFV</span>
+      <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${efvCol};"></span>eFV</span>
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${consCol};"></span>PROSPX consensus</span>
       <span class="meth-legend-key"><span class="meth-legend-swatch" style="background:var(--text-tertiary);"></span>random</span>
     </div>
-    <p class="meth-note">xFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. It sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is xFV against the consensus it is built to upgrade.</p>
+    <p class="meth-note">eFV concentrates <strong>${t20x}%</strong> of all realized career WAR in the top 20% of its board, against ${t20c}% for the consensus. It sorts the eventual contributors toward the top more sharply. Full graded pool (n=${cc.pool_n.toLocaleString()}, debuted + busts); the public sources don't grade the lower-minors busts, so this lift curve is eFV against the consensus it is built to upgrade.</p>
   </div>`;
 }
 function _methProseHTML() {
   return `
   <div class="meth-prose">
-    <h2 class="meth-h">How xFV is built <span class="meth-sub">the site's primary grade</span></h2>
-    <p><strong>xFV (prospxFV)</strong> is our outcome-grounded Future Value grade, and the
-    primary grade and ranking signal site-wide. A scout FV grades the tool profile; xFV predicts
+    <h2 class="meth-h">How eFV is built <span class="meth-sub">the site's primary grade</span></h2>
+    <p><strong>eFV (eephusFV)</strong> is our outcome-grounded Future Value grade, and the
+    primary grade and ranking signal site-wide. A scout FV grades the tool profile; eFV predicts
     the career it produces: <em>given everything known before a prospect debuts, his distribution
     of first-6-MLB-season WAR</em>, summarized back onto the familiar 20-80 scale.</p>
-    <p><strong>The model.</strong> xFV starts from the consensus FV as a regularized prior (see
+    <p><strong>The model.</strong> eFV starts from the consensus FV as a regularized prior (see
     below), then adds a small set of outcome-validated adjustments: the signals that carry WAR
     information <em>beyond</em> the grade and are under-priced by scouts. Hitters: on-base vs level,
     contact (K%) vs level, a multi-season peak K-rate, age-for-level, MiLB track-record length, the
     hit and speed tools. Pitchers: a multi-season peak K-rate, final-season K-rate, walk rate (the
     K-BB% completion), age-for-level, fastball. Game power is <em>omitted</em> for hitters on
     purpose: the data shows scouts over-price it and it predicts ISO, not incremental WAR, so
-    leaving it out is xFV's power-overpricing correction. It is a regularized ridge on ~3,800
+    leaving it out is eFV's power-overpricing correction. It is a regularized ridge on ~3,800
     labeled prospects (2011-2023), rate features sample-shrunk so a cup of coffee does not read as
     a track record.</p>
     <p><strong>The guarded blend.</strong> The headline ranking is a guarded blend,
     rank = (1-λ)·(consensus→WAR) + λ·(model→WAR), where λ is <em>WAG-calibrated</em>: the trust
-    that realized WAR-Above-Grade supports for xFV's adjustment, fit forward-chained
+    that realized WAR-Above-Grade supports for eFV's adjustment, fit forward-chained
     (hitters ~0.85; pitchers shrink harder, since consensus is the stronger pitcher signal). The
-    blend cannot fall far below the consensus prior, and leans on xFV where its edge is real.</p>
-    <p><strong>Two grades, one model.</strong> The <em>headline</em> xFV is a rank-preserving
+    blend cannot fall far below the consensus prior, and leans on eFV where its edge is real.</p>
+    <p><strong>Two grades, one model.</strong> The <em>headline</em> eFV is a rank-preserving
     quantile map of that blended ranking onto the consensus 20-80 distribution (so it reads on the
     scale you know); a deflated <em>realized-implied</em> grade - typically lower, because scout FV
     runs optimistic - drives the surplus + the 5-bucket outcome mix. Live prospects also get two
     bounded tilts: an injury penalty (current IL + recent IL load + post-TJ) and a Statcast+
     quality tilt on upper-level prospects.</p>
-    <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an xFV: the
+    <p><strong>Everywhere, frozen at debut.</strong> Every graded prospect carries an eFV: the
     active boards, graduates (backgraded at their final pre-debut snapshot, then <em>locked</em>),
     and the farm-system rankings, surplus, DvM+, and movement engine all run on it. Players with no
     pro track record (recent draftees, int'l signs) fall back to the consensus prior until they
     play.</p>
     <p class="meth-verdict is-good">On out-of-sample, leakage-free, forward-chained tests of how
-    well each grade ordered what prospects became, xFV out-predicts every public source: the PROSPX
+    well each grade ordered what prospects became, eFV out-predicts every public source: the PROSPX
     consensus, MLB Pipeline, and FanGraphs. The Source Comparison tab has the head-to-head numbers.
-    xFV is <strong>provisional</strong> and near the data's rank ceiling; its historical track is a
+    eFV is <strong>provisional</strong> and near the data's rank ceiling; its historical track is a
     current-model retrospective, not the grade we showed at the time.</p>
 
-    <h2 class="meth-h">How the consensus FV (xFV's prior) is built</h2>
-    <p>The consensus FV is the scout-grade aggregate xFV anchors on, and the reference shown
-    alongside xFV everywhere. Every source that publishes an explicit 20–80 Future Value grade feeds an
+    <h2 class="meth-h">How the consensus FV (eFV's prior) is built</h2>
+    <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
+    alongside eFV everywhere. Every source that publishes an explicit 20–80 Future Value grade feeds an
     <strong>accuracy-weighted</strong> consensus. Each source's vote weight comes from its
     measured track record on resolved cohorts, shrunk hard toward equal and clamped, so the
     weights barely move off one vote - today only MLB Pipeline (1.06) and FanGraphs (0.94)
@@ -358,13 +358,13 @@ function _methProseHTML() {
       leans on.</dd>
 
       <dt>DvM+ - Development vs Mean <span class="meth-tag">farm system</span></dt>
-      <dd>A wRC+-style index of organizational development: an org's cumulative <strong>xFV</strong>
+      <dd>A wRC+-style index of organizational development: an org's cumulative <strong>eFV</strong>
       growth over a 1 / 3 / 6-year window scored against the league-mean farm (100 = mean, +10 =
       one standard deviation). Acquisitions are nullified and graduations don't subtract, so it
       measures only development of prospects already in the system. The farm grade weights
       6y / 3y / 1y at 60 / 30 / 10%. ($DvM+, the per-prospect surplus-development index, is also
-      xFV-based; ToolDvM+ stays on per-tool scout-grade growth, since the tool grades have no
-      separate xFV time series.)</dd>
+      eFV-based; ToolDvM+ stays on per-tool scout-grade growth, since the tool grades have no
+      separate eFV time series.)</dd>
 
       <dt>RPS+ - Rate Performance Score <span class="meth-tag">prospect</span></dt>
       <dd>A level-anchored rate index (OPS+ for hitters, ERA- for pitchers) normalized against
@@ -396,8 +396,8 @@ function _methProseHTML() {
     <h2 class="meth-h">Surplus value - the economic model</h2>
     <p>A prospect is an asset because the six years of team control after debut are paid below
     market. Surplus value is the dollar production those controlled years are expected to deliver
-    above what they cost. The grade priced here is <strong>xFV</strong> (the consensus FV is the
-    fallback where xFV abstains); the pricing engine below is grade-agnostic - it takes whatever
+    above what they cost. The grade priced here is <strong>eFV</strong> (the consensus FV is the
+    fallback where eFV abstains); the pricing engine below is grade-agnostic - it takes whatever
     grade leads and converts it to dollars:</p>
     <p class="meth-eq">surplus = (expected WAR × $/WAR) − cost basis, probability-weighted across outcomes and discounted to present value</p>
     <p>The build, in order: (1) the <strong>FV→WAR anchor</strong> converts the scouting grade to an
@@ -510,7 +510,7 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
   const W = 580, H = 250, ML = 46, MR = 16, MT = 16, MB = 40;
   const iW = W - ML - MR, iH = H - MT - MB;
   const tiers = _TIER_ORDER;
-  // xFV joins the FV-tier lines whenever its cohort is present (primary, drawn boldest).
+  // eFV joins the FV-tier lines whenever its cohort is present (primary, drawn boldest).
   const raterList = bt.raters.concat(bt.cohorts.xfv ? ["xfv"] : []);
   const series = raterList.map(r => {
     const tmap = {}; ((bt.cohorts[r] && bt.cohorts[r].tiers) || []).forEach(t => { tmap[t.tier] = t; });
@@ -543,10 +543,10 @@ function _methCalibrationChart(bt, metricKey, metricLabel, opts) {
       d += ` C ${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2.x.toFixed(1)},${p2.y.toFixed(1)}`;
     }
     const col = _raterMeta(s.rater).color;
-    const isXfv = s.rater === "xfv";
-    const emph = isXfv || s.rater === "prospx_consensus";   // both drawn solid; xFV boldest
-    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isXfv ? 3.8 : emph ? 3.2 : 2.5}" fill="${col}"/>`).join("");
-    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${isXfv ? 2.8 : emph ? 2.4 : 1.6}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round"/>${dots}`;
+    const isEfv = s.rater === "xfv";
+    const emph = isEfv || s.rater === "prospx_consensus";   // both drawn solid; eFV boldest
+    const dots = pts.map(p => `<circle cx="${p.x.toFixed(1)}" cy="${p.y.toFixed(1)}" r="${isEfv ? 3.8 : emph ? 3.2 : 2.5}" fill="${col}"/>`).join("");
+    return `<path d="${d}" fill="none" stroke="${col}" stroke-width="${isEfv ? 2.8 : emph ? 2.4 : 1.6}" ${emph ? "" : 'stroke-dasharray="5,3"'} stroke-linecap="round"/>${dots}`;
   }).join("");
   const legend = raterList.map(r =>
     `<span class="meth-legend-key"><span class="meth-legend-swatch" style="background:${_raterMeta(r).color};"></span>${escapeHtml(_raterMeta(r).label)}</span>`).join("");
@@ -591,7 +591,7 @@ function _methAccuracyChart(bt) {
   let verdict;
   if (x && x.spearman != null && c && c.spearman != null) {
     const f3 = v => (v == null ? "-" : v.toFixed(3));
-    verdict = `<p class="meth-verdict is-good">Out of sample, leakage-free, on the players it grades, <strong>xFV orders realized WAR better than every grade on the board</strong>: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline, ${f3(fg && fg.spearman)} for FanGraphs; it also leads on contributor AUC, ${f3(x.auc)} to ${f3(c.auc)}. The consensus is the strongest public-style input, but xFV beats the consensus itself, and that gap is the reason it is the primary grade, not the consensus's edge over its inputs. The lead holds across recent cohorts and FV tiers; it is bounded, a few Spearman points (see caveats).</p>`;
+    verdict = `<p class="meth-verdict is-good">Out of sample, leakage-free, on the players it grades, <strong>eFV orders realized WAR better than every grade on the board</strong>: Spearman ${f3(x.spearman)}, against ${f3(c.spearman)} for the PROSPX consensus, ${f3(mlb && mlb.spearman)} for MLB Pipeline, ${f3(fg && fg.spearman)} for FanGraphs; it also leads on contributor AUC, ${f3(x.auc)} to ${f3(c.auc)}. The consensus is the strongest public-style input, but eFV beats the consensus itself, and that gap is the reason it is the primary grade, not the consensus's edge over its inputs. The lead holds across recent cohorts and FV tiers; it is bounded, a few Spearman points (see caveats).</p>`;
   } else {
     verdict = `<p class="meth-verdict">On the common set of ${bt.accuracy.common_n.toLocaleString()} players, the consensus is competitive with its inputs but does not lead on every metric (reported as measured, not cherry-picked).</p>`;
   }
@@ -601,9 +601,9 @@ function _methAccuracyChart(bt) {
   </div>`;
 }
 
-// xFV vs consensus FV - our outcome-grounded model, shown SEPARATELY from the per-source
+// eFV vs consensus FV - our outcome-grounded model, shown SEPARATELY from the per-source
 // bars because it runs on its own out-of-sample protocol (the harder, conservative bar).
-function _methXfvPanel(bt) {
+function _methEfvPanel(bt) {
   const xc = bt.xfv_vs_consensus;
   if (!xc || !xc.sides) return "";
   const W = v => Math.max(2, (v / 0.4) * 100).toFixed(1);
@@ -622,8 +622,8 @@ function _methXfvPanel(bt) {
     return `<div class="meth-metric">
       <div class="meth-metric-title">${escapeHtml(label)} <span class="meth-sub">n=${s.n}</span></div>
       <div class="meth-bar-row"><span class="meth-bar-label">Consensus FV</span><span class="meth-bar-track"><span class="meth-bar-fill" style="width:${W(s.consensus_spearman)}%;background:var(--text-secondary);"></span></span><span class="meth-bar-val">${s.consensus_spearman.toFixed(3)}</span></div>
-      <div class="meth-bar-row"><span class="meth-bar-label">xFV</span><span class="meth-bar-track"><span class="meth-bar-fill is-consensus" style="width:${W(s.xfv_spearman)}%;background:var(--neon-cyan);"></span></span><span class="meth-bar-val${win ? " is-best" : ""}">${s.xfv_spearman.toFixed(3)}${win ? " ★" : ""}</span></div>
-      ${eraRows ? `<div class="table-scroll-x" style="margin-top:6px;"><table class="meth-table"><thead><tr><th>Debut era</th><th>n</th><th>Consensus ρ</th><th>xFV ρ</th></tr></thead><tbody>${eraRows}</tbody></table></div>` : ""}
+      <div class="meth-bar-row"><span class="meth-bar-label">eFV</span><span class="meth-bar-track"><span class="meth-bar-fill is-consensus" style="width:${W(s.xfv_spearman)}%;background:var(--neon-cyan);"></span></span><span class="meth-bar-val${win ? " is-best" : ""}">${s.xfv_spearman.toFixed(3)}${win ? " ★" : ""}</span></div>
+      ${eraRows ? `<div class="table-scroll-x" style="margin-top:6px;"><table class="meth-table"><thead><tr><th>Debut era</th><th>n</th><th>Consensus ρ</th><th>eFV ρ</th></tr></thead><tbody>${eraRows}</tbody></table></div>` : ""}
     </div>`;
   };
   // Per-FV-tier head-to-head + the resolved "receipts" (where they disagreed, who was right).
@@ -637,45 +637,45 @@ function _methXfvPanel(bt) {
         <td style="color:${win ? "var(--up)" : "var(--text-secondary)"};font-weight:${win ? 700 : 400};">${t.xfv_spearman != null ? t.xfv_spearman.toFixed(3) : " - "}${win ? " ★" : ""}</td></tr>`;
     }).join("");
     tierTable = `<div class="meth-table-wrap"><div class="meth-table-title">By FV tier <span class="meth-sub">ordering skill (Spearman ρ) within each consensus-FV bucket</span></div>
-      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>FV tier</th><th>n</th><th>Consensus ρ</th><th>xFV ρ</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
+      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>FV tier</th><th>n</th><th>Consensus ρ</th><th>eFV ρ</th></tr></thead><tbody>${rows}</tbody></table></div></div>`;
   }
   if (det && det.receipts && det.receipts.length) {
     const rr = det.receipts.map(r => {
       const ok = r.xfv_right;
-      return `<tr><td>${escapeHtml(r.name)}</td><td>${r.consensus_fv}</td><td>xFV ${escapeHtml(r.dir)}</td><td>${r.war}</td>
-        <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "xFV ✓" : "consensus ✓"}</td></tr>`;
+      return `<tr><td>${escapeHtml(r.name)}</td><td>${r.consensus_fv}</td><td>eFV ${escapeHtml(r.dir)}</td><td>${r.war}</td>
+        <td style="color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "eFV ✓" : "consensus ✓"}</td></tr>`;
     }).join("");
     const share = det.xfv_right_share_on_disagreements;
-    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; on ${det.n_disagreements || "?"} clear grade disagreements (xFV vs consensus &ge;15 percentile apart), xFV was closer ${share != null ? Math.round(share * 100) : "?"}% of the time</span></div>
-      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>xFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
+    receipts = `<div class="meth-table-wrap"><div class="meth-table-title">Biggest disagreements - who was right <span class="meth-sub">resolved players; on ${det.n_disagreements || "?"} clear grade disagreements (eFV vs consensus &ge;15 percentile apart), eFV was closer ${share != null ? Math.round(share * 100) : "?"}% of the time</span></div>
+      <div class="table-scroll-x"><table class="meth-table"><thead><tr><th>Player</th><th>Consensus FV</th><th>eFV said</th><th>Career WAR</th><th>Closer</th></tr></thead><tbody>${rr}</tbody></table></div></div>`;
   }
   return `<div class="meth-chart meth-accuracy">
-    <div class="meth-chart-title">xFV vs consensus FV <span class="meth-sub">our model · out-of-sample</span></div>
+    <div class="meth-chart-title">eFV vs consensus FV <span class="meth-sub">our model · out-of-sample</span></div>
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
     ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
     ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
-    <p class="meth-verdict is-good">xFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019–2023 cohorts, so it is not merely exploiting older, less-accurate scouting. xFV is the primary grade; consensus FV remains a reference input. (This is xFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
+    <p class="meth-verdict is-good">eFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019–2023 cohorts, so it is not merely exploiting older, less-accurate scouting. eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
     ${tierTable}
     ${receipts}
   </div>`;
 }
 
-// Findings-led callout strip: the headline numbers that make the xFV case, pulled live from
+// Findings-led callout strip: the headline numbers that make the eFV case, pulled live from
 // the backtest so they never drift from the artifact. Cards read stat -> what it means.
-function _methXfvFindings(bt) {
+function _methEfvFindings(bt) {
   const p = (bt.accuracy && bt.accuracy.pooled) || {};
   const det = bt.accuracy && bt.accuracy.xfv_vs_consensus_detail;
   const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
   if (!x || x.spearman == null) return "";
   const f3 = v => (v == null ? "-" : v.toFixed(3));
   const cards = [];
-  cards.push({ stat: f3(x.spearman), label: "xFV ranking skill (Spearman ρ vs realized WAR)",
+  cards.push({ stat: f3(x.spearman), label: "eFV ranking skill (Spearman ρ vs realized WAR)",
     sub: `best of every grader &middot; consensus ${f3(c && c.spearman)} &middot; FanGraphs ${f3(fg && fg.spearman)} &middot; MLB ${f3(mlb && mlb.spearman)}` });
   if (det && det.per_tier) {
-    // Surface the tier where xFV finds the STRONGEST real ordering the consensus misses
-    // (highest xFV ρ among tiers it beats consensus). Dynamic, so it tracks the model rather
+    // Surface the tier where eFV finds the STRONGEST real ordering the consensus misses
+    // (highest eFV ρ among tiers it beats consensus). Dynamic, so it tracks the model rather
     // than hardcoding one tier -- after the cohort+milb_missing upgrade that is the FV-55 band
-    // (consensus near-random ~0.06 -> xFV ~0.20), not the FV-50 middle.
+    // (consensus near-random ~0.06 -> eFV ~0.20), not the FV-50 middle.
     const beats = det.per_tier.filter(t => t.xfv_spearman != null && t.consensus_spearman != null
       && t.xfv_spearman > t.consensus_spearman)
       .sort((a, b) => b.xfv_spearman - a.xfv_spearman);
@@ -684,14 +684,14 @@ function _methXfvFindings(bt) {
       cards.push({ stat: `${t.consensus_spearman.toFixed(2)}→${t.xfv_spearman.toFixed(2)}`,
         label: `Sharpest edge: the FV-${t.tier} tier`,
         sub: Math.abs(t.consensus_spearman) < 0.12
-          ? "consensus is near-random there; xFV finds real ordering"
-          : "xFV sharpens the ordering consensus leaves on the table" });
+          ? "consensus is near-random there; eFV finds real ordering"
+          : "eFV sharpens the ordering consensus leaves on the table" });
   }
   if (det && det.xfv_right_share_on_disagreements != null)
     cards.push({ stat: `${Math.round(det.xfv_right_share_on_disagreements * 100)}%`,
-      label: "xFV closer on the biggest disagreements", sub: "resolved players where xFV & consensus most diverged" });
+      label: "eFV closer on the biggest disagreements", sub: "resolved players where eFV & consensus most diverged" });
   if (x.auc != null)
-    cards.push({ stat: f3(x.auc), label: "xFV AUC (predicts “becomes a contributor”)",
+    cards.push({ stat: f3(x.auc), label: "eFV AUC (predicts “becomes a contributor”)",
       sub: `consensus ${f3(c && c.auc)} &middot; FanGraphs ${f3(fg && fg.auc)} &middot; MLB ${f3(mlb && mlb.auc)}` });
   return `<div class="meth-findings">${cards.map(cd => `
     <div class="meth-find-card">
@@ -760,8 +760,8 @@ function _methArchetypeNote(bt) {
   const ba = bt.accuracy && bt.accuracy.by_archetype;
   if (!ba || !ba.length) return "";
   const XFV = "xfv";
-  let xfvWins = 0, total = 0;
-  const losses = [];   // archetypes where xFV trails the best public grade
+  let efvWins = 0, total = 0;
+  const losses = [];   // archetypes where eFV trails the best public grade
   ba.forEach(a => {
     const entries = Object.entries(a.raters)
       .filter(([, v]) => v && v.auc != null).map(([r, v]) => [r, v.auc]);
@@ -769,14 +769,14 @@ function _methArchetypeNote(bt) {
     if (xa == null || !entries.length) return;
     total++;
     const best = Math.max(...entries.map(([, v]) => v));
-    if (xa >= best - 1e-9) { xfvWins++; return; }
+    if (xa >= best - 1e-9) { efvWins++; return; }
     const winner = entries.find(([, v]) => v === best);
     losses.push({ label: a.label, rater: winner ? winner[0] : null, auc: best, xa });
   });
   if (!total) return "";
-  const lead = `<strong>xFV grades best (highest AUC) in ${xfvWins} of ${total} archetypes.</strong>`;
+  const lead = `<strong>eFV grades best (highest AUC) in ${efvWins} of ${total} archetypes.</strong>`;
   const lose = losses.length
-    ? ` It trails only on ${losses.map(l => `${escapeHtml(l.label)} (${escapeHtml(_raterMeta(l.rater).label)} ${l.auc.toFixed(3)} vs xFV ${l.xa.toFixed(3)})`).join(", ")} - the youngest, lowest-track-record cohorts, where scouting projection still reads best and xFV leans on the consensus prior.`
+    ? ` It trails only on ${losses.map(l => `${escapeHtml(l.label)} (${escapeHtml(_raterMeta(l.rater).label)} ${l.auc.toFixed(3)} vs eFV ${l.xa.toFixed(3)})`).join(", ")} - the youngest, lowest-track-record cohorts, where scouting projection still reads best and eFV leans on the consensus prior.`
     : ` It leads every archetype on the board.`;
   return `<p class="meth-note">${lead}${lose}</p>`;
 }
@@ -1222,21 +1222,21 @@ function renderSourceComparison() {
   } else {
     const od = bt.outcome_defs || {};
     backtestHTML = `
-      <h2 class="meth-h">Does xFV outperform its sources?</h2>
-      <p class="meth-window">xFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of xFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
-      ${_methXfvFindings(bt)}
+      <h2 class="meth-h">Does eFV outperform its sources?</h2>
+      <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
+      ${_methEfvFindings(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>
       ${_methAccuracyChart(bt)}
-      ${_methXfvPanel(bt)}
+      ${_methEfvPanel(bt)}
       <h3 class="meth-h3">Where each grade wins, by prospect archetype</h3>
-      <p class="meth-note">xFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
+      <p class="meth-note">eFV leads the field overall and on most archetypes; the few it trails (often HS arms / int'l bats, the youngest, lowest-track-record cohorts) are where the scouting consensus still reads projection best. The obvious adds (signing bonus, draft slot) are already priced into consensus FV, so out-of-sample they cost more than they returned.</p>
       ${_methArchetypeTable(bt)}
       <div class="meth-chart-grid">
         ${_methCaptureCurve(bt)}
         ${_methCalibrationChart(bt, "contributor_rate", "Contributor rate (career WAR ≥ " + (od.contributor_war ?? 3) + ")", { pct: true, yMax: 1 })}
       </div>
       <h3 class="meth-h3">Cohort outcomes by FV tier</h3>
-      <p class="meth-note">Every prospect a source graded that preseason is in its cohort - players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that. <strong>xFV note:</strong> xFV is shown on its out-of-sample resolved cohort, which is debuted-heavy (its grades come from the labeled training pool), so its absolute WAR/contributor levels run a touch higher than the sources' full cohorts - compare the <em>shape</em> of the tier separation, not the absolute height.</p>
+      <p class="meth-note">Every prospect a source graded that preseason is in its cohort - players who never debuted stay in at 0 WAR (no survivorship cherry-picking). Cumulative WAR is censored at today, so younger cohorts (2023) have had less time to accrue it; the rate columns (WAR/yr, Reg pace) are less sensitive to that. <strong>eFV note:</strong> eFV is shown on its out-of-sample resolved cohort, which is debuted-heavy (its grades come from the labeled training pool), so its absolute WAR/contributor levels run a touch higher than the sources' full cohorts - compare the <em>shape</em> of the tier separation, not the absolute height.</p>
       <div class="meth-tables">${bt.raters.concat(bt.cohorts.xfv ? ["xfv"] : []).map(r => _methTierTable(bt, r)).join("")}</div>
       <div class="meth-caveats">
         <div class="meth-caveats-title">⚠ Read this honestly</div>
@@ -1244,8 +1244,8 @@ function renderSourceComparison() {
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
           <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
-          <li><strong>xFV's edge is real but bounded.</strong> xFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). It trails the consensus on a couple of young, low-track-record archetypes, and the margins are a few Spearman points: a calibrated grade that out-ranks the field by a steady, defensible amount, not a perfect predictor.</li>
-          <li><strong>xFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
+          <li><strong>eFV's edge is real but bounded.</strong> eFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). It trails the consensus on a couple of young, low-track-record archetypes, and the margins are a few Spearman points: a calibrated grade that out-ranks the field by a steady, defensible amount, not a perfect predictor.</li>
+          <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>
         </ul>
       </div>`;
   }

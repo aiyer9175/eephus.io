@@ -22,7 +22,7 @@
  "adjustment_direction_check": {
   "spearman_adj_vs_consensus_miss": 0.1159,
   "n": 502,
-  "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
+  "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
   "xfv": 6857.9,

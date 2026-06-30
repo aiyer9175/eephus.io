@@ -37,7 +37,7 @@ log = logging.getLogger(__name__)
 
 CACHE_DIR = Path(__file__).parent / ".cache" / "milb_stats"
 # Past-season milb caches are final and live forever; the CURRENT season refreshes once its
-# cache file ages past this TTL so the xFV model's stats track in-season production instead
+# cache file ages past this TTL so the eFV model's stats track in-season production instead
 # of freezing on the season's first fetch (the bulk per-sport fetch is cheap).
 _SEASON_TTL_SEC = 20 * 3600
 

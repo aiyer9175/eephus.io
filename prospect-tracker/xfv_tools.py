@@ -1,18 +1,18 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 
-"""xFV Pass 5 -- tool xFVs, grounded in the realized MLB stat each tool predicts.
+"""eFV Pass 5 -- tool eFVs, grounded in the realized MLB stat each tool predicts.
 
 For each gradeable tool we (1) take the player's realized MLB outcome stat (from
 career_stats MLB rows), (2) measure how well the consensus tool grade ranks it
 (baseline), and (3) measure whether the relevant pre-debut MiLB production adds
-signal BEYOND the grade (rank-partial, the Phase-1 method). The tool xFV blends
+signal BEYOND the grade (rank-partial, the Phase-1 method). The tool eFV blends
 grade (prior) + production where production earns it, re-expressed on the 20-80
 tool scale by a rank-preserving map onto the consensus grade distribution.
 
 Honest scope: tools with a clean realized target are modeled (power->ISO,
 hit->AVG/contact, speed->SB; pitcher stuff->K%, command->BB%). Field / arm /
-individual pitch SHAPES have no clean realized metric in our data -> the tool xFV
+individual pitch SHAPES have no clean realized metric in our data -> the tool eFV
 passes the consensus grade through unchanged, disclosed as such.
 
 Artifacts: data/xfv_tools.json (+ report). Run: python xfv_tools.py
@@ -172,7 +172,7 @@ def run(persist: bool = True) -> dict:
             if len(sub) >= 20:
                 partial = _partial_after_grade([s[0] for s in sub],
                                                [s[1] for s in sub], [s[2] for s in sub])
-        # tool xFV score = z(grade) + w*z(milb), w from the partial (cap 0.5).
+        # tool eFV score = z(grade) + w*z(milb), w from the partial (cap 0.5).
         # The partial is IN-SAMPLE, so GATE the applied weight on a forward-chained
         # OOS check (the platform's own bar): keep the blend only where it beats
         # grade-only out-of-sample; otherwise zero it (grade-only).
@@ -206,7 +206,7 @@ def run(persist: bool = True) -> dict:
         "modeled_tools": report,
         "passthrough_tools": _PASSTHROUGH,
         "passthrough_reason": "no clean realized MLB metric in our data; consensus grade used as-is",
-        "method": ("tool xFV = consensus grade (prior) + pre-debut MiLB production where it "
+        "method": ("tool eFV = consensus grade (prior) + pre-debut MiLB production where it "
                    "adds signal beyond the grade (rank-partial), mapped onto the 20-80 grade "
                    "scale. Validated vs grade-only on realized MLB stats."),
         "n_players_with_tool_xfv": len(tool_out),
@@ -257,7 +257,7 @@ def _fit_blend(tool, spec, train_rows, realized):
 
 
 def run_live(persist: bool = True) -> dict:
-    """Tool xFVs for the CURRENT active prospect board. Apply the production blend weight
+    """Tool eFVs for the CURRENT active prospect board. Apply the production blend weight
     learned from resolved players (run()) to each live player's tool grade + pre-decision
     MiLB production, then rank-map onto the LIVE pool's consensus grade distribution so the
     units match the tool grades shown on the site. Modeled tools only (pass-through tools
@@ -271,7 +271,7 @@ def run_live(persist: bool = True) -> dict:
         side = spec["side"]
         blend = _fit_blend(tool, spec, train[side], realized)
         # live players gate on pro track record (milb present) -- same rule as the
-        # headline live grade -- so a tool xFV only exists where production grounds it.
+        # headline live grade -- so a tool eFV only exists where production grounds it.
         lrows = [r for r in live[side]
                  if r.get(spec["grade"]) is not None and r.get("milb")]
         if blend is None or not lrows:
@@ -320,16 +320,16 @@ if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     if "--live" in sys.argv:
         rep = run_live()
-        print("LIVE tool xFV:", rep["n_players_with_tool_xfv"], "players")
+        print("LIVE tool eFV:", rep["n_players_with_tool_xfv"], "players")
         for t, d in rep["modeled_tools"].items():
             print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_production')}")
         sys.exit(0)
     rep = run()
-    print("tool xFV validation (realized MLB stat):")
+    print("tool eFV validation (realized MLB stat):")
     for t, d in rep["modeled_tools"].items():
         if d.get("n", 0) >= 20:
             print(f"  {t:9s} n={d['n']:4d} stat={d['realized_stat']:7s} "
                   f"grade-only rho={d['grade_only_spearman']} | partial={d['production_partial_after_grade']} "
-                  f"| tool-xFV rho={d['tool_xfv_spearman']} | adds={d['adds_over_grade']}")
+                  f"| tool-eFV rho={d['tool_xfv_spearman']} | adds={d['adds_over_grade']}")
     print("passthrough (no realized target):", ", ".join(rep["passthrough_tools"]))
-    print("players with >=1 tool xFV:", rep["n_players_with_tool_xfv"])
+    print("players with >=1 tool eFV:", rep["n_players_with_tool_xfv"])

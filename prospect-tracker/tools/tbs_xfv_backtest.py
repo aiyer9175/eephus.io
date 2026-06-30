@@ -3,19 +3,19 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Tiebreaker-Score (TBS) xFV-awareness backtest.
+"""Tiebreaker-Score (TBS) eFV-awareness backtest.
 
 The frontend TBS arbitrates the order of prospects who TIE on surfaced consensus
-FV (and the '+' upside flag). v41 folds the xFV decimal in as the DOMINANT TBS
-input where the prospect is xFV-rated. This backtest answers the owner mandate
-("ship gains, not losses"): does ordering same-consensus-FV prospects by the xFV
+FV (and the '+' upside flag). v41 folds the eFV decimal in as the DOMINANT TBS
+input where the prospect is eFV-rated. This backtest answers the owner mandate
+("ship gains, not losses"): does ordering same-consensus-FV prospects by the eFV
 decimal track REALIZED MLB outcomes?
 
 Basis: data/xfv_backgrade.json `scored` -- debuted players re-graded as-of-prospect
 (xfv_grade + consensus_fv) with realized_war (career bWAR so far). Within each
-snapped-consensus-FV tier (the tie groups TBS arbitrates), we Spearman the xFV
-decimal against realized WAR; a positive pooled value means xFV adds ordering
-signal beyond consensus FV -> the xFV-aware tiebreaker is a gain.
+snapped-consensus-FV tier (the tie groups TBS arbitrates), we Spearman the eFV
+decimal against realized WAR; a positive pooled value means eFV adds ordering
+signal beyond consensus FV -> the eFV-aware tiebreaker is a gain.
 
 Run: python tools/tbs_xfv_backtest.py
 """
@@ -74,8 +74,8 @@ def run() -> dict:
     for s in rows:
         tiers[round(s["consensus_fv"] / TIER_SNAP) * TIER_SNAP].append(s)
 
-    # Candidate within-tier TBS signals: the xFV grade decimal vs the finer
-    # xFV-implied expected WAR (xfv_war_6yr). The chosen TBS input is whichever
+    # Candidate within-tier TBS signals: the eFV grade decimal vs the finer
+    # eFV-implied expected WAR (xfv_war_6yr). The chosen TBS input is whichever
     # orders same-consensus-FV prospects by realized WAR best.
     candidates = {
         "xfv_grade":   lambda s: s.get("xfv_grade"),
@@ -132,10 +132,10 @@ def _pb(s, k):
 
 
 def run_within_xfv_grade() -> dict:
-    """SAME-xFV-GRADE tiebreaker probe (owner ask 2026-06-26): once prospects are
-    ranked by xFV, is there a FINER signal that orders prospects who share an xFV
-    grade by realized WAR better than the continuous xFV decimal the board already
-    sorts on? Ties on the DISPLAYED (ceil) xFV grade; Spearmans each candidate vs
+    """SAME-eFV-GRADE tiebreaker probe (owner ask 2026-06-26): once prospects are
+    ranked by eFV, is there a FINER signal that orders prospects who share an eFV
+    grade by realized WAR better than the continuous eFV decimal the board already
+    sorts on? Ties on the DISPLAYED (ceil) eFV grade; Spearmans each candidate vs
     realized WAR within those groups. A clearly higher mean than the continuous
     grade would be headroom; ~0 across the board means the grade is at its ceiling
     and a finer tiebreaker would fit noise (a committed loss)."""
@@ -185,7 +185,7 @@ def run_within_xfv_grade() -> dict:
         }
     # Ceiling verdict: at the EXACT-grade granularity, per-tier N is ~100 so the
     # Spearman noise SE is ~0.1. If NO candidate even clears a 0.03 floor, there
-    # is no exploitable same-grade ordering signal left -> the continuous xFV
+    # is no exploitable same-grade ordering signal left -> the continuous eFV
     # grade is at its data ceiling and a finer tiebreaker would fit noise. (The
     # nominal "best" can edge the current grade by a hair, but only between two
     # near-zero, noise-level values -> not a shippable gain.)
@@ -203,9 +203,9 @@ if __name__ == "__main__":
           f"(within-tier weighted-mean Spearman vs realized WAR = {rep['within_tier_weighted_mean']})")
     print("GAIN" if rep["verdict_gain"] else "NOT A CLEAR GAIN")
 
-    print("\n=== SAME-xFV-GRADE tiebreaker probe (headroom check) ===")
+    print("\n=== SAME-eFV-GRADE tiebreaker probe (headroom check) ===")
     g = run_within_xfv_grade()
     print(json.dumps(g, indent=2))
     print("\nTiebreaker is AT ITS DATA CEILING (no finer same-grade signal helps)"
           if g["at_data_ceiling"]
-          else "\nHEADROOM: a finer same-grade signal beats the continuous xFV grade")
+          else "\nHEADROOM: a finer same-grade signal beats the continuous eFV grade")

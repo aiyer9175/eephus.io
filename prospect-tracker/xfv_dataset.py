@@ -3,9 +3,9 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""xFV Pass 1 -- leakage-clean as-of feature matrix + KM-censored labels (HITTERS).
+"""eFV Pass 1 -- leakage-clean as-of feature matrix + KM-censored labels (HITTERS).
 
-This is the training SUBSTRATE for the xFV flagship model. It assembles one row per
+This is the training SUBSTRATE for the eFV flagship model. It assembles one row per
 resolved/censored prospect with features built strictly as-of a pre-outcome decision
 point, attaches a first-6-MLB-season bWAR label with censoring handling, and reproduces
 the consensus-FV-only baseline that the model must match or beat. NO MODEL IS FIT HERE.
@@ -163,7 +163,7 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
 # sample size, w = exposure / (exposure + K). A small-sample cup-of-coffee (e.g. a 3-PA
 # AAA cameo with a fluky .98 OBP) collapses to ~0 instead of reading as elite; a full
 # season is barely touched. Without this, cameos produced absurd grades (a 37-FV org bat
-# read 53 xFV off a few AAA PA). K is roughly a quarter-season of exposure.
+# read 53 eFV off a few AAA PA). K is roughly a quarter-season of exposure.
 _K_REL_PA = 100.0
 _K_REL_BF = 80.0
 
@@ -346,7 +346,7 @@ def _load_sidecars(player_keys: set[str]):
 def _cohort_flags(method, year, birth_date) -> tuple[float, float]:
     """Acquisition-cohort indicators used as model features. is_ifa = signed as an
     international free agent; is_college = drafted out of college (age>=21 in the draft
-    year, the leakage-free split the xFV sweep validated). HS draftees / unknown are (0,0).
+    year, the leakage-free split the eFV sweep validated). HS draftees / unknown are (0,0).
     The ridge re-centers each cohort's intercept -> sharper CROSS-tier ordering (OOS gain:
     hit +0.024, pit cohort-interactions +0.011)."""
     is_ifa = 1.0 if method == "international_fa" else 0.0
@@ -476,9 +476,9 @@ def build_live_matrix(side: str = "hit"):
     sourced from the live board (data/timeseries.json `players[]`), with the
     decision point = the latest snapshot (cutoff=None) and NO outcome label.
 
-    Reads timeseries.json (the export output) so the xFV grades line up exactly with
+    Reads timeseries.json (the export output) so the eFV grades line up exactly with
     the consensus FV the site displays. Captures age + eta_years + the engine's
-    consensus surplus so the scorer can price xFV vs consensus on identical timing.
+    consensus surplus so the scorer can price eFV vs consensus on identical timing.
     Run AFTER the site export (run_monthly / build_site) has written timeseries.json.
     """
     is_pit = side == "pit"

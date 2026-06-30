@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
-"""xFV experiment runner -- shared, deterministic, forward-chained compute for the
-xFV improvement sweep. Reuses the SHIPPED model machinery (xfv_model._vec / _fit_ridge /
+"""eFV experiment runner -- shared, deterministic, forward-chained compute for the
+eFV improvement sweep. Reuses the SHIPPED model machinery (xfv_model._vec / _fit_ridge /
 _fit_ols_fv / blend), so a 'gain' here is a real out-of-sample, leakage-clean gain on the
 same protocol data/xfv_eval.json uses.
 
