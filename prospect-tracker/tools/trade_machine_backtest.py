@@ -231,7 +231,7 @@ def run(write: bool = True) -> dict:
             "predictor": "trade_values.json trade_value_mm = apply_platform_surplus "
                          "(xfv.surplus_mm for prospects, mlb_projections surNpv/1e6 for MLB, "
                          "xfv backgrade fallback)",
-            "target": "xfv.realized_war = full career bWAR (xfv_score.py) - RANK only, "
+            "target": "xfv.realized_war = full career bWAR (efv_score.py) - RANK only, "
                       "NOT unit-comparable to remaining-control surplus $",
             "metric": "rank-Spearman + AUC(useful-asset); higher is better",
             "ship_rule": "board surplus Spearman >= consensus_fv pooled AND wins within-tier "

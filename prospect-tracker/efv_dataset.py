@@ -36,7 +36,7 @@ Design (per docs/xfv-phase1-plan.md, owner sign-off 2026-06-21):
              debuted-only, full-pool resolved, and KM-censored full pool.
 
 Artifacts: data/xfv_hitter_matrix.json (the matrix) + data/xfv_dataset_report.json.
-Run: python xfv_dataset.py
+Run: python efv_dataset.py
 """
 
 from __future__ import annotations

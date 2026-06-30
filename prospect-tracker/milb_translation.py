@@ -106,11 +106,11 @@ def _project_actives(fits: dict) -> dict:
     with a fit). BB% carries low_confidence when r2 is weak."""
     out: dict = {}
     try:
-        import xfv_score
+        import efv_score
     except ImportError:
         return out
     try:
-        rows = json.loads(xfv_score.live_matrix_path("hit").read_text(encoding="utf-8"))
+        rows = json.loads(efv_score.live_matrix_path("hit").read_text(encoding="utf-8"))
     except (OSError, ValueError):
         return out
     for r in rows:

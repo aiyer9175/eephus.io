@@ -497,7 +497,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # The forward-chained backtest eval (registry artifact) is stable -> not re-run
     # here. Best-effort; a failure must not abort the run. Provisional grade.
     try:
-        from xfv_export import regen_all as _regen_xfv
+        from efv_export import regen_all as _regen_xfv
         _xfv = _regen_xfv()
         log.info("eFV (rebuild): %d players (%d live board) -> data/xfv.json",
                  _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
@@ -518,7 +518,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # quality), forward-validated on recent debut cohorts. Separate artifact, NOT eFV; pulls
     # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
     try:
-        import xfv_proxy as _xfv_proxy
+        import efv_proxy as _xfv_proxy
         _xp = _xfv_proxy.run()
         log.info("eFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
                  _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
@@ -587,7 +587,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
 
     It then rebuilds data/timeseries.json from the refreshed DB via the
     no-scrape `rebuild_only()` path, which re-runs the eFV pipeline
-    (xfv_export.regen_all) against the fresh consensus / stats / injuries, so a
+    (efv_export.regen_all) against the fresh consensus / stats / injuries, so a
     consensus move, a new stat line, or an IL change all flow into eFV the same
     night.
 

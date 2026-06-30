@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 """eFV experiment runner -- shared, deterministic, forward-chained compute for the
-eFV improvement sweep. Reuses the SHIPPED model machinery (xfv_model._vec / _fit_ridge /
+eFV improvement sweep. Reuses the SHIPPED model machinery (efv_model._vec / _fit_ridge /
 _fit_ols_fv / blend), so a 'gain' here is a real out-of-sample, leakage-clean gain on the
 same protocol data/xfv_eval.json uses.
 
@@ -26,10 +26,10 @@ sys.path.insert(0, str(ROOT))
 import os; os.chdir(ROOT)
 
 import storage
-import xfv_model as XM
+import efv_model as XM
 from prospect_path import _spearman, _fit_ridge, _predict
-from xfv_model import _prep, _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec, _decision_year, _vec
-from xfv_dataset import matrix_path
+from efv_model import _prep, _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec, _decision_year, _vec
+from efv_dataset import matrix_path
 
 SCORED_YEARS = XM.SCORED_YEARS
 TARGET_SEASONS = 6

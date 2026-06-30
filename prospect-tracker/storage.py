@@ -4295,8 +4295,8 @@ def _fv_to_points(fv: float | int | None) -> float:
 # movement metrics (owner directive). Reads the PRIOR run's committed data/xfv.json
 # (per-player xfv_grade + surplus_mm + tool_xfv) and data/xfv_history.json (per-snapshot
 # eFV series, for the appreciation + movement signals). ONE-RUN LAG is intentional and
-# unavoidable: export_timeseries_json runs BEFORE xfv_export.regen_all in run_monthly, and
-# xfv_export reads timeseries.json — reordering would be circular. This mirrors the frontend,
+# unavoidable: export_timeseries_json runs BEFORE efv_export.regen_all in run_monthly, and
+# efv_export reads timeseries.json — reordering would be circular. This mirrors the frontend,
 # which already consumes xfv.json with a consensus fallback. Where eFV abstains (no pro track
 # record), every consumer falls back to consensus FV so nothing goes null.
 def _load_xfv_join() -> tuple[dict, dict]:

@@ -33,7 +33,7 @@ sys.path.insert(0, str(ROOT))
 import os; os.chdir(ROOT)
 
 import xfv_lab_runner as LAB
-from xfv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
+from efv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
 from prospect_path import _spearman, _fit_ridge, _predict
 
 SCORED_YEARS = LAB.SCORED_YEARS

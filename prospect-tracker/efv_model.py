@@ -24,7 +24,7 @@ on rank per the Phase-1 verdict -- the flagship case rests on the distribution/s
              feature); ensemble = mean(ridge, lgbm).
   GATE       a model beats consensus only if it wins BOTH pooled-OOS MAE and Spearman.
 
-Artifact: data/xfv_eval.json. Run: python xfv_model.py
+Artifact: data/xfv_eval.json. Run: python efv_model.py
 """
 
 from __future__ import annotations
@@ -148,7 +148,7 @@ def wag_calibration(side: str) -> dict:
     reliability (w_obs), through the origin. The slope is how much realized over/under-
     performance you actually get per unit of predicted edge -> the trust factor for the
     blend. Returns {lambda, slope_wobs, slope_unweighted, spearman, n}. Leakage-free."""
-    from xfv_dataset import matrix_path
+    from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     wag = _load_wag()
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -204,7 +204,7 @@ def rank_calibration(side: str) -> dict:
     the robust middle, not the noisy high-lambda plateau. (Leakage note: lambda is one smooth
     parameter; selecting it on the pooled OOS folds is in-sample for that single scalar, but the
     per-cohort forward-chain independently validates the direction.)"""
-    from xfv_dataset import matrix_path
+    from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
     data = _prep([r for r in rows if r["kind"] == "debuted"], "target_censored", side)
@@ -278,7 +278,7 @@ def oos_grades(side: str) -> dict:
     on earlier cohorts. The score is the guarded-blend rank_war (monotone in the grade),
     suitable for an apples-to-apples head-to-head against the sources on realized outcomes
     WITHOUT the in-sample advantage a fitted model would otherwise enjoy. Leakage-free."""
-    from xfv_dataset import matrix_path
+    from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     lam = blend_lambda(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -355,7 +355,7 @@ def _vec(r, side: str = "hit") -> dict:
         "bonus_log": math.log1p(float(bonus)) if bonus else 0.0,
         "il_stints_pre": g(r.get("il_stints_pre")),
         "fv_stddev": g(r.get("fv_stddev")),
-        # Acquisition-cohort indicators (xfv_dataset._cohort_flags). The ridge re-centers
+        # Acquisition-cohort indicators (efv_dataset._cohort_flags). The ridge re-centers
         # each cohort's intercept -> sharper cross-tier ordering (OOS gain, both sides).
         "is_ifa": g(r.get("is_ifa")),
         "is_college": g(r.get("is_college")),
@@ -605,7 +605,7 @@ def _era_split(deb_data, keys, lam):
 
 
 def run(persist: bool = True, side: str = "hit") -> dict:
-    from xfv_dataset import matrix_path
+    from efv_dataset import matrix_path
     keys, mono = _feature_spec(side)
     wag_cal = wag_calibration(side)
     lam = blend_lambda(side)   # WAG when it has signal; rank-gate fallback when WAG is noise

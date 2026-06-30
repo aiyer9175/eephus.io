@@ -6,7 +6,7 @@ site can consume (data/xfv.json): per player the headline grade (re-anchored to 
 20-80 scale), the realized 6yr-WAR projection, the 5-bucket distribution, surplus $,
 the uncertainty band, the consensus FV for side-by-side comparison, and tool eFVs.
 
-Run: python xfv_export.py   (after xfv_score for both sides + xfv_tools)
+Run: python efv_export.py   (after efv_score for both sides + xfv_tools)
 """
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ import logging
 from datetime import date
 from pathlib import Path
 
-from xfv_score import scored_path, scored_live_path
+from efv_score import scored_path, scored_live_path
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -74,7 +74,7 @@ def run(persist: bool = True) -> dict:
     # Backgrade: every other graded prospect (graduates + lingering/no-track-record actives),
     # scored on the live grade scale. Overwrites the resolved-scale entry so the WHOLE site
     # reads on one scale; the live board (next) wins for current prospects.
-    from xfv_score import backgrade_path
+    from efv_score import backgrade_path
     bp = backgrade_path()
     if bp.exists():
         for s in json.loads(bp.read_text(encoding="utf-8")).get("scored", []):
@@ -126,35 +126,35 @@ def run(persist: bool = True) -> dict:
 def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
     """Run the whole eFV pipeline in dependency order and consolidate data/xfv.json:
     training matrix -> live matrix -> resolved scores -> live scores -> tool eFVs ->
-    export. The forward-chained backtest eval (xfv_model, the governance artifact) is
+    export. The forward-chained backtest eval (efv_model, the governance artifact) is
     heavy and stable, so it is OPT-IN (include_eval). Requires data/timeseries.json
     (run after the site export). One call for what was five manual module runs."""
-    import xfv_dataset
-    import xfv_score
-    import xfv_tools
+    import efv_dataset
+    import efv_score
+    import efv_tools
     for side in ("hit", "pit"):
-        xfv_dataset.run(persist, side)          # labeled training matrix + baseline
-        xfv_dataset.build_live(persist, side)   # current active-board feature matrix
+        efv_dataset.run(persist, side)          # labeled training matrix + baseline
+        efv_dataset.build_live(persist, side)   # current active-board feature matrix
     if include_eval:
-        import xfv_model
+        import efv_model
         for side in ("hit", "pit"):
-            xfv_model.run(persist, side)         # forward-chained eval (registry artifact)
+            efv_model.run(persist, side)         # forward-chained eval (registry artifact)
     for side in ("hit", "pit"):
-        xfv_score.run(persist, side)             # resolved cohort scores
-        xfv_score.run_live(persist, side)        # live board scores (gated on track record)
-    xfv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
-    xfv_score.score_history(persist)              # eFV-over-time per snapshot (FV history chart)
-    xfv_tools.run(persist)                        # resolved tool eFVs
-    xfv_tools.run_live(persist)                   # live tool eFVs
+        efv_score.run(persist, side)             # resolved cohort scores
+        efv_score.run_live(persist, side)        # live board scores (gated on track record)
+    efv_score.run_backgrade(persist)              # backgrade the rest of the site (graduates etc.)
+    efv_score.score_history(persist)              # eFV-over-time per snapshot (FV history chart)
+    efv_tools.run(persist)                        # resolved tool eFVs
+    efv_tools.run_live(persist)                   # live tool eFVs
     # UNGRADED prospects -- production-only leading indicator for the source-ungraded roster
     # players (DSL/CPX breakouts etc.). Separate model + artifact (data/xfv_ungraded.json);
     # NOT folded into the flagship xfv.json or the farm-rank composite. Needs rosters_by_org.json
     # (written by the site export) + the labeled matrix (built above). Best-effort.
     try:
-        import xfv_ungraded
-        xfv_ungraded.build(persist)
+        import efv_ungraded
+        efv_ungraded.build(persist)
     except Exception:
-        log.exception("xfv_ungraded.build failed -- continuing without ungraded grades")
+        log.exception("efv_ungraded.build failed -- continuing without ungraded grades")
     return run(persist)
 
 

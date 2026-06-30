@@ -17,7 +17,7 @@ in the model prediction -> xfv_grade inherits the model's rank edge over consens
 (see data/xfv_eval.json). The surplus reuses the engine's own isotonic calibration; we
 do NOT re-calibrate on top (no double-correction).
 
-Artifacts: data/xfv_scored.json (per-player) + report block. Run: python xfv_score.py
+Artifacts: data/xfv_scored.json (per-player) + report block. Run: python efv_score.py
 """
 from __future__ import annotations
 
@@ -29,8 +29,8 @@ from pathlib import Path
 
 import value_framework as vf
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
-from xfv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
-from xfv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON
+from efv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
+from efv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -39,7 +39,7 @@ _BUCKETS = ("bust", "bench", "regular", "good", "star")
 # Guarded blend for the HEADLINE grade + board rank: rank_war = (1-lambda)*consensus_war
 # + lambda*model_war. eFV still PREDICTS WAR; lambda is the WAG-CALIBRATED trust in its
 # adjustment (how much realized WAR-Above-Grade supports eFV's where-consensus-missed edge,
-# forward-chained -- see xfv_model.wag_calibration). Hitters ~0.8, pitchers shrink harder.
+# forward-chained -- see efv_model.wag_calibration). Hitters ~0.8, pitchers shrink harder.
 # REALIZED grade + surplus + distribution stay on the pure model (the honest outcome view).
 
 
@@ -328,7 +328,7 @@ def score_history(persist: bool = True) -> dict:
     scoring old snapshots (a retrospective), not the grade we would have shown then. Writes
     data/xfv_history.json = {by_player: {key: [{d, x, c}]}}. Run after run_live (reuses its
     scored pool for the grade scale)."""
-    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
+    from efv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
                              _injury_features, _side_match, _f, CURRENT_SEASON)
     ts_path = DATA_DIR / "timeseries.json"
     if not ts_path.exists():
@@ -400,7 +400,7 @@ def _fit_production(side: str):
 
 
 def run_live(persist: bool = True, side: str = "hit") -> dict:
-    """Score the CURRENT active prospect board (xfv_dataset.build_live_matrix) with the
+    """Score the CURRENT active prospect board (efv_dataset.build_live_matrix) with the
     model fit on the full labeled matrix. Same production seam as run() -- grade +
     5-bucket distribution + surplus + uncertainty band via value_framework -- but these
     players have no outcome label yet, so there is no validation block; they ARE the
@@ -546,7 +546,7 @@ def run_backgrade(persist: bool = True) -> dict:
     no pro track record are graded prior-anchored and flagged xfv_provisional. Fills the gap
     run_live (active w/ track record) + run (matrix cohort) leave behind. Run AFTER run_live
     (reuses its scored pool for the grade scale). Writes data/xfv_backgrade.json."""
-    from xfv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
+    from efv_dataset import (_prior_features, _milb_features, _load_sidecars, _cohort_flags,
                              _injury_features, _side_match, _f, CURRENT_SEASON)
     fit = {s: _fit_production(s) for s in ("hit", "pit")}
     lam = {s: blend_lambda(s) for s in ("hit", "pit")}

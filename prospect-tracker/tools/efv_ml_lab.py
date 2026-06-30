@@ -37,9 +37,9 @@ sys.path.insert(0, str(ROOT))
 import os; os.chdir(ROOT)
 
 import numpy as np
-import xfv_model as XM
+import efv_model as XM
 from prospect_path import _spearman, _fit_ridge, _predict
-from xfv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
+from efv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
 import xfv_lab_runner as LAB
 
 SCORED_YEARS = XM.SCORED_YEARS
@@ -75,7 +75,7 @@ _RICH_PIT = [k for k, _ in XM._FEATURES_PIT] + [
     "bb_rel", "peak_bb_rel", "level_rank", "prod_trend", "fv_trend",
     "il_stints_pre", "tool_cmd", "tool_sl"]
 
-# monotone direction for the LEAN set (matches xfv_model)
+# monotone direction for the LEAN set (matches efv_model)
 _MONO_LEAN = {"hit": {k: m for k, m in XM._FEATURES_HIT},
               "pit": {k: m for k, m in XM._FEATURES_PIT}}
 
@@ -268,7 +268,7 @@ def _load_extra(kind):
 _MID_CACHE = {}
 def _mlbam_map(side):
     if side not in _MID_CACHE:
-        from xfv_dataset import matrix_path
+        from efv_dataset import matrix_path
         rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
         _MID_CACHE[side] = {r["player_key"]: str(r.get("mlbam_id") or "") for r in rows}
     return _MID_CACHE[side]

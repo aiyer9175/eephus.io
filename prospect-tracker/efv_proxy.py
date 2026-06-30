@@ -17,7 +17,7 @@ debut, whose MLB contact/stuff is strong," a different (and easier) question tha
 bust-inclusive WAR target. Provisional; publish-the-r.
 
 Writes data/xfv_proxy_eval.json (forward-chained r/rho + coefficients + per-active projections).
-Run: python xfv_proxy.py
+Run: python efv_proxy.py
 """
 from __future__ import annotations
 
@@ -29,9 +29,9 @@ import numpy as np
 from sklearn.linear_model import Ridge
 from sklearn.preprocessing import StandardScaler
 
-from xfv_dataset import (_asof_point, _prior_features, _milb_features, _side_match,
+from efv_dataset import (_asof_point, _prior_features, _milb_features, _side_match,
                          _f, live_matrix_path)
-from xfv_model import _vec, _feature_spec
+from efv_model import _vec, _feature_spec
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"

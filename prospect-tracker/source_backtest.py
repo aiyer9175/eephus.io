@@ -461,12 +461,12 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
 
     # Head-to-head accuracy on the COMMON resolved set (same players).
     # eFV (our outcome-grounded model) as a head-to-head rater. Its grade is the
-    # OUT-OF-SAMPLE forward-chained score (xfv_model.oos_grades) so the comparison is
+    # OUT-OF-SAMPLE forward-chained score (efv_model.oos_grades) so the comparison is
     # fair: a fitted model would otherwise enjoy an in-sample advantage the raw source
     # grades don't. Attached to every common row that has an eFV grade; sources still
     # define common-set membership, so eFV is reported on the subset it covers.
     try:
-        from xfv_model import oos_grades
+        from efv_model import oos_grades
         xfv_oos = {**oos_grades("hit"), **oos_grades("pit")}
     except Exception:
         log.exception("eFV OOS grades unavailable for source comparison — continuing")
@@ -518,13 +518,13 @@ def run_source_backtest(data_dir: Path = DATA_DIR,
     # (never-debuted busts are rarely graded by EVERY source), which made the eFV cohort
     # read 100% debut and not comparable to the sources. (The head-to-head Spearman/AUC
     # stay on the common set - those need identical players to be a fair contest.)
-    import xfv_dataset
+    import efv_dataset
     uni_out = {p.get("player_key"): _outcome(p) for p in universe}
     m_cons: dict[str, float] = {}
     m_info: dict[str, tuple] = {}      # key -> (realized war, debuted?) from the eFV matrix
     for _side in ("hit", "pit"):
         try:
-            for r in json.loads(xfv_dataset.matrix_path(_side).read_text(encoding="utf-8")):
+            for r in json.loads(efv_dataset.matrix_path(_side).read_text(encoding="utf-8")):
                 if r.get("consensus_fv_raw") is None:
                     continue
                 k = r["player_key"]

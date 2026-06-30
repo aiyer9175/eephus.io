@@ -42,7 +42,7 @@ These grades are PROVISIONAL and explicitly flagged (xfv_ungraded + xfv_provisio
 every surface can show them as the production-only leading indicator they are, distinct
 from the source-anchored flagship grade.
 
-Artifact: data/xfv_ungraded.json (by_player + by_mlbam). Run: python xfv_ungraded.py
+Artifact: data/xfv_ungraded.json (by_player + by_mlbam). Run: python efv_ungraded.py
 """
 from __future__ import annotations
 
@@ -54,8 +54,8 @@ from pathlib import Path
 
 import value_framework as vf
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
-from xfv_model import _vec
-from xfv_dataset import matrix_path, _milb_features, _f, CURRENT_SEASON
+from efv_model import _vec
+from efv_dataset import matrix_path, _milb_features, _f, CURRENT_SEASON
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"

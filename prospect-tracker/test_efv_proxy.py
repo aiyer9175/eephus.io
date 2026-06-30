@@ -27,5 +27,5 @@ def test_proxy_eval_structure_and_sanity():
 
 
 def test_proxy_module_imports():
-    import xfv_proxy  # noqa: F401
-    assert hasattr(xfv_proxy, "run")
+    import efv_proxy  # noqa: F401
+    assert hasattr(efv_proxy, "run")

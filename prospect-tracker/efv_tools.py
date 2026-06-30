@@ -15,7 +15,7 @@ hit->AVG/contact, speed->SB; pitcher stuff->K%, command->BB%). Field / arm /
 individual pitch SHAPES have no clean realized metric in our data -> the tool eFV
 passes the consensus grade through unchanged, disclosed as such.
 
-Artifacts: data/xfv_tools.json (+ report). Run: python xfv_tools.py
+Artifacts: data/xfv_tools.json (+ report). Run: python efv_tools.py
 """
 from __future__ import annotations
 
@@ -27,8 +27,8 @@ from pathlib import Path
 
 import storage
 from prospect_path import _spearman
-from xfv_dataset import matrix_path
-from xfv_model import SCORED_YEARS, _decision_year
+from efv_dataset import matrix_path
+from efv_model import SCORED_YEARS, _decision_year
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -262,7 +262,7 @@ def run_live(persist: bool = True) -> dict:
     MiLB production, then rank-map onto the LIVE pool's consensus grade distribution so the
     units match the tool grades shown on the site. Modeled tools only (pass-through tools
     have no realized target -> the site shows the consensus grade unchanged)."""
-    from xfv_dataset import live_matrix_path
+    from efv_dataset import live_matrix_path
     realized = _realized_mlb()
     train = {s: json.loads(matrix_path(s).read_text(encoding="utf-8")) for s in ("hit", "pit")}
     live = {s: json.loads(live_matrix_path(s).read_text(encoding="utf-8")) for s in ("hit", "pit")}

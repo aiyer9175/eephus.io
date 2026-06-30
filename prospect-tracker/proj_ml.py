@@ -60,7 +60,7 @@ log = logging.getLogger(__name__)
 # this fires once PER HEAD PER PLAYER (~32k times in a single proj_export, millions in a
 # backtest), spamming logs (58MB seen) for zero signal. Filter the one message at import
 # (scoped to the message + category, so real warnings still surface). Mirrors the
-# context-managed suppressions already in xfv_model / prospect_path / swing_plus_ingest.
+# context-managed suppressions already in efv_model / prospect_path / swing_plus_ingest.
 warnings.filterwarnings("ignore", message="X does not have valid feature names",
                         category=UserWarning)
 
