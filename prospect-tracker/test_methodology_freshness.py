@@ -24,7 +24,7 @@ MODEL_GLOSSARY = {
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row
-    "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); xFV-swap loss ledger
+    "prospect_def_value": "internal",  # Will Cahoon def model (local reconstruction); eFV-swap loss ledger
     "fa_market": ["fa_projection_engine", "deal_plus"],
     "fa_rational_value": ["rational_value", "contract_surplus"],
     "fa_dpw_series": ["winter_dpw", "dpw_tier"],
@@ -54,10 +54,10 @@ MODEL_GLOSSARY = {
     "xfv_hitter": ["xfv"],
     "xfv_pitcher": ["xfv"],
     "xfv_tools": ["xfv_tools"],
-    # xFV proxy = the leading-indicator companion to the xFV family (predicts first-MLB
-    # Statcast quality); documented under the xFV entry + self-documented on the detail tile.
+    # eFV proxy = the leading-indicator companion to the eFV family (predicts first-MLB
+    # Statcast quality); documented under the eFV entry + self-documented on the detail tile.
     "xfv_proxy": ["xfv"],
-    # xFV ungraded = the provisional production-only leading indicator for source-ungraded
+    # eFV ungraded = the provisional production-only leading indicator for source-ungraded
     # roster players (DSL/CPX sleepers); its own glossary entry documents the methodology.
     "xfv_ungraded": ["xfv_ungraded"],
     # Trade Machine surplus = the board/evaluator surplus ordering (= the platform surplus_value

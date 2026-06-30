@@ -1,4 +1,4 @@
-"""xFV proxy (leading indicator) — artifact sanity. Pure-data; no network."""
+"""eFV proxy (leading indicator) — artifact sanity. Pure-data; no network."""
 import json
 from pathlib import Path
 
@@ -10,7 +10,7 @@ EVAL = Path(__file__).parent / "data" / "xfv_proxy_eval.json"
 @pytest.mark.skipif(not EVAL.exists(), reason="xfv_proxy_eval.json not generated yet")
 def test_proxy_eval_structure_and_sanity():
     d = json.loads(EVAL.read_text(encoding="utf-8"))
-    assert d.get("kind") == "leading_indicator_not_xfv", "must be flagged NOT xFV"
+    assert d.get("kind") == "leading_indicator_not_xfv", "must be flagged NOT eFV"
     sides = d.get("sides") or {}
     assert set(sides) >= {"hit", "pit"}, "both sides present"
     for s, ev in sides.items():
