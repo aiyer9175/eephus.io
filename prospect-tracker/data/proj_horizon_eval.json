@@ -694,6 +694,120 @@
      "star": 0.0455
     }
    }
+  },
+  "star_mean_head": {
+   "dev_bases": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "holdout_bases": [
+    2022,
+    2023,
+    2024
+   ],
+   "lam_smh_fit": {
+    "1": 0.0,
+    "2": 0.0,
+    "3": 0.0,
+    "4": 0.0,
+    "5": 0.25
+   },
+   "dev_fit_table": {
+    "1": {
+     "n_star": 201,
+     "lam": 0.0,
+     "champ_bias": 0.0023,
+     "fit_bias": 0.0023,
+     "champ_mae": 1.8329,
+     "fit_mae": 1.8329
+    },
+    "2": {
+     "n_star": 201,
+     "lam": 0.0,
+     "champ_bias": 0.627,
+     "fit_bias": 0.627,
+     "champ_mae": 1.8573,
+     "fit_mae": 1.8573
+    },
+    "3": {
+     "n_star": 201,
+     "lam": 0.0,
+     "champ_bias": 0.3676,
+     "fit_bias": 0.3676,
+     "champ_mae": 1.8804,
+     "fit_mae": 1.8804
+    },
+    "4": {
+     "n_star": 201,
+     "lam": 0.0,
+     "champ_bias": 0.0276,
+     "fit_bias": 0.0276,
+     "champ_mae": 1.8214,
+     "fit_mae": 1.8214
+    },
+    "5": {
+     "n_star": 201,
+     "lam": 0.25,
+     "champ_bias": -0.6762,
+     "fit_bias": -0.5695,
+     "champ_mae": 1.8084,
+     "fit_mae": 1.8208
+    }
+   },
+   "holdout_star": {
+    "1": {
+     "n": 214,
+     "lam": 0.0,
+     "champ_bias": -0.6489,
+     "new_bias": -0.6489,
+     "champ_mae": 1.9588,
+     "new_mae": 1.9588
+    },
+    "2": {
+     "n": 214,
+     "lam": 0.0,
+     "champ_bias": -0.4537,
+     "new_bias": -0.4537,
+     "champ_mae": 1.8097,
+     "new_mae": 1.8097
+    },
+    "3": {
+     "n": 154,
+     "lam": 0.0,
+     "champ_bias": -0.4961,
+     "new_bias": -0.4961,
+     "champ_mae": 1.7003,
+     "new_mae": 1.7003
+    },
+    "4": {
+     "n": 79,
+     "lam": 0.0,
+     "champ_bias": -1.3601,
+     "new_bias": -1.3601,
+     "champ_mae": 1.9576,
+     "new_mae": 1.9576
+    }
+   },
+   "holdout_pooled": {
+    "n": 19610,
+    "champ_mae": 0.5069,
+    "new_mae": 0.5069
+   },
+   "dev_pooled": {
+    "n": 40265,
+    "champ_mae": 0.466,
+    "new_mae": 0.4661
+   },
+   "holdout_star_agg": {
+    "n": 661,
+    "champ_bias": -0.6351,
+    "new_bias": -0.6351,
+    "champ_mae": 1.8501,
+    "new_mae": 1.8501
+   },
+   "verdict": "REJECTED 2026-06-29 (loss, not shipped): a STAR-SLICE-ONLY additional lift toward a dedicated mean head, lambda fit forward-chained under a star-MAE +0.02 guard. The dev fit lands on ~zero lift (h1-h4 lam=0, h5 lam=0.25) and the holdout shows NO change (star bias -0.635 unchanged, star MAE 1.850 unchanged, pooled unchanged). The shipped global mean blend already lifts stars to the implied mean; any further mean-head lift that stays within the MAE guard buys no bias improvement -- the blend is already at the MAE-constrained optimum. tools/star_mean_head_backtest.py."
   }
  }
 }
