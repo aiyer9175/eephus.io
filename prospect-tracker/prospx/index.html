@@ -14851,7 +14851,7 @@ function getFilteredActives() {
     // xFV (our outcome-grounded grade) descending -- the PRIMARY board ranking.
     // xfvRankValue falls back to consensus FV for players with no pro track record
     // (where xFV abstains) so they interleave by consensus instead of vanishing.
-    pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || fvCmpDesc(a, b));
+    pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a) || (xfvWarOf(b) - xfvWarOf(a)) || fvCmpDesc(a, b));
   } else if (state.sort === "xfv_delta") {
     // Biggest xFV-minus-consensus gap first: surfaces the prospects the outcome
     // model rates furthest ABOVE the scouting consensus (the model's top "buys"),
@@ -29311,6 +29311,7 @@ function buildXfvRankMap() {
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
   let pool = DATA.players.filter(p => p && p.player_key).concat(provPlayers());
   pool.sort((a, b) => xfvRankValue(b) - xfvRankValue(a)
+    || (xfvWarOf(b) - xfvWarOf(a))          // break grade ties (esp. the FV-20 floor) by raw model WAR
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _XFV_RANK[p.player_key] = i + 1; });
   // PREVIOUS-grade xFV rank: rank the SAME pool by each player's xFV grade ~30 days ago
@@ -29356,6 +29357,14 @@ function xfvGradeDisplay(x) {
   // Rounded up like every grade. Falls back to the quantile-mapped headline grade.
   if (x && x.xfv_grade_realized != null) return fvCeil(x.xfv_grade_realized);
   return (x && x.xfv_grade != null) ? fvCeil(x.xfv_grade) : null;
+}
+// Continuous model output (E[6yr WAR]) for breaking GRADE ties when sorting -- esp. the
+// FV-20 floor, where ~half the pool clamps to the same displayed grade but ranks very
+// differently by raw model WAR (a CPX breakout at +0.6 vs org-filler at -2.0). Surfaces
+// the hidden low-end discrimination without changing the displayed grade.
+function xfvWarOf(p) {
+  const x = getXfv(p);
+  return (x && x.xfv_war_6yr != null) ? Number(x.xfv_war_6yr) : -99;
 }
 // xFV-minus-consensus delta CONSISTENT with the displayed (model-alone) grade: realized
 // grade vs consensus FV. Replaces the stored quantile-map delta so the colored +/- chip
