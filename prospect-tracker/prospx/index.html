@@ -10655,7 +10655,22 @@ function _translatedOverseasPerf(p) {
   return { wrc: adjWrc, fip };  // fip pass-through (hitter-side haircut only)
 }
 
+// TBS is the trailing tiebreaker of nearly every board/leaderboard sort, and because the eFV
+// decimal is quantized to 1dp (~99.5% of players share their decimal), the tie path fires for
+// most comparisons -- so the uncached score was recomputed (twice per tied pair) across every
+// O(n log n) sort. Memoize the no-opts score per player per render (WeakMap keyed on the reused
+// player objects); the opts path (surplus's {noEfv:true}) is NOT cached (different value).
+let _tbsCache = new WeakMap();
+function _resetTbsCache() { _tbsCache = new WeakMap(); }
 function tiebreakerScore(p, opts) {
+  if (opts) return _tiebreakerScoreRaw(p, opts);
+  if (p && _tbsCache.has(p)) return _tbsCache.get(p);
+  const r = _tiebreakerScoreRaw(p, opts);
+  if (p) _tbsCache.set(p, r);
+  return r;
+}
+
+function _tiebreakerScoreRaw(p, opts) {
   if (!p) return 0;
   // v31.13 - Three-cohort TBS tuned for MLB-SUCCESS PROJECTION. The
   // weights lean on FV-anchored scout signals (Tool composite, DS+,
@@ -12207,8 +12222,8 @@ function makeProvisionalEfvChart(series, dims) {
   const pts = s.map(h => `${xS(h.d).toFixed(1)},${yS(h.x).toFixed(1)}`).join(" ");
   const dots = s.map(h => {
     const x = xS(h.d).toFixed(1), y = yS(h.x).toFixed(1), yr = String(h.d).slice(0, 4);
-    return `<circle cx="${x}" cy="${y}" r="2.6" fill="var(--neon-cyan)"><title>${yr}: eFV ${fvCeil(h.x)}</title></circle>`
-      + `<text x="${x}" y="${(Number(y) - 5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--neon-cyan)" font-family="var(--font-mono)">${fvCeil(h.x)}</text>`;
+    return `<circle cx="${x}" cy="${y}" r="2.6" fill="var(--neon-cyan)"><title>${yr}: eFV ${Math.round(h.x)}</title></circle>`
+      + `<text x="${x}" y="${(Number(y) - 5).toFixed(1)}" text-anchor="middle" font-size="8" font-weight="700" fill="var(--neon-cyan)" font-family="var(--font-mono)">${Math.round(h.x)}</text>`;
   }).join("");
   const xlabels = s.map(h => `<text x="${xS(h.d).toFixed(1)}" y="${(H - 3).toFixed(1)}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)" font-family="var(--font-mono)">${String(h.d).slice(0, 4)}</text>`).join("");
   return `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;max-width:${W}px;">${grid.join("")}<polyline points="${pts}" fill="none" stroke="var(--neon-cyan)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>${dots}${xlabels}</svg>`;
@@ -31439,7 +31454,7 @@ function buildCompareCard(snap) {
 
   // Comparison stat table (best per row highlighted in that player's color).
   const rows = [
-    ["eFV", d => d.fvNum, "high", v => v != null ? fvCeil(v) : " - "],
+    ["eFV", d => d.fvNum, "high", v => v != null ? Math.round(v) : " - "],
     ["Statcast+", d => d.sc, "high", v => v != null ? v : " - "],
     ["RPS+", d => d.rps, "high", v => v != null ? v : " - "],
     ["$DvM+", d => d.dvm, "high", v => v != null ? v : " - "],
@@ -37226,7 +37241,7 @@ function makeFvHistogram(prospects, opts) {
     // Bin by eFV (the primary grade) where rated - incl. provisional prospects, which
     // carry an inline eFV grade - falling back to the consensus FV label/raw.
     const _x = (typeof getEfv === "function") ? getEfv(p) : null;
-    const n = (_x && _x.xfv_grade != null) ? fvCeil(_x.xfv_grade)
+    const n = (_x && _x.xfv_grade != null) ? Math.round(_x.xfv_grade)
               : parseInt(p.fv_label != null ? p.fv_label : p.fv_raw, 10);
     if (n == null || isNaN(n)) return;
     const tier = FV_HIST_TIERS.find(t => n >= t) ?? 40;
@@ -38247,7 +38262,7 @@ function renderFarmSystems() {
       ? `<div class="farm-top3-stack">${top3.map(t => {
           const pkey = escapeHtml(t.player_key || "");
           // Lead with eFV (consensus FV fallback), matching the active board.
-          const tFv = (t.xfv_grade != null) ? fvCeil(t.xfv_grade)
+          const tFv = (t.xfv_grade != null) ? Math.round(t.xfv_grade)
                     : (t.fv_raw != null ? fvCeil(t.fv_raw) : t.fv_label);
           const primaryPos = (t.pos || t.position || "")
             .toString().split("/")[0].trim().toUpperCase();
@@ -47143,7 +47158,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
         // with a dashed badge + tooltip so it reads clearly as not-yet-source-graded.
         const _ung = (typeof getUngradedEfv === "function") ? getUngradedEfv(pl) : null;
         if (_ung && _ung.xfv_grade != null) {
-          const _g = fvCeil(_ung.xfv_grade);
+          const _g = Math.round(_ung.xfv_grade);
           fvCell = `<span class="fv-badge ${fvClass(String(_g))} size-sm" style="border-style:dashed;opacity:0.82;" title="Provisional eFV ${_g} - production-only leading indicator (no source grade yet)">${_g}<sup style="font-size:7px;font-weight:700;opacity:0.75;margin-left:1px;">p</sup></span>`;
         } else {
           fvCell = `<span style="color:var(--text-tertiary);"> - </span>`;
@@ -47200,7 +47215,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
           : "";
         const _gx = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-        const _gl = (_gx && _gx.xfv_grade != null) ? String(fvCeil(_gx.xfv_grade)) : pl.fv_label;
+        const _gl = (_gx && _gx.xfv_grade != null) ? String(Math.round(_gx.xfv_grade)) : pl.fv_label;
         return `<div class="graded-prospect-row"${click}>
           <span class="fv-badge ${fvClass(_gl)} size-sm" title="${_gx && _gx.xfv_grade != null ? `eFV ${_gl} · consensus FV ${pl.fv_label}` : `Consensus FV ${pl.fv_label}`}">${_gl}</span>
           <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
@@ -47252,7 +47267,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
     if (!cands.length) return "";
     cands.sort((a, b) => b.g - a.g);
     const items = cands.slice(0, 10).map(c => {
-      const g = fvCeil(c.g);
+      const g = Math.round(c.g);
       const click = c.pl.player_key ? ` onclick="goToPlayer('${escapeHtml(c.pl.player_key)}');" style="cursor:pointer;"` : "";
       const topF = (c.factors || []).filter(f => f.dir === "up").slice(0, 2).map(f => f.label).join(" · ");
       return `<div class="graded-prospect-row"${click}>
@@ -47699,6 +47714,7 @@ function render() {
   _resetAgeMeanCache();
   _resetPhysPoolCache();
   _resetStatcastPlusCache();
+  _resetTbsCache();
   // v30.7 - Per-section ribbons replace the global header ribbon.
   // Transactions section owns its own renderWhatsNew("whats-new-traded")
   // call; Spotlights section calls renderStandoutPerformances against
@@ -49381,7 +49397,7 @@ function makeFarmCompareSideBySide(farms) {
     const grade = (o.grades && o.grades.overall) || " - ";
     const tp = o.top_prospect;
     // Lead with eFV (consensus FV fallback); top_prospect carries `name` + `xfv_grade`.
-    const tpFv = tp ? (tp.xfv_grade != null ? fvCeil(tp.xfv_grade)
+    const tpFv = tp ? (tp.xfv_grade != null ? Math.round(tp.xfv_grade)
                        : (tp.fv_raw != null ? fvCeil(tp.fv_raw) : null)) : null;
     const tpHtml = tp
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.name || tp.player_name || " - ")}</span>${tpFv != null ? ` <span class="fv-badge size-sm ${fvClass(String(tpFv))}" style="margin-left:4px;">${tpFv}</span>` : ""}</div>`
@@ -50347,16 +50363,21 @@ function attachHandlers() {
 
   const searchInput = document.getElementById("search-input");
   if (searchInput) {
+    let _searchTimer = null;
     searchInput.addEventListener("input", e => {
       state.search = e.target.value.trim();
       resetListPages();
-      render();
+      // Debounce: render() rebuilds the full-pool stats (_physPool etc.) + re-filters +
+      // FULL-re-sorts ~thousands of players, so firing it per keystroke is the dominant jank.
+      clearTimeout(_searchTimer);
+      _searchTimer = setTimeout(render, 175);
     });
-    // Clear search on Escape
+    // Clear search on Escape (immediate -- clearing should feel instant)
     searchInput.addEventListener("keydown", e => {
       if (e.key === "Escape") {
         state.search = "";
         searchInput.value = "";
+        clearTimeout(_searchTimer);
         render();
       }
     });

@@ -1,7 +1,7 @@
 # Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
 # Proprietary and confidential
 """eFV ML lab -- swap the MODEL CLASS / feature set / target / objective on the EXACT
-forward-chained, leakage-clean OOS protocol that data/xfv_eval.json + tools/xfv_lab_runner.py
+forward-chained, leakage-clean OOS protocol that data/xfv_eval.json + tools/efv_lab_runner.py
 use. The shipped eFV ranker is a prior-anchored linear RIDGE (LightGBM is only an evaluated
 challenger that LOSES). This harness answers: can a different ML model / objective / target
 / feature set beat the ridge on the Spearman gate -- pooled, within-tier, and at the FV-45
@@ -40,7 +40,7 @@ import numpy as np
 import efv_model as XM
 from prospect_path import _spearman, _fit_ridge, _predict
 from efv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
-import xfv_lab_runner as LAB
+import efv_lab_runner as LAB
 
 SCORED_YEARS = XM.SCORED_YEARS
 

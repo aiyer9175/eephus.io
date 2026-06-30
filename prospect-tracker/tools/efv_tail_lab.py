@@ -6,7 +6,7 @@ best players (ex. Bobby Witt Jr.)?
 The eFV rank gate is Spearman, which is INVARIANT to any monotone tail transform
 - so a tail fix can only ever be a CALIBRATION (magnitude) change, not a rank
 change. This harness measures, on the EXACT forward-chained leakage-clean
-protocol data/xfv_eval.json uses (reusing xfv_lab_runner's machinery):
+protocol data/xfv_eval.json uses (reusing efv_lab_runner's machinery):
 
   1. DIAGNOSIS - is the high end (true top FV tier + top predicted decile) over-
      or under-predicted vs realized first-6yr WAR? (mean residual, MAE, slope.)
@@ -32,7 +32,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 import os; os.chdir(ROOT)
 
-import xfv_lab_runner as LAB
+import efv_lab_runner as LAB
 from efv_model import _fit_ols_fv, _pred_ols, blend_lambda, _feature_spec
 from prospect_path import _spearman, _fit_ridge, _predict
 
