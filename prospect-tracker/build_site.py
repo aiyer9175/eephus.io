@@ -1923,17 +1923,13 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     movers_body = "".join(_row_mover(p, d) for d, p in risers + fallers)
     movers = _home_module("Top Movers", "/prospx/#tab=spotlights", "All movers", movers_body) if movers_body else ""
 
-    # Rank by PRIMARY FV (eFV when graded, else consensus close), RAW/unrounded.
-    # Tie-break to MATCH the PROSPX active board (buildEfvRankMap -> efvRankValue,
-    # ties broken by fvCmpDesc: consensus FV, then the '+' upside flag). Without
-    # this the homepage and the active list disagreed on eFV ties - e.g. Anderson
-    # & De Vries both eFV 60: the board ranks De Vries above (consensus 62 > 58),
-    # so the homepage must too. The displayed rank is the eFV-sorted POSITION (the
-    # board's eFV rank for the top 5), not the consensus overall_rank, so the two
-    # surfaces show the same number.
+    # Rank by PRIMARY FV (eFV when graded, else consensus close), RAW/unrounded -- the eFV
+    # DECIMAL, matching the board's efvRankValue. The board's v42 tiebreak on an exact-decimal
+    # tie is the '+' upside flag, then the JS-only Tiebreaker Score (TBS), then name; the
+    # homepage can match the primary + '+' but not TBS, so it approximates the rest by stable
+    # order. (Was tie-broken by consensus FV, which the board no longer uses since v42.)
     def _top_key(p):
         return (_primary_fv(p) if _primary_fv(p) is not None else -1,
-                p.get("fv_close") if p.get("fv_close") is not None else -1,
                 1 if p.get("fv_close_plus") else 0)
     topN = sorted(players, key=_top_key, reverse=True)[:5]
     top_body = "".join(_row_top(p, i) for i, p in enumerate(topN, 1))
@@ -2018,12 +2014,16 @@ def build_fa() -> str:
     site chrome and styles (.fa-app block in site.css) but loads none of the
     PROSPX boot payload or script. Views route via #view= (board / fits /
     archive / model / glossary)."""
+    # Derive the class label + archive count from the data so the subtitle never goes stale.
+    _fa_cy = _cached_data_json("fa_class.json").get("class_year") or 2027
+    _fa_span = f"{_fa_cy - 1}-{str(_fa_cy)[2:]}"
+    _fa_winters = len(_cached_data_json("fa_archive.json").get("winters") or []) or 12
     body = (
         '<div class="fa-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1></div>'
-        '<span class="section-sub">the 2026-27 class, constructed from data · '
-        'projected markets, rational value &amp; team fits · twelve archived winters</span></div>'
+        f'<span class="section-sub">the {_fa_span} class, constructed from data · '
+        f'projected markets, rational value &amp; team fits · {_fa_winters} archived winters</span></div>'
         '<div id="fa-banner"></div>'
         '<div class="filter-bar"><span class="filter-label">View</span>'
         '<span id="fa-view-chips"></span></div>'

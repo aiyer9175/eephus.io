@@ -7065,6 +7065,13 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 if is_pitcher else _ZONE_HITTER_PERCENTILE_METRICS
             )
             n = len(level_rows)
+            # Hoist the per-metric peer-value lists out of the row loop: `vals` depends only on
+            # (level_rows, metric), not the current row, so building it once per cohort drops this
+            # from O(rows^2 * metrics) to O(rows * metrics) (one _zone_num pass per peer per metric).
+            vals_by_metric = {
+                metric: [v for v in (_zone_num(r.get(metric)) for r in level_rows) if v is not None]
+                for metric in metric_directions
+            }
             for row in level_rows:
                 row["qualified"] = True
                 row["percentile_sample_size"] = n
@@ -7072,12 +7079,8 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     value = _zone_num(row.get(metric))
                     if value is None:
                         continue
-                    vals = [
-                        _zone_num(peer.get(metric))
-                        for peer in level_rows
-                        if _zone_num(peer.get(metric)) is not None
-                    ]
-                    row["percentiles"][metric] = _percentile_rank_100(value, vals, higher_is_better)
+                    row["percentiles"][metric] = _percentile_rank_100(
+                        value, vals_by_metric[metric], higher_is_better)
 
         for payload in out.values():
             if not isinstance(payload, dict):

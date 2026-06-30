@@ -526,16 +526,21 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         log.exception("eFV proxy crashed in rebuild_only — continuing")
 
     # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
+    # Parse the 66MB timeseries.json ONCE; reused by the GRPO + trade-value blocks below
+    # (was parsed 3x in immediate succession -- ~0.68s each).
+    try:
+        _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        _ts_payload = {}
     try:
         from grpo_prospect import export_grpo_scores
         _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
             if (out_dir / "graduates.json").exists() else []
-        _ts_for_grpo    = json.loads(out_path.read_text()).get("players") or []
         _grpo_result    = export_grpo_scores(
-            _ts_for_grpo, _grads_for_grpo,
+            _ts_payload.get("players") or [], _grads_for_grpo,
             out_path=out_dir / "grpo_scores.json",
             model_path=out_dir / "grpo_model.pkl",
-            level_norms=json.loads(out_path.read_text()).get("level_norms"),
+            level_norms=_ts_payload.get("level_norms"),
             retrain=True,
         )
         log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
@@ -548,9 +553,8 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     try:
         from bayes_trade_value import export_trade_values_json, _reset_cache
         _reset_cache()   # clear GRPO cache so new scores are loaded
-        ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
-        tv_players = list(ts_payload.get("players") or [])
-        lnorms     = ts_payload.get("level_norms")
+        tv_players = list(_ts_payload.get("players") or [])   # reuse the single parse above
+        lnorms     = _ts_payload.get("level_norms")
         for _sidecar in ("debuts.json", "graduates.json"):
             _sp = out_dir / _sidecar
             if _sp.exists():
