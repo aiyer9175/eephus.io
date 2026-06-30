@@ -10783,22 +10783,24 @@ function tiebreakerScore(p, opts) {
 }
 
 function fvCmpDesc(a, b) {
-  // v38 - Item-5: rank by the SURFACED (rounded/displayed) FV, NOT the raw
-  // decimal. Two prospects whose FV rounds to the same displayed value - e.g.
-  // 56.3 and 56.6 both surface as the same number - are TIED here, and the
-  // Tiebreaker Score (not the underlying decimal) arbitrates their order.
-  // fv_close is the snapped consensus FV server-side, so Math.round is normally
-  // a no-op; rounding makes the "TBS breaks same-surfaced-FV ties" contract
-  // explicit and robust to any raw-decimal payload.
-  const af = (a && a.fv_close != null) ? Math.round(Number(a.fv_close)) : -1;
-  const bf = (b && b.fv_close != null) ? Math.round(Number(b.fv_close)) : -1;
-  if (bf !== af) return bf - af;
-  // '+' upside flag is the only sub-FV distinction kept ahead of TBS: a 42+
-  // outranks a 42 but stays below 43.
+  // v42 - Owner: order PURELY by the eFV model's DECIMAL grade (the continuous
+  // xfv_grade_realized), NOT the rounded display value. Two prospects displaying the same
+  // integer (e.g. 62.6 and 63.2 both show 63) are ordered by the decimal (63.2 > 62.6);
+  // they are TIED only when their eFV grades match DOWN TO THE DECIMAL, and the Tiebreaker
+  // Score (TBS) is the SOLE arbiter of that exact tie. Cohorts eFV abstains on (draft /
+  // overseas) fall back to the surfaced consensus FV. (Reverses the v38 rounded-surfaced-FV
+  // contract: TBS no longer breaks same-rounded-grade ties -- the eFV decimal does.)
+  const _g = p => {
+    const x = (typeof getEfv === "function") ? getEfv(p) : null;
+    if (x && x.xfv_grade_realized != null) return Number(x.xfv_grade_realized);
+    return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
+  };
+  const ag = _g(a), bg = _g(b);
+  if (bg !== ag) return bg - ag;                 // pure eFV-decimal (consensus-fallback) order
+  // exact tie DOWN TO THE DECIMAL -> '+' upside flag (consensus nuance) -> TBS -> name
   const ap = (a && a.fv_close_plus) ? 1 : 0;
   const bp = (b && b.fv_close_plus) ? 1 : 0;
   if (bp !== ap) return bp - ap;
-  // Tiebreaker Score is the FINAL arbiter on equal surfaced FV (+ flag).
   const ta = tiebreakerScore(a);
   const tb = tiebreakerScore(b);
   if (tb !== ta) return tb - ta;
@@ -14851,7 +14853,7 @@ function getFilteredActives() {
     // eFV (our outcome-grounded grade) descending -- the PRIMARY board ranking.
     // efvRankValue falls back to consensus FV for players with no pro track record
     // (where eFV abstains) so they interleave by consensus instead of vanishing.
-    pool.sort((a, b) => efvRankValue(b) - efvRankValue(a) || (efvWarOf(b) - efvWarOf(a)) || fvCmpDesc(a, b));
+    pool.sort((a, b) => efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b));
   } else if (state.sort === "xfv_delta") {
     // Biggest eFV-minus-consensus gap first: surfaces the prospects the outcome
     // model rates furthest ABOVE the scouting consensus (the model's top "buys"),
@@ -29311,7 +29313,6 @@ function buildEfvRankMap() {
   // until the ungraded file lands, at which point the rank map rebuilds with them folded in.
   let pool = DATA.players.filter(p => p && p.player_key).concat(provPlayers());
   pool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
-    || (efvWarOf(b) - efvWarOf(a))          // break grade ties (esp. the FV-20 floor) by raw model WAR
     || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
   pool.forEach((p, i) => { _EFV_RANK[p.player_key] = i + 1; });
   // PREVIOUS-grade eFV rank: rank the SAME pool by each player's eFV grade ~30 days ago
@@ -29358,14 +29359,6 @@ function efvGradeDisplay(x) {
   // is unbiased (ceil adds a systematic ~+0.5). Falls back to the quantile-mapped grade.
   if (x && x.xfv_grade_realized != null) return Math.round(x.xfv_grade_realized);
   return (x && x.xfv_grade != null) ? Math.round(x.xfv_grade) : null;
-}
-// Continuous model output (E[6yr WAR]) for breaking GRADE ties when sorting -- esp. the
-// FV-20 floor, where ~half the pool clamps to the same displayed grade but ranks very
-// differently by raw model WAR (a CPX breakout at +0.6 vs org-filler at -2.0). Surfaces
-// the hidden low-end discrimination without changing the displayed grade.
-function efvWarOf(p) {
-  const x = getEfv(p);
-  return (x && x.xfv_war_6yr != null) ? Number(x.xfv_war_6yr) : -99;
 }
 // eFV-minus-consensus delta CONSISTENT with the displayed (model-alone) grade: realized
 // grade vs consensus FV. Replaces the stored quantile-map delta so the colored +/- chip
