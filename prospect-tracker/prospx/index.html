@@ -41974,7 +41974,15 @@ function renderPlayerDetail(key) {
   const hasRealFV      = p.fv_close != null && p.fv_close > 40.0;   // above provisional threshold
   const hasToolGrades  = p.tools && (p.tools.composite_overall != null ||
                                      Object.keys(p.tools.grades || {}).length > 0);
-  const hasScouting    = hasRealPoints || hasRealFV || hasToolGrades;
+  // A real MiLB statline (current-season or career) is enough to render the full page: a
+  // CPX/DSL breakout with genuine production but a sub-40 consensus FV + no scout snapshots
+  // (e.g. Primera, .427/.549/.718 in CPX) must NOT fall through to the minimal "no data"
+  // card -- the Stats tab renders off these. A real xFV grade also counts as signal.
+  const hasStats       = !!(p.current_season_statlines && p.current_season_statlines.length) ||
+                         !!(p.career_stats && p.career_stats.length);
+  const _xfvRec        = (typeof getXfv === "function") ? getXfv(p) : null;
+  const hasXfv         = !!(_xfvRec && _xfvRec.xfv_grade != null);
+  const hasScouting    = hasRealPoints || hasRealFV || hasToolGrades || hasStats || hasXfv;
   if (!hasScouting) {
     // Look up trade value from the Trade Board data if available
     const tvEntry = (window._tbData && (window._tbData.players || []).find(x => x.player_key === key)) || null;

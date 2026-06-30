@@ -8,24 +8,24 @@
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 1.4,
-  "max_up": 10.0,
-  "max_down": -7.3,
-  "share_within_2_grades": 0.643
+  "mean_abs_delta": 0.91,
+  "max_up": 7.7,
+  "max_down": -5.0,
+  "share_within_2_grades": 0.768
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 11.13,
+  "mean_abs_delta": 11.12,
   "max_up": 10.7,
   "max_down": -25.3
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1352,
+  "spearman_adj_vs_consensus_miss": 0.1351,
   "n": 461,
   "reading": "positive => xFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 20478.6,
+  "xfv": 20479.7,
   "consensus": 21790.4
  },
  "example_up_adjustments": [

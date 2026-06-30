@@ -36,6 +36,10 @@ from pathlib import Path
 log = logging.getLogger(__name__)
 
 CACHE_DIR = Path(__file__).parent / ".cache" / "milb_stats"
+# Past-season milb caches are final and live forever; the CURRENT season refreshes once its
+# cache file ages past this TTL so the xFV model's stats track in-season production instead
+# of freezing on the season's first fetch (the bulk per-sport fetch is cheap).
+_SEASON_TTL_SEC = 20 * 3600
 
 BASE = "https://statsapi.mlb.com/api/v1/stats"
 _UA = {"User-Agent": "Mozilla/5.0"}
@@ -87,13 +91,24 @@ def season_splits(sport_id: int, season: int, group: str,
     fetch=False (cache-only consumers stay offline-safe)."""
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / f"{group}_{sport_id}_{season}.json"
+    cached = None
     if path.exists():
         try:
-            return _relevel(json.loads(path.read_text(encoding="utf-8")), sport_id)
+            cached = json.loads(path.read_text(encoding="utf-8"))
         except ValueError:
-            pass
+            cached = None
+    if cached is not None:
+        import time as _time
+        from datetime import date as _date
+        # Current-season cache goes stale after the TTL so the MODEL re-pulls in-season
+        # production; past seasons are final (cache forever). fetch=False consumers
+        # (e.g. league_norms) always use the cache.
+        stale = (fetch and season >= _date.today().year
+                 and (_time.time() - path.stat().st_mtime) >= _SEASON_TTL_SEC)
+        if not stale:
+            return _relevel(cached, sport_id)
     if not fetch:
-        return []
+        return _relevel(cached, sport_id) if cached is not None else []
     splits: list[dict] = []
     offset = 0
     while True:
@@ -104,7 +119,8 @@ def season_splits(sport_id: int, season: int, group: str,
         except Exception as e:                                # noqa: BLE001
             log.warning("milb_stats fetch failed %s/%s/%s: %s",
                         group, sport_id, season, e)
-            return splits
+            # transient failure -> keep the prior (stale) cache rather than empty
+            return _relevel(cached, sport_id) if cached is not None else splits
         block = (d.get("stats") or [{}])[0]
         page = block.get("splits") or []
         splits.extend(page)
@@ -138,6 +154,8 @@ def season_splits(sport_id: int, season: int, group: str,
                 "gs": st.get("gamesStarted"),
             })
         lean.append(row)
+    if not lean and cached is not None:
+        return _relevel(cached, sport_id)        # empty refetch -> keep prior cache
     path.write_text(json.dumps(lean, separators=(",", ":")), encoding="utf-8")
     log.info("milb_stats cached %s sport=%s season=%s: %d rows",
              group, sport_id, season, len(lean))
