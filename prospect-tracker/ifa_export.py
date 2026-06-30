@@ -50,9 +50,9 @@ log = logging.getLogger(__name__)
 # Bonus buckets for the class-level distribution trend (high → low).
 _BONUS_BUCKETS = (
     ("≥$3M",        3_000_000, None),
-    ("$1–3M",       1_000_000, 3_000_000),
-    ("$500k–1M",      500_000, 1_000_000),
-    ("$100–500k",     100_000,   500_000),
+    ("$1-3M",       1_000_000, 3_000_000),
+    ("$500k-1M",      500_000, 1_000_000),
+    ("$100-500k",     100_000,   500_000),
     ("<$100k",              0,   100_000),
 )
 
@@ -135,7 +135,9 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
         out.update({
             "is_tracked":   True,
             "fv":           fv,                                  # CURRENT grade (eFV or consensus)
-            "fv_label":     _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv),
+            # eFV rounds to NEAREST (owner rule); consensus FV ceils.
+            "fv_label":     (str(int(round(fv))) if (use_xfv and fv is not None)
+                             else _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv)),
             "fv_basis":     "xfv" if use_xfv else "consensus",
             # FV at signing ≈ the earliest grade we have on file (fv_open).
             "fv_signing":       fv_open,

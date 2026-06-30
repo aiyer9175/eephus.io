@@ -775,7 +775,7 @@ function renderProjections() {
                  : (f.r2 != null && f.r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
       return `<tr><td class="tt-team">${label}${flag}</td>
         <td class="tt-col">${f.r2 != null ? f.r2.toFixed(2) : " - "}</td>
-        <td class="tt-col">±${f.band_sd ?? " - "}</td>
+        <td class="tt-col">${f.band_sd != null ? "±" + f.band_sd : " - "}</td>
         <td class="tt-col">${f.mae ?? " - "}</td>
         <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
     }).join("");

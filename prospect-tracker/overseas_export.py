@@ -154,8 +154,8 @@ LEAGUE_CONTEXT = {
     "NPB": {
         "name":          "Nippon Professional Baseball",
         "country":       "Japan",
-        "season_window": "March – October",
-        "split_note":    "Central + Pacific Leagues; Pacific runs slightly hotter (≈ +5 OPS pts)",
+        "season_window": "March to October",
+        "split_note":    "Central + Pacific Leagues; Pacific runs slightly hotter (about +5 OPS pts)",
         "hitter_wrc_factor": 0.87, # PRIOR retained - wRC+ refit needs per-season league context (measured raw OPS ratio 0.802, see eval)
         # REFIT (model-audit Phase 4b WS-8, data/overseas_translation_eval.json):
         # measured IP-weighted ERA ratio 1.696 over the n=15 2016-25
@@ -169,7 +169,7 @@ LEAGUE_CONTEXT = {
     "NPBF": {
         "name":          "NPB Farm (Eastern / Western Leagues)",
         "country":       "Japan",
-        "season_window": "March – October",
+        "season_window": "March to October",
         "split_note": "NPB minor leagues - small samples, used mostly for rehab + development",
         "hitter_wrc_factor":  0.72,
         "pitcher_era_factor": 1.45,
@@ -180,7 +180,7 @@ LEAGUE_CONTEXT = {
     "KBO": {
         "name":          "Korea Baseball Organization",
         "country":       "South Korea",
-        "season_window": "April – October",
+        "season_window": "April to October",
         "split_note":    "10-team single division; hitter-friendly (league OPS ≈ .740-.760)",
         "hitter_wrc_factor": 0.81, # PRIOR retained (measured raw OPS ratio 0.819, n=1 - see eval)
         # REFIT (Phase 4b WS-8): measured ERA ratio 1.215 (n=6, incl.
@@ -194,7 +194,7 @@ LEAGUE_CONTEXT = {
     "CPBL": {
         "name":          "Chinese Professional Baseball League",
         "country":       "Taiwan",
-        "season_window": "April – October",
+        "season_window": "April to October",
         "split_note":    "6-team league; extremely hitter-friendly, smaller sample",
         "hitter_wrc_factor":  0.70,
         "pitcher_era_factor": 1.55,
@@ -205,7 +205,7 @@ LEAGUE_CONTEXT = {
     "CUBA": {
         "name":          "Serie Nacional de Béisbol",
         "country":       "Cuba",
-        "season_window": "November – April",
+        "season_window": "November to April",
         "split_note":    "Defections + restricted player movement complicate continuity",
         "hitter_wrc_factor":  0.84,
         "pitcher_era_factor": 1.30,

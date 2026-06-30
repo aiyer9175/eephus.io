@@ -1189,17 +1189,6 @@ function _methRegistryHTML() {
     ${body}
   </div>`;
 }
-// Part 8 - exportable methodology: print just the methodology body (the
-// toolbar + interactive widgets are hidden by the print stylesheet; a dated
-// PROSPX header prints at the top). Users "Save as PDF" from the print dialog.
-function _printMethodology() {
-  document.body.classList.add("printing-meth");
-  const cleanup = () => { document.body.classList.remove("printing-meth"); window.removeEventListener("afterprint", cleanup); };
-  window.addEventListener("afterprint", cleanup);
-  setTimeout(() => { window.print(); }, 30);
-  // Fallback cleanup if afterprint doesn't fire (some browsers).
-  setTimeout(cleanup, 1500);
-}
 
 // Source Comparison - the empirical backtest, visually set apart from the
 // methodology prose as the "does it work?" evidence area (distinct framed

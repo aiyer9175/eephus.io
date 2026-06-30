@@ -46,6 +46,7 @@
   var _origTheme = null;
   var _canvas = null;
   var _busy = false;
+  var _lastFocus = null;
 
   function esc(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -200,7 +201,7 @@
         '" style="background:var(' + ACCENTS[k] + ')" title="' + k + ' accent"></button>';
     }).join("");
     ov.innerHTML =
-      '<div class="egfx-modal" role="dialog" aria-label="Generate graphic">' +
+      '<div class="egfx-modal" role="dialog" aria-modal="true" aria-label="Generate graphic">' +
         '<div class="egfx-head"><span class="egfx-title">Generate graphic</span>' +
           '<button class="egfx-x" type="button" aria-label="Close">&times;</button></div>' +
         '<div class="egfx-controls">' +
@@ -232,7 +233,20 @@
     ov.querySelector("#egfx-copy").onclick = function () { exportNow("copy"); };
     ov.querySelector("#egfx-share").onclick = function () { exportNow("share"); };
     document.addEventListener("keydown", function (e) {
-      if (e.key === "Escape" && ov.classList.contains("is-open")) close();
+      if (!ov.classList.contains("is-open")) return;
+      if (e.key === "Escape") { close(); return; }
+      if (e.key === "Tab") {
+        var modal = ov.querySelector(".egfx-modal");
+        if (!modal) return;
+        var focusable = Array.prototype.filter.call(
+          modal.querySelectorAll('button, [href], select, input, textarea, [tabindex]:not([tabindex="-1"])'),
+          function (el) { return !el.disabled && !el.hidden && el.offsetParent !== null; }
+        );
+        if (!focusable.length) return;
+        var first = focusable[0], last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
     });
     return ov;
   }
@@ -297,6 +311,8 @@
       action: action, filename: fname, shareTitle: _spec.title || "eephus.io",
     });
     if (action === "copy") flash(res === "copied" ? "Copied to clipboard" : "Downloaded (copy unsupported)");
+    else if (action === "share") flash(res === "shared" ? "Shared" : "Downloaded (share unsupported)");
+    else flash("Downloaded");
   }
   function flash(msg) {
     var ov = document.getElementById("egfx-overlay");
@@ -311,16 +327,21 @@
 
   function open(spec) {
     if (!spec || !window.EEPHUS_HUB) return;
+    _lastFocus = document.activeElement;
     _spec = spec;
     _opts.format = "wide";
     _opts.accent = null;            // default to the module's own accent
-    _opts.count = (spec.board && spec.board.defaultCount) || 25;
+    var _cs = (spec.board && spec.board.counts) || [10, 25, 50];
+    var _dc = (spec.board && spec.board.defaultCount);
+    _opts.count = (_cs.indexOf(_dc) >= 0) ? _dc : (_cs.length ? _cs[0] : 25);
     _origTheme = document.documentElement.getAttribute("data-theme");
     var ov = ensureModal();
     ov.classList.add("is-open");
     applyTheme();
     syncControls();
     refresh();
+    var x = ov.querySelector(".egfx-x");
+    if (x) x.focus();
   }
   function close() {
     var ov = document.getElementById("egfx-overlay");
@@ -328,6 +349,8 @@
     if (_origTheme != null) document.documentElement.setAttribute("data-theme", _origTheme);
     else document.documentElement.removeAttribute("data-theme");
     _canvas = null;
+    if (_lastFocus && _lastFocus.focus) _lastFocus.focus();
+    _lastFocus = null;
   }
 
   function chipHTML(id, label) {

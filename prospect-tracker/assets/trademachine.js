@@ -392,13 +392,14 @@ function _tbSortRows(rows) {
   return rows;
 }
 // Render a clickable, sort-aware column header with an active-direction arrow.
-function _tbTh(label, col, cls, title) {
+function _tbTh(label, col, cls, title, noActiveMark) {
   const [scol, sdir] = _tbSortParts();
-  const active = scol === col;
+  const active = !noActiveMark && scol === col;
   const arrow = active ? (sdir === "asc" ? " ▲" : " ▼") : "";
   const classes = ["tm-sortable", cls, active ? "tm-sorted" : ""].filter(Boolean).join(" ");
   const tt = (title ? title + " · " : "") + "click to sort";
-  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}">${label}${arrow}</th>`;
+  const ariaSort = active ? (sdir === "asc" ? "ascending" : "descending") : "none";
+  return `<th class="${classes}" data-tb-sortcol="${col}" title="${tt}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${arrow}</th>`;
 }
 // Column header click: toggle direction if already sorted by it, else pick a
 // sensible default (text asc, numeric desc).
@@ -563,7 +564,7 @@ function _renderTBRows() {
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
-    ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale; ranks how valuable a player is to ACQUIRE in trade")}
+    ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale; ranks how valuable a player is to ACQUIRE in trade", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}
     <th class="tm-col-div">Signals</th>
@@ -578,7 +579,7 @@ function _renderTBRows() {
     const gradeCol = _tbGradeColor(grade);
     // FV only meaningful for active MiLB prospects - hide for MLB players
     const isProspect = p.status === "active";
-    const fv    = isProspect && p.fv != null ? Number(p.fv).toFixed(0) : "";
+    const fv    = isProspect && p.fv != null ? String(Math.ceil(Number(p.fv))) : "";
     // Position: trade_values.json now carries fielding-corrected position
     const pos   = escapeHtml(p.position || "");
     const org   = escapeHtml(p.org || "");   // may be empty for some players
@@ -630,8 +631,12 @@ function _renderTBRows() {
   html += `</tbody></table>${topPager}`;
   wrap.innerHTML = html;
   // Sortable column headers (the table is rebuilt each render, so rewire here).
-  wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th =>
-    th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol)));
+  wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th => {
+    th.addEventListener("click", () => _tbSortByCol(th.dataset.tbSortcol));
+    th.addEventListener("keydown", e => {
+      if (e.key === "Enter" || e.key === " ") { e.preventDefault(); _tbSortByCol(th.dataset.tbSortcol); }
+    });
+  });
 }
 
 // ── Filter chip wiring (called once after first load) ──────────────────────
@@ -736,7 +741,7 @@ function _tbShowGroup(playerKey) {
         <td style="padding:4px 6px;font-weight:600;">${escapeHtml(m.player_name || "?")}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.position || "")}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.org || "")}</td>
-        <td style="padding:4px 6px;text-align:right;">${m.fv != null ? Number(m.fv).toFixed(0) : " - "}</td>
+        <td style="padding:4px 6px;text-align:right;">${m.fv != null ? String(Math.ceil(Number(m.fv))) : " - "}</td>
         <td style="padding:4px 6px;text-align:right;">${m.age != null ? Number(m.age).toFixed(1) : " - "}</td>
         <td style="padding:4px 6px;">${escapeHtml(m.current_level || "")}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);font-size:10px;">${avl}</td>
@@ -768,7 +773,7 @@ function _tbShowGroup(playerKey) {
       const warStr = c.war_per_yr != null ? `${Number(c.war_per_yr).toFixed(2)} WAR/yr` : " - ";
       return `<tr style="font-size:11px;">
         <td style="padding:3px 6px;font-weight:600;">${escapeHtml(c.player_name || "?")}</td>
-        <td style="padding:3px 6px;color:var(--text-secondary);">FV ${c.fv != null ? Number(c.fv).toFixed(0) : " - "}</td>
+        <td style="padding:3px 6px;color:var(--text-secondary);">FV ${c.fv != null ? String(Math.ceil(Number(c.fv))) : " - "}</td>
         <td style="padding:3px 6px;color:var(--text-secondary);">${warStr}</td>
         <td style="padding:3px 6px;text-align:right;color:var(--text-secondary);">${outcome} outcome</td>
       </tr>`;

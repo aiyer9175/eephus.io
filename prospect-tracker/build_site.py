@@ -616,16 +616,19 @@ def _social_meta(title: str, description: str, image: str = "", url: str = "",
     return "\n".join(tags)
 
 def page(title: str, active: str, body: str, description: str = "",
-         image: str = "", url: str = "", og_type: str = "website") -> str:
+         image: str = "", url: str = "", og_type: str = "website",
+         robots: str = "") -> str:
     desc = html.escape(description or "eephus.io - sabermetrics")
     social = _social_meta(title, description or "eephus.io - sabermetrics",
                           image, url, og_type)
+    robots_meta = (f'\n<meta name="robots" content="{html.escape(robots)}">'
+                   if robots else "")
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
 {THEME_INIT}
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1">{robots_meta}
 <title>{html.escape(title)}</title>
 <meta name="description" content="{desc}">
 {social}
@@ -671,9 +674,10 @@ ORG_NAMES = {
 # `fv_close`; this map lets it lead with eFV instead, with consensus as the
 # fallback for any player eFV abstains on (no MiLB track record => absent from
 # by_player). Loaded once at module import - missing/corrupt file => empty map,
-# so the homepage behaves EXACTLY as before. The headline `xfv_grade` is the
-# rank-preserving grade onto the 20-80 consensus distribution (NOT the deflated
-# `xfv_grade_realized` that drives surplus).
+# so the homepage behaves EXACTLY as before. The headline `xfv_grade` is now the
+# realized pure-model grade (identical to the `xfv_grade_realized` alias) - the
+# same grade that drives surplus and the active board's ranking, so the homepage
+# Top Prospects ordering matches the board.
 def _load_xfv_grades() -> dict:
     try:
         doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
@@ -1483,7 +1487,7 @@ _GLOSSARY_TERMS = [
     ("rps_plus", "RPS+", "rate performance vs. same-age peers"),
     ("statcast_plus", "SC+", "Statcast composite"),
     ("wag", "WAG", "WAR above grade"),
-    ("tool", "Tool+", "20–80 tool composite"),
+    ("tool", "Tool+", "20-80 tool composite"),
 ]
 
 def page_home(title: str, inner: str, description: str = "") -> str:
@@ -1970,7 +1974,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
     )
     inner = f'{ticker}<div class="home-shell">{sidebar}{main}</div>'
     return page_home("eephus.io - sabermetrics", inner,
-                     "Live MiLB prospect movers, top prospects, graduates, and analysis.")
+                     "MiLB prospect board with outcome-grounded eFV grades, top prospects, movers, graduates, and analysis.")
 
 def build_articles_index(articles: list[dict]) -> str:
     cards = []
@@ -2579,7 +2583,7 @@ def build_404() -> str:
         '</div>'
     )
     return page("Page not found - eephus.io", "", body,
-                "Page not found on eephus.io.")
+                "Page not found on eephus.io.", robots="noindex")
 
 
 def build_robots() -> str:

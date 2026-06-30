@@ -13090,7 +13090,7 @@ function goHome() {
   if (state.search)               p.set("q", state.search);
   if (state.farmSort !== "farm_rank") p.set("farm", state.farmSort);
   if (state.formWindow !== "7y")          p.set("formw", state.formWindow);
-  if (state.spotlightBucket !== "hot") p.set("bucket", state.spotlightBucket);
+  if (state.spotlightBucket !== "risers") p.set("bucket", state.spotlightBucket);
   _pushHash(p);
 }
 
@@ -14619,7 +14619,7 @@ function getFilteredActives() {
   pool = pool.concat(provPlayers());
   if (state.search) {
     const q = state.search.toLowerCase();
-    pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
+    pool = pool.filter(p => (p.player_name || "").toLowerCase().includes(q));
   }
   if (state.stockFilter === "up") {
     pool = pool.filter(p => efvStockDir(p) === "up");
@@ -15046,7 +15046,7 @@ function getFilteredGrads() {
   let pool = DATA.debuts.slice();
   if (state.search) {
     const q = state.search.toLowerCase();
-    pool = pool.filter(p => p.player_name.toLowerCase().includes(q));
+    pool = pool.filter(p => (p.player_name || "").toLowerCase().includes(q));
   }
   if (state.orgFilter !== "all") {
     pool = pool.filter(p => p.org === state.orgFilter);
@@ -39576,7 +39576,7 @@ function makeCareerByLevelTable(career, birthDate) {
         <td><span class="level-pill level-neutral">${lv}</span></td>
         <td>${g || " - "}</td>
         <td>${ip ? ip.toFixed(1) : " - "}</td>
-        <td>${sum(rs, "wins") || " - "}-${sum(rs, "losses") || " - "}</td>
+        <td>${ip ? `${sum(rs, "wins")}-${sum(rs, "losses")}` : " - "}</td>
         <td>${era != null ? era.toFixed(2) : " - "}</td>
         <td>${whip != null ? whip.toFixed(2) : " - "}</td>
         <td>${kp != null ? kp.toFixed(1) + "%" : " - "}</td>
@@ -42329,7 +42329,7 @@ function renderPlayerDetail(key) {
   const acqLabel = acqMethod === "draft" ? "Draft"
                  : acqMethod === "international_fa" ? "IFA"
                  : acqMethod === "trade" ? "Trade"
-                 : acqMethod === "waiver_claim" ? "Waiver"
+                 : acqMethod === "waiver" ? "Waiver"
                  : acqMethod === "rule_5" ? "Rule 5"
                  : acqMethod === "free_agent" ? "FA"
                  : acqMethod === "contract_purchase" ? "Purchase"
@@ -42347,7 +42347,7 @@ function renderPlayerDetail(key) {
   let acqSub = "";
   if (p.acquisition && p.acquisition.method === "draft" && p.acquisition.pick_overall != null) {
     acqSub = `Pick #${p.acquisition.pick_overall}`;
-  } else if (curEv && curEv.from_org && curEv.to_org && (acqMethod === "trade" || acqMethod === "waiver_claim" || acqMethod === "rule_5")) {
+  } else if (curEv && curEv.from_org && curEv.to_org && (acqMethod === "trade" || acqMethod === "waiver" || acqMethod === "rule_5")) {
     const tip = bouncePathTxt
       ? `${curEv.from_org} → ${curEv.to_org} - ${bouncePathTxt.replace(/&[a-z]+;/g, "")}`
       : `${curEv.from_org} → ${curEv.to_org}`;
@@ -50233,18 +50233,21 @@ function attachHandlers() {
     state.acqFilter = e.target.value;
     resetListPages();
     render();
+    syncToURL();
   });
   const classEl = document.getElementById("class-filter");
   if (classEl) classEl.addEventListener("change", e => {
     state.classFilter = e.target.value;
     resetListPages();
     render();
+    syncToURL();
   });
   // eFV / Consensus "Rank by" toggle: sets the board sort (and, via _gradePrimary,
   // which grade leads every cell). Sets state.sort to "xfv" or "fv".
   document.querySelectorAll("[data-grade-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.sort = btn.dataset.gradeToggle;
+      if (state.sortRev) state.sortRev.sort = false;   // clear stale reverse flag on an explicit sort pick
       _syncGradeToggle();
       syncSortHeaderActive();
       resetListPages();
@@ -50262,6 +50265,7 @@ function attachHandlers() {
   const sortEl = document.getElementById("sort-select");
   if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
+    if (state.sortRev) state.sortRev.sort = false;   // an explicit dropdown pick must not be silently reversed by a stale column-toggle flag
     _syncGradeToggle();
     // Mirror dropdown-driven sort changes into the column-click sort
     // header indicator (the header carries .is-active when its
@@ -50269,6 +50273,7 @@ function attachHandlers() {
     syncSortHeaderActive();
     resetListPages();
     render();
+    syncToURL();
   });
   // Column-click sort - delegated handler on the document so it picks up
   // .sort-header cells inside any current OR future-rendered col-header.
@@ -50396,7 +50401,8 @@ function attachHandlers() {
       // Debounce: render() rebuilds the full-pool stats (_physPool etc.) + re-filters +
       // FULL-re-sorts ~thousands of players, so firing it per keystroke is the dominant jank.
       clearTimeout(_searchTimer);
-      _searchTimer = setTimeout(render, 175);
+      // Sync ?q= alongside the debounced render so a search is shareable / has a Back entry.
+      _searchTimer = setTimeout(() => { render(); syncToURL(); }, 175);
     });
     // Clear search on Escape (immediate -- clearing should feel instant)
     searchInput.addEventListener("keydown", e => {
@@ -50405,6 +50411,7 @@ function attachHandlers() {
         searchInput.value = "";
         clearTimeout(_searchTimer);
         render();
+        syncToURL();   // drop the stale ?q= so a refresh/share doesn't resurrect the search
       }
     });
   }
@@ -50489,7 +50496,7 @@ function _resetPageFilters(page) {
     resetListPages();
   } else if (page === "farm") {
     state.farmSort      = "farm_rank";
-    state.formWindow    = "6y";
+    state.formWindow    = "7y";   // 7y is the documented default (matches the ★ chip + state initializer)
     state.farmViewMode  = "table";
     state.farmCompareOrg = "";
     state.farmTreeView  = "expanded";

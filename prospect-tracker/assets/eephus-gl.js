@@ -123,14 +123,14 @@
   }
 
   // ---- ⌘K / Ctrl+K / "/" quick-search palette ---------------------------------
-  let _qkActive = 0, _qkResults = [];
+  let _qkActive = 0, _qkResults = [], _qkPrevFocus = null;
 
   function qkEnsure() {
     let ov = document.getElementById("qk-overlay");
     if (ov) return ov;
     ov = document.createElement("div");
     ov.id = "qk-overlay"; ov.className = "qk-overlay";
-    ov.innerHTML = `<div class="qk-modal" role="dialog" aria-label="Quick search">
+    ov.innerHTML = `<div class="qk-modal" role="dialog" aria-modal="true" aria-label="Quick search">
       <input id="qk-input" class="qk-input" type="text" placeholder="Search players, terms, metrics…" autocomplete="off" spellcheck="false" aria-label="Quick search">
       <div id="qk-results" class="qk-results"></div>
       <div class="qk-foot"><span><b>↵</b> open</span><span><b>↑ ↓</b> move</span><span><b>esc</b> close</span></div>
@@ -144,12 +144,14 @@
       else if (e.key === "ArrowUp") { e.preventDefault(); qkMove(-1); }
       else if (e.key === "Enter") { e.preventDefault(); qkChoose(_qkActive); }
       else if (e.key === "Escape") { e.preventDefault(); qkClose(); }
+      else if (e.key === "Tab") { e.preventDefault(); }  // trap focus on the input while open
     });
     return ov;
   }
 
   function qkOpen() {
     const ov = qkEnsure();
+    _qkPrevFocus = document.activeElement;   // restore on close
     qkLoadPlayers();   // lazy: the player index fetches on first open only
     ov.classList.add("is-open");
     const inp = ov.querySelector("#qk-input");
@@ -159,6 +161,8 @@
   function qkClose() {
     const ov = document.getElementById("qk-overlay");
     if (ov) ov.classList.remove("is-open");
+    if (_qkPrevFocus && _qkPrevFocus.focus) _qkPrevFocus.focus();
+    _qkPrevFocus = null;
   }
 
   function qkSearch(q) {
@@ -307,8 +311,7 @@
     if (!e) return;
     const tip = tipEnsure();
     tip.innerHTML = `<div class="gl-tip-term">${esc(e.name)}</div>
-      <div class="gl-tip-def">${esc(e.short)}</div>
-      <a class="gl-tip-link" href="/glossary/#g=${encodeURIComponent(slug)}">Full entry →</a>`;
+      <div class="gl-tip-def">${esc(e.short)}</div>`;
     tip.classList.add("is-open");
     // collision-aware: below the term by default, above if no room; clamp X.
     const r = span.getBoundingClientRect();

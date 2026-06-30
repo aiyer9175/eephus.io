@@ -387,26 +387,53 @@
   // Modal scaffold
   // ===========================================================================
   var _openModal = null;
+  var _modalPrevFocus = null;
+  var _modalSeq = 0;
   function openModal(title, bodyNode, opts) {
     closeModal();
     opts = opts || {};
+    _modalPrevFocus = document.activeElement;  // restore focus to the opener on close
     var overlay = document.createElement("div");
     overlay.className = "eph-modal-overlay";
     var modal = document.createElement("div");
     modal.className = "eph-modal" + (opts.wide ? " wide" : "");
-    modal.innerHTML = '<div class="eph-modal-head"><h2></h2><button class="eph-modal-close" aria-label="Close">✕</button></div><div class="eph-modal-body"></div>';
+    var titleId = "eph-modal-title-" + (++_modalSeq);
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-labelledby", titleId);
+    modal.innerHTML = '<div class="eph-modal-head"><h2 id="' + titleId + '"></h2><button class="eph-modal-close" aria-label="Close">✕</button></div><div class="eph-modal-body"></div>';
     qs(".eph-modal-head h2", modal).textContent = title;
     qs(".eph-modal-body", modal).appendChild(bodyNode);
     overlay.appendChild(modal);
     document.body.appendChild(overlay);
     overlay.addEventListener("click", function (e) { if (e.target === overlay) closeModal(); });
     qs(".eph-modal-close", modal).addEventListener("click", closeModal);
+    // Trap Tab focus within the modal so keyboard users can't tab into the page behind it.
+    overlay.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var f = qsa('a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])', modal)
+        .filter(function (el) { return el.offsetParent !== null || el === document.activeElement; });
+      if (!f.length) return;
+      var first = f[0], last = f[f.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    });
     _openModal = overlay;
     document.addEventListener("keydown", escClose);
+    // Move focus into the modal: first form field if present, else the close button.
+    var focusTarget = qs('input, select, textarea, button:not(.eph-modal-close)', modal) || qs(".eph-modal-close", modal);
+    if (focusTarget) focusTarget.focus();
     return modal;
   }
   function escClose(e) { if (e.key === "Escape") closeModal(); }
-  function closeModal() { if (_openModal) { _openModal.remove(); _openModal = null; document.removeEventListener("keydown", escClose); } }
+  function closeModal() {
+    if (_openModal) {
+      _openModal.remove(); _openModal = null;
+      document.removeEventListener("keydown", escClose);
+      if (_modalPrevFocus && _modalPrevFocus.focus) _modalPrevFocus.focus();
+      _modalPrevFocus = null;
+    }
+  }
 
   // ===========================================================================
   // Part 1 - Auth modal (email + password primary; magic-link optional)
@@ -653,7 +680,6 @@
     on(node, "click", '[data-act="settings"]', function () { openSettings(); });
     on(node, "click", '[data-act="notifs"]', function () { openNotifications(); });
     on(node, "click", '[data-act="mod"]', function () { openModeration(); });
-    document.addEventListener("click", function (e) { if (menu && !node.contains(e.target)) menu.classList.remove("open"); });
     if (isSignedIn()) updateBellCount();
   }
   function isStaff(prof) { prof = prof || currentProfile(); return !!(prof && (prof.role === "admin" || prof.role === "moderator")); }
@@ -1080,8 +1106,20 @@
       var uname = t.getAttribute("data-uname");
       ta.value = ta.value.replace(/@([A-Za-z0-9_]{1,20})$/, "@" + uname + " "); mpop.classList.remove("open"); ta.focus();
     });
-    document.addEventListener("click", function (e) { if (!cmp.contains(e.target)) { if (pop) pop.classList.remove("open"); if (mpop) mpop.classList.remove("open"); } });
+    // Outside-click closing of the embed/mention popovers uses a single delegated
+    // document listener installed once (guarded by _composeOutsideClickWired), not
+    // one per compose box - the forum fully re-renders on every interaction.
+    if (!_composeOutsideClickWired) {
+      _composeOutsideClickWired = true;
+      document.addEventListener("click", function (e) {
+        qsa(".eph-embed-pop.open, .eph-mention-pop.open").forEach(function (p) {
+          var box = p.closest(".eph-compose");
+          if (box && !box.contains(e.target)) p.classList.remove("open");
+        });
+      });
+    }
   }
+  var _composeOutsideClickWired = false;
   function positionMentionPop(ta, pop) { pop.style.left = "12px"; pop.style.top = (ta.offsetTop + 30) + "px"; }
   function textBeforeCursor(ta) { return ta.value.slice(0, ta.selectionStart); }
   function insertAtCursor(ta, text) {
@@ -1107,7 +1145,7 @@
     var btn = qs('[data-act="post"]', cmp); if (btn) btn.disabled = true;
     if (LIVE()) {
       A.getOrCreateThread(_forumState.scope, _forumState.key, threadTitle()).then(function (thread) {
-        if (!thread) { toast("Sign in to post.", "err"); return; }
+        if (!thread) { toast("Sign in to post.", "err"); if (btn) btn.disabled = false; return; }
         var html = renderMarkdownSafe(md, ctx);
         return A.postComment(thread.id, parentId, md, html).then(function (r) {
           if (r.error) { toast("Couldn't post: " + friendlyAuthError(r.error), "err"); if (btn) btn.disabled = false; return; }
@@ -1115,7 +1153,7 @@
           if (mentions.length && r.data) resolveAndNotifyMentions(r.data.id, mentions);
           loadAndRenderComments();
         });
-      });
+      }).catch(function () { toast("Couldn't post. Try again.", "err"); if (btn) btn.disabled = false; });
     } else {
       var list = PV.comments(_forumState.scope, _forumState.key) || [];
       var prof = PV.profile();
@@ -1379,6 +1417,15 @@
   function boot() {
     refreshNav();
     autoMount();
+    // Single delegated outside-click handler for the nav account menu, registered
+    // once. (refreshNav rebuilds the nav node on every auth change, so a per-render
+    // listener would leak.) Closes any open menu when the click is outside it.
+    document.addEventListener("click", function (e) {
+      qsa(".eph-acct-menu.open").forEach(function (m) {
+        var node = m.closest(".eph-nav-account");
+        if (!node || !node.contains(e.target)) m.classList.remove("open");
+      });
+    });
     if (A && A.onAuthChange) A.onAuthChange(function () { refreshNav(); remountForumIfPresent(); syncWatchlistOnLogin(); });
     // Any username (.eph-uname) opens the profile modal instead of navigating - 
     // avoids clashing with the PROSPX hash router; href stays as a no-JS fallback.

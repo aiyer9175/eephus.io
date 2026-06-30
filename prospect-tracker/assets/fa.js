@@ -183,7 +183,7 @@
       ? `<div class="fa-cba-note">&#9432; ${state.classYear - 1}-${String(state.classYear).slice(2)} is a PROJECTED future class: contract-expiry members with option/QO statuses; projections priced at that winter's ex-ante $/WAR. No signings or events exist yet.</div>`
       : "";
     banner.innerHTML = futureNote + (cls.cba_carry_forward
-      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span> &mdash; thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
+      ? `<div class="fa-cba-note">&#9888; CBA rules past 2026-12-01 are <span data-gl="cba_carry_forward">carried forward</span> - thresholds and QO values for this winter are NOT yet collectively bargained.</div>`
       : "") + freshnessLine(meta);
     if (window.EEPHUS_GL) window.EEPHUS_GL.wire(banner);
     if (state.player) { renderPlayer(rows, cls, state.player); }
@@ -348,9 +348,10 @@
 
   // Board spec for the Generate GFX modal: the constructed class as a column
   // leaderboard (proj years/guarantee, AAV, deal WAR, surplus, verdict).
-  function _faBoardSpec(cls) {
-    const top = cls.members.filter(m => m.projGuar != null)
-      .sort((a, b) => (b.projGuar || 0) - (a.projGuar || 0)).slice(0, 50);
+  function _faBoardSpec(cls, rowsToShow) {
+    const top = (rowsToShow || cls.members.filter(m => m.projGuar != null)
+      .sort((a, b) => (b.projGuar || 0) - (a.projGuar || 0)))
+      .filter(m => m.projGuar != null).slice(0, 50);
     const vc = v => v === "value" ? "pos" : v === "overpay" ? "neg" : "muted";
     const rows = top.map((m, i) => ({ cells: [
       { t: i + 1 },
@@ -551,7 +552,7 @@
     });
     const gfx = document.getElementById("fa-gfx-btn");
     if (gfx) gfx.onclick = () => {
-      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faBoardSpec(cls));
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faBoardSpec(cls, members));
       else downloadShareCard(cls);   // fallback if the GFX module didn't load
     };
     fillRowPhotos(rows);
@@ -642,14 +643,14 @@
     const signed = cls.members.filter(m => m.status === "signed");
     if (!evs.length && !signed.length) {
       rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker</span>
-        <span class="newsprint-eyebrow-meta">preseason &mdash; goes live with the first observed event</span></div>
+        <span class="newsprint-eyebrow-meta">preseason - goes live with the first observed event</span></div>
         <div class="state-message">
           <div class="state-message-title">The ${cls.class_year - 1}-${String(cls.class_year).slice(2)} winter hasn't opened</div>
           <div class="state-message-body">Signings, option decisions and qualifying offers land here as the
           daily pipeline first observes them (Spotrac publishes no dates, so every event carries its
           observation stamp). The winter runs in sequence: contract options resolve in the days after
           the World Series, qualifying offers are extended and decided, and then the market opens.
-          Until then the Class Board carries the projected market &mdash;
+          Until then the Class Board carries the projected market -
           ${cls.n_projected} of ${cls.n_members} members projected.</div>
         </div>`;
       return;
@@ -691,7 +692,7 @@
     const trackerGfx = scored.length
       ? ` &middot; <button class="chip egfx-chip" id="fa-tracker-gfx" title="Generate a shareable graphic of the signing tracker"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>`
       : "";
-    rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker &mdash; live</span>
+    rows.innerHTML = `<div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Signing Tracker - live</span>
       <span class="newsprint-eyebrow-meta">${signed.length} of ${cls.n_members} signed &middot; ${money(spent)} guaranteed &middot; ${mae != null ? `running guarantee MAE ${money(mae)} over ${scored.length} scored deals` : "no scored MLB deals yet"} &middot; dates are first-seen stamps${trackerGfx}</span></div>
       ${sigRows ? `<table class="detail-table">
         <thead><tr><th><span data-gl="first_seen_dates">Seen</span></th><th>Player</th><th>From &rarr; To</th><th>Actual</th><th><span data-gl="m_guarantee">Predicted</span></th><th>&Delta; Guar</th><th><span data-gl="deal_plus">Deal+</span> real</th></tr></thead>
@@ -761,7 +762,7 @@
       <p>${teamLogo(m.from)}${esc(m.from || "")} &rarr; <strong>${teamLogo(m.signedTo)}${esc(m.signedTo || "")}</strong> &middot;
       ${m.signedMilb ? "MiLB deal" : `${m.signedYears ?? "?"}y / ${money(m.signedGuar)} (${money(m.signedAav)} AAV)`}
       ${m.signedDate ? `<span class="fa-sub"> &middot; first seen ${m.signedDate}</span>` : ""}
-      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} &mdash; miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
+      ${(m.projGuar != null && m.signedGuar != null && !m.signedMilb) ? `<br>vs predicted ${m.projYears}y / ${money(m.projGuar)} - miss ${formatMetric(((m.signedGuarNpv ?? m.signedGuar) - m.projGuar) / 1e6, "surplusM")}; Deal+ at the actual price ${Math.round(100 * m.rational / (m.signedGuarNpv ?? m.signedGuar))}` : ""}</p>` : "";
     const arcBlock = m.fvArc ? `
       <h3>Prospect to payday</h3>
       <div class="fa-arc">${_fvArcSvg(m.fvArc)}</div>
@@ -785,7 +786,7 @@
           ${m.dealPlus != null ? `<div class="mlbp-tile"><span class="mlbp-tile-label">Deal+</span><span class="mlbp-tile-val">${Math.round(m.dealPlus)}</span></div>` : ""}
         </div>
       </div>
-      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} &mdash; the projection, and every number priced off it, is low-confidence.</div>` : ""}
+      ${m.thinPlatform ? `<div class="fa-cba-note">&#9888; ${esc(m.thinPlatform)} - the projection, and every number priced off it, is low-confidence.</div>` : ""}
       ${m.note ? `<div class="fa-cba-note">&#8251; ${esc(m.note)}</div>` : ""}
       ${signedBlock}
       <h3>Predicted market</h3>
@@ -979,11 +980,11 @@
     rows.innerHTML = `
       <div class="newsprint-eyebrow"><span class="newsprint-eyebrow-label">Model Accountability</span>
       <span class="newsprint-eyebrow-meta">both hard gates, rendered verbatim from the committed eval artifacts, misses included &middot; ${meta.cba ? meta.cba.unverified_records + " curated CBA records pending owner verification" : ""}</span></div>
-      ${g1 ? `<h3>Gate 1 &mdash; projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
+      ${g1 ? `<h3>Gate 1 - projection engine (${g1.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">train &le; N&minus;1, predict N, ten held-out seasons ${g1.targets ? g1.targets.join(", ") : ""} &middot; P10&ndash;P90 coverage ${g1.coverage_p10_p90 != null ? g1.coverage_p10_p90.toFixed(3) : "?"} (target 0.75&ndash;0.85)</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Naive baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g1.pooled, v => v == null ? EM_DASH : v.toFixed(3))}</tbody></table>` : ""}
-      ${g2 ? `<h3>Gate 2 &mdash; market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
+      ${g2 ? `<h3>Gate 2 - market model (${g2.pass ? "PASSED" : "FAILING"})</h3>
       <div class="fa-note">forward-chained winters ${g2.test_winters ? g2.test_winters.join(", ") : ""} vs nearest-comps baseline &middot; guarantee/AAV in $M</div>
       <table class="detail-table"><thead><tr><th>Metric</th><th>Model MAE</th><th>Comps baseline</th><th>n</th><th>Verdict</th></tr></thead>
       <tbody>${pooledRows(g2.pooled, v => v == null ? EM_DASH : v.toFixed(2))}</tbody></table>

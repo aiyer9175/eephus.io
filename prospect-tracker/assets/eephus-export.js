@@ -314,6 +314,7 @@
       TEXT_ITEMS.forEach(function (it) {
         var b = el("button", "ex-menu-item", '<span>' + it.label + '</span><small>' + it.note + '</small>');
         b.type = "button";
+        b.setAttribute("role", "menuitem");
         b.addEventListener("click", function () {
           var model = scrape(host);
           var built = buildText(model, it.fmt);
@@ -337,6 +338,7 @@
       imgActions.forEach(function (a) {
         var b = el("button", "ex-menu-item", '<span>' + a.label + '</span><small>' + a.note + '</small>');
         b.type = "button";
+        b.setAttribute("role", "menuitem");
         b.addEventListener("click", function () {
           closeMenu();
           if (a.action === "svg") return exportChartSVG(host);
@@ -355,15 +357,24 @@
     menu.style.left = Math.max(8, left) + "px";
     menu.style.top = top + "px";
     setTimeout(function () { document.addEventListener("click", _onDocClick, true); }, 0);
+    document.addEventListener("keydown", _onKey, true);
+    window.addEventListener("scroll", closeMenu, true);
+    window.addEventListener("resize", closeMenu);
     EephusExport._menu = menu;
   }
   function _onDocClick(e) {
     if (EephusExport._menu && !EephusExport._menu.contains(e.target) && !e.target.closest(".eephus-export-chip")) closeMenu();
   }
+  function _onKey(e) {
+    if (e.key === "Escape") closeMenu();
+  }
   function closeMenu() {
     if (EephusExport._menu && EephusExport._menu.parentNode) EephusExport._menu.parentNode.removeChild(EephusExport._menu);
     EephusExport._menu = null;
     document.removeEventListener("click", _onDocClick, true);
+    document.removeEventListener("keydown", _onKey, true);
+    window.removeEventListener("scroll", closeMenu, true);
+    window.removeEventListener("resize", closeMenu);
   }
 
   // ---- image export (branded frame, self-contained) ------------------------
