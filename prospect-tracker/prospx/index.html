@@ -14859,7 +14859,7 @@ function getFilteredActives() {
     // sink below all rated gaps; ties break on the xFV rank.
     const _gap = p => {
       const x = getXfv(p);
-      return (x && x.xfv_minus_consensus != null) ? Number(x.xfv_minus_consensus) : -Infinity;
+      return (xfvMinusConsensus(x) != null) ? Number(xfvMinusConsensus(x)) : -Infinity;
     };
     pool.sort((a, b) => (_gap(b) - _gap(a)) || (xfvRankValue(b) - xfvRankValue(a)) || fvCmpDesc(a, b));
   } else if (state.sort === "surplus_sv" || state.sort === "surplus_risk"
@@ -29291,6 +29291,10 @@ function xfvProxyPanel(p) {
 // (recent draftees / IFA, where xFV abstains) still rank sensibly instead of vanishing.
 function xfvRankValue(p) {
   const x = getXfv(p);
+  // MODEL-ALONE board ranking: order by the realized (pure-model) grade -- a direct
+  // transform of the model's E[6yr WAR], no consensus blend. Falls back to the
+  // quantile-mapped headline grade, then consensus FV.
+  if (x && x.xfv_grade_realized != null) return x.xfv_grade_realized;
   if (x && x.xfv_grade != null) return x.xfv_grade;
   return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
 }
@@ -29343,7 +29347,19 @@ function getXfvRankDelta(p) {
 }
 // Display grade rounded UP (owner rule: FV grades show the integer ceiling).
 function xfvGradeDisplay(x) {
+  // MODEL-ALONE headline: show the realized (pure-model) grade -- xfv_grade_realized is
+  // a direct transform of the model's E[6yr WAR] with NO consensus blend / quantile remap.
+  // Rounded up like every grade. Falls back to the quantile-mapped headline grade.
+  if (x && x.xfv_grade_realized != null) return fvCeil(x.xfv_grade_realized);
   return (x && x.xfv_grade != null) ? fvCeil(x.xfv_grade) : null;
+}
+// xFV-minus-consensus delta CONSISTENT with the displayed (model-alone) grade: realized
+// grade vs consensus FV. Replaces the stored quantile-map delta so the colored +/- chip
+// matches the headline number.
+function xfvMinusConsensus(x) {
+  if (x && x.xfv_grade_realized != null && x.consensus_fv != null)
+    return Math.round((x.xfv_grade_realized - x.consensus_fv) * 10) / 10;
+  return (x && x.xfv_minus_consensus != null) ? x.xfv_minus_consensus : null;
 }
 // Tooltip describing xFV vs consensus + the outcome read.
 function xfvTooltip(x) {
@@ -29353,7 +29369,7 @@ function xfvTooltip(x) {
     ? `xFV ${xfvGradeDisplay(x)} - FINAL grade, locked at MLB debut${x.realized_war != null ? ` (${x.realized_war} career WAR so far)` : ""}`
     : `xFV ${xfvGradeDisplay(x)} - our outcome-grounded grade (provisional)`];
   if (x.consensus_fv != null) {
-    const d = x.xfv_minus_consensus;
+    const d = xfvMinusConsensus(x);
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
   }
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
@@ -29476,7 +29492,7 @@ function xfvDetailHeaderHTML(p, fvBadge) {
     return `<div style="${labelStyle}"><span>Current FV (consensus)</span></div>${fvBadge}`;
   }
   const g = xfvGradeDisplay(x);
-  const d = x.xfv_minus_consensus;
+  const d = xfvMinusConsensus(x);
   const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
   const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
   // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
@@ -29509,7 +29525,7 @@ function xfvDetailCard(p) {
   // scales with magnitude. Sum of factors ~= the xFV-minus-consensus adjustment.
   const cons = x.consensus_fv != null ? fvCeil(x.consensus_fv) : null;
   const xg = xfvGradeDisplay(x);
-  const d = x.xfv_minus_consensus;
+  const d = xfvMinusConsensus(x);
   const factorsHTML = (x.factors && x.factors.length) ? `
       <div style="margin-top:10px;border-top:1px solid var(--border-light);padding-top:8px;">
         <div title="Signals that moved xFV off the consensus prior, biggest first. Game power is intentionally not a driver (scouts over-price it vs realized WAR)." style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;cursor:help;">How xFV graded this prospect${cons != null ? ` · consensus FV ${cons} <span style="color:${d > 0 ? 'var(--up)' : d < 0 ? 'var(--down)' : 'var(--text-tertiary)'};">${d > 0 ? '+' : ''}${d != null ? d.toFixed(1) : ''}</span> &rarr; xFV ${xg}` : ""}</div>
@@ -47102,8 +47118,8 @@ function _renderFarmDetailBody(orgCode, org, root) {
       let fvCell;
       const _rg = (pl.player_key && typeof getXfv === "function") ? getXfv({ player_key: pl.player_key }) : null;
       if (_rg && _rg.xfv_grade != null) {
-        // Source-graded: lead with xFV (consensus FV fallback handled below).
-        const _g = fvCeil(_rg.xfv_grade);
+        // Source-graded: lead with xFV (model-alone realized grade via xfvGradeDisplay).
+        const _g = xfvGradeDisplay(_rg);
         fvCell = `<span class="fv-badge ${fvClass(String(_g))} size-sm" title="xFV ${_g}${pl.fv_label ? ` · consensus FV ${pl.fv_label}` : ""}">${_g}</span>`;
       } else if (pl.fv_label) {
         fvCell = `<span class="fv-badge ${fvClass(pl.fv_label)} size-sm" title="Consensus FV ${pl.fv_label} (xFV not yet rated)">${pl.fv_label}</span>`;
