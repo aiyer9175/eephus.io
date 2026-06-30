@@ -591,6 +591,109 @@
     }
    },
    "_verdict": "REJECTED 2026-06-23. Routed deep Baseball Savant (2015+) into the proj_lgbm challenger as versioned features: hitters +xwOBA, xwOBA-gap, EV, barrel% (38->42); pitchers +xwOBA/xISO/EV/barrel-against (31->36, first Statcast on that side). Forward-chained dev bases 2017-2021 vs the xISO-only v1 baseline ('dev' here): NO OOS lift - n-weighted mean MAE 0.4488 vs 0.4481 (worse at 4/5 horizons, tied at h5); coverage, survived-coverage and tail-ratio neutral-to-worse at every horizon; star MAE/bias tied; pinball noise-level. The contact-quality signal is redundant with the Marcel-regressed rates (iso/k/bb/babip/hr) + champion stack already in the vector, so the extra columns only add overfitting surface. Not shipped; live model unchanged (v1). Code on branch proj-statcast-v2 (features reverted; kept the experiment-independent hygiene fixes: proj_ml _SCHEMA_TAG cache-key versioning + predict_path feature-width guard)."
+  },
+  "mean_head_rejected": {
+   "verdict": "REJECTED 2026-06-29 (loss): a dedicated objective=regression mean head as the recenter target cuts star bias but regresses pooled MAE by over-lifting non-stars; the lift-only implied-mean blend is the better Pareto point. tools/mean_head_backtest.py.",
+   "dev_bases": [
+    2017,
+    2018,
+    2019,
+    2021
+   ],
+   "holdout_bases": [
+    2022,
+    2023,
+    2024
+   ],
+   "pooled": {
+    "champion": {
+     "dev": {
+      "n": 40265,
+      "mae": 0.466,
+      "bias": -0.0781,
+      "n_star": 1005,
+      "star_mae": 1.8399,
+      "star_bias": 0.0649
+     },
+     "holdout": {
+      "n": 19610,
+      "mae": 0.5069,
+      "bias": -0.058,
+      "n_star": 661,
+      "star_mae": 1.8501,
+      "star_bias": -0.6351
+     }
+    },
+    "mh_same": {
+     "dev": {
+      "n": 40265,
+      "mae": 0.4925,
+      "bias": -0.0194,
+      "n_star": 1005,
+      "star_mae": 1.9283,
+      "star_bias": 0.2755
+     },
+     "holdout": {
+      "n": 19610,
+      "mae": 0.5429,
+      "bias": 0.0329,
+      "n_star": 661,
+      "star_mae": 1.8986,
+      "star_bias": -0.2956
+     }
+    },
+    "mh_full": {
+     "dev": {
+      "n": 40265,
+      "mae": 0.5114,
+      "bias": 0.0146,
+      "n_star": 1005,
+      "star_mae": 1.9302,
+      "star_bias": 0.3359
+     },
+     "holdout": {
+      "n": 19610,
+      "mae": 0.5489,
+      "bias": 0.0443,
+      "n_star": 661,
+      "star_mae": 1.8982,
+      "star_bias": -0.2675
+     }
+    }
+   }
+  },
+  "def_war_share_rejected": {
+   "verdict": "REJECTED 2026-06-29 (loss): a def_war_share persistence feature (recent WAR_def/total WAR) added to the shipped pos_adj_prior REGRESSED the dev bases with an inconsistent dev/holdout sign (noise; raw ratio poorly conditioned). Defense already reaches FA via contract_war_path->pos_adj_prior.",
+   "baseline_shipped_pos_adj": {
+    "dev": {
+     "pooled_mae": 0.5179,
+     "star_mae": 1.8076
+    },
+    "holdout": {
+     "pooled_mae": 0.5554,
+     "star_mae": 1.7433
+    }
+   },
+   "plus_share_delta": {
+    "dev": {
+     "pooled": 0.0011,
+     "star": 0.0155
+    },
+    "holdout": {
+     "pooled": -0.0022,
+     "star": -0.0191
+    }
+   },
+   "share_only_delta": {
+    "dev": {
+     "pooled": 0.0018,
+     "star": 0.0156
+    },
+    "holdout": {
+     "pooled": 0.0021,
+     "star": 0.0455
+    }
+   }
   }
  }
 }
