@@ -30573,7 +30573,12 @@ function _gfxAvatar(r, P) {
   // cell background (otherwise the player silhouette shows through around the
   // padded, contained logo - farm-GFX bug). A logo 404 degrades to the plain
   // palette bg, not the silhouette.
-  return `<span style="${wrap}background-image:none;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="width:100%;height:100%;object-fit:contain;padding:7px;box-sizing:border-box;display:block;" onerror="this.style.display='none';"></span>`;
+  // html2canvas ignores object-fit, so a contained logo in this portrait cell
+  // rasterizes STRETCHED to the full 40x52 box (the "squished logo" bug). Size
+  // the logo with max-dims + auto width/height instead: the browser lays it out
+  // at its natural aspect ratio (never distorted) and html2canvas captures that
+  // box faithfully. Flex-center it in the cell.
+  return `<span style="${wrap}background-image:none;display:inline-flex;align-items:center;justify-content:center;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="max-width:34px;max-height:38px;width:auto;height:auto;display:block;" onerror="this.style.display='none';"></span>`;
 }
 // Footer legend per kind.
 function _gfxFooterNote(kind) {
@@ -31683,9 +31688,14 @@ function buildGfxBoard() {
 
   const rowHtml = (item, i) => {
     const r = _gfxRow(item, snap.kind, snap.meta);
+    // Rank-only rows (farm systems) have no FV badge and carry their rank in
+    // r.rank; show it once as the leading "#N" ordinal rather than a bare
+    // position number followed by a redundant "#N" badge.
+    const rankOnly = (r.fv == null && r.rank != null);
     const lead = (r.fv != null)
       ? `<span class="fv-badge ${fvClass(r.fv)}" style="flex:none;">${escapeHtml(String(r.fv))}</span>`
-      : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">${r.rank != null ? "#" + r.rank : ""}</span>`;
+      : (rankOnly ? ""
+         : `<span style="font-family:var(--font-mono);font-size:13px;font-weight:700;color:${accent};flex:none;width:36px;text-align:center;">${r.rank != null ? "#" + r.rank : ""}</span>`);
     // Team logo rides the meta line when the AVATAR is a player photo (so the
     // team is still shown). When the avatar is already the team logo (photos
     // off, or a photo-less / farm row), we skip the meta logo to avoid a
@@ -31693,7 +31703,7 @@ function buildGfxBoard() {
     const metaLogo = (_gfxOpts.logos && r.org && _gfxRowHasPhotoAvatar(r))
       ? _gfxTeamLogo(r.org, P, 18) : "";
     return `<div style="display:flex;align-items:center;gap:10px;padding:7px 8px;border-bottom:1px solid ${P.border};">
-        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${accent};width:30px;text-align:right;flex:none;">${i + 1}</span>
+        <span style="font-family:var(--font-mono);font-size:15px;font-weight:700;color:${accent};width:30px;text-align:right;flex:none;">${rankOnly ? "#" + r.rank : (i + 1)}</span>
         ${lead}
         ${_gfxAvatar(r, P)}
         <span style="min-width:0;flex:1;overflow:hidden;">

@@ -68,9 +68,22 @@ _FACTOR_LABELS = {
     "tool_ch": "Changeup", "tool_cb": "Curveball", "era_rel": "ERA vs level",
     "x_era_k": "K-backed run prevention",                 # KRP+: (-era_rel)*k_rel
     "n_sources": "Source coverage", "pick_overall": "Draft pedigree",
-    "bonus_log": "Signing bonus", "milb_missing": "Thin track record",
+    "bonus_log": "Signing bonus", "n_milb_seasons": "Track-record depth",
     "fv_stddev": "Source disagreement", "il_stints_pre": "Injury history",
 }
+
+# Features excluded from the per-prospect explainer: model-internal recentering,
+# not interpretable per-prospect "reasons" a reader can act on.
+#   fv                  - the consensus prior itself (the baseline deltas are FROM).
+#   milb_missing        - the imputed-production INDICATOR. eFV only grades players
+#                         WITH a pro track record, so every live-scored prospect has
+#                         milb_missing=0; it is a near-constant offset (~+0.7 on ~all
+#                         of them) whose "Thin track record" label reads BACKWARDS (a
+#                         real track record scores UP because the weight is negative
+#                         and the training mean > 0). Carries no per-player signal.
+#   is_ifa / is_college - acquisition-cohort intercept dummies (a per-cohort baseline
+#                         shift), not a scouting/production signal.
+_EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 
 
 def _factors(ridge, feats, top: int = 4) -> list:
@@ -80,7 +93,7 @@ def _factors(ridge, feats, top: int = 4) -> list:
     delta. Returns [{label, dir, mag}]."""
     contribs = []
     for k, m, s, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
-        if k == "fv":
+        if k in _EXPLAINER_SKIP:
             continue
         c = w * ((feats.get(k, 0.0) - m) / (s or 1.0))
         if abs(c) >= 0.05:
