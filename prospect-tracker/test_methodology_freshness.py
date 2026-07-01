@@ -67,6 +67,9 @@ MODEL_GLOSSARY = {
     # WAR cohort diagnostic = model-dev artifact rendered nowhere (audits the WAR engine's
     # per-cohort residuals); no user-facing methodology surface.
     "war_cohort_diagnostic": "internal",
+    # REM+ = the /mlbstats/ Bullpen Leaderboards reliever metric; its glossary entry
+    # (and the Bullpen+ / gmLI / WPA companions) documents the methodology.
+    "rem_plus": ["rem_plus", "bullpen_plus"],
 }
 
 

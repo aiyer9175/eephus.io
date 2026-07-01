@@ -361,6 +361,52 @@
   content: ""; position: absolute; left: 9px; right: 9px; bottom: 3px;
   height: 2px; background: var(--iridescent); border-radius: 2px;
 }
+/* "MLB Modules" grouped dropdown (a native <details>). The summary reads as a
+   nav link with a caret; the menu is position:fixed (placed by eephus-nav.js)
+   so it escapes the .eephus-links horizontal-scroll overflow clip. */
+.eephus-nav .eephus-nav-group { position: relative; flex: none; }
+.eephus-nav .eephus-nav-group > summary {
+  list-style: none; cursor: pointer;
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary);
+  padding: 8px 11px; white-space: nowrap; min-height: 40px;
+  display: inline-flex; align-items: center; gap: 5px;
+  border-left: 1px solid var(--border);
+  transition: background .12s, color .12s;
+}
+/* Kill the native disclosure triangle three ways (webkit marker, list marker,
+   and the inline-flex display above already drops it in Chrome). */
+.eephus-nav .eephus-nav-group > summary::-webkit-details-marker { display: none; }
+.eephus-nav .eephus-nav-group > summary::marker { display: none; content: ""; }
+.eephus-nav .eephus-nav-group > summary:hover,
+.eephus-nav .eephus-nav-group > summary:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary);
+}
+.eephus-nav .eephus-nav-group .nav-caret {
+  font-size: 8px; opacity: .55; margin-left: 1px; line-height: 1;
+  transition: transform .12s, opacity .12s;
+}
+.eephus-nav .eephus-nav-group > summary:hover .nav-caret,
+.eephus-nav .eephus-nav-group[open] .nav-caret { opacity: .9; }
+.eephus-nav .eephus-nav-group[open] .nav-caret { transform: rotate(180deg); }
+.eephus-nav .eephus-nav-group.is-active > summary { color: var(--text-primary); font-weight: 700; }
+.eephus-nav .eephus-nav-menu {
+  position: fixed; z-index: 60; min-width: 172px;
+  display: flex; flex-direction: column;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .18); padding: 4px 0;
+}
+.eephus-nav .eephus-nav-menu a {
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
+  padding: 9px 14px; white-space: nowrap; border-left: none;
+  display: block; transition: background .12s, color .12s;
+}
+.eephus-nav .eephus-nav-menu a:hover,
+.eephus-nav .eephus-nav-menu a:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary);
+}
+.eephus-nav .eephus-nav-menu a.is-active { color: var(--text-primary); font-weight: 700; }
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
@@ -742,6 +788,14 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .sb-nav a { font-size: 14px; font-weight: 600; padding: 7px 9px; }
 .sb-nav a.is-active { color: var(--text-primary); font-weight: 700; background: var(--bg-tertiary); }
 .sb-nav a:hover, .sb-subnav a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+/* "MLB Modules" sub-block in the rail: a small subhead with the member modules
+   indented under it (the rail stays expanded; the dropdown is a top-bar form). */
+.sb-subhead {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
+  margin: 8px 0 2px; padding: 0 9px;
+}
+.sb-nav a.sb-grouped { margin-left: 10px; }
 .sb-subnav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 .sb-subnav a { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
 /* Touch devices get larger sidebar tap targets (~40px) without loosening the
@@ -1361,6 +1415,76 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 
 /* ── MLB Projections (/projections/) - extends .fa-app ─────────────────── */
 /* Players view gets a RIGHT info rail (scope + leaders): main first, rail second. */
+/* ---- MLB Stats module (/mlbstats/): Bullpen Leaderboards ------------------ */
+.mlbstats-app { font-family: var(--font-retro); }
+/* Top-level section nav (Bullpen Leaderboards ...; grows over time). */
+.mlbstats-sectionnav { display: flex; gap: 4px; flex-wrap: wrap; margin: 14px 0 6px; }
+.mlbstats-sectionbtn {
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  color: var(--text-secondary); background: var(--bg-secondary);
+  border: 1px solid var(--border); padding: 8px 14px; border-radius: 0;
+}
+.mlbstats-sectionbtn:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.mlbstats-sectionbtn.active { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+/* Sub-tabs within Bullpen Leaderboards (Relievers / Team Bullpens / Depth Charts). */
+.mlbstats-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 14px 0 10px; border-bottom: 1px solid var(--border); }
+.mlbstats-tab {
+  font-family: var(--font-retro-mono); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; color: var(--text-tertiary);
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+}
+.mlbstats-tab:hover { color: var(--text-primary); }
+.mlbstats-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
+.mlbstats-note { font-size: 11px; color: var(--text-tertiary); margin: 6px 0 12px; }
+.mlbstats-empty { padding: 28px 16px; text-align: center; color: var(--text-tertiary);
+  font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }
+.mlbstats-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
+.mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
+.mlbstats-bar input, .mlbstats-bar select {
+  font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;
+  background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border);
+}
+.mlbstats-bar .mlbstats-search { margin-left: auto; min-width: 180px; }
+/* Leaderboard table - terminal/scoreboard treatment, tabular numerics. */
+.mlbstats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mlbstats-table th, .mlbstats-table td { padding: 6px 9px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+.mlbstats-table th { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary); text-align: right;
+  cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--bg-secondary); }
+.mlbstats-table th:first-child, .mlbstats-table td:first-child { text-align: left; }
+.mlbstats-table th.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+.mlbstats-table td { text-align: right; font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.mlbstats-table td.mlbstats-name { text-align: left; font-family: var(--font-retro); max-width: 260px;
+  overflow: hidden; text-overflow: ellipsis; }
+.mlbstats-table tbody tr:hover { background: var(--bg-tertiary); }
+.mlbstats-table tr.is-provisional td { opacity: .82; }
+/* REM+ / Bullpen+ index coloring (100 = average; thresholds mirror the +stat read). */
+.rem-plus { font-weight: 700; cursor: help; }
+.rem-elite { color: var(--accent-cyan); }
+.rem-good { color: var(--accent-green); }
+.rem-avg { color: var(--text-primary); }
+.rem-low { color: var(--text-tertiary); }
+.bp-pos { color: var(--accent-green); }
+.bp-neg { color: var(--accent-red); }
+.bp-prov { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700; color: var(--accent-orange);
+  border: 1px solid var(--accent-orange); padding: 1px 3px; margin-left: 5px; vertical-align: middle; }
+.bp-role { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); padding: 1px 5px; }
+/* Bullpen depth charts: a leverage ladder per team. */
+.bp-depth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.bp-depth-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
+.bp-depth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.bp-depth-team { font-family: var(--font-retro-mono); font-weight: 700; font-size: 13px; }
+.bp-slot { display: grid; grid-template-columns: 92px 1fr auto; gap: 8px; align-items: center; padding: 4px 0;
+  font-size: 12px; }
+.bp-slot .bp-slot-role { color: var(--text-tertiary); font-family: var(--font-retro-mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: .03em; }
+.bp-slot .bp-slot-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-slot .bp-slot-rem { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
 .proj-app .fa-board-layout { grid-template-columns: minmax(0, 1fr) 230px; }
 @media (max-width: 1100px) {
   .proj-app .fa-board-layout { grid-template-columns: 1fr; }

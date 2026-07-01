@@ -522,6 +522,20 @@
    "last_checked": "2026-06-30",
    "stale": false,
    "artifact_age_days": 5
+  },
+  {
+   "model_id": "rem_plus",
+   "surface": "/mlbstats/ Bullpen Leaderboards",
+   "predicts": "reliever run-prevention skill, pool-relative (100 = average reliever); a sample-shrunk FIP. Team Bullpen+ rolls it up by relief innings",
+   "champion": "rem_plus_v1 (empirical-Bayes-shrunk, reliever-pool-anchored FIP; two-number, leverage held out of the talent number)",
+   "baseline": "raw FIP and ERA (naive run-prevention baselines)",
+   "metric": "forward-chained Spearman Y->Y+1 RA9 (bootstrap CI on the rho gap) + leverage-variant bake-off + split-half stabilization + AAV market check",
+   "eval_artifact": "data/rem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-06-30 (/mlbstats/ Bullpen Leaderboards), FULL validation. Forward-chained OOS 2018-2025 (ex-2020): REM+ predicts next-year RA9 at rho 0.236 vs raw FIP 0.211, ERA 0.090, raw WPA 0.106; bootstrap CI on the rho gap beats ERA (lo95 +0.088), beats raw WPA (lo95 +0.068), and edges its raw-FIP parent (lo95 +0.001) - so the empirical-Bayes shrinkage + reliever-pool anchoring earn their place. TWO-NUMBER design EMPIRICALLY CONFIRMED: the leverage-weighted variant bake-off (REM+_lev = 100+(REM+-100)*(1+d*(gmLI-1))) is monotone-WORSE in d (optimal damping d=0: rho 0.236 at d=0 -> 0.227 at d=1.0), so folding gmLI in only hurts forward prediction (gmLI is manager-assigned, not repeatable skill; Moore 2011). YET the MARKET CHECK (271 matched RP FA signings, data/fa_archive.json) shows leverage-weighted REM+ correlates with AAV slightly BETTER (0.516) than pure (0.508): teams PAY for leverage. Conclusion (Rosen 2026): leverage is a price/deployment layer, not a talent layer -> kept OUT of the 100-scale REM+, surfaced in separate Impact columns (gmLI/WPA/WPA-LI/SD-MD). STABILIZATION: split-half REM+ rho rises with sample (0.18 @50-100 BF, 0.34 @100-150, 0.42 @150-250; relievers are genuinely volatile), qualifying at 100 BF sits at the knee. DATA self-computed from the StatsAPI winProbability feed (gmLI/WPA; FanGraphs 403-blocked), backfilled 2018-2025 via tools/backfill_win_prob.py (~17k games cached). v1 anchors on FIP not xFIP (xFIP needs a fly-ball walk). Bullpen+ = relief-IP-weighted REM+ rollup (leverage out) + a separate leverage-deploy column. Harness tools/rem_plus_backtest.py.",
+   "last_checked": "2026-06-30",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

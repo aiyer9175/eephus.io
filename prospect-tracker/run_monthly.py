@@ -2490,6 +2490,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("mlb player detail export failed — continuing")
 
+        # --- 6b4. Bullpen Leaderboards (the /mlbstats/ surface) ---------
+        # REM+ (FIP-based, pool-relative reliever skill; 100 = average) + team
+        # Bullpen+ + gmLI role depth charts. Skill core from the StatsAPI season
+        # leaderboard; gmLI / WPA self-computed from the winProbability feed
+        # (FanGraphs is 403-blocked here). The per-game feed is cached, so this
+        # is one big first walk, then incremental. Additive; never aborts.
+        with _step("6b4. Bullpen Leaderboards (bullpen_leaderboards.json)", log):
+            try:
+                from bullpen_export import export as _export_bullpen
+                _bp_n = _export_bullpen(log=log.info)
+                log.info("bullpen: %d relievers scored", _bp_n)
+            except Exception:
+                log.exception("bullpen leaderboards export failed - continuing")
+
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
         with _step("6c. Org tendencies export (org_tendencies.json)", log):

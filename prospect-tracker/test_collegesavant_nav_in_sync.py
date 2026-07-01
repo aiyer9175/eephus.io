@@ -3,18 +3,21 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Nav-drift guard for the hand-maintained CollegeSavant pages.
+"""Nav-drift guard for the hand-maintained static pages.
 
-Every editorial page gets its top nav from `build_site._nav()`, but the two
-CollegeSavant pages (`collegesavant/index.html`, `pitcher_index.html`) are
-hand-authored and hardcode the same nav bar. Nothing forced them to stay in
-sync, so adding/removing/renaming a `NAV_ITEMS` entry would silently leave
-CollegeSavant pointing at a stale set of links.
+Every generated editorial page gets its top nav from `build_site._nav()`, but
+three pages are hand-authored and hardcode the same nav bar: `prospx/index.html`
+and the two CollegeSavant pages (`collegesavant/index.html`,
+`pitcher_index.html`). Nothing forces them to stay in sync, so adding, removing,
+or renaming a `NAV_ITEMS` entry would silently leave these pages pointing at a
+stale set of links.
 
-This test asserts the `<nav class="eephus-links">` block on each CollegeSavant
-page carries exactly the canonical `NAV_ITEMS` set (same hrefs, same labels,
-same count) — catching drift in either direction at test time instead of in
-production.
+The nav now carries a grouped "MLB Modules" dropdown (Free Agency / Projections /
+MLB Stats live under it via a <details>), so the canonical link set is the
+FLATTENED leaf list `build_site.nav_leaves()`, not the top-level `NAV_ITEMS`.
+This test asserts the `<nav class="eephus-links">` block on each hand-kept page
+carries exactly that leaf set (same hrefs, same labels, same count) plus the
+group label, catching drift in either direction at test time.
 """
 from __future__ import annotations
 
@@ -23,11 +26,12 @@ from pathlib import Path
 
 import pytest
 
-from build_site import NAV_ITEMS
+from build_site import NAV_ITEMS, nav_leaves
 
 ROOT = Path(__file__).parent
 
-CS_PAGES = [
+STATIC_NAV_PAGES = [
+    ROOT / "prospx" / "index.html",
     ROOT / "collegesavant" / "index.html",
     ROOT / "collegesavant" / "pitcher_index.html",
 ]
@@ -39,31 +43,41 @@ _NAV_RE = re.compile(
 _LINK_RE = re.compile(r"<a\b", re.IGNORECASE)
 
 
-@pytest.mark.parametrize("page", CS_PAGES, ids=lambda p: p.name)
-def test_collegesavant_nav_matches_build_site(page: Path):
-    assert page.exists(), f"missing CollegeSavant page: {page}"
+@pytest.mark.parametrize("page", STATIC_NAV_PAGES, ids=lambda p: f"{p.parent.name}/{p.name}")
+def test_static_nav_matches_build_site(page: Path):
+    assert page.exists(), f"missing hand-kept nav page: {page}"
     html = page.read_text(encoding="utf-8")
 
     m = _NAV_RE.search(html)
     assert m, f'{page.name}: no <nav class="eephus-links"> block found'
     nav = m.group(1)
 
-    # Every canonical item must be present as a link (href + visible label).
+    leaves = nav_leaves()
+
+    # Every canonical leaf must be present as a link (href + visible label).
     missing = []
-    for _key, label, href in NAV_ITEMS:
+    for _key, label, href in leaves:
         has_href = f'href="{href}"' in nav
         has_label = f">{label}<" in nav
         if not (has_href and has_label):
             missing.append(f'{label} ({href})')
     assert not missing, (
-        f"{page.name}: nav out of sync with build_site.NAV_ITEMS — "
+        f"{page.name}: nav out of sync with build_site.nav_leaves() - "
         f"missing/renamed: {missing}"
     )
 
-    # And no extras: the link count must match exactly, so a removed
-    # NAV_ITEMS entry left behind on the page is also caught.
+    # Each grouped node's label must render as a dropdown summary.
+    for item in NAV_ITEMS:
+        if isinstance(item, dict):
+            assert f'>{item["group"]}<' in nav, (
+                f'{page.name}: missing "{item["group"]}" group dropdown summary'
+            )
+
+    # And no extras: the <a> count must match the leaf count exactly, so a
+    # removed entry left behind on the page is also caught. (The group's
+    # <summary> is not an <a>, so it does not inflate the count.)
     link_count = len(_LINK_RE.findall(nav))
-    assert link_count == len(NAV_ITEMS), (
-        f"{page.name}: nav has {link_count} links but NAV_ITEMS has "
-        f"{len(NAV_ITEMS)} — a stale/extra link drifted in."
+    assert link_count == len(leaves), (
+        f"{page.name}: nav has {link_count} links but nav_leaves() has "
+        f"{len(leaves)} - a stale/extra link drifted in."
     )

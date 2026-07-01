@@ -50,6 +50,7 @@ def _asset_ver(rel: str) -> str:
     except OSError:
         return "1"
 _CSS_VER = _asset_ver("assets/site.css")
+_NAV_VER = _asset_ver("assets/eephus-nav.js")
 _ACCT_VER = _asset_ver("assets/eephus-account.js")
 _UI_VER = _asset_ver("assets/eephus-ui.js")
 _ACCT_CSS_VER = _asset_ver("assets/eephus-account.css")
@@ -58,6 +59,7 @@ _FA_VER = _asset_ver("assets/fa.js")
 _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
+_MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
 _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
@@ -119,17 +121,43 @@ def _headshot_url(mlbam, px: int = 180) -> str | None:
 # 2026-06-12: the standalone Teams module merged into MLB Projections
 # (Team Outlook view carries the org-dashboard columns); /teams/ now
 # redirects there and the nav entry is gone.
+# A nav entry is either a LEAF (key, label, href) or a GROUP dict
+#   {"group": <label>, "key": <group key>, "children": [(key, label, href), ...]}
+# rendered as a click dropdown in the top bar (_nav) and a nested sub-block in
+# the homepage sidebar. The MLB-facing modules (Free Agency, Projections, MLB
+# Stats) live under one "MLB Modules" group; PROSPX/CollegeSavant stay top-level
+# (MiLB + amateur). This is the SINGLE source - _nav(), the sidebar, and the
+# hand-maintained static nav copies (prospx + the two CollegeSavant pages) all
+# mirror it; test_collegesavant_nav_in_sync guards the static copies.
 NAV_ITEMS = [
     ("home",     "Home",             "/"),
     ("prospx",   "PROSPX",           "/prospx/"),
     ("collegesavant", "CollegeSavant", "/collegesavant/"),
-    ("fa",       "Free Agency",      "/fa/"),
-    ("projections", "Projections",   "/projections/"),
+    {"group": "MLB Modules", "key": "mlb", "children": [
+        ("fa",          "Free Agency", "/fa/"),
+        ("projections", "Projections", "/projections/"),
+        ("mlbstats",    "MLB Stats",   "/mlbstats/"),
+    ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
     ("glossary", "Glossary",         "/glossary/"),
     ("team",     "Developers",        "/team/"),
 ]
+
+def _nav_is_group(item) -> bool:
+    """A NAV_ITEMS entry is a group when it's a dict (vs a (key,label,href) leaf)."""
+    return isinstance(item, dict)
+
+def nav_leaves() -> list[tuple]:
+    """Flatten NAV_ITEMS (groups + leaves) to (key, label, href) in nav order -
+    the canonical link set the static nav copies must mirror."""
+    out: list[tuple] = []
+    for item in NAV_ITEMS:
+        if _nav_is_group(item):
+            out.extend(item["children"])
+        else:
+            out.append(item)
+    return out
 
 # PROSPX sub-sections - deep links into the app (section = `tab` query param in
 # the hash; `active` is the default so it has no param).
@@ -246,6 +274,7 @@ MODULE_STAGE = {
     "trademachine": ("α", "Trade Machine is in alpha - newly launched"),
     "fa": ("α", "MLB Free Agency is in alpha - newly launched; numbers may shift as the model matures"),
     "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
+    "mlbstats": ("α", "MLB Stats is in alpha - newly launched; metrics may shift as the models mature"),
     "forums": ("α", "Forums is in alpha - newly launched"),
 }
 
@@ -568,9 +597,29 @@ def _nav(active: str) -> str:
     # here (the homepage sidebar keeps the full names).
     short = {}
     items = []
-    for key, label, href in NAV_ITEMS:
-        cls = ' class="is-active"' if key == active else ""
-        items.append(f'<a href="{href}"{cls}>{html.escape(short.get(key, label))}</a>')
+    for item in NAV_ITEMS:
+        if _nav_is_group(item):
+            children = item["children"]
+            active_in = any(k == active for k, _l, _h in children)
+            clinks = []
+            for k, l, h in children:
+                ccls = ' class="is-active"' if k == active else ""
+                clinks.append(f'<a href="{h}" role="menuitem"{ccls}>{html.escape(short.get(k, l))}</a>')
+            gcls = " is-active" if active_in else ""
+            # Native <details> dropdown: click-toggles, keyboard-accessible with
+            # zero JS. assets/eephus-nav.js adds outside-click/Esc close and
+            # fixed-positions the menu so it escapes the nav's overflow clip.
+            items.append(
+                f'<details class="eephus-nav-group{gcls}" data-nav-group>'
+                f'<summary aria-haspopup="true">{html.escape(item["group"])}'
+                f'<span class="nav-caret" aria-hidden="true">▾</span></summary>'
+                f'<div class="eephus-nav-menu" role="menu">{"".join(clinks)}</div>'
+                '</details>'
+            )
+        else:
+            key, label, href = item
+            cls = ' class="is-active"' if key == active else ""
+            items.append(f'<a href="{href}"{cls}>{html.escape(short.get(key, label))}</a>')
     # Site-wide controls (right-aligned), matching PROSPX's primary nav: a
     # Watchlist deep-link into PROSPX + the Dark Mode toggle.
     controls = (
@@ -634,6 +683,7 @@ def page(title: str, active: str, body: str, description: str = "",
 {social}
 {FAVICON_LINKS}
 <link rel="stylesheet" href="/assets/site.css?v={_CSS_VER}">
+<script src="/assets/eephus-nav.js?v={_NAV_VER}" defer></script>
 {ACCOUNT_CSS_LINK}
 </head>
 <body class="eephus-page">
@@ -1836,13 +1886,28 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
-                     "team": "⚒"}
-    nav = []
-    for key, label, href in NAV_ITEMS:
-        cls = ' class="is-active"' if key == "home" else ""
+                     "team": "⚒", "mlbstats": "▦"}
+    def _sb_link(key, label, href, grouped=False):
+        classes = []
+        if key == "home":
+            classes.append("is-active")   # the sidebar only renders on the homepage
+        if grouped:
+            classes.append("sb-grouped")
+        cls = f' class="{" ".join(classes)}"' if classes else ""
         icon = (prospx_ball_logo("sbnav") if key == "prospx"
                 else f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(key, "›")}</span>')
-        nav.append(f'<a href="{href}"{cls}>{icon}{html.escape(sidebar_labels.get(key, label))}</a>')
+        return f'<a href="{href}"{cls}>{icon}{html.escape(label)}</a>'
+    nav = []
+    for item in NAV_ITEMS:
+        if _nav_is_group(item):
+            # A nested, always-expanded sub-block in the vertical rail (the
+            # dropdown is for the horizontal top bar; the rail has room).
+            nav.append(f'<div class="sb-subhead">{html.escape(item["group"])}</div>')
+            for k, l, h in item["children"]:
+                nav.append(_sb_link(k, l, h, grouped=True))   # leaf label under the subhead
+        else:
+            key, label, href = item
+            nav.append(_sb_link(key, sidebar_labels.get(key, label), href))
     sub = "".join(f'<a href="{href}"><span class="px-glyph">›</span>{html.escape(label)}</a>'
                   for label, href in PROSPX_SUBNAV)
     feed = _feed_html(events, 12) or '<div class="feed-item" style="color:#6f8a76;">No recent activity.</div>'
@@ -2188,6 +2253,39 @@ def build_projections() -> str:
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
                 "prospects joining at their projected ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
+
+def build_mlbstats() -> str:
+    """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
+    First (and for now only) section is Bullpen Leaderboards: REM+ reliever
+    ratings, team Bullpen+ quality, and bullpen depth charts, all computed from
+    MLB play-by-play (gmLI/WPA self-computed from the StatsAPI winProbability
+    feed; FIP-based skill core). Static shell + assets/mlbstats.js, which fetches
+    the bullpen_export.py sidecar (data/bullpen_leaderboards.json). Styles ride
+    the .fa-app block plus a small .mlbstats-app extension in site.css. The
+    section nav is built to grow as more MLB stat sections land."""
+    body = (
+        '<div class="fa-app mlbstats-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1></div>'
+        '<span class="section-sub">League-wide MLB stat leaderboards. First up: Bullpen Leaderboards - '
+        'REM+ reliever ratings, team Bullpen+ quality, and bullpen depth charts, computed from MLB '
+        'play-by-play.</span></div>'
+        # Section nav (one section today; built as a tablist so more can join).
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true">Bullpen Leaderboards</button>'
+        '</div>'
+        '<div id="mlbstats-section-bullpen" class="mlbstats-section">'
+        '<div id="mlbstats-banner"></div>'
+        '<div id="mlbstats-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
+    )
+    return page("MLB Stats - eephus.io", "mlbstats", body,
+                "MLB stat leaderboards from eephus.io - REM+ reliever ratings, team Bullpen+ "
+                "bullpen quality, and bullpen depth charts, computed from MLB play-by-play.",
+                url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
@@ -2612,6 +2710,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/collegesavant/pitcher_index.html", "weekly", "0.7"),
         ("/fa/", "daily", "0.9"),
         ("/projections/", "daily", "0.9"),
+        ("/mlbstats/", "daily", "0.8"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -2675,6 +2774,7 @@ def main() -> None:
     _write("forums/index.html", build_forums_index())
     _write("fa/index.html", build_fa())
     _write("projections/index.html", build_projections())
+    _write("mlbstats/index.html", build_mlbstats())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

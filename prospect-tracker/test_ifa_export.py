@@ -113,7 +113,7 @@ def test_trends_distribution_and_countries():
     t = _build()["classes"][0]["trends"]
     assert t["n_signings"] == 3 and t["total_usd"] == 5_775_000
     d = t["bonus_distribution"]
-    assert d["≥$3M"] == 1 and d["$500k–1M"] == 1 and d["<$100k"] == 1
+    assert d["≥$3M"] == 1 and d["$500k-1M"] == 1 and d["<$100k"] == 1
     # Top markets aggregate by $ then count.
     top = {c["country"]: c for c in t["top_countries"]}
     assert top["Venezuela"]["n"] == 1 and top["Dominican Republic"]["n"] == 2
@@ -122,7 +122,7 @@ def test_trends_distribution_and_countries():
 
 def test_bonus_bucket_edges():
     assert _bonus_bucket(3_000_000) == "≥$3M"
-    assert _bonus_bucket(2_999_999) == "$1–3M"
+    assert _bonus_bucket(2_999_999) == "$1-3M"
     assert _bonus_bucket(99_999) == "<$100k"
     assert _bonus_bucket(None) is None
 

@@ -48,6 +48,7 @@ TARGETS: list[str] = [
     "forums/index.html",
     "fa/index.html",
     "projections/index.html",
+    "mlbstats/index.html",
     "glossary/index.html",
     "team/index.html",
     "data/glossary.json",

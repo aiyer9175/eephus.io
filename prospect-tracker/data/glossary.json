@@ -4574,6 +4574,164 @@
     "k_pct",
     "bb_pct"
    ]
+  },
+  {
+   "id": "rem_plus",
+   "term": "REM+ (Reliever Evaluation Metric +)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "REM+",
+    "Reliever Evaluation Metric",
+    "Reliever+"
+   ],
+   "priority": 18,
+   "definition": "A reliever's run-prevention skill on a league-relative scale where 100 is an average reliever and 110 is 10 percent better. Built from stabilized strikeout, walk, and contact-quality rates, regressed for small samples, and anchored to the reliever-only pool. Higher is better.",
+   "methodology": "REM+ is a FIP-based skill rate on the ERA+ family, a ratio to the league rather than a z-score. The component rates (K%, BB%, HBP, and a heavily regressed home-run rate) are each shrunk toward the reliever pool mean by sample size, then combined into a sample-shrunk FIP. REM+ = 100 times the pool-average FIP divided by the reliever's FIP, so a lower FIP scores above 100. The pool mean is taken over relievers only, so 100 is the average reliever, not the average pitcher. Leverage is left out of the number on purpose: gmLI, WPA, and Shutdowns minus Meltdowns ride separate Impact columns, because reliever leverage is assigned by the manager and does not carry forward as a repeatable skill.",
+   "formula": "REM+ = 100 x poolFIP / playerFIP (sample-shrunk FIP; 100 = average reliever)",
+   "seeAlso": [
+    "bullpen_plus",
+    "gmli",
+    "wpa"
+   ]
+  },
+  {
+   "id": "bullpen_plus",
+   "term": "Bullpen+",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Bullpen+",
+    "team bullpen rating"
+   ],
+   "priority": 19,
+   "definition": "A team bullpen rating where 100 is an average pen. A relief-innings-weighted blend of the pen's relievers' REM+, so it reads the talent of the innings a bullpen actually throws.",
+   "methodology": "Bullpen+ weights each reliever's REM+ by his relief innings, so a pen is credited for the quality of the innings it throws, not for how its manager assigns leverage. A separate Leverage Deployment number weights by innings times gmLI, showing how much leverage those innings carried. Alongside it the board shows bullpen depth (the share of above-average arms) and a high-leverage core rating (the top arms by entry leverage).",
+   "seeAlso": [
+    "rem_plus",
+    "gmli"
+   ]
+  },
+  {
+   "id": "gmli",
+   "term": "gmLI (Game-entry Leverage Index)",
+   "category": "pitcher-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "gmLI",
+    "game leverage index",
+    "entry leverage"
+   ],
+   "priority": 20,
+   "definition": "The average Leverage Index at the moment a reliever enters the game. A measure of how high-pressure his usage is, set largely by the manager, not the pitcher. About 1.0 is average; closers run high, mop-up arms run low.",
+   "methodology": "Computed in house from the MLB win-probability feed: for each appearance, the Leverage Index of the play where the reliever enters is recorded, and gmLI is the average across his appearances. It captures deployment, not skill, which is why REM+ keeps it in a separate column.",
+   "seeAlso": [
+    "leverage_index",
+    "rem_plus"
+   ]
+  },
+  {
+   "id": "wpa",
+   "term": "WPA (Win Probability Added)",
+   "category": "pitcher-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "WPA",
+    "win probability added"
+   ],
+   "priority": 21,
+   "definition": "The total change in a pitcher's team win probability across every play he was responsible for. A counting stat of in-the-moment impact, inflated by the leverage of the spots he was used in.",
+   "methodology": "Summed from the MLB win-probability feed: each play's change in the pitcher's team win expectancy, credited to the pitcher on the mound. Because a run prevented in a tie game in the ninth moves win probability far more than the same out in a blowout, WPA rewards high-leverage usage as much as performance.",
+   "seeAlso": [
+    "wpa_li",
+    "gmli"
+   ]
+  },
+  {
+   "id": "wpa_li",
+   "term": "WPA/LI (context-neutral wins)",
+   "category": "pitcher-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "WPA/LI",
+    "context-neutral WPA",
+    "situational wins"
+   ],
+   "priority": 22,
+   "definition": "Win Probability Added with the leverage of each play divided out, so it measures performance independent of how important the situations were. The leverage-stripped companion to WPA.",
+   "seeAlso": [
+    "wpa",
+    "leverage_index"
+   ]
+  },
+  {
+   "id": "leverage_index",
+   "term": "Leverage Index (LI)",
+   "category": "pitcher-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Leverage Index",
+    "LI"
+   ],
+   "priority": 23,
+   "definition": "How important a game situation is, based on inning, score, outs, and baserunners, where 1.0 is an average situation. Created by Tom Tango. Below 0.85 is low leverage, 2.0 and up is high leverage.",
+   "seeAlso": [
+    "gmli",
+    "wpa_li"
+   ]
+  },
+  {
+   "id": "shutdowns_meltdowns",
+   "term": "Shutdowns and Meltdowns (SD / MD)",
+   "category": "pitcher-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Shutdowns",
+    "Meltdowns",
+    "SD/MD",
+    "SD-MD"
+   ],
+   "priority": 24,
+   "definition": "Per-appearance reliever outcomes. A Shutdown adds at least 0.06 to the team's win probability in an outing; a Meltdown subtracts at least that much. Shutdowns minus Meltdowns is a cleaner reliever record than saves and holds.",
+   "seeAlso": [
+    "wpa"
+   ]
+  },
+  {
+   "id": "reliever_roles",
+   "term": "Bullpen roles (Closer, Setup, Middle, Long)",
+   "category": "definition",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "bullpen roles",
+    "closer",
+    "setup",
+    "middle relief",
+    "long reliever",
+    "mop-up"
+   ],
+   "priority": 25,
+   "definition": "The leverage ladder of a bullpen, assigned from entry leverage (gmLI) and usage. Closer finishes games at the highest leverage; High-leverage and Setup pitch the tightest middle innings; Middle relief works average spots; Long and Mop-up cover multi-inning or low-stakes work.",
+   "seeAlso": [
+    "gmli",
+    "rem_plus"
+   ]
   }
  ]
 }

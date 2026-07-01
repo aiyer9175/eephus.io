@@ -54,7 +54,7 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css">
+  <link rel="stylesheet" href="/assets/site.css?v=20260630">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
@@ -8403,13 +8403,21 @@
   <!-- No sigil on the nav brand (Open Beta polish): lifecycle chips live on
        module mastheads; the homepage hero carries the site-wide beta note. -->
   <span class="eephus-brand"><a class="eephus-wordmark" href="/" aria-label="eephus.io home"><span class="nameplate eephus-wordmark-merged"><svg class="ew-arc" viewBox="0 0 100 30" preserveAspectRatio="none" aria-hidden="true"><defs><linearGradient id="eephus-arc-pxnav" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#B91C1C"/><stop offset="38%" stop-color="#C9A227"/><stop offset="68%" stop-color="#1F7A3A"/><stop offset="100%" stop-color="#0E2B4D"/></linearGradient></defs><path d="M 3 30 Q 50 -24 97 30" fill="none" stroke="url(#eephus-arc-pxnav)" stroke-width="2.4" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg><svg class="ew-ball" viewBox="0 0 24 24" aria-hidden="true"><circle class="eephus-logo-ball" cx="12" cy="12" r="8.5" stroke="url(#eephus-arc-pxnav)" stroke-width="3"/><path class="eephus-logo-seam" d="M 6.5 10 Q 12 15.5 17.5 10" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>eephus<span class="dot">.io</span></span></a></span>
-  <!-- Mirrors build_site.py NAV_ITEMS (keep the two in sync) -->
+  <!-- Mirrors build_site.py NAV_ITEMS / _nav() (this is one of three hand-kept
+       static copies: prospx + the two CollegeSavant pages; test_collegesavant_nav_in_sync
+       guards them). The MLB modules sit in an "MLB Modules" dropdown. -->
   <nav class="eephus-links">
     <a href="/">Home</a>
     <a href="/prospx/" class="is-active">PROSPX</a>
     <a href="/collegesavant/">CollegeSavant</a>
-    <a href="/fa/">Free Agency</a>
-    <a href="/projections/">Projections</a>
+    <details class="eephus-nav-group" data-nav-group>
+      <summary aria-haspopup="true">MLB Modules<span class="nav-caret" aria-hidden="true">▾</span></summary>
+      <div class="eephus-nav-menu" role="menu">
+        <a href="/fa/" role="menuitem">Free Agency</a>
+        <a href="/projections/" role="menuitem">Projections</a>
+        <a href="/mlbstats/" role="menuitem">MLB Stats</a>
+      </div>
+    </details>
     <a href="/articles/">Articles</a>
     <a href="/forums/">Forums</a>
     <a href="/glossary/">Glossary</a>
@@ -9926,6 +9934,7 @@
      module self-injects the Supabase SDK and lights up the account UI. -->
 <script src="/assets/eephus-config.js" defer></script>
 <script src="/assets/eephus-account.js" defer></script>
+<script src="/assets/eephus-nav.js" defer></script>
 <script src="/assets/eephus-ui.js" defer></script>
   <script src="/assets/eephus-gl.js" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
