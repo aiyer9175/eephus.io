@@ -70,6 +70,7 @@ const HOME_WIDGET_METRICS = [
 const HOME_SECTIONS = [
   { route: "leaders", title: "Hitter Leaderboard", note: "Every tracked hitter, sortable across EV, discipline, and CS+, with team and qualified-PA filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college programs hit the ball hardest, chase the least, and run the best team CS+." },
+  { route: "prospects", title: "Draft Prospects", note: "Draft-eligible college hitters carried in by the box scores we hold, FV-ranked with a projected Single-A line." },
   { route: "projections", title: "MiLB Projections", note: "Each hitter's projected Single-A line, the matched-pair method, and its leave-one-out backtest." },
 ];
 
@@ -838,7 +839,7 @@ function renderTranslation(player, kind) {
     return `<div class="trans-row">
       <span class="trans-label">${label}${tag}</span>
       <span class="trans-val">${fmt(b.exp)}</span>
-      <span class="trans-band">${fmt(b.lo)} – ${fmt(b.hi)}</span>
+      <span class="trans-band">${fmt(b.lo)} - ${fmt(b.hi)}</span>
     </div>`;
   };
   const rows = [
@@ -854,7 +855,7 @@ function renderTranslation(player, kind) {
         <span>expected · P10-P90 band</span>
       </div>
       <div class="trans-grid">
-        <div class="trans-head"><span></span><span>Expected</span><span>P10 – P90</span></div>
+        <div class="trans-head"><span></span><span>Expected</span><span>P10 - P90</span></div>
         ${rows}
       </div>
       <p class="trans-note">Matched-pair projection from this college line to a Single-A

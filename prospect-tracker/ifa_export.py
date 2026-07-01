@@ -6,7 +6,7 @@
 """Build the data/ifa_timeseries.json export for the International Amateurs section.
 
 Mirrors the Draft section's sidecar (`draft_timeseries.json`): one "class" per
-signing year (2021–current), each carrying the full Spotrac IFA signing list,
+signing year (2021-current), each carrying the full Spotrac IFA signing list,
 an org spending leaderboard, and class-level trends.
 
 The signing data comes from `spotrac.scrape_spotrac_ifa` - the complete per-year
@@ -318,7 +318,7 @@ def _players_by_key_from_sibling(path: Path) -> dict:
 
 def export_ifa_json(path, players_by_key: dict | None = None,
                     force: bool = False) -> int:
-    """Scrape (cache-backed) the Spotrac IFA tracker for 2021–current, build
+    """Scrape (cache-backed) the Spotrac IFA tracker for 2021-current, build
     the class blocks, and write `ifa_timeseries.json`. Returns the total
     signing count. Enrichment uses `players_by_key` when supplied, else the
     sibling timeseries.json."""

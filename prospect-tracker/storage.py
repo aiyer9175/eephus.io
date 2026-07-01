@@ -5631,7 +5631,7 @@ from value_framework import (
 # (`_build_surplus_payload`). These were referenced but never defined, so the
 # `ci`/`dist` enrichment threw NameError and was silently swallowed by its
 # `except: pass` — every player shipped with `surplus` but no distribution
-# (no P10–P90 fan, no P(bust)). Modest counts keep the ~2k-player export fast
+# (no P10-P90 fan, no P(bust)). Modest counts keep the ~2k-player export fast
 # while giving stable percentiles + P(bust); the engine's config defaults
 # (10000 dist / 4000 CI) are reserved for one-off analysis. Pass None to fall
 # back to those config defaults instead.
@@ -6546,15 +6546,15 @@ def _letter_grade(rank: int, n: int) -> str:
         return "A+"
     pct = (rank - 1) / (n - 1)
     if pct < 0.07: return "A"      # top 7%   (was 10%)
-    if pct < 0.14: return "A-"     # 7–14%    (was 10–20%)
-    if pct < 0.24: return "B+"     # 14–24%   (was 20–30%)
-    if pct < 0.36: return "B"      # 24–36%   (was 30–45%)
-    if pct < 0.50: return "B-"     # 36–50%   (was 45–60%)
-    if pct < 0.62: return "C+"     # 50–62%   (was 60–72%)
-    if pct < 0.74: return "C"      # 62–74%   (was 72–85%)
-    if pct < 0.86: return "C-"     # 74–86%   (was 85–95%)
-    if pct < 0.93: return "D"      # 86–93%   (was bottom catch-all)
-    if pct < 0.97: return "D-"     # NEW — 93–97%
+    if pct < 0.14: return "A-"     # 7-14%    (was 10-20%)
+    if pct < 0.24: return "B+"     # 14-24%   (was 20-30%)
+    if pct < 0.36: return "B"      # 24-36%   (was 30-45%)
+    if pct < 0.50: return "B-"     # 36-50%   (was 45-60%)
+    if pct < 0.62: return "C+"     # 50-62%   (was 60-72%)
+    if pct < 0.74: return "C"      # 62-74%   (was 72-85%)
+    if pct < 0.86: return "C-"     # 74-86%   (was 85-95%)
+    if pct < 0.93: return "D"      # 86-93%   (was bottom catch-all)
+    if pct < 0.97: return "D-"     # NEW — 93-97%
     return "F"                     # NEW — bottom ~3% (~1 org in 30)
 
 
@@ -12960,7 +12960,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "grad_war_total":   entry.get("_grad_war_total"),
             },
         }
-    # Continuous "true rank" 1–30 by the tiebreaker score (finer than the letter
+    # Continuous "true rank" 1-30 by the tiebreaker score (finer than the letter
     # grade); the letter grade still comes from farm_score's rank bucket below.
     _tb_order = sorted(range(len(org_summary)),
                        key=lambda i: -(org_summary[i]["farm_tiebreaker"]["score"]))

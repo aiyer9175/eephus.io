@@ -185,6 +185,14 @@ def _fold_game(acc: dict, plays: Iterable[dict]) -> None:
             if li and li > 0:
                 d["wpa_li"] += wp / li
     for pid, d in gp.items():
+        # A pitcher whose first appearance in a game is in the 1st inning
+        # started or opened that game. Folding a whole start into relief gmLI /
+        # SD-MD / WPA / appearances contaminates the leverage profile of
+        # spot-starting swingmen (who are admitted to the reliever pool at
+        # GS/G <= 0.10). Drop start-games from the fold; true 1st-inning relief
+        # entries are rare and genuine openers are excluded downstream anyway.
+        if d.get("entry_inning") == 1:
+            continue
         a = acc.get(pid)
         if a is None:
             a = {"wpa": 0.0, "wpa_li": 0.0, "gmli_sum": 0.0, "gmli_n": 0,

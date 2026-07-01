@@ -190,7 +190,7 @@
 
   function tagFor(m) {
     if (m.src === "prospect") {
-      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${Math.round(m.fv)} · ETA ${m.eta}</span>`;
+      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${EEPHUS_HUB.fvCeil(m.fv)} · ETA ${m.eta}</span>`;
     }
     return m.twoWay
       ? `<span class="proj-tag" title="Two-way profile - projected on the larger recent exposure only (disclosed simplification).">two-way</span>` : "";
@@ -311,7 +311,7 @@
       };
     }
     if (!rows.length) {
-      root.innerHTML = `<div class="state-message">Team outlook not exported yet - run <code>python proj_export.py</code>.</div>`;
+      root.innerHTML = `<div class="state-message">This view is temporarily unavailable. Check back shortly.</div>`;
       return;
     }
     // Org-dashboard columns (the retired /teams/ page, merged here
@@ -555,7 +555,7 @@
     }
     const models = acct.models || [];
     if (!models.length) {
-      root.innerHTML = `<div class="state-message">Accountability data not exported yet - run <code>python proj_export.py</code>.</div>`;
+      root.innerHTML = `<div class="state-message">This view is temporarily unavailable. Check back shortly.</div>`;
       if (window.EEPHUS_GL && banner) window.EEPHUS_GL.wire(banner);
       return;
     }
@@ -613,7 +613,7 @@
           return `<td class="proj-dim">${milb ? "MiLB" : EM_DASH}</td>`;
         }
         const lo = bandAt(m, t, "lo"), hi = bandAt(m, t, "hi");
-        return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10–P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
+        return `<td class="proj-war${warClass(w)}" title="${s}: ${fmtWar(w)} bWAR (playing-time-held / if-healthy path)${lo != null ? ` · floor ${fmtWar(lo)} / ceiling ${fmtWar(hi)} (P10-P90 outcomes)` : ""}">${fmtWar(w)}</td>`;
       }).join("");
       // For prospects the per-season cells render only the fixed calendar window,
       // which can drop ETA-shifted prime seasons; sum the SHOWN cells so the Total
@@ -621,7 +621,7 @@
       const totV = m.src === "prospect"
         ? seasons.map((s, t) => warAt(m, t)).filter(v => v != null).reduce((a, b) => a + b, 0)
         : (m.warTotalPTH ?? m.warTotal);
-      const tot = `${fmtWar(totV)}${m.src !== "prospect" && m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}–${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
+      const tot = `${fmtWar(totV)}${m.src !== "prospect" && m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
       const cs = contractStatus(m);
       const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
         + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
@@ -1031,7 +1031,7 @@
         { t: i + 1 },
         { t: m.name, sub: [m.pos, m.team].filter(Boolean).join(" · ") || undefined },
         { t: war(m) != null ? fmtWar(war(m)) : "-", c: "accent" },
-        { t: lo(m) != null ? `${fmtWar(lo(m))}–${fmtWar(hi(m))}` : "-", c: "muted" },
+        { t: lo(m) != null ? `${fmtWar(lo(m))}-${fmtWar(hi(m))}` : "-", c: "muted" },
       ];
       const s = (m.surNpv != null) ? m.surNpv : (m.surplus != null ? m.surplus : null);
       cells.push(s != null ? { t: money(s), c: s >= 0 ? "pos" : "neg" } : { t: "-" });
@@ -1155,9 +1155,7 @@
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { DATA = d; render(); })
       .catch(e => {
-        root.innerHTML = `<div class="state-message is-error">Projection data unavailable
-          (${esc(String(e.message || e))}). Run <code>python proj_export.py</code> to regenerate
-          <code>data/mlb_projections.json</code>.</div>`;
+        root.innerHTML = `<div class="state-message is-error">This view is temporarily unavailable. Check back shortly.</div>`;
       });
     window.addEventListener("hashchange", () => { syncFromURL(); render(); });
   }

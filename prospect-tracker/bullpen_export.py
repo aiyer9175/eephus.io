@@ -205,6 +205,33 @@ def _verdict() -> str:
         return "provisional"
 
 
+def _backtest() -> dict:
+    """Compact accountability card from data/rem_plus_eval.json - the forward
+    chained out-of-sample backtest that earned REM+ its validated verdict. Shown
+    to users on /mlbstats/ so a validated model advertises its rigor."""
+    try:
+        j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    fs = j.get("forward_spearman_vs_RA9_next") or {}
+    gap = (j.get("gap_ci_vs_RA9_next") or {}).get("vs_era") or {}
+    mk = j.get("market_check_aav") or {}
+    v = j.get("verdict") or {}
+    return {
+        "status": v.get("status") or "provisional",
+        "n_pairs": j.get("n_forward_pairs"),
+        "seasons": len(j.get("seasons") or []),
+        "rho_rem_plus": fs.get("rem_plus"),
+        "rho_fip": fs.get("raw_fip"),
+        "rho_era": fs.get("era"),
+        "gap_vs_era_lo95": gap.get("lo95"),
+        "market_rho": mk.get("rho_leverage_weighted_vs_aav"),
+        "disclaimer": ("REM+ predicts next-year run prevention out of sample. Leverage (gmLI, WPA, "
+                       "Shutdowns minus Meltdowns) rides separate Impact columns because it is "
+                       "assigned by the manager, not a repeatable skill."),
+    }
+
+
 # --------------------------------------------------------------------------- #
 # export
 # --------------------------------------------------------------------------- #
@@ -248,6 +275,7 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
                      "full-season. Coverage fills toward complete as the feed cache accrues."),
         },
         "verdict": _verdict(),
+        "backtest": _backtest(),
         "pool": scored["pool"],
         "relievers": scored["relievers"],
         "teams": scored["teams"],

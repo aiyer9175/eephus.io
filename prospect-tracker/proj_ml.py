@@ -324,10 +324,9 @@ def build_training_frame(corpus: dict, first_base: int, max_label_season: int,
                 hist = [seasons[t] for t in (base - 1, base - 2, base - 3) if t in seasons]
                 if not hist:
                     continue
-                age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-                if age_prev is None:
+                age = age_from_history(hist, base)
+                if age is None:
                     continue
-                age = age_prev + (base - hist[0]["season"])
                 feats = build_features(hist, side, base, age, curves, war_map, league)
                 if feats is None:
                     continue
@@ -407,11 +406,23 @@ def _predict1(head, x) -> float:
     return float((b.predict(x) if b is not None else head.predict(x))[0])
 
 
+def age_from_history(hist, base):
+    """Age at season `base` from a most-recent-first history. Anchored to the row
+    that actually SUPPLIES an age: a more recent row can carry WAR but a null age
+    (B-Ref age drops on a NaN), so offsetting from hist[0] understated the age by
+    the season gap. Returns None when no row has an age."""
+    age_row = next((h for h in hist if h.get("age")), None)
+    return None if age_row is None else age_row["age"] + (base - age_row["season"])
+
+
 def _implied_mean(q10, q25, q50, q75, q90) -> float:
-    """Distribution mean implied by the five quantile heads (trapezoid
-    quadrature). The median ignores the right-tail mass; for the star
-    regime (zero-inflated labels pulling q50 down) the implied mean is
-    the principled recentering target."""
+    """Quantile-mass-weighted mean of the five heads, weights (1,2,2,2,1)/8.
+    This is NOT a normalized trapezoid (that would be (3,8,10,8,3)/32); it
+    deliberately truncates the ~10% probability mass beyond q10/q90, so for
+    right-skewed / zero-inflated WAR it under-states the true mean. The
+    lift-only mean/star recenter lambdas (proj_mean_blend.json /
+    proj_star_blend.json) are fitted against THIS estimator to absorb that
+    gap, so the weights must not change without re-fitting them."""
     return (q10 + 2 * q25 + 2 * q50 + 2 * q75 + q90) / 8.0
 
 

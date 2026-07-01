@@ -70,7 +70,7 @@
   // 2015-2026 corpus terciles; see the deal_verdict glossary entry).
   const VERDICT_META = {
     value: ["VALUE", "Projected to be UNDERPAID - rational value exceeds the predicted price (Deal+ in the corpus top tercile, ≥160)."],
-    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 75–160)."],
+    market: ["MARKET", "Priced about right - rational value and predicted price sit in the corpus middle tercile (Deal+ 75-160)."],
     overpay: ["OVERPAY", "Projected to be OVERPAID - predicted price exceeds rational value (Deal+ in the corpus bottom tercile, <75)."],
   };
   function verdictChip(m) {
@@ -513,7 +513,7 @@
         <td>${playerLink(m)}${noteBadge(m)} ${typeTag(m)}<span class="fa-sub"> ${esc(m.pos || "")} &middot; ${m.age != null ? Math.floor(m.age) : "?"} &middot; ${teamLogo(m.from)}${esc(m.from || "")}</span>${comps ? `<div class="fa-comps" title="Nearest real historical contracts (never fabricated)">comps: ${comps}</div>` : ""}</td>
         <td>${statusChip(m)}</td>
         <td>${m.warY1 != null ? formatMetric(m.warY1, "war") : EM_DASH}${thinBadge(m)}</td>
-        <td title="Projected bWAR over the predicted term (floor–ceiling from the Gate-1 probability buckets)">${dealWar}</td>
+        <td title="Projected bWAR over the predicted term (floor-ceiling from the Gate-1 probability buckets)">${dealWar}</td>
         <td>${yearsBand}</td>
         <td>${guarBand}</td>
         <td>${m.projAav != null ? `${money(m.projAav)}<span class="fa-band"> (${money(m.projAavP10)}&ndash;${money(m.projAavP90)})</span>` : EM_DASH}</td>
@@ -528,10 +528,10 @@
     rows.innerHTML = head + filterBar + valMap + `<div class="fa-board-layout"><div class="fa-board-main"><table class="detail-table">
       <thead><tr><th>#</th><th>Player</th><th>Status</th>
       ${sHead(`<span data-gl="war">WAR</span> y1`, "warY1", "Projected year-1 bWAR")}
-      ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor–ceiling buckets")}
-      ${sHead(`<span data-gl="m_years">projLength</span>`, "projYears", "Predicted contract length (P10–P90)")}
-      ${sHead(`<span data-gl="m_guarantee">projGuarantee</span>`, "projGuar", "Predicted total guarantee (P10–P90)")}
-      ${sHead(`<span data-gl="m_aav">projAAV</span>`, "projAav", "Predicted average annual value (P10–P90)")}
+      ${sHead("Deal WAR", "warTotal", "Projected bWAR over the predicted term, with floor-ceiling buckets")}
+      ${sHead(`<span data-gl="m_years">projLength</span>`, "projYears", "Predicted contract length (P10-P90)")}
+      ${sHead(`<span data-gl="m_guarantee">projGuarantee</span>`, "projGuar", "Predicted total guarantee (P10-P90)")}
+      ${sHead(`<span data-gl="m_aav">projAAV</span>`, "projAav", "Predicted average annual value (P10-P90)")}
       ${sHead(`<span data-gl="rational_value">Rational</span>`, "rational", "Convex-priced NPV of the projected production")}
       ${sHead(`<span data-gl="contract_surplus">Surplus</span>`, "surplus", "Rational value minus predicted price (hover for the floor/ceiling range)")}
       <th><span data-gl="deal_plus">Verdict</span></th>
@@ -711,7 +711,7 @@
 
   // ---- FA player card (#player=<key>) ----------------------------------------
   function _fvArcSvg(arc) {
-    // Tiny inline FV sparkline (20–80 scale). Pure presentation - the points
+    // Tiny inline FV sparkline (20-80 scale). Pure presentation - the points
     // are the exported consensus-FV change history, nothing interpolated.
     const w = 280, h = 56, pad = 4;
     const vals = arc.map(p => p[1]);

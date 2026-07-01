@@ -92,7 +92,7 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
       <button class="pg-nav" data-${dataKey}-page="${Math.max(1, cur - 1)}" type="button"${cur === 1 ? " disabled" : ""}>◀ Prev</button>
       ${chips}
       <button class="pg-nav" data-${dataKey}-page="${Math.min(total, cur + 1)}" type="button"${cur === total ? " disabled" : ""}>Next ▶</button>
-      <span class="pg-count">Showing ${lo}–${hi} of ${totalItems}</span>
+      <span class="pg-count">Showing ${lo}-${hi} of ${totalItems}</span>
     </div>`;
 }
 
@@ -230,8 +230,12 @@ function renderTradeMachine() {
   const dA = _tmTotal(_TM.a), dB = _tmTotal(_TM.b);
   const have = _TM.a.length || _TM.b.length;
   const bothSides = _TM.a.length && _TM.b.length;
-  const posSum = Math.max(0, dA) + Math.max(0, dB);
-  const aPct = posSum > 0 ? Math.round(100 * Math.max(0, dA) / posSum) : 50;
+  // Split the balance bar on each side's value relative to the combined range,
+  // shifting by the more-negative side so the ordering matches the verdict even
+  // when BOTH sides are net-negative (the more-negative side shows as the worse).
+  const balBase = Math.min(0, dA, dB);
+  const aShift = dA - balBase, bShift = dB - balBase, shiftSum = aShift + bShift;
+  const aPct = shiftSum > 0 ? Math.round(100 * aShift / shiftSum) : 50;
   const diff = Math.abs(dA - dB);
   const lead = dA >= dB ? "A" : "B";
   const behind = lead === "A" ? "B" : "A";
@@ -277,7 +281,7 @@ function renderTradeMachine() {
       res.innerHTML = hits.map((h, i) =>
         `<button class="tm-hit" data-tm-add="${side}:${i}" type="button">
            <strong>${escapeHtml(h.name)}</strong> <span class="tm-sub">${escapeHtml(h.sub)}</span>
-           <span class="tm-val">$${h.mm.toFixed(1)}M</span></button>`).join("");
+           <span class="tm-val">${window.EEPHUS_HUB.money(h.mm)}</span></button>`).join("");
       res._hits = hits;
     };
   });
@@ -485,7 +489,7 @@ function _tbCtrlBadge(p) {
   return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts}</span>`;
 }
 function _tbFmt(mm) {
-  if (mm == null) return "–";
+  if (mm == null) return "-";
   const a = Math.abs(Number(mm));
   const sign = mm < 0 ? "-$" : "$";   // surplus can be negative (overpaid MLB contracts)
   return a >= 100 ? `${sign}${a.toFixed(0)}M` : `${sign}${a.toFixed(1)}M`;
@@ -588,7 +592,7 @@ function _renderTBRows() {
     const statusCol = isMlb ? "var(--neon-violet)" : "var(--neon-green)";
     const statusLbl = isMlb ? "MLB" : "MiLB";
     const lo = p.trade_value_lo, hi = p.trade_value_hi;
-    const rangeTip = (lo != null && hi != null) ? `Range: $${lo}–$${hi}M` : "";
+    const rangeTip = (lo != null && hi != null) ? `Range: $${lo}-$${hi}M` : "";
     const flash = p.flash || {};
     const injD  = p.injury_discount || 0;
 
@@ -618,7 +622,7 @@ function _renderTBRows() {
     html += `<tr class="prospect-row" ${rowClick} title="${rangeTip}">
       <td class="tm-rank">${rank}</td>
       <td class="tm-player">${name}</td>
-      <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "–"}</td>
+      <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
       <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
       <td class="tm-num tm-dim">${fv}</td>
@@ -698,7 +702,7 @@ function renderTradeBoard() {
           .catch(() => {});
       })
       .catch(e => {
-        wrap.innerHTML = `<div class="empty-state">Trade Board data not found (<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code> to generate it.<br><small>${e}</small></div>`;
+        wrap.innerHTML = `<div class="empty-state">This view is temporarily unavailable. Check back shortly.</div>`;
       });
     return;
   }
@@ -842,8 +846,7 @@ function _tbShowGroup(playerKey) {
       })
       .catch(() => {
         const w = document.getElementById("tradeboard-content");
-        if (w) w.innerHTML = '<div class="empty-state">Trade-value data not found '
-          + '(<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code>.</div>';
+        if (w) w.innerHTML = '<div class="empty-state">This view is temporarily unavailable. Check back shortly.</div>';
       });
   }
 

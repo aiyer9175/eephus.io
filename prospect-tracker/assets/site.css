@@ -926,7 +926,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* Merged brand mark - the signature lob is PART of the lettering: the arc
    spans the wordmark with the ball at apex (replaces the old mark-above-text
    lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
-   the masthead (clamp 2.4–4rem) and the sidebar (20px) share one mark. */
+   the masthead (clamp 2.4-4rem) and the sidebar (20px) share one mark. */
 .eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; font-family: var(--font-logo); }
 .eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
 .eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
@@ -1571,11 +1571,15 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-miss { color: var(--accent-red); font-weight: 700; }
 .pal-pending { color: var(--text-tertiary); }
 /* backtest scorecard banner */
-.pal-scorecard { display: flex; flex-wrap: wrap; gap: 18px; align-items: baseline; padding: 10px 14px;
+.pal-scorecard, .mlbstats-scorecard { display: flex; flex-wrap: wrap; gap: 18px; align-items: baseline; padding: 10px 14px;
   border: 1px solid var(--border); background: var(--bg-secondary); margin: 8px 0 12px; }
-.pal-scorecard .pal-sc-stat { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
-.pal-scorecard .pal-sc-stat b { font-size: 16px; color: var(--text-primary); }
-.pal-scorecard .pal-sc-note { flex: 1 1 320px; font-size: 10.5px; color: var(--text-tertiary); }
+.pal-scorecard .pal-sc-stat, .mlbstats-scorecard .pal-sc-stat { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.pal-scorecard .pal-sc-stat b, .mlbstats-scorecard .pal-sc-stat b { font-size: 16px; color: var(--text-primary); }
+.pal-scorecard .pal-sc-note, .mlbstats-scorecard .pal-sc-note { flex: 1 1 320px; font-size: 10.5px; color: var(--text-tertiary); }
+/* positive accountability affordance: a validated model should advertise it */
+.bp-validated { font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);
+  padding: 1px 6px; border-radius: 2px; }
 .pal-mix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 .pal-mix-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
 .pal-mix-card h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }

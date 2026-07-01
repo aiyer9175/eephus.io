@@ -61,6 +61,26 @@ def test_entry_li_falls_back_when_leadoff_missing():
     assert out[400]["gmli"] == 1.3                     # took the next available LI
 
 
+def test_start_games_excluded_from_relief_fold():
+    # pid 500 STARTS game1 (first appearance in the 1st inning, a big +WPA that
+    # would clear the SD threshold) and RELIEVES game2 (enters inning 8). The
+    # start must not pollute relief gmLI / SD-MD / WPA / appearances.
+    game1 = [
+        _play(500, "top", 1, 0.9, 8.0, "Swing"),     # inning-1 entry => a start
+        _play(500, "top", 2, 0.8, 2.0, "Swing"),
+    ]
+    game2 = [
+        _play(500, "top", 8, 2.2, 3.0, "Swing"),     # true relief entry, +0.03
+    ]
+    out = ml.accumulate([(1, game1), (2, game2)])
+    sw = out[500]
+    assert sw["appearances"] == 1                      # only the relief game counts
+    assert sw["gmli"] == 2.2                            # inning-8 entry LI only
+    assert round(sw["wpa"], 3) == 0.03                  # only the relief WPA
+    assert sw["sd"] == 0 and sw["md"] == 0             # the start's +0.10 is excluded
+    assert sw["entry_inning"] == 8
+
+
 def test_plays_of_handles_list_and_dict():
     assert ml._plays_of([{"a": 1}]) == [{"a": 1}]
     assert ml._plays_of({"winProbability": [{"a": 1}]}) == [{"a": 1}]

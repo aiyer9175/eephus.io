@@ -18,6 +18,18 @@ import pal_conversion as pc
 from pal_conversion import PalArm
 
 
+def test_starter_need_shrinks_small_sample_era():
+    # A small-sample unlucky ace (39 IP, 5.31 ERA) must score LESS conversion
+    # need than a full-season struggler at the same ERA, and less than the raw
+    # unshrunk ERA - so a 30-40 IP blip does not land an ace on the demote board.
+    raw = pc.starter_need_score(5.31)                 # no IP -> unshrunk
+    small = pc.starter_need_score(5.31, 39.0)         # 39 IP -> shrunk to league
+    full = pc.starter_need_score(5.31, 180.0)         # full season -> barely shrunk
+    assert small < full < raw
+    # a dominant starter still scores ~0 regardless of sample
+    assert pc.starter_need_score(2.50, 40.0) < 20.0
+
+
 def _arm(mlbam, pitches, *, bb=0.07, velo=94.0, vl=0.70, vr=0.72, k=0.26,
          ip=60.0, tbf=250.0, role="RP"):
     arsenal = [{"pitch": p, "usage": u, "whiff": w, "est_woba": e, "hard_hit": h}
@@ -61,8 +73,11 @@ def test_sp_rp_gated_by_conversion_need():
     import copy
     # same elite stuff, different rotation results: a dominant starter has no
     # conversion case, a struggling one does
-    dom = copy.deepcopy(MILLER); dom.era = 3.0
-    strug = copy.deepcopy(MILLER); strug.era = 5.2
+    # full-season starter workloads: the ERA need-gate shrinks toward league by
+    # innings, so a struggling STARTER carries a starter's IP (a 30-IP blip is
+    # intentionally NOT treated as struggling - see test_starter_need_shrinks...)
+    dom = copy.deepcopy(MILLER); dom.era = 3.0; dom.ip = 150.0
+    strug = copy.deepcopy(MILLER); strug.era = 5.2; strug.ip = 150.0
     fd, fs = pc.sp_rp_fit(dom), pc.sp_rp_fit(strug)
     assert fs["fit"] > fd["fit"] + 30, (fd["fit"], fs["fit"])       # need gates it
     assert fd["relief_upside"] == fs["relief_upside"]               # upside identical

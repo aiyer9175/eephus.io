@@ -196,7 +196,7 @@
     var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
       + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
       + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
-    return relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+    return scorecard() + relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
   }
 
   function renderTeams() {
@@ -249,11 +249,29 @@
       var cov = DATA.coverage;
       bits.push(esc(cov.games) + (cov.expected ? " / " + esc(cov.expected) : "") + " games of play-by-play");
     }
-    if (DATA.verdict && DATA.verdict !== "validated") {
+    if (DATA.verdict === "validated") {
+      bits.push('<span class="bp-validated" title="Backtested out of sample - see the REM+ scorecard below">backtested</span>');
+    } else if (DATA.verdict) {
       bits.push('<span class="bp-prov" style="margin-left:0">' + esc(DATA.verdict) + "</span>");
     }
     if (!bits.length) return "";
     return '<div class="mlbstats-note">' + bits.join(" &middot; ") + "</div>";
+  }
+
+  // REM+ accountability scorecard - mirrors PAL's pattern so a validated model
+  // surfaces its out-of-sample backtest to users, not just a status word.
+  function scorecard() {
+    var b = (DATA && DATA.backtest) || {};
+    if (b.rho_rem_plus == null) return "";
+    return '<div class="mlbstats-scorecard">'
+      + '<span class="pal-sc-stat">' + gloss("REM+", "rem_plus") + ' forward &rho; <b>'
+      + b.rho_rem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? "-" : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? "-" : b.rho_era) + "</span></span>"
+      + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
+      + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
+      + (b.market_rho == null ? "" : '<span class="pal-sc-stat">market fit &rho; <b>' + b.market_rho + '</b><span class="proj-dim"> vs AAV</span></span>')
+      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
+      + "</div>";
   }
 
   function tabBar() {

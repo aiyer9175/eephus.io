@@ -130,8 +130,9 @@ def _project_targets() -> list[dict]:
                         if s in seasons]
                 if not hist:
                     continue
-                age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-                age = (age_prev + (target - hist[0]["season"])) if age_prev else None
+                # Anchor the age offset to the row that supplied the age.
+                age_row = next((h for h in hist if h.get("age")), None)
+                age = (age_row["age"] + (target - age_row["season"])) if age_row else None
                 proj = fp.project_player(hist, side, target, curves, league, age)
                 if proj is None:
                     continue

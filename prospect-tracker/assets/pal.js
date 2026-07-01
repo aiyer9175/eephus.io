@@ -328,7 +328,7 @@
     var note = '<div class="mlbstats-note">Conventionally a pitcher is tougher on same-handed hitters. A '
       + gloss("reverse platoon split", "platoon_split") + " (tougher on the OPPOSITE hand) is a rare hidden strength that "
       + "helps him face a full lineup, a plus for RP&rarr;SP; an extreme normal split is a conversion blocker. OPS-against "
-      + "by batter hand.</div>";
+      + "by batter hand. A descriptive split, not a separately backtested model.</div>";
     var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
       + "<th>Split</th><th>Read</th></tr></thead>";
     var body = "<tbody>" + view.map(function (r) {
@@ -349,7 +349,7 @@
       + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
       + "arsenal profiles as a reliever; a reliever with a deep arsenal could start. Shape-only: there is no pitch tracking "
       + "at the minors, so this reads role fit from tool grades, not stuff. " + esc(DATA.n_prospects || "")
-      + " prospect pitchers scanned.</div>";
+      + " prospect pitchers scanned. A descriptive shape screen, not a separately backtested model.</div>";
     function toolBars(tools) {
       tools = tools || {};
       return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {

@@ -101,10 +101,12 @@ def run(bases: list[int], persist: bool = True, predict_fn=None,
                 hist = [seasons[t] for t in (B - 1, B - 2, B - 3) if t in seasons]
                 if not hist:
                     continue
-                age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-                if age_prev is None:
+                # Anchor the age offset to the row that supplied the age (hist[0]
+                # can have WAR but a null age while an older row carries the age).
+                age_row = next((h for h in hist if h.get("age")), None)
+                if age_row is None:
                     continue
-                age = age_prev + (B - hist[0]["season"])
+                age = age_row["age"] + (B - age_row["season"])
                 path = predict_fn(hist, side, B, age, curves, war_map, league)
                 if path is None:
                     continue

@@ -457,7 +457,7 @@
     var signup =
       '<form data-form="signup">' +
         '<div class="eph-field"><label>Username</label><input class="eph-input" name="username" autocomplete="username" maxlength="20" pattern="[A-Za-z0-9_]{3,20}"' + req + ">" +
-          '<div class="eph-hint" data-uname-hint>3–20 chars · letters, numbers, underscore</div></div>' +
+          '<div class="eph-hint" data-uname-hint>3-20 chars · letters, numbers, underscore</div></div>' +
         '<div class="eph-field"><label>Email</label><input class="eph-input" type="email" name="email" autocomplete="email"' + req + "></div>" +
         '<div class="eph-field"><label>Password</label><input class="eph-input" type="password" name="password" autocomplete="new-password" minlength="8"' + req + ">" +
           '<div class="eph-hint">8+ characters</div></div>' +
@@ -489,7 +489,7 @@
       unameInput.addEventListener("input", function () {
         var hint = qs("[data-uname-hint]", body); var v = unameInput.value;
         clearTimeout(t);
-        if (!/^[A-Za-z0-9_]{3,20}$/.test(v)) { hint.className = "eph-hint"; hint.textContent = "3–20 chars · letters, numbers, underscore"; return; }
+        if (!/^[A-Za-z0-9_]{3,20}$/.test(v)) { hint.className = "eph-hint"; hint.textContent = "3-20 chars · letters, numbers, underscore"; return; }
         t = setTimeout(function () { A.usernameAvailable(v).then(function (ok) { hint.className = "eph-hint " + (ok ? "ok" : "bad"); hint.textContent = ok ? "✓ available" : "✗ taken"; }); }, 350);
       });
     }
@@ -508,7 +508,7 @@
       e.preventDefault();
       var uname = form.username.value.trim(), email = form.email.value.trim(), pw = form.password.value;
       if (!LIVE()) { return previewSignIn(uname || "preview_fan"); }
-      if (!/^[A-Za-z0-9_]{3,20}$/.test(uname)) return setMsg(form, "Pick a username: 3–20 letters, numbers, or underscore.", "err");
+      if (!/^[A-Za-z0-9_]{3,20}$/.test(uname)) return setMsg(form, "Pick a username: 3-20 letters, numbers, or underscore.", "err");
       setMsg(form, "Creating account…", "info");
       A.signUp(email, pw, uname).then(function (r) {
         if (r.error) return setMsg(form, friendlyAuthError(r.error), "err");

@@ -342,13 +342,26 @@ def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
     }
 
 
-def starter_need_score(era: Optional[float]) -> float:
+LG_SP_ERA = 4.20            # league-ish starter ERA: the need-gate shrink target
+NEED_ERA_SHRINK_IP = 45.0   # ERA regresses toward LG_SP_ERA with this pseudo-count of IP
+
+
+def starter_need_score(era: Optional[float], ip: Optional[float] = None) -> float:
     """How much a STARTER needs to move to relief, from his rotation results. A
     dominant starter (low ERA) scores ~0 (no conversion case); a struggling one
-    (high ERA) scores ~100. This is what keeps successful starters like a good
-    young rotation arm OFF the SP->RP board no matter how nasty their stuff is."""
+    (high ERA) scores ~100. This is what keeps successful starters OFF the SP->RP
+    board no matter how nasty their stuff is.
+
+    Raw ERA is the slowest-stabilizing pitching stat, so it is shrunk toward a
+    league-average starter ERA by innings (empirical Bayes). Without this a small
+    sample unlucky ace (e.g. 30-40 rocky innings on a high BABIP) scored ~100 need
+    and surfaced near the top of the demotion board - the exact noise the gate is
+    meant to reject. A full-season struggler still scores high; a 30-IP blip does
+    not."""
     if era is None:
         return 50.0
+    if ip and ip > 0:
+        era = (ip * era + NEED_ERA_SHRINK_IP * LG_SP_ERA) / (ip + NEED_ERA_SHRINK_IP)
     return _clamp(100.0 * (era - 3.20) / (5.50 - 3.20))
 
 
@@ -379,7 +392,7 @@ def sp_rp_fit(arm: PalArm) -> dict:
                               - 0.3 * fb_reliance_inv(fb_pct(arm))),
     }
     upside = _blend(SP_RP_UPSIDE_WEIGHTS, upside_comps)
-    need = starter_need_score(arm.era)
+    need = starter_need_score(arm.era, arm.ip)
     factor = 0.30 + 0.70 * (need / 100.0)   # dominant SP -> 0.30x, struggling SP -> 1.0x
     comps = {k: round(v, 1) for k, v in upside_comps.items()}
     comps["conversion_need"] = round(need, 1)

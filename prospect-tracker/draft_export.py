@@ -216,22 +216,17 @@ def _college_perf_z(summary: dict | None) -> float | None:
 # Draft Stock+ - class-normalized index. 100 = class median rank,
 # 130 ≈ +2 sigma toward #1 (so a top-5 pick reads ≥130 in most classes),
 # 70 ≈ -2 sigma (toward the back of the class). Lower rank = higher stock.
-def _stock_plus(rank: float | None, class_ranks: list[int]) -> int | None:
+def _stock_plus(rank: float | None, class_ranks: list[float]) -> int | None:
     if rank is None or not class_ranks:
         return None
     n = len(class_ranks)
     if n < 2:
         return 100
-    # Convert rank → percentile (lower rank = higher percentile)
+    # Convert rank → percentile (lower rank = higher percentile). Position is
+    # the count of strictly-better (lower) consensus ranks, computed on the raw
+    # floats so 4.4 and 4.6 stay distinct; an exact tie shares a position.
     sorted_ranks = sorted(class_ranks)
-    # The player's rank's position from the top.
-    # Use a simple inverted-z mapping: percentile from 1.0 (best) to 0.0.
-    try:
-        # Position of this rank in the sorted list (0 = best)
-        pos = sorted_ranks.index(int(rank))
-    except ValueError:
-        # Interpolate
-        pos = sum(1 for r in sorted_ranks if r < rank)
+    pos = sum(1 for r in sorted_ranks if r < rank)
     pct = 1.0 - (pos / max(1, n - 1))
     # Map pct → 70-130 index, with 0.5 → 100 (median)
     return int(round(70 + pct * 60))
@@ -514,7 +509,10 @@ def _build_class(year: int,
         r = _consensus(plist, "rank")
         if r is not None:
             consensus_ranks[pk] = r
-    class_rank_list = sorted(int(r) for r in consensus_ranks.values())
+    # Keep the consensus ranks as floats. int() truncation collapsed distinct
+    # fractional ranks (4.4 and 4.6 both became 4), giving tied prospects an
+    # identical DS+; the float list keeps a dense top-of-board separable.
+    class_rank_list = sorted(consensus_ranks.values())
 
     # Per-pick results for this class (by player_key for fast lookup). Remap
     # through merge_map so a pick recorded under a merged twin's key lands on the

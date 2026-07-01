@@ -319,5 +319,23 @@
     return exportCanvas(await drawCard(opts), opts);
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo, histogram, scatter };
+  // Shared display helpers so every surface formats the site's headline values
+  // the same way (FV rounding, money, and the missing-data glyph had each drifted
+  // into per-module copies that disagreed).
+  var DASH = " - ";
+  function dash(v, fn) {  // the missing-data glyph, or fn(v) when v is present
+    return (v === null || v === undefined || v === "" ||
+            (typeof v === "number" && !isFinite(v))) ? DASH : (fn ? fn(v) : v);
+  }
+  function fvCeil(v) {    // FV / 20-80 grades DISPLAY rounded up (never nearest)
+    if (v === null || v === undefined || !isFinite(v)) return null;
+    return Math.ceil(v - 1e-9);  // epsilon guards float noise (45.0000001 stays 45)
+  }
+  function money(mm, decimals) {  // $ millions with the sign BEFORE the $ (-$4.2M)
+    if (mm === null || mm === undefined || !isFinite(mm)) return DASH;
+    var d = (decimals == null) ? 1 : decimals;
+    return (mm < 0 ? "-" : "") + "$" + Math.abs(mm).toFixed(d) + "M";
+  }
+
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo, histogram, scatter, fvCeil, money, dash, DASH };
 })();

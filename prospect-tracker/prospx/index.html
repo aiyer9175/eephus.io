@@ -2652,7 +2652,7 @@
     .row-tag.recent-acq      { color: var(--text-on-accent); border-color: var(--neon-cyan); background: var(--neon-cyan); text-transform: uppercase; letter-spacing: 0.06em; }
 
     /* Subtle full-row FV-tier background tint. Derived from the
-       existing --fv-NN-bg palette but at 3–8% alpha so it's a
+       existing --fv-NN-bg palette but at 3-8% alpha so it's a
        background wash rather than a paint job. Org-color left stripe
        (inline style on .player-row) stacks on top of this. Hover state
        already brightens the row via the existing :hover rule, so the
@@ -4499,7 +4499,7 @@
     .tm-org-gap { width: 20px; height: 20px; display: inline-flex; align-items: center;
       justify-content: center; box-sizing: border-box; border: 1px dashed var(--border);
       color: var(--text-tertiary); font-family: var(--font-retro-mono); font-size: 12px; }
-    .tm-org-gap::before { content: "–"; }
+    .tm-org-gap::before { content: "-"; }
     /* Photo thumbnail - 16×20 baseball-card slot matching the logo's height so
        it fits the existing row; no border (the FV-tier ring still frames
        high-grade photos) keeps the outer box at exactly 20px. */
@@ -8633,7 +8633,7 @@
     <button class="section-tab" data-section="leaderboards">Leaderboards</button>
     <button class="section-tab" data-section="debuts">Debuted</button>
     <button class="section-tab" data-section="draft" title="Amateur draft prospects - isolated from the MiLB DB. Independent rankings, schools, draft order, slot values, signing bonuses. High School Details maps where prep talent comes from.">MLB Draft/HS</button>
-    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021–present).">International Amateurs</button>
+    <button class="section-tab" data-section="ifa" title="International amateur (J2) free-agent signing classes - signing bonuses, signing teams, prospects signed, and org spending by year (2021-present).">International Amateurs</button>
     <button class="section-tab" data-section="overseas" title="Established KBO / NPB / CPBL pros eligible for MLB via posting or international FA. Isolated cohort - no shared RPS+ with MiLB.">Overseas</button>
     <button class="section-tab" data-section="timemachine" title="Time-travel the board - view rankings &amp; grades as they stood at any past snapshot, or diff two dates for a changelog of risers, fallers, new entries &amp; graduates.">Time Machine</button>
     <button class="section-tab" data-section="charts" title="Build your own scatterplot - pick X/Y axes and a prospect group (MiLB, Debuted, Draft, International Amateurs, Overseas, or Farm systems).">Scatterplots</button>
@@ -9321,7 +9321,7 @@
   <div id="ifa-section" style="display: none;">
     <div class="newsprint-eyebrow">
       <span class="newsprint-eyebrow-label">International Amateur Signings</span>
-      <span class="newsprint-eyebrow-meta">J2 classes 2021–present · bonuses, signing teams, pool spend &amp; org leaders</span>
+      <span class="newsprint-eyebrow-meta">J2 classes 2021-present · bonuses, signing teams, pool spend &amp; org leaders</span>
     </div>
     <div id="ifa-class-bar" class="filter-bar" style="flex-wrap:wrap;gap:6px;margin-bottom:8px;">
       <span class="filter-label" title="IFA signing year (Jan 15 signing day opens each class)">Class</span>
@@ -9699,7 +9699,7 @@
           <button class="chip"        data-lb-window="custom" title="Stats over a custom from-to date range">Custom range</button>
         </div>
         <div class="filter-group" id="lb-window-range" style="display:none;">
-          <span class="filter-label">From – To</span>
+          <span class="filter-label">From - To</span>
           <input type="date" class="chip lb-date-input" id="lb-window-from" title="Window start date (inclusive)">
           <input type="date" class="chip lb-date-input" id="lb-window-to" title="Window end date (inclusive)">
         </div>
@@ -9803,7 +9803,7 @@
           <span class="filter-label" id="chart-xrange-label">X range</span>
           <input id="chart-xmin" type="number" inputmode="decimal" placeholder="min"
                  style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
-          <span style="color:var(--text-tertiary);">–</span>
+          <span style="color:var(--text-tertiary);">-</span>
           <input id="chart-xmax" type="number" inputmode="decimal" placeholder="max"
                  style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
@@ -9811,7 +9811,7 @@
           <span class="filter-label" id="chart-yrange-label">Y range</span>
           <input id="chart-ymin" type="number" inputmode="decimal" placeholder="min"
                  style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
-          <span style="color:var(--text-tertiary);">–</span>
+          <span style="color:var(--text-tertiary);">-</span>
           <input id="chart-ymax" type="number" inputmode="decimal" placeholder="max"
                  style="width:54px;font-family:var(--font-mono);font-size:11px;padding:4px 6px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg-secondary);color:var(--text-primary);">
         </div>
@@ -10017,7 +10017,7 @@ function toolAbbrev(key) {
 // units, and the null token can never drift between a table cell, a tooltip,
 // and prose. Precision is fixed PER METHODOLOGY: never show more precision than
 // the metric supports (the brief's core rule). Types:
-//   'fv'       20–80 grade        integer (grid enforced upstream)      -> "55"
+// 'fv' 20-80 grade integer (grid enforced upstream) -> "55"
 // 'plus' +-index family - DvM+, RPS+, SC+, ToolDvM+, $DvM+, wRC+ - 
 //              baseline 100, integer, NO leading '+' (an index, not a
 //              delta, so "+105" would misread as a change)              -> "112"
@@ -10913,7 +10913,7 @@ function fvBadgeWideMarkHTML(player) {
   if (!sp || sp.spread < 10) return "";
   const gap = (typeof sp.spread === "number") ? sp.spread.toFixed(1) : "?";
   const range = (sp.min != null && sp.max != null)
-    ? ` (FV ${fvCeil(sp.min)}–${fvCeil(sp.max)} across ${sp.n} sources)`
+    ? ` (FV ${fvCeil(sp.min)}-${fvCeil(sp.max)} across ${sp.n} sources)`
     : (sp.n ? ` across ${sp.n} sources` : "");
   return `<span class="fv-wide-mark" title="Wide source disagreement - sources differ by ${gap} grade points${range}. Open the per-source breakdown (now inside the More details accordion) for the per-source FVs.">W</span>`;
 }
@@ -11437,7 +11437,7 @@ function arsenalMiniHTML(p) {
   const pitches = pa && pa.pitches;
   if (!pitches || !pitches.length) return "";
   // Defensive: re-sort desc by usage_pct in case the upstream order
-  // changed. usage_pct can be either 0–1 or 0–100 depending on payload
+  // changed. usage_pct can be either 0-1 or 0-100 depending on payload
   // vintage; we normalize to percentage in the label.
   const sorted = pitches.slice().sort((a, b) =>
     (Number(b.usage_pct) || 0) - (Number(a.usage_pct) || 0));
@@ -12678,7 +12678,7 @@ function renderPaginationStrip(currentPage, totalItems, pageSize, dataKey) {
       <button class="pg-nav" data-${dataKey}-page="${Math.max(1, cur - 1)}" type="button"${cur === 1 ? " disabled" : ""}>◀ Prev</button>
       ${chips}
       <button class="pg-nav" data-${dataKey}-page="${Math.min(total, cur + 1)}" type="button"${cur === total ? " disabled" : ""}>Next ▶</button>
-      <span class="pg-count">Showing ${lo}–${hi} of ${totalItems}</span>
+      <span class="pg-count">Showing ${lo}-${hi} of ${totalItems}</span>
     </div>`;
 }
 
@@ -13091,7 +13091,7 @@ function _driverShort(label) {
     const tail = s.replace(/^[+\-−]?[\d.,%]+\s*/, "").trim();
     return tail || s;
   }
-  const head = s.slice(0, m.index).replace(/[\s:·,– - \-]+$/, "").trim();
+  const head = s.slice(0, m.index).replace(/[\s:·, - - \-]+$/, "").trim();
   return head || s;
 }
 
@@ -16107,7 +16107,7 @@ function _farmDetailSidebarCards(org, activeTab) {
       key: p.player_key,
       name: p.player_name,
       tag: positionBucket(p.position) || "",
-      value: p.fv_close != null ? `FV ${Math.round(p.fv_close)}` : " - ",
+      value: p.fv_close != null ? `FV ${fvCeil(p.fv_close)}` : " - ",
     }));
     const signals = [
       { key: "Active prospects", value: org.count ?? " - " },
@@ -18092,7 +18092,7 @@ function renderCharts() {
                   :              "var(--text-tertiary)";
         return `
           <g style="cursor:help;">
-            <title>R² = ${r2.toFixed(3)} - share of variance the linear fit explains. ≥0.5 strong, 0.2–0.5 moderate, &lt;0.2 weak.</title>
+            <title>R² = ${r2.toFixed(3)} - share of variance the linear fit explains. ≥0.5 strong, 0.2-0.5 moderate, &lt;0.2 weak.</title>
             <rect x="${(cx - 88).toFixed(1)}" y="${(cy - 12).toFixed(1)}" width="86" height="20"
                   rx="0" fill="var(--bg-secondary)" stroke="${fill}" stroke-width="1"/>
             <text x="${(cx - 80).toFixed(1)}" y="${(cy + 2).toFixed(1)}"
@@ -18526,7 +18526,7 @@ function _lbWindowDates() {
     if (!from) from = addDays(to, -13);
     if (from > to) { const tmp = from; from = to; to = tmp; }
     const days = Math.max(1, Math.round((Date.parse(to) - Date.parse(from)) / 86400000) + 1);
-    return { from, to, days, label: `${_lbFmtDate(from)} – ${_lbFmtDate(to)}`, asOf };
+    return { from, to, days, label: `${_lbFmtDate(from)} - ${_lbFmtDate(to)}`, asOf };
   }
   const N = Number(state.lbWindow) || 14;
   return { from: addDays(asOf, -(N - 1)), to: asOf, days: N,
@@ -19213,7 +19213,7 @@ function renderLeaderboards() {
   const _winNote = (windowMode && _winDates)
     ? `<div style="margin:6px 0 10px;padding:7px 11px;border:1px solid var(--border);border-left:3px solid var(--neon-cyan);border-radius:var(--radius-sm);background:var(--bg-secondary);font-size:11px;line-height:1.5;">`
       + `<strong style="color:var(--text-primary);">${state.lbWindow === "custom" ? "Custom range" : escapeHtml(_winDates.label)}</strong>`
-      + `<span style="color:var(--text-secondary);font-family:var(--font-mono);"> · ${_lbFmtDate(_winDates.from)} – ${_lbFmtDate(_winDates.to)}</span>`
+      + `<span style="color:var(--text-secondary);font-family:var(--font-mono);"> · ${_lbFmtDate(_winDates.from)} - ${_lbFmtDate(_winDates.to)}</span>`
       + `<span style="color:var(--text-tertiary);"> · rate stats recomputed from per-game box lines · latest game ${_lbFmtDate(_winDates.asOf)}</span>`
       + `</div>`
     : "";
@@ -19654,7 +19654,7 @@ function _tmRenderControls() {
   }
 
   el.innerHTML = `${modeToggle}${body}
-    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} – ${_tmFmtDate(latest)}), ranked by consensus FV. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
+    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked by consensus FV. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
 
   el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
     state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
@@ -20207,7 +20207,7 @@ function renderTradeMachine() {
         <a class="fa-player-link" href="${x.kind === "prospect" ? `#player=${encodeURIComponent(x.key)}` : `/projections/#player=${encodeURIComponent(x.key)}`}">${escapeHtml(x.name)}</a>
         <span class="tm-sub">${escapeHtml(x.sub)}</span>
         <span class="tm-val">${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm).toFixed(1)}M</span>
-        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove">×</button>
+        <button class="tm-x" data-tm-remove="${side}:${i}" title="Remove" aria-label="Remove">×</button>
       </div>`).join("");
     const tot = _tmTotal(_TM[side]);
     return `<div class="tm-side">
@@ -24311,7 +24311,7 @@ function _renderOverseasCard(p) {
          ["K/9", "k_per_9", v => v.toFixed(1)],
          ["IP",  "ip",  v => v.toFixed(1)]]
       : [["wRC+", "wrc_plus", v => Math.round(v).toString()],
-         ["OPS",  "ops",  v => v.toFixed(3)],
+         ["OPS",  "ops",  v => v.toFixed(3).replace(/^0/, "")],
          ["HR",   "hr",   v => Math.round(v).toString()],
          ["SB",   "sb",   v => Math.round(v).toString()]];
     const hl = [];
@@ -26914,7 +26914,7 @@ async function renderDraftDetail(key) {
     const fmtCell = (k, v) => {
       if (v == null) return " - ";
       if (typeof v !== "number") return String(v);
-      if (["avg", "obp", "slg", "ops"].includes(k)) return v.toFixed(3);
+      if (["avg", "obp", "slg", "ops"].includes(k)) return v.toFixed(3).replace(/^0/, "");
       if (["era", "fip", "whip", "ip", "k_per_9", "bb_per_9"].includes(k)) return v.toFixed(2);
       if (["k_pct", "bb_pct"].includes(k)) return (v * 100).toFixed(0) + '%';
       return Math.round(v).toString();
@@ -27381,7 +27381,7 @@ function _renderOverseasPosting(host, prospects) {
   const headerNote = `
     <div style="padding:10px 14px;background:var(--bg-secondary);border-radius:6px;color:var(--text-secondary);font-size:12px;line-height:1.5;margin-bottom:14px;">
       <strong style="color:var(--text-primary);">How postings work:</strong>
-      NPB &amp; KBO clubs can post a player to MLB in November–January.
+      NPB &amp; KBO clubs can post a player to MLB in November-January.
       The MLB negotiation window runs 45 days from the posting date.
       Top-of-class postings command 9-figure totals (Yamamoto $325M, Imanaga $53M).
       Track new postings via <code>data/overseas_postings.csv</code>.
@@ -28237,7 +28237,7 @@ function _renderTBRows() {
     const statusCol = isMlb ? "var(--neon-violet)" : "var(--neon-green)";
     const statusLbl = isMlb ? "MLB" : "MiLB";
     const lo = p.trade_value_lo, hi = p.trade_value_hi;
-    const rangeTip = (lo != null && hi != null) ? `Range: $${lo}–$${hi}M` : "";
+    const rangeTip = (lo != null && hi != null) ? `Range: $${lo}-$${hi}M` : "";
     const flash = p.flash || {};
     const injD  = p.injury_discount || 0;
 
@@ -28400,7 +28400,7 @@ function _mtRenderList(side) {
       </span>
       <span style="display:flex;align-items:center;gap:8px;">
         <span style="font-weight:700;color:${col};">${_tbFmt(tv)}</span>
-        <button class="chip" style="padding:1px 6px;font-size:10px;"
+        <button class="chip" style="padding:1px 6px;font-size:10px;" aria-label="Remove"
           onclick="_mtRemove('${escapeHtml(side)}','${escapeHtml(p.player_key||"")}')">✕</button>
       </span>
     </li>`;
@@ -29163,7 +29163,7 @@ function getAaaStuffPlus(p) {
 // Sidecar keyed by player_key (a prospect-centric slug), NOT mlbam_id - eFV is
 // a prospect grade. Each entry: headline xfv_grade (rank-preserving onto the
 // 20-80 consensus scale), xfv_grade_realized (deflated outcome-implied grade
-// that drives surplus/distribution), the 5-bucket outcome mix, surplus + a P10–P90
+// that drives surplus/distribution), the 5-bucket outcome mix, surplus + a P10-P90
 // fan, and tool eFVs. Shown ALONGSIDE consensus FV (it ties/▾consensus on rank;
 // its value-add is the calibrated distribution + uncertainty + surplus). Live-board
 // players carry kind="active"; eFV abstains on players with no pro track record.
@@ -30323,7 +30323,7 @@ function _gfxSubtitle(total, cap) {
   } else if (snap.section === "spotlights") {
     parts.push("by FV movement");
   } else if (snap.section === "ifa") {
-    parts.push("ranked " + (m.sortMode === "fv" ? "by FV" : m.sortMode === "name" ? "A–Z" : "by signing bonus"));
+    parts.push("ranked " + (m.sortMode === "fv" ? "by FV" : m.sortMode === "name" ? "A-Z" : "by signing bonus"));
   }
   if (state.search) parts.push(`“${state.search}”`);
   return `${countNote}${parts.length ? " · " + parts.join(" · ") : ""}`;
@@ -30757,7 +30757,7 @@ function _gfxInsight(p) {
 
 // Full surplus-value section for the card bottom (mirrors the detail page):
 // headline $ + scarcity chip, the Outcome-mix bucket bar, and the Simulated
-// outcome-range fan + P10–P90 / P(bust) / risk-adj meta. Reuses renderBucketBar
+// outcome-range fan + P10-P90 / P(bust) / risk-adj meta. Reuses renderBucketBar
 // + renderSvDistribution (both HTML, so var() resolves in html2canvas).
 function _gfxSurplusBlock(p, P) {
   const baked = (p && p.surplus && p.surplus.value_mm != null) ? p.surplus : null;
@@ -31139,8 +31139,8 @@ function buildProspectCard(snap) {
     ? (arsenalTable ? sect("Pitch Arsenal &amp; VAA", `${rateCaption ? `<div style="font-family:var(--font-mono);font-size:14px;color:${P.text2};margin-bottom:13px;">${escapeHtml(rateCaption)}</div>` : ""}${arsenalTable}`) : sect("Pitching Line", statsGrid))
     : sect("Hitting Line", statsGrid);
   const fvSect = sect("FV History", fvChartSvg);
-  const toolSect = sect("Tool Profile · 20–80", toolBlock);
-  const toolPillsSect = sect("Tool Grades · 20–80", toolsRow);
+  const toolSect = sect("Tool Profile · 20-80", toolBlock);
+  const toolPillsSect = sect("Tool Grades · 20-80", toolsRow);
   const pctSect = sect("Statcast Percentiles", pctBlock);
   const pitchSect = isPitcher ? sect("Pitch Movement", pitchPlotSvg) : "";
   const valSect = sect("Valuation & Surplus", valuationBlock);
@@ -31170,7 +31170,7 @@ function buildProspectCard(snap) {
     const bioSect = bioBits ? `<div style="font-family:var(--font-mono);font-size:15px;color:${P.text2};">${escapeHtml(bioBits)}</div>` : "";
     sectionsHTML = [
       sect(isPitcher ? "Career Pitching · by season" : "Career Hitting · by season", careerTbl),
-      sect("Tool Grades · 20–80", toolsRow),
+      sect("Tool Grades · 20-80", toolsRow),
       sect("Arkmetrics & Surplus", valuationBlock),
       blurb ? sect("Scouting Report", blurbHTML) : "",
       bioSect ? sect("Bio", bioSect) : "",
@@ -31196,7 +31196,7 @@ function buildProspectCard(snap) {
         <span style="font-family:var(--font-sans);font-size:10px;font-weight:700;letter-spacing:0.05em;color:${P.text3};">${lab}</span>
       </div>`;
     }).filter(Boolean);
-    return pills.length >= 3 ? microLabel("Tools · 20–80") + `<div style="display:flex;gap:6px;">${pills.join("")}</div>` : "";
+    return pills.length >= 3 ? microLabel("Tools · 20-80") + `<div style="display:flex;gap:6px;">${pills.join("")}</div>` : "";
   })();
   const dossierSeason = (() => {
     const yr = sl.season || "";
@@ -32216,7 +32216,7 @@ function svCiText(s) {
   const ci = s && s.ci;
   if (!ci || ci.lo_mm == null || ci.hi_mm == null || typeof fmtSvMM !== "function") return "";
   const pct = ci.cred != null ? Math.round(ci.cred * 100) : 90;
-  return `${pct}% CI ${fmtSvMM(ci.lo_mm)}–${fmtSvMM(ci.hi_mm)}`;
+  return `${pct}% CI ${fmtSvMM(ci.lo_mm)}-${fmtSvMM(ci.hi_mm)}`;
 }
 
 function makeSurplusCell(p) {
@@ -32247,7 +32247,7 @@ function makeSurplusCell(p) {
   const tip = `${isEfv ? "eFV" : "Consensus"} expected surplus ${fmtSvMM(s.value_mm)}`
     + (consSv != null ? ` (consensus FV surplus ${fmtSvMM(consSv)})` : "")
     + (ciText ? ` · ${ciText}` : "")
-    + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}` : "")
+    + (d.p10_mm != null ? ` · outcome range ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}` : "")
     + (pb != null ? ` · P(bust) ${pb}%` : "")
     + (d.risk_adjusted_mm != null ? ` · risk-adj ${fmtSvMM(d.risk_adjusted_mm)}` : "")
     + (wag != null ? ` · WAG ${wag > 0 ? "+" : ""}${Number(wag).toFixed(2)}` : "")
@@ -32301,7 +32301,7 @@ function fmtSvMM(m) {
 }
 
 // Stacked outcome-bucket bar. `buckets` = {bust,bench,regular,good,star} probs
-// (0–1). opts: {height, labels (inline % when wide enough), legend (caption row)}.
+// (0-1). opts: {height, labels (inline % when wide enough), legend (caption row)}.
 function renderBucketBar(buckets, opts) {
   opts = opts || {};
   if (!buckets) return "";
@@ -32331,7 +32331,7 @@ function renderBucketBar(buckets, opts) {
 
 // Percentile fan of the simulated SV distribution. `dist` = the baked
 // surplus.dist block ({p10_mm,p25_mm,p50_mm,p75_mm,p90_mm,mean_mm}). Draws a
-// P10–P90 band, a darker P25–P75 box, a median tick and an expected-value
+// P10-P90 band, a darker P25-P75 box, a median tick and an expected-value
 // (mean) tick. Self-scaled to its own P90 (a per-row sparkline of SHAPE, not a
 // cross-row scale). opts: {height, axis (P10/median/P90 labels under the bar)}.
 function renderSvDistribution(dist, opts) {
@@ -32349,7 +32349,7 @@ function renderSvDistribution(dist, opts) {
   const med  = `<div style="position:absolute;left:calc(${X(p50).toFixed(2)}% - 1px);top:8%;height:84%;width:2px;background:var(--text-primary);"></div>`;
   const meanM = mean != null
     ? `<div style="position:absolute;left:calc(${X(mean).toFixed(2)}% - 1px);top:0;height:100%;width:2px;background:var(--up);"></div>` : "";
-  const tip = `Simulated surplus outcomes - P10 ${fmtSvMM(p10)} · P25 ${fmtSvMM(p25)} · median ${fmtSvMM(p50)} · P75 ${fmtSvMM(p75)} · P90 ${fmtSvMM(p90)}${mean != null ? ` · expected ${fmtSvMM(mean)}` : ""}. Light band = P10–P90, inner box = P25–P75, dark line = median, green line = expected (mean).`;
+  const tip = `Simulated surplus outcomes - P10 ${fmtSvMM(p10)} · P25 ${fmtSvMM(p25)} · median ${fmtSvMM(p50)} · P75 ${fmtSvMM(p75)} · P90 ${fmtSvMM(p90)}${mean != null ? ` · expected ${fmtSvMM(mean)}` : ""}. Light band = P10-P90, inner box = P25-P75, dark line = median, green line = expected (mean).`;
   const axis = opts.axis
     ? `<div style="display:flex;justify-content:space-between;font-family:var(--font-mono);font-size:8px;color:var(--text-tertiary);margin-top:2px;"><span>${fmtSvMM(p10)}</span><span>${fmtSvMM(p50)}</span><span>${fmtSvMM(p90)}</span></div>` : "";
   return `<div class="sv-fan" title="${escapeHtml(tip)}" style="position:relative;width:100%;height:${h}px;background:var(--bg-secondary);border:1px solid var(--border-light);border-radius:3px;">${band}${iqr}${med}${meanM}</div>${axis}`;
@@ -35720,7 +35720,7 @@ function makeFarmDevTopMovers(rosterPlayersAll) {
   const fmtDelta = d => `${d >= 0 ? '+' : ''}${d.toFixed(1)}`;
   const row = r => {
     const p = r.p;
-    const fvNow = p.fv_close != null ? Math.round(p.fv_close) : " - ";
+    const fvNow = p.fv_close != null ? fvCeil(p.fv_close) : " - ";
     const tone = r.d >= 0 ? "var(--up)" : "var(--down)";
     return `<tr>
       <td><a href="#" onclick="event.preventDefault();goToPlayer('${escapeHtml(p.player_key)}');" style="color:var(--text-primary);">${escapeHtml(p.player_name)}</a></td>
@@ -36116,7 +36116,7 @@ function makeFarmComparePicker(currentOrg) {
     `<option value="${escapeHtml(o.org)}"${state.farmCompareOrg === o.org ? " selected" : ""}>${escapeHtml(o.org)} (farm #${o.rank})</option>`
   ).join("");
   const cleared = state.farmCompareOrg && state.farmCompareOrg !== currentOrg.org
-    ? `<button class="chip" type="button" data-farm-compare-clear="1" style="margin-left:6px;" title="Clear comparison">×</button>`
+    ? `<button class="chip" type="button" data-farm-compare-clear="1" style="margin-left:6px;" title="Clear comparison" aria-label="Clear comparison">×</button>`
     : "";
   return `<div class="filter-bar" style="margin-bottom:10px;padding:8px 12px;background:var(--bg-secondary);border:1px solid var(--border);border-radius:4px;">
     <span class="filter-label" style="margin-right:8px;">Compare ${escapeHtml(currentOrg.org)} to</span>
@@ -37972,7 +37972,7 @@ function farmSortedOrgs() {
 function makeSpendingDonut(org, size = 48) {
   const ifa = org && org.ifa_spending ? org.ifa_spending : {};
   const draft = org && org.draft_spending ? org.draft_spending : {};
-  // Last 3 years cutoff - anchored at the current year so 2024–2026
+  // Last 3 years cutoff - anchored at the current year so 2024-2026
   // counts as a "3yr" window for fresh data.
   const cutoff = new Date().getUTCFullYear() - 3;
   let ifaTotal = 0, draftTotal = 0;
@@ -39451,7 +39451,7 @@ function makeCareerTable(career, birthDate, player) {
       ${_sh("level", "Level")}${warHead}
       ${_sh("g", "G", 'title="Games appeared"')}
       ${_sh("ip", "IP", 'title="Innings pitched"')}
-      ${_sh("wins", "W-L", 'title="Wins–Losses (sorts by wins)"')}
+      ${_sh("wins", "W-L", 'title="Wins-Losses (sorts by wins)"')}
       ${_sh("era", "ERA", 'title="Earned Run Average (lower is better)"')}
       ${_sh("whip", "WHIP", 'title="Walks + Hits per Inning Pitched (lower is better)"')}
       ${_sh("k_pct", "K%", 'title="Strikeout rate (per batter faced) - preferred over K/9 because per-batter rate doesn\'t depend on starter vs reliever IP-per-appearance. Falls back to K/9 ÷ 0.387 when batters-faced isn\'t on file."')}
@@ -39578,7 +39578,7 @@ function makeCareerByLevelTable(career, birthDate) {
   const sum = (rows, key) => rows.reduce((s, r) => s + num(r[key]), 0);
   const seasonRange = rows => {
     const ys = rows.map(r => r.season).filter(y => y != null).sort();
-    return ys.length === 0 ? " - " : ys.length === 1 ? `${ys[0]}` : `${ys[0]}–${ys[ys.length-1]}`;
+    return ys.length === 0 ? " - " : ys.length === 1 ? `${ys[0]}` : `${ys[0]}-${ys[ys.length-1]}`;
   };
   // Age range across the seasons at a given level, using July 1 of
   // each season as the anchor (matches makeCareerTable + the
@@ -39597,7 +39597,7 @@ function makeCareerByLevelTable(career, birthDate) {
     if (ages.length === 1) return `${ages[0]}`;
     return ages[0] === ages[ages.length-1]
       ? `${ages[0]}`
-      : `${ages[0]}–${ages[ages.length-1]}`;
+      : `${ages[0]}-${ages[ages.length-1]}`;
   };
   if (isP) {
     const rows = levels.map(lv => {
@@ -40869,7 +40869,7 @@ function extractVeloHistory(p) {
     if (!ex || !ex.sits) continue;
     const s = String(ex.sits).trim();
     let mph = null;
-    const range = s.match(/(\d+(?:\.\d+)?)\s*[-–]\s*(\d+(?:\.\d+)?)/);
+    const range = s.match(/(\d+(?:\.\d+)?)\s*[--]\s*(\d+(?:\.\d+)?)/);
     const single = s.match(/^\s*(\d+(?:\.\d+)?)\s*$/);
     if (range) {
       mph = (parseFloat(range[1]) + parseFloat(range[2])) / 2;
@@ -41936,7 +41936,7 @@ function makeSourceFvHistory(points, opts = {}) {
       ? `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;">${escapeHtml(meta[hiSrc].label)} ${fvCeil(hi)} high · ${escapeHtml(meta[loSrc].label)} ${fvCeil(lo)} low</div>`
       : "";
     summary = `<div style="margin-bottom:8px;">
-      <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${fvVals.length} sources · range ${fvCeil(lo)}–${fvCeil(hi)}${wide}</span>
+      <span style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">${fvVals.length} sources · range ${fvCeil(lo)}-${fvCeil(hi)}${wide}</span>
       ${drift}
     </div>`;
   } else if (srcKeys.length === 1) {
@@ -42315,7 +42315,7 @@ function renderPlayerDetail(key) {
           if (p.fv_high_date) tipParts.push(`High first hit: ${p.fv_high_date}`);
           if (p.fv_low_date) tipParts.push(`Low first hit: ${p.fv_low_date}`);
           const tip = tipParts.join(" · ");
-          return `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">Range ${lowText}${lowFull}–${highText}${highFull} · O ${p.fv_open ?? " - "} · C ${p.fv_close ?? " - "}</div>`;
+          return `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-tertiary);margin-top:6px;font-variant-numeric:tabular-nums;" title="${escapeHtml(tip)}">Range ${lowText}${lowFull}-${highText}${highFull} · O ${p.fv_open ?? " - "} · C ${p.fv_close ?? " - "}</div>`;
         })()}
         ${(() => {
           const s = p.stock;
@@ -43037,7 +43037,7 @@ function renderPlayerDetail(key) {
       }
     }
     // v39 - Rich baked-engine breakdown (mirrors the list-row surplus cell):
-    // outcome-bucket bar (bust→star), the P10–P90 simulated distribution fan,
+    // outcome-bucket bar (bust→star), the P10-P90 simulated distribution fan,
     // P(bust) / risk-adjusted SV. Only when the baked engine output is present.
     let bakedDetailRow = "";
     if (_baked) {
@@ -43046,7 +43046,7 @@ function renderPlayerDetail(key) {
                  ? p.debuted_value.posterior : _baked.buckets;
       const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
       const metaBits = [];
-      if (d.p10_mm != null) metaBits.push(`P10–P90 ${fmtSvMM(d.p10_mm)}–${fmtSvMM(d.p90_mm)}`);
+      if (d.p10_mm != null) metaBits.push(`P10-P90 ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}`);
       if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
       if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {
@@ -44259,12 +44259,12 @@ function renderPlayerDetail(key) {
         if (highEntry && lowEntry && highEntry[0] !== lowEntry[0]) {
           const hiLab = SOURCE_LABELS[highEntry[0]] || highEntry[0];
           const loLab = SOURCE_LABELS[lowEntry[0]] || lowEntry[0];
-          driftLine = `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${Math.round(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${Math.round(lowEntry[1].fv_published)} low</div>`;
+          driftLine = `<div style="font-size:var(--fs-xs);color:var(--text-tertiary);margin-top:2px;font-family:var(--font-sans);letter-spacing:0.02em;">${escapeHtml(hiLab)} ${fvCeil(highEntry[1].fv_published)} high · ${escapeHtml(loLab)} ${fvCeil(lowEntry[1].fv_published)} low</div>`;
         }
       }
       disagreementLine = `<div style="margin-bottom:6px;">
         <div style="font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;">
-          Range ${Math.round(latestPt.fv_min)}–${Math.round(latestPt.fv_max)}${sigma}${wide}
+          Range ${fvCeil(latestPt.fv_min)}-${fvCeil(latestPt.fv_max)}${sigma}${wide}
         </div>
         ${driftLine}
       </div>`;
@@ -44521,7 +44521,7 @@ function renderPlayerDetail(key) {
     const seasonsLine = (rs.mlb_seasons || []).length
       ? `<div style="font-size:12px;color:var(--text-secondary);">
             <span style="color:var(--text-tertiary);">MLB seasons:</span>
-            <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${rs.mlb_seasons.length} (${rs.mlb_seasons[0]}–${rs.mlb_seasons[rs.mlb_seasons.length-1]})</span>
+            <span style="color:var(--text-primary);font-variant-numeric:tabular-nums;">${rs.mlb_seasons.length} (${rs.mlb_seasons[0]}-${rs.mlb_seasons[rs.mlb_seasons.length-1]})</span>
          </div>`
       : "";
     return `<div class="detail-title">MLB roster status</div>
@@ -44678,7 +44678,7 @@ function renderPlayerDetail(key) {
     const halfExplain = halfWord
       ? `<div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;line-height:1.5;">
            <strong style="color:var(--text-secondary);">${halfWord} ${eta.year}</strong> - 
-           ${halfWord === "Early" ? "an Apr–Jun (first-half)" : "a Jul–Sep (second-half)"} debut window.
+           ${halfWord === "Early" ? "an Apr-Jun (first-half)" : "a Jul-Sep (second-half)"} debut window.
            Blends how far into the year the fractional ETA lands, the org's H1/H2 promotion tendency, and a current-level bias (AAA leans early; A/A+ on a multi-year track lean late).${orgBits.length ? ` <span style="color:var(--text-tertiary);">(${orgBits.join(" · ")})</span>` : ""}
          </div>`
       : "";
@@ -44710,7 +44710,7 @@ function renderPlayerDetail(key) {
     const rows = teammates.map(t => `
       <div data-key="${escapeHtml(t.player_key)}" style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px solid var(--border-light);cursor:pointer;font-size:12px;">
         <span style="color:var(--text-primary);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(t.player_name)} <span style="color:var(--text-tertiary);font-size:10px;">${escapeHtml(t.position || " - ")}</span></span>
-        <span class="fv-badge ${fvClass(String(Math.round(t.fv_close)))} size-sm">${Math.round(t.fv_close)}</span>
+        <span class="fv-badge ${fvClass(String(fvCeil(t.fv_close)))} size-sm">${fvCeil(t.fv_close)}</span>
       </div>`).join("");
     return `<div class="detail-title">On the same farm <span class="detail-title-sub">other top ${escapeHtml(p.org)} prospects</span></div>
       <div style="border:1px solid var(--border-light);background:var(--bg-secondary);padding:8px 12px;border-radius:var(--radius-sm);">${rows}</div>`;
@@ -46007,7 +46007,7 @@ function makeFarmGraduates(orgCode) {
     const wag = (typeof gradVsFvProjection === "function") ? gradVsFvProjection(g) : null;
     const wagTxt = wag == null ? '<span class="split-sub">-</span>'
       : `<span style="color:${wag >= 0.5 ? "var(--up)" : wag <= -0.5 ? "var(--down)" : "var(--text-secondary)"};font-variant-numeric:tabular-nums;">${wag > 0 ? "+" : ""}${wag.toFixed(1)}</span>`;
-    const fv = g.fv_close != null ? `<span class="fv-badge ${fvClass(String(Math.round(g.fv_close)))} size-sm">${Math.round(g.fv_close)}</span>` : '<span class="split-sub">-</span>';
+    const fv = g.fv_close != null ? `<span class="fv-badge ${fvClass(String(fvCeil(g.fv_close)))} size-sm">${fvCeil(g.fv_close)}</span>` : '<span class="split-sub">-</span>';
     const click = g.player_key ? ` onclick="goToPlayer('${escapeHtml(g.player_key)}');" style="cursor:pointer;"` : "";
     return `<tr${click}>
       <td class="split-rowlabel" style="color:${g.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};">${escapeHtml(g.player_name || g.player_key || "?")}</td>
@@ -46883,7 +46883,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
       .slice(0, 6);
     if (!versaPlayers.length) return "";
     const rows = versaPlayers.map(({ rp, versa }) => {
-      const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
+      const fvL = rp.fv_close != null ? fvCeil(rp.fv_close) : null;
       const fvBadge = fvL != null
         ? `<span class="fv-badge ${fvClass(String(fvL))} size-xs" style="flex-shrink:0;">${fvL}</span>`
         : `<span style="width:22px;flex-shrink:0;"></span>`;
@@ -47052,7 +47052,7 @@ function _renderFarmDetailBody(orgCode, org, root) {
           const tj = (rp.health_profile || {}).is_post_tj
             ? ` <span style="font-size:9px;color:var(--neon-violet);font-weight:700;letter-spacing:0.04em;text-transform:uppercase;">TJ</span>`
             : "";
-          const fvL = rp.fv_close != null ? Math.round(rp.fv_close) : null;
+          const fvL = rp.fv_close != null ? fvCeil(rp.fv_close) : null;
           return `<div style="display:grid;grid-template-columns:auto 1fr auto;gap:6px;align-items:center;padding:3px 0;border-bottom:1px solid var(--border-light);font-size:var(--fs-sm);cursor:pointer;" onclick="goToPlayer('${escapeHtml(rp.player_key)}');">
             ${fvL != null ? `<span class="fv-badge ${fvClass(String(fvL))} size-sm">${fvL}</span>` : `<span style="width:24px;"></span>`}
             <span style="color:var(--neon-cyan);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(rp.player_name)}${tj}</span>
@@ -49428,7 +49428,7 @@ function makeCompareSideBySide(players) {
     if (p.org) ageBits.push(p.org);
     const rps = computeRelProd(p);
     return `<div class="csbs-player" style="--csbs-color:${color};">
-      <button class="csbs-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button" title="Remove from compare">×</button>
+      <button class="csbs-remove" data-compare-remove="${escapeHtml(p.player_key)}" type="button" title="Remove from compare" aria-label="Remove from compare">×</button>
       <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
         <span onclick="closeCompareAndGo('${escapeHtml(p.player_key)}');" style="cursor:pointer;flex-shrink:0;">${headshotHTML(p, 56)}</span>
         <div style="min-width:0;flex:1;">
@@ -49482,7 +49482,7 @@ function makeFarmCompareSideBySide(farms) {
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.name || tp.player_name || " - ")}</span>${tpFv != null ? ` <span class="fv-badge size-sm ${fvClass(String(tpFv))}" style="margin-left:4px;">${tpFv}</span>` : ""}</div>`
       : "";
     return `<div class="csbs-player" style="--csbs-color:${color};">
-      <button class="csbs-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button" title="Remove from compare">×</button>
+      <button class="csbs-remove" data-farm-compare-remove="${escapeHtml(o.org)}" type="button" title="Remove from compare" aria-label="Remove from compare">×</button>
       <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
         <span style="flex-shrink:0;">${teamLogoHTML(o.org, "lg", fullOrgName(o.org))}</span>
         <div style="min-width:0;flex:1;">

@@ -169,10 +169,11 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
         paths: dict[str, dict] = {}
         ages: dict[str, float] = {}
         for s_key, hist_s in sides.items():
-            age_prev = next((h.get("age") for h in hist_s if h.get("age")), None)
-            if age_prev is None:
+            # Anchor the age offset to the row that supplied the age.
+            age_row = next((h for h in hist_s if h.get("age")), None)
+            if age_row is None:
                 continue
-            age_s = age_prev + (FIRST_SEASON - hist_s[0]["season"])
+            age_s = age_row["age"] + (FIRST_SEASON - age_row["season"])
             p_s = fm.contract_war_path(hist_s, s_key, FIRST_SEASON, HORIZON,
                                        age_s, curves, war_map, league,
                                        in_progress=in_prog)
@@ -516,8 +517,9 @@ def _depth_pool(corpus: dict, names: dict[int, str],
                                          FIRST_SEASON - 3) if t in seasons]
             if not hist:
                 continue
-            age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-            age = (age_prev + (FIRST_SEASON - hist[0]["season"])) if age_prev else None
+            # Anchor the age offset to the row that supplied the age.
+            age_row = next((h for h in hist if h.get("age")), None)
+            age = (age_row["age"] + (FIRST_SEASON - age_row["season"])) if age_row else None
             age_any = age or age_any
             cp = fm.contract_war_path(hist, side, FIRST_SEASON, HORIZON, age,
                                       curves, war_map, league,

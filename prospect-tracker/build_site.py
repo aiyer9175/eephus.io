@@ -2404,7 +2404,7 @@ def build_glossary() -> str:
         "never blends them, because the gap between them is the entire point.</p>"
         "<p>WAR site-wide is Baseball-Reference's bWAR: one source, every surface. Where samples "
         "are thin the models shrink toward the mean and say so; where data is missing the site "
-        "shows an em-dash, never a guess.</p>"
+        "shows a plain dash, never a guess.</p>"
         "<p>Model derivations and the interactive teaching widgets live under Methodology; the "
         "source-vs-source backtest under Source Comparison grades the site's own consensus "
         "against its inputs - misses included.</p>"
@@ -2771,6 +2771,7 @@ def build_404() -> str:
         '<p>Try the <a href="/">homepage</a>, or jump straight into a module: '
         '<a href="/prospx/">PROSPX</a> · <a href="/collegesavant/">CollegeSavant</a> · '
         '<a href="/fa/">Free Agency</a> · <a href="/projections/">Projections</a> · '
+        '<a href="/mlbstats/">MLB Stats</a> · <a href="/pal/">Pitcher Alchemy Lab</a> · '
         '<a href="/glossary/">Glossary</a>.</p>'
         '<p>Looking for a player? Press <strong>Ctrl+K</strong> (⌘K on Mac) anywhere on the '
         'site and type a name.</p>'

@@ -63,6 +63,7 @@ const PITCHER_HOME_WIDGET_METRICS = [
 const PITCHER_HOME_SECTIONS = [
   { route: "leaders", title: "Pitcher Leaderboard", note: "Every tracked arm, sortable across Stuff+, velo, whiffs, and CS+, with team and qualified filters." },
   { route: "teams", title: "Team Tendencies", note: "Which college staffs throw the hardest, miss the most bats, and run the best team CS+." },
+  { route: "prospects", title: "Draft Prospects", note: "Draft-eligible college arms carried in by the box scores we hold, FV-ranked with a projected Single-A line." },
   { route: "projections", title: "MiLB Projections", note: "Each arm's projected Single-A K% / BB%, the matched-pair method, and its leave-one-out backtest." },
 ];
 
@@ -872,7 +873,7 @@ function _wireCsShare(pitcher, pct) {
       accentToken: "--accent-red",
       name: displayName(pitcher.pitcher_name),
       meta: `${formatTeamName(pitcher.team)} · ${pitcher.year} · college pitcher`,
-      headshotURL: pitcher.team ? `logos/${pitcher.team}.png` : null,
+      headshotURL: TEAM_LOGOS.has(pitcher.team) ? `logos/${pitcher.team}.png` : null,
       tiles: [
         pitcher.stuff_plus != null ? { label: "Stuff+", value: formatMetric(pitcher.stuff_plus, "number") } : null,
         pitcher.avg_fastball_velo != null ? { label: "FB velo", value: formatMetric(pitcher.avg_fastball_velo, "mph") } : null,
@@ -1132,7 +1133,7 @@ function renderTranslation(pitcher) {
     return `<div class="trans-row">
       <span class="trans-label">${label}${tag}</span>
       <span class="trans-val">${pct(b.exp)}</span>
-      <span class="trans-band">${pct(b.lo)} – ${pct(b.hi)}</span>
+      <span class="trans-band">${pct(b.lo)} - ${pct(b.hi)}</span>
     </div>`;
   };
   const rows = [
@@ -1147,7 +1148,7 @@ function renderTranslation(pitcher) {
         <span>expected · P10-P90 band</span>
       </div>
       <div class="trans-grid">
-        <div class="trans-head"><span></span><span>Expected</span><span>P10 – P90</span></div>
+        <div class="trans-head"><span></span><span>Expected</span><span>P10 - P90</span></div>
         ${rows}
       </div>
       <p class="trans-note">Matched-pair projection from this college K% / BB% to a Single-A

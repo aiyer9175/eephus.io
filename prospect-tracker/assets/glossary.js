@@ -336,7 +336,7 @@ function _methProseHTML() {
 
     <h2 class="meth-h">How the consensus FV (eFV's prior) is built</h2>
     <p>The consensus FV is the scout-grade aggregate eFV anchors on, and the reference shown
-    alongside eFV everywhere. Every source that publishes an explicit 20–80 Future Value grade feeds an
+    alongside eFV everywhere. Every source that publishes an explicit 20-80 Future Value grade feeds an
     <strong>accuracy-weighted</strong> consensus. Each source's vote weight comes from its
     measured track record on resolved cohorts, shrunk hard toward equal and clamped, so the
     weights barely move off one vote - today only MLB Pipeline (1.06) and FanGraphs (0.94)
@@ -484,7 +484,7 @@ function _methProseHTML() {
 
     <h2 class="meth-h">Methodology changelog</h2>
     <ul class="meth-changelog">
-      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017–2020 boards (new-format CSVs) + MLB Pipeline 2017–2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021–2023 (3 base years) to 2017–2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
+      <li><span class="mc-date">2026-06</span> Historical backfill: ingested FanGraphs 2017-2020 boards (new-format CSVs) + MLB Pipeline 2017-2020 Top 100, each grade date-stamped to its year. The backtest's resolved-cohort window grew from 2021-2023 (3 base years) to 2017-2023 (7), and the common scored set grew with it. On the larger, further-resolved sample the consensus still outranks its best individual source (current common-set size and margins are in Source Comparison below).</li>
       <li><span class="mc-date">2026-06</span> Surplus engine v38: FV→WAR anchor moved from a single peak-year projection to a flat 6-year-average table; side difference carried by the position multiplier. Farm list/detail surplus consolidated on the engine aggregate.</li>
       <li><span class="mc-date">2026-06</span> Glossary reorganized into Glossary / Methodology / Source Comparison; taxonomy regrouped (Arkmetrics · Statcast · Standard · Scouting · Economic · Farm · Site Features); Statcast input terms added.</li>
       <li><span class="mc-date">2026-06</span> Farm grade tree v40: value-tracking reweight. The org letter is now primarily driven by aggregate risk-adjusted controlled surplus (the Value branch, 65%); Development drops from the top weight to a secondary controllable-skill signal (9%), MLB Production 18%, Acquisition Strategy 8%. This stops the grade from reading as a per-prospect tool-development index decoupled from aggregate farm value.</li>
@@ -504,7 +504,7 @@ function _methProseHTML() {
       <dt>How often does it update?</dt>
       <dd>Grades, Arkmetrics, farm grades, and the backtest refresh monthly; transactions, IL, roster status, debuts, and trades refresh daily. Each board stamps its own cadence.</dd>
       <dt>What's the track record - and its limits?</dt>
-      <dd>The evaluation window spans seven preseason base years (2017–2023): the 2017–2020 cohorts are fully resolved while 2021–2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40–70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
+      <dd>The evaluation window spans seven preseason base years (2017-2023): the 2017-2020 cohorts are fully resolved while 2021-2023 are still accruing WAR, and cumulative WAR is censored at today. Top FV tiers stay thin (n≈40-70), so their rates move on a few outcomes. The Source Comparison area lists sample sizes and these caveats in full rather than headlining an inflated number.</dd>
     </dl>
   </div>`;
 }
@@ -660,7 +660,7 @@ function _methEfvPanel(bt) {
     <p class="meth-note">${escapeHtml(xc.protocol || "")}</p>
     ${sideBlock("hitters", "Hitters - ordering skill (Spearman ρ, grade vs realized WAR)")}
     ${sideBlock("pitchers", "Pitchers - ordering skill (Spearman ρ, grade vs realized WAR)")}
-    <p class="meth-verdict is-good">eFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019–2023 cohorts, so it is not merely exploiting older, less-accurate scouting. eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
+    <p class="meth-verdict is-good">eFV out-ranks consensus FV out-of-sample on both sides, and the edge holds on the recent 2019-2023 cohorts, so it is not merely exploiting older, less-accurate scouting. eFV is the primary grade; consensus FV remains a reference input. (This is eFV's own out-of-sample protocol, a more conservative test than the in-sample common-set bars above.)</p>
     ${tierTable}
     ${receipts}
   </div>`;
@@ -1237,7 +1237,7 @@ function renderSourceComparison() {
         <div class="meth-caveats-title">⚠ Read this honestly</div>
         <ul>
           <li><strong>Short track record.</strong> Only ${bt.window.years.length} preseason base years (${bt.window.years.join(", ")}) are old enough to have resolved outcomes. The newer sources have <em>zero</em> resolved cohorts.</li>
-          <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40–60 across all years - a handful of hits or misses moves its rates a lot.</li>
+          <li><strong>Thin top tiers.</strong> The 60+ tier is only n≈40-60 across all years - a handful of hits or misses moves its rates a lot.</li>
           <li><strong>Censoring.</strong> Outcomes are cumulative WAR as of ${escapeHtml(bt.as_of_date || "today")}; the 2023 cohort has had ~3 seasons, the 2021 cohort ~5. Rate metrics mitigate but don't erase this.</li>
           <li><strong>eFV's edge is real but bounded.</strong> eFV leads pooled and on most archetypes, FV tiers, and eras, and the lead holds on recent cohorts (not just older, easier-to-beat scouting). It trails the consensus on a couple of young, low-track-record archetypes, and the margins are a few Spearman points: a calibrated grade that out-ranks the field by a steady, defensible amount, not a perfect predictor.</li>
           <li><strong>eFV is in-the-loop, not infallible.</strong> Its grades come from production we have; for the youngest prospects (recent draftees, int'l signs with no pro reps) it leans on the consensus prior, and where richer data exists (Statcast, Stuff+) it is only a live overlay, not yet historical. The lead grows when the data does.</li>

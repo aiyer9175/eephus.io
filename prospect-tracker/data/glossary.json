@@ -224,10 +224,10 @@
     "Tiebreak"
    ],
    "priority": 12,
-   "definition": "0–100 composite that separates two prospects carrying the IDENTICAL FV grade by projected MLB success. Cohort-aware (MiLB / Draft / Overseas) and injury-aware.",
-   "methodology": "When two prospects share the same Future Value, raw FV can't separate them - TBS does. It blends scouting grades, cohort-normalized performance, and developmental/risk modifiers into one 0–100 number, tuned per cohort for 'how likely is this player to become a useful MLB regular?' rather than current-season output.\n\nMiLB (active): Tool composite 26% · RPS+ 16% · SC+ 16% · per-tool max 10% · Stuff+ 8% (pitchers) · age-vs-level 8% · health/injuries 10% · stock movement 6%. MLB Draft: Draft Stock+ 27% · Tool+ 18% · college RPS+ 17% · Tool composite 10% · per-tool max 10% · age 8% · health 6% · movement 4%.\n\nOverseas: Tool+ 22% · cohort RPS+ 18% · translation-adjusted wRC+ or FIP 18% · Tool composite 8% · per-tool max 8% · age 4% · health 4% · movement 4%. Each signal is independently normalized to 0–1 and clipped; any missing signal drops out and the remaining weights renormalize, so a partial-data player still scores on a comparable scale.\n\nThe HEALTH term works the same way everywhere: a prospect currently on the IL zeros it (sinking below a healthy same-FV peer); recent IL history (≥1 stint or ≥30 days in the trailing year) or a post-Tommy-John recovery window partially discounts it; a clean profile is neutral-max. TBS drives same-FV ordering on the Draft + Overseas lists, the surplus-value nudge in trade evaluations, and the 'TBS NN' line in Trade Audit cards.\n\nThe Active list's headline #overall-rank is computed server-side with a matching FV → Tools → currently-on-IL tiebreak, so an injured prospect also ranks just behind a healthy same-FV, same-tools peer there.",
+   "definition": "0-100 composite that separates two prospects carrying the IDENTICAL FV grade by projected MLB success. Cohort-aware (MiLB / Draft / Overseas) and injury-aware.",
+   "methodology": "When two prospects share the same Future Value, raw FV can't separate them - TBS does. It blends scouting grades, cohort-normalized performance, and developmental/risk modifiers into one 0-100 number, tuned per cohort for 'how likely is this player to become a useful MLB regular?' rather than current-season output.\n\nMiLB (active): Tool composite 26% · RPS+ 16% · SC+ 16% · per-tool max 10% · Stuff+ 8% (pitchers) · age-vs-level 8% · health/injuries 10% · stock movement 6%. MLB Draft: Draft Stock+ 27% · Tool+ 18% · college RPS+ 17% · Tool composite 10% · per-tool max 10% · age 8% · health 6% · movement 4%.\n\nOverseas: Tool+ 22% · cohort RPS+ 18% · translation-adjusted wRC+ or FIP 18% · Tool composite 8% · per-tool max 8% · age 4% · health 4% · movement 4%. Each signal is independently normalized to 0-1 and clipped; any missing signal drops out and the remaining weights renormalize, so a partial-data player still scores on a comparable scale.\n\nThe HEALTH term works the same way everywhere: a prospect currently on the IL zeros it (sinking below a healthy same-FV peer); recent IL history (≥1 stint or ≥30 days in the trailing year) or a post-Tommy-John recovery window partially discounts it; a clean profile is neutral-max. TBS drives same-FV ordering on the Draft + Overseas lists, the surplus-value nudge in trade evaluations, and the 'TBS NN' line in Trade Audit cards.\n\nThe Active list's headline #overall-rank is computed server-side with a matching FV → Tools → currently-on-IL tiebreak, so an injured prospect also ranks just behind a healthy same-FV, same-tools peer there.",
    "formula": "TBS = round( 100 × Σ(signalᵢ × weightᵢ) ÷ Σ(weightᵢ for present signals) ) - per-cohort weights as listed above",
-   "example": "Two 50-FV shortstops with similar tools: one healthy (RPS+ 118), one on the 60-day IL. The healthy bat scores ~8–10 TBS points higher and ranks ahead in any same-FV tiebreak.",
+   "example": "Two 50-FV shortstops with similar tools: one healthy (RPS+ 118), one on the 60-day IL. The healthy bat scores ~8-10 TBS points higher and ranks ahead in any same-FV tiebreak.",
    "seeAlso": [
     "fv",
     "tool",
@@ -2668,7 +2668,7 @@
    ],
    "priority": 50,
    "definition": "Continuous score differentiating farms that share a letter grade. 100 = league mean, +10 = 1σ.",
-   "methodology": "Coarse letter grades collapse real value gaps - two clearly different farms can share a grade. The tiebreaker is a continuous, league-normalized blend of the three value dimensions, shown under each farm's letter so same-grade systems are ordered and distinguishable: 0.40·total active surplus + 0.25·6yDvM+ + 0.35·raw graduate WAR (z-scored across the 30 orgs, anchored 100 + 10·z). Total surplus and 6yDvM+ are the dollar and indexed views of one controlled-value concept, so they share weight rather than double-count; raw graduate WAR adds the REALIZED-output axis (actual MLB WAR produced by the org's graduates - not WAG) that the paper-value measures can't see. Carries a component breakdown and a finer continuous 1–30 rank alongside the letter grade.",
+   "methodology": "Coarse letter grades collapse real value gaps - two clearly different farms can share a grade. The tiebreaker is a continuous, league-normalized blend of the three value dimensions, shown under each farm's letter so same-grade systems are ordered and distinguishable: 0.40·total active surplus + 0.25·6yDvM+ + 0.35·raw graduate WAR (z-scored across the 30 orgs, anchored 100 + 10·z). Total surplus and 6yDvM+ are the dollar and indexed views of one controlled-value concept, so they share weight rather than double-count; raw graduate WAR adds the REALIZED-output axis (actual MLB WAR produced by the org's graduates - not WAG) that the paper-value measures can't see. Carries a component breakdown and a finer continuous 1-30 rank alongside the letter grade.",
    "seeAlso": [
     "farm_report_card",
     "sur_plus",
@@ -2894,7 +2894,7 @@
    ],
    "priority": 60,
    "definition": "Trailing-6yr-window WAR per $M of IFA bonus spend. Captures whether the org's international signings translated to MLB production.",
-   "methodology": "IFA ROI leaf inside Financial v6. Numerator: sum of career WAR for IFA-method grads signed in (T-9)…(T-3) - 6-year rolling window (bumped from 5yr in v6 to align with the 6y DvM+ horizon). IFA prospects need more development time than draft picks, so the window starts ~9 years out and ends ~3 years out. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K–$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
+   "methodology": "IFA ROI leaf inside Financial v6. Numerator: sum of career WAR for IFA-method grads signed in (T-9)…(T-3) - 6-year rolling window (bumped from 5yr in v6 to align with the 6y DvM+ horizon). IFA prospects need more development time than draft picks, so the window starts ~9 years out and ends ~3 years out. Denominator: sum of org's total IFA bonus spending over those same signing years (from the per-year IFA spend table). Output: WAR/$M. Gated at ≥2 contributing grads with signed_year + bonus on file. Cubans / Asian-pro signings + bonus-pool-busting splash signings show up here as high-spend low-ROI; orgs that develop deep $200K-$500K signings (e.g. Cleveland's Latin America operation) show high ROI.",
    "seeAlso": [
     "farm_grade_financial",
     "fin_draft_pool_efficiency",
@@ -4619,7 +4619,7 @@
   {
    "id": "gmli",
    "term": "gmLI (Game-entry Leverage Index)",
-   "category": "pitcher-stat",
+   "category": "custom-index",
    "module": [
     "mlbstats"
    ],
@@ -4885,6 +4885,86 @@
    "definition": "The gap in results a pitcher allows to left-handed versus right-handed hitters (here, the OPS-against difference). A flat split means he can face a full lineup without being hidden from one side, which supports starting. A large split is a conversion blocker.",
    "seeAlso": [
     "rp_sp_fit"
+   ]
+  },
+  {
+   "id": "versa",
+   "term": "Versa (Positional Versatility)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Versa",
+    "Positional Versatility"
+   ],
+   "priority": 34,
+   "definition": "The set of non-pitcher positions a player has real game experience at, drawn from actual MLB and MiLB fielding logs rather than a scout's projected multi-position tag. A wider Versa profile means more lineup and roster flexibility.",
+   "methodology": "Versa is built from StatsAPI game fielding, not a reported position string. A position counts when the player has meaningful exposure there: at least 10 games, or at least 5 starts at that spot. Designated hitter is excluded because it is not a fielding position. The result is the honest, game-backed set of places a player has actually stood, so a listed shortstop who has logged real innings at second and third shows all three.",
+   "formula": "Position qualifies at >= 10 G or >= 5 GS at that spot; DH excluded",
+   "example": "A shortstop with 40 G at SS, 12 G at 2B, and 6 GS at 3B shows Versa: SS / 2B / 3B.",
+   "seeAlso": []
+  },
+  {
+   "id": "draft_stock_plus",
+   "term": "DS+ (Draft Stock+)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "DS+",
+    "Draft Stock+"
+   ],
+   "priority": 35,
+   "definition": "A draft prospect's board rank expressed as an index where 100 is the middle of the class and higher is a more valued prospect. It starts from the consensus board position and is nudged a few points by a college-performance signal, so a standout amateur season can move a prospect a little off his rank-derived baseline.",
+   "methodology": "DS+ maps a prospect's consensus draft rank to roughly a 70 to 130 index (best of class near 130, back of the board near 70), computed on the raw fractional consensus ranks so tightly bunched prospects stay distinct. A z-scored college-performance term then nudges the value up or down by up to about six points, and the result is clamped. It is a heuristic stock indicator, not a validated projection. This is different from Draft Overperformance, which compares realized FV to slot after the fact.",
+   "formula": "DS+ = rank-to-index (about 70-130) + college-performance nudge (up to about +-6), clamped",
+   "example": "A prospect ranked 8th in a class of 250 with a strong statistical spring might carry a DS+ near 126.",
+   "seeAlso": []
+  },
+  {
+   "id": "reverse_platoon",
+   "term": "Reverse-Platoon Index",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "Reverse-Platoon Index",
+    "Reverse Platoon",
+    "Reverse-Platoon Radar"
+   ],
+   "priority": 47,
+   "definition": "How much better a pitcher holds opposite-handed hitters than same-handed hitters, the reverse of the normal platoon pattern. A reverse split is a rare hidden strength that supports a full-lineup starter role, since the batters who would normally platoon against him do not get their edge.",
+   "methodology": "For a right-handed pitcher the index is his OPS-against versus righties minus his OPS-against versus lefties (mirrored for a lefty). A value above zero means he allows more to his own hand than to the opposite hand, a reverse split. The radar flags a reverse split above 0.03 and an extreme split at or beyond 0.15, and only counts pitchers with at least 100 batters faced on the lighter side so small-sample noise does not surface as a hidden strength.",
+   "formula": "reverse index = own-hand OPS-against minus opposite-hand OPS-against (RHP: vsR minus vsL); reverse if > 0.03; requires >= 100 TBF",
+   "example": "A righty who allows a .720 OPS to righties but only .560 to lefties has a reverse index of +0.16: he neutralizes the opposite-handed bats that would normally platoon against him.",
+   "seeAlso": [
+    "sp_rp_fit",
+    "rp_sp_fit",
+    "pal_conversion"
+   ]
+  },
+  {
+   "id": "starter_shape",
+   "term": "Starter Shape",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "Starter Shape"
+   ],
+   "priority": 48,
+   "definition": "A 0 to 100 read on whether a pitching prospect's tools fit a starting role or a relief role, built only from scout grades (arsenal depth and command). It is a shape screen, not a stuff-physics projection: it flags prospects whose listed role conflicts with what their tool grades suggest.",
+   "methodology": "Starter Shape scores a prospect pitcher from his 20-80 scout grades alone. It rewards arsenal depth (the count of distinct pitches graded 55 or better, since a starter needs a third weapon to turn a lineup over three times) and command, blended roughly 60/40. A high score on a reliever-labeled prospect, or a low score on a starter-labeled one, is flagged as a role mismatch on the PAL Prospect Watch. It uses no minor-league stats, so it is a descriptive shape read, not a validated outcome model.",
+   "formula": "Starter Shape = 0.60 x arsenal-depth score (pitches graded >= 55) + 0.40 x command score, on scout grades only",
+   "example": "A prospect graded FB 60 / SL 55 / CB 45 / CH 40 with 40 command has thin depth and light command, a low Starter Shape, so a starter-labeled version is flagged as profiling in relief.",
+   "seeAlso": [
+    "sp_rp_fit",
+    "rp_sp_fit",
+    "pal_conversion"
    ]
   }
  ]

@@ -442,7 +442,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         adj_factor = inj * sc
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = max(-2.0, xfv_war * adj_factor)
-            rank_war *= adj_factor
+            # Tilt the MODEL term only, then rebuild the blend, so the consensus
+            # anchor cons_war is not also haircut. (rank_war *= adj_factor scaled
+            # the whole blend, double-penalizing an injured/low-Statcast player.)
+            rank_war = (1 - lam) * cons_war + lam * xfv_war
         pos = r.get("position")
         age = r.get("age_now")
         if age is None:
@@ -610,7 +613,9 @@ def run_backgrade(persist: bool = True) -> dict:
         if inj < 1.0:
             factors.insert(0, {"label": "Injury penalty", "dir": "down", "mag": round((1 - inj) * 6, 2)})
             xfv_war = max(-2.0, xfv_war * inj)
-            rank_war *= inj
+            # Tilt the model term only, then rebuild the blend (see the live path
+            # above): the consensus anchor must not also be haircut.
+            rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
         disp = _map_grade(gmap[side], rank_war)
         if disp is None:
             continue
