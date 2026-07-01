@@ -4732,6 +4732,160 @@
     "gmli",
     "rem_plus"
    ]
+  },
+  {
+   "id": "rp_sp_fit",
+   "term": "RP->SP FIT (reliever to starter)",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "RP->SP FIT",
+    "reliever to starter fit"
+   ],
+   "priority": 26,
+   "definition": "A 0 to 100 candidate score for how well a current reliever would profile as a starter. Higher means a better fit. It is a screen for finding candidates, not a probability of success.",
+   "methodology": "A transparent weighted blend anchored on the role-structural signal the sabermetric research points to: arsenal depth, because a starter has to survive a lineup three times, so a third and fourth pitch matter most. The rest of the blend is command (walk rate), how fastball-reliant the arm is, platoon-neutrality, contact quality, and stuff. Fastball velocity is projected down about one mile per hour for the longer role. The weights are priors from the literature; the small, selection-biased conversion sample can only sign-check them, so this is a ranking screen, not a fitted forecast.",
+   "seeAlso": [
+    "sp_rp_fit",
+    "arsenal_depth",
+    "pal_conversion"
+   ]
+  },
+  {
+   "id": "sp_rp_fit",
+   "term": "SP->RP FIT (starter to reliever)",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "SP->RP FIT",
+    "starter to reliever fit"
+   ],
+   "priority": 27,
+   "definition": "A 0 to 100 candidate score for how well a current starter's stuff would play up in a one-inning relief role. Higher means a better fit.",
+   "methodology": "The traits that hurt a starter are exactly what make a good reliever: a thin, fastball-heavy arsenal that leaks runs the third time through a lineup is fine for one inning. So this score rewards a dominant putaway pitch, projected relief velocity (about one mile per hour up in short bursts), stuff quality, and the times-through-order leakage that is the complement of arsenal depth. A display-only projected relief REM+ shows roughly what the arm might post as a reliever.",
+   "seeAlso": [
+    "rp_sp_fit",
+    "putaway_pitch",
+    "rem_plus"
+   ]
+  },
+  {
+   "id": "pal_conversion",
+   "term": "Pitcher Alchemy Lab (conversion model)",
+   "category": "custom-index",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "PAL",
+    "pitcher alchemy lab",
+    "conversion model"
+   ],
+   "priority": 28,
+   "definition": "The model behind the Pitcher Alchemy Lab: two candidate scores (RP->SP FIT and SP->RP FIT) plus a validated history of past role conversions that doubles as the backtest set.",
+   "methodology": "Conversions are detected from season starting shares across 2018 to 2026 (a role flip between qualified seasons). Each conversion is labeled by whether the pitcher HELD the new role at least one full season, an objective label that avoids the confounding of raw rate stats. The pre-conversion FIT score is then correlated with that held-the-role label as a directional sign-check. The sample is small and selection-biased, since we only observe pitchers teams chose to convert, so the model is presented as a candidate screen, not a success-probability forecast, and it ships provisional.",
+   "seeAlso": [
+    "rp_sp_fit",
+    "sp_rp_fit",
+    "tto_penalty"
+   ]
+  },
+  {
+   "id": "arsenal_depth",
+   "term": "Arsenal depth",
+   "category": "pitcher-stat",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "arsenal depth",
+    "pitch mix depth",
+    "third pitch"
+   ],
+   "priority": 29,
+   "definition": "How many distinct pitches a pitcher throws at least ten percent of the time. The single most important trait for surviving a lineup multiple times, and the structural core of the RP->SP FIT score.",
+   "seeAlso": [
+    "rp_sp_fit",
+    "tto_penalty"
+   ]
+  },
+  {
+   "id": "tto_penalty",
+   "term": "Times-through-order penalty (TTOP)",
+   "category": "pitcher-stat",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "times through the order",
+    "TTO penalty",
+    "TTOP"
+   ],
+   "priority": 30,
+   "definition": "The tendency for a pitcher to get worse each time he faces the same lineup in a game. It is the mechanism that separates starters from relievers: a deep, varied arsenal blunts it, while a thin fastball-heavy mix collapses by the third time through. A reliever only faces the order once.",
+   "seeAlso": [
+    "arsenal_depth",
+    "rp_sp_fit"
+   ]
+  },
+  {
+   "id": "role_velo_delta",
+   "term": "Role velocity delta",
+   "category": "pitcher-stat",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "role velocity delta",
+    "velocity role change",
+    "velo delta"
+   ],
+   "priority": 31,
+   "definition": "The change in fastball velocity when a pitcher moves between roles. A starter stretching out loses about a mile per hour; a pitcher moving to one-inning relief gains about that much. Rigorous studies put the central number near one mile per hour, larger for pure power arms, so the Lab projects it modestly rather than assuming the folklore of three or four.",
+   "seeAlso": [
+    "sp_rp_fit",
+    "rp_sp_fit"
+   ]
+  },
+  {
+   "id": "putaway_pitch",
+   "term": "Putaway pitch",
+   "category": "pitcher-stat",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "putaway pitch",
+    "putaway",
+    "out pitch"
+   ],
+   "priority": 32,
+   "definition": "A pitcher's single best swing-and-miss pitch, measured by whiff rate. A dominant putaway pitch is what lets a starter's stuff play up in a one-inning relief role, so it drives the SP->RP FIT score.",
+   "seeAlso": [
+    "sp_rp_fit"
+   ]
+  },
+  {
+   "id": "platoon_split",
+   "term": "Platoon split",
+   "category": "pitcher-stat",
+   "module": [
+    "pal"
+   ],
+   "aliases": [
+    "platoon split",
+    "platoon neutrality",
+    "reverse split"
+   ],
+   "priority": 33,
+   "definition": "The gap in results a pitcher allows to left-handed versus right-handed hitters (here, the OPS-against difference). A flat split means he can face a full lineup without being hidden from one side, which supports starting. A large split is a conversion blocker.",
+   "seeAlso": [
+    "rp_sp_fit"
+   ]
   }
  ]
 }

@@ -60,6 +60,7 @@ _GL_VER = _asset_ver("assets/eephus-gl.js")
 _GLAPP_VER = _asset_ver("assets/glossary.js")
 _PROJ_VER = _asset_ver("assets/projections.js")
 _MLBSTATS_VER = _asset_ver("assets/mlbstats.js")
+_PAL_VER = _asset_ver("assets/pal.js")
 _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
@@ -137,6 +138,7 @@ NAV_ITEMS = [
         ("fa",          "Free Agency", "/fa/"),
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
+        ("pal",         "Pitcher Alchemy Lab", "/pal/"),
     ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
@@ -275,6 +277,7 @@ MODULE_STAGE = {
     "fa": ("α", "MLB Free Agency is in alpha - newly launched; numbers may shift as the model matures"),
     "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
     "mlbstats": ("α", "MLB Stats is in alpha - newly launched; metrics may shift as the models mature"),
+    "pal": ("α", "Pitcher Alchemy Lab is in alpha - newly launched; the conversion models are provisional"),
     "forums": ("α", "Forums is in alpha - newly launched"),
 }
 
@@ -1886,7 +1889,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
-                     "team": "⚒", "mlbstats": "▦"}
+                     "team": "⚒", "mlbstats": "▦", "pal": "⚗"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -2286,6 +2289,42 @@ def build_mlbstats() -> str:
                 "MLB stat leaderboards from eephus.io - REM+ reliever ratings, team Bullpen+ "
                 "bullpen quality, and bullpen depth charts, computed from MLB play-by-play.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
+
+def build_pal() -> str:
+    """The /pal/ Pitcher Alchemy Lab - role-conversion evaluation for MLB
+    pitchers. Three sections: RP->SP Candidates (which relievers profile as
+    starters), SP->RP Candidates (which starters would shine in relief), and
+    Conversion History (a validated archive of past SP<->RP switches that
+    doubles as the model's training/backtest set, plus pitch-mix changes).
+    Static shell + assets/pal.js, which fetches the pal_export.py sidecar
+    (data/pal.json). Reuses the arsenal / velocity / platoon Statcast data, the
+    validated REM+ model, and PROSPX prospect role history. Styles ride the
+    .fa-app block plus the .mlbstats-app / .pal-app extensions in site.css."""
+    body = (
+        '<div class="fa-app mlbstats-app pal-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1></div>'
+        '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
+        'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true">RP&rarr;SP Candidates</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false">SP&rarr;RP Candidates</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="history" role="tab" aria-selected="false">Conversion History</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="pitchadd" role="tab" aria-selected="false">Pitch-Add Lab</button>'
+        '</div>'
+        '<div id="pal-section" class="mlbstats-section">'
+        '<div id="pal-banner"></div>'
+        '<div id="pal-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
+    )
+    return page("Pitcher Alchemy Lab - eephus.io", "pal", body,
+                "Pitcher Alchemy Lab: which MLB relievers profile as starters and which starters would shine in "
+                "relief, with a validated history of past role conversions. Arsenal depth, command, platoon splits, "
+                "and role-adjusted velocity, computed from Statcast.",
+                url=f"{SITE_ORIGIN}/pal/")
 
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
@@ -2711,6 +2750,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/fa/", "daily", "0.9"),
         ("/projections/", "daily", "0.9"),
         ("/mlbstats/", "daily", "0.8"),
+        ("/pal/", "daily", "0.8"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -2775,6 +2815,7 @@ def main() -> None:
     _write("fa/index.html", build_fa())
     _write("projections/index.html", build_projections())
     _write("mlbstats/index.html", build_mlbstats())
+    _write("pal/index.html", build_pal())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

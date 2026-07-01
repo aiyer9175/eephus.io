@@ -1,0 +1,26 @@
+{
+ "generated_at": "2026-06-30",
+ "model": "pal_conversion",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025,
+  2026
+ ],
+ "n_conversions": 95,
+ "backtest": {
+  "n_labeled": 44,
+  "spearman_prefit_vs_held": 0.223,
+  "relief_k_bump_measured": 0.0218,
+  "converter_median_fit_pool_pctile": 72,
+  "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature and this rho is a directional sign-check, not a fitted validation. Success = held the new role at least one full season."
+ },
+ "verdict": {
+  "status": "provisional",
+  "summary": "A candidate SCREEN, not a success-probability model. 95 role conversions detected 2018-2026; pre-conversion FIT vs the held-the-role label sign-checks POSITIVE at Spearman rho 0.223 (n=44), and actual converters sit at the 72th percentile of the full-pool FIT distribution (teams convert arms the score ranks well). The sample is small and selection-biased (only pitchers teams chose to convert), so the weights are FROZEN literature priors and the backtest confirms sign only, never fits the weights. Ships provisional; the ML classifier is deferred (insufficient clean n). Success label = held the new role >=1 full season (objective, avoids the role-adjusted-tax circularity)."
+ }
+}

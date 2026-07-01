@@ -40,6 +40,25 @@
       .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   }
 
+  // ---- shared team logo (ESPN slugs) ----------------------------------------
+  // Keyed on the MLB StatsAPI abbreviations the MLB modules use (SD/SF/TB/CWS/AZ
+  // differ from the FanGraphs codes fa.js/projections.js use), with the ESPN
+  // slug aliases folded in so either family resolves.
+  var _ESPN = {
+    ARI: "ari", AZ: "ari", ATH: "ath", ATL: "atl", BAL: "bal", BOS: "bos",
+    CHC: "chc", CWS: "chw", CHW: "chw", CIN: "cin", CLE: "cle", COL: "col",
+    DET: "det", HOU: "hou", KC: "kc", KCR: "kc", LAA: "laa", LAD: "lad",
+    MIA: "mia", MIL: "mil", MIN: "min", NYM: "nym", NYY: "nyy", PHI: "phi",
+    PIT: "pit", SD: "sd", SDP: "sd", SEA: "sea", SF: "sf", SFG: "sf",
+    STL: "stl", TB: "tb", TBR: "tb", TEX: "tex", TOR: "tor", WSH: "wsh", WSN: "wsh",
+  };
+  function teamLogo(team, cls) {
+    if (!team) return "";
+    var slug = _ESPN[team] || String(team).toLowerCase();
+    return '<img class="' + (cls || "eephus-teamlogo") + '" src="https://a.espncdn.com/i/teamlogos/mlb/500/'
+      + slug + '.png" alt="' + esc(team) + '" loading="lazy" onerror="this.remove()">';
+  }
+
   // The module registry for the strip: id -> {label, glyph, href(row)}.
   // Module accents mirror the homepage sidebar glyph identity.
   const MODULES = [
@@ -230,5 +249,5 @@
     return exportCanvas(await drawCard(opts), opts);
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo };
 })();

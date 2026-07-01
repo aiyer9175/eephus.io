@@ -32,6 +32,10 @@
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
   function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
   function fSigned(v) { var n = num(v); if (n == null) return "-"; return (n > 0 ? "+" : "") + n.toFixed(1); }
+  function logo(team) {
+    try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
+    catch (e) { return ""; }
+  }
 
   // REM+/Bullpen+ index coloring (100 = average).
   function remClass(v) {
@@ -117,7 +121,7 @@
       body += "<tr" + prov + ">";
       cols.forEach(function (c) {
         if (c.kind === "name") { body += nameCell(r); return; }
-        if (c.kind === "team") { body += '<td class="mlbstats-name">' + esc(r.team || "-") + "</td>"; return; }
+        if (c.kind === "team") { body += '<td class="mlbstats-name">' + logo(r.team) + esc(r.team || "-") + "</td>"; return; }
         if (c.cell) { body += "<td>" + c.cell(r) + "</td>"; return; }
         var v = getVal(c, r);
         var rendered = c.fmt ? c.fmt(v, c.term) : esc(v);
@@ -133,7 +137,7 @@
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
-    return '<td class="mlbstats-name">' + esc(r.name || "-") + team + role + prov + "</td>";
+    return '<td class="mlbstats-name">' + logo(r.team) + esc(r.name || "-") + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -203,7 +207,7 @@
           + "</div>";
       }).join("");
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
-        + '<span class="bp-depth-team">' + esc(t.team) + "</span>"
+        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
         + '<span class="rem-plus ' + remClass(t.bullpen_plus) + '" data-gl="bullpen_plus">Bullpen+ ' + fInt(t.bullpen_plus) + "</span>"
         + "</div>" + slots + "</div>";
     }).join("");

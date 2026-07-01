@@ -2504,6 +2504,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("bullpen leaderboards export failed - continuing")
 
+        # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
+        # RP<->SP role-conversion candidate scores + a validated conversion
+        # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI
+        # splits, role from the season leaderboard; reuses the REM+ model for the
+        # relief projection. Additive; never aborts.
+        with _step("6b5. Pitcher Alchemy Lab (pal.json)", log):
+            try:
+                from pal_export import export as _export_pal
+                _pal_n = _export_pal(log=log.info)
+                log.info("pal: %d conversion candidates scored", _pal_n)
+            except Exception:
+                log.exception("pitcher alchemy lab export failed - continuing")
+
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
         with _step("6c. Org tendencies export (org_tendencies.json)", log):

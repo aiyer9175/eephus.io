@@ -70,6 +70,9 @@ MODEL_GLOSSARY = {
     # REM+ = the /mlbstats/ Bullpen Leaderboards reliever metric; its glossary entry
     # (and the Bullpen+ / gmLI / WPA companions) documents the methodology.
     "rem_plus": ["rem_plus", "bullpen_plus"],
+    # PAL = the /pal/ Pitcher Alchemy Lab role-conversion screen; documented by its
+    # FIT-score + conversion-model glossary entries.
+    "pal_conversion": ["pal_conversion", "rp_sp_fit", "sp_rp_fit"],
 }
 
 

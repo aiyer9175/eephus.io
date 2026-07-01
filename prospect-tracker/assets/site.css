@@ -1442,6 +1442,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }
 .mlbstats-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
+/* shared MLB team logo (ESPN), used across the MLB modules */
+.eephus-teamlogo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 5px; }
+.pal-mix-card .eephus-teamlogo, .bp-depth-team .eephus-teamlogo { width: 15px; height: 15px; }
 .mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
 .mlbstats-bar input, .mlbstats-bar select {
   font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;
@@ -1485,6 +1488,55 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   text-transform: uppercase; letter-spacing: .03em; }
 .bp-slot .bp-slot-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bp-slot .bp-slot-rem { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+/* ---- Pitcher Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
+.pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
+.pal-hi { color: var(--accent-cyan); }
+.pal-good { color: var(--accent-green); }
+.pal-mid { color: var(--text-primary); }
+.pal-lo { color: var(--text-tertiary); }
+.pal-flag { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase; padding: 1px 4px; margin-left: 4px; border: 1px solid var(--border);
+  color: var(--text-secondary); white-space: nowrap; vertical-align: middle; }
+.pal-flag--warn { color: var(--accent-orange); border-color: var(--accent-orange); }
+.pal-flag--good { color: var(--accent-green); border-color: var(--accent-green); }
+.pal-expand { cursor: pointer; }
+.pal-expand::before { content: "\25B8"; font-size: 9px; color: var(--text-tertiary); margin-right: 5px; }
+tr.is-open .pal-expand::before { content: "\25BE"; }
+/* the "why" panel: component bars + arsenal breakdown */
+.pal-why { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 12px 14px; }
+.pal-why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+@media (max-width: 720px) { .pal-why-grid { grid-template-columns: 1fr; } }
+.pal-why h4 { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px; }
+.pal-comp { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center;
+  font-size: 11px; margin: 3px 0; }
+.pal-comp-label { color: var(--text-secondary); font-family: var(--font-retro-mono); }
+.pal-bar { height: 7px; background: var(--bg-tertiary); border: 1px solid var(--border); position: relative; }
+.pal-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-gold); }
+.pal-comp-val { text-align: right; font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums;
+  color: var(--text-primary); }
+/* arsenal usage bars (also used by the pitch-mix before/after) */
+.pal-ars-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center;
+  font-size: 11px; margin: 2px 0; font-family: var(--font-retro-mono); }
+.pal-ars-row .pal-ars-pitch { color: var(--text-secondary); }
+.pal-ars-row .pal-bar > span { background: var(--accent-cyan); }
+.pal-ars-row .pal-ars-meta { color: var(--text-tertiary); white-space: nowrap; }
+/* direction + outcome badges (Conversion History) */
+.pal-dir { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  border: 1px solid var(--border); padding: 1px 6px; color: var(--text-secondary); white-space: nowrap; }
+.pal-hit { color: var(--accent-green); font-weight: 700; }
+.pal-miss { color: var(--accent-red); font-weight: 700; }
+.pal-pending { color: var(--text-tertiary); }
+/* backtest scorecard banner */
+.pal-scorecard { display: flex; flex-wrap: wrap; gap: 18px; align-items: baseline; padding: 10px 14px;
+  border: 1px solid var(--border); background: var(--bg-secondary); margin: 8px 0 12px; }
+.pal-scorecard .pal-sc-stat { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.pal-scorecard .pal-sc-stat b { font-size: 16px; color: var(--text-primary); }
+.pal-scorecard .pal-sc-note { flex: 1 1 320px; font-size: 10.5px; color: var(--text-tertiary); }
+.pal-mix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.pal-mix-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
+.pal-mix-card h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pal-mix-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
 .proj-app .fa-board-layout { grid-template-columns: minmax(0, 1fr) 230px; }
 @media (max-width: 1100px) {
   .proj-app .fa-board-layout { grid-template-columns: 1fr; }
