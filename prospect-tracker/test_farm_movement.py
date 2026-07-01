@@ -105,6 +105,68 @@ class FarmMovementTests(unittest.TestCase):
             h("2026-01-01", 18), h("2026-02-01", 13)])
         self.assertEqual(m["confidence"], "medium")
 
+    # --- R4: slow-monotonic-slide origin walk -----------------------------
+
+    def test_slow_monotonic_climb_reports_full_magnitude(self):
+        # Rank drifts 30 -> 2 in 2-spot steps over 15 runs. Each step is a
+        # genuine one-off move (farm plateau is exact-match), so the OLD engine
+        # broke at the first prior point and reported only the last 2-spot step,
+        # calling a 28-spot climb barely "up". The origin now walks the whole
+        # monotonic slide and reports its full magnitude.
+        ranks = list(range(30, 1, -2))              # 30,28,...,2  (15 points)
+        hist = [h(f"2026-01-{i + 1:02d}", r) for i, r in enumerate(ranks)]
+        m = movement.compute_farm_movement(hist)
+        self.assertEqual(m["direction"], "up_strong")
+        self.assertEqual(m["delta"], 28)            # 30 -> 2
+        self.assertEqual(m["from_rank"], 30)
+        self.assertEqual(m["to_rank"], 2)
+        self.assertEqual(m["from_date"], "2026-01-01")
+
+    def test_slow_monotonic_drop_reports_full_magnitude(self):
+        ranks = list(range(2, 31, 2))               # 2,4,...,30
+        hist = [h(f"2026-01-{i + 1:02d}", r) for i, r in enumerate(ranks)]
+        m = movement.compute_farm_movement(hist)
+        self.assertEqual(m["direction"], "down_strong")
+        self.assertEqual(m["delta"], -28)           # 2 -> 30
+        self.assertEqual(m["from_rank"], 2)
+
+    def test_sawtooth_wobble_stays_flat(self):
+        # Oscillation around #10 with no net move must NOT be amplified into a
+        # slide: the origin walk stops at the first reversal toward the anchor.
+        m = movement.compute_farm_movement([
+            h("2026-01-01", 10), h("2026-01-02", 12), h("2026-01-03", 9),
+            h("2026-01-04", 11), h("2026-01-05", 10)])
+        self.assertEqual(m["direction"], "flat")
+
+    def test_monotonic_run_stops_at_reversal(self):
+        # 20 -> 16, reverses to 18, then settles at 15. The origin walks the
+        # 18 -> 15 leg but stops at the 16 -> 18 reversal, so the move reported
+        # is 18 -> 15 (not the whole noisy 20 -> 15 history).
+        m = movement.compute_farm_movement([
+            h("2026-01-01", 20), h("2026-01-02", 16),
+            h("2026-01-03", 18), h("2026-01-04", 15)])
+        self.assertEqual(m["from_rank"], 18)
+        self.assertEqual(m["to_rank"], 15)
+        self.assertEqual(m["delta"], 3)
+        self.assertEqual(m["direction"], "up")
+
+    def test_held_level_then_jump_uses_durable_origin(self):
+        # Real-data regression (MIN farm): the org held ~#14 for most of the
+        # window - with a one-day #15 blip - then jumped to #6 on the last run.
+        # The origin walk must report the DURABLE #14 level, not the stray #15
+        # blip beyond it. (The unbounded walk adopted #15 -> delta 9; the origin
+        # is #14 -> delta 8.)
+        m = movement.compute_farm_movement([
+            h("2026-06-19", 14), h("2026-06-20", 14), h("2026-06-21", 13),
+            h("2026-06-22", 10), h("2026-06-23", 14), h("2026-06-24", 14),
+            h("2026-06-25", 14), h("2026-06-26", 15), h("2026-06-29", 14),
+            h("2026-06-30", 6)])
+        self.assertEqual(m["from_rank"], 14)   # the durable level, not the 15 blip
+        self.assertEqual(m["to_rank"], 6)
+        self.assertEqual(m["delta"], 8)
+        self.assertEqual(m["direction"], "up_strong")
+        self.assertEqual(m["from_date"], "2026-06-29")  # brackets the real jump
+
 
 if __name__ == "__main__":
     unittest.main()

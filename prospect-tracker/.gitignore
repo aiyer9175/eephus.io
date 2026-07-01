@@ -103,3 +103,10 @@ data/xfv_live_pitcher_matrix.json
 data/xfv_scored_live.json
 data/xfv_scored_live_pitcher.json
 data/xfv_tools_live.json
+
+# GRPO training fingerprint — sidecar to the (ignored) grpo_model.pkl; lets a
+# rerun skip a redundant retrain when the training data is unchanged. Rewritten
+# with the model, so it follows the same ignore policy.
+data/grpo_model.fingerprint
+# Output-diff harness scratch (tools/pipeline_artifact_diff.py snapshots).
+data/_artifact_fingerprints/

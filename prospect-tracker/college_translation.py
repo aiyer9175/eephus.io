@@ -284,8 +284,10 @@ def _equiv_headline(sa: dict, side: str) -> list[dict]:
 
 def load_single_a(con, key_name: dict):
     """Return {slug: {hit:{k_pct,bb_pct,ops}, pit:{k_pct,bb_pct}}} from the
-    earliest qualifying Single-A (A / A+) season on file. Pitcher K%/BB% are
-    derived from K/9, BB/9 via BF_PER_9. Pitcher seasons gated at >= 20 IP."""
+    earliest qualifying Single-A (A / A+) season on file. Pitcher K%/BB% use the
+    stored rate (from actual batters faced) when present, falling back to the
+    K/9, BB/9 via BF_PER_9 conversion only when it is missing. Pitcher seasons
+    gated at >= 20 IP."""
     hit, pit = {}, {}
     for pk, pj in con.execute("SELECT player_key, payload_json FROM statlines"):
         try:
@@ -299,19 +301,33 @@ def load_single_a(con, key_name: dict):
             continue
         season = d.get("season") or 0
         if d.get("is_pitcher"):
-            if d.get("k_per_9") is None:
-                continue
             try:
                 ip = float(d.get("ip") or 0)
             except (TypeError, ValueError):
                 ip = 0.0
             if ip < 20:
                 continue
-            k9 = float(d["k_per_9"])
-            bb9 = d.get("bb_per_9")
-            row = (season, k9 / BF_PER_9 * 100.0,
-                   (float(bb9) / BF_PER_9 * 100.0) if bb9 is not None else None)
-            pit.setdefault(slug, []).append(row)
+            # Prefer the stored K%/BB% (computed from actual batters faced); only
+            # fall back to the K/9, BB/9 -> rate conversion via BF_PER_9 when a
+            # stored rate is missing. The fixed 38-BF assumption biased the
+            # derived K% ~1.4 pts high (M12), flattening the pitcher fit against
+            # the college side (which already uses stored rates); 96% of A/A+
+            # pitcher seasons carry k_pct/bb_pct, so that is the path for nearly
+            # all rows and the conversion survives only as a thin fallback.
+            kp = d.get("k_pct")
+            if kp is None:
+                if d.get("k_per_9") is None:
+                    continue
+                kp = float(d["k_per_9"]) / BF_PER_9 * 100.0
+            else:
+                kp = float(kp)
+            bp = d.get("bb_pct")
+            if bp is None:
+                bb9 = d.get("bb_per_9")
+                bp = (float(bb9) / BF_PER_9 * 100.0) if bb9 is not None else None
+            else:
+                bp = float(bp)
+            pit.setdefault(slug, []).append((season, kp, bp))
         else:
             if d.get("k_pct") is None or d.get("bb_pct") is None:
                 continue

@@ -409,6 +409,59 @@ _FARM_RANK_DEADBAND = 2
 _FARM_RANK_STRONG = 5
 
 
+def _walk_to_step(ranks: list, plateau_eps: int) -> tuple:
+    """Walk back from the anchor to the ORIGIN of the current move.
+
+    `ranks` is the rank stream oldest-first with the anchor (current level) last.
+    Returns (step_idx, plateau_idx):
+      step_idx    index of the pre-move point (the level we moved FROM), or None
+                  when the rank held flat across all of history.
+      plateau_idx index of the earliest point still at the current level (when
+                  the current level was first reached).
+
+    Two phases:
+      1. Plateau - absorb the run of recent points within `plateau_eps` of the
+         anchor (the day-to-day churn at the current level).
+      2. Slide - once a point breaks the plateau band it is the step origin, but
+         we then keep walking back through any STRICTLY-monotonic continuation on
+         the same side (each earlier point further from the anchor). This is the
+         deferred R4 fix: a slow multi-step slide (e.g. a 40-spot drift in ~2-spot
+         steps) stayed hidden because every step sat inside the plateau band of
+         the FIXED anchor, so only the band edge was ever reported. Extending the
+         origin through the monotonic run reports the move's full accumulated
+         magnitude, while a reversal toward the anchor (sawtooth / oscillation)
+         ends the run and leaves noisy histories flat as before.
+    """
+    a = ranks[-1]
+    plateau_idx = len(ranks) - 1
+    i = len(ranks) - 2
+    while i >= 0 and abs(ranks[i] - a) <= plateau_eps:
+        plateau_idx = i
+        i -= 1
+    if i < 0:
+        return None, plateau_idx        # held at the current level throughout
+    step_idx = i                        # first point outside the plateau band
+    side = 1 if ranks[step_idx] > a else -1
+    j = i - 1
+    while j >= 0 and (ranks[j] - ranks[step_idx]) * side > 0:
+        # `j` sits further from the anchor than the current origin, so the slide
+        # continues - but do NOT adopt a one-snapshot SPIKE as the origin. If j's
+        # own earlier neighbour turns back toward the anchor, j is a transient
+        # local peak jutting past a durable held level, so the real origin is the
+        # level we are already on; stop without crossing it. A genuine continuous
+        # slide (each earlier point keeps going further, or j is the oldest point)
+        # is unaffected. This bounds the extension so a "held level + far-side
+        # blip + jump" history no longer inflates or mis-brackets the reported
+        # move - the over-extension the R4 adversarial pass caught (e.g. a farm
+        # org holding #14 then jumping to #6 must report from #14, not a stray
+        # #15 blip).
+        if j - 1 >= 0 and (ranks[j - 1] - ranks[j]) * side < 0:
+            break
+        step_idx = j                    # slide continues further on the same side
+        j -= 1
+    return step_idx, plateau_idx
+
+
 def _farm_flat(history_pts: list, basis: str, confidence: str) -> dict:
     """Flat / insufficient result. Carries the endpoints (when known) so the
     chip can still say "held at #N" if it wants to."""
@@ -439,11 +492,12 @@ def compute_farm_movement(history: list) -> dict:
     (rank, score) appended as the final point (the anchor). Out-of-order or
     duplicate-date input is tolerated (sorted + de-duped here).
 
-    Walks back from the anchor to the most recent genuine rank STEP: the run of
-    consecutive earlier points at the anchor's exact rank is the current
-    plateau; the step that created it (anchor rank vs the first earlier point at
-    a different rank) is the move reported. A move smaller than the dead-band is
-    reported as flat.
+    Walks back from the anchor to the ORIGIN of the current move (see
+    _walk_to_step): the run of consecutive earlier points at the anchor's exact
+    rank is the current plateau; the move reported runs from the anchor back to
+    the start of the monotonic slide that produced it, so a slow multi-run drift
+    reports its full magnitude and not just the first off-plateau spot. A move
+    smaller than the dead-band is reported as flat.
 
     Output keys (a superset compatible with the prospect `stock` shape):
       direction : up_strong|up|flat|down|down_strong
@@ -474,16 +528,10 @@ def compute_farm_movement(history: list) -> dict:
 
     anchor = pts[-1]
     a_rank = int(anchor["farm_rank"])
-    plateau_start = anchor          # earliest point still at the current rank
-    step_pt = None                  # the point just before the current level
-
-    for pt in reversed(pts[:-1]):
-        r = int(pt["farm_rank"])
-        if abs(r - a_rank) <= _FARM_PLATEAU_EPS:
-            plateau_start = pt
-            continue
-        step_pt = pt
-        break
+    step_i, plateau_i = _walk_to_step([int(p["farm_rank"]) for p in pts],
+                                      _FARM_PLATEAU_EPS)
+    plateau_start = pts[plateau_i]  # earliest point still at the current rank
+    step_pt = pts[step_i] if step_i is not None else None
 
     # Confidence scales with how much history backs the call.
     confidence = "high" if len(pts) >= 3 else "medium"
@@ -575,9 +623,11 @@ def compute_rank_movement(history: list) -> dict:
     with the current run's rank appended as the final point (the anchor).
     Out-of-order / duplicate-date input is tolerated.
 
-    Walks back from the anchor to the most recent genuine rank STEP (a point
-    more than _RANK_PLATEAU spots off the anchor); the move reported is that
-    point's rank vs the anchor's. A move smaller than the dead-band is flat.
+    Walks back from the anchor to the ORIGIN of the current move (see
+    _walk_to_step): past the plateau band (_RANK_PLATEAU spots of the anchor) and
+    on through any monotonic continuation, so a slow board slide reports its full
+    accumulated magnitude, not just the plateau-band edge. A move smaller than
+    the dead-band is flat.
 
     Output (a `stock`-compatible superset):
       direction : up_strong|up|flat|down|down_strong
@@ -601,14 +651,9 @@ def compute_rank_movement(history: list) -> dict:
 
     anchor = pts[-1]
     a_rank = anchor["rank"]
-    plateau_start = anchor
-    step_pt = None
-    for pt in reversed(pts[:-1]):
-        if abs(pt["rank"] - a_rank) <= _RANK_PLATEAU:
-            plateau_start = pt
-            continue
-        step_pt = pt
-        break
+    step_i, plateau_i = _walk_to_step([p["rank"] for p in pts], _RANK_PLATEAU)
+    plateau_start = pts[plateau_i]
+    step_pt = pts[step_i] if step_i is not None else None
 
     confidence = "high" if len(pts) >= 3 else "medium"
     if step_pt is None:

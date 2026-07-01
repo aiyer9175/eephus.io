@@ -1786,6 +1786,15 @@
     }
     .sort-header:hover { color: var(--neon-cyan); }
     .sort-header.is-active { color: var(--neon-cyan); }
+    /* a11y - the headers are keyboard-operable buttons (role=button /
+       tabindex stamped by the sort-header a11y observer + a delegated
+       Enter/Space keydown handler). A visible focus ring makes the current
+       keyboard target obvious; :focus-visible keeps it off mouse clicks. */
+    .sort-header:focus-visible {
+      outline: 2px solid var(--neon-cyan);
+      outline-offset: 2px;
+      border-radius: 3px;
+    }
     /* v29 - Active sort column shows a direction-specific arrow (▲ asc
        / ▼ desc) sourced from the `data-sort-dir` attribute that
        syncSortHeaderActive() stamps onto the active header. Lets the
@@ -9847,7 +9856,7 @@
     <div id="chart-canvas-wrap" data-export-chart data-export-title="PROSPX scatterplot" style="background:var(--bg-secondary);border-radius:8px;padding:14px;">
       <div id="chart-meta" style="font-size:12px;color:var(--text-secondary);margin-bottom:6px;"></div>
       <div id="chart-legend" style="display:flex;flex-wrap:wrap;gap:4px 12px;margin-bottom:8px;font-size:11px;color:var(--text-secondary);"></div>
-      <svg id="chart-svg" width="100%" viewBox="0 0 760 480" style="background:transparent;font-family:var(--font-sans);"></svg>
+      <svg id="chart-svg" width="100%" viewBox="0 0 760 480" role="img" aria-label="Scatterplot" style="background:transparent;font-family:var(--font-sans);"></svg>
       <div id="chart-stats" style="font-size:11px;color:var(--text-tertiary);margin-top:6px;"></div>
     </div>
   </div>
@@ -13347,6 +13356,12 @@ function syncSortHeaderActive() {
       h.classList.toggle("is-active", isActive);
       if (isActive) h.setAttribute("data-sort-dir", arrow);
       else h.removeAttribute("data-sort-dir");
+      // a11y - announce the current sort state to assistive tech. The
+      // arrow "▲" means the reverse (ascending) order is in effect; "▼" is
+      // the natural (descending) order. Inactive sortable headers read
+      // "none" so a screen-reader user knows they are sortable but unsorted.
+      h.setAttribute("aria-sort",
+        isActive ? (arrow === "▲" ? "ascending" : "descending") : "none");
     });
   }
 }
@@ -18015,6 +18030,7 @@ function renderCharts() {
       ? "No points match the current filters - loosen them or hit Reset."
       : "No data points with both axes populated - try different axes.";
     svg.innerHTML = `<text x="${W/2}" y="${H/2}" text-anchor="middle" fill="var(--text-tertiary)">${why}</text>`;
+    svg.setAttribute("aria-label", `Scatterplot: no points plotted. ${why}`);
     document.getElementById("chart-meta").innerHTML =
       `0 of ${entities.length} ${grp.noun} plotted${nFiltered ? ` · ${nFiltered} filtered out` : ""}`;
     const _lg = document.getElementById("chart-legend"); if (_lg) _lg.innerHTML = "";
@@ -18320,6 +18336,16 @@ function renderCharts() {
     ? `<div class="chart-active-filters"><span class="chart-af-label">Filters:</span>${activeChips.join("")}</div>` : "";
   document.getElementById("chart-meta").innerHTML =
     `<div>${dots.length} of ${entities.length} ${grp.noun} plotted · ${escapeHtml(xLbl)} vs ${escapeHtml(yLbl)}${_coverageNote}${_filterNote}</div>${chipStrip}`;
+  // a11y - keep the flagship scatter's accessible name in sync with what it
+  // plots so a screen reader announces the axes + sample (and trend, when
+  // drawn) instead of a bare "Scatterplot". Mirrors the visible meta line.
+  {
+    const _svg = document.getElementById("chart-svg");
+    if (_svg) _svg.setAttribute("aria-label",
+      `Scatterplot: ${xLbl} on the x-axis versus ${yLbl} on the y-axis, ` +
+      `${dots.length} ${grp.noun} plotted` +
+      (trend ? `, trend R squared ${trend.r2.toFixed(2)}.` : "."));
+  }
   // Wire chip removal.
   document.querySelectorAll("#chart-meta [data-clear]").forEach(b => b.onclick = () => {
     const k = b.dataset.clear;
@@ -50389,6 +50415,40 @@ function attachHandlers() {
       return;
     }
   });
+  // a11y - keyboard activation for the sort headers. They are <span>s (not
+  // native buttons), so Enter / Space must be wired explicitly; we re-dispatch
+  // through the delegated click path above so there stays a single source of
+  // truth for the sort + direction-toggle routing.
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Enter" && e.key !== " " && e.key !== "Spacebar") return;
+    const t = e.target;
+    if (!t || !t.classList || !t.classList.contains("sort-header")) return;
+    e.preventDefault();          // stop Space from scrolling the page
+    t.click();                   // reuse the delegated click-to-sort handler
+  });
+  // a11y - make every sort-header (present + future) a keyboard-reachable
+  // button. Renderers drop fresh .sort-header spans into #content on each
+  // paint (including farm / draft renders that don't call
+  // syncSortHeaderActive), so one scoped observer stamps role + tabindex and
+  // we never have to wire the ~25 render sites individually. aria-sort (the
+  // live sort state) is stamped separately by syncSortHeaderActive.
+  (function initSortHeaderA11y() {
+    const root = document.getElementById("content");
+    if (!root) return;
+    const stamp = (el) => {
+      if (el.getAttribute("role") !== "button") el.setAttribute("role", "button");
+      if (!el.hasAttribute("tabindex")) el.setAttribute("tabindex", "0");
+    };
+    const scan = (node) => {
+      if (node.nodeType !== 1) return;
+      if (node.classList && node.classList.contains("sort-header")) stamp(node);
+      if (node.querySelectorAll) node.querySelectorAll(".sort-header").forEach(stamp);
+    };
+    root.querySelectorAll(".sort-header").forEach(stamp);   // initial pass
+    new MutationObserver((muts) => {
+      for (const m of muts) m.addedNodes.forEach(scan);
+    }).observe(root, { childList: true, subtree: true });
+  })();
   // Tool-grade filter - two selects (key + min threshold). Either changing
   // re-runs render(); the filter passes when toolFilterKey != "off" AND
   // toolFilterMin > 0. See getFilteredActives() for the matching logic.

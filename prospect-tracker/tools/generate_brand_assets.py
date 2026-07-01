@@ -232,6 +232,23 @@ def make_app_icons() -> None:
     print("wrote assets/icon-192.png, icon-512.png, icon-maskable-512.png")
 
 
+def make_transparent_ball() -> None:
+    """The baseball mark on a TRANSPARENT canvas (no dark holo field) - the raster
+    twin of the hand-authored SVGs, for overlaying the mark on arbitrary
+    backgrounds (dark headers, colored cards, print). Two variants:
+      ball-transparent-{sz}.png           the clean eephus.io ball (no monogram)
+      ball-transparent-monogram-{sz}.png  the full PROSPX mark (P/X monogram),
+                                          the raster twin of marks/px-ball-monogram.svg
+    Written straight into branding/icons/ since these are export artifacts, not
+    web-served icons."""
+    icons = ROOT / "branding" / "icons"
+    icons.mkdir(parents=True, exist_ok=True)
+    for sz in (192, 512, 1024):
+        _ball(sz, monogram=False).save(icons / f"ball-transparent-{sz}.png")
+        _ball(sz, monogram=True).save(icons / f"ball-transparent-monogram-{sz}.png")
+    print("wrote branding/icons/ball-transparent[-monogram]-{192,512,1024}.png")
+
+
 def _ramp_rule(d: ImageDraw.ImageDraw, x0: int, x1: int, y: int, h: int) -> None:
     """The iridescent dark-theme rule, painted as per-pixel column stops."""
     for x in range(x0, x1):
@@ -471,6 +488,7 @@ def assemble_branding() -> None:
 if __name__ == "__main__":
     make_favicons()
     make_app_icons()
+    make_transparent_ball()
     make_share_card()
     make_twitter()
     make_animation()

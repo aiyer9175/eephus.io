@@ -76,6 +76,7 @@ INTEGRATION WITH TRADE VALUES
 
 from __future__ import annotations
 
+import hashlib
 import json
 import logging
 import math
@@ -335,6 +336,32 @@ def _feature_vector(feats: dict) -> list[float]:
     ]
 
 
+def _training_fingerprint(dataset: list[dict]) -> str:
+    """Stable content hash of the GRPO training data.
+
+    train_grpo_policy is deterministic (HistGradientBoostingRegressor with a
+    fixed random_state), so an identical training set yields a byte-identical
+    fitted model. The fingerprint lets a caller skip a redundant retrain when the
+    data has not changed (the monthly run trains GRPO in its own export, then the
+    chained run_daily -> rebuild_only retrains again on the exact same graduate
+    set) - a provably output-neutral optimization (the scores are unchanged
+    because the model is). Hashing the dataset (which fully determines the fitted
+    X / y) captures every upstream input, so no training signal can be missed."""
+    blob = json.dumps(dataset, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(blob.encode("utf-8")).hexdigest()
+
+
+def _fingerprint_path(model_path: Path) -> Path:
+    return model_path.with_suffix(".fingerprint")
+
+
+def _read_fingerprint(fp_path: Path) -> str | None:
+    try:
+        return fp_path.read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+
+
 def train_grpo_policy(dataset: list[dict],
                        model_path: Path | None = None) -> Any:
     """Train the GRPO policy using group-relative ranking.
@@ -411,6 +438,13 @@ def train_grpo_policy(dataset: list[dict],
         model_path.parent.mkdir(parents=True, exist_ok=True)
         with open(model_path, "wb") as f:
             pickle.dump(model, f, protocol=pickle.HIGHEST_PROTOCOL)
+        # Stamp the training fingerprint alongside the model so a later run can
+        # detect unchanged training data and skip the redundant retrain.
+        try:
+            _fingerprint_path(model_path).write_text(
+                _training_fingerprint(dataset), encoding="utf-8")
+        except OSError:
+            pass
         _log.info("grpo: model saved → %s", model_path)
 
     return model
@@ -547,8 +581,22 @@ def export_grpo_scores(
     training_set = build_training_dataset(graduates, level_norms)
     _log.info("grpo: %d training samples across groups", len(training_set))
 
-    # Train or load model
-    if retrain or not model_path.exists():
+    # Train or load model. When a retrain is requested but the training data is
+    # byte-identical to the saved model's fingerprint, reuse the saved model
+    # instead of refitting: training is deterministic, so the refit would produce
+    # the same model and the same scores. This elides the redundant GRPO retrain
+    # on the monthly -> daily rebuild chain (both train on the same graduate set).
+    fp_path = _fingerprint_path(model_path)
+    reuse = (retrain and model_path.exists() and fp_path.exists()
+             and _read_fingerprint(fp_path) == _training_fingerprint(training_set))
+    if reuse:
+        model = load_grpo_model(model_path)
+        if model is None:                       # corrupt/unreadable pickle
+            model = train_grpo_policy(training_set, model_path)
+        else:
+            _log.info("grpo: training data unchanged — reused saved model "
+                      "(skipped redundant retrain)")
+    elif retrain or not model_path.exists():
         model = train_grpo_policy(training_set, model_path)
     else:
         model = load_grpo_model(model_path)
