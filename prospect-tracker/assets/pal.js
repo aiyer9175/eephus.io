@@ -48,9 +48,34 @@
   function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
   function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
+  function f3(v) { var n = num(v); return n == null ? "-" : n.toFixed(3); }
   function gloss(label, term) { return '<span class="g-term" data-gl="' + esc(term) + '">' + esc(label) + "</span>"; }
   function wireGlossary(el) { try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { } }
   function logo(team) { try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; } catch (e) { return ""; } }
+  function chart(fn, arg, opts) { try { return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, opts) : ""; } catch (e) { return ""; } }
+  function vizWrap(title, svg) {
+    return svg ? '<div class="mlbstats-viz"><div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + title + "</div>" + svg + "</div></div>" : "";
+  }
+  function rp2spViz() {
+    var rows = (DATA && DATA.rp2sp) || [];
+    if (rows.length < 12) return "";
+    var hist = chart("histogram", rows.map(function (r) { return r.fit; }),
+      { height: 100, min: 0, max: 100, highlightAbove: 70, refs: [{ at: 60, label: "starter shape" }], aria: "RP-SP FIT distribution" });
+    return vizWrap(gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = 70+, a real starter profile)</span>', hist);
+  }
+  function sp2rpViz() {
+    var rows = (DATA && DATA.sp2rp) || [];
+    var pts = rows.filter(function (r) { return r.relief_upside != null && r.components && r.components.conversion_need != null; })
+      .map(function (r) {
+        return { x: r.relief_upside, y: r.components.conversion_need,
+                 label: r.name + "  upside " + r.relief_upside + "  need " + r.components.conversion_need + "  FIT " + r.fit,
+                 color: r.fit >= 55 ? null : "#6a6f7a" };
+      });
+    if (pts.length < 8) return "";
+    var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
+      xLabel: "relief upside →", yLabel: "↑ conversion need", xRef: 50, yRef: 50, aria: "upside vs need" });
+    return vizWrap('The conversion sweet spot <span class="proj-dim">(top-right = good stuff AND struggling as a starter)</span>', sc);
+  }
 
   function fitClass(v) {
     var n = num(v);
@@ -185,7 +210,7 @@
     var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
       + "platoon-neutrality, and contact quality. Click a row for the component breakdown.</div>";
-    return note + candTable(sortRows(rows, RP_COLS), RP_COLS);
+    return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
     var rows = (DATA && DATA.sp2rp) || [];
@@ -194,7 +219,7 @@
       + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
       + "the need signal; proj REM+ is a display-only relief projection.</div>";
-    return note + candTable(sortRows(rows, SP_COLS), SP_COLS);
+    return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
   function roleLine(x) {
@@ -293,13 +318,68 @@
     return note + '<div class="pal-mix-grid">' + cards + "</div>";
   }
 
+  function renderPlatoon() {
+    var rows = (DATA && DATA.reverse_platoon) || [];
+    // only meaningful splits (with a decent sample), most-reverse first
+    var view = rows.filter(function (r) {
+      return (r.reverse || r.extreme) && (r.min_tbf == null || r.min_tbf >= 100);
+    });
+    if (!view.length) return empty("No notable platoon splits yet.");
+    var note = '<div class="mlbstats-note">Conventionally a pitcher is tougher on same-handed hitters. A '
+      + gloss("reverse platoon split", "platoon_split") + " (tougher on the OPPOSITE hand) is a rare hidden strength that "
+      + "helps him face a full lineup, a plus for RP&rarr;SP; an extreme normal split is a conversion blocker. OPS-against "
+      + "by batter hand.</div>";
+    var head = "<thead><tr><th>Pitcher</th><th>Throws</th><th>Role</th><th>vs own hand</th><th>vs opp hand</th>"
+      + "<th>Split</th><th>Read</th></tr></thead>";
+    var body = "<tbody>" + view.map(function (r) {
+      var read = r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
+        : '<span class="pal-miss">extreme split</span>';
+      return '<tr><td class="mlbstats-name">' + logo(r.team) + esc(r.name) + "</td>"
+        + "<td>" + esc(r.p_throws) + "HP</td><td>" + esc(r.role) + "</td>"
+        + "<td>" + f3(r.own_ops) + "</td><td>" + f3(r.opp_ops) + "</td>"
+        + "<td>" + f3(r.split) + "</td><td>" + read + "</td></tr>";
+    }).join("") + "</tbody>";
+    return note + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
+  }
+
+  function renderProspects() {
+    var rows = (DATA && DATA.prospect_watch) || [];
+    if (!rows.length) return empty("No prospect role-mismatches yet.");
+    var note = '<div class="mlbstats-note">Prospect pitchers whose SCOUTED role may not fit their arsenal shape ('
+      + gloss("arsenal depth", "arsenal_depth") + " + command, from 20-80 scout grades). A scouted starter with a thin "
+      + "arsenal profiles as a reliever; a reliever with a deep arsenal could start. Shape-only: there is no pitch tracking "
+      + "at the minors, so this reads role fit from tool grades, not stuff. " + esc(DATA.n_prospects || "")
+      + " prospect pitchers scanned.</div>";
+    function toolBars(tools) {
+      tools = tools || {};
+      return ["fb", "sl", "cb", "ch", "ct", "cmd"].filter(function (k) { return tools[k] != null; }).map(function (k) {
+        return '<div class="pal-ars-row"><span class="pal-ars-pitch">' + k.toUpperCase() + "</span>"
+          + bar((tools[k] - 20) / 60 * 100) + '<span class="pal-ars-meta">' + fInt(tools[k]) + "</span></div>";
+      }).join("");
+    }
+    var cards = rows.map(function (p) {
+      var arrow = p.role === "SP" ? "SP &rarr; RP" : "RP &rarr; SP";
+      var msg = p.role === "SP" ? "Scouted a starter, but the arsenal profiles as a reliever."
+        : "Scouted a reliever, but has the arsenal to start.";
+      return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
+        + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
+        + '<span class="pal-dir">' + arrow + "</span></h4>"
+        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fInt(p.fv)
+        + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches</div>"
+        + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
+        + toolBars(p.tools) + "</div>";
+    }).join("");
+    return note + '<div class="pal-mix-grid">' + cards + "</div>";
+  }
+
   // ---- shell ----------------------------------------------------------------
   function render() {
     var root = document.getElementById("pal-app-root");
     if (!root) return;
     if (!DATA) { root.innerHTML = empty("The Pitcher Alchemy Lab conversion models are being computed from Statcast. Check back shortly."); return; }
     root.innerHTML = (section === "sp2rp") ? renderSP2RP() : (section === "history") ? renderHistory()
-      : (section === "pitchadd") ? renderPitchAdd() : renderRP2SP();
+      : (section === "pitchadd") ? renderPitchAdd() : (section === "platoon") ? renderPlatoon()
+      : (section === "prospects") ? renderProspects() : renderRP2SP();
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
       ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; a candidate screen, not a projection. '
@@ -356,7 +436,7 @@
   }
 
   function readHash() {
-    var m = /^#(rp2sp|sp2rp|history|pitchadd)/.exec(location.hash || "");
+    var m = /^#(rp2sp|sp2rp|history|pitchadd|platoon|prospects)/.exec(location.hash || "");
     if (m) setSection(m[1]);
   }
 

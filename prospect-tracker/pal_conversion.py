@@ -111,7 +111,11 @@ class PalArm:
     # platoon (StatsAPI sitCodes vl/vr): OPS-against by batter hand
     ops_vl: Optional[float] = None
     ops_vr: Optional[float] = None
+    platoon_tbf: Optional[float] = None  # min batters faced across hands (sample gate)
+    p_throws: Optional[str] = None      # 'L' | 'R' (for reverse-split direction)
     rem_plus: Optional[int] = None      # current reliever REM+ (relievers only)
+    was_starter: Optional[bool] = None  # started in a prior MLB season (re-conversion ease)
+    prospx_role: Optional[str] = None   # PROSPX prospect-era role, when known (SP/RP/...)
 
 
 # --------------------------------------------------------------------------- #
@@ -253,6 +257,9 @@ def _flags_rp_sp(arm: PalArm, npi: int, fb: Optional[float], plat: Optional[floa
     return flags
 
 
+PEDIGREE_NUDGE = 3.0   # "started before" = re-conversion ease (Baumann), capped + small
+
+
 def rp_sp_fit(arm: PalArm) -> dict:
     npi = n_pitches(arm)
     fb = fb_pct(arm)
@@ -265,13 +272,73 @@ def rp_sp_fit(arm: PalArm) -> dict:
         "platoon_neutrality": plat,
         "survivability": survivability_score(overall_hard_hit(arm)),
     }
+    fit = _blend(RP_SP_WEIGHTS, comps)
+    # starter pedigree: a reliever who has started before (in MLB or as a
+    # prospect) re-converts more easily - a small, capped nudge + a chip.
+    flags = _flags_rp_sp(arm, npi, fb, plat)
+    if arm.was_starter:
+        fit = min(100.0, fit + PEDIGREE_NUDGE)
+        flags.append({"key": "started_before", "label": "started before"})
+    elif arm.prospx_role == "SP":
+        fit = min(100.0, fit + PEDIGREE_NUDGE)
+        flags.append({"key": "prospect_sp", "label": "starter as a prospect"})
     return {
-        "fit": _blend(RP_SP_WEIGHTS, comps),
+        "fit": round(fit, 1),
         "components": {k: (round(v, 1) if v is not None else None) for k, v in comps.items()},
         "n_pitches": npi,
         "fb_pct": None if fb is None else round(fb, 3),
         "proj_velo": project_velo(arm, "SP"),
-        "flags": _flags_rp_sp(arm, npi, fb, plat),
+        "reverse_platoon": reverse_platoon(arm),
+        "flags": flags,
+    }
+
+
+def reverse_platoon(arm: PalArm) -> Optional[dict]:
+    """Platoon split WITH direction. Conventionally a pitcher is tougher on
+    same-handed hitters; a REVERSE split (tougher on the opposite hand) is a rare
+    hidden strength that supports facing a full lineup, and an extreme normal
+    split is a conversion blocker. Needs the throwing hand + vs-L/R OPS."""
+    if arm.ops_vl is None or arm.ops_vr is None or not arm.p_throws:
+        return None
+    if arm.p_throws == "R":
+        own, opp = arm.ops_vr, arm.ops_vl        # RHP own-side = RHB
+    else:
+        own, opp = arm.ops_vl, arm.ops_vr        # LHP own-side = LHB
+    idx = round(own - opp, 3)                     # > 0 => reverse (own-side is tougher)
+    split = round(abs(arm.ops_vl - arm.ops_vr), 3)
+    return {
+        "p_throws": arm.p_throws, "own_ops": round(own, 3), "opp_ops": round(opp, 3),
+        "reverse_index": idx, "reverse": idx > 0.030, "split": split,
+        "extreme": split >= 0.150,
+        "weak_hand": "RHB" if arm.ops_vr > arm.ops_vl else "LHB",
+    }
+
+
+# --------------------------------------------------------------------------- #
+# prospect conversion watch (shape-only; no Statcast physics at the minors)
+# --------------------------------------------------------------------------- #
+PROSPECT_TOOL_KEYS = ("fb", "sl", "cb", "ch", "ct")
+
+
+def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
+    """A SHAPE-ONLY role lean for a prospect pitcher from 20-80 scout tool grades
+    (no MiLB tracking, so no stuff physics). Flags starter-labeled prospects who
+    profile as relievers (thin arsenal / poor command) and reliever-labeled
+    prospects who could start (deep arsenal + command)."""
+    tools = tools or {}
+    grades = [tools.get(k) for k in PROSPECT_TOOL_KEYS if tools.get(k) is not None]
+    depth = sum(1 for g in grades if g is not None and g >= 55)   # above-average pitches
+    cmd = tools.get("cmd")
+    depth_s = {0: 5.0, 1: 15.0, 2: 45.0, 3: 80.0}.get(depth, 100.0)
+    cmd_s = 50.0 if cmd is None else _clamp((cmd - 40.0) / (60.0 - 40.0) * 100.0)
+    starter_shape = round(0.60 * depth_s + 0.40 * cmd_s, 1)
+    pos = (position or "").upper()
+    role = "SP" if "SP" in pos else ("RP" if ("RP" in pos or "IRP" in pos or "CL" in pos) else "SWING")
+    lean = "SP" if starter_shape >= 60 else ("RP" if starter_shape < 40 else "SWING")
+    return {
+        "starter_shape": starter_shape, "arsenal_depth": depth, "cmd": cmd,
+        "role": role, "lean": lean,
+        "mismatch": (role in ("SP", "RP") and lean in ("SP", "RP") and role != lean),
     }
 
 

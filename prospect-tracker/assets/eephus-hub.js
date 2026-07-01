@@ -59,6 +59,76 @@
       + slug + '.png" alt="' + esc(team) + '" loading="lazy" onerror="this.remove()">';
   }
 
+  // ---- lightweight inline charts (SVG, theme-tokened) -----------------------
+  function _chartTokens() {
+    var cs = getComputedStyle(document.documentElement);
+    var g = function (n, f) { return (cs.getPropertyValue(n) || "").trim() || f; };
+    return { grid: g("--border", "#2b2b31"), axis: g("--text-tertiary", "#7c808a"),
+             bar: g("--accent-gold", "#c9a227"), hi: g("--accent-cyan", "#00d9ff"),
+             lo: g("--accent-red", "#b91c1c"), text: g("--text-secondary", "#aaa") };
+  }
+  function _fmtN(v) {
+    if (Math.abs(v) >= 10) return String(Math.round(v));
+    return (Math.round(v * 100) / 100).toString();
+  }
+
+  // histogram(values, {width,height,bins,min,max,highlightAbove,refs:[{at,label}],aria})
+  function histogram(values, o) {
+    o = o || {};
+    var vals = (values || []).map(Number).filter(function (v) { return !isNaN(v); });
+    if (vals.length < 4) return "";
+    var W = o.width || 640, H = o.height || 120, pad = 22;
+    var lo = o.min != null ? o.min : Math.min.apply(null, vals);
+    var hi = o.max != null ? o.max : Math.max.apply(null, vals);
+    if (hi <= lo) hi = lo + 1;
+    var nb = o.bins || 26, bw = (hi - lo) / nb;
+    var counts = new Array(nb).fill(0);
+    vals.forEach(function (v) { var i = Math.floor((v - lo) / bw); if (i < 0) i = 0; if (i >= nb) i = nb - 1; counts[i]++; });
+    var maxc = Math.max.apply(null, counts) || 1, t = _chartTokens();
+    var iw = W - pad * 2, ih = H - pad - 8;
+    var bars = counts.map(function (c, i) {
+      var x = pad + i / nb * iw, w = Math.max(1, iw / nb - 1), h = c / maxc * ih, y = H - pad - h;
+      var mid = lo + (i + 0.5) * bw;
+      var col = (o.highlightAbove != null && mid >= o.highlightAbove) ? t.hi : t.bar;
+      return '<rect x="' + x.toFixed(1) + '" y="' + y.toFixed(1) + '" width="' + w.toFixed(1) + '" height="' + h.toFixed(1) + '" fill="' + col + '" opacity="0.82"/>';
+    }).join("");
+    var refs = (o.refs || []).map(function (r) {
+      var x = pad + (r.at - lo) / (hi - lo) * iw;
+      return '<line x1="' + x.toFixed(1) + '" y1="' + (H - pad) + '" x2="' + x.toFixed(1) + '" y2="4" stroke="' + t.axis + '" stroke-dasharray="3 3"/>'
+        + '<text x="' + (x + 3).toFixed(1) + '" y="12" fill="' + t.axis + '" font-size="9" font-family="monospace">' + esc(r.label) + '</text>';
+    }).join("");
+    var ax = '<line x1="' + pad + '" y1="' + (H - pad) + '" x2="' + (W - pad) + '" y2="' + (H - pad) + '" stroke="' + t.grid + '"/>'
+      + '<text x="' + pad + '" y="' + (H - 5) + '" fill="' + t.axis + '" font-size="9" font-family="monospace">' + esc(_fmtN(lo)) + '</text>'
+      + '<text x="' + (W - pad) + '" y="' + (H - 5) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="end">' + esc(_fmtN(hi)) + '</text>';
+    return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="none" role="img" aria-label="' + esc(o.aria || "distribution") + '">' + bars + refs + ax + "</svg>";
+  }
+
+  // scatter(points [{x,y,label,color}], {width,height,xLabel,yLabel,xRef,yRef,aria})
+  function scatter(points, o) {
+    o = o || {};
+    var pts = (points || []).filter(function (p) { return p && !isNaN(p.x) && !isNaN(p.y); });
+    if (pts.length < 3) return "";
+    var W = o.width || 640, H = o.height || 300, padL = 34, padB = 26, padT = 10, padR = 10;
+    var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; });
+    var x0 = o.xMin != null ? o.xMin : Math.min.apply(null, xs), x1 = o.xMax != null ? o.xMax : Math.max.apply(null, xs);
+    var y0 = o.yMin != null ? o.yMin : Math.min.apply(null, ys), y1 = o.yMax != null ? o.yMax : Math.max.apply(null, ys);
+    if (x1 <= x0) x1 = x0 + 1; if (y1 <= y0) y1 = y0 + 1;
+    var t = _chartTokens(), iw = W - padL - padR, ih = H - padB - padT;
+    var sx = function (x) { return padL + (x - x0) / (x1 - x0) * iw; };
+    var sy = function (y) { return padT + (1 - (y - y0) / (y1 - y0)) * ih; };
+    var refs = "";
+    if (o.xRef != null) refs += '<line x1="' + sx(o.xRef).toFixed(1) + '" y1="' + padT + '" x2="' + sx(o.xRef).toFixed(1) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>';
+    if (o.yRef != null) refs += '<line x1="' + padL + '" y1="' + sy(o.yRef).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + sy(o.yRef).toFixed(1) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>';
+    var dots = pts.map(function (p) {
+      return '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="' + (p.r || 3) + '" fill="' + (p.color || t.hi) + '" opacity="0.7"><title>' + esc(p.label || "") + "</title></circle>";
+    }).join("");
+    var ax = '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
+      + '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
+      + (o.xLabel ? '<text x="' + (W - padR) + '" y="' + (H - 6) + '" fill="' + t.axis + '" font-size="10" font-family="monospace" text-anchor="end">' + esc(o.xLabel) + "</text>" : "")
+      + (o.yLabel ? '<text x="4" y="' + (padT + 10) + '" fill="' + t.axis + '" font-size="10" font-family="monospace">' + esc(o.yLabel) + "</text>" : "");
+    return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(o.aria || "scatter") + '">' + refs + dots + ax + "</svg>";
+  }
+
   // The module registry for the strip: id -> {label, glyph, href(row)}.
   // Module accents mirror the homepage sidebar glyph identity.
   const MODULES = [
@@ -249,5 +319,5 @@
     return exportCanvas(await drawCard(opts), opts);
   }
 
-  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo };
+  window.EEPHUS_HUB = { links, stripHTML, shareCard, drawCard, exportCanvas, esc, teamLogo, histogram, scatter };
 })();

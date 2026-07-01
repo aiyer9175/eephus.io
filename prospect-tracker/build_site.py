@@ -289,6 +289,60 @@ CREATED_BY_BANNER = (
     '<span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div>'
 )
 
+# A distinct "Lead Developer & Creator" credit badge for modules Noah built end
+# to end (the MLB Stats / Bullpen Leaderboards + Pitcher Alchemy Lab). More
+# prominent than the small build-banner byline; links to the Developers page.
+LEAD_DEV_BADGE = (
+    '<a class="lead-dev-badge" href="/team/" '
+    'title="Lead Developer and Creator - Noah J. Dengler (@ARKNDJL)">'
+    '<span class="ldb-glyph" aria-hidden="true">🜎</span>'
+    '<span class="ldb-role">Lead Developer &amp; Creator</span>'
+    '<span class="ldb-name">Noah J. Dengler</span></a>'
+)
+
+# The "plus" badge is the counterpart to the Lead Dev badge: the big one goes on
+# head modules a developer built end to end; this compact one goes on sub-modules,
+# models, and within-module sections (Trade Machine, individual models, etc.). It
+# hovers open a full ledger of the granular work that does not warrant its own
+# masthead credit. Curated per developer; only Noah for now.
+DEV_PLUS_CONTRIBUTIONS = (
+    # (contribution, role/kind)
+    ("eFV (eephusFV) prospect valuation model", "model, creator"),
+    ("MLB Projections model + module", "model, creator"),
+    ("Free Agency market model + module", "model, creator"),
+    ("REM+ reliever metric + Bullpen Leaderboards", "model, creator"),
+    ("Pitcher Alchemy Lab conversion models", "model, creator"),
+    ("Trade Machine surplus + value engine", "developer"),
+    ("CollegeSavant (CS+ + college-to-pro translation)", "model, creator"),
+    ("Prospect surplus valuation ($/WAR)", "model, creator"),
+    ("Farm-system grading + Org Tendencies", "model, creator"),
+    ("Entity pages (High Schools / Colleges / States)", "creator"),
+)
+
+
+def _dev_plus_badge(name: str = "Noah J. Dengler", items=DEV_PLUS_CONTRIBUTIONS) -> str:
+    """Compact, hover-expandable developer credit for sub-modules and models."""
+    rows = "".join(
+        f'<span class="dpc-item"><span class="dpc-what">{html.escape(what)}</span>'
+        f'<span class="dpc-kind">{html.escape(kind)}</span></span>'
+        for what, kind in items
+    )
+    return (
+        '<span class="dev-plus-badge" tabindex="0" role="button" '
+        f'aria-label="Developer contributions by {html.escape(name)}">'
+        '<span class="dpb-glyph" aria-hidden="true">🜎</span>'
+        f'<span class="dpb-name">{html.escape(name)}</span>'
+        f'<span class="dpb-plus">+{len(items)}</span>'
+        '<span class="dev-plus-card" role="tooltip">'
+        f'<span class="dpc-head">Developer contributions &middot; {html.escape(name)}</span>'
+        f'{rows}'
+        '<a class="dpc-more" href="/team/">Full developer profile &rarr;</a>'
+        '</span></span>'
+    )
+
+
+DEV_PLUS_BADGE = _dev_plus_badge()
+
 # Modern X (Twitter) glyph - module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
 _X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
@@ -2115,10 +2169,11 @@ def build_fa() -> str:
 # Trade Machine view, relocated to live under MLB Projections (was a PROSPX module
 # by Anirudh Iyer). The board + evaluator run from assets/trademachine.js on the
 # standalone data files; this is just the markup the module mounts into.
-_TRADE_MACHINE_VIEW = """<div id="proj-view-trademachine" style="display:none;">
+_TRADE_MACHINE_VIEW = ("""<div id="proj-view-trademachine" style="display:none;">
   <div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
     <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
+    """ + DEV_PLUS_BADGE + """
   </div>
   <div id="trade-machine"></div>
   <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
@@ -2181,7 +2236,7 @@ _TRADE_MACHINE_VIEW = """<div id="proj-view-trademachine" style="display:none;">
     <div id="tb-group-body"></div>
   </div>
   <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>
-</div>"""
+</div>""")
 
 # Switcher: toggles the Projections table vs. the Trade Machine view, mounting the
 # module the first time its tab is shown. Deep-links (#view=trademachine, the legacy
@@ -2269,7 +2324,7 @@ def build_mlbstats() -> str:
     body = (
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1></div>'
+        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1>{LEAD_DEV_BADGE}</div>'
         '<span class="section-sub">League-wide MLB stat leaderboards. First up: Bullpen Leaderboards - '
         'REM+ reliever ratings, team Bullpen+ quality, and bullpen depth charts, computed from MLB '
         'play-by-play.</span></div>'
@@ -2303,7 +2358,7 @@ def build_pal() -> str:
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1></div>'
+        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1>{LEAD_DEV_BADGE}</div>'
         '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
         'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
@@ -2311,6 +2366,8 @@ def build_pal() -> str:
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false">SP&rarr;RP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="history" role="tab" aria-selected="false">Conversion History</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="pitchadd" role="tab" aria-selected="false">Pitch-Add Lab</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="platoon" role="tab" aria-selected="false">Reverse-Platoon Radar</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-palsection="prospects" role="tab" aria-selected="false">Prospect Watch</button>'
         '</div>'
         '<div id="pal-section" class="mlbstats-section">'
         '<div id="pal-banner"></div>'

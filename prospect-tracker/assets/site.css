@@ -498,6 +498,41 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 .section-head--byline { align-items: flex-end; }
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
 .section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
+/* Lead Developer & Creator credit badge (MLB Stats + Pitcher Alchemy Lab). */
+.lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
+  margin: 9px 0 2px; padding: 4px 10px; border: 1px solid var(--accent-gold);
+  background: var(--bg-secondary); transition: border-color .15s, background .15s; white-space: nowrap; }
+.lead-dev-badge:hover, .lead-dev-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); }
+.lead-dev-badge .ldb-glyph { color: var(--accent-gold); font-size: 13px; line-height: 1; }
+.lead-dev-badge .ldb-role { color: var(--accent-gold); font-weight: 700; text-transform: uppercase; }
+.lead-dev-badge .ldb-name { color: var(--text-primary); font-weight: 600; }
+
+/* Compact "plus" developer badge - for sub-modules / models / sections. Hovers
+   open a ledger of the granular work. Counterpart to the head-module lead badge. */
+.dev-plus-badge { position: relative; display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .03em; cursor: help;
+  padding: 2px 8px; border: 1px solid var(--accent-gold); background: var(--bg-secondary);
+  white-space: nowrap; vertical-align: middle; transition: border-color .15s, background .15s; }
+.dev-plus-badge:hover, .dev-plus-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); outline: none; }
+.dev-plus-badge .dpb-glyph { color: var(--accent-gold); font-size: 11px; line-height: 1; }
+.dev-plus-badge .dpb-name { color: var(--text-primary); font-weight: 600; }
+.dev-plus-badge .dpb-plus { color: var(--accent-gold); font-weight: 700; padding-left: 1px; }
+.dev-plus-badge .dev-plus-card { position: absolute; right: 0; left: auto; top: calc(100% + 6px); z-index: 60;
+  display: none; min-width: 280px; max-width: 360px; padding: 10px 12px 8px;
+  border: 1px solid var(--accent-gold); background: var(--bg-primary);
+  box-shadow: 0 8px 26px rgba(0,0,0,.5); white-space: normal; text-align: left; cursor: default; }
+.dev-plus-badge:hover .dev-plus-card, .dev-plus-badge:focus-within .dev-plus-card { display: block; }
+.dev-plus-card .dpc-head { display: block; color: var(--accent-gold); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; font-size: 9px; margin-bottom: 7px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.dev-plus-card .dpc-item { display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  padding: 3px 0; font-size: 10.5px; line-height: 1.35; }
+.dev-plus-card .dpc-what { color: var(--text-primary); font-weight: 600; }
+.dev-plus-card .dpc-kind { color: var(--text-tertiary); font-style: italic; text-align: right; flex: 0 0 auto; }
+.dev-plus-card .dpc-more { display: block; margin-top: 8px; padding-top: 6px; font-size: 9.5px;
+  color: var(--accent-cyan); text-decoration: none; border-top: 1px solid var(--border); }
+.dev-plus-card .dpc-more:hover { text-decoration: underline; }
 
 /* ---- articles index grid ---- */
 .article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
@@ -1445,6 +1480,14 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 /* shared MLB team logo (ESPN), used across the MLB modules */
 .eephus-teamlogo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 5px; }
 .pal-mix-card .eephus-teamlogo, .bp-depth-team .eephus-teamlogo { width: 15px; height: 15px; }
+.pal-mix-card h4 .eephus-teamlogo { width: 15px; height: 15px; }
+/* inline SVG charts (histograms + scatters) shared across the MLB modules */
+.mlbstats-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 16px; }
+@media (max-width: 820px) { .mlbstats-viz { grid-template-columns: 1fr; } }
+.mlbstats-viz-cell { border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; min-width: 0; }
+.mlbstats-viz-h { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+.eephus-chart { display: block; width: 100%; height: auto; }
 .mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
 .mlbstats-bar input, .mlbstats-bar select {
   font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;

@@ -127,6 +127,39 @@ def test_pitch_add_recommender():
     assert pc.recommend_pitch(LUGO) is None
 
 
+def test_reverse_platoon():
+    # RHP tougher on his own side (RHB) than on LHB -> a reverse split
+    rev = PalArm(mlbam=1, ops_vl=0.60, ops_vr=0.74, p_throws="R")
+    r = pc.reverse_platoon(rev)
+    assert r["reverse"] is True and r["p_throws"] == "R" and r["weak_hand"] == "RHB"
+    # a conventional RHP (better vs RHB) is not reverse
+    norm = PalArm(mlbam=2, ops_vl=0.78, ops_vr=0.62, p_throws="R")
+    assert pc.reverse_platoon(norm)["reverse"] is False
+    # LHP conventional (better vs LHB)
+    lhp = PalArm(mlbam=3, ops_vl=0.60, ops_vr=0.75, p_throws="L")
+    assert pc.reverse_platoon(lhp)["reverse"] is False
+    assert pc.reverse_platoon(PalArm(mlbam=4)) is None   # no hand/platoon data
+
+
+def test_starter_pedigree_nudge():
+    import copy
+    base = copy.deepcopy(LUGO); base.was_starter = False
+    ped = copy.deepcopy(LUGO); ped.was_starter = True
+    pro = copy.deepcopy(LUGO); pro.prospx_role = "SP"
+    assert pc.rp_sp_fit(ped)["fit"] > pc.rp_sp_fit(base)["fit"]
+    assert any(f["key"] == "started_before" for f in pc.rp_sp_fit(ped)["flags"])
+    assert any(f["key"] == "prospect_sp" for f in pc.rp_sp_fit(pro)["flags"])
+
+
+def test_prospect_role_fit_mismatch():
+    thin_sp = pc.prospect_role_fit({"fb": 60, "sl": 55, "cmd": 40}, "SP")
+    assert thin_sp["lean"] == "RP" and thin_sp["mismatch"] is True      # SP-labeled, profiles RP
+    deep_rp = pc.prospect_role_fit({"fb": 60, "sl": 60, "cb": 55, "ch": 55, "cmd": 60}, "RP")
+    assert deep_rp["lean"] == "SP" and deep_rp["mismatch"] is True      # RP-labeled, could start
+    aligned = pc.prospect_role_fit({"fb": 60, "sl": 60, "cb": 55, "ch": 55, "cmd": 60}, "SP")
+    assert aligned["mismatch"] is False
+
+
 def test_relief_rem_plus_projection_is_display_number():
     import rem_plus
     pool_arms = [rem_plus.Reliever(key=f"p{i}", gs=0, ip=50, tbf=200, so=40, bb=17,

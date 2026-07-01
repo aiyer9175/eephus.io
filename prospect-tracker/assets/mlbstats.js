@@ -36,6 +36,30 @@
     try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; }
     catch (e) { return ""; }
   }
+  function chart(fn, arg, opts) {
+    try { return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, opts) : ""; }
+    catch (e) { return ""; }
+  }
+  function relieverViz() {
+    var qual = ((DATA && DATA.relievers) || []).filter(function (r) { return r.qualified !== false; });
+    if (qual.length < 12) return "";
+    var rems = qual.map(function (r) { return r.rem_plus; });
+    var hist = chart("histogram", rems, { height: 108, min: 55, max: 175, highlightAbove: 120,
+      refs: [{ at: 100, label: "avg" }], aria: "REM+ distribution" });
+    var pts = qual.filter(function (r) { return r.gmli != null; }).map(function (r) {
+      return { x: r.rem_plus, y: r.gmli, label: r.name + "  REM+ " + r.rem_plus + "  gmLI " + r.gmli,
+               color: r.rem_plus >= 115 ? null : "#6a6f7a" };
+    });
+    var sc = chart("scatter", pts, { height: 250, xLabel: "REM+ (skill) →", yLabel: "↑ gmLI (leverage)",
+      xRef: 100, yRef: 1, aria: "skill vs leverage" });
+    if (!hist && !sc) return "";
+    return '<div class="mlbstats-viz">'
+      + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("REM+", "rem_plus")
+      + ' distribution <span class="proj-dim">(qualified relievers; cyan = elite)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs leverage'
+        + ' <span class="proj-dim">(top-right = elite arms in high leverage)</span></div>' + sc + "</div>" : "")
+      + "</div>";
+  }
 
   // REM+/Bullpen+ index coloring (100 = average).
   function remClass(v) {
@@ -172,7 +196,7 @@
     var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
       + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
       + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
-    return note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+    return relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
   }
 
   function renderTeams() {

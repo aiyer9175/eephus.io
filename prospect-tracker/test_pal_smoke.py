@@ -39,6 +39,12 @@ SAMPLE = """{
  "pitch_add":[{"mlbam":1,"name":"Deep Reliever","team":"NYY","fit":85.2,"n_pitches":4,
    "arsenal":[{"pitch":"FF","usage":0.3}],"platoon_split":0.05,
    "rec":{"add":"Changeup","target":"RHB","reason":"no offspeed pitch","priority":"medium"}}],
+ "reverse_platoon":[{"mlbam":9,"name":"Reverse Guy","team":"TB","role":"RP","p_throws":"R",
+   "own_ops":0.720,"opp_ops":0.560,"split":0.160,"reverse_index":0.160,"reverse":true,"extreme":true,
+   "weak_hand":"RHB","min_tbf":120}],
+ "prospect_watch":[{"name":"Thin Starter Prospect","org":"LAD","position":"SP","fv":50,
+   "tools":{"fb":60,"sl":55,"cmd":40},"starter_shape":27.0,"arsenal_depth":2,"role":"SP","lean":"RP","mismatch":true}],
+ "n_prospects":1960,
  "backtest":{"n_labeled":44,"spearman_prefit_vs_held":0.223,"relief_k_bump_measured":0.022,
    "converter_median_fit_pool_pctile":72,"disclaimer":"A screen, not a success-probability model."}
 }"""
@@ -102,3 +108,15 @@ def test_pitchadd_view():
     html = _render("#pitchadd")
     assert "Deep Reliever" in html
     assert "ADD Changeup" in html
+
+
+def test_platoon_radar_view():
+    html = _render("#platoon")
+    assert "Reverse Guy" in html
+    assert "reverse" in html.lower()
+
+
+def test_prospect_watch_view():
+    html = _render("#prospects")
+    assert "Thin Starter Prospect" in html
+    assert "profiles as a reliever" in html

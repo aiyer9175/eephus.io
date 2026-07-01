@@ -124,16 +124,19 @@ def _platoon_one(pid_year):
         req = U.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with U.urlopen(req, timeout=20) as r:
             d = json.load(r)
-        vals = {}
+        vals, tbf = {}, {}
         for s in d.get("stats", []):
             for sp in (s.get("splits") or []):
                 code = (sp.get("split") or {}).get("code")
-                ops = _num((sp.get("stat") or {}).get("ops"))
+                st = sp.get("stat") or {}
+                ops = _num(st.get("ops"))
                 if code in ("vl", "vr") and ops is not None:
                     vals[code] = ops
-        return pid, vals.get("vl"), vals.get("vr")
+                    tbf[code] = _num(st.get("battersFaced"))
+        mt = (min(tbf["vl"], tbf["vr"]) if tbf.get("vl") is not None and tbf.get("vr") is not None else None)
+        return pid, vals.get("vl"), vals.get("vr"), mt
     except Exception:
-        return pid, None, None
+        return pid, None, None, None
 
 
 def load_platoon(pid_years: list, workers: int = 12) -> dict:
@@ -144,11 +147,84 @@ def load_platoon(pid_years: list, workers: int = 12) -> dict:
         for fut in cf.as_completed(futs):
             pid, year = futs[fut]
             try:
-                _pid, vl, vr = fut.result()
-                out[(pid, year)] = (vl, vr)
+                _pid, vl, vr, mt = fut.result()
+                out[(pid, year)] = (vl, vr, mt)
             except Exception:
-                out[(pid, year)] = (None, None)
+                out[(pid, year)] = (None, None, None)
     return out
+
+
+@functools.lru_cache(maxsize=4)
+def load_pitch_hand(season: int) -> dict:
+    """{mlbam: 'L'|'R'} for every MLB pitcher, one bulk call (reverse platoon)."""
+    try:
+        data = be._get_json("sports/1/players", {"season": int(season)})
+    except Exception as e:
+        _log.warning("pitchHand fetch failed: %s", e)
+        return {}
+    out = {}
+    for p in data.get("people", []):
+        ph = (p.get("pitchHand") or {}).get("code")
+        if p.get("id") and ph:
+            out[int(p["id"])] = ph
+    return out
+
+
+def load_player_links() -> dict:
+    """{mlbam: link} from data/player_links.json (mlbam <-> prospx key)."""
+    try:
+        d = json.loads((DATA_DIR / "player_links.json").read_text(encoding="utf-8"))
+        return {e["mlbam"]: e for e in (d.get("byKey") or {}).values() if e.get("mlbam")}
+    except Exception:
+        return {}
+
+
+def load_prospect_pitchers() -> list:
+    """Prospect pitcher pool with 20-80 scout tool grades. Best-effort: needs the
+    prospect DB, so degrades to [] where it is absent (tests / no DB)."""
+    try:
+        from storage import load_all_snapshots
+        from consensus import build_timeseries, _is_pitcher_pos
+        ts = build_timeseries(load_all_snapshots())
+    except Exception as e:
+        _log.warning("prospect pool load unavailable: %s", e)
+        return []
+    out = []
+    for p in ts:
+        try:
+            if getattr(p, "status", "") != "active" or not _is_pitcher_pos(p.position):
+                continue
+            pt = p.points[-1] if getattr(p, "points", None) else None
+            tools = (getattr(pt, "tools_consensus", None) or getattr(pt, "tools", None) or {}) if pt else {}
+            keys = list(pc.PROSPECT_TOOL_KEYS) + ["cmd"]
+            tools = {k: _num(tools.get(k)) for k in keys if _num(tools.get(k)) is not None}
+            if not tools:
+                continue
+            out.append({"player_key": p.player_key, "name": p.player_name, "org": p.org,
+                        "position": p.position, "fv": _r(getattr(p, "fv_close", None), 1), "tools": tools})
+        except Exception:
+            continue
+    return out
+
+
+def _prospect_role(pos: Optional[str]) -> Optional[str]:
+    pos = (pos or "").upper()
+    if "SP" in pos:
+        return "SP"
+    if "RP" in pos or "IRP" in pos or "CL" in pos:
+        return "RP"
+    return None
+
+
+def _was_starter(by_pid: dict, mlbam: int, cur_season: int) -> bool:
+    """Did this pitcher hold a starting role in a prior MLB season (>= ~half a
+    rotation turn)? The free MLB-history half of the starter-pedigree signal."""
+    for y, r in by_pid.get(mlbam, {}).items():
+        if y >= cur_season:
+            continue
+        if pc.role_of(r.get("G"), r.get("GS"), r.get("IP")) == "SP" and be.ip_to_float(r.get("IP")) >= 40:
+            return True
+    return False
 
 
 # --------------------------------------------------------------------------- #
@@ -161,7 +237,7 @@ def build_arm(row: dict, arsenal: dict, velo: dict, platoon: dict, year: int) ->
     bb = _num(row.get("BB")) or 0
     ipf = be.ip_to_float(row.get("IP"))
     er = _num(row.get("ER")) or 0
-    vl, vr = platoon.get((mlbam, year), (None, None))
+    plat = platoon.get((mlbam, year)) or (None, None, None)
     return PalArm(
         mlbam=mlbam, name=row.get("name", ""), team=row.get("team", ""), season=year,
         role=pc.role_of(row.get("G"), row.get("GS"), row.get("IP")) or "",
@@ -169,7 +245,7 @@ def build_arm(row: dict, arsenal: dict, velo: dict, platoon: dict, year: int) ->
         k_pct=(so / tbf) if tbf else None, bb_pct=(bb / tbf) if tbf else None,
         era=(er * 9.0 / ipf) if ipf else None,
         arsenal=arsenal.get(mlbam, []), fb_velo=velo.get(mlbam),
-        ops_vl=vl, ops_vr=vr,
+        ops_vl=plat[0], ops_vr=plat[1], platoon_tbf=(plat[2] if len(plat) > 2 else None),
     )
 
 
@@ -256,16 +332,34 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # REM+ pool (current relievers) for the SP->RP relief projection
     rem_pool = _build_rem_pool(cur_rows, arsenal_by_year[season], velo_by_year[season], platoon)
 
+    # extensions: throwing hand (reverse platoon), MLB + PROSPX starter pedigree
+    pitch_hand = load_pitch_hand(season)
+    links = load_player_links()
+    prospects = load_prospect_pitchers()
+    prospx_role_map = {p["player_key"]: _prospect_role(p.get("position")) for p in prospects}
+
+    def _prospx_role_for(mlbam):
+        lk = links.get(mlbam)
+        return prospx_role_map.get(lk.get("prospx")) if lk and lk.get("prospx") else None
+
     # ---- current candidates -------------------------------------------------
-    rp2sp, sp2rp = [], []
+    rp2sp, sp2rp, platoon_rows = [], [], []
     for r in cur_rows:
         if be.ip_to_float(r.get("IP")) < CAND_MIN_IP:
             continue
         arm = build_arm(r, arsenal_by_year[season], velo_by_year[season], platoon, season)
+        arm.p_throws = pitch_hand.get(arm.mlbam)
+        arm.was_starter = _was_starter(by_pid, arm.mlbam, season)
+        arm.prospx_role = _prospx_role_for(arm.mlbam)
+        rp = pc.reverse_platoon(arm)
+        if rp:
+            platoon_rows.append({"mlbam": arm.mlbam, "name": arm.name, "team": arm.team,
+                                 "role": arm.role, "min_tbf": _r(arm.platoon_tbf, 0), **rp})
         if arm.role == "RP" and arm.arsenal:
             fit = pc.rp_sp_fit(arm)
             row = _cand_row(arm, fit, "rp2sp")
             row["pitch_add"] = pc.recommend_pitch(arm)
+            row["reverse_platoon"] = rp
             rp2sp.append(row)
         elif arm.role == "SP" and arm.arsenal:
             fit = pc.sp_rp_fit(arm)
@@ -274,6 +368,8 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
             sp2rp.append(row)
     rp2sp.sort(key=lambda x: x["fit"], reverse=True)
     sp2rp.sort(key=lambda x: x["fit"], reverse=True)
+    # reverse-platoon radar: most-reverse first (a hidden strength), extremes flagged
+    platoon_rows.sort(key=lambda x: x["reverse_index"], reverse=True)
 
     # ---- conversion history + backtest -------------------------------------
     history, mix_changes = [], []
@@ -329,19 +425,35 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
                   "platoon_split": r["platoon_split"], "rec": r["pitch_add"]}
                  for r in rp2sp if r.get("pitch_add")]
 
+    # prospect conversion watch (shape-only, no MiLB stuff physics): the role
+    # MISMATCHES worth a look (a scouted starter that profiles as a reliever, or
+    # vice versa), gated to real prospects (FV >= 40) and capped.
+    prospect_watch = []
+    for p in prospects:
+        rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
+        if not rf["mismatch"] or (p.get("fv") or 0) < 40:
+            continue
+        prospect_watch.append({"name": p["name"], "org": p.get("org"), "position": p.get("position"),
+                               "fv": p.get("fv"), "tools": p.get("tools"), **rf})
+    prospect_watch.sort(key=lambda x: -(x.get("fv") or 0))
+    prospect_watch = prospect_watch[:150]
+
     payload = {
         "generated_at": today, "season": season,
         "n_conversions": len(events),
         "rp2sp": rp2sp, "sp2rp": sp2rp, "history": history,
         "pitch_mix_changes": mix_changes,
         "pitch_add": pitch_add,
+        "reverse_platoon": platoon_rows,
+        "prospect_watch": prospect_watch,
+        "n_prospects": len(prospects),
         "backtest": backtest,
         "verdict": _verdict(),
     }
 
-    log(f"  pal: {len(rp2sp)} RP->SP candidates, {len(sp2rp)} SP->RP candidates, "
-        f"{len(events)} conversions; backtest rho={backtest['spearman_prefit_vs_held']} "
-        f"(n={backtest['n_labeled']})")
+    log(f"  pal: {len(rp2sp)} RP->SP, {len(sp2rp)} SP->RP, {len(events)} conversions, "
+        f"{len(prospect_watch)} prospect pitchers, {len(platoon_rows)} platoon rows; "
+        f"backtest rho={backtest['spearman_prefit_vs_held']} (n={backtest['n_labeled']})")
     if write:
         out_path.parent.mkdir(parents=True, exist_ok=True)
         tmp = out_path.with_suffix(".json.tmp")
