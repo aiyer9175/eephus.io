@@ -3631,6 +3631,11 @@ def bayesian_trade_value(
         "trade_value_lo":        trade_value_lo,
         "trade_value_hi":        trade_value_hi,
         "trade_value_tier":      tier,
+        # Active rarity floor (None when the FV50+ young-prospect floor didn't apply).
+        # Policy invariant: trade_value_mm never sits below this when set.
+        "fv50_trade_rarity_final_floor_mm": (
+            fv50_trade_rarity_final_floor_mm if fv50_trade_rarity_final_floor_mm > 0.0 else None
+        ),
 
         # Metadata
         "rolling_label":         roll_label if 'roll_label' in dir() else "none",
@@ -3761,6 +3766,7 @@ _BOARD_DROP = (
     "gross_floor_mm", "prior_surplus_mm", "catcher_dev_bonus", "defensive_floor_mm",
     "multiposition_bonus_mm", "options_premium_mm", "rule5_urgency_mm",
     "control_years_source", "rolling_label", "computed_at", "fv_effective",
+    "fv50_trade_rarity_final_floor_mm",
 )  # posterior_surplus_mm is KEPT (the evaluator's prospect-pool currency)
 _FLASH_KEEP = ("is_bimodal", "p_click")                       # board ceiling flag + tooltip
 _CONTRACT_KEEP = ("phase", "current_salary_mm", "signed_through", "fa_year", "aav_mm",

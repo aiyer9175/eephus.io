@@ -1587,9 +1587,14 @@ def test_fv50_active_prospect_gets_trade_rarity_floor() -> None:
     out = bayesian_trade_value(player)
 
     assert "fv50_trade_rarity_floor" in out["inputs_available"]
-    assert "fv50_trade_rarity_trade_floor" in out["inputs_available"]
-    assert out["posterior_surplus_mm"] >= 30.0
-    assert out["trade_value_mm"] >= 30.0
+    # The "fv50_trade_rarity_trade_floor" clamp tag only fires when scarcity and
+    # discount multipliers drag the final value back below the floor; whether it
+    # binds depends on tuning constants. The policy guarantee is the invariant:
+    # the shipped value never sits below the active rarity floor.
+    floor = out["fv50_trade_rarity_final_floor_mm"]
+    assert floor is not None and floor >= 30.0
+    assert out["posterior_surplus_mm"] >= floor
+    assert out["trade_value_mm"] >= floor
 
 
 def test_nonimpact_fv50_prospect_does_not_get_trade_rarity_floor() -> None:
