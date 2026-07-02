@@ -23,8 +23,13 @@ per-item sections and docs/audit-2026-07/AUDIT_FINDINGS.md):
 - Item 2 (MiLB park factors): CLOSED-INFEASIBLE on cached data (no venue dimension, no park
   join key). Re-open only after the minors ingest gains a venue dimension; spec retained below.
 - Item 8 (overseas wRC+): UPGRADED to READY-TO-RUN (NPB); see below.
-- Item 9 (Country/IFA entity pages): still open; the build lane failed on a structured-output
-  error (not a data problem) and was deferred rather than re-run under launch pressure.
+- Item 9 (Country/IFA entity pages): CLOSED as already-shipped. prospx has client-side
+  per-country pages (goToCountry / renderCountryDetail) AND an IFA signing-class tab
+  (#tab=ifa); both halves of the item exist. A parallel static build was written and
+  discarded as redundant (owner decision 2026-07-02). What is NOT done is a static,
+  crawlable/shareable entity-page layer, but every entity type (states, colleges,
+  countries) is client-side-only, so that is a site-wide SEO project (item 14), not a
+  countries-only bolt-on.
 Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
 
 ## 1. proj_lgbm star-tail refit (DO NOT ATTEMPT PRE-LAUNCH)
@@ -223,13 +228,22 @@ Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
 - Rollback: quantile-head change is a model artifact swap; revert to the
   committed proj_ml heads and the current decay in fa_market.
 
-## 14. Country/IFA entity pages re-run
+## 14. Static crawlable entity-page layer (all entity types) - SEO/sharing
 
-- What: same as item 9; the 2026-07-02 build lane failed on a structured-output
-  error (the agent did the work but could not format its return), not a data or
-  code problem, so nothing landed. Re-run the single lane against the shipped
-  states/colleges entity-page generator pattern.
-- Why: additive static pages, approved long ago; not launch-critical, which is
-  why it was deferred rather than re-run under pre-launch pressure.
-- Expected impact: new static pages only; no model surface.
-- Rollback: drop the routes from build_site.
+- What: expose the entity pages (states, colleges, countries, and the IFA
+  signing classes) as static, individually-crawlable, shareable URLs, with
+  prospx linking out to them. Today all entity pages are client-side routes
+  inside prospx (goToCountry / renderCountryDetail / _renderColleges / the
+  IFA tab), so none of them has a clean shareable URL or a social preview.
+- Why: launch-surface reach. The content is strong and international-prospect
+  and college pages are the kind of thing that gets linked from X/LinkedIn;
+  client-side-only routes are invisible to crawlers and share unfurlers.
+- Scope note: this is a site-wide decision, not a per-type bolt-on. A
+  countries-only static build was written in the 2026-07-02 round and
+  DISCARDED specifically because shipping static pages for one entity type
+  while the others stay client-side is incoherent (owner decision). Do all
+  types together, sharing one generator, with prospx routes linking to the
+  static canonical URLs (needs a prospx edit for the inbound links).
+- Expected impact: new static pages + sitemap entries; no model surface; the
+  client-side routes can stay as the in-app fast path or redirect to static.
+- Rollback: drop the routes from build_site and the sitemap.

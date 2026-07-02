@@ -411,6 +411,38 @@ critical; REVIEW_QUEUE). Outcomes:
   validation starts accruing immediately. test_farm_grade_history.py covers schema,
   letter-set alignment, append-only, same-day idempotence, self-heal.
 
+## Pre-registered gate: E-ISO4 (written 2026-07-02, before the run)
+
+Owner decision after E-ISO3: one more eFV bucket-calibration attempt, this time with a
+JOINTLY-CONSTRAINED side-symmetric grade map so cross-side ranking is preserved by
+construction (the one failure mode shared by X-ISO, E-ISO2, E-ISO3). All three prior
+attempts fit each side's grade map independently, which churns the pooled cross-side
+ranking the board relies on. E-ISO4 ties the two sides.
+
+### E-ISO4: joint side-symmetric bucket-distribution recalibration
+- Design constraint (the whole point): the RANKING grade is remapped by a SINGLE shared
+  monotone function g(grade) applied identically to hitters and pitchers, so any two
+  players in any side with grades a <= b satisfy g(a) <= g(b): pooled cross-side ranking
+  is preserved exactly (condition 3 becomes 0 by construction). The candidate to test is
+  whether a shared grade map (optionally with side-specific bucket-probability tables kept
+  for display/surplus, but the SHARED map driving both the grade and the ranking) still
+  delivers the calibration gain. Explore both formulations: (a) one shared grade->grade
+  monotone recal with pooled calibration loss; (b) shared grade map + side-specific
+  residual bucket tables that do NOT affect ranking order.
+- Gate (ALL, forward-chained OOF on the X-ISO cohort splits, SEED=7):
+  1. Pooled AND per-side AND per-bucket Brier/log-loss improve, no bucket materially worse
+     on either side (>1% relative). This is the condition E-ISO3 failed (pit bench bucket).
+  2. Within-(side,year) rank preservation EXACT.
+  3. Cross-side within-YEAR pooled Spearman delta >= -0.002 for every evaluation year
+     (should hold BY CONSTRUCTION under the shared-map design; measure it to confirm the
+     implementation actually preserves order and there is no numerical leak).
+  4. Per-tier reliability: every FV45+ tier improves; no tier worsens by more than 0.005.
+- Ship path on pass: wire into efv_score.py; registry row + eval artifact + freshness map;
+  expected-CHANGED limited to xfv.json + trade_values.json + downstreams, each delta
+  justified in CHANGELOG; PROSPX reliability diagram gains before/after.
+- On fail: this is the FINAL calibration attempt against this data vintage across all
+  formulations (owner: one more attempt). Loss ledger; revisit only with 2024+ cohorts.
+
 ## Changelog of findings in this pass
 
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.

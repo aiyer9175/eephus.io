@@ -71,6 +71,17 @@ automation secrets, payload size) and the ordinary pre-launch data refresh.
       found (bucket probabilities at FV45+) is blocked by a rank-gate
       tolerance tighter than the eval's noise floor, recorded for a future
       pre-registration.
+- [x] Review-queue round (owner-directed): SHIPPED farm-letter snapshotting,
+      the PROSPX gradeBlock refactor + grade-scale outcome band, and the F-01
+      total-band fix (dropped as miscalibrated per the owner-approved
+      fallback). RESOLVED the ERA-shrink unification (keep two) and MiLB park
+      factors (infeasible on cached data). CLOSED the eFV bucket-calibration
+      line (E-ISO3, final loss ledger). Overseas wRC+ upgraded to
+      ready-to-run and queued. AgeRel+ stays parked. Registry 51 rows, suite
+      1,725 green, golden artifacts still byte-identical to baseline (the
+      whole review-queue round is output-neutral on published model numbers).
+      DEFERRED: Country/IFA entity pages (build lane failed on a formatting
+      error, not a data problem; REVIEW_QUEUE item 14).
 
 ## Owner actions (pending, cannot be done by agents)
 
