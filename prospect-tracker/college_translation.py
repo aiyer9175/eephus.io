@@ -54,19 +54,13 @@ import re
 from pathlib import Path
 
 import storage
+# BF_PER_9: K/9, BB/9 -> K%, BB% fallback conversion. SLOPE_SHRINK_K: slope
+# = ols_slope * n / (n + K), pulls thin fits toward pure regression-to-the-
+# mean. Both live in rate_stabilization with their provenance.
+from rate_stabilization import BF_PER_9, SLOPE_SHRINK_K
 
 ROOT = Path(__file__).parent
 CS = ROOT / "collegesavant"
-
-# Pitcher Single-A statlines carry K/9 + BB/9, not K% / BB%. Convert with a
-# standard batters-faced-per-9-innings estimate so the pitcher translation runs
-# in the same K% / BB% units as the college side and the hitter model.
-BF_PER_9 = 38.0
-
-# Slope shrinkage pseudo-count: predicted slope = ols_slope * n / (n + K). Pulls
-# thin / weak fits toward pure regression-to-the-mean. K=20 keeps a strong n=77
-# fit near its OLS slope while heavily damping a 30-pair cell.
-SLOPE_SHRINK_K = 20
 
 _DEC = json.JSONDecoder()
 

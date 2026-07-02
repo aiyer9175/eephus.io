@@ -50,6 +50,7 @@ import fa_ident
 import fa_market as fm
 import fa_projection as fp
 import value_framework as vf
+from rate_stabilization import REPLACEMENT_WINS
 from scrapers import normalize_key
 
 log = logging.getLogger(__name__)
@@ -594,8 +595,10 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
     denominator, so it cancels - lockedPct isolates cost control: 1.0 = every
     contributor locked through the horizon, low = a core about to leak to free
     agency. `byYear[].war` (controlled WAR per season) drives the decline
-    sparkline. Prospects contribute at their org from their ETA forward."""
-    REPLACEMENT_WINS = 47.7
+    sparkline. Prospects contribute at their org from their ETA forward.
+
+    REPLACEMENT_WINS comes from rate_stabilization (shared with the retro
+    backtest in proj_backtest.py)."""
     # bWAR is calibrated so the league's players sum to ~1000 WAR every
     # season (verified 1000/1000/1000 for 2023-25 in war_daily). The
     # rostered universe captures ~56% of that pool (Marcel regression +

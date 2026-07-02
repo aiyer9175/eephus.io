@@ -38,6 +38,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
+from rate_stabilization import NEED_ERA_SHRINK_IP
+
 # ---- role detection (from season GS/G/IP) ---------------------------------- #
 SP_GS_SHARE = 0.60
 SP_IP_PER_G = 3.5
@@ -343,7 +345,8 @@ def prospect_role_fit(tools: dict, position: Optional[str]) -> dict:
 
 
 LG_SP_ERA = 4.20            # league-ish starter ERA: the need-gate shrink target
-NEED_ERA_SHRINK_IP = 45.0   # ERA regresses toward LG_SP_ERA with this pseudo-count of IP
+# ERA regresses toward LG_SP_ERA with NEED_ERA_SHRINK_IP pseudo-count of IP
+# (imported from rate_stabilization, which holds the provenance).
 
 
 def starter_need_score(era: Optional[float], ip: Optional[float] = None) -> float:

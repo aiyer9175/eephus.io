@@ -44,6 +44,7 @@ from datetime import date
 from pathlib import Path
 
 import fa_projection as fp
+from rate_stabilization import REPLACEMENT_WINS   # shared with proj_export
 
 log = logging.getLogger(__name__)
 
@@ -51,7 +52,6 @@ DATA_DIR = Path(__file__).parent / "data"
 EVAL_PATH = DATA_DIR / "team_outlook_eval.json"
 
 TARGETS = (2022, 2023, 2024, 2025)      # last one = the held-out gate season
-REPLACEMENT_WINS = 47.7
 LEAGUE_WINS = 2430.0
 AGE_BANDS = ((0, 25), (26, 29), (30, 33), (34, 99))
 BREF_ORG_FIX = {"OAK": "ATH", "WSH": "WSN", "ANA": "LAA", "TBD": "TBR",

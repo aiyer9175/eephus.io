@@ -41,6 +41,7 @@ from scrapers import (
 )
 from consensus import PlayerTimeseries, stock_movement
 from stats import StatLine
+from rate_stabilization import K_AB, K_IP
 
 DB_PATH = Path(__file__).parent / "prospects.db"
 _LEVEL_SORT_ORDER = {"MLB": 0, "AAA": 1, "AA": 2, "A+": 3, "A": 4, "CPX": 5, "DSL": 6}
@@ -8347,9 +8348,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if era and avg_era and era > 0:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a few-IP line no longer
-                        # reads as an extreme ERA-. K_IP ≈ ERA stabilization (IP).
+                        # reads as an extreme ERA-. K_IP (ERA stabilization,
+                        # IP units): rate_stabilization.py has the provenance.
                         ip = float(sl_out.get("ip") or 0)
-                        K_IP = 50.0
                         era_adj = (ip * era + K_IP * avg_era) / (ip + K_IP)
                         era_minus = round(era_adj / avg_era * 100)
                         sl_out["era_minus_level"] = era_minus
@@ -8368,9 +8369,9 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     if ops and avg_ops and avg_ops > 0:
                         # Empirical-Bayes shrinkage toward the level mean by
                         # sample size before indexing — a 4-AB line no longer
-                        # reads OPS+ 374. K_AB ≈ OPS stabilization (AB units).
+                        # reads OPS+ 374. K_AB (OPS stabilization, AB units):
+                        # rate_stabilization.py has the provenance.
                         ab = float(sl_out.get("ab") or 0)
-                        K_AB = 170.0
                         ops_adj = (ab * ops + K_AB * avg_ops) / (ab + K_AB)
                         ops_plus = round(ops_adj / avg_ops * 100)
                         sl_out["ops_plus_level"] = ops_plus
