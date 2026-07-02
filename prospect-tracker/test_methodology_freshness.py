@@ -79,6 +79,12 @@ MODEL_GLOSSARY = {
     "xfv_isotonic_calibration": "internal",
     "sc_plus_component_diagnostic": "internal",
     "surplus_sensitivity_diagnostic": "internal",
+    # X-D1 gmLI deployment-context metric: gate passed, /mlbstats/ wiring +
+    # glossary entry land this pass (re-point to the glossary slug then).
+    "leverage_consistency": "internal",
+    # X-D2 AgeRel+ candidate: numeric bar met but not a clear pass; NOT
+    # wired, owner decision queued in REVIEW_QUEUE.md.
+    "age_rel_outperformance": "internal",
 }
 
 

@@ -583,6 +583,28 @@
    "eval_artifact": "data/surplus_sensitivity.json",
    "verdict": "validated",
    "notes": "Holistic pass 3 (2026-07-01). Ordering is level-invariant: zero top-50 churn at every shift, max top-50 move 2 spots (-20% only), FV45+ rho >=0.9999 everywhere; dollar levels move roughly with the shift (FV60+ median +24% at +20%). Structural facts recorded: FV<=40 (3,491 players) is level-invariant by design (fixed-dollar low-tier anchor is not market-indexed); the isotonic output layer amplifies level shifts up to ~1.9x in FV 45-50 and pins ~3,300 players at the 1.44M floor. Deterministic, no MC."
+  },
+  {
+   "model_id": "leverage_consistency",
+   "surface": "/mlbstats/ Bullpen Leaderboards (deployment-context column; wiring lands this pass)",
+   "predicts": "n/a - deployment context, not skill: multi-year manager-assigned leverage (relief-entry-weighted gmLI mean over the trailing 3 seasons) with a pool percentile and an established/provisional stability tag; never folded into REM+",
+   "champion": "gmli_3yr (relief-entry-weighted mean, 2024-2026, min-BF qualified pool)",
+   "baseline": "pre-registered gate: pooled Y->Y+1 gmLI Spearman rho >= 0.30 (2018-2025 ex-2020) + split-half stability at the same bar",
+   "metric": "Y->Y+1 rank autocorrelation on qualified reliever pairs + within-season split-half rho",
+   "eval_artifact": "data/leverage_consistency_eval.json",
+   "verdict": "provisional",
+   "notes": "Holistic pass 3 (2026-07-01), gate pre-registered before the run and CLEANLY PASSED: pooled Y->Y+1 rho 0.4683 (n=878 pairs; seeded bootstrap 95% CI 0.412-0.5206, floor well above the 0.30 bar); every season pair 0.4069-0.5595; split-half pooled 0.5294 (n=1491), rising with entries (25+: 0.461). Sensitivity with symmetric 100/100 qualification: 0.4602. Pool and gmLI construction mirror tools/rem_plus_backtest.py (is_true_reliever + opener drop; gmLI self-computed from StatsAPI winProbability walks). proposed_values cover 197/197 of the current qualified pool (139 established, 58 provisional). Provisional until the displayed column accrues a forward season; deployment context only."
+  },
+  {
+   "model_id": "age_rel_outperformance",
+   "surface": "model-dev artifact (NOT WIRED - needs-owner-decision before any display)",
+   "predicts": "n/a - candidate display index (working name AgeRel+): production vs same-age same-level peers, EB-shrunk at source (K_AB=170/K_IP=50 from rate_stabilization)",
+   "champion": "shipped level-relative chips (ops_plus_level / era_minus_level) remain the displayed treatment",
+   "baseline": "pre-registered gate: forward r >= 0.10 on n >= 80 resolved graduates + no small-sample blowups after shrinkage",
+   "metric": "pooled Pearson r vs realized 6yr bWAR on fully-resolved graduates (debut <= 2020), contemporaneous norms (leakage-safe)",
+   "eval_artifact": "data/age_rel_outperformance_eval.json",
+   "verdict": "provisional",
+   "notes": "Holistic pass 3 (2026-07-01). Numeric gate met on its face (pooled r 0.1237, n=369; hit 0.177/pit 0.0973) but NOT a clear pass, so NOT WIRED per the ship policy: (1) the strict pre-registered no-blowups screen flagged 17 pitcher ERA tails and the pass verdict relies on parity checks formalized AFTER inspecting the failure (disclosed in the artifact); (2) the plain level-relative comparator OUT-PREDICTS the age-matched index (r 0.1559 vs 0.1237) because age-matching re-baselines away the age-for-level gradient; (3) selection confound at upper levels (same-age cohorts are promoted elites, so 100 reads as keeping pace with fast-track peers, not level average). Incremental value is context only (partial r 0.1752 beyond young-for-level). Owner decision queued in REVIEW_QUEUE.md; 3,570 proposed values sit in the artifact if wiring is approved."
   }
  ],
  "problems": []
