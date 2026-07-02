@@ -181,3 +181,25 @@ step's own comment; document in DATA_SOURCES.md.
 - 2026-07-01 (wave 1): X-ISO failed gate (no ship, loss ledger); X-D5 and X-C3 artifacts
   shipped; lanes B and H2 landed. Lanes G, H1, P and experiments X-D1, X-D2 pending re-run
   (session-limit interruption).
+- 2026-07-02 (wave 1b): X-D1 gmLI leverage-consistency PASSED its gate cleanly (pooled
+  Y->Y+1 rho 0.4683, bootstrap CI floor 0.412 vs the 0.30 bar; split-half 0.5294; ships
+  as deployment context, wiring follows). X-D2 AgeRel+ met the numeric bar on its face
+  (pooled r 0.1237 n=369) but is NOT a clear pass: the strict pre-registered no-blowups
+  screen failed (17 pitcher ERA tails) and the pass reading relies on parity instruments
+  formalized after inspecting the failure; the plain level-relative comparator
+  out-predicts it (r 0.1559 vs 0.1237); upper-level same-age cohorts are promoted elites
+  (selection confound in display semantics). Per the ship policy: NOT WIRED, owner
+  decision queued in REVIEW_QUEUE.md. Lane H1 landed F-02 (visible error states + retry
+  in all six module apps) and F-08 (REM+/Bullpen+ explainers) plus per-year P90 upside
+  and eFV-primary grade language on projections/#cmp. Lane P landed D4 (surplus $ band),
+  B3 (GFX follows rank mode), C1 (track-record panel), C2 (reliability diagram of the
+  shipped distribution). F-02/F-08 dispositions: FIXED. Full battery green: 1,714 passed
+  / 17 skipped, copy gates clean, p3-base vs p3-wave1b IDENTICAL.
+- 2026-07-01 (wave 2, lane G): audit deliverables landed. MODEL_REGISTRY.md /
+  SITE_MAP.md / DATA_SOURCES.md are GENERATED (tools/gen_audit_docs.py, drift-guarded
+  by test_generated_docs_in_sync.py; DATA_SOURCES.md carries a verbatim-round-tripped
+  CURATED block); CHANGELOG.md / REVIEW_QUEUE.md / BETA_READINESS.md are curated.
+  Registry at generation time: 42 rows (17 validated / 21 provisional / 3 unvalidated /
+  1 deprecated), validate() clean. F-01 spec'd in REVIEW_QUEUE.md item 7. NOTE: rerun
+  tools/gen_audit_docs.py after ALL lanes land (SITE_MAP/DATA_SOURCES introspect live
+  source, so sibling-lane edits will show as expected drift).
