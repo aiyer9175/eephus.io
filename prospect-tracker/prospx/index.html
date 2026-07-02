@@ -16499,9 +16499,8 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const _distPool = players.concat(typeof provPlayers === "function" ? provPlayers() : []);
   let _distN = 0;
   for (const p of _distPool) {
-    const _x = getEfv(p);
-    const g = (_x && _x.xfv_grade != null) ? efvGradeDisplay(_x)
-              : (p.fv_close != null ? fvCeil(p.fv_close) : null);
+    // gradeBlock.value = eFV grade (nearest) where rated, else fvCeil(fv_close), else null.
+    const g = gradeBlock(p).value;
     if (g == null) continue;
     const t = Math.max(20, Math.min(80, Math.floor(g / 5) * 5));
     counts[t] = (counts[t] || 0) + 1;
@@ -29642,6 +29641,77 @@ function efvGradeDisplay(x) {
   if (x && x.xfv_grade_realized != null) return Math.round(x.xfv_grade_realized);
   return (x && x.xfv_grade != null) ? Math.round(x.xfv_grade) : null;
 }
+// gradeBlock(p, opts): the single grade-resolution decision reused across board rows,
+// player detail, GFX rows and the compare/tooltip paths. It centralizes the two rounding
+// rules and the provisional/locked flags so no call site re-derives them:
+//   - eFV grade rounds to NEAREST (efvGradeDisplay); consensus FV rounds UP (fvCeil).
+// Returns a descriptor (never null):
+//   x         : the eFV entry (getEfv(p)) or null
+//   primary   : which grade leads ("xfv"/"fv"); opts.primary overrides the board toggle
+//   efvVal    : eFV display grade (round-to-nearest) or null when eFV abstains
+//   consLabel : consensus label string off the latest snapshot (may carry "45+" style) or null
+//   consVal   : numeric consensus FV via fvCeil(p.fv_close) or null
+//   value     : numeric lead value -- efvVal when rated, else consVal (no label path)
+//   label     : display STRING -- efvVal, else consLabel, else consVal, else null
+//   lead      : "efv" | "consensus" | "none"
+//   provisional / locked : eFV provisional (source-ungraded) / locked-at-debut flags
+// Consumers pick the field that matches their existing output; adopt only where byte-identical.
+function gradeBlock(p, opts) {
+  opts = opts || {};
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  const primary = opts.primary || (typeof _gradePrimary === "function" ? _gradePrimary() : "xfv");
+  const efvVal = (x && x.xfv_grade != null) ? efvGradeDisplay(x) : null;
+  const latest = (p && p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+  const consLabel = latest ? latest.consensus_fv_label : null;
+  const consVal = (p && p.fv_close != null) ? fvCeil(p.fv_close) : null;
+  const value = efvVal != null ? efvVal : consVal;
+  const label = efvVal != null ? String(efvVal)
+              : (consLabel != null) ? String(consLabel)
+              : (consVal != null) ? String(consVal) : null;
+  const lead = (efvVal != null && primary === "xfv") ? "efv"
+             : (consLabel != null || consVal != null) ? "consensus"
+             : (efvVal != null) ? "efv" : "none";
+  return { x, primary, efvVal, consLabel, consVal, value, label, lead,
+           provisional: !!(x && x.xfv_ungraded), locked: !!(x && x.kind === "debuted") };
+}
+// efvGradeBand(x): the OUTCOME-distribution band expressed on the grade (20-80) scale.
+// eFV already publishes the outcome distribution in surplus dollars (dist.p10_mm/p90_mm).
+// surplus_by_grade_mm in window.VALUE_FRAMEWORK is the SAME monotone anchor the grade is
+// priced on (inverting it on surplus_mm reproduces xfv_grade within ~0.4 grade points across
+// the population), so mapping the P10/P90 surplus quantiles back through it lands the band in
+// grade space consistently with the displayed grade. Endpoints round to NEAREST (an outcome
+// band, not a consensus FV). Returns {lo, hi} or null when the payload lacks the fields or the
+// band is degenerate/provisional (caller hides it).
+function efvGradeBand(x) {
+  if (!x || x.xfv_ungraded || x.xfv_grade == null) return null;
+  const d = x.dist || {};
+  const p10 = (d.p10_mm != null) ? d.p10_mm : x.band_p10_mm;
+  const p90 = (d.p90_mm != null) ? d.p90_mm : x.band_p90_mm;
+  if (p10 == null || p90 == null) return null;
+  const vf = (typeof window !== "undefined" && window.VALUE_FRAMEWORK) ? window.VALUE_FRAMEWORK : null;
+  const tbl = vf && vf.surplus_by_grade_mm && vf.surplus_by_grade_mm[x.side === "P" ? "pitcher" : "hitter"];
+  if (!tbl) return null;
+  const pts = Object.keys(tbl).map(k => [parseFloat(k), Number(tbl[k])]).sort((a, b) => a[0] - b[0]);
+  if (pts.length < 2) return null;
+  const inv = mm => {
+    if (mm <= pts[0][1]) return pts[0][0];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const g0 = pts[i][0], m0 = pts[i][1], g1 = pts[i + 1][0], m1 = pts[i + 1][1];
+      if (mm <= m1) return (m1 === m0) ? g0 : g0 + (g1 - g0) * (mm - m0) / (m1 - m0);
+    }
+    return pts[pts.length - 1][0];
+  };
+  const lo = Math.round(inv(Math.min(p10, p90)));
+  const hi = Math.round(inv(Math.max(p10, p90)));
+  if (!isFinite(lo) || !isFinite(hi) || lo >= hi) return null;   // degenerate / collapsed -> hide
+  return { lo, hi };
+}
+// The header line for the grade-scale outcome band. Empty string when hidden.
+function efvGradeBandHTML(x) {
+  const band = efvGradeBand(x);
+  if (!band) return "";
+  return `<div class="efv-grade-band" title="Outcome-distribution band on the grade scale: eFV's modeled 6-year outcome runs from about ${band.lo} to ${band.hi} on the 20-80 scale (P10 to P90). This is the spread of how the model thinks this prospect turns out, not scouting-source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
+}
 // eFV-minus-consensus delta CONSISTENT with the displayed (model-alone) grade: realized
 // grade vs consensus FV. Replaces the stored quantile-map delta so the colored +/- chip
 // matches the headline number.
@@ -29709,13 +29779,16 @@ function efvBadgeHTML(p, opts) {
   // opts.primary forces which grade leads ("xfv"/"fv"), overriding the board's Rank-by
   // toggle. The Debuted tab passes "xfv": it has its own sort + is the retrospective
   // eFV-vs-consensus view, so it should always lead with eFV regardless of the board toggle.
-  const primary = (opts && opts.primary) || _gradePrimary();
-  const x = getEfv(p);
-  const latest = p.points && p.points[p.points.length - 1];
-  const consLabel = latest ? latest.consensus_fv_label : null;
+  // gradeBlock centralizes the primary/eFV-value/consensus-label decision (single source of
+  // the eFV round-to-nearest vs consensus fvCeil rules). consNum keeps its own x.consensus_fv
+  // basis (a numeric compare value, not a display grade) so it is derived separately below.
+  const gb = gradeBlock(p, opts);
+  const primary = gb.primary;
+  const x = gb.x;
+  const consLabel = gb.consLabel;
   const consNum = (x && x.consensus_fv != null) ? x.consensus_fv
                   : (consLabel != null ? parseFloat(consLabel) : null);
-  const xg = (x && x.xfv_grade != null) ? efvGradeDisplay(x) : null;
+  const xg = gb.efvVal;
   const inj = (x && x.injury_factor != null && x.injury_factor < 1)
     ? `<span title="eFV applies an injury penalty (factor ${x.injury_factor})" style="color:var(--accent-il);font-size:9px;">⚕</span>` : "";
   // Locked: once a prospect debuts, its eFV is frozen at the final pre-debut grade (the grade
@@ -29776,19 +29849,21 @@ function efvRankNumHTML(p) {
 // Falls back to the consensus fvBadge when eFV abstains (no pro track record).
 function efvDetailHeaderHTML(p, fvBadge) {
   const labelStyle = "display:flex;justify-content:flex-end;align-items:center;gap:6px;font-family:var(--font-sans);font-size:10px;color:var(--text-tertiary);letter-spacing:0.08em;text-transform:uppercase;font-weight:600;";
-  const x = getEfv(p);
+  const gb = gradeBlock(p);
+  const x = gb.x;
   if (!(x && x.xfv_grade != null)) {
     return `<div style="${labelStyle}"><span>Current FV (consensus)</span></div>${fvBadge}`;
   }
-  const g = efvGradeDisplay(x);
+  const g = gb.efvVal;
   const d = efvMinusConsensus(x);
   const dtxt = d == null ? "" : `${d > 0 ? "+" : ""}${d.toFixed(1)}`;
   const dcol = d == null ? "var(--text-tertiary)" : d > 0 ? "var(--up)" : d < 0 ? "var(--down)" : "var(--text-secondary)";
   // Provisional (source-ungraded): label as provisional, dashed badge, and NO consensus-FV
   // reference line (there is no source grade to compare against).
-  const prov = !!x.xfv_ungraded;
+  const prov = gb.provisional;
   return `<div style="${labelStyle}"><span>${prov ? "Provisional eFV" : "eFV"}</span></div>`
     + `<span class="fv-badge ${fvClass(String(g))} size-lg" title="${escapeHtml(efvTooltip(x))}" style="margin-top:4px;${prov ? "border-style:dashed;" : ""}">${g}</span>`
+    + efvGradeBandHTML(x)
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
@@ -30595,14 +30670,9 @@ function _gfxRow(item, kind, meta) {
   }
   if (kind === "leader") {
     const p = item.p || {}, r = item.r || {};
-    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-    const _lx = getEfv(p);
-    const _lxg = (_lx && _lx.xfv_grade != null) ? efvGradeDisplay(_lx) : null;
     return {
-      // eFV badge (consensus FV fallback).
-      fv: _lxg != null ? String(_lxg)
-          : (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
-          : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null),
+      // eFV grade (nearest) where rated, else consensus label, else fvCeil(fv_close) -- via gradeBlock.
+      fv: gradeBlock(p).label,
       name: p.player_name || "",
       mlbam: p.mlbam_id, org: p.org,
       meta: [p.position, p.org, r.level].filter(Boolean).join(" · "),
@@ -31714,12 +31784,9 @@ function buildCompareCard(snap) {
   const fmtSurp = m => (m == null) ? " - " : (typeof fmtSvMM === "function" ? fmtSvMM(m) : "$" + Math.round(m) + "M");
   const data = players.map((p, i) => {
     const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
-    // eFV leads (consensus FV fallback where eFV abstains).
-    const _x = getEfv(p);
-    const _xg = (_x && _x.xfv_grade != null) ? efvGradeDisplay(_x) : null;
-    const fvLabel = _xg != null ? String(_xg)
-                  : (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
-                  : (p.fv_close != null ? String(fvCeil(p.fv_close)) : " - ");
+    // eFV leads (consensus FV fallback where eFV abstains) -- via gradeBlock.label.
+    const _gb = gradeBlock(p);
+    const fvLabel = _gb.label != null ? _gb.label : " - ";
     const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
     const grades = (p.tools && p.tools.grades) || {}; const ltc = (latest && latest.tools_consensus) || {};
     const getT = k => { const v = grades[k]; if (v != null && !isNaN(v)) return Number(v); const lv = ltc[k]; return (lv != null && !isNaN(lv)) ? Number(lv) : null; };
