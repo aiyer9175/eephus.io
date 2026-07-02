@@ -2145,6 +2145,9 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
 }
 .mlbp-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+/* Even cells at any count/viewport (the Upside per-year strip: 5 seasons
+   otherwise wrap 3+2 with uneven widths on wide viewports). */
+.mlbp-grid-flow { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
 .mlbp-cell {
   display: flex; flex-direction: column; gap: 3px; padding: 9px 12px;
   background: var(--bg-secondary); border: 1px solid var(--border);

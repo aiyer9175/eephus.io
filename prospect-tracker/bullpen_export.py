@@ -253,7 +253,8 @@ def _join_leverage_consistency(relievers: list[dict]) -> int:
         r["gmli_3yr"] = p.get("gmli_3yr")
         r["gmli_3yr_pct"] = p.get("pct")
         r["gmli_3yr_tag"] = p.get("tag")
-        n += 1
+        if r["gmli_3yr"] is not None:   # count only rows that will render
+            n += 1
     return n
 
 

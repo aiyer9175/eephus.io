@@ -134,7 +134,9 @@ def main() -> None:
 
     # --- 4. single-sourced version stamp (F-03) -----------------------------
     d["version"] = glossary_version()
-    PATH.write_text(json.dumps(d, ensure_ascii=False, indent=1) + "\n",
+    # No trailing newline: matches the other glossary writers, so re-running
+    # any of them never produces a spurious 1-byte diff.
+    PATH.write_text(json.dumps(d, ensure_ascii=False, indent=1),
                     encoding="utf-8")
     print(f"wrote {PATH} - {len(d['entries'])} entries, "
           f"version {d['version']}")

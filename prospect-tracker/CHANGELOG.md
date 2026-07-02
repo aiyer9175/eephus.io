@@ -12,6 +12,28 @@ BETA_READINESS.md (go/no-go).
 
 ## 2026-07-02
 
+- Wave 2 close-out: adversarial verification of the whole pass (4 read-only
+  lanes, 16 findings, none P0) plus the owner-directed eFV improvement round
+  (3 gated experiments, gates pre-registered before any run, all NO-SHIP).
+  Fixes landed from the verification: the track-record panel's glossary deep
+  link now uses the hash form the glossary actually parses; the gmLI
+  consistency tool derives its seasons from the leaderboards payload instead
+  of freezing at 2026 (gate numbers unchanged: pooled rho 0.4683, split-half
+  0.5294) and writes atomically; the SC+ component diagnostic pins its
+  keep/reweight decision to closed outcome seasons (the in-progress 2026
+  season had made committed numbers drift) and its now-firing reweight signal
+  is queued as REVIEW_QUEUE item 12 rather than shipped (n=23 per side); the
+  monthly pipeline regenerates the generated audit docs right after registry
+  restamps; the Upside strip lays out evenly at any season count; static
+  pages rebuilt so their cache-busters match the shipped JS. eFV round
+  verdicts, all honest loss ledgers with registry rows: the grade-space
+  monotone recalibration fixed the isotonic candidate's rank-flattening and
+  doubled the calibration gain but still fails the rank tolerance (which the
+  identity transform itself fails, a gate-design fact recorded for any future
+  attempt); per-cohort blend lambdas are noise-dominated at current cohort
+  depth; the AA/AAA pitcher tracking overlay has zero trainable coverage
+  until the 2024 debut cohort resolves. eFV stays at its trainable-data
+  ceiling on ranking; its published numbers are unchanged.
 - PROSPX display work (lane P): the player-detail Surplus card now shows the
   eFV surplus credible band in plain dollars ("Surplus band P10 to P90",
   explicitly surplus dollars, never a grade band; hidden when the band is

@@ -571,7 +571,7 @@
    "metric": "pooled per-component forward r/rho vs first-MLB OPS / inverted ERA and 2y bWAR, debut cohorts 2024-2026; forward-chained top-2 blend vs composite on identical OOS rows",
    "eval_artifact": "data/sc_plus_component_eval.json",
    "verdict": "validated",
-   "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count."
+   "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count. UPDATE 2026-07-02 (adversarial audit): the decision instrument is now pinned to CLOSED outcome seasons (debut <= 2025); in-progress-season rows drift with every stats refresh and had made the committed numbers irreproducible. On the closed basis the rule fires reweight (blend beats composite +0.14 hit / +0.28 pit pooled OOS r, n=23/side): recorded as a QUEUED candidate (REVIEW_QUEUE.md item 12), composite unchanged; a published-metric change requires its own pre-registered gate and these ns are far below any shippable bar."
   },
   {
    "model_id": "surplus_sensitivity_diagnostic",
@@ -605,6 +605,39 @@
    "eval_artifact": "data/age_rel_outperformance_eval.json",
    "verdict": "provisional",
    "notes": "Holistic pass 3 (2026-07-01). Numeric gate met on its face (pooled r 0.1237, n=369; hit 0.177/pit 0.0973) but NOT a clear pass, so NOT WIRED per the ship policy: (1) the strict pre-registered no-blowups screen flagged 17 pitcher ERA tails and the pass verdict relies on parity checks formalized AFTER inspecting the failure (disclosed in the artifact); (2) the plain level-relative comparator OUT-PREDICTS the age-matched index (r 0.1559 vs 0.1237) because age-matching re-baselines away the age-for-level gradient; (3) selection confound at upper levels (same-age cohorts are promoted elites, so 100 reads as keeping pace with fast-track peers, not level average). Incremental value is context only (partial r 0.1752 beyond young-for-level). Owner decision queued in REVIEW_QUEUE.md; 3,570 proposed values sit in the artifact if wiring is approved."
+  },
+  {
+   "model_id": "xfv_grade_recal",
+   "surface": "model-dev artifact (rendered nowhere) - eFV bucket-distribution recalibration candidate #2",
+   "predicts": "n/a - gated experiment E-ISO2: strictly-increasing monotone recalibration of p_bucket_given_fv in grade space (candidate REJECTED at its pre-registered gate)",
+   "champion": "shipped uncalibrated p_bucket_given_fv distribution (unchanged)",
+   "baseline": "grade-space monotone challenger (forward-chained OOF, X-ISO cohort splits, SEED=7)",
+   "metric": "pre-registered 3-condition gate (Brier/log-loss, Spearman tolerance -0.002, per-tier reliability incl. FV-35)",
+   "eval_artifact": "data/xfv_grade_recal_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3 eFV round (2026-07-02), gate pre-registered before the run. Solved X-ISO's failure mode: strict monotonicity verified on all 8 maps, within-(side,year) rank preservation EXACT, calibration gain even larger (pooled Brier 0.2466->0.1956, tier-45 gap 0.0946->0.0156, tier-55 0.1616->0.0436). Still NO SHIP: pooled Spearman -0.0115 vs -0.002 tolerance, all of it cross-cell (cross-year map drift + cross-side interleaving), and the IDENTITY transform itself scores -0.0041 on the same pooled metric, i.e. the tolerance is tighter than the eval's own noise floor. FV-35 tier marginally worse (+0.0009 vs 1e-4). The blockers are gate-design facts, not method facts; any future attempt must first fix the rank metric (within-cell or cohort-stratified Spearman) in a NEW pre-registration, never post-hoc."
+  },
+  {
+   "model_id": "xfv_cohort_lambda",
+   "surface": "model-dev artifact (rendered nowhere) - per-cohort eFV/consensus blend lambda candidate",
+   "predicts": "n/a - gated experiment E-LAMBDA: out-of-fold per-cohort blend lambda selection (candidate REJECTED on all 3 gate conditions)",
+   "champion": "shipped global per-side blend lambdas (unchanged)",
+   "baseline": "per-cohort OOF-selected lambdas (grid 0.00-1.00 step 0.05, min pool 25, SEED=7)",
+   "metric": "pre-registered gate: pooled OOS Spearman non-decrease both sides; >=+0.010 cohort gain with no cohort worse than -0.005; fold-stable lambdas",
+   "eval_artifact": "data/xfv_cohort_lambda_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3 eFV round (2026-07-02). FAILED all three conditions: pit pooled -0.0104; hit:hs -0.0107 / pit:college -0.0083 / pit:hs -0.0548 breach the cap (pit:ifa +0.0247 was the lone material gain); 5 of 6 gated cohorts fold-unstable (e.g. hit:college lambda path 0.10/0.95/0.95/0.80). Per-cohort argmax on 25-160-row OOF pools is noise-dominated with only 4 scored fold years. DO NOT RE-ATTEMPT this design; a future attempt needs shrinkage toward the global lambda (hierarchical partial pooling) pre-registered from the start, and more resolved cohorts."
+  },
+  {
+   "model_id": "xfv_pitcher_stuff",
+   "surface": "model-dev artifact (rendered nowhere) - AA/AAA pitcher tracking overlay candidate for eFV",
+   "predicts": "n/a - gated experiment E-STUFF: aStuff+ / SC+ whiff-z overlay features for upper-level pitchers (INCONCLUSIVE: zero trainable coverage)",
+   "champion": "shipped eFV pitcher model (unchanged; baseline blend rho 0.2787 reproduced exactly)",
+   "baseline": "overlay variants astuff/whiff/both under strict and same-season as-of conventions",
+   "metric": "pre-registered gate: pitcher pool OOS Spearman >=+0.005, AA/AAA sub-cohort >=+0.010, lower-level no worse than -0.003, honest insufficient-n rule",
+   "eval_artifact": "data/xfv_pitcher_stuff_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3 eFV round (2026-07-02). Structurally inconclusive, recorded as gate FAIL per the pre-registered insufficient-n rule: AAA tracking starts 2023 and scored cohorts end at debut 2023, so strict pre-decision coverage is 0/466 test rows and 0 train rows in every fold; the overlay coefficient is identically zero and every delta is exactly 0.0 (which also proves the neutral-when-missing encoding poisons nothing). The hypothesis is neither confirmed nor refuted. Do not re-attempt until the pitcher matrix rebuild adds debut cohorts 2024+ as censored scored rows; the first trainable fold arrives with the 2024-cohort resolution."
   }
  ],
  "problems": []

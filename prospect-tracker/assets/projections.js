@@ -872,7 +872,7 @@
     const first = DATA.first_season;
     const cells = hi.map((v, t) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${first + t}</span><span class="mlbp-cell-val${warClass(v)}">${fmtWar(v)}</span></div>`).join("");
     return `<div class="mlbp-section"><div class="mlbp-section-title">Upside <span class="fa-sub">P90 outcome per season - the year-by-year ceiling if things break right (per-year percentiles; they do not add up to a multi-year total)</span></div>
-      <div class="mlbp-grid">${cells}</div></div>`;
+      <div class="mlbp-grid mlbp-grid-flow">${cells}</div></div>`;
   }
   function arsenalTable(ar) {
     if (!ar || !ar.length) return "";

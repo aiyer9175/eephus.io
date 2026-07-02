@@ -71,7 +71,18 @@ BULLPEN_PATH = ROOT / "data" / "bullpen_leaderboards.json"
 
 # ---- pre-set constants (fixed before any number was computed) --------------- #
 SEASONS = [2018, 2019, 2021, 2022, 2023, 2024, 2025]  # ex-2020, backtest convention
-CURRENT_SEASON = 2026          # proposed_values pool only; never in the gate math
+# proposed_values pool only; never in the gate math. Derived from the
+# leaderboards payload season (falls back to the calendar year) so the monthly
+# 6b4b refresh keeps sliding forward instead of freezing at the build year.
+def _current_season() -> int:
+    try:
+        return int(json.loads(BULLPEN_PATH.read_text(encoding="utf-8"))["season"])
+    except (OSError, ValueError, KeyError, TypeError):
+        from datetime import date as _date
+        return _date.today().year
+
+
+CURRENT_SEASON = _current_season()
 MIN_TBF_Y = 100                # qualified in the predictor year (backtest MIN_TBF_Y)
 MIN_TBF_NEXT = 60              # a real sample in the outcome year (backtest MIN_TBF_NEXT)
 SPLIT_DATE = "06-30"           # first half through 06-30 (backtest stabilization split)
@@ -80,7 +91,9 @@ RHO_GATE = 0.30                # pre-registered pooled Y->Y+1 bar
 SPLIT_GATE = 0.30              # pre-set split-half bar (same materiality, set before run)
 BOOT = 2000                    # bootstrap resamples for the pooled-rho CI
 SEED = 20260701                # fixed seed for the bootstrap
-MULTI_YEAR_SEASONS = [2024, 2025, 2026]  # gmli_3yr window for the current pool
+# gmli_3yr window: the trailing 3 seasons ending at the current pool season,
+# so the monthly refresh slides forward with the leaderboards.
+MULTI_YEAR_SEASONS = [CURRENT_SEASON - 2, CURRENT_SEASON - 1, CURRENT_SEASON]
 TAG_MIN_SEASONS = 2            # "established" needs 2+ seasons ...
 TAG_MIN_ENTRIES = 60           # ... and 60+ total relief entries
 
@@ -428,7 +441,11 @@ def run(write: bool = True) -> dict:
                       "split_by_season": {k: v["spearman_rho"] for k, v in sh["by_season"].items()},
                       "proposed_n": pv["n_with_value"]}, indent=1))
     if write:
-        OUT_PATH.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+        # Atomic write (tmp + replace), matching bullpen_export: a crash
+        # mid-write must never leave malformed JSON for the export join.
+        tmp = OUT_PATH.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, indent=1) + "\n", encoding="utf-8")
+        tmp.replace(OUT_PATH)
         print(f"wrote {OUT_PATH.relative_to(ROOT)} in {round(time.time() - t0, 1)}s")
     return payload
 

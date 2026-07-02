@@ -81,6 +81,12 @@ BLEND_IMPROVE_MIN = 0.05   # pooled-OOS r gain required to call "reweight"
 DEMOTE_R_MAX = 0.05        # composite pooled r below this on BOTH sides
 P_SIGNAL = 0.10            # per-component two-sided p threshold
 
+# The keep/reweight DECISION reads only outcome seasons that are closed:
+# debut-2026 first-season rates are in progress and drift with every stats
+# refresh, so a decision computed on them is a moving target (2026-07 audit
+# finding). Full-pool numbers are still reported for context.
+DECISION_MAX_DEBUT_YEAR = 2025
+
 
 # ---------------------------------------------------------------- stats
 
@@ -297,6 +303,7 @@ def blend_check(records):
                     and r[outcome_key] is not None]
             fold_rows = []
             pooled = {"xw": [], "xe": [], "xc": [], "y": []}
+            pooled_closed = {"xw": [], "xe": [], "xc": [], "y": []}
             for train_seasons, test_season in folds:
                 train = [r for r in recs if r["season"] in train_seasons]
                 test = [r for r in recs if r["season"] == test_season]
@@ -319,11 +326,17 @@ def blend_check(records):
                 denom = sum(abs(train_r[c]) for c in top2) or 1.0
                 w_r = {c: train_r[c] / denom for c in top2}
                 w_eq = {c: (0.5 if train_r[c] >= 0 else -0.5) for c in top2}
+                closed_fold = (test_season + 1) <= DECISION_MAX_DEBUT_YEAR
                 for r in test:
                     pooled["xw"].append(sum(w_r[c] * r["z"][c] for c in top2))
                     pooled["xe"].append(sum(w_eq[c] * r["z"][c] for c in top2))
                     pooled["xc"].append(r["composite_z"])
                     pooled["y"].append(r[outcome_key])
+                    if closed_fold:
+                        pooled_closed["xw"].append(pooled["xw"][-1])
+                        pooled_closed["xe"].append(pooled["xe"][-1])
+                        pooled_closed["xc"].append(pooled["xc"][-1])
+                        pooled_closed["y"].append(pooled["y"][-1])
                 ys_t = [r[outcome_key] for r in test]
                 fold_rows.append({
                     "train_seasons": list(train_seasons),
@@ -348,6 +361,14 @@ def blend_check(records):
                     "r_blend_top2_equal": _pearson(pooled["xe"], pooled["y"]),
                     "r_composite": _pearson(pooled["xc"], pooled["y"]),
                     "rho_composite": _spearman(pooled["xc"], pooled["y"]),
+                },
+                # Decision instrument: closed outcome seasons only (stable
+                # under stats refreshes; see DECISION_MAX_DEBUT_YEAR).
+                "pooled_oos_closed": {
+                    "n": len(pooled_closed["y"]),
+                    "r_blend_r_weighted": _pearson(pooled_closed["xw"], pooled_closed["y"]),
+                    "r_blend_top2_equal": _pearson(pooled_closed["xe"], pooled_closed["y"]),
+                    "r_composite": _pearson(pooled_closed["xc"], pooled_closed["y"]),
                 },
             }
         out[label] = block
@@ -415,17 +436,24 @@ def recommendation(per_comp, blend):
     comp_r = {s: per_comp[s][rate_key[s]]["composite"]["r"] for s in rate_key}
     gains = {}
     for s in ("hitters", "pitchers"):
-        po = blend["rate_outcome"][s]["pooled_oos"]
+        po = (blend["rate_outcome"][s].get("pooled_oos_closed")
+              or blend["rate_outcome"][s]["pooled_oos"])
         rb, rc = po.get("r_blend_r_weighted"), po.get("r_composite")
         gains[s] = (None if rb is None or rc is None else round(rb - rc, 4))
     both_gain = all(g is not None and g >= BLEND_IMPROVE_MIN
-                    and (blend["rate_outcome"][s]["pooled_oos"]["r_blend_r_weighted"]
-                         or 0) >= 0.10
+                    and ((blend["rate_outcome"][s].get("pooled_oos_closed")
+                          or blend["rate_outcome"][s]["pooled_oos"])
+                         .get("r_blend_r_weighted") or 0) >= 0.10
                     for s, g in gains.items())
     both_dead = all(r is not None and abs(r) < DEMOTE_R_MAX
                     for r in comp_r.values())
     if both_gain:
-        decision = "reweight"
+        # The rule fires, but this tool is a DIAGNOSTIC, not a pre-registered
+        # ship gate: changing the published SC+ composite requires its own
+        # gated experiment (registry row + eval artifact + freshness map),
+        # and the closed-basis pool (n ~ 23/side) is far below any shippable
+        # bar. The candidate is queued, the shipped composite stays.
+        decision = "reweight-candidate (queued; composite unchanged)"
     elif both_dead:
         decision = "demote"
     else:
@@ -436,7 +464,15 @@ def recommendation(per_comp, blend):
                  f"composite by >= {BLEND_IMPROVE_MIN} pooled-OOS r on BOTH "
                  "sides (blend r >= 0.10); demote if the composite's pooled "
                  f"forward r is under {DEMOTE_R_MAX} in absolute value on both "
-                 "sides; otherwise keep as-is"),
+                 "sides; otherwise keep as-is. Decision inputs use CLOSED "
+                 f"outcome seasons only (debut <= {DECISION_MAX_DEBUT_YEAR}); "
+                 "open-season rows appear in pooled_oos for context but do "
+                 "not move the decision"),
+        "decision_basis": f"pooled_oos_closed (debut <= {DECISION_MAX_DEBUT_YEAR})",
+        "shipping_note": ("a reweight of the published SC+ composite ships only "
+                          "through a dedicated pre-registered gated experiment "
+                          "(see REVIEW_QUEUE.md); this artifact records the "
+                          "candidate signal, it does not authorize the change"),
         "oos_gain_blend_minus_composite": gains,
         "composite_pooled_r_rate": comp_r,
     }

@@ -2659,6 +2659,15 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             _reg = refresh_stamps()
             if _reg.get("problems"):
                 log.warning("model registry problems: %s", _reg["problems"])
+            # Regenerate the generated audit docs in the same breath: the
+            # restamp rewrites freshness fields that MODEL_REGISTRY.md renders,
+            # so regenerating here keeps the tree self-consistent and the
+            # test_generated_docs_in_sync gate green (both files travel in the
+            # same commit). Best-effort like everything in this tail.
+            import subprocess as _sp_docs
+            _sp_docs.run([sys.executable,
+                          str(Path(__file__).parent / "tools" / "gen_audit_docs.py")],
+                         check=True, timeout=300)
         except Exception:
             log.exception("model registry refresh failed — continuing")
         # Headshot resolution (data/photo_ctx.json for the photo fallback chain).

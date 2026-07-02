@@ -130,3 +130,40 @@ to CHANGELOG.md with their commit.
 - Expected impact: none at ship (append-only history table); the payoff is a
   validated/refuted verdict circa 2028.
 - Rollback: stop snapshotting; history keeps whatever accrued.
+
+## 11. AgeRel+ (age-relative outperformance) owner decision
+
+- What: decide whether the X-D2 AgeRel+ index ships as a PROSPX display chip.
+  The gate-passing-on-its-face eval and 3,570 proposed per-player values sit in
+  data/age_rel_outperformance_eval.json; wiring is a one-lookup join plus a
+  glossary entry.
+- Why it is a decision, not a ship: (a) the strict pre-registered no-blowups
+  screen failed and the PASS reading leans on parity instruments formalized
+  after inspecting the failure (disclosed in the artifact); (b) the plain
+  level-relative comparator out-predicts the age-matched index (pooled r
+  0.156 vs 0.124), so the index's value is context, not prediction; (c) at
+  upper levels the same-age cohort is the promoted-elite subset, so 100 reads
+  as "keeping pace with fast-track peers", not "level average" (e.g. an elite
+  young prospect can read 100 on AgeRel+ while reading 107 on the shipped
+  level-relative chip). The display semantics need an owner call.
+- Expected impact: display-only chip; no model or rank surface.
+- Rollback: drop the chip; the artifact stays as a loss-ledger/candidate.
+
+## 12. SC+ composite reweight candidate (barrel + whiff 2-component blend)
+
+- What: the X-C3 diagnostic's closed-outcome-season decision instrument now
+  fires "reweight": the forward-chained top-2 blend (hitters Barrel%/BBE-led,
+  pitchers SwingMiss%-led) beats the equal-weight 4-component composite by
+  +0.14 (hit) / +0.28 (pit) pooled OOS r on closed cohorts. The shipped
+  composite is unchanged: the diagnostic was never a pre-registered ship gate
+  and the closed pools are n=23 per side.
+- Why queued: changing published SC+ values requires its own pre-registered
+  gated experiment (registry row + eval artifact + freshness map), and the
+  decision flipped between "keep" and "reweight" depending on whether the
+  in-progress 2026 outcome season is included, which is exactly the sample
+  fragility a ship gate exists to absorb.
+- Spec: after the 2026 season closes, re-run with three closed folds
+  (2023->24, 23+24->25, 23+24+25->26), pre-register a gate (both-sides gain
+  >= 0.05 at n >= 40/side, no cohort-year reversal), and ship through the
+  standing triple if it passes.
+- Rollback: none needed until attempted.

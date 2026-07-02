@@ -100,7 +100,7 @@
       cell: function (r) {
         if (r.gmli_3yr == null) return "";
         var s = f2(r.gmli_3yr);
-        if (r.gmli_3yr_pct != null) s += '<span class="proj-dim"> p' + r.gmli_3yr_pct + "</span>";
+        if (r.gmli_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.gmli_3yr_pct) + "</span>";
         if (r.gmli_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 60 relief entries in the trailing window">*</span>';
         return s;
       } },

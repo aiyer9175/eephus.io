@@ -1,0 +1,966 @@
+{
+ "generated_at": "2026-07-02",
+ "tool": "tools/efv_pitcher_stuff_lab.py",
+ "experiment": "E-STUFF (pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md; deferred xfv-phase2 A3/A4)",
+ "seed": 20260702,
+ "method": {
+  "protocol": "exact efv_lab_runner forward chain: for each scored year Y in [2020, 2021, 2022, 2023] train the shipped lean ridge + OLS consensus anchor on decision_year < Y (fold gates 12 test / 50 train), blend with the shipped pitcher lambda, pool OOS rows; debuted pitcher pool, KM-censored target",
+  "overlays": {
+   "astuff": "in-house AAA aStuff+ rescored per (pitcher, season) from the committed model artifact with same-season pool stats (the shipped sidecar keeps only the latest season vs the 2025 pool, which would leak post-decision seasons); shrink k=300, 50-pitch score floor, 300-pitch pool floor",
+   "whiff": "swing_miss_percent z within the season's qualified AAA pitcher pool (min 100 PA, AAA-restricted, sign +1), per sc_plus_component_eval / X-C3"
+  },
+  "encoding": "centered value (astuff (v-100)/10; whiff already z), zeroed when uncovered, + 0/1 coverage flag; uncovered rows contribute exactly nothing",
+  "as_of": {
+   "strict": "tracking season < decision (debut) year",
+   "sameseason": "tracking season <= decision year (sensitivity only; debut-year AAA aggregates include post-debut pitches)"
+  },
+  "determinism": "closed-form ridge/OLS, no RNG; offline (cached CSVs + committed artifacts only)",
+  "astuff_selfscore_caveat": "the stuff model's shipping fit saw 2023-2025 pitches, so 2023 feature values score pitches the model trained on; accepted feature-generation caveat matching the module's own forward gate, and moot while the gate is untrainable"
+ },
+ "baseline": {
+  "pooled_rho": 0.2787,
+  "pooled_rho_pure": 0.2812,
+  "per_level_group": {
+   "upper": {
+    "n": 328,
+    "rho": 0.2746
+   },
+   "lower": {
+    "n": 97,
+    "rho": 0.2937
+   },
+   "unknown": {
+    "n": 41,
+    "rho": 0.2511
+   }
+  },
+  "per_year": {
+   "2020": 0.2284,
+   "2021": 0.1088,
+   "2022": 0.4044,
+   "2023": 0.3356
+  },
+  "n": 466,
+  "lam": 0.66,
+  "parity_with_efv_lab_runner_baseline": true,
+  "efv_lab_runner_baseline_rho": 0.2787
+ },
+ "coverage_by_cohort_year": {
+  "strict": {
+   "2011": {
+    "n": 8,
+    "mlbam": 0,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2012": {
+    "n": 30,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2013": {
+    "n": 53,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2014": {
+    "n": 53,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2015": {
+    "n": 71,
+    "mlbam": 4,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2016": {
+    "n": 47,
+    "mlbam": 9,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2017": {
+    "n": 20,
+    "mlbam": 15,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2018": {
+    "n": 41,
+    "mlbam": 31,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2019": {
+    "n": 72,
+    "mlbam": 60,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2020": {
+    "n": 107,
+    "mlbam": 92,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2021": {
+    "n": 112,
+    "mlbam": 98,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2022": {
+    "n": 110,
+    "mlbam": 103,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2023": {
+    "n": 137,
+    "mlbam": 136,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   }
+  },
+  "sameseason": {
+   "2011": {
+    "n": 8,
+    "mlbam": 0,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2012": {
+    "n": 30,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2013": {
+    "n": 53,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2014": {
+    "n": 53,
+    "mlbam": 1,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2015": {
+    "n": 71,
+    "mlbam": 4,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2016": {
+    "n": 47,
+    "mlbam": 9,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2017": {
+    "n": 20,
+    "mlbam": 15,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2018": {
+    "n": 41,
+    "mlbam": 31,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2019": {
+    "n": 72,
+    "mlbam": 60,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2020": {
+    "n": 107,
+    "mlbam": 92,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2021": {
+    "n": 112,
+    "mlbam": 98,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2022": {
+    "n": 110,
+    "mlbam": 103,
+    "astuff": 0,
+    "whiff": 0,
+    "any": 0
+   },
+   "2023": {
+    "n": 137,
+    "mlbam": 136,
+    "astuff": 85,
+    "whiff": 85,
+    "any": 85
+   }
+  }
+ },
+ "results": {
+  "strict": {
+   "astuff": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_astuff_c",
+      "x_astuff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 0,
+      "rho": null
+     },
+     "uncovered": {
+      "n": 466,
+      "rho": 0.2787
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 0
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 0,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   },
+   "whiff": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_whiff_z",
+      "x_whiff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 0,
+      "rho": null
+     },
+     "uncovered": {
+      "n": 466,
+      "rho": 0.2787
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 0
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 0,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   },
+   "both": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_astuff_c",
+      "x_astuff_has",
+      "x_whiff_z",
+      "x_whiff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 0,
+      "rho": null
+     },
+     "uncovered": {
+      "n": 466,
+      "rho": 0.2787
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 0
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 0,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   }
+  },
+  "sameseason": {
+   "astuff": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_astuff_c",
+      "x_astuff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 85,
+      "rho": 0.3274
+     },
+     "uncovered": {
+      "n": 381,
+      "rho": 0.2636
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 85
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 85,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   },
+   "whiff": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_whiff_z",
+      "x_whiff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 85,
+      "rho": 0.3274
+     },
+     "uncovered": {
+      "n": 381,
+      "rho": 0.2636
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 85
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 85,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   },
+   "both": {
+    "eval": {
+     "keys": [
+      "fv",
+      "peak_k_rel",
+      "k_rel",
+      "bb_rel",
+      "age_rel_level",
+      "x_era_k",
+      "tool_fb",
+      "x_astuff_c",
+      "x_astuff_has",
+      "x_whiff_z",
+      "x_whiff_has"
+     ],
+     "lam": 0.66,
+     "n": 466,
+     "pooled_rho": 0.2787,
+     "pooled_rho_pure": 0.2812,
+     "per_level_group": {
+      "upper": {
+       "n": 328,
+       "rho": 0.2746
+      },
+      "lower": {
+       "n": 97,
+       "rho": 0.2937
+      },
+      "unknown": {
+       "n": 41,
+       "rho": 0.2511
+      }
+     },
+     "covered": {
+      "n": 85,
+      "rho": 0.3274
+     },
+     "uncovered": {
+      "n": 381,
+      "rho": 0.2636
+     },
+     "per_year": {
+      "2020": 0.2284,
+      "2021": 0.1088,
+      "2022": 0.4044,
+      "2023": 0.3356
+     },
+     "fold_coverage": {
+      "2020": {
+       "train_n": 395,
+       "train_covered": 0,
+       "test_n": 107,
+       "test_covered": 0
+      },
+      "2021": {
+       "train_n": 502,
+       "train_covered": 0,
+       "test_n": 112,
+       "test_covered": 0
+      },
+      "2022": {
+       "train_n": 614,
+       "train_covered": 0,
+       "test_n": 110,
+       "test_covered": 0
+      },
+      "2023": {
+       "train_n": 724,
+       "train_covered": 0,
+       "test_n": 137,
+       "test_covered": 85
+      }
+     }
+    },
+    "vs_baseline": {
+     "delta_pooled": 0.0,
+     "delta_pooled_pure": 0.0,
+     "delta_upper": 0.0,
+     "delta_lower": 0.0,
+     "delta_unknown": 0.0,
+     "max_abs_score_diff": 0.0,
+     "n_matched": 466
+    },
+    "gate": {
+     "condition_1_pool_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.005
+     },
+     "condition_2_upper_delta": {
+      "pass": false,
+      "delta": 0.0,
+      "bar": 0.01
+     },
+     "condition_3_lower_no_degrade": {
+      "pass": true,
+      "delta": 0.0,
+      "bar": -0.003
+     },
+     "trainable_coverage": {
+      "train_covered_rows_all_folds": 0,
+      "test_covered_rows_all_folds": 85,
+      "trainable": false
+     },
+     "verdict": "FAIL"
+    }
+   }
+  }
+ },
+ "registered_gate": {
+  "convention": "strict",
+  "variant": "both",
+  "condition_1_pool_delta": {
+   "pass": false,
+   "delta": 0.0,
+   "bar": 0.005
+  },
+  "condition_2_upper_delta": {
+   "pass": false,
+   "delta": 0.0,
+   "bar": 0.01
+  },
+  "condition_3_lower_no_degrade": {
+   "pass": true,
+   "delta": 0.0,
+   "bar": -0.003
+  },
+  "trainable_coverage": {
+   "train_covered_rows_all_folds": 0,
+   "test_covered_rows_all_folds": 0,
+   "trainable": false
+  },
+  "verdict": "FAIL"
+ },
+ "all_gate_verdicts": {
+  "strict:astuff": "FAIL",
+  "strict:whiff": "FAIL",
+  "strict:both": "FAIL",
+  "sameseason:astuff": "FAIL",
+  "sameseason:whiff": "FAIL",
+  "sameseason:both": "FAIL"
+ },
+ "overall_verdict": "FAIL",
+ "supplementary_non_gate_reads": {
+  "residual_read_2023_sameseason_covered": {
+   "astuff": {
+    "n": 85,
+    "rho_vs_target": 0.1105,
+    "rho_vs_baseline_residual": 0.0146,
+    "rho_baseline_vs_target_same_rows": 0.3274
+   },
+   "whiff_z": {
+    "n": 85,
+    "rho_vs_target": 0.0262,
+    "rho_vs_baseline_residual": -0.0493,
+    "rho_baseline_vs_target_same_rows": 0.3274
+   }
+  },
+  "prior_evidence": {
+   "stuff_plus_aaa_forward_gate": "final-AAA aStuff+ vs first-MLB: K% r 0.5145, ERA(inv) r 0.077, n 18 (data/stuff_plus_aaa_eval.json, graduates 2024+)",
+   "x_c3_whiff": "AAA SwingMiss% z vs first-MLB ERA(inv) r 0.359 (data/sc_plus_component_eval.json)"
+  }
+ },
+ "future_coverage": {
+  "debut_2024_strict_covered": {
+   "any": 48,
+   "astuff": 48,
+   "whiff": 48,
+   "note": "pitcher-implied by presence in the pitcher tracking pools"
+  },
+  "debut_2025_strict_covered": {
+   "any": 64,
+   "astuff": 64,
+   "whiff": 64,
+   "note": "pitcher-implied by presence in the pitcher tracking pools"
+  },
+  "live_prospects_2025_2026_tracking": {
+   "upper_n": 620,
+   "upper_covered": 143,
+   "all_n": 2064,
+   "all_covered": 143
+  }
+ },
+ "loss_ledger": {
+  "date": "2026-07-02",
+  "experiment": "E-STUFF upper-level pitcher Tier-2 overlay (aStuff+ / SC+ whiff) into the eFV pitcher model",
+  "hypothesis": "for AA/AAA pitchers the in-house aStuff+ (pitcher-level forward r 0.28) or the SC+ whiff component (X-C3 r 0.359 vs first-MLB ERA) adds OOS rank signal the production features miss",
+  "what_was_tried": "both overlays plus each alone, joined per-season by mlbam under strict and same-season as-of rules, neutral-when-missing encoding + coverage flags, on the exact shipped forward-chained protocol",
+  "result": {
+   "failed_conditions": [
+    "condition_1_pool_delta",
+    "condition_2_upper_delta"
+   ],
+   "root_cause": "structural, not a signal failure: AAA tracking begins 2023 while the outcome-scored eval cohorts end at debut year 2023, so strict pre-decision coverage is 0 rows everywhere; even the same-season relaxation covers only the 2023 TEST cohort (85/137 rows) while every TRAIN fold has zero covered rows, so the ridge coefficient on the overlay is identically zero and every forward-chained delta is exactly 0.0 by construction (max |score diff| proves it)",
+   "verdict_reading": "FAIL as inconclusive under the pre-registered rule that insufficient n is a FAIL, not a pass; the overlay was never given a trainable fold, so nothing here refutes the hypothesis either"
+  },
+  "signal_read_recorded": "the same-season sensitivity read (n=85, 2023 cohort, 6yr-WAR censored target) shows only weak incremental signal: astuff rho 0.1105 vs target but 0.0146 vs the baseline's OOS residual; whiff 0.0262 / -0.0493. The strong priors (stuff K% r 0.5145 n=18; X-C3 whiff r 0.359) are against FIRST-MLB RATE outcomes, not 6yr WAR; the overlay is unproven on the eFV target and most of its rate signal may already be priced by the K-based production features",
+  "do_not_reattempt_until": "the pitcher matrix includes debut cohorts 2024+ as (censored) scored rows -- the first fold with nonzero TRAIN coverage is test year 2025 trained on the 2024 cohort (see future_coverage for the row counts that rebuild would add)"
+ }
+}

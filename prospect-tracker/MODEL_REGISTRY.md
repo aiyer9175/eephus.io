@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**44 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 1.
+**47 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 4.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -54,6 +54,9 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `surplus_sensitivity_diagnostic` | model-dev artifact (methodology-note source) - prospect s... | n/a - measurement: stability of surplus ORDERING under -20/-10/+10/+20 percent shifts of the dollars-per-WAR level (shape fixed) | shipped value_framework surplus (unchanged) | n/a (measurement; the metric IS the verdict) | rank Spearman vs baseline per shift, top-50 churn and max rank move, per-FV-t... | **validated** | `data/surplus_sensitivity.json` | - | - |
 | `leverage_consistency` | /mlbstats/ Bullpen Leaderboards, gmLI 3yr column (deploym... | n/a - deployment context, not skill: multi-year manager-assigned leverage (relief-entry-weighted gmLI mean over the trailing 3... | gmli_3yr (relief-entry-weighted mean, 2024-2026, min-BF qualified pool) | pre-registered gate: pooled Y->Y+1 gmLI Spearman rho >= 0.30 (2018-2025 ex-20... | Y->Y+1 rank autocorrelation on qualified reliever pairs + within-season split... | **provisional** | `data/leverage_consistency_eval.json` | - | - |
 | `age_rel_outperformance` | model-dev artifact (NOT WIRED - needs-owner-decision befo... | n/a - candidate display index (working name AgeRel+): production vs same-age same-level peers, EB-shrunk at source (K_AB=170/K_... | shipped level-relative chips (ops_plus_level / era_minus_level) remain the di... | pre-registered gate: forward r >= 0.10 on n >= 80 resolved graduates + no sma... | pooled Pearson r vs realized 6yr bWAR on fully-resolved graduates (debut <= 2... | **provisional** | `data/age_rel_outperformance_eval.json` | - | - |
+| `xfv_grade_recal` | model-dev artifact (rendered nowhere) - eFV bucket-distri... | n/a - gated experiment E-ISO2: strictly-increasing monotone recalibration of p_bucket_given_fv in grade space (candidate REJECT... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | grade-space monotone challenger (forward-chained OOF, X-ISO cohort splits, SE... | pre-registered 3-condition gate (Brier/log-loss, Spearman tolerance -0.002, p... | **deprecated** | `data/xfv_grade_recal_eval.json` | - | - |
+| `xfv_cohort_lambda` | model-dev artifact (rendered nowhere) - per-cohort eFV/co... | n/a - gated experiment E-LAMBDA: out-of-fold per-cohort blend lambda selection (candidate REJECTED on all 3 gate conditions) | shipped global per-side blend lambdas (unchanged) | per-cohort OOF-selected lambdas (grid 0.00-1.00 step 0.05, min pool 25, SEED=7) | pre-registered gate: pooled OOS Spearman non-decrease both sides; >=+0.010 co... | **deprecated** | `data/xfv_cohort_lambda_eval.json` | - | - |
+| `xfv_pitcher_stuff` | model-dev artifact (rendered nowhere) - AA/AAA pitcher tr... | n/a - gated experiment E-STUFF: aStuff+ / SC+ whiff-z overlay features for upper-level pitchers (INCONCLUSIVE: zero trainable c... | shipped eFV pitcher model (unchanged; baseline blend rho 0.2787 reproduced ex... | overlay variants astuff/whiff/both under strict and same-season as-of convent... | pre-registered gate: pitcher pool OOS Spearman >=+0.005, AA/AAA sub-cohort >=... | **deprecated** | `data/xfv_pitcher_stuff_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

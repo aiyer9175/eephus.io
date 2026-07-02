@@ -1,0 +1,1439 @@
+{
+ "generated_at": "2026-07-02",
+ "experiment": "E-LAMBDA: per-cohort blend lambda for the eFV/consensus blend",
+ "spec": "gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md section E-LAMBDA",
+ "seed": 7,
+ "method": {
+  "protocol": "forward-chained OOS, shipped lean ridge + consensus OLS anchor (efv_model machinery via efv_lab_runner rows), eval truth = target_censored, fold thresholds test>=12/train>=50",
+  "cohorts": "hs / college / ifa / draft / other from efv_lab_runner._cohort_of",
+  "selection": "per cohort-year, out of fold: lambda_c(Y) = argmax blend Spearman on pooled OOF predictions of cohort c from fold years < Y; grid 0.00..1.00 step 0.05; ties break toward shipped then lower; pools under 25 rows fall back to the shipped global lambda",
+  "primary_variant": "all_prior (selection pool includes pre-2020 OOF seed folds; a production re-tune would use all labeled data available at selection time); scored_only kept as harness-parity sensitivity",
+  "stability_rule": "per cohort with >=2 selected folds: selected-lambda range <= 0.2 and no opposite-sign consecutive steps > 0.1",
+  "gate_thresholds": {
+   "pooled_no_decrease": 0.0,
+   "cohort_improve_at_least": 0.01,
+   "cohort_degrade_no_more_than": 0.005,
+   "cohort_min_n": 25
+  },
+  "declared_before_first_run": true
+ },
+ "shipped_lambda": {
+  "hit": 0.557,
+  "pit": 0.66
+ },
+ "harness_parity": {
+  "hit": {
+   "n": 399,
+   "live_lambda": 0.557,
+   "pooled_rho_at_live_lambda": 0.3535,
+   "pooled_rho_at_lambda_0.9": 0.37
+  },
+  "pit": {
+   "n": 466,
+   "live_lambda": 0.66,
+   "pooled_rho_at_live_lambda": 0.2787
+  },
+  "note": "pit at live lambda 0.66 reproduces the shipped 0.2787; hit at 0.9 reproduces the 0.3699 in data/xfv_eval.json (that artifact records shipped_lambda 0.9 while live blend_lambda('hit') currently returns a lower WAG-calibrated value; drift flagged upstream, not part of this experiment's gate)"
+ },
+ "variants": {
+  "all_prior": {
+   "sides": {
+    "hit": {
+     "shipped_lambda": 0.557,
+     "n_scored": 399,
+     "fold_years_scored": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "seed_fold_years_used_for_selection": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "pooled": {
+      "baseline_rho": 0.3535,
+      "treatment_rho": 0.36,
+      "delta": 0.0065
+     },
+     "per_cohort": {
+      "college": {
+       "n": 136,
+       "gated": true,
+       "baseline_rho": 0.3495,
+       "treatment_rho": 0.3545,
+       "delta": 0.005
+      },
+      "draft": {
+       "n": 1,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      },
+      "hs": {
+       "n": 130,
+       "gated": true,
+       "baseline_rho": 0.4045,
+       "treatment_rho": 0.3938,
+       "delta": -0.0107
+      },
+      "ifa": {
+       "n": 127,
+       "gated": true,
+       "baseline_rho": 0.3055,
+       "treatment_rho": 0.3096,
+       "delta": 0.0041
+      },
+      "other": {
+       "n": 5,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      }
+     },
+     "lambda_paths": {
+      "college": [
+       {
+        "year": 2020,
+        "lambda": 0.1,
+        "mode": "selected",
+        "pool_n": 33,
+        "pool_rho_at_choice": 0.2664,
+        "pool_rho_at_shipped": 0.2517
+       },
+       {
+        "year": 2021,
+        "lambda": 0.95,
+        "mode": "selected",
+        "pool_n": 48,
+        "pool_rho_at_choice": 0.2848,
+        "pool_rho_at_shipped": 0.2684
+       },
+       {
+        "year": 2022,
+        "lambda": 0.95,
+        "mode": "selected",
+        "pool_n": 78,
+        "pool_rho_at_choice": 0.2891,
+        "pool_rho_at_shipped": 0.2722
+       },
+       {
+        "year": 2023,
+        "lambda": 0.8,
+        "mode": "selected",
+        "pool_n": 122,
+        "pool_rho_at_choice": 0.4361,
+        "pool_rho_at_shipped": 0.4233
+       }
+      ],
+      "draft": [
+       {
+        "year": 2023,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 1,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       }
+      ],
+      "hs": [
+       {
+        "year": 2020,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 62,
+        "pool_rho_at_choice": 0.5279,
+        "pool_rho_at_shipped": 0.5097
+       },
+       {
+        "year": 2021,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 80,
+        "pool_rho_at_choice": 0.4903,
+        "pool_rho_at_shipped": 0.4741
+       },
+       {
+        "year": 2022,
+        "lambda": 0.7,
+        "mode": "selected",
+        "pool_n": 114,
+        "pool_rho_at_choice": 0.4714,
+        "pool_rho_at_shipped": 0.4664
+       },
+       {
+        "year": 2023,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 165,
+        "pool_rho_at_choice": 0.4961,
+        "pool_rho_at_shipped": 0.4907
+       }
+      ],
+      "ifa": [
+       {
+        "year": 2020,
+        "lambda": 0.6,
+        "mode": "selected",
+        "pool_n": 34,
+        "pool_rho_at_choice": 0.5419,
+        "pool_rho_at_shipped": 0.5404
+       },
+       {
+        "year": 2021,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 63,
+        "pool_rho_at_choice": 0.533,
+        "pool_rho_at_shipped": 0.5281
+       },
+       {
+        "year": 2022,
+        "lambda": 0.65,
+        "mode": "selected",
+        "pool_n": 87,
+        "pool_rho_at_choice": 0.4878,
+        "pool_rho_at_shipped": 0.4843
+       },
+       {
+        "year": 2023,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 133,
+        "pool_rho_at_choice": 0.5256,
+        "pool_rho_at_shipped": 0.5114
+       }
+      ],
+      "other": [
+       {
+        "year": 2020,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 166,
+        "pool_rho_at_choice": 0.3544,
+        "pool_rho_at_shipped": 0.3483
+       },
+       {
+        "year": 2021,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 168,
+        "pool_rho_at_choice": 0.355,
+        "pool_rho_at_shipped": 0.3491
+       },
+       {
+        "year": 2022,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 170,
+        "pool_rho_at_choice": 0.354,
+        "pool_rho_at_shipped": 0.3497
+       }
+      ]
+     },
+     "stability": {
+      "college": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.1,
+        0.95,
+        0.95,
+        0.8
+       ],
+       "range": 0.85,
+       "step_deltas": [
+        0.85,
+        0.0,
+        -0.15
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "draft": {
+       "n_selected": 0,
+       "selected_lambdas": [],
+       "range": null,
+       "reversal": false,
+       "stable": true,
+       "note": "fewer than 2 selected folds; cannot oscillate"
+      },
+      "hs": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.0,
+        0.0,
+        0.7,
+        0.2
+       ],
+       "range": 0.7,
+       "step_deltas": [
+        0.0,
+        0.7,
+        -0.5
+       ],
+       "reversal": true,
+       "stable": false
+      },
+      "ifa": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.6,
+        1.0,
+        0.65,
+        1.0
+       ],
+       "range": 0.4,
+       "step_deltas": [
+        0.4,
+        -0.35,
+        0.35
+       ],
+       "reversal": true,
+       "stable": false
+      },
+      "other": {
+       "n_selected": 3,
+       "selected_lambdas": [
+        0.2,
+        0.2,
+        0.2
+       ],
+       "range": 0.0,
+       "step_deltas": [
+        0.0,
+        0.0
+       ],
+       "reversal": false,
+       "stable": true
+      }
+     }
+    },
+    "pit": {
+     "shipped_lambda": 0.66,
+     "n_scored": 466,
+     "fold_years_scored": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "seed_fold_years_used_for_selection": [
+      2014,
+      2015,
+      2016,
+      2017,
+      2018,
+      2019
+     ],
+     "pooled": {
+      "baseline_rho": 0.2787,
+      "treatment_rho": 0.2683,
+      "delta": -0.0104
+     },
+     "per_cohort": {
+      "college": {
+       "n": 234,
+       "gated": true,
+       "baseline_rho": 0.2714,
+       "treatment_rho": 0.2631,
+       "delta": -0.0083
+      },
+      "hs": {
+       "n": 107,
+       "gated": true,
+       "baseline_rho": 0.3519,
+       "treatment_rho": 0.2971,
+       "delta": -0.0548
+      },
+      "ifa": {
+       "n": 121,
+       "gated": true,
+       "baseline_rho": 0.2783,
+       "treatment_rho": 0.303,
+       "delta": 0.0247
+      },
+      "other": {
+       "n": 4,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      }
+     },
+     "lambda_paths": {
+      "college": [
+       {
+        "year": 2020,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 25,
+        "pool_rho_at_choice": 0.2885,
+        "pool_rho_at_shipped": 0.2054
+       },
+       {
+        "year": 2021,
+        "lambda": 0.2,
+        "mode": "selected",
+        "pool_n": 67,
+        "pool_rho_at_choice": 0.2886,
+        "pool_rho_at_shipped": 0.2656
+       },
+       {
+        "year": 2022,
+        "lambda": 0.7,
+        "mode": "selected",
+        "pool_n": 123,
+        "pool_rho_at_choice": 0.2149,
+        "pool_rho_at_shipped": 0.2146
+       },
+       {
+        "year": 2023,
+        "lambda": 0.8,
+        "mode": "selected",
+        "pool_n": 186,
+        "pool_rho_at_choice": 0.2695,
+        "pool_rho_at_shipped": 0.2673
+       }
+      ],
+      "hs": [
+       {
+        "year": 2020,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 54,
+        "pool_rho_at_choice": 0.3561,
+        "pool_rho_at_shipped": 0.213
+       },
+       {
+        "year": 2021,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 86,
+        "pool_rho_at_choice": 0.4257,
+        "pool_rho_at_shipped": 0.3593
+       },
+       {
+        "year": 2022,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 109,
+        "pool_rho_at_choice": 0.3834,
+        "pool_rho_at_shipped": 0.3209
+       },
+       {
+        "year": 2023,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 128,
+        "pool_rho_at_choice": 0.3834,
+        "pool_rho_at_shipped": 0.3275
+       }
+      ],
+      "ifa": [
+       {
+        "year": 2020,
+        "lambda": 0.5,
+        "mode": "selected",
+        "pool_n": 51,
+        "pool_rho_at_choice": 0.3981,
+        "pool_rho_at_shipped": 0.3802
+       },
+       {
+        "year": 2021,
+        "lambda": 0.9,
+        "mode": "selected",
+        "pool_n": 81,
+        "pool_rho_at_choice": 0.3074,
+        "pool_rho_at_shipped": 0.2926
+       },
+       {
+        "year": 2022,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 113,
+        "pool_rho_at_choice": 0.3062,
+        "pool_rho_at_shipped": 0.2953
+       },
+       {
+        "year": 2023,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 141,
+        "pool_rho_at_choice": 0.321,
+        "pool_rho_at_shipped": 0.3048
+       }
+      ],
+      "other": [
+       {
+        "year": 2020,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 173,
+        "pool_rho_at_choice": 0.2326,
+        "pool_rho_at_shipped": 0.2259
+       },
+       {
+        "year": 2021,
+        "lambda": 0.85,
+        "mode": "selected",
+        "pool_n": 176,
+        "pool_rho_at_choice": 0.2379,
+        "pool_rho_at_shipped": 0.2326
+       }
+      ]
+     },
+     "stability": {
+      "college": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.2,
+        0.2,
+        0.7,
+        0.8
+       ],
+       "range": 0.6,
+       "step_deltas": [
+        0.0,
+        0.5,
+        0.1
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "hs": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+       ],
+       "range": 0.0,
+       "step_deltas": [
+        0.0,
+        0.0,
+        0.0
+       ],
+       "reversal": false,
+       "stable": true
+      },
+      "ifa": {
+       "n_selected": 4,
+       "selected_lambdas": [
+        0.5,
+        0.9,
+        1.0,
+        1.0
+       ],
+       "range": 0.5,
+       "step_deltas": [
+        0.4,
+        0.1,
+        0.0
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "other": {
+       "n_selected": 2,
+       "selected_lambdas": [
+        1.0,
+        0.85
+       ],
+       "range": 0.15,
+       "step_deltas": [
+        -0.15
+       ],
+       "reversal": false,
+       "stable": true
+      }
+     }
+    }
+   },
+   "gate": {
+    "condition_1_pooled_no_decrease": {
+     "hit": {
+      "delta": 0.0065,
+      "pass": true
+     },
+     "pit": {
+      "delta": -0.0104,
+      "pass": false
+     }
+    },
+    "condition_2_cohort_improvement": {
+     "improved_cohorts": {
+      "pit:ifa": 0.0247
+     },
+     "degraded_cohorts": {
+      "hit:hs": -0.0107,
+      "pit:college": -0.0083,
+      "pit:hs": -0.0548
+     },
+     "pass": false
+    },
+    "condition_3_lambda_stability": {
+     "unstable_cohorts": {
+      "hit:college": {
+       "selected_lambdas": [
+        0.1,
+        0.95,
+        0.95,
+        0.8
+       ],
+       "range": 0.85,
+       "reversal": false
+      },
+      "hit:hs": {
+       "selected_lambdas": [
+        0.0,
+        0.0,
+        0.7,
+        0.2
+       ],
+       "range": 0.7,
+       "reversal": true
+      },
+      "hit:ifa": {
+       "selected_lambdas": [
+        0.6,
+        1.0,
+        0.65,
+        1.0
+       ],
+       "range": 0.4,
+       "reversal": true
+      },
+      "pit:college": {
+       "selected_lambdas": [
+        0.2,
+        0.2,
+        0.7,
+        0.8
+       ],
+       "range": 0.6,
+       "reversal": false
+      },
+      "pit:ifa": {
+       "selected_lambdas": [
+        0.5,
+        0.9,
+        1.0,
+        1.0
+       ],
+       "range": 0.5,
+       "reversal": false
+      }
+     },
+     "pass": false
+    },
+    "pass": false
+   }
+  },
+  "scored_only": {
+   "sides": {
+    "hit": {
+     "shipped_lambda": 0.557,
+     "n_scored": 399,
+     "fold_years_scored": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "seed_fold_years_used_for_selection": [],
+     "pooled": {
+      "baseline_rho": 0.3535,
+      "treatment_rho": 0.3544,
+      "delta": 0.0009
+     },
+     "per_cohort": {
+      "college": {
+       "n": 136,
+       "gated": true,
+       "baseline_rho": 0.3495,
+       "treatment_rho": 0.3466,
+       "delta": -0.0029
+      },
+      "draft": {
+       "n": 1,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      },
+      "hs": {
+       "n": 130,
+       "gated": true,
+       "baseline_rho": 0.4045,
+       "treatment_rho": 0.3959,
+       "delta": -0.0086
+      },
+      "ifa": {
+       "n": 127,
+       "gated": true,
+       "baseline_rho": 0.3055,
+       "treatment_rho": 0.3088,
+       "delta": 0.0033
+      },
+      "other": {
+       "n": 5,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      }
+     },
+     "lambda_paths": {
+      "college": [
+       {
+        "year": 2020,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 15,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": 0.3286
+       },
+       {
+        "year": 2022,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 45,
+        "pool_rho_at_choice": 0.176,
+        "pool_rho_at_shipped": 0.1461
+       },
+       {
+        "year": 2023,
+        "lambda": 0.75,
+        "mode": "selected",
+        "pool_n": 89,
+        "pool_rho_at_choice": 0.4113,
+        "pool_rho_at_shipped": 0.3921
+       }
+      ],
+      "draft": [
+       {
+        "year": 2023,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       }
+      ],
+      "hs": [
+       {
+        "year": 2020,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 18,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": 0.2673
+       },
+       {
+        "year": 2022,
+        "lambda": 0.75,
+        "mode": "selected",
+        "pool_n": 52,
+        "pool_rho_at_choice": 0.3113,
+        "pool_rho_at_shipped": 0.2835
+       },
+       {
+        "year": 2023,
+        "lambda": 0.15,
+        "mode": "selected",
+        "pool_n": 103,
+        "pool_rho_at_choice": 0.4494,
+        "pool_rho_at_shipped": 0.4306
+       }
+      ],
+      "ifa": [
+       {
+        "year": 2020,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.95,
+        "mode": "selected",
+        "pool_n": 29,
+        "pool_rho_at_choice": 0.473,
+        "pool_rho_at_shipped": 0.4563
+       },
+       {
+        "year": 2022,
+        "lambda": 0.65,
+        "mode": "selected",
+        "pool_n": 53,
+        "pool_rho_at_choice": 0.3482,
+        "pool_rho_at_shipped": 0.3441
+       },
+       {
+        "year": 2023,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 99,
+        "pool_rho_at_choice": 0.4288,
+        "pool_rho_at_shipped": 0.4184
+       }
+      ],
+      "other": [
+       {
+        "year": 2020,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 2,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2022,
+        "lambda": 0.557,
+        "mode": "fallback_shipped",
+        "pool_n": 4,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       }
+      ]
+     },
+     "stability": {
+      "college": {
+       "n_selected": 2,
+       "selected_lambdas": [
+        1.0,
+        0.75
+       ],
+       "range": 0.25,
+       "step_deltas": [
+        -0.25
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "draft": {
+       "n_selected": 0,
+       "selected_lambdas": [],
+       "range": null,
+       "reversal": false,
+       "stable": true,
+       "note": "fewer than 2 selected folds; cannot oscillate"
+      },
+      "hs": {
+       "n_selected": 2,
+       "selected_lambdas": [
+        0.75,
+        0.15
+       ],
+       "range": 0.6,
+       "step_deltas": [
+        -0.6
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "ifa": {
+       "n_selected": 3,
+       "selected_lambdas": [
+        0.95,
+        0.65,
+        1.0
+       ],
+       "range": 0.35,
+       "step_deltas": [
+        -0.3,
+        0.35
+       ],
+       "reversal": true,
+       "stable": false
+      },
+      "other": {
+       "n_selected": 0,
+       "selected_lambdas": [],
+       "range": null,
+       "reversal": false,
+       "stable": true,
+       "note": "fewer than 2 selected folds; cannot oscillate"
+      }
+     }
+    },
+    "pit": {
+     "shipped_lambda": 0.66,
+     "n_scored": 466,
+     "fold_years_scored": [
+      2020,
+      2021,
+      2022,
+      2023
+     ],
+     "seed_fold_years_used_for_selection": [],
+     "pooled": {
+      "baseline_rho": 0.2787,
+      "treatment_rho": 0.2696,
+      "delta": -0.0091
+     },
+     "per_cohort": {
+      "college": {
+       "n": 234,
+       "gated": true,
+       "baseline_rho": 0.2714,
+       "treatment_rho": 0.249,
+       "delta": -0.0224
+      },
+      "hs": {
+       "n": 107,
+       "gated": true,
+       "baseline_rho": 0.3519,
+       "treatment_rho": 0.3231,
+       "delta": -0.0288
+      },
+      "ifa": {
+       "n": 121,
+       "gated": true,
+       "baseline_rho": 0.2783,
+       "treatment_rho": 0.3032,
+       "delta": 0.0249
+      },
+      "other": {
+       "n": 4,
+       "gated": false,
+       "baseline_rho": null,
+       "treatment_rho": null,
+       "delta": null
+      }
+     },
+     "lambda_paths": {
+      "college": [
+       {
+        "year": 2020,
+        "lambda": 0.66,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 42,
+        "pool_rho_at_choice": 0.2841,
+        "pool_rho_at_shipped": 0.2627
+       },
+       {
+        "year": 2022,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 98,
+        "pool_rho_at_choice": 0.175,
+        "pool_rho_at_shipped": 0.1724
+       },
+       {
+        "year": 2023,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 161,
+        "pool_rho_at_choice": 0.2623,
+        "pool_rho_at_shipped": 0.2573
+       }
+      ],
+      "hs": [
+       {
+        "year": 2020,
+        "lambda": 0.66,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.4,
+        "mode": "selected",
+        "pool_n": 32,
+        "pool_rho_at_choice": 0.4082,
+        "pool_rho_at_shipped": 0.3893
+       },
+       {
+        "year": 2022,
+        "lambda": 0.0,
+        "mode": "selected",
+        "pool_n": 55,
+        "pool_rho_at_choice": 0.2952,
+        "pool_rho_at_shipped": 0.2445
+       },
+       {
+        "year": 2023,
+        "lambda": 0.3,
+        "mode": "selected",
+        "pool_n": 74,
+        "pool_rho_at_choice": 0.3296,
+        "pool_rho_at_shipped": 0.3074
+       }
+      ],
+      "ifa": [
+       {
+        "year": 2020,
+        "lambda": 0.66,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 30,
+        "pool_rho_at_choice": 0.0962,
+        "pool_rho_at_shipped": 0.0708
+       },
+       {
+        "year": 2022,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 62,
+        "pool_rho_at_choice": 0.2125,
+        "pool_rho_at_shipped": 0.2114
+       },
+       {
+        "year": 2023,
+        "lambda": 1.0,
+        "mode": "selected",
+        "pool_n": 90,
+        "pool_rho_at_choice": 0.2542,
+        "pool_rho_at_shipped": 0.2335
+       }
+      ],
+      "other": [
+       {
+        "year": 2020,
+        "lambda": 0.66,
+        "mode": "fallback_shipped",
+        "pool_n": 0,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       },
+       {
+        "year": 2021,
+        "lambda": 0.66,
+        "mode": "fallback_shipped",
+        "pool_n": 3,
+        "pool_rho_at_choice": null,
+        "pool_rho_at_shipped": null
+       }
+      ]
+     },
+     "stability": {
+      "college": {
+       "n_selected": 3,
+       "selected_lambdas": [
+        0.0,
+        1.0,
+        1.0
+       ],
+       "range": 1.0,
+       "step_deltas": [
+        1.0,
+        0.0
+       ],
+       "reversal": false,
+       "stable": false
+      },
+      "hs": {
+       "n_selected": 3,
+       "selected_lambdas": [
+        0.4,
+        0.0,
+        0.3
+       ],
+       "range": 0.4,
+       "step_deltas": [
+        -0.4,
+        0.3
+       ],
+       "reversal": true,
+       "stable": false
+      },
+      "ifa": {
+       "n_selected": 3,
+       "selected_lambdas": [
+        1.0,
+        1.0,
+        1.0
+       ],
+       "range": 0.0,
+       "step_deltas": [
+        0.0,
+        0.0
+       ],
+       "reversal": false,
+       "stable": true
+      },
+      "other": {
+       "n_selected": 0,
+       "selected_lambdas": [],
+       "range": null,
+       "reversal": false,
+       "stable": true,
+       "note": "fewer than 2 selected folds; cannot oscillate"
+      }
+     }
+    }
+   },
+   "gate": {
+    "condition_1_pooled_no_decrease": {
+     "hit": {
+      "delta": 0.0009,
+      "pass": true
+     },
+     "pit": {
+      "delta": -0.0091,
+      "pass": false
+     }
+    },
+    "condition_2_cohort_improvement": {
+     "improved_cohorts": {
+      "pit:ifa": 0.0249
+     },
+     "degraded_cohorts": {
+      "hit:hs": -0.0086,
+      "pit:college": -0.0224,
+      "pit:hs": -0.0288
+     },
+     "pass": false
+    },
+    "condition_3_lambda_stability": {
+     "unstable_cohorts": {
+      "hit:college": {
+       "selected_lambdas": [
+        1.0,
+        0.75
+       ],
+       "range": 0.25,
+       "reversal": false
+      },
+      "hit:hs": {
+       "selected_lambdas": [
+        0.75,
+        0.15
+       ],
+       "range": 0.6,
+       "reversal": false
+      },
+      "hit:ifa": {
+       "selected_lambdas": [
+        0.95,
+        0.65,
+        1.0
+       ],
+       "range": 0.35,
+       "reversal": true
+      },
+      "pit:college": {
+       "selected_lambdas": [
+        0.0,
+        1.0,
+        1.0
+       ],
+       "range": 1.0,
+       "reversal": false
+      },
+      "pit:hs": {
+       "selected_lambdas": [
+        0.4,
+        0.0,
+        0.3
+       ],
+       "range": 0.4,
+       "reversal": true
+      }
+     },
+     "pass": false
+    },
+    "pass": false
+   }
+  }
+ },
+ "diagnostics_test_tuned_do_not_ship": {
+  "hit": {
+   "college": {
+    "n": 136,
+    "rho_at_shipped": 0.3495,
+    "rho_consensus_only_lam0": 0.2927,
+    "rho_pure_model_lam1": 0.361,
+    "hindsight_best_constant_lambda": 0.75,
+    "rho_at_hindsight_best": 0.3625
+   },
+   "hs": {
+    "n": 130,
+    "rho_at_shipped": 0.4045,
+    "rho_consensus_only_lam0": 0.3856,
+    "rho_pure_model_lam1": 0.413,
+    "hindsight_best_constant_lambda": 0.9,
+    "rho_at_hindsight_best": 0.4151
+   },
+   "ifa": {
+    "n": 127,
+    "rho_at_shipped": 0.3055,
+    "rho_consensus_only_lam0": 0.2711,
+    "rho_pure_model_lam1": 0.3199,
+    "hindsight_best_constant_lambda": 1.0,
+    "rho_at_hindsight_best": 0.3199
+   }
+  },
+  "pit": {
+   "college": {
+    "n": 234,
+    "rho_at_shipped": 0.2714,
+    "rho_consensus_only_lam0": 0.2289,
+    "rho_pure_model_lam1": 0.2731,
+    "hindsight_best_constant_lambda": 0.8,
+    "rho_at_hindsight_best": 0.2735
+   },
+   "hs": {
+    "n": 107,
+    "rho_at_shipped": 0.3519,
+    "rho_consensus_only_lam0": 0.2971,
+    "rho_pure_model_lam1": 0.334,
+    "hindsight_best_constant_lambda": 0.65,
+    "rho_at_hindsight_best": 0.353
+   },
+   "ifa": {
+    "n": 121,
+    "rho_at_shipped": 0.2783,
+    "rho_consensus_only_lam0": 0.1548,
+    "rho_pure_model_lam1": 0.3054,
+    "hindsight_best_constant_lambda": 1.0,
+    "rho_at_hindsight_best": 0.3054
+   }
+  }
+ },
+ "gate": {
+  "condition_1_pooled_no_decrease": {
+   "hit": {
+    "delta": 0.0065,
+    "pass": true
+   },
+   "pit": {
+    "delta": -0.0104,
+    "pass": false
+   }
+  },
+  "condition_2_cohort_improvement": {
+   "improved_cohorts": {
+    "pit:ifa": 0.0247
+   },
+   "degraded_cohorts": {
+    "hit:hs": -0.0107,
+    "pit:college": -0.0083,
+    "pit:hs": -0.0548
+   },
+   "pass": false
+  },
+  "condition_3_lambda_stability": {
+   "unstable_cohorts": {
+    "hit:college": {
+     "selected_lambdas": [
+      0.1,
+      0.95,
+      0.95,
+      0.8
+     ],
+     "range": 0.85,
+     "reversal": false
+    },
+    "hit:hs": {
+     "selected_lambdas": [
+      0.0,
+      0.0,
+      0.7,
+      0.2
+     ],
+     "range": 0.7,
+     "reversal": true
+    },
+    "hit:ifa": {
+     "selected_lambdas": [
+      0.6,
+      1.0,
+      0.65,
+      1.0
+     ],
+     "range": 0.4,
+     "reversal": true
+    },
+    "pit:college": {
+     "selected_lambdas": [
+      0.2,
+      0.2,
+      0.7,
+      0.8
+     ],
+     "range": 0.6,
+     "reversal": false
+    },
+    "pit:ifa": {
+     "selected_lambdas": [
+      0.5,
+      0.9,
+      1.0,
+      1.0
+     ],
+     "range": 0.5,
+     "reversal": false
+    }
+   },
+   "pass": false
+  },
+  "pass": false
+ },
+ "loss_ledger": {
+  "verdict": "NO SHIP",
+  "failed_conditions": [
+   "condition_1_pooled_no_decrease",
+   "condition_2_cohort_improvement",
+   "condition_3_lambda_stability"
+  ],
+  "summary": "Per-cohort forward-chained blend-lambda selection did not clear the pre-registered E-LAMBDA gate on the primary (all_prior) variant.",
+  "detail": {
+   "pooled_deltas": {
+    "hit": 0.0065,
+    "pit": -0.0104
+   },
+   "cohort_deltas": {
+    "hit:college": 0.005,
+    "hit:hs": -0.0107,
+    "hit:ifa": 0.0041,
+    "pit:college": -0.0083,
+    "pit:hs": -0.0548,
+    "pit:ifa": 0.0247
+   },
+   "sensitivity_scored_only_pooled_deltas": {
+    "hit": 0.0009,
+    "pit": -0.0091
+   }
+  },
+  "observations": [
+   {
+    "finding": "pit:ifa is the one cohort with consistent forward evidence: selection moves toward the pure model in every full-pool fold of BOTH variants and the cohort improves past the +0.010 bar both times; the intl-arm consensus anchor is the weakest of any gated cohort",
+    "delta_all_prior": 0.0247,
+    "delta_scored_only": 0.0249,
+    "selected_path_all_prior": [
+     [
+      2020,
+      0.5
+     ],
+     [
+      2021,
+      0.9
+     ],
+     [
+      2022,
+      1.0
+     ],
+     [
+      2023,
+      1.0
+     ]
+    ],
+    "selected_path_scored_only": [
+     [
+      2021,
+      1.0
+     ],
+     [
+      2022,
+      1.0
+     ],
+     [
+      2023,
+      1.0
+     ]
+    ],
+    "consensus_only_rho": 0.1548,
+    "pure_model_rho": 0.3054
+   },
+   {
+    "finding": "the hypothesis's target cohort (intl BATS) did not deliver: hit:ifa delta is small and its forward-selected lambda oscillates; on this OOF protocol consensus does NOT beat the shipped blend for intl bats (consensus-only rho trails the blend), so the premise itself weakened",
+    "delta_all_prior": 0.0041,
+    "selected_path_all_prior": [
+     [
+      2020,
+      0.6
+     ],
+     [
+      2021,
+      1.0
+     ],
+     [
+      2022,
+      0.65
+     ],
+     [
+      2023,
+      1.0
+     ]
+    ],
+    "consensus_only_rho": 0.2711,
+    "blend_rho_at_shipped": 0.3055
+   },
+   {
+    "finding": "per-cohort argmax on 25-160 row OOF pools is too noisy to select lambda: 5 of 6 gated cohorts breached the pre-declared stability rule and the noise-driven picks dragged pooled pit rho below baseline",
+    "unstable_cohorts": [
+     "hit:college",
+     "hit:hs",
+     "hit:ifa",
+     "pit:college",
+     "pit:ifa"
+    ],
+    "pit_pooled_delta": -0.0104
+   },
+   {
+    "finding": "hindsight (test-tuned) constant-lambda headroom is modest outside pit:ifa; a per-cohort scheme has little to win even with an oracle",
+    "hindsight_headroom_vs_shipped": {
+     "hit:college": 0.013,
+     "hit:hs": 0.0106,
+     "hit:ifa": 0.0144,
+     "pit:college": 0.0021,
+     "pit:hs": 0.0011,
+     "pit:ifa": 0.0271
+    }
+   }
+  ],
+  "keep_alive": "See diagnostics_test_tuned_do_not_ship for the hindsight per-cohort constant-lambda headroom (test-tuned upper bound). If headroom exists but forward selection cannot capture it, a future gated attempt should use a shrunk or hierarchical lambda estimator (cohort posterior toward the global lambda) rather than per-cohort argmax, and should wait for more scored fold years."
+ }
+}

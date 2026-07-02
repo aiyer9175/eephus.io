@@ -1,33 +1,42 @@
 # Beta Readiness (go/no-go)
 
-Launch: 2026-07-11. Curated checklist; the audit orchestrator fills the
-final go/no-go after the current wave lands. Legend: [x] verified,
-[ ] open, [WAVE] awaiting this wave's results (do not hand-mark; the
-orchestrator writes these from lane reports).
+Launch: 2026-07-11. Curated checklist. Legend: [x] verified, [ ] open.
+
+## VERDICT (2026-07-02): GO, conditional on the three owner actions below
+
+Everything code-side is done, verified and pushed: three audit waves, an
+adversarial verification pass over the full diff (no P0 findings, every P1/P2
+fixed), four gated model experiments honestly rejected with loss ledgers, one
+new validated metric shipped (gmLI 3yr), and the full gate battery green. The
+remaining launch risk is entirely in the owner actions (production deploy,
+automation secrets, payload size) and the ordinary pre-launch data refresh.
 
 ## Data freshness
 
-- [x] Daily pipeline green: timeseries daily run completed clean 2026-07-01.
-- [x] Model registry stamped 2026-06-30, 42 rows, validate() clean, stored
-      problems: none (see MODEL_REGISTRY.md, regenerated from the same file).
-- [ ] Monthly run lands before launch with the wave's pipeline fixes in
-      (draft/pipeline fixes only reach tracked draft_timeseries.json on the
+- [x] Daily pipeline green: latest daily run completed clean 2026-07-02
+      (timeseries generated_at 2026-07-02T17:39Z; timeseries.json is
+      untracked by design, owned by the pipeline).
+- [x] Model registry: 47 rows, validate() clean (see MODEL_REGISTRY.md,
+      generated from the same file).
+- [ ] Monthly run lands before launch with this pass's pipeline additions in
+      (6b4b gmLI refresh, generated-docs regen after registry restamps;
+      draft/pipeline fixes only reach tracked draft_timeseries.json on the
       next rebuild).
 
 ## Test + artifact state
 
-- [x] Suite green: 1,705 collected, green after 9fe4852 (the pre-existing
-      red test fixed by asserting the rarity-floor invariant, CHANGELOG.md
-      entry 1).
-- [x] Golden fingerprint baseline recorded as `p3-base` (5/5 artifacts,
-      commit 4525ec5 baseline); wave output-diffs are judged against it.
-- [WAVE] All lanes re-run the copy gates (tools/copy_lint.py +
-      tools/strip_emdashes.py --check) after final edits.
-- [WAVE] test_generated_docs_in_sync passes on the final tree (regenerate
-      tools/gen_audit_docs.py LAST, after every lane's edits land, since
-      SITE_MAP.md/DATA_SOURCES.md introspect live source).
-- [WAVE] Golden-fingerprinted artifacts byte-unchanged unless a lane's
-      expected-CHANGED justification is on file (pipeline_artifact_diff).
+- [x] Suite green through the close-out commit (1,717+ collected; the
+      pre-existing red bayes test fixed in 9fe4852).
+- [x] Copy gates suite-enforced (test_copy_gates.py) and clean on the final
+      tree.
+- [x] test_generated_docs_in_sync green on the final tree (docs regenerated
+      last; run_monthly now regenerates them after registry restamps).
+- [x] Golden-fingerprinted TRACKED artifacts (xfv.json, trade_values.json,
+      grpo_scores.json, milb_translation.json) byte-identical to the p3-base
+      baseline through every wave: the whole pass is output-neutral on
+      published model numbers. All four model-change experiments were
+      rejected at their pre-registered gates, so no expected-CHANGED entry
+      exists.
 
 ## Wave results
 
@@ -50,6 +59,18 @@ orchestrator writes these from lane reports).
       comparator, selection confound); NOT wired; owner decision queued.
 - [x] X-ISO (eFV isotonic): REJECTED at pre-registered gate; loss ledger +
       deprecated registry row; published numbers untouched.
+- [x] Wave 2 adversarial verification (4 read-only lanes over the full pass
+      diff): 16 findings, no P0; every P1/P2 fixed in the close-out commit
+      (glossary deep link, gmLI season derivation, SC+ decision pinned to
+      closed seasons), P3s fixed or recorded. Live Playwright boot of all
+      shipped surfaces: zero page errors.
+- [x] eFV round (owner-directed): E-ISO2, E-LAMBDA, E-STUFF all rejected or
+      inconclusive at pre-registered gates; loss ledgers + registry rows
+      45-47; eFV published numbers unchanged. The measured takeaway: eFV
+      ranking is at its trainable-data ceiling; the real calibration gain
+      found (bucket probabilities at FV45+) is blocked by a rank-gate
+      tolerance tighter than the eval's noise floor, recorded for a future
+      pre-registration.
 
 ## Owner actions (pending, cannot be done by agents)
 

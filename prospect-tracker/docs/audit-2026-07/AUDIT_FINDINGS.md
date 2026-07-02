@@ -219,6 +219,57 @@ swap, level_jump, type-conditioned consensus weights).
      handling must not poison rows without tracking data; coverage reported).
 - Ship path: same expected-CHANGED discipline as E-LAMBDA.
 
+## Wave 2 outcomes (2026-07-02): adversarial verify + eFV round
+
+VERIFY (4 read-only lanes over 4525ec5..HEAD, 16 findings, no P0):
+- P1 FIXED: the X-D2 owner-decision spec that four docs referenced did not exist in
+  REVIEW_QUEUE.md; now item 11.
+- P2 FIXED: C1 track-record panel deep link used /glossary/?view=... but the glossary app
+  parses hash only; now #view=source-comparison.
+- P2 FIXED: tools/leverage_consistency_eval.py hardcoded CURRENT_SEASON/MULTI_YEAR_SEASONS
+  while run_monthly 6b4b runs it monthly forever; the 2027 season would have silently frozen
+  the gmLI 3yr window. Seasons now derive from the leaderboards payload; gate math is
+  unchanged (2018-2025 caches; verified identical after regen: rho 0.4683 / split 0.5294).
+- P2 FIXED: X-C3 decision instrument sat on in-progress 2026 outcomes (irreproducible
+  committed numbers). Decision now pinned to CLOSED outcome seasons. NOTE the pin flipped
+  the rule to "reweight" (closed-basis blend gain +0.14 hit / +0.28 pit, n=23/side):
+  recorded as a QUEUED candidate (REVIEW_QUEUE.md item 12), composite unchanged; a
+  published-metric change needs its own pre-registered gate.
+- P3s FIXED: gmLI pct cell now fInt-coerced; bullpen join count only counts rendering rows;
+  glossary writers share one no-trailing-newline convention; leverage artifact writes
+  atomically (tmp+replace); run_monthly regenerates the generated audit docs right after
+  registry restamps (keeps test_generated_docs_in_sync green across monthly runs); the
+  Upside strip gets an auto-fill grid (uneven 3+2 wrap); static pages' stale ?v=
+  cache-busters fixed by a site rebuild in the close-out commit.
+- P3s ACCEPTED/RECORDED, no code change: X-D1 pooled CI treats season-pairs as i.i.d.
+  (cluster bootstrap suggested at next refresh; per-pair rhos all clear the bar anyway);
+  X-ISO condition-1 wording pooled-vs-per-side ambiguity (E-ISO2's pre-registration states
+  it explicitly); X-C3 prior wording implied both sides missed the 0.05 bar (hitters
+  cleared it; pitcher side missed).
+- CLARIFIED: data/timeseries.json is UNTRACKED by design (daily pipeline owns it); the
+  golden fingerprint "CHANGED" verdicts on it reflect daily data, not code. All tracked
+  golden artifacts match HEAD; wave-2 verifier rerun churn on ~50 tracked data files was
+  git-restored.
+
+eFV ROUND (3 gated experiments, gates pre-registered 2026-07-02, ALL NO-SHIP):
+- E-ISO2 (grade-space monotone recal): REJECTED. Fixed X-ISO's tie-flattening (exact
+  within-cell rank preservation) and doubled down on the calibration gain (tier-45 gap
+  0.0946 -> 0.0156) but pooled Spearman -0.0115 vs -0.002 tolerance, entirely cross-cell,
+  and the IDENTITY transform scores -0.0041 on the same metric: the tolerance is tighter
+  than the eval's own noise floor. Any future attempt must first fix the rank metric in a
+  new pre-registration. Loss ledger: data/xfv_grade_recal_eval.json.
+- E-LAMBDA (per-cohort blend lambda): REJECTED on all 3 conditions; per-cohort argmax on
+  25-160-row pools is noise-dominated (5/6 cohorts fold-unstable). Do not re-attempt
+  without hierarchical shrinkage toward the global lambda. Loss ledger:
+  data/xfv_cohort_lambda_eval.json.
+- E-STUFF (AA/AAA pitcher tracking overlay): INCONCLUSIVE by the pre-registered
+  insufficient-n rule (0 trainable rows: tracking starts 2023, scored cohorts end at debut
+  2023); recorded as FAIL, hypothesis neither confirmed nor refuted; first trainable fold
+  arrives with the 2024-cohort resolution. Loss ledger: data/xfv_pitcher_stuff_eval.json.
+- Bottom line: eFV is at its trainable-data ceiling on ranking; the one real, measured
+  improvement available (bucket-probability calibration) cannot ship under a rank gate
+  whose tolerance sits below the eval's noise floor. Registry rows 45-47 record all three.
+
 ## Changelog of findings in this pass
 
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.
