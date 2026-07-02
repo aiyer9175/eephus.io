@@ -633,7 +633,10 @@
       const totV = m.src === "prospect"
         ? seasons.map((s, t) => warAt(m, t)).filter(v => v != null).reduce((a, b) => a + b, 0)
         : (m.warTotalPTH ?? m.warTotal);
-      const tot = `${fmtWar(totV)}${m.src !== "prospect" && m.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(m.warTotalPTHP10 ?? m.warTotalP10)}-${fmtWar(m.warTotalPTHP90 ?? m.warTotalP90)})</span>` : ""}`;
+      // Total-WAR P10-P90 band dropped (F-01): the band summed per-year
+      // quantiles and the per-year marginals undercover realized totals, so it
+      // was miscalibrated. Point estimate stays; per-year bands are unaffected.
+      const tot = `${fmtWar(totV)}`;
       const cs = contractStatus(m);
       const ct = `<span class="proj-ct ${cs.cls}" title="${esc(cs.tip)}">${esc(cs.label)}</span>`
         + (m.src !== "prospect" && m.thru && m.aav ? `<span class="fa-sub"> ${money(m.aav)}/y</span>` : "");
@@ -980,7 +983,8 @@
     const tiles = [];
     const tile = (label, val, cls, title) => tiles.push(`<div class="mlbp-tile"${title ? ` title="${esc(title)}"` : ""}><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${cls || ""}">${val}</span></div>`);
     if (p.proj && p.proj.warTotal != null)
-      tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}${p.proj.warTotalP10 != null ? `<span class="fa-band"> (${fmtWar(p.proj.warTotalP10)}-${fmtWar(p.proj.warTotalP90)})</span>` : ""}`,
+      // Total-WAR band dropped (F-01, miscalibrated); per-year bands stay in the fan chart + upside strip.
+      tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}`,
         null, "Expected (attrition-discounted) bWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
     if (p.proj && p.proj.surNpv != null) tile("Surplus NPV", money(p.proj.surNpv), p.proj.surNpv >= 0 ? "proj-pos" : "proj-neg");
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");

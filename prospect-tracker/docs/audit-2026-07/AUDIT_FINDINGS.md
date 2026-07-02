@@ -336,11 +336,58 @@ loss ledger, registry row + eval artifact + freshness map for anything model-sha
   the before/after view.
 - On fail: final loss ledger; no further calibration attempts against this data vintage.
 
-## Wave 3 outcomes (2026-07-02, review-queue round): partial landing
+## Wave 3 outcomes (2026-07-02, review-queue round)
 
-Two of eight lanes completed before a session-limit interruption; the other six
-(R-BAND, R-PARK, R-SHRINK, entity pages, PROSPX gradeBlock+band, overseas re-check)
-re-run on workflow resume (their pre-registered gates above still govern).
+First eight-lane run landed two lanes (E-ISO3, farm snapshotting) before a session-limit
+interruption; the resume landed five more; the entity-pages lane failed on a structured-
+output error (not a data problem) and is deferred (additive static pages, not launch-
+critical; REVIEW_QUEUE). Outcomes:
+
+- R-BAND (F-01 remediation): gate FAIL, and the failure is more informative than expected.
+  The simulated path-total band (Gaussian AR(1) copula, estimated dependence rho 0.345,
+  SEED 20260702) covers only 0.41 of realized multi-year totals vs the 0.75-0.85 gate. Root
+  cause: the INCUMBENT summed band already UNDER-covers (0.63, not over-covers), because
+  25.9% of realized totals fall below its p10 path (league attrition: washouts realize ~0
+  WAR, below a strictly-positive decayed p10). Coverage is monotone increasing in dependence,
+  so no admissible narrowing reaches 0.75. The bands are MIS-CENTERED (too high), not too
+  wide, so the "summing makes them too wide" framing of F-01 was incomplete. OWNER-APPROVED
+  FALLBACK TAKEN: the total P10-P90 bands are dropped from the FA and Projections display
+  (assets/fa.js, assets/projections.js); point estimates and the statistically-fine per-year
+  bands stay. F-01 disposition: FIXED (bands removed). NEW review-queue item: recalibrate the
+  per-year WAR quantile marginals to carry league-attrition zero mass (a proj_ml/Gate-1
+  quantile-head change), after which a dependence-aware total band becomes worth revisiting.
+  Loss ledger: data/total_band_eval.json, registry row war_total_band_calibration.
+- R-PARK (item 2): INFEASIBLE, gate cannot run. The cached Savant-minors data is player-
+  season aggregates with no venue dimension, and the Single-A statline target has no park
+  join key; best-case venue attribution reaches ~18% of matched players and only 2026.
+  No ship; college_translation unchanged. Prereq for any retry: a venue dimension on the
+  minors ingest + a park key on the Single-A statlines. Loss ledger:
+  data/milb_park_factors_eval.json, registry row milb_park_factors.
+- R-SHRINK (item 6): FAIL to unify, as the provenance predicted. Across shared ERA-shrink
+  candidates 35..65 the display objective is a monotone blowups/full-season-distortion
+  tradeoff balanced at K_IP=50, and the PAL need-gate ordering is flat within a wide
+  bootstrap CI on 36 labeled conversions. No single value beats both, so K_IP=50 and
+  NEED_ERA_SHRINK_IP=45 STAY. Resolves item 6. Loss ledger:
+  data/era_shrink_unification_eval.json, registry row era_shrink_unification.
+- PROSPX gradeBlock + grade band (items 5 + 4): SHIPPED. Extracted one gradeBlock() helper
+  and routed 5 duplicated grade-rendering sites through it, verified byte-identical via a
+  py_mini_racer golden harness (0 non-band diffs across 72 renders); 6 further sites were
+  intentionally left un-routed (each has a genuinely different fallback; routing them would
+  drift output) and flagged. Added a grade-scale "Outcome band" to the player-detail hero,
+  derived by inverting the published surplus_by_grade_mm anchor at the payload's surplus
+  P10/P90 (reproduces xfv_grade to MAE 0.385, so a faithful re-expression on the grade axis,
+  not fabrication), hidden for provisional/degenerate/ungraded rows, tooltip disambiguating
+  outcome-distribution from scout disagreement. Copy gates pass.
+- OVERSEAS (item 8): investigation only. VERDICT: the hitter wRC+ blocker has DISSOLVED for
+  NPB (READY-TO-RUN) and is marginally ready for KBO; CPBL and Cuba stay BLOCKED (CPBL has
+  zero MLB transitions; Cuba has no Serie Nacional wRC+ source plus a defection-gap problem).
+  FanGraphs already publishes league+park-adjusted NPB/KBO/MLB wRC+ on one page and
+  overseas_stats.py already parses it, so no league-context scrape is needed; the only new
+  input is curating ~7-10 fg_player_ids (an owner-extendable ledger task). A ready-to-run
+  gated refit is spec'd in docs/audit-2026-07/overseas-factors-recheck.md and queued
+  (REVIEW_QUEUE). No code changed.
+
+### Earlier partial-landing note (superseded by the outcomes above)
 
 - E-ISO3: REJECTED (2 of 4 conditions), FINAL loss ledger for the bucket-calibration
   line against this data vintage (per the pre-registration). C2 (exact within-side-year

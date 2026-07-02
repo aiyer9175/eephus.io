@@ -10,6 +10,47 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-02 (review-queue round)
+
+- F-01 total-WAR bands DROPPED from the FA and Projections display (the
+  owner-approved fallback after the R-BAND gate failed). The R-BAND
+  experiment found the displayed total bands were miscalibrated beyond the
+  summing bug: the incumbent summed band covers only 63% of realized
+  multi-year totals (vs 80% design) because roughly a quarter of realized
+  totals fall below its floor path, since players who wash out realize about
+  zero WAR while the decayed p10 never reaches zero. The bands are
+  mis-centered high, not merely too wide, so a narrower dependence-correct
+  band covers even less (41%). Point estimates and the per-year bands stay;
+  the real long-term fix (recalibrating the per-year quantile marginals to
+  carry league-attrition zero mass) is REVIEW_QUEUE item 13. Loss ledger:
+  data/total_band_eval.json.
+- PROSPX grade cluster refactor (review-queue item 5) plus a grade-scale
+  outcome band (item 4). One gradeBlock() helper now single-sources the
+  eFV-round-to-nearest vs consensus-FV-ceiling decision; five duplicated
+  sites route through it with byte-identical output (verified by a
+  py_mini_racer golden harness), and six sites with genuinely different
+  fallbacks are left in place and documented. The player-detail hero gains
+  an "Outcome band" on the 20-80 grade scale, derived by inverting the
+  published surplus pricing anchor at the outcome P10/P90 (a faithful
+  re-expression, reproducing the grade to 0.4 MAE), hidden for provisional
+  and degenerate rows, tooltip disambiguating it from scout disagreement.
+- Gated experiments, all resolved honestly with loss ledgers and registry
+  rows: MiLB park factors (item 2) are infeasible on cached data (the
+  minors feed has no venue dimension and the Single-A statlines have no park
+  key); the ERA-shrink unification (item 6) confirms the two pseudo-counts
+  should stay (no shared value beats both objectives); the eFV bucket
+  calibration re-attempt under a production-relevant gate (E-ISO3) fails on
+  a per-side materiality check and year-dependent cross-side rank churn, the
+  final attempt against this data vintage. eFV published numbers unchanged.
+- Overseas re-check (item 8): the hitter wRC+ factor blocker has dissolved
+  for NPB (FanGraphs already supplies league-and-park-adjusted wRC+ that
+  overseas_stats.py parses; the only missing input is curating about ten
+  FanGraphs player ids), upgraded to READY-TO-RUN and queued with a
+  pre-registered gate; CPBL and Cuba stay blocked on cohort and source
+  gaps. docs/audit-2026-07/overseas-factors-recheck.md.
+- Country/IFA entity pages (item 9) deferred: the build lane failed on a
+  structured-output error, not a data problem; re-run queued as item 14.
+
 ## 2026-07-02
 
 - Wave 2 close-out: adversarial verification of the whole pass (4 read-only

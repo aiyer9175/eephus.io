@@ -1,0 +1,269 @@
+{
+ "artifact": "milb_park_factors_eval",
+ "generated_at": "2026-07-02",
+ "lane": "R-PARK",
+ "gate_ref": "docs/audit-2026-07/AUDIT_FINDINGS.md#R-PARK",
+ "seed": "n/a (deterministic aggregation; no sampling or randomized step)",
+ "verdict": "FAIL -- INFEASIBLE. Per-park aggregation is not possible from the cached data the R-PARK hypothesis names (Savant-minors is player-aggregated, no venue dimension), and the college_translation matched-pair target carries no park join key, so the translation-improvement test cannot be run. Insufficient data. No ship; college_translation is unchanged.",
+ "gate_pass": false,
+ "conditions": {
+  "1_yoy_stability_rho_ge_0.50": {
+   "verdict": "INFEASIBLE",
+   "why": "The Savant-minors cache the hypothesis names has NO venue dimension (group_by=name; venue columns found: []), so per-park aggregates cannot be built from it at all. The only venue-attributable minors contact source (statcast_metrics) covers Single-A level 'A' in seasons [2026] only -- a single season, so a year-over-year correlation cannot be computed (needs >= 2 years). A+ has 0 tracked venues."
+  },
+  "2_translation_improvement_no_K%_r2_loss": {
+   "verdict": "INFEASIBLE",
+   "why": "The college_translation matched-pair target (Single-A statlines) carries no park/team/home-road field (park_or_team_fields=[]), so there is no join key to attach a park adjustment to a matched player's season line. Best-case venue attribution via the prospect statcast cache reaches only 18.4% of matched hitters and 18.8% of matched pitchers, and even that is a home+road venue list, not a park assignment. The LOO improvement test cannot be run."
+  },
+  "3_coverage_reported_honestly": {
+   "verdict": "REPORTED",
+   "why": "Single-A level 'A' (Florida State League): 14 tracked venues, seasons [2026], prospect-population only. Level 'A+' (High-A): 0 tracked venues -- half of the translation's 'A/A+' universe is dark. Untracked FSL/DSL parks are neither present nor imputed."
+  }
+ },
+ "feasibility_probe": {
+  "savant_minors_cache": {
+   "cache_dir": ".cache\\savant_minors",
+   "group_by": "name (player-season aggregates)",
+   "files": [
+    {
+     "file": "batter_2023.csv",
+     "player_rows": 722,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "batter_2024.csv",
+     "player_rows": 707,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "batter_2025.csv",
+     "player_rows": 723,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "batter_2026.csv",
+     "player_rows": 495,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "pitcher_2023.csv",
+     "player_rows": 853,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "pitcher_2024.csv",
+     "player_rows": 808,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "pitcher_2025.csv",
+     "player_rows": 827,
+     "n_columns": 77,
+     "venue_park_columns": []
+    },
+    {
+     "file": "pitcher_2026.csv",
+     "player_rows": 423,
+     "n_columns": 77,
+     "venue_park_columns": []
+    }
+   ],
+   "has_venue_dimension": false,
+   "venue_columns_found": []
+  },
+  "single_a_statline_fields": {
+   "single_a_statline_rows": 2030,
+   "fields_present": [
+    "avg",
+    "bb_pct",
+    "bb_per_9",
+    "era",
+    "fetched_at",
+    "fip",
+    "games",
+    "hr",
+    "hr_per_9",
+    "ip",
+    "is_pitcher",
+    "is_prior_season",
+    "iso",
+    "k_pct",
+    "k_per_9",
+    "level",
+    "mlbam_id",
+    "obp",
+    "ops",
+    "player_key",
+    "sb",
+    "season",
+    "slg",
+    "whip"
+   ],
+   "park_or_team_fields": [],
+   "has_park_join_key": false
+  },
+  "statcast_venue_coverage": {
+   "source": "statcast_metrics (MLB Stats API game feed; prospect population)",
+   "note": "contact_quality is aggregated per player per LEVEL, not per venue; the 'venues' list is a home+road NAME list only. No per-venue contact aggregate is retained, so a park factor would require re-walking the ~156k raw cached game feeds and would still only see the biased prospect subset.",
+   "per_level": {
+    "A": {
+     "distinct_venues": 14,
+     "prospect_season_rows": 499,
+     "seasons_covered": [
+      2026
+     ]
+    },
+    "AAA": {
+     "distinct_venues": 30,
+     "prospect_season_rows": 1447,
+     "seasons_covered": [
+      2026
+     ]
+    },
+    "MLB": {
+     "distinct_venues": 32,
+     "prospect_season_rows": 1018,
+     "seasons_covered": [
+      2026
+     ]
+    },
+    "CPX": {
+     "distinct_venues": 45,
+     "prospect_season_rows": 719,
+     "seasons_covered": [
+      2026
+     ]
+    }
+   },
+   "single_a_A_venues": [
+    {
+     "venue": "BayCare Ballpark",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Carilion Clinic Field",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Clover Park",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "George M. Steinbrenner Field",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Holman Stadium",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Jackie Robinson Ballpark",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "LECOM Park",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Lee Health Sports Complex",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Publix Field at Joker Marchant Stadium",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Roger Dean Chevrolet Stadium",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "SEGRA Stadium",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "SRP Park",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "Segra Park",
+     "seasons": [
+      2026
+     ]
+    },
+    {
+     "venue": "TD Ballpark",
+     "seasons": [
+      2026
+     ]
+    }
+   ],
+   "single_a_A_distinct_venues": 14,
+   "single_a_A_seasons_covered": [
+    2026
+   ],
+   "single_a_Aplus_tracked_venues": 0
+  },
+  "matched_pair_attribution": {
+   "hitters": {
+    "matched": 212,
+    "with_any_statcast": 49,
+    "with_A_venue_attribution": 39,
+    "A_attribution_pct": 18.4
+   },
+   "pitchers": {
+    "matched": 245,
+    "with_any_statcast": 48,
+    "with_A_venue_attribution": 46,
+    "A_attribution_pct": 18.8
+   },
+   "attribution_is": "home+road venue LIST only, not a home-park assignment or a home/road split"
+  }
+ },
+ "loss_ledger": {
+  "outcome": "INFEASIBLE / FAIL (insufficient data)",
+  "seed": "n/a (deterministic aggregation; no sampling or randomized fold)",
+  "root_causes": [
+   "Savant-minors cache is group_by=name: player-season aggregates with no venue/stadium/team/game column, across all 8 cached files (batter/pitcher x 2023-2026). Per-park aggregation is impossible from the source the hypothesis names.",
+   "college_translation's matched-pair target (statlines, level A/A+) carries no team/venue/home-road field, so no park adjustment can be joined to a matched player's Single-A line. Gate condition 2 cannot be executed.",
+   "The only venue-attributable minors contact data in cache (statcast_metrics, MLB game-feed aggregate) is a PROSPECT-population subset, stored per level not per venue, and for Single-A 'A' it spans a single season (2026), making a year-over-year stability correlation arithmetically impossible.",
+   "Single-A A+ (High-A) has zero tracked venues; the existing park-factor machinery (fa_park_factors / fetch_savant_park_factors) is MLB-only and the fa_park_factors table is empty."
+  ],
+  "what_would_be_needed": [
+   "A full-population (not prospect-only) per-venue batted-ball or run-scoring source for Single-A parks spanning >= 2 seasons, to estimate and stability-test park factors.",
+   "A team/venue (and ideally home/road) attribution on the Single-A statlines so an estimated factor could be applied inside the matched-pair LOO loop.",
+   "Coverage for A+ parks, which today have no tracking at all."
+  ],
+  "no_ship": true,
+  "college_translation_untouched": true
+ }
+}

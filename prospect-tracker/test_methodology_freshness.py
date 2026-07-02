@@ -96,6 +96,12 @@ MODEL_GLOSSARY = {
     # attempt under a production-relevant gate; rejected, loss ledger,
     # rendered nowhere.
     "xfv_grade_recal3": "internal",
+    # Review-queue round loss ledgers, all rendered nowhere: the total-WAR
+    # band replacement (rejected, bands dropped), MiLB park factors
+    # (infeasible), ERA-shrink unification (keep two values).
+    "war_total_band_calibration": "internal",
+    "milb_park_factors": "internal",
+    "era_shrink_unification": "internal",
 }
 
 

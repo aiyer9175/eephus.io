@@ -6,6 +6,27 @@ unless explicitly pulled forward by the owner; items marked DO NOT ATTEMPT
 PRE-LAUNCH are frozen harder than that. Curated by hand; landed items move
 to CHANGELOG.md with their commit.
 
+## Dispositions from the 2026-07-02 review-queue round
+
+Owner pulled items 2, 4, 5, 6, 7, 8, 9, 10 forward. Results (details in the
+per-item sections and docs/audit-2026-07/AUDIT_FINDINGS.md):
+- Item 4 (grade-scale eFV band): DONE. Shipped on the PROSPX player-detail hero.
+- Item 5 (gradeBlock refactor): DONE. One helper, 5 sites routed byte-identically;
+  6 sites intentionally left (distinct fallbacks) and flagged.
+- Item 6 (ERA-shrink unification): RESOLVED as KEEP-TWO. Gated sweep found no single
+  value beats both objectives; K_IP=50 and NEED_ERA_SHRINK_IP=45 stay. Closed.
+- Item 7 (F-01 total bands): RESOLVED. The bands were miscalibrated beyond the summing
+  bug (they under-cover, mis-centered high), so the owner-approved fallback was taken:
+  total P10-P90 bands dropped from FA + Projections display. See new item 13 for the
+  real long-term fix.
+- Item 10 (farm-letter snapshotting): DONE. History now accrues (first snapshot 2026-07-02).
+- Item 2 (MiLB park factors): CLOSED-INFEASIBLE on cached data (no venue dimension, no park
+  join key). Re-open only after the minors ingest gains a venue dimension; spec retained below.
+- Item 8 (overseas wRC+): UPGRADED to READY-TO-RUN (NPB); see below.
+- Item 9 (Country/IFA entity pages): still open; the build lane failed on a structured-output
+  error (not a data problem) and was deferred rather than re-run under launch pressure.
+Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
+
 ## 1. proj_lgbm star-tail refit (DO NOT ATTEMPT PRE-LAUNCH)
 
 - What: refit the WAR-path quantile heads so the star slice (base-year WAR
@@ -98,15 +119,28 @@ to CHANGELOG.md with their commit.
 - Rollback: keep the summed fields in the payload during transition; the
   frontend can re-point at the old keys.
 
-## 8. Overseas hitter wRC+ and CPBL factors
+## 8. Overseas hitter wRC+ factor (READY-TO-RUN, NPB) + CPBL/Cuba (blocked)
 
-- What: extend overseas_translation with hitter wRC+-based factors and a
-  measured CPBL set (current CPBL factors ride the smallest cohort).
-- Why: hitter translations lean on rate stats with no park/league offense
-  anchor; CPBL n is thin and shrunk hard, which the eval discloses but the
-  display does not.
-- Expected impact: better MLBe lines on the Overseas tab; updates
-  data/overseas_translation_eval.json and the registry row.
+- Status (2026-07-02 re-check, docs/audit-2026-07/overseas-factors-recheck.md):
+  the wRC+ blocker has DISSOLVED. FanGraphs already publishes league+park-
+  adjusted NPB/KBO/MLB wRC+ on one player page and overseas_stats.py already
+  parses it (HITTER_KEYS wRC+ -> wrc_plus), so NO separate league-context
+  scrape is needed. The refit is ready to run for NPB (n=6 hitters, matching
+  the K% delta factor this module already shipped under k=8 shrink) and
+  marginally KBO (rises to ~3-4 once FG resolves hitters B-Ref drops).
+- Only new input needed: curate ~7-10 fg_player_ids for the graduated cohort
+  hitters (Suzuki, Yoshida, etc. currently fg=None), an owner-extendable
+  ledger task. This is the sole gate to running it.
+- Gated experiment (pre-registered in the re-check doc): LOO-validated wRC+
+  multiplier must beat the prior, SEED=8 bootstrap stability, coverage n>=5
+  NPB, marginal=fail. Elite-selection caveat (every transition hitter is
+  posting-caliber) surfaces in the note, same as the shipped pitcher ERA
+  multiplier.
+- CPBL: BLOCKED-ON-cohort-existence (zero CPBL->MLB transitions 2015-2026;
+  CPBL is a destination, not a source). Cuba: BLOCKED-ON-source (no Serie
+  Nacional wRC+ on FG, unreliable B-Ref, plus a 1-2 year defection-gap that
+  breaks the "final foreign season" rule). Both stay hand-set prior-only;
+  recommend marking them prior-only in the registry note.
 - Rollback: factor table swap; keep the phase4b_refit_v2 table as fallback.
 
 ## 9. Country/IFA entity pages
@@ -167,3 +201,35 @@ to CHANGELOG.md with their commit.
   >= 0.05 at n >= 40/side, no cohort-year reversal), and ship through the
   standing triple if it passes.
 - Rollback: none needed until attempted.
+
+## 13. Per-year WAR quantile marginal recalibration (the real F-01 fix)
+
+- What: recalibrate the per-year WAR quantile heads (fa_market.contract_war_path
+  war_by_year_p10/p90, decayed from war1 + Gate-1 residual quantiles; and the
+  proj_ml quantile heads) so the marginals carry league-attrition zero mass.
+- Why: the R-BAND experiment (data/total_band_eval.json) proved the displayed
+  total bands under-cover realized multi-year totals (incumbent 0.63 vs 0.80
+  design), because ~26% of realized totals fall below the p10 path: washouts
+  leave the league and realize ~0 WAR, but the strictly-positive decayed p10
+  never reaches zero. This is a marginal-calibration defect, not a summing or
+  width defect, so it also affects the per-year bands (survived-all coverage
+  0.55). The total bands were dropped as the interim fix (item 7); this is the
+  fix that would let calibrated bands (per-year AND total) come back.
+- Expected impact: wider, lower-floored per-year bands that actually cover;
+  gate on realized coverage in [0.75, 0.85] on holdout, on BOTH per-year and
+  a dependence-aware total (the AR(1) copula machinery in tools/fit_total_band.py
+  is ready, rho 0.345 estimated, and becomes correct once the marginals are
+  fixed). Changes published band numbers: pre-registered gated experiment.
+- Rollback: quantile-head change is a model artifact swap; revert to the
+  committed proj_ml heads and the current decay in fa_market.
+
+## 14. Country/IFA entity pages re-run
+
+- What: same as item 9; the 2026-07-02 build lane failed on a structured-output
+  error (the agent did the work but could not format its return), not a data or
+  code problem, so nothing landed. Re-run the single lane against the shipped
+  states/colleges entity-page generator pattern.
+- Why: additive static pages, approved long ago; not launch-critical, which is
+  why it was deferred rather than re-run under pre-launch pressure.
+- Expected impact: new static pages only; no model surface.
+- Rollback: drop the routes from build_site.

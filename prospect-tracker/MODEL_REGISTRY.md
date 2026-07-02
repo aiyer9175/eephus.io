@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**48 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 5.
+**51 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 8.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -58,6 +58,9 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `xfv_cohort_lambda` | model-dev artifact (rendered nowhere) - per-cohort eFV/co... | n/a - gated experiment E-LAMBDA: out-of-fold per-cohort blend lambda selection (candidate REJECTED on all 3 gate conditions) | shipped global per-side blend lambdas (unchanged) | per-cohort OOF-selected lambdas (grid 0.00-1.00 step 0.05, min pool 25, SEED=7) | pre-registered gate: pooled OOS Spearman non-decrease both sides; >=+0.010 co... | **deprecated** | `data/xfv_cohort_lambda_eval.json` | - | - |
 | `xfv_pitcher_stuff` | model-dev artifact (rendered nowhere) - AA/AAA pitcher tr... | n/a - gated experiment E-STUFF: aStuff+ / SC+ whiff-z overlay features for upper-level pitchers (INCONCLUSIVE: zero trainable c... | shipped eFV pitcher model (unchanged; baseline blend rho 0.2787 reproduced ex... | overlay variants astuff/whiff/both under strict and same-season as-of convent... | pre-registered gate: pitcher pool OOS Spearman >=+0.005, AA/AAA sub-cohort >=... | **deprecated** | `data/xfv_pitcher_stuff_eval.json` | - | - |
 | `xfv_grade_recal3` | model-dev artifact (rendered nowhere) - eFV bucket-calibr... | n/a - gated experiment E-ISO3: the E-ISO2 grade-space monotone recalibration re-evaluated under a redesigned gate (within-year... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | grade-space monotone challenger (reused verbatim from efv_grade_recal_lab, fo... | pre-registered 4-condition gate: pooled+per-side+per-bucket Brier/log-loss, e... | **deprecated** | `data/xfv_grade_recal3_eval.json` | - | - |
+| `war_total_band_calibration` | model-dev artifact (rendered nowhere) - FA/Projections to... | n/a - gated experiment R-BAND: simulated path-total quantile band to replace the sum-of-per-year-quantiles total band (F-01); R... | no total band (dropped from display, owner-approved fallback) | simulated total via Gaussian AR(1) copula (SEED=20260702, N=20000, AR1 rho 0.... | pre-registered gate: realized-total coverage in [0.75,0.85]; band narrower th... | **deprecated** | `data/total_band_eval.json` | - | - |
+| `milb_park_factors` | model-dev artifact (rendered nowhere) - MiLB per-park fac... | n/a - gated experiment R-PARK: per-park run/contact environment factors from Savant-minors 2023+ to adjust college -> Single-A... | no park adjustment (college_translation unchanged) | per-park factors + matched-pair LOO with the adjustment (could not be run) | pre-registered gate: per-park YoY stability rho >= 0.50; translation LOO MAE/... | **deprecated** | `data/milb_park_factors_eval.json` | - | - |
+| `era_shrink_unification` | model-dev artifact (rendered nowhere) - ERA-shrink pseudo... | n/a - gated experiment R-SHRINK: whether one shared ERA-shrink value can replace K_IP=50 (display) and NEED_ERA_SHRINK_IP=45 (P... | two distinct values retained (K_IP=50.0, NEED_ERA_SHRINK_IP=45.0) | shared candidate values 35..65 step 5 vs both incumbents on their own objectives | pre-registered gate: a single value must beat-or-tie BOTH the display-stabili... | **deprecated** | `data/era_shrink_unification_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

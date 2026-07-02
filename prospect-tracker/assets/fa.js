@@ -504,8 +504,12 @@
         ? `${m.projYears}<span class="fa-band"> (${m.projYearsP10 ?? "?"}&ndash;${m.projYearsP90 ?? "?"})</span>` : EM_DASH;
       const guarBand = m.projGuar != null
         ? `${money(m.projGuar)}<span class="fa-band"> (${money(m.projGuarP10)}&ndash;${money(m.projGuarP90)})</span>` : EM_DASH;
+      // Total-WAR P10-P90 band dropped (F-01): summing per-year quantiles does
+      // not give the total's quantile, and the underlying per-year marginals
+      // undercover realized totals (no league-attrition zero floor), so the
+      // band was miscalibrated. Point estimate stays; see REVIEW_QUEUE.
       const dealWar = m.warTotal != null
-        ? `${formatMetric(m.warTotal, "war")}<span class="fa-band"> (${formatMetric(m.warTotalP10, "war")}&ndash;${formatMetric(m.warTotalP90, "war")})</span>` : EM_DASH;
+        ? `${formatMetric(m.warTotal, "war")}` : EM_DASH;
       const trCls = [
         (m.projGuar == null || m.status === "option_exercised") ? "fa-dim" : "",
         isOption(m) ? "fa-row-opt" : "",
@@ -797,7 +801,7 @@
         <td>${band(m.projYears, m.projYearsP10, m.projYearsP90, v => v ?? "?")}</td>
         <td>${band(m.projGuar, m.projGuarP10, m.projGuarP90, money)}</td>
         <td>${band(m.projAav, m.projAavP10, m.projAavP90, money)}</td>
-        <td>${band(m.warTotal, m.warTotalP10, m.warTotalP90, v => v == null ? "?" : formatMetric(v, "war"))}</td>
+        <td>${m.warTotal == null ? "?" : formatMetric(m.warTotal, "war")}</td>
         <td>${m.rational != null ? money(m.rational) : EM_DASH}</td>
         <td>${surplusSpan(m.surplus, m.surplusP10, m.surplusP90)}</td>
         <td>${verdictChip(m)}</td>

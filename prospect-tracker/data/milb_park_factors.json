@@ -1,0 +1,21 @@
+{
+ "artifact": "milb_park_factors",
+ "generated_at": "2026-07-02",
+ "status": "not_built",
+ "gate_pass": false,
+ "reason": "INFEASIBLE: cached Savant-minors data has no venue dimension (group_by=name), and Single-A statlines carry no park/team join key. See milb_park_factors_eval.json for the full feasibility probe and loss ledger.",
+ "factors": {},
+ "levels_touched_by_translation": [
+  "A",
+  "A+"
+ ],
+ "coverage_summary": {
+  "savant_minors_has_venue_dimension": false,
+  "single_a_A_tracked_venues": 14,
+  "single_a_A_seasons": [
+   2026
+  ],
+  "single_a_Aplus_tracked_venues": 0,
+  "single_a_statline_has_park_key": false
+ }
+}
