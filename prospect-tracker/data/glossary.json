@@ -1,5 +1,5 @@
 {
- "version": "2026-06-24",
+ "version": "2026-07-01",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -110,7 +110,7 @@
    ],
    "priority": 14,
    "definition": "Rare active-prospect flag: tool/FV velocity AND a strong performance gate, with an age cap. Surfaces roughly 10-40 prospects league-wide.",
-   "methodology": "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates): (a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3; (b) a strong performance gate fires - hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (v29 - Statcast+ ≥ 115 also passes as an alternative gate); (c) v15 age cap - position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout). Tuned to surface ~10-40 prospects league-wide. The badge gets an aquamarine pulsing ★ mark (bottom-left corner) with a tooltip explaining which signal fired and which gate passed.",
+   "methodology": "An active prospect flags as Breakout when ALL of the following hold over the window max(last 6 months, last 4 source updates):\n\n(a) consensus FV upgraded by ≥ +5 grade points OR mean tool-grade composite improved by ≥ +3;\n\n(b) a strong performance gate fires - hitters: RPS+ ≥ 110 or wRC+ ≥ 130; pitchers: Peripheral Stuff+ ≥ 105 or FIP- ≤ 90 (v29 - Statcast+ ≥ 115 also passes as an alternative gate);\n\n(c) v15 age cap - position players and SPs through age 24; relievers (RP / MIRP / SIRP / CL) through age 25 (relievers peak earlier in their development arc, so an aging-relief hot stretch shouldn't read as a prospect breakout).\n\nTuned to surface ~10-40 prospects league-wide. The badge gets an aquamarine pulsing ★ mark (bottom-left corner) with a tooltip explaining which signal fired and which gate passed.",
    "formula": "breakout = (fv_upgrade ≥ +5 OR tool_velocity ≥ +3)\n         AND perf_gate_pass\n         AND (age ≤ 24 starters/hitters, age ≤ 25 relievers)",
    "seeAlso": [
     "tools_dvm_plus",
@@ -426,7 +426,7 @@
    ],
    "priority": 30,
    "definition": "Hitter power index - RELIABILITY-WEIGHTED blend of ISO+ (performance), Statcast (hard-hit + barrel), and the Power grade. The scouting grade anchors thin samples; observed stats take over as PA accrue. 100 = average.",
-   "methodology": "Reliability-weighted blend, base importances 45% PERFORMANCE / 25% STATCAST / 30% Power grade. The performance and Statcast components are down-weighted by their own sample reliability - ISO stabilizes around 150 PA, batted-ball quality in tens of batted balls - so a thin-sample prospect leans on the scouting prior and a full-season one leans on observed power.\n\nThe performance signal is ISO+ ALONE: the prior version also summed an HR-rate+ term, but ISO+ and HR-rate+ correlate 0.91 across active hitters, so adding them double-counted one power trait and inflated the reading. Validated against graduate outcomes - the reliability-weighted POW+ predicts MLB ISO at 0.50, up from 0.35.\n\nPower grade on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) remain placeholders pending per-level MiLB calibration.",
+   "methodology": "Reliability-weighted blend, base importances 45% PERFORMANCE / 25% STATCAST / 30% Power grade. The performance and Statcast components are down-weighted by their own sample reliability - ISO stabilizes around 150 PA, batted-ball quality in tens of batted balls - so a thin-sample prospect leans on the scouting prior and a full-season one leans on observed power.\n\nThe performance signal is ISO+ ALONE: the prior version also summed an HR-rate+ term, but ISO+ and HR-rate+ correlate 0.91 across active hitters, so adding them double-counted one power trait and inflated the reading. Validated against graduate outcomes - the reliability-weighted POW+ predicts MLB ISO at 0.50, up from 0.35.\n\nPower grade on the 20-80 scale (50 → 100, ±10 ≈ ±20). Statcast pool anchors (hard-hit ≈ 33%, barrel ≈ 6%) remain placeholders pending per-level MiLB calibration.\n\nPWR+ is the retired legacy label for this metric and survives only as a search alias here; POW+ is the canonical name on every surface.",
    "formula": "POW+ = Σ wᵢ·xᵢ / Σ wᵢ\nperf:     x = ISO+,  w = 0.45 · AB/(AB+150)\nstatcast: x = 0.55·HH%/33 + 0.45·Brl%/6 (×100),  w = 0.25 · BBE/(BBE+40)\ntool:     x = 100 + (Power_grade − 50)·2,  w = 0.30  (prior, full weight)",
    "example": "A AA hitter with ISO+ 145, hard-hit 40% / barrel 9% (statcast ~134), and a 60 Power grade (tool+ 120) → POW+ ~135.",
    "seeAlso": [
@@ -2345,7 +2345,7 @@
    ],
    "priority": 5,
    "definition": "Green ▲ = consensus FV rose since the last update; red ▼ = fell. Magnitude is the FV-delta.",
-   "methodology": "Drives the 'Up' / 'Down' filter on the Active list. Stock reads as 'delta since the most recent prior update' - a player with only one update reads as 'flat'. Movements ≥ 1.5 grade-points show in the row's meta line.",
+   "methodology": "Stock is the consensus-FV delta since the most recent prior update - a player with only one update reads as 'flat'. Drives the 'Up' / 'Down' filter on the Active list; movements ≥ 1.5 grade-points show in the row's meta line.",
    "seeAlso": [
     "stock",
     "fv"

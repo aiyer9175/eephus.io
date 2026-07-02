@@ -21,9 +21,20 @@ from __future__ import annotations
 
 import json
 import re
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).parent
+
+
+def glossary_version() -> str:
+    """Single source for the data/glossary.json version stamp (audit F-03).
+
+    The stamp is the build date: it moves exactly when a glossary builder
+    rewrites the payload, never by hand. Every build_glossary_*.py script
+    that writes the payload imports this instead of setting a literal.
+    """
+    return date.today().isoformat()
 
 # Categories → display groups (mirrors the legacy _GLOSSARY_BASECAT_TO_GROUP
 # intent; the unified page navigates by these).
@@ -274,7 +285,7 @@ def main() -> None:
     for e in entries:
         if e.get("seeAlso"):
             e["seeAlso"] = [s for s in e["seeAlso"] if s in idset]
-    payload = {"version": "2026-06-10", "groups": GROUPS, "entries": entries}
+    payload = {"version": glossary_version(), "groups": GROUPS, "entries": entries}
     out = ROOT / "data" / "glossary.json"
     out.write_text(json.dumps(payload, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"wrote {out} - {len(entries)} entries")

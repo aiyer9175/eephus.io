@@ -16,6 +16,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from build_glossary_data import glossary_version
+
 PATH = Path(__file__).parent / "data" / "glossary.json"
 
 
@@ -161,7 +163,7 @@ def main() -> None:
     for e in d["entries"]:
         if e.get("seeAlso"):
             e["seeAlso"] = [s for s in e["seeAlso"] if s in idset]
-    d["version"] = "2026-06-10.2"
+    d["version"] = glossary_version()  # single-sourced stamp (audit F-03)
     PATH.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"updated {PATH} — {len(d['entries'])} entries")
 

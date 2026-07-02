@@ -7,26 +7,26 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 
 | Term | Source | Category | Verdict | Diagnosis |
 |---|---|---|---|---|
-| Tool | PROSPX | custom-index | LIGHT | 'Equally-weighted, tail-weighted' reads contradictory — say 'unweighted power-mean (p=4); the exponent rewards extreme tools'. |
+| Tool | PROSPX | custom-index | PASS | Fixed. |
 | O-Tool | PROSPX | custom-index | PASS |  |
 | D-Tool | PROSPX | custom-index | PASS |  |
-| Breakout Indicator | PROSPX | custom-index | REWRITE | 'Designed to surface ~10-40' → 'Surfaces ~10-40'. Long is a 147-word wall — restructure. |
-| Upside Indicator | PROSPX | custom-index | LIGHT | Typo: 'published a published'. Fix the duplication. |
-| Statcast+ (SC+) | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
-| Tiebreaker Score (TBS) | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
-| RPS+ | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| Breakout Indicator | PROSPX | custom-index | PASS | Rewritten. |
+| Upside Indicator | PROSPX | custom-index | PASS | Fixed. |
+| Statcast+ (SC+) | PROSPX | custom-index | PASS | Restructured. |
+| Tiebreaker Score (TBS) | PROSPX | custom-index | PASS | Restructured. |
+| RPS+ | PROSPX | custom-index | PASS | Restructured. |
 | DvM+ | PROSPX | custom-index | PASS |  |
 | Tool Δ | PROSPX | custom-index | PASS |  |
-| ToolDvM+ | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| ToolDvM+ | PROSPX | custom-index | PASS | Restructured. |
 | HitDvM+ / PowerDvM+ / … | PROSPX | custom-index | PASS |  |
 | HIT+ | PROSPX | custom-index | PASS |  |
 | ISO+ | PROSPX | custom-index | PASS |  |
-| POW+ | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| POW+ | PROSPX | custom-index | PASS | Restructured. |
 | PD+ | PROSPX | custom-index | PASS |  |
 | pStuff+ | PROSPX | custom-index | PASS |  |
 | FVStuff+ | PROSPX | custom-index | PASS |  |
-| Sur+ | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
-| WAG | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| Sur+ | PROSPX | custom-index | PASS | Restructured. |
+| WAG | PROSPX | custom-index | PASS | Restructured. |
 | WARWAG | PROSPX | custom-index | PASS |  |
 | Value Framework | PROSPX | custom-index | PASS |  |
 | $/WAR (tiered) | PROSPX | custom-index | PASS |  |
@@ -66,7 +66,7 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 | HR/9 | PROSPX | pitcher-stat | PASS |  |
 | K% (pitcher) | PROSPX | pitcher-stat | PASS |  |
 | BB% (pitcher) | PROSPX | pitcher-stat | PASS |  |
-| WAR | PROSPX | general-stat | LIGHT | Owner decision: bWAR is the platform source — move that identification from the long into the short (definition proper). |
+| WAR | PROSPX | general-stat | PASS | Fixed. |
 | Consensus FV | PROSPX | methodology | PASS |  |
 | Stock | PROSPX | methodology | PASS |  |
 | Farm rank | PROSPX | methodology | PASS |  |
@@ -104,18 +104,18 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 | Pre-arb | PROSPX | mlb-rules | PASS |  |
 | Super Two | PROSPX | mlb-rules | PASS |  |
 | Service-time manipulation | PROSPX | mlb-rules | PASS |  |
-| Free agency | PROSPX | mlb-rules | LIGHT | 'Market opens 5 days after the World Series' — the 5-day window is the exclusive-negotiation/QO period; players are free immediately after the WS. Tighten. |
-| Qualifying Offer (QO) | PROSPX | mlb-rules | REWRITE | False precision: 'Declining costs the signing team a draft pick' — declining costs nothing; SIGNING a QO-decliner forfeits the signing club's pick(s); the former club gains a comp pick. Restate the mechanism. |
+| Free agency | PROSPX | mlb-rules | PASS | Fixed. |
+| Qualifying Offer (QO) | PROSPX | mlb-rules | PASS | Rewritten. |
 | Compensation pick | PROSPX | mlb-rules | PASS |  |
 | Outrighted | PROSPX | mlb-rules | PASS |  |
 | DFA | PROSPX | mlb-rules | PASS |  |
 | MLB debut | PROSPX | mlb-rules | PASS |  |
 | Signing bonus | PROSPX | mlb-rules | PASS |  |
-| IL types (10/15/60-day) | PROSPX | mlb-rules | LIGHT | 10-day vs 15-day phrasing implies exclusivity; say 15-day is the pitcher/two-way MINIMUM (post-2022). |
-| Two-way player | PROSPX | mlb-rules | REWRITE | Rule imprecision: official two-way qualification is 20 MLB IP AND 20 games started as position player/DH with >=3 PA each — not '20 PA across 20+ games'. |
+| IL types (10/15/60-day) | PROSPX | mlb-rules | PASS | Fixed. |
+| Two-way player | PROSPX | mlb-rules | PASS | Rewritten. |
 | Present vs Future grades | PROSPX | mlb-rules | PASS |  |
 | Complex league | PROSPX | mlb-rules | PASS |  |
-| Stock arrow | PROSPX | indicators | LIGHT | 'Stock is computed as' → lead with the computation: 'Delta since the most recent prior snapshot…'. |
+| Stock arrow | PROSPX | indicators | PASS | Fixed. |
 | FV badge | PROSPX | indicators | PASS |  |
 | FV Rarity | PROSPX | indicators | PASS |  |
 | Tool pill | PROSPX | indicators | PASS |  |
@@ -132,23 +132,23 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 | Heat badge | PROSPX | indicators | PASS |  |
 | Surprise badge | PROSPX | indicators | PASS |  |
 | Arc badge | PROSPX | indicators | PASS |  |
-| Farm grade tree | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| Farm grade tree | PROSPX | custom-index | PASS | Restructured. |
 | Farm tiebreaker score | PROSPX | custom-index | PASS |  |
-| Acquisition Strategy | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| Acquisition Strategy | PROSPX | custom-index | PASS | Restructured. |
 | Development | PROSPX | custom-index | PASS |  |
-| Value (OrgSur+) | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
-| MLB Production | PROSPX | custom-index | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| Value (OrgSur+) | PROSPX | custom-index | PASS | Restructured. |
+| MLB Production | PROSPX | custom-index | PASS | Restructured. |
 | Boom Rate | PROSPX | custom-index | PASS |  |
 | Bust Rate | PROSPX | custom-index | PASS |  |
 | Top-3 Grad WAR/yr | PROSPX | custom-index | PASS |  |
 | Conviction | PROSPX | custom-index | PASS |  |
 | Draft Pool Efficiency | PROSPX | custom-index | PASS |  |
 | IFA ROI | PROSPX | custom-index | PASS |  |
-| OrgSur+ | PROSPX | custom-index | LIGHT | 'Designed to mirror the wRC+/OPS+ shape' → 'Mirrors the wRC+/OPS+ shape'. (NB slug 'sur_plus' is OrgSur+; per-prospect Sur+ lives at slug 'tvi' — permalink-stable legacy ids, keep them.) |
+| OrgSur+ | PROSPX | custom-index | PASS | Fixed. |
 | Draft Ceiling Hits | PROSPX | custom-index | PASS |  |
 | Trade WAR Delta | PROSPX | custom-index | PASS |  |
 | Waiver Hit Rate | PROSPX | custom-index | PASS |  |
-| Trade | PROSPX | transactions | LIGHT | Cut 'Note that' — state the caveat directly. |
+| Trade | PROSPX | transactions | PASS | Fixed. |
 | Waiver claim | PROSPX | transactions | PASS |  |
 | Talent Translation | PROSPX | custom-index | PASS |  |
 | Financial ROI | PROSPX | custom-index | PASS |  |
@@ -159,8 +159,8 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 | On IL now (farm) | PROSPX | custom-index | PASS |  |
 | Overseas posting class | PROSPX | methodology | PASS |  |
 | Competitive-balance pick (1A / 1B) | PROSPX | mlb-rules | PASS |  |
-| ETA half-season adjustment | PROSPX | methodology | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
-| Spotlight age cap | PROSPX | methodology | RESTRUCTURE | Definition passes; long runs >130 words unstructured — break into scannable prose. |
+| ETA half-season adjustment | PROSPX | methodology | PASS | Restructured. |
+| Spotlight age cap | PROSPX | methodology | PASS | Restructured. |
 | Exit Velocity (EV) | PROSPX | statcast | PASS |  |
 | Barrel% | PROSPX | statcast | PASS |  |
 | Hard-Hit% | PROSPX | statcast | PASS |  |
@@ -190,4 +190,27 @@ RESTRUCTURE (methodology long is an unstructured wall — content fine).
 | Contract Surplus ($) | FA | fa | PASS | Written 2026-06 to the current standard. |
 | QO pick tax | FA | fa | PASS | Written 2026-06 to the current standard. |
 
-**Totals:** PASS 158 · LIGHT 8 · REWRITE 3 · RESTRUCTURE 13
+**Totals:** PASS 182 · LIGHT 0 · REWRITE 0 · RESTRUCTURE 0
+
+## Backlog closure (2026-07-01, audit item A3)
+
+All 24 open verdicts (8 LIGHT, 3 REWRITE, 13 RESTRUCTURE) verified against the
+live payload and closed. Twenty-two had already landed at build time via
+build_glossary_data.py's DEFINITION_FIXES / LONG_FIXES / RESTRUCTURE tables;
+this ledger had never been reconciled. The two that needed real work got it in
+build_glossary_copy_pass.py (which also hard-asserts the other 22 so a
+regression fails the build, not the reader):
+
+- stock_arrow: methodology now leads with the computation (the delta since the
+  most recent prior update), then the filter and meta-line notes.
+- breakout_indicator: the last 147-word methodology wall, broken into the same
+  scannable paragraphs as the 13 RESTRUCTURE entries (content unchanged).
+
+Also in that pass: pwr_plus now states in prose that PWR+ is a retired legacy
+label surviving only as a search alias (POW+ is canonical on every surface),
+and the payload version stamp is derived by build_glossary_data.glossary_version()
+at build time instead of being hand-set (audit F-03).
+
+Entries added after this Phase-1 ledger (the payload now carries 240) were
+written to the current standard at creation time and are gated by
+tools/copy_lint.py + tools/strip_emdashes.py, now enforced by test_copy_gates.py.
