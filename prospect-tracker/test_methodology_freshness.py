@@ -92,6 +92,10 @@ MODEL_GLOSSARY = {
     "xfv_grade_recal": "internal",
     "xfv_cohort_lambda": "internal",
     "xfv_pitcher_stuff": "internal",
+    # Review-queue round (2026-07-02): the eFV bucket-calibration final
+    # attempt under a production-relevant gate; rejected, loss ledger,
+    # rendered nowhere.
+    "xfv_grade_recal3": "internal",
 }
 
 

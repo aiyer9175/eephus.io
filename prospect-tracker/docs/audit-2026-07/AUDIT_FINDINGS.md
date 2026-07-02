@@ -270,6 +270,100 @@ eFV ROUND (3 gated experiments, gates pre-registered 2026-07-02, ALL NO-SHIP):
   improvement available (bucket-probability calibration) cannot ship under a rank gate
   whose tolerance sits below the eval's noise floor. Registry rows 45-47 record all three.
 
+## Pre-registered experiment gates: review-queue round (written 2026-07-02, before any run)
+
+Owner decisions 2026-07-02: fix the F-01 bands via simulated total quantiles (coverage-
+gated, fallback = drop total bands); AgeRel+ stays parked; implement review-queue items
+2/4/5/6/8/9/10; re-attempt the eFV bucket calibration under a redesigned production-
+relevant gate. Standing discipline unchanged: seeded, forward-chained, clear pass or
+loss ledger, registry row + eval artifact + freshness map for anything model-shaped.
+
+### R-BAND: Simulated path-total quantile bands (F-01 remediation, review-queue item 7)
+- Hypothesis: totals bands built as P10/P90 of simulated multi-year paths (per-year
+  quantile curves + year-to-year dependence estimated from the realized proj_eval corpus)
+  are calibrated, unlike the current sum-of-quantiles bands.
+- Gate (ALL, seeded, holdout = cohorts never used to fit the dependence):
+  1. Coverage: realized multi-year WAR totals fall inside the simulated P10-P90 band for
+     75% to 85% of holdout players (target 80%).
+  2. The simulated band is narrower than the summed band on average (sanity: the fix
+     must tighten, not widen).
+  3. Point estimates (warTotal) are byte-unchanged; only band fields move.
+- Ship path on pass: re-export FA/Projections/player payloads with the new band fields
+  under the SAME keys (frontends unchanged), update test_proj_export.py, close F-01.
+  Expected-CHANGED tracked payloads: mlb_projections.json, fa_class*.json,
+  mlb_player_detail.json (band fields only; documented in CHANGELOG).
+- On fail: drop the summed total bands from display (owner-approved fallback).
+
+### R-PARK: MiLB per-park factors (review-queue item 2)
+- Hypothesis: Savant-minors (2023+) per-park aggregates support stable park factors that
+  improve the college -> Single-A translation (its documented SOS/park gap).
+- Gate: (1) per-park factors are stable (year-over-year correlation rho >= 0.50 on parks
+  with adequate batted-ball n, reported with n); (2) adding the park adjustment to
+  college_translation improves LOO MAE or interval coverage on the matched-pair set
+  WITHOUT degrading the hitter K% r2 (the one strong component); (3) coverage of parks
+  is reported honestly (untracked FSL/DSL parks excluded, not imputed).
+- Ship path on pass: college_translation park adjustment + artifact + registry row.
+  On fail/insufficient data: loss ledger, no ship.
+
+### R-SHRINK: ERA-shrink value unification (review-queue item 6)
+- Hypothesis: one shared ERA shrink pseudo-count can serve both K_IP=50 (display index)
+  and NEED_ERA_SHRINK_IP=45 (PAL need gate) without degrading either objective.
+- Gate: a single candidate value must beat or tie BOTH current values on their own
+  objectives: (1) era_minus_level display stability (small-sample blowup count + split-
+  half stability of the index) and (2) the PAL need-gate's demotion-board ordering vs the
+  conversion-history labels. Ties broken toward keeping two values (the null).
+- Expected outcome per the provenance notes: FAIL (they were tuned for different
+  objectives); the experiment resolves the queue item either way.
+
+### E-ISO3: eFV bucket-distribution calibration, production-relevant gate
+- Successor to E-ISO2 (rejected). Redesign rationale, stated a priori: in production every
+  player is scored by the SAME season's map, so cross-year map drift (the entire E-ISO2
+  Spearman deficit) never manifests on any surface; and E-ISO2's per-tier tolerance
+  (1e-4 absolute) was far tighter than tier-gap estimation noise. The board DOES rank
+  hitters and pitchers together, so cross-side stability within a season is real and
+  stays in the gate.
+- Gate (ALL, forward-chained OOF on the X-ISO cohort splits, SEED=7):
+  1. Pooled AND per-side AND per-bucket Brier/log-loss improve (no bucket materially
+     worse on either side, stated per-side explicitly this time).
+  2. Within-(side, year) rank preservation is EXACT (strict monotonicity in grade space).
+  3. Cross-side, within-YEAR pooled Spearman delta >= -0.002 for every evaluation year
+     (never pooled across years).
+  4. Per-tier reliability: every tier at FV 45+ improves; no tier's gap worsens by more
+     than 0.005 absolute (FV-35's E-ISO2 move was +0.0009).
+- Ship path on pass: wire into efv_score.py; registry row update + eval artifact +
+  freshness map; expected-CHANGED limited to xfv.json + trade_values.json + direct
+  downstreams, every delta justified in CHANGELOG; reliability diagram on PROSPX gains
+  the before/after view.
+- On fail: final loss ledger; no further calibration attempts against this data vintage.
+
+## Wave 3 outcomes (2026-07-02, review-queue round): partial landing
+
+Two of eight lanes completed before a session-limit interruption; the other six
+(R-BAND, R-PARK, R-SHRINK, entity pages, PROSPX gradeBlock+band, overseas re-check)
+re-run on workflow resume (their pre-registered gates above still govern).
+
+- E-ISO3: REJECTED (2 of 4 conditions), FINAL loss ledger for the bucket-calibration
+  line against this data vintage (per the pre-registration). C2 (exact within-side-year
+  rank preservation) and C4 (every FV45+ tier improves; FV-35 +0.0009) PASS; the large
+  calibration gain is real (tier-45 gap 0.0946->0.0156, tier-55 0.1616->0.0436). But C1
+  fails on a per-side materiality check the redesign added: the pitcher bench bucket is
+  +1.4% rel worse (vs 1% tolerance); and C3 fails because cross-side within-YEAR Spearman
+  flips sign by year (2020 +0.012 / 2021 -0.026 / 2022 +0.006 / 2023 -0.025), noise-
+  dominated at n~300-550/year, and the 2021 identity delta (+0.014) confirms the recal
+  itself churns cross-side interleaving there. Takeaway: a side-ASYMMETRIC grade map
+  cannot ship because the board ranks the two sides together; any future attempt needs
+  jointly-constrained side maps AND resolved 2024+ cohorts before re-registering. Line:
+  X-ISO -> E-ISO2 -> E-ISO3, all rejected; eFV published numbers unchanged. Registry row
+  xfv_grade_recal3 (deprecated). tools/efv_grade_recal3_lab.py, data/xfv_grade_recal3_eval.json.
+- Farm-grade LETTER snapshotting (review-queue item 10): SHIPPED. New append-only
+  farm_grade_history table + snapshot_farm_grades() in storage.py (mirrors
+  snapshot_farm_ranks; captures the board-displayed 7y-window letter + numeric composite,
+  self-heals, one row per org per day), wired as a never-aborts monthly step in
+  run_monthly right after the farm-rank snapshot; one snapshot backfilled today (30 orgs,
+  2026-07-02) so the letter history the farm_grades registry row needs for forward
+  validation starts accruing immediately. test_farm_grade_history.py covers schema,
+  letter-set alignment, append-only, same-day idempotence, self-heal.
+
 ## Changelog of findings in this pass
 
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.

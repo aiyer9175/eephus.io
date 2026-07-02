@@ -275,7 +275,7 @@
    "metric": "org-rank Spearman vs realized graduate bWAR Y..Y+3, vintages 2018-2022",
    "eval_artifact": "data/farm_grade_eval.json",
    "verdict": "provisional",
-   "notes": "Phase 4b WS-8 (2026-06-11): REDUCED ANALOG (grades were never snapshotted - the Gate-3 pattern): ranking orgs by vintage surplus mass predicts realized graduate WAR at mean Spearman .508 vs count baseline .240 (wins all 5 vintages). HONEST NOTE: simple FV50+ top-end depth nearly ties (.495) - the convex surplus weighting, not the rest of the tree, carries the signal. The literal v40 letter remains unvalidated as a letter; verdict stays provisional until grades accumulate their own vintage trail.",
+   "notes": "Phase 4b WS-8 (2026-06-11): REDUCED ANALOG (grades were never snapshotted - the Gate-3 pattern): ranking orgs by vintage surplus mass predicts realized graduate WAR at mean Spearman .508 vs count baseline .240 (wins all 5 vintages). HONEST NOTE: simple FV50+ top-end depth nearly ties (.495) - the convex surplus weighting, not the rest of the tree, carries the signal. The literal v40 letter remains unvalidated as a letter; verdict stays provisional until grades accumulate their own vintage trail. UPDATE 2026-07-02: letter snapshotting began (farm_grade_history table, monthly step beside snapshot_farm_ranks; records the displayed principal-window 7y letter plus the windowed composite it sorts on). The forward letter trail this verdict waits on is now accruing; first row 2026-07-02.",
    "last_checked": "2026-06-30",
    "stale": false,
    "artifact_age_days": 19
@@ -638,6 +638,17 @@
    "eval_artifact": "data/xfv_pitcher_stuff_eval.json",
    "verdict": "deprecated",
    "notes": "Holistic pass 3 eFV round (2026-07-02). Structurally inconclusive, recorded as gate FAIL per the pre-registered insufficient-n rule: AAA tracking starts 2023 and scored cohorts end at debut 2023, so strict pre-decision coverage is 0/466 test rows and 0 train rows in every fold; the overlay coefficient is identically zero and every delta is exactly 0.0 (which also proves the neutral-when-missing encoding poisons nothing). The hypothesis is neither confirmed nor refuted. Do not re-attempt until the pitcher matrix rebuild adds debut cohorts 2024+ as censored scored rows; the first trainable fold arrives with the 2024-cohort resolution."
+  },
+  {
+   "model_id": "xfv_grade_recal3",
+   "surface": "model-dev artifact (rendered nowhere) - eFV bucket-calibration final attempt under a production-relevant gate",
+   "predicts": "n/a - gated experiment E-ISO3: the E-ISO2 grade-space monotone recalibration re-evaluated under a redesigned gate (within-year cross-side ranking, per-side materiality); candidate REJECTED",
+   "champion": "shipped uncalibrated p_bucket_given_fv distribution (unchanged)",
+   "baseline": "grade-space monotone challenger (reused verbatim from efv_grade_recal_lab, forward-chained OOF, X-ISO splits, SEED=7)",
+   "metric": "pre-registered 4-condition gate: pooled+per-side+per-bucket Brier/log-loss, exact within-(side,year) rank preservation, per-YEAR cross-side Spearman >= -0.002, per-tier reliability",
+   "eval_artifact": "data/xfv_grade_recal3_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3 review-queue round (2026-07-02), gate redesigned to be production-relevant (each season scores by its own map, so E-ISO2's cross-YEAR drift was removed; per-side materiality added). Still REJECTED, 2 of 4 conditions fail: (C1) pooled+per-side Brier/log-loss improve strongly (pooled Brier 0.2466->0.1956) and the FV45+ calibration gain is large (tier-45 gap 0.0946->0.0156, tier-55 0.1616->0.0436, tier-60 0.2239->0.0605) BUT the pitcher bench bucket is materially worse per-side (+1.4% rel vs 1% tolerance); (C2 PASS) within-(side,year) rank preservation exact 8/8; (C3) cross-side within-YEAR Spearman flips sign by year (2020 +0.012, 2021 -0.026, 2022 +0.006, 2023 -0.025; the 2021 identity delta is +0.014 so the recal itself degrades cross-side interleaving ~0.04 rho there), noise-dominated at n~300-550/year; (C4 PASS) every FV45+ tier improves, worst move FV-35 +0.0009. FINAL loss ledger for the bucket-calibration line against this data vintage per its own pre-registration. Any future attempt needs resolved 2024+ cohorts and must jointly constrain the two sides' maps (side-asymmetric maps churn cross-side ranking) and address pitcher top-end compression toward FV 44-45 before re-registering. Line: [[xfv_isotonic_calibration]] (X-ISO) -> [[xfv_grade_recal]] (E-ISO2) -> this."
   }
  ],
  "problems": []
