@@ -139,7 +139,8 @@ from storage import (
     upsert_roster_status, load_roster_status,
     upsert_source_events,
     export_timeseries_json, latest_run_summary,
-    snapshot_board_metrics, snapshot_trade_values, snapshot_farm_ranks, record_il_observation,
+    snapshot_board_metrics, snapshot_trade_values, snapshot_farm_ranks,
+    snapshot_farm_grades, record_il_observation,
 )
 from consensus import build_timeseries
 from stats import (fetch_statlines_for, derive_statlines_from_career,
@@ -2587,6 +2588,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             # as the board snapshot above; idempotent upsert-by-(org, date).
             _n_farm = snapshot_farm_ranks(_ts.get("org_summary") or [])
             log.info("farm_rank_history: captured rank for %d orgs", _n_farm)
+            # Letter-grade sibling (review-queue item 10, moved up to
+            # 2026-07-02): the composite farm LETTER was derived at export
+            # and never persisted, so the farm_grades registry row had no
+            # forward-validatable history. Additive and best-effort: a
+            # failure here must never abort the run. Idempotent
+            # upsert-by-(org, date), no-ops when grades are not computable.
+            try:
+                _n_fg = snapshot_farm_grades(_ts.get("org_summary") or [])
+                log.info("farm_grade_history: captured letter grade for %d orgs", _n_fg)
+            except Exception:
+                log.exception("farm_grade_history capture failed, continuing")
         except Exception:
             log.exception("metric_snapshots/farm_rank_history capture failed — continuing")
         # Source-vs-source predictive backtest (data/source_backtest.json for

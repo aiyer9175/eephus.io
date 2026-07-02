@@ -1162,6 +1162,27 @@ CREATE TABLE IF NOT EXISTS farm_rank_history (
 );
 CREATE INDEX IF NOT EXISTS idx_farm_rank_hist_date ON farm_rank_history(snapshot_date);
 
+-- One row per (org, snapshot calendar date): the composite farm LETTER grade
+-- as displayed on the PROSPX farm systems view (letter_by_window at the
+-- principal 7y window, falling back to the canonical grades.overall) plus the
+-- numeric composite the letter's rank bucket sorts on and the window setting
+-- that produced it. Sibling to farm_rank_history at the same org grain. The
+-- letter was previously derived at export and never persisted, which is why
+-- the farm_grades registry row is provisional (no letter history means no
+-- forward validation; review-queue item 10). Cannot be back-filled: history
+-- begins 2026-07-02. Upsert by (org, date) is idempotent within a day; rows
+-- for prior dates are never rewritten or deleted (append-only).
+CREATE TABLE IF NOT EXISTS farm_grade_history (
+    org           TEXT NOT NULL,
+    snapshot_date TEXT NOT NULL,        -- 'YYYY-MM-DD' of the run
+    letter        TEXT NOT NULL,        -- composite letter, 'A+' through 'F'
+    farm_score    REAL,                 -- numeric composite behind the letter
+    grade_window  TEXT,                 -- '7y' principal; 'canonical' on fallback
+    inserted_at   TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (org, snapshot_date)
+);
+CREATE INDEX IF NOT EXISTS idx_farm_grade_hist_date ON farm_grade_history(snapshot_date);
+
 -- Append-only IL stint timeline. The il_status table is current-state only
 -- (overwritten each run); this records each placement once (keyed by the
 -- placement `since` date) and stamps the activation date when the player
@@ -3830,6 +3851,104 @@ def farm_rank_history_dates() -> list[str]:
         with connect() as con:
             rows = con.execute(
                 "SELECT DISTINCT snapshot_date FROM farm_rank_history ORDER BY snapshot_date"
+            ).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [r[0] for r in rows]
+
+
+# The full set of letters _letter_grade can emit. Anything else on an org
+# entry (the sparse dash sentinel, None, junk) means the grade could not be
+# computed and the org is skipped rather than written.
+_FARM_GRADE_LETTERS = frozenset(
+    ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D", "D-", "F"])
+
+
+def snapshot_farm_grades(org_summary: Iterable[dict],
+                         snapshot_date: str | None = None) -> int:
+    """Capture the composite farm LETTER grade for every org, one row per org
+    per calendar date. Sibling to snapshot_farm_ranks (which records only the
+    rank), letter-grade edition: records the letter the PROSPX farm systems
+    view displays, the numeric composite it sorts on, and the window setting.
+
+    `org_summary` is the list of org dicts from the exported boot payload.
+    The displayed letter is letter_by_window[FARM_PRINCIPAL_WINDOW] (the
+    board default); if the windowed letter is absent the canonical
+    grades.overall / farm_score pair is recorded with grade_window
+    'canonical' (the same fallback order the frontend uses). Orgs whose
+    grade cannot be resolved to a real letter are skipped, so a payload
+    with no computable grades no-ops cleanly and returns 0.
+
+    Idempotent within a day (re-running on the same date overwrites that
+    date's rows, never duplicating them); rows for prior dates are never
+    touched, so the table is append-only over time. Cannot be back-filled:
+    the letter track record begins 2026-07-02.
+    """
+    snapshot_date = snapshot_date or date.today().isoformat()
+    n = 0
+    with connect() as con:
+        try:
+            con.execute("SELECT 1 FROM farm_grade_history LIMIT 1")
+        except sqlite3.OperationalError:
+            con.executescript(SCHEMA)
+        for e in org_summary or []:
+            if not isinstance(e, dict):
+                continue
+            org = e.get("org")
+            if not org:
+                continue
+            win = FARM_PRINCIPAL_WINDOW
+            letter = (e.get("letter_by_window") or {}).get(win)
+            score = (e.get("farm_score_by_window") or {}).get(win)
+            if letter not in _FARM_GRADE_LETTERS:
+                letter = (e.get("grades") or {}).get("overall")
+                score = e.get("farm_score")
+                win = "canonical"
+            if letter not in _FARM_GRADE_LETTERS:
+                continue
+            con.execute(
+                """INSERT INTO farm_grade_history
+                     (org, snapshot_date, letter, farm_score, grade_window, inserted_at)
+                   VALUES (?, ?, ?, ?, ?, datetime('now'))
+                   ON CONFLICT(org, snapshot_date) DO UPDATE SET
+                     letter=excluded.letter,
+                     farm_score=excluded.farm_score,
+                     grade_window=excluded.grade_window,
+                     inserted_at=excluded.inserted_at""",
+                (org, snapshot_date, letter, score, win),
+            )
+            n += 1
+    return n
+
+
+def load_farm_grade_history(org: str | None = None) -> list[dict]:
+    """Load farm_grade_history rows, optionally filtered to one org.
+
+    Returns flat dicts ordered by (org, snapshot_date ascending) so a caller
+    can group by org and read each org's letter series oldest-first (the
+    shape the future forward letter backtest will consume)."""
+    where, params = [], []
+    if org is not None:
+        where.append("org = ?"); params.append(org)
+    sql = ("SELECT org, snapshot_date, letter, farm_score, grade_window "
+           "FROM farm_grade_history")
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY org, snapshot_date"
+    try:
+        with connect() as con:
+            rows = con.execute(sql, params).fetchall()
+    except sqlite3.OperationalError:
+        return []
+    return [dict(r) for r in rows]
+
+
+def farm_grade_history_dates() -> list[str]:
+    """Return the distinct snapshot dates present in farm_grade_history, ascending."""
+    try:
+        with connect() as con:
+            rows = con.execute(
+                "SELECT DISTINCT snapshot_date FROM farm_grade_history ORDER BY snapshot_date"
             ).fetchall()
     except sqlite3.OperationalError:
         return []
