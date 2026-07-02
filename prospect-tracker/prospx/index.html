@@ -28592,6 +28592,9 @@ function _tbShowGroup(playerKey) {
 function renderDebuts() {
   renderWhatsNew("whats-new-debuts", kind => kind === "debuted");
   try { _syncDebutGradeToggle(); } catch (e) { /* toggle not mounted yet */ }
+  // C1/C2 - kick the lazy fetch of the eFV-vs-consensus track-record artifacts;
+  // the collapsed panel at the top of this list renders once they land.
+  try { ensureEfvTrack(); } catch (e) { /* artifacts optional */ }
   const filtered = getFilteredGrads();
 
   // Build a render order based on the active sort. For date-sort we keep
@@ -28934,9 +28937,12 @@ function renderDebuts() {
   const _debutExpander = _debutHidden > 0
     ? `<div style="text-align:center;margin-top:10px;"><button class="chip" id="debuts-show-all" type="button">Show all ${filtered.length} graduates (+${_debutHidden} more)</button></div>`
     : "";
-  document.getElementById("debut-rows").innerHTML = filtered.length
+  // C1/C2 - collapsed eFV-vs-consensus track-record panel leads the list (this
+  // tab IS the retrospective eFV-vs-consensus view); "" until the artifacts land.
+  const _efvTrackPanel = (typeof efvTrackRecordSection === "function") ? efvTrackRecordSection() : "";
+  document.getElementById("debut-rows").innerHTML = _efvTrackPanel + (filtered.length
     ? banner + body + _debutExpander
-    : `<div class="state-message">No debuts match these filters.</div>`;
+    : `<div class="state-message">No debuts match these filters.</div>`);
   const _dbSa = document.getElementById("debuts-show-all");
   if (_dbSa) _dbSa.addEventListener("click", () => { state.debutsShowAll = true; renderDebuts(); });
   syncSortHeaderActive();
@@ -29385,6 +29391,188 @@ function efvProxyPanel(p) {
       </div>
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">Faster-resolving <strong>leading indicator</strong>, not eFV: predicts this prospect's debut-season Statcast quality from the pre-debut profile${r != null ? ` (out-of-sample r ${r.toFixed(2)} on recent debut cohorts)` : ""}. MLB average xwOBA ≈ .310. Survivorship-limited (debut cohort); provisional.</div>
     </div>`;
+}
+// ===== eFV vs consensus: the track record (C1) + reliability diagram (C2) ==
+// A collapsed panel at the top of the Debuted tab (the retrospective
+// eFV-vs-consensus view). Every number comes straight from a committed eval
+// artifact; the panel renders ONLY the fields that exist (a missing artifact
+// just drops its sub-block, nothing is fabricated):
+//   data/xfv_eval.json + data/xfv_eval_pitcher.json  pooled OOS + per-era Spearman
+//   data/source_backtest.json                        per-FV-tier split + resolved receipts
+//   data/xfv_isotonic_eval.json                      5-bucket reliability curves (OOF)
+// Lazy: fetched once on the first Debuted render, then repaint.
+let _EFV_TRACK = null, _EFV_TRACK_LOADING = false;
+function ensureEfvTrack() {
+  if (_EFV_TRACK !== null || _EFV_TRACK_LOADING) return;
+  _EFV_TRACK_LOADING = true;
+  const grab = url => fetch(url, { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null)).catch(() => null);
+  Promise.all([
+    grab("/data/xfv_eval.json"), grab("/data/xfv_eval_pitcher.json"),
+    grab("/data/source_backtest.json"), grab("/data/xfv_isotonic_eval.json"),
+  ]).then(([hit, pit, bt, iso]) => {
+    _EFV_TRACK = { hit: hit, pit: pit, bt: bt, iso: iso };
+    try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+  }).catch(() => { _EFV_TRACK = { hit: null, pit: null, bt: null, iso: null }; });
+}
+// Small shared bits for the track-record tables (inline-styled; the panel has no
+// dedicated CSS block on purpose - it follows the detail-card inline idiom).
+const _EFV_TRK_TH = 'style="text-align:left;padding:2px 8px 2px 0;font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;"';
+const _EFV_TRK_TD = 'style="padding:2px 8px 2px 0;font-size:11px;color:var(--text-secondary);font-family:var(--font-mono);font-variant-numeric:tabular-nums;"';
+function _efvTrkWinTd(v, win) {
+  return `<td style="padding:2px 8px 2px 0;font-size:11px;font-family:var(--font-mono);font-variant-numeric:tabular-nums;color:${win ? "var(--up)" : "var(--text-secondary)"};font-weight:${win ? 700 : 400};">${v}${win ? " ★" : ""}</td>`;
+}
+// C1a - pooled OOS head-to-head bars for one side (hitters or pitchers), from the
+// side's xfv_eval payload: consensus baseline vs the shipped eFV blend, Spearman
+// of grade vs realized 6-yr WAR on the debuted KM-censored cohort.
+function _efvTrackBars(label, ev) {
+  const po = ev && ev.evals && ev.evals.debuted_km && ev.evals.debuted_km.pooled_oos;
+  const cons = (po && po.baseline && po.baseline.spearman != null) ? po.baseline.spearman : null;
+  const efv = (po && po.blend && po.blend.spearman != null) ? po.blend.spearman : null;
+  if (cons == null || efv == null) return "";
+  const n = (po.blend && po.blend.n != null) ? po.blend.n : null;
+  const W = v => Math.max(2, Math.min(100, (Number(v) / 0.45) * 100)).toFixed(0);
+  const bar = (name, v, col, win) => `<div style="display:flex;align-items:center;gap:7px;margin-bottom:3px;font-size:11px;">
+      <span style="width:92px;flex:none;color:var(--text-secondary);">${name}</span>
+      <span style="flex:1;height:7px;background:var(--bg-tertiary);border-radius:4px;overflow:hidden;"><span style="display:block;height:100%;width:${W(v)}%;background:${col};"></span></span>
+      <span style="width:58px;flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-weight:${win ? 700 : 400};color:${win ? "var(--up)" : "var(--text-secondary)"};">${Number(v).toFixed(3)}${win ? " ★" : ""}</span>
+    </div>`;
+  const win = efv > cons;
+  return `<div style="margin-bottom:10px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">${label} · ordering skill (Spearman ρ, grade vs realized 6-yr WAR)${n != null ? ` · n=${n}` : ""}</div>
+      ${bar("Consensus FV", cons, "var(--text-tertiary)", !win)}
+      ${bar("eFV", efv, "var(--neon-cyan)", win)}
+    </div>`;
+}
+// C1b - per-era splits (both sides in one table) from era_split_debuted: does the
+// eFV edge hold on recent cohorts, or does it only exploit older scouting?
+function _efvTrackEraTable(hit, pit) {
+  const rows = [];
+  const push = (side, ev) => {
+    const es = ev && ev.era_split_debuted;
+    if (!es) return;
+    for (const era of Object.keys(es)) {
+      const e = es[era] || {};
+      if (e.consensus_spearman == null || e.xfv_blend_spearman == null) continue;
+      rows.push({ side: side, era: era, n: e.n, cons: e.consensus_spearman, efv: e.xfv_blend_spearman });
+    }
+  };
+  push("Hitters", hit); push("Pitchers", pit);
+  if (!rows.length) return "";
+  const tr = rows.map(r => `<tr>
+      <td ${_EFV_TRK_TD}>${escapeHtml(r.side)}</td><td ${_EFV_TRK_TD}>${escapeHtml(r.era)}</td>
+      <td ${_EFV_TRK_TD}>${r.n != null ? r.n : " - "}</td>
+      ${_efvTrkWinTd(r.cons.toFixed(3), r.cons > r.efv)}${_efvTrkWinTd(r.efv.toFixed(3), r.efv > r.cons)}
+    </tr>`).join("");
+  return `<div style="margin-bottom:10px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By debut era · Spearman ρ, the better grade starred</div>
+      <table style="border-collapse:collapse;"><thead><tr><th ${_EFV_TRK_TH}>Side</th><th ${_EFV_TRK_TH}>Era</th><th ${_EFV_TRK_TH}>n</th><th ${_EFV_TRK_TH}>Consensus ρ</th><th ${_EFV_TRK_TH}>eFV ρ</th></tr></thead><tbody>${tr}</tbody></table>
+    </div>`;
+}
+// C1c - per-consensus-FV-tier head-to-head, from the source backtest's
+// xfv_vs_consensus_detail (out-of-sample eFV grades on the common resolved set).
+function _efvTrackTierTable(bt) {
+  const det = bt && bt.accuracy && bt.accuracy.xfv_vs_consensus_detail;
+  if (!(det && det.per_tier && det.per_tier.length)) return "";
+  const tr = det.per_tier.map(t => `<tr>
+      <td ${_EFV_TRK_TD}>${escapeHtml(String(t.tier))}</td>
+      <td ${_EFV_TRK_TD}>${t.n != null ? t.n : " - "}</td>
+      ${_efvTrkWinTd(t.consensus_spearman != null ? t.consensus_spearman.toFixed(3) : " - ", t.consensus_spearman != null && t.xfv_spearman != null && t.consensus_spearman > t.xfv_spearman)}
+      ${_efvTrkWinTd(t.xfv_spearman != null ? t.xfv_spearman.toFixed(3) : " - ", t.consensus_spearman != null && t.xfv_spearman != null && t.xfv_spearman > t.consensus_spearman)}
+    </tr>`).join("");
+  return `<div style="margin-bottom:10px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">By consensus-FV tier · ordering skill within each tier, the better grade starred</div>
+      <table style="border-collapse:collapse;"><thead><tr><th ${_EFV_TRK_TH}>FV tier</th><th ${_EFV_TRK_TH}>n</th><th ${_EFV_TRK_TH}>Consensus ρ</th><th ${_EFV_TRK_TH}>eFV ρ</th></tr></thead><tbody>${tr}</tbody></table>
+    </div>`;
+}
+// C1d - the receipts: the biggest resolved eFV-vs-consensus disagreements and who
+// was closer to the realized outcome. Straight from the committed backtest.
+function _efvTrackReceipts(bt) {
+  const det = bt && bt.accuracy && bt.accuracy.xfv_vs_consensus_detail;
+  if (!(det && det.receipts && det.receipts.length)) return "";
+  const share = det.xfv_right_share_on_disagreements;
+  const rows = det.receipts.map(r => {
+    const ok = !!r.xfv_right;
+    return `<div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:3px;">
+      <span style="width:12px;flex:none;text-align:center;color:${ok ? "var(--up)" : "var(--down)"};font-weight:700;">${ok ? "✓" : "✗"}</span>
+      <span style="flex:1;min-width:0;color:var(--text-secondary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name || "")}</span>
+      <span style="flex:none;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);font-variant-numeric:tabular-nums;">consensus FV ${r.consensus_fv != null ? fvCeil(r.consensus_fv) : " - "} · eFV read ${r.dir === "higher" ? "higher" : "lower"} · ${r.war != null ? Number(r.war).toFixed(1) : " - "} WAR</span>
+      <span style="flex:none;width:104px;text-align:right;font-family:var(--font-mono);font-size:10px;font-weight:700;color:${ok ? "var(--up)" : "var(--down)"};">${ok ? "eFV closer" : "consensus closer"}</span>
+    </div>`;
+  }).join("");
+  return `<div style="margin-bottom:10px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Biggest resolved disagreements · who was closer to the outcome</div>
+      ${det.n_disagreements != null && share != null ? `<div style="font-size:10px;color:var(--text-tertiary);margin-bottom:5px;">On ${det.n_disagreements} clear disagreements (grades at least 15 percentile points apart), eFV was closer ${Math.round(share * 100)}% of the time.</div>` : ""}
+      ${rows}
+    </div>`;
+}
+// C2 - reliability diagram for the CURRENT (shipped, uncalibrated) 5-bucket eFV
+// outcome distribution: predicted bucket probability (x) vs realized frequency (y),
+// from the committed forward-chained out-of-fold curves in xfv_isotonic_eval.json
+// (results.reliability_curves_pooled.before = the shipped distribution; the "after"
+// isotonic variant failed its pre-registered gate and did NOT ship). Inline SVG in
+// the site's chart idiom; a point on the diagonal is perfectly calibrated.
+function efvReliabilityDiagram(iso) {
+  const cur = iso && iso.results && iso.results.reliability_curves_pooled
+              && iso.results.reliability_curves_pooled.before;
+  if (!cur) return "";
+  const nPool = (iso.results.pooled && iso.results.pooled.n != null) ? iso.results.pooled.n : null;
+  const W = 260, H = 218, L = 36, B = 32, T = 10, R = 12;
+  const X = p => (L + Number(p) * (W - L - R));
+  const Y = f => (H - B - Number(f) * (H - T - B));
+  let shapes = "";
+  const legend = [];
+  for (const k of SV_BUCKET_ORDER) {
+    const c = cur[k];
+    const pts = (c && c.curve) ? c.curve.filter(b => b && b.mean_p != null && b.freq != null) : [];
+    if (!pts.length) continue;
+    const col = SV_BUCKET_COLOR[k];
+    if (pts.length >= 2) {
+      const line = pts.map(b => `${X(b.mean_p).toFixed(1)},${Y(b.freq).toFixed(1)}`).join(" ");
+      shapes += `<polyline points="${line}" fill="none" stroke="${col}" stroke-width="1.5" opacity="0.8"/>`;
+    }
+    shapes += pts.map(b => `<circle cx="${X(b.mean_p).toFixed(1)}" cy="${Y(b.freq).toFixed(1)}" r="2.6" fill="${col}"><title>${SV_BUCKET_LABEL[k]}: predicted ${Math.round(b.mean_p * 100)}% of the time, realized ${Math.round(b.freq * 100)}%${b.n != null ? ` (n=${b.n})` : ""}</title></circle>`).join("");
+    legend.push(`<span style="display:inline-flex;align-items:center;gap:3px;"><span style="width:7px;height:7px;border-radius:1px;background:${col};display:inline-block;"></span>${SV_BUCKET_LABEL[k]}${(c.ece != null) ? ` <span style="color:var(--text-tertiary);">ECE ${c.ece.toFixed(3)}</span>` : ""}</span>`);
+  }
+  if (!shapes) return "";
+  const tick = v => `<line x1="${X(v)}" y1="${Y(0)}" x2="${X(v)}" y2="${Y(0) + 3}" stroke="var(--border)" stroke-width="1"/>
+      <text x="${X(v)}" y="${Y(0) + 12}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)">${v}</text>
+      <line x1="${X(0) - 3}" y1="${Y(v)}" x2="${X(0)}" y2="${Y(v)}" stroke="var(--border)" stroke-width="1"/>
+      <text x="${X(0) - 5}" y="${Y(v) + 3}" text-anchor="end" font-size="8" fill="var(--text-tertiary)">${v}</text>`;
+  const svg = `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Reliability diagram: predicted eFV outcome-bucket probability versus realized frequency, per bucket. Points on the diagonal are perfectly calibrated." style="max-width:100%;height:auto;display:block;">
+      <line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(0)}" stroke="var(--border)" stroke-width="1"/>
+      <line x1="${X(0)}" y1="${Y(0)}" x2="${X(0)}" y2="${Y(1)}" stroke="var(--border)" stroke-width="1"/>
+      ${tick(0)}${tick(0.5)}${tick(1)}
+      <line x1="${X(0)}" y1="${Y(0)}" x2="${X(1)}" y2="${Y(1)}" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="${(X(0) + X(1)) / 2}" y="${H - 3}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)">predicted bucket probability</text>
+      <text x="9" y="${(Y(0) + Y(1)) / 2}" text-anchor="middle" font-size="8" fill="var(--text-tertiary)" transform="rotate(-90 9 ${(Y(0) + Y(1)) / 2})">realized frequency</text>
+      ${shapes}
+    </svg>`;
+  return `<div style="margin-bottom:4px;">
+      <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Calibration of the 5-bucket outcome distribution · out-of-fold${nPool != null ? ` · n=${nPool}` : ""}</div>
+      ${svg}
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:4px;font-family:var(--font-mono);font-size:9px;color:var(--text-tertiary);">${legend.join("")}</div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:5px;">Each point bins players by the probability the shipped eFV distribution assigned to that outcome bucket: x = the mean predicted probability in the bin, y = the share that actually landed there (forward-chained out-of-fold, 2020-2023 decision cohorts, hitters + pitchers pooled; hover a point for its n). The dashed diagonal is perfect calibration; ECE is the bin-weighted gap. Honest read: mid-probability bust calls land ABOVE the diagonal (more busts than predicted), so bust risk on FV 45+ prospects runs understated; a rank-preserving recalibration is in the review queue.</div>
+    </div>`;
+}
+// The Debuted-tab panel: collapsed by default, renders only what the artifacts
+// carry, deep-links to the full Source Comparison treatment on /glossary/.
+function efvTrackRecordSection() {
+  if (_EFV_TRACK === null) return "";   // not fetched yet; repaints when it lands
+  const t = _EFV_TRACK;
+  const bars = _efvTrackBars("Hitters", t.hit) + _efvTrackBars("Pitchers", t.pit);
+  const era = _efvTrackEraTable(t.hit, t.pit);
+  const tier = _efvTrackTierTable(t.bt);
+  const receipts = _efvTrackReceipts(t.bt);
+  const relia = efvReliabilityDiagram(t.iso);
+  if (!(bars || era || tier || receipts || relia)) return "";
+  return `<details style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);">
+      <summary style="cursor:pointer;padding:8px 12px;font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);user-select:none;list-style:revert;">eFV vs consensus FV · the track record <span style="color:var(--text-tertiary);font-weight:400;">· out-of-sample, resolved cohorts</span></summary>
+      <div style="padding:2px 12px 12px;">
+        <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-bottom:10px;">Every number below is out-of-sample: the model graded each cohort using only earlier years, then the realized MLB outcomes were scored against both grades. The full methodology and source-by-source comparison live on the <a href="/glossary/?view=source-comparison" style="color:var(--neon-cyan);">Source Comparison</a> page.</div>
+        ${bars}${era}${tier}${receipts}${relia}
+      </div>
+    </details>`;
 }
 // eFV is the PRIMARY ranking signal. Its value where the player has a pro track record
 // (an eFV grade); consensus FV (fv_close) is the fallback so no-track-record players
@@ -30447,9 +30635,16 @@ function _gfxRow(item, kind, meta) {
   const p = item.p || item;
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   const isDO = (kind === "draftee" || kind === "overseas");
-  // eFV badge for board prospects + graduates (consensus FV fallback); draft/overseas
-  // stay on consensus (eFV does not grade those cohorts).
-  const _px = isDO ? null : getEfv(p);
+  // B3 - the GFX badge follows the SAME lead-grade toggle as the on-screen list it
+  // snapshots: board prospects follow the board's Rank-by toggle (_gradePrimary),
+  // graduates follow the Debuted lead-grade toggle. Lead = eFV -> eFV badge
+  // (rounded to nearest, consensus FV fallback where eFV abstains); lead =
+  // consensus -> consensus FV badge (ceiling). Draft/overseas stay on consensus
+  // (eFV does not grade those cohorts). _gfxFooterNote mirrors this choice.
+  const _leadEfv = (kind === "graduate")
+    ? ((state.debutGrade || "xfv") === "xfv")
+    : (_gradePrimary() === "xfv");
+  const _px = (isDO || !_leadEfv) ? null : getEfv(p);
   const _pxg = (_px && _px.xfv_grade != null) ? efvGradeDisplay(_px) : null;
   const fv = isDO
     ? (p.consensus_fv != null ? String(fvCeil(p.consensus_fv)) : null)
@@ -30580,11 +30775,15 @@ function _gfxAvatar(r, P) {
   // box faithfully. Flex-center it in the cell.
   return `<span style="${wrap}background-image:none;display:inline-flex;align-items:center;justify-content:center;"><img src="${teamLogoURL(r.org)}" crossorigin="anonymous" alt="${escapeHtml(r.org || "")}" style="max-width:34px;max-height:38px;width:auto;height:auto;display:block;" onerror="this.style.display='none';"></span>`;
 }
-// Footer legend per kind.
+// Footer legend per kind. The prospect/graduate badge legend tracks the same
+// lead-grade toggles the row badges follow (see _gfxRow, B3) so the exported
+// graphic labels the grade it actually shows.
 function _gfxFooterNote(kind) {
+  const _boardEfv = (typeof _gradePrimary === "function") ? _gradePrimary() === "xfv" : true;
+  const _gradEfv = ((state.debutGrade || "xfv") === "xfv");
   return {
-    prospect: "$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = eFV (consensus FV fallback)",
-    graduate: "WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = final eFV (locked at debut)",
+    prospect: `$M = engine expected surplus value · $DvM+ = surplus-development index (100 = FV-tier avg) · badge = ${_boardEfv ? "eFV (consensus FV fallback)" : "consensus FV"}`,
+    graduate: `WAR = career MLB WAR since debut (bWAR) · $DvM+ = surplus-development index · badge = ${_gradEfv ? "final eFV (locked at debut)" : "consensus FV at debut"}`,
     draftee: "Stk+ = Draft Stock+ (100 = class median) · badge = consensus FV",
     overseas: "badge = consensus FV",
     leader: "value = the selected stat · badge = eFV (consensus FV fallback)",
@@ -42869,6 +43068,17 @@ function renderPlayerDetail(key) {
                   : estimateSurplusValueMM(fv, _isPit, p.position, { player: p });
     const _efvFan = (_useEfv && _xf.dist && _xf.dist.p50_mm != null)
       ? renderSvDistribution(_xf.dist, { height: 16, axis: true }) : "";
+    // D4 - the eFV surplus credible band stated in words: band_p10_mm / band_p90_mm
+    // from the xfv payload, an 80% band (P10 to P90) of SIMULATED SURPLUS DOLLARS.
+    // These are dollars, never grade points. Skips cleanly when the fields are null
+    // (provisional/ungraded players) or the band is degenerate (P10 == P90, the
+    // $0-surplus org-filler case where the band carries no information).
+    const _efvBand = (_useEfv && _xf.band_p10_mm != null && _xf.band_p90_mm != null
+                      && Number(_xf.band_p90_mm) > Number(_xf.band_p10_mm))
+      ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin:0 0 8px;font-size:10px;" title="80% credible band on the eFV surplus: in 8 of 10 simulated career paths the 6-year cost-controlled surplus lands between these dollar figures (P10 to P90 of the simulated outcomes). A range of surplus dollars, not a grade band.">
+           <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;flex:none;">Surplus band <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;">P10 to P90</span></span>
+           <span style="font-family:var(--font-mono);color:var(--text-secondary);font-variant-numeric:tabular-nums;">${fmtSvMM(_xf.band_p10_mm)} to ${fmtSvMM(_xf.band_p90_mm)}</span>
+         </div>` : "";
     const fmtUsd = m => {
       if (m == null) return " - ";
       if (m >= 100) return `$${m.toFixed(0)}M`;
@@ -42909,7 +43119,7 @@ function renderPlayerDetail(key) {
              <div style="font-size:10px;color:var(--text-tertiary);margin-top:2px;font-style:italic;">${_surpSub}</div>
            </div>
            <div style="font-family:var(--font-mono);font-size:${p.status === "debuted" ? "16px" : "20px"};font-weight:700;color:${surplusColor};font-variant-numeric:tabular-nums;" title="${_useEfv ? `eFV expected surplus over the 6-year cost-controlled window, from the outcome-grounded grade (the model's calibrated WAR distribution priced through the value framework). ${escapeHtml(surplusTip)}` : surplusTip}">${fmtUsd(surplus)}</div>
-         </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}`
+         </div>${_efvFan ? `<div style="margin:-2px 0 8px;">${_efvFan}</div>` : ""}${_efvBand}`
       : "";
     // Expected market AAV - FV-derived WAR/yr × $/WAR market rate.
     // Same projection logic the WAG metric uses, surfaced as a "what
