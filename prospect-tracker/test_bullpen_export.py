@@ -88,3 +88,30 @@ def test_data_contract():
     t0 = d["teams"][0]
     for k in ("team", "bullpen_plus", "n_relievers", "depth"):
         assert k in t0, f"team missing {k}"
+
+
+def test_join_leverage_consistency(tmp_path, monkeypatch):
+    """X-D1 wiring: the artifact's proposed_values stamp gmli_3yr / pct / tag
+    onto matching reliever rows by MLBAM; unmatched rows and a missing
+    artifact leave the fields absent (column renders blank)."""
+    art = {"proposed_values": {"players": {
+        "695243": {"name": "Mason Miller", "gmli_3yr": 1.81, "pct": 98,
+                   "tag": "established"},
+    }}}
+    p = tmp_path / "leverage_consistency_eval.json"
+    p.write_text(json.dumps(art), encoding="utf-8")
+    monkeypatch.setattr(be, "LEVCON_PATH", p)
+
+    rows = [{"mlbam": 695243, "name": "Mason Miller"},
+            {"mlbam": 111111, "name": "Unmatched Arm"},
+            {"name": "No Id"}]
+    n = be._join_leverage_consistency(rows)
+    assert n == 1
+    assert rows[0]["gmli_3yr"] == 1.81
+    assert rows[0]["gmli_3yr_pct"] == 98
+    assert rows[0]["gmli_3yr_tag"] == "established"
+    assert "gmli_3yr" not in rows[1] and "gmli_3yr" not in rows[2]
+
+    # Missing artifact: a clean no-op, never an exception.
+    monkeypatch.setattr(be, "LEVCON_PATH", tmp_path / "nope.json")
+    assert be._join_leverage_consistency(rows) == 0

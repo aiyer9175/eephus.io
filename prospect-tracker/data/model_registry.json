@@ -586,14 +586,14 @@
   },
   {
    "model_id": "leverage_consistency",
-   "surface": "/mlbstats/ Bullpen Leaderboards (deployment-context column; wiring lands this pass)",
+   "surface": "/mlbstats/ Bullpen Leaderboards, gmLI 3yr column (deployment context)",
    "predicts": "n/a - deployment context, not skill: multi-year manager-assigned leverage (relief-entry-weighted gmLI mean over the trailing 3 seasons) with a pool percentile and an established/provisional stability tag; never folded into REM+",
    "champion": "gmli_3yr (relief-entry-weighted mean, 2024-2026, min-BF qualified pool)",
    "baseline": "pre-registered gate: pooled Y->Y+1 gmLI Spearman rho >= 0.30 (2018-2025 ex-2020) + split-half stability at the same bar",
    "metric": "Y->Y+1 rank autocorrelation on qualified reliever pairs + within-season split-half rho",
    "eval_artifact": "data/leverage_consistency_eval.json",
    "verdict": "provisional",
-   "notes": "Holistic pass 3 (2026-07-01), gate pre-registered before the run and CLEANLY PASSED: pooled Y->Y+1 rho 0.4683 (n=878 pairs; seeded bootstrap 95% CI 0.412-0.5206, floor well above the 0.30 bar); every season pair 0.4069-0.5595; split-half pooled 0.5294 (n=1491), rising with entries (25+: 0.461). Sensitivity with symmetric 100/100 qualification: 0.4602. Pool and gmLI construction mirror tools/rem_plus_backtest.py (is_true_reliever + opener drop; gmLI self-computed from StatsAPI winProbability walks). proposed_values cover 197/197 of the current qualified pool (139 established, 58 provisional). Provisional until the displayed column accrues a forward season; deployment context only."
+   "notes": "Holistic pass 3 (2026-07-01), gate pre-registered before the run and CLEANLY PASSED: pooled Y->Y+1 rho 0.4683 (n=878 pairs; seeded bootstrap 95% CI 0.412-0.5206, floor well above the 0.30 bar); every season pair 0.4069-0.5595; split-half pooled 0.5294 (n=1491), rising with entries (25+: 0.461). Sensitivity with symmetric 100/100 qualification: 0.4602. Pool and gmLI construction mirror tools/rem_plus_backtest.py (is_true_reliever + opener drop; gmLI self-computed from StatsAPI winProbability walks). proposed_values cover 197/197 of the current qualified pool (139 established, 58 provisional). Provisional until the displayed column accrues a forward season; deployment context only. WIRED 2026-07-02: bullpen_export joins gmli_3yr/pct/tag from the artifact by MLBAM (one-cycle lag, immaterial for a 3-year trailing mean); run_monthly 6b4b refreshes the artifact after the leaderboards build; glossary entry gmli_3yr added."
   },
   {
    "model_id": "age_rel_outperformance",

@@ -26,8 +26,8 @@ SAMPLE = """{
  "generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29",
  "coverage":{"games":1200,"expected":2430},"verdict":"provisional",
  "relievers":[
-  {"key":"a","name":"Closer Alpha","team":"NYY","rem_plus":138,"qualified":true,"ip":42.1,"g":45,"tbf":170,"k_pct":0.34,"bb_pct":0.06,"k_bb_pct":0.28,"fip":2.40,"swstr_pct":0.16,"era":2.10,"gmli":1.85,"wpa":2.6,"wpa_li":1.7,"sd":24,"md":4,"role":"Closer","saves":20},
-  {"key":"b","name":"Middle Beta","team":"NYY","rem_plus":96,"qualified":true,"ip":38.0,"g":40,"tbf":160,"k_pct":0.22,"bb_pct":0.09,"k_bb_pct":0.13,"fip":4.20,"swstr_pct":0.10,"era":4.00,"gmli":0.95,"wpa":-0.2,"wpa_li":0.1,"sd":12,"md":11,"role":"Middle"},
+  {"key":"a","name":"Closer Alpha","team":"NYY","rem_plus":138,"qualified":true,"ip":42.1,"g":45,"tbf":170,"k_pct":0.34,"bb_pct":0.06,"k_bb_pct":0.28,"fip":2.40,"swstr_pct":0.16,"era":2.10,"gmli":1.85,"gmli_3yr":1.81,"gmli_3yr_pct":98,"gmli_3yr_tag":"established","wpa":2.6,"wpa_li":1.7,"sd":24,"md":4,"role":"Closer","saves":20},
+  {"key":"b","name":"Middle Beta","team":"NYY","rem_plus":96,"qualified":true,"ip":38.0,"g":40,"tbf":160,"k_pct":0.22,"bb_pct":0.09,"k_bb_pct":0.13,"fip":4.20,"swstr_pct":0.10,"era":4.00,"gmli":0.95,"gmli_3yr":0.88,"gmli_3yr_pct":31,"gmli_3yr_tag":"provisional","wpa":-0.2,"wpa_li":0.1,"sd":12,"md":11,"role":"Middle"},
   {"key":"c","name":"Prov Gamma","team":"BOS","rem_plus":110,"qualified":false,"ip":12.0,"g":13,"tbf":50,"k_pct":0.28,"bb_pct":0.08,"k_bb_pct":0.20,"fip":3.30,"swstr_pct":0.13,"era":3.10,"gmli":1.20,"wpa":0.4,"wpa_li":0.3,"sd":6,"md":3,"role":"Setup"}
  ],
  "teams":[
@@ -145,3 +145,26 @@ def test_bullpen_plus_explainer_on_teams_view():
     assert "mlbstats-explainer" in html
     assert 'data-gl="bullpen_plus"' in html
     assert "/glossary/#g=bullpen_plus" in html
+
+
+# ---------------------------------------------------------------------------
+# X-D1 wiring: the gmLI 3yr deployment-context column (gate-validated;
+# joined by bullpen_export from data/leverage_consistency_eval.json).
+# ---------------------------------------------------------------------------
+
+def test_gmli_3yr_column_renders():
+    html = _render("")
+    assert "gmLI 3yr" in html                 # header present
+    assert "1.81" in html                     # established arm's value
+    assert "p98" in html                      # pool percentile, dimmed
+    # provisional arm carries the marker with its explanatory title
+    assert "0.88" in html and "p31" in html
+    assert "Provisional: under 2 seasons or 60 relief entries" in html
+
+
+def test_gmli_3yr_blank_when_absent():
+    # Prov Gamma has no gmli_3yr fields; via teams view its depth row renders
+    # without the column exploding. Relievers view: strip row c's absence by
+    # asserting no 'undefined' leaks anywhere in the rendered table.
+    html = _render("")
+    assert "undefined" not in html

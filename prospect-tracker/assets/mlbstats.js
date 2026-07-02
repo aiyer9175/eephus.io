@@ -96,6 +96,14 @@
     { key: "swstr_pct", label: "SwStr%", fmt: fPct, num: true },
     { key: "era", label: "ERA", fmt: f2, num: true, asc: true },
     { key: "gmli", label: "gmLI", term: "gmli", fmt: f2, num: true },
+    { key: "gmli_3yr", label: "gmLI 3yr", term: "gmli_3yr", fmt: f2, num: true,
+      cell: function (r) {
+        if (r.gmli_3yr == null) return "";
+        var s = f2(r.gmli_3yr);
+        if (r.gmli_3yr_pct != null) s += '<span class="proj-dim"> p' + r.gmli_3yr_pct + "</span>";
+        if (r.gmli_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 60 relief entries in the trailing window">*</span>';
+        return s;
+      } },
     { key: "wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,

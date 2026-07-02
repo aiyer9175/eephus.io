@@ -2504,6 +2504,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("bullpen leaderboards export failed - continuing")
 
+        # --- 6b4b. gmLI consistency artifact (leverage_consistency_eval) -
+        # Refreshes data/leverage_consistency_eval.json (multi-year gmLI
+        # deployment stability + per-player gmli_3yr values) from the
+        # leaderboards + leverage caches 6b4 just built. bullpen_export joins
+        # the artifact at export time, so the joined values lag one cycle; a
+        # 3-year trailing mean makes that immaterial. Additive; never aborts.
+        with _step("6b4b. gmLI consistency (leverage_consistency_eval.json)", log):
+            try:
+                import subprocess as _sp
+                _sp.run([sys.executable,
+                         str(Path(__file__).parent / "tools" / "leverage_consistency_eval.py")],
+                        check=True, timeout=1800)
+            except Exception:
+                log.exception("gmLI consistency refresh failed - continuing")
+
         # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI

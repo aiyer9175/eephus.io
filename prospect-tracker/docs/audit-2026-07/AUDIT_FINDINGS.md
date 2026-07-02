@@ -175,6 +175,50 @@ fielding_positions (run_monthly.py:1689-1700 lives in main() only, gated by --sk
 default False). Memory's "run_monthly 3a-ii" wiring is real but monthly, matching the
 step's own comment; document in DATA_SOURCES.md.
 
+## Pre-registered experiment gates: eFV round (written 2026-07-02, before any run)
+
+Owner directive 2026-07-02: target eFV for any remaining improvement. Constraints
+carried over: gated experiments only; clear pass or loss ledger; forward-chained
+OOS with no same-player leakage; seeded; do NOT re-attempt loss-ledgered dead ends
+(statcast features, power features, dedicated mean head, tail transforms, def-value
+swap, level_jump, type-conditioned consensus weights).
+
+### E-ISO2: Rank-preserving monotone recalibration of the eFV bucket distribution
+- Successor to the rejected X-ISO. Hypothesis: a strictly-increasing monotone
+  recalibration applied in GRADE space to the p_bucket_given_fv anchor tables captures
+  the X-ISO calibration gain (FV45+ bust/bench gaps 0.09-0.16) without PAVA tie-flattening.
+- Gate (ALL, forward-chained OOF, SEED documented):
+  1. Pooled and per-bucket Brier/log-loss improve (no bucket materially worse).
+  2. Forward Spearman delta >= -0.002 vs shipped (strict monotonicity should make this
+     hold by construction; it must still be measured).
+  3. Per-FV-tier reliability: no tier worse, including FV-35 (the tier X-ISO degraded).
+- Ship path on pass: changes published bucket probabilities -> surplus -> trade values.
+  Expected-CHANGED output-diff limited to xfv.json + trade_values.json + downstreams,
+  every delta justified in CHANGELOG; registry row update + eval artifact + freshness map.
+
+### E-LAMBDA: Per-cohort blend lambda for the eFV/consensus blend
+- Hypothesis: the global per-side blend lambda (pitchers 0.66 after the 2026-06-24 recal)
+  leaves cohort-level headroom; intl bats is the lone cohort where consensus still beats
+  eFV, suggesting cohort-conditional weighting (NOT the rejected type-conditioned source
+  weights; this is the model-vs-consensus blend, not source accuracy weights).
+- Gate (forward-chained by cohort-year, out-of-fold lambda selection):
+  1. Pooled OOS Spearman does not decrease on either side.
+  2. At least one cohort improves materially (rho +0.010 or better) and NO cohort
+     degrades by more than 0.005.
+  3. Selected lambdas are stable across folds (no oscillation; report per-fold choices).
+- Ship path: changes xfv_grade for affected cohorts -> same expected-CHANGED discipline.
+
+### E-STUFF: Upper-level pitcher Tier-2 overlay (aStuff+ / whiff analog)
+- Hypothesis (deferred xfv-phase2 A3/A4, never tested): for AA/AAA pitchers, the in-house
+  aStuff+ (pitcher-level forward r 0.28) or the SC+ whiff component (X-C3: r 0.359 vs
+  first-MLB ERA) adds OOS signal the production features miss.
+- Gate (forward-chained, pitcher side only):
+  1. OOS Spearman improves on the pitcher pool overall (delta >= +0.005).
+  2. The upper-level (AA/AAA) pitcher sub-cohort improves (delta >= +0.010).
+  3. No degradation of the lower-level pitcher cohort beyond -0.003 (missing-data
+     handling must not poison rows without tracking data; coverage reported).
+- Ship path: same expected-CHANGED discipline as E-LAMBDA.
+
 ## Changelog of findings in this pass
 
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.

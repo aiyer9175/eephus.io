@@ -48,6 +48,7 @@ _log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "bullpen_leaderboards.json"
 EVAL_PATH = DATA_DIR / "rem_plus_eval.json"
+LEVCON_PATH = DATA_DIR / "leverage_consistency_eval.json"
 
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
@@ -232,6 +233,30 @@ def _backtest() -> dict:
     }
 
 
+def _join_leverage_consistency(relievers: list[dict]) -> int:
+    """Stamp gmli_3yr / pool percentile / stability tag onto reliever rows
+    from the committed leverage-consistency artifact
+    (tools/leverage_consistency_eval.py, gate-validated 2026-07: pooled
+    Y->Y+1 rho 0.4683 vs the 0.30 bar). Deployment context only - never an
+    input to REM+. Missing artifact or unmatched player -> fields absent and
+    the column renders blank. Returns the number of rows stamped."""
+    try:
+        pv = json.loads(LEVCON_PATH.read_text(encoding="utf-8"))["proposed_values"]
+        players = pv["players"]
+    except (OSError, ValueError, KeyError):
+        return 0
+    n = 0
+    for r in relievers:
+        p = players.get(str(r.get("mlbam") or ""))
+        if not p:
+            continue
+        r["gmli_3yr"] = p.get("gmli_3yr")
+        r["gmli_3yr_pct"] = p.get("pct")
+        r["gmli_3yr_tag"] = p.get("tag")
+        n += 1
+    return n
+
+
 # --------------------------------------------------------------------------- #
 # export
 # --------------------------------------------------------------------------- #
@@ -263,6 +288,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
 
     relievers = build_relievers(rows, leverage, swstr)
     scored = rem_plus.score_pool(relievers)
+    n_lev = _join_leverage_consistency(scored["relievers"])
+    if n_lev:
+        log(f"  bullpen: gmLI-consistency joined for {n_lev} relievers")
 
     payload = {
         "generated_at": today,

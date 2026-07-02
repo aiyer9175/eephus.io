@@ -1,5 +1,5 @@
 {
- "version": "2026-07-01",
+ "version": "2026-07-02",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -4632,6 +4632,27 @@
    "definition": "The average Leverage Index at the moment a reliever enters the game. A measure of how high-pressure his usage is, set largely by the manager, not the pitcher. About 1.0 is average; closers run high, mop-up arms run low.",
    "methodology": "Computed in house from the MLB win-probability feed: for each appearance, the Leverage Index of the play where the reliever enters is recorded, and gmLI is the average across his appearances. It captures deployment, not skill, which is why REM+ keeps it in a separate column.",
    "seeAlso": [
+    "leverage_index",
+    "rem_plus"
+   ]
+  },
+  {
+   "id": "gmli_3yr",
+   "term": "gmLI 3yr (three-year deployment leverage)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "gmLI 3yr",
+    "leverage consistency",
+    "three-year gmLI"
+   ],
+   "priority": 21,
+   "definition": "The relief-entry-weighted average gmLI a pitcher's managers assigned him over the trailing three seasons, shown with his pool percentile. Deployment context, not skill: it says how he has been used, not how well he pitched. About 1.0 is average; established high-leverage arms run 1.5 and up.",
+   "methodology": "Each season's gmLI (entry-point Leverage Index, computed in house from the MLB win-probability feed) is averaged across the trailing three seasons, weighted by relief entries. The multi-year framing is gate-validated: year-over-year gmLI rank correlation on qualified relievers is 0.47 pooled over 2018-2025 (excluding 2020), with within-season split-half stability of 0.53, so a manager's leverage assignment is a persistent trait worth displaying.\n\nPlayers with fewer than 2 seasons or 60 relief entries in the window carry a provisional mark. gmLI 3yr never feeds REM+, which deliberately excludes leverage from the skill scale.",
+   "seeAlso": [
+    "gmli",
     "leverage_index",
     "rem_plus"
    ]
