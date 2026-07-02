@@ -550,6 +550,39 @@
    "last_checked": "2026-06-30",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_isotonic_calibration",
+   "surface": "model-dev artifact (rendered nowhere) - eFV 5-bucket distribution calibration candidate",
+   "predicts": "n/a - gated experiment: per-bucket out-of-fold isotonic recalibration of the eFV bucket probabilities (candidate REJECTED at its pre-registered gate)",
+   "champion": "shipped uncalibrated p_bucket_given_fv distribution (unchanged)",
+   "baseline": "isotonic challenger (forward-chained OOF, chain 2016-2023, eval 2020-2023, SEED=7)",
+   "metric": "pre-registered 3-condition gate: pooled+per-bucket Brier/log-loss, forward Spearman tolerance -0.002, per-FV-tier reliability",
+   "eval_artifact": "data/xfv_isotonic_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3 (2026-07-01), gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md BEFORE the run. Condition 1 passed big (pooled Brier -18.6%, log-loss -16.7%, every bucket better); conditions 2 and 3 failed (rank rho 0.2227 vs 0.2392 shipped, delta -0.0165 vs -0.002 tolerance, from PAVA flat-segment ties; FV-35 tier reliability worsened). NO SHIP; published numbers untouched. Loss ledger in the artifact. Real signal for a future attempt: FV45+ bust/bench probabilities are miscalibrated (tier-45 gap 0.0946, tier-55 0.1616); a rank-preserving monotone recalibration in grade space could take the calibration gain without the tie-induced rank loss."
+  },
+  {
+   "model_id": "sc_plus_component_diagnostic",
+   "surface": "model-dev artifact (rendered nowhere) - SC+ per-component forward-signal isolation",
+   "predicts": "n/a - measurement: which SC+ component (EV / HardHit / Barrel / SwingMiss) carries the weak composite forward signal",
+   "champion": "equal-weight 4-component SC+ composite (unchanged: keep-as-is per the pre-set rule)",
+   "baseline": "n/a (measurement; the metric IS the verdict)",
+   "metric": "pooled per-component forward r/rho vs first-MLB OPS / inverted ERA and 2y bWAR, debut cohorts 2024-2026; forward-chained top-2 blend vs composite on identical OOS rows",
+   "eval_artifact": "data/sc_plus_component_eval.json",
+   "verdict": "validated",
+   "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count."
+  },
+  {
+   "model_id": "surplus_sensitivity_diagnostic",
+   "surface": "model-dev artifact (methodology-note source) - prospect surplus $/WAR-level stress test",
+   "predicts": "n/a - measurement: stability of surplus ORDERING under -20/-10/+10/+20 percent shifts of the dollars-per-WAR level (shape fixed)",
+   "champion": "shipped value_framework surplus (unchanged)",
+   "baseline": "n/a (measurement; the metric IS the verdict)",
+   "metric": "rank Spearman vs baseline per shift, top-50 churn and max rank move, per-FV-tier median dollar change; 4,000 active prospects; baseline replication 4,000/4,000 at 0.1M rounding",
+   "eval_artifact": "data/surplus_sensitivity.json",
+   "verdict": "validated",
+   "notes": "Holistic pass 3 (2026-07-01). Ordering is level-invariant: zero top-50 churn at every shift, max top-50 move 2 spots (-20% only), FV45+ rho >=0.9999 everywhere; dollar levels move roughly with the shift (FV60+ median +24% at +20%). Structural facts recorded: FV<=40 (3,491 players) is level-invariant by design (fixed-dollar low-tier anchor is not market-indexed); the isotonic output layer amplifies level shifts up to ~1.9x in FV 45-50 and pins ~3,300 players at the 1.44M floor. Deterministic, no MC."
   }
  ],
  "problems": []

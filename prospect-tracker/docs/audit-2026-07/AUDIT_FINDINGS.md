@@ -1,0 +1,183 @@
+# Audit Findings: Holistic Pass 3 (2026-07-01)
+
+Curated findings ledger for the third pre-Beta audit pass. Sorted by severity, then expected value.
+Dispositions: FIXED / FLAGGED (review queue) / HIDDEN / VERIFIED-OK / NOT-REPRODUCED.
+Baseline: commit 4525ec5, clean tree, 5/5 artifacts fingerprinted as `p3-base`,
+model registry 39 rows (15 validated / 21 provisional / 3 unvalidated), validate() clean.
+
+## P1
+
+### F-01: Summed quantile totals displayed as WAR bands
+- Location: proj_export.py:274 and :399 (`warTotalP90 = round(sum(p90_arr))`), fa_export.py:328,
+  displayed in assets/fa.js:506 and :798, assets/projections.js:624/954/1028,
+  exported by mlb_player_export.py:286. test_proj_export.py:57 asserts against the summed field.
+- Issue: the total band shown as "(P10-P90)" sums per-year quantile points. The sum of per-year
+  P90s is not the P90 of the multi-year total unless year-to-year outcomes are perfectly
+  correlated; the displayed band is systematically too wide (overstated upside, understated floor).
+  The standing methodology rule already prohibits summing ML quantile points in backtests; the
+  display surface violates the same statistics.
+- Impact: every FA and Projections total-WAR band a front-office reader sees is wider than the
+  model's actual predictive interval. Point estimates (warTotal) are unaffected.
+- Severity: P1. Effort: M (needs a path-total quantile, e.g. per-path simulation or a
+  rank-correlation assumption, plus re-export and copy updates).
+- Disposition: FLAGGED (review queue). Changing band semantics alters published numbers 10 days
+  before launch; the fix needs an owner decision on the dependence assumption. New work in this
+  pass (upside display) uses per-year quantiles only and never sums them.
+
+## P2
+
+### F-02: Module apps fail silently when the data payload is missing
+- Location: assets/mlbstats.js:359-362 (fetch failure -> DATA=null -> render), and the
+  equivalent loaders in assets/projections.js, assets/pal.js, collegesavant apps.
+- Issue: on fetch failure or non-OK response the apps render blank or partially blank pages with
+  no visible error. PROSPX (prospx/index.html ~10236-10298) is the reference: structured
+  `__error` payload plus a visible state message.
+- Disposition: FIX in this pass (lane H), with per-page test assertions that the error-state
+  string exists.
+
+### F-03: Glossary version stamp hand-set in two diverging places
+- Location: data/glossary.json ("2026-06-24") vs build_glossary_data.py:277 ("2026-06-10").
+- Disposition: FIX in this pass (lane H): derive the stamp from the build, remove both literals.
+
+### F-04: Copy gates not enforced by the test suite
+- Location: tools/copy_lint.py and tools/strip_emdashes.py exist but have zero references in
+  conftest.py or any test; nothing stops a copy regression from landing.
+- Disposition: FIX in this pass (lane H): new test_copy_gates.py invokes both.
+
+### F-05: Same-concept stabilization constants scattered with no provenance
+- Location: storage.py:8373 (K_AB=170), storage.py:8352 (K_IP=50),
+  college_translation.py:64 (BF_PER_9=38), college_translation.py:68 (SLOPE_SHRINK_K=20),
+  pal_conversion.py:346 (NEED_ERA_SHRINK_IP=45).
+- Issue: five stabilization/shrinkage constants across three modules, two of which (K_IP=50 vs
+  NEED_ERA_SHRINK_IP=45) shrink the same quantity (ERA) toward different pseudo-counts with no
+  documented reason.
+- Disposition: FIX names in this pass (lane B): central module with provenance comments, values
+  unchanged, output-diff proven neutral. Value unification is FLAGGED (review queue) because it
+  changes published numbers.
+
+### F-06: Replacement-level 47.7 duplicated as two literals
+- Location: proj_export.py:598 and proj_backtest.py:54.
+- Note: value_framework bucket floors (surplus_floor_usd) are USD surplus floors, a different
+  concept; they are intentionally separate and must not be "unified" with the runs baseline.
+- Disposition: FIX in this pass (lane B): single shared constant or cross-assert test.
+
+## P3 / informational
+
+### F-07: Prior recon claims that did not reproduce
+- "K_AB duplicated in college_translation.py": wrong; that file has BF_PER_9 and SLOPE_SHRINK_K,
+  no K_AB. Corrected sites listed in F-05.
+- "Run environment implemented in multiple sites": grep for RUNS_PER_WIN / run_env found no
+  duplicated run-environment constant outside tests. NOT-REPRODUCED.
+- "data/fa_aging_curves.json is unused": wrong; fa_projection.py declares it CURVES_PATH (L50)
+  and writes it (L394). It is the committed fit artifact. Do not delete.
+- "Pre-existing failing bayes test": REPRODUCED on the full baseline run (1 failed / 1687
+  passed / 17 skipped): test_fv50_active_prospect_gets_trade_rarity_floor asserted the
+  final-value clamp tag must fire, but the tune in 2a00e00 plus the surplus realignment moved
+  the fixture 0.2 above the floor, so the clamp legitimately no longer binds. The policy
+  invariant (trade_value_mm >= active rarity floor) held throughout. FIXED (9fe4852): floor
+  exposed in the in-memory result (board_slim drops it from the written payload; trade_values
+  .json unchanged), test asserts the invariant instead of the tag. Suite fully green.
+- "Glossary copy backlog is 78 items": ledger totals in docs/glossary-copy-audit.md are
+  PASS 158 / LIGHT 8 / REWRITE 3 / RESTRUCTURE 13 -> 24 open items.
+
+### F-08: /mlbstats/ headline metrics lack on-page explainers
+- REM+ and Bullpen+ have glossary entries but no on-page explainer or glossary deep-link.
+- Disposition: FIX in this pass (lane H).
+
+### F-09: positions_played.json refresh wiring
+- run_monthly.py step 3a-ii (~L1684) calls fielding_positions.build_positions_played gated on
+  `not skip_stats`. VERIFY the daily path's flag value, then document in DATA_SOURCES.md.
+
+## Pre-registered experiment gates (written before any experiment ran)
+
+Owner policy for this pass: gated experiments; ship only on clear gate pass with before/after
+documented; marginal or failed results go to the loss ledger and review queue. All stochastic
+steps seeded.
+
+### X-ISO: Out-of-fold isotonic calibration of the eFV 5-bucket outcome distribution
+- Hypothesis: OOF isotonic per bucket improves probability calibration without hurting ranking.
+- Gate (ALL must hold, forward-chained / out-of-fold, no same-player leakage):
+  1. OOF Brier score and log-loss improve versus the uncalibrated 5-bucket distribution,
+     pooled and per bucket (no bucket materially worse).
+  2. Forward Spearman of the resulting grade/rank versus realized outcomes does not degrade
+     relative to the shipped model (tolerance: no decrease beyond -0.002).
+  3. Reliability curves improve in every FV tier (no tier gets worse).
+- Ship path on pass: registry row update + committed eval artifact + methodology-freshness map
+  entry + expected-CHANGED pipeline_artifact_diff limited to xfv.json, trade_values.json and
+  direct downstreams, each delta justified in CHANGELOG.
+- On marginal/fail: loss-ledger entry in the eval artifact + review-queue spec. No ship.
+
+### X-D1: Reliever leverage-consistency (multi-year gmLI deployment stability)
+- Hypothesis: a reliever's manager-assigned leverage (gmLI) is stable enough year-over-year to
+  be a meaningful displayed context metric on /mlbstats/.
+- Gate: Y->Y+1 autocorrelation of gmLI on the reliever pool (min-BF qualified) is materially
+  positive (rho >= 0.30 on the pooled 2018-2025 sample, ex-2020), and the metric survives a
+  split-half stability check. Displayed as context (deployment), never folded into REM+ skill.
+- Ship path on pass: registry row (provisional acceptable, disclosed) + eval artifact +
+  glossary entry + /mlbstats/ column.
+
+### X-D2: Age-relative outperformance index (production vs age-matched level cohort)
+- Hypothesis: a displayed index of production versus same-age same-level peers adds signal
+  beyond the existing age_rel_level model feature's internal use.
+- Gate: forward correlation of the index with realized outcomes (graduate cohort) is positive
+  and at least comparable to existing descriptive metrics (r >= 0.10 on n >= 80), and the index
+  is stable under the standard shrinkage treatment (no small-sample blowups; EB-shrunk at source
+  like RPS+ per the 2026-06-18 rule).
+- Ship path on pass: registry row + eval artifact + glossary entry + PROSPX display chip
+  (rounding: "+"-style metrics round to nearest).
+
+## Experiment outcomes (wave 1, 2026-07-01)
+
+### X-ISO: FAIL (loss ledger in data/xfv_isotonic_eval.json)
+Condition 1 passed strongly (pooled Brier -18.6%, log-loss -16.7%, every bucket improved).
+Conditions 2 and 3 failed: calibrated-rank Spearman 0.2227 vs shipped 0.2392 (delta -0.0165,
+tolerance -0.002; caused by isotonic flat-segment ties) and the FV-35 tier reliability gap
+worsened (0.00265 to 0.00493; 5/6 tiers improved). NO SHIP. Genuine signal recorded for a
+future gated attempt: bust/bench probabilities at FV 45+ are substantially miscalibrated
+(tier-45 gap 0.0946, tier-55 0.1616); a rank-preserving monotone recalibration of the
+p_bucket_given_fv tables in grade space could capture the calibration gain without the
+tie-induced rank loss. Harness: tools/efv_isotonic_lab.py (SEED=7, forward-chained OOF).
+
+### X-D5: SHIPPED (artifact data/surplus_sensitivity.json)
+Surplus ordering is essentially invariant to the $/WAR level: zero top-50 churn at every
+shift from -20% to +20%, max top-50 rank move 2 spots (at -20% only), FV45+ rank rho >=
+0.9999 everywhere. Dollar levels move roughly with the shift (FV60+ median +24% at +20%).
+Two structural observations recorded: (1) FV<=40 players (3,491 of 4,000) are $/WAR-level-
+invariant because the fixed-dollar low-tier anchor is not indexed to the market level;
+(2) the isotonic calibration layer locally amplifies level shifts up to ~1.9x in FV 45-50
+and pins ~3,300 low-tier players at the $1.44M floor. Both are pre-existing design facts,
+not bugs; flagged for owner awareness.
+
+### X-C3: DONE, keep composite as-is (artifact data/sc_plus_component_eval.json)
+Hitters: Barrel%/BBE carries the contact-quality signal (r 0.254 vs first-MLB OPS, n 54);
+EV weak (0.104); HardHit% and SwingMiss% ~ noise. Pitchers: SwingMiss% carries it (r 0.359
+vs first-MLB ERA inverted); barrels/EV noise. The forward-chained top-2 blend beat the
+composite by +0.053 (hit) / +0.048 (pit) pooled OOS r, just under the pre-set both-sides
+>= 0.05 reweight rule, so the composite stays. Side finding: reference approach stats
+(hitter BB% r 0.33, pitcher K% r 0.49) out-signal all contact-quality components but are
+already priced into consensus FV and eFV features; do not double-count.
+
+### Lane B (F-05/F-06): SHIPPED
+rate_stabilization.py centralizes K_AB/K_IP/NEED_ERA_SHRINK_IP/BF_PER_9/SLOPE_SHRINK_K +
+REPLACEMENT_WINS=47.7 with provenance; values byte-identical; consuming sites import it.
+New fact: fa_config.yaml carries its own replacement_wins=47.7 (config-driven by design,
+documented in the module; left separate). docs/aging-curves.md documents the three-way
+aging fork as defensible.
+
+### Lane H2 (F-03/F-04/A3): SHIPPED
+Version stamp single-sourced (build_glossary_data.glossary_version(), payload now
+2026-07-01). A3 audit: 22 of 24 open ledger items were ALREADY fixed in the live payload
+by earlier one-time updaters (ledger was stale); 3 remaining mutations applied via
+build_glossary_copy_pass.py (240 entries; idempotent). PWR+ confirmed alias-only, marked
+legacy alias of POW+. test_copy_gates.py wires both copy tools into the suite. F-09
+RESOLVED: positions_played refreshes on the MONTHLY cadence only; run_daily() never calls
+fielding_positions (run_monthly.py:1689-1700 lives in main() only, gated by --skip-stats,
+default False). Memory's "run_monthly 3a-ii" wiring is real but monthly, matching the
+step's own comment; document in DATA_SOURCES.md.
+
+## Changelog of findings in this pass
+
+- 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.
+- 2026-07-01 (wave 1): X-ISO failed gate (no ship, loss ledger); X-D5 and X-C3 artifacts
+  shipped; lanes B and H2 landed. Lanes G, H1, P and experiments X-D1, X-D2 pending re-run
+  (session-limit interruption).

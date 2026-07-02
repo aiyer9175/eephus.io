@@ -73,6 +73,12 @@ MODEL_GLOSSARY = {
     # PAL = the /pal/ Pitcher Alchemy Lab role-conversion screen; documented by its
     # FIT-score + conversion-model glossary entries.
     "pal_conversion": ["pal_conversion", "rp_sp_fit", "sp_rp_fit"],
+    # Holistic pass 3 (2026-07-01) model-dev artifacts, rendered nowhere:
+    # the rejected eFV isotonic candidate (loss ledger), the SC+ per-component
+    # signal isolation, and the surplus $/WAR-level stress test.
+    "xfv_isotonic_calibration": "internal",
+    "sc_plus_component_diagnostic": "internal",
+    "surplus_sensitivity_diagnostic": "internal",
 }
 
 
