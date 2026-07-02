@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**47 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 4.
+**48 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 5.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -57,6 +57,7 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `xfv_grade_recal` | model-dev artifact (rendered nowhere) - eFV bucket-distri... | n/a - gated experiment E-ISO2: strictly-increasing monotone recalibration of p_bucket_given_fv in grade space (candidate REJECT... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | grade-space monotone challenger (forward-chained OOF, X-ISO cohort splits, SE... | pre-registered 3-condition gate (Brier/log-loss, Spearman tolerance -0.002, p... | **deprecated** | `data/xfv_grade_recal_eval.json` | - | - |
 | `xfv_cohort_lambda` | model-dev artifact (rendered nowhere) - per-cohort eFV/co... | n/a - gated experiment E-LAMBDA: out-of-fold per-cohort blend lambda selection (candidate REJECTED on all 3 gate conditions) | shipped global per-side blend lambdas (unchanged) | per-cohort OOF-selected lambdas (grid 0.00-1.00 step 0.05, min pool 25, SEED=7) | pre-registered gate: pooled OOS Spearman non-decrease both sides; >=+0.010 co... | **deprecated** | `data/xfv_cohort_lambda_eval.json` | - | - |
 | `xfv_pitcher_stuff` | model-dev artifact (rendered nowhere) - AA/AAA pitcher tr... | n/a - gated experiment E-STUFF: aStuff+ / SC+ whiff-z overlay features for upper-level pitchers (INCONCLUSIVE: zero trainable c... | shipped eFV pitcher model (unchanged; baseline blend rho 0.2787 reproduced ex... | overlay variants astuff/whiff/both under strict and same-season as-of convent... | pre-registered gate: pitcher pool OOS Spearman >=+0.005, AA/AAA sub-cohort >=... | **deprecated** | `data/xfv_pitcher_stuff_eval.json` | - | - |
+| `xfv_grade_recal3` | model-dev artifact (rendered nowhere) - eFV bucket-calibr... | n/a - gated experiment E-ISO3: the E-ISO2 grade-space monotone recalibration re-evaluated under a redesigned gate (within-year... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | grade-space monotone challenger (reused verbatim from efv_grade_recal_lab, fo... | pre-registered 4-condition gate: pooled+per-side+per-bucket Brier/log-loss, e... | **deprecated** | `data/xfv_grade_recal3_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 
