@@ -169,9 +169,11 @@
         rows.innerHTML = `<div class="state-message">The ${state.classYear - 1}-${String(state.classYear).slice(2)} class isn't exported yet (run the monthly pipeline). <a href="#" onclick="location.hash='';return false;">Back to the current class</a>.</div>`;
         return;
       }
-      rows.innerHTML = `<div class="state-message is-error">Free-agency data unavailable
-        (${esc(String(e.message || e))}). Run <code>python fa_export.py</code> to regenerate
-        <code>data/fa_*.json</code>.</div>`;
+      rows.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. Refresh to retry;
+        if it persists the nightly build is mid-run.
+        <button class="chip" id="fa-retry" type="button">Retry</button></div>`;
+      const retry = document.getElementById("fa-retry");
+      if (retry) retry.onclick = () => render();   // load() re-fetches: failures are not cached
       return;
     }
     const cls = D[clsName], meta = D.fa_meta;

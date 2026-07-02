@@ -95,3 +95,53 @@ def test_depth_view_renders():
     assert "bp-depth-card" in html
     assert "Closer Alpha" in html
     assert "bp-slot" in html
+
+
+# ---------------------------------------------------------------------------
+# F-02: fetch failure must paint a visible error state (not a blank page or a
+# misleading "being computed" message), with a retry affordance.
+# ---------------------------------------------------------------------------
+
+_ERR_FETCH = ("var fetch=function(){return {then:function(){return this;},"
+              "catch:function(cb){cb(new Error('network down'));return this;}};};")
+
+
+def test_fetch_failure_renders_error_state():
+    ctx = MiniRacer()
+    ctx.eval(_prelude("") + _ERR_FETCH + JS)
+    html = ctx.eval("__html['mlbstats-app-root'] || ''")
+    assert "Data failed to load" in html
+    assert "nightly build is mid-run" in html
+    assert "mlbstats-retry" in html          # the retry affordance exists
+    assert 'role="alert"' in html
+
+
+def test_null_payload_still_reads_as_not_exported():
+    # ok fetch that yields a null payload = "not exported yet", NOT an error.
+    ctx = MiniRacer()
+    ok_null = ("var fetch=function(){return FT({ok:true,"
+               "json:function(){return FT(null);}});};")
+    ctx.eval(_prelude("") + ok_null + JS)
+    html = ctx.eval("__html['mlbstats-app-root'] || ''")
+    assert "being computed" in html
+    assert "Data failed to load" not in html
+
+
+# ---------------------------------------------------------------------------
+# F-08: on-page explainers for the headline metrics, wired to the glossary
+# tooltip system (data-gl) plus a deep link into the unified glossary.
+# ---------------------------------------------------------------------------
+
+def test_rem_plus_explainer_on_relievers_view():
+    html = _render("")
+    assert "mlbstats-explainer" in html
+    assert 'data-gl="rem_plus"' in html
+    assert "/glossary/#g=rem_plus" in html
+    assert "100 is an average reliever" in html
+
+
+def test_bullpen_plus_explainer_on_teams_view():
+    html = _render("#view=teams")
+    assert "mlbstats-explainer" in html
+    assert 'data-gl="bullpen_plus"' in html
+    assert "/glossary/#g=bullpen_plus" in html

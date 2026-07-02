@@ -188,9 +188,21 @@
     </svg>`;
   }
 
+  // Prospect grade language: eFV (the outcome-grounded model grade, exported as
+  // fv with fv_source="xfv") leads wherever the payload carries it, matching the
+  // PROSPX board's eFV-primary treatment; consensus FV is the fallback for the
+  // players eFV abstains on. Rounding rules: eFV displays round-to-NEAREST,
+  // consensus FV displays CEILING (fvCeil).
+  function prospectGrade(m) {
+    if (m.fv_source === "xfv") return `eFV ${Math.round(m.fv)}`;
+    return `FV ${EEPHUS_HUB.fvCeil(m.fv)}`;
+  }
   function tagFor(m) {
     if (m.src === "prospect") {
-      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">FV ${EEPHUS_HUB.fvCeil(m.fv)} · ETA ${m.eta}</span>`;
+      const gradeNote = m.fv_source === "xfv"
+        ? `Graded on eFV (outcome-grounded model grade, rank-mapped to the 20-80 scale)${m.consensus_fv != null ? `; consensus FV ${EEPHUS_HUB.fvCeil(m.consensus_fv)}` : ""}. `
+        : "";
+      return `<span class="proj-tag proj-tag-prospect" title="PROSPX prospect - outcome-model projection (P(bucket|FV) × calibrated trajectories) starting at the projected ETA. ${gradeNote}Floor/ceiling are the 10th/90th-percentile OUTCOME buckets (${esc(m.bucketLo || "?")} → ${esc(m.bucketHi || "?")}); P(bust) ${m.pBust != null ? (m.pBust * 100).toFixed(0) + "%" : "?"}.">${prospectGrade(m)} · ETA ${m.eta}</span>`;
     }
     return m.twoWay
       ? `<span class="proj-tag" title="Two-way profile - projected on the larger recent exposure only (disclosed simplification).">two-way</span>` : "";
@@ -850,6 +862,18 @@
         ${war.map((v, t) => `<circle cx="${x(t)}" cy="${y(v)}" r="3" class="mlbp-fan-dot"><title>${first + t}: ${fmtWar(v)}${lo[t] != null ? ` (${fmtWar(lo[t])}-${fmtWar(hi[t])})` : ""}</title></circle>`).join("")}
         ${zero}${ticks}</svg></div>`;
   }
+  // Explicit upside read-out: the per-year P90 (ceiling) path, each season
+  // labeled on its own. Per-year quantiles are NOT additive, so this element
+  // never shows a multi-year P90 total (the sum of per-year P90s is not the
+  // P90 of the total; see the F-01 ledger note).
+  function upsidePath(p) {
+    const hi = (p.proj && p.proj.warP90) || [];
+    if (!hi.length || !hi.some(v => v != null)) return "";
+    const first = DATA.first_season;
+    const cells = hi.map((v, t) => `<div class="mlbp-cell"><span class="mlbp-cell-label">${first + t}</span><span class="mlbp-cell-val${warClass(v)}">${fmtWar(v)}</span></div>`).join("");
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Upside <span class="fa-sub">P90 outcome per season - the year-by-year ceiling if things break right (per-year percentiles; they do not add up to a multi-year total)</span></div>
+      <div class="mlbp-grid">${cells}</div></div>`;
+  }
   function arsenalTable(ar) {
     if (!ar || !ar.length) return "";
     return `<div class="mlbp-section"><div class="mlbp-section-title">Pitch Arsenal <span class="fa-sub">usage · run value /100 · whiff%</span></div>
@@ -936,7 +960,12 @@
         fetch("/data/mlb_player_detail.json", { cache: "no-cache" })
           .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
           .then(d => { DETAIL = d; if (state.player) renderPlayer(state.player); })
-          .catch(e => { root.innerHTML = `<div class="state-message is-error">Player detail unavailable (${esc(String(e.message || e))}). Run <code>python mlb_player_export.py</code>.</div>`; });
+          .catch(() => {
+            DETAIL_LOADING = false;
+            root.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. Refresh to retry; if it persists the nightly build is mid-run. <button class="chip" id="mlbp-detail-retry" type="button">Retry</button></div>`;
+            const retry = document.getElementById("mlbp-detail-retry");
+            if (retry) retry.onclick = () => { if (state.player) renderPlayer(state.player); };
+          });
       }
       return;
     }
@@ -987,6 +1016,7 @@
       </div>
       ${positionGamesSummary(key)}
       ${fanChart(p)}
+      ${upsidePath(p)}
       ${p.twoWay && p.proj && p.proj.warHit ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : ""}
       ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : ""}
       ${sliders(p.sc)}
@@ -1146,17 +1176,26 @@
     });
   }
 
-  function boot() {
-    syncFromURL();
+  // Board payload loader, split out of boot() so the error-state Retry button
+  // can re-fetch without stacking a second hashchange listener.
+  function loadData() {
     const root = document.getElementById("proj-rows");
     if (!root) return;
     root.innerHTML = `<div class="state-message is-loading">Loading projections&hellip;</div>`;
     fetch("/data/mlb_projections.json", { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
       .then(d => { DATA = d; render(); })
-      .catch(e => {
-        root.innerHTML = `<div class="state-message is-error">This view is temporarily unavailable. Check back shortly.</div>`;
+      .catch(() => {
+        root.innerHTML = `<div class="state-message is-error" role="alert">Data failed to load. Refresh to retry; if it persists the nightly build is mid-run. <button class="chip" id="proj-retry" type="button">Retry</button></div>`;
+        const retry = document.getElementById("proj-retry");
+        if (retry) retry.onclick = loadData;
       });
+  }
+
+  function boot() {
+    syncFromURL();
+    if (!document.getElementById("proj-rows")) return;
+    loadData();
     window.addEventListener("hashchange", () => { syncFromURL(); render(); });
   }
 

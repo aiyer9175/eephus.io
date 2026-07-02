@@ -118,6 +118,7 @@
 
   // ---- state ----------------------------------------------------------------
   var DATA = null;
+  var LOAD_ERROR = false;          // fetch failed / non-OK (distinct from "not exported yet")
   var view = "relievers";          // relievers | teams | depth
   var relSort = { key: "rem_plus", asc: false };
   var teamSort = { key: "bullpen_plus", asc: false };
@@ -190,13 +191,33 @@
     });
   }
 
+  // On-page explainers for the headline metrics (F-08): 1-2 plain sentences,
+  // wired to the shared glossary tooltip (data-gl via gloss()) plus a deep link
+  // into the unified glossary entry.
+  function explainer(term, html) {
+    return '<div class="mlbstats-note mlbstats-explainer">' + html
+      + ' <a href="/glossary/#g=' + encodeURIComponent(term) + '">Full definition in the glossary.</a></div>';
+  }
+  function remExplainer() {
+    return explainer("rem_plus", gloss("REM+", "rem_plus")
+      + " measures a reliever's run-prevention skill on a league-relative scale: 100 is an average reliever, 110 is 10 percent"
+      + " better. It is FIP-based and regressed for small samples, so role and ball-in-play luck do not move it;"
+      + " the leverage columns carry the usage context separately.");
+  }
+  function bullpenExplainer() {
+    return explainer("bullpen_plus", gloss("Bullpen+", "bullpen_plus")
+      + " rates a whole pen on the same 100-average scale, weighting each reliever's "
+      + gloss("REM+", "rem_plus")
+      + " by the relief innings he actually throws. It reads the talent of the innings a bullpen really uses.");
+  }
+
   function renderRelievers() {
     var rows = sortRows(filteredRelievers(), REL_COLS, relSort);
     if (!rows.length) return '<div class="mlbstats-empty">No relievers match the current filters.</div>';
     var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
       + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
       + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
-    return scorecard() + relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+    return remExplainer() + scorecard() + relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
   }
 
   function renderTeams() {
@@ -206,7 +227,7 @@
     var note = '<div class="mlbstats-note">' + gloss("Bullpen+", "bullpen_plus")
       + " weights each pen by the quality of the relief innings it throws (relief-IP-weighted REM+); "
       + "Lev Deploy+ adds how much leverage those innings carry.</div>";
-    return note + '<div class="mlbstats-scroll">' + renderTable(rows, TEAM_COLS, teamSort) + "</div>";
+    return bullpenExplainer() + note + '<div class="mlbstats-scroll">' + renderTable(rows, TEAM_COLS, teamSort) + "</div>";
   }
 
   function teamDepth(t) {
@@ -295,8 +316,17 @@
     var root = document.getElementById("mlbstats-app-root");
     if (!root) return;
     if (!DATA) {
-      root.innerHTML = '<div class="mlbstats-empty">Bullpen Leaderboards are being computed from MLB play-by-play. '
-        + "Check back shortly.</div>";
+      root.innerHTML = LOAD_ERROR
+        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="mlbstats-retry">Retry</button></div>'
+        : '<div class="mlbstats-empty">Bullpen Leaderboards are being computed from MLB play-by-play. '
+          + "Check back shortly.</div>";
+      var retry = document.getElementById("mlbstats-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        load();
+      });
       return;
     }
     var inner = (view === "teams") ? renderTeams() : (view === "depth") ? renderDepth() : renderRelievers();
@@ -354,12 +384,21 @@
     if (m) view = m[1];
   }
 
+  // Loader with a visible failure mode: a non-OK response or a network error
+  // sets LOAD_ERROR so render() paints the error state (with a Retry button)
+  // instead of a blank/"computing" page. A successful fetch of a null payload
+  // still reads as "not exported yet".
+  function load() {
+    LOAD_ERROR = false;
+    fetch(DATA_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { DATA = j; render(); })
+      .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
+  }
+
   function init() {
     readHash();
-    fetch(DATA_URL, { cache: "no-cache" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { DATA = j; render(); })
-      .catch(function () { DATA = null; render(); });
+    load();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

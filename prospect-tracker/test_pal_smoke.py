@@ -120,3 +120,30 @@ def test_prospect_watch_view():
     html = _render("#prospects")
     assert "Thin Starter Prospect" in html
     assert "profiles as a reliever" in html
+
+
+# ---------------------------------------------------------------------------
+# F-02: fetch failure must paint a visible error state (not the misleading
+# "being computed" message), with a retry affordance.
+# ---------------------------------------------------------------------------
+
+def test_fetch_failure_renders_error_state():
+    ctx = MiniRacer()
+    err_fetch = ("var fetch=function(){return {then:function(){return this;},"
+                 "catch:function(cb){cb(new Error('network down'));return this;}};};")
+    ctx.eval(_prelude("") + err_fetch + JS)
+    html = ctx.eval("__html['pal-app-root'] || ''")
+    assert "Data failed to load" in html
+    assert "nightly build is mid-run" in html
+    assert "pal-retry" in html               # the retry affordance exists
+    assert 'role="alert"' in html
+
+
+def test_null_payload_still_reads_as_not_exported():
+    ctx = MiniRacer()
+    ok_null = ("var fetch=function(){return FT({ok:true,"
+               "json:function(){return FT(null);}});};")
+    ctx.eval(_prelude("") + ok_null + JS)
+    html = ctx.eval("__html['pal-app-root'] || ''")
+    assert "being computed" in html
+    assert "Data failed to load" not in html

@@ -174,7 +174,8 @@ async function init() {
     window.addEventListener("hashchange", render);
     render();
   } catch (error) {
-    app.innerHTML = `<section class="empty"><strong>Could not load hitter data.</strong><br>${escapeHtml(error.message)}</section>`;
+    // Visible error state (F-02): the data payload script or CSV fetch failed.
+    app.innerHTML = `<section class="empty" role="alert"><strong>Data failed to load.</strong> Refresh to retry; if it persists the nightly build is mid-run.<br><span style="color:var(--text-tertiary)">${escapeHtml(error.message)}</span><br><br><a class="pill" href="" onclick="location.reload();return false;">Retry</a></section>`;
   }
 }
 

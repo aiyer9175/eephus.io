@@ -21,6 +21,7 @@
 
   var DATA_URL = "/data/pal.json";
   var DATA = null;
+  var LOAD_ERROR = false;    // fetch failed / non-OK (distinct from "not exported yet")
   var section = "rp2sp";     // rp2sp | sp2rp | history
   var historyView = "table"; // table | mix
   var sortKey = "fit";
@@ -376,7 +377,19 @@
   function render() {
     var root = document.getElementById("pal-app-root");
     if (!root) return;
-    if (!DATA) { root.innerHTML = empty("The Pitcher Alchemy Lab conversion models are being computed from Statcast. Check back shortly."); return; }
+    if (!DATA) {
+      root.innerHTML = LOAD_ERROR
+        ? '<div class="mlbstats-empty pal-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="pal-retry">Retry</button></div>'
+        : empty("The Pitcher Alchemy Lab conversion models are being computed from Statcast. Check back shortly.");
+      var retry = document.getElementById("pal-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = empty("Loading…");
+        load();
+      });
+      return;
+    }
     root.innerHTML = (section === "sp2rp") ? renderSP2RP() : (section === "history") ? renderHistory()
       : (section === "pitchadd") ? renderPitchAdd() : (section === "platoon") ? renderPlatoon()
       : (section === "prospects") ? renderProspects() : renderRP2SP();
@@ -440,13 +453,21 @@
     if (m) setSection(m[1]);
   }
 
+  // Loader with a visible failure mode: a non-OK response or a network error
+  // sets LOAD_ERROR so render() paints the error state (with a Retry button)
+  // instead of a blank/"computing" page.
+  function load() {
+    LOAD_ERROR = false;
+    fetch(DATA_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { DATA = j; render(); })
+      .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
+  }
+
   function init() {
     bindSectionNav();
     readHash();
-    fetch(DATA_URL, { cache: "no-cache" })
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (j) { DATA = j; render(); })
-      .catch(function () { DATA = null; render(); });
+    load();
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

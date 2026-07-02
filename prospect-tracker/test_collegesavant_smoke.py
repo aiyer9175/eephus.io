@@ -155,3 +155,56 @@ def test_shared_team_resolver_resolves_codes():
     assert ctx.eval('formatTeamName("OSU_BUC")') == "Ohio State Buckeyes"
     # Unknown codes fall back to a clean title-case, never a raw underscore code.
     assert "_" not in ctx.eval('formatTeamName("ZZZ_QQQ")')
+
+
+# ---------------------------------------------------------------------------
+# F-02: a missing data payload must paint a visible error state into #app
+# (the payloads ride in as script tags; a failed script previously left the
+# pitcher page rendering an empty leaderboard with no message at all).
+# ---------------------------------------------------------------------------
+
+_CAP_PRELUDE = r"""
+var __html={};
+function __el(id){return new Proxy(function(){return __el(id);},{
+  get:function(t,k){ if(k==='innerHTML')return __html[id]||'';
+    if(k==='classList')return {add:function(){},remove:function(){},toggle:function(){},contains:function(){return false;}};
+    if(k==='querySelectorAll')return function(){return [];};
+    if(k==='getAttribute')return function(){return null;};
+    if(k==='addEventListener'||k==='setAttribute'||k==='removeEventListener'||k==='appendChild'||k==='focus')return function(){};
+    if(k==='querySelector'||k==='closest')return function(){return __el(id+'c');};
+    if(k==='value'||k==='textContent')return ''; if(k==='dataset')return {};
+    if(k===Symbol.toPrimitive)return function(){return '';};
+    return __el(id);},
+  set:function(t,k,v){if(k==='innerHTML')__html[id]=v;return true;}, apply:function(){return __el(id);}});}
+var location={hash:'#/',search:'',href:'http://x/'};
+var localStorage={getItem:function(){return null;},setItem:function(){},removeItem:function(){}};
+var document={querySelector:function(s){return __el(s==='#app'?'app':s);},querySelectorAll:function(){return [];},getElementById:function(id){return __el(id);},createElement:function(){return __el('t');},addEventListener:function(){},body:__el('b'),documentElement:__el('h'),head:__el('h')};
+var window={location:location, localStorage:localStorage, document:document, addEventListener:function(){}, removeEventListener:function(){}, matchMedia:function(){return {matches:false,addEventListener:function(){},addListener:function(){}};}, requestAnimationFrame:function(){}, setTimeout:function(){}, clearTimeout:function(){}, devicePixelRatio:1, innerWidth:1200, scrollTo:function(){}, EEPHUS_GL:null, EEPHUS_HUB:null};
+var console={log:function(){},warn:function(){},error:function(){}};
+var navigator={userAgent:'smoke'};
+"""
+
+
+def test_pitcher_app_missing_payload_renders_error_state():
+    # No window.PITCHER_DATA at all (pitcher_data.js failed to load).
+    ctx = MiniRacer()
+    ctx.eval(_CAP_PRELUDE + (CS / "pitcher_app.js").read_text(encoding="utf-8"))
+    html = ctx.eval("__html['app'] || ''")
+    assert "Data failed to load" in html
+    assert "nightly build is mid-run" in html
+    assert "Retry" in html
+    assert 'role="alert"' in html
+
+
+def test_hitter_app_missing_payload_renders_error_state():
+    # No window.HITTER_DATA and no fetch fallback available: init()'s catch
+    # must paint the visible error state, not leave the loading panel up.
+    ctx = MiniRacer()
+    ctx.eval(_CAP_PRELUDE
+             + (CS / "team_names.js").read_text(encoding="utf-8")
+             + (CS / "app.js").read_text(encoding="utf-8"))
+    html = ctx.eval("__html['app'] || ''")
+    assert "Data failed to load" in html
+    assert "nightly build is mid-run" in html
+    assert "Retry" in html
+    assert 'role="alert"' in html
