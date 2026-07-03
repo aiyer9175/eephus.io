@@ -247,3 +247,41 @@ Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
 - Expected impact: new static pages + sitemap entries; no model surface; the
   client-side routes can stay as the in-app fast path or redirect to static.
 - Rollback: drop the routes from build_site and the sitemap.
+
+## 15. Overseas translated stats -> eFV features (the Yamamoto low-eFV concern)
+
+- What: for overseas (NPB/KBO) prospects, populate the eFV production-block
+  features (efv_model._vec: k_rel / bb_rel / age_rel_level, currently taken from
+  r["milb"]) from the VALIDATED overseas-to-MLB statline translation
+  (overseas_stats._mlb_translate + the shipped overseas_translation model,
+  data/overseas_translation_eval.json: era_factor + k_pct_delta, shrunk k=8),
+  instead of leaving milb empty so milb_missing=1 and the model imputes the block
+  and leans on consensus FV. Owner motivation: Yamamoto-type arms get a low eFV
+  despite an elite overseas K rate because their real stat signal never reaches
+  the model.
+- Why deferred (NOT a pre-launch change): eFV writes data/xfv.json, a GOLDEN
+  artifact the whole 2026-07 pass has kept byte-neutral, and the eFV calibration
+  line was DEFINITIVELY CLOSED after four loss ledgers (at the trainable-data
+  ceiling). This is a change to published eFV numbers for a subpopulation and so
+  needs a pre-registered gate, but the graduated-overseas-with-outcome cohort is
+  too thin to validate one: the overseas translation cohort is 28 resolved
+  NPB/KBO transitions total (data/overseas_translation_eval.json accounting), and
+  the intersection with (had a prospect eFV grade) AND (has a realized eFV outcome
+  target) is far smaller, on the order of ten. That cannot carry the per-side,
+  no-degradation, bootstrap-CI rigor the other eFV experiments were held to. The
+  reassuring half is that feeding overseas features only touches the handful of
+  overseas prospects and cannot degrade the main OOS metric (no overseas players
+  in it), so the only real question is whether it moves those players sensibly.
+- Method when the cohort matures (2024+ overseas graduates resolve): translate
+  each overseas prospect's last qualifying foreign season to an MLB-equivalent
+  line, derive k_rel/bb_rel against the MLB level, set milb_missing=0, re-score,
+  and gate on (a) a directional check (elite-overseas-K arms move UP; verified
+  intent: Yamamoto), (b) no absurd outputs, (c) the thin-cohort eFV-vs-outcome
+  rho not worse. Ship provisional with the caveat disclosed; xfv.json golden diff
+  will CHANGE for overseas rows only, documented in the changelog.
+- Interim, zero-risk alternative (not yet built): surface the validated overseas
+  MLB-equivalent line (translated K% / ERA) as CONTEXT on the overseas prospect's
+  card WITHOUT changing eFV, so the quality signal is visible even while the
+  number stays put. Lower blast radius; a candidate Wave C display item.
+- Rollback: feature feed is a dataset-assembly change; revert efv_dataset to the
+  empty-milb path for overseas rows and re-score.

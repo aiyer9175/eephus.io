@@ -547,6 +547,22 @@ pre-registered here before any number was computed; harness tools/sem_plus_lab.p
 
 ## Changelog of findings in this pass
 
+- 2026-07-03 (follow-up Wave B3, DEFERRED with specs): the two remaining owner-batch model
+  experiments both change PUBLISHED numbers and cannot be responsibly shipped in the 8-day
+  pre-launch window, so they are queued with concrete specs rather than rushed. (a) Overseas
+  translated stats -> eFV features (the Yamamoto low-eFV concern): would change data/xfv.json
+  (a GOLDEN artifact held byte-neutral all pass) for overseas prospects, but the graduated-
+  overseas-with-outcome cohort is ~10 (the overseas translation cohort is 28 resolved NPB/KBO
+  transitions total), far too thin for the per-side, no-degradation, bootstrap-CI rigor the
+  four prior eFV experiments were held to; the eFV calibration line is already closed at the
+  trainable-data ceiling. REVIEW_QUEUE item 15, with the method + the zero-risk interim
+  (surface the validated MLB-equivalent line as card CONTEXT without moving eFV). (b) Per-year
+  WAR quantile marginal recalibration is REVIEW_QUEUE item 13, already spec'd (attrition zero-
+  mass, gate coverage [0.75,0.85]); it is high-blast-radius on published /projections/ + /fa/
+  bands and its total-band sibling was already shown miscalibrated and dropped, so it stays
+  deferred rather than shipped unvalidated pre-launch. Both respect the standing rule: gate
+  every model change; never ship an unvalidated published-number change, least of all a golden
+  artifact, days before Beta.
 - 2026-07-03 (follow-up Wave B2, starter metrics): the three pre-registered starter gates
   ran (harness tools/sem_plus_lab.py; seed 20260703; StatsAPI season pitching, no leverage
   walk). RESULTS:
