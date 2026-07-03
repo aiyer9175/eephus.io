@@ -12,6 +12,16 @@ BETA_READINESS.md (go/no-go).
 
 ## 2026-07-02 (review-queue round)
 
+- E-ISO4, the owner-approved final eFV bucket-calibration attempt, closes the
+  line honestly. Tying both sides to one shared monotone grade map solved the
+  cross-side ranking churn that failed the prior three attempts (cross-side
+  Spearman delta is exactly 0 by construction), which isolated the real
+  blocker: the pitcher bench bucket comes out materially worse no matter how
+  the grade is remapped, because fixing the large and real FV45+ calibration
+  gap pulls pitcher mid-grade mass toward bust. No grade-space monotone map
+  can ship; the fix needs resolved 2024+ cohorts and a method below the
+  grade-monotone constraint. Four attempts, four honest loss ledgers; eFV
+  published numbers unchanged. Registry row xfv_grade_recal4.
 - F-01 total-WAR bands DROPPED from the FA and Projections display (the
   owner-approved fallback after the R-BAND gate failed). The R-BAND
   experiment found the displayed total bands were miscalibrated beyond the

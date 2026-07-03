@@ -682,6 +682,17 @@
    "eval_artifact": "data/era_shrink_unification_eval.json",
    "verdict": "deprecated",
    "notes": "Holistic pass 3 review-queue round (2026-07-02), confirms the provenance prediction. Objective 1 (era_minus_level display, 19,693 statlines): small-sample blowups fall monotonically with K (161->20 across 35..65) while full-season distortion rises monotonically (4.07->6.33); split-half rho flat ~0.595 and non-discriminating; K_IP=50 sits at an interior tradeoff no candidate dominates. Objective 2 (PAL SP->RP need-gate ordering, 36 labeled conversions): need-vs-held Spearman 0.17-0.19 across all candidates, all inside each other's bootstrap CI. No single value beats-or-ties both with a material improvement -> the two pseudo-counts STAY. Resolves review-queue item 6; rate_stabilization.py unchanged."
+  },
+  {
+   "model_id": "xfv_grade_recal4",
+   "surface": "model-dev artifact (rendered nowhere) - eFV bucket-calibration FINAL attempt, joint side-symmetric map",
+   "predicts": "n/a - gated experiment E-ISO4: a single shared monotone grade map applied to both sides so cross-side ranking is preserved by construction; candidate REJECTED (final of the line)",
+   "champion": "shipped uncalibrated p_bucket_given_fv distribution (unchanged)",
+   "baseline": "shared grade map (formulation a) and shared map + per-side residual bucket tables (formulation b), forward-chained OOF, X-ISO splits, SEED=7",
+   "metric": "same 4-condition production-relevant gate as E-ISO3 (per-side per-bucket Brier/log-loss, exact within-side-year rank, per-YEAR cross-side Spearman, per-tier reliability)",
+   "eval_artifact": "data/xfv_grade_recal4_eval.json",
+   "verdict": "deprecated",
+   "notes": "Holistic pass 3, owner-approved FINAL calibration attempt (2026-07-02). The joint side-symmetric design WORKED at its stated purpose: tying both sides to one shared strictly-increasing grade map made condition 3 (cross-side within-year Spearman) exactly 0.0 for every eval year by construction (numerically verified, min step 0.0025), eliminating the churn that killed X-ISO/E-ISO2/E-ISO3. But it ISOLATED the true blocker, which is independent of ranking: condition 1 still fails because the pitcher BENCH bucket gets materially worse (formulation a: log-loss 0.25642->0.26036, +1.54%; formulation b added pit GOOD +3.7% too, so per-side residual isotonic does NOT recover it). The FV45+ calibration gain is real and large (pooled Brier 0.2466->0.1964; tier-45 gap 0.0946->0.0137, tier-55 0.1616->0.0439) but no grade-space monotone map can fix the gap without pulling pitcher mid-grade mass toward bust. DEFINITIVE CLOSE of the bucket-calibration line (X-ISO -> E-ISO2 -> E-ISO3 -> E-ISO4, all rejected) against this data vintage. Path forward requires resolved 2024+ cohorts AND a method operating below the grade-monotone constraint (direct per-side bucket-structure recalibration, not a grade remap). Line: [[xfv_grade_recal3]] (E-ISO3) -> this."
   }
  ],
  "problems": []

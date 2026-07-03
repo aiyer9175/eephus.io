@@ -1,0 +1,3716 @@
+{
+ "generated_at": "2026-07-02",
+ "experiment": "E-ISO4: joint side-symmetric (SHARED) grade-map recalibration of the eFV 5-bucket distribution -- FINAL calibration attempt against this data vintage (owner: one more attempt)",
+ "spec": "gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md section E-ISO4; predecessors: E-ISO3 data/xfv_grade_recal3_eval.json, E-ISO2 data/xfv_grade_recal_eval.json, X-ISO data/xfv_isotonic_eval.json",
+ "method": {
+  "base_distribution": "shipped seam, forward-chained OOF (reused verbatim from tools/efv_isotonic_lab.py oof_rows): lean ridge + in-fold linear scale calibration -> xfv_war -> realized_implied_fv -> p_bucket_given_fv (uncalibrated 'before')",
+  "shared_grade_map": "ONE strictly-increasing monotone map g(grade) fit on the POOLED (both sides) OOF rows: pooled binned effective-grade inversion (per grade bin, argmax over the dense grade grid of the KM-weighted realized-bucket log-likelihood, each row scored under its OWN side's anchor table at the SAME candidate grade) + weighted PAVA + strict identity blend f(g)=(1-eps)*iso(g)+eps*g, eps=0.01; applied IDENTICALLY to both sides so cross-side rank order == shipped-grade order",
+  "formulation_a": "p_after = p_bucket_given_fv(g(grade), side); the anchor table is untouched, only the shared grade it is evaluated at moves",
+  "formulation_b": "ranking grade = g(grade) (identical to a); DISPLAYED distribution = shared-map base further corrected by a per-side OOF per-bucket isotonic residual (fit on decision_year<Y rows' shared-map base), renormalized onto the simplex; residual never affects ranking order",
+  "ranking": "the board ranks by the shared recalibrated grade g(grade); conditions 2 and 3 are measured on g(grade) (0 by construction under a shared strictly-increasing map); the verbatim E-ISO3 expected-WAR cross-side instrument is reported as a diagnostic only",
+  "oof_protocol": "shared map (and formulation-b residual) for eval cohort Y fit ONLY on rows with decision_year < Y (pooled across sides for the map, per side for the residual); chain years 2016-2023; no row ever calibrates itself; no same-player leakage",
+  "realized_bucket": "6yr-average annual WAR (target_censored/6) binned by the engine bands: <0.5 bust / 0.5-1.5 bench / 1.5-2.5 regular / 2.5-4.0 good / 4.0+ star",
+  "pool": "full labeled matrix per side (debuted + busts, bust_recent excluded), matching efv_model.oos_grades",
+  "rank_metric": "ranking grade g(grade); shipped baseline = OOF eFV grade",
+  "anchor_table_method": {
+   "hitter": "proportional_odds",
+   "pitcher": "proportional_odds"
+  },
+  "eval_years": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "chain_years": [
+   2016,
+   2023
+  ],
+  "min_calibrator_rows": 150,
+  "min_residual_rows": 150,
+  "grid": [
+   20.0,
+   70.0,
+   0.1
+  ],
+  "bin_target": 12,
+  "bin_min": 50,
+  "strict_eps": 0.01
+ },
+ "seed": 7,
+ "cohort_splits": {
+  "hit": {
+   "chain_oof_rows_by_year": {
+    "2016": 95,
+    "2017": 106,
+    "2018": 169,
+    "2019": 240,
+    "2020": 206,
+    "2021": 143,
+    "2022": 277,
+    "2023": 271
+   },
+   "eval_rows": 897,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 610,
+    "2021": 816,
+    "2022": 959,
+    "2023": 1236
+   }
+  },
+  "pit": {
+   "chain_oof_rows_by_year": {
+    "2016": 116,
+    "2017": 77,
+    "2018": 206,
+    "2019": 198,
+    "2020": 211,
+    "2021": 159,
+    "2022": 244,
+    "2023": 279
+   },
+   "eval_rows": 893,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 597,
+    "2021": 808,
+    "2022": 967,
+    "2023": 1211
+   }
+  },
+  "pooled_calibrator_train_rows_by_eval_year": {
+   "2020": 1207,
+   "2021": 1624,
+   "2022": 1926,
+   "2023": 2447
+  }
+ },
+ "shared_grade_map": {
+  "2020": {
+   "n_cal": 1207,
+   "n_cal_hit": 610,
+   "n_cal_pit": 597,
+   "bin_centers": [
+    20.0,
+    20.0,
+    20.0,
+    23.739,
+    31.362,
+    35.226,
+    38.033,
+    40.707,
+    42.576,
+    45.249,
+    49.53,
+    60.304
+   ],
+   "bin_n": [
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    100,
+    107
+   ],
+   "bin_hit": [
+    100,
+    100,
+    25,
+    21,
+    44,
+    29,
+    37,
+    41,
+    48,
+    46,
+    48,
+    71
+   ],
+   "bin_pit": [
+    0,
+    0,
+    75,
+    79,
+    56,
+    71,
+    63,
+    59,
+    52,
+    54,
+    52,
+    36
+   ],
+   "eff_raw": [
+    27.0,
+    25.2,
+    29.5,
+    20.0,
+    26.2,
+    20.0,
+    24.3,
+    29.8,
+    26.2,
+    33.3,
+    39.8,
+    48.8
+   ],
+   "eff_iso": [
+    24.6,
+    24.6,
+    24.6,
+    24.6,
+    24.6,
+    24.6,
+    24.6,
+    28.0,
+    28.0,
+    33.3,
+    39.8,
+    48.8
+   ],
+   "sample_map": {
+    "25": 24.6,
+    "30": 24.65,
+    "35": 24.7,
+    "40": 27.23,
+    "45": 32.93,
+    "50": 40.29,
+    "55": 44.48,
+    "60": 48.66,
+    "65": 48.96
+   }
+  },
+  "2021": {
+   "n_cal": 1624,
+   "n_cal_hit": 816,
+   "n_cal_pit": 808,
+   "bin_centers": [
+    20.0,
+    20.0,
+    20.0,
+    20.0,
+    25.922,
+    32.961,
+    36.607,
+    39.783,
+    42.21,
+    45.164,
+    49.496,
+    60.074
+   ],
+   "bin_n": [
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    135,
+    139
+   ],
+   "bin_hit": [
+    135,
+    135,
+    78,
+    0,
+    47,
+    44,
+    43,
+    46,
+    67,
+    56,
+    68,
+    97
+   ],
+   "bin_pit": [
+    0,
+    0,
+    57,
+    135,
+    88,
+    91,
+    92,
+    89,
+    68,
+    79,
+    67,
+    42
+   ],
+   "eff_raw": [
+    23.5,
+    23.5,
+    28.8,
+    20.0,
+    20.0,
+    26.7,
+    25.6,
+    26.7,
+    29.4,
+    34.0,
+    39.8,
+    48.4
+   ],
+   "eff_iso": [
+    23.16,
+    23.16,
+    23.16,
+    23.16,
+    23.16,
+    26.15,
+    26.15,
+    26.7,
+    29.4,
+    34.0,
+    39.8,
+    48.4
+   ],
+   "sample_map": {
+    "25": 23.18,
+    "30": 24.94,
+    "35": 26.24,
+    "40": 27.07,
+    "45": 33.86,
+    "50": 40.31,
+    "55": 44.38,
+    "60": 48.46,
+    "65": 48.57
+   }
+  },
+  "2022": {
+   "n_cal": 1926,
+   "n_cal_hit": 959,
+   "n_cal_pit": 967,
+   "bin_centers": [
+    20.0,
+    20.0,
+    20.0,
+    20.0,
+    25.461,
+    32.878,
+    36.437,
+    39.704,
+    42.326,
+    45.303,
+    49.409,
+    59.656
+   ],
+   "bin_n": [
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    160,
+    166
+   ],
+   "bin_hit": [
+    160,
+    160,
+    71,
+    0,
+    48,
+    58,
+    53,
+    55,
+    79,
+    73,
+    83,
+    119
+   ],
+   "bin_pit": [
+    0,
+    0,
+    89,
+    160,
+    112,
+    102,
+    107,
+    105,
+    81,
+    87,
+    77,
+    47
+   ],
+   "eff_raw": [
+    24.3,
+    24.2,
+    28.1,
+    23.1,
+    22.4,
+    27.3,
+    25.5,
+    27.4,
+    30.6,
+    33.8,
+    40.6,
+    47.7
+   ],
+   "eff_iso": [
+    24.3,
+    24.452,
+    24.452,
+    24.452,
+    24.452,
+    26.403,
+    26.403,
+    27.4,
+    30.6,
+    33.8,
+    40.6,
+    47.7
+   ],
+   "sample_map": {
+    "25": 24.46,
+    "30": 25.69,
+    "35": 26.49,
+    "40": 27.88,
+    "45": 33.59,
+    "50": 41.1,
+    "55": 44.58,
+    "60": 47.82,
+    "65": 47.87
+   }
+  },
+  "2023": {
+   "n_cal": 2447,
+   "n_cal_hit": 1236,
+   "n_cal_pit": 1211,
+   "bin_centers": [
+    20.0,
+    20.0,
+    20.0,
+    20.0,
+    23.383,
+    31.89,
+    36.08,
+    39.605,
+    42.477,
+    45.574,
+    49.523,
+    59.43
+   ],
+   "bin_n": [
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    203,
+    214
+   ],
+   "bin_hit": [
+    203,
+    203,
+    103,
+    0,
+    36,
+    78,
+    66,
+    81,
+    92,
+    100,
+    111,
+    163
+   ],
+   "bin_pit": [
+    0,
+    0,
+    100,
+    203,
+    167,
+    125,
+    137,
+    122,
+    111,
+    103,
+    92,
+    51
+   ],
+   "eff_raw": [
+    23.9,
+    22.9,
+    26.5,
+    23.7,
+    21.6,
+    25.1,
+    26.4,
+    26.6,
+    30.8,
+    34.8,
+    40.9,
+    48.0
+   ],
+   "eff_iso": [
+    23.725,
+    23.725,
+    23.725,
+    23.725,
+    23.725,
+    25.1,
+    26.4,
+    26.6,
+    30.8,
+    34.8,
+    40.9,
+    48.0
+   ],
+   "sample_map": {
+    "25": 24.0,
+    "30": 24.85,
+    "35": 26.15,
+    "40": 27.31,
+    "45": 34.17,
+    "50": 41.33,
+    "55": 44.93,
+    "60": 48.12,
+    "65": 48.17
+   }
+  }
+ },
+ "residual_diag": {
+  "2020": {
+   "resid_train_rows": {
+    "hit": 610,
+    "pit": 597
+   },
+   "residual_applied": {
+    "hit": true,
+    "pit": true
+   }
+  },
+  "2021": {
+   "resid_train_rows": {
+    "hit": 816,
+    "pit": 808
+   },
+   "residual_applied": {
+    "hit": true,
+    "pit": true
+   }
+  },
+  "2022": {
+   "resid_train_rows": {
+    "hit": 959,
+    "pit": 967
+   },
+   "residual_applied": {
+    "hit": true,
+    "pit": true
+   }
+  },
+  "2023": {
+   "resid_train_rows": {
+    "hit": 1236,
+    "pit": 1211
+   },
+   "residual_applied": {
+    "hit": true,
+    "pit": true
+   }
+  }
+ },
+ "strict_monotonicity_check": {
+  "2020": {
+   "strictly_increasing": true,
+   "min_step": 0.0025
+  },
+  "2021": {
+   "strictly_increasing": true,
+   "min_step": 0.0025
+  },
+  "2022": {
+   "strictly_increasing": true,
+   "min_step": 0.0025
+  },
+  "2023": {
+   "strictly_increasing": true,
+   "min_step": 0.0025
+  }
+ },
+ "rank_preservation_by_cell": {
+  "hit": {
+   "2020": {
+    "n": 206,
+    "shipped_grade_rho": 0.3652,
+    "recal_grade_rho": 0.3652,
+    "preserved": true
+   },
+   "2021": {
+    "n": 143,
+    "shipped_grade_rho": 0.1538,
+    "recal_grade_rho": 0.1538,
+    "preserved": true
+   },
+   "2022": {
+    "n": 277,
+    "shipped_grade_rho": 0.3162,
+    "recal_grade_rho": 0.3162,
+    "preserved": true
+   },
+   "2023": {
+    "n": 271,
+    "shipped_grade_rho": 0.2596,
+    "recal_grade_rho": 0.2596,
+    "preserved": true
+   }
+  },
+  "pit": {
+   "2020": {
+    "n": 211,
+    "shipped_grade_rho": 0.1712,
+    "recal_grade_rho": 0.1712,
+    "preserved": true
+   },
+   "2021": {
+    "n": 159,
+    "shipped_grade_rho": 0.1257,
+    "recal_grade_rho": 0.1257,
+    "preserved": true
+   },
+   "2022": {
+    "n": 244,
+    "shipped_grade_rho": 0.325,
+    "recal_grade_rho": 0.325,
+    "preserved": true
+   },
+   "2023": {
+    "n": 279,
+    "shipped_grade_rho": 0.2345,
+    "recal_grade_rho": 0.2345,
+    "preserved": true
+   }
+  }
+ },
+ "cross_side_spearman_by_year": {
+  "2020": {
+   "n": 417,
+   "n_hit": 206,
+   "n_pit": 211,
+   "shipped_grade_rho": 0.2491,
+   "recal_grade_rho": 0.2491,
+   "delta_vs_shipped": 0.0,
+   "pass": true
+  },
+  "2021": {
+   "n": 302,
+   "n_hit": 143,
+   "n_pit": 159,
+   "shipped_grade_rho": 0.1213,
+   "recal_grade_rho": 0.1213,
+   "delta_vs_shipped": 0.0,
+   "pass": true
+  },
+  "2022": {
+   "n": 521,
+   "n_hit": 277,
+   "n_pit": 244,
+   "shipped_grade_rho": 0.3032,
+   "recal_grade_rho": 0.3032,
+   "delta_vs_shipped": 0.0,
+   "pass": true
+  },
+  "2023": {
+   "n": 550,
+   "n_hit": 271,
+   "n_pit": 279,
+   "shipped_grade_rho": 0.2485,
+   "recal_grade_rho": 0.2485,
+   "delta_vs_shipped": 0.0,
+   "pass": true
+  }
+ },
+ "results": {
+  "pooled": {
+   "n": 1790,
+   "brier": {
+    "before": 0.24663,
+    "after": 0.19636,
+    "delta": -0.05026
+   },
+   "log_loss": {
+    "before": 0.51306,
+    "after": 0.4056,
+    "delta": -0.10746
+   },
+   "per_bucket": {
+    "bust": {
+     "brier_before": 0.11629,
+     "brier_after": 0.08406,
+     "logloss_before": 0.3675,
+     "logloss_after": 0.28596,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "bench": {
+     "brier_before": 0.07517,
+     "brier_after": 0.07154,
+     "logloss_before": 0.26756,
+     "logloss_after": 0.25347,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "regular": {
+     "brier_before": 0.03117,
+     "brier_after": 0.02411,
+     "logloss_before": 0.1311,
+     "logloss_after": 0.10065,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "good": {
+     "brier_before": 0.02071,
+     "brier_after": 0.01393,
+     "logloss_before": 0.08551,
+     "logloss_after": 0.05754,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "star": {
+     "brier_before": 0.00329,
+     "brier_after": 0.00272,
+     "logloss_before": 0.01672,
+     "logloss_after": 0.01317,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    }
+   },
+   "spearman": {
+    "shipped_grade": 0.2392,
+    "expected_war_before": 0.2351,
+    "expected_war_after": 0.2246
+   }
+  },
+  "per_side": {
+   "hit": {
+    "n": 897,
+    "brier": {
+     "before": 0.28876,
+     "after": 0.20717,
+     "delta": -0.08159
+    },
+    "log_loss": {
+     "before": 0.60241,
+     "after": 0.42975,
+     "delta": -0.17266
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.13323,
+      "brier_after": 0.08236,
+      "logloss_before": 0.40592,
+      "logloss_after": 0.27464,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.08013,
+      "brier_after": 0.07247,
+      "logloss_before": 0.27865,
+      "logloss_after": 0.24662,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "regular": {
+      "brier_before": 0.03645,
+      "brier_after": 0.0255,
+      "logloss_before": 0.1504,
+      "logloss_after": 0.1059,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.0324,
+      "brier_after": 0.02141,
+      "logloss_before": 0.12115,
+      "logloss_after": 0.08121,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "star": {
+      "brier_before": 0.00655,
+      "brier_after": 0.00543,
+      "logloss_before": 0.03194,
+      "logloss_after": 0.02597,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2664,
+     "expected_war_before": 0.2664,
+     "expected_war_after": 0.2523
+    }
+   },
+   "pit": {
+    "n": 893,
+    "brier": {
+     "before": 0.20431,
+     "after": 0.18551,
+     "delta": -0.0188
+    },
+    "log_loss": {
+     "before": 0.42332,
+     "after": 0.38135,
+     "delta": -0.04197
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.09928,
+      "brier_after": 0.08577,
+      "logloss_before": 0.32891,
+      "logloss_after": 0.29734,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.07019,
+      "brier_after": 0.0706,
+      "logloss_before": 0.25642,
+      "logloss_after": 0.26036,
+      "brier_improved": false,
+      "logloss_improved": false,
+      "materially_worse": true
+     },
+     "regular": {
+      "brier_before": 0.02587,
+      "brier_after": 0.02272,
+      "logloss_before": 0.11171,
+      "logloss_after": 0.09538,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.00897,
+      "brier_after": 0.00642,
+      "logloss_before": 0.04971,
+      "logloss_after": 0.03377,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "star": {
+      "brier_before": 1e-05,
+      "brier_after": 0.0,
+      "logloss_before": 0.00143,
+      "logloss_after": 0.00031,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2233,
+     "expected_war_before": 0.2233,
+     "expected_war_after": 0.202
+    }
+   }
+  },
+  "per_tier_reliability": {
+   "35": {
+    "n": 373,
+    "realized_freq": {
+     "bust": 0.9812,
+     "bench": 0.0161,
+     "regular": 0.0027,
+     "good": 0.0,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.9754,
+     "bench": 0.0153,
+     "regular": 0.0067,
+     "good": 0.0025,
+     "star": 0.0002
+    },
+    "mean_p_after": {
+     "bust": 0.9704,
+     "bench": 0.0194,
+     "regular": 0.0074,
+     "good": 0.0026,
+     "star": 0.0002
+    },
+    "gap_before": 0.00265,
+    "gap_after": 0.00432,
+    "improved": false,
+    "worse": true
+   },
+   "40": {
+    "n": 779,
+    "realized_freq": {
+     "bust": 0.9448,
+     "bench": 0.0436,
+     "regular": 0.009,
+     "good": 0.0026,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.8817,
+     "bench": 0.0639,
+     "regular": 0.037,
+     "good": 0.016,
+     "star": 0.0015
+    },
+    "mean_p_after": {
+     "bust": 0.9548,
+     "bench": 0.0287,
+     "regular": 0.012,
+     "good": 0.0043,
+     "star": 0.0004
+    },
+    "gap_before": 0.02523,
+    "gap_after": 0.00599,
+    "improved": true,
+    "worse": false
+   },
+   "45": {
+    "n": 389,
+    "realized_freq": {
+     "bust": 0.874,
+     "bench": 0.1003,
+     "regular": 0.018,
+     "good": 0.0051,
+     "star": 0.0026
+    },
+    "mean_p_before": {
+     "bust": 0.6375,
+     "bench": 0.1692,
+     "regular": 0.1226,
+     "good": 0.0634,
+     "star": 0.0072
+    },
+    "mean_p_after": {
+     "bust": 0.8854,
+     "bench": 0.0674,
+     "regular": 0.0331,
+     "good": 0.0128,
+     "star": 0.0013
+    },
+    "gap_before": 0.0946,
+    "gap_after": 0.01367,
+    "improved": true,
+    "worse": false
+   },
+   "50": {
+    "n": 107,
+    "realized_freq": {
+     "bust": 0.5234,
+     "bench": 0.3084,
+     "regular": 0.1215,
+     "good": 0.0467,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.3203,
+     "bench": 0.228,
+     "regular": 0.2451,
+     "good": 0.1805,
+     "star": 0.0261
+    },
+    "mean_p_after": {
+     "bust": 0.6889,
+     "bench": 0.1645,
+     "regular": 0.0993,
+     "good": 0.0427,
+     "star": 0.0046
+    },
+    "gap_before": 0.1134,
+    "gap_after": 0.06804,
+    "improved": true,
+    "worse": false
+   },
+   "55": {
+    "n": 112,
+    "realized_freq": {
+     "bust": 0.4375,
+     "bench": 0.3125,
+     "regular": 0.1339,
+     "good": 0.1071,
+     "star": 0.0089
+    },
+    "mean_p_before": {
+     "bust": 0.1691,
+     "bench": 0.1769,
+     "regular": 0.2727,
+     "good": 0.3151,
+     "star": 0.0662
+    },
+    "mean_p_after": {
+     "bust": 0.51,
+     "bench": 0.2256,
+     "regular": 0.1705,
+     "good": 0.0843,
+     "star": 0.0097
+    },
+    "gap_before": 0.16161,
+    "gap_after": 0.04393,
+    "improved": true,
+    "worse": false
+   },
+   "60": {
+    "n": 17,
+    "realized_freq": {
+     "bust": 0.4118,
+     "bench": 0.2941,
+     "regular": 0.1176,
+     "good": 0.1765,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.0595,
+     "bench": 0.0867,
+     "regular": 0.2092,
+     "good": 0.463,
+     "star": 0.1816
+    },
+    "mean_p_after": {
+     "bust": 0.3854,
+     "bench": 0.248,
+     "regular": 0.2268,
+     "good": 0.1241,
+     "star": 0.0157
+    },
+    "gap_before": 0.2239,
+    "gap_after": 0.04995,
+    "improved": true,
+    "worse": false
+   }
+  },
+  "reliability_curves_pooled": {
+   "before": {
+    "bust": {
+     "ece": 0.11954,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 68,
+       "mean_p": 0.0589,
+       "freq": 0.3088
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 74,
+       "mean_p": 0.1447,
+       "freq": 0.4595
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 57,
+       "mean_p": 0.2525,
+       "freq": 0.6316
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 91,
+       "mean_p": 0.3527,
+       "freq": 0.6374
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 127,
+       "mean_p": 0.4574,
+       "freq": 0.7874
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 83,
+       "mean_p": 0.5517,
+       "freq": 0.8795
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 96,
+       "mean_p": 0.65,
+       "freq": 0.8958
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 108,
+       "mean_p": 0.7546,
+       "freq": 0.9352
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 152,
+       "mean_p": 0.8534,
+       "freq": 0.9079
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 934,
+       "mean_p": 0.9793,
+       "freq": 0.9732
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02403,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1080,
+       "mean_p": 0.0221,
+       "freq": 0.0361
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 300,
+       "mean_p": 0.1501,
+       "freq": 0.1333
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 410,
+       "mean_p": 0.241,
+       "freq": 0.1854
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.05319,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1225,
+       "mean_p": 0.0174,
+       "freq": 0.0073
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 263,
+       "mean_p": 0.1519,
+       "freq": 0.0228
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 236,
+       "mean_p": 0.2521,
+       "freq": 0.0975
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 66,
+       "mean_p": 0.3092,
+       "freq": 0.1212
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.04377,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1468,
+       "mean_p": 0.0167,
+       "freq": 0.002
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 156,
+       "mean_p": 0.1392,
+       "freq": 0.0256
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 53,
+       "mean_p": 0.2518,
+       "freq": 0.0566
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 50,
+       "mean_p": 0.3506,
+       "freq": 0.12
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 45,
+       "mean_p": 0.4468,
+       "freq": 0.1556
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 18,
+       "mean_p": 0.5061,
+       "freq": 0.2778
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00838,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1734,
+       "mean_p": 0.0058,
+       "freq": 0.0006
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 34,
+       "mean_p": 0.137,
+       "freq": 0.0294
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 14,
+       "mean_p": 0.24,
+       "freq": 0.0714
+      }
+     ]
+    }
+   },
+   "after": {
+    "bust": {
+     "ece": 0.02549,
+     "curve": [
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 55,
+       "mean_p": 0.3681,
+       "freq": 0.2909
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 49,
+       "mean_p": 0.4567,
+       "freq": 0.3265
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 45,
+       "mean_p": 0.5429,
+       "freq": 0.6444
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 75,
+       "mean_p": 0.651,
+       "freq": 0.5333
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 82,
+       "mean_p": 0.7538,
+       "freq": 0.7073
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 158,
+       "mean_p": 0.8568,
+       "freq": 0.8228
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 1326,
+       "mean_p": 0.9649,
+       "freq": 0.9555
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02732,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1451,
+       "mean_p": 0.028,
+       "freq": 0.0434
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 174,
+       "mean_p": 0.1518,
+       "freq": 0.2471
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 165,
+       "mean_p": 0.2363,
+       "freq": 0.297
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.00869,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1588,
+       "mean_p": 0.0164,
+       "freq": 0.0145
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 131,
+       "mean_p": 0.146,
+       "freq": 0.1145
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 71,
+       "mean_p": 0.2301,
+       "freq": 0.1127
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.00392,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1719,
+       "mean_p": 0.0105,
+       "freq": 0.0087
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 71,
+       "mean_p": 0.1266,
+       "freq": 0.1831
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00118,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1790,
+       "mean_p": 0.0016,
+       "freq": 0.0028
+      }
+     ]
+    }
+   }
+  }
+ },
+ "gate": {
+  "condition_1_brier_logloss": {
+   "pass": false,
+   "definition": "pooled Brier AND log-loss improve; each side's pooled Brier AND log-loss improve; every pooled bucket improves on both metrics; no bucket materially worse (rel > 0.01 on either metric) pooled OR on either side",
+   "pooled_improves": true,
+   "per_side_improves": {
+    "hit": true,
+    "pit": true
+   },
+   "pooled_all_buckets_improve": true,
+   "pooled_no_bucket_materially_worse": true,
+   "per_side_all_buckets_improve_diagnostic": {
+    "hit": true,
+    "pit": false
+   },
+   "per_side_buckets_materially_worse": {
+    "hit": [],
+    "pit": [
+     "bench"
+    ]
+   },
+   "material_tolerance_rel": 0.01
+  },
+  "condition_2_rank_preservation": {
+   "pass": true,
+   "definition": "within-(side, eval-year) Spearman of the ranking grade g(grade) equals the shipped grade Spearman exactly (abs diff < 1e-9) in every cell",
+   "n_cells": 8,
+   "n_preserved": 8,
+   "cells_not_preserved": []
+  },
+  "condition_3_cross_side_by_year": {
+   "pass": true,
+   "definition": "for EVERY evaluation year 2020-2023, the cross-side pooled Spearman of the ranking grade g(grade) (both sides, that year only) has delta >= -0.002 vs the shipped grade (0 by construction under the shared map)",
+   "tolerance": -0.002,
+   "per_year_delta": {
+    "2020": 0.0,
+    "2021": 0.0,
+    "2022": 0.0,
+    "2023": 0.0
+   },
+   "per_year_pass": {
+    "2020": true,
+    "2021": true,
+    "2022": true,
+    "2023": true
+   },
+   "years_failed": []
+  },
+  "condition_4_tier_reliability": {
+   "pass": true,
+   "definition": "every FV tier >= 45 improves (gap_after < gap_before); no tier (any grade) worsens by more than 0.005 absolute",
+   "fv45_plus_tiers": [
+    "45",
+    "50",
+    "55",
+    "60"
+   ],
+   "fv45_plus_not_improved": [],
+   "tier_gap_delta_abs": {
+    "35": 0.00167,
+    "40": -0.01924,
+    "45": -0.08093,
+    "50": -0.04536,
+    "55": -0.11768,
+    "60": -0.17395
+   },
+   "tiers_worse_beyond_0p005": [],
+   "worse_tolerance_abs": 0.005
+  },
+  "verdict": "FAIL"
+ },
+ "formulations": {
+  "a_shared_map": {
+   "gate": {
+    "condition_1_brier_logloss": {
+     "pass": false,
+     "definition": "pooled Brier AND log-loss improve; each side's pooled Brier AND log-loss improve; every pooled bucket improves on both metrics; no bucket materially worse (rel > 0.01 on either metric) pooled OR on either side",
+     "pooled_improves": true,
+     "per_side_improves": {
+      "hit": true,
+      "pit": true
+     },
+     "pooled_all_buckets_improve": true,
+     "pooled_no_bucket_materially_worse": true,
+     "per_side_all_buckets_improve_diagnostic": {
+      "hit": true,
+      "pit": false
+     },
+     "per_side_buckets_materially_worse": {
+      "hit": [],
+      "pit": [
+       "bench"
+      ]
+     },
+     "material_tolerance_rel": 0.01
+    },
+    "condition_2_rank_preservation": {
+     "pass": true,
+     "definition": "within-(side, eval-year) Spearman of the ranking grade g(grade) equals the shipped grade Spearman exactly (abs diff < 1e-9) in every cell",
+     "n_cells": 8,
+     "n_preserved": 8,
+     "cells_not_preserved": []
+    },
+    "condition_3_cross_side_by_year": {
+     "pass": true,
+     "definition": "for EVERY evaluation year 2020-2023, the cross-side pooled Spearman of the ranking grade g(grade) (both sides, that year only) has delta >= -0.002 vs the shipped grade (0 by construction under the shared map)",
+     "tolerance": -0.002,
+     "per_year_delta": {
+      "2020": 0.0,
+      "2021": 0.0,
+      "2022": 0.0,
+      "2023": 0.0
+     },
+     "per_year_pass": {
+      "2020": true,
+      "2021": true,
+      "2022": true,
+      "2023": true
+     },
+     "years_failed": []
+    },
+    "condition_4_tier_reliability": {
+     "pass": true,
+     "definition": "every FV tier >= 45 improves (gap_after < gap_before); no tier (any grade) worsens by more than 0.005 absolute",
+     "fv45_plus_tiers": [
+      "45",
+      "50",
+      "55",
+      "60"
+     ],
+     "fv45_plus_not_improved": [],
+     "tier_gap_delta_abs": {
+      "35": 0.00167,
+      "40": -0.01924,
+      "45": -0.08093,
+      "50": -0.04536,
+      "55": -0.11768,
+      "60": -0.17395
+     },
+     "tiers_worse_beyond_0p005": [],
+     "worse_tolerance_abs": 0.005
+    },
+    "verdict": "FAIL"
+   },
+   "results": {
+    "pooled": {
+     "n": 1790,
+     "brier": {
+      "before": 0.24663,
+      "after": 0.19636,
+      "delta": -0.05026
+     },
+     "log_loss": {
+      "before": 0.51306,
+      "after": 0.4056,
+      "delta": -0.10746
+     },
+     "per_bucket": {
+      "bust": {
+       "brier_before": 0.11629,
+       "brier_after": 0.08406,
+       "logloss_before": 0.3675,
+       "logloss_after": 0.28596,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "bench": {
+       "brier_before": 0.07517,
+       "brier_after": 0.07154,
+       "logloss_before": 0.26756,
+       "logloss_after": 0.25347,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "regular": {
+       "brier_before": 0.03117,
+       "brier_after": 0.02411,
+       "logloss_before": 0.1311,
+       "logloss_after": 0.10065,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "good": {
+       "brier_before": 0.02071,
+       "brier_after": 0.01393,
+       "logloss_before": 0.08551,
+       "logloss_after": 0.05754,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "star": {
+       "brier_before": 0.00329,
+       "brier_after": 0.00272,
+       "logloss_before": 0.01672,
+       "logloss_after": 0.01317,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      }
+     },
+     "spearman": {
+      "shipped_grade": 0.2392,
+      "expected_war_before": 0.2351,
+      "expected_war_after": 0.2246
+     }
+    },
+    "per_side": {
+     "hit": {
+      "n": 897,
+      "brier": {
+       "before": 0.28876,
+       "after": 0.20717,
+       "delta": -0.08159
+      },
+      "log_loss": {
+       "before": 0.60241,
+       "after": 0.42975,
+       "delta": -0.17266
+      },
+      "per_bucket": {
+       "bust": {
+        "brier_before": 0.13323,
+        "brier_after": 0.08236,
+        "logloss_before": 0.40592,
+        "logloss_after": 0.27464,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "bench": {
+        "brier_before": 0.08013,
+        "brier_after": 0.07247,
+        "logloss_before": 0.27865,
+        "logloss_after": 0.24662,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "regular": {
+        "brier_before": 0.03645,
+        "brier_after": 0.0255,
+        "logloss_before": 0.1504,
+        "logloss_after": 0.1059,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "good": {
+        "brier_before": 0.0324,
+        "brier_after": 0.02141,
+        "logloss_before": 0.12115,
+        "logloss_after": 0.08121,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "star": {
+        "brier_before": 0.00655,
+        "brier_after": 0.00543,
+        "logloss_before": 0.03194,
+        "logloss_after": 0.02597,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       }
+      },
+      "spearman": {
+       "shipped_grade": 0.2664,
+       "expected_war_before": 0.2664,
+       "expected_war_after": 0.2523
+      }
+     },
+     "pit": {
+      "n": 893,
+      "brier": {
+       "before": 0.20431,
+       "after": 0.18551,
+       "delta": -0.0188
+      },
+      "log_loss": {
+       "before": 0.42332,
+       "after": 0.38135,
+       "delta": -0.04197
+      },
+      "per_bucket": {
+       "bust": {
+        "brier_before": 0.09928,
+        "brier_after": 0.08577,
+        "logloss_before": 0.32891,
+        "logloss_after": 0.29734,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "bench": {
+        "brier_before": 0.07019,
+        "brier_after": 0.0706,
+        "logloss_before": 0.25642,
+        "logloss_after": 0.26036,
+        "brier_improved": false,
+        "logloss_improved": false,
+        "materially_worse": true
+       },
+       "regular": {
+        "brier_before": 0.02587,
+        "brier_after": 0.02272,
+        "logloss_before": 0.11171,
+        "logloss_after": 0.09538,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "good": {
+        "brier_before": 0.00897,
+        "brier_after": 0.00642,
+        "logloss_before": 0.04971,
+        "logloss_after": 0.03377,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "star": {
+        "brier_before": 1e-05,
+        "brier_after": 0.0,
+        "logloss_before": 0.00143,
+        "logloss_after": 0.00031,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       }
+      },
+      "spearman": {
+       "shipped_grade": 0.2233,
+       "expected_war_before": 0.2233,
+       "expected_war_after": 0.202
+      }
+     }
+    },
+    "per_tier_reliability": {
+     "35": {
+      "n": 373,
+      "realized_freq": {
+       "bust": 0.9812,
+       "bench": 0.0161,
+       "regular": 0.0027,
+       "good": 0.0,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.9754,
+       "bench": 0.0153,
+       "regular": 0.0067,
+       "good": 0.0025,
+       "star": 0.0002
+      },
+      "mean_p_after": {
+       "bust": 0.9704,
+       "bench": 0.0194,
+       "regular": 0.0074,
+       "good": 0.0026,
+       "star": 0.0002
+      },
+      "gap_before": 0.00265,
+      "gap_after": 0.00432,
+      "improved": false,
+      "worse": true
+     },
+     "40": {
+      "n": 779,
+      "realized_freq": {
+       "bust": 0.9448,
+       "bench": 0.0436,
+       "regular": 0.009,
+       "good": 0.0026,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.8817,
+       "bench": 0.0639,
+       "regular": 0.037,
+       "good": 0.016,
+       "star": 0.0015
+      },
+      "mean_p_after": {
+       "bust": 0.9548,
+       "bench": 0.0287,
+       "regular": 0.012,
+       "good": 0.0043,
+       "star": 0.0004
+      },
+      "gap_before": 0.02523,
+      "gap_after": 0.00599,
+      "improved": true,
+      "worse": false
+     },
+     "45": {
+      "n": 389,
+      "realized_freq": {
+       "bust": 0.874,
+       "bench": 0.1003,
+       "regular": 0.018,
+       "good": 0.0051,
+       "star": 0.0026
+      },
+      "mean_p_before": {
+       "bust": 0.6375,
+       "bench": 0.1692,
+       "regular": 0.1226,
+       "good": 0.0634,
+       "star": 0.0072
+      },
+      "mean_p_after": {
+       "bust": 0.8854,
+       "bench": 0.0674,
+       "regular": 0.0331,
+       "good": 0.0128,
+       "star": 0.0013
+      },
+      "gap_before": 0.0946,
+      "gap_after": 0.01367,
+      "improved": true,
+      "worse": false
+     },
+     "50": {
+      "n": 107,
+      "realized_freq": {
+       "bust": 0.5234,
+       "bench": 0.3084,
+       "regular": 0.1215,
+       "good": 0.0467,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.3203,
+       "bench": 0.228,
+       "regular": 0.2451,
+       "good": 0.1805,
+       "star": 0.0261
+      },
+      "mean_p_after": {
+       "bust": 0.6889,
+       "bench": 0.1645,
+       "regular": 0.0993,
+       "good": 0.0427,
+       "star": 0.0046
+      },
+      "gap_before": 0.1134,
+      "gap_after": 0.06804,
+      "improved": true,
+      "worse": false
+     },
+     "55": {
+      "n": 112,
+      "realized_freq": {
+       "bust": 0.4375,
+       "bench": 0.3125,
+       "regular": 0.1339,
+       "good": 0.1071,
+       "star": 0.0089
+      },
+      "mean_p_before": {
+       "bust": 0.1691,
+       "bench": 0.1769,
+       "regular": 0.2727,
+       "good": 0.3151,
+       "star": 0.0662
+      },
+      "mean_p_after": {
+       "bust": 0.51,
+       "bench": 0.2256,
+       "regular": 0.1705,
+       "good": 0.0843,
+       "star": 0.0097
+      },
+      "gap_before": 0.16161,
+      "gap_after": 0.04393,
+      "improved": true,
+      "worse": false
+     },
+     "60": {
+      "n": 17,
+      "realized_freq": {
+       "bust": 0.4118,
+       "bench": 0.2941,
+       "regular": 0.1176,
+       "good": 0.1765,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.0595,
+       "bench": 0.0867,
+       "regular": 0.2092,
+       "good": 0.463,
+       "star": 0.1816
+      },
+      "mean_p_after": {
+       "bust": 0.3854,
+       "bench": 0.248,
+       "regular": 0.2268,
+       "good": 0.1241,
+       "star": 0.0157
+      },
+      "gap_before": 0.2239,
+      "gap_after": 0.04995,
+      "improved": true,
+      "worse": false
+     }
+    },
+    "reliability_curves_pooled": {
+     "before": {
+      "bust": {
+       "ece": 0.11954,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 68,
+         "mean_p": 0.0589,
+         "freq": 0.3088
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 74,
+         "mean_p": 0.1447,
+         "freq": 0.4595
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 57,
+         "mean_p": 0.2525,
+         "freq": 0.6316
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 91,
+         "mean_p": 0.3527,
+         "freq": 0.6374
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 127,
+         "mean_p": 0.4574,
+         "freq": 0.7874
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 83,
+         "mean_p": 0.5517,
+         "freq": 0.8795
+        },
+        {
+         "bin": [
+          0.6,
+          0.7
+         ],
+         "n": 96,
+         "mean_p": 0.65,
+         "freq": 0.8958
+        },
+        {
+         "bin": [
+          0.7,
+          0.8
+         ],
+         "n": 108,
+         "mean_p": 0.7546,
+         "freq": 0.9352
+        },
+        {
+         "bin": [
+          0.8,
+          0.9
+         ],
+         "n": 152,
+         "mean_p": 0.8534,
+         "freq": 0.9079
+        },
+        {
+         "bin": [
+          0.9,
+          1.0
+         ],
+         "n": 934,
+         "mean_p": 0.9793,
+         "freq": 0.9732
+        }
+       ]
+      },
+      "bench": {
+       "ece": 0.02403,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1080,
+         "mean_p": 0.0221,
+         "freq": 0.0361
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 300,
+         "mean_p": 0.1501,
+         "freq": 0.1333
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 410,
+         "mean_p": 0.241,
+         "freq": 0.1854
+        }
+       ]
+      },
+      "regular": {
+       "ece": 0.05319,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1225,
+         "mean_p": 0.0174,
+         "freq": 0.0073
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 263,
+         "mean_p": 0.1519,
+         "freq": 0.0228
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 236,
+         "mean_p": 0.2521,
+         "freq": 0.0975
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 66,
+         "mean_p": 0.3092,
+         "freq": 0.1212
+        }
+       ]
+      },
+      "good": {
+       "ece": 0.04377,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1468,
+         "mean_p": 0.0167,
+         "freq": 0.002
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 156,
+         "mean_p": 0.1392,
+         "freq": 0.0256
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 53,
+         "mean_p": 0.2518,
+         "freq": 0.0566
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 50,
+         "mean_p": 0.3506,
+         "freq": 0.12
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 45,
+         "mean_p": 0.4468,
+         "freq": 0.1556
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 18,
+         "mean_p": 0.5061,
+         "freq": 0.2778
+        }
+       ]
+      },
+      "star": {
+       "ece": 0.00838,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1734,
+         "mean_p": 0.0058,
+         "freq": 0.0006
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 34,
+         "mean_p": 0.137,
+         "freq": 0.0294
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 14,
+         "mean_p": 0.24,
+         "freq": 0.0714
+        }
+       ]
+      }
+     },
+     "after": {
+      "bust": {
+       "ece": 0.02549,
+       "curve": [
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 55,
+         "mean_p": 0.3681,
+         "freq": 0.2909
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 49,
+         "mean_p": 0.4567,
+         "freq": 0.3265
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 45,
+         "mean_p": 0.5429,
+         "freq": 0.6444
+        },
+        {
+         "bin": [
+          0.6,
+          0.7
+         ],
+         "n": 75,
+         "mean_p": 0.651,
+         "freq": 0.5333
+        },
+        {
+         "bin": [
+          0.7,
+          0.8
+         ],
+         "n": 82,
+         "mean_p": 0.7538,
+         "freq": 0.7073
+        },
+        {
+         "bin": [
+          0.8,
+          0.9
+         ],
+         "n": 158,
+         "mean_p": 0.8568,
+         "freq": 0.8228
+        },
+        {
+         "bin": [
+          0.9,
+          1.0
+         ],
+         "n": 1326,
+         "mean_p": 0.9649,
+         "freq": 0.9555
+        }
+       ]
+      },
+      "bench": {
+       "ece": 0.02732,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1451,
+         "mean_p": 0.028,
+         "freq": 0.0434
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 174,
+         "mean_p": 0.1518,
+         "freq": 0.2471
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 165,
+         "mean_p": 0.2363,
+         "freq": 0.297
+        }
+       ]
+      },
+      "regular": {
+       "ece": 0.00869,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1588,
+         "mean_p": 0.0164,
+         "freq": 0.0145
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 131,
+         "mean_p": 0.146,
+         "freq": 0.1145
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 71,
+         "mean_p": 0.2301,
+         "freq": 0.1127
+        }
+       ]
+      },
+      "good": {
+       "ece": 0.00392,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1719,
+         "mean_p": 0.0105,
+         "freq": 0.0087
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 71,
+         "mean_p": 0.1266,
+         "freq": 0.1831
+        }
+       ]
+      },
+      "star": {
+       "ece": 0.00118,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1790,
+         "mean_p": 0.0016,
+         "freq": 0.0028
+        }
+       ]
+      }
+     }
+    }
+   },
+   "rank_preservation_grade": {
+    "hit": {
+     "2020": {
+      "n": 206,
+      "shipped_grade_rho": 0.3652,
+      "recal_grade_rho": 0.3652,
+      "preserved": true
+     },
+     "2021": {
+      "n": 143,
+      "shipped_grade_rho": 0.1538,
+      "recal_grade_rho": 0.1538,
+      "preserved": true
+     },
+     "2022": {
+      "n": 277,
+      "shipped_grade_rho": 0.3162,
+      "recal_grade_rho": 0.3162,
+      "preserved": true
+     },
+     "2023": {
+      "n": 271,
+      "shipped_grade_rho": 0.2596,
+      "recal_grade_rho": 0.2596,
+      "preserved": true
+     }
+    },
+    "pit": {
+     "2020": {
+      "n": 211,
+      "shipped_grade_rho": 0.1712,
+      "recal_grade_rho": 0.1712,
+      "preserved": true
+     },
+     "2021": {
+      "n": 159,
+      "shipped_grade_rho": 0.1257,
+      "recal_grade_rho": 0.1257,
+      "preserved": true
+     },
+     "2022": {
+      "n": 244,
+      "shipped_grade_rho": 0.325,
+      "recal_grade_rho": 0.325,
+      "preserved": true
+     },
+     "2023": {
+      "n": 279,
+      "shipped_grade_rho": 0.2345,
+      "recal_grade_rho": 0.2345,
+      "preserved": true
+     }
+    }
+   },
+   "cross_side_grade_by_year": {
+    "2020": {
+     "n": 417,
+     "n_hit": 206,
+     "n_pit": 211,
+     "shipped_grade_rho": 0.2491,
+     "recal_grade_rho": 0.2491,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2021": {
+     "n": 302,
+     "n_hit": 143,
+     "n_pit": 159,
+     "shipped_grade_rho": 0.1213,
+     "recal_grade_rho": 0.1213,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2022": {
+     "n": 521,
+     "n_hit": 277,
+     "n_pit": 244,
+     "shipped_grade_rho": 0.3032,
+     "recal_grade_rho": 0.3032,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2023": {
+     "n": 550,
+     "n_hit": 271,
+     "n_pit": 279,
+     "shipped_grade_rho": 0.2485,
+     "recal_grade_rho": 0.2485,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    }
+   },
+   "cross_side_expected_war_by_year_diagnostic": {
+    "2020": {
+     "n": 417,
+     "n_hit": 206,
+     "n_pit": 211,
+     "shipped_grade_rho": 0.2491,
+     "identity_rho": 0.2248,
+     "recal_rho": 0.2187,
+     "delta_vs_shipped": -0.0304,
+     "identity_delta_vs_shipped": -0.0243,
+     "pass": false
+    },
+    "2021": {
+     "n": 302,
+     "n_hit": 143,
+     "n_pit": 159,
+     "shipped_grade_rho": 0.1213,
+     "identity_rho": 0.1354,
+     "recal_rho": 0.1364,
+     "delta_vs_shipped": 0.0151,
+     "identity_delta_vs_shipped": 0.0141,
+     "pass": true
+    },
+    "2022": {
+     "n": 521,
+     "n_hit": 277,
+     "n_pit": 244,
+     "shipped_grade_rho": 0.3032,
+     "identity_rho": 0.2986,
+     "recal_rho": 0.3111,
+     "delta_vs_shipped": 0.0079,
+     "identity_delta_vs_shipped": -0.0046,
+     "pass": true
+    },
+    "2023": {
+     "n": 550,
+     "n_hit": 271,
+     "n_pit": 279,
+     "shipped_grade_rho": 0.2485,
+     "identity_rho": 0.2376,
+     "recal_rho": 0.238,
+     "delta_vs_shipped": -0.0105,
+     "identity_delta_vs_shipped": -0.0109,
+     "pass": false
+    }
+   }
+  },
+  "b_shared_map_plus_residual": {
+   "gate": {
+    "condition_1_brier_logloss": {
+     "pass": false,
+     "definition": "pooled Brier AND log-loss improve; each side's pooled Brier AND log-loss improve; every pooled bucket improves on both metrics; no bucket materially worse (rel > 0.01 on either metric) pooled OR on either side",
+     "pooled_improves": true,
+     "per_side_improves": {
+      "hit": true,
+      "pit": true
+     },
+     "pooled_all_buckets_improve": true,
+     "pooled_no_bucket_materially_worse": true,
+     "per_side_all_buckets_improve_diagnostic": {
+      "hit": true,
+      "pit": false
+     },
+     "per_side_buckets_materially_worse": {
+      "hit": [],
+      "pit": [
+       "bench",
+       "good"
+      ]
+     },
+     "material_tolerance_rel": 0.01
+    },
+    "condition_2_rank_preservation": {
+     "pass": true,
+     "definition": "within-(side, eval-year) Spearman of the ranking grade g(grade) equals the shipped grade Spearman exactly (abs diff < 1e-9) in every cell",
+     "n_cells": 8,
+     "n_preserved": 8,
+     "cells_not_preserved": []
+    },
+    "condition_3_cross_side_by_year": {
+     "pass": true,
+     "definition": "for EVERY evaluation year 2020-2023, the cross-side pooled Spearman of the ranking grade g(grade) (both sides, that year only) has delta >= -0.002 vs the shipped grade (0 by construction under the shared map)",
+     "tolerance": -0.002,
+     "per_year_delta": {
+      "2020": 0.0,
+      "2021": 0.0,
+      "2022": 0.0,
+      "2023": 0.0
+     },
+     "per_year_pass": {
+      "2020": true,
+      "2021": true,
+      "2022": true,
+      "2023": true
+     },
+     "years_failed": []
+    },
+    "condition_4_tier_reliability": {
+     "pass": true,
+     "definition": "every FV tier >= 45 improves (gap_after < gap_before); no tier (any grade) worsens by more than 0.005 absolute",
+     "fv45_plus_tiers": [
+      "45",
+      "50",
+      "55",
+      "60"
+     ],
+     "fv45_plus_not_improved": [],
+     "tier_gap_delta_abs": {
+      "35": 0.00034,
+      "40": -0.01905,
+      "45": -0.08254,
+      "50": -0.04202,
+      "55": -0.1446,
+      "60": -0.16494
+     },
+     "tiers_worse_beyond_0p005": [],
+     "worse_tolerance_abs": 0.005
+    },
+    "verdict": "FAIL"
+   },
+   "results": {
+    "pooled": {
+     "n": 1790,
+     "brier": {
+      "before": 0.24663,
+      "after": 0.19582,
+      "delta": -0.05081
+     },
+     "log_loss": {
+      "before": 0.51306,
+      "after": 0.41566,
+      "delta": -0.0974
+     },
+     "per_bucket": {
+      "bust": {
+       "brier_before": 0.11629,
+       "brier_after": 0.08373,
+       "logloss_before": 0.3675,
+       "logloss_after": 0.28899,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "bench": {
+       "brier_before": 0.07517,
+       "brier_after": 0.07161,
+       "logloss_before": 0.26756,
+       "logloss_after": 0.25547,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "regular": {
+       "brier_before": 0.03117,
+       "brier_after": 0.02367,
+       "logloss_before": 0.1311,
+       "logloss_after": 0.10059,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "good": {
+       "brier_before": 0.02071,
+       "brier_after": 0.01405,
+       "logloss_before": 0.08551,
+       "logloss_after": 0.0663,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      },
+      "star": {
+       "brier_before": 0.00329,
+       "brier_after": 0.00275,
+       "logloss_before": 0.01672,
+       "logloss_after": 0.01265,
+       "brier_improved": true,
+       "logloss_improved": true,
+       "materially_worse": false
+      }
+     },
+     "spearman": {
+      "shipped_grade": 0.2392,
+      "expected_war_before": 0.2351,
+      "expected_war_after": 0.2303
+     }
+    },
+    "per_side": {
+     "hit": {
+      "n": 897,
+      "brier": {
+       "before": 0.28876,
+       "after": 0.20769,
+       "delta": -0.08107
+      },
+      "log_loss": {
+       "before": 0.60241,
+       "after": 0.42784,
+       "delta": -0.17456
+      },
+      "per_bucket": {
+       "bust": {
+        "brier_before": 0.13323,
+        "brier_after": 0.08321,
+        "logloss_before": 0.40592,
+        "logloss_after": 0.27816,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "bench": {
+        "brier_before": 0.08013,
+        "brier_after": 0.07328,
+        "logloss_before": 0.27865,
+        "logloss_after": 0.24983,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "regular": {
+        "brier_before": 0.03645,
+        "brier_after": 0.02416,
+        "logloss_before": 0.1504,
+        "logloss_after": 0.10096,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "good": {
+        "brier_before": 0.0324,
+        "brier_after": 0.02155,
+        "logloss_before": 0.12115,
+        "logloss_after": 0.08096,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "star": {
+        "brier_before": 0.00655,
+        "brier_after": 0.00549,
+        "logloss_before": 0.03194,
+        "logloss_after": 0.02523,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       }
+      },
+      "spearman": {
+       "shipped_grade": 0.2664,
+       "expected_war_before": 0.2664,
+       "expected_war_after": 0.2539
+      }
+     },
+     "pit": {
+      "n": 893,
+      "brier": {
+       "before": 0.20431,
+       "after": 0.1839,
+       "delta": -0.02042
+      },
+      "log_loss": {
+       "before": 0.42332,
+       "after": 0.40343,
+       "delta": -0.01989
+      },
+      "per_bucket": {
+       "bust": {
+        "brier_before": 0.09928,
+        "brier_after": 0.08426,
+        "logloss_before": 0.32891,
+        "logloss_after": 0.29988,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "bench": {
+        "brier_before": 0.07019,
+        "brier_after": 0.06994,
+        "logloss_before": 0.25642,
+        "logloss_after": 0.26113,
+        "brier_improved": true,
+        "logloss_improved": false,
+        "materially_worse": true
+       },
+       "regular": {
+        "brier_before": 0.02587,
+        "brier_after": 0.02318,
+        "logloss_before": 0.11171,
+        "logloss_after": 0.10022,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       },
+       "good": {
+        "brier_before": 0.00897,
+        "brier_after": 0.00652,
+        "logloss_before": 0.04971,
+        "logloss_after": 0.05157,
+        "brier_improved": true,
+        "logloss_improved": false,
+        "materially_worse": true
+       },
+       "star": {
+        "brier_before": 1e-05,
+        "brier_after": 0.0,
+        "logloss_before": 0.00143,
+        "logloss_after": 0.0,
+        "brier_improved": true,
+        "logloss_improved": true,
+        "materially_worse": false
+       }
+      },
+      "spearman": {
+       "shipped_grade": 0.2233,
+       "expected_war_before": 0.2233,
+       "expected_war_after": 0.2134
+      }
+     }
+    },
+    "per_tier_reliability": {
+     "35": {
+      "n": 373,
+      "realized_freq": {
+       "bust": 0.9812,
+       "bench": 0.0161,
+       "regular": 0.0027,
+       "good": 0.0,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.9754,
+       "bench": 0.0153,
+       "regular": 0.0067,
+       "good": 0.0025,
+       "star": 0.0002
+      },
+      "mean_p_after": {
+       "bust": 0.9738,
+       "bench": 0.0195,
+       "regular": 0.0066,
+       "good": 0.0002,
+       "star": 0.0
+      },
+      "gap_before": 0.00265,
+      "gap_after": 0.00299,
+      "improved": false,
+      "worse": true
+     },
+     "40": {
+      "n": 779,
+      "realized_freq": {
+       "bust": 0.9448,
+       "bench": 0.0436,
+       "regular": 0.009,
+       "good": 0.0026,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.8817,
+       "bench": 0.0639,
+       "regular": 0.037,
+       "good": 0.016,
+       "star": 0.0015
+      },
+      "mean_p_after": {
+       "bust": 0.9595,
+       "bench": 0.0292,
+       "regular": 0.0097,
+       "good": 0.0016,
+       "star": 0.0
+      },
+      "gap_before": 0.02523,
+      "gap_after": 0.00618,
+      "improved": true,
+      "worse": false
+     },
+     "45": {
+      "n": 389,
+      "realized_freq": {
+       "bust": 0.874,
+       "bench": 0.1003,
+       "regular": 0.018,
+       "good": 0.0051,
+       "star": 0.0026
+      },
+      "mean_p_before": {
+       "bust": 0.6375,
+       "bench": 0.1692,
+       "regular": 0.1226,
+       "good": 0.0634,
+       "star": 0.0072
+      },
+      "mean_p_after": {
+       "bust": 0.8972,
+       "bench": 0.0717,
+       "regular": 0.0183,
+       "good": 0.0118,
+       "star": 0.001
+      },
+      "gap_before": 0.0946,
+      "gap_after": 0.01206,
+      "improved": true,
+      "worse": false
+     },
+     "50": {
+      "n": 107,
+      "realized_freq": {
+       "bust": 0.5234,
+       "bench": 0.3084,
+       "regular": 0.1215,
+       "good": 0.0467,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.3203,
+       "bench": 0.228,
+       "regular": 0.2451,
+       "good": 0.1805,
+       "star": 0.0261
+      },
+      "mean_p_after": {
+       "bust": 0.682,
+       "bench": 0.1914,
+       "regular": 0.06,
+       "good": 0.0609,
+       "star": 0.0056
+      },
+      "gap_before": 0.1134,
+      "gap_after": 0.07138,
+      "improved": true,
+      "worse": false
+     },
+     "55": {
+      "n": 112,
+      "realized_freq": {
+       "bust": 0.4375,
+       "bench": 0.3125,
+       "regular": 0.1339,
+       "good": 0.1071,
+       "star": 0.0089
+      },
+      "mean_p_before": {
+       "bust": 0.1691,
+       "bench": 0.1769,
+       "regular": 0.2727,
+       "good": 0.3151,
+       "star": 0.0662
+      },
+      "mean_p_after": {
+       "bust": 0.4659,
+       "bench": 0.2707,
+       "regular": 0.1332,
+       "good": 0.1187,
+       "star": 0.0116
+      },
+      "gap_before": 0.16161,
+      "gap_after": 0.01701,
+      "improved": true,
+      "worse": false
+     },
+     "60": {
+      "n": 17,
+      "realized_freq": {
+       "bust": 0.4118,
+       "bench": 0.2941,
+       "regular": 0.1176,
+       "good": 0.1765,
+       "star": 0.0
+      },
+      "mean_p_before": {
+       "bust": 0.0595,
+       "bench": 0.0867,
+       "regular": 0.2092,
+       "good": 0.463,
+       "star": 0.1816
+      },
+      "mean_p_after": {
+       "bust": 0.291,
+       "bench": 0.2675,
+       "regular": 0.1657,
+       "good": 0.2442,
+       "star": 0.0316
+      },
+      "gap_before": 0.2239,
+      "gap_after": 0.05896,
+      "improved": true,
+      "worse": false
+     }
+    },
+    "reliability_curves_pooled": {
+     "before": {
+      "bust": {
+       "ece": 0.11954,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 68,
+         "mean_p": 0.0589,
+         "freq": 0.3088
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 74,
+         "mean_p": 0.1447,
+         "freq": 0.4595
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 57,
+         "mean_p": 0.2525,
+         "freq": 0.6316
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 91,
+         "mean_p": 0.3527,
+         "freq": 0.6374
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 127,
+         "mean_p": 0.4574,
+         "freq": 0.7874
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 83,
+         "mean_p": 0.5517,
+         "freq": 0.8795
+        },
+        {
+         "bin": [
+          0.6,
+          0.7
+         ],
+         "n": 96,
+         "mean_p": 0.65,
+         "freq": 0.8958
+        },
+        {
+         "bin": [
+          0.7,
+          0.8
+         ],
+         "n": 108,
+         "mean_p": 0.7546,
+         "freq": 0.9352
+        },
+        {
+         "bin": [
+          0.8,
+          0.9
+         ],
+         "n": 152,
+         "mean_p": 0.8534,
+         "freq": 0.9079
+        },
+        {
+         "bin": [
+          0.9,
+          1.0
+         ],
+         "n": 934,
+         "mean_p": 0.9793,
+         "freq": 0.9732
+        }
+       ]
+      },
+      "bench": {
+       "ece": 0.02403,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1080,
+         "mean_p": 0.0221,
+         "freq": 0.0361
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 300,
+         "mean_p": 0.1501,
+         "freq": 0.1333
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 410,
+         "mean_p": 0.241,
+         "freq": 0.1854
+        }
+       ]
+      },
+      "regular": {
+       "ece": 0.05319,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1225,
+         "mean_p": 0.0174,
+         "freq": 0.0073
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 263,
+         "mean_p": 0.1519,
+         "freq": 0.0228
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 236,
+         "mean_p": 0.2521,
+         "freq": 0.0975
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 66,
+         "mean_p": 0.3092,
+         "freq": 0.1212
+        }
+       ]
+      },
+      "good": {
+       "ece": 0.04377,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1468,
+         "mean_p": 0.0167,
+         "freq": 0.002
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 156,
+         "mean_p": 0.1392,
+         "freq": 0.0256
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 53,
+         "mean_p": 0.2518,
+         "freq": 0.0566
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 50,
+         "mean_p": 0.3506,
+         "freq": 0.12
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 45,
+         "mean_p": 0.4468,
+         "freq": 0.1556
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 18,
+         "mean_p": 0.5061,
+         "freq": 0.2778
+        }
+       ]
+      },
+      "star": {
+       "ece": 0.00838,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1734,
+         "mean_p": 0.0058,
+         "freq": 0.0006
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 34,
+         "mean_p": 0.137,
+         "freq": 0.0294
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 14,
+         "mean_p": 0.24,
+         "freq": 0.0714
+        }
+       ]
+      }
+     },
+     "after": {
+      "bust": {
+       "ece": 0.02307,
+       "curve": [
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 34,
+         "mean_p": 0.2444,
+         "freq": 0.2353
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 28,
+         "mean_p": 0.3741,
+         "freq": 0.4286
+        },
+        {
+         "bin": [
+          0.4,
+          0.5
+         ],
+         "n": 41,
+         "mean_p": 0.4292,
+         "freq": 0.4146
+        },
+        {
+         "bin": [
+          0.5,
+          0.6
+         ],
+         "n": 36,
+         "mean_p": 0.5562,
+         "freq": 0.3611
+        },
+        {
+         "bin": [
+          0.6,
+          0.7
+         ],
+         "n": 99,
+         "mean_p": 0.636,
+         "freq": 0.6263
+        },
+        {
+         "bin": [
+          0.7,
+          0.8
+         ],
+         "n": 38,
+         "mean_p": 0.7548,
+         "freq": 0.6053
+        },
+        {
+         "bin": [
+          0.8,
+          0.9
+         ],
+         "n": 125,
+         "mean_p": 0.8481,
+         "freq": 0.832
+        },
+        {
+         "bin": [
+          0.9,
+          1.0
+         ],
+         "n": 1384,
+         "mean_p": 0.9669,
+         "freq": 0.9501
+        }
+       ]
+      },
+      "bench": {
+       "ece": 0.0279,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1420,
+         "mean_p": 0.0243,
+         "freq": 0.0408
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 158,
+         "mean_p": 0.1507,
+         "freq": 0.2278
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 147,
+         "mean_p": 0.2552,
+         "freq": 0.3129
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 65,
+         "mean_p": 0.3194,
+         "freq": 0.2308
+        }
+       ]
+      },
+      "regular": {
+       "ece": 0.00697,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1653,
+         "mean_p": 0.0127,
+         "freq": 0.0169
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 130,
+         "mean_p": 0.1633,
+         "freq": 0.1308
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 6,
+         "mean_p": 0.2119,
+         "freq": 0.0
+        }
+       ]
+      },
+      "good": {
+       "ece": 0.00408,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1650,
+         "mean_p": 0.0054,
+         "freq": 0.0061
+        },
+        {
+         "bin": [
+          0.1,
+          0.2
+         ],
+         "n": 96,
+         "mean_p": 0.1241,
+         "freq": 0.0833
+        },
+        {
+         "bin": [
+          0.2,
+          0.3
+         ],
+         "n": 33,
+         "mean_p": 0.2641,
+         "freq": 0.2424
+        },
+        {
+         "bin": [
+          0.3,
+          0.4
+         ],
+         "n": 11,
+         "mean_p": 0.3213,
+         "freq": 0.1818
+        }
+       ]
+      },
+      "star": {
+       "ece": 0.00106,
+       "curve": [
+        {
+         "bin": [
+          0.0,
+          0.1
+         ],
+         "n": 1788,
+         "mean_p": 0.0017,
+         "freq": 0.0028
+        }
+       ]
+      }
+     }
+    }
+   },
+   "rank_preservation_grade": {
+    "hit": {
+     "2020": {
+      "n": 206,
+      "shipped_grade_rho": 0.3652,
+      "recal_grade_rho": 0.3652,
+      "preserved": true
+     },
+     "2021": {
+      "n": 143,
+      "shipped_grade_rho": 0.1538,
+      "recal_grade_rho": 0.1538,
+      "preserved": true
+     },
+     "2022": {
+      "n": 277,
+      "shipped_grade_rho": 0.3162,
+      "recal_grade_rho": 0.3162,
+      "preserved": true
+     },
+     "2023": {
+      "n": 271,
+      "shipped_grade_rho": 0.2596,
+      "recal_grade_rho": 0.2596,
+      "preserved": true
+     }
+    },
+    "pit": {
+     "2020": {
+      "n": 211,
+      "shipped_grade_rho": 0.1712,
+      "recal_grade_rho": 0.1712,
+      "preserved": true
+     },
+     "2021": {
+      "n": 159,
+      "shipped_grade_rho": 0.1257,
+      "recal_grade_rho": 0.1257,
+      "preserved": true
+     },
+     "2022": {
+      "n": 244,
+      "shipped_grade_rho": 0.325,
+      "recal_grade_rho": 0.325,
+      "preserved": true
+     },
+     "2023": {
+      "n": 279,
+      "shipped_grade_rho": 0.2345,
+      "recal_grade_rho": 0.2345,
+      "preserved": true
+     }
+    }
+   },
+   "cross_side_grade_by_year": {
+    "2020": {
+     "n": 417,
+     "n_hit": 206,
+     "n_pit": 211,
+     "shipped_grade_rho": 0.2491,
+     "recal_grade_rho": 0.2491,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2021": {
+     "n": 302,
+     "n_hit": 143,
+     "n_pit": 159,
+     "shipped_grade_rho": 0.1213,
+     "recal_grade_rho": 0.1213,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2022": {
+     "n": 521,
+     "n_hit": 277,
+     "n_pit": 244,
+     "shipped_grade_rho": 0.3032,
+     "recal_grade_rho": 0.3032,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    },
+    "2023": {
+     "n": 550,
+     "n_hit": 271,
+     "n_pit": 279,
+     "shipped_grade_rho": 0.2485,
+     "recal_grade_rho": 0.2485,
+     "delta_vs_shipped": 0.0,
+     "pass": true
+    }
+   },
+   "cross_side_expected_war_by_year_diagnostic": {
+    "2020": {
+     "n": 417,
+     "n_hit": 206,
+     "n_pit": 211,
+     "shipped_grade_rho": 0.2491,
+     "identity_rho": 0.2248,
+     "recal_rho": 0.2861,
+     "delta_vs_shipped": 0.037,
+     "identity_delta_vs_shipped": -0.0243,
+     "pass": true
+    },
+    "2021": {
+     "n": 302,
+     "n_hit": 143,
+     "n_pit": 159,
+     "shipped_grade_rho": 0.1213,
+     "identity_rho": 0.1354,
+     "recal_rho": 0.1113,
+     "delta_vs_shipped": -0.01,
+     "identity_delta_vs_shipped": 0.0141,
+     "pass": false
+    },
+    "2022": {
+     "n": 521,
+     "n_hit": 277,
+     "n_pit": 244,
+     "shipped_grade_rho": 0.3032,
+     "identity_rho": 0.2986,
+     "recal_rho": 0.3146,
+     "delta_vs_shipped": 0.0114,
+     "identity_delta_vs_shipped": -0.0046,
+     "pass": true
+    },
+    "2023": {
+     "n": 550,
+     "n_hit": 271,
+     "n_pit": 279,
+     "shipped_grade_rho": 0.2485,
+     "identity_rho": 0.2376,
+     "recal_rho": 0.2397,
+     "delta_vs_shipped": -0.0088,
+     "identity_delta_vs_shipped": -0.0109,
+     "pass": false
+    }
+   }
+  }
+ },
+ "overall_verdict": "FAIL",
+ "formulation_verdicts": {
+  "a_shared_map": "FAIL",
+  "b_shared_map_plus_residual": "FAIL"
+ },
+ "ships": [],
+ "loss_ledger": {
+  "date": "2026-07-02",
+  "experiment": "E-ISO4: joint side-symmetric SHARED grade-map recalibration of the eFV 5-bucket distribution (both formulations)",
+  "hypothesis": "tying the two sides to ONE shared monotone grade map removes the cross-side rank churn that killed X-ISO/E-ISO2/E-ISO3, so the real, large FV45+ calibration gain finally clears every gate condition",
+  "what_was_tried": "(a) one shared strictly-increasing grade map minimizing pooled calibration loss, applied identically to both sides; (b) the same shared map for ranking + per-side OOF per-bucket isotonic residual bucket tables for the displayed distribution",
+  "result_formulation_a": {
+   "failed_conditions": [
+    "condition_1_brier_logloss"
+   ],
+   "pooled_brier_before_after": [
+    0.24663,
+    0.19636
+   ],
+   "pooled_logloss_before_after": [
+    0.51306,
+    0.4056
+   ],
+   "per_side_buckets_materially_worse": {
+    "hit": [],
+    "pit": [
+     "bench"
+    ]
+   },
+   "pit_bench_bucket": {
+    "brier_before": 0.07019,
+    "brier_after": 0.0706,
+    "logloss_before": 0.25642,
+    "logloss_after": 0.26036,
+    "brier_improved": false,
+    "logloss_improved": false,
+    "materially_worse": true
+   },
+   "hit_bench_bucket": {
+    "brier_before": 0.08013,
+    "brier_after": 0.07247,
+    "logloss_before": 0.27865,
+    "logloss_after": 0.24662,
+    "brier_improved": true,
+    "logloss_improved": true,
+    "materially_worse": false
+   },
+   "cross_side_grade_per_year_delta": {
+    "2020": 0.0,
+    "2021": 0.0,
+    "2022": 0.0,
+    "2023": 0.0
+   },
+   "cross_side_expected_war_per_year_delta": {
+    "2020": -0.0304,
+    "2021": 0.0151,
+    "2022": 0.0079,
+    "2023": -0.0105
+   },
+   "rank_preservation": "8/8",
+   "fv45_plus_not_improved": [],
+   "tiers_worse_beyond_0p005": [],
+   "tier_gap_delta_abs": {
+    "35": 0.00167,
+    "40": -0.01924,
+    "45": -0.08093,
+    "50": -0.04536,
+    "55": -0.11768,
+    "60": -0.17395
+   }
+  },
+  "result_formulation_b": {
+   "failed_conditions": [
+    "condition_1_brier_logloss"
+   ],
+   "pooled_brier_before_after": [
+    0.24663,
+    0.19582
+   ],
+   "pooled_logloss_before_after": [
+    0.51306,
+    0.41566
+   ],
+   "per_side_buckets_materially_worse": {
+    "hit": [],
+    "pit": [
+     "bench",
+     "good"
+    ]
+   },
+   "pit_bench_bucket": {
+    "brier_before": 0.07019,
+    "brier_after": 0.06994,
+    "logloss_before": 0.25642,
+    "logloss_after": 0.26113,
+    "brier_improved": true,
+    "logloss_improved": false,
+    "materially_worse": true
+   },
+   "hit_bench_bucket": {
+    "brier_before": 0.08013,
+    "brier_after": 0.07328,
+    "logloss_before": 0.27865,
+    "logloss_after": 0.24983,
+    "brier_improved": true,
+    "logloss_improved": true,
+    "materially_worse": false
+   },
+   "cross_side_grade_per_year_delta": {
+    "2020": 0.0,
+    "2021": 0.0,
+    "2022": 0.0,
+    "2023": 0.0
+   },
+   "cross_side_expected_war_per_year_delta": {
+    "2020": 0.037,
+    "2021": -0.01,
+    "2022": 0.0114,
+    "2023": -0.0088
+   },
+   "rank_preservation": "8/8",
+   "fv45_plus_not_improved": [],
+   "tiers_worse_beyond_0p005": [],
+   "tier_gap_delta_abs": {
+    "35": 0.00034,
+    "40": -0.01905,
+    "45": -0.08254,
+    "50": -0.04202,
+    "55": -0.1446,
+    "60": -0.16494
+   }
+  },
+  "disposition": "NO SHIP. Per the pre-registration this is the FINAL calibration attempt against this data vintage across all formulations. Harness (tools/efv_grade_recal4_lab.py) + this artifact are the committed loss; revisit only with 2024+ cohorts."
+ }
+}

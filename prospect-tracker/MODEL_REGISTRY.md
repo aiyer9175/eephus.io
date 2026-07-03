@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**51 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 8.
+**52 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 9.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -61,6 +61,7 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `war_total_band_calibration` | model-dev artifact (rendered nowhere) - FA/Projections to... | n/a - gated experiment R-BAND: simulated path-total quantile band to replace the sum-of-per-year-quantiles total band (F-01); R... | no total band (dropped from display, owner-approved fallback) | simulated total via Gaussian AR(1) copula (SEED=20260702, N=20000, AR1 rho 0.... | pre-registered gate: realized-total coverage in [0.75,0.85]; band narrower th... | **deprecated** | `data/total_band_eval.json` | - | - |
 | `milb_park_factors` | model-dev artifact (rendered nowhere) - MiLB per-park fac... | n/a - gated experiment R-PARK: per-park run/contact environment factors from Savant-minors 2023+ to adjust college -> Single-A... | no park adjustment (college_translation unchanged) | per-park factors + matched-pair LOO with the adjustment (could not be run) | pre-registered gate: per-park YoY stability rho >= 0.50; translation LOO MAE/... | **deprecated** | `data/milb_park_factors_eval.json` | - | - |
 | `era_shrink_unification` | model-dev artifact (rendered nowhere) - ERA-shrink pseudo... | n/a - gated experiment R-SHRINK: whether one shared ERA-shrink value can replace K_IP=50 (display) and NEED_ERA_SHRINK_IP=45 (P... | two distinct values retained (K_IP=50.0, NEED_ERA_SHRINK_IP=45.0) | shared candidate values 35..65 step 5 vs both incumbents on their own objectives | pre-registered gate: a single value must beat-or-tie BOTH the display-stabili... | **deprecated** | `data/era_shrink_unification_eval.json` | - | - |
+| `xfv_grade_recal4` | model-dev artifact (rendered nowhere) - eFV bucket-calibr... | n/a - gated experiment E-ISO4: a single shared monotone grade map applied to both sides so cross-side ranking is preserved by c... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | shared grade map (formulation a) and shared map + per-side residual bucket ta... | same 4-condition production-relevant gate as E-ISO3 (per-side per-bucket Brie... | **deprecated** | `data/xfv_grade_recal4_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

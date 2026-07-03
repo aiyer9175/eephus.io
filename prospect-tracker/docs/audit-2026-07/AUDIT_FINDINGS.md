@@ -443,6 +443,25 @@ ranking the board relies on. E-ISO4 ties the two sides.
 - On fail: this is the FINAL calibration attempt against this data vintage across all
   formulations (owner: one more attempt). Loss ledger; revisit only with 2024+ cohorts.
 
+## E-ISO4 outcome (2026-07-02): the eFV calibration line is definitively closed
+
+E-ISO4 FAILED (final loss ledger, data/xfv_grade_recal4_eval.json), and it is the most
+informative of the four attempts because it isolated the true blocker. The joint
+side-symmetric design WORKED at its stated job: one shared strictly-increasing grade map
+applied to both sides made condition 3 (cross-side within-year Spearman) exactly 0.0 for
+every eval year by construction, killing the ranking churn that failed X-ISO, E-ISO2 and
+E-ISO3. But condition 1 still fails, and now we know WHY: the pitcher BENCH bucket gets
+materially worse (formulation a +1.54% log-loss; formulation b added pit GOOD +3.7%, so
+a per-side residual does not recover it). The FV45+ calibration gain is real and large
+(pooled Brier 0.2466 to 0.1964; tier-45 gap 0.0946 to 0.0137) but NO grade-space monotone
+map can fix that gap without pulling pitcher mid-grade probability mass toward bust. That
+is a model-structural limit, not a ranking or gate-design artifact. Definitive close of
+the bucket-calibration line (X-ISO -> E-ISO2 -> E-ISO3 -> E-ISO4, all rejected) against
+this data vintage; eFV published numbers unchanged throughout. The path forward, recorded
+for when it exists, needs resolved 2024+ cohorts AND a method operating below the
+grade-monotone constraint (direct per-side bucket-structure recalibration). Registry row
+xfv_grade_recal4 (deprecated), 52 rows.
+
 ## Changelog of findings in this pass
 
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.

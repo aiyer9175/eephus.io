@@ -102,6 +102,9 @@ MODEL_GLOSSARY = {
     "war_total_band_calibration": "internal",
     "milb_park_factors": "internal",
     "era_shrink_unification": "internal",
+    # E-ISO4: the final eFV bucket-calibration attempt (joint side-symmetric
+    # map); rejected, closes the line, loss ledger, rendered nowhere.
+    "xfv_grade_recal4": "internal",
 }
 
 
