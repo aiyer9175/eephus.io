@@ -2428,6 +2428,7 @@ def build_glossary() -> str:
         '<button class="chip active" data-glossary-view="terms">Terms</button>'
         '<button class="chip" data-glossary-view="guide">How to Read</button>'
         '<button class="chip" data-glossary-view="methodology">Methodology</button>'
+        '<button class="chip" data-glossary-view="models">Models &amp; Proofs</button>'
         '<button class="chip" data-glossary-view="source-comparison">Source Comparison</button>'
         # Outbound link (not a view toggle) to the full attribution page, so the
         # Data Sources & Attribution page is reachable from this section, not just
@@ -2441,6 +2442,7 @@ def build_glossary() -> str:
         '</div>'
         '<div id="guide-body" style="display:none;"></div>'
         '<div id="methodology-body" style="display:none;"></div>'
+        '<div id="models-body" style="display:none;"></div>'
         '<div id="source-comparison-body" style="display:none;"></div>'
         '<div id="glossary-rows"></div>'
         '</div>'

@@ -1727,6 +1727,42 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
 .gl-app a.chip.gl-chip-out { margin-left: auto; }
 .gl-app a.chip:hover { color: var(--text-primary); border-color: var(--accent-gold); }
+/* === Models & Proofs view === */
+/* Verdict pill: theme-aware via the shared accent tokens, so it reads on both
+   the light cream and the dark refractor themes. */
+.gl-app .gl-verdict { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border: 1px solid var(--border);
+  color: var(--text-tertiary); white-space: nowrap; }
+.gl-app .gl-verdict--validated { color: var(--accent-green); border-color: var(--accent-green); }
+.gl-app .gl-verdict--provisional { color: var(--accent-gold); border-color: var(--accent-gold); }
+.gl-app .gl-verdict--unvalidated { color: var(--accent-red); border-color: var(--accent-red); }
+.gl-app .gl-verdict--deprecated { color: var(--text-tertiary); border-color: var(--border); opacity: 0.85; }
+.gl-app .gl-model-summary { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-primary); margin: 8px 0; }
+.gl-app .gl-model-filters { margin-top: 6px; }
+.gl-app .gl-model-group { margin: 16px 0; }
+.gl-app .gl-model-grouphead { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; }
+.gl-app .gl-model-card { border: 1px solid var(--border-light); background: var(--bg-secondary); margin: 5px 0; }
+.gl-app .gl-model-head { cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 11px; list-style: none; user-select: none; }
+.gl-app .gl-model-head::-webkit-details-marker { display: none; }
+.gl-app .gl-model-head::marker { content: ""; }
+.gl-app .gl-model-card[open] > .gl-model-head { border-bottom: 1px solid var(--border-light); }
+.gl-app .gl-model-name { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.gl-app .gl-model-surface { font-family: var(--font-retro-mono); font-size: 10px; color: var(--text-tertiary);
+  margin-left: auto; text-align: right; }
+.gl-app .gl-model-body { padding: 6px 11px 11px; }
+.gl-app .gl-model-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; padding: 6px 0;
+  border-bottom: 1px dotted var(--border-light); font-size: 12px; }
+.gl-app .gl-model-row:last-child { border-bottom: 0; }
+.gl-app .gl-model-rowlabel { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+.gl-app .gl-model-rowval { color: var(--text-secondary); line-height: 1.5; min-width: 0; word-break: break-word; }
+.gl-app .gl-model-rowval a { color: var(--accent-cyan); }
+@media (max-width: 640px) {.gl-app .gl-model-row { grid-template-columns: 1fr; gap: 2px; }.gl-app .gl-model-surface { margin-left: 0; text-align: left; flex-basis: 100%; }
+    }
 .gl-app /* === How to Read the Site (guide) === */
     .guide-wrap { max-width: 900px; }
 .gl-app .guide-intro { font-family: var(--font-serif); font-size: 14px; line-height: 1.6;

@@ -20,6 +20,12 @@
                backtest: null, btLoading: false };
   let GL = {};         // legacy-shaped map: slug -> {name, short, long, ...}
   let GROUPS = {};     // category -> display group
+  // Models & Proofs view state. Declared up top (module scope, before boot
+  // runs) so the lazy fetch guard is always initialized, mirroring the
+  // _S.registry/_S.backtest lazy-load pattern the other views use.
+  let _MODELS = null;          // cached model_registry.json payload (or {__error:true})
+  let _MODELS_LOADING = false; // in-flight guard against a double fetch
+  let _MODELS_FILTER = "all";  // active verdict filter for the Models & Proofs list
 
   function escapeHtml(s) {
     return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -179,7 +185,8 @@
   // ---- router ----------------------------------------------------------------
   function render() {
     const ids = { terms: "glossary-rows", guide: "guide-body",
-                  methodology: "methodology-body", "source-comparison": "source-comparison-body" };
+                  methodology: "methodology-body", "source-comparison": "source-comparison-body",
+                  models: "models-body" };
     document.querySelectorAll("[data-glossary-view]").forEach(b => {
       b.classList.toggle("active", b.dataset.glossaryView === _S.view);
     });
@@ -192,6 +199,7 @@
     if (_S.view === "guide") renderGuide();
     else if (_S.view === "methodology") renderMethodology();
     else if (_S.view === "source-comparison") renderSourceComparison();
+    else if (_S.view === "models") renderModels();
     else renderTerms();
   }
 
@@ -1250,6 +1258,168 @@ function renderSourceComparison() {
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Empirical backtest · resolved cohorts only</div>
     ${backtestHTML}
   </div>`;
+}
+
+// ---- Models & Proofs view --------------------------------------------------
+// The platform's accountability ledger as a browsable, family-grouped,
+// verdict-filterable view. Same registry the Methodology table renders
+// verbatim (data/model_registry.json), reorganized so a reader can audit one
+// family or one verdict at a time. Lazy-loaded once into _MODELS, mirroring
+// the Source Comparison fetch / guard / failure pattern.
+const _MODEL_FAMILY_ORDER = ["PROSPX / eFV", "MLB Projections", "Free Agency",
+  "MLB Stats", "Draft", "Trade Machine", "Other", "Internal / model-dev"];
+const _MODEL_VERDICT_ORDER = ["validated", "provisional", "unvalidated", "deprecated"];
+// Tokens kept fully uppercased when a model_id is humanized into a label. The
+// list the owner keeps uppercase (REM, RIV, SEM, FV, WAR, WAG, PAL, FA, DPW,
+// QO, SC, RPS, KRP, DS) plus a few domain acronyms that appear in ids. The
+// bare "<=4 chars" shortcut was dropped on purpose: it shouts common words
+// (PICK, TAX, SLOT, TEAM, WIN, FIT), which reads badly in user-facing copy.
+const _MODEL_ACRONYMS = new Set(["REM", "RIV", "SEM", "FV", "WAR", "WAG", "PAL",
+  "FA", "DPW", "QO", "SC", "RPS", "KRP", "DS", "MLB", "ETA", "IFA", "NPB", "KBO",
+  "CPBL", "AAA", "AA", "ERA", "OPS", "AUC"]);
+const _MODEL_MIXEDCASE = { efv: "eFV", xfv: "eFV", gmli: "gmLI" };
+const _MODEL_STOPWORDS = new Set(["to", "vs", "of", "and", "the", "per", "by", "a"]);
+
+function _modelLabel(id) {
+  const toks = String(id == null ? "" : id).split("_");
+  return toks.map((tok, i) => {
+    if (!tok) return tok;
+    const low = tok.toLowerCase();
+    if (_MODEL_MIXEDCASE[low]) return _MODEL_MIXEDCASE[low];
+    if (_MODEL_ACRONYMS.has(tok.toUpperCase())) return tok.toUpperCase();
+    if (i > 0 && _MODEL_STOPWORDS.has(low)) return low;
+    return tok.charAt(0).toUpperCase() + tok.slice(1);
+  }).join(" ");
+}
+
+// Family from the surface (+ id as a fallback signal). Internal / model-dev is
+// tested FIRST so the many "rendered nowhere" dev artifacts land there rather
+// than being pulled into a product family by an incidental mention of eFV or
+// Projections in their description.
+function _modelFamily(m) {
+  const s = ((m.surface || "") + " " + (m.model_id || "")).toLowerCase();
+  const any = arr => arr.some(n => s.indexOf(n) !== -1);
+  if (any(["model-dev", "rendered nowhere", "loss ledger", "not wired", "n/a", "internal"])) return "Internal / model-dev";
+  if (any(["mlbstats", "bullpen", "starter"])) return "MLB Stats";
+  if (any(["trademachine", "trade machine"])) return "Trade Machine";
+  if (any(["free agency", "/fa/"])) return "Free Agency";
+  if (any(["/projections/", "projections"])) return "MLB Projections";
+  if (any(["draft"])) return "Draft";
+  if (any(["prospx", "efv", "xfv"])) return "PROSPX / eFV";
+  return "Other";
+}
+
+function _modelRow(label, val) {
+  return val
+    ? `<div class="gl-model-row"><span class="gl-model-rowlabel">${label}</span><span class="gl-model-rowval">${escapeHtml(val)}</span></div>`
+    : "";
+}
+
+// The proof line: a link to the committed eval artifact where one exists; the
+// audit-hit-list note for an unvalidated claim with no eval; the consensus /
+// source models also point at the Source Comparison head-to-head. Eval-less
+// internal rows get no Proof line at all.
+function _modelProofHTML(m) {
+  const bits = [];
+  if (m.eval_artifact) {
+    bits.push(`<a href="/${escapeHtml(m.eval_artifact)}" target="_blank" rel="noopener">${escapeHtml(m.eval_artifact)}</a>`);
+  } else if (m.verdict === "unvalidated") {
+    bits.push("No committed eval yet (this is the audit's hit list).");
+  }
+  if (m.model_id === "consensus_fv" || m.model_id === "source_track_record") {
+    bits.push("See the Source Comparison view for the head-to-head proof.");
+  }
+  if (!bits.length) return "";
+  return `<div class="gl-model-row"><span class="gl-model-rowlabel">Proof</span><span class="gl-model-rowval">${bits.join(" ")}</span></div>`;
+}
+
+function _modelCard(m) {
+  const v = m.verdict || "";
+  const badge = `<span class="gl-verdict gl-verdict--${escapeHtml(v)}">${escapeHtml(v)}</span>`;
+  return `<details class="gl-model-card">
+    <summary class="gl-model-head">
+      <span class="gl-model-name">${escapeHtml(_modelLabel(m.model_id))}</span>
+      ${badge}
+      <span class="gl-model-surface">${escapeHtml(m.surface || "")}</span>
+    </summary>
+    <div class="gl-model-body">
+      ${_modelRow("Predicts", m.predicts)}
+      ${_modelRow("Champion", m.champion)}
+      ${_modelRow("Baseline it must beat", m.baseline)}
+      ${_modelRow("How it is measured", m.metric)}
+      ${_modelRow("Accountability", m.notes)}
+      ${_modelProofHTML(m)}
+    </div>
+  </details>`;
+}
+
+function _modelsShell(inner) {
+  return `<div class="source-comp-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Models &amp; Proofs · the accountability ledger</div>
+    ${inner}
+  </div>`;
+}
+
+function renderModels() {
+  const el = document.getElementById("models-body");
+  if (!el) return;
+  if (!_MODELS && !_MODELS_LOADING) {
+    _MODELS_LOADING = true;
+    fetch("/data/model_registry.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _MODELS = j || { __error: true }; _MODELS_LOADING = false;
+        if (_S.view === "models") renderModels(); })
+      // A failed fetch (or a throw in the re-render) must surface the retry
+      // state, never strand the loading placeholder.
+      .catch(() => { _MODELS = { __error: true }; _MODELS_LOADING = false;
+        if (_S.view === "models") renderModels(); });
+  }
+  const reg = _MODELS;
+  if (!reg) {
+    el.innerHTML = _modelsShell(`<div class="state-message">Loading the model registry...</div>`);
+    return;
+  }
+  if (reg.__error || !Array.isArray(reg.models) || !reg.models.length) {
+    el.innerHTML = _modelsShell(`<div class="state-message">The model registry could not be loaded.<div style="margin-top:12px;"><button class="chip" type="button" id="gl-models-retry">Retry</button></div></div>`);
+    const rb = document.getElementById("gl-models-retry");
+    if (rb) rb.onclick = () => { _MODELS = null; _MODELS_LOADING = false; renderModels(); };
+    return;
+  }
+
+  const models = reg.models;
+  const counts = {};
+  models.forEach(m => { counts[m.verdict] = (counts[m.verdict] || 0) + 1; });
+  const filters = [["all", "All", models.length]].concat(
+    _MODEL_VERDICT_ORDER.map(v => [v, v.charAt(0).toUpperCase() + v.slice(1), counts[v] || 0]));
+  const chips = filters.map(([key, lbl, n]) =>
+    `<button class="chip${_MODELS_FILTER === key ? " active" : ""}" type="button" data-gl-mfilter="${escapeHtml(key)}">${escapeHtml(lbl)} <span class="gl-count">${n}</span></button>`).join("");
+
+  const shown = _MODELS_FILTER === "all" ? models : models.filter(m => m.verdict === _MODELS_FILTER);
+  const byFam = new Map();
+  shown.forEach(m => {
+    const f = _modelFamily(m);
+    if (!byFam.has(f)) byFam.set(f, []);
+    byFam.get(f).push(m);
+  });
+  const famOrder = _MODEL_FAMILY_ORDER.concat([...byFam.keys()].filter(f => _MODEL_FAMILY_ORDER.indexOf(f) === -1));
+  const groupsHTML = famOrder.filter(f => byFam.has(f)).map(f =>
+    `<div class="gl-model-group">
+      <div class="gl-model-grouphead">${escapeHtml(f)} <span class="gl-count">${byFam.get(f).length}</span></div>
+      ${byFam.get(f).map(_modelCard).join("")}
+    </div>`).join("");
+
+  const summary = `${models.length} models: ${counts.validated || 0} validated, ${counts.provisional || 0} provisional, ${counts.unvalidated || 0} unvalidated, ${counts.deprecated || 0} deprecated${reg.checked_at ? ` &middot; last checked ${escapeHtml(reg.checked_at)}` : ""}.`;
+
+  el.innerHTML = _modelsShell(`
+    <h2 class="meth-h">Every model that makes a predictive claim</h2>
+    <p class="meth-note">This is the platform's accountability ledger. Every model that makes a predictive claim is listed here with an honest verdict, misses included. <strong>Validated</strong> means a forward-chained out-of-sample backtest exists and the champion beats its stated baseline. <strong>Provisional</strong> means measured but partial. <strong>Unvalidated</strong> means a claim with no measurement yet. <strong>Deprecated</strong> means it failed its gate and was retired.</p>
+    <p class="gl-model-summary">${summary}</p>
+    <div class="filter-bar gl-model-filters">${chips}</div>
+    ${shown.length ? groupsHTML : `<div class="state-message">No models with that verdict.</div>`}`);
+
+  el.querySelectorAll("[data-gl-mfilter]").forEach(b => b.onclick = () => {
+    _MODELS_FILTER = b.dataset.glMfilter; renderModels();
+  });
 }
 
 })();

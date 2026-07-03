@@ -170,6 +170,36 @@ def load_pitch_hand(season: int) -> dict:
     return out
 
 
+@functools.lru_cache(maxsize=1)
+def load_bref_pitcher_war() -> dict:
+    """{year: {mlbam: bWAR}} - Baseball-Reference pitcher WAR by season, summed
+    across in-season stints (traded pitchers), for the "WAR produced by
+    conversion" read. One bulk pull (pybaseball.bwar_pitch); best-effort, {} on
+    any failure so the history still renders without the WAR column."""
+    try:
+        import pybaseball as pyb
+        df = pyb.bwar_pitch(return_all=True)
+    except Exception as e:  # noqa: BLE001
+        _log.warning("bref pitcher WAR unavailable: %s", e)
+        return {}
+    out: dict = {}
+    try:
+        for r in df.to_dict("records"):
+            mid, yr, war = r.get("mlb_ID"), r.get("year_ID"), r.get("WAR")
+            if mid is None or yr is None or war is None:
+                continue
+            try:
+                mid_i, yr_i, war_f = int(float(mid)), int(yr), float(war)
+            except (TypeError, ValueError):
+                continue
+            out.setdefault(yr_i, {})
+            out[yr_i][mid_i] = out[yr_i].get(mid_i, 0.0) + war_f
+    except Exception as e:  # noqa: BLE001
+        _log.warning("bref pitcher WAR parse failed: %s", e)
+        return {}
+    return out
+
+
 def load_player_links() -> dict:
     """{mlbam: link} from data/player_links.json (mlbam <-> prospx key)."""
     try:
@@ -424,6 +454,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     platoon_rows.sort(key=lambda x: x["reverse_index"], reverse=True)
 
     # ---- conversion history + backtest -------------------------------------
+    war_by_year = load_bref_pitcher_war()   # {year: {mlbam: bWAR}}, best-effort
     history, mix_changes = [], []
     pre_fits, labels = [], []
     for e in events:
@@ -439,19 +470,34 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         succ = pc.label_success(e)
         h = dict(e); h["pre_fit"] = pre_fit
         h["success"] = succ
+        # WAR produced by the conversion: bWAR in the pre-role season vs the
+        # post-role season, plus the delta. Keyed by the seasons the detector
+        # recorded. Absent (older season or no bref row) renders as a dash.
+        pre_season = (e.get("pre") or {}).get("season", py)
+        post_season = (e.get("post") or {}).get("season", e["year"])
+        pre_war = (war_by_year.get(pre_season) or {}).get(e["mlbam"])
+        post_war = (war_by_year.get(post_season) or {}).get(e["mlbam"])
+        h["pre_war"] = None if pre_war is None else round(pre_war, 1)
+        h["post_war"] = None if post_war is None else round(post_war, 1)
+        h["war_delta"] = (None if pre_war is None or post_war is None
+                          else round(post_war - pre_war, 1))
+        # pitch-mix change (before/after arsenal usage) for the converter,
+        # attached INLINE to the record so the history view can show the arsenal
+        # shift per conversion (kept as a standalone array too).
+        pre_ars = arsenal_by_year.get(py, {}).get(e["mlbam"])
+        post_ars = arsenal_by_year.get(e["year"], {}).get(e["mlbam"])
+        if pre_ars and post_ars:
+            before, after = _mix(pre_ars), _mix(post_ars)
+            h["pitch_mix"] = {"before": before, "after": after}
+            mix_changes.append({
+                "mlbam": e["mlbam"], "name": e["name"], "team": e["team"],
+                "direction": e["direction"], "year": e["year"],
+                "before": before, "after": after,
+            })
         history.append(h)
         if pre_fit is not None and succ is not None:
             pre_fits.append(pre_fit)
             labels.append(1.0 if succ else 0.0)
-        # pitch-mix change (before/after arsenal usage) for the converter
-        pre_ars = arsenal_by_year.get(py, {}).get(e["mlbam"])
-        post_ars = arsenal_by_year.get(e["year"], {}).get(e["mlbam"])
-        if pre_ars and post_ars:
-            mix_changes.append({
-                "mlbam": e["mlbam"], "name": e["name"], "team": e["team"],
-                "direction": e["direction"], "year": e["year"],
-                "before": _mix(pre_ars), "after": _mix(post_ars),
-            })
     history.sort(key=lambda h: (h["year"], -(h["pre_fit"] or 0)), reverse=True)
 
     rho = _spearman(pre_fits, labels)

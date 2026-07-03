@@ -322,6 +322,38 @@
     if (h.success === false) return '<span class="pal-miss">Miss</span>';
     return '<span class="pal-pending">pending</span>';
   }
+  // WAR produced by the conversion: realized bWAR before and after the switch,
+  // with the delta colored (a gain reads as a hit, a drop as a miss).
+  function warCell(h) {
+    if (h.post_war == null && h.pre_war == null) return '<span class="pal-pending">-</span>';
+    var pre = (h.pre_war == null) ? "-" : f1(h.pre_war);
+    var post = (h.post_war == null) ? "-" : f1(h.post_war);
+    var d = "";
+    if (h.war_delta != null) {
+      var cls = h.war_delta > 0 ? "pal-hit" : (h.war_delta < 0 ? "pal-miss" : "proj-dim");
+      d = ' <span class="' + cls + '">' + (h.war_delta > 0 ? "+" : "") + f1(h.war_delta) + "</span>";
+    }
+    return '<span class="proj-dim">' + pre + " &rarr; </span>" + post + d;
+  }
+  // Compact arsenal shift: pitches meaningfully ADDED (leaned on) and DROPPED
+  // across the conversion, from the inline before/after pitch mix. Signals the
+  // "stretch out adds a third pitch / trim to two" pattern per row.
+  function arsenalShiftCell(h) {
+    var mix = h.pitch_mix;
+    if (!mix || !mix.before || !mix.after) return '<span class="pal-pending">-</span>';
+    function set(arr, thr) {
+      var m = {};
+      (arr || []).forEach(function (p) { if ((p.usage || 0) >= thr) m[p.pitch] = p.usage; });
+      return m;
+    }
+    var before = set(mix.before, 0.05), after = set(mix.after, 0.10);
+    var added = [], dropped = [];
+    Object.keys(after).forEach(function (p) { if (before[p] == null) added.push(p); });
+    Object.keys(set(mix.before, 0.10)).forEach(function (p) { if (set(mix.after, 0.05)[p] == null) dropped.push(p); });
+    var out = added.map(function (p) { return '<span class="pal-hit">+' + esc(p) + "</span>"; })
+      .concat(dropped.map(function (p) { return '<span class="pal-miss">-' + esc(p) + "</span>"; }));
+    return out.length ? out.join(" ") : '<span class="proj-dim">same mix</span>';
+  }
   function scorecard() {
     var b = (DATA && DATA.backtest) || {};
     return '<div class="pal-scorecard">'
@@ -348,17 +380,24 @@
       return la - lb || b.year - a.year || (b.pre_fit || 0) - (a.pre_fit || 0);
     });
     var head = "<thead><tr><th>Pitcher</th><th>Conversion</th><th>Year</th><th>Before</th><th>After</th>"
+      + "<th>WAR before &rarr; after</th><th>Arsenal shift</th>"
       + "<th>Held role</th><th>pre-FIT</th><th>Result</th></tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
       return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + esc(h.name || "-") + "</td>"
         + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
         + "<td>" + esc(h.year) + "</td>"
         + "<td>" + roleLine(h.pre) + "</td><td>" + roleLine(h.post) + "</td>"
+        + "<td>" + warCell(h) + "</td>"
+        + "<td>" + arsenalShiftCell(h) + "</td>"
         + "<td>" + heldCell(h) + "</td>"
         + '<td>' + (h.pre_fit == null ? "-" : '<span class="pal-fit ' + fitClass(h.pre_fit) + '">' + f1(h.pre_fit) + "</span>") + "</td>"
         + "<td>" + successCell(h) + "</td></tr>";
     }).join("") + "</tbody>";
-    return scorecard() + historyToggle()
+    var note = '<div class="mlbstats-note">Every detected SP&harr;RP switch since 2018, labeled by whether the pitcher '
+      + "held the new role. WAR before and after is realized Baseball-Reference pitcher WAR in the pre-role and "
+      + "post-role seasons (the value the conversion actually produced); Arsenal shift flags the pitches he added "
+      + "or dropped in the move.</div>";
+    return scorecard() + historyToggle() + note
       + '<div class="mlbstats-scroll"><table class="mlbstats-table">' + head + body + "</table></div>";
   }
   function renderMix() {

@@ -109,9 +109,10 @@ def test_all_four_views_render(server):
         page.wait_for_selector(".gl-app .glossary-card", timeout=10_000)
         for view, body_id in [("guide", "guide-body"),
                               ("methodology", "methodology-body"),
+                              ("models", "models-body"),
                               ("source-comparison", "source-comparison-body")]:
             page.click(f'[data-glossary-view="{view}"]')
-            # source-comparison lazy-fetches its backtest JSON.
+            # source-comparison + models lazy-fetch their JSON.
             page.wait_for_timeout(900)
             results[view] = page.evaluate(
                 f"document.getElementById('{body_id}').innerHTML.length")
@@ -120,6 +121,10 @@ def test_all_four_views_render(server):
         # length-only assertion — never again).
         sc_html = page.evaluate(
             "document.getElementById('source-comparison-body').innerHTML")
+        # Models & Proofs must render the registry-driven accountability cards,
+        # not strand on loading (same lesson).
+        models_html = page.evaluate(
+            "document.getElementById('models-body').innerHTML")
         browser.close()
 
     assert not page_errors, "JS errors during view walk:\n  " + "\n  ".join(page_errors)
@@ -128,6 +133,8 @@ def test_all_four_views_render(server):
     assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
     assert ("Does eFV outperform" in sc_html
             or "no resolved cohorts" in sc_html), "source comparison rendered neither data nor empty-state"
+    assert "gl-verdict" in models_html, "Models & Proofs stranded (no verdict badges rendered)"
+    assert "Predicts" in models_html, "Models & Proofs cards missing the Predicts row"
 
 
 def test_deep_link_expands_and_highlights_term(server):

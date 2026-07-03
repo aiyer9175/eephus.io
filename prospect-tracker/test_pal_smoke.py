@@ -32,7 +32,9 @@ SAMPLE = """{
    "components":{"stuff_upside":80,"putaway":90,"velo_leverage":70,"tto_leakage":75,"conversion_need":82},
    "flags":[{"key":"putaway","label":"late-inning weapon"},{"key":"struggling_sp","label":"struggling as a starter"}]}],
  "history":[{"mlbam":3,"name":"Converted Guy","team":"KC","direction":"RP->SP","year":2023,
-   "pre":{"g":60,"gs":0,"ip":65,"k_pct":0.28,"era":3.5},"post":{"g":30,"gs":28,"ip":160,"k_pct":0.24,"era":3.8},
+   "pre":{"season":2022,"g":60,"gs":0,"ip":65,"k_pct":0.28,"era":3.5},"post":{"season":2023,"g":30,"gs":28,"ip":160,"k_pct":0.24,"era":3.8},
+   "pre_war":0.8,"post_war":3.2,"war_delta":2.4,
+   "pitch_mix":{"before":[{"pitch":"FF","usage":0.6},{"pitch":"SL","usage":0.35}],"after":[{"pitch":"FF","usage":0.45},{"pitch":"SL","usage":0.3},{"pitch":"CH","usage":0.2}]},
    "held":true,"pre_fit":80.5,"success":true}],
  "pitch_mix_changes":[{"mlbam":3,"name":"Converted Guy","team":"KC","direction":"RP->SP","year":2023,
    "before":[{"pitch":"FF","usage":0.6}],"after":[{"pitch":"FF","usage":0.4},{"pitch":"CH","usage":0.2}]}],
@@ -102,6 +104,11 @@ def test_history_scorecard_view():
     assert "pal-scorecard" in html
     assert "0.223" in html and "Converted Guy" in html
     assert "Hit" in html                              # held-role label
+    # WAR produced by the conversion: before -> after with the delta
+    assert "WAR before" in html                       # column header
+    assert "3.2" in html and "+2.4" in html           # post WAR + gain
+    # arsenal shift: CH was added in the move
+    assert "+CH" in html
 
 
 def test_pitchadd_view():

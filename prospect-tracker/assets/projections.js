@@ -77,6 +77,8 @@
   let DETAIL_LOADING = false;
   let FIELDING = null;          // data/mlb_fielding_positions.json, lazy
   let FIELDING_LOADING = false;
+  let PITCHLB = null;           // {byMlbam:{...}} from the /mlbstats/ leaderboards, lazy
+  let PITCHLB_LOADING = false;
 
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
@@ -925,6 +927,56 @@
       })
       .catch(() => { FIELDING = { players: {} }; FIELDING_LOADING = false; });
   }
+  // Live season pitching from the /mlbstats/ leaderboards (REM+ / RIV+ for
+  // relievers, SEM+ for starters), joined by MLBAM. Lazy-loaded once and cached,
+  // then the player page re-renders (same pattern as ensureFielding). This rolls
+  // the current-season pitching skill/impact ratings into the MLB player card.
+  function ensurePitchingStats(key) {
+    if (PITCHLB || PITCHLB_LOADING) return;
+    PITCHLB_LOADING = true;
+    const byMlbam = {};
+    const grab = (url, kind) => fetch(url, { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => {
+        const rows = (d && (d.relievers || d.starters)) || [];
+        const season = d && d.season;
+        rows.forEach(row => { if (row.mlbam != null) byMlbam[row.mlbam] = { kind, season, row }; });
+      })
+      .catch(() => {});
+    Promise.all([
+      grab("/data/bullpen_leaderboards.json", "rel"),
+      grab("/data/starter_leaderboards.json", "sp"),
+    ]).then(() => {
+      PITCHLB = { byMlbam };
+      PITCHLB_LOADING = false;
+      if (state.player === key) renderPlayer(key);
+    });
+  }
+  function pitchingStatsBlock(p) {
+    if (!PITCHLB || !p || p.mlbam == null) return "";
+    const hit = PITCHLB.byMlbam[p.mlbam];
+    if (!hit) return "";
+    const r = hit.row;
+    const plus = (label, val, term, hi) => (val == null ? "" :
+      `<div class="mlbp-tile"><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= (hi || 105) ? "proj-pos" : val <= (200 - (hi || 105)) ? "proj-neg" : ""}">${val}</span></div>`);
+    let tiles = "", title = "", n = "";
+    if (hit.kind === "rel") {
+      title = "Bullpen Leaderboards";
+      tiles = plus("REM+", r.rem_plus, "rem_plus") + plus("RIV+", r.riv_plus, "riv_plus")
+        + (r.rem_plus_3yr != null ? plus("REM+ 3yr", r.rem_plus_3yr) : "");
+      n = `${r.role || "reliever"} · ${r.ip != null ? r.ip + " IP" : ""}`;
+    } else {
+      title = "Starter Leaderboards";
+      tiles = plus("SEM+", r.sem_plus, "sem_plus")
+        + (r.sem_plus_3yr != null ? plus("SEM+ 3yr", r.sem_plus_3yr) : "");
+      n = `${r.role || "starter"} · ${r.ip != null ? r.ip + " IP" : ""}`;
+    }
+    if (!tiles) return "";
+    const seasonTxt = hit.season ? `${hit.season} ` : "";
+    return `<div class="mlbp-section-title" style="margin-top:18px;">Live pitching <span class="fa-sub" style="font-weight:normal;">${esc(seasonTxt)}season</span></div>
+      <div class="fa-sub" style="margin:-2px 0 8px;">${esc(n)} · <a class="fa-player-link" href="/mlbstats/">open the MLB Stats leaderboards &rarr;</a></div>
+      <div class="mlbp-tiles">${tiles}</div>`;
+  }
   function positionGamesSummary(key) {
     const entry = FIELDING && FIELDING.players && FIELDING.players[key];
     const positions = entry && entry.positions;
@@ -978,6 +1030,7 @@
       return;
     }
     ensureFielding(key);
+    if (p.isPit || p.twoWay) ensurePitchingStats(key);
     const photo = p.mlbam
       ? `<img class="mlbp-headshot" src="${headshotURL(p.mlbam, 240)}" alt="" onerror="this.style.visibility='hidden'">` : "";
     const tiles = [];
@@ -1019,6 +1072,7 @@
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
       ${positionGamesSummary(key)}
+      ${pitchingStatsBlock(p)}
       ${fanChart(p)}
       ${upsidePath(p)}
       ${p.twoWay && p.proj && p.proj.warHit ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : ""}
