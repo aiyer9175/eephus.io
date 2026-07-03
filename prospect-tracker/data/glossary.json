@@ -4658,6 +4658,49 @@
    ]
   },
   {
+   "id": "riv_plus",
+   "term": "RIV+ (Reliever Impact Value)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "RIV+",
+    "reliever impact value",
+    "reliever impact"
+   ],
+   "priority": 21,
+   "definition": "The realized leverage-weighted VALUE a reliever produced this season, on a 100-anchored scale (100 = average, higher is more value). RIV+ is the deployment-value companion to REM+: where REM+ is pure run-prevention skill with leverage held out, RIV+ credits the wins a reliever actually added in the leverage he was given. An elite high-leverage closer scores far above his own REM+; a good arm used in low-leverage work scores below it.",
+   "methodology": "RIV+ standardizes a WPA-primary composite over the season's reliever pool and reports it as 100 plus ten times the standard score. The composite is 70 percent Win Probability Added (WPA already weights every out by the leverage of the moment) and 30 percent shutdowns minus meltdowns (a lower-variance count of the high-impact good and bad outings). Leverage enters only through the value a reliever produced, never as free credit for being handed a high-leverage role.\n\nRIV+ is a realized-VALUE measure, not a repeatable-skill number. By design it is less stable year to year than REM+: its year-over-year rank correlation is 0.21 versus 0.35 for REM+ over 2018-2025 (excluding 2020), which is exactly why leverage stays out of the REM+ skill scale and rides here instead. RIV+ tracks what teams pay relief free agents at least as closely as REM+ does. Accountability artifact: data/riv_plus_eval.json.",
+   "seeAlso": [
+    "rem_plus",
+    "wpa",
+    "gmli",
+    "shutdowns_meltdowns"
+   ]
+  },
+  {
+   "id": "rem_plus_3yr",
+   "term": "REM+ 3yr (three-year skill)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "REM+ 3yr",
+    "three-year REM+",
+    "rem plus 3yr"
+   ],
+   "priority": 21,
+   "definition": "REM+ over the trailing three seasons, weighted by innings, shown with the pitcher's pool percentile. The same pure-skill run-prevention scale as REM+ (100 = average reliever), just read over more innings so it is steadier than a single season, which for relievers is genuinely noisy.",
+   "methodology": "Each of the trailing three seasons' REM+ is averaged with innings-pitched weights. Single reliever seasons are volatile (within-season split-half REM+ correlation only about 0.34 at 100 to 150 batters faced), so a three-year window is a more stable talent read. In the forward test it predicts next-year run prevention about as well as, and no worse than, a single season on the same arms; its value is stability, not a claim of sharper prediction, so it ships as a companion column to the single-season REM+ rather than a replacement.\n\nArms with fewer than 2 seasons or 40 innings in the window carry a provisional mark. Like REM+, it excludes leverage from the scale. Accountability artifact: data/rem_plus_multiyear_eval.json.",
+   "seeAlso": [
+    "rem_plus",
+    "riv_plus",
+    "gmli_3yr"
+   ]
+  },
+  {
    "id": "wpa",
    "term": "WPA (Win Probability Added)",
    "category": "pitcher-stat",

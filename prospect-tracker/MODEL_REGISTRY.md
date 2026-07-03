@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**52 models.** Verdicts: validated: 17, provisional: 23, unvalidated: 3, deprecated: 9.
+**55 models.** Verdicts: validated: 17, provisional: 25, unvalidated: 3, deprecated: 10.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -62,6 +62,9 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `milb_park_factors` | model-dev artifact (rendered nowhere) - MiLB per-park fac... | n/a - gated experiment R-PARK: per-park run/contact environment factors from Savant-minors 2023+ to adjust college -> Single-A... | no park adjustment (college_translation unchanged) | per-park factors + matched-pair LOO with the adjustment (could not be run) | pre-registered gate: per-park YoY stability rho >= 0.50; translation LOO MAE/... | **deprecated** | `data/milb_park_factors_eval.json` | - | - |
 | `era_shrink_unification` | model-dev artifact (rendered nowhere) - ERA-shrink pseudo... | n/a - gated experiment R-SHRINK: whether one shared ERA-shrink value can replace K_IP=50 (display) and NEED_ERA_SHRINK_IP=45 (P... | two distinct values retained (K_IP=50.0, NEED_ERA_SHRINK_IP=45.0) | shared candidate values 35..65 step 5 vs both incumbents on their own objectives | pre-registered gate: a single value must beat-or-tie BOTH the display-stabili... | **deprecated** | `data/era_shrink_unification_eval.json` | - | - |
 | `xfv_grade_recal4` | model-dev artifact (rendered nowhere) - eFV bucket-calibr... | n/a - gated experiment E-ISO4: a single shared monotone grade map applied to both sides so cross-side ranking is preserved by c... | shipped uncalibrated p_bucket_given_fv distribution (unchanged) | shared grade map (formulation a) and shared map + per-side residual bucket ta... | same 4-condition production-relevant gate as E-ISO3 (per-side per-bucket Brie... | **deprecated** | `data/xfv_grade_recal4_eval.json` | - | - |
+| `riv_plus` | /mlbstats/ Bullpen Leaderboards, RIV+ column (realized im... | realized leverage-weighted reliever VALUE (not skill): a 100-anchored index of the wins a reliever actually added, WPA-primary... | riv_plus_v1 (0.70*z(WPA) + 0.30*z(SD-MD), reported as 100 + 10z) | pre-registered descriptive-validity checks (X-R3): aligns with RP AAV at leas... | Y->Y+1 rank autocorrelation vs REM+ + RP free-agent AAV market alignment | **provisional** | `data/riv_plus_eval.json` | - | - |
+| `rem_plus_3yr` | /mlbstats/ Bullpen Leaderboards, REM+ 3yr column (stable... | reliever run-prevention skill over a trailing 3-season window (IP-weighted mean REM+); a more stable talent read than a single... | rem_plus_3yr (IP-weighted trailing-3-season REM+) | single-season REM+ forward rho vs RA9(Y+1) on the same reliever set | forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded boots... | **provisional** | `data/rem_plus_multiyear_eval.json` | - | - |
+| `rem_plus_swstr` | n/a (loss ledger; rendered nowhere) | candidate REM+ skill core that shrinks the K component toward a SwStr-implied expected-K prior instead of the pool mean | rejected candidate (SwStr xK skill core) | incumbent REM+ FIP core forward rho vs RA9(Y+1) | forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the candidate-min... | **deprecated** | `data/rem_plus_swstr_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

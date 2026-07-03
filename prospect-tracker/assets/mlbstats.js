@@ -129,6 +129,15 @@
   var REL_COLS = [
     { key: "name", label: "Reliever", term: null, sortable: true, kind: "name" },
     { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "rem_plus_3yr", label: "REM+ 3yr", term: "rem_plus_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.rem_plus_3yr; },
+      cell: function (r) {
+        if (r.rem_plus_3yr == null) return "";
+        var s = remCell(r.rem_plus_3yr);
+        if (r.rem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.rem_plus_3yr_pct) + "</span>";
+        if (r.rem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
+        return s;
+      } },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
@@ -146,11 +155,20 @@
         if (r.gmli_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 60 relief entries in the trailing window">*</span>';
         return s;
       } },
+    { key: "riv_plus", label: "RIV+", term: "riv_plus", fmt: remCell, num: true, desc: true },
     { key: "wpa", label: "WPA", term: "wpa", fmt: fSigned, num: true },
     { key: "wpa_li", label: "WPA/LI", term: "wpa_li", fmt: fSigned, num: true },
     { key: "sd_md", label: "SD-MD", term: "shutdowns_meltdowns", fmt: fInt, num: true,
       get: function (r) { var sd = num(r.sd), md = num(r.md); return (sd == null && md == null) ? null : (sd || 0) - (md || 0); } },
   ];
+
+  // Past-season history rows (bullpen_history.json) carry only the season-level
+  // fields, not the trailing-window ones. Reuse the same column objects so the
+  // history board renders and sorts identically, dropping the columns whose data
+  // (rem_plus_3yr, gmli_3yr, wpa_li) does not exist in a history row.
+  var REL_HISTORY_KEYS = { name: 1, rem_plus: 1, riv_plus: 1, ip: 1, g: 1, k_pct: 1,
+    bb_pct: 1, k_bb_pct: 1, fip: 1, swstr_pct: 1, era: 1, gmli: 1, wpa: 1, sd_md: 1 };
+  var REL_HISTORY_COLS = REL_COLS.filter(function (c) { return REL_HISTORY_KEYS[c.key]; });
 
   var TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team" },
@@ -174,6 +192,16 @@
   var teamSort = { key: "bullpen_plus", asc: false };
   var query = "";
   var qualifiedOnly = true;
+
+  // Yearly history board (bullpen_history.json) is lazy-fetched the first time a
+  // past season is picked. relSeason is "current" for the live board or a season
+  // string like "2025". HISTORY caches the payload; the flags drive the inline
+  // loading / error states so a failed fetch never leaves a blank board.
+  var HISTORY_URL = "/data/bullpen_history.json";
+  var relSeason = "current";
+  var HISTORY = null;
+  var HISTORY_LOADING = false;
+  var HISTORY_ERROR = false;
 
   function getVal(col, row) {
     if (col.get) return col.get(row);
@@ -241,6 +269,60 @@
     });
   }
 
+  // ---- yearly history board -------------------------------------------------
+  // The season list drives the pills. Before the history file loads we seed it
+  // from the live season (the five completed seasons before it) so the pills
+  // exist to trigger the fetch; once loaded the file's own list is authoritative.
+  function historySeasons() {
+    if (HISTORY && HISTORY.seasons && HISTORY.seasons.length) return HISTORY.seasons.slice();
+    var cur = num(DATA && DATA.season);
+    if (cur == null) return [];
+    var out = [];
+    for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
+    return out;
+  }
+  function seasonPills() {
+    var pills = [["current", "Current"]];
+    historySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
+      pills.push([String(y), String(y)]);
+    });
+    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
+      var sel = (p[0] === relSeason);
+      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
+        + '" data-mlbseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function loadHistory() {
+    if (HISTORY || HISTORY_LOADING) return;
+    HISTORY_LOADING = true;
+    HISTORY_ERROR = false;
+    fetch(HISTORY_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { HISTORY = j; HISTORY_LOADING = false; render(); })
+      .catch(function () { HISTORY_LOADING = false; HISTORY_ERROR = true; render(); });
+  }
+  function historyYear() {
+    return (HISTORY && HISTORY.history && HISTORY.history[relSeason]) || null;
+  }
+  function filteredHistory() {
+    var yr = historyYear();
+    var rows = (yr && yr.relievers) || [];
+    var q = query.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (qualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+  // A past board can only sort on columns it actually shows; if the shared sort
+  // key belongs to a current-only column, fall back to the REM+ default.
+  function historySort() {
+    var ok = false;
+    REL_HISTORY_COLS.forEach(function (c) { if (c.key === relSort.key) ok = true; });
+    return ok ? relSort : { key: "rem_plus", asc: false };
+  }
+
   // On-page explainers for the headline metrics (F-08): 1-2 plain sentences,
   // wired to the shared glossary tooltip (data-gl via gloss()) plus a deep link
   // into the unified glossary entry.
@@ -262,12 +344,53 @@
   }
 
   function renderRelievers() {
+    if (relSeason !== "current") return renderRelieverHistory();
     var rows = sortRows(filteredRelievers(), REL_COLS, relSort);
-    if (!rows.length) return '<div class="mlbstats-empty">No relievers match the current filters.</div>';
-    var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
-      + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
-      + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
-    return remExplainer() + scorecard() + relieverViz() + note + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+    var body = rows.length
+      ? (function () {
+          var note = '<div class="mlbstats-note">' + rows.length + " relievers. "
+            + gloss("REM+", "rem_plus") + " is pure run-prevention skill (100 = average reliever); "
+            + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value, and "
+            + "gmLI / WPA / WPA-LI / SD-MD are the leverage context, kept separate.</div>";
+          return remExplainer() + scorecard() + relieverViz() + note
+            + '<div class="mlbstats-scroll">' + renderTable(rows, REL_COLS, relSort) + "</div>";
+        })()
+      : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
+    return seasonPills() + body;
+  }
+
+  // A past season's board: the same table and controls, restricted to the
+  // columns a history row carries (no trailing-window or WPA/LI columns). It
+  // lets a user eyeball how each season's REM+ (skill) and RIV+ (impact) aged.
+  function renderRelieverHistory() {
+    var pills = seasonPills();
+    if (HISTORY_ERROR) {
+      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
+        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-history-retry">Retry</button></div>';
+    }
+    if (!HISTORY) {
+      loadHistory();
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(relSeason) + " season leaderboard&hellip;</div>";
+    }
+    if (HISTORY_LOADING) {
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(relSeason) + " season leaderboard&hellip;</div>";
+    }
+    var yr = historyYear();
+    if (!yr || !yr.relievers || !yr.relievers.length) {
+      return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(relSeason) + " season.</div>";
+    }
+    var sort = historySort();
+    var rows = sortRows(filteredHistory(), REL_HISTORY_COLS, sort);
+    var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.relievers.length;
+    var cap = '<div class="mlbstats-note">' + esc(relSeason) + " season, " + esc(nQual)
+      + " qualified relievers. " + gloss("REM+", "rem_plus") + " is the skill read and "
+      + gloss("RIV+", "riv_plus") + " is realized leverage-weighted value; compare them against how "
+      + "these arms actually played forward.</div>";
+    var table = rows.length
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, REL_HISTORY_COLS, sort) + "</div>"
+      : '<div class="mlbstats-empty">No relievers match the current filters.</div>';
+    return pills + cap + table;
   }
 
   function renderTeams() {
@@ -402,10 +525,24 @@
     if (q) q.addEventListener("input", function () { query = q.value; renderInPlace(); });
     var qual = root.querySelector("#mlbstats-qual");
     if (qual) qual.addEventListener("change", function () { qualifiedOnly = qual.checked; renderInPlace(); });
+    root.querySelectorAll("[data-mlbseason]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        relSeason = b.getAttribute("data-mlbseason");
+        if (relSeason !== "current") loadHistory();
+        render();
+      });
+    });
+    var hretry = root.querySelector("#mlbstats-history-retry");
+    if (hretry) hretry.addEventListener("click", function () {
+      HISTORY_ERROR = false;
+      loadHistory();
+      render();
+    });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
       th.addEventListener("click", function () {
         var key = th.getAttribute("data-col");
-        var cols = (view === "teams") ? TEAM_COLS : REL_COLS;
+        var cols = (view === "teams") ? TEAM_COLS
+          : (view === "relievers" && relSeason !== "current") ? REL_HISTORY_COLS : REL_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
         var sort = (view === "teams") ? teamSort : relSort;

@@ -1472,6 +1472,16 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 }
 .mlbstats-tab:hover { color: var(--text-primary); }
 .mlbstats-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
+/* Season selector pills (yearly history board) - a compact row above the table. */
+.mlbstats-seasons { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 10px; }
+.mlbstats-season {
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; color: var(--text-tertiary);
+  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 999px;
+  padding: 3px 11px;
+}
+.mlbstats-season:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+.mlbstats-season.active { color: var(--bg-primary); background: var(--accent-gold); border-color: var(--accent-gold); }
 .mlbstats-note { font-size: 11px; color: var(--text-tertiary); margin: 6px 0 12px; }
 .mlbstats-empty { padding: 28px 16px; text-align: center; color: var(--text-tertiary);
   font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }

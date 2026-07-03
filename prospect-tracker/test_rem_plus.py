@@ -120,3 +120,39 @@ def test_provisional_tiering():
     by = {r["key"]: r for r in out["relievers"]}
     assert by["small"]["qualified"] is False
     assert by["avg0"]["qualified"] is True
+
+
+def _pool_with_leverage(n=12):
+    # average clones spread across a plausible realized-value range so the RIV+
+    # pool standardization has variance to work with
+    pool = []
+    for i in range(n):
+        r = _rel(f"avg{i}", so=40, bb=17, hr=6)
+        r.wpa = -1.0 + 0.2 * i            # spread WPA from -1.0 to +1.2
+        r.sd = 5 + i
+        r.md = 8 - (i // 2)
+        pool.append(r)
+    return pool
+
+
+def test_riv_plus_scores_realized_value_and_is_separate_from_skill():
+    pool = _pool_with_leverage()
+    # same league-average SKILL, but one added a lot of realized value and one
+    # bled it away - RIV+ must separate them even though REM+ is ~identical
+    hero = _rel("hero", so=40, bb=17, hr=6); hero.wpa = 4.0; hero.sd = 30; hero.md = 1
+    goat = _rel("goat", so=40, bb=17, hr=6); goat.wpa = -3.0; goat.sd = 1; goat.md = 20
+    out = rp.score_pool(pool + [hero, goat])
+    by = {r["key"]: r for r in out["relievers"]}
+    assert by["hero"]["riv_plus"] is not None and by["goat"]["riv_plus"] is not None
+    assert by["hero"]["riv_plus"] > 100 > by["goat"]["riv_plus"], (
+        by["hero"]["riv_plus"], by["goat"]["riv_plus"])
+    # RIV+ is realized VALUE, not the REM+ talent number: the two arms have the
+    # same skill line but very different RIV+
+    assert abs(by["hero"]["rem_plus"] - by["goat"]["rem_plus"]) <= 1
+    assert by["hero"]["riv_plus"] != by["goat"]["riv_plus"]
+
+
+def test_riv_plus_none_without_leverage_feed():
+    # no WPA anywhere -> no RIV+ (renders blank), never a spurious 100
+    out = rp.score_pool(_identical_pool())
+    assert all(r["riv_plus"] is None for r in out["relievers"])

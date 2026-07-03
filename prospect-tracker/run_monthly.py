@@ -2520,6 +2520,31 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("gmLI consistency refresh failed - continuing")
 
+        # --- 6b4c. Reliever-metric lab (rem_plus_multiyear + riv_plus evals) --
+        # Refreshes data/rem_plus_multiyear_eval.json (3-year REM+ proposed_values,
+        # joined by bullpen_export next cycle, same trailing-window lag as gmli_3yr)
+        # and data/riv_plus_eval.json (RIV+ accountability; RIV+ itself is computed
+        # live in the 6b4 export). Also re-runs the pre-registered X-R1 SwStr gate
+        # (loss ledger). Multi-season leverage walk uses the warm cache. Never aborts.
+        with _step("6b4c. reliever lab (rem_plus_multiyear + riv_plus evals)", log):
+            try:
+                import subprocess as _sp
+                _sp.run([sys.executable,
+                         str(Path(__file__).parent / "tools" / "rem_plus_lab.py")],
+                        check=True, timeout=2400)
+            except Exception:
+                log.exception("reliever-metric lab refresh failed - continuing")
+
+        # --- 6b4d. Yearly reliever history (bullpen_history.json) -------------
+        # Per-season qualified-reliever boards for the /mlbstats/ history tabs.
+        # Cached winProbability keeps the multi-season walk fast. Never aborts.
+        with _step("6b4d. bullpen history (bullpen_history.json)", log):
+            try:
+                from bullpen_export import export_history as _export_bp_history
+                _export_bp_history(log=log.info)
+            except Exception:
+                log.exception("bullpen history export failed - continuing")
+
         # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI

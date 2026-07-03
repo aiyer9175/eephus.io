@@ -152,3 +152,38 @@ BETA_READINESS.md (go/no-go).
 
 <!-- APPEND PACKAGE ENTRIES BELOW THIS LINE (newest first within each day;
      add a new "## YYYY-MM-DD" heading when the day changes) -->
+
+## 2026-07-02 (follow-up Wave B1: reliever metrics)
+
+- Bullpen Leaderboards gains a richer, honest reliever picture. Three gated
+  experiments (pre-registered before any number was computed; harness
+  tools/rem_plus_lab.py, seed 20260702):
+  - REM+ skill overhaul (X-R1) was REJECTED at its gate. The owner's central
+    "make REM+ more than a FIP proxy" ask was tested directly: shrink the K
+    component toward a SwStr-implied expected-K prior instead of the pool mean.
+    Candidate forward rho 0.2277 vs the incumbent FIP core 0.2246, bootstrap gap
+    lo95 -0.0066, a wash within noise. The incumbent already regresses K% by
+    sample; at reliever volumes observed K% is a strong enough estimate that a
+    SwStr prior adds no forward signal. The FIP-based REM+ skill core stays
+    unchanged and REM+ published numbers are unchanged. Loss ledger
+    data/rem_plus_swstr_eval.json.
+  - 3-year REM+ (X-R2) ships PROVISIONAL as a companion display column. An
+    IP-weighted trailing-3-season REM+ forward-predicts next-year run prevention
+    at least as well as one season (0.2366 vs 0.2316 on the same 668 arms; the
+    gap is not distinguishable from zero), and it is more stable by construction,
+    since single reliever seasons are noisy. Its value is stability, not sharper
+    prediction. Joined into the leaderboard by MLBAM like gmLI 3yr.
+  - RIV+ (Reliever Impact Value, X-R3) ships as a new realized-VALUE column, the
+    two-number design the owner asked for: REM+ stays pure skill, RIV+ carries
+    the leverage-weighted impact. RIV+ is a 100-anchored index of the wins a
+    reliever actually added (WPA-primary, with a shutdowns-minus-meltdowns
+    overlay). Both pre-registered checks passed: RIV+ is materially less
+    repeatable year to year than REM+ (0.209 vs 0.352, confirming why leverage
+    stays out of the skill scale) and it tracks what teams pay relief free agents
+    better than REM+ (0.576 vs 0.508). Computed live in rem_plus.score_riv_plus;
+    accountability artifact data/riv_plus_eval.json.
+- Yearly reliever history: data/bullpen_history.json carries per-season
+  qualified-reliever boards (2021-2025) for the /mlbstats/ history tabs, so users
+  can read past seasons and see how REM+ (skill) and RIV+ (impact) played
+  forward. Monthly refresh wired as run_monthly steps 6b4c (reliever lab) and
+  6b4d (history). Registry now 55 rows; glossary adds riv_plus and rem_plus_3yr.

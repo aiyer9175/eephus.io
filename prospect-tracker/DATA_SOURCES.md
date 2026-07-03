@@ -66,7 +66,9 @@ happen inside the called module, so this file alone cannot split them).
 | 6b2b. AAA Stuff+ re-score (stuff_plus_aaa.json) | stuff_plus_aaa.json |
 | 6b3. MLB player detail export (mlb_player_detail.json) | mlb_player_detail.json |
 | 6b4. Bullpen Leaderboards (bullpen_leaderboards.json) | bullpen_leaderboards.json, leverage_consistency_eval.json |
-| 6b4b. gmLI consistency (leverage_consistency_eval.json) | leverage_consistency_eval.json |
+| 6b4b. gmLI consistency (leverage_consistency_eval.json) | leverage_consistency_eval.json, rem_plus_multiyear_eval.json, riv_plus_eval.json |
+| 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json |
+| 6b4d. bullpen history (bullpen_history.json) | bullpen_history.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
 | 6c. Org tendencies export (org_tendencies.json) | org_tendencies.json, trade_values.json |
 | 6d. Bayesian trade value export (trade_values.json) | debuts.json, graduates.json, trade_values.json |

@@ -47,8 +47,13 @@ _log = logging.getLogger(__name__)
 
 DATA_DIR = Path(__file__).parent / "data"
 OUT_PATH = DATA_DIR / "bullpen_leaderboards.json"
+HISTORY_PATH = DATA_DIR / "bullpen_history.json"
+# Yearly reliever-history window: the seasons the /mlbstats/ history tabs offer
+# (ex-2020 COVID short season). Cached winProbability makes the walk fast.
+HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 EVAL_PATH = DATA_DIR / "rem_plus_eval.json"
 LEVCON_PATH = DATA_DIR / "leverage_consistency_eval.json"
+MULTIYR_PATH = DATA_DIR / "rem_plus_multiyear_eval.json"
 
 STATSAPI = "https://statsapi.mlb.com/api/v1"
 
@@ -322,6 +327,30 @@ def _join_leverage_consistency(relievers: list[dict]) -> int:
     return n
 
 
+def _join_rem_plus_3yr(relievers: list[dict]) -> int:
+    """Stamp rem_plus_3yr / percentile / tag onto reliever rows from the committed
+    multi-year artifact (tools/rem_plus_lab.py, X-R2: 3-year IP-weighted REM+, a
+    more stable talent read than one season). Companion SKILL column - a longer
+    window of the same REM+ scale, not a new metric. Missing artifact or unmatched
+    player -> fields absent and the column renders blank. Returns rows stamped."""
+    try:
+        pv = json.loads(MULTIYR_PATH.read_text(encoding="utf-8"))["proposed_values"]
+        players = pv["players"]
+    except (OSError, ValueError, KeyError):
+        return 0
+    n = 0
+    for r in relievers:
+        p = players.get(str(r.get("mlbam") or ""))
+        if not p:
+            continue
+        r["rem_plus_3yr"] = p.get("rem_plus_3yr")
+        r["rem_plus_3yr_pct"] = p.get("pct")
+        r["rem_plus_3yr_tag"] = p.get("tag")
+        if r["rem_plus_3yr"] is not None:
+            n += 1
+    return n
+
+
 # --------------------------------------------------------------------------- #
 # export
 # --------------------------------------------------------------------------- #
@@ -356,6 +385,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     n_lev = _join_leverage_consistency(scored["relievers"])
     if n_lev:
         log(f"  bullpen: gmLI-consistency joined for {n_lev} relievers")
+    n_r3 = _join_rem_plus_3yr(scored["relievers"])
+    if n_r3:
+        log(f"  bullpen: 3-year REM+ joined for {n_r3} relievers")
 
     # Bullpen Charts should show only players actually ON the active roster; drop
     # off-roster arms (demoted / released) from the depth ladders. Roster fetch is
@@ -402,8 +434,70 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     return n
 
 
+_HISTORY_FIELDS = ("mlbam", "name", "team", "rem_plus", "riv_plus", "role",
+                   "ip", "g", "tbf", "era", "fip", "k_pct", "bb_pct", "k_bb_pct",
+                   "swstr_pct", "hr9", "gmli", "wpa", "sd", "md", "saves", "holds",
+                   "qualified")
+
+
+def export_history(seasons=None, *, out_path: Optional[Path] = None,
+                   write: bool = True, log=print) -> dict:
+    """Build data/bullpen_history.json - per-season reliever boards (qualified
+    arms) for the /mlbstats/ yearly history tabs, so users can read past seasons
+    and eyeball how REM+ (skill) and RIV+ (realized impact) played forward. One
+    compact row per qualified reliever per season; the current live season stays
+    in bullpen_leaderboards.json. Cached winProbability keeps the walk fast."""
+    seasons = list(seasons or HISTORY_SEASONS)
+    out_path = out_path or HISTORY_PATH
+    hist = {}
+    for y in seasons:
+        log(f"  bullpen-history: {y}...")
+        rows = load_season_pitching(y)
+        if not rows:
+            log(f"  bullpen-history: no data for {y}; skipping")
+            continue
+        swstr = load_bref_swstr(y)
+        try:
+            import mlb_leverage
+            leverage, cov = mlb_leverage.fetch_season_leverage(y)
+        except Exception as e:  # noqa: BLE001
+            _log.warning("history leverage walk %s failed: %s", y, e)
+            leverage, cov = {}, {"games": 0, "games_total": 0}
+        scored = rem_plus.score_pool(build_relievers(rows, leverage, swstr))
+        board = [{k: r.get(k) for k in _HISTORY_FIELDS}
+                 for r in scored["relievers"] if r.get("qualified")]
+        board.sort(key=lambda r: (r.get("rem_plus") or -999), reverse=True)
+        hist[str(y)] = {
+            "season": y,
+            "leverage_games": cov.get("games", 0),
+            "leverage_expected": cov.get("games_total", 0),
+            "n_qualified": len(board),
+            "relievers": board,
+        }
+        log(f"  bullpen-history: {y} -> {len(board)} qualified")
+    payload = {
+        "generated_at": date.today().isoformat(),
+        "seasons": [int(y) for y in hist],
+        "note": ("Per-season qualified-reliever boards for the yearly history tabs. "
+                 "REM+ is the pure-skill run-prevention index; RIV+ is the realized "
+                 "leverage-weighted impact index (deployment value, not repeatable skill)."),
+        "history": hist,
+    }
+    if write and hist:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+        tmp.replace(out_path)
+        log(f"  bullpen-history: wrote {out_path.name} ({len(hist)} seasons)")
+    return payload
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    _season = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    _limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
-    export(_season, leverage_limit=_limit)
+    if len(sys.argv) > 1 and sys.argv[1] == "history":
+        _yrs = [int(x) for x in sys.argv[2].split(",")] if len(sys.argv) > 2 else None
+        export_history(_yrs)
+    else:
+        _season = int(sys.argv[1]) if len(sys.argv) > 1 else None
+        _limit = int(sys.argv[2]) if len(sys.argv) > 2 else None
+        export(_season, leverage_limit=_limit)

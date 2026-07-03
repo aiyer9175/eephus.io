@@ -462,8 +462,82 @@ for when it exists, needs resolved 2024+ cohorts AND a method operating below th
 grade-monotone constraint (direct per-side bucket-structure recalibration). Registry row
 xfv_grade_recal4 (deprecated), 52 rows.
 
+## Follow-up program Wave B1: reliever-metric pre-registrations (2026-07-02)
+
+Owner batch after Pass 3: overhaul REM+ so it is "not just a proxy for FIP", add a
+separate reliever IMPACT metric, add a 3-year REM+, and yearly reliever history. Owner
+design decision (recorded in memory pass3-followup-program-2026-07): REM+ stays a PURE
+SKILL number with DEEPER skill inputs; leverage moves into a SEPARATE new impact metric,
+preserving the validated two-number finding (leverage is a deployment/price layer, not
+repeatable skill). Gates are pre-registered here BEFORE any candidate number is computed.
+Incumbent baseline (data/rem_plus_eval.json): REM+ forward-chained Spearman vs RA9(Y+1)
+= 0.2363 over 878 Y->Y+1 pairs, 7 seasons (2018-2025 ex-2020), beating raw FIP 0.211
+(gap lo95 +0.0013), ERA 0.0901, raw WPA 0.1055. Split-half reliability only ~0.34 at
+100-150 BF (single reliever seasons are noisy).
+
+- **X-R1 - REM+ skill overhaul (SwStr-informed expected-K core).** Hypothesis: shrinking
+  the K component toward a player-specific SwStr%-derived expected-K (SwStr% stabilizes
+  ~50 pitches, faster than K% ~70 BF and BB% ~170 BF) is a better skill estimate than
+  shrinking toward the pool mean, so REM+ becomes more than a one-year-FIP proxy and
+  forward-predicts next-year run prevention better. bref SwStr% confirmed available for
+  all backtest seasons (831-863 non-null rows/yr). GATE (ship-or-ledger, pre-registered):
+  candidate REM+ forward-chained Spearman vs RA9(Y+1), same seasons + same MIN_TBF_Y=100 /
+  MIN_TBF_NEXT=60 convention as the incumbent, must EXCEED 0.2363 with a seeded
+  2000-resample bootstrap-CI gap (candidate minus incumbent) lo95 >= 0 AND a positive
+  point estimate. Clear positive gap -> ship (rem_plus.py skill core changes, expected
+  bullpen_leaderboards.json CHANGE with the delta documented, registry row updated, eval
+  artifact, glossary + freshness map). Within-noise or negative -> KEEP the FIP core,
+  loss ledger, review queue. All stochastic steps seeded.
+
+- **X-R2 - 3-year REM+ (trailing-3-season talent estimate).** Hypothesis: an IP-weighted
+  trailing-3-season REM+ is a more stable talent read than one season (split-half rho only
+  ~0.34) and forward-predicts next-year RA9 better. GATE: 3yr REM+ through year Y forward
+  Spearman vs RA9(Y+1), on the reliever set that HAS a 3yr value and a real Y+1 sample
+  (TBF>=60), must EXCEED single-season REM+(Y) forward rho on the SAME player set, seeded
+  bootstrap-CI gap lo95 >= 0. Clear positive gap -> ship a rem_plus_3yr companion display
+  column (like gmli_3yr), joined into bullpen_leaderboards.json + proposed_values for the
+  current pool. Marginal -> provisional-with-r; negative -> ledger.
+
+- **X-R3 - RIV+ (Reliever Impact Value, realized-value index).** NEW additive column, NOT
+  a change to REM+ published numbers, so the pre-registered checks are descriptive-validity
+  not a forward-skill ship gate. RIV+ = a 100-anchored index of realized leverage-weighted
+  value (context wins added: WPA, plus leverage-weighted shutdowns-minus-meltdowns),
+  DISCLOSED as a deployment/value metric that by design is NOT a repeatable-skill number.
+  Pre-registered honesty checks (reported in the eval, ship regardless as a labeled Impact
+  descriptor since it is a realized-value measure not a prediction): (1) RIV+ aligns with
+  what teams pay RP free agents at least as well as REM+ does (rho vs RP AAV >= REM+'s),
+  showing it captures deployed value; (2) RIV+ is materially LESS forward-stable Y->Y+1
+  than REM+, CONFIRMING the two-number design. If RIV+ turned out MORE forward-stable than
+  REM+, that would overturn the leverage-isn't-skill thesis and force a rethink before any
+  ship. Registry row + glossary + freshness map required either way.
+
 ## Changelog of findings in this pass
 
+- 2026-07-02 (follow-up Wave B1, reliever metrics): the three pre-registered gates ran on
+  the forward-chained pool (2018-2025 ex-2020; leverage from the warm winProbability cache;
+  seed 20260702; harness tools/rem_plus_lab.py). RESULTS:
+  * X-R1 REM+ SwStr overhaul FAILED its gate (NO SHIP, loss ledger data/rem_plus_swstr_eval
+    .json). Candidate SwStr-xK skill core forward rho 0.2277 vs incumbent FIP core 0.2246
+    on 1036 pairs; bootstrap gap lo95 -0.0066 (< 0), a wash within noise. The incumbent
+    already regresses K% by sample; at reliever volumes observed K% is a strong enough K
+    estimate that a SwStr prior adds no forward signal. The FIP-based REM+ skill core stays
+    unchanged; REM+ published numbers unchanged. Registry row rem_plus_swstr (deprecated).
+  * X-R2 3-year REM+ MARGINAL -> shipped PROVISIONAL. 3yr forward rho 0.2366 vs 1yr 0.2316
+    on the same 668 arms; point estimate favors 3yr but the same-set bootstrap gap CI
+    includes 0 (lo95 -0.043). Per the pre-registered rule (marginal -> provisional-with-r)
+    it ships as a companion display column (value is stability, not sharper prediction:
+    single reliever seasons split-half only ~0.34). data/rem_plus_multiyear_eval.json,
+    registry row rem_plus_3yr (provisional), joined by bullpen_export._join_rem_plus_3yr.
+  * X-R3 RIV+ BOTH checks PASSED -> shipped. RIV+ is materially less forward-stable than
+    REM+ (Y->Y+1 rho 0.209 vs 0.352, confirming the two-number design) and aligns with RP
+    AAV better than REM+ (0.576 vs 0.508, 271 signings). Computed live in
+    rem_plus.score_riv_plus; data/riv_plus_eval.json, registry row riv_plus (provisional).
+  Also shipped: data/bullpen_history.json (per-season qualified boards 2021-2025 for the
+  /mlbstats/ yearly history tabs); run_monthly steps 6b4c (reliever lab) + 6b4d (history).
+  Registry now 55 rows; glossary +2 entries (riv_plus, rem_plus_3yr). The owner's "make
+  REM+ more than a FIP proxy" ask was tested directly (X-R1) and honestly rejected; the
+  richer picture comes from the NEW metrics (3yr REM+ stability + RIV+ realized impact),
+  not a changed skill core.
 - 2026-07-01: ledger created; F-01..F-09 recorded; X-ISO/X-D1/X-D2 gates pre-registered.
 - 2026-07-01 (wave 1): X-ISO failed gate (no ship, loss ledger); X-D5 and X-C3 artifacts
   shipped; lanes B and H2 landed. Lanes G, H1, P and experiments X-D1, X-D2 pending re-run

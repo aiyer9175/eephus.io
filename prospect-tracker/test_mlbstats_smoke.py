@@ -26,9 +26,9 @@ SAMPLE = """{
  "generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29",
  "coverage":{"games":1200,"expected":2430},"verdict":"provisional",
  "relievers":[
-  {"key":"a","name":"Closer Alpha","team":"NYY","rem_plus":138,"qualified":true,"ip":42.1,"g":45,"tbf":170,"k_pct":0.34,"bb_pct":0.06,"k_bb_pct":0.28,"fip":2.40,"swstr_pct":0.16,"era":2.10,"gmli":1.85,"gmli_3yr":1.81,"gmli_3yr_pct":98,"gmli_3yr_tag":"established","wpa":2.6,"wpa_li":1.7,"sd":24,"md":4,"role":"Closer","saves":20},
-  {"key":"b","name":"Middle Beta","team":"NYY","rem_plus":96,"qualified":true,"ip":38.0,"g":40,"tbf":160,"k_pct":0.22,"bb_pct":0.09,"k_bb_pct":0.13,"fip":4.20,"swstr_pct":0.10,"era":4.00,"gmli":0.95,"gmli_3yr":0.88,"gmli_3yr_pct":31,"gmli_3yr_tag":"provisional","wpa":-0.2,"wpa_li":0.1,"sd":12,"md":11,"role":"Middle"},
-  {"key":"c","name":"Prov Gamma","team":"BOS","rem_plus":110,"qualified":false,"ip":12.0,"g":13,"tbf":50,"k_pct":0.28,"bb_pct":0.08,"k_bb_pct":0.20,"fip":3.30,"swstr_pct":0.13,"era":3.10,"gmli":1.20,"wpa":0.4,"wpa_li":0.3,"sd":6,"md":3,"role":"Setup"}
+  {"key":"a","name":"Closer Alpha","team":"NYY","rem_plus":138,"rem_plus_3yr":128,"rem_plus_3yr_pct":95,"rem_plus_3yr_tag":"established","riv_plus":132,"qualified":true,"ip":42.1,"g":45,"tbf":170,"k_pct":0.34,"bb_pct":0.06,"k_bb_pct":0.28,"fip":2.40,"swstr_pct":0.16,"era":2.10,"gmli":1.85,"gmli_3yr":1.81,"gmli_3yr_pct":98,"gmli_3yr_tag":"established","wpa":2.6,"wpa_li":1.7,"sd":24,"md":4,"role":"Closer","saves":20},
+  {"key":"b","name":"Middle Beta","team":"NYY","rem_plus":96,"rem_plus_3yr":99,"rem_plus_3yr_pct":42,"rem_plus_3yr_tag":"provisional","riv_plus":97,"qualified":true,"ip":38.0,"g":40,"tbf":160,"k_pct":0.22,"bb_pct":0.09,"k_bb_pct":0.13,"fip":4.20,"swstr_pct":0.10,"era":4.00,"gmli":0.95,"gmli_3yr":0.88,"gmli_3yr_pct":31,"gmli_3yr_tag":"provisional","wpa":-0.2,"wpa_li":0.1,"sd":12,"md":11,"role":"Middle"},
+  {"key":"c","name":"Prov Gamma","team":"BOS","rem_plus":110,"riv_plus":104,"qualified":false,"ip":12.0,"g":13,"tbf":50,"k_pct":0.28,"bb_pct":0.08,"k_bb_pct":0.20,"fip":3.30,"swstr_pct":0.13,"era":3.10,"gmli":1.20,"wpa":0.4,"wpa_li":0.3,"sd":6,"md":3,"role":"Setup"}
  ],
  "teams":[
   {"team":"NYY","bullpen_plus":118,"leverage_deploy_plus":121,"n_above_avg":5,"n_relievers":8,"high_lev_core_rem":130,"relief_ip":410.0,"team_wpa":5.4,"sd":120,"md":70,
@@ -168,3 +168,35 @@ def test_gmli_3yr_blank_when_absent():
     # asserting no 'undefined' leaks anywhere in the rendered table.
     html = _render("")
     assert "undefined" not in html
+
+
+# ---------------------------------------------------------------------------
+# Wave B1: RIV+ (realized-impact) + REM+ 3yr (stable-skill) columns, and the
+# yearly-history season pills on the Relievers view.
+# ---------------------------------------------------------------------------
+
+def test_riv_plus_and_rem3yr_columns_render():
+    html = _render("")
+    assert "RIV+" in html                      # RIV+ header present
+    assert "REM+ 3yr" in html                  # REM+ 3yr header present
+    assert ">132<" in html                     # Closer Alpha RIV+ value
+    assert ">128<" in html or "128" in html    # Closer Alpha REM+ 3yr value
+    assert "p95" in html                        # REM+ 3yr percentile, dimmed
+    # provisional REM+ 3yr arm carries its explanatory marker
+    assert "Provisional: under 2 seasons or 40 IP" in html
+    assert "undefined" not in html
+
+
+def test_riv_plus_glossary_wired():
+    html = _render("")
+    # the header tooltip + the note both reach the riv_plus glossary entry
+    assert 'data-gl="riv_plus"' in html
+
+
+def test_season_history_pills_render():
+    html = _render("")
+    assert "mlbstats-seasons" in html          # the season tablist
+    assert "Current" in html                    # the live-season pill
+    # DATA.season is 2026, so the five prior seasons seed the pills before load
+    assert ">2025<" in html and ">2021<" in html
+    assert 'aria-selected="true"' in html       # Current is selected by default

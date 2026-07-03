@@ -693,6 +693,39 @@
    "eval_artifact": "data/xfv_grade_recal4_eval.json",
    "verdict": "deprecated",
    "notes": "Holistic pass 3, owner-approved FINAL calibration attempt (2026-07-02). The joint side-symmetric design WORKED at its stated purpose: tying both sides to one shared strictly-increasing grade map made condition 3 (cross-side within-year Spearman) exactly 0.0 for every eval year by construction (numerically verified, min step 0.0025), eliminating the churn that killed X-ISO/E-ISO2/E-ISO3. But it ISOLATED the true blocker, which is independent of ranking: condition 1 still fails because the pitcher BENCH bucket gets materially worse (formulation a: log-loss 0.25642->0.26036, +1.54%; formulation b added pit GOOD +3.7% too, so per-side residual isotonic does NOT recover it). The FV45+ calibration gain is real and large (pooled Brier 0.2466->0.1964; tier-45 gap 0.0946->0.0137, tier-55 0.1616->0.0439) but no grade-space monotone map can fix the gap without pulling pitcher mid-grade mass toward bust. DEFINITIVE CLOSE of the bucket-calibration line (X-ISO -> E-ISO2 -> E-ISO3 -> E-ISO4, all rejected) against this data vintage. Path forward requires resolved 2024+ cohorts AND a method operating below the grade-monotone constraint (direct per-side bucket-structure recalibration, not a grade remap). Line: [[xfv_grade_recal3]] (E-ISO3) -> this."
+  },
+  {
+   "model_id": "riv_plus",
+   "surface": "/mlbstats/ Bullpen Leaderboards, RIV+ column (realized impact)",
+   "predicts": "realized leverage-weighted reliever VALUE (not skill): a 100-anchored index of the wins a reliever actually added, WPA-primary with a shutdowns-minus-meltdowns overlay, standardized over the season pool",
+   "champion": "riv_plus_v1 (0.70*z(WPA) + 0.30*z(SD-MD), reported as 100 + 10z)",
+   "baseline": "pre-registered descriptive-validity checks (X-R3): aligns with RP AAV at least as well as REM+, AND is materially LESS forward-stable Y->Y+1 than REM+ (confirming the two-number design)",
+   "metric": "Y->Y+1 rank autocorrelation vs REM+ + RP free-agent AAV market alignment",
+   "eval_artifact": "data/riv_plus_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07 (Wave B1) as the realized-VALUE companion to REM+, the two-number design the owner asked for: REM+ stays pure skill (leverage held out), RIV+ carries the leverage-weighted impact. Pre-registered X-R3 checks both PASSED on the forward-chained pool (2018-2025 ex-2020): (1) RIV+ is materially LESS repeatable year over year than REM+ (riv_plus Y->Y+1 Spearman 0.209 vs REM+ 0.352), which is exactly why leverage stays OUT of the REM+ skill scale and rides here instead; (2) RIV+ aligns with what teams pay RP free agents BETTER than REM+ (rho vs AAV 0.576 vs 0.508, 271 matched signings), so it captures deployed value. Provisional because it is a descriptive realized-value index, not a forward prediction (WPA already encodes the leverage a reliever was given; gmLI is shown as context, never added as free credit). Computed live in rem_plus.score_riv_plus over the scored pool; harness tools/rem_plus_lab.py."
+  },
+  {
+   "model_id": "rem_plus_3yr",
+   "surface": "/mlbstats/ Bullpen Leaderboards, REM+ 3yr column (stable skill)",
+   "predicts": "reliever run-prevention skill over a trailing 3-season window (IP-weighted mean REM+); a more stable talent read than a single season",
+   "champion": "rem_plus_3yr (IP-weighted trailing-3-season REM+)",
+   "baseline": "single-season REM+ forward rho vs RA9(Y+1) on the same reliever set",
+   "metric": "forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
+   "eval_artifact": "data/rem_plus_multiyear_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07 (Wave B1, X-R2) as a companion display column to single-season REM+ (same pure-skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020): 3-year REM+ forward-predicts next-year RA9 at rho 0.2366 vs single-season REM+ 0.2316 on the SAME 668 arms; the point estimate favors 3yr but the same-set bootstrap gap CI includes 0 (lo95 -0.043), so per the pre-registered rule it ships PROVISIONAL with the r published. Its value proposition is stability, not sharper prediction: single reliever seasons are noisy (split-half REM+ only ~0.34 at 100-150 BF), so a 3-year IP-weighted window is a steadier talent estimate that forward-predicts at least as well. Joined into bullpen_leaderboards.json by MLBAM from the proposed_values block (bullpen_export._join_rem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 40+ IP for an established tag. Harness tools/rem_plus_lab.py."
+  },
+  {
+   "model_id": "rem_plus_swstr",
+   "surface": "n/a (loss ledger; rendered nowhere)",
+   "predicts": "candidate REM+ skill core that shrinks the K component toward a SwStr-implied expected-K prior instead of the pool mean",
+   "champion": "rejected candidate (SwStr xK skill core)",
+   "baseline": "incumbent REM+ FIP core forward rho vs RA9(Y+1)",
+   "metric": "forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the candidate-minus-incumbent gap)",
+   "eval_artifact": "data/rem_plus_swstr_eval.json",
+   "verdict": "deprecated",
+   "notes": "REJECTED at its pre-registered gate (Wave B1, X-R1), the owner's central 'make REM+ more than a FIP proxy' ask tested directly and honestly. Hypothesis: shrinking K% toward a SwStr%-implied expected-K prior (SwStr% stabilizes ~50 pitches, faster than K% ~70 BF) beats shrinking toward the pool mean and improves forward run-prevention prediction. bref SwStr% confirmed available for all backtest seasons. RESULT: candidate forward rho 0.2277 vs incumbent 0.2246 on 1036 pairs, gap CI lo95 -0.0066 (< 0) - a wash within noise. The incumbent already regresses K% by sample size; at reliever volumes the observed K% is a strong enough K estimate that a SwStr prior adds no out-of-sample forward signal. NO SHIP: the FIP-based REM+ skill core stays unchanged, REM+ published numbers unchanged. SwStr% still rides as a displayed peripheral. Do not retry without a pitch-level CSW%/xwOBAcon feed. Loss ledger data/rem_plus_swstr_eval.json; harness tools/rem_plus_lab.py."
   }
  ],
  "problems": []

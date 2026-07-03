@@ -54,6 +54,20 @@ QUALIFY_MIN_IP = 20.0
 QUALIFY_MIN_G = 20
 MAX_START_SHARE = 0.10  # GS/G at or below this still counts as a reliever
 
+# ---- RIV+ (Reliever Impact Value) ------------------------------------------- #
+# The SEPARATE realized-VALUE companion to REM+ (skill). RIV+ is a 100-anchored
+# standardized index of the leverage-weighted value a reliever actually produced:
+# WPA-primary (win probability added ALREADY encodes the leverage he was given),
+# with a lower-variance shutdowns-minus-meltdowns overlay. It is a deployment /
+# value number, NOT a repeatable-skill number - by design it is less stable year
+# to year than REM+ (validated X-R3: riv_plus Y->Y+1 rho 0.209 vs REM+ 0.352),
+# which is exactly why leverage stays OUT of the REM+ talent scale and rides here
+# instead. gmLI is shown as context, never added as free credit for being handed
+# leverage. (data/riv_plus_eval.json is the accountability artifact.)
+RIV_W_WPA = 0.70        # WPA is the primary realized-value signal
+RIV_W_SDMD = 0.30       # SD-MD: a lower-variance consistency overlay
+RIV_SCALE = 10.0        # 100 + SCALE*z (the "+"-family standardized index)
+
 # ---- gmLI role bands (FanGraphs LI bands + PitcherList taxonomy) ------------ #
 ROLE_ORDER = ["Closer", "High-leverage", "Setup", "Middle", "Long", "Mop-up"]
 GMLI_HIGH = 1.50
@@ -126,6 +140,8 @@ class Reliever:
     fip_skill: Optional[float] = None
     rem_plus: Optional[int] = None
     rem_plus_raw: Optional[float] = None
+    riv_plus: Optional[int] = None          # realized-impact index (separate from skill)
+    riv_plus_raw: Optional[float] = None
     role: str = ""
     qualified: bool = False
 
@@ -244,6 +260,40 @@ def rem_plus(r: Reliever, pool: Pool) -> Optional[int]:
     return r.rem_plus
 
 
+def _mean_std(xs) -> tuple:
+    xs = [x for x in xs if x is not None]
+    if len(xs) < 2:
+        return (None, None)
+    mu = sum(xs) / len(xs)
+    sd = (sum((x - mu) ** 2 for x in xs) / (len(xs) - 1)) ** 0.5
+    return (mu, sd)
+
+
+def score_riv_plus(relievers: list[Reliever]) -> None:
+    """Stamp RIV+ (realized-impact index) onto each reliever, in place. Pool-
+    standardized WPA-primary composite: 100 + RIV_SCALE * z, where z is the
+    weighted average of the standardized WPA and standardized SD-MD (weights
+    renormalized when only one is present). Only relievers with WPA get a value
+    (leverage feed present); the rest stay None and render blank. Standardized
+    over the arms with WPA in THIS pool so 100 = average deployed value."""
+    arms = [r for r in relievers if _num(r.wpa) is not None]
+    if len(arms) < 10:
+        return
+    mu_w, sd_w = _mean_std([r.wpa for r in arms])
+    mu_s, sd_s = _mean_std([((r.sd or 0.0) - (r.md or 0.0)) for r in arms])
+    for r in arms:
+        parts = []
+        if sd_w:
+            parts.append((RIV_W_WPA, (r.wpa - mu_w) / sd_w))
+        if sd_s:
+            parts.append((RIV_W_SDMD, (((r.sd or 0.0) - (r.md or 0.0)) - mu_s) / sd_s))
+        if not parts:
+            continue
+        z = sum(w * v for w, v in parts) / sum(w for w, _ in parts)
+        r.riv_plus_raw = z
+        r.riv_plus = int(round(100.0 + RIV_SCALE * z))
+
+
 def assign_roles(team_relievers: list[Reliever]) -> None:
     """Bucket a team's relievers into the gmLI leverage ladder. Closer is the
     team's save leader (fallback: highest gmLI); the rest key off gmLI, with a
@@ -350,6 +400,9 @@ def score_pool(relievers: list[Reliever]) -> dict:
     for r in pool_input:
         rem_plus(r, pool)
         r.qualified = (r.tbf >= QUALIFY_MIN_TBF) or (r.ip >= QUALIFY_MIN_IP and r.g >= QUALIFY_MIN_G)
+    # RIV+ realized-impact index, standardized over the scored pool (separate
+    # from the REM+ skill scale; only arms with a leverage feed get a value).
+    score_riv_plus([r for r in pool_input if r.rem_plus is not None])
 
     # roles + team rollups
     by_team: dict[str, list[Reliever]] = {}
@@ -379,6 +432,7 @@ def reliever_row(r: Reliever) -> dict:
     return {
         "key": r.key, "mlbam": r.mlbam, "name": r.name, "team": r.team,
         "rem_plus": r.rem_plus, "rem_plus_raw": _round(r.rem_plus_raw, 1),
+        "riv_plus": r.riv_plus, "riv_plus_raw": _round(r.riv_plus_raw, 2),
         "qualified": r.qualified, "role": r.role,
         "ip": round(r.ip, 1), "g": int(r.g), "tbf": int(r.tbf),
         "k_pct": _round(r.rates.get("k_pct"), 4),
