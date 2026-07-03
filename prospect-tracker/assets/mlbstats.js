@@ -53,12 +53,13 @@
     var sc = chart("scatter", pts, { height: 250, xLabel: "REM+ (skill) →", yLabel: "↑ gmLI (leverage)",
       xRef: 100, yRef: 1, aria: "skill vs leverage" });
     if (!hist && !sc) return "";
-    return '<div class="mlbstats-viz">'
+    var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("REM+", "rem_plus")
       + ' distribution <span class="proj-dim">(qualified relievers; cyan = elite)</span></div>' + hist + "</div>"
       + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs leverage'
         + ' <span class="proj-dim">(top-right = elite arms in high leverage)</span></div>' + sc + "</div>" : "")
       + "</div>";
+    return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, skill vs leverage)</span>', body);
   }
 
   // REM+/Bullpen+ index coloring (100 = average).
@@ -79,6 +80,47 @@
   }
   function wireGlossary(el) {
     try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { /* glossary optional */ }
+  }
+
+  // ---- collapsible chart panels --------------------------------------------
+  // Charts default to COLLAPSED (they are context, not the leaderboard). The
+  // header is the click target; open/closed state persists in localStorage so a
+  // user who opens the charts keeps them open across renders and visits.
+  var COLLAPSE = {};
+  function collapseState(id) {
+    if (COLLAPSE[id] != null) return COLLAPSE[id];
+    var v = true; // default collapsed
+    try {
+      var s = window.localStorage.getItem("mlbstats.collapse." + id);
+      if (s === "0") v = false; else if (s === "1") v = true;
+    } catch (e) { /* localStorage optional */ }
+    COLLAPSE[id] = v;
+    return v;
+  }
+  function setCollapse(id, collapsed) {
+    COLLAPSE[id] = collapsed;
+    try { window.localStorage.setItem("mlbstats.collapse." + id, collapsed ? "1" : "0"); } catch (e) { /* optional */ }
+  }
+  function collapsible(id, title, body) {
+    if (!body) return "";
+    var collapsed = collapseState(id);
+    return '<div class="mlbstats-collapse' + (collapsed ? " is-collapsed" : "") + '" data-collapse="' + esc(id) + '">'
+      + '<button type="button" class="mlbstats-collapse-head" aria-expanded="' + (!collapsed) + '">'
+      + '<span class="mlbstats-collapse-caret" aria-hidden="true"></span>' + title + "</button>"
+      + '<div class="mlbstats-collapse-body">' + body + "</div></div>";
+  }
+  function bindCollapse(root) {
+    root.querySelectorAll("[data-collapse]").forEach(function (el) {
+      var head = el.querySelector(".mlbstats-collapse-head");
+      if (!head) return;
+      head.addEventListener("click", function () {
+        var id = el.getAttribute("data-collapse");
+        var next = !el.classList.contains("is-collapsed");
+        el.classList.toggle("is-collapsed", next);
+        head.setAttribute("aria-expanded", String(!next));
+        setCollapse(id, next);
+      });
+    });
   }
 
   // ---- column definitions (Relievers) --------------------------------------
@@ -248,7 +290,7 @@
 
   function renderDepth() {
     var teams = (DATA && DATA.teams) || [];
-    if (!teams.length) return '<div class="mlbstats-empty">No bullpen depth charts to show yet.</div>';
+    if (!teams.length) return '<div class="mlbstats-empty">No bullpen charts to show yet.</div>';
     var sorted = teams.slice().sort(function (a, b) { return (num(b.bullpen_plus) || 0) - (num(a.bullpen_plus) || 0); });
     var cards = sorted.map(function (t) {
       var slots = teamDepth(t).map(function (r) {
@@ -304,7 +346,9 @@
   }
 
   function tabBar() {
-    var tabs = [["relievers", "Relievers"], ["teams", "Team Bullpens"], ["depth", "Depth Charts"]];
+    // routing key stays "depth" so existing URLs/hashes keep working; the label
+    // reads "Bullpen Charts" now.
+    var tabs = [["relievers", "Relievers"], ["teams", "Team Bullpens"], ["depth", "Bullpen Charts"]];
     return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
       var active = (t[0] === view) ? " active" : "";
       return '<button type="button" class="mlbstats-tab' + active + '" data-mlbview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === view) + '">' + t[1] + "</button>";
@@ -346,6 +390,7 @@
   }
 
   function bindEvents(root) {
+    bindCollapse(root);
     root.querySelectorAll("[data-mlbview]").forEach(function (b) {
       b.addEventListener("click", function () {
         view = b.getAttribute("data-mlbview");

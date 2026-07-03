@@ -241,6 +241,7 @@ def _footer() -> str:
         f'<a href="/glossary/">Glossary</a>'
         f'<a href="/report/">Report a bug</a>'
         f'<a href="https://x.com/ARKNDJL" target="_blank" rel="noopener noreferrer">@ARKNDJL</a>'
+        f'<a href="{html.escape(DISCORD_URL)}" target="_blank" rel="noopener noreferrer">Discord</a>'
     )
     # Footer carries the compact mark (the favicon ball) so the identity closes
     # every page - it reads on both themes (cream face, navy outline).
@@ -289,60 +290,6 @@ CREATED_BY_BANNER = (
     '<span aria-hidden="true">🜎</span> Noah J. Dengler / @ARKNDJL</div>'
 )
 
-# A distinct "Lead Developer & Creator" credit badge for modules Noah built end
-# to end (the MLB Stats / Bullpen Leaderboards + Pitcher Alchemy Lab). More
-# prominent than the small build-banner byline; links to the Developers page.
-LEAD_DEV_BADGE = (
-    '<a class="lead-dev-badge" href="/team/" '
-    'title="Lead Developer and Creator - Noah J. Dengler (@ARKNDJL)">'
-    '<span class="ldb-glyph" aria-hidden="true">🜎</span>'
-    '<span class="ldb-role">Lead Developer &amp; Creator</span>'
-    '<span class="ldb-name">Noah J. Dengler</span></a>'
-)
-
-# The "plus" badge is the counterpart to the Lead Dev badge: the big one goes on
-# head modules a developer built end to end; this compact one goes on sub-modules,
-# models, and within-module sections (Trade Machine, individual models, etc.). It
-# hovers open a full ledger of the granular work that does not warrant its own
-# masthead credit. Curated per developer; only Noah for now.
-DEV_PLUS_CONTRIBUTIONS = (
-    # (contribution, role/kind)
-    ("eFV (eephusFV) prospect valuation model", "model, creator"),
-    ("MLB Projections model + module", "model, creator"),
-    ("Free Agency market model + module", "model, creator"),
-    ("REM+ reliever metric + Bullpen Leaderboards", "model, creator"),
-    ("Pitcher Alchemy Lab conversion models", "model, creator"),
-    ("Trade Machine surplus + value engine", "developer"),
-    ("CollegeSavant (CS+ + college-to-pro translation)", "model, creator"),
-    ("Prospect surplus valuation ($/WAR)", "model, creator"),
-    ("Farm-system grading + Org Tendencies", "model, creator"),
-    ("Entity pages (High Schools / Colleges / States)", "creator"),
-)
-
-
-def _dev_plus_badge(name: str = "Noah J. Dengler", items=DEV_PLUS_CONTRIBUTIONS) -> str:
-    """Compact, hover-expandable developer credit for sub-modules and models."""
-    rows = "".join(
-        f'<span class="dpc-item"><span class="dpc-what">{html.escape(what)}</span>'
-        f'<span class="dpc-kind">{html.escape(kind)}</span></span>'
-        for what, kind in items
-    )
-    return (
-        '<span class="dev-plus-badge" tabindex="0" role="button" '
-        f'aria-label="Developer contributions by {html.escape(name)}">'
-        '<span class="dpb-glyph" aria-hidden="true">🜎</span>'
-        f'<span class="dpb-name">{html.escape(name)}</span>'
-        f'<span class="dpb-plus">+{len(items)}</span>'
-        '<span class="dev-plus-card" role="tooltip">'
-        f'<span class="dpc-head">Developer contributions &middot; {html.escape(name)}</span>'
-        f'{rows}'
-        '<a class="dpc-more" href="/team/">Full developer profile &rarr;</a>'
-        '</span></span>'
-    )
-
-
-DEV_PLUS_BADGE = _dev_plus_badge()
-
 # Modern X (Twitter) glyph - module-level so social links on every surface share
 # one mark. (build_team keeps its own local copy for the per-member chips.)
 _X_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 '
@@ -356,6 +303,27 @@ def _x_link(handle: str, cls: str = "") -> str:
     return (f'<a class="eph-xlink{" " + cls if cls else ""}" href="https://x.com/{html.escape(h)}" target="_blank" '
             f'rel="noopener noreferrer" aria-label="Follow @{html.escape(h)} on X">'
             f'{_X_SVG}<span class="eph-xlink-handle">@{html.escape(h)}</span></a>')
+
+# Community Discord server - one module-level constant so every surface points
+# at the same invite. Inline glyph mirrors the _X_SVG treatment (no external art).
+DISCORD_URL = "https://discord.gg/X3BbVrJ4w"
+_DISCORD_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037 '
+                'c-.211.375-.445.865-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.036 '
+                '19.736 19.736 0 0 0-4.885 1.515.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 '
+                '19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994a.076.076 0 0 0-.041-.106 '
+                '13.1 13.1 0 0 1-1.872-.892.077.077 0 0 1-.008-.128c.126-.094.252-.192.372-.291a.074.074 0 0 1 .077-.01 '
+                'c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.009c.12.099.246.198.373.292a.077.077 0 0 1-.006.127 '
+                '12.3 12.3 0 0 1-1.873.891.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 '
+                '19.84 19.84 0 0 0 6.002-3.03.077.077 0 0 0 .032-.055c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028z'
+                'M8.02 15.331c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.419-2.157 2.419z'
+                'm7.975 0c-1.183 0-2.157-1.086-2.157-2.419 0-1.333.955-2.42 2.157-2.42 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.419-2.157 2.419z"/></svg>')
+
+def _discord_link(cls: str = "") -> str:
+    """An on-theme Discord link: glyph + label. Mirrors _x_link (sharp corners,
+    new tab); points at the single DISCORD_URL invite. Glyph is inline SVG."""
+    return (f'<a class="eph-xlink{" " + cls if cls else ""}" href="{html.escape(DISCORD_URL)}" target="_blank" '
+            f'rel="noopener noreferrer" aria-label="Join the eephus.io Discord">'
+            f'{_DISCORD_SVG}<span class="eph-xlink-handle">Discord</span></a>')
 
 # eephus.io merged brand mark - the "signature pitch" arc is now PART of the
 # lettering: the lob launches off the leading "e", crests with the ball at
@@ -1200,7 +1168,11 @@ def _recent_trades_html(players: list, n: int = 5) -> str:
     return _home_module("Recent Trades", "/prospx/#tab=traded", "All transactions", "".join(rows))
 
 def _row_farm(o: dict, rank: int) -> str:
-    grade = (o.get("grades") or {}).get("overall") or " - "
+    # Match the PROSPX board: it shows the trailing-window letter (7y default)
+    # first, falling back to the canonical overall grade. Both sides read the
+    # same org_summary objects, so the homepage must use the same lookup.
+    grade = ((o.get("letter_by_window") or {}).get("7y")
+             or (o.get("grades") or {}).get("overall") or " - ")
     gcls = " gold" if str(grade).startswith("A") else ""
     name = ORG_NAMES.get(o.get("org"), o.get("org") or " - ")
     return (f'<a class="row-link" href="/prospx/#farm-org={html.escape(o.get("org") or "")}">'
@@ -1913,6 +1885,38 @@ def _cross_module_strip() -> str:
                   '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">Hitter dashboard</span><span class="xmod-val">EV · xwOBA · discipline →</span></a>'
                   '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'
                   '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">By Joseph Gillis</span><span class="xmod-val">alpha</span></a>'))
+    # MLB Stats / REM+ - top relievers by REM+ (the reliever run-prevention metric)
+    try:
+        bl = _cached_data_json("bullpen_leaderboards.json")
+        top = sorted((r for r in bl.get("relievers") or [] if r.get("rem_plus") is not None),
+                     key=lambda r: -r["rem_plus"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/mlbstats/">'
+            f'<span class="xmod-name">{html.escape(r.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(r.get("team") or "")}{" · " + html.escape(r["role"]) if r.get("role") else ""}</span>'
+            f'<span class="xmod-val">{round(r["rem_plus"])} REM+</span></a>'
+            for r in top)
+        if rows:
+            cards.append(('▦ MLB Stats', '/mlbstats/',
+                          'top relievers by REM+', rows))
+    except (OSError, ValueError, KeyError):
+        pass
+    # Pitcher Alchemy Lab - top RP->SP conversion candidates by FIT score
+    try:
+        pal = _cached_data_json("pal.json")
+        top = sorted((c for c in pal.get("rp2sp") or [] if c.get("fit") is not None),
+                     key=lambda c: -c["fit"])[:3]
+        rows = "".join(
+            f'<a class="xmod-row" href="/pal/">'
+            f'<span class="xmod-name">{html.escape(c.get("name") or "")}</span>'
+            f'<span class="xmod-sub">{html.escape(c.get("team") or "")}</span>'
+            f'<span class="xmod-val">{round(c["fit"])} FIT</span></a>'
+            for c in top)
+        if rows:
+            cards.append(('⚗ Pitcher Alchemy Lab', '/pal/',
+                          'top reliever-to-starter conversion candidates', rows))
+    except (OSError, ValueError, KeyError):
+        pass
     body = "".join(
         f'<div class="xmod-card"><div class="xmod-head"><span class="xmod-title">{title}</span>'
         f'<a class="xmod-link" href="{href}">open →</a></div>'
@@ -2173,7 +2177,6 @@ _TRADE_MACHINE_VIEW = ("""<div id="proj-view-trademachine" style="display:none;"
   <div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
     <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
-    """ + DEV_PLUS_BADGE + """
   </div>
   <div id="trade-machine"></div>
   <div class="trademachine-board-head detail-title" style="margin:18px 0 4px;font-size:13px;">Trade-value board <span class="detail-title-sub">Bayesian surplus, contract-aware, positional scarcity, opt-out adjusted</span></div>
@@ -2315,7 +2318,7 @@ def build_projections() -> str:
 def build_mlbstats() -> str:
     """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
     First (and for now only) section is Bullpen Leaderboards: REM+ reliever
-    ratings, team Bullpen+ quality, and bullpen depth charts, all computed from
+    ratings, team Bullpen+ quality, and bullpen charts, all computed from
     MLB play-by-play (gmLI/WPA self-computed from the StatsAPI winProbability
     feed; FIP-based skill core). Static shell + assets/mlbstats.js, which fetches
     the bullpen_export.py sidecar (data/bullpen_leaderboards.json). Styles ride
@@ -2324,9 +2327,9 @@ def build_mlbstats() -> str:
     body = (
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1>{LEAD_DEV_BADGE}</div>'
+        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">League-wide MLB stat leaderboards. First up: Bullpen Leaderboards - '
-        'REM+ reliever ratings, team Bullpen+ quality, and bullpen depth charts, computed from MLB '
+        'REM+ reliever ratings, team Bullpen+ quality, and bullpen charts, computed from MLB '
         'play-by-play.</span></div>'
         # Section nav (one section today; built as a tablist so more can join).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
@@ -2342,7 +2345,7 @@ def build_mlbstats() -> str:
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
                 "MLB stat leaderboards from eephus.io - REM+ reliever ratings, team Bullpen+ "
-                "bullpen quality, and bullpen depth charts, computed from MLB play-by-play.",
+                "bullpen quality, and bullpen charts, computed from MLB play-by-play.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:
@@ -2358,7 +2361,7 @@ def build_pal() -> str:
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1>{LEAD_DEV_BADGE}</div>'
+        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
         'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
@@ -2645,7 +2648,7 @@ def build_team() -> str:
         )
     follow = (
         '<div class="team-follow"><span class="team-follow-label">Follow</span>'
-        f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}</div>'
+        f'{_x_link("eephus_io")}{_x_link("MLBPROSPX")}{_discord_link()}</div>'
     )
     mission = (
         "<p class=\"team-mission\">eephus.io is a collaborative sabermetric analysis project "

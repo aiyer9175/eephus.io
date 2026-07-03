@@ -3164,6 +3164,22 @@
       font-weight: 800;
       border-width: 1.5px;
     }
+    /* List-row tool strips wrap instead of clipping so the FULL tool list stays
+       visible (the strip is bounded to cols 1-3; a long hitter profile would
+       otherwise overflow-hidden its trailing chips). Detail-page strips keep
+       their own single-line treatment. */
+    .player-row-toolstrip .tool-grade-strip {
+      flex-wrap: wrap;
+      overflow: visible;
+      row-gap: 3px;
+    }
+    /* Active tool-sort chip: a cyan ring (box-shadow, so no layout shift) marks
+       the tool the list is sorted by; the JS hoists it to the front. */
+    .tool-grade-pill.tg-sorted {
+      box-shadow: 0 0 0 1.5px var(--neon-cyan);
+      position: relative;
+      z-index: 1;
+    }
     /* Compact density - tighten slightly but keep legibility. The new
        grid-row geometry already bounds the strip height; the smaller
        chip just keeps the strip flush within the row's natural envelope. */
@@ -4524,6 +4540,12 @@
       font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700;
       padding: 2px 8px; border: 1px solid; border-radius: 3px; min-width: 30px;
       text-align: center; justify-self: end;
+    }
+    /* Point-in-time eFV pill on Time Machine rows: the "eFV" tag rides as a
+       small superscript so the grade number still reads at a glance. */
+    .tm-fv-efv sup {
+      font-size: 7px; font-weight: 700; letter-spacing: 0.02em;
+      opacity: 0.72; margin-left: 1px; vertical-align: super;
     }
     .tm-delta { font-family: var(--font-retro-mono); font-size: 11px;
       font-weight: 700; white-space: nowrap; justify-self: end; }
@@ -6030,6 +6052,18 @@
       white-space: nowrap; opacity: 0.85;
     }
     .src-attr-link:hover { color: var(--neon-cyan, var(--accent-cyan)); opacity: 1; text-decoration: underline; }
+    /* Prominent source-page CTA at the top of the FanGraphs writeup body -
+       a bordered pill that stands out from the subtle inline attribution. */
+    .sr-source-link { margin: 0 0 8px; }
+    .sr-source-link .src-attr-link {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border: 1px solid var(--border-light);
+      border-radius: 4px; font-size: 12px; font-weight: 600;
+      color: var(--neon-cyan, var(--accent-cyan)); opacity: 1;
+    }
+    .sr-source-link .src-attr-link:hover {
+      border-color: var(--neon-cyan, var(--accent-cyan)); text-decoration: none;
+    }
     .sr-prose {
       font-size: 12px; color: var(--text-secondary);
       line-height: 1.6; white-space: pre-wrap;
@@ -16329,7 +16363,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
   } else {
     moverPool = moverPool.sort((a, b) => Math.abs(b.step) - Math.abs(a.step));
   }
-  const movers = moverPool.slice(0, 6);
+  const movers = moverPool.slice(0, 12);
   const _moverChip = (val, label) =>
     `<button class="chip${moverMode === val ? " active" : ""}" data-mover-filter="${val}" type="button">${label}</button>`;
   const moverChips = `<div class="ctx-mover-chips">
@@ -16338,19 +16372,14 @@ function renderActiveContextRail(railId = "active-context-rail") {
   const moverRows = movers.map(({ p, step: d }) => {
     const cls = d > 0 ? "stock-up" : "stock-down";
     const arrow = d > 0 ? "▲" : "▼";
-    const driverRaw = (p.stock.drivers && p.stock.drivers[0]);
-    const driverLabel = driverRaw == null ? ""
-                      : (typeof driverRaw === "string" ? driverRaw : (driverRaw.label || ""));
-    const subline = driverLabel
-      ? `<div style="font-size:10px;color:var(--text-tertiary);margin-left:6px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(driverLabel)}</div>`
-      : "";
+    // Driver flavor line dropped: the freed vertical space now shows more mover
+    // names (slice raised above). Name + FV delta stay.
     const _level = (p.statline && p.statline.level) || null;
     return _ctxRow({
       key: p.player_key,
       name: p.player_name,
       pos: p.position ? String(p.position).split("/")[0] : null,
       level: _level,
-      subline,
       teamLogoHTML: p.org ? teamLogoHTML(p.org, "sm", p.org) : "",
       rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d}</span>`,
     });
@@ -16612,7 +16641,9 @@ function renderActives() {
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
     <span class="desktop-only" style="text-align:center;" title="FV history sparkline - hover for OHLC open / high / low / close">FV history</span>
     <span class="desktop-only sort-header" data-sort-key="level_desc" title="MiLB level + age vs level. Click to sort by closeness to MLB (MLB → DSL); click again for the reverse.">MiLB · age vs. level</span>
-    <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="bmi_desc" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). B/T handedness now lives next to the age chip on each row, so the header reflects only what this column displays.">Ht · Wt · BMI</span>
+    <span class="desktop-only" style="text-align:center;white-space:nowrap;" title="Physical profile: Height · Weight · BMI (colored by z-score vs same-position-bucket peers). Click Ht, Wt, or BMI to sort by that dimension; click the same one again to reverse.">
+      <span class="sort-header" data-sort-key="ht_desc" title="Sort by height (tallest first; click again to reverse)">Ht</span> · <span class="sort-header" data-sort-key="wt_desc" title="Sort by weight (heaviest first; click again to reverse)">Wt</span> · <span class="sort-header" data-sort-key="bmi_desc" title="Sort by BMI (highest first; click again to reverse)">BMI</span>
+    </span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
   </div>`;
@@ -19377,6 +19408,36 @@ function _tmFvPill(fv, plus) {
   return `<span class="tm-fv" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${escapeHtml(String(lab))}</span>`;
 }
 
+// Point-in-time eFV as of `dateStr`: the model grade (xfv_history `x`) at the
+// latest snapshot at-or-before that date. Reads the same eFV-over-time series
+// (data/xfv_history.json via getEfvHistory) the FV-history chart draws, so the
+// Time Machine board leads with eFV like the rest of the site. Returns null
+// when no eFV history covers this player/date (caller falls back to consensus).
+function _tmEfvAsOf(p, dateStr) {
+  const hist = (typeof getEfvHistory === "function") ? getEfvHistory(p) : null;
+  if (!hist || !hist.length) return null;
+  let best = null;
+  for (const h of hist) {
+    if (!h || h.d == null || h.x == null || h.d > dateStr) continue;
+    if (!best || h.d >= best.d) best = h;
+  }
+  return best ? { x: best.x, d: best.d } : null;
+}
+
+// Grade pill for a Time Machine row. Leads with the point-in-time eFV (rounded
+// to nearest, labeled "eFV") so the board matches the site's primary grade;
+// falls back to the point-in-time consensus FV only when no eFV history exists
+// for this player/date. Never fabricates a historical grade.
+function _tmGradePill(r) {
+  if (r && r.efv != null) {
+    const efv = Math.round(r.efv);   // eFV rounds to NEAREST (not ceiling)
+    const tier = Math.max(20, Math.min(80, Math.round(efv / 5) * 5));
+    const asOf = r.efvAsOf ? _tmFmtDate(r.efvAsOf) : "this snapshot";
+    return `<span class="tm-fv tm-fv-efv" title="Point-in-time eFV (model grade) as of ${escapeHtml(asOf)}" style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);">${efv}<sup>eFV</sup></span>`;
+  }
+  return _tmFvPill(r.fv, r.fvPlus);
+}
+
 // Pretty date: "Feb 13, 2025".
 function _tmFmtDate(d) {
   if (!d) return "";
@@ -19418,6 +19479,10 @@ function _boardAsOf(dateStr) {
       org: (best.org === undefined ? p.org : best.org), pos: p.position,
       mlbamId: p.mlbam_id || (p.statline || {}).mlbam_id || null,
       fv: best.consensus_fv, fvPlus: !!best.consensus_fv_plus,
+      // Point-in-time eFV (primary grade shown on the board pill); null when the
+      // model's eFV history doesn't cover this player/date -> pill falls back to
+      // the consensus FV above. Ranking still keys off consensus FV (see sort).
+      ...(function () { const e = _tmEfvAsOf(p, dateStr); return { efv: e ? e.x : null, efvAsOf: e ? e.d : null }; })(),
       avgRank: best.avg_rank, asOf: best.snapshot_date,
       debutDate: p.debut_date || null,
       war: cw.career_war ?? null,
@@ -19567,7 +19632,7 @@ function _tmBoardHeadHTML(slotLabel) {
       <span class="tm-h-rank">#</span><span></span><span></span>
       <span>Player</span><span>Pos</span>
       <span class="tm-h-out">${slotLabel || ""}</span>
-      <span class="tm-h-fv">FV</span>
+      <span class="tm-h-fv">eFV</span>
     </div>`;
 }
 
@@ -19580,7 +19645,7 @@ function _tmHindHeadHTML() {
       <span>Player</span><span>Pos</span>
       <span class="tm-h-stat">Debut</span><span class="tm-h-stat">WAR</span>
       <span class="tm-h-stat">/yr</span><span class="tm-h-stat">WAG</span>
-      <span class="tm-h-fv">FV</span>
+      <span class="tm-h-fv">eFV</span>
     </div>`;
 }
 
@@ -19611,7 +19676,7 @@ function _tmHindRowHTML(r) {
       <span class="tm-cell tm-cell-war">${war}</span>
       <span class="tm-cell tm-cell-yr">${yr}</span>
       <span class="tm-cell tm-cell-wag">${wag}</span>
-      ${_tmFvPill(r.fv, r.fvPlus)}
+      ${_tmGradePill(r)}
     </a>`;
 }
 
@@ -19627,7 +19692,7 @@ function _tmBoardRowHTML(r, opts) {
       <span class="tm-name">${escapeHtml(r.name)}</span>
       <span class="tm-pos">${escapeHtml(r.pos || "")}</span>
       ${slot}
-      ${_tmFvPill(r.fv, r.fvPlus)}
+      ${_tmGradePill(r)}
     </a>`;
 }
 
@@ -19679,7 +19744,7 @@ function _tmRenderControls() {
   }
 
   el.innerHTML = `${modeToggle}${body}
-    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked by consensus FV. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
+    <p class="tm-note">Board reconstructed from each prospect's point-in-time consensus-FV history (${dates.length} snapshots, ${_tmFmtDate(dates[0])} - ${_tmFmtDate(latest)}), ranked by consensus FV. The grade pill shows the point-in-time eFV (our model grade re-scored at that snapshot), falling back to consensus FV where no eFV history exists. A prospect appears on every board dated <em>before</em> their MLB debut at their grade/rank then, and leaves on their debut date - debut date is the practical proxy for rookie-eligibility exhaustion. Hindsight outcomes (WAR / WAR-per-season / WAG) are realized results known only now, distinct from the as-of grade.</p>`;
 
   el.querySelectorAll("[data-tm-mode]").forEach(b => b.onclick = () => {
     state.tmMode = b.dataset.tmMode; _tmRenderControls(); _tmRenderBody(); syncToURL();
@@ -34076,8 +34141,13 @@ function _toolHistoryChart(p) {
     </div>`;
 }
 
-function makeToolGradeChips(p) {
+function makeToolGradeChips(p, activeToolKey) {
   if (!p) return "";
+  // When the active list is sorted by a specific tool, that tool's chip is
+  // pulled to the FRONT of the strip and highlighted (rather than prepending a
+  // separate overflowing pill that clipped the trailing chips). Null/"off" =
+  // normal order. Only list-row callers pass this; detail pages omit it.
+  const sortTool = (activeToolKey && activeToolKey !== "off") ? activeToolKey : null;
   const tools = (p.tools && p.tools.grades) || {};
   // Fall back to the latest snapshot's consensus dict if `tools.grades`
   // isn't populated (older payloads, some sources).
@@ -34108,6 +34178,7 @@ function makeToolGradeChips(p) {
       + `</span>`
     );
   }
+  let sortedPill = null;   // the active-sort tool's chip, hoisted to the front
   for (const k of order) {
     // PWR uses the consolidated helper; everything else reads directly.
     const v = k === "pwr" ? _resolvePwr(grades) : grades[k];
@@ -34125,15 +34196,20 @@ function makeToolGradeChips(p) {
         && grades.pwr == null) {
       tip = `${full} ${rounded} · Game ${grades.game_pwr} · Raw ${grades.raw_pwr} (mean)`;
     }
-    pills.push(
-      `<span class="tool-grade-pill"
+    const isSorted = sortTool != null && k === sortTool;
+    if (isSorted) tip += " · sorted by this tool";
+    const html =
+      `<span class="tool-grade-pill${isSorted ? " tg-sorted" : ""}"
              style="background:var(--fv-${tier}-bg);color:var(--fv-${tier}-fg);border-color:var(--fv-${tier}-bd);"
              title="${escapeHtml(tip)}">`
       + `<span class="tg-code">${escapeHtml(code)}</span>`
       + `<span class="tg-val">${rounded}</span>`
-      + `</span>`
-    );
+      + `</span>`;
+    if (isSorted) sortedPill = html;   // hoisted below so it leads the strip
+    else pills.push(html);
   }
+  // Lead with the sorted tool so the sort is legible without clipping the rest.
+  if (sortedPill) pills.unshift(sortedPill);
   if (!pills.length) return "";
   return `<div class="tool-grade-strip">${pills.join("")}</div>`;
 }
@@ -34208,10 +34284,10 @@ function _sortStatPill(p) {
   }
   const tk = state.toolSortKey;
   if (tk && tk !== "off") {
-    const grades = (p.tools && p.tools.grades) || {};
-    const v = tk === "pwr" ? _resolvePwr(grades) : grades[tk];
-    return _pillHTML((typeof toolAbbrev === "function" ? toolAbbrev(tk) : tk.toUpperCase()),
-                     (v == null || !isFinite(Number(v))) ? null : String(fvCeil(Number(v))));
+    // The active tool is now hoisted to the front of the tool-grade strip and
+    // highlighted inline (makeToolGradeChips), so no separate leading pill -
+    // that extra pill overflowed the toolstrip and clipped the trailing chips.
+    return "";
   }
   const surM = {
     surplus_sv: ["Surplus", s => s && s.value_mm],
@@ -34232,7 +34308,12 @@ function _sortStatPill(p) {
 
 function makeListRowSummary(p) {
   const sortPill = _sortStatPill(p);
-  const chipStrip = makeToolGradeChips(p);
+  // Pass the active tool-sort key so the sorted tool leads + highlights inside
+  // the strip (only in the active list; sibling lists sort on their own keys).
+  const activeToolKey = (typeof state !== "undefined" && state.section === "active"
+    && !state.view && state.toolSortKey && state.toolSortKey !== "off")
+    ? state.toolSortKey : null;
+  const chipStrip = makeToolGradeChips(p, activeToolKey);
   if (chipStrip) return sortPill + chipStrip;
   // listMode=true trims segments whose data already shows on sibling
   // cells of the same row (age/pos/level, FV badge, stock arrow, ETA,
@@ -44281,6 +44362,11 @@ function renderPlayerDetail(key) {
       const list = entriesBySrc[s.key];
       if (!list || !list.length) return "";
       const hidden = s.key !== defaultSrc;
+      // Prominent "View on FanGraphs" link at the top of the FanGraphs body.
+      // Reuses the shared builder (uses srIds.fangraphs); renders nothing when
+      // no FanGraphs id is on file for this player.
+      const srcLink = (s.key === "fangraphs") ? sourceLinkHtml("fangraphs", p, srIds, "FanGraphs") : "";
+      const srcLinkBlock = srcLink ? `<div class="sr-source-link">${srcLink}</div>` : "";
       // Cycle picker - only show when ≥2 cycles. Each <option> carries
       // the cycle index so the change handler can swap the body without
       // re-rendering the whole detail panel.
@@ -44299,6 +44385,7 @@ function renderPlayerDetail(key) {
           <div class="sr-prose">${escapeHtml(e.text)}</div>
         </div>`).join("");
       return `<div class="sr-body${hidden ? ' is-hidden' : ''}" data-sr-body="${escapeHtml(s.key)}">
+        ${srcLinkBlock}
         ${cyclePicker}
         ${renderedCycles}
       </div>`;

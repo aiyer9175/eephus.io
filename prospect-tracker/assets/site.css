@@ -1488,6 +1488,20 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-viz-h { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
   text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
 .eephus-chart { display: block; width: 100%; height: auto; }
+/* collapsible chart panels (shared by /mlbstats/ + /pal/): charts default
+   collapsed and the header row is the toggle. */
+.mlbstats-collapse { border: 1px solid var(--border); background: var(--bg-secondary); margin: 12px 0 16px; }
+.mlbstats-collapse-head { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-secondary); background: none; border: 0;
+  padding: 9px 12px; cursor: pointer; }
+.mlbstats-collapse-head:hover { color: var(--text-primary); }
+.mlbstats-collapse-caret { flex: none; width: 0; height: 0; border-left: 5px solid currentColor;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform .12s ease; }
+.mlbstats-collapse:not(.is-collapsed) .mlbstats-collapse-caret { transform: rotate(90deg); }
+.mlbstats-collapse-body { padding: 0 12px 12px; }
+.mlbstats-collapse.is-collapsed .mlbstats-collapse-body { display: none; }
+.mlbstats-collapse .mlbstats-viz { margin: 0; }
 .mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
 .mlbstats-bar input, .mlbstats-bar select {
   font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;
@@ -1570,6 +1584,18 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
 .pal-hit { color: var(--accent-green); font-weight: 700; }
 .pal-miss { color: var(--accent-red); font-weight: 700; }
 .pal-pending { color: var(--text-tertiary); }
+/* direction-colored conversion chips: RP->SP is the value-additive move (prominent
+   cyan), SP->RP is the muted salvage direction (orange). */
+.pal-dir--rp2sp { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); opacity: .85; }
+/* conversion candidate TIER titles (under the FIT number in the candidate table) */
+.pal-tier { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase; margin-top: 3px; white-space: nowrap; color: var(--text-tertiary); }
+.pal-tier--rp2sp { color: var(--accent-cyan); }
+.pal-tier--sp2rp { color: var(--accent-orange); }
+.pal-tier-legend { font-size: 10.5px; color: var(--text-tertiary); margin: 0 0 12px;
+  padding: 7px 10px; border: 1px dashed var(--border); background: var(--bg-secondary); }
+.pal-tier-legend b { color: var(--text-secondary); }
 /* backtest scorecard banner */
 .pal-scorecard, .mlbstats-scorecard { display: flex; flex-wrap: wrap; gap: 18px; align-items: baseline; padding: 10px 14px;
   border: 1px solid var(--border); background: var(--bg-secondary); margin: 8px 0 12px; }

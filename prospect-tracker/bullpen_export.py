@@ -94,6 +94,70 @@ def _team_abbrev_map() -> dict:
         return {}
 
 
+@functools.lru_cache(maxsize=2)
+def _active_mlbam_ids(season: int) -> Optional[frozenset]:
+    """Set of MLBAM ids on a current ACTIVE roster (26-man), fetched ONCE per
+    season and cached. Walks the 30 club active rosters from the StatsAPI teams
+    roster endpoint and unions the person ids.
+
+    Returns None on any failure so the caller does NOT filter (never break the
+    board): an unreachable roster feed must leave the depth ladders intact rather
+    than blank them. rosterType=active (not 40Man) so a demoted arm optioned to
+    Triple-A (e.g. Blade Tidwell) is correctly dropped."""
+    try:
+        teams = _get_json("teams", {"sportId": 1}).get("teams", [])
+    except Exception as e:
+        _log.warning("active-roster team list fetch failed: %s", e)
+        return None
+    if not teams:
+        return None
+    ids: set = set()
+    any_ok = False
+    for t in teams:
+        tid = t.get("id")
+        if not tid:
+            continue
+        try:
+            data = _get_json(f"teams/{tid}/roster", {"rosterType": "active", "season": int(season)})
+        except Exception as e:
+            _log.warning("active-roster fetch team %s failed: %s", tid, e)
+            continue
+        for r in data.get("roster", []):
+            pid = (r.get("person") or {}).get("id")
+            if pid:
+                ids.add(int(pid))
+                any_ok = True
+    # if not a single roster came back, treat it as a total failure (do not filter)
+    return frozenset(ids) if any_ok else None
+
+
+def _apply_roster_filter(teams: list, active_ids: Optional[frozenset]) -> int:
+    """Drop depth-ladder entries whose MLBAM (depth row 'key' = str(mlbam)) is not
+    on a current active roster. `active_ids` None => roster fetch failed, so do NOT
+    filter. An unidentifiable key is KEPT (never over-filter). Returns the number
+    of off-roster arms dropped."""
+    if not active_ids:
+        return 0
+    dropped = 0
+    for t in teams:
+        depth = t.get("depth")
+        if not depth:
+            continue
+        kept = []
+        for d in depth:
+            try:
+                mid = int(d.get("key"))
+            except (TypeError, ValueError):
+                kept.append(d)   # can't identify the player -> keep
+                continue
+            if mid in active_ids:
+                kept.append(d)
+            else:
+                dropped += 1
+        t["depth"] = kept
+    return dropped
+
+
 def load_season_pitching(season: int) -> list[dict]:
     """All MLB pitchers' season lines from the StatsAPI leaderboard (playerPool
     'all' so relievers are included). One combined row per player. [] on any
@@ -292,6 +356,17 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     n_lev = _join_leverage_consistency(scored["relievers"])
     if n_lev:
         log(f"  bullpen: gmLI-consistency joined for {n_lev} relievers")
+
+    # Bullpen Charts should show only players actually ON the active roster; drop
+    # off-roster arms (demoted / released) from the depth ladders. Roster fetch is
+    # a single guarded pass and falls back to NO filtering if it fails.
+    active_ids = _active_mlbam_ids(season)
+    if active_ids is None:
+        log("  bullpen: active-roster feed unavailable; depth ladders left unfiltered")
+    else:
+        n_off = _apply_roster_filter(scored["teams"], active_ids)
+        log(f"  bullpen: active-roster filter kept {len(active_ids)} rostered ids, "
+            f"dropped {n_off} off-roster arms from depth ladders")
 
     payload = {
         "generated_at": today,

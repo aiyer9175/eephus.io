@@ -54,15 +54,54 @@
   function wireGlossary(el) { try { if (window.EEPHUS_GL && EEPHUS_GL.wire) EEPHUS_GL.wire(el); } catch (e) { } }
   function logo(team) { try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; } catch (e) { return ""; } }
   function chart(fn, arg, opts) { try { return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, opts) : ""; } catch (e) { return ""; } }
-  function vizWrap(title, svg) {
-    return svg ? '<div class="mlbstats-viz"><div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + title + "</div>" + svg + "</div></div>" : "";
+
+  // ---- collapsible chart panels (shared pattern with /mlbstats/) ------------
+  // Charts default COLLAPSED; the header is the toggle and the open/closed state
+  // persists in localStorage.
+  var COLLAPSE = {};
+  function collapseState(id) {
+    if (COLLAPSE[id] != null) return COLLAPSE[id];
+    var v = true; // default collapsed
+    try {
+      var s = window.localStorage.getItem("pal.collapse." + id);
+      if (s === "0") v = false; else if (s === "1") v = true;
+    } catch (e) { /* localStorage optional */ }
+    COLLAPSE[id] = v;
+    return v;
+  }
+  function setCollapse(id, collapsed) {
+    COLLAPSE[id] = collapsed;
+    try { window.localStorage.setItem("pal.collapse." + id, collapsed ? "1" : "0"); } catch (e) { /* optional */ }
+  }
+  function bindCollapse(root) {
+    root.querySelectorAll("[data-collapse]").forEach(function (el) {
+      var head = el.querySelector(".mlbstats-collapse-head");
+      if (!head) return;
+      head.addEventListener("click", function (e) {
+        e.stopPropagation();
+        var id = el.getAttribute("data-collapse");
+        var next = !el.classList.contains("is-collapsed");
+        el.classList.toggle("is-collapsed", next);
+        head.setAttribute("aria-expanded", String(!next));
+        setCollapse(id, next);
+      });
+    });
+  }
+  function vizWrap(id, title, svg) {
+    if (!svg) return "";
+    var collapsed = collapseState(id);
+    var body = '<div class="mlbstats-viz"><div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + title + "</div>" + svg + "</div></div>";
+    return '<div class="mlbstats-collapse' + (collapsed ? " is-collapsed" : "") + '" data-collapse="' + esc(id) + '">'
+      + '<button type="button" class="mlbstats-collapse-head" aria-expanded="' + (!collapsed) + '">'
+      + '<span class="mlbstats-collapse-caret" aria-hidden="true"></span>Charts</button>'
+      + '<div class="mlbstats-collapse-body">' + body + "</div></div>";
   }
   function rp2spViz() {
     var rows = (DATA && DATA.rp2sp) || [];
     if (rows.length < 12) return "";
     var hist = chart("histogram", rows.map(function (r) { return r.fit; }),
       { height: 100, min: 0, max: 100, highlightAbove: 70, refs: [{ at: 60, label: "starter shape" }], aria: "RP-SP FIT distribution" });
-    return vizWrap(gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = 70+, a real starter profile)</span>', hist);
+    return vizWrap("rp2sp-viz", gloss("RP→SP FIT", "rp_sp_fit") + ' distribution <span class="proj-dim">(cyan = 70+, a real starter profile)</span>', hist);
   }
   function sp2rpViz() {
     var rows = (DATA && DATA.sp2rp) || [];
@@ -75,7 +114,7 @@
     if (pts.length < 8) return "";
     var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
       xLabel: "relief upside →", yLabel: "↑ conversion need", xRef: 50, yRef: 50, aria: "upside vs need" });
-    return vizWrap('The conversion sweet spot <span class="proj-dim">(top-right = good stuff AND struggling as a starter)</span>', sc);
+    return vizWrap("sp2rp-viz", 'The conversion sweet spot <span class="proj-dim">(top-right = good stuff AND struggling as a starter)</span>', sc);
   }
 
   function fitClass(v) {
@@ -88,6 +127,50 @@
   }
   function fitCell(v, term) {
     return '<span class="pal-fit ' + fitClass(v) + '" data-gl="' + esc(term) + '">' + f1(v) + "</span>";
+  }
+  // Color the conversion-direction chip by direction. RP->SP is the value-additive
+  // move (a starter is worth more than a reliever) so it gets the prominent color;
+  // SP->RP is the more muted salvage direction. Accepts "RP->SP", "RP→SP", or the
+  // spaced arrow form used on the prospect cards.
+  function dirClass(direction) {
+    var d = String(direction || "").replace(/\s/g, "");
+    if (d.indexOf("RP->SP") >= 0 || d.indexOf("RP→SP") >= 0) return " pal-dir--rp2sp";
+    if (d.indexOf("SP->RP") >= 0 || d.indexOf("SP→RP") >= 0) return " pal-dir--sp2rp";
+    return "";
+  }
+  // Candidate TIER titles. The role-value logic: a starter is worth more than a
+  // reliever, so the premium RP->SP case is a SUCCESSFUL reliever who profiles as
+  // a starter; the premium SP->RP case is a starter STRUGGLING in the rotation
+  // whose stuff would play up in relief. Titles are wired off the FIT breakpoints
+  // (>=70 / >=55 / >=42) plus the server-computed `successful` flag.
+  function tierTitle(row, dir) {
+    var f = num(row.fit);
+    if (f == null) return "";
+    if (dir === "sp2rp") {
+      if (f >= 70) return "Bullpen Upside";
+      if (f >= 55) return "Relief Fit";
+      if (f >= 42) return "Marginal Move";
+      return "Keep Starting";
+    }
+    // rp2sp
+    if (f >= 70) return row.successful ? "Prime Starter Convert" : "Starter Upside";
+    if (f >= 55) return "Worth a Look";
+    if (f >= 42) return "Fringe Fit";
+    return "Reliever Profile";
+  }
+  function tierBadge(row, dir) {
+    var t = tierTitle(row, dir);
+    if (!t) return "";
+    return '<div class="pal-tier pal-tier--' + dir + '">' + esc(t) + "</div>";
+  }
+  function tierLegend(dir) {
+    if (dir === "sp2rp") {
+      return '<div class="pal-tier-legend">Tiers frame salvaging a struggling starter whose stuff plays up in short bursts: '
+        + '<b>Bullpen Upside</b> (70+), <b>Relief Fit</b> (55+), <b>Marginal Move</b> (42+), <b>Keep Starting</b> (below 42).</div>';
+    }
+    return '<div class="pal-tier-legend">Tiers read FIT with role value in mind (a starter is worth more than a reliever, so a '
+      + 'successful reliever who profiles as a starter is the premium case): <b>Prime Starter Convert</b> (70+, already succeeding '
+      + 'in relief), <b>Starter Upside</b> (70+), <b>Worth a Look</b> (55+), <b>Fringe Fit</b> (42+), <b>Reliever Profile</b> (below 42).</div>';
   }
   function fbPct(row) {
     if (row.fb_pct != null) return row.fb_pct;
@@ -165,7 +248,7 @@
   var RP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Reliever", kind: "name", sortable: false },
-    { key: "fit", label: "RP→SP FIT", term: "rp_sp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "rp_sp_fit"); } },
+    { key: "fit", label: "RP→SP FIT", term: "rp_sp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "rp_sp_fit") + tierBadge(r, "rp2sp"); } },
     { key: "n_pitches", label: "Arsenal", term: "arsenal_depth", cell: function (r) { return fInt(r.n_pitches) + '<span class="proj-dim"> pitch</span>'; } },
     { key: "fb_pct", label: "FB%", cell: function (r) { return fPct(fbPct(r)); }, get: function (r) { return fbPct(r); } },
     { key: "k_pct", label: "K%", cell: function (r) { return fPct(r.k_pct); } },
@@ -176,7 +259,7 @@
   var SP_COLS = [
     { key: "rank", label: "#", kind: "rank" },
     { key: "name", label: "Starter", kind: "name", sortable: false },
-    { key: "fit", label: "SP→RP FIT", term: "sp_rp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "sp_rp_fit"); } },
+    { key: "fit", label: "SP→RP FIT", term: "sp_rp_fit", desc: true, cell: function (r) { return fitCell(r.fit, "sp_rp_fit") + tierBadge(r, "sp2rp"); } },
     { key: "starter_era", label: "SP ERA", cell: function (r) { return f2(r.starter_era); }, asc: true },
     { key: "relief_upside", label: "Relief upside", cell: function (r) { return f1(r.relief_upside); } },
     { key: "best_whiff", label: "Putaway", term: "putaway_pitch", cell: function (r) { return fPct(r.best_whiff); } },
@@ -210,7 +293,7 @@
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
-      + "platoon-neutrality, and contact quality. Click a row for the component breakdown.</div>";
+      + "platoon-neutrality, and contact quality. Click a row for the component breakdown.</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
@@ -219,7 +302,7 @@
     var note = '<div class="mlbstats-note">Starters who are <b>struggling in the rotation</b> and whose stuff would play up in relief. '
       + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
-      + "the need signal; proj REM+ is a display-only relief projection.</div>";
+      + "the need signal; proj REM+ is a display-only relief projection.</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -268,7 +351,7 @@
       + "<th>Held role</th><th>pre-FIT</th><th>Result</th></tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
       return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + esc(h.name || "-") + "</td>"
-        + '<td><span class="pal-dir">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
+        + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
         + "<td>" + esc(h.year) + "</td>"
         + "<td>" + roleLine(h.pre) + "</td><td>" + roleLine(h.post) + "</td>"
         + "<td>" + heldCell(h) + "</td>"
@@ -288,7 +371,7 @@
       }).join("");
     }
     var cards = rows.map(function (m) {
-      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + esc(m.name) + '</span><span class="pal-dir">'
+      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + esc(m.name) + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
         + esc((m.direction || "").replace("->", "→")) + " " + esc(m.year) + "</span></h4>"
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
         + '<div><h4>After</h4>' + usageBars(m.after) + "</div></div></div>";
@@ -359,12 +442,13 @@
       }).join("");
     }
     var cards = rows.map(function (p) {
+      var pdir = p.role === "SP" ? "SP->RP" : "RP->SP";
       var arrow = p.role === "SP" ? "SP &rarr; RP" : "RP &rarr; SP";
       var msg = p.role === "SP" ? "Scouted a starter, but the arsenal profiles as a reliever."
         : "Scouted a reliever, but has the arsenal to start.";
       return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
-        + '<span class="pal-dir">' + arrow + "</span></h4>"
+        + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fInt(p.fv)
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
@@ -402,6 +486,7 @@
   }
 
   function bindTable(root) {
+    bindCollapse(root);
     root.querySelectorAll("[data-open]").forEach(function (tr) {
       tr.addEventListener("click", function (e) {
         if (e.target.closest("th")) return;

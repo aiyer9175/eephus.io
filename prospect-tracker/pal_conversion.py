@@ -510,6 +510,22 @@ def _role_line(row: dict) -> dict:
     }
 
 
+def role_success(arm: PalArm) -> Optional[bool]:
+    """Is this pitcher SUCCEEDING in his CURRENT role, from a real sample of his
+    own results (ERA + K-BB)? Used only to TIER conversion candidates for display:
+    a successful reliever who profiles as a starter is the premium RP->SP case (a
+    starter is worth more than a reliever), while the SP->RP board is already
+    gated on conversion NEED. None when the sample is too thin to judge."""
+    if arm.ip is None or arm.ip < CONV_MIN_IP or arm.era is None:
+        return None
+    kbb = (arm.k_pct - arm.bb_pct) if (arm.k_pct is not None and arm.bb_pct is not None) else None
+    if arm.role == "RP":
+        return arm.era <= 3.50 and (kbb is None or kbb >= 0.12)
+    if arm.role == "SP":
+        return arm.era <= 3.90 and (kbb is None or kbb >= 0.10)
+    return None
+
+
 def label_success(ev: dict) -> Optional[bool]:
     """Primary label = held the new role >=1 full season (objective, not a
     tunable role-adjusted tax). A revert within a year is a soft-fail. None when

@@ -179,9 +179,32 @@ def load_player_links() -> dict:
         return {}
 
 
-def load_prospect_pitchers() -> list:
+@functools.lru_cache(maxsize=1)
+def _graduated_player_keys() -> frozenset:
+    """player_keys of prospects with an MLB debut on record (data/debuts.json).
+    A HARD MLB-graduation gate for the prospect watch: anyone here has reached the
+    majors and is no longer a conversion-watch prospect. Empty set on any failure
+    (never crash the export)."""
+    try:
+        d = json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8"))
+    except Exception as e:
+        _log.warning("debuts.json unavailable for graduation gate: %s", e)
+        return frozenset()
+    return frozenset(e.get("player_key") for e in d if e.get("player_key"))
+
+
+def load_prospect_pitchers(exclude_keys: Optional[set] = None) -> list:
     """Prospect pitcher pool with 20-80 scout tool grades. Best-effort: needs the
-    prospect DB, so degrades to [] where it is absent (tests / no DB)."""
+    prospect DB, so degrades to [] where it is absent (tests / no DB).
+
+    A hard MLB-graduation gate drops anyone with an MLB debut on record
+    (data/debuts.json) or with meaningful MLB service (`exclude_keys`, player_keys
+    the caller resolves from career MLB innings via player_links). This catches
+    established MLB pitchers whose prospect record was never marked debuted
+    (e.g. NPB/KBO arrivals like Kodai Senga) that the status signal alone misses."""
+    graduated = set(_graduated_player_keys())
+    if exclude_keys:
+        graduated |= set(exclude_keys)
     try:
         from storage import load_all_snapshots
         from consensus import build_timeseries, _is_pitcher_pos
@@ -192,6 +215,8 @@ def load_prospect_pitchers() -> list:
     out = []
     for p in ts:
         try:
+            if p.player_key in graduated:
+                continue    # hard MLB-graduation gate (debuted or meaningful MLB service)
             if getattr(p, "status", "") != "active" or not _is_pitcher_pos(p.position):
                 continue
             pt = p.points[-1] if getattr(p, "points", None) else None
@@ -205,6 +230,28 @@ def load_prospect_pitchers() -> list:
         except Exception:
             continue
     return out
+
+
+MLB_SERVICE_IP = 50.0   # career MLB innings that mark a pitcher as graduated
+
+
+def _mlb_service_keys(by_pid: dict, links: dict) -> set:
+    """player_keys of pitchers with meaningful career MLB innings (>= MLB_SERVICE_IP
+    across the loaded seasons), resolved from their MLBAM id via player_links. The
+    service half of the prospect-watch graduation gate (backstops debuts.json for
+    foreign-league arrivals the debut tracker never marked)."""
+    keys = set()
+    for mlbam, byyr in by_pid.items():
+        try:
+            tot = sum(be.ip_to_float(r.get("IP")) for r in byyr.values())
+        except Exception:
+            continue
+        if tot < MLB_SERVICE_IP:
+            continue
+        lk = links.get(mlbam)
+        if lk and lk.get("key"):
+            keys.add(lk["key"])
+    return keys
 
 
 def _prospect_role(pos: Optional[str]) -> Optional[str]:
@@ -335,7 +382,12 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # extensions: throwing hand (reverse platoon), MLB + PROSPX starter pedigree
     pitch_hand = load_pitch_hand(season)
     links = load_player_links()
-    prospects = load_prospect_pitchers()
+    # hard MLB-graduation gate for the prospect watch: anyone with meaningful MLB
+    # service (career innings across the loaded seasons) has graduated even when
+    # the debut tracker missed them (e.g. NPB/KBO arrivals like Senga). Resolve
+    # those MLBAM ids back to prospect player_keys via player_links.
+    served = _mlb_service_keys(by_pid, links)
+    prospects = load_prospect_pitchers(exclude_keys=served)
     prospx_role_map = {p["player_key"]: _prospect_role(p.get("position")) for p in prospects}
 
     def _prospx_role_for(mlbam):
@@ -477,6 +529,8 @@ def _cand_row(arm: PalArm, fit: dict, kind: str) -> dict:
         "platoon_split": (round(abs(arm.ops_vl - arm.ops_vr), 3)
                           if arm.ops_vl is not None and arm.ops_vr is not None else None),
         "components": fit["components"], "flags": fit["flags"],
+        # succeeding in his CURRENT role? (display-only tiering signal, ERA + K-BB)
+        "successful": pc.role_success(arm),
         "arsenal": [{"pitch": p.get("pitch"), "usage": _r(p.get("usage"), 3),
                      "whiff": _r(p.get("whiff"), 3), "est_woba": _r(p.get("est_woba"), 3)}
                     for p in arm.arsenal if (p.get("usage") or 0) >= 0.03],
