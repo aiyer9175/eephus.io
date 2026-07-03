@@ -153,6 +153,36 @@ BETA_READINESS.md (go/no-go).
 <!-- APPEND PACKAGE ENTRIES BELOW THIS LINE (newest first within each day;
      add a new "## YYYY-MM-DD" heading when the day changes) -->
 
+## 2026-07-03 (follow-up Wave B2: starter metrics)
+
+- New Starter Leaderboards section on /mlbstats/, the starter counterpart to the
+  Bullpen Leaderboards. Three gated experiments (pre-registered; harness
+  tools/sem_plus_lab.py, seed 20260703):
+  - SEM+ (Starter Evaluation Metric, X-S1) ships VALIDATED. A starter-pool-
+    anchored, sample-shrunk FIP (100 = average qualified starter), pure run-
+    prevention skill. Forward-chained out of sample over 2018-2025 (excluding
+    2020, 702 season-to-season pairs), SEM+ predicts a starter's next-year
+    runs-allowed rate at a Spearman correlation of 0.39, beating ERA (0.26; gap
+    confidence floor above zero) and edging its raw-FIP parent (0.36). It is a
+    stronger forward predictor than the reliever REM+ (0.24) because starters
+    carry larger, steadier single-season samples. Durability (innings, games
+    started, average start length) is shown as context, never mixed into the
+    skill number.
+  - A "more than FIP" test (X-S3, a ground-ball-adjusted home-run expectation)
+    was REJECTED: it scored 0.3905 versus plain FIP 0.3923 out of sample, so the
+    plain core ships. Starter samples are large enough that the observed home-run
+    rate is already a strong estimate, the same finding as the reliever SwStr
+    test. Loss ledger inside data/sem_plus_eval.json.
+  - 3-year SEM+ (X-S2) ships PROVISIONAL as a companion column: it forward-
+    predicts a touch better than a single season (0.41 versus 0.39 on the same
+    starters, gap not statistically separable) and is steadier by construction.
+  - Team Rotation+ rolls SEM+ up by starter innings; yearly history tabs read
+    per-season boards from data/starter_history.json (2021-2025).
+- New modules sem_plus.py (reuses the validated REM+ FIP machinery) and
+  starter_export.py; run_monthly steps 6b4e (starter lab) and 6b4f (starter
+  export + history); registry now 57 rows; glossary adds sem_plus and
+  sem_plus_3yr. Golden artifacts byte-unchanged.
+
 ## 2026-07-02 (follow-up Wave B1: reliever metrics)
 
 - Bullpen Leaderboards gains a richer, honest reliever picture. Three gated

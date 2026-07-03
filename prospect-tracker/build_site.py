@@ -2328,24 +2328,30 @@ def build_mlbstats() -> str:
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1></div>'
-        '<span class="section-sub">League-wide MLB stat leaderboards. First up: Bullpen Leaderboards - '
-        'REM+ reliever ratings, team Bullpen+ quality, and bullpen charts, computed from MLB '
+        '<span class="section-sub">League-wide MLB stat leaderboards. Bullpen Leaderboards - '
+        'REM+ reliever skill, RIV+ impact, team Bullpen+ quality, and bullpen charts; and Starter '
+        'Leaderboards - SEM+ starter run-prevention skill and team Rotation+, computed from MLB '
         'play-by-play.</span></div>'
-        # Section nav (one section today; built as a tablist so more can join).
+        # Section nav (built as a tablist; sections join here as they ship).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true">Bullpen Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false">Starter Leaderboards</button>'
         '</div>'
         '<div id="mlbstats-section-bullpen" class="mlbstats-section">'
         '<div id="mlbstats-banner"></div>'
         '<div id="mlbstats-app-root"></div>'
+        '</div>'
+        '<div id="mlbstats-section-starters" class="mlbstats-section" hidden>'
+        '<div id="mlbstats-starters-root"></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
-                "MLB stat leaderboards from eephus.io - REM+ reliever ratings, team Bullpen+ "
-                "bullpen quality, and bullpen charts, computed from MLB play-by-play.",
+                "MLB stat leaderboards from eephus.io - REM+ reliever skill and RIV+ impact, team "
+                "Bullpen+ quality, and SEM+ starter run-prevention ratings, computed from MLB "
+                "play-by-play.",
                 url=f"{SITE_ORIGIN}/mlbstats/")
 
 def build_pal() -> str:

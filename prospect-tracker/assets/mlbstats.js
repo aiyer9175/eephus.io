@@ -214,7 +214,8 @@
     cols.forEach(function (c) {
       var sorted = (c.key === sort.key) ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
-      head += '<th class="mlbstats-col-' + c.key + sorted + '" data-col="' + c.key + '">' + lbl + "</th>";
+      var title = c.title ? ' title="' + esc(c.title) + '"' : "";
+      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + title + ' data-col="' + c.key + '">' + lbl + "</th>";
     });
     head += "</tr></thead>";
 
@@ -586,8 +587,357 @@
       .catch(function () { DATA = null; LOAD_ERROR = true; render(); });
   }
 
+  // ===========================================================================
+  // Section 2: Starter Leaderboards (SEM+ starter run-prevention skill).
+  // ---------------------------------------------------------------------------
+  // A parallel of the reliever section: SEM+ is a starter's pure run-prevention
+  // skill (100 = average qualified starter), and durability (IP, GS, average
+  // start length) rides context columns so workload never moves the skill
+  // number. Renders into #mlbstats-starters-root; reuses every shared helper
+  // (renderTable / sortRows / gloss / remCell / explainer / season pills).
+  // ===========================================================================
+  var section = "bullpen";                    // bullpen | starters
+  var STARTER_URL = "/data/starter_leaderboards.json";
+  var STARTER_HISTORY_URL = "/data/starter_history.json";
+
+  var starterData = null;
+  var starterErr = false;                     // fetch failed / non-OK
+  var starterInit = false;                    // lazy-fetch guard (first activation)
+  var starterView = "starters";               // starters | teams
+  var starterSort = { key: "sem_plus", asc: false };
+  var starterTeamSort = { key: "rotation_plus", asc: false };
+  var starterQuery = "";
+  var starterQualifiedOnly = true;
+
+  // Yearly history board (starter_history.json), lazy-fetched the first time a
+  // past season pill is picked. Mirrors the reliever history state machine.
+  var starterSeason = "current";
+  var STARTER_HISTORY = null;
+  var STARTER_HISTORY_LOADING = false;
+  var STARTER_HISTORY_ERROR = false;
+
+  // Skill core first (SEM+ and the trailing-window SEM+ 3yr), then the durability
+  // and rate columns that ride as context.
+  var STARTER_COLS = [
+    { key: "name", label: "Starter", term: null, sortable: true, kind: "name" },
+    { key: "sem_plus", label: "SEM+", term: "sem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "sem_plus_3yr", label: "SEM+ 3yr", term: "sem_plus_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.sem_plus_3yr; },
+      cell: function (r) {
+        if (r.sem_plus_3yr == null) return "";
+        var s = remCell(r.sem_plus_3yr);
+        if (r.sem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.sem_plus_3yr_pct) + "</span>";
+        if (r.sem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "ip", label: "IP", fmt: f1, num: true },
+    { key: "gs", label: "GS", fmt: fInt, num: true },
+    { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
+    { key: "k_pct", label: "K%", fmt: fPct, num: true },
+    { key: "bb_pct", label: "BB%", fmt: fPct, num: true },
+    { key: "k_bb_pct", label: "K-BB%", fmt: fPct, num: true },
+    { key: "gb_pct", label: "GB%", fmt: fPct, num: true },
+    { key: "fip", label: "FIP", term: "fip", fmt: f2, num: true, asc: true },
+    { key: "era", label: "ERA", term: "era", fmt: f2, num: true, asc: true },
+    { key: "hr9", label: "HR/9", fmt: f2, num: true, asc: true },
+  ];
+
+  // Past-season history rows carry the season-level fields but not the
+  // trailing-window SEM+ 3yr. Reuse the same column objects so the history board
+  // renders and sorts identically, dropping the column its rows lack.
+  var STARTER_HISTORY_DROP = { sem_plus_3yr: 1 };
+  var STARTER_HISTORY_COLS = STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; });
+
+  var STARTER_TEAM_COLS = [
+    { key: "team", label: "Team", sortable: true, kind: "team" },
+    { key: "rotation_plus", label: "Rotation+", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "front_sem", label: "Front 3", fmt: remCell, num: true },
+    { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
+      get: function (t) { return num(t.n_above_avg); },
+      cell: function (t) { return fInt(t.n_above_avg) + (t.n_starters != null ? '<span class="proj-dim"> / ' + fInt(t.n_starters) + "</span>" : ""); } },
+    { key: "starter_ip", label: "Starter IP", fmt: f1, num: true },
+    { key: "total_gs", label: "GS", fmt: fInt, num: true },
+  ];
+
+  // SEM+ explainer - reuses the shared explainer() markup so it styles like the
+  // reliever REM+ one, wired to the glossary tooltip (data-gl) + deep link.
+  function semExplainer() {
+    return explainer("sem_plus", gloss("SEM+", "sem_plus")
+      + " measures a starting pitcher's pure run-prevention skill on a league-relative scale: 100 is an average"
+      + " qualified starter, 110 is 10 percent better. It is FIP-based and regressed for small samples, so"
+      + " durability (innings, games started, and average start length) rides the context columns instead of"
+      + " moving the skill number.");
+  }
+
+  // SEM+ accountability scorecard - mirrors the reliever scorecard so a validated
+  // model surfaces its out-of-sample backtest, not just a status word.
+  function starterScorecard() {
+    var b = (starterData && starterData.backtest) || {};
+    if (b.rho_sem_plus == null) return "";
+    return '<div class="mlbstats-scorecard">'
+      + '<span class="pal-sc-stat">' + gloss("SEM+", "sem_plus") + ' forward &rho; <b>'
+      + b.rho_sem_plus + '</b><span class="proj-dim"> vs FIP ' + (b.rho_fip == null ? "-" : b.rho_fip)
+      + ", ERA " + (b.rho_era == null ? "-" : b.rho_era) + "</span></span>"
+      + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
+      + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
+      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
+      + "</div>";
+  }
+
+  // ---- starters: yearly history board ---------------------------------------
+  function starterHistorySeasons() {
+    if (STARTER_HISTORY && STARTER_HISTORY.seasons && STARTER_HISTORY.seasons.length) return STARTER_HISTORY.seasons.slice();
+    var cur = num(starterData && starterData.season);
+    if (cur == null) return [];
+    var out = [];
+    for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
+    return out;
+  }
+  function starterSeasonPills() {
+    var pills = [["current", "Current"]];
+    starterHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
+      pills.push([String(y), String(y)]);
+    });
+    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
+      var sel = (p[0] === starterSeason);
+      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
+        + '" data-starterseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function loadStarterHistory() {
+    if (STARTER_HISTORY || STARTER_HISTORY_LOADING) return;
+    STARTER_HISTORY_LOADING = true;
+    STARTER_HISTORY_ERROR = false;
+    fetch(STARTER_HISTORY_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { STARTER_HISTORY = j; STARTER_HISTORY_LOADING = false; renderStarters(); })
+      .catch(function () { STARTER_HISTORY_LOADING = false; STARTER_HISTORY_ERROR = true; renderStarters(); });
+  }
+  function starterHistoryYear() {
+    return (STARTER_HISTORY && STARTER_HISTORY.history && STARTER_HISTORY.history[starterSeason]) || null;
+  }
+  function filteredStarters() {
+    var rows = (starterData && starterData.starters) || [];
+    var q = starterQuery.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (starterQualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+  function filteredStarterHistory() {
+    var yr = starterHistoryYear();
+    var rows = (yr && yr.starters) || [];
+    var q = starterQuery.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (starterQualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+  // A past board can only sort on columns it shows; if the shared sort key is a
+  // current-only column (SEM+ 3yr), fall back to the SEM+ default.
+  function starterHistorySort() {
+    var ok = false;
+    STARTER_HISTORY_COLS.forEach(function (c) { if (c.key === starterSort.key) ok = true; });
+    return ok ? starterSort : { key: "sem_plus", asc: false };
+  }
+
+  // ---- starters: views ------------------------------------------------------
+  function starterTabBar() {
+    var tabs = [["starters", "Starters"], ["teams", "Team Rotations"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === starterView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-starterview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === starterView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function starterControls() {
+    if (starterView !== "starters") return "";
+    return '<div class="mlbstats-bar">'
+      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + '<input class="mlbstats-search" type="search" id="mlbstats-starter-q" placeholder="Search starter or team" value="' + esc(starterQuery) + '">'
+      + "</div>";
+  }
+
+  function renderStarterBoard() {
+    if (starterSeason !== "current") return renderStarterHistory();
+    var rows = sortRows(filteredStarters(), STARTER_COLS, starterSort);
+    var body = rows.length
+      ? (function () {
+          var note = '<div class="mlbstats-note">' + rows.length + " starters. "
+            + gloss("SEM+", "sem_plus") + " is pure run-prevention skill (100 = average qualified starter); "
+            + "the durability columns (IP, GS, IP/GS) are context, kept separate from the skill number.</div>";
+          return semExplainer() + starterScorecard() + note
+            + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_COLS, starterSort) + "</div>";
+        })()
+      : '<div class="mlbstats-empty">No starters match the current filters.</div>';
+    return starterSeasonPills() + body;
+  }
+
+  // A past season's board: the same table and controls, restricted to the
+  // columns a history row carries (no SEM+ 3yr trailing-window column). It lets a
+  // user eyeball how each season's SEM+ (skill) aged forward.
+  function renderStarterHistory() {
+    var pills = starterSeasonPills();
+    if (STARTER_HISTORY_ERROR) {
+      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
+        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-starter-history-retry">Retry</button></div>';
+    }
+    if (!STARTER_HISTORY) {
+      loadStarterHistory();
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(starterSeason) + " season leaderboard&hellip;</div>";
+    }
+    if (STARTER_HISTORY_LOADING) {
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(starterSeason) + " season leaderboard&hellip;</div>";
+    }
+    var yr = starterHistoryYear();
+    if (!yr || !yr.starters || !yr.starters.length) {
+      return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(starterSeason) + " season.</div>";
+    }
+    var sort = starterHistorySort();
+    var rows = sortRows(filteredStarterHistory(), STARTER_HISTORY_COLS, sort);
+    var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.starters.length;
+    var cap = '<div class="mlbstats-note">' + esc(starterSeason) + " season, " + esc(nQual)
+      + " qualified starters. " + gloss("SEM+", "sem_plus") + " is the skill read; the durability columns"
+      + " (IP, GS, IP/GS) are context. Compare against how these arms actually pitched forward.</div>";
+    var table = rows.length
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_HISTORY_COLS, sort) + "</div>"
+      : '<div class="mlbstats-empty">No starters match the current filters.</div>';
+    return pills + cap + table;
+  }
+
+  function renderStarterTeams() {
+    var rows = (starterData && starterData.teams) || [];
+    rows = sortRows(rows, STARTER_TEAM_COLS, starterTeamSort);
+    if (!rows.length) return '<div class="mlbstats-empty">No team rotations to show yet.</div>';
+    var note = '<div class="mlbstats-note">Rotation+ weights each rotation by the '
+      + gloss("SEM+", "sem_plus") + " of the starter innings it throws (starter-IP-weighted). Front 3 reads the"
+      + " top of the rotation; the durability columns are context.</div>";
+    return note + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
+  }
+
+  // ---- starters: shell ------------------------------------------------------
+  function renderStarters() {
+    var root = document.getElementById("mlbstats-starters-root");
+    if (!root) return;
+    if (!starterData) {
+      root.innerHTML = starterErr
+        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="mlbstats-starter-retry">Retry</button></div>'
+        : '<div class="mlbstats-empty">Starter Leaderboards are being computed from MLB play-by-play. '
+          + "Check back shortly.</div>";
+      var retry = document.getElementById("mlbstats-starter-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        loadStarters();
+      });
+      return;
+    }
+    var inner = (starterView === "teams") ? renderStarterTeams() : renderStarterBoard();
+    root.innerHTML = starterTabBar() + starterControls() + inner;
+    bindStarterEvents(root);
+    wireGlossary(root);
+  }
+
+  function bindStarterEvents(root) {
+    bindCollapse(root);
+    root.querySelectorAll("[data-starterview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        starterView = b.getAttribute("data-starterview");
+        renderStarters();
+      });
+    });
+    var q = root.querySelector("#mlbstats-starter-q");
+    if (q) q.addEventListener("input", function () { starterQuery = q.value; renderStartersInPlace(); });
+    var qual = root.querySelector("#mlbstats-starter-qual");
+    if (qual) qual.addEventListener("change", function () { starterQualifiedOnly = qual.checked; renderStartersInPlace(); });
+    root.querySelectorAll("[data-starterseason]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        starterSeason = b.getAttribute("data-starterseason");
+        if (starterSeason !== "current") loadStarterHistory();
+        renderStarters();
+      });
+    });
+    var hretry = root.querySelector("#mlbstats-starter-history-retry");
+    if (hretry) hretry.addEventListener("click", function () {
+      STARTER_HISTORY_ERROR = false;
+      loadStarterHistory();
+      renderStarters();
+    });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      th.addEventListener("click", function () {
+        var key = th.getAttribute("data-col");
+        var cols = (starterView === "teams") ? STARTER_TEAM_COLS
+          : (starterView === "starters" && starterSeason !== "current") ? STARTER_HISTORY_COLS : STARTER_COLS;
+        var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
+        var sort = (starterView === "teams") ? starterTeamSort : starterSort;
+        if (sort.key === key) sort.asc = !sort.asc;
+        else { sort.key = key; sort.asc = !!col.asc; }
+        renderStarters();
+      });
+    });
+  }
+
+  // Re-render only the starters root (keeps search-box focus on input).
+  function renderStartersInPlace() {
+    var root = document.getElementById("mlbstats-starters-root");
+    if (!root) return;
+    var inner = (starterView === "teams") ? renderStarterTeams() : renderStarterBoard();
+    root.innerHTML = starterTabBar() + starterControls() + inner;
+    var q = root.querySelector("#mlbstats-starter-q");
+    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    bindStarterEvents(root);
+    wireGlossary(root);
+  }
+
+  // Loader with a visible failure mode, matching the bullpen loader: a non-OK
+  // response or network error sets starterErr so renderStarters paints the error
+  // state (with Retry) instead of a blank board.
+  function loadStarters() {
+    starterErr = false;
+    fetch(STARTER_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { starterData = j; renderStarters(); })
+      .catch(function () { starterData = null; starterErr = true; renderStarters(); });
+  }
+
+  // First activation lazy-fetches the payload; later activations just re-render.
+  function initStarters() {
+    if (starterInit) { renderStarters(); return; }
+    starterInit = true;
+    renderStarters();          // paint the loading/computing state up front
+    loadStarters();
+  }
+
+  // ---- top-level section switching ------------------------------------------
+  function showSection(name) {
+    section = name;
+    document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
+      var on = b.getAttribute("data-mlbsection") === name;
+      b.classList.toggle("active", on);
+      b.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    var bp = document.getElementById("mlbstats-section-bullpen");
+    var st = document.getElementById("mlbstats-section-starters");
+    if (bp) { if (name === "bullpen") bp.removeAttribute("hidden"); else bp.setAttribute("hidden", "hidden"); }
+    if (st) { if (name === "starters") st.removeAttribute("hidden"); else st.setAttribute("hidden", "hidden"); }
+    if (name === "starters") initStarters();
+  }
+  function bindSectionNav() {
+    document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
+      b.addEventListener("click", function () { showSection(b.getAttribute("data-mlbsection")); });
+    });
+  }
+
   function init() {
     readHash();
+    bindSectionNav();
     load();
   }
 

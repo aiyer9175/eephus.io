@@ -201,6 +201,9 @@ def load_season_pitching(season: int) -> list[dict]:
             "HBP": st.get("hitByPitch"), "BF": st.get("battersFaced"),
             "Pit": st.get("numberOfPitches"),
             "IR": st.get("inheritedRunners"), "IRS": st.get("inheritedRunnersScored"),
+            # starter-side context (SEM+): durability + a batted-ball signal
+            "CG": st.get("completeGames"), "GO": st.get("groundOuts"),
+            "AO": st.get("airOuts"), "Strk": st.get("strikes"),
         })
     return out
 

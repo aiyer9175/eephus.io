@@ -112,6 +112,11 @@ MODEL_GLOSSARY = {
     "riv_plus": ["riv_plus"],
     "rem_plus_3yr": ["rem_plus_3yr"],
     "rem_plus_swstr": "internal",
+    # Follow-up Wave B2 starter metrics (2026-07): SEM+ (validated starter
+    # run-prevention) + 3-year SEM+ on the /mlbstats/ Starter Leaderboards, each
+    # with its own glossary entry.
+    "sem_plus": ["sem_plus"],
+    "sem_plus_3yr": ["sem_plus_3yr"],
 }
 
 

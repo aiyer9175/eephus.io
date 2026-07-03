@@ -726,6 +726,28 @@
    "eval_artifact": "data/rem_plus_swstr_eval.json",
    "verdict": "deprecated",
    "notes": "REJECTED at its pre-registered gate (Wave B1, X-R1), the owner's central 'make REM+ more than a FIP proxy' ask tested directly and honestly. Hypothesis: shrinking K% toward a SwStr%-implied expected-K prior (SwStr% stabilizes ~50 pitches, faster than K% ~70 BF) beats shrinking toward the pool mean and improves forward run-prevention prediction. bref SwStr% confirmed available for all backtest seasons. RESULT: candidate forward rho 0.2277 vs incumbent 0.2246 on 1036 pairs, gap CI lo95 -0.0066 (< 0) - a wash within noise. The incumbent already regresses K% by sample size; at reliever volumes the observed K% is a strong enough K estimate that a SwStr prior adds no out-of-sample forward signal. NO SHIP: the FIP-based REM+ skill core stays unchanged, REM+ published numbers unchanged. SwStr% still rides as a displayed peripheral. Do not retry without a pitch-level CSW%/xwOBAcon feed. Loss ledger data/rem_plus_swstr_eval.json; harness tools/rem_plus_lab.py."
+  },
+  {
+   "model_id": "sem_plus",
+   "surface": "/mlbstats/ Starter Leaderboards, SEM+ column",
+   "predicts": "starting-pitcher run-prevention skill, pool-relative (100 = average qualified starter); a sample-shrunk starter-pool-anchored FIP. Team Rotation+ rolls it up by starter innings",
+   "champion": "sem_plus_v1 (empirical-Bayes-shrunk, starter-pool-anchored FIP; durability held out of the skill number)",
+   "baseline": "ERA (naive run-prevention baseline) and raw FIP (its parent)",
+   "metric": "forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the rho gap)",
+   "eval_artifact": "data/sem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07 (Wave B2, X-S1), the starter analog of REM+. Forward-chained OOS 2018-2025 (ex-2020, 702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3923 vs raw FIP 0.358, ERA 0.2612; bootstrap CI on the rho gap beats ERA (lo95 +0.081) and edges its raw-FIP parent (lo95 +0.019), so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Forward predictiveness is materially higher than REM+ (0.24) because starters carry larger, more stable single-season samples. X-S3 'more than FIP' test REJECTED: a ground-ball-adjusted HR expectation (groundOutsToAirouts) scored 0.3905 vs plain 0.3923, gap lo95 -0.0086, so plain FIP stays (starter samples are large enough that observed HR rate is already a strong estimate; loss ledger inside the same artifact). Durability (IP, GS, average start length) is shown as CONTEXT, never in the skill number; quality starts / times-through-order are not in the StatsAPI season feed. Data from the StatsAPI season pitching leaderboard (FanGraphs 403-blocked); no leverage walk (starters are not leverage-deployed). Harness tools/sem_plus_lab.py; core sem_plus.py (reuses the validated rem_plus FIP machinery)."
+  },
+  {
+   "model_id": "sem_plus_3yr",
+   "surface": "/mlbstats/ Starter Leaderboards, SEM+ 3yr column (stable skill)",
+   "predicts": "starter run-prevention skill over a trailing 3-season window (IP-weighted mean SEM+); a steadier talent read than one season",
+   "champion": "sem_plus_3yr (IP-weighted trailing-3-season SEM+)",
+   "baseline": "single-season SEM+ forward rho vs RA9(Y+1) on the same starter set",
+   "metric": "forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
+   "eval_artifact": "data/sem_plus_multiyear_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07 (Wave B2, X-S2) as a companion display column to single-season SEM+ (same skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020, 457 arms): 3-year SEM+ forward-predicts next-year RA9 at rho 0.4141 vs single-season SEM+ 0.3922 on the same set; the point estimate favors 3yr (+0.022, a larger gain than the reliever 3yr case) but the same-set bootstrap gap CI includes 0 (lo95 -0.0257), so per the pre-registered rule it ships PROVISIONAL with the r published. Value is a steadier talent estimate. Joined into starter_leaderboards.json by MLBAM from proposed_values (starter_export._join_sem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 120+ IP for an established tag. Harness tools/sem_plus_lab.py."
   }
  ],
  "problems": []

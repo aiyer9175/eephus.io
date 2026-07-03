@@ -2545,6 +2545,29 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("bullpen history export failed - continuing")
 
+        # --- 6b4e. Starter lab (sem_plus_eval + sem_plus_multiyear_eval) ------
+        # The validated SEM+ starter gate + 3-year SEM+ proposed_values. One
+        # StatsAPI call per season, no leverage walk. Run before the starter
+        # export so the 3yr join reads the fresh artifact. Never aborts.
+        with _step("6b4e. starter lab (sem_plus + sem_plus_multiyear evals)", log):
+            try:
+                import subprocess as _sp
+                _sp.run([sys.executable,
+                         str(Path(__file__).parent / "tools" / "sem_plus_lab.py")],
+                        check=True, timeout=1200)
+            except Exception:
+                log.exception("starter-metric lab refresh failed - continuing")
+
+        # --- 6b4f. Starter Leaderboards + history (starter_*.json) ------------
+        with _step("6b4f. Starter Leaderboards (starter_leaderboards.json)", log):
+            try:
+                from starter_export import export as _export_starters, export_history as _export_st_history
+                _st_n = _export_starters(log=log.info)
+                log.info("starters: %d starters scored", _st_n)
+                _export_st_history(log=log.info)
+            except Exception:
+                log.exception("starter leaderboards export failed - continuing")
+
         # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI

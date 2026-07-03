@@ -511,8 +511,65 @@ Incumbent baseline (data/rem_plus_eval.json): REM+ forward-chained Spearman vs R
   REM+, that would overturn the leverage-isn't-skill thesis and force a rethink before any
   ship. Registry row + glossary + freshness map required either way.
 
+## Follow-up program Wave B2: starter-metric pre-registrations (2026-07-03)
+
+Owner ask: a new Starter Leaderboards section on /mlbstats/ with SEM+ (Starter Evaluation
+Metric+) and a 3-year SEM+, mirroring the reliever board. Recon: StatsAPI season pitching
+carries every FIP input + durability (gamesStarted, inningsPitched, completeGames) and a
+batted-ball signal (groundOutsToAirouts), but NOT quality starts or times-through-order
+(those need game logs / a feed the pipeline does not have). So SEM+ is the starter analog
+of REM+: a starter-pool-anchored empirical-Bayes-shrunk FIP (100 = average qualified
+starter), pure run-prevention skill, with durability (IP, GS, average start length) shown
+as CONTEXT, never folded into the skill number unless a gate proves it predicts forward.
+Starters are not leverage-deployed, so there is no leverage walk and no starter RIV+. Gates
+pre-registered here before any number was computed; harness tools/sem_plus_lab.py; seed
+20260703; same forward-chained convention as REM+ (Y qualified, RA9 in Y+1).
+
+- **X-S1 - SEM+ skill validation.** SEM+ = starter-pool EB-shrunk FIP. GATE (ship): SEM+
+  forward-chained Spearman vs RA9(Y+1) BEATS ERA (the naive baseline) with a seeded
+  bootstrap-CI gap lo95 > 0, AND is not worse than its raw-FIP parent (gap lo95 >= -0.01).
+  Clear pass -> ship SEM+ as a validated starter run-prevention index; else provisional
+  with the r published. Starter pool = primarily-starting pitchers (GS/G >= 0.5) with a
+  real sample; qualification pre-set at IP >= 40 provisional, the season leaderboard bar
+  (~1 IP per team game) for qualified.
+
+- **X-S2 - 3-year SEM+.** IP-weighted trailing-3-season SEM+. GATE: 3yr SEM+ forward rho vs
+  RA9(Y+1) on arms with a 3yr value EXCEEDS single-season SEM+ on the same set, seeded
+  bootstrap-CI gap lo95 >= 0. Clear positive -> ship a sem_plus_3yr companion column;
+  marginal -> provisional-with-r; negative -> ledger. (Starters have larger single-season
+  samples than relievers, so the 3-year stability gain may be smaller; report honestly.)
+
+- **X-S3 (informative, optional) - "more than FIP" for starters.** Does a batted-ball
+  (groundOutsToAirouts) adjustment to the HR expectation improve SEM+ forward prediction
+  over plain FIP? Ship the adjusted core ONLY if it beats plain FIP forward with a
+  bootstrap gap lo95 >= 0; otherwise keep plain FIP and record the loss ledger (the
+  reliever SwStr analog X-R1 was rejected, so the prior is skeptical).
+
 ## Changelog of findings in this pass
 
+- 2026-07-03 (follow-up Wave B2, starter metrics): the three pre-registered starter gates
+  ran (harness tools/sem_plus_lab.py; seed 20260703; StatsAPI season pitching, no leverage
+  walk). RESULTS:
+  * X-S1 SEM+ VALIDATED and shipped. Forward-chained OOS (702 Y->Y+1 pairs, 2018-2025
+    ex-2020): SEM+ predicts next-year RA9 at rho 0.3923 vs raw FIP 0.358, ERA 0.2612;
+    bootstrap CI on the gap beats ERA (lo95 +0.081) and edges raw FIP (lo95 +0.019).
+    Forward predictiveness is much higher than REM+ (0.24) because starters carry larger,
+    more stable single-season samples. data/sem_plus_eval.json, registry sem_plus
+    (validated). New surface: /mlbstats/ Starter Leaderboards.
+  * X-S3 "more than FIP" (ground-ball-adjusted HR expectation) REJECTED. Candidate 0.3905
+    vs plain 0.3923, gap lo95 -0.0086. Plain FIP stays (starter samples are large enough
+    that observed HR rate is already a strong estimate). Loss ledger inside sem_plus_eval.
+    Consistent with the reliever SwStr rejection (X-R1): peripheral priors do not beat
+    sample-shrunk FIP for full-season pitcher samples.
+  * X-S2 3-year SEM+ MARGINAL -> shipped PROVISIONAL. 3yr 0.4141 vs 1yr 0.3922 same-set
+    (+0.022, a larger gain than the reliever 3yr case), gap CI includes 0 (lo95 -0.0257).
+    Per the pre-registered rule ships provisional with the r published; value is stability.
+    data/sem_plus_multiyear_eval.json, registry sem_plus_3yr (provisional), joined by
+    starter_export._join_sem_plus_3yr.
+  Also shipped: data/starter_history.json (per-season qualified boards 2021-2025); new
+  modules sem_plus.py (reuses the rem_plus FIP machinery) + starter_export.py; run_monthly
+  steps 6b4e (starter lab) + 6b4f (starter export/history); build_site adds the Starter
+  Leaderboards section; registry 57 rows; glossary +2 (sem_plus, sem_plus_3yr).
 - 2026-07-02 (follow-up Wave B1, reliever metrics): the three pre-registered gates ran on
   the forward-chained pool (2018-2025 ex-2020; leverage from the warm winProbability cache;
   seed 20260702; harness tools/rem_plus_lab.py). RESULTS:

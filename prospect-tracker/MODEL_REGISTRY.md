@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 
-**55 models.** Verdicts: validated: 17, provisional: 25, unvalidated: 3, deprecated: 10.
+**57 models.** Verdicts: validated: 18, provisional: 26, unvalidated: 3, deprecated: 10.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -65,6 +65,8 @@ stamped as of **2026-06-30**. `validate()` at generation time: **clean**.
 | `riv_plus` | /mlbstats/ Bullpen Leaderboards, RIV+ column (realized im... | realized leverage-weighted reliever VALUE (not skill): a 100-anchored index of the wins a reliever actually added, WPA-primary... | riv_plus_v1 (0.70*z(WPA) + 0.30*z(SD-MD), reported as 100 + 10z) | pre-registered descriptive-validity checks (X-R3): aligns with RP AAV at leas... | Y->Y+1 rank autocorrelation vs REM+ + RP free-agent AAV market alignment | **provisional** | `data/riv_plus_eval.json` | - | - |
 | `rem_plus_3yr` | /mlbstats/ Bullpen Leaderboards, REM+ 3yr column (stable... | reliever run-prevention skill over a trailing 3-season window (IP-weighted mean REM+); a more stable talent read than a single... | rem_plus_3yr (IP-weighted trailing-3-season REM+) | single-season REM+ forward rho vs RA9(Y+1) on the same reliever set | forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded boots... | **provisional** | `data/rem_plus_multiyear_eval.json` | - | - |
 | `rem_plus_swstr` | n/a (loss ledger; rendered nowhere) | candidate REM+ skill core that shrinks the K component toward a SwStr-implied expected-K prior instead of the pool mean | rejected candidate (SwStr xK skill core) | incumbent REM+ FIP core forward rho vs RA9(Y+1) | forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the candidate-min... | **deprecated** | `data/rem_plus_swstr_eval.json` | - | - |
+| `sem_plus` | /mlbstats/ Starter Leaderboards, SEM+ column | starting-pitcher run-prevention skill, pool-relative (100 = average qualified starter); a sample-shrunk starter-pool-anchored F... | sem_plus_v1 (empirical-Bayes-shrunk, starter-pool-anchored FIP; durability he... | ERA (naive run-prevention baseline) and raw FIP (its parent) | forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the rho gap) | **validated** | `data/sem_plus_eval.json` | - | - |
+| `sem_plus_3yr` | /mlbstats/ Starter Leaderboards, SEM+ 3yr column (stable... | starter run-prevention skill over a trailing 3-season window (IP-weighted mean SEM+); a steadier talent read than one season | sem_plus_3yr (IP-weighted trailing-3-season SEM+) | single-season SEM+ forward rho vs RA9(Y+1) on the same starter set | forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded boots... | **provisional** | `data/sem_plus_multiyear_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

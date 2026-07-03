@@ -4701,6 +4701,48 @@
    ]
   },
   {
+   "id": "sem_plus",
+   "term": "SEM+ (Starter Evaluation Metric)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "SEM+",
+    "starter evaluation metric",
+    "starter plus"
+   ],
+   "priority": 21,
+   "definition": "A starting pitcher's run-prevention skill on a 100-anchored scale (100 = the average qualified starter, 110 = 10 percent better run prevention). The starter cousin of REM+: a sample-shrunk, starter-pool-anchored FIP built from strikeouts, walks, hit batters, and a heavily regressed home-run rate. Durability (innings, games started, average start length) is shown alongside as context, never mixed into the skill number.",
+   "methodology": "Each rate is regressed toward the starter-pool average by sample size (the same empirical-Bayes recipe REM+ uses), turned into a fielding-independent ERA, and expressed as 100 times the pool-average skill FIP over the pitcher's own. The pool is re-normalized over starters, so 100 is the average starter, not the average pitcher.\n\nValidated out of sample: forward-chained over 2018-2025 (excluding 2020), SEM+ predicts a starter's next-year runs-allowed rate at a Spearman correlation of 0.39, beating ERA (0.26; gap confidence floor above zero) and edging its raw-FIP parent (0.36), so the shrinkage and starter anchoring earn their place. A ground-ball-adjusted variant was tested and did not beat plain FIP out of sample, so the plain core ships. Quality starts and times-through-order are not in the source feed, so average start length carries the durability read. Accountability artifact: data/sem_plus_eval.json.",
+   "seeAlso": [
+    "rem_plus",
+    "sem_plus_3yr",
+    "fip"
+   ]
+  },
+  {
+   "id": "sem_plus_3yr",
+   "term": "SEM+ 3yr (three-year starter skill)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "SEM+ 3yr",
+    "three-year SEM+",
+    "sem plus 3yr"
+   ],
+   "priority": 21,
+   "definition": "SEM+ over the trailing three seasons, weighted by innings, shown with the pitcher's pool percentile. The same starter run-prevention scale as SEM+ (100 = average qualified starter), read over more innings so it is steadier than a single season.",
+   "methodology": "Each of the trailing three seasons' SEM+ is averaged with innings-pitched weights. In the forward test the three-year read predicts next-year run prevention a little better than a single season on the same starters (0.41 versus 0.39), though the same-set gap is not statistically separable, so it ships as a companion column with the r published rather than a replacement. Its value is a steadier talent estimate. Starters with fewer than 2 seasons or 120 innings in the window carry a provisional mark. Accountability artifact: data/sem_plus_multiyear_eval.json.",
+   "seeAlso": [
+    "sem_plus",
+    "rem_plus_3yr",
+    "fip"
+   ]
+  },
+  {
    "id": "wpa",
    "term": "WPA (Win Probability Added)",
    "category": "pitcher-stat",
