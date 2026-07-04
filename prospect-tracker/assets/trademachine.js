@@ -370,6 +370,7 @@ function _tbSortVal(p, col) {
   if (col === "pos") return { t: _tbPrimaryPos(p.position) };
   if (col === "name") return { t: String(p.player_name || "") };
   if (col === "contract") return { n: num(p.remaining_control_years) };
+  if (col === "risk") return { n: num(p.sortino) };   // downside-adjusted surplus
   return { n: num(p.trade_value_mm) };          // surplus | grade (default)
 }
 function _tbSortRows(rows) {
@@ -524,10 +525,37 @@ function _tbGradeColor(g) {
 }
 
 // ── Leaderboard render ──────────────────────────────────────────────────────
+// Risk-adjusted surplus (Sortino) column: dark by default pre-launch; opt in
+// with #risk=1 for the soak, then flip RISK_UI_DEFAULT at launch. Also degrades
+// on payload presence (older exports carry no sortino field).
+const RISK_UI_DEFAULT = false;
+function _tbRiskUiOn() {
+  const v = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("risk");
+  return v != null ? v !== "0" : RISK_UI_DEFAULT;
+}
+// One compact risk cell: Sortino (upside cushion per unit downside, higher is
+// safer) with a tooltip carrying the downside deviation, risk-adjusted surplus,
+// and bust probability. Colored by bust risk.
+function _tbRiskCell(p) {
+  if (p.sortino == null) return `<td class="tm-num tm-dim">-</td>`;
+  const pb = p.p_bust;
+  const col = pb == null ? "var(--text-secondary)"
+    : pb >= 0.25 ? "var(--neon-red)" : pb <= 0.10 ? "var(--neon-green)" : "var(--text-primary)";
+  const tip = [
+    `Sortino ${p.sortino}: expected surplus per unit of downside risk (higher is safer)`,
+    p.risk_mm != null ? `Risk-adjusted surplus $${p.risk_mm}M` : "",
+    p.downside_mm != null ? `Downside deviation $${p.downside_mm}M` : "",
+    pb != null ? `Bust probability ${(pb * 100).toFixed(0)}%` : "",
+  ].filter(Boolean).join(" · ");
+  const bustStr = pb != null ? ` <span class="tm-dim" style="font-size:9px;">${(pb * 100).toFixed(0)}% bust</span>` : "";
+  return `<td class="tm-num tm-risk" title="${escapeHtml(tip)}"><span style="color:${col};">${p.sortino}</span>${bustStr}</td>`;
+}
+
 function _renderTBRows() {
   const wrap = document.getElementById("tradeboard-content");
   if (!wrap || !_tbData) return;
   const q = _tbQ.toLowerCase().trim();
+  const showRisk = _tbRiskUiOn() && (_tbData.players || []).some(p => p && p.sortino != null);
 
   let rows = (_tbData.players || []).filter(p => {
     if (!p || p.trade_value_mm == null) return false;
@@ -570,6 +598,7 @@ function _renderTBRows() {
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
     ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale; ranks how valuable a player is to ACQUIRE in trade", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
+    ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}
     <th class="tm-col-div">Signals</th>
   </tr></thead><tbody>`;
@@ -628,6 +657,7 @@ function _renderTBRows() {
       <td class="tm-num tm-dim">${fv}</td>
       <td class="tm-num tm-col-div tm-grade">${grade ? `<span class="tm-grade-chip" style="color:${gradeCol};border-color:${gradeCol};" title="Trade Value Grade ${grade} (${_tbFmt(tv)} contract-adjusted surplus)">${grade}</span>` : ""}</td>
       <td class="tm-num tm-surplus" style="color:${tvCol};">${_tbFmt(tv)}</td>
+      ${showRisk ? _tbRiskCell(p) : ""}
       <td class="tm-contract">${_tbCtrlBadge(p)}</td>
       <td class="tm-col-div tm-signals">${signals}</td>
     </tr>`;

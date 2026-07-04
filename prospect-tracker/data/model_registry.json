@@ -924,6 +924,19 @@
    "notes": "SHIPPED 2026-07-04 behind #window=1 (dark by default). Bond-math for farm systems: etaMean = surplus-weighted average arrival season (duration); etaByYear = arrival curve; etaAlignYears = etaMean - coreCenter, <=0 means the farm lands while the MLB core is still under control. Descriptive (provisional): it composes the validated ETA model, the validated surplus engine, and the controlled-core WAR trajectory; no independent forward gate. Coverage + distribution in team_outlook_eval.json window_alignment.",
    "last_checked": "2026-07-04",
    "stale": false
+  },
+  {
+   "model_id": "surplus_downside_risk",
+   "surface": "/projections/#view=trademachine (Risk column)",
+   "predicts": "n/a - a downside-risk view of the eFV surplus distribution (a prospect is an option on future WAR; only shortfall below the mean is risk)",
+   "champion": "Sortino = (mean surplus - p10 floor) / downside semi-deviation; plus risk_mm = mean - 0.5*downside and p_bust passthrough",
+   "baseline": "n/a - derived from the validated prospect_surplus distribution (xfv.json dist)",
+   "metric": "descriptive; the underlying distribution is gated by prospect_surplus (surplus_backtest_real.json)",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04 behind #risk=1 (dark by default). Downside-only (Sortino, not Sharpe) because upside variance is not risk for a prospect. Additive display fields on trade_values.json (p_bust, downside_mm, risk_mm, sortino), computed from the persisted 5-point eFV fan; scale-consistent with the shown trade value. Uses a LOCAL 0.5 lambda for risk_mm and does NOT touch the global risk_aversion_lambda (0.0), so no board re-ranking. No independent eval: it is a lens on the already-validated surplus distribution.",
+   "last_checked": "2026-07-04",
+   "stale": false
   }
  ],
  "problems": []

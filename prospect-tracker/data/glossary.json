@@ -5590,6 +5590,30 @@
     "sur_plus",
     "farm_report_card"
    ]
+  },
+  {
+   "id": "risk_adjusted_surplus",
+   "term": "Risk-adjusted Surplus (Sortino)",
+   "category": "custom-index",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "Risk-adjusted Surplus",
+    "Sortino",
+    "Downside surplus",
+    "Bust risk"
+   ],
+   "priority": 40,
+   "definition": "Surplus value weighed against its downside. A prospect is an option on future WAR, so upside swings are not risk; only the chance of falling short is. Higher Sortino means more expected surplus per unit of downside.",
+   "methodology": "Built from the same eFV surplus distribution the trade board already carries (a five-point fan from p10 to p90 plus the mean). Downside deviation is the semi-deviation below the mean (only shortfalls count). Sortino = (mean surplus minus the p10 floor) divided by that downside deviation, so a bunched, high-floor profile scores higher than a boom-or-bust one at the same mean. The tooltip also carries a risk-adjusted surplus (mean minus half the downside deviation, a local display haircut that does not re-rank the board) and the bust probability. Descriptive: it re-expresses the validated surplus model, it does not change any shown surplus.",
+   "origin": "Arkmetric, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "tvi",
+    "fv"
+   ]
   }
  ]
 }
