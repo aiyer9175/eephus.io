@@ -578,6 +578,46 @@ def _org_farm_blocks() -> dict[str, dict]:
                              "fv": top.get("fv_label")}
                             if top.get("name") else None),
         }
+
+    # System Duration: surplus-weighted arrival timing per org. etaMean is the
+    # bond-math "duration" of a farm (when its surplus arrives, on average);
+    # etaByYear is the arrival curve (share of farm surplus landing each season,
+    # last bucket = FIRST_SEASON+HORIZON and later). Weight = expected surplus
+    # $ (floored at 0 so an over-valued negative-surplus prospect never pulls
+    # the center); count-weight fallback keeps a zero-surplus org from vanishing.
+    LAST = FIRST_SEASON + HORIZON            # the "and later" bucket edge
+    acc: dict[str, dict] = {}
+    for p in ts.get("players") or []:
+        org = p.get("org")
+        eta = p.get("eta") or {}
+        yr = eta.get("year")
+        if not org or yr is None or org not in out:
+            continue
+        try:
+            yr = int(yr)
+        except (TypeError, ValueError):
+            continue
+        w = max(0.0, float((p.get("surplus") or {}).get("value_mm") or 0.0))
+        yr_c = min(LAST, max(FIRST_SEASON, yr))
+        a = acc.setdefault(org, {"wsum": 0.0, "wyr": 0.0, "n": 0,
+                                 "by": [0.0] * (HORIZON + 1), "cn": 0, "cyr": 0.0})
+        a["n"] += 1
+        a["cyr"] += yr_c          # count-weighted center fallback
+        a["cn"] += 1
+        a["wsum"] += w
+        a["wyr"] += w * yr_c
+        a["by"][yr_c - FIRST_SEASON] += w if w > 0 else 0.0
+    for org, a in acc.items():
+        if a["wsum"] > 0:
+            eta_mean = a["wyr"] / a["wsum"]
+            tot = sum(a["by"]) or 1.0
+            eta_by = [round(x / tot, 3) for x in a["by"]]
+        else:                     # no positive surplus: fall back to count-weight
+            eta_mean = a["cyr"] / a["cn"] if a["cn"] else None
+            eta_by = None
+        out[org]["etaMean"] = round(eta_mean, 2) if eta_mean is not None else None
+        out[org]["etaByYear"] = eta_by
+        out[org]["etaN"] = a["n"]
     return out
 
 
@@ -713,6 +753,22 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
         ctrl5 = sum(t_["raw"])
         full5 = sum(t_["full"])
         locked = max(0.0, min(1.0, ctrl5 / full5)) if full5 > 0.01 else None
+        # Window Alignment: does the farm arrive while the big-league core is
+        # still under control? coreCenter = WAR-weighted midpoint of the
+        # controlled core's 2027-31 production; etaAlignYears = farm arrival
+        # center minus coreCenter. <= 0: farm lands inside the window (aligned);
+        # positive: it arrives after the core has leaked to free agency (gap).
+        fb = farm.get(tm)
+        core_w = sum(max(0.0, b["war"]) for b in by_year)
+        core_center = (sum((b["season"]) * max(0.0, b["war"]) for b in by_year) / core_w
+                       if core_w > 0.01 else None)
+        eta_mean = (fb or {}).get("etaMean")
+        align = (round(eta_mean - core_center, 2)
+                 if (fb and eta_mean is not None and core_center is not None) else None)
+        if fb is not None:
+            fb = dict(fb)
+            fb["coreCenter"] = round(core_center, 2) if core_center is not None else None
+            fb["etaAlignYears"] = align
         out.append({
             "team": tm,
             # Back-compat year-1 top-level fields (GFX + older consumers read
@@ -726,7 +782,7 @@ def _team_outlook(vets: list[dict], prospects: list[dict],
             "fullWar5y": round(full5, 1),   # everyone-stays WAR (the denominator)
             "top": [{"name": n, "key": k, "war": round(w, 1)}
                     for w, n, k in t_["top"][:3]],
-            "farm": farm.get(tm),
+            "farm": fb,
         })
     out.sort(key=lambda r: -r["wins"])
     _write_team_outlook_eval(out, raw_wins_sum_y1, season_remainder, depth_acct or {})
@@ -810,6 +866,34 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
             "scope": f"first season only; {FIRST_SEASON + 1}+ are not gateable",
             "metric": "MAE vs actual wins; baseline = prior-season wins carry-forward"},
     })
+    # System Duration / Window Alignment coverage + league distribution. A
+    # descriptive rollup of committed inputs (eta model validated, surplus
+    # validated, controlled-core WAR), so this is disclosure, not a new gate.
+    aligns = [r["farm"]["etaAlignYears"] for r in rows
+              if r.get("farm") and r["farm"].get("etaAlignYears") is not None]
+    etas = [r["farm"]["etaMean"] for r in rows
+            if r.get("farm") and r["farm"].get("etaMean") is not None]
+    aligns_sorted = sorted(aligns)
+    payload["window_alignment"] = {
+        "kind": "surplus-weighted farm ETA (etaMean) vs the controlled-core WAR "
+                "center (coreCenter); etaAlignYears = etaMean - coreCenter, "
+                "<= 0 = farm arrives inside the control window (aligned)",
+        "weight": "expected surplus $ (value_mm), floored at 0; count-weight fallback",
+        "eta_coverage_orgs": len(etas),
+        "align_coverage_orgs": len(aligns),
+        "eta_mean_range": [round(min(etas), 2), round(max(etas), 2)] if etas else None,
+        "align_median": (round(aligns_sorted[len(aligns_sorted) // 2], 2)
+                         if aligns_sorted else None),
+        "align_range": [round(aligns_sorted[0], 2), round(aligns_sorted[-1], 2)]
+                       if aligns_sorted else None,
+        "aligned_org_count": sum(1 for a in aligns if a <= 0),
+        "limitations": [
+            "etaMean is surplus-weighted by the platform surplus model (its "
+            "uncertainty flows through); coreCenter is the controlled-core "
+            "trajectory, not a scored contention forecast",
+            "orgs whose farm carries no positive-surplus prospect fall back to "
+            "a count-weighted center and report no arrival curve"],
+    }
     (DATA_DIR / "team_outlook_eval.json").write_text(
         json.dumps(payload, indent=1), encoding="utf-8")
 

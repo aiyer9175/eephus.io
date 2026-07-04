@@ -5565,6 +5565,31 @@
     "extension"
    ],
    "shelf": "industry"
+  },
+  {
+   "id": "window_alignment",
+   "term": "Window Alignment",
+   "category": "custom-index",
+   "module": [
+    "prospx",
+    "platform"
+   ],
+   "aliases": [
+    "Window Alignment",
+    "System Duration",
+    "etaAlignYears",
+    "Farm duration"
+   ],
+   "priority": 40,
+   "definition": "Bond-math for a farm system: whether its prospects arrive while the big-league core is still under team control. Negative means the farm lands inside the window (aligned); positive means help comes after the core has leaked to free agency.",
+   "methodology": "Two pieces. System Duration (etaMean) is the surplus-weighted average arrival season of a farm: each prospect's projected ETA weighted by his expected surplus dollars, so the number leans toward the prospects who matter most. The core center (coreCenter) is the WAR-weighted midpoint of the org's controlled-core production over 2027-2031. Window Alignment = etaMean minus coreCenter. At or below zero, the farm reinforces the core while it is still cheap and productive; well above zero, the core has aged out or left before the farm shows up. The arrival curve (etaByYear) shows the share of farm surplus landing each season.",
+   "origin": "Arkmetric, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "eta",
+    "sur_plus",
+    "farm_report_card"
+   ]
   }
  ]
 }

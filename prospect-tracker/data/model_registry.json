@@ -911,6 +911,19 @@
    "last_checked": "2026-07-03",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "farm_window_alignment",
+   "surface": "/projections/ Team Outlook (Window column)",
+   "predicts": "n/a - a descriptive rollup: when a farm's surplus arrives (etaMean) vs the controlled-core WAR center (coreCenter)",
+   "champion": "surplus-weighted farm ETA minus controlled-core WAR center (etaAlignYears)",
+   "baseline": "n/a - composes the validated eta + surplus + controlled-core models",
+   "metric": "league distribution of etaAlignYears (disclosure block, not a forward gate)",
+   "eval_artifact": "data/team_outlook_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04 behind #window=1 (dark by default). Bond-math for farm systems: etaMean = surplus-weighted average arrival season (duration); etaByYear = arrival curve; etaAlignYears = etaMean - coreCenter, <=0 means the farm lands while the MLB core is still under control. Descriptive (provisional): it composes the validated ETA model, the validated surplus engine, and the controlled-core WAR trajectory; no independent forward gate. Coverage + distribution in team_outlook_eval.json window_alignment.",
+   "last_checked": "2026-07-04",
+   "stale": false
   }
  ],
  "problems": []
