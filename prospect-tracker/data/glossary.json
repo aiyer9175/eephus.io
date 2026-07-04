@@ -5639,6 +5639,31 @@
     "fv",
     "source_disagreement"
    ]
+  },
+  {
+   "id": "draft_war_room",
+   "term": "Draft War Room",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Draft War Room",
+    "War Room",
+    "Reach or steal",
+    "Live draft board"
+   ],
+   "priority": 40,
+   "definition": "A live draft-night board: each pick as it happens, priced against our board and the historical value of that pick slot, so you see the reach or the steal in surplus dollars.",
+   "methodology": "During the draft a poller reads the MLB Stats API every minute and writes a read-only feed the page renders. Each pick joins to our board by name and carries the consensus FV, the reach-or-steal gap (how many spots earlier or later than our board rank the player went; a faller past his rank is a steal for the drafting team), the expected first-six-year WAR for that slot from the realized pick-value curve, and the slot surplus in dollars, plus the signing bonus against the slot value. It is a live view over already-published models, not a new projection; before the draft the board is empty.",
+   "origin": "Arkmetric, original to eephus.io. Pick data from the MLB Stats API.",
+   "shelf": "ark",
+   "seeAlso": [
+    "draft_stock_plus",
+    "consensus_fv",
+    "sur_plus",
+    "slot_value"
+   ]
   }
  ]
 }

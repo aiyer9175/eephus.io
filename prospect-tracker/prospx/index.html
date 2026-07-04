@@ -9146,6 +9146,8 @@
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
         <button class="chip" data-draft-view="mock-draft"
                 title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
+        <button class="chip" data-draft-view="war-room"
+                title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -22029,7 +22031,13 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "war-room"];
+  // War Room: gated on the presence of the live artifact (data/draft_live.json,
+  // written by the draft-night poller). No artifact => chip hidden, so the view
+  // is dark until the draft opens. Kick off a one-time fetch; re-render when it
+  // resolves so the chip can appear.
+  if (!_warRoom.loaded && !_warRoom.loading) _loadWarRoom(() => { if (state.section === "draft") renderDraft(); });
+  const _anyWarRoom = !!(_warRoom.data && _warRoom.data.status);
   const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
@@ -22049,7 +22057,11 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock)) {
+      (state.draftView === "mock-draft" && !_anyMock) ||
+      // War Room: only fall back once the fetch has CONFIRMED there is no
+      // artifact, else a direct dview=war-room link races the async load and
+      // bounces to rankings before the feed arrives.
+      (state.draftView === "war-room" && _warRoom.loaded && !_anyWarRoom)) {
     state.draftView = isOverall ? "class-strength" : "rankings";
   }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
@@ -22057,6 +22069,9 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
+    // War Room chip: visible once the artifact is present, or while a direct
+    // war-room link is still loading its feed (avoids a flash on normal pages).
+    if (view === "war-room" && !_anyWarRoom && !(state.draftView === "war-room" && !_warRoom.loaded)) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
@@ -22101,6 +22116,7 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
+    case "war-room":       return _renderWarRoom(host);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
@@ -22812,6 +22828,75 @@ function _renderDraftOrder(host, cls) {
 // (consensus rank + Draft Stock+) anchors each pick; org tendencies, bonus-pool
 // behavior, and signability nudge the fit within a small window of best-
 // available. All of this is baked in mock_draft.py; here we just render it.
+// ── Draft War Room (Tier 1) ────────────────────────────────────────────────
+// Live draft-night board. The poller (tools/draft_live_poller.py, a cron on the
+// box) writes data/draft_live.json READ-ONLY; this view fetches it and prices
+// each pick against our board. No artifact => the chip stays hidden (dark until
+// the draft). While the view is open it re-polls every 60s; the timer stops
+// itself once the user leaves the view.
+let _warRoom = { data: null, loaded: false, loading: false, timer: null };
+function _loadWarRoom(cb) {
+  _warRoom.loading = true;
+  fetch("/data/draft_live.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _warRoom.data = j; _warRoom.loaded = true; _warRoom.loading = false; if (cb) cb(); })
+    .catch(() => { _warRoom.data = null; _warRoom.loaded = true; _warRoom.loading = false; if (cb) cb(); });
+}
+function _warRoomMoney(usd) {
+  if (usd == null) return "-";
+  const a = Math.abs(usd);
+  const s = a >= 1e6 ? `$${(usd / 1e6).toFixed(1)}M` : a >= 1e3 ? `$${Math.round(usd / 1e3)}k` : `$${usd}`;
+  return s;
+}
+function _renderWarRoom(host) {
+  if (_warRoom.timer) { clearInterval(_warRoom.timer); _warRoom.timer = null; }
+  const d = _warRoom.data;
+  const head = `<div class="detail-title">Draft War Room <span class="detail-title-sub">live picks priced against our board</span></div>`;
+  if (!_warRoom.loaded) {
+    host.innerHTML = head + `<div class="state-message is-loading">Loading the live draft feed...</div>`;
+  } else if (!d || d.status === "error") {
+    host.innerHTML = head + `<div class="state-message is-error">The live draft feed is unavailable right now. It refreshes automatically.</div>`;
+  } else if (d.status !== "live" || !(d.picks && d.picks.length)) {
+    // Doors-open / waiting state (pre-draft or between picks).
+    host.innerHTML = head + `<div class="state-message">The War Room opens on draft night (July 11-13). Live picks appear here priced against our board and the historical pick-value curve, so you see each reach or steal in surplus dollars.${d && d.generated_at ? `<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">Feed live, waiting on the first pick. Updated ${escapeHtml(String(d.generated_at))}.</div>` : ""}</div>`;
+  } else {
+    const picks = d.picks.slice().sort((a, b) => (a.pick_overall || 0) - (b.pick_overall || 0));
+    const rows = picks.map(p => {
+      const bd = p.board_delta;
+      const tag = p.reach_or_steal;
+      const tagCol = tag === "steal" ? "var(--neon-green)" : tag === "reach" ? "var(--neon-red)" : "var(--text-tertiary)";
+      const deltaStr = bd == null ? "" : `<span style="color:${tagCol};">${bd > 0 ? "+" + bd : bd}</span>`;
+      const our = p.player_key
+        ? `<a class="fa-player-link" href="#player=${encodeURIComponent(p.player_key)}">${p.consensus_fv != null ? "FV " + fvCeil(p.consensus_fv) : "on board"}</a>`
+        : `<span class="tm-dim">off board</span>`;
+      const surCol = (p.exp_surplus_usd || 0) >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+      const bvs = p.bonus_vs_slot_usd;
+      return `<tr>
+        <td class="tm-num">${p.pick_overall}</td>
+        <td>${p.team ? teamLogoHTML(p.team) : ""} ${escapeHtml(p.team || "")}</td>
+        <td><strong>${escapeHtml(p.player_name || "?")}</strong></td>
+        <td>${our}</td>
+        <td class="tm-num"><span style="color:${tagCol};text-transform:uppercase;font-size:10px;">${escapeHtml(tag || "")}</span> ${deltaStr}</td>
+        <td class="tm-num" style="color:${surCol};">${_warRoomMoney(p.exp_surplus_usd)}</td>
+        <td class="tm-num tm-dim">${p.exp_first6_war != null ? p.exp_first6_war.toFixed(1) : "-"}</td>
+        <td class="tm-num">${_warRoomMoney(p.signing_bonus_usd)}${bvs != null ? ` <span class="tm-dim" style="font-size:9px;">${bvs >= 0 ? "+" : ""}${_warRoomMoney(bvs)} vs slot</span>` : ""}</td>
+      </tr>`;
+    }).join("");
+    host.innerHTML = head
+      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; surplus = the historical value of that pick slot.</div>`
+      + `<table class="detail-table"><thead><tr>
+          <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th>
+        </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  // Re-poll every 60s while the view stays open; the timer self-clears on exit.
+  _warRoom.timer = setInterval(() => {
+    if (state.section !== "draft" || state.draftView !== "war-room") {
+      clearInterval(_warRoom.timer); _warRoom.timer = null; return;
+    }
+    _loadWarRoom(() => { if (state.draftView === "war-room") _renderWarRoom(host); });
+  }, 60000);
+}
+
 function _renderMockDraft(host, cls) {
   const mock = cls && cls.mock_draft;
   const picks = (mock && mock.picks) || [];

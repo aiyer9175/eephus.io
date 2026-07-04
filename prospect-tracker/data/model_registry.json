@@ -950,6 +950,19 @@
    "notes": "SHIPPED 2026-07-04 dark by default (localStorage prospect-tracker.tape, set via ?tape=1). Registered for accountability because it renders displayed indicators (momentum, RSI, volatility). It makes NO predictive claim - these are descriptive market signals on the consensus grade path, and the surface says so. Candles gate at >=4 consensus points; RSI at >=6 grade changes (flat re-confirmations dropped). No backtest is owed for a non-predictive display; it is listed unvalidated only in the sense of carrying no committed measurement.",
    "last_checked": "2026-07-04",
    "stale": false
+  },
+  {
+   "model_id": "draft_war_room",
+   "surface": "PROSPX MLB Draft - War Room (live, draft night)",
+   "predicts": "n/a - a live board that prices each pick against our board and the historical pick-value curve",
+   "champion": "reach/steal = actual pick minus our board rank; slot surplus from the realized pick-value curve",
+   "baseline": "n/a - composes the validated draft_slot_curve + prospect surplus + consensus board",
+   "metric": "n/a - a live display; the pricing inputs are separately gated (draft_slot_curve validated)",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04. Dark until the draft: a cron (tools/draft_live_poller.py) writes data/draft_live.json READ-ONLY on draft night (July 12-13), and the prospx War Room view fetches it, re-polling every 60s. The poller NEVER writes to prospects.db or draft_timeseries.json (a test asserts byte-invariance), so it cannot kill the mock or trigger promotion. reach_or_steal = pick_overall - consensus_pick (positive = fell past his rank = steal); slot surplus via storage._pick_slot_expected_war + fa_market._slot_surplus_usd. Provisional: it composes validated pieces, no independent eval of the live board.",
+   "last_checked": "2026-07-04",
+   "stale": false
   }
  ],
  "problems": []
