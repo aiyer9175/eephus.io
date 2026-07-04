@@ -81,6 +81,23 @@ def validate(reg: dict | None = None) -> list[str]:
                     json.loads(p.read_text(encoding="utf-8"))
                 except ValueError:
                     problems.append(f"{mid}: artifact unparseable: {art}")
+        # Optional Report Card block: proof numbers rendered inline on the
+        # Models & Proofs view. A card may only exist on a row that has an
+        # eval_artifact to trace back to (the honesty rule for cards).
+        card = m.get("card")
+        if card is not None:
+            if not art:
+                problems.append(f"{mid}: has a card but no eval_artifact to source it from")
+            hl = card.get("headline")
+            if not isinstance(hl, list) or not hl:
+                problems.append(f"{mid}: card.headline must be a non-empty list")
+            else:
+                for h in hl:
+                    if not isinstance(h.get("champion"), (int, float)) or \
+                       not isinstance(h.get("baseline"), (int, float)):
+                        problems.append(f"{mid}: card headline champion/baseline must be numeric")
+                    if h.get("better") not in ("lower", "higher"):
+                        problems.append(f"{mid}: card headline 'better' must be 'lower' or 'higher'")
     return problems
 
 
