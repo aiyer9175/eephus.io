@@ -44,7 +44,7 @@
                       aliases: e.aliases || [], category: e.category,
                       priority: e.priority, formula: e.formula, example: e.example,
                       visual_html: e.visual, related: e.seeAlso || [],
-                      module: e.module || [] };
+                      module: e.module || [], shelf: e.shelf, origin: e.origin };
       }
       window.EEPHUS_GLOSSARY = map;
       window.EEPHUS_GLOSSARY_GROUPS = d.groups || {};

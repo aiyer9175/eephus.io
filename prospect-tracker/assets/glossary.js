@@ -75,6 +75,16 @@
       `<span class="gl-mod gl-mod--${m}">${LBL[m] || m.toUpperCase()}</span>`).join("");
   }
 
+  // Provenance chip: distinguishes our own models from borrowed industry
+  // metrics and shared foundations, so a reader always knows what is ours.
+  function shelfBadge(e) {
+    const S = { ark: ["ARKMETRIC", "eephus.io original"],
+                industry: ["INDUSTRY", "external metric, credited"],
+                foundation: ["FOUNDATION", "shared concept or standard stat"] };
+    const s = S[e.shelf];
+    return s ? `<span class="gl-shelf gl-shelf--${e.shelf}" title="${s[1]}">${s[0]}</span>` : "";
+  }
+
   function entryCard(slug, e, expanded) {
     const altNames = (e.aliases || []).filter(a => a !== e.name && a.includes(" "));
     const fullName = altNames.length ? altNames.sort((a, b) => b.length - a.length)[0] : "";
@@ -82,6 +92,7 @@
     if (e.long) more.push(`<div class="gl-meth">${e.long.split("\n\n").map(p => `<p>${escapeHtml(p)}</p>`).join("")}</div>`);
     if (e.formula) more.push(`<div class="gp-formula">${escapeHtml(e.formula)}</div>`);
     if (e.example) more.push(`<div class="gl-example"><span class="gl-microlabel">Example · </span>${escapeHtml(e.example)}</div>`);
+    if (e.origin) more.push(`<div class="gl-origin"><span class="gl-microlabel">Origin · </span>${escapeHtml(e.origin)}</div>`);
     if (e.visual_html) more.push(`<div class="gl-microlabel" style="margin-top:8px;">Visual</div><div class="glossary-visual">${e.visual_html}</div>`);
     if (typeof _GLOSSARY_VIZ !== "undefined" && _GLOSSARY_VIZ[slug]) {
       let viz = ""; try { viz = _GLOSSARY_VIZ[slug](); } catch (err) { viz = ""; }
@@ -96,7 +107,7 @@
       <div class="gl-card-head">
         <span class="gp-term">${escapeHtml(e.name)}</span>
         ${fullName ? `<span class="gl-fullname">(${escapeHtml(fullName)})</span>` : ""}
-        <span class="gl-badges">${moduleBadges(e)}</span>
+        <span class="gl-badges">${shelfBadge(e)}${moduleBadges(e)}</span>
       </div>
       <div class="gl-def">${escapeHtml(e.short)}</div>
       ${moreHtml}</div>`;
