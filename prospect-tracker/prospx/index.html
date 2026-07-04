@@ -9674,7 +9674,7 @@
           <button class="chip" data-lb-stat="pitcher_bb_pct" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
           <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
-          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - K/9 + BB/9 + HR/9 normalized to level mean (100 = average peripherals). Pitchers only.">pStuff+</button>
+          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, indexed to the level mean (100 = average peripherals, +10 = +1σ). Pitchers only.">pStuff+</button>
           <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
         </div>
 
@@ -13953,7 +13953,7 @@ function _statcastPercentileBlock(p, opts = {}) {
         const tp = (((q.sc || {}).pitch_movement || {}).pitch_summary || [])[0];
         return tp ? tp.avg_velo : null;
       }, false, v => v.toFixed(1) + " mph");
-    _push("Stuff+",
+    _push("Stuff+ (Statcast)",
       _pitcherCompositeStuffPlusFromSc(sc),
       q => _pitcherCompositeStuffPlusFromSc(q.sc),
       false, v => String(Math.round(v)));
@@ -15728,7 +15728,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
-      isPit && sl.stf_plus_periph != null ? { key: "Stuff+", value: sl.stf_plus_periph } : null,
+      isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
       isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
       sm.wrc_plus != null ? { key: "wRC+", value: Math.round(sm.wrc_plus) } : null,
