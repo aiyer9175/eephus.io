@@ -5614,6 +5614,31 @@
     "tvi",
     "fv"
    ]
+  },
+  {
+   "id": "fv_tape",
+   "term": "FV Tape",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "FV Tape",
+    "Candlesticks",
+    "Momentum",
+    "RSI",
+    "Grade volatility"
+   ],
+   "priority": 42,
+   "definition": "A market-structure overlay on a prospect's consensus FV history: candlesticks plus trader-style indicators (momentum, an RSI gauge on grade changes, realized volatility). Descriptive signals on scouting consensus, not predictions.",
+   "methodology": "Each candle covers one consensus snapshot: the open is the prior grade, the close is the current consensus FV, and the wick spans the range of source grades that period. Momentum is the net grade change over the last three intervals. The RSI gauge measures the balance of upgrades to downgrades over recent GRADE CHANGES only (flat re-confirmations are dropped, so a static grade never pins the gauge); above 70 reads overbought, below 30 oversold. Volatility is the standard deviation across sources on the latest grade. These are read as market context, not a forecast; the candles need at least four snapshots and the RSI at least six grade changes, otherwise the relevant piece is hidden.",
+   "origin": "Arkmetric, original to eephus.io. Candlestick and RSI conventions are borrowed from financial technical analysis.",
+   "shelf": "ark",
+   "seeAlso": [
+    "consensus_fv",
+    "fv",
+    "source_disagreement"
+   ]
   }
  ]
 }

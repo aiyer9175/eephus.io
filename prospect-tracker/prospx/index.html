@@ -10013,6 +10013,18 @@
   document.documentElement.setAttribute("data-theme", theme);
 })();
 
+// FV Tape flag capture: the SPA router rewrites the hash on load (dropping
+// query state), so capture a `tape` param from the INITIAL url here, before
+// the router runs, and persist it. After that localStorage is the source of
+// truth (owner preview: append ?tape=1 or #tape=1 once; ?tape=0 turns it off).
+(function initFvTapeFlag() {
+  try {
+    const raw = (location.hash || "").replace(/^#/, "") + "&" + (location.search || "").replace(/^\?/, "");
+    const m = new URLSearchParams(raw).get("tape");
+    if (m != null) localStorage.setItem("prospect-tracker.tape", m !== "0" ? "1" : "0");
+  } catch (_) {}
+})();
+
 // Canonical tool key → [full display name, compact abbreviation].
 // v12 - unified source of truth for tool labels. Use toolFullName(key)
 // or toolAbbrev(key) instead of indexing this map directly. Renames:
@@ -42277,6 +42289,103 @@ function _fvHistSrcMeta(src, idx) {
   return { label, color: _FV_HIST_FALLBACK_COLORS[idx % _FV_HIST_FALLBACK_COLORS.length] };
 }
 
+// FV Tape (Tier 1, flag-dark): a market-structure overlay on the consensus FV
+// history. Candlesticks from the consensus grade path plus trader indicators
+// (momentum, an RSI-style gauge on grade changes, realized volatility). These
+// are DESCRIPTIVE signals on scouting consensus, not predictions. Self-gating:
+// returns "" unless #tape=1 or localStorage prospect-tracker.tape is set, so the
+// default build is provably inert. Degrades below the sample gates (needs >= 4
+// consensus points for candles, >= 6 grade changes for RSI).
+function _fvTapeEnabled() {
+  // localStorage is the source of truth (initFvTapeFlag captured any url param
+  // before the router rewrote the hash). Default dark pre-launch.
+  try { return localStorage.getItem("prospect-tracker.tape") === "1"; }
+  catch (_) { return false; }
+}
+function computeFvTape(points) {
+  const pts = (points || [])
+    .filter(pt => pt && pt.snapshot_date && pt.consensus_fv_raw != null && isFinite(pt.consensus_fv_raw))
+    .sort((a, b) => String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+  if (pts.length < 4) return null;
+  // Candles: open = prior close, close = consensus_fv_raw; the multi-source
+  // fv_min/fv_max are the intraperiod low/high (fall back to the body).
+  const candles = [];
+  for (let i = 0; i < pts.length; i++) {
+    const c = +pts[i].consensus_fv_raw;
+    const o = i === 0 ? c : +pts[i - 1].consensus_fv_raw;
+    const lo = pts[i].fv_min != null ? Math.min(o, c, +pts[i].fv_min) : Math.min(o, c);
+    const hi = pts[i].fv_max != null ? Math.max(o, c, +pts[i].fv_max) : Math.max(o, c);
+    candles.push({ d: pts[i].snapshot_date, o, c, l: lo, h: hi, up: c >= o });
+  }
+  const closes = candles.map(c => c.c);
+  const n = closes.length;
+  // Momentum: net grade change over the last 3 intervals.
+  const momentum = +(closes[n - 1] - closes[Math.max(0, n - 4)]).toFixed(2);
+  // RSI over grade-change deltas only (flat re-confirmations dropped, else it
+  // pins at 100/0). Simple averaged form over the last N changes.
+  const deltas = [];
+  for (let i = 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i - 1];
+    if (Math.abs(d) > 1e-9) deltas.push(d);
+  }
+  let rsi = null;
+  if (deltas.length >= 6) {
+    const N = Math.min(14, deltas.length);
+    const recent = deltas.slice(-N);
+    let g = 0, l = 0;
+    for (const d of recent) { if (d > 0) g += d; else l -= d; }
+    const ag = g / N, al = l / N;
+    rsi = al === 0 ? 100 : Math.round(100 - 100 / (1 + ag / al));
+  }
+  const last = pts[n - 1];
+  const vol = last.fv_stddev != null ? +last.fv_stddev : null;
+  return { candles, momentum, rsi, vol, close: closes[n - 1] };
+}
+function makeFvTape(points) {
+  if (!_fvTapeEnabled()) return "";
+  const t = computeFvTape(points);
+  if (!t) return "";
+  const { candles, momentum, rsi, vol } = t;
+  // Candlestick SVG (green up, red down), scaled to the grade range in view.
+  const W = 320, H = 96, padL = 26, padR = 8, padT = 8, padB = 16;
+  const lows = candles.map(c => c.l), highs = candles.map(c => c.h);
+  const lo = Math.min(...lows), hi = Math.max(...highs);
+  const span = Math.max(1, hi - lo);
+  const y = v => padT + ((hi - v) / span) * (H - padT - padB);
+  const step = (W - padL - padR) / candles.length;
+  const cw = Math.max(2, Math.min(9, step * 0.6));
+  const bars = candles.map((c, i) => {
+    const cx = padL + step * (i + 0.5);
+    const col = c.up ? "var(--neon-green)" : "var(--neon-red)";
+    const yO = y(c.o), yC = y(c.c), yH = y(c.h), yL = y(c.l);
+    const top = Math.min(yO, yC), bh = Math.max(1, Math.abs(yC - yO));
+    return `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${yH.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1"/>`
+      + `<rect x="${(cx - cw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${cw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.85"><title>${escapeHtml(String(c.d))}: ${fvCeil(c.o)} to ${fvCeil(c.c)}</title></rect>`;
+  }).join("");
+  const yTicks = [lo, (lo + hi) / 2, hi].map(v =>
+    `<text x="${padL - 4}" y="${(y(v) + 3).toFixed(1)}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${Math.round(v)}</text>`).join("");
+  // Indicator chips.
+  const chip = (label, val, col, tip) =>
+    `<span title="${escapeHtml(tip)}" style="display:inline-flex;gap:4px;align-items:baseline;padding:2px 7px;border:1px solid var(--border-light);border-radius:10px;font-size:10px;">
+      <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${label}</span><span style="font-family:var(--font-mono);font-weight:600;color:${col};">${val}</span></span>`;
+  const momCol = momentum > 0 ? "var(--neon-green)" : momentum < 0 ? "var(--neon-red)" : "var(--text-secondary)";
+  const momChip = chip("MOM", (momentum > 0 ? "+" : "") + momentum, momCol, "Momentum: net consensus grade change over the last 3 intervals");
+  let rsiChip = "";
+  if (rsi != null) {
+    const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
+    const rsiCol = rsi >= 70 ? "var(--neon-amber)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
+    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
+  }
+  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
+  return `<div class="fv-tape" style="margin-top:10px;">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <span style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
+      <span style="font-size:9px;color:var(--text-tertiary);">descriptive market signals on scouting consensus, not predictions</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="FV consensus candlestick tape">${yTicks}${bars}</svg>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${momChip}${rsiChip}${volChip}</div>
+  </div>`;
+}
 function makeSourceFvHistory(points, opts = {}) {
   const pts = (points || []).filter(pt =>
     pt && pt.snapshot_date &&
@@ -43129,7 +43238,8 @@ function renderPlayerDetail(key) {
   const chartSection = (p.points && p.points.length >= 2)
     ? `<div class="detail-title">FV history <span style="margin-left:8px;vertical-align:middle;">${_srcToggle}</span></div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p, { showSources: _showSrc })}
        ${_srcLegend}
-       ${transactionLegend()}`
+       ${transactionLegend()}
+       ${makeFvTape(p.points)}`
     : (p._is_provisional && _provEfvHist && _provEfvHist.length >= 2)
       // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory
       // (the production-only grade as-of each MiLB season). Plot that instead.

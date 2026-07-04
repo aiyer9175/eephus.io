@@ -937,6 +937,19 @@
    "notes": "SHIPPED 2026-07-04 behind #risk=1 (dark by default). Downside-only (Sortino, not Sharpe) because upside variance is not risk for a prospect. Additive display fields on trade_values.json (p_bust, downside_mm, risk_mm, sortino), computed from the persisted 5-point eFV fan; scale-consistent with the shown trade value. Uses a LOCAL 0.5 lambda for risk_mm and does NOT touch the global risk_aversion_lambda (0.0), so no board re-ranking. No independent eval: it is a lens on the already-validated surplus distribution.",
    "last_checked": "2026-07-04",
    "stale": false
+  },
+  {
+   "model_id": "fv_tape",
+   "surface": "PROSPX player FV history (behind the tape flag)",
+   "predicts": "nothing - descriptive market-structure signals on the scouting-consensus grade path (candles, momentum, an RSI-style gauge, realized volatility)",
+   "champion": "n/a - a display transform, not a model",
+   "baseline": "n/a",
+   "metric": "n/a - explicitly NOT a predictive claim (labeled as such on the surface), so no eval is owed",
+   "eval_artifact": null,
+   "verdict": "unvalidated",
+   "notes": "SHIPPED 2026-07-04 dark by default (localStorage prospect-tracker.tape, set via ?tape=1). Registered for accountability because it renders displayed indicators (momentum, RSI, volatility). It makes NO predictive claim - these are descriptive market signals on the consensus grade path, and the surface says so. Candles gate at >=4 consensus points; RSI at >=6 grade changes (flat re-confirmations dropped). No backtest is owed for a non-predictive display; it is listed unvalidated only in the sense of carrying no committed measurement.",
+   "last_checked": "2026-07-04",
+   "stale": false
   }
  ],
  "problems": []
