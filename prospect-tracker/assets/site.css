@@ -1309,6 +1309,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro); font-weight: 700; font-size: 10px;
   letter-spacing: 0.08em; text-transform: uppercase;
   border-bottom: 2px solid var(--bg-header);
+  position: sticky; top: 0; z-index: 2;
+}
+/* Sticky headers on the long Projections / Team Outlook boards too (parity with
+   MLB Stats and FA, so the header does not scroll off a long table). */
+.proj-app .detail-table thead th, .proj-app .proj-table thead th {
+  position: sticky; top: 0; z-index: 2; background: var(--bg-secondary);
 }
 .fa-app .detail-table tbody tr:hover { background: var(--bg-tertiary); }
 .fa-app .detail-table td:first-child, .fa-app .detail-table th:first-child { text-align: left; }
