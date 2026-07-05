@@ -11,10 +11,38 @@ degrades to a valid artifact on an empty feed, and touches ONLY its out_path
 (never prospects.db or draft_timeseries.json)."""
 import json
 
+import pytest
+
 import scrapers
 import tools.draft_live_poller as dlp
 
 YEAR = 2026
+
+# A controlled synthetic board so the join is deterministic. The live
+# data/draft_timeseries.json is churned by other tests during a full-suite run
+# (it is a generated artifact), so board-delta assertions must NOT read it -
+# they pass this fixture via board_path instead. Trevor Condon sits at
+# consensus_pick 18; the mock has him at 12.
+_BOARD = {
+    "classes": [{
+        "year": YEAR,
+        "prospects": [{
+            "player_name": "Trevor Condon",
+            "player_key": "draft_2026_trevor_condon",
+            "consensus_fv": 55, "consensus_pick": 18,
+        }],
+        "mock_draft": {"picks": [
+            {"player_key": "draft_2026_trevor_condon", "pick_overall": 12},
+        ]},
+    }],
+}
+
+
+@pytest.fixture()
+def board_file(tmp_path):
+    p = tmp_path / "board.json"
+    p.write_text(json.dumps(_BOARD), encoding="utf-8")
+    return p
 
 # Fixture rows mirror the real scrapers.scrape_mlb_draft_tracker dict shape:
 # pick_overall, round_label, team, player_name, player_key, slot_usd, bonus_usd.
@@ -51,10 +79,11 @@ def _patch(monkeypatch, rows):
                         lambda year, force=False: list(rows))
 
 
-def test_build_returns_priced_joined_artifact(monkeypatch, tmp_path):
+def test_build_returns_priced_joined_artifact(monkeypatch, tmp_path, board_file):
     _patch(monkeypatch, [_REACH_ROW, _OFFBOARD_ROW])
     out = tmp_path / "draft_live.json"
-    art = dlp.build_draft_live(YEAR, out_path=out, now_iso="2026-07-12T18:00:00")
+    art = dlp.build_draft_live(YEAR, out_path=out, board_path=board_file,
+                               now_iso="2026-07-12T18:00:00")
 
     assert art["status"] == "live"
     assert art["year"] == YEAR
@@ -71,13 +100,14 @@ def test_build_returns_priced_joined_artifact(monkeypatch, tmp_path):
         assert field in p
 
 
-def test_board_joined_pick_is_priced(monkeypatch, tmp_path):
+def test_board_joined_pick_is_priced(monkeypatch, tmp_path, board_file):
     _patch(monkeypatch, [_REACH_ROW])
-    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json")
+    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json", board_path=board_file)
     p = art["picks"][0]
 
     assert p["player_key"] == "draft_2026_trevor_condon"
-    assert p["consensus_fv"] is not None
+    assert p["consensus_fv"] == 55
+    assert p["mock_pick"] == 12
     assert p["board_delta"] == -8           # 10 - 18: taken 8 spots early
     assert p["reach_or_steal"] == "reach"   # -8 <= -threshold
     assert p["exp_first6_war"] is not None
@@ -85,18 +115,18 @@ def test_board_joined_pick_is_priced(monkeypatch, tmp_path):
     assert p["bonus_vs_slot_usd"] == 250_000  # 5_250_000 - 5_000_000
 
 
-def test_faller_reads_as_steal(monkeypatch, tmp_path):
+def test_faller_reads_as_steal(monkeypatch, tmp_path, board_file):
     """A board player who falls past his rank is a steal (positive delta)."""
     _patch(monkeypatch, [_STEAL_ROW])
-    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json")
+    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json", board_path=board_file)
     p = art["picks"][0]
     assert p["board_delta"] == 7            # 25 - 18: fell 7 spots
     assert p["reach_or_steal"] == "steal"
 
 
-def test_unmatched_name_is_off_board(monkeypatch, tmp_path):
+def test_unmatched_name_is_off_board(monkeypatch, tmp_path, board_file):
     _patch(monkeypatch, [_OFFBOARD_ROW])
-    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json")
+    art = dlp.build_draft_live(YEAR, out_path=tmp_path / "d.json", board_path=board_file)
     p = art["picks"][0]
 
     assert p["player_key"] is None
