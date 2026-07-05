@@ -77,7 +77,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
 | 6c. Org tendencies export (org_tendencies.json) | org_tendencies.json, trade_values.json |
 | 6d. Bayesian trade value export (trade_values.json) | debuts.json, graduates.json, trade_values.json |
-| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json |
+| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json, star_label_view.json, star_odds_eval.json |
 
 ## Rebuild-only hook (`run_monthly.rebuild_only`)
 
