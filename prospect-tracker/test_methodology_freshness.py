@@ -26,6 +26,7 @@ MODEL_GLOSSARY = {
     "farm_window_alignment": ["window_alignment"],
     "fv_tape": ["fv_tape"],
     "surplus_downside_risk": ["risk_adjusted_surplus"],
+    "prospect_greeks": ["prospect_greeks"],
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row

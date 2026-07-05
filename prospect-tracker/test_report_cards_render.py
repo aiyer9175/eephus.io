@@ -37,20 +37,22 @@ def test_report_cards_flag_gating():
             page.on("pageerror", lambda e: errors.append(str(e)))
             base = f"http://127.0.0.1:{port}/glossary/index.html"
 
-            page.goto(base + "#view=models&cards=1", wait_until="networkidle")
+            # Surfaced: proof charts show by default now.
+            page.goto(base + "#view=models", wait_until="networkidle")
             page.wait_for_selector(".gl-model-card", timeout=15000)
             page.wait_for_timeout(600)
             on = page.eval_on_selector_all(".gl-card-proof", "els => els.length")
 
-            page.goto(base + "#view=models", wait_until="networkidle")
+            # ...and #cards=0 turns them off.
+            page.goto(base + "#view=models&cards=0", wait_until="networkidle")
             page.wait_for_selector(".gl-model-card", timeout=15000)
             page.wait_for_timeout(600)
             off = page.eval_on_selector_all(".gl-card-proof", "els => els.length")
             ledger = page.eval_on_selector_all(".gl-model-card", "els => els.length")
             browser.close()
 
-            assert on >= 8, f"expected proof charts under #cards=1, got {on}"
-            assert off == 0, f"cards must be inert by default, got {off}"
+            assert on >= 8, f"expected proof charts by default, got {on}"
+            assert off == 0, f"cards must hide under #cards=0, got {off}"
             assert ledger >= 50, f"ledger should still render, got {ledger}"
             assert not errors, f"page errors: {errors}"
     finally:

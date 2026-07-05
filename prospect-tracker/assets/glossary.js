@@ -21,7 +21,7 @@
   // Report Cards v0: inline champion-vs-baseline proof charts on the Models &
   // Proofs cards. Dark by default pre-launch; opt in with #cards=1 for owner
   // preview. Flip _CARDS_DEFAULT to true at launch.
-  const _CARDS_DEFAULT = false;
+  const _CARDS_DEFAULT = true;   // surfaced: proof charts on by default (#cards=0 to hide)
   let GL = {};         // legacy-shaped map: slug -> {name, short, long, ...}
   let GROUPS = {};     // category -> display group
   // Models & Proofs view state. Declared up top (module scope, before boot

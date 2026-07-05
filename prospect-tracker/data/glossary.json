@@ -5664,6 +5664,31 @@
     "sur_plus",
     "slot_value"
    ]
+  },
+  {
+   "id": "prospect_greeks",
+   "term": "Prospect Greeks",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Prospect Greeks",
+    "Delta",
+    "Vega",
+    "Theta",
+    "Implied volatility"
+   ],
+   "priority": 41,
+   "definition": "An options-desk view of a prospect's value. Delta is the dollars gained from a one-grade upgrade, Vega is the dollar swing implied by scouting disagreement, and Theta is the surplus lost per year of arrival delay.",
+   "methodology": "All three read off the same value framework the surplus board uses. Delta is the change in expected surplus dollars when the grade moves up one full grade (5 FV points), measured on the FV-to-surplus curve at the prospect's grade, so a jump near the steep part of the curve is worth more. Vega multiplies the local slope of that curve by the spread of source grades, giving the dollar value at stake in the scouting disagreement. Theta applies the framework's annual discount to the expected surplus, the value that erodes for each extra year before the prospect arrives. Implied volatility is just that grade spread. Descriptive: it re-expresses the validated surplus model as option sensitivities, it does not change any dollar figure.",
+   "origin": "Arkmetric, original to eephus.io. The Greeks framing is borrowed from options pricing.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "risk_adjusted_surplus",
+    "eta"
+   ]
   }
  ]
 }

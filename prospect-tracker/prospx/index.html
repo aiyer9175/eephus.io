@@ -42382,10 +42382,10 @@ function _fvHistSrcMeta(src, idx) {
 // default build is provably inert. Degrades below the sample gates (needs >= 4
 // consensus points for candles, >= 6 grade changes for RSI).
 function _fvTapeEnabled() {
-  // localStorage is the source of truth (initFvTapeFlag captured any url param
-  // before the router rewrote the hash). Default dark pre-launch.
-  try { return localStorage.getItem("prospect-tracker.tape") === "1"; }
-  catch (_) { return false; }
+  // Surfaced: on by default. localStorage still lets a user turn it off
+  // (?tape=0 sets it to "0", captured by initFvTapeFlag before the router runs).
+  try { return localStorage.getItem("prospect-tracker.tape") !== "0"; }
+  catch (_) { return true; }
 }
 function computeFvTape(points) {
   const pts = (points || [])
@@ -42470,6 +42470,54 @@ function makeFvTape(points) {
     <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="FV consensus candlestick tape">${yTicks}${bars}</svg>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${momChip}${rsiChip}${volChip}</div>
   </div>`;
+}
+// Prospect Greeks: an option-on-future-WAR view of a prospect's value, from the
+// committed value framework (sv_curve = FV->surplus) + the eFV outcome fan.
+// Delta = $ from a one-grade (5 FV) upgrade; Vega = $ swing implied by scouting
+// disagreement (local $/FV slope x grade dispersion); Theta = $ eroded per year
+// of ETA delay (the framework discount). IV = the grade dispersion itself.
+function _svAt(side, fv) {
+  const sv = (window.VALUE_FRAMEWORK || {}).sv_curve;
+  if (!sv || !sv[side] || fv == null) return null;
+  const fvc = Math.max(sv.fv_min, Math.min(sv.fv_max, fv));
+  const a = sv[side];
+  const i = Math.max(0, Math.min(a.length - 1, Math.round((fvc - sv.fv_min) / sv.step)));
+  return a[i];
+}
+function computeGreeks(fv, isPit, dist) {
+  const vf = window.VALUE_FRAMEWORK || {};
+  if (!vf.sv_curve || fv == null) return null;
+  const side = isPit ? "pitcher" : "hitter";
+  const s0 = _svAt(side, fv), sUp = _svAt(side, fv + 5);
+  if (s0 == null || sUp == null) return null;
+  const slopeUp = _svAt(side, fv + 1), slopeDn = _svAt(side, fv - 1);
+  const slope = (slopeUp != null && slopeDn != null) ? (slopeUp - slopeDn) / 2 : null;
+  const disp = (dist && dist.fv_dispersion != null) ? dist.fv_dispersion : null;
+  const dr = vf.discount_rate || 0.09;
+  const base = (dist && dist.mean_mm != null) ? dist.mean_mm : s0;
+  return {
+    delta: sUp - s0,                                            // $ per one-grade upgrade
+    vega: (slope != null && disp != null) ? Math.abs(slope) * disp : null,  // $ from disagreement
+    theta: base != null ? -(base * dr / (1 + dr)) : null,       // $/yr ETA decay
+    iv: disp,                                                   // implied vol = grade dispersion
+  };
+}
+function makeGreeksStrip(fv, isPit, dist) {
+  const g = computeGreeks(fv, isPit, dist);
+  if (!g || g.delta == null) return "";
+  const money = v => v == null ? " - " : `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(1)}M`;
+  const cell = (sym, name, val, col, tip) =>
+    `<div title="${escapeHtml(tip)}" style="flex:1;min-width:64px;">
+      <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">${sym} <span style="text-transform:none;letter-spacing:0;">${name}</span></div>
+      <div style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:${col};">${val}</div></div>`;
+  return `<div style="padding:8px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;">Prospect Greeks <span style="text-transform:none;letter-spacing:0;font-style:italic;">an option on future WAR</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      ${cell("&Delta;", "Delta", money(g.delta), "var(--neon-green)", "Delta: dollars of surplus gained from a one-grade (5 FV) upgrade, from the value framework's FV-to-surplus curve at this grade")}
+      ${g.vega != null ? cell("&nu;", "Vega", money(g.vega), "var(--neon-amber)", "Vega: dollar swing implied by scouting disagreement (local surplus slope times the grade dispersion across sources)") : ""}
+      ${g.theta != null ? cell("&Theta;", "Theta", money(g.theta), "var(--neon-red)", "Theta: surplus eroded per additional year of ETA delay (the value framework's annual discount)") : ""}
+      ${g.iv != null ? cell("IV", "grade &sigma;", g.iv.toFixed(1), "var(--text-secondary)", "Implied volatility: the spread of source FV grades, in grade points (higher = more scouting disagreement)") : ""}
+    </div></div>`;
 }
 function makeSourceFvHistory(points, opts = {}) {
   const pts = (points || []).filter(pt =>
@@ -43660,7 +43708,15 @@ function renderPlayerDetail(key) {
            <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${dc};font-variant-numeric:tabular-nums;">${Math.round(dv)}</div>
          </div>`;
     }
-    const inner = surplusRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
+    // Prospect Greeks: Delta needs only a grade + the value-framework curve;
+    // Vega/Theta additionally use the eFV outcome fan's dispersion where present.
+    // Grade falls back through the eFV grade / gradeBlock when fv_close is unset.
+    const _gDist = (_xf && _xf.dist) || (p.surplus && p.surplus.dist) || {};
+    const _gFv = fv != null ? fv
+               : (_xf && _xf.xfv_grade != null) ? _xf.xfv_grade
+               : (typeof gradeBlock === "function" ? gradeBlock(p).value : null);
+    const greeksRow = makeGreeksStrip(_gFv, _isPit, _gDist);
+    const inner = surplusRow + greeksRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
     const _srcLabel = _useEfv ? "eFV · outcome-grounded" : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>

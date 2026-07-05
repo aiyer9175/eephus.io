@@ -528,7 +528,7 @@ function _tbGradeColor(g) {
 // Risk-adjusted surplus (Sortino) column: dark by default pre-launch; opt in
 // with #risk=1 for the soak, then flip RISK_UI_DEFAULT at launch. Also degrades
 // on payload presence (older exports carry no sortino field).
-const RISK_UI_DEFAULT = false;
+const RISK_UI_DEFAULT = true;   // surfaced: Risk column on by default (#risk=0 to hide)
 function _tbRiskUiOn() {
   const v = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("risk");
   return v != null ? v !== "0" : RISK_UI_DEFAULT;

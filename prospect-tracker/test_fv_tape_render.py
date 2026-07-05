@@ -36,27 +36,27 @@ def test_fv_tape_flag_gating():
             except Exception as e:  # noqa: BLE001
                 pytest.skip(f"chromium unavailable: {e}")
 
-            # Flag ON: fresh context, set via query param.
+            # Surfaced: on by default in a clean context.
             ctx_on = browser.new_context()
             p1 = ctx_on.new_page()
             errs = []
             p1.on("pageerror", lambda e: errs.append(str(e)))
-            p1.goto(f"{base}?tape=1#player={PLAYER}", wait_until="networkidle", timeout=45000)
+            p1.goto(f"{base}#player={PLAYER}", wait_until="networkidle", timeout=45000)
             p1.wait_for_timeout(2500)
             on = p1.eval_on_selector_all(".fv-tape", "e => e.length")
             ctx_on.close()
 
-            # Default dark: a separate clean context, no param.
+            # ...and ?tape=0 turns it off (fresh context).
             ctx_off = browser.new_context()
             p2 = ctx_off.new_page()
-            p2.goto(f"{base}#player={PLAYER}", wait_until="networkidle", timeout=45000)
+            p2.goto(f"{base}?tape=0#player={PLAYER}", wait_until="networkidle", timeout=45000)
             p2.wait_for_timeout(2500)
             off = p2.eval_on_selector_all(".fv-tape", "e => e.length")
             ctx_off.close()
             browser.close()
 
-            assert on >= 1, "FV Tape should render under ?tape=1"
-            assert off == 0, "FV Tape must be dark by default"
+            assert on >= 1, "FV Tape should render by default"
+            assert off == 0, "FV Tape must hide under ?tape=0"
             assert not errs, f"page errors: {errs[:3]}"
     finally:
         httpd.shutdown()

@@ -337,7 +337,7 @@
     // System Duration / Window Alignment: dark by default pre-launch; opt in
     // with #window=1 for the soak, then flip WINDOW_DEFAULT at launch. Also
     // degrades on payload presence (older exports have no etaAlignYears).
-    const WINDOW_DEFAULT = false;
+    const WINDOW_DEFAULT = true;   // surfaced: Window column on by default (#window=0 to hide)
     const _wp = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("window");
     const windowOn = _wp != null ? _wp !== "0" : WINDOW_DEFAULT;
     const hasWindow = rows.some(r => (r.farm || {}).etaAlignYears != null);

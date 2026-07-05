@@ -963,6 +963,19 @@
    "notes": "SHIPPED 2026-07-04. Dark until the draft: a cron (tools/draft_live_poller.py) writes data/draft_live.json READ-ONLY on draft night (July 12-13), and the prospx War Room view fetches it, re-polling every 60s. The poller NEVER writes to prospects.db or draft_timeseries.json (a test asserts byte-invariance), so it cannot kill the mock or trigger promotion. reach_or_steal = pick_overall - consensus_pick (positive = fell past his rank = steal); slot surplus via storage._pick_slot_expected_war + fa_market._slot_surplus_usd. Provisional: it composes validated pieces, no independent eval of the live board.",
    "last_checked": "2026-07-04",
    "stale": false
+  },
+  {
+   "model_id": "prospect_greeks",
+   "surface": "PROSPX prospect detail (Surplus value card)",
+   "predicts": "n/a - an option-on-future-WAR view of a prospect's value, derived from the committed value framework",
+   "champion": "Delta (surplus per one-grade FV move), Vega (surplus swing from scouting disagreement), Theta (surplus eroded per year of ETA delay)",
+   "baseline": "n/a - a re-expression of the validated value_framework surplus curve + eFV dispersion",
+   "metric": "n/a - descriptive; the underlying surplus curve is gated by prospect_surplus",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04, surfaced (visible) on the prospect detail Surplus value card. Delta = value_framework.sv_curve at fv+5 minus at fv (dollars from a one-grade upgrade); Vega = local surplus slope times the eFV grade dispersion (dollars implied by scouting disagreement); Theta = mean surplus times discount_rate/(1+discount_rate) (annual ETA-delay decay). IV = the grade dispersion. Client-side over the committed value_framework.js; no new model, a lens on the validated surplus curve.",
+   "last_checked": "2026-07-04",
+   "stale": false
   }
  ],
  "problems": []
