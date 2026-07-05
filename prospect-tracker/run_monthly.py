@@ -945,6 +945,20 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # Patch the just-written run summary into timeseries.json so the
         # site's "as of" reflects this daily refresh.
         _patch_export_run_summary(out_dir / "timeseries.json", log)
+        # d11. Rebuild the static site from the fresh data. Without this the daily
+        # data refresh (trades/promos/IL/debuts to today, refreshed MiLB statlines)
+        # never reaches the browser -- the homepage "Prospect News" wire, /news/, and
+        # the player pages are build-time artifacts that freeze at the last build.
+        # main() chains run_daily() at its tail, so this single step also rebuilds
+        # the site on a full monthly run. Best-effort: a build failure must not fail
+        # the data pipeline. (nightly-build.sh also runs build_site after the pipeline
+        # on the server; this makes freshness robust to how the pipeline is invoked.)
+        try:
+            with _step("d11. Rebuild site (build_site)", log):
+                import build_site
+                build_site.main()
+        except Exception:
+            log.exception("daily: site rebuild failed — continuing (data is fresh, pages stale)")
         total = time.monotonic() - _run_start
         log.info("DAILY run %s complete in %.1fs", run_id, total)
         for label, secs in _STEP_TIMES:
@@ -2567,6 +2581,19 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _export_st_history(log=log.info)
             except Exception:
                 log.exception("starter leaderboards export failed - continuing")
+
+        # --- 6b4g. Hitter Leaderboards + history (hitter_*.json) --------------
+        # HEM+ hitter board + team Offense+ from the StatsAPI season hitting
+        # leaderboard. Validated (forward-chained vs next-year wOBA; tools/
+        # hem_plus_lab.py -> data/hem_plus_eval.json). Additive; never aborts.
+        with _step("6b4g. Hitter Leaderboards (hitter_leaderboards.json)", log):
+            try:
+                from hitter_export import export as _export_hitters, export_history as _export_hit_history
+                _hit_n = _export_hitters(log=log.info)
+                log.info("hitters: %d hitters scored", _hit_n)
+                _export_hit_history(log=log.info)
+            except Exception:
+                log.exception("hitter leaderboards export failed - continuing")
 
         # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion

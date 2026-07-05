@@ -913,6 +913,32 @@
    "artifact_age_days": 0
   },
   {
+   "model_id": "hem_plus",
+   "surface": "/mlbstats/ Hitter Leaderboards, HEM+ column",
+   "predicts": "hitter offensive-rate skill, pool-relative (100 = average qualified hitter); a sample-shrunk hitter-pool-anchored wOBA. Team Offense+ rolls it up by plate appearances",
+   "champion": "hem_plus_v1 (per-component empirical-Bayes-shrunk, hitter-pool-anchored wOBA; volume/baserunning held out of the skill number)",
+   "baseline": "AVG (naive rate baseline) and raw wOBA (its parent)",
+   "metric": "forward-chained Spearman Y->Y+1 wOBA (seeded bootstrap CI on the rho gap)",
+   "eval_artifact": "data/hem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07-05, the hitter analog of REM+/SEM+. Each wOBA component (unintentional walks, HBP, singles, doubles, triples, HR) is empirical-Bayes-shrunk toward the hitter pool by its own reliability constant (walks fast, extra-base hits slow), recombined with the FanGraphs wOBA linear weights, and re-anchored so the pool average scores 100; HEM+ = 100 * shrunk wOBA / pool wOBA (a ratio-to-league index, the wRC+/OPS+ family, NOT a z-score). Forward-chained OOS 2012-2024 (ex-2020, 3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4123 vs raw wOBA 0.4089, OPS 0.411, AVG 0.2348; bootstrap CI on the rho gap decisively beats AVG (lo95 +0.145) and holds even-or-ahead of its raw-wOBA parent (lo95 -0.009 >= -0.01), so the component shrinkage + hitter-pool anchoring earn their place. Volume (PA), baserunning (SB), and the slash line are shown as CONTEXT, never in the skill number. Data from the cached StatsAPI season hitting leaderboard (fa_sources). Harness tools/hem_plus_lab.py; core hem_plus.py (reuses the validated rem_plus shrink machinery).",
+   "last_checked": "2026-07-05",
+   "stale": false,
+   "artifact_age_days": 0,
+   "card": {
+    "n": 3372,
+    "window": "2012-2024 ex-2020, forward pairs",
+    "headline": [
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.412,
+      "baseline": 0.235,
+      "better": "higher"
+     }
+    ]
+   }
+  },
+  {
    "model_id": "farm_window_alignment",
    "surface": "/projections/ Team Outlook (Window column)",
    "predicts": "n/a - a descriptive rollup: when a farm's surplus arrives (etaMean) vs the controlled-core WAR center (coreCenter)",

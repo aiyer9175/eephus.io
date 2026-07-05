@@ -30,6 +30,8 @@
   function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
   function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
+  // 3-decimal baseball slash formatter: .300 (drops the leading zero; OPS>1 keeps it).
+  function f3(v) { var n = num(v); return n == null ? "-" : n.toFixed(3).replace(/^0\./, "."); }
   function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
   function fSigned(v) { var n = num(v); if (n == null) return "-"; return (n > 0 ? "+" : "") + n.toFixed(1); }
   function logo(team) {
@@ -237,11 +239,25 @@
     return '<table class="mlbstats-table">' + head + body + "</table>";
   }
 
+  // player_links map (mlbam -> merged-card key), preloaded once at init so
+  // nameCell can link synchronously. Names resolve to the merged MLB player card
+  // at /projections/#player=<key>; unmatched rows stay plain text.
+  var LINKS = null;
+  function playerHref(r) {
+    // Resolve by MLBAM via player_links -- NOT r.key (which is str(mlbam) here).
+    if (!LINKS || !LINKS.byMlbam || r.mlbam == null) return null;
+    var hit = LINKS.byMlbam[String(r.mlbam)];
+    return (hit && hit.key) ? ("/projections/#player=" + encodeURIComponent(hit.key)) : null;
+  }
+
   function nameCell(r) {
     var role = r.role ? ' <span class="bp-role">' + esc(r.role) + "</span>" : "";
     var team = r.team ? '<span class="proj-dim"> ' + esc(r.team) + "</span>" : "";
     var prov = (r.qualified === false) ? '<span class="bp-prov" title="below the qualifying sample - shown but provisional">prov</span>' : "";
-    return '<td class="mlbstats-name">' + logo(r.team) + esc(r.name || "-") + team + role + prov + "</td>";
+    var nm = esc(r.name || "-");
+    var href = playerHref(r);
+    var name = href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
+    return '<td class="mlbstats-name">' + logo(r.team) + name + team + role + prov + "</td>";
   }
 
   function sortRows(rows, cols, sort) {
@@ -571,8 +587,17 @@
   }
 
   function readHash() {
-    var m = /view=(relievers|teams|depth)/.exec(location.hash || "");
+    var h = location.hash || "";
+    // Top-level section deep-link (#section=bullpen|starters|hitters) + the
+    // per-section view (#view= bullpen, #sview= starters).
+    var s = /section=(bullpen|starters|hitters)/.exec(h);
+    if (s) section = s[1];
+    var m = /view=(relievers|teams|depth)/.exec(h);
     if (m) view = m[1];
+    var sv = /sview=(starters|teams|charts)/.exec(h);
+    if (sv) starterView = sv[1];
+    var hv = /hview=(hitters|teams|charts)/.exec(h);
+    if (hv) hitterView = hv[1];
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error
@@ -747,7 +772,7 @@
 
   // ---- starters: views ------------------------------------------------------
   function starterTabBar() {
-    var tabs = [["starters", "Starters"], ["teams", "Team Rotations"]];
+    var tabs = [["starters", "Starters"], ["teams", "Team Rotations"], ["charts", "Rotation Charts"]];
     return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
       var active = (t[0] === starterView) ? " active" : "";
       return '<button type="button" class="mlbstats-tab' + active + '" data-starterview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === starterView) + '">' + t[1] + "</button>";
@@ -820,6 +845,72 @@
     return note + '<div class="mlbstats-scroll">' + renderTable(rows, STARTER_TEAM_COLS, starterTeamSort) + "</div>";
   }
 
+  // ---- starters: Rotation Charts (mirrors the reliever viz + bullpen depth) --
+  // SVG SEM+ distribution + skill-vs-durability scatter (clone of relieverViz),
+  // then per-team rotation depth ladders (clone of renderDepth): each rotation as
+  // its workload-ordered starters with SEM+ per slot.
+  function starterViz() {
+    var qual = ((starterData && starterData.starters) || []).filter(function (r) { return r.qualified !== false; });
+    if (qual.length < 12) return "";
+    var sems = qual.map(function (r) { return r.sem_plus; });
+    var hist = chart("histogram", sems, { height: 108, min: 55, max: 175, highlightAbove: 120,
+      refs: [{ at: 100, label: "avg" }], aria: "SEM+ distribution" });
+    var pts = qual.filter(function (r) { return r.ip_per_gs != null; }).map(function (r) {
+      return { x: r.sem_plus, y: r.ip_per_gs, label: r.name + "  SEM+ " + r.sem_plus + "  IP/GS " + f1(r.ip_per_gs),
+               color: r.sem_plus >= 115 ? null : "#6a6f7a" };
+    });
+    var sc = chart("scatter", pts, { height: 250, xLabel: "SEM+ (skill) →", yLabel: "↑ IP/GS (durability)",
+      xRef: 100, aria: "skill vs durability" });
+    if (!hist && !sc) return "";
+    var body = '<div class="mlbstats-viz">'
+      + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("SEM+", "sem_plus")
+      + ' distribution <span class="proj-dim">(qualified starters; cyan = elite)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs durability'
+        + ' <span class="proj-dim">(top-right = front-line workhorses)</span></div>' + sc + "</div>" : "")
+      + "</div>";
+    return collapsible("starters-viz", 'Distribution <span class="proj-dim">(SEM+ spread, skill vs durability)</span>', body);
+  }
+
+  function rotationLadders() {
+    var teams = (starterData && starterData.teams) || [];
+    var starters = (starterData && starterData.starters) || [];
+    if (!teams.length || !starters.length) return "";
+    var byTeam = {};
+    starters.forEach(function (r) {
+      if (!r.team) return;
+      (byTeam[r.team] = byTeam[r.team] || []).push(r);
+    });
+    Object.keys(byTeam).forEach(function (t) {
+      byTeam[t].sort(function (a, b) { return (num(b.ip) || 0) - (num(a.ip) || 0); });
+    });
+    var sorted = teams.slice().sort(function (a, b) { return (num(b.rotation_plus) || 0) - (num(a.rotation_plus) || 0); });
+    var cards = sorted.map(function (t) {
+      var rot = (byTeam[t.team] || []).slice(0, 5);
+      var slots = rot.map(function (r, i) {
+        return '<div class="bp-slot">'
+          + '<span class="bp-slot-role">SP' + (i + 1) + "</span>"
+          + '<span class="bp-slot-name">' + esc(r.name || "-")
+          + (r.ip_per_gs != null ? '<span class="proj-dim"> ' + f1(r.ip_per_gs) + " IP/GS</span>" : "") + "</span>"
+          + '<span class="bp-slot-rem ' + remClass(r.sem_plus) + '">' + fInt(r.sem_plus) + "</span>"
+          + "</div>";
+      }).join("");
+      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="rem-plus ' + remClass(t.rotation_plus) + '" data-gl="sem_plus">Rotation+ ' + fInt(t.rotation_plus) + "</span>"
+        + "</div>" + slots + "</div>";
+    }).join("");
+    return '<div class="mlbstats-note">Each rotation as a depth ladder: its starters ordered by workload, with '
+      + gloss("SEM+", "sem_plus") + " per slot (skill) and average start length.</div>"
+      + '<div class="bp-depth-grid">' + cards + "</div>";
+  }
+
+  function renderStarterCharts() {
+    if (!starterData || !((starterData.starters) || []).length) {
+      return '<div class="mlbstats-empty">No rotation charts to show yet.</div>';
+    }
+    return starterViz() + rotationLadders();
+  }
+
   // ---- starters: shell ------------------------------------------------------
   function renderStarters() {
     var root = document.getElementById("mlbstats-starters-root");
@@ -838,7 +929,8 @@
       });
       return;
     }
-    var inner = (starterView === "teams") ? renderStarterTeams() : renderStarterBoard();
+    var inner = (starterView === "teams") ? renderStarterTeams()
+      : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
     root.innerHTML = starterTabBar() + starterControls() + inner;
     bindStarterEvents(root);
     wireGlossary(root);
@@ -888,7 +980,8 @@
   function renderStartersInPlace() {
     var root = document.getElementById("mlbstats-starters-root");
     if (!root) return;
-    var inner = (starterView === "teams") ? renderStarterTeams() : renderStarterBoard();
+    var inner = (starterView === "teams") ? renderStarterTeams()
+      : (starterView === "charts") ? renderStarterCharts() : renderStarterBoard();
     root.innerHTML = starterTabBar() + starterControls() + inner;
     var q = root.querySelector("#mlbstats-starter-q");
     if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
@@ -915,6 +1008,353 @@
     loadStarters();
   }
 
+  // ===========================================================================
+  // Section 3: Hitter Leaderboards (HEM+ offensive-rate skill).
+  // ---------------------------------------------------------------------------
+  // The hitter analog of the reliever/starter sections: HEM+ is a hitter's pure
+  // offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA;
+  // volume (PA), baserunning (SB), and the slash line ride context columns so
+  // they never move the skill number. Renders into #mlbstats-hitters-root; reuses
+  // every shared helper. Tabs mirror the pitching sections: Hitters / Team
+  // Lineups / Lineup Charts.
+  // ===========================================================================
+  var HITTER_URL = "/data/hitter_leaderboards.json";
+  var HITTER_HISTORY_URL = "/data/hitter_history.json";
+
+  var hitterData = null;
+  var hitterErr = false;
+  var hitterInit = false;
+  var hitterView = "hitters";                 // hitters | teams | charts
+  var hitterSort = { key: "hem_plus", asc: false };
+  var hitterTeamSort = { key: "offense_plus", asc: false };
+  var hitterQuery = "";
+  var hitterQualifiedOnly = true;
+
+  var hitterSeason = "current";
+  var HITTER_HISTORY = null;
+  var HITTER_HISTORY_LOADING = false;
+  var HITTER_HISTORY_ERROR = false;
+
+  // Skill core first (HEM+), then the volume + slash-line context columns.
+  var HITTER_COLS = [
+    { key: "name", label: "Hitter", term: null, sortable: true, kind: "name" },
+    { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "pa", label: "PA", fmt: fInt, num: true },
+    { key: "hr", label: "HR", fmt: fInt, num: true },
+    { key: "sb", label: "SB", fmt: fInt, num: true },
+    { key: "avg", label: "AVG", fmt: f3, num: true, title: "Batting average (context)" },
+    { key: "obp", label: "OBP", fmt: f3, num: true },
+    { key: "slg", label: "SLG", fmt: f3, num: true },
+    { key: "ops", label: "OPS", fmt: f3, num: true },
+    { key: "iso", label: "ISO", fmt: f3, num: true, title: "Isolated power (SLG - AVG)" },
+    { key: "woba", label: "wOBA", term: "hem_plus", fmt: f3, num: true, title: "Shrunk wOBA (the HEM+ skill core)" },
+    { key: "bb_pct", label: "BB%", fmt: fPct, num: true },
+    { key: "k_pct", label: "K%", fmt: fPct, num: true, asc: true },
+    { key: "babip", label: "BABIP", fmt: f3, num: true },
+  ];
+
+  var HITTER_HISTORY_COLS = HITTER_COLS;   // history rows carry the same fields
+
+  var HITTER_TEAM_COLS = [
+    { key: "team", label: "Team", sortable: true, kind: "team" },
+    { key: "offense_plus", label: "Offense+", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "heart_hem", label: "Heart 3", fmt: remCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
+    { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
+      get: function (t) { return num(t.n_above_avg); },
+      cell: function (t) { return fInt(t.n_above_avg) + (t.n_hitters != null ? '<span class="proj-dim"> / ' + fInt(t.n_hitters) + "</span>" : ""); } },
+    { key: "team_pa", label: "PA", fmt: fInt, num: true },
+  ];
+
+  function hemExplainer() {
+    return explainer("hem_plus", gloss("HEM+", "hem_plus")
+      + " measures a hitter's pure offensive-rate skill on a league-relative scale: 100 is an average"
+      + " qualified hitter, 110 is 10 percent more offense per plate appearance. It is a sample-shrunk"
+      + " wOBA (the wRC+ family), so volume (PA), baserunning (SB), and the slash line ride the context"
+      + " columns instead of moving the skill number.");
+  }
+
+  function hitterScorecard() {
+    var b = (hitterData && hitterData.backtest) || {};
+    if (b.rho_hem_plus == null) return "";
+    return '<div class="mlbstats-scorecard">'
+      + '<span class="pal-sc-stat">' + gloss("HEM+", "hem_plus") + ' forward &rho; <b>'
+      + b.rho_hem_plus + '</b><span class="proj-dim"> vs raw wOBA ' + (b.rho_woba == null ? "-" : b.rho_woba)
+      + ", OPS " + (b.rho_ops == null ? "-" : b.rho_ops) + ", AVG " + (b.rho_avg == null ? "-" : b.rho_avg)
+      + "</span></span>"
+      + '<span class="pal-sc-stat"><b>' + esc(b.n_pairs) + "</b> out-of-sample year pairs"
+      + (b.seasons ? '<span class="proj-dim"> (' + esc(b.seasons) + " seasons)</span>" : "") + "</span>"
+      + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
+      + "</div>";
+  }
+
+  function hitterHistorySeasons() {
+    if (HITTER_HISTORY && HITTER_HISTORY.seasons && HITTER_HISTORY.seasons.length) return HITTER_HISTORY.seasons.slice();
+    var cur = num(hitterData && hitterData.season);
+    if (cur == null) return [];
+    var out = [];
+    for (var y = cur - 1; y >= cur - 5; y--) out.push(y);
+    return out;
+  }
+  function hitterSeasonPills() {
+    var pills = [["current", "Current"]];
+    hitterHistorySeasons().slice().sort(function (a, b) { return b - a; }).forEach(function (y) {
+      pills.push([String(y), String(y)]);
+    });
+    return '<div class="mlbstats-seasons" role="tablist" aria-label="Season">' + pills.map(function (p) {
+      var sel = (p[0] === hitterSeason);
+      return '<button type="button" class="mlbstats-season' + (sel ? " active" : "")
+        + '" data-hitterseason="' + esc(p[0]) + '" role="tab" aria-selected="' + sel + '">' + esc(p[1]) + "</button>";
+    }).join("") + "</div>";
+  }
+  function loadHitterHistory() {
+    if (HITTER_HISTORY || HITTER_HISTORY_LOADING) return;
+    HITTER_HISTORY_LOADING = true;
+    HITTER_HISTORY_ERROR = false;
+    fetch(HITTER_HISTORY_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { HITTER_HISTORY = j; HITTER_HISTORY_LOADING = false; renderHitters(); })
+      .catch(function () { HITTER_HISTORY_LOADING = false; HITTER_HISTORY_ERROR = true; renderHitters(); });
+  }
+  function hitterHistoryYear() {
+    return (HITTER_HISTORY && HITTER_HISTORY.history && HITTER_HISTORY.history[hitterSeason]) || null;
+  }
+  function filteredHitters() {
+    var rows = (hitterData && hitterData.hitters) || [];
+    var q = hitterQuery.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (hitterQualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+  function filteredHitterHistory() {
+    var yr = hitterHistoryYear();
+    var rows = (yr && yr.hitters) || [];
+    var q = hitterQuery.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (hitterQualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+
+  function hitterTabBar() {
+    var tabs = [["hitters", "Hitters"], ["teams", "Team Lineups"], ["charts", "Lineup Charts"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === hitterView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-hitterview="' + t[0] + '" role="tab" aria-selected="' + (t[0] === hitterView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function hitterControls() {
+    if (hitterView !== "hitters") return "";
+    return '<div class="mlbstats-bar">'
+      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + '<input class="mlbstats-search" type="search" id="mlbstats-hitter-q" placeholder="Search hitter or team" value="' + esc(hitterQuery) + '">'
+      + "</div>";
+  }
+
+  function renderHitterBoard() {
+    if (hitterSeason !== "current") return renderHitterHistory();
+    var rows = sortRows(filteredHitters(), HITTER_COLS, hitterSort);
+    var body = rows.length
+      ? (function () {
+          var note = '<div class="mlbstats-note">' + rows.length + " hitters. "
+            + gloss("HEM+", "hem_plus") + " is pure offensive-rate skill (100 = average qualified hitter); "
+            + "the volume (PA, HR, SB) and slash columns are context, kept separate from the skill number.</div>";
+          return hemExplainer() + hitterScorecard() + note
+            + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_COLS, hitterSort) + "</div>";
+        })()
+      : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
+    return hitterSeasonPills() + body;
+  }
+
+  function renderHitterHistory() {
+    var pills = hitterSeasonPills();
+    if (HITTER_HISTORY_ERROR) {
+      return pills + '<div class="mlbstats-empty mlbstats-load-error" role="alert">'
+        + "Season history failed to load. Refresh to retry; if it persists the nightly build is mid-run. "
+        + '<button type="button" class="chip" id="mlbstats-hitter-history-retry">Retry</button></div>';
+    }
+    if (!HITTER_HISTORY) {
+      loadHitterHistory();
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(hitterSeason) + " season leaderboard&hellip;</div>";
+    }
+    if (HITTER_HISTORY_LOADING) {
+      return pills + '<div class="mlbstats-empty">Loading the ' + esc(hitterSeason) + " season leaderboard&hellip;</div>";
+    }
+    var yr = hitterHistoryYear();
+    if (!yr || !yr.hitters || !yr.hitters.length) {
+      return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(hitterSeason) + " season.</div>";
+    }
+    var rows = sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, hitterSort);
+    var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.hitters.length;
+    var cap = '<div class="mlbstats-note">' + esc(hitterSeason) + " season, " + esc(nQual)
+      + " qualified hitters. " + gloss("HEM+", "hem_plus") + " is the skill read; the slash + volume"
+      + " columns are context. Compare against how these bats actually hit forward.</div>";
+    var table = rows.length
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_HISTORY_COLS, hitterSort) + "</div>"
+      : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
+    return pills + cap + table;
+  }
+
+  function renderHitterTeams() {
+    var rows = (hitterData && hitterData.teams) || [];
+    rows = sortRows(rows, HITTER_TEAM_COLS, hitterTeamSort);
+    if (!rows.length) return '<div class="mlbstats-empty">No team lineups to show yet.</div>';
+    var note = '<div class="mlbstats-note">Offense+ weights each lineup by the '
+      + gloss("HEM+", "hem_plus") + " of the plate appearances it takes (PA-weighted). Heart 3 reads the"
+      + " top of the order; the volume columns are context.</div>";
+    return note + '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_TEAM_COLS, hitterTeamSort) + "</div>";
+  }
+
+  // Lineup Charts: HEM+ distribution + skill-vs-volume scatter (clone of the
+  // reliever viz), then per-team lineup ladders (clone of the bullpen depth).
+  function hitterViz() {
+    var qual = ((hitterData && hitterData.hitters) || []).filter(function (r) { return r.qualified !== false; });
+    if (qual.length < 12) return "";
+    var hems = qual.map(function (r) { return r.hem_plus; });
+    var hist = chart("histogram", hems, { height: 108, min: 55, max: 175, highlightAbove: 125,
+      refs: [{ at: 100, label: "avg" }], aria: "HEM+ distribution" });
+    var pts = qual.filter(function (r) { return r.pa != null; }).map(function (r) {
+      return { x: r.hem_plus, y: r.pa, label: r.name + "  HEM+ " + r.hem_plus + "  PA " + r.pa,
+               color: r.hem_plus >= 120 ? null : "#6a6f7a" };
+    });
+    var sc = chart("scatter", pts, { height: 250, xLabel: "HEM+ (skill) →", yLabel: "↑ PA (volume)",
+      xRef: 100, aria: "skill vs volume" });
+    if (!hist && !sc) return "";
+    var body = '<div class="mlbstats-viz">'
+      + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("HEM+", "hem_plus")
+      + ' distribution <span class="proj-dim">(qualified hitters; cyan = elite)</span></div>' + hist + "</div>"
+      + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs volume'
+        + ' <span class="proj-dim">(top-right = elite bats with the PAs to prove it)</span></div>' + sc + "</div>" : "")
+      + "</div>";
+    return collapsible("hitters-viz", 'Distribution <span class="proj-dim">(HEM+ spread, skill vs volume)</span>', body);
+  }
+
+  function lineupLadders() {
+    var teams = (hitterData && hitterData.teams) || [];
+    if (!teams.length) return "";
+    var sorted = teams.slice().sort(function (a, b) { return (num(b.offense_plus) || 0) - (num(a.offense_plus) || 0); });
+    var cards = sorted.map(function (t) {
+      var lineup = (t.lineup || []).slice(0, 9);
+      var slots = lineup.map(function (h, i) {
+        return '<div class="bp-slot">'
+          + '<span class="bp-slot-role">' + (i + 1) + "</span>"
+          + '<span class="bp-slot-name">' + esc(h.name || "-")
+          + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
+          + '<span class="bp-slot-rem ' + remClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
+          + "</div>";
+      }).join("");
+      return '<div class="bp-depth-card"><div class="bp-depth-head">'
+        + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
+        + '<span class="rem-plus ' + remClass(t.offense_plus) + '" data-gl="hem_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
+        + "</div>" + slots + "</div>";
+    }).join("");
+    return '<div class="mlbstats-note">Each lineup as a depth ladder: its hitters ordered by '
+      + gloss("HEM+", "hem_plus") + " (offensive-rate skill per slot) with plate-appearance volume.</div>"
+      + '<div class="bp-depth-grid">' + cards + "</div>";
+  }
+
+  function renderHitterCharts() {
+    if (!hitterData || !((hitterData.hitters) || []).length) {
+      return '<div class="mlbstats-empty">No lineup charts to show yet.</div>';
+    }
+    return hitterViz() + lineupLadders();
+  }
+
+  function renderHitters() {
+    var root = document.getElementById("mlbstats-hitters-root");
+    if (!root) return;
+    if (!hitterData) {
+      root.innerHTML = hitterErr
+        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="mlbstats-hitter-retry">Retry</button></div>'
+        : '<div class="mlbstats-empty">Hitter Leaderboards are being computed from the MLB season. '
+          + "Check back shortly.</div>";
+      var retry = document.getElementById("mlbstats-hitter-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        loadHitters();
+      });
+      return;
+    }
+    var inner = (hitterView === "teams") ? renderHitterTeams()
+      : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
+    root.innerHTML = hitterTabBar() + hitterControls() + inner;
+    bindHitterEvents(root);
+    wireGlossary(root);
+  }
+
+  function bindHitterEvents(root) {
+    bindCollapse(root);
+    root.querySelectorAll("[data-hitterview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        hitterView = b.getAttribute("data-hitterview");
+        renderHitters();
+      });
+    });
+    var q = root.querySelector("#mlbstats-hitter-q");
+    if (q) q.addEventListener("input", function () { hitterQuery = q.value; renderHittersInPlace(); });
+    var qual = root.querySelector("#mlbstats-hitter-qual");
+    if (qual) qual.addEventListener("change", function () { hitterQualifiedOnly = qual.checked; renderHittersInPlace(); });
+    root.querySelectorAll("[data-hitterseason]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        hitterSeason = b.getAttribute("data-hitterseason");
+        if (hitterSeason !== "current") loadHitterHistory();
+        renderHitters();
+      });
+    });
+    var hretry = root.querySelector("#mlbstats-hitter-history-retry");
+    if (hretry) hretry.addEventListener("click", function () {
+      HITTER_HISTORY_ERROR = false;
+      loadHitterHistory();
+      renderHitters();
+    });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      th.addEventListener("click", function () {
+        var key = th.getAttribute("data-col");
+        var cols = (hitterView === "teams") ? HITTER_TEAM_COLS : HITTER_COLS;
+        var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
+        var sort = (hitterView === "teams") ? hitterTeamSort : hitterSort;
+        if (sort.key === key) sort.asc = !sort.asc;
+        else { sort.key = key; sort.asc = !!col.asc; }
+        renderHitters();
+      });
+    });
+  }
+
+  function renderHittersInPlace() {
+    var root = document.getElementById("mlbstats-hitters-root");
+    if (!root) return;
+    var inner = (hitterView === "teams") ? renderHitterTeams()
+      : (hitterView === "charts") ? renderHitterCharts() : renderHitterBoard();
+    root.innerHTML = hitterTabBar() + hitterControls() + inner;
+    var q = root.querySelector("#mlbstats-hitter-q");
+    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    bindHitterEvents(root);
+    wireGlossary(root);
+  }
+
+  function loadHitters() {
+    hitterErr = false;
+    fetch(HITTER_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { hitterData = j; renderHitters(); })
+      .catch(function () { hitterData = null; hitterErr = true; renderHitters(); });
+  }
+
+  function initHitters() {
+    if (hitterInit) { renderHitters(); return; }
+    hitterInit = true;
+    renderHitters();
+    loadHitters();
+  }
+
   // ---- top-level section switching ------------------------------------------
   function showSection(name) {
     section = name;
@@ -923,11 +1363,14 @@
       b.classList.toggle("active", on);
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
-    var bp = document.getElementById("mlbstats-section-bullpen");
-    var st = document.getElementById("mlbstats-section-starters");
-    if (bp) { if (name === "bullpen") bp.removeAttribute("hidden"); else bp.setAttribute("hidden", "hidden"); }
-    if (st) { if (name === "starters") st.removeAttribute("hidden"); else st.setAttribute("hidden", "hidden"); }
+    var sects = { bullpen: "mlbstats-section-bullpen", starters: "mlbstats-section-starters",
+                  hitters: "mlbstats-section-hitters" };
+    Object.keys(sects).forEach(function (k) {
+      var el = document.getElementById(sects[k]);
+      if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
+    });
     if (name === "starters") initStarters();
+    else if (name === "hitters") initHitters();
   }
   function bindSectionNav() {
     document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
@@ -939,6 +1382,18 @@
     readHash();
     bindSectionNav();
     load();
+    // Honor a deep-linked non-default section (#section=starters|hitters).
+    if (section !== "bullpen") showSection(section);
+    // Preload the player-links map, then re-render the active section so the
+    // leaderboard names upgrade from plain text to merged-card links.
+    if (window.EEPHUS_HUB && EEPHUS_HUB.links) {
+      EEPHUS_HUB.links().then(function (L) {
+        LINKS = L || null;
+        if (section === "starters") { if (starterInit) renderStarters(); }
+        else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
+        else render();
+      });
+    }
   }
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);

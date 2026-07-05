@@ -47,7 +47,7 @@
     "tools_dvm_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "o_tool",
@@ -73,7 +73,7 @@
     "speed_tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "d_tool",
@@ -101,7 +101,7 @@
     "speed_tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "breakout_indicator",
@@ -127,7 +127,7 @@
    "visual": "<span class=\"fv-badge fv-50 is-breakout\" style=\"position:relative;display:inline-block;padding:3px 8px;\">50<span class=\"fv-breakout-mark\" title=\"Breakout\">★</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ aquamarine ★ + pulsing bottom edge</span>",
    "example": "A 20-year-old A+ hitter whose consensus jumped +5 FV in four months while running RPS+ 118 flags Breakout ★; a 24-year-old AAA arm with the same grade jump does not (age cap), and neither does a riser whose performance gate reads RPS+ 96 (velocity without production is a re-rank, not a breakout).",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "upside_indicator",
@@ -151,7 +151,7 @@
    "visual": "<span class=\"fv-badge fv-45 is-upside\" style=\"position:relative;display:inline-block;padding:3px 8px;\">45<span class=\"fv-upside-mark\" title=\"Upside\"><span>^</span></span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ soft-pink ^ + pink top edge</span>",
    "example": "A source publishing 45+ on a 19-year-old shortstop puts the soft-pink ^ on his FV badge: the outlet sees a grade above the number. A 55+ from the same outlet shows no marker because 55 already prices the upside (the cap keeps the mark meaningful below FV 50).",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "cs_plus",
@@ -175,7 +175,7 @@
     "rps_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "single_a_equivalent",
@@ -199,7 +199,7 @@
     "statcast_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "statcast_plus",
@@ -224,7 +224,7 @@
    ],
    "visual": "<span class=\"driver-tag is-good\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);\">SC+ 122</span><span class=\"driver-tag is-neutral\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;\">SC+ 101</span><span class=\"driver-tag is-bad\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;\">SC+ 84</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tiebreaker_score",
@@ -251,7 +251,7 @@
     "statcast_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rps_plus",
@@ -274,7 +274,7 @@
     "wrc_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "dvm_plus",
@@ -300,7 +300,7 @@
     "tools_dvm_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tool_delta",
@@ -325,7 +325,7 @@
     "tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tools_dvm_plus",
@@ -352,7 +352,7 @@
     "farm_rank"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tool_specific_dvm_plus",
@@ -388,7 +388,7 @@
     "tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "hit_plus",
@@ -415,7 +415,7 @@
     "pd_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "iso_plus",
@@ -441,7 +441,7 @@
     "tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "pwr_plus",
@@ -470,7 +470,7 @@
     "pd_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "pd_plus",
@@ -498,7 +498,7 @@
     "tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "stf_plus",
@@ -526,7 +526,7 @@
     "fip"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "stuff_plus_aaa",
@@ -551,7 +551,7 @@
     "statcast_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "stuff_grade_plus",
@@ -577,7 +577,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tvi",
@@ -609,7 +609,7 @@
     "value_framework"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "wag",
@@ -633,7 +633,7 @@
     "fv_to_war_table"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "warwag",
@@ -658,7 +658,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "value_framework",
@@ -687,7 +687,7 @@
     "fv_per_m_pool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "dpw_tier",
@@ -715,7 +715,7 @@
     "tvi"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fv_to_war_table",
@@ -743,7 +743,7 @@
     "wag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "bust_prob",
@@ -770,7 +770,7 @@
     "wag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "dollars_per_fv",
@@ -798,7 +798,7 @@
     "surplus_per_fv_pt"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fv_per_m_pool",
@@ -826,7 +826,7 @@
     "value_framework"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "surplus_per_fv_pt",
@@ -852,7 +852,7 @@
     "fin_draft_pool_efficiency"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "sp",
@@ -1536,7 +1536,7 @@
    "formula": "consensus FV = accuracy-weighted mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
    "example": "A prospect carrying 60/62/65 grades across five sources lands at an accuracy-weighted consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "stock",
@@ -1559,7 +1559,7 @@
    "formula": "stock = consensus_fv_raw(latest) − consensus_fv_raw(prior snapshot)\n▲ if ≥ +1.5 · ▼ if ≤ −1.5 · \"-\" otherwise",
    "example": "A prospect whose consensus moves 48 to 50 between snapshots shows ▲ +2 on his row; a 48 to 47.5 move stays flat (\"-\") (under the 1.5-point gate, so source noise does not read as news).",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_rank",
@@ -1579,7 +1579,7 @@
    ],
    "example": "The 2026-06 board has the Dodgers at #1 with a farm score of 117: an elite top five (Josue De Paula FV 57 leads), top-25 depth, positive 1y DvM+ trajectory, and a productive graduate pipeline. Farm scores read like wRC+: 100 is the league-mean system, 117 is about 1.7 standard deviations above it.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "eta",
@@ -1599,7 +1599,7 @@
    "formula": "years_to_MLB = level_base + perf_adj + age_adj + fv_adj + health_adj\nETA year = current season + ceil(years_to_MLB, by season phase)",
    "example": "Ryan Sloan (SEA, AA): base 1.35y for AA, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV-grade leaves about 0.45y, so the board shows ETA 2027 at high confidence. Every term is visible in the ETA tooltip on his card.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "shrinkage",
@@ -1621,7 +1621,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "wide_spread",
@@ -1641,7 +1641,7 @@
     "consensus_fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "surplus_value",
@@ -2519,7 +2519,7 @@
    ],
    "visual": "<span style=\"color:var(--up);font-weight:600;\">▲ +5.0</span><span style=\"color:var(--text-tertiary);\">vs</span><span style=\"color:var(--down);font-weight:600;\">▼ −3.5</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fv_badge",
@@ -2541,7 +2541,7 @@
    ],
    "visual": "<span class=\"fv-badge fv-70\">70</span><span class=\"fv-badge fv-60\">60</span><span class=\"fv-badge fv-50\">50</span><span class=\"fv-badge fv-45\">45</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fv_rarity",
@@ -2563,7 +2563,7 @@
    ],
    "visual": "<div style=\"display:flex;gap:12px;align-items:flex-end;font-size:10px;color:var(--text-tertiary);\">",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "tool_pill",
@@ -2585,7 +2585,7 @@
    ],
    "visual": "<span class=\"tool-pill is-pos\">Tool 65</span><span class=\"tool-pill is-neutral\">Tool 52</span><span class=\"tool-pill is-amber\">Tool 45</span><span class=\"tool-pill is-neg\">Tool 38</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rps_plus_pill",
@@ -2604,7 +2604,7 @@
    ],
    "visual": "<span class=\"rps-plus-pill is-pos\">RPS+ 125</span><span class=\"rps-plus-pill is-neutral\">RPS+ 100</span><span class=\"rps-plus-pill is-neg\">RPS+ 78</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "wide_spread_mark",
@@ -2626,7 +2626,7 @@
    ],
    "visual": "<span class=\"fv-badge fv-60 is-wide\" style=\"position:relative;display:inline-block;padding:3px 8px;\">60<span class=\"fv-wide-mark\" title=\"Wide spread\">W</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ violet W + violet right edge</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "single_source_mark",
@@ -2648,7 +2648,7 @@
    ],
    "visual": "<span class=\"fv-badge fv-55 is-single-source\" style=\"position:relative;display:inline-block;padding:3px 8px;\">55<span class=\"fv-single-mark\" title=\"Single source\">1</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ amber 1 + amber left edge</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "il_chip",
@@ -2668,7 +2668,7 @@
    ],
    "visual": "<span class=\"il-tag\" style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--neon-amber);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);\">10-day IL · 14d</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "post_tj_chip",
@@ -2687,7 +2687,7 @@
    ],
    "visual": "<span style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--neon-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;\">Post-TJ · 2024-09-03</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "latest_pill",
@@ -2707,7 +2707,7 @@
    ],
    "visual": "<span style=\"font-size:11px;color:var(--text-primary);font-family:var(--font-mono);\">2025-07-31</span><span style=\"display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;\">LATEST</span><span style=\"font-size:11px;color:var(--text-tertiary);\">FanGraphs 2025 Updated</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "stale_pill",
@@ -2724,7 +2724,7 @@
    "methodology": "Stale sources still appear in the consensus (their most recent grade is still valid until refreshed) but the pill signals that the projection is aging. Sources go stale when an outlet stops covering a prospect.",
    "visual": "<span style=\"font-size:12px;color:var(--text-secondary);font-weight:600;\">MLB Pipeline</span><span style=\"font-size:9px;color:var(--neon-amber);font-family:var(--font-mono);\">STALE</span><span style=\"font-size:11px;color:var(--text-tertiary);\">(last published 484 days ago)</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "green_flag",
@@ -2744,7 +2744,7 @@
     "red_flag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "red_flag",
@@ -2763,7 +2763,7 @@
     "green_flag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fg_only_badge",
@@ -2779,7 +2779,7 @@
    "priority": 42,
    "definition": "Small violet 'FG' superscript next to a tool name - that grade is published by FanGraphs only (no cross-source consensus).",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "heat_badge",
@@ -2795,7 +2795,7 @@
    "priority": 50,
    "definition": "Spotlight badge for prospects with top-decile recent stock movement - rising fast across multiple sources.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "surprise_badge",
@@ -2810,7 +2810,7 @@
    "priority": 52,
    "definition": "Spotlight badge for out-of-nowhere rises - sources just started covering a prospect not previously ranked.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "arc_badge",
@@ -2825,7 +2825,7 @@
    "priority": 54,
    "definition": "Spotlight badge for sustained multi-update FV movement in one direction - the steady riser/decliner pattern.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_report_card",
@@ -2855,7 +2855,7 @@
    ],
    "example": "A system graded A- with branches Value A, MLB Production B+, Development B, Acquisition B- is winning on aggregate risk-adjusted surplus (the 65% branch) while its trade ledger lags; the Tendencies tab shows which acquisition channels drive the B-.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_tiebreaker",
@@ -2879,7 +2879,7 @@
     "mlb_production_top_grads"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_acquisition_strategy",
@@ -2904,7 +2904,7 @@
     "waiver_hit_rate"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_development",
@@ -2927,7 +2927,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_financial",
@@ -2957,7 +2957,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_mlb_production",
@@ -2984,7 +2984,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mlb_production_boom_pct",
@@ -3009,7 +3009,7 @@
     "wag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mlb_production_bust_pct",
@@ -3031,7 +3031,7 @@
     "mlb_production_boom_pct"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mlb_production_top_grads",
@@ -3054,7 +3054,7 @@
     "wag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mlb_production_conviction",
@@ -3076,7 +3076,7 @@
     "mlb_production_boom_pct"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fin_draft_pool_efficiency",
@@ -3102,7 +3102,7 @@
     "value_framework"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fin_ifa_roi",
@@ -3126,7 +3126,7 @@
     "ifa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "sur_plus",
@@ -3154,7 +3154,7 @@
    "formula": "OrgSur+ = 100 + 10 · avg(z(WAR/$M), z(grad contract surplus))",
    "example": "An org producing 0.8 graduate WAR per $M of bonus spend (one stddev above the mean) and league-average graduate contract surplus posts OrgSur+ around 105: capital-efficient on the draft side, ordinary on the development-to-contract side.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "draft_ceiling_hits",
@@ -3176,7 +3176,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "trade_war_delta",
@@ -3198,7 +3198,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "waiver_hit_rate",
@@ -3219,7 +3219,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "trade",
@@ -3287,7 +3287,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_financial_roi",
@@ -3311,7 +3311,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_tools_quality",
@@ -3334,7 +3334,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_intl_depth",
@@ -3356,7 +3356,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_readiness",
@@ -3376,7 +3376,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_grade_health_burden",
@@ -3400,7 +3400,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "farm_il_pct_current",
@@ -3423,7 +3423,7 @@
     "il_10_15_60"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "overseas_posting_class",
@@ -3444,7 +3444,7 @@
     "ifa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "draft_comp_pick",
@@ -3485,7 +3485,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "spotlight_age_cap",
@@ -3505,7 +3505,7 @@
     "spotlights"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "exit_velocity",
@@ -3832,7 +3832,7 @@
     "war"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fin_contract_surplus",
@@ -3857,7 +3857,7 @@
     "service_time"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fin_dollar_dvm",
@@ -3881,7 +3881,7 @@
     "tvi"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "time_machine",
@@ -3904,7 +3904,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "generate_gfx",
@@ -3928,7 +3928,7 @@
     "surplus_value"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "scatterplots",
@@ -3952,7 +3952,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "watchlist",
@@ -3973,7 +3973,7 @@
     "generate_gfx"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "spotlights",
@@ -4000,7 +4000,7 @@
     "statcast_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rarity_tiers",
@@ -4027,7 +4027,7 @@
    ],
    "visual": "<span class=\"fv-badge fv-70 card-rarity-legendary\" style=\"padding:3px 9px;\">70</span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:8px;\">legendary → holo → chrome → foil → shine</span>",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "quick_search",
@@ -4050,7 +4050,7 @@
     "consensus_fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "m_guarantee",
@@ -4073,7 +4073,7 @@
     "contract_surplus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "m_aav",
@@ -4094,7 +4094,7 @@
     "m_years"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "m_years",
@@ -4116,7 +4116,7 @@
     "m_aav"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "deal_plus",
@@ -4141,7 +4141,7 @@
     "rational_value"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "contract_surplus",
@@ -4163,7 +4163,7 @@
     "rational_value"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "qo_tax",
@@ -4184,7 +4184,7 @@
     "fv"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rational_value",
@@ -4206,7 +4206,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "p10_p90_bands",
@@ -4226,7 +4226,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "enter_prob",
@@ -4246,7 +4246,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "cba_carry_forward",
@@ -4284,7 +4284,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "thin_platform",
@@ -4303,7 +4303,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fit_components",
@@ -4327,7 +4327,7 @@
    ],
    "methodology": "v2 reweight: need 0.31 / window 0.19 / afford 0.22 / park 0.04 / behavior 0.24. Park was cut from 0.12 after the measured failure mode - the most suppressive park topped EVERY pitcher's fit list because park alone separated otherwise-similar clubs. Afford reads Spotrac's CBT-basis tax space (the number front offices budget against) and floors at 0.4 for clubs over the line that keep signing nine-figure deals; behavior blends deal-scale history (0.5), recency-weighted three-winter FA outlay (0.3), and $100M-deal count (0.2). Blocked-by names both kinds of blocker: PX = a near-ETA PROSPX prospect (FV >= 50), MLB = a contracted incumbent projecting >= 2.5 WAR at the slot the signing would displace.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "first_seen_dates",
@@ -4345,7 +4345,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fa_gates",
@@ -4365,7 +4365,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "nearest_comps",
@@ -4385,7 +4385,7 @@
     "fa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "fa_projection_engine",
@@ -4407,7 +4407,7 @@
    ],
    "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved. Phase 1 (2026-06): horizons 1-5 are served by proj_lgbm_v1 - LightGBM quantile models (P10/P25/P50/P75/P90 per horizon) stacked ON the Marcel champion (its prediction rides as a feature, so the trees learn its residuals), with no zero floor on the bands (the measured cause of the old coverage collapse). Shipped under best-model-wins after beating the champion on dev bases, the Gate-1 target seasons (h1 MAE 0.557 vs 0.627) and a touched-once 2022-2024 holdout; the Marcel+aging champion remains the fallback, the stacking feature, and the shape for horizons 6+. Disclosed: long-horizon star medians run ~0.2 WAR below the champion (zero-inflated labels), with equal star MAE.",
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "era_minus",
@@ -4463,7 +4463,7 @@
     "platform"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "wire_ticker",
@@ -4483,7 +4483,7 @@
     "platform"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "active_pool",
@@ -4502,7 +4502,7 @@
     "platform"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "proj_buckets",
@@ -4527,7 +4527,7 @@
     "rational_value"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mlb_projections",
@@ -4550,7 +4550,7 @@
     "surplus_value"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "model_accountability",
@@ -4574,7 +4574,7 @@
     "mlb_projections"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "model_verdict",
@@ -4599,7 +4599,7 @@
     "mlb_projections"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "backtest",
@@ -4624,7 +4624,7 @@
     "forward_gate"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "holdout",
@@ -4647,7 +4647,7 @@
     "model_verdict"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "forward_gate",
@@ -4670,7 +4670,7 @@
     "mlb_projections"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "mae",
@@ -4716,7 +4716,7 @@
     "statcast_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "draft_overperformance",
@@ -4739,7 +4739,7 @@
     "draft_ceiling_hits"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "deferral_npv",
@@ -4762,7 +4762,7 @@
     "winter_dpw"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "swing_plus",
@@ -4784,7 +4784,7 @@
    "seeAlso": [],
    "formula": null,
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "collegesavant",
@@ -4804,7 +4804,7 @@
    "seeAlso": [],
    "formula": null,
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "xfv",
@@ -4830,7 +4830,7 @@
     "wag"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "xfv_tools",
@@ -4853,7 +4853,7 @@
     "tool"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "xfv_ungraded",
@@ -4878,7 +4878,7 @@
     "farm_report_card"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "krp_plus",
@@ -4905,7 +4905,7 @@
     "k_pct_pitcher"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "trade_machine",
@@ -4929,7 +4929,7 @@
     "dpw_tier"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "milb_translation",
@@ -4954,7 +4954,7 @@
     "bb_pct"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rem_plus",
@@ -4978,7 +4978,7 @@
     "wpa"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "bullpen_plus",
@@ -4999,7 +4999,7 @@
     "gmli"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "gmli",
@@ -5021,7 +5021,7 @@
     "rem_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "gmli_3yr",
@@ -5044,7 +5044,7 @@
     "rem_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "riv_plus",
@@ -5068,7 +5068,7 @@
     "shutdowns_meltdowns"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "rem_plus_3yr",
@@ -5091,7 +5091,7 @@
     "gmli_3yr"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "sem_plus",
@@ -5114,7 +5114,31 @@
     "fip"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "hem_plus",
+   "term": "HEM+ (Hitter Evaluation Metric)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "HEM+",
+    "hitter evaluation metric",
+    "hitter plus",
+    "offense plus"
+   ],
+   "priority": 21,
+   "definition": "A hitter's offensive-rate skill on a 100-anchored scale (100 = the average qualified hitter, 110 = 10 percent more offense per plate appearance). The hitter cousin of REM+/SEM+: a sample-shrunk, hitter-pool-anchored wOBA built from unintentional walks, hit-by-pitches, singles, doubles, triples, and home runs. Volume (plate appearances), baserunning (steals), and the slash line are shown alongside as context, never mixed into the skill number.",
+   "methodology": "Each wOBA component rate is regressed toward the hitter-pool average by sample size (the same empirical-Bayes recipe REM+ uses, with a slower pull for the extra-base hits that stabilize late), recombined with the FanGraphs wOBA linear weights, and re-anchored over hitters so the pool average scores 100; HEM+ = 100 times the shrunk player wOBA over the pool wOBA, a ratio-to-league index in the wRC+/OPS+ family, not a z-score.\n\nValidated out of sample: forward-chained over 2012-2024 (excluding 2020), HEM+ predicts a hitter's next-year wOBA at a Spearman correlation of 0.41, decisively beating batting average (0.23; gap confidence floor well above zero) and holding even-or-ahead of its raw-wOBA parent (0.41), so the component shrinkage and hitter anchoring earn their place. Volume, baserunning, and defense are separate value and stay out of the rate number. Accountability artifact: data/hem_plus_eval.json.",
+   "seeAlso": [
+    "rem_plus",
+    "sem_plus",
+    "rps_plus"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "sem_plus_3yr",
@@ -5137,7 +5161,7 @@
     "fip"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "wpa",
@@ -5265,7 +5289,7 @@
     "pal_conversion"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "sp_rp_fit",
@@ -5287,7 +5311,7 @@
     "rem_plus"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "pal_conversion",
@@ -5310,7 +5334,7 @@
     "tto_penalty"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "arsenal_depth",
@@ -5372,7 +5396,7 @@
     "rp_sp_fit"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "putaway_pitch",
@@ -5430,7 +5454,7 @@
    "example": "A shortstop with 40 G at SS, 12 G at 2B, and 6 GS at 3B shows Versa: SS / 2B / 3B.",
    "seeAlso": [],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "draft_stock_plus",
@@ -5450,7 +5474,7 @@
    "example": "A prospect ranked 8th in a class of 250 with a strong statistical spring might carry a DS+ near 126.",
    "seeAlso": [],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "reverse_platoon",
@@ -5475,7 +5499,7 @@
     "pal_conversion"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "starter_shape",
@@ -5498,7 +5522,7 @@
     "pal_conversion"
    ],
    "shelf": "ark",
-   "origin": "Arkmetric, original to eephus.io."
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
    "id": "xwoba",
@@ -5583,7 +5607,7 @@
    "priority": 40,
    "definition": "Bond-math for a farm system: whether its prospects arrive while the big-league core is still under team control. Negative means the farm lands inside the window (aligned); positive means help comes after the core has leaked to free agency.",
    "methodology": "Two pieces. System Duration (etaMean) is the surplus-weighted average arrival season of a farm: each prospect's projected ETA weighted by his expected surplus dollars, so the number leans toward the prospects who matter most. The core center (coreCenter) is the WAR-weighted midpoint of the org's controlled-core production over 2027-2031. Window Alignment = etaMean minus coreCenter. At or below zero, the farm reinforces the core while it is still cheap and productive; well above zero, the core has aged out or left before the farm shows up. The arrival curve (etaByYear) shows the share of farm surplus landing each season.",
-   "origin": "Arkmetric, original to eephus.io.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
    "shelf": "ark",
    "seeAlso": [
     "eta",
@@ -5607,7 +5631,7 @@
    "priority": 40,
    "definition": "Surplus value weighed against its downside. A prospect is an option on future WAR, so upside swings are not risk; only the chance of falling short is. Higher Sortino means more expected surplus per unit of downside.",
    "methodology": "Built from the same eFV surplus distribution the trade board already carries (a five-point fan from p10 to p90 plus the mean). Downside deviation is the semi-deviation below the mean (only shortfalls count). Sortino = (mean surplus minus the p10 floor) divided by that downside deviation, so a bunched, high-floor profile scores higher than a boom-or-bust one at the same mean. The tooltip also carries a risk-adjusted surplus (mean minus half the downside deviation, a local display haircut that does not re-rank the board) and the bust probability. Descriptive: it re-expresses the validated surplus model, it does not change any shown surplus.",
-   "origin": "Arkmetric, original to eephus.io.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
    "shelf": "ark",
    "seeAlso": [
     "sur_plus",
@@ -5632,7 +5656,7 @@
    "priority": 42,
    "definition": "A market-structure overlay on a prospect's consensus FV history: candlesticks plus trader-style indicators (momentum, an RSI gauge on grade changes, realized volatility). Descriptive signals on scouting consensus, not predictions.",
    "methodology": "Each candle covers one consensus snapshot: the open is the prior grade, the close is the current consensus FV, and the wick spans the range of source grades that period. Momentum is the net grade change over the last three intervals. The RSI gauge measures the balance of upgrades to downgrades over recent GRADE CHANGES only (flat re-confirmations are dropped, so a static grade never pins the gauge); above 70 reads overbought, below 30 oversold. Volatility is the standard deviation across sources on the latest grade. These are read as market context, not a forecast; the candles need at least four snapshots and the RSI at least six grade changes, otherwise the relevant piece is hidden.",
-   "origin": "Arkmetric, original to eephus.io. Candlestick and RSI conventions are borrowed from financial technical analysis.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Candlestick and RSI conventions are borrowed from financial technical analysis.",
    "shelf": "ark",
    "seeAlso": [
     "consensus_fv",
@@ -5656,7 +5680,7 @@
    "priority": 40,
    "definition": "A live draft-night board: each pick as it happens, priced against our board and the historical value of that pick slot, so you see the reach or the steal in surplus dollars.",
    "methodology": "During the draft a poller reads the MLB Stats API every minute and writes a read-only feed the page renders. Each pick joins to our board by name and carries the consensus FV, the reach-or-steal gap (how many spots earlier or later than our board rank the player went; a faller past his rank is a steal for the drafting team), the expected first-six-year WAR for that slot from the realized pick-value curve, and the slot surplus in dollars, plus the signing bonus against the slot value. It is a live view over already-published models, not a new projection; before the draft the board is empty.",
-   "origin": "Arkmetric, original to eephus.io. Pick data from the MLB Stats API.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Pick data from the MLB Stats API.",
    "shelf": "ark",
    "seeAlso": [
     "draft_stock_plus",
@@ -5682,7 +5706,7 @@
    "priority": 41,
    "definition": "An options-desk view of a prospect's value. Delta is the dollars gained from a one-grade upgrade, Vega is the dollar swing implied by scouting disagreement, and Theta is the surplus lost per year of arrival delay.",
    "methodology": "All three read off the same value framework the surplus board uses. Delta is the change in expected surplus dollars when the grade moves up one full grade (5 FV points), measured on the FV-to-surplus curve at the prospect's grade, so a jump near the steep part of the curve is worth more. Vega multiplies the local slope of that curve by the spread of source grades, giving the dollar value at stake in the scouting disagreement. Theta applies the framework's annual discount to the expected surplus, the value that erodes for each extra year before the prospect arrives. Implied volatility is just that grade spread. Descriptive: it re-expresses the validated surplus model as option sensitivities, it does not change any dollar figure.",
-   "origin": "Arkmetric, original to eephus.io. The Greeks framing is borrowed from options pricing.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. The Greeks framing is borrowed from options pricing.",
    "shelf": "ark",
    "seeAlso": [
     "sur_plus",
@@ -5706,7 +5730,7 @@
    "priority": 41,
    "definition": "The probability a prospect becomes a star, defined as posting two or more seasons of four or more WAR during his team-control years. Hitters run higher than pitchers, since a bullpen outcome rarely clears four WAR.",
    "methodology": "The displayed figure is the FanGraphs 2026 published tier value for the player's FV and role, read straight from the published valuation set, so what you see on the board matches the published table exactly. Star is defined as two or more seasons of four or more WAR across the player's team-control years. Our own mixture model also computes a per-player version from the outcome-bucket distribution: for each bucket it draws a per-season WAR profile, sums the chance of clearing four WAR in two or more control seasons, and weights the buckets by the odds of each outcome given the grade, blending starter and reliever paths for pitchers. That model version runs below the published tiers under the current bust-heavy WAR anchors, so it is shown as a diagnostic and is being calibrated toward the published tiers rather than replacing them.",
-   "origin": "Published star-odds tiers from FanGraphs 2026; the per-player mixture model is Arkmetric, original to eephus.io.",
+   "origin": "Published star-odds tiers from FanGraphs 2026; the per-player mixture model is Arkmetric, created by Noah J. Dengler, original to eephus.io.",
    "shelf": "ark",
    "seeAlso": [
     "sur_plus",

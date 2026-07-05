@@ -126,6 +126,7 @@ MODEL_GLOSSARY = {
     # with its own glossary entry.
     "sem_plus": ["sem_plus"],
     "sem_plus_3yr": ["sem_plus_3yr"],
+    "hem_plus": ["hem_plus"],
 }
 
 

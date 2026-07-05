@@ -200,3 +200,163 @@ def test_season_history_pills_render():
     # DATA.season is 2026, so the five prior seasons seed the pills before load
     assert ">2025<" in html and ">2021<" in html
     assert 'aria-selected="true"' in html       # Current is selected by default
+
+
+# ---------------------------------------------------------------------------
+# Wave 2: Starter section Rotation Charts (SEM+ viz + rotation ladders) and
+# clickable leaderboard names (mlbam -> merged /projections/ card via links()).
+# ---------------------------------------------------------------------------
+
+STARTER_SAMPLE = """{
+ "generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29","verdict":"provisional",
+ "backtest":{"rho_sem_plus":0.39,"rho_fip":0.26,"rho_era":0.09,"n_pairs":120,"seasons":"2021-2025","disclaimer":"forward-chained OOS"},
+ "starters":[
+  {"key":"111","name":"Ace One","team":"NYY","mlbam":111,"sem_plus":135,"sem_plus_3yr":130,"qualified":true,"ip":110.0,"gs":18,"ip_per_gs":6.1,"k_pct":0.31,"bb_pct":0.05,"k_bb_pct":0.26,"gb_pct":0.45,"fip":2.90,"era":2.70,"hr9":0.8},
+  {"key":"222","name":"Mid Two","team":"NYY","mlbam":222,"sem_plus":98,"sem_plus_3yr":101,"qualified":true,"ip":95.0,"gs":17,"ip_per_gs":5.6,"k_pct":0.22,"bb_pct":0.08,"k_bb_pct":0.14,"gb_pct":0.42,"fip":4.10,"era":4.20,"hr9":1.2},
+  {"key":"333","name":"Back Three","team":"BOS","mlbam":333,"sem_plus":88,"sem_plus_3yr":90,"qualified":true,"ip":90.0,"gs":16,"ip_per_gs":5.5,"k_pct":0.19,"bb_pct":0.09,"k_bb_pct":0.10,"gb_pct":0.40,"fip":4.80,"era":4.90,"hr9":1.4},
+  {"key":"401","name":"Arm 4","team":"NYY","mlbam":401,"sem_plus":122,"qualified":true,"ip":100.0,"gs":17,"ip_per_gs":5.9,"k_pct":0.27,"bb_pct":0.06,"k_bb_pct":0.21,"gb_pct":0.44,"fip":3.30,"era":3.20,"hr9":0.9},
+  {"key":"402","name":"Arm 5","team":"BOS","mlbam":402,"sem_plus":115,"qualified":true,"ip":98.0,"gs":16,"ip_per_gs":6.0,"k_pct":0.25,"bb_pct":0.06,"k_bb_pct":0.19,"gb_pct":0.43,"fip":3.60,"era":3.40,"hr9":1.0},
+  {"key":"403","name":"Arm 6","team":"NYY","mlbam":403,"sem_plus":108,"qualified":true,"ip":92.0,"gs":16,"ip_per_gs":5.7,"k_pct":0.24,"bb_pct":0.07,"k_bb_pct":0.17,"gb_pct":0.41,"fip":3.90,"era":3.80,"hr9":1.1},
+  {"key":"404","name":"Arm 7","team":"BOS","mlbam":404,"sem_plus":103,"qualified":true,"ip":90.0,"gs":15,"ip_per_gs":6.0,"k_pct":0.23,"bb_pct":0.07,"k_bb_pct":0.16,"gb_pct":0.42,"fip":4.00,"era":3.90,"hr9":1.1},
+  {"key":"405","name":"Arm 8","team":"NYY","mlbam":405,"sem_plus":99,"qualified":true,"ip":88.0,"gs":15,"ip_per_gs":5.9,"k_pct":0.22,"bb_pct":0.08,"k_bb_pct":0.14,"gb_pct":0.40,"fip":4.20,"era":4.10,"hr9":1.2},
+  {"key":"406","name":"Arm 9","team":"BOS","mlbam":406,"sem_plus":94,"qualified":true,"ip":85.0,"gs":15,"ip_per_gs":5.7,"k_pct":0.21,"bb_pct":0.08,"k_bb_pct":0.13,"gb_pct":0.39,"fip":4.40,"era":4.30,"hr9":1.3},
+  {"key":"407","name":"Arm 10","team":"NYY","mlbam":407,"sem_plus":90,"qualified":true,"ip":82.0,"gs":14,"ip_per_gs":5.9,"k_pct":0.20,"bb_pct":0.09,"k_bb_pct":0.11,"gb_pct":0.41,"fip":4.60,"era":4.50,"hr9":1.3},
+  {"key":"408","name":"Arm 11","team":"BOS","mlbam":408,"sem_plus":86,"qualified":true,"ip":80.0,"gs":14,"ip_per_gs":5.7,"k_pct":0.19,"bb_pct":0.09,"k_bb_pct":0.10,"gb_pct":0.38,"fip":4.80,"era":4.70,"hr9":1.4},
+  {"key":"409","name":"Arm 12","team":"NYY","mlbam":409,"sem_plus":112,"qualified":true,"ip":96.0,"gs":16,"ip_per_gs":6.0,"k_pct":0.26,"bb_pct":0.06,"k_bb_pct":0.20,"gb_pct":0.44,"fip":3.70,"era":3.50,"hr9":1.0}
+ ],
+ "teams":[
+  {"team":"NYY","rotation_plus":118,"front_sem":130,"n_above_avg":3,"n_starters":5,"starter_ip":520.0,"total_gs":86},
+  {"team":"BOS","rotation_plus":94,"front_sem":100,"n_above_avg":2,"n_starters":5,"starter_ip":505.0,"total_gs":85}
+ ]
+}"""
+
+
+def _starter_prelude(hash_: str) -> str:
+    # Override the base prelude's fetch (route by URL to the starter sample) and
+    # EEPHUS_HUB (chart proxies + a links() map for clickable names).
+    override = f"""
+    var STARTER_SAMPLE={STARTER_SAMPLE};
+    fetch=function(url){{
+      var body = (String(url).indexOf('starter')>=0) ? STARTER_SAMPLE : SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{
+      teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{"111":{{"key":"ace_one","mlbam":111,"name":"Ace One"}}}}}});}}
+    }};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    return _prelude(hash_) + override
+
+
+def _render_starters(hash_: str) -> str:
+    ctx = MiniRacer()
+    ctx.eval(_starter_prelude(hash_) + JS)
+    return ctx.eval("__html['mlbstats-starters-root'] || ''")
+
+
+def test_starter_board_renders_via_section_hash():
+    html = _render_starters("#section=starters")
+    assert "mlbstats-table" in html
+    assert "SEM+" in html and "Ace One" in html
+    # clickable name: mlbam 111 resolves through the links() map
+    assert 'class="mlbstats-name-link"' in html
+    assert "/projections/#player=ace_one" in html
+    # a starter with no links match still renders (plain text, no crash)
+    assert "Mid Two" in html and "undefined" not in html
+
+
+def test_rotation_charts_view_renders():
+    html = _render_starters("#section=starters&sview=charts")
+    # SVG viz (histogram + scatter) from the stubbed EEPHUS_HUB
+    assert "hub-hist" in html
+    assert "hub-scatter" in html
+    # per-team rotation depth ladders (clone of the bullpen depth cards)
+    assert "bp-depth-card" in html
+    assert "Rotation+" in html
+    assert "SP1" in html and "Ace One" in html
+    assert "undefined" not in html
+
+
+# ---------------------------------------------------------------------------
+# Wave 2: Hitter Leaderboards section (HEM+), Team Lineups, Lineup Charts, and
+# clickable names -- driven via the #section=hitters deep-link.
+# ---------------------------------------------------------------------------
+
+def _hrow(mlbam, name, team, hem, pa, hr=20, sb=5, qualified=True):
+    return ('{"key":"%d","name":"%s","team":"%s","mlbam":%d,"hem_plus":%d,"qualified":%s,'
+            '"tier":"Above-avg","pa":%d,"ab":%d,"hr":%d,"bb":50,"sb":%d,"woba":0.360,'
+            '"woba_raw":0.365,"avg":0.280,"obp":0.360,"slg":0.480,"ops":0.840,"iso":0.200,'
+            '"bb_pct":0.09,"k_pct":0.20,"babip":0.300}'
+            % (mlbam, name, team, mlbam, hem, "true" if qualified else "false",
+               pa, pa - 70, hr, sb))
+
+_HIT_ROWS = ",".join(
+    [_hrow(111, "Star Bat", "NYY", 145, 640)]
+    + [_hrow(500 + i, "Bat %d" % i, "NYY" if i % 2 else "BOS", 130 - i * 3, 600 - i * 20)
+       for i in range(13)]
+)
+
+HITTER_SAMPLE = ('{"generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29","verdict":"validated",'
+                 '"backtest":{"rho_hem_plus":0.4123,"rho_woba":0.4089,"rho_ops":0.411,"rho_avg":0.2348,'
+                 '"n_pairs":3372,"seasons":"2012-2024","disclaimer":"forward-chained OOS"},'
+                 '"hitters":[' + _HIT_ROWS + '],'
+                 '"teams":[{"team":"NYY","offense_plus":112,"heart_hem":135,"n_above_avg":5,"n_hitters":9,'
+                 '"team_pa":6000,"lineup":[{"name":"Star Bat","hem_plus":145,"pa":640},'
+                 '{"name":"Bat 1","hem_plus":127,"pa":580}]},'
+                 '{"team":"BOS","offense_plus":98,"heart_hem":110,"n_above_avg":3,"n_hitters":9,'
+                 '"team_pa":5900,"lineup":[{"name":"Bat 2","hem_plus":124,"pa":560}]}]}')
+
+
+def _hitter_prelude(hash_: str) -> str:
+    override = f"""
+    var HITTER_SAMPLE={HITTER_SAMPLE};
+    fetch=function(url){{
+      var body = (String(url).indexOf('hitter')>=0) ? HITTER_SAMPLE : SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{
+      teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{"111":{{"key":"star_bat","mlbam":111,"name":"Star Bat"}}}}}});}}
+    }};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    return _prelude(hash_) + override
+
+
+def _render_hitters(hash_: str) -> str:
+    ctx = MiniRacer()
+    ctx.eval(_hitter_prelude(hash_) + JS)
+    return ctx.eval("__html['mlbstats-hitters-root'] || ''")
+
+
+def test_hitter_board_renders_via_section_hash():
+    html = _render_hitters("#section=hitters")
+    assert "mlbstats-table" in html
+    assert "HEM+" in html and "Star Bat" in html
+    assert 'data-gl="hem_plus"' in html          # the HEM+ explainer is wired
+    # clickable name: mlbam 111 resolves to the merged card
+    assert 'class="mlbstats-name-link"' in html
+    assert "/projections/#player=star_bat" in html
+    assert "undefined" not in html
+
+
+def test_hitter_team_lineups_render():
+    html = _render_hitters("#section=hitters")
+    # switch to the teams tab is event-driven; assert the Team Lineups tab exists
+    assert "Team Lineups" in html
+    assert "Lineup Charts" in html
+
+
+def test_lineup_charts_render():
+    html = _render_hitters("#section=hitters&hview=charts")
+    assert "hub-hist" in html and "hub-scatter" in html     # HEM+ distribution + scatter
+    assert "bp-depth-card" in html                          # per-team lineup ladders
+    assert "Offense+" in html
+    assert "Star Bat" in html and "undefined" not in html

@@ -1535,6 +1535,9 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
 .mlbstats-table td { text-align: right; font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
 .mlbstats-table td.mlbstats-name { text-align: left; font-family: var(--font-retro); max-width: 260px;
   overflow: hidden; text-overflow: ellipsis; }
+/* Clickable leaderboard names -> the merged /projections/ MLB player card. */
+.mlbstats-name-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
+.mlbstats-name-link:hover { border-bottom-color: var(--text-tertiary); color: var(--neon-cyan); }
 .mlbstats-table tbody tr:hover { background: var(--bg-tertiary); }
 .mlbstats-table tr.is-provisional td { opacity: .82; }
 /* REM+ / Bullpen+ index coloring (100 = average; thresholds mirror the +stat read). */

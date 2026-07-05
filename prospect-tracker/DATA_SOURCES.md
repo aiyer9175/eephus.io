@@ -26,6 +26,7 @@ happen inside the called module, so this file alone cannot split them).
 | d8. Trade detection | timeseries.json |
 | d9. Rebuild timeseries (no scrape) | - |
 | d10. FA signing-window refresh | timeseries.json |
+| d11. Rebuild site (build_site) | - |
 
 ## Monthly pipeline (`run_monthly.main`)
 
@@ -70,7 +71,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json |
 | 6b4d. bullpen history (bullpen_history.json) | bullpen_history.json |
 | 6b4e. starter lab (sem_plus + sem_plus_multiyear evals) | - |
-| 6b4f. Starter Leaderboards (starter_leaderboards.json) | starter_leaderboards.json |
+| 6b4f. Starter Leaderboards (starter_leaderboards.json) | hem_plus_eval.json, starter_leaderboards.json |
+| 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_leaderboards.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
 | 6c. Org tendencies export (org_tendencies.json) | org_tendencies.json, trade_values.json |
 | 6d. Bayesian trade value export (trade_values.json) | debuts.json, graduates.json, trade_values.json |
