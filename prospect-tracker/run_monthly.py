@@ -2582,10 +2582,26 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("starter leaderboards export failed - continuing")
 
+        # --- 6b4g-lab. Hitter lab (hem_plus_eval + hem_plus_multiyear_eval) ----
+        # Forward-chained HEM+ validation + the 3yr proposed_values. Runs off the
+        # CACHED StatsAPI hitting seasons, so it is offline + cheap. Additive.
+        with _step("6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals)", log):
+            try:
+                from tools import hem_plus_lab
+                hem_plus_lab.run(write=True)
+            except Exception:
+                log.exception("hitter lab failed - continuing (export uses the last eval)")
+            try:
+                from tools import xhem_plus_lab
+                xhem_plus_lab.run(write=True)   # Savant xwOBA forward-validation (network)
+            except Exception:
+                log.exception("xhem lab failed - continuing")
+
         # --- 6b4g. Hitter Leaderboards + history (hitter_*.json) --------------
         # HEM+ hitter board + team Offense+ from the StatsAPI season hitting
         # leaderboard. Validated (forward-chained vs next-year wOBA; tools/
-        # hem_plus_lab.py -> data/hem_plus_eval.json). Additive; never aborts.
+        # hem_plus_lab.py -> data/hem_plus_eval.json). 3yr HEM+ joined by MLBAM
+        # from the multiyear eval (validated companion). Additive; never aborts.
         with _step("6b4g. Hitter Leaderboards (hitter_leaderboards.json)", log):
             try:
                 from hitter_export import export as _export_hitters, export_history as _export_hit_history

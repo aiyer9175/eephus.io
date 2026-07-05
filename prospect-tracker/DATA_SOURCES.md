@@ -71,7 +71,8 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json |
 | 6b4d. bullpen history (bullpen_history.json) | bullpen_history.json |
 | 6b4e. starter lab (sem_plus + sem_plus_multiyear evals) | - |
-| 6b4f. Starter Leaderboards (starter_leaderboards.json) | hem_plus_eval.json, starter_leaderboards.json |
+| 6b4f. Starter Leaderboards (starter_leaderboards.json) | starter_leaderboards.json |
+| 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json |
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_leaderboards.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
 | 6c. Org tendencies export (org_tendencies.json) | org_tendencies.json, trade_values.json |

@@ -383,6 +383,92 @@
    }
   }
  },
+ "realized_calibration": {
+  "note": "Realized window-star rate (2+ control seasons of >=4 WAR) by pre-debut consensus FV, vs the displayed published table. Window-resolved debuts only (fully observed outcome). Small classes; a calibration read, not a refit.",
+  "definition": "2+ seasons of >=4 WAR in debut..debut+6",
+  "roles": {
+   "hitter": {
+    "n": 397,
+    "tiers": [
+     {
+      "tier": "<50",
+      "n": 186,
+      "stars": 6,
+      "realized": 0.032,
+      "published": 0.06
+     },
+     {
+      "tier": "50-55",
+      "n": 94,
+      "stars": 6,
+      "realized": 0.064,
+      "published": 0.155
+     },
+     {
+      "tier": "55-60",
+      "n": 48,
+      "stars": 12,
+      "realized": 0.25,
+      "published": 0.253
+     },
+     {
+      "tier": "60-65",
+      "n": 48,
+      "stars": 16,
+      "realized": 0.333,
+      "published": 0.365
+     },
+     {
+      "tier": "65+",
+      "n": 21,
+      "stars": 11,
+      "realized": 0.524,
+      "published": 0.495
+     }
+    ]
+   },
+   "pitcher": {
+    "n": 395,
+    "tiers": [
+     {
+      "tier": "<50",
+      "n": 217,
+      "stars": 3,
+      "realized": 0.014,
+      "published": 0.03
+     },
+     {
+      "tier": "50-55",
+      "n": 90,
+      "stars": 3,
+      "realized": 0.033,
+      "published": 0.07
+     },
+     {
+      "tier": "55-60",
+      "n": 44,
+      "stars": 4,
+      "realized": 0.091,
+      "published": 0.14
+     },
+     {
+      "tier": "60-65",
+      "n": 36,
+      "stars": 1,
+      "realized": 0.028,
+      "published": 0.305
+     },
+     {
+      "tier": "65+",
+      "n": 8,
+      "stars": 4,
+      "realized": 0.5,
+      "published": 0.495
+     }
+    ]
+   }
+  }
+ },
  "gate": {
   "tolerance_abs": 0.1,
   "max_abs_dev": 0.6439,

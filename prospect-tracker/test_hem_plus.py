@@ -103,3 +103,24 @@ def test_eval_artifact_present_and_gate_passes():
     # HEM+ beats AVG and is at least even with raw wOBA out of sample
     assert fs["hem_plus"] >= fs["avg"]
     assert fs["hem_plus"] >= fs["raw_woba"] - 0.01
+
+
+def test_multiyear_eval_3yr_beats_1yr():
+    doc = json.loads((Path(H.__file__).parent / "data" / "hem_plus_multiyear_eval.json").read_text(encoding="utf-8"))
+    assert doc["experiment"] == "X-H2"
+    assert doc["model"] == "hem_plus_3yr"
+    # 3yr forward-predicts next-year offense better than 1yr on the same set
+    assert doc["hem_3yr_forward_rho"] > doc["hem_1yr_forward_rho_on_3yr_set"]
+    assert doc["gate"]["pass"] is True
+    pv = doc["proposed_values"]
+    assert pv["metric"] == "hem_plus_3yr" and pv["n_with_value"] > 0
+
+
+def test_xhem_eval_xwoba_beats_actual_woba():
+    doc = json.loads((Path(H.__file__).parent / "data" / "xhem_plus_eval.json").read_text(encoding="utf-8"))
+    assert doc["experiment"] == "X-H3" and doc["model"] == "xhem_plus"
+    fs = doc["forward_spearman_vs_wOBA_next"]
+    # Savant xwOBA forward-predicts next-year wOBA better than actual wOBA
+    assert fs["xwoba"] > fs["actual_woba"]
+    assert doc["gate"]["pass"] is True
+    assert doc["gap_ci_xwoba_minus_woba"]["lo95"] > 0

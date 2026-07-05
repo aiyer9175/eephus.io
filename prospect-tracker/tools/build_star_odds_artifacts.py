@@ -141,6 +141,55 @@ def build_label_view() -> dict:
     }
 
 
+def _realized_calibration() -> dict:
+    """GROUND-TRUTH the displayed (published) star odds against REALIZED outcomes:
+    join each debuted prospect's pre-debut consensus FV (efv_dataset) to whether he
+    actually posted 2+ control seasons of >=4 WAR (star_label_view), bucket by FV
+    tier, and compare the realized star rate to the published table value. Real data
+    only; window-resolved players only (outcome fully observed). Best-effort: returns
+    {} if the eFV dataset / labels are unavailable. This is the accountability answer
+    to 'are the star odds accurate' -- it is REPORTED, it does not change the odds."""
+    try:
+        import efv_dataset
+        import value_framework as vf
+        labels = {p["player_key"]: p for p in
+                  json.loads((_DATA / "star_label_view.json").read_text(encoding="utf-8"))["players"]}
+    except Exception:
+        return {}
+    tiers = [("<50", 20.0, 48.75, 47.5), ("50-55", 48.75, 52.5, 52.5),
+             ("55-60", 52.5, 57.5, 57.5), ("60-65", 57.5, 63.75, 62.5),
+             ("65+", 63.75, 90.0, 66.0)]
+    out = {"note": ("Realized window-star rate (2+ control seasons of >=4 WAR) by pre-debut "
+                    "consensus FV, vs the displayed published table. Window-resolved debuts only "
+                    "(fully observed outcome). Small classes; a calibration read, not a refit."),
+           "definition": "2+ seasons of >=4 WAR in debut..debut+6", "roles": {}}
+    for side, is_pit, role in (("hit", False, "hitter"), ("pit", True, "pitcher")):
+        try:
+            rows = efv_dataset.build_matrix(side)
+            rows = rows[0] if isinstance(rows, tuple) else rows
+        except Exception:
+            continue
+        rec = []
+        for r in rows:
+            if r.get("kind") != "debuted":
+                continue
+            fv = r.get("consensus_fv_raw")
+            lab = labels.get(r.get("player_key"))
+            if fv is None or lab is None or not lab.get("window_resolved"):
+                continue
+            rec.append((float(fv), int(bool(lab.get("star")))))
+        role_rows = []
+        for label, lo, hi, mid in tiers:
+            sub = [y for fv, y in rec if lo <= fv < hi]
+            if not sub:
+                continue
+            role_rows.append({"tier": label, "n": len(sub), "stars": int(sum(sub)),
+                              "realized": round(sum(sub) / len(sub), 3),
+                              "published": round(float(vf.published_star_odds(mid, is_pit)), 3)})
+        out["roles"][role] = {"n": len(rec), "tiers": role_rows}
+    return out
+
+
 def build_calibration_eval() -> dict:
     import value_framework as vf
     cal = vf.star_odds_calibration("clemens_2026")
@@ -171,6 +220,7 @@ def build_calibration_eval() -> dict:
         "calibration": cal,
         "surplus_calibration": surplus_cal,
         "reconciliation": recon,
+        "realized_calibration": _realized_calibration(),
         "gate": {
             "tolerance_abs": tol,
             "max_abs_dev": max_dev,

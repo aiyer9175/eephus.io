@@ -287,11 +287,13 @@ def test_rotation_charts_view_renders():
 # ---------------------------------------------------------------------------
 
 def _hrow(mlbam, name, team, hem, pa, hr=20, sb=5, qualified=True):
-    return ('{"key":"%d","name":"%s","team":"%s","mlbam":%d,"hem_plus":%d,"qualified":%s,'
+    return ('{"key":"%d","name":"%s","team":"%s","mlbam":%d,"hem_plus":%d,"hem_plus_3yr":%d,'
+            '"hem_plus_3yr_pct":88,"hem_plus_3yr_tag":"established","xhem_plus":%d,"luck_gap":%d,'
+            '"xwoba":0.375,"qualified":%s,'
             '"tier":"Above-avg","pa":%d,"ab":%d,"hr":%d,"bb":50,"sb":%d,"woba":0.360,'
             '"woba_raw":0.365,"avg":0.280,"obp":0.360,"slg":0.480,"ops":0.840,"iso":0.200,'
             '"bb_pct":0.09,"k_pct":0.20,"babip":0.300}'
-            % (mlbam, name, team, mlbam, hem, "true" if qualified else "false",
+            % (mlbam, name, team, mlbam, hem, hem - 3, hem + 4, 4, "true" if qualified else "false",
                pa, pa - 70, hr, sb))
 
 _HIT_ROWS = ",".join(
@@ -340,6 +342,8 @@ def test_hitter_board_renders_via_section_hash():
     html = _render_hitters("#section=hitters")
     assert "mlbstats-table" in html
     assert "HEM+" in html and "Star Bat" in html
+    assert "HEM+ 3yr" in html                     # the validated 3yr companion column
+    assert "xHEM+" in html and "Luck" in html     # the validated Savant deserved-offense columns
     assert 'data-gl="hem_plus"' in html          # the HEM+ explainer is wired
     # clickable name: mlbam 111 resolves to the merged card
     assert 'class="mlbstats-name-link"' in html

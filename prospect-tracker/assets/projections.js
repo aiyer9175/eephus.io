@@ -1035,6 +1035,53 @@
       }).join("")}
     </div>`;
   }
+
+  // Group the merged card's sections (projection + statcast + stats + contract)
+  // into a tabbed layout that mirrors the Prospect Detail Card. The section
+  // functions keep their own .mlbp-section wrappers; only non-empty panels get a
+  // tab, and the first non-empty panel is active by default. All sections stay in
+  // the DOM (hidden panels included), so their async fills still land.
+  function mlbpTabs(p, key) {
+    const nonEmpty = (h) => !!(h && h.replace(/\s+/g, "").length);
+    const twoWayNote = (p.twoWay && p.proj && p.proj.warHit)
+      ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : "";
+    const statcast = (p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : "")
+      + sliders(p.sc)
+      + ((p.isPit && !p.twoWay) ? arsenalTable(p.arsenal) : "")
+      + (p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : "");
+    const stats = positionGamesSummary(key) + pitchingStatsBlock(p) + careerTable(p)
+      + (p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : "");
+    const panels = [
+      { id: "proj", label: "Projection", html: fanChart(p) + upsidePath(p) + twoWayNote },
+      { id: "statcast", label: "Statcast", html: statcast },
+      { id: "stats", label: "Stats & Career", html: stats },
+      { id: "contract", label: "Contract & FA", html: faBlock(p) },
+    ].filter((pan) => nonEmpty(pan.html));
+    if (!panels.length) return "";
+    const strip = panels.length > 1
+      ? `<div class="mlbp-tabs" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px;">${panels.map((pan, i) => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${i === 0}"${i === 0 ? "" : ' style="opacity:.55;"'}>${pan.label}</button>`).join("")}</div>`
+      : "";
+    const body = panels.map((pan, i) => `<div class="mlbp-tabpanel" data-mlbp-panel="${pan.id}"${i === 0 ? "" : " hidden"}>${pan.html}</div>`).join("");
+    return strip + body;
+  }
+
+  function bindMlbpTabs(root) {
+    const tabs = root.querySelectorAll("[data-mlbp-tab]");
+    if (!tabs.length) return;
+    tabs.forEach((t) => t.addEventListener("click", () => {
+      const id = t.getAttribute("data-mlbp-tab");
+      root.querySelectorAll("[data-mlbp-tab]").forEach((b) => {
+        const on = b.getAttribute("data-mlbp-tab") === id;
+        b.setAttribute("aria-selected", on ? "true" : "false");
+        b.style.opacity = on ? "" : ".55";
+      });
+      root.querySelectorAll("[data-mlbp-panel]").forEach((pane) => {
+        if (pane.getAttribute("data-mlbp-panel") === id) pane.removeAttribute("hidden");
+        else pane.setAttribute("hidden", "hidden");
+      });
+    }));
+  }
+
   function renderPlayer(key) {
     const root = document.getElementById("proj-rows");
     const bar = document.getElementById("proj-filters");
@@ -1106,20 +1153,10 @@
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>
-      ${positionGamesSummary(key)}
-      ${pitchingStatsBlock(p)}
-      ${fanChart(p)}
-      ${upsidePath(p)}
-      ${p.twoWay && p.proj && p.proj.warHit ? `<div class="fa-note">Two-way projection: the path above SUMS both sides per season - hitting ${p.proj.warHit.map(fmtWar).join(" / ")} + pitching ${p.proj.warPit.map(fmtWar).join(" / ")}.</div>` : ""}
-      ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a hitter</div>` : ""}
-      ${sliders(p.sc)}
-      ${(p.isPit && !p.twoWay) ? arsenalTable(p.arsenal) : ""}
-      ${p.twoWay ? `<div class="mlbp-section-title" style="margin-top:18px;">As a pitcher</div>${sliders(p.scPit)}${arsenalTable(p.arsenal)}` : ""}
-      ${faBlock(p)}
-      ${careerTable(p)}
-      ${p.twoWay && p.careerPit && p.careerPit.length ? careerTable({ ...p, career: p.careerPit, isPit: true }) : ""}
+      ${mlbpTabs(p, key)}
       <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
+    bindMlbpTabs(root);
     // hub strip (cross-module identity) - lazy, never blocks the paint
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {

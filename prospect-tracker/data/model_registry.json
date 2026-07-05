@@ -939,6 +939,58 @@
    }
   },
   {
+   "model_id": "hem_plus_3yr",
+   "surface": "/mlbstats/ Hitter Leaderboards, HEM+ 3yr column (stable skill)",
+   "predicts": "hitter offensive-rate skill over a trailing 3-season window (PA-weighted mean HEM+); a steadier talent read than one season",
+   "champion": "hem_plus_3yr (PA-weighted trailing-3-season HEM+)",
+   "baseline": "single-season HEM+ forward rho vs wOBA(Y+1) on the same hitter set",
+   "metric": "forward-chained Spearman Y->Y+1 wOBA, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
+   "eval_artifact": "data/hem_plus_multiyear_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07-05 (X-H2) as a companion column to single-season HEM+ (same skill scale, longer window). Forward-chained OOS (2012-2024 ex-2020, 2382 hitter pairs): 3-year HEM+ forward-predicts next-year wOBA at rho 0.4548 vs single-season HEM+ 0.4275 on the same set; the bootstrap same-set gap CI clears zero (lo95 +0.0062), so it ships VALIDATED (stronger than the SEM+ 3yr case, which was provisional -- hitters carry larger, steadier PA samples). Joined into hitter_leaderboards.json by MLBAM from proposed_values (hitter_export._join_hem_plus_3yr), like sem_plus_3yr. Hitters need 2+ seasons and 600+ PA over the trailing 2024-2026 window for an established tag. Harness tools/hem_plus_lab.py.",
+   "last_checked": "2026-07-05",
+   "stale": false,
+   "artifact_age_days": 0,
+   "card": {
+    "n": 2382,
+    "window": "2012-2024 ex-2020, forward pairs",
+    "headline": [
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.455,
+      "baseline": 0.428,
+      "better": "higher"
+     }
+    ]
+   }
+  },
+  {
+   "model_id": "xhem_plus",
+   "surface": "/mlbstats/ Hitter Leaderboards, xHEM+ + Luck columns (Savant deserved offense)",
+   "predicts": "a hitter's DESERVED offensive rate: the HEM+ ratio scale applied to Savant expected wOBA (xwOBA) instead of actual wOBA; xwOBA strips BABIP/sequencing luck, so it is the more forward-stable talent signal. Luck = xHEM+ minus HEM+",
+   "champion": "xhem_plus (100 * xwOBA / PA-weighted pool xwOBA; tracked hitters, min 100 Savant PA)",
+   "baseline": "actual wOBA forward rho vs wOBA(Y+1)",
+   "metric": "forward-chained Spearman: xwOBA(Y) vs wOBA(Y+1) beats actual wOBA(Y) (seeded bootstrap CI on the gap)",
+   "eval_artifact": "data/xhem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07-05 (X-H3) as a deserved-offense companion to HEM+. Forward-chained OOS over 8 year-pairs 2016-2025 (ex-2020, 1871 pairs): Savant xwOBA predicts next-year wOBA at rho 0.4543 vs actual wOBA 0.4108; the bootstrap gap CI clears zero (lo95 +0.0173), so xwOBA is decisively the more forward-stable talent signal and xHEM+ earns its place. It is a COMPANION, not a replacement: Savant is MLB-only + min-BBE gated, so xHEM+ stamps only tracked hitters with a real sample (min 100 Savant PA -- a 1-PA player who homered is not 'deserving' a 244). No further shrink (xwOBA is already de-luck'd). Luck = xHEM+ - HEM+: positive = under-performing his contact (room to bounce back), negative = over-performing (due to regress). Joined in hitter_export._join_xhem_plus from mlb_player_export._savant. Harness tools/xhem_plus_lab.py.",
+   "last_checked": "2026-07-05",
+   "stale": false,
+   "artifact_age_days": 0,
+   "card": {
+    "n": 1871,
+    "window": "2016-2025 ex-2020, forward pairs",
+    "headline": [
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.454,
+      "baseline": 0.411,
+      "better": "higher"
+     }
+    ]
+   }
+  },
+  {
    "model_id": "farm_window_alignment",
    "surface": "/projections/ Team Outlook (Window column)",
    "predicts": "n/a - a descriptive rollup: when a farm's surplus arrives (etaMean) vs the controlled-core WAR center (coreCenter)",

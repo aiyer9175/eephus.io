@@ -127,6 +127,8 @@ MODEL_GLOSSARY = {
     "sem_plus": ["sem_plus"],
     "sem_plus_3yr": ["sem_plus_3yr"],
     "hem_plus": ["hem_plus"],
+    "hem_plus_3yr": ["hem_plus_3yr"],
+    "xhem_plus": ["xhem_plus"],
 }
 
 

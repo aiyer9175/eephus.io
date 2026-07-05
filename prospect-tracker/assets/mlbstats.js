@@ -1039,6 +1039,28 @@
   var HITTER_COLS = [
     { key: "name", label: "Hitter", term: null, sortable: true, kind: "name" },
     { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
+      get: function (r) { return r.hem_plus_3yr; },
+      cell: function (r) {
+        if (r.hem_plus_3yr == null) return "";
+        var s = remCell(r.hem_plus_3yr);
+        if (r.hem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.hem_plus_3yr_pct) + "</span>";
+        if (r.hem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
+        return s;
+      } },
+    { key: "xhem_plus", label: "xHEM+", term: "xhem_plus", num: true, desc: true, isRem: true,
+      title: "Deserved offense: the HEM+ scale on Savant expected wOBA (xwOBA). Forward-predicts next-year offense better than actual. Tracked hitters only.",
+      get: function (r) { return r.xhem_plus; },
+      cell: function (r) { return r.xhem_plus == null ? "" : remCell(r.xhem_plus); } },
+    { key: "luck_gap", label: "Luck", num: true, desc: true,
+      title: "xHEM+ minus HEM+: positive = under-performing his contact quality (bad luck, room to bounce back); negative = over-performing (due to regress).",
+      get: function (r) { return r.luck_gap; },
+      cell: function (r) {
+        if (r.luck_gap == null) return "";
+        var v = r.luck_gap;
+        var col = v >= 6 ? "var(--up)" : v <= -6 ? "var(--down)" : "var(--text-tertiary)";
+        return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + fInt(v) + "</span>";
+      } },
     { key: "pa", label: "PA", fmt: fInt, num: true },
     { key: "hr", label: "HR", fmt: fInt, num: true },
     { key: "sb", label: "SB", fmt: fInt, num: true },
@@ -1053,7 +1075,17 @@
     { key: "babip", label: "BABIP", fmt: f3, num: true },
   ];
 
-  var HITTER_HISTORY_COLS = HITTER_COLS;   // history rows carry the same fields
+  // History rows carry the season fields but not the trailing-window HEM+ 3yr or
+  // the current-season Savant xHEM+ / Luck join.
+  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, luck_gap: 1 };
+  var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
+  // A past board can only sort on columns it shows; if the shared key is a
+  // current-only column (HEM+ 3yr), fall back to the HEM+ default.
+  function hitterHistorySort() {
+    var ok = false;
+    HITTER_HISTORY_COLS.forEach(function (c) { if (c.key === hitterSort.key) ok = true; });
+    return ok ? hitterSort : { key: "hem_plus", asc: false };
+  }
 
   var HITTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team" },
@@ -1189,13 +1221,14 @@
     if (!yr || !yr.hitters || !yr.hitters.length) {
       return pills + '<div class="mlbstats-empty">No leaderboard for the ' + esc(hitterSeason) + " season.</div>";
     }
-    var rows = sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, hitterSort);
+    var sort = hitterHistorySort();
+    var rows = sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, sort);
     var nQual = (yr.n_qualified != null) ? yr.n_qualified : yr.hitters.length;
     var cap = '<div class="mlbstats-note">' + esc(hitterSeason) + " season, " + esc(nQual)
       + " qualified hitters. " + gloss("HEM+", "hem_plus") + " is the skill read; the slash + volume"
       + " columns are context. Compare against how these bats actually hit forward.</div>";
     var table = rows.length
-      ? '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_HISTORY_COLS, hitterSort) + "</div>"
+      ? '<div class="mlbstats-scroll">' + renderTable(rows, HITTER_HISTORY_COLS, sort) + "</div>"
       : '<div class="mlbstats-empty">No hitters match the current filters.</div>';
     return pills + cap + table;
   }
@@ -1317,7 +1350,8 @@
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
       th.addEventListener("click", function () {
         var key = th.getAttribute("data-col");
-        var cols = (hitterView === "teams") ? HITTER_TEAM_COLS : HITTER_COLS;
+        var cols = (hitterView === "teams") ? HITTER_TEAM_COLS
+          : (hitterSeason !== "current") ? HITTER_HISTORY_COLS : HITTER_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
         if (!col || (!col.num && col.kind !== "name" && col.kind !== "team")) return;
         var sort = (hitterView === "teams") ? hitterTeamSort : hitterSort;

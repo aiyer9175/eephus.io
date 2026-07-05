@@ -5141,6 +5141,53 @@
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
   },
   {
+   "id": "hem_plus_3yr",
+   "term": "HEM+ (3yr)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "HEM+ 3yr",
+    "three-year HEM+",
+    "trailing HEM+"
+   ],
+   "priority": 22,
+   "definition": "A hitter's HEM+ over the trailing three seasons (plate-appearance-weighted), a steadier read on offensive-rate talent than a single season. Same 100-anchored scale as HEM+.",
+   "methodology": "The PA-weighted mean of the hitter's HEM+ across the last three seasons (2024-2026), so a partial current season is weighted by its plate appearances and the fuller prior seasons carry more. 'Established' means 2+ seasons and 600+ PA in the window; below that it is flagged provisional. Validated out of sample: forward-chained over 2012-2024 (ex-2020), the 3-year read predicts next-year wOBA at a Spearman correlation of 0.45 vs 0.43 for a single season on the same hitters, with the same-set gap confidence floor above zero -- so more sample is a genuinely steadier talent estimate (a stronger result than the SEM+ 3yr case). Accountability artifact: data/hem_plus_multiyear_eval.json.",
+   "seeAlso": [
+    "hem_plus",
+    "sem_plus_3yr",
+    "rem_plus_3yr"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io."
+  },
+  {
+   "id": "xhem_plus",
+   "term": "xHEM+ (Deserved Offense)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "xHEM+",
+    "deserved offense",
+    "expected HEM+",
+    "Luck (offense)"
+   ],
+   "priority": 22,
+   "definition": "A hitter's DESERVED offensive rate on the HEM+ scale: HEM+ computed from Savant expected wOBA (xwOBA) instead of actual results, so it reflects contact quality rather than how the balls happened to fall. Luck is xHEM+ minus HEM+.",
+   "methodology": "xHEM+ = 100 times the hitter's Savant expected wOBA over the plate-appearance-weighted pool average, on the same 100-anchored scale as HEM+. Expected wOBA is built from the launch conditions of each batted ball (exit velocity and angle), so it strips the batting-average-on-balls-in-play and sequencing luck baked into actual wOBA. Validated out of sample: forward-chained over eight season-pairs 2016-2025 (excluding 2020, 1871 pairs), expected wOBA predicts a hitter's next-year wOBA at a Spearman correlation of 0.45 vs 0.41 for actual wOBA, with the gap confidence floor above zero -- so it is the more forward-stable talent signal. It is a COMPANION for tracked hitters (Statcast is MLB-only and needs a real sample, 100+ tracked plate appearances), not the population-complete HEM+. Luck greater than zero means a hitter is under-performing his contact (room to bounce back); less than zero means he is over-performing (due to regress). Accountability artifact: data/xhem_plus_eval.json.",
+   "seeAlso": [
+    "hem_plus",
+    "statcast_plus",
+    "xwoba"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
+  },
+  {
    "id": "sem_plus_3yr",
    "term": "SEM+ 3yr (three-year starter skill)",
    "category": "custom-index",
