@@ -130,6 +130,24 @@ Deferred to avoid permalink/alias churn 8 days from launch:
 - Wire the ~199 entries reachable only via the browse page to in-context
   `data-gl` tooltips where their metric renders (close the loop both ways).
 
+## Surfacing status (2026-07-04)
+
+Tier-1 features are now visible by default (flags flipped; URL params still
+toggle): Report Cards proof charts on /glossary Models, Window Alignment column
+on the Team Outlook board, Sortino Risk column on the Trade Machine, FV Tape +
+Prospect Greeks on the prospect detail page. Remaining surfacing, deferred
+because it needs data plumbing (not a display flip):
+- **Window Alignment on the farm-system detail page.** The prospx org_summary
+  prospects carry no `eta`/`surplus` client-side, and the MLB-core center lives
+  only in mlb_projections.json (the projections app). Surface by adding
+  `etaMean` / `etaByYear` / `etaAlignYears` to org_summary in the farm exporter
+  (mirror proj_export._org_farm_blocks), then render a System Duration card
+  beside makeFarmToolDevCard. Small, but a pipeline change on the 58MB
+  timeseries payload, so post-launch.
+- **IFA Efficiency Index (#19)** was scoped as client-side-doable (ifa signings
+  carry bonus + fv + country), but not built this pass; a $/eFV efficiency
+  rollup on the IFA tab is the spec. Effort S.
+
 ## Launch-polish backlog (from Section D, deferred)
 
 - **Money-formatter consolidation.** 4+ divergent `$M` renderers (`fa.js:46`,
