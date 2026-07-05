@@ -237,8 +237,8 @@ def load_prospect_pitchers(exclude_keys: Optional[set] = None) -> list:
         graduated |= set(exclude_keys)
     try:
         from storage import load_all_snapshots
-        from consensus import build_timeseries, _is_pitcher_pos
-        ts = build_timeseries(load_all_snapshots())
+        from consensus import build_timeseries, _is_pitcher_pos, ADOPT_NORMALIZED_CONSENSUS
+        ts = build_timeseries(load_all_snapshots(), normalize=ADOPT_NORMALIZED_CONSENSUS)
     except Exception as e:
         _log.warning("prospect pool load unavailable: %s", e)
         return []

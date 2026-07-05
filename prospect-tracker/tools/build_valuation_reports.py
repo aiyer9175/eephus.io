@@ -26,7 +26,11 @@ _TIERS = [("35+", 37.5), ("40", 40.0), ("40+", 42.5), ("45", 45.0), ("45+", 47.5
 
 # Published aggregate targets (intro post) for the coverage comparison.
 _PUB = {"pool_50plus_b": 5.7, "pool_sub50_b": 6.3, "minors_b": 12.0,
-        "minors_band_b": (10.5, 13.75), "top_org_musd": 671.0}
+        "minors_band_b": (10.5, 13.75), "top_org_musd": 671.0, "top_org_name": "Pittsburgh (PIT)"}
+# The FanGraphs "The Board" annual list used for the Board-aligned universe
+# comparison. source='fangraphs' + interval_label=this label + rank IS NOT NULL is
+# the ranked Board (2026report = the 2026 annual, ~1005 ranked on 2026-02-12).
+_BOARD_LABEL = "2026report"
 # Published sensitivity magnitudes ($M move in the whole-minors total).
 _PUB_SENS = {"discount_3pt": 700.0, "residence_half_yr": 600.0,
              "arb_30pct": 400.0, "flat_total_b": 10.5}
@@ -55,6 +59,22 @@ def load_universe() -> list[dict]:
                     "org": org or "??", "position": pos,
                     "age": float(age) if age is not None else None})
     return out, d
+
+
+def board_keys(label: str = _BOARD_LABEL) -> set:
+    """The FanGraphs 'The Board' ranked-player set for a cycle, derived from the raw
+    per-source `snapshots` table (source='fangraphs', the given interval_label, rank
+    not null). This is the Board membership our metric_snapshots universe intersects
+    with for the apples-to-apples comparison; metric_snapshots.overall_rank is OUR
+    consensus rank, NOT FanGraphs', so it cannot substitute for this."""
+    con = sqlite3.connect(str(_DB))
+    try:
+        rows = con.execute(
+            "SELECT DISTINCT player_key FROM snapshots WHERE source='fangraphs' "
+            "AND interval_label=? AND rank IS NOT NULL", (label,)).fetchall()
+    finally:
+        con.close()
+    return {r[0] for r in rows if r[0]}
 
 
 # --------------------------------------------------------------------------
@@ -151,7 +171,7 @@ def build_sensitivity(vf, universe) -> dict:
     scen["arb_-30pct"] = _total_with(vf, universe, "clemens_2026",
                                      lambda c: scale_arb(c, 0.70))
     scen["flat_kernel"] = _total_with(vf, universe, "clemens_2026", flatten)
-    vf.set_valuation_set("prospx_current")   # restore production default
+    vf.set_valuation_set("prospx_current")   # back to the legacy set for the diff's 'current' columns
 
     # Residence-time sensitivity is an AGGREGATE stock->flow effect that our
     # per-player stock sum does not model; approximate it as scaling the sub-50
@@ -201,13 +221,14 @@ def main() -> None:
     reconciled_total = clt_sub_flow + clt_ge
 
     caveats = (
-        f"Coverage caveats: universe = {n} active graded prospects on the "
+        f"Coverage caveats: the HEADLINE universe = {n} active graded prospects on the "
         f"{asof} metric snapshot ({n_sub} sub-50, {n - n_sub} 50+). This is OUR "
         "graded stock, not the FanGraphs Board: never-ranked contributors are "
-        "excluded, org membership follows our data, and NO residence-time "
-        "stock->flow conversion is applied (we sum a stock of per-player values). "
-        "Totals therefore need not equal the published aggregates; deviations are "
-        "reported, not forced.")
+        "included, org membership follows our data, and the whole-stock totals sum a "
+        "STOCK of per-player values. The org rollup below now applies a residence-time "
+        "stock->flow reconciliation, and a Board-restricted (2026report) universe "
+        "comparison is reported separately for the apples-to-apples read. Totals still "
+        "need not equal the published aggregates; deviations are reported, not forced.")
 
     # ---------- validation.md (totals + org + calibration) ----------
     star_cal = vf.star_odds_calibration("clemens_2026")
@@ -222,17 +243,48 @@ def main() -> None:
                 surplus_cal_rows.append([role, label, f"{pub:.1f}", f"{model:.1f}",
                                          f"{dev * 100:.0f}%", "PASS" if dev <= 0.10 else "off"])
 
-    top_org_cur = sorted(cur_org.items(), key=lambda kv: -kv[1])[:15]
-    top_org_clt = sorted(cl_tbl_org.items(), key=lambda kv: -kv[1])[:15]
     # depth-vs-stars: sub-50 share of each org's value (clemens table mode)
     org_sub = {}
     for p in universe:
         if p["fv"] < 50.0:
             org_sub[p["org"]] = org_sub.get(p["org"], 0.0) + cl_tbl_pp.get(p["player_key"], 0.0)
+    # (a) Residence-time stock->flow reconciliation of the ORG rollup: the sub-50
+    # portion of each org's stock is divided by residence (2y), the 50+ portion is
+    # left as stock -- the SAME convention as the whole-minors reconciled_total, so
+    # sum(recon_org) == reconciled_total. This makes our top org comparable to the
+    # published ~$671M (Pittsburgh) instead of the raw stock (~$858M), which double-
+    # counts a ~2y prospect residence.
+    recon_org = {o: org_sub.get(o, 0.0) / residence + (tot - org_sub.get(o, 0.0))
+                 for o, tot in cl_tbl_org.items()}
+    top_org_recon = sorted(recon_org.items(), key=lambda kv: -kv[1])[:15]
     depth_rows = []
-    for org, tot in top_org_clt:
-        share = (org_sub.get(org, 0.0) / tot) if tot else 0.0
-        depth_rows.append([org, f"${tot:.0f}M", f"{share * 100:.0f}%"])
+    for org, rec in top_org_recon:
+        raw = cl_tbl_org.get(org, 0.0)
+        share = (org_sub.get(org, 0.0) / raw) if raw else 0.0
+        depth_rows.append([org, f"${raw:.0f}M", f"${rec:.0f}M", f"{share * 100:.0f}%"])
+    our_top_org, our_top_raw = (top_org_recon[0][0], cl_tbl_org.get(top_org_recon[0][0], 0.0)) \
+        if top_org_recon else ("-", 0.0)
+    our_top_recon = top_org_recon[0][1] if top_org_recon else 0.0
+
+    # (b) Board-aligned universe: restrict to FanGraphs 'The Board' ranked players
+    # (2026report), priced table-mode, so the totals are apples-to-apples with the
+    # published aggregates rather than our full graded stock.
+    board = board_keys(_BOARD_LABEL)
+    board_uni = [p for p in universe if p["player_key"] in board]
+    b_total, b_pp, b_org = _sum_table_surplus(board_uni, "clemens_2026", vs)
+    b_sub, b_ge = _split_5050(board_uni, b_pp)
+    b_sub_stock = {}
+    for p in board_uni:
+        if p["fv"] < 50.0:
+            b_sub_stock[p["org"]] = b_sub_stock.get(p["org"], 0.0) + b_pp.get(p["player_key"], 0.0)
+    b_recon_org = {o: b_sub_stock.get(o, 0.0) / residence + (tot - b_sub_stock.get(o, 0.0))
+                   for o, tot in b_org.items()}
+    b_top_org = sorted(b_recon_org.items(), key=lambda kv: -kv[1])[:1]
+    b_reconciled_total = b_sub / residence + b_ge
+
+    # (#3) Model<->table reconciliation diagnostic: the single per-role WAR-anchor
+    # multiplier that best aligns model aggregates to the published tiers + residual.
+    recon_fit = vf.fit_tier_reconciliation("clemens_2026")
 
     val = [
         "# Valuation validation report (Phase 5)", "",
@@ -265,16 +317,55 @@ def main() -> None:
         ]),
         ("In band." if _PUB['minors_band_b'][0] * 1000 <= reconciled_total <= _PUB['minors_band_b'][1] * 1000
          else "Outside band even after reconciliation (universe differs from the Board)."), "",
-        "## Organization rollup (clemens_2026 table mode)", "",
-        f"Top org published ~${_PUB['top_org_musd']:.0f}M (Pittsburgh). Ours:", "",
-        _md_table(["org", "total value", "sub-50 share (depth-vs-stars)"], depth_rows), "",
+        "## Organization rollup (clemens_2026 table mode, residence-reconciled)", "",
+        f"Top org published ~${_PUB['top_org_musd']:.0f}M ({_PUB['top_org_name']}). Our raw "
+        f"TABLE stock tops out at ~${our_top_raw:.0f}M ({our_top_org}), above the published "
+        "figure because a raw stock double-counts a prospect's ~2y residence. Applying the "
+        f"same sub-50 stock->flow reconciliation (/{residence:.0f}y) drops our top org to "
+        f"~${our_top_recon:.0f}M -- {'in line with' if abs(our_top_recon - _PUB['top_org_musd']) <= 120 else 'closer to'} "
+        f"the published ${_PUB['top_org_musd']:.0f}M; the residual is the universe/Board "
+        "difference isolated in the next section.", "",
+        _md_table(["org", "raw stock", "residence-reconciled flow", "sub-50 share (depth-vs-stars)"],
+                  depth_rows), "",
+        "## Board-aligned universe comparison (apples-to-apples)", "",
+        f"Restricting to FanGraphs 'The Board' ranked players ({_BOARD_LABEL}) that are still "
+        f"active in our universe -- {len(board_uni)} of {len(board)} ranked (the rest graduated "
+        "or washed out and are dropped by the active filter, so this UNDERCOUNTS the published "
+        "full-board aggregate). Priced table-mode; sub-50 stock->flow reconciled:", "",
+        _md_table(["measure", "our value", "published"], [
+            ["Board whole (raw stock)", _fmt_b(b_total), _fmt_b(_PUB['minors_b'] * 1000)],
+            ["Board whole (residence-reconciled)", _fmt_b(b_reconciled_total),
+             f"{_fmt_b(_PUB['minors_band_b'][0] * 1000)}-{_fmt_b(_PUB['minors_band_b'][1] * 1000)}"],
+            ["Board top org (reconciled)",
+             f"${b_top_org[0][1]:.0f}M ({b_top_org[0][0]})" if b_top_org else "-",
+             f"${_PUB['top_org_musd']:.0f}M ({_PUB['top_org_name']})"],
+        ]),
+        "The Board-restricted top org lands nearer the published figure than the full-stock "
+        "rollup; the remaining gap is the excluded (graduated/washed-out) board members plus "
+        "the approximate residence conversion. Reported, not tuned to match.", "",
         "## Tier calibration: surplus (clemens model vs published table)", "",
-        "Model mode uses the v47 realized anchors, so it runs below the published "
-        "tiers (the reconciliation gap the new framework surfaces). Deviations:", "",
+        "Model mode (the career-path engine under the clemens params, war_anchor_scale=1) runs "
+        "below the published tiers because it uses the v47 realized (bust-heavy) WAR anchors. "
+        "The per-tier deviations below are the RESIDUAL at the production anchor; the "
+        "reconciliation section quantifies how much of it is a single global scale.", "",
         _md_table(["role", "tier", "published $M", "model $M", "|dev|", "<=10%?"], surplus_cal_rows), "",
         "## Tier calibration: star odds (clemens model vs published)", "",
-        _md_table(["role", "max abs deviation"],
-                  [[r, f"{d['max_abs_dev']:.3f}"] for r, d in star_cal["roles"].items()]), "",
+        _md_table(["role", "max abs dev", "mean abs dev"],
+                  [[r, f"{d['max_abs_dev']:.3f}", f"{d['mean_abs_dev']:.3f}"]
+                   for r, d in star_cal["roles"].items()]), "",
+        "## Model<->table reconciliation (diagnostic; reported, not forced)", "",
+        "The single per-role WAR-anchor multiplier k that best aligns the MODEL tier aggregates "
+        "to the PUBLISHED tiers (joint surplus + star-odds objective), with the RESIDUAL after "
+        "that best fit. This is a DIAGNOSTIC only: k is swept transiently and written to NO "
+        "shipped set, so the live board is never rescaled to the table. A single scalar cannot "
+        "zero both residuals (star odds is a nonlinear tail functional, surplus near-linear in "
+        "WAR), so both stay > 0 -- that irreducible residual is the honest read of the gap.", "",
+        _md_table(["role", "fitted k", "surplus mean |dev| (pre->post)",
+                   "star mean |dev| (pre->post)"],
+                  [[role, f"{d['k']:.2f}",
+                    f"{d['pre']['surplus_mean_pct_dev'] * 100:.0f}% -> {d['post']['surplus_mean_pct_dev'] * 100:.0f}%",
+                    f"{d['pre']['star_mean_abs_dev']:.3f} -> {d['post']['star_mean_abs_dev']:.3f}"]
+                   for role, d in recon_fit["roles"].items()]), "",
     ]
     (_REPORTS / "validation.md").write_text("\n".join(val) + "\n", encoding="utf-8")
 
@@ -378,7 +469,7 @@ def main() -> None:
     ]
     (_REPORTS / "diff.md").write_text("\n".join(diff_md) + "\n", encoding="utf-8")
 
-    vf.set_valuation_set("prospx_current")
+    vf.set_valuation_set("clemens_2026")   # restore the production default (no state leak)
     print(f"wrote reports/validation.md, reports/sensitivity.md, reports/diff.md "
           f"(universe n={n}, asof {asof})")
     print(f"  prospx_current model total={_fmt_b(cur_total)}; "

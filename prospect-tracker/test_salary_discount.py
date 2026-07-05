@@ -107,12 +107,14 @@ def test_arb_salary_monotone_in_prior_season_war():
 
 def test_prior_vs_current_basis_differ_on_rising_path():
     wars = [1.0, 1.0, 1.0, 3.0, 3.0, 3.0, 3.0]   # jump up at the first arb year
-    with vf.valuation_set("clemens_2026"):
+    with vf.valuation_set("clemens_2026"):   # prior_season basis
         markets = [vf.tiered_war_value_usd(w) for w in wars]
         prior = vf._service_path_salaries(wars, markets, False)
-    # Under the default (current-season) basis, the first arb salary tracks the
-    # CURRENT (3.0) season; under clemens prior-season it tracks the prior (1.0),
-    # so prior-season pays less at the jump.
-    markets_d = [vf.tiered_war_value_usd(w) for w in wars]
-    current = vf._service_path_salaries(wars, markets_d, False)  # default set
+    # Under the current-season basis (the legacy prospx_current set), the first arb
+    # salary tracks the CURRENT (3.0) season; under clemens prior-season it tracks
+    # the prior (1.0), so prior-season pays less at the jump. clemens is now the
+    # default, so pin the current-season comparison to the prospx_current context.
+    with vf.valuation_set("prospx_current"):   # current_season basis
+        markets_d = [vf.tiered_war_value_usd(w) for w in wars]
+        current = vf._service_path_salaries(wars, markets_d, False)
     assert prior[3] < current[3]

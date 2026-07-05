@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-04",
+ "generated_at": "2026-07-05",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
@@ -7,7 +7,7 @@
   "model_odds": "analytic: per bucket, per control season WAR ~ Gamma(mean=level, cv=within_bucket_cv); Poisson-binomial P(>=2 of n); weighted by P(bucket|FV); pitchers blend SP/RP by P(reliever|bucket).",
   "published": "FanGraphs 2026 tier star odds (config/valuation_sets/clemens_2026.yaml).",
   "priced_under": "clemens_2026 (control_years=7, star def 2x4 WAR).",
-  "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so it runs BELOW the published tier odds; Phase 5 reconciles model aggregates to the table. The DISPLAYED star odds are the published table values (exact by construction)."
+  "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so at the production anchor (war_anchor_scale=1) it runs BELOW the published tier odds. The DISPLAYED star odds are the published table values (exact by construction); the per-player model is a diagnostic. The `reconciliation` block reports the single per-role WAR-anchor multiplier (k) that best aligns the model aggregates to the published tiers and the RESIDUAL after it -- reported, NOT forced onto the live board (the shipped set carries no such scale)."
  },
  "calibration": {
   "valuation_set": "clemens_2026",
@@ -85,7 +85,8 @@
       "abs_dev": 0.5472
      }
     ],
-    "max_abs_dev": 0.5472
+    "max_abs_dev": 0.5472,
+    "mean_abs_dev": 0.1462
    },
    "pitcher": {
     "tiers": [
@@ -160,7 +161,225 @@
       "abs_dev": 0.6439
      }
     ],
-    "max_abs_dev": 0.6439
+    "max_abs_dev": 0.6439,
+    "mean_abs_dev": 0.1313
+   }
+  }
+ },
+ "surplus_calibration": {
+  "valuation_set": "clemens_2026",
+  "roles": {
+   "hitter": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 2.0,
+      "model": 1.4,
+      "abs_dev": 0.6,
+      "pct_dev": 0.3
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 5.5,
+      "model": 1.5,
+      "abs_dev": 4.0,
+      "pct_dev": 0.7273
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 8.0,
+      "model": 2.7,
+      "abs_dev": 5.3,
+      "pct_dev": 0.6625
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 14.5,
+      "model": 5.5,
+      "abs_dev": 9.0,
+      "pct_dev": 0.6207
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 18.5,
+      "model": 15.2,
+      "abs_dev": 3.3,
+      "pct_dev": 0.1784
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 45.0,
+      "model": 18.5,
+      "abs_dev": 26.5,
+      "pct_dev": 0.5889
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 55.0,
+      "model": 35.2,
+      "abs_dev": 19.8,
+      "pct_dev": 0.36
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 82.0,
+      "model": 67.7,
+      "abs_dev": 14.3,
+      "pct_dev": 0.1744
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 95.0,
+      "model": 116.7,
+      "abs_dev": 21.7,
+      "pct_dev": 0.2284
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 195.0,
+      "model": 165.0,
+      "abs_dev": 30.0,
+      "pct_dev": 0.1538
+     }
+    ],
+    "max_abs_pct_dev": 0.7273,
+    "mean_abs_pct_dev": 0.3994
+   },
+   "pitcher": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 1.5,
+      "model": 1.4,
+      "abs_dev": 0.1,
+      "pct_dev": 0.0667
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 4.0,
+      "model": 1.5,
+      "abs_dev": 2.5,
+      "pct_dev": 0.625
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 7.0,
+      "model": 2.1,
+      "abs_dev": 4.9,
+      "pct_dev": 0.7
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 9.5,
+      "model": 3.0,
+      "abs_dev": 6.5,
+      "pct_dev": 0.6842
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 15.0,
+      "model": 8.9,
+      "abs_dev": 6.1,
+      "pct_dev": 0.4067
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 33.5,
+      "model": 15.5,
+      "abs_dev": 18.0,
+      "pct_dev": 0.5373
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 45.0,
+      "model": 24.3,
+      "abs_dev": 20.7,
+      "pct_dev": 0.46
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 70.0,
+      "model": 53.0,
+      "abs_dev": 17.0,
+      "pct_dev": 0.2429
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 95.0,
+      "model": 96.8,
+      "abs_dev": 1.8,
+      "pct_dev": 0.0189
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 195.0,
+      "model": 140.8,
+      "abs_dev": 54.2,
+      "pct_dev": 0.2779
+     }
+    ],
+    "max_abs_pct_dev": 0.7,
+    "mean_abs_pct_dev": 0.402
+   }
+  }
+ },
+ "reconciliation": {
+  "valuation_set": "clemens_2026",
+  "objective": {
+   "surplus_weight": 1.0,
+   "star_weight": 1.0,
+   "note": "min over k of w_s*mean_tier(|model_surplus-pub|/pub) + w_o*mean_tier(|model_star-pub|); k sweeps the shared WAR anchor transiently, tiers never snapped."
+  },
+  "roles": {
+   "hitter": {
+    "k": 1.4,
+    "pre": {
+     "surplus_max_pct_dev": 0.7273,
+     "surplus_mean_pct_dev": 0.3994,
+     "star_max_abs_dev": 0.5472,
+     "star_mean_abs_dev": 0.1462
+    },
+    "post": {
+     "surplus_max_pct_dev": 0.7758,
+     "surplus_mean_pct_dev": 0.3532,
+     "star_max_abs_dev": 0.2627,
+     "star_mean_abs_dev": 0.0765
+    }
+   },
+   "pitcher": {
+    "k": 1.5,
+    "pre": {
+     "surplus_max_pct_dev": 0.7,
+     "surplus_mean_pct_dev": 0.402,
+     "star_max_abs_dev": 0.6439,
+     "star_mean_abs_dev": 0.1313
+    },
+    "post": {
+     "surplus_max_pct_dev": 0.7758,
+     "surplus_mean_pct_dev": 0.3231,
+     "star_max_abs_dev": 0.2813,
+     "star_mean_abs_dev": 0.0403
+    }
    }
   }
  },
@@ -169,6 +388,6 @@
   "max_abs_dev": 0.6439,
   "pass": false,
   "verdict": "provisional",
-  "reason": "Displayed odds = published table (exact). Model odds are a diagnostic not yet reconciled to the table (deviation exceeds tolerance under the current anchors); Phase 5 calibration is the forcing function."
+  "reason": "Displayed odds = published table (exact). Model odds are a diagnostic; at the production anchor the deviation exceeds tolerance. The reconciliation block characterizes the gap as a best-fit anchor multiplier (k_h, k_p) plus an irreducible residual -- a single scalar cannot zero both the surplus and star-odds residuals, so the residual is disclosed, not snapped."
  }
 }

@@ -5747,6 +5747,7 @@ from value_framework import (
     active_valuation_set as _active_valuation_set,
     star_odds as _star_odds,
     published_star_odds as _published_star_odds,
+    published_opt_pct as _published_opt_pct,
     _BUCKETS as _SV_BUCKET_ORDER,
 )
 
@@ -5815,6 +5816,15 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
         _so_model = _star_odds(fv, is_pitcher, position, age=age, eta_years=eta_years)
         if _so_model is not None:
             out["star_odds_model"] = round(float(_so_model), 4)
+    except Exception:
+        pass
+    # `opt_pct` (upgrade-option layer): the share of the grade's value that comes
+    # from the chance of upgrading before graduating. Snapped by FV tier; NEGATIVE
+    # at high grades (top-end downgrade risk). Own try so it degrades independently.
+    try:
+        _op = _published_opt_pct(fv, is_pitcher)
+        if _op is not None:
+            out["opt_pct"] = round(float(_op), 4)
     except Exception:
         pass
     if eta_years is not None:

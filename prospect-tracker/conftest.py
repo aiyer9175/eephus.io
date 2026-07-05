@@ -43,6 +43,35 @@ def _raw_surplus_engine(request):
         cfg["enabled"] = saved
 
 
+# Modules that pin base-engine ALGEBRA / calibration MAGNITUDES (discount + $/WAR
+# reference values, surplus continuity/convexity/escalation, WAG talent convergence,
+# FA winter-dpw math). These were calibrated under the base-identity set. The
+# 2026-07 production-default flip to clemens_2026 overlays the SHARED $/WAR + salary
+# + discount conventions, which shifts those magnitudes site-wide; pin these unit
+# tests to the base set (prospx_current) so they keep testing the mechanics against
+# their stable reference. The SHIPPED production numbers (now clemens) are covered
+# by test_value_framework_integration + reports/validation.md, not these unit tests.
+_BASE_SET_MODULES = (
+    "test_config_base_verification",
+    "test_debuted",
+    "test_pitcher_roles",
+    "test_fa_class",
+    "test_fa_market",
+    "test_proj_export",
+    "test_wag",
+)
+
+
+@pytest.fixture(autouse=True)
+def _pin_base_valuation_set(request):
+    if request.module.__name__ not in _BASE_SET_MODULES:
+        yield
+        return
+    import value_framework as vf
+    with vf.valuation_set("prospx_current"):
+        yield
+
+
 @pytest.fixture(scope="session", autouse=True)
 def _restore_committed_build_artifacts():
     """Test-hygiene guard for committed BUILD ARTIFACTS (data/ sidecars +

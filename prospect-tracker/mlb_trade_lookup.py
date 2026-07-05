@@ -40,9 +40,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 # Phase 2 (D5): price the projected vet WAR per-season through the convex kernel
 # instead of the price-the-mean shortcut (total WAR * rate keyed to the AVERAGE).
-# Gated OFF by default so the live trade board is unchanged until the Phase-5 diff
-# is reviewed; set TRADE_LOOKUP_PER_SEASON_KERNEL=1 to enable the corrected path.
-_PER_SEASON_TRADE_KERNEL = os.environ.get("TRADE_LOOKUP_PER_SEASON_KERNEL", "0") == "1"
+# Now the DEFAULT (transform-first is the correct pricing; the Phase-5 diff was
+# reviewed and the per-season kernel is adopted). Opt OUT with
+# TRADE_LOOKUP_PER_SEASON_KERNEL=0 to restore the legacy price-the-mean path.
+_PER_SEASON_TRADE_KERNEL = os.environ.get("TRADE_LOOKUP_PER_SEASON_KERNEL", "1") != "0"
 
 from storage import (
     connect as _storage_connect,
@@ -346,16 +347,15 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
         season_market_usd += tiered_war_value_usd(season_war)
     aav_mm = aav_usd / 1_000_000.0
     if _PER_SEASON_TRADE_KERNEL:
-        # CORRECT (transform-first): sum per-season convex market value, then net
-        # salary. Avoids the E[f(X)] vs f(E[X]) error of pricing total WAR at one
-        # rate keyed to the AVERAGE (which underprices a declining vet whose good
-        # years sit in a higher tier). Gated OFF by default so the live board is
-        # unchanged until the Phase-5 diff is reviewed; flip TRADE_LOOKUP_PER_SEASON_KERNEL=1.
+        # CORRECT (transform-first) and now the DEFAULT: sum per-season convex
+        # market value, then net salary. Avoids the E[f(X)] vs f(E[X]) error of
+        # pricing total WAR at one rate keyed to the AVERAGE (which underprices a
+        # declining vet whose good years sit in a higher tier).
         surplus_mm = (season_market_usd / 1_000_000.0) - (aav_mm * years_remaining)
     else:
-        # LEGACY price-the-mean (default): tier the $/WAR rate off the AVG per-year
-        # projection and value all WAR at it. Retained as the live-board behavior
-        # pending the diff review; see the corrected path above.
+        # LEGACY price-the-mean (opt-out via TRADE_LOOKUP_PER_SEASON_KERNEL=0): tier
+        # the $/WAR rate off the AVG per-year projection and value all WAR at it.
+        # Kept only as a fallback; the per-season path above is the live board.
         avg_per_year = proj_war / years_remaining
         war_dollar_mm = dollars_per_war(avg_per_year)
         surplus_mm = (proj_war * war_dollar_mm) - (aav_mm * years_remaining)

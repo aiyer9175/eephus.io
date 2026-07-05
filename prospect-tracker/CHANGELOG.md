@@ -10,6 +10,35 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-05 (Clemens 2026 followups: default flip + safety flags + Tier 2 surfacing)
+
+The owner-gated followups from the recalibration, executed.
+
+- Production default FLIPPED to `clemens_2026` (MODEL mode). Split
+  `_BASE_IDENTITY_SET` (prospx_current, the byte-identical base config, overlay
+  no-op) from `_DEFAULT_VALUATION_SET` (clemens_2026) so the clemens overlay
+  actually applies on the default path -- the naive two-constant flip was a
+  mislabeled no-op. The board reprices per player under the FanGraphs market
+  conventions (prior-season arb, 4-step arb, 7yr control, net-7%, published
+  cost-of-win): 50 FV hitter model surplus ~$18.5M (+3% whole-stock), NOT the flat
+  ~2x table. This shifts the SHARED $/WAR conventions site-wide (FA / projections /
+  trade / WAG also reprice). value_framework.{json,js} re-emitted.
+- Model<->table reconciliation is now a REPORTED diagnostic, not forced:
+  `surplus_tier_calibration` + `fit_tier_reconciliation` (a per-role WAR-anchor
+  multiplier via the identity-default `war_anchor_scale` lever) report the best-fit
+  alignment + irreducible residual in star_odds_eval.json + validation.md. No scale
+  is written to the shipped set, so the live board is never rescaled to the table.
+- Validation report: residence-reconciled org rollup (top org ~$858M raw ->
+  reconciled toward the published ~$671M) + a FanGraphs-Board-aligned universe
+  comparison (793 of 1005 ranked).
+- Safety flags enabled: mlb_trade_lookup per-season kernel is now the default
+  (opt-out via TRADE_LOOKUP_PER_SEASON_KERNEL=0); the PROSPX Star Odds column is on.
+- Tier 2 surfaced: OPT% (upgrade-option) is an opt-in PROSPX column (`#optpct`,
+  surplus.opt_pct via published_opt_pct); the cross-source normalized consensus is
+  now the LIVE consensus scale (consensus.build_timeseries normalize=
+  ADOPT_NORMALIZED_CONSENSUS; per-source published grades untouched). Glossary +
+  registry + freshness-map updated. Full suite green (1871 passed).
+
 ## 2026-07-04 (Clemens 2026 recalibration, Tier 2: upgrade-option + grade normalization)
 
 Two analytical layers on top of the Tier 1 valuation sets. Both ship as reports +

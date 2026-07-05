@@ -131,6 +131,18 @@ FALLBACK_PRIOR_FV = 45.0
 SINGLE_SOURCE_PRIOR = 35.0
 SINGLE_SOURCE_K = 0.5
 
+# Adopt the cross-source grade-normalized consensus as the LIVE board FV
+# (grade_normalization.build_remapper): each source's FV is quantile-mapped onto the
+# FanGraphs scale BEFORE it enters the consensus mean, so a materially hot/cold
+# grader (e.g. ESPN, MLB Pipeline in 2026) is de-biased. The PIPELINE entrypoints
+# pass normalize=ADOPT_NORMALIZED_CONSENSUS to build_timeseries; unit tests call it
+# with the default (normalize=False) so their exact consensus_fv fixtures stay
+# valid. Flip to False to revert the board to the raw per-source mean. NOTE: this
+# moves the live scale, so on the next full pipeline run the append-only history
+# (metric_snapshots, farm_grade_history) gains a scale seam at the adoption date,
+# and eFV (which reads consensus_fv_raw) settles over one run.
+ADOPT_NORMALIZED_CONSENSUS = True
+
 # Source aliases — outlets that publish multiple separate lists but
 # count as one editorial voice. MLB Pipeline splits its yearly coverage
 # into the Top 100 (`mlb_pipeline`) and the International Top 50
@@ -450,6 +462,7 @@ def compute_consensus_point(
     total_fv_instances: int | None = None,
     dropped_off_pairs: set[tuple[str, str]] | None = None,
     source_weights: dict[str, float] | None = None,
+    grade_norm=None,
 ) -> ConsensusPoint | None:
     """
     Aggregate one player's snapshots into a ConsensusPoint.
@@ -503,10 +516,24 @@ def compute_consensus_point(
         # for transparency; per_source.fv_adjusted carries the post-shrink
         # value, and per_source.dropped_off flags the source.
         source_dropped = (s.player_key, s.source) in pairs
-        fv_for_consensus = s.fv
+        # Grade normalization (adopted 2026-07): quantile-map this source's FV onto
+        # the FanGraphs scale BEFORE it enters the consensus, and before the dropped-
+        # off shrink, so a hot/cold grader is de-biased on the same scale. Falls back
+        # to the raw fv when there is no usable overlap. The per_source entry below
+        # still records the RAW published grade (what the source actually said).
+        base_fv = s.fv
+        if grade_norm is not None and base_fv is not None:
+            try:
+                _yr = int(str(s.snapshot_date)[:4])
+                _nm = grade_norm(base_fv, s.source, s.position, _yr)
+                if _nm is not None:
+                    base_fv = _nm
+            except (TypeError, ValueError):
+                base_fv = s.fv
+        fv_for_consensus = base_fv
         fv_adjusted = None
-        if source_dropped and s.fv is not None:
-            fv_adjusted = (float(s.fv) + 30.0) / 2.0
+        if source_dropped and base_fv is not None:
+            fv_adjusted = (float(base_fv) + 30.0) / 2.0
             fv_for_consensus = fv_adjusted
             dropped_off_in_point.append(s.source)
         # v10 — When the same source publishes MULTIPLE lists with the
@@ -1011,6 +1038,7 @@ def build_timeseries(
     shrinkage_n_full: int = DEFAULT_N_FULL,
     prior_mean_fv: float | None = None,
     single_source_k: float = SINGLE_SOURCE_K,
+    normalize: bool = False,
 ) -> list[PlayerTimeseries]:
     """Build per-player FV time-series with forward-filled sources and
     Bayesian shrinkage applied to every point.
@@ -1027,6 +1055,16 @@ def build_timeseries(
     auto-computed prior (e.g. for unit tests).
     """
     snapshots = [_canonicalize_player_snapshot(s) for s in snapshots]
+    # Grade normalization (adopted 2026-07): build the quantile-mapping remapper ONCE
+    # here (single DB pass) and pass the PURE closure into every consensus point, so
+    # the hot path stays free of per-point DB hits. None when disabled -> raw scale.
+    grade_norm = None
+    if normalize:
+        try:
+            from grade_normalization import build_remapper
+            grade_norm = build_remapper()
+        except Exception:
+            grade_norm = None   # degrade to the raw scale rather than crash the build
     # v14 — drop-off detection runs ONCE across the full snapshot pool so
     # every player-level compute_consensus_point call shares the same view
     # of "which (player, source) pairs lost a Top-30 spot." Stays out of
@@ -1109,6 +1147,7 @@ def build_timeseries(
                 total_fv_instances=total_fv_instances,
                 dropped_off_pairs=dropped_off,
                 source_weights=_SOURCE_WEIGHTS,
+                grade_norm=grade_norm,
             )
             if pt is not None:
                 points.append(pt)

@@ -144,6 +144,8 @@ def build_label_view() -> dict:
 def build_calibration_eval() -> dict:
     import value_framework as vf
     cal = vf.star_odds_calibration("clemens_2026")
+    surplus_cal = vf.surplus_tier_calibration("clemens_2026")
+    recon = vf.fit_tier_reconciliation("clemens_2026")
     max_dev = max((v["max_abs_dev"] for v in cal["roles"].values()), default=None)
     tol = 0.10   # documented per-tier tolerance (see the recalibration spec)
     passed = max_dev is not None and max_dev <= tol
@@ -158,19 +160,27 @@ def build_calibration_eval() -> dict:
                           "P(bucket|FV); pitchers blend SP/RP by P(reliever|bucket).",
             "published": "FanGraphs 2026 tier star odds (config/valuation_sets/clemens_2026.yaml).",
             "priced_under": "clemens_2026 (control_years=7, star def 2x4 WAR).",
-            "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so it runs BELOW "
-                    "the published tier odds; Phase 5 reconciles model aggregates to the table. "
-                    "The DISPLAYED star odds are the published table values (exact by construction).",
+            "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so at the production "
+                    "anchor (war_anchor_scale=1) it runs BELOW the published tier odds. The "
+                    "DISPLAYED star odds are the published table values (exact by construction); "
+                    "the per-player model is a diagnostic. The `reconciliation` block reports the "
+                    "single per-role WAR-anchor multiplier (k) that best aligns the model "
+                    "aggregates to the published tiers and the RESIDUAL after it -- reported, NOT "
+                    "forced onto the live board (the shipped set carries no such scale).",
         },
         "calibration": cal,
+        "surplus_calibration": surplus_cal,
+        "reconciliation": recon,
         "gate": {
             "tolerance_abs": tol,
             "max_abs_dev": max_dev,
             "pass": passed,
             "verdict": "provisional",
-            "reason": "Displayed odds = published table (exact). Model odds are a diagnostic "
-                      "not yet reconciled to the table (deviation exceeds tolerance under the "
-                      "current anchors); Phase 5 calibration is the forcing function.",
+            "reason": "Displayed odds = published table (exact). Model odds are a diagnostic; at "
+                      "the production anchor the deviation exceeds tolerance. The reconciliation "
+                      "block characterizes the gap as a best-fit anchor multiplier (k_h, k_p) plus "
+                      "an irreducible residual -- a single scalar cannot zero both the surplus and "
+                      "star-odds residuals, so the residual is disclosed, not snapped.",
         },
     }
 

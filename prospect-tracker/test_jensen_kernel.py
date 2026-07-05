@@ -101,17 +101,20 @@ def test_default_kernel_mode_is_smoothed_production():
 
 
 # --------------------------------------------------------------------------
-# D5: mlb_trade_lookup vet surplus -- legacy price-the-mean by default,
-# per-season convex kernel behind the flag (default OFF; live board unchanged).
+# D5: mlb_trade_lookup vet surplus -- per-season convex kernel is now the DEFAULT
+# (transform-first, Phase-5 diff reviewed); legacy price-the-mean is the opt-out
+# (TRADE_LOOKUP_PER_SEASON_KERNEL=0).
 # --------------------------------------------------------------------------
-def test_trade_lookup_default_is_legacy_price_the_mean():
+def test_trade_lookup_default_is_per_season_kernel():
     import mlb_trade_lookup as mtl
-    assert mtl._PER_SEASON_TRADE_KERNEL is False   # live board unchanged by default
+    assert mtl._PER_SEASON_TRADE_KERNEL is True   # per-season kernel is the live board
     # Declining vet: rate 2.0 (career 10 / 5 seasons), age 30, 3 yrs left, $5M AAV.
     # Seasons: 1.6, 1.2, 0.8 (aging -0.4/yr past 29); proj_war 3.6, avg 1.2.
     proj, surplus = mtl._compute_surplus(10.0, 5, 30, 5_000_000, 3)
     assert proj == pytest.approx(3.6, abs=0.01)
-    exp = round(3.6 * vf.dollars_per_war(1.2) - 5.0 * 3, 1)   # legacy: total WAR x avg-tier rate
+    # per-season: each season priced on its OWN WAR through the convex kernel.
+    seasons = [1.6, 1.2, 0.8]
+    exp = round(sum(vf.tiered_war_value_usd(w) for w in seasons) / 1e6 - 5.0 * 3, 1)
     assert surplus == pytest.approx(exp, abs=0.05)
 
 

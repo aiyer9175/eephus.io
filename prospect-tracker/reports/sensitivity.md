@@ -1,8 +1,8 @@
 # Valuation sensitivity report (Phase 5)
 
-_Generated 2026-07-04. clemens_2026 model-mode total over our stock = $9.94B._
+_Generated 2026-07-05. clemens_2026 model-mode total over our stock = $9.94B._
 
-Coverage caveats: universe = 4044 active graded prospects on the 2026-07-04 metric snapshot (3945 sub-50, 99 50+). This is OUR graded stock, not the FanGraphs Board: never-ranked contributors are excluded, org membership follows our data, and NO residence-time stock->flow conversion is applied (we sum a stock of per-player values). Totals therefore need not equal the published aggregates; deviations are reported, not forced.
+Coverage caveats: the HEADLINE universe = 4044 active graded prospects on the 2026-07-04 metric snapshot (3945 sub-50, 99 50+). This is OUR graded stock, not the FanGraphs Board: never-ranked contributors are included, org membership follows our data, and the whole-stock totals sum a STOCK of per-player values. The org rollup below now applies a residence-time stock->flow reconciliation, and a Board-restricted (2026report) universe comparison is reported separately for the apples-to-apples read. Totals still need not equal the published aggregates; deviations are reported, not forced.
 
 Our totals are on a different scale than the FanGraphs whole-minors $12B (different universe + no residence flow), and our stock is heavily sub-50 (3945 of 4044), so compare DIRECTION and relative size, not absolute $M, to the published magnitudes.
 

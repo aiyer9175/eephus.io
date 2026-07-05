@@ -87,8 +87,8 @@ def test_calibration_report_structure():
         assert "max_abs_dev" in d and d["tiers"]
         for row in d["tiers"]:
             assert {"tier", "fv", "published", "model", "abs_dev"} <= set(row)
-    # Restored to the default set after the report's context manager.
-    assert vf.active_valuation_set() == "prospx_current"
+    # Restored to the default set (clemens_2026) after the report's context manager.
+    assert vf.active_valuation_set() == "clemens_2026"
 
 
 def test_snapshot_carries_star_odds():

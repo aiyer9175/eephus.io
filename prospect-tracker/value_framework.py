@@ -242,12 +242,17 @@ def _fitted() -> dict:
 
 
 def _reset_caches() -> None:
-    """Drop cached config/fitted + derived tables (used by --fit and tests)."""
+    """Drop cached config/fitted + derived tables (used by --fit, set_valuation_set,
+    and tests). Clears the FV-WAR-scale caches too: those are keyed only on
+    (fv, role) but READ the active set's config (the reconciliation anchor), so a
+    valuation-set switch must invalidate them or a stale scale leaks across sets."""
     _config.cache_clear()
     _fitted.cache_clear()
     _bucket_sv_usd.cache_clear()
     _calibrated_midpoints.cache_clear()
     _bayes_theta_draws.cache_clear()
+    _fv_war_scale.cache_clear()
+    _prime_war_scale.cache_clear()
 
 
 def _reset_derived_caches() -> None:
@@ -262,13 +267,27 @@ def _reset_derived_caches() -> None:
 
 # =============================================================================
 # Versioned valuation sets (Phase 1) -- select which published framework the
-# engine calibrates to / prices against. The DEFAULT stays prospx_current (the
-# live production engine); its params are deliberately NOT overlaid (the base
-# config is authoritative), so production output is byte-identical. A non-default
-# set (e.g. clemens_2026) deep-merges its translated `params` block onto the base
-# config. See valuation_sets.py.
+# engine calibrates to / prices against.
+#
+# Two distinct concepts, deliberately split (they used to coincide):
+#   * _BASE_IDENTITY_SET -- the set whose params are BYTE-IDENTICAL to the
+#     authoritative base config (value_framework_config.yaml). Its overlay is a
+#     deliberate no-op: the base config is authoritative, so selecting it re-prices
+#     to the exact legacy engine. This is prospx_current and does not move.
+#   * _DEFAULT_VALUATION_SET -- the PRODUCTION default the engine boots under.
+#     As of the 2026-07 flip this is clemens_2026 (FanGraphs/Ben Clemens market
+#     conventions: prior-season arb basis, 4-step arb, 7yr control, net-7%
+#     discount, published FG cost-of-win), whose translated `params` deep-merge
+#     onto the base config. MODEL mode: the career-path mixture engine reprices
+#     per player under these params (not the flat published tier table).
+#
+# Keeping the no-op keyed to _BASE_IDENTITY_SET (not the default) is load-bearing:
+# once the default is a NON-identity set, the overlay MUST actually apply, or the
+# engine would price under the base (prospx) config while merely relabeling output
+# as the default set. See valuation_sets.py.
 # =============================================================================
-_DEFAULT_VALUATION_SET = "prospx_current"
+_BASE_IDENTITY_SET = "prospx_current"   # byte-identical to the base config; overlay no-op
+_DEFAULT_VALUATION_SET = "clemens_2026"  # production default (flipped 2026-07; MODEL mode)
 _ACTIVE_VALUATION_SET = _DEFAULT_VALUATION_SET
 
 
@@ -322,12 +341,16 @@ def _deep_merge(base: dict, over: dict) -> dict:
 
 def _apply_valuation_overlay(cfg: dict) -> dict:
     """Overlay the active valuation set's engine params onto the base config. The
-    DEFAULT set is a deliberate no-op (base config authoritative -> production
-    byte-identical); any other set deep-merges its translated `params`. Tags
+    BASE-IDENTITY set (prospx_current) is a deliberate no-op: its params ARE the
+    base config, so selecting it re-prices to the exact legacy engine and byte-
+    identical output. Any OTHER set -- including the production default clemens_2026
+    -- deep-merges its translated `params`. Keyed to _BASE_IDENTITY_SET, NOT the
+    default: once the default is a non-identity set the overlay must actually apply,
+    or pricing would silently stay on the base config under a clemens label. Tags
     cfg['_valuation_set'] either way (this is the output-tagging seam)."""
     set_id = _ACTIVE_VALUATION_SET
     cfg["_valuation_set"] = set_id
-    if set_id == _DEFAULT_VALUATION_SET:
+    if set_id == _BASE_IDENTITY_SET:
         return cfg
     import valuation_sets as _vs
     _deep_merge(cfg, _vs.engine_params(set_id))
@@ -901,13 +924,30 @@ def _calibrated_midpoints(role: str) -> tuple[float, ...]:
     return tuple(float(cfg[b]["midpoint_war"]) for b in _BUCKETS)
 
 
+def _war_anchor_scale_for(role: str) -> float:
+    """Per-role WAR-anchor multiplier from config['war_anchor_scale'] (DEFAULT 1.0
+    == identity, so production is unchanged). This is the SINGLE shared upstream
+    lever that scales the realized 6yr-avg WAR anchor the engine reconciles to,
+    moving surplus AND star odds together. It is used ONLY by the Phase-5 model<->
+    table reconciliation DIAGNOSTIC (fit_tier_reconciliation), which sets it
+    transiently to REPORT the best-fit alignment + residual -- it is deliberately
+    NOT written into any shipped valuation set, so the live board is never forced
+    to the published tiers."""
+    return float(_config().get("war_anchor_scale", {}).get(role, 1.0))
+
+
 @lru_cache(maxsize=1024)
 def _fv_war_scale(fv_half: float, role: str) -> float:
     """FV-dependent scalar k(FV) on the base bucket shape: scales it so the
-    P(bucket|FV)-weighted six-year-avg WAR reconciles EXACTLY to the
+    P(bucket|FV)-weighted six-year-avg WAR reconciles to the (optionally rescaled)
     fv_to_6yr_avg_war anchor at this FV. Smooth in FV (anchor + P(bucket) are
     smooth), so midpoints = shape * k(FV) never go bimodal. `fv_half` is the FV
-    rounded to 0.5 (bounds the cache). bust bucket (shape 0) is unaffected."""
+    rounded to 0.5 (bounds the cache). bust bucket (shape 0) is unaffected.
+
+    The anchor is multiplied by _war_anchor_scale_for(role) (default 1.0 -> no
+    change); a non-unit scale is only ever set transiently by the reconciliation
+    diagnostic. Cached on (fv_half, role) but READS config, so set_valuation_set /
+    _reset_derived_caches must clear this cache (they do)."""
     is_pit = (role == "pitcher")
     probs = p_bucket_given_fv(fv_half, is_pit)
     base = _calibrated_midpoints(role)
@@ -917,7 +957,8 @@ def _fv_war_scale(fv_half: float, role: str) -> float:
     anchor = fv_to_6yr_avg_war(fv_half)
     if not denom or anchor is None:
         return 1.0
-    return float(anchor) / float(denom)
+    anchor = float(anchor) * _war_anchor_scale_for(role)
+    return anchor / float(denom)
 
 
 def _war_scale_for(fv: float | None, role: str) -> float:
@@ -3409,6 +3450,37 @@ def published_star_odds(fv: float | None, is_pitcher: bool,
     return _vs.table_star_odds(set_id, float(fv), is_pitcher)
 
 
+@lru_cache(maxsize=8)
+def _opt_pct_table(is_pitcher: bool, set_id: str) -> tuple:
+    """Cached (grade -> opt_pct) lookup for a role from the upgrade-option layer.
+    upgrade_option.option_valuation runs an np.linalg.inv per call, so this memoizes
+    it to ONE call per role (never per player). Returns () when the grade history is
+    insufficient, so the caller degrades to omission."""
+    import upgrade_option as _uo
+    if not _uo.data_sufficient():
+        return ()
+    grades = _uo.option_valuation(bool(is_pitcher), set_id).get("grades", {})
+    return tuple((int(g), float(v.get("opt_pct", 0.0))) for g, v in grades.items())
+
+
+def published_opt_pct(fv: float | None, is_pitcher: bool,
+                      set_id: str = "clemens_2026") -> float | None:
+    """The upgrade-option OPT% (share of a grade's value that comes from the chance
+    of UPGRADING before graduating) for an FV/role, from the upgrade_option layer's
+    per-grade table snapped by FV tier (reports/upgrade_option.md is the numeric
+    source of truth). The UI-surfaced value; mirrors published_star_odds. None when
+    FV is missing or history is insufficient. NEGATIVE at high grades (thin data +
+    top-end downgrade risk) -- surfaced honestly, not clamped to zero."""
+    if fv is None:
+        return None
+    import upgrade_option as _uo
+    table = dict(_opt_pct_table(bool(is_pitcher), set_id))
+    if not table:
+        return None
+    v = table.get(_uo._snap_tier(float(fv)))
+    return float(v) if v is not None else None
+
+
 def star_odds_calibration(set_id: str = "clemens_2026") -> dict:
     """Compare MODEL tier-aggregate star odds to the PUBLISHED tier star odds for a
     valuation set, per role, with the max absolute deviation. Real numbers only;
@@ -3423,6 +3495,7 @@ def star_odds_calibration(set_id: str = "clemens_2026") -> dict:
             is_pit = role == "pitcher"
             rows = []
             max_dev = 0.0
+            devs = []
             for label, tier in data["tiers"][role].items():
                 pub = tier.get("star_odds")
                 if pub is None:
@@ -3431,11 +3504,133 @@ def star_odds_calibration(set_id: str = "clemens_2026") -> dict:
                 model = float(star_odds(fv, is_pit) or 0.0)
                 dev = abs(model - float(pub))
                 max_dev = max(max_dev, dev)
+                devs.append(dev)
                 rows.append({"tier": label, "fv": fv,
                              "published": round(float(pub), 4),
                              "model": round(model, 4),
                              "abs_dev": round(dev, 4)})
-            out["roles"][role] = {"tiers": rows, "max_abs_dev": round(max_dev, 4)}
+            # mean alongside max so one saturated tail tier (70 FV, 0.875) doesn't
+            # mask an otherwise-good global fit.
+            mean_dev = sum(devs) / len(devs) if devs else 0.0
+            out["roles"][role] = {"tiers": rows, "max_abs_dev": round(max_dev, 4),
+                                  "mean_abs_dev": round(mean_dev, 4)}
+    return out
+
+
+def surplus_tier_calibration(set_id: str = "clemens_2026") -> dict:
+    """Compare MODEL tier-aggregate surplus ($M) to the PUBLISHED tier surplus for a
+    valuation set, per role, reporting absolute AND percent deviation (max + mean).
+    The surplus sibling of star_odds_calibration: a first-class, testable residual
+    surface (previously only computed inline in build_valuation_reports). Real
+    numbers only; a deviation is reported, never hidden. Prices under the set's own
+    params (model mode -- the career-path engine, not the flat published table)."""
+    import valuation_sets as _vs
+    data = _vs.load(set_id)
+    axis = _vs._TIER_AXIS
+    out = {"valuation_set": set_id, "roles": {}}
+    with valuation_set(set_id):
+        for role in ("hitter", "pitcher"):
+            is_pit = role == "pitcher"
+            rows = []
+            max_pct = 0.0
+            pcts = []
+            for label, tier in data["tiers"][role].items():
+                pub = tier.get("surplus_musd")
+                if pub is None:
+                    continue
+                fv = axis[label]
+                model = float(surplus_value_mm(fv, is_pit) or 0.0)
+                dev = abs(model - float(pub))
+                pct = dev / float(pub) if pub else 0.0
+                max_pct = max(max_pct, pct)
+                pcts.append(pct)
+                rows.append({"tier": label, "fv": fv,
+                             "published": round(float(pub), 2),
+                             "model": round(model, 2),
+                             "abs_dev": round(dev, 2),
+                             "pct_dev": round(pct, 4)})
+            mean_pct = sum(pcts) / len(pcts) if pcts else 0.0
+            out["roles"][role] = {"tiers": rows,
+                                  "max_abs_pct_dev": round(max_pct, 4),
+                                  "mean_abs_pct_dev": round(mean_pct, 4)}
+    return out
+
+
+def fit_tier_reconciliation(set_id: str = "clemens_2026", *,
+                            surplus_weight: float = 1.0, star_weight: float = 1.0,
+                            grid: list[float] | None = None) -> dict:
+    """DIAGNOSTIC (Phase-5 model<->table reconciliation): the single per-role WAR-
+    anchor multiplier k that best aligns the MODEL tier aggregates to the PUBLISHED
+    tiers, with the RESIDUAL after that best fit reported honestly.
+
+    REPORTED, NOT FORCED: this sweeps war_anchor_scale TRANSIENTLY (restoring it
+    afterward) purely to characterize the gap. It writes k to NO shipped valuation
+    set, so the live board is never rescaled to the published tiers. A single
+    scalar cannot zero BOTH residuals -- star odds is a nonlinear tail functional
+    (Gamma>=4 WAR -> Poisson-binomial) while surplus is near-linear in WAR through
+    the convex kernel -- so the fit is an honest compromise and both residuals stay
+    > 0. That non-zero residual is the point: it quantifies the model<->table gap
+    as 'a global anchor scale of ~k, plus an irreducible per-tier residual'.
+
+    Returns per role: {k, pre, post} where pre/post carry the surplus (max/mean
+    pct) and star-odds (max/mean abs) deviations at k=1 and at the fitted k."""
+    import valuation_sets as _vs
+    data = _vs.load(set_id)
+    axis = _vs._TIER_AXIS
+    if grid is None:
+        grid = [round(0.5 + 0.05 * i, 3) for i in range(int((4.0 - 0.5) / 0.05) + 1)]
+    out = {"valuation_set": set_id,
+           "objective": {"surplus_weight": surplus_weight, "star_weight": star_weight,
+                         "note": "min over k of w_s*mean_tier(|model_surplus-pub|/pub) "
+                                 "+ w_o*mean_tier(|model_star-pub|); k sweeps the shared "
+                                 "WAR anchor transiently, tiers never snapped."},
+           "roles": {}}
+
+    def _summ(s_pcts, o_devs):
+        return {"surplus_max_pct_dev": round(max(s_pcts), 4) if s_pcts else None,
+                "surplus_mean_pct_dev": round(sum(s_pcts) / len(s_pcts), 4) if s_pcts else None,
+                "star_max_abs_dev": round(max(o_devs), 4) if o_devs else None,
+                "star_mean_abs_dev": round(sum(o_devs) / len(o_devs), 4) if o_devs else None}
+
+    with valuation_set(set_id):
+        cfg = _config()
+        prev_scale = cfg.get("war_anchor_scale")
+        try:
+            for role in ("hitter", "pitcher"):
+                is_pit = role == "pitcher"
+                tiers = [(axis[l], t) for l, t in data["tiers"][role].items()]
+
+                def _eval(k):
+                    cfg["war_anchor_scale"] = {role: k}
+                    _reset_derived_caches()
+                    s_pcts, o_devs = [], []
+                    for fv, t in tiers:
+                        ps = t.get("surplus_musd")
+                        if ps:
+                            m = float(surplus_value_mm(fv, is_pit) or 0.0)
+                            s_pcts.append(abs(m - float(ps)) / float(ps))
+                        po = t.get("star_odds")
+                        if po is not None:
+                            m = float(star_odds(fv, is_pit) or 0.0)
+                            o_devs.append(abs(m - float(po)))
+                    return s_pcts, o_devs
+
+                pre = _summ(*_eval(1.0))
+                best = None
+                for k in grid:
+                    s_pcts, o_devs = _eval(k)
+                    js = (sum(s_pcts) / len(s_pcts)) if s_pcts else 0.0
+                    jo = (sum(o_devs) / len(o_devs)) if o_devs else 0.0
+                    obj = surplus_weight * js + star_weight * jo
+                    if best is None or obj < best[0]:
+                        best = (obj, k, _summ(s_pcts, o_devs))
+                out["roles"][role] = {"k": round(best[1], 3), "pre": pre, "post": best[2]}
+        finally:
+            if prev_scale is None:
+                cfg.pop("war_anchor_scale", None)
+            else:
+                cfg["war_anchor_scale"] = prev_scale
+            _reset_derived_caches()
     return out
 
 

@@ -1648,13 +1648,18 @@
       row-gap: 0;                      /* tightened so toolstrip sits flush below meta */
       align-items: center;
     }
-    /* Star Odds column (opt-in, #starodds=1): one extra track appended to the
-       right of Surplus so the 9-cell grid stays column-aligned when the column
-       is surfaced. Only applied when the render adds .has-star-odds, so the
-       default 8-track layout is untouched. The mobile override below keeps the
-       3-col collapse (the Star Odds cell is desktop-only). */
-    .col-header.has-star-odds, .player-row.has-star-odds {
+    /* Star Odds / OPT% columns (opt-in, #starodds / #optpct): each appends one
+       extra track to the right of Surplus so the grid stays column-aligned when a
+       column is surfaced. Star Odds and OPT% are independent flags, so THREE states
+       exist: star-only (9 tracks), opt-only (9 tracks), both (10 tracks). The base
+       8-track layout is untouched. Mobile overrides below keep the 3-col collapse
+       (both cells are desktop-only). */
+    .col-header.has-star-odds, .player-row.has-star-odds,
+    .col-header.has-opt-pct, .player-row.has-opt-pct {
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr;
+    }
+    .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr 0.6fr;
     }
     /* v19 - Tool-grade-strip relocated out of column 1 into its own
        grid item that spans Player + Rank + FV columns. Reads as a
@@ -6684,12 +6689,15 @@
            Rank column at 44px so "RANK" header fits without wrapping. */
         grid-template-columns: 1fr 44px 0.5fr;
       }
-      /* Keep the mobile 3-col collapse even when Star Odds is surfaced - the
-         desktop .has-star-odds 9-track rule outweighs the base mobile selector
-         (two classes vs one), so it must be re-overridden here at equal
-         specificity + later in source. The Star Odds cell itself is
-         desktop-only, so mobile drops it like the other dense columns. */
-      .col-header.has-star-odds, .player-row.has-star-odds {
+      /* Keep the mobile 3-col collapse even when Star Odds / OPT% are surfaced -
+         the desktop .has-star-odds / .has-opt-pct multi-track rules outweigh the
+         base mobile selector, so re-override here at matching-or-higher specificity
+         + later in source. Both cells are desktop-only, so mobile drops them like
+         the other dense columns. Includes the combined selector so the 10-track
+         desktop rule (specificity 0,3,0) is beaten at mobile width. */
+      .col-header.has-star-odds, .player-row.has-star-odds,
+      .col-header.has-opt-pct, .player-row.has-opt-pct,
+      .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
         grid-template-columns: 1fr 44px 0.5fr;
       }
       .player-row .line-chart-cell,
@@ -15056,6 +15064,19 @@ function getFilteredActives() {
       if (bm) return -1;
       return (bv - av) || fvCmpDesc(a, b);
     });
+  } else if (state.sort === "opt_pct") {
+    // OPT% (upgrade-option layer), descending. Missing sinks; FV is the tiebreak.
+    // Negative values (high-grade downgrade risk) sort below positive ones.
+    const _op = p => (p.surplus && p.surplus.opt_pct != null)
+                      ? Number(p.surplus.opt_pct) : null;
+    pool.sort((a, b) => {
+      const av = _op(a), bv = _op(b);
+      const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
+      if (am && bm) return fvCmpDesc(a, b);
+      if (am) return 1;
+      if (bm) return -1;
+      return (bv - av) || fvCmpDesc(a, b);
+    });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -16665,9 +16686,10 @@ function renderActives() {
   renderActiveContextRail();
   const filtered = getFilteredActives();
   _gfxSet("active", "prospect", filtered, {});
-  // Star Odds column: flag-gated (#starodds=1) and degrades on payload presence -
-  // only surfaces when at least one filtered prospect carries surplus.star_odds.
+  // Star Odds + OPT% columns: each flag-gated (#starodds / #optpct) and degrades on
+  // payload presence - only surfaces when a filtered prospect carries the field.
   const starOddsOn = _starOddsShow(filtered);
+  const optPctOn = _optPctShow(filtered);
   const pageSize = state.pageSizes.actives || 50;
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -16683,7 +16705,7 @@ function renderActives() {
   // says "Consensus FV · stock" so the source of the value is explicit.
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
-  const header = `<div class="col-header${starOddsOn ? " has-star-odds" : ""}">
+  const header = `<div class="col-header${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. Click to sort.">eFV Rank</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
@@ -16695,6 +16717,7 @@ function renderActives() {
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
     ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
+    ${optPctOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="opt_pct" title="OPT%: share of this grade's value from the chance of upgrading before graduating (upgrade-option layer, provisional). Low tiers option-rich; high grades run low/negative (top-end downgrade risk).">OPT%</span>` : ""}
   </div>`;
 
   const rows = pagedRows.map((p, i) => {
@@ -16704,7 +16727,7 @@ function renderActives() {
     // primary grade), consistent with the eFV rank + badge in this same row.
     const fvTier = fvTierAttr(p);
     return `
-      <div class="player-row${starOddsOn ? " has-star-odds" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+      <div class="player-row${starOddsOn ? " has-star-odds" : ""}${optPctOn ? " has-opt-pct" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
@@ -16723,6 +16746,7 @@ function renderActives() {
         ${makeEtaCell(p)}
         <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
         ${starOddsOn ? makeStarOddsCell(p) : ""}
+        ${optPctOn ? makeOptPctCell(p) : ""}
         ${playerExpandedMetaHTML(p)}
         ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>
@@ -32725,12 +32749,13 @@ function svCiText(s) {
 // ── Star Odds column ────────────────────────────────────────────────────────
 // FanGraphs 2026 published "odds of becoming a star": P(two or more seasons of
 // four or more WAR during team control), baked per prospect onto
-// p.surplus.star_odds (a probability 0..1). Dark by default pre-launch; opt in
-// with #starodds=1 (or ?starodds=1), then flip STAR_ODDS_DEFAULT at launch. The
-// column also degrades on payload presence: it only renders when at least one
-// visible row carries surplus.star_odds, so older exports stay dark even with
-// the flag on. Mirrors the Risk / Window column-flag convention used elsewhere.
-const STAR_ODDS_DEFAULT = false;   // dark by default pre-launch; opt in with #starodds=1, then flip STAR_ODDS_DEFAULT at launch
+// p.surplus.star_odds (a probability 0..1). ON by default (launched); force off
+// per-view with #starodds=0 (or ?starodds=0). The column also degrades on payload
+// presence: it only renders when at least one visible row carries
+// surplus.star_odds, so an older export that predates the storage star_odds bake
+// stays dark until it is regenerated. Mirrors the Risk / Window column-flag
+// convention used elsewhere.
+const STAR_ODDS_DEFAULT = true;   // launched: on by default; force off per-view with #starodds=0
 function _starOddsUiOn() {
   const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("starodds");
   if (h != null) return h !== "0";
@@ -32759,6 +32784,40 @@ function makeStarOddsCell(p) {
             : v >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)";
   const tip = "Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.";
   return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtStarOdds(v)}</div>`;
+}
+
+// OPT% (upgrade-option layer): the share of a grade's value that comes from the
+// chance of UPGRADING before graduating. Own opt-in flag (#optpct=0 to hide),
+// payload-presence gated exactly like Star Odds. High grades run LOW or NEGATIVE
+// (top-end downgrade risk), so the formatter + color ramp tolerate negatives.
+const OPT_PCT_DEFAULT = true;   // launched: on by default; force off per-view with #optpct=0
+function _optPctUiOn() {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("optpct");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("optpct");
+  if (q != null) return q !== "0";
+  return OPT_PCT_DEFAULT;
+}
+function _optPctShow(rows) {
+  return _optPctUiOn() && Array.isArray(rows)
+    && rows.some(p => p && p.surplus && p.surplus.opt_pct != null);
+}
+// OPT% as a signed percent, no decimals (e.g. "60%", "-7%"); dash when absent.
+function fmtOptPct(v) {
+  if (v == null || !isFinite(v)) return " - ";
+  return `${(Number(v) * 100).toFixed(0)}%`;
+}
+// One centered OPT% cell (desktop-only grid child). Bright when option-rich,
+// muted at/below zero (a high grade with net downgrade risk is not "good news").
+function makeOptPctCell(p) {
+  const v = (p && p.surplus && p.surplus.opt_pct != null) ? Number(p.surplus.opt_pct) : null;
+  const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
+            : v >= 0.5 ? "var(--up)"
+            : v >= 0.2 ? "var(--neon-cyan)"
+            : v >= 0 ? "var(--text-primary)"
+            : "var(--text-tertiary)";
+  const tip = "OPT%: share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
+  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtOptPct(v)}</div>`;
 }
 
 function makeSurplusCell(p) {

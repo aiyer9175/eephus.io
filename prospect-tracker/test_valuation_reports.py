@@ -48,6 +48,7 @@ def test_residence_reconciliation_arithmetic():
 
 
 def test_default_set_restored_after_report_pricing():
-    # The harness switches sets; ensure nothing leaves the engine off-default.
+    # The harness switches sets; ensure nothing leaves the engine off-default
+    # (the production default is now clemens_2026).
     br.load_universe()
-    assert vf.active_valuation_set() == "prospx_current"
+    assert vf.active_valuation_set() == "clemens_2026"

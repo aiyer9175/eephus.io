@@ -21,18 +21,21 @@ A valuation set is a FIRST-CLASS, versioned config artifact under
 
 Two sets ship:
 
-  * ``prospx_current`` -- the CURRENT production engine, captured so table mode
-    reproduces the live board and the legacy pipeline stays reproducible. NOTE
-    on naming: the prompt called this ``edwards_2019``, but the live anchors are
-    NOT raw Edwards 2019 -- they were empirically re-anchored (v47) to realized
-    2017-2020 outcomes (see docs/surplus-recalibration.md). We name it honestly
-    and keep ``edwards_2019`` as an alias. Its ``params`` MIRROR
-    value_framework_config.yaml for documentation; they are NOT re-applied for
-    the default set (the base config stays authoritative, so production is
-    byte-identical).
+  * ``prospx_current`` -- the LEGACY production engine (the BASE-IDENTITY set),
+    captured so table mode reproduces the pre-flip live board and the legacy
+    pipeline stays reproducible. NOTE on naming: the prompt called this
+    ``edwards_2019``, but the live anchors are NOT raw Edwards 2019 -- they were
+    empirically re-anchored (v47) to realized 2017-2020 outcomes (see
+    docs/surplus-recalibration.md). We name it honestly and keep ``edwards_2019``
+    as an alias. Its ``params`` MIRROR value_framework_config.yaml; because it is
+    byte-identical to the base config its overlay is a no-op (selecting it re-
+    prices to the exact legacy engine).
   * ``clemens_2026`` -- the FanGraphs / Ben Clemens (2026) published framework,
     fetched from the three source posts on 2026-07-03 and checksum-validated
-    against the values in the recalibration spec.
+    against the values in the recalibration spec. As of the 2026-07 flip this is
+    the PRODUCTION DEFAULT (MODEL mode): its ``params`` deep-merge onto the base
+    config so the career-path engine reprices per player under the FanGraphs
+    market conventions.
 
 Units: dollars in MILLIONS of nominal 2026 USD (``*_musd``); WAR per the field.
 
@@ -48,7 +51,12 @@ from pathlib import Path
 _HERE = Path(__file__).resolve().parent
 SETS_DIR = _HERE / "config" / "valuation_sets"
 
-DEFAULT_SET = "prospx_current"
+# The PRODUCTION default set the engine boots under (flipped 2026-07 to
+# clemens_2026; MODEL mode). prospx_current is the BASE-IDENTITY set -- byte-
+# identical to value_framework_config.yaml, whose overlay is a no-op (see
+# value_framework._BASE_IDENTITY_SET / _apply_valuation_overlay).
+DEFAULT_SET = "clemens_2026"
+BASE_IDENTITY_SET = "prospx_current"
 # Historical / prompt-facing aliases -> canonical set id.
 _ALIASES = {"edwards_2019": "prospx_current"}
 

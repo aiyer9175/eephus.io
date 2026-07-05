@@ -142,7 +142,7 @@ from storage import (
     snapshot_board_metrics, snapshot_trade_values, snapshot_farm_ranks,
     snapshot_farm_grades, record_il_observation,
 )
-from consensus import build_timeseries
+from consensus import build_timeseries, ADOPT_NORMALIZED_CONSENSUS
 from stats import (fetch_statlines_for, derive_statlines_from_career,
                    fetch_pitch_arsenal, fetch_sabermetrics,
                    fetch_career_war_bulk,
@@ -387,7 +387,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
 
     log.info("rebuild_only: loading snapshots + ancillary tables from DB")
     all_snaps = load_all_snapshots()
-    timeseries = build_timeseries(all_snaps)
+    timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
     log.info("rebuild_only: built timeseries for %d players", len(timeseries))
 
     # Preserve the existing rosters_by_org sidecar — it's built at
@@ -685,7 +685,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
 
         with _step("d1. Build player set from DB", log):
             all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
+            timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
             log.info("daily: %d tracked players", len(timeseries))
 
         # --- 2. Resolve MLBAM IDs + PlayerIndex (disk-cached, fast). ------
@@ -1355,7 +1355,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # --- 2. Build consensus ----------------------------------------
         with _step("2. Build consensus timeseries", log):
             all_snaps = load_all_snapshots()
-            timeseries = build_timeseries(all_snaps)
+            timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
             log.info("built timeseries for %d players", len(timeseries))
 
         # --- 2a. Bulk resolve IDs + birth dates for every prospect -----
@@ -1876,7 +1876,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 # Rebuild timeseries once so subsequent steps + export see the
                 # correct statuses.
                 all_snaps = load_all_snapshots()
-                timeseries = build_timeseries(all_snaps)
+                timeseries = build_timeseries(all_snaps, normalize=ADOPT_NORMALIZED_CONSENSUS)
 
         # --- 3d. Pitch arsenals (pitchers) + sabermetrics (everyone).
         # The MLB Stats API only carries this data for MLB seasons, so most

@@ -62,3 +62,22 @@ def test_eval_artifact_present_and_gate_passes():
     assert doc["experiment"] == "upgrade-option-layer"
     assert doc["gate"]["pass"] is True
     assert set(doc["roles"]) == {"hitter", "pitcher"}
+
+
+def test_published_opt_pct_surfacing():
+    # The UI-surfaced helper snaps by FV tier and mirrors the per-grade table.
+    import value_framework as vf
+    h45 = vf.published_opt_pct(45.0, False)
+    h60 = vf.published_opt_pct(60.0, False)
+    assert h45 is not None and h60 is not None
+    assert h45 > 0.50                 # low-tier hitter is option-rich
+    assert h60 < h45                  # high grade runs lower (downgrade risk)
+    # snaps to the tier: 44 and 46 both map to the 45 FV grade
+    assert vf.published_opt_pct(44.0, False) == vf.published_opt_pct(46.0, False)
+    assert vf.published_opt_pct(None, False) is None
+
+
+def test_surplus_payload_carries_opt_pct():
+    from storage import _build_surplus_payload
+    pl = _build_surplus_payload(45.0, False, "SS")
+    assert "opt_pct" in pl and pl["opt_pct"] > 0.50

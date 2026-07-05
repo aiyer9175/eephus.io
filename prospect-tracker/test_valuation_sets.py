@@ -71,46 +71,62 @@ def test_unknown_set_raises():
 @pytest.mark.parametrize("is_pit", [False, True])
 def test_prospx_current_table_mode_matches_production(label, fv, is_pit):
     table = vs.table_value_musd("prospx_current", fv, is_pit)
-    engine = vf.surplus_value_mm(fv, is_pit)
+    # prospx_current is now the BASE-IDENTITY set (no longer the default): its
+    # table mode reproduces the LEGACY engine, so price the engine in its context.
+    with vf.valuation_set("prospx_current"):
+        engine = vf.surplus_value_mm(fv, is_pit)
     assert table == pytest.approx(engine, abs=0.05), (
         f"{label} {'pit' if is_pit else 'hit'}: table {table} != engine {engine}")
 
 
 # --------------------------------------------------------------------------
-# Default is production; overlay is a no-op for the default set
+# Default is clemens_2026 (MODEL mode); prospx_current is the base-identity no-op
 # --------------------------------------------------------------------------
-def test_default_is_prospx_current_and_no_overlay_leak():
-    assert vf.active_valuation_set() == "prospx_current"
+def test_default_is_clemens_2026_and_base_identity_no_op():
+    # Production default flipped 2026-07 to clemens_2026 (MODEL mode).
+    assert vf.active_valuation_set() == "clemens_2026"
     cfg = vf._config()
-    assert cfg["_valuation_set"] == "prospx_current"
-    # Base config untouched by any overlay.
-    assert int(cfg["service_time"]["control_years"]) == 6
-    assert list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"]) == [0.40, 0.60, 0.80]
+    assert cfg["_valuation_set"] == "clemens_2026"
+    # clemens params applied on the default path.
+    assert int(cfg["service_time"]["control_years"]) == 7
+    assert list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"]) == [0.15, 0.35, 0.50, 0.75]
+    # The base-identity set (prospx_current) overlay is a no-op: selecting it
+    # re-prices to the exact legacy base config.
+    with vf.valuation_set("prospx_current"):
+        cfg0 = vf._config()
+        assert cfg0["_valuation_set"] == "prospx_current"
+        assert int(cfg0["service_time"]["control_years"]) == 6
+        assert list(cfg0["service_time"]["arb_model"]["fractions_of_fa_value"]) == [0.40, 0.60, 0.80]
 
 
 # --------------------------------------------------------------------------
-# clemens_2026 overlay applies its params, then restores cleanly
+# clemens_2026 (the default) applies its params; a context switch restores cleanly
 # --------------------------------------------------------------------------
-def test_clemens_overlay_applies_and_restores():
+def test_clemens_default_applies_and_context_restores():
+    # clemens_2026 is the default, so its overlay params ARE the live config.
+    cfg = vf._config()
+    assert cfg["_valuation_set"] == "clemens_2026"
+    assert int(cfg["service_time"]["control_years"]) == 7
+    assert list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"]) == [0.15, 0.35, 0.50, 0.75]
+    assert cfg["service_time"]["arb_basis"] == "prior_season"
+    assert float(cfg["discount_rate"]) == pytest.approx(0.07)
+    assert float(cfg["dollars_per_war_inflation"]) == pytest.approx(0.0)
+    # fa_implied disabled -> tier rates stay at the published FG figures.
+    assert cfg["dollars_per_war"]["fa_implied"]["enabled"] is False
+    assert float(cfg["dollars_per_war"]["tiered"]["rates"]["lt_1"]) == pytest.approx(6.97e6, rel=1e-6)
+    assert float(cfg["dollars_per_war"]["tiered"]["rates"]["2plus"]) == pytest.approx(13.63e6, rel=1e-6)
+    assert cfg["star_definition"]["min_seasons"] == 2
+    assert cfg["star_definition"]["war_threshold"] == 4.0
     base_50 = vf.surplus_value_mm(50.0, False)
-    with vf.valuation_set("clemens_2026"):
-        cfg = vf._config()
-        assert cfg["_valuation_set"] == "clemens_2026"
-        assert int(cfg["service_time"]["control_years"]) == 7
-        assert list(cfg["service_time"]["arb_model"]["fractions_of_fa_value"]) == [0.15, 0.35, 0.50, 0.75]
-        assert cfg["service_time"]["arb_basis"] == "prior_season"
-        assert float(cfg["discount_rate"]) == pytest.approx(0.07)
-        assert float(cfg["dollars_per_war_inflation"]) == pytest.approx(0.0)
-        # fa_implied disabled -> tier rates stay at the published FG figures.
-        assert cfg["dollars_per_war"]["fa_implied"]["enabled"] is False
-        assert float(cfg["dollars_per_war"]["tiered"]["rates"]["lt_1"]) == pytest.approx(6.97e6, rel=1e-6)
-        assert float(cfg["dollars_per_war"]["tiered"]["rates"]["2plus"]) == pytest.approx(13.63e6, rel=1e-6)
-        assert cfg["star_definition"]["min_seasons"] == 2
-        assert cfg["star_definition"]["war_threshold"] == 4.0
-    # restored
-    assert vf.active_valuation_set() == "prospx_current"
+    # Entering the base-identity context prices the legacy value; leaving restores
+    # the clemens default (params + priced value).
+    with vf.valuation_set("prospx_current"):
+        assert vf.active_valuation_set() == "prospx_current"
+        assert int(vf._config()["service_time"]["control_years"]) == 6
+        assert vf.surplus_value_mm(50.0, False) == pytest.approx(17.7, abs=0.1)
+    assert vf.active_valuation_set() == "clemens_2026"
     assert vf.surplus_value_mm(50.0, False) == pytest.approx(base_50, abs=0.01)
-    assert vf._config()["_valuation_set"] == "prospx_current"
+    assert vf._config()["_valuation_set"] == "clemens_2026"
 
 
 def test_engine_params_translation_units():
@@ -118,6 +134,7 @@ def test_engine_params_translation_units():
     assert ep["dollars_per_war"]["tiered"]["rates"]["1_to_2"] == pytest.approx(8.76e6, rel=1e-9)
     assert ep["service_time"]["control_years"] == 7
     assert ep["discount_rate"] == 0.07
-    # default set params are documentation only, but the translator still works:
+    # base-identity set params mirror the base config (its overlay is a no-op),
+    # but the translator still works:
     ep0 = vs.engine_params("prospx_current")
     assert ep0["service_time"]["control_years"] == 6

@@ -15,8 +15,15 @@ Raw and normalized grades are kept side by side; a normalized consensus is the
 mean of the normalized per-source grades (so a hot or cold grader is de-biased by
 the shape of its whole distribution, not just a single offset). Drift tables
 report, per source per cycle, how far the mapping moves the scale, flagging
-sources with material drift. This is an analytical layer: it does NOT change the
-live consensus (default unchanged); it is reproducible and diff-able.
+sources with material drift.
+
+ADOPTED (2026-07): the LIVE consensus is now the normalized scale. build_remapper()
+precomputes the mapping once and consensus.build_timeseries applies it per source
+BEFORE aggregation (preserving every consensus discipline: source weights, the
+single-source FV-35 pull, dropped-off shrinkage, rank-implied fallback, forward-
+fill, candlesticks) -- gated by consensus.ADOPT_NORMALIZED_CONSENSUS. The per-
+source published grades on the card are untouched; only the consensus scale moves.
+Still reproducible and diff-able (normalized_consensus below is the analysis view).
 
 No fabricated grades: a (source, role, cycle) cell below `min_n` falls back to the
 source's pooled all-year distribution (flagged), and a cell with no FanGraphs
@@ -176,6 +183,56 @@ def _latest_player_grades(year: int) -> dict:
     return {pk: {"role": rec["role"],
                  "sources": {s: v[1] for s, v in rec["sources"].items()}}
             for pk, rec in latest.items()}
+
+
+def build_remapper(years: list[int] | None = None):
+    """Precompute the per-(source, role, cycle) quantile-mapping distributions in a
+    SINGLE DB pass and return a PURE closure remap(fv, source, position, year) -> fv
+    on the FanGraphs scale. Lets consensus.py ADOPT the normalized consensus without
+    importing this module's DB layer per point.
+
+    Contract: the reference source (FanGraphs) maps to itself; a (source, role,
+    year) cell with no usable overlap falls back to the RAW fv (never drops the
+    source). Role is derived from position with the same pitcher-token rule the
+    paired distributions were built under, so a grade is remapped against its own
+    role's distribution. Deterministic given the DB contents."""
+    latest = _all_latest()
+    sources: set[str] = set()
+    for players in latest.values():
+        for d in players.values():
+            sources.update(d.keys())
+    table: dict = {}
+    for (role, yr) in list(latest.keys()):
+        if years is not None and yr not in years:
+            continue
+        for src in sources:
+            if src == REFERENCE:
+                continue
+            s_sorted, r_sorted, _pooled = _paired_dists(src, role, yr)
+            if len(s_sorted) and len(r_sorted):
+                table[(src, role, yr)] = (s_sorted, r_sorted)
+
+    def remap(fv, source, position, year):
+        if fv is None:
+            return None
+        if source == REFERENCE:
+            return float(fv)
+        try:
+            yr = int(year)
+        except (TypeError, ValueError):
+            return float(fv)
+        role = "pitcher" if _is_pitcher(position) else "hitter"
+        ent = table.get((source, role, yr))
+        if not ent:
+            return float(fv)          # no usable overlap -> raw fallback (never drop)
+        src, ref = ent
+        if len(src) == 1:
+            q = 0.5
+        else:
+            q = float(np.interp(float(fv), src, np.linspace(0.0, 1.0, len(src))))
+        return float(np.interp(q, np.linspace(0.0, 1.0, len(ref)), ref))
+
+    return remap
 
 
 def normalized_consensus(year: int, min_sources: int = 2) -> dict:

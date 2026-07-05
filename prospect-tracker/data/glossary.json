@@ -1527,7 +1527,7 @@
    "aliases": [],
    "priority": 8,
    "definition": "The site-computed FV; an accuracy-weighted mean of all source publications with single-instance shrinkage.",
-   "methodology": "For every snapshot, the consensus FV is an accuracy-weighted mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted.",
+   "methodology": "For every snapshot, the consensus FV is an accuracy-weighted mean of explicit FVs published by any tracked source. When only one source has ever published the player (across their entire history, not just the latest snapshot), the consensus is Bayesian-pulled 1/3 toward FV 35 to reflect single-observation uncertainty. The pull lifts as soon as a second grade lands, even from the same source. Phase 4 (2026-06): the blend is ACCURACY-WEIGHTED - relative vote weights from each source's measured track record on resolved common-set cohorts (vintage-disciplined: a board year only uses track records resolvable before it), shrunk hard toward equal (k=150) and clamped [0.6, 1.5]. Current weights: MLB Pipeline 1.06, FanGraphs 0.94 - the resolved cohorts measured Pipeline slightly ahead, the opposite of the popular prior; sources without resolved history vote at 1.0. Shipped only after the weighted blend beat equal-weight on both pooled Spearman and AUC in the A/B (data/consensus_weight_eval.json); disagreement metrics stay unweighted. Cross-source normalization (2026-07): before the blend, each source's grade is quantile-mapped onto the FanGraphs scale on the players both grade, so a materially hot or cold outlet is de-biased by the shape of its whole distribution rather than assumed to share the FanGraphs scale; the per-source grades shown on the card are unchanged, only the consensus scale is.",
    "seeAlso": [
     "fv",
     "shrinkage",
@@ -5712,6 +5712,30 @@
     "sur_plus",
     "fv",
     "eta"
+   ]
+  },
+  {
+   "id": "opt_pct",
+   "term": "OPT% (Upgrade Option)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "OPT%",
+    "Upgrade option",
+    "Option share",
+    "Grade option value"
+   ],
+   "priority": 40,
+   "definition": "The share of a prospect's grade value that comes from the chance of UPGRADING to a better grade before graduating, rather than from the most likely outcome at today's grade. A grade is a call option on development: a low FV is worth more than its modal result because it can still improve before it graduates.",
+   "methodology": "The grade is modeled as a role-split absorbing Markov chain over FV tiers 35 to 70 plus graduated and out, with an annual step estimated from our dated grade history (FanGraphs and MLB Pipeline pooled to one grade per player per year, Laplace-smoothed); graduation is a real MLB debut and out is a washed-out player, and a still-active player's last observed year is censored so no transition is fabricated. total is the expected payoff under the full chain (the grade can move), intrinsic is the payoff if the grade were frozen at today's value, option is total minus intrinsic, and OPT% is option divided by total. Payoff is the clemens_2026 table value of the grade a player graduates from. Low tiers are option-rich (a 45 FV hitter runs about 60 percent); high grades run low or NEGATIVE because grade mobility at the top is net-downgrade risk the frozen view ignores and the top-tier samples are thin. Provisional and descriptive: negatives are shown honestly and it does not change any surplus.",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "fv",
+    "star_odds"
    ]
   }
  ]

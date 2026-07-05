@@ -33,7 +33,12 @@ import pytest
 import value_framework as vf
 
 _B = vf._BUCKETS
-_CFG = vf._config()
+# Base-config verification: capture the config under the BASE-IDENTITY set so the
+# reference magnitudes (discount, $/WAR, arb) stay stable across the 2026-07
+# production-default flip to clemens_2026 (which overlays those conventions). The
+# per-test _pin_base_valuation_set fixture keeps the engine on the same set.
+with vf.valuation_set("prospx_current"):
+    _CFG = vf._config()
 _RECON_TOL = float(_CFG["fit"]["reconcile_tol"])
 
 

@@ -1,11 +1,14 @@
 # Prospect Valuation Methodology (Clemens 2026 recalibration)
 
-> **Status (2026-07-04):** Tier 1 of the recalibration is built behind versioned
-> valuation sets. The production default is unchanged (`prospx_current`); the new
-> FanGraphs / Ben Clemens 2026 framework ships as a selectable set (`clemens_2026`)
-> for comparison and for the published Star Odds and draft pick-surplus surfaces.
-> No published board number moves until the diff report is reviewed and the default
-> is flipped. Companion reports: `reports/validation.md`, `reports/sensitivity.md`,
+> **Status (2026-07-05):** the diff report was reviewed and the production default
+> is now `clemens_2026` (MODEL mode): the career-path engine reprices per player
+> under the FanGraphs / Ben Clemens 2026 market conventions (prior-season arb basis,
+> 4-step arb, 7yr control, net-7% discount, published FG cost-of-win). `prospx_current`
+> remains the BASE-IDENTITY set (byte-identical to the base config; overlay no-op) and
+> stays selectable for the legacy comparison. This flip applies MODEL mode, not the
+> flat published table (~2x), so per-player resolution is preserved; the model<->table
+> gap is reported as a diagnostic in the eval artifacts, not forced onto the board.
+> Companion reports: `reports/validation.md`, `reports/sensitivity.md`,
 > `reports/diff.md`. Engine: `value_framework.py`; sets: `config/valuation_sets/`.
 
 This document has two parts, mirroring the two FanGraphs source posts: a
@@ -34,13 +37,16 @@ global parameters the engine prices with (cost of a win, arbitration schedule,
 discount rate, control-year convention, star definition, residence time). Two sets
 ship:
 
-- `prospx_current` (default, alias `edwards_2019`): the current production engine,
-  captured so the legacy pipeline stays reproducible. A 50 FV hitter is about
-  $17.7M here.
-- `clemens_2026`: the FanGraphs 2026 published framework. A 50 FV hitter is $45.0M
-  (pitcher $33.5M); a 70 FV is about $195M. Adopting it roughly doubles published
-  surplus at the mid tiers, which is why the default does not change until the diff
-  is reviewed.
+- `prospx_current` (base-identity set, alias `edwards_2019`): the legacy production
+  engine, byte-identical to the base config (overlay no-op), captured so the legacy
+  pipeline stays reproducible. A 50 FV hitter is about $17.7M here.
+- `clemens_2026` (production default since 2026-07-05): the FanGraphs 2026 framework.
+  In MODEL mode (the shipped board), the engine reprices per player under the clemens
+  market conventions; a 50 FV hitter model surplus is about $18.5M (55 FV ~$35.2M),
+  a modest +3% whole-stock lift over `prospx_current`, NOT the flat published table.
+  The published TABLE values (50 FV hitter $45.0M, pitcher $33.5M, 70 FV ~$195M -
+  roughly 2x the mid tiers) remain the calibration target + the draft/star-odds
+  display source, but are deliberately NOT the per-player board price.
 
 **Two modes.** *Table mode* prices a player directly at his tier value (exact
 replication of the published framework, and the fallback and display option).
@@ -213,7 +219,8 @@ in our data (60 FV about 221 hitter observations) and grade mobility at the top 
 net-downgrade risk the frozen-at-grade intrinsic ignores. A config-prior mode
 (labelled literature anchor: a 45 FV position player upgrades at roughly 20 percent)
 is available as a cross-check. Report: `reports/upgrade_option.md`; eval:
-`data/upgrade_option_eval.json`. UI deferred.
+`data/upgrade_option_eval.json`. Surfaced 2026-07-05 as the opt-in OPT% column on
+the PROSPX active board (`#optpct`; provisional, negatives shown honestly).
 
 ## 10. Cross-source grade normalization (`grade_normalization.py`)
 
@@ -225,20 +232,38 @@ coverage difference, so a top-only outlet is not called hot for skipping the low
 tiers. No scale equivalences are assumed; thin cells pool the source's overlap across
 years (flagged). Raw and normalized grades sit side by side; a normalized consensus
 is the mean of the FanGraphs-scale normalized per-source grades. The reference maps
-to itself (identity) and recomputation is deterministic. This is an analytical layer:
-the live consensus is NOT changed. The 2026 cycle flags mlb_pipeline and espn as
-grading materially higher than FanGraphs on shared players. Report:
-`reports/grade_normalization.md`; eval: `data/grade_normalization_eval.json`.
+to itself (identity) and recomputation is deterministic. ADOPTED 2026-07-05 as the
+LIVE consensus scale: `consensus.build_timeseries` applies the remapper per source
+before aggregation (gated by `ADOPT_NORMALIZED_CONSENSUS`), preserving the source
+weights, single-source pull, dropped-off shrinkage and forward-fill; the per-source
+published grades on the card are untouched, only the consensus scale moves. The 2026
+cycle flags mlb_pipeline and espn as grading materially higher than FanGraphs on
+shared players. Report: `reports/grade_normalization.md`; eval:
+`data/grade_normalization_eval.json`.
+
+## Resolved (2026-07-05 followups)
+
+- Production default FLIPPED to `clemens_2026` (MODEL mode), keyed off a
+  `_BASE_IDENTITY_SET` split so the clemens overlay actually applies on the default
+  path. This changes the shared $/WAR + salary + discount conventions site-wide
+  (prospects, and downstream FA / projections / trade / WAG), not just the board.
+- Model<->table reconciliation is now a REPORTED diagnostic (`fit_tier_reconciliation`
+  + `surplus_tier_calibration`): a single per-role WAR-anchor multiplier best-aligns
+  the model aggregates to the published tiers, with the residual disclosed. It is NOT
+  applied to the live board (no `war_anchor_scale` in the shipped set), so the board
+  stays model-mode +3%, not the ~2x table.
+- Validation report gained a residence-reconciled org rollup (top org drops from
+  ~$858M raw stock toward the published ~$671M) and a FanGraphs-Board-aligned
+  universe comparison (793 of 1005 ranked).
+- Safety flags enabled: the mlb_trade_lookup per-season kernel (opt-out) and the
+  PROSPX Star Odds column.
+- Tier 2 surfaced: OPT% is an opt-in PROSPX column; the cross-source normalized
+  consensus is now the live consensus scale (`ADOPT_NORMALIZED_CONSENSUS`).
 
 ## Open items
 
-- Model-mode reconciliation to the published tier table (surplus and star odds) is
-  the outstanding calibration work; the deviations are reported honestly rather than
-  forced.
-- The production default stays `prospx_current` until the diff report is reviewed and
-  the owner approves flipping to `clemens_2026`.
-- Top-org magnitude reconciliation and any Board-aligned universe comparison remain a
-  TODO for the validation report.
-- Tier 2 (upgrade-option layer, grade normalization) ships as reports + eval
-  artifacts with UI deferred; surfacing OPT% and adopting the normalized consensus
-  are future decisions.
+- The model<->table residual is irreducible under a single anchor scale (star odds is
+  a nonlinear tail functional, surplus near-linear in WAR); reported, not forced.
+- Adopting the normalized consensus adds a scale seam to the append-only history
+  (metric_snapshots, farm_grade_history) at the adoption date, and eFV (which reads
+  consensus_fv_raw) settles over one pipeline run.

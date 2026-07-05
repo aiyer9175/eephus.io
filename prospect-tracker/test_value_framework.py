@@ -482,28 +482,32 @@ def test_inflation_raises_value_vs_no_inflation() -> None:
 def test_disabling_timing_reproduces_flat_behavior() -> None:
     """Disabling inflation + debut-based discounting + aging makes surplus
     INVARIANT to age/ETA (the prior timing-flat behavior) and reproduces the
-    recalibrated flat value (FV 60 SS = 48.5)."""
-    cfg = vf._config()
-    saved = (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"])
-    try:
-        cfg["dollars_per_war_inflation"] = 0.0
-        cfg["discount_from"] = "now"
-        cfg["aging"]["enabled"] = False
-        vf._bucket_sv_usd.cache_clear()
-        v_noargs = vf.surplus_value_mm(60, False, "SS")
-        v_young = vf.surplus_value_mm(60, False, "SS", age=19, eta_years=4)
-        v_old = vf.surplus_value_mm(60, False, "SS", age=30, eta_years=0)
-        assert v_noargs == v_young == v_old                    # timing has NO effect (flat)
-        # The flat value tracks the (hierarchical-MAP) point estimate. v44 lifted
-        # the $/WAR tiers to the trailing 3-yr average (2024-26), so the 60-FV
-        # flat surplus rose ~6% (the 2plus tier firmed up) to ~140 from the old
-        # ~132.5; range widened to absorb future annual re-averages + G pooling.
-        # v3 (re-anchor): the band scales by the FA-implied level shift.
-        scale = (cfg["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
-        assert 44.0 * scale <= v_noargs <= 54.0 * scale   # v47 recalibration (~48.5 pre-anchor)
-    finally:
-        (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
-        vf._bucket_sv_usd.cache_clear()
+    recalibrated flat value (FV 60 SS = 48.5). Pinned to the base-identity set
+    (prospx_current) so the calibrated magnitude band is stable across the
+    2026-07 production-default flip to clemens_2026; the timing mechanic under
+    test is set-independent."""
+    with vf.valuation_set("prospx_current"):
+        cfg = vf._config()
+        saved = (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"])
+        try:
+            cfg["dollars_per_war_inflation"] = 0.0
+            cfg["discount_from"] = "now"
+            cfg["aging"]["enabled"] = False
+            vf._bucket_sv_usd.cache_clear()
+            v_noargs = vf.surplus_value_mm(60, False, "SS")
+            v_young = vf.surplus_value_mm(60, False, "SS", age=19, eta_years=4)
+            v_old = vf.surplus_value_mm(60, False, "SS", age=30, eta_years=0)
+            assert v_noargs == v_young == v_old                    # timing has NO effect (flat)
+            # The flat value tracks the (hierarchical-MAP) point estimate. v44 lifted
+            # the $/WAR tiers to the trailing 3-yr average (2024-26), so the 60-FV
+            # flat surplus rose ~6% (the 2plus tier firmed up) to ~140 from the old
+            # ~132.5; range widened to absorb future annual re-averages + G pooling.
+            # v3 (re-anchor): the band scales by the FA-implied level shift.
+            scale = (cfg["dollars_per_war"].get("_fa_reanchor") or {}).get("scale", 1.0)
+            assert 44.0 * scale <= v_noargs <= 54.0 * scale   # v47 recalibration (~48.5 pre-anchor)
+        finally:
+            (cfg["dollars_per_war_inflation"], cfg["discount_from"], cfg["aging"]["enabled"]) = saved
+            vf._bucket_sv_usd.cache_clear()
 
 
 def test_distribution_threads_timing() -> None:
