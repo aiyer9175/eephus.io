@@ -1,0 +1,193 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+"""Emit the Phase-4 Star Odds artifacts:
+
+  * data/star_odds_eval.json  -- the tier calibration report (MODEL tier-aggregate
+    star odds vs the FanGraphs 2026 PUBLISHED tier odds, per role, max abs dev).
+  * data/star_label_view.json -- the xFV training-label view (player, debut class,
+    control seasons, star boolean) built from REAL realized MLB WAR. No synthesized
+    outcomes: a player appears only if we hold his per-season WAR + a debut year.
+
+Run:  python -m tools.build_star_odds_artifacts     (from repo root)
+"""
+from __future__ import annotations
+
+import datetime as _dt
+import json
+import sqlite3
+from pathlib import Path
+
+_ROOT = Path(__file__).resolve().parent.parent
+_DATA = _ROOT / "data"
+
+# Star window: the clemens_2026 control window (7 seasons) is the star definition
+# window. The label counts seasons of >= 4 WAR within [debut_year .. debut_year+6].
+_STAR_MIN_SEASONS = 2
+_STAR_WAR = 4.0
+_CONTROL_YEARS = 7
+_RESOLVED_THROUGH = 2025   # last complete MLB season (efv_dataset convention)
+
+
+def _today() -> str:
+    return _dt.date.today().isoformat()
+
+
+def _debut_years() -> dict[str, dict]:
+    """player_key -> {debut_year, name} from data/debuts.json."""
+    out: dict[str, dict] = {}
+    try:
+        rows = json.loads((_DATA / "debuts.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return out
+    for r in rows:
+        pk = r.get("player_key")
+        dd = r.get("debut_date")
+        if not pk or not dd:
+            continue
+        try:
+            yr = int(str(dd)[:4])
+        except ValueError:
+            continue
+        out[pk] = {"debut_year": yr, "name": r.get("player_name") or r.get("name")}
+    return out
+
+
+def _career_seasons() -> dict[str, dict]:
+    """player_key -> {year(int): war(float)} from the career_war table."""
+    db = _ROOT / "prospects.db"
+    out: dict[str, dict] = {}
+    if not db.exists():
+        return out
+    con = sqlite3.connect(str(db))
+    try:
+        cur = con.execute("SELECT player_key, payload_json FROM career_war")
+        for pk, pj in cur.fetchall():
+            if not pj:
+                continue
+            try:
+                seasons = (json.loads(pj) or {}).get("seasons") or {}
+            except ValueError:
+                continue
+            parsed = {}
+            for y, w in seasons.items():
+                try:
+                    parsed[int(y)] = float(w)
+                except (TypeError, ValueError):
+                    continue
+            if parsed:
+                out[pk] = parsed
+    finally:
+        con.close()
+    return out
+
+
+def build_label_view() -> dict:
+    debuts = _debut_years()
+    seasons_by_pk = _career_seasons()
+    players = []
+    n_star = n_star_career = n_resolved = 0
+    for pk, seasons in seasons_by_pk.items():
+        meta = debuts.get(pk)
+        if not meta:
+            continue   # no debut year -> cannot define the control window; skip (no synthesis)
+        dy = meta["debut_year"]
+        window = list(range(dy, dy + _CONTROL_YEARS))
+        ctrl = [(y, seasons[y]) for y in window if y in seasons]
+        n_ge4_window = sum(1 for _, w in ctrl if w >= _STAR_WAR)
+        n_ge4_career = sum(1 for w in seasons.values() if w >= _STAR_WAR)
+        star = n_ge4_window >= _STAR_MIN_SEASONS
+        star_career = n_ge4_career >= _STAR_MIN_SEASONS
+        resolved = (dy + _CONTROL_YEARS - 1) <= _RESOLVED_THROUGH
+        n_star += int(star)
+        n_star_career += int(star_career)
+        n_resolved += int(resolved)
+        players.append({
+            "player_key": pk,
+            "name": meta.get("name"),
+            "debut_year": dy,
+            "control_window": [window[0], window[-1]],
+            "control_seasons": [[y, round(w, 2)] for y, w in ctrl],
+            "n_seasons_ge4_window": n_ge4_window,
+            "n_seasons_ge4_career": n_ge4_career,
+            "star": star,
+            "star_career": star_career,
+            "window_resolved": resolved,
+        })
+    players.sort(key=lambda p: (-p["n_seasons_ge4_career"], p["debut_year"]))
+    n = len(players)
+    return {
+        "generated_at": _today(),
+        "artifact": "xFV star-label training view (Phase 4)",
+        "definition": {
+            "min_seasons": _STAR_MIN_SEASONS, "war_threshold": _STAR_WAR,
+            "control_years": _CONTROL_YEARS, "window": "debut_year .. debut_year+6",
+        },
+        "source": "REAL realized MLB WAR: prospects.db career_war (per-season bWAR) "
+                  "joined to data/debuts.json debut years. No synthesized outcomes.",
+        "control_note": "No true MLB service-time field exists; 'control seasons' is "
+                        "the debut+0..+6 proxy (existing efv_dataset convention). "
+                        "Windows with debut_year > 2019 are not fully resolved through "
+                        f"{_RESOLVED_THROUGH} (window_resolved=false) and may undercount stars.",
+        "counts": {
+            "n_players": n,
+            "n_star_window": n_star,
+            "n_star_career": n_star_career,
+            "n_window_resolved": n_resolved,
+            "base_rate_window": round(n_star / n, 4) if n else None,
+            "base_rate_career": round(n_star_career / n, 4) if n else None,
+        },
+        "small_class_caveat": "The star-positive class is small (~1e2); usable as a "
+                              "label SOURCE / view, not yet a trained model.",
+        "players": players,
+    }
+
+
+def build_calibration_eval() -> dict:
+    import value_framework as vf
+    cal = vf.star_odds_calibration("clemens_2026")
+    max_dev = max((v["max_abs_dev"] for v in cal["roles"].values()), default=None)
+    tol = 0.10   # documented per-tier tolerance (see the recalibration spec)
+    passed = max_dev is not None and max_dev <= tol
+    return {
+        "generated_at": _today(),
+        "experiment": "star-odds-calibration",
+        "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
+        "seed": None,
+        "method": {
+            "model_odds": "analytic: per bucket, per control season WAR ~ Gamma(mean=level, "
+                          "cv=within_bucket_cv); Poisson-binomial P(>=2 of n); weighted by "
+                          "P(bucket|FV); pitchers blend SP/RP by P(reliever|bucket).",
+            "published": "FanGraphs 2026 tier star odds (config/valuation_sets/clemens_2026.yaml).",
+            "priced_under": "clemens_2026 (control_years=7, star def 2x4 WAR).",
+            "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so it runs BELOW "
+                    "the published tier odds; Phase 5 reconciles model aggregates to the table. "
+                    "The DISPLAYED star odds are the published table values (exact by construction).",
+        },
+        "calibration": cal,
+        "gate": {
+            "tolerance_abs": tol,
+            "max_abs_dev": max_dev,
+            "pass": passed,
+            "verdict": "provisional",
+            "reason": "Displayed odds = published table (exact). Model odds are a diagnostic "
+                      "not yet reconciled to the table (deviation exceeds tolerance under the "
+                      "current anchors); Phase 5 calibration is the forcing function.",
+        },
+    }
+
+
+def main() -> None:
+    eval_doc = build_calibration_eval()
+    (_DATA / "star_odds_eval.json").write_text(
+        json.dumps(eval_doc, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {_DATA / 'star_odds_eval.json'} "
+          f"(max_abs_dev={eval_doc['gate']['max_abs_dev']}, pass={eval_doc['gate']['pass']})")
+    label_doc = build_label_view()
+    (_DATA / "star_label_view.json").write_text(
+        json.dumps(label_doc, indent=1) + "\n", encoding="utf-8")
+    c = label_doc["counts"]
+    print(f"wrote {_DATA / 'star_label_view.json'} "
+          f"(n={c['n_players']}, star_window={c['n_star_window']}, star_career={c['n_star_career']})")
+
+
+if __name__ == "__main__":
+    main()

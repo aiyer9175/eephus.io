@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-03**. `validate()` at generation time: **clean**.
 
-**62 models.** Verdicts: validated: 18, provisional: 30, unvalidated: 4, deprecated: 10.
+**63 models.** Verdicts: validated: 18, provisional: 31, unvalidated: 4, deprecated: 10.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -72,6 +72,7 @@ stamped as of **2026-07-03**. `validate()` at generation time: **clean**.
 | `fv_tape` | PROSPX player FV history (behind the tape flag) | nothing - descriptive market-structure signals on the scouting-consensus grade path (candles, momentum, an RSI-style gauge, rea... | n/a - a display transform, not a model | n/a | n/a - explicitly NOT a predictive claim (labeled as such on the surface), so... | **unvalidated** | - | - | no |
 | `draft_war_room` | PROSPX MLB Draft - War Room (live, draft night) | n/a - a live board that prices each pick against our board and the historical pick-value curve | reach/steal = actual pick minus our board rank; slot surplus from the realize... | n/a - composes the validated draft_slot_curve + prospect surplus + consensus... | n/a - a live display; the pricing inputs are separately gated (draft_slot_cur... | **provisional** | - | - | no |
 | `prospect_greeks` | PROSPX prospect detail (Surplus value card) | n/a - an option-on-future-WAR view of a prospect's value, derived from the committed value framework | Delta (surplus per one-grade FV move), Vega (surplus swing from scouting disa... | n/a - a re-expression of the validated value_framework surplus curve + eFV di... | n/a - descriptive; the underlying surplus curve is gated by prospect_surplus | **provisional** | - | - | no |
+| `star_odds` | PROSPX prospect board + prospect detail card | P(>=2 team-control seasons of >=4 WAR) -- odds of becoming a star | FanGraphs 2026 published tier star odds (table mode, config/valuation_sets/cl... | engine mixture Poisson-binomial per-player odds | max abs tier deviation (model vs published), per role | **provisional** | `data/star_odds_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

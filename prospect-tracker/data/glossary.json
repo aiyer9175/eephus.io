@@ -5689,6 +5689,30 @@
     "risk_adjusted_surplus",
     "eta"
    ]
+  },
+  {
+   "id": "star_odds",
+   "term": "Star Odds",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Star Odds",
+    "Star probability",
+    "Odds of becoming a star",
+    "Two 4-WAR seasons"
+   ],
+   "priority": 41,
+   "definition": "The probability a prospect becomes a star, defined as posting two or more seasons of four or more WAR during his team-control years. Hitters run higher than pitchers, since a bullpen outcome rarely clears four WAR.",
+   "methodology": "The displayed figure is the FanGraphs 2026 published tier value for the player's FV and role, read straight from the published valuation set, so what you see on the board matches the published table exactly. Star is defined as two or more seasons of four or more WAR across the player's team-control years. Our own mixture model also computes a per-player version from the outcome-bucket distribution: for each bucket it draws a per-season WAR profile, sums the chance of clearing four WAR in two or more control seasons, and weights the buckets by the odds of each outcome given the grade, blending starter and reliever paths for pitchers. That model version runs below the published tiers under the current bust-heavy WAR anchors, so it is shown as a diagnostic and is being calibrated toward the published tiers rather than replacing them.",
+   "origin": "Published star-odds tiers from FanGraphs 2026; the per-player mixture model is Arkmetric, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "fv",
+    "eta"
+   ]
   }
  ]
 }

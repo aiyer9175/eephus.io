@@ -976,6 +976,20 @@
    "notes": "SHIPPED 2026-07-04, surfaced (visible) on the prospect detail Surplus value card. Delta = value_framework.sv_curve at fv+5 minus at fv (dollars from a one-grade upgrade); Vega = local surplus slope times the eFV grade dispersion (dollars implied by scouting disagreement); Theta = mean surplus times discount_rate/(1+discount_rate) (annual ETA-delay decay). IV = the grade dispersion. Client-side over the committed value_framework.js; no new model, a lens on the validated surplus curve.",
    "last_checked": "2026-07-04",
    "stale": false
+  },
+  {
+   "model_id": "star_odds",
+   "surface": "PROSPX prospect board + prospect detail card",
+   "predicts": "P(>=2 team-control seasons of >=4 WAR) -- odds of becoming a star",
+   "champion": "FanGraphs 2026 published tier star odds (table mode, config/valuation_sets/clemens_2026.yaml)",
+   "baseline": "engine mixture Poisson-binomial per-player odds",
+   "metric": "max abs tier deviation (model vs published), per role",
+   "eval_artifact": "data/star_odds_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04. The displayed Star Odds are the FanGraphs 2026 published tier figures for the player's FV and role (exact by construction, config/valuation_sets/clemens_2026.yaml); hitters run higher than pitchers because a bullpen outcome rarely clears 4 WAR. Our own mixture Poisson-binomial model computes a per-player version from the outcome-bucket distribution; under the v47 realized (bust-heavy) WAR anchors it runs below the published tiers, so it is shown as a diagnostic only. Phase 5 calibration is the forcing function that reconciles the model aggregates to the published table. Current max absolute tier deviation is about 0.64 (pitcher 70 FV), above the 0.1 tolerance, so the gate does not pass and the verdict stays provisional.",
+   "last_checked": "2026-07-04",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

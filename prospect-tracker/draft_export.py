@@ -633,15 +633,26 @@ def _build_class(year: int,
             if _rs and re.search(r"\([A-Z]{2}\)\s*$", _rs):
                 _state_school = _rs
         _school_val = _state_school or any_snap.get("school") or player_meta.get("school")
+        # Phase 6: implied pick surplus = clemens_2026 tier value for the drafted
+        # player's FV/role minus the cost (actual signing bonus if known, else the
+        # expected slot). None for undrafted board rows (no real cost). Role from
+        # the position class, falling back to the canonical player_type side.
+        _ptype = _canon_player_type(
+            any_snap.get("player_type") or player_meta.get("player_type"),
+            _school_val, _pos_val)
+        _pc = _pos_class(_pos_val)
+        _is_pit_draft = (_pc == "P") if _pc in ("P", "H") else str(_ptype or "").endswith("p")
+        import valuation_sets as _vs_mod
+        _ips = _vs_mod.implied_pick_surplus(
+            fv_raw if fv_raw is not None else fv, _is_pit_draft,
+            bonus_usd=bonus_usd, slot_usd=slot_usd)
         prospects.append({
             "player_key":     pk,
             "player_name":    dedupe_name.get(pk) or any_snap.get("player_name"),
             "position":       _pos_val,
             "school":         _school_val,
             "college_commit": any_snap.get("college_commit") or player_meta.get("college_commit"),
-            "player_type":    _canon_player_type(
-                                  any_snap.get("player_type") or player_meta.get("player_type"),
-                                  _school_val, _pos_val),
+            "player_type":    _ptype,
             "height":         player_meta.get("height"),
             "weight":         player_meta.get("weight"),
             "bats":           player_meta.get("bats"),
@@ -672,6 +683,9 @@ def _build_class(year: int,
             "slot_value":     slot_usd,
             "over_slot_usd":  (bonus_usd - slot_usd) if (bonus_usd and slot_usd) else None,
             "over_slot_pct":  round((bonus_usd / slot_usd - 1.0) * 100, 1) if (bonus_usd and slot_usd) else None,
+            "implied_pick_surplus_usd":   (_ips or {}).get("surplus_usd"),
+            "implied_pick_surplus_basis": (_ips or {}).get("basis"),
+            "clemens_tier_value_usd":     (_ips or {}).get("tier_value_usd"),
             "signed":         signed,
             "milb_key":       canonical_keys.get(pk),
             "promoted_key":   player_meta.get("promoted_key"),

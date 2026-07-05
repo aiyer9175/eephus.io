@@ -1,0 +1,106 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+# =============================================================================
+# VALUATION SET: clemens_2026
+# =============================================================================
+# The FanGraphs / Ben Clemens (2026) published prospect-valuation framework.
+# All tier values were FETCHED from the three source posts on 2026-07-03 and
+# checksum-validated by valuation_sets._validate_checksums (do NOT hand-edit a
+# tier value without re-checking the source; a drift beyond rounding refuses to
+# load). Dollars are MILLIONS of nominal 2026 USD. ctrl_war is total expected
+# WAR over the team-control window; star_odds is P(>=2 control seasons of >=4
+# WAR). Tier surplus/WAR/star split by role (hitter vs pitcher).
+id: clemens_2026
+label: "FanGraphs / Ben Clemens (2026)"
+
+meta:
+  retrieval_date: "2026-07-03"
+  sources:
+    intro: "https://blogs.fangraphs.com/introducing-an-updated-method-for-prospect-valuation/"
+    methodology: "https://blogs.fangraphs.com/the-details-of-our-new-prospect-valuation-methodology/"
+    cost_of_win: "https://blogs.fangraphs.com/what-are-teams-paying-for-a-win-in-free-agency-2026-edition/"
+  win_cost_basis: >-
+    Free-agency cost of a win, 2024-2026 average, graduated by production
+    (per-player bucket rates keyed to that season's WAR). The methodology post
+    states the framework used "the average prevailing cost of a win in free
+    agency from 2024 to 2026". The cost-of-win post publishes only 2026-only and
+    a 2020-2026 average; the 2024-2026 figures below are the mean of the post's
+    2024/2025/2026 per-tier rows.
+  caveats:
+    - >-
+      Backcast hindsight bias: tier surplus and star odds were estimated on
+      2005-2018 grade history (Baseball America Top 100 for 2005-2016 plus
+      FanGraphs 2017-2018), with ordinals quantile-mapped onto the modern FV
+      distribution so a 70 FV means the same thing every year.
+    - >-
+      The 70 FV surplus is a plausible RANGE of $150M-$200M under alternate
+      calibrations; the table lists the $195M central value.
+    - >-
+      The upgrade-option figures (a 45 FV position player ~20% likely to upgrade
+      to 50+, ~$7M if never upgraded, blending to ~$16M) are NOT in the published
+      tier tables; they are a Phase-7 config-prior reference only, estimated on
+      2019-2023 grade history in the source.
+    - >-
+      Residence time (2.0y central, 1.9-2.5 band) is used ONLY for the sub-50
+      stock->flow aggregate reconciliation, never for per-player pricing.
+
+# --- Published FV x role tier table (calibration target + table-mode prices) ---
+tiers:
+  hitter:
+    "35+": {surplus_musd: 2.0,   ctrl_war: 0.30,  star_odds: 0.004}
+    "40":  {surplus_musd: 5.5,   ctrl_war: 0.75,  star_odds: 0.008}
+    "40+": {surplus_musd: 8.0,   ctrl_war: 1.20,  star_odds: 0.018}
+    "45":  {surplus_musd: 14.5,  ctrl_war: 2.50,  star_odds: 0.035}
+    "45+": {surplus_musd: 18.5,  ctrl_war: 3.20,  star_odds: 0.060}
+    "50":  {surplus_musd: 45.0,  ctrl_war: 7.00,  star_odds: 0.135}
+    "55":  {surplus_musd: 55.0,  ctrl_war: 8.00,  star_odds: 0.175}
+    "60":  {surplus_musd: 82.0,  ctrl_war: 12.50, star_odds: 0.330}
+    "65":  {surplus_musd: 95.0,  ctrl_war: 13.50, star_odds: 0.400}
+    "70":  {surplus_musd: 195.0, ctrl_war: 27.50, star_odds: 0.875}
+  pitcher:
+    "35+": {surplus_musd: 1.5,   ctrl_war: 0.25,  star_odds: 0.004}
+    "40":  {surplus_musd: 4.0,   ctrl_war: 0.55,  star_odds: 0.004}
+    "40+": {surplus_musd: 7.0,   ctrl_war: 1.00,  star_odds: 0.010}
+    "45":  {surplus_musd: 9.5,   ctrl_war: 1.60,  star_odds: 0.015}
+    "45+": {surplus_musd: 15.0,  ctrl_war: 2.60,  star_odds: 0.030}
+    "50":  {surplus_musd: 33.5,  ctrl_war: 5.00,  star_odds: 0.070}
+    "55":  {surplus_musd: 45.0,  ctrl_war: 7.00,  star_odds: 0.070}
+    "60":  {surplus_musd: 70.0,  ctrl_war: 11.00, star_odds: 0.210}
+    "65":  {surplus_musd: 95.0,  ctrl_war: 13.50, star_odds: 0.400}
+    "70":  {surplus_musd: 195.0, ctrl_war: 27.00, star_odds: 0.875}
+
+# --- Global valuation parameters (the kernel / salary / discount inputs) ---
+params:
+  # Graduated FA cost of a win, 2024-2026 average ($M / WAR), keyed to the
+  # season's own WAR. breakpoints are WAR thresholds [<1 -> lt_1, <2 -> 1_to_2,
+  # else 2plus]. disable_fa_implied: price against the published FG rate, not our
+  # FA-signings-implied rescale.
+  win_cost:
+    breakpoints: [1.0, 2.0]
+    rates_musd: {lt_1: 6.97, "1_to_2": 8.76, "2plus": 13.63}
+    flat_musd: 11.74
+    disable_fa_implied: true
+  # Arbitration: percent of the PRIOR season's FA-equivalent value, Arb 1-4.
+  # 3 pre-arb (league min) + 4 arb over a 7-season control window.
+  arbitration:
+    schedule: [0.15, 0.35, 0.50, 0.75]
+    basis: prior_season
+    pre_arb_years: 3
+  control:
+    years: 7
+    basis: roster_day
+  # Net 7% discount = a 10% discount rate minus 3% annual win-cost growth. We
+  # apply the exact net-7%-flat branch (engine infl=0, discount_rate=0.07); the
+  # prompt forbids applying both growth and net at once.
+  discount:
+    net_rate: 0.07
+    form: net_7_flat
+  star:
+    min_seasons: 2
+    war_threshold: 4.0
+    window: control
+  residence:
+    central_years: 2.0
+    band: [1.9, 2.5]

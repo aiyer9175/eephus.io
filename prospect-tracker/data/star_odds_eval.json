@@ -1,0 +1,174 @@
+{
+ "generated_at": "2026-07-04",
+ "experiment": "star-odds-calibration",
+ "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
+ "seed": null,
+ "method": {
+  "model_odds": "analytic: per bucket, per control season WAR ~ Gamma(mean=level, cv=within_bucket_cv); Poisson-binomial P(>=2 of n); weighted by P(bucket|FV); pitchers blend SP/RP by P(reliever|bucket).",
+  "published": "FanGraphs 2026 tier star odds (config/valuation_sets/clemens_2026.yaml).",
+  "priced_under": "clemens_2026 (control_years=7, star def 2x4 WAR).",
+  "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so it runs BELOW the published tier odds; Phase 5 reconciles model aggregates to the table. The DISPLAYED star odds are the published table values (exact by construction)."
+ },
+ "calibration": {
+  "valuation_set": "clemens_2026",
+  "roles": {
+   "hitter": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 0.004,
+      "model": 0.0017,
+      "abs_dev": 0.0023
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 0.008,
+      "model": 0.0006,
+      "abs_dev": 0.0074
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 0.018,
+      "model": 0.0007,
+      "abs_dev": 0.0173
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 0.035,
+      "model": 0.0006,
+      "abs_dev": 0.0344
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 0.06,
+      "model": 0.0029,
+      "abs_dev": 0.0571
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 0.135,
+      "model": 0.0066,
+      "abs_dev": 0.1284
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 0.175,
+      "model": 0.0166,
+      "abs_dev": 0.1584
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 0.33,
+      "model": 0.0567,
+      "abs_dev": 0.2733
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 0.4,
+      "model": 0.1643,
+      "abs_dev": 0.2357
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 0.875,
+      "model": 0.3278,
+      "abs_dev": 0.5472
+     }
+    ],
+    "max_abs_dev": 0.5472
+   },
+   "pitcher": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 0.004,
+      "model": 0.0006,
+      "abs_dev": 0.0034
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 0.004,
+      "model": 0.0002,
+      "abs_dev": 0.0038
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 0.01,
+      "model": 0.0002,
+      "abs_dev": 0.0098
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 0.015,
+      "model": 0.0003,
+      "abs_dev": 0.0147
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 0.03,
+      "model": 0.0012,
+      "abs_dev": 0.0288
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 0.07,
+      "model": 0.0028,
+      "abs_dev": 0.0672
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 0.07,
+      "model": 0.0073,
+      "abs_dev": 0.0627
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 0.21,
+      "model": 0.0286,
+      "abs_dev": 0.1814
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 0.4,
+      "model": 0.1027,
+      "abs_dev": 0.2973
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 0.875,
+      "model": 0.2311,
+      "abs_dev": 0.6439
+     }
+    ],
+    "max_abs_dev": 0.6439
+   }
+  }
+ },
+ "gate": {
+  "tolerance_abs": 0.1,
+  "max_abs_dev": 0.6439,
+  "pass": false,
+  "verdict": "provisional",
+  "reason": "Displayed odds = published table (exact). Model odds are a diagnostic not yet reconciled to the table (deviation exceeds tolerance under the current anchors); Phase 5 calibration is the forcing function."
+ }
+}

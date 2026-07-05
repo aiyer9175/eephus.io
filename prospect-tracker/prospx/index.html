@@ -1648,6 +1648,14 @@
       row-gap: 0;                      /* tightened so toolstrip sits flush below meta */
       align-items: center;
     }
+    /* Star Odds column (opt-in, #starodds=1): one extra track appended to the
+       right of Surplus so the 9-cell grid stays column-aligned when the column
+       is surfaced. Only applied when the render adds .has-star-odds, so the
+       default 8-track layout is untouched. The mobile override below keeps the
+       3-col collapse (the Star Odds cell is desktop-only). */
+    .col-header.has-star-odds, .player-row.has-star-odds {
+      grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr;
+    }
     /* v19 - Tool-grade-strip relocated out of column 1 into its own
        grid item that spans Player + Rank + FV columns. Reads as a
        flush horizontal band of color-coded chips along the bottom of
@@ -6674,6 +6682,14 @@
            the right side of the player block). History, MiLB, phys, ETA
            hidden via the .desktop-only / per-cell display:none rules.
            Rank column at 44px so "RANK" header fits without wrapping. */
+        grid-template-columns: 1fr 44px 0.5fr;
+      }
+      /* Keep the mobile 3-col collapse even when Star Odds is surfaced - the
+         desktop .has-star-odds 9-track rule outweighs the base mobile selector
+         (two classes vs one), so it must be re-overridden here at equal
+         specificity + later in source. The Star Odds cell itself is
+         desktop-only, so mobile drops it like the other dense columns. */
+      .col-header.has-star-odds, .player-row.has-star-odds {
         grid-template-columns: 1fr 44px 0.5fr;
       }
       .player-row .line-chart-cell,
@@ -15025,6 +15041,21 @@ function getFilteredActives() {
       if (bm) return -1;
       return (_asc ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
+  } else if (state.sort === "star_odds") {
+    // FanGraphs published Star Odds (P(2+ seasons of 4+ WAR in control)),
+    // descending. Prospects without the field sink; FV is the tiebreak.
+    // Header re-click reverses direction via _applySortDir (plain key, no
+    // _asc/_desc suffix, so it falls through to the state.sortRev toggle).
+    const _so = p => (p.surplus && p.surplus.star_odds != null)
+                      ? Number(p.surplus.star_odds) : null;
+    pool.sort((a, b) => {
+      const av = _so(a), bv = _so(b);
+      const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
+      if (am && bm) return fvCmpDesc(a, b);
+      if (am) return 1;
+      if (bm) return -1;
+      return (bv - av) || fvCmpDesc(a, b);
+    });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
   } else if (state.sort === "age_vs_level") {
@@ -16634,6 +16665,9 @@ function renderActives() {
   renderActiveContextRail();
   const filtered = getFilteredActives();
   _gfxSet("active", "prospect", filtered, {});
+  // Star Odds column: flag-gated (#starodds=1) and degrades on payload presence -
+  // only surfaces when at least one filtered prospect carries surplus.star_odds.
+  const starOddsOn = _starOddsShow(filtered);
   const pageSize = state.pageSizes.actives || 50;
   const totalItems = filtered.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize));
@@ -16649,7 +16683,7 @@ function renderActives() {
   // says "Consensus FV · stock" so the source of the value is explicit.
   // Both still click-to-sort by FV (FV-derived rank == consensus FV).
   // Every column is now click-to-sort - Player (alpha), MiLB level, etc.
-  const header = `<div class="col-header">
+  const header = `<div class="col-header${starOddsOn ? " has-star-odds" : ""}">
     <span class="sort-header" data-sort-key="name_asc" title="Player name + meta line: pos · org · age · handedness (LHB/RHB/SHB or LHP/RHP). Click to sort alphabetically.">Player · pos · org · age · B/T</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV rank - our outcome-grounded ranking (primary). Diamond border matches the rarity tier. Click to sort.">eFV Rank</span>
     <span class="sort-header" style="text-align:center;" data-sort-key="xfv" title="eFV - our outcome-grounded Future Value (primary grade). Click to sort by eFV.">eFV · FV</span>
@@ -16660,6 +16694,7 @@ function renderActives() {
     </span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
+    ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
   </div>`;
 
   const rows = pagedRows.map((p, i) => {
@@ -16669,7 +16704,7 @@ function renderActives() {
     // primary grade), consistent with the eFV rank + badge in this same row.
     const fvTier = fvTierAttr(p);
     return `
-      <div class="player-row" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
+      <div class="player-row${starOddsOn ? " has-star-odds" : ""}" data-key="${escapeHtml(p.player_key)}" data-fv-tier="${fvTier}" style="${orgStripe(p.org)}">
         <div class="player-row-col1" style="display:flex;flex-direction:column;justify-content:center;gap:3px;min-width:0;"><div class="player-row-idrow" style="display:flex;align-items:center;gap:10px;min-width:0;width:100%;">
           <span class="headshot-stack">${headshotHTML(p, 64)}${optionsDotsHTML(p)}</span>
           <div class="player-name-stack" style="min-width:0;flex:1;">
@@ -16687,6 +16722,7 @@ function renderActives() {
         ${physClusterHTML(p)}
         ${makeEtaCell(p)}
         <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
+        ${starOddsOn ? makeStarOddsCell(p) : ""}
         ${playerExpandedMetaHTML(p)}
         ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
       </div>
@@ -22057,11 +22093,10 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock) ||
-      // War Room: only fall back once the fetch has CONFIRMED there is no
-      // artifact, else a direct dview=war-room link races the async load and
-      // bounces to rankings before the feed arrives.
-      (state.draftView === "war-room" && _warRoom.loaded && !_anyWarRoom)) {
+      (state.draftView === "mock-draft" && !_anyMock)) {
+    // War Room stays selectable even before the live feed exists: it lands on
+    // the "opens on draft night" state rather than bouncing to rankings, so the
+    // chip is a real destination in the draft section year-round.
     state.draftView = isOverall ? "class-strength" : "rankings";
   }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
@@ -22069,9 +22104,8 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
-    // War Room chip: visible once the artifact is present, or while a direct
-    // war-room link is still loading its feed (avoids a flash on normal pages).
-    if (view === "war-room" && !_anyWarRoom && !(state.draftView === "war-room" && !_warRoom.loaded)) show = false;
+    // War Room chip: always surfaced in the draft section so it is discoverable;
+    // pre-draft it lands on the "opens on draft night" state (Phase 6 surfacing).
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
@@ -22854,9 +22888,9 @@ function _renderWarRoom(host) {
   const head = `<div class="detail-title">Draft War Room <span class="detail-title-sub">live picks priced against our board</span></div>`;
   if (!_warRoom.loaded) {
     host.innerHTML = head + `<div class="state-message is-loading">Loading the live draft feed...</div>`;
-  } else if (!d || d.status === "error") {
+  } else if (d && d.status === "error") {
     host.innerHTML = head + `<div class="state-message is-error">The live draft feed is unavailable right now. It refreshes automatically.</div>`;
-  } else if (d.status !== "live" || !(d.picks && d.picks.length)) {
+  } else if (!d || d.status !== "live" || !(d.picks && d.picks.length)) {
     // Doors-open / waiting state (pre-draft or between picks).
     host.innerHTML = head + `<div class="state-message">The War Room opens on draft night (July 11-13). Live picks appear here priced against our board and the historical pick-value curve, so you see each reach or steal in surplus dollars.${d && d.generated_at ? `<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">Feed live, waiting on the first pick. Updated ${escapeHtml(String(d.generated_at))}.</div>` : ""}</div>`;
   } else {
@@ -22871,6 +22905,10 @@ function _renderWarRoom(host) {
         : `<span class="tm-dim">off board</span>`;
       const surCol = (p.exp_surplus_usd || 0) >= 0 ? "var(--neon-green)" : "var(--neon-red)";
       const bvs = p.bonus_vs_slot_usd;
+      const imp = p.implied_pick_surplus_usd;
+      const impBasis = p.implied_pick_surplus_basis;   // 'actual_bonus' | 'expected_slot'
+      const impCol = imp == null ? "var(--text-tertiary)" : (imp >= 0 ? "var(--neon-green)" : "var(--neon-red)");
+      const impLabel = impBasis === "actual_bonus" ? "vs bonus" : (impBasis === "expected_slot" ? "vs slot" : "");
       return `<tr>
         <td class="tm-num">${p.pick_overall}</td>
         <td>${p.team ? teamLogoHTML(p.team) : ""} ${escapeHtml(p.team || "")}</td>
@@ -22880,12 +22918,13 @@ function _renderWarRoom(host) {
         <td class="tm-num" style="color:${surCol};">${_warRoomMoney(p.exp_surplus_usd)}</td>
         <td class="tm-num tm-dim">${p.exp_first6_war != null ? p.exp_first6_war.toFixed(1) : "-"}</td>
         <td class="tm-num">${_warRoomMoney(p.signing_bonus_usd)}${bvs != null ? ` <span class="tm-dim" style="font-size:9px;">${bvs >= 0 ? "+" : ""}${_warRoomMoney(bvs)} vs slot</span>` : ""}</td>
+        <td class="tm-num" style="color:${impCol};">${_warRoomMoney(imp)}${impLabel ? ` <span class="tm-dim" style="font-size:9px;">${impLabel}</span>` : ""}</td>
       </tr>`;
     }).join("");
     host.innerHTML = head
-      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; surplus = the historical value of that pick slot.</div>`
+      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; slot surplus = the historical value of that pick slot; implied surplus = the FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot).</div>`
       + `<table class="detail-table"><thead><tr>
-          <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th>
+          <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th><th title="FanGraphs 2026 tier value for the pick's FV and role minus the bonus (actual once signed, otherwise the expected slot)">Implied surplus</th>
         </tr></thead><tbody>${rows}</tbody></table>`;
   }
   // Re-poll every 60s while the view stays open; the timer self-clears on exit.
@@ -32681,6 +32720,45 @@ function svCiText(s) {
   if (!ci || ci.lo_mm == null || ci.hi_mm == null || typeof fmtSvMM !== "function") return "";
   const pct = ci.cred != null ? Math.round(ci.cred * 100) : 90;
   return `${pct}% CI ${fmtSvMM(ci.lo_mm)}-${fmtSvMM(ci.hi_mm)}`;
+}
+
+// ── Star Odds column ────────────────────────────────────────────────────────
+// FanGraphs 2026 published "odds of becoming a star": P(two or more seasons of
+// four or more WAR during team control), baked per prospect onto
+// p.surplus.star_odds (a probability 0..1). Dark by default pre-launch; opt in
+// with #starodds=1 (or ?starodds=1), then flip STAR_ODDS_DEFAULT at launch. The
+// column also degrades on payload presence: it only renders when at least one
+// visible row carries surplus.star_odds, so older exports stay dark even with
+// the flag on. Mirrors the Risk / Window column-flag convention used elsewhere.
+const STAR_ODDS_DEFAULT = false;   // dark by default pre-launch; opt in with #starodds=1, then flip STAR_ODDS_DEFAULT at launch
+function _starOddsUiOn() {
+  const h = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("starodds");
+  if (h != null) return h !== "0";
+  const q = new URLSearchParams(location.search || "").get("starodds");
+  if (q != null) return q !== "0";
+  return STAR_ODDS_DEFAULT;
+}
+// True only when the flag is on AND at least one row in the given set carries
+// the field - keeps the column dark on payloads that predate star_odds.
+function _starOddsShow(rows) {
+  return _starOddsUiOn() && Array.isArray(rows)
+    && rows.some(p => p && p.surplus && p.surplus.star_odds != null);
+}
+// Star Odds as a percent, one decimal (e.g. "13.5%"); dash when absent.
+function fmtStarOdds(v) {
+  if (v == null || !isFinite(v)) return " - ";
+  return `${(Number(v) * 100).toFixed(1)}%`;
+}
+// One centered Star Odds cell (desktop-only grid child, mirrors the Surplus
+// cell placement). Colored by magnitude so higher odds read brighter,
+// consistent with the surrounding numeric columns.
+function makeStarOddsCell(p) {
+  const v = (p && p.surplus && p.surplus.star_odds != null) ? Number(p.surplus.star_odds) : null;
+  const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
+            : v >= 0.20 ? "var(--up)"
+            : v >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)";
+  const tip = "Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.";
+  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtStarOdds(v)}</div>`;
 }
 
 function makeSurplusCell(p) {

@@ -2006,6 +2006,23 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
         '<div class="dateline"><span>Sabermetric Analysis</span>'
         f'<span>{html.escape(today)}</span><span>Data as of {html.escape(as_of)}</span></div></div>'
     )
+    # Draft War Room banner: hidden by default, revealed by a small client-side
+    # check ONLY while the live draft feed reports status "live" (draft night).
+    # Links into the PROSPX draft section's War Room view. No em dashes (copy rule).
+    masthead += (
+        '<div id="draft-war-room-banner" style="display:none;margin:10px 0 0;">'
+        '<a href="/prospx/#tab=draft&amp;dview=war-room" '
+        'style="display:block;padding:10px 14px;border-radius:8px;'
+        'background:var(--brand-navy,#0E2B4D);color:#fff;font-weight:600;'
+        'text-decoration:none;">'
+        '<span class="blip"></span> The MLB Draft is live. Open the Draft War Room '
+        'to see every pick priced against our board in surplus dollars.</a></div>'
+        '<script>(function(){try{fetch("/data/draft_live.json",{cache:"no-cache"})'
+        '.then(function(r){return r.ok?r.json():null;})'
+        '.then(function(j){if(j&&j.status==="live"){'
+        'var e=document.getElementById("draft-war-room-banner");if(e)e.style.display="";}})'
+        '.catch(function(){});}catch(e){}})();</script>'
+    )
 
     # ---- lead story (latest article) + secondary ----
     latest = articles[0] if articles else None

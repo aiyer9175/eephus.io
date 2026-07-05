@@ -10,6 +10,54 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-04 (Clemens 2026 prospect valuation recalibration, Tier 1)
+
+Recalibrated the surplus engine to the new FanGraphs / Ben Clemens (2026)
+prospect-valuation framework behind versioned valuation sets. The production
+default is UNCHANGED (`prospx_current`, alias `edwards_2019`); the new framework
+ships as a selectable set (`clemens_2026`) for the diff, the published Star Odds,
+and draft pick surplus. No published board number moves until the diff report is
+reviewed. Two-part write-up in docs/METHODOLOGY.md; reports in reports/.
+
+- Versioned valuation sets: config/valuation_sets/{prospx_current,clemens_2026}.yaml
+  + valuation_sets.py loader (checksum-validated on load: 50 FV hitter $45.0M /
+  13.5%, 50 pitcher $33.5M / 7.0%, 45 $14.5M, 45+ $18.5M, 40 $5.5M, 70 in
+  $150-200M). Table mode (price at tier values) vs model mode (the mixture engine).
+  prospx_current table mode reproduces the live board at the tier grid. Outputs
+  are tagged with the active valuation_set (snapshot header + per-prospect payload).
+- Convex kernel: added a bucket_step mode (faithful hard per-bucket rates) beside
+  the production smoothed ramp; Jensen test proves transform-first beats
+  price-the-mean. Fixed the mlb_trade_lookup vet price-the-mean (per-season kernel)
+  behind TRADE_LOOKUP_PER_SEASON_KERNEL (default off, live board unchanged);
+  annotated the deliberate bayes defensive floor and the non-production comparators.
+- Salary + discount: clemens_2026 uses a 4-step 15/35/50/75 arbitration schedule
+  on the prior season's value (floored at league min) over a 7-season control
+  window, and a net 7% discount; a test proves a single net discount factor (no
+  double inflation).
+- Star Odds (new metric): P(2+ control seasons of 4+ WAR), computed analytically
+  (per-bucket Gamma season WAR + Poisson-binomial, role-mixed for pitchers),
+  monotone-in-FV via isotonic shrinkage. The board shows the FanGraphs published
+  tier value (table mode); the engine's per-player odds are a diagnostic, reported
+  against the published tiers in data/star_odds_eval.json (registry: provisional,
+  model runs below the published tiers under the v47 anchors). xFV label view in
+  data/star_label_view.json (real MLB WAR; ~108 career stars). Column on the PROSPX
+  board behind #starodds=1 (dark by default). Glossary + registry + freshness map.
+- Validation: reports/validation.md, sensitivity.md, diff.md over the 4,044-player
+  graded stock. Residence-time reconciliation lands the sub-50 pool at $6.29B
+  (published $6.30B) and the whole-minors total at $11.13B, inside the published
+  $10.5B-$13.75B band. Sensitivity signs match the published discount/win-cost/arb
+  directions (flat-kernel and residence differ in size, explained by our
+  sub-50-heavy universe).
+- Draft War Room: implied pick surplus = clemens_2026 tier value for the drafted
+  player's FV and role minus the cost (actual signing bonus if known, else the
+  expected slot), from REAL ingested bonus/slot data. Surfaced in draft_export +
+  the live poller. War Room column added; the War Room chip is now always
+  discoverable in the draft section (lands on the "opens on draft night" state
+  pre-draft); a homepage banner links to it while the live feed reports status live.
+
+Tier 2 (upgrade-option Markov layer, cross-source grade normalization) is gated
+behind a checkpoint and NOT started.
+
 ## 2026-07-04 (research sweep + model frontier)
 
 Discovery ran as a 20-agent read-only audit (registry / glossary census /

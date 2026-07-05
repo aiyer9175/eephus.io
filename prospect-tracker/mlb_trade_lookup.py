@@ -33,9 +33,16 @@ v31.8b — Pipeline-safe defaults:
 from __future__ import annotations
 
 import logging
+import os
 import re
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+# Phase 2 (D5): price the projected vet WAR per-season through the convex kernel
+# instead of the price-the-mean shortcut (total WAR * rate keyed to the AVERAGE).
+# Gated OFF by default so the live trade board is unchanged until the Phase-5 diff
+# is reviewed; set TRADE_LOOKUP_PER_SEASON_KERNEL=1 to enable the corrected path.
+_PER_SEASON_TRADE_KERNEL = os.environ.get("TRADE_LOOKUP_PER_SEASON_KERNEL", "0") == "1"
 
 from storage import (
     connect as _storage_connect,
@@ -319,7 +326,7 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
     Returns (proj_war_remaining, surplus_mm) or (None, None) when
     insufficient inputs (no career WAR or no contract data).
     """
-    from value_framework import dollars_per_war
+    from value_framework import dollars_per_war, tiered_war_value_usd
     if career_war is None or war_seasons is None or war_seasons <= 0:
         return (None, None)
     if aav_usd is None or years_remaining is None or years_remaining <= 0:
@@ -327,6 +334,7 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
     rate = max(0.0, min(6.0, float(career_war) / float(war_seasons)))
     # Aging-curve adjusted future seasons.
     proj_war = 0.0
+    season_market_usd = 0.0
     base_age = age if age is not None else 28
     for i in range(int(years_remaining)):
         yr_age = base_age + i
@@ -334,12 +342,23 @@ def _compute_surplus(career_war: float | None, war_seasons: int | None,
         decline = max(0.0, 0.4 * (yr_age - 29))
         season_war = max(0.0, rate - decline)
         proj_war += season_war
+        # Price EACH season on its OWN WAR through the convex kernel (Phase 2).
+        season_market_usd += tiered_war_value_usd(season_war)
     aav_mm = aav_usd / 1_000_000.0
-    # Tier the $/WAR rate off the AVG per-year projection -- a 1.5 WAR/yr
-    # vet sits in the 1-2 tier, a 0.5 WAR/yr declining vet sits at fringe.
-    avg_per_year = proj_war / years_remaining
-    war_dollar_mm = dollars_per_war(avg_per_year)
-    surplus_mm = (proj_war * war_dollar_mm) - (aav_mm * years_remaining)
+    if _PER_SEASON_TRADE_KERNEL:
+        # CORRECT (transform-first): sum per-season convex market value, then net
+        # salary. Avoids the E[f(X)] vs f(E[X]) error of pricing total WAR at one
+        # rate keyed to the AVERAGE (which underprices a declining vet whose good
+        # years sit in a higher tier). Gated OFF by default so the live board is
+        # unchanged until the Phase-5 diff is reviewed; flip TRADE_LOOKUP_PER_SEASON_KERNEL=1.
+        surplus_mm = (season_market_usd / 1_000_000.0) - (aav_mm * years_remaining)
+    else:
+        # LEGACY price-the-mean (default): tier the $/WAR rate off the AVG per-year
+        # projection and value all WAR at it. Retained as the live-board behavior
+        # pending the diff review; see the corrected path above.
+        avg_per_year = proj_war / years_remaining
+        war_dollar_mm = dollars_per_war(avg_per_year)
+        surplus_mm = (proj_war * war_dollar_mm) - (aav_mm * years_remaining)
     return (round(proj_war, 2), round(surplus_mm, 1))
 
 

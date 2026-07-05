@@ -472,6 +472,13 @@ def defensive_floor_mm(position: str | None, def_grade: float | None,
                else cfg.get("floor_control_years", 5))
     rate = float(cfg.get("floor_discount_rate", 0.09))
 
+    # NOTE (Phase 2 audit): this is a DELIBERATE flat defensive FLOOR, not a
+    # price-the-mean of an uncertain outcome. An elite defender's glove is worth a
+    # near-certain `base_war` every season regardless of the bat, so it is priced
+    # at a single floor rate (`floor_dollars_per_war_mm`, the 1-2 WAR tier) and
+    # discounted per season. It is additive on top of the mixture-priced posterior
+    # and is intentionally EXEMPT from the convex per-season kernel (there is no
+    # volatile WAR distribution to transform-first here). Left as-is by design.
     pv = sum(
         grade_scale * base_war * dpw / (1.0 + rate) ** yr
         for yr in range(1, yrs + 1)

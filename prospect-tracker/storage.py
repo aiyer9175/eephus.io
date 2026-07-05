@@ -5744,6 +5744,9 @@ from value_framework import (
     wag as _engine_wag,
     wag_boom_bust as _engine_wag_boom_bust,
     realized_consumed_seasons as _realized_consumed_seasons,
+    active_valuation_set as _active_valuation_set,
+    star_odds as _star_odds,
+    published_star_odds as _published_star_odds,
     _BUCKETS as _SV_BUCKET_ORDER,
 )
 
@@ -5798,7 +5801,22 @@ def _build_surplus_payload(fv, is_pitcher, position, *, age=None, eta_years=None
         "is_pitcher": bool(is_pitcher),
         "fv_used": round(float(fv), 2),
         "fv_continuous": round(float(fv), 2),
+        "valuation_set": _active_valuation_set(),
     }
+    # Phase 4: Star Odds = P(>= 2 control seasons of >= 4 WAR). The DISPLAYED value
+    # is the FanGraphs (2026) published tier odds (table mode -- the credible,
+    # industry-anchored number); `star_odds_model` is the engine's per-player odds
+    # (timing-aware diagnostic, calibrated toward the published targets in P5).
+    # Degrades to omission on any hiccup rather than sinking the export.
+    try:
+        _so_pub = _published_star_odds(fv, is_pitcher)
+        if _so_pub is not None:
+            out["star_odds"] = round(float(_so_pub), 4)
+        _so_model = _star_odds(fv, is_pitcher, position, age=age, eta_years=eta_years)
+        if _so_model is not None:
+            out["star_odds_model"] = round(float(_so_model), 4)
+    except Exception:
+        pass
     if eta_years is not None:
         out["eta_years"] = round(float(eta_years), 2)
     # Outcome-bucket probabilities P(bucket|FV) over the five career buckets

@@ -1,0 +1,89 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+# =============================================================================
+# VALUATION SET: prospx_current  (alias: edwards_2019)
+# =============================================================================
+# The CURRENT production surplus engine, captured so table mode reproduces the
+# live board and the legacy pipeline stays reproducible.
+#
+# NAMING: the recalibration prompt called this legacy set "edwards_2019", but the
+# live anchors are NOT raw Edwards 2019 -- fv_to_6yr_avg_war was empirically
+# re-anchored (v47) to realized 2017-2020 cohort outcomes, deliberately
+# de-inflating surplus to ~0.7-1.2x the public scale (see
+# docs/surplus-recalibration.md). We name it honestly as prospx_current and keep
+# edwards_2019 as an alias (valuation_sets._ALIASES).
+#
+# tiers.*.surplus_musd are the LIVE engine outputs captured 2026-07-04 from
+# value_framework.surplus_value_mm(fv, is_pitcher) at each tier axis FV; table
+# mode with this set reproduces those production numbers at the tier grid.
+# ctrl_war = fv_to_6yr_avg_war(fv) * 6 (the legacy 6-year control window).
+# star_odds is intentionally ABSENT: the legacy engine does not compute
+# P(>=2 seasons of >=4 WAR); Phase 4 backfills it once star_odds ships.
+id: prospx_current
+label: "PROSPX current production (v47 empirical; Edwards-lineage anchors)"
+
+meta:
+  retrieval_date: "2026-07-04"
+  sources:
+    engine: "value_framework.surplus_value_mm (v2.0 career-path mixture)"
+    recalibration: "docs/surplus-recalibration.md (v47 empirical re-anchor)"
+  win_cost_basis: >-
+    FA-signings-implied $/WAR (data/fa_dpw_series.json, trailing 3-winter mean),
+    convex shape from the 2024-2026 FA cost-of-win table.
+  caveats:
+    - >-
+      NOT the public Edwards 2019 scale: fv_to_6yr_avg_war is the realized
+      2017-2020 bust-inclusive WAR/yr, blended toward the Edwards public
+      reference only at thin/censored tiers.
+    - >-
+      star_odds is absent by design; the legacy engine has no P(>=2x 4-WAR)
+      output. Phase 4 backfills it.
+
+# --- Captured live production tier table (table-mode prices) ---
+tiers:
+  hitter:
+    "35+": {surplus_musd: 1.4,   ctrl_war: 1.14}
+    "40":  {surplus_musd: 1.5,   ctrl_war: 1.14}
+    "40+": {surplus_musd: 2.6,   ctrl_war: 1.50}
+    "45":  {surplus_musd: 4.5,   ctrl_war: 1.86}
+    "45+": {surplus_musd: 14.8,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 17.7,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 33.2,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 63.9,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 111.1, ctrl_war: 12.00}
+    "70":  {surplus_musd: 157.9, ctrl_war: 15.12}
+  pitcher:
+    "35+": {surplus_musd: 1.4,   ctrl_war: 1.14}
+    "40":  {surplus_musd: 1.5,   ctrl_war: 1.14}
+    "40+": {surplus_musd: 2.1,   ctrl_war: 1.50}
+    "45":  {surplus_musd: 2.9,   ctrl_war: 1.86}
+    "45+": {surplus_musd: 8.5,   ctrl_war: 2.94}
+    "50":  {surplus_musd: 15.2,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 22.7,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 50.2,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 93.0,  ctrl_war: 12.00}
+    "70":  {surplus_musd: 135.2, ctrl_war: 15.12}
+
+# --- Global valuation parameters ---
+# MIRROR of value_framework_config.yaml at capture, for documentation and diff
+# comparison. These are NOT re-applied for the default set: value_framework keeps
+# the base config authoritative so production output stays byte-identical.
+params:
+  win_cost:
+    breakpoints: [1.0, 2.0]
+    rates_musd: {lt_1: 6.97, "1_to_2": 8.76, "2plus": 13.63}
+    flat_musd: 11.74
+    disable_fa_implied: false   # production leaves the FA-implied rescale ON
+  arbitration:
+    schedule: [0.40, 0.60, 0.80]
+    basis: current_season
+    pre_arb_years: 3
+  control:
+    years: 6
+    basis: service_time
+  discount:
+    form: rate_minus_growth
+    rate: 0.09
+    growth: 0.05

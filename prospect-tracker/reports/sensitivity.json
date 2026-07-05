@@ -1,0 +1,25 @@
+{
+ "generated_at": "2026-07-04",
+ "baseline_musd": 9943.599999998874,
+ "scenarios_musd": {
+  "discount_+3pt": 9588.599999998887,
+  "discount_-3pt": 10373.59999999889,
+  "wincost_+10pct": 10614.799999998851,
+  "wincost_-10pct": 9323.499999998863,
+  "arb_+30pct": 9401.299999998871,
+  "arb_-30pct": 10517.999999998874,
+  "flat_kernel": 12822.099999998878
+ },
+ "residence_flow_musd": {
+  "base": 6292.450000000008,
+  "minus_half_yr": 2097.4833333333354,
+  "plus_half_yr": -1258.4900000000016
+ },
+ "flat_vs_graduated_musd": 2878.5000000000036,
+ "published_magnitudes_musd": {
+  "discount_3pt": 700.0,
+  "residence_half_yr": 600.0,
+  "arb_30pct": 400.0,
+  "flat_total_b": 10.5
+ }
+}

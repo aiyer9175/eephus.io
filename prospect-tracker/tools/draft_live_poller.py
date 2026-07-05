@@ -38,6 +38,8 @@ _DEFAULT_OUT = _REPO / "data" / "draft_live.json"
 # A pick this many spots off the board rank counts as a steal or a reach.
 # Inside the window it reads as "on board" (roughly where we had him).
 _STEAL_REACH_THRESHOLD = 5
+# Position tags that mark a pitcher, for the clemens_2026 role-split tier lookup.
+_PITCHER_POS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "P"}
 
 
 def _current_draft_year() -> int:
@@ -126,6 +128,21 @@ def _price_pick(row: dict, board: dict, mock: dict) -> dict:
     slot = row.get("slot_usd")
     bonus_vs_slot = (bonus - slot) if (bonus is not None and slot is not None) else None
 
+    # Phase 6: implied pick surplus = clemens_2026 tier value for the drafted
+    # player's FV/role minus the cost (actual signing bonus if known, else the
+    # expected slot). Uses the committed board's FV + role; None when we can't
+    # place the player on the board or have no real cost (never guesses a bonus).
+    implied_surplus = implied_basis = clemens_tier = None
+    if prospect is not None and consensus_fv is not None:
+        import valuation_sets as _vs
+        _pos = prospect.get("position")
+        _pt = str(prospect.get("player_type") or "")
+        _is_pit = str(_pos or "").upper() in _PITCHER_POS or _pt.endswith("p")
+        _ips = _vs.implied_pick_surplus(consensus_fv, _is_pit, bonus_usd=bonus, slot_usd=slot)
+        if _ips:
+            implied_surplus, implied_basis, clemens_tier = (
+                _ips["surplus_usd"], _ips["basis"], _ips["tier_value_usd"])
+
     return {
         "pick_overall": pick_overall,
         "round": row.get("round_label"),
@@ -143,6 +160,9 @@ def _price_pick(row: dict, board: dict, mock: dict) -> dict:
         "signing_bonus_usd": bonus,
         "slot_usd": slot,
         "bonus_vs_slot_usd": bonus_vs_slot,
+        "implied_pick_surplus_usd": implied_surplus,
+        "implied_pick_surplus_basis": implied_basis,   # 'actual_bonus' | 'expected_slot'
+        "clemens_tier_value_usd": clemens_tier,
     }
 
 

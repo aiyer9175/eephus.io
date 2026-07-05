@@ -225,6 +225,7 @@ def _config() -> dict:
     import yaml  # pyyaml; only needed to read the config
     with _CONFIG_PATH.open(encoding="utf-8") as fh:
         cfg = yaml.safe_load(fh)
+    cfg = _apply_valuation_overlay(cfg)
     return _apply_fa_implied_reanchor(_validate_config(cfg))
 
 
@@ -247,6 +248,90 @@ def _reset_caches() -> None:
     _bucket_sv_usd.cache_clear()
     _calibrated_midpoints.cache_clear()
     _bayes_theta_draws.cache_clear()
+
+
+def _reset_derived_caches() -> None:
+    """Clear config-DERIVED caches ONLY (not _config/_fitted) so an in-place edit
+    of the loaded config dict takes effect on the next pricing call. Used by the
+    Phase-5 sensitivity harness, which perturbs discount / $/WAR / arb parameters
+    directly on the cached config and re-prices the universe."""
+    for _c in (_pchip_bucket_interpolators, _bayes_theta_draws, _calibrated_midpoints,
+               _fv_war_scale, _prime_war_scale, _bucket_sv_usd):
+        _c.cache_clear()
+
+
+# =============================================================================
+# Versioned valuation sets (Phase 1) -- select which published framework the
+# engine calibrates to / prices against. The DEFAULT stays prospx_current (the
+# live production engine); its params are deliberately NOT overlaid (the base
+# config is authoritative), so production output is byte-identical. A non-default
+# set (e.g. clemens_2026) deep-merges its translated `params` block onto the base
+# config. See valuation_sets.py.
+# =============================================================================
+_DEFAULT_VALUATION_SET = "prospx_current"
+_ACTIVE_VALUATION_SET = _DEFAULT_VALUATION_SET
+
+
+def active_valuation_set() -> str:
+    """The valuation set the engine is currently pricing/calibrating against."""
+    return _ACTIVE_VALUATION_SET
+
+
+def set_valuation_set(set_id: str) -> None:
+    """Select the active valuation set (alias-resolved) and drop cached config so
+    the next call re-derives under the new set. Pass the default id to restore
+    production behavior. Raises ValuationSetError if the set does not load."""
+    global _ACTIVE_VALUATION_SET
+    import valuation_sets as _vs
+    data = _vs.load(set_id)          # validates; raises on a bad set
+    _ACTIVE_VALUATION_SET = data["id"]  # canonical (alias-resolved) id
+    _reset_caches()
+
+
+class valuation_set:  # noqa: N801 (context-manager, lowercase by convention here)
+    """Context manager: temporarily price under a valuation set, restoring the
+    previous set (and caches) on exit. For diff / calibration harnesses:
+
+        with vf.valuation_set("clemens_2026"):
+            ...  # engine prices under clemens_2026
+    """
+    def __init__(self, set_id: str):
+        self._target = set_id
+        self._prev = None
+
+    def __enter__(self):
+        self._prev = _ACTIVE_VALUATION_SET
+        set_valuation_set(self._target)
+        return self
+
+    def __exit__(self, *exc):
+        set_valuation_set(self._prev)
+        return False
+
+
+def _deep_merge(base: dict, over: dict) -> dict:
+    """Recursively merge `over` into `base` in place: dict leaves merge, non-dict
+    leaves replace. Returns base."""
+    for k, v in over.items():
+        if isinstance(v, dict) and isinstance(base.get(k), dict):
+            _deep_merge(base[k], v)
+        else:
+            base[k] = v
+    return base
+
+
+def _apply_valuation_overlay(cfg: dict) -> dict:
+    """Overlay the active valuation set's engine params onto the base config. The
+    DEFAULT set is a deliberate no-op (base config authoritative -> production
+    byte-identical); any other set deep-merges its translated `params`. Tags
+    cfg['_valuation_set'] either way (this is the output-tagging seam)."""
+    set_id = _ACTIVE_VALUATION_SET
+    cfg["_valuation_set"] = set_id
+    if set_id == _DEFAULT_VALUATION_SET:
+        return cfg
+    import valuation_sets as _vs
+    _deep_merge(cfg, _vs.engine_params(set_id))
+    return cfg
 
 
 def _role_key(is_pitcher: bool) -> str:
@@ -352,14 +437,36 @@ def tiered_war_value_usd(season_war: float) -> float:
     blocked re-anchoring the low-mid FV WAR targets. The ramp passes through the
     tier rates at the tier CENTERS (b1-0.5, b1+0.5, b2+0.5), so it returns exactly
     0.5*lt_1, 1.5*(1_to_2), 3*(2plus) there — same convex intent, no discontinuity.
-    Never call on an averaged WAR -- value each bucket-season separately. WAR<=0 -> $0."""
+
+    KERNEL MODE (Phase 2) -- `dollars_per_war.kernel_mode`:
+      * "smoothed"    (default, PRODUCTION) -- the v46 C1 smoothstep ramp above:
+        monotone, no cliff at a breakpoint (a 1.9-WAR and a 2.1-WAR season don't
+        jump from the 1_to_2 rate to the 2plus rate).
+      * "bucket_step" (CALIBRATION) -- faithful per-player bucket rates: the whole
+        season's WAR valued at its tier's flat rate (hard step at the breakpoints).
+        Exact replication of the published per-bucket cost of a win.
+    Both are convex in WAR, so pricing per bucket-season and aggregating last still
+    beats pricing an averaged WAR (Jensen). Never call on an averaged WAR -- value
+    each bucket-season separately. WAR<=0 -> $0."""
+    cfg_dpw = _config()["dollars_per_war"]
+    mode = str(cfg_dpw.get("kernel_mode", "smoothed"))
+    return _tiered_war_value(season_war, mode, cfg_dpw["tiered"])
+
+
+def _tiered_war_value(season_war: float, mode: str, tiered: dict) -> float:
+    """Pure convex per-season kernel (no config read), so callers can price a
+    season under EITHER mode without touching global config (used by the snapshot
+    to summarize the bucket_step-vs-smoothed divergence)."""
     if season_war is None or season_war <= 0:
         return 0.0
-    dpw = _config()["dollars_per_war"]["tiered"]
-    b1, b2 = dpw["breakpoints"]
-    rates = dpw["rates"]
+    b1, b2 = tiered["breakpoints"]
+    rates = tiered["rates"]
     r_lo, r_mid, r_hi = float(rates["lt_1"]), float(rates["1_to_2"]), float(rates["2plus"])
     w = float(season_war)
+    if mode == "bucket_step":
+        rate = r_lo if w < b1 else (r_mid if w < b2 else r_hi)
+        return w * rate
+    # "smoothed" (default): C1 smoothstep ramp through the tier-center rates.
     c_lo, c_mid, c_hi = b1 - 0.5, b1 + 0.5, b2 + 0.5   # tier centers: 0.5, 1.5, 2.5
     if w <= c_lo:
         rate = r_lo
@@ -402,7 +509,12 @@ def dollars_per_war_flat(window: tuple[int, ...] | None = None) -> float:
 
 
 def career_war_value_mm(career_war: float | None, window: tuple[int, ...] | None = None) -> float | None:
-    """Realized career WAR -> $M at the flat overall rate. None/<=0 -> None."""
+    """Realized career WAR -> $M at the flat overall rate. None/<=0 -> None.
+
+    NON-PRODUCTION (Phase 2 audit): a price-the-mean helper (single career WAR x
+    flat rate) with NO live caller -- only tests reference it. The live realized-vet
+    path prices per-season at the year's rate (`realized_consumed_seasons`). Kept
+    for those tests / ad-hoc use; do NOT wire it into a user-facing surface."""
     if career_war is None:
         return None
     try:
@@ -988,6 +1100,34 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     season's surplus is grown by $/WAR inflation and discounted at discount_rate;
     the two net to ((1+inflation)/(1+discount_rate))^(eta_years+k). With
     inflation = 0 and eta_years = 0 this is exactly the prior 1/(1+r)^k discount."""
+    markets = [tiered_war_value_usd(w) for w in season_wars]
+    salaries = _service_path_salaries(season_wars, markets, super_two)
+    cfg = _config()
+    infl = float(cfg.get("dollars_per_war_inflation", 0.0))
+    r = float(cfg["discount_rate"])
+    # SINGLE net real factor: $/WAR growth (infl) partially offsets the nominal
+    # discount (r), applied ONCE per season as net**(eta+t). No second inflation
+    # or discount is applied anywhere on this path (present_value() is intentionally
+    # never called). test_salary_discount guards this.
+    net = (1.0 + infl) / (1.0 + r)
+    return sum((markets[t] - salaries[t]) * (net ** (float(eta_years) + t))
+               for t in range(len(season_wars)))
+
+
+def _service_path_salaries(season_wars: list[float], markets: list[float],
+                           super_two: bool) -> list[float]:
+    """Per-season salary ($) over the control window: pre_arb_years at the league
+    minimum, then escalating-fraction arbitration years.
+
+    Arbitration BASIS (`service_time.arb_basis`):
+      * "current_season" (default, PRODUCTION) -- arb salary = frac * THIS season's
+        market value (the prior, unchanged behavior; no explicit league-min floor,
+        since frac*market > min in every realistic case).
+      * "prior_season" (clemens_2026) -- arb salary = frac * the PRIOR season's
+        FA-equivalent value (that season's WAR priced through the kernel), FLOORED
+        at the league minimum in every year (a bounce-back after a down year still
+        pays at least the minimum). Monotone in the prior season's WAR by
+        construction (max of a nondecreasing term and a constant)."""
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
@@ -998,20 +1138,20 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
     else:
         pre_arb = int(st["pre_arb_years"])
         arb_fracs = fracs
-    infl = float(cfg.get("dollars_per_war_inflation", 0.0))
-    r = float(cfg["discount_rate"])
-    net = (1.0 + infl) / (1.0 + r)
-    total = 0.0
-    for t, war in enumerate(season_wars):
-        market = tiered_war_value_usd(war)
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    out: list[float] = []
+    for t in range(len(season_wars)):
         if t < pre_arb:
-            salary = league_min
+            out.append(league_min)
+            continue
+        i = t - pre_arb
+        frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
+        if arb_basis == "prior_season":
+            prior_market = markets[t - 1] if t > 0 else markets[t]
+            out.append(max(league_min, frac * prior_market))
         else:
-            i = t - pre_arb
-            frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
-            salary = frac * market
-        total += (market - salary) * (net ** (float(eta_years) + t))
-    return total
+            out.append(frac * markets[t])
+    return out
 
 
 @lru_cache(maxsize=512)
@@ -3133,6 +3273,172 @@ def _sv_curve(is_pitcher: bool, position: str | None = None) -> list[float]:
     return out
 
 
+# =============================================================================
+# Star Odds (Phase 4) -- P(>= min_seasons control seasons with WAR >= threshold).
+# The published framework's "odds of becoming a star" (default 2 seasons of 4+ WAR
+# during team control). Computed ANALYTICALLY from the SAME mixture the surplus
+# uses: for each outcome bucket, each control season's WAR ~ Gamma(mean = the
+# bucket's per-season level, cv = within_bucket_cv[bucket]); the per-season
+# exceedance probabilities feed a Poisson-binomial for P(>= k of n), weighted by
+# P(bucket|FV) and (for pitchers) blended across the SP / bullpen-capped-RP mix.
+# Deterministic (no Monte-Carlo seed), so calibration and monotonicity are exact.
+# =============================================================================
+def _star_def() -> tuple[int, float]:
+    """(min_seasons, war_threshold) for the star definition; from the active
+    valuation set's `star_definition`, default 2 seasons of 4.0 WAR."""
+    sd = _config().get("star_definition") or {}
+    return int(sd.get("min_seasons", 2)), float(sd.get("war_threshold", 4.0))
+
+
+def _within_bucket_cv(bucket_name: str) -> float:
+    return float(_config().get("distribution", {})
+                 .get("within_bucket_cv", {}).get(bucket_name, 0.0))
+
+
+def _season_ge_prob(level: float, cv: float, threshold: float) -> float:
+    """P(one season's WAR >= threshold) for season WAR ~ Gamma(mean=level, cv).
+    cv<=0 or level<=0 is a point mass at `level` (1.0 iff level>=threshold)."""
+    if level is None or level <= 0.0:
+        return 0.0
+    if cv <= 0.0:
+        return 1.0 if level >= threshold else 0.0
+    from scipy.special import gammaincc  # regularized upper incomplete gamma
+    shape = 1.0 / (cv * cv)
+    scale = level * cv * cv
+    return float(gammaincc(shape, threshold / scale))
+
+
+def _poisson_binomial_ge(ps: list[float], k: int) -> float:
+    """P(>= k successes) for independent Bernoulli(ps) via exact DP convolution
+    (n small, <= ~8 control seasons)."""
+    if k <= 0:
+        return 1.0
+    dist = [1.0]
+    for p in ps:
+        p = min(1.0, max(0.0, float(p)))
+        nxt = [0.0] * (len(dist) + 1)
+        for c, w in enumerate(dist):
+            nxt[c] += w * (1.0 - p)
+            nxt[c + 1] += w * p
+        dist = nxt
+    if k >= len(dist):
+        return 0.0
+    return float(min(1.0, max(0.0, sum(dist[k:]))))
+
+
+def _bucket_star_prob(role: str, bucket_idx: int, reliever: bool,
+                      debut_age: float | None, war_scale: float,
+                      min_seasons: int, threshold: float) -> float:
+    wars = _bucket_season_wars(role, bucket_idx, reliever, debut_age, war_scale)
+    cv = _within_bucket_cv(_BUCKETS[bucket_idx])
+    ps = [_season_ge_prob(w, cv, threshold) for w in wars]
+    return _poisson_binomial_ge(ps, min_seasons)
+
+
+def star_odds(fv: float | None, is_pitcher: bool, position: str | None = None,
+              *, age: float | None = None, eta_years: float | None = None) -> float | None:
+    """P(the player posts >= min_seasons control seasons of >= threshold WAR) --
+    the published "odds of becoming a star" (default 2 seasons of 4+ WAR). Averaged
+    over the outcome-bucket mixture P(bucket|FV); pitchers blend the SP and
+    bullpen-capped RP paths by P(reliever|bucket) (a capped reliever essentially
+    cannot clear 4 WAR, so pitcher star odds run below hitter). Timing-aware via
+    age/ETA. Uses the active valuation set (control-year window + star definition).
+    None when FV is missing."""
+    if fv is None:
+        return None
+    probs = p_bucket_given_fv(float(fv), is_pitcher)
+    if probs is None:
+        return None
+    role = _role_key(is_pitcher)
+    ws = _war_scale_for(float(fv), role)
+    debut_age, _eta = _resolve_timing(age, eta_years)
+    min_seasons, threshold = _star_def()
+    total = 0.0
+    if is_pitcher:
+        p_rp = _pitcher_rp_by_bucket(position)
+        for b in range(_N_BUCKETS):
+            if probs[b] <= 0.0:
+                continue
+            sp = _bucket_star_prob("pitcher", b, False, debut_age, ws, min_seasons, threshold)
+            rp = _bucket_star_prob("pitcher", b, True, debut_age, ws, min_seasons, threshold)
+            total += probs[b] * ((1.0 - p_rp[b]) * sp + p_rp[b] * rp)
+    else:
+        for b in range(_N_BUCKETS):
+            if probs[b] <= 0.0:
+                continue
+            total += probs[b] * _bucket_star_prob("hitter", b, False, debut_age,
+                                                  ws, min_seasons, threshold)
+    return float(min(1.0, max(0.0, total)))
+
+
+def star_odds_curve(is_pitcher: bool, position: str | None = None,
+                    fvs: list[float] | None = None, *, monotone: bool = True) -> dict:
+    """Star-odds curve over an FV grid for a role. When monotone=True the raw curve
+    is passed through increasing isotonic regression so the PUBLISHED curve is
+    non-decreasing in FV within the role (the shrinkage utility; the published
+    bottom tiers should not be noisier than the framework's). Returns
+    {fv: [...], raw: [...], odds: [...]} where `odds` is the (monotone) curve."""
+    if fvs is None:
+        fvs = [round(20.0 + 0.5 * i, 1) for i in range(int((80.0 - 20.0) / 0.5) + 1)]
+    raw = [float(star_odds(fv, is_pitcher, position) or 0.0) for fv in fvs]
+    odds = raw
+    if monotone and len(raw) >= 2:
+        try:
+            from sklearn.isotonic import IsotonicRegression
+            iso = IsotonicRegression(increasing=True, out_of_bounds="clip")
+            odds = [float(v) for v in iso.fit_transform(fvs, raw)]
+        except Exception:
+            # Fallback: cumulative max (guarantees monotone non-decreasing).
+            run = 0.0
+            odds = []
+            for v in raw:
+                run = max(run, v)
+                odds.append(run)
+    return {"fv": list(fvs), "raw": raw, "odds": odds}
+
+
+def published_star_odds(fv: float | None, is_pitcher: bool,
+                        set_id: str = "clemens_2026") -> float | None:
+    """The PUBLISHED (table-mode) star odds for an FV/role -- the FanGraphs (2026)
+    tier value interpolated by FV. This is the credible, industry-anchored number
+    the UI surfaces; the per-player `star_odds` model is a diagnostic that Phase 5
+    calibrates toward these targets. None if the set publishes no star odds."""
+    if fv is None:
+        return None
+    import valuation_sets as _vs
+    return _vs.table_star_odds(set_id, float(fv), is_pitcher)
+
+
+def star_odds_calibration(set_id: str = "clemens_2026") -> dict:
+    """Compare MODEL tier-aggregate star odds to the PUBLISHED tier star odds for a
+    valuation set, per role, with the max absolute deviation. Real numbers only;
+    a deviation is reported, never hidden. Prices under the set's own control-year
+    window + star definition."""
+    import valuation_sets as _vs
+    data = _vs.load(set_id)
+    axis = _vs._TIER_AXIS
+    out = {"valuation_set": set_id, "roles": {}}
+    with valuation_set(set_id):
+        for role in ("hitter", "pitcher"):
+            is_pit = role == "pitcher"
+            rows = []
+            max_dev = 0.0
+            for label, tier in data["tiers"][role].items():
+                pub = tier.get("star_odds")
+                if pub is None:
+                    continue
+                fv = axis[label]
+                model = float(star_odds(fv, is_pit) or 0.0)
+                dev = abs(model - float(pub))
+                max_dev = max(max_dev, dev)
+                rows.append({"tier": label, "fv": fv,
+                             "published": round(float(pub), 4),
+                             "model": round(model, 4),
+                             "abs_dev": round(dev, 4)})
+            out["roles"][role] = {"tiers": rows, "max_abs_dev": round(max_dev, 4)}
+    return out
+
+
 def build_snapshot() -> dict:
     """Build the full JSON snapshot for frontend consumption. Deterministic from
     the committed config + fitted files (no model fitting here)."""
@@ -3149,6 +3455,7 @@ def build_snapshot() -> dict:
     return {
         "version": FRAMEWORK_VERSION,
         "model": "career-path-mixture",
+        "valuation_set": active_valuation_set(),
         "sources": {
             "primer": SOURCE_PRIMER_URL,
             "dollars_per_war": SOURCE_DPW_URL,
@@ -3158,6 +3465,17 @@ def build_snapshot() -> dict:
             "flat_mm": round(float(dpw["flat"]) / 1e6, 4),
             "tiered_mm": {k: round(float(v) / 1e6, 4) for k, v in dpw["tiered"]["rates"].items()},
             "tiered_breakpoints": [float(b) for b in dpw["tiered"]["breakpoints"]],
+            # Phase 2: which convex kernel prices each season, plus a small
+            # bucket_step-vs-smoothed divergence sample so the board can show how
+            # much the smoothstep ramp softens the hard breakpoints.
+            "kernel_mode": str(dpw.get("kernel_mode", "smoothed")),
+            "kernel_divergence": {
+                "sample_war": [0.5, 1.0, 1.5, 2.0, 2.5, 3.0],
+                "smoothed_mm": [round(_tiered_war_value(w, "smoothed", dpw["tiered"]) / 1e6, 3)
+                                for w in (0.5, 1.0, 1.5, 2.0, 2.5, 3.0)],
+                "bucket_step_mm": [round(_tiered_war_value(w, "bucket_step", dpw["tiered"]) / 1e6, 3)
+                                   for w in (0.5, 1.0, 1.5, 2.0, 2.5, 3.0)],
+            },
         },
         "discount_rate": float(cfg["discount_rate"]),
         "timing": {
@@ -3194,6 +3512,27 @@ def build_snapshot() -> dict:
             "reliever": _sv_curve(True, "RP"),  # bullpen-capped
         },
         "surplus_by_grade_mm": {"hitter": grade_table(False), "pitcher": grade_table(True)},
+        # Phase 4: Star Odds = P(>= min_seasons control seasons of >= threshold WAR).
+        # `published` = FanGraphs (2026) tier values (what the UI shows); `model` =
+        # the engine's per-FV odds (diagnostic, calibrated toward published in P5);
+        # `calibration` = per-role max abs deviation model-vs-published.
+        "star_odds": {
+            "definition": {"min_seasons": _star_def()[0], "war_threshold": _star_def()[1]},
+            "valuation_set": active_valuation_set(),
+            "published_set": "clemens_2026",
+            "published_by_grade": {
+                "hitter": {str(g): (published_star_odds(g, False) or 0.0) for g in grades},
+                "pitcher": {str(g): (published_star_odds(g, True) or 0.0) for g in grades},
+            },
+            "model_by_grade": {
+                "hitter": {str(g): round(star_odds(g, False) or 0.0, 4) for g in grades},
+                "pitcher": {str(g): round(star_odds(g, True) or 0.0, 4) for g in grades},
+            },
+            # Monotone (isotonic) model curves over the dense FV grid.
+            "model_curve": {"hitter": star_odds_curve(False), "pitcher": star_odds_curve(True)},
+            "calibration": {r: v["max_abs_dev"]
+                            for r, v in star_odds_calibration("clemens_2026")["roles"].items()},
+        },
         "position": {
             "apply_market_scarcity": bool(cfg["position"].get("apply_market_scarcity")),
             "market_scarcity": dict(cfg["position"].get("market_scarcity", {})),
