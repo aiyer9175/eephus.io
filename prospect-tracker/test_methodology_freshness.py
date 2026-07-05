@@ -118,6 +118,10 @@ MODEL_GLOSSARY = {
     # feature absent from the shipped lean sets, plus the A1 ops_rel swap; all
     # rejected at the pre-registered gate, loss ledger, rendered nowhere.
     "xfv_leanplus": "internal",
+    # E-COLLEGE-BACKFILL (2026-07-05): eFV production-block imputation for
+    # milb_missing college draftees; STOPPED at the trainability gate (college
+    # TrackMan coverage post-dates the resolved cohort), loss ledger, nowhere.
+    "xfv_college_backfill": "internal",
     # Follow-up Wave B1 reliever metrics (2026-07): RIV+ realized-impact index
     # and 3-year REM+ both surface on /mlbstats/ with their own glossary entries;
     # the SwStr xK skill-core candidate was rejected at its gate (loss ledger,

@@ -845,6 +845,20 @@
    "artifact_age_days": 0
   },
   {
+   "model_id": "xfv_college_backfill",
+   "surface": "model-dev artifact (rendered nowhere) - eFV college-translation production backfill trainability check (E-COLLEGE-BACKFILL)",
+   "predicts": "n/a - gated experiment: whether milb_missing college draftees can have their eFV production block imputed from the college->Single-A translation; STOPPED at the trainability gate",
+   "champion": "shipped eFV (milb_missing indicator retained for empty-production college rows; unchanged)",
+   "baseline": "college_translation hit_k imputation into the lean production block (not run - coverage-empty)",
+   "metric": "trainability gate: resolved 2011-2023 debut x milb_missing x in-repo college line intersection = 4 hit / 3 pit, all cross-era name collisions (5 of 796 resolved hitters join any college line)",
+   "eval_artifact": "data/xfv_college_backfill_eval.json",
+   "verdict": "deprecated",
+   "notes": "Improvement program 2026-07-05, analog of overseas item 15. STOP - timing/coverage block, same class as [[xfv_pitcher_stuff]] (E-STUFF): the feature source (CollegeSavant TrackMan) starts ~2021+, after the resolved-outcome cohort (2011-2023 debuts) ends, so the trainable intersection is empty and the apparent joins are cross-era same-name collisions. No experiment run, data/xfv.json untouched. Reopen only with resolved 2024+ debut cohorts. Feed only validated components (hit_k; hit_bb caveated; never hit_ops/pit_k).",
+   "last_checked": "2026-07-05",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
    "model_id": "riv_plus",
    "surface": "/mlbstats/ Bullpen Leaderboards, RIV+ column (realized impact)",
    "predicts": "realized leverage-weighted reliever VALUE (not skill): a 100-anchored index of the wins a reliever actually added, WPA-primary with a shutdowns-minus-meltdowns overlay, standardized over the season pool",
