@@ -2737,6 +2737,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                      _er["champion_heuristic"]["n"])
         except Exception:
             log.exception("eta_backtest failed — continuing")
+        # Star-odds artifacts (data/star_label_view.json + star_odds_eval.json).
+        # Rebuilds the published-vs-realized star-rate calibration and the label
+        # view off the resolved debut/career + xfv data produced above. Was only
+        # ever produced by a manual tool run, so the display + realized-rate
+        # disclosure silently froze between runs; wire it onto the pipeline
+        # cadence. Reads-only from the DB + xfv; additive, never aborts.
+        try:
+            from tools import build_star_odds_artifacts
+            build_star_odds_artifacts.main()
+        except Exception:
+            log.exception("star_odds artifacts failed — continuing")
         # Editorial forward-validation (Phase 5 WS-10). Scores matured
         # 30/60-day flag cohorts vs matched controls; WITHHOLDS the
         # artifact until the first cohort matures (registry honesty —

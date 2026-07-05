@@ -32778,6 +32778,37 @@ function fmtStarOdds(v) {
   if (v == null || !isFinite(v)) return " - ";
   return `${(Number(v) * 100).toFixed(1)}%`;
 }
+// Realized star-rate calibration (data/star_odds_eval.json). The published FG
+// table is what the cell shows; the realized column is what actually happened in
+// the resolved cohort by role + FV tier, disclosed beside it. At mid tiers the
+// two diverge sharply (e.g. pitcher FV 60-65 realized ~3% vs published ~30%).
+let _STAR_REALIZED = null;   // { hitter:[{tier,n,realized,published}], pitcher:[...] }
+(function loadStarRealized() {
+  fetch("/data/star_odds_eval.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _STAR_REALIZED = (j && j.realized_calibration && j.realized_calibration.roles) || null; })
+    .catch(() => { _STAR_REALIZED = null; });
+})();
+// FV -> the eval's tier bucket label.
+function _starTierOf(fv) {
+  const v = Number(fv);
+  if (!isFinite(v)) return null;
+  if (v < 50) return "<50";
+  if (v < 55) return "50-55";
+  if (v < 60) return "55-60";
+  if (v < 65) return "60-65";
+  return "65+";
+}
+// Realized star rate + n for a prospect's role + FV tier, or null.
+function _starRealizedFor(p) {
+  if (!_STAR_REALIZED || !p) return null;
+  const isPit = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || ""));
+  const role = isPit ? "pitcher" : "hitter";
+  const tier = _starTierOf(p.fv);
+  const tiers = _STAR_REALIZED[role];
+  if (!tier || !Array.isArray(tiers)) return null;
+  return tiers.find(t => t && t.tier === tier) || null;
+}
 // One centered Star Odds cell (desktop-only grid child, mirrors the Surplus
 // cell placement). Colored by magnitude so higher odds read brighter,
 // consistent with the surrounding numeric columns.
@@ -32786,8 +32817,17 @@ function makeStarOddsCell(p) {
   const col = (v == null || !isFinite(v)) ? "var(--text-tertiary)"
             : v >= 0.20 ? "var(--up)"
             : v >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)";
-  const tip = "Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.";
-  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtStarOdds(v)}</div>`;
+  let tip = "Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.";
+  // Realized disclosure: the resolved cohort's actual star rate for this role +
+  // FV tier, shown as a muted second line. The published table is unchanged; this
+  // is honest context where the two diverge (mid tiers most).
+  const rc = _starRealizedFor(p);
+  let realizedLine = "";
+  if (rc && rc.realized != null && rc.n != null) {
+    tip += ` Realized in the resolved cohort: ${(rc.realized * 100).toFixed(1)}% of FV ${rc.tier} ${/^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "")) ? "pitchers" : "hitters"} (n=${rc.n}) reached that bar.`;
+    realizedLine = `<div style="font-size:10px;font-weight:600;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Realized star rate in the resolved cohort for this role and FV tier (n=${rc.n})">${(rc.realized * 100).toFixed(1)}% real</div>`;
+  }
+  return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;">${fmtStarOdds(v)}</div>${realizedLine}</div>`;
 }
 
 // OPT% (upgrade-option layer): the share of a grade's value that comes from the
