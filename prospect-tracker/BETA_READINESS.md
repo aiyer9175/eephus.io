@@ -16,8 +16,11 @@ automation secrets, payload size) and the ordinary pre-launch data refresh.
 - [x] Daily pipeline green: latest daily run completed clean 2026-07-02
       (timeseries generated_at 2026-07-02T17:39Z; timeseries.json is
       untracked by design, owned by the pipeline).
-- [x] Model registry: 47 rows, validate() clean (see MODEL_REGISTRY.md,
-      generated from the same file).
+- [x] Model registry: 71 rows (21 validated / 34 provisional / 4 unvalidated /
+      12 deprecated), validate() clean (see MODEL_REGISTRY.md, generated from the
+      same file). Count refreshed 2026-07-05 after the improvement-program pass
+      (eFV lean+1 / college-backfill / reliability-split rows + wRC+/trade-board
+      / star-odds / college honesty work).
 - [ ] Monthly run lands before launch with this pass's pipeline additions in
       (6b4b gmLI refresh, generated-docs regen after registry restamps;
       draft/pipeline fixes only reach tracked draft_timeseries.json on the
@@ -77,7 +80,8 @@ automation secrets, payload size) and the ordinary pre-launch data refresh.
       fallback). RESOLVED the ERA-shrink unification (keep two) and MiLB park
       factors (infeasible on cached data). CLOSED the eFV bucket-calibration
       line (E-ISO3, final loss ledger). Overseas wRC+ upgraded to
-      ready-to-run and queued. AgeRel+ stays parked. Registry 51 rows, suite
+      ready-to-run and queued. AgeRel+ stays parked. Registry 51 rows at that
+      round (now 71 after the 2026-07-05 improvement pass), suite
       1,725 green, golden artifacts still byte-identical to baseline (the
       whole review-queue round is output-neutral on published model numbers).
       DEFERRED: Country/IFA entity pages (build lane failed on a formatting

@@ -305,7 +305,25 @@
    "notes": "auto-reruns monthly; newer sources insufficient-history by design",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 0
+   "artifact_age_days": 0,
+   "card": {
+    "n": 4239,
+    "window": "preseason cohorts 2017-2023, forward-chained",
+    "headline": [
+     {
+      "label": "Rank accuracy vs realized WAR (Spearman), consensus blend vs best single source",
+      "champion": 0.284,
+      "baseline": 0.278,
+      "better": "higher"
+     },
+     {
+      "label": "Useful-asset AUC, consensus blend vs best single source",
+      "champion": 0.741,
+      "baseline": 0.723,
+      "better": "higher"
+     }
+    ]
+   }
   },
   {
    "model_id": "eta",
@@ -377,7 +395,19 @@
    "notes": "Phase 4b WS-8 (2026-06-11): the hand-set table was never realized-anchored and UNDERSHOOTS resolved 2005-14 career means ~3x at every slot (pick 1: 28.4 realized vs 9.0). Live lookup = fitted FIRST-6 curve (matches the grad career-to-date comparison window + the QO control-window basis). 2015-18 holdout disclosed as censoring/COVID-confounded diagnostic (windows count from debut), not the ship criterion. Unsigned picks excluded via re-draft detection (404 of 7,000).",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 24
+   "artifact_age_days": 24,
+   "card": {
+    "n": 6596,
+    "window": "realized career bWAR, 2005-2014 draft classes",
+    "headline": [
+     {
+      "label": "Realized career bWAR, top overall pick vs late-round (picks 301-500) bucket",
+      "champion": 28.4,
+      "baseline": 0.3,
+      "better": "higher"
+     }
+    ]
+   }
   },
   {
    "model_id": "overseas_translation",
