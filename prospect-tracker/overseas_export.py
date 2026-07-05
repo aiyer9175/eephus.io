@@ -182,7 +182,13 @@ LEAGUE_CONTEXT = {
         "country":       "South Korea",
         "season_window": "April to October",
         "split_note":    "10-team single division; hitter-friendly (league OPS ≈ .740-.760)",
-        "hitter_wrc_factor": 0.81, # PRIOR retained (measured raw OPS ratio 0.819, n=1 - see eval)
+        # REFIT (2026-07-05, item 8 wRC+): offline cached-FG cohort n=3
+        # (Ha-Seong Kim, Jung Hoo Lee, Hyeseong Kim), PA-weighted MLB/KBO wRC+
+        # ratio 0.586 shrunk k=8 toward the 0.81 prior -> 0.749. Gate PASSED:
+        # LOO MAE 23.5 < prior 27.2, bootstrap band [0.724,0.802] (SEED=8).
+        # Elite-selection caveat disclosed in the eval. NPB stayed prior
+        # (0 cached transitions, coverage-blocked). See hitter_wrc_factor block.
+        "hitter_wrc_factor": 0.749,
         # REFIT (Phase 4b WS-8): measured ERA ratio 1.215 (n=6, incl.
         # MLB returnees Kelly/Flexen/Fedde - flagged in the eval),
         # shrunk toward 1.32 -> 1.275. KBO prior was slightly harsh.

@@ -106,12 +106,16 @@ TRANSITIONS: list[dict] = [
     {"name": "Chris Flexen", "league": "KBO", "side": "pit", "entry": 2021, "returnee": True},
     {"name": "Drew Rucinski", "league": "KBO", "side": "pit", "entry": 2023, "returnee": True},
     {"name": "Erick Fedde", "league": "KBO", "side": "pit", "entry": 2024, "returnee": True},
-    # KBO hitters
+    # KBO hitters. fg_id (optional) enables the offline wRC+ refit
+    # (refit_hitter_wrc) which reads the cached FanGraphs page directly;
+    # curated + owner-extendable. Ids without a cached page are skipped and
+    # counted (coverage audit), never guessed.
     {"name": "Byung Ho Park", "league": "KBO", "side": "hit", "entry": 2016},
     {"name": "Hyun Soo Kim", "league": "KBO", "side": "hit", "entry": 2016},
     {"name": "Jae-gyun Hwang", "league": "KBO", "side": "hit", "entry": 2017},
-    {"name": "Ha-Seong Kim", "league": "KBO", "side": "hit", "entry": 2021},
-    {"name": "Jung Hoo Lee", "league": "KBO", "side": "hit", "entry": 2024},
+    {"name": "Ha-Seong Kim", "league": "KBO", "side": "hit", "entry": 2021, "fg_id": "27506"},
+    {"name": "Jung Hoo Lee", "league": "KBO", "side": "hit", "entry": 2024, "fg_id": "33824"},
+    {"name": "Hyeseong Kim", "league": "KBO", "side": "hit", "entry": 2025, "fg_id": "kr3012639"},
 ]
 
 # B-Ref register "Lg" labels per platform league
@@ -280,6 +284,184 @@ def _shrunk(measured: float, n: float, prior: float, k: float = SHRINK_K) -> flo
     return (n * measured + k * prior) / (n + k)
 
 
+# ---------------------------------------------------------------------------
+# hitter wRC+ factor refit (review-queue item 8; spec in
+# docs/audit-2026-07/overseas-factors-recheck.md). OFFLINE by construction:
+# it reads the cached FanGraphs player pages only (FanGraphs is Cloudflare-
+# blocked to Python, so live resolution of uncached ids is out of scope and a
+# missing page is a counted coverage gap, never a guess). This is the wRC+
+# analog of the shipped ERA/K% refit: PA-weighted ratio of means, shrunk k=8
+# toward the incumbent prior, with a pre-registered LOO + bootstrap gate.
+# ---------------------------------------------------------------------------
+
+WRC_SEED = 8            # documented; the only stochastic step (bootstrap)
+WRC_BOOT_N = 2000
+WRC_MIN_NPB, WRC_MIN_KBO = 5, 3   # per-league coverage minimums (recheck doc)
+
+
+def _wrc_pair_from_cache(fg_id: str, league: str, entry: int) -> dict | None:
+    """Final qualifying foreign wRC+ (Level==league, PA>=150, season<entry)
+    and first MLB wRC+ (Level==MLB, PA>=100, season>=entry) from the cached FG
+    page. Returns None (counted upstream) when the page is uncached or either
+    side does not qualify. Skips ST/ROS/PROJ synthetic rows via the scraper."""
+    import overseas_stats as _os
+    cache_file = _os.CACHE_DIR / f"fg_player_{fg_id}.html"
+    if not cache_file.exists():
+        return None
+    try:
+        rows = _os.scrape_fg_player_stats(fg_id)
+    except Exception:                                          # noqa: BLE001
+        return None
+    norm = []
+    for r in rows or []:
+        lvl = str(r.get("level") or "").upper()
+        try:
+            yr = int(r.get("season") or r.get("year"))
+            pa = float(r.get("pa") or r.get("PA") or 0.0)
+            wrc = r.get("wrc_plus")
+            wrc = float(wrc) if wrc is not None else None
+        except (TypeError, ValueError):
+            continue
+        if wrc is None or lvl in {"ST", "ROS", "PROJ"}:
+            continue
+        norm.append({"lvl": lvl, "yr": yr, "pa": pa, "wrc": wrc})
+    foreign = [r for r in norm if r["lvl"] == league
+               and r["pa"] >= MIN_FOREIGN_PA and r["yr"] < entry]
+    mlb = [r for r in norm if r["lvl"] == "MLB"
+           and r["pa"] >= MIN_MLB_PA and r["yr"] >= entry]
+    if not foreign or not mlb:
+        return None
+    ff = max(foreign, key=lambda r: r["yr"])
+    mm = min(mlb, key=lambda r: r["yr"])
+    return {"fg_id": fg_id, "league": league,
+            "foreign_year": ff["yr"], "foreign_wrc": ff["wrc"], "foreign_pa": ff["pa"],
+            "mlb_year": mm["yr"], "mlb_wrc": mm["wrc"], "mlb_pa": mm["pa"]}
+
+
+def _wrc_ratio(pairs: list[dict]) -> float | None:
+    """PA-weighted ratio of means, weight min(foreign PA, mlb PA) - matching
+    the ERA factor's construction so one extreme season cannot dominate."""
+    num = sum(min(p["foreign_pa"], p["mlb_pa"]) * p["mlb_wrc"] for p in pairs)
+    den = sum(min(p["foreign_pa"], p["mlb_pa"]) * p["foreign_wrc"] for p in pairs)
+    return (num / den) if den else None
+
+
+def _wrc_loo_mae(pairs: list[dict], factor_fn) -> float | None:
+    """Leave-one-out MAE of predicted first-MLB wRC+ = factor(others) x foreign."""
+    if len(pairs) < 2:
+        return None
+    errs = []
+    for i, p in enumerate(pairs):
+        others = [q for j, q in enumerate(pairs) if j != i]
+        fac = factor_fn(others)
+        if fac is None:
+            return None
+        errs.append(abs(fac * p["foreign_wrc"] - p["mlb_wrc"]))
+    return sum(errs) / len(errs)
+
+
+def refit_hitter_wrc(persist_into_eval: bool = False) -> dict:
+    """Offline wRC+ factor refit + pre-registered gate, per league. Returns a
+    block ready to merge into data/overseas_translation_eval.json under
+    'hitter_wrc_factor'. Does NOT touch overseas_export or the timeseries; the
+    caller applies a passing factor and regenerates."""
+    import random
+    from overseas_export import LEAGUE_CONTEXT
+
+    hitters = [t for t in TRANSITIONS if t["side"] == "hit"]
+    per_league: dict[str, dict] = {}
+    for lg, min_n in (("NPB", WRC_MIN_NPB), ("KBO", WRC_MIN_KBO)):
+        inc = float(LEAGUE_CONTEXT[lg]["hitter_wrc_factor"])
+        listed = [t for t in hitters if t["league"] == lg]
+        pairs, dropped = [], []
+        for t in listed:
+            fg_id = t.get("fg_id")
+            pair = _wrc_pair_from_cache(fg_id, lg, t["entry"]) if fg_id else None
+            if pair:
+                pairs.append({**pair, "name": t["name"]})
+            else:
+                dropped.append({"name": t["name"], "fg_id": fg_id,
+                                "reason": "no_fg_id" if not fg_id else "uncached_or_unqualified"})
+
+        raw = _wrc_ratio(pairs)
+        shipped = round(_shrunk(raw, len(pairs), inc), 4) if raw is not None else inc
+
+        def _fac(sub, _inc=inc):
+            r = _wrc_ratio(sub)
+            return _shrunk(r, len(sub), _inc) if r is not None else None
+
+        loo_fitted = _wrc_loo_mae(pairs, _fac)
+        loo_prior = _wrc_loo_mae(pairs, lambda _sub, _p=inc: _p)
+        loo_factors = [_fac([q for j, q in enumerate(pairs) if j != i])
+                       for i in range(len(pairs))] if len(pairs) >= 2 else []
+        loo_factors = [f for f in loo_factors if f is not None]
+        swing = (max(loo_factors) - min(loo_factors)) if loo_factors else None
+
+        band = None
+        if len(pairs) >= min_n:
+            rng = random.Random(WRC_SEED)
+            boot = []
+            for _ in range(WRC_BOOT_N):
+                samp = [pairs[rng.randrange(len(pairs))] for _ in pairs]
+                r = _wrc_ratio(samp)
+                if r is not None:
+                    boot.append(_shrunk(r, len(samp), inc))
+            boot.sort()
+            if boot:
+                band = [round(boot[int(0.025 * len(boot))], 4),
+                        round(boot[int(0.975 * len(boot))], 4)]
+
+        # Gate: coverage AND LOO strictly beats prior (ties -> prior) AND
+        # stability (swing <= 0.05, bootstrap band excludes the no-op 1.0).
+        coverage_ok = len(pairs) >= min_n
+        loo_ok = (loo_fitted is not None and loo_prior is not None
+                  and loo_fitted < loo_prior)
+        stable_ok = (swing is not None and swing <= 0.05
+                     and band is not None and band[1] < 1.0)
+        passed = bool(coverage_ok and loo_ok and stable_ok)
+
+        per_league[lg] = {
+            "n_resolved": len(pairs), "min_required": min_n,
+            "incumbent_prior": inc,
+            "measured_raw_ratio": round(raw, 4) if raw is not None else None,
+            "shipped_if_pass": shipped,
+            "loo_mae_fitted": round(loo_fitted, 3) if loo_fitted is not None else None,
+            "loo_mae_prior": round(loo_prior, 3) if loo_prior is not None else None,
+            "loo_factor_swing": round(swing, 4) if swing is not None else None,
+            "bootstrap_seed": WRC_SEED, "bootstrap_95_band": band,
+            "gate": {"coverage_ok": coverage_ok, "loo_beats_prior": loo_ok,
+                     "stability_ok": stable_ok, "passed": passed},
+            "verdict": ("SHIP" if passed else
+                        ("coverage_blocked" if not coverage_ok else "no_ship")),
+            "pairs": [{"name": p["name"], "fg_id": p["fg_id"],
+                       "foreign_year": p["foreign_year"], "foreign_wrc": p["foreign_wrc"],
+                       "mlb_year": p["mlb_year"], "mlb_wrc": p["mlb_wrc"]} for p in pairs],
+            "dropped": dropped,
+            "elite_selection_caveat": ("every transition hitter earned a posting, so the "
+                "measured MLB-over-foreign wRC+ ratio is an elite-cohort ratio applied as a "
+                "global multiplier down to wRC+ 100; same extrapolation the shipped ERA "
+                "multiplier accepts. n is too small to fit a slope+intercept, so the "
+                "multiplier stays."),
+        }
+
+    block = {
+        "method": ("offline cached-FanGraphs wRC+ pairs (final qualifying foreign season "
+                   "vs first MLB season); PA-weighted ratio of means, shrunk k=%g toward the "
+                   "incumbent prior; pre-registered gate coverage(NPB>=%d/KBO>=%d) + LOO "
+                   "strictly beats prior + stability(swing<=0.05, bootstrap band excludes "
+                   "1.0), SEED=%d" % (SHRINK_K, WRC_MIN_NPB, WRC_MIN_KBO, WRC_SEED)),
+        "spec": "docs/audit-2026-07/overseas-factors-recheck.md",
+        "leagues": per_league,
+    }
+
+    if persist_into_eval and OUT_PATH.exists():
+        eval_doc = json.loads(OUT_PATH.read_text(encoding="utf-8"))
+        eval_doc["hitter_wrc_factor"] = block
+        OUT_PATH.write_text(json.dumps(eval_doc, indent=1), encoding="utf-8")
+        log.info("merged hitter_wrc_factor block into %s", OUT_PATH)
+    return block
+
+
 def run(persist: bool = True) -> dict:
     from overseas_export import LEAGUE_CONTEXT
     cohort = []
@@ -367,7 +549,16 @@ def run(persist: bool = True) -> dict:
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    rep = run()
-    print("accounting:", rep["accounting"])
-    for lg, f in rep["factors"].items():
-        print(lg, json.dumps(f))
+    if "--wrc" in sys.argv:
+        # offline hitter wRC+ refit only (no live B-Ref/StatsAPI fetch)
+        blk = refit_hitter_wrc(persist_into_eval="--persist" in sys.argv)
+        for lg, r in blk["leagues"].items():
+            print(lg, r["verdict"], "n=%d/%d" % (r["n_resolved"], r["min_required"]),
+                  "shipped=%s prior=%s LOO fitted/prior=%s/%s band=%s" % (
+                      r["shipped_if_pass"], r["incumbent_prior"],
+                      r["loo_mae_fitted"], r["loo_mae_prior"], r["bootstrap_95_band"]))
+    else:
+        rep = run()
+        print("accounting:", rep["accounting"])
+        for lg, f in rep["factors"].items():
+            print(lg, json.dumps(f))

@@ -383,15 +383,15 @@
    "model_id": "overseas_translation",
    "surface": "Overseas tab MLBe lines",
    "predicts": "MLB-equivalent rates for NPB/KBO/CPBL stats",
-   "champion": "phase4b_refit_v2: NPB ERA factor 1.54 (measured 1.696, n=15, shrunk k=8 from 1.25), KBO ERA 1.275 (measured 1.215, n=6), NPB K% delta +0.043; wRC+/velo/CPBL/CUBA/NPBF priors RETAINED",
+   "champion": "phase4b_refit_v2 + wRC+ (2026-07-05): NPB ERA factor 1.54 (measured 1.696, n=15), KBO ERA 1.275 (measured 1.215, n=6), NPB K% delta +0.043; KBO hitter wRC+ factor REFIT 0.81 -> 0.749 (measured 0.586, n=3, shrunk k=8); NPB wRC+/velo/CPBL/CUBA/NPBF priors RETAINED",
    "baseline": "the hand-set Longenhagen-primer factors (measured against the cohort)",
-   "metric": "IP/PA-weighted transition ratios, curated 2015-2026 cohort (28/34 resolved, B-Ref register x StatsAPI)",
+   "metric": "IP/PA-weighted transition ratios, curated cohort; wRC+ gate = LOO strictly beats prior + bootstrap stability (SEED=8), per-league coverage NPB>=5 / KBO>=3",
    "eval_artifact": "data/overseas_translation_eval.json",
    "verdict": "provisional",
-   "notes": "Phase 4b WS-8 (2026-06-11): the NPB pitcher haircut was badly optimistic (real ERA ratio 1.696 vs the hand-set 1.25); KBO was slightly harsh. NOT SHIPPED (documented lifts): hitter wRC+ factor (needs per-season foreign league offense context - raw OPS ratios 0.802 NPB / 0.819 KBO reported as analogs), fb_velo_delta (no historical velo source). Exclusions counted in the artifact; the transition ledger is owner-extendable.",
+   "notes": "Phase 4b WS-8 (2026-06-11) refit the ERA/K% factors. wRC+ refit (2026-07-05, item 8, offline cached-FanGraphs cohort): KBO hitter wRC+ factor SHIPPED 0.81 -> 0.749 - n=3 (Ha-Seong Kim, Jung Hoo Lee, Hyeseong Kim), LOO MAE 23.5 < prior 27.2, bootstrap band [0.724,0.802]; elite-selection caveat disclosed (every hitter earned a posting, so the ratio is an elite-cohort multiplier applied down to wRC+ 100). NPB hitter wRC+ stays prior 0.87: 0 cached transitions (coverage-blocked; FanGraphs is Python-blocked so uncached ids cannot be resolved offline). fb_velo_delta / CPBL / CUBA still prior. Ledger owner-extendable (add fg_id per hitter). overseas_timeseries.json regenerates the KBO wrc_plus_mlbe lines on the pipeline cadence from the new constant.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 24
+   "artifact_age_days": 0
   },
   {
    "model_id": "college_translation",
@@ -660,7 +660,7 @@
    "notes": "Holistic pass 3 (2026-07-01), gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md BEFORE the run. Condition 1 passed big (pooled Brier -18.6%, log-loss -16.7%, every bucket better); conditions 2 and 3 failed (rank rho 0.2227 vs 0.2392 shipped, delta -0.0165 vs -0.002 tolerance, from PAVA flat-segment ties; FV-35 tier reliability worsened). NO SHIP; published numbers untouched. Loss ledger in the artifact. Real signal for a future attempt: FV45+ bust/bench probabilities are miscalibrated (tier-45 gap 0.0946, tier-55 0.1616); a rank-preserving monotone recalibration in grade space could take the calibration gain without the tie-induced rank loss.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 3
+   "artifact_age_days": 4
   },
   {
    "model_id": "sc_plus_component_diagnostic",

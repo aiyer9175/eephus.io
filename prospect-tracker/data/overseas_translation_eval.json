@@ -698,5 +698,130 @@
    "entry": 2024,
    "status": "no_foreign_line"
   }
- ]
+ ],
+ "hitter_wrc_factor": {
+  "method": "offline cached-FanGraphs wRC+ pairs (final qualifying foreign season vs first MLB season); PA-weighted ratio of means, shrunk k=8 toward the incumbent prior; pre-registered gate coverage(NPB>=5/KBO>=3) + LOO strictly beats prior + stability(swing<=0.05, bootstrap band excludes 1.0), SEED=8",
+  "spec": "docs/audit-2026-07/overseas-factors-recheck.md",
+  "leagues": {
+   "NPB": {
+    "n_resolved": 0,
+    "min_required": 5,
+    "incumbent_prior": 0.87,
+    "measured_raw_ratio": null,
+    "shipped_if_pass": 0.87,
+    "loo_mae_fitted": null,
+    "loo_mae_prior": null,
+    "loo_factor_swing": null,
+    "bootstrap_seed": 8,
+    "bootstrap_95_band": null,
+    "gate": {
+     "coverage_ok": false,
+     "loo_beats_prior": false,
+     "stability_ok": false,
+     "passed": false
+    },
+    "verdict": "coverage_blocked",
+    "pairs": [],
+    "dropped": [
+     {
+      "name": "Shohei Ohtani",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Yoshi Tsutsugo",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Shogo Akiyama",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Seiya Suzuki",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Masataka Yoshida",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Munetaka Murakami",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     }
+    ],
+    "elite_selection_caveat": "every transition hitter earned a posting, so the measured MLB-over-foreign wRC+ ratio is an elite-cohort ratio applied as a global multiplier down to wRC+ 100; same extrapolation the shipped ERA multiplier accepts. n is too small to fit a slope+intercept, so the multiplier stays."
+   },
+   "KBO": {
+    "n_resolved": 3,
+    "min_required": 3,
+    "incumbent_prior": 0.81,
+    "measured_raw_ratio": 0.5857,
+    "shipped_if_pass": 0.7488,
+    "loo_mae_fitted": 23.547,
+    "loo_mae_prior": 27.16,
+    "loo_factor_swing": 0.0307,
+    "bootstrap_seed": 8,
+    "bootstrap_95_band": [
+     0.7236,
+     0.8015
+    ],
+    "gate": {
+     "coverage_ok": true,
+     "loo_beats_prior": true,
+     "stability_ok": true,
+     "passed": true
+    },
+    "verdict": "SHIP",
+    "pairs": [
+     {
+      "name": "Ha-Seong Kim",
+      "fg_id": "27506",
+      "foreign_year": 2020,
+      "foreign_wrc": 144.0,
+      "mlb_year": 2021,
+      "mlb_wrc": 71.0
+     },
+     {
+      "name": "Jung Hoo Lee",
+      "fg_id": "33824",
+      "foreign_year": 2023,
+      "foreign_wrc": 142.0,
+      "mlb_year": 2024,
+      "mlb_wrc": 83.0
+     },
+     {
+      "name": "Hyeseong Kim",
+      "fg_id": "kr3012639",
+      "foreign_year": 2024,
+      "foreign_wrc": 122.0,
+      "mlb_year": 2025,
+      "mlb_wrc": 95.0
+     }
+    ],
+    "dropped": [
+     {
+      "name": "Byung Ho Park",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Hyun Soo Kim",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Jae-gyun Hwang",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     }
+    ],
+    "elite_selection_caveat": "every transition hitter earned a posting, so the measured MLB-over-foreign wRC+ ratio is an elite-cohort ratio applied as a global multiplier down to wRC+ 100; same extrapolation the shipped ERA multiplier accepts. n is too small to fit a slope+intercept, so the multiplier stays."
+   }
+  }
+ }
 }
