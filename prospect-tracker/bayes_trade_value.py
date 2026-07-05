@@ -3876,6 +3876,31 @@ def _backgrade_realized_factor(age, realized_war, proj_war_6yr, n_seasons) -> fl
     return max(0.0, min(1.0, eff_rate / proj_rate))
 
 
+def _sortino_fields(dist: dict | None, scale: float) -> dict | None:
+    """Downside-risk stats from the persisted 5-point eFV surplus fan. A prospect
+    is an option on future WAR, so upside variance is not risk; only the shortfall
+    below the mean is. Semi-deviation DD = sqrt(sum w_i * min(q_i - mean, 0)^2)
+    over the p10..p90 quadrature. Returns display fields scaled to the board's
+    shown value ($ fields scale; the ratio is scale-invariant). risk_mm applies a
+    LOCAL half-lambda and does NOT touch the global risk_aversion_lambda (which
+    stays 0 and feeds the separate prospx risk_adjusted_mm)."""
+    if not dist:
+        return None
+    mean = dist.get("mean_mm")
+    pts = [dist.get(k) for k in ("p10_mm", "p25_mm", "p50_mm", "p75_mm", "p90_mm")]
+    if mean is None or any(p is None for p in pts):
+        return None
+    w = (0.15, 0.25, 0.25, 0.25, 0.10)
+    dd = sum(wi * min(float(p) - float(mean), 0.0) ** 2 for wi, p in zip(w, pts)) ** 0.5
+    sortino = (float(mean) - float(pts[0])) / max(dd, 0.1)   # upside cushion per unit downside
+    return {
+        "p_bust": dist.get("p_bust"),
+        "downside_mm": round(dd * scale, 1),
+        "risk_mm": round((float(mean) - 0.5 * dd) * scale, 1),
+        "sortino": round(min(99.0, max(0.0, sortino)), 2),
+    }
+
+
 def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
     """Re-point each Trade Machine record's surplus to the PLATFORM-STANDARD value the rest
     of the site shows, so the board/evaluator stop using bayes' own (floored/scarcity-scaled)
@@ -3987,6 +4012,15 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             scale = (mm / float(x_sur)) if (src == "xfv_backgrade" and x_sur) else 1.0
             r["trade_value_lo"] = round(float(lo) * scale, 1) if lo is not None else None
             r["trade_value_hi"] = round(float(hi) * scale, 1) if hi is not None else None
+            # Risk-adjusted surplus (Sortino): downside-only risk from the eFV
+            # fan. Additive top-level fields (kept by board_slim); null where no
+            # distribution (unmodeled MLB rows). Does not change any shown value.
+            rf = _sortino_fields(xe.get("dist"), scale)
+            if rf:
+                r["p_bust"] = rf["p_bust"]
+                r["downside_mm"] = rf["downside_mm"]
+                r["risk_mm"] = rf["risk_mm"]
+                r["sortino"] = rf["sortino"]
             stats[src] += 1
         else:
             stats["unchanged"] += 1

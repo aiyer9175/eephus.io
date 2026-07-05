@@ -21,6 +21,12 @@ ROOT = Path(__file__).parent
 # models with no user-facing methodology surface). EVERY registry row
 # must appear; a new model ships with its documentation decision.
 MODEL_GLOSSARY = {
+    # 2026-07-04 research-sweep Tier-1 features (each has its own glossary entry).
+    "draft_war_room": ["draft_war_room"],
+    "farm_window_alignment": ["window_alignment"],
+    "fv_tape": ["fv_tape"],
+    "surplus_downside_risk": ["risk_adjusted_surplus"],
+    "prospect_greeks": ["prospect_greeks"],
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row

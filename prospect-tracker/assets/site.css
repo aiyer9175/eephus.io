@@ -1309,6 +1309,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   font-family: var(--font-retro); font-weight: 700; font-size: 10px;
   letter-spacing: 0.08em; text-transform: uppercase;
   border-bottom: 2px solid var(--bg-header);
+  position: sticky; top: 0; z-index: 2;
+}
+/* Sticky headers on the long Projections / Team Outlook boards too (parity with
+   MLB Stats and FA, so the header does not scroll off a long table). */
+.proj-app .detail-table thead th, .proj-app .proj-table thead th {
+  position: sticky; top: 0; z-index: 2; background: var(--bg-secondary);
 }
 .fa-app .detail-table tbody tr:hover { background: var(--bg-tertiary); }
 .fa-app .detail-table td:first-child, .fa-app .detail-table th:first-child { text-align: left; }
@@ -1689,6 +1695,12 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: 0.1em; padding: 2px 5px; border: 1px solid var(--border); color: var(--text-tertiary); }
 .gl-app .gl-mod--fa { border-color: var(--accent-gold); }
 .gl-app .gl-mod--prospx { border-color: var(--accent-cyan); }
+.gl-app .gl-shelf { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; padding: 2px 5px; border: 1px solid var(--border); }
+.gl-app .gl-shelf--ark { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.gl-app .gl-shelf--industry { border-color: var(--text-tertiary); color: var(--text-tertiary); }
+.gl-app .gl-shelf--foundation { border-color: var(--border); color: var(--text-tertiary); opacity: 0.85; }
+.gl-app .gl-origin { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.45; }
 .gl-app .gl-def { margin-top: 4px; font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
 .gl-app .gl-meth p { margin: 0 0 8px; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
 .gl-app .gl-example { font-size: 11.5px; color: var(--text-secondary); font-style: italic; margin-top: 6px; }
@@ -1761,6 +1773,24 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
   letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
 .gl-app .gl-model-rowval { color: var(--text-secondary); line-height: 1.5; min-width: 0; word-break: break-word; }
 .gl-app .gl-model-rowval a { color: var(--accent-cyan); }
+/* Report Card v0: inline champion-vs-baseline proof bars */
+.gl-app .gl-card-proof { margin: 2px 0 10px; padding: 8px 10px; border: 1px solid var(--border-light);
+  background: var(--bg-primary); }
+.gl-app .gl-card-metric { margin-bottom: 8px; }
+.gl-app .gl-card-metric:last-of-type { margin-bottom: 0; }
+.gl-app .gl-card-metriclab { font-size: 11.5px; color: var(--text-primary); margin-bottom: 4px; }
+.gl-app .gl-card-dir { color: var(--text-tertiary); font-size: 10px; }
+.gl-app .gl-card-barrow { display: grid; grid-template-columns: 62px 1fr 46px; align-items: center;
+  gap: 8px; margin: 2px 0; }
+.gl-app .gl-card-barlab { font-family: var(--font-retro-mono); font-size: 9px; letter-spacing: 0.04em;
+  color: var(--text-tertiary); text-align: right; }
+.gl-app .gl-card-track { height: 9px; background: var(--bg-secondary); border: 1px solid var(--border-light); }
+.gl-app .gl-card-fill { display: block; height: 100%; background: var(--text-tertiary); }
+.gl-app .gl-card-fill--champ { background: var(--accent-cyan); }
+.gl-app .gl-card-barval { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+  text-align: left; }
+.gl-app .gl-card-foot { font-family: var(--font-retro-mono); font-size: 9px; color: var(--text-tertiary);
+  margin-top: 6px; letter-spacing: 0.04em; }
 @media (max-width: 640px) {.gl-app .gl-model-row { grid-template-columns: 1fr; gap: 2px; }.gl-app .gl-model-surface { margin-left: 0; text-align: left; flex-basis: 100%; }
     }
 .gl-app /* === How to Read the Site (guide) === */

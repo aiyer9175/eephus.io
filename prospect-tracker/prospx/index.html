@@ -9146,6 +9146,8 @@
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
         <button class="chip" data-draft-view="mock-draft"
                 title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
+        <button class="chip" data-draft-view="war-room"
+                title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
       <span class="draft-subnav-group">
         <span class="draft-subnav-grouplabel">Trends &amp; Tendencies</span>
@@ -9674,7 +9676,7 @@
           <button class="chip" data-lb-stat="pitcher_bb_pct" title="Pitcher BB% - walks as % of batters faced (lower is better)">BB%</button>
           <button class="chip"        data-lb-stat="hr_per_9" title="Home runs allowed per 9 (lower is better)">HR/9</button>
           <button class="chip"        data-lb-stat="pit_level_plus" title="ERA- vs level mean (100 = level-average; lower is better)">ERA- lvl</button>
-          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - K/9 + BB/9 + HR/9 normalized to level mean (100 = average peripherals). Pitchers only.">pStuff+</button>
+          <button class="chip" data-lb-stat="pstuff_plus" title="pStuff+ - peripheral run prevention from per-batter K% and BB% plus HR/9, indexed to the level mean (100 = average peripherals, +10 = +1σ). Pitchers only.">pStuff+</button>
           <button class="chip" data-lb-stat="krp_plus" title="KRP+ - K-backed run prevention: a below-level ERA an above-level strikeout rate supports (100 = pool average, +10 = +1σ). Pitchers only.">KRP+</button>
         </div>
 
@@ -10011,6 +10013,18 @@
     && window.matchMedia("(prefers-color-scheme: dark)").matches;
   const theme = stored || (sysDark ? "dark" : "light");
   document.documentElement.setAttribute("data-theme", theme);
+})();
+
+// FV Tape flag capture: the SPA router rewrites the hash on load (dropping
+// query state), so capture a `tape` param from the INITIAL url here, before
+// the router runs, and persist it. After that localStorage is the source of
+// truth (owner preview: append ?tape=1 or #tape=1 once; ?tape=0 turns it off).
+(function initFvTapeFlag() {
+  try {
+    const raw = (location.hash || "").replace(/^#/, "") + "&" + (location.search || "").replace(/^\?/, "");
+    const m = new URLSearchParams(raw).get("tape");
+    if (m != null) localStorage.setItem("prospect-tracker.tape", m !== "0" ? "1" : "0");
+  } catch (_) {}
 })();
 
 // Canonical tool key → [full display name, compact abbreviation].
@@ -13953,7 +13967,7 @@ function _statcastPercentileBlock(p, opts = {}) {
         const tp = (((q.sc || {}).pitch_movement || {}).pitch_summary || [])[0];
         return tp ? tp.avg_velo : null;
       }, false, v => v.toFixed(1) + " mph");
-    _push("Stuff+",
+    _push("Stuff+ (Statcast)",
       _pitcherCompositeStuffPlusFromSc(sc),
       q => _pitcherCompositeStuffPlusFromSc(q.sc),
       false, v => String(Math.round(v)));
@@ -15728,7 +15742,7 @@ function _prospectDetailSidebarCards(p, activeTab) {
       sp != null ? { key: "SC+", value: sp, valColor: sp >= 105 ? "var(--up)" : sp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       swp != null ? { key: "Swing+", value: Math.round(swp), valColor: swp >= 105 ? "var(--up)" : swp <= 95 ? "var(--down)" : "var(--text-primary)" } : null,
       sl.rps_plus != null ? { key: "RPS+", value: sl.rps_plus, valColor: sl.rps_plus >= 110 ? "var(--up)" : sl.rps_plus <= 90 ? "var(--down)" : "var(--text-primary)" } : null,
-      isPit && sl.stf_plus_periph != null ? { key: "Stuff+", value: sl.stf_plus_periph } : null,
+      isPit && sl.stf_plus_periph != null ? { key: "pStuff+", value: sl.stf_plus_periph } : null,
       !isPit && sl.ops_plus_level != null ? { key: "OPS+ lvl", value: sl.ops_plus_level } : null,
       isPit && sl.era_minus_level != null ? { key: "ERA-", value: sl.era_minus_level } : null,
       sm.wrc_plus != null ? { key: "wRC+", value: Math.round(sm.wrc_plus) } : null,
@@ -22017,7 +22031,13 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "war-room"];
+  // War Room: gated on the presence of the live artifact (data/draft_live.json,
+  // written by the draft-night poller). No artifact => chip hidden, so the view
+  // is dark until the draft opens. Kick off a one-time fetch; re-render when it
+  // resolves so the chip can appear.
+  if (!_warRoom.loaded && !_warRoom.loading) _loadWarRoom(() => { if (state.section === "draft") renderDraft(); });
+  const _anyWarRoom = !!(_warRoom.data && _warRoom.data.status);
   const OVERALL_VIEWS = ["class-strength", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges"];
   const _selectedCls = isOverall ? null : classes.find(c => c.year === state.draftYear);
   // Lottery is inherently next-draft data and lives on ONE class (the upcoming
@@ -22037,7 +22057,11 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock)) {
+      (state.draftView === "mock-draft" && !_anyMock) ||
+      // War Room: only fall back once the fetch has CONFIRMED there is no
+      // artifact, else a direct dview=war-room link races the async load and
+      // bounces to rankings before the feed arrives.
+      (state.draftView === "war-room" && _warRoom.loaded && !_anyWarRoom)) {
     state.draftView = isOverall ? "class-strength" : "rankings";
   }
   document.querySelectorAll("[data-draft-view]").forEach(b => {
@@ -22045,6 +22069,9 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
+    // War Room chip: visible once the artifact is present, or while a direct
+    // war-room link is still loading its feed (avoids a flash on normal pages).
+    if (view === "war-room" && !_anyWarRoom && !(state.draftView === "war-room" && !_warRoom.loaded)) show = false;
     b.style.display = show ? "" : "none";
     b.classList.toggle("active", view === state.draftView);
     b.onclick = () => {
@@ -22089,6 +22116,7 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
+    case "war-room":       return _renderWarRoom(host);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
     case "org-tendencies": return _renderDraftTendencies(host, classes, state.draftYear);
@@ -22800,6 +22828,75 @@ function _renderDraftOrder(host, cls) {
 // (consensus rank + Draft Stock+) anchors each pick; org tendencies, bonus-pool
 // behavior, and signability nudge the fit within a small window of best-
 // available. All of this is baked in mock_draft.py; here we just render it.
+// ── Draft War Room (Tier 1) ────────────────────────────────────────────────
+// Live draft-night board. The poller (tools/draft_live_poller.py, a cron on the
+// box) writes data/draft_live.json READ-ONLY; this view fetches it and prices
+// each pick against our board. No artifact => the chip stays hidden (dark until
+// the draft). While the view is open it re-polls every 60s; the timer stops
+// itself once the user leaves the view.
+let _warRoom = { data: null, loaded: false, loading: false, timer: null };
+function _loadWarRoom(cb) {
+  _warRoom.loading = true;
+  fetch("/data/draft_live.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => { _warRoom.data = j; _warRoom.loaded = true; _warRoom.loading = false; if (cb) cb(); })
+    .catch(() => { _warRoom.data = null; _warRoom.loaded = true; _warRoom.loading = false; if (cb) cb(); });
+}
+function _warRoomMoney(usd) {
+  if (usd == null) return "-";
+  const a = Math.abs(usd);
+  const s = a >= 1e6 ? `$${(usd / 1e6).toFixed(1)}M` : a >= 1e3 ? `$${Math.round(usd / 1e3)}k` : `$${usd}`;
+  return s;
+}
+function _renderWarRoom(host) {
+  if (_warRoom.timer) { clearInterval(_warRoom.timer); _warRoom.timer = null; }
+  const d = _warRoom.data;
+  const head = `<div class="detail-title">Draft War Room <span class="detail-title-sub">live picks priced against our board</span></div>`;
+  if (!_warRoom.loaded) {
+    host.innerHTML = head + `<div class="state-message is-loading">Loading the live draft feed...</div>`;
+  } else if (!d || d.status === "error") {
+    host.innerHTML = head + `<div class="state-message is-error">The live draft feed is unavailable right now. It refreshes automatically.</div>`;
+  } else if (d.status !== "live" || !(d.picks && d.picks.length)) {
+    // Doors-open / waiting state (pre-draft or between picks).
+    host.innerHTML = head + `<div class="state-message">The War Room opens on draft night (July 11-13). Live picks appear here priced against our board and the historical pick-value curve, so you see each reach or steal in surplus dollars.${d && d.generated_at ? `<div style="margin-top:8px;font-size:11px;color:var(--text-tertiary);">Feed live, waiting on the first pick. Updated ${escapeHtml(String(d.generated_at))}.</div>` : ""}</div>`;
+  } else {
+    const picks = d.picks.slice().sort((a, b) => (a.pick_overall || 0) - (b.pick_overall || 0));
+    const rows = picks.map(p => {
+      const bd = p.board_delta;
+      const tag = p.reach_or_steal;
+      const tagCol = tag === "steal" ? "var(--neon-green)" : tag === "reach" ? "var(--neon-red)" : "var(--text-tertiary)";
+      const deltaStr = bd == null ? "" : `<span style="color:${tagCol};">${bd > 0 ? "+" + bd : bd}</span>`;
+      const our = p.player_key
+        ? `<a class="fa-player-link" href="#player=${encodeURIComponent(p.player_key)}">${p.consensus_fv != null ? "FV " + fvCeil(p.consensus_fv) : "on board"}</a>`
+        : `<span class="tm-dim">off board</span>`;
+      const surCol = (p.exp_surplus_usd || 0) >= 0 ? "var(--neon-green)" : "var(--neon-red)";
+      const bvs = p.bonus_vs_slot_usd;
+      return `<tr>
+        <td class="tm-num">${p.pick_overall}</td>
+        <td>${p.team ? teamLogoHTML(p.team) : ""} ${escapeHtml(p.team || "")}</td>
+        <td><strong>${escapeHtml(p.player_name || "?")}</strong></td>
+        <td>${our}</td>
+        <td class="tm-num"><span style="color:${tagCol};text-transform:uppercase;font-size:10px;">${escapeHtml(tag || "")}</span> ${deltaStr}</td>
+        <td class="tm-num" style="color:${surCol};">${_warRoomMoney(p.exp_surplus_usd)}</td>
+        <td class="tm-num tm-dim">${p.exp_first6_war != null ? p.exp_first6_war.toFixed(1) : "-"}</td>
+        <td class="tm-num">${_warRoomMoney(p.signing_bonus_usd)}${bvs != null ? ` <span class="tm-dim" style="font-size:9px;">${bvs >= 0 ? "+" : ""}${_warRoomMoney(bvs)} vs slot</span>` : ""}</td>
+      </tr>`;
+    }).join("");
+    host.innerHTML = head
+      + `<div class="fa-note" style="margin:6px 0;">${picks.length} picks in · updated ${escapeHtml(String(d.generated_at || ""))}. Reach/steal = our board rank minus the pick number; surplus = the historical value of that pick slot.</div>`
+      + `<table class="detail-table"><thead><tr>
+          <th>#</th><th>Team</th><th>Player</th><th>Our board</th><th>Reach / steal</th><th>Slot surplus</th><th>Exp 6yr WAR</th><th>Bonus</th>
+        </tr></thead><tbody>${rows}</tbody></table>`;
+  }
+  // Re-poll every 60s while the view stays open; the timer self-clears on exit.
+  _warRoom.timer = setInterval(() => {
+    if (state.section !== "draft" || state.draftView !== "war-room") {
+      clearInterval(_warRoom.timer); _warRoom.timer = null; return;
+    }
+    _loadWarRoom(() => { if (state.draftView === "war-room") _renderWarRoom(host); });
+  }, 60000);
+}
+
 function _renderMockDraft(host, cls) {
   const mock = cls && cls.mock_draft;
   const picks = (mock && mock.picks) || [];
@@ -42277,6 +42374,151 @@ function _fvHistSrcMeta(src, idx) {
   return { label, color: _FV_HIST_FALLBACK_COLORS[idx % _FV_HIST_FALLBACK_COLORS.length] };
 }
 
+// FV Tape (Tier 1, flag-dark): a market-structure overlay on the consensus FV
+// history. Candlesticks from the consensus grade path plus trader indicators
+// (momentum, an RSI-style gauge on grade changes, realized volatility). These
+// are DESCRIPTIVE signals on scouting consensus, not predictions. Self-gating:
+// returns "" unless #tape=1 or localStorage prospect-tracker.tape is set, so the
+// default build is provably inert. Degrades below the sample gates (needs >= 4
+// consensus points for candles, >= 6 grade changes for RSI).
+function _fvTapeEnabled() {
+  // Surfaced: on by default. localStorage still lets a user turn it off
+  // (?tape=0 sets it to "0", captured by initFvTapeFlag before the router runs).
+  try { return localStorage.getItem("prospect-tracker.tape") !== "0"; }
+  catch (_) { return true; }
+}
+function computeFvTape(points) {
+  const pts = (points || [])
+    .filter(pt => pt && pt.snapshot_date && pt.consensus_fv_raw != null && isFinite(pt.consensus_fv_raw))
+    .sort((a, b) => String(a.snapshot_date).localeCompare(String(b.snapshot_date)));
+  if (pts.length < 4) return null;
+  // Candles: open = prior close, close = consensus_fv_raw; the multi-source
+  // fv_min/fv_max are the intraperiod low/high (fall back to the body).
+  const candles = [];
+  for (let i = 0; i < pts.length; i++) {
+    const c = +pts[i].consensus_fv_raw;
+    const o = i === 0 ? c : +pts[i - 1].consensus_fv_raw;
+    const lo = pts[i].fv_min != null ? Math.min(o, c, +pts[i].fv_min) : Math.min(o, c);
+    const hi = pts[i].fv_max != null ? Math.max(o, c, +pts[i].fv_max) : Math.max(o, c);
+    candles.push({ d: pts[i].snapshot_date, o, c, l: lo, h: hi, up: c >= o });
+  }
+  const closes = candles.map(c => c.c);
+  const n = closes.length;
+  // Momentum: net grade change over the last 3 intervals.
+  const momentum = +(closes[n - 1] - closes[Math.max(0, n - 4)]).toFixed(2);
+  // RSI over grade-change deltas only (flat re-confirmations dropped, else it
+  // pins at 100/0). Simple averaged form over the last N changes.
+  const deltas = [];
+  for (let i = 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i - 1];
+    if (Math.abs(d) > 1e-9) deltas.push(d);
+  }
+  let rsi = null;
+  if (deltas.length >= 6) {
+    const N = Math.min(14, deltas.length);
+    const recent = deltas.slice(-N);
+    let g = 0, l = 0;
+    for (const d of recent) { if (d > 0) g += d; else l -= d; }
+    const ag = g / N, al = l / N;
+    rsi = al === 0 ? 100 : Math.round(100 - 100 / (1 + ag / al));
+  }
+  const last = pts[n - 1];
+  const vol = last.fv_stddev != null ? +last.fv_stddev : null;
+  return { candles, momentum, rsi, vol, close: closes[n - 1] };
+}
+function makeFvTape(points) {
+  if (!_fvTapeEnabled()) return "";
+  const t = computeFvTape(points);
+  if (!t) return "";
+  const { candles, momentum, rsi, vol } = t;
+  // Candlestick SVG (green up, red down), scaled to the grade range in view.
+  const W = 320, H = 96, padL = 26, padR = 8, padT = 8, padB = 16;
+  const lows = candles.map(c => c.l), highs = candles.map(c => c.h);
+  const lo = Math.min(...lows), hi = Math.max(...highs);
+  const span = Math.max(1, hi - lo);
+  const y = v => padT + ((hi - v) / span) * (H - padT - padB);
+  const step = (W - padL - padR) / candles.length;
+  const cw = Math.max(2, Math.min(9, step * 0.6));
+  const bars = candles.map((c, i) => {
+    const cx = padL + step * (i + 0.5);
+    const col = c.up ? "var(--neon-green)" : "var(--neon-red)";
+    const yO = y(c.o), yC = y(c.c), yH = y(c.h), yL = y(c.l);
+    const top = Math.min(yO, yC), bh = Math.max(1, Math.abs(yC - yO));
+    return `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${yH.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1"/>`
+      + `<rect x="${(cx - cw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${cw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.85"><title>${escapeHtml(String(c.d))}: ${fvCeil(c.o)} to ${fvCeil(c.c)}</title></rect>`;
+  }).join("");
+  const yTicks = [lo, (lo + hi) / 2, hi].map(v =>
+    `<text x="${padL - 4}" y="${(y(v) + 3).toFixed(1)}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${Math.round(v)}</text>`).join("");
+  // Indicator chips.
+  const chip = (label, val, col, tip) =>
+    `<span title="${escapeHtml(tip)}" style="display:inline-flex;gap:4px;align-items:baseline;padding:2px 7px;border:1px solid var(--border-light);border-radius:10px;font-size:10px;">
+      <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${label}</span><span style="font-family:var(--font-mono);font-weight:600;color:${col};">${val}</span></span>`;
+  const momCol = momentum > 0 ? "var(--neon-green)" : momentum < 0 ? "var(--neon-red)" : "var(--text-secondary)";
+  const momChip = chip("MOM", (momentum > 0 ? "+" : "") + momentum, momCol, "Momentum: net consensus grade change over the last 3 intervals");
+  let rsiChip = "";
+  if (rsi != null) {
+    const rsiState = rsi >= 70 ? "overbought" : rsi <= 30 ? "oversold" : "neutral";
+    const rsiCol = rsi >= 70 ? "var(--neon-amber)" : rsi <= 30 ? "var(--neon-cyan)" : "var(--text-secondary)";
+    rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
+  }
+  const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
+  return `<div class="fv-tape" style="margin-top:10px;">
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+      <span style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
+      <span style="font-size:9px;color:var(--text-tertiary);">descriptive market signals on scouting consensus, not predictions</span>
+    </div>
+    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="FV consensus candlestick tape">${yTicks}${bars}</svg>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${momChip}${rsiChip}${volChip}</div>
+  </div>`;
+}
+// Prospect Greeks: an option-on-future-WAR view of a prospect's value, from the
+// committed value framework (sv_curve = FV->surplus) + the eFV outcome fan.
+// Delta = $ from a one-grade (5 FV) upgrade; Vega = $ swing implied by scouting
+// disagreement (local $/FV slope x grade dispersion); Theta = $ eroded per year
+// of ETA delay (the framework discount). IV = the grade dispersion itself.
+function _svAt(side, fv) {
+  const sv = (window.VALUE_FRAMEWORK || {}).sv_curve;
+  if (!sv || !sv[side] || fv == null) return null;
+  const fvc = Math.max(sv.fv_min, Math.min(sv.fv_max, fv));
+  const a = sv[side];
+  const i = Math.max(0, Math.min(a.length - 1, Math.round((fvc - sv.fv_min) / sv.step)));
+  return a[i];
+}
+function computeGreeks(fv, isPit, dist) {
+  const vf = window.VALUE_FRAMEWORK || {};
+  if (!vf.sv_curve || fv == null) return null;
+  const side = isPit ? "pitcher" : "hitter";
+  const s0 = _svAt(side, fv), sUp = _svAt(side, fv + 5);
+  if (s0 == null || sUp == null) return null;
+  const slopeUp = _svAt(side, fv + 1), slopeDn = _svAt(side, fv - 1);
+  const slope = (slopeUp != null && slopeDn != null) ? (slopeUp - slopeDn) / 2 : null;
+  const disp = (dist && dist.fv_dispersion != null) ? dist.fv_dispersion : null;
+  const dr = vf.discount_rate || 0.09;
+  const base = (dist && dist.mean_mm != null) ? dist.mean_mm : s0;
+  return {
+    delta: sUp - s0,                                            // $ per one-grade upgrade
+    vega: (slope != null && disp != null) ? Math.abs(slope) * disp : null,  // $ from disagreement
+    theta: base != null ? -(base * dr / (1 + dr)) : null,       // $/yr ETA decay
+    iv: disp,                                                   // implied vol = grade dispersion
+  };
+}
+function makeGreeksStrip(fv, isPit, dist) {
+  const g = computeGreeks(fv, isPit, dist);
+  if (!g || g.delta == null) return "";
+  const money = v => v == null ? " - " : `${v < 0 ? "-" : ""}$${Math.abs(v).toFixed(1)}M`;
+  const cell = (sym, name, val, col, tip) =>
+    `<div title="${escapeHtml(tip)}" style="flex:1;min-width:64px;">
+      <div style="font-size:9px;letter-spacing:0.06em;text-transform:uppercase;color:var(--text-tertiary);">${sym} <span style="text-transform:none;letter-spacing:0;">${name}</span></div>
+      <div style="font-family:var(--font-mono);font-size:12px;font-weight:600;color:${col};">${val}</div></div>`;
+  return `<div style="padding:8px 0;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
+    <div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:6px;">Prospect Greeks <span style="text-transform:none;letter-spacing:0;font-style:italic;">an option on future WAR</span></div>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      ${cell("&Delta;", "Delta", money(g.delta), "var(--neon-green)", "Delta: dollars of surplus gained from a one-grade (5 FV) upgrade, from the value framework's FV-to-surplus curve at this grade")}
+      ${g.vega != null ? cell("&nu;", "Vega", money(g.vega), "var(--neon-amber)", "Vega: dollar swing implied by scouting disagreement (local surplus slope times the grade dispersion across sources)") : ""}
+      ${g.theta != null ? cell("&Theta;", "Theta", money(g.theta), "var(--neon-red)", "Theta: surplus eroded per additional year of ETA delay (the value framework's annual discount)") : ""}
+      ${g.iv != null ? cell("IV", "grade &sigma;", g.iv.toFixed(1), "var(--text-secondary)", "Implied volatility: the spread of source FV grades, in grade points (higher = more scouting disagreement)") : ""}
+    </div></div>`;
+}
 function makeSourceFvHistory(points, opts = {}) {
   const pts = (points || []).filter(pt =>
     pt && pt.snapshot_date &&
@@ -43129,7 +43371,8 @@ function renderPlayerDetail(key) {
   const chartSection = (p.points && p.points.length >= 2)
     ? `<div class="detail-title">FV history <span style="margin-left:8px;vertical-align:middle;">${_srcToggle}</span></div>${makeBigLineChart(p.points, p.fv_open, p.fv_close, p.debut_date, p.trades, p.career_stats, p, { showSources: _showSrc })}
        ${_srcLegend}
-       ${transactionLegend()}`
+       ${transactionLegend()}
+       ${makeFvTape(p.points)}`
     : (p._is_provisional && _provEfvHist && _provEfvHist.length >= 2)
       // Provisional prospects have no scout snapshots, but DO have a per-season eFV trajectory
       // (the production-only grade as-of each MiLB season). Plot that instead.
@@ -43465,7 +43708,15 @@ function renderPlayerDetail(key) {
            <div style="font-family:var(--font-mono);font-size:17px;font-weight:700;color:${dc};font-variant-numeric:tabular-nums;">${Math.round(dv)}</div>
          </div>`;
     }
-    const inner = surplusRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
+    // Prospect Greeks: Delta needs only a grade + the value-framework curve;
+    // Vega/Theta additionally use the eFV outcome fan's dispersion where present.
+    // Grade falls back through the eFV grade / gradeBlock when fv_close is unset.
+    const _gDist = (_xf && _xf.dist) || (p.surplus && p.surplus.dist) || {};
+    const _gFv = fv != null ? fv
+               : (_xf && _xf.xfv_grade != null) ? _xf.xfv_grade
+               : (typeof gradeBlock === "function" ? gradeBlock(p).value : null);
+    const greeksRow = makeGreeksStrip(_gFv, _isPit, _gDist);
+    const inner = surplusRow + greeksRow + bakedDetailRow + dvmRow + expectedAavRow + realizedRow + surplusDeltaRow + aavRow + acqRow + bonusRow + roiRow + actualRoiRow;
     if (!inner) return "";
     const _srcLabel = _useEfv ? "eFV · outcome-grounded" : _baked ? "career-path mixture engine" : "FV-implied · FanGraphs 2019 framework";
     return `<div class="detail-title">Surplus value <span class="detail-title-sub">${_srcLabel}</span></div>

@@ -10,6 +10,79 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-04 (research sweep + model frontier)
+
+Discovery ran as a 20-agent read-only audit (registry / glossary census /
+correctness / frontier feasibility) with adversarial verification of every
+blocker/fix-now claim. That pass refuted or downgraded 4 of 6 checked fix-now
+claims: the zone/plate-discipline models are regime-safe by construction
+(percentiles rank within-level; chase comes from a geometric MLB-trained zone
+applied uniformly, not the ABS zone) and value_framework verified exemplary on
+transform-first-aggregate-last. Deliverables: docs/audit/current_state_map.md,
+docs/audit/research_check.md, docs/plans/sweep_and_frontier_plan.md,
+docs/roadmap/post_launch_frontier.md.
+
+Research-check fixes:
+- OPS+ published formula corrected to the level-relative OPS ratio the code
+  actually computes (was the Bill James OBP/SLG decomposition, which the shipped
+  level norms cannot even reproduce). Copy-only.
+- ABS-challenge-era caveats added to Chase% and CSW% (the site was silent on the
+  2026 league-wide ABS regime; AAA since 2023, FSL since 2022). RPS+ headline now
+  states its two scales plainly (draft z-score vs active ratio). pStuff+
+  leaderboard tooltip corrected to the shipped per-batter formula. The two
+  player-card "Stuff+" labels disambiguated (pStuff+ / Stuff+ (Statcast)).
+- NUMBER CHANGE (owner-approved with output diff, docs/audit/rc6_shrink_impact):
+  per-season ops_plus_level / era_minus_level now apply the same K_AB=170 /
+  K_IP=50 empirical-Bayes shrink the headline statline uses, killing the "OPS+
+  374 on 4 AB" cameo blowups. Qualified rows barely move (OPS+ median 5, ERA-
+  median 10); every small-sample extreme is tamed.
+- em-dashes in storage.py generated card-flag / statline notes (which bake into
+  debuts.json / inactive.json outside the copy-gate scope) replaced with ' - ';
+  a narrow regression test guards the note strings. statcast_plus docstring
+  corrected (10 pts/sigma, z-scale not the ratio family).
+
+Glossary reclamation (the "reclaim the glossary" mandate):
+- Three shelves via a new `shelf` field: 143 Arkmetric / 23 industry / 82
+  foundation (universal standard stats moved off the industry shelf).
+- An `origin` credit line on every Arkmetric and industry entry: Arkmetrics say
+  "original to eephus.io"; 23 industry metrics name their creator and source
+  (Tango/FanGraphs for wRC+/wOBA/FIP/WPA/leverage index; Studeman xFIP; MLB
+  Statcast for the bat/batted-ball/tracking suite; Alex Fast/Pitcher List CSW%).
+- Three displayed-but-undefined metrics added (xwOBA, BABIP, VAA). Shelf badge +
+  Origin line now render on every card (eephus-gl.js passes the fields through).
+- DEFERRED to the roadmap: 41 weak-stub rewrites, 7 near-duplicate merges, 13
+  multi-resolving alias disambiguations (touching aliases/permalinks 8 days from
+  launch was needless risk).
+
+Tier 1 frontier (all five owner-approved, each behind a flag, each with a
+registry row + glossary entry at birth):
+- Model Report Cards v0: inline champion-vs-baseline proof bars on 8 flagship
+  Models & Proofs rows, behind #cards=1. Every card number traces to its eval
+  artifact (a test is the anti-drift fence; the field survives refresh_stamps).
+- System Duration / Window Alignment: surplus-weighted farm ETA vs the
+  controlled-core WAR center on the Team Outlook board, behind #window=1. An
+  economic lens no public farm ranking uses (5/30 orgs aligned, median +0.39).
+- Risk-adjusted Surplus (Sortino): downside-deviation + bust column on the Trade
+  Machine, behind #risk=1, from the persisted eFV fan. Local half-lambda; the
+  global risk_aversion_lambda is untouched (no re-ranking).
+- FV Tape: candlesticks + momentum / RSI / volatility on the consensus FV
+  history, dark by default (localStorage, set via ?tape=1). Descriptive market
+  signals, not predictions; RSI drops flat re-confirmations so a static grade
+  never pins the gauge.
+- Draft War Room: a cron (tools/draft_live_poller.py) writes a READ-ONLY
+  data/draft_live.json on draft night and the PROSPX War Room view prices each
+  live pick against our board and the historical pick-value curve (reach/steal
+  in surplus dollars). The poller never touches prospects.db /
+  draft_timeseries.json (a test asserts byte-invariance), so it cannot kill the
+  mock or trigger promotion. Ships dark until the artifact appears.
+
+Down-tiering: three "frontier" ideas (Crunch Index, Portfolio Frontier, IFA
+Efficiency) are largely already built and become small display adds post-launch.
+Blocked (spec, no start): Catcher/Challenge Value (no catcher-defense or ABS data
+ingested), sequencing/judgment/matchups (only aggregates retained). Polish:
+sticky Projections/FA headers shipped; money formatter, origin badges, qualifier
+chips, nav naming deferred to the roadmap.
+
 ## 2026-07-02 (review-queue round)
 
 - E-ISO4, the owner-approved final eFV bucket-calibration attempt, closes the

@@ -468,7 +468,7 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
                     "delta_display": f"{raw_val - 50:+.1f}",
                     "category": "composite",
                     "polarity": "above_good",
-                    "note": f"{label} {raw_val:.1f} — Plus tier (60+) composite toolset.",
+                    "note": f"{label} {raw_val:.1f} - Plus tier (60+) composite toolset.",
                 })
         if stuff_plus is not None and stuff_plus >= 115:
             tool_flags.append({
@@ -482,7 +482,7 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
                 "delta_display": f"{stuff_plus - 100:+d}",
                 "category": "composite",
                 "polarity": "above_good",
-                "note": f"Stuff index {stuff_plus} — above-cohort arsenal.",
+                "note": f"Stuff index {stuff_plus} - above-cohort arsenal.",
             })
         if overall_raw is not None and overall_raw <= 40:
             tool_flags.append({
@@ -496,7 +496,7 @@ def _attach_tool_plus_indices(payloads: list[dict]) -> None:
                 "delta_display": f"{overall_raw - 50:+.1f}",
                 "category": "composite",
                 "polarity": "below_good",
-                "note": f"Tool {overall_raw:.1f} — Below-Average tier composite toolset.",
+                "note": f"Tool {overall_raw:.1f} - Below-Average tier composite toolset.",
             })
 
 
@@ -5333,7 +5333,7 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "kind":  "usd",
                 "value": round(tx["surplus_out"], 1),
                 "n":     tx.get("surplus_out_count") or 0,
-                "raw":   "Talent given up — same valuation as inbound side",
+                "raw":   "Talent given up - same valuation as inbound side",
             })
         if tx.get("surplus_delta") is not None:
             subs.append({
@@ -5438,7 +5438,7 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "kind":     "pct",
                 "value":    round(hm["post_tj_pct"], 3),
                 "n":        hm.get("active_count"),
-                "raw":      f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ — informational only, not graded",
+                "raw":      f"{hm.get('post_tj_count', 0)} of {hm.get('active_count', 0)} with prior TJ - informational only, not graded",
                 "info_only": True,
             })
         if hm.get("post_tj_pct_pit") is not None:
@@ -5447,7 +5447,7 @@ def _attach_sub_leaves(entry: dict) -> None:
                 "kind":      "pct",
                 "value":     round(hm["post_tj_pct_pit"], 3),
                 "n":         hm.get("actives_pit_count"),
-                "raw":       "informational only — post-surgery grace period often correlates with above-avg outcomes",
+                "raw":       "informational only - post-surgery grace period often correlates with above-avg outcomes",
                 "info_only": True,
             })
         if subs:
@@ -8510,12 +8510,23 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                     _era = float(_rr.get("era")) if _rr.get("era") and _rr.get("era") != "—" else None
                     _avg_era = _norms_perf.get("avg_era")
                     if _era and _avg_era and _era > 0:
-                        _rr["era_minus_level"] = round(_era / _avg_era * 100)
+                        # Same empirical-Bayes shrink toward the level mean as the
+                        # headline statline (storage.py ~L8473). Without it, a
+                        # few-IP per-season row re-enabled the extreme ERA- the
+                        # headline guard was added to kill. K_IP has the provenance.
+                        _ip = float(_rr.get("ip") or 0)
+                        _era_adj = (_ip * _era + K_IP * _avg_era) / (_ip + K_IP)
+                        _rr["era_minus_level"] = round(_era_adj / _avg_era * 100)
                 else:
                     _ops = float(_rr.get("ops")) if _rr.get("ops") and _rr.get("ops") != "—" else None
                     _avg_ops = _norms_perf.get("avg_ops")
                     if _ops and _avg_ops and _avg_ops > 0:
-                        _rr["ops_plus_level"] = round(_ops / _avg_ops * 100)
+                        # Same empirical-Bayes shrink as the headline statline
+                        # (storage.py ~L8494): a 4-AB line no longer reads
+                        # OPS+ 374. K_AB has the provenance.
+                        _ab = float(_rr.get("ab") or 0)
+                        _ops_adj = (_ab * _ops + K_AB * _avg_ops) / (_ab + K_AB)
+                        _rr["ops_plus_level"] = round(_ops_adj / _avg_ops * 100)
             except (TypeError, ValueError, ZeroDivisionError):
                 pass
             _current_season_statlines.append(_rr)

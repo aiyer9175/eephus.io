@@ -334,6 +334,39 @@
     // farm block (older exports) degrade to the original columns.
     const hasFarm = rows.some(r => r.farm);
     const hasControl = rows.some(r => r.lockedPct != null || (Array.isArray(r.byYear) && r.byYear.length));
+    // System Duration / Window Alignment: dark by default pre-launch; opt in
+    // with #window=1 for the soak, then flip WINDOW_DEFAULT at launch. Also
+    // degrades on payload presence (older exports have no etaAlignYears).
+    const WINDOW_DEFAULT = true;   // surfaced: Window column on by default (#window=0 to hide)
+    const _wp = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("window");
+    const windowOn = _wp != null ? _wp !== "0" : WINDOW_DEFAULT;
+    const hasWindow = rows.some(r => (r.farm || {}).etaAlignYears != null);
+    const showWindow = hasWindow && windowOn;
+    // Window cell: an arrival-curve sparkline (share of farm surplus landing
+    // each 2027-31 season + a later bucket) plus etaAlignYears, colored by
+    // whether the farm lands inside the controlled-core window (<= 0 aligned).
+    const windowCell = (r) => {
+      const f = r.farm || {};
+      const a = f.etaAlignYears;
+      if (a == null) return EM_DASH;
+      const by = Array.isArray(f.etaByYear) ? f.etaByYear : [];
+      let spark = "";
+      if (by.length) {
+        const mx = Math.max(0.01, ...by);
+        spark = `<span style="display:inline-flex;align-items:flex-end;gap:1.5px;height:20px;">${
+          by.map((v, k) => {
+            const yr = DATA.first_season + k;
+            const lab = k === by.length - 1 ? `${yr}+` : `${yr}`;
+            const h = Math.max(2, Math.round((v / mx) * 18));
+            return `<span title="${esc(`${lab}: ${Math.round(v * 100)}% of farm surplus`)}" style="display:inline-block;width:5px;height:${h}px;background:var(--accent-gold);opacity:.85;border-radius:1px;"></span>`;
+          }).join("")
+        }</span> `;
+      }
+      const col = a <= 0 ? "var(--up)" : a >= 1.5 ? "var(--down)" : "var(--text-primary)";
+      const sign = a > 0 ? "+" : "";
+      const tip = `Window alignment: the farm's surplus-weighted arrival (${f.etaMean != null ? f.etaMean : "?"}) vs the controlled-core WAR center (${f.coreCenter != null ? f.coreCenter : "?"}). ${a <= 0 ? "Farm lands inside the control window (aligned)." : "Farm arrives after the core leaks to free agency (gap)."} Bars = share of farm surplus by arrival season.`;
+      return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${spark}<span style="font-family:var(--font-mono);font-weight:600;color:${col};">${sign}${a.toFixed(1)}y</span></span>`;
+    };
     // Core-control cell: a decline sparkline of CONTROLLED WAR per season (the
     // cliff) + the WAR-weighted lock-up %. % colored up/down; bars from byYear.
     const controlCell = (r) => {
@@ -366,6 +399,7 @@
       war:       { get: r => r.war, natural: "desc" },
       wins:      { get: r => r.wins, natural: "desc" },
       control:   { get: r => r.lockedPct, natural: "desc" },
+      window:    { get: r => (r.farm || {}).etaAlignYears, natural: "asc" },
       farm:      { get: r => (r.farm || {}).farmRank, natural: "asc" },
       surplus:   { get: r => (r.farm || {}).farmSurplusMM, natural: "desc" },
       prospect:  { get: r => ((r.farm || {}).topProspect || {}).fv, natural: "desc" },
@@ -417,6 +451,7 @@
       <td class="proj-war${warClass(r.war / 8)}">${r.war.toFixed(1)}</td>
       <td title="${esc(wlTip)}"><strong>${wl}</strong></td>
       ${hasControl ? `<td>${controlCell(r)}</td>` : ""}
+      ${showWindow ? `<td>${windowCell(r)}</td>` : ""}
       ${hasFarm ? `<td>${farmCell}</td><td>${surCell}</td><td>${topCell}</td>` : ""}
       <td class="fa-sub">${(r.top || []).map(p => `<a class="fa-player-link" href="#player=${encodeURIComponent(p.key)}">${esc(p.name)}</a> ${p.war.toFixed(1)}`).join(" · ")}</td>
       ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
@@ -431,7 +466,7 @@
       `<th class="proj-sortable" data-team-sort="${key}"${title ? ` title="${esc(title)}"` : ""} style="cursor:pointer;user-select:none;white-space:nowrap;">${label}${_arrow(key)}</th>`;
     root.innerHTML = `<div class="fa-note" style="margin:8px 0;">${note}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
+      <thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${showWindow ? sth("window", "Window", `System Duration: farm surplus-weighted arrival vs the controlled-core window. Negative = the farm lands while the core is still under control (aligned); positive = it arrives after the core leaks. Bars = share of farm surplus by arrival season.`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
       <tbody>${body}</tbody></table>`;
     root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
       const k = h.dataset.teamSort;

@@ -45,7 +45,9 @@
     "o_tool",
     "d_tool",
     "tools_dvm_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "o_tool",
@@ -69,7 +71,9 @@
     "tool",
     "d_tool",
     "speed_tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "d_tool",
@@ -95,7 +99,9 @@
     "field_tool",
     "throw_tool",
     "speed_tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "breakout_indicator",
@@ -119,7 +125,9 @@
     "statcast_plus"
    ],
    "visual": "<span class=\"fv-badge fv-50 is-breakout\" style=\"position:relative;display:inline-block;padding:3px 8px;\">50<span class=\"fv-breakout-mark\" title=\"Breakout\">★</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ aquamarine ★ + pulsing bottom edge</span>",
-   "example": "A 20-year-old A+ hitter whose consensus jumped +5 FV in four months while running RPS+ 118 flags Breakout ★; a 24-year-old AAA arm with the same grade jump does not (age cap), and neither does a riser whose performance gate reads RPS+ 96 (velocity without production is a re-rank, not a breakout)."
+   "example": "A 20-year-old A+ hitter whose consensus jumped +5 FV in four months while running RPS+ 118 flags Breakout ★; a 24-year-old AAA arm with the same grade jump does not (age cap), and neither does a riser whose performance gate reads RPS+ 96 (velocity without production is a re-rank, not a breakout).",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "upside_indicator",
@@ -141,7 +149,9 @@
     "fv"
    ],
    "visual": "<span class=\"fv-badge fv-45 is-upside\" style=\"position:relative;display:inline-block;padding:3px 8px;\">45<span class=\"fv-upside-mark\" title=\"Upside\"><span>^</span></span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ soft-pink ^ + pink top edge</span>",
-   "example": "A source publishing 45+ on a 19-year-old shortstop puts the soft-pink ^ on his FV badge: the outlet sees a grade above the number. A 55+ from the same outlet shows no marker because 55 already prices the upside (the cap keeps the mark meaningful below FV 50)."
+   "example": "A source publishing 45+ on a 19-year-old shortstop puts the soft-pink ^ on his FV badge: the outlet sees a grade above the number. A 55+ from the same outlet shows no marker because 55 already prices the upside (the cap keeps the mark meaningful below FV 50).",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "cs_plus",
@@ -163,7 +173,9 @@
    "seeAlso": [
     "statcast_plus",
     "rps_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "single_a_equivalent",
@@ -185,7 +197,9 @@
    "seeAlso": [
     "cs_plus",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "statcast_plus",
@@ -208,7 +222,9 @@
     "rps_plus",
     "breakout_indicator"
    ],
-   "visual": "<span class=\"driver-tag is-good\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);\">SC+ 122</span><span class=\"driver-tag is-neutral\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;\">SC+ 101</span><span class=\"driver-tag is-bad\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;\">SC+ 84</span>"
+   "visual": "<span class=\"driver-tag is-good\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--up);background:rgba(31,122,58,0.15);color:var(--up);font-family:var(--font-mono);\">SC+ 122</span><span class=\"driver-tag is-neutral\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--neon-amber);background:rgba(255,215,0,0.15);color:var(--neon-amber);font-family:var(--font-mono);margin-left:4px;\">SC+ 101</span><span class=\"driver-tag is-bad\" style=\"font-size:11px;padding:2px 8px;border-radius:3px;border:1px solid var(--down);background:rgba(185,28,28,0.12);color:var(--down);font-family:var(--font-mono);margin-left:4px;\">SC+ 84</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tiebreaker_score",
@@ -233,7 +249,9 @@
     "tool",
     "rps_plus",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rps_plus",
@@ -247,14 +265,16 @@
     "Rate Performance Score"
    ],
    "priority": 3,
-   "definition": "Level-relative rate index (100 = level average). For active prospects this surfaces the level-anchored OPS+; draft/overseas cohorts compute a cohort-relative z-score.",
+   "definition": "Level-relative rate index (100 = average). Read the scale by cohort: active prospects surface the level-anchored OPS+ ratio, where each point is roughly one percent of level OPS; draft and overseas cohorts use a cohort z-score where 15 points is one standard deviation, so a draft RPS+ of 115 means one standard deviation above the class, not 15 percent better.",
    "methodology": "RPS+ is a level-relative rate index. v-arkmetric-audit (implementation status, disclosed): the standalone per-prospect rps_plus field is currently populated only for the DRAFT cohort (100 + 15·z of college-performance) and the OVERSEAS cohort (z vs the international cohort). For ACTIVE MiLB prospects the rps_plus field is not yet computed, so the board falls back to the level-relative OPS+ index (ops_plus_level), the level anchor at the core of RPS+ and the populated relative-performance signal for the active pool.\n\nThe fuller design (age × position-group cohort normalization + position multipliers described below) is wired for the cohort exports but not yet for actives; until it is, treat active RPS+ as level-relative OPS+. Intended design: cohort = (age × position group); a small position multiplier (C ×1.08, MI ×1.05, CF ×1.04, 1B ×0.95, DH ×0.92) applied after cohort normalization; MLB-level prospects substitute wRC+ / FIP-.\n\nNote: draft RPS+ is a z-score (×15) while the active OPS+ fallback is a ratio - scale convention differs across the cohort sources.",
    "formula": "RPS+ = 100 × (player_score + 100) / (cohort_mean + 100) × position_multiplier · clamped [0, 250]",
    "example": "A 21yo catcher and a 21yo 1B with identical OPS+ vs level read at different RPS+ - catcher gets ×1.08, first-baseman ×0.95.",
    "seeAlso": [
     "fv",
     "wrc_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "dvm_plus",
@@ -278,7 +298,9 @@
     "stock",
     "fv",
     "tools_dvm_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tool_delta",
@@ -301,7 +323,9 @@
     "tools_dvm_plus",
     "fv",
     "tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tools_dvm_plus",
@@ -326,7 +350,9 @@
     "tool_delta",
     "tool",
     "farm_rank"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tool_specific_dvm_plus",
@@ -360,7 +386,9 @@
     "tool_delta",
     "dvm_plus",
     "tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "hit_plus",
@@ -385,7 +413,9 @@
     "tool",
     "pwr_plus",
     "pd_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "iso_plus",
@@ -409,7 +439,9 @@
     "pwr_plus",
     "slg",
     "tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "pwr_plus",
@@ -436,7 +468,9 @@
     "rps_plus",
     "hit_plus",
     "pd_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "pd_plus",
@@ -462,7 +496,9 @@
     "pwr_plus",
     "hit_plus",
     "tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "stf_plus",
@@ -488,7 +524,9 @@
     "bb_pct_pitcher",
     "hr_per_9",
     "fip"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "stuff_plus_aaa",
@@ -503,15 +541,17 @@
     "in-house Stuff+"
    ],
    "priority": 41,
-   "definition": "In-house pitch-quality model for AAA pitchers; scores per-pitch kinematics against run value. 100 = qualified-AAA pool mean, 10 pts = 1 stdev, higher = better stuff.",
-   "methodology": "The platform's first in-house pitch-quality model, built to score stuff for pitchers who have not debuted (external Stuff+ models only cover MLB tracking). A LightGBM regressor is trained on Savant minors per-pitch detail (AAA, 2023 onward) to predict each pitch's run value from physics alone: velocity, spin, extension, arm-side-signed horizontal and vertical movement, release point, arm angle, and the velocity gap off the pitcher's primary fastball. No pitch-type labels and no results enter the features, so the score reads raw stuff, not usage or sequencing.\n\nA pitcher's score is his season mean predicted run value, shrunk toward the pool mean below 300 pitches, then scaled so 100 is the qualified-AAA pool mean and 10 points is one standard deviation. The model is validated season-out (train 2023-24, score 2025 out-of-sample) and gated forward against graduates' first-MLB outcomes; the eval ships in data/stuff_plus_aaa_eval.json whatever it says.\n\nDiffers from pStuff+ (peripheral results: K%, BB%, HR/9 vs level mean) and FVStuff+ (scouting-grade composite): aStuff+ measures the pitches themselves from tracking data.",
+   "definition": "In-house pitch-quality model for AAA pitchers; scores per-pitch kinematics against run value. 100 = qualified-AAA pool mean, 10 pts = 1 stdev, higher = better stuff. The name follows the industry Stuff+ convention but this is our own AAA-trained model, not FanGraphs Stuff+.",
+   "methodology": "The platform's first in-house pitch-quality model, built to score stuff for pitchers who have not debuted. The public Stuff+ family (FanGraphs Stuff+, created by Eno Sarris and Max Bay) covers only MLB tracking, so aStuff+ extends the same physics-first idea to AAA. A LightGBM regressor is trained on Savant minors per-pitch detail (AAA, 2023 onward) to predict each pitch's run value from physics alone: velocity, spin, extension, arm-side-signed horizontal and vertical movement, release point, arm angle, and the velocity gap off the pitcher's primary fastball. No pitch-type labels and no results enter the features, so the score reads raw stuff, not usage or sequencing.\n\nA pitcher's score is his season mean predicted run value, shrunk toward the pool mean below 300 pitches, then scaled so 100 is the qualified-AAA pool mean and 10 points is one standard deviation. The model is validated season-out (train 2023-24, score 2025 out-of-sample) and gated forward against graduates' first-MLB outcomes; the eval ships in data/stuff_plus_aaa_eval.json whatever it says.\n\nDiffers from FanGraphs Stuff+ (MLB-only, different training data and target), from pStuff+ (peripheral results: K%, BB%, HR/9 vs level mean), and from FVStuff+ (scouting-grade composite): aStuff+ measures the AAA pitches themselves from tracking data.",
    "formula": "aStuff+ = 100 + 10 · (μ_pool − RV̂_shrunk) / σ_pool\nwhere RV̂_shrunk = (n · RV̂ + 300 · μ_pool) / (n + 300)",
    "example": "A AAA starter whose pitches grade 1 stdev better than the qualified pool over 1,500 tracked pitches posts an aStuff+ around 110; the same stuff over 150 pitches reads closer to 103 until the sample grows.",
    "seeAlso": [
     "stf_plus",
     "stuff_grade_plus",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "stuff_grade_plus",
@@ -535,7 +575,9 @@
     "stf_plus",
     "tool",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tvi",
@@ -565,7 +607,9 @@
     "bust_prob",
     "dollars_per_fv",
     "value_framework"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "wag",
@@ -587,7 +631,9 @@
     "fv",
     "war",
     "fv_to_war_table"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "warwag",
@@ -610,7 +656,9 @@
     "wag",
     "war",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "value_framework",
@@ -637,7 +685,9 @@
     "dollars_per_fv",
     "surplus_per_fv_pt",
     "fv_per_m_pool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "dpw_tier",
@@ -663,7 +713,9 @@
     "surplus_value",
     "value_framework",
     "tvi"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fv_to_war_table",
@@ -689,7 +741,9 @@
     "value_framework",
     "dpw_tier",
     "wag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "bust_prob",
@@ -714,7 +768,9 @@
     "value_framework",
     "tvi",
     "wag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "dollars_per_fv",
@@ -740,7 +796,9 @@
     "value_framework",
     "fv_per_m_pool",
     "surplus_per_fv_pt"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fv_per_m_pool",
@@ -766,7 +824,9 @@
     "fv",
     "dollars_per_fv",
     "value_framework"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "surplus_per_fv_pt",
@@ -790,7 +850,9 @@
     "tvi",
     "value_framework",
     "fin_draft_pool_efficiency"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "sp",
@@ -812,7 +874,8 @@
     "sirp",
     "mirp",
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "rp",
@@ -834,7 +897,8 @@
     "sirp",
     "mirp",
     "sp"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "sirp",
@@ -856,7 +920,8 @@
     "rp",
     "sp",
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "mirp",
@@ -879,7 +944,8 @@
     "rp",
     "sp",
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "fv",
@@ -903,7 +969,8 @@
     "wag",
     "tvi",
     "shrinkage"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "twenty_eighty",
@@ -923,7 +990,8 @@
    "seeAlso": [
     "fv",
     "tool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "hit_tool",
@@ -942,7 +1010,8 @@
    "seeAlso": [
     "game_power",
     "tool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "game_power",
@@ -962,7 +1031,8 @@
     "raw_power",
     "iso",
     "pwr_plus"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "raw_power",
@@ -980,7 +1050,8 @@
    "methodology": "What a hitter can do at peak: exit velocity, BP home-run distance, peak EV. Different from game power, which folds in whether the swing actually unlocks the raw tool in competition.",
    "seeAlso": [
     "game_power"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "speed_tool",
@@ -1001,7 +1072,8 @@
     "tool",
     "o_tool",
     "d_tool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "field_tool",
@@ -1020,7 +1092,8 @@
    "seeAlso": [
     "throw_tool",
     "speed_tool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "throw_tool",
@@ -1038,7 +1111,8 @@
    "methodology": "Critical for OF, SS, 3B, C; less weighted at 1B and 2B. 60+ is a legitimate plus arm, 70+ is elite (Andruw Jones, Yadier Molina caliber).",
    "seeAlso": [
     "field_tool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "debut_rule",
@@ -1059,7 +1133,8 @@
    "definition": "A prospect becomes 'Debuted' the moment MLB records their first MLB game.",
    "methodology": "The MLB API's mlbDebutDate is the source of truth - when that field is set on a prospect's record, they move out of the active prospect pool and onto the Debuted tab. The site additionally promotes any prospect who has been outrighted (cleared waivers off the 40-man) since being on the 40-man already makes them a non-prospect. When neither signal is available, debut date falls back to the player's earliest MLB-season Opening Day from career stats. The rookie-eligibility thresholds (130 AB / 50 IP / 45 active-roster days) are NOT used - they produced unreliable dates whenever any upstream input was stale.",
    "formula": "debuted iff mlbDebutDate is set OR an outright transaction is on file",
-   "seeAlso": []
+   "seeAlso": [],
+   "shelf": "foundation"
   },
   {
    "id": "wrc_plus",
@@ -1078,7 +1153,9 @@
    "seeAlso": [
     "rps_plus",
     "ops"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Linear-weights framework by Tom Tango and coauthors (The Book); wRC+ implemented by FanGraphs. We display it as the offensive baseline next to our own metrics."
   },
   {
    "id": "ops",
@@ -1097,7 +1174,9 @@
     "slg",
     "wrc_plus",
     "iso"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "iso",
@@ -1114,7 +1193,9 @@
    "seeAlso": [
     "slg",
     "pwr_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "avg",
@@ -1130,7 +1211,9 @@
    "seeAlso": [
     "obp",
     "ops"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "obp",
@@ -1146,7 +1229,9 @@
    "seeAlso": [
     "bb_pct",
     "ops"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "slg",
@@ -1162,7 +1247,9 @@
    "seeAlso": [
     "iso",
     "ops"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "bb_pct",
@@ -1182,7 +1269,9 @@
    "seeAlso": [
     "k_pct",
     "pd_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "k_pct",
@@ -1202,7 +1291,9 @@
    "seeAlso": [
     "bb_pct",
     "pd_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "era",
@@ -1220,7 +1311,9 @@
     "fip",
     "xfip",
     "whip"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "fip",
@@ -1240,7 +1333,9 @@
     "era",
     "xfip",
     "fip_minus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Created by Tom Tango, building on Voros McCracken's DIPS insight; popularized by FanGraphs."
   },
   {
    "id": "whip",
@@ -1256,7 +1351,9 @@
    "formula": "WHIP = (BB + H) / IP",
    "seeAlso": [
     "era"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "xfip",
@@ -1272,7 +1369,9 @@
    "seeAlso": [
     "fip",
     "era"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Created by Dave Studeman (The Hardball Times): FIP with a league-average home-run rate substituted for actual homers."
   },
   {
    "id": "fip_minus",
@@ -1291,7 +1390,9 @@
    "seeAlso": [
     "fip",
     "wrc_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. The FIP- park- and league-adjusted index, implemented by FanGraphs (100 = average, lower is better)."
   },
   {
    "id": "k_per_9",
@@ -1308,7 +1409,9 @@
    "seeAlso": [
     "k_pct_pitcher",
     "stf_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "bb_per_9",
@@ -1325,7 +1428,9 @@
    "seeAlso": [
     "bb_pct_pitcher",
     "stf_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "hr_per_9",
@@ -1342,7 +1447,9 @@
    "seeAlso": [
     "fip",
     "xfip"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "k_pct_pitcher",
@@ -1362,7 +1469,9 @@
    "seeAlso": [
     "k_per_9",
     "stf_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "bb_pct_pitcher",
@@ -1382,7 +1491,9 @@
    "seeAlso": [
     "bb_per_9",
     "stf_plus"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "war",
@@ -1402,7 +1513,9 @@
    "seeAlso": [
     "wag",
     "tvi"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry framework popularized by Tom Tango, Sean Smith and others; fWAR is FanGraphs' implementation, rWAR/bWAR Baseball-Reference's, WARP Baseball Prospectus'. We display bWAR site-wide."
   },
   {
    "id": "consensus_fv",
@@ -1421,7 +1534,9 @@
     "wide_spread"
    ],
    "formula": "consensus FV = accuracy-weighted mean(latest explicit FV from each tracked source)\nsingle-source case: shrunk = (n_obs · src_FV + k · prior_FV) / (n_obs + k)",
-   "example": "A prospect carrying 60/62/65 grades across five sources lands at an accuracy-weighted consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces."
+   "example": "A prospect carrying 60/62/65 grades across five sources lands at an accuracy-weighted consensus of about 62, with the 60-65 spread (stddev 2.4) shown as the Wide Spread marker when it stretches. A rank-implied FV that reads higher than the published grades is a gap the Source Comparison tab surfaces.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "stock",
@@ -1442,7 +1557,9 @@
     "dvm_plus"
    ],
    "formula": "stock = consensus_fv_raw(latest) − consensus_fv_raw(prior snapshot)\n▲ if ≥ +1.5 · ▼ if ≤ −1.5 · \"-\" otherwise",
-   "example": "A prospect whose consensus moves 48 to 50 between snapshots shows ▲ +2 on his row; a 48 to 47.5 move stays flat (\"-\") (under the 1.5-point gate, so source noise does not read as news)."
+   "example": "A prospect whose consensus moves 48 to 50 between snapshots shows ▲ +2 on his row; a 48 to 47.5 move stays flat (\"-\") (under the 1.5-point gate, so source noise does not read as news).",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_rank",
@@ -1460,7 +1577,9 @@
     "dvm_plus",
     "fv"
    ],
-   "example": "The 2026-06 board has the Dodgers at #1 with a farm score of 117: an elite top five (Josue De Paula FV 57 leads), top-25 depth, positive 1y DvM+ trajectory, and a productive graduate pipeline. Farm scores read like wRC+: 100 is the league-mean system, 117 is about 1.7 standard deviations above it."
+   "example": "The 2026-06 board has the Dodgers at #1 with a farm score of 117: an elite top five (Josue De Paula FV 57 leads), top-25 depth, positive 1y DvM+ trajectory, and a productive graduate pipeline. Farm scores read like wRC+: 100 is the league-mean system, 117 is about 1.7 standard deviations above it.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "eta",
@@ -1478,7 +1597,9 @@
     "rps_plus"
    ],
    "formula": "years_to_MLB = level_base + perf_adj + age_adj + fv_adj + health_adj\nETA year = current season + ceil(years_to_MLB, by season phase)",
-   "example": "Ryan Sloan (SEA, AA): base 1.35y for AA, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV-grade leaves about 0.45y, so the board shows ETA 2027 at high confidence. Every term is visible in the ETA tooltip on his card."
+   "example": "Ryan Sloan (SEA, AA): base 1.35y for AA, +0.5 performance, −1.15 age-vs-level (young for AA), −0.25 FV-grade leaves about 0.45y, so the board shows ETA 2027 at high confidence. Every term is visible in the ETA tooltip on his card.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "shrinkage",
@@ -1498,7 +1619,9 @@
    "seeAlso": [
     "consensus_fv",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "wide_spread",
@@ -1516,7 +1639,9 @@
    "methodology": "When 2+ sources have published the player and their max-min spread is ≥10 grade points (e.g., FG 45 vs Pipeline 55), the FV badge carries a violet 'W' corner mark. Hover for the spread and source count. Means the consensus averages meaningfully disagreeing views, a 'wide read' rather than tight consensus.",
    "seeAlso": [
     "consensus_fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "surplus_value",
@@ -1537,7 +1662,8 @@
     "dpw_tier",
     "dollars_per_fv",
     "value_framework"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "aav",
@@ -1555,7 +1681,8 @@
    "methodology": "For deferral-heavy deals (e.g., Ohtani's $700M / 10yr but only ~$46M present-value AAV) the displayed AAV is the present-value-adjusted figure, not raw money divided by years.",
    "seeAlso": [
     "surplus_value"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "bonus_pool",
@@ -1570,7 +1697,8 @@
    "methodology": "Draft pool is the sum of the team's first-10-rounds slot values. IFA pool is the MLB-assigned international signing budget (base ~$5.95M plus competitive-balance bonuses). Teams can exceed by up to ~5% before luxury-tax penalties kick in.",
    "seeAlso": [
     "slot_value"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "slot_value",
@@ -1585,7 +1713,8 @@
    "methodology": "Every pick in the first 10 rounds has a published slot value. Teams can sign over slot for top picks if they sign under for later picks (rebalancing within the pool). Going over the pool total triggers a tax plus potential future-pick penalty.",
    "seeAlso": [
     "bonus_pool"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "mlb",
@@ -1599,7 +1728,8 @@
    "definition": "Major League Baseball. The top tier; the destination for every prospect's projection.",
    "seeAlso": [
     "aaa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "aaa",
@@ -1617,7 +1747,8 @@
    "seeAlso": [
     "aa",
     "mlb"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "aa",
@@ -1635,7 +1766,8 @@
    "seeAlso": [
     "a_plus",
     "aaa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "a_plus",
@@ -1654,7 +1786,8 @@
    "seeAlso": [
     "a",
     "aa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "a",
@@ -1674,7 +1807,8 @@
    "seeAlso": [
     "a_plus",
     "cpx"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "cpx",
@@ -1693,7 +1827,8 @@
    "seeAlso": [
     "dsl",
     "a"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "dsl",
@@ -1713,7 +1848,8 @@
     "cpx",
     "complex_league",
     "ifa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "ifa",
@@ -1733,7 +1869,8 @@
    "seeAlso": [
     "bonus_pool",
     "dsl"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "post_tj",
@@ -1751,7 +1888,8 @@
    "methodology": "Tommy John (ulnar collateral ligament reconstruction) is the most common pitching surgery. Recovery curve: 0-6mo throwing, 6-12mo mound work, 12-14mo rehab assignments, 14-18mo MLB return. Roughly 80% of TJ recipients return to prior form within 2 years; ~10% never pitch at the same level again.",
    "seeAlso": [
     "on_il"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "on_il",
@@ -1771,7 +1909,8 @@
    "seeAlso": [
     "post_tj",
     "il_10_15_60"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "fastball_grade",
@@ -1791,7 +1930,8 @@
    "seeAlso": [
     "slider_grade",
     "command_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "slider_grade",
@@ -1811,7 +1951,8 @@
    "seeAlso": [
     "fastball_grade",
     "curveball_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "curveball_grade",
@@ -1831,7 +1972,8 @@
    "seeAlso": [
     "slider_grade",
     "fastball_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "changeup_grade",
@@ -1850,7 +1992,8 @@
    "methodology": "Changeups sit 8-12 mph below the FB with sink/fade. Splitters sit 8-12 mph below with hard tumble - different grip, same role in the arsenal. Both ride the 'ch' slot. 60+ changeups define a starter's profile vs. lefties.",
    "seeAlso": [
     "fastball_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "command_grade",
@@ -1869,7 +2012,8 @@
    "methodology": "Control = ability to throw strikes; Command = ability to throw the right strike. Plus command (60+) means consistently spotting the FB on the corner, burying the breaker below the zone, etc. Most prospects sit 45-50; a 60 command grade dramatically lifts the ceiling.",
    "seeAlso": [
     "fastball_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "cutter_grade",
@@ -1888,7 +2032,8 @@
    "seeAlso": [
     "fastball_grade",
     "slider_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "pitch_sel",
@@ -1909,7 +2054,8 @@
    "seeAlso": [
     "hit_tool",
     "bat_ctrl"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "bat_ctrl",
@@ -1928,7 +2074,8 @@
    "seeAlso": [
     "hit_tool",
     "pitch_sel"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "rule_5_draft",
@@ -1947,7 +2094,8 @@
    "seeAlso": [
     "forty_man_roster",
     "rule_4_draft"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "rule_4_draft",
@@ -1968,7 +2116,8 @@
     "rule_5_draft",
     "ifa",
     "signing_bonus"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "forty_man_roster",
@@ -1988,7 +2137,8 @@
     "rule_5_draft",
     "dfa",
     "options"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "options",
@@ -2008,7 +2158,8 @@
    "seeAlso": [
     "forty_man_roster",
     "service_time"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "service_time",
@@ -2027,7 +2178,8 @@
    "seeAlso": [
     "arbitration",
     "options"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "arbitration",
@@ -2047,7 +2199,8 @@
     "service_time",
     "pre_arbitration",
     "super_two"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "pre_arbitration",
@@ -2068,7 +2221,8 @@
     "service_time",
     "arbitration",
     "super_two"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "super_two",
@@ -2088,7 +2242,8 @@
     "service_time",
     "arbitration",
     "service_time_manipulation"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "service_time_manipulation",
@@ -2107,7 +2262,8 @@
    "seeAlso": [
     "service_time",
     "super_two"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "free_agency",
@@ -2129,7 +2285,8 @@
     "service_time",
     "qualifying_offer",
     "compensation_pick"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "qualifying_offer",
@@ -2148,7 +2305,8 @@
    "seeAlso": [
     "free_agency",
     "compensation_pick"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "compensation_pick",
@@ -2170,7 +2328,8 @@
     "rule_4_draft",
     "qualifying_offer",
     "free_agency"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "outright_assignment",
@@ -2191,7 +2350,8 @@
     "dfa",
     "forty_man_roster",
     "free_agency"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "dfa",
@@ -2210,7 +2370,8 @@
    "seeAlso": [
     "forty_man_roster",
     "options"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "mlb_debut",
@@ -2228,7 +2389,8 @@
    "methodology": "We mark MLB debuts with a ★ chip on the transaction-history table. Pre-debut, a prospect's value is theoretical; post-debut, the FV starts converting to (or away from) real MLB performance. Debut removes a player from the active prospect lists and surfaces them on the Debuted tab.",
    "seeAlso": [
     "debut_rule"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "signing_bonus",
@@ -2248,7 +2410,8 @@
    "seeAlso": [
     "rule_4_draft",
     "ifa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "il_10_15_60",
@@ -2269,7 +2432,8 @@
    "seeAlso": [
     "on_il",
     "forty_man_roster"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "two_way_player",
@@ -2289,7 +2453,8 @@
    "seeAlso": [
     "hit_tool",
     "fastball_grade"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "present_vs_future_grades",
@@ -2308,7 +2473,8 @@
    "methodology": "We always store the FUTURE grade as the canonical tool number (the projection is the actionable signal). Present grades ride alongside in _extras['present'] for sources that publish both. The gap between present and future encodes risk / development runway.",
    "seeAlso": [
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "complex_league",
@@ -2329,7 +2495,8 @@
    "methodology": "Two leagues: ACL (Arizona Complex League, ex-AZL) and FCL (Florida Complex League, ex-GCL). Games at team backfields, no fans. Players are 17-20. The 2021 MiLB reorg consolidated the older rookie-level leagues into these two.",
    "seeAlso": [
     "dsl"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "stock_arrow",
@@ -2350,7 +2517,9 @@
     "stock",
     "fv"
    ],
-   "visual": "<span style=\"color:var(--up);font-weight:600;\">▲ +5.0</span><span style=\"color:var(--text-tertiary);\">vs</span><span style=\"color:var(--down);font-weight:600;\">▼ −3.5</span>"
+   "visual": "<span style=\"color:var(--up);font-weight:600;\">▲ +5.0</span><span style=\"color:var(--text-tertiary);\">vs</span><span style=\"color:var(--down);font-weight:600;\">▼ −3.5</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fv_badge",
@@ -2370,7 +2539,9 @@
     "consensus_fv",
     "fv_rarity"
    ],
-   "visual": "<span class=\"fv-badge fv-70\">70</span><span class=\"fv-badge fv-60\">60</span><span class=\"fv-badge fv-50\">50</span><span class=\"fv-badge fv-45\">45</span>"
+   "visual": "<span class=\"fv-badge fv-70\">70</span><span class=\"fv-badge fv-60\">60</span><span class=\"fv-badge fv-50\">50</span><span class=\"fv-badge fv-45\">45</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fv_rarity",
@@ -2390,7 +2561,9 @@
     "fv",
     "fv_badge"
    ],
-   "visual": "<div style=\"display:flex;gap:12px;align-items:flex-end;font-size:10px;color:var(--text-tertiary);\">"
+   "visual": "<div style=\"display:flex;gap:12px;align-items:flex-end;font-size:10px;color:var(--text-tertiary);\">",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "tool_pill",
@@ -2410,7 +2583,9 @@
    "seeAlso": [
     "tool"
    ],
-   "visual": "<span class=\"tool-pill is-pos\">Tool 65</span><span class=\"tool-pill is-neutral\">Tool 52</span><span class=\"tool-pill is-amber\">Tool 45</span><span class=\"tool-pill is-neg\">Tool 38</span>"
+   "visual": "<span class=\"tool-pill is-pos\">Tool 65</span><span class=\"tool-pill is-neutral\">Tool 52</span><span class=\"tool-pill is-amber\">Tool 45</span><span class=\"tool-pill is-neg\">Tool 38</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rps_plus_pill",
@@ -2427,7 +2602,9 @@
    "seeAlso": [
     "rps_plus"
    ],
-   "visual": "<span class=\"rps-plus-pill is-pos\">RPS+ 125</span><span class=\"rps-plus-pill is-neutral\">RPS+ 100</span><span class=\"rps-plus-pill is-neg\">RPS+ 78</span>"
+   "visual": "<span class=\"rps-plus-pill is-pos\">RPS+ 125</span><span class=\"rps-plus-pill is-neutral\">RPS+ 100</span><span class=\"rps-plus-pill is-neg\">RPS+ 78</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "wide_spread_mark",
@@ -2447,7 +2624,9 @@
     "wide_spread",
     "fv"
    ],
-   "visual": "<span class=\"fv-badge fv-60 is-wide\" style=\"position:relative;display:inline-block;padding:3px 8px;\">60<span class=\"fv-wide-mark\" title=\"Wide spread\">W</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ violet W + violet right edge</span>"
+   "visual": "<span class=\"fv-badge fv-60 is-wide\" style=\"position:relative;display:inline-block;padding:3px 8px;\">60<span class=\"fv-wide-mark\" title=\"Wide spread\">W</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ violet W + violet right edge</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "single_source_mark",
@@ -2467,7 +2646,9 @@
     "consensus_fv",
     "shrinkage"
    ],
-   "visual": "<span class=\"fv-badge fv-55 is-single-source\" style=\"position:relative;display:inline-block;padding:3px 8px;\">55<span class=\"fv-single-mark\" title=\"Single source\">1</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ amber 1 + amber left edge</span>"
+   "visual": "<span class=\"fv-badge fv-55 is-single-source\" style=\"position:relative;display:inline-block;padding:3px 8px;\">55<span class=\"fv-single-mark\" title=\"Single source\">1</span></span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:24px;\">→ amber 1 + amber left edge</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "il_chip",
@@ -2485,7 +2666,9 @@
     "on_il",
     "il_10_15_60"
    ],
-   "visual": "<span class=\"il-tag\" style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--neon-amber);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);\">10-day IL · 14d</span>"
+   "visual": "<span class=\"il-tag\" style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-amber);color:var(--neon-amber);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);\">10-day IL · 14d</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "post_tj_chip",
@@ -2502,7 +2685,9 @@
    "seeAlso": [
     "post_tj"
    ],
-   "visual": "<span style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--neon-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;\">Post-TJ · 2024-09-03</span>"
+   "visual": "<span style=\"display:inline-block;padding:2px 6px;border:1px solid var(--neon-violet);color:var(--neon-violet);font-size:10px;letter-spacing:0.04em;border-radius:2px;font-family:var(--font-mono);font-weight:700;\">Post-TJ · 2024-09-03</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "latest_pill",
@@ -2520,7 +2705,9 @@
    "seeAlso": [
     "tool"
    ],
-   "visual": "<span style=\"font-size:11px;color:var(--text-primary);font-family:var(--font-mono);\">2025-07-31</span><span style=\"display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;\">LATEST</span><span style=\"font-size:11px;color:var(--text-tertiary);\">FanGraphs 2025 Updated</span>"
+   "visual": "<span style=\"font-size:11px;color:var(--text-primary);font-family:var(--font-mono);\">2025-07-31</span><span style=\"display:inline-block;padding:1px 5px;font-size:9px;letter-spacing:0.04em;background:var(--neon-cyan);color:var(--bg-primary);border-radius:2px;font-weight:700;\">LATEST</span><span style=\"font-size:11px;color:var(--text-tertiary);\">FanGraphs 2025 Updated</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "stale_pill",
@@ -2535,7 +2722,9 @@
    "priority": 32,
    "definition": "Amber pill on the per-source history header when a source's latest publication is >365 days old.",
    "methodology": "Stale sources still appear in the consensus (their most recent grade is still valid until refreshed) but the pill signals that the projection is aging. Sources go stale when an outlet stops covering a prospect.",
-   "visual": "<span style=\"font-size:12px;color:var(--text-secondary);font-weight:600;\">MLB Pipeline</span><span style=\"font-size:9px;color:var(--neon-amber);font-family:var(--font-mono);\">STALE</span><span style=\"font-size:11px;color:var(--text-tertiary);\">(last published 484 days ago)</span>"
+   "visual": "<span style=\"font-size:12px;color:var(--text-secondary);font-weight:600;\">MLB Pipeline</span><span style=\"font-size:9px;color:var(--neon-amber);font-family:var(--font-mono);\">STALE</span><span style=\"font-size:11px;color:var(--text-tertiary);\">(last published 484 days ago)</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "green_flag",
@@ -2553,7 +2742,9 @@
    "methodology": "Green flags appear in the per-player flag strip (3 visible, more on hover) and in the dedicated Flags section on the detail page. They're computed from a mix of tool grades, rate stats vs. level norms, and composite indices.",
    "seeAlso": [
     "red_flag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "red_flag",
@@ -2570,7 +2761,9 @@
    "definition": "Below-cohort signal flagged for concern - e.g., 30 hit tool, bottom-decile contact, chronic injury history.",
    "seeAlso": [
     "green_flag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fg_only_badge",
@@ -2584,7 +2777,9 @@
     "Single-source grade"
    ],
    "priority": 42,
-   "definition": "Small violet 'FG' superscript next to a tool name - that grade is published by FanGraphs only (no cross-source consensus)."
+   "definition": "Small violet 'FG' superscript next to a tool name - that grade is published by FanGraphs only (no cross-source consensus).",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "heat_badge",
@@ -2598,7 +2793,9 @@
     "Trending hot"
    ],
    "priority": 50,
-   "definition": "Spotlight badge for prospects with top-decile recent stock movement - rising fast across multiple sources."
+   "definition": "Spotlight badge for prospects with top-decile recent stock movement - rising fast across multiple sources.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "surprise_badge",
@@ -2611,7 +2808,9 @@
     "Surprise"
    ],
    "priority": 52,
-   "definition": "Spotlight badge for out-of-nowhere rises - sources just started covering a prospect not previously ranked."
+   "definition": "Spotlight badge for out-of-nowhere rises - sources just started covering a prospect not previously ranked.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "arc_badge",
@@ -2624,7 +2823,9 @@
     "Arc"
    ],
    "priority": 54,
-   "definition": "Spotlight badge for sustained multi-update FV movement in one direction - the steady riser/decliner pattern."
+   "definition": "Spotlight badge for sustained multi-update FV movement in one direction - the steady riser/decliner pattern.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_report_card",
@@ -2652,7 +2853,9 @@
     "dvm_plus",
     "mlb_production_top_grads"
    ],
-   "example": "A system graded A- with branches Value A, MLB Production B+, Development B, Acquisition B- is winning on aggregate risk-adjusted surplus (the 65% branch) while its trade ledger lags; the Tendencies tab shows which acquisition channels drive the B-."
+   "example": "A system graded A- with branches Value A, MLB Production B+, Development B, Acquisition B- is winning on aggregate risk-adjusted surplus (the 65% branch) while its trade ledger lags; the Tendencies tab shows which acquisition channels drive the B-.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_tiebreaker",
@@ -2674,7 +2877,9 @@
     "sur_plus",
     "dvm_plus",
     "mlb_production_top_grads"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_acquisition_strategy",
@@ -2697,7 +2902,9 @@
     "draft_ceiling_hits",
     "trade_war_delta",
     "waiver_hit_rate"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_development",
@@ -2718,7 +2925,9 @@
     "tools_dvm_plus",
     "tool_delta",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_financial",
@@ -2746,7 +2955,9 @@
     "fin_draft_pool_efficiency",
     "fin_ifa_roi",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_mlb_production",
@@ -2771,7 +2982,9 @@
     "mlb_production_top_grads",
     "mlb_production_conviction",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mlb_production_boom_pct",
@@ -2794,7 +3007,9 @@
     "mlb_production_top_grads",
     "mlb_production_conviction",
     "wag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mlb_production_bust_pct",
@@ -2814,7 +3029,9 @@
    "seeAlso": [
     "farm_grade_mlb_production",
     "mlb_production_boom_pct"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mlb_production_top_grads",
@@ -2835,7 +3052,9 @@
     "mlb_production_boom_pct",
     "mlb_production_conviction",
     "wag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mlb_production_conviction",
@@ -2855,7 +3074,9 @@
     "farm_grade_mlb_production",
     "mlb_production_top_grads",
     "mlb_production_boom_pct"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fin_draft_pool_efficiency",
@@ -2879,7 +3100,9 @@
     "fv_per_m_pool",
     "dollars_per_fv",
     "value_framework"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fin_ifa_roi",
@@ -2901,7 +3124,9 @@
     "war",
     "signing_bonus",
     "ifa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "sur_plus",
@@ -2927,7 +3152,9 @@
     "tvi"
    ],
    "formula": "OrgSur+ = 100 + 10 · avg(z(WAR/$M), z(grad contract surplus))",
-   "example": "An org producing 0.8 graduate WAR per $M of bonus spend (one stddev above the mean) and league-average graduate contract surplus posts OrgSur+ around 105: capital-efficient on the draft side, ordinary on the development-to-contract side."
+   "example": "An org producing 0.8 graduate WAR per $M of bonus spend (one stddev above the mean) and league-average graduate contract surplus posts OrgSur+ around 105: capital-efficient on the draft side, ordinary on the development-to-contract side.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "draft_ceiling_hits",
@@ -2947,7 +3174,9 @@
     "farm_grade_acquisition_strategy",
     "fv",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "trade_war_delta",
@@ -2967,7 +3196,9 @@
     "war",
     "wag",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "waiver_hit_rate",
@@ -2986,7 +3217,9 @@
     "farm_grade_acquisition_strategy",
     "waiver_claim",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "trade",
@@ -3006,7 +3239,8 @@
     "farm_grade_acquisition_strategy",
     "trade_war_delta",
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "waiver_claim",
@@ -3029,7 +3263,8 @@
     "waiver_hit_rate",
     "trade",
     "fv"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "farm_grade_talent_translation",
@@ -3050,7 +3285,9 @@
     "wag",
     "fv",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_financial_roi",
@@ -3072,7 +3309,9 @@
     "wag",
     "signing_bonus",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_tools_quality",
@@ -3093,7 +3332,9 @@
    "seeAlso": [
     "tool",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_intl_depth",
@@ -3113,7 +3354,9 @@
     "ifa",
     "dsl",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_readiness",
@@ -3131,7 +3374,9 @@
    "methodology": "Per-org (very_young_count − very_old_count) / total_actives. Positive = many under-age prospects (long development horizon); negative = old-for-level system that's peaking now. Uses the same per-prospect age_vs_level tiers the row chip uses.",
    "seeAlso": [
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_grade_health_burden",
@@ -3153,7 +3398,9 @@
     "il_10_15_60",
     "farm_il_pct_current",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "farm_il_pct_current",
@@ -3174,7 +3421,9 @@
     "farm_grade_health_burden",
     "on_il",
     "il_10_15_60"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "overseas_posting_class",
@@ -3193,7 +3442,9 @@
    "seeAlso": [
     "wag",
     "ifa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "draft_comp_pick",
@@ -3212,7 +3463,8 @@
    "priority": 63,
    "definition": "Extra draft slots awarded to small-revenue clubs under the 2022 CBA. Round 1A (6 picks) lands after round 1; Round 1B (6 picks) lands after round 2.",
    "methodology": "Eligible clubs are the 6 smallest-revenue + 6 smallest-market teams. Round 1A picks are slotted after the regular first round (pick 31-36); Round 1B picks land after the regular second round. They're TRADEABLE - comp picks are the only draft slots a team may swap. Tankathon's projection assigns these by current eligibility; the lottery view surfaces them at the bottom with a 1A / 1B label.",
-   "seeAlso": []
+   "seeAlso": [],
+   "shelf": "foundation"
   },
   {
    "id": "eta_half_season",
@@ -3231,7 +3483,9 @@
    "methodology": "MLB's All-Star break (anchored to July 15 as a stable midpoint) cleaves the season into pre-break (H1) and post-break (H2) halves. By H2, a AAA prospect has already burned roughly half their AAA year, so the level-baseline travel time to MLB should shrink correspondingly.\n\nThe baseline adjustment subtracts 0.25 years when the snapshot is post-break. ORG TENDENCY then scales: each org's last 3 years of promotions are bucketed H1/H2. Orgs with h2_rate ≥ 60% (TBR / OAK-types that bank Sept call-ups) get a stronger ×1.4 pull-in; orgs with h1_rate ≥ 70% (front-loaded promoters) get a softer ×0.6 since they've already done most of their calling.\n\nH2-heavy orgs during pre-break add a small +0.10 push-back (their prospect is even LESS likely to debut before the break). Offseason snapshots (Nov-Feb) and balanced orgs (40-60 split) get no adjustment.\n\nSurfaced via a 'Snapshot: post-All-Star break' eyebrow + an 'Org promotes X% H1 / Y% H2' line on the ETA panel. Implemented in eta.py · see `season_phase`, `HALF_SEASON_ADJ`, `_org_promotion_phase_weight`.",
    "seeAlso": [
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "spotlight_age_cap",
@@ -3249,7 +3503,9 @@
    "methodology": "Hitters get disqualified when their age is ≥ +2.0 years above the level baseline; pitchers get a 1-year grace (≥ +3.0) since later debuts are common. Anchored on aspirational baselines NOT empirical level means - the empirical AAA pool is dragged up by the same journeymen we're trying to filter, so anchoring on the empirical median defeats the purpose.\n\nExamples (AAA, baseline 24): a 26.0+ hitter is cut; a 27.0+ pitcher is cut. The cap fires inside `_classify_movement` in spotlights.py BEFORE bucket classification - capped prospects return bucket='none' and never reach the Risers / Fallers / Rebounders lists.\n\nPlayers at rookie levels (DSL/CPX/ROK) and players with missing age/level pass through (no cap fires). The cap is SPECIFIC to the spotlights section - it does not affect the active prospect list, farm rosters, leaderboards, or any other view.",
    "seeAlso": [
     "spotlights"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "exit_velocity",
@@ -3273,7 +3529,9 @@
     "barrel_pct",
     "hard_hit_pct",
     "raw_power"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): the speed of the ball off the bat."
   },
   {
    "id": "barrel_pct",
@@ -3298,7 +3556,9 @@
     "game_power",
     "iso",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): a barrel is a batted ball whose exit velocity and launch angle historically produce elite results."
   },
   {
    "id": "hard_hit_pct",
@@ -3320,7 +3580,9 @@
     "exit_velocity",
     "barrel_pct",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): share of batted balls hit 95+ mph."
   },
   {
    "id": "chase_pct",
@@ -3337,7 +3599,7 @@
    ],
    "priority": 13,
    "definition": "Share of pitches OUTSIDE the strike zone that a hitter swings at. Lower = better plate discipline.",
-   "methodology": "Chase% (a.k.a. O-Swing%) = swings on out-of-zone pitches ÷ out-of-zone pitches seen. It is the core plate-discipline input: low chase predicts walk rate and protects the hit tool against advanced sequencing. It stabilizes quickly and travels well across levels, so it's a leading indicator that a young hitter's approach will hold up against better pitching. League average is ~28-31%; sub-25% is plus discipline.",
+   "methodology": "Chase% (a.k.a. O-Swing%) = swings on out-of-zone pitches ÷ out-of-zone pitches seen. It is the core plate-discipline input: low chase predicts walk rate and protects the hit tool against advanced sequencing. It stabilizes quickly and travels well across levels, so it's a leading indicator that a young hitter's approach will hold up against better pitching. League average is ~28-31%; sub-25% is plus discipline. Note the site defines the zone geometrically (a fixed rulebook rectangle), not by the called zone, so the metric is consistent across levels even though the enforced zone now differs by regime: MLB runs the ABS challenge system in 2026, AAA has used ABS regimes since 2023, and the Florida State League since 2022.",
    "formula": "Chase% = out-of-zone swings / out-of-zone pitches × 100",
    "example": "A 20-year-old at AA running a 22% Chase% has a discipline foundation that typically survives the jump to MLB sequencing.",
    "seeAlso": [
@@ -3346,7 +3608,9 @@
     "bb_pct",
     "pitch_sel",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric (O-Swing%). Plate-discipline rate from pitch tracking; the Statcast/Savant zone definition is used here."
   },
   {
    "id": "whiff_pct",
@@ -3371,7 +3635,9 @@
     "stf_plus",
     "chase_pct",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): swinging strikes per swing."
   },
   {
    "id": "z_contact_pct",
@@ -3395,7 +3661,9 @@
     "chase_pct",
     "k_pct",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Plate-discipline rate popularized by FanGraphs (contact on in-zone swings)."
   },
   {
    "id": "csw_pct",
@@ -3411,14 +3679,16 @@
    ],
    "priority": 16,
    "definition": "Pitcher metric: share of pitches that are either called strikes OR whiffs. One number for 'how often this pitch beats the hitter.'",
-   "methodology": "CSW% = (called strikes + swinging strikes) ÷ total pitches. It folds stuff (whiffs) and command/deception (called strikes) into a single rate, and it stabilizes faster than K% because it counts every pitch, not just plate-appearance outcomes. League average is ~28%; 30%+ is a strong pitch, 32%+ is elite. Used as the high-signal modern pitcher input alongside K-BB%.",
+   "methodology": "CSW% = (called strikes + swinging strikes) ÷ total pitches. It folds stuff (whiffs) and command/deception (called strikes) into a single rate, and it stabilizes faster than K% because it counts every pitch, not just plate-appearance outcomes. League average is ~28%; 30%+ is a strong pitch, 32%+ is elite. Used as the high-signal modern pitcher input alongside K-BB%. Read the called-strike half with the strike-zone regime in mind: under the 2026 MLB ABS challenge system (and ABS regimes in AAA since 2023, the FSL since 2022) borderline calls are correctable, so framing and edge-stealing move fewer of them, and CSW% across those environments is not strictly comparable to a human-umpire baseline.",
    "formula": "CSW% = (called strikes + whiffs) / pitches × 100",
    "seeAlso": [
     "whiff_pct",
     "k_pct_pitcher",
     "stf_plus",
     "command_grade"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Called Strikes plus Whiffs, popularized by Alex Fast at Pitcher List."
   },
   {
    "id": "spin_rate",
@@ -3439,7 +3709,9 @@
     "fastball_grade",
     "stf_plus",
     "extension"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant), measured by Hawk-Eye tracking."
   },
   {
    "id": "extension",
@@ -3458,7 +3730,9 @@
     "fastball_grade",
     "spin_rate",
     "stf_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): how far off the rubber the ball is released."
   },
   {
    "id": "sprint_speed",
@@ -3478,7 +3752,9 @@
    "seeAlso": [
     "speed_tool",
     "field_tool"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant): feet per second in a runner's fastest one-second window."
   },
   {
    "id": "k_bb_pct",
@@ -3502,7 +3778,9 @@
     "bb_pct_pitcher",
     "fip",
     "csw_pct"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "ops_plus",
@@ -3519,14 +3797,16 @@
    ],
    "priority": 6,
    "definition": "On-base-plus-slugging indexed so 100 = the player's level average. Above 100 = better than his league; the +/− is roughly a percentage.",
-   "methodology": "OPS+ rescales OPS against the run environment the player actually hit in, so a .800 OPS in a pitcher-friendly Low-A league and a .800 OPS in the hitter-friendly PCL aren't read as equal. 100 is the level mean; 130 means ~30% better than league. The site computes it against the prospect's specific level so cross-level comparisons hold. It's the quick descriptive cousin of wRC+ (which additionally park- and position-adjusts).",
-   "formula": "OPS+ = 100 × (OBP/lgOBP + SLG/lgSLG − 1)   (computed vs the player's level)",
+   "methodology": "OPS+ rescales OPS against the run environment the player actually hit in, so a .800 OPS in a pitcher-friendly Low-A league and a .800 OPS in the hitter-friendly PCL aren't read as equal. 100 is the level mean; 130 means ~30% better than league OPS. The site indexes the player's OPS directly against his level's mean OPS (not the Bill James OBP/SLG decomposition), and shrinks a small-sample line toward the level mean before indexing so a 4-AB line doesn't read as an extreme. It's the quick descriptive cousin of wRC+, which additionally park- and position-adjusts; OPS+ here carries no park adjustment.",
+   "formula": "OPS+ = 100 × OPS_adj / lgOPS,  where OPS_adj = (AB·OPS + K·lgOPS)/(AB + K) shrinks toward the level mean (K = 170 AB).  Computed vs the player's level.",
    "seeAlso": [
     "ops",
     "wrc_plus",
     "iso",
     "rps_plus"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. OPS+ in the Bill James tradition (Baseball-Reference implements the league version). Here it is computed relative to the player's minor-league level and carries no park adjustment."
   },
   {
    "id": "fin_war_per_m",
@@ -3550,7 +3830,9 @@
     "fin_dollar_dvm",
     "signing_bonus",
     "war"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fin_contract_surplus",
@@ -3573,7 +3855,9 @@
     "surplus_value",
     "aav",
     "service_time"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fin_dollar_dvm",
@@ -3595,7 +3879,9 @@
     "farm_grade_financial",
     "surplus_value",
     "tvi"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "time_machine",
@@ -3616,7 +3902,9 @@
     "consensus_fv",
     "stock",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "generate_gfx",
@@ -3638,7 +3926,9 @@
     "fv_rarity",
     "fv",
     "surplus_value"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "scatterplots",
@@ -3660,7 +3950,9 @@
     "rps_plus",
     "statcast_plus",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "watchlist",
@@ -3679,7 +3971,9 @@
    "methodology": "Starring a prospect adds them to a Watchlist stored in the browser (localStorage - nothing leaves the device). The list is filterable like any board and can be exported as a Generate GFX card pack, so a personal shortlist becomes a shareable sheet.",
    "seeAlso": [
     "generate_gfx"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "spotlights",
@@ -3704,7 +3998,9 @@
     "spotlight_age_cap",
     "rps_plus",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rarity_tiers",
@@ -3729,7 +4025,9 @@
     "fv_rarity",
     "generate_gfx"
    ],
-   "visual": "<span class=\"fv-badge fv-70 card-rarity-legendary\" style=\"padding:3px 9px;\">70</span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:8px;\">legendary → holo → chrome → foil → shine</span>"
+   "visual": "<span class=\"fv-badge fv-70 card-rarity-legendary\" style=\"padding:3px 9px;\">70</span><span style=\"font-size:11px;color:var(--text-tertiary);margin-left:8px;\">legendary → holo → chrome → foil → shine</span>",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "quick_search",
@@ -3750,7 +4048,9 @@
    "methodology": "The quick-search palette is the site-wide entry point to the glossary single-source-of-truth: type any metric name or alias to see its definition inline and open the full entry. It also resolves prospect names for fast navigation. Opens with ⌘K / Ctrl+K (or the / key) and is dismissable with Escape.",
    "seeAlso": [
     "consensus_fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "m_guarantee",
@@ -3771,7 +4071,9 @@
     "m_years",
     "deal_plus",
     "contract_surplus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "m_aav",
@@ -3790,7 +4092,9 @@
    "seeAlso": [
     "m_guarantee",
     "m_years"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "m_years",
@@ -3810,7 +4114,9 @@
    "seeAlso": [
     "m_guarantee",
     "m_aav"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "deal_plus",
@@ -3833,7 +4139,9 @@
     "contract_surplus",
     "m_guarantee",
     "rational_value"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "contract_surplus",
@@ -3853,7 +4161,9 @@
     "m_guarantee",
     "qo_tax",
     "rational_value"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "qo_tax",
@@ -3872,7 +4182,9 @@
     "contract_surplus",
     "qualifying_offer",
     "fv"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rational_value",
@@ -3892,7 +4204,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "p10_p90_bands",
@@ -3910,7 +4224,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "enter_prob",
@@ -3928,7 +4244,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "cba_carry_forward",
@@ -3946,7 +4264,8 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "winter_dpw",
@@ -3963,7 +4282,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "thin_platform",
@@ -3980,7 +4301,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fit_components",
@@ -4002,7 +4325,9 @@
    "module": [
     "fa"
    ],
-   "methodology": "v2 reweight: need 0.31 / window 0.19 / afford 0.22 / park 0.04 / behavior 0.24. Park was cut from 0.12 after the measured failure mode - the most suppressive park topped EVERY pitcher's fit list because park alone separated otherwise-similar clubs. Afford reads Spotrac's CBT-basis tax space (the number front offices budget against) and floors at 0.4 for clubs over the line that keep signing nine-figure deals; behavior blends deal-scale history (0.5), recency-weighted three-winter FA outlay (0.3), and $100M-deal count (0.2). Blocked-by names both kinds of blocker: PX = a near-ETA PROSPX prospect (FV >= 50), MLB = a contracted incumbent projecting >= 2.5 WAR at the slot the signing would displace."
+   "methodology": "v2 reweight: need 0.31 / window 0.19 / afford 0.22 / park 0.04 / behavior 0.24. Park was cut from 0.12 after the measured failure mode - the most suppressive park topped EVERY pitcher's fit list because park alone separated otherwise-similar clubs. Afford reads Spotrac's CBT-basis tax space (the number front offices budget against) and floors at 0.4 for clubs over the line that keep signing nine-figure deals; behavior blends deal-scale history (0.5), recency-weighted three-winter FA outlay (0.3), and $100M-deal count (0.2). Blocked-by names both kinds of blocker: PX = a near-ETA PROSPX prospect (FV >= 50), MLB = a contracted incumbent projecting >= 2.5 WAR at the slot the signing would displace.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "first_seen_dates",
@@ -4018,7 +4343,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fa_gates",
@@ -4036,7 +4363,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "nearest_comps",
@@ -4054,7 +4383,9 @@
    ],
    "module": [
     "fa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "fa_projection_engine",
@@ -4074,7 +4405,9 @@
    "module": [
     "fa"
    ],
-   "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved. Phase 1 (2026-06): horizons 1-5 are served by proj_lgbm_v1 - LightGBM quantile models (P10/P25/P50/P75/P90 per horizon) stacked ON the Marcel champion (its prediction rides as a feature, so the trees learn its residuals), with no zero floor on the bands (the measured cause of the old coverage collapse). Shipped under best-model-wins after beating the champion on dev bases, the Gate-1 target seasons (h1 MAE 0.557 vs 0.627) and a touched-once 2022-2024 holdout; the Marcel+aging champion remains the fallback, the stacking feature, and the shape for horizons 6+. Disclosed: long-horizon star medians run ~0.2 WAR below the champion (zero-inflated labels), with equal star MAE."
+   "methodology": "Beyond Gate 1 (next-season), the multi-year decay is now measured by a forward-chained horizon backtest (proj_eval.py, bases 2017-2021): the v2 regressed-rate curves doubled the horizon-5 >=3-WAR tail ratio (0.06 to 0.12) and cut star bias from -1.34 to -0.64 WAR while Gate 1 improved. Phase 1 (2026-06): horizons 1-5 are served by proj_lgbm_v1 - LightGBM quantile models (P10/P25/P50/P75/P90 per horizon) stacked ON the Marcel champion (its prediction rides as a feature, so the trees learn its residuals), with no zero floor on the bands (the measured cause of the old coverage collapse). Shipped under best-model-wins after beating the champion on dev bases, the Gate-1 target seasons (h1 MAE 0.557 vs 0.627) and a touched-once 2022-2024 holdout; the Marcel+aging champion remains the fallback, the stacking feature, and the shape for horizons 6+. Disclosed: long-horizon star medians run ~0.2 WAR below the champion (zero-inflated labels), with equal star MAE.",
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "era_minus",
@@ -4091,7 +4424,9 @@
    ],
    "module": [
     "foundations"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. The ERA- park- and league-adjusted index, implemented by FanGraphs (100 = average, lower is better). Here it is level-relative."
   },
   {
    "id": "woba",
@@ -4108,7 +4443,9 @@
    ],
    "module": [
     "foundations"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Created by Tom Tango (The Book); implemented by FanGraphs. It weights each offensive event by its average run value."
   },
   {
    "id": "module_stages",
@@ -4124,7 +4461,9 @@
    "seeAlso": [],
    "module": [
     "platform"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "wire_ticker",
@@ -4142,7 +4481,9 @@
    ],
    "module": [
     "platform"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "active_pool",
@@ -4159,7 +4500,9 @@
    ],
    "module": [
     "platform"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "proj_buckets",
@@ -4182,7 +4525,9 @@
     "p10_p90_bands",
     "fa_projection_engine",
     "rational_value"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mlb_projections",
@@ -4203,7 +4548,9 @@
     "proj_buckets",
     "winter_dpw",
     "surplus_value"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "model_accountability",
@@ -4225,7 +4572,9 @@
     "backtest",
     "forward_gate",
     "mlb_projections"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "model_verdict",
@@ -4248,7 +4597,9 @@
     "model_accountability",
     "backtest",
     "mlb_projections"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "backtest",
@@ -4271,7 +4622,9 @@
     "model_verdict",
     "mae",
     "forward_gate"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "holdout",
@@ -4292,7 +4645,9 @@
     "backtest",
     "forward_gate",
     "model_verdict"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "forward_gate",
@@ -4313,7 +4668,9 @@
     "backtest",
     "holdout",
     "mlb_projections"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "mae",
@@ -4334,7 +4691,9 @@
     "backtest",
     "p10_p90_bands",
     "war"
-   ]
+   ],
+   "shelf": "foundation",
+   "origin": "Standard baseball statistic (no single creator); defined here for reference."
   },
   {
    "id": "org_tendencies",
@@ -4355,7 +4714,9 @@
     "farm_report_card",
     "dvm_plus",
     "statcast_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "draft_overperformance",
@@ -4376,7 +4737,9 @@
    "seeAlso": [
     "org_tendencies",
     "draft_ceiling_hits"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "deferral_npv",
@@ -4397,7 +4760,9 @@
     "m_guarantee",
     "rational_value",
     "winter_dpw"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "swing_plus",
@@ -4417,7 +4782,9 @@
    "methodology": "Per-swing tracking features are filtered to competitive swings, aggregated per hitter (means + variability), and scored through the model's run-value pipelines with a reliability shrink toward 100 below ~180 swings. DATA BOUNDARY: bat tracking exists only at the MLB level (2024+); no public MiLB tracking exists, so prospects light up after debut, never before.",
    "example": "A debuted prospect at Swing+ 115 with 300+ swings carries a plus swing by MLB standards; 95 on 60 swings is mostly shrink, not signal.",
    "seeAlso": [],
-   "formula": null
+   "formula": null,
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "collegesavant",
@@ -4435,7 +4802,9 @@
    "methodology": "Percentiles are computed within the college dataset's qualified pool per season. The module is in alpha.",
    "example": null,
    "seeAlso": [],
-   "formula": null
+   "formula": null,
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "xfv",
@@ -4459,7 +4828,9 @@
     "consensus_fv",
     "surplus_value",
     "wag"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "xfv_tools",
@@ -4480,7 +4851,9 @@
    "seeAlso": [
     "xfv",
     "tool"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "xfv_ungraded",
@@ -4503,7 +4876,9 @@
     "xfv",
     "consensus_fv",
     "farm_report_card"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "krp_plus",
@@ -4528,7 +4903,9 @@
     "stf_plus",
     "era",
     "k_pct_pitcher"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "trade_machine",
@@ -4550,7 +4927,9 @@
     "tvi",
     "mlb_projections",
     "dpw_tier"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "milb_translation",
@@ -4573,7 +4952,9 @@
     "xfv",
     "k_pct",
     "bb_pct"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rem_plus",
@@ -4595,7 +4976,9 @@
     "bullpen_plus",
     "gmli",
     "wpa"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "bullpen_plus",
@@ -4614,7 +4997,9 @@
    "seeAlso": [
     "rem_plus",
     "gmli"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "gmli",
@@ -4634,7 +5019,9 @@
    "seeAlso": [
     "leverage_index",
     "rem_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "gmli_3yr",
@@ -4655,7 +5042,9 @@
     "gmli",
     "leverage_index",
     "rem_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "riv_plus",
@@ -4677,7 +5066,9 @@
     "wpa",
     "gmli",
     "shutdowns_meltdowns"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "rem_plus_3yr",
@@ -4698,7 +5089,9 @@
     "rem_plus",
     "riv_plus",
     "gmli_3yr"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "sem_plus",
@@ -4719,7 +5112,9 @@
     "rem_plus",
     "sem_plus_3yr",
     "fip"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "sem_plus_3yr",
@@ -4740,7 +5135,9 @@
     "sem_plus",
     "rem_plus_3yr",
     "fip"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "wpa",
@@ -4759,7 +5156,9 @@
    "seeAlso": [
     "wpa_li",
     "gmli"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Win Probability Added, from the win-expectancy framework (Tom Tango and coauthors, The Book); implemented by FanGraphs."
   },
   {
    "id": "wpa_li",
@@ -4778,7 +5177,9 @@
    "seeAlso": [
     "wpa",
     "leverage_index"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. WPA divided by leverage index, a context-neutral wins measure from the win-expectancy framework (Tom Tango)."
   },
   {
    "id": "leverage_index",
@@ -4796,7 +5197,9 @@
    "seeAlso": [
     "gmli",
     "wpa_li"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Leverage Index, created by Tom Tango (The Book): how much the current game state can swing win probability, 1.0 = average."
   },
   {
    "id": "shutdowns_meltdowns",
@@ -4815,7 +5218,9 @@
    "definition": "Per-appearance reliever outcomes. A Shutdown adds at least 0.06 to the team's win probability in an outing; a Meltdown subtracts at least that much. Shutdowns minus Meltdowns is a cleaner reliever record than saves and holds.",
    "seeAlso": [
     "wpa"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric. Reliever WPA thresholds proposed by Tom Tango and implemented by FanGraphs."
   },
   {
    "id": "reliever_roles",
@@ -4837,7 +5242,8 @@
    "seeAlso": [
     "gmli",
     "rem_plus"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "rp_sp_fit",
@@ -4857,7 +5263,9 @@
     "sp_rp_fit",
     "arsenal_depth",
     "pal_conversion"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "sp_rp_fit",
@@ -4877,7 +5285,9 @@
     "rp_sp_fit",
     "putaway_pitch",
     "rem_plus"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "pal_conversion",
@@ -4898,7 +5308,9 @@
     "rp_sp_fit",
     "sp_rp_fit",
     "tto_penalty"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "arsenal_depth",
@@ -4917,7 +5329,8 @@
    "seeAlso": [
     "rp_sp_fit",
     "tto_penalty"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "tto_penalty",
@@ -4936,7 +5349,9 @@
    "seeAlso": [
     "arsenal_depth",
     "rp_sp_fit"
-   ]
+   ],
+   "shelf": "industry",
+   "origin": "Industry concept. The times-through-order penalty, quantified by Mitchel Lichtman and coauthors (The Book)."
   },
   {
    "id": "role_velo_delta",
@@ -4955,7 +5370,9 @@
    "seeAlso": [
     "sp_rp_fit",
     "rp_sp_fit"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "putaway_pitch",
@@ -4973,7 +5390,8 @@
    "definition": "A pitcher's single best swing-and-miss pitch, measured by whiff rate. A dominant putaway pitch is what lets a starter's stuff play up in a one-inning relief role, so it drives the SP->RP FIT score.",
    "seeAlso": [
     "sp_rp_fit"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "platoon_split",
@@ -4991,7 +5409,8 @@
    "definition": "The gap in results a pitcher allows to left-handed versus right-handed hitters (here, the OPS-against difference). A flat split means he can face a full lineup without being hidden from one side, which supports starting. A large split is a conversion blocker.",
    "seeAlso": [
     "rp_sp_fit"
-   ]
+   ],
+   "shelf": "foundation"
   },
   {
    "id": "versa",
@@ -5009,7 +5428,9 @@
    "methodology": "Versa is built from StatsAPI game fielding, not a reported position string. A position counts when the player has meaningful exposure there: at least 10 games, or at least 5 starts at that spot. Designated hitter is excluded because it is not a fielding position. The result is the honest, game-backed set of places a player has actually stood, so a listed shortstop who has logged real innings at second and third shows all three.",
    "formula": "Position qualifies at >= 10 G or >= 5 GS at that spot; DH excluded",
    "example": "A shortstop with 40 G at SS, 12 G at 2B, and 6 GS at 3B shows Versa: SS / 2B / 3B.",
-   "seeAlso": []
+   "seeAlso": [],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "draft_stock_plus",
@@ -5027,7 +5448,9 @@
    "methodology": "DS+ maps a prospect's consensus draft rank to roughly a 70 to 130 index (best of class near 130, back of the board near 70), computed on the raw fractional consensus ranks so tightly bunched prospects stay distinct. A z-scored college-performance term then nudges the value up or down by up to about six points, and the result is clamped. It is a heuristic stock indicator, not a validated projection. This is different from Draft Overperformance, which compares realized FV to slot after the fact.",
    "formula": "DS+ = rank-to-index (about 70-130) + college-performance nudge (up to about +-6), clamped",
    "example": "A prospect ranked 8th in a class of 250 with a strong statistical spring might carry a DS+ near 126.",
-   "seeAlso": []
+   "seeAlso": [],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "reverse_platoon",
@@ -5050,7 +5473,9 @@
     "sp_rp_fit",
     "rp_sp_fit",
     "pal_conversion"
-   ]
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
   },
   {
    "id": "starter_shape",
@@ -5071,6 +5496,198 @@
     "sp_rp_fit",
     "rp_sp_fit",
     "pal_conversion"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, original to eephus.io."
+  },
+  {
+   "id": "xwoba",
+   "term": "xwOBA",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "xwOBA",
+    "xwOBAcon",
+    "Expected wOBA"
+   ],
+   "priority": 50,
+   "definition": "Expected wOBA: what a hitter's contact and plate results are worth based on how the ball was struck, stripping out defense and luck.",
+   "methodology": "xwOBA estimates wOBA from the quality of contact (exit velocity and launch angle) plus strikeouts and walks, using the run values of each outcome. xwOBAcon is the contact-only version. It answers what a hitter deserved rather than what fell in. The value shown on player cards is our estimate from the tracking inputs available, so read it as our reconstruction, not the official Savant figure.",
+   "origin": "Industry metric. MLB Statcast (Baseball Savant). Displayed here as an estimate.",
+   "seeAlso": [
+    "woba",
+    "barrel_pct",
+    "hard_hit_pct"
+   ],
+   "shelf": "industry"
+  },
+  {
+   "id": "babip",
+   "term": "BABIP",
+   "category": "hitter-stat",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "BABIP",
+    "Batting Average on Balls In Play"
+   ],
+   "priority": 50,
+   "definition": "Batting average on balls in play: how often balls put in play become hits, indexed to whether a line is running hot or unlucky.",
+   "methodology": "BABIP = (H - HR) / (AB - K - HR + SF). League average sits near .300. Large gaps from a hitter's own norm often regress, so it is read as a luck and contact-quality signal rather than a skill on its own; some hitters sustain higher BABIP through speed or hard contact.",
+   "origin": "Standard sabermetric rate; the DIPS insight that pitchers have limited control over BABIP is due to Voros McCracken.",
+   "seeAlso": [
+    "avg",
+    "hard_hit_pct"
+   ],
+   "shelf": "foundation"
+  },
+  {
+   "id": "vaa",
+   "term": "VAA",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "VAA",
+    "VAAoe",
+    "Vertical Approach Angle"
+   ],
+   "priority": 50,
+   "definition": "Vertical approach angle: the steepness of a pitch's descent as it crosses the plate; VAAoe is that angle over expectation given the pitch's release and velocity.",
+   "methodology": "VAA is the angle of the ball's path at the plate. Flatter approach angles on four-seam fastballs at the top of the zone tend to generate more swing-and-miss, so VAA and VAAoe (over expectation, adjusting for release height and velocity) are read as shape context for a fastball, not a stand-alone grade.",
+   "origin": "Derived here from Statcast pitch tracking (Baseball Savant); the approach-angle family was popularized across the public pitching-analysis community.",
+   "seeAlso": [
+    "spin_rate",
+    "extension"
+   ],
+   "shelf": "industry"
+  },
+  {
+   "id": "window_alignment",
+   "term": "Window Alignment",
+   "category": "custom-index",
+   "module": [
+    "prospx",
+    "platform"
+   ],
+   "aliases": [
+    "Window Alignment",
+    "System Duration",
+    "etaAlignYears",
+    "Farm duration"
+   ],
+   "priority": 40,
+   "definition": "Bond-math for a farm system: whether its prospects arrive while the big-league core is still under team control. Negative means the farm lands inside the window (aligned); positive means help comes after the core has leaked to free agency.",
+   "methodology": "Two pieces. System Duration (etaMean) is the surplus-weighted average arrival season of a farm: each prospect's projected ETA weighted by his expected surplus dollars, so the number leans toward the prospects who matter most. The core center (coreCenter) is the WAR-weighted midpoint of the org's controlled-core production over 2027-2031. Window Alignment = etaMean minus coreCenter. At or below zero, the farm reinforces the core while it is still cheap and productive; well above zero, the core has aged out or left before the farm shows up. The arrival curve (etaByYear) shows the share of farm surplus landing each season.",
+   "origin": "Arkmetric, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "eta",
+    "sur_plus",
+    "farm_report_card"
+   ]
+  },
+  {
+   "id": "risk_adjusted_surplus",
+   "term": "Risk-adjusted Surplus (Sortino)",
+   "category": "custom-index",
+   "module": [
+    "platform"
+   ],
+   "aliases": [
+    "Risk-adjusted Surplus",
+    "Sortino",
+    "Downside surplus",
+    "Bust risk"
+   ],
+   "priority": 40,
+   "definition": "Surplus value weighed against its downside. A prospect is an option on future WAR, so upside swings are not risk; only the chance of falling short is. Higher Sortino means more expected surplus per unit of downside.",
+   "methodology": "Built from the same eFV surplus distribution the trade board already carries (a five-point fan from p10 to p90 plus the mean). Downside deviation is the semi-deviation below the mean (only shortfalls count). Sortino = (mean surplus minus the p10 floor) divided by that downside deviation, so a bunched, high-floor profile scores higher than a boom-or-bust one at the same mean. The tooltip also carries a risk-adjusted surplus (mean minus half the downside deviation, a local display haircut that does not re-rank the board) and the bust probability. Descriptive: it re-expresses the validated surplus model, it does not change any shown surplus.",
+   "origin": "Arkmetric, original to eephus.io.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "tvi",
+    "fv"
+   ]
+  },
+  {
+   "id": "fv_tape",
+   "term": "FV Tape",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "FV Tape",
+    "Candlesticks",
+    "Momentum",
+    "RSI",
+    "Grade volatility"
+   ],
+   "priority": 42,
+   "definition": "A market-structure overlay on a prospect's consensus FV history: candlesticks plus trader-style indicators (momentum, an RSI gauge on grade changes, realized volatility). Descriptive signals on scouting consensus, not predictions.",
+   "methodology": "Each candle covers one consensus snapshot: the open is the prior grade, the close is the current consensus FV, and the wick spans the range of source grades that period. Momentum is the net grade change over the last three intervals. The RSI gauge measures the balance of upgrades to downgrades over recent GRADE CHANGES only (flat re-confirmations are dropped, so a static grade never pins the gauge); above 70 reads overbought, below 30 oversold. Volatility is the standard deviation across sources on the latest grade. These are read as market context, not a forecast; the candles need at least four snapshots and the RSI at least six grade changes, otherwise the relevant piece is hidden.",
+   "origin": "Arkmetric, original to eephus.io. Candlestick and RSI conventions are borrowed from financial technical analysis.",
+   "shelf": "ark",
+   "seeAlso": [
+    "consensus_fv",
+    "fv",
+    "wide_spread"
+   ]
+  },
+  {
+   "id": "draft_war_room",
+   "term": "Draft War Room",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Draft War Room",
+    "War Room",
+    "Reach or steal",
+    "Live draft board"
+   ],
+   "priority": 40,
+   "definition": "A live draft-night board: each pick as it happens, priced against our board and the historical value of that pick slot, so you see the reach or the steal in surplus dollars.",
+   "methodology": "During the draft a poller reads the MLB Stats API every minute and writes a read-only feed the page renders. Each pick joins to our board by name and carries the consensus FV, the reach-or-steal gap (how many spots earlier or later than our board rank the player went; a faller past his rank is a steal for the drafting team), the expected first-six-year WAR for that slot from the realized pick-value curve, and the slot surplus in dollars, plus the signing bonus against the slot value. It is a live view over already-published models, not a new projection; before the draft the board is empty.",
+   "origin": "Arkmetric, original to eephus.io. Pick data from the MLB Stats API.",
+   "shelf": "ark",
+   "seeAlso": [
+    "draft_stock_plus",
+    "consensus_fv",
+    "sur_plus",
+    "slot_value"
+   ]
+  },
+  {
+   "id": "prospect_greeks",
+   "term": "Prospect Greeks",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "Prospect Greeks",
+    "Delta",
+    "Vega",
+    "Theta",
+    "Implied volatility"
+   ],
+   "priority": 41,
+   "definition": "An options-desk view of a prospect's value. Delta is the dollars gained from a one-grade upgrade, Vega is the dollar swing implied by scouting disagreement, and Theta is the surplus lost per year of arrival delay.",
+   "methodology": "All three read off the same value framework the surplus board uses. Delta is the change in expected surplus dollars when the grade moves up one full grade (5 FV points), measured on the FV-to-surplus curve at the prospect's grade, so a jump near the steep part of the curve is worth more. Vega multiplies the local slope of that curve by the spread of source grades, giving the dollar value at stake in the scouting disagreement. Theta applies the framework's annual discount to the expected surplus, the value that erodes for each extra year before the prospect arrives. Implied volatility is just that grade spread. Descriptive: it re-expresses the validated surplus model as option sensitivities, it does not change any dollar figure.",
+   "origin": "Arkmetric, original to eephus.io. The Greeks framing is borrowed from options pricing.",
+   "shelf": "ark",
+   "seeAlso": [
+    "sur_plus",
+    "risk_adjusted_surplus",
+    "eta"
    ]
   }
  ]

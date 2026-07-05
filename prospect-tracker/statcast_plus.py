@@ -29,7 +29,9 @@ Definition (mirrors the original JS):
   allowed).
 Each component is z-scored against the side-matched active pool,
 averaged, then rescaled so 100 = pool mean and one population stddev
-moves the index 15 points (wRC+/OPS+ family scaling).
+moves the index 10 points (a 100 + 10z index, matching the RPS+/DvM+/
+Stf+ suite; this is z-score scaling, not the ratio wRC+/OPS+ family
+where a point is ~1 percent).
 """
 
 from __future__ import annotations

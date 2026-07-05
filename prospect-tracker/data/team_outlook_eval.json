@@ -262,5 +262,25 @@
    "control window = Spotrac signed_through where present, else an age-based proxy (no service time in the pipeline)",
    "cohort intercepts were fit on year-1 residuals; out-year application re-bands by age but is an approximation"
   ]
+ },
+ "window_alignment": {
+  "kind": "surplus-weighted farm ETA (etaMean) vs the controlled-core WAR center (coreCenter); etaAlignYears = etaMean - coreCenter, <= 0 = farm arrives inside the control window (aligned)",
+  "weight": "expected surplus $ (value_mm), floored at 0; count-weight fallback",
+  "eta_coverage_orgs": 30,
+  "align_coverage_orgs": 30,
+  "eta_mean_range": [
+   2027.99,
+   2029.08
+  ],
+  "align_median": 0.39,
+  "align_range": [
+   -0.47,
+   0.95
+  ],
+  "aligned_org_count": 5,
+  "limitations": [
+   "etaMean is surplus-weighted by the platform surplus model (its uncertainty flows through); coreCenter is the controlled-core trajectory, not a scored contention forecast",
+   "orgs whose farm carries no positive-surplus prospect fall back to a count-weighted center and report no arrival curve"
+  ]
  }
 }

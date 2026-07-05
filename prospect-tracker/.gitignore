@@ -110,3 +110,4 @@ data/xfv_tools_live.json
 data/grpo_model.fingerprint
 # Output-diff harness scratch (tools/pipeline_artifact_diff.py snapshots).
 data/_artifact_fingerprints/
+data/draft_live.json

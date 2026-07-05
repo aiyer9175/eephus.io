@@ -17,7 +17,11 @@
   "use strict";
 
   const _S = { view: "terms", cat: "all", q: "", term: null,
-               backtest: null, btLoading: false };
+               backtest: null, btLoading: false, cards: false };
+  // Report Cards v0: inline champion-vs-baseline proof charts on the Models &
+  // Proofs cards. Dark by default pre-launch; opt in with #cards=1 for owner
+  // preview. Flip _CARDS_DEFAULT to true at launch.
+  const _CARDS_DEFAULT = true;   // surfaced: proof charts on by default (#cards=0 to hide)
   let GL = {};         // legacy-shaped map: slug -> {name, short, long, ...}
   let GROUPS = {};     // category -> display group
   // Models & Proofs view state. Declared up top (module scope, before boot
@@ -47,6 +51,7 @@
     if (p.has("view")) _S.view = p.get("view");
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
+    _S.cards = p.has("cards") ? p.get("cards") !== "0" : _CARDS_DEFAULT;
     _S.term = p.get("g") || null;
     if (_S.term) _S.view = "terms";
   }
@@ -75,6 +80,16 @@
       `<span class="gl-mod gl-mod--${m}">${LBL[m] || m.toUpperCase()}</span>`).join("");
   }
 
+  // Provenance chip: distinguishes our own models from borrowed industry
+  // metrics and shared foundations, so a reader always knows what is ours.
+  function shelfBadge(e) {
+    const S = { ark: ["ARKMETRIC", "eephus.io original"],
+                industry: ["INDUSTRY", "external metric, credited"],
+                foundation: ["FOUNDATION", "shared concept or standard stat"] };
+    const s = S[e.shelf];
+    return s ? `<span class="gl-shelf gl-shelf--${e.shelf}" title="${s[1]}">${s[0]}</span>` : "";
+  }
+
   function entryCard(slug, e, expanded) {
     const altNames = (e.aliases || []).filter(a => a !== e.name && a.includes(" "));
     const fullName = altNames.length ? altNames.sort((a, b) => b.length - a.length)[0] : "";
@@ -82,6 +97,7 @@
     if (e.long) more.push(`<div class="gl-meth">${e.long.split("\n\n").map(p => `<p>${escapeHtml(p)}</p>`).join("")}</div>`);
     if (e.formula) more.push(`<div class="gp-formula">${escapeHtml(e.formula)}</div>`);
     if (e.example) more.push(`<div class="gl-example"><span class="gl-microlabel">Example · </span>${escapeHtml(e.example)}</div>`);
+    if (e.origin) more.push(`<div class="gl-origin"><span class="gl-microlabel">Origin · </span>${escapeHtml(e.origin)}</div>`);
     if (e.visual_html) more.push(`<div class="gl-microlabel" style="margin-top:8px;">Visual</div><div class="glossary-visual">${e.visual_html}</div>`);
     if (typeof _GLOSSARY_VIZ !== "undefined" && _GLOSSARY_VIZ[slug]) {
       let viz = ""; try { viz = _GLOSSARY_VIZ[slug](); } catch (err) { viz = ""; }
@@ -96,7 +112,7 @@
       <div class="gl-card-head">
         <span class="gp-term">${escapeHtml(e.name)}</span>
         ${fullName ? `<span class="gl-fullname">(${escapeHtml(fullName)})</span>` : ""}
-        <span class="gl-badges">${moduleBadges(e)}</span>
+        <span class="gl-badges">${shelfBadge(e)}${moduleBadges(e)}</span>
       </div>
       <div class="gl-def">${escapeHtml(e.short)}</div>
       ${moreHtml}</div>`;
@@ -1333,9 +1349,39 @@ function _modelProofHTML(m) {
   return `<div class="gl-model-row"><span class="gl-model-rowlabel">Proof</span><span class="gl-model-rowval">${bits.join(" ")}</span></div>`;
 }
 
+// Report Card v0: paired champion-vs-baseline bars for each headline metric.
+// Bars are normalized to the larger of the two values so the win is visible;
+// the winner (per `better`) gets a star. One try/catch-wrapped card must never
+// strand the ledger, so the caller degrades to the text card on a throw.
+function _cardHeadline(card) {
+  if (!card || !Array.isArray(card.headline) || !card.headline.length) return "";
+  const rows = card.headline.map(h => {
+    const champWins = h.better === "lower" ? h.champion <= h.baseline : h.champion >= h.baseline;
+    const scale = Math.max(Math.abs(h.champion), Math.abs(h.baseline)) || 1;
+    const bar = (val, isChamp) => {
+      const pct = Math.max(2, Math.min(100, Math.abs(val) / scale * 100));
+      return `<div class="gl-card-barrow">
+        <span class="gl-card-barlab">${isChamp ? "model" : "baseline"}${isChamp && champWins ? " ★" : ""}</span>
+        <span class="gl-card-track"><span class="gl-card-fill${isChamp ? " gl-card-fill--champ" : ""}" style="width:${pct.toFixed(1)}%"></span></span>
+        <span class="gl-card-barval">${escapeHtml(String(val))}</span></div>`;
+    };
+    const dir = h.better === "lower" ? "lower is better" : "higher is better";
+    return `<div class="gl-card-metric">
+      <div class="gl-card-metriclab">${escapeHtml(h.label)} <span class="gl-card-dir">(${dir})</span></div>
+      ${bar(h.champion, true)}${bar(h.baseline, false)}</div>`;
+  }).join("");
+  const foot = [card.n ? `n = ${escapeHtml(String(card.n))}` : "", escapeHtml(card.window || "")]
+    .filter(Boolean).join(" · ");
+  return `<div class="gl-card-proof">${rows}${foot ? `<div class="gl-card-foot">${foot}</div>` : ""}</div>`;
+}
+
 function _modelCard(m) {
   const v = m.verdict || "";
   const badge = `<span class="gl-verdict gl-verdict--${escapeHtml(v)}">${escapeHtml(v)}</span>`;
+  let cardHtml = "";
+  if (_S.cards && m.card) {
+    try { cardHtml = _cardHeadline(m.card); } catch (err) { cardHtml = ""; }
+  }
   return `<details class="gl-model-card">
     <summary class="gl-model-head">
       <span class="gl-model-name">${escapeHtml(_modelLabel(m.model_id))}</span>
@@ -1343,6 +1389,7 @@ function _modelCard(m) {
       <span class="gl-model-surface">${escapeHtml(m.surface || "")}</span>
     </summary>
     <div class="gl-model-body">
+      ${cardHtml}
       ${_modelRow("Predicts", m.predicts)}
       ${_modelRow("Champion", m.champion)}
       ${_modelRow("Baseline it must beat", m.baseline)}

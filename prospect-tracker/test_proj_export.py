@@ -150,6 +150,41 @@ def test_team_outlook_control_cliff(monkeypatch):
     assert gap_last > gap_y1
 
 
+def test_team_outlook_window_alignment(monkeypatch):
+    """etaAlignYears = surplus-weighted farm ETA minus the WAR-weighted core
+    center. A core with flat controlled WAR across 2027-31 centers at the
+    midpoint; a farm arriving before it reads negative (aligned)."""
+    H, F = pe.HORIZON, pe.FIRST_SEASON
+    mid = F + (H - 1) / 2.0                      # 2029.0 for 2027-31
+    v = _vet("WIN", [6.0] * H, F + H - 1, key="win")
+    # Farm block with a known surplus-weighted arrival one year before the core.
+    monkeypatch.setattr(pe, "_write_team_outlook_eval", lambda *a, **k: None)
+    monkeypatch.setattr(pe, "_org_farm_blocks",
+                        lambda: {"WIN": {"farmRank": 1, "etaMean": mid - 1.0,
+                                         "etaByYear": [0.5, 0.5, 0, 0, 0, 0], "etaN": 10}})
+    rows = pe._team_outlook([v], [], {}, {}, {})
+    f = rows[0]["farm"]
+    assert f["coreCenter"] == round(mid, 2)
+    assert f["etaAlignYears"] == round((mid - 1.0) - mid, 2) == -1.0
+
+
+def test_org_farm_blocks_eta_rollup():
+    """The live rollup over timeseries.json: every org gets a surplus-weighted
+    etaMean inside the horizon and an arrival curve that sums to 1."""
+    blocks = pe._org_farm_blocks()
+    assert len(blocks) >= 25
+    seen = 0
+    for org, b in blocks.items():
+        if b.get("etaMean") is None:
+            continue
+        seen += 1
+        assert pe.FIRST_SEASON <= b["etaMean"] <= pe.FIRST_SEASON + pe.HORIZON
+        if b.get("etaByYear"):
+            assert abs(sum(b["etaByYear"]) - 1.0) < 0.02
+            assert len(b["etaByYear"]) == pe.HORIZON + 1
+    assert seen >= 25
+
+
 def test_team_outlook_uses_champion_mean_not_display(monkeypatch):
     """The roll-up must sum champion MEANS (warChamp), never the median-like
     displayed war head — the 83-win-Dodgers failure mode, multi-year edition."""
