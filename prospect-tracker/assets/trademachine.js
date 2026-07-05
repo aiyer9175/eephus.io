@@ -355,13 +355,16 @@ function _tbPrimaryPos(pos) {
 // default + dropdown value) maps to the surplus column so header clicks and the
 // dropdown share one model.
 function _tbSortParts() {
-  if (_tbSort === "trade_desc" || !_tbSort) return ["surplus", "desc"];
+  if (_tbSort === "trade_desc" || !_tbSort) return ["grade", "desc"];
   const i = _tbSort.lastIndexOf("_");
   if (i < 0) return [_tbSort, "desc"];
   return [_tbSort.slice(0, i), _tbSort.slice(i + 1)];
 }
 // Per-column accessor (numeric -> null when absent so nulls always sort last;
-// text -> string). Grade sorts by the same surplus value it is derived from.
+// text -> string). The default Grade column ranks by the raw eFV grade
+// (xfv_grade), which orders realized WAR better than the $-surplus transform it
+// is derived from (data/trade_machine_eval.json: grade rho 0.3433 vs surplus
+// 0.3289, and grade wins within every tier); Surplus stays on trade_value_mm.
 function _tbSortVal(p, col) {
   const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
   if (col === "age") return { n: num(p.age) };
@@ -371,15 +374,17 @@ function _tbSortVal(p, col) {
   if (col === "name") return { t: String(p.player_name || "") };
   if (col === "contract") return { n: num(p.remaining_control_years) };
   if (col === "risk") return { n: num(p.sortino) };   // downside-adjusted surplus
-  return { n: num(p.trade_value_mm) };          // surplus | grade (default)
+  if (col === "surplus") return { n: num(p.trade_value_mm) };   // explicit $ column
+  return { n: num(p.xfv_grade) };                // grade (default) - eFV grade orderer
 }
 function _tbSortRows(rows) {
   const [col, dir] = _tbSortParts();
   const sign = dir === "asc" ? 1 : -1;
   const tv = p => { const v = Number(p.trade_value_mm); return Number.isFinite(v) ? v : -1e9; };
-  // eFV grade tiebreak: the convex-$/WAR + $0-floor surplus transform bunches a
-  // large low/fringe block at the same value with no internal order; the raw
-  // xfv_grade orders realized WAR better, so it breaks surplus ties sensibly.
+  // Cross-key tiebreaks: surplus $ then eFV grade. The default Grade column now
+  // ranks by xfv_grade directly (see _tbSortVal); the explicit Surplus column
+  // ranks by trade_value_mm and falls to xfv_grade to break the large low/fringe
+  // block the convex-$/WAR + $0-floor surplus transform bunches at one value.
   const xg = p => { const v = Number(p.xfv_grade); return Number.isFinite(v) ? v : -1e9; };
   rows.sort((a, b) => {
     const av = _tbSortVal(a, col), bv = _tbSortVal(b, col);
@@ -416,7 +421,7 @@ function _tbSortByCol(col) {
             : (["name", "org", "pos", "age"].includes(col) ? "asc" : "desc");
   _tbSort = `${col}_${dir}`;
   const sel = document.getElementById("tb-sort-select");
-  if (sel) { const opt = (_tbSort === "surplus_desc") ? "trade_desc" : _tbSort; sel.value = opt; if (sel.value !== opt) sel.selectedIndex = -1; }
+  if (sel) { const opt = (_tbSort === "grade_desc" || _tbSort === "surplus_desc") ? "trade_desc" : _tbSort; sel.value = opt; if (sel.value !== opt) sel.selectedIndex = -1; }
   resetPage("tradeboard");
   _renderTBRows();
 }
@@ -596,7 +601,7 @@ function _renderTBRows() {
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
-    ${_tbTh("Grade", "surplus", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale; ranks how valuable a player is to ACQUIRE in trade", true)}
+    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the eFV grade the surplus is derived from, which orders realized value better than the dollar transform; the letter is the coarse display.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}

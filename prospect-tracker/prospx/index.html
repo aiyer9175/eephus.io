@@ -28343,7 +28343,11 @@ function _tbSortRows(rows) {
     if (_tbSort === "fv_desc") return withTradeTiebreak((num(b.fv) ?? -1) - (num(a.fv) ?? -1), a, b);
     if (_tbSort === "org_asc") return withTradeTiebreak(cmpText(a.org, b.org), a, b);
     if (_tbSort === "pos_asc") return withTradeTiebreak(cmpText(_tbPrimaryPos(a.position), _tbPrimaryPos(b.position)), a, b);
-    return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
+    if (_tbSort === "surplus_desc") return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
+    // Default: rank by the eFV grade the surplus is derived from (orders realized
+    // WAR better than the $-transform per data/trade_machine_eval.json), surplus $
+    // as the tiebreak.
+    return withTradeTiebreak((num(b.xfv_grade) ?? -1) - (num(a.xfv_grade) ?? -1), a, b);
   });
   return rows;
 }
