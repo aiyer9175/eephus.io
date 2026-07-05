@@ -1,0 +1,51 @@
+{
+ "generated_at": "2026-07-05",
+ "experiment": "E-LEAN1: lean+1 single-feature re-tests + A1 production-backbone swap for the eFV lean ridge",
+ "spec": "gate pre-registered 2026-07-05 before any run (this artifact, method block); motivated by the milb_missing precedent (bundle-rejected feature re-validated alone, +0.023) and docs/xfv-phase2-plan.md A1/A2",
+ "seed": "n/a - harness fully deterministic (no stochastic steps; efv_lab_runner/efv_ml_lab forward-chained ridge)",
+ "method": {
+  "protocol": "forward-chained OOS on SCORED_YEARS 2020-2023, shipped lean ridge + consensus OLS anchor at shipped blend_lambda, debuted rows only, both eval targets (target_censored and target_resolved); additive variants via tools/efv_lab_runner.py (feature added to the shipped lean spec), replacement variant via tools/efv_ml_lab.py (explicit key list)",
+  "noise_floor": "identity variant (fv duplicated as an extra ridge column, zero new information) run per side per target; epsilon = max |pooled Spearman delta| observed: hit 0.0023, pit 0.0035",
+  "candidates": "computed in efv_model._vec but absent from the shipped lean sets: prod_trend, fv_trend, ops_rel, pos_prem, il_stints_pre, n_sources (hit); prod_trend, fv_trend, il_stints_pre, n_sources (pit); plus A1 swap ops_rel replacing obp_rel (hit). pick_overall / bonus_log / fv_stddev excluded (individually dead per phase-1 sweep, partial-given-FV ~= 0)",
+  "gate_thresholds": {
+   "pooled_gain_exceeds_noise_floor_both_targets": true,
+   "within_tier_wm_no_degrade_both_targets": true,
+   "t45_no_degrade_both_targets": true,
+   "no_new_per_year_sign_flips": true,
+   "marginal_counts_as_fail": true
+  },
+  "declared_before_first_run": true
+ },
+ "baselines": {
+  "hit": {"censored": {"n": 399, "spearman": 0.3535, "within_tier_wm": 0.1775, "t45": 0.0697},
+          "resolved": {"n": 399, "spearman": 0.3558, "within_tier_wm": 0.1845, "t45": 0.06}},
+  "pit": {"censored": {"n": 466, "spearman": 0.2787, "within_tier_wm": 0.1317, "t45": 0.1217},
+          "resolved": {"n": 466, "spearman": 0.2704, "within_tier_wm": 0.1365, "t45": 0.1098}}
+ },
+ "identity_noise_floor": {
+  "hit": {"censored_delta": -0.0015, "resolved_delta": -0.0023, "epsilon": 0.0023},
+  "pit": {"censored_delta": -0.0035, "resolved_delta": -0.0025, "epsilon": 0.0035}
+ },
+ "results_additive": {
+  "hit_prod_trend": {"censored": {"spearman": 0.3462, "delta": -0.0073, "wm": 0.159, "t45": 0.0534}, "resolved": {"spearman": 0.3458, "delta": -0.01, "wm": 0.1628, "t45": 0.0308}, "verdict": "FAIL (negative both targets)"},
+  "hit_fv_trend": {"censored": {"spearman": 0.3467, "delta": -0.0068, "wm": 0.1524, "t45": 0.054}, "resolved": {"spearman": 0.347, "delta": -0.0088, "wm": 0.1486, "t45": 0.0445}, "verdict": "FAIL (negative both targets)"},
+  "hit_ops_rel": {"censored": {"spearman": 0.3524, "delta": -0.0011, "wm": 0.1722, "t45": 0.09}, "resolved": {"spearman": 0.3554, "delta": -0.0004, "wm": 0.1836, "t45": 0.0661}, "verdict": "FAIL (pooled within noise floor). NOTE: t45 improves on both targets (+0.0203 cen / +0.0061 res); see notes"},
+  "hit_pos_prem": {"censored": {"spearman": 0.3532, "delta": -0.0003, "wm": 0.1753, "t45": 0.067}, "resolved": {"spearman": 0.3552, "delta": -0.0006, "wm": 0.1828, "t45": 0.0547}, "verdict": "FAIL (within noise floor)"},
+  "hit_il_stints_pre": {"censored": {"spearman": 0.3539, "delta": 0.0004, "wm": 0.1759, "t45": 0.0744}, "resolved": {"spearman": 0.3567, "delta": 0.0009, "wm": 0.1855, "t45": 0.0669}, "verdict": "FAIL (gain below noise floor both targets)"},
+  "hit_n_sources": {"censored": {"spearman": 0.3587, "delta": 0.0052, "wm": 0.1597, "t45": 0.0579}, "resolved": {"spearman": 0.362, "delta": 0.0062, "wm": 0.1728, "t45": 0.0438}, "verdict": "FAIL condition 2: pooled gain exceeds noise floor on both targets BUT within_tier_wm degrades (0.1775->0.1597 cen, 0.1845->0.1728 res) and t45 degrades (0.0697->0.0579, 0.06->0.0438). Coverage/popularity proxy: adds cross-tier rank signal already visible to readers, dilutes real within-tier signal. The exact pattern the within-tier condition exists to reject"},
+  "pit_prod_trend": {"censored": {"spearman": 0.277, "delta": -0.0017, "wm": 0.1292, "t45": 0.1193}, "resolved": {"spearman": 0.2698, "delta": -0.0006, "wm": 0.1359, "t45": 0.1065}, "verdict": "FAIL (within noise floor, negative)"},
+  "pit_fv_trend": {"censored": {"spearman": 0.2707, "delta": -0.008, "wm": 0.1318, "t45": 0.1256}, "resolved": {"spearman": 0.2648, "delta": -0.0056, "wm": 0.1401, "t45": 0.1277}, "verdict": "FAIL (negative both targets)"},
+  "pit_il_stints_pre": {"censored": {"spearman": 0.2787, "delta": 0.0, "wm": 0.1317, "t45": 0.1217}, "resolved": {"spearman": 0.2704, "delta": 0.0, "wm": 0.1365, "t45": 0.1098}, "verdict": "FAIL (exact no-op: il_stints_pre is a constant column for the pitcher matrix, ridge assigns zero weight; pre-debut IL data effectively absent for pitchers in this vintage)"},
+  "pit_n_sources": {"censored": {"spearman": 0.2636, "delta": -0.0151, "wm": 0.1093, "t45": 0.0564}, "resolved": {"spearman": 0.2547, "delta": -0.0157, "wm": 0.1145, "t45": 0.0413}, "verdict": "FAIL (materially negative everywhere)"}
+ },
+ "results_replacement": {
+  "hit_ops_rel_for_obp_rel": {
+   "baseline_lean": {"censored": {"blend": 0.3535, "pure": 0.3725, "wm": 0.1775, "t45": 0.0697}, "resolved": {"blend": 0.3491, "pure": 0.3663, "wm": 0.1649, "t45": 0.0563}},
+   "swap": {"censored": {"blend": 0.3536, "pure": 0.3733, "wm": 0.1758, "t45": 0.0916}, "resolved": {"blend": 0.3493, "pure": 0.3672, "wm": 0.166, "t45": 0.064}},
+   "verdict": "FAIL (pooled +0.0001/+0.0002, deep inside the 0.0023 noise floor; wm flat-to-down on censored). t45 again improves (+0.0219 cen / +0.0077 res), consistent with the additive form"
+  }
+ },
+ "verdict": "NO SHIP - all 11 variants fail the pre-registered gate. Shipped lean feature sets and data/xfv.json unchanged (byte-neutral). Third independent confirmation that the current matrix vintage is at its trainable-data ceiling for pooled ranking.",
+ "genuine_signal_recorded": "ops_rel carries FV-45 fringe-tier signal the lean set misses: t45 +0.0203/+0.0219 (censored, additive/swap) and +0.0061/+0.0077 (resolved) with pooled flat. A t45-targeted change is NOT shippable under this gate (pooled-first) and was not pre-registered as such; any future attempt must pre-register a fringe-tier gate with a pooled no-degrade condition and address the wm dip (0.1775->0.1722 additive censored) before re-testing. Do not ship on this post-hoc subgroup observation.",
+ "do_not_retry": "prod_trend, fv_trend, pos_prem, il_stints_pre, n_sources as lean additions against this data vintage (2011-2023 debut cohorts, SCORED_YEARS 2020-2023). Re-opening requires resolved 2024+ cohorts (new information), not a re-run."
+}

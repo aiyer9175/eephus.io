@@ -27,7 +27,7 @@
    "notes": "Gate 1 PASSED: WAR 0.627 vs 0.728; coverage 0.800. IN-PROGRESS FIX (2026-06-13, owner: 'Lindor's WAR falls off a cliff / future years too low'): the heads + PT model train on COMPLETED seasons, but the LIVE base-1 season is partial (~41% elapsed at a June rebuild). Feeding the raw partial season made a durable regular briefly hurt this year (Lindor: 105 PA / 0.5 WAR vs his ~700 PA / ~6 WAR norm) read as a bad FULL season -> projected as a part-timer with an out-year cliff. Fix: reliability-blend the in-progress season's PT (fa_projection.project_player) AND the ML lag features war/exposure (proj_ml.build_features) toward the player's established (prior completed) level, weighted by the unobserved fraction (1-frac); healthy regulars whose current pace matches their track record are ~unchanged (population median y1 delta 0.000), only limited/injured veterans lift (mean +0.07). LIVE-ONLY: the gates project from completed seasons (in_progress=None), so Gate-1 (war 0.627, coverage 0.800) and Gate-2 are BYTE-UNCHANGED - re-confirmed PASS. Lindor 6.7 -> 12.2 5y WAR, cliff removed. Trade-off (disclosed): a player limited by losing the job, not injury, is also lifted - the lesser error for a star-heavy surface.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 21,
+   "artifact_age_days": 22,
    "card": {
     "n": 20721,
     "window": "10 winters, forward-chained",
@@ -217,7 +217,7 @@
    "notes": "CALIBRATION v3 (2026-06-12, owner escalations x2): v1's per-player isotonic carried a degenerate $0 bottom block (every FV35-40 prospect -> $0.0M) AND priced realized targets at era $/WAR ($6.7-12.1M) while the model prices today (~$13.0M) - the apparent 0.64 raw slope was mostly dollar inflation. v3 = count-weighted binned PAVA (fit_isotonic_binned) on TODAY-PRICED realized targets: raw slope 1.02 / bias -2.9M, held-out LOYO slope 0.97 / bias -1.13M. Curve: FV40 $1.5M / 45 $6.9M / 50 $17.9M / 55 $31.9M / 60 $65.6M (hitters); elite tail extrapolates the last observed segment (documented). Surplus now reads 'expected realized value at current replacement cost' - consistent units with vet surplus in the trade machine and team fits. Fit block: data/surplus_calibration_fit.json; the committed artifact keeps the historical-dollars slice as cohort accounting.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 22
+   "artifact_age_days": 23
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -674,7 +674,7 @@
    "notes": "Holistic pass 3 (2026-07-01). Hitters: Barrel%/BBE carries it (r 0.254 vs first-MLB OPS, n 54); EV weak 0.104; HardHit/SwingMiss noise. Pitchers: SwingMiss carries it (r 0.359 vs inverted ERA); barrels/EV noise. Top-2 blend beat composite +0.053 hit / +0.048 pit pooled OOS r, just under the pre-set both-sides >=0.05 reweight rule, so composite stays. Side finding: reference approach stats (hitter BB% r 0.33, pitcher K% r 0.49) out-signal every contact component but are already priced into consensus FV / eFV features; do not double-count. UPDATE 2026-07-02 (adversarial audit): the decision instrument is now pinned to CLOSED outcome seasons (debut <= 2025); in-progress-season rows drift with every stats refresh and had made the committed numbers irreproducible. On the closed basis the rule fires reweight (blend beats composite +0.14 hit / +0.28 pit pooled OOS r, n=23/side): recorded as a QUEUED candidate (REVIEW_QUEUE.md item 12), composite unchanged; a published-metric change requires its own pre-registered gate and these ns are far below any shippable bar.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "surplus_sensitivity_diagnostic",
@@ -829,6 +829,20 @@
    "last_checked": "2026-07-05",
    "stale": false,
    "artifact_age_days": 2
+  },
+  {
+   "model_id": "xfv_leanplus",
+   "surface": "model-dev artifact (rendered nowhere) - eFV lean+1 feature search (E-LEAN1)",
+   "predicts": "n/a - gated experiment E-LEAN1: individual re-tests of every _vec feature absent from the shipped lean sets (prod_trend, fv_trend, ops_rel, pos_prem, il_stints_pre, n_sources) plus the A1 ops_rel-for-obp_rel swap; all candidates REJECTED",
+   "champion": "shipped lean feature sets _FEATURES_HIT / _FEATURES_PIT (unchanged)",
+   "baseline": "each candidate as a lean+1 addition (efv_lab_runner, shipped ridge + consensus anchor) and the A1 replacement (efv_ml_lab explicit keys), forward-chained OOS 2020-2023, both targets",
+   "metric": "pre-registered 4-condition gate: pooled OOS Spearman gain must exceed the measured identity-variant noise floor (hit 0.0023 / pit 0.0035) on BOTH censored and resolved targets; within_tier_wm and t45 no-degrade; no new per-year sign flips; marginal = fail",
+   "eval_artifact": "data/xfv_leanplus_eval.json",
+   "verdict": "deprecated",
+   "notes": "Improvement program 2026-07-05, motivated by the milb_missing precedent (bundle-rejected feature later re-validated alone, +0.023). NO candidate cleared the gate: prod_trend/fv_trend negative both sides; pos_prem/il_stints_pre within noise (pitcher il_stints_pre is a constant column, exact no-op); n_sources gains pooled (+0.005/+0.006, above noise) but degrades within_tier_wm AND t45 on both targets - a coverage/popularity proxy, the exact pattern the within-tier condition rejects; ops_rel flat pooled in both additive and replacement forms. GENUINE SIGNAL RECORDED: ops_rel improves the FV-45 fringe tier consistently (t45 +0.020/+0.022 censored across both forms) - not shippable under the pooled-first gate and not pre-registered as a fringe-tier experiment; any future attempt must pre-register a t45-targeted gate with pooled and wm no-degrade conditions. Third independent confirmation of the trainable-data ceiling; re-opening any of these candidates requires resolved 2024+ cohorts, not a re-run. Line: [[xfv_hitter]] / [[xfv_pitcher]] unchanged.",
+   "last_checked": "2026-07-05",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "riv_plus",

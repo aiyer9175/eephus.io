@@ -114,6 +114,10 @@ MODEL_GLOSSARY = {
     # E-ISO4: the final eFV bucket-calibration attempt (joint side-symmetric
     # map); rejected, closes the line, loss ledger, rendered nowhere.
     "xfv_grade_recal4": "internal",
+    # E-LEAN1 (2026-07-05): lean+1 single-feature re-tests of every _vec
+    # feature absent from the shipped lean sets, plus the A1 ops_rel swap; all
+    # rejected at the pre-registered gate, loss ledger, rendered nowhere.
+    "xfv_leanplus": "internal",
     # Follow-up Wave B1 reliever metrics (2026-07): RIV+ realized-impact index
     # and 3-year REM+ both surface on /mlbstats/ with their own glossary entries;
     # the SwStr xK skill-core candidate was rejected at its gate (loss ledger,
