@@ -231,7 +231,7 @@
    "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin WS-6 positional-stratification diagnostic measured + parked (see prospect_surplus row): per-position cells too thin above FV50 to beat the pooled+role fit.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 12
+   "artifact_age_days": 13
   },
   {
    "model_id": "wag",
@@ -245,7 +245,7 @@
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 12
+   "artifact_age_days": 13
   },
   {
    "model_id": "consensus_fv",
@@ -402,7 +402,7 @@
    "metric": "leave-one-out MAE + P10-P90 coverage (target 0.80), matched pairs only",
    "eval_artifact": "data/college_translation_eval.json",
    "verdict": "provisional",
-   "notes": "Built college_translation.py 2026-06-20. ONLY K%/BB% live on both the college tracked side and the Single-A conventional side (the ~182 matched pairs; 77 hitter / 61 pitcher qualify), so those are the matched-pair translation. Hitter OPS (from college xwOBA) ships EXPERIMENTAL: r2 ~0.01, essentially the level mean with a wide band. Pitcher BB% has no signal (r2 ~0); Stuff+ does NOT predict Single-A outcomes (r ~0 in the matched data) so it stays a descriptive CS+ index, never an outcome forecast. LOO P10-P90 coverage 0.79-0.83 across stats - the bands are honest. NOT adjusted for strength of schedule or park (no conference/park table held; flagged in the UI). Pitcher K%/BB% derived from K/9, BB/9 via BF_PER_9=38.",
+   "notes": "Built college_translation.py 2026-06-20. ONLY K%/BB% live on both the college tracked side and the Single-A conventional side (the ~182 matched pairs; 77 hitter / 61 pitcher qualify), so those are the matched-pair translation. Hitter OPS (from college xwOBA) ships EXPERIMENTAL: r2 ~0.01, essentially the level mean with a wide band. Pitcher BB% has no signal (r2 ~0); Stuff+ does NOT predict Single-A outcomes (r ~0 in the matched data) so it stays a descriptive CS+ index, never an outcome forecast. LOO P10-P90 coverage 0.79-0.83 across stats - the bands are honest. NOT adjusted for strength of schedule or park (no conference/park table held; flagged in the UI). Pitcher K%/BB% derived from K/9, BB/9 via BF_PER_9=38. H-6 (2026-07-05): the Projected Single-A quality table now data-drives an honesty gate off the committed backtest r2 - components below 0.05 (OPS r2 ~0.006) are greyed and labeled 'not predictive'; 0.05-0.10 'low signal' (BB% ~0.062); K% (r2 ~0.30) leads. No model change; display honesty only.",
    "last_checked": "2026-07-05",
    "stale": false,
    "artifact_age_days": 0
@@ -895,7 +895,7 @@
    "metric": "forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
    "eval_artifact": "data/rem_plus_multiyear_eval.json",
    "verdict": "provisional",
-   "notes": "SHIPPED 2026-07 (Wave B1, X-R2) as a companion display column to single-season REM+ (same pure-skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020): 3-year REM+ forward-predicts next-year RA9 at rho 0.2366 vs single-season REM+ 0.2316 on the SAME 668 arms; the point estimate favors 3yr but the same-set bootstrap gap CI includes 0 (lo95 -0.043), so per the pre-registered rule it ships PROVISIONAL with the r published. Its value proposition is stability, not sharper prediction: single reliever seasons are noisy (split-half REM+ only ~0.34 at 100-150 BF), so a 3-year IP-weighted window is a steadier talent estimate that forward-predicts at least as well. Joined into bullpen_leaderboards.json by MLBAM from the proposed_values block (bullpen_export._join_rem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 40+ IP for an established tag. Harness tools/rem_plus_lab.py.",
+   "notes": "SHIPPED 2026-07 (Wave B1, X-R2) as a companion display column to single-season REM+ (same pure-skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020): 3-year REM+ forward-predicts next-year RA9 at rho 0.2366 vs single-season REM+ 0.2316 on the SAME 668 arms; the point estimate favors 3yr but the same-set bootstrap gap CI includes 0 (lo95 -0.043), so per the pre-registered rule it ships PROVISIONAL with the r published. Its value proposition is stability, not sharper prediction: single reliever seasons are noisy (split-half REM+ only ~0.34 at 100-150 BF), so a 3-year IP-weighted window is a steadier talent estimate that forward-predicts at least as well. Joined into bullpen_leaderboards.json by MLBAM from the proposed_values block (bullpen_export._join_rem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 40+ IP for an established tag. Harness tools/rem_plus_lab.py. H-5 (2026-07-05): relabeled as a STEADINESS companion, not a more predictive column. The multi-year eval gate FAILED (3yr forward Spearman does not separably beat the 1yr number; gap 95% interval runs negative), so the glossary + column now frame it as a stability read, not a stronger forecast. Stays provisional.",
    "last_checked": "2026-07-05",
    "stale": false,
    "artifact_age_days": 0
@@ -949,7 +949,7 @@
    "metric": "forward-chained Spearman Y->Y+1 RA9, 3yr vs 1yr on the same set (seeded bootstrap CI on the gap)",
    "eval_artifact": "data/sem_plus_multiyear_eval.json",
    "verdict": "provisional",
-   "notes": "SHIPPED 2026-07 (Wave B2, X-S2) as a companion display column to single-season SEM+ (same skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020, 457 arms): 3-year SEM+ forward-predicts next-year RA9 at rho 0.4141 vs single-season SEM+ 0.3922 on the same set; the point estimate favors 3yr (+0.022, a larger gain than the reliever 3yr case) but the same-set bootstrap gap CI includes 0 (lo95 -0.0257), so per the pre-registered rule it ships PROVISIONAL with the r published. Value is a steadier talent estimate. Joined into starter_leaderboards.json by MLBAM from proposed_values (starter_export._join_sem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 120+ IP for an established tag. Harness tools/sem_plus_lab.py.",
+   "notes": "SHIPPED 2026-07 (Wave B2, X-S2) as a companion display column to single-season SEM+ (same skill scale, longer window). Forward-chained OOS (2018-2025 ex-2020, 457 arms): 3-year SEM+ forward-predicts next-year RA9 at rho 0.4141 vs single-season SEM+ 0.3922 on the same set; the point estimate favors 3yr (+0.022, a larger gain than the reliever 3yr case) but the same-set bootstrap gap CI includes 0 (lo95 -0.0257), so per the pre-registered rule it ships PROVISIONAL with the r published. Value is a steadier talent estimate. Joined into starter_leaderboards.json by MLBAM from proposed_values (starter_export._join_sem_plus_3yr), like gmli_3yr. Arms need 2+ seasons and 120+ IP for an established tag. Harness tools/sem_plus_lab.py. H-5 (2026-07-05): relabeled as a STEADINESS companion, not a more predictive column. The multi-year eval gate FAILED (3yr forward Spearman does not separably beat the 1yr number; gap 95% interval runs negative), so the glossary + column now frame it as a stability read, not a stronger forecast. Stays provisional.",
    "last_checked": "2026-07-05",
    "stale": false,
    "artifact_age_days": 0

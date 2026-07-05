@@ -5083,8 +5083,8 @@
     "rem plus 3yr"
    ],
    "priority": 21,
-   "definition": "REM+ over the trailing three seasons, weighted by innings, shown with the pitcher's pool percentile. The same pure-skill run-prevention scale as REM+ (100 = average reliever), just read over more innings so it is steadier than a single season, which for relievers is genuinely noisy.",
-   "methodology": "Each of the trailing three seasons' REM+ is averaged with innings-pitched weights. Single reliever seasons are volatile (within-season split-half REM+ correlation only about 0.34 at 100 to 150 batters faced), so a three-year window is a more stable talent read. In the forward test it predicts next-year run prevention about as well as, and no worse than, a single season on the same arms; its value is stability, not a claim of sharper prediction, so it ships as a companion column to the single-season REM+ rather than a replacement.\n\nArms with fewer than 2 seasons or 40 innings in the window carry a provisional mark. Like REM+, it excludes leverage from the scale. Accountability artifact: data/rem_plus_multiyear_eval.json.",
+   "definition": "REM+ over the trailing three seasons, innings-weighted, shown with the pitcher's pool percentile. Same pure-skill run-prevention scale as REM+ (100 = average reliever). Read it as a steadier version of the single-season number, not a stronger forecast.",
+   "methodology": "Each of the trailing three seasons' REM+ is averaged with innings-pitched weights. Single reliever seasons are volatile (within-season split-half REM+ correlation only about 0.34 at 100 to 150 batters faced), so a three-year window is a more stable talent read. It did NOT beat the single-season number in the forward test: three-year forward Spearman 0.237 versus 0.232 for one year, and the difference is not statistically separable (95% interval on the gap runs negative). So it ships as a steadiness companion, not a more predictive column.",
    "seeAlso": [
     "rem_plus",
     "riv_plus",
@@ -5200,8 +5200,8 @@
     "sem plus 3yr"
    ],
    "priority": 21,
-   "definition": "SEM+ over the trailing three seasons, weighted by innings, shown with the pitcher's pool percentile. The same starter run-prevention scale as SEM+ (100 = average qualified starter), read over more innings so it is steadier than a single season.",
-   "methodology": "Each of the trailing three seasons' SEM+ is averaged with innings-pitched weights. In the forward test the three-year read predicts next-year run prevention a little better than a single season on the same starters (0.41 versus 0.39), though the same-set gap is not statistically separable, so it ships as a companion column with the r published rather than a replacement. Its value is a steadier talent estimate. Starters with fewer than 2 seasons or 120 innings in the window carry a provisional mark. Accountability artifact: data/sem_plus_multiyear_eval.json.",
+   "definition": "SEM+ over the trailing three seasons, innings-weighted, shown with the pitcher's pool percentile. Same starter run-prevention scale as SEM+ (100 = average qualified starter). Read it as a steadier version of the single-season number, not a stronger forecast.",
+   "methodology": "Each of the trailing three seasons' SEM+ is averaged with innings-pitched weights, a steadier read than one starter season. It did NOT reliably beat the single-season number in the forward test: three-year forward Spearman 0.414 versus 0.392 for one year on the same starters, but the gap is not statistically separable (95% interval runs negative). So it ships as a steadiness companion with the numbers published, not a more predictive replacement.",
    "seeAlso": [
     "sem_plus",
     "rem_plus_3yr",

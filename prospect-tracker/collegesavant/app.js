@@ -773,10 +773,16 @@ function renderProjections() {
       const f = E[k];
       if (!f) return "";
       const cov = f.coverage != null ? Math.round(f.coverage * 100) + "%" : " - ";
-      const flag = k === "hit_ops" ? ` <span class="trans-flag">experimental</span>`
-                 : (f.r2 != null && f.r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
-      return `<tr><td class="tt-team">${label}${flag}</td>
-        <td class="tt-col">${f.r2 != null ? f.r2.toFixed(2) : " - "}</td>
+      // Data-driven honesty gate off the committed backtest r2: below 0.05 a
+      // component barely beats predicting the Single-A mean, so grey the row and
+      // label it non-predictive; 0.05 to 0.10 is low signal; K% (r2 ~0.30) leads.
+      const r2 = f.r2;
+      const notPredictive = r2 != null && r2 < 0.05;
+      const flag = notPredictive ? ` <span class="trans-flag">not predictive</span>`
+                 : (r2 != null && r2 < 0.10) ? ` <span class="trans-flag">low signal</span>` : "";
+      const rowStyle = notPredictive ? ` style="opacity:0.5"` : "";
+      return `<tr${rowStyle}><td class="tt-team">${label}${flag}</td>
+        <td class="tt-col">${r2 != null ? r2.toFixed(2) : " - "}</td>
         <td class="tt-col">${f.band_sd != null ? "±" + f.band_sd : " - "}</td>
         <td class="tt-col">${f.mae ?? " - "}</td>
         <td class="tt-col">${cov}</td><td class="tt-col">${f.n ?? " - "}</td></tr>`;
