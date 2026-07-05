@@ -5823,7 +5823,9 @@
    ],
    "priority": 50,
    "definition": "Expected slugging: the slugging percentage a hitter's batted-ball contact deserved, based on how the ball was struck, stripping out defense and park luck.",
-   "methodology": "Baseball Savant estimates SLG from exit velocity and launch angle using the run values of each batted-ball outcome. It answers what a hitter's contact was worth rather than what fell in for extra bases. Shown on MLB player cards as a percentile against the qualified-hitter pool for the season."
+   "methodology": "Baseball Savant estimates SLG from exit velocity and launch angle using the run values of each batted-ball outcome. It answers what a hitter's contact was worth rather than what fell in for extra bases. Shown on MLB player cards as a percentile against the qualified-hitter pool for the season.",
+   "shelf": "industry",
+   "origin": "Baseball Savant (MLB Statcast), Tom Tango and the Statcast team; our card value is a percentile reconstruction from the tracking inputs available."
   },
   {
    "id": "xiso",
@@ -5839,7 +5841,9 @@
    ],
    "priority": 50,
    "definition": "Expected isolated power: deserved extra-base power, computed as xSLG minus xBA, so it isolates the power a hitter's contact earned from the singles.",
-   "methodology": "xISO = xSLG - xBA, both from Baseball Savant's contact-quality model (exit velocity + launch angle). It is the deserved-power analog of ISO (SLG - AVG), reading through defense and park luck. Shown on MLB player cards as a percentile against the qualified-hitter pool; pairs with the Luck tile (actual wOBA minus xwOBA)."
+   "methodology": "xISO = xSLG - xBA, both from Baseball Savant's contact-quality model (exit velocity + launch angle). It is the deserved-power analog of ISO (SLG - AVG), reading through defense and park luck. Shown on MLB player cards as a percentile against the qualified-hitter pool; pairs with the Luck tile (actual wOBA minus xwOBA).",
+   "shelf": "industry",
+   "origin": "Baseball Savant (MLB Statcast), Tom Tango and the Statcast team; our card value is a percentile reconstruction from the tracking inputs available."
   }
  ]
 }
