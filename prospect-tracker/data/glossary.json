@@ -5808,6 +5808,38 @@
     "fv",
     "star_odds"
    ]
+  },
+  {
+   "id": "xslg",
+   "term": "xSLG",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "xSLG",
+    "Expected SLG",
+    "deserved SLG"
+   ],
+   "priority": 50,
+   "definition": "Expected slugging: the slugging percentage a hitter's batted-ball contact deserved, based on how the ball was struck, stripping out defense and park luck.",
+   "methodology": "Baseball Savant estimates SLG from exit velocity and launch angle using the run values of each batted-ball outcome. It answers what a hitter's contact was worth rather than what fell in for extra bases. Shown on MLB player cards as a percentile against the qualified-hitter pool for the season."
+  },
+  {
+   "id": "xiso",
+   "term": "xISO",
+   "category": "statcast",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "xISO",
+    "Expected ISO",
+    "deserved isolated power"
+   ],
+   "priority": 50,
+   "definition": "Expected isolated power: deserved extra-base power, computed as xSLG minus xBA, so it isolates the power a hitter's contact earned from the singles.",
+   "methodology": "xISO = xSLG - xBA, both from Baseball Savant's contact-quality model (exit velocity + launch angle). It is the deserved-power analog of ISO (SLG - AVG), reading through defense and park luck. Shown on MLB player cards as a percentile against the qualified-hitter pool; pairs with the Luck tile (actual wOBA minus xwOBA)."
   }
  ]
 }
