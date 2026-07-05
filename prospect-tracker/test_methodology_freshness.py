@@ -122,6 +122,10 @@ MODEL_GLOSSARY = {
     # milb_missing college draftees; STOPPED at the trainability gate (college
     # TrackMan coverage post-dates the resolved cohort), loss ledger, nowhere.
     "xfv_college_backfill": "internal",
+    # H-4 (2026-07-05): the shipped eFV distribution's reliability curves, split
+    # out of the deprecated isotonic loss ledger into a live artifact that the
+    # PROSPX eFV reliability diagram renders.
+    "xfv_reliability": ["xfv"],
     # Follow-up Wave B1 reliever metrics (2026-07): RIV+ realized-impact index
     # and 3-year REM+ both surface on /mlbstats/ with their own glossary entries;
     # the SwStr xK skill-core candidate was rejected at its gate (loss ledger,

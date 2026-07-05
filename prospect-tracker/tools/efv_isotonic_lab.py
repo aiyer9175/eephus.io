@@ -75,6 +75,7 @@ SPEARMAN_TOL = 0.002          # pre-registered rank-drop tolerance
 LL_CLIP = 1e-6                # log-loss probability clip
 
 OUT_PATH = ROOT / "data" / "xfv_isotonic_eval.json"
+RELIABILITY_PATH = ROOT / "data" / "xfv_reliability.json"   # live: shipped-distribution curves only
 
 
 def realized_bucket(target_war_6yr: float) -> int:
@@ -456,6 +457,24 @@ def run(persist: bool = True) -> dict:
     if persist:
         OUT_PATH.write_text(json.dumps(out, indent=1), encoding="utf-8")
         print(f"wrote {OUT_PATH}")
+        # Live reliability artifact: the SHIPPED distribution's calibration curves
+        # only (results.reliability_curves_pooled.before). The isotonic "after"
+        # variant failed its gate and is deprecated, so the PROSPX reliability
+        # diagram reads this dedicated live file instead of the loss-ledger eval,
+        # keeping xfv_isotonic_eval.json genuinely rendered nowhere.
+        curves = (out.get("results") or {}).get("reliability_curves_pooled") or {}
+        before = curves.get("before")
+        if before is not None:
+            rel_out = {
+                "generated_at": out.get("generated_at"),
+                "note": ("Reliability curves for the SHIPPED eFV 5-bucket outcome "
+                         "distribution (forward-chained out-of-fold, the 'before' baseline). "
+                         "The isotonic recalibration failed its pre-registered gate and did "
+                         "not ship; see data/xfv_isotonic_eval.json for the loss ledger."),
+                "reliability_curves_pooled": {"before": before},
+            }
+            RELIABILITY_PATH.write_text(json.dumps(rel_out, indent=1), encoding="utf-8")
+            print(f"wrote {RELIABILITY_PATH}")
     return out
 
 

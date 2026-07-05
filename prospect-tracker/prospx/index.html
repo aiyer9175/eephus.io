@@ -29637,7 +29637,7 @@ function ensureEfvTrack() {
     .then(r => (r.ok ? r.json() : null)).catch(() => null);
   Promise.all([
     grab("/data/xfv_eval.json"), grab("/data/xfv_eval_pitcher.json"),
-    grab("/data/source_backtest.json"), grab("/data/xfv_isotonic_eval.json"),
+    grab("/data/source_backtest.json"), grab("/data/xfv_reliability.json"),
   ]).then(([hit, pit, bt, iso]) => {
     _EFV_TRACK = { hit: hit, pit: pit, bt: bt, iso: iso };
     try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
@@ -29736,15 +29736,16 @@ function _efvTrackReceipts(bt) {
 }
 // C2 - reliability diagram for the CURRENT (shipped, uncalibrated) 5-bucket eFV
 // outcome distribution: predicted bucket probability (x) vs realized frequency (y),
-// from the committed forward-chained out-of-fold curves in xfv_isotonic_eval.json
-// (results.reliability_curves_pooled.before = the shipped distribution; the "after"
-// isotonic variant failed its pre-registered gate and did NOT ship). Inline SVG in
-// the site's chart idiom; a point on the diagonal is perfectly calibrated.
+// from the SHIPPED distribution's forward-chained out-of-fold curves in the live
+// data/xfv_reliability.json (reliability_curves_pooled.before). The isotonic
+// recalibration failed its gate and did NOT ship (loss ledger in
+// xfv_isotonic_eval.json). Inline SVG in the site's chart idiom; a point on the
+// diagonal is perfectly calibrated.
 function efvReliabilityDiagram(iso) {
-  const cur = iso && iso.results && iso.results.reliability_curves_pooled
-              && iso.results.reliability_curves_pooled.before;
+  const cur = iso && iso.reliability_curves_pooled
+              && iso.reliability_curves_pooled.before;
   if (!cur) return "";
-  const nPool = (iso.results.pooled && iso.results.pooled.n != null) ? iso.results.pooled.n : null;
+  const nPool = (iso.pooled_n != null) ? iso.pooled_n : null;
   const W = 260, H = 218, L = 36, B = 32, T = 10, R = 12;
   const X = p => (L + Number(p) * (W - L - R));
   const Y = f => (H - B - Number(f) * (H - T - B));
