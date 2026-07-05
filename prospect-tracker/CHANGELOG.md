@@ -10,6 +10,32 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-04 (Clemens 2026 recalibration, Tier 2: upgrade-option + grade normalization)
+
+Two analytical layers on top of the Tier 1 valuation sets. Both ship as reports +
+eval artifacts with UI deferred; neither changes any live surface.
+
+- Upgrade-option layer (upgrade_option.py): a prospect's grade modeled as a
+  role-split absorbing Markov chain (grades 35-70 plus graduated and out, annual
+  step), estimated from our dated grade history (prospects.db snapshots, fangraphs +
+  mlb_pipeline pooled), Laplace-smoothed; graduated = debuts.json, out =
+  inactive.json, still-active last year censored. Payoff = the clemens_2026 table
+  value of the grade a player graduates from. total (full chain) vs intrinsic
+  (frozen-grade) gives option value and OPT% = option/total. A 45 FV hitter is
+  option-dominated (OPT% about 60%); high grades run low or negative OPT% (thin data
+  plus net-downgrade risk at the top). Config-prior cross-check (labelled 20% upgrade
+  anchor). reports/upgrade_option.md, data/upgrade_option_eval.json; registry
+  provisional.
+- Cross-source grade normalization (grade_normalization.py): quantile-map each
+  source's grade distribution onto FanGraphs FV on the OVERLAP (players graded by
+  both), per role per cycle, so coverage is controlled for and only a true scale
+  bias remains. Raw and normalized grades side by side; a normalized consensus is
+  the mean of the FanGraphs-scale grades. Reference maps to itself (identity),
+  recomputation deterministic; the 2026 cycle flags mlb_pipeline and espn as grading
+  materially higher than FanGraphs on shared players. Analytical layer only, the live
+  consensus is unchanged. reports/grade_normalization.md,
+  data/grade_normalization_eval.json; registry provisional.
+
 ## 2026-07-04 (Clemens 2026 prospect valuation recalibration, Tier 1)
 
 Recalibrated the surplus engine to the new FanGraphs / Ben Clemens (2026)

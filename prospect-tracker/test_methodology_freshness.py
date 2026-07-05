@@ -28,6 +28,8 @@ MODEL_GLOSSARY = {
     "surplus_downside_risk": ["risk_adjusted_surplus"],
     "prospect_greeks": ["prospect_greeks"],
     "star_odds": ["star_odds"],
+    "upgrade_option": "internal",   # Tier 2 grade-option layer; report + eval only, UI deferred
+    "grade_normalization": "internal",  # Tier 2 cross-source scale map; analytical layer, live consensus unchanged
     "fa_projection_marcel": ["fa_projection_engine"],
     "fa_war_paths_decay": ["fa_projection_engine"],
     "proj_def_prior": "internal",   # a hit feature of fa_war_paths_decay; gate-artifact row

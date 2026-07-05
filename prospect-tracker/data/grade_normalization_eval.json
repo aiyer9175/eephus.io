@@ -1,0 +1,199 @@
+{
+ "generated_at": "2026-07-04",
+ "experiment": "cross-source-grade-normalization",
+ "model": "grade_normalization (paired quantile map of each source onto FanGraphs FV)",
+ "cycle": 2026,
+ "method": {
+  "mapping": "quantile-map each source's grade distribution onto FanGraphs on the OVERLAP (players graded by both), per role per cycle, so coverage is controlled for and only a true scale bias remains.",
+  "reference": "fangraphs",
+  "consensus": "normalized consensus = mean of the FanGraphs-scale normalized per-source grades (>= 2 sources); does NOT change the live consensus (analytical layer, default unchanged).",
+  "no_equivalence": "no assumed scale equivalences; mappings are data-derived; thin cells pool the source's overlap across years (flagged)."
+ },
+ "drift": [
+  {
+   "source": "baseballamerica_statcast_by_age",
+   "role": "hitter",
+   "year": 2026,
+   "n": 29,
+   "median_raw": 40.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "espn",
+   "role": "hitter",
+   "year": 2026,
+   "n": 61,
+   "median_raw": 55.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": -5.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "fangraphs",
+   "role": "hitter",
+   "year": 2026,
+   "n": 665,
+   "median_raw": 40.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "just_baseball",
+   "role": "hitter",
+   "year": 2026,
+   "n": 83,
+   "median_raw": 50.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "mlb_pipeline",
+   "role": "hitter",
+   "year": 2026,
+   "n": 411,
+   "median_raw": 45.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": -5.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "mlb_pipeline_international",
+   "role": "hitter",
+   "year": 2026,
+   "n": 37,
+   "median_raw": 50.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": -10.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "performance_ingest",
+   "role": "hitter",
+   "year": 2026,
+   "n": 2,
+   "median_raw": 35.0,
+   "median_fg_overlap": 35.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "tjstats",
+   "role": "hitter",
+   "year": 2026,
+   "n": 82,
+   "median_raw": 50.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "espn",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 42,
+   "median_raw": 50.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "fangraphs",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 720,
+   "median_raw": 40.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "just_baseball",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 42,
+   "median_raw": 50.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  },
+  {
+   "source": "mlb_pipeline",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 347,
+   "median_raw": 45.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": -5.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "mlb_pipeline_international",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 1,
+   "median_raw": 45.0,
+   "median_fg_overlap": 35.0,
+   "median_shift": -10.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "performance_ingest",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 6,
+   "median_raw": 35.0,
+   "median_fg_overlap": 40.0,
+   "median_shift": 5.0,
+   "pooled": false,
+   "material": true
+  },
+  {
+   "source": "tjstats",
+   "role": "pitcher",
+   "year": 2026,
+   "n": 54,
+   "median_raw": 50.0,
+   "median_fg_overlap": 50.0,
+   "median_shift": 0.0,
+   "pooled": false,
+   "material": false
+  }
+ ],
+ "consensus_diff": {
+  "n_players": 824,
+  "mean": -0.219,
+  "median": 0.0,
+  "p10": -2.5,
+  "p90": 0.0,
+  "max_abs": 7.5
+ },
+ "gate": {
+  "reproducible": true,
+  "reference_identity": true,
+  "material_drift_sources": [
+   "espn",
+   "mlb_pipeline",
+   "mlb_pipeline_international",
+   "performance_ingest"
+  ],
+  "pass": true,
+  "verdict": "provisional"
+ }
+}

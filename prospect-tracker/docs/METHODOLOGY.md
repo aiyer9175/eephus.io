@@ -179,9 +179,56 @@ the production default.
 
 ## 8. Draft pick surplus
 
-TODO (Phase 6): implied pick surplus = the `clemens_2026` tier value for the drafted
-player's FV and role minus the expected or actual signing bonus, using real ingested
-bonus and slot data. To be surfaced in the Draft War Room.
+Implied pick surplus = the `clemens_2026` tier value for the drafted player's FV and
+role minus the pick's cost, using real ingested bonus and slot data. The cost is the
+actual signing bonus when known, otherwise the expected slot value; unsigned and
+over-slot picks show the input, not a guess. It is computed in the static board
+(`draft_export`) and the live poller, and surfaced as a labeled Draft War Room
+column. The War Room chip is always discoverable in the draft section (it lands on
+the "opens on draft night" state pre-draft), and a homepage banner links to it while
+the live feed is active.
+
+---
+
+# Part 3 - Tier 2 (post-beta roadmap)
+
+## 9. Upgrade-option layer (`upgrade_option.py`)
+
+A prospect's grade is a call option on development. We model the grade as a
+role-split absorbing Markov chain (grades 35-70 plus graduated and out, annual step),
+estimated from our own dated grade history (`prospects.db` snapshots, fangraphs +
+mlb_pipeline pooled to one grade per player per year), Laplace-smoothed; graduated is
+a debut (`data/debuts.json`), out is inactive (`data/inactive.json`), and a
+still-active player's last year is censored (no fabricated transitions). The payoff
+is the `clemens_2026` table value of the grade a player graduates from.
+
+- total = expected payoff under the full chain (grade can move)
+- intrinsic = payoff under frozen-grade transitions (stay / graduate / out at the
+  current grade)
+- option = total - intrinsic; OPT% = option / total
+
+Low grades are long-dated out-of-the-money calls on development: a 45 FV hitter's
+OPT% is about 60 percent. High grades run low or negative OPT% because they are thin
+in our data (60 FV about 221 hitter observations) and grade mobility at the top is
+net-downgrade risk the frozen-at-grade intrinsic ignores. A config-prior mode
+(labelled literature anchor: a 45 FV position player upgrades at roughly 20 percent)
+is available as a cross-check. Report: `reports/upgrade_option.md`; eval:
+`data/upgrade_option_eval.json`. UI deferred.
+
+## 10. Cross-source grade normalization (`grade_normalization.py`)
+
+Each source's grade distribution is quantile-mapped onto FanGraphs FV on the OVERLAP
+(players graded by both source and FanGraphs), per role per cycle -- the same
+distribution-matching the FanGraphs methodology used for old Baseball America
+ordinals. Mapping on the shared players separates a genuine scale bias from a
+coverage difference, so a top-only outlet is not called hot for skipping the low
+tiers. No scale equivalences are assumed; thin cells pool the source's overlap across
+years (flagged). Raw and normalized grades sit side by side; a normalized consensus
+is the mean of the FanGraphs-scale normalized per-source grades. The reference maps
+to itself (identity) and recomputation is deterministic. This is an analytical layer:
+the live consensus is NOT changed. The 2026 cycle flags mlb_pipeline and espn as
+grading materially higher than FanGraphs on shared players. Report:
+`reports/grade_normalization.md`; eval: `data/grade_normalization_eval.json`.
 
 ## Open items
 
@@ -190,4 +237,8 @@ bonus and slot data. To be surfaced in the Draft War Room.
   forced.
 - The production default stays `prospx_current` until the diff report is reviewed and
   the owner approves flipping to `clemens_2026`.
-- TODO: top-org magnitude reconciliation and any Board-aligned universe comparison.
+- Top-org magnitude reconciliation and any Board-aligned universe comparison remain a
+  TODO for the validation report.
+- Tier 2 (upgrade-option layer, grade normalization) ships as reports + eval
+  artifacts with UI deferred; surfacing OPT% and adopting the normalized consensus
+  are future decisions.

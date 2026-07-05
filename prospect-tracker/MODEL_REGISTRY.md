@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-03**. `validate()` at generation time: **clean**.
 
-**63 models.** Verdicts: validated: 18, provisional: 31, unvalidated: 4, deprecated: 10.
+**65 models.** Verdicts: validated: 18, provisional: 33, unvalidated: 4, deprecated: 10.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -73,6 +73,8 @@ stamped as of **2026-07-03**. `validate()` at generation time: **clean**.
 | `draft_war_room` | PROSPX MLB Draft - War Room (live, draft night) | n/a - a live board that prices each pick against our board and the historical pick-value curve | reach/steal = actual pick minus our board rank; slot surplus from the realize... | n/a - composes the validated draft_slot_curve + prospect surplus + consensus... | n/a - a live display; the pricing inputs are separately gated (draft_slot_cur... | **provisional** | - | - | no |
 | `prospect_greeks` | PROSPX prospect detail (Surplus value card) | n/a - an option-on-future-WAR view of a prospect's value, derived from the committed value framework | Delta (surplus per one-grade FV move), Vega (surplus swing from scouting disa... | n/a - a re-expression of the validated value_framework surplus curve + eFV di... | n/a - descriptive; the underlying surplus curve is gated by prospect_surplus | **provisional** | - | - | no |
 | `star_odds` | PROSPX prospect board + prospect detail card | P(>=2 team-control seasons of >=4 WAR) -- odds of becoming a star | FanGraphs 2026 published tier star odds (table mode, config/valuation_sets/cl... | engine mixture Poisson-binomial per-player odds | max abs tier deviation (model vs published), per role | **provisional** | `data/star_odds_eval.json` | 0 | no |
+| `upgrade_option` | Internal report (reports/upgrade_option.md); UI deferred | grade-transition option value: OPT% = option / total (the share of a grade's value that comes from the chance of upgrading befo... | absorbing-Markov option valuation over our dated grade history (clemens_2026... | intrinsic value under frozen-grade transitions | OPT% by grade; acceptance 45 FV hitter OPT% > 0.50 and 60 FV OPT% well below it | **provisional** | `data/upgrade_option_eval.json` | 0 | no |
+| `grade_normalization` | Internal report (reports/grade_normalization.md); analyti... | cross-source scale bias: each source's grade distribution mapped onto FanGraphs FV, and the normalized consensus vs the raw con... | paired (same-player overlap) quantile map of each source onto FanGraphs FV, p... | raw per-source consensus (no scale normalization) | median mapping shift per source (material at >= 2 FV); consensus before/after... | **provisional** | `data/grade_normalization_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

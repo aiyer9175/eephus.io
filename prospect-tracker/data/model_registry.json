@@ -990,6 +990,34 @@
    "last_checked": "2026-07-04",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "upgrade_option",
+   "surface": "Internal report (reports/upgrade_option.md); UI deferred",
+   "predicts": "grade-transition option value: OPT% = option / total (the share of a grade's value that comes from the chance of upgrading before graduating)",
+   "champion": "absorbing-Markov option valuation over our dated grade history (clemens_2026 table payoff)",
+   "baseline": "intrinsic value under frozen-grade transitions",
+   "metric": "OPT% by grade; acceptance 45 FV hitter OPT% > 0.50 and 60 FV OPT% well below it",
+   "eval_artifact": "data/upgrade_option_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04 (Tier 2). Grade modeled as a role-split absorbing Markov chain (grades 35-70 plus graduated and out, annual step), estimated from prospects.db snapshots (fangraphs + mlb_pipeline pooled to one grade per player per year), Laplace-smoothed; graduated = debuts.json, out = inactive.json, and a still-active player's last year is censored (no fabricated transitions). Payoff = the clemens_2026 table value of the grade a player graduates from. Low grades are option-dominated (45 FV hitter OPT% about 60%, thick data); high grades run low or negative OPT% because they are thin (60 FV about 221 hitter obs) and grade mobility at the top is net-downgrade risk the frozen intrinsic ignores. UI deferred; report + eval only.",
+   "last_checked": "2026-07-04",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "grade_normalization",
+   "surface": "Internal report (reports/grade_normalization.md); analytical layer, live consensus unchanged",
+   "predicts": "cross-source scale bias: each source's grade distribution mapped onto FanGraphs FV, and the normalized consensus vs the raw consensus",
+   "champion": "paired (same-player overlap) quantile map of each source onto FanGraphs FV, per role per cycle",
+   "baseline": "raw per-source consensus (no scale normalization)",
+   "metric": "median mapping shift per source (material at >= 2 FV); consensus before/after diff; reproducibility + reference-identity gate",
+   "eval_artifact": "data/grade_normalization_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-04 (Tier 2). Quantile-maps each source's grade distribution onto FanGraphs FV on the OVERLAP (players graded by both), per role per cycle, so coverage is controlled for and only a true scale bias remains (a top-only outlet is not called hot for skipping the low tiers). No scale equivalences are assumed; thin cells pool the source's overlap across years (flagged). The reference maps to itself (identity) and recomputation is deterministic. Analytical layer only: the live consensus is NOT changed; the normalized consensus and the drift tables are reproducible and diff-able. 2026 cycle flags mlb_pipeline and espn as grading materially higher than FanGraphs on shared players.",
+   "last_checked": "2026-07-04",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

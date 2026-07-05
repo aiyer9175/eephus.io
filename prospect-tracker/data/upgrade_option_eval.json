@@ -1,0 +1,201 @@
+{
+ "generated_at": "2026-07-04",
+ "experiment": "upgrade-option-layer",
+ "model": "upgrade_option (grade-transition absorbing Markov; OPT% = option/total)",
+ "seed": null,
+ "method": {
+  "states": "grades [35, 40, 45, 50, 55, 60, 65, 70] + graduated + out; annual step",
+  "estimation": "prospects.db snapshots (fangraphs + mlb_pipeline pooled to one grade per player per year), Laplace-smoothed; graduated = debuts.json debut year, out = inactive.json; last year of a still-active player is censored (no fabricated transitions).",
+  "payoff": "clemens_2026 TABLE value of the grade a player graduates FROM.",
+  "total": "expected payoff under the full chain; intrinsic = frozen-grade chain (stay/graduate/out at the current grade); option = total - intrinsic; OPT% = option/total.",
+  "caveat": "High grades are thin (60 FV ~221 hitter obs, 70 ~30) and their graduation timing is partly censored, so their OPT% runs low or negative: grade mobility at the top is net-downgrade risk, which the frozen-at-grade intrinsic ignores. Low grades, where the data is thick, show the expected large positive option value."
+ },
+ "roles": {
+  "hitter": {
+   "role": "hitter",
+   "mode": "data",
+   "set_id": "clemens_2026",
+   "grades": {
+    "35": {
+     "total_musd": 3.95,
+     "intrinsic_musd": 0.31,
+     "option_musd": 3.64,
+     "opt_pct": 0.9213,
+     "n_obs": 940,
+     "p_upgrade_annual": 0.3317,
+     "p_graduate_annual": 0.0577,
+     "p_out_annual": 0.3138
+    },
+    "40": {
+     "total_musd": 6.26,
+     "intrinsic_musd": 1.56,
+     "option_musd": 4.69,
+     "opt_pct": 0.75,
+     "n_obs": 2528,
+     "p_upgrade_annual": 0.1713,
+     "p_graduate_annual": 0.076,
+     "p_out_annual": 0.1913
+    },
+    "45": {
+     "total_musd": 11.44,
+     "intrinsic_musd": 4.58,
+     "option_musd": 6.86,
+     "opt_pct": 0.5998,
+     "n_obs": 2252,
+     "p_upgrade_annual": 0.1513,
+     "p_graduate_annual": 0.0804,
+     "p_out_annual": 0.1743
+    },
+    "50": {
+     "total_musd": 24.5,
+     "intrinsic_musd": 26.18,
+     "option_musd": -1.68,
+     "opt_pct": -0.0686,
+     "n_obs": 1031,
+     "p_upgrade_annual": 0.1959,
+     "p_graduate_annual": 0.096,
+     "p_out_annual": 0.069
+    },
+    "55": {
+     "total_musd": 41.83,
+     "intrinsic_musd": 48.21,
+     "option_musd": -6.37,
+     "opt_pct": -0.1523,
+     "n_obs": 458,
+     "p_upgrade_annual": 0.1479,
+     "p_graduate_annual": 0.1609,
+     "p_out_annual": 0.0227
+    },
+    "60": {
+     "total_musd": 60.13,
+     "intrinsic_musd": 79.07,
+     "option_musd": -18.95,
+     "opt_pct": -0.3151,
+     "n_obs": 221,
+     "p_upgrade_annual": 0.1504,
+     "p_graduate_annual": 0.1792,
+     "p_out_annual": 0.0066
+    },
+    "65": {
+     "total_musd": 86.93,
+     "intrinsic_musd": 92.84,
+     "option_musd": -5.91,
+     "opt_pct": -0.0679,
+     "n_obs": 55,
+     "p_upgrade_annual": 0.0917,
+     "p_graduate_annual": 0.3583,
+     "p_out_annual": 0.0083
+    },
+    "70": {
+     "total_musd": 146.06,
+     "intrinsic_musd": 187.5,
+     "option_musd": -41.44,
+     "opt_pct": -0.2837,
+     "n_obs": 30,
+     "p_upgrade_annual": 0.0,
+     "p_graduate_annual": 0.3571,
+     "p_out_annual": 0.0143
+    }
+   }
+  },
+  "pitcher": {
+   "role": "pitcher",
+   "mode": "data",
+   "set_id": "clemens_2026",
+   "grades": {
+    "35": {
+     "total_musd": 1.96,
+     "intrinsic_musd": 0.35,
+     "option_musd": 1.62,
+     "opt_pct": 0.8239,
+     "n_obs": 1376,
+     "p_upgrade_annual": 0.269,
+     "p_graduate_annual": 0.0793,
+     "p_out_annual": 0.2647
+    },
+    "40": {
+     "total_musd": 3.32,
+     "intrinsic_musd": 1.71,
+     "option_musd": 1.61,
+     "opt_pct": 0.4856,
+     "n_obs": 2520,
+     "p_upgrade_annual": 0.1378,
+     "p_graduate_annual": 0.0996,
+     "p_out_annual": 0.1337
+    },
+    "45": {
+     "total_musd": 5.85,
+     "intrinsic_musd": 3.21,
+     "option_musd": 2.64,
+     "opt_pct": 0.4513,
+     "n_obs": 1967,
+     "p_upgrade_annual": 0.1326,
+     "p_graduate_annual": 0.0936,
+     "p_out_annual": 0.1833
+    },
+    "50": {
+     "total_musd": 12.62,
+     "intrinsic_musd": 18.98,
+     "option_musd": -6.37,
+     "opt_pct": -0.5047,
+     "n_obs": 786,
+     "p_upgrade_annual": 0.153,
+     "p_graduate_annual": 0.0967,
+     "p_out_annual": 0.074
+    },
+    "55": {
+     "total_musd": 21.2,
+     "intrinsic_musd": 33.14,
+     "option_musd": -11.94,
+     "opt_pct": -0.5631,
+     "n_obs": 306,
+     "p_upgrade_annual": 0.1238,
+     "p_graduate_annual": 0.1302,
+     "p_out_annual": 0.0466
+    },
+    "60": {
+     "total_musd": 26.23,
+     "intrinsic_musd": 60.93,
+     "option_musd": -34.7,
+     "opt_pct": -1.3228,
+     "n_obs": 177,
+     "p_upgrade_annual": 0.044,
+     "p_graduate_annual": 0.1291,
+     "p_out_annual": 0.0192
+    },
+    "65": {
+     "total_musd": 48.18,
+     "intrinsic_musd": 87.08,
+     "option_musd": -38.9,
+     "opt_pct": -0.8075,
+     "n_obs": 18,
+     "p_upgrade_annual": 0.1087,
+     "p_graduate_annual": 0.2391,
+     "p_out_annual": 0.0217
+    },
+    "70": {
+     "total_musd": 67.9,
+     "intrinsic_musd": 162.5,
+     "option_musd": -94.6,
+     "opt_pct": -1.3933,
+     "n_obs": 10,
+     "p_upgrade_annual": 0.0,
+     "p_graduate_annual": 0.1667,
+     "p_out_annual": 0.0333
+    }
+   }
+  }
+ },
+ "config_prior_cross_check": {
+  "hitter_45_opt_pct_data": 0.5998,
+  "hitter_45_opt_pct_config_prior": 0.909,
+  "note": "config_prior uses the labelled literature anchor (45 FV ~20% upgrade), NOT estimated from our data; shown only as a sanity cross-check."
+ },
+ "gate": {
+  "criterion": "hitter 45 FV OPT% > 0.50 AND hitter 60 FV OPT% < hitter 45 FV OPT%",
+  "hitter_45_opt_pct": 0.5998,
+  "hitter_60_opt_pct": -0.3151,
+  "pass": true,
+  "verdict": "provisional"
+ }
+}
