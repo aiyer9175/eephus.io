@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-05",
+ "generated_at": "2026-07-06",
  "model": "eFV pitcher v1 (lean + guarded blend)",
  "scope": "PITCHERS",
  "conventions": {
@@ -40,7 +40,7 @@
     0.7
    ]
   },
-  "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's adjustment over the consensus anchor. WAG (realized over/underperformance vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When that regression is non-significant (pitchers, spearman ~0.02) WAG's slope is noise -- it pinned pitchers at 0.391, which the eval shows DRAGGING the ridge (rho 0.281) back toward consensus (blend 0.2625). There lambda is sized by the rank gate directly (rank_calibration): pooled+within-tier+FV45-fringe maximized in a conservative [0.50,0.70] band -> ~0.65, lifting pooled OOS rho to ~0.28 (the robust, CI-positive part of the available gain)."
+  "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's adjustment over the consensus anchor. WAG (realized over/underperformance vs consensus FV = where consensus MISSED) sets lambda ONLY when its predicted-edge -> realized-WAG regression is SIGNIFICANT. As of the 2026 norm-fix that regression is non-significant on BOTH sides (pitchers spearman ~0.001, hitters ~0.066, both bootstrap CIs straddle 0), so a WAG-sized lambda would be noise pinning a rank-suboptimal weight. Both sides therefore size lambda by the RANK GATE directly (rank_calibration): pooled + within-tier + FV45-fringe rank rho maximized in a conservative band -> ~0.70, which lifts the pooled OOS rank rho vs the old WAG-pinned lambda (the robust, CI-positive part of the available gain)."
  },
  "era_split_debuted": {
   "<=2018": {

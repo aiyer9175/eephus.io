@@ -1,32 +1,32 @@
 {
- "generated_at": "2026-07-05",
+ "generated_at": "2026-07-06",
  "scope": "PITCHERS",
- "n_scored": 2039,
+ "n_scored": 1917,
  "calibration_scale": {
-  "a": -0.04,
-  "b": 1.042
+  "a": -0.046,
+  "b": 1.044
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 0.73,
+  "mean_abs_delta": 0.74,
   "max_up": 10.0,
   "max_down": -5.3,
-  "share_within_2_grades": 0.845
+  "share_within_2_grades": 0.834
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 7.89,
+  "mean_abs_delta": 7.64,
   "max_up": 12.3,
-  "max_down": -21.7
+  "max_down": -20.3
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1282,
+  "spearman_adj_vs_consensus_miss": 0.1285,
   "n": 502,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 6849.1,
-  "consensus": 12677.9
+  "xfv": 6855.5,
+  "consensus": 12397.5
  },
  "example_up_adjustments": [
   {
@@ -39,15 +39,15 @@
   {
    "player_key": "kevin_ginkel",
    "consensus_fv": 37.7,
-   "xfv_grade": 47.1,
-   "delta": 9.5,
+   "xfv_grade": 47.2,
+   "delta": 9.6,
    "realized_war_6yr": 1.94
   },
   {
    "player_key": "bryan_abreu",
    "consensus_fv": 42.3,
-   "xfv_grade": 51.1,
-   "delta": 8.8,
+   "xfv_grade": 51.2,
+   "delta": 8.9,
    "realized_war_6yr": 4.92
   },
   {
@@ -61,14 +61,14 @@
    "player_key": "cristian_javier",
    "consensus_fv": 42.3,
    "xfv_grade": 49.4,
-   "delta": 7.0,
+   "delta": 7.1,
    "realized_war_6yr": 8.0
   },
   {
    "player_key": "luis_garcia__23735",
    "consensus_fv": 40.0,
-   "xfv_grade": 46.3,
-   "delta": 6.3,
+   "xfv_grade": 46.4,
+   "delta": 6.4,
    "realized_war_6yr": 4.76
   }
  ],

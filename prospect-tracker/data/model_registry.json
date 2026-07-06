@@ -1137,8 +1137,8 @@
    "metric": "max abs tier deviation (model vs published), per role",
    "eval_artifact": "data/star_odds_eval.json",
    "verdict": "provisional",
-   "notes": "SHIPPED 2026-07-04. The displayed Star Odds are the FanGraphs 2026 published tier figures for the player's FV and role (exact by construction, config/valuation_sets/clemens_2026.yaml); hitters run higher than pitchers because a bullpen outcome rarely clears 4 WAR. Our own mixture Poisson-binomial model computes a per-player version from the outcome-bucket distribution; under the v47 realized (bust-heavy) WAR anchors it runs below the published tiers, so it is shown as a diagnostic only. Phase 5 calibration is the forcing function that reconciles the model aggregates to the published table. Current max absolute tier deviation is about 0.64 (pitcher 70 FV), above the 0.1 tolerance, so the gate does not pass and the verdict stays provisional. H-2/H-3 (2026-07-05): the PROSPX Star Odds cell now discloses the RESOLVED-cohort realized star rate + n beside the published FG value (by role + FV tier, from realized_calibration); published numbers unchanged. Realized contradicts published at mid tiers (pitcher FV 60-65 realized 2.8%% vs published 30.5%%, n=36; hitter 50-55 6.4%% vs 15.5%%). star_label_view.json + star_odds_eval.json are now regenerated on the pipeline cadence (previously a manual tool run only, so they silently went stale).",
-   "last_checked": "2026-07-05",
+   "notes": "SHIPPED 2026-07-04. The displayed Star Odds are the FanGraphs 2026 published tier figures for the player's FV and role (exact by construction, config/valuation_sets/clemens_2026.yaml); hitters run higher than pitchers because a bullpen outcome rarely clears 4 WAR. Our own mixture Poisson-binomial model computes a per-player version from the outcome-bucket distribution; under the v47 realized (bust-heavy) WAR anchors it runs below the published tiers, so it is shown as a diagnostic only. Phase 5 calibration is the forcing function that reconciles the model aggregates to the published table. Current max absolute tier deviation is about 0.64 (pitcher 70 FV), above the 0.1 tolerance, so the gate does not pass and the verdict stays provisional. H-2/H-3 (2026-07-05): the PROSPX Star Odds cell now discloses the RESOLVED-cohort realized star rate + n beside the published FG value (by role + FV tier, from realized_calibration); published numbers unchanged. Realized contradicts published at mid tiers (pitcher FV 60-65 realized 2.8%% vs published 30.5%%, n=36; hitter 50-55 6.4%% vs 15.5%%). star_label_view.json + star_odds_eval.json are now regenerated on the pipeline cadence (previously a manual tool run only, so they silently went stale). LOSS-LEDGER 2026-07-06: a fitted eFV->star_prob overlay (centered-logistic on FV; Platt recal of the published logit) was tested forward-chained by debut class, per role, and LOST to the published table out-of-sample on BOTH Brier and LogLoss (hitter 0.0869 vs 0.0842; pitcher 0.0317 vs 0.0293) -- the tiny positive class (66 resolved stars, 15 pitchers) overfits vintage noise while the industry prior generalizes; published stays the displayed value. The by-tier realized disclosure now suppresses its bold 'X% real' line below n=30 so thin one-star tiers do not over-claim.",
+   "last_checked": "2026-07-06",
    "stale": false,
    "artifact_age_days": 0
   },
@@ -1194,6 +1194,19 @@
    "verdict": "provisional",
    "notes": "SHIPPED 2026-07-05 as a deserved-run-prevention companion to SEM+, the starter analog of xREM+. HONEST FRAMING (loss ledger): Statcast xwOBA-allowed did NOT beat FIP for the pitcher models, so SEM+ stays FIP-based; xSEM+ is a companion contact-quality-inclusive deserved read plus a Luck residual, not a more predictive replacement. Inverts the ratio (lower allowed xwOBA = higher +) and anchors over the STARTER board so 100 = the average starter. Luck = actual minus expected wOBA-allowed (positive = unlucky, room to improve). MLB-only + min-BBE gated (min 150 batters faced, starters face more); missing -> column blank. Joined in starter_export._join_xsem_plus from mlb_player_export._savant('expected'). No independent predictive eval by design; an X-H3-style deserved-vs-actual forward gate is a clean follow-up.",
    "last_checked": "2026-07-05",
+   "stale": false
+  },
+  {
+   "model_id": "leverage_board",
+   "surface": "/mlbstats/ Leverage Leaderboards",
+   "predicts": "realized in-game leverage IMPACT: batters (WPA, average Leverage Index faced pLI, Clutch, context-neutral WPA/LI) and starters (per-start WPA, WPA/LI), self-computed from the MLB StatsAPI winProbability feed",
+   "champion": "per-play win-probability-added credited to the involved player and sign-flipped by batting half (batter WPA = -pitcher WPA); Clutch = WPA/pLI - WPA/LI",
+   "baseline": "n/a - a DESCRIPTIVE realized-impact board (RIV+ / xREM+ precedent), not a predictive model",
+   "metric": "descriptive; no forward gate by design (realized WPA is an outcome, not a forecast)",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-06 as the 4th /mlbstats/ section. Extends the reliever-only leverage engine (mlb_leverage) to BATTERS and STARTERS in one extra pass over the already-warm winProbability cache: the reliever fold is byte-identical (test_mlb_leverage locks it); batter fold accumulates per PA (WPA = negation of the pitcher's, pLI = mean Leverage Index faced, Clutch = WPA/pLI - WPA/LI); starter fold keeps the entry_inning==1 games the reliever fold drops (per-start WPA). Descriptive realized value like RIV+/xREM+, so no hard predictive gate. leverage_export.py writes data/leverage_leaderboards.json.",
+   "last_checked": "2026-07-06",
    "stale": false
   }
  ],

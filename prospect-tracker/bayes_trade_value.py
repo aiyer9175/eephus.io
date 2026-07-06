@@ -3590,6 +3590,38 @@ def bayesian_trade_value(
             "club_opt_years":     _club_opt_yrs,
         }
 
+    # § CRUNCH: roster-crunch exposure (Rule 5 urgency / 40-man status / option
+    # years / service phase). All already computed above but never exported; a
+    # compact sub-dict that SURVIVES board_slim (not in _BOARD_DROP) so the trade
+    # board can flag protect-or-lose players and roll a per-org Crunch score. A
+    # descriptive/deterministic lookup (no outcome to validate). Most meaningful for
+    # the 40-man-eligible / MLB cohort (minor leaguers read on_40_man False / 3
+    # options); the surface discloses that scope.
+    _cr_roster = player.get("roster_status") or {}
+    _cr_on40   = bool(_cr_roster.get("on_40_man"))
+    _cr_used   = int(_cr_roster.get("options_used") or 0)
+    _cr_left   = (int(_cr_roster["options_remaining"]) if _cr_roster.get("options_remaining") is not None
+                  else max(0, 3 - _cr_used))
+    _cr_signed_yr = (player.get("acquisition") or {}).get("year")
+    _cr_years_in  = (date.today().year - int(_cr_signed_yr)) if _cr_signed_yr else None
+    _cr_exp_yrs   = int(_cfg().get("rule5", {}).get("exposure_years_default", 3))
+    _cr_r5_exp    = (not _cr_on40) and (_cr_years_in is not None and _cr_years_in >= _cr_exp_yrs)
+    _cr_score = 0.0
+    if _cr_r5_exp or r5_mm > 0:      _cr_score += 55.0   # must-protect by Nov or lose for ~$100k
+    if _cr_on40 and _cr_left == 0:   _cr_score += 30.0   # out of options -> waiver-exposed to move
+    elif _cr_on40 and _cr_left == 1: _cr_score += 12.0
+    if _cr_on40:                     _cr_score += 10.0   # occupies a scarce 40-man slot
+    crunch = {
+        "on_40_man":        _cr_on40,
+        "options_used":     _cr_used,
+        "options_left":     _cr_left,
+        "rule5_exposed":    _cr_r5_exp,
+        "rule5_urgency_mm": round(r5_mm, 2),
+        "service_phase":    _cr_roster.get("service_phase") or "none",
+        "service_years":    (round(_svc_yrs, 1) if is_mlb_player else None),
+        "score":            round(min(100.0, _cr_score), 1),
+    }
+
     return {
         "player_key":            player_key,
         "player_name":           player.get("player_name"),
@@ -3632,6 +3664,9 @@ def bayesian_trade_value(
         # § OPTIONS + § RULE5
         "options_premium_mm":    round(opt_mm, 2),
         "rule5_urgency_mm":      round(r5_mm, 2),
+
+        # § CRUNCH (roster-decision exposure; survives board_slim for the board chip + per-org score)
+        "crunch":                crunch,
 
         # Final values
         "trade_value_mm":        trade_value_mm,

@@ -112,11 +112,16 @@ _WAG_LAMBDA_CACHE: dict[str, float] = {}
 
 # WAG sizes the blend ONLY when its predicted-edge -> realized-WAG regression is meaningful.
 # When that regression is non-significant (|spearman| below this / too few rows), its slope is
-# noise and would shrink the blend to a rank-SUBOPTIMAL weight. Pitchers land here (WAG
+# noise and would shrink the blend to a rank-SUBOPTIMAL weight. Pitchers already land here (WAG
 # spearman ~0.02, slope 0.39) -- the shipped pit eval shows the 0.391 blend (rho 0.2625)
 # trailing the pure ridge (rho 0.281); the blend was pulling the better prediction back toward
 # the weaker consensus. There we size lambda by the rank gate directly (rank_calibration).
-_WAG_MIN_SPEARMAN = 0.05
+# Threshold raised 0.05 -> 0.10 (2026-07-06): the 2026 norm-fix collapsed the HITTER WAG signal
+# (spearman 0.20 -> 0.066, bootstrap CI straddles 0), so at 0.05 it was still (barely) clearing
+# the gate and pinning a rank-suboptimal lambda ~0.53; a non-significant WAG at n~400 needs
+# ~0.10 to be real, so hitters now defer to the rank gate too (lambda ~0.70), which lifts the
+# pooled OOS rank rho 0.343 -> 0.353 (within-tier + FV45 also up).
+_WAG_MIN_SPEARMAN = 0.10
 _WAG_MIN_N = 100
 
 
@@ -254,11 +259,12 @@ def rank_calibration(side: str) -> dict:
 
 
 def blend_lambda(side: str) -> float:
-    """Blend weight on the eFV model vs the consensus anchor (cached). Calibrated by WAG when
-    its predicted-edge -> realized-WAG regression has signal (hitters: spearman ~0.20); when
-    that regression is non-significant (pitchers: spearman ~0.02), WAG's slope is noise and
-    pins a rank-suboptimal weight -- there we size lambda by the rank gate directly
-    (rank_calibration). Falls back to the hand-set value on any error."""
+    """Blend weight on the eFV model vs the consensus anchor (cached). Calibrated by WAG only
+    when its predicted-edge -> realized-WAG regression is SIGNIFICANT (|spearman| >=
+    _WAG_MIN_SPEARMAN); otherwise the slope is noise and pins a rank-suboptimal weight, so we
+    size lambda by the rank gate directly (rank_calibration). As of the 2026 norm-fix BOTH sides
+    are non-significant on WAG (pitchers spearman ~0.001, hitters ~0.066, both CIs straddle 0),
+    so both defer to the rank gate. Falls back to the hand-set value on any error."""
     if side not in _WAG_LAMBDA_CACHE:
         try:
             wc = wag_calibration(side)
@@ -644,14 +650,15 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             "rank_gate": rank_cal,
             "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's "
                        "adjustment over the consensus anchor. WAG (realized over/underperformance "
-                       "vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-"
-                       "edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When "
-                       "that regression is non-significant (pitchers, spearman ~0.02) WAG's slope "
-                       "is noise -- it pinned pitchers at 0.391, which the eval shows DRAGGING the "
-                       "ridge (rho 0.281) back toward consensus (blend 0.2625). There lambda is "
-                       "sized by the rank gate directly (rank_calibration): pooled+within-tier+"
-                       "FV45-fringe maximized in a conservative [0.50,0.70] band -> ~0.65, lifting "
-                       "pooled OOS rho to ~0.28 (the robust, CI-positive part of the available gain).",
+                       "vs consensus FV = where consensus MISSED) sets lambda ONLY when its "
+                       "predicted-edge -> realized-WAG regression is SIGNIFICANT. As of the 2026 "
+                       "norm-fix that regression is non-significant on BOTH sides (pitchers spearman "
+                       "~0.001, hitters ~0.066, both bootstrap CIs straddle 0), so a WAG-sized lambda "
+                       "would be noise pinning a rank-suboptimal weight. Both sides therefore size "
+                       "lambda by the RANK GATE directly (rank_calibration): pooled + within-tier + "
+                       "FV45-fringe rank rho maximized in a conservative band -> ~0.70, which lifts "
+                       "the pooled OOS rank rho vs the old WAG-pinned lambda (the robust, "
+                       "CI-positive part of the available gain).",
         },
         "era_split_debuted": _era_split(_prep(deb, "target_censored", side), keys, lam),
         "evals": evals,

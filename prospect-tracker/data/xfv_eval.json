@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-05",
+ "generated_at": "2026-07-06",
  "model": "eFV hitter v1 (lean + guarded blend)",
  "scope": "HITTERS",
  "conventions": {
@@ -7,7 +7,7 @@
   "vintage": "features strictly pre-outcome (Pass-1 matrix; leakage verified 0)",
   "protocol": "forward-chained by decision-year cohort; pooled OOS",
   "baseline": "within-fold OLS WAR ~ consensus_fv_raw (THE bar)",
-  "shipped_model": "'blend' = (1-0.531)*consensus_OLS + 0.531*lean-ridge; this is the headline RANK driver. 'ridge' = the pure lean model.",
+  "shipped_model": "'blend' = (1-0.7)*consensus_OLS + 0.7*lean-ridge; this is the headline RANK driver. 'ridge' = the pure lean model.",
   "rank_gate": "beat consensus FV on pooled-OOS Spearman (the flagship criterion)",
   "features": [
    "fv",
@@ -24,8 +24,8 @@
   ]
  },
  "lambda_calibration": {
-  "shipped_lambda": 0.531,
-  "source": "wag",
+  "shipped_lambda": 0.7,
+  "source": "rank_gate",
   "wag": {
    "lambda": 0.531,
    "slope_wobs": 0.531,
@@ -44,23 +44,23 @@
     0.7
    ]
   },
-  "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's adjustment over the consensus anchor. WAG (realized over/underperformance vs consensus FV = where consensus MISSED) sets lambda WHEN its predicted-edge -> realized-WAG regression has signal (hitters, spearman ~0.20). When that regression is non-significant (pitchers, spearman ~0.02) WAG's slope is noise -- it pinned pitchers at 0.391, which the eval shows DRAGGING the ridge (rho 0.281) back toward consensus (blend 0.2625). There lambda is sized by the rank gate directly (rank_calibration): pooled+within-tier+FV45-fringe maximized in a conservative [0.50,0.70] band -> ~0.65, lifting pooled OOS rho to ~0.28 (the robust, CI-positive part of the available gain)."
+  "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's adjustment over the consensus anchor. WAG (realized over/underperformance vs consensus FV = where consensus MISSED) sets lambda ONLY when its predicted-edge -> realized-WAG regression is SIGNIFICANT. As of the 2026 norm-fix that regression is non-significant on BOTH sides (pitchers spearman ~0.001, hitters ~0.066, both bootstrap CIs straddle 0), so a WAG-sized lambda would be noise pinning a rank-suboptimal weight. Both sides therefore size lambda by the RANK GATE directly (rank_calibration): pooled + within-tier + FV45-fringe rank rho maximized in a conservative band -> ~0.70, which lifts the pooled OOS rank rho vs the old WAG-pinned lambda (the robust, CI-positive part of the available gain)."
  },
  "era_split_debuted": {
   "<=2018": {
    "n": 115,
    "consensus_spearman": 0.5315,
-   "xfv_blend_spearman": 0.5154
+   "xfv_blend_spearman": 0.5016
   },
   "2019-2021": {
    "n": 226,
    "consensus_spearman": 0.2477,
-   "xfv_blend_spearman": 0.3117
+   "xfv_blend_spearman": 0.3266
   },
   "2022-2023": {
    "n": 245,
    "consensus_spearman": 0.3129,
-   "xfv_blend_spearman": 0.3778
+   "xfv_blend_spearman": 0.386
   }
  },
  "evals": {
@@ -87,11 +87,11 @@
     },
     "blend": {
      "n": 399,
-     "mae": 3.918,
-     "spearman": 0.3433,
+     "mae": 3.954,
+     "spearman": 0.3531,
      "calibration": {
-      "slope": 0.867,
-      "bias": 0.644
+      "slope": 0.839,
+      "bias": 0.744
      }
     },
     "lgbm": {
@@ -162,11 +162,11 @@
      },
      "blend": {
       "n": 64,
-      "mae": 4.26,
-      "spearman": 0.3499,
+      "mae": 4.347,
+      "spearman": 0.3595,
       "calibration": {
-       "slope": 0.533,
-       "bias": 1.662
+       "slope": 0.517,
+       "bias": 1.858
       }
      },
      "lgbm": {
@@ -218,11 +218,11 @@
      },
      "blend": {
       "n": 90,
-      "mae": 3.688,
-      "spearman": 0.1773,
+      "mae": 3.736,
+      "spearman": 0.1972,
       "calibration": {
-       "slope": 0.578,
-       "bias": 0.877
+       "slope": 0.569,
+       "bias": 1.007
       }
      },
      "lgbm": {
@@ -274,11 +274,11 @@
      },
      "blend": {
       "n": 142,
-      "mae": 3.578,
-      "spearman": 0.5174,
+      "mae": 3.61,
+      "spearman": 0.5207,
       "calibration": {
-       "slope": 1.471,
-       "bias": 0.377
+       "slope": 1.406,
+       "bias": 0.425
       }
      },
      "lgbm": {
@@ -330,11 +330,11 @@
      },
      "blend": {
       "n": 103,
-      "mae": 4.375,
-      "spearman": 0.2138,
+      "mae": 4.373,
+      "spearman": 0.2254,
       "calibration": {
        "slope": 0.567,
-       "bias": 0.174
+       "bias": 0.26
       }
      },
      "lgbm": {
@@ -427,11 +427,11 @@
     },
     "blend": {
      "n": 64,
-     "mae": 4.26,
-     "spearman": 0.3499,
+     "mae": 4.347,
+     "spearman": 0.3595,
      "calibration": {
-      "slope": 0.533,
-      "bias": 1.662
+      "slope": 0.517,
+      "bias": 1.858
      }
     },
     "lgbm": {
@@ -502,11 +502,11 @@
      },
      "blend": {
       "n": 64,
-      "mae": 4.26,
-      "spearman": 0.3499,
+      "mae": 4.347,
+      "spearman": 0.3595,
       "calibration": {
-       "slope": 0.533,
-       "bias": 1.662
+       "slope": 0.517,
+       "bias": 1.858
       }
      },
      "lgbm": {
@@ -563,11 +563,11 @@
     },
     "blend": {
      "n": 896,
-     "mae": 2.057,
-     "spearman": 0.229,
+     "mae": 2.183,
+     "spearman": 0.2335,
      "calibration": {
-      "slope": 0.861,
-      "bias": -0.032
+      "slope": 0.8,
+      "bias": -0.006
      }
     },
     "lgbm": {
@@ -638,11 +638,11 @@
      },
      "blend": {
       "n": 206,
-      "mae": 1.754,
-      "spearman": 0.3248,
+      "mae": 1.939,
+      "spearman": 0.3233,
       "calibration": {
-       "slope": 0.595,
-       "bias": -0.097
+       "slope": 0.549,
+       "bias": -0.152
       }
      },
      "lgbm": {
@@ -694,11 +694,11 @@
      },
      "blend": {
       "n": 143,
-      "mae": 2.347,
-      "spearman": 0.0848,
+      "mae": 2.443,
+      "spearman": 0.0906,
       "calibration": {
-       "slope": 0.636,
-       "bias": 0.118
+       "slope": 0.605,
+       "bias": 0.203
       }
      },
      "lgbm": {
@@ -750,11 +750,11 @@
      },
      "blend": {
       "n": 277,
-      "mae": 2.081,
-      "spearman": 0.2971,
+      "mae": 2.201,
+      "spearman": 0.2984,
       "calibration": {
-       "slope": 1.297,
-       "bias": -0.098
+       "slope": 1.201,
+       "bias": -0.054
       }
      },
      "lgbm": {
@@ -806,11 +806,11 @@
      },
      "blend": {
       "n": 270,
-      "mae": 2.109,
-      "spearman": 0.2221,
+      "mae": 2.213,
+      "spearman": 0.2294,
       "calibration": {
-       "slope": 0.738,
-       "bias": 0.006
+       "slope": 0.697,
+       "bias": 0.043
       }
      },
      "lgbm": {

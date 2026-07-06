@@ -91,17 +91,18 @@ def test_committed_artifact_headline_alias_contract():
 # INTENTIONAL eFV ship (model/feature/calibration change) updates this constant in the
 # SAME commit, alongside a CHANGELOG / memory note describing what moved and why. An
 # UNEXPECTED red here means the committed artifact drifted without a sanctioned ship.
-# Updated 2026-07-05: intentional eFV flagship correction (two bugs):
-# (1) the WAR->grade map now inverts on the model's own 6-season window
-#     (efv_score passes exposure_seasons=TARGET_SEASONS) instead of the clemens
-#     control_years=7, which had silently deflated top-end grades (jesus_made
-#     61.8->64.9, back in line with consensus + the codebase's own 6yr anchor);
-# (2) efv_dataset._season_rates no longer treats a MISSING level norm as
-#     league-average-0 (prior-season / static-prior fallback), which had let a
-#     raw DSL K% masquerade as a level-relative edge and spike young low-level
-#     arms (fredy_penuelas 6yr WAR 5.57->3.0). Rank gate essentially flat
-#     (hit 0.362->0.353, pit 0.279->0.284); most-resolved <=2018 hitter blend up.
-_GOLDEN_XFV_SHA256 = "1318524adb092e6aa2022d236872c5e5fd806295aae8e8c55ca2441b4222dcd2"
+# Updated 2026-07-05: eFV flagship correction -- (1) grade map inverts on the model's
+#   own 6-season window (exposure_seasons=TARGET_SEASONS) not clemens control_years=7
+#   (fixed top-end deflation, jesus_made 61.8->64.9); (2) efv_dataset._season_rates no
+#   longer treats a missing level norm as 0 (fixed young/DSL-arm inflation).
+# Updated 2026-07-06 (holistic-audit batch): (3) blend_lambda WAG gate raised 0.05->0.10
+#   so the now-non-significant hitter WAG defers to the rank gate (hitter lambda
+#   0.53->0.70), lifting recent-era OOS blend rho (2019-23 up, small <=2018 give-back);
+#   (4) production fit pool now excludes never-MLB recent-bust rows to match the
+#   governance eval (removes fringe fit noise, rank-neutral). Grades ~unchanged
+#   (jesus_made 65.1, franklin_arias 64.6). The FV-history + provisional-board fixes in
+#   this batch do not touch xfv.json.
+_GOLDEN_XFV_SHA256 = "ef44d63c3b0dfea42125d89a7d91c6a3961e561eb37626e2ba297298546ada2f"
 
 
 def test_efv_grade_map_inverts_on_model_window():

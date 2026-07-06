@@ -4,8 +4,8 @@
   "cohort": "curated NPB/KBO -> MLB transitions 2015-2026 (returnees flagged); foreign side = last qualifying season pre-entry (B-Ref register); MLB side = first season >= entry with min exposure (StatsAPI)",
   "era_factor": "IP-weighted ratio of means, shrunk k=8.0 toward incumbent",
   "k_pct_delta": "PA-weighted mean delta, shrunk k=8.0",
-  "not_shipped": "hitter_wrc_factor (needs per-season foreign league context \u2014 raw OPS ratio reported as analog), fb_velo_delta (no source), CPBL/CUBA/NPBF (n too small, stay prior)",
-  "exclusions": "players whose pages fail to resolve/parse are excluded and counted \u2014 the ledger is owner-extendable"
+  "not_shipped": "hitter_wrc_factor (needs per-season foreign league context — raw OPS ratio reported as analog), fb_velo_delta (no source), CPBL/CUBA/NPBF (n too small, stay prior)",
+  "exclusions": "players whose pages fail to resolve/parse are excluded and counted — the ledger is owner-extendable"
  },
  "accounting": {
   "listed": 34,
@@ -37,7 +37,7 @@
    "incumbent_k_pct_delta": 0.05,
    "shipped_k_pct_delta": 0.05,
    "measured_raw_ops_ratio_NOT_SHIPPED": 0.819,
-   "incumbent_wrc_factor_retained": 0.81
+   "incumbent_wrc_factor_retained": 0.749
   }
  },
  "cohort": [

@@ -283,3 +283,63 @@ class TestScoutReportSidecarPerSource:
             assert src in entry["text"], (
                 f"{src} report text doesn't carry its own tag; got {entry['text']!r}"
             )
+
+
+# ---------------------------------------------------------------------------
+# Farm grade / rank determinism: building the tree twice from the SAME fixed DB
+# must yield identical farm_rank + letter + farm_score for every org. This is the
+# guard behind "why does the farm ranking move each run_monthly": the answer is
+# 100% INPUT drift (consensus / pool / graduations), NEVER stochasticity -- there
+# is no RNG anywhere in the farm-tree math, and this pins that invariant.
+# ---------------------------------------------------------------------------
+
+_DET_ORGS = ["ARI", "ATL", "BAL", "BOS", "CHC", "CWS", "CIN", "CLE", "COL", "DET",
+             "HOU", "KC", "LAA", "LAD", "MIA", "MIL", "MIN", "NYM", "NYY", "OAK",
+             "PHI", "PIT", "SD", "SF", "SEA", "STL", "TB", "TEX", "TOR", "WSH"]
+
+
+def _det_snaps() -> list[Snapshot]:
+    """Two graded fangraphs prospects per org across two vintages, FV spread so the
+    30 orgs get distinct farm scores (a mid-pack tie would still be deterministic,
+    but distinct scores exercise the ordinal rank + letter buckets)."""
+    snaps: list[Snapshot] = []
+    for i, org in enumerate(_DET_ORGS):
+        for j in range(2):
+            fv = 40.0 + (i % 8) * 3 + j * 5
+            key = f"{org.lower()}_p{j}"
+            for sd, lbl in (("2024-02-14", "2024report"), ("2025-02-12", "2025report")):
+                snaps.append(Snapshot(
+                    source="fangraphs", snapshot_date=sd, interval_label=lbl,
+                    player_key=key, player_name=f"{org} Prospect {j}",
+                    position="SS", org=org, rank=10 + i, fv=fv, status="active",
+                    tools={"hit": fv, "game_pwr": fv - 5.0}))
+    return snaps
+
+
+class TestFarmTreeDeterminism:
+    def test_farm_rank_and_letter_are_deterministic(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+        snaps = _det_snaps()
+        storage.insert_snapshots(snaps)
+
+        def _build(name: str) -> dict:
+            ts = build_timeseries(snaps, single_source_k=0)
+            out = tmp_path / name
+            storage.export_timeseries_json(ts, out)
+            data = json.loads(out.read_text(encoding="utf-8"))
+            return {o["org"]: o for o in data.get("org_summary", [])}
+
+        a = _build("a.json")
+        b = _build("b.json")
+        assert set(a) == set(b), (sorted(a), sorted(b))
+        assert len(a) >= 20, f"expected the synthetic 30-org pool, got {len(a)}"
+        for org in a:
+            assert a[org].get("farm_rank") == b[org].get("farm_rank"), (org, "farm_rank", a[org].get("farm_rank"), b[org].get("farm_rank"))
+            assert a[org].get("farm_score") == b[org].get("farm_score"), (org, "farm_score")
+            la = (a[org].get("letter_by_window") or {}).get("7y")
+            lb = (b[org].get("letter_by_window") or {}).get("7y")
+            assert la == lb, (org, "letter_7y", la, lb)
+        # ranks form a proper 1..N permutation (no dupes / gaps from the ordinal sort)
+        ranks = sorted(o.get("farm_rank") for o in a.values() if o.get("farm_rank") is not None)
+        assert ranks == list(range(1, len(ranks) + 1)), ranks

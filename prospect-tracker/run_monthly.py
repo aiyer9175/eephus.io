@@ -2626,6 +2626,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("hitter leaderboards export failed - continuing")
 
+        # --- 6b4h. Leverage Leaderboards (leverage_leaderboards.json) --------
+        # Realized in-game WPA impact for BATTERS (WPA / pLI / Clutch / WPA-LI)
+        # and STARTERS (per-start WPA), self-computed from the StatsAPI
+        # winProbability feed in ONE extra pass over the already-warm cache the
+        # bullpen board (6b4) just walked. Descriptive realized value (the RIV+ /
+        # xREM+ precedent), not a predictive model. Additive; never aborts.
+        with _step("6b4h. Leverage Leaderboards (leverage_leaderboards.json)", log):
+            try:
+                from leverage_export import export as _export_leverage
+                _lev_n = _export_leverage(log=log.info)
+                log.info("leverage: %d batter+starter rows scored", _lev_n)
+            except Exception:
+                log.exception("leverage leaderboards export failed - continuing")
+
         # --- 6b5. Pitcher Alchemy Lab (the /pal/ surface) ---------------
         # RP<->SP role-conversion candidate scores + a validated conversion
         # history. Arsenal/velocity from bulk Statcast, platoon from StatsAPI

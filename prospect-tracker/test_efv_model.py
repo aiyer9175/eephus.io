@@ -28,8 +28,11 @@ def test_fallback_and_clamp_constants_are_pinned():
     assert em._BLEND_LAMBDA_FALLBACK == {"hit": 0.85, "pit": 0.80}
     # the clamp band every calibrated lambda must live inside
     assert em._BLEND_LAMBDA_CLAMP == (0.35, 0.90)
-    # the WAG-significance gate that decides WAG-vs-rank-gate
-    assert em._WAG_MIN_SPEARMAN == 0.05
+    # the WAG-significance gate that decides WAG-vs-rank-gate (raised 0.05 -> 0.10 on
+    # 2026-07-06: the norm-fix collapsed the hitter WAG signal to non-significance, so
+    # 0.05 was still pinning a rank-suboptimal lambda; 0.10 defers non-significant WAG
+    # to the rank gate, lifting the pooled OOS rank rho)
+    assert em._WAG_MIN_SPEARMAN == 0.10
     assert em._WAG_MIN_N == 100
 
 

@@ -43,9 +43,9 @@ class TranslationFactors(unittest.TestCase):
 
     def test_kbo_factors(self):
         ctx = LEAGUE_CONTEXT["KBO"]
-        # 168 wRC+ * 0.81 = 136
+        # 168 wRC+ * 0.749 = 126 (KBO wRC+ factor refit 0.81 -> 0.749, commit 95d224f)
         hit = _mlb_translate({"wrc_plus": 168}, ctx, is_pitcher=False)
-        self.assertEqual(hit["wrc_plus_mlbe"], 136)
+        self.assertEqual(hit["wrc_plus_mlbe"], 126)
 
     def test_missing_inputs_safe(self):
         """No payload field → no MLBe field added, no crash."""

@@ -96,6 +96,14 @@ _GRADE_MAP = {
     "pit": {"BASE": 25.0, "SLOPE": 4.5, "FLOOR": 20.0, "KNEE": 34.0, "CEIL": 38.0, "SOFT": 2.5},
 }
 
+# Sample floor: a provisional grade needs a real exposure sample. The rate features
+# are exposure-shrunk, but level_rank + age_rel_level are NOT, so a 1-PA / 1.2-IP
+# cameo at a high level otherwise mints a mid-30s grade off level + age alone. Below
+# the floor we cap the grade at org-filler (a cameo is not a prospect signal).
+_MIN_EXPO_BF = 90.0     # min batters faced for a pitcher provisional grade
+_MIN_EXPO_PA = 80.0     # min plate appearances for a hitter provisional grade
+_SUBFLOOR_GRADE = 30.0  # org-filler cap for sub-floor lines
+
 # Default ETA (years to MLB) by level, for the surplus seam -- ungraded low-minors players
 # are years away. Surplus at FV 20-35 is near $0 regardless; this only shapes the band.
 _LEVEL_ETA = {"DSL": 6.0, "CPX": 5.0, "A": 4.5, "A+": 3.5, "AA": 2.5, "AAA": 1.5}
@@ -150,8 +158,28 @@ def fit_nofv(side: str):
     return ridge, a, b
 
 
+# Out-of-support guard: the no-FV ridge is a linear model, so a live feature far
+# outside the training envelope extrapolates without bound. Un-scouted tiny-sample
+# DSL/complex lines routinely present standardized features at z = +5..+40 (a
+# catastrophic-outing era_rel, a 2.8% K% k_rel), which the shared _predict weights
+# straight through -- e.g. x_era_k contributing +6.9 WAR off a 1.2-IP blowup. Clip
+# each standardized feature to +/-_Z_CLIP before weighting. This is LOCAL to the
+# provisional path (writes only xfv_ungraded.json; xfv.json is byte-identical) and
+# preserves the low-minors OOS rank (validated: clip 6 leaves Spearman flat).
+_Z_CLIP = 6.0
+
+
+def _predict_clipped(model: dict, feats: dict, clip: float = _Z_CLIP) -> float:
+    z = 0.0
+    for k, m, s, w in zip(model["keys"], model["mu"], model["sd"], model["w"]):
+        zc = (feats.get(k, 0.0) - m) / (s or 1.0)
+        zc = max(-clip, min(clip, zc))
+        z += w * zc
+    return z + model["b"]
+
+
 def _war(ridge, a, b, feats) -> float:
-    return max(-2.0, a + b * _predict(ridge, feats))
+    return max(-2.0, a + b * _predict_clipped(ridge, feats))
 
 
 def _grade(war: float, side: str) -> float:
@@ -273,7 +301,8 @@ def _factors(ridge, feats, top: int = 3) -> list:
     """The largest standardized production contributions (WAR units), for the explainer."""
     contribs = []
     for k, mu, sd, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
-        c = w * ((feats.get(k, 0.0) - mu) / (sd or 1.0))
+        zc = max(-_Z_CLIP, min(_Z_CLIP, (feats.get(k, 0.0) - mu) / (sd or 1.0)))   # match _war's clip
+        c = w * zc
         if abs(c) >= 0.05:
             contribs.append((k, c))
     contribs.sort(key=lambda kc: -abs(kc[1]))
@@ -362,12 +391,17 @@ def build(persist: bool = True) -> dict:
                 age = _f(p.get("age"))
                 eta = _LEVEL_ETA.get(level, 4.0)
                 is_pit = side == "pit"
+                pk = p.get("player_key") or f"mlbam_{mid}"
+                statline = _display_statline(mid, m, side, p.get("team_name"))
+                # SAMPLE FLOOR: cap a sub-floor cameo at org-filler BEFORE it prices surplus,
+                # so a 1-PA/1.2-IP line can't ride level+age into a prospect grade.
+                _expo = ((statline or {}).get("tbf") if is_pit else (statline or {}).get("pa")) or 0
+                if _expo < (_MIN_EXPO_BF if is_pit else _MIN_EXPO_PA):
+                    grade = min(grade, _SUBFLOOR_GRADE)
                 surplus = vf.expected_surplus_usd(grade, is_pit, pos, age=age, eta_years=eta)
                 dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta) or {}
                 pcts = dist.get("percentiles") or {}
                 probs = vf.p_bucket_given_fv(grade, is_pit) or []
-                pk = p.get("player_key") or f"mlbam_{mid}"
-                statline = _display_statline(mid, m, side, p.get("team_name"))
                 career_stats = _career_stats(mid, side, p.get("team_name"))
                 # eFV TRAJECTORY: the provisional grade as-of each MiLB season (re-score
                 # production through that season only) so the detail page can plot an

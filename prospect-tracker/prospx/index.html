@@ -9402,6 +9402,7 @@
       <span class="filter-label">View</span>
       <button class="chip active" data-ifa-view="signings" title="Signing classes: the signings table, bonuses, and org spending">Signings</button>
       <button class="chip" data-ifa-view="countries" title="Where signees come from: a ranked board by country, with a page per country">Countries</button>
+      <button class="chip" data-ifa-view="efficiency" title="Bonus dollars spent per projected FV point (graded signees only). Lower is more efficient. A projected proxy, not realized value.">Efficiency</button>
     </div>
     <div id="ifa-rows"></div>
   </div>
@@ -16724,7 +16725,7 @@ function renderActives() {
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="eta" title="ETA · click to sort earliest first">ETA</span>
     <span class="desktop-only sort-header" style="text-align:center;" data-sort-key="surplus_sv" title="Expected MLB surplus value ($M) from the career-path mixture engine, with the outcome-bucket bar (bust→star). Click to sort by expected SV.">Surplus</span>
     ${starOddsOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="star_odds" title="Star Odds: probability of two or more seasons of four or more WAR during team control. FanGraphs 2026 published value for this FV and role.">Star Odds</span>` : ""}
-    ${optPctOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="opt_pct" title="OPT%: share of this grade's value from the chance of upgrading before graduating (upgrade-option layer, provisional). Low tiers option-rich; high grades run low/negative (top-end downgrade risk).">OPT%</span>` : ""}
+    ${optPctOn ? `<span class="desktop-only sort-header" style="text-align:center;" data-sort-key="opt_pct" title="PLUS%: share of this grade's value from the chance of upgrading before graduating (upgrade-option layer, provisional). Low tiers option-rich; high grades run low/negative (top-end downgrade risk).">PLUS%</span>` : ""}
   </div>`;
 
   const rows = pagedRows.map((p, i) => {
@@ -23945,6 +23946,7 @@ async function renderIFA() {
     b.onclick = () => { state.ifaView = b.dataset.ifaView; renderIFA(); };
   });
   if (state.ifaView === "countries") { _renderIFACountries(host, classes); return; }
+  if (state.ifaView === "efficiency") { _renderIFAEfficiency(host, classes, usd); return; }
 
   // All-time aggregate view (classes ranked + cross-year leaders).
   if (state.ifaYear === "all") { _renderIFAAllTime(host, classes, usd); return; }
@@ -26508,6 +26510,65 @@ function _renderIFACountries(host, classes) {
     else _countrySort = { key: k, dir: (k === "name" || k === "top1") ? 1 : -1 };
     renderIFA();
   });
+}
+
+// IFA spending EFFICIENCY: bonus dollars spent per projected FV point, per org,
+// over the graded (tracked) signees only. A PROJECTED-FV spending proxy - recent
+// classes have no realized outcomes - so it is disclosed as such. Aggregated
+// client-side from the same signings the Signings view already holds.
+function _renderIFAEfficiency(host, classes, usd) {
+  const MIN_N = 3;
+  const yr = (state.ifaYear == null || state.ifaYear === "all") ? "all" : state.ifaYear;
+  const byOrg = {};
+  for (const c of classes) {
+    if (yr !== "all" && c.year !== yr) continue;
+    for (const s of (c.signings || [])) {
+      if (!s.org) continue;
+      const o = byOrg[s.org] || (byOrg[s.org] = { org: s.org, signings: 0, totalUsd: 0, coveredN: 0, fvPts: 0, coveredUsd: 0 });
+      o.signings++;
+      if (s.bonus_usd) o.totalUsd += s.bonus_usd;
+      if (s.is_tracked && s.fv != null) {   // covered = graded (carries a projected FV)
+        o.coveredN++;
+        o.fvPts += s.fv;
+        if (s.bonus_usd) o.coveredUsd += s.bonus_usd;
+      }
+    }
+  }
+  const rows = Object.values(byOrg).map(o => Object.assign(o, {
+    dpf: o.fvPts > 0 ? o.coveredUsd / o.fvPts : null,
+    covShareUsd: o.totalUsd ? o.coveredUsd / o.totalUsd : 0,
+  }));
+  const ranked = rows.filter(r => r.coveredN >= MIN_N && r.dpf != null).sort((a, b) => a.dpf - b.dpf);
+  const held = rows.filter(r => !(r.coveredN >= MIN_N && r.dpf != null)).sort((a, b) => b.signings - a.signings);
+  if (!ranked.length) {
+    host.innerHTML = _draftEmpty("No orgs clear the graded-signee gate yet",
+      "An org needs at least " + MIN_N + " tracked (graded) signees in this view to rank on dollars-per-FV. Pick a broader year, or All-time.");
+    return;
+  }
+  const body = ranked.map((r, i) =>
+    '<tr><td style="color:var(--text-tertiary);">' + (i + 1) + '</td>'
+    + '<td style="white-space:nowrap;">' + _ifaOrgLink(r.org) + '</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + usd(Math.round(r.dpf)) + '</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + usd(r.coveredUsd) + '</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + r.fvPts.toFixed(0) + '</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + r.coveredN + '/' + r.signings + '</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + Math.round(r.covShareUsd * 100) + '%</td>'
+    + '<td style="text-align:right;font-family:var(--font-mono);">' + usd(r.totalUsd) + '</td>'
+    + '</tr>').join("");
+  const heldNote = held.length
+    ? '<div style="color:var(--text-tertiary);font-size:11px;margin-top:8px;">Below the ' + MIN_N + '-graded-signee gate (not ranked): '
+      + held.map(r => escapeHtml(r.org) + ' (' + r.coveredN + '/' + r.signings + ')').join(", ") + '.</div>'
+    : "";
+  host.innerHTML = _draftCaption("Efficiency",
+    "bonus dollars spent per projected FV point, over the graded (tracked) signees only. A projected-FV SPENDING proxy, not realized value - recent classes have no outcomes yet. Lower dollars-per-FV is more efficient. The Coverage column is the graded subset's share of each org's class spending. Showing <strong>" + ranked.length + "</strong> orgs"
+    + (yr === "all" ? " (all classes)" : " (" + yr + " class)") + ", minimum " + MIN_N + " graded signees to rank.")
+    + '<table class="draft-table"><thead><tr><th>#</th><th style="text-align:left;">Org</th>'
+    + '<th class="g-term" data-gl="ifa_dollars_per_fv" style="text-align:right;cursor:help;" title="Bonus dollars per projected FV point, graded signees only. Lower is more efficient. A projected proxy, not realized value.">$/FV pt</th>'
+    + '<th style="text-align:right;">Covered $</th><th style="text-align:right;">FV pts</th>'
+    + '<th style="text-align:right;" title="Graded (tracked) signees / total signees">Graded</th>'
+    + '<th style="text-align:right;" title="Graded subset share of the org class spending">Coverage</th>'
+    + '<th style="text-align:right;">Total spend</th>'
+    + '</tr></thead><tbody>' + body + '</tbody></table>' + heldNote;
 }
 
 function _findCountry(name) {
@@ -29813,13 +29874,19 @@ function efvTrackRecordSection() {
 // eFV is the PRIMARY ranking signal. Its value where the player has a pro track record
 // (an eFV grade); consensus FV (fv_close) is the fallback so no-track-record players
 // (recent draftees / IFA, where eFV abstains) still rank sensibly instead of vanishing.
+// Provisional (production-only, no scout corroboration) grades carry real
+// uncertainty vs a graded realized grade, so they get a fixed rank penalty: a
+// provisional X sits BELOW a graded X on the board (ordering WITHIN provisional is
+// preserved). Without this an un-scouted DSL cameo ranked 1:1 with graded prospects
+// of the same number. Pure display; xfv.json / xfv_ungraded.json are unchanged.
+const _PROV_RANK_PENALTY = 4;
 function efvRankValue(p) {
   const x = getEfv(p);
   // MODEL-ALONE board ranking: order by the realized (pure-model) grade -- a direct
   // transform of the model's E[6yr WAR], no consensus blend. Falls back to the
   // quantile-mapped headline grade, then consensus FV.
   if (x && x.xfv_grade_realized != null) return x.xfv_grade_realized;
-  if (x && x.xfv_grade != null) return x.xfv_grade;
+  if (x && x.xfv_grade != null) return (p && p._is_provisional) ? x.xfv_grade - _PROV_RANK_PENALTY : x.xfv_grade;
   return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
 }
 function buildEfvRankMap() {
@@ -32839,10 +32906,20 @@ function makeStarOddsCell(p) {
   // FV tier, shown as a muted second line. The published table is unchanged; this
   // is honest context where the two diverge (mid tiers most).
   const rc = _starRealizedFor(p);
+  // Only HEADLINE the realized "% real" line when the tier has a real sample. Some
+  // resolved tiers rest on single-digit / one-star counts (e.g. pitcher 65+ n=8);
+  // a 12.5% off one star is noise, and showing it as bold "12.5% real" over-claims.
+  // Below the threshold the realized rate stays in the TOOLTIP (with a caveat) but
+  // does not get its own line. A fitted eFV->star overlay was tested and LOST to the
+  // published table out-of-sample for both roles, so published stays the value.
+  const _STAR_REAL_MIN_N = 30;
   let realizedLine = "";
   if (rc && rc.realized != null && rc.n != null) {
-    tip += ` Realized in the resolved cohort: ${(rc.realized * 100).toFixed(1)}% of FV ${rc.tier} ${/^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "")) ? "pitchers" : "hitters"} (n=${rc.n}) reached that bar.`;
-    realizedLine = `<div style="font-size:10px;font-weight:600;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Realized star rate in the resolved cohort for this role and FV tier (n=${rc.n})">${(rc.realized * 100).toFixed(1)}% real</div>`;
+    const _thin = rc.n < _STAR_REAL_MIN_N;
+    tip += ` Realized in the resolved cohort: ${(rc.realized * 100).toFixed(1)}% of FV ${rc.tier} ${/^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "")) ? "pitchers" : "hitters"} (n=${rc.n})${_thin ? ", a thin sample" : ""} reached that bar.`;
+    if (!_thin) {
+      realizedLine = `<div style="font-size:10px;font-weight:600;color:var(--text-tertiary);font-variant-numeric:tabular-nums;" title="Realized star rate in the resolved cohort for this role and FV tier (n=${rc.n})">${(rc.realized * 100).toFixed(1)}% real</div>`;
+    }
   }
   return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);color:${col};" title="${escapeHtml(tip)}"><div style="font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;">${fmtStarOdds(v)}</div>${realizedLine}</div>`;
 }
@@ -32877,7 +32954,7 @@ function makeOptPctCell(p) {
             : v >= 0.2 ? "var(--neon-cyan)"
             : v >= 0 ? "var(--text-primary)"
             : "var(--text-tertiary)";
-  const tip = "OPT%: share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
+  const tip = "PLUS%: share of this grade's value that comes from the chance of upgrading to a better grade before graduating (upgrade-option layer, provisional). Low tiers are option-rich; high grades run low or negative because grade mobility at the top is net downgrade risk.";
   return `<div class="desktop-only" style="align-self:center;text-align:center;font-family:var(--font-mono);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums;color:${col};" title="${escapeHtml(tip)}">${fmtOptPct(v)}</div>`;
 }
 

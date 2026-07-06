@@ -366,3 +366,73 @@ def test_lineup_charts_render():
     assert "bp-depth-card" in html                          # per-team lineup ladders
     assert "Offense+" in html
     assert "Star Bat" in html and "undefined" not in html
+
+
+# ---------------------------------------------------------------------------
+# S-1: Leverage Leaderboards section (realized WPA impact) -- Batters (WPA /
+# pLI / Clutch / WPA-LI) and Starters (per-start WPA), driven via the
+# #section=leverage deep-link, with clickable names + the WPA/pLI explainer.
+# ---------------------------------------------------------------------------
+
+LEVERAGE_SAMPLE = ('{"generated_at":"2026-06-30","season":2026,"as_of":"2026-06-29",'
+                   '"coverage":{"games":1346,"games_total":1356},'
+                   '"batters":['
+                   '{"mlbam":111,"name":"Clutch Cody","team":"NYY","pa":600,"wpa":3.4,"pli":1.05,'
+                   '"clutch":1.20,"wpa_li":2.9,"qualified":true},'
+                   '{"mlbam":222,"name":"Quiet Quinn","team":"BOS","pa":540,"wpa":-0.8,"pli":0.97,'
+                   '"clutch":-0.60,"wpa_li":-0.4,"qualified":true},'
+                   '{"mlbam":333,"name":"Thin Sample","team":"BOS","pa":120,"wpa":0.5,"pli":1.10,'
+                   '"clutch":0.10,"wpa_li":0.4,"qualified":false}],'
+                   '"starters":['
+                   '{"mlbam":911,"name":"Ace Adams","team":"NYY","starts":18,"wpa":2.6,'
+                   '"wpa_per_start":0.144,"wpa_li":1.9,"gs":18,"qualified":true},'
+                   '{"mlbam":922,"name":"Mid Miller","team":"BOS","starts":16,"wpa":-0.5,'
+                   '"wpa_per_start":-0.031,"wpa_li":-0.2,"gs":16,"qualified":true}]}')
+
+
+def _leverage_prelude(hash_: str) -> str:
+    override = f"""
+    var LEVERAGE_SAMPLE={LEVERAGE_SAMPLE};
+    fetch=function(url){{
+      var body = (String(url).indexOf('leverage')>=0) ? LEVERAGE_SAMPLE : SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{
+      teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{"111":{{"key":"clutch_cody","mlbam":111,"name":"Clutch Cody"}}}}}});}}
+    }};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    return _prelude(hash_) + override
+
+
+def _render_leverage(hash_: str) -> str:
+    ctx = MiniRacer()
+    ctx.eval(_leverage_prelude(hash_) + JS)
+    return ctx.eval("__html['mlbstats-leverage-root'] || ''")
+
+
+def test_leverage_batter_board_renders_via_section_hash():
+    html = _render_leverage("#section=leverage")
+    assert "mlbstats-table" in html
+    assert "WPA" in html and "Clutch Cody" in html
+    assert "pLI" in html and "Clutch" in html          # leverage-context columns
+    assert 'data-gl="wpa"' in html                      # the WPA/pLI/Clutch explainer is wired
+    # clickable name: mlbam 111 resolves to the merged card
+    assert 'class="mlbstats-name-link"' in html
+    assert "/projections/#player=clutch_cody" in html
+    # qualified-only default drops the thin-sample bat
+    assert "Thin Sample" not in html
+    assert "undefined" not in html
+
+
+def test_leverage_starter_board_renders_via_view_hash():
+    html = _render_leverage("#section=leverage&lview=starters")
+    assert "mlbstats-table" in html
+    assert "WPA/start" in html                           # the starter-only column
+    assert "Ace Adams" in html and "Mid Miller" in html
+    assert "GS" in html
+    assert "undefined" not in html

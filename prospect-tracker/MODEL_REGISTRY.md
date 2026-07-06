@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-05**. `validate()` at generation time: **clean**.
 
-**73 models.** Verdicts: validated: 21, provisional: 36, unvalidated: 4, deprecated: 12.
+**74 models.** Verdicts: validated: 21, provisional: 37, unvalidated: 4, deprecated: 12.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -83,6 +83,7 @@ stamped as of **2026-07-05**. `validate()` at generation time: **clean**.
 | `grade_normalization` | Live consensus FV (consensus.build_timeseries normalize=A... | cross-source scale bias: each source's grade distribution mapped onto FanGraphs FV, and the normalized consensus vs the raw con... | paired (same-player overlap) quantile map of each source onto FanGraphs FV, p... | raw per-source consensus (no scale normalization) | median mapping shift per source (material at >= 2 FV); consensus before/after... | **provisional** | `data/grade_normalization_eval.json` | 0 | no |
 | `xrem_plus` | /mlbstats/ Bullpen Leaderboards, xREM+ + Luck columns (Sa... | a reliever's DESERVED run prevention: the REM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) ins... | xrem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower... | n/a - a DESCRIPTIVE companion to the FIP-based REM+, not a predictive replace... | descriptive; the REM+ skill core it companions is gated by rem_plus_eval / le... | **provisional** | - | - | no |
 | `xsem_plus` | /mlbstats/ Starter Leaderboards, xSEM+ + Luck columns (Sa... | a starter's DESERVED run prevention: the SEM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) inst... | xsem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower... | n/a - a DESCRIPTIVE companion to the FIP-based SEM+, not a predictive replace... | descriptive; the SEM+ skill core it companions is gated by sem_plus_eval | **provisional** | - | - | no |
+| `leverage_board` | /mlbstats/ Leverage Leaderboards | realized in-game leverage IMPACT: batters (WPA, average Leverage Index faced pLI, Clutch, context-neutral WPA/LI) and starters... | per-play win-probability-added credited to the involved player and sign-flipp... | n/a - a DESCRIPTIVE realized-impact board (RIV+ / xREM+ precedent), not a pre... | descriptive; no forward gate by design (realized WPA is an outcome, not a for... | **provisional** | - | - | no |
 
 Stored problems at last refresh: none.
 

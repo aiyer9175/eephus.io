@@ -176,7 +176,11 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     keys, _mono = _feature_spec(side)
     is_pit = side == "pit"
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit]
+    # Match the GOVERNANCE eval pool (efv_model.run): drop never-MLB recent-bust rows
+    # so the shipped model is fit on the same population the eval measures. Rank-neutral
+    # (those rows are outside every forward-chain fold), just removes fringe fit noise.
+    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
+            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
     data = _prep(pool, "target_censored", side)
     by_key = {r["player_key"]: r for r in pool}
 
@@ -388,10 +392,13 @@ def score_history(persist: bool = True) -> dict:
             # Pure-model (realized) grade at this snapshot -- the same realized_implied_fv
             # transform the headline now uses, so the eFV-history chart is on ONE scale
             # with the current grade (no quantile-remapped discontinuity at the live point).
-            # Same 6-season window as the headline (see run_live) so the history line and
-            # the current grade agree at the top of the scale.
+            # Same 6-season window AND the same age/position tilt as the headline (run_live
+            # lines 205/482) so the history line traces the badge; without age/position the
+            # inversion biased the line ~1-2 grades LOW at the top (elite prospects most).
             grade = vf.realized_implied_fv(model_war, side == "pit",
-                                           exposure_seasons=TARGET_SEASONS)
+                                           exposure_seasons=TARGET_SEASONS,
+                                           age=_age_at(rec.get("birth_date"), yr),
+                                           position=rec.get("position"))
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
@@ -411,7 +418,11 @@ def _fit_production(side: str):
     keys, _mono = _feature_spec(side)
     is_pit = side == "pit"
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit]
+    # Match the GOVERNANCE eval pool (efv_model.run): drop never-MLB recent-bust rows
+    # so the shipped model is fit on the same population the eval measures. Rank-neutral
+    # (those rows are outside every forward-chain fold), just removes fringe fit noise.
+    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
+            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
     data = _prep(pool, "target_censored", side)
     ridge = _fit_ridge(data, keys)
     raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}

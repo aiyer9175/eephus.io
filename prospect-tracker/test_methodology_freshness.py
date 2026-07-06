@@ -143,6 +143,7 @@ MODEL_GLOSSARY = {
     "xhem_plus": ["xhem_plus"],
     "xrem_plus": ["xrem_plus"],
     "xsem_plus": ["xsem_plus"],
+    "leverage_board": ["wpa", "clutch", "pli"],
 }
 
 

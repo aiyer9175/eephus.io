@@ -847,7 +847,13 @@ def _fv_label(p: dict) -> str:
     # snapping / '+' upside), else ceil(fv_close) (consensus FV still rounds up).
     g = _EFV_GRADES.get(p.get("player_key"))
     if g is not None:
-        return str(int(round(g)))   # eFV rounds to NEAREST (true-model, unbiased)
+        # eFV rounds to NEAREST, HALF-UP -- matching the JS efvGradeDisplay
+        # (Math.round) that the PROSPX board + player card + projections all use.
+        # Python's built-in round() is banker's (half-to-even), so round(64.5)=64
+        # while Math.round(64.5)=65 -> the homepage disagreed with the board on any
+        # x.5 grade (e.g. franklin_arias 64.5). math.floor(g+0.5) is half-up for the
+        # always-positive 20-80 grade range.
+        return str(int(math.floor(g + 0.5)))
     pts = p.get("points") or []
     if pts and pts[-1].get("consensus_fv_label") is not None:
         return str(pts[-1]["consensus_fv_label"])
@@ -2364,13 +2370,15 @@ def build_mlbstats() -> str:
         '<span class="section-sub">League-wide MLB stat leaderboards. Bullpen Leaderboards - '
         'REM+ reliever skill, RIV+ impact, team Bullpen+ quality, and bullpen charts; Starter '
         'Leaderboards - SEM+ starter run-prevention skill, team Rotation+, and rotation charts; and '
-        'Hitter Leaderboards - HEM+ offensive-rate skill, team Offense+, and lineup charts, computed '
+        'Hitter Leaderboards - HEM+ offensive-rate skill, team Offense+, and lineup charts; and '
+        'Leverage Leaderboards - realized in-game WPA impact for batters and starters, computed '
         'from the MLB season.</span></div>'
         # Section nav (built as a tablist; sections join here as they ship).
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="MLB Stats sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-mlbsection="bullpen" role="tab" aria-selected="true">Bullpen Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="starters" role="tab" aria-selected="false">Starter Leaderboards</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="hitters" role="tab" aria-selected="false">Hitter Leaderboards</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-mlbsection="leverage" role="tab" aria-selected="false">Leverage Leaderboards</button>'
         '</div>'
         '<div id="mlbstats-section-bullpen" class="mlbstats-section">'
         '<div id="mlbstats-banner"></div>'
@@ -2381,6 +2389,9 @@ def build_mlbstats() -> str:
         '</div>'
         '<div id="mlbstats-section-hitters" class="mlbstats-section" hidden>'
         '<div id="mlbstats-hitters-root"></div>'
+        '</div>'
+        '<div id="mlbstats-section-leverage" class="mlbstats-section" hidden>'
+        '<div id="mlbstats-leverage-root"></div>'
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'

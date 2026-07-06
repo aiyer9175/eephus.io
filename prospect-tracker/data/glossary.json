@@ -5222,8 +5222,8 @@
     "win probability added"
    ],
    "priority": 21,
-   "definition": "The total change in a pitcher's team win probability across every play he was responsible for. A counting stat of in-the-moment impact, inflated by the leverage of the spots he was used in.",
-   "methodology": "Summed from the MLB win-probability feed: each play's change in the pitcher's team win expectancy, credited to the pitcher on the mound. Because a run prevented in a tie game in the ninth moves win probability far more than the same out in a blowout, WPA rewards high-leverage usage as much as performance.",
+   "definition": "The total change in a player's team win probability across every play he was involved in -- credited to the BATTER on offense and to the PITCHER on defense (opposite signs on the same play). A counting stat of in-the-moment impact, inflated by the leverage of the spots the player was in.",
+   "methodology": "Summed from the MLB win-probability feed: each play's change in the pitcher's team win expectancy, credited to the pitcher on the mound. Because a run prevented in a tie game in the ninth moves win probability far more than the same out in a blowout, WPA rewards high-leverage usage as much as performance. Batter WPA is the negation of the pitcher's on the same play (the batting team gains what the fielding team loses), summed over the player's plate appearances; per-play home-team win-probability-added, sign-flipped to the involved player's team.",
    "seeAlso": [
     "wpa_li",
     "gmli"
@@ -5787,12 +5787,13 @@
   },
   {
    "id": "opt_pct",
-   "term": "OPT% (Upgrade Option)",
+   "term": "PLUS% (Upgrade Option)",
    "category": "custom-index",
    "module": [
     "prospx"
    ],
    "aliases": [
+    "PLUS%",
     "OPT%",
     "Upgrade option",
     "Option share",
@@ -5800,7 +5801,7 @@
    ],
    "priority": 40,
    "definition": "The share of a prospect's grade value that comes from the chance of UPGRADING to a better grade before graduating, rather than from the most likely outcome at today's grade. A grade is a call option on development: a low FV is worth more than its modal result because it can still improve before it graduates.",
-   "methodology": "The grade is modeled as a role-split absorbing Markov chain over FV tiers 35 to 70 plus graduated and out, with an annual step estimated from our dated grade history (FanGraphs and MLB Pipeline pooled to one grade per player per year, Laplace-smoothed); graduation is a real MLB debut and out is a washed-out player, and a still-active player's last observed year is censored so no transition is fabricated. total is the expected payoff under the full chain (the grade can move), intrinsic is the payoff if the grade were frozen at today's value, option is total minus intrinsic, and OPT% is option divided by total. Payoff is the clemens_2026 table value of the grade a player graduates from. Low tiers are option-rich (a 45 FV hitter runs about 60 percent); high grades run low or NEGATIVE because grade mobility at the top is net-downgrade risk the frozen view ignores and the top-tier samples are thin. Provisional and descriptive: negatives are shown honestly and it does not change any surplus.",
+   "methodology": "The grade is modeled as a role-split absorbing Markov chain over FV tiers 35 to 70 plus graduated and out, with an annual step estimated from our dated grade history (FanGraphs and MLB Pipeline pooled to one grade per player per year, Laplace-smoothed); graduation is a real MLB debut and out is a washed-out player, and a still-active player's last observed year is censored so no transition is fabricated. total is the expected payoff under the full chain (the grade can move), intrinsic is the payoff if the grade were frozen at today's value, option is total minus intrinsic, and PLUS% is option divided by total. Payoff is the clemens_2026 table value of the grade a player graduates from. Low tiers are option-rich (a 45 FV hitter runs about 60 percent); high grades run low or NEGATIVE because grade mobility at the top is net-downgrade risk the frozen view ignores and the top-tier samples are thin. Provisional and descriptive: negatives are shown honestly and it does not change any surplus.",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io.",
    "shelf": "ark",
    "seeAlso": [
@@ -5892,6 +5893,100 @@
    ],
    "shelf": "ark",
    "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
+  },
+  {
+   "id": "ifa_dollars_per_fv",
+   "term": "$/FV signed (IFA efficiency)",
+   "category": "custom-index",
+   "module": [
+    "prospx"
+   ],
+   "aliases": [
+    "$/FV pt",
+    "IFA efficiency",
+    "dollars per FV signed",
+    "signing efficiency"
+   ],
+   "priority": 41,
+   "definition": "An organization's international-amateur spending efficiency: bonus dollars committed per projected FV point, over the graded (tracked) signees in a class. Lower is more efficient. It is a PROJECTED-FV spending proxy, not realized value, because recent J2 classes have no outcomes yet.",
+   "methodology": "Per org, over the graded (tracked) signees only: numerator = sum of signing bonuses on those signees (covered dollars), denominator = sum of their current projected FV points (raw FV, matching the fv_per_m_pool / surplus_per_fv_pt family, no floor subtracted); $/FV pt = covered dollars / FV points. Only tracked signees carry a projected FV, so the ratio is computed over that covered subset and the Coverage column discloses the graded subset's share of the org's total class spending. Orgs with fewer than 3 graded signees in view are held out (listed, not ranked) because a one or two signee ratio is noise. This is descriptive and PROJECTED: it reads how efficiently an org converted bonus dollars into scouted grade, NOT realized MLB value, since recent classes have not resolved. Provisional; it changes no surplus number.",
+   "seeAlso": [
+    "fv_per_m_pool",
+    "surplus_per_fv_pt",
+    "dollars_per_fv"
+   ],
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. IFA signing bonuses from Spotrac.",
+   "shelf": "ark"
+  },
+  {
+   "id": "roster_crunch",
+   "term": "Crunch Index",
+   "category": "custom-index",
+   "module": [
+    "prospx",
+    "platform"
+   ],
+   "aliases": [
+    "Crunch Index",
+    "roster crunch",
+    "Rule 5 exposure",
+    "40-man crunch"
+   ],
+   "priority": 42,
+   "definition": "A roster-decision exposure read for the trade board: whether a player is Rule 5 must-protect, on the 40-man, and out of option years. It flags players an org may be forced to move or protect, which shapes trade leverage. Descriptive and deterministic, not a predictive model.",
+   "methodology": "Built from the player's roster status: on_40_man, option years used and left (3 to start), Rule 5 exposure (not on the 40-man and at least the exposure-year threshold since signing, so protect-by-November or lose for about $100k), and service phase. The 0-100 Crunch score is a simple additive: +55 Rule 5 must-protect or in the November urgency window, +30 on the 40-man and out of options (waiver-exposed to option), +12 one option left, +10 for occupying a scarce 40-man slot. The per-org Crunch summary counts must-protect and out-of-options players among that org's rostered / MLB board players only, which is disclosed as NOT a full 40-man census. Descriptive: there is no outcome to backtest, so no predictive gate; the inputs are exact roster facts, not a forecast.",
+   "seeAlso": [
+    "rule_5_draft",
+    "opt_pct",
+    "trade_machine"
+   ],
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Roster status from the MLB Stats API.",
+   "shelf": "ark"
+  },
+  {
+   "id": "pli",
+   "term": "pLI (average Leverage Index)",
+   "category": "industry-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "pLI",
+    "average leverage index",
+    "leverage faced"
+   ],
+   "priority": 30,
+   "definition": "The average Leverage Index of the situations a player was involved in -- how high-stakes his plate appearances (batters) or entries (relievers) were on average. 1.0 is a neutral spot; above 1.0 means he saw more pressure than average.",
+   "methodology": "Leverage Index (Tom Tango, The Book) measures how much a single play can swing win probability relative to an average situation; pLI averages that index over all the plays a player was in. For batters we average the LI across every plate appearance from the MLB StatsAPI winProbability feed. It contextualizes WPA: a high WPA at a high pLI is expected, while a high WPA at a low pLI is genuine clutch. Descriptive, not predictive.",
+   "seeAlso": [
+    "wpa",
+    "leverage_index",
+    "clutch"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric; average Leverage Index faced (Tom Tango, The Book), computed here from the MLB StatsAPI winProbability feed."
+  },
+  {
+   "id": "clutch",
+   "term": "Clutch (timing above a context-neutral base)",
+   "category": "industry-stat",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "Clutch",
+    "clutch score"
+   ],
+   "priority": 30,
+   "definition": "How much better (or worse) a player performed in high-leverage spots than his own overall rate would predict. Positive means he added more win probability when it mattered than a context-neutral version of himself would have; it is a timing measure, not a skill.",
+   "methodology": "FanGraphs Clutch = WPA/pLI - WPA/LI. WPA/pLI is the player's win-probability added rescaled by his average leverage faced (what a context-neutral player at his rate would add), and WPA/LI is his actual context-neutral production; the difference isolates whether his value clustered in high-leverage spots. Computed here from the MLB StatsAPI winProbability feed. Descriptive and famously unstable year to year -- a realized timing read, not a projection.",
+   "seeAlso": [
+    "wpa",
+    "pli",
+    "wpa_li"
+   ],
+   "shelf": "industry",
+   "origin": "Industry metric (FanGraphs), from the win-expectancy framework (Tom Tango). Clutch = WPA/pLI - WPA/LI."
   }
  ]
 }

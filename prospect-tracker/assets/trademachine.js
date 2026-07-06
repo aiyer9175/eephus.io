@@ -448,6 +448,22 @@ function _tbWorryBadge(w) {
   const col = w.score > 0.5 ? "var(--neon-red)" : "var(--neon-amber)";
   return `<span style="font-size:10px;color:${col}" title="Worriedness ${(w.score*100).toFixed(0)}% - ${label} signal">⚠ ${label}</span>`;
 }
+// § CRUNCH chip: flags roster-decision exposure (Rule 5 must-protect, out of
+// options on the 40-man). Reads the compact crunch sub-dict on each board row.
+function _tbCrunchChip(c) {
+  if (!c) return "";
+  const bits = [];
+  if (c.rule5_exposed) bits.push("R5");
+  if (c.on_40_man && c.options_left === 0) bits.push("0-opt");
+  else if (c.on_40_man && c.options_left === 1) bits.push("1-opt");
+  if (!bits.length) return "";
+  const sc = c.score || 0;
+  const col = sc >= 55 ? "var(--neon-red)" : sc >= 30 ? "var(--neon-amber)" : "var(--text-secondary)";
+  const tip = `Roster crunch ${sc}: ${c.rule5_exposed ? "Rule 5 exposed this November; " : ""}`
+    + `${c.on_40_man ? "on the 40-man" : "off the 40-man"} · ${c.options_left} option${c.options_left === 1 ? "" : "s"} left`
+    + `${c.service_phase && c.service_phase !== "none" ? " · " + escapeHtml(c.service_phase) : ""}`;
+  return ` <span class="chip" style="padding:1px 5px;font-size:9px;color:${col};border-color:${col};" title="${tip}">${bits.join(" ")}</span>`;
+}
 function _tbCtrlBadge(p) {
   const ctrl   = p.remaining_control_years;
   const cc     = p.contract || {};
@@ -591,7 +607,19 @@ function _renderTBRows() {
   const pagedRows = pageSlice(rows, curPage, pageSize);
   const topPager = renderPaginationStrip(curPage, rows.length, pageSize, "tradeboard");
 
+  // Per-org roster-crunch summary (only when an org is selected). Counts among
+  // this org's rostered / MLB board players; disclosed as not a full 40-man census.
+  let _crunchBanner = "";
+  if (_tbOrg !== "all") {
+    const mustProtect = rows.filter(p => p.crunch && p.crunch.rule5_exposed).length;
+    const squeezed    = rows.filter(p => p.crunch && p.crunch.on_40_man && p.crunch.options_left === 0).length;
+    if (mustProtect || squeezed) {
+      _crunchBanner = `<div style="margin:2px 0 6px;color:var(--text-secondary);font-size:11px;" title="Roster-decision exposure among this org's rostered / MLB board players (not a full 40-man census, and not a predictive model)."><strong>${escapeHtml(_tbOrg)} roster crunch:</strong> ${mustProtect} Rule 5 must-protect · ${squeezed} out-of-options on the 40-man</div>`;
+    }
+  }
+
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
+  ${_crunchBanner}
   ${topPager}
   <table class="stats-table tm-board-table">
   <thead><tr>
@@ -640,6 +668,7 @@ function _renderTBRows() {
     let signals = `<span style="color:${statusCol};font-size:10px;">${statusLbl}</span>`;
     if (flash.is_bimodal) signals += ` <span style="color:var(--card-gold);font-size:10px;" title="Ceiling player (p_click=${flash.p_click})">↑</span>`;
     if (injD > 0.05)      signals += ` <span style="color:var(--neon-red);font-size:10px;" title="Injury discount ${(injD*100).toFixed(0)}%">⚕</span>`;
+    signals += _tbCrunchChip(p.crunch);
     // GRPO breakout badge - a within-cohort breakout SIGNAL (display only; it no longer
     // shifts the surplus, which is now the platform eFV/Projections value). Click -> group.
     const grpoSc = p.grpo_breakout_score;

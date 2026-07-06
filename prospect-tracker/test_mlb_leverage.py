@@ -85,3 +85,60 @@ def test_plays_of_handles_list_and_dict():
     assert ml._plays_of([{"a": 1}]) == [{"a": 1}]
     assert ml._plays_of({"winProbability": [{"a": 1}]}) == [{"a": 1}]
     assert ml._plays_of(None) == []
+
+
+# ---- batter + starter folds (S-1 Leverage Leaderboards) --------------------- #
+def _bplay(bid, half, inning, li, added, name="B"):
+    # one PA: a pitcher (id 99) plus the batter under test. halfInning fixes who
+    # is home -- batter bats in the half opposite the fielding (pitching) team.
+    return {"about": {"halfInning": half, "inning": inning},
+            "matchup": {"pitcher": {"id": 99, "fullName": "P"},
+                        "batter": {"id": bid, "fullName": name}},
+            "leverageIndex": li, "homeTeamWinProbabilityAdded": added}
+
+
+def test_batter_fold_wpa_sign_pli_and_clutch():
+    # 900 is an AWAY batter (top half): his WPA is the negation of the home WPA
+    # the play records. 901 is a HOME batter (bottom half): same home WPA number
+    # flips the OTHER way -- the sign-mirror the fold has to get right.
+    games = [(1, [
+        _bplay(900, "top", 8, 2.0, 4.0, "Away"),      # home WPA +0.04 -> batter -0.04
+        _bplay(900, "top", 9, 1.0, -6.0, "Away"),     # home WPA -0.06 -> batter +0.06
+        _bplay(901, "bottom", 9, 1.8, 9.0, "Home"),   # home WPA +0.09 -> batter +0.09
+    ])]
+    out = ml.accumulate_batters(games)
+
+    a = out[900]
+    assert a["pa"] == 2
+    assert a["wpa"] == 0.02                            # -0.04 + 0.06
+    assert a["pli"] == 1.5                             # mean LI faced (2.0, 1.0)
+    assert a["wpa_li"] == 0.04                         # -0.04/2.0 + 0.06/1.0
+    # Clutch = WPA/pLI - WPA/LI = 0.02/1.5 - 0.04
+    assert a["clutch"] == -0.027
+
+    h = out[901]
+    assert h["wpa"] == 0.09                            # home batter: opposite sign of an away batter
+    assert h["pli"] == 1.8
+    assert h["clutch"] == 0.0                          # 0.09/1.8 - 0.09/1.8
+
+
+def test_starter_fold_keeps_only_starts_and_averages_per_start():
+    # 500 STARTS game1 + game3 (first appearance in the 1st inning) and RELIEVES
+    # game2 (enters inning 8). Only the two starts count; the relief game is the
+    # reliever board's, not this one -- the mirror of the reliever exclusion test.
+    game1 = [
+        _play(500, "top", 1, 0.9, 8.0, "Ace"),        # start: home pitcher, +0.08
+        _play(500, "top", 2, 0.8, 2.0, "Ace"),        # +0.02  (wpa_li 0.08/0.9 + 0.02/0.8)
+    ]
+    game2 = [
+        _play(500, "top", 8, 2.2, 3.0, "Ace"),        # relief entry -> excluded from starts
+    ]
+    game3 = [
+        _play(500, "bottom", 1, 1.0, 5.0, "Ace"),     # start: away pitcher, home WPA +0.05 -> -0.05
+    ]
+    out = ml.accumulate_starters([(1, game1), (2, game2), (3, game3)])
+    a = out[500]
+    assert a["starts"] == 2                            # game2 (relief) excluded
+    assert a["wpa"] == 0.05                            # 0.10 + (-0.05)
+    assert a["wpa_per_start"] == 0.025                 # 0.05 / 2
+    assert a["wpa_li"] == 0.064                        # (0.08/0.9 + 0.02/0.8) + (-0.05/1.0)

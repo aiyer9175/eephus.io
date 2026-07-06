@@ -619,7 +619,7 @@
     var h = location.hash || "";
     // Top-level section deep-link (#section=bullpen|starters|hitters) + the
     // per-section view (#view= bullpen, #sview= starters).
-    var s = /section=(bullpen|starters|hitters)/.exec(h);
+    var s = /section=(bullpen|starters|hitters|leverage)/.exec(h);
     if (s) section = s[1];
     var m = /view=(relievers|teams|depth)/.exec(h);
     if (m) view = m[1];
@@ -627,6 +627,8 @@
     if (sv) starterView = sv[1];
     var hv = /hview=(hitters|teams|charts)/.exec(h);
     if (hv) hitterView = hv[1];
+    var lv = /lview=(batters|starters)/.exec(h);
+    if (lv) leverageView = lv[1];
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error
@@ -1476,6 +1478,202 @@
     loadHitters();
   }
 
+  // ===========================================================================
+  // Section 4: Leverage Leaderboards (S-1) -- realized in-game leverage IMPACT.
+  // ---------------------------------------------------------------------------
+  // Self-computed from the MLB StatsAPI winProbability feed (mlb_leverage), the
+  // two sides the reliever board doesn't cover: BATTERS (WPA, average leverage
+  // faced pLI, Clutch, context-neutral WPA/LI) and STARTERS (per-start WPA,
+  // WPA/LI). A DESCRIPTIVE realized-value board (the RIV+ / xREM+ precedent), not
+  // a predictive model -- so no forward scorecard. Renders into
+  // #mlbstats-leverage-root; reuses every shared helper.
+  // ===========================================================================
+  var LEVERAGE_URL = "/data/leverage_leaderboards.json";
+  var leverageData = null;
+  var leverageErr = false;
+  var leverageInit = false;
+  var leverageView = "batters";                 // batters | starters
+  var leverageBatSort = { key: "wpa", asc: false };
+  var leverageStarterSort = { key: "wpa", asc: false };
+  var leverageQuery = "";
+  var leverageQualifiedOnly = true;
+
+  // Signed, tabular WPA-family cell: positive (added win probability) reads up,
+  // negative reads down, a neutral band stays quiet.
+  function levSignedCell(v, digits, band) {
+    var n = num(v);
+    if (n == null) return "-";
+    var d = (digits == null) ? 2 : digits;
+    var b = band || 0;
+    var col = n > b ? "var(--up)" : n < -b ? "var(--down)" : "var(--text-tertiary)";
+    return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">'
+      + (n > 0 ? "+" : "") + n.toFixed(d) + "</span>";
+  }
+
+  // Skill/impact core first (WPA), then the leverage context (pLI, Clutch,
+  // context-neutral WPA/LI) and the volume column.
+  var BAT_LEV_COLS = [
+    { key: "name", label: "Batter", term: null, sortable: true, kind: "name" },
+    { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
+      title: "Win Probability Added (batter): total win probability the hitter's plate appearances swung his team's way.",
+      cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
+    { key: "pli", label: "pLI", term: "pli", num: true, desc: true,
+      title: "Average Leverage Index faced (1.0 = neutral). How high-stakes his plate appearances were on average.",
+      cell: function (r) { return r.pli == null ? "-" : f2(r.pli); } },
+    { key: "clutch", label: "Clutch", term: "clutch", num: true, desc: true,
+      title: "WPA/pLI minus WPA/LI: how much more (or less) win probability he added in high-leverage spots than his own rate predicts. A timing read, not a skill.",
+      cell: function (r) { return levSignedCell(r.clutch, 2, 0.5); } },
+    { key: "wpa_li", label: "WPA/LI", term: "wpa_li", num: true, desc: true,
+      title: "Context-neutral WPA: his win-probability production stripped of the leverage of the spots he happened to be in.",
+      cell: function (r) { return levSignedCell(r.wpa_li, 2, 0); } },
+    { key: "pa", label: "PA", fmt: fInt, num: true, title: "Plate appearances (context)" },
+  ];
+
+  var STARTER_LEV_COLS = [
+    { key: "name", label: "Starter", term: null, sortable: true, kind: "name" },
+    { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
+      title: "Win Probability Added (starter): total win probability his starts swung his team's way.",
+      cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
+    { key: "wpa_per_start", label: "WPA/start", num: true, desc: true,
+      title: "WPA per game started -- his average per-outing win-probability impact.",
+      cell: function (r) { return levSignedCell(r.wpa_per_start, 3, 0); } },
+    { key: "wpa_li", label: "WPA/LI", term: "wpa_li", num: true, desc: true,
+      title: "Context-neutral WPA: his production with the leverage of his spots removed.",
+      cell: function (r) { return levSignedCell(r.wpa_li, 2, 0); } },
+    { key: "starts", label: "GS", fmt: fInt, num: true, title: "Games started (context)" },
+  ];
+
+  function levCols() { return leverageView === "starters" ? STARTER_LEV_COLS : BAT_LEV_COLS; }
+  function levSort() { return leverageView === "starters" ? leverageStarterSort : leverageBatSort; }
+
+  function levExplainer() {
+    return explainer("wpa", gloss("WPA", "wpa")
+      + " (Win Probability Added) is a realized, in-the-moment impact tally: every play shifts each team's"
+      + " win probability, and a batter is credited with his team's swing (the pitcher gets the mirror image)."
+      + " " + gloss("pLI", "pli") + " is the average leverage of the spots he was in (1.0 = neutral), and "
+      + gloss("Clutch", "clutch") + " asks whether his value clustered when it mattered (WPA/pLI minus WPA/LI)."
+      + " These are descriptive outcome measures, self-computed from the MLB win-probability feed -- not a"
+      + " projection.");
+  }
+
+  function filteredLeverage() {
+    var rows = (leverageData && (leverageView === "starters" ? leverageData.starters : leverageData.batters)) || [];
+    var q = leverageQuery.trim().toLowerCase();
+    return rows.filter(function (r) {
+      if (leverageQualifiedOnly && r.qualified === false) return false;
+      if (!q) return true;
+      return (String(r.name || "").toLowerCase().indexOf(q) >= 0
+        || String(r.team || "").toLowerCase().indexOf(q) >= 0);
+    });
+  }
+
+  function leverageTabBar() {
+    var tabs = [["batters", "Batters"], ["starters", "Starters"]];
+    return '<div class="mlbstats-tabs" role="tablist">' + tabs.map(function (t) {
+      var active = (t[0] === leverageView) ? " active" : "";
+      return '<button type="button" class="mlbstats-tab' + active + '" data-leverageview="' + t[0]
+        + '" role="tab" aria-selected="' + (t[0] === leverageView) + '">' + t[1] + "</button>";
+    }).join("") + "</div>";
+  }
+  function leverageControls() {
+    return '<div class="mlbstats-bar">'
+      + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
+      + '<input type="checkbox" id="mlbstats-leverage-qual"' + (leverageQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + '<input class="mlbstats-search" type="search" id="mlbstats-leverage-q" placeholder="Search player or team" value="' + esc(leverageQuery) + '">'
+      + "</div>";
+  }
+  function leverageCoverage() {
+    var cov = (leverageData && leverageData.coverage) || null;
+    if (!cov || cov.games == null) return "";
+    return '<span class="proj-dim"> &middot; ' + esc(cov.games)
+      + (cov.games_total != null ? " / " + esc(cov.games_total) : "") + " games walked</span>";
+  }
+
+  function renderLeverageBoard() {
+    var cols = levCols(), sort = levSort();
+    var rows = sortRows(filteredLeverage(), cols, sort);
+    if (!rows.length) return '<div class="mlbstats-empty">No players match the current filters.</div>';
+    var isStart = (leverageView === "starters");
+    var note = '<div class="mlbstats-note">' + rows.length + (isStart ? " starters. " : " batters. ")
+      + gloss("WPA", "wpa") + " is realized in-game impact; " + gloss("pLI", "pli")
+      + " and " + gloss("Clutch", "clutch") + " read the leverage of the spots. Descriptive outcome value, "
+      + "not a forecast." + leverageCoverage() + "</div>";
+    return note + '<div class="mlbstats-scroll">' + renderTable(rows, cols, sort) + "</div>";
+  }
+
+  function renderLeverage() {
+    var root = document.getElementById("mlbstats-leverage-root");
+    if (!root) return;
+    if (!leverageData) {
+      root.innerHTML = leverageErr
+        ? '<div class="mlbstats-empty mlbstats-load-error" role="alert">Data failed to load. Refresh to retry; '
+          + 'if it persists the nightly build is mid-run. '
+          + '<button type="button" class="chip" id="mlbstats-leverage-retry">Retry</button></div>'
+        : '<div class="mlbstats-empty">Leverage Leaderboards are being computed from the MLB win-probability '
+          + "feed. Check back shortly.</div>";
+      var retry = document.getElementById("mlbstats-leverage-retry");
+      if (retry) retry.addEventListener("click", function () {
+        root.innerHTML = '<div class="mlbstats-empty">Loading&hellip;</div>';
+        loadLeverage();
+      });
+      return;
+    }
+    root.innerHTML = leverageTabBar() + leverageControls() + levExplainer() + renderLeverageBoard();
+    bindLeverageEvents(root);
+    wireGlossary(root);
+  }
+
+  function renderLeverageInPlace() {
+    var root = document.getElementById("mlbstats-leverage-root");
+    if (!root) return;
+    root.innerHTML = leverageTabBar() + leverageControls() + levExplainer() + renderLeverageBoard();
+    var q = root.querySelector("#mlbstats-leverage-q");
+    if (q) { q.focus(); q.setSelectionRange(q.value.length, q.value.length); }
+    bindLeverageEvents(root);
+    wireGlossary(root);
+  }
+
+  function bindLeverageEvents(root) {
+    bindCollapse(root);
+    root.querySelectorAll("[data-leverageview]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        leverageView = b.getAttribute("data-leverageview");
+        renderLeverage();
+      });
+    });
+    var q = root.querySelector("#mlbstats-leverage-q");
+    if (q) q.addEventListener("input", function () { leverageQuery = q.value; renderLeverageInPlace(); });
+    var qual = root.querySelector("#mlbstats-leverage-qual");
+    if (qual) qual.addEventListener("change", function () { leverageQualifiedOnly = qual.checked; renderLeverageInPlace(); });
+    root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
+      th.addEventListener("click", function () {
+        var key = th.getAttribute("data-col");
+        var cols = levCols();
+        var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
+        if (!col || (!col.num && col.kind !== "name")) return;
+        var sort = levSort();
+        if (sort.key === key) sort.asc = !sort.asc;
+        else { sort.key = key; sort.asc = !!col.asc; }
+        renderLeverage();
+      });
+    });
+  }
+
+  function loadLeverage() {
+    leverageErr = false;
+    fetch(LEVERAGE_URL, { cache: "no-cache" })
+      .then(function (r) { if (!r.ok) throw new Error("HTTP " + r.status); return r.json(); })
+      .then(function (j) { leverageData = j; renderLeverage(); })
+      .catch(function () { leverageData = null; leverageErr = true; renderLeverage(); });
+  }
+
+  function initLeverage() {
+    if (leverageInit) { renderLeverage(); return; }
+    leverageInit = true;
+    renderLeverage();
+    loadLeverage();
+  }
+
   // ---- top-level section switching ------------------------------------------
   function showSection(name) {
     section = name;
@@ -1485,13 +1683,14 @@
       b.setAttribute("aria-selected", on ? "true" : "false");
     });
     var sects = { bullpen: "mlbstats-section-bullpen", starters: "mlbstats-section-starters",
-                  hitters: "mlbstats-section-hitters" };
+                  hitters: "mlbstats-section-hitters", leverage: "mlbstats-section-leverage" };
     Object.keys(sects).forEach(function (k) {
       var el = document.getElementById(sects[k]);
       if (el) { if (k === name) el.removeAttribute("hidden"); else el.setAttribute("hidden", "hidden"); }
     });
     if (name === "starters") initStarters();
     else if (name === "hitters") initHitters();
+    else if (name === "leverage") initLeverage();
   }
   function bindSectionNav() {
     document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
@@ -1512,6 +1711,7 @@
         LINKS = L || null;
         if (section === "starters") { if (starterInit) renderStarters(); }
         else if (section === "hitters") { if (typeof hitterInit !== "undefined" && hitterInit) renderHitters(); }
+        else if (section === "leverage") { if (typeof leverageInit !== "undefined" && leverageInit) renderLeverage(); }
         else render();
       });
     }

@@ -336,33 +336,37 @@ def _prospect_rows(dpw: float) -> list[dict]:
     out: list[dict] = []
     for p in players:
         cons_fv = p.get("fv_close")
-        # eFV sweep: price the prospect projection on the eFV grade - rank-mapped onto
-        # the consensus 20-80 scale, so it carries eFV's OOS-better ordering (Spearman
-        # 0.349 vs consensus 0.285) while preserving the aggregate calibration (active
-        # pool total WAR within 0.2% of consensus). Fall back to consensus FV where eFV
-        # abstains (recent draftees / int'l signs with no pro track record yet).
-        # Prefer xfv_grade_realized (the PROSPX board's efvGradeDisplay precedence)
-        # so /projections/ and PROSPX read the SAME eFV field; identical to
-        # xfv_grade for graded players today, but keeps the two in lock-step.
+        # DISPLAY grade: the realized eFV headline (matches the PROSPX board's
+        # efvGradeDisplay precedence: xfv_grade_realized, then xfv_grade), so the two
+        # surfaces show the SAME eFV number.
         _rec = xfv_by.get(p.get("player_key")) or {}
         _xg = _rec.get("xfv_grade_realized")
         _xg = _rec.get("xfv_grade") if _xg is None else _xg
         fv = _xg if _xg is not None else cons_fv
         fv_source = "xfv" if _xg is not None else "consensus"
+        # PRICING grade: the FV>=45 gate + p_bucket / WAR-path / surplus / prime curves
+        # are all calibrated on the CONSENSUS 20-80 scale, but the realized headline grade
+        # sits ~9 pts below consensus in the mid-band and floors a large pile at 20 -- so
+        # pricing the WAR path on it inflated the projected prospect pool ~+60% vs
+        # consensus. Price on the consensus-scale grade (xfv_grade_quantile, rank-order
+        # IDENTICAL to realized so the eFV ordering edge is kept), mirroring fa_fit.py's
+        # blocker-FV rule. The realized grade above is display-only.
+        _pq = _rec.get("xfv_grade_quantile")
+        price_fv = _pq if (fv_source == "xfv" and _pq is not None) else fv
         eta = (p.get("eta") or {}).get("year")
-        if (fv is None or fv < 45 or not eta or p.get("status") != "active"
+        if (price_fv is None or price_fv < 45 or not eta or p.get("status") != "active"
                 or eta > FIRST_SEASON + HORIZON - 1):
             continue
         pos = p.get("position")
         is_pit = vf.is_pitcher_position(pos)
         reliever = vf.is_reliever_position(pos)
         role = vf._role_key(is_pit)
-        probs = vf.p_bucket_given_fv(float(fv), is_pit)
+        probs = vf.p_bucket_given_fv(float(price_fv), is_pit)
         if not probs:
             continue
         age = p.get("age")
         debut_age = (float(age) + max(0, int(eta) - (FIRST_SEASON - 1))) if age else None
-        scale = vf._war_scale_for(float(fv), role)
+        scale = vf._war_scale_for(float(price_fv), role)
         paths = [vf._bucket_season_wars(role, i, reliever, debut_age, scale)
                  for i in range(len(_BUCKET_ORDER))]
         n_yrs = len(paths[0])
@@ -384,14 +388,14 @@ def _prospect_rows(dpw: float) -> list[dict]:
 
         lo_b, hi_b = _q_bucket(0.10), _q_bucket(0.90)
         eta_yr = max(int(eta), FIRST_SEASON)
-        sv = vf.surplus_value_mm(float(fv), is_pit, pos, age=age,
+        sv = vf.surplus_value_mm(float(price_fv), is_pit, pos, age=age,
                                  eta_years=max(0.0, eta_yr - (FIRST_SEASON - 1)))
         # PRIME/TALENT display path (warPTH) + headline peak: reconciled to the
         # industry-style prime anchor so the board shows "what he is if he
         # sticks" (a 62-FV SS ~ 3-4 WAR, star ceiling ~5) instead of the
         # realized-mean ramp. The expected `war` above is unchanged and still
         # prices surplus.
-        prime = vf.prospect_prime_path(float(fv), is_pit, debut_age, reliever)
+        prime = vf.prospect_prime_path(float(price_fv), is_pit, debut_age, reliever)
         out.append(_clean({
             "key": p.get("player_key"), "name": p.get("player_name"),
             "age": age, "src": "prospect", "fv": fv, "consensus_fv": cons_fv,

@@ -154,10 +154,10 @@ def _is_home_pitcher(play: dict) -> bool:
     return bool(ab.get("isTopInning"))
 
 
-def _fold_game(acc: dict, plays: Iterable[dict]) -> None:
-    """Fold one game's plays into the running per-pitcher accumulator. Entry
-    leverage + per-appearance WPA (for SD/MD) are computed within the game
-    first, then merged."""
+def _game_pitcher_dict(plays: Iterable[dict]) -> dict:
+    """One game's per-pitcher within-game accumulator (wpa, wpa_li, entry_li,
+    entry_inning, name), keyed by pitcher id. Shared by the reliever + starter
+    folds so both read one pass over the play stream. Pure."""
     gp: dict = {}
     for play in plays:
         matchup = play.get("matchup") or {}
@@ -184,6 +184,13 @@ def _fold_game(acc: dict, plays: Iterable[dict]) -> None:
             d["wpa"] += wp
             if li and li > 0:
                 d["wpa_li"] += wp / li
+    return gp
+
+
+def _merge_reliever(acc: dict, gp: dict) -> None:
+    """Merge one game's per-pitcher dict into the RELIEVER accumulator, dropping
+    start-games (entry_inning==1). Byte-identical to the original _fold_game merge
+    (test_mlb_leverage.py locks the reliever numbers)."""
     for pid, d in gp.items():
         # A pitcher whose first appearance in a game is in the 1st inning
         # started or opened that game. Folding a whole start into relief gmLI /
@@ -214,6 +221,90 @@ def _fold_game(acc: dict, plays: Iterable[dict]) -> None:
             a["name"] = d["name"]
 
 
+def _fold_game(acc: dict, plays: Iterable[dict]) -> None:
+    """Fold one game's plays into the running per-RELIEVER accumulator. Kept as a
+    thin composition of the two extracted helpers so the reliever output is
+    unchanged."""
+    _merge_reliever(acc, _game_pitcher_dict(plays))
+
+
+# ---- batter + starter folds (S-1; the reliever fold above is untouched) ----- #
+def _fold_game_batters(acc: dict, plays: Iterable[dict]) -> None:
+    """Per-BATTER accumulation, per plate appearance. WPA_batter = -WPA_pitcher
+    (the batting team is the pitcher's opponent), pLI = mean leverageIndex faced.
+    The winProbability feed carries one object per PA, so one play == one PA."""
+    for play in plays:
+        matchup = play.get("matchup") or {}
+        b = matchup.get("batter") or {}
+        bid = b.get("id")
+        if not bid:
+            continue
+        home_bat = not _is_home_pitcher(play)          # batter bats in the other half
+        added = play.get("homeTeamWinProbabilityAdded")
+        li = play.get("leverageIndex")
+        a = acc.get(bid)
+        if a is None:
+            a = {"pa": 0, "wpa": 0.0, "wpa_li": 0.0, "li_sum": 0.0, "li_n": 0,
+                 "name": b.get("fullName", "")}
+            acc[bid] = a
+        a["pa"] += 1
+        if added is not None:
+            wp = (added if home_bat else -added) / 100.0
+            a["wpa"] += wp
+            if li and li > 0:
+                a["wpa_li"] += wp / li
+        if li is not None:
+            a["li_sum"] += li
+            a["li_n"] += 1
+        if b.get("fullName"):
+            a["name"] = b["fullName"]
+
+
+def _finalize_batters(acc: dict) -> dict:
+    out: dict = {}
+    for bid, a in acc.items():
+        pli = (a["li_sum"] / a["li_n"]) if a["li_n"] else None
+        # FanGraphs Clutch = WPA/pLI - WPA/LI (context-timing above a rate-neutral base).
+        clutch = round(a["wpa"] / pli - a["wpa_li"], 3) if pli else None
+        out[int(bid)] = {
+            "mlbam": int(bid), "name": a["name"], "pa": a["pa"],
+            "wpa": round(a["wpa"], 3), "wpa_li": round(a["wpa_li"], 3),
+            "pli": round(pli, 2) if pli is not None else None,
+            "clutch": clutch,
+        }
+    return out
+
+
+def _merge_starter(acc: dict, gp: dict) -> None:
+    """Merge one game's per-pitcher dict into the STARTER accumulator, KEEPING only
+    the entry_inning==1 games (starts/openers) that the reliever fold drops."""
+    for pid, d in gp.items():
+        if d.get("entry_inning") != 1:
+            continue
+        a = acc.get(pid)
+        if a is None:
+            a = {"starts": 0, "wpa": 0.0, "wpa_li": 0.0, "name": d["name"]}
+            acc[pid] = a
+        a["starts"] += 1
+        a["wpa"] += d["wpa"]
+        a["wpa_li"] += d["wpa_li"]
+        if d["name"]:
+            a["name"] = d["name"]
+
+
+def _finalize_starters(acc: dict) -> dict:
+    out: dict = {}
+    for pid, a in acc.items():
+        starts = a["starts"]
+        out[int(pid)] = {
+            "mlbam": int(pid), "name": a["name"], "starts": starts,
+            "wpa": round(a["wpa"], 3),
+            "wpa_per_start": round(a["wpa"] / starts, 3) if starts else None,
+            "wpa_li": round(a["wpa_li"], 3),
+        }
+    return out
+
+
 def _finalize(acc: dict) -> dict:
     out: dict = {}
     for pid, a in acc.items():
@@ -240,3 +331,52 @@ def accumulate(games: Iterable[tuple[int, list]]) -> dict:
     for _pk, plays in games:
         _fold_game(acc, plays)
     return _finalize(acc)
+
+
+def accumulate_batters(games: Iterable[tuple[int, list]]) -> dict:
+    """Pure batter fold over (game_pk, plays) -> finalized per-batter metrics."""
+    acc: dict = {}
+    for _pk, plays in games:
+        _fold_game_batters(acc, plays)
+    return _finalize_batters(acc)
+
+
+def accumulate_starters(games: Iterable[tuple[int, list]]) -> dict:
+    """Pure starter fold over (game_pk, plays) -> finalized per-starter metrics."""
+    acc: dict = {}
+    for _pk, plays in games:
+        _merge_starter(acc, _game_pitcher_dict(plays))
+    return _finalize_starters(acc)
+
+
+def fetch_season_all_leverage(season: int, *, limit: Optional[int] = None,
+                              game_type: str = "R",
+                              progress: Optional[Callable[[int, int], None]] = None):
+    """Single-pass season walk that folds RELIEVER + BATTER + STARTER accumulators
+    from the same cached winProbability feed (the cache makes the re-walk free, so
+    one pass beats three). Returns (relievers, batters, starters, coverage). The
+    per-game pitcher dict is built once and shared by the reliever + starter merges
+    so the reliever output stays identical to fetch_season_leverage."""
+    pks = season_game_pks(season, game_type=game_type)
+    if limit is not None:
+        pks = pks[:limit]
+    rel_acc: dict = {}
+    bat_acc: dict = {}
+    strt_acc: dict = {}
+    used = 0
+    total = len(pks)
+    for i, (pk, gd) in enumerate(pks):
+        try:
+            plays = get_win_probability(pk, game_date=gd)
+        except Exception as e:  # network / parse - skip this game
+            _log.warning("winProbability fetch failed for game %s: %s", pk, e)
+            continue
+        gp = _game_pitcher_dict(plays)
+        _merge_reliever(rel_acc, gp)
+        _merge_starter(strt_acc, gp)
+        _fold_game_batters(bat_acc, plays)
+        used += 1
+        if progress and (i % 100 == 0 or i == total - 1):
+            progress(i + 1, total)
+    return (_finalize(rel_acc), _finalize_batters(bat_acc), _finalize_starters(strt_acc),
+            {"games": used, "games_total": total})
