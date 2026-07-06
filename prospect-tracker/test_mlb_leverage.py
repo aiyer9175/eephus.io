@@ -142,3 +142,62 @@ def test_starter_fold_keeps_only_starts_and_averages_per_start():
     assert a["wpa"] == 0.05                            # 0.10 + (-0.05)
     assert a["wpa_per_start"] == 0.025                 # 0.05 / 2
     assert a["wpa_li"] == 0.064                        # (0.08/0.9 + 0.02/0.8) + (-0.05/1.0)
+
+
+# ---- yearly history export (leverage_history.json) -------------------------- #
+def test_export_history_keeps_only_qualified_per_season(monkeypatch):
+    """export_history folds each season off the (stubbed) cached feed and stores
+    only qualified batters/starters, one block per season. No network."""
+    import leverage_export as lev
+
+    def fake_fetch(season, **kw):
+        bat = {
+            10: {"name": "Reg Ular", "pa": 300, "wpa": 2.0, "pli": 1.1, "clutch": 0.3, "wpa_li": 1.8},
+            11: {"name": "Thin Bat", "pa": 100, "wpa": 0.4, "pli": 1.0, "clutch": 0.0, "wpa_li": 0.4},
+        }
+        strt = {
+            20: {"name": "Ace", "starts": 12, "wpa": 1.5, "wpa_per_start": 0.125, "wpa_li": 1.1},
+            21: {"name": "Spot", "starts": 3, "wpa": 0.1, "wpa_per_start": 0.033, "wpa_li": 0.1},
+        }
+        return {}, bat, strt, {"games": 2430, "games_total": 2430}
+
+    monkeypatch.setattr(lev.mlb_leverage, "fetch_season_all_leverage", fake_fetch)
+    monkeypatch.setattr(lev, "load_season_hitting", lambda y: [
+        {"mlbam": 10, "name": "Reg Ular", "team": "NYY"},
+        {"mlbam": 11, "name": "Thin Bat", "team": "BOS"}])
+    monkeypatch.setattr(lev, "load_season_pitching", lambda y: [
+        {"mlbam": 20, "name": "Ace", "team": "NYY", "GS": 12},
+        {"mlbam": 21, "name": "Spot", "team": "BOS", "GS": 3}])
+
+    payload = lev.export_history([2024, 2025], write=False, log=lambda *a: None)
+
+    assert payload["seasons"] == [2024, 2025]
+    assert set(payload["history"].keys()) == {"2024", "2025"}
+    yr = payload["history"]["2025"]
+    assert yr["season"] == 2025
+    # qualified-only: the 300-PA regular is kept, the 100-PA bat is dropped
+    assert [b["name"] for b in yr["batters"]] == ["Reg Ular"]
+    assert yr["n_batters"] == 1
+    # QUAL_STARTS=5: Ace (12 starts) kept, Spot (3 starts) dropped
+    assert [s["name"] for s in yr["starters"]] == ["Ace"]
+    assert yr["n_starters"] == 1
+    assert yr["coverage"]["games"] == 2430
+
+
+def test_export_history_skips_a_season_that_fails(monkeypatch):
+    """A season whose fold raises is logged and skipped, never aborting the run."""
+    import leverage_export as lev
+
+    def fake_fetch(season, **kw):
+        if season == 2024:
+            raise RuntimeError("boom")
+        bat = {10: {"name": "Reg", "pa": 300, "wpa": 1.0, "pli": 1.0, "clutch": 0.0, "wpa_li": 1.0}}
+        return {}, bat, {}, {"games": 1, "games_total": 1}
+
+    monkeypatch.setattr(lev.mlb_leverage, "fetch_season_all_leverage", fake_fetch)
+    monkeypatch.setattr(lev, "load_season_hitting", lambda y: [{"mlbam": 10, "name": "Reg", "team": "NYY"}])
+    monkeypatch.setattr(lev, "load_season_pitching", lambda y: [])
+
+    payload = lev.export_history([2024, 2025], write=False, log=lambda *a: None)
+    assert payload["seasons"] == [2025]                # 2024 skipped, run survives
+    assert "2024" not in payload["history"]

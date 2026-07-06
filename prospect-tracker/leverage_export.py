@@ -39,9 +39,17 @@ _log = logging.getLogger(__name__)
 ROOT = Path(__file__).parent
 DATA_DIR = ROOT / "data"
 OUT_PATH = DATA_DIR / "leverage_leaderboards.json"
+HISTORY_PATH = DATA_DIR / "leverage_history.json"
 
 QUAL_PA = 250       # batter qualification (a regular's sample)
 QUAL_STARTS = 5     # starter qualification
+
+# Yearly leverage-history window: the seasons the /mlbstats/ Leverage history
+# pills offer. Every game of these seasons is already in the winProbability
+# cache (the reliever board + gmLI-3yr lab warm 2019+), so the multi-season
+# fold reads from disk; the only network is one schedule + two statline calls
+# per season.
+HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 
 
 def _name_team(rows: list[dict]) -> dict:
@@ -53,12 +61,45 @@ def _name_team(rows: list[dict]) -> dict:
     return out
 
 
-def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None,
-           write: bool = True, log=print, today: Optional[str] = None) -> int:
-    """Build data/leverage_leaderboards.json and return batters+starters count."""
-    season = int(season or date.today().year)
-    today = today or date.today().isoformat()
+def _build_batters(bat: dict, bat_nt: dict) -> list[dict]:
+    """Batter board rows (WPA-sorted) from a finalized fold + name/team map."""
+    batters = []
+    for mid, m in bat.items():
+        nt = bat_nt.get(mid)
+        batters.append({
+            "mlbam": mid, "name": m.get("name") or (nt[0] if nt else None),
+            "team": nt[1] if nt else None,
+            "pa": m.get("pa"), "wpa": m.get("wpa"), "pli": m.get("pli"),
+            "clutch": m.get("clutch"), "wpa_li": m.get("wpa_li"),
+            "qualified": (m.get("pa") or 0) >= QUAL_PA,
+        })
+    batters.sort(key=lambda r: (r["wpa"] if r["wpa"] is not None else -99), reverse=True)
+    return batters
 
+
+def _build_starters(strt: dict, pit_nt: dict, pit_gs: dict) -> list[dict]:
+    """Starter board rows (WPA-sorted); only real starters (GS>0 on the line)."""
+    starters = []
+    for mid, m in strt.items():
+        if pit_gs.get(mid, 0) <= 0:      # keep only real starters (GS>0 on the season line)
+            continue
+        nt = pit_nt.get(mid)
+        starters.append({
+            "mlbam": mid, "name": m.get("name") or (nt[0] if nt else None),
+            "team": nt[1] if nt else None,
+            "starts": m.get("starts"), "wpa": m.get("wpa"),
+            "wpa_per_start": m.get("wpa_per_start"), "wpa_li": m.get("wpa_li"),
+            "gs": pit_gs.get(mid, 0),
+            "qualified": (m.get("starts") or 0) >= QUAL_STARTS,
+        })
+    starters.sort(key=lambda r: (r["wpa"] if r["wpa"] is not None else -99), reverse=True)
+    return starters
+
+
+def _season_boards(season: int, *, leverage_limit: Optional[int] = None, log=print):
+    """Load the season name/team maps + fold the winProbability feed once, and
+    return (batters, starters, coverage). Cached games make the fold free, so a
+    prior season costs one schedule + two statline calls."""
     log(f"  leverage: loading {season} name/team maps...")
     hit_rows = load_season_hitting(season)
     pit_rows = load_season_pitching(season)
@@ -74,32 +115,16 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     _rel, bat, strt, cov = mlb_leverage.fetch_season_all_leverage(season, limit=leverage_limit)
     log(f"  leverage: {cov.get('games')}/{cov.get('games_total')} games; "
         f"{len(bat)} batters, {len(strt)} starters folded")
+    return _build_batters(bat, bat_nt), _build_starters(strt, pit_nt, pit_gs), cov
 
-    batters = []
-    for mid, m in bat.items():
-        nt = bat_nt.get(mid)
-        batters.append({
-            "mlbam": mid, "name": m.get("name") or (nt[0] if nt else None),
-            "team": nt[1] if nt else None,
-            "pa": m.get("pa"), "wpa": m.get("wpa"), "pli": m.get("pli"),
-            "clutch": m.get("clutch"), "wpa_li": m.get("wpa_li"),
-            "qualified": (m.get("pa") or 0) >= QUAL_PA,
-        })
-    starters = []
-    for mid, m in strt.items():
-        if pit_gs.get(mid, 0) <= 0:      # keep only real starters (GS>0 on the season line)
-            continue
-        nt = pit_nt.get(mid)
-        starters.append({
-            "mlbam": mid, "name": m.get("name") or (nt[0] if nt else None),
-            "team": nt[1] if nt else None,
-            "starts": m.get("starts"), "wpa": m.get("wpa"),
-            "wpa_per_start": m.get("wpa_per_start"), "wpa_li": m.get("wpa_li"),
-            "gs": pit_gs.get(mid, 0),
-            "qualified": (m.get("starts") or 0) >= QUAL_STARTS,
-        })
-    batters.sort(key=lambda r: (r["wpa"] if r["wpa"] is not None else -99), reverse=True)
-    starters.sort(key=lambda r: (r["wpa"] if r["wpa"] is not None else -99), reverse=True)
+
+def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None,
+           write: bool = True, log=print, today: Optional[str] = None) -> int:
+    """Build data/leverage_leaderboards.json and return batters+starters count."""
+    season = int(season or date.today().year)
+    today = today or date.today().isoformat()
+
+    batters, starters, cov = _season_boards(season, leverage_limit=leverage_limit, log=log)
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
@@ -123,7 +148,56 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     return n
 
 
+def export_history(seasons=None, *, out_path: Optional[Path] = None,
+                   write: bool = True, log=print) -> dict:
+    """Build data/leverage_history.json - per-season batter + starter leverage
+    boards for the /mlbstats/ Leverage yearly-history pills. Every game of these
+    seasons is already in the winProbability cache, so the multi-season fold is a
+    disk walk (one schedule + two statline calls per season is the only network).
+    Only qualified rows are kept (the history board defaults to qualified-only,
+    matching the reliever/hitter history files). Best-effort: a season that fails
+    to load is logged and skipped, never aborting the run."""
+    seasons = list(seasons or HISTORY_SEASONS)
+    out_path = out_path or HISTORY_PATH
+    hist: dict[str, dict] = {}
+    for y in seasons:
+        try:
+            batters, starters, cov = _season_boards(y, log=log)
+        except Exception:
+            _log.exception("leverage-history: %s failed; skipping", y)
+            continue
+        batters = [b for b in batters if b["qualified"]]
+        starters = [s for s in starters if s["qualified"]]
+        if not batters and not starters:
+            log(f"  leverage-history: no qualified rows for {y}; skipping")
+            continue
+        hist[str(y)] = {
+            "season": y, "n_batters": len(batters), "n_starters": len(starters),
+            "coverage": cov, "batters": batters, "starters": starters,
+        }
+        log(f"  leverage-history: {y} -> {len(batters)} batters, {len(starters)} starters")
+    payload = {
+        "generated_at": date.today().isoformat(),
+        "seasons": [int(y) for y in hist],
+        "note": ("Per-season qualified batter + starter realized-leverage boards for the "
+                 "yearly history pills. WPA is realized in-game win-probability impact; pLI "
+                 "and Clutch read the leverage of the spots. Descriptive, not predictive."),
+        "history": hist,
+    }
+    if write and hist:
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp = out_path.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, indent=1), encoding="utf-8")
+        tmp.replace(out_path)
+        log(f"  leverage-history: wrote {out_path.name} ({len(hist)} seasons)")
+    return payload
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format="%(message)s")
-    _season = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else None
-    export(_season, log=print)
+    if len(sys.argv) > 1 and sys.argv[1] == "history":
+        _yrs = [int(x) for x in sys.argv[2].split(",")] if len(sys.argv) > 2 else None
+        export_history(_yrs, log=print)
+    else:
+        _season = int(sys.argv[1]) if len(sys.argv) > 1 and sys.argv[1].isdigit() else None
+        export(_season, log=print)

@@ -2634,9 +2634,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # xREM+ precedent), not a predictive model. Additive; never aborts.
         with _step("6b4h. Leverage Leaderboards (leverage_leaderboards.json)", log):
             try:
-                from leverage_export import export as _export_leverage
+                from leverage_export import (export as _export_leverage,
+                                             export_history as _export_lev_history)
                 _lev_n = _export_leverage(log=log.info)
                 log.info("leverage: %d batter+starter rows scored", _lev_n)
+                # Yearly batter/starter history (leverage_history.json) for the
+                # season pills. The prior seasons are already in the warm cache.
+                _export_lev_history(log=log.info)
             except Exception:
                 log.exception("leverage leaderboards export failed - continuing")
 

@@ -10,6 +10,31 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-06 (S-1 Leverage follow-ups: yearly history + charts)
+
+The two deferred follow-ups on the S-1 Leverage Leaderboards (the board shipped
+table-only, current-season-only in 6444bbd). Additive, self-contained, offline:
+no model, registry, or golden-artifact change.
+
+- Yearly leverage history: `leverage_export.export_history` writes a new
+  `data/leverage_history.json` (per-season qualified batter + starter boards,
+  2021-2025) and the /mlbstats/ Leverage board grows season pills (Current +
+  five prior seasons), mirroring the reliever/starter/hitter history state
+  machines. The prior seasons are already in the winProbability cache (the
+  reliever + gmLI-3yr walks warm 2019+), so the multi-season fold is a disk walk
+  (one schedule + two statline calls per season is the only network); a season
+  that fails to load is logged and skipped, never aborting the run. Wired into
+  run_monthly 6b4h after the live export.
+- Leverage charts: a Charts collapsible on the board. Batters get the WPA
+  distribution plus a production-vs-leverage scatter (WPA/LI context-neutral
+  production on x, pLI leverage faced on y, dots tinted by Clutch: green
+  clutch-positive, red clutch-negative). Starters get the WPA-per-start
+  distribution plus a context-vs-realized WPA scatter. Renders for any season
+  the pills select. Reuses the shared EEPHUS_HUB histogram/scatter helpers, so
+  no new chart code.
+- Tests: export_history qualified-only + fail-skip unit tests (test_mlb_leverage,
+  no network); season-pill + charts render smoke tests (test_mlbstats_smoke).
+
 ## 2026-07-05 (owner-request batch: eFV bug-fixes + site polish)
 
 - eFV FLAGSHIP CORRECTION (two bugs; `_GOLDEN_XFV_SHA256` bumped, rank gate held).

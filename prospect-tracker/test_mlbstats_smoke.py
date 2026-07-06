@@ -12,6 +12,7 @@ unavailable so it never blocks a machine without it.
 """
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pytest
@@ -435,4 +436,57 @@ def test_leverage_starter_board_renders_via_view_hash():
     assert "WPA/start" in html                           # the starter-only column
     assert "Ace Adams" in html and "Mid Miller" in html
     assert "GS" in html
+    assert "undefined" not in html
+
+
+def test_leverage_board_has_season_pills():
+    # The yearly-history pills seed from the live season before the history file
+    # loads, so "Current" plus the five prior seasons are always offered.
+    html = _render_leverage("#section=leverage")
+    assert "mlbstats-seasons" in html
+    assert 'data-leverageseason="current"' in html
+    assert 'data-leverageseason="2025"' in html
+    assert "undefined" not in html
+
+
+# A full-pool sample (>=10 qualified batters) so the charts clear their threshold.
+_VIZ_BATTERS = [
+    {"mlbam": 500 + i, "name": "Bat %02d" % i, "team": "NYY",
+     "pa": 400, "wpa": round(3.0 - i * 0.35, 2), "pli": round(1.30 - i * 0.03, 2),
+     "clutch": round(0.8 - i * 0.15, 2), "wpa_li": round(2.6 - i * 0.30, 2),
+     "qualified": True}
+    for i in range(12)
+]
+LEVERAGE_VIZ_SAMPLE = json.dumps({
+    "generated_at": "2026-06-30", "season": 2026, "as_of": "2026-06-29",
+    "coverage": {"games": 1346, "games_total": 1356},
+    "batters": _VIZ_BATTERS, "starters": [],
+})
+
+
+def _render_leverage_viz(hash_: str) -> str:
+    ctx = MiniRacer()
+    override = f"""
+    var LEVERAGE_SAMPLE={LEVERAGE_VIZ_SAMPLE};
+    fetch=function(url){{
+      var body=(String(url).indexOf('leverage')>=0)?LEVERAGE_SAMPLE:SAMPLE;
+      return FT({{ok:true,json:function(){{return FT(body);}}}});
+    }};
+    var EEPHUS_HUB={{teamLogo:function(){{return '';}},
+      histogram:function(){{return '<svg class="hub-hist"></svg>';}},
+      scatter:function(){{return '<svg class="hub-scatter"></svg>';}},
+      stripHTML:function(){{return '';}},
+      links:function(){{return FT({{byMlbam:{{}}}});}}}};
+    window.EEPHUS_HUB=EEPHUS_HUB;
+    """
+    ctx.eval(_prelude(hash_) + override + JS)
+    return ctx.eval("__html['mlbstats-leverage-root'] || ''")
+
+
+def test_leverage_charts_render_for_a_full_pool():
+    # 12 qualified batters clears the viz threshold -> the Charts collapsible with
+    # the WPA histogram + the production-vs-leverage scatter.
+    html = _render_leverage_viz("#section=leverage")
+    assert 'data-collapse="leverage-viz"' in html
+    assert 'class="hub-hist"' in html and 'class="hub-scatter"' in html
     assert "undefined" not in html
