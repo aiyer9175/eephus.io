@@ -118,6 +118,59 @@ def _join_sem_plus_3yr(starters: list[dict]) -> int:
     return n
 
 
+_XSEM_MIN_PA = 150.0   # min Savant batters-faced for a stable xwOBA-allowed read (starters face more)
+
+
+def _join_xsem_plus(starters: list[dict], season: int) -> int:
+    """Stamp xSEM+ (deserved run prevention on Savant expected wOBA-allowed) + Luck
+    onto tracked starters. Mirror of bullpen_export._join_xrem_plus, anchored over
+    the STARTER board so 100 = the average starter.
+
+    HONEST FRAMING (loss ledger): Statcast xwOBA-allowed was tested against FIP for
+    SEM+ and did NOT win, so SEM+ stays FIP-based. xSEM+ is a COMPANION deserved-
+    suppression read plus a luck residual, NOT a more predictive replacement.
+    Inverts the ratio (lower allowed xwOBA = higher +). Luck = actual minus expected
+    wOBA-allowed (positive = unlucky). Best-effort."""
+    try:
+        import mlb_player_export as mpe
+        rows = mpe._savant("expected", int(season), "pitcher")
+    except Exception:   # noqa: BLE001 - best-effort
+        return 0
+    board = {int(s["mlbam"]) for s in starters if s.get("mlbam") is not None}
+    xw: dict[int, tuple[float, float]] = {}
+    luck_by: dict[int, float] = {}
+    for r in rows:
+        try:
+            mid = int(r["player_id"]); ew = float(r["est_woba"]); pa = float(r["pa"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        if mid not in board or pa < _XSEM_MIN_PA or ew <= 0:
+            continue
+        xw[mid] = (ew, pa)
+        try:
+            luck_by[mid] = round(float(r["woba"]) - ew, 3)
+        except (TypeError, ValueError, KeyError):
+            pass
+    if not xw:
+        return 0
+    dtot = sum(pa for _, pa in xw.values())
+    pool = (sum(x * pa for x, pa in xw.values()) / dtot) if dtot else None
+    if not pool:
+        return 0
+    n = 0
+    for s in starters:
+        ent = xw.get(int(s["mlbam"])) if s.get("mlbam") is not None else None
+        if not ent:
+            continue
+        s["xsem_plus"] = int(round(100.0 * pool / ent[0]))   # INVERTED: lower allowed = higher
+        s["xwoba_against"] = round(ent[0], 3)
+        mid = int(s["mlbam"])
+        if mid in luck_by:
+            s["luck"] = luck_by[mid]
+        n += 1
+    return n
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/starter_leaderboards.json and return the starter count."""
@@ -135,6 +188,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_s3 = _join_sem_plus_3yr(scored["starters"])
     if n_s3:
         log(f"  starters: 3-year SEM+ joined for {n_s3} starters")
+    n_xs = _join_xsem_plus(scored["starters"], season)
+    if n_xs:
+        log(f"  starters: xSEM+ (Savant deserved run prevention) joined for {n_xs} starters")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,

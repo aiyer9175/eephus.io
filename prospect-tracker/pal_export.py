@@ -387,6 +387,14 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # conversions from role flips (cheap, season-stats only)
     events = pc.detect_conversions(by_pid)
     log(f"  pal: detected {len(events)} role conversions {HISTORY_YEARS[0]}-{HISTORY_YEARS[-1]}")
+    # Current-season (in-progress) conversions that season-cumulative role_of misses
+    # because a mid-year switch reads as SWING (e.g. Griffin Jax 2026). Always pending;
+    # merged de-duped so a pitcher already caught by the historical detector isn't doubled.
+    _seen = {(e["mlbam"], e["year"]) for e in events}
+    _inprog = [e for e in pc.detect_in_progress_conversions(by_pid, HISTORY_YEARS[-1])
+               if (e["mlbam"], e["year"]) not in _seen]
+    events.extend(_inprog)
+    log(f"  pal: + {len(_inprog)} in-progress {HISTORY_YEARS[-1]} conversions")
 
     # measured relief K% bump from the converters (RP->SP loses K, SP->RP gains)
     sp2rp_dk = [ (_num(e["post"]["k_pct"]) - _num(e["pre"]["k_pct"]))

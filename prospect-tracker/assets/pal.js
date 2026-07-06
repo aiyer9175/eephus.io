@@ -266,6 +266,23 @@
     { key: "proj_velo", label: "velo→RP", term: "role_velo_delta", cell: function (r) { return veloCell(r); } },
     { key: "proj_relief_rem_plus", label: "proj REM+", term: "rem_plus", cell: function (r) { return r.proj_relief_rem_plus == null ? "-" : '<span class="rem-plus ' + remClass(r.proj_relief_rem_plus) + '">' + fInt(r.proj_relief_rem_plus) + "</span>"; } },
   ];
+  // Conversion-history columns: drives the sortable header + the sort accessors
+  // (the row cells are still rendered by renderHistory's custom builders). Default
+  // sort is year-desc so the newest (current-season, still-pending) conversions
+  // lead. Non-numeric columns (Pitcher / Conversion / Before / After / Arsenal)
+  // are non-sortable; sortRows is numeric-only.
+  var HISTORY_COLS = [
+    { key: "name", label: "Pitcher", kind: "name" },
+    { key: "direction", label: "Conversion", sortable: false },
+    { key: "year", label: "Year", desc: true },
+    { key: "pre_ip", label: "Before", sortable: false },
+    { key: "post_ip", label: "After", sortable: false },
+    { key: "war_delta", label: "WAR before &rarr; after" },
+    { key: "arsenal", label: "Arsenal shift", sortable: false },
+    { key: "held", label: "Held role", get: function (h) { return h.held === true ? 1 : h.held === false ? 0 : null; } },
+    { key: "pre_fit", label: "pre-FIT" },
+    { key: "success", label: "Result", get: function (h) { return h.success === true ? 1 : h.success === false ? 0 : null; } },
+  ];
   function veloCell(r) {
     if (r.fb_velo == null) return "-";
     var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
@@ -374,14 +391,13 @@
     var rows = (DATA && DATA.history) || [];
     if (!rows.length) return empty("No conversion history yet.");
     if (historyView === "mix") return scorecard() + historyToggle() + renderMix();
-    // labeled conversions (the model's evidence) lead; then the newest pending ones
-    rows = rows.slice().sort(function (a, b) {
-      var la = a.success == null ? 1 : 0, lb = b.success == null ? 1 : 0;
-      return la - lb || b.year - a.year || (b.pre_fit || 0) - (a.pre_fit || 0);
-    });
-    var head = "<thead><tr><th>Pitcher</th><th>Conversion</th><th>Year</th><th>Before</th><th>After</th>"
-      + "<th>WAR before &rarr; after</th><th>Arsenal shift</th>"
-      + "<th>Held role</th><th>pre-FIT</th><th>Result</th></tr></thead>";
+    // Sortable, recency-first by default (year desc -> 2026 conversions lead).
+    // Click any numeric column header to re-sort.
+    rows = sortRows(rows, HISTORY_COLS);
+    var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
+      if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
+      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "") + ">" + c.label + "</th>";
+    }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
       return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + esc(h.name || "-") + "</td>"
         + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
@@ -538,9 +554,9 @@
       th.addEventListener("click", function (e) {
         e.stopPropagation();
         var key = th.getAttribute("data-col");
-        var cols = (section === "sp2rp") ? SP_COLS : RP_COLS;
+        var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
-        if (!col || col.kind === "rank" || col.kind === "name") return;
+        if (!col || col.kind === "rank" || col.kind === "name" || col.sortable === false) return;
         if (sortKey === key) sortAsc = !sortAsc;
         else { sortKey = key; sortAsc = !!col.asc; }
         render();
@@ -554,7 +570,8 @@
   function setSection(s) {
     section = s;
     openRow = null;
-    sortKey = "fit"; sortAsc = false;
+    // History defaults to year-desc (recency); the candidate tables to FIT-desc.
+    sortKey = (s === "history") ? "year" : "fit"; sortAsc = false;
     document.querySelectorAll("[data-palsection]").forEach(function (x) {
       var on = x.getAttribute("data-palsection") === s;
       x.classList.toggle("active", on);

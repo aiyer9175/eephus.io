@@ -18,10 +18,11 @@ fetch strings.
 | 5 | `projections` | Projections | `/projections/` | MLB Modules |
 | 6 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
 | 7 | `pal` | Pitcher Alchemy Lab | `/pal/` | MLB Modules |
-| 8 | `articles` | Articles | `/articles/` | - |
-| 9 | `forums` | Forums | `/forums/` | - |
-| 10 | `glossary` | Glossary | `/glossary/` | - |
-| 11 | `team` | Developers | `/team/` | - |
+| 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
+| 9 | `articles` | Articles | `/articles/` | - |
+| 10 | `forums` | Forums | `/forums/` | - |
+| 11 | `glossary` | Glossary | `/glossary/` | - |
+| 12 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -57,9 +58,10 @@ column below lists only what the surface's own module app fetches.
 | `/articles/<slug>/` | `build_site.build_article_page()` | server-rendered | - | one page per content/articles/*.md |
 | `/forums/` | `build_site.build_forums_index()` | server-rendered | - | account/forum shell; Supabase-backed, inert without assets/eephus-config.js |
 | `/fa/` | `build_site.build_fa()` | `assets/fa.js` | `fa_archive.json`, `fa_class.json`, `fa_meta.json`, `glossary.json`, `player_links.json` | Free Agency module shell |
-| `/projections/` | `build_site.build_projections()` | `assets/projections.js`, `assets/trademachine.js` | `bullpen_leaderboards.json`, `grpo_scores.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `team_outlook_eval.json`, `trade_machine_eval.json`, `trade_values.json` | MLB Projections (+ #view=trademachine, #player= pages, Team Outlook) |
+| `/projections/` | `build_site.build_projections()` | `assets/projections.js` | `bullpen_leaderboards.json`, `mlb_fielding_positions.json`, `mlb_player_detail.json`, `mlb_projections.json`, `model_registry.json`, `proj_horizon_eval.json`, `prospect_path_eval.json`, `starter_leaderboards.json`, `team_outlook_eval.json` | MLB Projections (+ #player= pages, Team Outlook) |
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json` | Pitcher Alchemy Lab |
+| `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
 | `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
 | `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |

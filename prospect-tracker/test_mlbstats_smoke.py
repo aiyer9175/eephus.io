@@ -77,6 +77,7 @@ def test_relievers_view_renders():
     assert "mlbstats-table" in html
     assert "Closer Alpha" in html and "Middle Beta" in html
     assert "rem-elite" in html        # REM+ 138 colors elite
+    assert "xREM+" in html            # deserved run-prevention companion column
     assert "Prov Gamma" not in html   # qualified-only filter (default) drops it
     assert ">138<" in html
 
@@ -262,6 +263,7 @@ def test_starter_board_renders_via_section_hash():
     html = _render_starters("#section=starters")
     assert "mlbstats-table" in html
     assert "SEM+" in html and "Ace One" in html
+    assert "xSEM+" in html and "Luck" in html   # deserved run-prevention companion columns
     # clickable name: mlbam 111 resolves through the links() map
     assert 'class="mlbstats-name-link"' in html
     assert "/projections/#player=ace_one" in html

@@ -873,14 +873,15 @@
          registration dot) - the dotted photo screen of an old sports section;
          (4) fine cardstock grain. All tunable via the --paper-* dials. Content
          sits on solid cream cards, so legibility is untouched. */
+      /* Pinstripe / column-rule "scanlines" dropped (owner: too busy, hurt
+         legibility). Just the newsprint HALFTONE dot screen + fine grain now. */
       background-image:
-        repeating-linear-gradient(90deg, transparent 0 15px, var(--paper-pinstripe) 15px 16px),
         radial-gradient(var(--paper-dot)  0.9px, transparent 1.4px),
         radial-gradient(var(--paper-dot2) 0.9px, transparent 1.4px),
         radial-gradient(rgba(139, 132, 116, 0.05) 1px, transparent 1px);
-      background-size: 16px 100%, 9px 9px, 9px 9px, 13px 13px;
-      background-position: 0 0, 0 0, 4px 5px, 13px 13px;
-      background-attachment: fixed, fixed, fixed, scroll;
+      background-size: 9px 9px, 9px 9px, 13px 13px;
+      background-position: 0 0, 4px 5px, 13px 13px;
+      background-attachment: fixed, fixed, scroll;
       color: var(--text-primary);
       /* Bumped 1.5 → 1.55 for the MS Gothic stack - Japanese-Latin
          fonts pack tighter vertically and benefit from slightly more
@@ -8484,6 +8485,7 @@
         <a href="/projections/" role="menuitem">Projections</a>
         <a href="/mlbstats/" role="menuitem">MLB Stats</a>
         <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
+        <a href="/trademachine/" role="menuitem">Trade Machine</a>
       </div>
     </details>
     <a href="/articles/">Articles</a>
@@ -12966,8 +12968,8 @@ function syncFromURL() {
                     : p.has("ostab") ? p.get("ostab")
                     : "overview";
   if (p.has("tab"))   state.section     = p.get("tab");
-  // Trade Machine moved under MLB Projections - redirect legacy deep links there.
-  if (state.section === "tradeboard" || state.section === "trademachine") { window.location.replace("/projections/#view=trademachine"); return; }
+  // Trade Machine is now its own top-level module - redirect legacy deep links there.
+  if (state.section === "tradeboard" || state.section === "trademachine") { window.location.replace("/trademachine/"); return; }
   // Free Agency moved to its own surface - redirect legacy #tab=fa deep links.
   if (state.section === "fa") { window.location.replace("/fa/"); return; }
   // Glossary/Methodology moved to /glossary/ - redirect legacy deep links,
@@ -16450,10 +16452,15 @@ function renderActiveContextRail(railId = "active-context-rail") {
       rightHTML: `<span class="${cls}" style="font-family:var(--font-mono);font-variant-numeric:tabular-nums;font-size:11px;">${arrow} ${d > 0 ? "+" : ""}${d}</span>`,
     });
   }).join("");
+  // Label the ACTUAL window this card covers: the mover pool is gated by the
+  // _HOME_MOVER_RECENCY_DAYS recency floor (365d), not a single refresh cycle.
+  const _moverWindowLabel = _HOME_MOVER_RECENCY_DAYS % 365 === 0
+    ? `last ${_HOME_MOVER_RECENCY_DAYS / 365} year${_HOME_MOVER_RECENCY_DAYS / 365 > 1 ? "s" : ""}`
+    : `last ${Math.round(_HOME_MOVER_RECENCY_DAYS / 7)} weeks`;
   const moversCard = `<div class="ctx-card">
-    <div class="ctx-title">Top movers · this update</div>
+    <div class="ctx-title">Top movers · ${_moverWindowLabel}</div>
     ${moverChips}
-    ${movers.length ? moverRows : `<div style="color:var(--text-tertiary);font-size:11px;padding:6px 0;">No ${moverMode === "up" ? "risers" : moverMode === "down" ? "fallers" : "movers"} this cycle.</div>`}
+    ${movers.length ? moverRows : `<div style="color:var(--text-tertiary);font-size:11px;padding:6px 0;">No ${moverMode === "up" ? "risers" : moverMode === "down" ? "fallers" : "movers"} in the ${_moverWindowLabel}.</div>`}
   </div>`;
 
   // -------- Top by Tool card --------
@@ -30145,6 +30152,10 @@ function efvDetailCard(p) {
       </div>` : ""}
       ${factorsHTML}
       ${bucketBar ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin:10px 0 4px;">Projected outcome mix (6-yr)</div>${bucketBar}` : ""}
+      ${(p && p.surplus && p.surplus.star_odds != null) ? `<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--border-light);font-size:11px;" title="Star Odds: FanGraphs 2026 published probability of two or more seasons of four or more WAR during team control, for this player's FV and role. This is the SAME value shown in the board's Star Odds column. It is distinct from the outcome-mix Elite band above (the share of simulated careers whose per-season talent is in the top 4+ WAR/yr band).">
+        <span style="letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">Star Odds <span style="text-transform:none;letter-spacing:0;font-weight:400;font-style:italic;color:var(--text-tertiary);">2+ seasons of 4+ WAR</span></span>
+        <span style="font-family:var(--font-mono);font-weight:700;color:${Number(p.surplus.star_odds) >= 0.20 ? "var(--up)" : Number(p.surplus.star_odds) >= 0.08 ? "var(--neon-cyan)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;">${fmtStarOdds(p.surplus.star_odds)}</span>
+      </div>` : ""}
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.5;margin-top:8px;">${pbust}${pbust ? " · " : ""}eFV predicts a calibrated 6-year WAR outcome distribution from how comparable prospects actually turned out. It out-ranks consensus FV out-of-sample; the headline grade is on the familiar 20-80 scale, while the outcome mix uses the honest (typically lower) outcome-implied grade because scout FV runs optimistic. The dollar surplus + its range are in the Surplus value card below. Provisional. <a href="/glossary/#g=xfv" style="color:var(--neon-cyan);">Methodology →</a></div>
     </div>`;
 }
@@ -32721,8 +32732,13 @@ const SV_BUCKET_COLOR = {
   bust: "var(--down)", bench: "var(--text-tertiary)", regular: "var(--neon-amber)",
   good: "var(--neon-cyan)", star: "var(--up)",
 };
+// Top talent band is labeled "Elite" (not "Star") on purpose: it is the share of
+// simulated careers whose per-season talent lands in the top (4+ WAR/yr) band -
+// a DIFFERENT quantity than the "Star Odds" column (FanGraphs P(2+ seasons of 4+
+// WAR in team control)). Sharing the word "Star" made the two read as the same
+// number when they are not; "Elite" keeps the outcome-mix band distinct.
 const SV_BUCKET_LABEL = {
-  bust: "Bust", bench: "Bench", regular: "Regular", good: "Good", star: "Star",
+  bust: "Bust", bench: "Bench", regular: "Regular", good: "Good", star: "Elite",
 };
 function svBucketBand(key) {
   const b = window.VALUE_FRAMEWORK && window.VALUE_FRAMEWORK.buckets
@@ -42612,26 +42628,11 @@ function makeFvTape(points) {
   if (!_fvTapeEnabled()) return "";
   const t = computeFvTape(points);
   if (!t) return "";
-  const { candles, momentum, rsi, vol } = t;
-  // Candlestick SVG (green up, red down), scaled to the grade range in view.
-  const W = 320, H = 96, padL = 26, padR = 8, padT = 8, padB = 16;
-  const lows = candles.map(c => c.l), highs = candles.map(c => c.h);
-  const lo = Math.min(...lows), hi = Math.max(...highs);
-  const span = Math.max(1, hi - lo);
-  const y = v => padT + ((hi - v) / span) * (H - padT - padB);
-  const step = (W - padL - padR) / candles.length;
-  const cw = Math.max(2, Math.min(9, step * 0.6));
-  const bars = candles.map((c, i) => {
-    const cx = padL + step * (i + 0.5);
-    const col = c.up ? "var(--neon-green)" : "var(--neon-red)";
-    const yO = y(c.o), yC = y(c.c), yH = y(c.h), yL = y(c.l);
-    const top = Math.min(yO, yC), bh = Math.max(1, Math.abs(yC - yO));
-    return `<line x1="${cx.toFixed(1)}" x2="${cx.toFixed(1)}" y1="${yH.toFixed(1)}" y2="${yL.toFixed(1)}" stroke="${col}" stroke-width="1"/>`
-      + `<rect x="${(cx - cw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${cw.toFixed(1)}" height="${bh.toFixed(1)}" fill="${col}" opacity="0.85"><title>${escapeHtml(String(c.d))}: ${fvCeil(c.o)} to ${fvCeil(c.c)}</title></rect>`;
-  }).join("");
-  const yTicks = [lo, (lo + hi) / 2, hi].map(v =>
-    `<text x="${padL - 4}" y="${(y(v) + 3).toFixed(1)}" text-anchor="end" style="font-family:var(--font-mono);font-size:8px;fill:var(--text-tertiary);">${Math.round(v)}</text>`).join("");
-  // Indicator chips.
+  const { momentum, rsi, vol } = t;
+  // Compact one-line strip (owner: the full candlestick chart ate too much space
+  // for its value). Just the FV TAPE label + the descriptive MOM / RSI / VOL
+  // chips on scouting-consensus grade movement. `.fv-tape` wrapper kept (guard
+  // tests depend on it), the SVG candlestick dropped.
   const chip = (label, val, col, tip) =>
     `<span title="${escapeHtml(tip)}" style="display:inline-flex;gap:4px;align-items:baseline;padding:2px 7px;border:1px solid var(--border-light);border-radius:10px;font-size:10px;">
       <span style="color:var(--text-tertiary);letter-spacing:0.04em;">${label}</span><span style="font-family:var(--font-mono);font-weight:600;color:${col};">${val}</span></span>`;
@@ -42644,13 +42645,9 @@ function makeFvTape(points) {
     rsiChip = chip("RSI", `${rsi}`, rsiCol, `Relative strength of grade changes (${rsiState}); a momentum gauge, not a projection`);
   }
   const volChip = vol != null ? chip("VOL", vol.toFixed(1), "var(--text-secondary)", "Realized volatility: standard deviation across sources on the latest grade") : "";
-  return `<div class="fv-tape" style="margin-top:10px;">
-    <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-      <span style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
-      <span style="font-size:9px;color:var(--text-tertiary);">descriptive market signals on scouting consensus, not predictions</span>
-    </div>
-    <svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;display:block;" role="img" aria-label="FV consensus candlestick tape">${yTicks}${bars}</svg>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px;">${momChip}${rsiChip}${volChip}</div>
+  return `<div class="fv-tape" style="margin-top:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <span title="Descriptive market signals on scouting-consensus grade movement, not predictions" style="font-family:var(--font-retro-mono);font-size:10px;letter-spacing:0.08em;color:var(--text-secondary);">FV TAPE</span>
+    ${momChip}${rsiChip}${volChip}
   </div>`;
 }
 // Prospect Greeks: an option-on-future-WAR view of a prospect's value, from the
@@ -42918,7 +42915,7 @@ function renderPlayerDetail(key) {
             ← Back to prospect board
           </a>
           &nbsp;·&nbsp;
-          <a href="/projections/#view=trademachine" style="color:var(--neon-cyan);font-size:12px;">
+          <a href="/trademachine/" style="color:var(--neon-cyan);font-size:12px;">
             Trade Machine
           </a>
         </div>
@@ -43865,13 +43862,16 @@ function renderPlayerDetail(key) {
                  ? p.debuted_value.posterior : _baked.buckets;
       const pb = d.p_bust != null ? Math.round(d.p_bust * 100) : null;
       const metaBits = [];
-      if (d.p10_mm != null) metaBits.push(`P10-P90 ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}`);
+      // Skip the baked P10-P90 when the eFV surplus band is already shown above
+      // (the eFV fan + its Surplus band are the headline distribution); avoids two
+      // near-identical dollar ranges on the same card.
+      if (d.p10_mm != null && !_efvFan) metaBits.push(`P10-P90 ${fmtSvMM(d.p10_mm)}-${fmtSvMM(d.p90_mm)}`);
       if (pb != null) metaBits.push(`<span style="color:${pb >= 40 ? 'var(--down)' : 'var(--text-secondary)'};">P(bust) ${pb}%</span>`);
       if (d.risk_adjusted_mm != null) metaBits.push(`risk-adj ${fmtSvMM(d.risk_adjusted_mm)}`);
       if (bk || d.p10_mm != null || metaBits.length) {
         bakedDetailRow = `<div style="padding-bottom:10px;border-bottom:1px solid var(--border-light);margin-bottom:8px;">
             ${(bk && !_gradeCardHasMix) ? `<div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Outcome mix</div>${renderBucketBar(bk, { height: 16, labels: true, legend: true })}` : ""}
-            ${d.p10_mm != null ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
+            ${(d.p10_mm != null && !_efvFan) ? `<div style="margin-top:10px;"><div style="font-size:9px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;margin-bottom:4px;">Simulated outcome range</div>${renderSvDistribution(d, { height: 30, axis: true })}</div>` : ""}
             ${metaBits.length ? `<div style="font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);margin-top:8px;">${metaBits.join(" · ")}</div>` : ""}
           </div>`;
       }

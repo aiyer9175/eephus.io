@@ -1279,6 +1279,71 @@ def _process_one_set(grp: dict, slug: str, birth_dates: dict[str, str],
 # One-shot: backfill publish dates on already-ingested fangraphs snapshots
 # ---------------------------------------------------------------------------
 
+def backfill_fg_player_ids(db_path: Path | None = None) -> dict:
+    """One-shot migration: FanGraphs boards ingested before 2026-06-25 stored no
+    FanGraphs PlayerId for alphanumeric ("sa...") minor-league ids - the int-only
+    field collapsed them to None, and fg_player_id_str was not persisted yet - so
+    the "View on FanGraphs" scouting-report links are missing for those players.
+
+    This rebuilds a player_key -> FG id map by re-parsing the processed summary
+    CSVs, then stamps ``_extras.fg_player_id_str`` into any fangraphs snapshot
+    whose tools_json lacks a FG id. Idempotent: rows that already carry an id are
+    skipped, and existing _extras keys are preserved. Run once, then re-export
+    (scout_reports.json regenerates the ``_ids.fangraphs`` map). Returns a summary
+    ``{"csv_ids", "examined", "updated"}``."""
+    import sqlite3
+    import json as _json
+    import glob
+    from contextlib import closing
+    from storage import DB_PATH
+    path = db_path or DB_PATH
+
+    # 1) canonical player_key -> FG id (string form preferred so "sa..." survives),
+    #    latest CSV wins.
+    id_map: dict[str, str] = {}
+    csv_paths = sorted(glob.glob(str(_BASE / "data" / "fangraphs_imports" / "processed"
+                                     / "**" / "summary-*.csv"), recursive=True))
+    csv_paths += sorted(glob.glob(str(_BASE / "data" / "fangraphs_articles" / "summary-*.csv")))
+    for cp in csv_paths:
+        for raw in _read_csv_rows(Path(cp)):
+            p = _parse_summary_row(raw)
+            if not p:
+                continue
+            fid = p.get("fg_player_id_str") or (
+                str(p["fg_player_id"]) if p.get("fg_player_id") is not None else None)
+            if p.get("player_key") and fid:
+                id_map[p["player_key"]] = fid
+
+    # 2) stamp the id into fangraphs snapshots that have none.
+    n_updated = n_examined = 0
+    with closing(sqlite3.connect(str(path))) as con:
+        con.row_factory = sqlite3.Row
+        rows = con.execute(
+            "SELECT id, player_key, tools_json FROM snapshots WHERE source = 'fangraphs'"
+        ).fetchall()
+        for r in rows:
+            n_examined += 1
+            fid = id_map.get(r["player_key"])
+            if not fid:
+                continue
+            try:
+                tj = _json.loads(r["tools_json"]) if r["tools_json"] else {}
+            except (ValueError, TypeError):
+                continue
+            ex = tj.get("_extras")
+            if not isinstance(ex, dict):
+                ex = {}
+                tj["_extras"] = ex
+            if ex.get("fg_player_id_str") or ex.get("fg_player_id") is not None:
+                continue   # already linkable - idempotent
+            ex["fg_player_id_str"] = fid
+            con.execute("UPDATE snapshots SET tools_json = ? WHERE id = ?",
+                        (_json.dumps(tj), r["id"]))
+            n_updated += 1
+        con.commit()
+    return {"csv_ids": len(id_map), "examined": n_examined, "updated": n_updated}
+
+
 def backfill_publish_dates(db_path: Path | None = None) -> list[tuple[str, str, str, int]]:
     """One-shot migration: for every distinct fangraphs interval_label in
     the snapshots DB, recompute the publish date via the calendar table

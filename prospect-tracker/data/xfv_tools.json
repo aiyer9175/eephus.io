@@ -1,6 +1,6 @@
 {
 "meta": {
-"generated_at": "2026-06-30",
+"generated_at": "2026-07-05",
 "modeled_tools": {
 "hit": {
 "n": 515,
@@ -22,13 +22,13 @@
 "n": 515,
 "realized_stat": "iso",
 "grade_only_spearman": 0.5162,
-"production_partial_after_grade": 0.0678,
-"blend_weight_insample": 0.136,
+"production_partial_after_grade": 0.0677,
+"blend_weight_insample": 0.135,
 "blend_weight_applied": 0.0,
 "tool_xfv_spearman": 0.5162,
 "oos_validation": {
 "n": 392,
-"blend_rho": 0.5017,
+"blend_rho": 0.5018,
 "grade_rho": 0.5029,
 "validated": false
 },
@@ -1144,11 +1144,6 @@
 "game_pwr": 47.5,
 "speed": 57.5
 },
-"will_craig": {
-"hit": 47.5,
-"game_pwr": 55.0,
-"speed": 32.5
-},
 "sherten_apostel": {
 "hit": 47.5,
 "game_pwr": 55.0,
@@ -1158,6 +1153,11 @@
 "hit": 47.5,
 "game_pwr": 55.0,
 "speed": 40.0
+},
+"will_craig": {
+"hit": 47.5,
+"game_pwr": 55.0,
+"speed": 32.5
 },
 "abraham_toro": {
 "hit": 47.5,
@@ -1904,15 +1904,15 @@
 "game_pwr": 47.5,
 "speed": 50.0
 },
-"jordan_diaz": {
-"hit": 55.0,
-"game_pwr": 42.5,
-"speed": 37.5
-},
 "ford_proctor": {
 "hit": 55.0,
 "game_pwr": 40.0,
 "speed": 47.5
+},
+"jordan_diaz": {
+"hit": 55.0,
+"game_pwr": 42.5,
+"speed": 37.5
 },
 "jonah_bride": {
 "hit": 55.0,

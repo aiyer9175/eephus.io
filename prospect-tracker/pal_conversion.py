@@ -493,6 +493,68 @@ def detect_conversions(by_pid: dict) -> list:
     return events
 
 
+# In-progress (current-season) conversion detection thresholds. A mid-year switch
+# dilutes the season's cumulative GS-share / IP-per-G, so role_of reads SWING and
+# detect_conversions drops the pair (both sides must be a clean SP/RP). These
+# gates surface the switch anyway, as an always-PENDING event.
+IN_PROGRESS_MIN_GS = 5          # current-season starts to call an RP->SP in progress
+IN_PROGRESS_MIN_RELIEF = 0.50   # current-season relief-appearance share for SP->RP
+
+
+def detect_in_progress_conversions(by_pid: dict, current_season: int) -> list:
+    """Surface a CURRENT-SEASON role conversion that season-cumulative role_of
+    misses because a mid-year switch dilutes the year's GS-share and IP-per-G
+    (e.g. a reliever who becomes a starter in June reads as SWING for the whole
+    year, so detect_conversions never emits the flip). These events are always
+    PENDING (held=None): the following season is unobserved. Kept SEPARATE from
+    detect_conversions so the historical backtest set stays byte-identical.
+
+    Griffin Jax (2025 RP, 2026 G23/GS12/IP60 -> SWING) is the motivating case."""
+    import bullpen_export as be
+    events = []
+    for pid, byyr in by_pid.items():
+        cur = byyr.get(current_season)
+        if not cur:
+            continue
+        ip_cur = be.ip_to_float(cur.get("IP"))
+        if ip_cur < CONV_MIN_IP:
+            continue
+        # Only ambiguous (SWING) current seasons are interesting - a clean current
+        # SP/RP is already handled by detect_conversions.
+        if role_of(cur.get("G"), cur.get("GS"), cur.get("IP")) != "SWING":
+            continue
+        g_cur = _num(cur.get("G")) or 0
+        gs_cur = _num(cur.get("GS")) or 0
+        # Most recent prior season (within 2 years) with a real sample + clear role.
+        prior_role = prior_year = None
+        for py in sorted((y for y in byyr if y < current_season), reverse=True):
+            if current_season - py > 2:
+                break
+            if be.ip_to_float(byyr[py].get("IP")) < CONV_MIN_IP:
+                continue
+            r = role_of(byyr[py].get("G"), byyr[py].get("GS"), byyr[py].get("IP"))
+            if r in ("SP", "RP"):
+                prior_role, prior_year = r, py
+                break
+        if prior_role is None:
+            continue
+        relief_share = (g_cur - gs_cur) / g_cur if g_cur else 0.0
+        direction = None
+        if prior_role == "RP" and gs_cur >= IN_PROGRESS_MIN_GS:
+            direction = "RP->SP"
+        elif prior_role == "SP" and gs_cur < g_cur and relief_share >= IN_PROGRESS_MIN_RELIEF:
+            direction = "SP->RP"
+        if not direction:
+            continue
+        events.append({
+            "mlbam": pid, "name": cur.get("name", ""), "team": cur.get("team", ""),
+            "direction": direction, "year": current_season,
+            "pre": _role_line(byyr[prior_year]), "post": _role_line(cur),
+            "held": None, "in_progress": True,
+        })
+    return events
+
+
 def _role_line(row: dict) -> dict:
     import bullpen_export as be
     ip = be.ip_to_float(row.get("IP"))

@@ -923,6 +923,21 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         with _step("d9. Rebuild timeseries (no scrape)", log):
             rebuild_only(out_dir)
 
+        # --- 9b. Re-bake MLB Projections off the FRESH eFV grades. --------
+        # rebuild_only() regenerated xfv.json (the eFV grades the PROSPX board
+        # reads live), but mlb_projections.json's per-prospect eFV is baked by
+        # proj_export, which otherwise only runs monthly -- so /projections/
+        # showed a STALE eFV vs PROSPX (e.g. 63 vs 62 for the same prospect).
+        # Re-running proj_export here after the eFV regen keeps the two surfaces
+        # in lock-step. Best-effort (reads the same cached FA/contract inputs the
+        # monthly step 6b uses); a cache miss must not abort the daily run.
+        with _step("d9b. Re-bake MLB Projections off fresh eFV", log):
+            try:
+                from proj_export import export as _export_proj
+                _export_proj()
+            except Exception:
+                log.exception("daily: proj_export re-bake failed — continuing")
+
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
         # acceptances), so the daily job re-scrapes the current class and

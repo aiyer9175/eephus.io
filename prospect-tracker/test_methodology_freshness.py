@@ -141,6 +141,8 @@ MODEL_GLOSSARY = {
     "hem_plus": ["hem_plus"],
     "hem_plus_3yr": ["hem_plus_3yr"],
     "xhem_plus": ["xhem_plus"],
+    "xrem_plus": ["xrem_plus"],
+    "xsem_plus": ["xsem_plus"],
 }
 
 

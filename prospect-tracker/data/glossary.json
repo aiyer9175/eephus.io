@@ -4912,7 +4912,7 @@
    "term": "Trade Machine",
    "category": "site-feature",
    "module": [
-    "prospx"
+    "trademachine"
    ],
    "aliases": [
     "Trade Machine",
@@ -5130,8 +5130,8 @@
     "offense plus"
    ],
    "priority": 21,
-   "definition": "A hitter's offensive-rate skill on a 100-anchored scale (100 = the average qualified hitter, 110 = 10 percent more offense per plate appearance). The hitter cousin of REM+/SEM+: a sample-shrunk, hitter-pool-anchored wOBA built from unintentional walks, hit-by-pitches, singles, doubles, triples, and home runs. Volume (plate appearances), baserunning (steals), and the slash line are shown alongside as context, never mixed into the skill number.",
-   "methodology": "Each wOBA component rate is regressed toward the hitter-pool average by sample size (the same empirical-Bayes recipe REM+ uses, with a slower pull for the extra-base hits that stabilize late), recombined with the FanGraphs wOBA linear weights, and re-anchored over hitters so the pool average scores 100; HEM+ = 100 times the shrunk player wOBA over the pool wOBA, a ratio-to-league index in the wRC+/OPS+ family, not a z-score.\n\nValidated out of sample: forward-chained over 2012-2024 (excluding 2020), HEM+ predicts a hitter's next-year wOBA at a Spearman correlation of 0.41, decisively beating batting average (0.23; gap confidence floor well above zero) and holding even-or-ahead of its raw-wOBA parent (0.41), so the component shrinkage and hitter anchoring earn their place. Volume, baserunning, and defense are separate value and stay out of the rate number. Accountability artifact: data/hem_plus_eval.json.",
+   "definition": "A hitter's offensive-rate skill on a 100-anchored scale (100 = the average qualified hitter), scaled to the wRC+ convention so the league reads with real separation (about 15 points per standard deviation). The hitter cousin of REM+/SEM+: a sample-shrunk, hitter-pool-anchored wOBA built from unintentional walks, hit-by-pitches, singles, doubles, triples, and home runs. Volume (plate appearances), baserunning (steals), and the slash line are shown alongside as context, never mixed into the skill number.",
+   "methodology": "Each wOBA component rate is regressed toward the hitter-pool average by sample size (the same empirical-Bayes recipe REM+ uses, with a slower pull for the extra-base hits that stabilize late), recombined with the FanGraphs wOBA linear weights, and re-anchored over hitters so the pool average scores 100; HEM+ = 100 times the shrunk player wOBA over the pool wOBA, a ratio-to-league index in the wRC+/OPS+ family, not a z-score.\n\nValidated out of sample: forward-chained over 2012-2024 (excluding 2020), HEM+ predicts a hitter's next-year wOBA at a Spearman correlation of 0.41, decisively beating batting average (0.23; gap confidence floor well above zero) and holding even-or-ahead of its raw-wOBA parent (0.41), so the component shrinkage and hitter anchoring earn their place. Volume, baserunning, and defense are separate value and stay out of the rate number. Accountability artifact: data/hem_plus_eval.json. Display scale: the score is stretched from the bare wOBA ratio to the wRC+ deviation width by a fixed monotone gain (HEM_SPREAD_GAIN), which preserves player RANK exactly (so the validation is unchanged) while giving the league visible spread.",
    "seeAlso": [
     "rem_plus",
     "sem_plus",
@@ -5844,6 +5844,54 @@
    "methodology": "xISO = xSLG - xBA, both from Baseball Savant's contact-quality model (exit velocity + launch angle). It is the deserved-power analog of ISO (SLG - AVG), reading through defense and park luck. Shown on MLB player cards as a percentile against the qualified-hitter pool; pairs with the Luck tile (actual wOBA minus xwOBA).",
    "shelf": "industry",
    "origin": "Baseball Savant (MLB Statcast), Tom Tango and the Statcast team; our card value is a percentile reconstruction from the tracking inputs available."
+  },
+  {
+   "id": "xrem_plus",
+   "term": "xREM+ (Deserved Run Prevention)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "xREM+",
+    "deserved run prevention (reliever)",
+    "expected REM+",
+    "Luck (pitching)"
+   ],
+   "priority": 22,
+   "definition": "A reliever's DESERVED run prevention on the REM+ scale: the 100-anchored REM+ convention applied to Savant expected wOBA allowed instead of FIP, so it reflects the contact quality a reliever gives up rather than how the balls happened to fall. Luck is actual minus expected wOBA allowed. A companion to REM+, not a replacement.",
+   "methodology": "xREM+ = 100 times the pool-average expected wOBA allowed over the reliever's own expected wOBA allowed (INVERTED, so a lower allowed xwOBA scores higher), anchored over the reliever board so 100 is the average reliever. Expected wOBA is built from the launch conditions of each batted ball allowed, so it strips the balls-in-play and sequencing luck in actual results. HONEST FRAMING: Statcast expected wOBA allowed was tested against FIP for the pitcher run-prevention models and did NOT forward-predict better, so REM+ stays FIP-based; xREM+ is a companion contact-quality-inclusive DESERVED read plus a luck residual, never a claim of sharper prediction. Companion for tracked relievers only (Statcast is MLB-only and needs a real sample, 80+ batters faced). Luck greater than zero means the reliever allowed more than his contact deserved (unlucky, room to improve); less than zero means he over-performed (due to regress).",
+   "seeAlso": [
+    "rem_plus",
+    "statcast_plus",
+    "xwoba"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
+  },
+  {
+   "id": "xsem_plus",
+   "term": "xSEM+ (Deserved Run Prevention)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "xSEM+",
+    "deserved run prevention (starter)",
+    "expected SEM+",
+    "Luck (pitching)"
+   ],
+   "priority": 22,
+   "definition": "A starter's DESERVED run prevention on the SEM+ scale: the 100-anchored SEM+ convention applied to Savant expected wOBA allowed instead of FIP, so it reflects the contact quality a starter gives up rather than how the balls happened to fall. Luck is actual minus expected wOBA allowed. A companion to SEM+, not a replacement.",
+   "methodology": "xSEM+ = 100 times the pool-average expected wOBA allowed over the starter's own expected wOBA allowed (INVERTED, so a lower allowed xwOBA scores higher), anchored over the starter board so 100 is the average starter. Expected wOBA is built from the launch conditions of each batted ball allowed, so it strips the balls-in-play and sequencing luck in actual results. HONEST FRAMING: Statcast expected wOBA allowed was tested against FIP for the pitcher run-prevention models and did NOT forward-predict better, so SEM+ stays FIP-based; xSEM+ is a companion contact-quality-inclusive DESERVED read plus a luck residual, never a claim of sharper prediction. Companion for tracked starters only (Statcast is MLB-only and needs a real sample, 150+ batters faced). Luck greater than zero means the starter allowed more than his contact deserved (unlucky, room to improve); less than zero means he over-performed (due to regress).",
+   "seeAlso": [
+    "sem_plus",
+    "statcast_plus",
+    "xwoba"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
   }
  ]
 }

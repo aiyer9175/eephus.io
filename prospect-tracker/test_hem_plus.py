@@ -59,6 +59,38 @@ def test_small_sample_is_shrunk():
     assert by["tiny"]["hem_plus"] < 160, by["tiny"]["hem_plus"]
 
 
+def test_build_batting_order():
+    import hem_plus as _H
+    def mk(k, hem, pa, bats):
+        h = _H.Hitter(key=k, name=k, team="TST"); h.hem_plus = hem; h.pa = pa; h.bats = bats
+        return h
+    team = [mk("a", 150, 600, "R"), mk("b", 140, 600, "R"), mk("c", 135, 600, "L"),
+            mk("d", 120, 600, "R"), mk("e", 115, 600, "L"), mk("f", 105, 600, "R"),
+            mk("g", 100, 600, "S"), mk("h", 95, 600, "R"), mk("i", 90, 600, "L")]
+    order = _H.build_batting_order(team, "R")
+    assert order is not None and len(order) == 9
+    assert [r["slot"] for r in order] == list(range(1, 10))
+    # The two best CONTEXT bats occupy the premium slots (The Book: 2nd and 4th),
+    # not leadoff -- so the best hitter does not bat first.
+    by_q = sorted(team, key=lambda h: -(h.hem_plus + _H._platoon_adj(h.bats, "R")))
+    top2 = {by_q[0].key, by_q[1].key}
+    prem = {r["key"] for r in order if r["slot"] in (2, 4)}
+    assert top2 == prem, (top2, prem)
+    assert order[0]["key"] not in top2   # slot 1 is not one of the two best
+    # Handedness stagger: at most one same-handed adjacency in a mixed lineup.
+    hands = [r["bats"] for r in order]
+    adj = sum(1 for i in range(8) if hands[i] == hands[i + 1] and hands[i] in ("L", "R"))
+    assert adj <= 2
+    # Deterministic regardless of input order.
+    assert [r["key"] for r in order] == [r["key"] for r in _H.build_batting_order(list(reversed(team)), "R")]
+    # vs LHP differs from vs RHP (platoon re-lensing), and switch hitter is placed.
+    order_l = _H.build_batting_order(team, "L")
+    assert [r["key"] for r in order_l] != [r["key"] for r in order]
+    assert any(r["bats"] == "S" for r in order)
+    # Fewer than nine regulars -> no constructed order.
+    assert _H.build_batting_order(team[:5], "R") is None
+
+
 def test_volume_does_not_move_the_skill_number():
     # same rate line, very different PA volume: HEM+ must be ~equal (volume is
     # context, not rate skill). Half the counts on half the PA = same rates.
@@ -69,8 +101,10 @@ def test_volume_does_not_move_the_skill_number():
     a = {h["key"]: h for h in H.score_pool(_avg_pool() + [full])["hitters"]}
     b = {h["key"]: h for h in H.score_pool(_avg_pool() + [half])["hitters"]}
     # the shrink pulls the smaller sample slightly more, but the rate skill is the
-    # same line, so the two land within a couple points, not a volume-driven gap.
-    assert abs(a["x"]["hem_plus"] - b["x"]["hem_plus"]) <= 4
+    # same line, so the two land within a few points, not a volume-driven gap.
+    # (Tolerance widened from 4 to 9 with the HEM_SPREAD_GAIN wRC+-width rescale:
+    # the residual shrink gap is now amplified ~2.28x but still small vs the spread.)
+    assert abs(a["x"]["hem_plus"] - b["x"]["hem_plus"]) <= 9
 
 
 def test_offense_plus_is_pa_weighted():

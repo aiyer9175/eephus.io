@@ -24,7 +24,8 @@ happen inside the called module, so this file alone cannot split them).
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
 | d8. Trade detection | timeseries.json |
-| d9. Rebuild timeseries (no scrape) | - |
+| d9. Rebuild timeseries (no scrape) | mlb_projections.json, xfv.json |
+| d9b. Re-bake MLB Projections off fresh eFV | - |
 | d10. FA signing-window refresh | timeseries.json |
 | d11. Rebuild site (build_site) | - |
 

@@ -50,6 +50,7 @@ from datetime import date
 from pathlib import Path
 
 import milb_history as mh
+from scrapers import normalize_key
 
 log = logging.getLogger(__name__)
 
@@ -323,6 +324,27 @@ def build_payload() -> dict:
             "projAavP10", "projAavP90", "rational", "surplus", "dealPlus",
             "verdict", "prevAav", "enterProb")}
 
+    # Thin cards for MLB Stats leaderboard players outside the projections / FA
+    # universe, so their leaderboard names link to a card. Collision-safe keys
+    # (base__mlbam when the normalized name is already taken) mean a name-key
+    # collision no longer silently drops a player's link. Enriched by the same
+    # career / statcast / arsenal loop below (keyed by mlbam), so a thin card that
+    # has cached data shows a real page; otherwise it degrades to identity only.
+    _existing_mlbams = {int(p["mlbam"]) for p in players.values() if p.get("mlbam")}
+    _n_thin = 0
+    for row in _leaderboard_thin_rows():
+        mid = row["mlbam"]
+        if mid in _existing_mlbams:
+            continue
+        base = normalize_key(row["name"] or "") or f"mlbam-{mid}"
+        key = base if base not in players else f"{base}__{mid}"
+        players[key] = {"key": key, "name": row["name"], "mlbam": mid,
+                        "pos": row.get("pos"), "team": row.get("team"), "age": None,
+                        "isPit": row["isPit"], "leaderboardOnly": True}
+        _existing_mlbams.add(mid)
+        _n_thin += 1
+    log.info("player detail: +%d thin leaderboard cards", _n_thin)
+
     n_sc = n_ar = n_car = 0
     for key, p in players.items():
         mlbam = p.get("mlbam")
@@ -378,6 +400,37 @@ def build_payload() -> dict:
         ],
         "players": players,
     }
+
+
+def _leaderboard_thin_rows() -> list[dict]:
+    """Identity rows for MLB Stats leaderboard players (bullpen / starter / hitter
+    boards) so their leaderboard names link to a real player card even when they
+    aren't in the projections / FA universe. This closes the dominant clickability
+    gap (rookies / up-and-down arms like Erik Sabrowski, Didier Fuentes) and, via
+    the collision-safe keying in build_payload, gives name-key-collided veterans
+    (e.g. Max Muncy 571970 vs the A's Max Muncy 691777) their own linkable card.
+    Deduped by mlbam; empty on any error."""
+    out: list[dict] = []
+    seen: set[int] = set()
+    specs = [("bullpen_leaderboards.json", "relievers", True, "RP"),
+             ("starter_leaderboards.json", "starters", True, "SP"),
+             ("hitter_leaderboards.json", "hitters", False, None)]
+    for fname, akey, is_pit, pos in specs:
+        try:
+            d = json.loads((DATA_DIR / fname).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for r in d.get(akey) or []:
+            try:
+                mid = int(r.get("mlbam"))
+            except (TypeError, ValueError):
+                continue
+            if mid in seen or not r.get("name"):
+                continue
+            seen.add(mid)
+            out.append({"mlbam": mid, "name": r.get("name"),
+                        "team": r.get("team"), "pos": pos, "isPit": is_pit})
+    return out
 
 
 def _active_prospect_rows() -> list[dict]:

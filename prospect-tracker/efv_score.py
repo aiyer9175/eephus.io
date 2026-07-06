@@ -30,7 +30,7 @@ from pathlib import Path
 import value_framework as vf
 from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearman
 from efv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
-from efv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON
+from efv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON, TARGET_SEASONS
 
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
@@ -197,7 +197,13 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         pos = src.get("position")
         dyear = src.get("debut_year") or 2020
         age = _age_at(src.get("birth_date"), dyear)
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos)
+        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
+        # target), NOT the global clemens control_years=7. A control_years flip for
+        # valuation had silently re-pointed this denominator to 7 seasons, deflating
+        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
+        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
+        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos,
+                                           exposure_seasons=TARGET_SEASONS)
         cons_fv = src.get("consensus_fv_raw")
         if xfv_grade is None or cons_fv is None:
             continue
@@ -382,7 +388,10 @@ def score_history(persist: bool = True) -> dict:
             # Pure-model (realized) grade at this snapshot -- the same realized_implied_fv
             # transform the headline now uses, so the eFV-history chart is on ONE scale
             # with the current grade (no quantile-remapped discontinuity at the live point).
-            grade = vf.realized_implied_fv(model_war, side == "pit")
+            # Same 6-season window as the headline (see run_live) so the history line and
+            # the current grade agree at the top of the scale.
+            grade = vf.realized_implied_fv(model_war, side == "pit",
+                                           exposure_seasons=TARGET_SEASONS)
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
@@ -465,7 +474,13 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             age = _age_at(r.get("birth_date"), CURRENT_SEASON)
         eta = r.get("eta_years")
         eta = float(eta) if eta is not None else 1.0
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos)
+        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
+        # target), NOT the global clemens control_years=7. A control_years flip for
+        # valuation had silently re-pointed this denominator to 7 seasons, deflating
+        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
+        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
+        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos,
+                                           exposure_seasons=TARGET_SEASONS)
         if xfv_grade is None:
             continue
         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []
@@ -638,7 +653,13 @@ def run_backgrade(persist: bool = True) -> dict:
             age = rec.get("age_now") or _age_at(rec.get("birth_date"), CURRENT_SEASON)
             eta = float(rec.get("eta_years")) if rec.get("eta_years") is not None else 1.0
         pos = rec.get("position")
-        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos)
+        # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
+        # target), NOT the global clemens control_years=7. A control_years flip for
+        # valuation had silently re-pointed this denominator to 7 seasons, deflating
+        # top-end grades (an elite prospect's 6yr-WAR prediction was priced against a
+        # 7yr FV curve). Monotone -> rank-preserving, so the OOS eval is unchanged.
+        xfv_grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos,
+                                           exposure_seasons=TARGET_SEASONS)
         if xfv_grade is None:
             continue
         probs = vf.p_bucket_given_fv(xfv_grade, is_pit) or []

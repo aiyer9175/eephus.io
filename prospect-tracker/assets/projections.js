@@ -134,6 +134,22 @@
     return arr[t] ?? null;
   }
 
+  // The DISPLAYED 5-year (windowed, ETA-aligned) WAR total, so the board sorts on
+  // the same number the Total column shows. Prospects get the in-window sum only
+  // (a late-ETA prospect's off-window prime years do NOT float him up the board);
+  // vets keep their full if-healthy total (already 5-year, truncated at export).
+  function warShown(m) {
+    if (m.src === "prospect") {
+      let s = null;
+      for (let t = 0; t < DATA.horizon; t++) {
+        const w = warAt(m, t);
+        if (w != null) s = (s == null ? 0 : s) + w;
+      }
+      return s;
+    }
+    return m.warTotalPTH ?? m.warTotal;
+  }
+
   function rows() {
     const all = (DATA.vets || []).concat(DATA.prospects || []);
     const q = state.q.trim().toLowerCase();
@@ -150,7 +166,7 @@
     const val = m => {
       if (k === "age") return m.age ?? 99;
       if (k === "sur") return m.surNpv ?? -1e15;
-      if (k === "warTotal") return m.warTotalPTH ?? m.warTotal ?? -99;  // sort by the displayed (if-healthy) total
+      if (k === "warTotal") return warShown(m) ?? -99;  // sort by the DISPLAYED 5yr total (prospects: in-window only)
       if (k.startsWith("y")) return warAt(m, Number(k.slice(1))) ?? -99;
       return m[k] ?? -99;
     };
@@ -706,7 +722,7 @@
         <div class="fa-rail-row"><span>veterans</span><span class="fa-rail-num">${DATA.n_vets}</span></div>
         <div class="fa-rail-row"><span>prospects</span><span class="fa-rail-num">${DATA.n_prospects}</span></div>
         <div class="fa-rail-row"><span data-gl="winter_dpw">$/WAR</span><span class="fa-rail-num">${money(DATA.dpw_usd)}</span></div></div>`;
-      const warTot = m => m.warTotalPTH ?? m.warTotal ?? -99;
+      const warTot = m => warShown(m) ?? -99;   // same windowed 5yr total the board sorts + shows
       const topWar = curr.slice().sort((a, b) => warTot(b) - warTot(a)).slice(0, 6);
       const warRow = m => `<div class="fa-rail-row"><a class="fa-player-link" href="${m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`}">${esc(m.name)}</a><span class="fa-rail-num">${fmtWar(warTot(m))}</span></div>`;
       const warMod = `<div class="fa-rail-mod"><div class="fa-rail-head" title="Top ${DATA.horizon}-year projected bWAR among the current filters (if-healthy path)">Top projected WAR</div>
@@ -1149,7 +1165,7 @@
           <div class="mlbp-name">${teamLogo(p.team)}<h2>${esc(p.name || key)}</h2></div>
           <div class="fa-sub">${esc(p.pos || "")}${p.age != null ? ` · age ${Math.floor(p.age)}` : ""}${p.team ? ` · ${esc(p.team)}` : " · FA"} · ${contract}</div>
           ${originLine}
-          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && p.proj.surNpv != null) ? `<a class="chip" href="/projections/#view=trademachine&amp;tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
+          <div style="margin-top:8px;display:inline-flex;gap:6px;flex-wrap:wrap;"><button class="chip egfx-chip" id="mlbp-gfx" title="Generate a shareable graphic (theme-aware)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>${(p.proj && p.proj.surNpv != null) ? `<a class="chip" href="/trademachine/#tm=mlb:${encodeURIComponent(key)}" title="Value this player in the Trade Machine - prospects (eFV surplus) and MLB players (projection surplus) on one currency">&#8646; Trade Machine</a>` : ""}</div>
         </div>
         <div class="mlbp-tiles">${tiles.join("")}</div>
       </div>

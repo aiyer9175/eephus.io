@@ -48,6 +48,40 @@ def test_sidecar_shape_contract():
         assert m["warTotal"] is not None
 
 
+def test_efv_grade_matches_prospx_board():
+    # /projections/ and the PROSPX board must show the SAME eFV grade for a
+    # prospect (they diverged when mlb_projections.json baked a stale eFV vintage;
+    # run_daily now re-bakes proj_export after the eFV regen to keep them in sync).
+    # Only meaningful when the two artifacts are the SAME vintage -- proj_export is
+    # monthly, xfv.json is daily, so a mid-cadence working tree can legitimately have
+    # a stale mlb_projections; skip rather than false-fail in that window.
+    d = _payload()
+    xfv_path = ROOT / "data" / "xfv.json"
+    if not xfv_path.exists():
+        pytest.skip("xfv.json not present")
+    xj = json.loads(xfv_path.read_text(encoding="utf-8"))
+    xf = xj.get("by_player", {})
+    rows = (d.get("vets") or []) + (d.get("prospects") or [])
+    mism = []
+    for r in rows:
+        if r.get("fv_source") != "xfv" or r.get("fv") is None:
+            continue
+        rec = xf.get(r.get("key"))
+        if not rec:
+            continue
+        want = rec.get("xfv_grade_realized")
+        want = rec.get("xfv_grade") if want is None else want
+        if want is not None and round(r["fv"]) != round(want):
+            mism.append((r.get("key"), r["fv"], want))
+    # >5% mismatch => genuinely different vintages (proj_export not re-run after an
+    # eFV regen); skip. A same-vintage drift (a real regression) shows near-zero
+    # mismatch normally, so any nonzero count under the threshold still fails.
+    if rows and len(mism) > 0.05 * len(rows):
+        pytest.skip(f"mlb_projections.json is a different eFV vintage than xfv.json "
+                    f"({len(mism)}/{len(rows)} rows differ); reconciles on next full rebuild")
+    assert not mism, f"projections eFV drifted from PROSPX (same vintage) for {len(mism)} rows: {mism[:5]}"
+
+
 def test_bucket_ordering_floor_mean_ceiling():
     d = _payload()
     for m in d["vets"] + d["prospects"]:

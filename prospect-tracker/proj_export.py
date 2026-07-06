@@ -341,7 +341,12 @@ def _prospect_rows(dpw: float) -> list[dict]:
         # 0.349 vs consensus 0.285) while preserving the aggregate calibration (active
         # pool total WAR within 0.2% of consensus). Fall back to consensus FV where eFV
         # abstains (recent draftees / int'l signs with no pro track record yet).
-        _xg = (xfv_by.get(p.get("player_key")) or {}).get("xfv_grade")
+        # Prefer xfv_grade_realized (the PROSPX board's efvGradeDisplay precedence)
+        # so /projections/ and PROSPX read the SAME eFV field; identical to
+        # xfv_grade for graded players today, but keeps the two in lock-step.
+        _rec = xfv_by.get(p.get("player_key")) or {}
+        _xg = _rec.get("xfv_grade_realized")
+        _xg = _rec.get("xfv_grade") if _xg is None else _xg
         fv = _xg if _xg is not None else cons_fv
         fv_source = "xfv" if _xg is not None else "consensus"
         eta = (p.get("eta") or {}).get("year")

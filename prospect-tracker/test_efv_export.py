@@ -91,7 +91,38 @@ def test_committed_artifact_headline_alias_contract():
 # INTENTIONAL eFV ship (model/feature/calibration change) updates this constant in the
 # SAME commit, alongside a CHANGELOG / memory note describing what moved and why. An
 # UNEXPECTED red here means the committed artifact drifted without a sanctioned ship.
-_GOLDEN_XFV_SHA256 = "3a04b22a72526e8641abaaa100f4b230c6f3d7b78cdc5797c2eb3d692c8f0729"
+# Updated 2026-07-05: intentional eFV flagship correction (two bugs):
+# (1) the WAR->grade map now inverts on the model's own 6-season window
+#     (efv_score passes exposure_seasons=TARGET_SEASONS) instead of the clemens
+#     control_years=7, which had silently deflated top-end grades (jesus_made
+#     61.8->64.9, back in line with consensus + the codebase's own 6yr anchor);
+# (2) efv_dataset._season_rates no longer treats a MISSING level norm as
+#     league-average-0 (prior-season / static-prior fallback), which had let a
+#     raw DSL K% masquerade as a level-relative edge and spike young low-level
+#     arms (fredy_penuelas 6yr WAR 5.57->3.0). Rank gate essentially flat
+#     (hit 0.362->0.353, pit 0.279->0.284); most-resolved <=2018 hitter blend up.
+_GOLDEN_XFV_SHA256 = "1318524adb092e6aa2022d236872c5e5fd806295aae8e8c55ca2441b4222dcd2"
+
+
+def test_efv_grade_map_inverts_on_model_window():
+    # The eFV grade map (realized_implied_fv) must invert on the MODEL's own target
+    # window (efv_dataset.TARGET_SEASONS = 6 seasons), NOT the global clemens
+    # control_years (=7). The two were coupled once and a control_years flip for
+    # valuation silently deflated top-end eFV grades. Guard: every grade-map call in
+    # efv_score passes exposure_seasons=TARGET_SEASONS so it can't happen again.
+    import re
+    import efv_dataset
+    assert efv_dataset.TARGET_SEASONS == 6
+    src = (Path(efv_export.__file__).parent / "efv_score.py").read_text(encoding="utf-8")
+    calls = re.findall(r"realized_implied_fv\((.*?)\)", src, re.DOTALL)
+    # Real grade-map calls carry the side arg (a comma); the docstring example
+    # `realized_implied_fv(xfv_war)` has none -> excluded.
+    grade_calls = [c for c in calls if ("xfv_war" in c or "model_war" in c) and "," in c]
+    assert grade_calls, "no realized_implied_fv grade-map calls found in efv_score.py"
+    for c in grade_calls:
+        assert "exposure_seasons=TARGET_SEASONS" in c, (
+            "an eFV grade-map call is missing exposure_seasons=TARGET_SEASONS "
+            "(a control_years flip would silently re-deflate top-end grades): " + " ".join(c.split())[:90])
 
 
 def test_xfv_golden_fingerprint():

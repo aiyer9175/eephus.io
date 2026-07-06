@@ -10,6 +10,62 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-05 (owner-request batch: eFV bug-fixes + site polish)
+
+- eFV FLAGSHIP CORRECTION (two bugs; `_GOLDEN_XFV_SHA256` bumped, rank gate held).
+  (1) The WAR->grade map inverted a 6-season model prediction against the clemens
+  `control_years=7` curve (a valuation flip had silently re-pointed the eFV grade
+  denominator), deflating top-end grades. efv_score now passes
+  `exposure_seasons=TARGET_SEASONS` (6) at every `realized_implied_fv` call
+  (rank-preserving; jesus_made 61.8->64.9, franklin_arias 61.6->64.5,
+  leo_de_vries 61.4->64.4, back in line with consensus + the codebase's own 6yr
+  anchor). New guard `test_efv_grade_map_inverts_on_model_window`.
+  (2) efv_dataset._season_rates treated a MISSING level norm as league-average-0,
+  so a raw DSL K% masqueraded as a level-relative edge and spiked young low-level
+  arms; now falls back prior-season -> static prior (fredy_penuelas 6yr WAR
+  5.57->3.0, grade 52->47.8). Provisional pitcher ceiling de-rated (efv_ungraded
+  _GRADE_MAP KNEE 38->34 / CEIL 42->38) so un-scouted DSL arms top out at org
+  depth (~38), not a fringe-regular 42. eval rank gate flat (hit 0.362->0.353,
+  pit 0.279->0.284); <=2018 hitter blend up 0.509->0.515.
+- eFV display consistency: /projections/ baked a stale eFV vintage vs the daily
+  PROSPX board (62 vs 63). run_daily now re-bakes proj_export after the eFV regen
+  (step d9b) and proj_export prefers `xfv_grade_realized` (PROSPX's precedence).
+- MLB Projections sort: prospects were sorted on a 7yr prime total while the Total
+  column showed the 5yr window; projections.js now sorts (+ the Top-projected rail)
+  on the same displayed windowed 5yr WAR (`warShown`), so late-ETA arms sink to
+  where their visible total puts them.
+- HEM+/Offense+ spread widened to the wRC+ convention (hem_plus.HEM_SPREAD_GAIN,
+  a monotone/rank-preserving display gain; qualified HEM+ SD 7->16, team Offense+
+  SD 2->4.5). Both validation gates re-confirmed (X-H1 vs raw wOBA lo95 -0.0092,
+  X-H2 3yr gap lo95 +0.0053). Dedicated hemClass color bands so REM+/SEM+ colors
+  are untouched.
+- Lineup Charts: sabermetric batting-order construction (best two bats hit 2nd/4th,
+  handedness stagger, vs-LHP/vs-RHP toggle, bench bats shown separately) via pure
+  hem_plus.build_batting_order + hitter_export.load_bat_side (batSide bulk call).
+- xREM+ / xSEM+: Savant "deserved run prevention" companion columns + Luck residual
+  for relievers/starters, mirroring xHEM+ (inverted ratio, role-anchored pool).
+  Framed per the loss ledger (xwOBA-allowed did NOT beat FIP, so REM+/SEM+ stay
+  FIP-based); shipped provisional (registry rows, glossary, freshness map).
+- Trade Machine promoted to its own top-level module (/trademachine/) under the
+  MLB Modules nav group; legacy #view=trademachine redirects; trademachine.css
+  re-scoped from #proj-view-trademachine to .tm-app so the standalone page themes
+  correctly.
+- Scouting reports: backfilled the FanGraphs "sa..." player ids that pre-2026-06-25
+  boards never stored, so "View on FanGraphs" links resolve (+2,552 players); one-
+  shot fangraphs_csv.backfill_fg_player_ids.
+- MLB Stats leaderboard clickability: thin player cards for leaderboard players
+  outside the projections/FA universe + collision-safe keys (fixes Max Muncy /
+  Sabrowski / Fuentes; takes effect on next player-detail rebuild).
+- PAL Conversion History: recency-first + click-column sorting; in-progress
+  (current-season) conversion detector so mid-year converts like Griffin Jax show
+  up (needs a pal.json regen to populate).
+- Site polish: light-mode background pinstripe "scanlines" removed (dots kept);
+  Discord CTA on the homepage; Developers page badges removed + click-to-flip
+  cards; CollegeSavant homepage card attribution/alpha tag removed; "Top movers"
+  rail relabeled to its real window; FV tape shrunk to a one-line chip strip;
+  redundant second surplus outcome-range fan suppressed; outcome-mix top band
+  relabeled "Elite" + canonical "Star Odds" line added to the eFV detail card.
+
 ## 2026-07-05 (Clemens 2026 followups: default flip + safety flags + Tier 2 surfacing)
 
 The owner-gated followups from the recalibration, executed.

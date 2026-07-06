@@ -1,19 +1,19 @@
 {
- "generated_at": "2026-06-30",
+ "generated_at": "2026-07-05",
  "scope": "HITTERS; debut 2017-2023 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
  "accounting": {
-  "debuted_seen": 2627,
+  "debuted_seen": 2636,
   "debuted_hitter": 934,
   "debuted_no_pre_fv": 122,
   "debuted_no_war": 16,
   "debuted_kept": 796,
-  "bust_seen": 2570,
+  "bust_seen": 2569,
   "bust_hitter": 1341,
   "bust_no_fv": 84,
   "bust_kept": 1257,
-  "bust_recent_flagged": 104
+  "bust_recent_flagged": 105
  },
  "counts": {
   "rows_total": 2053,
@@ -21,15 +21,15 @@
   "busts": 1257,
   "resolved_debuted": 461,
   "censored_debuted": 335,
-  "bust_recent_excluded_from_label": 104
+  "bust_recent_excluded_from_label": 105
  },
  "feature_coverage": {
   "consensus_fv_raw": "2053/2053",
-  "fv_fangraphs": "1320/2053",
-  "fv_mlb_pipeline": "1614/2053",
-  "fv_stddev": "917/2053",
-  "tool_hit": "1773/2053",
-  "tool_game_pwr": "1773/2053",
+  "fv_fangraphs": "1319/2053",
+  "fv_mlb_pipeline": "1613/2053",
+  "fv_stddev": "916/2053",
+  "tool_hit": "1772/2053",
+  "tool_game_pwr": "1772/2053",
   "pick_overall": "771/2053",
   "bonus_usd": "513/2053"
  },
@@ -51,19 +51,19 @@
  "baseline_consensus_fv_spearman": {
   "debuted_only_resolved": {
    "n": 461,
-   "spearman": 0.3837
+   "spearman": 0.3784
   },
   "full_pool_resolved": {
-   "n": 1614,
-   "spearman": 0.2837
+   "n": 1613,
+   "spearman": 0.2793
   },
   "full_pool_km_censored": {
-   "n": 1949,
-   "spearman": 0.2725
+   "n": 1948,
+   "spearman": 0.265
   },
   "debuted_km_censored": {
    "n": 796,
-   "spearman": 0.3722
+   "spearman": 0.3611
   }
  },
  "baseline_note": "THE bar. consensus_fv_raw rank vs realized first-6yr bWAR. debuted-only ~ the 0.38 Phase-1 sweep figure; full-pool dilutes with busts. Sensitivity = resolved vs KM-censored."

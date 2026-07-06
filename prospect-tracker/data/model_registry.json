@@ -612,7 +612,7 @@
   },
   {
    "model_id": "trade_machine_surplus",
-   "surface": "/projections/#view=trademachine",
+   "surface": "/trademachine/",
    "predicts": "tradeable surplus value ($M) per player + the Trade Board / evaluator ORDERING; the value = apply_platform_surplus (xfv.surplus_mm for prospects, mlb_projections surNpv/1e6 for MLB, xfv backgrade fallback)",
    "champion": "apply_platform_surplus (passthrough of xFV surplus + MLB Projections surNpv)",
    "baseline": "consensus_fv ordering",
@@ -816,7 +816,7 @@
    "notes": "Holistic pass 3 review-queue round (2026-07-02), gate redesigned to be production-relevant (each season scores by its own map, so E-ISO2's cross-YEAR drift was removed; per-side materiality added). Still REJECTED, 2 of 4 conditions fail: (C1) pooled+per-side Brier/log-loss improve strongly (pooled Brier 0.2466->0.1956) and the FV45+ calibration gain is large (tier-45 gap 0.0946->0.0156, tier-55 0.1616->0.0436, tier-60 0.2239->0.0605) BUT the pitcher bench bucket is materially worse per-side (+1.4% rel vs 1% tolerance); (C2 PASS) within-(side,year) rank preservation exact 8/8; (C3) cross-side within-YEAR Spearman flips sign by year (2020 +0.012, 2021 -0.026, 2022 +0.006, 2023 -0.025; the 2021 identity delta is +0.014 so the recal itself degrades cross-side interleaving ~0.04 rho there), noise-dominated at n~300-550/year; (C4 PASS) every FV45+ tier improves, worst move FV-35 +0.0009. FINAL loss ledger for the bucket-calibration line against this data vintage per its own pre-registration. Any future attempt needs resolved 2024+ cohorts and must jointly constrain the two sides' maps (side-asymmetric maps churn cross-side ranking) and address pitcher top-end compression toward FV 44-45 before re-registering. Line: [[xfv_isotonic_calibration]] (X-ISO) -> [[xfv_grade_recal]] (E-ISO2) -> this.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "war_total_band_calibration",
@@ -830,7 +830,7 @@
    "notes": "Holistic pass 3 review-queue round (2026-07-02). Gate FAIL: simulated coverage 0.4055 (need 0.75-0.85); condition 2 (narrower) passes at width ratio 0.596. Root cause bigger than the summing bug: the INCUMBENT summed band (widest admissible) covers only 0.6314 of realized multi-year totals, i.e. it UNDER-covers, because 25.9% of realized totals fall below its p10 path (league attrition -> washouts realize ~0 WAR, below a strictly-positive decayed p10) vs 11.0% above p90. Coverage is monotone increasing in dependence rho (0.29 at 0 -> 0.63 at 0.99), so no admissible narrowing reaches 0.75; the dependence-correct fix moves coverage further from 0.80. The bands are MIS-CENTERED (too high), not too wide. Owner-approved fallback taken: total P10-P90 bands dropped from the FA + Projections display (point estimates and per-year bands stay). The real long-term fix is recalibrating the per-year WAR quantile marginals to include league-attrition zero mass (a proj_ml/Gate-1 quantile-head change) -> REVIEW_QUEUE.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "milb_park_factors",
@@ -844,7 +844,7 @@
    "notes": "Holistic pass 3 review-queue round (2026-07-02). INFEASIBLE, gate cannot run: (1) the cached Savant-minors CSVs are group_by=name player-season aggregates with ZERO venue/stadium/team/game columns, so per-park aggregation does not exist in the source the gate presumes; (2) the Single-A statline target carries no team/venue/home-road key, so there is no join to attach a park adjustment to a matched player-season; (3) best-case venue attribution via the prospect statcast cache reaches only ~18% of matched players and only 2026 (single season, so no YoY stability). No ship. Prerequisite for any future attempt: a venue dimension on the minors ingest (group_by including venue) plus a park key on the Single-A statlines.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "era_shrink_unification",
@@ -858,7 +858,7 @@
    "notes": "Holistic pass 3 review-queue round (2026-07-02), confirms the provenance prediction. Objective 1 (era_minus_level display, 19,693 statlines): small-sample blowups fall monotonically with K (161->20 across 35..65) while full-season distortion rises monotonically (4.07->6.33); split-half rho flat ~0.595 and non-discriminating; K_IP=50 sits at an interior tradeoff no candidate dominates. Objective 2 (PAL SP->RP need-gate ordering, 36 labeled conversions): need-vs-held Spearman 0.17-0.19 across all candidates, all inside each other's bootstrap CI. No single value beats-or-ties both with a material improvement -> the two pseudo-counts STAY. Resolves review-queue item 6; rate_stabilization.py unchanged.",
    "last_checked": "2026-07-05",
    "stale": false,
-   "artifact_age_days": 2
+   "artifact_age_days": 3
   },
   {
    "model_id": "xfv_grade_recal4",
@@ -1078,7 +1078,7 @@
   },
   {
    "model_id": "surplus_downside_risk",
-   "surface": "/projections/#view=trademachine (Risk column)",
+   "surface": "/trademachine/ (Risk column)",
    "predicts": "n/a - a downside-risk view of the eFV surplus distribution (a prospect is an option on future WAR; only shortfall below the mean is risk)",
    "champion": "Sortino = (mean surplus - p10 floor) / downside semi-deviation; plus risk_mm = mean - 0.5*downside and p_bust passthrough",
    "baseline": "n/a - derived from the validated prospect_surplus distribution (xfv.json dist)",
@@ -1169,6 +1169,32 @@
    "last_checked": "2026-07-05",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xrem_plus",
+   "surface": "/mlbstats/ Bullpen Leaderboards, xREM+ + Luck columns (Savant deserved run prevention)",
+   "predicts": "a reliever's DESERVED run prevention: the REM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) instead of FIP, plus a Luck residual (actual minus expected wOBA allowed)",
+   "champion": "xrem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower allowed = higher; anchored over the reliever board, min 80 Savant batters faced)",
+   "baseline": "n/a - a DESCRIPTIVE companion to the FIP-based REM+, not a predictive replacement",
+   "metric": "descriptive; the REM+ skill core it companions is gated by rem_plus_eval / leverage_consistency_eval",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-05 as a deserved-run-prevention companion to REM+. HONEST FRAMING (loss ledger): Statcast xwOBA-allowed was tested against FIP for the pitcher models and did NOT win, so REM+ stays FIP-based; xREM+ is a companion contact-quality-inclusive deserved read plus a Luck residual, never a claim of sharper prediction. Inverts the hitter xHEM+ ratio (lower allowed xwOBA = higher +, mirroring rem_plus = 100*poolFIP/playerFIP) and anchors over the RELIEVER board so 100 = the average reliever. Luck = actual wOBA-allowed minus expected (positive = allowed more than his contact deserved = unlucky, room to improve). MLB-only + min-BBE gated (min 80 batters faced); missing -> column blank. Joined in bullpen_export._join_xrem_plus from mlb_player_export._savant('expected'). No independent predictive eval by design (would re-open the rejected beat-FIP comparison); an X-H3-style deserved-vs-actual forward gate is a clean follow-up.",
+   "last_checked": "2026-07-05",
+   "stale": false
+  },
+  {
+   "model_id": "xsem_plus",
+   "surface": "/mlbstats/ Starter Leaderboards, xSEM+ + Luck columns (Savant deserved run prevention)",
+   "predicts": "a starter's DESERVED run prevention: the SEM+ (100-anchored) scale applied to Savant expected wOBA allowed (xwOBA-against) instead of FIP, plus a Luck residual (actual minus expected wOBA allowed)",
+   "champion": "xsem_plus (100 * pool_xwOBA_against / player_xwOBA_against, INVERTED so lower allowed = higher; anchored over the starter board, min 150 Savant batters faced)",
+   "baseline": "n/a - a DESCRIPTIVE companion to the FIP-based SEM+, not a predictive replacement",
+   "metric": "descriptive; the SEM+ skill core it companions is gated by sem_plus_eval",
+   "eval_artifact": null,
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-05 as a deserved-run-prevention companion to SEM+, the starter analog of xREM+. HONEST FRAMING (loss ledger): Statcast xwOBA-allowed did NOT beat FIP for the pitcher models, so SEM+ stays FIP-based; xSEM+ is a companion contact-quality-inclusive deserved read plus a Luck residual, not a more predictive replacement. Inverts the ratio (lower allowed xwOBA = higher +) and anchors over the STARTER board so 100 = the average starter. Luck = actual minus expected wOBA-allowed (positive = unlucky, room to improve). MLB-only + min-BBE gated (min 150 batters faced, starters face more); missing -> column blank. Joined in starter_export._join_xsem_plus from mlb_player_export._savant('expected'). No independent predictive eval by design; an X-H3-style deserved-vs-actual forward gate is a clean follow-up.",
+   "last_checked": "2026-07-05",
+   "stale": false
   }
  ],
  "problems": []

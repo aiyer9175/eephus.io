@@ -354,6 +354,62 @@ def _join_rem_plus_3yr(relievers: list[dict]) -> int:
     return n
 
 
+_XREM_MIN_PA = 80.0   # min Savant batters-faced for a stable xwOBA-allowed read
+
+
+def _join_xrem_plus(relievers: list[dict], season: int) -> int:
+    """Stamp xREM+ (deserved run prevention on Savant expected wOBA-allowed) + Luck
+    onto tracked relievers.
+
+    HONEST FRAMING (loss ledger): Statcast xwOBA-allowed was tested against FIP for
+    REM+ and did NOT win, so REM+ stays FIP-based. xREM+ is a COMPANION deserved-
+    suppression read plus a luck residual, NOT a more predictive replacement. It
+    INVERTS the hitter xHEM+ ratio (lower allowed xwOBA = higher +, mirroring
+    rem_plus = 100 * poolFIP / playerFIP) and anchors the pool over the RELIEVER
+    board (so 100 = the average reliever, matching REM+'s reliever anchor). Luck =
+    actual wOBA-allowed minus expected (positive = allowed more than deserved =
+    unlucky, room to improve). MLB-only + min-BBE gated; missing -> fields absent
+    (column blank). Best-effort."""
+    try:
+        import mlb_player_export as mpe
+        rows = mpe._savant("expected", int(season), "pitcher")
+    except Exception:   # noqa: BLE001 - best-effort, network/parse anything
+        return 0
+    board = {int(r["mlbam"]) for r in relievers if r.get("mlbam") is not None}
+    xw: dict[int, tuple[float, float]] = {}
+    luck_by: dict[int, float] = {}
+    for r in rows:
+        try:
+            mid = int(r["player_id"]); ew = float(r["est_woba"]); pa = float(r["pa"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        if mid not in board or pa < _XREM_MIN_PA or ew <= 0:
+            continue
+        xw[mid] = (ew, pa)
+        try:
+            luck_by[mid] = round(float(r["woba"]) - ew, 3)
+        except (TypeError, ValueError, KeyError):
+            pass
+    if not xw:
+        return 0
+    dtot = sum(pa for _, pa in xw.values())
+    pool = (sum(x * pa for x, pa in xw.values()) / dtot) if dtot else None
+    if not pool:
+        return 0
+    n = 0
+    for r in relievers:
+        ent = xw.get(int(r["mlbam"])) if r.get("mlbam") is not None else None
+        if not ent:
+            continue
+        r["xrem_plus"] = int(round(100.0 * pool / ent[0]))   # INVERTED: lower allowed = higher
+        r["xwoba_against"] = round(ent[0], 3)
+        mid = int(r["mlbam"])
+        if mid in luck_by:
+            r["luck"] = luck_by[mid]
+        n += 1
+    return n
+
+
 # --------------------------------------------------------------------------- #
 # export
 # --------------------------------------------------------------------------- #
@@ -391,6 +447,9 @@ def export(season: Optional[int] = None, *, leverage_limit: Optional[int] = None
     n_r3 = _join_rem_plus_3yr(scored["relievers"])
     if n_r3:
         log(f"  bullpen: 3-year REM+ joined for {n_r3} relievers")
+    n_xr = _join_xrem_plus(scored["relievers"], season)
+    if n_xr:
+        log(f"  bullpen: xREM+ (Savant deserved run prevention) joined for {n_xr} relievers")
 
     # Bullpen Charts should show only players actually ON the active roster; drop
     # off-roster arms (demoted / released) from the depth ladders. Roster fetch is

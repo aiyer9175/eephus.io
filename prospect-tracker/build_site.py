@@ -139,6 +139,7 @@ NAV_ITEMS = [
         ("projections", "Projections", "/projections/"),
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
         ("pal",         "Pitcher Alchemy Lab", "/pal/"),
+        ("trademachine", "Trade Machine", "/trademachine/"),
     ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
@@ -384,7 +385,8 @@ def eephus_logo_lockup(badge: bool = True) -> str:
     the link accent so it reads clickable)."""
     chips = (
         f'<div class="eephus-logo-chips">{BETA_BADGE}'
-        f'{_x_link("eephus_io", cls="eph-xlink--beta eph-xlink--live")}</div>'
+        f'{_x_link("eephus_io", cls="eph-xlink--beta eph-xlink--live")}'
+        f'{_discord_link(cls="eph-xlink--beta eph-xlink--live")}</div>'
     ) if badge else ""
     # eephus-logo--animate plays the one-shot arc-draw + ball-settle on the
     # homepage hero only (the nav/sidebar lockups stay static). Reduced-motion
@@ -1869,13 +1871,13 @@ def _cross_module_strip() -> str:
         top = sorted((p for p in tv.get("players") or [] if p.get("trade_value_mm") is not None),
                      key=lambda p: -p["trade_value_mm"])[:3]
         rows = "".join(
-            f'<a class="xmod-row" href="/projections/#view=trademachine">'
+            f'<a class="xmod-row" href="/trademachine/">'
             f'<span class="xmod-name">{html.escape(p.get("player_name") or "")}</span>'
             f'<span class="xmod-sub">{html.escape(p.get("position") or "")} · {html.escape(p.get("org") or "")}</span>'
             f'<span class="xmod-val">${p["trade_value_mm"]:.0f}M</span></a>'
             for p in top)
         if rows:
-            cards.append(('⇄ Trade Machine', '/projections/#view=trademachine',
+            cards.append(('⇄ Trade Machine', '/trademachine/',
                           'surplus trade value, prospects + MLB', rows))
     except (OSError, ValueError, KeyError):
         pass
@@ -1883,8 +1885,7 @@ def _cross_module_strip() -> str:
     cards.append(('✪ CollegeSavant', '/collegesavant/',
                   'college baseball percentiles',
                   '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">Hitter dashboard</span><span class="xmod-val">EV · xwOBA · discipline →</span></a>'
-                  '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'
-                  '<a class="xmod-row" href="/collegesavant/"><span class="xmod-name">By Joseph Gillis</span><span class="xmod-val">alpha</span></a>'))
+                  '<a class="xmod-row" href="/collegesavant/pitcher_index.html"><span class="xmod-name">Pitcher dashboard</span><span class="xmod-val">Stuff+ · shapes →</span></a>'))
     # MLB Stats / REM+ - top relievers by REM+ (the reliever run-prevention metric)
     try:
         bl = _cached_data_json("bullpen_leaderboards.json")
@@ -1947,7 +1948,7 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
-                     "team": "⚒", "mlbstats": "▦", "pal": "⚗"}
+                     "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -2187,11 +2188,11 @@ def build_fa() -> str:
                 url=f"{SITE_ORIGIN}/fa/")
 
 
-# Trade Machine view, relocated to live under MLB Projections (was a PROSPX module
-# by Anirudh Iyer). The board + evaluator run from assets/trademachine.js on the
-# standalone data files; this is just the markup the module mounts into.
-_TRADE_MACHINE_VIEW = ("""<div id="proj-view-trademachine" style="display:none;">
-  <div class="newsprint-eyebrow">
+# Trade Machine markup - now the body of its own top-level /trademachine/ module
+# (was a view inside MLB Projections; originally a PROSPX module by Anirudh Iyer).
+# The board + evaluator run from assets/trademachine.js on the standalone data
+# files; this is the markup the module mounts into.
+_TRADE_MACHINE_BODY = ("""<div class="newsprint-eyebrow">
     <span class="newsprint-eyebrow-label">Trade Machine</span>
     <span class="newsprint-eyebrow-meta">build + value a deal both ways: prospects on eFV surplus, MLB players on projection surplus &middot; then the full Bayesian trade-value board &middot; module by Anirudh Iyer</span>
   </div>
@@ -2255,42 +2256,33 @@ _TRADE_MACHINE_VIEW = ("""<div id="proj-view-trademachine" style="display:none;"
     </div>
     <div id="tb-group-body"></div>
   </div>
-  <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>
-</div>""")
+  <div id="tradeboard-content"><div class="spinner-wrap"><span class="spinner"></span></div></div>""")
 
-# Switcher: toggles the Projections table vs. the Trade Machine view, mounting the
-# module the first time its tab is shown. Deep-links (#view=trademachine, the legacy
-# #tab=trademachine, or any #tm=<seed> from a player page) open straight onto it.
-_PROJ_VIEW_SWITCHER = """<script>
+# Legacy redirect shim for /projections/: the Trade Machine used to live here as
+# a #view=trademachine tab. It is now its own top-level module at /trademachine/,
+# but old bookmarks and inbound hash links (incl. the #tm=<seed> player deep-link)
+# must still land on it. A hash change can't be caught by a server redirect, so
+# this runs client-side on /projections/ and forwards, preserving the tm= seed.
+_PROJ_TM_REDIRECT = """<script>
 (function(){
-  function show(v){
-    var pv=document.getElementById('proj-view-projections'),
-        tv=document.getElementById('proj-view-trademachine'),
-        nav=document.querySelector('.proj-viewnav');
-    if(!pv||!tv) return;
-    var tm=v==='trademachine';
-    pv.style.display=tm?'none':''; tv.style.display=tm?'':'none';
-    if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){ b.classList.toggle('active', b.dataset.projview===v); });
-    if(tm && window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount();
-  }
-  function hashWantsTM(){
+  function forward(){
     var h=location.hash||'';
-    return /(?:^|[#&])(?:view|tab)=trademachine/.test(h) || /[#&]tm=/.test(h);
+    if(!(/(?:^|[#&])(?:view|tab)=trademachine/.test(h) || /[#&]tm=/.test(h))) return;
+    var m=/[#&]tm=([^&]+)/.exec(h);
+    location.replace('/trademachine/' + (m?('#tm='+m[1]):''));
   }
-  function init(){
-    var nav=document.querySelector('.proj-viewnav');
-    if(nav) nav.querySelectorAll('[data-projview]').forEach(function(b){
-      b.addEventListener('click', function(){
-        var v=b.dataset.projview; show(v);
-        try{ history.replaceState(null,'', v==='trademachine'?'#view=trademachine':location.pathname); }catch(e){}
-      });
-    });
-    // In-page deep links (e.g. a player page's 'Trade Machine' chip -> #view=trademachine&tm=...)
-    // change only the hash; react so the view actually switches and re-seeds.
-    window.addEventListener('hashchange', function(){ if(hashWantsTM()) show('trademachine'); else show('projections'); });
-    if(hashWantsTM()) show('trademachine');
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', init); else init();
+  window.addEventListener('hashchange', forward);
+  forward();
+})();
+</script>"""
+
+# Standalone /trademachine/ init: mount the board on load, and re-mount on a
+# hashchange so an inbound #tm=<seed> re-seeds the evaluator.
+_TRADE_MACHINE_INIT = """<script>
+(function(){
+  function mount(){ if(window.TradeMachine && window.TradeMachine.mount) window.TradeMachine.mount(); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', mount); else mount();
+  window.addEventListener('hashchange', mount);
 })();
 </script>"""
 
@@ -2300,37 +2292,61 @@ def build_projections() -> str:
     engine applied to the whole league plus post-ETA PROSPX prospects.
     Static shell + assets/projections.js, which fetches the proj_export.py
     sidecar (data/mlb_projections.json). Styles ride the .fa-app block plus
-    a small .proj-app extension in site.css. Also hosts the Trade Machine view
-    (assets/trademachine.js), relocated here from PROSPX."""
+    a small .proj-app extension in site.css. The Trade Machine is now its own
+    top-level module at /trademachine/ (a redirect shim forwards old
+    #view=trademachine bookmarks there)."""
     body = (
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
         f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1></div>'
         '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
-        '<div class="proj-viewnav" role="tablist">'
-        '<button type="button" class="proj-viewbtn active" data-projview="projections" role="tab">Projections</button>'
-        '<button type="button" class="proj-viewbtn" data-projview="trademachine" role="tab">⇄ Trade Machine</button>'
-        '</div>'
         '<div id="proj-view-projections">'
         '<div id="proj-banner"></div>'
         '<div class="filter-bar" id="proj-filters"></div>'
         '<div id="proj-rows"></div>'
         '</div>'
-        + _TRADE_MACHINE_VIEW +
         '</div>'
-        f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
         f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/projections.js?v={_PROJ_VER}" defer></script>'
-        f'<script src="/assets/trademachine.js?v={_TM_VER}" defer></script>'
-        + _PROJ_VIEW_SWITCHER
+        + _PROJ_TM_REDIRECT
     )
     return page("MLB Projections - eephus.io", "projections", body,
                 "Five-year bWAR projections for every MLB player - floor/mean/ceiling probability "
                 "buckets, aging-curve decay, contract surplus on salary-known seasons, and PROSPX "
                 "prospects joining at their projected ETA.",
                 url=f"{SITE_ORIGIN}/projections/")
+
+
+def build_trademachine() -> str:
+    """The /trademachine/ Trade Machine module (top-level, module by Anirudh
+    Iyer). Build and value a deal both ways - prospects on eFV surplus, MLB
+    players on projection surplus - then the full Bayesian trade-value board.
+    Static shell + assets/trademachine.js on the standalone trade_values.json /
+    mlb_projections.json data. Was formerly a #view=trademachine tab inside MLB
+    Projections."""
+    body = (
+        # id="proj-view-trademachine" is kept for trademachine.js, which scopes its
+        # filter + collapse wiring to that id; .tm-app carries the standalone theming.
+        '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>Trade Machine '
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["trademachine"][1])}">α alpha</span></h1></div>'
+        '<span class="section-sub">build and value a deal both ways: prospects on eFV surplus, MLB players '
+        'on projection surplus, then the full Bayesian trade-value board</span></div>'
+        + _TRADE_MACHINE_BODY +
+        '</div>'
+        f'<link rel="stylesheet" href="/assets/trademachine.css?v={_TM_CSS_VER}">'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/trademachine.js?v={_TM_VER}" defer></script>'
+        + _TRADE_MACHINE_INIT
+    )
+    return page("Trade Machine - eephus.io", "trademachine", body,
+                "Build and value MLB trades both ways - prospects on outcome-grounded eFV surplus, "
+                "MLB players on projection surplus, on one currency - plus the full Bayesian "
+                "trade-value board (contract-aware, positional scarcity, opt-out adjusted).",
+                url=f"{SITE_ORIGIN}/trademachine/")
 
 def build_mlbstats() -> str:
     """The /mlbstats/ MLB Stats module - league-wide MLB stat leaderboards.
@@ -2667,14 +2683,43 @@ def build_team() -> str:
         if isinstance(notes, str):
             notes = [notes]
         notes = [n for n in (notes or []) if n]
+        # Module credit badges are intentionally NOT rendered on the front right
+        # now (owner will re-add them manually). The _badge_for helper + the `note`
+        # data in team.json are preserved so re-adding is a one-line change.
         note_html = (
             '<div class="team-notes">'
             + "".join(_badge_for(n, f'{_member_slug(m["name"])}-{i}') for i, n in enumerate(notes))
             + "</div>"
         ) if notes else ""
+        _ = note_html   # retained for future re-add; not rendered on the front face
+        slug = _member_slug(m["name"])
+        # Back face: the owner fills in the specific sections / models / metrics
+        # each developer built later. Optional `back` field in team.json (a list
+        # of strings, or a preformatted HTML string) drives it; absent -> a plain
+        # placeholder so the flip always has something to show.
+        back = m.get("back")
+        if isinstance(back, str) and back.strip():
+            back_body = back
+        elif isinstance(back, list) and back:
+            back_body = ('<ul class="team-back-list">'
+                         + "".join(f'<li>{html.escape(str(b))}</li>' for b in back if b)
+                         + "</ul>")
+        else:
+            back_body = '<p class="team-back-empty">Detailed contributions coming soon.</p>'
+        front_face = (
+            f'<div class="card team-card-face team-card-front">{photo_html}'
+            f'<p class="name">{html.escape(m["name"])}</p>{_school_html(m)}{socials_html}'
+            '<span class="team-flip-hint" aria-hidden="true">flip &#8635;</span></div>'
+        )
+        back_face = (
+            '<div class="card team-card-face team-card-back">'
+            f'<div class="team-back-head">{html.escape(m["name"])}</div>{back_body}'
+            '<span class="team-flip-hint" aria-hidden="true">back &#8635;</span></div>'
+        )
         cards.append(
-            f'<div class="card team-card" id="member-{_member_slug(m["name"])}">{photo_html}'
-            f'<p class="name">{html.escape(m["name"])}</p>{note_html}{_school_html(m)}{socials_html}</div>'
+            f'<div class="team-card team-flip" id="member-{slug}" tabindex="0" role="button" '
+            f'aria-pressed="false" aria-label="{html.escape(m["name"])} - activate to flip the card for contribution details">'
+            f'<div class="team-card-inner">{front_face}{back_face}</div></div>'
         )
     follow = (
         '<div class="team-follow"><span class="team-follow-label">Follow</span>'
@@ -2686,11 +2731,27 @@ def build_team() -> str:
         "students actively pursuing futures in baseball. Please contact any of us "
         "for questions, feedback, or opportunities.</p>"
     )
+    # Click / keyboard flip: toggles .is-flipped on a card. Clicks on the social
+    # links (or any future back-face link/button) do NOT flip, so links still
+    # work. Self-contained inline script (page() inserts body raw); plain ASCII,
+    # no em-dashes (copy gate scans generated HTML).
+    flip_js = (
+        '<script>(function(){'
+        'function toggle(card){var f=card.classList.toggle("is-flipped");'
+        'card.setAttribute("aria-pressed",f?"true":"false");}'
+        'document.querySelectorAll(".team-flip").forEach(function(card){'
+        'card.addEventListener("click",function(e){'
+        'if(e.target.closest("a,button"))return;toggle(card);});'
+        'card.addEventListener("keydown",function(e){'
+        'if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle(card);}});'
+        '});})();</script>'
+    )
     body = (
         '<div class="section-head"><h1>Developers</h1></div>'
         f'{mission}'
         f'{follow}'
         f'<div class="team-grid">{"".join(cards)}</div>'
+        f'{flip_js}'
     )
     return page("Developers - eephus.io", "team", body, "The team behind eephus.io.",
                 url=f"{SITE_ORIGIN}/team/")
@@ -2842,6 +2903,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/projections/", "daily", "0.9"),
         ("/mlbstats/", "daily", "0.8"),
         ("/pal/", "daily", "0.8"),
+        ("/trademachine/", "daily", "0.8"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -2907,6 +2969,7 @@ def main() -> None:
     _write("projections/index.html", build_projections())
     _write("mlbstats/index.html", build_mlbstats())
     _write("pal/index.html", build_pal())
+    _write("trademachine/index.html", build_trademachine())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

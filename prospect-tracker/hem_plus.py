@@ -63,10 +63,21 @@ K_HR = 170.0
 POOL_MIN_PA = 50.0        # minimum PA to CONTRIBUTE to the hitter anchor
 QUALIFY_MIN_PA = 200.0    # leaderboard-qualified: a regular's sample
 
-# ---- HEM+ tier bands (offensive-rate tiers by HEM+) -------------------------- #
+# ---- HEM+ display spread -----------------------------------------------------
+# The bare ratio (100 * wOBA / league_wOBA) has a slope of ~100/0.323 ~= 310
+# points per unit wOBA, about 2.28x FLATTER than the wRC+/OPS+ DEVIATION scale
+# users mentally compare against - so every hitter (and every team Offense+) sat
+# compressed near 100 and the league looked near-identical. HEM_SPREAD_GAIN
+# rescales the deviation from 100 to the wRC+ convention. It is a MONOTONE
+# transform of the score, so it preserves rank EXACTLY: the Spearman-rank
+# validation (X-H1 gap-vs-raw-wOBA, X-H2 3yr) is unchanged (confirmed offline).
+# 100 stays "league average"; only the spread around it widens.
+HEM_SPREAD_GAIN = 2.28
+
+# ---- HEM+ tier bands (offensive-rate tiers by HEM+, on the widened scale) ----- #
 TIER_ORDER = ["Elite", "Above-avg", "Average", "Below-avg"]
-HEM_ELITE = 140.0
-HEM_ABOVE = 110.0
+HEM_ELITE = 135.0
+HEM_ABOVE = 112.0
 HEM_AVG = 90.0
 
 
@@ -93,6 +104,7 @@ class Hitter:
     cs: float = 0.0
     rbi: float = 0.0
     r: float = 0.0
+    bats: Optional[str] = None   # 'L' | 'R' | 'S' (batSide), for lineup construction
     # computed
     rates: dict = field(default_factory=dict)
     woba_skill: Optional[float] = None
@@ -230,12 +242,14 @@ def woba_skill(hi: "Hitter", pool: Pool) -> Optional[float]:
 
 
 def hem_plus(hi: "Hitter", pool: Pool) -> Optional[int]:
-    """100 * shrunk_player_wOBA / pool_mean_wOBA, rounded (the +stat convention).
-    Higher = more offense per PA than the average hitter."""
+    """100 + gain * (100 * shrunk_player_wOBA / pool_mean_wOBA - 100), rounded (the
+    +stat convention on the wRC+-width scale). 100 = average; HEM_SPREAD_GAIN
+    widens the deviation so the league reads with real separation. Monotone in the
+    bare ratio, so ranks (and the validated Spearman gates) are unchanged."""
     w = woba_skill(hi, pool)
     if w is None or pool.mean_woba <= 0:
         return None
-    raw = 100.0 * w / pool.mean_woba
+    raw = 100.0 + HEM_SPREAD_GAIN * (100.0 * w / pool.mean_woba - 100.0)
     hi.woba_skill = w
     hi.woba_raw = _raw_woba(hi)
     hi.hem_plus_raw = raw
@@ -258,9 +272,80 @@ def assign_tiers(hitters: list["Hitter"]) -> None:
             h.tier = "Below-avg"
 
 
+# ---- sabermetric batting-order construction ---------------------------------
+# Slot (1-indexed) for the k-th best bat: best -> #2 and #4 (The Book: your two
+# best hitters bat 2nd and 4th, not leadoff), then #1, #3, #5, then 6-9 by
+# quality. A tunable constant so a future eval can refit it.
+SLOT_PRIORITY = [2, 4, 1, 3, 5, 6, 7, 8, 9]
+PLATOON_ADV = 4.0        # HEM+ pts a platoon-advantaged bat gains vs the given hand
+PLATOON_S = 2.0          # switch hitters: small universal edge (never disadvantaged)
+STAGGER_MAX_COST = 8.0   # only swap for handedness when two bats' Q are within this band
+
+
+def _platoon_adj(bats: Optional[str], opp_hand: str) -> float:
+    """Heuristic platoon term for lineup construction (Phase 1, no split HEM+ yet):
+    a lefty gains vs RHP, a righty gains vs LHP, a switch hitter always holds a
+    small edge. Used only to re-lens the order vs L / vs R, not the published
+    HEM+ number."""
+    b = (bats or "").upper()[:1]
+    if b == "S":
+        return PLATOON_S
+    if b not in ("L", "R"):
+        return 0.0
+    adv = (opp_hand == "R" and b == "L") or (opp_hand == "L" and b == "R")
+    return PLATOON_ADV if adv else -PLATOON_ADV
+
+
+def build_batting_order(hitters: list["Hitter"], opp_hand: str) -> Optional[list[dict]]:
+    """A sabermetric 9-man batting order vs the given pitcher hand ('R' or 'L').
+    Not just HEM+ descending: the two best bats hit 2nd and 4th, then a handedness
+    stagger breaks up same-handed runs (managers alternate L/R so a reliever can't
+    match up). Everyday nine = the top 9 by PA. Returns None if fewer than 9."""
+    pool = [h for h in hitters if h.hem_plus is not None and (h.pa or 0) > 0]
+    pool = sorted(pool, key=lambda h: -(h.pa or 0))[:9]
+    if len(pool) < 9:
+        return None
+
+    def Q(h):   # context quality vs this hand
+        return (h.hem_plus or 0) + _platoon_adj(h.bats, opp_hand)
+
+    ranked = sorted(pool, key=lambda h: -Q(h))
+    slots: list = [None] * 9
+    for k, h in enumerate(ranked):
+        slots[SLOT_PRIORITY[k] - 1] = h
+
+    def _hand(h):
+        return (h.bats or "").upper()[:1]
+
+    def _same(a, b):
+        ha, hb = _hand(a), _hand(b)
+        return bool(ha) and bool(hb) and ha != "S" and hb != "S" and ha == hb
+
+    # Handedness stagger: greedily swap a same-handed neighbor with a later,
+    # different-handed bat of near-equal quality. Deterministic, bounded passes.
+    improved, passes = True, 0
+    while improved and passes < 4:
+        improved, passes = False, passes + 1
+        for i in range(8):
+            if _same(slots[i], slots[i + 1]):
+                for j in range(i + 2, 9):
+                    if (not _same(slots[i], slots[j])
+                            and abs(Q(slots[i + 1]) - Q(slots[j])) <= STAGGER_MAX_COST):
+                        slots[i + 1], slots[j] = slots[j], slots[i + 1]
+                        improved = True
+                        break
+    order = []
+    for idx, h in enumerate(slots):
+        order.append({"slot": idx + 1, "key": h.key, "name": h.name,
+                      "bats": h.bats, "hem_plus": h.hem_plus, "pa": int(h.pa),
+                      "platoon_adv": _platoon_adj(h.bats, opp_hand) > 0})
+    return order
+
+
 def team_offense(team: str, hitters: list["Hitter"]) -> dict:
     """Team offense aggregates. Offense+ is PA-weighted HEM+ (the offensive
-    quality of the plate appearances the lineup takes)."""
+    quality of the plate appearances the lineup takes). Also emits constructed
+    batting orders vs RHP / LHP and a bench list (regulars beyond the nine)."""
     scored = [h for h in hitters if h.hem_plus is not None and h.pa > 0]
     out = {"team": team, "n_hitters": len(scored)}
     if not scored:
@@ -279,8 +364,19 @@ def team_offense(team: str, hitters: list["Hitter"]) -> dict:
                    key=lambda h: h.hem_plus, reverse=True)[:3]
     out["heart_hem"] = int(round(sum(h.hem_plus for h in front) / len(front))) if front else None
     ladder = sorted(scored, key=lambda h: (-(h.hem_plus or 0), -h.pa))
-    out["lineup"] = [{"tier": h.tier, "key": h.key, "name": h.name,
+    out["lineup"] = [{"tier": h.tier, "key": h.key, "name": h.name, "bats": h.bats,
                       "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in ladder]
+    # Constructed orders vs each pitcher hand (falls back to overall HEM+ when the
+    # bat side is unknown; the toggle still re-lenses platoon advantage + stagger).
+    orders = {"vr": build_batting_order(scored, "R"),
+              "vl": build_batting_order(scored, "L")}
+    out["orders"] = {k: v for k, v in orders.items() if v}
+    # Bench bats: the regulars who did NOT make the everyday nine (by PA), the
+    # next hitters by playing time, so the chart can show them clearly separated.
+    everyday = {r["key"] for r in (orders.get("vr") or [])}
+    bench = [h for h in sorted(scored, key=lambda h: -(h.pa or 0)) if h.key not in everyday][:6]
+    out["bench"] = [{"key": h.key, "name": h.name, "bats": h.bats,
+                     "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in bench]
     return out
 
 
@@ -323,6 +419,7 @@ def hitter_row(h: "Hitter") -> dict:
     rate + volume + baserunning columns ride as separate context."""
     return {
         "key": h.key, "mlbam": h.mlbam, "name": h.name, "team": h.team,
+        "bats": h.bats,
         "hem_plus": h.hem_plus, "hem_plus_raw": _round(h.hem_plus_raw, 1),
         "qualified": h.qualified, "tier": h.tier,
         "pa": int(h.pa), "ab": int(h.ab), "hr": int(h.hr), "bb": int(h.bb),

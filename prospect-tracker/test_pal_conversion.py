@@ -130,6 +130,37 @@ def test_role_and_conversion_detection():
     assert pc.label_success(ev) is True
 
 
+def test_in_progress_conversion_detection():
+    # A mid-year RP->SP switch (Griffin Jax pattern): 2025 RP, 2026 reads SWING
+    # because the cumulative GS-share is diluted. detect_conversions drops it
+    # (SWING side), but detect_in_progress_conversions surfaces it as pending.
+    rows = {
+        643377: {
+            2025: {"G": 73, "GS": 2, "IP": "66.0", "BF": 270, "SO": 80, "BB": 20, "ER": 28, "name": "Griffin Jax", "team": "MIN", "season": 2025},
+            2026: {"G": 23, "GS": 12, "IP": "60.0", "BF": 245, "SO": 65, "BB": 18, "ER": 25, "name": "Griffin Jax", "team": "MIN", "season": 2026},
+        }
+    }
+    assert pc.detect_conversions(rows) == []          # historical detector still drops the SWING side
+    evs = pc.detect_in_progress_conversions(rows, 2026)
+    assert len(evs) == 1
+    ev = evs[0]
+    assert ev["direction"] == "RP->SP" and ev["year"] == 2026
+    assert ev["held"] is None and ev["in_progress"] is True
+
+    # A perennial swingman (no prior CLEAR role) is NOT flagged.
+    swing = {1: {
+        2025: {"G": 30, "GS": 10, "IP": "55.0", "name": "Swing", "season": 2025},
+        2026: {"G": 28, "GS": 11, "IP": "52.0", "name": "Swing", "season": 2026},
+    }}
+    assert pc.detect_in_progress_conversions(swing, 2026) == []
+    # An occasional spot-starter (still a clean RP by role_of) is NOT flagged.
+    spot = {2: {
+        2025: {"G": 60, "GS": 0, "IP": "62.0", "name": "Spot", "season": 2025},
+        2026: {"G": 30, "GS": 4, "IP": "40.0", "name": "Spot", "season": 2026},
+    }}
+    assert pc.detect_in_progress_conversions(spot, 2026) == []
+
+
 def test_pitch_add_recommender():
     # Hicks: fastball + slider, no offspeed, big platoon split -> add a changeup vs RHB
     rec = pc.recommend_pitch(HICKS)

@@ -273,21 +273,21 @@
   font-synthesis: none;
 }
 /* Light-mode paper texture: leans into the baseball-card cardstock + vintage
-   newspaper sports-page look. Four layers, back to front: (1) faint vertical
-   baseball pinstripes / newspaper column rules; (2+3) a two-tone offset
-   newsprint HALFTONE screen (navy + warm registration dot) - the dotted photo
-   screen of an old sports section; (4) fine cardstock grain. Light only - dark
-   keeps the pixel starfield. Tunable via the --paper-* dials; content sits on
-   solid cards so legibility is untouched. */
+   newspaper sports-page look. The vertical pinstripe / column-rule "scanlines"
+   were dropped (owner: they made the field too busy and hurt legibility); what
+   remains is the newsprint HALFTONE dot screen. Two layers, back to front:
+   (1+2) a two-tone offset newsprint HALFTONE screen (navy + warm registration
+   dot) - the dotted photo screen of an old sports section; (3) fine cardstock
+   grain. Light only - dark keeps the pixel starfield. Tunable via the --paper-*
+   dials; content sits on solid cards so legibility is untouched. */
 :root:not([data-theme="dark"]) .eephus-page {
   background-image:
-    repeating-linear-gradient(90deg, transparent 0 15px, var(--paper-pinstripe) 15px 16px),
     radial-gradient(var(--paper-dot)  0.9px, transparent 1.4px),
     radial-gradient(var(--paper-dot2) 0.9px, transparent 1.4px),
     radial-gradient(var(--grain2) 1px, transparent 1px);
-  background-size: 16px 100%, 9px 9px, 9px 9px, 13px 13px;
-  background-position: 0 0, 0 0, 4px 5px, 13px 13px;
-  background-attachment: fixed, fixed, fixed, scroll;
+  background-size: 9px 9px, 9px 9px, 13px 13px;
+  background-position: 0 0, 4px 5px, 13px 13px;
+  background-attachment: fixed, fixed, scroll;
 }
 .eephus-page a { color: var(--accent-navy); }
 .eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
@@ -634,6 +634,47 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 }
 .team-card .team-soc:hover { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary); }
 .team-card .team-soc svg { width: 15px; height: 15px; display: block; fill: currentColor; }
+
+/* ---- team card flip (click / Enter / Space) ---------------------------------
+   The outer .team-flip is the 3D perspective wrapper (keeps the id + :target so
+   deep links still resolve); the rotating .team-card-inner carries the two .card
+   faces. The .card chrome (incl. overflow:hidden + the iridescent top bar) lives
+   ON the faces, NEVER on the rotating parent, or it clips the 3D. Front stays in
+   normal flow (defines the box height); back is absolutely positioned over it. */
+.team-grid { align-items: start; }
+.team-flip { perspective: 1200px; cursor: pointer; }
+.team-flip:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
+.team-card-inner {
+  position: relative; width: 100%;
+  transition: transform .6s cubic-bezier(.2,.7,.3,1);
+  transform-style: preserve-3d;
+}
+.team-flip.is-flipped .team-card-inner { transform: rotateY(180deg); }
+.team-card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.team-card-back {
+  position: absolute; inset: 0; transform: rotateY(180deg);
+  overflow: auto; display: flex; flex-direction: column;
+}
+/* Only the visible face is interactive (front links must not intercept when
+   flipped; back links must work once flipped). */
+.team-flip .team-card-back { pointer-events: none; }
+.team-flip.is-flipped .team-card-back { pointer-events: auto; }
+.team-flip.is-flipped .team-card-front { pointer-events: none; }
+.team-back-head {
+  font-family: var(--font-retro-mono); font-size: 1.05rem; font-weight: 700;
+  letter-spacing: .02em; margin: 0 0 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.team-back-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.team-back-list li { margin: 2px 0; }
+.team-back-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; margin: 6px 0; }
+.team-flip-hint {
+  margin-top: auto; align-self: flex-end; padding-top: 10px;
+  font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-tertiary); opacity: .7;
+}
+.team-card-front { display: flex; flex-direction: column; }
+@media (prefers-reduced-motion: reduce) { .team-card-inner { transition: none; } }
 
 /* ---- footer ---- */
 .eephus-footer {
@@ -1564,6 +1605,12 @@ select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visibl
   text-transform: uppercase; letter-spacing: .03em; }
 .bp-slot .bp-slot-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .bp-slot .bp-slot-rem { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+.bp-slot .bp-slot-adv { color: var(--accent-green, #1F7A3A); font-size: 9px; margin-left: 5px; vertical-align: middle; }
+/* Bench bats: clearly separated from the constructed nine. */
+.bp-bench-head { margin: 8px 0 2px; padding-top: 6px; border-top: 1px dashed var(--border);
+  font-family: var(--font-retro-mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text-tertiary); }
+.bp-slot--bench { opacity: .72; }
 /* ---- Pitcher Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
 .pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
 .pal-hi { color: var(--accent-cyan); }

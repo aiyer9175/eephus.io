@@ -77,6 +77,22 @@
     var g = glossaryTerm ? ' data-gl="' + glossaryTerm + '"' : "";
     return '<span class="rem-plus ' + remClass(v) + '"' + g + '>' + fInt(v) + "</span>";
   }
+  // HEM+ / xHEM+ / Offense+ ride a WIDER (wRC+-width) scale than the FIP-based
+  // REM+/SEM+, so they get their own color bands (widening the shared remClass
+  // would recolor the reliever/starter metrics). Same rem-* CSS classes, wider
+  // thresholds (mean 100, SD ~16).
+  function hemClass(v) {
+    var n = num(v);
+    if (n == null) return "rem-avg";
+    if (n >= 130) return "rem-elite";
+    if (n >= 112) return "rem-good";
+    if (n >= 88) return "rem-avg";
+    return "rem-low";
+  }
+  function hemCell(v, glossaryTerm) {
+    var g = glossaryTerm ? ' data-gl="' + glossaryTerm + '"' : "";
+    return '<span class="rem-plus ' + hemClass(v) + '"' + g + '>' + fInt(v) + "</span>";
+  }
   function gloss(label, term) {
     return '<span class="g-term" data-gl="' + esc(term) + '">' + esc(label) + "</span>";
   }
@@ -139,6 +155,19 @@
         if (r.rem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.rem_plus_3yr_pct) + "</span>";
         if (r.rem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 40 IP in the trailing window">*</span>';
         return s;
+      } },
+    { key: "xrem_plus", label: "xREM+", term: "xrem_plus", num: true, desc: true, isRem: true,
+      title: "Deserved run prevention: the REM+ scale on Savant expected wOBA allowed (lower allowed = higher). A companion to REM+, which stays FIP-based (xwOBA-allowed did not beat FIP predictively); this is a deserved read, not a replacement. Tracked relievers only.",
+      get: function (r) { return r.xrem_plus; },
+      cell: function (r) { return r.xrem_plus == null ? "" : remCell(r.xrem_plus); } },
+    { key: "luck", label: "Luck", num: true, desc: true,
+      title: "Actual minus expected wOBA allowed. Positive = allowed more than his contact deserved (unlucky, room to improve); negative = allowed less (over-performing, due to regress).",
+      get: function (r) { return r.luck; },
+      cell: function (r) {
+        if (r.luck == null) return "";
+        var v = r.luck;
+        var col = v >= 0.02 ? "var(--up)" : v <= -0.02 ? "var(--down)" : "var(--text-tertiary)";
+        return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + v.toFixed(3) + "</span>";
       } },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
@@ -655,6 +684,19 @@
         if (r.sem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 120 IP in the trailing window">*</span>';
         return s;
       } },
+    { key: "xsem_plus", label: "xSEM+", term: "xsem_plus", num: true, desc: true, isRem: true,
+      title: "Deserved run prevention: the SEM+ scale on Savant expected wOBA allowed (lower allowed = higher). A companion to SEM+, which stays FIP-based (xwOBA-allowed did not beat FIP predictively); a deserved read, not a replacement. Tracked starters only.",
+      get: function (r) { return r.xsem_plus; },
+      cell: function (r) { return r.xsem_plus == null ? "" : remCell(r.xsem_plus); } },
+    { key: "luck", label: "Luck", num: true, desc: true,
+      title: "Actual minus expected wOBA allowed. Positive = allowed more than his contact deserved (unlucky, room to improve); negative = allowed less (over-performing, due to regress).",
+      get: function (r) { return r.luck; },
+      cell: function (r) {
+        if (r.luck == null) return "";
+        var v = r.luck;
+        var col = v >= 0.02 ? "var(--up)" : v <= -0.02 ? "var(--down)" : "var(--text-tertiary)";
+        return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + v.toFixed(3) + "</span>";
+      } },
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
@@ -670,7 +712,7 @@
   // Past-season history rows carry the season-level fields but not the
   // trailing-window SEM+ 3yr. Reuse the same column objects so the history board
   // renders and sorts identically, dropping the column its rows lack.
-  var STARTER_HISTORY_DROP = { sem_plus_3yr: 1 };
+  var STARTER_HISTORY_DROP = { sem_plus_3yr: 1, xsem_plus: 1, luck: 1 };
   var STARTER_HISTORY_COLS = STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; });
 
   var STARTER_TEAM_COLS = [
@@ -1025,6 +1067,7 @@
   var hitterErr = false;
   var hitterInit = false;
   var hitterView = "hitters";                 // hitters | teams | charts
+  var hitterSplit = "vr";                      // vr (vs RHP) | vl (vs LHP) for lineup charts
   var hitterSort = { key: "hem_plus", asc: false };
   var hitterTeamSort = { key: "offense_plus", asc: false };
   var hitterQuery = "";
@@ -1038,12 +1081,12 @@
   // Skill core first (HEM+), then the volume + slash-line context columns.
   var HITTER_COLS = [
     { key: "name", label: "Hitter", term: null, sortable: true, kind: "name" },
-    { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: remCell, num: true, desc: true, isRem: true },
+    { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true, isRem: true },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.hem_plus_3yr; },
       cell: function (r) {
         if (r.hem_plus_3yr == null) return "";
-        var s = remCell(r.hem_plus_3yr);
+        var s = hemCell(r.hem_plus_3yr);
         if (r.hem_plus_3yr_pct != null) s += '<span class="proj-dim"> p' + fInt(r.hem_plus_3yr_pct) + "</span>";
         if (r.hem_plus_3yr_tag === "provisional") s += '<span class="proj-dim" title="Provisional: under 2 seasons or 600 PA in the trailing window">*</span>';
         return s;
@@ -1051,14 +1094,14 @@
     { key: "xhem_plus", label: "xHEM+", term: "xhem_plus", num: true, desc: true, isRem: true,
       title: "Deserved offense: the HEM+ scale on Savant expected wOBA (xwOBA). Forward-predicts next-year offense better than actual. Tracked hitters only.",
       get: function (r) { return r.xhem_plus; },
-      cell: function (r) { return r.xhem_plus == null ? "" : remCell(r.xhem_plus); } },
+      cell: function (r) { return r.xhem_plus == null ? "" : hemCell(r.xhem_plus); } },
     { key: "luck_gap", label: "Luck", num: true, desc: true,
       title: "xHEM+ minus HEM+: positive = under-performing his contact quality (bad luck, room to bounce back); negative = over-performing (due to regress).",
       get: function (r) { return r.luck_gap; },
       cell: function (r) {
         if (r.luck_gap == null) return "";
         var v = r.luck_gap;
-        var col = v >= 6 ? "var(--up)" : v <= -6 ? "var(--down)" : "var(--text-tertiary)";
+        var col = v >= 13 ? "var(--up)" : v <= -13 ? "var(--down)" : "var(--text-tertiary)";
         return '<span style="color:' + col + ';font-variant-numeric:tabular-nums;">' + (v > 0 ? "+" : "") + fInt(v) + "</span>";
       } },
     { key: "pa", label: "PA", fmt: fInt, num: true },
@@ -1089,8 +1132,8 @@
 
   var HITTER_TEAM_COLS = [
     { key: "team", label: "Team", sortable: true, kind: "team" },
-    { key: "offense_plus", label: "Offense+", fmt: remCell, num: true, desc: true, isRem: true },
-    { key: "heart_hem", label: "Heart 3", fmt: remCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
+    { key: "offense_plus", label: "Offense+", fmt: hemCell, num: true, desc: true, isRem: true },
+    { key: "heart_hem", label: "Heart 3", fmt: hemCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
       get: function (t) { return num(t.n_above_avg); },
       cell: function (t) { return fInt(t.n_above_avg) + (t.n_hitters != null ? '<span class="proj-dim"> / ' + fInt(t.n_hitters) + "</span>" : ""); } },
@@ -1099,10 +1142,11 @@
 
   function hemExplainer() {
     return explainer("hem_plus", gloss("HEM+", "hem_plus")
-      + " measures a hitter's pure offensive-rate skill on a league-relative scale: 100 is an average"
-      + " qualified hitter, 110 is 10 percent more offense per plate appearance. It is a sample-shrunk"
-      + " wOBA (the wRC+ family), so volume (PA), baserunning (SB), and the slash line ride the context"
-      + " columns instead of moving the skill number.");
+      + " measures a hitter's pure offensive-rate skill on a league-relative scale (100 = an average"
+      + " qualified hitter), scaled to the wRC+ convention so the league reads with real separation"
+      + " (roughly 15 points per standard deviation). It is a sample-shrunk wOBA (the wRC+ family), so"
+      + " volume (PA), baserunning (SB), and the slash line ride the context columns instead of moving"
+      + " the skill number.");
   }
 
   function hitterScorecard() {
@@ -1249,11 +1293,11 @@
     var qual = ((hitterData && hitterData.hitters) || []).filter(function (r) { return r.qualified !== false; });
     if (qual.length < 12) return "";
     var hems = qual.map(function (r) { return r.hem_plus; });
-    var hist = chart("histogram", hems, { height: 108, min: 55, max: 175, highlightAbove: 125,
+    var hist = chart("histogram", hems, { height: 108, min: 55, max: 175, highlightAbove: 130,
       refs: [{ at: 100, label: "avg" }], aria: "HEM+ distribution" });
     var pts = qual.filter(function (r) { return r.pa != null; }).map(function (r) {
       return { x: r.hem_plus, y: r.pa, label: r.name + "  HEM+ " + r.hem_plus + "  PA " + r.pa,
-               color: r.hem_plus >= 120 ? null : "#6a6f7a" };
+               color: r.hem_plus >= 130 ? null : "#6a6f7a" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "HEM+ (skill) →", yLabel: "↑ PA (volume)",
       xRef: 100, aria: "skill vs volume" });
@@ -1267,27 +1311,64 @@
     return collapsible("hitters-viz", 'Distribution <span class="proj-dim">(HEM+ spread, skill vs volume)</span>', body);
   }
 
+  // vs-RHP / vs-LHP segmented toggle for the constructed lineups.
+  function lineupSplitToggle() {
+    function b(val, label) {
+      return '<button type="button" class="mlbstats-tab' + (hitterSplit === val ? " active" : "")
+        + '" data-hittersplit="' + val + '" role="tab" aria-selected="' + (hitterSplit === val) + '">' + label + "</button>";
+    }
+    return '<div class="mlbstats-seasons" role="tablist" aria-label="Opposing pitcher hand">'
+      + b("vr", "vs RHP") + b("vl", "vs LHP") + "</div>";
+  }
+  function _slotRow(h, slotNum) {
+    var adv = h.platoon_adv
+      ? '<span class="bp-slot-adv" title="Platoon advantage vs this hand">●</span>' : "";
+    var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
+    return '<div class="bp-slot">'
+      + '<span class="bp-slot-role">' + slotNum + "</span>"
+      + '<span class="bp-slot-name">' + esc(h.name || "-") + hand + adv
+      + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
+      + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
+      + "</div>";
+  }
   function lineupLadders() {
     var teams = (hitterData && hitterData.teams) || [];
     if (!teams.length) return "";
     var sorted = teams.slice().sort(function (a, b) { return (num(b.offense_plus) || 0) - (num(a.offense_plus) || 0); });
     var cards = sorted.map(function (t) {
-      var lineup = (t.lineup || []).slice(0, 9);
-      var slots = lineup.map(function (h, i) {
-        return '<div class="bp-slot">'
-          + '<span class="bp-slot-role">' + (i + 1) + "</span>"
-          + '<span class="bp-slot-name">' + esc(h.name || "-")
-          + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
-          + '<span class="bp-slot-rem ' + remClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
-          + "</div>";
-      }).join("");
+      // Constructed handedness-aware order for the selected hand; fall back to the
+      // HEM+ depth ladder when the bat side wasn't available.
+      var order = (t.orders && t.orders[hitterSplit]) || null;
+      var slots;
+      if (order && order.length) {
+        slots = order.map(function (h) { return _slotRow(h, h.slot); }).join("");
+      } else {
+        slots = (t.lineup || []).slice(0, 9).map(function (h, i) { return _slotRow(h, i + 1); }).join("");
+      }
+      // Bench bats, clearly separated below the nine.
+      var bench = (t.bench || []);
+      var benchHtml = bench.length
+        ? '<div class="bp-bench-head">Bench</div>'
+          + bench.map(function (h) {
+              var hand = h.bats ? '<span class="proj-dim"> ' + esc(h.bats) + "HB</span>" : "";
+              return '<div class="bp-slot bp-slot--bench">'
+                + '<span class="bp-slot-role">&mdash;</span>'
+                + '<span class="bp-slot-name">' + esc(h.name || "-") + hand
+                + (h.pa != null ? '<span class="proj-dim"> ' + fInt(h.pa) + " PA</span>" : "") + "</span>"
+                + '<span class="bp-slot-rem ' + hemClass(h.hem_plus) + '">' + fInt(h.hem_plus) + "</span>"
+                + "</div>";
+            }).join("")
+        : "";
       return '<div class="bp-depth-card"><div class="bp-depth-head">'
         + '<span class="bp-depth-team">' + logo(t.team) + esc(t.team) + "</span>"
-        + '<span class="rem-plus ' + remClass(t.offense_plus) + '" data-gl="hem_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
-        + "</div>" + slots + "</div>";
+        + '<span class="rem-plus ' + hemClass(t.offense_plus) + '" data-gl="hem_plus">Offense+ ' + fInt(t.offense_plus) + "</span>"
+        + "</div>" + slots + benchHtml + "</div>";
     }).join("");
-    return '<div class="mlbstats-note">Each lineup as a depth ladder: its hitters ordered by '
-      + gloss("HEM+", "hem_plus") + " (offensive-rate skill per slot) with plate-appearance volume.</div>"
+    return '<div class="mlbstats-note">A sabermetric batting order, not a HEM+ sort: the two best bats hit '
+      + "2nd and 4th, and left/right hitters are staggered so a reliever can't get a platoon matchup. Toggle "
+      + "the opposing hand to re-lens platoon advantage (" + "● marks a platoon-advantaged bat). Bench bats "
+      + "are listed below each nine.</div>"
+      + lineupSplitToggle()
       + '<div class="bp-depth-grid">' + cards + "</div>";
   }
 
@@ -1327,6 +1408,12 @@
     root.querySelectorAll("[data-hitterview]").forEach(function (b) {
       b.addEventListener("click", function () {
         hitterView = b.getAttribute("data-hitterview");
+        renderHitters();
+      });
+    });
+    root.querySelectorAll("[data-hittersplit]").forEach(function (b) {
+      b.addEventListener("click", function () {
+        hitterSplit = b.getAttribute("data-hittersplit");
         renderHitters();
       });
     });

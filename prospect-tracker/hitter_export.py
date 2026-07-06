@@ -161,7 +161,9 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
         ent = xw.get(int(h["mlbam"])) if h.get("mlbam") is not None else None
         if not ent:
             continue
-        h["xhem_plus"] = int(round(100.0 * ent[0] / pool))
+        # Same widened scale as HEM+ (hem_plus.HEM_SPREAD_GAIN), so xHEM+ and HEM+
+        # are on ONE ruler and luck_gap = xHEM+ - HEM+ stays meaningful.
+        h["xhem_plus"] = int(round(100.0 + hem_plus.HEM_SPREAD_GAIN * (100.0 * ent[0] / pool - 100.0)))
         h["xwoba"] = round(ent[0], 3)
         if h.get("hem_plus") is not None:
             h["luck_gap"] = h["xhem_plus"] - h["hem_plus"]   # + = under-performing his contact
@@ -198,6 +200,26 @@ def _backtest() -> dict:
     }
 
 
+@functools.lru_cache(maxsize=4)
+def load_bat_side(season: int) -> dict:
+    """{mlbam: 'L'|'R'|'S'} for every MLB player, one bulk StatsAPI call. Feeds the
+    handedness-aware lineup construction (build_batting_order). Best-effort: {} on
+    any failure, so lineups fall back to the HEM+-only order."""
+    try:
+        import bullpen_export as be
+        data = be._get_json("sports/1/players", {"season": int(season)})
+    except Exception as e:   # noqa: BLE001 - best-effort, network/parse anything
+        log = logging.getLogger(__name__)
+        log.warning("batSide fetch failed: %s", e)
+        return {}
+    out = {}
+    for p in data.get("people", []):
+        bs = (p.get("batSide") or {}).get("code")
+        if p.get("id") and bs:
+            out[int(p["id"])] = bs
+    return out
+
+
 def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
            write: bool = True, log=print, today: Optional[str] = None) -> int:
     """Build data/hitter_leaderboards.json and return the hitter count."""
@@ -210,7 +232,19 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     if not rows:
         log(f"  hitters: no hitting data for {season} (source blocked or empty); skipping")
         return 0
-    scored = hem_plus.score_pool(build_hitters(rows))
+    hitters = build_hitters(rows)
+    # Stamp bat side (L/R/S) before scoring so team_offense can construct the
+    # handedness-staggered vs-LHP / vs-RHP orders. Best-effort bulk call.
+    bat_side = load_bat_side(season)
+    if bat_side:
+        n_bs = 0
+        for h in hitters:
+            bs = bat_side.get(int(h.mlbam)) if h.mlbam is not None else None
+            if bs:
+                h.bats = bs
+                n_bs += 1
+        log(f"  hitters: bat side stamped for {n_bs} hitters")
+    scored = hem_plus.score_pool(hitters)
     n_h3 = _join_hem_plus_3yr(scored["hitters"])
     if n_h3:
         log(f"  hitters: 3-year HEM+ joined for {n_h3} hitters")

@@ -167,6 +167,29 @@ def _prior_features(rec, pt, side: str = "hit") -> dict:
 _K_REL_PA = 100.0
 _K_REL_BF = 80.0
 
+# Static per-group level-median-ish priors, used ONLY when neither the
+# contemporaneous nor the prior-season same-level norm exists (e.g. a brand-new
+# season's DSL pitching norms have not been computed yet). Without a fallback,
+# _season_rates subtracts 0, so a RAW rate masquerades as a level-relative edge --
+# the exact bug that spiked new-season DSL arms (a 45% DSL K% read as a +45% edge).
+_NORM_PRIOR = {
+    "pitching": {"k_pct": 0.22, "bb_pct": 0.095, "era": 4.30},
+    "hitting":  {"k_pct": 0.22, "bb_pct": 0.085, "iso": 0.135, "obp": 0.330, "ops": 0.715},
+}
+
+
+def _resolved_norms(season, level, group):
+    """Contemporaneous same-level norms, falling back to the prior season's
+    same-level norms, then to a static per-group prior -- NEVER an empty dict. A
+    missing norm made _season_rates treat a raw rate as a level-relative edge,
+    which is why un-normed DSL/complex arms spiked to the grade ceiling."""
+    n = mh.league_norms(season, level, group, fetch=False) or {}
+    if not n.get("k_pct"):
+        n = mh.league_norms(season - 1, level, group, fetch=False) or {}
+    if not n.get("k_pct"):
+        n = dict(_NORM_PRIOR.get(group, {}))
+    return n
+
 
 def _season_rates(row, norms, side: str):
     """Level-relative rate block + exposure (pa/bf) for one MiLB season, SAMPLE-SHRUNK.
@@ -245,7 +268,7 @@ def _milb_features(mlbam, decision_year, birth_date, side: str = "hit"):
                 return (_f(lr.get("bf")) if side == "pit" else _f(lr.get("pa"))) or 0.0
             level = max(present, key=_lv_exp)
             row = mh.level_row(rows, level, group)
-        norms = mh.league_norms(season, level, group, fetch=False) or {}
+        norms = _resolved_norms(season, level, group)
         rates = _season_rates(row, norms, side)
         # Age-for-level uses the integer StatsAPI "baseball age" (age at the season's July 1).
         # Decimal precision from birth_date was tested for the model and slightly HURT OOS rank

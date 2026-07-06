@@ -88,7 +88,12 @@ _NOFV_PIT = ["k_rel", "peak_k_rel", "bb_rel", "era_rel", "x_era_k",
 # into the flagship board rank + farm composite.
 _GRADE_MAP = {
     "hit": {"BASE": 27.0, "SLOPE": 3.8, "FLOOR": 20.0, "KNEE": 43.0, "CEIL": 49.0, "SOFT": 4.0},
-    "pit": {"BASE": 25.0, "SLOPE": 4.5, "FLOOR": 20.0, "KNEE": 38.0, "CEIL": 42.0, "SOFT": 2.5},
+    # Pitcher ceiling de-rated (KNEE 38->34, CEIL 42->38): the module's own cap test
+    # found the un-scouted low-level pitcher signal above ~40 is NOISE (small-sample
+    # high-K complex/DSL spikes), so a provisional arm should top out at an org-depth
+    # grade, not a fringe-regular 42. Order-preserving soft ceiling -> the provisional
+    # rank eval is unchanged; xfv.json is untouched (this path writes only xfv_ungraded).
+    "pit": {"BASE": 25.0, "SLOPE": 4.5, "FLOOR": 20.0, "KNEE": 34.0, "CEIL": 38.0, "SOFT": 2.5},
 }
 
 # Default ETA (years to MLB) by level, for the surplus seam -- ungraded low-minors players
