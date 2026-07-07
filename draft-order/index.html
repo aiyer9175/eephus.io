@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>2027 MLB Draft Order Simulator</title>
+    <link rel="stylesheet" href="styles.css?v=order-5" />
+  </head>
+  <body>
+    <main class="page-shell">
+      <section class="hero">
+        <div>
+          <p class="eyebrow">2027 MLB Draft</p>
+          <h1>Draft order simulator</h1>
+          <p class="lede">Generate a draft order from current MLB records, lottery odds, eligibility caps, projected PPI picks, CBT penalties, and Competitive Balance Round A/B picks. The 15 listed small-market clubs are split into seven Round A picks and eight Round B picks, ordered within each round by record from best to worst.</p>
+        </div>
+        <div class="actions">
+          <button id="generateBtn" type="button">Generate Order</button>
+          <button id="refreshBtn" class="secondary" type="button">Refresh Records</button>
+        </div>
+      </section>
+
+      <section class="status-grid" aria-label="Simulator status">
+        <article>
+          <span>Records</span>
+          <strong id="recordStatus">Loading...</strong>
+        </article>
+        <article>
+          <span>Lottery</span>
+          <strong>Top 6 picks</strong>
+        </article>
+        <article>
+          <span>Output</span>
+          <strong id="pickCount">0 picks</strong>
+        </article>
+        <article>
+          <span>PPI rookies</span>
+          <strong id="ppiStatus">Loading...</strong>
+        </article>
+      </section>
+
+      <section class="source-section">
+        <article>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">PPI Watch</p>
+              <h2>Current rookie fWAR leaders</h2>
+            </div>
+            <span class="badge">FanGraphs</span>
+          </div>
+          <div id="ppiBoard" class="mini-board"></div>
+        </article>
+        <article>
+          <div class="section-head compact">
+            <div>
+              <p class="eyebrow">CBT</p>
+              <h2>Projected pick-drop teams</h2>
+            </div>
+            <span class="badge">10 slots</span>
+          </div>
+          <div id="taxBoard" class="mini-board"></div>
+        </article>
+      </section>
+
+      <section class="board-section">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Generated Board</p>
+            <h2>First round and competitive balance picks</h2>
+          </div>
+          <span id="generatedAt" class="badge">Not generated</span>
+        </div>
+        <div id="orderBoard" class="order-board"></div>
+      </section>
+
+      <section class="rules-section">
+        <div>
+          <p class="eyebrow">Model</p>
+          <h2>Rules used</h2>
+        </div>
+        <div id="rulesList" class="rules-list"></div>
+      </section>
+    </main>
+    <script src="app.js?v=order-5"></script>
+  </body>
+</html>
