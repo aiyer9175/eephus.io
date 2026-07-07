@@ -25,7 +25,7 @@
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 6855.5,
+  "xfv": 12444.6,
   "consensus": 12397.5
  },
  "example_up_adjustments": [

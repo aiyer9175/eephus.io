@@ -3143,12 +3143,18 @@
     }
     .tool-grade-strip {
       display: flex;
-      flex-wrap: nowrap;
+      /* Default: WRAP so the FULL tool set stays visible on spacious cards. A
+         hitter carrying the frame+athl physical grades runs 8 chips (TOOL + 7
+         tools) and used to clip the trailing chip under the old nowrap +
+         overflow:hidden. The detail ribbon and mobile keep their own single-line
+         scroll rules; list rows already wrap via .player-row-toolstrip. */
+      flex-wrap: wrap;
       gap: 4px;
+      row-gap: 3px;
       margin: 0;
       align-items: center;
       width: 100%;
-      overflow: hidden;
+      overflow: visible;
     }
     .tool-grade-pill {
       display: inline-flex;
@@ -10895,15 +10901,17 @@ function _tiebreakerScoreRaw(p, opts) {
 }
 
 function fvCmpDesc(a, b) {
-  // v42 - Owner: order PURELY by the eFV model's DECIMAL grade (the continuous
-  // xfv_grade_realized), NOT the rounded display value. Two prospects displaying the same
-  // integer (e.g. 62.6 and 63.2 both show 63) are ordered by the decimal (63.2 > 62.6);
-  // they are TIED only when their eFV grades match DOWN TO THE DECIMAL, and the Tiebreaker
-  // Score (TBS) is the SOLE arbiter of that exact tie. Cohorts eFV abstains on (draft /
-  // overseas) fall back to the surfaced consensus FV. (Reverses the v38 rounded-surfaced-FV
-  // contract: TBS no longer breaks same-rounded-grade ties -- the eFV decimal does.)
+  // v42 - Owner: order PURELY by the eFV model's DECIMAL grade on the 20-80 scale (the
+  // continuous xfv_grade_quantile), NOT the rounded display value. Two prospects displaying
+  // the same integer (e.g. 62.6 and 63.2 both show 63) are ordered by the decimal (63.2 >
+  // 62.6); they are TIED only when their eFV grades match DOWN TO THE DECIMAL, and the
+  // Tiebreaker Score (TBS) is the SOLE arbiter of that exact tie. Cohorts eFV abstains on
+  // (draft / overseas) fall back to the surfaced consensus FV. (Reverses the v38
+  // rounded-surfaced-FV contract: TBS no longer breaks same-rounded-grade ties -- the eFV
+  // decimal does.)
   const _g = p => {
     const x = (typeof getEfv === "function") ? getEfv(p) : null;
+    if (x && x.xfv_grade_quantile != null) return Number(x.xfv_grade_quantile);
     if (x && x.xfv_grade_realized != null) return Number(x.xfv_grade_realized);
     return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
   };
@@ -14725,6 +14733,15 @@ function getAllOrgs() {
   return [...orgs].sort();
 }
 
+// Fold to lowercase + strip diacritics so search matches across accents ("baez"
+// finds "Joshua Baez" -> stored "Joshua Báez"; "pena" -> "Peña"; "munoz" -> "Muñoz").
+// NFD splits an accented letter into base + combining mark; U+0300-U+036F is the
+// combining-diacritic block we drop. Naive toLowerCase().includes() missed these,
+// so accented Latino names dropped out of the list when searched.
+function _deaccent(s) {
+  return (s || "").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
 function getFilteredActives() {
   // v28 - Defensive safety filter: any player whose status is "debuted"
   // OR who has a debut_date on file gets peeled off the active pool
@@ -14756,8 +14773,10 @@ function getFilteredActives() {
     }
   }
   if (state.search) {
-    const q = state.search.toLowerCase();
-    pool = pool.filter(p => (p.player_name || "").toLowerCase().includes(q));
+    // Accent-insensitive: "baez" must find "Báez", "pena" -> "Peña". Strip diacritics
+    // from BOTH the query and the name so accented Latino names stay searchable.
+    const q = _deaccent(state.search);
+    pool = pool.filter(p => _deaccent(p.player_name).includes(q));
   }
   if (state.stockFilter === "up") {
     pool = pool.filter(p => efvStockDir(p) === "up");
@@ -29882,9 +29901,12 @@ function efvTrackRecordSection() {
 const _PROV_RANK_PENALTY = 4;
 function efvRankValue(p) {
   const x = getEfv(p);
-  // MODEL-ALONE board ranking: order by the realized (pure-model) grade -- a direct
-  // transform of the model's E[6yr WAR], no consensus blend. Falls back to the
-  // quantile-mapped headline grade, then consensus FV.
+  // Board ranking on the 20-80-scale eFV grade (xfv_grade_quantile) -- the SAME number the
+  // board displays, so same-integer players order by the underlying decimal. Falls back to
+  // the realized (pure-model) grade, then the raw grade, then consensus FV. Provisional
+  // (source-ungraded) prospects carry only xfv_grade and get a small rank penalty so an
+  // un-scouted cameo does not tie a graded prospect of the same grade.
+  if (x && x.xfv_grade_quantile != null) return x.xfv_grade_quantile;
   if (x && x.xfv_grade_realized != null) return x.xfv_grade_realized;
   if (x && x.xfv_grade != null) return (p && p._is_provisional) ? x.xfv_grade - _PROV_RANK_PENALTY : x.xfv_grade;
   return (p && p.fv_close != null) ? Number(p.fv_close) : -1;
@@ -29938,10 +29960,12 @@ function getEfvRankDelta(p) {
 }
 // Display grade rounded UP (owner rule: FV grades show the integer ceiling).
 function efvGradeDisplay(x) {
-  // MODEL-ALONE headline: show the realized (pure-model) grade -- xfv_grade_realized is
-  // a direct transform of the model's E[6yr WAR] with NO consensus blend / quantile remap.
-  // Rounded to the NEAREST integer (not up): eFV is the true-model grade and round-to-nearest
-  // is unbiased (ceil adds a systematic ~+0.5). Falls back to the quantile-mapped grade.
+  // 20-80-SCALE headline (owner): show the model's ranking mapped onto the familiar 20-80
+  // scale (xfv_grade_quantile), rounded to the NEAREST integer (eFV rounds to nearest, not
+  // up; round-to-nearest is unbiased). Same-integer players are ordered by the underlying
+  // decimal in efvRankValue / fvCmpDesc. Falls back to the realized (pure-model) grade, then
+  // the raw grade, when the quantile map is absent (e.g. some provisional cohorts).
+  if (x && x.xfv_grade_quantile != null) return Math.round(x.xfv_grade_quantile);
   if (x && x.xfv_grade_realized != null) return Math.round(x.xfv_grade_realized);
   return (x && x.xfv_grade != null) ? Math.round(x.xfv_grade) : null;
 }
@@ -30016,10 +30040,12 @@ function efvGradeBandHTML(x) {
   if (!band) return "";
   return `<div class="efv-grade-band" title="Outcome-distribution band on the grade scale: eFV's modeled 6-year outcome runs from about ${band.lo} to ${band.hi} on the 20-80 scale (P10 to P90). This is the spread of how the model thinks this prospect turns out, not scouting-source disagreement." style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;cursor:help;">Outcome band <b style="color:var(--text-secondary);">${band.lo}-${band.hi}</b></div>`;
 }
-// eFV-minus-consensus delta CONSISTENT with the displayed (model-alone) grade: realized
-// grade vs consensus FV. Replaces the stored quantile-map delta so the colored +/- chip
-// matches the headline number.
+// eFV-minus-consensus delta CONSISTENT with the displayed (20-80-scale quantile) grade so
+// the colored +/- chip matches the headline number.
 function efvMinusConsensus(x) {
+  if (x && x.xfv_minus_consensus_quantile != null) return x.xfv_minus_consensus_quantile;
+  if (x && x.xfv_grade_quantile != null && x.consensus_fv != null)
+    return Math.round((x.xfv_grade_quantile - x.consensus_fv) * 10) / 10;
   if (x && x.xfv_grade_realized != null && x.consensus_fv != null)
     return Math.round((x.xfv_grade_realized - x.consensus_fv) * 10) / 10;
   return (x && x.xfv_minus_consensus != null) ? x.xfv_minus_consensus : null;
@@ -30035,6 +30061,11 @@ function efvTooltip(x) {
     const d = efvMinusConsensus(x);
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
   }
+  // Secondary transparency line: the pure-model outcome-implied grade before it is mapped
+  // onto the 20-80 scale (the headline eFV above is that map). Kept so eFV stays legible.
+  if (x.xfv_grade_realized != null && x.xfv_grade_quantile != null
+      && Math.round(x.xfv_grade_realized) !== Math.round(x.xfv_grade_quantile))
+    parts.push(`Model grade ${Math.round(x.xfv_grade_realized)} (outcome-implied, pre-scale)`);
   if (x.p_bust != null) parts.push(`P(bust) ${Math.round(x.p_bust * 100)}%`);
   if (x.surplus_mm != null) parts.push(`eFV surplus ${fmtSvMM(x.surplus_mm)}`);
   if (x.statcast_factor != null) parts.push(`Statcast+ tilt ${x.statcast_factor > 1 ? "+" : ""}${Math.round((x.statcast_factor - 1) * 100)}%`);
@@ -31455,9 +31486,10 @@ function buildProspectCard(snap) {
   const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
   // Lead the headline badge with eFV (platform-primary grade) so the single-
   // player card matches the board GFX rows, compare card, and on-screen board.
-  // Falls back to consensus when eFV abstains or the user is in consensus mode.
+  // ALWAYS leads with eFV when the model has graded the player, regardless of the board's
+  // current sort mode; falls back to consensus only when eFV genuinely abstains.
   const _xC = (typeof getEfv === "function") ? getEfv(p) : null;
-  const _useEfvC = !!(_xC && _xC.xfv_grade != null && (typeof _gradePrimary === "function") && _gradePrimary() === "xfv");
+  const _useEfvC = !!(_xC && _xC.xfv_grade != null);
   const _xgC = _useEfvC ? efvGradeDisplay(_xC) : null;
   const fvLabel = _xgC != null ? String(_xgC)
                 : (latest && latest.consensus_fv_label != null) ? String(latest.consensus_fv_label)
@@ -31494,8 +31526,17 @@ function buildProspectCard(snap) {
   // default "rarity" style scales the frame with tier (thin/none below FV 45).
   const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
   const photoFrameBg = rarGrad || P.borderStrong;
+  // Base layer BEHIND the photo: the team logo (contained, centered) when we have one, else
+  // the neutral silhouette. Because the photo sits ON TOP as a cover layer, a player with no
+  // headshot on file (or a photo that 404s) degrades to the team logo instead of the dim
+  // silhouette -- which reads far better on dark-mode GFX. The logo is contained (never
+  // stretched) and rides the ESPN CDN (crossorigin-safe under html2canvas like the meta logos).
+  const _logoURL = (typeof teamLogoURL === "function" && p.org) ? teamLogoURL(p.org) : null;
+  const _baseLayer = _logoURL
+    ? `background-color:${P.bg3};background-image:url('${_logoURL}');background-repeat:no-repeat;background-position:center;background-size:58%;`
+    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
-    <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+    <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;${_baseLayer}">
       ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
     </div>
   </div>`;
@@ -32964,7 +33005,7 @@ function makeSurplusCell(p) {
   const xf = getEfv(p);
   let s, d, buckets, isEfv = false;
   if (xf && xf.surplus_mm != null && _gradePrimary() === "xfv") {
-    s = { value_mm: xf.surplus_mm, dist: xf.dist || {}, fv_continuous: xf.xfv_grade_realized != null ? xf.xfv_grade_realized : xf.xfv_grade };
+    s = { value_mm: xf.surplus_mm, dist: xf.dist || {}, fv_continuous: xf.xfv_grade_quantile != null ? xf.xfv_grade_quantile : (xf.xfv_grade_realized != null ? xf.xfv_grade_realized : xf.xfv_grade) };
     d = xf.dist || {};
     buckets = xf.p_bucket;
     isEfv = true;
@@ -35248,8 +35289,10 @@ function makeFarmReportCard(org) {
   // Main-grade branch (<details>) with sub-cells inside.
   const _FARM_BRANCH_SLUG = { acquisition_strategy: "farm_grade_acquisition_strategy", development: "farm_grade_development", financial: "farm_grade_financial", mlb_production: "farm_grade_mlb_production" };
   const branch = (label, parentKey, weightPct, subsHtml, tooltip) => {
-    const letter = g[parentKey] || 'C';
-    const rank = r[parentKey];
+    // Branch (canopy) letter + rank re-grade with the selected window; leaves stay canonical.
+    const _cwB = canopyAt(org)[parentKey] || null;
+    const letter = (_cwB && _cwB.letter) || g[parentKey] || 'C';
+    const rank = (_cwB && _cwB.rank != null) ? _cwB.rank : r[parentKey];
     const _slug = _FARM_BRANCH_SLUG[parentKey];
     const labelHtml = _slug
       ? `<span class="gt-branch-label g-term" data-term="${_slug}">${escapeHtml(label)}</span>`
@@ -38406,10 +38449,10 @@ function _farmSortVal(o, s) {
   if (s === "statcast_plus_avg") return (o.statcast_quality || {}).mean;
   if (s === "statcast_plus_hit") return (o.statcast_quality || {}).hitter_mean;
   if (s === "statcast_plus_pit") return (o.statcast_quality || {}).pitcher_mean;
-  if (s === "acquisition_strategy" || s === "acquisitions" || s === "transactions") return o.acquisition_strategy_score;
-  if (s === "development")   return o.development_score;
-  if (s === "financial")     return o.financial_score;
-  if (s === "mlb_production") return o.mlb_production_score;
+  if (s === "acquisition_strategy" || s === "acquisitions" || s === "transactions") return (canopyAt(o).acquisition_strategy || {}).score ?? o.acquisition_strategy_score;
+  if (s === "development")   return (canopyAt(o).development || {}).score ?? o.development_score;
+  if (s === "financial")     return (canopyAt(o).financial || {}).score ?? o.financial_score;
+  if (s === "mlb_production") return (canopyAt(o).mlb_production || {}).score ?? o.mlb_production_score;
   // Drafting / IFA skill = the org's league rank (1=best of 30) on the
   // Acquisition tree's draft / IFA performance leaf (precomputed component_ranks).
   if (s === "acq_draft")     return o.component_ranks ? o.component_ranks.acq_draft : null;
@@ -38686,12 +38729,14 @@ function farmSortedOrgs() {
     // composite stamped onto the org payload by storage._zscore_to_100.
     // 'acquisitions' + 'transactions' keys preserved (back-compat) and
     // both resolve to the merged acquisition_strategy_score.
+    // Branch (canopy) sorts read the SELECTED-window score via canopyAt so the board
+    // re-orders with the grade window (falls back to the fixed canonical *_score).
     if (s === "acquisition_strategy"
         || s === "acquisitions"
-        || s === "transactions") return ((b.acquisition_strategy_score ?? -1) - (a.acquisition_strategy_score ?? -1));
-    if (s === "development")    return ((b.development_score    ?? -1) - (a.development_score    ?? -1));
-    if (s === "financial")      return ((b.financial_score      ?? -1) - (a.financial_score      ?? -1));
-    if (s === "mlb_production") return ((b.mlb_production_score ?? -1) - (a.mlb_production_score ?? -1));
+        || s === "transactions") return (((canopyAt(b).acquisition_strategy || {}).score ?? b.acquisition_strategy_score ?? -1) - ((canopyAt(a).acquisition_strategy || {}).score ?? a.acquisition_strategy_score ?? -1));
+    if (s === "development")    return (((canopyAt(b).development || {}).score ?? b.development_score ?? -1) - ((canopyAt(a).development || {}).score ?? a.development_score ?? -1));
+    if (s === "financial")      return (((canopyAt(b).financial || {}).score ?? b.financial_score ?? -1) - ((canopyAt(a).financial || {}).score ?? a.financial_score ?? -1));
+    if (s === "mlb_production") return (((canopyAt(b).mlb_production || {}).score ?? b.mlb_production_score ?? -1) - ((canopyAt(a).mlb_production || {}).score ?? a.mlb_production_score ?? -1));
     // Drafting / IFA skill: ascending by the Acquisition-leaf league rank
     // (rank 1 = best of 30 at finding draft / IFA value), so the most skilled
     // orgs sort first. Orgs without a graded leaf (??99) sink to the bottom.
@@ -38815,13 +38860,32 @@ function snapshotCurrentFarmRanks(orgs) {
   } catch { /* localStorage may be full / private - silent */ }
 }
 
+// Canopy branch cells ({score, letter, rank} for development / mlb_production /
+// acquisition_strategy / financial / overall) at the SELECTED farm window, so the canopy
+// subgrades re-grade with the grade window (state.formWindow). Financial is a
+// window-invariant surplus snapshot, so only DEV / PROD / ACQ move across windows. Falls
+// back to the fixed canonical grades/ranks for older payloads with no canopy_by_window.
+function canopyAt(org, win) {
+  win = win || (typeof state !== "undefined" && state.formWindow) || "7y";
+  const cw = (org && org.canopy_by_window && org.canopy_by_window[win]) || null;
+  if (cw) return cw;
+  const g = (org && org.grades) || {}, r = (org && org.component_ranks) || {};
+  const mk = k => ({ score: org && org[k + "_score"], letter: g[k] || "C", rank: r[k] });
+  return {
+    development: mk("development"), mlb_production: mk("mlb_production"),
+    acquisition_strategy: mk("acquisition_strategy"),
+    financial: { score: org && org.financial_score, letter: g.financial || "C", rank: r.financial, window_invariant: true },
+    overall: { score: org && org.farm_score, letter: g.overall || "C", rank: r.overall },
+  };
+}
 function makeComponentGrades(org) {
   // v31.4 - Revived as a 4-grade canopy strip under the main farm
   // grade. Mirrors the report card's 4 parent branches so a row-
   // scanner can read the org's per-branch profile without opening
   // the detail page. Abbreviations: ACQ (Acquisition), DEV
   // (Development), FIN (Financial), PROD (MLB Production).
-  const g = org.grades || {};
+  // Re-grades with the selected farm window via canopyAt.
+  const cw = canopyAt(org);
   const branches = [
     { k: 'acquisition_strategy', lbl: 'ACQ'  },
     { k: 'development',          lbl: 'DEV'  },
@@ -38829,7 +38893,7 @@ function makeComponentGrades(org) {
     { k: 'mlb_production',       lbl: 'PROD' },
   ];
   const chips = branches.map(({ k, lbl }) => {
-    const letter = g[k] || 'C';
+    const letter = (cw[k] && cw[k].letter) || 'C';
     const tone = gradeColor(letter);
     return `<div class="fg-comp" title="${escapeHtml(lbl)} grade: ${escapeHtml(letter)}">
       <span class="fg-comp-label">${escapeHtml(lbl)}</span>
@@ -39032,11 +39096,11 @@ function renderFarmSystems() {
     const overall = ((org.letter_by_window || {})[win]) || (org.grades && org.grades.overall) || ' - ';
     const gradeColorVal = gradeColor(overall);
     // v40 - continuous tiebreaker score, surfaced under the letter so same-grade
-    // farms are visibly differentiated (0.40 total surplus + 0.25 6yDvM+ + 0.35
+    // farms are visibly differentiated (0.40 total surplus + 0.25 7yDvM+ + 0.35
     // raw graduate WAR; 100 = league mean, +10 = 1σ).
     const _tb = org.farm_tiebreaker || null;
     const tbScore = (_tb && _tb.score != null) ? _tb.score.toFixed(1) : null;
-    const tbTitle = _tb ? `Tiebreaker ${tbScore} (rank #${_tb.rank}) - orders same-grade farms · 0.40 surplus + 0.25 6yDvM+ + 0.35 graduate WAR (100 = league mean)` : "";
+    const tbTitle = _tb ? `Tiebreaker ${tbScore} (rank #${_tb.rank}) - orders same-grade farms · 0.40 surplus + 0.25 7yDvM+ + 0.35 graduate WAR (100 = league mean)` : "";
     const tbHtml = tbScore != null
       ? `<span class="fg-tiebreak" title="${escapeHtml(tbTitle)}" style="display:block;font:600 9px var(--font-mono);color:var(--text-tertiary);letter-spacing:0.04em;margin-top:2px;">TB&nbsp;${tbScore}</span>`
       : "";

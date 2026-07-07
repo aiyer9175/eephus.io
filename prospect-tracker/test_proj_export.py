@@ -41,10 +41,22 @@ def test_sidecar_shape_contract():
     d = _payload()
     assert d["first_season"] == pe.FIRST_SEASON and d["horizon"] == pe.HORIZON
     assert d["n_vets"] > 800 and d["n_prospects"] > 100
-    assert d["dpw_usd"] > 5_000_000 and 0 < d["dpw_infl"] < 0.2
+    # dpw_infl == 0.0 is CORRECT under the production clemens_2026 set: its net-7%-flat
+    # discount convention folds win-cost growth into the net rate (valuation_sets.py
+    # sets dollars_per_war_inflation = 0.0 for form net_7_flat). The old 0 < bound
+    # encoded the pre-clemens 5%-inflation convention.
+    assert d["dpw_usd"] > 5_000_000 and 0 <= d["dpw_infl"] < 0.2
+    # Prospect WAR paths run the platform CONTROL WINDOW (clemens_2026: 7 seasons),
+    # not the fixed 6 the pre-clemens artifact carried -- derive the cap from the
+    # PRODUCTION default set (conftest pins this module to the identity set for
+    # hermeticity, but the committed artifact is exported under the production set),
+    # so a valuation-set window change cannot silently re-break this.
+    import value_framework as _vf
+    with _vf.valuation_set(_vf._DEFAULT_VALUATION_SET):
+        _ctrl = int(_vf._config()["service_time"]["control_years"])
     for m in d["vets"][:50] + d["prospects"][:50]:
         assert m["key"] and m["name"] and m["src"] in ("vet", "prospect")
-        assert len(m["war"]) <= max(pe.HORIZON, 6) and m["war"], m["name"]
+        assert len(m["war"]) <= max(pe.HORIZON, _ctrl, 6) and m["war"], m["name"]
         assert m["warTotal"] is not None
 
 

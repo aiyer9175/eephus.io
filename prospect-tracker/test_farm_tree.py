@@ -254,6 +254,48 @@ class TestExportedTreeShape:
                 f"blend+stretch {recomputed:.2f} (raw blend = {blended:.2f})"
             )
 
+    def test_farm_rank_monotonic_in_farm_score(self):
+        # Owner: farm_rank MUST follow the canonical farm_score in order (a lower
+        # farm_score can never out-rank a higher one). Regression lock for the COL-above-
+        # NYY/NYM inversion caused by the removed 7y-window re-rank hack.
+        ranked = sorted((o for o in self.orgs if o.get("farm_rank") is not None),
+                        key=lambda o: o["farm_rank"])
+        for i in range(1, len(ranked)):
+            hi, lo = ranked[i - 1], ranked[i]
+            if hi.get("farm_score") is None or lo.get("farm_score") is None:
+                continue
+            assert lo["farm_score"] <= hi["farm_score"] + 1e-6, (
+                f"farm_rank #{lo['farm_rank']} ({lo['org']}, farm_score {lo['farm_score']}) "
+                f"out-ranks #{hi['farm_rank']} ({hi['org']}, farm_score {hi['farm_score']})"
+            )
+
+    def test_principal_window_equals_canonical(self):
+        # The principal (7y) window IS the canonical slice: farm_score_by_window["7y"]
+        # == farm_score, so the board's default-window rank matches farm_rank.
+        from storage import FARM_PRINCIPAL_WINDOW
+        for o in self.orgs:
+            fw = (o.get("farm_score_by_window") or {}).get(FARM_PRINCIPAL_WINDOW)
+            if fw is None or o.get("farm_score") is None:
+                continue
+            assert abs(fw - o["farm_score"]) < 0.05, (
+                f"{o['org']} farm_score_by_window[{FARM_PRINCIPAL_WINDOW}] {fw} "
+                f"!= farm_score {o['farm_score']}"
+            )
+
+    def test_canopy_by_window_shape(self):
+        # Every org carries canopy_by_window for each selectable window, each with the 5
+        # branch cells, so the frontend canopy subgrades re-grade with the window.
+        from storage import FARM_SELECTABLE_WINDOWS
+        for o in self.orgs:
+            cw = o.get("canopy_by_window")
+            assert cw, f"{o['org']} missing canopy_by_window"
+            for win in FARM_SELECTABLE_WINDOWS:
+                assert win in cw, f"{o['org']} canopy_by_window missing {win}"
+                for br in ("development", "mlb_production", "acquisition_strategy",
+                           "financial", "overall"):
+                    assert br in cw[win], f"{o['org']} canopy_by_window[{win}] missing {br}"
+                    assert "letter" in cw[win][br] and "score" in cw[win][br]
+
     def test_overall_letter_matches_farm_score_rank(self):
         # rank-1 org's overall letter must be A or A+; rank-30 org must
         # not be A-tier.

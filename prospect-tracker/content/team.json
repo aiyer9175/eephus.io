@@ -1,9 +1,30 @@
 [
   { "name": "Noah J. Dengler",    "handle": "ARKNDJL",    "linkedin": "noahjdengler",
     "email": "arkndjl@gmail.com", "school": "New York University",
-    "note": ["PROSPX Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Free Agency Creator/Lead Developer", "CollegeSavant Developer", "Trade Machine Developer", "Lead Site Designer", "Writer/Analyst"],
+    "note": ["eephus.io Creator/Lead Developer", "PROSPX Creator/Lead Developer", "CollegeSavant Developer", "MLB Free Agency Creator/Lead Developer", "MLB Projections Creator/Lead Developer", "MLB Stats Creator/Lead Developer", "Pitcher Alchemy Lab Creator/Lead Developer", "Trade Machine Developer", "Writer", "Site Designer"],
+    "back": [
+      "Founder and lead developer of eephus.io: the site architecture, the static build pipeline, the data model, and the retro card-and-newspaper design system.",
+      "PROSPX end to end: the prospect board, filters, player cards, the farm system, Generate GFX, and the account and forum layer.",
+      "eFV, the outcome-grounded Future Value model: a leakage-clean feature matrix, a ridge WAR projection, the realized-implied grade, the 20-80 quantile scale, surplus value, and the backtest that shows eFV out-ranks consensus, FanGraphs, and MLB Pipeline out of sample.",
+      "MLB Projections: the league-wide projection engine, Team Outlook, and the merged MLB player cards.",
+      "MLB Free Agency: the market-value engine, the fit model, and the verdict framework.",
+      "MLB Stats: the leaderboard module and the REM+, RIV+, SEM+, and HEM+ Arkmetrics, plus the Leverage boards.",
+      "Pitcher Alchemy Lab: the starter and reliever role-conversion fit engine, the pitch-add lab, and the reverse-platoon radar.",
+      "Trade Machine: the Bayesian trade valuation for prospects and veterans.",
+      "CollegeSavant: the college-to-pro translation and the CS+ Arkmetric.",
+      "The unified Glossary, the Arkmetric standard, and the model-accountability registry.",
+      "Site design and writing across the platform."
+    ],
     "website": "https://arkndjl.net/", "github": "arkndjl" },
-  { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396", "note": ["PROSPX Developer", "MLB Projections Developer", "MLB Free Agency Developer", "Writer/Analyst"], "school": "Utah College", "github": "willclq" },
+  { "name": "Will Cahoon",        "handle": "WillColqhn", "linkedin": "will-cahoon-b94308396",
+    "note": ["MLB Projections Creator/Lead Developer", "PROSPX Developer", "MLB Free Agency Developer", "Writer/Analyst"],
+    "back": [
+      "Swing+: a bat-tracking swing-quality model (bat speed, swing length, attack angle and path tilt, intercept point) that scores each hitter's tracked MLB swings. It rides the player cards, the GFX hero rail, and MLB Projections.",
+      "Prospect Defensive Value: a model of expected MLB positional run value from a prospect's listed position, body frame, and age.",
+      "Core development on PROSPX, MLB Projections, and MLB Free Agency.",
+      "Writing and analysis, including the Shortstops Galore feature."
+    ],
+    "school": "Utah College", "github": "willclq" },
   { "name": "Michael Behrens",    "handle": "b____tech",  "linkedin": "michael-behrens-", "note": "Webmaster", "school": "University of Oklahoma", "github": "baron-git" },
   { "name": "Anirudh Iyer",       "handle": null,         "linkedin": "anirudh-iyer-193086229", "note": ["Trade Machine Creator/Lead Developer", "PROSPX Developer", "CollegeSavant Developer"], "school": "University of California, Los Angeles", "github": "aiyer9175" },
   { "name": "Joseph Gillis",      "handle": null,         "linkedin": "josephdgil",                "note": "CollegeSavant Creator/Lead Developer", "school": "Boston University", "github": "jgillisBU" },

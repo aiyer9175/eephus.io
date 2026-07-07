@@ -103,14 +103,16 @@ def run(persist: bool = True) -> dict:
             "generated_at": date.today().isoformat(),
             "n_players": len(by_player),
             "n_active": counts["active"],
-            "grade_scale": "headline xfv_grade is the pure-model outcome-implied (realized) "
-                           "grade -- realized_implied_fv(E[6yr WAR]), no consensus blend; it is "
-                           "the SAME grade that drives surplus + the outcome distribution "
-                           "(xfv_grade_realized is an identical alias). xfv_grade_quantile "
-                           "preserves the prior rank-preserving map onto the 20-80 consensus "
-                           "scale (projection pricing + backtests). Live board players carry "
-                           "kind=active + a surplus dist; they require a pro track record (eFV "
-                           "abstains on players with no MiLB production).",
+            "grade_scale": "xfv_grade_quantile is the DISPLAYED grade site-wide: the model's "
+                           "outcome-grounded ranking mapped onto the familiar 20-80 consensus "
+                           "scale, and the grade surplus_mm is priced on (owner: eFV + eFV "
+                           "surplus consistent everywhere, matching /projections/). xfv_grade / "
+                           "xfv_grade_realized is the honest pure-model grade -- "
+                           "realized_implied_fv(E[6yr WAR]), deflated -- kept as a secondary "
+                           "reference; the outcome distribution p_bucket / p_bust stays on it "
+                           "(validated star/bust odds). Live board players carry kind=active + a "
+                           "surplus dist; they require a pro track record (eFV abstains on "
+                           "players with no MiLB production).",
             "eval": {"hitter": "data/xfv_eval.json", "pitcher": "data/xfv_eval_pitcher.json",
                      "tools": "data/xfv_tools.json"},
             "status": "provisional",

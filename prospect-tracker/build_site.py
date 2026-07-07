@@ -2608,17 +2608,34 @@ def build_team() -> str:
     # so the Trade Machine creator no longer shares the generic star with Writer/Analyst.
     _M_TRADE = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13M14 6l3 3-3 3M20 15H7M10 12l-3 3 3 3" '
                 'fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>')
+    # eephus.io (the whole site): an infield diamond with the pitcher's mound.
+    _M_SITE = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l9 9-9 9-9-9z" fill="none" '
+               'stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/>'
+               '<circle cx="12" cy="12" r="1.6" fill="currentColor"/></svg>')
+    # MLB Stats: leaderboard bars on a baseline.
+    _M_STATS = ('<svg viewBox="0 0 24 24" aria-hidden="true"><g fill="none" stroke="currentColor" '
+                'stroke-width="2" stroke-linecap="round"><path d="M5 20v-7"/><path d="M12 20V5"/>'
+                '<path d="M19 20v-10"/></g><path d="M3 20h18" fill="none" stroke="currentColor" '
+                'stroke-width="1.4" stroke-linecap="round"/></svg>')
+    # Pitcher Alchemy Lab: an Erlenmeyer flask.
+    _M_ALCHEMY = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6M10 3v6l-4.4 8.4a2 2 0 0 0 '
+                  '1.8 2.9h9.2a2 2 0 0 0 1.8-2.9L14 9V3" fill="none" stroke="currentColor" '
+                  'stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>'
+                  '<path d="M7.7 15h8.6" stroke="currentColor" stroke-width="1.4"/></svg>')
     def _badge_for(note: str, uid: str) -> str:
         n = note.lower()
         if "prospx" in n:                         mark, accent = prospx_ball_logo(uid, 24), "var(--accent-gold)"
         elif "projection" in n:                   mark, accent = _M_PROJ, "var(--accent-cyan)"
         elif "free agency" in n:                  mark, accent = _M_FA, "var(--accent-green)"
         elif "collegesavant" in n or "college" in n: mark, accent = _M_CAP, "var(--accent-lilac)"
+        elif "eephus" in n:                       mark, accent = _M_SITE, "var(--accent-gold)"
+        elif "stats" in n:                        mark, accent = _M_STATS, "var(--neon-amber)"
+        elif "alchemy" in n:                      mark, accent = _M_ALCHEMY, "var(--neon-violet)"
         elif "webmaster" in n or "web" in n:      mark, accent = _M_WEB, "var(--accent-navy)"
         elif "design" in n:                       mark, accent = _M_PEN, "var(--text-secondary)"
         elif "trade" in n:                        mark, accent = _M_TRADE, "var(--accent-orange)"
         else:                                     mark, accent = _M_STAR, "var(--accent-red)"   # Writer/Analyst + any unmapped role
-        creator = "creator" in n or "lead" in n   # crown any lead/creator role
+        creator = "creator" in n or "lead" in n or "webmaster" in n   # crown any lead/creator/webmaster role
         cls = "team-badge" + (" is-creator" if creator else "")
         label = html.escape(note)
         return (f'<span class="{cls}" title="{label}" aria-label="{label}" '
@@ -2694,15 +2711,13 @@ def build_team() -> str:
         if isinstance(notes, str):
             notes = [notes]
         notes = [n for n in (notes or []) if n]
-        # Module credit badges are intentionally NOT rendered on the front right
-        # now (owner will re-add them manually). The _badge_for helper + the `note`
-        # data in team.json are preserved so re-adding is a one-line change.
+        # Module credit badges (a logo mark per role, a crown on creator/lead/webmaster
+        # roles, full role name on hover) render on the FRONT face under the socials.
         note_html = (
             '<div class="team-notes">'
             + "".join(_badge_for(n, f'{_member_slug(m["name"])}-{i}') for i, n in enumerate(notes))
             + "</div>"
         ) if notes else ""
-        _ = note_html   # retained for future re-add; not rendered on the front face
         slug = _member_slug(m["name"])
         # Back face: the owner fills in the specific sections / models / metrics
         # each developer built later. Optional `back` field in team.json (a list
@@ -2719,7 +2734,7 @@ def build_team() -> str:
             back_body = '<p class="team-back-empty">Detailed contributions coming soon.</p>'
         front_face = (
             f'<div class="card team-card-face team-card-front">{photo_html}'
-            f'<p class="name">{html.escape(m["name"])}</p>{_school_html(m)}{socials_html}'
+            f'<p class="name">{html.escape(m["name"])}</p>{_school_html(m)}{socials_html}{note_html}'
             '<span class="team-flip-hint" aria-hidden="true">flip &#8635;</span></div>'
         )
         back_face = (

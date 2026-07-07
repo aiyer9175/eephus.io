@@ -131,7 +131,10 @@ def test_all_four_views_render(server):
     empty = [v for v, n in results.items() if n < 200]
     assert not empty, f"views rendered (near-)empty: {empty} — {results}"
     assert "Loading backtest" not in sc_html, "source comparison stranded on its loading state"
-    assert ("Does eFV outperform" in sc_html
+    # 2026-07-06: the data-state header is "The full head-to-head", led by the hero
+    # verdict banner ("A different kind of Future Value"); the empty-state text is unchanged.
+    assert ("The full head-to-head" in sc_html
+            or "A different kind of Future Value" in sc_html
             or "no resolved cohorts" in sc_html), "source comparison rendered neither data nor empty-state"
     assert "gl-verdict" in models_html, "Models & Proofs stranded (no verdict badges rendered)"
     assert "Predicts" in models_html, "Models & Proofs cards missing the Predicts row"

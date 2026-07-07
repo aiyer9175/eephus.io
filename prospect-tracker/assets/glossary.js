@@ -1217,6 +1217,33 @@ function _methRegistryHTML() {
 // Source Comparison - the empirical backtest, visually set apart from the
 // methodology prose as the "does it work?" evidence area (distinct framed
 // container + eyebrow). Lazy-loads source_backtest.json.
+// Hero verdict banner: leads the source comparison with WHAT eFV is and the headline
+// result (it wins out of sample) before the detailed breakdown. Uses the live pooled
+// backtest numbers, so the claim can never drift from the measured data.
+function _methHeroBanner(bt) {
+  const p = (bt.accuracy && bt.accuracy.pooled) || {};
+  const x = p.xfv, c = p.prospx_consensus, fg = p.fangraphs, mlb = p.mlb_pipeline;
+  if (!x || x.spearman == null) return "";
+  const f3 = v => (v == null ? "-" : v.toFixed(3));
+  const pubs = [["PROSPX consensus", c], ["MLB Pipeline", mlb], ["FanGraphs", fg]]
+    .filter(pr => pr[1] && pr[1].spearman != null);
+  const bestPub = pubs.length ? pubs.reduce((a, b) => (b[1].spearman > a[1].spearman ? b : a)) : null;
+  const lead = (bestPub && x.spearman != null) ? (x.spearman - bestPub[1].spearman) : null;
+  const tile = (lbl, v, isEfv) => `<div class="meth-find-card${isEfv ? " scx-hero-efv" : ""}">
+    <div class="meth-find-stat">${f3(v)}</div>
+    <div class="meth-find-label">${escapeHtml(lbl)}</div>
+    <div class="meth-find-sub">${isEfv ? "outcome-grounded model" : "public scouting grade"}</div>
+  </div>`;
+  const tiles = tile("eFV", x.spearman, true) + pubs.map(pr => tile(pr[0], pr[1].spearman, false)).join("");
+  return `<div class="source-comp-hero">
+    <div class="source-comp-hero-kicker">A different kind of Future Value</div>
+    <h2 class="source-comp-hero-title">eFV grades prospects on what they actually <em>became</em> - and it out-ranks the scouting industry out of sample.</h2>
+    <p class="source-comp-hero-lede">Every public FV grade is an educated opinion about the future. eFV is a model trained on resolved outcomes and scored the honest way: leakage-free, forward-chained, on the same players and the same window as the sources it is measured against. On ordering skill - how well a preseason grade tracks the WAR a prospect went on to produce - it beats every one of them${(lead != null && bestPub) ? `, ${f3(x.spearman)} to ${f3(bestPub[1].spearman)} over the best public source (${escapeHtml(bestPub[0])}), a +${lead.toFixed(3)} edge` : ""}.</p>
+    <div class="meth-findings source-comp-hero-tiles">${tiles}</div>
+    <p class="source-comp-hero-foot">Ordering skill = Spearman correlation between the preseason grade and realized MLB WAR (higher is better). The full method, per-FV-tier and per-archetype breakdowns, and the honest limits are all below - nothing cherry-picked.</p>
+  </div>`;
+}
+
 function renderSourceComparison() {
   const el = document.getElementById("source-comparison-body");
   if (!el) return;
@@ -1241,7 +1268,8 @@ function renderSourceComparison() {
   } else {
     const od = bt.outcome_defs || {};
     backtestHTML = `
-      <h2 class="meth-h">Does eFV outperform its sources?</h2>
+      ${_methHeroBanner(bt)}
+      <h2 class="meth-h">The full head-to-head</h2>
       <p class="meth-window">eFV is the primary grade, our outcome-grounded model. The test: a leakage-free, forward-chained backtest of eFV against the public sources (FanGraphs, MLB Pipeline) and the PROSPX consensus, scored on how well each grade ordered what prospects became. ${escapeHtml(bt.window.note)} <strong>Sources with too little history to score</strong> (${(bt.insufficient_history || []).join(", ")}) are excluded, not guessed at.</p>
       ${_methEfvFindings(bt)}
       <h3 class="meth-h3">Head-to-head: ranking skill + contributor AUC</h3>

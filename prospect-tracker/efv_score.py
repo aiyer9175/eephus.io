@@ -172,6 +172,37 @@ def _statcast_factor(r, side: str = "hit") -> float:
     return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * slope)), 3)
 
 
+def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None) -> None:
+    """Re-price the surplus DOLLARS (surplus_mm + band + the surplus fan) off the DISPLAYED
+    20-80 grade (xfv_grade_display) instead of the honestly-deflated realized grade, so the
+    dollars a prospect shows match the eFV grade the site displays and the /projections/
+    surface (owner: eFV surplus must be consistent site-wide). The OUTCOME ODDS (p_bucket and
+    p_bust -- the validated star/bust odds) STAY on the realized grade: they are probabilities,
+    not a dollar value, and were ground-truthed on that basis. No-op when the display grade or
+    a priced surplus is unavailable (e.g. a provisional cohort)."""
+    gq = s.get("xfv_grade_display")
+    if gq is None:
+        return
+    kw = {}
+    if age is not None:
+        kw["age"] = age
+    if eta is not None:
+        kw["eta_years"] = eta
+    sq = vf.expected_surplus_usd(gq, is_pit, pos, **kw)
+    dq = vf.sv_distribution(gq, is_pit, pos, **kw) or {}
+    pq = dq.get("percentiles") or {}
+    _r1 = lambda v: round(float(v), 1) if v is not None else None
+    s["surplus_mm"] = _r1(sq / 1e6) if sq else None
+    s["band_p10_mm"] = _r1(pq.get("p10"))
+    s["band_p90_mm"] = _r1(pq.get("p90"))
+    if s.get("dist") is not None:
+        # Surplus fan follows the displayed grade; keep the realized p_bust already on the row.
+        s["dist"] = {"p10_mm": _r1(pq.get("p10")), "p25_mm": _r1(pq.get("p25")),
+                     "p50_mm": _r1(pq.get("p50")), "p75_mm": _r1(pq.get("p75")),
+                     "p90_mm": _r1(pq.get("p90")), "mean_mm": _r1(dq.get("mean")),
+                     "p_bust": s.get("p_bust")}
+
+
 def run(persist: bool = True, side: str = "hit") -> dict:
     keys, _mono = _feature_spec(side)
     is_pit = side == "pit"
@@ -194,6 +225,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     lam = blend_lambda(side)
 
     scored = []
+    _price_ctx = {}                                       # pk -> age, for the post-rank surplus re-price
     for r in data:
         pk = r["player_key"]
         src = by_key[pk]
@@ -201,6 +233,7 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         pos = src.get("position")
         dyear = src.get("debut_year") or 2020
         age = _age_at(src.get("birth_date"), dyear)
+        _price_ctx[pk] = age
         # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
         # target), NOT the global clemens control_years=7. A control_years flip for
         # valuation had silently re-pointed this denominator to 7 seasons, deflating
@@ -254,6 +287,14 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    # --- re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade --------
+    # Owner: eFV surplus must reflect the 20-80 grade the site shows (consensus-tier
+    # market value), consistent with /projections/. Runs AFTER the quantile map since
+    # xfv_grade_display is pool-relative. Star/bust odds stay on the realized grade.
+    for s in scored:
+        _reprice_surplus_on_display(s, is_pit, s.get("position"),
+                                    age=_price_ctx.get(s["player_key"]), eta=1.0)
 
     # --- validation -------------------------------------------------------
     res = [s for s in scored if s["kind"] == "debuted" and not s["censored"]]
@@ -447,6 +488,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
 
     scored, skipped_no_track = [], 0
     krp_raw = {}                                          # KRP+ pool: player_key -> x_era_k (pitchers w/ exposure)
+    _price_ctx = {}                                       # pk -> (age, eta), for the post-rank surplus re-price
     for r in live:
         try:
             cons_fv = float(r.get("consensus_fv_raw"))
@@ -485,6 +527,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             age = _age_at(r.get("birth_date"), CURRENT_SEASON)
         eta = r.get("eta_years")
         eta = float(eta) if eta is not None else 1.0
+        _price_ctx[r["player_key"]] = (age, eta)
         # Invert the WAR->grade map on the model's OWN window (6 seasons, the model
         # target), NOT the global clemens control_years=7. A control_years flip for
         # valuation had silently re-pointed this denominator to 7 seasons, deflating
@@ -539,6 +582,13 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    # Re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade (see run()): eFV surplus
+    # reflects the 20-80 grade shown, consistent site-wide + with /projections/. Star/bust
+    # odds stay on the realized grade.
+    for s in scored:
+        _age, _eta = _price_ctx.get(s["player_key"], (None, 1.0))
+        _reprice_surplus_on_display(s, is_pit, s.get("position"), age=_age, eta=_eta)
 
     # KRP+ (K-backed Run Prevention): standardize the model's x_era_k = (-era_rel)*k_rel
     # interaction over the live pitcher pool onto the harmonized "+" scale (100 + 10*z,
@@ -696,6 +746,8 @@ def run_backgrade(persist: bool = True) -> dict:
             "p_bust": round(dist["p_bust"], 3) if dist.get("p_bust") is not None else None,
             "factors": factors,
         }
+        # Surplus dollars on the DISPLAYED (quantile) grade, consistent with the live board.
+        _reprice_surplus_on_display(entry, is_pit, pos, age=age, eta=eta)
         if not row.get("milb"):
             entry["xfv_provisional"] = True          # prior-anchored (no pro track record)
         if inj < 1.0:

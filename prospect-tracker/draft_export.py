@@ -988,9 +988,26 @@ def build_draft_export() -> dict:
     }
 
 
+def _strip_dashes(obj):
+    """Copy-gate hygiene at the export boundary: ingested scouting prose (Pipeline
+    draft `report` blurbs etc.) can carry em/en-dashes, and the committed sidecar is a
+    copy-gate target (tools/strip_emdashes.py). Normalize them to " - " here so any
+    future ingest stays gate-clean without hand-editing generated JSON."""
+    if isinstance(obj, str):
+        # em-dash (U+2014) / en-dash (U+2013) via escapes: this module is itself a
+        # copy-gate target, so the literals must not appear in source.
+        return obj.replace(" \u2014 ", " - ").replace("\u2014", " - ") \
+                  .replace(" \u2013 ", " - ").replace("\u2013", "-")
+    if isinstance(obj, list):
+        return [_strip_dashes(v) for v in obj]
+    if isinstance(obj, dict):
+        return {k: _strip_dashes(v) for k, v in obj.items()}
+    return obj
+
+
 def export_draft_json(out_path: Path) -> int:
     """Build + write the draft JSON. Returns the number of prospects exported."""
-    payload = build_draft_export()
+    payload = _strip_dashes(build_draft_export())
     n = sum(c["n_prospects"] for c in payload["classes"])
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as f:

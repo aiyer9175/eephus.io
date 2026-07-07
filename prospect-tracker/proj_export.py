@@ -336,21 +336,22 @@ def _prospect_rows(dpw: float) -> list[dict]:
     out: list[dict] = []
     for p in players:
         cons_fv = p.get("fv_close")
-        # DISPLAY grade: the realized eFV headline (matches the PROSPX board's
-        # efvGradeDisplay precedence: xfv_grade_realized, then xfv_grade), so the two
-        # surfaces show the SAME eFV number.
+        # DISPLAY grade: the 20-80-scale eFV headline (matches the PROSPX board's
+        # efvGradeDisplay precedence since the 2026-07-06 quantile flip: xfv_grade_quantile,
+        # then realized, then raw), so the two surfaces show the SAME eFV number.
         _rec = xfv_by.get(p.get("player_key")) or {}
-        _xg = _rec.get("xfv_grade_realized")
+        _xg = _rec.get("xfv_grade_quantile")
+        _xg = _rec.get("xfv_grade_realized") if _xg is None else _xg
         _xg = _rec.get("xfv_grade") if _xg is None else _xg
         fv = _xg if _xg is not None else cons_fv
         fv_source = "xfv" if _xg is not None else "consensus"
-        # PRICING grade: the FV>=45 gate + p_bucket / WAR-path / surplus / prime curves
-        # are all calibrated on the CONSENSUS 20-80 scale, but the realized headline grade
-        # sits ~9 pts below consensus in the mid-band and floors a large pile at 20 -- so
-        # pricing the WAR path on it inflated the projected prospect pool ~+60% vs
-        # consensus. Price on the consensus-scale grade (xfv_grade_quantile, rank-order
-        # IDENTICAL to realized so the eFV ordering edge is kept), mirroring fa_fit.py's
-        # blocker-FV rule. The realized grade above is display-only.
+        # PRICING grade: the FV>=45 gate + p_bucket / WAR-path / surplus / prime curves are
+        # all calibrated on the CONSENSUS 20-80 scale -- exactly the scale the quantile
+        # grade lives on, so display and pricing are now the SAME number for eFV-graded
+        # prospects (the realized grade sits ~9 pts lower and floors a pile at 20; pricing
+        # on it once inflated the projected prospect pool ~+60% vs consensus). Rank-order
+        # identical to realized, so the eFV ordering edge is kept; mirrors fa_fit.py's
+        # blocker-FV rule.
         _pq = _rec.get("xfv_grade_quantile")
         price_fv = _pq if (fv_source == "xfv" and _pq is not None) else fv
         eta = (p.get("eta") or {}).get("year")

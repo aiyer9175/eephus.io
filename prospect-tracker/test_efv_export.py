@@ -102,7 +102,14 @@ def test_committed_artifact_headline_alias_contract():
 #   governance eval (removes fringe fit noise, rank-neutral). Grades ~unchanged
 #   (jesus_made 65.1, franklin_arias 64.6). The FV-history + provisional-board fixes in
 #   this batch do not touch xfv.json.
-_GOLDEN_XFV_SHA256 = "ef44d63c3b0dfea42125d89a7d91c6a3961e561eb37626e2ba297298546ada2f"
+# Updated 2026-07-06 (eFV consistency batch): surplus_mm + band + surplus fan (dist) now
+#   priced on the DISPLAYED quantile grade (xfv_grade_display) instead of the honest
+#   realized grade -- owner: eFV surplus must match the 20-80 grade the site shows and the
+#   /projections/ surface. p_bucket / p_bust (validated star/bust odds) STAY on the realized
+#   grade. Grades (xfv_grade / _quantile) unchanged; only the priced dollars moved (e.g.
+#   jayden_dubanewicz surplus 0.5 -> 1.6 at the displayed 40). Ripples into trade_values +
+#   the farm Value branch via _active_surplus_net_mm. Also refreshed the meta grade_scale note.
+_GOLDEN_XFV_SHA256 = "576bd8fd9cd28c6b1c21f7b711dbede603c45f7722be0998aa080aadcdd21120"
 
 
 def test_efv_grade_map_inverts_on_model_window():

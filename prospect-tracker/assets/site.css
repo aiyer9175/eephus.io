@@ -495,9 +495,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    stacks above the title in the left slot, so the description keeps the right
    slot and the alpha chip stays inline with the title instead of being squeezed
    into its own flex column. Bottom-align so title and description share a base. */
-.section-head--byline { align-items: flex-end; }
+/* Byline modules STACK the description below the title (full width each) instead of
+   crushing the title into a narrow left column beside a long description (e.g. MLB
+   Stats names all four leaderboard sections). Matches the phone stacking rule below. */
+.section-head--byline { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; }
 .section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
 .section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
+.section-head--byline .section-sub { max-width: 78ch; }
 /* Lead Developer & Creator credit badge (MLB Stats + Pitcher Alchemy Lab). */
 .lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
   text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
@@ -641,11 +645,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
    faces. The .card chrome (incl. overflow:hidden + the iridescent top bar) lives
    ON the faces, NEVER on the rotating parent, or it clips the 3D. Front stays in
    normal flow (defines the box height); back is absolutely positioned over it. */
-.team-grid { align-items: start; }
+/* Uniform card size: stretch every card to its row's tallest sibling (with a floor)
+   so a member with 10 badges and one with none read as the same card. */
+.team-grid { align-items: stretch; }
 .team-flip { perspective: 1200px; cursor: pointer; }
 .team-flip:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
 .team-card-inner {
-  position: relative; width: 100%;
+  position: relative; width: 100%; height: 100%; min-height: 340px;
   transition: transform .6s cubic-bezier(.2,.7,.3,1);
   transform-style: preserve-3d;
 }
@@ -673,7 +679,7 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .06em;
   text-transform: uppercase; color: var(--text-tertiary); opacity: .7;
 }
-.team-card-front { display: flex; flex-direction: column; }
+.team-card-front { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
 @media (prefers-reduced-motion: reduce) { .team-card-inner { transition: none; } }
 
 /* ---- footer ---- */
@@ -1930,6 +1936,20 @@ tr.is-open .pal-expand::before { content: "\25BE"; }
       margin-bottom: 6px; }
 .gl-app .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
       border-radius: var(--radius-sm); box-shadow: 0 0 6px var(--neon-cyan); }
+/* Source-comparison HERO verdict banner - leads the page with the headline result. */
+.gl-app .source-comp-hero { border: 1px solid var(--neon-cyan); border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, rgba(78,224,255,0.06), transparent);
+      padding: 18px 20px 20px; margin: 6px 0 22px; }
+.gl-app .source-comp-hero-kicker { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--neon-cyan); margin-bottom: 8px; }
+.gl-app .source-comp-hero-title { font-family: var(--font-retro-mono); font-size: clamp(19px, 2.4vw, 26px);
+      line-height: 1.2; font-weight: 800; color: var(--text-primary); margin: 0 0 10px; letter-spacing: 0.01em; }
+.gl-app .source-comp-hero-title em { font-style: italic; color: var(--neon-cyan); }
+.gl-app .source-comp-hero-lede { max-width: 820px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 14px; }
+.gl-app .source-comp-hero-tiles { margin: 0 0 12px; }
+.gl-app .source-comp-hero-tiles .scx-hero-efv { border-color: var(--neon-cyan); box-shadow: 0 0 0 1px var(--neon-cyan) inset; }
+.gl-app .source-comp-hero-tiles .scx-hero-efv .meth-find-stat { color: var(--neon-cyan); }
+.gl-app .source-comp-hero-foot { max-width: 820px; font-size: 11.5px; line-height: 1.5; color: var(--text-tertiary); margin: 0; font-style: italic; }
 .gl-app .meth-prose { max-width: 860px; margin-bottom: 22px; }
 .gl-app .meth-eq { font-family: var(--font-retro-mono); font-size: 13px; color: var(--text-primary);
       background: var(--bg-secondary); border-left: 3px solid var(--neon-cyan);

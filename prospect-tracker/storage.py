@@ -13101,21 +13101,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     _surp_z = _farm_z([e.get("_active_surplus_net_mm") for e in org_summary])
     _dvm_z  = _farm_z([(e.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW) for e in org_summary])
     _gwar_z = _farm_z([e.get("_grad_war_total") for e in org_summary])
-    _TB_W = {"surplus": 0.40, "dvm6y": 0.25, "grad_war": 0.35}
+    # DvM+ term uses the PRINCIPAL (7y) window (matching _dvm_z above); the component key
+    # and displayed input read the same 7y value so the label and the number can't disagree
+    # (was labeled/displayed as "6y" while the z-score used 7y).
+    _TB_W = {"surplus": 0.40, "dvm7y": 0.25, "grad_war": 0.35}
     for i, entry in enumerate(org_summary):
-        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm6y"] * _dvm_z[i]
+        _blend = (_TB_W["surplus"] * _surp_z[i] + _TB_W["dvm7y"] * _dvm_z[i]
                   + _TB_W["grad_war"] * _gwar_z[i])
         entry["farm_tiebreaker"] = {
             "score": round(100 + 10 * _blend, 1),
             "weights": _TB_W,
             "components": {
                 "surplus_z":  round(_surp_z[i], 2),
-                "dvm6y_z":    round(_dvm_z[i], 2),
+                "dvm7y_z":    round(_dvm_z[i], 2),
                 "grad_war_z": round(_gwar_z[i], 2),
             },
             "inputs": {
                 "total_surplus_mm": round(entry.get("_active_surplus_net_mm") or 0.0, 1),
-                "dvm_plus_6y":      (entry.get("dvm_plus") or {}).get("6y"),
+                "dvm_plus_7y":      (entry.get("dvm_plus") or {}).get(FARM_PRINCIPAL_WINDOW),
                 "grad_war_total":   entry.get("_grad_war_total"),
             },
         }
@@ -13626,6 +13629,20 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for entry in org_summary:
         entry["farm_score_by_window"] = {}
         entry["letter_by_window"] = {}
+        entry["canopy_by_window"] = {}
+
+    def _branch_cell(score, rank, present):
+        """{score, letter, rank} for one branch at one window (None rank -> neutral C)."""
+        return {"score": score,
+                "letter": _letter_grade(rank, present) if rank is not None else _SPARSE_FALLBACK,
+                "rank": rank}
+
+    # Financial is aggregate CURRENT surplus (a snapshot), so it is window-invariant: the
+    # same score/letter/rank repeats at every window (flagged so the UI can note it).
+    _fin_scores = [e.get("financial_score") for e in org_summary]
+    _fin_ranks = _rank_list(_fin_scores)
+    _fin_present = sum(1 for x in _fin_ranks if x is not None)
+
     for win in FARM_TRAJECTORY_WINDOWS:
         # Development leaves at W.
         z_org = _zscore_to_100([(e.get("dvm_plus") or {}).get(win) for e in org_summary],
@@ -13645,7 +13662,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         z_prod_pit = _node_win("mlb_pitcher_production", "war_per_yr_by_window", win)
         z_acq_drf  = _node_win("acq_draft", "career_war_by_window", win)
         z_acq_ifa  = _node_win("acq_ifa",   "career_war_by_window", win)
-        farm_scores_w = []
+        dev_parents, prod_parents, acq_parents, farm_scores_w = [], [], [], []
         for i, entry in enumerate(org_summary):
             dev_parent = _mean_present([dev_leaf_w["dev_hitter"][i], dev_leaf_w["dev_pitcher"][i],
                                         _dev_health_100[i], _dev_statc_100[i]])
@@ -13660,47 +13677,58 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             fs = _stretch_composite(round(comp, 1), factor=1.20)
             entry["farm_score_by_window"][win] = fs
             farm_scores_w.append(fs)
+            dev_parents.append(round(dev_parent, 1) if dev_parent is not None else None)
+            prod_parents.append(round(prod_parent, 1) if prod_parent is not None else None)
+            acq_parents.append(round(acq_parent, 1) if acq_parent is not None else None)
+        # Per-window branch + overall letters/ranks, stamped onto canopy_by_window so the
+        # frontend canopy subgrades re-grade with the selected window. (Leaf grades are
+        # unchanged; only the branch/composite grades are windowed here.)
+        _dev_ranks, _prod_ranks, _acq_ranks = _rank_list(dev_parents), _rank_list(prod_parents), _rank_list(acq_parents)
+        _dp = sum(1 for x in _dev_ranks if x is not None)
+        _pp = sum(1 for x in _prod_ranks if x is not None)
+        _ap = sum(1 for x in _acq_ranks if x is not None)
         ranks_w = _rank_descending(farm_scores_w)
         for i, entry in enumerate(org_summary):
             entry["letter_by_window"][win] = _letter_grade(ranks_w[i], _n_orgs)
+            entry["canopy_by_window"][win] = {
+                "development":          _branch_cell(dev_parents[i],  _dev_ranks[i],  _dp),
+                "mlb_production":       _branch_cell(prod_parents[i], _prod_ranks[i], _pp),
+                "acquisition_strategy": _branch_cell(acq_parents[i],  _acq_ranks[i],  _ap),
+                "financial":            {**_branch_cell(_fin_scores[i], _fin_ranks[i], _fin_present), "window_invariant": True},
+                "overall":              {"score": farm_scores_w[i], "letter": entry["letter_by_window"][win], "rank": ranks_w[i]},
+            }
+
+    # PRINCIPAL window IS the canonical slice: override farm_score_by_window[PW],
+    # letter_by_window[PW], and canopy_by_window[PW] with the canonical composite/branch
+    # scores so farm_score_by_window[PW] == farm_score EXACTLY and farm_rank (assigned off
+    # farm_score) matches the board's default-window ranking. The neutralizing windowed
+    # engine no longer overrides the canonical grade at the default view. Other windows keep
+    # the windowed trajectory view.
+    _PW = FARM_PRINCIPAL_WINDOW
+    for entry in org_summary:
+        g = entry.get("grades") or {}
+        cr = entry.get("component_ranks") or {}
+        entry["farm_score_by_window"][_PW] = entry["farm_score"]
+        entry["letter_by_window"][_PW] = g.get("overall", _SPARSE_FALLBACK)
+        entry["canopy_by_window"][_PW] = {
+            "development":          {"score": entry.get("development_score"),          "letter": g.get("development", _SPARSE_FALLBACK),          "rank": cr.get("development")},
+            "mlb_production":       {"score": entry.get("mlb_production_score"),       "letter": g.get("mlb_production", _SPARSE_FALLBACK),       "rank": cr.get("mlb_production")},
+            "acquisition_strategy": {"score": entry.get("acquisition_strategy_score"), "letter": g.get("acquisition_strategy", _SPARSE_FALLBACK), "rank": cr.get("acquisition_strategy")},
+            "financial":            {"score": entry.get("financial_score"),            "letter": g.get("financial", _SPARSE_FALLBACK),            "rank": cr.get("financial"), "window_invariant": True},
+            "overall":              {"score": entry["farm_score"],                     "letter": g.get("overall", _SPARSE_FALLBACK),             "rank": cr.get("overall")},
+        }
     # ────────────────────────────────────────────────────────────────────────
 
-    # ── Unify farm_rank with the DEFAULT (7y) display window ──────────────
-    # The board ranks orgs by farm_score_by_window["7y"] (farmWindowRank) for both the
-    # #N and the letter, but the canonical `farm_rank` above was assigned off the separate
-    # `farm_score` leaf basis -- so the two DIVERGED for 29/30 orgs. `farm_rank` only feeds
-    # the snapshot, the de-noised movement chip, and the build_site top-5, so the board
-    # showed e.g. NYY at #29 (7y window) while the movement chip read +2 off the canonical
-    # #25 -- an impossible-looking combination. Re-rank farm_rank to the 7y window so the
-    # displayed #N, the movement chip, the snapshot, and farmWindowRank("7y") all agree.
-    # (The chip only renders at the 7y default window; other windows hide it.)
-    _DEFAULT_FARM_WIN = "7y"
-    if all((e.get("farm_score_by_window") or {}).get(_DEFAULT_FARM_WIN) is not None
-           for e in org_summary):
-        org_summary.sort(key=lambda x: (-(x["farm_score_by_window"][_DEFAULT_FARM_WIN]),
-                                        -(x.get("top_end_points") or 0)))
-        for rank_i, entry in enumerate(org_summary, start=1):
-            entry["farm_rank"] = rank_i
-        # Re-derive the movement chip off the corrected (7y) rank (overwrites the earlier
-        # canonical-rank pass). NOTE: farm_rank_history accrued on the OLD basis, so the
-        # chip may read a transient basis-change artifact until ~2 monthly runs of 7y-rank
-        # history accrue -- the engine's documented warm-up, not an impossible value.
-        try:
-            from movement import compute_farm_movement as _cfm
-            _today_iso2 = date.today().isoformat()
-            _hist_by_org2: dict[str, list[dict]] = {}
-            for _row in load_farm_rank_history():
-                _hist_by_org2.setdefault(_row["org"], []).append(_row)
-            for entry in org_summary:
-                _org = entry.get("org")
-                _h = [h for h in _hist_by_org2.get(_org, [])
-                      if h.get("snapshot_date") != _today_iso2]
-                _h.append({"org": _org, "snapshot_date": _today_iso2,
-                           "farm_rank": entry.get("farm_rank"),
-                           "farm_score": entry.get("farm_score")})
-                entry["rank_movement"] = _cfm(_h)
-        except Exception:
-            pass
+    # ── farm_rank follows the CANONICAL farm_score (owner) ────────────────
+    # Previously farm_rank was RE-RANKED here onto farm_score_by_window["7y"], a separately
+    # computed windowed engine that re-z-scored the branches and neutralized real branch
+    # advantages -- so a lower-farm_score org (e.g. COL 90.0) out-ranked a higher one (NYY
+    # 96.9), contradicting grades.overall / component_ranks / farm_tiebreaker. That re-rank
+    # is REMOVED: farm_rank is the rank of the canonical farm_score (assigned above at the
+    # composite pass), and the principal (7y) window is now defined AS the canonical slice
+    # (farm_score_by_window["7y"] == farm_score), so farmWindowRank("7y"), the board #N, the
+    # movement chip (derived off the canonical rank above), the snapshot, grades.overall, and
+    # component_ranks all agree. Better dev/production/acquisition subgrades now rank up.
 
     # ── Per-org draft spending (computed from our acquisitions table) ──
     # The acquisitions table records `bonus_usd` for every drafted player
