@@ -245,7 +245,10 @@ def build_relievers(rows: list[dict], leverage: dict, swstr: Optional[dict] = No
             continue
         pit = _num(r.get("Pit")) or 0.0
         sw = swstr.get(mlbam)
-        sts = (sw * pit) if (sw is not None and pit) else 0.0
+        # None (not 0.0) when the bref SwStr enrichment is absent: swstr_pct downstream
+        # (_safe_div(sts, pit)) then reports null "unknown", not a fake 0% swinging-strike
+        # rate that read as a real (terrible) value for every player missing a bref row.
+        sts = (sw * pit) if (sw is not None and pit) else None
         rel = Reliever(
             key=str(mlbam), name=str(r.get("name", "")), team=str(r.get("team", "")),
             mlbam=int(mlbam),

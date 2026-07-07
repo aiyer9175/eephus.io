@@ -407,13 +407,25 @@ def build(persist: bool = True) -> dict:
                 # production through that season only) so the detail page can plot an
                 # eFV-over-time chart for a prospect the sources have never graded.
                 xfv_hist = []
+                _min_expo = _MIN_EXPO_BF if is_pit else _MIN_EXPO_PA
                 for _S in sorted({r.get("season") for r in (career_stats or []) if r.get("season")}):
                     _ms = _milb_features(mid, int(_S) + 1, None, side)
                     if not _ms or _ms.get("k_rel") is None:
                         continue
                     _ws = _war(ridge, a, b, _vec({"consensus_fv_raw": _GRADE_MAP[side]["BASE"],
                                                   "position": p.get("position"), "milb": _ms}, side))
-                    xfv_hist.append({"d": f"{int(_S)}-07-01", "x": _grade(_ws, side)})
+                    _xg = _grade(_ws, side)
+                    # Same sample floor as the headline grade (398-400), applied to THIS point's
+                    # own primary-level line -- the exposure _milb_features keyed its as-of
+                    # statline on -- NOT cumulative career PA/BF. Mirroring the headline exactly:
+                    # a season whose primary line is a sub-floor cameo floors that point, so a
+                    # player with a big early season then a tiny recent cameo floors the cameo
+                    # point just as the card headline floors it (cumulative would leave it above).
+                    _stat_S = _display_statline(mid, _ms, side, p.get("team_name"))
+                    _expo_S = ((_stat_S or {}).get("tbf") if is_pit else (_stat_S or {}).get("pa")) or 0
+                    if _expo_S < _min_expo:
+                        _xg = min(_xg, _SUBFLOOR_GRADE)
+                    xfv_hist.append({"d": f"{int(_S)}-07-01", "x": _xg})
                 # Approximate birth_date from the roster age so the detail-page stats table can
                 # show age-vs-level (no extra fetch; ~+/- a few months, fine for display).
                 birth_date = None

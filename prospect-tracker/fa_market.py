@@ -336,6 +336,13 @@ def winter_dpw(dpw_series: dict[int, float], class_year: int) -> float:
     Fewer than 4 prior winters always falls back to flat5."""
     prior = {y: v for y, v in dpw_series.items() if y < class_year}
     if not prior:
+        # No PRIOR winter: anchor on the CLOSEST available winter (even a later one) and
+        # de/escalate to class_year, rather than today's flat $/WAR -- which, with the
+        # fa_implied re-anchor on, is the trailing 2024-26 signings-implied rate and is
+        # anachronistic for an early class. Fall to the flat rate only if truly empty.
+        if dpw_series:
+            y0 = min(dpw_series)
+            return dpw_series[y0] * ((1 + _dpw_inflation()) ** (class_year - y0))
         return fa_class._flat_dpw_usd()
     method = _dpw_forecast_method()
     if method in ("trend", "trend_cbt") and len(prior) >= 4:

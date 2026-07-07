@@ -125,7 +125,7 @@ class Reliever:
     er: float = 0.0
     r: float = 0.0          # total runs allowed (for RA9)
     pit: float = 0.0        # pitches (for SwStr%)
-    sts: float = 0.0        # swinging strikes
+    sts: Optional[float] = None   # swinging strikes; None = no bref enrichment (swstr_pct -> null)
     sv: float = 0.0
     hld: float = 0.0
     # leverage / context (optional, from the winProbability walk)

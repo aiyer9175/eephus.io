@@ -1662,28 +1662,35 @@
     .col-header.has-star-odds.has-opt-pct, .player-row.has-star-odds.has-opt-pct {
       grid-template-columns: 1.5fr 64px 0.55fr 1.8fr 1.2fr 0.7fr 0.55fr 0.75fr 0.6fr 0.6fr;
     }
-    /* v19 - Tool-grade-strip relocated out of column 1 into its own
-       grid item that spans Player + Rank + FV columns. Reads as a
-       flush horizontal band of color-coded chips along the bottom of
-       the row, ending at the FV-grade column's right edge. */
+    /* v20 - Tool-grade-strip is a FULL-WIDTH tape: it spans every column in
+       its own bottom row so the complete tool set (up to 11 pitcher pills)
+       always lays out on ONE line at a uniform row height. The v19 layout
+       boxed it into cols 1-3 (~250-320px), which clipped/ragged-wrapped the
+       8-pill hitter and 10+-pill pitcher sets and left rows uneven. Reads as
+       a flush horizontal band of color-coded chips along the card bottom. */
     .player-row > .player-row-toolstrip,
     .col-header > .player-row-toolstrip {
-      grid-column: 1 / span 3;
+      grid-column: 1 / -1;
       grid-row: 2;
       min-width: 0;
       align-self: start;
     }
     .player-row > *:not(.player-row-toolstrip):not(.line-chart-cell),
     .col-header > *:not(.player-row-toolstrip):not(.line-chart-cell) { grid-row: 1; }
-    /* v19 - FV history chart spans BOTH grid rows so it fills the full
-       card height instead of sitting cramped in row 1 only. Toolstrip
-       (cols 1-3, row 2) stays to the left of the chart; chart cell
-       starts at col 4 so they don't overlap. */
+    /* v20 - FV history chart sits in row 1 with the rest of the meta cells;
+       the toolstrip owns the full width of row 2 below it, so the chart no
+       longer needs to span both rows (which is what boxed the strip into
+       cols 1-3). It still fills its column height via align-self: stretch. */
     .player-row > .line-chart-cell {
-      grid-row: 1 / span 2;
+      grid-row: 1;
       align-self: stretch;
       display: flex;
       align-items: center;
+      /* min-height:0 lets the 1fr row shrink the chart to its share instead of
+         the SVG's intrinsic height forcing row 1 taller than the card (which
+         pushed the row-2 tape past the fixed card bottom = the clip). */
+      min-height: 0;
+      overflow: hidden;
     }
     /* v19 - Anchor the name + meta block to the BOTTOM of column 1
        so the meta line touches the toolstrip below with no centered-
@@ -1973,7 +1980,13 @@
     .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) {
       box-sizing: border-box;
       height: 136px;
-      grid-template-rows: 1fr auto;
+      /* minmax(0, ...) on row 1 lets it shrink to its share so the row-2 tape
+         ALWAYS keeps its own reserved band at the card bottom. Without the 0
+         floor, a data-rich row-1 cell (the multi-level MiLB stat cell, a long
+         identity block) forced row 1 to its min-content and shoved the tape
+         past the fixed card bottom = the clip. Tall cells clip inside their own
+         box (see .milb-cell / .player-row-col1 min-height:0) instead. */
+      grid-template-rows: minmax(0, 1fr) auto;
     }
     /* Expanded rows open an accordion below the card - they must grow, so the
        fixed height only applies while collapsed. */
@@ -2173,6 +2186,16 @@
       margin-left: 6px;
     }
     .age-hand-cluster .age-tag { margin-left: 0; }
+    /* Keep the team logo + org code glued together (and center-aligned) so
+       the meta line's flex-wrap can never break between them -- previously
+       the org code (e.g. "NYY") could fall to the next line, sitting BELOW
+       the logo instead of beside it. Same lockup pattern as age-hand-cluster. */
+    .org-cluster {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+    }
     .hand-chip-pair {
       display: inline-flex;
       align-items: center;
@@ -6726,7 +6749,12 @@
         row-gap: 6px;
       }
       .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .line-chart-cell {
-        display: flex; grid-column: 1 / 6; grid-row: 3; height: 42px; align-self: stretch;
+        /* overflow:visible re-opens the cell on mobile: the desktop base rule now
+           sets overflow:hidden (to bound the chart inside the fixed-height card's
+           row 1), but here the card is height:auto and this cell is a fixed 42px
+           with the density-compact chart rendering ~60px, so hidden would crop the
+           sparkline's top FV label + bottom year labels. Mobile renders it in full. */
+        display: flex; grid-column: 1 / 6; grid-row: 3; height: 42px; align-self: stretch; overflow: visible;
       }
       .player-row:not(.is-leaderboard):not(.is-injured):not(.is-traded):not([data-org]) > .player-row-toolstrip {
         grid-column: 1 / 6; grid-row: 2;
@@ -11552,13 +11580,15 @@ function arsenalMiniHTML(p) {
   return `<span class="row-tag arsenal-mini" title="${escapeHtml("Pitch mix: " + tipBits.join(" · "))}">${escapeHtml(labelBits.join(" · "))}</span>`;
 }
 
-// v43 - Dedicated full-width pitch-mix line for the list-row identity block
-// (pitchers only). Spans the whole player column under the name/meta, so the
-// complete arsenal fits on one line without wrapping the name row or clipping.
-// Hitters return "" (their handedness badges live inline in the meta line).
+// v44 - Pitch-mix line REMOVED from the compact list (owner request). On
+// pitchers it added a second full-width strip under the name/meta, which -
+// stacked above the tool-grade tape inside the fixed-height card - pushed the
+// tape past the card bottom and clipped it. The complete arsenal still renders
+// on the prospect DETAIL page (expand-arsenal-row + the detail card), so no
+// signal is lost; the list just stays clean. Returning "" disables it at the
+// source while leaving the 3 call sites wired for an easy re-enable.
 function arsenalLineHTML(p) {
-  const pill = (typeof arsenalMiniHTML === "function") ? arsenalMiniHTML(p) : "";
-  return pill ? `<div class="pr-arsenal-line">${pill}</div>` : "";
+  return "";
 }
 
 // "Newly acquired" chip - fires when the most recent trade / waiver
@@ -13698,8 +13728,31 @@ function formatLevelStatline(row) {
 }
 
 function levelStatlinesHTML(p, opts = {}) {
-  const rows = currentSeasonStatRows(p);
+  let rows = currentSeasonStatRows(p);
   if (!rows.length) return " - ";
+  // v44 - Compact list rows only show the most RECENT season(s), not a player's
+  // entire multi-year level history. A stale line (e.g. a rookie-ball CPX stint
+  // from two years ago) is noise on the scan view and bloated the fixed-height
+  // card. opts.recentSeasons keeps the N newest seasons; opts.maxRows then caps
+  // the total lines (current level + highest levels first). The DETAIL page
+  // passes neither, so its by-season / by-level tables stay complete.
+  if (opts.recentSeasons || opts.maxRows) {
+    const _seasonOf = r => Number(r && r.season) || 0;
+    if (opts.recentSeasons) {
+      const seasons = [...new Set(rows.map(_seasonOf))].sort((a, b) => b - a);
+      const keep = new Set(seasons.slice(0, opts.recentSeasons));
+      rows = rows.filter(r => keep.has(_seasonOf(r)));
+    }
+    const _lvlRank = { MLB: 7, AAA: 6, AA: 5, "A+": 4, A: 3, CPX: 2, DSL: 1 };
+    const _dl = currentDisplayLevel(p);
+    rows.sort((a, b) => {
+      // current level first, then newest season, then highest level
+      const ca = (_dl && a.level === _dl) ? 1 : 0, cb = (_dl && b.level === _dl) ? 1 : 0;
+      return (cb - ca) || (_seasonOf(b) - _seasonOf(a))
+             || ((_lvlRank[b.level] || 0) - (_lvlRank[a.level] || 0));
+    });
+    if (opts.maxRows) rows = rows.slice(0, opts.maxRows);
+  }
   const compact = opts.compact !== false;
   const hideCurrentLevelLabel = !!opts.hideCurrentLevelLabel;
   const displayLevel = currentDisplayLevel(p);
@@ -13739,7 +13792,7 @@ function makeMilbCell(p) {
   // Triple-slash / IP+ERA still leads the supporting line; the new
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
-  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true });
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 2, maxRows: 3 });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
   // they're no longer in this prose detail line.
@@ -33891,7 +33944,7 @@ function playerMetaHTML(p, opts = {}) {
   // duplicated IL state per row. The pill is more glanceable.
   const orgLogo = orgMeta && orgMeta.logoHTML != null ? orgMeta.logoHTML : teamLogoHTML(p.org, "sm");
   const orgLabel = orgMeta && orgMeta.labelHTML != null ? orgMeta.labelHTML : `<span>${escapeHtml(p.org ?? " - ")}</span>`;
-  return `<div class="player-meta">${positionLabel} · ${orgLogo}${orgLabel}${ageHand}${rosterTag}</div>`;
+  return `<div class="player-meta">${positionLabel} · <span class="org-cluster">${orgLogo}${orgLabel}</span>${ageHand}${rosterTag}</div>`;
 }
 
 // "Current level" resolver - returns the player's most-recent assignment

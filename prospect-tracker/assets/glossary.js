@@ -701,22 +701,9 @@ function _methEfvFindings(bt) {
   const cards = [];
   cards.push({ stat: f3(x.spearman), label: "eFV ranking skill (Spearman ρ vs realized WAR)",
     sub: `best of every grader &middot; consensus ${f3(c && c.spearman)} &middot; FanGraphs ${f3(fg && fg.spearman)} &middot; MLB ${f3(mlb && mlb.spearman)}` });
-  if (det && det.per_tier) {
-    // Surface the tier where eFV finds the STRONGEST real ordering the consensus misses
-    // (highest eFV ρ among tiers it beats consensus). Dynamic, so it tracks the model rather
-    // than hardcoding one tier -- after the cohort+milb_missing upgrade that is the FV-55 band
-    // (consensus near-random ~0.06 -> eFV ~0.20), not the FV-50 middle.
-    const beats = det.per_tier.filter(t => t.xfv_spearman != null && t.consensus_spearman != null
-      && t.xfv_spearman > t.consensus_spearman)
-      .sort((a, b) => b.xfv_spearman - a.xfv_spearman);
-    const t = beats[0];
-    if (t)
-      cards.push({ stat: `${t.consensus_spearman.toFixed(2)}→${t.xfv_spearman.toFixed(2)}`,
-        label: `Sharpest edge: the FV-${t.tier} tier`,
-        sub: Math.abs(t.consensus_spearman) < 0.12
-          ? "consensus is near-random there; eFV finds real ordering"
-          : "eFV sharpens the ordering consensus leaves on the table" });
-  }
+  // (Removed the per-tier "Sharpest edge" card: on the current cohort the best tier
+  // margin is a fraction of a Spearman point -- e.g. 0.44 -> 0.45 -- which does not read
+  // as a "sharp edge" and overstated a within-noise gap.)
   if (det && det.xfv_right_share_on_disagreements != null)
     cards.push({ stat: `${Math.round(det.xfv_right_share_on_disagreements * 100)}%`,
       label: "eFV closer on the biggest disagreements", sub: "resolved players where eFV & consensus most diverged" });
