@@ -81,10 +81,14 @@ def _extract_hitter(player: dict) -> dict:
         "hard_hit_pct": cq.get("hard_hit_pct"),
         "barrel_pct":   cq.get("barrel_pct"),
         # Zone discipline — whiff/chase are inverted so "less is better"
-        # rolls the same direction as the other components.
+        # rolls the same direction as the other components. The chase rate is
+        # serialized as o_swing_pct on ZoneMetricRow (chase_pct never existed on
+        # production rows, which silently killed this component); keep chase_pct
+        # as a defensive fallback for any alternate payload shape.
         "z_contact":    z.get("z_contact_pct"),
         "whiff_inv":    -z["whiff_pct"] if z.get("whiff_pct") is not None else None,
-        "chase_inv":    -z["chase_pct"] if z.get("chase_pct") is not None else None,
+        "chase_inv":    (-z["o_swing_pct"] if z.get("o_swing_pct") is not None
+                         else (-z["chase_pct"] if z.get("chase_pct") is not None else None)),
     }
 
 
@@ -98,7 +102,9 @@ def _extract_pitcher(player: dict) -> dict:
     return {
         "top_velo":   top.get("avg_velo"),
         "whiff":      z.get("whiff_pct"),
-        "chase":      z.get("chase_pct"),
+        # o_swing_pct = the serialized chase rate (see _extract_hitter note).
+        "chase":      (z.get("o_swing_pct") if z.get("o_swing_pct") is not None
+                       else z.get("chase_pct")),
         # Contact-suppression components — both inverted so higher is
         # better, matching the rest of the pitcher mix.
         "hh_inv":     -cq["hard_hit_pct"] if cq.get("hard_hit_pct") is not None else None,

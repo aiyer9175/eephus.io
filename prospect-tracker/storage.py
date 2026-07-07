@@ -10723,18 +10723,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             "settled_count": settled_count,
         }
         # Financial ROI — WAR per million USD spent on the grads who
-        # have both signing bonus AND career WAR on file. Requires the
-        # bonus union (we use a separate bonus_count gate so a free
-        # agent without a published bonus doesn't drag the ratio down).
+        # have both signing bonus AND career WAR on file. The numerator
+        # MUST be paired with the denominator: summing ALL grads' WAR
+        # over only the bonus-covered dollars inflated the ratio by up
+        # to ~34x for orgs whose stars predate bonus coverage (LAD read
+        # 21.1 WAR/$M on a true paired ~0.61) and ranked orgs by data
+        # coverage, not ROI. The per-channel sums (war_sum_draft/ifa/
+        # other) accumulate only inside the bonus-covered branch, so
+        # their total IS the paired numerator.
         bonus_sum = gagg.get("bonus_sum") or 0
         war_sum = gagg.get("war_sum") or 0.0
+        paired_war = sum(gagg.get(f"war_sum_{c}") or 0.0
+                         for c in ("draft", "ifa", "other"))
         # v40 — total realized graduate WAR (raw MLB production) exposed for the
-        # farm tiebreaker score. Sum of career bWAR across the org's graduates.
+        # farm tiebreaker score. Sum of career bWAR across ALL the org's
+        # graduates (deliberately NOT bonus-paired: realized output, not ROI).
         m["_grad_war_total"] = round(war_sum, 2)
         m["financial_roi"] = {
-            "war_per_million": (round(war_sum / (bonus_sum / 1_000_000), 3)
+            "war_per_million": (round(paired_war / (bonus_sum / 1_000_000), 3)
                                 if bonus_sum >= 1_000_000 else None),
-            "total_career_war":  round(war_sum, 2),
+            "total_career_war":  round(paired_war, 2),
+            "total_career_war_all_grads": round(war_sum, 2),
             "total_bonus_usd":   bonus_sum,
             "grad_count_with_bonus": gagg.get("bonus_count") or 0,
         }
@@ -12739,8 +12748,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         ],
         # Draft Performance — pick-slot-adjusted value + ceiling-hits %
         "acq_draft": [
-            ("pick_value", lambda e: ((e["tree"]["acq_draft"] or {}).get("pick_value_mean")
-                                      or (e["tree"]["acq_draft"] or {}).get("wag_mean"))),
+            # `is None` (not `or`): pick_value_mean is a DELTA metric whose natural
+            # center is 0.0 - a legitimate exactly-average 0.0 must not be silently
+            # replaced by the wag_mean fallback.
+            ("pick_value", lambda e: ((e["tree"]["acq_draft"] or {}).get("wag_mean")
+                                      if (e["tree"]["acq_draft"] or {}).get("pick_value_mean") is None
+                                      else (e["tree"]["acq_draft"] or {}).get("pick_value_mean"))),
             ("ceiling_pct", lambda e: (e["tree"]["acq_draft"] or {}).get("ceiling_hits_pct")),
         ],
         # v30.7 — Trade Acumen now scores on REALIZED outcomes only —
@@ -13387,7 +13400,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     # better — outbound WAR is "talent we gave up").
     _grade_sub_leaf_across_league("tx_trades", "Inbound WAR")
     _grade_sub_leaf_across_league("tx_trades", "Outbound WAR", higher_is_better=False)
-    _grade_sub_leaf_across_league("tx_trades", "Unweighted Δ")
+    _grade_sub_leaf_across_league("tx_trades", "Unweighted WAR Δ")
 
     # Waiver Claims hit rate.
     _grade_sub_leaf_across_league("tx_waivers", "Hit rate")

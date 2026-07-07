@@ -143,8 +143,55 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             if row.get("mlbam") and row["season"] >= FIRST_SEASON - 3:
                 by_player[side][row["mlbam"]][row["season"]] = row
 
+    # Spotrac contracts are keyed by NORMALIZED NAME only (no mlbam), so two active
+    # players sharing a name (Will Smith C/RP, Max Muncy LAD/ATH) would both join the
+    # SAME contract -- corrupting team/pos/salary/surNpv and the team outlook. Names
+    # that collide within this vet universe join NO contract in the loop; after the
+    # loop the contract is awarded to the collision's highest-projected-WAR row only
+    # (Spotrac's collapse keeps the highest-AAV deal, which belongs to the flagship
+    # player). Everyone else honestly carries no contract rather than a wrong one.
+    _vet_ids = set(by_player["hit"]) | set(by_player["pit"])
+    _name_counts: dict[str, int] = {}
+    for _mid in _vet_ids:
+        _nm = names.get(_mid)
+        if _nm:
+            _k = normalize_key(_nm)
+            _name_counts[_k] = _name_counts.get(_k, 0) + 1
+
+    def _apply_contract(m: dict, ct: dict) -> None:
+        """Stamp the contract-dependent fields (pos/team/thru/aav/sur/surNpv) onto a
+        built row. Shared by the inline (unambiguous) join and the post-loop
+        collision-winner award so both paths price identically."""
+        if not m.get("twoWay") and ct.get("position"):
+            m["pos"] = ct["position"]
+        if ct.get("team_code"):
+            m["team"] = ct["team_code"]
+        sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
+        if ct.get("signed_through") is not None:
+            m["thru"] = ct["signed_through"]
+        if ct.get("aav_usd") is not None:
+            m["aav"] = ct["aav_usd"]
+        sur = []
+        npv = 0.0
+        any_sal = False
+        for t in range(HORIZON):
+            season = FIRST_SEASON + t
+            s_usd = sal.get(season)
+            if s_usd is None:
+                sur.append(None)
+                continue
+            any_sal = True
+            v_usd = _season_value_usd(m["war"][t], t, dpw)
+            d_usd = v_usd - s_usd
+            sur.append(round(d_usd / 1e6, 1))
+            npv += d_usd / ((1 + r) ** t)
+        if any_sal:
+            m["sur"] = sur
+            m["surNpv"] = int(npv)
+
     out: list[dict] = []
-    for mlbam in set(by_player["hit"]) | set(by_player["pit"]):
+    _collision_rows: dict[str, list[dict]] = {}
+    for mlbam in _vet_ids:
         sides = {}
         for side, expo_key, floor in (("hit", "pa", MIN_PA), ("pit", "bf", 0)):
             seasons = by_player[side].get(mlbam) or {}
@@ -236,14 +283,22 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             war_arr = path["war_by_year"][:HORIZON]
             champ_arr = (path.get("war_by_year_champ") or path["war_by_year"])[:HORIZON]
             pth_arr = (path.get("war_by_year_pth") or war_arr)[:HORIZON]   # if-healthy display path
-            p10_arr = (path.get("war_by_year_p10") or [None])[:HORIZON] or None
-            p90_arr = (path.get("war_by_year_p90") or [None])[:HORIZON] or None
+            # `or None` after the slice never fired ([None] is truthy), so a vet path
+            # with no band shipped warP10/warP90 = [None] (a 1-elem null list) instead
+            # of None -- gate on the source list being present first.
+            p10_arr = (path.get("war_by_year_p10") or None) and path["war_by_year_p10"][:HORIZON]
+            p90_arr = (path.get("war_by_year_p90") or None) and path["war_by_year_p90"][:HORIZON]
         name = names.get(mlbam)
         if not name:
             continue
-        ct = contracts.get(normalize_key(name))
+        _nkey = normalize_key(name)
+        _ambiguous = _name_counts.get(_nkey, 0) > 1
+        ct = None if _ambiguous else contracts.get(_nkey)
         m = {
-            "key": normalize_key(name), "name": name, "age": age,
+            # Collided names get a collision-safe key (base__mlbam, the thin-card
+            # convention); the post-loop award below restores the PLAIN key on the
+            # flagship row so existing links / FA / trade joins keep working for him.
+            "key": (f"{_nkey}__{mlbam}" if _ambiguous else _nkey), "name": name, "age": age,
             "mlbam": mlbam,
             "src": "vet", "twoWay": True if two_way else None,
             "pos": "TWP" if two_way else ((ct or {}).get("position") or path["role"]),
@@ -274,27 +329,19 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
             m["warTotalP10"] = round(sum(p10_arr), 1)
             m["warTotalP90"] = round(sum(p90_arr), 1)
         if ct:
-            sal = {int(y): int(v) for y, v in (ct.get("salary_by_year") or {}).items()}
-            m["thru"] = ct.get("signed_through")
-            m["aav"] = ct.get("aav_usd")
-            sur = []
-            npv = 0.0
-            any_sal = False
-            for t in range(HORIZON):
-                season = FIRST_SEASON + t
-                s_usd = sal.get(season)
-                if s_usd is None:
-                    sur.append(None)
-                    continue
-                any_sal = True
-                v_usd = _season_value_usd(m["war"][t], t, dpw)
-                d_usd = v_usd - s_usd
-                sur.append(round(d_usd / 1e6, 1))
-                npv += d_usd / ((1 + r) ** t)
-            if any_sal:
-                m["sur"] = sur
-                m["surNpv"] = int(npv)
-        out.append(_clean(m))
+            _apply_contract(m, ct)
+        m = _clean(m)
+        out.append(m)
+        if _ambiguous:
+            _collision_rows.setdefault(_nkey, []).append(m)
+    # Award each collided name's contract to its highest-projected-WAR row only.
+    for _nkey, rows in _collision_rows.items():
+        ct = contracts.get(_nkey)
+        if not ct or not rows:
+            continue
+        winner = max(rows, key=lambda m: m.get("warTotal") or 0.0)
+        _apply_contract(winner, ct)   # mutates the row already in `out`
+        winner["key"] = _nkey         # flagship keeps the plain key (links/joins)
     out.sort(key=lambda m: -(m.get("warTotal") or 0))
     return out
 
@@ -405,16 +452,20 @@ def _prospect_rows(dpw: float) -> list[dict]:
             "war": [round(w, 2) for w in mean_path],
             "warP10": [round(w, 2) for w in paths[lo_b]],
             "warP90": [round(w, 2) for w in paths[hi_b]],
-            "warTotal": round(sum(mean_path), 1),
-            "warTotalP10": round(sum(paths[lo_b]), 1),
-            "warTotalP90": round(sum(paths[hi_b]), 1),
+            # Totals sum the SAME HORIZON window as the veteran rows (the war
+            # arrays themselves keep the full control window for the card path);
+            # summing the prospect's 7-season control window against the vets'
+            # 5-season totals made every same-column comparison prospect-inflated.
+            "warTotal": round(sum(mean_path[:HORIZON]), 1),
+            "warTotalP10": round(sum(paths[lo_b][:HORIZON]), 1),
+            "warTotalP90": round(sum(paths[hi_b][:HORIZON]), 1),
             # Prime/talent display path (not used for $): board WAR cells.
             "warPTH": [round(w, 2) for w in prime["mean"]] if prime else None,
             "warPTHP10": [round(w, 2) for w in prime["p10"]] if prime else None,
             "warPTHP90": [round(w, 2) for w in prime["p90"]] if prime else None,
-            "warTotalPTH": round(sum(prime["mean"]), 1) if prime else None,
-            "warTotalPTHP10": round(sum(prime["p10"]), 1) if prime else None,
-            "warTotalPTHP90": round(sum(prime["p90"]), 1) if prime else None,
+            "warTotalPTH": round(sum(prime["mean"][:HORIZON]), 1) if prime else None,
+            "warTotalPTHP10": round(sum(prime["p10"][:HORIZON]), 1) if prime else None,
+            "warTotalPTHP90": round(sum(prime["p90"][:HORIZON]), 1) if prime else None,
             "warPeak": prime["peak"] if prime else None,
             "bucketLo": _BUCKET_ORDER[lo_b], "bucketHi": _BUCKET_ORDER[hi_b],
             "pBust": round(probs[0], 3),
@@ -519,6 +570,16 @@ def _depth_pool(corpus: dict, names: dict[int, str],
     team_war: dict[str, list[float]] = defaultdict(lambda: [0.0] * HORIZON)
     war_unassigned = [0.0] * HORIZON
     n = n_unassigned = 0
+    # Contract joins are by normalized name (Spotrac has no mlbam): a depth player
+    # sharing a name with ANY projectable player (vet or depth) must not inherit the
+    # namesake's contract/team - count name keys over the full projectable universe
+    # and leave collided names unassigned (honest) instead of crediting the wrong club.
+    _dp_name_counts: dict[str, int] = {}
+    for _mid in (set(by_player["hit"]) | set(by_player["pit"])) | vet_mlbams:
+        _nm = names.get(_mid)
+        if _nm:
+            _k = normalize_key(_nm)
+            _dp_name_counts[_k] = _dp_name_counts.get(_k, 0) + 1
     for mlbam in (set(by_player["hit"]) | set(by_player["pit"])) - vet_mlbams:
         champ = [0.0] * HORIZON
         age_any = None
@@ -545,7 +606,8 @@ def _depth_pool(corpus: dict, names: dict[int, str],
             continue
         n += 1
         name = names.get(mlbam)
-        ct = contracts.get(normalize_key(name)) if name else None
+        _dk = normalize_key(name) if name else None
+        ct = (contracts.get(_dk) if (_dk and _dp_name_counts.get(_dk, 0) == 1) else None)
         org = (ct or {}).get("team_code")
         last_ctrl = _last_controlled_season(
             {"src": "vet", "thru": (ct or {}).get("signed_through"), "age": age_any})

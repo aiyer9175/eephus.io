@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-02",
+ "generated_at": "2026-07-07",
  "experiment": "X-D1",
  "model": "leverage_consistency (multi-year gmLI deployment stability)",
  "seed": 20260701,
@@ -66,9 +66,9 @@
    "failed": 0
   },
   "2026": {
-   "games": 1295,
-   "games_total": 1305,
-   "failed": 10
+   "games": 1356,
+   "games_total": 1365,
+   "failed": 9
   }
  },
  "pool_sizes": {
@@ -220,7 +220,7 @@
   "metric": "gmli_3yr",
   "display_name": "Deployment gmLI (3yr)",
   "definition": "Relief-entry-weighted mean gmLI over [2024, 2025, 2026] (start games excluded from the fold). pct is the percentile within the current qualified pool. tag is 'established' with 2+ seasons and 60+ relief entries, else 'provisional'.",
-  "pool": "qualified relievers in data/bullpen_leaderboards.json (season 2026, as_of 2026-07-02)",
+  "pool": "qualified relievers in data/bullpen_leaderboards.json (season 2026, as_of 2026-07-07)",
   "n_pool_qualified": 198,
   "n_with_value": 198,
   "never_in_rem_plus": "deployment context only; by design this number is never folded into the REM+ skill scale",
@@ -228,10 +228,10 @@
    "695243": {
     "name": "Mason Miller",
     "team": "SD",
-    "gmli_now": 1.9,
-    "gmli_3yr": 1.81,
+    "gmli_now": 1.82,
+    "gmli_3yr": 1.79,
     "seasons_used": 3,
-    "entries_total": 148,
+    "entries_total": 150,
     "tag": "established",
     "pct": 98
    },
@@ -239,9 +239,9 @@
     "name": "Louis Varland",
     "team": "TOR",
     "gmli_now": 1.9,
-    "gmli_3yr": 1.47,
+    "gmli_3yr": 1.48,
     "seasons_used": 3,
-    "entries_total": 123,
+    "entries_total": 124,
     "tag": "established",
     "pct": 84
    },
@@ -258,42 +258,62 @@
    "669276": {
     "name": "Dylan Lee",
     "team": "ATL",
-    "gmli_now": 1.33,
-    "gmli_3yr": 1.24,
+    "gmli_now": 1.39,
+    "gmli_3yr": 1.25,
     "seasons_used": 3,
-    "entries_total": 165,
+    "entries_total": 168,
     "tag": "established",
-    "pct": 57
+    "pct": 58
    },
    "671922": {
     "name": "Cade Smith",
     "team": "CLE",
-    "gmli_now": 1.92,
+    "gmli_now": 1.89,
     "gmli_3yr": 1.57,
     "seasons_used": 3,
-    "entries_total": 186,
+    "entries_total": 188,
     "tag": "established",
     "pct": 92
    },
    "656730": {
     "name": "Trevor Megill",
     "team": "MIL",
-    "gmli_now": 1.61,
-    "gmli_3yr": 1.89,
+    "gmli_now": 1.72,
+    "gmli_3yr": 1.92,
     "seasons_used": 3,
-    "entries_total": 132,
+    "entries_total": 135,
     "tag": "established",
     "pct": 99
    },
    "681870": {
     "name": "Erik Sabrowski",
     "team": "CLE",
-    "gmli_now": 1.51,
-    "gmli_3yr": 1.38,
+    "gmli_now": 1.56,
+    "gmli_3yr": 1.41,
     "seasons_used": 3,
-    "entries_total": 71,
+    "entries_total": 73,
     "tag": "established",
-    "pct": 74
+    "pct": 76
+   },
+   "656945": {
+    "name": "Tanner Scott",
+    "team": "LAD",
+    "gmli_now": 1.48,
+    "gmli_3yr": 1.76,
+    "seasons_used": 3,
+    "entries_total": 172,
+    "tag": "established",
+    "pct": 97
+   },
+   "656546": {
+    "name": "Jeff Hoffman",
+    "team": "TOR",
+    "gmli_now": 1.4,
+    "gmli_3yr": 1.6,
+    "seasons_used": 3,
+    "entries_total": 180,
+    "tag": "established",
+    "pct": 94
    },
    "670970": {
     "name": "Adrian Morejon",
@@ -301,49 +321,19 @@
     "gmli_now": 1.85,
     "gmli_3yr": 1.45,
     "seasons_used": 3,
-    "entries_total": 174,
+    "entries_total": 176,
     "tag": "established",
-    "pct": 82
+    "pct": 81
    },
-   "656945": {
-    "name": "Tanner Scott",
-    "team": "LAD",
-    "gmli_now": 1.5,
-    "gmli_3yr": 1.77,
-    "seasons_used": 3,
-    "entries_total": 169,
+   "680742": {
+    "name": "Jonathan Bowlan",
+    "team": "PHI",
+    "gmli_now": 0.92,
+    "gmli_3yr": 0.92,
+    "seasons_used": 2,
+    "entries_total": 62,
     "tag": "established",
-    "pct": 97
-   },
-   "656546": {
-    "name": "Jeff Hoffman",
-    "team": "TOR",
-    "gmli_now": 1.39,
-    "gmli_3yr": 1.6,
-    "seasons_used": 3,
-    "entries_total": 179,
-    "tag": "established",
-    "pct": 94
-   },
-   "628452": {
-    "name": "Raisel Iglesias",
-    "team": "ATL",
-    "gmli_now": 1.49,
-    "gmli_3yr": 1.55,
-    "seasons_used": 3,
-    "entries_total": 163,
-    "tag": "established",
-    "pct": 91
-   },
-   "681911": {
-    "name": "Alex Vesia",
-    "team": "LAD",
-    "gmli_now": 1.49,
-    "gmli_3yr": 1.47,
-    "seasons_used": 3,
-    "entries_total": 172,
-    "tag": "established",
-    "pct": 85
+    "pct": 20
    },
    "656641": {
     "name": "Jacob Latz",
@@ -353,47 +343,57 @@
     "seasons_used": 3,
     "entries_total": 103,
     "tag": "established",
-    "pct": 80
-   },
-   "664991": {
-    "name": "Grant Wolfram",
-    "team": "BAL",
-    "gmli_now": 1.22,
-    "gmli_3yr": 0.94,
-    "seasons_used": 2,
-    "entries_total": 52,
-    "tag": "provisional",
-    "pct": 22
+    "pct": 79
    },
    "596133": {
     "name": "Luke Weaver",
     "team": "NYM",
-    "gmli_now": 1.68,
+    "gmli_now": 1.72,
+    "gmli_3yr": 1.5,
+    "seasons_used": 3,
+    "entries_total": 162,
+    "tag": "established",
+    "pct": 87
+   },
+   "628452": {
+    "name": "Raisel Iglesias",
+    "team": "ATL",
+    "gmli_now": 1.51,
+    "gmli_3yr": 1.55,
+    "seasons_used": 3,
+    "entries_total": 165,
+    "tag": "established",
+    "pct": 91
+   },
+   "670280": {
+    "name": "David Bednar",
+    "team": "NYY",
+    "gmli_now": 1.42,
+    "gmli_3yr": 1.46,
+    "seasons_used": 3,
+    "entries_total": 161,
+    "tag": "established",
+    "pct": 82
+   },
+   "676477": {
+    "name": "Garrett Whitlock",
+    "team": "BOS",
+    "gmli_now": 1.37,
     "gmli_3yr": 1.49,
-    "seasons_used": 3,
-    "entries_total": 160,
+    "seasons_used": 2,
+    "entries_total": 92,
     "tag": "established",
-    "pct": 86
+    "pct": 85
    },
-   "670059": {
-    "name": "Colin Holderman",
-    "team": "CLE",
-    "gmli_now": 1.21,
-    "gmli_3yr": 1.35,
+   "681911": {
+    "name": "Alex Vesia",
+    "team": "LAD",
+    "gmli_now": 1.45,
+    "gmli_3yr": 1.47,
     "seasons_used": 3,
-    "entries_total": 109,
+    "entries_total": 175,
     "tag": "established",
-    "pct": 71
-   },
-   "662253": {
-    "name": "Andr\u00e9s Mu\u00f1oz",
-    "team": "SEA",
-    "gmli_now": 1.9,
-    "gmli_3yr": 2.13,
-    "seasons_used": 3,
-    "entries_total": 157,
-    "tag": "established",
-    "pct": 100
+    "pct": 83
    },
    "669622": {
     "name": "Anthony Bender",
@@ -403,97 +403,87 @@
     "seasons_used": 3,
     "entries_total": 145,
     "tag": "established",
-    "pct": 64
+    "pct": 65
+   },
+   "664991": {
+    "name": "Grant Wolfram",
+    "team": "BAL",
+    "gmli_now": 1.25,
+    "gmli_3yr": 0.97,
+    "seasons_used": 2,
+    "entries_total": 53,
+    "tag": "provisional",
+    "pct": 24
    },
    "800311": {
     "name": "Didier Fuentes",
     "team": "ATL",
-    "gmli_now": 1.36,
-    "gmli_3yr": 1.36,
+    "gmli_now": 1.35,
+    "gmli_3yr": 1.35,
     "seasons_used": 1,
-    "entries_total": 25,
+    "entries_total": 27,
     "tag": "provisional",
     "pct": 72
    },
-   "547973": {
-    "name": "Aroldis Chapman",
-    "team": "BOS",
-    "gmli_now": 1.77,
-    "gmli_3yr": 1.72,
+   "670059": {
+    "name": "Colin Holderman",
+    "team": "CLE",
+    "gmli_now": 1.23,
+    "gmli_3yr": 1.35,
     "seasons_used": 3,
-    "entries_total": 161,
+    "entries_total": 111,
     "tag": "established",
-    "pct": 96
-   },
-   "676477": {
-    "name": "Garrett Whitlock",
-    "team": "BOS",
-    "gmli_now": 1.41,
-    "gmli_3yr": 1.51,
-    "seasons_used": 2,
-    "entries_total": 90,
-    "tag": "established",
-    "pct": 87
-   },
-   "676879": {
-    "name": "Aaron Ashby",
-    "team": "MIL",
-    "gmli_now": 1.31,
-    "gmli_3yr": 1.16,
-    "seasons_used": 3,
-    "entries_total": 93,
-    "tag": "established",
-    "pct": 50
-   },
-   "656794": {
-    "name": "Sean Newcomb",
-    "team": "CWS",
-    "gmli_now": 1.41,
-    "gmli_3yr": 1.08,
-    "seasons_used": 3,
-    "entries_total": 80,
-    "tag": "established",
-    "pct": 37
-   },
-   "680742": {
-    "name": "Jonathan Bowlan",
-    "team": "PHI",
-    "gmli_now": 0.92,
-    "gmli_3yr": 0.92,
-    "seasons_used": 2,
-    "entries_total": 60,
-    "tag": "established",
-    "pct": 21
+    "pct": 72
    },
    "666661": {
     "name": "Juan Morillo",
     "team": "AZ",
-    "gmli_now": 1.51,
-    "gmli_3yr": 1.3,
+    "gmli_now": 1.52,
+    "gmli_3yr": 1.31,
     "seasons_used": 2,
-    "entries_total": 78,
+    "entries_total": 80,
     "tag": "established",
-    "pct": 63
+    "pct": 64
    },
-   "656848": {
-    "name": "Michael Petersen",
-    "team": "MIA",
-    "gmli_now": 1.33,
-    "gmli_3yr": 1.11,
-    "seasons_used": 3,
-    "entries_total": 65,
-    "tag": "established",
-    "pct": 41
-   },
-   "670280": {
-    "name": "David Bednar",
-    "team": "NYY",
-    "gmli_now": 1.46,
-    "gmli_3yr": 1.47,
+   "662253": {
+    "name": "Andr\u00e9s Mu\u00f1oz",
+    "team": "SEA",
+    "gmli_now": 1.88,
+    "gmli_3yr": 2.13,
     "seasons_used": 3,
     "entries_total": 159,
     "tag": "established",
-    "pct": 84
+    "pct": 100
+   },
+   "687396": {
+    "name": "Brent Headrick",
+    "team": "NYY",
+    "gmli_now": 1.31,
+    "gmli_3yr": 1.09,
+    "seasons_used": 3,
+    "entries_total": 62,
+    "tag": "established",
+    "pct": 38
+   },
+   "547973": {
+    "name": "Aroldis Chapman",
+    "team": "BOS",
+    "gmli_now": 1.71,
+    "gmli_3yr": 1.71,
+    "seasons_used": 3,
+    "entries_total": 163,
+    "tag": "established",
+    "pct": 96
+   },
+   "641329": {
+    "name": "Bryan Baker",
+    "team": "TB",
+    "gmli_now": 1.45,
+    "gmli_3yr": 1.22,
+    "seasons_used": 3,
+    "entries_total": 128,
+    "tag": "established",
+    "pct": 54
    },
    "693686": {
     "name": "Spencer Miles",
@@ -505,15 +495,25 @@
     "tag": "provisional",
     "pct": 16
    },
-   "642207": {
-    "name": "Devin Williams",
-    "team": "NYM",
-    "gmli_now": 1.63,
-    "gmli_3yr": 1.58,
+   "656794": {
+    "name": "Sean Newcomb",
+    "team": "CWS",
+    "gmli_now": 1.5,
+    "gmli_3yr": 1.13,
     "seasons_used": 3,
-    "entries_total": 120,
+    "entries_total": 83,
     "tag": "established",
-    "pct": 93
+    "pct": 41
+   },
+   "656848": {
+    "name": "Michael Petersen",
+    "team": "MIA",
+    "gmli_now": 1.36,
+    "gmli_3yr": 1.13,
+    "seasons_used": 3,
+    "entries_total": 67,
+    "tag": "established",
+    "pct": 43
    },
    "663158": {
     "name": "Robert Suarez",
@@ -525,65 +525,25 @@
     "tag": "established",
     "pct": 97
    },
-   "641329": {
-    "name": "Bryan Baker",
-    "team": "TB",
-    "gmli_now": 1.46,
-    "gmli_3yr": 1.22,
+   "676879": {
+    "name": "Aaron Ashby",
+    "team": "MIL",
+    "gmli_now": 1.32,
+    "gmli_3yr": 1.17,
     "seasons_used": 3,
-    "entries_total": 126,
+    "entries_total": 95,
     "tag": "established",
-    "pct": 54
+    "pct": 50
    },
-   "669165": {
-    "name": "Kyle Hurt",
+   "694361": {
+    "name": "Will Klein",
     "team": "LAD",
-    "gmli_now": 0.81,
-    "gmli_3yr": 0.8,
-    "seasons_used": 2,
-    "entries_total": 31,
+    "gmli_now": 1.37,
+    "gmli_3yr": 1.09,
+    "seasons_used": 3,
+    "entries_total": 50,
     "tag": "provisional",
-    "pct": 11
-   },
-   "687396": {
-    "name": "Brent Headrick",
-    "team": "NYY",
-    "gmli_now": 1.33,
-    "gmli_3yr": 1.11,
-    "seasons_used": 3,
-    "entries_total": 60,
-    "tag": "established",
-    "pct": 39
-   },
-   "666974": {
-    "name": "Yennier Cano",
-    "team": "BAL",
-    "gmli_now": 0.92,
-    "gmli_3yr": 1.34,
-    "seasons_used": 3,
-    "entries_total": 172,
-    "tag": "established",
-    "pct": 70
-   },
-   "699134": {
-    "name": "Bradgley Rodriguez",
-    "team": "SD",
-    "gmli_now": 1.2,
-    "gmli_3yr": 1.07,
-    "seasons_used": 2,
-    "entries_total": 36,
-    "tag": "provisional",
-    "pct": 36
-   },
-   "518585": {
-    "name": "Fernando Cruz",
-    "team": "NYY",
-    "gmli_now": 1.64,
-    "gmli_3yr": 1.47,
-    "seasons_used": 3,
-    "entries_total": 155,
-    "tag": "established",
-    "pct": 83
+    "pct": 37
    },
    "641835": {
     "name": "Tim Mayza",
@@ -591,39 +551,29 @@
     "gmli_now": 0.6,
     "gmli_3yr": 0.73,
     "seasons_used": 3,
-    "entries_total": 95,
+    "entries_total": 97,
     "tag": "established",
     "pct": 9
    },
-   "683618": {
-    "name": "Edgardo Henriquez",
-    "team": "LAD",
-    "gmli_now": 0.67,
-    "gmli_3yr": 0.97,
-    "seasons_used": 3,
-    "entries_total": 56,
-    "tag": "provisional",
-    "pct": 27
-   },
-   "669330": {
-    "name": "Tyler Wells",
-    "team": "BAL",
-    "gmli_now": 0.97,
-    "gmli_3yr": 0.97,
+   "702193": {
+    "name": "Andrew Morris",
+    "team": "MIN",
+    "gmli_now": 1.33,
+    "gmli_3yr": 1.33,
     "seasons_used": 1,
-    "entries_total": 30,
+    "entries_total": 29,
     "tag": "provisional",
-    "pct": 26
+    "pct": 68
    },
-   "682608": {
-    "name": "Peyton Gray",
-    "team": "TEX",
-    "gmli_now": 0.9,
-    "gmli_3yr": 0.9,
-    "seasons_used": 1,
-    "entries_total": 22,
+   "805299": {
+    "name": "Brandyn Garcia",
+    "team": "AZ",
+    "gmli_now": 1.29,
+    "gmli_3yr": 1.14,
+    "seasons_used": 2,
+    "entries_total": 39,
     "tag": "provisional",
-    "pct": 19
+    "pct": 45
    },
    "681895": {
     "name": "Evan Sisk",
@@ -633,47 +583,127 @@
     "seasons_used": 2,
     "entries_total": 51,
     "tag": "provisional",
+    "pct": 22
+   },
+   "669330": {
+    "name": "Tyler Wells",
+    "team": "BAL",
+    "gmli_now": 0.97,
+    "gmli_3yr": 0.97,
+    "seasons_used": 1,
+    "entries_total": 32,
+    "tag": "provisional",
     "pct": 24
+   },
+   "683618": {
+    "name": "Edgardo Henriquez",
+    "team": "LAD",
+    "gmli_now": 0.75,
+    "gmli_3yr": 1.0,
+    "seasons_used": 3,
+    "entries_total": 59,
+    "tag": "provisional",
+    "pct": 28
+   },
+   "666974": {
+    "name": "Yennier Cano",
+    "team": "BAL",
+    "gmli_now": 0.93,
+    "gmli_3yr": 1.34,
+    "seasons_used": 3,
+    "entries_total": 174,
+    "tag": "established",
+    "pct": 70
+   },
+   "642207": {
+    "name": "Devin Williams",
+    "team": "NYM",
+    "gmli_now": 1.63,
+    "gmli_3yr": 1.58,
+    "seasons_used": 3,
+    "entries_total": 122,
+    "tag": "established",
+    "pct": 93
    },
    "670329": {
     "name": "Rico Garcia",
     "team": "BAL",
-    "gmli_now": 1.49,
-    "gmli_3yr": 1.43,
+    "gmli_now": 1.45,
+    "gmli_3yr": 1.41,
     "seasons_used": 2,
-    "entries_total": 67,
+    "entries_total": 69,
     "tag": "established",
-    "pct": 79
-   },
-   "702193": {
-    "name": "Andrew Morris",
-    "team": "MIN",
-    "gmli_now": 1.37,
-    "gmli_3yr": 1.37,
-    "seasons_used": 1,
-    "entries_total": 27,
-    "tag": "provisional",
-    "pct": 73
+    "pct": 76
    },
    "656464": {
     "name": "Kevin Ginkel",
     "team": "AZ",
     "gmli_now": 1.29,
-    "gmli_3yr": 1.33,
+    "gmli_3yr": 1.32,
     "seasons_used": 3,
-    "entries_total": 136,
+    "entries_total": 138,
     "tag": "established",
     "pct": 67
+   },
+   "699134": {
+    "name": "Bradgley Rodriguez",
+    "team": "SD",
+    "gmli_now": 1.24,
+    "gmli_3yr": 1.11,
+    "seasons_used": 2,
+    "entries_total": 38,
+    "tag": "provisional",
+    "pct": 40
+   },
+   "643410": {
+    "name": "Mark Leiter Jr.",
+    "team": "ATH",
+    "gmli_now": 1.09,
+    "gmli_3yr": 1.31,
+    "seasons_used": 3,
+    "entries_total": 152,
+    "tag": "established",
+    "pct": 65
    },
    "676263": {
     "name": "Jack Dreyer",
     "team": "LAD",
-    "gmli_now": 0.72,
+    "gmli_now": 0.76,
     "gmli_3yr": 0.92,
     "seasons_used": 2,
-    "entries_total": 94,
+    "entries_total": 95,
     "tag": "established",
     "pct": 20
+   },
+   "518585": {
+    "name": "Fernando Cruz",
+    "team": "NYY",
+    "gmli_now": 1.62,
+    "gmli_3yr": 1.46,
+    "seasons_used": 3,
+    "entries_total": 156,
+    "tag": "established",
+    "pct": 82
+   },
+   "682608": {
+    "name": "Peyton Gray",
+    "team": "TEX",
+    "gmli_now": 1.0,
+    "gmli_3yr": 1.0,
+    "seasons_used": 1,
+    "entries_total": 24,
+    "tag": "provisional",
+    "pct": 30
+   },
+   "664076": {
+    "name": "Garrett Cleavinger",
+    "team": "TB",
+    "gmli_now": 1.52,
+    "gmli_3yr": 1.46,
+    "seasons_used": 3,
+    "entries_total": 163,
+    "tag": "established",
+    "pct": 81
    },
    "646241": {
     "name": "Enmanuel De Jesus",
@@ -685,75 +715,85 @@
     "tag": "provisional",
     "pct": 2
    },
-   "643410": {
-    "name": "Mark Leiter Jr.",
-    "team": "ATH",
-    "gmli_now": 1.12,
-    "gmli_3yr": 1.32,
+   "660825": {
+    "name": "Eduard Bazardo",
+    "team": "SEA",
+    "gmli_now": 1.53,
+    "gmli_3yr": 1.03,
     "seasons_used": 3,
-    "entries_total": 151,
+    "entries_total": 137,
     "tag": "established",
-    "pct": 65
-   },
-   "664076": {
-    "name": "Garrett Cleavinger",
-    "team": "TB",
-    "gmli_now": 1.45,
-    "gmli_3yr": 1.45,
-    "seasons_used": 3,
-    "entries_total": 161,
-    "tag": "established",
-    "pct": 81
-   },
-   "694361": {
-    "name": "Will Klein",
-    "team": "LAD",
-    "gmli_now": 1.42,
-    "gmli_3yr": 1.11,
-    "seasons_used": 3,
-    "entries_total": 48,
-    "tag": "provisional",
-    "pct": 40
-   },
-   "682842": {
-    "name": "Abner Uribe",
-    "team": "MIL",
-    "gmli_now": 1.76,
-    "gmli_3yr": 1.45,
-    "seasons_used": 3,
-    "entries_total": 123,
-    "tag": "established",
-    "pct": 82
-   },
-   "623454": {
-    "name": "Drew Anderson",
-    "team": "DET",
-    "gmli_now": 1.22,
-    "gmli_3yr": 1.22,
-    "seasons_used": 1,
-    "entries_total": 29,
-    "tag": "provisional",
-    "pct": 55
-   },
-   "667297": {
-    "name": "Tommy Nance",
-    "team": "TOR",
-    "gmli_now": 0.56,
-    "gmli_3yr": 0.71,
-    "seasons_used": 3,
-    "entries_total": 80,
-    "tag": "established",
-    "pct": 8
+    "pct": 32
    },
    "621237": {
     "name": "Jos\u00e9 Alvarado",
     "team": "PHI",
-    "gmli_now": 1.24,
+    "gmli_now": 1.25,
     "gmli_3yr": 1.34,
     "seasons_used": 3,
-    "entries_total": 130,
+    "entries_total": 131,
     "tag": "established",
-    "pct": 69
+    "pct": 70
+   },
+   "682842": {
+    "name": "Abner Uribe",
+    "team": "MIL",
+    "gmli_now": 1.84,
+    "gmli_3yr": 1.48,
+    "seasons_used": 3,
+    "entries_total": 125,
+    "tag": "established",
+    "pct": 85
+   },
+   "548384": {
+    "name": "Brooks Raley",
+    "team": "NYM",
+    "gmli_now": 1.58,
+    "gmli_3yr": 1.47,
+    "seasons_used": 3,
+    "entries_total": 74,
+    "tag": "established",
+    "pct": 84
+   },
+   "669165": {
+    "name": "Kyle Hurt",
+    "team": "LAD",
+    "gmli_now": 0.81,
+    "gmli_3yr": 0.79,
+    "seasons_used": 2,
+    "entries_total": 33,
+    "tag": "provisional",
+    "pct": 11
+   },
+   "660853": {
+    "name": "Enyel De Los Santos",
+    "team": "HOU",
+    "gmli_now": 1.19,
+    "gmli_3yr": 1.05,
+    "seasons_used": 3,
+    "entries_total": 167,
+    "tag": "established",
+    "pct": 34
+   },
+   "686580": {
+    "name": "Justin Slaten",
+    "team": "BOS",
+    "gmli_now": 1.54,
+    "gmli_3yr": 1.56,
+    "seasons_used": 3,
+    "entries_total": 103,
+    "tag": "established",
+    "pct": 91
+   },
+   "663738": {
+    "name": "Daniel Lynch IV",
+    "team": "KC",
+    "gmli_now": 1.46,
+    "gmli_3yr": 1.08,
+    "seasons_used": 3,
+    "entries_total": 104,
+    "tag": "established",
+    "pct": 35
    },
    "668933": {
     "name": "Graham Ashcraft",
@@ -763,37 +803,17 @@
     "seasons_used": 2,
     "entries_total": 88,
     "tag": "established",
-    "pct": 79
-   },
-   "660825": {
-    "name": "Eduard Bazardo",
-    "team": "SEA",
-    "gmli_now": 1.51,
-    "gmli_3yr": 1.02,
-    "seasons_used": 3,
-    "entries_total": 136,
-    "tag": "established",
-    "pct": 31
+    "pct": 78
    },
    "595345": {
     "name": "Steven Okert",
     "team": "HOU",
-    "gmli_now": 1.09,
-    "gmli_3yr": 1.07,
+    "gmli_now": 1.13,
+    "gmli_3yr": 1.08,
     "seasons_used": 3,
-    "entries_total": 148,
+    "entries_total": 150,
     "tag": "established",
-    "pct": 35
-   },
-   "642397": {
-    "name": "Gregory Soto",
-    "team": "PIT",
-    "gmli_now": 1.79,
-    "gmli_3yr": 1.37,
-    "seasons_used": 3,
-    "entries_total": 172,
-    "tag": "established",
-    "pct": 74
+    "pct": 36
    },
    "695380": {
     "name": "Alex Hoppe",
@@ -805,16 +825,6 @@
     "tag": "provisional",
     "pct": 1
    },
-   "657097": {
-    "name": "Jacob Webb",
-    "team": "CHC",
-    "gmli_now": 1.15,
-    "gmli_3yr": 1.13,
-    "seasons_used": 3,
-    "entries_total": 152,
-    "tag": "established",
-    "pct": 44
-   },
    "676775": {
     "name": "Keaton Winn",
     "team": "SF",
@@ -823,7 +833,7 @@
     "seasons_used": 2,
     "entries_total": 36,
     "tag": "provisional",
-    "pct": 46
+    "pct": 47
    },
    "596001": {
     "name": "Jakob Junis",
@@ -833,7 +843,7 @@
     "seasons_used": 3,
     "entries_total": 105,
     "tag": "established",
-    "pct": 28
+    "pct": 26
    },
    "669093": {
     "name": "Jeremiah Estrada",
@@ -845,125 +855,25 @@
     "tag": "established",
     "pct": 68
    },
-   "665660": {
-    "name": "Elvis Alvarado",
-    "team": "ATH",
-    "gmli_now": 1.58,
-    "gmli_3yr": 0.99,
-    "seasons_used": 2,
-    "entries_total": 58,
-    "tag": "provisional",
-    "pct": 29
-   },
-   "548384": {
-    "name": "Brooks Raley",
-    "team": "NYM",
-    "gmli_now": 1.45,
-    "gmli_3yr": 1.41,
+   "657097": {
+    "name": "Jacob Webb",
+    "team": "CHC",
+    "gmli_now": 1.17,
+    "gmli_3yr": 1.13,
     "seasons_used": 3,
-    "entries_total": 72,
+    "entries_total": 153,
     "tag": "established",
-    "pct": 76
+    "pct": 42
    },
-   "665622": {
-    "name": "Luis Medina",
-    "team": "ATH",
-    "gmli_now": 0.95,
-    "gmli_3yr": 0.95,
-    "seasons_used": 1,
-    "entries_total": 27,
-    "tag": "provisional",
-    "pct": 23
-   },
-   "608718": {
-    "name": "Brent Suter",
-    "team": "LAA",
-    "gmli_now": 0.56,
-    "gmli_3yr": 0.54,
-    "seasons_used": 3,
-    "entries_total": 116,
-    "tag": "established",
-    "pct": 3
-   },
-   "660853": {
-    "name": "Enyel De Los Santos",
-    "team": "HOU",
-    "gmli_now": 1.21,
-    "gmli_3yr": 1.06,
-    "seasons_used": 3,
-    "entries_total": 165,
-    "tag": "established",
-    "pct": 34
-   },
-   "687330": {
-    "name": "Kevin Kelly",
-    "team": "TB",
-    "gmli_now": 1.93,
-    "gmli_3yr": 1.43,
-    "seasons_used": 3,
-    "entries_total": 146,
-    "tag": "established",
-    "pct": 80
-   },
-   "663738": {
-    "name": "Daniel Lynch IV",
-    "team": "KC",
-    "gmli_now": 1.47,
-    "gmli_3yr": 1.08,
-    "seasons_used": 3,
-    "entries_total": 102,
-    "tag": "established",
-    "pct": 36
-   },
-   "660761": {
-    "name": "Jos\u00e9 Suarez",
-    "team": "ATH",
-    "gmli_now": 0.69,
-    "gmli_3yr": 0.68,
-    "seasons_used": 3,
-    "entries_total": 50,
-    "tag": "provisional",
-    "pct": 7
-   },
-   "622608": {
-    "name": "Antonio Senzatela",
-    "team": "COL",
-    "gmli_now": 1.72,
-    "gmli_3yr": 1.46,
-    "seasons_used": 2,
-    "entries_total": 31,
-    "tag": "provisional",
-    "pct": 83
-   },
-   "667463": {
-    "name": "John King",
-    "team": "MIA",
-    "gmli_now": 0.98,
-    "gmli_3yr": 0.88,
-    "seasons_used": 3,
-    "entries_total": 144,
-    "tag": "established",
-    "pct": 17
-   },
-   "623149": {
-    "name": "Paul Sewald",
+   "642528": {
+    "name": "Jonathan Lo\u00e1isiga",
     "team": "AZ",
-    "gmli_now": 1.66,
-    "gmli_3yr": 1.42,
+    "gmli_now": 0.97,
+    "gmli_3yr": 1.14,
     "seasons_used": 3,
-    "entries_total": 97,
+    "entries_total": 70,
     "tag": "established",
-    "pct": 77
-   },
-   "678606": {
-    "name": "Jos\u00e9 A. Ferrer",
-    "team": "SEA",
-    "gmli_now": 1.39,
-    "gmli_3yr": 1.35,
-    "seasons_used": 3,
-    "entries_total": 143,
-    "tag": "established",
-    "pct": 71
+    "pct": 44
    },
    "641302": {
     "name": "Tyler Alexander",
@@ -971,29 +881,129 @@
     "gmli_now": 1.11,
     "gmli_3yr": 1.09,
     "seasons_used": 3,
-    "entries_total": 93,
+    "entries_total": 95,
     "tag": "established",
-    "pct": 38
+    "pct": 36
+   },
+   "642397": {
+    "name": "Gregory Soto",
+    "team": "PIT",
+    "gmli_now": 1.76,
+    "gmli_3yr": 1.36,
+    "seasons_used": 3,
+    "entries_total": 174,
+    "tag": "established",
+    "pct": 73
+   },
+   "668873": {
+    "name": "Caleb Kilian",
+    "team": "SF",
+    "gmli_now": 1.23,
+    "gmli_3yr": 1.23,
+    "seasons_used": 2,
+    "entries_total": 37,
+    "tag": "provisional",
+    "pct": 55
+   },
+   "689254": {
+    "name": "Mason Fluharty",
+    "team": "TOR",
+    "gmli_now": 1.19,
+    "gmli_3yr": 1.12,
+    "seasons_used": 2,
+    "entries_total": 99,
+    "tag": "established",
+    "pct": 40
+   },
+   "622608": {
+    "name": "Antonio Senzatela",
+    "team": "COL",
+    "gmli_now": 1.68,
+    "gmli_3yr": 1.44,
+    "seasons_used": 2,
+    "entries_total": 33,
+    "tag": "provisional",
+    "pct": 80
+   },
+   "623454": {
+    "name": "Drew Anderson",
+    "team": "DET",
+    "gmli_now": 1.2,
+    "gmli_3yr": 1.2,
+    "seasons_used": 1,
+    "entries_total": 30,
+    "tag": "provisional",
+    "pct": 53
+   },
+   "687330": {
+    "name": "Kevin Kelly",
+    "team": "TB",
+    "gmli_now": 1.93,
+    "gmli_3yr": 1.44,
+    "seasons_used": 3,
+    "entries_total": 147,
+    "tag": "established",
+    "pct": 79
+   },
+   "608718": {
+    "name": "Brent Suter",
+    "team": "LAA",
+    "gmli_now": 0.54,
+    "gmli_3yr": 0.54,
+    "seasons_used": 3,
+    "entries_total": 117,
+    "tag": "established",
+    "pct": 3
+   },
+   "665660": {
+    "name": "Elvis Alvarado",
+    "team": "ATH",
+    "gmli_now": 1.47,
+    "gmli_3yr": 0.96,
+    "seasons_used": 2,
+    "entries_total": 60,
+    "tag": "established",
+    "pct": 23
+   },
+   "681217": {
+    "name": "Chase Silseth",
+    "team": "LAA",
+    "gmli_now": 1.41,
+    "gmli_3yr": 1.3,
+    "seasons_used": 2,
+    "entries_total": 50,
+    "tag": "provisional",
+    "pct": 63
+   },
+   "689147": {
+    "name": "Orion Kerkering",
+    "team": "PHI",
+    "gmli_now": 1.11,
+    "gmli_3yr": 1.29,
+    "seasons_used": 3,
+    "entries_total": 168,
+    "tag": "established",
+    "pct": 62
+   },
+   "678606": {
+    "name": "Jos\u00e9 A. Ferrer",
+    "team": "SEA",
+    "gmli_now": 1.37,
+    "gmli_3yr": 1.34,
+    "seasons_used": 3,
+    "entries_total": 144,
+    "tag": "established",
+    "pct": 71
    },
    "676617": {
     "name": "Riley O'Brien",
     "team": "STL",
-    "gmli_now": 2.11,
+    "gmli_now": 2.07,
     "gmli_3yr": 1.54,
     "seasons_used": 3,
-    "entries_total": 85,
+    "entries_total": 86,
     "tag": "established",
-    "pct": 91
-   },
-   "642528": {
-    "name": "Jonathan Lo\u00e1isiga",
-    "team": "AZ",
-    "gmli_now": 0.92,
-    "gmli_3yr": 1.12,
-    "seasons_used": 3,
-    "entries_total": 68,
-    "tag": "established",
-    "pct": 42
+    "pct": 90
    },
    "595014": {
     "name": "Blake Treinen",
@@ -1005,35 +1015,15 @@
     "tag": "established",
     "pct": 93
    },
-   "668873": {
-    "name": "Caleb Kilian",
-    "team": "SF",
-    "gmli_now": 1.24,
-    "gmli_3yr": 1.23,
-    "seasons_used": 2,
-    "entries_total": 36,
-    "tag": "provisional",
-    "pct": 56
-   },
-   "689254": {
-    "name": "Mason Fluharty",
-    "team": "TOR",
-    "gmli_now": 1.21,
-    "gmli_3yr": 1.13,
-    "seasons_used": 2,
-    "entries_total": 98,
-    "tag": "established",
-    "pct": 44
-   },
    "669020": {
     "name": "Ryan Rolison",
     "team": "CHC",
-    "gmli_now": 0.94,
+    "gmli_now": 0.93,
     "gmli_3yr": 0.65,
     "seasons_used": 2,
-    "entries_total": 55,
+    "entries_total": 57,
     "tag": "provisional",
-    "pct": 6
+    "pct": 5
    },
    "676684": {
     "name": "Will Vest",
@@ -1045,75 +1035,85 @@
     "tag": "established",
     "pct": 88
    },
-   "681217": {
-    "name": "Chase Silseth",
-    "team": "LAA",
-    "gmli_now": 1.47,
-    "gmli_3yr": 1.34,
-    "seasons_used": 2,
-    "entries_total": 48,
-    "tag": "provisional",
-    "pct": 70
-   },
-   "673513": {
-    "name": "Yuki Matsui",
-    "team": "SD",
-    "gmli_now": 0.91,
-    "gmli_3yr": 0.85,
+   "623149": {
+    "name": "Paul Sewald",
+    "team": "AZ",
+    "gmli_now": 1.68,
+    "gmli_3yr": 1.43,
     "seasons_used": 3,
-    "entries_total": 145,
+    "entries_total": 99,
     "tag": "established",
-    "pct": 15
+    "pct": 78
    },
    "642100": {
     "name": "Gabe Speier",
     "team": "SEA",
-    "gmli_now": 1.56,
-    "gmli_3yr": 1.52,
+    "gmli_now": 1.53,
+    "gmli_3yr": 1.51,
     "seasons_used": 3,
-    "entries_total": 131,
+    "entries_total": 132,
     "tag": "established",
-    "pct": 88
+    "pct": 87
+   },
+   "660761": {
+    "name": "Jos\u00e9 Suarez",
+    "team": "ATH",
+    "gmli_now": 0.68,
+    "gmli_3yr": 0.68,
+    "seasons_used": 3,
+    "entries_total": 52,
+    "tag": "provisional",
+    "pct": 6
+   },
+   "622088": {
+    "name": "Tejay Antone",
+    "team": "CIN",
+    "gmli_now": 1.46,
+    "gmli_3yr": 1.38,
+    "seasons_used": 2,
+    "entries_total": 29,
+    "tag": "provisional",
+    "pct": 74
+   },
+   "665622": {
+    "name": "Luis Medina",
+    "team": "ATH",
+    "gmli_now": 0.92,
+    "gmli_3yr": 0.92,
+    "seasons_used": 1,
+    "entries_total": 28,
+    "tag": "provisional",
+    "pct": 19
    },
    "642121": {
     "name": "Cole Sulser",
     "team": "TB",
     "gmli_now": 1.04,
-    "gmli_3yr": 0.85,
+    "gmli_3yr": 0.86,
     "seasons_used": 3,
-    "entries_total": 55,
+    "entries_total": 57,
     "tag": "provisional",
     "pct": 15
    },
-   "686993": {
-    "name": "Justin Sterner",
-    "team": "ATH",
-    "gmli_now": 1.4,
-    "gmli_3yr": 1.24,
+   "687377": {
+    "name": "Orlando Ribalta",
+    "team": "WSH",
+    "gmli_now": 1.79,
+    "gmli_3yr": 1.04,
     "seasons_used": 3,
-    "entries_total": 100,
-    "tag": "established",
-    "pct": 58
+    "entries_total": 54,
+    "tag": "provisional",
+    "pct": 33
    },
-   "641755": {
-    "name": "Tyler Kinley",
-    "team": "ATL",
-    "gmli_now": 1.12,
-    "gmli_3yr": 1.1,
+   "667463": {
+    "name": "John King",
+    "team": "MIA",
+    "gmli_now": 1.01,
+    "gmli_3yr": 0.88,
     "seasons_used": 3,
-    "entries_total": 173,
+    "entries_total": 145,
     "tag": "established",
-    "pct": 39
-   },
-   "689147": {
-    "name": "Orion Kerkering",
-    "team": "PHI",
-    "gmli_now": 1.13,
-    "gmli_3yr": 1.3,
-    "seasons_used": 3,
-    "entries_total": 167,
-    "tag": "established",
-    "pct": 62
+    "pct": 17
    },
    "689296": {
     "name": "Anthony Nunez",
@@ -1125,45 +1125,15 @@
     "tag": "provisional",
     "pct": 66
    },
-   "679358": {
-    "name": "Eric Orze",
-    "team": "MIN",
-    "gmli_now": 1.29,
-    "gmli_3yr": 1.01,
+   "687911": {
+    "name": "Bryan King",
+    "team": "HOU",
+    "gmli_now": 2.01,
+    "gmli_3yr": 1.37,
     "seasons_used": 3,
-    "entries_total": 69,
+    "entries_total": 133,
     "tag": "established",
-    "pct": 30
-   },
-   "666808": {
-    "name": "Camilo Doval",
-    "team": "NYY",
-    "gmli_now": 1.11,
-    "gmli_3yr": 1.32,
-    "seasons_used": 3,
-    "entries_total": 168,
-    "tag": "established",
-    "pct": 65
-   },
-   "656234": {
-    "name": "Jake Bird",
-    "team": "NYY",
-    "gmli_now": 1.12,
-    "gmli_3yr": 1.17,
-    "seasons_used": 3,
-    "entries_total": 114,
-    "tag": "established",
-    "pct": 51
-   },
-   "681810": {
-    "name": "Austin Warren",
-    "team": "NYM",
-    "gmli_now": 0.9,
-    "gmli_3yr": 0.75,
-    "seasons_used": 3,
-    "entries_total": 33,
-    "tag": "provisional",
-    "pct": 10
+    "pct": 73
    },
    "681867": {
     "name": "Cooper Criswell",
@@ -1173,117 +1143,167 @@
     "seasons_used": 3,
     "entries_total": 40,
     "tag": "provisional",
-    "pct": 12
+    "pct": 11
    },
-   "657514": {
-    "name": "Brennan Bernardino",
-    "team": "COL",
-    "gmli_now": 1.13,
-    "gmli_3yr": 1.2,
+   "657044": {
+    "name": "Ryan Thompson",
+    "team": "AZ",
+    "gmli_now": 1.12,
+    "gmli_3yr": 1.42,
     "seasons_used": 3,
-    "entries_total": 144,
+    "entries_total": 151,
     "tag": "established",
-    "pct": 53
+    "pct": 77
    },
-   "663687": {
-    "name": "Hogan Harris",
-    "team": "ATH",
-    "gmli_now": 1.67,
-    "gmli_3yr": 1.3,
-    "seasons_used": 3,
-    "entries_total": 102,
-    "tag": "established",
-    "pct": 63
-   },
-   "668984": {
-    "name": "Casey Legumina",
-    "team": "TB",
-    "gmli_now": 0.87,
-    "gmli_3yr": 0.84,
-    "seasons_used": 3,
-    "entries_total": 77,
-    "tag": "established",
-    "pct": 14
-   },
-   "670036": {
-    "name": "Matt Festa",
+   "683769": {
+    "name": "Hunter Gaddis",
     "team": "CLE",
-    "gmli_now": 1.09,
-    "gmli_3yr": 1.11,
+    "gmli_now": 1.6,
+    "gmli_3yr": 1.53,
     "seasons_used": 3,
-    "entries_total": 119,
+    "entries_total": 183,
     "tag": "established",
-    "pct": 40
+    "pct": 88
    },
-   "676755": {
-    "name": "Isaac Mattson",
-    "team": "PIT",
-    "gmli_now": 1.18,
-    "gmli_3yr": 1.29,
+   "667297": {
+    "name": "Tommy Nance",
+    "team": "TOR",
+    "gmli_now": 0.54,
+    "gmli_3yr": 0.7,
     "seasons_used": 3,
-    "entries_total": 74,
+    "entries_total": 82,
     "tag": "established",
-    "pct": 62
-   },
-   "693855": {
-    "name": "Ian Seymour",
-    "team": "TB",
-    "gmli_now": 1.34,
-    "gmli_3yr": 1.12,
-    "seasons_used": 2,
-    "entries_total": 41,
-    "tag": "provisional",
-    "pct": 43
-   },
-   "621383": {
-    "name": "Tanner Banks",
-    "team": "PHI",
-    "gmli_now": 0.72,
-    "gmli_3yr": 1.1,
-    "seasons_used": 3,
-    "entries_total": 153,
-    "tag": "established",
-    "pct": 38
-   },
-   "687911": {
-    "name": "Bryan King",
-    "team": "HOU",
-    "gmli_now": 2.03,
-    "gmli_3yr": 1.36,
-    "seasons_used": 3,
-    "entries_total": 131,
-    "tag": "established",
-    "pct": 73
+    "pct": 7
    },
    "676534": {
     "name": "Calvin Faucher",
     "team": "MIA",
-    "gmli_now": 1.44,
-    "gmli_3yr": 1.54,
+    "gmli_now": 1.41,
+    "gmli_3yr": 1.53,
     "seasons_used": 3,
-    "entries_total": 153,
+    "entries_total": 155,
     "tag": "established",
-    "pct": 90
+    "pct": 89
+   },
+   "668390": {
+    "name": "Cole Winn",
+    "team": "TEX",
+    "gmli_now": 1.14,
+    "gmli_3yr": 0.93,
+    "seasons_used": 3,
+    "entries_total": 78,
+    "tag": "established",
+    "pct": 21
    },
    "668941": {
     "name": "JoJo Romero",
     "team": "STL",
-    "gmli_now": 1.77,
-    "gmli_3yr": 1.72,
+    "gmli_now": 1.72,
+    "gmli_3yr": 1.71,
     "seasons_used": 3,
-    "entries_total": 168,
+    "entries_total": 170,
     "tag": "established",
     "pct": 96
    },
-   "695418": {
-    "name": "Brad Lord",
-    "team": "WSH",
-    "gmli_now": 1.19,
-    "gmli_3yr": 1.12,
+   "621112": {
+    "name": "Paul Blackburn",
+    "team": "NYY",
+    "gmli_now": 0.75,
+    "gmli_3yr": 0.6,
     "seasons_used": 2,
-    "entries_total": 54,
+    "entries_total": 39,
     "tag": "provisional",
-    "pct": 43
+    "pct": 4
+   },
+   "679358": {
+    "name": "Eric Orze",
+    "team": "MIN",
+    "gmli_now": 1.27,
+    "gmli_3yr": 1.0,
+    "seasons_used": 3,
+    "entries_total": 70,
+    "tag": "established",
+    "pct": 29
+   },
+   "643511": {
+    "name": "Tyler Rogers",
+    "team": "TOR",
+    "gmli_now": 1.4,
+    "gmli_3yr": 1.35,
+    "seasons_used": 3,
+    "entries_total": 200,
+    "tag": "established",
+    "pct": 71
+   },
+   "552640": {
+    "name": "Andrew Kittredge",
+    "team": "BAL",
+    "gmli_now": 0.91,
+    "gmli_3yr": 1.42,
+    "seasons_used": 3,
+    "entries_total": 154,
+    "tag": "established",
+    "pct": 77
+   },
+   "669062": {
+    "name": "Erik Miller",
+    "team": "SF",
+    "gmli_now": 1.18,
+    "gmli_3yr": 1.18,
+    "seasons_used": 3,
+    "entries_total": 128,
+    "tag": "established",
+    "pct": 51
+   },
+   "686993": {
+    "name": "Justin Sterner",
+    "team": "ATH",
+    "gmli_now": 1.35,
+    "gmli_3yr": 1.23,
+    "seasons_used": 3,
+    "entries_total": 102,
+    "tag": "established",
+    "pct": 55
+   },
+   "666808": {
+    "name": "Camilo Doval",
+    "team": "NYY",
+    "gmli_now": 1.06,
+    "gmli_3yr": 1.31,
+    "seasons_used": 3,
+    "entries_total": 170,
+    "tag": "established",
+    "pct": 64
+   },
+   "669711": {
+    "name": "Greg Weissert",
+    "team": "BOS",
+    "gmli_now": 1.11,
+    "gmli_3yr": 1.25,
+    "seasons_used": 3,
+    "entries_total": 170,
+    "tag": "established",
+    "pct": 57
+   },
+   "670950": {
+    "name": "Trevor Richards",
+    "team": "CWS",
+    "gmli_now": 0.55,
+    "gmli_3yr": 0.69,
+    "seasons_used": 3,
+    "entries_total": 80,
+    "tag": "established",
+    "pct": 7
+   },
+   "573204": {
+    "name": "Caleb Thielbar",
+    "team": "CHC",
+    "gmli_now": 1.42,
+    "gmli_3yr": 1.19,
+    "seasons_used": 3,
+    "entries_total": 154,
+    "tag": "established",
+    "pct": 52
    },
    "641745": {
     "name": "Brad Keller",
@@ -1303,87 +1323,137 @@
     "seasons_used": 2,
     "entries_total": 84,
     "tag": "established",
-    "pct": 64
+    "pct": 63
    },
-   "621112": {
-    "name": "Paul Blackburn",
+   "663687": {
+    "name": "Hogan Harris",
+    "team": "ATH",
+    "gmli_now": 1.64,
+    "gmli_3yr": 1.28,
+    "seasons_used": 3,
+    "entries_total": 103,
+    "tag": "established",
+    "pct": 62
+   },
+   "656234": {
+    "name": "Jake Bird",
     "team": "NYY",
-    "gmli_now": 0.7,
-    "gmli_3yr": 0.56,
-    "seasons_used": 2,
-    "entries_total": 37,
-    "tag": "provisional",
-    "pct": 4
-   },
-   "643511": {
-    "name": "Tyler Rogers",
-    "team": "TOR",
-    "gmli_now": 1.43,
-    "gmli_3yr": 1.36,
+    "gmli_now": 1.05,
+    "gmli_3yr": 1.15,
     "seasons_used": 3,
-    "entries_total": 199,
+    "entries_total": 116,
     "tag": "established",
-    "pct": 72
+    "pct": 48
    },
-   "666171": {
-    "name": "Ryan Zeferjahn",
-    "team": "LAA",
-    "gmli_now": 1.23,
-    "gmli_3yr": 1.27,
+   "657514": {
+    "name": "Brennan Bernardino",
+    "team": "COL",
+    "gmli_now": 1.25,
+    "gmli_3yr": 1.24,
     "seasons_used": 3,
-    "entries_total": 107,
+    "entries_total": 147,
     "tag": "established",
-    "pct": 60
+    "pct": 56
    },
    "663947": {
     "name": "Tyler Holton",
     "team": "DET",
-    "gmli_now": 1.09,
+    "gmli_now": 1.1,
     "gmli_3yr": 1.27,
     "seasons_used": 3,
-    "entries_total": 155,
+    "entries_total": 156,
     "tag": "established",
     "pct": 61
    },
-   "622088": {
-    "name": "Tejay Antone",
-    "team": "CIN",
-    "gmli_now": 1.48,
-    "gmli_3yr": 1.4,
-    "seasons_used": 2,
-    "entries_total": 27,
-    "tag": "provisional",
-    "pct": 75
-   },
-   "552640": {
-    "name": "Andrew Kittredge",
-    "team": "BAL",
-    "gmli_now": 0.9,
-    "gmli_3yr": 1.42,
+   "666171": {
+    "name": "Ryan Zeferjahn",
+    "team": "LAA",
+    "gmli_now": 1.19,
+    "gmli_3yr": 1.26,
     "seasons_used": 3,
-    "entries_total": 153,
+    "entries_total": 108,
     "tag": "established",
-    "pct": 78
+    "pct": 58
+   },
+   "668984": {
+    "name": "Casey Legumina",
+    "team": "TB",
+    "gmli_now": 0.94,
+    "gmli_3yr": 0.87,
+    "seasons_used": 3,
+    "entries_total": 80,
+    "tag": "established",
+    "pct": 16
+   },
+   "701519": {
+    "name": "Travis Adams",
+    "team": "MIN",
+    "gmli_now": 1.04,
+    "gmli_3yr": 0.99,
+    "seasons_used": 2,
+    "entries_total": 32,
+    "tag": "provisional",
+    "pct": 27
+   },
+   "690925": {
+    "name": "Clayton Beeter",
+    "team": "WSH",
+    "gmli_now": 2.03,
+    "gmli_3yr": 1.54,
+    "seasons_used": 3,
+    "entries_total": 56,
+    "tag": "provisional",
+    "pct": 90
+   },
+   "670036": {
+    "name": "Matt Festa",
+    "team": "CLE",
+    "gmli_now": 1.08,
+    "gmli_3yr": 1.1,
+    "seasons_used": 3,
+    "entries_total": 120,
+    "tag": "established",
+    "pct": 39
+   },
+   "820862": {
+    "name": "Jos\u00e9 Fermin",
+    "team": "LAA",
+    "gmli_now": 0.9,
+    "gmli_3yr": 1.03,
+    "seasons_used": 2,
+    "entries_total": 64,
+    "tag": "established",
+    "pct": 31
+   },
+   "673513": {
+    "name": "Yuki Matsui",
+    "team": "SD",
+    "gmli_now": 0.93,
+    "gmli_3yr": 0.85,
+    "seasons_used": 3,
+    "entries_total": 147,
+    "tag": "established",
+    "pct": 14
    },
    "805123": {
     "name": "AJ Blubaugh",
     "team": "HOU",
-    "gmli_now": 0.81,
-    "gmli_3yr": 0.78,
+    "gmli_now": 0.85,
+    "gmli_3yr": 0.81,
     "seasons_used": 2,
-    "entries_total": 42,
+    "entries_total": 43,
     "tag": "provisional",
-    "pct": 11
+    "pct": 12
    },
-   "669711": {
-    "name": "Greg Weissert",
-    "team": "BOS",
-    "gmli_now": 1.14,
-    "gmli_3yr": 1.26,
+   "641755": {
+    "name": "Tyler Kinley",
+    "team": "ATL",
+    "gmli_now": 1.15,
+    "gmli_3yr": 1.11,
     "seasons_used": 3,
-    "entries_total": 168,
+    "entries_total": 176,
     "tag": "established",
-    "pct": 59
+    "pct": 39
    },
    "669084": {
     "name": "DL Hall",
@@ -1395,25 +1465,35 @@
     "tag": "provisional",
     "pct": 13
    },
-   "573204": {
-    "name": "Caleb Thielbar",
-    "team": "CHC",
-    "gmli_now": 1.46,
-    "gmli_3yr": 1.2,
-    "seasons_used": 3,
-    "entries_total": 153,
-    "tag": "established",
-    "pct": 52
-   },
-   "657044": {
-    "name": "Ryan Thompson",
+   "664199": {
+    "name": "Taylor Clarke",
     "team": "AZ",
-    "gmli_now": 1.1,
-    "gmli_3yr": 1.42,
-    "seasons_used": 3,
-    "entries_total": 149,
+    "gmli_now": 1.03,
+    "gmli_3yr": 0.95,
+    "seasons_used": 2,
+    "entries_total": 91,
     "tag": "established",
-    "pct": 78
+    "pct": 23
+   },
+   "621383": {
+    "name": "Tanner Banks",
+    "team": "PHI",
+    "gmli_now": 0.69,
+    "gmli_3yr": 1.09,
+    "seasons_used": 3,
+    "entries_total": 154,
+    "tag": "established",
+    "pct": 37
+   },
+   "606996": {
+    "name": "Kyle Hart",
+    "team": "SD",
+    "gmli_now": 1.17,
+    "gmli_3yr": 0.97,
+    "seasons_used": 2,
+    "entries_total": 34,
+    "tag": "provisional",
+    "pct": 25
    },
    "701719": {
     "name": "Tyler Samaniego",
@@ -1423,27 +1503,17 @@
     "seasons_used": 1,
     "entries_total": 19,
     "tag": "provisional",
-    "pct": 14
+    "pct": 13
    },
-   "687377": {
-    "name": "Orlando Ribalta",
-    "team": "WSH",
-    "gmli_now": 1.86,
-    "gmli_3yr": 1.04,
+   "656638": {
+    "name": "Alex Lange",
+    "team": "KC",
+    "gmli_now": 1.0,
+    "gmli_3yr": 1.14,
     "seasons_used": 3,
-    "entries_total": 52,
+    "entries_total": 58,
     "tag": "provisional",
-    "pct": 33
-   },
-   "606996": {
-    "name": "Kyle Hart",
-    "team": "SD",
-    "gmli_now": 1.19,
-    "gmli_3yr": 0.98,
-    "seasons_used": 2,
-    "entries_total": 33,
-    "tag": "provisional",
-    "pct": 28
+    "pct": 45
    },
    "676428": {
     "name": "Brant Hurter",
@@ -1453,67 +1523,47 @@
     "seasons_used": 3,
     "entries_total": 67,
     "tag": "established",
-    "pct": 47
+    "pct": 48
    },
-   "656638": {
-    "name": "Alex Lange",
-    "team": "KC",
-    "gmli_now": 1.01,
-    "gmli_3yr": 1.14,
+   "666277": {
+    "name": "George Soriano",
+    "team": "STL",
+    "gmli_now": 1.38,
+    "gmli_3yr": 1.06,
     "seasons_used": 3,
-    "entries_total": 57,
-    "tag": "provisional",
-    "pct": 45
-   },
-   "664126": {
-    "name": "Pete Fairbanks",
-    "team": "MIA",
-    "gmli_now": 1.43,
-    "gmli_3yr": 1.71,
-    "seasons_used": 3,
-    "entries_total": 133,
+    "entries_total": 85,
     "tag": "established",
-    "pct": 95
+    "pct": 34
    },
-   "668390": {
-    "name": "Cole Winn",
-    "team": "TEX",
-    "gmli_now": 1.2,
-    "gmli_3yr": 0.95,
-    "seasons_used": 3,
-    "entries_total": 76,
-    "tag": "established",
-    "pct": 23
-   },
-   "664199": {
-    "name": "Taylor Clarke",
-    "team": "AZ",
-    "gmli_now": 1.0,
-    "gmli_3yr": 0.94,
+   "696147": {
+    "name": "Sam Bachman",
+    "team": "LAA",
+    "gmli_now": 1.7,
+    "gmli_3yr": 1.4,
     "seasons_used": 2,
-    "entries_total": 89,
-    "tag": "established",
-    "pct": 21
+    "entries_total": 55,
+    "tag": "provisional",
+    "pct": 74
    },
-   "669062": {
-    "name": "Erik Miller",
-    "team": "SF",
-    "gmli_now": 1.15,
-    "gmli_3yr": 1.17,
-    "seasons_used": 3,
-    "entries_total": 127,
+   "675848": {
+    "name": "Juan Mejia",
+    "team": "COL",
+    "gmli_now": 1.43,
+    "gmli_3yr": 1.16,
+    "seasons_used": 2,
+    "entries_total": 90,
     "tag": "established",
-    "pct": 50
+    "pct": 49
    },
-   "622554": {
-    "name": "Seranthony Dom\u00ednguez",
-    "team": "CWS",
-    "gmli_now": 1.76,
-    "gmli_3yr": 1.33,
+   "681810": {
+    "name": "Austin Warren",
+    "team": "NYM",
+    "gmli_now": 0.87,
+    "gmli_3yr": 0.74,
     "seasons_used": 3,
-    "entries_total": 162,
-    "tag": "established",
-    "pct": 68
+    "entries_total": 34,
+    "tag": "provisional",
+    "pct": 9
    },
    "699823": {
     "name": "Tyler Davis",
@@ -1523,67 +1573,17 @@
     "seasons_used": 1,
     "entries_total": 22,
     "tag": "provisional",
-    "pct": 37
-   },
-   "696147": {
-    "name": "Sam Bachman",
-    "team": "LAA",
-    "gmli_now": 1.74,
-    "gmli_3yr": 1.42,
-    "seasons_used": 2,
-    "entries_total": 54,
-    "tag": "provisional",
-    "pct": 77
-   },
-   "670990": {
-    "name": "Yohan Ram\u00edrez",
-    "team": "PIT",
-    "gmli_now": 1.23,
-    "gmli_3yr": 1.0,
-    "seasons_used": 3,
-    "entries_total": 98,
-    "tag": "established",
-    "pct": 29
-   },
-   "542888": {
-    "name": "Shawn Armstrong",
-    "team": "CLE",
-    "gmli_now": 1.17,
-    "gmli_3yr": 1.16,
-    "seasons_used": 3,
-    "entries_total": 147,
-    "tag": "established",
-    "pct": 48
-   },
-   "666277": {
-    "name": "George Soriano",
-    "team": "STL",
-    "gmli_now": 1.4,
-    "gmli_3yr": 1.06,
-    "seasons_used": 3,
-    "entries_total": 83,
-    "tag": "established",
     "pct": 35
    },
-   "675848": {
-    "name": "Juan Mejia",
-    "team": "COL",
-    "gmli_now": 1.44,
-    "gmli_3yr": 1.16,
-    "seasons_used": 2,
-    "entries_total": 89,
+   "518886": {
+    "name": "Craig Kimbrel",
+    "team": "TB",
+    "gmli_now": 0.79,
+    "gmli_3yr": 1.26,
+    "seasons_used": 3,
+    "entries_total": 96,
     "tag": "established",
-    "pct": 49
-   },
-   "820862": {
-    "name": "Jos\u00e9 Fermin",
-    "team": "LAA",
-    "gmli_now": 0.94,
-    "gmli_3yr": 1.04,
-    "seasons_used": 2,
-    "entries_total": 62,
-    "tag": "established",
-    "pct": 34
+    "pct": 59
    },
    "687606": {
     "name": "Paxton Schultz",
@@ -1593,7 +1593,17 @@
     "seasons_used": 2,
     "entries_total": 35,
     "tag": "provisional",
-    "pct": 4
+    "pct": 3
+   },
+   "695418": {
+    "name": "Brad Lord",
+    "team": "WSH",
+    "gmli_now": 1.2,
+    "gmli_3yr": 1.13,
+    "seasons_used": 2,
+    "entries_total": 55,
+    "tag": "provisional",
+    "pct": 42
    },
    "572955": {
     "name": "Pierce Johnson",
@@ -1605,16 +1615,6 @@
     "tag": "established",
     "pct": 59
    },
-   "690925": {
-    "name": "Clayton Beeter",
-    "team": "WSH",
-    "gmli_now": 2.06,
-    "gmli_3yr": 1.53,
-    "seasons_used": 3,
-    "entries_total": 54,
-    "tag": "provisional",
-    "pct": 89
-   },
    "688158": {
     "name": "David Morgan",
     "team": "SD",
@@ -1623,37 +1623,7 @@
     "seasons_used": 2,
     "entries_total": 57,
     "tag": "provisional",
-    "pct": 9
-   },
-   "670950": {
-    "name": "Trevor Richards",
-    "team": "CWS",
-    "gmli_now": 0.42,
-    "gmli_3yr": 0.66,
-    "seasons_used": 3,
-    "entries_total": 78,
-    "tag": "established",
-    "pct": 7
-   },
-   "683769": {
-    "name": "Hunter Gaddis",
-    "team": "CLE",
-    "gmli_now": 1.66,
-    "gmli_3yr": 1.53,
-    "seasons_used": 3,
-    "entries_total": 180,
-    "tag": "established",
-    "pct": 90
-   },
-   "573124": {
-    "name": "Taylor Rogers",
-    "team": "MIN",
-    "gmli_now": 1.36,
-    "gmli_3yr": 0.95,
-    "seasons_used": 3,
-    "entries_total": 158,
-    "tag": "established",
-    "pct": 24
+    "pct": 8
    },
    "663765": {
     "name": "Jake Woodford",
@@ -1663,17 +1633,27 @@
     "seasons_used": 3,
     "entries_total": 40,
     "tag": "provisional",
-    "pct": 16
+    "pct": 14
    },
-   "518886": {
-    "name": "Craig Kimbrel",
-    "team": "TB",
-    "gmli_now": 0.68,
-    "gmli_3yr": 1.24,
+   "664126": {
+    "name": "Pete Fairbanks",
+    "team": "MIA",
+    "gmli_now": 1.39,
+    "gmli_3yr": 1.7,
     "seasons_used": 3,
-    "entries_total": 94,
+    "entries_total": 134,
     "tag": "established",
-    "pct": 58
+    "pct": 95
+   },
+   "664141": {
+    "name": "JT Brubaker",
+    "team": "SF",
+    "gmli_now": 0.42,
+    "gmli_3yr": 0.32,
+    "seasons_used": 2,
+    "entries_total": 44,
+    "tag": "provisional",
+    "pct": 1
    },
    "663767": {
     "name": "Chase Shugart",
@@ -1685,75 +1665,55 @@
     "tag": "established",
     "pct": 17
    },
-   "445276": {
-    "name": "Kenley Jansen",
-    "team": "DET",
-    "gmli_now": 1.97,
-    "gmli_3yr": 1.91,
+   "622554": {
+    "name": "Seranthony Dom\u00ednguez",
+    "team": "CWS",
+    "gmli_now": 1.75,
+    "gmli_3yr": 1.33,
     "seasons_used": 3,
-    "entries_total": 138,
+    "entries_total": 163,
     "tag": "established",
-    "pct": 99
+    "pct": 69
    },
-   "642232": {
-    "name": "Ryan Yarbrough",
-    "team": "NYY",
-    "gmli_now": 0.4,
-    "gmli_3yr": 0.65,
+   "573124": {
+    "name": "Taylor Rogers",
+    "team": "MIN",
+    "gmli_now": 1.45,
+    "gmli_3yr": 0.97,
     "seasons_used": 3,
-    "entries_total": 75,
+    "entries_total": 159,
     "tag": "established",
-    "pct": 5
+    "pct": 26
    },
-   "664141": {
-    "name": "JT Brubaker",
-    "team": "SF",
-    "gmli_now": 0.44,
-    "gmli_3yr": 0.32,
-    "seasons_used": 2,
-    "entries_total": 43,
-    "tag": "provisional",
-    "pct": 1
-   },
-   "681982": {
-    "name": "Grant Anderson",
-    "team": "MIL",
-    "gmli_now": 0.88,
-    "gmli_3yr": 0.91,
+   "676755": {
+    "name": "Isaac Mattson",
+    "team": "PIT",
+    "gmli_now": 1.15,
+    "gmli_3yr": 1.27,
     "seasons_used": 3,
-    "entries_total": 121,
+    "entries_total": 76,
     "tag": "established",
-    "pct": 20
+    "pct": 60
    },
-   "669438": {
-    "name": "Mason Englert",
-    "team": "TB",
-    "gmli_now": 0.46,
-    "gmli_3yr": 0.49,
+   "670990": {
+    "name": "Yohan Ram\u00edrez",
+    "team": "PIT",
+    "gmli_now": 1.21,
+    "gmli_3yr": 0.99,
     "seasons_used": 3,
-    "entries_total": 51,
-    "tag": "provisional",
-    "pct": 2
-   },
-   "674444": {
-    "name": "Steven Cruz",
-    "team": "KC",
-    "gmli_now": 0.64,
-    "gmli_3yr": 0.8,
-    "seasons_used": 3,
-    "entries_total": 75,
+    "entries_total": 99,
     "tag": "established",
-    "pct": 12
+    "pct": 28
    },
-   "593974": {
-    "name": "Wandy Peralta",
-    "team": "SD",
-    "gmli_now": 0.72,
-    "gmli_3yr": 0.95,
+   "542888": {
+    "name": "Shawn Armstrong",
+    "team": "CLE",
+    "gmli_now": 1.16,
+    "gmli_3yr": 1.16,
     "seasons_used": 3,
     "entries_total": 150,
     "tag": "established",
-    "pct": 25
+    "pct": 49
    },
    "592773": {
     "name": "Ryne Stanek",
@@ -1761,19 +1721,79 @@
     "gmli_now": 1.33,
     "gmli_3yr": 1.23,
     "seasons_used": 3,
-    "entries_total": 163,
+    "entries_total": 166,
     "tag": "established",
     "pct": 56
+   },
+   "681982": {
+    "name": "Grant Anderson",
+    "team": "MIL",
+    "gmli_now": 0.91,
+    "gmli_3yr": 0.91,
+    "seasons_used": 3,
+    "entries_total": 124,
+    "tag": "established",
+    "pct": 19
    },
    "594580": {
     "name": "Sam Moll",
     "team": "CIN",
-    "gmli_now": 1.18,
-    "gmli_3yr": 1.11,
+    "gmli_now": 1.15,
+    "gmli_3yr": 1.1,
     "seasons_used": 3,
-    "entries_total": 110,
+    "entries_total": 112,
     "tag": "established",
-    "pct": 41
+    "pct": 38
+   },
+   "672335": {
+    "name": "Cionel P\u00e9rez",
+    "team": "NYM",
+    "gmli_now": 0.95,
+    "gmli_3yr": 1.03,
+    "seasons_used": 3,
+    "entries_total": 109,
+    "tag": "established",
+    "pct": 31
+   },
+   "445276": {
+    "name": "Kenley Jansen",
+    "team": "DET",
+    "gmli_now": 1.85,
+    "gmli_3yr": 1.89,
+    "seasons_used": 3,
+    "entries_total": 140,
+    "tag": "established",
+    "pct": 99
+   },
+   "642232": {
+    "name": "Ryan Yarbrough",
+    "team": "NYY",
+    "gmli_now": 0.42,
+    "gmli_3yr": 0.65,
+    "seasons_used": 3,
+    "entries_total": 76,
+    "tag": "established",
+    "pct": 5
+   },
+   "674444": {
+    "name": "Steven Cruz",
+    "team": "KC",
+    "gmli_now": 0.6,
+    "gmli_3yr": 0.78,
+    "seasons_used": 3,
+    "entries_total": 77,
+    "tag": "established",
+    "pct": 10
+   },
+   "656271": {
+    "name": "Brock Burke",
+    "team": "CIN",
+    "gmli_now": 1.15,
+    "gmli_3yr": 1.18,
+    "seasons_used": 3,
+    "entries_total": 145,
+    "tag": "established",
+    "pct": 51
    },
    "592094": {
     "name": "Jason Adam",
@@ -1785,6 +1805,16 @@
     "tag": "established",
     "pct": 89
    },
+   "694335": {
+    "name": "Matt Svanson",
+    "team": "STL",
+    "gmli_now": 0.66,
+    "gmli_3yr": 0.77,
+    "seasons_used": 2,
+    "entries_total": 73,
+    "tag": "established",
+    "pct": 10
+   },
    "677955": {
     "name": "Jaden Hill",
     "team": "COL",
@@ -1793,7 +1823,17 @@
     "seasons_used": 3,
     "entries_total": 69,
     "tag": "established",
-    "pct": 42
+    "pct": 41
+   },
+   "670167": {
+    "name": "John Schreiber",
+    "team": "KC",
+    "gmli_now": 1.37,
+    "gmli_3yr": 1.49,
+    "seasons_used": 3,
+    "entries_total": 171,
+    "tag": "established",
+    "pct": 86
    },
    "607455": {
     "name": "Anthony Banda",
@@ -1803,7 +1843,17 @@
     "seasons_used": 3,
     "entries_total": 155,
     "tag": "established",
-    "pct": 45
+    "pct": 43
+   },
+   "663855": {
+    "name": "Jordan Hicks",
+    "team": "CWS",
+    "gmli_now": 0.95,
+    "gmli_3yr": 0.98,
+    "seasons_used": 3,
+    "entries_total": 58,
+    "tag": "provisional",
+    "pct": 27
    },
    "669211": {
     "name": "Keegan Akin",
@@ -1815,65 +1865,25 @@
     "tag": "established",
     "pct": 69
    },
-   "670167": {
-    "name": "John Schreiber",
-    "team": "KC",
-    "gmli_now": 1.41,
-    "gmli_3yr": 1.5,
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "gmli_now": 0.95,
+    "gmli_3yr": 0.91,
     "seasons_used": 3,
-    "entries_total": 169,
+    "entries_total": 60,
     "tag": "established",
-    "pct": 87
-   },
-   "656271": {
-    "name": "Brock Burke",
-    "team": "CIN",
-    "gmli_now": 1.16,
-    "gmli_3yr": 1.18,
-    "seasons_used": 3,
-    "entries_total": 143,
-    "tag": "established",
-    "pct": 52
-   },
-   "657612": {
-    "name": "Tim Hill",
-    "team": "NYY",
-    "gmli_now": 1.36,
-    "gmli_3yr": 1.18,
-    "seasons_used": 3,
-    "entries_total": 170,
-    "tag": "established",
-    "pct": 51
+    "pct": 18
    },
    "672782": {
     "name": "Yoendrys G\u00f3mez",
     "team": "MIN",
-    "gmli_now": 1.3,
-    "gmli_3yr": 0.96,
+    "gmli_now": 1.27,
+    "gmli_3yr": 0.95,
     "seasons_used": 3,
-    "entries_total": 52,
+    "entries_total": 53,
     "tag": "provisional",
-    "pct": 26
-   },
-   "672335": {
-    "name": "Cionel P\u00e9rez",
-    "team": "NYM",
-    "gmli_now": 0.93,
-    "gmli_3yr": 1.02,
-    "seasons_used": 3,
-    "entries_total": 108,
-    "tag": "established",
-    "pct": 31
-   },
-   "677865": {
-    "name": "Justin Bruihl",
-    "team": "STL",
-    "gmli_now": 0.92,
-    "gmli_3yr": 0.88,
-    "seasons_used": 3,
-    "entries_total": 59,
-    "tag": "provisional",
-    "pct": 18
+    "pct": 22
    },
    "544150": {
     "name": "Albert Su\u00e1rez",
@@ -1903,37 +1913,17 @@
     "seasons_used": 2,
     "entries_total": 28,
     "tag": "provisional",
-    "pct": 13
+    "pct": 12
    },
-   "694335": {
-    "name": "Matt Svanson",
-    "team": "STL",
-    "gmli_now": 0.61,
-    "gmli_3yr": 0.75,
-    "seasons_used": 2,
-    "entries_total": 71,
-    "tag": "established",
-    "pct": 10
-   },
-   "640448": {
-    "name": "Kyle Finnegan",
-    "team": "DET",
-    "gmli_now": 1.31,
-    "gmli_3yr": 1.67,
+   "642701": {
+    "name": "Dennis Santana",
+    "team": "PIT",
+    "gmli_now": 0.91,
+    "gmli_3yr": 1.19,
     "seasons_used": 3,
-    "entries_total": 158,
+    "entries_total": 171,
     "tag": "established",
-    "pct": 95
-   },
-   "676254": {
-    "name": "Ryan Walker",
-    "team": "SF",
-    "gmli_now": 1.02,
-    "gmli_3yr": 1.47,
-    "seasons_used": 3,
-    "entries_total": 167,
-    "tag": "established",
-    "pct": 85
+    "pct": 52
    },
    "681402": {
     "name": "Gus Varland",
@@ -1943,7 +1933,7 @@
     "seasons_used": 2,
     "entries_total": 58,
     "tag": "provisional",
-    "pct": 55
+    "pct": 54
    },
    "571948": {
     "name": "Hoby Milner",
@@ -1955,15 +1945,35 @@
     "tag": "established",
     "pct": 60
    },
-   "642701": {
-    "name": "Dennis Santana",
-    "team": "PIT",
-    "gmli_now": 0.95,
-    "gmli_3yr": 1.2,
+   "815083": {
+    "name": "Mitch Farris",
+    "team": "LAA",
+    "gmli_now": 0.55,
+    "gmli_3yr": 0.55,
+    "seasons_used": 1,
+    "entries_total": 17,
+    "tag": "provisional",
+    "pct": 4
+   },
+   "657612": {
+    "name": "Tim Hill",
+    "team": "NYY",
+    "gmli_now": 1.33,
+    "gmli_3yr": 1.17,
     "seasons_used": 3,
-    "entries_total": 169,
+    "entries_total": 171,
     "tag": "established",
-    "pct": 53
+    "pct": 50
+   },
+   "676254": {
+    "name": "Ryan Walker",
+    "team": "SF",
+    "gmli_now": 0.98,
+    "gmli_3yr": 1.47,
+    "seasons_used": 3,
+    "entries_total": 168,
+    "tag": "established",
+    "pct": 83
    },
    "670245": {
     "name": "Ryan Watson",
@@ -1975,6 +1985,16 @@
     "tag": "provisional",
     "pct": 0
    },
+   "640448": {
+    "name": "Kyle Finnegan",
+    "team": "DET",
+    "gmli_now": 1.28,
+    "gmli_3yr": 1.66,
+    "seasons_used": 3,
+    "entries_total": 159,
+    "tag": "established",
+    "pct": 95
+   },
    "621366": {
     "name": "Ryan Borucki",
     "team": "SF",
@@ -1983,17 +2003,7 @@
     "seasons_used": 3,
     "entries_total": 74,
     "tag": "established",
-    "pct": 22
-   },
-   "663855": {
-    "name": "Jordan Hicks",
-    "team": "CWS",
-    "gmli_now": 0.94,
-    "gmli_3yr": 0.98,
-    "seasons_used": 3,
-    "entries_total": 57,
-    "tag": "provisional",
-    "pct": 27
+    "pct": 21
    },
    "664208": {
     "name": "Phil Maton",
@@ -2005,15 +2015,15 @@
     "tag": "established",
     "pct": 66
    },
-   "815083": {
-    "name": "Mitch Farris",
-    "team": "LAA",
-    "gmli_now": 0.61,
-    "gmli_3yr": 0.61,
-    "seasons_used": 1,
-    "entries_total": 15,
-    "tag": "provisional",
-    "pct": 5
+   "663423": {
+    "name": "Trent Thornton",
+    "team": "CHC",
+    "gmli_now": 1.13,
+    "gmli_3yr": 1.05,
+    "seasons_used": 3,
+    "entries_total": 125,
+    "tag": "established",
+    "pct": 33
    },
    "680730": {
     "name": "Mitchell Parker",
@@ -2025,45 +2035,35 @@
     "tag": "provisional",
     "pct": 67
    },
-   "668674": {
-    "name": "Lucas Erceg",
-    "team": "KC",
-    "gmli_now": 1.7,
-    "gmli_3yr": 1.61,
+   "676760": {
+    "name": "Ron Marinaccio",
+    "team": "SD",
+    "gmli_now": 0.42,
+    "gmli_3yr": 0.49,
     "seasons_used": 3,
-    "entries_total": 156,
-    "tag": "established",
-    "pct": 94
-   },
-   "663423": {
-    "name": "Trent Thornton",
-    "team": "CHC",
-    "gmli_now": 1.12,
-    "gmli_3yr": 1.04,
-    "seasons_used": 3,
-    "entries_total": 124,
-    "tag": "established",
-    "pct": 33
+    "entries_total": 52,
+    "tag": "provisional",
+    "pct": 2
    },
    "682120": {
     "name": "Tim Herrin",
     "team": "CLE",
-    "gmli_now": 1.48,
-    "gmli_3yr": 1.21,
+    "gmli_now": 1.5,
+    "gmli_3yr": 1.22,
     "seasons_used": 3,
-    "entries_total": 166,
+    "entries_total": 169,
     "tag": "established",
-    "pct": 54
+    "pct": 53
    },
-   "676760": {
-    "name": "Ron Marinaccio",
-    "team": "SD",
-    "gmli_now": 0.44,
-    "gmli_3yr": 0.5,
+   "668674": {
+    "name": "Lucas Erceg",
+    "team": "KC",
+    "gmli_now": 1.66,
+    "gmli_3yr": 1.61,
     "seasons_used": 3,
-    "entries_total": 51,
-    "tag": "provisional",
-    "pct": 3
+    "entries_total": 157,
+    "tag": "established",
+    "pct": 94
    },
    "681799": {
     "name": "Ethan Roberts",
@@ -2075,6 +2075,16 @@
     "tag": "provisional",
     "pct": 6
    },
+   "700669": {
+    "name": "Gordon Graceffo",
+    "team": "STL",
+    "gmli_now": 1.13,
+    "gmli_3yr": 0.9,
+    "seasons_used": 3,
+    "entries_total": 63,
+    "tag": "established",
+    "pct": 18
+   },
    "663574": {
     "name": "Tony Santillan",
     "team": "CIN",
@@ -2085,35 +2095,35 @@
     "tag": "established",
     "pct": 92
    },
-   "657424": {
-    "name": "Matt Gage",
-    "team": "SF",
-    "gmli_now": 1.42,
-    "gmli_3yr": 1.16,
+   "688642": {
+    "name": "Zach Agnos",
+    "team": "COL",
+    "gmli_now": 0.5,
+    "gmli_3yr": 0.86,
     "seasons_used": 2,
-    "entries_total": 63,
-    "tag": "established",
-    "pct": 49
-   },
-   "700669": {
-    "name": "Gordon Graceffo",
-    "team": "STL",
-    "gmli_now": 1.16,
-    "gmli_3yr": 0.91,
-    "seasons_used": 3,
-    "entries_total": 61,
-    "tag": "established",
-    "pct": 19
+    "entries_total": 52,
+    "tag": "provisional",
+    "pct": 15
    },
    "669270": {
     "name": "Joel Kuhnel",
     "team": "MIL",
-    "gmli_now": 1.15,
-    "gmli_3yr": 1.03,
+    "gmli_now": 1.12,
+    "gmli_3yr": 1.0,
     "seasons_used": 2,
-    "entries_total": 40,
+    "entries_total": 41,
     "tag": "provisional",
-    "pct": 32
+    "pct": 29
+   },
+   "680767": {
+    "name": "Victor Vodnik",
+    "team": "COL",
+    "gmli_now": 1.43,
+    "gmli_3yr": 1.41,
+    "seasons_used": 3,
+    "entries_total": 141,
+    "tag": "established",
+    "pct": 75
    },
    "650556": {
     "name": "Bryan Abreu",
@@ -2125,45 +2135,45 @@
     "tag": "established",
     "pct": 86
    },
+   "519141": {
+    "name": "Drew Pomeranz",
+    "team": "CHC",
+    "gmli_now": 1.19,
+    "gmli_3yr": 1.15,
+    "seasons_used": 2,
+    "entries_total": 80,
+    "tag": "established",
+    "pct": 46
+   },
    "621381": {
     "name": "Matt Strahm",
     "team": "KC",
     "gmli_now": 1.32,
-    "gmli_3yr": 1.45,
+    "gmli_3yr": 1.44,
     "seasons_used": 3,
-    "entries_total": 162,
+    "entries_total": 163,
     "tag": "established",
-    "pct": 81
+    "pct": 80
    },
-   "688642": {
-    "name": "Zach Agnos",
-    "team": "COL",
-    "gmli_now": 0.53,
-    "gmli_3yr": 0.88,
-    "seasons_used": 2,
-    "entries_total": 50,
-    "tag": "provisional",
-    "pct": 18
-   },
-   "680767": {
-    "name": "Victor Vodnik",
-    "team": "COL",
-    "gmli_now": 1.45,
-    "gmli_3yr": 1.41,
+   "681892": {
+    "name": "Kody Funderburk",
+    "team": "MIN",
+    "gmli_now": 1.21,
+    "gmli_3yr": 1.03,
     "seasons_used": 3,
-    "entries_total": 139,
+    "entries_total": 90,
     "tag": "established",
-    "pct": 76
+    "pct": 32
    },
-   "519141": {
-    "name": "Drew Pomeranz",
-    "team": "LAA",
-    "gmli_now": 1.25,
-    "gmli_3yr": 1.16,
+   "657424": {
+    "name": "Matt Gage",
+    "team": "SF",
+    "gmli_now": 1.38,
+    "gmli_3yr": 1.15,
     "seasons_used": 2,
-    "entries_total": 78,
+    "entries_total": 64,
     "tag": "established",
-    "pct": 48
+    "pct": 47
    },
    "683175": {
     "name": "Connor Phillips",
@@ -2185,25 +2195,15 @@
     "tag": "established",
     "pct": 46
    },
-   "681892": {
-    "name": "Kody Funderburk",
-    "team": "MIN",
-    "gmli_now": 1.22,
-    "gmli_3yr": 1.03,
-    "seasons_used": 3,
-    "entries_total": 89,
-    "tag": "established",
-    "pct": 32
-   },
    "664875": {
     "name": "Justin Lawrence",
     "team": "WSH",
-    "gmli_now": 0.9,
-    "gmli_3yr": 1.15,
+    "gmli_now": 0.87,
+    "gmli_3yr": 1.14,
     "seasons_used": 3,
-    "entries_total": 104,
+    "entries_total": 106,
     "tag": "established",
-    "pct": 47
+    "pct": 44
    }
   }
  }

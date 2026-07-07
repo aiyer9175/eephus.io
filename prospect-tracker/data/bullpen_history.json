@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-03",
+ "generated_at": "2026-07-07",
  "seasons": [
   2021,
   2022,
@@ -3192,7 +3192,7 @@
     },
     {
      "mlbam": 642152,
-     "name": "Lou Trivino",
+     "name": "Lou Trivino III",
      "team": "ATH",
      "rem_plus": 100,
      "riv_plus": 116,
@@ -10550,7 +10550,7 @@
     },
     {
      "mlbam": 642152,
-     "name": "Lou Trivino",
+     "name": "Lou Trivino III",
      "team": "NYY",
      "rem_plus": 101,
      "riv_plus": 95,
@@ -33649,7 +33649,7 @@
     },
     {
      "mlbam": 642152,
-     "name": "Lou Trivino",
+     "name": "Lou Trivino III",
      "team": "PHI",
      "rem_plus": 88,
      "riv_plus": 97,

@@ -1948,15 +1948,28 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
         pre_arb = int(st["pre_arb_years"])
         arb_fracs = fracs
     net = (1.0 + float(cfg.get("dollars_per_war_inflation", 0.0))) / (1.0 + float(cfg["discount_rate"]))
+    # Honor service_time.arb_basis + the league-min floor EXACTLY like
+    # _service_path_salaries (the prospect path), so start_k=0 really does reproduce
+    # the full prospect path at eta=0. Under the production clemens_2026 set
+    # (arb_basis=prior_season) the old current-season hardcode priced every debuted
+    # player's arb seasons on the wrong market, inflating remaining/trade value
+    # ~$0.3-1.5M per player vs the prospect model on the identical WAR path.
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    markets = [tiered_war_value_usd(w) for w in season_wars]
     total = 0.0
     start_k = int(start_k)
     for k in range(start_k, len(season_wars)):
-        market = tiered_war_value_usd(season_wars[k])
+        market = markets[k]
         if k < pre_arb:
             salary = league_min
         else:
             i = k - pre_arb
-            salary = (arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]) * market
+            frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
+            if arb_basis == "prior_season":
+                prior_market = markets[k - 1] if k > 0 else markets[k]
+                salary = max(league_min, frac * prior_market)
+            else:
+                salary = frac * market   # matches _service_path_salaries exactly (no floor)
         total += (market - salary) * (net ** (k - start_k))
     return total
 
@@ -2061,8 +2074,14 @@ def _realized_consumed_usd(consumed_seasons) -> float:
     for i, s in enumerate(consumed_seasons):
         fwar = float(s.get("fwar", 0.0))
         salary_usd = float(s.get("salary_mm", 0.0)) * 1e6
-        dpw = float(s["dpw_mm"]) * 1e6 if s.get("dpw_mm") is not None else flat
-        total += (fwar * dpw - salary_usd) * ((1.0 + r) ** (n - 1 - i))   # compound past -> now
+        # Market on the KERNEL-consistent tiered curve (matches the projected/remaining
+        # path); legacy dicts without market_mm fall back to fwar * hard-step dpw.
+        if s.get("market_mm") is not None:
+            market_usd = float(s["market_mm"]) * 1e6
+        else:
+            dpw = float(s["dpw_mm"]) * 1e6 if s.get("dpw_mm") is not None else flat
+            market_usd = fwar * dpw
+        total += (market_usd - salary_usd) * ((1.0 + r) ** (n - 1 - i))   # compound past -> now
     return total
 
 
@@ -2117,10 +2136,11 @@ def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
         arb_fracs = fracs
     sby = salary_by_year or {}
 
+    arb_basis = str(st.get("arb_basis", "current_season"))
+    markets_mm = [tiered_war_value_usd(w) / 1e6 for _, w in rows]   # $M market, 0 for war<=0
     consumed = []
     for t, (yr, war) in enumerate(rows):
-        market_mm = tiered_war_value_usd(war) / 1e6           # $M, tiered, 0 for war<=0
-        dpw_mm = dollars_per_war(war)                          # $M/WAR tier rate
+        market_mm = markets_mm[t]
         actual = sby.get(yr, sby.get(str(yr)))
         if actual is not None and float(actual) > 0:
             salary_mm = float(actual) / 1e6
@@ -2129,11 +2149,19 @@ def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
         elif t < control_years:
             i = t - pre_arb
             frac = arb_fracs[i] if i < len(arb_fracs) else arb_fracs[-1]
-            salary_mm = max(league_min_mm, frac * market_mm)
+            # Arb salaries settle on the PRIOR season's market under prior_season basis
+            # (the production convention), not this season's.
+            base_mkt = markets_mm[t - 1] if (arb_basis == "prior_season" and t > 0) else market_mm
+            salary_mm = max(league_min_mm, frac * base_mkt)
         else:                                                  # post-control: paid ~fair market
             salary_mm = max(league_min_mm, market_mm)
+        # Store the tiered MARKET (kernel-consistent with the projected/remaining path),
+        # not fwar * hard-step dollars_per_war -- the banked realized surplus is now
+        # market - salary, on the same $/WAR curve as every other surplus. dpw_mm kept
+        # for back-compat display / legacy consumers.
         consumed.append({"fwar": war, "salary_mm": round(salary_mm, 4),
-                         "dpw_mm": round(dpw_mm, 6), "year": yr})
+                         "market_mm": round(market_mm, 4),
+                         "dpw_mm": round(dollars_per_war(war), 6), "year": yr})
     return consumed
 
 

@@ -239,30 +239,57 @@ def build_cohort() -> tuple[list[dict], dict]:
 # ridge (closed form, numpy)
 # ---------------------------------------------------------------------------
 
+_RIDGE_HOLDOUT_SEED = 20260707
+
+
 def _fit_ridge(train: list[dict], keys: list[str]) -> dict | None:
     import numpy as np
     if len(train) < 40:
         return None
     X = np.array([[r["feats"].get(k, 0.0) for k in keys] for r in train])
     y = np.array([r["target"] for r in train])
+    # KM observed-fraction SAMPLE WEIGHTS (efv_dataset emits `weight`: a fully-resolved
+    # 6-season row = 1.0, a censored row = observed_seasons/6, busts down-weighted). The
+    # fit used to DROP these (the docstring claimed they were applied); the weighted
+    # normal equations honor them so a thin-exposure censored row does not count as a
+    # full observation. Rows without a weight default to 1.0 (back-compat).
+    wts = np.clip(np.array([float(r.get("weight", 1.0) or 0.0) for r in train]), 1e-3, None)
     mu, sd = X.mean(axis=0), X.std(axis=0)
     sd[sd == 0] = 1.0
     Xs = (X - mu) / sd
+    n = len(train)
+
+    def _wmean(idx):
+        ww = wts[idx]
+        return float(np.average(y[idx], weights=ww)) if ww.sum() > 0 else float(y[idx].mean())
+
+    def _wridge(idx, alpha, b):
+        Xi, wi = Xs[idx], wts[idx]
+        WX = Xi * wi[:, None]
+        A = WX.T @ Xi + alpha * np.eye(len(keys))
+        return np.linalg.solve(A, WX.T @ (y[idx] - b))
+
+    # Alpha picked on a DETERMINISTIC, representative holdout (a seeded permutation), NOT
+    # the contiguous last-fifth: the eFV matrix is kind-blocked + year-descending, so the
+    # last fifth was systematically the oldest bust rows, tuning alpha on a degenerate
+    # slice. The fixed seed keeps the fit deterministic (golden-fingerprint stable).
+    order = np.random.default_rng(_RIDGE_HOLDOUT_SEED).permutation(n)
+    k = max(1, n // 5)
+    ho, tri = order[:k], order[k:]
+    b_tr = _wmean(tri)
     best = None
-    # alpha picked by leave-out-last-fifth inside the TRAINING set only
-    k = max(1, len(train) // 5)
     for alpha in _ALPHAS:
-        A = Xs[:-k].T @ Xs[:-k] + alpha * np.eye(len(keys))
-        w = np.linalg.solve(A, Xs[:-k].T @ (y[:-k] - y[:-k].mean()))
-        pred = Xs[-k:] @ w + y[:-k].mean()
-        mae = float(np.abs(pred - y[-k:]).mean())
+        w = _wridge(tri, alpha, b_tr)
+        pred = Xs[ho] @ w + b_tr
+        mae = (float(np.average(np.abs(pred - y[ho]), weights=wts[ho]))
+               if wts[ho].sum() > 0 else float(np.abs(pred - y[ho]).mean()))
         if best is None or mae < best[0]:
             best = (mae, alpha)
     alpha = best[1]
-    A = Xs.T @ Xs + alpha * np.eye(len(keys))
-    w = np.linalg.solve(A, Xs.T @ (y - y.mean()))
+    b = _wmean(np.arange(n))
+    w = _wridge(np.arange(n), alpha, b)
     return {"keys": keys, "mu": mu.tolist(), "sd": sd.tolist(),
-            "w": w.tolist(), "b": float(y.mean()), "alpha": alpha}
+            "w": w.tolist(), "b": float(b), "alpha": alpha}
 
 
 def _predict(model: dict, feats: dict) -> float:

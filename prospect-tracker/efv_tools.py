@@ -132,7 +132,11 @@ def _oos_validate(tool, spec, rows, realized) -> dict | None:
             fz = (((milb if milb is not None else 0.0) - params["fmu"]) / params["fsd"]
                   if spec["milb"] else 0.0)
             oos_score.append(gz + params["sign"] * params["w"] * fz)
-            oos_grade.append(g)
+            # Compare the blend against the grade-alone baseline on the SAME per-year
+            # z-normalized basis (gz), not the raw grade g -- the gate must isolate the
+            # milb feature's marginal lift, not conflate it with cross-year grade-scale
+            # drift that the z-normalization already removes from the blend side.
+            oos_grade.append(gz)
             oos_y.append(sy)
     if len(oos_y) < 15:
         return None
@@ -330,6 +334,6 @@ if __name__ == "__main__":
         if d.get("n", 0) >= 20:
             print(f"  {t:9s} n={d['n']:4d} stat={d['realized_stat']:7s} "
                   f"grade-only rho={d['grade_only_spearman']} | partial={d['production_partial_after_grade']} "
-                  f"| tool-eFV rho={d['tool_xfv_spearman']} | adds={d['adds_over_grade']}")
+                  f"| tool-eFV rho={d['tool_xfv_spearman']} | adds={d['adds_over_grade_oos']}")
     print("passthrough (no realized target):", ", ".join(rep["passthrough_tools"]))
     print("players with >=1 tool eFV:", rep["n_players_with_tool_xfv"])

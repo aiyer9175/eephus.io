@@ -108,7 +108,9 @@ class MarketModelML:
     def _features(self, s: dict) -> list[float]:
         g = fm._pos_group(s.get("position"))
         w1 = s["_war_path"]["war_y1"]
-        comps_my, log_comps_guar, comps_aav = self.champ._comps_stats(s)
+        # _comps_stats grew a 4th element (p75 comps years) in the champion's v3
+        # my75 addition; a 3-name unpack crashed this challenger before fitting.
+        comps_my, log_comps_guar, comps_aav, _comps_my75 = self.champ._comps_stats(s)
         champ_pred = self.champ._point(s)
         champ_years, champ_guar = champ_pred
         dpw = fm.winter_dpw(self.dpw_series, s["class_year"])

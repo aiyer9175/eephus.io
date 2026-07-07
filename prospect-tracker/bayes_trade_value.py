@@ -1075,8 +1075,13 @@ def _aggregate_recent_games(games: list[dict], is_pitcher: bool) -> dict | None:
         if ip == 0:
             return None
         era = round(9 * er / ip, 2) if ip else None
-        k_pct  = round(100 * k / max(1, k + er + bb), 1)
-        bb_pct = round(100 * bb / max(1, k + er + bb), 1)
+        # K% / BB% are per BATTER FACED, not per (K+ER+BB) -- the old denominator was
+        # nonsense (an ER is not a plate appearance). Estimate BF = outs + baserunners
+        # reached = 3*IP + H + BB (the standard TBF approximation; HBP omitted).
+        h_a = totals.get("h_allowed") or 0
+        bf  = 3 * ip + h_a + bb
+        k_pct  = round(100 * k / max(1, bf), 1)
+        bb_pct = round(100 * bb / max(1, bf), 1)
         return {"ip": ip, "era": era, "k_pct": k_pct, "bb_pct": bb_pct}
 
 
@@ -2552,15 +2557,15 @@ def rule5_urgency_mm(player: dict) -> float:
         if years_in < exp_yrs:
             return 0.0  # not yet exposed
 
-    # Are we within the urgency window before the November deadline?
+    # Months until the November deadline (0 = the deadline IS this month = MAX urgency).
     months_to_deadline = (deadline - today.month) % 12
-    if months_to_deadline == 0:
-        months_to_deadline = 12
     if months_to_deadline > window:
         return 0.0
 
-    # Linear ramp: full premium when deadline month, partial when window months out
-    ramp = 1.0 - (months_to_deadline - 1) / window
+    # Linear ramp: full premium in the deadline month and the month before, tapering to
+    # premium/window at the window edge. (The old code remapped 0 -> 12 and then zeroed
+    # the premium DURING the deadline month, the single highest-urgency month.)
+    ramp = 1.0 - max(0, months_to_deadline - 1) / window
     return round(premium * ramp, 2)
 
 
@@ -3270,9 +3275,17 @@ def bayesian_trade_value(
         auth = skills_authenticity(statline, statcast, is_pitcher, level)
 
         if signal_mm is not None and sample > 10:
-            # § KALMAN: Gaussian conjugate update
+            # § KALMAN: Gaussian conjugate update in PRECISION-consistent form.
+            # K = prior_var / (prior_var + obs_var) = 1 / (1 + prior_prec * obs_var).
+            # The old prior_prec / (prior_prec + obs_n) INVERTED the prior's role: a
+            # TIGHTER prior (higher pedigree / age-for-level / source precision) moved
+            # MORE on a noisy sample, the exact opposite of _prior_precision's contract
+            # ("higher precision -> observation moves the posterior less"). Now a higher
+            # prior precision correctly SHRINKS the gain, so a young high-bonus prospect's
+            # FV prior is protected from a small noisy sample. obs_n is the observation
+            # variance proxy (same magnitude the old denominator used).
             obs_n = _obs_noise(sample, is_pitcher)
-            K     = prior_prec / (prior_prec + obs_n)
+            K     = 1.0 / (1.0 + max(1e-6, prior_prec) * obs_n)
             # § PROSPECT GAIN CAP: the FV is an informed consensus that should
             # dominate the prior. A single season of outlier rate stats
             # (BB%=26%, K%=6%) shouldn't override FV ordering.
@@ -4048,21 +4061,23 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
             r["posterior_surplus_mm"] = mm
             r["trade_value_tier"] = _platform_tier(mm)
             r["surplus_source"] = src
-            lo, hi = xe.get("band_p10_mm"), xe.get("band_p90_mm")
-            # Bands are the eFV credible interval; scale them with a tempered
-            # backgrade so they stay consistent with the shown value.
-            scale = (mm / float(x_sur)) if (src == "xfv_backgrade" and x_sur) else 1.0
-            r["trade_value_lo"] = round(float(lo) * scale, 1) if lo is not None else None
-            r["trade_value_hi"] = round(float(hi) * scale, 1) if hi is not None else None
-            # Risk-adjusted surplus (Sortino): downside-only risk from the eFV
-            # fan. Additive top-level fields (kept by board_slim); null where no
-            # distribution (unmodeled MLB rows). Does not change any shown value.
-            rf = _sortino_fields(xe.get("dist"), scale)
-            if rf:
-                r["p_bust"] = rf["p_bust"]
-                r["downside_mm"] = rf["downside_mm"]
-                r["risk_mm"] = rf["risk_mm"]
-                r["sortino"] = rf["sortino"]
+            # eFV credible-interval bands + Sortino apply ONLY when the shown value came
+            # from the eFV entry (xfv / xfv_backgrade). A "projection"-sourced MLB row's
+            # value is the projection surNpv, NOT the eFV surplus, so attaching xe's
+            # prospect-era band_p10/p90 + dist to it was a basis mismatch -> leave null.
+            if src in ("xfv", "xfv_backgrade"):
+                lo, hi = xe.get("band_p10_mm"), xe.get("band_p90_mm")
+                # Scale the bands with a tempered backgrade so they stay consistent.
+                scale = (mm / float(x_sur)) if (src == "xfv_backgrade" and x_sur) else 1.0
+                r["trade_value_lo"] = round(float(lo) * scale, 1) if lo is not None else None
+                r["trade_value_hi"] = round(float(hi) * scale, 1) if hi is not None else None
+                # Risk-adjusted surplus (Sortino): downside-only risk from the eFV fan.
+                rf = _sortino_fields(xe.get("dist"), scale)
+                if rf:
+                    r["p_bust"] = rf["p_bust"]
+                    r["downside_mm"] = rf["downside_mm"]
+                    r["risk_mm"] = rf["risk_mm"]
+                    r["sortino"] = rf["sortino"]
             stats[src] += 1
         else:
             stats["unchanged"] += 1

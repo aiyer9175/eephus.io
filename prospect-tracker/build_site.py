@@ -751,10 +751,11 @@ ORG_NAMES = {
 # `fv_close`; this map lets it lead with eFV instead, with consensus as the
 # fallback for any player eFV abstains on (no MiLB track record => absent from
 # by_player). Loaded once at module import - missing/corrupt file => empty map,
-# so the homepage behaves EXACTLY as before. The headline `xfv_grade` is now the
-# realized pure-model grade (identical to the `xfv_grade_realized` alias) - the
-# same grade that drives surplus and the active board's ranking, so the homepage
-# Top Prospects ordering matches the board.
+# so the homepage behaves EXACTLY as before. Since the 2026-07-06 quantile flip
+# the DISPLAYED eFV site-wide is `xfv_grade_quantile` (the model ranking on the
+# 20-80 consensus scale; the grade surplus is priced on) - prefer it here so the
+# homepage Top Prospects grade matches the PROSPX board and /projections/, with
+# the realized grade, then the raw grade, as legacy fallbacks.
 def _load_xfv_grades() -> dict:
     try:
         doc = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8"))
@@ -762,7 +763,12 @@ def _load_xfv_grades() -> dict:
         return {}
     out = {}
     for key, rec in (doc.get("by_player") or {}).items():
-        g = (rec or {}).get("xfv_grade")
+        rec = rec or {}
+        g = rec.get("xfv_grade_quantile")
+        if g is None:
+            g = rec.get("xfv_grade_realized")
+        if g is None:
+            g = rec.get("xfv_grade")
         if isinstance(g, (int, float)):
             out[key] = float(g)
     return out

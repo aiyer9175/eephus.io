@@ -30,7 +30,11 @@ log = logging.getLogger(__name__)
 DATA = Path(__file__).parent / "data"
 OUT = DATA / "milb_translation.json"
 
-MIN_MLB_GAMES = 40   # a fuller first season so K% / BB% stabilize
+MIN_MLB_GAMES = 40   # hitters: a fuller first season so K% / BB% stabilize
+MIN_MLB_IP = 40.0    # pitchers gate on INNINGS: `games` = appearances, an
+                     # unreachable 40 for starters (~30 starts/season) - the old
+                     # games gate passed only 15 of 960 debut pitchers and
+                     # starved the pit_k / pit_bb fits (ip>=40 passes ~230)
 
 
 def _f(v):
@@ -65,10 +69,15 @@ def _load_pairs() -> dict:
         mb = milb.get(pk)
         if not mb:
             continue
-        g = _f(sl.get("games"))
-        if g is None or g < MIN_MLB_GAMES:
-            continue
         side = "pit" if sl.get("is_pitcher") else "hit"
+        if side == "pit":
+            ip = _f(sl.get("ip"))
+            if ip is None or ip < MIN_MLB_IP:
+                continue
+        else:
+            g = _f(sl.get("games"))
+            if g is None or g < MIN_MLB_GAMES:
+                continue
         kp, bp = _f(sl.get("k_pct")), _f(sl.get("bb_pct"))
         if kp is not None and mb.get("k_rel") is not None:
             out[f"{side}_k"].append((mb["k_rel"], kp))
@@ -142,6 +151,7 @@ def build(persist: bool = True) -> dict:
     out = {
         "generated_at": date.today().isoformat(),
         "min_mlb_games": MIN_MLB_GAMES,
+        "min_mlb_ip": MIN_MLB_IP,
         "note": ("MiLB final-season level-relative rate -> first-MLB rate. K% real "
                  "signal; BB% modest (flagged); OPS/xwOBA do not translate (not projected)."),
         "fits": fits,

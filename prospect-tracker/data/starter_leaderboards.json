@@ -1,21 +1,21 @@
 {
- "generated_at": "2026-07-05",
+ "generated_at": "2026-07-07",
  "season": 2026,
- "as_of": "2026-07-05",
+ "as_of": "2026-07-07",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
   "n_pairs": 702,
   "seasons": 7,
-  "rho_sem_plus": 0.3939,
-  "rho_fip": 0.3589,
+  "rho_sem_plus": 0.3934,
+  "rho_fip": 0.3585,
   "rho_era": 0.2616,
   "disclaimer": "SEM+ predicts next-year run prevention out of sample. Durability (innings, games started, average start length) is shown as context because it is workload, not run-prevention rate."
  },
  "pool": {
   "n": 177,
-  "pool_era": 4.17,
-  "mean_fip": 4.15,
+  "pool_era": 4.18,
+  "mean_fip": 4.16,
   "n_qualified": 142,
   "n_provisional": 70
  },
@@ -39,16 +39,16 @@
    "k_bb_pct": 0.3249,
    "gb_pct": 0.4967,
    "ip_per_gs": 6.12,
-   "fip": 2.53,
+   "fip": 2.54,
    "era": 1.47,
    "hr9": 0.61,
    "strike_pct": 0.6757,
    "sem_plus_3yr": 144,
    "sem_plus_3yr_pct": 98,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 135,
-   "xwoba_against": 0.238,
-   "luck": -0.028
+   "xsem_plus": 141,
+   "xwoba_against": 0.226,
+   "luck": -0.02
   },
   {
    "key": "656302",
@@ -74,71 +74,71 @@
    "hr9": 0.5,
    "strike_pct": 0.62,
    "sem_plus_3yr": 124,
-   "sem_plus_3yr_pct": 94,
+   "sem_plus_3yr_pct": 93,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 119,
-   "xwoba_against": 0.272,
-   "luck": 0.002
-  },
-  {
-   "key": "650911",
-   "mlbam": 650911,
-   "name": "Cristopher S\u00e1nchez",
-   "team": "PHI",
-   "sem_plus": 145,
-   "sem_plus_raw": 144.9,
-   "qualified": true,
-   "role": "Ace",
-   "ip": 117.0,
-   "g": 18,
-   "gs": 18,
-   "tbf": 475,
-   "cg": 1,
-   "k_pct": 0.2863,
-   "bb_pct": 0.0484,
-   "k_bb_pct": 0.2379,
-   "gb_pct": 0.6238,
-   "ip_per_gs": 6.5,
-   "fip": 2.87,
-   "era": 2.0,
-   "hr9": 0.62,
-   "strike_pct": 0.6779,
-   "sem_plus_3yr": 135,
-   "sem_plus_3yr_pct": 97,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 122,
-   "xwoba_against": 0.264,
-   "luck": -0.004
+   "xsem_plus": 120,
+   "xwoba_against": 0.265,
+   "luck": 0.001
   },
   {
    "key": "693645",
    "mlbam": 693645,
    "name": "Cam Schlittler",
    "team": "NYY",
-   "sem_plus": 135,
-   "sem_plus_raw": 134.7,
+   "sem_plus": 138,
+   "sem_plus_raw": 138.5,
    "qualified": true,
    "role": "Ace",
-   "ip": 104.0,
-   "g": 18,
-   "gs": 18,
-   "tbf": 414,
+   "ip": 112.0,
+   "g": 19,
+   "gs": 19,
+   "tbf": 442,
    "cg": 0,
-   "k_pct": 0.2971,
-   "bb_pct": 0.0507,
-   "k_bb_pct": 0.2464,
-   "gb_pct": 0.4706,
-   "ip_per_gs": 5.78,
-   "fip": 3.08,
-   "era": 2.08,
-   "hr9": 0.87,
-   "strike_pct": 0.6784,
-   "sem_plus_3yr": 123,
-   "sem_plus_3yr_pct": 93,
+   "k_pct": 0.2964,
+   "bb_pct": 0.0475,
+   "k_bb_pct": 0.2489,
+   "gb_pct": 0.4828,
+   "ip_per_gs": 5.89,
+   "fip": 3.0,
+   "era": 2.01,
+   "hr9": 0.8,
+   "strike_pct": 0.6804,
+   "sem_plus_3yr": 126,
+   "sem_plus_3yr_pct": 94,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 123,
-   "xwoba_against": 0.263,
-   "luck": -0.034
+   "xsem_plus": 119,
+   "xwoba_against": 0.267,
+   "luck": -0.017
+  },
+  {
+   "key": "650911",
+   "mlbam": 650911,
+   "name": "Cristopher S\u00e1nchez",
+   "team": "PHI",
+   "sem_plus": 135,
+   "sem_plus_raw": 135.0,
+   "qualified": true,
+   "role": "Ace",
+   "ip": 120.3,
+   "g": 19,
+   "gs": 19,
+   "tbf": 496,
+   "cg": 1,
+   "k_pct": 0.2762,
+   "bb_pct": 0.0484,
+   "k_bb_pct": 0.2278,
+   "gb_pct": 0.6267,
+   "ip_per_gs": 6.33,
+   "fip": 3.08,
+   "era": 2.62,
+   "hr9": 0.82,
+   "strike_pct": 0.6761,
+   "sem_plus_3yr": 133,
+   "sem_plus_3yr_pct": 97,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 114,
+   "xwoba_against": 0.279,
+   "luck": 0.009
   },
   {
    "key": "682243",
@@ -159,13 +159,16 @@
    "k_bb_pct": 0.3048,
    "gb_pct": 0.4111,
    "ip_per_gs": 6.58,
-   "fip": 3.13,
+   "fip": 3.14,
    "era": 1.71,
    "hr9": 1.2,
    "strike_pct": 0.7073,
    "sem_plus_3yr": 107,
    "sem_plus_3yr_pct": 73,
-   "sem_plus_3yr_tag": "established"
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 141,
+   "xwoba_against": 0.226,
+   "luck": -0.013
   },
   {
    "key": "657746",
@@ -184,18 +187,48 @@
    "k_pct": 0.2877,
    "bb_pct": 0.0542,
    "k_bb_pct": 0.2335,
-   "gb_pct": 0.3989,
+   "gb_pct": 0.4021,
    "ip_per_gs": 5.49,
    "fip": 3.2,
-   "era": 3.36,
+   "era": 2.85,
    "hr9": 0.86,
    "strike_pct": 0.6748,
    "sem_plus_3yr": 118,
-   "sem_plus_3yr_pct": 88,
+   "sem_plus_3yr_pct": 87,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 116,
-   "xwoba_against": 0.278,
-   "luck": -0.009
+   "xwoba_against": 0.274,
+   "luck": -0.003
+  },
+  {
+   "key": "624133",
+   "mlbam": 624133,
+   "name": "Ranger Suarez",
+   "team": "BOS",
+   "sem_plus": 128,
+   "sem_plus_raw": 128.2,
+   "qualified": true,
+   "role": "Ace",
+   "ip": 91.3,
+   "g": 17,
+   "gs": 17,
+   "tbf": 376,
+   "cg": 0,
+   "k_pct": 0.258,
+   "bb_pct": 0.0691,
+   "k_bb_pct": 0.1888,
+   "gb_pct": 0.4737,
+   "ip_per_gs": 5.37,
+   "fip": 3.24,
+   "era": 3.15,
+   "hr9": 0.49,
+   "strike_pct": 0.6307,
+   "sem_plus_3yr": 119,
+   "sem_plus_3yr_pct": 88,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 113,
+   "xwoba_against": 0.283,
+   "luck": -0.006
   },
   {
    "key": "694973",
@@ -223,9 +256,9 @@
    "sem_plus_3yr": 142,
    "sem_plus_3yr_pct": 98,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 129,
-   "xwoba_against": 0.25,
-   "luck": 0.003
+   "xsem_plus": 123,
+   "xwoba_against": 0.26,
+   "luck": 0.014
   },
   {
    "key": "519242",
@@ -246,7 +279,7 @@
    "k_bb_pct": 0.2245,
    "gb_pct": 0.503,
    "ip_per_gs": 5.94,
-   "fip": 3.3,
+   "fip": 3.31,
    "era": 2.27,
    "hr9": 0.76,
    "strike_pct": 0.6744,
@@ -254,8 +287,8 @@
    "sem_plus_3yr_pct": 99,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 110,
-   "xwoba_against": 0.292,
-   "luck": -0.021
+   "xwoba_against": 0.289,
+   "luck": -0.009
   },
   {
    "key": "690986",
@@ -283,39 +316,9 @@
    "sem_plus_3yr": 107,
    "sem_plus_3yr_pct": 71,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 109,
-   "xwoba_against": 0.295,
-   "luck": 0.001
-  },
-  {
-   "key": "624133",
-   "mlbam": 624133,
-   "name": "Ranger Suarez",
-   "team": "BOS",
-   "sem_plus": 125,
-   "sem_plus_raw": 125.4,
-   "qualified": true,
-   "role": "Ace",
-   "ip": 88.7,
-   "g": 16,
-   "gs": 16,
-   "tbf": 361,
-   "cg": 0,
-   "k_pct": 0.2548,
-   "bb_pct": 0.072,
-   "k_bb_pct": 0.1828,
-   "gb_pct": 0.4611,
-   "ip_per_gs": 5.54,
-   "fip": 3.31,
-   "era": 2.94,
-   "hr9": 0.51,
-   "strike_pct": 0.6281,
-   "sem_plus_3yr": 118,
-   "sem_plus_3yr_pct": 87,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 107,
-   "xwoba_against": 0.3,
-   "luck": -0.016
+   "xsem_plus": 117,
+   "xwoba_against": 0.272,
+   "luck": 0.008
   },
   {
    "key": "601713",
@@ -367,9 +370,9 @@
    "sem_plus_3yr": 108,
    "sem_plus_3yr_pct": 74,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 125,
-   "xwoba_against": 0.258,
-   "luck": -0.003
+   "xsem_plus": 118,
+   "xwoba_against": 0.271,
+   "luck": -0.008
   },
   {
    "key": "666200",
@@ -390,15 +393,15 @@
    "k_bb_pct": 0.2105,
    "gb_pct": 0.5943,
    "ip_per_gs": 5.74,
-   "fip": 3.33,
+   "fip": 3.34,
    "era": 3.75,
    "hr9": 0.78,
    "strike_pct": 0.642,
    "sem_plus_3yr": 123,
    "sem_plus_3yr_pct": 92,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 110,
-   "xwoba_against": 0.293,
+   "xsem_plus": 117,
+   "xwoba_against": 0.273,
    "luck": 0.031
   },
   {
@@ -427,9 +430,9 @@
    "sem_plus_3yr": 145,
    "sem_plus_3yr_pct": 100,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 114,
-   "xwoba_against": 0.284,
-   "luck": -0.027
+   "xsem_plus": 113,
+   "xwoba_against": 0.282,
+   "luck": -0.008
   },
   {
    "key": "701656",
@@ -437,7 +440,7 @@
    "name": "Logan Henderson",
    "team": "MIL",
    "sem_plus": 122,
-   "sem_plus_raw": 122.4,
+   "sem_plus_raw": 122.3,
    "qualified": false,
    "role": "Ace",
    "ip": 23.0,
@@ -450,7 +453,7 @@
    "k_bb_pct": 0.2667,
    "gb_pct": 0.1667,
    "ip_per_gs": 4.6,
-   "fip": 3.39,
+   "fip": 3.4,
    "era": 2.74,
    "hr9": 0.78,
    "strike_pct": 0.7062
@@ -481,9 +484,9 @@
    "sem_plus_3yr": 118,
    "sem_plus_3yr_pct": 86,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 119,
-   "xwoba_against": 0.272,
-   "luck": -0.012
+   "xsem_plus": 112,
+   "xwoba_against": 0.285,
+   "luck": -0.02
   },
   {
    "key": "677952",
@@ -511,9 +514,9 @@
    "sem_plus_3yr": 122,
    "sem_plus_3yr_pct": 91,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 118,
-   "xwoba_against": 0.273,
-   "luck": 0.016
+   "xsem_plus": 115,
+   "xwoba_against": 0.278,
+   "luck": 0.009
   },
   {
    "key": "672282",
@@ -534,16 +537,16 @@
    "k_bb_pct": 0.1921,
    "gb_pct": 0.3866,
    "ip_per_gs": 5.81,
-   "fip": 3.43,
+   "fip": 3.44,
    "era": 4.13,
    "hr9": 0.77,
    "strike_pct": 0.6548,
    "sem_plus_3yr": 109,
-   "sem_plus_3yr_pct": 76,
+   "sem_plus_3yr_pct": 75,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 120,
-   "xwoba_against": 0.268,
-   "luck": 0.002
+   "xsem_plus": 114,
+   "xwoba_against": 0.279,
+   "luck": -0.005
   },
   {
    "key": "800048",
@@ -564,16 +567,16 @@
    "k_bb_pct": 0.182,
    "gb_pct": 0.4848,
    "ip_per_gs": 5.89,
-   "fip": 3.44,
+   "fip": 3.45,
    "era": 2.8,
    "hr9": 0.76,
    "strike_pct": 0.6387,
    "sem_plus_3yr": 119,
    "sem_plus_3yr_pct": 89,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 112,
-   "xwoba_against": 0.288,
-   "luck": -0.007
+   "xsem_plus": 114,
+   "xwoba_against": 0.28,
+   "luck": -0.005
   },
   {
    "key": "695505",
@@ -601,9 +604,9 @@
    "sem_plus_3yr": 124,
    "sem_plus_3yr_pct": 93,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 119,
-   "xwoba_against": 0.271,
-   "luck": -0.007
+   "xsem_plus": 117,
+   "xwoba_against": 0.272,
+   "luck": 0.006
   },
   {
    "key": "647336",
@@ -624,16 +627,16 @@
    "k_bb_pct": 0.1862,
    "gb_pct": 0.4437,
    "ip_per_gs": 5.47,
-   "fip": 3.46,
+   "fip": 3.47,
    "era": 3.07,
    "hr9": 0.66,
    "strike_pct": 0.6674,
    "sem_plus_3yr": 109,
-   "sem_plus_3yr_pct": 75,
+   "sem_plus_3yr_pct": 74,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 103,
-   "xwoba_against": 0.312,
-   "luck": -0.016
+   "xwoba_against": 0.309,
+   "luck": -0.025
   },
   {
    "key": "594798",
@@ -661,9 +664,9 @@
    "sem_plus_3yr": 116,
    "sem_plus_3yr_pct": 84,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 107,
-   "xwoba_against": 0.301,
-   "luck": -0.026
+   "xsem_plus": 110,
+   "xwoba_against": 0.289,
+   "luck": -0.019
   },
   {
    "key": "607192",
@@ -708,16 +711,16 @@
    "k_bb_pct": 0.1985,
    "gb_pct": 0.5517,
    "ip_per_gs": 6.54,
-   "fip": 3.49,
+   "fip": 3.5,
    "era": 2.49,
    "hr9": 0.95,
    "strike_pct": 0.6605,
    "sem_plus_3yr": 127,
    "sem_plus_3yr_pct": 95,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 111,
-   "xwoba_against": 0.291,
-   "luck": -0.028
+   "xsem_plus": 112,
+   "xwoba_against": 0.284,
+   "luck": -0.039
   },
   {
    "key": "656876",
@@ -738,16 +741,16 @@
    "k_bb_pct": 0.209,
    "gb_pct": 0.5421,
    "ip_per_gs": 5.71,
-   "fip": 3.51,
+   "fip": 3.52,
    "era": 2.78,
    "hr9": 1.02,
    "strike_pct": 0.6601,
    "sem_plus_3yr": 111,
    "sem_plus_3yr_pct": 79,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 120,
-   "xwoba_against": 0.269,
-   "luck": -0.029
+   "xsem_plus": 115,
+   "xwoba_against": 0.278,
+   "luck": -0.028
   },
   {
    "key": "554430",
@@ -775,9 +778,9 @@
    "sem_plus_3yr": 126,
    "sem_plus_3yr_pct": 95,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 114,
-   "xwoba_against": 0.284,
-   "luck": -0.03
+   "xsem_plus": 119,
+   "xwoba_against": 0.269,
+   "luck": -0.012
   },
   {
    "key": "669302",
@@ -785,7 +788,7 @@
    "name": "Logan Gilbert",
    "team": "SEA",
    "sem_plus": 117,
-   "sem_plus_raw": 117.2,
+   "sem_plus_raw": 117.3,
    "qualified": true,
    "role": "Ace",
    "ip": 107.3,
@@ -798,16 +801,16 @@
    "k_bb_pct": 0.2196,
    "gb_pct": 0.3939,
    "ip_per_gs": 5.96,
-   "fip": 3.54,
+   "fip": 3.55,
    "era": 3.19,
    "hr9": 1.17,
    "strike_pct": 0.6586,
    "sem_plus_3yr": 121,
    "sem_plus_3yr_pct": 90,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 102,
-   "xwoba_against": 0.317,
-   "luck": -0.008
+   "xsem_plus": 108,
+   "xwoba_against": 0.296,
+   "luck": -0.022
   },
   {
    "key": "663436",
@@ -828,16 +831,16 @@
    "k_bb_pct": 0.1537,
    "gb_pct": 0.5,
    "ip_per_gs": 5.67,
-   "fip": 3.56,
+   "fip": 3.57,
    "era": 3.08,
    "hr9": 0.56,
    "strike_pct": 0.6428,
    "sem_plus_3yr": 100,
    "sem_plus_3yr_pct": 51,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.306,
-   "luck": -0.027
+   "xsem_plus": 102,
+   "xwoba_against": 0.314,
+   "luck": -0.008
   },
   {
    "key": "605540",
@@ -861,7 +864,10 @@
    "fip": 3.58,
    "era": 2.98,
    "hr9": 0.99,
-   "strike_pct": 0.687
+   "strike_pct": 0.687,
+   "xsem_plus": 121,
+   "xwoba_against": 0.264,
+   "luck": -0.033
   },
   {
    "key": "608331",
@@ -882,46 +888,76 @@
    "k_bb_pct": 0.1292,
    "gb_pct": 0.4921,
    "ip_per_gs": 6.17,
-   "fip": 3.59,
+   "fip": 3.6,
    "era": 3.21,
    "hr9": 0.15,
    "strike_pct": 0.6216,
    "sem_plus_3yr": 118,
    "sem_plus_3yr_pct": 88,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 127,
+   "xsem_plus": 126,
    "xwoba_against": 0.253,
-   "luck": -0.011
+   "luck": -0.012
+  },
+  {
+   "key": "669160",
+   "mlbam": 669160,
+   "name": "Dustin May",
+   "team": "STL",
+   "sem_plus": 115,
+   "sem_plus_raw": 114.7,
+   "qualified": true,
+   "role": "Ace",
+   "ip": 89.0,
+   "g": 17,
+   "gs": 17,
+   "tbf": 369,
+   "cg": 1,
+   "k_pct": 0.2304,
+   "bb_pct": 0.065,
+   "k_bb_pct": 0.1653,
+   "gb_pct": 0.485,
+   "ip_per_gs": 5.24,
+   "fip": 3.63,
+   "era": 4.55,
+   "hr9": 0.71,
+   "strike_pct": 0.6582,
+   "sem_plus_3yr": 99,
+   "sem_plus_3yr_pct": 46,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 106,
+   "xwoba_against": 0.302,
+   "luck": 0.005
   },
   {
    "key": "694738",
    "mlbam": 694738,
    "name": "Landen Roupp",
    "team": "SF",
-   "sem_plus": 114,
-   "sem_plus_raw": 114.3,
+   "sem_plus": 113,
+   "sem_plus_raw": 113.2,
    "qualified": true,
    "role": "Mid-rotation",
-   "ip": 89.0,
-   "g": 17,
-   "gs": 17,
-   "tbf": 381,
+   "ip": 97.0,
+   "g": 18,
+   "gs": 18,
+   "tbf": 411,
    "cg": 0,
-   "k_pct": 0.2598,
-   "bb_pct": 0.105,
-   "k_bb_pct": 0.1549,
-   "gb_pct": 0.5987,
-   "ip_per_gs": 5.24,
-   "fip": 3.63,
-   "era": 4.55,
-   "hr9": 0.61,
-   "strike_pct": 0.598,
+   "k_pct": 0.253,
+   "bb_pct": 0.1022,
+   "k_bb_pct": 0.1509,
+   "gb_pct": 0.5876,
+   "ip_per_gs": 5.39,
+   "fip": 3.67,
+   "era": 4.27,
+   "hr9": 0.65,
+   "strike_pct": 0.6008,
    "sem_plus_3yr": 107,
    "sem_plus_3yr_pct": 71,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 112,
-   "xwoba_against": 0.288,
-   "luck": 0.012
+   "xwoba_against": 0.286,
+   "luck": 0.02
   },
   {
    "key": "676974",
@@ -949,9 +985,9 @@
    "sem_plus_3yr": 101,
    "sem_plus_3yr_pct": 55,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 104,
-   "xwoba_against": 0.309,
-   "luck": -0.037
+   "xsem_plus": 106,
+   "xwoba_against": 0.301,
+   "luck": -0.023
   },
   {
    "key": "669923",
@@ -979,9 +1015,9 @@
    "sem_plus_3yr": 117,
    "sem_plus_3yr_pct": 86,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 108,
-   "xwoba_against": 0.299,
-   "luck": 0.019
+   "xsem_plus": 106,
+   "xwoba_against": 0.3,
+   "luck": 0.022
   },
   {
    "key": "676917",
@@ -1002,16 +1038,16 @@
    "k_bb_pct": 0.1796,
    "gb_pct": 0.5509,
    "ip_per_gs": 4.88,
-   "fip": 3.7,
+   "fip": 3.71,
    "era": 3.88,
    "hr9": 0.78,
    "strike_pct": 0.6594,
    "sem_plus_3yr": 105,
    "sem_plus_3yr_pct": 69,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 99,
-   "xwoba_against": 0.327,
-   "luck": 0.001
+   "xsem_plus": 101,
+   "xwoba_against": 0.315,
+   "luck": 0.004
   },
   {
    "key": "690997",
@@ -1040,7 +1076,7 @@
    "sem_plus_3yr_pct": 83,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 111,
-   "xwoba_against": 0.29,
+   "xwoba_against": 0.288,
    "luck": -0.002
   },
   {
@@ -1062,16 +1098,16 @@
    "k_bb_pct": 0.1476,
    "gb_pct": 0.4906,
    "ip_per_gs": 4.98,
-   "fip": 3.71,
+   "fip": 3.72,
    "era": 3.05,
    "hr9": 0.68,
    "strike_pct": 0.6542,
    "sem_plus_3yr": 112,
    "sem_plus_3yr_pct": 82,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 107,
-   "xwoba_against": 0.301,
-   "luck": -0.042
+   "xsem_plus": 100,
+   "xwoba_against": 0.32,
+   "luck": -0.044
   },
   {
    "key": "669022",
@@ -1079,7 +1115,7 @@
    "name": "MacKenzie Gore",
    "team": "TEX",
    "sem_plus": 112,
-   "sem_plus_raw": 111.7,
+   "sem_plus_raw": 111.8,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 96.0,
@@ -1099,9 +1135,9 @@
    "sem_plus_3yr": 110,
    "sem_plus_3yr_pct": 76,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
-   "xwoba_against": 0.323,
-   "luck": -0.013
+   "xsem_plus": 105,
+   "xwoba_against": 0.305,
+   "luck": -0.003
   },
   {
    "key": "657277",
@@ -1130,38 +1166,8 @@
    "sem_plus_3yr_pct": 96,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 103,
-   "xwoba_against": 0.312,
-   "luck": -0.02
-  },
-  {
-   "key": "669160",
-   "mlbam": 669160,
-   "name": "Dustin May",
-   "team": "STL",
-   "sem_plus": 111,
-   "sem_plus_raw": 110.8,
-   "qualified": true,
-   "role": "Mid-rotation",
-   "ip": 84.3,
-   "g": 16,
-   "gs": 16,
-   "tbf": 351,
-   "cg": 1,
-   "k_pct": 0.2222,
-   "bb_pct": 0.0684,
-   "k_bb_pct": 0.1538,
-   "gb_pct": 0.4813,
-   "ip_per_gs": 5.27,
-   "fip": 3.75,
-   "era": 4.8,
-   "hr9": 0.75,
-   "strike_pct": 0.6569,
-   "sem_plus_3yr": 97,
-   "sem_plus_3yr_pct": 33,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 107,
-   "xwoba_against": 0.301,
-   "luck": 0.012
+   "xwoba_against": 0.31,
+   "luck": -0.019
   },
   {
    "key": "801139",
@@ -1169,7 +1175,7 @@
    "name": "Payton Tolle",
    "team": "BOS",
    "sem_plus": 110,
-   "sem_plus_raw": 110.1,
+   "sem_plus_raw": 110.2,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 74.3,
@@ -1189,9 +1195,9 @@
    "sem_plus_3yr": 110,
    "sem_plus_3yr_pct": 77,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 129,
-   "xwoba_against": 0.25,
-   "luck": 0.016
+   "xsem_plus": 114,
+   "xwoba_against": 0.279,
+   "luck": 0.004
   },
   {
    "key": "668909",
@@ -1199,7 +1205,7 @@
    "name": "Gavin Williams",
    "team": "CLE",
    "sem_plus": 110,
-   "sem_plus_raw": 109.9,
+   "sem_plus_raw": 110.0,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 106.3,
@@ -1219,9 +1225,9 @@
    "sem_plus_3yr": 102,
    "sem_plus_3yr_pct": 60,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
+   "xsem_plus": 97,
    "xwoba_against": 0.329,
-   "luck": -0.03
+   "luck": -0.02
   },
   {
    "key": "687562",
@@ -1242,10 +1248,13 @@
    "k_bb_pct": 0.1529,
    "gb_pct": 0.5294,
    "ip_per_gs": 5.81,
-   "fip": 3.78,
+   "fip": 3.79,
    "era": 3.1,
    "hr9": 0.66,
-   "strike_pct": 0.6742
+   "strike_pct": 0.6742,
+   "xsem_plus": 121,
+   "xwoba_against": 0.263,
+   "luck": -0.01
   },
   {
    "key": "676106",
@@ -1274,8 +1283,8 @@
    "sem_plus_3yr_pct": 21,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 99,
-   "xwoba_against": 0.327,
-   "luck": -0.056
+   "xwoba_against": 0.322,
+   "luck": -0.048
   },
   {
    "key": "543243",
@@ -1303,9 +1312,9 @@
    "sem_plus_3yr": 120,
    "sem_plus_3yr_pct": 90,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.013
+   "xsem_plus": 107,
+   "xwoba_against": 0.299,
+   "luck": -0.008
   },
   {
    "key": "701542",
@@ -1333,9 +1342,39 @@
    "sem_plus_3yr": 104,
    "sem_plus_3yr_pct": 64,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 110,
-   "xwoba_against": 0.292,
-   "luck": -0.003
+   "xsem_plus": 102,
+   "xwoba_against": 0.312,
+   "luck": 0.004
+  },
+  {
+   "key": "592332",
+   "mlbam": 592332,
+   "name": "Kevin Gausman",
+   "team": "TOR",
+   "sem_plus": 109,
+   "sem_plus_raw": 108.9,
+   "qualified": true,
+   "role": "Mid-rotation",
+   "ip": 106.3,
+   "g": 19,
+   "gs": 19,
+   "tbf": 445,
+   "cg": 0,
+   "k_pct": 0.2427,
+   "bb_pct": 0.0652,
+   "k_bb_pct": 0.1775,
+   "gb_pct": 0.466,
+   "ip_per_gs": 5.6,
+   "fip": 3.82,
+   "era": 4.32,
+   "hr9": 1.27,
+   "strike_pct": 0.6484,
+   "sem_plus_3yr": 111,
+   "sem_plus_3yr_pct": 79,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 104,
+   "xwoba_against": 0.306,
+   "luck": 0.004
   },
   {
    "key": "571510",
@@ -1366,7 +1405,7 @@
    "mlbam": 680732,
    "name": "Sean Burke",
    "team": "CWS",
-   "sem_plus": 108,
+   "sem_plus": 109,
    "sem_plus_raw": 108.5,
    "qualified": true,
    "role": "Mid-rotation",
@@ -1384,42 +1423,12 @@
    "era": 3.56,
    "hr9": 1.09,
    "strike_pct": 0.6634,
-   "sem_plus_3yr": 97,
-   "sem_plus_3yr_pct": 34,
+   "sem_plus_3yr": 98,
+   "sem_plus_3yr_pct": 36,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 106,
-   "xwoba_against": 0.303,
-   "luck": 0.0
-  },
-  {
-   "key": "592332",
-   "mlbam": 592332,
-   "name": "Kevin Gausman",
-   "team": "TOR",
-   "sem_plus": 108,
-   "sem_plus_raw": 108.4,
-   "qualified": true,
-   "role": "Mid-rotation",
-   "ip": 101.0,
-   "g": 18,
-   "gs": 18,
-   "tbf": 419,
-   "cg": 0,
-   "k_pct": 0.2387,
-   "bb_pct": 0.0573,
-   "k_bb_pct": 0.1814,
-   "gb_pct": 0.4596,
-   "ip_per_gs": 5.61,
-   "fip": 3.83,
-   "era": 4.19,
-   "hr9": 1.34,
-   "strike_pct": 0.6506,
-   "sem_plus_3yr": 111,
-   "sem_plus_3yr_pct": 79,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 110,
-   "xwoba_against": 0.294,
-   "luck": -0.003
+   "xwoba_against": 0.3,
+   "luck": 0.013
   },
   {
    "key": "605280",
@@ -1445,11 +1454,11 @@
    "hr9": 0.51,
    "strike_pct": 0.6546,
    "sem_plus_3yr": 100,
-   "sem_plus_3yr_pct": 49,
+   "sem_plus_3yr_pct": 48,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
+   "xsem_plus": 104,
    "xwoba_against": 0.306,
-   "luck": -0.046
+   "luck": -0.047
   },
   {
    "key": "680736",
@@ -1477,9 +1486,9 @@
    "sem_plus_3yr": 101,
    "sem_plus_3yr_pct": 54,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 104,
-   "xwoba_against": 0.31,
-   "luck": -0.055
+   "xsem_plus": 100,
+   "xwoba_against": 0.32,
+   "luck": -0.061
   },
   {
    "key": "607074",
@@ -1500,10 +1509,13 @@
    "k_bb_pct": 0.134,
    "gb_pct": 0.4337,
    "ip_per_gs": 5.15,
-   "fip": 3.88,
+   "fip": 3.89,
    "era": 3.3,
    "hr9": 0.58,
-   "strike_pct": 0.6099
+   "strike_pct": 0.6099,
+   "xsem_plus": 107,
+   "xwoba_against": 0.297,
+   "luck": -0.016
   },
   {
    "key": "677960",
@@ -1511,7 +1523,7 @@
    "name": "Ryan Weathers",
    "team": "NYY",
    "sem_plus": 106,
-   "sem_plus_raw": 106.2,
+   "sem_plus_raw": 106.3,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 92.3,
@@ -1531,9 +1543,9 @@
    "sem_plus_3yr": 102,
    "sem_plus_3yr_pct": 57,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
-   "xwoba_against": 0.321,
-   "luck": -0.016
+   "xsem_plus": 96,
+   "xwoba_against": 0.331,
+   "luck": -0.014
   },
   {
    "key": "665152",
@@ -1579,9 +1591,12 @@
    "gb_pct": 0.3457,
    "ip_per_gs": 5.38,
    "fip": 3.93,
-   "era": 3.98,
+   "era": 3.77,
    "hr9": 0.84,
-   "strike_pct": 0.6644
+   "strike_pct": 0.6644,
+   "xsem_plus": 102,
+   "xwoba_against": 0.312,
+   "luck": 0.002
   },
   {
    "key": "671737",
@@ -1602,15 +1617,15 @@
    "k_bb_pct": 0.1689,
    "gb_pct": 0.3727,
    "ip_per_gs": 5.54,
-   "fip": 3.93,
+   "fip": 3.94,
    "era": 3.86,
    "hr9": 1.22,
    "strike_pct": 0.6259,
    "sem_plus_3yr": 101,
    "sem_plus_3yr_pct": 53,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
-   "xwoba_against": 0.329,
+   "xsem_plus": 103,
+   "xwoba_against": 0.309,
    "luck": -0.002
   },
   {
@@ -1663,9 +1678,9 @@
    "sem_plus_3yr": 105,
    "sem_plus_3yr_pct": 68,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 106,
-   "xwoba_against": 0.304,
-   "luck": 0.006
+   "xsem_plus": 102,
+   "xwoba_against": 0.313,
+   "luck": 0.012
   },
   {
    "key": "656427",
@@ -1693,9 +1708,9 @@
    "sem_plus_3yr": 111,
    "sem_plus_3yr_pct": 80,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.334,
-   "luck": 0.019
+   "xsem_plus": 99,
+   "xwoba_against": 0.321,
+   "luck": 0.011
   },
   {
    "key": "804267",
@@ -1716,7 +1731,7 @@
    "k_bb_pct": 0.1667,
    "gb_pct": 0.5,
    "ip_per_gs": 5.17,
-   "fip": 3.98,
+   "fip": 3.99,
    "era": 4.35,
    "hr9": 0.87,
    "strike_pct": 0.6772
@@ -1740,7 +1755,7 @@
    "k_bb_pct": 0.1398,
    "gb_pct": 0.5429,
    "ip_per_gs": 6.78,
-   "fip": 3.98,
+   "fip": 3.99,
    "era": 3.98,
    "hr9": 0.0,
    "strike_pct": 0.6695
@@ -1764,7 +1779,7 @@
    "k_bb_pct": 0.24,
    "gb_pct": 0.25,
    "ip_per_gs": 2.67,
-   "fip": 4.0,
+   "fip": 4.01,
    "era": 8.44,
    "hr9": 0.0,
    "strike_pct": 0.6577
@@ -1788,16 +1803,46 @@
    "k_bb_pct": 0.1208,
    "gb_pct": 0.5269,
    "ip_per_gs": 5.59,
-   "fip": 4.0,
+   "fip": 4.01,
    "era": 4.11,
    "hr9": 0.72,
    "strike_pct": 0.6252,
    "sem_plus_3yr": 117,
    "sem_plus_3yr_pct": 85,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
+   "xsem_plus": 97,
    "xwoba_against": 0.328,
-   "luck": -0.04
+   "luck": -0.042
+  },
+  {
+   "key": "702070",
+   "mlbam": 702070,
+   "name": "Noah Cameron",
+   "team": "KC",
+   "sem_plus": 103,
+   "sem_plus_raw": 103.2,
+   "qualified": true,
+   "role": "Mid-rotation",
+   "ip": 88.7,
+   "g": 17,
+   "gs": 17,
+   "tbf": 396,
+   "cg": 0,
+   "k_pct": 0.2071,
+   "bb_pct": 0.0758,
+   "k_bb_pct": 0.1313,
+   "gb_pct": 0.4426,
+   "ip_per_gs": 5.22,
+   "fip": 4.03,
+   "era": 4.77,
+   "hr9": 1.02,
+   "strike_pct": 0.6279,
+   "sem_plus_3yr": 101,
+   "sem_plus_3yr_pct": 52,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 94,
+   "xwoba_against": 0.34,
+   "luck": -0.005
   },
   {
    "key": "621107",
@@ -1818,7 +1863,7 @@
    "k_bb_pct": 0.2941,
    "gb_pct": 0.5,
    "ip_per_gs": 3.67,
-   "fip": 4.02,
+   "fip": 4.03,
    "era": 2.45,
    "hr9": 2.45,
    "strike_pct": 0.5946
@@ -1849,9 +1894,9 @@
    "sem_plus_3yr": 106,
    "sem_plus_3yr_pct": 69,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
-   "xwoba_against": 0.322,
-   "luck": -0.021
+   "xsem_plus": 102,
+   "xwoba_against": 0.312,
+   "luck": -0.006
   },
   {
    "key": "543135",
@@ -1859,7 +1904,7 @@
    "name": "Nathan Eovaldi",
    "team": "TEX",
    "sem_plus": 103,
-   "sem_plus_raw": 103.0,
+   "sem_plus_raw": 103.1,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 105.3,
@@ -1879,39 +1924,9 @@
    "sem_plus_3yr": 113,
    "sem_plus_3yr_pct": 83,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.335,
-   "luck": -0.013
-  },
-  {
-   "key": "702070",
-   "mlbam": 702070,
-   "name": "Noah Cameron",
-   "team": "KC",
-   "sem_plus": 103,
-   "sem_plus_raw": 103.0,
-   "qualified": true,
-   "role": "Mid-rotation",
-   "ip": 83.7,
-   "g": 16,
-   "gs": 16,
-   "tbf": 370,
-   "cg": 0,
-   "k_pct": 0.2027,
-   "bb_pct": 0.0676,
-   "k_bb_pct": 0.1351,
-   "gb_pct": 0.4343,
-   "ip_per_gs": 5.23,
-   "fip": 4.03,
-   "era": 4.95,
-   "hr9": 1.08,
-   "strike_pct": 0.632,
-   "sem_plus_3yr": 101,
-   "sem_plus_3yr_pct": 52,
-   "sem_plus_3yr_tag": "established",
    "xsem_plus": 103,
-   "xwoba_against": 0.313,
-   "luck": -0.02
+   "xwoba_against": 0.311,
+   "luck": 0.006
   },
   {
    "key": "667755",
@@ -1939,9 +1954,9 @@
    "sem_plus_3yr": 103,
    "sem_plus_3yr_pct": 62,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
-   "xwoba_against": 0.321,
-   "luck": -0.034
+   "xsem_plus": 99,
+   "xwoba_against": 0.322,
+   "luck": -0.022
   },
   {
    "key": "622491",
@@ -1969,9 +1984,9 @@
    "sem_plus_3yr": 105,
    "sem_plus_3yr_pct": 67,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 94,
-   "xwoba_against": 0.344,
-   "luck": -0.015
+   "xsem_plus": 97,
+   "xwoba_against": 0.329,
+   "luck": -0.01
   },
   {
    "key": "672456",
@@ -1992,16 +2007,16 @@
    "k_bb_pct": 0.1068,
    "gb_pct": 0.4065,
    "ip_per_gs": 6.18,
-   "fip": 4.04,
+   "fip": 4.05,
    "era": 3.21,
    "hr9": 0.87,
    "strike_pct": 0.6649,
    "sem_plus_3yr": 93,
    "sem_plus_3yr_pct": 14,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.307,
-   "luck": -0.022
+   "xsem_plus": 108,
+   "xwoba_against": 0.294,
+   "luck": -0.033
   },
   {
    "key": "669358",
@@ -2022,16 +2037,16 @@
    "k_bb_pct": 0.1106,
    "gb_pct": 0.4417,
    "ip_per_gs": 5.94,
-   "fip": 4.04,
+   "fip": 4.05,
    "era": 4.19,
    "hr9": 0.8,
    "strike_pct": 0.6363,
    "sem_plus_3yr": 99,
-   "sem_plus_3yr_pct": 48,
+   "sem_plus_3yr_pct": 47,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.001
+   "xsem_plus": 98,
+   "xwoba_against": 0.327,
+   "luck": -0.004
   },
   {
    "key": "702056",
@@ -2059,16 +2074,16 @@
    "sem_plus_3yr": 103,
    "sem_plus_3yr_pct": 64,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 122,
-   "xwoba_against": 0.265,
-   "luck": 0.018
+   "xsem_plus": 116,
+   "xwoba_against": 0.275,
+   "luck": -0.002
   },
   {
    "key": "669387",
    "mlbam": 669387,
    "name": "Carmen Mlodzinski",
    "team": "PIT",
-   "sem_plus": 102,
+   "sem_plus": 103,
    "sem_plus_raw": 102.5,
    "qualified": true,
    "role": "Mid-rotation",
@@ -2082,46 +2097,16 @@
    "k_bb_pct": 0.1037,
    "gb_pct": 0.4562,
    "ip_per_gs": 8.41,
-   "fip": 4.05,
+   "fip": 4.06,
    "era": 3.33,
    "hr9": 0.71,
    "strike_pct": 0.6359,
-   "sem_plus_3yr": 102,
-   "sem_plus_3yr_pct": 60,
+   "sem_plus_3yr": 103,
+   "sem_plus_3yr_pct": 62,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 93,
-   "xwoba_against": 0.348,
-   "luck": -0.022
-  },
-  {
-   "key": "621111",
-   "mlbam": 621111,
-   "name": "Walker Buehler",
-   "team": "SD",
-   "sem_plus": 102,
-   "sem_plus_raw": 102.4,
-   "qualified": true,
-   "role": "Mid-rotation",
-   "ip": 82.0,
-   "g": 17,
-   "gs": 17,
-   "tbf": 351,
-   "cg": 0,
-   "k_pct": 0.2165,
-   "bb_pct": 0.0855,
-   "k_bb_pct": 0.1311,
-   "gb_pct": 0.5346,
-   "ip_per_gs": 4.82,
-   "fip": 4.06,
-   "era": 4.61,
-   "hr9": 0.99,
-   "strike_pct": 0.6274,
-   "sem_plus_3yr": 86,
-   "sem_plus_3yr_pct": 4,
-   "sem_plus_3yr_tag": "established",
    "xsem_plus": 95,
-   "xwoba_against": 0.34,
-   "luck": -0.031
+   "xwoba_against": 0.337,
+   "luck": -0.02
   },
   {
    "key": "645261",
@@ -2147,11 +2132,11 @@
    "hr9": 0.87,
    "strike_pct": 0.6755,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 45,
+   "sem_plus_3yr_pct": 43,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 102,
-   "xwoba_against": 0.317,
-   "luck": 0.004
+   "xsem_plus": 106,
+   "xwoba_against": 0.302,
+   "luck": 0.007
   },
   {
    "key": "664074",
@@ -2159,7 +2144,7 @@
    "name": "Cody Ponce",
    "team": "TOR",
    "sem_plus": 102,
-   "sem_plus_raw": 102.2,
+   "sem_plus_raw": 102.3,
    "qualified": false,
    "role": "Mid-rotation",
    "ip": 2.3,
@@ -2172,7 +2157,7 @@
    "k_bb_pct": 0.2,
    "gb_pct": 0.6,
    "ip_per_gs": 2.33,
-   "fip": 4.06,
+   "fip": 4.07,
    "era": 3.86,
    "hr9": 0.0,
    "strike_pct": 0.6383
@@ -2201,11 +2186,11 @@
    "hr9": 0.9,
    "strike_pct": 0.6756,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 43,
+   "sem_plus_3yr_pct": 41,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
-   "xwoba_against": 0.329,
-   "luck": -0.031
+   "xsem_plus": 96,
+   "xwoba_against": 0.333,
+   "luck": -0.036
   },
   {
    "key": "690928",
@@ -2213,7 +2198,7 @@
    "name": "Hunter Dobbins",
    "team": "STL",
    "sem_plus": 102,
-   "sem_plus_raw": 101.7,
+   "sem_plus_raw": 101.8,
    "qualified": false,
    "role": "Mid-rotation",
    "ip": 17.3,
@@ -2226,7 +2211,7 @@
    "k_bb_pct": 0.1644,
    "gb_pct": 0.6,
    "ip_per_gs": 8.67,
-   "fip": 4.08,
+   "fip": 4.09,
    "era": 3.63,
    "hr9": 1.56,
    "strike_pct": 0.634
@@ -2250,16 +2235,16 @@
    "k_bb_pct": 0.1277,
    "gb_pct": 0.4737,
    "ip_per_gs": 5.8,
-   "fip": 4.08,
+   "fip": 4.09,
    "era": 4.01,
    "hr9": 1.09,
    "strike_pct": 0.6347,
    "sem_plus_3yr": 96,
    "sem_plus_3yr_pct": 29,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 117,
-   "xwoba_against": 0.275,
-   "luck": -0.014
+   "xsem_plus": 108,
+   "xwoba_against": 0.296,
+   "luck": 0.001
   },
   {
    "key": "579328",
@@ -2280,7 +2265,7 @@
    "k_bb_pct": 0.1338,
    "gb_pct": 0.4068,
    "ip_per_gs": 4.43,
-   "fip": 4.09,
+   "fip": 4.1,
    "era": 5.81,
    "hr9": 0.87,
    "strike_pct": 0.6349
@@ -2291,7 +2276,7 @@
    "name": "Foster Griffin",
    "team": "WSH",
    "sem_plus": 101,
-   "sem_plus_raw": 101.0,
+   "sem_plus_raw": 101.1,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 103.3,
@@ -2311,9 +2296,9 @@
    "sem_plus_3yr": 101,
    "sem_plus_3yr_pct": 55,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 99,
-   "xwoba_against": 0.325,
-   "luck": -0.019
+   "xsem_plus": 103,
+   "xwoba_against": 0.311,
+   "luck": -0.027
   },
   {
    "key": "690990",
@@ -2334,7 +2319,7 @@
    "k_bb_pct": 0.0769,
    "gb_pct": 0.6875,
    "ip_per_gs": 3.67,
-   "fip": 4.12,
+   "fip": 4.13,
    "era": 2.45,
    "hr9": 1.23,
    "strike_pct": 0.663
@@ -2358,16 +2343,16 @@
    "k_bb_pct": 0.116,
    "gb_pct": 0.5145,
    "ip_per_gs": 5.62,
-   "fip": 4.12,
+   "fip": 4.13,
    "era": 3.95,
    "hr9": 0.96,
    "strike_pct": 0.6145,
    "sem_plus_3yr": 96,
    "sem_plus_3yr_pct": 32,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.335,
-   "luck": -0.031
+   "xsem_plus": 97,
+   "xwoba_against": 0.33,
+   "luck": -0.02
   },
   {
    "key": "543037",
@@ -2391,7 +2376,10 @@
    "fip": 4.13,
    "era": 4.01,
    "hr9": 1.69,
-   "strike_pct": 0.6865
+   "strike_pct": 0.6865,
+   "xsem_plus": 112,
+   "xwoba_against": 0.285,
+   "luck": 0.04
   },
   {
    "key": "683003",
@@ -2418,6 +2406,36 @@
    "strike_pct": 0.612
   },
   {
+   "key": "669467",
+   "mlbam": 669467,
+   "name": "Andre Pallante",
+   "team": "STL",
+   "sem_plus": 100,
+   "sem_plus_raw": 100.5,
+   "qualified": true,
+   "role": "Mid-rotation",
+   "ip": 95.0,
+   "g": 17,
+   "gs": 17,
+   "tbf": 398,
+   "cg": 0,
+   "k_pct": 0.1759,
+   "bb_pct": 0.0678,
+   "k_bb_pct": 0.108,
+   "gb_pct": 0.6019,
+   "ip_per_gs": 5.59,
+   "fip": 4.14,
+   "era": 3.6,
+   "hr9": 0.85,
+   "strike_pct": 0.6355,
+   "sem_plus_3yr": 96,
+   "sem_plus_3yr_pct": 30,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 107,
+   "xwoba_against": 0.299,
+   "luck": 0.002
+  },
+  {
    "key": "676979",
    "mlbam": 676979,
    "name": "Garrett Crochet",
@@ -2436,40 +2454,40 @@
    "k_bb_pct": 0.1884,
    "gb_pct": 0.434,
    "ip_per_gs": 5.0,
-   "fip": 4.13,
+   "fip": 4.14,
    "era": 6.3,
    "hr9": 1.5,
    "strike_pct": 0.6351
   },
   {
-   "key": "669467",
-   "mlbam": 669467,
-   "name": "Andre Pallante",
-   "team": "STL",
+   "key": "643377",
+   "mlbam": 643377,
+   "name": "Griffin Jax",
+   "team": "TB",
    "sem_plus": 100,
    "sem_plus_raw": 100.4,
    "qualified": true,
    "role": "Mid-rotation",
-   "ip": 95.0,
-   "g": 17,
-   "gs": 17,
-   "tbf": 398,
+   "ip": 65.0,
+   "g": 24,
+   "gs": 13,
+   "tbf": 266,
    "cg": 0,
-   "k_pct": 0.1759,
-   "bb_pct": 0.0678,
-   "k_bb_pct": 0.108,
-   "gb_pct": 0.6019,
-   "ip_per_gs": 5.59,
-   "fip": 4.13,
+   "k_pct": 0.2556,
+   "bb_pct": 0.0827,
+   "k_bb_pct": 0.1729,
+   "gb_pct": 0.5339,
+   "ip_per_gs": 5.0,
+   "fip": 4.14,
    "era": 3.6,
-   "hr9": 0.85,
-   "strike_pct": 0.6355,
-   "sem_plus_3yr": 96,
-   "sem_plus_3yr_pct": 29,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.306,
-   "luck": 0.003
+   "hr9": 1.66,
+   "strike_pct": 0.6388,
+   "sem_plus_3yr": 100,
+   "sem_plus_3yr_pct": 49,
+   "sem_plus_3yr_tag": "provisional",
+   "xsem_plus": 92,
+   "xwoba_against": 0.346,
+   "luck": -0.031
   },
   {
    "key": "686790",
@@ -2495,11 +2513,11 @@
    "hr9": 0.63,
    "strike_pct": 0.6251,
    "sem_plus_3yr": 102,
-   "sem_plus_3yr_pct": 61,
+   "sem_plus_3yr_pct": 60,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 106,
-   "xwoba_against": 0.305,
-   "luck": -0.008
+   "xsem_plus": 104,
+   "xwoba_against": 0.306,
+   "luck": -0.004
   },
   {
    "key": "680694",
@@ -2527,9 +2545,9 @@
    "sem_plus_3yr": 110,
    "sem_plus_3yr_pct": 78,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 101,
-   "xwoba_against": 0.318,
-   "luck": 0.026
+   "xsem_plus": 104,
+   "xwoba_against": 0.306,
+   "luck": 0.017
   },
   {
    "key": "691587",
@@ -2557,8 +2575,8 @@
    "sem_plus_3yr": 106,
    "sem_plus_3yr_pct": 70,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 93,
-   "xwoba_against": 0.346,
+   "xsem_plus": 101,
+   "xwoba_against": 0.316,
    "luck": -0.013
   },
   {
@@ -2591,7 +2609,7 @@
    "name": "Brandon Young",
    "team": "BAL",
    "sem_plus": 100,
-   "sem_plus_raw": 99.7,
+   "sem_plus_raw": 99.8,
    "qualified": true,
    "role": "Mid-rotation",
    "ip": 77.3,
@@ -2604,7 +2622,7 @@
    "k_bb_pct": 0.0952,
    "gb_pct": 0.4611,
    "ip_per_gs": 5.52,
-   "fip": 4.16,
+   "fip": 4.17,
    "era": 3.38,
    "hr9": 0.81,
    "strike_pct": 0.6431,
@@ -2612,8 +2630,8 @@
    "sem_plus_3yr_pct": 21,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 99,
-   "xwoba_against": 0.327,
-   "luck": -0.032
+   "xwoba_against": 0.322,
+   "luck": -0.015
   },
   {
    "key": "681035",
@@ -2639,11 +2657,11 @@
    "hr9": 1.29,
    "strike_pct": 0.6337,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 36,
+   "sem_plus_3yr_pct": 34,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 101,
-   "xwoba_against": 0.319,
-   "luck": -0.026
+   "xsem_plus": 95,
+   "xwoba_against": 0.335,
+   "luck": -0.012
   },
   {
    "key": "700712",
@@ -2664,16 +2682,46 @@
    "k_bb_pct": 0.1009,
    "gb_pct": 0.5779,
    "ip_per_gs": 5.52,
-   "fip": 4.17,
+   "fip": 4.18,
    "era": 3.03,
    "hr9": 0.58,
    "strike_pct": 0.6085,
    "sem_plus_3yr": 100,
-   "sem_plus_3yr_pct": 50,
+   "sem_plus_3yr_pct": 49,
    "sem_plus_3yr_tag": "provisional",
    "xsem_plus": 113,
-   "xwoba_against": 0.286,
-   "luck": 0.006
+   "xwoba_against": 0.282,
+   "luck": 0.007
+  },
+  {
+   "key": "621111",
+   "mlbam": 621111,
+   "name": "Walker Buehler",
+   "team": "SD",
+   "sem_plus": 100,
+   "sem_plus_raw": 99.5,
+   "qualified": true,
+   "role": "Mid-rotation",
+   "ip": 87.0,
+   "g": 18,
+   "gs": 18,
+   "tbf": 375,
+   "cg": 0,
+   "k_pct": 0.2133,
+   "bb_pct": 0.0827,
+   "k_bb_pct": 0.1307,
+   "gb_pct": 0.5294,
+   "ip_per_gs": 4.83,
+   "fip": 4.18,
+   "era": 5.07,
+   "hr9": 1.14,
+   "strike_pct": 0.6264,
+   "sem_plus_3yr": 86,
+   "sem_plus_3yr_pct": 3,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 98,
+   "xwoba_against": 0.326,
+   "luck": 0.004
   },
   {
    "key": "593958",
@@ -2701,9 +2749,9 @@
    "sem_plus_3yr": 95,
    "sem_plus_3yr_pct": 23,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.336,
-   "luck": -0.043
+   "xsem_plus": 93,
+   "xwoba_against": 0.343,
+   "luck": -0.056
   },
   {
    "key": "683352",
@@ -2724,7 +2772,7 @@
    "k_bb_pct": 0.0769,
    "gb_pct": 0.6667,
    "ip_per_gs": 3.0,
-   "fip": 4.18,
+   "fip": 4.19,
    "era": 3.0,
    "hr9": 0.0,
    "strike_pct": 0.6667
@@ -2755,9 +2803,9 @@
    "sem_plus_3yr": 88,
    "sem_plus_3yr_pct": 6,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 92,
+   "xsem_plus": 91,
    "xwoba_against": 0.349,
-   "luck": -0.021
+   "luck": -0.023
   },
   {
    "key": "669432",
@@ -2785,39 +2833,9 @@
    "sem_plus_3yr": 104,
    "sem_plus_3yr_pct": 65,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.337,
-   "luck": 0.017
-  },
-  {
-   "key": "686218",
-   "mlbam": 686218,
-   "name": "Emmet Sheehan",
-   "team": "LAD",
-   "sem_plus": 99,
-   "sem_plus_raw": 99.0,
-   "qualified": true,
-   "role": "Back-end",
-   "ip": 75.7,
-   "g": 16,
-   "gs": 16,
-   "tbf": 320,
-   "cg": 0,
-   "k_pct": 0.2625,
-   "bb_pct": 0.0719,
-   "k_bb_pct": 0.1906,
-   "gb_pct": 0.4058,
-   "ip_per_gs": 4.73,
-   "fip": 4.2,
-   "era": 4.88,
-   "hr9": 1.78,
-   "strike_pct": 0.6464,
-   "sem_plus_3yr": 112,
-   "sem_plus_3yr_pct": 81,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.307,
-   "luck": 0.026
+   "xsem_plus": 101,
+   "xwoba_against": 0.315,
+   "luck": -0.001
   },
   {
    "key": "650633",
@@ -2845,9 +2863,9 @@
    "sem_plus_3yr": 107,
    "sem_plus_3yr_pct": 72,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
-   "xwoba_against": 0.33,
-   "luck": -0.032
+   "xsem_plus": 97,
+   "xwoba_against": 0.329,
+   "luck": -0.041
   },
   {
    "key": "686613",
@@ -2855,7 +2873,7 @@
    "name": "Hunter Brown",
    "team": "HOU",
    "sem_plus": 99,
-   "sem_plus_raw": 98.7,
+   "sem_plus_raw": 98.8,
    "qualified": false,
    "role": "Back-end",
    "ip": 29.3,
@@ -2879,7 +2897,7 @@
    "name": "Seth Lugo",
    "team": "KC",
    "sem_plus": 99,
-   "sem_plus_raw": 98.5,
+   "sem_plus_raw": 98.6,
    "qualified": true,
    "role": "Back-end",
    "ip": 96.3,
@@ -2892,23 +2910,23 @@
    "k_bb_pct": 0.113,
    "gb_pct": 0.449,
    "ip_per_gs": 5.67,
-   "fip": 4.21,
+   "fip": 4.22,
    "era": 4.2,
    "hr9": 1.12,
    "strike_pct": 0.6491,
    "sem_plus_3yr": 103,
    "sem_plus_3yr_pct": 63,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 91,
-   "xwoba_against": 0.355,
-   "luck": -0.025
+   "xsem_plus": 90,
+   "xwoba_against": 0.353,
+   "luck": -0.008
   },
   {
    "key": "676083",
    "mlbam": 676083,
    "name": "Janson Junk",
    "team": "MIA",
-   "sem_plus": 98,
+   "sem_plus": 99,
    "sem_plus_raw": 98.5,
    "qualified": true,
    "role": "Back-end",
@@ -2927,11 +2945,41 @@
    "hr9": 1.2,
    "strike_pct": 0.6618,
    "sem_plus_3yr": 109,
-   "sem_plus_3yr_pct": 74,
+   "sem_plus_3yr_pct": 76,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 103,
+   "xwoba_against": 0.31,
+   "luck": 0.016
+  },
+  {
+   "key": "686218",
+   "mlbam": 686218,
+   "name": "Emmet Sheehan",
+   "team": "LAD",
+   "sem_plus": 98,
+   "sem_plus_raw": 98.5,
+   "qualified": true,
+   "role": "Back-end",
+   "ip": 77.0,
+   "g": 16,
+   "gs": 16,
+   "tbf": 329,
+   "cg": 0,
+   "k_pct": 0.2614,
+   "bb_pct": 0.076,
+   "k_bb_pct": 0.1854,
+   "gb_pct": 0.4,
+   "ip_per_gs": 4.81,
+   "fip": 4.22,
+   "era": 4.91,
+   "hr9": 1.75,
+   "strike_pct": 0.6432,
+   "sem_plus_3yr": 111,
+   "sem_plus_3yr_pct": 81,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 104,
-   "xwoba_against": 0.31,
-   "luck": 0.018
+   "xwoba_against": 0.308,
+   "luck": 0.03
   },
   {
    "key": "663567",
@@ -2957,11 +3005,11 @@
    "hr9": 1.12,
    "strike_pct": 0.6308,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 38,
+   "sem_plus_3yr_pct": 37,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 105,
-   "xwoba_against": 0.307,
-   "luck": -0.018
+   "xsem_plus": 109,
+   "xwoba_against": 0.293,
+   "luck": -0.007
   },
   {
    "key": "675512",
@@ -2985,7 +3033,10 @@
    "fip": 4.24,
    "era": 2.05,
    "hr9": 1.43,
-   "strike_pct": 0.6337
+   "strike_pct": 0.6337,
+   "xsem_plus": 116,
+   "xwoba_against": 0.274,
+   "luck": -0.031
   },
   {
    "key": "669372",
@@ -3011,41 +3062,11 @@
    "hr9": 0.95,
    "strike_pct": 0.6084,
    "sem_plus_3yr": 97,
-   "sem_plus_3yr_pct": 35,
+   "sem_plus_3yr_pct": 33,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.307,
-   "luck": -0.017
-  },
-  {
-   "key": "643377",
-   "mlbam": 643377,
-   "name": "Griffin Jax",
-   "team": "TB",
-   "sem_plus": 98,
-   "sem_plus_raw": 97.7,
-   "qualified": true,
-   "role": "Back-end",
-   "ip": 60.0,
-   "g": 23,
-   "gs": 12,
-   "tbf": 248,
-   "cg": 0,
-   "k_pct": 0.2339,
-   "bb_pct": 0.0806,
-   "k_bb_pct": 0.1532,
-   "gb_pct": 0.5221,
-   "ip_per_gs": 5.0,
-   "fip": 4.25,
-   "era": 3.45,
-   "hr9": 1.65,
-   "strike_pct": 0.6396,
-   "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 38,
-   "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 92,
-   "xwoba_against": 0.349,
-   "luck": -0.011
+   "xsem_plus": 102,
+   "xwoba_against": 0.313,
+   "luck": -0.019
   },
   {
    "key": "681517",
@@ -3066,16 +3087,16 @@
    "k_bb_pct": 0.1058,
    "gb_pct": 0.5057,
    "ip_per_gs": 5.08,
-   "fip": 4.25,
+   "fip": 4.26,
    "era": 3.86,
    "hr9": 0.94,
    "strike_pct": 0.6205,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 38,
+   "sem_plus_3yr_pct": 37,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 83,
-   "xwoba_against": 0.39,
-   "luck": -0.031
+   "xsem_plus": 89,
+   "xwoba_against": 0.359,
+   "luck": -0.018
   },
   {
    "key": "642547",
@@ -3086,26 +3107,26 @@
    "sem_plus_raw": 97.3,
    "qualified": true,
    "role": "Back-end",
-   "ip": 95.3,
-   "g": 18,
-   "gs": 18,
-   "tbf": 422,
+   "ip": 100.0,
+   "g": 19,
+   "gs": 19,
+   "tbf": 445,
    "cg": 0,
-   "k_pct": 0.218,
-   "bb_pct": 0.09,
-   "k_bb_pct": 0.128,
-   "gb_pct": 0.466,
-   "ip_per_gs": 5.3,
+   "k_pct": 0.2202,
+   "bb_pct": 0.0876,
+   "k_bb_pct": 0.1326,
+   "gb_pct": 0.46,
+   "ip_per_gs": 5.26,
    "fip": 4.27,
-   "era": 4.81,
-   "hr9": 1.23,
-   "strike_pct": 0.6084,
-   "sem_plus_3yr": 105,
+   "era": 4.68,
+   "hr9": 1.26,
+   "strike_pct": 0.6074,
+   "sem_plus_3yr": 104,
    "sem_plus_3yr_pct": 66,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 105,
-   "xwoba_against": 0.306,
-   "luck": 0.013
+   "xsem_plus": 106,
+   "xwoba_against": 0.301,
+   "luck": 0.033
   },
   {
    "key": "684007",
@@ -3134,8 +3155,8 @@
    "sem_plus_3yr_pct": 52,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 107,
-   "xwoba_against": 0.302,
-   "luck": 0.007
+   "xwoba_against": 0.298,
+   "luck": 0.014
   },
   {
    "key": "700241",
@@ -3143,7 +3164,7 @@
    "name": "Michael McGreevy",
    "team": "STL",
    "sem_plus": 97,
-   "sem_plus_raw": 96.8,
+   "sem_plus_raw": 96.9,
    "qualified": true,
    "role": "Back-end",
    "ip": 95.3,
@@ -3161,11 +3182,11 @@
    "hr9": 1.23,
    "strike_pct": 0.6202,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 36,
+   "sem_plus_3yr_pct": 35,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 90,
-   "xwoba_against": 0.359,
-   "luck": -0.07
+   "xsem_plus": 89,
+   "xwoba_against": 0.36,
+   "luck": -0.064
   },
   {
    "key": "676282",
@@ -3191,11 +3212,11 @@
    "hr9": 1.19,
    "strike_pct": 0.6238,
    "sem_plus_3yr": 99,
-   "sem_plus_3yr_pct": 47,
+   "sem_plus_3yr_pct": 45,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.331,
-   "luck": 0.025
+   "xsem_plus": 100,
+   "xwoba_against": 0.318,
+   "luck": 0.006
   },
   {
    "key": "689818",
@@ -3216,7 +3237,7 @@
    "k_bb_pct": 0.125,
    "gb_pct": 0.5143,
    "ip_per_gs": 6.44,
-   "fip": 4.3,
+   "fip": 4.31,
    "era": 6.05,
    "hr9": 1.86,
    "strike_pct": 0.6134
@@ -3247,9 +3268,9 @@
    "sem_plus_3yr": 105,
    "sem_plus_3yr_pct": 67,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 95,
-   "xwoba_against": 0.338,
-   "luck": 0.009
+   "xsem_plus": 92,
+   "xwoba_against": 0.347,
+   "luck": 0.011
   },
   {
    "key": "622663",
@@ -3277,9 +3298,9 @@
    "sem_plus_3yr": 97,
    "sem_plus_3yr_pct": 33,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 101,
+   "xsem_plus": 100,
    "xwoba_against": 0.318,
-   "luck": 0.03
+   "luck": 0.028
   },
   {
    "key": "641816",
@@ -3300,16 +3321,16 @@
    "k_bb_pct": 0.1299,
    "gb_pct": 0.5038,
    "ip_per_gs": 5.07,
-   "fip": 4.35,
+   "fip": 4.36,
    "era": 5.7,
    "hr9": 1.52,
    "strike_pct": 0.6279,
    "sem_plus_3yr": 102,
    "sem_plus_3yr_pct": 58,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 102,
-   "xwoba_against": 0.316,
-   "luck": 0.05
+   "xsem_plus": 101,
+   "xwoba_against": 0.315,
+   "luck": 0.04
   },
   {
    "key": "696136",
@@ -3330,7 +3351,7 @@
    "k_bb_pct": 0.12,
    "gb_pct": 0.5238,
    "ip_per_gs": 5.17,
-   "fip": 4.37,
+   "fip": 4.38,
    "era": 10.45,
    "hr9": 0.87,
    "strike_pct": 0.6556
@@ -3361,9 +3382,9 @@
    "sem_plus_3yr": 102,
    "sem_plus_3yr_pct": 57,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.017
+   "xsem_plus": 99,
+   "xwoba_against": 0.321,
+   "luck": -0.002
   },
   {
    "key": "605400",
@@ -3391,9 +3412,9 @@
    "sem_plus_3yr": 100,
    "sem_plus_3yr_pct": 50,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 99,
-   "xwoba_against": 0.326,
-   "luck": 0.031
+   "xsem_plus": 100,
+   "xwoba_against": 0.319,
+   "luck": 0.042
   },
   {
    "key": "677944",
@@ -3414,16 +3435,16 @@
    "k_bb_pct": 0.1044,
    "gb_pct": 0.5271,
    "ip_per_gs": 5.3,
-   "fip": 4.38,
+   "fip": 4.39,
    "era": 4.44,
    "hr9": 1.23,
    "strike_pct": 0.6349,
    "sem_plus_3yr": 93,
    "sem_plus_3yr_pct": 17,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 98,
-   "xwoba_against": 0.33,
-   "luck": 0.013
+   "xsem_plus": 97,
+   "xwoba_against": 0.328,
+   "luck": 0.005
   },
   {
    "key": "688107",
@@ -3447,14 +3468,17 @@
    "fip": 4.39,
    "era": 4.54,
    "hr9": 1.77,
-   "strike_pct": 0.6661
+   "strike_pct": 0.6661,
+   "xsem_plus": 113,
+   "xwoba_against": 0.283,
+   "luck": 0.06
   },
   {
    "key": "527048",
    "mlbam": 527048,
    "name": "Mart\u00edn P\u00e9rez",
    "team": "ATL",
-   "sem_plus": 94,
+   "sem_plus": 95,
    "sem_plus_raw": 94.5,
    "qualified": true,
    "role": "Back-end",
@@ -3468,16 +3492,16 @@
    "k_bb_pct": 0.0901,
    "gb_pct": 0.5407,
    "ip_per_gs": 5.81,
-   "fip": 4.39,
+   "fip": 4.4,
    "era": 3.54,
    "hr9": 1.11,
    "strike_pct": 0.6115,
    "sem_plus_3yr": 91,
-   "sem_plus_3yr_pct": 11,
+   "sem_plus_3yr_pct": 12,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 102,
-   "xwoba_against": 0.317,
-   "luck": -0.032
+   "xsem_plus": 97,
+   "xwoba_against": 0.33,
+   "luck": -0.029
   },
   {
    "key": "664285",
@@ -3505,9 +3529,9 @@
    "sem_plus_3yr": 111,
    "sem_plus_3yr_pct": 81,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.013
+   "xsem_plus": 98,
+   "xwoba_against": 0.324,
+   "luck": -0.002
   },
   {
    "key": "675911",
@@ -3531,7 +3555,10 @@
    "fip": 4.4,
    "era": 5.31,
    "hr9": 2.08,
-   "strike_pct": 0.6179
+   "strike_pct": 0.6179,
+   "xsem_plus": 110,
+   "xwoba_against": 0.291,
+   "luck": 0.064
   },
   {
    "key": "605483",
@@ -3552,7 +3579,7 @@
    "k_bb_pct": 0.1667,
    "gb_pct": 0.8,
    "ip_per_gs": 3.0,
-   "fip": 4.4,
+   "fip": 4.41,
    "era": 12.0,
    "hr9": 0.0,
    "strike_pct": 0.6494
@@ -3581,11 +3608,11 @@
    "hr9": 1.08,
    "strike_pct": 0.6423,
    "sem_plus_3yr": 99,
-   "sem_plus_3yr_pct": 45,
+   "sem_plus_3yr_pct": 44,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.032
+   "xsem_plus": 90,
+   "xwoba_against": 0.354,
+   "luck": -0.03
   },
   {
    "key": "837227",
@@ -3606,7 +3633,7 @@
    "k_bb_pct": 0.1395,
    "gb_pct": 0.525,
    "ip_per_gs": 4.03,
-   "fip": 4.42,
+   "fip": 4.43,
    "era": 6.14,
    "hr9": 1.49,
    "strike_pct": 0.5885,
@@ -3614,8 +3641,8 @@
    "sem_plus_3yr_pct": 20,
    "sem_plus_3yr_tag": "provisional",
    "xsem_plus": 94,
-   "xwoba_against": 0.342,
-   "luck": -0.022
+   "xwoba_against": 0.34,
+   "luck": -0.006
   },
   {
    "key": "663568",
@@ -3623,7 +3650,7 @@
    "name": "Stephen Kolek",
    "team": "KC",
    "sem_plus": 94,
-   "sem_plus_raw": 93.5,
+   "sem_plus_raw": 93.6,
    "qualified": true,
    "role": "Back-end",
    "ip": 54.0,
@@ -3641,11 +3668,11 @@
    "hr9": 1.33,
    "strike_pct": 0.6404,
    "sem_plus_3yr": 99,
-   "sem_plus_3yr_pct": 46,
+   "sem_plus_3yr_pct": 45,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 111,
-   "xwoba_against": 0.29,
-   "luck": -0.007
+   "xsem_plus": 105,
+   "xwoba_against": 0.303,
+   "luck": 0.025
   },
   {
    "key": "687473",
@@ -3690,13 +3717,16 @@
    "k_bb_pct": 0.0984,
    "gb_pct": 0.5276,
    "ip_per_gs": 4.92,
-   "fip": 4.45,
+   "fip": 4.46,
    "era": 4.27,
    "hr9": 1.37,
    "strike_pct": 0.6305,
    "sem_plus_3yr": 96,
    "sem_plus_3yr_pct": 28,
-   "sem_plus_3yr_tag": "established"
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 94,
+   "xwoba_against": 0.34,
+   "luck": -0.022
   },
   {
    "key": "687931",
@@ -3704,7 +3734,7 @@
    "name": "Carson Whisenhunt",
    "team": "SF",
    "sem_plus": 93,
-   "sem_plus_raw": 93.2,
+   "sem_plus_raw": 93.3,
    "qualified": false,
    "role": "Back-end",
    "ip": 5.0,
@@ -3717,7 +3747,7 @@
    "k_bb_pct": 0.0,
    "gb_pct": 0.3846,
    "ip_per_gs": 5.0,
-   "fip": 4.45,
+   "fip": 4.46,
    "era": 3.6,
    "hr9": 0.0,
    "strike_pct": 0.6
@@ -3741,16 +3771,16 @@
    "k_bb_pct": 0.1239,
    "gb_pct": 0.4483,
    "ip_per_gs": 5.57,
-   "fip": 4.46,
+   "fip": 4.47,
    "era": 3.81,
    "hr9": 1.15,
    "strike_pct": 0.6076,
    "sem_plus_3yr": 95,
-   "sem_plus_3yr_pct": 26,
+   "sem_plus_3yr_pct": 27,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 95,
-   "xwoba_against": 0.34,
-   "luck": -0.059
+   "xwoba_against": 0.334,
+   "luck": -0.029
   },
   {
    "key": "683004",
@@ -3758,7 +3788,7 @@
    "name": "Jack Leiter",
    "team": "TEX",
    "sem_plus": 93,
-   "sem_plus_raw": 92.7,
+   "sem_plus_raw": 92.8,
    "qualified": true,
    "role": "Back-end",
    "ip": 80.0,
@@ -3778,9 +3808,9 @@
    "sem_plus_3yr": 95,
    "sem_plus_3yr_pct": 24,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.334,
-   "luck": -0.008
+   "xsem_plus": 95,
+   "xwoba_against": 0.337,
+   "luck": 0.003
   },
   {
    "key": "621121",
@@ -3788,7 +3818,7 @@
    "name": "Lance McCullers Jr.",
    "team": "HOU",
    "sem_plus": 93,
-   "sem_plus_raw": 92.7,
+   "sem_plus_raw": 92.8,
    "qualified": false,
    "role": "Back-end",
    "ip": 39.3,
@@ -3805,9 +3835,9 @@
    "era": 6.86,
    "hr9": 1.6,
    "strike_pct": 0.5891,
-   "xsem_plus": 98,
-   "xwoba_against": 0.33,
-   "luck": 0.042
+   "xsem_plus": 97,
+   "xwoba_against": 0.329,
+   "luck": 0.04
   },
   {
    "key": "805673",
@@ -3828,13 +3858,16 @@
    "k_bb_pct": 0.1406,
    "gb_pct": 0.44,
    "ip_per_gs": 6.1,
-   "fip": 4.49,
+   "fip": 4.5,
    "era": 4.43,
    "hr9": 1.92,
    "strike_pct": 0.6384,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 43,
-   "sem_plus_3yr_tag": "established"
+   "sem_plus_3yr_pct": 42,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 98,
+   "xwoba_against": 0.326,
+   "luck": -0.003
   },
   {
    "key": "694462",
@@ -3886,9 +3919,9 @@
    "sem_plus_3yr": 100,
    "sem_plus_3yr_pct": 48,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 92,
-   "xwoba_against": 0.351,
-   "luck": -0.012
+   "xsem_plus": 97,
+   "xwoba_against": 0.329,
+   "luck": -0.029
   },
   {
    "key": "687075",
@@ -3916,9 +3949,33 @@
    "sem_plus_3yr": 94,
    "sem_plus_3yr_pct": 22,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 91,
-   "xwoba_against": 0.353,
-   "luck": 0.017
+   "xsem_plus": 96,
+   "xwoba_against": 0.333,
+   "luck": 0.012
+  },
+  {
+   "key": "676664",
+   "mlbam": 676664,
+   "name": "JP Sears",
+   "team": "SD",
+   "sem_plus": 92,
+   "sem_plus_raw": 91.8,
+   "qualified": false,
+   "role": "Back-end",
+   "ip": 15.3,
+   "g": 3,
+   "gs": 3,
+   "tbf": 67,
+   "cg": 0,
+   "k_pct": 0.209,
+   "bb_pct": 0.1045,
+   "k_bb_pct": 0.1045,
+   "gb_pct": 0.4062,
+   "ip_per_gs": 5.11,
+   "fip": 4.53,
+   "era": 4.7,
+   "hr9": 2.35,
+   "strike_pct": 0.5952
   },
   {
    "key": "663362",
@@ -3950,7 +4007,7 @@
    "name": "Tanner Bibee",
    "team": "CLE",
    "sem_plus": 92,
-   "sem_plus_raw": 91.6,
+   "sem_plus_raw": 91.7,
    "qualified": true,
    "role": "Back-end",
    "ip": 106.3,
@@ -3963,16 +4020,16 @@
    "k_bb_pct": 0.1256,
    "gb_pct": 0.4395,
    "ip_per_gs": 5.6,
-   "fip": 4.53,
+   "fip": 4.54,
    "era": 4.06,
    "hr9": 1.69,
    "strike_pct": 0.6373,
    "sem_plus_3yr": 101,
    "sem_plus_3yr_pct": 56,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 97,
-   "xwoba_against": 0.333,
-   "luck": -0.016
+   "xsem_plus": 95,
+   "xwoba_against": 0.336,
+   "luck": -0.03
   },
   {
    "key": "668881",
@@ -3993,7 +4050,7 @@
    "k_bb_pct": 0.15,
    "gb_pct": 0.5,
    "ip_per_gs": 3.33,
-   "fip": 4.54,
+   "fip": 4.55,
    "era": 21.6,
    "hr9": 2.7,
    "strike_pct": 0.5955
@@ -4017,46 +4074,16 @@
    "k_bb_pct": 0.1003,
    "gb_pct": 0.5032,
    "ip_per_gs": 4.93,
-   "fip": 4.59,
+   "fip": 4.6,
    "era": 5.11,
    "hr9": 1.34,
    "strike_pct": 0.6178,
    "sem_plus_3yr": 94,
    "sem_plus_3yr_pct": 19,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 88,
-   "xwoba_against": 0.365,
-   "luck": -0.014
-  },
-  {
-   "key": "607536",
-   "mlbam": 607536,
-   "name": "Kyle Freeland",
-   "team": "COL",
-   "sem_plus": 90,
-   "sem_plus_raw": 90.4,
-   "qualified": true,
-   "role": "Back-end",
-   "ip": 77.0,
-   "g": 15,
-   "gs": 15,
-   "tbf": 355,
-   "cg": 0,
-   "k_pct": 0.1915,
-   "bb_pct": 0.0507,
-   "k_bb_pct": 0.1408,
-   "gb_pct": 0.4969,
-   "ip_per_gs": 5.13,
-   "fip": 4.59,
-   "era": 7.25,
-   "hr9": 1.87,
-   "strike_pct": 0.6729,
-   "sem_plus_3yr": 93,
-   "sem_plus_3yr_pct": 16,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 84,
-   "xwoba_against": 0.385,
-   "luck": 0.021
+   "xsem_plus": 89,
+   "xwoba_against": 0.36,
+   "luck": 0.002
   },
   {
    "key": "702273",
@@ -4081,8 +4108,8 @@
    "era": 5.86,
    "hr9": 1.05,
    "strike_pct": 0.6035,
-   "xsem_plus": 90,
-   "xwoba_against": 0.36,
+   "xsem_plus": 89,
+   "xwoba_against": 0.357,
    "luck": -0.03
   },
   {
@@ -4104,16 +4131,16 @@
    "k_bb_pct": 0.0769,
    "gb_pct": 0.4928,
    "ip_per_gs": 5.05,
-   "fip": 4.6,
+   "fip": 4.61,
    "era": 5.07,
    "hr9": 1.1,
    "strike_pct": 0.6164,
    "sem_plus_3yr": 93,
-   "sem_plus_3yr_pct": 18,
+   "sem_plus_3yr_pct": 19,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 92,
-   "xwoba_against": 0.35,
-   "luck": -0.04
+   "xsem_plus": 89,
+   "xwoba_against": 0.357,
+   "luck": -0.018
   },
   {
    "key": "666142",
@@ -4121,7 +4148,7 @@
    "name": "Cole Ragans",
    "team": "KC",
    "sem_plus": 90,
-   "sem_plus_raw": 90.1,
+   "sem_plus_raw": 90.2,
    "qualified": false,
    "role": "Back-end",
    "ip": 35.3,
@@ -4139,8 +4166,8 @@
    "hr9": 2.55,
    "strike_pct": 0.6041,
    "xsem_plus": 93,
-   "xwoba_against": 0.345,
-   "luck": 0.012
+   "xwoba_against": 0.344,
+   "luck": 0.01
   },
   {
    "key": "665795",
@@ -4148,7 +4175,7 @@
    "name": "Edward Cabrera",
    "team": "CHC",
    "sem_plus": 90,
-   "sem_plus_raw": 90.1,
+   "sem_plus_raw": 90.2,
    "qualified": true,
    "role": "Back-end",
    "ip": 72.3,
@@ -4166,11 +4193,41 @@
    "hr9": 1.74,
    "strike_pct": 0.616,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 44,
+   "sem_plus_3yr_pct": 43,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.336,
-   "luck": 0.015
+   "xsem_plus": 94,
+   "xwoba_against": 0.338,
+   "luck": 0.003
+  },
+  {
+   "key": "607536",
+   "mlbam": 607536,
+   "name": "Kyle Freeland",
+   "team": "COL",
+   "sem_plus": 90,
+   "sem_plus_raw": 90.1,
+   "qualified": true,
+   "role": "Back-end",
+   "ip": 82.0,
+   "g": 16,
+   "gs": 16,
+   "tbf": 378,
+   "cg": 0,
+   "k_pct": 0.1852,
+   "bb_pct": 0.0476,
+   "k_bb_pct": 0.1376,
+   "gb_pct": 0.4795,
+   "ip_per_gs": 5.12,
+   "fip": 4.62,
+   "era": 7.46,
+   "hr9": 1.87,
+   "strike_pct": 0.6711,
+   "sem_plus_3yr": 93,
+   "sem_plus_3yr_pct": 17,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 87,
+   "xwoba_against": 0.365,
+   "luck": 0.031
   },
   {
    "key": "641927",
@@ -4196,11 +4253,11 @@
    "hr9": 1.62,
    "strike_pct": 0.6541,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 42,
+   "sem_plus_3yr_pct": 40,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
+   "xsem_plus": 99,
    "xwoba_against": 0.323,
-   "luck": 0.002
+   "luck": -0.001
   },
   {
    "key": "703615",
@@ -4221,7 +4278,7 @@
    "k_bb_pct": 0.0833,
    "gb_pct": 0.3214,
    "ip_per_gs": 4.44,
-   "fip": 4.62,
+   "fip": 4.63,
    "era": 4.72,
    "hr9": 2.02,
    "strike_pct": 0.6049
@@ -4275,7 +4332,10 @@
    "strike_pct": 0.6217,
    "sem_plus_3yr": 90,
    "sem_plus_3yr_pct": 10,
-   "sem_plus_3yr_tag": "established"
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 96,
+   "xwoba_against": 0.332,
+   "luck": -0.029
   },
   {
    "key": "702281",
@@ -4296,7 +4356,7 @@
    "k_bb_pct": -0.0909,
    "gb_pct": 0.6364,
    "ip_per_gs": 5.0,
-   "fip": 4.66,
+   "fip": 4.67,
    "era": 5.4,
    "hr9": 1.8,
    "strike_pct": 0.6279
@@ -4320,13 +4380,16 @@
    "k_bb_pct": 0.0881,
    "gb_pct": 0.4946,
    "ip_per_gs": 5.67,
-   "fip": 4.66,
+   "fip": 4.67,
    "era": 6.71,
    "hr9": 1.41,
    "strike_pct": 0.5857,
    "sem_plus_3yr": 88,
    "sem_plus_3yr_pct": 5,
-   "sem_plus_3yr_tag": "established"
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 95,
+   "xwoba_against": 0.337,
+   "luck": 0.021
   },
   {
    "key": "696149",
@@ -4352,11 +4415,11 @@
    "hr9": 1.0,
    "strike_pct": 0.6267,
    "sem_plus_3yr": 96,
-   "sem_plus_3yr_pct": 30,
+   "sem_plus_3yr_pct": 31,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 100,
-   "xwoba_against": 0.324,
-   "luck": -0.007
+   "xwoba_against": 0.32,
+   "luck": 0.0
   },
   {
    "key": "700249",
@@ -4388,7 +4451,7 @@
    "name": "Randy V\u00e1squez",
    "team": "SD",
    "sem_plus": 88,
-   "sem_plus_raw": 88.4,
+   "sem_plus_raw": 88.5,
    "qualified": true,
    "role": "Back-end",
    "ip": 84.0,
@@ -4408,9 +4471,9 @@
    "sem_plus_3yr": 87,
    "sem_plus_3yr_pct": 5,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 83,
-   "xwoba_against": 0.389,
-   "luck": -0.056
+   "xsem_plus": 80,
+   "xwoba_against": 0.398,
+   "luck": -0.03
   },
   {
    "key": "680570",
@@ -4462,9 +4525,9 @@
    "sem_plus_3yr": 96,
    "sem_plus_3yr_pct": 31,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 91,
-   "xwoba_against": 0.354,
-   "luck": -0.004
+   "xsem_plus": 89,
+   "xwoba_against": 0.357,
+   "luck": 0.008
   },
   {
    "key": "607067",
@@ -4490,11 +4553,11 @@
    "hr9": 1.31,
    "strike_pct": 0.6378,
    "sem_plus_3yr": 93,
-   "sem_plus_3yr_pct": 15,
+   "sem_plus_3yr_pct": 16,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 87,
-   "xwoba_against": 0.371,
-   "luck": -0.026
+   "xsem_plus": 89,
+   "xwoba_against": 0.357,
+   "luck": -0.014
   },
   {
    "key": "663978",
@@ -4502,7 +4565,7 @@
    "name": "Chris Paddack",
    "team": "TEX",
    "sem_plus": 88,
-   "sem_plus_raw": 87.8,
+   "sem_plus_raw": 87.9,
    "qualified": true,
    "role": "Back-end",
    "ip": 57.0,
@@ -4522,9 +4585,9 @@
    "sem_plus_3yr": 91,
    "sem_plus_3yr_pct": 10,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 95,
-   "xwoba_against": 0.338,
-   "luck": 0.038
+   "xsem_plus": 93,
+   "xwoba_against": 0.343,
+   "luck": 0.027
   },
   {
    "key": "547179",
@@ -4552,9 +4615,9 @@
    "sem_plus_3yr": 90,
    "sem_plus_3yr_pct": 8,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 88,
-   "xwoba_against": 0.366,
-   "luck": 0.047
+   "xsem_plus": 89,
+   "xwoba_against": 0.36,
+   "luck": 0.039
   },
   {
    "key": "669920",
@@ -4575,7 +4638,7 @@
    "k_bb_pct": 0.0714,
    "gb_pct": 0.525,
    "ip_per_gs": 9.17,
-   "fip": 4.75,
+   "fip": 4.76,
    "era": 9.33,
    "hr9": 1.96,
    "strike_pct": 0.6254
@@ -4606,9 +4669,9 @@
    "sem_plus_3yr": 88,
    "sem_plus_3yr_pct": 7,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 85,
-   "xwoba_against": 0.379,
-   "luck": -0.029
+   "xsem_plus": 87,
+   "xwoba_against": 0.366,
+   "luck": -0.015
   },
   {
    "key": "671111",
@@ -4629,7 +4692,7 @@
    "k_bb_pct": 0.1333,
    "gb_pct": 0.25,
    "ip_per_gs": 2.67,
-   "fip": 4.76,
+   "fip": 4.77,
    "era": 10.12,
    "hr9": 3.38,
    "strike_pct": 0.6327
@@ -4640,7 +4703,7 @@
    "name": "JR Ritchie",
    "team": "ATL",
    "sem_plus": 87,
-   "sem_plus_raw": 86.8,
+   "sem_plus_raw": 86.9,
    "qualified": false,
    "role": "Spot",
    "ip": 43.7,
@@ -4653,10 +4716,13 @@
    "k_bb_pct": 0.0781,
    "gb_pct": 0.4824,
    "ip_per_gs": 6.24,
-   "fip": 4.78,
+   "fip": 4.79,
    "era": 4.53,
    "hr9": 1.44,
-   "strike_pct": 0.5767
+   "strike_pct": 0.5767,
+   "xsem_plus": 96,
+   "xwoba_against": 0.331,
+   "luck": -0.004
   },
   {
    "key": "666157",
@@ -4677,37 +4743,16 @@
    "k_bb_pct": 0.0856,
    "gb_pct": 0.5,
    "ip_per_gs": 5.24,
-   "fip": 4.78,
+   "fip": 4.79,
    "era": 4.68,
    "hr9": 1.25,
    "strike_pct": 0.6274,
    "sem_plus_3yr": 102,
-   "sem_plus_3yr_pct": 62,
-   "sem_plus_3yr_tag": "established"
-  },
-  {
-   "key": "676664",
-   "mlbam": 676664,
-   "name": "JP Sears",
-   "team": "SD",
-   "sem_plus": 87,
-   "sem_plus_raw": 86.8,
-   "qualified": false,
-   "role": "Spot",
-   "ip": 12.3,
-   "g": 3,
-   "gs": 3,
-   "tbf": 57,
-   "cg": 0,
-   "k_pct": 0.1754,
-   "bb_pct": 0.1053,
-   "k_bb_pct": 0.0702,
-   "gb_pct": 0.3929,
-   "ip_per_gs": 4.11,
-   "fip": 4.78,
-   "era": 5.84,
-   "hr9": 2.92,
-   "strike_pct": 0.5829
+   "sem_plus_3yr_pct": 61,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 85,
+   "xwoba_against": 0.374,
+   "luck": -0.019
   },
   {
    "key": "656550",
@@ -4728,7 +4773,7 @@
    "k_bb_pct": 0.0927,
    "gb_pct": 0.4593,
    "ip_per_gs": 5.15,
-   "fip": 4.78,
+   "fip": 4.79,
    "era": 3.83,
    "hr9": 1.64,
    "strike_pct": 0.6281,
@@ -4736,8 +4781,8 @@
    "sem_plus_3yr_pct": 13,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 96,
-   "xwoba_against": 0.335,
-   "luck": -0.006
+   "xwoba_against": 0.331,
+   "luck": -0.009
   },
   {
    "key": "678394",
@@ -4765,16 +4810,16 @@
    "sem_plus_3yr": 95,
    "sem_plus_3yr_pct": 24,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 86,
+   "xsem_plus": 85,
    "xwoba_against": 0.377,
-   "luck": -0.005
+   "luck": -0.008
   },
   {
    "key": "671096",
    "mlbam": 671096,
    "name": "Andrew Abbott",
    "team": "CIN",
-   "sem_plus": 86,
+   "sem_plus": 87,
    "sem_plus_raw": 86.5,
    "qualified": true,
    "role": "Spot",
@@ -4788,16 +4833,16 @@
    "k_bb_pct": 0.0675,
    "gb_pct": 0.4187,
    "ip_per_gs": 5.28,
-   "fip": 4.8,
+   "fip": 4.81,
    "era": 3.88,
    "hr9": 1.42,
    "strike_pct": 0.6212,
    "sem_plus_3yr": 96,
-   "sem_plus_3yr_pct": 27,
+   "sem_plus_3yr_pct": 29,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 95,
-   "xwoba_against": 0.338,
-   "luck": -0.018
+   "xsem_plus": 94,
+   "xwoba_against": 0.339,
+   "luck": -0.012
   },
   {
    "key": "641743",
@@ -4805,7 +4850,7 @@
    "name": "Anthony Kay",
    "team": "CWS",
    "sem_plus": 86,
-   "sem_plus_raw": 86.3,
+   "sem_plus_raw": 86.4,
    "qualified": true,
    "role": "Spot",
    "ip": 84.0,
@@ -4819,15 +4864,15 @@
    "gb_pct": 0.4725,
    "ip_per_gs": 5.25,
    "fip": 4.81,
-   "era": 4.39,
+   "era": 4.29,
    "hr9": 1.18,
    "strike_pct": 0.6131,
    "sem_plus_3yr": 86,
-   "sem_plus_3yr_pct": 3,
+   "sem_plus_3yr_pct": 4,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 87,
-   "xwoba_against": 0.372,
-   "luck": -0.017
+   "xsem_plus": 91,
+   "xwoba_against": 0.35,
+   "luck": -0.009
   },
   {
    "key": "605135",
@@ -4853,11 +4898,11 @@
    "hr9": 0.96,
    "strike_pct": 0.6149,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 40,
+   "sem_plus_3yr_pct": 38,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 94,
+   "xsem_plus": 93,
    "xwoba_against": 0.344,
-   "luck": 0.025
+   "luck": 0.023
   },
   {
    "key": "808963",
@@ -4878,16 +4923,16 @@
    "k_bb_pct": 0.1307,
    "gb_pct": 0.5208,
    "ip_per_gs": 5.0,
-   "fip": 4.83,
+   "fip": 4.84,
    "era": 5.4,
    "hr9": 2.04,
    "strike_pct": 0.6369,
    "sem_plus_3yr": 85,
    "sem_plus_3yr_pct": 2,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 100,
-   "xwoba_against": 0.322,
-   "luck": 0.007
+   "xsem_plus": 95,
+   "xwoba_against": 0.336,
+   "luck": 0.024
   },
   {
    "key": "669194",
@@ -4915,33 +4960,9 @@
    "sem_plus_3yr": 102,
    "sem_plus_3yr_pct": 59,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 90,
-   "xwoba_against": 0.357,
-   "luck": -0.021
-  },
-  {
-   "key": "696270",
-   "mlbam": 696270,
-   "name": "Ryan Johnson",
-   "team": "LAA",
-   "sem_plus": 86,
-   "sem_plus_raw": 85.7,
-   "qualified": false,
-   "role": "Spot",
-   "ip": 24.3,
-   "g": 7,
-   "gs": 4,
-   "tbf": 111,
-   "cg": 0,
-   "k_pct": 0.1622,
-   "bb_pct": 0.0811,
-   "k_bb_pct": 0.0811,
-   "gb_pct": 0.4545,
-   "ip_per_gs": 6.08,
-   "fip": 4.85,
-   "era": 7.4,
-   "hr9": 2.22,
-   "strike_pct": 0.6558
+   "xsem_plus": 91,
+   "xwoba_against": 0.349,
+   "luck": -0.013
   },
   {
    "key": "434378",
@@ -4968,6 +4989,30 @@
    "strike_pct": 0.6625
   },
   {
+   "key": "696270",
+   "mlbam": 696270,
+   "name": "Ryan Johnson",
+   "team": "LAA",
+   "sem_plus": 85,
+   "sem_plus_raw": 85.3,
+   "qualified": false,
+   "role": "Spot",
+   "ip": 28.3,
+   "g": 8,
+   "gs": 5,
+   "tbf": 131,
+   "cg": 0,
+   "k_pct": 0.1832,
+   "bb_pct": 0.0763,
+   "k_bb_pct": 0.1069,
+   "gb_pct": 0.4355,
+   "ip_per_gs": 5.67,
+   "fip": 4.87,
+   "era": 6.99,
+   "hr9": 2.54,
+   "strike_pct": 0.6634
+  },
+  {
    "key": "691951",
    "mlbam": 691951,
    "name": "Sam Aldegheri",
@@ -4989,7 +5034,10 @@
    "fip": 4.88,
    "era": 5.08,
    "hr9": 1.34,
-   "strike_pct": 0.618
+   "strike_pct": 0.618,
+   "xsem_plus": 90,
+   "xwoba_against": 0.355,
+   "luck": -0.036
   },
   {
    "key": "681343",
@@ -5021,7 +5069,7 @@
    "name": "Tomoyuki Sugano",
    "team": "COL",
    "sem_plus": 84,
-   "sem_plus_raw": 84.4,
+   "sem_plus_raw": 84.5,
    "qualified": true,
    "role": "Spot",
    "ip": 84.3,
@@ -5041,9 +5089,9 @@
    "sem_plus_3yr": 83,
    "sem_plus_3yr_pct": 1,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 78,
-   "xwoba_against": 0.411,
-   "luck": -0.067
+   "xsem_plus": 80,
+   "xwoba_against": 0.397,
+   "luck": -0.048
   },
   {
    "key": "686799",
@@ -5071,9 +5119,9 @@
    "sem_plus_3yr": 80,
    "sem_plus_3yr_pct": 0,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 90,
+   "xsem_plus": 89,
    "xwoba_against": 0.359,
-   "luck": -0.026
+   "luck": -0.028
   },
   {
    "key": "605288",
@@ -5102,8 +5150,8 @@
    "sem_plus_3yr_pct": 26,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 90,
-   "xwoba_against": 0.359,
-   "luck": 0.014
+   "xwoba_against": 0.355,
+   "luck": 0.007
   },
   {
    "key": "650644",
@@ -5132,8 +5180,8 @@
    "sem_plus_3yr_pct": 7,
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 92,
-   "xwoba_against": 0.35,
-   "luck": 0.018
+   "xwoba_against": 0.348,
+   "luck": 0.036
   },
   {
    "key": "691725",
@@ -5141,7 +5189,7 @@
    "name": "Andrew Painter",
    "team": "PHI",
    "sem_plus": 84,
-   "sem_plus_raw": 84.0,
+   "sem_plus_raw": 84.1,
    "qualified": true,
    "role": "Spot",
    "ip": 65.0,
@@ -5154,46 +5202,16 @@
    "k_bb_pct": 0.097,
    "gb_pct": 0.3704,
    "ip_per_gs": 5.42,
-   "fip": 4.94,
+   "fip": 4.95,
    "era": 7.06,
    "hr9": 1.94,
    "strike_pct": 0.6415,
    "sem_plus_3yr": 84,
    "sem_plus_3yr_pct": 2,
    "sem_plus_3yr_tag": "provisional",
-   "xsem_plus": 94,
-   "xwoba_against": 0.342,
-   "luck": 0.033
-  },
-  {
-   "key": "681347",
-   "mlbam": 681347,
-   "name": "Mike Burrows",
-   "team": "HOU",
-   "sem_plus": 84,
-   "sem_plus_raw": 83.7,
-   "qualified": true,
-   "role": "Spot",
-   "ip": 90.3,
-   "g": 17,
-   "gs": 16,
-   "tbf": 398,
-   "cg": 0,
-   "k_pct": 0.1809,
-   "bb_pct": 0.0829,
-   "k_bb_pct": 0.098,
-   "gb_pct": 0.4301,
-   "ip_per_gs": 5.65,
-   "fip": 4.96,
-   "era": 5.58,
-   "hr9": 1.89,
-   "strike_pct": 0.6462,
-   "sem_plus_3yr": 94,
-   "sem_plus_3yr_pct": 19,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 95,
-   "xwoba_against": 0.338,
-   "luck": 0.047
+   "xsem_plus": 92,
+   "xwoba_against": 0.348,
+   "luck": 0.041
   },
   {
    "key": "500779",
@@ -5214,13 +5232,13 @@
    "k_bb_pct": 0.0166,
    "gb_pct": 0.4184,
    "ip_per_gs": 4.56,
-   "fip": 4.98,
+   "fip": 4.99,
    "era": 5.27,
    "hr9": 1.32,
    "strike_pct": 0.5953,
-   "xsem_plus": 94,
-   "xwoba_against": 0.344,
-   "luck": 0.022
+   "xsem_plus": 93,
+   "xwoba_against": 0.343,
+   "luck": 0.021
   },
   {
    "key": "607200",
@@ -5246,11 +5264,11 @@
    "hr9": 1.59,
    "strike_pct": 0.6034,
    "sem_plus_3yr": 91,
-   "sem_plus_3yr_pct": 12,
+   "sem_plus_3yr_pct": 11,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 96,
-   "xwoba_against": 0.335,
-   "luck": 0.016
+   "xsem_plus": 95,
+   "xwoba_against": 0.334,
+   "luck": 0.007
   },
   {
    "key": "695684",
@@ -5271,7 +5289,7 @@
    "k_bb_pct": -0.012,
    "gb_pct": 0.5641,
    "ip_per_gs": 4.25,
-   "fip": 5.01,
+   "fip": 5.02,
    "era": 4.76,
    "hr9": 0.53,
    "strike_pct": 0.5692
@@ -5295,16 +5313,16 @@
    "k_bb_pct": 0.0676,
    "gb_pct": 0.5,
    "ip_per_gs": 5.11,
-   "fip": 5.01,
+   "fip": 5.02,
    "era": 6.36,
    "hr9": 1.66,
    "strike_pct": 0.6363,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 41,
+   "sem_plus_3yr_pct": 40,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 89,
-   "xwoba_against": 0.362,
-   "luck": 0.003
+   "xsem_plus": 84,
+   "xwoba_against": 0.378,
+   "luck": -0.004
   },
   {
    "key": "680689",
@@ -5373,10 +5391,43 @@
    "k_bb_pct": 0.1159,
    "gb_pct": 0.4167,
    "ip_per_gs": 5.05,
-   "fip": 5.06,
+   "fip": 5.07,
    "era": 8.66,
    "hr9": 2.8,
-   "strike_pct": 0.6006
+   "strike_pct": 0.6006,
+   "xsem_plus": 94,
+   "xwoba_against": 0.34,
+   "luck": 0.057
+  },
+  {
+   "key": "681347",
+   "mlbam": 681347,
+   "name": "Mike Burrows",
+   "team": "HOU",
+   "sem_plus": 82,
+   "sem_plus_raw": 81.8,
+   "qualified": true,
+   "role": "Spot",
+   "ip": 94.7,
+   "g": 18,
+   "gs": 17,
+   "tbf": 423,
+   "cg": 0,
+   "k_pct": 0.1773,
+   "bb_pct": 0.0827,
+   "k_bb_pct": 0.0946,
+   "gb_pct": 0.4315,
+   "ip_per_gs": 5.57,
+   "fip": 5.09,
+   "era": 5.99,
+   "hr9": 2.0,
+   "strike_pct": 0.6477,
+   "sem_plus_3yr": 93,
+   "sem_plus_3yr_pct": 15,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 95,
+   "xwoba_against": 0.336,
+   "luck": 0.039
   },
   {
    "key": "605488",
@@ -5404,16 +5455,16 @@
    "sem_plus_3yr": 90,
    "sem_plus_3yr_pct": 9,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 100,
-   "xwoba_against": 0.322,
-   "luck": 0.021
+   "xsem_plus": 96,
+   "xwoba_against": 0.331,
+   "luck": 0.027
   },
   {
    "key": "592791",
    "mlbam": 592791,
    "name": "Jameson Taillon",
    "team": "CHC",
-   "sem_plus": 81,
+   "sem_plus": 82,
    "sem_plus_raw": 81.5,
    "qualified": true,
    "role": "Spot",
@@ -5432,11 +5483,11 @@
    "hr9": 2.66,
    "strike_pct": 0.6315,
    "sem_plus_3yr": 95,
-   "sem_plus_3yr_pct": 25,
+   "sem_plus_3yr_pct": 26,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 90,
+   "xsem_plus": 89,
    "xwoba_against": 0.357,
-   "luck": -0.002
+   "luck": -0.005
   },
   {
    "key": "694341",
@@ -5444,7 +5495,7 @@
    "name": "Brendan Beck",
    "team": "NYY",
    "sem_plus": 81,
-   "sem_plus_raw": 81.3,
+   "sem_plus_raw": 81.4,
    "qualified": false,
    "role": "Spot",
    "ip": 6.7,
@@ -5510,11 +5561,11 @@
    "hr9": 2.19,
    "strike_pct": 0.6131,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 37,
+   "sem_plus_3yr_pct": 36,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 87,
-   "xwoba_against": 0.369,
-   "luck": 0.036
+   "xsem_plus": 89,
+   "xwoba_against": 0.359,
+   "luck": 0.021
   },
   {
    "key": "682227",
@@ -5522,7 +5573,7 @@
    "name": "Brandon Williamson",
    "team": "CIN",
    "sem_plus": 80,
-   "sem_plus_raw": 80.1,
+   "sem_plus_raw": 80.2,
    "qualified": false,
    "role": "Spot",
    "ip": 28.0,
@@ -5535,40 +5586,10 @@
    "k_bb_pct": -0.0078,
    "gb_pct": 0.3333,
    "ip_per_gs": 4.67,
-   "fip": 5.18,
+   "fip": 5.19,
    "era": 6.11,
    "hr9": 1.29,
    "strike_pct": 0.5753
-  },
-  {
-   "key": "641778",
-   "mlbam": 641778,
-   "name": "Eric Lauer",
-   "team": "LAD",
-   "sem_plus": 80,
-   "sem_plus_raw": 79.7,
-   "qualified": true,
-   "role": "Spot",
-   "ip": 70.7,
-   "g": 14,
-   "gs": 11,
-   "tbf": 299,
-   "cg": 0,
-   "k_pct": 0.1472,
-   "bb_pct": 0.0836,
-   "k_bb_pct": 0.0635,
-   "gb_pct": 0.362,
-   "ip_per_gs": 6.42,
-   "fip": 5.21,
-   "era": 4.84,
-   "hr9": 2.17,
-   "strike_pct": 0.6528,
-   "sem_plus_3yr": 96,
-   "sem_plus_3yr_pct": 31,
-   "sem_plus_3yr_tag": "established",
-   "xsem_plus": 91,
-   "xwoba_against": 0.353,
-   "luck": -0.005
   },
   {
    "key": "666129",
@@ -5589,10 +5610,40 @@
    "k_bb_pct": -0.1071,
    "gb_pct": 0.375,
    "ip_per_gs": 2.17,
-   "fip": 5.24,
+   "fip": 5.25,
    "era": 14.54,
    "hr9": 0.0,
    "strike_pct": 0.5039
+  },
+  {
+   "key": "641778",
+   "mlbam": 641778,
+   "name": "Eric Lauer",
+   "team": "LAD",
+   "sem_plus": 79,
+   "sem_plus_raw": 79.2,
+   "qualified": true,
+   "role": "Spot",
+   "ip": 76.7,
+   "g": 15,
+   "gs": 12,
+   "tbf": 325,
+   "cg": 0,
+   "k_pct": 0.1446,
+   "bb_pct": 0.0831,
+   "k_bb_pct": 0.0615,
+   "gb_pct": 0.339,
+   "ip_per_gs": 6.39,
+   "fip": 5.25,
+   "era": 4.81,
+   "hr9": 2.11,
+   "strike_pct": 0.6564,
+   "sem_plus_3yr": 95,
+   "sem_plus_3yr_pct": 25,
+   "sem_plus_3yr_tag": "established",
+   "xsem_plus": 94,
+   "xwoba_against": 0.341,
+   "luck": -0.007
   },
   {
    "key": "807743",
@@ -5637,17 +5688,20 @@
    "k_bb_pct": 0.0311,
    "gb_pct": 0.6418,
    "ip_per_gs": 4.71,
-   "fip": 5.26,
+   "fip": 5.27,
    "era": 7.36,
    "hr9": 1.91,
-   "strike_pct": 0.601
+   "strike_pct": 0.601,
+   "xsem_plus": 82,
+   "xwoba_against": 0.391,
+   "luck": -0.006
   },
   {
    "key": "608337",
    "mlbam": 608337,
    "name": "Lucas Giolito",
    "team": "SD",
-   "sem_plus": 78,
+   "sem_plus": 79,
    "sem_plus_raw": 78.5,
    "qualified": false,
    "role": "Spot",
@@ -5661,7 +5715,7 @@
    "k_bb_pct": -0.0362,
    "gb_pct": 0.3594,
    "ip_per_gs": 5.93,
-   "fip": 5.29,
+   "fip": 5.3,
    "era": 5.16,
    "hr9": 1.21,
    "strike_pct": 0.5608
@@ -5685,7 +5739,7 @@
    "k_bb_pct": 0.0312,
    "gb_pct": 0.4286,
    "ip_per_gs": 4.33,
-   "fip": 5.33,
+   "fip": 5.34,
    "era": 9.0,
    "hr9": 4.15,
    "strike_pct": 0.6211
@@ -5720,7 +5774,7 @@
    "name": "Zack Littell",
    "team": "WSH",
    "sem_plus": 78,
-   "sem_plus_raw": 77.6,
+   "sem_plus_raw": 77.7,
    "qualified": true,
    "role": "Spot",
    "ip": 86.0,
@@ -5740,9 +5794,9 @@
    "sem_plus_3yr": 92,
    "sem_plus_3yr_pct": 14,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 86,
-   "xwoba_against": 0.373,
-   "luck": -0.033
+   "xsem_plus": 83,
+   "xwoba_against": 0.384,
+   "luck": -0.038
   },
   {
    "key": "680573",
@@ -5768,11 +5822,11 @@
    "hr9": 1.4,
    "strike_pct": 0.5919,
    "sem_plus_3yr": 93,
-   "sem_plus_3yr_pct": 17,
+   "sem_plus_3yr_pct": 18,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 89,
-   "xwoba_against": 0.364,
-   "luck": 0.034
+   "xsem_plus": 86,
+   "xwoba_against": 0.369,
+   "luck": 0.019
   },
   {
    "key": "518876",
@@ -5793,16 +5847,16 @@
    "k_bb_pct": 0.0465,
    "gb_pct": 0.449,
    "ip_per_gs": 5.78,
-   "fip": 5.37,
+   "fip": 5.38,
    "era": 5.71,
    "hr9": 1.97,
    "strike_pct": 0.6318,
    "sem_plus_3yr": 98,
-   "sem_plus_3yr_pct": 40,
+   "sem_plus_3yr_pct": 39,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 78,
-   "xwoba_against": 0.414,
-   "luck": -0.04
+   "xsem_plus": 77,
+   "xwoba_against": 0.412,
+   "luck": -0.033
   },
   {
    "key": "592836",
@@ -5823,7 +5877,7 @@
    "k_bb_pct": 0.0522,
    "gb_pct": 0.52,
    "ip_per_gs": 5.67,
-   "fip": 5.46,
+   "fip": 5.47,
    "era": 9.13,
    "hr9": 3.18,
    "strike_pct": 0.6203
@@ -5854,9 +5908,9 @@
    "sem_plus_3yr": 92,
    "sem_plus_3yr_pct": 12,
    "sem_plus_3yr_tag": "established",
-   "xsem_plus": 104,
+   "xsem_plus": 103,
    "xwoba_against": 0.311,
-   "luck": 0.077
+   "luck": 0.075
   },
   {
    "key": "661563",
@@ -6087,20 +6141,20 @@
   {
    "team": "PHI",
    "n_starters": 6,
-   "rotation_plus": 115,
-   "rotation_plus_raw": 115.0923611111111,
-   "starter_ip": 480.0,
+   "rotation_plus": 113,
+   "rotation_plus_raw": 112.80896551724138,
+   "starter_ip": 483.3,
    "n_above_avg": 3,
-   "total_gs": 83,
-   "front_sem": 129,
+   "total_gs": 84,
+   "front_sem": 126,
    "rotation": [
     {
      "role": "Ace",
      "key": "650911",
      "name": "Cristopher S\u00e1nchez",
-     "sem_plus": 145,
-     "ip": 117.0,
-     "gs": 18
+     "sem_plus": 135,
+     "ip": 120.3,
+     "gs": 19
     },
     {
      "role": "Ace",
@@ -6147,20 +6201,20 @@
   {
    "team": "NYY",
    "n_starters": 9,
-   "rotation_plus": 111,
-   "rotation_plus_raw": 111.41585535465926,
-   "starter_ip": 479.3,
+   "rotation_plus": 112,
+   "rotation_plus_raw": 112.49247606019152,
+   "starter_ip": 487.3,
    "n_above_avg": 6,
-   "total_gs": 88,
-   "front_sem": 120,
+   "total_gs": 89,
+   "front_sem": 121,
    "rotation": [
     {
      "role": "Ace",
      "key": "693645",
      "name": "Cam Schlittler",
-     "sem_plus": 135,
-     "ip": 104.0,
-     "gs": 18
+     "sem_plus": 138,
+     "ip": 112.0,
+     "gs": 19
     },
     {
      "role": "Ace",
@@ -6297,82 +6351,22 @@
    ]
   },
   {
-   "team": "PIT",
-   "n_starters": 6,
-   "rotation_plus": 107,
-   "rotation_plus_raw": 106.99466666666669,
-   "starter_ip": 500.0,
-   "n_above_avg": 4,
-   "total_gs": 87,
-   "front_sem": 117,
-   "rotation": [
-    {
-     "role": "Ace",
-     "key": "694973",
-     "name": "Paul Skenes",
-     "sem_plus": 126,
-     "ip": 97.0,
-     "gs": 18
-    },
-    {
-     "role": "Ace",
-     "key": "677952",
-     "name": "Braxton Ashcraft",
-     "sem_plus": 122,
-     "ip": 108.3,
-     "gs": 18
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "669387",
-     "name": "Carmen Mlodzinski",
-     "sem_plus": 102,
-     "ip": 75.7,
-     "gs": 9
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "683003",
-     "name": "Jared Jones",
-     "sem_plus": 101,
-     "ip": 29.0,
-     "gs": 7
-    },
-    {
-     "role": "Back-end",
-     "key": "656605",
-     "name": "Mitch Keller",
-     "sem_plus": 94,
-     "ip": 100.3,
-     "gs": 18
-    },
-    {
-     "role": "Back-end",
-     "key": "696149",
-     "name": "Bubba Chandler",
-     "sem_plus": 89,
-     "ip": 89.7,
-     "gs": 17
-    }
-   ]
-  },
-  {
    "team": "BOS",
    "n_starters": 7,
-   "rotation_plus": 106,
-   "rotation_plus_raw": 106.32773109243698,
-   "starter_ip": 476.0,
+   "rotation_plus": 107,
+   "rotation_plus_raw": 107.0041782729805,
+   "starter_ip": 478.7,
    "n_above_avg": 5,
-   "total_gs": 83,
-   "front_sem": 115,
+   "total_gs": 84,
+   "front_sem": 116,
    "rotation": [
     {
      "role": "Ace",
      "key": "624133",
      "name": "Ranger Suarez",
-     "sem_plus": 125,
-     "ip": 88.7,
-     "gs": 16
+     "sem_plus": 128,
+     "ip": 91.3,
+     "gs": 17
     },
     {
      "role": "Mid-rotation",
@@ -6425,13 +6419,73 @@
    ]
   },
   {
+   "team": "PIT",
+   "n_starters": 6,
+   "rotation_plus": 107,
+   "rotation_plus_raw": 107.146,
+   "starter_ip": 500.0,
+   "n_above_avg": 4,
+   "total_gs": 87,
+   "front_sem": 117,
+   "rotation": [
+    {
+     "role": "Ace",
+     "key": "694973",
+     "name": "Paul Skenes",
+     "sem_plus": 126,
+     "ip": 97.0,
+     "gs": 18
+    },
+    {
+     "role": "Ace",
+     "key": "677952",
+     "name": "Braxton Ashcraft",
+     "sem_plus": 122,
+     "ip": 108.3,
+     "gs": 18
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "669387",
+     "name": "Carmen Mlodzinski",
+     "sem_plus": 103,
+     "ip": 75.7,
+     "gs": 9
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "683003",
+     "name": "Jared Jones",
+     "sem_plus": 101,
+     "ip": 29.0,
+     "gs": 7
+    },
+    {
+     "role": "Back-end",
+     "key": "656605",
+     "name": "Mitch Keller",
+     "sem_plus": 94,
+     "ip": 100.3,
+     "gs": 18
+    },
+    {
+     "role": "Back-end",
+     "key": "696149",
+     "name": "Bubba Chandler",
+     "sem_plus": 89,
+     "ip": 89.7,
+     "gs": 17
+    }
+   ]
+  },
+  {
    "team": "TB",
    "n_starters": 6,
-   "rotation_plus": 105,
-   "rotation_plus_raw": 105.35690789473685,
-   "starter_ip": 405.3,
-   "n_above_avg": 4,
-   "total_gs": 75,
+   "rotation_plus": 106,
+   "rotation_plus_raw": 105.58407798537775,
+   "starter_ip": 410.3,
+   "n_above_avg": 5,
+   "total_gs": 76,
    "front_sem": 112,
    "rotation": [
     {
@@ -6467,12 +6521,12 @@
      "gs": 17
     },
     {
-     "role": "Back-end",
+     "role": "Mid-rotation",
      "key": "643377",
      "name": "Griffin Jax",
-     "sem_plus": 98,
-     "ip": 60.0,
-     "gs": 12
+     "sem_plus": 100,
+     "ip": 65.0,
+     "gs": 13
     },
     {
      "role": "Spot",
@@ -6488,10 +6542,10 @@
    "team": "TOR",
    "n_starters": 8,
    "rotation_plus": 105,
-   "rotation_plus_raw": 105.19523443504995,
-   "starter_ip": 433.7,
+   "rotation_plus_raw": 105.47152619589977,
+   "starter_ip": 439.0,
    "n_above_avg": 4,
-   "total_gs": 82,
+   "total_gs": 83,
    "front_sem": 119,
    "rotation": [
     {
@@ -6506,9 +6560,9 @@
      "role": "Mid-rotation",
      "key": "592332",
      "name": "Kevin Gausman",
-     "sem_plus": 108,
-     "ip": 101.0,
-     "gs": 18
+     "sem_plus": 109,
+     "ip": 106.3,
+     "gs": 19
     },
     {
      "role": "Mid-rotation",
@@ -6692,7 +6746,7 @@
    "team": "MIA",
    "n_starters": 7,
    "rotation_plus": 103,
-   "rotation_plus_raw": 102.87500000000001,
+   "rotation_plus_raw": 103.02500000000002,
    "starter_ip": 400.0,
    "n_above_avg": 3,
    "total_gs": 72,
@@ -6726,7 +6780,7 @@
      "role": "Back-end",
      "key": "676083",
      "name": "Janson Junk",
-     "sem_plus": 98,
+     "sem_plus": 99,
      "ip": 60.0,
      "gs": 11
     },
@@ -6812,10 +6866,10 @@
    "team": "NYM",
    "n_starters": 6,
    "rotation_plus": 102,
-   "rotation_plus_raw": 102.19961240310077,
-   "starter_ip": 344.0,
+   "rotation_plus_raw": 102.1300191204589,
+   "starter_ip": 348.7,
    "n_above_avg": 4,
-   "total_gs": 65,
+   "total_gs": 66,
    "front_sem": 108,
    "rotation": [
     {
@@ -6855,8 +6909,8 @@
      "key": "642547",
      "name": "Freddy Peralta",
      "sem_plus": 97,
-     "ip": 95.3,
-     "gs": 18
+     "ip": 100.0,
+     "gs": 19
     },
     {
      "role": "Spot",
@@ -6869,82 +6923,14 @@
    ]
   },
   {
-   "team": "LAD",
-   "n_starters": 7,
-   "rotation_plus": 102,
-   "rotation_plus_raw": 102.017316017316,
-   "starter_ip": 462.0,
-   "n_above_avg": 3,
-   "total_gs": 80,
-   "front_sem": 115,
-   "rotation": [
-    {
-     "role": "Ace",
-     "key": "808967",
-     "name": "Yoshinobu Yamamoto",
-     "sem_plus": 119,
-     "ip": 104.7,
-     "gs": 16
-    },
-    {
-     "role": "Ace",
-     "key": "607192",
-     "name": "Tyler Glasnow",
-     "sem_plus": 119,
-     "ip": 39.7,
-     "gs": 7
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "680736",
-     "name": "Justin Wrobleski",
-     "sem_plus": 108,
-     "ip": 93.3,
-     "gs": 14
-    },
-    {
-     "role": "Back-end",
-     "key": "686218",
-     "name": "Emmet Sheehan",
-     "sem_plus": 99,
-     "ip": 75.7,
-     "gs": 16
-    },
-    {
-     "role": "Back-end",
-     "key": "605483",
-     "name": "Blake Snell",
-     "sem_plus": 94,
-     "ip": 3.0,
-     "gs": 1
-    },
-    {
-     "role": "Spot",
-     "key": "808963",
-     "name": "Roki Sasaki",
-     "sem_plus": 86,
-     "ip": 75.0,
-     "gs": 15
-    },
-    {
-     "role": "Spot",
-     "key": "641778",
-     "name": "Eric Lauer",
-     "sem_plus": 80,
-     "ip": 70.7,
-     "gs": 11
-    }
-   ]
-  },
-  {
    "team": "ATL",
    "n_starters": 7,
    "rotation_plus": 101,
-   "rotation_plus_raw": 100.5558867362146,
+   "rotation_plus_raw": 100.73770491803276,
    "starter_ip": 447.3,
    "n_above_avg": 2,
    "total_gs": 79,
-   "front_sem": 107,
+   "front_sem": 108,
    "rotation": [
     {
      "role": "Ace",
@@ -6966,7 +6952,7 @@
      "role": "Back-end",
      "key": "527048",
      "name": "Mart\u00edn P\u00e9rez",
-     "sem_plus": 94,
+     "sem_plus": 95,
      "ip": 81.3,
      "gs": 14
     },
@@ -7005,13 +6991,81 @@
    ]
   },
   {
+   "team": "LAD",
+   "n_starters": 7,
+   "rotation_plus": 101,
+   "rotation_plus_raw": 101.39985795454545,
+   "starter_ip": 469.3,
+   "n_above_avg": 3,
+   "total_gs": 81,
+   "front_sem": 115,
+   "rotation": [
+    {
+     "role": "Ace",
+     "key": "808967",
+     "name": "Yoshinobu Yamamoto",
+     "sem_plus": 119,
+     "ip": 104.7,
+     "gs": 16
+    },
+    {
+     "role": "Ace",
+     "key": "607192",
+     "name": "Tyler Glasnow",
+     "sem_plus": 119,
+     "ip": 39.7,
+     "gs": 7
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "680736",
+     "name": "Justin Wrobleski",
+     "sem_plus": 108,
+     "ip": 93.3,
+     "gs": 14
+    },
+    {
+     "role": "Back-end",
+     "key": "686218",
+     "name": "Emmet Sheehan",
+     "sem_plus": 98,
+     "ip": 77.0,
+     "gs": 16
+    },
+    {
+     "role": "Back-end",
+     "key": "605483",
+     "name": "Blake Snell",
+     "sem_plus": 94,
+     "ip": 3.0,
+     "gs": 1
+    },
+    {
+     "role": "Spot",
+     "key": "808963",
+     "name": "Roki Sasaki",
+     "sem_plus": 86,
+     "ip": 75.0,
+     "gs": 15
+    },
+    {
+     "role": "Spot",
+     "key": "641778",
+     "name": "Eric Lauer",
+     "sem_plus": 79,
+     "ip": 76.7,
+     "gs": 12
+    }
+   ]
+  },
+  {
    "team": "LAA",
    "n_starters": 9,
    "rotation_plus": 100,
-   "rotation_plus_raw": 100.48424068767905,
-   "starter_ip": 465.3,
+   "rotation_plus_raw": 100.30042613636361,
+   "starter_ip": 469.3,
    "n_above_avg": 4,
-   "total_gs": 88,
+   "total_gs": 89,
    "front_sem": 108,
    "rotation": [
     {
@@ -7056,19 +7110,19 @@
     },
     {
      "role": "Spot",
-     "key": "696270",
-     "name": "Ryan Johnson",
-     "sem_plus": 86,
-     "ip": 24.3,
-     "gs": 4
-    },
-    {
-     "role": "Spot",
      "key": "691951",
      "name": "Sam Aldegheri",
      "sem_plus": 85,
      "ip": 33.7,
      "gs": 6
+    },
+    {
+     "role": "Spot",
+     "key": "696270",
+     "name": "Ryan Johnson",
+     "sem_plus": 85,
+     "ip": 28.3,
+     "gs": 5
     },
     {
      "role": "Spot",
@@ -7089,22 +7143,82 @@
    ]
   },
   {
+   "team": "STL",
+   "n_starters": 6,
+   "rotation_plus": 100,
+   "rotation_plus_raw": 99.70042492917847,
+   "starter_ip": 470.7,
+   "n_above_avg": 3,
+   "total_gs": 88,
+   "front_sem": 106,
+   "rotation": [
+    {
+     "role": "Ace",
+     "key": "669160",
+     "name": "Dustin May",
+     "sem_plus": 115,
+     "ip": 89.0,
+     "gs": 17
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "690928",
+     "name": "Hunter Dobbins",
+     "sem_plus": 102,
+     "ip": 17.3,
+     "gs": 2
+    },
+    {
+     "role": "Mid-rotation",
+     "key": "669467",
+     "name": "Andre Pallante",
+     "sem_plus": 100,
+     "ip": 95.0,
+     "gs": 17
+    },
+    {
+     "role": "Back-end",
+     "key": "681517",
+     "name": "Kyle Leahy",
+     "sem_plus": 98,
+     "ip": 86.3,
+     "gs": 17
+    },
+    {
+     "role": "Back-end",
+     "key": "700241",
+     "name": "Michael McGreevy",
+     "sem_plus": 97,
+     "ip": 95.3,
+     "gs": 17
+    },
+    {
+     "role": "Back-end",
+     "key": "669461",
+     "name": "Matthew Liberatore",
+     "sem_plus": 88,
+     "ip": 87.7,
+     "gs": 18
+    }
+   ]
+  },
+  {
    "team": "SF",
    "n_starters": 7,
    "rotation_plus": 100,
-   "rotation_plus_raw": 99.75576662143827,
-   "starter_ip": 491.3,
+   "rotation_plus_raw": 99.78971962616824,
+   "starter_ip": 499.3,
    "n_above_avg": 3,
-   "total_gs": 89,
+   "total_gs": 90,
    "front_sem": 108,
    "rotation": [
     {
      "role": "Mid-rotation",
      "key": "694738",
      "name": "Landen Roupp",
-     "sem_plus": 114,
-     "ip": 89.0,
-     "gs": 17
+     "sem_plus": 113,
+     "ip": 97.0,
+     "gs": 18
     },
     {
      "role": "Mid-rotation",
@@ -7160,10 +7274,10 @@
    "team": "KC",
    "n_starters": 6,
    "rotation_plus": 100,
-   "rotation_plus_raw": 100.05218726016885,
-   "starter_ip": 434.3,
+   "rotation_plus_raw": 100.08573596358119,
+   "starter_ip": 439.3,
    "n_above_avg": 3,
-   "total_gs": 78,
+   "total_gs": 79,
    "front_sem": 103,
    "rotation": [
     {
@@ -7187,8 +7301,8 @@
      "key": "702070",
      "name": "Noah Cameron",
      "sem_plus": 103,
-     "ip": 83.7,
-     "gs": 16
+     "ip": 88.7,
+     "gs": 17
     },
     {
      "role": "Back-end",
@@ -7213,66 +7327,6 @@
      "sem_plus": 90,
      "ip": 35.3,
      "gs": 8
-    }
-   ]
-  },
-  {
-   "team": "STL",
-   "n_starters": 6,
-   "rotation_plus": 99,
-   "rotation_plus_raw": 98.82331902718168,
-   "starter_ip": 466.0,
-   "n_above_avg": 3,
-   "total_gs": 87,
-   "front_sem": 104,
-   "rotation": [
-    {
-     "role": "Mid-rotation",
-     "key": "669160",
-     "name": "Dustin May",
-     "sem_plus": 111,
-     "ip": 84.3,
-     "gs": 16
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "690928",
-     "name": "Hunter Dobbins",
-     "sem_plus": 102,
-     "ip": 17.3,
-     "gs": 2
-    },
-    {
-     "role": "Mid-rotation",
-     "key": "669467",
-     "name": "Andre Pallante",
-     "sem_plus": 100,
-     "ip": 95.0,
-     "gs": 17
-    },
-    {
-     "role": "Back-end",
-     "key": "681517",
-     "name": "Kyle Leahy",
-     "sem_plus": 98,
-     "ip": 86.3,
-     "gs": 17
-    },
-    {
-     "role": "Back-end",
-     "key": "700241",
-     "name": "Michael McGreevy",
-     "sem_plus": 97,
-     "ip": 95.3,
-     "gs": 17
-    },
-    {
-     "role": "Back-end",
-     "key": "669461",
-     "name": "Matthew Liberatore",
-     "sem_plus": 88,
-     "ip": 87.7,
-     "gs": 18
     }
    ]
   },
@@ -7332,7 +7386,7 @@
    "team": "CWS",
    "n_starters": 7,
    "rotation_plus": 98,
-   "rotation_plus_raw": 98.09892638036811,
+   "rotation_plus_raw": 98.3259202453988,
    "starter_ip": 434.7,
    "n_above_avg": 2,
    "total_gs": 71,
@@ -7350,7 +7404,7 @@
      "role": "Mid-rotation",
      "key": "680732",
      "name": "Sean Burke",
-     "sem_plus": 108,
+     "sem_plus": 109,
      "ip": 98.7,
      "gs": 14
     },
@@ -7481,14 +7535,90 @@
    ]
   },
   {
+   "team": "CIN",
+   "n_starters": 8,
+   "rotation_plus": 94,
+   "rotation_plus_raw": 93.57109737248842,
+   "starter_ip": 431.3,
+   "n_above_avg": 1,
+   "total_gs": 84,
+   "front_sem": 101,
+   "rotation": [
+    {
+     "role": "Ace",
+     "key": "695505",
+     "name": "Chase Burns",
+     "sem_plus": 121,
+     "ip": 97.7,
+     "gs": 17
+    },
+    {
+     "role": "Back-end",
+     "key": "668881",
+     "name": "Hunter Greene",
+     "sem_plus": 91,
+     "ip": 3.3,
+     "gs": 1
+    },
+    {
+     "role": "Back-end",
+     "key": "695076",
+     "name": "Rhett Lowder",
+     "sem_plus": 90,
+     "ip": 65.7,
+     "gs": 13
+    },
+    {
+     "role": "Spot",
+     "key": "671096",
+     "name": "Andrew Abbott",
+     "sem_plus": 87,
+     "ip": 95.0,
+     "gs": 18
+    },
+    {
+     "role": "Spot",
+     "key": "666157",
+     "name": "Nick Lodolo",
+     "sem_plus": 87,
+     "ip": 57.7,
+     "gs": 11
+    },
+    {
+     "role": "Spot",
+     "key": "680689",
+     "name": "Lyon Richardson",
+     "sem_plus": 83,
+     "ip": 1.7,
+     "gs": 1
+    },
+    {
+     "role": "Spot",
+     "key": "663903",
+     "name": "Brady Singer",
+     "sem_plus": 81,
+     "ip": 82.3,
+     "gs": 17
+    },
+    {
+     "role": "Spot",
+     "key": "682227",
+     "name": "Brandon Williamson",
+     "sem_plus": 80,
+     "ip": 28.0,
+     "gs": 6
+    }
+   ]
+  },
+  {
    "team": "SD",
    "n_starters": 9,
    "rotation_plus": 94,
-   "rotation_plus_raw": 93.70538461538462,
-   "starter_ip": 433.3,
+   "rotation_plus_raw": 93.60045317220542,
+   "starter_ip": 441.3,
    "n_above_avg": 2,
-   "total_gs": 81,
-   "front_sem": 109,
+   "total_gs": 82,
+   "front_sem": 108,
    "rotation": [
     {
      "role": "Ace",
@@ -7502,9 +7632,9 @@
      "role": "Mid-rotation",
      "key": "621111",
      "name": "Walker Buehler",
-     "sem_plus": 102,
-     "ip": 82.0,
-     "gs": 17
+     "sem_plus": 100,
+     "ip": 87.0,
+     "gs": 18
     },
     {
      "role": "Back-end",
@@ -7520,6 +7650,14 @@
      "name": "Matt Waldron",
      "sem_plus": 92,
      "ip": 23.3,
+     "gs": 3
+    },
+    {
+     "role": "Back-end",
+     "key": "676664",
+     "name": "JP Sears",
+     "sem_plus": 92,
+     "ip": 15.3,
      "gs": 3
     },
     {
@@ -7540,14 +7678,6 @@
     },
     {
      "role": "Spot",
-     "key": "676664",
-     "name": "JP Sears",
-     "sem_plus": 87,
-     "ip": 12.3,
-     "gs": 3
-    },
-    {
-     "role": "Spot",
      "key": "608566",
      "name": "Germ\u00e1n M\u00e1rquez",
      "sem_plus": 81,
@@ -7558,7 +7688,7 @@
      "role": "Spot",
      "key": "608337",
      "name": "Lucas Giolito",
-     "sem_plus": 78,
+     "sem_plus": 79,
      "ip": 29.7,
      "gs": 5
     }
@@ -7633,86 +7763,10 @@
    ]
   },
   {
-   "team": "CIN",
-   "n_starters": 8,
-   "rotation_plus": 93,
-   "rotation_plus_raw": 93.35085007727977,
-   "starter_ip": 431.3,
-   "n_above_avg": 1,
-   "total_gs": 84,
-   "front_sem": 101,
-   "rotation": [
-    {
-     "role": "Ace",
-     "key": "695505",
-     "name": "Chase Burns",
-     "sem_plus": 121,
-     "ip": 97.7,
-     "gs": 17
-    },
-    {
-     "role": "Back-end",
-     "key": "668881",
-     "name": "Hunter Greene",
-     "sem_plus": 91,
-     "ip": 3.3,
-     "gs": 1
-    },
-    {
-     "role": "Back-end",
-     "key": "695076",
-     "name": "Rhett Lowder",
-     "sem_plus": 90,
-     "ip": 65.7,
-     "gs": 13
-    },
-    {
-     "role": "Spot",
-     "key": "666157",
-     "name": "Nick Lodolo",
-     "sem_plus": 87,
-     "ip": 57.7,
-     "gs": 11
-    },
-    {
-     "role": "Spot",
-     "key": "671096",
-     "name": "Andrew Abbott",
-     "sem_plus": 86,
-     "ip": 95.0,
-     "gs": 18
-    },
-    {
-     "role": "Spot",
-     "key": "680689",
-     "name": "Lyon Richardson",
-     "sem_plus": 83,
-     "ip": 1.7,
-     "gs": 1
-    },
-    {
-     "role": "Spot",
-     "key": "663903",
-     "name": "Brady Singer",
-     "sem_plus": 81,
-     "ip": 82.3,
-     "gs": 17
-    },
-    {
-     "role": "Spot",
-     "key": "682227",
-     "name": "Brandon Williamson",
-     "sem_plus": 80,
-     "ip": 28.0,
-     "gs": 6
-    }
-   ]
-  },
-  {
    "team": "CHC",
    "n_starters": 9,
    "rotation_plus": 92,
-   "rotation_plus_raw": 92.26030927835052,
+   "rotation_plus_raw": 92.39110824742268,
    "starter_ip": 517.3,
    "n_above_avg": 2,
    "total_gs": 87,
@@ -7786,7 +7840,7 @@
      "role": "Spot",
      "key": "592791",
      "name": "Jameson Taillon",
-     "sem_plus": 81,
+     "sem_plus": 82,
      "ip": 67.7,
      "gs": 13
     }
@@ -7795,11 +7849,11 @@
   {
    "team": "HOU",
    "n_starters": 8,
-   "rotation_plus": 92,
-   "rotation_plus_raw": 91.81350210970467,
-   "starter_ip": 395.0,
+   "rotation_plus": 91,
+   "rotation_plus_raw": 91.25459098497498,
+   "starter_ip": 399.3,
    "n_above_avg": 0,
-   "total_gs": 75,
+   "total_gs": 76,
    "front_sem": 97,
    "rotation": [
     {
@@ -7854,9 +7908,9 @@
      "role": "Spot",
      "key": "681347",
      "name": "Mike Burrows",
-     "sem_plus": 84,
-     "ip": 90.3,
-     "gs": 16
+     "sem_plus": 82,
+     "ip": 94.7,
+     "gs": 17
     },
     {
      "role": "Spot",
@@ -7948,10 +8002,10 @@
    "team": "COL",
    "n_starters": 7,
    "rotation_plus": 87,
-   "rotation_plus_raw": 87.20232766338407,
-   "starter_ip": 372.3,
+   "rotation_plus_raw": 87.23939929328621,
+   "starter_ip": 377.3,
    "n_above_avg": 0,
-   "total_gs": 76,
+   "total_gs": 77,
    "front_sem": 90,
    "rotation": [
     {
@@ -7967,8 +8021,8 @@
      "key": "607536",
      "name": "Kyle Freeland",
      "sem_plus": 90,
-     "ip": 77.0,
-     "gs": 15
+     "ip": 82.0,
+     "gs": 16
     },
     {
      "role": "Back-end",

@@ -45,6 +45,7 @@ import io
 import json
 import logging
 import statistics
+import time
 import urllib.request
 from datetime import date
 from pathlib import Path
@@ -77,10 +78,24 @@ def _f(v):
         return None
 
 
+_SAVANT_LIVE_TTL_S = 24 * 3600   # current-season CSVs refresh daily; past seasons are final
+
+
 def _savant(kind: str, year: int, side: str = "batter") -> list[dict]:
     CACHE_DIR.mkdir(parents=True, exist_ok=True)
     path = CACHE_DIR / f"{kind}_{side}_{year}.csv"
-    if not path.exists():
+    # Past seasons are immutable -> cache forever. The CURRENT season's leaderboard
+    # moves daily; a forever-cache froze xwOBA/xERA (and every xHEM+/xREM+/xSEM+
+    # deserved-stat join downstream) at whatever day the file first landed, so the
+    # in-season file gets a TTL. A failed refresh falls back to the stale file
+    # (better than dropping the join).
+    stale = False
+    if path.exists() and year >= date.today().year:
+        try:
+            stale = (time.time() - path.stat().st_mtime) > _SAVANT_LIVE_TTL_S
+        except OSError:
+            stale = False
+    if not path.exists() or stale:
         url = LB[kind].format(side=side, year=year)
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         try:
@@ -88,7 +103,8 @@ def _savant(kind: str, year: int, side: str = "batter") -> list[dict]:
                 path.write_bytes(r.read())
         except Exception as e:                                # noqa: BLE001
             log.warning("savant %s/%s/%s failed: %s", kind, side, year, e)
-            return []
+            if not path.exists():
+                return []
     text = path.read_text(encoding="utf-8-sig", errors="replace")
     return list(csv.DictReader(io.StringIO(text)))
 
@@ -186,7 +202,7 @@ def _arsenal_block(mlbam: int, year: int) -> list[dict] | None:
 
 
 def _career_rows(mlbam: int, is_pitcher: bool,
-                 war_by: dict[int, dict[int, float]]) -> list[dict]:
+                 war_by: dict[int, dict[int, dict[str, float]]]) -> list[dict]:
     group = "pitching" if is_pitcher else "hitting"
     out = []
     for season in range(CAREER_FROM, date.today().year + 1):
@@ -195,7 +211,10 @@ def _career_rows(mlbam: int, is_pitcher: bool,
         if not rows:
             continue
         r = max(rows, key=lambda x: _f(x.get("bf" if is_pitcher else "pa")) or 0)
-        war = (war_by.get(mlbam) or {}).get(season)
+        # Side-specific bWAR (batting vs pitching kept separate) so a two-way arm or a
+        # position player's mop-up inning doesn't fold pitching WAR into the hitting row.
+        _sw = (war_by.get(mlbam) or {}).get(season) or {}
+        war = _sw.get("pit" if is_pitcher else "bat")
         if is_pitcher:
             bf = _f(r.get("bf")) or 0
             so, bb = _f(r.get("so")), _f(r.get("bb"))
@@ -217,10 +236,14 @@ def _career_rows(mlbam: int, is_pitcher: bool,
     return out
 
 
-def _war_daily() -> dict[int, dict[int, float]]:
+def _war_daily() -> dict[int, dict[int, dict[str, float]]]:
+    """{mlbam: {season: {"bat": bWAR, "pit": bWAR}}} -- batting and pitching bWAR kept
+    on SEPARATE keys (they used to be summed onto one number and attached to both the
+    hitting and pitching career rows, distorting two-way players and position-player
+    pitching cameos)."""
     import pybaseball as pyb
-    out: dict[int, dict[int, float]] = {}
-    for fn in (pyb.bwar_bat, pyb.bwar_pitch):
+    out: dict[int, dict[int, dict[str, float]]] = {}
+    for fn, side in ((pyb.bwar_bat, "bat"), (pyb.bwar_pitch, "pit")):
         try:
             df = fn(return_all=True)
         except Exception:                                      # noqa: BLE001
@@ -231,8 +254,8 @@ def _war_daily() -> dict[int, dict[int, float]]:
                 mid, yr, war = int(row.mlb_ID), int(row.year_ID), float(row.WAR)
             except (TypeError, ValueError):
                 continue
-            seasons = out.setdefault(mid, {})
-            seasons[yr] = seasons.get(yr, 0.0) + war
+            cell = out.setdefault(mid, {}).setdefault(yr, {})
+            cell[side] = cell.get(side, 0.0) + war
     return out
 
 
@@ -298,10 +321,15 @@ def build_payload() -> dict:
     year = date.today().year
     players: dict[str, dict] = {}
 
-    # vets from the projections universe
+    # vets from the projections universe. proj_export now emits collision-safe keys
+    # (base__mlbam for same-named vets), but guard here too: a duplicate key must
+    # NEVER silently overwrite an existing card (the Will Smith reliever once
+    # replaced the LAD catcher's page) - suffix with mlbam instead.
     for v in proj.get("vets") or []:
         key = v["key"]
         mlbam = v.get("mlbam") or fa_ids.get(key)
+        if key in players:
+            key = f"{key}__{mlbam or 'dup'}"
         is_pit = _is_pitcher_pos(v.get("pos"))
         p = {"key": key, "name": v.get("name"), "mlbam": mlbam,
              "pos": v.get("pos"), "team": v.get("team"), "age": v.get("age"),

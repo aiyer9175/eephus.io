@@ -1,12 +1,32 @@
 {
- "as_of": "2026-06-30",
+ "as_of": "2026-07-07",
  "older_board": "June 2026",
- "newer_board": "Live 2026-06-30",
+ "newer_board": "Live 2026-07-07",
  "movers": [
   {
    "player_key": "josh_adamczewski",
    "name": "Josh Adamczewski",
    "mlbam_id": "815304",
+   "rank": 98,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "owen_murphy",
+   "name": "Owen Murphy",
+   "mlbam_id": "702566",
+   "rank": 99,
+   "prev_rank": null,
+   "rank_delta": null,
+   "fv_delta": null,
+   "status": "entered"
+  },
+  {
+   "player_key": "cam_cannarella",
+   "name": "Cam Cannarella",
+   "mlbam_id": "703448",
    "rank": 100,
    "prev_rank": null,
    "rank_delta": null,

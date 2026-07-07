@@ -948,8 +948,11 @@ def enriched_signings(first_year: int = 2015, last_year: int = 2026) -> list[dic
             if not hist:
                 skipped += 1
                 continue
-            age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-            age = (age_prev + (year - hist[0]["season"])) if age_prev else None
+            # Anchor the year offset to the SEASON of the row that supplied the age, not
+            # hist[0]'s season -- if the most recent row lacks an age, using hist[0].season
+            # with an older row's age understated age by the season gap between them.
+            age_row = next((h for h in hist if h.get("age")), None)
+            age = (age_row["age"] + (year - age_row["season"])) if age_row else None
             path = contract_war_path(hist, side, year, int(s["years"]), age,
                                      curves, war_map, league, use_ml=False)
             if path is None or age is None:

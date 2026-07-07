@@ -627,7 +627,8 @@ def run(persist: bool = True, side: str = "hit") -> dict:
 
     report = {
         "generated_at": date.today().isoformat(),
-        "scope": f"{'PITCHERS' if side == 'pit' else 'HITTERS'}; debut 2017-2023 + never-MLB bust pool",
+        "scope": (f"{'PITCHERS' if side == 'pit' else 'HITTERS'}; debut "
+                  f"{DEBUT_YEARS[0]}-{DEBUT_YEARS[-1]} + never-MLB bust pool"),
         "target": f"first-{TARGET_SEASONS}-season summed bWAR; resolved<= {RESOLVED_THROUGH}",
         "no_model": True,
         "accounting": acct,

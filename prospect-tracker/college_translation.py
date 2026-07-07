@@ -479,23 +479,9 @@ def build(out_dir: Path | None = None) -> dict:
                 f["loo"] = _loo_mae_cov(cs, pro, ck, pi)
                 F[key] = f
 
-        eval_doc = {
-            "method": "matched-pair regression-to-the-mean (college -> Single-A), "
-                      "our-data join: CollegeSavant name -> draft_players -> statlines (A/A+)",
-            "bf_per_9": BF_PER_9, "slope_shrink_k": SLOPE_SHRINK_K,
-            "competition_park_adjusted": False,
-            "caveat": "Not adjusted for strength of schedule or park (no conference/park "
-                      "table held). Bands are P10-P90 and widen with thinner support. "
-                      "hit_ops is experimental: college tracked data barely forecasts "
-                      "Single-A production in our matched sample.",
-            "factors": F,
-            "matched_pairs": {
-                "hitters_with_single_a": sum(1 for s in cs_h if s in sa_h),
-                "pitchers_with_single_a": sum(1 for s in cs_p if s in sa_p),
-            },
-        }
-        (out_dir / "college_translation_eval.json").write_text(
-            json.dumps(eval_doc, indent=1), encoding="utf-8")
+        # NB: the accountability eval artifact is written AFTER the box_k/box_bb
+        # factors are fitted below (they are live-in-production but were omitted from
+        # the artifact when it was written here, before that block).
 
         # Key the per-player sidecar by the frontend slug (slugify of the raw
         # "Last, First" name) so each CollegeSavant player looks up their own.
@@ -523,6 +509,26 @@ def build(out_dir: Path | None = None) -> dict:
             if bf:
                 bf["loo"] = _loo_mae_cov(box_cs, sa_h, bck, bpi)
                 F[bkey] = bf
+
+        # Accountability eval artifact -- written HERE, after ALL factors (including
+        # box_k / box_bb) are in F, so the artifact matches what production actually uses.
+        eval_doc = {
+            "method": "matched-pair regression-to-the-mean (college -> Single-A), "
+                      "our-data join: CollegeSavant name -> draft_players -> statlines (A/A+)",
+            "bf_per_9": BF_PER_9, "slope_shrink_k": SLOPE_SHRINK_K,
+            "competition_park_adjusted": False,
+            "caveat": "Not adjusted for strength of schedule or park (no conference/park "
+                      "table held). Bands are P10-P90 and widen with thinner support. "
+                      "hit_ops is experimental: college tracked data barely forecasts "
+                      "Single-A production in our matched sample.",
+            "factors": F,
+            "matched_pairs": {
+                "hitters_with_single_a": sum(1 for s in cs_h if s in sa_h),
+                "pitchers_with_single_a": sum(1 for s in cs_p if s in sa_p),
+            },
+        }
+        (out_dir / "college_translation_eval.json").write_text(
+            json.dumps(eval_doc, indent=1), encoding="utf-8")
 
         translations, bridge = {}, {}
         pk_to_cs = {}  # draft player_key -> {slug, year, side}: prospects that ALSO

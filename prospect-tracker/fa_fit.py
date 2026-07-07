@@ -366,7 +366,11 @@ def fit_scores(player: dict, market_pred: dict, class_year: int,
     priors = behavior_priors()
     # League-max recent spend normalizes the will-spend component to [0,1].
     max_recent = max((b.get("recent_spend_usd") or 0) for b in priors.values()) or 1
-    war1 = (player.get("_war_path") or {}).get("war_y1") or 1.0
+    # `is None` (not `or`): a projected war_y1 of exactly 0.0 is a real value (a
+    # replacement-level bat), not "missing" -- `or 1.0` gave zero-WAR members a phantom
+    # 1.0-WAR displacement gap and inflated their fit scores.
+    _w1 = (player.get("_war_path") or {}).get("war_y1")
+    war1 = _w1 if _w1 is not None else 1.0
     rows = []
     for org, by_pos in needs.items():
         cell = by_pos.get(pos) or {}

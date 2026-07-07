@@ -6287,15 +6287,15 @@
       gap: 5px;
     }
     .detail-chip-ribbon .ribbon-row .tool-grade-strip {
-      /* Keep the tool/pitch-grade pills on ONE line. Was flex-wrap: wrap,
-         which spilled the strip onto a second row on narrow prospect cards.
-         Overflow scrolls horizontally if the full set is wider than the card;
-         the slightly tighter gap + pill padding below let the common 7-8 pill
-         pitcher strip fit without needing to scroll. */
-      flex-wrap: nowrap;
-      overflow-x: auto;
-      overflow-y: hidden;
-      scrollbar-width: thin;
+      /* WRAP so the FULL tool/pitch-grade set stays visible. A pitcher carries up
+         to 11 pills (TOOL + FB/SL/CB/CH/CT/SP/CMD/frame/athl/delivery); the old
+         nowrap + overflow-x:auto hid the trailing pills off the right edge (read as
+         cut off - Seth Hernandez / Josue De Paula / George Lombard Jr.). The ribbon
+         is a flex column with no fixed height, so wrapping grows it cleanly and the
+         header card above is unchanged (no overlap, no bleed). */
+      flex-wrap: wrap;
+      overflow: visible;
+      row-gap: 4px;
       gap: 3px;
     }
     .detail-chip-ribbon .ribbon-row .tool-grade-pill {
@@ -11756,7 +11756,7 @@ function _statcastStripHTML(p) {
     // above pool reads green; ≤95 below pool reads red). Even a
     // modest +5 vs pool mean is a real signal worth surfacing.
     const sPlusColor = sPlus >= 105 ? "var(--up)" : sPlus <= 95 ? "var(--down)" : "var(--text-primary)";
-    chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (~σ × 15)`));
+    chips.unshift(chip("SC+", String(sPlus), sPlusColor, `Statcast+ composite (${isP ? "pitcher" : "hitter"} blend) · pool-anchored at 100 (10 pts = 1σ)`));
   }
   // Swing+ (Will Cahoon's bat-tracking model, data/swing_plus.json).
   // MLB bat tracking only (2024+) - no public MiLB tracking exists, so

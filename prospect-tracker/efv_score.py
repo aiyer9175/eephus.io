@@ -172,6 +172,20 @@ def _statcast_factor(r, side: str = "hit") -> float:
     return round(min(1.18, max(0.82, 1.0 + (sc - 100.0) * slope)), 3)
 
 
+def _apply_war_tilt(war: float, factor: float) -> float:
+    """Apply a multiplicative injury/Statcast tilt to a (possibly NEGATIVE) WAR
+    projection in the INTENDED direction: a penalty (factor<1) always LOWERS the
+    projection, a boost (factor>1) always RAISES it. For war>=0 that is war*factor;
+    for war<0, war*factor INVERTS (a penalty on a negative war moves it toward zero =
+    UP, so an injured fringe arm leapfrogs his healthy peers and the factors chip
+    reads backwards), so divide instead -- symmetric and monotone across the sign
+    boundary. Floored at the model floor -2.0."""
+    if factor == 1.0 or war is None:
+        return war
+    adj = war * factor if war >= 0 else war / factor
+    return max(-2.0, adj)
+
+
 def _reprice_surplus_on_display(s: dict, is_pit: bool, pos, age=None, eta=None) -> None:
     """Re-price the surplus DOLLARS (surplus_mm + band + the surplus fan) off the DISPLAYED
     20-80 grade (xfv_grade_display) instead of the honestly-deflated realized grade, so the
@@ -430,16 +444,14 @@ def score_history(persist: bool = True) -> dict:
             row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
                                          rec.get("birth_date"), side)
             model_war = max(-2.0, a + b * _predict(ridge, _vec(row, side)))
-            # Pure-model (realized) grade at this snapshot -- the same realized_implied_fv
-            # transform the headline now uses, so the eFV-history chart is on ONE scale
-            # with the current grade (no quantile-remapped discontinuity at the live point).
-            # Same 6-season window AND the same age/position tilt as the headline (run_live
-            # lines 205/482) so the history line traces the badge; without age/position the
-            # inversion biased the line ~1-2 grades LOW at the top (elite prospects most).
-            grade = vf.realized_implied_fv(model_war, side == "pit",
-                                           exposure_seasons=TARGET_SEASONS,
-                                           age=_age_at(rec.get("birth_date"), yr),
-                                           position=rec.get("position"))
+            # DISPLAYED (20-80 quantile-scale) grade at this snapshot: guarded blend ->
+            # live grade map, the same transform behind the headline since the 2026-07-06
+            # quantile flip -- so the eFV-history chart is on ONE scale with the badge (no
+            # scale discontinuity at the live point; the pre-flip realized line sat ~5-9
+            # grades below the displayed number).
+            cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else model_war
+            rank_war = (1 - lam[side]) * cons_war + lam[side] * model_war
+            grade = _map_grade(gmap[side], rank_war)
             if grade is None:
                 continue
             series.append({"d": pt["snapshot_date"], "x": round(grade, 1), "c": round(cons_fv, 1)})
@@ -516,7 +528,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                                "mag": round((1 - inj) * 6, 2)})
         adj_factor = inj * sc
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
-            xfv_war = max(-2.0, xfv_war * adj_factor)
+            xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus
             # anchor cons_war is not also haircut. (rank_war *= adj_factor scaled
             # the whole blend, double-penalizing an injured/low-Statcast player.)
@@ -701,7 +713,7 @@ def run_backgrade(persist: bool = True) -> dict:
         inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
         if inj < 1.0:
             factors.insert(0, {"label": "Injury penalty", "dir": "down", "mag": round((1 - inj) * 6, 2)})
-            xfv_war = max(-2.0, xfv_war * inj)
+            xfv_war = _apply_war_tilt(xfv_war, inj)         # sign-aware (negative-war safe)
             # Tilt the model term only, then rebuild the blend (see the live path
             # above): the consensus anchor must not also be haircut.
             rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war

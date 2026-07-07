@@ -109,7 +109,14 @@ def test_committed_artifact_headline_alias_contract():
 #   grade. Grades (xfv_grade / _quantile) unchanged; only the priced dollars moved (e.g.
 #   jayden_dubanewicz surplus 0.5 -> 1.6 at the displayed 40). Ripples into trade_values +
 #   the farm Value branch via _active_surplus_net_mm. Also refreshed the meta grade_scale note.
-_GOLDEN_XFV_SHA256 = "576bd8fd9cd28c6b1c21f7b711dbede603c45f7722be0998aa080aadcdd21120"
+# Updated 2026-07-07 (model bug-sweep batch 2): (1) injury/Statcast WAR tilt made SIGN-AWARE
+#   (efv_score._apply_war_tilt) -- a multiplicative haircut on a NEGATIVE xfv_war used to
+#   INVERT (an injury RAISED a fringe arm past healthy peers; 153 neg-war+factor rows now
+#   correctly move down); (2) prospect_path._fit_ridge now honors the KM observed-fraction
+#   sample weight + picks alpha on a seeded representative holdout (was the contiguous
+#   last-fifth = oldest busts). OOS eval UNCHANGED (hit 0.3524 / pit 0.2839), so grades shift
+#   only trivially (jayden_dubanewicz 32.5 -> 32.4). No accuracy change; correctness only.
+_GOLDEN_XFV_SHA256 = "75cd0b328f073f25940c239ec708509b868d0b13ae87ebea9a640a39b1818749"
 
 
 def test_efv_grade_map_inverts_on_model_window():

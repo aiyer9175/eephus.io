@@ -1,86 +1,86 @@
 {
 "meta": {
-"generated_at": "2026-07-06",
+"generated_at": "2026-07-07",
 "modeled_tools": {
 "hit": {
-"n": 515,
+"n": 519,
 "realized_stat": "avg",
-"grade_only_spearman": 0.4328,
-"production_partial_after_grade": -0.0492,
+"grade_only_spearman": 0.4373,
+"production_partial_after_grade": -0.0562,
 "blend_weight_insample": 0.0,
 "blend_weight_applied": 0.0,
-"tool_xfv_spearman": 0.4328,
+"tool_xfv_spearman": 0.4373,
 "oos_validation": {
-"n": 392,
-"blend_rho": 0.381,
-"grade_rho": 0.3751,
-"validated": true
+"n": 375,
+"blend_rho": 0.3964,
+"grade_rho": 0.3964,
+"validated": false
 },
-"adds_over_grade_oos": true
+"adds_over_grade_oos": false
 },
 "game_pwr": {
-"n": 515,
+"n": 519,
 "realized_stat": "iso",
-"grade_only_spearman": 0.5162,
-"production_partial_after_grade": 0.0677,
-"blend_weight_insample": 0.135,
+"grade_only_spearman": 0.5161,
+"production_partial_after_grade": 0.0603,
+"blend_weight_insample": 0.121,
 "blend_weight_applied": 0.0,
-"tool_xfv_spearman": 0.5162,
+"tool_xfv_spearman": 0.5161,
 "oos_validation": {
-"n": 392,
-"blend_rho": 0.5018,
-"grade_rho": 0.5029,
+"n": 375,
+"blend_rho": 0.4949,
+"grade_rho": 0.4969,
 "validated": false
 },
 "adds_over_grade_oos": false
 },
 "speed": {
-"n": 515,
+"n": 519,
 "realized_stat": "sb",
-"grade_only_spearman": 0.4875,
+"grade_only_spearman": 0.4836,
 "production_partial_after_grade": null,
 "blend_weight_insample": 0.0,
 "blend_weight_applied": 0.0,
-"tool_xfv_spearman": 0.4875,
+"tool_xfv_spearman": 0.4836,
 "oos_validation": {
-"n": 392,
-"blend_rho": 0.477,
-"grade_rho": 0.4754,
-"validated": true
+"n": 375,
+"blend_rho": 0.4726,
+"grade_rho": 0.4726,
+"validated": false
 },
-"adds_over_grade_oos": true
+"adds_over_grade_oos": false
 },
 "fb": {
-"n": 572,
+"n": 586,
 "realized_stat": "k_pct",
-"grade_only_spearman": 0.2767,
-"production_partial_after_grade": 0.2697,
+"grade_only_spearman": 0.2635,
+"production_partial_after_grade": 0.269,
 "blend_weight_insample": 0.5,
 "blend_weight_applied": 0.5,
-"tool_xfv_spearman": 0.3577,
+"tool_xfv_spearman": 0.3457,
 "oos_validation": {
-"n": 451,
-"blend_rho": 0.3093,
-"grade_rho": 0.2439,
+"n": 435,
+"blend_rho": 0.3143,
+"grade_rho": 0.2544,
 "validated": true
 },
 "adds_over_grade_oos": true
 },
 "cmd": {
-"n": 572,
+"n": 585,
 "realized_stat": "bb_pct",
-"grade_only_spearman": 0.4291,
-"production_partial_after_grade": -0.2487,
+"grade_only_spearman": 0.4335,
+"production_partial_after_grade": -0.2489,
 "blend_weight_insample": 0.0,
 "blend_weight_applied": 0.0,
-"tool_xfv_spearman": 0.4291,
+"tool_xfv_spearman": 0.4335,
 "oos_validation": {
-"n": 451,
-"blend_rho": 0.4146,
-"grade_rho": 0.4029,
-"validated": true
+"n": 435,
+"blend_rho": 0.4068,
+"grade_rho": 0.4068,
+"validated": false
 },
-"adds_over_grade_oos": true
+"adds_over_grade_oos": false
 }
 },
 "passthrough_tools": [
@@ -91,7 +91,7 @@
 ],
 "passthrough_reason": "no clean realized MLB metric in our data; consensus grade used as-is",
 "method": "tool eFV = consensus grade (prior) + pre-debut MiLB production where it adds signal beyond the grade (rank-partial), mapped onto the 20-80 grade scale. Validated vs grade-only on realized MLB stats.",
-"n_players_with_tool_xfv": 1088
+"n_players_with_tool_xfv": 1106
 },
 "by_player": {
 "alexander_canario": {
@@ -174,11 +174,6 @@
 "game_pwr": 50.0,
 "speed": 60.0
 },
-"bobby_bradley": {
-"hit": 37.5,
-"game_pwr": 57.5,
-"speed": 20.0
-},
 "payton_henry": {
 "hit": 37.5,
 "game_pwr": 47.5,
@@ -203,6 +198,11 @@
 "hit": 37.5,
 "game_pwr": 57.5,
 "speed": 40.0
+},
+"bobby_bradley": {
+"hit": 37.5,
+"game_pwr": 57.5,
+"speed": 20.0
 },
 "jacob_nottingham": {
 "hit": 37.5,
@@ -429,6 +429,11 @@
 "game_pwr": 52.5,
 "speed": 37.5
 },
+"dylan_cozens": {
+"hit": 40.0,
+"game_pwr": 60.0,
+"speed": 37.5
+},
 "joey_wiemer": {
 "hit": 41.5,
 "game_pwr": 60.0,
@@ -468,11 +473,6 @@
 "hit": 42.5,
 "game_pwr": 50.0,
 "speed": 60.0
-},
-"yu_chang": {
-"hit": 42.5,
-"game_pwr": 47.5,
-"speed": 50.0
 },
 "cade_marlowe": {
 "hit": 42.5,
@@ -518,11 +518,6 @@
 "hit": 42.5,
 "game_pwr": 60.0,
 "speed": 40.0
-},
-"skye_bolt": {
-"hit": 42.5,
-"game_pwr": 47.5,
-"speed": 57.5
 },
 "james_outman": {
 "hit": 42.5,
@@ -709,11 +704,6 @@
 "game_pwr": 50.0,
 "speed": 40.0
 },
-"nick_plummer": {
-"hit": 45.0,
-"game_pwr": 47.5,
-"speed": 52.5
-},
 "oswaldo_cabrera": {
 "hit": 45.0,
 "game_pwr": 50.0,
@@ -769,6 +759,11 @@
 "game_pwr": 45.0,
 "speed": 55.0
 },
+"nick_plummer": {
+"hit": 45.0,
+"game_pwr": 47.5,
+"speed": 52.5
+},
 "heliot_ramos": {
 "hit": 45.0,
 "game_pwr": 52.5,
@@ -809,11 +804,6 @@
 "game_pwr": 45.0,
 "speed": 60.0
 },
-"luis_alexander_basabe": {
-"hit": 45.0,
-"game_pwr": 47.5,
-"speed": 60.0
-},
 "daz_cameron": {
 "hit": 45.0,
 "game_pwr": 47.5,
@@ -829,15 +819,10 @@
 "game_pwr": 42.5,
 "speed": 70.0
 },
-"dawel_lugo": {
+"luis_alexander_basabe": {
 "hit": 45.0,
-"game_pwr": 40.0,
-"speed": 40.0
-},
-"abiatal_avelino": {
-"hit": 45.0,
-"game_pwr": 32.5,
-"speed": 55.0
+"game_pwr": 47.5,
+"speed": 60.0
 },
 "jorge_mateo": {
 "hit": 45.0,
@@ -869,30 +854,45 @@
 "game_pwr": 55.0,
 "speed": 55.0
 },
-"ryder_jones": {
-"hit": 45.0,
-"game_pwr": 50.0,
-"speed": 30.0
-},
 "zach_green": {
 "hit": 45.0,
 "game_pwr": 55.0,
 "speed": 45.0
+},
+"yu_chang": {
+"hit": 45.0,
+"game_pwr": 52.5,
+"speed": 50.0
 },
 "cavan_biggio": {
 "hit": 45.0,
 "game_pwr": 52.5,
 "speed": 42.5
 },
+"skye_bolt": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 57.5
+},
 "lane_thomas": {
 "hit": 45.0,
 "game_pwr": 47.5,
 "speed": 57.5
 },
+"engelb_vielma": {
+"hit": 45.0,
+"game_pwr": 20.0,
+"speed": 65.0
+},
 "ryan_mcmahon": {
 "hit": 45.0,
 "game_pwr": 52.5,
 "speed": 35.0
+},
+"ryder_jones": {
+"hit": 45.0,
+"game_pwr": 50.0,
+"speed": 30.0
 },
 "franchy_cordero": {
 "hit": 45.0,
@@ -1049,11 +1049,6 @@
 "game_pwr": 45.0,
 "speed": 42.5
 },
-"kelvin_gutierrez": {
-"hit": 47.5,
-"game_pwr": 42.5,
-"speed": 45.0
-},
 "bryan_lavastida": {
 "hit": 47.5,
 "game_pwr": 45.0,
@@ -1068,11 +1063,6 @@
 "hit": 47.5,
 "game_pwr": 50.0,
 "speed": 57.5
-},
-"shed_long_jr": {
-"hit": 47.5,
-"game_pwr": 50.0,
-"speed": 52.5
 },
 "nick_ciuffo": {
 "hit": 47.5,
@@ -1168,6 +1158,11 @@
 "hit": 47.5,
 "game_pwr": 37.5,
 "speed": 50.0
+},
+"shed_long_jr": {
+"hit": 47.5,
+"game_pwr": 50.0,
+"speed": 52.5
 },
 "richie_martin_jr": {
 "hit": 47.5,
@@ -1359,11 +1354,6 @@
 "game_pwr": 53.5,
 "speed": 63.5
 },
-"austin_allen": {
-"hit": 50.0,
-"game_pwr": 55.0,
-"speed": 30.0
-},
 "nick_allen": {
 "hit": 50.0,
 "game_pwr": 30.0,
@@ -1373,16 +1363,6 @@
 "hit": 50.0,
 "game_pwr": 30.0,
 "speed": 55.0
-},
-"justin_williams": {
-"hit": 50.0,
-"game_pwr": 45.0,
-"speed": 42.5
-},
-"rio_ruiz": {
-"hit": 50.0,
-"game_pwr": 42.5,
-"speed": 35.0
 },
 "ryan_vilade": {
 "hit": 50.0,
@@ -1509,16 +1489,6 @@
 "game_pwr": 55.0,
 "speed": 40.0
 },
-"richard_urena": {
-"hit": 50.0,
-"game_pwr": 40.0,
-"speed": 50.0
-},
-"dustin_peterson": {
-"hit": 50.0,
-"game_pwr": 50.0,
-"speed": 47.5
-},
 "donovan_walton": {
 "hit": 50.0,
 "game_pwr": 40.0,
@@ -1544,15 +1514,15 @@
 "game_pwr": 45.0,
 "speed": 60.0
 },
-"carlos_tocci": {
-"hit": 50.0,
-"game_pwr": 25.0,
-"speed": 57.5
-},
 "oscar_mercado": {
 "hit": 50.0,
 "game_pwr": 40.0,
 "speed": 57.5
+},
+"austin_allen": {
+"hit": 50.0,
+"game_pwr": 55.0,
+"speed": 30.0
 },
 "ty_france": {
 "hit": 50.0,
@@ -1569,6 +1539,11 @@
 "game_pwr": 30.0,
 "speed": 52.5
 },
+"abiatal_avelino": {
+"hit": 50.0,
+"game_pwr": 30.0,
+"speed": 50.0
+},
 "rowdy_tellez": {
 "hit": 50.0,
 "game_pwr": 52.5,
@@ -1584,10 +1559,20 @@
 "game_pwr": 45.0,
 "speed": 60.0
 },
+"dustin_peterson": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 47.5
+},
 "jesmuel_valentin": {
 "hit": 50.0,
 "game_pwr": 30.0,
 "speed": 45.0
+},
+"carlos_tocci": {
+"hit": 50.0,
+"game_pwr": 25.0,
+"speed": 57.5
 },
 "billy_mckinney": {
 "hit": 50.0,
@@ -1608,6 +1593,11 @@
 "hit": 50.0,
 "game_pwr": 45.0,
 "speed": 35.0
+},
+"rio_ruiz": {
+"hit": 50.0,
+"game_pwr": 50.0,
+"speed": 30.0
 },
 "adalberto_mondesi": {
 "hit": 50.0,
@@ -1654,6 +1644,11 @@
 "game_pwr": 63.5,
 "speed": 60.0
 },
+"richard_urena": {
+"hit": 51.5,
+"game_pwr": 43.5,
+"speed": 53.5
+},
 "cody_bellinger": {
 "hit": 51.5,
 "game_pwr": 63.5,
@@ -1689,11 +1684,6 @@
 "game_pwr": 37.5,
 "speed": 65.0
 },
-"victor_reyes": {
-"hit": 52.5,
-"game_pwr": 35.0,
-"speed": 57.5
-},
 "logan_ohoppe": {
 "hit": 52.5,
 "game_pwr": 50.0,
@@ -1715,11 +1705,6 @@
 "speed": 35.0
 },
 "alfonso_rivas_iii": {
-"hit": 52.5,
-"game_pwr": 40.0,
-"speed": 40.0
-},
-"daniel_robertson": {
 "hit": 52.5,
 "game_pwr": 40.0,
 "speed": 40.0
@@ -1749,11 +1734,6 @@
 "game_pwr": 37.5,
 "speed": 60.0
 },
-"joe_mccarthy": {
-"hit": 52.5,
-"game_pwr": 47.5,
-"speed": 42.5
-},
 "luis_gonzalez": {
 "hit": 52.5,
 "game_pwr": 37.5,
@@ -1763,6 +1743,11 @@
 "hit": 52.5,
 "game_pwr": 32.5,
 "speed": 50.0
+},
+"joe_mccarthy": {
+"hit": 52.5,
+"game_pwr": 47.5,
+"speed": 42.5
 },
 "mark_mathias": {
 "hit": 52.5,
@@ -1784,6 +1769,11 @@
 "game_pwr": 30.0,
 "speed": 55.0
 },
+"kelvin_gutierrez": {
+"hit": 52.5,
+"game_pwr": 42.5,
+"speed": 45.0
+},
 "bryan_reynolds": {
 "hit": 52.5,
 "game_pwr": 47.5,
@@ -1793,6 +1783,11 @@
 "hit": 52.5,
 "game_pwr": 35.0,
 "speed": 37.5
+},
+"dawel_lugo": {
+"hit": 52.5,
+"game_pwr": 45.0,
+"speed": 40.0
 },
 "brandon_lowe": {
 "hit": 52.5,
@@ -1804,6 +1799,11 @@
 "game_pwr": 40.0,
 "speed": 60.0
 },
+"justin_williams": {
+"hit": 52.5,
+"game_pwr": 52.5,
+"speed": 42.5
+},
 "luis_guillorme": {
 "hit": 52.5,
 "game_pwr": 20.0,
@@ -1813,6 +1813,11 @@
 "hit": 52.5,
 "game_pwr": 27.5,
 "speed": 47.5
+},
+"victor_reyes": {
+"hit": 52.5,
+"game_pwr": 35.0,
+"speed": 57.5
 },
 "austin_hays": {
 "hit": 52.5,
@@ -1828,6 +1833,11 @@
 "hit": 52.5,
 "game_pwr": 30.0,
 "speed": 60.0
+},
+"daniel_robertson": {
+"hit": 52.5,
+"game_pwr": 40.0,
+"speed": 40.0
 },
 "oswald_peraza": {
 "hit": 53.5,
@@ -1848,11 +1858,6 @@
 "hit": 55.0,
 "game_pwr": 53.5,
 "speed": 55.0
-},
-"yonathan_daza": {
-"hit": 55.0,
-"game_pwr": 35.0,
-"speed": 57.5
 },
 "michael_busch": {
 "hit": 55.0,
@@ -1959,11 +1964,6 @@
 "game_pwr": 30.0,
 "speed": 45.0
 },
-"franklin_barreto": {
-"hit": 55.0,
-"game_pwr": 51.5,
-"speed": 56.5
-},
 "otto_lopez": {
 "hit": 55.0,
 "game_pwr": 37.5,
@@ -2013,11 +2013,6 @@
 "hit": 55.0,
 "game_pwr": 56.5,
 "speed": 40.0
-},
-"dustin_fowler": {
-"hit": 55.0,
-"game_pwr": 50.0,
-"speed": 60.0
 },
 "geraldo_perdomo": {
 "hit": 55.0,
@@ -2124,6 +2119,11 @@
 "game_pwr": 35.0,
 "speed": 55.0
 },
+"yonathan_daza": {
+"hit": 55.0,
+"game_pwr": 35.0,
+"speed": 57.5
+},
 "myles_straw": {
 "hit": 55.0,
 "game_pwr": 20.0,
@@ -2148,6 +2148,16 @@
 "hit": 55.0,
 "game_pwr": 58.5,
 "speed": 36.5
+},
+"dustin_fowler": {
+"hit": 55.0,
+"game_pwr": 45.0,
+"speed": 60.0
+},
+"allen_cordoba": {
+"hit": 55.0,
+"game_pwr": 35.0,
+"speed": 55.0
 },
 "albert_almora_jr": {
 "hit": 55.0,
@@ -2204,6 +2214,11 @@
 "game_pwr": 50.0,
 "speed": 66.5
 },
+"franklin_barreto": {
+"hit": 56.5,
+"game_pwr": 48.5,
+"speed": 56.5
+},
 "ezequiel_tovar": {
 "hit": 57.5,
 "game_pwr": 40.0,
@@ -2228,11 +2243,6 @@
 "hit": 57.5,
 "game_pwr": 40.0,
 "speed": 60.0
-},
-"chance_sisco": {
-"hit": 57.5,
-"game_pwr": 45.0,
-"speed": 35.0
 },
 "tucupita_marcano": {
 "hit": 57.5,
@@ -2353,6 +2363,11 @@
 "hit": 58.5,
 "game_pwr": 65.0,
 "speed": 65.0
+},
+"chance_sisco": {
+"hit": 58.5,
+"game_pwr": 45.0,
+"speed": 36.5
 },
 "ian_happ": {
 "hit": 58.5,
@@ -2479,6 +2494,11 @@
 "game_pwr": 42.5,
 "speed": 47.5
 },
+"austin_meadows": {
+"hit": 60.0,
+"game_pwr": 48.5,
+"speed": 58.5
+},
 "alex_verdugo": {
 "hit": 60.0,
 "game_pwr": 50.0,
@@ -2519,15 +2539,15 @@
 "game_pwr": 45.0,
 "speed": 60.0
 },
-"addison_russell": {
-"hit": 60.0,
-"game_pwr": 60.0,
-"speed": 50.0
-},
 "corey_seager": {
 "hit": 60.0,
 "game_pwr": 60.0,
 "speed": 40.0
+},
+"addison_russell": {
+"hit": 60.0,
+"game_pwr": 60.0,
+"speed": 50.0
 },
 "curtis_mead": {
 "hit": 61.5,
@@ -2745,13 +2765,13 @@
 "fb": 45.0,
 "cmd": 62.5
 },
-"clayton_andrews": {
-"fb": 45.0,
-"cmd": 50.0
-},
 "packy_naughton": {
 "fb": 45.0,
 "cmd": 52.5
+},
+"clayton_andrews": {
+"fb": 45.0,
+"cmd": 50.0
 },
 "devin_smeltzer": {
 "fb": 45.0,
@@ -2761,17 +2781,17 @@
 "fb": 45.0,
 "cmd": 50.0
 },
-"michael_plassmeyer": {
+"austin_cox": {
 "fb": 45.0,
-"cmd": 57.5
+"cmd": 45.0
 },
 "paul_campbell": {
 "fb": 45.0,
 "cmd": 55.0
 },
-"austin_cox": {
+"michael_plassmeyer": {
 "fb": 45.0,
-"cmd": 45.0
+"cmd": 57.5
 },
 "angel_zerpa": {
 "fb": 45.0,
@@ -2793,10 +2813,6 @@
 "fb": 45.0,
 "cmd": 52.5
 },
-"jaime_barria": {
-"fb": 45.0,
-"cmd": 60.0
-},
 "jackson_wolf": {
 "fb": 45.0,
 "cmd": 52.5
@@ -2804,6 +2820,10 @@
 "thomas_eshelman": {
 "fb": 45.0,
 "cmd": 70.0
+},
+"jenho_tseng": {
+"fb": 45.0,
+"cmd": 55.0
 },
 "bryce_elder": {
 "fb": 45.0,
@@ -2822,7 +2842,7 @@
 "cmd": 52.5
 },
 "zack_thompson": {
-"fb": 47.5,
+"fb": 45.0,
 "cmd": 50.0
 },
 "anthony_misiewicz": {
@@ -2841,13 +2861,13 @@
 "fb": 47.5,
 "cmd": 50.0
 },
-"nick_margevicius": {
-"fb": 47.5,
-"cmd": 55.0
-},
 "nick_neidert": {
 "fb": 47.5,
 "cmd": 60.0
+},
+"nick_margevicius": {
+"fb": 47.5,
+"cmd": 55.0
 },
 "griffin_jax": {
 "fb": 47.5,
@@ -2877,11 +2897,11 @@
 "fb": 47.5,
 "cmd": 55.0
 },
-"rogelio_armenteros": {
+"nivaldo_rodriguez": {
 "fb": 47.5,
 "cmd": 52.5
 },
-"nivaldo_rodriguez": {
+"rogelio_armenteros": {
 "fb": 47.5,
 "cmd": 52.5
 },
@@ -2897,29 +2917,29 @@
 "fb": 47.5,
 "cmd": 52.5
 },
-"rony_garcia": {
+"peter_lambert": {
 "fb": 47.5,
-"cmd": 50.0
+"cmd": 57.5
 },
 "kyle_leahy": {
 "fb": 47.5,
 "cmd": 50.0
 },
+"jaime_barria": {
+"fb": 47.5,
+"cmd": 60.0
+},
 "eli_morgan": {
 "fb": 48.5,
-"cmd": 55.0
-},
-"peter_lambert": {
-"fb": 50.0,
-"cmd": 57.5
-},
-"sterling_sharp": {
-"fb": 50.0,
 "cmd": 55.0
 },
 "javier_assad": {
 "fb": 50.0,
 "cmd": 50.0
+},
+"sterling_sharp": {
+"fb": 50.0,
+"cmd": 55.0
 },
 "beau_brieske": {
 "fb": 50.0,
@@ -2941,17 +2961,13 @@
 "fb": 50.0,
 "cmd": 45.0
 },
-"jordan_balazovic": {
-"fb": 50.0,
-"cmd": 45.0
-},
 "cal_quantrill": {
 "fb": 50.0,
 "cmd": 52.5
 },
-"cory_abbott": {
+"jordan_balazovic": {
 "fb": 50.0,
-"cmd": 52.5
+"cmd": 45.0
 },
 "davis_daniel": {
 "fb": 50.0,
@@ -2960,6 +2976,10 @@
 "ljay_newsome": {
 "fb": 50.0,
 "cmd": 62.5
+},
+"cory_abbott": {
+"fb": 50.0,
+"cmd": 52.5
 },
 "jonathan_bowlan": {
 "fb": 50.0,
@@ -2989,29 +3009,44 @@
 "fb": 50.0,
 "cmd": 57.5
 },
-"humberto_mejia": {
-"fb": 50.0,
-"cmd": 52.5
-},
 "andre_pallante": {
 "fb": 50.0,
 "cmd": 47.5
 },
-"brandon_walter": {
+"humberto_mejia": {
 "fb": 50.0,
-"cmd": 60.0
+"cmd": 52.5
 },
 "levi_stoudt": {
 "fb": 50.0,
 "cmd": 52.5
 },
+"matt_peacock": {
+"fb": 50.0,
+"cmd": 45.0
+},
+"adonis_medina": {
+"fb": 50.0,
+"cmd": 52.5
+},
+"rony_garcia": {
+"fb": 50.0,
+"cmd": 50.0
+},
+"brandon_walter": {
+"fb": 50.0,
+"cmd": 60.0
+},
 "zac_lowther": {
 "fb": 50.0,
 "cmd": 50.0
 },
-"matt_peacock": {
+"jake_cronenworth": {
+"fb": 50.0
+},
+"pedro_payano": {
 "fb": 50.0,
-"cmd": 45.0
+"cmd": 50.0
 },
 "jordan_yamamoto": {
 "fb": 50.0,
@@ -3021,26 +3056,11 @@
 "fb": 50.0,
 "cmd": 50.0
 },
-"jake_cronenworth": {
-"fb": 50.0
-},
-"jacob_nix": {
+"rob_whalen": {
 "fb": 50.0,
-"cmd": 50.0
-},
-"pedro_payano": {
-"fb": 50.0,
-"cmd": 50.0
-},
-"gabriel_moya": {
-"fb": 50.0,
-"cmd": 50.0
+"cmd": 45.0
 },
 "thomas_pannone": {
-"fb": 50.0,
-"cmd": 52.5
-},
-"adonis_medina": {
 "fb": 50.0,
 "cmd": 52.5
 },
@@ -3052,11 +3072,11 @@
 "fb": 50.0,
 "cmd": 62.5
 },
-"james_kaprielian": {
+"keegan_thompson": {
 "fb": 50.0,
 "cmd": 52.5
 },
-"keegan_thompson": {
+"ethan_small": {
 "fb": 50.0,
 "cmd": 52.5
 },
@@ -3064,23 +3084,15 @@
 "fb": 50.0,
 "cmd": 55.0
 },
-"ethan_small": {
-"fb": 50.0,
-"cmd": 52.5
-},
 "kolby_allard": {
 "fb": 50.0,
 "cmd": 56.5
-},
-"andrew_nardi": {
-"fb": 50.0,
-"cmd": 55.0
 },
 "max_castillo": {
 "fb": 50.0,
 "cmd": 50.0
 },
-"kyle_tyler": {
+"andrew_nardi": {
 "fb": 50.0,
 "cmd": 55.0
 },
@@ -3088,39 +3100,39 @@
 "fb": 50.0,
 "cmd": 60.0
 },
+"kyle_tyler": {
+"fb": 50.0,
+"cmd": 55.0
+},
 "anthony_kay": {
 "fb": 50.0,
 "cmd": 50.0
-},
-"eric_lauer": {
-"fb": 50.0,
-"cmd": 52.5
-},
-"chase_silseth": {
-"fb": 50.0,
-"cmd": 45.0
 },
 "jojo_romero": {
 "fb": 50.0,
 "cmd": 47.5
 },
-"jose_butto": {
+"chase_silseth": {
 "fb": 50.0,
-"cmd": 50.0
-},
-"slade_cecconi": {
-"fb": 50.0,
-"cmd": 52.5
+"cmd": 45.0
 },
 "eduardo_salazar": {
 "fb": 50.0,
 "cmd": 55.0
 },
-"thaddeus_ward": {
+"eric_lauer": {
 "fb": 50.0,
-"cmd": 45.0
+"cmd": 52.5
 },
-"tyson_miller": {
+"slade_cecconi": {
+"fb": 50.0,
+"cmd": 52.5
+},
+"james_kaprielian": {
+"fb": 50.0,
+"cmd": 52.5
+},
+"jose_butto": {
 "fb": 50.0,
 "cmd": 50.0
 },
@@ -3128,33 +3140,41 @@
 "fb": 50.0,
 "cmd": 50.0
 },
+"tyson_miller": {
+"fb": 50.0,
+"cmd": 50.0
+},
 "pablo_lopez": {
 "fb": 50.0,
 "cmd": 57.5
+},
+"thaddeus_ward": {
+"fb": 50.0,
+"cmd": 45.0
 },
 "cody_sedlock": {
 "fb": 50.0,
 "cmd": 50.0
 },
+"jhony_brito": {
+"fb": 50.0,
+"cmd": 55.0
+},
 "david_peterson": {
 "fb": 50.0,
 "cmd": 57.5
 },
-"jhony_brito": {
-"fb": 51.5,
-"cmd": 55.0
-},
 "edwin_uceta": {
+"fb": 51.5,
+"cmd": 52.5
+},
+"wil_crowe": {
 "fb": 52.5,
 "cmd": 52.5
 },
 "jovani_moran": {
 "fb": 52.5,
 "cmd": 40.0
-},
-"wil_crowe": {
-"fb": 52.5,
-"cmd": 52.5
 },
 "kutter_crawford": {
 "fb": 52.5,
@@ -3200,10 +3220,6 @@
 "fb": 52.5,
 "cmd": 45.0
 },
-"justus_sheffield": {
-"fb": 52.5,
-"cmd": 45.0
-},
 "jose_suarez": {
 "fb": 52.5,
 "cmd": 52.5
@@ -3211,10 +3227,6 @@
 "ryan_castellani": {
 "fb": 52.5,
 "cmd": 45.0
-},
-"lewis_thorpe": {
-"fb": 52.5,
-"cmd": 50.0
 },
 "kyle_dohy": {
 "fb": 52.5,
@@ -3224,27 +3236,31 @@
 "fb": 52.5,
 "cmd": 50.0
 },
-"yohander_mendez": {
+"brett_martin": {
 "fb": 52.5,
-"cmd": 42.5
+"cmd": 47.5
 },
 "heath_fillmyer": {
 "fb": 52.5,
 "cmd": 47.5
 },
-"miguel_yajure": {
+"ariel_jurado": {
 "fb": 52.5,
 "cmd": 57.5
 },
-"pedro_avila": {
+"miguel_yajure": {
 "fb": 52.5,
-"cmd": 52.5
+"cmd": 57.5
 },
 "victor_gonzalez": {
 "fb": 52.5,
 "cmd": 47.5
 },
 "jake_wong": {
+"fb": 52.5,
+"cmd": 52.5
+},
+"pedro_avila": {
 "fb": 52.5,
 "cmd": 52.5
 },
@@ -3280,10 +3296,6 @@
 "fb": 52.5,
 "cmd": 50.0
 },
-"chance_adams": {
-"fb": 52.5,
-"cmd": 50.0
-},
 "hunter_gaddis": {
 "fb": 52.5,
 "cmd": 45.0
@@ -3308,11 +3320,11 @@
 "fb": 52.5,
 "cmd": 45.0
 },
-"robert_dugger": {
+"joey_estes": {
 "fb": 52.5,
 "cmd": 50.0
 },
-"joey_estes": {
+"robert_dugger": {
 "fb": 52.5,
 "cmd": 50.0
 },
@@ -3320,13 +3332,17 @@
 "fb": 52.5,
 "cmd": 50.0
 },
-"bailey_ober": {
-"fb": 52.5,
-"cmd": 62.5
-},
 "shane_bieber": {
 "fb": 52.5,
 "cmd": 70.0
+},
+"william_woods": {
+"fb": 52.5,
+"cmd": 40.0
+},
+"alex_lange": {
+"fb": 52.5,
+"cmd": 42.5
 },
 "zac_gallen": {
 "fb": 52.5,
@@ -3340,19 +3356,27 @@
 "fb": 52.5,
 "cmd": 55.0
 },
-"william_woods": {
+"bailey_ober": {
 "fb": 52.5,
-"cmd": 40.0
+"cmd": 62.5
 },
-"alex_lange": {
-"fb": 52.5,
-"cmd": 42.5
-},
-"garrett_hill": {
+"jake_bird": {
 "fb": 52.5,
 "cmd": 50.0
 },
-"jake_bird": {
+"shaun_anderson": {
+"fb": 52.5,
+"cmd": 50.0
+},
+"jackson_tetreault": {
+"fb": 52.5,
+"cmd": 45.0
+},
+"garrett_whitlock": {
+"fb": 52.5,
+"cmd": 52.5
+},
+"garrett_hill": {
 "fb": 52.5,
 "cmd": 50.0
 },
@@ -3360,49 +3384,37 @@
 "fb": 52.5,
 "cmd": 45.0
 },
-"shaun_anderson": {
-"fb": 52.5,
-"cmd": 50.0
-},
-"garrett_whitlock": {
-"fb": 52.5,
-"cmd": 52.5
-},
-"jackson_tetreault": {
-"fb": 52.5,
-"cmd": 45.0
-},
 "tanner_houck": {
-"fb": 53.5,
-"cmd": 45.0
-},
-"jp_france": {
-"fb": 53.5,
+"fb": 52.5,
 "cmd": 45.0
 },
 "aaron_ashby": {
-"fb": 55.0,
+"fb": 53.5,
 "cmd": 42.5
 },
 "joan_adon": {
-"fb": 55.0,
+"fb": 53.5,
 "cmd": 42.5
 },
 "oliver_ortega": {
-"fb": 55.0,
+"fb": 53.5,
 "cmd": 40.0
 },
-"alex_faedo": {
+"jp_france": {
 "fb": 55.0,
-"cmd": 57.5
+"cmd": 45.0
+},
+"frank_german": {
+"fb": 55.0,
+"cmd": 45.0
 },
 "thomas_hatch": {
 "fb": 55.0,
 "cmd": 50.0
 },
-"frank_german": {
+"alex_faedo": {
 "fb": 55.0,
-"cmd": 45.0
+"cmd": 57.5
 },
 "quinn_priester": {
 "fb": 55.0,
@@ -3416,6 +3428,10 @@
 "fb": 55.0,
 "cmd": 50.0
 },
+"tj_zeuch": {
+"fb": 55.0,
+"cmd": 55.0
+},
 "kolton_ingram": {
 "fb": 55.0,
 "cmd": 50.0
@@ -3424,9 +3440,9 @@
 "fb": 55.0,
 "cmd": 40.0
 },
-"tj_zeuch": {
+"dakota_hudson": {
 "fb": 55.0,
-"cmd": 55.0
+"cmd": 47.5
 },
 "shintaro_fujinami": {
 "fb": 55.0,
@@ -3448,17 +3464,25 @@
 "fb": 55.0,
 "cmd": 45.0
 },
-"merandy_gonzalez": {
+"lewis_thorpe": {
 "fb": 55.0,
-"cmd": 45.0
+"cmd": 50.0
+},
+"felix_jorge": {
+"fb": 55.0,
+"cmd": 57.5
+},
+"yohander_mendez": {
+"fb": 55.0,
+"cmd": 55.0
 },
 "tylor_megill": {
 "fb": 55.0,
 "cmd": 45.0
 },
-"dakota_hudson": {
+"roansy_contreras": {
 "fb": 55.0,
-"cmd": 47.5
+"cmd": 50.0
 },
 "josh_walker": {
 "fb": 55.0,
@@ -3468,21 +3492,21 @@
 "fb": 55.0,
 "cmd": 55.0
 },
-"roansy_contreras": {
-"fb": 55.0,
-"cmd": 50.0
-},
 "elvis_peguero": {
 "fb": 55.0,
 "cmd": 50.0
+},
+"jackson_rutledge": {
+"fb": 55.0,
+"cmd": 45.0
 },
 "braxton_garrett": {
 "fb": 55.0,
 "cmd": 55.0
 },
-"jackson_rutledge": {
+"ricardo_pinto": {
 "fb": 55.0,
-"cmd": 45.0
+"cmd": 52.5
 },
 "logan_allen": {
 "fb": 55.0,
@@ -3500,17 +3524,9 @@
 "fb": 55.0,
 "cmd": 50.0
 },
-"ricardo_pinto": {
-"fb": 55.0,
-"cmd": 52.5
-},
 "brady_singer": {
 "fb": 55.0,
 "cmd": 56.5
-},
-"grant_anderson": {
-"fb": 55.0,
-"cmd": 60.0
 },
 "taylor_widener": {
 "fb": 55.0,
@@ -3524,45 +3540,53 @@
 "fb": 55.0,
 "cmd": 47.5
 },
-"daulton_jefferies": {
+"grant_anderson": {
 "fb": 55.0,
 "cmd": 60.0
 },
-"zack_littell": {
+"daulton_jefferies": {
 "fb": 55.0,
-"cmd": 52.5
+"cmd": 60.0
 },
 "seth_elledge": {
 "fb": 55.0,
 "cmd": 42.5
 },
-"reiss_knehr": {
+"zack_littell": {
 "fb": 55.0,
-"cmd": 45.0
+"cmd": 52.5
 },
 "vladimir_gutierrez": {
 "fb": 55.0,
 "cmd": 50.0
 },
-"dane_dunning": {
+"reiss_knehr": {
 "fb": 55.0,
-"cmd": 55.0
-},
-"brenan_hanifee": {
-"fb": 55.0,
-"cmd": 55.0
+"cmd": 45.0
 },
 "sam_bachman": {
 "fb": 55.0,
 "cmd": 45.0
 },
-"logan_webb": {
+"luis_oviedo": {
 "fb": 55.0,
-"cmd": 47.5
+"cmd": 42.5
+},
+"brenan_hanifee": {
+"fb": 55.0,
+"cmd": 55.0
+},
+"dane_dunning": {
+"fb": 55.0,
+"cmd": 55.0
 },
 "adbert_alzolay": {
 "fb": 55.0,
 "cmd": 50.0
+},
+"logan_webb": {
+"fb": 55.0,
+"cmd": 47.5
 },
 "trevor_rogers": {
 "fb": 55.0,
@@ -3572,59 +3596,55 @@
 "fb": 55.0,
 "cmd": 50.0
 },
-"nick_sandlin": {
+"chance_adams": {
 "fb": 55.0,
-"cmd": 57.5
+"cmd": 50.0
 },
 "gregory_santos": {
 "fb": 55.0,
 "cmd": 47.5
 },
-"kyle_nelson": {
-"fb": 55.0,
-"cmd": 55.0
-},
 "chris_flexen": {
 "fb": 55.0,
 "cmd": 50.0
 },
-"tom_cosgrove": {
+"nick_sandlin": {
 "fb": 55.0,
-"cmd": 60.0
-},
-"kyle_hurt": {
-"fb": 55.0,
-"cmd": 40.0
+"cmd": 57.5
 },
 "yency_almonte": {
 "fb": 55.0,
 "cmd": 47.5
 },
-"brendon_little": {
+"kyle_hurt": {
 "fb": 55.0,
-"cmd": 45.0
+"cmd": 40.0
+},
+"kyle_nelson": {
+"fb": 55.0,
+"cmd": 55.0
+},
+"tom_cosgrove": {
+"fb": 55.0,
+"cmd": 60.0
 },
 "roel_ramirez": {
 "fb": 55.0,
 "cmd": 40.0
 },
-"franklyn_kilome": {
+"brendon_little": {
 "fb": 55.0,
-"cmd": 42.5
+"cmd": 45.0
 },
 "cody_bolton": {
 "fb": 55.0,
 "cmd": 45.0
 },
-"evan_lee": {
-"fb": 55.0,
-"cmd": 47.5
-},
 "tucker_davidson": {
 "fb": 55.0,
 "cmd": 50.0
 },
-"jonathan_heasley": {
+"duane_underwood_jr": {
 "fb": 55.0,
 "cmd": 45.0
 },
@@ -3632,9 +3652,21 @@
 "fb": 55.0,
 "cmd": 47.5
 },
+"evan_lee": {
+"fb": 55.0,
+"cmd": 47.5
+},
+"jonathan_heasley": {
+"fb": 55.0,
+"cmd": 45.0
+},
 "jared_solomon": {
 "fb": 55.0,
 "cmd": 45.0
+},
+"ronald_herrera": {
+"fb": 55.0,
+"cmd": 52.5
 },
 "thomas_szapucki": {
 "fb": 55.0,
@@ -3648,6 +3680,10 @@
 "fb": 55.0,
 "cmd": 37.5
 },
+"kyle_funkhouser": {
+"fb": 55.0,
+"cmd": 50.0
+},
 "matt_krook": {
 "fb": 55.0,
 "cmd": 40.0
@@ -3656,17 +3692,13 @@
 "fb": 55.0,
 "cmd": 50.0
 },
-"kyle_funkhouser": {
+"ian_anderson": {
 "fb": 55.0,
-"cmd": 50.0
+"cmd": 51.5
 },
 "ryan_borucki": {
 "fb": 55.0,
 "cmd": 55.0
-},
-"ian_anderson": {
-"fb": 55.0,
-"cmd": 51.5
 },
 "cionel_perez": {
 "fb": 55.0,
@@ -3692,6 +3724,10 @@
 "fb": 55.0,
 "cmd": 37.5
 },
+"merandy_gonzalez": {
+"fb": 55.0,
+"cmd": 45.0
+},
 "lyon_richardson": {
 "fb": 55.0,
 "cmd": 50.0
@@ -3700,23 +3736,19 @@
 "fb": 55.0,
 "cmd": 45.0
 },
-"alec_marsh": {
-"fb": 55.0,
-"cmd": 45.0
-},
-"stephen_gonsalves": {
-"fb": 55.0,
-"cmd": 47.5
-},
 "victor_mederos": {
 "fb": 55.0,
 "cmd": 42.5
+},
+"alec_marsh": {
+"fb": 55.0,
+"cmd": 45.0
 },
 "louis_varland": {
 "fb": 55.0,
 "cmd": 50.0
 },
-"cole_sands": {
+"stephen_gonsalves": {
 "fb": 55.0,
 "cmd": 47.5
 },
@@ -3724,73 +3756,85 @@
 "fb": 56.5,
 "cmd": 55.0
 },
+"cole_sands": {
+"fb": 56.5,
+"cmd": 47.5
+},
 "sean_reidfoley": {
 "fb": 56.5,
 "cmd": 47.5
 },
 "mitch_white": {
-"fb": 56.5,
+"fb": 57.5,
 "cmd": 47.5
 },
 "andrew_abbott": {
 "fb": 57.5,
 "cmd": 47.5
 },
+"mason_thompson": {
+"fb": 57.5,
+"cmd": 40.0
+},
 "wyatt_mills": {
 "fb": 57.5,
 "cmd": 50.0
-},
-"grant_hartwig": {
-"fb": 57.5,
-"cmd": 42.5
 },
 "brandon_bailey": {
 "fb": 57.5,
 "cmd": 42.5
 },
-"jc_mejia": {
+"grant_hartwig": {
 "fb": 57.5,
-"cmd": 52.5
-},
-"mason_thompson": {
-"fb": 57.5,
-"cmd": 40.0
+"cmd": 42.5
 },
 "caleb_kilian": {
 "fb": 57.5,
 "cmd": 65.0
 },
-"ben_bowden": {
+"jc_mejia": {
 "fb": 57.5,
-"cmd": 45.0
+"cmd": 52.5
 },
 "lucas_gilbreath": {
 "fb": 57.5,
 "cmd": 40.0
 },
-"aaron_fletcher": {
+"ben_bowden": {
 "fb": 57.5,
-"cmd": 42.5
+"cmd": 45.0
 },
 "michael_soroka": {
 "fb": 57.5,
 "cmd": 58.5
 },
+"aaron_fletcher": {
+"fb": 57.5,
+"cmd": 42.5
+},
 "sam_hentges": {
 "fb": 57.5,
 "cmd": 42.5
 },
-"jonathan_stiever": {
+"justus_sheffield": {
 "fb": 57.5,
-"cmd": 55.0
+"cmd": 50.0
 },
 "anthony_veneziano": {
 "fb": 57.5,
 "cmd": 45.0
 },
+"jonathan_stiever": {
+"fb": 57.5,
+"cmd": 55.0
+},
 "ronny_henriquez": {
 "fb": 57.5,
 "cmd": 50.0
+},
+"hagen_danner": {
+"fb": 57.5,
+"cmd": 45.0
 },
 "kevin_kelly": {
 "fb": 57.5,
@@ -3800,57 +3844,49 @@
 "fb": 57.5,
 "cmd": 42.5
 },
+"casey_mize": {
+"fb": 57.5,
+"cmd": 60.0
+},
 "jp_sears": {
 "fb": 57.5,
 "cmd": 57.5
-},
-"hagen_danner": {
-"fb": 57.5,
-"cmd": 45.0
 },
 "michael_rucker": {
 "fb": 57.5,
 "cmd": 52.5
 },
-"casey_mize": {
+"keaton_winn": {
 "fb": 57.5,
-"cmd": 60.0
-},
-"corbin_burnes": {
-"fb": 57.5,
-"cmd": 60.0
+"cmd": 45.0
 },
 "anthony_bender": {
 "fb": 57.5,
 "cmd": 45.0
 },
-"keaton_winn": {
+"corbin_burnes": {
 "fb": 57.5,
-"cmd": 45.0
-},
-"gus_varland": {
-"fb": 57.5,
-"cmd": 47.5
+"cmd": 60.0
 },
 "jonathan_hernandez": {
 "fb": 57.5,
 "cmd": 42.5
 },
-"hogan_harris": {
+"gus_varland": {
+"fb": 57.5,
+"cmd": 47.5
+},
+"cristopher_sanchez": {
 "fb": 57.5,
 "cmd": 45.0
 },
-"cristopher_sanchez": {
+"hogan_harris": {
 "fb": 57.5,
 "cmd": 45.0
 },
 "tommy_romero": {
 "fb": 57.5,
 "cmd": 55.0
-},
-"patrick_sandoval": {
-"fb": 57.5,
-"cmd": 47.5
 },
 "yoendrys_gomez": {
 "fb": 57.5,
@@ -3859,6 +3895,14 @@
 "mauricio_llovera": {
 "fb": 57.5,
 "cmd": 45.0
+},
+"franklyn_kilome": {
+"fb": 57.5,
+"cmd": 42.5
+},
+"patrick_sandoval": {
+"fb": 57.5,
+"cmd": 47.5
 },
 "triston_mckenzie": {
 "fb": 57.5,
@@ -3872,6 +3916,10 @@
 "fb": 57.5,
 "cmd": 50.0
 },
+"carlos_vargas": {
+"fb": 57.5,
+"cmd": 40.0
+},
 "ryder_ryan": {
 "fb": 57.5,
 "cmd": 42.5
@@ -3880,39 +3928,35 @@
 "fb": 57.5,
 "cmd": 60.0
 },
-"carlos_vargas": {
-"fb": 57.5,
-"cmd": 40.0
-},
 "keegan_akin": {
 "fb": 57.5,
 "cmd": 47.5
-},
-"hunter_stratton": {
-"fb": 57.5,
-"cmd": 35.0
-},
-"deivi_garcia": {
-"fb": 57.5,
-"cmd": 50.0
 },
 "antonio_senzatela": {
 "fb": 57.5,
 "cmd": 55.0
 },
+"deivi_garcia": {
+"fb": 57.5,
+"cmd": 50.0
+},
 "isaiah_campbell": {
 "fb": 57.5,
 "cmd": 50.0
+},
+"hunter_stratton": {
+"fb": 57.5,
+"cmd": 35.0
 },
 "jose_a_ferrer": {
 "fb": 57.5,
 "cmd": 42.5
 },
-"yerry_rodriguez": {
+"stephen_nogosek": {
 "fb": 57.5,
 "cmd": 45.0
 },
-"stephen_nogosek": {
+"yerry_rodriguez": {
 "fb": 57.5,
 "cmd": 45.0
 },
@@ -3920,25 +3964,21 @@
 "fb": 57.5,
 "cmd": 53.5
 },
-"drew_anderson": {
-"fb": 57.5,
-"cmd": 50.0
-},
 "hunter_harvey": {
-"fb": 57.5,
+"fb": 58.5,
 "cmd": 45.0
 },
 "graham_ashcraft": {
-"fb": 57.5,
+"fb": 58.5,
 "cmd": 47.5
 },
-"ethan_roberts": {
-"fb": 57.5,
+"drew_anderson": {
+"fb": 58.5,
 "cmd": 50.0
 },
-"yennsy_diaz": {
+"hans_crouse": {
 "fb": 58.5,
-"cmd": 40.0
+"cmd": 45.0
 },
 "victor_arano": {
 "fb": 58.5,
@@ -3960,17 +4000,44 @@
 "fb": 58.5,
 "cmd": 35.0
 },
-"luis_escobar": {
-"fb": 58.5,
-"cmd": 40.0
-},
-"kohl_stewart": {
-"fb": 58.5,
-"cmd": 47.5
-},
-"hans_crouse": {
+"yennsy_diaz": {
 "fb": 60.0,
 "cmd": 45.0
+},
+"luis_escobar": {
+"fb": 60.0,
+"cmd": 40.0
+},
+"elvis_luciano": {
+"fb": 60.0,
+"cmd": 50.0
+},
+"kohl_stewart": {
+"fb": 60.0,
+"cmd": 47.5
+},
+"jacob_nix": {
+"fb": 60.0,
+"cmd": 52.5
+},
+"walker_lockett": {
+"fb": 60.0
+},
+"jamie_callahan": {
+"fb": 60.0,
+"cmd": 55.0
+},
+"jairo_labourt": {
+"fb": 60.0,
+"cmd": 40.0
+},
+"eduardo_paredes": {
+"fb": 60.0,
+"cmd": 50.0
+},
+"ethan_roberts": {
+"fb": 60.0,
+"cmd": 50.0
 },
 "josiah_gray": {
 "fb": 60.0,
@@ -3980,10 +4047,6 @@
 "fb": 60.0,
 "cmd": 42.5
 },
-"reese_olson": {
-"fb": 60.0,
-"cmd": 37.5
-},
 "alex_vesia": {
 "fb": 60.0,
 "cmd": 45.0
@@ -3992,27 +4055,31 @@
 "fb": 60.0,
 "cmd": 40.0
 },
-"xzavion_curry": {
-"fb": 60.0,
-"cmd": 57.5
-},
 "jesus_tinoco": {
 "fb": 60.0,
 "cmd": 42.5
 },
-"juan_then": {
+"reese_olson": {
 "fb": 60.0,
-"cmd": 45.0
+"cmd": 37.5
+},
+"xzavion_curry": {
+"fb": 60.0,
+"cmd": 57.5
 },
 "jackson_stephens": {
 "fb": 60.0,
 "cmd": 45.0
 },
-"gavin_hollowell": {
+"juan_then": {
 "fb": 60.0,
 "cmd": 45.0
 },
 "patrick_murphy": {
+"fb": 60.0,
+"cmd": 45.0
+},
+"gavin_hollowell": {
 "fb": 60.0,
 "cmd": 45.0
 },
@@ -4028,14 +4095,6 @@
 "fb": 60.0,
 "cmd": 55.0
 },
-"luis_oviedo": {
-"fb": 60.0,
-"cmd": 42.5
-},
-"peter_solomon": {
-"fb": 60.0,
-"cmd": 45.0
-},
 "adam_oller": {
 "fb": 60.0,
 "cmd": 55.0
@@ -4043,6 +4102,10 @@
 "zach_pop": {
 "fb": 60.0,
 "cmd": 50.0
+},
+"peter_solomon": {
+"fb": 60.0,
+"cmd": 45.0
 },
 "glenn_otto_jr": {
 "fb": 60.0,
@@ -4064,21 +4127,13 @@
 "fb": 60.0,
 "cmd": 45.0
 },
-"griffin_canning": {
-"fb": 60.0,
-"cmd": 55.0
-},
 "lucas_erceg": {
 "fb": 60.0,
 "cmd": 40.0
 },
-"duane_underwood_jr": {
+"griffin_canning": {
 "fb": 60.0,
-"cmd": 45.0
-},
-"jose_espada": {
-"fb": 60.0,
-"cmd": 50.0
+"cmd": 55.0
 },
 "michel_baez": {
 "fb": 60.0,
@@ -4087,6 +4142,10 @@
 "kyle_bradish": {
 "fb": 60.0,
 "cmd": 45.0
+},
+"jose_espada": {
+"fb": 60.0,
+"cmd": 50.0
 },
 "bennett_sousa": {
 "fb": 60.0,
@@ -4112,33 +4171,33 @@
 "fb": 60.0,
 "cmd": 47.5
 },
-"jose_quijada": {
+"jose_castillo": {
 "fb": 60.0,
-"cmd": 45.0
+"cmd": 40.0
 },
 "tanner_bibee": {
 "fb": 60.0,
 "cmd": 60.0
 },
-"jose_castillo": {
-"fb": 60.0,
-"cmd": 40.0
-},
 "amos_willingham": {
 "fb": 60.0,
 "cmd": 40.0
-},
-"gavin_stone": {
-"fb": 60.0,
-"cmd": 51.5
 },
 "george_soriano": {
 "fb": 60.0,
 "cmd": 50.0
 },
+"jose_quijada": {
+"fb": 60.0,
+"cmd": 45.0
+},
 "clarke_schmidt": {
 "fb": 60.0,
 "cmd": 50.0
+},
+"gavin_stone": {
+"fb": 60.0,
+"cmd": 51.5
 },
 "dustin_may": {
 "fb": 60.0,
@@ -4148,37 +4207,33 @@
 "fb": 60.0,
 "cmd": 35.0
 },
-"jorge_guzman": {
-"fb": 60.0,
-"cmd": 37.5
-},
 "devin_williams": {
 "fb": 60.0,
 "cmd": 37.5
-},
-"joe_palumbo": {
-"fb": 60.0,
-"cmd": 47.5
 },
 "taj_bradley": {
 "fb": 60.0,
 "cmd": 60.0
 },
-"tyler_ivey": {
+"joe_palumbo": {
 "fb": 60.0,
-"cmd": 45.0
+"cmd": 47.5
 },
 "adrian_morejon": {
 "fb": 60.0,
 "cmd": 51.5
 },
-"jesus_cruz": {
+"tyler_ivey": {
 "fb": 60.0,
-"cmd": 35.0
+"cmd": 45.0
 },
 "guillo_zuniga": {
 "fb": 60.0,
 "cmd": 40.0
+},
+"jesus_cruz": {
+"fb": 60.0,
+"cmd": 35.0
 },
 "connor_phillips": {
 "fb": 60.0,
@@ -4204,14 +4259,6 @@
 "fb": 60.0,
 "cmd": 52.5
 },
-"garrett_acton": {
-"fb": 60.0,
-"cmd": 40.0
-},
-"connor_brogdon": {
-"fb": 60.0,
-"cmd": 50.0
-},
 "junior_fernandez": {
 "fb": 60.0,
 "cmd": 45.0
@@ -4220,17 +4267,29 @@
 "fb": 60.0,
 "cmd": 37.5
 },
+"garrett_acton": {
+"fb": 60.0,
+"cmd": 40.0
+},
+"connor_brogdon": {
+"fb": 60.0,
+"cmd": 50.0
+},
 "bryse_wilson": {
 "fb": 60.0,
 "cmd": 52.5
+},
+"german_marquez": {
+"fb": 60.0,
+"cmd": 55.0
 },
 "michael_grove": {
 "fb": 60.0,
 "cmd": 47.5
 },
-"german_marquez": {
+"chris_paddack": {
 "fb": 60.0,
-"cmd": 55.0
+"cmd": 63.5
 },
 "nick_lodolo": {
 "fb": 60.0,
@@ -4240,23 +4299,19 @@
 "fb": 60.0,
 "cmd": 45.0
 },
-"chris_paddack": {
+"daniel_lynch_iv": {
 "fb": 60.0,
-"cmd": 63.5
+"cmd": 53.5
 },
 "colin_selby": {
 "fb": 60.0,
 "cmd": 40.0
 },
-"justin_dunn": {
+"kyle_wright": {
 "fb": 60.0,
 "cmd": 50.0
 },
-"daniel_lynch_iv": {
-"fb": 60.0,
-"cmd": 53.5
-},
-"kyle_wright": {
+"justin_dunn": {
 "fb": 60.0,
 "cmd": 50.0
 },
@@ -4280,6 +4335,10 @@
 "fb": 60.0,
 "cmd": 45.0
 },
+"walker_buehler": {
+"fb": 60.0,
+"cmd": 53.5
+},
 "bryan_woo": {
 "fb": 60.0,
 "cmd": 52.5
@@ -4288,29 +4347,29 @@
 "fb": 60.0,
 "cmd": 50.0
 },
-"kodi_whitley": {
-"fb": 60.0,
-"cmd": 50.0
-},
-"walker_buehler": {
-"fb": 60.0,
-"cmd": 53.5
-},
 "hunter_brown": {
 "fb": 60.0,
 "cmd": 42.5
 },
-"lucas_sims": {
+"kodi_whitley": {
 "fb": 60.0,
-"cmd": 45.0
+"cmd": 50.0
 },
 "aj_alexy": {
 "fb": 60.0,
 "cmd": 40.0
 },
+"lucas_sims": {
+"fb": 60.0,
+"cmd": 45.0
+},
 "jesus_luzardo": {
 "fb": 60.0,
 "cmd": 58.5
+},
+"ryan_pepiot": {
+"fb": 60.0,
+"cmd": 45.0
 },
 "brayan_bello": {
 "fb": 60.0,
@@ -4320,17 +4379,13 @@
 "fb": 60.0,
 "cmd": 47.5
 },
-"ryan_pepiot": {
+"blake_cederlind": {
 "fb": 60.0,
-"cmd": 45.0
+"cmd": 40.0
 },
 "alexis_diaz": {
 "fb": 60.0,
 "cmd": 45.0
-},
-"blake_cederlind": {
-"fb": 60.0,
-"cmd": 40.0
 },
 "elieser_hernandez": {
 "fb": 60.0,
@@ -4344,13 +4399,13 @@
 "fb": 60.0,
 "cmd": 45.0
 },
-"dennis_santana": {
-"fb": 60.0,
-"cmd": 50.0
-},
 "jordan_sheffield": {
 "fb": 60.0,
 "cmd": 35.0
+},
+"luiz_gohara": {
+"fb": 60.0,
+"cmd": 50.0
 },
 "randy_rosario": {
 "fb": 60.0,
@@ -4360,6 +4415,10 @@
 "fb": 60.0,
 "cmd": 55.0
 },
+"dennis_santana": {
+"fb": 60.0,
+"cmd": 50.0
+},
 "shane_mcclanahan": {
 "fb": 60.0,
 "cmd": 45.0
@@ -4368,23 +4427,23 @@
 "fb": 60.0,
 "cmd": 42.5
 },
+"gregory_soto": {
+"fb": 61.5,
+"cmd": 40.0
+},
 "brock_burke": {
 "fb": 61.5,
 "cmd": 47.5
-},
-"cristian_javier": {
-"fb": 61.5,
-"cmd": 45.0
-},
-"gregory_soto": {
-"fb": 62.5,
-"cmd": 40.0
 },
 "genesis_cabrera": {
 "fb": 62.5,
 "cmd": 40.0
 },
 "anthony_castro": {
+"fb": 62.5,
+"cmd": 45.0
+},
+"cristian_javier": {
 "fb": 62.5,
 "cmd": 45.0
 },
@@ -4400,6 +4459,10 @@
 "fb": 62.5,
 "cmd": 56.5
 },
+"mitch_keller": {
+"fb": 62.5,
+"cmd": 53.5
+},
 "brandon_pfaadt": {
 "fb": 62.5,
 "cmd": 55.0
@@ -4408,45 +4471,41 @@
 "fb": 62.5,
 "cmd": 40.0
 },
-"mitch_keller": {
-"fb": 62.5,
-"cmd": 53.5
-},
 "hector_perez": {
 "fb": 62.5,
 "cmd": 35.0
-},
-"nick_nelson": {
-"fb": 62.5,
-"cmd": 42.5
 },
 "jose_marte": {
 "fb": 62.5,
 "cmd": 37.5
 },
-"cody_morris": {
+"nick_nelson": {
 "fb": 62.5,
-"cmd": 47.5
+"cmd": 42.5
 },
 "jason_foley": {
 "fb": 62.5,
 "cmd": 45.0
 },
-"jeremiah_estrada": {
+"cody_morris": {
 "fb": 62.5,
-"cmd": 45.0
+"cmd": 47.5
 },
 "freddy_tarnok": {
 "fb": 62.5,
 "cmd": 47.5
 },
-"phil_bickford": {
+"jeremiah_estrada": {
 "fb": 62.5,
-"cmd": 52.5
+"cmd": 45.0
 },
 "jose_soriano": {
 "fb": 62.5,
 "cmd": 40.0
+},
+"phil_bickford": {
+"fb": 62.5,
+"cmd": 52.5
 },
 "ron_marinaccio": {
 "fb": 62.5,
@@ -4456,49 +4515,53 @@
 "fb": 62.5,
 "cmd": 50.0
 },
-"ryan_helsley": {
-"fb": 62.5,
-"cmd": 47.5
-},
 "miguel_diaz": {
 "fb": 62.5,
 "cmd": 40.0
+},
+"ryan_helsley": {
+"fb": 62.5,
+"cmd": 47.5
 },
 "edward_cabrera": {
 "fb": 62.5,
 "cmd": 50.0
 },
+"francis_martes": {
+"fb": 62.5,
+"cmd": 51.5
+},
 "touki_toussaint": {
 "fb": 62.5,
 "cmd": 45.0
-},
-"yohan_ramirez": {
-"fb": 62.5,
-"cmd": 35.0
 },
 "edwar_colina": {
 "fb": 62.5,
 "cmd": 47.5
 },
-"francis_martes": {
+"yohan_ramirez": {
 "fb": 62.5,
-"cmd": 51.5
+"cmd": 35.0
 },
 "brooks_kriske": {
 "fb": 62.5,
 "cmd": 40.0
 },
-"bryan_garcia": {
-"fb": 62.5,
-"cmd": 45.0
-},
 "conner_greene": {
 "fb": 62.5,
 "cmd": 42.5
 },
+"bryan_garcia": {
+"fb": 63.5,
+"cmd": 45.0
+},
 "sixto_sanchez": {
 "fb": 63.5,
 "cmd": 58.5
+},
+"jorge_guzman": {
+"fb": 63.5,
+"cmd": 37.5
 },
 "aj_smithshawver": {
 "fb": 63.5,
@@ -4516,13 +4579,13 @@
 "fb": 63.5,
 "cmd": 50.0
 },
-"anderson_espinoza": {
-"fb": 63.5,
-"cmd": 47.5
-},
 "justin_lawrence": {
 "fb": 63.5,
 "cmd": 37.5
+},
+"anderson_espinoza": {
+"fb": 63.5,
+"cmd": 47.5
 },
 "garrett_cleavinger": {
 "fb": 63.5,
@@ -4532,29 +4595,33 @@
 "fb": 63.5,
 "cmd": 35.0
 },
-"zach_jackson": {
-"fb": 63.5,
-"cmd": 40.0
-},
 "huascar_ynoa": {
 "fb": 63.5,
 "cmd": 45.0
 },
+"zach_jackson": {
+"fb": 65.0,
+"cmd": 40.0
+},
+"cade_cavalli": {
+"fb": 65.0,
+"cmd": 45.0
+},
 "cam_hill": {
-"fb": 63.5,
+"fb": 65.0,
 "cmd": 35.0
 },
 "matt_manning": {
 "fb": 65.0,
 "cmd": 51.5
 },
-"cade_cavalli": {
-"fb": 65.0,
-"cmd": 45.0
-},
 "jhoan_duran": {
 "fb": 65.0,
 "cmd": 47.5
+},
+"johan_quezada": {
+"fb": 65.0,
+"cmd": 45.0
 },
 "shane_baz": {
 "fb": 65.0,
@@ -4564,17 +4631,13 @@
 "fb": 65.0,
 "cmd": 42.5
 },
-"johan_quezada": {
+"jonathan_loaisiga": {
 "fb": 65.0,
-"cmd": 45.0
+"cmd": 52.5
 },
 "jose_berrios": {
 "fb": 65.0,
 "cmd": 55.0
-},
-"jonathan_loaisiga": {
-"fb": 65.0,
-"cmd": 52.5
 },
 "spencer_howard": {
 "fb": 65.0,
@@ -4584,13 +4647,17 @@
 "fb": 65.0,
 "cmd": 42.5
 },
+"brusdar_graterol": {
+"fb": 65.0,
+"cmd": 50.0
+},
 "riley_pint": {
 "fb": 65.0,
 "cmd": 35.0
 },
-"brusdar_graterol": {
+"taylor_hearn": {
 "fb": 65.0,
-"cmd": 50.0
+"cmd": 45.0
 },
 "edwin_diaz": {
 "fb": 65.0,
@@ -4604,37 +4671,37 @@
 "fb": 65.0,
 "cmd": 40.0
 },
-"luis_frias": {
-"fb": 65.0,
-"cmd": 42.5
-},
 "kyle_muller": {
 "fb": 65.0,
 "cmd": 40.0
 },
-"bryan_abreu": {
+"luis_frias": {
 "fb": 65.0,
-"cmd": 45.0
+"cmd": 42.5
 },
 "ray_kerr": {
 "fb": 65.0,
 "cmd": 37.5
 },
+"bryan_abreu": {
+"fb": 65.0,
+"cmd": 45.0
+},
 "victor_vodnik": {
 "fb": 65.0,
 "cmd": 40.0
-},
-"gerson_bautista": {
-"fb": 65.0,
-"cmd": 37.5
 },
 "demarcus_evans": {
 "fb": 65.0,
 "cmd": 37.5
 },
-"alek_manoah": {
+"gerson_bautista": {
 "fb": 65.0,
-"cmd": 50.0
+"cmd": 42.5
+},
+"alex_reyes": {
+"fb": 65.0,
+"cmd": 45.0
 },
 "george_kirby": {
 "fb": 65.0,
@@ -4644,96 +4711,100 @@
 "fb": 65.0,
 "cmd": 42.5
 },
-"mckinley_moore": {
-"fb": 65.0,
-"cmd": 35.0
-},
-"ken_waldichuk": {
+"alek_manoah": {
 "fb": 65.0,
 "cmd": 50.0
 },
+"mckinley_moore": {
+"fb": 66.5,
+"cmd": 35.0
+},
+"ken_waldichuk": {
+"fb": 66.5,
+"cmd": 50.0
+},
 "dylan_coleman": {
-"fb": 65.0,
+"fb": 66.5,
 "cmd": 40.0
 },
 "bryce_miller": {
 "fb": 66.5,
 "cmd": 51.5
 },
-"kevin_ginkel": {
-"fb": 66.5,
-"cmd": 47.5
-},
 "drew_rasmussen": {
 "fb": 66.5,
 "cmd": 45.0
+},
+"kevin_ginkel": {
+"fb": 66.5,
+"cmd": 47.5
 },
 "enoli_paredes": {
 "fb": 66.5,
 "cmd": 42.5
 },
 "angel_de_jesus": {
-"fb": 66.5,
+"fb": 67.5,
 "cmd": 35.0
 },
 "luis_medina": {
-"fb": 66.5,
+"fb": 67.5,
 "cmd": 37.5
-},
-"jose_lopez": {
-"fb": 66.5,
-"cmd": 40.0
 },
 "zack_burdi": {
 "fb": 67.5,
 "cmd": 42.5
 },
+"jose_lopez": {
+"fb": 67.5,
+"cmd": 40.0
+},
 "angel_perdomo": {
 "fb": 67.5,
 "cmd": 35.0
-},
-"ryne_nelson": {
-"fb": 67.5,
-"cmd": 50.0
 },
 "bryce_montes_de_oca": {
 "fb": 67.5,
 "cmd": 30.0
 },
+"ryne_nelson": {
+"fb": 67.5,
+"cmd": 50.0
+},
 "freddy_peralta": {
 "fb": 67.5,
 "cmd": 47.5
+},
+"fernando_romero": {
+"fb": 67.5,
+"cmd": 48.5
 },
 "luis_patino": {
 "fb": 67.5,
 "cmd": 56.5
 },
-"taylor_hearn": {
-"fb": 67.5,
-"cmd": 45.0
-},
 "shawn_dubin": {
 "fb": 67.5,
 "cmd": 37.5
 },
-"julio_urias": {
-"fb": 67.5,
-"cmd": 55.0
-},
 "ian_hamilton": {
-"fb": 67.5,
+"fb": 68.5,
 "cmd": 50.0
+},
+"julio_urias": {
+"fb": 68.5,
+"cmd": 55.0
 },
 "joel_kuhnel": {
 "fb": 68.5,
 "cmd": 52.5
 },
 "josh_hader": {
-"fb": 68.5,
+"fb": 70.0,
 "cmd": 45.0
 },
 "joe_ryan": {
-"fb": 68.5,
+"fb": 70.0,
 "cmd": 60.0
 },
 "jose_alvarado": {
@@ -4752,13 +4823,13 @@
 "fb": 70.0,
 "cmd": 45.0
 },
-"daysbel_hernandez": {
-"fb": 70.0,
-"cmd": 42.5
-},
 "reynaldo_lopez": {
 "fb": 70.0,
 "cmd": 50.0
+},
+"daysbel_hernandez": {
+"fb": 70.0,
+"cmd": 42.5
 },
 "emmet_sheehan": {
 "fb": 70.0,
@@ -4767,6 +4838,10 @@
 "john_mcmillon": {
 "fb": 70.0,
 "cmd": 35.0
+},
+"joe_jimenez": {
+"fb": 70.0,
+"cmd": 47.5
 },
 "bobby_miller": {
 "fb": 70.0,
@@ -4824,6 +4899,10 @@
 "fb": 70.0,
 "cmd": 40.0
 },
+"darwinzon_hernandez": {
+"fb": 70.0,
+"cmd": 42.5
+},
 "luis_severino": {
 "fb": 70.0,
 "cmd": 60.0
@@ -4843,10 +4922,6 @@
 "grayson_rodriguez": {
 "fb": 70.0,
 "cmd": 56.5
-},
-"darwinzon_hernandez": {
-"fb": 70.0,
-"cmd": 42.5
 },
 "aj_puk": {
 "fb": 70.0,
@@ -4888,17 +4963,17 @@
 "fb": 70.0,
 "cmd": 45.0
 },
-"kyle_harrison": {
-"fb": 70.0,
-"cmd": 45.0
-},
 "daniel_palencia": {
-"fb": 72.5,
+"fb": 70.0,
 "cmd": 40.0
 },
 "shohei_ohtani": {
 "fb": 72.5,
 "cmd": 51.5
+},
+"kyle_harrison": {
+"fb": 72.5,
+"cmd": 45.0
 },
 "michael_kopech": {
 "fb": 75.0,
@@ -4920,10 +4995,6 @@
 "fb": 80.0,
 "cmd": 40.0
 },
-"james_karinchak": {
-"fb": 80.0,
-"cmd": 42.5
-},
 "emmanuel_clase": {
 "fb": 80.0,
 "cmd": 40.0
@@ -4931,6 +5002,10 @@
 "andres_munoz": {
 "fb": 80.0,
 "cmd": 40.0
+},
+"james_karinchak": {
+"fb": 80.0,
+"cmd": 42.5
 },
 "colin_poche": {
 "fb": 80.0,
