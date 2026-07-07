@@ -46,6 +46,21 @@
   --shadow-card-hover: 0 2px 6px rgba(15,27,45,.12), 0 0 0 1px rgba(14,43,77,.10);
   --iridescent: linear-gradient(90deg,#B91C1C 0%,#C9A227 35%,#1F7A3A 65%,#0E2B4D 100%);
   --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
+  /* Neon accent tokens - the glossary palette (.gl-app, below) promoted to :root
+     so the MLB modules that reference them OUTSIDE .gl-app resolve site-wide:
+     /mlbstats/ name-link hover + /trademachine/ chips / verdicts / balance bar.
+     Definitions mirror the .gl-app block verbatim - theme-aware because they
+     resolve through the --accent-* tokens (already overridden under
+     [data-theme="dark"]), so no separate dark block is needed; --neon-violet is a
+     fixed hex in both themes, exactly as the glossary sets it. --neon-green is
+     added here (the glossary never defined it; trademachine references it with no
+     fallback). PROSPX is self-contained - its own inline :root still wins there. */
+  --neon-cyan:   var(--accent-cyan);
+  --neon-green:  var(--accent-green);
+  --neon-violet: #b47cff;
+  --neon-amber:  var(--accent-gold);
+  --up:   var(--accent-green);
+  --down: var(--accent-red);
   --grain: rgba(15,27,45,.035);
   --grain2: rgba(139,132,116,.05);
   /* Light-mode background-texture dials (baseball-card cardstock + vintage
@@ -1153,7 +1168,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
 /* ---- front-page modules grid ---- */
 .module-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }
 .module-cols > .home-module + .home-module { }
-.home-module { padding-bottom: 8px; }
+/* min-width:0 lets each module shrink to its 1fr grid track. Without it a grid
+   item keeps min-width:auto (= min-content), so a module whose nowrap content
+   (On This Day rows / kicker) is wider than the single-column mobile track
+   pushed the whole page past the viewport (375px: documentElement scrollWidth
+   409). The inner .otd-body / .kicker h2 already ellipsize, so shrinking the
+   module is clean. */
+.home-module { padding-bottom: 8px; min-width: 0; }
 .home-module.full { grid-column: 1 / -1; }
 
 /* data rows (PROSPX row idiom) */

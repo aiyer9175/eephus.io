@@ -110,4 +110,8 @@ data/xfv_tools_live.json
 data/grpo_model.fingerprint
 # Output-diff harness scratch (tools/pipeline_artifact_diff.py snapshots).
 data/_artifact_fingerprints/
-data/draft_live.json
+# data/draft_live.json is now a COMMITTED idle stub (status "idle", empty picks)
+# so the front end never 404s on this path in a normal deploy. The draft-night
+# poller (tools/draft_live_poller.py) overwrites it READ-ONLY with the live feed
+# on draft night; that live artifact is expected to differ locally on the poller
+# box and is not committed back.

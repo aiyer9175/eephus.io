@@ -40,6 +40,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import sys
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -84,11 +85,16 @@ def _pitcher_game(g: dict) -> dict:
     }
 
 
-def _pull_one(player: dict, seasons: list[int]) -> tuple[str, dict] | None:
+def _pull_one(player: dict, seasons: list[int],
+              ttl_seconds: int = 86400) -> tuple[str, dict] | None:
     """Pull + shape one player's full game log across `seasons` (newest first).
     Returns (player_key, slice_entry) or None on no data / error. Multi-season
     pulls let the frontend build By-season splits; single-season callers pass a
-    one-element list and behave exactly as before."""
+    one-element list and behave exactly as before.
+
+    `ttl_seconds` is forwarded to statcast_metrics._game_logs so an in-process
+    caller can share the same on-disk feed cache the daily d5d Statcast scan
+    just primed (default 86400 = accept a feed pulled within the last day)."""
     key = player.get("player_key")
     mlbam = player.get("mlbam_id")
     if not key or not mlbam:
@@ -98,7 +104,8 @@ def _pull_one(player: dict, seasons: list[int]) -> tuple[str, dict] | None:
     shaped: list[dict] = []
     for season in seasons:
         try:
-            logs = sm._game_logs(int(mlbam), season, is_pitcher=is_p)
+            logs = sm._game_logs(int(mlbam), season, is_pitcher=is_p,
+                                 ttl_seconds=ttl_seconds)
         except Exception as e:  # noqa: BLE001 - network/parse hiccups skip the season
             print(f"  ! {player.get('player_name')} ({mlbam}) {season}: {e}", file=sys.stderr)
             continue
@@ -114,6 +121,96 @@ def _pull_one(player: dict, seasons: list[int]) -> tuple[str, dict] | None:
     return key, {"is_pitcher": is_p, "games": shaped}
 
 
+def build(season: int | None = None,
+          seasons: int = 1,
+          limit: int = 200,
+          workers: int = 8,
+          ttl_seconds: int = 86400,
+          deadline_s: float | None = None,
+          log: logging.Logger | None = None) -> dict:
+    """Pull + shape the top-`limit` prospects' full game logs (by overall_rank)
+    and write data/leaderboard_gamelogs.json. Returns a summary dict.
+
+    In-process entry point for the pipeline (run_daily d5e). `limit` caps to the
+    recognizable top of the board across every level; 0 = full active pool.
+
+    `deadline_s` is a SOFT wall-clock budget (WS-R): once exceeded, no further
+    player results are collected and the not-yet-started pulls are cancelled, so
+    a cache-miss storm can't blow the nightly time budget. Whatever has been
+    pulled is written (partial slice; the frontend staleness notice covers the
+    gaps). Reuses the warm statcast_metrics._game_logs on-disk feed cache, so
+    when the daily d5d Statcast scan primed the same (mlbam, season) feeds
+    moments earlier most pulls are disk-cache hits."""
+    lg = log or logging.getLogger("leaderboard_gamelogs")
+    season = season or datetime.now().year
+    seasons_list = [season - i for i in range(max(1, seasons))]
+
+    boot = json.loads(BOOT.read_text(encoding="utf-8"))
+    players = boot.get("players") or []
+    # Active prospects with an mlbam_id, ordered by overall rank so the sample
+    # is the recognizable top of the board across every level.
+    cand = [p for p in players if p.get("mlbam_id")]
+    cand.sort(key=lambda p: (p.get("overall_rank") is None, p.get("overall_rank") or 1e9))
+    if limit:
+        cand = cand[:limit]
+    lg.info("leaderboard_gamelogs: pulling %d prospects (seasons %s-%s, %d workers%s)",
+            len(cand), seasons_list[-1], seasons_list[0], workers,
+            f", <={deadline_s:.0f}s budget" if deadline_s else "")
+
+    out_players: dict[str, dict] = {}
+    t0 = time.time()
+    deadline = (t0 + deadline_s) if deadline_s else None
+    done = 0
+    skipped_deadline = 0
+    # Not a `with` block: on a budget overrun we break early and shut the pool
+    # down with cancel_futures so queued pulls are dropped rather than awaited.
+    ex = ThreadPoolExecutor(max_workers=workers)
+    futs = {ex.submit(_pull_one, p, seasons_list, ttl_seconds): p for p in cand}
+    try:
+        for fut in as_completed(futs):
+            if deadline and time.time() > deadline:
+                skipped_deadline = len(cand) - done
+                lg.warning("leaderboard_gamelogs: soft %.0fs budget hit - skipping "
+                           "%d remaining players (partial slice is fail-open)",
+                           deadline_s, skipped_deadline)
+                break
+            done += 1
+            res = fut.result()
+            if res:
+                out_players[res[0]] = res[1]
+            if done % 50 == 0:
+                lg.info("  %d/%d (%d with games, %.0fs)",
+                        done, len(cand), len(out_players), time.time() - t0)
+    finally:
+        # wait=False so the pipeline is never blocked behind in-flight stragglers
+        # (<= `workers` of them); cancel_futures drops the not-yet-started pulls.
+        ex.shutdown(wait=False, cancel_futures=True)
+
+    # as_of = latest game date across everyone (the window anchor).
+    as_of = ""
+    for entry in out_players.values():
+        for g in entry["games"]:
+            if g["d"] and g["d"] > as_of:
+                as_of = g["d"]
+
+    slice_obj = {
+        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
+        "season": season,
+        "as_of": as_of,
+        "players": out_players,
+    }
+    OUT.write_text(json.dumps(slice_obj, separators=(",", ":")), encoding="utf-8")
+    total_games = sum(len(e["games"]) for e in out_players.values())
+    elapsed = time.time() - t0
+    lg.info("leaderboard_gamelogs: wrote %s -> %d players, %d games, as_of=%s, "
+            "%.0f KB, %.0fs%s",
+            OUT.name, len(out_players), total_games, as_of,
+            OUT.stat().st_size / 1024, elapsed,
+            f" ({skipped_deadline} skipped by budget)" if skipped_deadline else "")
+    return {"players": len(out_players), "games": total_games, "as_of": as_of,
+            "elapsed_s": elapsed, "skipped_deadline": skipped_deadline}
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--season", type=int, default=datetime.now().year)
@@ -122,55 +219,17 @@ def main() -> int:
                          "so the frontend can build By-season splits. 1 = current "
                          "season only (default, matches the legacy slice).")
     ap.add_argument("--limit", type=int, default=300,
-                    help="POC: cap to the top-N prospects by overall_rank. "
-                         "0 = full active pool (pipeline phase).")
+                    help="Cap to the top-N prospects by overall_rank. "
+                         "0 = full active pool. Pipeline d5e passes 200.")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--deadline", type=float, default=None,
+                    help="Soft wall-clock budget in seconds; on overrun the "
+                         "remaining players are skipped and a partial slice is "
+                         "written (fail-open).")
     args = ap.parse_args()
-    seasons = [args.season - i for i in range(max(1, args.seasons))]
-
-    boot = json.loads(BOOT.read_text(encoding="utf-8"))
-    players = boot.get("players") or []
-    # Active prospects with an mlbam_id, ordered by overall rank so the POC
-    # sample is the recognizable top of the board across every level.
-    cand = [p for p in players if p.get("mlbam_id")]
-    cand.sort(key=lambda p: (p.get("overall_rank") is None, p.get("overall_rank") or 1e9))
-    if args.limit:
-        cand = cand[: args.limit]
-    print(f"pulling game logs for {len(cand)} prospects "
-          f"(seasons {seasons[-1]}-{seasons[0]}) with {args.workers} workers ...")
-
-    out_players: dict[str, dict] = {}
-    t0 = time.time()
-    done = 0
-    with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        futs = {ex.submit(_pull_one, p, seasons): p for p in cand}
-        for fut in as_completed(futs):
-            done += 1
-            res = fut.result()
-            if res:
-                out_players[res[0]] = res[1]
-            if done % 25 == 0:
-                print(f"  {done}/{len(cand)} ({len(out_players)} with games, "
-                      f"{time.time() - t0:.0f}s)")
-
-    # as_of = latest game date across everyone (the window anchor).
-    as_of = ""
-    for entry in out_players.values():
-        for g in entry["games"]:
-            if g["d"] > as_of:
-                as_of = g["d"]
-
-    slice_obj = {
-        "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
-        "season": args.season,
-        "as_of": as_of,
-        "players": out_players,
-    }
-    OUT.write_text(json.dumps(slice_obj, separators=(",", ":")), encoding="utf-8")
-    total_games = sum(len(e["games"]) for e in out_players.values())
-    print(f"wrote {OUT.relative_to(ROOT)}: {len(out_players)} players, "
-          f"{total_games} games, as_of={as_of}, "
-          f"{OUT.stat().st_size / 1024:.0f} KB, {time.time() - t0:.0f}s")
+    logging.basicConfig(level=logging.INFO, format="%(message)s", stream=sys.stdout)
+    build(season=args.season, seasons=args.seasons, limit=args.limit,
+          workers=args.workers, deadline_s=args.deadline)
     return 0
 
 

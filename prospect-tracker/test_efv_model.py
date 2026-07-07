@@ -93,6 +93,9 @@ _EXPECTED_HIT = [
     ("fv", +1), ("obp_rel", +1), ("k_rel", -1), ("peak_k_rel", -1),
     ("age_rel_level", -1), ("n_milb_seasons", +1), ("tool_hit", +1),
     ("tool_speed", +1), ("milb_missing", -1), ("is_ifa", 0), ("is_college", 0),
+    # ops_rel: FV-45 fringe signal shipped via WS-M / M5 (fringe gate, t45 +0.0237;
+    # ledger data/xfv_ops_rel_fringe_eval.json). Kept last (ridge is order-invariant).
+    ("ops_rel", +1),
 ]
 _EXPECTED_PIT = [
     ("fv", +1), ("peak_k_rel", +1), ("k_rel", +1), ("bb_rel", -1),

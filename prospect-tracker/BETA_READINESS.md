@@ -2,25 +2,35 @@
 
 Launch: 2026-07-11. Curated checklist. Legend: [x] verified, [ ] open.
 
-## VERDICT (2026-07-02): GO, conditional on the three owner actions below
+## VERDICT (2026-07-02): GO, conditional on the owner actions below
 
 Everything code-side is done, verified and pushed: three audit waves, an
 adversarial verification pass over the full diff (no P0 findings, every P1/P2
 fixed), four gated model experiments honestly rejected with loss ledgers, one
 new validated metric shipped (gmLI 3yr), and the full gate battery green. The
 remaining launch risk is entirely in the owner actions (production deploy,
-automation secrets, payload size) and the ordinary pre-launch data refresh.
+nginx config, db backup, payload sign-off) and the ordinary pre-launch data
+refresh.
+
+Addendum (2026-07-07): deploy target resolved to the self-building nginx box
+(deploy/README.md Option 1) with a written runbook
+(docs/prelaunch-2026-07/DEPLOY_RUNBOOK.md); the owner-action list below is now
+the deploy cron + first-run seed, the initial webroot redeploy, the nginx
+cache-header block, the prospects.db backup cron, and a one-line payload
+accept-for-Beta sign-off. Launch-cycle code work landed today is in the new
+"Completed 2026-07-07" section.
 
 ## Data freshness
 
 - [x] Daily pipeline green: latest daily run completed clean 2026-07-02
       (timeseries generated_at 2026-07-02T17:39Z; timeseries.json is
       untracked by design, owned by the pipeline).
-- [x] Model registry: 71 rows (21 validated / 34 provisional / 4 unvalidated /
+- [x] Model registry: 75 rows (21 validated / 38 provisional / 4 unvalidated /
       12 deprecated), validate() clean (see MODEL_REGISTRY.md, generated from the
-      same file). Count refreshed 2026-07-05 after the improvement-program pass
-      (eFV lean+1 / college-backfill / reliability-split rows + wRC+/trade-board
-      / star-odds / college honesty work).
+      same file). Refreshed 2026-07-07 by the pre-beta registry-hygiene pass
+      (xfv_backgrade registered; the external/pending unvalidated rows relabeled;
+      see "Completed 2026-07-07" below). May rise further when the eFV accuracy
+      pass (docs/prelaunch-2026-07/GATES.md) registers any M-gate winner rows.
 - [ ] Monthly run lands before launch with this pass's pipeline additions in
       (6b4b gmLI refresh, generated-docs regen after registry restamps;
       draft/pipeline fixes only reach tracked draft_timeseries.json on the
@@ -89,21 +99,75 @@ automation secrets, payload size) and the ordinary pre-launch data refresh.
 
 ## Owner actions (pending, cannot be done by agents)
 
-- [ ] Production eephus.io is a STALE nginx build; redeploy the current tree
-      (nightly Pages workflow exists; production box was never repointed).
-- [ ] One-time Pages automation setup: cron or the 3 repo secrets for the
-      07:30 UTC nightly workflow.
-- [ ] Payload backlog decision: debuts payload ~122MB, boot payload ~62MB;
-      either accept for Beta or approve the trim plan before launch.
+Deploy target is CHOSEN: the nginx box builds itself nightly (deploy/README.md
+Option 1 - it pulls the repo, runs the pipeline, gates on the suite, and rsyncs
+the webroot; a red suite leaves the live site untouched). The full owner-facing
+runbook is docs/prelaunch-2026-07/DEPLOY_RUNBOOK.md; the lines below reference it
+rather than duplicate it. (deploy/README.md Option 2, the Actions-builds +
+SSH-push path with 3 repo secrets, stays documented as the alternative.)
+
+- [ ] Install the nightly cron + seed the first run: DEPLOY_RUNBOOK.md sections
+      1-2 (the exact 03:10 ET line; `EEPHUS_FULL=1` for the very first run so
+      every tracked artifact rebuilds once from a clean pull).
+- [ ] Initial webroot redeploy (production is STALE): production nginx still
+      serves a hand-copied build and is not replaced until the first green
+      nightly rsyncs the fresh build into `$WEBROOT` (DEPLOY_RUNBOOK.md section
+      3). Treat launch day as "not live until the first green nightly publishes";
+      confirm the webroot timestamps advanced and `/data/` boot JSON matches.
+- [ ] nginx server block: enable `gzip_static` + the per-location cache headers
+      (deploy/README.md nginx section, updated 2026-07-07). `/data/` takes a long
+      `max-age` (payloads are `?v=<stamp>` cache-busted); `/assets/` and `*.html`
+      stay `no-cache` so a rebuild is picked up on the next request and the
+      hand-authored PROSPX/CollegeSavant shared `?v=` lag can never strand assets.
+      `sudo nginx -t && sudo systemctl reload nginx` after.
+- [ ] prospects.db nightly backup: add the sqlite `.backup` cron line a few
+      minutes before the build (DEPLOY_RUNBOOK.md section 5). prospects.db is the
+      one piece of state that does not rebuild from scratch.
+- [ ] Payload weight: RECOMMENDATION is accept-for-Beta as-is (debuts payload
+      ~122MB, boot ~62MB on disk; `gzip_static` ships the `.gz` twins so wire
+      weight is far lower). The trim plan is deferred to REVIEW_QUEUE.md item 16
+      (post-beta), so this is a one-line owner sign-off, not a pre-launch build.
 
 ## Launch-day tasks
 
-- [ ] Run editorial_eval when the first spotlight cohort matures
-      (~2026-07-11). NOTE the designed forcing function: once it first
-      writes data/editorial_eval.json, the standing-rule test goes red until
-      the owner registers a verdict for the `spotlights_movement` row.
+Morning-of checklist: docs/prelaunch-2026-07/LAUNCH_DAY.md.
+
+- [ ] editorial_eval same-day-verdict rule: when the first spotlight cohort
+      matures (~2026-07-11) the pipeline writes data/editorial_eval.json for the
+      first time, which turns the withheld-until-matured guard
+      (`test_phase4b_evals.py`) RED and FREEZES the nightly deploy (the gate
+      blocks the rsync, so the site stops publishing). Register the
+      `spotlights_movement` verdict OFF `unvalidated` in the model registry and
+      commit it the SAME DAY. Full procedure: DEPLOY_RUNBOOK.md section 6.
 - [ ] Final `python tools/gen_audit_docs.py` + commit, so the generated
       deliverables snapshot the shipped tree.
+
+## Completed 2026-07-07 (launch-cycle pass)
+
+- [x] Deploy/golden reconciliation: the nightly gate runs with
+      `EEPHUS_DEPLOY_RUN=1`, which relaxes the dev-time exact-hash golden
+      tripwires (data/xfv.json + sibling artifact goldens) to SHAPE checks,
+      because a deploy run legitimately regenerates those files from fresh data
+      every night; dev and CI keep the exact-hash behavior (DEPLOY_RUNBOOK.md
+      section 1).
+- [x] Asset versioning: generated pages hash `/assets/` via
+      `build_site._asset_ver()`; the hand-authored PROSPX/CollegeSavant pages
+      `?v=`-stamp their vendor + same-directory JS, and the `/assets/` no-cache
+      header (owner action above) covers the shared-`?v=` lag.
+- [x] Beta badge shipped (PROSPX).
+- [x] Tokens/chips pass.
+- [x] L15 (last-15) chip.
+- [x] Staleness notice: the site surfaces data_freshness stamps (PROSPX) so a
+      stale nightly is visible to readers instead of failing silently.
+- [x] Consensus glossary note.
+- [x] Draft-weights equal-weight reset: draft-board sources hold at 1.0
+      (`draft_consensus_weight`; the accuracy-weighted blend did not clear equal
+      out-of-sample, so equal-weight is the honest live vote).
+- [x] Model-registry hygiene: `xfv_backgrade` registered (provisional,
+      documented under the eFV glossary entry); the external/pending unvalidated
+      rows (`stuff_plus_external`, `swing_plus_external`, `spotlights_movement`)
+      relabeled with dated honesty notes (kept `unvalidated` on purpose);
+      validate() clean; MODEL_REGISTRY.md regenerated.
 
 ## Standing rules in force for the wave
 

@@ -258,10 +258,10 @@
    "bias_corrected": 424
   },
   "shippable_level_bias_adj": {
-   "DSL": 0.5,
+   "A": 0.5,
    "AA": 0.5,
    "CPX": 0.5,
-   "A": 0.5,
+   "DSL": 0.5,
    "AAA": 0.5,
    "A+": 0.5
   },

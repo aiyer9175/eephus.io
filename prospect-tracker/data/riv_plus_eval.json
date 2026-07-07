@@ -25,7 +25,7 @@
  },
  "forward_stability_check": {
   "riv_plus_y_to_y1_rho": 0.2094,
-  "rem_plus_y_to_y1_rho": 0.3495,
+  "rem_plus_y_to_y1_rho": 0.3498,
   "riv_less_stable_than_rem": true,
   "reading": "CONFIRMS the two-number design: RIV+ (realized impact) is less repeatable year to year than REM+ (skill), so leverage-weighted value stays a separate Impact column and never enters the skill scale"
  },
@@ -921,15 +921,6 @@
     "md": 5,
     "gmli": 1.138
    },
-   "668941": {
-    "name": "JoJo Romero",
-    "team": "STL",
-    "riv_plus": 110,
-    "wpa": 0.756,
-    "sd": 17,
-    "md": 10,
-    "gmli": 1.72
-   },
    "621112": {
     "name": "Paul Blackburn",
     "team": "NYY",
@@ -947,6 +938,15 @@
     "sd": 12,
     "md": 7,
     "gmli": 1.27
+   },
+   "668941": {
+    "name": "JoJo Romero",
+    "team": "STL",
+    "riv_plus": 110,
+    "wpa": 0.756,
+    "sd": 17,
+    "md": 10,
+    "gmli": 1.72
    },
    "643511": {
     "name": "Tyler Rogers",
@@ -1389,15 +1389,6 @@
     "md": 7,
     "gmli": 1.164
    },
-   "592773": {
-    "name": "Ryne Stanek",
-    "team": "STL",
-    "riv_plus": 90,
-    "wpa": -0.912,
-    "sd": 12,
-    "md": 9,
-    "gmli": 1.332
-   },
    "681982": {
     "name": "Grant Anderson",
     "team": "MIL",
@@ -1434,6 +1425,15 @@
     "md": 5,
     "gmli": 1.849
    },
+   "694335": {
+    "name": "Matt Svanson",
+    "team": "STL",
+    "riv_plus": 81,
+    "wpa": -1.251,
+    "sd": 2,
+    "md": 8,
+    "gmli": 0.655
+   },
    "642232": {
     "name": "Ryan Yarbrough",
     "team": "NYY",
@@ -1452,6 +1452,15 @@
     "md": 4,
     "gmli": 0.596
    },
+   "592773": {
+    "name": "Ryne Stanek",
+    "team": "STL",
+    "riv_plus": 90,
+    "wpa": -0.912,
+    "sd": 12,
+    "md": 9,
+    "gmli": 1.332
+   },
    "656271": {
     "name": "Brock Burke",
     "team": "CIN",
@@ -1469,15 +1478,6 @@
     "sd": 15,
     "md": 5,
     "gmli": 1.433
-   },
-   "694335": {
-    "name": "Matt Svanson",
-    "team": "STL",
-    "riv_plus": 81,
-    "wpa": -1.251,
-    "sd": 2,
-    "md": 8,
-    "gmli": 0.655
    },
    "677955": {
     "name": "Jaden Hill",
@@ -1506,6 +1506,15 @@
     "md": 6,
     "gmli": 1.389
    },
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "riv_plus": 94,
+    "wpa": -0.26,
+    "sd": 8,
+    "md": 10,
+    "gmli": 0.954
+   },
    "663855": {
     "name": "Jordan Hicks",
     "team": "CWS",
@@ -1523,15 +1532,6 @@
     "sd": 3,
     "md": 5,
     "gmli": 0.795
-   },
-   "677865": {
-    "name": "Justin Bruihl",
-    "team": "STL",
-    "riv_plus": 94,
-    "wpa": -0.26,
-    "sd": 8,
-    "md": 10,
-    "gmli": 0.954
    },
    "672782": {
     "name": "Yoendrys G\u00f3mez",
@@ -1832,5 +1832,5 @@
    }
   }
  },
- "runtime_seconds": 227.2
+ "runtime_seconds": 185.4
 }

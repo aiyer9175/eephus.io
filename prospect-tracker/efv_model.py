@@ -75,6 +75,15 @@ _FEATURES_HIT = [
     # cross-tier ordering in EVERY tier (sweep: stacks with milb_missing to blend 0.367).
     ("is_ifa",          0),
     ("is_college",      0),
+    # ops_rel: FV-45 FRINGE-tier on-base+slugging signal the obp_rel/k_rel pair misses.
+    # E-LEAN1 flagged a genuine t45 signal (~+0.02) that the pooled-first gate could not
+    # ship; WS-M / M5 re-tested it under a pre-registered FRINGE gate (docs/prelaunch-2026-07)
+    # and it cleared: t45 +0.0237 (0.120 -> 0.144), with pooled (-0.002) and within-tier
+    # (-0.0026) movement at the identity noise floor (~0.0023 = statistically no change).
+    # Ledger: data/xfv_ops_rel_fringe_eval.json (resolved-target within-tier dips -0.0052 =
+    # the accepted sensitivity cost of a fringe-targeted add). Kept LAST to match the tested
+    # key order (ridge predictions are feature-order invariant).
+    ("ops_rel",        +1),
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
     # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]
@@ -123,6 +132,11 @@ _WAG_LAMBDA_CACHE: dict[str, float] = {}
 # pooled OOS rank rho 0.343 -> 0.353 (within-tier + FV45 also up).
 _WAG_MIN_SPEARMAN = 0.10
 _WAG_MIN_N = 100
+
+# Realized-outcome bars for the M1 AUC instrumentation (source_backtest.CONTRIBUTOR_WAR /
+# STAR_WAR): a first-6yr summed-bWAR contributor clears 3, a star clears 10.
+_CONTRIB_WAR = 3.0
+_STAR_WAR = 10.0
 
 
 def _feature_spec(side: str):
@@ -580,6 +594,127 @@ def _importances(data, keys=None, mono=None):
     return out
 
 
+def _era_of(yr) -> str:
+    """Debut-era bucket, matching _era_split and the eFV labs."""
+    y = int(yr)
+    return "<=2018" if y <= 2018 else ("2019-2021" if y <= 2021 else "2022-2023")
+
+
+def _cohort_map(rows) -> dict:
+    """player_key -> acquisition cohort (ifa / college / hs / draft / other), matching
+    efv_dataset._cohort_flags + the eFV lab's leakage-free draft-age split (drafted at
+    age >= 21 = college, else hs). Storage-derived; used ONLY for the M1 eval AUC
+    breakdown, NEVER for scoring, so a missing storage layer degrades to 'other'."""
+    keys = [r["player_key"] for r in rows if r.get("player_key")]
+    if not keys:
+        return {}
+    bd = {r["player_key"]: r.get("birth_date") for r in rows}
+    acq = {}
+    try:
+        import storage
+        with storage.connect() as con:
+            ph = ",".join("?" for _ in keys)
+            for r in con.execute(
+                    f"SELECT player_key, method, year FROM acquisitions "
+                    f"WHERE player_key IN ({ph})", tuple(keys)):
+                acq[r["player_key"]] = {"method": r["method"], "year": r["year"]}
+    except Exception:
+        return {}
+    out = {}
+    for pk in keys:
+        a = acq.get(pk) or {}
+        m = a.get("method")
+        if m == "international_fa":
+            out[pk] = "ifa"
+        elif m == "draft":
+            yr, b = a.get("year"), bd.get(pk)
+            coh = "draft"
+            if yr and b:
+                try:
+                    coh = "college" if (int(yr) - int(str(b)[:4])) >= 21 else "hs"
+                except (ValueError, TypeError):
+                    coh = "draft"
+            out[pk] = coh
+        else:
+            out[pk] = "other"
+    return out
+
+
+def _auc_breakdown(data, keys, lam, cohort_map) -> dict:
+    """M1 instrumentation (measurement, not a model change). Forward-chained
+    contributor-AUC (realized first-6yr WAR >= _CONTRIB_WAR) and star-AUC
+    (>= _STAR_WAR) for the shipped BLEND and the CONSENSUS baseline, sliced by
+    acquisition cohort, debut era, and FV tier -- so eFV's discrimination margin
+    over consensus FV is visible per cell. Same forward-chained folds as the
+    'blend' eval row (each cohort year scored by models fit on strictly-earlier
+    cohorts). Reuses source_backtest._auc (Mann-Whitney U). Both scores share the
+    SAME binary labels, so the model-minus-consensus margin is label-invariant."""
+    try:
+        from source_backtest import _auc
+    except Exception:
+        return {"n": 0, "note": "source_backtest._auc unavailable"}
+    # Forward-chain over the full scoreable span (seed years 2016+ populate the <=2018
+    # era cell, as in _era_split); tag each row with its fold year. Pooled/cohort/tier
+    # use SCORED_YEARS only so pooled n matches the 'blend' eval row; by_era uses the
+    # full span so all three era cells can appear.
+    recs = []   # (blend, cons, war, fv, cohort, era, year)
+    for yr in range(2016, max(SCORED_YEARS) + 1):
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < 15 or len(tr) < 60:
+            continue
+        ols = _fit_ols_fv(tr)
+        ridge = _fit_ridge(tr, keys)
+        if not (ols and ridge):
+            continue
+        for r in te:
+            cons = max(0.0, _pred_ols(ols, r["fv"]))
+            blend = (1 - lam) * cons + lam * _predict(ridge, r["feats"])
+            recs.append((blend, cons, r["target"], r["fv"],
+                         cohort_map.get(r["player_key"], "other"),
+                         _era_of(r["decision_year"]), int(r["decision_year"])))
+    scored = [r for r in recs if r[6] in SCORED_YEARS]
+    if len(scored) < 30:
+        return {"n": len(scored), "note": "insufficient rows for AUC breakdown"}
+
+    def _pair(subset, thresh):
+        if len(subset) < 15:
+            return None
+        labels = [w >= thresh for _, _, w, _, _, _, _ in subset]
+        n_pos = sum(labels)
+        if n_pos == 0 or n_pos == len(labels):
+            return None
+        am = _auc([b for b, _, _, _, _, _, _ in subset], labels)
+        ac = _auc([c for _, c, _, _, _, _, _ in subset], labels)
+        return {"n": len(subset), "n_pos": int(n_pos),
+                "model_auc": round(am, 4) if am is not None else None,
+                "consensus_auc": round(ac, 4) if ac is not None else None,
+                "margin": (round(am - ac, 4) if (am is not None and ac is not None) else None)}
+
+    def _cell(subset):
+        c = {"contributor": _pair(subset, _CONTRIB_WAR), "star": _pair(subset, _STAR_WAR)}
+        return c if (c["contributor"] or c["star"]) else None
+
+    out = {"n": len(scored), "n_with_seed_folds": len(recs),
+           "labels": {"contributor_war": _CONTRIB_WAR, "star_war": _STAR_WAR,
+                      "war_metric": "first-6yr summed bWAR (target_censored); "
+                                    "model=blend, consensus=OLS(FV) anchor, shared labels"},
+           "pooled": _cell(scored), "by_cohort": {}, "by_era": {}, "by_fv_tier": {}}
+    for c in ("hs", "college", "ifa", "draft", "other"):
+        cell = _cell([r for r in scored if r[4] == c])
+        if cell:
+            out["by_cohort"][c] = cell
+    for e in ("<=2018", "2019-2021", "2022-2023"):
+        cell = _cell([r for r in recs if r[5] == e])
+        if cell:
+            out["by_era"][e] = cell
+    for tk in sorted({round(r[3] / 5) * 5 for r in scored}):
+        cell = _cell([r for r in scored if round(r[3] / 5) * 5 == tk])
+        if cell:
+            out["by_fv_tier"][str(int(tk))] = cell
+    return out
+
+
 def _era_split(deb_data, keys, lam):
     """Honest record of the 'scouting got more accurate over time' question: forward-chained
     consensus vs shipped-blend rank by debut era. If eFV's edge lived only in old cohorts it
@@ -622,13 +757,20 @@ def run(persist: bool = True, side: str = "hit") -> dict:
     deb = [r for r in rows if r["kind"] == "debuted"]
     full = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
 
+    deb_km = _prep(deb, "target_censored", side)
+    cohort_map = _cohort_map(full)   # covers debuted + busts so both AUC pools get real cohorts
     evals = {
-        "debuted_km": _run_eval(_prep(deb, "target_censored", side), "debuted, KM-censored target", keys, mono, lam),
+        "debuted_km": _run_eval(deb_km, "debuted, KM-censored target", keys, mono, lam),
         "debuted_resolved": _run_eval(_prep([r for r in deb if not r["censored"]],
                                             "target_resolved", side), "debuted, resolved-only (sensitivity)", keys, mono, lam),
         "full_pool_km": _run_eval(_prep(full, "target_censored", side),
                                   "full pool (debuted+busts), KM target [decision-year proxy]", keys, mono, lam),
     }
+    # M1 AUC instrumentation: per-cohort / per-era / per-FV-tier contributor + star AUC,
+    # model (blend) vs consensus, on the same forward-chained debuted-KM folds.
+    evals["debuted_km"]["auc_breakdown"] = _auc_breakdown(deb_km, keys, lam, cohort_map)
+    evals["full_pool_km"]["auc_breakdown"] = _auc_breakdown(
+        _prep(full, "target_censored", side), keys, lam, cohort_map)
     out = {
         "generated_at": date.today().isoformat(),
         "model": f"eFV {'pitcher' if side == 'pit' else 'hitter'} v1 (lean + guarded blend)",
@@ -646,6 +788,28 @@ def run(persist: bool = True, side: str = "hit") -> dict:
         "lambda_calibration": {
             "shipped_lambda": lam,
             "source": lam_source,
+            "shipped_lambda_provenance": {
+                # shipped_lambda IS the live blend_lambda(side) recomputed at eval time
+                # (no stale copy) -- this block records the decisive values so the
+                # bookkeeping is self-contained and cannot silently desync from the
+                # export's lambda again.
+                "live_blend_lambda": blend_lambda(side),
+                "matches_shipped_lambda": abs(lam - blend_lambda(side)) < 1e-9,
+                "selector": lam_source,
+                "rank_gate_band": rank_cal.get("band"),
+                "composite_at_shipped": {
+                    "pooled_rho": rank_cal.get("rho"),
+                    "within_tier_wm": rank_cal.get("within_tier_wm"),
+                    "t45": rank_cal.get("t45"),
+                    "composite_sum": (round((rank_cal.get("rho") or 0)
+                                            + (rank_cal.get("within_tier_wm") or 0)
+                                            + (rank_cal.get("t45") or 0), 4)
+                                      if rank_cal.get("rho") is not None else None),
+                },
+                "note": "rank_calibration selects lambda in rank_gate_band by argmax of "
+                        "pooled + within-tier + FV45-fringe Spearman; composite_at_shipped "
+                        "are those decisive components at the selected lambda.",
+            },
             "wag": wag_cal,
             "rank_gate": rank_cal,
             "reading": "eFV still predicts WAR; the blend lambda is HOW MUCH to trust eFV's "

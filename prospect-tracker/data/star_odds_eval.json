@@ -388,27 +388,27 @@
   "definition": "2+ seasons of >=4 WAR in debut..debut+6",
   "roles": {
    "hitter": {
-    "n": 397,
+    "n": 418,
     "tiers": [
      {
       "tier": "<50",
-      "n": 187,
+      "n": 203,
       "stars": 6,
-      "realized": 0.032,
+      "realized": 0.03,
       "published": 0.06
      },
      {
       "tier": "50-55",
-      "n": 93,
+      "n": 94,
       "stars": 6,
-      "realized": 0.065,
+      "realized": 0.064,
       "published": 0.155
      },
      {
       "tier": "55-60",
-      "n": 45,
+      "n": 49,
       "stars": 11,
-      "realized": 0.244,
+      "realized": 0.224,
       "published": 0.253
      },
      {
@@ -428,13 +428,13 @@
     ]
    },
    "pitcher": {
-    "n": 394,
+    "n": 425,
     "tiers": [
      {
       "tier": "<50",
-      "n": 216,
+      "n": 241,
       "stars": 3,
-      "realized": 0.014,
+      "realized": 0.012,
       "published": 0.03
      },
      {
@@ -446,16 +446,16 @@
      },
      {
       "tier": "55-60",
-      "n": 43,
+      "n": 48,
       "stars": 4,
-      "realized": 0.093,
+      "realized": 0.083,
       "published": 0.14
      },
      {
       "tier": "60-65",
-      "n": 37,
+      "n": 38,
       "stars": 1,
-      "realized": 0.027,
+      "realized": 0.026,
       "published": 0.305
      },
      {

@@ -1004,29 +1004,92 @@
     });
   }
   function pitchingStatsBlock(p) {
-    if (!PITCHLB || !p || p.mlbam == null) return "";
-    const hit = PITCHLB.byMlbam[p.mlbam];
-    if (!hit) return "";
-    const r = hit.row;
-    const plus = (label, val, term, hi) => (val == null ? "" :
+    if (!p || p.mlbam == null) return "";
+    // Prefer the baked skills block (mlb_player_export); fall back to the
+    // client-fetched leaderboard row for payloads generated before it was baked.
+    let kind, season, role, ip, remPlus, rivPlus, remPlus3yr, semPlus, semPlus3yr;
+    if (p.skills && p.skills.pitch) {
+      const s = p.skills.pitch;
+      kind = s.kind; season = s.season; role = s.role; ip = s.ip;
+      remPlus = s.remPlus; rivPlus = s.rivPlus; remPlus3yr = s.remPlus3yr;
+      semPlus = s.semPlus; semPlus3yr = s.semPlus3yr;
+    } else if (PITCHLB && PITCHLB.byMlbam && PITCHLB.byMlbam[p.mlbam]) {
+      const hit = PITCHLB.byMlbam[p.mlbam], r = hit.row;
+      kind = hit.kind; season = hit.season; role = r.role; ip = r.ip;
+      remPlus = r.rem_plus; rivPlus = r.riv_plus; remPlus3yr = r.rem_plus_3yr;
+      semPlus = r.sem_plus; semPlus3yr = r.sem_plus_3yr;
+    } else return "";
+    const plus = (label, val, hi) => (val == null ? "" :
       `<div class="mlbp-tile"><span class="mlbp-tile-label">${label}</span><span class="mlbp-tile-val ${val >= (hi || 105) ? "proj-pos" : val <= (200 - (hi || 105)) ? "proj-neg" : ""}">${val}</span></div>`);
-    let tiles = "", title = "", n = "";
-    if (hit.kind === "rel") {
-      title = "Bullpen Leaderboards";
-      tiles = plus("REM+", r.rem_plus, "rem_plus") + plus("RIV+", r.riv_plus, "riv_plus")
-        + (r.rem_plus_3yr != null ? plus("REM+ 3yr", r.rem_plus_3yr) : "");
-      n = `${r.role || "reliever"} · ${r.ip != null ? r.ip + " IP" : ""}`;
+    let tiles = "", n = "";
+    if (kind === "rel") {
+      tiles = plus("REM+", remPlus) + plus("RIV+", rivPlus)
+        + (remPlus3yr != null ? plus("REM+ 3yr", remPlus3yr) : "");
+      n = `${role || "reliever"}${ip != null ? ` · ${ip} IP` : ""}`;
     } else {
-      title = "Starter Leaderboards";
-      tiles = plus("SEM+", r.sem_plus, "sem_plus")
-        + (r.sem_plus_3yr != null ? plus("SEM+ 3yr", r.sem_plus_3yr) : "");
-      n = `${r.role || "starter"} · ${r.ip != null ? r.ip + " IP" : ""}`;
+      tiles = plus("SEM+", semPlus) + (semPlus3yr != null ? plus("SEM+ 3yr", semPlus3yr) : "");
+      n = `${role || "starter"}${ip != null ? ` · ${ip} IP` : ""}`;
     }
     if (!tiles) return "";
-    const seasonTxt = hit.season ? `${hit.season} ` : "";
+    const seasonTxt = season ? `${season} ` : "";
     return `<div class="mlbp-section-title" style="margin-top:18px;">Live pitching <span class="fa-sub" style="font-weight:normal;">${esc(seasonTxt)}season</span></div>
       <div class="fa-sub" style="margin:-2px 0 8px;">${esc(n)} · <a class="fa-player-link" href="/mlbstats/">open the MLB Stats leaderboards &rarr;</a></div>
       <div class="mlbp-tiles">${tiles}</div>`;
+  }
+  // Consensus-FV trajectory as a tiny inline sparkline (ex-PROSPX players). The
+  // arc is [[date, fv], ...] baked from the same series the PROSPX FV-history
+  // chart draws; here it is a hero-strip glyph next to the FV open->close read.
+  function fvSparkSVG(spark) {
+    if (!spark || spark.length < 2) return "";
+    const vals = spark.map(s => s[1]).filter(v => v != null);
+    if (vals.length < 2) return "";
+    const W = 108, H = 22, PX = 2, PY = 3;
+    const mn = Math.min(...vals), mx = Math.max(...vals);
+    const x = i => PX + i * (W - 2 * PX) / (spark.length - 1);
+    const y = v => PY + (mx - v) * (H - 2 * PY) / ((mx - mn) || 1);
+    const pts = spark.map((s, i) => s[1] != null ? `${x(i).toFixed(1)},${y(s[1]).toFixed(1)}` : null).filter(Boolean).join(" ");
+    const last = vals[vals.length - 1];
+    return `<svg class="mlbp-fvspark" viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Consensus FV trajectory, ${vals[0]} to ${last}" style="vertical-align:middle;margin-left:6px;" preserveAspectRatio="none">
+      <polyline points="${pts}" fill="none" stroke="var(--accent-cyan)" stroke-width="1.5" stroke-linejoin="round"/>
+      <circle cx="${x(spark.length - 1).toFixed(1)}" cy="${y(last).toFixed(1)}" r="1.8" fill="var(--accent-cyan)"><title>latest consensus FV ${last}</title></circle></svg>`;
+  }
+  // 20-80 scouting-scale color (50 = MLB average). Tool grades display CEILING.
+  function gradeColor(v) {
+    return v >= 65 ? "var(--up)" : v >= 55 ? "var(--accent-cyan)" : v >= 45 ? "var(--text-secondary)" : "var(--down)";
+  }
+  const TOOL_PILLS = {
+    hit: [["Hit", "hit"], ["Game Pwr", "game_pwr"], ["Raw Pwr", "raw_pwr"], ["Speed", "speed"], ["Field", "field"], ["Arm", "throw"], ["Bat Ctrl", "bat_ctrl"], ["Pitch Sel", "pitch_sel"]],
+    pit: [["FB", "fb"], ["SL", "sl"], ["CB", "cb"], ["CH", "ch"], ["CT", "ct"], ["CMD", "cmd"], ["FRM", "frame"], ["ATHL", "athl"]],
+  };
+  // Scouting slice (ex-PROSPX players): the latest published report blurb + the
+  // consensus 20-80 tool grades as pills. Both are conditional - a player with
+  // neither renders nothing (no empty shell).
+  function scoutingBlock(p) {
+    const s = p.scout;
+    if (!s) return "";
+    let pillsHtml = "";
+    if (s.tools) {
+      const order = TOOL_PILLS[p.isPit ? "pit" : "hit"];
+      const known = new Set(order.map(o => o[1]));
+      const extra = Object.keys(s.tools).filter(k => !known.has(k) && s.tools[k] != null).map(k => [k.toUpperCase().replace(/_/g, " "), k]);
+      const pills = order.concat(extra).filter(([, k]) => s.tools[k] != null).map(([lbl, k]) => {
+        const raw = Number(s.tools[k]);
+        const g = Math.ceil(raw);   // owner rule: tool grades display ceiling
+        return `<span style="display:inline-flex;flex-direction:column;align-items:center;min-width:40px;padding:3px 7px;border:1px solid var(--border);border-radius:7px;">
+          <span style="font-size:10px;letter-spacing:.03em;color:var(--text-tertiary);text-transform:uppercase;">${esc(lbl)}</span>
+          <span style="font-family:var(--font-mono);font-weight:700;font-size:14px;color:${gradeColor(raw)};">${g}</span></span>`;
+      }).join("");
+      if (pills) pillsHtml = `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;">${pills}</div>`;
+    }
+    let reportHtml = "";
+    const r = s.report;
+    if (r && r.text) {
+      reportHtml = `<div class="mlbp-scout-report">
+        <div class="fa-sub" style="margin-bottom:4px;">${esc(r.source || "Scouting report")}${r.date ? ` · ${esc(r.date)}` : ""}</div>
+        <p style="margin:0;line-height:1.5;color:var(--text-secondary);">${esc(r.text)}${r.truncated ? "&hellip;" : ""}${p.origin && p.origin.prospx ? ` <a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(p.origin.prospx)}">full report &rarr;</a>` : ""}</p></div>`;
+    }
+    if (!pillsHtml && !reportHtml) return "";
+    return `<div class="mlbp-section"><div class="mlbp-section-title">Scouting <span class="fa-sub">consensus 20-80 tool grades + latest published report · via PROSPX</span></div>${pillsHtml}${reportHtml}</div>`;
   }
   function positionGamesSummary(key) {
     const entry = FIELDING && FIELDING.players && FIELDING.players[key];
@@ -1071,8 +1134,14 @@
       { id: "proj", label: "Projection", html: fanChart(p) + upsidePath(p) + twoWayNote },
       { id: "statcast", label: "Statcast", html: statcast },
       { id: "stats", label: "Stats & Career", html: stats },
+      { id: "scouting", label: "Scouting", html: scoutingBlock(p) },
       { id: "contract", label: "Contract & FA", html: faBlock(p) },
     ].filter((pan) => nonEmpty(pan.html));
+    // Discussion (per-player thread). Gated on the forum layer being loaded so a
+    // build without it never leaves an empty shell; the layer itself paints a
+    // quiet "No comments yet" state when Supabase config is blank.
+    if (window.EephusUI && typeof window.EephusUI.mountForum === "function")
+      panels.push({ id: "discussion", label: "Discussion", html: '<div id="eph-forum-mount"></div>' });
     if (!panels.length) return "";
     const strip = panels.length > 1
       ? `<div class="mlbp-tabs" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin:16px 0 4px;">${panels.map((pan, i) => `<button type="button" class="chip mlbp-tab" data-mlbp-tab="${pan.id}" role="tab" aria-selected="${i === 0}"${i === 0 ? "" : ' style="opacity:.55;"'}>${pan.label}</button>`).join("")}</div>`
@@ -1081,7 +1150,20 @@
     return strip + body;
   }
 
-  function bindMlbpTabs(root) {
+  function bindMlbpTabs(root, p, key) {
+    // Mount the forum thread the first time the Discussion tab is opened (the
+    // account/forum layer loads it only while that tab is active - the prospect
+    // page uses the same lazy pattern). No-op without the layer.
+    let forumMounted = false;
+    const maybeMountForum = (id) => {
+      if (id !== "discussion" || forumMounted) return;
+      if (!(window.EephusUI && window.EephusUI.mountForum)) return;
+      forumMounted = true;
+      try { window.EephusUI.mountForum("mlb", key, { name: p.name, player_name: p.name, key: key }); }
+      catch (e) { /* non-fatal */ }
+    };
+    const active = root.querySelector("[data-mlbp-panel]:not([hidden])");
+    if (active) maybeMountForum(active.getAttribute("data-mlbp-panel"));
     const tabs = root.querySelectorAll("[data-mlbp-tab]");
     if (!tabs.length) return;
     tabs.forEach((t) => t.addEventListener("click", () => {
@@ -1095,6 +1177,7 @@
         if (pane.getAttribute("data-mlbp-panel") === id) pane.removeAttribute("hidden");
         else pane.setAttribute("hidden", "hidden");
       });
+      maybeMountForum(id);
     }));
   }
 
@@ -1128,7 +1211,9 @@
       return;
     }
     ensureFielding(key);
-    if (p.isPit || p.twoWay) ensurePitchingStats(key);
+    // Only client-fetch the pitching leaderboards when the skills block was not
+    // baked into the payload (older builds); the baked block renders directly.
+    if ((p.isPit || p.twoWay) && !(p.skills && p.skills.pitch)) ensurePitchingStats(key);
     const photo = p.mlbam
       ? `<img class="mlbp-headshot" src="${headshotURL(p.mlbam, 240)}" alt="" onerror="this.style.visibility='hidden'">` : "";
     const tiles = [];
@@ -1138,6 +1223,13 @@
       tile(`${(p.proj.war || []).length}y WAR`, `${fmtWar(p.proj.warTotal)}`,
         null, "Expected (attrition-discounted) bWAR over the projection window - the same path surplus prices. The board headline uses the if-healthy path, which reads a little higher.");
     if (p.proj && p.proj.surNpv != null) tile("Surplus NPV", money(p.proj.surNpv), p.proj.surNpv >= 0 ? "proj-pos" : "proj-neg");
+    // HEM+ (hitters): pure offensive-rate skill from the MLB Stats leaderboards.
+    if (p.skills && p.skills.hem && p.skills.hem.hemPlus != null) {
+      const h = p.skills.hem;
+      tile("HEM+", `${h.hemPlus}${h.hemPlus3yr != null ? `<span class="fa-band"> 3yr ${h.hemPlus3yr}</span>` : ""}`,
+        h.hemPlus >= 112 ? "proj-pos" : h.hemPlus <= 88 ? "proj-neg" : "",
+        "HEM+: a hitter's pure offensive-rate skill (100 = average qualified hitter), a sample-shrunk wOBA. From the MLB Stats hitter leaderboards.");
+    }
     if (p.swingPlus != null) tile("Swing+", `${p.swingPlus}<span class="fa-band"> n=${p.swingN}</span>`, p.swingPlus >= 105 ? "proj-pos" : p.swingPlus <= 95 ? "proj-neg" : "");
     if (p.aaaStuffPlus != null) tile("aStuff+", `${Math.round(p.aaaStuffPlus)}<span class="fa-band"> AAA ${p.aaaStuffSeason}</span>`, p.aaaStuffPlus >= 110 ? "proj-pos" : p.aaaStuffPlus <= 90 ? "proj-neg" : "");
     if (p.fa && p.fa.projAav != null) tile("Proj AAV", money(p.fa.projAav));
@@ -1155,7 +1247,7 @@
     // debut date - the hub strip carries the link to the full arc.
     const org = p.origin;
     const originLine = (org && org.prospx)
-      ? `<div class="fa-sub" style="margin-top:4px;"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, eFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} → ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}</div>`
+      ? `<div class="fa-sub" style="margin-top:4px;"><a class="fa-player-link" href="/prospx/#player=${encodeURIComponent(org.prospx)}" title="Open this player's full PROSPX prospect page (FV history, tools, eFV)">ex-PROSPX prospect &rarr;</a>${org.fvOpen != null && org.fvClose != null ? ` · FV ${org.fvOpen} &rarr; ${org.fvClose}` : ""}${org.debut ? ` · debuted ${esc(org.debut)}` : ""}${fvSparkSVG(org.fvSpark)}</div>`
       : "";
     root.innerHTML = `<div class="mlbp-page">
       <div id="mlbp-hub"></div>
@@ -1172,7 +1264,7 @@
       ${mlbpTabs(p, key)}
       <div class="fa-note" style="margin-top:14px;">Projections: the eephus projection engine (proj_lgbm_v1; bands = empirical residual quantiles). Statcast percentiles vs the season's qualified MLB pool. ${p.swingPlus != null ? "Swing+ by Will Cahoon (MLB bat tracking 2024+)." : ""}${p.aaaStuffPlus != null ? " aStuff+: in-house AAA pitch-quality model (per-pitch kinematics vs run value, latest tracked AAA season)." : ""}</div>
     </div>`;
-    bindMlbpTabs(root);
+    bindMlbpTabs(root, p, key);
     // hub strip (cross-module identity) - lazy, never blocks the paint
     if (window.EEPHUS_HUB) {
       window.EEPHUS_HUB.links().then(L => {

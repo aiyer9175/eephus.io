@@ -114,7 +114,7 @@
       color: var(--text-tertiary); font-size: 14px; line-height: 1;
       padding: 0 2px; align-self: center;
     }
-#trade-machine .tm-x:hover { color: var(--down, #e05c5c); }
+#trade-machine .tm-x:hover { color: var(--down); }
 #trade-machine .tm-empty { color: var(--text-tertiary); font-size: var(--fs-sm); padding: 6px 2px; font-style: italic; }
 #trade-machine .tm-verdict {
       margin-top: 10px; padding-top: 9px;
@@ -145,8 +145,8 @@
   display: flex; height: 7px; border-radius: 4px; overflow: hidden;
   background: var(--bg-primary); border: 1px solid var(--border); margin-bottom: 7px;
 }
-.tm-balbar-a { background: var(--accent-cyan, #2ea0c4); }
-.tm-balbar-b { background: var(--neon-amber, #e0a23c); }
+.tm-balbar-a { background: var(--accent-cyan); }
+.tm-balbar-b { background: var(--neon-amber); }
 .tm-balrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .tm-balverdict { font-weight: 700; color: var(--text-primary); }
 .tm-balverdict.is-bal { color: var(--neon-green); }
@@ -172,8 +172,8 @@
 .tm-board-table .tm-grade .tm-grade-chip { font-size: 11px; padding: 1px 5px; }
 .tm-board-table .tm-col-div { border-left: 1px solid var(--border-light); }
 .tm-board-table th.tm-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
-.tm-board-table th.tm-sortable:hover { color: var(--neon-cyan, var(--accent-cyan)); }
-.tm-board-table th.tm-sorted { color: var(--neon-cyan, var(--accent-cyan)); }
+.tm-board-table th.tm-sortable:hover { color: var(--neon-cyan); }
+.tm-board-table th.tm-sorted { color: var(--neon-cyan); }
 
 /* mobile: let the wide board scroll horizontally rather than squash 9 columns */
 @media (max-width: 720px) {
@@ -214,7 +214,7 @@
 
 /* evaluator grader verdict colors + Clear/Copy controls */
 .tm-balverdict.is-warn { color: var(--neon-amber); }
-.tm-balverdict.is-bad { color: var(--down, #e05c5c); }
+.tm-balverdict.is-bad { color: var(--down); }
 .tm-controls { display: flex; gap: 8px; margin-top: 9px; }
 
 /* pagination strip (the relocation lost this CSS -> the pager rendered as big
@@ -242,4 +242,4 @@
 .proj-viewnav{display:flex;gap:4px;margin:12px 0 14px;border-bottom:1px solid var(--border-subtle);}
 .proj-viewbtn{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);font:inherit;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer;margin-bottom:-1px;}
 .proj-viewbtn:hover{color:var(--text-primary);}
-.proj-viewbtn.active{color:var(--text-primary);border-bottom-color:var(--neon-cyan,#2ea0c4);}
+.proj-viewbtn.active{color:var(--text-primary);border-bottom-color:var(--neon-cyan);}

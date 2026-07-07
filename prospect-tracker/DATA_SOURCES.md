@@ -20,7 +20,8 @@ happen inside the called module, so this file alone cannot split them).
 | d4. Player transactions | - |
 | d5. IL status | - |
 | d5c. Current-season stat lines | - |
-| d5d. Incremental Statcast metrics | - |
+| d5d. Incremental Statcast metrics | leaderboard_gamelogs.json |
+| d5e. Leaderboard game logs (leaderboard_gamelogs.json) | leaderboard_gamelogs.json |
 | d6. Roster status | - |
 | d7. Auto-debut detection | - |
 | d8. Trade detection | timeseries.json |
@@ -51,7 +52,7 @@ happen inside the called module, so this file alone cannot split them).
 | 2b.vii. IL status check | - |
 | 2c. Affiliate roster map. ~6 HTTP calls (one per sport level) (no _step wrapper) | - |
 | 3a. Fetch career year-by-year stats (no _step wrapper) | - |
-| 3a-ii. Positional versatility (fielding) | - |
+| 3a-ii. Positional versatility (fielding) | positions_played.json |
 | 3a-iii. Self-heal graduates frozen pre-org-feature (no _step wrapper) | - |
 | 3b. Derive statlines from career cache | - |
 | 3c. Auto-debut detection | - |
@@ -69,11 +70,11 @@ happen inside the called module, so this file alone cannot split them).
 | 6b3. MLB player detail export (mlb_player_detail.json) | mlb_player_detail.json |
 | 6b4. Bullpen Leaderboards (bullpen_leaderboards.json) | bullpen_leaderboards.json, leverage_consistency_eval.json |
 | 6b4b. gmLI consistency (leverage_consistency_eval.json) | leverage_consistency_eval.json, rem_plus_multiyear_eval.json, riv_plus_eval.json |
-| 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json |
+| 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json, rem_plus_multiyear_eval.json |
 | 6b4d. bullpen history (bullpen_history.json) | bullpen_history.json |
-| 6b4e. starter lab (sem_plus + sem_plus_multiyear evals) | - |
+| 6b4e. starter lab (sem_plus + sem_plus_multiyear evals) | sem_plus_eval.json |
 | 6b4f. Starter Leaderboards (starter_leaderboards.json) | starter_leaderboards.json |
-| 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json |
+| 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json, xhem_plus_eval.json |
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |

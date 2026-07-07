@@ -18,10 +18,10 @@
  "experiment": "X-R2",
  "model": "rem_plus_3yr (trailing-3-season REM+)",
  "n_forward_pairs": 665,
- "rem_1yr_forward_rho_on_3yr_set": 0.2329,
- "rem_3yr_forward_rho": 0.2404,
+ "rem_1yr_forward_rho_on_3yr_set": 0.2332,
+ "rem_3yr_forward_rho": 0.2408,
  "gap_ci_3yr_minus_1yr": {
-  "mean": 0.0072,
+  "mean": 0.0073,
   "lo95": -0.0378,
   "hi95": 0.0541
  },
@@ -347,9 +347,9 @@
     "name": "Aaron Ashby",
     "team": "MIL",
     "rem_plus_now": 114,
-    "rem_plus_3yr": 117,
+    "rem_plus_3yr": 118,
     "seasons_used": 2,
-    "ip_total": 119.3,
+    "ip_total": 120.0,
     "tag": "established",
     "pct": 92
    },
@@ -471,7 +471,7 @@
     "seasons_used": 2,
     "ip_total": 44.3,
     "tag": "established",
-    "pct": 75
+    "pct": 74
    },
    "643410": {
     "name": "Mark Leiter Jr.",
@@ -611,7 +611,7 @@
     "seasons_used": 2,
     "ip_total": 103.7,
     "tag": "established",
-    "pct": 14
+    "pct": 13
    },
    "668933": {
     "name": "Graham Ashcraft",
@@ -1013,16 +1013,6 @@
     "tag": "established",
     "pct": 35
    },
-   "668941": {
-    "name": "JoJo Romero",
-    "team": "STL",
-    "rem_plus_now": 101,
-    "rem_plus_3yr": 99,
-    "seasons_used": 3,
-    "ip_total": 159.0,
-    "tag": "established",
-    "pct": 39
-   },
    "621112": {
     "name": "Paul Blackburn",
     "team": "NYY",
@@ -1042,6 +1032,16 @@
     "ip_total": 84.3,
     "tag": "established",
     "pct": 31
+   },
+   "668941": {
+    "name": "JoJo Romero",
+    "team": "STL",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 160.0,
+    "tag": "established",
+    "pct": 38
    },
    "643511": {
     "name": "Tyler Rogers",
@@ -1081,7 +1081,7 @@
     "seasons_used": 3,
     "ip_total": 109.7,
     "tag": "established",
-    "pct": 38
+    "pct": 39
    },
    "666808": {
     "name": "Camilo Doval",
@@ -1161,7 +1161,7 @@
     "seasons_used": 3,
     "ip_total": 124.0,
     "tag": "established",
-    "pct": 15
+    "pct": 14
    },
    "657514": {
     "name": "Brennan Bernardino",
@@ -1533,16 +1533,6 @@
     "tag": "established",
     "pct": 71
    },
-   "592773": {
-    "name": "Ryne Stanek",
-    "team": "STL",
-    "rem_plus_now": 94,
-    "rem_plus_3yr": 95,
-    "seasons_used": 3,
-    "ip_total": 146.0,
-    "tag": "established",
-    "pct": 20
-   },
    "681982": {
     "name": "Grant Anderson",
     "team": "MIL",
@@ -1583,6 +1573,16 @@
     "tag": "established",
     "pct": 62
    },
+   "694335": {
+    "name": "Matt Svanson",
+    "team": "STL",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 109,
+    "seasons_used": 2,
+    "ip_total": 99.0,
+    "tag": "established",
+    "pct": 75
+   },
    "642232": {
     "name": "Ryan Yarbrough",
     "team": "NYY",
@@ -1603,6 +1603,16 @@
     "tag": "established",
     "pct": 21
    },
+   "592773": {
+    "name": "Ryne Stanek",
+    "team": "STL",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 146.0,
+    "tag": "established",
+    "pct": 19
+   },
    "656271": {
     "name": "Brock Burke",
     "team": "CIN",
@@ -1622,16 +1632,6 @@
     "ip_total": 171.3,
     "tag": "established",
     "pct": 76
-   },
-   "694335": {
-    "name": "Matt Svanson",
-    "team": "STL",
-    "rem_plus_now": 92,
-    "rem_plus_3yr": 109,
-    "seasons_used": 2,
-    "ip_total": 98.0,
-    "tag": "established",
-    "pct": 74
    },
    "677955": {
     "name": "Jaden Hill",
@@ -1661,7 +1661,17 @@
     "seasons_used": 3,
     "ip_total": 149.0,
     "tag": "established",
-    "pct": 19
+    "pct": 20
+   },
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 61.7,
+    "tag": "established",
+    "pct": 16
    },
    "663855": {
     "name": "Jordan Hicks",
@@ -1682,16 +1692,6 @@
     "ip_total": 167.3,
     "tag": "established",
     "pct": 57
-   },
-   "677865": {
-    "name": "Justin Bruihl",
-    "team": "STL",
-    "rem_plus_now": 91,
-    "rem_plus_3yr": 93,
-    "seasons_used": 3,
-    "ip_total": 60.7,
-    "tag": "established",
-    "pct": 13
    },
    "672782": {
     "name": "Yoendrys G\u00f3mez",
@@ -1721,7 +1721,7 @@
     "seasons_used": 3,
     "ip_total": 153.3,
     "tag": "established",
-    "pct": 16
+    "pct": 15
    },
    "657756": {
     "name": "Connor Seabold",
@@ -2025,5 +2025,5 @@
    }
   }
  },
- "runtime_seconds": 227.2
+ "runtime_seconds": 185.4
 }

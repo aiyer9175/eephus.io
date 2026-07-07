@@ -92,11 +92,19 @@ server {
     # The on-theme not-found page (build_site.py writes /404.html).
     error_page 404 /404.html;
 
-    # Data payloads + assets are fetched with ?v=<stamp> cache-busting,
-    # so long max-age is safe; the HTML pages themselves stay no-cache
-    # so a rebuild shows up on the next reload.
+    # Data payloads are fetched with ?v=<stamp> cache-busting, so a long
+    # max-age is safe for /data/. Assets under /assets/ are NOT uniformly
+    # stamped: the generated pages hash them, but the hand-authored PROSPX
+    # and CollegeSavant pages hand-bump a shared ?v= that can lag a deploy.
+    # Serving /assets/ no-cache makes the browser revalidate with the ETag
+    # and take a cheap 304 when the file is unchanged; gzip_static keeps
+    # that revalidation cheap because the .gz twin ships the same ETag and
+    # no body rides the 304. The HTML pages stay no-cache too so a rebuild
+    # shows up on the next reload. (The hand-authored pages also ?v=-stamp
+    # their /vendor/ and same-directory JS, so those stay cache-safe under
+    # the default location.)
     location /data/    { add_header Cache-Control "public, max-age=604800"; }
-    location /assets/  { add_header Cache-Control "public, max-age=604800"; }
+    location /assets/  { add_header Cache-Control "no-cache"; }
     location ~* \.html$ { add_header Cache-Control "no-cache"; }
 
     # Range requests must stay enabled (default) - the PROSPX boot probe

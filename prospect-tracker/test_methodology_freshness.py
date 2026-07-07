@@ -69,6 +69,10 @@ MODEL_GLOSSARY = {
     # eFV ungraded = the provisional production-only leading indicator for source-ungraded
     # roster players (DSL/CPX sleepers); its own glossary entry documents the methodology.
     "xfv_ungraded": ["xfv_ungraded"],
+    # eFV backgrade = the eFV family applied retroactively so DEBUTED players keep a locked
+    # eFV grade (frozen at their final pre-debut snapshot); user-facing on graduate cards +
+    # the trade-machine backgrade surplus source, documented under the eFV glossary entry.
+    "xfv_backgrade": ["xfv"],
     # Trade Machine surplus = the board/evaluator surplus ordering (= the platform surplus_value
     # the Trade Machine shows); first outcome-validated 2026-06-25. Documented under the trade
     # machine + surplus-value glossary entries.
@@ -101,6 +105,17 @@ MODEL_GLOSSARY = {
     "xfv_grade_recal": "internal",
     "xfv_cohort_lambda": "internal",
     "xfv_pitcher_stuff": "internal",
+    # Pre-launch eFV round (2026-07-07, docs/prelaunch-2026-07/GATES.md):
+    # four gated experiments. Three no-ships (lambda confirm hit boundary
+    # censored, hierarchical cohort lambda blocked on 3 clauses, alpha
+    # criterion hurts hitters) and one ship (ops_rel into the hitter lean
+    # set, fringe-tier gate). All model-dev artifacts, rendered nowhere;
+    # the shipped feature's user-facing methodology lives under the xfv
+    # glossary entry.
+    "xfv_lambda_confirm": "internal",
+    "xfv_cohort_lambda_hier": "internal",
+    "xfv_alpha_criterion": "internal",
+    "xfv_ops_rel_fringe": "internal",
     # Review-queue round (2026-07-02): the eFV bucket-calibration final
     # attempt under a production-relevant gate; rejected, loss ledger,
     # rendered nowhere.

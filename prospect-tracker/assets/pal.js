@@ -55,6 +55,28 @@
   function logo(team) { try { return (window.EEPHUS_HUB && EEPHUS_HUB.teamLogo) ? EEPHUS_HUB.teamLogo(team) : ""; } catch (e) { return ""; } }
   function chart(fn, arg, opts) { try { return (window.EEPHUS_HUB && EEPHUS_HUB[fn]) ? EEPHUS_HUB[fn](arg, opts) : ""; } catch (e) { return ""; } }
 
+  // player_links map (MLBAM -> merged-card key), preloaded once so candidate
+  // names link to the MLB player card at /projections/#player=<key> - the same
+  // resolution the /mlbstats/ and /trademachine/ boards use. Unresolved names
+  // (or prospects, who have no MLBAM) stay plain text.
+  var LINKS = null;
+  function loadLinks() {
+    fetch("/data/player_links.json", { cache: "no-cache" })
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (j) { LINKS = j || {}; if (DATA) render(); })
+      .catch(function () { LINKS = {}; });
+  }
+  function playerHref(mlbam) {
+    if (!LINKS || !LINKS.byMlbam || mlbam == null) return null;
+    var hit = LINKS.byMlbam[String(mlbam)];
+    return (hit && hit.key) ? ("/projections/#player=" + encodeURIComponent(hit.key)) : null;
+  }
+  function nameLink(name, mlbam) {
+    var nm = esc(name || "-");
+    var href = playerHref(mlbam);
+    return href ? '<a class="mlbstats-name-link" href="' + href + '" title="Open the MLB player card">' + nm + "</a>" : nm;
+  }
+
   // ---- collapsible chart panels (shared pattern with /mlbstats/) ------------
   // Charts default COLLAPSED; the header is the toggle and the open/closed state
   // persists in localStorage.
@@ -232,7 +254,7 @@
       cols.forEach(function (c) {
         if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
-          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + esc(r.name || "-")
+          body += '<td class="mlbstats-name pal-expand">' + logo(r.team) + nameLink(r.name, r.mlbam)
             + '<span class="proj-dim"> ' + esc(r.team || "") + "</span>" + flagChips(r.flags) + "</td>";
           return;
         }
@@ -399,7 +421,7 @@
       return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "") + ">" + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
-      return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + esc(h.name || "-") + "</td>"
+      return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + nameLink(h.name, h.mlbam) + "</td>"
         + '<td><span class="pal-dir' + dirClass(h.direction) + '">' + esc((h.direction || "").replace("->", "→")) + "</span></td>"
         + "<td>" + esc(h.year) + "</td>"
         + "<td>" + roleLine(h.pre) + "</td><td>" + roleLine(h.post) + "</td>"
@@ -426,7 +448,7 @@
       }).join("");
     }
     var cards = rows.map(function (m) {
-      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + esc(m.name) + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
+      return '<div class="pal-mix-card"><h4><span>' + logo(m.team) + nameLink(m.name, m.mlbam) + '</span><span class="pal-dir' + dirClass(m.direction) + '">'
         + esc((m.direction || "").replace("->", "→")) + " " + esc(m.year) + "</span></h4>"
         + '<div class="pal-mix-cols"><div><h4>Before</h4>' + usageBars(m.before) + "</div>"
         + '<div><h4>After</h4>' + usageBars(m.after) + "</div></div></div>";
@@ -447,7 +469,7 @@
       var arsenal = (r.arsenal || []).slice().sort(function (a, b) { return (b.usage || 0) - (a.usage || 0); })
         .map(function (p) { return esc(p.pitch) + " " + fPct(p.usage); }).join(" &middot; ");
       var pri = rec.priority === "high" ? " pal-flag--warn" : " pal-flag--good";
-      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + esc(r.name) + '<span class="proj-dim"> ' + esc(r.team)
+      return '<div class="pal-mix-card"><h4><span>' + logo(r.team) + nameLink(r.name, r.mlbam) + '<span class="proj-dim"> ' + esc(r.team)
         + '</span></span><span class="pal-fit ' + fitClass(r.fit) + '">' + f1(r.fit) + "</span></h4>"
         + '<div class="mlbstats-note" style="margin:4px 0">Current: ' + (arsenal || "-") + "</div>"
         + '<div style="margin:7px 0"><span class="pal-flag' + pri + '">ADD ' + esc(rec.add) + "</span>"
@@ -473,7 +495,7 @@
     var body = "<tbody>" + view.map(function (r) {
       var read = r.reverse ? '<span class="pal-hit">reverse (neutral+)</span>'
         : '<span class="pal-miss">extreme split</span>';
-      return '<tr><td class="mlbstats-name">' + logo(r.team) + esc(r.name) + "</td>"
+      return '<tr><td class="mlbstats-name">' + logo(r.team) + nameLink(r.name, r.mlbam) + "</td>"
         + "<td>" + esc(r.p_throws) + "HP</td><td>" + esc(r.role) + "</td>"
         + "<td>" + f3(r.own_ops) + "</td><td>" + f3(r.opp_ops) + "</td>"
         + "<td>" + f3(r.split) + "</td><td>" + read + "</td></tr>";
@@ -545,6 +567,7 @@
     root.querySelectorAll("[data-open]").forEach(function (tr) {
       tr.addEventListener("click", function (e) {
         if (e.target.closest("th")) return;
+        if (e.target.closest("a")) return;   // let name links navigate, don't toggle the row
         var id = Number(tr.getAttribute("data-open"));
         openRow = (openRow === id) ? null : id;
         render();
@@ -608,6 +631,7 @@
   function init() {
     bindSectionNav();
     readHash();
+    loadLinks();
     load();
   }
 

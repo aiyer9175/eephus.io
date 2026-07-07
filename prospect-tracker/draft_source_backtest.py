@@ -241,13 +241,27 @@ def run_draft_weight_ab(data_dir: Path = DATA_DIR, write: bool = True) -> dict:
     if write:
         (data_dir / "draft_consensus_weight_eval.json").write_text(
             json.dumps(out, indent=1), encoding="utf-8")
+        wpath = data_dir / "draft_source_weights.json"
         if ship:
-            (data_dir / "draft_source_weights.json").write_text(json.dumps({
+            wpath.write_text(json.dumps({
                 "generated_at": out["generated_at"],
                 "min_lag_years": MIN_LAG_YEARS,
                 "resolved_years": resolved_years,
                 "weights": live_weights,
                 "note": "relative draft-FV vote weights (1.0 = equal); sources absent here vote at 1.0",
+            }, indent=1), encoding="utf-8")
+        elif wpath.exists():
+            # ship=False must actually RESTORE equal-weight: a prior winter's
+            # ship=True file otherwise outlives a later failing verdict and the
+            # draft consensus keeps applying stale non-unity weights (observed
+            # 2026-07: a 2026-06-25 ship=True artifact survived the current
+            # ship=False A/B). Reset to unity weights, keep the receipt.
+            wpath.write_text(json.dumps({
+                "generated_at": out["generated_at"],
+                "min_lag_years": MIN_LAG_YEARS,
+                "resolved_years": resolved_years,
+                "weights": {},
+                "note": "equal-weight (ship=False on the latest A/B); sources absent here vote at 1.0",
             }, indent=1), encoding="utf-8")
         log.info("draft weight A/B: ship=%s pooled=%s loo=%s", ship, pooled, loo)
     return out

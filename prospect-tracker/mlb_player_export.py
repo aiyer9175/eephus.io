@@ -53,6 +53,12 @@ from pathlib import Path
 import milb_history as mh
 from scrapers import normalize_key
 
+try:                                    # site-wide copy rule: no em/en-dashes
+    from tools.strip_emdashes import strip_emdashes
+except Exception:                       # noqa: BLE001 - normalizer is optional
+    def strip_emdashes(text: str) -> str:
+        return text.replace("—", "-").replace("–", "-")
+
 log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent
@@ -279,21 +285,137 @@ def _is_pitcher_pos(pos: str | None) -> bool:
         "P", "SP", "RP", "LHP", "RHP", "SP2", "CL", "SIRP", "MIRP")
 
 
+def _fv_spark(points: list, cap: int = 40) -> list | None:
+    """Compact consensus-FV arc [[date, fv], ...] from a debut row's points[]
+    (the same series the PROSPX FV-history chart draws). Downsampled to `cap`
+    points if longer, always keeping the first and last snapshot."""
+    spark = []
+    for pt in points or []:
+        dt = pt.get("snapshot_date")
+        fv = pt.get("consensus_fv_raw")
+        if dt and fv is not None:
+            try:
+                spark.append([dt, round(float(fv), 1)])
+            except (TypeError, ValueError):
+                continue
+    if len(spark) <= 1:
+        return spark or None
+    if len(spark) > cap:
+        step = (len(spark) - 1) / (cap - 1)
+        idx = sorted({int(round(i * step)) for i in range(cap)} | {len(spark) - 1})
+        spark = [spark[i] for i in idx]
+    return spark
+
+
 def _debut_origins() -> dict[int, dict]:
-    """{mlbam: prospect origin} from debuts.json - the PROSPX identity +
-    the FV arc endpoints for ex-prospects."""
+    """{mlbam: prospect origin} from debuts.json - the PROSPX identity, the FV
+    arc endpoints + full consensus-FV spark, and the consensus tool grades for
+    ex-prospects (the scouting slice + hero sparkline sources)."""
     out: dict[int, dict] = {}
     try:
         for d in json.loads((DATA_DIR / "debuts.json").read_text(encoding="utf-8")):
             if d.get("mlbam_id"):
+                tools = ((d.get("tools") or {}).get("grades")) or None
                 out[int(d["mlbam_id"])] = {
                     "prospx": d.get("player_key"),
                     "fvOpen": d.get("fv_open"),
                     "fvClose": d.get("fv_close"),
                     "debut": d.get("debut_date"),
+                    "fvSpark": _fv_spark(d.get("points")),
+                    "tools": {k: v for k, v in tools.items() if v is not None} if tools else None,
                 }
     except (OSError, ValueError):
         log.warning("mlb player export: debuts.json unavailable - no origins")
+    return out
+
+
+_SCOUT_SRC_LABELS = {"fangraphs": "FanGraphs", "mlb_pipeline": "MLB Pipeline",
+                     "espn": "ESPN", "just_baseball": "Just Baseball"}
+
+
+def _scout_report_slice(prospx: str, reports: dict) -> dict | None:
+    """The single most-recent published scouting report for an ex-PROSPX player,
+    text capped at ~600 chars on a word boundary. NEVER bakes the whole report
+    set (scout_reports.json is 29MB); one latest blurb per player only."""
+    rec = reports.get(prospx)
+    if not rec:
+        return None
+    best = None   # (date, source_key, text)
+    for src in _SCOUT_SRC_LABELS:
+        for it in rec.get(src) or []:
+            txt = (it.get("text") or "").strip()
+            if not txt:
+                continue
+            dt = it.get("date") or ""
+            if best is None or dt > best[0]:
+                best = (dt, src, txt)
+    if not best:
+        return None
+    dt, src, txt = best
+    truncated = len(txt) > 600
+    if truncated:
+        cut = txt[:600]
+        sp = cut.rfind(" ")
+        if sp > 400:
+            cut = cut[:sp]
+        txt = cut.rstrip()
+    txt = strip_emdashes(txt)           # verbatim quote, dash-normalized to site policy
+    return {"source": _SCOUT_SRC_LABELS.get(src, src), "date": dt or None,
+            "text": txt, "truncated": truncated}
+
+
+def _skill_index() -> dict[int, dict]:
+    """{mlbam: {"hem": {...} | "pitch": {...}}} from the /mlbstats/ leaderboards
+    (hitter HEM+, reliever REM+/RIV+, starter SEM+), joined by MLBAM. Baked onto
+    the card so it no longer client-fetches the whole leaderboard just to show a
+    few tiles. Relievers take priority over starters for the rare swingman."""
+    out: dict[int, dict] = {}
+
+    def _load(fname):
+        try:
+            return json.loads((DATA_DIR / fname).read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            return {}
+
+    hd = _load("hitter_leaderboards.json")
+    for r in hd.get("hitters") or []:
+        try:
+            mid = int(r.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        out.setdefault(mid, {})["hem"] = {
+            "hemPlus": r.get("hem_plus"), "hemPlus3yr": r.get("hem_plus_3yr"),
+            "xhemPlus": r.get("xhem_plus"), "tier": r.get("tier"),
+            "qualified": bool(r.get("qualified")), "luckGap": r.get("luck_gap")}
+
+    bd = _load("bullpen_leaderboards.json")
+    b_season = bd.get("season")
+    for r in bd.get("relievers") or []:
+        try:
+            mid = int(r.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        out.setdefault(mid, {})["pitch"] = {
+            "kind": "rel", "season": b_season, "role": r.get("role"),
+            "ip": r.get("ip"), "qualified": bool(r.get("qualified")),
+            "remPlus": r.get("rem_plus"), "rivPlus": r.get("riv_plus"),
+            "remPlus3yr": r.get("rem_plus_3yr"), "xremPlus": r.get("xrem_plus")}
+
+    sd = _load("starter_leaderboards.json")
+    s_season = sd.get("season")
+    for r in sd.get("starters") or []:
+        try:
+            mid = int(r.get("mlbam"))
+        except (TypeError, ValueError):
+            continue
+        e = out.setdefault(mid, {})
+        if "pitch" in e:            # reliever board already claimed this arm
+            continue
+        e["pitch"] = {
+            "kind": "sp", "season": s_season, "role": r.get("role"),
+            "ip": r.get("ip"), "qualified": bool(r.get("qualified")),
+            "semPlus": r.get("sem_plus"), "semPlus3yr": r.get("sem_plus_3yr"),
+            "xsemPlus": r.get("xsem_plus")}
     return out
 
 
@@ -314,6 +436,12 @@ def build_payload() -> dict:
     except (OSError, ValueError):
         pass
     origins = _debut_origins()
+    scout_reports = {}
+    try:
+        scout_reports = json.loads((DATA_DIR / "scout_reports.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        log.warning("mlb player export: scout_reports.json unavailable - no scouting slices")
+    skills_by_mlbam = _skill_index()
 
     all_keys = [v["key"] for v in proj.get("vets") or []] + list(members)
     fa_ids = _ident_mlbams(all_keys)
@@ -380,7 +508,33 @@ def build_payload() -> dict:
             continue
         org = origins.get(int(mlbam))
         if org and org.get("prospx"):
-            p["origin"] = org          # ex-PROSPX prospect: arc + hub link
+            # ex-PROSPX prospect: arc + hub link (hero). Only the render-facing
+            # arc fields ride in origin; tool grades go into the scout slice.
+            p["origin"] = {k: org[k] for k in ("prospx", "fvOpen", "fvClose",
+                                               "debut", "fvSpark")
+                           if org.get(k) is not None}
+            # Scouting slice (ex-PROSPX only): latest report blurb + tool grades.
+            rep = _scout_report_slice(org["prospx"], scout_reports)
+            tools = org.get("tools")
+            if rep or tools:
+                sc_block = {}
+                if rep:
+                    sc_block["report"] = rep
+                if tools:
+                    sc_block["tools"] = tools
+                p["scout"] = sc_block
+        # Skill ratings from the MLB Stats leaderboards (HEM+ for hitters,
+        # REM+/RIV+/SEM+ for pitchers), baked so the card stops client-fetching
+        # whole leaderboards for a few tiles.
+        sk = skills_by_mlbam.get(int(mlbam))
+        if sk:
+            block = {}
+            if sk.get("hem") and not p["isPit"]:
+                block["hem"] = sk["hem"]
+            if sk.get("pitch") and (p["isPit"] or p.get("twoWay")):
+                block["pitch"] = sk["pitch"]
+            if block:
+                p["skills"] = block
         p["career"] = _career_rows(int(mlbam), p["isPit"], war_by)
         n_car += 1 if p["career"] else 0
         sc = _statcast_block(int(mlbam), p["isPit"], year)
@@ -418,12 +572,17 @@ def build_payload() -> dict:
                      "swing_plus": sum(1 for p in players.values()
                                        if p.get("swingPlus") is not None),
                      "aaa_stuff_plus": sum(1 for p in players.values()
-                                           if p.get("aaaStuffPlus") is not None)},
+                                           if p.get("aaaStuffPlus") is not None),
+                     "skills": sum(1 for p in players.values() if p.get("skills")),
+                     "scout": sum(1 for p in players.values() if p.get("scout"))},
         "notes": [
             "career: MLB season lines (StatsAPI) + per-season bWAR (war_daily)",
             "statcast: Savant leaderboard percentiles within the season's qualified pool; pitcher contact metrics invert (suppression = good)",
             "swing_plus: Will Cahoon's model, MLB bat tracking 2024+ only",
             "aaa_stuff_plus: in-house AAA pitch-quality model (stuff_plus_aaa.py), ex-PROSPX pitchers' latest tracked AAA season",
+            "skills: HEM+ (hitters), REM+/RIV+/SEM+ (pitchers) from the MLB Stats leaderboards, joined by MLBAM",
+            "scout: latest published report blurb (capped) + consensus tool grades, ex-PROSPX players only",
+            "origin.fvSpark: consensus-FV arc [[date, fv], ...] for ex-PROSPX players",
             "fa fields attach for current class members; verdict/dealPlus from the gate-validated market model",
         ],
         "players": players,
@@ -517,11 +676,19 @@ def _export_links(payload: dict) -> None:
              len(by_key), n_prospects, len(by_mlbam))
 
 
+_PAYLOAD_SOFT_BUDGET = 6 * 1024 * 1024   # 6MB - lazy-fetched on first player view
+
+
 def export() -> int:
     payload = build_payload()
     raw = json.dumps(payload, separators=(",", ":"))
     OUT_PATH.write_text(raw, encoding="utf-8")
     _export_links(payload)
+    if len(raw) > _PAYLOAD_SOFT_BUDGET:
+        log.warning("mlb player detail: payload %.1fMB exceeds the %dMB soft "
+                    "budget (lazy-fetched on first player view) - consider "
+                    "trimming baked blocks", len(raw) / 1048576,
+                    _PAYLOAD_SOFT_BUDGET // 1048576)
     log.info("mlb player detail: %dKB, %d players, coverage %s",
              len(raw) // 1024, payload["n_players"], payload["coverage"])
     return len(raw)

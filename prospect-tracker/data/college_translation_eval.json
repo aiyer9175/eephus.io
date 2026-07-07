@@ -79,6 +79,36 @@
     "target_coverage": 0.8,
     "n": 247
    }
+  },
+  "box_k": {
+   "x_mean": 17.067,
+   "y_mean": 25.633,
+   "slope": 0.5969,
+   "ols_slope": 0.8622,
+   "band_sd": 5.925,
+   "r2": 0.423,
+   "n": 45,
+   "loo": {
+    "mae": 4.892,
+    "p10_p90_coverage": 0.756,
+    "target_coverage": 0.8,
+    "n": 45
+   }
+  },
+  "box_bb": {
+   "x_mean": 12.693,
+   "y_mean": 12.402,
+   "slope": 0.3582,
+   "ols_slope": 0.5173,
+   "band_sd": 4.869,
+   "r2": 0.121,
+   "n": 45,
+   "loo": {
+    "mae": 3.891,
+    "p10_p90_coverage": 0.8,
+    "target_coverage": 0.8,
+    "n": 45
+   }
   }
  },
  "matched_pairs": {

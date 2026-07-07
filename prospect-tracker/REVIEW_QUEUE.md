@@ -285,3 +285,19 @@ Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
   number stays put. Lower blast radius; a candidate Wave C display item.
 - Rollback: feature feed is a dataset-assembly change; revert efv_dataset to the
   empty-milb path for overseas rows and re-score.
+
+## 16. Payload weight trim (post-beta)
+
+- What: shrink the two heaviest browser payloads - the debuts payload (~122MB on
+  disk) and the boot payload (~62MB) - so cold loads are lighter, without
+  dropping any surface.
+- Status (2026-07-07): ACCEPTED-FOR-BETA as-is. `gzip_static` serves the `.gz`
+  twins (deploy/README.md nginx block), so wire weight is already far below the
+  on-disk figures and the numbers are a page-weight optimization, not a
+  correctness or availability risk. Deferred so it does not gate launch.
+- Why deferred: a real trim (shard by cohort/era, lazy-load the debuted-backgrade
+  and ungraded tails, or move the heaviest tables behind an on-demand fetch)
+  touches the PROSPX boot path and several exporters; it wants its own before/after
+  wire-weight measurement and an e2e boot check, not a rushed pre-launch change.
+- Expected impact: faster cold load; no change to any published number or surface.
+- Rollback: additive shards / lazy-load flags; revert to the single-payload fetch.

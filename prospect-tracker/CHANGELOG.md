@@ -10,6 +10,71 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-07 (pre-launch pass: models + deploy + freshness + cards + polish)
+
+The final pre-Beta debugging/polish/refinement pass (plan:
+docs/prelaunch-2026-07/, gates pre-registered in GATES.md before any lab ran).
+`_GOLDEN_XFV_SHA256` bumped for the eFV ship below.
+
+- eFV accuracy round (4 gated experiments, docs/prelaunch-2026-07/WSM_RESULTS.md):
+  ops_rel SHIPPED into the hitter lean set under the pre-registered fringe-tier
+  gate (FV-45 tier Spearman +0.0237, about 10x the noise floor; pooled and
+  within-tier costs sit at the identity noise floor). Lambda-confirm,
+  hierarchical cohort-lambda, and alpha-criterion all NO SHIP with loss-ledger
+  artifacts + registry rows (the lambda sweep flags an owner decision: the
+  hitter composite is monotone to the 0.80 sweep ceiling, so a cap-raise
+  experiment above the registered [0.50,0.70] band is the follow-up).
+  evaluate() now also writes per-cohort/era/tier contributor-AUC (WAR >= 3) and
+  star-AUC (>= 10) for blend vs consensus, and records the LIVE blend lambda
+  with rank-gate provenance (fixes a stale shipped_lambda desync).
+- Deploy reconciliation (P0): nightly-build.sh restores the tracked tree before
+  git pull and runs its pytest gate under EEPHUS_DEPLOY_RUN=1, which relaxes the
+  xfv golden fingerprint to shape checks (exists, parses, row count within 20%,
+  generated_at < 48h) for runs that legitimately regenerate the artifact. Dev/CI
+  keep the exact hash. Without this the first nightly with real data movement
+  froze publishing permanently. Runbook: docs/prelaunch-2026-07/DEPLOY_RUNBOOK.md.
+- Stale-asset fix (P0): nginx /assets/ goes no-cache (etag revalidation);
+  45 unversioned CSS/JS refs across prospx + collegesavant now carry ?v= stamps;
+  new test_asset_versioning.py guards them.
+- Beta badge: accounts created on/after BETA_START (eephus-ui.js, one-line
+  constant) get a computed beta_tester chip via withComputedBadges(), rendered on
+  the profile modal and forum comment heads from the single flair path. No DB
+  writes; inert-without-config preserved.
+- Runtime cuts (measured baseline 52m49s, docs/prelaunch-2026-07/WSR_NOTES.md):
+  the monthly-chained daily skips d5c/d5d (235s, the monthly just fetched them);
+  the four eval-lab subprocesses gate on 30-day artifact age (503s when fresh,
+  EEPHUS_LABS=1 forces); positional versatility gates on a 7-day artifact
+  freshness check (437s). New daily step d5e rebuilds leaderboard_gamelogs.json
+  (top 200, 210s soft budget) - it was stale since Jun 16 with no producer wired.
+- Freshness: L15 OPS chip on hitter detail pages (top-200, client-side from the
+  daily recent_games sidecars); the date-window leaderboard shows a "window data
+  through <date>" notice when its payload is over 3 days old.
+- MLB player cards: hitter HEM+ (plus 3yr/x variants), reliever/starter
+  REM+/RIV+/SEM+ baked onto mlb_player_detail.json (client fetch kept only as
+  fallback); ex-PROSPX cards gain a scouting slice (latest report, capped) and a
+  consensus-FV trajectory sparkline; Discussion tab mounts the shared forum; PAL
+  rows now link player names to the projections card (was a dead end).
+- Consensus weighting: verified live end-to-end (weighted mean receipts;
+  non-FG/Pipeline sources vote 1.0); glossary methodology extended (vintage
+  cutoff, live weights, draft-board equal-weight clause). Draft-side hygiene:
+  draft_source_backtest now RESETS draft_source_weights.json to equal-weight on
+  a ship=False verdict (a stale 2026-06-25 ship=True file was still applying
+  near-unity weights against the current failing A/B).
+- Site polish: neon/up/down tokens promoted from .gl-app scope to :root (fixes
+  the dead mlbstats hover + trademachine hardcoded-hex fallbacks); module chips
+  flipped alpha -> beta for launch; visual sweep of 192 route/viewport/theme
+  cells found 0 page errors and 5 defects, all fixed (draft_live.json idle stub
+  ends year-round console 404s, host-relative headshot normalize, home module
+  min-width bleed at 375, farm grid tightened to fit 1280 without breaking the
+  sticky header, leaderboard filter chips wrap).
+- Registry hygiene: xfv_backgrade registered; external/unvalidated rows
+  (stuff_plus_external, swing_plus_external, spotlights_movement) get precise
+  dated notes; 4 new experiment rows; registry at 79 models, validate clean.
+  Supabase abuse-surface audit: RLS confirmed on across tables, rate limits live
+  in 0003; two trivial client fixes (comment maxlength, protocol-relative link
+  reject); thread-moderation SQL drafted NOT-APPLIED as owner action
+  (docs/prelaunch-2026-07/ABUSE_SURFACE.md).
+
 ## 2026-07-06 (S-1 Leverage follow-ups: yearly history + charts)
 
 The two deferred follow-ups on the S-1 Leverage Leaderboards (the board shipped

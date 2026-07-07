@@ -44,6 +44,11 @@ fi
 echo "=== $(date -Is) nightly build start ==="
 cd "$APP"
 
+# The pipeline (below) rewrites TRACKED artifacts (data/xfv.json et al.) in place, so
+# the tree is dirty when this run ends. Restore tracked files before pulling so the
+# fast-forward can't abort on a dirty tree. Untracked state we deliberately keep
+# (prospects.db, .cache/, data/pitch_plots/) is not touched by `checkout -- .`.
+git -C "$REPO" checkout -- .
 git -C "$REPO" pull --ff-only
 
 # shellcheck disable=SC1091
@@ -61,8 +66,10 @@ fi
 python build_site.py
 
 # The gate: never sync a build the suite rejects. Browser-dependent tests
-# skip themselves when playwright isn't installed on the box.
-python -m pytest -q
+# skip themselves when playwright isn't installed on the box. EEPHUS_DEPLOY_RUN
+# relaxes the dev-time exact-hash golden tripwires (xfv.json et al.) to shape
+# checks, since this run legitimately regenerates those artifacts from fresh data.
+EEPHUS_DEPLOY_RUN=1 python -m pytest -q
 
 echo "--- rsync -> $WEBROOT"
 mkdir -p "$WEBROOT"

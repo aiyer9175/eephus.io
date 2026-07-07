@@ -13,6 +13,9 @@
 Read-only on committed files; no writes into data/.
 """
 import json
+import os
+import time
+from datetime import datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -116,7 +119,25 @@ def test_committed_artifact_headline_alias_contract():
 #   sample weight + picks alpha on a seeded representative holdout (was the contiguous
 #   last-fifth = oldest busts). OOS eval UNCHANGED (hit 0.3524 / pit 0.2839), so grades shift
 #   only trivially (jayden_dubanewicz 32.5 -> 32.4). No accuracy change; correctness only.
-_GOLDEN_XFV_SHA256 = "75cd0b328f073f25940c239ec708509b868d0b13ae87ebea9a640a39b1818749"
+# Updated 2026-07-07 (pre-launch pass): (1) M5 SHIP - ops_rel joins the hitter lean
+#   feature set under the pre-registered fringe-tier gate (docs/prelaunch-2026-07/
+#   GATES.md; FV-45 tier Spearman +0.0237, ~10x the noise floor; pooled/within-tier
+#   at the identity noise floor; ledger data/xfv_ops_rel_fringe_eval.json); (2) fresh
+#   post-pipeline data vintage folded in by the same regen (run 371 scrapes: consensus
+#   live captures, statlines, IL, transactions), so grades carry both the feature ship
+#   and the ordinary daily movement. M1 instrumentation (per-cohort/era/tier
+#   contributor-AUC + star-AUC, live-lambda provenance hit 0.70 / pit 0.54) landed in
+#   the eval artifacts only - xfv.json itself is untouched by M1.
+_GOLDEN_XFV_SHA256 = "d64ea85eecd5689c165c8f9d3e8b06f2428e4d43e40d30f474a4fbee7a441002"
+
+# DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
+# regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
+# above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
+# the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
+# swap the exact hash for a sane-shape check anchored on this recorded row count
+# (data/xfv.json by_player, read 2026-07-07). The +/-20% band tolerates ordinary
+# roster churn while still catching a gross truncation / empty-artifact regression.
+_GOLDEN_XFV_ROWCOUNT = 8841
 
 
 def test_efv_grade_map_inverts_on_model_window():
@@ -140,7 +161,48 @@ def test_efv_grade_map_inverts_on_model_window():
             "(a control_years flip would silently re-deflate top-end grades): " + " ".join(c.split())[:90])
 
 
+def _load_xfv_doc():
+    """Read data/xfv.json, retrying once if the read looks torn (the nightly deploy
+    runs this test right after the pipeline has rewritten the artifact, so a rare
+    mid-write read can raise on partial JSON)."""
+    path = DATA / "xfv.json"
+    for attempt in range(2):
+        assert path.exists(), "data/xfv.json missing"
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except ValueError:
+            if attempt == 0:
+                time.sleep(3)
+                continue
+            raise
+
+
 def test_xfv_golden_fingerprint():
+    # DEPLOY MODE (EEPHUS_DEPLOY_RUN=1, set by deploy/nightly-build.sh): the nightly
+    # build regenerates data/xfv.json with fresh data BEFORE gating on the suite, so the
+    # exact-hash tripwire below would go red every night real numbers move and freeze the
+    # publish. On the deploy box we therefore assert the artifact is present, parses, has a
+    # sane row count, and is freshly stamped -- not that it is byte-identical to the dev
+    # golden. The exact hash stays a DEV-TIME tripwire (env unset -> behavior UNCHANGED).
+    if os.environ.get("EEPHUS_DEPLOY_RUN") == "1":
+        doc = _load_xfv_doc()
+        bp = doc.get("by_player")
+        assert isinstance(bp, dict) and bp, "data/xfv.json has no by_player rows"
+        lo = _GOLDEN_XFV_ROWCOUNT * 0.8
+        hi = _GOLDEN_XFV_ROWCOUNT * 1.2
+        assert lo <= len(bp) <= hi, (
+            f"data/xfv.json by_player count {len(bp)} is outside +/-20% of the recorded "
+            f"baseline {_GOLDEN_XFV_ROWCOUNT} -- likely a truncated / partial regen.")
+        raw = doc.get("meta", {}).get("generated_at")
+        assert raw, "data/xfv.json meta.generated_at missing"
+        # generated_at is date.today().isoformat() (date-only); tolerate a full timestamp.
+        gen = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        now = datetime.now(gen.tzinfo) if gen.tzinfo else datetime.now()
+        assert abs(now - gen) <= timedelta(hours=48), (
+            f"data/xfv.json meta.generated_at {raw!r} is not within 48h of now -- the "
+            "nightly regen did not refresh the artifact.")
+        return
+
     from tools.pipeline_artifact_diff import fingerprint_file
     fp = fingerprint_file(DATA / "xfv.json", None)   # whole-doc hash, volatile keys stripped
     assert fp is not None and "sha256" in fp, "xfv.json missing/unreadable"

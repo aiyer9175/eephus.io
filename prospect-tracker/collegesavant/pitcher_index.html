@@ -24,9 +24,9 @@
     <meta name="theme-color" content="#0E2B4D" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0C0C0E" media="(prefers-color-scheme: dark)" />
     <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
-    <link rel="stylesheet" href="/assets/site.css?v=20260630" />
-    <link rel="stylesheet" href="/assets/eephus-account.css" />
-    <link rel="stylesheet" href="styles.css" />
+    <link rel="stylesheet" href="/assets/site.css?v=20260709" />
+    <link rel="stylesheet" href="/assets/eephus-account.css?v=20260709" />
+    <link rel="stylesheet" href="styles.css?v=20260709" />
   </head>
   <body>
     <!-- Site-wide nav - mirrors build_site.py NAV_ITEMS (keep in sync) -->
@@ -60,7 +60,7 @@
       </div>
     </header>
     <div class="cs-bar">
-      <span class="cs-bar-title">CollegeSavant <span class="eephus-beta" title="CollegeSavant is in alpha - newly launched">&alpha; alpha</span></span>
+      <span class="cs-bar-title">CollegeSavant <span class="eephus-beta" title="CollegeSavant is in beta - newly launched">&beta; beta</span></span>
       <div class="hp-toggle" role="group" aria-label="Hitters or pitchers">
         <a class="hp-seg" href="index.html#/" data-cross-page="index.html">Hitters</a>
         <a class="hp-seg is-active" href="#/" aria-current="page">Pitchers</a>
@@ -89,20 +89,20 @@
          first use; pitch_shape_data_2024/2025.js (38MB/1.6MB) are
          lazy-injected by renderPitchShapePlot when a pitcher detail with
          that season's tracking opens (pitcher_app.js ensurePitchShapes). -->
-    <script src="data.js" defer></script>
-    <script src="pitcher_data.js" defer></script>
+    <script src="data.js?v=20260709" defer></script>
+    <script src="pitcher_data.js?v=20260709" defer></script>
     <script src="/data/collegesavant_translation.js" defer></script>
     <script src="/data/collegesavant_draft_prospects.js" defer></script>
-    <script src="global_search.js" defer></script>
-    <script src="table_sort.js" defer></script>
-    <script src="pitcher_app.js" defer></script>
-    <script src="/assets/eephus-config.js" defer></script>
-    <script src="/assets/eephus-account.js" defer></script>
-    <script src="/assets/eephus-nav.js" defer></script>
-    <script src="/assets/eephus-ui.js" defer></script>
-    <script src="/assets/eephus-bg.js" defer></script>
-    <script src="/assets/eephus-gl.js" defer></script>
-    <script src="/assets/eephus-hub.js" defer></script>
-    <script src="/assets/eephus-export.js" defer></script>
+    <script src="global_search.js?v=20260709" defer></script>
+    <script src="table_sort.js?v=20260709" defer></script>
+    <script src="pitcher_app.js?v=20260709" defer></script>
+    <script src="/assets/eephus-config.js?v=20260709" defer></script>
+    <script src="/assets/eephus-account.js?v=20260709" defer></script>
+    <script src="/assets/eephus-nav.js?v=20260709" defer></script>
+    <script src="/assets/eephus-ui.js?v=20260709" defer></script>
+    <script src="/assets/eephus-bg.js?v=20260709" defer></script>
+    <script src="/assets/eephus-gl.js?v=20260709" defer></script>
+    <script src="/assets/eephus-hub.js?v=20260709" defer></script>
+    <script src="/assets/eephus-export.js?v=20260709" defer></script>
   </body>
 </html>

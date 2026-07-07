@@ -15,19 +15,19 @@
   "target": "-RA9 in year Y+1 (IP>=40)",
   "excluded": "2020 (60-game COVID season)"
  },
- "runtime_seconds": 15.9,
+ "runtime_seconds": 11.3,
  "experiment": "X-S1 (+ X-S3)",
  "model": "sem_plus",
  "n_forward_pairs": 702,
  "forward_spearman_vs_RA9_next": {
   "sem_plus": 0.3934,
   "raw_fip": 0.3585,
-  "era": 0.2616
+  "era": 0.2617
  },
  "gap_ci_vs_era": {
   "mean": 0.1318,
   "lo95": 0.0829,
-  "hi95": 0.1808
+  "hi95": 0.1807
  },
  "gap_ci_vs_raw_fip": {
   "mean": 0.0346,
@@ -51,6 +51,6 @@
  },
  "verdict": {
   "status": "validated",
-  "summary": "Forward-chained OOS over 7 seasons (702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3934 vs raw FIP 0.3585, ERA 0.2616. CI on the rho gap vs ERA {'mean': 0.1318, 'lo95': 0.0829, 'hi95': 0.1808}, vs raw FIP {'mean': 0.0346, 'lo95': 0.0198, 'hi95': 0.0493}. Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse than its raw-FIP parent, so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Durability rides separate context columns."
+  "summary": "Forward-chained OOS over 7 seasons (702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3934 vs raw FIP 0.3585, ERA 0.2617. CI on the rho gap vs ERA {'mean': 0.1318, 'lo95': 0.0829, 'hi95': 0.1807}, vs raw FIP {'mean': 0.0346, 'lo95': 0.0198, 'hi95': 0.0493}. Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse than its raw-FIP parent, so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Durability rides separate context columns."
  }
 }

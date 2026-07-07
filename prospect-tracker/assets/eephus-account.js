@@ -346,7 +346,7 @@
       var c = client();
       if (!c || !threadId) return Promise.resolve([]);
       var sel = "id,thread_id,parent_id,author_id,body_md,body_html,score,created_at,edited_at,deleted," +
-        "profiles:author_id(username,avatar_url,role,karma)";
+        "profiles:author_id(username,avatar_url,role,karma,created_at)";
       var q = c.from("comments").select(sel).eq("thread_id", threadId);
       if (sort === "top") q = q.order("score", { ascending: false }).order("created_at", { ascending: true });
       else q = q.order("created_at", { ascending: true }); // recent/active resolve client-side

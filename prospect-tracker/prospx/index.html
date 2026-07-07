@@ -54,12 +54,12 @@
        loadData() already starts the fetch on boot. Do not re-add. -->
   <!-- eephus.io shared site nav/theme. Loaded BEFORE the inline <style> below so
        PROSPX's own :root wins the cascade; we only need `.eephus-nav` from it. -->
-  <link rel="stylesheet" href="/assets/site.css?v=20260630">
+  <link rel="stylesheet" href="/assets/site.css?v=20260709">
   <!-- eephus.io account/forum layer styles. Loaded AFTER site.css so its tokens
        resolve; scoped under .eph-* so it can't touch existing chrome. Circular
        account avatars (.eph-avatar) are the one sanctioned exception to the
        site-wide sharp-corner rule. -->
-  <link rel="stylesheet" href="/assets/eephus-account.css">
+  <link rel="stylesheet" href="/assets/eephus-account.css?v=20260709">
 
   <!-- Webfonts: Source Serif for headlines, Inter for UI, JetBrains Mono
        for numerics. System fallbacks (Georgia / -apple-system / Menlo)
@@ -1056,6 +1056,12 @@
        The label stays pinned left and the chips flow beneath it. */
     #farm-sort-bar .filter-group { flex-wrap: wrap; min-width: 0; }
     #farm-sort-bar .filter-group .filter-label { flex: 0 0 auto; }
+    /* v45 - Leaderboard filter bar: the Stat group carries ~26 chips in a single
+       group that used to run off the right edge at 1280/1440 (page-level
+       horizontal scroll). Same treatment as the farm sort bar - let each group
+       wrap its chips to multiple rows, with the label pinned left. */
+    #leaderboard-bar .filter-group { flex-wrap: wrap; min-width: 0; }
+    #leaderboard-bar .filter-group .filter-label { flex: 0 0 auto; }
     /* v30.8 - Three-cluster filter layout. The active-list filter bar
        used to be 13 flat groups; now they're organized into WHO /
        WHAT / HOW clusters that render as stacked rows separated by a
@@ -4694,8 +4700,17 @@
          sparkline SVG + level-depth chips pushed the 16-col grid ~10px past the
          viewport at desktop (page-level horizontal scroll). minmax(0,1fr) lets
          them shrink to the available track, eliminating the overflow. */
-      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px minmax(0,1fr) 156px minmax(0,1fr) 56px 60px 64px 64px 60px 56px;
-      gap: 10px;
+      /* v45 - Tightened the gutter (10 -> 6px) and trimmed the slack numeric
+         tracks (avg age, ROI, spend, surplus) plus the trailing chevron so the
+         full 16-column board fits a 1280px laptop viewport with NO page-level
+         horizontal scrollbar - and the sticky column header keeps working (no
+         overflow wrapper). Organization (180px) and Positions (156px, the v20
+         four-pill minimum) are left untouched so no primary content squishes;
+         the Stock column now clears the right edge with margin. The header
+         label typography below is nudged so the two flexible-track labels
+         still read at the tighter track widths. */
+      grid-template-columns: 32px 56px 180px 80px 110px 76px 160px minmax(0,1fr) 156px minmax(0,1fr) 50px 54px 60px 60px 60px 44px;
+      gap: 6px;
       align-items: center;
     }
     /* Hard-clip positions + level-depth cells so any residual chip
@@ -5258,19 +5273,23 @@
     }
     .farm-header {
       font-family: var(--font-sans);
-      font-size: 10px;
+      /* v45 - font 10 -> 9px + letter-spacing 0.10 -> 0.03em so the two
+         flexible-track labels (Top prospects / Level depth) still read at the
+         tightened column widths without spilling into their neighbors. */
+      font-size: 9px;
       color: var(--col-header-fg);
       padding: 9px 14px 9px 18px;
       background: var(--bg-header);
       border-radius: var(--radius-sm);
       margin-bottom: 8px;
       text-transform: uppercase;
-      letter-spacing: 0.10em;
+      letter-spacing: 0.03em;
       font-weight: 600;
     }
     .farm-header > span {
       display: block;
       color: var(--col-header-fg) !important;
+      line-height: 1.15;
     }
     .farm-row {
       position: relative;
@@ -10025,13 +10044,13 @@
      buttons on prospect / farm / leaderboard / chart-builder surfaces.
      Loaded async so it doesn't block first paint; the export helper
      gates on `window.html2canvas` being defined before firing. -->
-<script src="/vendor/html2canvas.min.js" defer></script>
+<script src="/vendor/html2canvas.min.js?v=20260709" defer></script>
 <!-- qrcode-generator (vendored, ~56KB) - builds the optional QR in the GFX card
      header that links a shared graphic back to the eephus.io prospect/farm page. -->
-<script src="/vendor/qrcode.min.js" defer></script>
+<script src="/vendor/qrcode.min.js?v=20260709" defer></script>
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
-<script src="/assets/eephus-export.js" defer></script>
+<script src="/assets/eephus-export.js?v=20260709" defer></script>
 
 <!-- eephus.io account layer (Parts 1-7). Both are OPTIONAL: eephus-config.js is
      git-ignored and absent on the public/dev tree, so its <script> 404s harmlessly
@@ -10039,18 +10058,18 @@
      inert - no Supabase SDK fetch, no behavior change - and the site works exactly
      as today (logged-out, localStorage watchlist). When config IS present, the
      module self-injects the Supabase SDK and lights up the account UI. -->
-<script src="/assets/eephus-config.js" defer></script>
-<script src="/assets/eephus-account.js" defer></script>
-<script src="/assets/eephus-nav.js" defer></script>
-<script src="/assets/eephus-ui.js" defer></script>
-  <script src="/assets/eephus-gl.js" defer></script>
+<script src="/assets/eephus-config.js?v=20260709" defer></script>
+<script src="/assets/eephus-account.js?v=20260709" defer></script>
+<script src="/assets/eephus-nav.js?v=20260709" defer></script>
+<script src="/assets/eephus-ui.js?v=20260709" defer></script>
+  <script src="/assets/eephus-gl.js?v=20260709" defer></script>
   <!-- Cross-module player hub (strip + unified share card) -->
-  <script src="/assets/eephus-hub.js" defer></script>
+  <script src="/assets/eephus-hub.js?v=20260709" defer></script>
 <!-- Dark-theme phosphor-starfield background - shared with the editorial
      pages (single component + token set in assets/site.css [data-theme=dark]).
      Mounts only while the dark theme is active; render() feeds it the
      prospect FV on detail views so the field escalates with the rarity tier. -->
-<script src="/assets/eephus-bg.js" defer></script>
+<script src="/assets/eephus-bg.js?v=20260709" defer></script>
 
 <!-- v32.0 - FV/WAR/$ conversion framework, loaded synchronously so all
      downstream code can call dollarsPerWar() / surplusValueMM() / etc
@@ -14209,7 +14228,7 @@ function _recentGameLogsBlock(p) {
       ${cells.map((c, i) => `<td style="text-align:${i < 3 ? "left" : "right"};padding:3px 6px;font-family:${i < 3 ? "var(--font-mono)" : "var(--font-retro-mono)"};font-size:11px;color:${i === 0 ? "var(--text-tertiary)" : "var(--text-primary)"};font-variant-numeric:tabular-nums;border-bottom:1px solid var(--border-light);">${c}</td>`).join("")}
     </tr>`;
   }).join("");
-  return `<div class="detail-title">Last ${games.length} game${games.length === 1 ? "" : "s"}
+  return `<div class="detail-title">Last ${games.length} game${games.length === 1 ? "" : "s"}${_l15OpsChip(p)}
     <span class="detail-title-sub">most recent first · raw box-line · green tint = strong outing, red tint = poor outing</span></div>
     <div class="detail-card" style="padding:6px 8px;overflow-x:auto;">
       <table style="width:100%;border-collapse:collapse;">
@@ -14217,6 +14236,38 @@ function _recentGameLogsBlock(p) {
         <tbody>${rows}</tbody>
       </table>
     </div>`;
+}
+
+// Pre-Beta - L15 OPS chip. Aggregates the last-15 game box lines
+// (p.statcast_metrics.recent_games) into a single OPS, using the same
+// (H+BB)/(AB+BB) OBP and TB/AB SLG the date-windowed leaderboard uses, so
+// the number ties out with those boards. Hitters only, and only for
+// top-~200 board prospects (getEfvRank <= 200). Sample-gated to >= 8 games
+// with AB data so a 2-game hot streak cannot flash a 1.500 OPS. Rendered
+// inline with the "Last N games" detail heading; returns "" when any gate
+// fails (pitcher, unranked / outside top 200, thin sample, no AB).
+function _l15OpsChip(p) {
+  const games = (p && p.statcast_metrics && p.statcast_metrics.recent_games) || [];
+  if (!Array.isArray(games) || !games.length) return "";
+  if (games[0].is_pitcher) return "";                       // hitters only
+  const rank = getEfvRank(p);
+  if (rank == null || rank > 200) return "";                // top ~200 gate
+  let n = 0, ab = 0, h = 0, bb = 0, doub = 0, trip = 0, hr = 0;
+  for (const g of games) {
+    if (!g || g.is_pitcher || g.ab == null) continue;       // skip games lacking AB data
+    n++;
+    ab += g.ab || 0; h += g.h || 0; bb += g.bb || 0;
+    doub += g.doub || 0; trip += g.trip || 0; hr += g.hr || 0;
+  }
+  if (n < 8 || ab <= 0) return "";                          // sample gate
+  const oneB = h - doub - trip - hr;
+  const obp = (ab + bb) > 0 ? (h + bb) / (ab + bb) : null;
+  const slg = (oneB + 2 * doub + 3 * trip + 4 * hr) / ab;
+  if (obp == null || !isFinite(slg)) return "";
+  const ops = obp + slg;
+  // 3 decimals, leading zero stripped (.847 / 1.050) - matches fmtRate3.
+  const opsStr = ops < 1 ? ops.toFixed(3).replace(/^0/, "") : ops.toFixed(3);
+  return `<span class="stat-pill" title="OPS over the last 15 games (all levels)" style="font-size:11px;padding:2px 7px;margin-left:8px;vertical-align:middle;">L15 ${opsStr} OPS</span>`;
 }
 
 function _debutFvCohortBlock(p) {
@@ -19428,6 +19479,22 @@ function renderLeaderboards() {
       + `</div>`
     : "";
 
+  // Pre-Beta - Staleness notice. The game-log slice is a nightly build; if its
+  // stamp (generated_at, else as_of) is more than 3 days old, flag it quietly so
+  // window boards are not read as live. Fresh slices (<= 3 days) show nothing;
+  // the absent-file fallback above is untouched.
+  const _staleNote = (() => {
+    if (!windowMode) return "";
+    const gl = DATA.leaderboard_gamelogs;
+    const stamp = gl && (gl.generated_at || gl.as_of);
+    if (!stamp) return "";
+    const t = Date.parse(stamp);
+    if (isNaN(t)) return "";
+    if ((Date.now() - t) / 86400000 <= 3) return "";
+    const through = gl.as_of || String(stamp).slice(0, 10);
+    return `<div style="margin:6px 0 0;font-size:11px;color:var(--text-tertiary);">Window data through ${escapeHtml(_lbFmtDate(through))}</div>`;
+  })();
+
   if (!ranked.length) {
     const minLabel = windowMode
       ? (cfg.side === "hit"
@@ -19443,7 +19510,7 @@ function renderLeaderboards() {
       ? `the ${escapeHtml(_winDates.label).toLowerCase()} ${escapeHtml(cfg.label)} window`
       : `the ${season} ${escapeHtml(cfg.label)} board`;
     document.getElementById("leaderboard-rows").innerHTML =
-      _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).</div>`;
+      _staleNote + _winNote + header + `<div class="state-message">No active MiLB ${cfg.side === "hit" ? "hitters" : "pitchers"} qualify for ${_scope} under these filters (min ${minLabel}).</div>`;
     return;
   }
 
@@ -19499,7 +19566,7 @@ function renderLeaderboards() {
       </div>`;
   }).join("");
 
-  document.getElementById("leaderboard-rows").innerHTML = _winNote + paginationStripTop + header + rows + paginationStrip;
+  document.getElementById("leaderboard-rows").innerHTML = _staleNote + _winNote + paginationStripTop + header + rows + paginationStrip;
   // Phase 3 viz: cohort histogram showing where the top-10 sits in the
   // full qualifying-prospect distribution. The vertical dashed line +
   // cyan highlight bin makes the percentile context obvious.
@@ -21966,6 +22033,15 @@ function _headshotImg(url, name, opts) {
   // exported JSON that still carries one falls straight to the silhouette
   // without issuing a doomed request. (player_images.py no longer emits them.)
   if (url && String(url).includes("fangraphs.com/players/photo")) url = null;
+  // Defensive normalize (v45): some upstream rows can carry a HOST-RELATIVE
+  // MiLB headshot path ("/mlb-photos/image/upload/.../headshot/milb/current")
+  // instead of a full URL. Without the CDN host that resolves against our own
+  // origin and 404s. Restore the canonical img.mlbstatic.com host; full
+  // https:// URLs (the common case) already start with the scheme and are
+  // left untouched.
+  if (url && String(url).charAt(0) === "/" && String(url).startsWith("/mlb-photos")) {
+    url = "https://img.mlbstatic.com" + url;
+  }
   // Silhouette SVG always renders inside the wrapper; the <img> sits
   // ABOVE it. When the image 404s, the img is hidden via onerror and
   // the silhouette underneath shows through. Same pattern as the MiLB

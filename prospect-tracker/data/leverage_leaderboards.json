@@ -6508,7 +6508,7 @@
    "wpa": 2.956,
    "wpa_per_start": 0.174,
    "wpa_li": 3.426,
-   "gs": 17,
+   "gs": 18,
    "qualified": true
   },
   {
@@ -8148,6 +8148,17 @@
    "wpa_per_start": 0.001,
    "wpa_li": -0.046,
    "gs": 2,
+   "qualified": false
+  },
+  {
+   "mlbam": 694335,
+   "name": "Matt Svanson",
+   "team": "STL",
+   "starts": 1,
+   "wpa": 0.0,
+   "wpa_per_start": 0.0,
+   "wpa_li": 0.0,
+   "gs": 1,
    "qualified": false
   },
   {

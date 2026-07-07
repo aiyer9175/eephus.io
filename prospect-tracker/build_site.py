@@ -268,19 +268,19 @@ BETA_BADGE = (
     f'{html.escape(EEPHUS_VERSION)}</span>'
 )
 
-# Module lifecycle stages - α = newly launched (numbers may still shift),
-# β = established but in beta. Rendered ONLY as a bordered chip on each
-# module's own masthead (Open Beta polish: the nav links and the homepage
-# sidebar carry no sigils; version is noted where you land, not where you
-# browse). The homepage hero keeps the site-wide chip (eephus.io is in beta).
+# Module lifecycle stage - β = in beta (the Open Beta launch promoted every
+# module to beta). Rendered ONLY as a bordered chip on each module's own
+# masthead (Open Beta polish: the nav links and the homepage sidebar carry no
+# sigils; version is noted where you land, not where you browse). The homepage
+# hero keeps the site-wide chip (eephus.io is in beta).
 MODULE_STAGE = {
     "prospx": ("β", "PROSPX is in beta"),
-    "trademachine": ("α", "Trade Machine is in alpha - newly launched"),
-    "fa": ("α", "MLB Free Agency is in alpha - newly launched; numbers may shift as the model matures"),
-    "projections": ("α", "MLB Projections is in alpha - newly launched; numbers may shift as the model matures"),
-    "mlbstats": ("α", "MLB Stats is in alpha - newly launched; metrics may shift as the models mature"),
-    "pal": ("α", "Pitcher Alchemy Lab is in alpha - newly launched; the conversion models are provisional"),
-    "forums": ("α", "Forums is in alpha - newly launched"),
+    "trademachine": ("β", "Trade Machine is in beta - newly launched"),
+    "fa": ("β", "MLB Free Agency is in beta - newly launched; numbers may shift as the model matures"),
+    "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
+    "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
+    "pal": ("β", "Pitcher Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
+    "forums": ("β", "Forums is in beta - newly launched"),
 }
 
 # Dev byline - the same "Created by" signature PROSPX renders above its
@@ -2158,7 +2158,7 @@ def build_forums_index() -> str:
     recently active first. Static shell gives SEO + first paint + a nav home."""
     body = (
         '<div class="section-head"><h1>Forums '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["forums"][1])}">α alpha</span></h1>'
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["forums"][1])}">β beta</span></h1>'
         '<span class="section-sub">Discussion across prospects, farm systems, and articles</span></div>'
         '<div class="eph-forums-index-page"><div id="eph-forums-index"></div></div>'
     )
@@ -2181,7 +2181,7 @@ def build_fa() -> str:
     body = (
         '<div class="fa-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Free Agency '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">α alpha</span></h1></div>'
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["fa"][1])}">β beta</span></h1></div>'
         f'<span class="section-sub">the {_fa_span} class, constructed from data · '
         f'projected markets, rational value &amp; team fits · {_fa_winters} archived winters</span></div>'
         '<div id="fa-banner"></div>'
@@ -2310,7 +2310,7 @@ def build_projections() -> str:
     body = (
         '<div class="fa-app proj-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>MLB Projections '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">α alpha</span></h1></div>'
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["projections"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">five-year bWAR paths for every MLB player · floor / mean / ceiling '
         'probability buckets · contract surplus on salary-known seasons · prospects join at their PROSPX ETA</span></div>'
         '<div id="proj-view-projections">'
@@ -2343,7 +2343,7 @@ def build_trademachine() -> str:
         # filter + collapse wiring to that id; .tm-app carries the standalone theming.
         '<div class="fa-app proj-app tm-app" id="proj-view-trademachine">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}<h1>Trade Machine '
-        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["trademachine"][1])}">α alpha</span></h1></div>'
+        f'<span class="eephus-beta" title="{html.escape(MODULE_STAGE["trademachine"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">build and value a deal both ways: prospects on eFV surplus, MLB players '
         'on projection surplus, then the full Bayesian trade-value board</span></div>'
         + _TRADE_MACHINE_BODY +
@@ -2372,7 +2372,7 @@ def build_mlbstats() -> str:
     body = (
         '<div class="fa-app mlbstats-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">α alpha</span></h1></div>'
+        f'<h1>MLB Stats <span class="eephus-beta" title="{html.escape(MODULE_STAGE["mlbstats"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">League-wide MLB stat leaderboards. Bullpen Leaderboards - '
         'REM+ reliever skill, RIV+ impact, team Bullpen+ quality, and bullpen charts; Starter '
         'Leaderboards - SEM+ starter run-prevention skill, team Rotation+, and rotation charts; and '
@@ -2422,7 +2422,7 @@ def build_pal() -> str:
     body = (
         '<div class="fa-app mlbstats-app pal-app">'
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
-        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">α alpha</span></h1></div>'
+        f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
         'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'

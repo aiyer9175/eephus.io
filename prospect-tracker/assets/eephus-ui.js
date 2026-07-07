@@ -105,7 +105,7 @@
     if (LIVE()) {
       var p = A.profile();
       if (!p) return null;
-      return { id: p.id, username: p.username, avatar_url: p.avatar_url, role: p.role, karma: p.karma, badges: p._badges || [], _live: true };
+      return { id: p.id, username: p.username, avatar_url: p.avatar_url, role: p.role, karma: p.karma, badges: p._badges || [], created_at: p.created_at, _live: true };
     }
     return PV.profile();
   }
@@ -128,6 +128,27 @@
   // prospect chip + badges/role. Used in comments, nav, profiles.
   var BADGE_ICON = { beta_tester: "🧪", contributor: "✍️", tenured_1y: "🎖️" };
   var BADGE_NAME = { beta_tester: "Beta Tester", contributor: "Contributor", tenured_1y: "Charter Member" };
+  // Beta launch date - accounts created on or after this get the computed
+  // beta_tester badge; this is the one line to change if the launch date shifts.
+  var BETA_START = "2026-07-09";
+  // Single source of truth for the computed beta_tester badge. Returns the
+  // profile's badge slugs with beta_tester PREPENDED (so it survives the
+  // 4-badge slice in flairHTML) when the account was created on or after
+  // BETA_START. created_at is a Supabase timestamptz ISO string, e.g.
+  // "2026-07-09T12:34:56.789+00:00"; its leading 10 chars are the UTC date and
+  // ISO date strings sort lexicographically, so a plain compare of the date
+  // part against BETA_START is correct. Never double-adds an already-granted
+  // beta_tester. No network calls - reads only what the profile already carries.
+  function withComputedBadges(profile) {
+    var badges = (profile && profile.badges) || [];
+    var created = profile && profile.created_at;
+    if (created && /^\d{4}-\d{2}-\d{2}/.test(String(created)) &&
+        String(created).slice(0, 10) >= BETA_START &&
+        badges.indexOf("beta_tester") < 0) {
+      badges = ["beta_tester"].concat(badges);
+    }
+    return badges;
+  }
   function flairHTML(profile, opts) {
     opts = opts || {};
     if (!profile) return "";
@@ -149,7 +170,7 @@
     }
     // role + badges
     if (profile.role === "admin" || profile.role === "moderator") out += '<span class="eph-role ' + profile.role + '">' + esc(profile.role === "admin" ? "Admin" : "Mod") + "</span>";
-    var badges = profile.badges || [];
+    var badges = withComputedBadges(profile);
     if (badges.length) {
       out += '<span class="eph-badges">';
       badges.slice(0, 4).forEach(function (b) { out += '<span class="eph-badge" title="' + escAttr(BADGE_NAME[b] || b) + '">' + (BADGE_ICON[b] || "🏅") + "</span>"; });
@@ -170,8 +191,12 @@
   // ===========================================================================
   function safeLink(url) {
     var u = String(url || "").trim();
-    if (/^https?:\/\//i.test(u) || /^\//.test(u)) return u; // absolute http(s) or site-root only
-    return null; // reject javascript:, data:, etc.
+    // absolute http(s), OR a single-slash site-root path. The (?!\/) rejects a
+    // protocol-relative "//host" that would render as a live EXTERNAL link while
+    // masquerading as internal AND slips past the https?:// link-gate (client +
+    // server migration 0003). javascript:, data:, mailto: etc. fall through to null.
+    if (/^https?:\/\//i.test(u) || /^\/(?!\/)/.test(u)) return u;
+    return null;
   }
   function inline(escaped, ctx) {
     var s = escaped;
@@ -894,7 +919,7 @@
         return {
           id: c.id, parent_id: c.parent_id, score: c.score, created_at: c.created_at, edited_at: c.edited_at,
           deleted: c.deleted, body_md: c.body_md, my_vote: mine[c.id] || 0,
-          author: { id: c.author_id, username: pr.username, avatar_url: pr.avatar_url, role: pr.role, karma: pr.karma, badges: [] }
+          author: { id: c.author_id, username: pr.username, avatar_url: pr.avatar_url, role: pr.role, karma: pr.karma, badges: [], created_at: pr.created_at }
         };
       });
     });
@@ -968,7 +993,7 @@
         '<button class="eph-md-btn" data-act="poll" title="Insert a poll" type="button">▦ Poll</button>' +
         '<button class="eph-embed-btn" data-act="embed" type="button">＋ Embed PROSPX</button>' +
       "</div>" +
-      '<textarea placeholder="' + (parentId ? "Write a reply…" : "Share your read… **markdown** supported · @mention users · [[fv:key]] to embed a chart") + '"></textarea>' +
+      '<textarea maxlength="8000" placeholder="' + (parentId ? "Write a reply…" : "Share your read… **markdown** supported · @mention users · [[fv:key]] to embed a chart") + '"></textarea>' +
       '<div class="eph-mention-pop"></div>' +
       '<div class="eph-embed-pop"><h4>Embed a prospect</h4><input class="eph-embed-search" placeholder="Search prospects…"><div class="eph-ac-list"></div></div>' +
       '<div class="eph-compose-foot"><span class="eph-fyi">Embeds: <code>[[fv:key]]</code> chart · <code>[[player:key]]</code> card · <code>[[fv:THIS]]</code> = this page</span>' +
@@ -1023,7 +1048,7 @@
       var bodyEl = qs(".eph-c-body", row); var foot = qs(".eph-c-foot", row);
       if (qs(".eph-edit", row)) return;
       var cur = decodeURIComponent(row.getAttribute("data-md") || "");
-      bodyEl.insertAdjacentHTML("afterend", '<div class="eph-compose eph-edit"><textarea>' + esc(cur) + "</textarea>" +
+      bodyEl.insertAdjacentHTML("afterend", '<div class="eph-compose eph-edit"><textarea maxlength="8000">' + esc(cur) + "</textarea>" +
         '<div class="eph-compose-foot"><span class="eph-fyi">Editing</span><span style="display:flex;gap:6px;">' +
         '<button class="eph-btn sm" data-act="saveedit">Save</button><button class="eph-btn sm ghost" data-act="canceledit">Cancel</button></span></div></div>');
       bodyEl.style.display = "none"; if (foot) foot.style.display = "none";
@@ -1157,7 +1182,7 @@
     } else {
       var list = PV.comments(_forumState.scope, _forumState.key) || [];
       var prof = PV.profile();
-      list.push({ id: "pv" + Date.now(), parent_id: parentId, author: { id: "preview", username: prof.username, role: prof.role, badges: prof.badges, fav_team: prof.fav_team, fav_prospect: prof.fav_prospect }, score: 1, my_vote: 1, created_at: new Date().toISOString(), body_md: md });
+      list.push({ id: "pv" + Date.now(), parent_id: parentId, author: { id: "preview", username: prof.username, role: prof.role, badges: prof.badges, fav_team: prof.fav_team, fav_prospect: prof.fav_prospect, created_at: prof.created_at }, score: 1, my_vote: 1, created_at: new Date().toISOString(), body_md: md });
       PV.saveComments(_forumState.scope, _forumState.key, list);
       PV.setVote("pv-self", 0);
       loadAndRenderComments();

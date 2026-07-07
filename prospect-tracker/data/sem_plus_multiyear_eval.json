@@ -15,7 +15,7 @@
   "target": "-RA9 in year Y+1 (IP>=40)",
   "excluded": "2020 (60-game COVID season)"
  },
- "runtime_seconds": 15.9,
+ "runtime_seconds": 11.3,
  "experiment": "X-S2",
  "model": "sem_plus_3yr",
  "n_forward_pairs": 457,
@@ -46,10 +46,10 @@
    "694819": {
     "name": "Jacob Misiorowski",
     "team": "MIL",
-    "sem_plus_now": 164,
-    "sem_plus_3yr": 144,
+    "sem_plus_now": 162,
+    "sem_plus_3yr": 143,
     "seasons_used": 2,
-    "ip_total": 170.0,
+    "ip_total": 177.0,
     "tag": "established",
     "pct": 98
    },
@@ -226,7 +226,7 @@
    "690986": {
     "name": "Kyle Harrison",
     "team": "MIL",
-    "sem_plus_now": 126,
+    "sem_plus_now": 125,
     "sem_plus_3yr": 107,
     "seasons_used": 3,
     "ip_total": 239.7,
@@ -271,7 +271,7 @@
     "seasons_used": 3,
     "ip_total": 219.0,
     "tag": "established",
-    "pct": 33
+    "pct": 34
    },
    "663556": {
     "name": "Shane McClanahan",
@@ -311,7 +311,7 @@
     "seasons_used": 3,
     "ip_total": 214.0,
     "tag": "established",
-    "pct": 35
+    "pct": 36
    },
    "669373": {
     "name": "Tarik Skubal",
@@ -406,12 +406,12 @@
    "669387": {
     "name": "Carmen Mlodzinski",
     "team": "PIT",
-    "sem_plus_now": 103,
-    "sem_plus_3yr": 103,
+    "sem_plus_now": 102,
+    "sem_plus_3yr": 102,
     "seasons_used": 1,
     "ip_total": 75.7,
     "tag": "provisional",
-    "pct": 62
+    "pct": 60
    },
    "687064": {
     "name": "Brandon Young",
@@ -491,7 +491,7 @@
     "seasons_used": 2,
     "ip_total": 96.3,
     "tag": "provisional",
-    "pct": 34
+    "pct": 35
    },
    "650633": {
     "name": "Michael King",
@@ -516,12 +516,12 @@
    "680732": {
     "name": "Sean Burke",
     "team": "CWS",
-    "sem_plus_now": 109,
-    "sem_plus_3yr": 98,
+    "sem_plus_now": 108,
+    "sem_plus_3yr": 97,
     "seasons_used": 3,
     "ip_total": 252.0,
     "tag": "established",
-    "pct": 36
+    "pct": 33
    },
    "643377": {
     "name": "Griffin Jax",
@@ -676,12 +676,12 @@
    "671096": {
     "name": "Andrew Abbott",
     "team": "CIN",
-    "sem_plus_now": 87,
+    "sem_plus_now": 86,
     "sem_plus_3yr": 96,
     "seasons_used": 3,
     "ip_total": 399.3,
     "tag": "established",
-    "pct": 29
+    "pct": 28
    },
    "676917": {
     "name": "Cade Cavalli",
@@ -841,7 +841,7 @@
     "seasons_used": 3,
     "ip_total": 251.7,
     "tag": "established",
-    "pct": 28
+    "pct": 29
    },
    "684007": {
     "name": "Shota Imanaga",
@@ -921,7 +921,7 @@
     "seasons_used": 2,
     "ip_total": 72.0,
     "tag": "provisional",
-    "pct": 60
+    "pct": 61
    },
    "805673": {
     "name": "Zebby Matthews",
@@ -1001,7 +1001,7 @@
     "seasons_used": 3,
     "ip_total": 329.7,
     "tag": "established",
-    "pct": 61
+    "pct": 62
    },
    "669432": {
     "name": "Trevor Rogers",

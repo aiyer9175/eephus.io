@@ -1195,16 +1195,6 @@
     "tag": "established",
     "pct": 21
    },
-   "668941": {
-    "name": "JoJo Romero",
-    "team": "STL",
-    "gmli_now": 1.72,
-    "gmli_3yr": 1.71,
-    "seasons_used": 3,
-    "entries_total": 170,
-    "tag": "established",
-    "pct": 96
-   },
    "621112": {
     "name": "Paul Blackburn",
     "team": "NYY",
@@ -1224,6 +1214,16 @@
     "entries_total": 70,
     "tag": "established",
     "pct": 29
+   },
+   "668941": {
+    "name": "JoJo Romero",
+    "team": "STL",
+    "gmli_now": 1.72,
+    "gmli_3yr": 1.71,
+    "seasons_used": 3,
+    "entries_total": 170,
+    "tag": "established",
+    "pct": 96
    },
    "643511": {
     "name": "Tyler Rogers",
@@ -1715,16 +1715,6 @@
     "tag": "established",
     "pct": 49
    },
-   "592773": {
-    "name": "Ryne Stanek",
-    "team": "STL",
-    "gmli_now": 1.33,
-    "gmli_3yr": 1.23,
-    "seasons_used": 3,
-    "entries_total": 166,
-    "tag": "established",
-    "pct": 56
-   },
    "681982": {
     "name": "Grant Anderson",
     "team": "MIL",
@@ -1765,6 +1755,16 @@
     "tag": "established",
     "pct": 99
    },
+   "694335": {
+    "name": "Matt Svanson",
+    "team": "STL",
+    "gmli_now": 0.66,
+    "gmli_3yr": 0.77,
+    "seasons_used": 2,
+    "entries_total": 73,
+    "tag": "established",
+    "pct": 10
+   },
    "642232": {
     "name": "Ryan Yarbrough",
     "team": "NYY",
@@ -1785,6 +1785,16 @@
     "tag": "established",
     "pct": 10
    },
+   "592773": {
+    "name": "Ryne Stanek",
+    "team": "STL",
+    "gmli_now": 1.33,
+    "gmli_3yr": 1.23,
+    "seasons_used": 3,
+    "entries_total": 166,
+    "tag": "established",
+    "pct": 56
+   },
    "656271": {
     "name": "Brock Burke",
     "team": "CIN",
@@ -1804,16 +1814,6 @@
     "entries_total": 175,
     "tag": "established",
     "pct": 89
-   },
-   "694335": {
-    "name": "Matt Svanson",
-    "team": "STL",
-    "gmli_now": 0.66,
-    "gmli_3yr": 0.77,
-    "seasons_used": 2,
-    "entries_total": 73,
-    "tag": "established",
-    "pct": 10
    },
    "677955": {
     "name": "Jaden Hill",
@@ -1845,6 +1845,16 @@
     "tag": "established",
     "pct": 43
    },
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "gmli_now": 0.95,
+    "gmli_3yr": 0.91,
+    "seasons_used": 3,
+    "entries_total": 60,
+    "tag": "established",
+    "pct": 18
+   },
    "663855": {
     "name": "Jordan Hicks",
     "team": "CWS",
@@ -1864,16 +1874,6 @@
     "entries_total": 149,
     "tag": "established",
     "pct": 69
-   },
-   "677865": {
-    "name": "Justin Bruihl",
-    "team": "STL",
-    "gmli_now": 0.95,
-    "gmli_3yr": 0.91,
-    "seasons_used": 3,
-    "entries_total": 60,
-    "tag": "established",
-    "pct": 18
    },
    "672782": {
     "name": "Yoendrys G\u00f3mez",

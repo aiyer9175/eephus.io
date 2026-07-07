@@ -175,6 +175,26 @@ CAREER_STATS_FRESH_DAYS = 0
 ZONE_METRICS_FRESH_DAYS = 0
 STATCAST_METRICS_FRESH_DAYS = 0
 
+# WS-R (2026-07): positional-versatility freshness gate. Unlike the stats
+# gates above (dropped to 0 so every run refetches fast-moving lines), versa
+# is derived from SEASON-CUMULATIVE fielding games/starts that barely move
+# day to day, yet the per-player StatsAPI fielding fetch (step 3a-ii) was the
+# single slowest step in the pipeline: measured 437s. Gate the WHOLE artifact
+# (positions_played.json carries no per-entry timestamps) — skip the refetch
+# when it was regenerated within this window. --force (and an explicit
+# EEPHUS_FULL=1 owner rebuild) override.
+VERSA_FRESH_DAYS = 7
+
+# WS-R (2026-07): eval-lab cadence gate. The 6b4 reliever/starter/hitter
+# eval labs re-derive validation artifacts for ALREADY-validated (or already
+# rejected) metrics; combined they cost ~500s (leverage 271s + reliever 185s
+# + hitter 47s, plus the starter lab) yet their conclusions move on a
+# monthly-plus horizon, not nightly. Skip a lab when its own eval artifact's
+# generated_at is younger than this. EEPHUS_LABS=1 forces them all (for a
+# metric-research session). The leaderboard EXPORTS they feed still run every
+# run — only the slow re-validation is gated.
+LAB_EVAL_FRESH_DAYS = 30
+
 # How many CollegeSavant teams the NCAA box-score pass renders per run (densest
 # tracked teams first). Bounded because each team is a headless-Chrome render;
 # raise once the first run is validated. 0 disables the pass.
@@ -193,6 +213,52 @@ def _is_career_fresh(fetched_at: str | None, max_age_days: int) -> bool:
         return False
     # Naive UTC subtraction — both sides are naive UTC timestamps.
     return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days < max_age_days
+
+
+def _artifact_fresh(path: Path, max_age_days: int) -> bool:
+    """True if a JSON artifact's top-level `generated_at` is younger than
+    max_age_days. The WS-R freshness/cadence gates (positional versatility +
+    the 6b4 eval labs) key off the WHOLE-artifact stamp because those files
+    carry no per-entry timestamps. FAIL-OPEN: any missing/unreadable/malformed
+    artifact (or absent stamp) returns False (not fresh) so the caller RE-RUNS
+    the step rather than trusting stale or corrupt output."""
+    try:
+        gen = json.loads(Path(path).read_text(encoding="utf-8")).get("generated_at")
+    except (OSError, ValueError):
+        return False
+    return _is_career_fresh(gen, max_age_days) if gen else False
+
+
+def _artifact_age_days(path: Path) -> int | None:
+    """Whole days since a JSON artifact's top-level `generated_at`, or None if
+    unreadable/absent. Companion to _artifact_fresh, used only for log copy."""
+    try:
+        gen = json.loads(Path(path).read_text(encoding="utf-8")).get("generated_at")
+        from datetime import datetime as _dt, timezone as _tz
+        ts = _dt.fromisoformat(str(gen).replace(" ", "T"))
+        return (_dt.now(_tz.utc).replace(tzinfo=None) - ts).days
+    except Exception:
+        return None
+
+
+def _lab_should_skip(artifact: Path, label: str, log: logging.Logger,
+                     max_age_days: int = LAB_EVAL_FRESH_DAYS) -> bool:
+    """WS-R eval-lab cadence gate. Return True (SKIP the lab) when EEPHUS_LABS
+    is unset AND the lab's own eval artifact was regenerated within
+    max_age_days; logs the artifact age either way. FAIL-OPEN: a missing or
+    malformed artifact reads as NOT fresh (returns False -> caller RUNS the
+    lab), so a corrupt file can never suppress a re-validation. Wrap the call
+    inside the lab's existing try/except so this stays best-effort."""
+    if os.environ.get("EEPHUS_LABS") == "1":
+        log.info("%s: RUN eval lab (EEPHUS_LABS=1 forces the metric-research labs)", label)
+        return False
+    if _artifact_fresh(artifact, max_age_days):
+        age = _artifact_age_days(artifact)
+        log.info("%s: SKIP eval refresh - %s regenerated %s ago (< %dd cadence; "
+                 "set EEPHUS_LABS=1 to force)", label, artifact.name,
+                 f"{age}d" if age is not None else "recently", max_age_days)
+        return True
+    return False
 
 
 def _iso_date_prefix(value: object) -> str | None:
@@ -576,8 +642,17 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
 
 
 def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
-              no_cache: bool = False) -> None:
+              no_cache: bool = False, chained: bool = False) -> None:
     """DAILY fast-moving refresh — the time-sensitive subset of the pipeline.
+
+    `chained=True` is set ONLY by main() when the monthly run tail-calls this
+    (see the chain at the end of main()). In that mode two steps are skipped as
+    pure duplication of monthly work that ran minutes earlier in THIS process:
+    d5c (statlines: the monthly 3a career fetch + 3b derive just rebuilt every
+    line) and d5d (incremental Statcast: the monthly 3d-ter full scrape just
+    ran). Measured saving: 68s + 167s = ~235s off the chained-daily tail.
+    A standalone `--daily` invocation always runs chained=False, so its
+    behavior is byte-for-byte identical to before this change.
 
     Pulls and updates the data that moves between monthly grade releases, so
     the outcome-grounded eFV grade (re-scored at the end via rebuild_only)
@@ -746,21 +821,29 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # board's cadence stamp stays honest; this keeps OPS/ERA columns
         # and level pills no more than a day old.
         with _step("d5c. Current-season stat lines", log):
-            try:
-                from stats import fetch_statlines_for
-                from storage import upsert_statlines
-                active = [(p.player_key, p.player_name, _is_pitcher(p.position))
-                          for p in timeseries
-                          if p.status != "debuted"
-                          and ids_by_key.get(p.player_key) is not None]
-                if active:
-                    sl = fetch_statlines_for(active, season,
-                                             max_workers=workers or 24,
-                                             id_cache=ids_by_key)
-                    n_sl = upsert_statlines(sl, season) if sl else 0
-                    log.info("daily: refreshed %d current-season stat lines", n_sl)
-            except Exception:
-                log.exception("daily: stat-line refresh failed — continuing")
+            if chained:
+                # WS-R: chained after the monthly run, whose 3a career fetch +
+                # 3b derive already rebuilt every current-season line minutes
+                # ago in THIS process. This HTTP re-fetch (measured 68s) would
+                # only re-derive data we just wrote. Standalone --daily still
+                # runs it (chained=False).
+                log.info("daily: SKIP d5c: monthly 3a/3b just rebuilt statlines (chained)")
+            else:
+                try:
+                    from stats import fetch_statlines_for
+                    from storage import upsert_statlines
+                    active = [(p.player_key, p.player_name, _is_pitcher(p.position))
+                              for p in timeseries
+                              if p.status != "debuted"
+                              and ids_by_key.get(p.player_key) is not None]
+                    if active:
+                        sl = fetch_statlines_for(active, season,
+                                                 max_workers=workers or 24,
+                                                 id_cache=ids_by_key)
+                        n_sl = upsert_statlines(sl, season) if sl else 0
+                        log.info("daily: refreshed %d current-season stat lines", n_sl)
+                except Exception:
+                    log.exception("daily: stat-line refresh failed — continuing")
 
         # --- 5d. Incremental Statcast-style metrics ----------------------
         # Game plots/tables need same-day starts, but re-running the full
@@ -770,102 +853,140 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # payload, then rebuild full-season metrics only for players with
         # newer games. The rebuild replaces that player's row, preserving the
         # existing summary math without trying to merge partial pitch samples.
-        with _step("d5d. Incremental Statcast metrics", log):
-            try:
-                from statcast_metrics import _game_logs, fetch_statcast_metrics_for_players
+        # WS-R: when chained after the monthly run, the 3d-ter full Statcast
+        # scrape just ran in THIS process; this incremental rebuild (measured
+        # 167s) would only re-derive rows we already hold. Standalone --daily
+        # (chained=False) still runs it for same-day starts between grades.
+        if chained:
+            log.info("daily: SKIP d5d: monthly 3d-ter Statcast scrape just ran (chained)")
+        else:
+            with _step("d5d. Incremental Statcast metrics", log):
+                try:
+                    from statcast_metrics import _game_logs, fetch_statcast_metrics_for_players
 
-                statlines = load_statlines()
-                statcast_metric_cache = load_statcast_metrics()
-                statcast_metric_meta = load_statcast_metrics_meta()
-                eligible = []
-                for p in timeseries:
-                    mlbam = ids_by_key.get(p.player_key)
-                    if mlbam is None:
-                        continue
-                    sl = statlines.get(p.player_key) or {}
-                    level = sl.get("level")
-                    if level is not None and level not in DAILY_STATCAST_TRACKED_LEVELS:
-                        continue
-                    if p.player_key not in statcast_metric_meta and level != "MLB":
-                        continue
-                    is_pitcher = bool(sl.get("is_pitcher")) or _is_pitcher(p.position)
-                    eligible.append((p, mlbam, level, is_pitcher))
-
-                if not eligible:
-                    log.info("daily: no Statcast-eligible players")
-                else:
-                    max_w = max(1, min(workers or 16, len(eligible)))
-                    log_ttl = 0 if no_cache else 1800
-                    logs_by_key: dict[str, list[dict]] = {}
-
-                    def _fetch_daily_statcast_logs(item):
-                        p, mlbam, _level, is_pitcher = item
-                        try:
-                            return p.player_key, _game_logs(
-                                int(mlbam),
-                                season,
-                                is_pitcher=is_pitcher,
-                                ttl_seconds=log_ttl,
-                            )
-                        except Exception as e:
-                            log.debug("daily: Statcast game logs failed for %s: %s",
-                                      p.player_key, e)
-                            return p.player_key, []
-
-                    scan_start = time.monotonic()
-                    scan_done = 0
-                    log.info(
-                        "daily: scanning Statcast game logs for %d players (%d workers)",
-                        len(eligible),
-                        max_w,
-                    )
-                    with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
-                        for key, logs in ex.map(_fetch_daily_statcast_logs, eligible):
-                            logs_by_key[key] = logs
-                            scan_done += 1
-                            if scan_done % 250 == 0 or scan_done == len(eligible):
-                                log.info(
-                                    "daily: Statcast game-log scan %d/%d done (%.0fs)",
-                                    scan_done,
-                                    len(eligible),
-                                    time.monotonic() - scan_start,
-                                )
-
-                    refresh_players = []
-                    refresh_logs: dict[str, list[dict]] = {}
-                    for p, mlbam, level, is_pitcher in eligible:
-                        logs = logs_by_key.get(p.player_key) or []
-                        if not _statcast_logs_newer_than_metric(
-                            logs,
-                            statcast_metric_cache.get(p.player_key),
-                            level_hint=level,
-                        ):
+                    statlines = load_statlines()
+                    statcast_metric_cache = load_statcast_metrics()
+                    statcast_metric_meta = load_statcast_metrics_meta()
+                    eligible = []
+                    for p in timeseries:
+                        mlbam = ids_by_key.get(p.player_key)
+                        if mlbam is None:
                             continue
-                        refresh_players.append((
-                            p.player_key,
-                            p.player_name,
-                            mlbam,
-                            level,
-                            is_pitcher,
-                        ))
-                        refresh_logs[p.player_key] = logs
+                        sl = statlines.get(p.player_key) or {}
+                        level = sl.get("level")
+                        if level is not None and level not in DAILY_STATCAST_TRACKED_LEVELS:
+                            continue
+                        if p.player_key not in statcast_metric_meta and level != "MLB":
+                            continue
+                        is_pitcher = bool(sl.get("is_pitcher")) or _is_pitcher(p.position)
+                        eligible.append((p, mlbam, level, is_pitcher))
 
-                    log.info(
-                        "daily: Statcast scan found %d/%d players with newer tracked games",
-                        len(refresh_players),
-                        len(eligible),
-                    )
-                    if refresh_players:
-                        new_statcast_metrics = fetch_statcast_metrics_for_players(
-                            refresh_players,
-                            season,
-                            workers=max_w,
-                            logs_by_key=refresh_logs,
+                    if not eligible:
+                        log.info("daily: no Statcast-eligible players")
+                    else:
+                        max_w = max(1, min(workers or 16, len(eligible)))
+                        log_ttl = 0 if no_cache else 1800
+                        logs_by_key: dict[str, list[dict]] = {}
+
+                        def _fetch_daily_statcast_logs(item):
+                            p, mlbam, _level, is_pitcher = item
+                            try:
+                                return p.player_key, _game_logs(
+                                    int(mlbam),
+                                    season,
+                                    is_pitcher=is_pitcher,
+                                    ttl_seconds=log_ttl,
+                                )
+                            except Exception as e:
+                                log.debug("daily: Statcast game logs failed for %s: %s",
+                                          p.player_key, e)
+                                return p.player_key, []
+
+                        scan_start = time.monotonic()
+                        scan_done = 0
+                        log.info(
+                            "daily: scanning Statcast game logs for %d players (%d workers)",
+                            len(eligible),
+                            max_w,
                         )
-                        n_sc = upsert_statcast_metrics(new_statcast_metrics, season) if new_statcast_metrics else 0
-                        log.info("daily: refreshed %d Statcast metric rows", n_sc)
+                        with concurrent.futures.ThreadPoolExecutor(max_workers=max_w) as ex:
+                            for key, logs in ex.map(_fetch_daily_statcast_logs, eligible):
+                                logs_by_key[key] = logs
+                                scan_done += 1
+                                if scan_done % 250 == 0 or scan_done == len(eligible):
+                                    log.info(
+                                        "daily: Statcast game-log scan %d/%d done (%.0fs)",
+                                        scan_done,
+                                        len(eligible),
+                                        time.monotonic() - scan_start,
+                                    )
+
+                        refresh_players = []
+                        refresh_logs: dict[str, list[dict]] = {}
+                        for p, mlbam, level, is_pitcher in eligible:
+                            logs = logs_by_key.get(p.player_key) or []
+                            if not _statcast_logs_newer_than_metric(
+                                logs,
+                                statcast_metric_cache.get(p.player_key),
+                                level_hint=level,
+                            ):
+                                continue
+                            refresh_players.append((
+                                p.player_key,
+                                p.player_name,
+                                mlbam,
+                                level,
+                                is_pitcher,
+                            ))
+                            refresh_logs[p.player_key] = logs
+
+                        log.info(
+                            "daily: Statcast scan found %d/%d players with newer tracked games",
+                            len(refresh_players),
+                            len(eligible),
+                        )
+                        if refresh_players:
+                            new_statcast_metrics = fetch_statcast_metrics_for_players(
+                                refresh_players,
+                                season,
+                                workers=max_w,
+                                logs_by_key=refresh_logs,
+                            )
+                            n_sc = upsert_statcast_metrics(new_statcast_metrics, season) if new_statcast_metrics else 0
+                            log.info("daily: refreshed %d Statcast metric rows", n_sc)
+                except Exception:
+                    log.exception("daily: incremental Statcast metrics failed — continuing")
+
+        # --- d5e. Per-game box-line slice (leaderboard_gamelogs.json) -----
+        # Powers the date-windowed PROSPX leaderboards ("last N days"). Wired
+        # into nothing before WS-R, so the committed slice went stale. Rebuilt
+        # in-process for the top ~200 prospects by overall rank, REUSING the
+        # feed cache the d5d Statcast scan just primed moments earlier (same
+        # statcast_metrics._game_logs feed) so most pulls are disk-cache hits.
+        # Runs on chained monthly nights too (freshness matters then as well).
+        # SOFT ~210s budget: on a cache-miss storm the remainder is skipped and
+        # a partial slice is written (the frontend staleness notice covers gaps)
+        # so this never balloons the nightly wall time. Best-effort; never aborts.
+        with _step("d5e. Leaderboard game logs (leaderboard_gamelogs.json)", log):
+            try:
+                from tools.build_leaderboard_gamelogs import build as _build_gamelogs
+                # ttl 0 forces fresh feeds when --no-cache; otherwise accept the
+                # day-old cache d5d wrote seconds ago (86400s window).
+                _gl = _build_gamelogs(
+                    season=season,
+                    limit=200,
+                    workers=max(1, min(workers or 8, 12)),
+                    ttl_seconds=0 if no_cache else 86400,
+                    deadline_s=210.0,
+                    log=log,
+                )
+                log.info("daily: gamelogs slice %d players / %d games (%.0fs%s)",
+                         _gl.get("players", 0), _gl.get("games", 0),
+                         _gl.get("elapsed_s", 0.0),
+                         f", {_gl['skipped_deadline']} skipped by budget"
+                         if _gl.get("skipped_deadline") else "")
             except Exception:
-                log.exception("daily: incremental Statcast metrics failed — continuing")
+                log.exception("daily: leaderboard gamelogs build failed — continuing")
 
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
@@ -1719,15 +1840,34 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         if not skip_stats:
             with _step("3a-ii. Positional versatility (fielding)", log):
                 try:
-                    from fielding_positions import build_positions_played
-                    versa_input = [
-                        {"player_key": p.player_key,
-                         "mlbam_id": ids_by_key.get(p.player_key),
-                         "statline": {"is_pitcher": _is_pitcher(p.position)}}
-                        for p in timeseries
-                        if p.status != "debuted" and ids_by_key.get(p.player_key)
-                    ]
-                    build_positions_played(versa_input, log_=log)
+                    # WS-R freshness gate (measured 437s, the single slowest
+                    # step in the pipeline). versa is derived from SEASON-
+                    # CUMULATIVE fielding games/starts that barely move day to
+                    # day, and positions_played.json carries no per-entry
+                    # timestamps, so gate the WHOLE artifact: skip the per-player
+                    # StatsAPI fetch when it was regenerated within VERSA_FRESH_
+                    # DAYS. --force (force_refetch) and an explicit EEPHUS_FULL=1
+                    # owner rebuild override. Fail-open: a missing/corrupt
+                    # artifact reads as stale via _artifact_fresh -> rebuilds.
+                    _versa_path = out_dir / "positions_played.json"
+                    _versa_forced = force_refetch or os.environ.get("EEPHUS_FULL") == "1"
+                    if not _versa_forced and _artifact_fresh(_versa_path, VERSA_FRESH_DAYS):
+                        _versa_age = _artifact_age_days(_versa_path)
+                        log.info("3a-ii positional versatility: SKIP - %s regenerated "
+                                 "%s ago (< %dd; --force / EEPHUS_FULL=1 override)",
+                                 _versa_path.name,
+                                 f"{_versa_age}d" if _versa_age is not None else "recently",
+                                 VERSA_FRESH_DAYS)
+                    else:
+                        from fielding_positions import build_positions_played
+                        versa_input = [
+                            {"player_key": p.player_key,
+                             "mlbam_id": ids_by_key.get(p.player_key),
+                             "statline": {"is_pitcher": _is_pitcher(p.position)}}
+                            for p in timeseries
+                            if p.status != "debuted" and ids_by_key.get(p.player_key)
+                        ]
+                        build_positions_played(versa_input, log_=log)
                 except Exception:
                     log.exception("positions_played build failed — continuing")
         _step_3a_per_start = time.monotonic() if not skip_stats else None
@@ -2542,10 +2682,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # 3-year trailing mean makes that immaterial. Additive; never aborts.
         with _step("6b4b. gmLI consistency (leverage_consistency_eval.json)", log):
             try:
-                import subprocess as _sp
-                _sp.run([sys.executable,
-                         str(Path(__file__).parent / "tools" / "leverage_consistency_eval.py")],
-                        check=True, timeout=1800)
+                # WS-R cadence gate (measured 271s): gmLI 3yr stability is a
+                # slow re-derivation of an already-validated artifact. Skip when
+                # fresh; EEPHUS_LABS=1 forces. The 6b4/6b4h leverage EXPORTS
+                # still run every run; only this eval refresh is gated.
+                if not _lab_should_skip(out_dir / "leverage_consistency_eval.json",
+                                        "6b4b gmLI consistency", log):
+                    import subprocess as _sp
+                    _sp.run([sys.executable,
+                             str(Path(__file__).parent / "tools" / "leverage_consistency_eval.py")],
+                            check=True, timeout=1800)
             except Exception:
                 log.exception("gmLI consistency refresh failed - continuing")
 
@@ -2557,10 +2703,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # (loss ledger). Multi-season leverage walk uses the warm cache. Never aborts.
         with _step("6b4c. reliever lab (rem_plus_multiyear + riv_plus evals)", log):
             try:
-                import subprocess as _sp
-                _sp.run([sys.executable,
-                         str(Path(__file__).parent / "tools" / "rem_plus_lab.py")],
-                        check=True, timeout=2400)
+                # WS-R cadence gate (measured 185s): re-derives 3yr REM+ +
+                # RIV+/SwStr loss-ledger evals for already-settled metrics. Skip
+                # when fresh; EEPHUS_LABS=1 forces. The 6b4 REM+/RIV+ export is
+                # computed live every run; this only gates the eval refresh.
+                if not _lab_should_skip(out_dir / "rem_plus_multiyear_eval.json",
+                                        "6b4c reliever lab", log):
+                    import subprocess as _sp
+                    _sp.run([sys.executable,
+                             str(Path(__file__).parent / "tools" / "rem_plus_lab.py")],
+                            check=True, timeout=2400)
             except Exception:
                 log.exception("reliever-metric lab refresh failed - continuing")
 
@@ -2580,10 +2732,16 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # export so the 3yr join reads the fresh artifact. Never aborts.
         with _step("6b4e. starter lab (sem_plus + sem_plus_multiyear evals)", log):
             try:
-                import subprocess as _sp
-                _sp.run([sys.executable,
-                         str(Path(__file__).parent / "tools" / "sem_plus_lab.py")],
-                        check=True, timeout=1200)
+                # WS-R cadence gate: re-validates the SEM+ starter gate + 3yr
+                # proposed_values, an already-settled artifact. Skip when fresh;
+                # EEPHUS_LABS=1 forces. The 6b4f starter EXPORT still runs every
+                # run; only this eval refresh is gated.
+                if not _lab_should_skip(out_dir / "sem_plus_eval.json",
+                                        "6b4e starter lab", log):
+                    import subprocess as _sp
+                    _sp.run([sys.executable,
+                             str(Path(__file__).parent / "tools" / "sem_plus_lab.py")],
+                            check=True, timeout=1200)
             except Exception:
                 log.exception("starter-metric lab refresh failed - continuing")
 
@@ -2602,13 +2760,21 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # CACHED StatsAPI hitting seasons, so it is offline + cheap. Additive.
         with _step("6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals)", log):
             try:
-                from tools import hem_plus_lab
-                hem_plus_lab.run(write=True)
+                # WS-R cadence gate (measured 47s): forward-chained HEM+
+                # validation over already-settled seasons. Skip when fresh;
+                # EEPHUS_LABS=1 forces. The 6b4g hitter EXPORT runs every run.
+                if not _lab_should_skip(out_dir / "hem_plus_eval.json",
+                                        "6b4g-lab hitter lab", log):
+                    from tools import hem_plus_lab
+                    hem_plus_lab.run(write=True)
             except Exception:
                 log.exception("hitter lab failed - continuing (export uses the last eval)")
             try:
-                from tools import xhem_plus_lab
-                xhem_plus_lab.run(write=True)   # Savant xwOBA forward-validation (network)
+                # Savant xwOBA forward-validation (network); same WS-R cadence gate.
+                if not _lab_should_skip(out_dir / "xhem_plus_eval.json",
+                                        "6b4g-lab xhem lab", log):
+                    from tools import xhem_plus_lab
+                    xhem_plus_lab.run(write=True)
             except Exception:
                 log.exception("xhem lab failed - continuing")
 
@@ -2844,7 +3010,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # failure must not fail the already-completed monthly run.
         try:
             log.info("monthly run: chaining the daily fast-moving refresh")
-            run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache)
+            # WS-R: chained=True elides d5c (statlines) + d5d (Statcast): the
+            # monthly 3a/3b + 3d-ter passes just rebuilt both minutes ago in this
+            # same process (measured 68s + 167s = ~235s of pure duplication). The
+            # cheap/freshest-data d-steps (captures, tx, IL, debuts, trades) plus
+            # d9/d9b (final eFV regen) and d11 (site build) still run. d5e still
+            # runs so the game-log slice is fresh on monthly nights too.
+            run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache,
+                      chained=True)
         except Exception:
             log.exception("chained daily refresh failed — monthly run already completed")
     except Exception:

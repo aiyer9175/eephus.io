@@ -1,0 +1,645 @@
+{
+ "generated_at": "2026-07-07",
+ "experiment": "M3: hierarchical shrunk per-cohort blend lambda (E-LAMBDA keep-alive successor)",
+ "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M3",
+ "seed": 7,
+ "method": {
+  "estimator": "lambda_c = (n_c*lambdahat_c + k*lambda_global)/(n_c + k); lambdahat_c = E-LAMBDA forward-chained per-cohort argmax on OOF pool (years < Y); lambda_global = blend_lambda(side)",
+  "k_grid": [
+   50,
+   100,
+   200
+  ],
+  "k_selection": "argmax pooled treatment rho on PRE-2023 folds only (2023 held out)",
+  "variant": "all_prior (selection pool includes pre-2020 OOF seed folds; E-LAMBDA primary)",
+  "cohorts": "hs / college / ifa / draft / other from efv_lab_runner._cohort_of",
+  "stability_rule": "applied lambda_c range <= 0.2 and no opposite-sign consecutive step > 0.1",
+  "declared_before_first_run": true
+ },
+ "gate_thresholds": {
+  "pooled_no_decrease": 0.0,
+  "target_improve": 0.01,
+  "cohort_degrade_no_more_than": 0.005,
+  "era_drop_no_more_than": 0.01,
+  "within_tier_t45_floor": -0.005,
+  "stab_range_max": 0.2,
+  "stab_reversal_max": 0.1,
+  "cohort_min_n": 25
+ },
+ "sides": {
+  "hit": {
+   "shipped_lambda_global": 0.7,
+   "selected_k": 100,
+   "k_selection_pre2023_pooled_treat_rho": {
+    "50": 0.4084,
+    "100": 0.4099,
+    "200": 0.4096
+   },
+   "n_scored": 399,
+   "metrics": {
+    "pooled": {
+     "base": 0.3506,
+     "treat": 0.3536,
+     "delta": 0.003
+    },
+    "per_cohort": {
+     "college": {
+      "n": 136,
+      "gated": true,
+      "base": 0.3562,
+      "treat": 0.3609,
+      "delta": 0.0047
+     },
+     "draft": {
+      "n": 1,
+      "gated": false,
+      "base": null,
+      "treat": null,
+      "delta": null
+     },
+     "hs": {
+      "n": 130,
+      "gated": true,
+      "base": 0.3708,
+      "treat": 0.3701,
+      "delta": -0.0007
+     },
+     "ifa": {
+      "n": 127,
+      "gated": true,
+      "base": 0.3219,
+      "treat": 0.3157,
+      "delta": -0.0062
+     },
+     "other": {
+      "n": 5,
+      "gated": false,
+      "base": null,
+      "treat": null,
+      "delta": null
+     }
+    },
+    "per_era": {
+     "2019-2021": {
+      "n": 154,
+      "base": 0.2858,
+      "treat": 0.2972,
+      "delta": 0.0114
+     },
+     "2022-2023": {
+      "n": 245,
+      "base": 0.3837,
+      "treat": 0.3816,
+      "delta": -0.0021
+     }
+    },
+    "within_tier": {
+     "wm_base": 0.2031,
+     "wm_treat": 0.2207,
+     "wm_delta": 0.0177,
+     "t45_base": 0.1125,
+     "t45_treat": 0.1411,
+     "t45_delta": 0.0286
+    }
+   },
+   "lambda_c_paths": {
+    "college": [
+     {
+      "year": 2020,
+      "lambda_c": 0.5883,
+      "lambdahat": 0.25,
+      "n_c": 33,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.7649,
+      "lambdahat": 0.9,
+      "n_c": 48,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.8315,
+      "lambdahat": 1.0,
+      "n_c": 78,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.8649,
+      "lambdahat": 1.0,
+      "n_c": 122,
+      "mode": "selected"
+     }
+    ],
+    "draft": [
+     {
+      "year": 2023,
+      "lambda_c": 0.7,
+      "lambdahat": 0.7,
+      "n_c": 1,
+      "mode": "fallback_shipped"
+     }
+    ],
+    "hs": [
+     {
+      "year": 2020,
+      "lambda_c": 0.4704,
+      "lambdahat": 0.1,
+      "n_c": 62,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.3889,
+      "lambdahat": 0.0,
+      "n_c": 80,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.407,
+      "lambdahat": 0.15,
+      "n_c": 114,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.3264,
+      "lambdahat": 0.1,
+      "n_c": 165,
+      "mode": "selected"
+     }
+    ],
+    "ifa": [
+     {
+      "year": 2020,
+      "lambda_c": 0.5224,
+      "lambdahat": 0.0,
+      "n_c": 34,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.7773,
+      "lambdahat": 0.9,
+      "n_c": 63,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.3743,
+      "lambdahat": 0.0,
+      "n_c": 87,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.8142,
+      "lambdahat": 0.9,
+      "n_c": 133,
+      "mode": "selected"
+     }
+    ],
+    "other": [
+     {
+      "year": 2020,
+      "lambda_c": 0.2944,
+      "lambdahat": 0.05,
+      "n_c": 166,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.2925,
+      "lambdahat": 0.05,
+      "n_c": 168,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.2907,
+      "lambdahat": 0.05,
+      "n_c": 170,
+      "mode": "selected"
+     }
+    ]
+   },
+   "stability": {
+    "college": {
+     "lambda_c_path": [
+      0.5883,
+      0.7649,
+      0.8315,
+      0.8649
+     ],
+     "range": 0.2766,
+     "step_deltas": [
+      0.1766,
+      0.0666,
+      0.0334
+     ],
+     "reversal": false,
+     "stable": false
+    },
+    "draft": {
+     "lambda_c_path": [
+      0.7
+     ],
+     "range": 0.0,
+     "reversal": false,
+     "stable": true,
+     "note": "fewer than 2 folds; cannot oscillate"
+    },
+    "hs": {
+     "lambda_c_path": [
+      0.4704,
+      0.3889,
+      0.407,
+      0.3264
+     ],
+     "range": 0.144,
+     "step_deltas": [
+      -0.0815,
+      0.0181,
+      -0.0806
+     ],
+     "reversal": false,
+     "stable": true
+    },
+    "ifa": {
+     "lambda_c_path": [
+      0.5224,
+      0.7773,
+      0.3743,
+      0.8142
+     ],
+     "range": 0.4399,
+     "step_deltas": [
+      0.2549,
+      -0.403,
+      0.4399
+     ],
+     "reversal": true,
+     "stable": false
+    },
+    "other": {
+     "lambda_c_path": [
+      0.2944,
+      0.2925,
+      0.2907
+     ],
+     "range": 0.0037,
+     "step_deltas": [
+      -0.0019,
+      -0.0018
+     ],
+     "reversal": false,
+     "stable": true
+    }
+   }
+  },
+  "pit": {
+   "shipped_lambda_global": 0.54,
+   "selected_k": 50,
+   "k_selection_pre2023_pooled_treat_rho": {
+    "50": 0.2577,
+    "100": 0.257,
+    "200": 0.2553
+   },
+   "n_scored": 466,
+   "metrics": {
+    "pooled": {
+     "base": 0.2755,
+     "treat": 0.2781,
+     "delta": 0.0026
+    },
+    "per_cohort": {
+     "college": {
+      "n": 234,
+      "gated": true,
+      "base": 0.2938,
+      "treat": 0.2908,
+      "delta": -0.003
+     },
+     "hs": {
+      "n": 107,
+      "gated": true,
+      "base": 0.2989,
+      "treat": 0.2987,
+      "delta": -0.0002
+     },
+     "ifa": {
+      "n": 121,
+      "gated": true,
+      "base": 0.246,
+      "treat": 0.2593,
+      "delta": 0.0133
+     },
+     "other": {
+      "n": 4,
+      "gated": false,
+      "base": null,
+      "treat": null,
+      "delta": null
+     }
+    },
+    "per_era": {
+     "2019-2021": {
+      "n": 219,
+      "base": 0.1673,
+      "treat": 0.1818,
+      "delta": 0.0145
+     },
+     "2022-2023": {
+      "n": 247,
+      "base": 0.3743,
+      "treat": 0.3629,
+      "delta": -0.0114
+     }
+    },
+    "within_tier": {
+     "wm_base": 0.113,
+     "wm_treat": 0.1208,
+     "wm_delta": 0.0077,
+     "t45_base": 0.1764,
+     "t45_treat": 0.1916,
+     "t45_delta": 0.0152
+    }
+   },
+   "lambda_c_paths": {
+    "college": [
+     {
+      "year": 2020,
+      "lambda_c": 0.4267,
+      "lambdahat": 0.2,
+      "n_c": 25,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.5744,
+      "lambdahat": 0.6,
+      "n_c": 67,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.6182,
+      "lambdahat": 0.65,
+      "n_c": 123,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.7449,
+      "lambdahat": 0.8,
+      "n_c": 186,
+      "mode": "selected"
+     }
+    ],
+    "hs": [
+     {
+      "year": 2020,
+      "lambda_c": 0.2596,
+      "lambdahat": 0.0,
+      "n_c": 54,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.1985,
+      "lambdahat": 0.0,
+      "n_c": 86,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.1698,
+      "lambdahat": 0.0,
+      "n_c": 109,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.1517,
+      "lambdahat": 0.0,
+      "n_c": 128,
+      "mode": "selected"
+     }
+    ],
+    "ifa": [
+     {
+      "year": 2020,
+      "lambda_c": 0.6713,
+      "lambdahat": 0.8,
+      "n_c": 51,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.7008,
+      "lambdahat": 0.8,
+      "n_c": 81,
+      "mode": "selected"
+     },
+     {
+      "year": 2022,
+      "lambda_c": 0.7896,
+      "lambdahat": 0.9,
+      "n_c": 113,
+      "mode": "selected"
+     },
+     {
+      "year": 2023,
+      "lambda_c": 0.8796,
+      "lambdahat": 1.0,
+      "n_c": 141,
+      "mode": "selected"
+     }
+    ],
+    "other": [
+     {
+      "year": 2020,
+      "lambda_c": 0.8969,
+      "lambdahat": 1.0,
+      "n_c": 173,
+      "mode": "selected"
+     },
+     {
+      "year": 2021,
+      "lambda_c": 0.8982,
+      "lambdahat": 1.0,
+      "n_c": 176,
+      "mode": "selected"
+     }
+    ]
+   },
+   "stability": {
+    "college": {
+     "lambda_c_path": [
+      0.4267,
+      0.5744,
+      0.6182,
+      0.7449
+     ],
+     "range": 0.3182,
+     "step_deltas": [
+      0.1477,
+      0.0438,
+      0.1267
+     ],
+     "reversal": false,
+     "stable": false
+    },
+    "hs": {
+     "lambda_c_path": [
+      0.2596,
+      0.1985,
+      0.1698,
+      0.1517
+     ],
+     "range": 0.1079,
+     "step_deltas": [
+      -0.0611,
+      -0.0287,
+      -0.0181
+     ],
+     "reversal": false,
+     "stable": true
+    },
+    "ifa": {
+     "lambda_c_path": [
+      0.6713,
+      0.7008,
+      0.7896,
+      0.8796
+     ],
+     "range": 0.2083,
+     "step_deltas": [
+      0.0295,
+      0.0888,
+      0.09
+     ],
+     "reversal": false,
+     "stable": false
+    },
+    "other": {
+     "lambda_c_path": [
+      0.8969,
+      0.8982
+     ],
+     "range": 0.0013,
+     "step_deltas": [
+      0.0013
+     ],
+     "reversal": false,
+     "stable": true
+    }
+   }
+  }
+ },
+ "gate": {
+  "condition_1_pooled_no_decrease": {
+   "hit": {
+    "delta": 0.003,
+    "pass": true
+   },
+   "pit": {
+    "delta": 0.0026,
+    "pass": true
+   }
+  },
+  "condition_2_target_cohort_improve": {
+   "named_targets": {
+    "pit:ifa": {
+     "delta": 0.0133,
+     "gated": true,
+     "pass": true
+    }
+   },
+   "pit_pre2018_era_note": "not scoreable: <=2018 era absent from SCORED_YEARS folds",
+   "requires": "pit:ifa gated & improves >= +0.01",
+   "pass": true
+  },
+  "condition_3_no_cohort_degrade": {
+   "degraded_gated_cohorts": {
+    "hit:ifa": -0.0062
+   },
+   "pass": false
+  },
+  "condition_4_era_no_drop": {
+   "era_drops": {
+    "pit:2022-2023": -0.0114
+   },
+   "pass": false
+  },
+  "condition_5_within_tier_t45": {
+   "tier_failures": {},
+   "pass": true
+  },
+  "condition_6_fold_stability": {
+   "unstable_gated_cohorts": {
+    "hit:college": {
+     "range": 0.2766,
+     "reversal": false,
+     "lambda_c_path": [
+      0.5883,
+      0.7649,
+      0.8315,
+      0.8649
+     ]
+    },
+    "hit:ifa": {
+     "range": 0.4399,
+     "reversal": true,
+     "lambda_c_path": [
+      0.5224,
+      0.7773,
+      0.3743,
+      0.8142
+     ]
+    },
+    "pit:college": {
+     "range": 0.3182,
+     "reversal": false,
+     "lambda_c_path": [
+      0.4267,
+      0.5744,
+      0.6182,
+      0.7449
+     ]
+    },
+    "pit:ifa": {
+     "range": 0.2083,
+     "reversal": false,
+     "lambda_c_path": [
+      0.6713,
+      0.7008,
+      0.7896,
+      0.8796
+     ]
+    }
+   },
+   "pass": false
+  },
+  "pass": false
+ },
+ "verdict": "NO SHIP",
+ "loss_ledger": {
+  "verdict": "NO SHIP",
+  "failed_conditions": [
+   "condition_3_no_cohort_degrade",
+   "condition_4_era_no_drop",
+   "condition_6_fold_stability"
+  ],
+  "summary": "The hierarchical shrunk cohort-lambda did not clear the full M3 gate, but it is a genuine advance over the raw per-cohort argmax (E-LAMBDA, NO SHIP): shrinkage toward the global lambda FIXED the pooled degradation (E-LAMBDA pit pooled -0.0104 -> hier +0.0026; hit +0.0030, both no-decrease = clause 1 PASS) and CAPTURED the proven pit:ifa direction (+0.0133 >= +0.01 = clause 2 PASS). It is blocked by the collateral, not the target.",
+  "blocking_clauses": {
+   "condition_3": "hit:ifa degrades -0.0062 (> 0.005) -- the same intl-bats cohort E-LAMBDA flagged as a weak, oscillating premise.",
+   "condition_4": "pit 2022-2023 era drops -0.0114 (> 0.010) -- the shrunk pit:college path drifts toward the pure model in the late folds and hurts the recent era.",
+   "condition_6": "even shrunk, the applied lambda_c range exceeds 0.20 on hit:college, hit:ifa, pit:college, pit:ifa. The pre-registered k selection maximizes pre-2023 pooled rho and lands on the LIGHTEST shrink (pit k=50); heavier k would stabilize but was not selected -- re-selecting k to pass stability would be goalpost-moving."
+  },
+  "keep_alive": "pit:ifa now clears BOTH pooled and the +0.010 target under shrinkage -- the strongest evidence yet for the intl-arm anchor weakness. The blocker is no longer pooled degradation (solved) but (a) residual per-cohort lambda instability on 25-160 row OOF pools and (b) collateral in hit:ifa / pit-late-era. Wait for resolved 2024+ cohorts (more fold years shrink the OOF variance) before re-opening; do NOT hand-tune k for stability. A pit:ifa-ONLY shrink (leave every other cohort at global) is a narrower future candidate that would sidestep the hit:ifa / pit:college collateral, but needs its own pre-registered gate."
+ }
+}
