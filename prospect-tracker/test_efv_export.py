@@ -128,7 +128,11 @@ def test_committed_artifact_headline_alias_contract():
 #   and the ordinary daily movement. M1 instrumentation (per-cohort/era/tier
 #   contributor-AUC + star-AUC, live-lambda provenance hit 0.70 / pit 0.54) landed in
 #   the eval artifacts only - xfv.json itself is untouched by M1.
-_GOLDEN_XFV_SHA256 = "d64ea85eecd5689c165c8f9d3e8b06f2428e4d43e40d30f474a4fbee7a441002"
+# Updated 2026-07-07 (final pre-launch validation run): the timed full pipeline run
+#   (run 372, 33m12s vs the 52m49s baseline = the WS-R cut proven) refreshed every
+#   artifact on launch-eve data; ordinary daily movement only, no model change
+#   (ops_rel shipped in the prior bump). Rowcount 8843.
+_GOLDEN_XFV_SHA256 = "2a5d59471dab7f699e80fbf019e52590a965296f2cf8591bdc59ef3a839fe33d"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

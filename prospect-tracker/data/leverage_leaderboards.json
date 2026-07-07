@@ -6585,7 +6585,7 @@
    "wpa": 2.055,
    "wpa_per_start": 0.114,
    "wpa_li": 1.114,
-   "gs": 18,
+   "gs": 19,
    "qualified": true
   },
   {
@@ -7058,7 +7058,7 @@
    "wpa": 0.695,
    "wpa_per_start": 0.063,
    "wpa_li": 0.849,
-   "gs": 11,
+   "gs": 12,
    "qualified": true
   },
   {
@@ -7531,7 +7531,7 @@
    "wpa": 0.245,
    "wpa_per_start": 0.061,
    "wpa_li": 0.15,
-   "gs": 4,
+   "gs": 5,
    "qualified": false
   },
   {

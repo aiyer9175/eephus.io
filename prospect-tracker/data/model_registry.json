@@ -217,7 +217,7 @@
    "notes": "CALIBRATION v3 (2026-06-12, owner escalations x2): v1's per-player isotonic carried a degenerate $0 bottom block (every FV35-40 prospect -> $0.0M) AND priced realized targets at era $/WAR ($6.7-12.1M) while the model prices today (~$13.0M) - the apparent 0.64 raw slope was mostly dollar inflation. v3 = count-weighted binned PAVA (fit_isotonic_binned) on TODAY-PRICED realized targets: raw slope 1.02 / bias -2.9M, held-out LOYO slope 0.97 / bias -1.13M. Curve: FV40 $1.5M / 45 $6.9M / 50 $17.9M / 55 $31.9M / 60 $65.6M (hitters); elite tail extrapolates the last observed segment (documented). Surplus now reads 'expected realized value at current replacement cost' - consistent units with vet surplus in the trade machine and team fits. Fit block: data/surplus_calibration_fit.json; the committed artifact keeps the historical-dollars slice as cohort accounting.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 24
+   "artifact_age_days": 25
   },
   {
    "model_id": "fv_to_war_anchors",
@@ -231,7 +231,7 @@
    "notes": "no positional stratification yet (Phase 4 WS-6); top tiers thin WS-6 positional-stratification diagnostic measured + parked (see prospect_surplus row): per-position cells too thin above FV50 to beat the pooled+role fit.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "wag",
@@ -245,7 +245,7 @@
    "notes": "the template: distributionally validated, auto-propagates recalibrations",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 14
+   "artifact_age_days": 15
   },
   {
    "model_id": "consensus_fv",
@@ -566,7 +566,7 @@
    "notes": "LEAN model (multi-season PEAK K-rate + final K-rate + bb_rel + age-vs-level + x_era_k + fastball), guarded blend. peak_k_rel flipped pitchers from trailing to BEATING consensus on OOS rank; bb_rel completed the K-BB edge. 2026-06-22 feature re-test added x_era_k = (-era_rel)*k_rel (run-prevention x missing-bats interaction): debuted-KM ridge 0.2739 -> 0.2823 (edge over consensus +0.063), full-pool 0.209 -> 0.215, blend +0.0074, sane calibration, robust 3/4 folds; era_rel alone fails (it is specifically the interaction). Re-test REJECTED milb_missing/level_rank (data-vintage/missingness artifacts) + every single production add (ceiling). Earlier kitchen-sink set lost. Trails MAE; xFV deflates pitcher surplus reflecting realized bust rates (flagged). Live board gated on a pro track record. Provisional. BLEND-LAMBDA RECALIBRATION 2026-06-24 (ML-improvement audit, owner ask): the WAG calibration is NON-significant for pitchers (WAG spearman 0.0229, n=466) and was pinning blend lambda at 0.391 -- which DRAGGED the pure ridge (debuted-KM rho 0.281) back DOWN to blend 0.2625 (the blend was hurting, visible in the eval: ridge>blend). Fix: when WAG lacks signal its slope is noise; lambda is now sized by the rank gate directly (xfv_model.rank_calibration: pooled + within-tier + FV-45-fringe Spearman maximized in a conservative [0.50,0.70] band) -> lam=0.66. Result: blend rho 0.2625 -> 0.2787 (+0.016), within-tier 0.118 -> 0.131, FV-45 fringe 0.107 -> 0.122; hitters UNCHANGED (WAG has signal there, lam stays 0.9). Leakage-free forward-chained selection confirms +0.017; 0.66 is the only move whose player-bootstrap CI stays strictly positive (P>0=0.98) -- the originally-tested 0.85-0.90 oversold (CI crosses zero AND degrades the fringe). Live board re-ranks sanely (rank-order corr 0.98; movers are pitchers the WAR model rightly liked over their prospect FV). REJECTED same audit (committed losses, all CI-crossing or fragile): (a) pitcher ridge+monotone-histgbm ensemble (+0.009 = 0.2 sigma of sampling noise, P>0=0.753, entire edge is the HS cohort -- drop-HS goes NEGATIVE); (b) pitcher tier-gated LTR (collapses to -0.001 under honest forward-chained w-selection); (c) hitter lambda->1.0, is_hs, +ops_rel, tier-45 LTR (all bootstrap CIs cross zero / add a second model class); (d) ALL Will's-model features as WAR inputs -- Defense+ field/position prior + p_hold + Decision+ MLB-equivalent K%/BB%, tested via faithful proxies = flat-to-negative on every gate both sides (the decisive control: raw bb_rel+level_rank reproduces the Decision+ proxy delta to the digit, so the level/age 'translation' adds nothing xFV lacks; Defense+ also BLOCKED to regenerate -- FanGraphs 403 + missing grades_long/projection_engine producers). New leakage-free experiment harness: tools/xfv_ml_lab.py (swaps model class / features / target / objective / lambda on the shipped forward-chained protocol; reproduces baselines exactly). XFV FEATURE EXPERIMENTS (2026-06-23, owner ask: improve cohorts / pitchers / level-weighting): tested SP/RP role split (pos_prem), AA/A+ per-level production columns, age*level, explicit K-BB%, level-jump, obp*age - forward-chained on the source_backtest per-archetype AUC + xfv_eval Spearman/MAE. RESULT: NULL, none robustly beat the tuned model (committed loss). pos_prem read +0.023 sum AUC (College arms +0.015) but Spearman was FLAT (0.2162->0.2162) + MAE worse -> within the ~+/-0.01 per-cohort AUC NOISE FLOOR (proven: hitter-only feature changes moved pitcher cohort AUCs). level_jump clearly HURT (College bats -0.046). FINDINGS: (1) AA is the single most WAR-predictive level (hitters conditional ridge +0.76, pitchers +0.29) yet explicit AA columns add nothing - the model already captures it (AA = modal final pre-decision level). (2) Int'l bats is the lone cohort consensus still beats (xFV 0.746 vs 0.782 AUC); not fixable from MiLB-stat features (scouts price young low-level projection the stats can't). SHIPPED a DSL LABELING BUGFIX (milb_history: the cached StatsAPI league name is 'DSL' not 'Dominican', so the old substring check folded ALL DSL into CPX and DSL norms were unavailable; now splits DSL/VSL vs CPX + re-derives level on cached reads). Model-NEUTRAL (hitter Spearman +/-0.001; AUC HS arms +0.014 / int'l bats -0.008, net ~flat) - shipped as a CORRECTNESS fix since correct level norms benefit every MiLB-norm surface. HIGH-END TAIL FIX REJECTED (2026-06-25, owner asked 'can a tail fix improve xFV at the high end, ex. Bobby Witt Jr.'): NO - committed as a loss. Forward-chained diagnosis (tools/xfv_tail_lab.py, the SAME OOS protocol as this eval) shows the top tier is already OVER-predicted vs realized first-6yr WAR, not under: FV>=55 hitters predict 10.4 vs realized 7.7 (bias +2.7), pitchers 6.0 vs 3.5 (bias +2.5) - a winner's-curse/attrition artifact that is INVISIBLE in-sample, so no correction fit on train transfers to it. And rank is invariant to any monotone tail transform by construction, so a tail fix cannot move the flagship rank gate either. Tested forward-chained, all LOSSES, none shipped: tail expansion (worsens FV55+ calibration), tail compression (no transfer - collapses to identity), global per-fold linear recalibration (worsens FV55+ MAE/bias - it is MSE-optimal for the bulk, not the bimodal tail), high-FV prior-anchoring lambda dip (rank delta hit -0.001 / pit +0.0002 = noise). The genuine high-end gap is within-elite-tier DISCRIMINATION (FV55+ realized spreads far wider than predictions; within-cohort slope ~2.0) - a new-discriminating-feature problem, NOT a magnitude transform; consistent with xFV at the trainable-data ceiling. Harness kept: tools/xfv_tail_lab.py. PROJECTED-ETA FEATURE REJECTED (2026-06-25, owner asked 'can projected ETA improve xFV'): NO - committed loss. ETA is a transform of level + age, already captured by age_rel_level + the level-relative rate stats. Forward-chained OOS (tools/xfv_lab_runner.py) adding absolute level_rank OR a years-to-MLB eta proxy: hitters rho 0.3699->0.368/0.368 (-0.002), pitchers 0.2787->0.2559 (-0.023, clearly worse); no within-tier gain either. Matches the earlier level-weighting/age*level/AA-column rejections - absolute level adds noise, not signal, on top of the lean set. CLEMENS-FEATURE experiment TESTED + REJECTED 2026-07-06: the Clemens_2026 star-odds and surplus tiers evaluated as eFV features add NO forward signal - they are monotone functions of FV, so their rank vs realized WAR is identical to consensus_fv itself (hitter 0.3735 vs 0.3735; pitcher within noise). The Clemens framework is a market-valuation layer, orthogonal to WAR-outcome ranking; it cannot improve eFV. eFV stays at its trainable-data ceiling.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 0
   },
   {
    "model_id": "xfv_tools",
@@ -703,7 +703,7 @@
    "notes": "Holistic pass 3 (2026-07-01), gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md BEFORE the run. Condition 1 passed big (pooled Brier -18.6%, log-loss -16.7%, every bucket better); conditions 2 and 3 failed (rank rho 0.2227 vs 0.2392 shipped, delta -0.0165 vs -0.002 tolerance, from PAVA flat-segment ties; FV-35 tier reliability worsened). NO SHIP; published numbers untouched. Loss ledger in the artifact. Real signal for a future attempt: FV45+ bust/bench probabilities are miscalibrated (tier-45 gap 0.0946, tier-55 0.1616); a rank-preserving monotone recalibration in grade space could take the calibration gain without the tie-induced rank loss. H-4 (2026-07-05): the PROSPX eFV reliability diagram was reading this deprecated loss-ledger artifact for the SHIPPED distribution's 'before' curves; those curves now live in the dedicated live artifact data/xfv_reliability.json ([[xfv_reliability]]), so this eval is genuinely rendered nowhere.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 5
+   "artifact_age_days": 6
   },
   {
    "model_id": "xfv_reliability",
@@ -717,7 +717,7 @@
    "notes": "Split out (H-4, 2026-07-05) from the deprecated [[xfv_isotonic_calibration]] loss ledger so a live surface no longer depends on a rendered-nowhere experiment artifact. Carries only the shipped distribution's 'before' curves; the isotonic recalibration failed its gate and is not shown. Regenerated by tools/efv_isotonic_lab.py alongside the loss ledger.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "sc_plus_component_diagnostic",
@@ -899,7 +899,7 @@
    "notes": "Improvement program 2026-07-05, motivated by the milb_missing precedent (bundle-rejected feature later re-validated alone, +0.023). NO candidate cleared the gate: prod_trend/fv_trend negative both sides; pos_prem/il_stints_pre within noise (pitcher il_stints_pre is a constant column, exact no-op); n_sources gains pooled (+0.005/+0.006, above noise) but degrades within_tier_wm AND t45 on both targets - a coverage/popularity proxy, the exact pattern the within-tier condition rejects; ops_rel flat pooled in both additive and replacement forms. GENUINE SIGNAL RECORDED: ops_rel improves the FV-45 fringe tier consistently (t45 +0.020/+0.022 censored across both forms) - not shippable under the pooled-first gate and not pre-registered as a fringe-tier experiment; any future attempt must pre-register a t45-targeted gate with pooled and wm no-degrade conditions. Third independent confirmation of the trainable-data ceiling; re-opening any of these candidates requires resolved 2024+ cohorts, not a re-run. Line: [[xfv_hitter]] / [[xfv_pitcher]] unchanged.",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "xfv_college_backfill",
@@ -913,7 +913,7 @@
    "notes": "Improvement program 2026-07-05, analog of overseas item 15. STOP - timing/coverage block, same class as [[xfv_pitcher_stuff]] (E-STUFF): the feature source (CollegeSavant TrackMan) starts ~2021+, after the resolved-outcome cohort (2011-2023 debuts) ends, so the trainable intersection is empty and the apparent joins are cross-era same-name collisions. No experiment run, data/xfv.json untouched. Reopen only with resolved 2024+ debut cohorts. Feed only validated components (hit_k; hit_bb caveated; never hit_ops/pit_k).",
    "last_checked": "2026-07-07",
    "stale": false,
-   "artifact_age_days": 1
+   "artifact_age_days": 2
   },
   {
    "model_id": "riv_plus",

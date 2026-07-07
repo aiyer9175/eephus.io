@@ -574,7 +574,7 @@
 ],
 "xfv_grade_display": 51.7,
 "xfv_minus_consensus_display": 2.9,
-"krp_plus": 111.9
+"krp_plus": 112.0
 },
 {
 "player_key": "braylon_doughty",
@@ -1141,7 +1141,7 @@
 ],
 "xfv_grade_display": 52.0,
 "xfv_minus_consensus_display": -1.0,
-"krp_plus": 91.2
+"krp_plus": 91.1
 },
 {
 "player_key": "andrew_moore",
@@ -1519,7 +1519,7 @@
 ],
 "xfv_grade_display": 47.3,
 "xfv_minus_consensus_display": 5.6,
-"krp_plus": 126.5
+"krp_plus": 126.6
 },
 {
 "player_key": "seth_clausen",
@@ -2018,7 +2018,7 @@
 ],
 "xfv_grade_display": 50.2,
 "xfv_minus_consensus_display": 0.2,
-"krp_plus": 109.5
+"krp_plus": 109.6
 },
 {
 "player_key": "hagen_smith",
@@ -2522,7 +2522,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 125.2
+"krp_plus": 125.3
 },
 {
 "player_key": "nicolo_pinazzi",
@@ -2585,7 +2585,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 131.5
+"krp_plus": 131.6
 },
 {
 "player_key": "charlie_christensen",
@@ -3094,7 +3094,7 @@
 ],
 "xfv_grade_display": 45.0,
 "xfv_minus_consensus_display": 3.3,
-"krp_plus": 129.7
+"krp_plus": 129.8
 },
 {
 "player_key": "jackson_ferris",
@@ -3288,7 +3288,7 @@
 ],
 "xfv_grade_display": 42.7,
 "xfv_minus_consensus_display": 2.7,
-"krp_plus": 108.8
+"krp_plus": 108.9
 },
 {
 "player_key": "miguel_sime_jr",
@@ -5491,19 +5491,19 @@
 "good": 0.099,
 "star": 0.004
 },
-"surplus_mm": 4.4,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 5.0,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 4.1,
-"p90_mm": 13.2,
-"mean_mm": 4.4,
+"p75_mm": 4.7,
+"p90_mm": 15.1,
+"mean_mm": 5.0,
 "p_bust": 0.417
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 13.2,
+"band_p90_mm": 15.1,
 "p_bust": 0.417,
 "injury_factor": null,
 "statcast_factor": null,
@@ -8104,7 +8104,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 3.4,
-"krp_plus": 123.6
+"krp_plus": 123.7
 },
 {
 "player_key": "xavier_cruz",
@@ -12300,19 +12300,19 @@
 "good": 0.067,
 "star": 0.003
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.4,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.526
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.4,
+"band_p90_mm": 8.4,
 "p_bust": 0.526,
 "injury_factor": null,
 "statcast_factor": null,
@@ -14606,6 +14606,64 @@
 "krp_plus": 92.4
 },
 {
+"player_key": "talon_haley",
+"kind": "active",
+"position": "SP",
+"consensus_fv": 42.7,
+"xfv_grade": 43.9,
+"xfv_minus_consensus": 1.2,
+"xfv_war_6yr": 1.63,
+"rank_war": 1.392,
+"p_bucket": {
+"bust": 0.554,
+"bench": 0.241,
+"regular": 0.143,
+"good": 0.06,
+"star": 0.002
+},
+"surplus_mm": 3.3,
+"consensus_surplus_mm": 2.2,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 4.2,
+"p90_mm": 10.6,
+"mean_mm": 3.2,
+"p_bust": 0.554
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 10.6,
+"p_bust": 0.554,
+"injury_factor": null,
+"statcast_factor": 0.999,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.01
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.34
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.24
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": -1.0,
+"krp_plus": 92.9
+},
+{
 "player_key": "ben_jacobs",
 "kind": "active",
 "position": "SP",
@@ -14667,64 +14725,6 @@
 "xfv_grade_display": 42.3,
 "xfv_minus_consensus_display": -1.0,
 "krp_plus": 83.4
-},
-{
-"player_key": "talon_haley",
-"kind": "active",
-"position": "SP",
-"consensus_fv": 42.7,
-"xfv_grade": 43.8,
-"xfv_minus_consensus": 1.2,
-"xfv_war_6yr": 1.63,
-"rank_war": 1.391,
-"p_bucket": {
-"bust": 0.555,
-"bench": 0.241,
-"regular": 0.143,
-"good": 0.06,
-"star": 0.002
-},
-"surplus_mm": 3.3,
-"consensus_surplus_mm": 2.2,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 4.2,
-"p90_mm": 10.6,
-"mean_mm": 3.2,
-"p_bust": 0.555
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 10.6,
-"p_bust": 0.555,
-"injury_factor": null,
-"statcast_factor": 0.998,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.01
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.34
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.24
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": -1.0,
-"krp_plus": 92.9
 },
 {
 "player_key": "cade_crossland",
@@ -15251,19 +15251,19 @@
 "good": 0.066,
 "star": 0.003
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.2,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.6,
 "p_bust": 0.527
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.2,
+"band_p90_mm": 8.6,
 "p_bust": 0.527,
 "injury_factor": null,
 "statcast_factor": null,
@@ -16027,7 +16027,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.1
+"krp_plus": 105.2
 },
 {
 "player_key": "luke_taggart",
@@ -16786,6 +16786,69 @@
 "krp_plus": 95.4
 },
 {
+"player_key": "yordanis_guerra",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 42.9,
+"xfv_minus_consensus": 1.3,
+"xfv_war_6yr": 1.49,
+"rank_war": 1.217,
+"p_bucket": {
+"bust": 0.59,
+"bench": 0.228,
+"regular": 0.128,
+"good": 0.052,
+"star": 0.002
+},
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
+"p_bust": 0.59
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.5,
+"p_bust": 0.59,
+"injury_factor": null,
+"statcast_factor": 1.002,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.38
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.28
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.1
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 101.0
+},
+{
 "player_key": "juan_cazarez",
 "kind": "active",
 "position": "P",
@@ -16847,69 +16910,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 100.1
-},
-{
-"player_key": "yordanis_guerra",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 42.9,
-"xfv_minus_consensus": 1.3,
-"xfv_war_6yr": 1.49,
-"rank_war": 1.217,
-"p_bucket": {
-"bust": 0.591,
-"bench": 0.227,
-"regular": 0.128,
-"good": 0.052,
-"star": 0.002
-},
-"surplus_mm": 2.6,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.5,
-"mean_mm": 2.6,
-"p_bust": 0.591
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.5,
-"p_bust": 0.591,
-"injury_factor": null,
-"statcast_factor": 1.001,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.01
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.38
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.28
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.1
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.0
 },
 {
 "player_key": "david_davalillo",
@@ -17610,19 +17610,19 @@
 "good": 0.051,
 "star": 0.002
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.1,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.599
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.1,
+"band_p90_mm": 8.4,
 "p_bust": 0.599,
 "injury_factor": null,
 "statcast_factor": null,
@@ -18573,6 +18573,69 @@
 "krp_plus": 95.9
 },
 {
+"player_key": "jd_mcreynolds",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 41.6,
+"xfv_minus_consensus": -0.1,
+"xfv_war_6yr": 1.31,
+"rank_war": 1.117,
+"p_bucket": {
+"bust": 0.643,
+"bench": 0.206,
+"regular": 0.107,
+"good": 0.042,
+"star": 0.002
+},
+"surplus_mm": 2.8,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.7,
+"p90_mm": 9.1,
+"mean_mm": 2.8,
+"p_bust": 0.643
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 9.1,
+"p_bust": 0.643,
+"injury_factor": null,
+"statcast_factor": 1.012,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.07
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.45
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.35
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.3
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.23
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 105.5
+},
+{
 "player_key": "nicolas_cruz",
 "kind": "active",
 "position": "P",
@@ -18697,69 +18760,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 107.9
-},
-{
-"player_key": "jd_mcreynolds",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 41.6,
-"xfv_minus_consensus": -0.1,
-"xfv_war_6yr": 1.31,
-"rank_war": 1.116,
-"p_bucket": {
-"bust": 0.644,
-"bench": 0.205,
-"regular": 0.107,
-"good": 0.042,
-"star": 0.002
-},
-"surplus_mm": 2.8,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.7,
-"p90_mm": 9.1,
-"mean_mm": 2.8,
-"p_bust": 0.644
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 9.1,
-"p_bust": 0.644,
-"injury_factor": null,
-"statcast_factor": 1.011,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.07
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.45
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.35
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.3
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.23
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 105.5
 },
 {
 "player_key": "mason_olson",
@@ -20903,6 +20903,69 @@
 "krp_plus": 96.0
 },
 {
+"player_key": "preston_howey",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -21.7,
+"xfv_war_6yr": -0.03,
+"rank_war": 0.396,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 1.5,
+"consensus_surplus_mm": 1.8,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 1.6,
+"p90_mm": 4.8,
+"mean_mm": 1.5,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 4.8,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.993,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.42
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.34
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.21
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 40.0,
+"xfv_minus_consensus_display": -1.7,
+"krp_plus": 101.1
+},
+{
 "player_key": "james_ellwanger__sa3030911",
 "kind": "active",
 "position": "SP",
@@ -21049,19 +21112,19 @@
 "good": 0.043,
 "star": 0.002
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.6,
 "p_bust": 0.64
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.6,
 "p_bust": 0.64,
 "injury_factor": null,
 "statcast_factor": null,
@@ -21102,19 +21165,19 @@
 "good": 0.048,
 "star": 0.002
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.2,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.612
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.2,
+"band_p90_mm": 8.5,
 "p_bust": 0.612,
 "injury_factor": null,
 "statcast_factor": null,
@@ -22448,6 +22511,69 @@
 "krp_plus": 87.2
 },
 {
+"player_key": "austin_breedlove",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 41.2,
+"xfv_minus_consensus": -0.5,
+"xfv_war_6yr": 1.26,
+"rank_war": 1.091,
+"p_bucket": {
+"bust": 0.657,
+"bench": 0.2,
+"regular": 0.102,
+"good": 0.04,
+"star": 0.002
+},
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
+"p_bust": 0.657
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.5,
+"p_bust": 0.657,
+"injury_factor": null,
+"statcast_factor": 1.008,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.05
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.31
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.21
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.21
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 108.6
+},
+{
 "player_key": "adam_smith",
 "kind": "active",
 "position": "P",
@@ -22635,69 +22761,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 106.4
-},
-{
-"player_key": "austin_breedlove",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 41.2,
-"xfv_minus_consensus": -0.5,
-"xfv_war_6yr": 1.26,
-"rank_war": 1.09,
-"p_bucket": {
-"bust": 0.657,
-"bench": 0.2,
-"regular": 0.102,
-"good": 0.04,
-"star": 0.002
-},
-"surplus_mm": 2.6,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.5,
-"mean_mm": 2.6,
-"p_bust": 0.657
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.5,
-"p_bust": 0.657,
-"injury_factor": null,
-"statcast_factor": 1.007,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.04
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.31
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.21
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.21
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 108.6
 },
 {
 "player_key": "colton_shaw",
@@ -25177,19 +25240,19 @@
 "good": 0.04,
 "star": 0.002
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.653
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.653,
 "injury_factor": null,
 "statcast_factor": null,
@@ -25235,19 +25298,19 @@
 "good": 0.038,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.668
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.668,
 "injury_factor": null,
 "statcast_factor": null,
@@ -25462,19 +25525,19 @@
 "good": 0.039,
 "star": 0.002
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.0,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
 "p_bust": 0.662
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.0,
+"band_p90_mm": 8.7,
 "p_bust": 0.662,
 "injury_factor": null,
 "statcast_factor": null,
@@ -25578,19 +25641,19 @@
 "good": 0.04,
 "star": 0.002
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.654
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.4,
 "p_bust": 0.654,
 "injury_factor": null,
 "statcast_factor": null,
@@ -25684,6 +25747,69 @@
 "krp_plus": 103.8
 },
 {
+"player_key": "cameron_millar",
+"kind": "active",
+"position": "SP",
+"consensus_fv": 35.0,
+"xfv_grade": 40.2,
+"xfv_minus_consensus": 5.2,
+"xfv_war_6yr": 1.13,
+"rank_war": 0.609,
+"p_bucket": {
+"bust": 0.691,
+"bench": 0.184,
+"regular": 0.09,
+"good": 0.034,
+"star": 0.001
+},
+"surplus_mm": 3.1,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 4.0,
+"p90_mm": 10.0,
+"mean_mm": 3.1,
+"p_bust": 0.691
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 10.0,
+"p_bust": 0.691,
+"injury_factor": null,
+"statcast_factor": 1.011,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.07
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.58
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.49
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.22
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.21
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 6.7,
+"krp_plus": 105.0
+},
+{
 "player_key": "mavis_graves",
 "kind": "active",
 "position": "SP",
@@ -25744,69 +25870,6 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 4.0
-},
-{
-"player_key": "cameron_millar",
-"kind": "active",
-"position": "SP",
-"consensus_fv": 35.0,
-"xfv_grade": 40.2,
-"xfv_minus_consensus": 5.2,
-"xfv_war_6yr": 1.13,
-"rank_war": 0.608,
-"p_bucket": {
-"bust": 0.691,
-"bench": 0.183,
-"regular": 0.09,
-"good": 0.034,
-"star": 0.001
-},
-"surplus_mm": 3.1,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 4.0,
-"p90_mm": 10.0,
-"mean_mm": 3.1,
-"p_bust": 0.691
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 10.0,
-"p_bust": 0.691,
-"injury_factor": null,
-"statcast_factor": 1.01,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.06
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.58
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.49
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.22
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.21
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 6.7,
-"krp_plus": 105.0
 },
 {
 "player_key": "fulton_lockhart",
@@ -30010,7 +30073,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 155.8
+"krp_plus": 155.9
 },
 {
 "player_key": "phil_fox",
@@ -30338,19 +30401,19 @@
 "good": 0.035,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.688
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.688,
 "injury_factor": null,
 "statcast_factor": null,
@@ -30391,19 +30454,19 @@
 "good": 0.035,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.2,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.686
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.2,
+"band_p90_mm": 8.5,
 "p_bust": 0.686,
 "injury_factor": null,
 "statcast_factor": null,
@@ -30507,19 +30570,19 @@
 "good": 0.032,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.705
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.705,
 "injury_factor": null,
 "statcast_factor": null,
@@ -30537,7 +30600,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.2
+"krp_plus": 98.1
 },
 {
 "player_key": "santiago_guerrero",
@@ -32345,6 +32408,69 @@
 "krp_plus": 90.5
 },
 {
+"player_key": "juan_reyes",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 39.4,
+"xfv_minus_consensus": -2.3,
+"xfv_war_6yr": 1.03,
+"rank_war": 0.965,
+"p_bucket": {
+"bust": 0.721,
+"bench": 0.169,
+"regular": 0.08,
+"good": 0.03,
+"star": 0.001
+},
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
+"p_bust": 0.721
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.7,
+"p_bust": 0.721,
+"injury_factor": null,
+"statcast_factor": 1.006,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.04
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.18
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.1
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 101.0
+},
+{
 "player_key": "kevin_valdez",
 "kind": "active",
 "position": "P",
@@ -32406,69 +32532,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 96.8
-},
-{
-"player_key": "juan_reyes",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 39.4,
-"xfv_minus_consensus": -2.3,
-"xfv_war_6yr": 1.02,
-"rank_war": 0.965,
-"p_bucket": {
-"bust": 0.721,
-"bench": 0.169,
-"regular": 0.079,
-"good": 0.03,
-"star": 0.001
-},
-"surplus_mm": 2.7,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.7,
-"mean_mm": 2.7,
-"p_bust": 0.721
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.7,
-"p_bust": 0.721,
-"injury_factor": null,
-"statcast_factor": 1.005,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.03
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.18
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.1
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 101.0
 },
 {
 "player_key": "daniel_keaney",
@@ -35373,19 +35436,19 @@
 "good": 0.027,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.745
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.745,
 "injury_factor": null,
 "statcast_factor": null,
@@ -35542,19 +35605,19 @@
 "good": 0.028,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.1,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.731
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.1,
+"band_p90_mm": 8.4,
 "p_bust": 0.731,
 "injury_factor": null,
 "statcast_factor": null,
@@ -36371,7 +36434,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": -3.3,
-"krp_plus": 88.8
+"krp_plus": 88.7
 },
 {
 "player_key": "jesus_travieso",
@@ -38004,7 +38067,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 98.6
+"krp_plus": 98.5
 },
 {
 "player_key": "jose_guedez",
@@ -40504,7 +40567,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 114.0
+"krp_plus": 114.1
 },
 {
 "player_key": "eliezer_pena",
@@ -41137,69 +41200,6 @@
 "krp_plus": 95.6
 },
 {
-"player_key": "jeury_espinal",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 37.9,
-"xfv_minus_consensus": -3.8,
-"xfv_war_6yr": 0.85,
-"rank_war": 0.873,
-"p_bucket": {
-"bust": 0.767,
-"bench": 0.144,
-"regular": 0.064,
-"good": 0.024,
-"star": 0.001
-},
-"surplus_mm": 2.6,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.4,
-"mean_mm": 2.6,
-"p_bust": 0.767
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.4,
-"p_bust": 0.767,
-"injury_factor": null,
-"statcast_factor": 0.994,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.04
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.64
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.41
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.25
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 88.7
-},
-{
 "player_key": "marcos_pimentel",
 "kind": "active",
 "position": "P",
@@ -41261,6 +41261,69 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 100.4
+},
+{
+"player_key": "jeury_espinal",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 37.9,
+"xfv_minus_consensus": -3.8,
+"xfv_war_6yr": 0.85,
+"rank_war": 0.872,
+"p_bucket": {
+"bust": 0.767,
+"bench": 0.144,
+"regular": 0.064,
+"good": 0.024,
+"star": 0.001
+},
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
+"p_bust": 0.767
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.4,
+"p_bust": 0.767,
+"injury_factor": null,
+"statcast_factor": 0.993,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.64
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.41
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.25
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 88.7
 },
 {
 "player_key": "marlon_franco",
@@ -41449,7 +41512,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.7
+"krp_plus": 116.8
 },
 {
 "player_key": "cesar_lares",
@@ -42112,19 +42175,19 @@
 "good": 0.023,
 "star": 0.001
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.4,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.775
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.4,
+"band_p90_mm": 8.4,
 "p_bust": 0.775,
 "injury_factor": null,
 "statcast_factor": null,
@@ -42170,19 +42233,19 @@
 "good": 0.024,
 "star": 0.001
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.6,
 "p_bust": 0.763
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.6,
 "p_bust": 0.763,
 "injury_factor": null,
 "statcast_factor": null,
@@ -42286,19 +42349,19 @@
 "good": 0.026,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.7,
 "p_bust": 0.748
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.6,
 "p_bust": 0.748,
 "injury_factor": null,
 "statcast_factor": null,
@@ -44151,7 +44214,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.4
+"krp_plus": 95.3
 },
 {
 "player_key": "austin_love",
@@ -45991,7 +46054,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": -0.6,
-"krp_plus": 94.7
+"krp_plus": 94.6
 },
 {
 "player_key": "anyer_laureano",
@@ -46998,7 +47061,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.4
+"krp_plus": 121.5
 },
 {
 "player_key": "luke_mensik",
@@ -47900,7 +47963,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 120.6
+"krp_plus": 120.7
 },
 {
 "player_key": "yoan_valdez",
@@ -47981,19 +48044,19 @@
 "good": 0.021,
 "star": 0.001
 },
-"surplus_mm": 2.1,
-"consensus_surplus_mm": 1.5,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.0,
-"p90_mm": 6.7,
-"mean_mm": 2.1,
+"p75_mm": 2.5,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.791
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 6.7,
+"band_p90_mm": 8.4,
 "p_bust": 0.791,
 "injury_factor": null,
 "statcast_factor": null,
@@ -50071,6 +50134,64 @@
 "krp_plus": 99.0
 },
 {
+"player_key": "leonardo_rossell",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 35.8,
+"xfv_minus_consensus": -5.9,
+"xfv_war_6yr": 0.65,
+"rank_war": 0.764,
+"p_bucket": {
+"bust": 0.822,
+"bench": 0.113,
+"regular": 0.047,
+"good": 0.017,
+"star": 0.001
+},
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
+"p_bust": 0.822
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.7,
+"p_bust": 0.822,
+"injury_factor": null,
+"statcast_factor": 1.01,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.06
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.3
+},
+{
 "player_key": "thomas_schultz",
 "kind": "active",
 "position": "P",
@@ -50253,64 +50374,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 98.8
-},
-{
-"player_key": "leonardo_rossell",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 35.8,
-"xfv_minus_consensus": -5.9,
-"xfv_war_6yr": 0.65,
-"rank_war": 0.763,
-"p_bucket": {
-"bust": 0.822,
-"bench": 0.113,
-"regular": 0.047,
-"good": 0.017,
-"star": 0.001
-},
-"surplus_mm": 2.7,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.7,
-"mean_mm": 2.7,
-"p_bust": 0.822
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.7,
-"p_bust": 0.822,
-"injury_factor": null,
-"statcast_factor": 1.008,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.05
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.3
 },
 {
 "player_key": "landen_payne",
@@ -53395,7 +53458,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.1
+"krp_plus": 121.2
 },
 {
 "player_key": "danyony_pulido",
@@ -53778,7 +53841,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 117.0
+"krp_plus": 117.1
 },
 {
 "player_key": "kamdyn_perry",
@@ -55504,7 +55567,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 121.4
+"krp_plus": 121.5
 },
 {
 "player_key": "ismael_cabral",
@@ -56510,7 +56573,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.9
+"krp_plus": 97.8
 },
 {
 "player_key": "yoralbert_cadiz",
@@ -57758,6 +57821,69 @@
 "krp_plus": 100.9
 },
 {
+"player_key": "sabier_marte",
+"kind": "active",
+"position": "SP",
+"consensus_fv": 40.0,
+"xfv_grade": 34.9,
+"xfv_minus_consensus": -5.1,
+"xfv_war_6yr": 0.57,
+"rank_war": 0.55,
+"p_bucket": {
+"bust": 0.842,
+"bench": 0.101,
+"regular": 0.041,
+"good": 0.015,
+"star": 0.001
+},
+"surplus_mm": 3.0,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 3.9,
+"p90_mm": 9.9,
+"mean_mm": 3.0,
+"p_bust": 0.842
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 9.9,
+"p_bust": 0.842,
+"injury_factor": null,
+"statcast_factor": 1.011,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.07
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.21
+},
+{
+"label": "Peak K rate",
+"dir": "up",
+"mag": 0.19
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "up",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 1.7,
+"krp_plus": 95.7
+},
+{
 "player_key": "ben_abeldt",
 "kind": "active",
 "position": "LHP",
@@ -57814,69 +57940,6 @@
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": 1.7,
 "krp_plus": 99.9
-},
-{
-"player_key": "sabier_marte",
-"kind": "active",
-"position": "SP",
-"consensus_fv": 40.0,
-"xfv_grade": 34.9,
-"xfv_minus_consensus": -5.1,
-"xfv_war_6yr": 0.57,
-"rank_war": 0.55,
-"p_bucket": {
-"bust": 0.842,
-"bench": 0.101,
-"regular": 0.041,
-"good": 0.015,
-"star": 0.001
-},
-"surplus_mm": 3.0,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 3.9,
-"p90_mm": 9.9,
-"mean_mm": 3.0,
-"p_bust": 0.843
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 9.9,
-"p_bust": 0.843,
-"injury_factor": null,
-"statcast_factor": 1.01,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "up",
-"mag": 0.06
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.21
-},
-{
-"label": "Peak K rate",
-"dir": "up",
-"mag": 0.19
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "up",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 1.7,
-"krp_plus": 95.7
 },
 {
 "player_key": "caden_grice",
@@ -61843,19 +61906,19 @@
 "good": 0.016,
 "star": 0.001
 },
-"surplus_mm": 2.1,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.0,
-"mean_mm": 2.1,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.6,
 "p_bust": 0.83
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.0,
+"band_p90_mm": 8.6,
 "p_bust": 0.83,
 "injury_factor": null,
 "statcast_factor": null,
@@ -62510,7 +62573,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 81.9
+"krp_plus": 81.8
 },
 {
 "player_key": "luis_diaz",
@@ -63399,7 +63462,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 86.7
+"krp_plus": 86.6
 },
 {
 "player_key": "angelo_smith",
@@ -63588,7 +63651,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 73.9
+"krp_plus": 73.8
 },
 {
 "player_key": "aidan_haugh",
@@ -65500,7 +65563,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.7
+"krp_plus": 97.6
 },
 {
 "player_key": "johan_simon",
@@ -69331,19 +69394,19 @@
 "good": 0.014,
 "star": 0.001
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.85
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.85,
 "injury_factor": null,
 "statcast_factor": null,
@@ -69389,19 +69452,19 @@
 "good": 0.013,
 "star": 0.0
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.861
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.861,
 "injury_factor": null,
 "statcast_factor": null,
@@ -71989,6 +72052,69 @@
 "krp_plus": 93.4
 },
 {
+"player_key": "josbel_garcia",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 33.4,
+"xfv_minus_consensus": -8.2,
+"xfv_war_6yr": 0.46,
+"rank_war": 0.658,
+"p_bucket": {
+"bust": 0.871,
+"bench": 0.084,
+"regular": 0.033,
+"good": 0.012,
+"star": 0.0
+},
+"surplus_mm": 2.9,
+"consensus_surplus_mm": 1.8,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.8,
+"p90_mm": 9.3,
+"mean_mm": 2.9,
+"p_bust": 0.871
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 9.3,
+"p_bust": 0.871,
+"injury_factor": null,
+"statcast_factor": 1.001,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.17
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.13
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 96.2
+},
+{
 "player_key": "jarold_rosado",
 "kind": "active",
 "position": "SIRP",
@@ -72156,64 +72282,6 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 95.7
-},
-{
-"player_key": "josbel_garcia",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 33.4,
-"xfv_minus_consensus": -8.2,
-"xfv_war_6yr": 0.46,
-"rank_war": 0.658,
-"p_bucket": {
-"bust": 0.871,
-"bench": 0.084,
-"regular": 0.033,
-"good": 0.012,
-"star": 0.0
-},
-"surplus_mm": 2.9,
-"consensus_surplus_mm": 1.8,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.8,
-"p90_mm": 9.3,
-"mean_mm": 2.9,
-"p_bust": 0.871
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 9.3,
-"p_bust": 0.871,
-"injury_factor": null,
-"statcast_factor": null,
-"factors": [
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.17
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.13
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.2
 },
 {
 "player_key": "jack_choate",
@@ -73855,7 +73923,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 87.6
+"krp_plus": 87.5
 },
 {
 "player_key": "dominic_scheffler",
@@ -74682,19 +74750,19 @@
 "good": 0.011,
 "star": 0.0
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.0,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
 "p_bust": 0.877
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.0,
+"band_p90_mm": 8.7,
 "p_bust": 0.877,
 "injury_factor": null,
 "statcast_factor": null,
@@ -74909,19 +74977,19 @@
 "good": 0.011,
 "star": 0.0
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.6,
+"mean_mm": 2.7,
 "p_bust": 0.879
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.6,
 "p_bust": 0.879,
 "injury_factor": null,
 "statcast_factor": null,
@@ -76920,7 +76988,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 82.9
+"krp_plus": 82.8
 },
 {
 "player_key": "dominic_freeberger",
@@ -79007,7 +79075,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.2
+"krp_plus": 95.1
 },
 {
 "player_key": "jonathan_stevens",
@@ -80595,69 +80663,6 @@
 "krp_plus": 95.7
 },
 {
-"player_key": "jose_g_gonzalez",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 32.1,
-"xfv_minus_consensus": -9.5,
-"xfv_war_6yr": 0.36,
-"rank_war": 0.608,
-"p_bucket": {
-"bust": 0.893,
-"bench": 0.07,
-"regular": 0.027,
-"good": 0.009,
-"star": 0.0
-},
-"surplus_mm": 2.6,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.5,
-"p90_mm": 8.3,
-"mean_mm": 2.6,
-"p_bust": 0.893
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.3,
-"p_bust": 0.893,
-"injury_factor": null,
-"statcast_factor": 0.99,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.06
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.36
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.25
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.2
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 104.5
-},
-{
 "player_key": "ricardo_montero",
 "kind": "active",
 "position": "P",
@@ -80850,6 +80855,69 @@
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
 "krp_plus": 121.9
+},
+{
+"player_key": "jose_g_gonzalez",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 32.1,
+"xfv_minus_consensus": -9.6,
+"xfv_war_6yr": 0.36,
+"rank_war": 0.607,
+"p_bucket": {
+"bust": 0.893,
+"bench": 0.07,
+"regular": 0.027,
+"good": 0.009,
+"star": 0.0
+},
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.5,
+"p90_mm": 8.3,
+"mean_mm": 2.6,
+"p_bust": 0.893
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.3,
+"p_bust": 0.893,
+"injury_factor": null,
+"statcast_factor": 0.989,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.07
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.36
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.25
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.2
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 104.5
 },
 {
 "player_key": "rj_sales",
@@ -81192,19 +81260,19 @@
 "good": 0.009,
 "star": 0.0
 },
-"surplus_mm": 2.1,
-"consensus_surplus_mm": 1.5,
+"surplus_mm": 2.7,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.0,
-"p90_mm": 6.9,
-"mean_mm": 2.1,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
 "p_bust": 0.902
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 6.9,
+"band_p90_mm": 8.7,
 "p_bust": 0.902,
 "injury_factor": null,
 "statcast_factor": null,
@@ -81250,19 +81318,19 @@
 "good": 0.01,
 "star": 0.0
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.1,
-"p90_mm": 7.2,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.89
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.2,
+"band_p90_mm": 8.5,
 "p_bust": 0.89,
 "injury_factor": null,
 "statcast_factor": null,
@@ -81308,19 +81376,19 @@
 "good": 0.01,
 "star": 0.0
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.4,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.887
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.4,
+"band_p90_mm": 8.4,
 "p_bust": 0.887,
 "injury_factor": null,
 "statcast_factor": null,
@@ -81464,7 +81532,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.8
+"krp_plus": 96.7
 },
 {
 "player_key": "josh_perez",
@@ -81696,7 +81764,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 117.7
+"krp_plus": 117.8
 },
 {
 "player_key": "pete_hansen",
@@ -82079,7 +82147,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.6,
-"krp_plus": 94.5
+"krp_plus": 94.4
 },
 {
 "player_key": "owen_hall",
@@ -85363,19 +85431,19 @@
 "good": 0.008,
 "star": 0.0
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.3,
+"p75_mm": 2.5,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.905
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.4,
 "p_bust": 0.905,
 "injury_factor": null,
 "statcast_factor": null,
@@ -88865,7 +88933,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 116.2
+"krp_plus": 116.3
 },
 {
 "player_key": "carson_swilling",
@@ -90003,7 +90071,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 97.7
+"krp_plus": 97.6
 },
 {
 "player_key": "xavier_martinez",
@@ -90288,7 +90356,7 @@
 "band_p90_mm": 8.7,
 "p_bust": 0.915,
 "injury_factor": 0.9,
-"statcast_factor": 0.99,
+"statcast_factor": 0.992,
 "factors": [
 {
 "label": "Injury penalty",
@@ -90298,7 +90366,7 @@
 {
 "label": "Statcast+ quality",
 "dir": "down",
-"mag": 0.06
+"mag": 0.05
 },
 {
 "label": "Peak K rate",
@@ -90855,7 +90923,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": 0.6,
-"krp_plus": 91.3
+"krp_plus": 91.2
 },
 {
 "player_key": "nazier_mule",
@@ -94448,19 +94516,19 @@
 "good": 0.006,
 "star": 0.0
 },
-"surplus_mm": 2.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.3,
-"mean_mm": 2.2,
+"p75_mm": 2.6,
+"p90_mm": 8.5,
+"mean_mm": 2.6,
 "p_bust": 0.931
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.3,
+"band_p90_mm": 8.5,
 "p_bust": 0.931,
 "injury_factor": null,
 "statcast_factor": null,
@@ -103358,19 +103426,19 @@
 "good": 0.003,
 "star": 0.0
 },
-"surplus_mm": 2.3,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 2.2,
-"p90_mm": 7.4,
-"mean_mm": 2.3,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
 "p_bust": 0.965
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 7.4,
+"band_p90_mm": 8.4,
 "p_bust": 0.965,
 "injury_factor": null,
 "statcast_factor": null,
@@ -103834,7 +103902,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 94.9
+"krp_plus": 94.8
 },
 {
 "player_key": "carson_fischer",
@@ -105132,7 +105200,7 @@
 ],
 "xfv_grade_display": 41.7,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 93.8
+"krp_plus": 93.7
 },
 {
 "player_key": "angel_perez",
@@ -105205,7 +105273,7 @@
 "xfv_grade": 23.3,
 "xfv_minus_consensus": -18.3,
 "xfv_war_6yr": 0.02,
-"rank_war": 0.422,
+"rank_war": 0.423,
 "p_bucket": {
 "bust": 0.972,
 "bench": 0.019,
@@ -105228,12 +105296,12 @@
 "band_p90_mm": 9.3,
 "p_bust": 0.972,
 "injury_factor": null,
-"statcast_factor": 1.004,
+"statcast_factor": 1.005,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "up",
-"mag": 0.02
+"mag": 0.03
 },
 {
 "label": "Peak K rate",
@@ -105601,12 +105669,12 @@
 "band_p90_mm": 5.9,
 "p_bust": 0.979,
 "injury_factor": null,
-"statcast_factor": 0.995,
+"statcast_factor": 0.996,
 "factors": [
 {
 "label": "Statcast+ quality",
 "dir": "down",
-"mag": 0.03
+"mag": 0.02
 },
 {
 "label": "Contact (K%) vs level",
@@ -105760,69 +105828,6 @@
 "krp_plus": 96.4
 },
 {
-"player_key": "cristian_aray",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 22.4,
-"xfv_minus_consensus": -19.3,
-"xfv_war_6yr": 0.01,
-"rank_war": 0.417,
-"p_bucket": {
-"bust": 0.976,
-"bench": 0.016,
-"regular": 0.006,
-"good": 0.002,
-"star": 0.0
-},
-"surplus_mm": 2.6,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 2.6,
-"p90_mm": 8.4,
-"mean_mm": 2.6,
-"p_bust": 0.976
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 8.4,
-"p_bust": 0.976,
-"injury_factor": null,
-"statcast_factor": 0.992,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.05
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.28
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.26
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.18
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 41.7,
-"xfv_minus_consensus_display": 0.0,
-"krp_plus": 88.3
-},
-{
 "player_key": "christian_chamberlain",
 "kind": "active",
 "position": "SIRP",
@@ -105886,6 +105891,69 @@
 "krp_plus": 105.9
 },
 {
+"player_key": "cristian_aray",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 22.4,
+"xfv_minus_consensus": -19.3,
+"xfv_war_6yr": 0.01,
+"rank_war": 0.417,
+"p_bucket": {
+"bust": 0.976,
+"bench": 0.016,
+"regular": 0.006,
+"good": 0.002,
+"star": 0.0
+},
+"surplus_mm": 2.6,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 2.6,
+"p90_mm": 8.4,
+"mean_mm": 2.6,
+"p_bust": 0.976
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 8.4,
+"p_bust": 0.976,
+"injury_factor": null,
+"statcast_factor": 0.99,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.06
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.28
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.26
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.18
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 88.2
+},
+{
 "player_key": "david_bracho",
 "kind": "active",
 "position": "P",
@@ -105901,19 +105969,19 @@
 "good": 0.002,
 "star": 0.0
 },
-"surplus_mm": 1.6,
+"surplus_mm": 2.7,
 "consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 1.6,
-"p90_mm": 5.1,
-"mean_mm": 1.6,
+"p75_mm": 2.6,
+"p90_mm": 8.7,
+"mean_mm": 2.7,
 "p_bust": 0.977
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 5.1,
+"band_p90_mm": 8.7,
 "p_bust": 0.977,
 "injury_factor": 0.7,
 "statcast_factor": 0.996,
@@ -105949,9 +106017,9 @@
 "mag": 0.14
 }
 ],
-"xfv_grade_display": 40.3,
-"xfv_minus_consensus_display": -1.4,
-"krp_plus": 99.0
+"xfv_grade_display": 41.7,
+"xfv_minus_consensus_display": 0.0,
+"krp_plus": 98.9
 },
 {
 "player_key": "konner_eaton",
@@ -110611,7 +110679,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 95.7
+"krp_plus": 95.6
 },
 {
 "player_key": "jose_chirinos",
@@ -114505,7 +114573,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 87.3
+"krp_plus": 87.2
 },
 {
 "player_key": "ty_weatherly",
@@ -116294,7 +116362,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.7
+"krp_plus": 96.6
 },
 {
 "player_key": "kevin_abel",
@@ -118267,7 +118335,7 @@
 ],
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": 0.0,
-"krp_plus": 96.1
+"krp_plus": 96.0
 },
 {
 "player_key": "dalvin_rosario",
@@ -121905,6 +121973,69 @@
 "krp_plus": 89.3
 },
 {
+"player_key": "brandon_cain",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -21.7,
+"xfv_war_6yr": -0.13,
+"rank_war": 0.341,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 1.5,
+"consensus_surplus_mm": 1.8,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 1.6,
+"p90_mm": 4.6,
+"mean_mm": 1.5,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 4.6,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 1.001,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "up",
+"mag": 0.01
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.41
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.3
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 40.0,
+"xfv_minus_consensus_display": -1.7,
+"krp_plus": 97.4
+},
+{
 "player_key": "cole_gilley",
 "kind": "active",
 "position": "P",
@@ -122704,64 +122835,6 @@
 "krp_plus": 92.3
 },
 {
-"player_key": "brandon_cain",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -21.7,
-"xfv_war_6yr": -0.13,
-"rank_war": 0.341,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 1.5,
-"consensus_surplus_mm": 1.8,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 1.6,
-"p90_mm": 4.6,
-"mean_mm": 1.5,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 4.6,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": null,
-"factors": [
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.41
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.3
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 40.0,
-"xfv_minus_consensus_display": -1.7,
-"krp_plus": 97.4
-},
-{
 "player_key": "justin_henschel",
 "kind": "active",
 "position": "P",
@@ -122835,19 +122908,19 @@
 "good": 0.001,
 "star": 0.0
 },
-"surplus_mm": 1.6,
+"surplus_mm": 1.7,
 "consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
 "p75_mm": 1.6,
-"p90_mm": 5.0,
-"mean_mm": 1.6,
+"p90_mm": 5.3,
+"mean_mm": 1.7,
 "p_bust": 0.984
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 5.0,
+"band_p90_mm": 5.3,
 "p_bust": 0.984,
 "injury_factor": null,
 "statcast_factor": null,
@@ -122873,8 +122946,8 @@
 "mag": 0.21
 }
 ],
-"xfv_grade_display": 40.2,
-"xfv_minus_consensus_display": -1.5,
+"xfv_grade_display": 40.3,
+"xfv_minus_consensus_display": -1.4,
 "krp_plus": 94.4
 },
 {
@@ -125024,7 +125097,7 @@
 ],
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": -1.7,
-"krp_plus": 94.7
+"krp_plus": 94.6
 },
 {
 "player_key": "ryan_hawks",
@@ -126501,19 +126574,19 @@
 "good": 0.001,
 "star": 0.0
 },
-"surplus_mm": 1.4,
+"surplus_mm": 1.6,
 "consensus_surplus_mm": 1.8,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 1.5,
-"p90_mm": 4.5,
-"mean_mm": 1.4,
+"p75_mm": 1.6,
+"p90_mm": 5.0,
+"mean_mm": 1.6,
 "p_bust": 0.984
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 4.5,
+"band_p90_mm": 5.0,
 "p_bust": 0.984,
 "injury_factor": null,
 "statcast_factor": 0.996,
@@ -126544,8 +126617,8 @@
 "mag": 0.14
 }
 ],
-"xfv_grade_display": 40.0,
-"xfv_minus_consensus_display": -1.7,
+"xfv_grade_display": 40.2,
+"xfv_minus_consensus_display": -1.5,
 "krp_plus": 97.9
 },
 {
@@ -129515,6 +129588,69 @@
 "krp_plus": 93.8
 },
 {
+"player_key": "irving_cota",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -21.7,
+"xfv_war_6yr": -0.43,
+"rank_war": 0.179,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 1.3,
+"consensus_surplus_mm": 1.9,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 3.2,
+"mean_mm": 1.3,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 3.2,
+"p_bust": 0.984,
+"injury_factor": 0.7,
+"statcast_factor": null,
+"factors": [
+{
+"label": "Injury penalty",
+"dir": "down",
+"mag": 1.8
+},
+{
+"label": "K-backed run prevention",
+"dir": "down",
+"mag": 0.7
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.47
+},
+{
+"label": "Walk rate vs level",
+"dir": "up",
+"mag": 0.2
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 38.3,
+"xfv_minus_consensus_display": -3.4,
+"krp_plus": 72.6
+},
+{
 "player_key": "joey_gartrell",
 "kind": "active",
 "position": "P",
@@ -129639,6 +129775,69 @@
 "xfv_grade_display": 40.0,
 "xfv_minus_consensus_display": -1.7,
 "krp_plus": 100.8
+},
+{
+"player_key": "raul_garayzar",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -21.7,
+"xfv_war_6yr": -0.58,
+"rank_war": 0.096,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 1.0,
+"consensus_surplus_mm": 1.7,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 2.4,
+"mean_mm": 1.0,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 2.4,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.993,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.04
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.69
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.58
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.21
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 37.7,
+"xfv_minus_consensus_display": -4.0,
+"krp_plus": 102.6
 },
 {
 "player_key": "randy_ramnarace",
@@ -129891,74 +130090,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
 "krp_plus": 104.5
-},
-{
-"player_key": "irving_cota",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -21.7,
-"xfv_war_6yr": -0.43,
-"rank_war": 0.179,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 1.3,
-"consensus_surplus_mm": 1.9,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 3.2,
-"mean_mm": 1.3,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 3.2,
-"p_bust": 0.984,
-"injury_factor": 0.7,
-"statcast_factor": 0.999,
-"factors": [
-{
-"label": "Injury penalty",
-"dir": "down",
-"mag": 1.8
-},
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.01
-},
-{
-"label": "K-backed run prevention",
-"dir": "down",
-"mag": 0.7
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.47
-},
-{
-"label": "Walk rate vs level",
-"dir": "up",
-"mag": 0.2
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 38.3,
-"xfv_minus_consensus_display": -3.4,
-"krp_plus": 72.6
 },
 {
 "player_key": "braydon_tucker",
@@ -130276,69 +130407,6 @@
 "krp_plus": 96.9
 },
 {
-"player_key": "raul_garayzar",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -21.7,
-"xfv_war_6yr": -0.59,
-"rank_war": 0.096,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 1.0,
-"consensus_surplus_mm": 1.7,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 2.4,
-"mean_mm": 1.0,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 2.4,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.992,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.05
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.69
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.58
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.21
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 37.7,
-"xfv_minus_consensus_display": -4.0,
-"krp_plus": 102.6
-},
-{
 "player_key": "anthony_patterson_iii",
 "kind": "active",
 "position": "P",
@@ -130654,6 +130722,69 @@
 "krp_plus": 95.9
 },
 {
+"player_key": "alexander_almonte",
+"kind": "active",
+"position": "MIRP",
+"consensus_fv": 38.3,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -18.3,
+"xfv_war_6yr": -0.36,
+"rank_war": -0.124,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 0.9,
+"consensus_surplus_mm": 1.4,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 2.6,
+"mean_mm": 0.9,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 2.6,
+"p_bust": 0.984,
+"injury_factor": null,
+"statcast_factor": 0.987,
+"factors": [
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.08
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.53
+},
+{
+"label": "K-backed run prevention",
+"dir": "up",
+"mag": 0.21
+},
+{
+"label": "Walk rate vs level",
+"dir": "down",
+"mag": 0.16
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.07
+}
+],
+"xfv_grade_display": 37.7,
+"xfv_minus_consensus_display": -0.6,
+"krp_plus": 105.1
+},
+{
 "player_key": "reid_johnston",
 "kind": "active",
 "position": "P",
@@ -130856,69 +130987,6 @@
 "xfv_grade_display": 38.3,
 "xfv_minus_consensus_display": -3.4,
 "krp_plus": 97.8
-},
-{
-"player_key": "alexander_almonte",
-"kind": "active",
-"position": "MIRP",
-"consensus_fv": 38.3,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -18.3,
-"xfv_war_6yr": -0.36,
-"rank_war": -0.124,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 0.9,
-"consensus_surplus_mm": 1.4,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 2.6,
-"mean_mm": 0.9,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 2.6,
-"p_bust": 0.984,
-"injury_factor": null,
-"statcast_factor": 0.986,
-"factors": [
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.08
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.53
-},
-{
-"label": "K-backed run prevention",
-"dir": "up",
-"mag": 0.21
-},
-{
-"label": "Walk rate vs level",
-"dir": "down",
-"mag": 0.16
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.07
-}
-],
-"xfv_grade_display": 37.7,
-"xfv_minus_consensus_display": -0.6,
-"krp_plus": 105.1
 },
 {
 "player_key": "tyler_stuart",
@@ -131687,6 +131755,74 @@
 "krp_plus": 94.7
 },
 {
+"player_key": "john_michael_bertrand",
+"kind": "active",
+"position": "P",
+"consensus_fv": 41.7,
+"xfv_grade": 20.0,
+"xfv_minus_consensus": -21.7,
+"xfv_war_6yr": -0.71,
+"rank_war": 0.027,
+"p_bucket": {
+"bust": 0.984,
+"bench": 0.011,
+"regular": 0.004,
+"good": 0.001,
+"star": 0.0
+},
+"surplus_mm": 1.1,
+"consensus_surplus_mm": 1.9,
+"dist": {
+"p10_mm": 0.0,
+"p25_mm": 0.0,
+"p50_mm": 0.0,
+"p75_mm": 0.0,
+"p90_mm": 2.6,
+"mean_mm": 1.1,
+"p_bust": 0.984
+},
+"band_p10_mm": 0.0,
+"band_p90_mm": 2.6,
+"p_bust": 0.984,
+"injury_factor": 0.738,
+"statcast_factor": 0.995,
+"factors": [
+{
+"label": "Injury penalty",
+"dir": "down",
+"mag": 1.57
+},
+{
+"label": "Statcast+ quality",
+"dir": "down",
+"mag": 0.03
+},
+{
+"label": "Contact (K%) vs level",
+"dir": "down",
+"mag": 0.56
+},
+{
+"label": "Peak K rate",
+"dir": "down",
+"mag": 0.48
+},
+{
+"label": "Age for level",
+"dir": "down",
+"mag": 0.25
+},
+{
+"label": "Fastball",
+"dir": "down",
+"mag": 0.14
+}
+],
+"xfv_grade_display": 37.7,
+"xfv_minus_consensus_display": -4.0,
+"krp_plus": 101.4
+},
+{
 "player_key": "cole_macrae",
 "kind": "active",
 "position": "P",
@@ -132320,74 +132456,6 @@
 "xfv_grade_display": 35.0,
 "xfv_minus_consensus_display": -3.3,
 "krp_plus": 96.4
-},
-{
-"player_key": "john_michael_bertrand",
-"kind": "active",
-"position": "P",
-"consensus_fv": 41.7,
-"xfv_grade": 20.0,
-"xfv_minus_consensus": -21.7,
-"xfv_war_6yr": -0.71,
-"rank_war": 0.027,
-"p_bucket": {
-"bust": 0.984,
-"bench": 0.011,
-"regular": 0.004,
-"good": 0.001,
-"star": 0.0
-},
-"surplus_mm": 1.1,
-"consensus_surplus_mm": 1.9,
-"dist": {
-"p10_mm": 0.0,
-"p25_mm": 0.0,
-"p50_mm": 0.0,
-"p75_mm": 0.0,
-"p90_mm": 2.6,
-"mean_mm": 1.1,
-"p_bust": 0.984
-},
-"band_p10_mm": 0.0,
-"band_p90_mm": 2.6,
-"p_bust": 0.984,
-"injury_factor": 0.738,
-"statcast_factor": 0.994,
-"factors": [
-{
-"label": "Injury penalty",
-"dir": "down",
-"mag": 1.57
-},
-{
-"label": "Statcast+ quality",
-"dir": "down",
-"mag": 0.04
-},
-{
-"label": "Contact (K%) vs level",
-"dir": "down",
-"mag": 0.56
-},
-{
-"label": "Peak K rate",
-"dir": "down",
-"mag": 0.48
-},
-{
-"label": "Age for level",
-"dir": "down",
-"mag": 0.25
-},
-{
-"label": "Fastball",
-"dir": "down",
-"mag": 0.14
-}
-],
-"xfv_grade_display": 37.7,
-"xfv_minus_consensus_display": -4.0,
-"krp_plus": 101.4
 },
 {
 "player_key": "frank_camarillo",
@@ -134228,19 +134296,19 @@
 "good": 0.001,
 "star": 0.0
 },
-"surplus_mm": 1.2,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 1.4,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
-"p75_mm": 1.2,
-"p90_mm": 3.6,
-"mean_mm": 1.2,
+"p75_mm": 1.5,
+"p90_mm": 4.4,
+"mean_mm": 1.4,
 "p_bust": 0.984
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 3.6,
+"band_p90_mm": 4.4,
 "p_bust": 0.984,
 "injury_factor": null,
 "statcast_factor": null,
@@ -134286,19 +134354,19 @@
 "good": 0.001,
 "star": 0.0
 },
-"surplus_mm": 0.9,
-"consensus_surplus_mm": 1.6,
+"surplus_mm": 1.0,
+"consensus_surplus_mm": 1.7,
 "dist": {
 "p10_mm": 0.0,
 "p25_mm": 0.0,
 "p50_mm": 0.0,
 "p75_mm": 0.0,
-"p90_mm": 2.1,
-"mean_mm": 0.9,
+"p90_mm": 2.6,
+"mean_mm": 1.1,
 "p_bust": 0.984
 },
 "band_p10_mm": 0.0,
-"band_p90_mm": 2.1,
+"band_p90_mm": 2.6,
 "p_bust": 0.984,
 "injury_factor": null,
 "statcast_factor": null,
