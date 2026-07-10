@@ -1,0 +1,162 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# MLB Free Agency module configuration. Kept separate from
+# value_framework_config.yaml so that file's strict validator is untouched;
+# the shared economics (discount rate 0.09, $/WAR tiers, 5% escalation) are
+# READ from value_framework at runtime — never duplicated here.
+
+schema_version: 1
+
+class_construction:
+  # v1 option-exercise heuristic (DOCUMENTED SIMPLIFICATION, replaced by a
+  # learned model in v2): P(player walks / club declines) is a logistic on
+  # the gap between the option price and the player's crude rational AAV
+  # (prev WAR x flat $/WAR when Spotrac's market value is absent).
+  exercise_logistic_scale_usd: 6000000     # $6M gap ~= one logit unit
+  # Mutual options: both sides almost never exercise — encode the prior
+  # explicitly rather than pretending the logistic knows it.
+  mutual_option_decline_prob: 0.85
+  conditional_option_unknown_prob: 0.50    # conditions unobservable at class level
+
+ledger:
+  # Retrospective $/WAR per past season: until the Stage-3 market model
+  # estimates per-winter $/WAR from the signing corpus itself, the ledger
+  # backcasts the current framework rate by the configured escalation
+  # (value_framework dollars_per_war_inflation, 5%/yr). DOCUMENTED v1;
+  # Stage 3.1 replaces this with the estimated series.
+  backcast_mode: framework_flat_deescalated
+
+market_model:
+  # Next-winter $/WAR forecast method (WS-2b). MEASURED 2026-06-11
+  # (data/dpw_forecast_eval.json, forward-chained one-winter-ahead on the
+  # NPV-basis series): flat5 MAPE 0.102 beat trend (0.122) and trend_cbt
+  # (0.132) — the fitted forecasts LOST to the flat carry at this n, so
+  # the incumbent assumption retains. Candidates stay implemented in
+  # fa_market.winter_dpw; re-run the eval as winters accumulate.
+  dpw_forecast: { method: flat5 }
+  # Regime breaks for $/WAR estimation — dated records, not code.
+  regimes:
+    - { name: pre_covid,  from_class_year: 2015, to_class_year: 2020 }
+    - { name: covid,      from_class_year: 2021, to_class_year: 2021 }
+    - { name: lockout,    from_class_year: 2022, to_class_year: 2022 }
+    - { name: current,    from_class_year: 2023, to_class_year: 2027 }
+
+backfill:
+  first_class_year: 2015     # owner decision: 2014-15 winter onward
+
+projection:
+  corpus_first_season: 2000
+  # Component stabilization points (exposure added as league-mean prior),
+  # standard public reliability anchors; PA for hitters, BF for pitchers.
+  regression_k:
+    hit: { k_pct: 60, bb_pct: 120, iso: 160, babip: 820, hr_pa: 170 }
+    pit: { k_pct: 70, bb_pct: 170, hr_bf: 400 }
+  marcel_weights: [5, 3, 2]          # seasons N-1, N-2, N-3
+  # v2 — Statcast expected-stats blend (owner ask): hitter ISO inputs
+  # blend toward Savant xISO (est_slg − est_ba) where the season has
+  # expected stats (2015+, >= min_pa). Same information vintage as the
+  # raw season line — no lookahead. Gate-measured before shipping.
+  statcast_blend: { enabled: true, alpha: 0.4, first_season: 2015, min_pa: 50 }
+  # Phase-1 ML challenger (proj_lgbm): when enabled AND a bundle exists at
+  # model/proj_lgbm/, contract_war_path serves horizons 1-5 (point+bands)
+  # from the quantile heads (no zero floor — the Phase-0 coverage fix);
+  # h6+ extrapolates along the champion's relative decay. Gates/eval
+  # baselines pin the champion via use_ml=False. Flipped on ONLY by a
+  # passing ship decision (dev + gate targets + touched-once holdout).
+  # SHIPPED 2026-06-11 (model-audit Phase 1 verdict): dev + gate-targets +
+  # touched-once holdout all beat the champion on MAE/coverage/pinball at
+  # every horizon (gate-targets h1 0.557 vs 0.627; holdout pooled coverage
+  # 0.81-0.82 vs 0.67-0.77). DISCLOSED caveat: long-horizon star bias runs
+  # ~0.2 WAR deeper than the champion (zero-inflated labels pull the
+  # medians; star MAE equal) — follow-up recorded in the registry.
+  # SCOPE: projection surfaces only (/projections/, proj_export). The FA
+  # market stack PINS use_ml=False — ML paths as market-model inputs
+  # FAILED Gate 2 (measured: guar 11.08 vs 10.56; FA signees are survivors,
+  # attrition-inclusive medians misprice them). Each consumer runs the
+  # model that won ITS gate.
+  ml: { enabled: true }
+  playing_time:                       # classic Marcel PT + aging delta
+    hit: { w1: 0.5, w2: 0.1, base_pa: 200 }
+    pit: { w1: 0.5, w2: 0.1, base_ip_sp: 60, base_ip_rp: 25 }
+  min_exposure_pair: { pa: 100, bf: 70 }   # aging-curve season pairs
+  survivorship_lambda: 1.0           # correction strength (documented v1)
+  age_range: [21, 42]                # curve support; clamped outside
+  # v2 — WAR-rate aging is fit on REGRESSED rates (shrunk toward the
+  # season league rate at these stabilization exposures). Raw observed
+  # deltas bundle real aging with regression-to-the-mean luck decay; the
+  # projection's year-1 WAR is ALREADY a regressed quantity, so chaining
+  # raw deltas double-counted the regression and crushed the multi-year
+  # tail (measured: horizon-5 tail ratio 0.06 — 17 predicted >=3 WAR vs
+  # 283 actual). Regressed-rate deltas measure talent aging only.
+  war_rate_regression: { hit_pa: 600, pit_bf: 350 }
+  # v2 — profile-specific aging cohorts (owner ask): power vs finesse
+  # PITCHERS (K% relative to league) get their own war_rate + pt curves,
+  # falling back to the base role curve where a cohort cell is thin.
+  # HITTER power/contact cohorts were built and MEASURED (proj_eval,
+  # bases 2017-2021): season-ISO cohorts hurt at every tested threshold
+  # (1.2/0.8 and 1.4/0.6 both cut the horizon-5 tail ratio from 0.131 to
+  # ~0.09 and deepened star bias) — high-ISO season selection re-injects
+  # the mean reversion the regressed-rate fit removes. The machinery
+  # stays; hitter thresholds are parked NEUTRAL until a career-anchored
+  # profile is tried (documented fork). Component curves stay per base
+  # role — fragmenting K%/BB% cohorts shreds sample.
+  profile_cohorts:
+    iso_hi: 99.0      # hitter cohorts OFF (measured worse — see note)
+    iso_lo: 0.0
+    k_hi: 1.15        # season K% >= 1.15x league -> "pwr" pitcher cohort
+    k_lo: 0.85        # season K% <= 0.85x league -> "fin" pitcher cohort
+  # Fixed assembly constants (documented): league HBP/SF rates and the
+  # 2B:3B split used to invert ISO into a slash line; wOBA linear weights
+  # (FG-era constants) + scale; evaluated park-neutral.
+  assembly:
+    hbp_rate: 0.009
+    sf_rate: 0.007
+    double_triple_ratio: 5.0
+    woba_weights: { bb: 0.69, hbp: 0.72, single: 0.89, double: 1.27, triple: 1.62, hr: 2.10 }
+    woba_scale: 1.15
+  bands: { z_p10_p90: 1.2816 }       # parametric v1; calibration measured in the gate
+  eval:
+    target_seasons: [2015, 2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024, 2025]
+    rate_eval_min_pa: 150
+    rate_eval_min_bf: 150
+
+fit:
+  blocker_fv_min: 50            # existing FV grid line — no parallel thresholds
+  blocker_eta_horizon: 1        # ETA <= class_year + 1 blocks the position
+  # MLB incumbents at/above the displacement slot projecting >= this WAR
+  # are LISTED as blockers (their WAR already discounts need via the gap).
+  incumbent_block_war: 2.5
+  # Prospect blockers aren't on the contracted roster (invisible to the
+  # gap), so they carry an explicit multiplier. 0.5, softened from the v1
+  # 0.35 — prospects bust; a blocked position is discounted, not closed.
+  prospect_block_multiplier: 0.5
+  replacement_wins: 47.7        # 0-WAR team baseline
+  # Win-curve (documented v1, fixed not fitted): playoff odds as a logistic
+  # in talent wins; marginal leverage = P x (1 - P), peaking at the center.
+  # roster_fill_wins: contracted-core baselines exclude arb/pre-arb
+  # players, understating full-roster strength by a roughly constant
+  # amount — the documented shift recenters contenders near the curve
+  # peak. v2 fills actual arb rosters.
+  win_curve: { center: 86.5, scale: 2.8, roster_fill_wins: 12 }
+  # Composite weights (sum 1.0) — every component decomposes in the UI.
+  # v3 — GATE-3 MEASURED WEIGHTS (data/fa_gate3_eval.json, 2026-06-11):
+  # the first-ever fit backtest (does fit rank predict the actual signing
+  # team; 1,173 signings, forward-chained 2018-2026) measured the v2
+  # hand-set weights barely beating random (MRR 0.142 vs 0.133) and
+  # LOSING to behavior-alone (0.152). Will-spend behavior is the dominant
+  # predictive signal; window/afford/park carry ~zero signing signal.
+  # The logistic-fitted vector (behavior .67) scored MRR 0.165 — but a
+  # behavior-dominated composite is nearly player-INDEPENDENT and put LAD
+  # atop all 133 pitcher fit lists (the measured Giants-failure pattern,
+  # reborn). The shipped mix below scored MRR 0.167 in the same harness —
+  # gate-equivalent-or-better AND player-discriminative, because the need
+  # proxy is the only player-specific signal with positive coefficient.
+  # All candidates + the comparison are committed in the artifact.
+  weights: { need: 0.40, window: 0.05, afford: 0.05, park: 0.05, behavior: 0.45 }
+  # Behavior (will-spend) blend: biggest-deal scale vs this price, recent
+  # 3-winter FA outlay (league-max-normalized), $100M-deal participation.
+  behavior_weights: { max_guar: 0.5, recent: 0.3, rich: 0.2 }
+  # Habitual taxpayers (payor status + >= 3 nine-figure deals) keep at
+  # least this afford score — CBT space is not their binding constraint.
+  taxpayer_afford_floor: 0.4
+  # Need scaling: a 4-WAR upgrade gap saturates the need component.
+  need_war_saturation: 4.0

@@ -1,0 +1,13 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+requests>=2.31
+beautifulsoup4>=4.12
+pytest>=8.0
+pybaseball>=2.2
+scikit-learn>=1.3
+lightgbm>=4.0
+markdown>=3.5          # build_site.py: render content/articles/*.md -> static article pages
+orjson>=3.9            # storage export serializer: 3-5x faster dumps of the 60MB+ payloads
+py_mini_racer  # CollegeSavant JS smoke test (test_collegesavant_smoke.py)

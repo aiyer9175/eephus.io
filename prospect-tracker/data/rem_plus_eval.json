@@ -1,0 +1,89 @@
+{
+ "generated_at": "2026-06-30",
+ "model": "rem_plus",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "n_forward_pairs": 878,
+ "conventions": {
+  "predictor_year": "REM+ / -rawFIP / -ERA / raw WPA in year Y (qualified >= 100 BF)",
+  "target": "-RA9 in year Y+1 (actual runs)",
+  "orientation": "predictors + target oriented so higher = better; Spearman rho",
+  "excluded": "2020 (60-game COVID season)",
+  "leverage_source": "gmLI/WPA self-computed from the StatsAPI winProbability feed (FanGraphs 403-blocked); backfilled by tools/backfill_win_prob.py",
+  "note": "xFIP- omitted as a baseline (no fly-ball source without the batted-ball walk)."
+ },
+ "forward_spearman_vs_RA9_next": {
+  "rem_plus": 0.2363,
+  "raw_fip": 0.211,
+  "era": 0.0901,
+  "raw_wpa": 0.1055
+ },
+ "gap_ci_vs_RA9_next": {
+  "vs_raw_fip": {
+   "mean": 0.0252,
+   "lo95": 0.0013,
+   "hi95": 0.0501
+  },
+  "vs_era": {
+   "mean": 0.1451,
+   "lo95": 0.0881,
+   "hi95": 0.2018
+  },
+  "vs_raw_wpa": {
+   "mean": 0.1299,
+   "lo95": 0.0681,
+   "hi95": 0.1915
+  }
+ },
+ "leverage_variant_bakeoff": {
+  "n_with_leverage": 878,
+  "by_damping": {
+   "0.0": 0.2363,
+   "0.1": 0.2354,
+   "0.25": 0.2346,
+   "0.5": 0.2329,
+   "0.75": 0.2305,
+   "1.0": 0.2272
+  },
+  "rem_plus_pure_on_this_subset": 0.2363,
+  "best": {
+   "d": 0.0,
+   "rho": 0.2363
+  },
+  "verdict": "leverage-weighting does NOT beat pure REM+ on forward RA9 (best gain within noise); ships as a separate Impact column"
+ },
+ "stabilization_split_half": {
+  "n_pairs": 1900,
+  "by_tbf_bin": {
+   "50-100": {
+    "n": 458,
+    "split_half_rho": 0.179
+   },
+   "100-150": {
+    "n": 606,
+    "split_half_rho": 0.342
+   },
+   "150-250": {
+    "n": 41,
+    "split_half_rho": 0.424
+   }
+  }
+ },
+ "market_check_aav": {
+  "n_signings_matched": 271,
+  "rho_rem_plus_vs_aav": 0.5084,
+  "rho_leverage_weighted_vs_aav": 0.5157,
+  "reading": "leverage-weighted REM+ aligns better with what teams pay"
+ },
+ "verdict": {
+  "status": "validated",
+  "summary": "Forward-chained OOS over 7 seasons (878 Y->Y+1 pairs): REM+ predicts next-year RA9 at rho=0.2363 vs raw FIP 0.211, ERA 0.0901, raw WPA 0.1055. CI on the rho gap: vs ERA {'mean': 0.1451, 'lo95': 0.0881, 'hi95': 0.2018}, vs raw WPA {'mean': 0.1299, 'lo95': 0.0681, 'hi95': 0.1915}, vs raw FIP {'mean': 0.0252, 'lo95': 0.0013, 'hi95': 0.0501}. LEVERAGE BAKE-OFF: leverage-weighting does NOT beat pure REM+ on forward RA9 (best gain within noise); ships as a separate Impact column (best d=0.0, rho=0.2363 vs pure 0.2363). MARKET CHECK: leverage-weighted REM+ aligns better with what teams pay. Shipped VALIDATED: REM+ beats ERA + raw WPA and is not worse than its raw-FIP parent; the leverage-weighted variant does not earn a forward edge, confirming the two-number design (leverage is a deployment/price layer, kept in a separate column)."
+ }
+}

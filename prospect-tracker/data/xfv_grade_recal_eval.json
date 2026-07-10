@@ -1,0 +1,1803 @@
+{
+ "generated_at": "2026-07-02",
+ "experiment": "E-ISO2: rank-preserving monotone recalibration of the eFV bucket distribution in GRADE space (successor to the rejected X-ISO)",
+ "spec": "gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md section E-ISO2; X-ISO loss ledger in data/xfv_isotonic_eval.json",
+ "method": {
+  "base_distribution": "shipped seam, forward-chained OOF (reused verbatim from tools/efv_isotonic_lab.py oof_rows): lean ridge + in-fold linear scale calibration -> xfv_war -> realized_implied_fv -> p_bucket_given_fv (uncalibrated 'before')",
+  "recalibration": "strictly-increasing monotone grade map f: binned effective-grade inversion (per grade bin, argmax over a dense grade grid of the KM-weighted realized-bucket log-likelihood under the anchor table) + weighted PAVA + strict identity blend f(g)=(1-eps)*iso(g)+eps*g, eps=0.01; p_after = p_bucket_given_fv(f(grade)) ('after'). The anchor table itself is untouched; only the grade it is evaluated at moves.",
+  "why_rank_preserving": "both sides' fitted tables are proportional-odds ordered logits with strictly increasing expected WAR in grade; f strictly increasing => within-side expected-WAR order equals the shipped grade order. Pooled Spearman is still measured (cross-side interleaving is not guaranteed).",
+  "oof_protocol": "map for eval cohort Y fit ONLY on OOF rows with decision_year < Y; those rows were themselves predicted by models trained strictly before them (chain years 2016-2023); no row ever calibrates itself; no same-player leakage (each player appears in exactly one cohort)",
+  "realized_bucket": "6yr-average annual WAR (target_censored/6) binned by the engine bands: <0.5 bust / 0.5-1.5 bench / 1.5-2.5 regular / 2.5-4.0 good / 4.0+ star",
+  "pool": "full labeled matrix per side (debuted + busts, bust_recent excluded), matching efv_model.oos_grades",
+  "rank_metric": "expected WAR under the distribution (bucket probs x calibrated bucket midpoints); shipped baseline = OOF eFV grade (as X-ISO)",
+  "anchor_table_method": {
+   "hitter": "proportional_odds",
+   "pitcher": "proportional_odds"
+  },
+  "eval_years": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "chain_years": [
+   2016,
+   2023
+  ],
+  "min_calibrator_rows": 150,
+  "grid": [
+   20.0,
+   70.0,
+   0.1
+  ],
+  "bin_target": 12,
+  "bin_min": 50,
+  "strict_eps": 0.01
+ },
+ "seed": 7,
+ "cohort_splits": {
+  "hit": {
+   "chain_oof_rows_by_year": {
+    "2016": 95,
+    "2017": 106,
+    "2018": 169,
+    "2019": 240,
+    "2020": 206,
+    "2021": 143,
+    "2022": 277,
+    "2023": 271
+   },
+   "eval_rows": 897,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 610,
+    "2021": 816,
+    "2022": 959,
+    "2023": 1236
+   }
+  },
+  "pit": {
+   "chain_oof_rows_by_year": {
+    "2016": 116,
+    "2017": 77,
+    "2018": 206,
+    "2019": 198,
+    "2020": 211,
+    "2021": 159,
+    "2022": 244,
+    "2023": 279
+   },
+   "eval_rows": 893,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 597,
+    "2021": 808,
+    "2022": 967,
+    "2023": 1211
+   }
+  }
+ },
+ "grade_maps": {
+  "hit": {
+   "2020": {
+    "n_cal": 610,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     20.0,
+     23.162,
+     31.764,
+     37.013,
+     40.722,
+     42.666,
+     45.715,
+     50.814,
+     63.41
+    ],
+    "bin_n": [
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     60
+    ],
+    "eff_raw": [
+     22.9,
+     29.5,
+     22.8,
+     27.0,
+     26.9,
+     27.0,
+     22.8,
+     29.4,
+     22.8,
+     32.4,
+     41.1,
+     50.9
+    ],
+    "eff_iso": [
+     25.55,
+     25.55,
+     25.55,
+     25.55,
+     25.567,
+     25.567,
+     25.567,
+     26.1,
+     26.1,
+     32.4,
+     41.1,
+     50.9
+    ],
+    "sample_map": {
+     "25": 25.56,
+     "30": 25.61,
+     "35": 25.66,
+     "40": 26.14,
+     "45": 31.06,
+     "50": 39.81,
+     "55": 44.46,
+     "60": 48.36,
+     "65": 51.04
+    }
+   },
+   "2021": {
+    "n_cal": 816,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     20.0,
+     20.0,
+     27.307,
+     34.999,
+     39.92,
+     42.733,
+     46.431,
+     52.591,
+     63.903
+    ],
+    "bin_n": [
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68,
+     68
+    ],
+    "eff_raw": [
+     21.1,
+     25.2,
+     25.2,
+     21.1,
+     29.3,
+     21.1,
+     27.6,
+     25.2,
+     27.4,
+     34.9,
+     42.3,
+     50.9
+    ],
+    "eff_iso": [
+     23.833,
+     23.833,
+     23.833,
+     23.833,
+     23.833,
+     23.833,
+     26.4,
+     26.4,
+     27.4,
+     34.9,
+     42.3,
+     50.9
+    ],
+    "sample_map": {
+     "25": 23.84,
+     "30": 24.78,
+     "35": 26.49,
+     "40": 26.56,
+     "45": 32.13,
+     "50": 39.3,
+     "55": 44.24,
+     "60": 48.05,
+     "65": 51.04
+    }
+   },
+   "2022": {
+    "n_cal": 959,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     20.0,
+     20.108,
+     29.627,
+     35.886,
+     40.368,
+     43.219,
+     46.556,
+     51.783,
+     62.859
+    ],
+    "bin_n": [
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     79,
+     90
+    ],
+    "eff_raw": [
+     20.3,
+     26.8,
+     20.2,
+     26.7,
+     24.3,
+     24.4,
+     26.3,
+     28.2,
+     29.1,
+     35.8,
+     40.9,
+     50.3
+    ],
+    "eff_iso": [
+     22.398,
+     25.168,
+     22.398,
+     22.398,
+     25.168,
+     25.168,
+     26.3,
+     28.2,
+     29.1,
+     35.8,
+     40.9,
+     50.3
+    ],
+    "sample_map": {
+     "25": 25.17,
+     "30": 25.28,
+     "35": 26.23,
+     "40": 28.16,
+     "45": 32.8,
+     "50": 39.27,
+     "55": 43.74,
+     "60": 47.99,
+     "65": 50.45
+    }
+   },
+   "2023": {
+    "n_cal": 1236,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     20.0,
+     20.161,
+     30.215,
+     36.662,
+     41.106,
+     44.396,
+     47.752,
+     53.258,
+     63.339
+    ],
+    "bin_n": [
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103,
+     103
+    ],
+    "eff_raw": [
+     21.9,
+     25.3,
+     20.0,
+     25.3,
+     26.3,
+     22.9,
+     22.4,
+     29.0,
+     30.8,
+     37.2,
+     42.9,
+     50.9
+    ],
+    "eff_iso": [
+     23.126,
+     23.126,
+     23.126,
+     23.126,
+     23.886,
+     23.886,
+     23.886,
+     29.0,
+     30.8,
+     37.2,
+     42.9,
+     50.9
+    ],
+    "sample_map": {
+     "25": 23.9,
+     "30": 23.95,
+     "35": 24.0,
+     "40": 27.85,
+     "45": 32.08,
+     "50": 39.63,
+     "55": 44.39,
+     "60": 48.37,
+     "65": 51.04
+    }
+   }
+  },
+  "pit": {
+   "2020": {
+    "n_cal": 597,
+    "bin_centers": [
+     20.0,
+     20.0,
+     24.338,
+     31.156,
+     34.204,
+     36.506,
+     38.629,
+     40.645,
+     42.515,
+     44.919,
+     52.081
+    ],
+    "bin_n": [
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     50,
+     97
+    ],
+    "eff_raw": [
+     31.6,
+     20.0,
+     20.0,
+     25.6,
+     21.3,
+     20.0,
+     25.6,
+     30.2,
+     25.7,
+     30.3,
+     43.6
+    ],
+    "eff_iso": [
+     23.083,
+     23.083,
+     23.083,
+     23.083,
+     23.083,
+     23.083,
+     25.6,
+     27.95,
+     27.95,
+     30.3,
+     43.6
+    ],
+    "sample_map": {
+     "25": 23.1,
+     "30": 23.15,
+     "35": 23.2,
+     "40": 27.33,
+     "45": 30.6,
+     "50": 39.84,
+     "55": 43.71,
+     "60": 43.76,
+     "65": 43.81
+    }
+   },
+   "2021": {
+    "n_cal": 808,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     24.956,
+     31.878,
+     34.908,
+     37.153,
+     39.671,
+     41.812,
+     44.376,
+     47.418,
+     54.764
+    ],
+    "bin_n": [
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     67,
+     71
+    ],
+    "eff_raw": [
+     29.6,
+     20.0,
+     20.0,
+     20.0,
+     26.3,
+     23.9,
+     26.4,
+     20.0,
+     31.9,
+     32.0,
+     40.4,
+     44.8
+    ],
+    "eff_iso": [
+     22.4,
+     22.4,
+     22.4,
+     22.4,
+     24.15,
+     24.15,
+     24.15,
+     24.15,
+     31.9,
+     32.0,
+     40.4,
+     44.8
+    ],
+    "sample_map": {
+     "25": 22.44,
+     "30": 23.74,
+     "35": 24.26,
+     "40": 25.49,
+     "45": 33.84,
+     "50": 42.03,
+     "55": 44.9,
+     "60": 44.95,
+     "65": 45.0
+    }
+   },
+   "2022": {
+    "n_cal": 967,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     22.04,
+     30.191,
+     33.963,
+     36.516,
+     38.95,
+     41.374,
+     44.037,
+     46.924,
+     54.146
+    ],
+    "bin_n": [
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     80,
+     87
+    ],
+    "eff_raw": [
+     30.5,
+     24.3,
+     21.6,
+     20.0,
+     27.9,
+     26.7,
+     25.4,
+     22.7,
+     30.6,
+     31.8,
+     39.0,
+     44.9
+    ],
+    "eff_iso": [
+     24.098,
+     24.098,
+     24.098,
+     24.098,
+     25.675,
+     25.675,
+     25.675,
+     25.675,
+     30.6,
+     31.8,
+     39.0,
+     44.9
+    ],
+    "sample_map": {
+     "25": 24.67,
+     "30": 25.68,
+     "35": 25.77,
+     "40": 27.93,
+     "45": 34.31,
+     "50": 41.6,
+     "55": 45.0,
+     "60": 45.05,
+     "65": 45.1
+    }
+   },
+   "2023": {
+    "n_cal": 1211,
+    "bin_centers": [
+     20.0,
+     20.0,
+     20.0,
+     20.172,
+     27.246,
+     32.971,
+     35.832,
+     38.41,
+     41.07,
+     43.693,
+     46.594,
+     53.458
+    ],
+    "bin_n": [
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     100,
+     111
+    ],
+    "eff_raw": [
+     28.0,
+     24.7,
+     22.8,
+     20.0,
+     22.5,
+     25.5,
+     25.5,
+     27.7,
+     30.6,
+     31.2,
+     40.0,
+     44.5
+    ],
+    "eff_iso": [
+     23.605,
+     23.605,
+     23.605,
+     23.605,
+     23.605,
+     25.5,
+     25.5,
+     27.7,
+     30.6,
+     31.2,
+     40.0,
+     44.5
+    ],
+    "sample_map": {
+     "25": 23.62,
+     "30": 24.57,
+     "35": 25.6,
+     "40": 29.54,
+     "45": 35.26,
+     "50": 42.31,
+     "55": 44.6,
+     "60": 44.66,
+     "65": 44.7
+    }
+   }
+  }
+ },
+ "strict_monotonicity_check": {
+  "hit": {
+   "2020": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2021": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2022": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2023": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   }
+  },
+  "pit": {
+   "2020": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2021": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2022": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   },
+   "2023": {
+    "strictly_increasing": true,
+    "min_step": 0.0025
+   }
+  }
+ },
+ "rank_preservation_by_cell": {
+  "hit": {
+   "2020": {
+    "n": 206,
+    "shipped_grade_rho": 0.3652,
+    "recal_rank_rho": 0.3652,
+    "preserved": true
+   },
+   "2021": {
+    "n": 143,
+    "shipped_grade_rho": 0.1538,
+    "recal_rank_rho": 0.1538,
+    "preserved": true
+   },
+   "2022": {
+    "n": 277,
+    "shipped_grade_rho": 0.3162,
+    "recal_rank_rho": 0.3162,
+    "preserved": true
+   },
+   "2023": {
+    "n": 271,
+    "shipped_grade_rho": 0.2596,
+    "recal_rank_rho": 0.2596,
+    "preserved": true
+   }
+  },
+  "pit": {
+   "2020": {
+    "n": 211,
+    "shipped_grade_rho": 0.1712,
+    "recal_rank_rho": 0.1712,
+    "preserved": true
+   },
+   "2021": {
+    "n": 159,
+    "shipped_grade_rho": 0.1257,
+    "recal_rank_rho": 0.1257,
+    "preserved": true
+   },
+   "2022": {
+    "n": 244,
+    "shipped_grade_rho": 0.325,
+    "recal_rank_rho": 0.325,
+    "preserved": true
+   },
+   "2023": {
+    "n": 279,
+    "shipped_grade_rho": 0.2345,
+    "recal_rank_rho": 0.2345,
+    "preserved": true
+   }
+  }
+ },
+ "sensitivity_single_prior_map": {
+  "protocol": "single map per side fit on decision_year < 2020 only; applied to all eval years (deployment-faithful: one shipped map at a time)",
+  "pooled": {
+   "brier": {
+    "before": 0.24663,
+    "after": 0.19796,
+    "delta": -0.04867
+   },
+   "log_loss": {
+    "before": 0.51306,
+    "after": 0.4105,
+    "delta": -0.10256
+   },
+   "spearman": {
+    "shipped_grade": 0.2392,
+    "expected_war_before": 0.2351,
+    "expected_war_after": 0.2298
+   }
+  },
+  "per_side_spearman": {
+   "hit": {
+    "shipped_grade": 0.2664,
+    "expected_war_before": 0.2664,
+    "expected_war_after": 0.2664
+   },
+   "pit": {
+    "shipped_grade": 0.2233,
+    "expected_war_before": 0.2233,
+    "expected_war_after": 0.2233
+   }
+  },
+  "per_tier_reliability": {
+   "35": {
+    "n": 373,
+    "gap_before": 0.00265,
+    "gap_after": 0.00412,
+    "worse": true
+   },
+   "40": {
+    "n": 779,
+    "gap_before": 0.02523,
+    "gap_after": 0.00757,
+    "worse": false
+   },
+   "45": {
+    "n": 389,
+    "gap_before": 0.0946,
+    "gap_after": 0.01885,
+    "worse": false
+   },
+   "50": {
+    "n": 107,
+    "gap_before": 0.1134,
+    "gap_after": 0.07901,
+    "worse": false
+   },
+   "55": {
+    "n": 112,
+    "gap_before": 0.16161,
+    "gap_after": 0.047,
+    "worse": false
+   },
+   "60": {
+    "n": 17,
+    "gap_before": 0.2239,
+    "gap_after": 0.06045,
+    "worse": false
+   }
+  },
+  "gate_equivalent_verdicts": {
+   "condition_1_brier_logloss": true,
+   "condition_2_spearman": false,
+   "condition_3_tier_reliability": false
+  },
+  "spearman_delta_vs_shipped": -0.0094
+ },
+ "results": {
+  "pooled": {
+   "n": 1790,
+   "brier": {
+    "before": 0.24663,
+    "after": 0.19555,
+    "delta": -0.05108
+   },
+   "log_loss": {
+    "before": 0.51306,
+    "after": 0.40497,
+    "delta": -0.10809
+   },
+   "per_bucket": {
+    "bust": {
+     "brier_before": 0.11629,
+     "brier_after": 0.08341,
+     "logloss_before": 0.3675,
+     "logloss_after": 0.2863,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "bench": {
+     "brier_before": 0.07517,
+     "brier_after": 0.07168,
+     "logloss_before": 0.26756,
+     "logloss_after": 0.2555,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "regular": {
+     "brier_before": 0.03117,
+     "brier_after": 0.02403,
+     "logloss_before": 0.1311,
+     "logloss_after": 0.10008,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "good": {
+     "brier_before": 0.02071,
+     "brier_after": 0.01374,
+     "logloss_before": 0.08551,
+     "logloss_after": 0.05696,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "star": {
+     "brier_before": 0.00329,
+     "brier_after": 0.00269,
+     "logloss_before": 0.01672,
+     "logloss_after": 0.01242,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    }
+   },
+   "spearman": {
+    "shipped_grade": 0.2392,
+    "expected_war_before": 0.2351,
+    "expected_war_after": 0.2277
+   }
+  },
+  "per_side": {
+   "hit": {
+    "n": 897,
+    "brier": {
+     "before": 0.28876,
+     "after": 0.20712,
+     "delta": -0.08163
+    },
+    "log_loss": {
+     "before": 0.60241,
+     "after": 0.42939,
+     "delta": -0.17302
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.13323,
+      "brier_after": 0.08209,
+      "logloss_before": 0.40592,
+      "logloss_after": 0.27628,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.08013,
+      "brier_after": 0.07305,
+      "logloss_before": 0.27865,
+      "logloss_after": 0.25102,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "regular": {
+      "brier_before": 0.03645,
+      "brier_after": 0.02561,
+      "logloss_before": 0.1504,
+      "logloss_after": 0.10537,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.0324,
+      "brier_after": 0.02099,
+      "logloss_before": 0.12115,
+      "logloss_after": 0.07947,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "star": {
+      "brier_before": 0.00655,
+      "brier_after": 0.00537,
+      "logloss_before": 0.03194,
+      "logloss_after": 0.02447,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2664,
+     "expected_war_before": 0.2664,
+     "expected_war_after": 0.2554
+    }
+   },
+   "pit": {
+    "n": 893,
+    "brier": {
+     "before": 0.20431,
+     "after": 0.18393,
+     "delta": -0.02038
+    },
+    "log_loss": {
+     "before": 0.42332,
+     "after": 0.38045,
+     "delta": -0.04287
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.09928,
+      "brier_after": 0.08473,
+      "logloss_before": 0.32891,
+      "logloss_after": 0.29637,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.07019,
+      "brier_after": 0.0703,
+      "logloss_before": 0.25642,
+      "logloss_after": 0.25999,
+      "brier_improved": false,
+      "logloss_improved": false,
+      "materially_worse": true
+     },
+     "regular": {
+      "brier_before": 0.02587,
+      "brier_after": 0.02244,
+      "logloss_before": 0.11171,
+      "logloss_after": 0.09478,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.00897,
+      "brier_after": 0.00646,
+      "logloss_before": 0.04971,
+      "logloss_after": 0.03436,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "star": {
+      "brier_before": 1e-05,
+      "brier_after": 0.0,
+      "logloss_before": 0.00143,
+      "logloss_after": 0.00031,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2233,
+     "expected_war_before": 0.2233,
+     "expected_war_after": 0.2092
+    }
+   }
+  },
+  "per_tier_reliability": {
+   "35": {
+    "n": 373,
+    "realized_freq": {
+     "bust": 0.9812,
+     "bench": 0.0161,
+     "regular": 0.0027,
+     "good": 0.0,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.9754,
+     "bench": 0.0153,
+     "regular": 0.0067,
+     "good": 0.0025,
+     "star": 0.0002
+    },
+    "mean_p_after": {
+     "bust": 0.9724,
+     "bench": 0.0181,
+     "regular": 0.0069,
+     "good": 0.0024,
+     "star": 0.0002
+    },
+    "gap_before": 0.00265,
+    "gap_after": 0.00352,
+    "improved": false,
+    "worse": true
+   },
+   "40": {
+    "n": 779,
+    "realized_freq": {
+     "bust": 0.9448,
+     "bench": 0.0436,
+     "regular": 0.009,
+     "good": 0.0026,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.8817,
+     "bench": 0.0639,
+     "regular": 0.037,
+     "good": 0.016,
+     "star": 0.0015
+    },
+    "mean_p_after": {
+     "bust": 0.9573,
+     "bench": 0.0271,
+     "regular": 0.0113,
+     "good": 0.004,
+     "star": 0.0003
+    },
+    "gap_before": 0.02523,
+    "gap_after": 0.00662,
+    "improved": true,
+    "worse": false
+   },
+   "45": {
+    "n": 389,
+    "realized_freq": {
+     "bust": 0.874,
+     "bench": 0.1003,
+     "regular": 0.018,
+     "good": 0.0051,
+     "star": 0.0026
+    },
+    "mean_p_before": {
+     "bust": 0.6375,
+     "bench": 0.1692,
+     "regular": 0.1226,
+     "good": 0.0634,
+     "star": 0.0072
+    },
+    "mean_p_after": {
+     "bust": 0.8945,
+     "bench": 0.0627,
+     "regular": 0.0302,
+     "good": 0.0115,
+     "star": 0.0011
+    },
+    "gap_before": 0.0946,
+    "gap_after": 0.01561,
+    "improved": true,
+    "worse": false
+   },
+   "50": {
+    "n": 107,
+    "realized_freq": {
+     "bust": 0.5234,
+     "bench": 0.3084,
+     "regular": 0.1215,
+     "good": 0.0467,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.3203,
+     "bench": 0.228,
+     "regular": 0.2451,
+     "good": 0.1805,
+     "star": 0.0261
+    },
+    "mean_p_after": {
+     "bust": 0.6928,
+     "bench": 0.1642,
+     "regular": 0.0974,
+     "good": 0.0413,
+     "star": 0.0042
+    },
+    "gap_before": 0.1134,
+    "gap_after": 0.06947,
+    "improved": true,
+    "worse": false
+   },
+   "55": {
+    "n": 112,
+    "realized_freq": {
+     "bust": 0.4375,
+     "bench": 0.3125,
+     "regular": 0.1339,
+     "good": 0.1071,
+     "star": 0.0089
+    },
+    "mean_p_before": {
+     "bust": 0.1691,
+     "bench": 0.1769,
+     "regular": 0.2727,
+     "good": 0.3151,
+     "star": 0.0662
+    },
+    "mean_p_after": {
+     "bust": 0.5088,
+     "bench": 0.2256,
+     "regular": 0.1706,
+     "good": 0.0852,
+     "star": 0.0099
+    },
+    "gap_before": 0.16161,
+    "gap_after": 0.04355,
+    "improved": true,
+    "worse": false
+   },
+   "60": {
+    "n": 17,
+    "realized_freq": {
+     "bust": 0.4118,
+     "bench": 0.2941,
+     "regular": 0.1176,
+     "good": 0.1765,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.0595,
+     "bench": 0.0867,
+     "regular": 0.2092,
+     "good": 0.463,
+     "star": 0.1816
+    },
+    "mean_p_after": {
+     "bust": 0.3394,
+     "bench": 0.2364,
+     "regular": 0.2471,
+     "good": 0.1553,
+     "star": 0.0219
+    },
+    "gap_before": 0.2239,
+    "gap_after": 0.06051,
+    "improved": true,
+    "worse": false
+   }
+  },
+  "reliability_curves_pooled": {
+   "before": {
+    "bust": {
+     "ece": 0.11954,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 68,
+       "mean_p": 0.0589,
+       "freq": 0.3088
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 74,
+       "mean_p": 0.1447,
+       "freq": 0.4595
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 57,
+       "mean_p": 0.2525,
+       "freq": 0.6316
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 91,
+       "mean_p": 0.3527,
+       "freq": 0.6374
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 127,
+       "mean_p": 0.4574,
+       "freq": 0.7874
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 83,
+       "mean_p": 0.5517,
+       "freq": 0.8795
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 96,
+       "mean_p": 0.65,
+       "freq": 0.8958
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 108,
+       "mean_p": 0.7546,
+       "freq": 0.9352
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 152,
+       "mean_p": 0.8534,
+       "freq": 0.9079
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 934,
+       "mean_p": 0.9793,
+       "freq": 0.9732
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02403,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1080,
+       "mean_p": 0.0221,
+       "freq": 0.0361
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 300,
+       "mean_p": 0.1501,
+       "freq": 0.1333
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 410,
+       "mean_p": 0.241,
+       "freq": 0.1854
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.05319,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1225,
+       "mean_p": 0.0174,
+       "freq": 0.0073
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 263,
+       "mean_p": 0.1519,
+       "freq": 0.0228
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 236,
+       "mean_p": 0.2521,
+       "freq": 0.0975
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 66,
+       "mean_p": 0.3092,
+       "freq": 0.1212
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.04377,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1468,
+       "mean_p": 0.0167,
+       "freq": 0.002
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 156,
+       "mean_p": 0.1392,
+       "freq": 0.0256
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 53,
+       "mean_p": 0.2518,
+       "freq": 0.0566
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 50,
+       "mean_p": 0.3506,
+       "freq": 0.12
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 45,
+       "mean_p": 0.4468,
+       "freq": 0.1556
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 18,
+       "mean_p": 0.5061,
+       "freq": 0.2778
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00838,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1734,
+       "mean_p": 0.0058,
+       "freq": 0.0006
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 34,
+       "mean_p": 0.137,
+       "freq": 0.0294
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 14,
+       "mean_p": 0.24,
+       "freq": 0.0714
+      }
+     ]
+    }
+   },
+   "after": {
+    "bust": {
+     "ece": 0.02315,
+     "curve": [
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 26,
+       "mean_p": 0.274,
+       "freq": 0.2308
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 24,
+       "mean_p": 0.3554,
+       "freq": 0.2917
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 34,
+       "mean_p": 0.4542,
+       "freq": 0.2941
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 68,
+       "mean_p": 0.5472,
+       "freq": 0.5294
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 73,
+       "mean_p": 0.6543,
+       "freq": 0.5753
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 72,
+       "mean_p": 0.7546,
+       "freq": 0.6944
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 133,
+       "mean_p": 0.8546,
+       "freq": 0.812
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 1360,
+       "mean_p": 0.9657,
+       "freq": 0.9537
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02953,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1448,
+       "mean_p": 0.0257,
+       "freq": 0.0449
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 170,
+       "mean_p": 0.1476,
+       "freq": 0.2118
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 172,
+       "mean_p": 0.2318,
+       "freq": 0.314
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.00793,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1590,
+       "mean_p": 0.0156,
+       "freq": 0.0132
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 137,
+       "mean_p": 0.1432,
+       "freq": 0.1241
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 63,
+       "mean_p": 0.2505,
+       "freq": 0.127
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.00225,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1727,
+       "mean_p": 0.0102,
+       "freq": 0.0093
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 63,
+       "mean_p": 0.1526,
+       "freq": 0.1905
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00113,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1790,
+       "mean_p": 0.0017,
+       "freq": 0.0028
+      }
+     ]
+    }
+   }
+  },
+  "gate": {
+   "condition_1_brier_logloss": {
+    "pass": true,
+    "pooled_improves": true,
+    "all_buckets_improve": true,
+    "no_bucket_materially_worse": true,
+    "material_tolerance_rel": 0.01
+   },
+   "condition_2_spearman": {
+    "pass": false,
+    "shipped_grade_rho": 0.2392,
+    "calibrated_rank_rho": 0.2277,
+    "delta": -0.0115,
+    "tolerance": -0.002,
+    "identity_transform_rho": 0.2351,
+    "identity_transform_delta_vs_shipped": -0.0041
+   },
+   "condition_3_tier_reliability": {
+    "pass": false,
+    "definition": "no FV tier worse (gap_after > gap_before + 1e-4); FV-35 must be present",
+    "tiers_worse": [
+     "35"
+    ],
+    "tiers_improved": {
+     "35": false,
+     "40": true,
+     "45": true,
+     "50": true,
+     "55": true,
+     "60": true
+    },
+    "n_tiers": 6,
+    "n_improved": 5,
+    "fv35_present": true,
+    "fv35_gap_before_after": [
+     0.00265,
+     0.00352
+    ],
+    "x_iso_strict_reading_all_improved": false
+   },
+   "verdict": "FAIL"
+  }
+ },
+ "gate": {
+  "condition_1_brier_logloss": {
+   "pass": true,
+   "pooled_improves": true,
+   "all_buckets_improve": true,
+   "no_bucket_materially_worse": true,
+   "material_tolerance_rel": 0.01
+  },
+  "condition_2_spearman": {
+   "pass": false,
+   "shipped_grade_rho": 0.2392,
+   "calibrated_rank_rho": 0.2277,
+   "delta": -0.0115,
+   "tolerance": -0.002,
+   "identity_transform_rho": 0.2351,
+   "identity_transform_delta_vs_shipped": -0.0041
+  },
+  "condition_3_tier_reliability": {
+   "pass": false,
+   "definition": "no FV tier worse (gap_after > gap_before + 1e-4); FV-35 must be present",
+   "tiers_worse": [
+    "35"
+   ],
+   "tiers_improved": {
+    "35": false,
+    "40": true,
+    "45": true,
+    "50": true,
+    "55": true,
+    "60": true
+   },
+   "n_tiers": 6,
+   "n_improved": 5,
+   "fv35_present": true,
+   "fv35_gap_before_after": [
+    0.00265,
+    0.00352
+   ],
+   "x_iso_strict_reading_all_improved": false
+  },
+  "verdict": "FAIL"
+ },
+ "loss_ledger": {
+  "date": "2026-07-02",
+  "experiment": "E-ISO2 grade-space monotone recalibration (5-bucket eFV outcome distribution)",
+  "hypothesis": "a strictly-increasing monotone recalibration in grade space captures the X-ISO calibration gain without PAVA tie-flattening",
+  "what_was_tried": "binned effective-grade inversion through the anchor table + weighted PAVA + strict identity blend (eps=0.01), forward-chained OOF by cohort; p_after = anchor table at the recalibrated grade",
+  "result": {
+   "failed_conditions": [
+    "condition_2_spearman",
+    "condition_3_tier_reliability"
+   ],
+   "pooled_brier_before_after": [
+    0.24663,
+    0.19555
+   ],
+   "pooled_logloss_before_after": [
+    0.51306,
+    0.40497
+   ],
+   "spearman_shipped_vs_calibrated": [
+    0.2392,
+    0.2277
+   ],
+   "tiers_improved": "5/6",
+   "tiers_worse": [
+    "35"
+   ],
+   "per_side_spearman": {
+    "hit": {
+     "shipped_grade": 0.2664,
+     "expected_war_before": 0.2664,
+     "expected_war_after": 0.2554
+    },
+    "pit": {
+     "shipped_grade": 0.2233,
+     "expected_war_before": 0.2233,
+     "expected_war_after": 0.2092
+    }
+   },
+   "rank_preservation_by_cell": {
+    "hit": {
+     "2020": {
+      "n": 206,
+      "shipped_grade_rho": 0.3652,
+      "recal_rank_rho": 0.3652,
+      "preserved": true
+     },
+     "2021": {
+      "n": 143,
+      "shipped_grade_rho": 0.1538,
+      "recal_rank_rho": 0.1538,
+      "preserved": true
+     },
+     "2022": {
+      "n": 277,
+      "shipped_grade_rho": 0.3162,
+      "recal_rank_rho": 0.3162,
+      "preserved": true
+     },
+     "2023": {
+      "n": 271,
+      "shipped_grade_rho": 0.2596,
+      "recal_rank_rho": 0.2596,
+      "preserved": true
+     }
+    },
+    "pit": {
+     "2020": {
+      "n": 211,
+      "shipped_grade_rho": 0.1712,
+      "recal_rank_rho": 0.1712,
+      "preserved": true
+     },
+     "2021": {
+      "n": 159,
+      "shipped_grade_rho": 0.1257,
+      "recal_rank_rho": 0.1257,
+      "preserved": true
+     },
+     "2022": {
+      "n": 244,
+      "shipped_grade_rho": 0.325,
+      "recal_rank_rho": 0.325,
+      "preserved": true
+     },
+     "2023": {
+      "n": 279,
+      "shipped_grade_rho": 0.2345,
+      "recal_rank_rho": 0.2345,
+      "preserved": true
+     }
+    }
+   },
+   "sensitivity_single_prior_map_delta": -0.0094,
+   "identity_transform_delta_vs_shipped": -0.0041
+  },
+  "diagnosis": "the strict-monotone construction WORKED as designed: within every (side, eval-year) cell the recalibrated rank equals the shipped grade rank exactly (rank_preservation_by_cell, 8/8 preserved), so PAVA tie-flattening (the X-ISO failure mode) is eliminated. The pooled Spearman deficit is entirely CROSS-CELL: (a) the four forward-chained maps drift year-to-year, reordering cross-year pairs; (b) the rank metric (expected WAR, side-specific midpoints) interleaves hit vs pit differently than the pooled grade baseline -- the IDENTITY transform already scores below the shipped-grade baseline on this metric (see identity_transform_delta_vs_shipped), so the -0.002 bar requires the recalibration to actively IMPROVE cross-side interleaving, and it instead worsens it (the pit map's top-end compresses toward ~FV 44-45, pushing all top pitchers below top hitters). The single-prior-map sensitivity (zero cross-year drift, per-side preservation exact) still fails condition 2 on cross-side interleaving alone. Condition 3: the FV-35 tier again degrades, but by ~0.001 absolute (0.00265 -> ~0.0035) against a 1e-4 tolerance -- the low-grade bins' effective-grade inversion is slightly too aggressive where the table is already near-perfectly calibrated. The FV45+ calibration gain itself is real and larger than X-ISO's (condition 1 passes with every bucket better; tier-45 gap 0.0946 -> ~0.016, tier-55 0.1616 -> ~0.044).",
+  "reading": "pre-registered gate requires ALL THREE conditions; a marginal result is a FAIL (owner policy). The distribution stays on the engine's own calibration (value_framework p_bucket_given_fv); nothing ships. NOTE for any future re-registration (owner decision, not this lab's): condition 2's baseline (pooled shipped-grade rho) and metric (pooled expected WAR) are not the same ordering even under the identity transform, so the bar as written is unreachable by any within-side rank-preserving method that does not also improve cross-side interleaving; and condition 3's 1e-4 worse-tolerance on an FV-35 gap of 0.0027 binds at ~4% relative noise.",
+  "disposition": "NO SHIP. Harness (tools/efv_grade_recal_lab.py) + this artifact are the committed loss."
+ }
+}

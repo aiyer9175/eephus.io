@@ -1,0 +1,827 @@
+{
+ "generated_at": "2026-06-11",
+ "conventions": {
+  "cohort": "curated NPB/KBO -> MLB transitions 2015-2026 (returnees flagged); foreign side = last qualifying season pre-entry (B-Ref register); MLB side = first season >= entry with min exposure (StatsAPI)",
+  "era_factor": "IP-weighted ratio of means, shrunk k=8.0 toward incumbent",
+  "k_pct_delta": "PA-weighted mean delta, shrunk k=8.0",
+  "not_shipped": "hitter_wrc_factor (needs per-season foreign league context — raw OPS ratio reported as analog), fb_velo_delta (no source), CPBL/CUBA/NPBF (n too small, stay prior)",
+  "exclusions": "players whose pages fail to resolve/parse are excluded and counted — the ledger is owner-extendable"
+ },
+ "accounting": {
+  "listed": 34,
+  "resolved": 28,
+  "no_register_page": 0,
+  "no_foreign_line": 3,
+  "no_mlb_line": 3
+ },
+ "factors": {
+  "NPB": {
+   "n_pitchers": 15,
+   "n_hitters": 6,
+   "measured_era_ratio": 1.696,
+   "incumbent_era_factor": 1.25,
+   "shipped_era_factor": 1.541,
+   "measured_k_pct_delta": 0.0475,
+   "incumbent_k_pct_delta": 0.04,
+   "shipped_k_pct_delta": 0.043,
+   "measured_raw_ops_ratio_NOT_SHIPPED": 0.802,
+   "incumbent_wrc_factor_retained": 0.87
+  },
+  "KBO": {
+   "n_pitchers": 6,
+   "n_hitters": 1,
+   "measured_era_ratio": 1.215,
+   "incumbent_era_factor": 1.32,
+   "shipped_era_factor": 1.275,
+   "measured_k_pct_delta": 0.0474,
+   "incumbent_k_pct_delta": 0.05,
+   "shipped_k_pct_delta": 0.05,
+   "measured_raw_ops_ratio_NOT_SHIPPED": 0.819,
+   "incumbent_wrc_factor_retained": 0.749
+  }
+ },
+ "cohort": [
+  {
+   "name": "Kenta Maeda",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2016,
+   "status": "resolved",
+   "foreign": {
+    "season": 2015,
+    "era": 2.09,
+    "ip": 206.1,
+    "so": 175.0,
+    "bf": 821.0
+   },
+   "mlb": {
+    "season": 2016,
+    "era": 3.48,
+    "ip": 175.2,
+    "so": 179.0,
+    "bf": 716.0
+   }
+  },
+  {
+   "name": "Shohei Ohtani",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2018,
+   "status": "resolved",
+   "foreign": {
+    "season": 2016,
+    "era": 1.86,
+    "ip": 140.0,
+    "so": 174.0,
+    "bf": 548.0
+   },
+   "mlb": {
+    "season": 2018,
+    "era": 3.31,
+    "ip": 51.2,
+    "so": 63.0,
+    "bf": 211.0
+   }
+  },
+  {
+   "name": "Miles Mikolas",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2018,
+   "returnee": true,
+   "status": "resolved",
+   "foreign": {
+    "season": 2017,
+    "era": 2.25,
+    "ip": 188.0,
+    "so": 187.0,
+    "bf": 745.0
+   },
+   "mlb": {
+    "season": 2018,
+    "era": 2.83,
+    "ip": 200.2,
+    "so": 146.0,
+    "bf": 808.0
+   }
+  },
+  {
+   "name": "Yoshihisa Hirano",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2018,
+   "status": "resolved",
+   "foreign": {
+    "season": 2017,
+    "era": 2.67,
+    "ip": 57.1,
+    "so": 47.0,
+    "bf": 240.0
+   },
+   "mlb": {
+    "season": 2018,
+    "era": 2.44,
+    "ip": 66.1,
+    "so": 59.0,
+    "bf": 262.0
+   }
+  },
+  {
+   "name": "Yusei Kikuchi",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2019,
+   "status": "resolved",
+   "foreign": {
+    "season": 2018,
+    "era": 3.08,
+    "ip": 163.2,
+    "so": 153.0,
+    "bf": 654.0
+   },
+   "mlb": {
+    "season": 2019,
+    "era": 5.46,
+    "ip": 161.2,
+    "so": 116.0,
+    "bf": 721.0
+   }
+  },
+  {
+   "name": "Shun Yamaguchi",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2020,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "era": 2.91,
+    "ip": 170.0,
+    "so": 188.0,
+    "bf": 705.0
+   },
+   "mlb": {
+    "season": 2020,
+    "era": 8.06,
+    "ip": 25.2,
+    "so": 26.0,
+    "bf": 120.0
+   }
+  },
+  {
+   "name": "Kohei Arihara",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2021,
+   "status": "resolved",
+   "foreign": {
+    "season": 2020,
+    "era": 3.46,
+    "ip": 132.2,
+    "so": 106.0,
+    "bf": 547.0
+   },
+   "mlb": {
+    "season": 2021,
+    "era": 6.64,
+    "ip": 40.2,
+    "so": 24.0,
+    "bf": 178.0
+   }
+  },
+  {
+   "name": "Hirokazu Sawamura",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2021,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "era": 2.61,
+    "ip": 48.1,
+    "so": 55.0,
+    "bf": 197.0
+   },
+   "mlb": {
+    "season": 2021,
+    "era": 3.06,
+    "ip": 53.0,
+    "so": 61.0,
+    "bf": 233.0
+   }
+  },
+  {
+   "name": "Kodai Senga",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2023,
+   "status": "resolved",
+   "foreign": {
+    "season": 2022,
+    "era": 1.94,
+    "ip": 144.0,
+    "so": 156.0,
+    "bf": 568.0
+   },
+   "mlb": {
+    "season": 2023,
+    "era": 2.98,
+    "ip": 166.1,
+    "so": 202.0,
+    "bf": 694.0
+   }
+  },
+  {
+   "name": "Shintaro Fujinami",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2023,
+   "status": "resolved",
+   "foreign": {
+    "season": 2022,
+    "era": 3.38,
+    "ip": 66.2,
+    "so": 65.0,
+    "bf": 276.0
+   },
+   "mlb": {
+    "season": 2023,
+    "era": 7.18,
+    "ip": 79.0,
+    "so": 83.0,
+    "bf": 357.0
+   }
+  },
+  {
+   "name": "Yoshinobu Yamamoto",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2024,
+   "status": "resolved",
+   "foreign": {
+    "season": 2023,
+    "era": 1.21,
+    "ip": 164.0,
+    "so": 169.0,
+    "bf": 636.0
+   },
+   "mlb": {
+    "season": 2024,
+    "era": 3.0,
+    "ip": 90.0,
+    "so": 105.0,
+    "bf": 368.0
+   }
+  },
+  {
+   "name": "Shota Imanaga",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2024,
+   "status": "resolved",
+   "foreign": {
+    "season": 2023,
+    "era": 2.8,
+    "ip": 148.0,
+    "so": 174.0,
+    "bf": 596.0
+   },
+   "mlb": {
+    "season": 2024,
+    "era": 2.91,
+    "ip": 173.1,
+    "so": 174.0,
+    "bf": 694.0
+   }
+  },
+  {
+   "name": "Yuki Matsui",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2024,
+   "status": "resolved",
+   "foreign": {
+    "season": 2023,
+    "era": 1.57,
+    "ip": 57.1,
+    "so": 72.0,
+    "bf": 222.0
+   },
+   "mlb": {
+    "season": 2024,
+    "era": 3.73,
+    "ip": 62.2,
+    "so": 69.0,
+    "bf": 257.0
+   }
+  },
+  {
+   "name": "Naoyuki Uwasawa",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2024,
+   "status": "no_mlb_line",
+   "foreign": {
+    "season": 2023,
+    "era": 2.96,
+    "ip": 170.0,
+    "so": 124.0,
+    "bf": 696.0
+   }
+  },
+  {
+   "name": "Tomoyuki Sugano",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2025,
+   "status": "resolved",
+   "foreign": {
+    "season": 2024,
+    "era": 1.67,
+    "ip": 156.2,
+    "so": 111.0,
+    "bf": 608.0
+   },
+   "mlb": {
+    "season": 2025,
+    "era": 4.64,
+    "ip": 157.0,
+    "so": 106.0,
+    "bf": 675.0
+   }
+  },
+  {
+   "name": "Roki Sasaki",
+   "league": "NPB",
+   "side": "pit",
+   "entry": 2025,
+   "status": "resolved",
+   "foreign": {
+    "season": 2024,
+    "era": 2.35,
+    "ip": 111.0,
+    "so": 129.0,
+    "bf": 450.0
+   },
+   "mlb": {
+    "season": 2025,
+    "era": 4.46,
+    "ip": 36.1,
+    "so": 28.0,
+    "bf": 161.0
+   }
+  },
+  {
+   "name": "Shohei Ohtani",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2018,
+   "status": "resolved",
+   "foreign": {
+    "season": 2017,
+    "ops": 0.942,
+    "pa": 231.0,
+    "so": 63.0,
+    "k_pct": 0.2727272727272727
+   },
+   "mlb": {
+    "season": 2018,
+    "ops": 0.925,
+    "pa": 367.0,
+    "so": 102.0,
+    "k_pct": 0.2779291553133515
+   }
+  },
+  {
+   "name": "Yoshi Tsutsugo",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2020,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "ops": 0.899,
+    "pa": 557.0,
+    "so": 141.0,
+    "k_pct": 0.25314183123877915
+   },
+   "mlb": {
+    "season": 2020,
+    "ops": 0.709,
+    "pa": 185.0,
+    "so": 50.0,
+    "k_pct": 0.2702702702702703
+   }
+  },
+  {
+   "name": "Shogo Akiyama",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2020,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "ops": 0.864,
+    "pa": 678.0,
+    "so": 108.0,
+    "k_pct": 0.1592920353982301
+   },
+   "mlb": {
+    "season": 2020,
+    "ops": 0.654,
+    "pa": 183.0,
+    "so": 34.0,
+    "k_pct": 0.18579234972677597
+   }
+  },
+  {
+   "name": "Seiya Suzuki",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2022,
+   "status": "resolved",
+   "foreign": {
+    "season": 2021,
+    "ops": 1.072,
+    "pa": 533.0,
+    "so": 88.0,
+    "k_pct": 0.1651031894934334
+   },
+   "mlb": {
+    "season": 2022,
+    "ops": 0.769,
+    "pa": 446.0,
+    "so": 110.0,
+    "k_pct": 0.24663677130044842
+   }
+  },
+  {
+   "name": "Masataka Yoshida",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2023,
+   "status": "resolved",
+   "foreign": {
+    "season": 2022,
+    "ops": 1.008,
+    "pa": 508.0,
+    "so": 41.0,
+    "k_pct": 0.08070866141732283
+   },
+   "mlb": {
+    "season": 2023,
+    "ops": 0.783,
+    "pa": 580.0,
+    "so": 81.0,
+    "k_pct": 0.1396551724137931
+   }
+  },
+  {
+   "name": "Munetaka Murakami",
+   "league": "NPB",
+   "side": "hit",
+   "entry": 2026,
+   "status": "resolved",
+   "foreign": {
+    "season": 2025,
+    "ops": 1.043,
+    "pa": 224.0,
+    "so": 64.0,
+    "k_pct": 0.2857142857142857
+   },
+   "mlb": {
+    "season": 2026,
+    "ops": 0.938,
+    "pa": 246.0,
+    "so": 80.0,
+    "k_pct": 0.3252032520325203
+   }
+  },
+  {
+   "name": "Seunghwan Oh",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2016,
+   "status": "resolved",
+   "foreign": {
+    "season": 2013,
+    "era": 1.74,
+    "ip": 51.2,
+    "so": 54.0,
+    "bf": 196.0
+   },
+   "mlb": {
+    "season": 2016,
+    "era": 1.92,
+    "ip": 79.2,
+    "so": 103.0,
+    "bf": 313.0
+   }
+  },
+  {
+   "name": "Merrill Kelly",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2019,
+   "returnee": true,
+   "status": "resolved",
+   "foreign": {
+    "season": 2018,
+    "era": 4.09,
+    "ip": 158.1,
+    "so": 161.0,
+    "bf": 674.0
+   },
+   "mlb": {
+    "season": 2019,
+    "era": 4.42,
+    "ip": 183.1,
+    "so": 158.0,
+    "bf": 777.0
+   }
+  },
+  {
+   "name": "Kwang Hyun Kim",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2020,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "era": 2.51,
+    "ip": 190.1,
+    "so": 180.0,
+    "bf": 786.0
+   },
+   "mlb": {
+    "season": 2020,
+    "era": 1.62,
+    "ip": 39.0,
+    "so": 24.0,
+    "bf": 154.0
+   }
+  },
+  {
+   "name": "Brooks Raley",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2020,
+   "returnee": true,
+   "status": "resolved",
+   "foreign": {
+    "season": 2019,
+    "era": 3.88,
+    "ip": 181.0,
+    "so": 140.0,
+    "bf": 791.0
+   },
+   "mlb": {
+    "season": 2021,
+    "era": 4.78,
+    "ip": 49.0,
+    "so": 65.0,
+    "bf": 205.0
+   }
+  },
+  {
+   "name": "Chris Flexen",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2021,
+   "returnee": true,
+   "status": "resolved",
+   "foreign": {
+    "season": 2020,
+    "era": 3.01,
+    "ip": 116.2,
+    "so": 132.0,
+    "bf": 472.0
+   },
+   "mlb": {
+    "season": 2021,
+    "era": 3.61,
+    "ip": 179.2,
+    "so": 125.0,
+    "bf": 741.0
+   }
+  },
+  {
+   "name": "Drew Rucinski",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2023,
+   "returnee": true,
+   "status": "no_mlb_line",
+   "foreign": {
+    "season": 2022,
+    "era": 2.97,
+    "ip": 193.2,
+    "so": 194.0,
+    "bf": 797.0
+   }
+  },
+  {
+   "name": "Erick Fedde",
+   "league": "KBO",
+   "side": "pit",
+   "entry": 2024,
+   "returnee": true,
+   "status": "resolved",
+   "foreign": {
+    "season": 2023,
+    "era": 2.0,
+    "ip": 180.1,
+    "so": 209.0,
+    "bf": 708.0
+   },
+   "mlb": {
+    "season": 2024,
+    "era": 3.3,
+    "ip": 177.1,
+    "so": 154.0,
+    "bf": 726.0
+   }
+  },
+  {
+   "name": "Byung Ho Park",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2016,
+   "status": "no_foreign_line"
+  },
+  {
+   "name": "Hyun Soo Kim",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2016,
+   "status": "resolved",
+   "foreign": {
+    "season": 2015,
+    "ops": 0.979,
+    "pa": 630.0,
+    "so": 63.0,
+    "k_pct": 0.1
+   },
+   "mlb": {
+    "season": 2016,
+    "ops": 0.802,
+    "pa": 346.0,
+    "so": 51.0,
+    "k_pct": 0.14739884393063585
+   }
+  },
+  {
+   "name": "Jae-gyun Hwang",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2017,
+   "status": "no_mlb_line",
+   "foreign": {
+    "season": 2016,
+    "ops": 0.964,
+    "pa": 559.0,
+    "so": 66.0,
+    "k_pct": 0.11806797853309481
+   }
+  },
+  {
+   "name": "Ha-Seong Kim",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2021,
+   "status": "no_foreign_line"
+  },
+  {
+   "name": "Jung Hoo Lee",
+   "league": "KBO",
+   "side": "hit",
+   "entry": 2024,
+   "status": "no_foreign_line"
+  }
+ ],
+ "hitter_wrc_factor": {
+  "method": "offline cached-FanGraphs wRC+ pairs (final qualifying foreign season vs first MLB season); PA-weighted ratio of means, shrunk k=8 toward the incumbent prior; pre-registered gate coverage(NPB>=5/KBO>=3) + LOO strictly beats prior + stability(swing<=0.05, bootstrap band excludes 1.0), SEED=8",
+  "spec": "docs/audit-2026-07/overseas-factors-recheck.md",
+  "leagues": {
+   "NPB": {
+    "n_resolved": 0,
+    "min_required": 5,
+    "incumbent_prior": 0.87,
+    "measured_raw_ratio": null,
+    "shipped_if_pass": 0.87,
+    "loo_mae_fitted": null,
+    "loo_mae_prior": null,
+    "loo_factor_swing": null,
+    "bootstrap_seed": 8,
+    "bootstrap_95_band": null,
+    "gate": {
+     "coverage_ok": false,
+     "loo_beats_prior": false,
+     "stability_ok": false,
+     "passed": false
+    },
+    "verdict": "coverage_blocked",
+    "pairs": [],
+    "dropped": [
+     {
+      "name": "Shohei Ohtani",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Yoshi Tsutsugo",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Shogo Akiyama",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Seiya Suzuki",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Masataka Yoshida",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Munetaka Murakami",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     }
+    ],
+    "elite_selection_caveat": "every transition hitter earned a posting, so the measured MLB-over-foreign wRC+ ratio is an elite-cohort ratio applied as a global multiplier down to wRC+ 100; same extrapolation the shipped ERA multiplier accepts. n is too small to fit a slope+intercept, so the multiplier stays."
+   },
+   "KBO": {
+    "n_resolved": 3,
+    "min_required": 3,
+    "incumbent_prior": 0.81,
+    "measured_raw_ratio": 0.5857,
+    "shipped_if_pass": 0.7488,
+    "loo_mae_fitted": 23.547,
+    "loo_mae_prior": 27.16,
+    "loo_factor_swing": 0.0307,
+    "bootstrap_seed": 8,
+    "bootstrap_95_band": [
+     0.7236,
+     0.8015
+    ],
+    "gate": {
+     "coverage_ok": true,
+     "loo_beats_prior": true,
+     "stability_ok": true,
+     "passed": true
+    },
+    "verdict": "SHIP",
+    "pairs": [
+     {
+      "name": "Ha-Seong Kim",
+      "fg_id": "27506",
+      "foreign_year": 2020,
+      "foreign_wrc": 144.0,
+      "mlb_year": 2021,
+      "mlb_wrc": 71.0
+     },
+     {
+      "name": "Jung Hoo Lee",
+      "fg_id": "33824",
+      "foreign_year": 2023,
+      "foreign_wrc": 142.0,
+      "mlb_year": 2024,
+      "mlb_wrc": 83.0
+     },
+     {
+      "name": "Hyeseong Kim",
+      "fg_id": "kr3012639",
+      "foreign_year": 2024,
+      "foreign_wrc": 122.0,
+      "mlb_year": 2025,
+      "mlb_wrc": 95.0
+     }
+    ],
+    "dropped": [
+     {
+      "name": "Byung Ho Park",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Hyun Soo Kim",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     },
+     {
+      "name": "Jae-gyun Hwang",
+      "fg_id": null,
+      "reason": "no_fg_id"
+     }
+    ],
+    "elite_selection_caveat": "every transition hitter earned a posting, so the measured MLB-over-foreign wRC+ ratio is an elite-cohort ratio applied as a global multiplier down to wRC+ 100; same extrapolation the shipped ERA multiplier accepts. n is too small to fit a slope+intercept, so the multiplier stays."
+   }
+  }
+ }
+}

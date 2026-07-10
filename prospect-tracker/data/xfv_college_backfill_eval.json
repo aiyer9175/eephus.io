@@ -1,0 +1,20 @@
+{
+ "generated_at": "2026-07-05",
+ "experiment": "E-COLLEGE-BACKFILL: populate the eFV production block for milb_missing college draftees from the validated college->Single-A translation",
+ "spec": "trainability check pre-registered as the FIRST step (analog of the overseas item 15 method and the E-STUFF timing block); the modeling experiment runs ONLY if the resolved trainable cohort is non-trivial",
+ "hypothesis": "college draftees who reach MLB with a thin/empty MiLB production block (milb_missing=1) could have k_rel/bb_rel imputed from their college tracked line via college_translation (hit_k is the one validated component, r2 ~0.30), giving the eFV ridge real production signal instead of the missingness indicator",
+ "method": {
+  "join": "efv_dataset matrix resolved-debuted rows (2011-2023 cohorts) with target_censored and consensus_fv_raw present; milb_missing = no 'milb' block; college line joined by normalized player name (college_translation.norm_name) against load_cs_hitters/load_cs_pitchers (CollegeSavant TrackMan tracked lines)",
+  "trainability_gate": "STOP unless the resolved milb_missing college-joinable count is non-trivial per side (target: enough to hold out a per-side, no-degradation, thin-cohort rho check like item 15's method)"
+ },
+ "trainability_result": {
+  "hit": {"resolved_debuted": 796, "milb_missing": 328, "milb_missing_college_joinable": 4, "all_resolved_college_joinable": 5,
+          "apparent_matches": ["justin williams (2021)", "luis garcia (2020)", "tyler smith (2017)", "tyler white (2016)"]},
+  "pit": {"resolved_debuted": 861, "milb_missing": 324, "milb_missing_college_joinable": 3, "all_resolved_college_joinable": 4,
+          "apparent_matches": ["aaron sanchez (2014)", "carlos martinez (2013)", "jacob turner (2011)"]}
+ },
+ "verdict": "STOP - timing/coverage block, NO experiment run, data/xfv.json untouched. The intersection (resolved 2011-2023 debut cohort) x (empty production block) x (has an in-repo college tracked line) is 4 hitters / 3 pitchers, and these are cross-era name collisions, not real joins: CollegeSavant TrackMan ingestion covers roughly the 2021+ college classes, whose players have not resolved a 6-MLB-season WAR window (drafted ~2018+, debut ~2021+). A 'carlos martinez' debuting 2013 cannot carry 2021+ college TrackMan data; the apparent matches join a resolved veteran to a different, recent same-named amateur. Confirmed by the context count: only 5 of 796 resolved hitter rows join to ANY college line at all.",
+ "structural_reason": "same class of block as E-STUFF (AAA aStuff+ overlay): the feature source (college TrackMan / AAA tracking) starts after the resolved-outcome cohort ends. There is no data engineering fix on the current vintage; it resolves with time.",
+ "reopen_trigger": "resolved 2024+ debut cohorts (players who were drafted with college TrackMan coverage AND have since accrued a scorable MLB WAR window). Re-run the trainability check then; only feed the validated component(s) (hit_k; hit_bb caveated; never hit_ops / pit_k, which are r2 < 0.05).",
+ "do_not_retry": "the eFV college backfill against the 2011-2023 resolved vintage - it is coverage-empty by construction, not under-optimized."
+}

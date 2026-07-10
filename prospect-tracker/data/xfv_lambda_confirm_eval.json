@@ -1,0 +1,942 @@
+{
+ "generated_at": "2026-07-07",
+ "experiment": "M2: lambda re-selection confirmation lab (WS-M)",
+ "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M2",
+ "seed": 7,
+ "method": {
+  "protocol": "forward-chained OOS, shipped lean ridge + consensus OLS anchor, target_censored, SCORED_YEARS folds, gate test>=15/train>=60 -- IDENTICAL to efv_model.rank_calibration",
+  "sweep": "lambda in [0.45, 0.8] step 0.0125 (29 points)",
+  "composite": "pooled Spearman + within-FV-tier weighted-mean + FV-45-tier rho (the rank_calibration composite)",
+  "reference": "live efv_model.blend_lambda(side) (recomputed against the current matrix)",
+  "bootstrap": "1000 row resamples, fixed treatment lambdas, seeded",
+  "declared_before_first_run": true
+ },
+ "gate_thresholds": {
+  "composite_gain_at_least": 0.005,
+  "pooled_no_drop": -0.002,
+  "era_drop_no_more_than": 0.015,
+  "bootstrap_p_at_least": 0.75
+ },
+ "sides": {
+  "hit": {
+   "n": 399,
+   "live_lambda": 0.7,
+   "live": {
+    "composite": 0.6791,
+    "pooled_rho": 0.3523,
+    "within_tier_wm": 0.2066,
+    "t45": 0.1202,
+    "era": {
+     "2019-2021": 0.2858,
+     "2022-2023": 0.3852
+    }
+   },
+   "swept_best_lambda": 0.8,
+   "swept_best": {
+    "composite": 0.7023,
+    "pooled_rho": 0.3579,
+    "within_tier_wm": 0.2152,
+    "t45": 0.1292,
+    "era": {
+     "2019-2021": 0.2958,
+     "2022-2023": 0.3883
+    }
+   },
+   "bootstrap": {
+    "p_gain_gt_0": 0.973,
+    "mean_gain": 0.02278,
+    "ci95": [
+     -0.00019,
+     0.04831
+    ],
+    "n_resamples": 1000
+   },
+   "gate_clauses": {
+    "c1_composite_gain": {
+     "value": 0.0232,
+     "threshold": 0.005,
+     "pass": true
+    },
+    "c2_pooled_no_drop": {
+     "value": 0.0056,
+     "threshold": -0.002,
+     "pass": true
+    },
+    "c3_era_no_drop": {
+     "worst_drop": 0.0031,
+     "per_era_delta": {
+      "2019-2021": 0.01,
+      "2022-2023": 0.0031
+     },
+     "threshold": -0.015,
+     "pass": true
+    },
+    "c4_bootstrap": {
+     "p_gain_gt_0": 0.973,
+     "threshold": 0.75,
+     "pass": true
+    },
+    "c5_interior_optimum": {
+     "swept_best": 0.8,
+     "grid_edges": [
+      0.45,
+      0.8
+     ],
+     "at_boundary": true,
+     "pass": false
+    }
+   },
+   "mechanical_clauses_pass": true,
+   "swept_best_at_boundary": true,
+   "side_ship": false,
+   "wide_diagnostic_curve_to_clamp": {
+    "0.30": {
+     "composite": 0.5541,
+     "pooled_rho": 0.3222,
+     "within_tier_wm": 0.1321,
+     "t45": 0.0998
+    },
+    "0.35": {
+     "composite": 0.5821,
+     "pooled_rho": 0.3272,
+     "within_tier_wm": 0.1506,
+     "t45": 0.1043
+    },
+    "0.40": {
+     "composite": 0.608,
+     "pooled_rho": 0.332,
+     "within_tier_wm": 0.1666,
+     "t45": 0.1094
+    },
+    "0.45": {
+     "composite": 0.6272,
+     "pooled_rho": 0.3364,
+     "within_tier_wm": 0.1777,
+     "t45": 0.1131
+    },
+    "0.50": {
+     "composite": 0.6369,
+     "pooled_rho": 0.3394,
+     "within_tier_wm": 0.1858,
+     "t45": 0.1117
+    },
+    "0.55": {
+     "composite": 0.6493,
+     "pooled_rho": 0.3429,
+     "within_tier_wm": 0.1915,
+     "t45": 0.1149
+    },
+    "0.60": {
+     "composite": 0.6644,
+     "pooled_rho": 0.3465,
+     "within_tier_wm": 0.2002,
+     "t45": 0.1177
+    },
+    "0.65": {
+     "composite": 0.6726,
+     "pooled_rho": 0.3494,
+     "within_tier_wm": 0.2034,
+     "t45": 0.1198
+    },
+    "0.70": {
+     "composite": 0.6791,
+     "pooled_rho": 0.3523,
+     "within_tier_wm": 0.2066,
+     "t45": 0.1202
+    },
+    "0.75": {
+     "composite": 0.6912,
+     "pooled_rho": 0.3549,
+     "within_tier_wm": 0.2118,
+     "t45": 0.1245
+    },
+    "0.80": {
+     "composite": 0.7023,
+     "pooled_rho": 0.3579,
+     "within_tier_wm": 0.2152,
+     "t45": 0.1292
+    },
+    "0.85": {
+     "composite": 0.7098,
+     "pooled_rho": 0.3592,
+     "within_tier_wm": 0.2183,
+     "t45": 0.1323
+    },
+    "0.90": {
+     "composite": 0.7188,
+     "pooled_rho": 0.3623,
+     "within_tier_wm": 0.222,
+     "t45": 0.1345
+    }
+   },
+   "wide_curve_argmax_lambda": 0.9,
+   "curve": {
+    "0.4500": {
+     "composite": 0.6272,
+     "pooled_rho": 0.3364,
+     "within_tier_wm": 0.1777,
+     "t45": 0.1131,
+     "era": {
+      "2019-2021": 0.2654,
+      "2022-2023": 0.3709
+     }
+    },
+    "0.4625": {
+     "composite": 0.6301,
+     "pooled_rho": 0.338,
+     "within_tier_wm": 0.1809,
+     "t45": 0.1112,
+     "era": {
+      "2019-2021": 0.2665,
+      "2022-2023": 0.3728
+     }
+    },
+    "0.4750": {
+     "composite": 0.631,
+     "pooled_rho": 0.3382,
+     "within_tier_wm": 0.182,
+     "t45": 0.1108,
+     "era": {
+      "2019-2021": 0.2663,
+      "2022-2023": 0.3729
+     }
+    },
+    "0.4875": {
+     "composite": 0.6353,
+     "pooled_rho": 0.3391,
+     "within_tier_wm": 0.1839,
+     "t45": 0.1123,
+     "era": {
+      "2019-2021": 0.2664,
+      "2022-2023": 0.3743
+     }
+    },
+    "0.5000": {
+     "composite": 0.6369,
+     "pooled_rho": 0.3394,
+     "within_tier_wm": 0.1858,
+     "t45": 0.1117,
+     "era": {
+      "2019-2021": 0.2669,
+      "2022-2023": 0.3745
+     }
+    },
+    "0.5125": {
+     "composite": 0.6403,
+     "pooled_rho": 0.3404,
+     "within_tier_wm": 0.1874,
+     "t45": 0.1125,
+     "era": {
+      "2019-2021": 0.2679,
+      "2022-2023": 0.3752
+     }
+    },
+    "0.5250": {
+     "composite": 0.6446,
+     "pooled_rho": 0.3412,
+     "within_tier_wm": 0.1892,
+     "t45": 0.1142,
+     "era": {
+      "2019-2021": 0.2682,
+      "2022-2023": 0.3759
+     }
+    },
+    "0.5375": {
+     "composite": 0.6429,
+     "pooled_rho": 0.3417,
+     "within_tier_wm": 0.189,
+     "t45": 0.1122,
+     "era": {
+      "2019-2021": 0.2694,
+      "2022-2023": 0.3761
+     }
+    },
+    "0.5500": {
+     "composite": 0.6493,
+     "pooled_rho": 0.3429,
+     "within_tier_wm": 0.1915,
+     "t45": 0.1149,
+     "era": {
+      "2019-2021": 0.2716,
+      "2022-2023": 0.3771
+     }
+    },
+    "0.5625": {
+     "composite": 0.6576,
+     "pooled_rho": 0.3445,
+     "within_tier_wm": 0.194,
+     "t45": 0.1191,
+     "era": {
+      "2019-2021": 0.2734,
+      "2022-2023": 0.3781
+     }
+    },
+    "0.5750": {
+     "composite": 0.663,
+     "pooled_rho": 0.345,
+     "within_tier_wm": 0.1974,
+     "t45": 0.1206,
+     "era": {
+      "2019-2021": 0.2743,
+      "2022-2023": 0.3789
+     }
+    },
+    "0.5875": {
+     "composite": 0.664,
+     "pooled_rho": 0.346,
+     "within_tier_wm": 0.1998,
+     "t45": 0.1182,
+     "era": {
+      "2019-2021": 0.2767,
+      "2022-2023": 0.379
+     }
+    },
+    "0.6000": {
+     "composite": 0.6644,
+     "pooled_rho": 0.3465,
+     "within_tier_wm": 0.2002,
+     "t45": 0.1177,
+     "era": {
+      "2019-2021": 0.2782,
+      "2022-2023": 0.3794
+     }
+    },
+    "0.6125": {
+     "composite": 0.6641,
+     "pooled_rho": 0.3472,
+     "within_tier_wm": 0.1998,
+     "t45": 0.1171,
+     "era": {
+      "2019-2021": 0.2787,
+      "2022-2023": 0.3794
+     }
+    },
+    "0.6250": {
+     "composite": 0.6664,
+     "pooled_rho": 0.348,
+     "within_tier_wm": 0.2008,
+     "t45": 0.1176,
+     "era": {
+      "2019-2021": 0.2786,
+      "2022-2023": 0.38
+     }
+    },
+    "0.6375": {
+     "composite": 0.6704,
+     "pooled_rho": 0.3485,
+     "within_tier_wm": 0.2023,
+     "t45": 0.1196,
+     "era": {
+      "2019-2021": 0.2797,
+      "2022-2023": 0.3809
+     }
+    },
+    "0.6500": {
+     "composite": 0.6726,
+     "pooled_rho": 0.3494,
+     "within_tier_wm": 0.2034,
+     "t45": 0.1198,
+     "era": {
+      "2019-2021": 0.2813,
+      "2022-2023": 0.3822
+     }
+    },
+    "0.6625": {
+     "composite": 0.6758,
+     "pooled_rho": 0.3504,
+     "within_tier_wm": 0.2048,
+     "t45": 0.1206,
+     "era": {
+      "2019-2021": 0.2818,
+      "2022-2023": 0.3831
+     }
+    },
+    "0.6750": {
+     "composite": 0.6748,
+     "pooled_rho": 0.3511,
+     "within_tier_wm": 0.2047,
+     "t45": 0.119,
+     "era": {
+      "2019-2021": 0.2836,
+      "2022-2023": 0.3841
+     }
+    },
+    "0.6875": {
+     "composite": 0.6757,
+     "pooled_rho": 0.3516,
+     "within_tier_wm": 0.2049,
+     "t45": 0.1192,
+     "era": {
+      "2019-2021": 0.2846,
+      "2022-2023": 0.3843
+     }
+    },
+    "0.7000": {
+     "composite": 0.6791,
+     "pooled_rho": 0.3523,
+     "within_tier_wm": 0.2066,
+     "t45": 0.1202,
+     "era": {
+      "2019-2021": 0.2858,
+      "2022-2023": 0.3852
+     }
+    },
+    "0.7125": {
+     "composite": 0.6823,
+     "pooled_rho": 0.353,
+     "within_tier_wm": 0.2075,
+     "t45": 0.1218,
+     "era": {
+      "2019-2021": 0.2864,
+      "2022-2023": 0.3856
+     }
+    },
+    "0.7250": {
+     "composite": 0.6859,
+     "pooled_rho": 0.3536,
+     "within_tier_wm": 0.2093,
+     "t45": 0.123,
+     "era": {
+      "2019-2021": 0.2872,
+      "2022-2023": 0.3858
+     }
+    },
+    "0.7375": {
+     "composite": 0.6892,
+     "pooled_rho": 0.3541,
+     "within_tier_wm": 0.21,
+     "t45": 0.1251,
+     "era": {
+      "2019-2021": 0.2885,
+      "2022-2023": 0.3858
+     }
+    },
+    "0.7500": {
+     "composite": 0.6912,
+     "pooled_rho": 0.3549,
+     "within_tier_wm": 0.2118,
+     "t45": 0.1245,
+     "era": {
+      "2019-2021": 0.289,
+      "2022-2023": 0.3865
+     }
+    },
+    "0.7625": {
+     "composite": 0.6946,
+     "pooled_rho": 0.3558,
+     "within_tier_wm": 0.2129,
+     "t45": 0.1259,
+     "era": {
+      "2019-2021": 0.2909,
+      "2022-2023": 0.3871
+     }
+    },
+    "0.7750": {
+     "composite": 0.6971,
+     "pooled_rho": 0.3563,
+     "within_tier_wm": 0.2138,
+     "t45": 0.127,
+     "era": {
+      "2019-2021": 0.292,
+      "2022-2023": 0.3871
+     }
+    },
+    "0.7875": {
+     "composite": 0.698,
+     "pooled_rho": 0.3567,
+     "within_tier_wm": 0.2138,
+     "t45": 0.1275,
+     "era": {
+      "2019-2021": 0.2932,
+      "2022-2023": 0.3869
+     }
+    },
+    "0.8000": {
+     "composite": 0.7023,
+     "pooled_rho": 0.3579,
+     "within_tier_wm": 0.2152,
+     "t45": 0.1292,
+     "era": {
+      "2019-2021": 0.2958,
+      "2022-2023": 0.3883
+     }
+    }
+   }
+  },
+  "pit": {
+   "n": 466,
+   "live_lambda": 0.54,
+   "live": {
+    "composite": 0.5706,
+    "pooled_rho": 0.2757,
+    "within_tier_wm": 0.1159,
+    "t45": 0.179,
+    "era": {
+     "2019-2021": 0.1673,
+     "2022-2023": 0.3737
+    }
+   },
+   "swept_best_lambda": 0.525,
+   "swept_best": {
+    "composite": 0.5705,
+    "pooled_rho": 0.2753,
+    "within_tier_wm": 0.1168,
+    "t45": 0.1784,
+    "era": {
+     "2019-2021": 0.1674,
+     "2022-2023": 0.3726
+    }
+   },
+   "bootstrap": {
+    "p_gain_gt_0": 0.439,
+    "mean_gain": -0.00047,
+    "ci95": [
+     -0.00931,
+     0.00851
+    ],
+    "n_resamples": 1000
+   },
+   "gate_clauses": {
+    "c1_composite_gain": {
+     "value": -0.0001,
+     "threshold": 0.005,
+     "pass": false
+    },
+    "c2_pooled_no_drop": {
+     "value": -0.0004,
+     "threshold": -0.002,
+     "pass": true
+    },
+    "c3_era_no_drop": {
+     "worst_drop": -0.0011,
+     "per_era_delta": {
+      "2019-2021": 0.0001,
+      "2022-2023": -0.0011
+     },
+     "threshold": -0.015,
+     "pass": true
+    },
+    "c4_bootstrap": {
+     "p_gain_gt_0": 0.439,
+     "threshold": 0.75,
+     "pass": false
+    },
+    "c5_interior_optimum": {
+     "swept_best": 0.525,
+     "grid_edges": [
+      0.45,
+      0.8
+     ],
+     "at_boundary": false,
+     "pass": true
+    }
+   },
+   "mechanical_clauses_pass": false,
+   "swept_best_at_boundary": false,
+   "side_ship": false,
+   "wide_diagnostic_curve_to_clamp": {
+    "0.30": {
+     "composite": 0.5466,
+     "pooled_rho": 0.2693,
+     "within_tier_wm": 0.1053,
+     "t45": 0.172
+    },
+    "0.35": {
+     "composite": 0.5471,
+     "pooled_rho": 0.2705,
+     "within_tier_wm": 0.1067,
+     "t45": 0.1699
+    },
+    "0.40": {
+     "composite": 0.5575,
+     "pooled_rho": 0.2722,
+     "within_tier_wm": 0.1086,
+     "t45": 0.1767
+    },
+    "0.45": {
+     "composite": 0.5603,
+     "pooled_rho": 0.2739,
+     "within_tier_wm": 0.112,
+     "t45": 0.1744
+    },
+    "0.50": {
+     "composite": 0.5651,
+     "pooled_rho": 0.2756,
+     "within_tier_wm": 0.116,
+     "t45": 0.1735
+    },
+    "0.55": {
+     "composite": 0.5664,
+     "pooled_rho": 0.276,
+     "within_tier_wm": 0.1152,
+     "t45": 0.1752
+    },
+    "0.60": {
+     "composite": 0.5577,
+     "pooled_rho": 0.2765,
+     "within_tier_wm": 0.1153,
+     "t45": 0.1659
+    },
+    "0.65": {
+     "composite": 0.556,
+     "pooled_rho": 0.2768,
+     "within_tier_wm": 0.1136,
+     "t45": 0.1656
+    },
+    "0.70": {
+     "composite": 0.5337,
+     "pooled_rho": 0.2758,
+     "within_tier_wm": 0.1093,
+     "t45": 0.1486
+    },
+    "0.75": {
+     "composite": 0.5303,
+     "pooled_rho": 0.2751,
+     "within_tier_wm": 0.1084,
+     "t45": 0.1468
+    },
+    "0.80": {
+     "composite": 0.5126,
+     "pooled_rho": 0.2755,
+     "within_tier_wm": 0.1058,
+     "t45": 0.1313
+    },
+    "0.85": {
+     "composite": 0.5032,
+     "pooled_rho": 0.2752,
+     "within_tier_wm": 0.1052,
+     "t45": 0.1228
+    },
+    "0.90": {
+     "composite": 0.4868,
+     "pooled_rho": 0.2746,
+     "within_tier_wm": 0.1042,
+     "t45": 0.108
+    }
+   },
+   "wide_curve_argmax_lambda": 0.55,
+   "curve": {
+    "0.4500": {
+     "composite": 0.5603,
+     "pooled_rho": 0.2739,
+     "within_tier_wm": 0.112,
+     "t45": 0.1744,
+     "era": {
+      "2019-2021": 0.1677,
+      "2022-2023": 0.3695
+     }
+    },
+    "0.4625": {
+     "composite": 0.5597,
+     "pooled_rho": 0.2742,
+     "within_tier_wm": 0.1137,
+     "t45": 0.1718,
+     "era": {
+      "2019-2021": 0.1674,
+      "2022-2023": 0.3701
+     }
+    },
+    "0.4750": {
+     "composite": 0.5631,
+     "pooled_rho": 0.2746,
+     "within_tier_wm": 0.1145,
+     "t45": 0.174,
+     "era": {
+      "2019-2021": 0.1674,
+      "2022-2023": 0.3706
+     }
+    },
+    "0.4875": {
+     "composite": 0.5624,
+     "pooled_rho": 0.2753,
+     "within_tier_wm": 0.1148,
+     "t45": 0.1723,
+     "era": {
+      "2019-2021": 0.1667,
+      "2022-2023": 0.372
+     }
+    },
+    "0.5000": {
+     "composite": 0.5651,
+     "pooled_rho": 0.2756,
+     "within_tier_wm": 0.116,
+     "t45": 0.1735,
+     "era": {
+      "2019-2021": 0.1673,
+      "2022-2023": 0.3727
+     }
+    },
+    "0.5125": {
+     "composite": 0.5688,
+     "pooled_rho": 0.2752,
+     "within_tier_wm": 0.1156,
+     "t45": 0.178,
+     "era": {
+      "2019-2021": 0.1668,
+      "2022-2023": 0.3726
+     }
+    },
+    "0.5250": {
+     "composite": 0.5705,
+     "pooled_rho": 0.2753,
+     "within_tier_wm": 0.1168,
+     "t45": 0.1784,
+     "era": {
+      "2019-2021": 0.1674,
+      "2022-2023": 0.3726
+     }
+    },
+    "0.5375": {
+     "composite": 0.5703,
+     "pooled_rho": 0.2756,
+     "within_tier_wm": 0.1157,
+     "t45": 0.179,
+     "era": {
+      "2019-2021": 0.1674,
+      "2022-2023": 0.3734
+     }
+    },
+    "0.5500": {
+     "composite": 0.5664,
+     "pooled_rho": 0.276,
+     "within_tier_wm": 0.1152,
+     "t45": 0.1752,
+     "era": {
+      "2019-2021": 0.1677,
+      "2022-2023": 0.3739
+     }
+    },
+    "0.5625": {
+     "composite": 0.5594,
+     "pooled_rho": 0.2758,
+     "within_tier_wm": 0.1146,
+     "t45": 0.169,
+     "era": {
+      "2019-2021": 0.1678,
+      "2022-2023": 0.3746
+     }
+    },
+    "0.5750": {
+     "composite": 0.5609,
+     "pooled_rho": 0.2763,
+     "within_tier_wm": 0.1149,
+     "t45": 0.1697,
+     "era": {
+      "2019-2021": 0.1686,
+      "2022-2023": 0.3757
+     }
+    },
+    "0.5875": {
+     "composite": 0.5612,
+     "pooled_rho": 0.2764,
+     "within_tier_wm": 0.1152,
+     "t45": 0.1696,
+     "era": {
+      "2019-2021": 0.1688,
+      "2022-2023": 0.3761
+     }
+    },
+    "0.6000": {
+     "composite": 0.5577,
+     "pooled_rho": 0.2765,
+     "within_tier_wm": 0.1153,
+     "t45": 0.1659,
+     "era": {
+      "2019-2021": 0.1683,
+      "2022-2023": 0.3771
+     }
+    },
+    "0.6125": {
+     "composite": 0.5536,
+     "pooled_rho": 0.2761,
+     "within_tier_wm": 0.1134,
+     "t45": 0.1641,
+     "era": {
+      "2019-2021": 0.1673,
+      "2022-2023": 0.3774
+     }
+    },
+    "0.6250": {
+     "composite": 0.5581,
+     "pooled_rho": 0.2767,
+     "within_tier_wm": 0.1139,
+     "t45": 0.1675,
+     "era": {
+      "2019-2021": 0.1675,
+      "2022-2023": 0.3783
+     }
+    },
+    "0.6375": {
+     "composite": 0.5557,
+     "pooled_rho": 0.277,
+     "within_tier_wm": 0.1141,
+     "t45": 0.1646,
+     "era": {
+      "2019-2021": 0.1685,
+      "2022-2023": 0.3782
+     }
+    },
+    "0.6500": {
+     "composite": 0.556,
+     "pooled_rho": 0.2768,
+     "within_tier_wm": 0.1136,
+     "t45": 0.1656,
+     "era": {
+      "2019-2021": 0.1686,
+      "2022-2023": 0.3776
+     }
+    },
+    "0.6625": {
+     "composite": 0.5503,
+     "pooled_rho": 0.2769,
+     "within_tier_wm": 0.1132,
+     "t45": 0.1602,
+     "era": {
+      "2019-2021": 0.1683,
+      "2022-2023": 0.377
+     }
+    },
+    "0.6750": {
+     "composite": 0.5476,
+     "pooled_rho": 0.2761,
+     "within_tier_wm": 0.1118,
+     "t45": 0.1597,
+     "era": {
+      "2019-2021": 0.167,
+      "2022-2023": 0.377
+     }
+    },
+    "0.6875": {
+     "composite": 0.5382,
+     "pooled_rho": 0.2755,
+     "within_tier_wm": 0.1099,
+     "t45": 0.1528,
+     "era": {
+      "2019-2021": 0.1661,
+      "2022-2023": 0.3762
+     }
+    },
+    "0.7000": {
+     "composite": 0.5337,
+     "pooled_rho": 0.2758,
+     "within_tier_wm": 0.1093,
+     "t45": 0.1486,
+     "era": {
+      "2019-2021": 0.1661,
+      "2022-2023": 0.3776
+     }
+    },
+    "0.7125": {
+     "composite": 0.5306,
+     "pooled_rho": 0.2756,
+     "within_tier_wm": 0.1089,
+     "t45": 0.1461,
+     "era": {
+      "2019-2021": 0.1654,
+      "2022-2023": 0.3779
+     }
+    },
+    "0.7250": {
+     "composite": 0.5315,
+     "pooled_rho": 0.275,
+     "within_tier_wm": 0.1089,
+     "t45": 0.1476,
+     "era": {
+      "2019-2021": 0.1647,
+      "2022-2023": 0.378
+     }
+    },
+    "0.7375": {
+     "composite": 0.5324,
+     "pooled_rho": 0.275,
+     "within_tier_wm": 0.1085,
+     "t45": 0.1489,
+     "era": {
+      "2019-2021": 0.1641,
+      "2022-2023": 0.3783
+     }
+    },
+    "0.7500": {
+     "composite": 0.5303,
+     "pooled_rho": 0.2751,
+     "within_tier_wm": 0.1084,
+     "t45": 0.1468,
+     "era": {
+      "2019-2021": 0.1636,
+      "2022-2023": 0.3784
+     }
+    },
+    "0.7625": {
+     "composite": 0.5218,
+     "pooled_rho": 0.2752,
+     "within_tier_wm": 0.1068,
+     "t45": 0.1398,
+     "era": {
+      "2019-2021": 0.1637,
+      "2022-2023": 0.3788
+     }
+    },
+    "0.7750": {
+     "composite": 0.5162,
+     "pooled_rho": 0.2752,
+     "within_tier_wm": 0.1061,
+     "t45": 0.1349,
+     "era": {
+      "2019-2021": 0.1634,
+      "2022-2023": 0.3788
+     }
+    },
+    "0.7875": {
+     "composite": 0.5131,
+     "pooled_rho": 0.2752,
+     "within_tier_wm": 0.1056,
+     "t45": 0.1323,
+     "era": {
+      "2019-2021": 0.1627,
+      "2022-2023": 0.3786
+     }
+    },
+    "0.8000": {
+     "composite": 0.5126,
+     "pooled_rho": 0.2755,
+     "within_tier_wm": 0.1058,
+     "t45": 0.1313,
+     "era": {
+      "2019-2021": 0.1626,
+      "2022-2023": 0.3793
+     }
+    }
+   }
+  }
+ },
+ "verdict": "NO SHIP -- confirms the live lambda",
+ "loss_ledger": {
+  "verdict": "NO SHIP",
+  "summary": "No lambda re-selection ships. PIT confirms the live 0.54 at its interior composite optimum. HIT clears the four mechanical clauses but ONLY at the sweep boundary (0.80) -- a censored maximizer, not an identified optimum -- so it fails the interior-optimum guard and is FLAGGED, not shipped.",
+  "failed_clauses_by_side": {
+   "hit": [
+    "c5_interior_optimum"
+   ],
+   "pit": [
+    "c1_composite_gain",
+    "c4_bootstrap"
+   ]
+  },
+  "note": "rank_calibration argmaxes the composite inside its registered [0.50,0.70] band. pit's composite peaks interior (~0.54-0.55), so the live value is confirmed. hit's composite is MONOTONE INCREASING to the 0.90 clamp on this matrix vintage (see wide_diagnostic_curve_to_clamp): the old adversarial-bootstrap rationale for the 0.70 cap (within-tier/fringe peaking ~0.65) no longer holds here, so the cap is now BINDING for hitters and holds hit lambda below its composite optimum."
+ },
+ "flagged_finding_hitter_lambda_cap": {
+  "severity": "high -- owner decision required before any change",
+  "finding": "On the current matrix vintage the hitter blend composite (pooled + within-tier + FV45) increases monotonically in lambda all the way to the 0.90 clamp, with NO interior optimum. The live 0.70 (top of the rank_calibration band) is therefore below the composite optimum.",
+  "hit_live_lambda": 0.7,
+  "hit_wide_curve_argmax_lambda": 0.9,
+  "hit_mechanical_clauses": {
+   "c1_composite_gain": true,
+   "c2_pooled_no_drop": true,
+   "c3_era_no_drop": true,
+   "c4_bootstrap": true,
+   "c5_interior_optimum": false
+  },
+  "why_not_auto_shipped": "The M2 swept-best (0.80) is the grid ceiling, a censored boundary solution, not an identified optimum; auto-shipping it would raise the deliberately-registered rank_calibration [0.50,0.70] robustness cap as an unvetted side effect of a confirmation lab. That cap was set with its own adversarial bootstrap and should be re-litigated the same way.",
+  "recommendation": "Run a DEDICATED pre-registered experiment to raise/remove the hitter lambda cap: confirm the monotonicity is stable across fold years (not a single-vintage artifact), verify the pooled gain's CI stays positive at high lambda (the original concern), and pick a principled ceiling. Do NOT ship a boundary value."
+ }
+}

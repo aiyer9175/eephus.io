@@ -1,0 +1,91 @@
+{
+  "_comment": [
+    "Rule-versioned CBA data - the ONLY source fa_cba.py reads. Every record is",
+    "dated and sourced; computations resolve rules by date, never hardcode them.",
+    "CURATION NOTE: values transcribed from the cited public sources and flagged",
+    "for owner spot-check at the Stage-1 checkpoint (verify_status per record).",
+    "The 2022 CBA expires 2026-12-01 - mid-market for the 2026-27 class. Rules",
+    "for dates past expiry resolve with carry_forward=true, which the UI must",
+    "surface as an explicit uncertainty banner (thresholds for 2027 unknown;",
+    "market-timing risk per the 2021-22 lockout precedent)."
+  ],
+  "schema_version": 1,
+  "cba_regimes": [
+    {
+      "regime": "cba_2017",
+      "effective_from": "2016-12-01",
+      "effective_to": "2021-12-01",
+      "source": "https://www.mlb.com/glossary/transactions/qualifying-offer",
+      "verify_status": "curated-unverified"
+    },
+    {
+      "regime": "cba_2022",
+      "effective_from": "2022-03-10",
+      "effective_to": "2026-12-01",
+      "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax",
+      "verify_status": "curated-unverified",
+      "notes": "2021-12-02..2022-03-10 = lockout (no transactions); the 2021-22 winter market split around it."
+    }
+  ],
+  "cbt_thresholds": [
+    { "season": 2017, "threshold_usd": 195000000, "regime": "cba_2017", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2018, "threshold_usd": 197000000, "regime": "cba_2017", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2019, "threshold_usd": 206000000, "regime": "cba_2017", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2020, "threshold_usd": 208000000, "regime": "cba_2017", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2021, "threshold_usd": 210000000, "regime": "cba_2017", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2022, "threshold_usd": 230000000, "regime": "cba_2022", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2023, "threshold_usd": 233000000, "regime": "cba_2022", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2024, "threshold_usd": 237000000, "regime": "cba_2022", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2025, "threshold_usd": 241000000, "regime": "cba_2022", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2026, "threshold_usd": 244000000, "regime": "cba_2022", "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax", "verify_status": "curated-unverified" },
+    { "season": 2027, "threshold_usd": 244000000, "regime": "post_cba_2022_unknown", "carry_forward": true, "source": "carry-forward of 2026 value; 2022 CBA expires 2026-12-01", "verify_status": "explicitly-unknown" }
+  ],
+  "cbt_surcharge_tiers_usd": {
+    "regime": "cba_2022",
+    "tiers_above_threshold": [20000000, 40000000, 60000000],
+    "notes": "Third surcharge tier added by the 2022 CBA. Clubs past the second surcharge tier also have their top draft pick moved back 10 places (top-6 picks protected).",
+    "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax",
+    "verify_status": "curated-unverified"
+  },
+  "cbt_tax_rates": {
+    "regime": "cba_2022",
+    "base_rate_by_payor_year": { "1": 0.20, "2": 0.30, "3+": 0.50 },
+    "surcharge_rates": { "tier1": 0.12, "tier2_first": 0.425, "tier2_repeat": 0.45, "tier3": 0.60 },
+    "source": "https://www.mlb.com/glossary/transactions/competitive-balance-tax",
+    "verify_status": "curated-unverified"
+  },
+  "qo_values": [
+    { "winter": "2014-15", "class_year": 2015, "value_usd": 15300000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2015-16", "class_year": 2016, "value_usd": 15800000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2016-17", "class_year": 2017, "value_usd": 17200000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2017-18", "class_year": 2018, "value_usd": 17400000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2018-19", "class_year": 2019, "value_usd": 17900000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2019-20", "class_year": 2020, "value_usd": 17800000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2020-21", "class_year": 2021, "value_usd": 18900000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2021-22", "class_year": 2022, "value_usd": 18400000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2022-23", "class_year": 2023, "value_usd": 19650000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2023-24", "class_year": 2024, "value_usd": 20325000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2024-25", "class_year": 2025, "value_usd": 21050000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "winter": "2025-26", "class_year": 2026, "value_usd": 22025000, "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" }
+  ],
+  "qo_compensation": [
+    {
+      "regime": "cba_2017_and_2022",
+      "effective_from": "2016-12-01",
+      "effective_to": "2026-12-01",
+      "notes": "Signing-team forfeiture and losing-team compensation, tiered by payor / revenue-sharing status. Unchanged in substance from the 2017 CBA through the 2022 CBA.",
+      "signing_team_forfeits": {
+        "cbt_payor": { "picks": ["2nd-highest", "5th-highest"], "intl_pool_usd": 1000000 },
+        "revenue_sharing_recipient": { "picks": ["3rd-highest"], "intl_pool_usd": 0 },
+        "other": { "picks": ["2nd-highest"], "intl_pool_usd": 500000 }
+      },
+      "losing_team_receives": {
+        "revenue_sharing_recipient_and_deal_50m_plus": "pick after round 1",
+        "cbt_payor": "pick after round 4",
+        "other": "pick after competitive balance round B"
+      },
+      "source": "https://www.mlb.com/glossary/transactions/qualifying-offer",
+      "verify_status": "curated-unverified"
+    }
+  ]
+}

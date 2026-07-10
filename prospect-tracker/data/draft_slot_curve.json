@@ -1,0 +1,328 @@
+{
+ "generated_at": "2026-06-11",
+ "draft_years": [
+  2005,
+  2018
+ ],
+ "career_fit_years": [
+  2005,
+  2014
+ ],
+ "accounting": {
+  "picks_seen": 7000,
+  "unsigned_excluded": 404,
+  "scored": 6596
+ },
+ "conventions": {
+  "war_basis": "bWAR (war_daily, bat+pitch summed), the platform basis",
+  "unsigned": "excluded when the person reappears in a later draft",
+  "never_mlb": "scores 0 (the expectation includes busts)",
+  "fit": "weighted decreasing isotonic (PAVA) on per-pick means, picks 1-500",
+  "holdout": "first-8y curve (fit 2005-14) vs realized first-8y by bucket on 2015-18 \u2014 NB incumbent steps are CAREER-basis, so its holdout column is a scale reference, not a like-for-like error",
+  "holdout_confounds": "DISCLOSED: windows count from MLB DEBUT, so 2015-18 cohorts are right-censored (a 2018 pick debuting 2022 has only 4 observed seasons by 2025) and every window contains COVID-2020 \u2014 the holdout reads structurally low and is a diagnostic, NOT the ship criterion"
+ },
+ "ship_decision": {
+  "date": "2026-06-11",
+  "decision": "SHIP the fitted FIRST-6-SEASON curve into storage._pick_slot_expected_war (the org draft-value leaf compares graduates' career-to-date WAR, almost always <= 6 MLB seasons) and into the QO pick tax (fa_market: expected first-6 path through the service-time surplus machinery, eta-lagged 3y). The hand-set table stays as artifact-absent fallback.",
+  "basis": "the incumbent was never realized-anchored and undershoots resolved 2005-14 career means ~3x at every slot; monotonicity is enforced by the fit; the holdout is censoring-confounded (see conventions) and not used as the criterion"
+ },
+ "buckets_upper_bounds": [
+  1,
+  5,
+  10,
+  20,
+  35,
+  50,
+  75,
+  100,
+  150,
+  200,
+  300,
+  500
+ ],
+ "realized_career_by_bucket_2005_14": {
+  "1": {
+   "n": 9,
+   "mean_war": 28.369
+  },
+  "5": {
+   "n": 40,
+   "mean_war": 14.134
+  },
+  "10": {
+   "n": 46,
+   "mean_war": 12.915
+  },
+  "20": {
+   "n": 98,
+   "mean_war": 7.502
+  },
+  "35": {
+   "n": 145,
+   "mean_war": 4.218
+  },
+  "50": {
+   "n": 147,
+   "mean_war": 3.259
+  },
+  "75": {
+   "n": 243,
+   "mean_war": 1.988
+  },
+  "100": {
+   "n": 240,
+   "mean_war": 1.854
+  },
+  "150": {
+   "n": 476,
+   "mean_war": 1.207
+  },
+  "200": {
+   "n": 473,
+   "mean_war": 0.926
+  },
+  "300": {
+   "n": 941,
+   "mean_war": 0.911
+  },
+  "500": {
+   "n": 1770,
+   "mean_war": 0.291
+  }
+ },
+ "incumbent_step_table": {
+  "1": 9.0,
+  "5": 6.0,
+  "10": 4.0,
+  "20": 2.5,
+  "35": 1.8,
+  "50": 1.2,
+  "75": 0.8,
+  "100": 0.55,
+  "150": 0.35,
+  "200": 0.22,
+  "300": 0.13,
+  "500": 0.07,
+  "10000": 0.03
+ },
+ "fitted_career_by_bucket": {
+  "1": 28.369,
+  "5": 15.3,
+  "10": 13.239,
+  "20": 7.466,
+  "35": 4.128,
+  "50": 3.167,
+  "75": 2.317,
+  "100": 1.574,
+  "150": 1.213,
+  "200": 1.147,
+  "300": 0.758,
+  "500": 0.282
+ },
+ "fitted_first6_by_bucket": {
+  "1": 13.44,
+  "5": 8.492,
+  "10": 7.622,
+  "20": 4.545,
+  "35": 2.573,
+  "50": 1.976,
+  "75": 1.482,
+  "100": 1.073,
+  "150": 0.776,
+  "200": 0.65,
+  "300": 0.553,
+  "500": 0.203
+ },
+ "fitted_first8_by_bucket": {
+  "1": 19.756,
+  "5": 11.284,
+  "10": 9.603,
+  "20": 5.843,
+  "35": 3.298,
+  "50": 2.57,
+  "75": 1.888,
+  "100": 1.365,
+  "150": 1.0,
+  "200": 0.859,
+  "300": 0.676,
+  "500": 0.244
+ },
+ "holdout_2015_18_first8": {
+  "1": {
+   "realized_first8": 7.268,
+   "n": 4,
+   "fitted_first8_2005_14": 19.756,
+   "incumbent_career_step": 9.0
+  },
+  "5": {
+   "realized_first8": 6.921,
+   "n": 16,
+   "fitted_first8_2005_14": 11.284,
+   "incumbent_career_step": 6.0
+  },
+  "10": {
+   "realized_first8": 2.823,
+   "n": 20,
+   "fitted_first8_2005_14": 9.603,
+   "incumbent_career_step": 4.0
+  },
+  "20": {
+   "realized_first8": 2.859,
+   "n": 40,
+   "fitted_first8_2005_14": 5.843,
+   "incumbent_career_step": 2.5
+  },
+  "35": {
+   "realized_first8": 2.608,
+   "n": 58,
+   "fitted_first8_2005_14": 3.298,
+   "incumbent_career_step": 1.8
+  },
+  "50": {
+   "realized_first8": 1.06,
+   "n": 60,
+   "fitted_first8_2005_14": 2.57,
+   "incumbent_career_step": 1.2
+  },
+  "75": {
+   "realized_first8": 1.246,
+   "n": 98,
+   "fitted_first8_2005_14": 1.888,
+   "incumbent_career_step": 0.8
+  },
+  "100": {
+   "realized_first8": 1.337,
+   "n": 100,
+   "fitted_first8_2005_14": 1.365,
+   "incumbent_career_step": 0.55
+  },
+  "150": {
+   "realized_first8": 0.69,
+   "n": 200,
+   "fitted_first8_2005_14": 1.0,
+   "incumbent_career_step": 0.35
+  },
+  "200": {
+   "realized_first8": 0.53,
+   "n": 200,
+   "fitted_first8_2005_14": 0.859,
+   "incumbent_career_step": 0.22
+  },
+  "300": {
+   "realized_first8": 0.364,
+   "n": 398,
+   "fitted_first8_2005_14": 0.676,
+   "incumbent_career_step": 0.13
+  },
+  "500": {
+   "realized_first8": 0.198,
+   "n": 774,
+   "fitted_first8_2005_14": 0.244,
+   "incumbent_career_step": 0.07
+  }
+ },
+ "holdout_mae": {
+  "fitted_first8": 2.54,
+  "incumbent_career_steps_as_first8_proxy": 0.615
+ },
+ "career_step_curve": [
+  [
+   1,
+   28.369
+  ],
+  [
+   5,
+   15.3
+  ],
+  [
+   10,
+   13.239
+  ],
+  [
+   20,
+   7.466
+  ],
+  [
+   35,
+   4.128
+  ],
+  [
+   50,
+   3.167
+  ],
+  [
+   75,
+   2.317
+  ],
+  [
+   100,
+   1.574
+  ],
+  [
+   150,
+   1.213
+  ],
+  [
+   200,
+   1.147
+  ],
+  [
+   300,
+   0.758
+  ],
+  [
+   500,
+   0.282
+  ]
+ ],
+ "first6_step_curve": [
+  [
+   1,
+   13.44
+  ],
+  [
+   5,
+   8.492
+  ],
+  [
+   10,
+   7.622
+  ],
+  [
+   20,
+   4.545
+  ],
+  [
+   35,
+   2.573
+  ],
+  [
+   50,
+   1.976
+  ],
+  [
+   75,
+   1.482
+  ],
+  [
+   100,
+   1.073
+  ],
+  [
+   150,
+   0.776
+  ],
+  [
+   200,
+   0.65
+  ],
+  [
+   300,
+   0.553
+  ],
+  [
+   500,
+   0.203
+  ]
+ ]
+}

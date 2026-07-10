@@ -1,0 +1,31 @@
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# large local data
+*.csv
+*.parquet
+*.sqlite
+*.db
+# prospect-tracker carve-outs: manual_rankings.csv is the source of truth
+!prospect-tracker/manual_rankings.csv
+
+# generated outputs
+bat_plus_outputs/
+hitter_model_outputs/
+stuff_plus_outputs/
+# CollegeSavant local pipeline files
+.python-packages/
+__pycache__/
+logos/
+*.png
+*.pkl
+*.csv
+server.*.log
+xrv_models_vaa/
+xwoba_model_metrics.json
+ncaa_statsapi_2026_summary.json

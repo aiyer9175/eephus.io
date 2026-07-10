@@ -1,0 +1,50 @@
+{
+ "generated_at": "2026-07-07",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260702,
+ "conventions": {
+  "predictor_year": "year Y qualified (TBF>=100)",
+  "target": "-RA9 in year Y+1 (TBF>=60)",
+  "excluded": "2020 (60-game COVID season)"
+ },
+ "experiment": "X-R1",
+ "model": "rem_plus (SwStr xK skill core candidate)",
+ "hypothesis": "shrink the K component toward a SwStr-implied expected-K prior (faster-stabilizing, player-specific) instead of the pool mean",
+ "n_forward_pairs": 1033,
+ "incumbent_forward_rho_vs_RA9_next": 0.2254,
+ "candidate_forward_rho_vs_RA9_next": 0.2293,
+ "gap_ci_candidate_minus_incumbent": {
+  "mean": 0.0038,
+  "lo95": -0.0054,
+  "hi95": 0.0131
+ },
+ "gate": {
+  "bar": "candidate rho > incumbent AND bootstrap gap lo95 >= 0",
+  "incumbent_published_rho": 0.2363,
+  "pass": false
+ },
+ "verdict": "NO SHIP (loss ledger): the SwStr xK core does not beat the incumbent FIP core on forward RA9 out of sample within the pre-registered bootstrap tolerance. The incumbent shrink-to-pool-mean K core stays. SwStr% still rides as a displayed peripheral. REM+ published numbers unchanged.",
+ "loss_ledger": {
+  "hypothesis": "SwStr-implied xK prior beats pool-mean K shrinkage on forward RA9",
+  "result": {
+   "incumbent_rho": 0.2254,
+   "candidate_rho": 0.2293,
+   "gap_ci": {
+    "mean": 0.0038,
+    "lo95": -0.0054,
+    "hi95": 0.0131
+   }
+  },
+  "reading": "the incumbent already regresses K% by sample size; at reliever volumes the observed K% is a strong enough K estimate that a SwStr-implied prior does not add out-of-sample forward signal",
+  "do_not_retry_without": "a pitch-level CSW% / xwOBAcon feed or a multi-year xK prior that materially beats single-season K%"
+ },
+ "runtime_seconds": 185.4
+}

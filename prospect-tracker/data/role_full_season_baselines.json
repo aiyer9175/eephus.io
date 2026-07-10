@@ -1,0 +1,9 @@
+{
+  "_note": "Role-typical full-season workload targets used by the WAG rate-to-volume conversion in storage.py:_grad_wag. Values are seasonal medians derived from FanGraphs' qualified MLB leaderboards (2023-2025). Refresh annually by re-running the offline aggregator (or hand-update against published season summaries). Hitter PA matches the MLB qualifier threshold (3.1 × 162 = 502 minimum, ~600 typical for qualified regulars). Pitcher IP targets are role medians: SP ~165-185 IP, closers ~60 IP across 60+ apps, multi-inning relievers ~65 IP, single-inning relievers ~50 IP. WAG = full_season_war (rate * target) - fv_implied_war.",
+  "computed_through_season": 2025,
+  "hitter_pa_target": 612,
+  "sp_ip_target": 175,
+  "mirp_ip_target": 65,
+  "sirp_ip_target": 50,
+  "cl_ip_target": 60
+}

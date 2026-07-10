@@ -1,0 +1,32 @@
+{
+ "enabled": true,
+ "version": "isotonic-real-v3-todaypriced-2026-06-12",
+ "method": "isotonic",
+ "linear": {
+  "slope": 1.0,
+  "intercept_mm": 0.0
+ },
+ "isotonic": {
+  "x_mm": [
+   1.75,
+   5.31,
+   8.98,
+   9.33,
+   15.33,
+   22.55,
+   27.48,
+   48.43
+  ],
+  "y_mm": [
+   1.44,
+   2.51,
+   4.66,
+   6.59,
+   14.99,
+   17.87,
+   23.99,
+   50.94
+  ]
+ },
+ "fit_provenance": "REAL-data fit v3 BINNED + TODAY-PRICED targets (realized WAR valued at the standing flat $/WAR; the calibration corrects the WAR layer only) (count-weighted PAVA on equal-count bin means - per-player PAVA let exact-zero busts force a degenerate $0 bottom block; surplus_backtest_real resolved pool, 2017-2019 listings, n=2239): raw slope 1.02 / bias -2.9M corrected to held-out slope 0.97 / bias -1.13M under leave-one-year-out CV (see data/surplus_backtest_real.json cross_validated_correction). Breakpoints downsampled to 8 knots."
+}

@@ -1,0 +1,41 @@
+{
+  "_comment": [
+    "Qualifying-offer ACCEPTANCES per winter (the rare branch — most QOs are",
+    "declined; per-player offered/declined flags come from the ingested Spotrac",
+    "class rows, which mark QO inline, so this file only curates the accept",
+    "list + counts). Every record dated + sourced; verify_status flags what the",
+    "owner should spot-check at the Stage-1 checkpoint. class_year = the season",
+    "the contract covers (winter 2023-24 -> class_year 2024)."
+  ],
+  "schema_version": 1,
+  "acceptances": [
+    { "class_year": 2016, "player_name": "Colby Rasmus", "team": "HOU", "decision_date": "2015-11-13", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2016, "player_name": "Matt Wieters", "team": "BAL", "decision_date": "2015-11-13", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2016, "player_name": "Brett Anderson", "team": "LAD", "decision_date": "2015-11-13", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2017, "player_name": "Neil Walker", "team": "NYM", "decision_date": "2016-11-14", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2017, "player_name": "Jeremy Hellickson", "team": "PHI", "decision_date": "2016-11-14", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2019, "player_name": "Hyun-Jin Ryu", "team": "LAD", "decision_date": "2018-11-12", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2020, "player_name": "Jose Abreu", "team": "CHW", "decision_date": "2019-11-14", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2020, "player_name": "Jake Odorizzi", "team": "MIN", "decision_date": "2019-11-14", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2021, "player_name": "Kevin Gausman", "team": "SFG", "decision_date": "2020-11-11", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2021, "player_name": "Marcus Stroman", "team": "NYM", "decision_date": "2020-11-11", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2022, "player_name": "Brandon Belt", "team": "SFG", "decision_date": "2021-11-17", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2023, "player_name": "Joc Pederson", "team": "SFG", "decision_date": "2022-11-15", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2023, "player_name": "Martin Perez", "team": "TEX", "decision_date": "2022-11-15", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified" },
+    { "class_year": 2025, "player_name": "Nick Pivetta", "team": "BOS", "decision_date": "2024-11-19", "source": "https://www.mlb.com/glossary/transactions/qualifying-offer", "verify_status": "curated-unverified", "notes": "verify — listed from memory of the 2024-25 winter; replace with sourced record" }
+  ],
+  "offered_counts_by_winter": [
+    { "class_year": 2015, "offered": 12, "verify_status": "curated-unverified" },
+    { "class_year": 2016, "offered": 20, "verify_status": "curated-unverified" },
+    { "class_year": 2017, "offered": 10, "verify_status": "curated-unverified" },
+    { "class_year": 2018, "offered": 9,  "verify_status": "curated-unverified" },
+    { "class_year": 2019, "offered": 7,  "verify_status": "curated-unverified" },
+    { "class_year": 2020, "offered": 10, "verify_status": "curated-unverified" },
+    { "class_year": 2021, "offered": 6,  "verify_status": "curated-unverified" },
+    { "class_year": 2022, "offered": 14, "verify_status": "curated-unverified" },
+    { "class_year": 2023, "offered": 14, "verify_status": "curated-unverified" },
+    { "class_year": 2024, "offered": 7,  "verify_status": "curated-unverified" },
+    { "class_year": 2025, "offered": 13, "verify_status": "curated-unverified" },
+    { "class_year": 2026, "offered": 13, "verify_status": "curated-unverified" }
+  ]
+}

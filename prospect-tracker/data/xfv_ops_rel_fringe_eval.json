@@ -1,0 +1,104 @@
+{
+ "generated_at": "2026-07-07",
+ "experiment": "M5: FV-45 fringe ops_rel feature (one attempt)",
+ "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M5",
+ "method": {
+  "change": "add ops_rel to the hitter lean set (additive), shipped forward-chained eFV blend eval (efv_lab_runner), blend at the live lambda",
+  "primary_target": "censored (resolved reported as sensitivity)",
+  "one_attempt": true,
+  "declared_before_first_run": true
+ },
+ "gate_thresholds": {
+  "t45_at_least": 0.015,
+  "pooled_floor": -0.003,
+  "within_tier_floor": -0.003,
+  "era_drop_no_more_than": 0.01
+ },
+ "results_by_target": {
+  "censored": {
+   "baseline": {
+    "spearman": 0.3523,
+    "within_tier_wm": 0.2066,
+    "t45": 0.1202,
+    "era": {
+     "2019-2021": 0.2858,
+     "2022-2023": 0.3852
+    },
+    "n": 399
+   },
+   "treatment": {
+    "spearman": 0.3503,
+    "within_tier_wm": 0.204,
+    "t45": 0.1439,
+    "era": {
+     "2019-2021": 0.2798,
+     "2022-2023": 0.3837
+    },
+    "n": 399
+   },
+   "delta": {
+    "spearman": -0.002,
+    "within_tier_wm": -0.0026,
+    "t45": 0.0237,
+    "era": {
+     "2019-2021": -0.006,
+     "2022-2023": -0.0015
+    }
+   }
+  },
+  "resolved": {
+   "baseline": {
+    "spearman": 0.3527,
+    "within_tier_wm": 0.2093,
+    "t45": 0.0754,
+    "era": {
+     "2019-2021": 0.2921,
+     "2022-2023": 0.3921
+    },
+    "n": 399
+   },
+   "treatment": {
+    "spearman": 0.3516,
+    "within_tier_wm": 0.2041,
+    "t45": 0.0942,
+    "era": {
+     "2019-2021": 0.2865,
+     "2022-2023": 0.3914
+    },
+    "n": 399
+   },
+   "delta": {
+    "spearman": -0.0011,
+    "within_tier_wm": -0.0052,
+    "t45": 0.0188,
+    "era": {
+     "2019-2021": -0.0056,
+     "2022-2023": -0.0007
+    }
+   }
+  }
+ },
+ "gate": {
+  "condition_1_t45": {
+   "t45_delta": 0.0237,
+   "threshold": 0.015,
+   "pass": true
+  },
+  "condition_2_pooled": {
+   "pooled_delta": -0.002,
+   "threshold": -0.003,
+   "pass": true
+  },
+  "condition_3_within_tier": {
+   "within_tier_wm_delta": -0.0026,
+   "threshold": -0.003,
+   "pass": true
+  },
+  "condition_4_era": {
+   "era_failures": {},
+   "pass": true
+  },
+  "pass": true
+ },
+ "verdict": "SHIP"
+}

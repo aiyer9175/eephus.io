@@ -1,0 +1,437 @@
+# Copyright (C) 2026 Noah J. Dengler (@ARKNDJL) - All Rights Reserved
+# Unauthorized copying of this file, via any medium is strictly prohibited
+# Proprietary and confidential
+# Written by Noah J. Dengler (@ARKNDJL), 2026
+
+"""HEM+ (Hitter Evaluation Metric +) - the model core.
+
+HEM+ is the hitter analog of REM+/SEM+ (see rem_plus.py / sem_plus.py): a
+ratio-to-league RATE index (100 = the average qualified hitter, 110 = 10% more
+offense per plate appearance), the wRC+/wOBA family, NOT a z-score. The headline
+number is PURE OFFENSIVE RATE SKILL: a sample-shrunk, hitter-pool-anchored wOBA
+built from the events that carry a hitter's run creation (unintentional walks,
+HBP, singles, doubles, triples, home runs) with the FanGraphs wOBA linear
+weights, then re-normalized over hitters so 100 is the average hitter.
+
+Volume (plate appearances), baserunning (SB/CS), and defense are real value but
+they are NOT offensive-rate skill, so they ride SEPARATE context columns and
+never move the HEM+ number - the same two-number discipline REM+ uses for
+leverage and SEM+ for durability.
+
+Each wOBA component is regressed toward the league pool by its own sample-
+reliability constant (walks stabilize fast, extra-base hits slowly), so a small
+sample does not blow up the number. HEM+ = 100 * shrunk_player_wOBA /
+pool_mean_wOBA, with the pool anchor set so the sample-weighted pool average
+scores exactly 100 by construction.
+
+This module is PURE (no network, no I/O). It reuses the empirical-Bayes shrink
+recipe from rem_plus. hitter_export.py assembles inputs (StatsAPI hitting
+statlines) and writes the sidecar; tools/hem_plus_lab.py is the forward-chained
+backtest (HEM+(Y) vs next-year wOBA, must beat raw wOBA / OPS / AVG). Every
+threshold here is a module constant so the backtest can tune it.
+"""
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import Iterable, Optional
+
+# Reuse the validated empirical-Bayes shrink recipe from the reliever model.
+from rem_plus import _num, _safe_div, _shrink, _round
+
+# ---- wOBA linear weights (FanGraphs family; mirror fa_config assembly.woba_weights) --
+# Event run values relative to an out. Held as module constants so the model stays
+# pure; hitter_export may override from fa_config for a season-specific set.
+W_UBB = 0.69     # unintentional walk
+W_HBP = 0.72     # hit by pitch
+W_1B = 0.89      # single
+W_2B = 1.27      # double
+W_3B = 1.62      # triple
+W_HR = 2.10      # home run
+
+# ---- per-component sample-reliability constants (wOBA-denominator PAs) --------- #
+# The number of wOBA-PA at which each rate is ~50% signal (Pizza-Cutter / Carleton
+# stabilization points). Walks and HBP stabilize fast; extra-base hits very slowly,
+# so 2B/3B are pulled hard toward the pool (they are near-noise in a partial season).
+K_UBB = 120.0
+K_HBP = 240.0
+K_1B = 290.0
+K_2B = 1000.0
+K_3B = 1600.0
+K_HR = 170.0
+
+# ---- hitter population + qualification --------------------------------------- #
+POOL_MIN_PA = 50.0        # minimum PA to CONTRIBUTE to the hitter anchor
+QUALIFY_MIN_PA = 200.0    # leaderboard-qualified: a regular's sample
+
+# ---- HEM+ display spread -----------------------------------------------------
+# The bare ratio (100 * wOBA / league_wOBA) has a slope of ~100/0.323 ~= 310
+# points per unit wOBA, about 2.28x FLATTER than the wRC+/OPS+ DEVIATION scale
+# users mentally compare against - so every hitter (and every team Offense+) sat
+# compressed near 100 and the league looked near-identical. HEM_SPREAD_GAIN
+# rescales the deviation from 100 to the wRC+ convention. It is a MONOTONE
+# transform of the score, so it preserves rank EXACTLY: the Spearman-rank
+# validation (X-H1 gap-vs-raw-wOBA, X-H2 3yr) is unchanged (confirmed offline).
+# 100 stays "league average"; only the spread around it widens.
+HEM_SPREAD_GAIN = 2.28
+
+# ---- HEM+ tier bands (offensive-rate tiers by HEM+, on the widened scale) ----- #
+TIER_ORDER = ["Elite", "Above-avg", "Average", "Below-avg"]
+HEM_ELITE = 135.0
+HEM_ABOVE = 112.0
+HEM_AVG = 90.0
+
+
+@dataclass
+class Hitter:
+    """One hitter-season. Counts are season totals; rates derived in
+    derive_rates(). Singles are back-solved (H - 2B - 3B - HR)."""
+    key: str
+    name: str = ""
+    team: str = ""
+    mlbam: Optional[int] = None
+    pa: float = 0.0
+    ab: float = 0.0
+    h: float = 0.0
+    doub: float = 0.0
+    trip: float = 0.0
+    hr: float = 0.0
+    bb: float = 0.0
+    ibb: float = 0.0
+    hbp: float = 0.0
+    sf: float = 0.0
+    so: float = 0.0
+    sb: float = 0.0
+    cs: float = 0.0
+    rbi: float = 0.0
+    r: float = 0.0
+    bats: Optional[str] = None   # 'L' | 'R' | 'S' (batSide), for lineup construction
+    # computed
+    rates: dict = field(default_factory=dict)
+    woba_skill: Optional[float] = None
+    woba_raw: Optional[float] = None
+    hem_plus: Optional[int] = None
+    hem_plus_raw: Optional[float] = None
+    tier: str = ""
+    qualified: bool = False
+
+
+def _woba_denom(hi: "Hitter") -> float:
+    """The wOBA denominator: AB + BB - IBB + SF + HBP (the wOBA 'plate
+    appearance', excluding IBB/sac bunts). Doubles as the shrink sample size."""
+    return max(0.0, (hi.ab or 0.0) + (hi.bb or 0.0) - (hi.ibb or 0.0)
+              + (hi.sf or 0.0) + (hi.hbp or 0.0))
+
+
+def _singles(hi: "Hitter") -> float:
+    return max(0.0, (hi.h or 0.0) - (hi.doub or 0.0) - (hi.trip or 0.0) - (hi.hr or 0.0))
+
+
+def derive_rates(hi: "Hitter") -> None:
+    d = _woba_denom(hi)
+    ubb = max(0.0, (hi.bb or 0.0) - (hi.ibb or 0.0))
+    s1 = _singles(hi)
+    pa = hi.pa or 0.0
+    ab = hi.ab or 0.0
+    tb = s1 + 2.0 * (hi.doub or 0.0) + 3.0 * (hi.trip or 0.0) + 4.0 * (hi.hr or 0.0)
+    obp_den = ab + (hi.bb or 0.0) + (hi.hbp or 0.0) + (hi.sf or 0.0)
+    bip = ab - (hi.so or 0.0) - (hi.hr or 0.0) + (hi.sf or 0.0)   # BABIP denominator
+    hi.rates = {
+        # wOBA component rates (per wOBA-denominator PA) - the shrink targets
+        "ubb_rate": _safe_div(ubb, d),
+        "hbp_rate": _safe_div(hi.hbp, d),
+        "s1_rate": _safe_div(s1, d),
+        "s2_rate": _safe_div(hi.doub, d),
+        "s3_rate": _safe_div(hi.trip, d),
+        "hr_rate": _safe_div(hi.hr, d),
+        # context rates (never enter the skill number)
+        "avg": _safe_div(hi.h, ab),
+        "obp": _safe_div((hi.h or 0.0) + (hi.bb or 0.0) + (hi.hbp or 0.0), obp_den),
+        "slg": _safe_div(tb, ab),
+        "iso": _safe_div(tb - (hi.h or 0.0), ab),
+        "bb_pct": _safe_div(hi.bb, pa),
+        "k_pct": _safe_div(hi.so, pa),
+        "babip": _safe_div((hi.h or 0.0) - (hi.hr or 0.0), bip),
+        "sb_net": (hi.sb or 0.0) - (hi.cs or 0.0),
+        "woba_denom": d,
+    }
+    op = hi.rates["obp"]
+    sl = hi.rates["slg"]
+    hi.rates["ops"] = (op + sl) if (op is not None and sl is not None) else None
+
+
+def _raw_woba(hi: "Hitter") -> Optional[float]:
+    """Unshrunk wOBA from the actual event counts (for display + the backtest
+    comparator)."""
+    d = _woba_denom(hi)
+    if d <= 0:
+        return None
+    num = (W_UBB * max(0.0, (hi.bb or 0.0) - (hi.ibb or 0.0)) + W_HBP * (hi.hbp or 0.0)
+           + W_1B * _singles(hi) + W_2B * (hi.doub or 0.0) + W_3B * (hi.trip or 0.0)
+           + W_HR * (hi.hr or 0.0))
+    return num / d
+
+
+@dataclass
+class Pool:
+    n: int = 0
+    mean_ubb: float = 0.075
+    mean_hbp: float = 0.010
+    mean_1b: float = 0.150
+    mean_2b: float = 0.045
+    mean_3b: float = 0.004
+    mean_hr: float = 0.033
+    pool_woba: float = 0.315
+    mean_woba: float = 0.315     # sample-weighted mean of the SHRUNK skill -> anchors 100
+
+
+def build_pool(hitters: Iterable["Hitter"]) -> Pool:
+    """League-HITTER component means (over pool-contributing bats) + the shrunk-
+    wOBA anchor. The anchor (mean_woba) is the wOBA-denominator-weighted mean of
+    each hitter's SHRUNK wOBA, so the pool average scores exactly 100."""
+    pool = [h for h in hitters if _woba_denom(h) >= POOL_MIN_PA]
+    if not pool:
+        return Pool()
+    for h in pool:
+        if not h.rates:
+            derive_rates(h)
+    dtot = sum(_woba_denom(h) for h in pool)
+    if dtot <= 0:
+        return Pool()
+
+    def _wmean(key: str) -> float:
+        num = sum((h.rates.get(key) or 0.0) * _woba_denom(h) for h in pool)
+        return num / dtot
+
+    p = Pool()
+    p.n = len(pool)
+    p.mean_ubb = _wmean("ubb_rate")
+    p.mean_hbp = _wmean("hbp_rate")
+    p.mean_1b = _wmean("s1_rate")
+    p.mean_2b = _wmean("s2_rate")
+    p.mean_3b = _wmean("s3_rate")
+    p.mean_hr = _wmean("hr_rate")
+    p.pool_woba = (W_UBB * p.mean_ubb + W_HBP * p.mean_hbp + W_1B * p.mean_1b
+                   + W_2B * p.mean_2b + W_3B * p.mean_3b + W_HR * p.mean_hr)
+    num = den = 0.0
+    for h in pool:
+        w = woba_skill(h, p)
+        if w is not None:
+            num += w * _woba_denom(h)
+            den += _woba_denom(h)
+    p.mean_woba = (num / den) if den else p.pool_woba
+    return p
+
+
+def woba_skill(hi: "Hitter", pool: Pool) -> Optional[float]:
+    """Sample-shrunk wOBA (higher = better). Each component rate is regressed
+    toward the hitter pool by its own reliability constant, then recombined with
+    the wOBA linear weights. Extra-base hits (slow to stabilize) are pulled hard
+    toward the pool in a partial season; walks/singles less so."""
+    d = _woba_denom(hi)
+    if d <= 0:
+        return None
+    if not hi.rates:
+        derive_rates(hi)
+    ubb = _shrink(hi.rates["ubb_rate"], d, K_UBB, pool.mean_ubb)
+    hbp = _shrink(hi.rates["hbp_rate"], d, K_HBP, pool.mean_hbp)
+    s1 = _shrink(hi.rates["s1_rate"], d, K_1B, pool.mean_1b)
+    s2 = _shrink(hi.rates["s2_rate"], d, K_2B, pool.mean_2b)
+    s3 = _shrink(hi.rates["s3_rate"], d, K_3B, pool.mean_3b)
+    hr = _shrink(hi.rates["hr_rate"], d, K_HR, pool.mean_hr)
+    return (W_UBB * ubb + W_HBP * hbp + W_1B * s1 + W_2B * s2 + W_3B * s3 + W_HR * hr)
+
+
+def hem_plus(hi: "Hitter", pool: Pool) -> Optional[int]:
+    """100 + gain * (100 * shrunk_player_wOBA / pool_mean_wOBA - 100), rounded (the
+    +stat convention on the wRC+-width scale). 100 = average; HEM_SPREAD_GAIN
+    widens the deviation so the league reads with real separation. Monotone in the
+    bare ratio, so ranks (and the validated Spearman gates) are unchanged."""
+    w = woba_skill(hi, pool)
+    if w is None or pool.mean_woba <= 0:
+        return None
+    raw = 100.0 + HEM_SPREAD_GAIN * (100.0 * w / pool.mean_woba - 100.0)
+    hi.woba_skill = w
+    hi.woba_raw = _raw_woba(hi)
+    hi.hem_plus_raw = raw
+    hi.hem_plus = int(round(raw))
+    return hi.hem_plus
+
+
+def assign_tiers(hitters: list["Hitter"]) -> None:
+    for h in hitters:
+        v = h.hem_plus
+        if v is None:
+            h.tier = ""
+        elif v >= HEM_ELITE:
+            h.tier = "Elite"
+        elif v >= HEM_ABOVE:
+            h.tier = "Above-avg"
+        elif v >= HEM_AVG:
+            h.tier = "Average"
+        else:
+            h.tier = "Below-avg"
+
+
+# ---- sabermetric batting-order construction ---------------------------------
+# Slot (1-indexed) for the k-th best bat: best -> #2 and #4 (The Book: your two
+# best hitters bat 2nd and 4th, not leadoff), then #1, #3, #5, then 6-9 by
+# quality. A tunable constant so a future eval can refit it.
+SLOT_PRIORITY = [2, 4, 1, 3, 5, 6, 7, 8, 9]
+PLATOON_ADV = 4.0        # HEM+ pts a platoon-advantaged bat gains vs the given hand
+PLATOON_S = 2.0          # switch hitters: small universal edge (never disadvantaged)
+STAGGER_MAX_COST = 8.0   # only swap for handedness when two bats' Q are within this band
+
+
+def _platoon_adj(bats: Optional[str], opp_hand: str) -> float:
+    """Heuristic platoon term for lineup construction (Phase 1, no split HEM+ yet):
+    a lefty gains vs RHP, a righty gains vs LHP, a switch hitter always holds a
+    small edge. Used only to re-lens the order vs L / vs R, not the published
+    HEM+ number."""
+    b = (bats or "").upper()[:1]
+    if b == "S":
+        return PLATOON_S
+    if b not in ("L", "R"):
+        return 0.0
+    adv = (opp_hand == "R" and b == "L") or (opp_hand == "L" and b == "R")
+    return PLATOON_ADV if adv else -PLATOON_ADV
+
+
+def build_batting_order(hitters: list["Hitter"], opp_hand: str) -> Optional[list[dict]]:
+    """A sabermetric 9-man batting order vs the given pitcher hand ('R' or 'L').
+    Not just HEM+ descending: the two best bats hit 2nd and 4th, then a handedness
+    stagger breaks up same-handed runs (managers alternate L/R so a reliever can't
+    match up). Everyday nine = the top 9 by PA. Returns None if fewer than 9."""
+    pool = [h for h in hitters if h.hem_plus is not None and (h.pa or 0) > 0]
+    pool = sorted(pool, key=lambda h: -(h.pa or 0))[:9]
+    if len(pool) < 9:
+        return None
+
+    def Q(h):   # context quality vs this hand
+        return (h.hem_plus or 0) + _platoon_adj(h.bats, opp_hand)
+
+    ranked = sorted(pool, key=lambda h: -Q(h))
+    slots: list = [None] * 9
+    for k, h in enumerate(ranked):
+        slots[SLOT_PRIORITY[k] - 1] = h
+
+    def _hand(h):
+        return (h.bats or "").upper()[:1]
+
+    def _same(a, b):
+        ha, hb = _hand(a), _hand(b)
+        return bool(ha) and bool(hb) and ha != "S" and hb != "S" and ha == hb
+
+    # Handedness stagger: greedily swap a same-handed neighbor with a later,
+    # different-handed bat of near-equal quality. Deterministic, bounded passes.
+    improved, passes = True, 0
+    while improved and passes < 4:
+        improved, passes = False, passes + 1
+        for i in range(8):
+            if _same(slots[i], slots[i + 1]):
+                for j in range(i + 2, 9):
+                    if (not _same(slots[i], slots[j])
+                            and abs(Q(slots[i + 1]) - Q(slots[j])) <= STAGGER_MAX_COST):
+                        slots[i + 1], slots[j] = slots[j], slots[i + 1]
+                        improved = True
+                        break
+    order = []
+    for idx, h in enumerate(slots):
+        order.append({"slot": idx + 1, "key": h.key, "name": h.name,
+                      "bats": h.bats, "hem_plus": h.hem_plus, "pa": int(h.pa),
+                      "platoon_adv": _platoon_adj(h.bats, opp_hand) > 0})
+    return order
+
+
+def team_offense(team: str, hitters: list["Hitter"]) -> dict:
+    """Team offense aggregates. Offense+ is PA-weighted HEM+ (the offensive
+    quality of the plate appearances the lineup takes). Also emits constructed
+    batting orders vs RHP / LHP and a bench list (regulars beyond the nine)."""
+    scored = [h for h in hitters if h.hem_plus is not None and h.pa > 0]
+    out = {"team": team, "n_hitters": len(scored)}
+    if not scored:
+        return out
+    num = den = 0.0
+    for h in scored:
+        num += h.hem_plus * h.pa
+        den += h.pa
+    off = (num / den) if den else None
+    out["offense_plus"] = None if off is None else int(round(off))
+    out["offense_plus_raw"] = off
+    out["team_pa"] = int(sum(h.pa for h in scored))
+    out["n_above_avg"] = sum(1 for h in scored if h.hem_plus >= 100)
+    # heart of the order: top-3 by HEM+ among the regulars
+    front = sorted([h for h in scored if h.pa >= QUALIFY_MIN_PA],
+                   key=lambda h: h.hem_plus, reverse=True)[:3]
+    out["heart_hem"] = int(round(sum(h.hem_plus for h in front) / len(front))) if front else None
+    ladder = sorted(scored, key=lambda h: (-(h.hem_plus or 0), -h.pa))
+    out["lineup"] = [{"tier": h.tier, "key": h.key, "name": h.name, "bats": h.bats,
+                      "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in ladder]
+    # Constructed orders vs each pitcher hand (falls back to overall HEM+ when the
+    # bat side is unknown; the toggle still re-lenses platoon advantage + stagger).
+    orders = {"vr": build_batting_order(scored, "R"),
+              "vl": build_batting_order(scored, "L")}
+    out["orders"] = {k: v for k, v in orders.items() if v}
+    # Bench bats: the regulars who did NOT make the everyday nine (by PA), the
+    # next hitters by playing time, so the chart can show them clearly separated.
+    everyday = {r["key"] for r in (orders.get("vr") or [])}
+    bench = [h for h in sorted(scored, key=lambda h: -(h.pa or 0)) if h.key not in everyday][:6]
+    out["bench"] = [{"key": h.key, "name": h.name, "bats": h.bats,
+                     "hem_plus": h.hem_plus, "pa": int(h.pa)} for h in bench]
+    return out
+
+
+def score_pool(hitters: list["Hitter"]) -> dict:
+    """End to end: derive rates, build the pool, score HEM+, assign tiers, roll up
+    team offenses. Returns 'hitters', 'teams', 'pool'. Pure - callers supply the
+    data."""
+    pool_input = [h for h in hitters if _woba_denom(h) > 0]
+    for h in pool_input:
+        derive_rates(h)
+    pool = build_pool(pool_input)
+    for h in pool_input:
+        hem_plus(h, pool)
+        h.qualified = _woba_denom(h) >= QUALIFY_MIN_PA
+    assign_tiers(pool_input)
+
+    by_team: dict[str, list["Hitter"]] = {}
+    for h in pool_input:
+        by_team.setdefault(h.team or "", []).append(h)
+    teams = []
+    for team, hs in by_team.items():
+        if team:
+            teams.append(team_offense(team, hs))
+    teams.sort(key=lambda t: (t.get("offense_plus") or -999), reverse=True)
+
+    scored = [h for h in pool_input if h.hem_plus is not None]
+    scored.sort(key=lambda h: (h.hem_plus, h.hem_plus_raw or 0), reverse=True)
+    return {
+        "hitters": [hitter_row(h) for h in scored],
+        "teams": teams,
+        "pool": {"n": pool.n, "pool_woba": round(pool.pool_woba, 3),
+                 "mean_woba": round(pool.mean_woba, 3),
+                 "n_qualified": sum(1 for h in scored if h.qualified),
+                 "n_provisional": sum(1 for h in scored if not h.qualified)},
+    }
+
+
+def hitter_row(h: "Hitter") -> dict:
+    """The per-hitter record the frontend/export consumes. HEM+ is the skill; the
+    rate + volume + baserunning columns ride as separate context."""
+    return {
+        "key": h.key, "mlbam": h.mlbam, "name": h.name, "team": h.team,
+        "bats": h.bats,
+        "hem_plus": h.hem_plus, "hem_plus_raw": _round(h.hem_plus_raw, 1),
+        "qualified": h.qualified, "tier": h.tier,
+        "pa": int(h.pa), "ab": int(h.ab), "hr": int(h.hr), "bb": int(h.bb),
+        "sb": int(h.sb),
+        "woba": _round(h.woba_skill, 3),
+        "woba_raw": _round(h.woba_raw, 3),
+        "avg": _round(h.rates.get("avg"), 3),
+        "obp": _round(h.rates.get("obp"), 3),
+        "slg": _round(h.rates.get("slg"), 3),
+        "ops": _round(h.rates.get("ops"), 3),
+        "iso": _round(h.rates.get("iso"), 3),
+        "bb_pct": _round(h.rates.get("bb_pct"), 4),
+        "k_pct": _round(h.rates.get("k_pct"), 4),
+        "babip": _round(h.rates.get("babip"), 3),
+    }

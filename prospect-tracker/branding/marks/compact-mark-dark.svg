@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" role="img" aria-label="eephus.io">
+  <!-- eephus.io compact mark (dark variant) - tuned for near-black surfaces:
+       a bright cool-white rim so the ball reads on #0C0C0E, and the seams painted
+       in the dark refractor ramp (cyan -> violet -> magenta -> gold -> mint) so the
+       mark ties to the Topps-Chrome dark theme. -->
+  <defs>
+    <linearGradient id="seam-d" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#00D9FF"/>
+      <stop offset="28%" stop-color="#B47CFF"/>
+      <stop offset="52%" stop-color="#FF4FD8"/>
+      <stop offset="76%" stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#4FFF9E"/>
+    </linearGradient>
+  </defs>
+  <circle cx="22" cy="22" r="19" fill="#F6F1E4" stroke="#ECEEF2" stroke-width="3"/>
+  <path d="M 32 8 Q 40 22 32 36" fill="none" stroke="url(#seam-d)" stroke-width="3.4" stroke-linecap="round"/>
+  <path d="M 12 8 Q 4 22 12 36" fill="none" stroke="url(#seam-d)" stroke-width="3.4" stroke-linecap="round"/>
+</svg>

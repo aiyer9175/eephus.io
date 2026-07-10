@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MLB Mock Draft Room</title>
+    <link rel="stylesheet" href="styles.css?v=draft-44" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="side-panel" aria-label="Draft controls">
+        <div class="brand-block">
+          <h1>MLB Mock Draft</h1>
+          <p>Run a live baseball mock draft, control one or multiple clubs, and grade every pick against the Perfect Game draft board.</p>
+        </div>
+
+        <section class="control-card" aria-labelledby="setupHeading">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Setup</p>
+              <h2 id="setupHeading">Draft room</h2>
+            </div>
+          </div>
+
+          <label class="field-control" for="yearSelect">
+            <span>Draft class</span>
+            <select id="yearSelect">
+              <option value="2026">2026 Perfect Game Top 400</option>
+            </select>
+          </label>
+
+          <label class="field-control" for="teamMode">
+            <span>User controls</span>
+            <select id="teamMode">
+              <option value="single">Single team</option>
+              <option value="multi">Multiple teams</option>
+              <option value="all">All teams</option>
+            </select>
+          </label>
+
+          <label class="field-control" for="teamSelect">
+            <span>Primary team</span>
+            <select id="teamSelect"></select>
+          </label>
+
+          <label class="field-control" for="roundSelect">
+            <span>Rounds to sim</span>
+            <select id="roundSelect">
+              <option value="1">1 round</option>
+              <option value="2">2 rounds</option>
+              <option value="3">3 rounds</option>
+              <option value="5">5 rounds</option>
+              <option value="10">10 rounds</option>
+              <option value="full" selected>Full board (400 picks)</option>
+            </select>
+          </label>
+
+          <div id="controlledTeams" class="team-checklist" aria-label="Controlled teams"></div>
+        </section>
+
+        <section class="control-card" aria-labelledby="runHeading">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Run</p>
+              <h2 id="runHeading">Draft pace and results</h2>
+            </div>
+          </div>
+
+          <label class="field-control" for="speedSlider">
+            <span>AI pick speed</span>
+            <input id="speedSlider" type="range" min="80" max="1600" step="40" value="1160" />
+            <small id="speedLabel" class="field-note">0.52s per AI pick</small>
+          </label>
+
+          <label class="field-control" for="resultsView">
+            <span>Results view</span>
+            <select id="resultsView">
+              <option value="all">Full draft results</option>
+              <option value="mine">My picks + bonuses</option>
+            </select>
+          </label>
+        </section>
+
+      </aside>
+
+      <main class="dashboard">
+        <section class="topbar" aria-label="Draft status">
+          <div>
+            <p id="slateLabel" class="eyebrow">2026 MLB Draft Order</p>
+            <h2 id="draftTitle">Mock draft room</h2>
+          </div>
+          <div class="topbar-actions">
+            <a class="secondary-action" href="../draft-order/">2027 Order Simulator</a>
+            <a id="startDraft" class="secondary-action primary-action" href="#start-draft" onpointerdown="window.DraftApp?.start(event)" onclick="window.DraftApp?.start(event)">Start Draft</a>
+            <button id="autoPick" class="secondary-action" type="button">Auto Pick For Me</button>
+            <button id="undoPick" class="secondary-action" type="button">Undo</button>
+            <button id="resetDraft" class="secondary-action danger" type="button">Reset</button>
+          </div>
+        </section>
+
+        <section class="draft-results-panel" aria-labelledby="resultsHeading">
+          <div class="section-title">
+            <div>
+              <p class="eyebrow">Pick Grades</p>
+              <h2 id="resultsHeading">Draft results</h2>
+            </div>
+            <span id="gradeLegend" class="compact-badge">Last 10</span>
+          </div>
+          <div id="resultsTabs" class="results-tabs" aria-label="Controlled team results tabs"></div>
+          <div class="table-wrap results-scroll">
+            <table>
+              <thead>
+                <tr>
+                  <th>Rnd</th>
+                  <th>Pick</th>
+                  <th>CB</th>
+                  <th>Team</th>
+                  <th>Player</th>
+                  <th>Pos</th>
+                  <th>PG Rank</th>
+                  <th>Pos Rank</th>
+                  <th>Slot</th>
+                  <th>Ask</th>
+                  <th>Pool Hit</th>
+                  <th>Delta</th>
+                  <th>Grade</th>
+                  <th>Fit</th>
+                  <th>GM</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="scoreboard" aria-label="Draft summary">
+          <article class="score-card primary">
+            <span>On The Clock</span>
+            <strong id="clockTeam">Team</strong>
+            <small id="clockPick">Pick 1</small>
+          </article>
+          <article class="score-card best-available-card">
+            <span>Best Available</span>
+            <strong id="bestAvailable">Player</strong>
+            <small id="bestAvailableMeta">PG rank</small>
+          </article>
+          <article class="score-card">
+            <span>Overall Grade</span>
+            <strong id="userGrade">--</strong>
+            <small id="userGradeMeta">Start the draft</small>
+          </article>
+          <article class="score-card">
+            <span>Pool Room</span>
+            <strong id="poolRoom">--</strong>
+            <small id="poolRoomMeta">Choose a team</small>
+          </article>
+          <article class="score-card">
+            <span>Drafted</span>
+            <strong id="draftProgress">0/400</strong>
+            <small id="draftProgressMeta">Round progress</small>
+          </article>
+        </section>
+
+        <section id="draftRecap" class="draft-recap" aria-labelledby="draftRecapHeading" hidden>
+          <div class="recap-hero">
+            <div id="draftRecapLogo" class="recap-logo"></div>
+            <div>
+              <p class="eyebrow">Final Results</p>
+              <h2 id="draftRecapHeading">My mock draft</h2>
+            </div>
+            <div class="recap-grade">
+              <span>Overall Grade</span>
+              <strong id="draftRecapGrade">--</strong>
+            </div>
+          </div>
+          <div id="draftRecapBody" class="recap-picks"></div>
+        </section>
+
+        <section class="workspace-grid">
+          <section class="draft-board" aria-labelledby="boardHeading">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">Eligible Players</p>
+              <h2 id="boardHeading">Perfect Game draft board</h2>
+              </div>
+              <span id="availableCount" class="compact-badge">0 left</span>
+            </div>
+            <div class="board-filters" aria-label="Player filters">
+              <label class="field-control compact-field" for="playerSearch">
+                <span>Search</span>
+                <input id="playerSearch" type="search" placeholder="Name or school" autocomplete="off" />
+              </label>
+
+              <label class="field-control compact-field" for="positionFilter">
+                <span>Position</span>
+                <select id="positionFilter"></select>
+              </label>
+
+              <label class="field-control compact-field" for="typeFilter">
+                <span>Class</span>
+                <select id="typeFilter"></select>
+              </label>
+
+              <label class="field-control compact-field" for="roleFilter">
+                <span>Role</span>
+                <select id="roleFilter">
+                  <option value="ALL">Pitchers + hitters</option>
+                  <option value="P">Pitchers</option>
+                  <option value="H">Hitters</option>
+                </select>
+              </label>
+            </div>
+            <div id="playerBoard" class="player-board"></div>
+          </section>
+
+          <section class="clock-panel" aria-labelledby="clockHeading">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">Selection</p>
+                <h2 id="clockHeading">Current pick</h2>
+              </div>
+              <span id="controlledBadge" class="compact-badge">AI</span>
+            </div>
+            <div id="pickCard" class="pick-card"></div>
+          </section>
+        </section>
+
+        <section class="detail-grid">
+          <section class="full-results-panel" aria-labelledby="fullResultsHeading">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">Full Board</p>
+                <h2 id="fullResultsHeading">Draft by team</h2>
+              </div>
+            </div>
+            <label class="field-control full-results-select" for="fullResultsTeam">
+              <span>Show picks for</span>
+              <select id="fullResultsTeam"></select>
+            </label>
+            <label class="field-control full-results-select" for="fullResultsRound">
+              <span>Round</span>
+              <select id="fullResultsRound"></select>
+            </label>
+            <div class="table-wrap full-results-scroll">
+              <table>
+                <thead>
+                  <tr>
+                  <th>Rnd</th>
+                  <th>Pick</th>
+                  <th>CB</th>
+                  <th>Team</th>
+                    <th>Player</th>
+                    <th>Pos</th>
+                    <th>PG Rank</th>
+                    <th>Pos Rank</th>
+                    <th>Slot</th>
+                    <th>Ask</th>
+                    <th>Pool Hit</th>
+                    <th>Delta</th>
+                    <th>Grade</th>
+                    <th>Fit</th>
+                    <th>GM</th>
+                  </tr>
+                </thead>
+                <tbody id="fullResultsBody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="game-info" aria-labelledby="infoHeading">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">Model</p>
+                <h2 id="infoHeading">Draft context</h2>
+              </div>
+            </div>
+            <div id="draftContext" class="context-list"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script src="draftData.js?v=pg-2026-top400"></script>
+    <script src="app.js?v=draft-44"></script>
+  </body>
+</html>

@@ -1,0 +1,8 @@
+{
+  "generated_at": null,
+  "year": 2026,
+  "status": "idle",
+  "pick_count": 0,
+  "picks": [],
+  "note": "Committed placeholder so the front end never 404s on this path. The draft-night poller (tools/draft_live_poller.py) overwrites this READ-ONLY with the live feed (status 'live'/'waiting'/'error'); until then the War Room shows its 'opens on draft night' state and the home banner stays hidden."
+}

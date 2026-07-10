@@ -1,0 +1,118 @@
+{
+ "method": "matched-pair regression-to-the-mean (college -> Single-A), our-data join: CollegeSavant name -> draft_players -> statlines (A/A+)",
+ "bf_per_9": 38.0,
+ "slope_shrink_k": 20,
+ "competition_park_adjusted": false,
+ "caveat": "Not adjusted for strength of schedule or park (no conference/park table held). Bands are P10-P90 and widen with thinner support. hit_ops is experimental: college tracked data barely forecasts Single-A production in our matched sample.",
+ "factors": {
+  "hit_k": {
+   "x_mean": 18.095,
+   "y_mean": 25.981,
+   "slope": 0.5838,
+   "ols_slope": 0.6391,
+   "band_sd": 6.771,
+   "r2": 0.295,
+   "n": 211,
+   "loo": {
+    "mae": 5.413,
+    "p10_p90_coverage": 0.787,
+    "target_coverage": 0.8,
+    "n": 211
+   }
+  },
+  "hit_bb": {
+   "x_mean": 12.396,
+   "y_mean": 12.876,
+   "slope": 0.2718,
+   "ols_slope": 0.2976,
+   "band_sd": 4.559,
+   "r2": 0.086,
+   "n": 211,
+   "loo": {
+    "mae": 3.505,
+    "p10_p90_coverage": 0.834,
+    "target_coverage": 0.8,
+    "n": 211
+   }
+  },
+  "hit_ops": {
+   "x_mean": 0.391,
+   "y_mean": 0.728,
+   "slope": 0.3125,
+   "ols_slope": 0.3421,
+   "band_sd": 0.148,
+   "r2": 0.017,
+   "n": 211,
+   "loo": {
+    "mae": 0.114,
+    "p10_p90_coverage": 0.858,
+    "target_coverage": 0.8,
+    "n": 211
+   }
+  },
+  "pit_k": {
+   "x_mean": 24.192,
+   "y_mean": 24.965,
+   "slope": 0.1064,
+   "ols_slope": 0.115,
+   "band_sd": 5.436,
+   "r2": 0.027,
+   "n": 247,
+   "loo": {
+    "mae": 4.376,
+    "p10_p90_coverage": 0.806,
+    "target_coverage": 0.8,
+    "n": 247
+   }
+  },
+  "pit_bb": {
+   "x_mean": 10.867,
+   "y_mean": 11.37,
+   "slope": 0.2541,
+   "ols_slope": 0.2747,
+   "band_sd": 4.075,
+   "r2": 0.115,
+   "n": 247,
+   "loo": {
+    "mae": 3.187,
+    "p10_p90_coverage": 0.83,
+    "target_coverage": 0.8,
+    "n": 247
+   }
+  },
+  "box_k": {
+   "x_mean": 17.067,
+   "y_mean": 25.633,
+   "slope": 0.5969,
+   "ols_slope": 0.8622,
+   "band_sd": 5.925,
+   "r2": 0.423,
+   "n": 45,
+   "loo": {
+    "mae": 4.892,
+    "p10_p90_coverage": 0.756,
+    "target_coverage": 0.8,
+    "n": 45
+   }
+  },
+  "box_bb": {
+   "x_mean": 12.693,
+   "y_mean": 12.402,
+   "slope": 0.3582,
+   "ols_slope": 0.5173,
+   "band_sd": 4.869,
+   "r2": 0.121,
+   "n": 45,
+   "loo": {
+    "mae": 3.891,
+    "p10_p90_coverage": 0.8,
+    "target_coverage": 0.8,
+    "n": 45
+   }
+  }
+ },
+ "matched_pairs": {
+  "hitters_with_single_a": 211,
+  "pitchers_with_single_a": 247
+ }
+}

@@ -1,0 +1,130 @@
+2026 Minor League Statcast Hitter Leaderboard Standouts By Age
+June 3, 2026
+June 3, 2026
+Ian Cundall
+0 Comments
+
+
+Image credit: Xavier Neyens (Photo by Nick Cammett/Diamond Images via Getty Images)
+With the calendar moving into June, we’ve reached the point where most full-season minor league affiliates have played at least 50 games, and prospects who have stayed healthy are approaching 200 plate appearances. In addition, the Florida and Arizona Complex Leagues have been going for about a month now, and the Dominican Summer League season has also just started up. 
+By now, the underlying data for players at full-season affiliates has largely normalized, and some metrics for players in the complex league have, as well. For each age between 18 and 23, I chose 10 players with compelling underlying data. The only rules were that players needed a minimum of 40 plate appearances and could not have played in the major leagues. 
+I focused on ages 18 to 23 because the vast majority of Top 30 position player prospects fall in that range. There are very few true position player prospects who are still in the minors at age 24, and only a handful of 17-year-olds have enough plate appearances to allow some of their data to start to normalize. 
+Giants shortstop Luis Hernandez is one player whose data really stands out among 17-year-olds. He’s currently hitting .310/.378/.655 in the Arizona Complex League and jumped inside the top 50 prospects in all of baseball during our Top 100 update today. Hernandez’s zone-contact rate, hard-hit rate and 90th percentile exit velocity all rank first or second among prospects his age. All would be impressive if he was several years older, let alone 17. 
+Here are 10 hitting prospects with compelling underlying data by age from 18 to 23. 
+Age 18
+Filter by...
+Reset
+PLAYER	POS	ORG	TEAM	BATS	AGE	PA	ZCON	CHASE	HIT95+	90TH
+EV
+Alexander Frias	OF	MIL	ACL Brewers	L	18	69	77%	28%	58.70%	109.3
+Jhomnardo Reyes	OF	MIN	FCL Twins	L	18	47	88%	23%	42.30%	108.7
+Taitn Gray	1B	TB	Charleston	S	18	192	85%	22%	50.90%	107.4
+Josuar Gonzalez	SS	SF	ACL Giants	S	18	49	82%	16%	53.80%	106.2
+Hyun Seung Lee	3B	PIT	Bradenton	L	18	69	85%	18%	47.20%	104.8
+Juneiker Caceres	OF	CLE	Hill City	L	18	117	89%	23%	41.20%	103.8
+Cristian Arguelles	OF	COL	ACL Rockies	L	18	89	88%	20%	38.60%	103.7
+Sebastian Dos Santos	SS	STL	FCL Cardinals	S	18	78	82%	17%	44.40%	102.6
+Richard Matic	3B	NYY	FCL Yankees	R	18	99	89%	15%	43.30%	102.5
+Luis Arana	SS	MIA	FCL Marlins	S	18	65	91%	21%	37.80%	101.5
+Twins outfielder Jhomnardo Reyes has been one of the most impressive players in the Florida Complex League this season. Roboscout has him just behind Hernandez among complex league hitters, and feedback from scouts has been glowing. Several have identified him as one of the best players they’ve seen down there, and looking at his data, it is easy to see why thanks to his combination of impact ability and contact skills. His 90th percentile EV ranks second among all 18-year-olds, and his zone contact rate is tied for eighth. That’s a rare combination of skills for a 6-foot-3 hitter his age to have, and it has led to a strong start in his stateside debut, as he’s hitting .370/.482/.783 with four home runs, and nine walks compared to eight strikeouts in 56 plate appearances. 
+Brewers outfielder Alexander Frias has displayed substantial impact ability in his stateside debut. The 6-foot-2 lefthanded-hitting outfielder has been one of the top performers in the Arizona Complex League so far, slashing .385/.459/.631 with three home runs. His hard-hit rate and 90th percentile EV are the highest among all 18-year-old prospects with at least 40 plate appearances and would be standout marks for players of any age. His approach and hit tool need refinement, but he has the early makings of an intriguing offensive profile. 
+This group is mostly made up of players in the complex league, but a pair of players at full-season affiliates also stand out.
+One is Rays first baseman Taitn Gray, who ranks in the top 10 of all 18-year-old prospects in hard-hit rate and 90th percentile exit velocity.  He pairs that with an above-average zone-contact rate and solid chase rate. He’s been one of the biggest risers in the Rays’ system this year and moved into the Top 100 in our June update.
+The other is Guardians outfielder Juneiker Caceres, who doesn’t have the same impact ability as Gray but has contact skills that are very impressive. He ranks in the top five of zone-contact rate among players in his age group, and his impact data is solid for his age, as well. Caceres is more than holding his own so far in the pitcher-friendly Carolina league, slashing .268/.376/.402 with more walks than strikeouts.
+Age 19
+Filter by...
+Reset
+PLAYEr	POS	ORG	TEAM	BATS	AGE	PA	ZCON	CHASE	HIT95+	90TH EV
+Michael Martinez	OF	ATL	Augusta	R	19	86	73%	32%	62.70%	109.6
+Quentin Young	SS	MIN	Fort Myers	R	19	188	67%	26%	55.80%	109.6
+Conor Essenburg	OF	ATL	Augusta	R	19	81	77%	23%	54.50%	108.4
+Xavier Neyens	3B	HOU	Fayetteville	L	19	174	70%	9%	53.30%	108.4
+Chase Harlan	3B	LAD	Ontario	R	19	198	84%	20%	44.40%	107.7
+Ty Harvey	C	SD	Lake Elsinore	R	19	78	80%	22%	61.70%	107.2
+Andreimi Antunez	SS	TB	FCL Rays	R	19	86	92%	32%	38.90%	106.1
+Nathan Flewelling	C	TB	Bowling Green	L	19	189	80%	23%	51.30%	105.3
+Jesus Pinto	OF	DET	Lakeland	R	19	168	91%	19%	46.30%	104.9
+Jaiden Lo Re	3B	BAL	FCL Orioles	R	19	72	93%	16%	40.70%	100.4
+Astros third baseman Xavier Neyens has among the most compelling combinations of underlying data of prospects at any age because he crushes the ball and makes very good swing decisions. He has the lowest chase rate of all 19-year-olds, and his hard-hit rate and 90th percentile EV rank inside the top 10. His zone-contact rate, however, is poor, and he strikes out 33% of the time. If Neyens can make improvements with his contact ability, he has substantial offensive potential.
+The Braves have a pair of intriguing 19-year-olds in righthanded-hitting outfielders Conor Essenburg and Michael Martinez. Both of their hard-hit rates and 90th percentile EVs rank among the top 10 of prospects their age.
+Essenburg signed for well over slot in the fifth round of the 2025 draft and ranked among Atlanta’s Top 30 prospects heading into the season. He missed over a month with an oblique injury but returned to hit a pair of home runs in his first week back. His contact rate needs refinement, but his approach and impact ability make him intriguing. Martinez, meanwhile, started the season in the complex league but was quickly promoted to Augusta, where he joined Essenburg. He has the highest hard-hit rate and second-highest 90th percentile EV of all 19-year-olds, but has a ways to go with his hit tool and approach. 
+Padres catcher Ty Harvey has missed time with two injuries this year: a quad injury in April and a fractured hand in May that has him out right now. When he’s played, he’s impressed, slashing .338/.449/.431. His underlying data backs up that performance, as he’s consistently hit the ball very hard and shown solid zone-contact and chase skills. 
+A pair of complex league names to watch in this group are Orioles third baseman Jaiden Lo Re and Rays shortstop Andreimi Antunez.
+Lo Re showed high-end contact skills during his stint in the complex league, earning a promotion to Low-A this week. The Orioles’ 2025 fifth-round pick needs to get stronger, but he has a solid baseline of skills to build on as he progresses through the system. 
+Antunez signed back in 2024 but missed the entire season due to knee surgery. He was one of the Rays’ top performers in the Dominican Summer League last year and stood out during extended spring training this year. Scouts have identified him as the top player on Tampa Bay’s FCL team, and he blends a strong combination of contact skills and impact. He needs to elevate the ball more consistently, however, as right now his groundball rate is far too high.
+Age 20
+Filter by...
+Reset
+PLAYER	POS	ORG	TEAM	BATS	AGE	PA	ZCON	CHASE	HIT95+	90TH EV
+Bryce Rainer	SS	DET	West Michigan	L	20	178	72%	19%	57.30%	110.9
+Easton Shelton	1B	LAD	Ontario	R	20	197	66%	31%	56.30%	110.5
+Axiel Plaz	C	PIT	Greensboro	R	20	159	80%	34%	56.50%	110.3
+Alfredo Duno	C	CIN	Dayton	R	20	195	76%	19%	50.50%	109.2
+Wyatt Sanford	SS	PIT	Greensboro	L	20	206	69%	28%	55.10%	108.5
+Eduardo Quintero	OF	LAD	Great Lakes	R	20	189	87%	15%	39.60%	106.6
+Alirio Ferrebus	C	PHI	Clearwater	R	20	183	89%	42%	48.90%	106.2
+Ethan Salas	C	SD	San Antonio	L	20	182	90%	25%	41.70%	106.2
+Franklin Arias	SS	BOS	Portland	R	20	179	83%	26%	54.40%	104.4
+Braylon Whitaker	OF	BAL	Delmarva	L	20	161	90%	13%	26.50%	98.7
+Red Sox shortstop Franklin Arias and Padres catcher Ethan Salas have both joined the upper echelons of our new Top 100. It’s easy to see why with their sort of underlying data and defensive ability at a premium position. 
+Coming into the season, Tigers shortstop Bryce Rainer ranked among the top 50 prospects in all of baseball, while Pirates shortstop Wyatt Sanford ranked 12th in the Pirates system. Two months into the season, both are now similarly ranked and seen as prospects with premium power, but major hit tool questions. Rainer has the highest 90th percentile EV and fourth-highest hard-hit rate among 20-year-olds, while Sanford ranks just inside the top 10 in both. Rainer’s shoulder injury last year has caused him to have swing issues, leading to a low zone-contact rate and high strikeout rate. 
+Sanford also had his 2025 season end early due to injury, and came back looking like a different hitter. His changes, however, have unlocked his impact ability, and he’s already doubled his home run total from 2025 with 10, which ranks tied for eighth in the South Atlantic League. Both have considerable upside but need to make more consistent contact to reach their potential. 
+Dodgers first baseman Easton Shelton currently leads the California League in home runs with 13 in 45 games. The 6-foot-3 righthanded hitter who signed as an undrafted free agent out of Bishop Gorman High School in Nevada spent two years in the complex league before jumping to Low-A Ontario to start this year. His power really stands out and plays to all fields, and he does a lot of damage against fastballs. He struggles to consistently make contact, however, and is prone to chasing secondary offerings. He needs to substantially improve in those areas for his power to actualize against better pitching.   
+Phillies catcher Alirio Ferrebus was one of the biggest risers in our May Top 30s update. He’s retooled his swing path, which has allowed him to make consistent hard contact, and he rarely misses pitches in the zone. His swing decisions need substantial improvement, as shown by his extremely high chase rate, but it hasn’t slowed him so far in Low-A, as he’s hitting .346/.399/.562.
+Outfielder Braylon Whitaker moved into the Orioles’ Top 30 in our May update on the back of his contact ability and secondary skills. His zone-contact rate and chase rate both rank in the top 10 of all 20-year-olds, but as his very low hard-hit rate and 90th percentile EV show, he needs to get substantially stronger to reach his potential. 
+Age 21
+Filter by...
+Reset
+PLAYER	POS	ORG	TEAM	BATS	AGE	PA	ZCON	CHASE	HIT95+	90TH EV
+Tony Blanco Jr.	OF	PIT	Greensboro	R	21	150	77%	31%	48.30%	113
+Lazaro Montes	OF	SEA	Arkansas	L	21	206	68%	28%	45.20%	109.4
+Ethan Petry	OF	WSH	Wilmington	R	21	173	82%	23%	56.20%	107.4
+Walker Jenkins	OF	MIN	St. Paul	L	21	111	91%	22%	45.10%	107.2
+Josh Adamczewski	OF	MIL	Wisconsin	L	21	173	83%	18%	51.50%	105.8
+Yordany De Los Santos	SS	PIT	Greensboro	R	21	112	78%	28%	52.20%	105.5
+Juan Villavicencio	3B	PHI	Clearwater	L	21	147	87%	24%	57.80%	105
+Max Clark	OF	DET	Toledo	L	21	229	93%	21%	36.70%	103.9
+Jaison Chourio	OF	CLE	Akron	S	21	150	84%	16%	49.50%	103.5
+Luis Lara	OF	MIL	Nashville	S	21	242	92%	25%	41.20%	102.3
+Twins outfielder Walker Jenkins has the most well-rounded data of any 21-year-old. He’s at least above-average across all metrics shown here with a blend of contact and impact ability. Jenkins’ surface stat line doesn’t stand out so far at .256/.396/.389, but he’s improved his zone-contact rate 10% and 90th percentile exit velocity over 4 mph. Unfortunately, he is injured again after suffering an AC joint sprain in his left shoulder when he crashed into the wall while making a catch. 
+Brewers outfielder Josh Adamczewski also has well-rounded data. He makes consistent contact, rarely chases and produces solid exit velocities. He’s hitting over .300 for the third consecutive season, slashing .304/.449/.536 in High-A. He has one of the best pure hit tools in the Brewers’ system and has the chance to hit for both average and power in his peak. 
+Nationals outfielder Ethan Petry has been on the radar for a long time, and after a standout freshman season at South Carolina, he has seamlessly transitioned to pro ball. Scouts have been impressed by his swing and think he has a chance to hit for average and power while also reaching base at a high clip. Those skills are all evident in his data, as he is above-average in both zone-contact rate and chase rate and also ranks in the top five of all 21-year-olds for hard-hit rate and just outside the top ten in 90th percentile EV. He was a riser in the Nationals’ system in May and looks like he’s ready for a promotion to Double-A.
+Mariners outfielder Lazaro Montes has prodigious raw power, but there’s a fine line between what he is doing and a player like Pirates first baseman Tony Blanco Jr., who ranks No. 28 in Pittsburgh’s Top 30. Blanco has the highest 90th percentile EV of any player in minor league baseball, and though he is a level below Montes, he is showing more contact ability so far this year. Montes still ranks among the Top 100 prospects in all of baseball, but he’ll need to drastically improve his zone-contact rate to reach his potential.
+Pirates shortstop Yordany De Los Santos and Phillies third baseman Juan Villavicencio are a pair of less-heralded names whose data jumped out among 21-year-olds. Both have spent parts of at least the past three seasons in Low-A but have taken a step forward this season.
+De Los Santos originally signed for $1.2 million as part of the Pirates 2022 international class. His development has been very slow, but he’s broken out this year, hitting .284/.368/.608 and has already earned a promotion to High-A. Villavicencio signed for only $90,000 and has seen his underlying data improve drastically this year, leading to a career-best slash line of .292/.363/.523. Neither ranks among the top 30 prospects in their systems right now, but they are names to monitor as the season progresses.
+Age 22
+Filter by...
+Reset
+PLAYER	POS	ORG	TEAM	BATS	AGE	PA	ZCON	CHASE	HIT95+	90TH EV
+Wehiwa Aloy	SS	BAL	Frederick	R	22	183	78%	29%	50.00%	111
+Blake Burke	1B	MIL	Biloxi	L	22	207	77%	30%	51.10%	110.2
+Aiva Arquette	SS	MIA	Pensacola	R	22	93	85%	26%	50.00%	109.5
+Mike Sirota	OF	LAD	Tulsa	R	22	209	79%	12%	62.20%	107.6
+Andrew Fischer	3B	MIL	Wisconsin	L	22	202	68%	21%	65.60%	107.5
+Dean Curley	SS	CLE	Lake County	R	22	196	81%	13%	55.60%	106.8
+Luke Hill	3B	CLE	Lake County	R	22	164	78%	13%	53.80%	106
+Angel Genao	SS	CLE	Columbus	S	22	205	89%	21%	55.00%	104.7
+Caden Bodine	C	TB	Charleston	S	22	196	94%	26%	40.90%	104.7
+Jacob Reimer	3B	NYM	Binghamton	R	22	182	79%	19%	57.10%	104.1
+Orioles shortstop Wehiwa Aloy’s data makes him one of the more divisive prospects in their system. For the year, he’s hitting .283/.348/.518 in High-A with 10 home runs in 42 games. His 90th percentile EV is the highest of all 22-year-olds, but his contact ability and approach need work. Scout feedback echoes what his data shows, as they’ve noted that when he does make contact, he hits the ball very hard and at optimal angles. But he does a lot of damage against fastballs and punishes mistakes. He struggles against secondary pitches and has holes in his swing because of his long path. 
+Marlins shortstop Aiva Arquette missed the first month of the season due to a core muscle injury but has been impressive since returning. The 6-foot-5 shortstop is hitting the ball extremely hard. His 90th percentile EV is up over 4 mph from his debut last year and currently ranks seventh among all 22-year-olds. He pairs that with solid zone-contact ability and good batted-ball angles, but needs to tighten up his approach.
+Dodgers outfielder Mike Sirota is one of the biggest risers in our new Top 100, and it’s easy to see why with this sort of data. His hard-hit rate ranks second among all 22-year-olds, and his 90th percentile EV and chase rate are both well above average for his age. 
+The Guardians are well-represented with three 22-year-olds with compelling data. Shortstop Angel Genao was recently promoted to Triple-A, and if he can start consistently elevating the ball, he might have even more offensive upside than he’s showing right now while hitting .271/.371/.452. \
+Shortstop Dean Curley and third baseman Luke Hill make up the left side of the infield for High-A Lake County, and both have shown a strong combination of impact ability and approach. Their 13% chase rate is tied for sixth among all 22-year-olds. Curley sees among the most pitches of anyone in his age group, which is part of why both his strikeout and walk rates are high. He could stand to be more aggressive attacking pitches in the zone, as he can get passive at times. 
+The Brewers have a pair of power-hitting corner infielders in first baseman Blake Burke and third baseman Andrew Fischer who consistently make hard contact and produce extremely high exit velocities. Looking at their EV data, it’s easy to see why Fischer has 16 home runs this year and Burke has 12. Both have major contact questions, however, which is why neither ranks among the top 10 prospects in the Brewers’ system.
+Age 23
+Filter by...
+Reset
+PLAYER	POS	TEAM	ORG	BATS	AGE	PA	Z-CON	CHASE	HIT95+	90TH EV
+Emmanuel Rodriguez	OF	St. Paul	MIN	L	23	108	76%	22%	51.90%	111.3
+Jason Schiavone	C	Asheville	HOU	R	23	215	69%	16%	59.20%	110.6
+Kemp Alderman	OF	Jacksonville	MIA	R	23	170	76%	32%	64.60%	109.8
+Mason Guerra	1B	Rome	ATL	R	23	147	80%	18%	44.00%	109.5
+Sean Keys	3B	New Hampshire	TOR	L	23	197	79%	29%	55.00%	109.3
+Jake Cunningham	OF	Fort Wayne	SD	R	23	155	70%	25%	62.80%	109.2
+Dakota Jordan	OF	Eugene	SF	R	23	215	72%	28%	54.00%	108.8
+Jose Meza	OF	Great Lakes	LAD	R	23	172	76%	15%	53.20%	106.3
+James Tibbs III	OF	Okla. City	LAD	L	23	251	73%	22%	56.50%	106.1
+Jacob Friend	C	Daytona	CIN	L	23	187	74%	10%	48.00%	105.5
+This list shows how thin things get prospect-wise when looking at 23-year-olds. Twins outfielder Emmanuel Rodriguez is the only Top 100 Prospect among the crew, and if it wasn’t for his lengthy injury history, he likely would have graduated by now. Rodriguez has the highest 90th percentile EV among his age peers and has improved his zone-contact rate 4%. Given his on-base skills and power potential, even a small increase could make a major difference for him long term. 
+Astros catcher Jason Schiavone was originally selected in the 11th round of the 2024 draft. He hit .180/.390/.324 in 2025 and entered the season unranked but has had a breakout season, hitting .265/.441/.669 with 19 home runs. He was recently promoted to Double-A, but still leads the South Atlantic League in home runs with 17. He jumped up to No. 17 in the Astros’ system in our May update and now looks to have a chance to be a bat-first catcher with power and on-base skills, even if his contact ability remains low. 

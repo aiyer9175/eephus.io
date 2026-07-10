@@ -1,0 +1,2029 @@
+{
+ "generated_at": "2026-07-07",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260702,
+ "conventions": {
+  "predictor_year": "year Y qualified (TBF>=100)",
+  "target": "-RA9 in year Y+1 (TBF>=60)",
+  "excluded": "2020 (60-game COVID season)"
+ },
+ "experiment": "X-R2",
+ "model": "rem_plus_3yr (trailing-3-season REM+)",
+ "n_forward_pairs": 665,
+ "rem_1yr_forward_rho_on_3yr_set": 0.2332,
+ "rem_3yr_forward_rho": 0.2408,
+ "gap_ci_3yr_minus_1yr": {
+  "mean": 0.0073,
+  "lo95": -0.0378,
+  "hi95": 0.0541
+ },
+ "gate": {
+  "bar": "3yr rho > 1yr rho on the same set AND bootstrap gap lo95 >= 0",
+  "pass": false
+ },
+ "verdict": "MARGINAL: 3-year REM+ does not clear the strict same-set bootstrap gate; ship provisional with the r published (more sample is still a more stable read) or hold, see numbers.",
+ "proposed_values": {
+  "season": 2026,
+  "window": [
+   2024,
+   2025,
+   2026
+  ],
+  "metric": "rem_plus_3yr",
+  "display_name": "REM+ (3yr)",
+  "definition": "IP-weighted mean REM+ over [2024, 2025, 2026]. A more stable talent read than one season (single reliever seasons split-half ~0.34). tag is 'established' with 2+ seasons and 40+ IP.",
+  "n_pool_qualified": 198,
+  "n_with_value": 198,
+  "players": {
+   "695243": {
+    "name": "Mason Miller",
+    "team": "SD",
+    "rem_plus_now": 179,
+    "rem_plus_3yr": 154,
+    "seasons_used": 3,
+    "ip_total": 163.3,
+    "tag": "established",
+    "pct": 100
+   },
+   "686973": {
+    "name": "Louis Varland",
+    "team": "TOR",
+    "rem_plus_now": 152,
+    "rem_plus_3yr": 128,
+    "seasons_used": 2,
+    "ip_total": 119.7,
+    "tag": "established",
+    "pct": 98
+   },
+   "661395": {
+    "name": "Jhoan Duran",
+    "team": "PHI",
+    "rem_plus_now": 150,
+    "rem_plus_3yr": 128,
+    "seasons_used": 3,
+    "ip_total": 154.0,
+    "tag": "established",
+    "pct": 97
+   },
+   "669276": {
+    "name": "Dylan Lee",
+    "team": "ATL",
+    "rem_plus_now": 143,
+    "rem_plus_3yr": 121,
+    "seasons_used": 3,
+    "ip_total": 168.3,
+    "tag": "established",
+    "pct": 94
+   },
+   "671922": {
+    "name": "Cade Smith",
+    "team": "CLE",
+    "rem_plus_now": 137,
+    "rem_plus_3yr": 151,
+    "seasons_used": 3,
+    "ip_total": 189.3,
+    "tag": "established",
+    "pct": 99
+   },
+   "656730": {
+    "name": "Trevor Megill",
+    "team": "MIL",
+    "rem_plus_now": 137,
+    "rem_plus_3yr": 123,
+    "seasons_used": 3,
+    "ip_total": 129.3,
+    "tag": "established",
+    "pct": 96
+   },
+   "681870": {
+    "name": "Erik Sabrowski",
+    "team": "CLE",
+    "rem_plus_now": 132,
+    "rem_plus_3yr": 119,
+    "seasons_used": 3,
+    "ip_total": 68.0,
+    "tag": "established",
+    "pct": 93
+   },
+   "656945": {
+    "name": "Tanner Scott",
+    "team": "LAD",
+    "rem_plus_now": 132,
+    "rem_plus_3yr": 111,
+    "seasons_used": 3,
+    "ip_total": 165.7,
+    "tag": "established",
+    "pct": 83
+   },
+   "656546": {
+    "name": "Jeff Hoffman",
+    "team": "TOR",
+    "rem_plus_now": 126,
+    "rem_plus_3yr": 115,
+    "seasons_used": 3,
+    "ip_total": 173.0,
+    "tag": "established",
+    "pct": 89
+   },
+   "670970": {
+    "name": "Adrian Morejon",
+    "team": "SD",
+    "rem_plus_now": 125,
+    "rem_plus_3yr": 123,
+    "seasons_used": 3,
+    "ip_total": 183.3,
+    "tag": "established",
+    "pct": 96
+   },
+   "680742": {
+    "name": "Jonathan Bowlan",
+    "team": "PHI",
+    "rem_plus_now": 124,
+    "rem_plus_3yr": 110,
+    "seasons_used": 2,
+    "ip_total": 71.7,
+    "tag": "established",
+    "pct": 78
+   },
+   "656641": {
+    "name": "Jacob Latz",
+    "team": "TEX",
+    "rem_plus_now": 123,
+    "rem_plus_3yr": 104,
+    "seasons_used": 2,
+    "ip_total": 85.7,
+    "tag": "established",
+    "pct": 55
+   },
+   "596133": {
+    "name": "Luke Weaver",
+    "team": "NYM",
+    "rem_plus_now": 121,
+    "rem_plus_3yr": 112,
+    "seasons_used": 3,
+    "ip_total": 186.7,
+    "tag": "established",
+    "pct": 84
+   },
+   "628452": {
+    "name": "Raisel Iglesias",
+    "team": "ATL",
+    "rem_plus_now": 121,
+    "rem_plus_3yr": 118,
+    "seasons_used": 3,
+    "ip_total": 167.0,
+    "tag": "established",
+    "pct": 92
+   },
+   "670280": {
+    "name": "David Bednar",
+    "team": "NYY",
+    "rem_plus_now": 121,
+    "rem_plus_3yr": 116,
+    "seasons_used": 3,
+    "ip_total": 157.3,
+    "tag": "established",
+    "pct": 90
+   },
+   "676477": {
+    "name": "Garrett Whitlock",
+    "team": "BOS",
+    "rem_plus_now": 120,
+    "rem_plus_3yr": 130,
+    "seasons_used": 2,
+    "ip_total": 101.0,
+    "tag": "established",
+    "pct": 98
+   },
+   "681911": {
+    "name": "Alex Vesia",
+    "team": "LAD",
+    "rem_plus_now": 120,
+    "rem_plus_3yr": 112,
+    "seasons_used": 3,
+    "ip_total": 156.0,
+    "tag": "established",
+    "pct": 85
+   },
+   "669622": {
+    "name": "Anthony Bender",
+    "team": "MIA",
+    "rem_plus_now": 119,
+    "rem_plus_3yr": 109,
+    "seasons_used": 3,
+    "ip_total": 137.3,
+    "tag": "established",
+    "pct": 72
+   },
+   "664991": {
+    "name": "Grant Wolfram",
+    "team": "BAL",
+    "rem_plus_now": 119,
+    "rem_plus_3yr": 108,
+    "seasons_used": 2,
+    "ip_total": 52.7,
+    "tag": "established",
+    "pct": 69
+   },
+   "800311": {
+    "name": "Didier Fuentes",
+    "team": "ATL",
+    "rem_plus_now": 119,
+    "rem_plus_3yr": 119,
+    "seasons_used": 1,
+    "ip_total": 34.7,
+    "tag": "provisional",
+    "pct": 93
+   },
+   "670059": {
+    "name": "Colin Holderman",
+    "team": "CLE",
+    "rem_plus_now": 119,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 109.3,
+    "tag": "established",
+    "pct": 32
+   },
+   "666661": {
+    "name": "Juan Morillo",
+    "team": "AZ",
+    "rem_plus_now": 118,
+    "rem_plus_3yr": 108,
+    "seasons_used": 2,
+    "ip_total": 68.7,
+    "tag": "established",
+    "pct": 70
+   },
+   "662253": {
+    "name": "Andr\u00e9s Mu\u00f1oz",
+    "team": "SEA",
+    "rem_plus_now": 118,
+    "rem_plus_3yr": 119,
+    "seasons_used": 3,
+    "ip_total": 154.0,
+    "tag": "established",
+    "pct": 94
+   },
+   "687396": {
+    "name": "Brent Headrick",
+    "team": "NYY",
+    "rem_plus_now": 118,
+    "rem_plus_3yr": 114,
+    "seasons_used": 3,
+    "ip_total": 69.3,
+    "tag": "established",
+    "pct": 87
+   },
+   "547973": {
+    "name": "Aroldis Chapman",
+    "team": "BOS",
+    "rem_plus_now": 117,
+    "rem_plus_3yr": 132,
+    "seasons_used": 3,
+    "ip_total": 149.7,
+    "tag": "established",
+    "pct": 99
+   },
+   "641329": {
+    "name": "Bryan Baker",
+    "team": "TB",
+    "rem_plus_now": 116,
+    "rem_plus_3yr": 110,
+    "seasons_used": 3,
+    "ip_total": 126.3,
+    "tag": "established",
+    "pct": 76
+   },
+   "693686": {
+    "name": "Spencer Miles",
+    "team": "TOR",
+    "rem_plus_now": 116,
+    "rem_plus_3yr": 116,
+    "seasons_used": 1,
+    "ip_total": 54.0,
+    "tag": "provisional",
+    "pct": 91
+   },
+   "656794": {
+    "name": "Sean Newcomb",
+    "team": "CWS",
+    "rem_plus_now": 116,
+    "rem_plus_3yr": 111,
+    "seasons_used": 2,
+    "ip_total": 62.3,
+    "tag": "established",
+    "pct": 80
+   },
+   "656848": {
+    "name": "Michael Petersen",
+    "team": "MIA",
+    "rem_plus_now": 115,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 75.7,
+    "tag": "established",
+    "pct": 50
+   },
+   "663158": {
+    "name": "Robert Suarez",
+    "team": "ATL",
+    "rem_plus_now": 115,
+    "rem_plus_3yr": 114,
+    "seasons_used": 3,
+    "ip_total": 166.7,
+    "tag": "established",
+    "pct": 86
+   },
+   "676879": {
+    "name": "Aaron Ashby",
+    "team": "MIL",
+    "rem_plus_now": 114,
+    "rem_plus_3yr": 118,
+    "seasons_used": 2,
+    "ip_total": 120.0,
+    "tag": "established",
+    "pct": 92
+   },
+   "694361": {
+    "name": "Will Klein",
+    "team": "LAD",
+    "rem_plus_now": 114,
+    "rem_plus_3yr": 108,
+    "seasons_used": 3,
+    "ip_total": 58.0,
+    "tag": "established",
+    "pct": 70
+   },
+   "641835": {
+    "name": "Tim Mayza",
+    "team": "PHI",
+    "rem_plus_now": 114,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 100.0,
+    "tag": "established",
+    "pct": 39
+   },
+   "702193": {
+    "name": "Andrew Morris",
+    "team": "MIN",
+    "rem_plus_now": 114,
+    "rem_plus_3yr": 114,
+    "seasons_used": 1,
+    "ip_total": 41.0,
+    "tag": "provisional",
+    "pct": 86
+   },
+   "805299": {
+    "name": "Brandyn Garcia",
+    "team": "AZ",
+    "rem_plus_now": 113,
+    "rem_plus_3yr": 107,
+    "seasons_used": 2,
+    "ip_total": 35.7,
+    "tag": "provisional",
+    "pct": 66
+   },
+   "681895": {
+    "name": "Evan Sisk",
+    "team": "PIT",
+    "rem_plus_now": 112,
+    "rem_plus_3yr": 110,
+    "seasons_used": 2,
+    "ip_total": 54.0,
+    "tag": "established",
+    "pct": 77
+   },
+   "669330": {
+    "name": "Tyler Wells",
+    "team": "BAL",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 111,
+    "seasons_used": 1,
+    "ip_total": 41.7,
+    "tag": "provisional",
+    "pct": 82
+   },
+   "683618": {
+    "name": "Edgardo Henriquez",
+    "team": "LAD",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 108,
+    "seasons_used": 3,
+    "ip_total": 59.0,
+    "tag": "established",
+    "pct": 69
+   },
+   "666974": {
+    "name": "Yennier Cano",
+    "team": "BAL",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 147.0,
+    "tag": "established",
+    "pct": 48
+   },
+   "642207": {
+    "name": "Devin Williams",
+    "team": "NYM",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 123,
+    "seasons_used": 3,
+    "ip_total": 113.3,
+    "tag": "established",
+    "pct": 95
+   },
+   "670329": {
+    "name": "Rico Garcia",
+    "team": "BAL",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 109,
+    "seasons_used": 2,
+    "ip_total": 72.3,
+    "tag": "established",
+    "pct": 74
+   },
+   "656464": {
+    "name": "Kevin Ginkel",
+    "team": "AZ",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 112,
+    "seasons_used": 3,
+    "ip_total": 130.0,
+    "tag": "established",
+    "pct": 84
+   },
+   "699134": {
+    "name": "Bradgley Rodriguez",
+    "team": "SD",
+    "rem_plus_now": 111,
+    "rem_plus_3yr": 109,
+    "seasons_used": 2,
+    "ip_total": 44.3,
+    "tag": "established",
+    "pct": 74
+   },
+   "643410": {
+    "name": "Mark Leiter Jr.",
+    "team": "ATH",
+    "rem_plus_now": 110,
+    "rem_plus_3yr": 110,
+    "seasons_used": 3,
+    "ip_total": 137.0,
+    "tag": "established",
+    "pct": 79
+   },
+   "676263": {
+    "name": "Jack Dreyer",
+    "team": "LAD",
+    "rem_plus_now": 110,
+    "rem_plus_3yr": 115,
+    "seasons_used": 2,
+    "ip_total": 112.3,
+    "tag": "established",
+    "pct": 88
+   },
+   "518585": {
+    "name": "Fernando Cruz",
+    "team": "NYY",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 116,
+    "seasons_used": 3,
+    "ip_total": 152.3,
+    "tag": "established",
+    "pct": 90
+   },
+   "682608": {
+    "name": "Peyton Gray",
+    "team": "TEX",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 109,
+    "seasons_used": 1,
+    "ip_total": 31.3,
+    "tag": "provisional",
+    "pct": 73
+   },
+   "664076": {
+    "name": "Garrett Cleavinger",
+    "team": "TB",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 146.0,
+    "tag": "established",
+    "pct": 64
+   },
+   "646241": {
+    "name": "Enmanuel De Jesus",
+    "team": "DET",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 109,
+    "seasons_used": 1,
+    "ip_total": 31.7,
+    "tag": "provisional",
+    "pct": 73
+   },
+   "660825": {
+    "name": "Eduard Bazardo",
+    "team": "SEA",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 109,
+    "seasons_used": 3,
+    "ip_total": 144.7,
+    "tag": "established",
+    "pct": 73
+   },
+   "621237": {
+    "name": "Jos\u00e9 Alvarado",
+    "team": "PHI",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 118.7,
+    "tag": "established",
+    "pct": 56
+   },
+   "682842": {
+    "name": "Abner Uribe",
+    "team": "MIL",
+    "rem_plus_now": 109,
+    "rem_plus_3yr": 115,
+    "seasons_used": 3,
+    "ip_total": 125.3,
+    "tag": "established",
+    "pct": 88
+   },
+   "548384": {
+    "name": "Brooks Raley",
+    "team": "NYM",
+    "rem_plus_now": 108,
+    "rem_plus_3yr": 111,
+    "seasons_used": 3,
+    "ip_total": 65.0,
+    "tag": "established",
+    "pct": 79
+   },
+   "669165": {
+    "name": "Kyle Hurt",
+    "team": "LAD",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 107,
+    "seasons_used": 1,
+    "ip_total": 29.7,
+    "tag": "provisional",
+    "pct": 67
+   },
+   "660853": {
+    "name": "Enyel De Los Santos",
+    "team": "HOU",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 170.7,
+    "tag": "established",
+    "pct": 17
+   },
+   "686580": {
+    "name": "Justin Slaten",
+    "team": "BOS",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 111,
+    "seasons_used": 3,
+    "ip_total": 109.3,
+    "tag": "established",
+    "pct": 82
+   },
+   "663738": {
+    "name": "Daniel Lynch IV",
+    "team": "KC",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 93,
+    "seasons_used": 2,
+    "ip_total": 103.7,
+    "tag": "established",
+    "pct": 13
+   },
+   "668933": {
+    "name": "Graham Ashcraft",
+    "team": "CIN",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 112,
+    "seasons_used": 2,
+    "ip_total": 92.3,
+    "tag": "established",
+    "pct": 83
+   },
+   "595345": {
+    "name": "Steven Okert",
+    "team": "HOU",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 111,
+    "seasons_used": 3,
+    "ip_total": 150.3,
+    "tag": "established",
+    "pct": 80
+   },
+   "695380": {
+    "name": "Alex Hoppe",
+    "team": "SEA",
+    "rem_plus_now": 107,
+    "rem_plus_3yr": 107,
+    "seasons_used": 1,
+    "ip_total": 24.0,
+    "tag": "provisional",
+    "pct": 67
+   },
+   "676775": {
+    "name": "Keaton Winn",
+    "team": "SF",
+    "rem_plus_now": 106,
+    "rem_plus_3yr": 105,
+    "seasons_used": 2,
+    "ip_total": 40.7,
+    "tag": "established",
+    "pct": 61
+   },
+   "596001": {
+    "name": "Jakob Junis",
+    "team": "TEX",
+    "rem_plus_now": 106,
+    "rem_plus_3yr": 105,
+    "seasons_used": 2,
+    "ip_total": 102.0,
+    "tag": "established",
+    "pct": 59
+   },
+   "669093": {
+    "name": "Jeremiah Estrada",
+    "team": "SD",
+    "rem_plus_now": 106,
+    "rem_plus_3yr": 125,
+    "seasons_used": 3,
+    "ip_total": 154.7,
+    "tag": "established",
+    "pct": 97
+   },
+   "657097": {
+    "name": "Jacob Webb",
+    "team": "CHC",
+    "rem_plus_now": 106,
+    "rem_plus_3yr": 101,
+    "seasons_used": 3,
+    "ip_total": 161.0,
+    "tag": "established",
+    "pct": 45
+   },
+   "642528": {
+    "name": "Jonathan Lo\u00e1isiga",
+    "team": "AZ",
+    "rem_plus_now": 106,
+    "rem_plus_3yr": 96,
+    "seasons_used": 3,
+    "ip_total": 68.0,
+    "tag": "established",
+    "pct": 23
+   },
+   "641302": {
+    "name": "Tyler Alexander",
+    "team": "TEX",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 103,
+    "seasons_used": 2,
+    "ip_total": 134.7,
+    "tag": "established",
+    "pct": 53
+   },
+   "642397": {
+    "name": "Gregory Soto",
+    "team": "PIT",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 151.3,
+    "tag": "established",
+    "pct": 51
+   },
+   "668873": {
+    "name": "Caleb Kilian",
+    "team": "SF",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 105,
+    "seasons_used": 1,
+    "ip_total": 37.0,
+    "tag": "provisional",
+    "pct": 60
+   },
+   "689254": {
+    "name": "Mason Fluharty",
+    "team": "TOR",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 103,
+    "seasons_used": 2,
+    "ip_total": 87.0,
+    "tag": "established",
+    "pct": 52
+   },
+   "622608": {
+    "name": "Antonio Senzatela",
+    "team": "COL",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 105,
+    "seasons_used": 1,
+    "ip_total": 46.0,
+    "tag": "provisional",
+    "pct": 60
+   },
+   "623454": {
+    "name": "Drew Anderson",
+    "team": "DET",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 105,
+    "seasons_used": 1,
+    "ip_total": 53.7,
+    "tag": "provisional",
+    "pct": 60
+   },
+   "687330": {
+    "name": "Kevin Kelly",
+    "team": "TB",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 151.3,
+    "tag": "established",
+    "pct": 50
+   },
+   "608718": {
+    "name": "Brent Suter",
+    "team": "LAA",
+    "rem_plus_now": 105,
+    "rem_plus_3yr": 96,
+    "seasons_used": 3,
+    "ip_total": 184.3,
+    "tag": "established",
+    "pct": 25
+   },
+   "665660": {
+    "name": "Elvis Alvarado",
+    "team": "ATH",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 100,
+    "seasons_used": 2,
+    "ip_total": 66.7,
+    "tag": "established",
+    "pct": 43
+   },
+   "681217": {
+    "name": "Chase Silseth",
+    "team": "LAA",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 103,
+    "seasons_used": 2,
+    "ip_total": 44.0,
+    "tag": "established",
+    "pct": 53
+   },
+   "689147": {
+    "name": "Orion Kerkering",
+    "team": "PHI",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 110,
+    "seasons_used": 3,
+    "ip_total": 158.3,
+    "tag": "established",
+    "pct": 78
+   },
+   "678606": {
+    "name": "Jos\u00e9 A. Ferrer",
+    "team": "SEA",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 109,
+    "seasons_used": 3,
+    "ip_total": 145.3,
+    "tag": "established",
+    "pct": 71
+   },
+   "676617": {
+    "name": "Riley O'Brien",
+    "team": "STL",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 100,
+    "seasons_used": 3,
+    "ip_total": 92.3,
+    "tag": "established",
+    "pct": 40
+   },
+   "595014": {
+    "name": "Blake Treinen",
+    "team": "LAD",
+    "rem_plus_now": 104,
+    "rem_plus_3yr": 107,
+    "seasons_used": 3,
+    "ip_total": 96.3,
+    "tag": "established",
+    "pct": 68
+   },
+   "669020": {
+    "name": "Ryan Rolison",
+    "team": "CHC",
+    "rem_plus_now": 103,
+    "rem_plus_3yr": 87,
+    "seasons_used": 2,
+    "ip_total": 75.7,
+    "tag": "established",
+    "pct": 1
+   },
+   "676684": {
+    "name": "Will Vest",
+    "team": "DET",
+    "rem_plus_now": 103,
+    "rem_plus_3yr": 114,
+    "seasons_used": 3,
+    "ip_total": 165.7,
+    "tag": "established",
+    "pct": 85
+   },
+   "623149": {
+    "name": "Paul Sewald",
+    "team": "AZ",
+    "rem_plus_now": 103,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 91.3,
+    "tag": "established",
+    "pct": 47
+   },
+   "642100": {
+    "name": "Gabe Speier",
+    "team": "SEA",
+    "rem_plus_now": 103,
+    "rem_plus_3yr": 122,
+    "seasons_used": 3,
+    "ip_total": 107.7,
+    "tag": "established",
+    "pct": 95
+   },
+   "660761": {
+    "name": "Jos\u00e9 Suarez",
+    "team": "ATH",
+    "rem_plus_now": 103,
+    "rem_plus_3yr": 103,
+    "seasons_used": 1,
+    "ip_total": 45.3,
+    "tag": "provisional",
+    "pct": 54
+   },
+   "622088": {
+    "name": "Tejay Antone",
+    "team": "CIN",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 101,
+    "seasons_used": 2,
+    "ip_total": 28.0,
+    "tag": "provisional",
+    "pct": 46
+   },
+   "665622": {
+    "name": "Luis Medina",
+    "team": "ATH",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 102,
+    "seasons_used": 1,
+    "ip_total": 39.7,
+    "tag": "provisional",
+    "pct": 49
+   },
+   "642121": {
+    "name": "Cole Sulser",
+    "team": "TB",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 105,
+    "seasons_used": 2,
+    "ip_total": 60.3,
+    "tag": "established",
+    "pct": 59
+   },
+   "687377": {
+    "name": "Orlando Ribalta",
+    "team": "WSH",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 91,
+    "seasons_used": 3,
+    "ip_total": 54.0,
+    "tag": "established",
+    "pct": 6
+   },
+   "667463": {
+    "name": "John King",
+    "team": "MIA",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 147.3,
+    "tag": "established",
+    "pct": 15
+   },
+   "689296": {
+    "name": "Anthony Nunez",
+    "team": "BAL",
+    "rem_plus_now": 102,
+    "rem_plus_3yr": 102,
+    "seasons_used": 1,
+    "ip_total": 34.3,
+    "tag": "provisional",
+    "pct": 49
+   },
+   "687911": {
+    "name": "Bryan King",
+    "team": "HOU",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 107,
+    "seasons_used": 3,
+    "ip_total": 133.3,
+    "tag": "established",
+    "pct": 66
+   },
+   "681867": {
+    "name": "Cooper Criswell",
+    "team": "SEA",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 101,
+    "seasons_used": 1,
+    "ip_total": 30.7,
+    "tag": "provisional",
+    "pct": 46
+   },
+   "657044": {
+    "name": "Ryan Thompson",
+    "team": "AZ",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 140.0,
+    "tag": "established",
+    "pct": 48
+   },
+   "683769": {
+    "name": "Hunter Gaddis",
+    "team": "CLE",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 111,
+    "seasons_used": 3,
+    "ip_total": 168.3,
+    "tag": "established",
+    "pct": 81
+   },
+   "667297": {
+    "name": "Tommy Nance",
+    "team": "TOR",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 86.7,
+    "tag": "established",
+    "pct": 65
+   },
+   "676534": {
+    "name": "Calvin Faucher",
+    "team": "MIA",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 150.0,
+    "tag": "established",
+    "pct": 57
+   },
+   "668390": {
+    "name": "Cole Winn",
+    "team": "TEX",
+    "rem_plus_now": 101,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 89.0,
+    "tag": "established",
+    "pct": 35
+   },
+   "621112": {
+    "name": "Paul Blackburn",
+    "team": "NYY",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 100,
+    "seasons_used": 1,
+    "ip_total": 43.3,
+    "tag": "provisional",
+    "pct": 41
+   },
+   "679358": {
+    "name": "Eric Orze",
+    "team": "MIN",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 84.3,
+    "tag": "established",
+    "pct": 31
+   },
+   "668941": {
+    "name": "JoJo Romero",
+    "team": "STL",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 160.0,
+    "tag": "established",
+    "pct": 38
+   },
+   "643511": {
+    "name": "Tyler Rogers",
+    "team": "TOR",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 188.3,
+    "tag": "established",
+    "pct": 63
+   },
+   "552640": {
+    "name": "Andrew Kittredge",
+    "team": "BAL",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 108,
+    "seasons_used": 3,
+    "ip_total": 145.7,
+    "tag": "established",
+    "pct": 68
+   },
+   "669062": {
+    "name": "Erik Miller",
+    "team": "SF",
+    "rem_plus_now": 100,
+    "rem_plus_3yr": 94,
+    "seasons_used": 2,
+    "ip_total": 54.0,
+    "tag": "established",
+    "pct": 18
+   },
+   "686993": {
+    "name": "Justin Sterner",
+    "team": "ATH",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 109.7,
+    "tag": "established",
+    "pct": 39
+   },
+   "666808": {
+    "name": "Camilo Doval",
+    "team": "NYY",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 102,
+    "seasons_used": 3,
+    "ip_total": 159.0,
+    "tag": "established",
+    "pct": 47
+   },
+   "669711": {
+    "name": "Greg Weissert",
+    "team": "BOS",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 101,
+    "seasons_used": 3,
+    "ip_total": 165.0,
+    "tag": "established",
+    "pct": 44
+   },
+   "670950": {
+    "name": "Trevor Richards",
+    "team": "CWS",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 104.0,
+    "tag": "established",
+    "pct": 16
+   },
+   "573204": {
+    "name": "Caleb Thielbar",
+    "team": "CHC",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 105,
+    "seasons_used": 3,
+    "ip_total": 130.0,
+    "tag": "established",
+    "pct": 62
+   },
+   "641745": {
+    "name": "Brad Keller",
+    "team": "PHI",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 111,
+    "seasons_used": 2,
+    "ip_total": 100.0,
+    "tag": "established",
+    "pct": 81
+   },
+   "677053": {
+    "name": "Andrew Nardi",
+    "team": "MIA",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 110,
+    "seasons_used": 2,
+    "ip_total": 72.3,
+    "tag": "established",
+    "pct": 77
+   },
+   "663687": {
+    "name": "Hogan Harris",
+    "team": "ATH",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 100,
+    "seasons_used": 2,
+    "ip_total": 104.7,
+    "tag": "established",
+    "pct": 40
+   },
+   "656234": {
+    "name": "Jake Bird",
+    "team": "NYY",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 93,
+    "seasons_used": 3,
+    "ip_total": 124.0,
+    "tag": "established",
+    "pct": 14
+   },
+   "657514": {
+    "name": "Brennan Bernardino",
+    "team": "COL",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 97,
+    "seasons_used": 3,
+    "ip_total": 139.0,
+    "tag": "established",
+    "pct": 30
+   },
+   "663947": {
+    "name": "Tyler Holton",
+    "team": "DET",
+    "rem_plus_now": 99,
+    "rem_plus_3yr": 96,
+    "seasons_used": 2,
+    "ip_total": 118.7,
+    "tag": "established",
+    "pct": 23
+   },
+   "666171": {
+    "name": "Ryan Zeferjahn",
+    "team": "LAA",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 114.7,
+    "tag": "established",
+    "pct": 17
+   },
+   "668984": {
+    "name": "Casey Legumina",
+    "team": "TB",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 95.3,
+    "tag": "established",
+    "pct": 22
+   },
+   "701519": {
+    "name": "Travis Adams",
+    "team": "MIN",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 98,
+    "seasons_used": 1,
+    "ip_total": 22.7,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "690925": {
+    "name": "Clayton Beeter",
+    "team": "WSH",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 100,
+    "seasons_used": 3,
+    "ip_total": 56.0,
+    "tag": "established",
+    "pct": 41
+   },
+   "670036": {
+    "name": "Matt Festa",
+    "team": "CLE",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 105,
+    "seasons_used": 3,
+    "ip_total": 115.0,
+    "tag": "established",
+    "pct": 58
+   },
+   "820862": {
+    "name": "Jos\u00e9 Fermin",
+    "team": "LAA",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 91,
+    "seasons_used": 2,
+    "ip_total": 60.3,
+    "tag": "established",
+    "pct": 6
+   },
+   "673513": {
+    "name": "Yuki Matsui",
+    "team": "SD",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 96,
+    "seasons_used": 3,
+    "ip_total": 157.0,
+    "tag": "established",
+    "pct": 22
+   },
+   "805123": {
+    "name": "AJ Blubaugh",
+    "team": "HOU",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 98,
+    "seasons_used": 1,
+    "ip_total": 58.0,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "641755": {
+    "name": "Tyler Kinley",
+    "team": "ATL",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 96,
+    "seasons_used": 3,
+    "ip_total": 169.0,
+    "tag": "established",
+    "pct": 24
+   },
+   "669084": {
+    "name": "DL Hall",
+    "team": "MIL",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 98,
+    "seasons_used": 1,
+    "ip_total": 31.0,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "664199": {
+    "name": "Taylor Clarke",
+    "team": "AZ",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 100,
+    "seasons_used": 2,
+    "ip_total": 94.7,
+    "tag": "established",
+    "pct": 43
+   },
+   "621383": {
+    "name": "Tanner Banks",
+    "team": "PHI",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 168.3,
+    "tag": "established",
+    "pct": 63
+   },
+   "606996": {
+    "name": "Kyle Hart",
+    "team": "SD",
+    "rem_plus_now": 98,
+    "rem_plus_3yr": 98,
+    "seasons_used": 1,
+    "ip_total": 30.7,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "701719": {
+    "name": "Tyler Samaniego",
+    "team": "BOS",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 97,
+    "seasons_used": 1,
+    "ip_total": 20.3,
+    "tag": "provisional",
+    "pct": 29
+   },
+   "656638": {
+    "name": "Alex Lange",
+    "team": "KC",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 57.0,
+    "tag": "established",
+    "pct": 18
+   },
+   "676428": {
+    "name": "Brant Hurter",
+    "team": "DET",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 103,
+    "seasons_used": 3,
+    "ip_total": 133.7,
+    "tag": "established",
+    "pct": 54
+   },
+   "666277": {
+    "name": "George Soriano",
+    "team": "STL",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 87,
+    "seasons_used": 3,
+    "ip_total": 104.3,
+    "tag": "established",
+    "pct": 3
+   },
+   "696147": {
+    "name": "Sam Bachman",
+    "team": "LAA",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 96,
+    "seasons_used": 2,
+    "ip_total": 59.0,
+    "tag": "established",
+    "pct": 28
+   },
+   "675848": {
+    "name": "Juan Mejia",
+    "team": "COL",
+    "rem_plus_now": 97,
+    "rem_plus_3yr": 101,
+    "seasons_used": 2,
+    "ip_total": 101.3,
+    "tag": "established",
+    "pct": 45
+   },
+   "681810": {
+    "name": "Austin Warren",
+    "team": "NYM",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 97,
+    "seasons_used": 3,
+    "ip_total": 55.0,
+    "tag": "established",
+    "pct": 29
+   },
+   "699823": {
+    "name": "Tyler Davis",
+    "team": "CWS",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 96,
+    "seasons_used": 1,
+    "ip_total": 23.3,
+    "tag": "provisional",
+    "pct": 26
+   },
+   "518886": {
+    "name": "Craig Kimbrel",
+    "team": "TB",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 89.7,
+    "tag": "established",
+    "pct": 38
+   },
+   "687606": {
+    "name": "Paxton Schultz",
+    "team": "WSH",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 96,
+    "seasons_used": 1,
+    "ip_total": 30.7,
+    "tag": "provisional",
+    "pct": 26
+   },
+   "695418": {
+    "name": "Brad Lord",
+    "team": "WSH",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 96,
+    "seasons_used": 1,
+    "ip_total": 58.0,
+    "tag": "provisional",
+    "pct": 26
+   },
+   "572955": {
+    "name": "Pierce Johnson",
+    "team": "CIN",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 103,
+    "seasons_used": 3,
+    "ip_total": 140.3,
+    "tag": "established",
+    "pct": 52
+   },
+   "688158": {
+    "name": "David Morgan",
+    "team": "SD",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 100,
+    "seasons_used": 2,
+    "ip_total": 69.3,
+    "tag": "established",
+    "pct": 42
+   },
+   "663765": {
+    "name": "Jake Woodford",
+    "team": "MIL",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 91,
+    "seasons_used": 2,
+    "ip_total": 59.7,
+    "tag": "established",
+    "pct": 7
+   },
+   "664126": {
+    "name": "Pete Fairbanks",
+    "team": "MIA",
+    "rem_plus_now": 96,
+    "rem_plus_3yr": 103,
+    "seasons_used": 3,
+    "ip_total": 131.7,
+    "tag": "established",
+    "pct": 51
+   },
+   "664141": {
+    "name": "JT Brubaker",
+    "team": "SF",
+    "rem_plus_now": 95,
+    "rem_plus_3yr": 97,
+    "seasons_used": 2,
+    "ip_total": 72.3,
+    "tag": "established",
+    "pct": 30
+   },
+   "663767": {
+    "name": "Chase Shugart",
+    "team": "PHI",
+    "rem_plus_now": 95,
+    "rem_plus_3yr": 93,
+    "seasons_used": 3,
+    "ip_total": 82.7,
+    "tag": "established",
+    "pct": 11
+   },
+   "622554": {
+    "name": "Seranthony Dom\u00ednguez",
+    "team": "CWS",
+    "rem_plus_now": 95,
+    "rem_plus_3yr": 100,
+    "seasons_used": 3,
+    "ip_total": 151.0,
+    "tag": "established",
+    "pct": 42
+   },
+   "573124": {
+    "name": "Taylor Rogers",
+    "team": "MIN",
+    "rem_plus_now": 95,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 143.0,
+    "tag": "established",
+    "pct": 32
+   },
+   "676755": {
+    "name": "Isaac Mattson",
+    "team": "PIT",
+    "rem_plus_now": 95,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 81.0,
+    "tag": "established",
+    "pct": 36
+   },
+   "670990": {
+    "name": "Yohan Ram\u00edrez",
+    "team": "PIT",
+    "rem_plus_now": 94,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 127.0,
+    "tag": "established",
+    "pct": 19
+   },
+   "542888": {
+    "name": "Shawn Armstrong",
+    "team": "CLE",
+    "rem_plus_now": 94,
+    "rem_plus_3yr": 109,
+    "seasons_used": 2,
+    "ip_total": 101.7,
+    "tag": "established",
+    "pct": 71
+   },
+   "681982": {
+    "name": "Grant Anderson",
+    "team": "MIL",
+    "rem_plus_now": 94,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 135.7,
+    "tag": "established",
+    "pct": 20
+   },
+   "594580": {
+    "name": "Sam Moll",
+    "team": "CIN",
+    "rem_plus_now": 94,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 92.7,
+    "tag": "established",
+    "pct": 31
+   },
+   "672335": {
+    "name": "Cionel P\u00e9rez",
+    "team": "NYM",
+    "rem_plus_now": 94,
+    "rem_plus_3yr": 93,
+    "seasons_used": 3,
+    "ip_total": 109.7,
+    "tag": "established",
+    "pct": 13
+   },
+   "445276": {
+    "name": "Kenley Jansen",
+    "team": "DET",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 105,
+    "seasons_used": 3,
+    "ip_total": 135.3,
+    "tag": "established",
+    "pct": 62
+   },
+   "694335": {
+    "name": "Matt Svanson",
+    "team": "STL",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 109,
+    "seasons_used": 2,
+    "ip_total": 99.0,
+    "tag": "established",
+    "pct": 75
+   },
+   "642232": {
+    "name": "Ryan Yarbrough",
+    "team": "NYY",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 88,
+    "seasons_used": 2,
+    "ip_total": 134.3,
+    "tag": "established",
+    "pct": 3
+   },
+   "674444": {
+    "name": "Steven Cruz",
+    "team": "KC",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 79.7,
+    "tag": "established",
+    "pct": 21
+   },
+   "592773": {
+    "name": "Ryne Stanek",
+    "team": "STL",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 146.0,
+    "tag": "established",
+    "pct": 19
+   },
+   "656271": {
+    "name": "Brock Burke",
+    "team": "CIN",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 96,
+    "seasons_used": 3,
+    "ip_total": 138.0,
+    "tag": "established",
+    "pct": 27
+   },
+   "592094": {
+    "name": "Jason Adam",
+    "team": "SD",
+    "rem_plus_now": 93,
+    "rem_plus_3yr": 110,
+    "seasons_used": 3,
+    "ip_total": 171.3,
+    "tag": "established",
+    "pct": 76
+   },
+   "677955": {
+    "name": "Jaden Hill",
+    "team": "COL",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 66.7,
+    "tag": "established",
+    "pct": 21
+   },
+   "670167": {
+    "name": "John Schreiber",
+    "team": "KC",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 150.7,
+    "tag": "established",
+    "pct": 37
+   },
+   "607455": {
+    "name": "Anthony Banda",
+    "team": "MIN",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 95,
+    "seasons_used": 3,
+    "ip_total": 149.0,
+    "tag": "established",
+    "pct": 20
+   },
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 61.7,
+    "tag": "established",
+    "pct": 16
+   },
+   "663855": {
+    "name": "Jordan Hicks",
+    "team": "CWS",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 92,
+    "seasons_used": 1,
+    "ip_total": 22.0,
+    "tag": "provisional",
+    "pct": 10
+   },
+   "669211": {
+    "name": "Keegan Akin",
+    "team": "BAL",
+    "rem_plus_now": 92,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 167.3,
+    "tag": "established",
+    "pct": 57
+   },
+   "672782": {
+    "name": "Yoendrys G\u00f3mez",
+    "team": "MIN",
+    "rem_plus_now": 91,
+    "rem_plus_3yr": 90,
+    "seasons_used": 2,
+    "ip_total": 52.7,
+    "tag": "established",
+    "pct": 5
+   },
+   "544150": {
+    "name": "Albert Su\u00e1rez",
+    "team": "BAL",
+    "rem_plus_now": 91,
+    "rem_plus_3yr": 91,
+    "seasons_used": 1,
+    "ip_total": 39.7,
+    "tag": "provisional",
+    "pct": 7
+   },
+   "656222": {
+    "name": "Jalen Beeks",
+    "team": "TEX",
+    "rem_plus_now": 91,
+    "rem_plus_3yr": 94,
+    "seasons_used": 3,
+    "ip_total": 153.3,
+    "tag": "established",
+    "pct": 15
+   },
+   "657756": {
+    "name": "Connor Seabold",
+    "team": "KC",
+    "rem_plus_now": 90,
+    "rem_plus_3yr": 91,
+    "seasons_used": 2,
+    "ip_total": 34.3,
+    "tag": "provisional",
+    "pct": 8
+   },
+   "642701": {
+    "name": "Dennis Santana",
+    "team": "PIT",
+    "rem_plus_now": 90,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 179.3,
+    "tag": "established",
+    "pct": 64
+   },
+   "681402": {
+    "name": "Gus Varland",
+    "team": "WSH",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 96,
+    "seasons_used": 2,
+    "ip_total": 58.0,
+    "tag": "established",
+    "pct": 24
+   },
+   "571948": {
+    "name": "Hoby Milner",
+    "team": "CHC",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 170.7,
+    "tag": "established",
+    "pct": 55
+   },
+   "815083": {
+    "name": "Mitch Farris",
+    "team": "LAA",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 89,
+    "seasons_used": 1,
+    "ip_total": 37.3,
+    "tag": "provisional",
+    "pct": 4
+   },
+   "657612": {
+    "name": "Tim Hill",
+    "team": "NYY",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 92,
+    "seasons_used": 3,
+    "ip_total": 166.3,
+    "tag": "established",
+    "pct": 9
+   },
+   "676254": {
+    "name": "Ryan Walker",
+    "team": "SF",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 115,
+    "seasons_used": 3,
+    "ip_total": 165.7,
+    "tag": "established",
+    "pct": 87
+   },
+   "670245": {
+    "name": "Ryan Watson",
+    "team": "BOS",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 89,
+    "seasons_used": 1,
+    "ip_total": 47.7,
+    "tag": "provisional",
+    "pct": 4
+   },
+   "640448": {
+    "name": "Kyle Finnegan",
+    "team": "DET",
+    "rem_plus_now": 89,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 161.0,
+    "tag": "established",
+    "pct": 37
+   },
+   "621366": {
+    "name": "Ryan Borucki",
+    "team": "SF",
+    "rem_plus_now": 88,
+    "rem_plus_3yr": 93,
+    "seasons_used": 3,
+    "ip_total": 69.7,
+    "tag": "established",
+    "pct": 14
+   },
+   "664208": {
+    "name": "Phil Maton",
+    "team": "CHC",
+    "rem_plus_now": 87,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 152.0,
+    "tag": "established",
+    "pct": 58
+   },
+   "663423": {
+    "name": "Trent Thornton",
+    "team": "CHC",
+    "rem_plus_now": 87,
+    "rem_plus_3yr": 98,
+    "seasons_used": 3,
+    "ip_total": 141.0,
+    "tag": "established",
+    "pct": 35
+   },
+   "680730": {
+    "name": "Mitchell Parker",
+    "team": "WSH",
+    "rem_plus_now": 87,
+    "rem_plus_3yr": 87,
+    "seasons_used": 1,
+    "ip_total": 39.7,
+    "tag": "provisional",
+    "pct": 2
+   },
+   "676760": {
+    "name": "Ron Marinaccio",
+    "team": "SD",
+    "rem_plus_now": 87,
+    "rem_plus_3yr": 92,
+    "seasons_used": 3,
+    "ip_total": 77.0,
+    "tag": "established",
+    "pct": 10
+   },
+   "682120": {
+    "name": "Tim Herrin",
+    "team": "CLE",
+    "rem_plus_now": 87,
+    "rem_plus_3yr": 99,
+    "seasons_used": 3,
+    "ip_total": 140.0,
+    "tag": "established",
+    "pct": 36
+   },
+   "668674": {
+    "name": "Lucas Erceg",
+    "team": "KC",
+    "rem_plus_now": 86,
+    "rem_plus_3yr": 106,
+    "seasons_used": 3,
+    "ip_total": 156.7,
+    "tag": "established",
+    "pct": 65
+   },
+   "681799": {
+    "name": "Ethan Roberts",
+    "team": "CHC",
+    "rem_plus_now": 86,
+    "rem_plus_3yr": 91,
+    "seasons_used": 3,
+    "ip_total": 61.3,
+    "tag": "established",
+    "pct": 8
+   },
+   "700669": {
+    "name": "Gordon Graceffo",
+    "team": "STL",
+    "rem_plus_now": 85,
+    "rem_plus_3yr": 96,
+    "seasons_used": 2,
+    "ip_total": 85.3,
+    "tag": "established",
+    "pct": 28
+   },
+   "663574": {
+    "name": "Tony Santillan",
+    "team": "CIN",
+    "rem_plus_now": 85,
+    "rem_plus_3yr": 104,
+    "seasons_used": 3,
+    "ip_total": 134.7,
+    "tag": "established",
+    "pct": 56
+   },
+   "688642": {
+    "name": "Zach Agnos",
+    "team": "COL",
+    "rem_plus_now": 85,
+    "rem_plus_3yr": 84,
+    "seasons_used": 2,
+    "ip_total": 87.7,
+    "tag": "established",
+    "pct": 1
+   },
+   "669270": {
+    "name": "Joel Kuhnel",
+    "team": "MIL",
+    "rem_plus_now": 84,
+    "rem_plus_3yr": 87,
+    "seasons_used": 2,
+    "ip_total": 45.3,
+    "tag": "established",
+    "pct": 2
+   },
+   "680767": {
+    "name": "Victor Vodnik",
+    "team": "COL",
+    "rem_plus_now": 83,
+    "rem_plus_3yr": 93,
+    "seasons_used": 3,
+    "ip_total": 151.0,
+    "tag": "established",
+    "pct": 12
+   },
+   "650556": {
+    "name": "Bryan Abreu",
+    "team": "HOU",
+    "rem_plus_now": 83,
+    "rem_plus_3yr": 115,
+    "seasons_used": 3,
+    "ip_total": 178.3,
+    "tag": "established",
+    "pct": 89
+   },
+   "519141": {
+    "name": "Drew Pomeranz",
+    "team": "CHC",
+    "rem_plus_now": 82,
+    "rem_plus_3yr": 101,
+    "seasons_used": 2,
+    "ip_total": 75.0,
+    "tag": "established",
+    "pct": 44
+   },
+   "621381": {
+    "name": "Matt Strahm",
+    "team": "KC",
+    "rem_plus_now": 82,
+    "rem_plus_3yr": 117,
+    "seasons_used": 3,
+    "ip_total": 153.7,
+    "tag": "established",
+    "pct": 91
+   },
+   "681892": {
+    "name": "Kody Funderburk",
+    "team": "MIN",
+    "rem_plus_now": 81,
+    "rem_plus_3yr": 92,
+    "seasons_used": 3,
+    "ip_total": 98.0,
+    "tag": "established",
+    "pct": 9
+   },
+   "657424": {
+    "name": "Matt Gage",
+    "team": "SF",
+    "rem_plus_now": 81,
+    "rem_plus_3yr": 93,
+    "seasons_used": 2,
+    "ip_total": 58.3,
+    "tag": "established",
+    "pct": 11
+   },
+   "683175": {
+    "name": "Connor Phillips",
+    "team": "CIN",
+    "rem_plus_now": 80,
+    "rem_plus_3yr": 93,
+    "seasons_used": 2,
+    "ip_total": 52.7,
+    "tag": "established",
+    "pct": 12
+   },
+   "605130": {
+    "name": "Scott Barlow",
+    "team": "ATH",
+    "rem_plus_now": 79,
+    "rem_plus_3yr": 90,
+    "seasons_used": 3,
+    "ip_total": 156.7,
+    "tag": "established",
+    "pct": 5
+   },
+   "664875": {
+    "name": "Justin Lawrence",
+    "team": "WSH",
+    "rem_plus_now": 77,
+    "rem_plus_3yr": 82,
+    "seasons_used": 3,
+    "ip_total": 108.7,
+    "tag": "established",
+    "pct": 0
+   }
+  }
+ },
+ "runtime_seconds": 185.4
+}

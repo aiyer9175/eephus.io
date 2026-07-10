@@ -1,0 +1,79 @@
+{
+ "fitted_at": "2026-06-29",
+ "protocol": "forward-chained dev bases 2017-2021; star slice = base-season WAR >= 4 (ex-ante star_l1); lambda grid [0.0, 0.2, 0.4, 0.6, 0.8, 1.0]; guard: star MAE +0.02 max; pooled MAE untouched by construction (non-star rows never blend)",
+ "lambda_by_horizon": {
+  "1": 0.0,
+  "2": 0.0,
+  "3": 0.0,
+  "4": 0.0,
+  "5": 1.0
+ },
+ "dev_table": {
+  "1": {
+   "n_star": 195,
+   "bias_before": -0.0824,
+   "bias_after": -0.0824,
+   "mae_before": 1.8638,
+   "mae_after": 1.8638,
+   "lambda": 0.0
+  },
+  "2": {
+   "n_star": 195,
+   "bias_before": 0.5271,
+   "bias_after": 0.5271,
+   "mae_before": 1.8723,
+   "mae_after": 1.8723,
+   "lambda": 0.0
+  },
+  "3": {
+   "n_star": 195,
+   "bias_before": 0.2819,
+   "bias_after": 0.2819,
+   "mae_before": 1.8331,
+   "mae_after": 1.8331,
+   "lambda": 0.0
+  },
+  "4": {
+   "n_star": 195,
+   "bias_before": -0.0228,
+   "bias_after": -0.0228,
+   "mae_before": 1.8479,
+   "mae_after": 1.8479,
+   "lambda": 0.0
+  },
+  "5": {
+   "n_star": 195,
+   "bias_before": -0.8206,
+   "bias_after": -0.7331,
+   "mae_before": 1.8611,
+   "mae_after": 1.8453,
+   "lambda": 1.0
+  }
+ },
+ "ship": true,
+ "holdout_confirmation": {
+  "bases": [
+   2022,
+   2023,
+   2024
+  ],
+  "h2": {
+   "unblended_star_bias": -0.5193,
+   "blended_star_bias": -0.5666,
+   "verdict": "FAILED confirmation - dev h2 signal (positive bias regime) did not transfer; lambda_2 dropped to 0"
+  },
+  "h5": {
+   "verdict": "UNCONFIRMABLE on the holdout (2022-24 bases have no mature h5 labels). Ships on dev evidence only (bias -0.825 -> -0.743, star MAE down, n=195) with this disclosure; first holdout look possible when 2027+ labels complete.",
+   "dev": {
+    "n_star": 195,
+    "bias_before": -0.8206,
+    "bias_after": -0.7331,
+    "mae_before": 1.8611,
+    "mae_after": 1.8453,
+    "lambda": 1.0
+   }
+  },
+  "h1_h3_h4": "lambda 0 from the dev fit - no blend, holdout untouched by construction",
+  "refit_note": "carried across the 2026-06-29 pos_adj defensive-prior refit; shipped lambdas unchanged (h5=1.0), so the original h2/h5 verdicts still hold; h5.dev refreshed to the new-schema dev fit"
+ }
+}

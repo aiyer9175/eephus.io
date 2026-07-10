@@ -1,0 +1,19 @@
+{
+ "generated_at": "2026-07-07",
+ "season_out_validation": {
+  "pitch_level_r": 0.0213,
+  "pitcher_level_r": 0.2797,
+  "n_valid_pitchers": 638
+ },
+ "forward_gate": {
+  "n_era": 18,
+  "r_vs_mlb_era_inv": 0.0648,
+  "n_k": 18,
+  "r_vs_mlb_kpct": 0.5066
+ },
+ "conventions": {
+  "model": "physics-only features, label = delta_run_exp",
+  "cohort": "graduates 2024+ with a strictly pre-debut AAA Stuff+ season and >=100 MLB BF in the debut year",
+  "scale": "100 + 10z vs the qualified AAA pool, shrink k=300"
+ }
+}

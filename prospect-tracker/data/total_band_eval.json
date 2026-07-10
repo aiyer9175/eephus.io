@@ -1,0 +1,163 @@
+{
+ "experiment": "R-BAND (F-01): simulated path-total quantile bands",
+ "generated_by": "tools/fit_total_band.py",
+ "seed": 20260702,
+ "n_sim": 20000,
+ "horizons": 5,
+ "method": "Per-year predictive marginal = piecewise-linear quantile function pinned to (p10, mean, p90) with slope-continued tails. Year-to-year dependence = Gaussian copula, AR(1) structure, rho = Pearson corr of consecutive-year z=Phi^-1(F_year(realized bWAR)) on the fit cohort. Total band = P10/P90 of N_SIM seeded simulated path sums (inverse-CDF sampling of the per-year marginals under the AR(1) copula). Estimation corpus is MLB-only (proj_eval/fa_projection), champion marcel_decay_v2, forward-chained (fit<=B-1, score complete seasons only).",
+ "fit_bases": [
+  2013,
+  2014,
+  2015,
+  2016,
+  2017,
+  2018
+ ],
+ "holdout_bases": [
+  2019,
+  2020,
+  2021
+ ],
+ "n_fit_records": 11460,
+ "n_holdout_records": 6136,
+ "dependence": {
+  "n_lag1_pairs": 45840,
+  "n_lag2_pairs": 34380,
+  "ar1_rho_pearson_z": 0.3451,
+  "lag2_rho_pearson_z": 0.2744,
+  "lag1_spearman_u": 0.4103,
+  "implied_ar1_from_lag2": 0.5239
+ },
+ "applied_ar1_rho": 0.3451,
+ "coverage_vs_rho": [
+  {
+   "rho": 0.0,
+   "coverage": 0.2901,
+   "mean_width": 2.156
+  },
+  {
+   "rho": 0.2,
+   "coverage": 0.3486,
+   "mean_width": 2.495
+  },
+  {
+   "rho": 0.3451,
+   "coverage": 0.4084,
+   "mean_width": 2.787
+  },
+  {
+   "rho": 0.5,
+   "coverage": 0.4461,
+   "mean_width": 3.133
+  },
+  {
+   "rho": 0.7,
+   "coverage": 0.507,
+   "mean_width": 3.621
+  },
+  {
+   "rho": 0.9,
+   "coverage": 0.5852,
+   "mean_width": 4.254
+  },
+  {
+   "rho": 0.99,
+   "coverage": 0.6335,
+   "mean_width": 4.621
+  }
+ ],
+ "gate": {
+  "conditions": {
+   "c1_coverage_in_0.75_0.85": false,
+   "c2_simulated_narrower_than_summed": true,
+   "c3_point_estimates_untouched": true
+  },
+  "metrics": {
+   "n_holdout_full_window": 6136,
+   "coverage_simulated": 0.4055,
+   "coverage_summed_incumbent": 0.6314,
+   "mean_width_simulated": 2.793,
+   "mean_width_summed_incumbent": 4.69,
+   "width_ratio_sim_over_sum": 0.5955,
+   "coverage_by_side": {
+    "hit": [
+     0.3345,
+     2568
+    ],
+    "pit": [
+     0.4566,
+     3568
+    ]
+   },
+   "summed_frac_below_p10": 0.259,
+   "summed_frac_above_p90": 0.1097,
+   "simulated_frac_below_p10": 0.4521,
+   "simulated_frac_above_p90": 0.1424,
+   "n_survived_all_window": 1338,
+   "coverage_summed_survived_all": 0.5508,
+   "coverage_simulated_survived_all": 0.3685
+  },
+  "verdict": "FAIL"
+ },
+ "examples_top_projected": [
+  {
+   "mlbam": 665742,
+   "side": "hit",
+   "base": 2020,
+   "point_warTotal": 32.0,
+   "summed_band": [
+    20.1,
+    48.1
+   ],
+   "summed_width": 28.0,
+   "simulated_band": [
+    25.6,
+    41.2
+   ],
+   "simulated_width": 15.6,
+   "realized_total": 28.3
+  },
+  {
+   "mlbam": 665742,
+   "side": "hit",
+   "base": 2019,
+   "point_warTotal": 26.3,
+   "summed_band": [
+    13.3,
+    43.6
+   ],
+   "summed_width": 30.2,
+   "simulated_band": [
+    19.2,
+    36.2
+   ],
+   "simulated_width": 17.0,
+   "realized_total": 25.4
+  },
+  {
+   "mlbam": 660670,
+   "side": "hit",
+   "base": 2020,
+   "point_warTotal": 25.6,
+   "summed_band": [
+    14.2,
+    40.7
+   ],
+   "summed_width": 26.5,
+   "simulated_band": [
+    19.4,
+    34.2
+   ],
+   "simulated_width": 14.8,
+   "realized_total": 16.6
+  }
+ ],
+ "scope_note": "Dependence measured on the MLB vet corpus; applied to the continuous aging-quantile paths (vets + FA) produced by the same aging model. Prospect bucket paths (proj_export _prospect_rows) are a discrete career-trait mixture, a different statistical object with no realized FV->outcome corpus join; handling documented in the export change.",
+ "loss_ledger": [
+  "C1 FAIL: simulated coverage 0.4055 is outside the [0.75,0.85] gate band. Root cause is NOT band width: the incumbent COMONOTONIC summed band (the widest admissible, rho->1) already covers only 0.6314 of realized multi-year totals, well below the 0.75 floor. It UNDER-covers, so the F-01 premise that the displayed band is 'too wide' does not hold against realized totals.",
+  "The summed band's misses are downside-dominated: 0.259 of realized totals fall BELOW its p10 (attrition -- players who leave the league realize ~0 WAR, below a strictly-positive decayed p10 path) vs 0.1097 above p90. The per-year quantile marginals carry no full-dropout zero floor, so the total band is MIS-CENTERED (too high), not too wide.",
+  "Coverage is monotone increasing in the copula rho and tops out at the comonotonic band: [(0.0, 0.2901), (0.2, 0.3486), (0.3451, 0.4084), (0.5, 0.4461), (0.7, 0.507), (0.9, 0.5852), (0.99, 0.6335)]. No admissible rho (<1) reaches 0.75; the mathematically-correct dependence fix (narrowing) moves coverage AWAY from the 0.80 target.",
+  "Even on the survived-all-window subset (n=1338, dropout-0 mass removed), the summed band covers only 0.5508 and the simulated 0.3685: the marginals undercover on rostered players too, so this is not solely an attrition artifact.",
+  "Disposition per R-BAND pre-registration: FAIL -> touch NO export code. The owner-approved fallback (drop the total P10-P90 bands from display) is a separate decision; the summed bands remain in the payloads unchanged. This gate result is evidence FOR that fallback: the displayed total bands are miscalibrated (undercover, mis-centered), and the dependence-correct replacement is narrower and therefore covers even less."
+ ]
+}

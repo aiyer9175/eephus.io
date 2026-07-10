@@ -1,0 +1,96 @@
+# Current State Map (Phase A, Step 1)
+
+Generated from the 2026-07-03 read-only discovery workflow (wf_2ede42ee-b5a). One row per registered model plus a glossary census summary. Origin: arkmetric-original unless noted; the eFV family keeps internal xfv_* data keys by owner decision.
+
+## Model registry (57 rows)
+
+| Model | Version | Origin | Surface | Glossary | Notes |
+|---|---|---|---|---|---|
+| fa_projection_marcel | marcel_v2 | arkmetric-original | /fa/ + /projections/ | yes | validated. Gate-1 WAR MAE 0.627 vs 0.728 base, P10-P90 coverage 0.800 (data/fa_gate1_eval.json, n=20721). Glossary: fa_projection_engine. |
+| fa_war_paths_decay | proj_lgbm_v1 (bundle 6a691e03ff096a35) | arkmetric-original | /fa/ + /projections/ multi-year WAR path | yes | validated (data/proj_horizon_eval.json). LightGBM quantile heads + mean/star blends. No dedicated glossary term; covered by mlb_projections/proj_buckets. |
+| proj_def_prior | proj_lgbm_v1 w/ pos_adj_prior | arkmetric-original | /projections/ + /fa/ WAR paths (a hit fe | NO | validated. HIT-only positional-adj prior; holdout pooled MAE -0.0027 / star -0.0285 (data/proj_def_feature_eval.json). A feature of fa_war_paths_decay, registered for the eval arti... |
+| fa_market | fa_mkt_v2 | arkmetric-original | /fa/ class board + tracker | yes | validated. Guarantee MAE 9.84, AAV 3.08, years 0.44 (NPV basis, data/fa_gate2_eval.json). Glossary: m_guarantee/m_aav/m_years/nearest_comps. |
+| fa_rational_value | convex_v2 | arkmetric-original | /fa/ rational value + surplus + verdicts | yes | provisional. Convex NPV pricing; verdict terciles value>=160/overpay<75 (data/fa_gate2_eval.json). Glossary: rational_value. |
+| fa_dpw_series | fa_signings_implied_v1 | arkmetric-original | platform-wide $/WAR level | yes | validated. Flat-5% carry MAPE 0.102 beat fitted trend 0.122 (data/dpw_forecast_eval.json). Glossary: winter_dpw/dpw_tier. |
+| fa_team_fit | fit_v3 | arkmetric-original | /fa/ fits view + board fit chips | yes | provisional. Gate-3 shipped mix MRR 0.167 (data/fa_gate3_eval.json, n=1173). Glossary: fit_components. |
+| fa_penter | v2 band-priced + v1 priors | arkmetric-original | /fa/ option-pending rows | yes | provisional; inputs validated, decisions not (no eval yet, points at fa_gate2). Glossary: enter_prob. |
+| fa_qo_pick_tax | realized_slot_war_service_priced_v2 | arkmetric-original | /fa/ QO tax on player cards | yes | provisional. Inherits data/draft_slot_curve.json. Glossary: qo_tax. |
+| mlb_projections_vets | proj_lgbm_v1 | arkmetric-original | /projections/ veterans | yes | validated (inherits proj_horizon_eval). warPTH if-healthy display series. Glossary: mlb_projections/proj_buckets. |
+| mlb_projections_prospects | fv_outcome_v1 | arkmetric-original | /projections/ prospects | yes | provisional. fv_outcome beats ridge/LGBM challengers (rho 0.2099 vs 0.1495; data/prospect_path_eval.json); intercept-only calibration shipped. Glossary: mlb_projections. |
+| prospect_surplus | isotonic-real-v3 | arkmetric-original | PROSPX Sur+/OrgSur+ + trade lookup | yes | validated. Calibration raw slope 1.02/bias -2.9M, LOYO 0.97/-1.13M (data/surplus_backtest_real.json + surplus_calibration_fit.json). Glossary: tvi(Sur+)/surplus_value/sur_plus. |
+| fv_to_war_anchors | empirical_anchors | arkmetric-original | value framework FV->WAR layer | yes | validated. Realized 2017-2020 cohort means (data/value_framework_fitted.json). No positional stratification yet. Glossary: fv_to_war_table. |
+| wag | wag_v47 | arkmetric-original | PROSPX debuted players | yes | validated (PIT uniformity; data/value_framework_fitted.json). Glossary: wag (also warwag). |
+| consensus_fv | accuracy-weighted blend (WS-5) | arkmetric-original (weights over external source grades) | every PROSPX surface | yes | validated. Weighted Spearman 0.2671 vs equal 0.266, AUC 0.7443 vs 0.7373 (data/consensus_weight_eval.json); live FG 0.9377/MLB 1.0623. Glossary: consensus_fv. |
+| draft_consensus_weight | equal-weight (near-1.0) | arkmetric-original | PROSPX draft board | NO | provisional. Weighted +0.0007 over equal within noise (data/draft_consensus_weight_eval.json, n=672). NO dedicated glossary term. |
+| source_track_record | source_backtest 2017-2023 | arkmetric-original | /glossary/ source comparison | NO | validated (data/source_backtest.json); auto-reruns monthly. Rendered in Source Comparison view but NO glossary term entry. |
+| eta | heuristic v39 (KM-recalibrated) | arkmetric-original | PROSPX ETA on every prospect | yes | validated. Champion MAE 1.425/within-1y 0.586; bias-corrected 1.232/0.659 (data/eta_eval.json, n=4150). Glossary: eta/eta_half_season. |
+| farm_grades | farm_tree_v40 | arkmetric-original | PROSPX farm systems + detail pages | yes | provisional (letter unvalidated as letter; reduced-analog surplus-mass rank rho 0.508 vs count 0.240, data/farm_grade_eval.json). Letter snapshotting began 2026-07-02. Glossary: fa... |
+| draft_slot_curve | realized_isotonic_v1 | arkmetric-original | farm finance leaves + QO pick tax | NO | validated. Realized first-6yr bWAR PAVA on 2005-14 drafts (data/draft_slot_curve.json). NO glossary term for the WAR curve (slot_value entry is the $ bonus slot, different). |
+| overseas_translation | phase4b_refit_v2 | arkmetric-original | Overseas tab MLBe lines | NO | provisional. NPB ERA factor 1.54, KBO 1.275 (data/overseas_translation_eval.json). NO dedicated glossary term (overseas_posting_class is a different concept). |
+| college_translation | matched-pair RTM (college.py) | arkmetric-original | CollegeSavant Projected Single-A block | yes | provisional. K%/BB% matched-pair; hitter K% slope 0.57 r2 0.38; LOO coverage 0.79-0.83 (data/college_translation_eval.json). Glossary: single_a_equivalent. |
+| statcast_plus | sc_plus_v2 | arkmetric-original | PROSPX SC+ pills + leaderboards | yes | provisional. Weak forward r ~0.12-0.17 (data/statcast_plus_eval.json), published per publish-the-r rule; descriptive. Glossary: statcast_plus. |
+| stuff_plus_external | tjstuff_plus LGBM (external) | wraps-external | PROSPX pitcher pages | NO | UNVALIDATED (eval_artifact null; local validation blocked on per-pitch history). External tjStuff+ consumed as-is. NO glossary term for tjStuff+ (stf_plus is the scouting pStuff+). |
+| stuff_plus_aaa | stuff_plus_aaa v1 (in-house LGBM) | arkmetric-original | PROSPX pitcher cards aStuff+ pill + MLB  | yes | provisional. Trained 1.19M AAA pitches; pitcher-level r 0.280; forward K% r 0.550 (n=17) (data/stuff_plus_aaa_eval.json). Glossary: stuff_plus_aaa. |
+| swing_plus_external | swing_plus v1.0.0 (Will Cahoon, vendored | wraps-external | PROSPX debuted cards + GFX hero rail + / | yes | UNVALIDATED locally (eval_artifact null; validated in author repo). MLB bat-tracking 2024+ only. Glossary: swing_plus. |
+| spotlights_movement | movement_engine v19 | arkmetric-original | PROSPX spotlights + WIRE flags | yes | UNVALIDATED. Scoring machinery shipped (editorial_eval.py) but data/editorial_eval.json WITHHELD until first cohort matures (~2026-07). Glossary: spotlights. |
+| org_tendencies | org_tendencies v1 | arkmetric-original | farm detail Tendencies tab | yes | provisional; deliberately descriptive, no predictive claim (data/org_tendencies.json). Glossary: org_tendencies. |
+| team_win_projections | roster_war_rollup_v1 | arkmetric-original | /projections/ Team Outlook | NO | provisional. Retro 2022-25 team-wins MAE 7.3-10.2, r 0.44-0.68 (data/team_outlook_eval.json). NO dedicated glossary term (covered by mlb_projections module entry only). |
+| xfv_hitter | xfv_hit_v1_lean | arkmetric-original | /prospx PRIMARY grade + ranking | yes | provisional. Blend rho 0.362 (ridge 0.341) vs consensus 0.295 (data/xfv_eval.json, n=399); at data rank ceiling. Glossary: xfv (eephusFV). |
+| prospect_def_value | local reconstruction (Will Cahoon Defens | wraps-external | xFV def-input swap CANDIDATE (rendered a | NO | provisional. Beats FG fFld (Spearman 0.68 vs 0.28) but xFV + proj_lgbm swaps REJECTED (data/prospect_def_value_eval.json). NO glossary term. |
+| xfv_pitcher | xfv_pit_v1_lean | arkmetric-original | /prospx PRIMARY grade + ranking | yes | provisional. Blend rho 0.2787 vs consensus 0.219 (data/xfv_eval_pitcher.json, n=466); lambda recalibrated to 0.66. Glossary: xfv. |
+| xfv_tools | xfv_tools_v0 | arkmetric-original | /prospx (provisional) | yes | provisional. fastball->K% survives OOS (blend 0.309>0.244); game_pwr gated to 0 (data/xfv_tools.json). Glossary: xfv_tools. |
+| xfv_proxy | xfv_proxy_v0 | arkmetric-original | /prospx player detail leading-indicator  | NO | provisional. First-MLB Statcast quality; OOS hitters r 0.25, pitchers r 0.19 (data/xfv_proxy_eval.json). NO glossary term. |
+| xfv_ungraded | xfv_ungraded_v0 | arkmetric-original | /prospx farm-detail (provisional, ungrad | yes | provisional. No-FV production ridge; low-minors hit rho ~0.22-0.31 (data/xfv_ungraded_eval.json). Glossary: xfv_ungraded. |
+| trade_machine_surplus | apply_platform_surplus | arkmetric-original | /projections/#view=trademachine | yes | provisional (ship=False). Board surplus rho 0.329 vs consensus 0.331; loses within-tier (data/trade_machine_eval.json, n=2333). Snapshotting started 2026-06-25. Glossary: trade_mac... |
+| war_cohort_diagnostic | proj_lgbm_v1 / marcel_decay_v2 audit | arkmetric-original | model-dev artifact (rendered nowhere) | NO | validated (measurement). Locates hitter-star h5 residual -0.884 live-blended (data/war_cohort_eval.json, n=8053). Internal, NO glossary term. |
+| rem_plus | rem_plus_v1 | arkmetric-original | /mlbstats/ Bullpen Leaderboards | yes | validated. Forward rho 0.2363 vs FIP 0.211, ERA 0.090, WPA 0.106 (data/rem_plus_eval.json, n=878); leverage held out (bakeoff monotone-worse). Glossary: rem_plus/bullpen_plus. |
+| pal_conversion | pal_v1 | arkmetric-original | /pal/ Pitcher Alchemy Lab | yes | provisional; sign-check only (Spearman 0.223, n=44; data/pal_eval.json). Frozen priors. Glossary: pal_conversion/rp_sp_fit/sp_rp_fit. |
+| xfv_isotonic_calibration | isotonic challenger (E X-ISO) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. Brier -18.6% but rank rho -0.0165 vs -0.002 tol (data/xfv_isotonic_eval.json). NO ship. Internal. |
+| sc_plus_component_diagnostic | equal-weight 4-component (unchanged) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | validated (measurement). Barrel% carries hitters (r 0.254), SwStr pitchers (r 0.359); top-2 blend just under reweight rule (data/sc_plus_component_eval.json). Internal. |
+| surplus_sensitivity_diagnostic | shipped surplus (unchanged) | arkmetric-original | model-dev artifact (methodology-note sou | NO | validated (measurement). Ordering level-invariant: zero top-50 churn, FV45+ rho >=0.9999 (data/surplus_sensitivity.json, 4000 prospects). Internal. |
+| leverage_consistency | gmli_3yr | arkmetric-original | /mlbstats/ Bullpen Leaderboards gmLI 3yr | yes | provisional. Y->Y+1 gmLI rho 0.4683 (n=878), passes 0.30 gate (data/leverage_consistency_eval.json). Wired 2026-07-02. Glossary: gmli_3yr. |
+| age_rel_outperformance | candidate AgeRel+ (NOT wired) | arkmetric-original | model-dev artifact (NOT wired) | NO | provisional. r 0.1237 (n=369) meets numeric gate but plain level-relative out-predicts (0.1559); NOT wired, owner decision queued (data/age_rel_outperformance_eval.json). NO glossa... |
+| xfv_grade_recal | grade-space monotone (E-ISO2) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. Brier 0.2466->0.1956 but pooled Spearman -0.0115 vs -0.002 tol (data/xfv_grade_recal_eval.json). Internal. |
+| xfv_cohort_lambda | per-cohort OOF lambda | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. Failed all 3 conditions; fold-unstable (data/xfv_cohort_lambda_eval.json). Internal. |
+| xfv_pitcher_stuff | aStuff+/whiff overlay (E-STUFF) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated (inconclusive). 0/466 trainable coverage; every delta exactly 0.0 (data/xfv_pitcher_stuff_eval.json). Internal. |
+| xfv_grade_recal3 | E-ISO3 redesigned-gate | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. 2/4 conditions fail (pitcher bench bucket +1.4%, cross-side sign-flips) (data/xfv_grade_recal3_eval.json). Internal. |
+| war_total_band_calibration | R-BAND simulated total (rejected) | arkmetric-original | model-dev artifact; total P10-P90 band D | NO | deprecated. Simulated coverage 0.4055 (need 0.75-0.85); incumbent summed 0.6314 undercovers (data/total_band_eval.json). Band dropped. Internal. |
+| milb_park_factors | R-PARK (infeasible) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated (infeasible). Cached Savant-minors CSVs have no venue column (data/milb_park_factors_eval.json). Internal. |
+| era_shrink_unification | R-SHRINK (keep two) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. No single pseudo-count beats both objectives; K_IP=50 and NEED_ERA_SHRINK_IP=45 retained (data/era_shrink_unification_eval.json). Internal. |
+| xfv_grade_recal4 | E-ISO4 joint side-symmetric (final) | arkmetric-original | model-dev artifact (rendered nowhere) | NO | deprecated. Cross-side rank fixed to 0.0 but pitcher bench bucket still worse; definitive close of the bucket-calibration line (data/xfv_grade_recal4_eval.json). Internal. |
+| riv_plus | riv_plus_v1 | arkmetric-original | /mlbstats/ Bullpen Leaderboards RIV+ col | yes | provisional. Realized-value index; Y->Y+1 0.209 vs REM+ 0.352; AAV rho 0.576 vs 0.508 (data/riv_plus_eval.json). Glossary: riv_plus. |
+| rem_plus_3yr | rem_plus_3yr (IP-weighted 3yr) | arkmetric-original | /mlbstats/ Bullpen Leaderboards REM+ 3yr | yes | provisional. Forward rho 0.2366 vs 1yr 0.2316; gap CI includes 0 (data/rem_plus_multiyear_eval.json, n=668). Glossary: rem_plus_3yr. |
+| rem_plus_swstr | SwStr xK core (rejected) | arkmetric-original | loss ledger (rendered nowhere) | NO | deprecated. Candidate 0.2277 vs incumbent 0.2246, gap lo95 -0.0066 (wash); FIP core stays (data/rem_plus_swstr_eval.json). Internal. |
+| sem_plus | sem_plus_v1 | arkmetric-original | /mlbstats/ Starter Leaderboards SEM+ col | yes | validated. Forward rho 0.3923 vs FIP 0.358, ERA 0.2612 (data/sem_plus_eval.json, n=702); GB-adjusted X-S3 rejected. Glossary: sem_plus/rotation rollup. |
+| sem_plus_3yr | sem_plus_3yr (IP-weighted 3yr) | arkmetric-original | /mlbstats/ Starter Leaderboards SEM+ 3yr | yes | provisional. Forward rho 0.4141 vs 1yr 0.3922; gap CI includes 0 (data/sem_plus_multiyear_eval.json, n=457). Glossary: sem_plus_3yr. |
+
+### Registry gaps (models rendering without a glossary entry)
+- REGISTRY ROWS WITH NO GLOSSARY ENTRY (product-surface, notable): draft_slot_curve (WAR curve; slot_value term is the $ bonus slot), overseas_translation (only overseas_posting_class exists), team_win_projections (Team Outlook; no team-wins term), xfv_proxy (leading-indicator tile), stuff_plus_external (tjStuff+; stf_plus is scouting pStuff+), prospect_def_value, draft_consensus_weight, source_track_record. Internal/model-dev rows (war_cohort_diagnostic, sc_plus_component_diagnostic, surplus_sensitivity_diagnostic, age_rel_outperformance, all 9 xfv_/efv_ + R-* calibration experiments, rem_plus_swstr, proj_def_prior) have no glossary entry BY DESIGN (rendered nowhere).
+- GLOSSARY METRICS WITH NO REGISTRY ROW (these render on-site as PROSPX indices/pills but are absent from the accountability registry - the biggest accountability gap): RPS+ (rps_plus), DvM+ (dvm_plus), ToolDvM+ (tools_dvm_plus), tool-specific DvM+ (HitDvM+/PowerDvM+), HIT+ (hit_plus), ISO+ (iso_plus), POW+ (pwr_plus), PD+ (pd_plus), pStuff+ (stf_plus), FVStuff+ (stuff_grade_plus), KRP+ (krp_plus), Versa (versa), DS+ Draft Stock+ (draft_stock_plus), TBS Tiebreaker (tiebreaker_score), CS+ CollegeSavant+ (cs_plus), Reverse-Platoon (reverse_platoon), Starter Shape (starter_shape), Proj first-MLB K%/BB% (milb_translation), WARWAG (warwag), Tool/O-Tool/D-Tool composites. Several (RPS+, DS+, KRP+, DvM+, Versa) make implicit ranking/predictive claims yet have no eval artifact and no registry row.
+- MODELS RENDERING ON SITE BUT ABSENT FROM REGISTRY: same set as above - RPS+, DS+, KRP+, DvM+/ToolDvM+, Versa, TBS, CS+, HIT+/ISO+/POW+/PD+, pStuff+, FVStuff+, Starter Shape, Reverse-Platoon, milb_translation (Proj first-MLB K%/BB%). Bullpen+ and Rotation+ rollups and gmLI are covered indirectly (rem_plus/sem_plus/leverage_consistency rows). The registry's own note claims 'every-eval-artifact-registered' but there is no matching 'every-rendered-index-registered' rule, so descriptive PROSPX composites escape the ledger.
+- MODELS & PROOFS PAGE: generator is a client-side view in assets/glossary.js renderModels() (lines 1263-1423), fetched into the /glossary/ shell built by build_site.build_glossary() (build_site.py:2431 chip 'Models & Proofs'). Data source = data/model_registry.json fetched directly (no separate copy). Covers ALL 57 rows, family-grouped (8 families) and verdict-filterable; summary line reports '57 models: 18 validated, 26 provisional, 3 unvalidated, 10 deprecated'. AGREES WITH REGISTRY BY CONSTRUCTION (same JSON). Third derived surface MODEL_REGISTRY.md is generated by tools/gen_audit_docs.py from the same registry and byte-compared by test_generated_docs_in_sync.py.
+- VERDICT DISTRIBUTION (57 rows): validated 18, provisional 26, unvalidated 3 (stuff_plus_external, swing_plus_external, spotlights_movement - all null eval_artifact, the 'audit hit list'), deprecated 10 (all internal calibration/candidate losses). registry-level version 2026-06-11, checked_at 2026-06-30; problems: [].
+
+## Glossary census (245 entries)
+
+- Shelf split: **{'ark': 142, 'foundation': 63, 'industry': 40}**
+- Disposition: **{'keep': 183, 'verify': 19, 'rewrite': 36, 'merge': 7}**
+- Definition quality: **{'good': 204, 'weak': 41}**
+
+### Industry metrics displayed WITHOUT creator credit (attribution backlog)
+wRC+, OPS, ISO, AVG, OBP, SLG, BB%, K%, ERA, FIP, WHIP, xFIP, FIP-, K/9, BB/9, HR/9, K% (pitcher), BB% (pitcher), WAR, Barrel%, Hard-Hit%, Chase% (O-Swing), Whiff%, Z-Contact%, CSW%, Spin Rate, Extension, Sprint Speed, K-BB%, OPS+ (vs level), ERA-, wOBA, MAE (mean absolute error), WPA (Win Probability Added), WPA/LI (context-neutral wins), Shutdowns and Meltdowns (SD / MD), Times-through-order penalty (TTOP), Role velocity delta
+
+### Displayed metrics with NO glossary entry
+- **xwOBA / xwOBAcon** — Leaderboard chips (index.html:9692-9693), player cards (index.html:11460, 13912,
+- **BABIP** — Splits table column (index.html:18657); NO glossary entry (inline mention at glo
+- **VAA / VAAoe** — Pitch-traits table headers (index.html:41055); NO glossary entry
+- **Stuff+ (FanGraphs / external)** — Displayed as bare 'Stuff+' on player cards and pitch tables (index.html:13956, 1
+
+### Merge candidates
+- Wide-spread indicator [ark]
+- CPX [foundation]
+- Compensation pick [foundation]
+- Complex league [foundation]
+- Wide-spread mark (W) [ark]
+- Competitive-balance pick (1A / 1B) [foundation]
+- Rarity tiers [ark]

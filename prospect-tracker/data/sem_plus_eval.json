@@ -1,0 +1,56 @@
+{
+ "generated_at": "2026-07-07",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260703,
+ "conventions": {
+  "predictor_year": "year Y qualified (IP>=50)",
+  "target": "-RA9 in year Y+1 (IP>=40)",
+  "excluded": "2020 (60-game COVID season)"
+ },
+ "runtime_seconds": 11.3,
+ "experiment": "X-S1 (+ X-S3)",
+ "model": "sem_plus",
+ "n_forward_pairs": 702,
+ "forward_spearman_vs_RA9_next": {
+  "sem_plus": 0.3934,
+  "raw_fip": 0.3585,
+  "era": 0.2617
+ },
+ "gap_ci_vs_era": {
+  "mean": 0.1318,
+  "lo95": 0.0829,
+  "hi95": 0.1807
+ },
+ "gap_ci_vs_raw_fip": {
+  "mean": 0.0346,
+  "lo95": 0.0198,
+  "hi95": 0.0493
+ },
+ "gate": {
+  "bar": "beats ERA (gap lo95 > 0) AND not worse than raw FIP (lo95 >= -0.01)",
+  "pass": true
+ },
+ "gb_adjusted_candidate": {
+  "experiment": "X-S3",
+  "candidate_rho": 0.3916,
+  "gap_ci_vs_plain_sem": {
+   "mean": -0.0017,
+   "lo95": -0.0087,
+   "hi95": 0.0055
+  },
+  "pass": false,
+  "verdict": "NO SHIP: the GB-adjusted core does not beat plain FIP forward out of sample; plain FIP stays. Starter samples are large enough that the observed HR rate is already a strong estimate."
+ },
+ "verdict": {
+  "status": "validated",
+  "summary": "Forward-chained OOS over 7 seasons (702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3934 vs raw FIP 0.3585, ERA 0.2617. CI on the rho gap vs ERA {'mean': 0.1318, 'lo95': 0.0829, 'hi95': 0.1807}, vs raw FIP {'mean': 0.0346, 'lo95': 0.0198, 'hi95': 0.0493}. Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse than its raw-FIP parent, so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Durability rides separate context columns."
+ }
+}

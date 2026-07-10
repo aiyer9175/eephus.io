@@ -1,0 +1,479 @@
+{
+ "generated_at": "2026-07-07",
+ "experiment": "star-odds-calibration",
+ "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
+ "seed": null,
+ "method": {
+  "model_odds": "analytic: per bucket, per control season WAR ~ Gamma(mean=level, cv=within_bucket_cv); Poisson-binomial P(>=2 of n); weighted by P(bucket|FV); pitchers blend SP/RP by P(reliever|bucket).",
+  "published": "FanGraphs 2026 tier star odds (config/valuation_sets/clemens_2026.yaml).",
+  "priced_under": "clemens_2026 (control_years=7, star def 2x4 WAR).",
+  "note": "Model uses the v47 realized (bust-heavy) WAR anchors, so at the production anchor (war_anchor_scale=1) it runs BELOW the published tier odds. The DISPLAYED star odds are the published table values (exact by construction); the per-player model is a diagnostic. The `reconciliation` block reports the single per-role WAR-anchor multiplier (k) that best aligns the model aggregates to the published tiers and the RESIDUAL after it -- reported, NOT forced onto the live board (the shipped set carries no such scale)."
+ },
+ "calibration": {
+  "valuation_set": "clemens_2026",
+  "roles": {
+   "hitter": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 0.004,
+      "model": 0.0017,
+      "abs_dev": 0.0023
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 0.008,
+      "model": 0.0006,
+      "abs_dev": 0.0074
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 0.018,
+      "model": 0.0007,
+      "abs_dev": 0.0173
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 0.035,
+      "model": 0.0006,
+      "abs_dev": 0.0344
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 0.06,
+      "model": 0.0029,
+      "abs_dev": 0.0571
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 0.135,
+      "model": 0.0066,
+      "abs_dev": 0.1284
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 0.175,
+      "model": 0.0166,
+      "abs_dev": 0.1584
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 0.33,
+      "model": 0.0567,
+      "abs_dev": 0.2733
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 0.4,
+      "model": 0.1643,
+      "abs_dev": 0.2357
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 0.875,
+      "model": 0.3278,
+      "abs_dev": 0.5472
+     }
+    ],
+    "max_abs_dev": 0.5472,
+    "mean_abs_dev": 0.1462
+   },
+   "pitcher": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 0.004,
+      "model": 0.0006,
+      "abs_dev": 0.0034
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 0.004,
+      "model": 0.0002,
+      "abs_dev": 0.0038
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 0.01,
+      "model": 0.0002,
+      "abs_dev": 0.0098
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 0.015,
+      "model": 0.0003,
+      "abs_dev": 0.0147
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 0.03,
+      "model": 0.0012,
+      "abs_dev": 0.0288
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 0.07,
+      "model": 0.0028,
+      "abs_dev": 0.0672
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 0.07,
+      "model": 0.0073,
+      "abs_dev": 0.0627
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 0.21,
+      "model": 0.0286,
+      "abs_dev": 0.1814
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 0.4,
+      "model": 0.1027,
+      "abs_dev": 0.2973
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 0.875,
+      "model": 0.2311,
+      "abs_dev": 0.6439
+     }
+    ],
+    "max_abs_dev": 0.6439,
+    "mean_abs_dev": 0.1313
+   }
+  }
+ },
+ "surplus_calibration": {
+  "valuation_set": "clemens_2026",
+  "roles": {
+   "hitter": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 2.0,
+      "model": 1.4,
+      "abs_dev": 0.6,
+      "pct_dev": 0.3
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 5.5,
+      "model": 1.5,
+      "abs_dev": 4.0,
+      "pct_dev": 0.7273
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 8.0,
+      "model": 2.7,
+      "abs_dev": 5.3,
+      "pct_dev": 0.6625
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 14.5,
+      "model": 5.5,
+      "abs_dev": 9.0,
+      "pct_dev": 0.6207
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 18.5,
+      "model": 15.2,
+      "abs_dev": 3.3,
+      "pct_dev": 0.1784
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 45.0,
+      "model": 18.5,
+      "abs_dev": 26.5,
+      "pct_dev": 0.5889
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 55.0,
+      "model": 35.2,
+      "abs_dev": 19.8,
+      "pct_dev": 0.36
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 82.0,
+      "model": 67.7,
+      "abs_dev": 14.3,
+      "pct_dev": 0.1744
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 95.0,
+      "model": 116.7,
+      "abs_dev": 21.7,
+      "pct_dev": 0.2284
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 195.0,
+      "model": 165.0,
+      "abs_dev": 30.0,
+      "pct_dev": 0.1538
+     }
+    ],
+    "max_abs_pct_dev": 0.7273,
+    "mean_abs_pct_dev": 0.3994
+   },
+   "pitcher": {
+    "tiers": [
+     {
+      "tier": "35+",
+      "fv": 37.5,
+      "published": 1.5,
+      "model": 1.4,
+      "abs_dev": 0.1,
+      "pct_dev": 0.0667
+     },
+     {
+      "tier": "40",
+      "fv": 40.0,
+      "published": 4.0,
+      "model": 1.5,
+      "abs_dev": 2.5,
+      "pct_dev": 0.625
+     },
+     {
+      "tier": "40+",
+      "fv": 42.5,
+      "published": 7.0,
+      "model": 2.1,
+      "abs_dev": 4.9,
+      "pct_dev": 0.7
+     },
+     {
+      "tier": "45",
+      "fv": 45.0,
+      "published": 9.5,
+      "model": 3.0,
+      "abs_dev": 6.5,
+      "pct_dev": 0.6842
+     },
+     {
+      "tier": "45+",
+      "fv": 47.5,
+      "published": 15.0,
+      "model": 8.9,
+      "abs_dev": 6.1,
+      "pct_dev": 0.4067
+     },
+     {
+      "tier": "50",
+      "fv": 50.0,
+      "published": 33.5,
+      "model": 15.5,
+      "abs_dev": 18.0,
+      "pct_dev": 0.5373
+     },
+     {
+      "tier": "55",
+      "fv": 55.0,
+      "published": 45.0,
+      "model": 24.3,
+      "abs_dev": 20.7,
+      "pct_dev": 0.46
+     },
+     {
+      "tier": "60",
+      "fv": 60.0,
+      "published": 70.0,
+      "model": 53.0,
+      "abs_dev": 17.0,
+      "pct_dev": 0.2429
+     },
+     {
+      "tier": "65",
+      "fv": 65.0,
+      "published": 95.0,
+      "model": 96.8,
+      "abs_dev": 1.8,
+      "pct_dev": 0.0189
+     },
+     {
+      "tier": "70",
+      "fv": 70.0,
+      "published": 195.0,
+      "model": 140.8,
+      "abs_dev": 54.2,
+      "pct_dev": 0.2779
+     }
+    ],
+    "max_abs_pct_dev": 0.7,
+    "mean_abs_pct_dev": 0.402
+   }
+  }
+ },
+ "reconciliation": {
+  "valuation_set": "clemens_2026",
+  "objective": {
+   "surplus_weight": 1.0,
+   "star_weight": 1.0,
+   "note": "min over k of w_s*mean_tier(|model_surplus-pub|/pub) + w_o*mean_tier(|model_star-pub|); k sweeps the shared WAR anchor transiently, tiers never snapped."
+  },
+  "roles": {
+   "hitter": {
+    "k": 1.4,
+    "pre": {
+     "surplus_max_pct_dev": 0.7273,
+     "surplus_mean_pct_dev": 0.3994,
+     "star_max_abs_dev": 0.5472,
+     "star_mean_abs_dev": 0.1462
+    },
+    "post": {
+     "surplus_max_pct_dev": 0.7758,
+     "surplus_mean_pct_dev": 0.3532,
+     "star_max_abs_dev": 0.2627,
+     "star_mean_abs_dev": 0.0765
+    }
+   },
+   "pitcher": {
+    "k": 1.5,
+    "pre": {
+     "surplus_max_pct_dev": 0.7,
+     "surplus_mean_pct_dev": 0.402,
+     "star_max_abs_dev": 0.6439,
+     "star_mean_abs_dev": 0.1313
+    },
+    "post": {
+     "surplus_max_pct_dev": 0.7758,
+     "surplus_mean_pct_dev": 0.3231,
+     "star_max_abs_dev": 0.2813,
+     "star_mean_abs_dev": 0.0403
+    }
+   }
+  }
+ },
+ "realized_calibration": {
+  "note": "Realized window-star rate (2+ control seasons of >=4 WAR) by pre-debut consensus FV, vs the displayed published table. Window-resolved debuts only (fully observed outcome). Small classes; a calibration read, not a refit.",
+  "definition": "2+ seasons of >=4 WAR in debut..debut+6",
+  "roles": {
+   "hitter": {
+    "n": 418,
+    "tiers": [
+     {
+      "tier": "<50",
+      "n": 203,
+      "stars": 6,
+      "realized": 0.03,
+      "published": 0.06
+     },
+     {
+      "tier": "50-55",
+      "n": 94,
+      "stars": 6,
+      "realized": 0.064,
+      "published": 0.155
+     },
+     {
+      "tier": "55-60",
+      "n": 49,
+      "stars": 11,
+      "realized": 0.224,
+      "published": 0.253
+     },
+     {
+      "tier": "60-65",
+      "n": 51,
+      "stars": 17,
+      "realized": 0.333,
+      "published": 0.365
+     },
+     {
+      "tier": "65+",
+      "n": 21,
+      "stars": 11,
+      "realized": 0.524,
+      "published": 0.495
+     }
+    ]
+   },
+   "pitcher": {
+    "n": 425,
+    "tiers": [
+     {
+      "tier": "<50",
+      "n": 241,
+      "stars": 3,
+      "realized": 0.012,
+      "published": 0.03
+     },
+     {
+      "tier": "50-55",
+      "n": 90,
+      "stars": 3,
+      "realized": 0.033,
+      "published": 0.07
+     },
+     {
+      "tier": "55-60",
+      "n": 48,
+      "stars": 4,
+      "realized": 0.083,
+      "published": 0.14
+     },
+     {
+      "tier": "60-65",
+      "n": 38,
+      "stars": 1,
+      "realized": 0.026,
+      "published": 0.305
+     },
+     {
+      "tier": "65+",
+      "n": 8,
+      "stars": 4,
+      "realized": 0.5,
+      "published": 0.495
+     }
+    ]
+   }
+  }
+ },
+ "gate": {
+  "tolerance_abs": 0.1,
+  "max_abs_dev": 0.6439,
+  "pass": false,
+  "verdict": "provisional",
+  "reason": "Displayed odds = published table (exact). Model odds are a diagnostic; at the production anchor the deviation exceeds tolerance. The reconciliation block characterizes the gap as a best-fit anchor multiplier (k_h, k_p) plus an irreducible residual -- a single scalar cannot zero both the surplus and star-odds residuals, so the residual is disclosed, not snapped."
+ }
+}

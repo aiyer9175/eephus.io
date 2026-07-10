@@ -1,0 +1,1018 @@
+{
+ "generated_at": "2026-07-01",
+ "experiment": "X-ISO: out-of-fold isotonic calibration of the eFV 5-bucket outcome distribution",
+ "spec": "docs/xfv-phase2-plan.md A5; gate pre-registered in docs/audit-2026-07/AUDIT_FINDINGS.md section X-ISO",
+ "method": {
+  "base_distribution": "shipped seam, forward-chained OOF: lean ridge + in-fold linear scale calibration -> xfv_war -> realized_implied_fv -> p_bucket_given_fv (uncalibrated 'before')",
+  "calibration": "per-bucket sklearn IsotonicRegression (PAVA, deterministic), fit on predicted p_b vs realized 1{y==b}, KM-weight sample weights, then renormalized onto the simplex ('after')",
+  "oof_protocol": "isotonic for eval cohort Y fit ONLY on OOF rows with decision_year < Y; those rows were themselves predicted by models trained strictly before them (chain years 2016-2023); no row ever calibrates itself; no same-player leakage (each player appears in exactly one cohort)",
+  "realized_bucket": "6yr-average annual WAR (target_censored/6) binned by the engine bands: <0.5 bust / 0.5-1.5 bench / 1.5-2.5 regular / 2.5-4.0 good / 4.0+ star",
+  "pool": "full labeled matrix per side (debuted + busts, bust_recent excluded), matching efv_model.oos_grades",
+  "rank_metric": "expected WAR under the distribution (bucket probs x calibrated bucket midpoints); shipped baseline = OOF eFV grade",
+  "eval_years": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "chain_years": [
+   2016,
+   2023
+  ],
+  "min_calibrator_rows": 150
+ },
+ "seed": 7,
+ "cohort_splits": {
+  "hit": {
+   "chain_oof_rows_by_year": {
+    "2016": 95,
+    "2017": 106,
+    "2018": 169,
+    "2019": 240,
+    "2020": 206,
+    "2021": 143,
+    "2022": 277,
+    "2023": 271
+   },
+   "eval_rows": 897,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 610,
+    "2021": 816,
+    "2022": 959,
+    "2023": 1236
+   }
+  },
+  "pit": {
+   "chain_oof_rows_by_year": {
+    "2016": 116,
+    "2017": 77,
+    "2018": 206,
+    "2019": 198,
+    "2020": 211,
+    "2021": 159,
+    "2022": 244,
+    "2023": 279
+   },
+   "eval_rows": 893,
+   "calibrator_train_rows_by_eval_year": {
+    "2020": 597,
+    "2021": 808,
+    "2022": 967,
+    "2023": 1211
+   }
+  }
+ },
+ "results": {
+  "pooled": {
+   "n": 1790,
+   "brier": {
+    "before": 0.24663,
+    "after": 0.20064,
+    "delta": -0.04598
+   },
+   "log_loss": {
+    "before": 0.51306,
+    "after": 0.42757,
+    "delta": -0.08549
+   },
+   "per_bucket": {
+    "bust": {
+     "brier_before": 0.11629,
+     "brier_after": 0.08447,
+     "logloss_before": 0.3675,
+     "logloss_after": 0.28892,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "bench": {
+     "brier_before": 0.07517,
+     "brier_after": 0.0743,
+     "logloss_before": 0.26756,
+     "logloss_after": 0.26587,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "regular": {
+     "brier_before": 0.03117,
+     "brier_after": 0.02392,
+     "logloss_before": 0.1311,
+     "logloss_after": 0.10243,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "good": {
+     "brier_before": 0.02071,
+     "brier_after": 0.01498,
+     "logloss_before": 0.08551,
+     "logloss_after": 0.06818,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    },
+    "star": {
+     "brier_before": 0.00329,
+     "brier_after": 0.00297,
+     "logloss_before": 0.01672,
+     "logloss_after": 0.01264,
+     "brier_improved": true,
+     "logloss_improved": true,
+     "materially_worse": false
+    }
+   },
+   "spearman": {
+    "shipped_grade": 0.2392,
+    "expected_war_before": 0.2351,
+    "expected_war_after": 0.2227
+   }
+  },
+  "per_side": {
+   "hit": {
+    "n": 897,
+    "brier": {
+     "before": 0.28876,
+     "after": 0.21961,
+     "delta": -0.06914
+    },
+    "log_loss": {
+     "before": 0.60241,
+     "after": 0.46096,
+     "delta": -0.14144
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.13323,
+      "brier_after": 0.08581,
+      "logloss_before": 0.40592,
+      "logloss_after": 0.28462,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.08013,
+      "brier_after": 0.07938,
+      "logloss_before": 0.27865,
+      "logloss_after": 0.27672,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "regular": {
+      "brier_before": 0.03645,
+      "brier_after": 0.02503,
+      "logloss_before": 0.1504,
+      "logloss_after": 0.10722,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.0324,
+      "brier_after": 0.02346,
+      "logloss_before": 0.12115,
+      "logloss_after": 0.08529,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "star": {
+      "brier_before": 0.00655,
+      "brier_after": 0.00593,
+      "logloss_before": 0.03194,
+      "logloss_after": 0.02522,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2664,
+     "expected_war_before": 0.2664,
+     "expected_war_after": 0.2514
+    }
+   },
+   "pit": {
+    "n": 893,
+    "brier": {
+     "before": 0.20431,
+     "after": 0.18159,
+     "delta": -0.02272
+    },
+    "log_loss": {
+     "before": 0.42332,
+     "after": 0.39402,
+     "delta": -0.02929
+    },
+    "per_bucket": {
+     "bust": {
+      "brier_before": 0.09928,
+      "brier_after": 0.08313,
+      "logloss_before": 0.32891,
+      "logloss_after": 0.29324,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "bench": {
+      "brier_before": 0.07019,
+      "brier_after": 0.0692,
+      "logloss_before": 0.25642,
+      "logloss_after": 0.25496,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "regular": {
+      "brier_before": 0.02587,
+      "brier_after": 0.0228,
+      "logloss_before": 0.11171,
+      "logloss_after": 0.09761,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     },
+     "good": {
+      "brier_before": 0.00897,
+      "brier_after": 0.00646,
+      "logloss_before": 0.04971,
+      "logloss_after": 0.051,
+      "brier_improved": true,
+      "logloss_improved": false,
+      "materially_worse": true
+     },
+     "star": {
+      "brier_before": 1e-05,
+      "brier_after": 0.0,
+      "logloss_before": 0.00143,
+      "logloss_after": 0.0,
+      "brier_improved": true,
+      "logloss_improved": true,
+      "materially_worse": false
+     }
+    },
+    "spearman": {
+     "shipped_grade": 0.2233,
+     "expected_war_before": 0.2233,
+     "expected_war_after": 0.2055
+    }
+   }
+  },
+  "per_tier_reliability": {
+   "35": {
+    "n": 373,
+    "realized_freq": {
+     "bust": 0.9812,
+     "bench": 0.0161,
+     "regular": 0.0027,
+     "good": 0.0,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.9754,
+     "bench": 0.0153,
+     "regular": 0.0067,
+     "good": 0.0025,
+     "star": 0.0002
+    },
+    "mean_p_after": {
+     "bust": 0.9689,
+     "bench": 0.0229,
+     "regular": 0.008,
+     "good": 0.0002,
+     "star": 0.0
+    },
+    "gap_before": 0.00265,
+    "gap_after": 0.00493,
+    "improved": false,
+    "worse": true
+   },
+   "40": {
+    "n": 779,
+    "realized_freq": {
+     "bust": 0.9448,
+     "bench": 0.0436,
+     "regular": 0.009,
+     "good": 0.0026,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.8817,
+     "bench": 0.0639,
+     "regular": 0.037,
+     "good": 0.016,
+     "star": 0.0015
+    },
+    "mean_p_after": {
+     "bust": 0.9413,
+     "bench": 0.0432,
+     "regular": 0.014,
+     "good": 0.0015,
+     "star": 0.0
+    },
+    "gap_before": 0.02523,
+    "gap_after": 0.002,
+    "improved": true,
+    "worse": false
+   },
+   "45": {
+    "n": 389,
+    "realized_freq": {
+     "bust": 0.874,
+     "bench": 0.1003,
+     "regular": 0.018,
+     "good": 0.0051,
+     "star": 0.0026
+    },
+    "mean_p_before": {
+     "bust": 0.6375,
+     "bench": 0.1692,
+     "regular": 0.1226,
+     "good": 0.0634,
+     "star": 0.0072
+    },
+    "mean_p_after": {
+     "bust": 0.8633,
+     "bench": 0.0908,
+     "regular": 0.0327,
+     "good": 0.0122,
+     "star": 0.001
+    },
+    "gap_before": 0.0946,
+    "gap_after": 0.0087,
+    "improved": true,
+    "worse": false
+   },
+   "50": {
+    "n": 107,
+    "realized_freq": {
+     "bust": 0.5234,
+     "bench": 0.3084,
+     "regular": 0.1215,
+     "good": 0.0467,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.3203,
+     "bench": 0.228,
+     "regular": 0.2451,
+     "good": 0.1805,
+     "star": 0.0261
+    },
+    "mean_p_after": {
+     "bust": 0.674,
+     "bench": 0.1602,
+     "regular": 0.0911,
+     "good": 0.0687,
+     "star": 0.006
+    },
+    "gap_before": 0.1134,
+    "gap_after": 0.07144,
+    "improved": true,
+    "worse": false
+   },
+   "55": {
+    "n": 112,
+    "realized_freq": {
+     "bust": 0.4375,
+     "bench": 0.3125,
+     "regular": 0.1339,
+     "good": 0.1071,
+     "star": 0.0089
+    },
+    "mean_p_before": {
+     "bust": 0.1691,
+     "bench": 0.1769,
+     "regular": 0.2727,
+     "good": 0.3151,
+     "star": 0.0662
+    },
+    "mean_p_after": {
+     "bust": 0.5317,
+     "bench": 0.1565,
+     "regular": 0.134,
+     "good": 0.1627,
+     "star": 0.0151
+    },
+    "gap_before": 0.16161,
+    "gap_after": 0.06241,
+    "improved": true,
+    "worse": false
+   },
+   "60": {
+    "n": 17,
+    "realized_freq": {
+     "bust": 0.4118,
+     "bench": 0.2941,
+     "regular": 0.1176,
+     "good": 0.1765,
+     "star": 0.0
+    },
+    "mean_p_before": {
+     "bust": 0.0595,
+     "bench": 0.0867,
+     "regular": 0.2092,
+     "good": 0.463,
+     "star": 0.1816
+    },
+    "mean_p_after": {
+     "bust": 0.3791,
+     "bench": 0.0912,
+     "regular": 0.0798,
+     "good": 0.4087,
+     "star": 0.0412
+    },
+    "gap_before": 0.2239,
+    "gap_after": 0.10937,
+    "improved": true,
+    "worse": false
+   }
+  },
+  "reliability_curves_pooled": {
+   "before": {
+    "bust": {
+     "ece": 0.11954,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 68,
+       "mean_p": 0.0589,
+       "freq": 0.3088
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 74,
+       "mean_p": 0.1447,
+       "freq": 0.4595
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 57,
+       "mean_p": 0.2525,
+       "freq": 0.6316
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 91,
+       "mean_p": 0.3527,
+       "freq": 0.6374
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 127,
+       "mean_p": 0.4574,
+       "freq": 0.7874
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 83,
+       "mean_p": 0.5517,
+       "freq": 0.8795
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 96,
+       "mean_p": 0.65,
+       "freq": 0.8958
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 108,
+       "mean_p": 0.7546,
+       "freq": 0.9352
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 152,
+       "mean_p": 0.8534,
+       "freq": 0.9079
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 934,
+       "mean_p": 0.9793,
+       "freq": 0.9732
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02403,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1080,
+       "mean_p": 0.0221,
+       "freq": 0.0361
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 300,
+       "mean_p": 0.1501,
+       "freq": 0.1333
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 410,
+       "mean_p": 0.241,
+       "freq": 0.1854
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.05319,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1225,
+       "mean_p": 0.0174,
+       "freq": 0.0073
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 263,
+       "mean_p": 0.1519,
+       "freq": 0.0228
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 236,
+       "mean_p": 0.2521,
+       "freq": 0.0975
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 66,
+       "mean_p": 0.3092,
+       "freq": 0.1212
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.04377,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1468,
+       "mean_p": 0.0167,
+       "freq": 0.002
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 156,
+       "mean_p": 0.1392,
+       "freq": 0.0256
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 53,
+       "mean_p": 0.2518,
+       "freq": 0.0566
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 50,
+       "mean_p": 0.3506,
+       "freq": 0.12
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 45,
+       "mean_p": 0.4468,
+       "freq": 0.1556
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 18,
+       "mean_p": 0.5061,
+       "freq": 0.2778
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00838,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1734,
+       "mean_p": 0.0058,
+       "freq": 0.0006
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 34,
+       "mean_p": 0.137,
+       "freq": 0.0294
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 14,
+       "mean_p": 0.24,
+       "freq": 0.0714
+      }
+     ]
+    }
+   },
+   "after": {
+    "bust": {
+     "ece": 0.01472,
+     "curve": [
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 11,
+       "mean_p": 0.2777,
+       "freq": 0.2727
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 25,
+       "mean_p": 0.3509,
+       "freq": 0.32
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 25,
+       "mean_p": 0.4863,
+       "freq": 0.44
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 96,
+       "mean_p": 0.5675,
+       "freq": 0.4688
+      },
+      {
+       "bin": [
+        0.6,
+        0.7
+       ],
+       "n": 94,
+       "mean_p": 0.6456,
+       "freq": 0.5638
+      },
+      {
+       "bin": [
+        0.7,
+        0.8
+       ],
+       "n": 84,
+       "mean_p": 0.7563,
+       "freq": 0.7619
+      },
+      {
+       "bin": [
+        0.8,
+        0.9
+       ],
+       "n": 273,
+       "mean_p": 0.8603,
+       "freq": 0.8755
+      },
+      {
+       "bin": [
+        0.9,
+        1.0
+       ],
+       "n": 1179,
+       "mean_p": 0.9632,
+       "freq": 0.961
+      }
+     ]
+    },
+    "bench": {
+     "ece": 0.02471,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1394,
+       "mean_p": 0.0362,
+       "freq": 0.0538
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 318,
+       "mean_p": 0.1316,
+       "freq": 0.1887
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 47,
+       "mean_p": 0.2631,
+       "freq": 0.234
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 28,
+       "mean_p": 0.317,
+       "freq": 0.3214
+      }
+     ]
+    },
+    "regular": {
+     "ece": 0.00368,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1635,
+       "mean_p": 0.0183,
+       "freq": 0.0177
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 150,
+       "mean_p": 0.1446,
+       "freq": 0.1067
+      }
+     ]
+    },
+    "good": {
+     "ece": 0.00966,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1635,
+       "mean_p": 0.0047,
+       "freq": 0.0049
+      },
+      {
+       "bin": [
+        0.1,
+        0.2
+       ],
+       "n": 110,
+       "mean_p": 0.1478,
+       "freq": 0.0909
+      },
+      {
+       "bin": [
+        0.2,
+        0.3
+       ],
+       "n": 8,
+       "mean_p": 0.246,
+       "freq": 0.125
+      },
+      {
+       "bin": [
+        0.3,
+        0.4
+       ],
+       "n": 5,
+       "mean_p": 0.3542,
+       "freq": 0.4
+      },
+      {
+       "bin": [
+        0.4,
+        0.5
+       ],
+       "n": 21,
+       "mean_p": 0.4527,
+       "freq": 0.1905
+      },
+      {
+       "bin": [
+        0.5,
+        0.6
+       ],
+       "n": 9,
+       "mean_p": 0.5493,
+       "freq": 0.1111
+      }
+     ]
+    },
+    "star": {
+     "ece": 0.00066,
+     "curve": [
+      {
+       "bin": [
+        0.0,
+        0.1
+       ],
+       "n": 1788,
+       "mean_p": 0.0021,
+       "freq": 0.0028
+      }
+     ]
+    }
+   }
+  },
+  "gate": {
+   "condition_1_brier_logloss": {
+    "pass": true,
+    "pooled_improves": true,
+    "all_buckets_improve": true,
+    "no_bucket_materially_worse": true,
+    "material_tolerance_rel": 0.01
+   },
+   "condition_2_spearman": {
+    "pass": false,
+    "shipped_grade_rho": 0.2392,
+    "calibrated_rank_rho": 0.2227,
+    "delta": -0.0165,
+    "tolerance": -0.002
+   },
+   "condition_3_tier_reliability": {
+    "pass": false,
+    "tiers_improved": {
+     "35": false,
+     "40": true,
+     "45": true,
+     "50": true,
+     "55": true,
+     "60": true
+    },
+    "n_tiers": 6,
+    "n_improved": 5,
+    "any_tier_worse": true
+   },
+   "verdict": "FAIL"
+  }
+ },
+ "gate": {
+  "condition_1_brier_logloss": {
+   "pass": true,
+   "pooled_improves": true,
+   "all_buckets_improve": true,
+   "no_bucket_materially_worse": true,
+   "material_tolerance_rel": 0.01
+  },
+  "condition_2_spearman": {
+   "pass": false,
+   "shipped_grade_rho": 0.2392,
+   "calibrated_rank_rho": 0.2227,
+   "delta": -0.0165,
+   "tolerance": -0.002
+  },
+  "condition_3_tier_reliability": {
+   "pass": false,
+   "tiers_improved": {
+    "35": false,
+    "40": true,
+    "45": true,
+    "50": true,
+    "55": true,
+    "60": true
+   },
+   "n_tiers": 6,
+   "n_improved": 5,
+   "any_tier_worse": true
+  },
+  "verdict": "FAIL"
+ },
+ "loss_ledger": {
+  "date": "2026-07-01",
+  "experiment": "X-ISO out-of-fold isotonic calibration (5-bucket eFV outcome distribution)",
+  "hypothesis": "OOF per-bucket isotonic improves probability calibration without hurting ranking",
+  "what_was_tried": "per-bucket PAVA isotonic on the shipped OOF distribution, forward-chained by cohort with 2016-2019 seeding the first calibrator; simplex renormalization; KM sample weights",
+  "result": {
+   "failed_conditions": [
+    "condition_2_spearman",
+    "condition_3_tier_reliability"
+   ],
+   "pooled_brier_before_after": [
+    0.24663,
+    0.20064
+   ],
+   "pooled_logloss_before_after": [
+    0.51306,
+    0.42757
+   ],
+   "spearman_shipped_vs_calibrated": [
+    0.2392,
+    0.2227
+   ],
+   "tiers_improved": "5/6",
+   "tiers_worse": [
+    "35"
+   ],
+   "per_side_spearman": {
+    "hit": {
+     "shipped_grade": 0.2664,
+     "expected_war_before": 0.2664,
+     "expected_war_after": 0.2514
+    },
+    "pit": {
+     "shipped_grade": 0.2233,
+     "expected_war_before": 0.2233,
+     "expected_war_after": 0.2055
+    }
+   }
+  },
+  "diagnosis": "the rank metric is faithful (within each side, expected-WAR-before rho equals the shipped grade rho exactly), so the Spearman drop is caused by the isotonic step itself: PAVA's flat segments tie previously-distinct grades and lose within-segment ordering. Calibration quality genuinely improves (condition 1 passes, every bucket better; tier gaps shrink in 5/6 tiers, driven by bust-probability over/under-prediction at FV 45+), but it costs more rank than the pre-registered tolerance allows and the FV-35 tier (already near-perfectly calibrated) gets slightly worse.",
+  "reading": "pre-registered gate requires ALL THREE conditions; a marginal result is a FAIL (owner policy). The distribution stays on the engine's own calibration (value_framework p_bucket_given_fv); no double-correction is shipped.",
+  "disposition": "NO SHIP. Harness (tools/efv_isotonic_lab.py) + this artifact are the committed loss; re-attempt only with a materially different method or more resolved cohorts."
+ }
+}

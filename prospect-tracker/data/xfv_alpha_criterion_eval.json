@@ -1,0 +1,213 @@
+{
+ "generated_at": "2026-07-07",
+ "experiment": "M4: ridge alpha grid + holdout selection criterion (WS-M)",
+ "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M4",
+ "method": {
+  "baseline": "shipped ridge: alphas [1.0, 10.0, 100.0], holdout min weighted MAE",
+  "treatment": "alphas [0.3, 1.0, 3.0, 10.0, 30.0, 100.0, 300.0], holdout MAX weighted Spearman (KM weights retained, same seeded permutation holdout)",
+  "eval": "forward-chained eFV blend, debuted target_censored, test>=15/train>=60, blend at live lambda -- identical to rank_calibration",
+  "note": "efv_model imports prospect_path._fit_ridge, so this ridge config feeds the shipped eFV blend directly.",
+  "declared_before_first_run": true
+ },
+ "gate_thresholds": {
+  "improve_at_least_one_side": 0.003,
+  "other_side_floor": -0.002,
+  "within_tier_t45_floor": -0.005,
+  "era_drop_no_more_than": 0.01
+ },
+ "sides": {
+  "hit": {
+   "baseline": {
+    "n": 399,
+    "lambda": 0.7,
+    "spearman": 0.3523,
+    "mae": 3.9963,
+    "within_tier_wm": 0.2066,
+    "t45": 0.1202,
+    "era": {
+     "2019-2021": 0.2858,
+     "2022-2023": 0.3852
+    },
+    "alpha_path": [
+     {
+      "year": 2020,
+      "alpha": 100.0
+     },
+     {
+      "year": 2021,
+      "alpha": 100.0
+     },
+     {
+      "year": 2022,
+      "alpha": 10.0
+     },
+     {
+      "year": 2023,
+      "alpha": 1.0
+     }
+    ]
+   },
+   "treatment": {
+    "n": 399,
+    "lambda": 0.7,
+    "spearman": 0.3358,
+    "mae": 4.0921,
+    "within_tier_wm": 0.158,
+    "t45": 0.0977,
+    "era": {
+     "2019-2021": 0.2826,
+     "2022-2023": 0.3648
+    },
+    "alpha_path": [
+     {
+      "year": 2020,
+      "alpha": 300.0
+     },
+     {
+      "year": 2021,
+      "alpha": 300.0
+     },
+     {
+      "year": 2022,
+      "alpha": 300.0
+     },
+     {
+      "year": 2023,
+      "alpha": 100.0
+     }
+    ]
+   },
+   "delta_spearman": -0.0165,
+   "delta_within_tier_wm": -0.0486,
+   "delta_t45": -0.0225,
+   "delta_mae": 0.0958,
+   "era_delta": {
+    "2019-2021": -0.0032,
+    "2022-2023": -0.0204
+   }
+  },
+  "pit": {
+   "baseline": {
+    "n": 466,
+    "lambda": 0.54,
+    "spearman": 0.2757,
+    "mae": 2.3517,
+    "within_tier_wm": 0.1159,
+    "t45": 0.179,
+    "era": {
+     "2019-2021": 0.1673,
+     "2022-2023": 0.3737
+    },
+    "alpha_path": [
+     {
+      "year": 2020,
+      "alpha": 100.0
+     },
+     {
+      "year": 2021,
+      "alpha": 10.0
+     },
+     {
+      "year": 2022,
+      "alpha": 1.0
+     },
+     {
+      "year": 2023,
+      "alpha": 100.0
+     }
+    ]
+   },
+   "treatment": {
+    "n": 466,
+    "lambda": 0.54,
+    "spearman": 0.2878,
+    "mae": 2.3849,
+    "within_tier_wm": 0.1367,
+    "t45": 0.2057,
+    "era": {
+     "2019-2021": 0.1812,
+     "2022-2023": 0.3734
+    },
+    "alpha_path": [
+     {
+      "year": 2020,
+      "alpha": 300.0
+     },
+     {
+      "year": 2021,
+      "alpha": 300.0
+     },
+     {
+      "year": 2022,
+      "alpha": 100.0
+     },
+     {
+      "year": 2023,
+      "alpha": 300.0
+     }
+    ]
+   },
+   "delta_spearman": 0.0121,
+   "delta_within_tier_wm": 0.0208,
+   "delta_t45": 0.0267,
+   "delta_mae": 0.0332,
+   "era_delta": {
+    "2019-2021": 0.0139,
+    "2022-2023": -0.0003
+   }
+  }
+ },
+ "grid_vs_criterion_diagnostic": {
+  "hit": {
+   "base_grid_mae": 0.3523,
+   "wide_grid_mae": 0.3502,
+   "base_grid_wspearman": 0.3517,
+   "wide_grid_wspearman": 0.3358
+  },
+  "pit": {
+   "base_grid_mae": 0.2757,
+   "wide_grid_mae": 0.2727,
+   "base_grid_wspearman": 0.2839,
+   "wide_grid_wspearman": 0.2878
+  }
+ },
+ "gate": {
+  "condition_1_improve": {
+   "deltas": {
+    "hit": -0.0165,
+    "pit": 0.0121
+   },
+   "pass": true
+  },
+  "condition_2_other_side": {
+   "pass": false,
+   "min_delta": -0.0165
+  },
+  "condition_3_within_tier_t45": {
+   "tier_failures": {
+    "hit:wm": -0.0486,
+    "hit:t45": -0.0225
+   },
+   "pass": false
+  },
+  "condition_4_era": {
+   "era_failures": {
+    "hit:2022-2023": -0.0204
+   },
+   "pass": false
+  },
+  "pass": false
+ },
+ "verdict": "NO SHIP",
+ "loss_ledger": {
+  "verdict": "NO SHIP",
+  "failed_conditions": [
+   "condition_2_other_side",
+   "condition_3_within_tier_t45",
+   "condition_4_era"
+  ],
+  "summary": "Widening the alpha grid and switching the holdout criterion to weighted Spearman did not clear the M4 gate; prospect_path._ALPHAS and the MAE selection criterion are retained unchanged.",
+  "asymmetry": "The change HELPS pit (blend rho +0.0121, within-tier +0.0208, t45 +0.0267) but badly HURTS hit (-0.0165, within-tier -0.0486, t45 -0.0225). The weighted-Spearman criterion pins alpha at the grid max (300) every fold for hitters -- over-regularizing the ridge collapses it toward the FV prior and kills the within-tier signal that is eFV's value-add. Fails c2 (hit -0.0165 < -0.002), c3 (hit tier), c4 (hit 2022-2023 -0.0204).",
+  "keep_alive": "grid_vs_criterion_diagnostic disentangles it: pit's gain is CRITERION-driven, not grid-driven (base_grid+wspearman pit 0.2757 -> 0.2839 = +0.0082; wide_grid+MAE pit -0.0030). The WIDE grid is what poisons hitters -- it lets weighted-Spearman reach alpha 300 (base_grid+wspearman hit is a near-neutral -0.0006, wide_grid+wspearman hit is -0.0165). So the promising future cell is weighted-Spearman selection ON THE BASE GRID (pit +0.0082, hit ~neutral), NOT the wide grid. That is a DIAGNOSTIC observation only -- the pre-registered M4 change bundled wide grid + criterion and that bundle fails; carving out base_grid+wspearman post-hoc would be goalpost-moving. Re-open it as its own pre-registered gate (criterion-only, base grid, per-side alpha cap)."
+ }
+}

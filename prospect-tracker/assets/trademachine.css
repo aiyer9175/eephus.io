@@ -1,0 +1,245 @@
+/* Trade Machine styles (relocated under MLB Projections). Extracted from the
+   PROSPX module; evaluator rules are namespaced under #trade-machine. */
+.tm-row {
+      display: grid;
+      /* rank | photo | logo | name | pos | slot(outcome/delta) | fv */
+      grid-template-columns: 30px 18px 20px minmax(0,1fr) 40px auto auto;
+      /* Original padding kept; the photo is sized to the SAME 20px the logo
+         already set as the tallest element, so rows do NOT grow taller. */
+      align-items: center; gap: 9px; padding: 7px 8px;
+      border-bottom: 1px solid var(--border-light); text-decoration: none;
+      color: var(--text-primary);
+    }
+.tm-row:hover { background: var(--bg-secondary); }
+/* Hindsight board: realized-outcome stats get their OWN aligned columns so
+       each value sits directly under its header, instead of being packed into
+       one right-aligned cell. The header and every row share this grid (each
+       .tm-row is its own grid, so fixed widths are what keep them in column).
+       rank | photo | logo | name | pos | debut | WAR | /yr | WAG | FV */
+    .tm-board--hind .tm-row,
+    .tm-board--hind .tm-board-head {
+      grid-template-columns: 30px 18px 20px minmax(0,1fr) 40px 96px 56px 50px 62px 44px;
+    }
+.tm-row .team-logo { width: 20px; height: 20px; }
+.tm-fv {
+      font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700;
+      padding: 2px 8px; border: 1px solid; border-radius: 3px; min-width: 30px;
+      text-align: center; justify-self: end;
+    }
+/* --- Trade Machine (Transactions tab) --- */
+    .tm-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg, 10px);
+      padding: 14px 16px;
+      margin: 0 0 18px;
+    }
+#trade-machine .tm-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-top: 10px;
+    }
+#trade-machine .tm-side {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 12px;
+      min-width: 0;
+    }
+#trade-machine .tm-side-head {
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+      text-transform: uppercase; color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+#trade-machine .tm-total { font-family: var(--font-mono); font-size: 14px; font-variant-numeric: tabular-nums; }
+#trade-machine .tm-search {
+      width: 100%; box-sizing: border-box;
+      background: var(--bg-primary); color: var(--text-primary);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 6px 9px; font-size: var(--fs-base); font-family: inherit;
+      margin-bottom: 6px;
+    }
+#trade-machine .tm-search:focus { outline: none; border-color: var(--accent-cyan); }
+#trade-machine .tm-results { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+#trade-machine .tm-hit {
+      display: flex; align-items: baseline; gap: 8px; width: 100%;
+      text-align: left; cursor: pointer;
+      background: var(--bg-card); color: var(--text-primary);
+      border: 1px solid var(--border); border-radius: 6px;
+      padding: 5px 9px; font-size: 12px; font-family: inherit;
+    }
+#trade-machine .tm-hit:hover { border-color: var(--accent-cyan); }
+#trade-machine .tm-hit .tm-val { margin-left: auto; }
+#trade-machine .tm-row {
+      display: flex; align-items: baseline; gap: 8px;
+      padding: 5px 2px; font-size: var(--fs-base);
+      border-bottom: 1px solid var(--border);
+      min-width: 0;
+    }
+#trade-machine .tm-row:last-child { border-bottom: none; }
+#trade-machine .tm-kind {
+      flex: none; width: 16px; height: 16px; line-height: 16px;
+      border-radius: 4px; text-align: center;
+      font-size: 10px; font-weight: 800;
+      background: var(--bg-primary); color: var(--text-secondary);
+      border: 1px solid var(--border);
+      align-self: center;
+    }
+#trade-machine .tm-sub {
+      color: var(--text-tertiary); font-size: 11px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      min-width: 0;
+    }
+#trade-machine .tm-row .tm-val { margin-left: auto; }
+#trade-machine .tm-val {
+      flex: none; font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums; font-size: 12px;
+      color: var(--text-primary);
+    }
+/* Trade Value Grade chip - shared by the evaluator rows and the board cell.
+   Color + border-color are set inline (per-grade ramp); this is just the shape. */
+.tm-grade-chip {
+      display: inline-block; flex: none;
+      font-family: var(--font-mono); font-weight: 800; font-size: 11px;
+      line-height: 1; letter-spacing: 0.3px;
+      padding: 2px 5px; border: 1px solid currentColor; border-radius: 4px;
+    }
+/* In the evaluator row the grade chip + value float right together. */
+#trade-machine .tm-row .tm-grade-chip { margin-left: auto; }
+#trade-machine .tm-row .tm-grade-chip + .tm-val { margin-left: 6px; }
+#trade-machine .tm-x {
+      flex: none; background: none; border: none; cursor: pointer;
+      color: var(--text-tertiary); font-size: 14px; line-height: 1;
+      padding: 0 2px; align-self: center;
+    }
+#trade-machine .tm-x:hover { color: var(--down); }
+#trade-machine .tm-empty { color: var(--text-tertiary); font-size: var(--fs-sm); padding: 6px 2px; font-style: italic; }
+#trade-machine .tm-verdict {
+      margin-top: 10px; padding-top: 9px;
+      border-top: 1px solid var(--border);
+      font-size: var(--fs-base); font-weight: 600; color: var(--text-primary);
+    }
+@media (max-width: 720px) { #trade-machine .tm-grid { grid-template-columns: 1fr; } }
+/* --- Re-theme (2026-06-24): team logos, tier-colored values, balance bar, mobile --- */
+.tm-logo { width: 16px; height: 16px; object-fit: contain; flex: none; vertical-align: middle; }
+#trade-machine .tm-row { align-items: center; }
+#trade-machine .tm-name {
+  font-weight: 600; color: var(--text-primary); text-decoration: none;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0;
+}
+#trade-machine .tm-name:hover { color: var(--accent-cyan); }
+#trade-machine .tm-kind--prospect { color: var(--neon-green); border-color: var(--neon-green); }
+#trade-machine .tm-kind--mlb { color: var(--neon-violet); border-color: var(--neon-violet); }
+#trade-machine .tm-total { font-weight: 700; }
+#trade-machine .tm-side-head { align-items: center; }
+
+/* board Org cell: logo + faint abbreviation */
+.tm-org-cell { display: inline-flex; align-items: center; gap: 4px; }
+.tm-org-cell .tm-logo { width: 15px; height: 15px; }
+.tm-org-abbr { color: var(--text-tertiary); font-size: 10px; }
+
+/* evaluator value-split balance bar */
+.tm-balbar {
+  display: flex; height: 7px; border-radius: 4px; overflow: hidden;
+  background: var(--bg-primary); border: 1px solid var(--border); margin-bottom: 7px;
+}
+.tm-balbar-a { background: var(--accent-cyan); }
+.tm-balbar-b { background: var(--neon-amber); }
+.tm-balrow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.tm-balverdict { font-weight: 700; color: var(--text-primary); }
+.tm-balverdict.is-bal { color: var(--neon-green); }
+
+/* Trade Board table: finished column treatment (header band, row dividers, hover,
+   right-aligned numerics, and group dividers separating identity | value | signals). */
+.tm-board-table { width: 100%; border-collapse: collapse; }
+.tm-board-table thead th {
+  background: var(--bg-secondary); border-bottom: 2px solid var(--border);
+  text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap;
+  font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+  padding: 7px 8px; text-align: left;
+}
+.tm-board-table td { padding: 6px 8px; font-size: 12px; vertical-align: middle; }
+.tm-board-table tbody tr { border-bottom: 1px solid var(--border-light); }
+.tm-board-table tbody tr:hover { background: var(--bg-secondary); }
+.tm-board-table .tm-num { text-align: right; font-variant-numeric: tabular-nums; }
+.tm-board-table .tm-dim { color: var(--text-secondary); font-size: 11px; }
+.tm-board-table .tm-rank { color: var(--text-tertiary); font-size: 11px; }
+.tm-board-table .tm-player { font-weight: 600; font-size: 13px; }
+.tm-board-table .tm-surplus { font-weight: 800; font-size: 13px; }
+.tm-board-table .tm-grade { text-align: right; }
+.tm-board-table .tm-grade .tm-grade-chip { font-size: 11px; padding: 1px 5px; }
+.tm-board-table .tm-col-div { border-left: 1px solid var(--border-light); }
+.tm-board-table th.tm-sortable { cursor: pointer; user-select: none; white-space: nowrap; }
+.tm-board-table th.tm-sortable:hover { color: var(--neon-cyan); }
+.tm-board-table th.tm-sorted { color: var(--neon-cyan); }
+
+/* mobile: let the wide board scroll horizontally rather than squash 9 columns */
+@media (max-width: 720px) {
+  #tradeboard-content { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  #tradeboard-content table { min-width: 620px; }
+  .tm-org-abbr { display: none; }   /* the logo carries the team on small screens */
+}
+
+/* --- Trade Board filter bar: theme the native <select>s + toggle to match the chips
+   and tie the active state to the view's cyan accent (was OS-default selects + gold). --- */
+.tm-app select.chip {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
+  padding: 4px 26px 4px 10px; cursor: pointer; border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border); background-color: var(--bg-secondary); color: var(--text-secondary);
+  appearance: none; -webkit-appearance: none; -moz-appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23888' stroke-width='1.4' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 8px center; background-size: 9px;
+}
+.tm-app select.chip:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+.tm-app select.chip:focus { outline: none; border-color: var(--accent-cyan); }
+
+.tm-app .filter-toggle-row { margin: 12px 0 6px; }
+.tm-app .filter-toggle {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro); font-size: 12px; font-weight: 600;
+  padding: 5px 12px; cursor: pointer; border-radius: var(--radius-sm, 4px);
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+}
+.tm-app .filter-toggle:hover { color: var(--text-primary); border-color: var(--accent-cyan); }
+.tm-app .filter-toggle-arrow { font-size: 10px; transition: transform .15s ease; }
+.tm-app .filter-toggle[aria-expanded="true"] .filter-toggle-arrow { transform: rotate(180deg); }
+/* Collapsible filter bar: default collapsed, revealed on .is-open (toggle wired in trademachine.js mount). */
+.tm-app .collapsible-filter-bar { display: none; }
+.tm-app .collapsible-filter-bar.is-open { display: flex; flex-wrap: wrap; gap: 6px; }
+
+/* active filter chip -> cyan (cohesive with the view tabs), keep the iridescent underline */
+.tm-app button.chip.active { border-color: var(--accent-cyan); }
+
+/* evaluator grader verdict colors + Clear/Copy controls */
+.tm-balverdict.is-warn { color: var(--neon-amber); }
+.tm-balverdict.is-bad { color: var(--down); }
+.tm-controls { display: flex; gap: 8px; margin-top: 9px; }
+
+/* pagination strip (the relocation lost this CSS -> the pager rendered as big
+   default buttons). Ported on-theme: compact chips, cyan active page. */
+.pg-strip {
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  padding: 10px 0; margin-top: 10px; border-top: 1px solid var(--border-light);
+}
+.pg-chip, .pg-nav {
+  font-family: var(--font-mono); font-size: var(--fs-sm, 12px);
+  font-variant-numeric: tabular-nums; padding: 3px 9px;
+  border-radius: var(--radius-sm, 4px); border: 1px solid var(--border);
+  background: var(--bg-secondary); color: var(--text-secondary); cursor: pointer;
+  transition: background .12s, border-color .12s, color .12s;
+}
+.pg-chip:hover:not(.active), .pg-nav:hover:not(:disabled) {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+.pg-chip.active { background: var(--neon-cyan); color: var(--bg-primary); border-color: var(--neon-cyan); cursor: default; }
+.pg-nav[disabled] { opacity: 0.4; cursor: not-allowed; }
+.pg-ellipsis { padding: 0 4px; color: var(--text-tertiary); font-family: var(--font-mono); font-size: var(--fs-sm, 12px); }
+.pg-count { margin-left: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+
+/* Projections-page view switcher (Projections | Trade Machine) */
+.proj-viewnav{display:flex;gap:4px;margin:12px 0 14px;border-bottom:1px solid var(--border-subtle);}
+.proj-viewbtn{appearance:none;background:none;border:none;border-bottom:2px solid transparent;color:var(--text-secondary);font:inherit;font-size:14px;font-weight:600;padding:8px 14px;cursor:pointer;margin-bottom:-1px;}
+.proj-viewbtn:hover{color:var(--text-primary);}
+.proj-viewbtn.active{color:var(--text-primary);border-bottom-color:var(--neon-cyan);}

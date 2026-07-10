@@ -1,0 +1,28 @@
+{
+  "_doc": [
+    "Owner-curated overrides for the MLB Free Agency module, keyed by",
+    "player_key. Consumed by fa_export at export time — nothing here",
+    "touches the model or the gates; it is disclosure and curation only.",
+    "Fields per player:",
+    "  two_way  (bool)  — two-way profile. The market model prices ONE",
+    "                     profile (whichever the corpus carries), so the",
+    "                     prediction is a FLOOR. Adds the standard caveat",
+    "                     note unless a custom `note` is given. Worked",
+    "                     example: Ohtani '23 — model would have said",
+    "                     5y/$173M off the age-29 SP line; he signed",
+    "                     10y/$700M. No-lookahead can't price unicorns;",
+    "                     we disclose instead.",
+    "  note     (str)   — owner note, shown verbatim on the board tooltip",
+    "                     and the player card.",
+    "  exclude  (bool)  — drop the row from the exported class entirely",
+    "                     (bad parse, retired, non-MLB destination...).",
+    "Keys starting with '_' are documentation and are ignored."
+  ],
+  "players": {
+    "_example_two_way_guy": {
+      "two_way": true,
+      "note": null,
+      "exclude": false
+    }
+  }
+}

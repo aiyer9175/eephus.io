@@ -1,0 +1,93 @@
+{
+ "generated_at": "2026-07-07T22:50:17Z",
+ "raters": [
+  "fangraphs",
+  "mlb_pipeline_draft"
+ ],
+ "min_lag_years": 5,
+ "resolved_years": [
+  2018,
+  2019,
+  2020,
+  2021
+ ],
+ "common_n": 672,
+ "per_source_spearman": {
+  "fangraphs": 0.1541,
+  "mlb_pipeline_draft": 0.1404
+ },
+ "live_weights": {
+  "fangraphs": 1.0381,
+  "mlb_pipeline_draft": 0.9619
+ },
+ "pooled": {
+  "n": 672,
+  "equal": {
+   "spearman": 0.1598,
+   "auc": 0.7224
+  },
+  "weighted": {
+   "spearman": 0.1587,
+   "auc": 0.7235
+  }
+ },
+ "loo_cv": {
+  "per_year": [
+   {
+    "year": 2018,
+    "n": 185,
+    "train_weights": {
+     "fangraphs": 1.0059,
+     "mlb_pipeline_draft": 0.9941
+    },
+    "debut_rate": 0.5081
+   },
+   {
+    "year": 2019,
+    "n": 193,
+    "train_weights": {
+     "fangraphs": 1.0236,
+     "mlb_pipeline_draft": 0.9764
+    },
+    "debut_rate": 0.4663
+   },
+   {
+    "year": 2020,
+    "n": 162,
+    "train_weights": {
+     "fangraphs": 1.0613,
+     "mlb_pipeline_draft": 0.9387
+    },
+    "debut_rate": 0.4136
+   },
+   {
+    "year": 2021,
+    "n": 132,
+    "train_weights": {
+     "fangraphs": 1.0584,
+     "mlb_pipeline_draft": 0.9416
+    },
+    "debut_rate": 0.4773
+   }
+  ],
+  "pooled": {
+   "n": 672,
+   "equal": {
+    "spearman": 0.1598,
+    "auc": 0.7224
+   },
+   "weighted": {
+    "spearman": 0.1631,
+    "auc": 0.7297
+   }
+  }
+ },
+ "ship": false,
+ "notes": [
+  "two-source A/B (FanGraphs vs MLB Pipeline); ESPN + any other source vote at 1.0 (no resolved draft history)",
+  "resolved class = (today - draft_year) >= 5; outcome = cumulative MLB bWAR (0 if never debuted)",
+  "weights = relative Spearman accuracy, shrunk k=150 toward equal, clamped (0.6, 1.5)",
+  "temporal vintage A/B not yet possible (MLB Pipeline draft history starts 2018, 5y outcome lag); LOO-CV is the out-of-sample read and is advisory, not gating",
+  "ship rule: weighted >= equal on BOTH pooled Spearman and AUC"
+ ]
+}

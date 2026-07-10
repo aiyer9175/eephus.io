@@ -1,0 +1,2257 @@
+{
+ "generated_at": "2026-07-07",
+ "seasons": [
+  2012,
+  2013,
+  2014,
+  2015,
+  2016,
+  2017,
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024
+ ],
+ "seed": 20260705,
+ "experiment": "X-H2",
+ "model": "hem_plus_3yr",
+ "n_forward_pairs": 2382,
+ "conventions": {
+  "predictor_year": "trailing 3yr through Y (PA>=150 in Y)",
+  "target": "wOBA in year Y+1 (PA>=150)",
+  "excluded": "2020"
+ },
+ "hem_1yr_forward_rho_on_3yr_set": 0.428,
+ "hem_3yr_forward_rho": 0.4545,
+ "gap_ci_3yr_minus_1yr": {
+  "mean": 0.0266,
+  "lo95": 0.0053,
+  "hi95": 0.0486
+ },
+ "gate": {
+  "bar": "3yr rho > 1yr rho on the same set AND bootstrap gap lo95 >= 0",
+  "pass": true
+ },
+ "verdict": "PASS: 3-year HEM+ forward-predicts next-year offense better than one season; ship hem_plus_3yr as a companion column.",
+ "proposed_values": {
+  "season": 2026,
+  "window": [
+   2024,
+   2025,
+   2026
+  ],
+  "metric": "hem_plus_3yr",
+  "display_name": "HEM+ (3yr)",
+  "definition": "PA-weighted mean HEM+ over the trailing 3 seasons. A steadier offense read than one season. tag is 'established' with 2+ seasons and 600+ PA.",
+  "n_with_value": 245,
+  "players": {
+   "670541": {
+    "name": "Yordan Alvarez",
+    "hem_plus_now": 160,
+    "hem_plus_3yr": 144,
+    "seasons_used": 3,
+    "pa_total": 1231,
+    "tag": "established",
+    "pct": 97
+   },
+   "808959": {
+    "name": "Munetaka Murakami",
+    "hem_plus_now": 149,
+    "hem_plus_3yr": 149,
+    "seasons_used": 1,
+    "pa_total": 246,
+    "tag": "provisional",
+    "pct": 99
+   },
+   "656941": {
+    "name": "Kyle Schwarber",
+    "hem_plus_now": 149,
+    "hem_plus_3yr": 147,
+    "seasons_used": 3,
+    "pa_total": 1804,
+    "tag": "established",
+    "pct": 98
+   },
+   "665742": {
+    "name": "Juan Soto",
+    "hem_plus_now": 148,
+    "hem_plus_3yr": 156,
+    "seasons_used": 3,
+    "pa_total": 1736,
+    "tag": "established",
+    "pct": 99
+   },
+   "701762": {
+    "name": "Nick Kurtz",
+    "hem_plus_now": 144,
+    "hem_plus_3yr": 149,
+    "seasons_used": 2,
+    "pa_total": 891,
+    "tag": "established",
+    "pct": 98
+   },
+   "691406": {
+    "name": "Junior Caminero",
+    "hem_plus_now": 142,
+    "hem_plus_3yr": 126,
+    "seasons_used": 3,
+    "pa_total": 1215,
+    "tag": "established",
+    "pct": 94
+   },
+   "695578": {
+    "name": "James Wood",
+    "hem_plus_now": 141,
+    "hem_plus_3yr": 124,
+    "seasons_used": 3,
+    "pa_total": 1455,
+    "tag": "established",
+    "pct": 92
+   },
+   "660271": {
+    "name": "Shohei Ohtani",
+    "hem_plus_now": 138,
+    "hem_plus_3yr": 156,
+    "seasons_used": 3,
+    "pa_total": 1844,
+    "tag": "established",
+    "pct": 99
+   },
+   "700250": {
+    "name": "Ben Rice",
+    "hem_plus_now": 136,
+    "hem_plus_3yr": 120,
+    "seasons_used": 3,
+    "pa_total": 1072,
+    "tag": "established",
+    "pct": 88
+   },
+   "592450": {
+    "name": "Aaron Judge",
+    "hem_plus_now": 135,
+    "hem_plus_3yr": 181,
+    "seasons_used": 3,
+    "pa_total": 1644,
+    "tag": "established",
+    "pct": 100
+   },
+   "545361": {
+    "name": "Mike Trout",
+    "hem_plus_now": 135,
+    "hem_plus_3yr": 129,
+    "seasons_used": 3,
+    "pa_total": 1017,
+    "tag": "established",
+    "pct": 96
+   },
+   "575929": {
+    "name": "Willson Contreras",
+    "hem_plus_now": 133,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 1278,
+    "tag": "established",
+    "pct": 91
+   },
+   "547180": {
+    "name": "Bryce Harper",
+    "hem_plus_now": 132,
+    "hem_plus_3yr": 129,
+    "seasons_used": 3,
+    "pa_total": 1593,
+    "tag": "established",
+    "pct": 96
+   },
+   "691718": {
+    "name": "Pete Crow-Armstrong",
+    "hem_plus_now": 132,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1447,
+    "tag": "established",
+    "pct": 53
+   },
+   "621439": {
+    "name": "Byron Buxton",
+    "hem_plus_now": 128,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 1265,
+    "tag": "established",
+    "pct": 89
+   },
+   "678246": {
+    "name": "Miguel Vargas",
+    "hem_plus_now": 128,
+    "hem_plus_3yr": 102,
+    "seasons_used": 3,
+    "pa_total": 1190,
+    "tag": "established",
+    "pct": 51
+   },
+   "691023": {
+    "name": "Jordan Walker",
+    "hem_plus_now": 127,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 945,
+    "tag": "established",
+    "pct": 34
+   },
+   "696100": {
+    "name": "Hunter Goodman",
+    "hem_plus_now": 126,
+    "hem_plus_3yr": 115,
+    "seasons_used": 3,
+    "pa_total": 1161,
+    "tag": "established",
+    "pct": 81
+   },
+   "571970": {
+    "name": "Max Muncy",
+    "hem_plus_now": 126,
+    "hem_plus_3yr": 129,
+    "seasons_used": 3,
+    "pa_total": 1002,
+    "tag": "established",
+    "pct": 97
+   },
+   "621566": {
+    "name": "Matt Olson",
+    "hem_plus_now": 125,
+    "hem_plus_3yr": 121,
+    "seasons_used": 3,
+    "pa_total": 1799,
+    "tag": "established",
+    "pct": 88
+   },
+   "650490": {
+    "name": "Yandy D\u00edaz",
+    "hem_plus_now": 125,
+    "hem_plus_3yr": 117,
+    "seasons_used": 3,
+    "pa_total": 1640,
+    "tag": "established",
+    "pct": 84
+   },
+   "668804": {
+    "name": "Bryan Reynolds",
+    "hem_plus_now": 124,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1743,
+    "tag": "established",
+    "pct": 69
+   },
+   "518692": {
+    "name": "Freddie Freeman",
+    "hem_plus_now": 124,
+    "hem_plus_3yr": 123,
+    "seasons_used": 3,
+    "pa_total": 1654,
+    "tag": "established",
+    "pct": 92
+   },
+   "641343": {
+    "name": "Jake Bauers",
+    "hem_plus_now": 124,
+    "hem_plus_3yr": 111,
+    "seasons_used": 3,
+    "pa_total": 885,
+    "tag": "established",
+    "pct": 74
+   },
+   "666018": {
+    "name": "Jonathan Aranda",
+    "hem_plus_now": 124,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 945,
+    "tag": "established",
+    "pct": 90
+   },
+   "687462": {
+    "name": "Spencer Horwitz",
+    "hem_plus_now": 123,
+    "hem_plus_3yr": 114,
+    "seasons_used": 3,
+    "pa_total": 1087,
+    "tag": "established",
+    "pct": 79
+   },
+   "686527": {
+    "name": "Dominic Canzone",
+    "hem_plus_now": 122,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 689,
+    "tag": "established",
+    "pct": 77
+   },
+   "682985": {
+    "name": "Riley Greene",
+    "hem_plus_now": 121,
+    "hem_plus_3yr": 118,
+    "seasons_used": 3,
+    "pa_total": 1615,
+    "tag": "established",
+    "pct": 86
+   },
+   "689414": {
+    "name": "Liam Hicks",
+    "hem_plus_now": 121,
+    "hem_plus_3yr": 109,
+    "seasons_used": 2,
+    "pa_total": 709,
+    "tag": "established",
+    "pct": 71
+   },
+   "682928": {
+    "name": "CJ Abrams",
+    "hem_plus_now": 121,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1610,
+    "tag": "established",
+    "pct": 52
+   },
+   "666160": {
+    "name": "Mickey Moniak",
+    "hem_plus_now": 121,
+    "hem_plus_3yr": 100,
+    "seasons_used": 3,
+    "pa_total": 1087,
+    "tag": "established",
+    "pct": 46
+   },
+   "665833": {
+    "name": "Oneil Cruz",
+    "hem_plus_now": 120,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1426,
+    "tag": "established",
+    "pct": 55
+   },
+   "686948": {
+    "name": "Drake Baldwin",
+    "hem_plus_now": 119,
+    "hem_plus_3yr": 117,
+    "seasons_used": 2,
+    "pa_total": 740,
+    "tag": "established",
+    "pct": 83
+   },
+   "624413": {
+    "name": "Pete Alonso",
+    "hem_plus_now": 119,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 1797,
+    "tag": "established",
+    "pct": 90
+   },
+   "671056": {
+    "name": "Iv\u00e1n Herrera",
+    "hem_plus_now": 119,
+    "hem_plus_3yr": 121,
+    "seasons_used": 3,
+    "pa_total": 1111,
+    "tag": "established",
+    "pct": 89
+   },
+   "592626": {
+    "name": "Joc Pederson",
+    "hem_plus_now": 118,
+    "hem_plus_3yr": 120,
+    "seasons_used": 3,
+    "pa_total": 1031,
+    "tag": "established",
+    "pct": 88
+   },
+   "668709": {
+    "name": "JJ Bleday",
+    "hem_plus_now": 117,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1245,
+    "tag": "established",
+    "pct": 56
+   },
+   "678554": {
+    "name": "Curtis Mead",
+    "hem_plus_now": 117,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 672,
+    "tag": "established",
+    "pct": 33
+   },
+   "681198": {
+    "name": "TJ Rumfield",
+    "hem_plus_now": 117,
+    "hem_plus_3yr": 117,
+    "seasons_used": 1,
+    "pa_total": 360,
+    "tag": "provisional",
+    "pct": 83
+   },
+   "805808": {
+    "name": "Kevin McGonigle",
+    "hem_plus_now": 117,
+    "hem_plus_3yr": 117,
+    "seasons_used": 1,
+    "pa_total": 387,
+    "tag": "provisional",
+    "pct": 83
+   },
+   "671739": {
+    "name": "Michael Harris II",
+    "hem_plus_now": 116,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1436,
+    "tag": "established",
+    "pct": 26
+   },
+   "669127": {
+    "name": "Shea Langeliers",
+    "hem_plus_now": 116,
+    "hem_plus_3yr": 114,
+    "seasons_used": 3,
+    "pa_total": 1420,
+    "tag": "established",
+    "pct": 80
+   },
+   "802139": {
+    "name": "JJ Wetherholt",
+    "hem_plus_now": 116,
+    "hem_plus_3yr": 116,
+    "seasons_used": 1,
+    "pa_total": 387,
+    "tag": "provisional",
+    "pct": 82
+   },
+   "502671": {
+    "name": "Paul Goldschmidt",
+    "hem_plus_now": 115,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 1431,
+    "tag": "established",
+    "pct": 38
+   },
+   "694192": {
+    "name": "Jackson Chourio",
+    "hem_plus_now": 115,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 1421,
+    "tag": "established",
+    "pct": 58
+   },
+   "672960": {
+    "name": "Kazuma Okamoto",
+    "hem_plus_now": 115,
+    "hem_plus_3yr": 115,
+    "seasons_used": 1,
+    "pa_total": 359,
+    "tag": "provisional",
+    "pct": 81
+   },
+   "695657": {
+    "name": "Colson Montgomery",
+    "hem_plus_now": 115,
+    "hem_plus_3yr": 119,
+    "seasons_used": 2,
+    "pa_total": 640,
+    "tag": "established",
+    "pct": 87
+   },
+   "693307": {
+    "name": "Dillon Dingler",
+    "hem_plus_now": 114,
+    "hem_plus_3yr": 102,
+    "seasons_used": 3,
+    "pa_total": 904,
+    "tag": "established",
+    "pct": 49
+   },
+   "683737": {
+    "name": "Michael Busch",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 118,
+    "seasons_used": 3,
+    "pa_total": 1557,
+    "tag": "established",
+    "pct": 86
+   },
+   "673548": {
+    "name": "Seiya Suzuki",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 118,
+    "seasons_used": 3,
+    "pa_total": 1553,
+    "tag": "established",
+    "pct": 85
+   },
+   "664040": {
+    "name": "Brandon Lowe",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 1354,
+    "tag": "established",
+    "pct": 77
+   },
+   "656811": {
+    "name": "Ryan O'Hearn",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 1352,
+    "tag": "established",
+    "pct": 77
+   },
+   "660670": {
+    "name": "Ronald Acu\u00f1a Jr.",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 128,
+    "seasons_used": 3,
+    "pa_total": 870,
+    "tag": "established",
+    "pct": 95
+   },
+   "671277": {
+    "name": "Luis Garc\u00eda Jr.",
+    "hem_plus_now": 113,
+    "hem_plus_3yr": 99,
+    "seasons_used": 3,
+    "pa_total": 1353,
+    "tag": "established",
+    "pct": 43
+   },
+   "682829": {
+    "name": "Elly De La Cruz",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1707,
+    "tag": "established",
+    "pct": 69
+   },
+   "677951": {
+    "name": "Bobby Witt Jr.",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 1770,
+    "tag": "established",
+    "pct": 91
+   },
+   "701398": {
+    "name": "Sal Stewart",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 112,
+    "seasons_used": 2,
+    "pa_total": 445,
+    "tag": "provisional",
+    "pct": 74
+   },
+   "663616": {
+    "name": "Trevor Larnach",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 1237,
+    "tag": "established",
+    "pct": 63
+   },
+   "681481": {
+    "name": "Kerry Carpenter",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 978,
+    "tag": "established",
+    "pct": 78
+   },
+   "669016": {
+    "name": "Brandon Marsh",
+    "hem_plus_now": 112,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 1243,
+    "tag": "established",
+    "pct": 66
+   },
+   "668227": {
+    "name": "Randy Arozarena",
+    "hem_plus_now": 111,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1709,
+    "tag": "established",
+    "pct": 66
+   },
+   "694212": {
+    "name": "Samuel Basallo",
+    "hem_plus_now": 111,
+    "hem_plus_3yr": 102,
+    "seasons_used": 2,
+    "pa_total": 395,
+    "tag": "provisional",
+    "pct": 50
+   },
+   "672515": {
+    "name": "Gabriel Moreno",
+    "hem_plus_now": 111,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 909,
+    "tag": "established",
+    "pct": 63
+   },
+   "680869": {
+    "name": "Zack Gelof",
+    "hem_plus_now": 111,
+    "hem_plus_3yr": 90,
+    "seasons_used": 3,
+    "pa_total": 884,
+    "tag": "established",
+    "pct": 16
+   },
+   "669364": {
+    "name": "Xavier Edwards",
+    "hem_plus_now": 111,
+    "hem_plus_3yr": 101,
+    "seasons_used": 3,
+    "pa_total": 1305,
+    "tag": "established",
+    "pct": 46
+   },
+   "681715": {
+    "name": "Heriberto Hern\u00e1ndez",
+    "hem_plus_now": 110,
+    "hem_plus_3yr": 111,
+    "seasons_used": 2,
+    "pa_total": 501,
+    "tag": "provisional",
+    "pct": 73
+   },
+   "687263": {
+    "name": "Zach Neto",
+    "hem_plus_now": 110,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 1552,
+    "tag": "established",
+    "pct": 64
+   },
+   "668930": {
+    "name": "Brice Turang",
+    "hem_plus_now": 110,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1669,
+    "tag": "established",
+    "pct": 54
+   },
+   "657757": {
+    "name": "Gavin Sheets",
+    "hem_plus_now": 110,
+    "hem_plus_3yr": 98,
+    "seasons_used": 3,
+    "pa_total": 1343,
+    "tag": "established",
+    "pct": 40
+   },
+   "672640": {
+    "name": "Otto Lopez",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1411,
+    "tag": "established",
+    "pct": 28
+   },
+   "664023": {
+    "name": "Ian Happ",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 112,
+    "seasons_used": 3,
+    "pa_total": 1693,
+    "tag": "established",
+    "pct": 76
+   },
+   "572233": {
+    "name": "Christian Walker",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1570,
+    "tag": "established",
+    "pct": 68
+   },
+   "663993": {
+    "name": "Nathaniel Lowe",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 106,
+    "seasons_used": 3,
+    "pa_total": 1390,
+    "tag": "established",
+    "pct": 63
+   },
+   "669003": {
+    "name": "Garrett Mitchell",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 106,
+    "seasons_used": 3,
+    "pa_total": 590,
+    "tag": "provisional",
+    "pct": 61
+   },
+   "670623": {
+    "name": "Isaac Paredes",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 114,
+    "seasons_used": 3,
+    "pa_total": 1440,
+    "tag": "established",
+    "pct": 79
+   },
+   "682998": {
+    "name": "Corbin Carroll",
+    "hem_plus_now": 109,
+    "hem_plus_3yr": 110,
+    "seasons_used": 3,
+    "pa_total": 1698,
+    "tag": "established",
+    "pct": 72
+   },
+   "695506": {
+    "name": "Jac Caglianone",
+    "hem_plus_now": 108,
+    "hem_plus_3yr": 95,
+    "seasons_used": 2,
+    "pa_total": 555,
+    "tag": "provisional",
+    "pct": 31
+   },
+   "676475": {
+    "name": "Alec Burleson",
+    "hem_plus_now": 108,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1516,
+    "tag": "established",
+    "pct": 66
+   },
+   "691016": {
+    "name": "Tyler Soderstrom",
+    "hem_plus_now": 108,
+    "hem_plus_3yr": 112,
+    "seasons_used": 3,
+    "pa_total": 1172,
+    "tag": "established",
+    "pct": 75
+   },
+   "673962": {
+    "name": "Josh Jung",
+    "hem_plus_now": 108,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 1058,
+    "tag": "established",
+    "pct": 35
+   },
+   "621493": {
+    "name": "Taylor Ward",
+    "hem_plus_now": 107,
+    "hem_plus_3yr": 111,
+    "seasons_used": 3,
+    "pa_total": 1739,
+    "tag": "established",
+    "pct": 73
+   },
+   "606466": {
+    "name": "Ketel Marte",
+    "hem_plus_now": 107,
+    "hem_plus_3yr": 131,
+    "seasons_used": 3,
+    "pa_total": 1517,
+    "tag": "established",
+    "pct": 97
+   },
+   "641487": {
+    "name": "J.P. Crawford",
+    "hem_plus_now": 107,
+    "hem_plus_3yr": 100,
+    "seasons_used": 3,
+    "pa_total": 1413,
+    "tag": "established",
+    "pct": 45
+   },
+   "665161": {
+    "name": "Jeremy Pe\u00f1a",
+    "hem_plus_now": 107,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1395,
+    "tag": "established",
+    "pct": 54
+   },
+   "608348": {
+    "name": "Carson Kelly",
+    "hem_plus_now": 107,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 965,
+    "tag": "established",
+    "pct": 64
+   },
+   "668715": {
+    "name": "Spencer Steer",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 102,
+    "seasons_used": 3,
+    "pa_total": 1556,
+    "tag": "established",
+    "pct": 50
+   },
+   "669257": {
+    "name": "Will Smith",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 117,
+    "seasons_used": 3,
+    "pa_total": 1181,
+    "tag": "established",
+    "pct": 84
+   },
+   "641355": {
+    "name": "Cody Bellinger",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1603,
+    "tag": "established",
+    "pct": 68
+   },
+   "663757": {
+    "name": "Trent Grisham",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 120,
+    "seasons_used": 3,
+    "pa_total": 1069,
+    "tag": "established",
+    "pct": 87
+   },
+   "681624": {
+    "name": "Andy Pages",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1461,
+    "tag": "established",
+    "pct": 54
+   },
+   "666126": {
+    "name": "Carlos Cortes",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 103,
+    "seasons_used": 2,
+    "pa_total": 320,
+    "tag": "provisional",
+    "pct": 52
+   },
+   "681297": {
+    "name": "Colton Cowser",
+    "hem_plus_now": 106,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1143,
+    "tag": "established",
+    "pct": 55
+   },
+   "691720": {
+    "name": "Kyle Karros",
+    "hem_plus_now": 105,
+    "hem_plus_3yr": 99,
+    "seasons_used": 2,
+    "pa_total": 453,
+    "tag": "provisional",
+    "pct": 42
+   },
+   "803011": {
+    "name": "Sam Antonacci",
+    "hem_plus_now": 105,
+    "hem_plus_3yr": 105,
+    "seasons_used": 1,
+    "pa_total": 283,
+    "tag": "provisional",
+    "pct": 59
+   },
+   "661388": {
+    "name": "William Contreras",
+    "hem_plus_now": 105,
+    "hem_plus_3yr": 114,
+    "seasons_used": 3,
+    "pa_total": 1706,
+    "tag": "established",
+    "pct": 79
+   },
+   "670042": {
+    "name": "Luke Raley",
+    "hem_plus_now": 105,
+    "hem_plus_3yr": 106,
+    "seasons_used": 3,
+    "pa_total": 915,
+    "tag": "established",
+    "pct": 62
+   },
+   "606192": {
+    "name": "Teoscar Hern\u00e1ndez",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 111,
+    "seasons_used": 3,
+    "pa_total": 1433,
+    "tag": "established",
+    "pct": 72
+   },
+   "665019": {
+    "name": "Kody Clemens",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 99,
+    "seasons_used": 3,
+    "pa_total": 812,
+    "tag": "established",
+    "pct": 42
+   },
+   "669065": {
+    "name": "Kyle Stowers",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 112,
+    "seasons_used": 3,
+    "pa_total": 948,
+    "tag": "established",
+    "pct": 74
+   },
+   "646240": {
+    "name": "Rafael Devers",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 122,
+    "seasons_used": 3,
+    "pa_total": 1711,
+    "tag": "established",
+    "pct": 90
+   },
+   "677594": {
+    "name": "Julio Rodr\u00edguez",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1701,
+    "tag": "established",
+    "pct": 68
+   },
+   "669394": {
+    "name": "Jake Burger",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 101,
+    "seasons_used": 3,
+    "pa_total": 1304,
+    "tag": "established",
+    "pct": 48
+   },
+   "682626": {
+    "name": "Francisco Alvarez",
+    "hem_plus_now": 104,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 835,
+    "tag": "established",
+    "pct": 57
+   },
+   "669477": {
+    "name": "Casey Schmitt",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 100,
+    "seasons_used": 3,
+    "pa_total": 805,
+    "tag": "established",
+    "pct": 44
+   },
+   "621020": {
+    "name": "Dansby Swanson",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 98,
+    "seasons_used": 3,
+    "pa_total": 1571,
+    "tag": "established",
+    "pct": 39
+   },
+   "700932": {
+    "name": "Kyle Manzardo",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 973,
+    "tag": "established",
+    "pct": 60
+   },
+   "672695": {
+    "name": "Geraldo Perdomo",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 112,
+    "seasons_used": 3,
+    "pa_total": 1477,
+    "tag": "established",
+    "pct": 75
+   },
+   "693304": {
+    "name": "Nick Gonzales",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 89,
+    "seasons_used": 3,
+    "pa_total": 1142,
+    "tag": "established",
+    "pct": 13
+   },
+   "679529": {
+    "name": "Spencer Torkelson",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 1378,
+    "tag": "established",
+    "pct": 61
+   },
+   "663656": {
+    "name": "Kyle Tucker",
+    "hem_plus_now": 103,
+    "hem_plus_3yr": 127,
+    "seasons_used": 3,
+    "pa_total": 1299,
+    "tag": "established",
+    "pct": 94
+   },
+   "608070": {
+    "name": "Jos\u00e9 Ram\u00edrez",
+    "hem_plus_now": 102,
+    "hem_plus_3yr": 118,
+    "seasons_used": 3,
+    "pa_total": 1669,
+    "tag": "established",
+    "pct": 86
+   },
+   "645277": {
+    "name": "Ozzie Albies",
+    "hem_plus_now": 102,
+    "hem_plus_3yr": 92,
+    "seasons_used": 3,
+    "pa_total": 1487,
+    "tag": "established",
+    "pct": 21
+   },
+   "664034": {
+    "name": "Ty France",
+    "hem_plus_now": 102,
+    "hem_plus_3yr": 91,
+    "seasons_used": 3,
+    "pa_total": 1241,
+    "tag": "established",
+    "pct": 17
+   },
+   "664983": {
+    "name": "Jake McCarthy",
+    "hem_plus_now": 102,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 999,
+    "tag": "established",
+    "pct": 30
+   },
+   "605170": {
+    "name": "Victor Caratini",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 912,
+    "tag": "established",
+    "pct": 51
+   },
+   "608369": {
+    "name": "Corey Seager",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 124,
+    "seasons_used": 3,
+    "pa_total": 1197,
+    "tag": "established",
+    "pct": 92
+   },
+   "683953": {
+    "name": "Travis Bazzana",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 101,
+    "seasons_used": 1,
+    "pa_total": 254,
+    "tag": "provisional",
+    "pct": 47
+   },
+   "687859": {
+    "name": "Troy Johnston",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 102,
+    "seasons_used": 2,
+    "pa_total": 425,
+    "tag": "provisional",
+    "pct": 49
+   },
+   "800050": {
+    "name": "Chase DeLauter",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 101,
+    "seasons_used": 1,
+    "pa_total": 306,
+    "tag": "provisional",
+    "pct": 47
+   },
+   "667670": {
+    "name": "Brent Rooker",
+    "hem_plus_now": 101,
+    "hem_plus_3yr": 125,
+    "seasons_used": 3,
+    "pa_total": 1516,
+    "tag": "established",
+    "pct": 93
+   },
+   "695600": {
+    "name": "Carter Jensen",
+    "hem_plus_now": 100,
+    "hem_plus_3yr": 102,
+    "seasons_used": 2,
+    "pa_total": 389,
+    "tag": "provisional",
+    "pct": 50
+   },
+   "686797": {
+    "name": "Brooks Lee",
+    "hem_plus_now": 100,
+    "hem_plus_3yr": 90,
+    "seasons_used": 3,
+    "pa_total": 1060,
+    "tag": "established",
+    "pct": 14
+   },
+   "657041": {
+    "name": "Lane Thomas",
+    "hem_plus_now": 100,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 913,
+    "tag": "established",
+    "pct": 29
+   },
+   "677587": {
+    "name": "Brayan Rocchio",
+    "hem_plus_now": 99,
+    "hem_plus_3yr": 86,
+    "seasons_used": 3,
+    "pa_total": 1158,
+    "tag": "established",
+    "pct": 9
+   },
+   "677800": {
+    "name": "Wilyer Abreu",
+    "hem_plus_now": 99,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 1237,
+    "tag": "established",
+    "pct": 59
+   },
+   "656555": {
+    "name": "Rhys Hoskins",
+    "hem_plus_now": 99,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 1096,
+    "tag": "established",
+    "pct": 65
+   },
+   "605141": {
+    "name": "Mookie Betts",
+    "hem_plus_now": 99,
+    "hem_plus_3yr": 110,
+    "seasons_used": 3,
+    "pa_total": 1424,
+    "tag": "established",
+    "pct": 72
+   },
+   "624585": {
+    "name": "Jorge Soler",
+    "hem_plus_now": 99,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 1177,
+    "tag": "established",
+    "pct": 61
+   },
+   "665862": {
+    "name": "Jazz Chisholm Jr.",
+    "hem_plus_now": 98,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 1491,
+    "tag": "established",
+    "pct": 76
+   },
+   "805367": {
+    "name": "Chase Meidroth",
+    "hem_plus_now": 98,
+    "hem_plus_3yr": 93,
+    "seasons_used": 2,
+    "pa_total": 873,
+    "tag": "established",
+    "pct": 24
+   },
+   "683357": {
+    "name": "Owen Caissie",
+    "hem_plus_now": 98,
+    "hem_plus_3yr": 98,
+    "seasons_used": 2,
+    "pa_total": 270,
+    "tag": "provisional",
+    "pct": 39
+   },
+   "650489": {
+    "name": "Willi Castro",
+    "hem_plus_now": 98,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 1393,
+    "tag": "established",
+    "pct": 32
+   },
+   "663886": {
+    "name": "Tyler Stephenson",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 106,
+    "seasons_used": 3,
+    "pa_total": 1097,
+    "tag": "established",
+    "pct": 62
+   },
+   "593428": {
+    "name": "Xander Bogaerts",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 1351,
+    "tag": "established",
+    "pct": 30
+   },
+   "701807": {
+    "name": "Carson Benge",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 97,
+    "seasons_used": 1,
+    "pa_total": 361,
+    "tag": "provisional",
+    "pct": 37
+   },
+   "668939": {
+    "name": "Adley Rutschman",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 1257,
+    "tag": "established",
+    "pct": 38
+   },
+   "676609": {
+    "name": "Jos\u00e9 Caballero",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 88,
+    "seasons_used": 3,
+    "pa_total": 1130,
+    "tag": "established",
+    "pct": 11
+   },
+   "671289": {
+    "name": "Tyler Freeman",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 91,
+    "seasons_used": 3,
+    "pa_total": 1044,
+    "tag": "established",
+    "pct": 18
+   },
+   "677942": {
+    "name": "Blaze Alexander",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 677,
+    "tag": "established",
+    "pct": 34
+   },
+   "605137": {
+    "name": "Josh Bell",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 1486,
+    "tag": "established",
+    "pct": 57
+   },
+   "608324": {
+    "name": "Alex Bregman",
+    "hem_plus_now": 97,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1532,
+    "tag": "established",
+    "pct": 67
+   },
+   "643289": {
+    "name": "Mauricio Dub\u00f3n",
+    "hem_plus_now": 96,
+    "hem_plus_3yr": 83,
+    "seasons_used": 3,
+    "pa_total": 1173,
+    "tag": "established",
+    "pct": 6
+   },
+   "592518": {
+    "name": "Manny Machado",
+    "hem_plus_now": 96,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1691,
+    "tag": "established",
+    "pct": 70
+   },
+   "671976": {
+    "name": "Tristan Peters",
+    "hem_plus_now": 96,
+    "hem_plus_3yr": 96,
+    "seasons_used": 2,
+    "pa_total": 272,
+    "tag": "provisional",
+    "pct": 33
+   },
+   "668885": {
+    "name": "Austin Martin",
+    "hem_plus_now": 96,
+    "hem_plus_3yr": 92,
+    "seasons_used": 3,
+    "pa_total": 700,
+    "tag": "established",
+    "pct": 19
+   },
+   "514888": {
+    "name": "Jose Altuve",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1632,
+    "tag": "established",
+    "pct": 71
+   },
+   "671218": {
+    "name": "Heliot Ramos",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 1423,
+    "tag": "established",
+    "pct": 59
+   },
+   "642086": {
+    "name": "Dominic Smith",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 750,
+    "tag": "established",
+    "pct": 23
+   },
+   "592885": {
+    "name": "Christian Yelich",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 118,
+    "seasons_used": 3,
+    "pa_total": 1211,
+    "tag": "established",
+    "pct": 85
+   },
+   "643217": {
+    "name": "Andrew Benintendi",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 98,
+    "seasons_used": 3,
+    "pa_total": 1268,
+    "tag": "established",
+    "pct": 40
+   },
+   "686555": {
+    "name": "Isaac Collins",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 752,
+    "tag": "established",
+    "pct": 56
+   },
+   "666397": {
+    "name": "Edouard Julien",
+    "hem_plus_now": 95,
+    "hem_plus_3yr": 92,
+    "seasons_used": 3,
+    "pa_total": 748,
+    "tag": "established",
+    "pct": 21
+   },
+   "543807": {
+    "name": "George Springer",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 117,
+    "seasons_used": 3,
+    "pa_total": 1479,
+    "tag": "established",
+    "pct": 82
+   },
+   "683002": {
+    "name": "Gunnar Henderson",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 115,
+    "seasons_used": 3,
+    "pa_total": 1783,
+    "tag": "established",
+    "pct": 81
+   },
+   "804606": {
+    "name": "Konnor Griffin",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 94,
+    "seasons_used": 1,
+    "pa_total": 247,
+    "tag": "provisional",
+    "pct": 27
+   },
+   "650333": {
+    "name": "Luis Arraez",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 1723,
+    "tag": "established",
+    "pct": 22
+   },
+   "571448": {
+    "name": "Nolan Arenado",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1393,
+    "tag": "established",
+    "pct": 28
+   },
+   "808982": {
+    "name": "Jung Hoo Lee",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 90,
+    "seasons_used": 3,
+    "pa_total": 1106,
+    "tag": "established",
+    "pct": 16
+   },
+   "665487": {
+    "name": "Fernando Tatis Jr.",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 115,
+    "seasons_used": 3,
+    "pa_total": 1518,
+    "tag": "established",
+    "pct": 80
+   },
+   "694497": {
+    "name": "Evan Carter",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 630,
+    "tag": "established",
+    "pct": 27
+   },
+   "656775": {
+    "name": "Cedric Mullins",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 1297,
+    "tag": "established",
+    "pct": 36
+   },
+   "664770": {
+    "name": "Nathan Lukes",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 729,
+    "tag": "established",
+    "pct": 37
+   },
+   "668904": {
+    "name": "Royce Lewis",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 960,
+    "tag": "established",
+    "pct": 30
+   },
+   "702284": {
+    "name": "Cole Young",
+    "hem_plus_now": 94,
+    "hem_plus_3yr": 91,
+    "seasons_used": 2,
+    "pa_total": 618,
+    "tag": "established",
+    "pct": 17
+   },
+   "677649": {
+    "name": "Ezequiel Duran",
+    "hem_plus_now": 93,
+    "hem_plus_3yr": 80,
+    "seasons_used": 3,
+    "pa_total": 805,
+    "tag": "established",
+    "pct": 3
+   },
+   "694384": {
+    "name": "Nolan Schanuel",
+    "hem_plus_now": 93,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1469,
+    "tag": "established",
+    "pct": 53
+   },
+   "665489": {
+    "name": "Vladimir Guerrero Jr.",
+    "hem_plus_now": 93,
+    "hem_plus_3yr": 125,
+    "seasons_used": 3,
+    "pa_total": 1740,
+    "tag": "established",
+    "pct": 93
+   },
+   "607043": {
+    "name": "Brandon Nimmo",
+    "hem_plus_now": 93,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 1677,
+    "tag": "established",
+    "pct": 58
+   },
+   "657656": {
+    "name": "Ram\u00f3n Laureano",
+    "hem_plus_now": 93,
+    "hem_plus_3yr": 108,
+    "seasons_used": 3,
+    "pa_total": 1003,
+    "tag": "established",
+    "pct": 67
+   },
+   "701358": {
+    "name": "Cam Smith",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 90,
+    "seasons_used": 2,
+    "pa_total": 836,
+    "tag": "established",
+    "pct": 14
+   },
+   "660821": {
+    "name": "Jes\u00fas S\u00e1nchez",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 1268,
+    "tag": "established",
+    "pct": 32
+   },
+   "701675": {
+    "name": "Nathan Church",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 91,
+    "seasons_used": 2,
+    "pa_total": 305,
+    "tag": "provisional",
+    "pct": 17
+   },
+   "807712": {
+    "name": "Luke Keaschall",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 98,
+    "seasons_used": 2,
+    "pa_total": 540,
+    "tag": "provisional",
+    "pct": 39
+   },
+   "678882": {
+    "name": "Ceddanne Rafaela",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 85,
+    "seasons_used": 3,
+    "pa_total": 1497,
+    "tag": "established",
+    "pct": 7
+   },
+   "573262": {
+    "name": "Mike Yastrzemski",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 99,
+    "seasons_used": 3,
+    "pa_total": 1279,
+    "tag": "established",
+    "pct": 43
+   },
+   "680700": {
+    "name": "Richie Palacios",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 99,
+    "seasons_used": 3,
+    "pa_total": 577,
+    "tag": "provisional",
+    "pct": 43
+   },
+   "663968": {
+    "name": "Jake Mangum",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 89,
+    "seasons_used": 2,
+    "pa_total": 658,
+    "tag": "established",
+    "pct": 13
+   },
+   "682657": {
+    "name": "Angel Mart\u00ednez",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 82,
+    "seasons_used": 3,
+    "pa_total": 896,
+    "tag": "established",
+    "pct": 5
+   },
+   "641857": {
+    "name": "Ryan McMahon",
+    "hem_plus_now": 92,
+    "hem_plus_3yr": 100,
+    "seasons_used": 3,
+    "pa_total": 1443,
+    "tag": "established",
+    "pct": 45
+   },
+   "656305": {
+    "name": "Matt Chapman",
+    "hem_plus_now": 91,
+    "hem_plus_3yr": 107,
+    "seasons_used": 3,
+    "pa_total": 1534,
+    "tag": "established",
+    "pct": 65
+   },
+   "647304": {
+    "name": "Josh Naylor",
+    "hem_plus_now": 90,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1600,
+    "tag": "established",
+    "pct": 70
+   },
+   "542303": {
+    "name": "Marcell Ozuna",
+    "hem_plus_now": 90,
+    "hem_plus_3yr": 127,
+    "seasons_used": 3,
+    "pa_total": 1518,
+    "tag": "established",
+    "pct": 94
+   },
+   "666182": {
+    "name": "Bo Bichette",
+    "hem_plus_now": 90,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 1361,
+    "tag": "established",
+    "pct": 34
+   },
+   "669357": {
+    "name": "Nolan Gorman",
+    "hem_plus_now": 90,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1033,
+    "tag": "established",
+    "pct": 26
+   },
+   "663728": {
+    "name": "Cal Raleigh",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 128,
+    "seasons_used": 3,
+    "pa_total": 1587,
+    "tag": "established",
+    "pct": 95
+   },
+   "553993": {
+    "name": "Eugenio Su\u00e1rez",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 113,
+    "seasons_used": 3,
+    "pa_total": 1539,
+    "tag": "established",
+    "pct": 78
+   },
+   "666152": {
+    "name": "David Hamilton",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 89,
+    "seasons_used": 3,
+    "pa_total": 749,
+    "tag": "established",
+    "pct": 11
+   },
+   "680574": {
+    "name": "Matt McLain",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 90,
+    "seasons_used": 2,
+    "pa_total": 884,
+    "tag": "established",
+    "pct": 14
+   },
+   "662139": {
+    "name": "Daulton Varsho",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 1071,
+    "tag": "established",
+    "pct": 37
+   },
+   "642715": {
+    "name": "Willy Adames",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 109,
+    "seasons_used": 3,
+    "pa_total": 1733,
+    "tag": "established",
+    "pct": 70
+   },
+   "686469": {
+    "name": "Vinnie Pasquantino",
+    "hem_plus_now": 89,
+    "hem_plus_3yr": 104,
+    "seasons_used": 3,
+    "pa_total": 1527,
+    "tag": "established",
+    "pct": 57
+   },
+   "691026": {
+    "name": "Masyn Winn",
+    "hem_plus_now": 88,
+    "hem_plus_3yr": 90,
+    "seasons_used": 3,
+    "pa_total": 1509,
+    "tag": "established",
+    "pct": 15
+   },
+   "690976": {
+    "name": "Alex Freeland",
+    "hem_plus_now": 88,
+    "hem_plus_3yr": 90,
+    "seasons_used": 2,
+    "pa_total": 311,
+    "tag": "provisional",
+    "pct": 15
+   },
+   "681393": {
+    "name": "Connor Norby",
+    "hem_plus_now": 88,
+    "hem_plus_3yr": 91,
+    "seasons_used": 3,
+    "pa_total": 764,
+    "tag": "established",
+    "pct": 19
+   },
+   "691723": {
+    "name": "Coby Mayo",
+    "hem_plus_now": 88,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 577,
+    "tag": "provisional",
+    "pct": 21
+   },
+   "683083": {
+    "name": "Nasim Nu\u00f1ez",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 465,
+    "tag": "provisional",
+    "pct": 23
+   },
+   "805779": {
+    "name": "Jacob Wilson",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 101,
+    "seasons_used": 3,
+    "pa_total": 840,
+    "tag": "established",
+    "pct": 46
+   },
+   "686681": {
+    "name": "Michael Massey",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 86,
+    "seasons_used": 3,
+    "pa_total": 859,
+    "tag": "established",
+    "pct": 8
+   },
+   "681082": {
+    "name": "Bryson Stott",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1459,
+    "tag": "established",
+    "pct": 25
+   },
+   "671732": {
+    "name": "Lawrence Butler",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 100,
+    "seasons_used": 3,
+    "pa_total": 1334,
+    "tag": "established",
+    "pct": 44
+   },
+   "695734": {
+    "name": "Daylen Lile",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 94,
+    "seasons_used": 2,
+    "pa_total": 735,
+    "tag": "established",
+    "pct": 25
+   },
+   "676391": {
+    "name": "Ernie Clement",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 85,
+    "seasons_used": 3,
+    "pa_total": 1389,
+    "tag": "established",
+    "pct": 8
+   },
+   "805300": {
+    "name": "Jakob Marsee",
+    "hem_plus_now": 87,
+    "hem_plus_3yr": 93,
+    "seasons_used": 2,
+    "pa_total": 601,
+    "tag": "established",
+    "pct": 22
+   },
+   "668901": {
+    "name": "Mark Vientos",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 103,
+    "seasons_used": 3,
+    "pa_total": 1170,
+    "tag": "established",
+    "pct": 52
+   },
+   "664761": {
+    "name": "Alec Bohm",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 96,
+    "seasons_used": 3,
+    "pa_total": 1458,
+    "tag": "established",
+    "pct": 35
+   },
+   "665750": {
+    "name": "Leody Taveras",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 82,
+    "seasons_used": 3,
+    "pa_total": 987,
+    "tag": "established",
+    "pct": 6
+   },
+   "682177": {
+    "name": "Daniel Schneemann",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 87,
+    "seasons_used": 3,
+    "pa_total": 891,
+    "tag": "established",
+    "pct": 10
+   },
+   "690993": {
+    "name": "Colt Keith",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 1281,
+    "tag": "established",
+    "pct": 31
+   },
+   "545121": {
+    "name": "Ildemaro Vargas",
+    "hem_plus_now": 86,
+    "hem_plus_3yr": 82,
+    "seasons_used": 3,
+    "pa_total": 709,
+    "tag": "established",
+    "pct": 5
+   },
+   "592663": {
+    "name": "J.T. Realmuto",
+    "hem_plus_now": 85,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1201,
+    "tag": "established",
+    "pct": 29
+   },
+   "810938": {
+    "name": "Ben Williamson",
+    "hem_plus_now": 85,
+    "hem_plus_3yr": 79,
+    "seasons_used": 2,
+    "pa_total": 501,
+    "tag": "provisional",
+    "pct": 2
+   },
+   "666176": {
+    "name": "Jo Adell",
+    "hem_plus_now": 85,
+    "hem_plus_3yr": 101,
+    "seasons_used": 3,
+    "pa_total": 1400,
+    "tag": "established",
+    "pct": 47
+   },
+   "680757": {
+    "name": "Steven Kwan",
+    "hem_plus_now": 85,
+    "hem_plus_3yr": 101,
+    "seasons_used": 3,
+    "pa_total": 1567,
+    "tag": "established",
+    "pct": 48
+   },
+   "691594": {
+    "name": "Javier Sanoja",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 80,
+    "seasons_used": 3,
+    "pa_total": 603,
+    "tag": "established",
+    "pct": 2
+   },
+   "663586": {
+    "name": "Austin Riley",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 98,
+    "seasons_used": 3,
+    "pa_total": 1277,
+    "tag": "established",
+    "pct": 41
+   },
+   "672724": {
+    "name": "Oswald Peraza",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 75,
+    "seasons_used": 3,
+    "pa_total": 537,
+    "tag": "provisional",
+    "pct": 0
+   },
+   "607208": {
+    "name": "Trea Turner",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 105,
+    "seasons_used": 3,
+    "pa_total": 1571,
+    "tag": "established",
+    "pct": 60
+   },
+   "672580": {
+    "name": "Maikel Garcia",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 89,
+    "seasons_used": 3,
+    "pa_total": 1586,
+    "tag": "established",
+    "pct": 12
+   },
+   "681351": {
+    "name": "Logan O'Hoppe",
+    "hem_plus_now": 84,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 1185,
+    "tag": "established",
+    "pct": 23
+   },
+   "669236": {
+    "name": "Jeremiah Jackson",
+    "hem_plus_now": 83,
+    "hem_plus_3yr": 89,
+    "seasons_used": 2,
+    "pa_total": 392,
+    "tag": "provisional",
+    "pct": 12
+   },
+   "543760": {
+    "name": "Marcus Semien",
+    "hem_plus_now": 83,
+    "hem_plus_3yr": 93,
+    "seasons_used": 3,
+    "pa_total": 1570,
+    "tag": "established",
+    "pct": 24
+   },
+   "680776": {
+    "name": "Jarren Duran",
+    "hem_plus_now": 83,
+    "hem_plus_3yr": 98,
+    "seasons_used": 3,
+    "pa_total": 1783,
+    "tag": "established",
+    "pct": 41
+   },
+   "670764": {
+    "name": "Taylor Walls",
+    "hem_plus_now": 83,
+    "hem_plus_3yr": 78,
+    "seasons_used": 3,
+    "pa_total": 817,
+    "tag": "established",
+    "pct": 1
+   },
+   "702332": {
+    "name": "Caleb Durbin",
+    "hem_plus_now": 83,
+    "hem_plus_3yr": 92,
+    "seasons_used": 2,
+    "pa_total": 797,
+    "tag": "established",
+    "pct": 20
+   },
+   "666969": {
+    "name": "Adolis Garc\u00eda",
+    "hem_plus_now": 82,
+    "hem_plus_3yr": 87,
+    "seasons_used": 3,
+    "pa_total": 1443,
+    "tag": "established",
+    "pct": 10
+   },
+   "694728": {
+    "name": "Brice Matthews",
+    "hem_plus_now": 82,
+    "hem_plus_3yr": 86,
+    "seasons_used": 2,
+    "pa_total": 262,
+    "tag": "provisional",
+    "pct": 9
+   },
+   "696285": {
+    "name": "Jacob Young",
+    "hem_plus_now": 82,
+    "hem_plus_3yr": 80,
+    "seasons_used": 3,
+    "pa_total": 1166,
+    "tag": "established",
+    "pct": 3
+   },
+   "663538": {
+    "name": "Nico Hoerner",
+    "hem_plus_now": 82,
+    "hem_plus_3yr": 92,
+    "seasons_used": 3,
+    "pa_total": 1687,
+    "tag": "established",
+    "pct": 19
+   },
+   "686217": {
+    "name": "Sal Frelick",
+    "hem_plus_now": 81,
+    "hem_plus_3yr": 92,
+    "seasons_used": 3,
+    "pa_total": 1415,
+    "tag": "established",
+    "pct": 20
+   },
+   "687401": {
+    "name": "Joey Ortiz",
+    "hem_plus_now": 80,
+    "hem_plus_3yr": 84,
+    "seasons_used": 3,
+    "pa_total": 1234,
+    "tag": "established",
+    "pct": 7
+   },
+   "609280": {
+    "name": "Miguel Andujar",
+    "hem_plus_now": 80,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 890,
+    "tag": "established",
+    "pct": 26
+   },
+   "701538": {
+    "name": "Jackson Merrill",
+    "hem_plus_now": 79,
+    "hem_plus_3yr": 99,
+    "seasons_used": 3,
+    "pa_total": 1441,
+    "tag": "established",
+    "pct": 41
+   },
+   "683146": {
+    "name": "Brett Baty",
+    "hem_plus_now": 79,
+    "hem_plus_3yr": 95,
+    "seasons_used": 3,
+    "pa_total": 906,
+    "tag": "established",
+    "pct": 32
+   },
+   "665926": {
+    "name": "Andr\u00e9s Gim\u00e9nez",
+    "hem_plus_now": 79,
+    "hem_plus_3yr": 80,
+    "seasons_used": 3,
+    "pa_total": 1300,
+    "tag": "established",
+    "pct": 3
+   },
+   "802415": {
+    "name": "Chandler Simpson",
+    "hem_plus_now": 78,
+    "hem_plus_3yr": 80,
+    "seasons_used": 2,
+    "pa_total": 772,
+    "tag": "established",
+    "pct": 4
+   },
+   "702222": {
+    "name": "Justin Crawford",
+    "hem_plus_now": 77,
+    "hem_plus_3yr": 77,
+    "seasons_used": 1,
+    "pa_total": 276,
+    "tag": "provisional",
+    "pct": 1
+   },
+   "691785": {
+    "name": "Marcelo Mayer",
+    "hem_plus_now": 77,
+    "hem_plus_3yr": 80,
+    "seasons_used": 2,
+    "pa_total": 364,
+    "tag": "provisional",
+    "pct": 4
+   },
+   "643446": {
+    "name": "Jeff McNeil",
+    "hem_plus_now": 77,
+    "hem_plus_3yr": 91,
+    "seasons_used": 3,
+    "pa_total": 1219,
+    "tag": "established",
+    "pct": 18
+   },
+   "656716": {
+    "name": "Zach McKinstry",
+    "hem_plus_now": 77,
+    "hem_plus_3yr": 85,
+    "seasons_used": 3,
+    "pa_total": 1061,
+    "tag": "established",
+    "pct": 8
+   },
+   "669224": {
+    "name": "Austin Wells",
+    "hem_plus_now": 77,
+    "hem_plus_3yr": 94,
+    "seasons_used": 3,
+    "pa_total": 1066,
+    "tag": "established",
+    "pct": 28
+   },
+   "663743": {
+    "name": "Nick Fortes",
+    "hem_plus_now": 76,
+    "hem_plus_3yr": 76,
+    "seasons_used": 3,
+    "pa_total": 788,
+    "tag": "established",
+    "pct": 1
+   },
+   "521692": {
+    "name": "Salvador Perez",
+    "hem_plus_now": 74,
+    "hem_plus_3yr": 97,
+    "seasons_used": 3,
+    "pa_total": 1642,
+    "tag": "established",
+    "pct": 36
+   },
+   "663837": {
+    "name": "Matt Vierling",
+    "hem_plus_now": 73,
+    "hem_plus_3yr": 89,
+    "seasons_used": 3,
+    "pa_total": 907,
+    "tag": "established",
+    "pct": 12
+   },
+   "678662": {
+    "name": "Ezequiel Tovar",
+    "hem_plus_now": 71,
+    "hem_plus_3yr": 87,
+    "seasons_used": 3,
+    "pa_total": 1406,
+    "tag": "established",
+    "pct": 10
+   },
+   "650859": {
+    "name": "Luis Rengifo",
+    "hem_plus_now": 71,
+    "hem_plus_3yr": 84,
+    "seasons_used": 3,
+    "pa_total": 1054,
+    "tag": "established",
+    "pct": 6
+   }
+  }
+ }
+}

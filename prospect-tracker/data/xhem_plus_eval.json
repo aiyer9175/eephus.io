@@ -1,0 +1,41 @@
+{
+ "generated_at": "2026-07-07",
+ "seasons": [
+  2016,
+  2017,
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260705,
+ "experiment": "X-H3",
+ "model": "xhem_plus",
+ "conventions": {
+  "predictor_year": "Savant Y (PA>=200)",
+  "target": "actual wOBA in Y+1 (PA>=200)",
+  "excluded": "2020"
+ },
+ "n_forward_pairs": 1871,
+ "forward_spearman_vs_wOBA_next": {
+  "xwoba": 0.4543,
+  "actual_woba": 0.4108
+ },
+ "gap_ci_xwoba_minus_woba": {
+  "mean": 0.0432,
+  "lo95": 0.0173,
+  "hi95": 0.0699
+ },
+ "gate": {
+  "bar": "xwOBA forward-beats actual wOBA (gap lo95 > 0)",
+  "pass": true
+ },
+ "runtime_seconds": 6.1,
+ "verdict": {
+  "status": "validated",
+  "summary": "Forward-chained OOS over 7 year-pairs (1871 pairs): Savant xwOBA predicts next-year wOBA at rho 0.4543 vs actual wOBA 0.4108; bootstrap gap CI {'mean': 0.0432, 'lo95': 0.0173, 'hi95': 0.0699}. Shipped VALIDATED: xwOBA is the more forward-stable talent signal (it strips BABIP/sequencing luck), so xHEM+ (the HEM+ ratio scale on xwOBA) is a genuine deserved-offense companion. MLB-only + min-BBE gated, so it is a companion column, not population-complete."
+ }
+}

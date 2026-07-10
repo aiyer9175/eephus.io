@@ -1,0 +1,385 @@
+{
+ "generated_at": "2026-07-02",
+ "experiment": "R-SHRINK",
+ "gate_ref": "docs/audit-2026-07/AUDIT_FINDINGS.md#R-SHRINK",
+ "incumbents": {
+  "display_K_IP": 50.0,
+  "pal_NEED_ERA_SHRINK_IP": 45.0
+ },
+ "candidates": [
+  35,
+  40,
+  45,
+  50,
+  55,
+  60,
+  65
+ ],
+ "seeds": {
+  "split_half": 20260702,
+  "bootstrap": 20260702,
+  "n_boot": 2000
+ },
+ "objective_1_display": {
+  "meta": {
+   "n_lines": 19693,
+   "n_split_pool": 12474,
+   "era_norm_by_level": {
+    "A": 4.26,
+    "A+": 4.27,
+    "AA": 4.22,
+    "AAA": 4.93,
+    "CPX": 5.05,
+    "DSL": 4.32,
+    "MLB": 4.29
+   },
+   "split_half_generative": "per-line half-season ER ~ Poisson(era/9 * IP/2), one seeded draw reused across candidates",
+   "seed_split": 20260702
+  },
+  "sweep": {
+   "35": {
+    "blowups_ip_lt_k": 187,
+    "blowups_ip_lt_30": 161,
+    "blowups_total": 272,
+    "full_season_distortion": 4.066,
+    "split_half_rho_pooled": 0.5956,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5976
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5861
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6024
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6082
+     }
+    }
+   },
+   "40": {
+    "blowups_ip_lt_k": 140,
+    "blowups_ip_lt_30": 113,
+    "blowups_total": 187,
+    "full_season_distortion": 4.506,
+    "split_half_rho_pooled": 0.5955,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5976
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5861
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6025
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6088
+     }
+    }
+   },
+   "45": {
+    "blowups_ip_lt_k": 109,
+    "blowups_ip_lt_30": 80,
+    "blowups_total": 136,
+    "full_season_distortion": 4.921,
+    "split_half_rho_pooled": 0.5953,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5973
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5861
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6022
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6099
+     }
+    }
+   },
+   "50": {
+    "blowups_ip_lt_k": 80,
+    "blowups_ip_lt_30": 56,
+    "blowups_total": 100,
+    "full_season_distortion": 5.293,
+    "split_half_rho_pooled": 0.5953,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5974
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5862
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6024
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6099
+     }
+    }
+   },
+   "55": {
+    "blowups_ip_lt_k": 57,
+    "blowups_ip_lt_30": 39,
+    "blowups_total": 66,
+    "full_season_distortion": 5.651,
+    "split_half_rho_pooled": 0.5951,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5973
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5861
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6022
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6101
+     }
+    }
+   },
+   "60": {
+    "blowups_ip_lt_k": 44,
+    "blowups_ip_lt_30": 27,
+    "blowups_total": 50,
+    "full_season_distortion": 5.997,
+    "split_half_rho_pooled": 0.5947,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.5971
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.5859
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6018
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6101
+     }
+    }
+   },
+   "65": {
+    "blowups_ip_lt_k": 34,
+    "blowups_ip_lt_30": 20,
+    "blowups_total": 39,
+    "full_season_distortion": 6.33,
+    "split_half_rho_pooled": 0.5946,
+    "split_half_by_ip_bin": {
+     "20-40": {
+      "n": 5710,
+      "split_half_rho": 0.597
+     },
+     "40-70": {
+      "n": 4202,
+      "split_half_rho": 0.586
+     },
+     "70-120": {
+      "n": 2051,
+      "split_half_rho": 0.6019
+     },
+     "120-plus": {
+      "n": 511,
+      "split_half_rho": 0.6101
+     }
+    }
+   }
+  }
+ },
+ "objective_2_pal_need_gate": {
+  "meta": {
+   "n_labeled_sp_to_rp": 36,
+   "n_held_true": 24,
+   "n_held_false": 12,
+   "seed_boot": 20260702,
+   "n_boot": 2000,
+   "note": "A directional sign-check on a small, selection-biased sample (only arms teams chose to convert); differences across candidates are read against the bootstrap CI, not as fitted validation."
+  },
+  "sweep": {
+   "35": {
+    "need_vs_held_rho": 0.1705,
+    "boot_ci": {
+     "lo95": -0.1557,
+     "hi95": 0.4784
+    },
+    "n_ties_at_clamp": 12
+   },
+   "40": {
+    "need_vs_held_rho": 0.1899,
+    "boot_ci": {
+     "lo95": -0.1475,
+     "hi95": 0.5069
+    },
+    "n_ties_at_clamp": 11
+   },
+   "45": {
+    "need_vs_held_rho": 0.1835,
+    "boot_ci": {
+     "lo95": -0.1494,
+     "hi95": 0.5036
+    },
+    "n_ties_at_clamp": 10
+   },
+   "50": {
+    "need_vs_held_rho": 0.1892,
+    "boot_ci": {
+     "lo95": -0.1529,
+     "hi95": 0.5155
+    },
+    "n_ties_at_clamp": 10
+   },
+   "55": {
+    "need_vs_held_rho": 0.1765,
+    "boot_ci": {
+     "lo95": -0.152,
+     "hi95": 0.4785
+    },
+    "n_ties_at_clamp": 7
+   },
+   "60": {
+    "need_vs_held_rho": 0.1706,
+    "boot_ci": {
+     "lo95": -0.1763,
+     "hi95": 0.51
+    },
+    "n_ties_at_clamp": 6
+   },
+   "65": {
+    "need_vs_held_rho": 0.1706,
+    "boot_ci": {
+     "lo95": -0.1874,
+     "hi95": 0.4805
+    },
+    "n_ties_at_clamp": 6
+   }
+  }
+ },
+ "gate": {
+  "rule": "Ship a single shared value ONLY if it beats-or-ties BOTH incumbents on their own objectives AND strictly improves at least one (Pareto). Ties break toward keeping two values (the null).",
+  "display_objective_metrics": "blowups_ip_lt_30 (lower better) AND split_half_rho_pooled (higher better) AND full_season_distortion (lower better), each vs the K=50 incumbent.",
+  "pal_objective_metric": "need_vs_held_rho (higher better) vs the K=45 incumbent.",
+  "per_candidate": [
+   {
+    "k": 35,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": false,
+    "blow_ok": false,
+    "split_ok": true,
+    "distort_ok": true,
+    "material_improvement": true,
+    "ships": false
+   },
+   {
+    "k": 40,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": true,
+    "blow_ok": false,
+    "split_ok": true,
+    "distort_ok": true,
+    "material_improvement": true,
+    "ships": false
+   },
+   {
+    "k": 45,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": true,
+    "blow_ok": false,
+    "split_ok": true,
+    "distort_ok": true,
+    "material_improvement": true,
+    "ships": false
+   },
+   {
+    "k": 50,
+    "display_beats_or_ties_50": true,
+    "pal_beats_or_ties_45": true,
+    "blow_ok": true,
+    "split_ok": true,
+    "distort_ok": true,
+    "material_improvement": false,
+    "ships": false
+   },
+   {
+    "k": 55,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": false,
+    "blow_ok": true,
+    "split_ok": true,
+    "distort_ok": false,
+    "material_improvement": true,
+    "ships": false
+   },
+   {
+    "k": 60,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": false,
+    "blow_ok": true,
+    "split_ok": true,
+    "distort_ok": false,
+    "material_improvement": true,
+    "ships": false
+   },
+   {
+    "k": 65,
+    "display_beats_or_ties_50": false,
+    "pal_beats_or_ties_45": false,
+    "blow_ok": true,
+    "split_ok": true,
+    "distort_ok": false,
+    "material_improvement": true,
+    "ships": false
+   }
+  ],
+  "ship_value": null,
+  "verdict": "FAIL (keep two values)"
+ },
+ "loss_ledger": {
+  "outcome": "No single shared value beats or ties both incumbents; the two ERA-shrink pseudo-counts stay (K_IP=50, NEED_ERA_SHRINK_IP=45).",
+  "why": [
+   "The two constants optimize different objectives on different populations, exactly as the rate_stabilization.py provenance predicted.",
+   "Display objective (MiLB level-relative index): small-sample blowups fall monotonically as K rises, but full-season distortion rises monotonically with K, so the incumbent K=50 sits at an interior blowup/fidelity balance no other candidate dominates.",
+   "PAL objective (need-vs-held ordering) is measured on n=36 labeled, selection-biased SP->RP conversions; candidate rhos sit inside each other's bootstrap CI, so no candidate meaningfully beats K=45 and changing a published PAL board on within-noise evidence is unjustified."
+  ],
+  "incumbent_display_K50": {
+   "blowups_ip_lt_30": 56,
+   "split_half_rho_pooled": 0.5953,
+   "full_season_distortion": 5.293
+  },
+  "incumbent_pal_K45": {
+   "need_vs_held_rho": 0.1835,
+   "boot_ci": {
+    "lo95": -0.1494,
+    "hi95": 0.5036
+   }
+  },
+  "disposition": "FAIL-to-unify resolves review-queue item 6 (F-05). Keep two values with their provenance comments. No code change to rate_stabilization.py / storage.py / pal_conversion.py."
+ }
+}

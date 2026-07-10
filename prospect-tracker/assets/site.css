@@ -1,0 +1,2437 @@
+/* =============================================================================
+   eephus.io - shared site stylesheet
+   -----------------------------------------------------------------------------
+   The site-wide nav + the editorial pages (Home / Articles / Team) share this
+   file so they read as one brand with PROSPX. Tokens are lifted verbatim from
+   the PROSPX :root palette (warm newsprint paper, navy headline band, gold
+   accent, MS-Gothic retro stack) so the parent brand and the tool match.
+
+   On the PROSPX page this file is loaded BEFORE its inline <style>, so PROSPX's
+   own :root wins the cascade - here we only need it for `.eephus-nav`.
+   ========================================================================== */
+
+/* DotGothic16 - the brand logo/display face. A pixel/bitmap gothic that
+   recreates the MS-Gothic look and renders identically on every device (real
+   MS Gothic is a Windows-only system font, often absent, and proprietary so it
+   can't be self-hosted). Self-hosted as a ~11KB Latin-subset woff2; SIL OFL,
+   license in branding/fonts/OFL.txt. The PIL brand generator uses the same
+   face, so the site logo and the share cards / animated gif match exactly. */
+@font-face {
+  font-family: "DotGothic16";
+  src: url("/assets/fonts/dotgothic16-latin.woff2") format("woff2");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-primary:    #F4F0E6;   /* warm paper */
+  --bg-secondary:  #FAF5E6;   /* card surface - warm baseball-card cream (was near-white #FBF8F0) */
+  --bg-tertiary:   #ECE6D6;   /* alt panel */
+  --bg-header:     #0E2B4D;   /* deep navy band */
+  --text-primary:  #0F1B2D;
+  --text-secondary:#4A5468;
+  --text-tertiary: #706B5C;  /* v43: darkened from #8B8474 -> ~4.7:1 on warm paper (WCAG AA) */
+  --border:        #C9C1AE;
+  --border-light:  #E2DCC9;
+  --accent-gold:   #C9A227;
+  --accent-red:    #B91C1C;
+  --accent-green:  #1F7A3A;
+  --accent-navy:   #0E2B4D;
+  --accent-orange: #C2540A;   /* alpha/beta version chips (warm, AA on paper) */
+  --radius-sm: 0;  /* corners sharpened site-wide (retro / newspaper theme) */
+  --radius-md: 0;
+  --radius-lg: 0;
+  --shadow-card: 0 1px 0 rgba(15,27,45,.05), 0 1px 2px rgba(15,27,45,.04);
+  --shadow-card-hover: 0 2px 6px rgba(15,27,45,.12), 0 0 0 1px rgba(14,43,77,.10);
+  --iridescent: linear-gradient(90deg,#B91C1C 0%,#C9A227 35%,#1F7A3A 65%,#0E2B4D 100%);
+  --accent-cyan:   #0E7C86;   /* terminal/feed accent (light) */
+  /* Neon accent tokens - the glossary palette (.gl-app, below) promoted to :root
+     so the MLB modules that reference them OUTSIDE .gl-app resolve site-wide:
+     /mlbstats/ name-link hover + /trademachine/ chips / verdicts / balance bar.
+     Definitions mirror the .gl-app block verbatim - theme-aware because they
+     resolve through the --accent-* tokens (already overridden under
+     [data-theme="dark"]), so no separate dark block is needed; --neon-violet is a
+     fixed hex in both themes, exactly as the glossary sets it. --neon-green is
+     added here (the glossary never defined it; trademachine references it with no
+     fallback). PROSPX is self-contained - its own inline :root still wins there. */
+  --neon-cyan:   var(--accent-cyan);
+  --neon-green:  var(--accent-green);
+  --neon-violet: #b47cff;
+  --neon-amber:  var(--accent-gold);
+  --up:   var(--accent-green);
+  --down: var(--accent-red);
+  --grain: rgba(15,27,45,.035);
+  --grain2: rgba(139,132,116,.05);
+  /* Light-mode background-texture dials (baseball-card cardstock + vintage
+     newspaper sports-page halftone). Light only; dark keeps the starfield. */
+  --paper-dot:        rgba(14,43,77,.055);   /* navy newsprint halftone ink   */
+  --paper-dot2:       rgba(178,75,40,.035);  /* warm registration-offset dot  */
+  --paper-pinstripe:  rgba(14,43,77,.028);   /* faint baseball pinstripe / column rule */
+  /* LEGIBILITY FIX: MS UI Gothic / MS Gothic still lead (the brand pixel-gothic on
+     Windows), but where they're ABSENT (Mac / Linux / mobile) COPY now falls to a
+     clean technical MONOSPACE - on-theme + legible - instead of the DotGothic16
+     pixel face, which rendered body copy illegibly off-Windows. Pixel-gothic is
+     kept ONLY for the logo (--font-logo). Mirrors prospx/index.html. */
+  --font-retro: "MS UI Gothic","MS Gothic",
+                ui-monospace,"SF Mono","SFMono-Regular",Menlo,Consolas,
+                "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
+  --font-retro-mono: "MS Gothic","MS UI Gothic",
+                     ui-monospace,"SF Mono","SFMono-Regular",Consolas,Menlo,
+                     "Liberation Mono","DejaVu Sans Mono","Roboto Mono",monospace;
+  /* The eephus.io wordmark + headings. DotGothic16 (self-hosted pixel-gothic)
+     leads so the logo renders the MS-Gothic/Y2K look on EVERY device; real MS
+     Gothic / MS UI Gothic are honored next for anyone who has them; Roboto Mono
+     is the last cross-platform fallback. */
+  --font-logo: "DotGothic16","MS Gothic","MS UI Gothic","Osaka",ui-monospace,Consolas,monospace;
+  --byline-lilac:  #C8A2C8;   /* dev byline (build-banner) text - mirrors PROSPX */
+  /* Font aliases - the editorial pages, the /projections/ .mlbp player cards,
+     and the homepage cross-module strip reference these. Without them at the
+     shared :root they fell back to UA serif/sans and lost the MS-Gothic
+     identity on shipped surfaces. Values mirror prospx/index.html. */
+  --font-sans:  var(--font-retro);
+  --font-serif: var(--font-retro);
+  --font-mono:  var(--font-retro-mono);
+  /* Spacing + type scale, shared with PROSPX so module shells use one scale. */
+  --space-1: 4px; --space-2: 8px; --space-3: 12px; --space-4: 16px; --space-5: 24px; --space-6: 32px;
+  --fs-xs: 11px; --fs-sm: 12px; --fs-base: 13px; --fs-md: 14px; --fs-lg: 15px; --fs-xl: 18px; --fs-xxl: 24px;
+  --text-on-accent: #FBF8F0;          /* cream text on the navy band / dark accents */
+  --bg-hover: rgba(15, 27, 45, 0.05); /* subtle row / control hover on paper */
+  /* Scrollbars - one theme-aware token set drives BOTH surfaces (editorial +
+     PROSPX). Sharp (no radius) thumb that reads on paper; navy accent on hover. */
+  --scrollbar-track: transparent;
+  --scrollbar-thumb: #BBB29C;
+  --scrollbar-thumb-hover: var(--accent-navy);
+  /* Y2K pixel-bevel edges for the sharp thumb: a cream highlight top-left, a
+     navy ink shadow bottom-right (the newspaper read on paper). */
+  --scrollbar-hi: rgba(255, 250, 235, 0.55);
+  --scrollbar-lo: rgba(15, 27, 45, 0.28);
+  /* Brand iridescent / lilac-blurple accent - the site THEME shade on both
+     modes. Light is a deep violet (AA on cream), dark a brighter blurple
+     (below). The logo .io and the decorative chrome take it; FV-tier gold stays
+     gold (that is data, not chrome). */
+  --accent-lilac: #6E56CF;
+  --logo-dot: var(--accent-lilac);
+}
+
+/* ── Site-wide corner sharpening (retro / newspaper / baseball-card) ───────────
+   One place: zero ALL UI corner-rounding across the editorial pages, the PROSPX
+   app (which also loads this sheet), and the html2canvas GFX export (it renders
+   the live DOM with these stylesheets). The universal selector + !important
+   overrides every rule and the ~hundreds of inline `border-radius` styles in the
+   PROSPX templates. This does NOT touch SVG/canvas chart geometry - plotted
+   curves are <path d="…"> data, not CSS border-radius - only rounded UI corners.
+   SVG <rect> UI chrome is sharpened separately by removing rx/ry; chart/data-viz
+   rects keep theirs. Circular dots/avatars/pills become squares. */
+*, *::before, *::after { border-radius: 0 !important; }
+
+/* ── Keyboard focus safety net (a11y) ─────────────────────────────────────────
+   One shared, sharp, token-colored focus ring for every interactive element,
+   site-wide (editorial pages + PROSPX, which also loads this sheet). Authored
+   with :where() so its specificity is ZERO - any element that already defines a
+   richer :focus/:focus-visible style still wins, and this only backstops the
+   ones that had a bare `outline:none` with no visible replacement. :focus-visible
+   (not :focus) keeps it keyboard-only, so mouse clicks don't draw the ring. */
+:where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 1px;
+}
+
+/* Diamond accents (approved) - small live / status glyphs rendered as
+   45°-rotated squares (the global rule above already squared their corners).
+   Scope: homepage live "blip" dots + the PROSPX IL / health status dots.
+   (Stock direction already uses pointed ▲/▼ glyphs - no round dot to convert.) */
+.home-ticker .ticker-tag .blip,
+.sb-feed .feed-head .blip,
+.row-tag.health-il::before, .row-tag.health-tj::before, .row-tag.health-chronic::before,
+.row-tag.health-watch::before, .row-tag.health-healthy::before { transform: rotate(45deg); }
+
+/* Dark-mode logo legibility - a faint light halo lifts dark/navy team logos off
+   the near-black background. This is the one piece of the removed pixelation step
+   worth preserving (the pixel assets baked a beige outline for the same reason);
+   kept here as clean CSS, no pixelation. Applies to PROSPX (.team-logo) + the
+   editorial row logos (.row-logo). */
+[data-theme="dark"] .team-logo,
+[data-theme="dark"] .row-logo,
+[data-theme="dark"] .otd-logo {
+  filter: drop-shadow(0 0 0.5px rgba(255,255,255,.55)) drop-shadow(0 0 1.6px rgba(255,255,255,.32));
+}
+
+/* Dark variant - mirrors the PROSPX Topps-Chrome / refractor dark theme
+   (neutral near-black surfaces + refractor-rainbow accents) so the whole site
+   reads as one. Token VALUES copied from prospx/index.html [data-theme="dark"].
+   Toggled via <html data-theme="dark">, shared with PROSPX via the same
+   localStorage key ('prospect-tracker.theme'). */
+[data-theme="dark"] {
+  --bg-primary:    #0C0C0E;
+  --bg-secondary:  #1A1A1E;
+  --bg-tertiary:   #232328;
+  --bg-header:     #08080A;
+  --text-primary:  #ECEEF2;
+  --text-secondary:#A6ABB5;
+  --text-tertiary: #7C808A;  /* v43: lightened from #6E727B -> ~4.9:1 on near-black (WCAG AA) */
+  --border:        #2B2B31;
+  --border-light:  #1D1D21;
+  --accent-gold:   #FFD700;   /* refractor gold */
+  --accent-red:    #FF6B7A;   /* refractor down */
+  --accent-green:  #4FFF9E;   /* refractor mint */
+  --accent-navy: #4FD9FF; /* refractor cyan - links pop on black */
+  --accent-orange: #FF9D42;   /* alpha/beta version chips (refractor orange) */
+  --accent-cyan:   #00D9FF;
+  --byline-lilac:  #D9B8E8;   /* lifted lilac for the near-black surface - mirrors PROSPX B2 */
+  --text-on-accent: #05080F;            /* near-black text on the bright refractor accents */
+  --bg-hover: rgba(0, 217, 255, 0.08);  /* cyan-tinted hover on the dark surface */
+  /* Scrollbars (dark): charcoal thumb that reads on near-black, a faint track so
+     the star canvas barely shows through the gutter, iridescent lilac on hover. */
+  --scrollbar-track: rgba(150,160,180,0.05);
+  --scrollbar-thumb: #45405A;   /* blurple-charcoal: on-theme even on Firefox (which only honors scrollbar-color) */
+  --scrollbar-thumb-hover: var(--accent-lilac);
+  /* Y2K pixel-bevel edges (dark): an iridescent lilac highlight top-left, a
+     near-black shadow bottom-right - the cybergothic/holo read. */
+  --scrollbar-hi: rgba(155, 140, 255, 0.42);
+  --scrollbar-lo: rgba(0, 0, 0, 0.55);
+  /* Brand accent on dark = iridescent lilac / blurple (replaces the old yellow
+     gold as the site's primary brand color). The logo .io takes it too. FV-tier
+     gold stays gold - that is data, not chrome. */
+  --accent-lilac: #9B8CFF;
+  --logo-dot: var(--accent-lilac);
+  --iridescent: linear-gradient(90deg,#00D9FF 0%,#B47CFF 30%,#FF4FD8 55%,#FFD700 78%,#4FFF9E 100%);
+  --grain: rgba(255,255,255,.035);
+  --grain2: rgba(120,200,224,.04);
+  --shadow-card: 0 1px 0 rgba(0,0,0,.3), 0 1px 2px rgba(0,0,0,.4);
+  --shadow-card-hover: 0 2px 8px rgba(0,0,0,.55), 0 0 0 1px rgba(0,217,255,.14);
+
+  /* ── Starfield background system (dark theme ONLY) ─────────────────────
+     Single source of truth for BOTH surfaces: PROSPX loads this sheet before
+     its inline <style> and never redefines these names, so the values below
+     resolve identically on the editorial pages and inside the app. Consumed
+     by assets/eephus-bg.js (the star canvas) + the #eephus-bg rule below
+     (glow/vignette layers). None of these tokens exists outside this block,
+     so the treatment cannot leak into the light theme. A real night sky: a
+     spread of magnitudes and color temperature, with a small brand-tinted
+     minority (refractor mint #4FFF9E + gold #FFD700) so it still reads eephus
+     - no new brand colors. */
+  --bg-base: var(--bg-primary);        /* near-black field base (#0C0C0E) */
+  --bg-glow-color: #6A5CFF;            /* blurple glow pool (was mint) */
+  --bg-glow-origin: 50% 0%; /* top-center - brightest above the fold */
+  --bg-glow-radius: 120%;
+  --bg-glow-strength: 0.05;            /* 0..1 alpha dial on the glow pool */
+  --bg-vignette-strength: 0.35;        /* 0..1 corner darkening */
+  --bg-scanline-opacity: 0.03;         /* faint Y2K/CRT scanlines on the field */
+  /* Holo / chrome iridescent ramp (blue -> purple -> magenta) the pixel stars
+     shimmer through. Plus a white-blue for the bright anchor stars. */
+  --star-holo-1: #00D9FF;              /* cyan */
+  --star-holo-2: #5BC8FF;              /* sky blue */
+  --star-holo-3: #8B7FFF;              /* blurple */
+  --star-holo-4: #B47CFF;              /* violet */
+  --star-holo-5: #FF4FD8;              /* magenta */
+  --star-color-bright: #DDEBFF;        /* white-blue anchors */
+  --star-density-base: 0.12;           /* stars per 1000px² (JS hard-caps total) */
+  --star-opacity-max: 0.55;
+  --star-twinkle-speed: 1;             /* global twinkle-rate multiplier */
+  --star-holo-speed: 1;                /* iridescent hue-shimmer rate */
+  --star-parallax-layers: 3;           /* 2..3 depth layers (scroll/pointer only) */
+  /* FV-linked escalation (PROSPX prospect views; t=1 at the 70 legendary tier) */
+  --star-fv-density-mult: 1.6;
+  --star-fv-opacity-mult: 1.25;
+}
+
+/* ── Phosphor starfield canvas (dark theme only) ──────────────────────────
+   One fixed, full-viewport <canvas id="eephus-bg">, mounted by
+   assets/eephus-bg.js only while data-theme="dark" and removed entirely on
+   any other theme. z-index:-1 slots it ABOVE the page background (the body
+   background promotes to the document canvas, which paints below negative-z
+   elements) and BELOW all content - panels, WIRE ticker, cards, modals. The
+   radial glow + corner vignette render as CSS background layers ON the
+   element (beneath the JS-drawn stars); cards/data panels keep their flat
+   near-black surfaces on top, untinted. pointer-events:none - decoration. */
+[data-theme="dark"] #eephus-bg {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    /* scanlines (top layer - invisible at the default 0 opacity) */
+    repeating-linear-gradient(0deg,
+      color-mix(in srgb, #000 calc(var(--bg-scanline-opacity) * 100%), transparent) 0 1px,
+      transparent 1px 3px),
+    /* corner vignette */
+    radial-gradient(ellipse 130% 130% at 50% 45%,
+      transparent 55%,
+      color-mix(in srgb, #000 calc(var(--bg-vignette-strength) * 100%), transparent) 100%),
+    /* top-center phosphor glow */
+    radial-gradient(ellipse var(--bg-glow-radius) 70% at var(--bg-glow-origin),
+      color-mix(in srgb, var(--bg-glow-color) calc(var(--bg-glow-strength) * 100%), transparent),
+      transparent 70%);
+}
+/* Belt-and-braces: the JS unmounts the canvas outside dark; if a stale node
+   ever survives a theme race it renders nothing. */
+:root:not([data-theme="dark"]) #eephus-bg { display: none; }
+
+/* ---- base (editorial pages only; PROSPX has its own <body> rules) ---- */
+.eephus-page * { box-sizing: border-box; }
+.eephus-page {
+  margin: 0;
+  background: var(--bg-primary);
+  background-image:
+    radial-gradient(var(--grain) 1px, transparent 1px),
+    radial-gradient(var(--grain2) 1px, transparent 1px);
+  background-size: 26px 26px, 13px 13px;
+  background-position: 0 0, 13px 13px;
+  color: var(--text-primary);
+  font-family: var(--font-retro);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  font-synthesis: none;
+}
+/* Light-mode paper texture: leans into the baseball-card cardstock + vintage
+   newspaper sports-page look. The vertical pinstripe / column-rule "scanlines"
+   were dropped (owner: they made the field too busy and hurt legibility); what
+   remains is the newsprint HALFTONE dot screen. Two layers, back to front:
+   (1+2) a two-tone offset newsprint HALFTONE screen (navy + warm registration
+   dot) - the dotted photo screen of an old sports section; (3) fine cardstock
+   grain. Light only - dark keeps the pixel starfield. Tunable via the --paper-*
+   dials; content sits on solid cards so legibility is untouched. */
+:root:not([data-theme="dark"]) .eephus-page {
+  background-image:
+    radial-gradient(var(--paper-dot)  0.9px, transparent 1.4px),
+    radial-gradient(var(--paper-dot2) 0.9px, transparent 1.4px),
+    radial-gradient(var(--grain2) 1px, transparent 1px);
+  background-size: 9px 9px, 9px 9px, 13px 13px;
+  background-position: 0 0, 4px 5px, 13px 13px;
+  background-attachment: fixed, fixed, scroll;
+}
+.eephus-page a { color: var(--accent-navy); }
+.eephus-wrap { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+/* ---- site nav (every page, incl. PROSPX) ---- */
+/* PRIMARY site nav - masthead-level. A filled band with a heavy double rule
+   (the newspaper-nameplate treatment) so it reads as the dominant, site-wide
+   bar that the PROSPX section strip nests beneath. */
+/* Open Beta: ONE line, always. The old 1100px cap + wrap pushed the
+   controls onto a cramped second row on module pages once the link set
+   grew; the bar now spans wide, never wraps, and the link strip scrolls
+   horizontally if it ever runs out of room instead of stacking. */
+.eephus-nav {
+  display: flex; align-items: center; gap: 14px; flex-wrap: nowrap;
+  max-width: 1440px; margin: 0 auto;
+  padding: 14px 1.5rem 12px;
+  background: var(--bg-secondary);
+  border-bottom: 3px double var(--text-primary);
+}
+/* The masthead brand renders the eephus.io merged wordmark (the signature-arc
+   logo), matching the homepage sidebar. Font-size sizes the whole lockup; the
+   arc replaces the old iridescent underline. */
+.eephus-nav .eephus-wordmark {
+  font-family: var(--font-retro-mono);
+  font-weight: 700; font-size: 22px; letter-spacing: .04em;
+  color: var(--text-primary); text-decoration: none;
+  display: inline-flex; align-items: flex-end; line-height: 1;
+}
+.eephus-nav .eephus-wordmark .dot { color: var(--logo-dot); }
+/* Wordmark + beta tag lockup. One version string lives in build_site.py
+   (EEPHUS_VERSION); the badge is a platform-wide state, so it rides the
+   eephus.io wordmark - never PROSPX. Subordinate to the wordmark, sharp, both
+   themes. */
+.eephus-nav .eephus-brand { display: inline-flex; align-items: center; gap: 9px; }
+.eephus-beta {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .06em; line-height: 1; white-space: nowrap;
+  /* Alpha/beta version chips read in the warm orange accent so they're
+     distinct from links + neutral chrome across the site (incl. PROSPX,
+     which loads this stylesheet). */
+  color: var(--accent-orange); background: transparent;
+  border: 1px solid var(--accent-orange); padding: 3px 6px;
+}
+.eephus-nav .eephus-links {
+  display: flex; align-items: center; gap: 0; flex-wrap: nowrap;
+  margin-left: auto; min-width: 0;
+  overflow-x: auto; scrollbar-width: none; -ms-overflow-style: none;
+}
+.eephus-nav .eephus-links::-webkit-scrollbar { display: none; }
+.eephus-nav .eephus-links a {
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
+  padding: 8px 11px; border-radius: 0; white-space: nowrap;
+  min-height: 40px; display: inline-flex; align-items: center;
+  transition: background .12s, color .12s;
+  /* Vertical hairline divider between adjacent links - the same
+     scoreboard/newspaper column separator the PROSPX section strip
+     uses (first link's edge is carried by the bar itself). */
+  border-left: 1px solid var(--border);
+}
+.eephus-nav .eephus-links a:first-of-type { border-left: none; }
+/* Keep the controls pinned on the line; below 1100px their text labels
+   drop (icons remain) so links + controls still share one row. */
+.eephus-nav .eephus-nav-controls { flex: none; }
+@media (max-width: 1100px) {
+  .eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { display: none; }
+}
+.eephus-nav .eephus-links a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.eephus-nav .eephus-links a.is-active { color: var(--text-primary); font-weight: 700; position: relative; }
+.eephus-nav .eephus-links a.is-active::after {
+  content: ""; position: absolute; left: 9px; right: 9px; bottom: 3px;
+  height: 2px; background: var(--iridescent); border-radius: 2px;
+}
+/* "MLB Modules" grouped dropdown (a native <details>). The summary reads as a
+   nav link with a caret; the menu is position:fixed (placed by eephus-nav.js)
+   so it escapes the .eephus-links horizontal-scroll overflow clip. */
+.eephus-nav .eephus-nav-group { position: relative; flex: none; }
+.eephus-nav .eephus-nav-group > summary {
+  list-style: none; cursor: pointer;
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary);
+  padding: 8px 11px; white-space: nowrap; min-height: 40px;
+  display: inline-flex; align-items: center; gap: 5px;
+  border-left: 1px solid var(--border);
+  transition: background .12s, color .12s;
+}
+/* Kill the native disclosure triangle three ways (webkit marker, list marker,
+   and the inline-flex display above already drops it in Chrome). */
+.eephus-nav .eephus-nav-group > summary::-webkit-details-marker { display: none; }
+.eephus-nav .eephus-nav-group > summary::marker { display: none; content: ""; }
+.eephus-nav .eephus-nav-group > summary:hover,
+.eephus-nav .eephus-nav-group > summary:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary);
+}
+.eephus-nav .eephus-nav-group .nav-caret {
+  font-size: 8px; opacity: .55; margin-left: 1px; line-height: 1;
+  transition: transform .12s, opacity .12s;
+}
+.eephus-nav .eephus-nav-group > summary:hover .nav-caret,
+.eephus-nav .eephus-nav-group[open] .nav-caret { opacity: .9; }
+.eephus-nav .eephus-nav-group[open] .nav-caret { transform: rotate(180deg); }
+.eephus-nav .eephus-nav-group.is-active > summary { color: var(--text-primary); font-weight: 700; }
+.eephus-nav .eephus-nav-menu {
+  position: fixed; z-index: 60; min-width: 172px;
+  display: flex; flex-direction: column;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, .18); padding: 4px 0;
+}
+.eephus-nav .eephus-nav-menu a {
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-secondary); text-decoration: none;
+  padding: 9px 14px; white-space: nowrap; border-left: none;
+  display: block; transition: background .12s, color .12s;
+}
+.eephus-nav .eephus-nav-menu a:hover,
+.eephus-nav .eephus-nav-menu a:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary);
+}
+.eephus-nav .eephus-nav-menu a.is-active { color: var(--text-primary); font-weight: 700; }
+/* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
+.eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
+/* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
+   label, with an iridescent hairline that lights on hover/focus (and marks the
+   dark-mode toggle's "on" state). Header-only - scoped under .eephus-nav, so the
+   homepage sidebar controls (.home-theme-toggle / .sb-* / .eph-*) are untouched. */
+.eephus-nav .eephus-nav-ctrl {
+  position: relative;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--text-secondary); background: transparent;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  padding: 0 11px; min-height: 38px; line-height: 1;
+  cursor: pointer; text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.eephus-nav .eephus-nav-ctrl:hover,
+.eephus-nav .eephus-nav-ctrl:focus-visible {
+  background: var(--bg-tertiary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+/* Iridescent hairline accent - the red→yellow→green masthead gradient. */
+.eephus-nav .eephus-nav-ctrl::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
+}
+.eephus-nav .eephus-nav-ctrl:hover::after,
+.eephus-nav .eephus-nav-ctrl:focus-visible::after { opacity: 1; }
+/* Dark mode "on": the theme toggle wears the accent so its active state reads
+   (prospx uses #global-theme-toggle; editorial nav uses [data-theme-toggle]). */
+[data-theme="dark"] .eephus-nav .eephus-nav-ctrl[data-theme-toggle]::after,
+[data-theme="dark"] .eephus-nav #global-theme-toggle::after { opacity: 1; }
+[data-theme="dark"] .eephus-nav .eephus-nav-ctrl[data-theme-toggle],
+[data-theme="dark"] .eephus-nav #global-theme-toggle { color: var(--text-primary); }
+.eephus-nav .eephus-nav-ctrl .theme-icon { font-size: 14px; }
+.eephus-nav .eephus-nav-ctrl .eephus-nav-ctrl-label { white-space: nowrap; }
+.eephus-nav .eephus-nav-ctrl .global-ctrl-count {
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 800;
+  min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-sm);
+  background: transparent; color: var(--accent-gold); border: 1px solid var(--accent-gold);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+
+/* ---- hero (Home) ---- */
+.hero { padding: 56px 0 36px; border-bottom: 3px double var(--border); margin-bottom: 32px; }
+.hero h1 {
+  font-family: var(--font-retro-mono); font-weight: 700;
+  font-size: clamp(2.2rem, 6vw, 3.6rem); letter-spacing: .03em;
+  margin: 0 0 8px; line-height: 1.05;
+}
+.hero h1 .dot { color: var(--logo-dot); }
+.hero .hero-rule { height: 4px; width: 120px; background: var(--iridescent); border-radius: 2px; margin: 14px 0 18px; }
+.hero p { font-size: 1.05rem; color: var(--text-secondary); max-width: 60ch; margin: 0; }
+
+/* ---- module cards (Home) + article/team cards (shared geometry) ---- */
+.module-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+.card {
+  display: block; text-decoration: none; color: inherit;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  border-radius: var(--radius-md); box-shadow: var(--shadow-card);
+  padding: 20px 22px; transition: box-shadow .12s, transform .12s;
+  position: relative; overflow: hidden;
+}
+a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px); }
+.card::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 5px; background: var(--accent-navy); }
+.card.module-card::before { background: var(--accent-lilac); }
+.card .eyebrow {
+  font-family: var(--font-retro); font-size: 10px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px;
+}
+.card h2, .card h3 { font-family: var(--font-retro-mono); margin: 0 0 8px; letter-spacing: .02em; }
+.card h2 { font-size: 1.25rem; } .card h3 { font-size: 1.05rem; }
+.card p { margin: 0; color: var(--text-secondary); font-size: .95rem; }
+.card .card-cta { display: inline-block; margin-top: 12px; font-weight: 700; font-size: 13px; color: var(--accent-navy); }
+
+/* ---- section heading (newspaper banner) ---- */
+.section-head {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+  border-top: 3px double var(--border); border-bottom: 3px double var(--border);
+  padding: 10px 2px; margin: 28px 0 22px;
+}
+.section-head h1 { font-family: var(--font-retro-mono); font-size: 1.5rem; margin: 0; letter-spacing: .04em; }
+.section-head .section-sub { font-size: .85rem; color: var(--text-tertiary); font-style: italic; }
+
+/* Variant for modules that carry a dev byline (FA / Projections): the byline
+   stacks above the title in the left slot, so the description keeps the right
+   slot and the alpha chip stays inline with the title instead of being squeezed
+   into its own flex column. Bottom-align so title and description share a base. */
+/* Byline modules STACK the description below the title (full width each) instead of
+   crushing the title into a narrow left column beside a long description (e.g. MLB
+   Stats names all four leaderboard sections). Matches the phone stacking rule below. */
+.section-head--byline { flex-direction: column; align-items: flex-start; justify-content: flex-start; gap: 6px; }
+.section-head--byline .section-head-titles { display: flex; flex-direction: column; min-width: 0; }
+.section-head--byline .section-head-titles .build-banner { margin: 0 0 6px; }
+.section-head--byline .section-sub { max-width: 78ch; }
+/* Lead Developer & Creator credit badge (MLB Stats + Pitcher Alchemy Lab). */
+.lead-dev-badge { display: inline-flex; align-items: center; gap: 8px; align-self: flex-start;
+  text-decoration: none; font-family: var(--font-retro-mono); font-size: 10.5px; letter-spacing: .03em;
+  margin: 9px 0 2px; padding: 4px 10px; border: 1px solid var(--accent-gold);
+  background: var(--bg-secondary); transition: border-color .15s, background .15s; white-space: nowrap; }
+.lead-dev-badge:hover, .lead-dev-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); }
+.lead-dev-badge .ldb-glyph { color: var(--accent-gold); font-size: 13px; line-height: 1; }
+.lead-dev-badge .ldb-role { color: var(--accent-gold); font-weight: 700; text-transform: uppercase; }
+.lead-dev-badge .ldb-name { color: var(--text-primary); font-weight: 600; }
+
+/* Compact "plus" developer badge - for sub-modules / models / sections. Hovers
+   open a ledger of the granular work. Counterpart to the head-module lead badge. */
+.dev-plus-badge { position: relative; display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .03em; cursor: help;
+  padding: 2px 8px; border: 1px solid var(--accent-gold); background: var(--bg-secondary);
+  white-space: nowrap; vertical-align: middle; transition: border-color .15s, background .15s; }
+.dev-plus-badge:hover, .dev-plus-badge:focus-visible { border-color: var(--accent-cyan); background: var(--bg-tertiary); outline: none; }
+.dev-plus-badge .dpb-glyph { color: var(--accent-gold); font-size: 11px; line-height: 1; }
+.dev-plus-badge .dpb-name { color: var(--text-primary); font-weight: 600; }
+.dev-plus-badge .dpb-plus { color: var(--accent-gold); font-weight: 700; padding-left: 1px; }
+.dev-plus-badge .dev-plus-card { position: absolute; right: 0; left: auto; top: calc(100% + 6px); z-index: 60;
+  display: none; min-width: 280px; max-width: 360px; padding: 10px 12px 8px;
+  border: 1px solid var(--accent-gold); background: var(--bg-primary);
+  box-shadow: 0 8px 26px rgba(0,0,0,.5); white-space: normal; text-align: left; cursor: default; }
+.dev-plus-badge:hover .dev-plus-card, .dev-plus-badge:focus-within .dev-plus-card { display: block; }
+.dev-plus-card .dpc-head { display: block; color: var(--accent-gold); font-weight: 700;
+  text-transform: uppercase; letter-spacing: .05em; font-size: 9px; margin-bottom: 7px;
+  padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.dev-plus-card .dpc-item { display: flex; justify-content: space-between; gap: 12px; align-items: baseline;
+  padding: 3px 0; font-size: 10.5px; line-height: 1.35; }
+.dev-plus-card .dpc-what { color: var(--text-primary); font-weight: 600; }
+.dev-plus-card .dpc-kind { color: var(--text-tertiary); font-style: italic; text-align: right; flex: 0 0 auto; }
+.dev-plus-card .dpc-more { display: block; margin-top: 8px; padding-top: 6px; font-size: 9.5px;
+  color: var(--accent-cyan); text-decoration: none; border-top: 1px solid var(--border); }
+.dev-plus-card .dpc-more:hover { text-decoration: underline; }
+
+/* ---- articles index grid ---- */
+.article-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+.article-card .meta { font-size: 12px; color: var(--text-tertiary); margin: 0 0 8px; }
+.article-card .meta .author { color: var(--text-secondary); font-weight: 700; }
+
+/* ---- article reading view ---- */
+.article { max-width: 720px; margin: 0 auto; }
+.article-header { border-bottom: 3px double var(--border); padding-bottom: 18px; margin-bottom: 24px; }
+.article-header h1 { font-family: var(--font-retro-mono); font-size: clamp(1.6rem, 4vw, 2.4rem); line-height: 1.1; margin: 0 0 12px; letter-spacing: .02em; }
+.article-header .byline { font-size: 13px; color: var(--text-secondary); }
+.article-header .byline .author { font-weight: 700; }
+.article-header .byline .dot-sep { color: var(--text-tertiary); margin: 0 8px; }
+/* Byline links: author → their Development Team card, handle → X profile. */
+.byline-author { color: inherit; font-weight: 700; text-decoration: none; }
+.byline-author:hover, .byline-author:focus-visible { text-decoration: underline; }
+.byline-handle { color: var(--accent-navy); text-decoration: none; }
+.byline-handle:hover, .byline-handle:focus-visible { text-decoration: underline; }
+.article-summary { font-size: 1.05rem; color: var(--text-secondary); font-style: italic; border-left: 3px solid var(--accent-lilac); padding-left: 14px; margin: 0 0 28px; }
+.article-body { font-size: 1.05rem; line-height: 1.7; }
+.article-body p { margin: 0 0 1.1em; }
+.article-body h2, .article-body h3 { font-family: var(--font-retro-mono); margin: 1.6em 0 .5em; letter-spacing: .02em; }
+.article-body a { color: var(--accent-navy); text-decoration: underline; }
+.article-body ul, .article-body ol { margin: 0 0 1.1em 1.4em; }
+.article-body img { max-width: 100%; height: auto; border-radius: var(--radius-sm); }
+.article-body .video-embed { position: relative; width: 100%; padding-top: 56.25%; margin: 1.4em 0; border-radius: var(--radius-md); overflow: hidden; border: 1px solid var(--border); }
+.article-body .video-embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.back-link { display: inline-block; margin-bottom: 18px; font-size: 13px; font-weight: 700; color: var(--accent-navy); text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+
+/* ---- team ---- */
+.team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+/* Deep-linked card (e.g. /team/#member-will-cahoon) gets a brief gold accent. */
+.team-card { scroll-margin-top: 90px; }
+.team-card:target { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
+/* Headshot - rectangular, sharp corners (circular is reserved for account
+   avatars). Provided <img> sits above a monogram that shows through when there's
+   no photo or the file fails to load. */
+.team-card .team-photo {
+  position: relative; width: 100%; height: 168px; margin: 0 0 12px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-tertiary); overflow: hidden;
+}
+.team-card .team-photo img {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: cover; object-position: center top; z-index: 1;
+}
+.team-card .team-monogram {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-retro-mono); font-size: 2.6rem; font-weight: 700;
+  letter-spacing: .04em; color: var(--text-tertiary);
+}
+.team-card .team-photo::after {   /* thin iridescent baseline, like the card rules */
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: var(--iridescent); z-index: 2;
+}
+.team-mission { max-width: 760px; margin: 4px 0 20px; font-size: 15px; line-height: 1.6; color: var(--text-secondary); }
+.team-card .name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; margin: 0; letter-spacing: .02em; }
+.team-card .team-school { display: inline-flex; align-items: center; gap: 7px; margin-top: 9px;
+  font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+.team-card .team-school-mark { font-weight: 800; letter-spacing: .02em; font-size: 14px; }
+.team-card .team-school-logo { height: 26px; width: auto; display: block; }
+/* align-items:flex-end + container top headroom keep every badge box on one
+   line (crowns float above uniformly) instead of crowned boxes sitting lower. */
+.team-card .team-notes { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 11px; margin: 18px 0 2px; }
+/* Credit badge: a logo mark (no text), the role name surfaced on hover via the
+   native title. A crown perches above "Creator" badges. The mark rides the
+   per-module accent passed in as --badge-accent; the crown stays gold. */
+.team-card .team-badge {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: 40px; height: 40px; flex: none; overflow: visible; cursor: help;
+  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 10px;
+  transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+}
+.team-card .team-badge:hover {
+  transform: translateY(-2px);
+  border-color: var(--badge-accent, var(--accent-gold));
+  box-shadow: 0 4px 14px rgba(0,0,0,.18);
+}
+.team-card .team-badge-mark { display: inline-flex; color: var(--badge-accent, var(--text-primary)); }
+.team-card .team-badge-mark svg { width: 24px; height: 24px; display: block; }
+.team-card .team-badge-crown {
+  position: absolute; top: -9px; left: 50%; transform: translateX(-50%);
+  width: 20px; height: 12px; color: var(--accent-gold);
+  filter: drop-shadow(0 1px 1px rgba(0,0,0,.25));
+}
+.team-card .handle { font-size: 13px; color: var(--accent-navy); margin: 6px 0 0; }
+.team-card .handle a { color: var(--accent-navy); text-decoration: none; }
+.team-card .handle a:hover { text-decoration: underline; }
+/* Per-member Twitter / LinkedIn chips (sharp corners, on-theme). */
+.team-card .team-socials { display: flex; gap: 8px; margin-top: 10px; }
+.team-card .team-soc {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px;
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--bg-tertiary); color: var(--text-secondary);
+  text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.team-card .team-soc:hover { background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary); }
+.team-card .team-soc svg { width: 15px; height: 15px; display: block; fill: currentColor; }
+
+/* ---- team card flip (click / Enter / Space) ---------------------------------
+   The outer .team-flip is the 3D perspective wrapper (keeps the id + :target so
+   deep links still resolve); the rotating .team-card-inner carries the two .card
+   faces. The .card chrome (incl. overflow:hidden + the iridescent top bar) lives
+   ON the faces, NEVER on the rotating parent, or it clips the 3D. Front stays in
+   normal flow (defines the box height); back is absolutely positioned over it. */
+/* Uniform card size: stretch every card to its row's tallest sibling (with a floor)
+   so a member with 10 badges and one with none read as the same card. */
+.team-grid { align-items: stretch; }
+.team-flip { perspective: 1200px; cursor: pointer; }
+.team-flip:focus-visible { outline: 2px solid var(--accent-gold); outline-offset: 3px; }
+.team-card-inner {
+  position: relative; width: 100%; height: 100%; min-height: 340px;
+  transition: transform .6s cubic-bezier(.2,.7,.3,1);
+  transform-style: preserve-3d;
+}
+.team-flip.is-flipped .team-card-inner { transform: rotateY(180deg); }
+.team-card-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.team-card-back {
+  position: absolute; inset: 0; transform: rotateY(180deg);
+  overflow: auto; display: flex; flex-direction: column;
+}
+/* Only the visible face is interactive (front links must not intercept when
+   flipped; back links must work once flipped). */
+.team-flip .team-card-back { pointer-events: none; }
+.team-flip.is-flipped .team-card-back { pointer-events: auto; }
+.team-flip.is-flipped .team-card-front { pointer-events: none; }
+.team-back-head {
+  font-family: var(--font-retro-mono); font-size: 1.05rem; font-weight: 700;
+  letter-spacing: .02em; margin: 0 0 10px; padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.team-back-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.6; color: var(--text-secondary); }
+.team-back-list li { margin: 2px 0; }
+.team-back-empty { font-size: 13px; color: var(--text-tertiary); font-style: italic; margin: 6px 0; }
+.team-flip-hint {
+  margin-top: auto; align-self: flex-end; padding-top: 10px;
+  font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-tertiary); opacity: .7;
+}
+.team-card-front { display: flex; flex-direction: column; height: 100%; box-sizing: border-box; }
+@media (prefers-reduced-motion: reduce) { .team-card-inner { transition: none; } }
+
+/* ---- footer ---- */
+.eephus-footer {
+  max-width: 1100px; margin: 0 auto; padding: 24px 1.5rem;
+  border-top: 1px solid var(--border);
+  font-size: 12px; color: var(--text-tertiary);
+  display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+}
+.eephus-footer-links { display: flex; gap: 14px; flex-wrap: wrap; }
+.eephus-footer-links a {
+  color: var(--text-tertiary); text-decoration: none;
+  font-family: var(--font-retro-mono);
+}
+.eephus-footer-links a:hover { color: var(--text-primary); text-decoration: underline; }
+
+/* ---- dev byline (Created by ... on FA / Projections mastheads) ----
+   Mirrors PROSPX's .build-banner inline rule so the signature reads
+   identically on every module. */
+.build-banner {
+  display: inline-block;
+  font-family: var(--font-retro);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--byline-lilac);
+  margin: 0 0 8px;
+  opacity: 0.95;
+  font-weight: 600;
+  user-select: text;
+}
+
+/* ---- mobile ---- */
+/* Phone exception to the one-line rule (the old width:100% + flex:1 rules
+   here predated it and blew the nowrap bar past the viewport on every
+   page). Brand + controls share the top line; the LINK strip drops to its
+   own full-width swipe row beneath. The failure the one-line rule fixed
+   was the CONTROLS landing on a cramped second row - they stay up top. */
+@media (max-width: 640px) {
+  .eephus-nav { flex-wrap: wrap; gap: 8px; row-gap: 4px; padding: 10px 1rem; }
+  .eephus-nav .eephus-links { order: 3; flex: 1 1 100%; margin-left: 0; }
+  .eephus-nav .eephus-links a { padding: 10px 12px; }
+  .eephus-nav .eephus-nav-controls { margin-left: auto; }
+  /* Touch targets: keep the mobile controls at ~40px (>= recommended tap size)
+     rather than shrinking below the 38px desktop height. */
+  .eephus-nav .eephus-nav-ctrl { padding: 0 10px; min-height: 40px; }
+  .eephus-wrap { padding: 0 1rem 3rem; }
+  .hero { padding: 36px 0 24px; }
+  /* Module masthead: stack the title block above the description on phones so
+     the title isn't crushed into a ~80px column beside the italic subtitle
+     (e.g. "MLB Projections" wrapping to "MLB / Projec…"). Full width each. */
+  .section-head { flex-direction: column; align-items: flex-start; gap: 4px; }
+  .section-head--byline { align-items: flex-start; }
+  .section-head .section-sub { font-size: .8rem; }
+}
+
+/* ===========================================================================
+   HOMEPAGE - sidebar + main editorial portal (newspaper × baseball-card × retro)
+   =========================================================================== */
+.home-theme-toggle {
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase; cursor: pointer;
+  background: transparent; color: inherit; border: 1px solid currentColor;
+  border-radius: var(--radius-sm); padding: 3px 9px; opacity: .85;
+}
+.home-theme-toggle:hover { opacity: 1; }
+/* theme-toggle label: show the action the click will perform (CSS-driven, no JS) */
+[data-theme-toggle] .lbl-light { display: none; }
+[data-theme="dark"] [data-theme-toggle] .lbl-dark { display: none; }
+[data-theme="dark"] [data-theme-toggle] .lbl-light { display: inline; }
+
+/* ---- top wire ticker (scoreboard/terminal) ---- */
+.home-ticker {
+  position: relative;
+  background: #0B0E07; color: #e6fbef; border-bottom: 2px solid var(--accent-gold);
+  font-family: var(--font-retro-mono); font-size: 13px; letter-spacing: .02em;
+  display: flex; align-items: center; gap: 0; overflow: hidden; white-space: nowrap;
+}
+/* WIRE brand mark - pinned at the left, opaque, and ABOVE the scrolling track
+   (sticky so it stays put if the bar becomes manually scrollable under
+   reduced-motion). Items dissolve behind it rather than overlapping it. */
+.home-ticker .ticker-tag {
+  position: sticky; left: 0; z-index: 3;
+  flex: none; display: inline-flex; align-items: center; gap: 6px;
+  background: var(--accent-red); color: #fff; font-weight: 700;
+  padding: 6px 12px; letter-spacing: .14em; text-transform: uppercase; font-size: 11px;
+}
+/* Trailing gradient fade just right of the label: items dissolve into the bar
+   as they pass behind the WIRE mark instead of hard-cutting against it. Sits
+   above the track (the tag's z-index:3 stacking context) but below the label. */
+.home-ticker .ticker-tag::after {
+  content: ""; position: absolute; left: 100%; top: 0; bottom: 0; width: 40px;
+  background: linear-gradient(to right, #0B0E07 0%, rgba(11,14,7,0) 100%);
+  z-index: 1; pointer-events: none;
+}
+.home-ticker .ticker-tag .blip { width: 7px; height: 7px; border-radius: 50%; background: #fff; animation: ticker-blip 1.4s steps(2) infinite; }
+/* The tag links to /news/ (mouse convenience; the ticker is aria-hidden, so
+   the accessible path is the sidebar feed header). Inherit the white-on-red. */
+.home-ticker .ticker-tag a { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+@keyframes ticker-blip { 50% { opacity: .25; } }
+.home-ticker .ticker-track {
+  display: inline-flex; align-items: center; gap: 0; padding: 7px 0;
+  animation: ticker-scroll 50s linear infinite;
+  /* Keep scrolling even when the browser/OS prefers reduced motion. The global
+     reduced-motion reset (animation-duration:.001ms + iteration-count:1,
+     !important) is beaten here by higher selector specificity. The ticker is
+     decorative (aria-hidden) with a STATIC, accessible Prospect Wire feed in the
+     sidebar, and it pauses on hover - so motion-sensitive readers still get the
+     data and can stop it. (Per site-owner request the marquee always runs.) */
+  animation-duration: 50s !important;
+  animation-iteration-count: infinite !important;
+}
+/* Pause-on-hover (desktop) so a reader can stop the marquee and click an item. */
+.home-ticker:hover .ticker-track { animation-play-state: paused; }
+/* Direct children only (the items) - NOT the inner glyph spans. */
+.home-ticker .ticker-track > a, .home-ticker .ticker-track > span { flex: none; }
+/* Dim separator after each item for scannability (lives inside the item so the
+   duplicated track still loops seamlessly). */
+.home-ticker .ticker-track > a::after, .home-ticker .ticker-track > span::after {
+  content: "•"; color: #45563d; margin: 0 20px; font-weight: 400;
+}
+.home-ticker .ticker-track a { color: inherit; text-decoration: none; }
+/* Per-prospect team logo in each ticker item - clean (non-pixelated) ESPN CDN
+   logo, small + inline so it rides ahead of the glyph. */
+/* A subtle light plate behind each logo so dark-colored marks (Giants, Yankees,
+   White Sox…) stay visible on the near-black ticker bar. Nearly-sharp corners
+   (the round-shape exception is reserved for user avatars). */
+.home-ticker .ticker-track .tk-logo {
+  width: 17px; height: 17px; object-fit: contain; vertical-align: -5px; margin-right: 7px;
+  /* Faint glow (no plate) so dark marks read on the near-black bar without a box. */
+  filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
+}
+.home-ticker .ticker-track span.tk-logo { width: auto; height: auto; vertical-align: baseline; color: #1a1d12; padding: 1px 4px; background: rgba(245,246,238,0.92); border-radius: 3px; filter: none; }
+.home-ticker .ticker-track a:hover { text-decoration: underline; }
+.home-ticker .ticker-track .up { color: #6ee7a8; } .home-ticker .ticker-track .down { color: #ff8a8a; }
+.home-ticker .ticker-track .signing { color: #b47cff; }   /* FA winter wire */
+.home-ticker .ticker-track .glyph { color: var(--accent-gold); }
+.home-ticker .ticker-track .promo { color: #6ee7a8; } .home-ticker .ticker-track .demo { color: #ff8a8a; }
+.home-ticker .ticker-track .il { color: #ffb454; } .home-ticker .ticker-track .debut { color: #4ee0ff; }
+.home-ticker .ticker-track .trade { color: var(--accent-gold); }
+@keyframes ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* ---- shell grid ---- */
+.home-shell { display: grid; grid-template-columns: 292px minmax(0, 1fr); max-width: 1320px; margin: 0 auto; align-items: start; }
+.home-sidebar {
+  position: sticky; top: 0; align-self: start; max-height: 100vh; overflow-y: auto;
+  border-right: 1px solid var(--border); padding: 20px 20px 40px;
+  background: linear-gradient(180deg, var(--bg-secondary), transparent 120px);
+}
+.home-main { min-width: 0; padding: 0 30px 56px; }
+
+/* sidebar brand + search + nav */
+.sb-brand { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
+/* Sidebar brand = the merged arc-wordmark at 20px (the arc IS the flourish - 
+   the old iridescent underline is gone with it). */
+.sb-brand .wm { font-family: var(--font-retro-mono); font-weight: 700; font-size: 20px; letter-spacing: .03em; color: var(--text-primary); text-decoration: none; }
+.sb-search { width: 100%; font-family: var(--font-retro); font-size: 13px; padding: 8px 10px; margin-bottom: 18px;
+  background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border); border-radius: var(--radius-sm); }
+.sb-search::placeholder { color: var(--text-tertiary); }
+.sb-group { margin-bottom: 20px; }
+/* PROSPX baseball badge inline with its nav entry + subnav group label. */
+.px-ball { flex: none; }
+.sb-group-label--lockup { display: flex; align-items: center; gap: 6px; }
+/* Module glyphs in the sidebar nav - terminal-safe text glyphs, fixed
+   width so labels align whether the icon is a glyph or the ball SVG. */
+.sb-ico {
+  width: 16px; flex: none; text-align: center;
+  font-family: var(--font-retro-mono); font-size: 13px;
+  color: var(--text-tertiary);
+}
+.sb-nav a:hover .sb-ico, .sb-nav a.is-active .sb-ico { color: var(--text-primary); }
+/* α/β module lifecycle markers - superscript next to module names in navs;
+   the bordered .eephus-beta chip is the masthead form. */
+.mod-stage {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  color: var(--text-tertiary); margin-left: 2px;
+  vertical-align: super; line-height: 1; cursor: help;
+}
+.section-head h1 .eephus-beta { vertical-align: middle; margin-left: 10px; }
+/* PROSPX masthead stage chip (prospx h1 is a flex lockup). */
+.h1-stage { align-self: center; margin-left: 4px; }
+.sb-group-label { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid var(--border-light); }
+.sb-nav a, .sb-subnav a {
+  display: flex; align-items: center; gap: 8px; text-decoration: none;
+  font-family: var(--font-retro); color: var(--text-secondary);
+  border-radius: var(--radius-sm); transition: background .12s, color .12s;
+}
+.sb-nav a { font-size: 14px; font-weight: 600; padding: 7px 9px; }
+.sb-nav a.is-active { color: var(--text-primary); font-weight: 700; background: var(--bg-tertiary); }
+.sb-nav a:hover, .sb-subnav a:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+/* "MLB Modules" sub-block in the rail: a small subhead with the member modules
+   indented under it (the rail stays expanded; the dropdown is a top-bar form). */
+.sb-subhead {
+  font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
+  margin: 8px 0 2px; padding: 0 9px;
+}
+.sb-nav a.sb-grouped { margin-left: 10px; }
+.sb-subnav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
+.sb-subnav a { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
+/* Touch devices get larger sidebar tap targets (~40px) without loosening the
+   dense desktop/mouse sidebar. Mouse users keep the compact 7px padding. */
+@media (hover: none) and (pointer: coarse) {
+  .sb-nav a { padding: 11px 9px; }
+  .sb-subnav a { padding: 10px 8px; }
+}
+.sb-subnav a .px-glyph { color: var(--accent-cyan); font-family: var(--font-retro-mono); }
+
+/* sidebar terminal feed */
+.sb-feed { background: #0B0E07; border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 10px 11px; }
+[data-theme="dark"] .sb-feed { background: #0a0c06; }
+.sb-feed .feed-head { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: #8fe3b0; margin-bottom: 8px; }
+.sb-feed .feed-head .blip { width: 7px; height: 7px; border-radius: 50%; background: #6ee7a8; animation: ticker-blip 1.4s steps(2) infinite; }
+/* Clickable section header -> /news/. Keeps the terminal-green color; an
+   "all ->" affordance trails the label and brightens on hover. */
+.sb-feed .feed-head a { display: inline-flex; align-items: center; gap: 7px; color: inherit; text-decoration: none; width: 100%; }
+.sb-feed .feed-head a:hover { color: #d6ffe7; }
+.sb-feed .feed-head .feed-head-more { margin-left: auto; color: #4ee0ff; letter-spacing: .04em; }
+/* Sidebar Prospect Wire - same palette as the top scrolling WIRE ticker
+   (bright base text + matching per-type glyph colors) so the two read as one
+   feed. */
+/* NOTE: the base color is set on `.sb-feed .feed-item` below - `.feed-item`
+   alone (0,1,0) loses to the global `.eephus-page a` link color (0,1,1), which
+   would render the names dark-navy on the dark feed. */
+/* Structured wire rows: date | logo | name (ellipsized, fills) | value chip
+   right-aligned. One line per item - the type glyph lives only in the value
+   chip, never duplicated beside the name. */
+.feed-item { display: flex; align-items: center; gap: 7px; font-family: var(--font-retro-mono); font-size: 12px; line-height: 1.4; text-decoration: none; padding: 7px 2px; border-bottom: 1px dotted #2f3a2a; }
+.sb-feed .feed-item { color: #e6fbef; }
+.feed-item:last-child { border-bottom: 0; }
+.feed-item:hover { color: #fff; background: rgba(255,255,255,0.04); }
+.feed-item .ts { color: #8fb89b; font-size: 10px; flex: none; letter-spacing: .02em; }
+.feed-item .g { margin-right: 1px; flex: none; font-weight: 700; }
+/* Day headers group the wire by date; each deep-links into Time Machine at
+   that date (the full board as of that day). */
+.sb-feed .feed-day { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding: 9px 2px 3px; }
+.sb-feed .feed-day:first-child { padding-top: 2px; }
+.sb-feed .feed-day-date { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .1em; color: #8fb89b; }
+.sb-feed .feed-day-tm { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700; letter-spacing: .04em; color: #4ee0ff; text-decoration: none; }
+.sb-feed .feed-day-tm:hover, .sb-feed .feed-day-tm:focus-visible { text-decoration: underline; }
+.feed-item .feed-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.feed-item .feed-val { flex: none; font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+/* Per-item team logo - same light plate as the top ticker's tk-logo so dark
+   marks (Yankees, Giants…) stay visible on the near-black feed panel.
+   Nearly-sharp corners; circles stay avatar-only. */
+.sb-feed .feed-item .feed-logo {
+  width: 15px; height: 15px; flex: none; object-fit: contain;
+  /* Faint glow (no plate) so dark marks read on the near-black feed without a box. */
+  filter: drop-shadow(0 0 0.5px rgba(255,255,255,.6)) drop-shadow(0 0 1.7px rgba(255,255,255,.35));
+}
+.sb-feed .feed-item span.feed-logo {
+  width: auto; height: auto; font: 700 8px var(--font-retro-mono);
+  color: #1a1d12; padding: 1px 3px; background: rgba(245,246,238,0.92); border-radius: 3px;
+}
+.feed-item .g.up,    .feed-item .feed-val.up,
+.feed-item .g.promo, .feed-item .feed-val.promo { color: #6ee7a8; }
+.feed-item .g.down,  .feed-item .feed-val.down,
+.feed-item .g.demo,  .feed-item .feed-val.demo  { color: #ff8a8a; }
+.feed-item .g.il,    .feed-item .feed-val.il    { color: #ffb454; }
+.feed-item .g.debut, .feed-item .feed-val.debut { color: #4ee0ff; }
+.feed-item .g.trade, .feed-item .feed-val.trade { color: var(--accent-gold); }
+.feed-item .g.signing, .feed-item .feed-val.signing { color: #b47cff; } /* FA winter wire - refractor violet */
+
+/* ---- /news/ expanded Prospect News page ---- */
+.news-app .news-intro { font-size: 13px; line-height: 1.6; color: var(--text-secondary); max-width: 760px; margin: 6px 0 4px; }
+.news-app .filter-bar { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 14px; }
+.news-app .filter-label { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px; }
+.news-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer; border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); border-radius: var(--radius-sm); }
+.news-app button.chip:hover { border-color: var(--accent-gold); }
+.news-app button.chip.active { color: var(--text-primary); border-color: var(--accent-gold); font-weight: 700; }
+/* The feed reuses the .sb-feed terminal panel; just bound its width + give
+   each day block a hair of separation so the grouping reads on a full page. */
+.news-app .news-feed { max-width: 760px; }
+.news-app .news-feed .news-day + .news-day { margin-top: 2px; }
+/* Enriched /news/ rows: stack the name over a scouting line and carry the
+   player's current FV chip beside the event chip. Scoped to .news-feed so the
+   homepage sidebar wire (sb-feed only, no .news-feed) is untouched. */
+.news-feed .news-main { display: flex; flex-direction: column; gap: 1px; flex: 1; min-width: 0; }
+.news-feed .feed-item .feed-name { flex: none; }
+.news-feed .news-meta { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .01em; color: #8fb89b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.news-feed .feed-item .fv-pill { font-size: 11px; font-weight: 800; padding: 2px 7px; min-width: 30px; text-align: center; }
+
+/* ---- masthead ---- */
+.masthead { text-align: center; border-bottom: 3px double var(--text-primary); padding: 22px 0 12px; margin-bottom: 4px; }
+.masthead .nameplate { font-family: var(--font-logo); font-weight: 700; font-size: clamp(2.4rem, 6vw, 4rem); letter-spacing: .04em; line-height: 1; margin: 0; }
+.masthead .nameplate .dot { color: var(--logo-dot); }
+/* eephus.io placeholder logo lockup (homepage hero). Swappable: the mark itself
+   is EEPHUS_LOGO_MARK in build_site.py. Crisp vector, sharp container, theme-aware
+   (arc gradient is fixed brand colors; baseline/seam ride currentColor; the ball
+   punches through with the page background so it reads in both modes). */
+/* Merged brand mark - the signature lob is PART of the lettering: the arc
+   spans the wordmark with the ball at apex (replaces the old mark-above-text
+   lockup). Arc + ball are em-scaled off the nameplate's own font-size, so
+   the masthead (clamp 2.4-4rem) and the sidebar (20px) share one mark. */
+.eephus-wordmark-merged { position: relative; display: inline-block; line-height: 1; padding-top: .5em; margin: 0; font-family: var(--font-logo); }
+.eephus-wordmark-merged .ew-arc { position: absolute; left: -1%; width: 102%; top: .04em; height: .48em; overflow: visible; }
+.eephus-wordmark-merged .ew-ball { position: absolute; left: 50%; top: -.08em; width: .26em; height: .26em; transform: translateX(-50%); color: var(--text-primary); }
+.masthead .eephus-logo { display: inline-flex; align-items: flex-end; gap: 14px; }
+/* β + @eephus_io chips stack beside the wordmark (β on top, X under),
+   bottom-aligned with the lettering. */
+.eephus-logo-chips { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 5px; margin-bottom: .3em; }
+/* Chip-family sizing for the @handle link (matches the β chip geometry).
+   Double-class selectors outrank the base .eph-xlink rule below regardless
+   of source order. */
+.eph-xlink.eph-xlink--beta {
+  font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  padding: 3px 6px; gap: 5px; line-height: 1;
+  color: var(--text-tertiary); background: transparent;
+  border: 1px solid var(--border);
+}
+.eph-xlink.eph-xlink--beta svg { width: 10px; height: 10px; }
+/* The live link chip carries the link accent so it reads clickable next to
+   the inert β tag; hover inverts to a filled chip. */
+.eph-xlink.eph-xlink--live { color: var(--accent-navy); border-color: var(--accent-navy); }
+.eph-xlink.eph-xlink--live:hover, .eph-xlink.eph-xlink--live:focus-visible {
+  background: var(--accent-navy); color: var(--bg-primary); border-color: var(--accent-navy);
+}
+.eephus-logo-ball { fill: var(--bg-primary); }
+.eephus-logo-seam { opacity: .8; }
+/* The merged-wordmark ball is filled with the surface color so it masks the
+   arc passing behind it. In the sidebar brand the surface is the secondary-
+   tinted gradient top, not the page bg - fill it to match so the ball doesn't
+   read as an off-color disc beside the logo. */
+.sb-brand .eephus-logo-ball { fill: var(--bg-secondary); }
+
+/* ---- Logo load animation: "the eephus" ----
+   Homepage hero only (.eephus-logo--animate). One short shot on load: the lob
+   arc traces in left to right, then the ball drops onto the apex and settles.
+   It never loops. The nav/sidebar lockups are static. The arc path carries
+   pathLength="100" (build_site.py) so the dash math is resolution-independent. */
+/* Robust by construction: the base path has NO dash (fully drawn), so if the
+   animation never runs - unsupported, reduced-motion, an odd browser - the arc
+   is simply visible. The keyframe sets the hidden start; `backwards` holds it
+   only while the animation is live. The logo can never get stuck invisible. */
+.eephus-logo--animate .ew-arc path {
+  animation: ew-arc-draw .8s cubic-bezier(.22,.61,.36,1) backwards;
+}
+.eephus-logo--animate .ew-ball {
+  transform-origin: center bottom;
+  animation: ew-ball-settle .36s cubic-bezier(.34,1.56,.64,1) .6s backwards;
+}
+@keyframes ew-arc-draw {
+  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
+  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+}
+@keyframes ew-ball-settle {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+/* Hover-replay: hovering ANY eephus.io wordmark (hero, nav, sidebar) re-traces
+   the arc and re-settles the ball, so the animation is always discoverable and
+   verifiable even if the one-shot on load was missed. Distinct keyframe names so
+   the hover actually re-triggers; works under reduced-motion since it is
+   user-initiated (a deliberate intent, not autoplay). */
+.eephus-wordmark-merged { cursor: pointer; }
+.eephus-wordmark-merged:hover .ew-arc path {
+  animation: ew-arc-redraw .8s cubic-bezier(.22,.61,.36,1) backwards;
+}
+.eephus-wordmark-merged:hover .ew-ball {
+  transform-origin: center bottom;
+  animation: ew-ball-resettle .42s cubic-bezier(.34,1.56,.64,1) .5s backwards;
+}
+@keyframes ew-arc-redraw {
+  from { stroke-dasharray: 100; stroke-dashoffset: 100; }
+  to   { stroke-dasharray: 100; stroke-dashoffset: 0; }
+}
+@keyframes ew-ball-resettle {
+  0%   { opacity: 0; transform: translateX(-50%) translateY(-.18em) scale(.7); }
+  70%  { opacity: 1; transform: translateX(-50%) translateY(.03em) scale(1.05); }
+  100% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  /* Proper fallback for the autoplay-on-load: the finished logo, no motion. The
+     hover-replay above stays (it is user-initiated). */
+  .eephus-logo--animate .ew-arc path,
+  .eephus-logo--animate .ew-ball { animation: none; }
+}
+
+/* Cybergothic dark masthead: a faint lilac/cyan neon glow on the nameplate so
+   the wordmark reads like backlit chrome on the holo field. Dark only. */
+[data-theme="dark"] .masthead .nameplate {
+  text-shadow: 0 0 10px rgba(155, 140, 255, 0.35), 0 0 3px rgba(0, 217, 255, 0.22);
+}
+
+/* ---- On-theme scrollbars (one token set, shared with PROSPX's inline copy).
+   Sharp, rectangular thumb with a Y2K pixel bevel that reads in both themes; a
+   brand accent on hover (navy on paper, iridescent lilac on the dark field). The
+   theme-aware --scrollbar-* tokens flip automatically, so the dark editorial bars
+   match the app instead of fading to dim charcoal-on-black. ---- */
+* { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track); }
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+/* Sharp, pixel-square thumb (no radius) with a Y2K pixel bevel: a brand-tinted
+   highlight top-left + ink shadow bottom-right reads as a retro digital control,
+   on theme in both modes. Grabbable full 12px; fills with the brand accent on
+   hover (navy on paper, iridescent lilac on the dark field). */
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb); border-radius: 0;
+  box-shadow: inset 1.5px 1.5px 0 var(--scrollbar-hi), inset -1.5px -1.5px 0 var(--scrollbar-lo);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-thumb:active { background: var(--scrollbar-thumb-hover); }
+::-webkit-scrollbar-corner { background: transparent; }
+.masthead-follow { display: flex; justify-content: center; margin-top: 12px; }
+
+/* Shared on-theme X link: glyph + @handle. Sharp corners, opens in a new tab.
+   Used on the homepage hero, the team page Follow row, and the PROSPX masthead. */
+.eph-xlink {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .03em; line-height: 1;
+  color: var(--text-secondary); background: var(--bg-tertiary);
+  border: 1px solid var(--border); padding: 7px 11px; text-decoration: none;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.eph-xlink:hover, .eph-xlink:focus-visible {
+  background: var(--bg-secondary); color: var(--text-primary); border-color: var(--text-tertiary);
+}
+.eph-xlink svg { width: 14px; height: 14px; display: block; fill: currentColor; flex: 0 0 auto; }
+.eph-xlink-handle { white-space: nowrap; }
+/* Dev Team: labeled Follow row grouping both handles. */
+.team-follow { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin: 0 0 22px; }
+.team-follow-label {
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary);
+}
+/* PROSPX masthead: the @MLBPROSPX link sits in the title space the beta tag freed. */
+.header h1 .eph-xlink--mast {
+  position: relative;
+  font-size: 11px; padding: 5px 9px; align-self: center; background: transparent;
+}
+.header h1 .eph-xlink--mast:hover, .header h1 .eph-xlink--mast:focus-visible { background: var(--bg-tertiary); }
+/* Iridescent hairline accent - matches the nav control cluster (Watchlist /
+   theme toggle / Sign in) so the @handle chip reads as part of the same family. */
+.header h1 .eph-xlink--mast::after {
+  content: ""; position: absolute; left: -1px; right: -1px; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0; transition: opacity .12s; pointer-events: none;
+}
+.header h1 .eph-xlink--mast:hover::after, .header h1 .eph-xlink--mast:focus-visible::after { opacity: 1; }
+.masthead .dateline { display: flex; align-items: center; justify-content: space-between; gap: 12px; font-family: var(--font-retro-mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5px 2px; margin-top: 14px; }
+
+/* ---- section kicker ---- */
+.kicker { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; border-bottom: 2px solid var(--text-primary); padding: 14px 2px 6px; margin: 26px 0 14px; }
+/* h2 stays on ONE line (ellipsizes if ever too long) so every module's
+   separator (the kicker's bottom border) sits at the same height and the
+   paired columns' rules line up across the grid. */
+.kicker h2 { font-family: var(--font-retro-mono); font-size: 1.15rem; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; margin: 0; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kicker .see-all { font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); text-decoration: none; white-space: nowrap; flex: none; }
+.kicker .see-all:hover { text-decoration: underline; }
+
+/* ---- lead story (featured article) ---- */
+.lead-story { display: grid; grid-template-columns: 1.4fr 1fr; gap: 26px; padding: 8px 0 22px; border-bottom: 1px solid var(--border); }
+.lead-story.no-img { grid-template-columns: 1fr; }
+.lead-story .lead-kicker { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--accent-red); }
+.lead-story h1 { font-family: var(--font-retro-mono); font-size: clamp(1.7rem, 3.5vw, 2.6rem); line-height: 1.08; margin: 8px 0 10px; letter-spacing: .01em; }
+.lead-story .byline { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
+.lead-story .excerpt { font-size: 1.02rem; line-height: 1.6; color: var(--text-secondary); }
+.lead-story .read { display: inline-block; margin-top: 12px; font-family: var(--font-retro); font-weight: 700; font-size: 13px; color: var(--accent-navy); text-decoration: none; }
+.lead-story .lead-img { width: 100%; height: 100%; min-height: 200px; object-fit: cover; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); }
+.secondary-stories { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border-bottom: 3px double var(--border); }
+.secondary-stories a { display: block; text-decoration: none; padding: 14px 16px; border-left: 1px solid var(--border); }
+.secondary-stories a:first-child { border-left: 0; }
+.secondary-stories .s-kicker { font-family: var(--font-retro-mono); font-size: 10px; letter-spacing: .08em; text-transform: uppercase; color: var(--text-tertiary); }
+.secondary-stories h3 { font-family: var(--font-retro-mono); font-size: 1rem; line-height: 1.2; margin: 6px 0 0; color: var(--text-primary); }
+.secondary-stories a:hover h3 { color: var(--accent-navy); }
+/* single-piece front (one story so far): keep the broadsheet rule, no bare gap */
+.more-soon-strip { display: flex; justify-content: space-between; align-items: baseline; padding: 10px 0 14px; border-bottom: 3px double var(--border); font-family: var(--font-retro-mono); font-size: 12px; letter-spacing: .04em; color: var(--text-tertiary); text-transform: uppercase; }
+.more-soon-strip a { color: var(--accent-navy); text-decoration: none; font-weight: 700; }
+
+/* ---- front-page modules grid ---- */
+.module-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 30px; }
+.module-cols > .home-module + .home-module { }
+/* min-width:0 lets each module shrink to its 1fr grid track. Without it a grid
+   item keeps min-width:auto (= min-content), so a module whose nowrap content
+   (On This Day rows / kicker) is wider than the single-column mobile track
+   pushed the whole page past the viewport (375px: documentElement scrollWidth
+   409). The inner .otd-body / .kicker h2 already ellipsize, so shrinking the
+   module is clean. */
+.home-module { padding-bottom: 8px; min-width: 0; }
+.home-module.full { grid-column: 1 / -1; }
+
+/* data rows (PROSPX row idiom) */
+/* Right padding sized for the widest trailing value (e.g. "▼ -16" / a holo FV
+   pill) so it never hugs the row border; left stays tight to align with the
+   module header. */
+.row-link { display: flex; align-items: center; gap: 10px; text-decoration: none; padding: 8px 12px 8px 4px; border-bottom: 1px solid var(--border-light); }
+.row-link:hover { background: var(--bg-tertiary); }
+.row-rank { font-family: var(--font-retro-mono); font-size: 14px; font-weight: 700; color: var(--text-tertiary); width: 34px; text-align: right; flex: none; }
+/* "#" prefix on every non-empty homepage rank (Top Movers / Prospects / Farm /
+   Recent Debuts / Recent Trades). Empty rank slots (no overall rank) stay blank. */
+.row-rank:not(:empty)::before { content: "#"; opacity: .65; }
+/* Recent Trades from -> to team logos (reuses the .otd-logo / .otd-arrow marks). */
+.trade-logos { display: inline-flex; align-items: center; gap: 2px; flex: none; }
+.row-logo { width: 24px; height: 24px; flex: none; object-fit: contain; }
+.row-name { flex: 1; min-width: 0; font-family: var(--font-retro); font-weight: 700; font-size: 14px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-meta { font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-tertiary); flex: none; }
+.row-spark { width: 58px; height: 20px; flex: none; display: inline-flex; align-items: center; opacity: .9; }
+.row-spark svg { width: 58px; height: 20px; display: block; }
+.row-delta { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 700; flex: none; font-variant-numeric: tabular-nums; min-width: 46px; text-align: right; }
+.row-delta.up { color: var(--accent-green); } .row-delta.down { color: var(--accent-red); }
+/* Neutral delta - a value that rounds to zero is not a gain or a loss. Prevents
+   the "-0.0 WAG" (red) negative-zero artifact on grad rows. */
+.row-delta.flat { color: var(--text-tertiary); }
+.fv-pill { font-family: var(--font-retro-mono); font-size: 13px; font-weight: 800; flex: none; padding: 3px 9px; border-radius: var(--radius-sm); background: var(--bg-tertiary); border: 1px solid var(--border); color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.fv-pill.holo { border: 2px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
+.fv-pill.gold { border-color: var(--accent-gold); color: var(--accent-gold); }
+/* Home-module trailing chips (Top Prospects/Recent Graduates FV, Farm grade,
+   Recent Trades FV) get a uniform fixed width + centered value via border-box
+   so every grid column ends in a clean, vertically-aligned chip column. */
+.home-module .row-link .fv-pill { box-sizing: border-box; min-width: 46px; text-align: center; }
+
+/* ---- spotlight prospect (baseball card) ---- */
+.spotlight { display: flex; gap: 14px; align-items: stretch; padding: 14px; border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--bg-secondary); }
+.spotlight.holo { border: 3px solid transparent; background: linear-gradient(var(--bg-secondary),var(--bg-secondary)) padding-box, var(--iridescent) border-box; }
+/* Photo trimmed 96 → 84px: in the 292px sidebar the text column was only
+   ~109px, and the "45 ▲ +15 FV" pill+delta row overflowed it under the wide
+   MS-Gothic metrics, cramping the delta against the card border. */
+.spotlight .sp-photo { width: 84px; height: 128px; flex: none; border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary) center top/cover no-repeat; }
+.spotlight .sp-name { font-family: var(--font-retro-mono); font-size: 1.1rem; font-weight: 700; }
+.spotlight .sp-meta { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+
+/* ---- glossary teaser ---- */
+.glossary-teaser { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); font-family: var(--font-retro-mono); font-size: 13px; }
+.glossary-teaser a { color: var(--accent-navy); font-weight: 700; text-decoration: none; }
+
+/* Glossary + scatterplot teasers share a row. minmax(0,1fr) so the
+   scatter teaser's nowrap sub-line (550px min-content) can't force the
+   track - and the page - past a phone viewport; the ellipsis engages. */
+.teaser-row { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; margin-top: 18px; }
+.teaser-row .glossary-teaser { margin: 0; }
+.scatter-teaser { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border: 1px dashed var(--border); border-radius: var(--radius-sm); background: var(--bg-tertiary); text-decoration: none; color: inherit; }
+.scatter-teaser .st-svg { flex: none; width: 92px; height: 40px; }
+.scatter-teaser .st-svg svg { width: 92px; height: 40px; display: block; }
+.scatter-teaser .st-txt { flex: 1; min-width: 0; display: flex; flex-direction: column; font-family: var(--font-retro-mono); }
+.scatter-teaser .st-txt strong { font-size: 13px; color: var(--text-primary); }
+.scatter-teaser .st-txt span { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.scatter-teaser .st-go { flex: none; font-family: var(--font-retro); font-size: 12px; font-weight: 700; color: var(--accent-navy); }
+
+/* "This Day in Prospect History" module. */
+.otd-module .otd-row { display: flex; align-items: center; gap: 9px; text-decoration: none; padding: 5px 4px; }
+.otd-module .otd-row:hover { background: var(--bg-tertiary); }
+.otd-when { flex: none; font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700; letter-spacing: .04em; color: var(--accent-gold); text-transform: uppercase; white-space: nowrap; }
+.otd-body { flex: 1; min-width: 0; font-family: var(--font-retro); font-size: 14px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.otd-body strong { color: var(--text-primary); }
+/* WAG chip - how the player panned out vs. their grade. Reuses .row-delta
+   coloring (up/down/flat); sits between the body and the "Ny ago" stamp. */
+.otd-wag { flex: none; font-size: 12px; min-width: 0; }
+/* FV chip sits a touch smaller in this dense history row than its default,
+   with a fixed width + centered value so every row's chip lines up as a
+   clean right-hand column (the optional WAG chip sits to its left). */
+.otd-module .fv-pill { font-size: 12px; padding: 2px 7px; min-width: 22px; text-align: center; }
+/* "Trades on this day" sub-block divider + the from->to org logos. */
+.otd-subhead { margin: 10px 4px 2px; font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-tertiary); border-top: 1px solid var(--border-light); padding-top: 10px; }
+.otd-logo { height: 16px; width: 16px; object-fit: contain; vertical-align: middle; flex: none; }
+.otd-arrow { color: var(--text-tertiary); margin: 0 2px; font-size: 11px; }
+
+/* Date-aware upcoming-event callout (draft / signing period). */
+.home-callout { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 8px 14px; margin: 12px 0 0; padding: 9px 16px; border: 1px solid var(--accent-gold); background: color-mix(in srgb, var(--accent-gold) 10%, var(--bg-secondary)); text-decoration: none; color: var(--text-primary); font-family: var(--font-retro-mono); font-size: 13px; }
+.home-callout .cal-tag { font-weight: 700; color: var(--accent-gold); letter-spacing: .08em; text-transform: uppercase; font-size: 10px; flex: none; border: 1px solid color-mix(in srgb, var(--accent-gold) 45%, transparent); padding: 2px 7px; }
+.home-callout .cal-msg { color: var(--text-secondary); } .home-callout .cal-msg strong { color: var(--text-primary); }
+.home-callout .cal-go { font-weight: 700; color: var(--accent-navy); flex: none; }
+.home-callout:hover .cal-go { text-decoration: underline; }
+
+/* ---- responsive ---- */
+@media (max-width: 900px) {
+  .home-shell { grid-template-columns: 1fr; }
+  .home-sidebar { position: static; max-height: none; border-right: 0; border-bottom: 1px solid var(--border); }
+  .home-main { padding: 0 16px 40px; }
+  .module-cols, .lead-story, .secondary-stories { grid-template-columns: 1fr; }
+  .teaser-row { grid-template-columns: minmax(0, 1fr); }
+  .lead-story .lead-img { min-height: 160px; max-height: 240px; }
+  .secondary-stories a { border-left: 0; border-top: 1px solid var(--border); }
+  .sb-subnav { grid-template-columns: 1fr 1fr 1fr; }
+  .row-spark { display: none; }   /* keep the tight mobile row legible */
+}
+
+/* ── Accessibility ────────────────────────────────────────────────────────── */
+/* Visible, on-theme focus ring (sharp, cyan) for keyboard users on the editorial
+   pages + homepage. site.css previously shipped no focus styles, so keyboard
+   focus depended on the UA default; this makes it consistent + on-brand. Loaded
+   by PROSPX too, so it backstops any control there without its own focus style. */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+a:focus-visible, button:focus-visible, input:focus-visible,
+select:focus-visible, [tabindex]:focus-visible, [data-theme-toggle]:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+/* Respect prefers-reduced-motion: stop the homepage wire ticker + blink-dots and
+   neutralize transitions/animations site-wide for users who ask for less motion.
+   Plotted chart curves are static SVG paths, unaffected. */
+@media (prefers-reduced-motion: reduce) {
+  /* Under reduced-motion the global reset below also stills the WIRE marquee
+     (the duplicated track holds a complete, readable set of items when frozen);
+     the sidebar "Prospect Wire" feed is the static accessible equivalent. The
+     pulse-dots are stilled explicitly so they don't hold a half-faded frame. */
+  .home-ticker .ticker-tag .blip, .sb-feed .feed-head .blip { animation: none; }
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Free Agency app (/fa/) ──────────────────────────────────────────────── */
+/* The FA module's own surface - separate from PROSPX by design. Everything is
+   scoped under .fa-app so none of these primitives (chips, detail tables,
+   newsprint eyebrows) leak into PROSPX, which also loads site.css. Tokens
+   only - both themes ride the palette blocks at the top of this file. */
+.eephus-wrap:has(.fa-app) { max-width: 1400px; }   /* 11-col board needs room */
+.fa-app { font-family: var(--font-retro); }
+.fa-app .newsprint-eyebrow {
+  display: flex; align-items: baseline; justify-content: space-between;
+  gap: 12px; padding: 4px 10px 5px; margin: 0 0 8px;
+  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
+  background: linear-gradient(180deg, transparent, var(--bg-secondary));
+  position: relative;
+}
+.fa-app .newsprint-eyebrow::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+  background: var(--iridescent); opacity: 0.85;
+}
+.fa-app .newsprint-eyebrow-label {
+  font-size: 11px; font-weight: 700; letter-spacing: 0.18em;
+  text-transform: uppercase; color: var(--text-tertiary);
+}
+.fa-app .newsprint-eyebrow-meta {
+  font-size: 11px; font-style: italic; color: var(--text-tertiary);
+}
+.fa-app .filter-bar {
+  display: flex; flex-wrap: wrap; gap: 4px; align-items: center;
+  margin-bottom: 8px; padding: 8px 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+.fa-app .filter-label {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--text-tertiary); margin-right: 4px;
+}
+.fa-app button.chip, .fa-app a.chip {
+  font-family: var(--font-retro); font-size: 12px; font-weight: 500;
+  padding: 4px 10px; letter-spacing: 0.02em; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-secondary);
+  color: var(--text-secondary);
+  /* anchors in the chip row (the Glossary link) read EXACTLY like the
+     view chips - same box, no underline, glyph accent (the § the site
+     uses for the glossary module). */
+  text-decoration: none; display: inline-block;
+}
+.fa-app button.chip:hover, .fa-app a.chip:hover {
+  background: var(--bg-tertiary); color: var(--text-primary);
+  border-color: var(--text-tertiary);
+}
+.fa-app a.chip .chip-glyph { color: var(--accent-gold); margin-right: 4px; font-weight: 700; }
+.fa-app button.chip.active {
+  background: var(--bg-secondary); color: var(--text-primary);
+  border-color: var(--accent-gold); font-weight: 700;
+  position: relative; overflow: hidden;
+}
+.fa-app button.chip.active::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: var(--iridescent);
+}
+.fa-app .detail-table {
+  width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono);
+}
+.fa-app .detail-table th, .fa-app .detail-table td {
+  padding: 6px 10px; text-align: center; font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--border-light);
+}
+.fa-app .detail-table thead th {
+  background: var(--bg-tertiary); color: var(--text-primary);
+  font-family: var(--font-retro); font-weight: 700; font-size: 10px;
+  letter-spacing: 0.08em; text-transform: uppercase;
+  border-bottom: 2px solid var(--bg-header);
+  position: sticky; top: 0; z-index: 2;
+}
+/* Sticky headers on the long Projections / Team Outlook boards too (parity with
+   MLB Stats and FA, so the header does not scroll off a long table). */
+.proj-app .detail-table thead th, .proj-app .proj-table thead th {
+  position: sticky; top: 0; z-index: 2; background: var(--bg-secondary);
+}
+.fa-app .detail-table tbody tr:hover { background: var(--bg-tertiary); }
+.fa-app .detail-table td:first-child, .fa-app .detail-table th:first-child { text-align: left; }
+.fa-app .detail-table td:nth-child(2) { text-align: left; }
+.fa-app .fa-dim { opacity: 0.55; }
+.fa-app .fa-sub { color: var(--text-tertiary); font-weight: 400; }
+.fa-app .fa-band { opacity: 0.55; font-size: 0.85em; }
+.fa-app .fa-comps { opacity: 0.55; font-size: 0.85em; }
+.fa-app .fa-note { color: var(--text-secondary); font-size: 0.9em; margin-bottom: 6px; }
+.fa-app h3 { font-family: var(--font-retro-mono); margin: 14px 0 6px; letter-spacing: 0.02em; }
+.fa-app .fa-cba-note {
+  margin-bottom: 8px; padding: 8px 12px; font-size: 12px;
+  color: var(--text-secondary);
+  border: 1px solid var(--accent-gold); border-left-width: 4px;
+  background: var(--bg-secondary);
+}
+.fa-app #fa-rows { overflow-x: auto; }   /* wide board scrolls, never clips */
+.fa-app .state-message {
+  text-align: center; padding: 4rem 1rem; font-size: 14px;
+  color: var(--text-secondary); line-height: 1.5;
+}
+.fa-app .state-message.is-error { color: var(--accent-red); }
+.fa-app .state-message code { font-family: var(--font-retro-mono); font-size: 12px; }
+
+/* ---- shared loading spinner --------------------------------------------
+   Every app surface that paints "Loading …" into a .state-message.is-loading
+   (FA, Projections, Glossary) gets the same ring, matching CollegeSavant's
+   .loader and the GFX export overlay so the loading read is consistent
+   site-wide. The spinner rides ::before; the text sits below it. */
+@keyframes eephus-spin { to { transform: rotate(360deg); } }
+.state-message.is-loading {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+}
+.state-message.is-loading::before {
+  content: ""; width: 32px; height: 32px; box-sizing: border-box;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent-lilac); border-right-color: var(--accent-cyan);
+  border-radius: 0; animation: eephus-spin 0.8s steps(8) infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .state-message.is-loading::before { animation-duration: 2.4s !important; animation-iteration-count: infinite !important; }
+}
+.fa-app .fa-thin { color: var(--accent-gold); cursor: help; }
+.fa-app .fa-stale { color: var(--accent-red); font-weight: 700; }
+.fa-app .fa-sources { margin: 2px 0 8px; font-size: 11px; color: var(--text-tertiary); }
+.fa-app .fa-player-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
+.fa-app .fa-player-link:hover { border-bottom-color: var(--text-tertiary); }
+.fa-app .fa-warpath { display: flex; gap: 6px; align-items: flex-end; height: 90px; padding: 6px 2px; }
+.fa-app .fa-warbar { display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; width: 34px; }
+.fa-app .fa-warbar > div { width: 100%; background: var(--iridescent); opacity: 0.85; }
+.fa-app .fa-warbar > span { font-size: 10px; color: var(--text-tertiary); margin-top: 3px; }
+.fa-app .fa-arc { color: var(--accent-gold); }      /* sparkline stroke/fill = currentColor */
+.fa-app .fa-arc circle { fill: currentColor; }
+.fa-app .fa-fitchips .chip {
+  display: inline-block; font-size: 12px; padding: 4px 10px; margin: 0 4px 4px 0;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary);
+}
+.fa-app .state-message-title { font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+.fa-app .state-message-body { max-width: 60ch; margin: 0 auto; }
+.fa-app .fa-gloss { max-width: 72ch; margin: 0 0 18px; }
+.fa-app .fa-gloss h3 { margin: 0 0 4px; }
+.fa-app .fa-gloss p { margin: 0 0 6px; color: var(--text-secondary); font-size: 0.95rem; }
+.fa-app .fa-gloss .fa-gloss-short { font-weight: 700; color: var(--text-primary); }
+
+/* ── FA v2 - logos, verdict chips, surplus coloring, sortable headers,
+      board rail, season table, fit component bars ─────────────────────── */
+.fa-app .fa-logo { width: 16px; height: 16px; object-fit: contain; vertical-align: -3px;
+  margin-right: 4px; }
+.fa-app .fa-verdict { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.08em; padding: 2px 6px; border: 1px solid var(--border); white-space: nowrap; cursor: help; }
+.fa-app .fa-verdict-value { color: var(--accent-green); border-color: var(--accent-green);
+  background: rgba(31, 122, 58, 0.08); }
+.fa-app .fa-verdict-overpay { color: var(--accent-red); border-color: var(--accent-red);
+  background: rgba(185, 28, 28, 0.08); }
+.fa-app .fa-verdict-market { color: var(--text-secondary); }
+.fa-app .fa-pos { color: var(--accent-green); font-weight: 600; }
+.fa-app .fa-neg { color: var(--accent-red); font-weight: 600; }
+.fa-app th.fa-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.fa-app th.fa-sort:hover { color: var(--text-primary); }
+.fa-app th.fa-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+.fa-app .fa-fitorg { white-space: nowrap; cursor: help; }
+/* FA type tag (UFA vs the option family) + option row accent + filter bar. */
+.fa-app .fa-type {
+  display: inline-block; font-family: var(--font-retro-mono); font-size: 9px;
+  font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 1px 6px; margin-left: 6px; vertical-align: middle; white-space: nowrap;
+  border: 1px solid var(--border);
+}
+.fa-app .fa-type-ufa { color: var(--text-tertiary); background: var(--bg-tertiary); }
+.fa-app .fa-type-opt {
+  color: var(--accent-gold); border-color: var(--accent-gold);
+  background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
+}
+.fa-app .fa-row-opt td:first-child { box-shadow: inset 3px 0 0 var(--accent-gold); }
+.fa-app .fa-filter-bar {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 5px;
+  margin: 8px 0 6px; padding: 8px 10px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.fa-app .fa-filter-count { margin-left: auto; color: var(--text-tertiary); }
+/* FA value map (rational value vs predicted price scatter). */
+.fa-app .fa-valmap { margin: 8px 0 12px; border: 1px solid var(--border); background: var(--bg-secondary); }
+.fa-app .fa-valmap > summary { padding: 8px 12px; cursor: pointer; font-family: var(--font-sans);
+  font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; }
+.fa-app .fa-valmap > summary:hover { color: var(--text-primary); }
+.fa-app .fa-valmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
+.fa-app .fa-valmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
+.fa-app .fa-board-layout { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 14px;
+  align-items: start; }
+.fa-app .fa-board-main { min-width: 0; overflow-x: auto; }
+.fa-app .fa-board-rail { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 8px; }
+.fa-app .fa-rail-mod { border: 1px solid var(--border); background: var(--bg-secondary); padding: 8px 10px; }
+.fa-app .fa-rail-head { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary);
+  margin-bottom: 6px; cursor: help; }
+.fa-app .fa-rail-row { display: flex; align-items: center; gap: 6px; font-size: 11.5px;
+  padding: 2px 0; border-bottom: 1px dotted var(--border-light); }
+.fa-app .fa-rail-row:last-child { border-bottom: 0; }
+.fa-app .fa-rail-row a { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fa-app .fa-rail-num { margin-left: auto; font-family: var(--font-retro-mono); font-size: 11px; white-space: nowrap; }
+.fa-app .fa-year-table td, .fa-app .fa-year-table th { text-align: right; }
+.fa-app .fa-year-table td:first-child, .fa-app .fa-year-table th:first-child { text-align: left; }
+.fa-app .fa-cbar { position: relative; width: 64px; height: 12px; background: var(--bg-tertiary);
+  border: 1px solid var(--border-light); }
+.fa-app .fa-cbar > div { height: 100%; background: var(--accent-cyan); opacity: 0.55; }
+.fa-app .fa-cbar > span { position: absolute; inset: 0; font-size: 9px; line-height: 12px;
+  text-align: center; color: var(--text-primary); font-family: var(--font-retro-mono); }
+.fa-app .fa-block { white-space: nowrap; font-size: 11px; cursor: help; }
+.fa-app .fa-block i { font-style: normal; font-family: var(--font-retro-mono); font-size: 8px;
+  font-weight: 700; letter-spacing: 0.06em; padding: 1px 3px; margin-left: 3px;
+  border: 1px solid var(--border); color: var(--text-tertiary); vertical-align: 1px; }
+.fa-app .fa-block-mlb i { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.fa-app .fa-block-prospect i { border-color: var(--accent-gold); color: var(--accent-gold); }
+@media (max-width: 1100px) {
+  .fa-app .fa-board-layout { grid-template-columns: 1fr; }
+  .fa-app .fa-board-rail { position: static; flex-direction: row; flex-wrap: wrap; }
+  .fa-app .fa-rail-mod { flex: 1 1 200px; }
+}
+
+/* ── MLB Projections (/projections/) - extends .fa-app ─────────────────── */
+/* Players view gets a RIGHT info rail (scope + leaders): main first, rail second. */
+/* ---- MLB Stats module (/mlbstats/): Bullpen Leaderboards ------------------ */
+.mlbstats-app { font-family: var(--font-retro); }
+/* Top-level section nav (Bullpen Leaderboards ...; grows over time). */
+.mlbstats-sectionnav { display: flex; gap: 4px; flex-wrap: wrap; margin: 14px 0 6px; }
+.mlbstats-sectionbtn {
+  font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  color: var(--text-secondary); background: var(--bg-secondary);
+  border: 1px solid var(--border); padding: 8px 14px; border-radius: 0;
+}
+.mlbstats-sectionbtn:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.mlbstats-sectionbtn.active { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+/* Sub-tabs within Bullpen Leaderboards (Relievers / Team Bullpens / Depth Charts). */
+.mlbstats-tabs { display: flex; gap: 2px; flex-wrap: wrap; margin: 14px 0 10px; border-bottom: 1px solid var(--border); }
+.mlbstats-tab {
+  font-family: var(--font-retro-mono); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; color: var(--text-tertiary);
+  background: transparent; border: 0; border-bottom: 2px solid transparent;
+  padding: 8px 12px;
+}
+.mlbstats-tab:hover { color: var(--text-primary); }
+.mlbstats-tab.active { color: var(--text-primary); border-bottom-color: var(--accent-gold); }
+/* Season selector pills (yearly history board) - a compact row above the table. */
+.mlbstats-seasons { display: flex; flex-wrap: wrap; gap: 5px; margin: 4px 0 10px; }
+.mlbstats-season {
+  font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: .03em; cursor: pointer; color: var(--text-tertiary);
+  background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 999px;
+  padding: 3px 11px;
+}
+.mlbstats-season:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+.mlbstats-season.active { color: var(--bg-primary); background: var(--accent-gold); border-color: var(--accent-gold); }
+.mlbstats-note { font-size: 11px; color: var(--text-tertiary); margin: 6px 0 12px; }
+.mlbstats-empty { padding: 28px 16px; text-align: center; color: var(--text-tertiary);
+  font-family: var(--font-retro-mono); font-size: 12px; border: 1px dashed var(--border); }
+.mlbstats-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.mlbstats-app .proj-dim { color: var(--text-tertiary); opacity: .65; font-size: 10px; font-family: var(--font-retro-mono); }
+/* shared MLB team logo (ESPN), used across the MLB modules */
+.eephus-teamlogo { width: 17px; height: 17px; object-fit: contain; vertical-align: -4px; margin-right: 5px; }
+.pal-mix-card .eephus-teamlogo, .bp-depth-team .eephus-teamlogo { width: 15px; height: 15px; }
+.pal-mix-card h4 .eephus-teamlogo { width: 15px; height: 15px; }
+/* inline SVG charts (histograms + scatters) shared across the MLB modules */
+.mlbstats-viz { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 12px 0 16px; }
+@media (max-width: 820px) { .mlbstats-viz { grid-template-columns: 1fr; } }
+.mlbstats-viz-cell { border: 1px solid var(--border); background: var(--bg-secondary); padding: 10px 12px; min-width: 0; }
+.mlbstats-viz-h { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-secondary); margin-bottom: 8px; }
+.eephus-chart { display: block; width: 100%; height: auto; }
+/* collapsible chart panels (shared by /mlbstats/ + /pal/): charts default
+   collapsed and the header row is the toggle. */
+.mlbstats-collapse { border: 1px solid var(--border); background: var(--bg-secondary); margin: 12px 0 16px; }
+.mlbstats-collapse-head { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left;
+  font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--text-secondary); background: none; border: 0;
+  padding: 9px 12px; cursor: pointer; }
+.mlbstats-collapse-head:hover { color: var(--text-primary); }
+.mlbstats-collapse-caret { flex: none; width: 0; height: 0; border-left: 5px solid currentColor;
+  border-top: 4px solid transparent; border-bottom: 4px solid transparent; transition: transform .12s ease; }
+.mlbstats-collapse:not(.is-collapsed) .mlbstats-collapse-caret { transform: rotate(90deg); }
+.mlbstats-collapse-body { padding: 0 12px 12px; }
+.mlbstats-collapse.is-collapsed .mlbstats-collapse-body { display: none; }
+.mlbstats-collapse .mlbstats-viz { margin: 0; }
+.mlbstats-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 8px 0 12px; }
+.mlbstats-bar input, .mlbstats-bar select {
+  font-family: var(--font-retro-mono); font-size: 12px; padding: 6px 9px;
+  background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border);
+}
+.mlbstats-bar .mlbstats-search { margin-left: auto; min-width: 180px; }
+/* Leaderboard table - terminal/scoreboard treatment, tabular numerics. */
+.mlbstats-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+.mlbstats-table th, .mlbstats-table td { padding: 6px 9px; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+.mlbstats-table th { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary); text-align: right;
+  cursor: pointer; user-select: none; position: sticky; top: 0; background: var(--bg-secondary); }
+.mlbstats-table th:first-child, .mlbstats-table td:first-child { text-align: left; }
+.mlbstats-table th.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+.mlbstats-table td { text-align: right; font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.mlbstats-table td.mlbstats-name { text-align: left; font-family: var(--font-retro); max-width: 260px;
+  overflow: hidden; text-overflow: ellipsis; }
+/* Clickable leaderboard names -> the merged /projections/ MLB player card. */
+.mlbstats-name-link { color: var(--text-primary); text-decoration: none; border-bottom: 1px dotted var(--border); }
+.mlbstats-name-link:hover { border-bottom-color: var(--text-tertiary); color: var(--neon-cyan); }
+.mlbstats-table tbody tr:hover { background: var(--bg-tertiary); }
+.mlbstats-table tr.is-provisional td { opacity: .82; }
+/* REM+ / Bullpen+ index coloring (100 = average; thresholds mirror the +stat read). */
+.rem-plus { font-weight: 700; cursor: help; }
+.rem-elite { color: var(--accent-cyan); }
+.rem-good { color: var(--accent-green); }
+.rem-avg { color: var(--text-primary); }
+.rem-low { color: var(--text-tertiary); }
+.bp-pos { color: var(--accent-green); }
+.bp-neg { color: var(--accent-red); }
+.bp-prov { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700; color: var(--accent-orange);
+  border: 1px solid var(--accent-orange); padding: 1px 3px; margin-left: 5px; vertical-align: middle; }
+.bp-role { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700; letter-spacing: .03em;
+  text-transform: uppercase; color: var(--text-secondary); border: 1px solid var(--border); padding: 1px 5px; }
+/* Bullpen depth charts: a leverage ladder per team. */
+.bp-depth-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+.bp-depth-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
+.bp-depth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px;
+  margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+.bp-depth-team { font-family: var(--font-retro-mono); font-weight: 700; font-size: 13px; }
+.bp-slot { display: grid; grid-template-columns: 92px 1fr auto; gap: 8px; align-items: center; padding: 4px 0;
+  font-size: 12px; }
+.bp-slot .bp-slot-role { color: var(--text-tertiary); font-family: var(--font-retro-mono); font-size: 9px;
+  text-transform: uppercase; letter-spacing: .03em; }
+.bp-slot .bp-slot-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bp-slot .bp-slot-rem { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; font-weight: 700; }
+.bp-slot .bp-slot-adv { color: var(--accent-green, #1F7A3A); font-size: 9px; margin-left: 5px; vertical-align: middle; }
+/* Bench bats: clearly separated from the constructed nine. */
+.bp-bench-head { margin: 8px 0 2px; padding-top: 6px; border-top: 1px dashed var(--border);
+  font-family: var(--font-retro-mono); font-size: 9px; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--text-tertiary); }
+.bp-slot--bench { opacity: .72; }
+/* ---- Pitcher Alchemy Lab (/pal/) - reuses .mlbstats-* tables ------------- */
+.pal-fit { font-weight: 700; cursor: help; font-variant-numeric: tabular-nums; }
+.pal-hi { color: var(--accent-cyan); }
+.pal-good { color: var(--accent-green); }
+.pal-mid { color: var(--text-primary); }
+.pal-lo { color: var(--text-tertiary); }
+.pal-flag { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase; padding: 1px 4px; margin-left: 4px; border: 1px solid var(--border);
+  color: var(--text-secondary); white-space: nowrap; vertical-align: middle; }
+.pal-flag--warn { color: var(--accent-orange); border-color: var(--accent-orange); }
+.pal-flag--good { color: var(--accent-green); border-color: var(--accent-green); }
+.pal-expand { cursor: pointer; }
+.pal-expand::before { content: "\25B8"; font-size: 9px; color: var(--text-tertiary); margin-right: 5px; }
+tr.is-open .pal-expand::before { content: "\25BE"; }
+/* the "why" panel: component bars + arsenal breakdown */
+.pal-why { background: var(--bg-secondary); border-top: 1px solid var(--border); padding: 12px 14px; }
+.pal-why-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+@media (max-width: 720px) { .pal-why-grid { grid-template-columns: 1fr; } }
+.pal-why h4 { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--text-tertiary); margin: 0 0 6px; }
+.pal-comp { display: grid; grid-template-columns: 130px 1fr 34px; gap: 8px; align-items: center;
+  font-size: 11px; margin: 3px 0; }
+.pal-comp-label { color: var(--text-secondary); font-family: var(--font-retro-mono); }
+.pal-bar { height: 7px; background: var(--bg-tertiary); border: 1px solid var(--border); position: relative; }
+.pal-bar > span { position: absolute; left: 0; top: 0; bottom: 0; background: var(--accent-gold); }
+.pal-comp-val { text-align: right; font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums;
+  color: var(--text-primary); }
+/* arsenal usage bars (also used by the pitch-mix before/after) */
+.pal-ars-row { display: grid; grid-template-columns: 44px 1fr auto; gap: 8px; align-items: center;
+  font-size: 11px; margin: 2px 0; font-family: var(--font-retro-mono); }
+.pal-ars-row .pal-ars-pitch { color: var(--text-secondary); }
+.pal-ars-row .pal-bar > span { background: var(--accent-cyan); }
+.pal-ars-row .pal-ars-meta { color: var(--text-tertiary); white-space: nowrap; }
+/* direction + outcome badges (Conversion History) */
+.pal-dir { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700; letter-spacing: .03em;
+  border: 1px solid var(--border); padding: 1px 6px; color: var(--text-secondary); white-space: nowrap; }
+.pal-hit { color: var(--accent-green); font-weight: 700; }
+.pal-miss { color: var(--accent-red); font-weight: 700; }
+.pal-pending { color: var(--text-tertiary); }
+/* direction-colored conversion chips: RP->SP is the value-additive move (prominent
+   cyan), SP->RP is the muted salvage direction (orange). */
+.pal-dir--rp2sp { color: var(--accent-cyan); border-color: var(--accent-cyan); }
+.pal-dir--sp2rp { color: var(--accent-orange); border-color: var(--accent-orange); opacity: .85; }
+/* conversion candidate TIER titles (under the FIT number in the candidate table) */
+.pal-tier { font-family: var(--font-retro-mono); font-size: 8.5px; font-weight: 700; letter-spacing: .02em;
+  text-transform: uppercase; margin-top: 3px; white-space: nowrap; color: var(--text-tertiary); }
+.pal-tier--rp2sp { color: var(--accent-cyan); }
+.pal-tier--sp2rp { color: var(--accent-orange); }
+.pal-tier-legend { font-size: 10.5px; color: var(--text-tertiary); margin: 0 0 12px;
+  padding: 7px 10px; border: 1px dashed var(--border); background: var(--bg-secondary); }
+.pal-tier-legend b { color: var(--text-secondary); }
+/* backtest scorecard banner */
+.pal-scorecard, .mlbstats-scorecard { display: flex; flex-wrap: wrap; gap: 18px; align-items: baseline; padding: 10px 14px;
+  border: 1px solid var(--border); background: var(--bg-secondary); margin: 8px 0 12px; }
+.pal-scorecard .pal-sc-stat, .mlbstats-scorecard .pal-sc-stat { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; }
+.pal-scorecard .pal-sc-stat b, .mlbstats-scorecard .pal-sc-stat b { font-size: 16px; color: var(--text-primary); }
+.pal-scorecard .pal-sc-note, .mlbstats-scorecard .pal-sc-note { flex: 1 1 320px; font-size: 10.5px; color: var(--text-tertiary); }
+/* positive accountability affordance: a validated model should advertise it */
+.bp-validated { font-family: var(--font-retro-mono); font-size: 9.5px; letter-spacing: .04em;
+  text-transform: uppercase; color: var(--accent-cyan); border: 1px solid var(--accent-cyan);
+  padding: 1px 6px; border-radius: 2px; }
+.pal-mix-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+.pal-mix-card { border: 1px solid var(--border); background: var(--bg-secondary); padding: 12px; }
+.pal-mix-card h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.pal-mix-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.proj-app .fa-board-layout { grid-template-columns: minmax(0, 1fr) 230px; }
+@media (max-width: 1100px) {
+  .proj-app .fa-board-layout { grid-template-columns: 1fr; }
+}
+.proj-app .proj-select, .proj-app .proj-search { font-family: var(--font-retro-mono);
+  font-size: 12px; padding: 4px 8px; background: var(--bg-secondary);
+  border: 1px solid var(--border); color: var(--text-primary); }
+.proj-app .proj-search { margin-left: auto; min-width: 180px; }
+.proj-app th.proj-sort { cursor: pointer; user-select: none; white-space: nowrap; }
+.proj-app th.proj-sort:hover { color: var(--text-primary); }
+.proj-app th.proj-sort.is-sorted { color: var(--text-primary); border-bottom: 2px solid var(--accent-gold); }
+.proj-app .proj-player { white-space: nowrap; max-width: 320px; overflow: hidden; text-overflow: ellipsis; }
+.proj-app .proj-war { font-family: var(--font-retro-mono); font-variant-numeric: tabular-nums; cursor: help; }
+.proj-app .proj-war-elite { color: var(--accent-cyan); font-weight: 700; }
+.proj-app .proj-war-good { color: var(--accent-green); font-weight: 600; }
+.proj-app .proj-war-avg { color: var(--text-primary); }
+.proj-app .proj-war-low { color: var(--text-tertiary); }
+.proj-app .proj-dim { color: var(--text-tertiary); opacity: 0.6; font-size: 10px;
+  font-family: var(--font-retro-mono); }
+.proj-app .proj-pos { color: var(--accent-green); font-weight: 600; }
+.proj-app .proj-neg { color: var(--accent-red); font-weight: 600; }
+.proj-app .proj-tag { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.06em; padding: 1px 4px; border: 1px solid var(--border);
+  color: var(--text-tertiary); white-space: nowrap; cursor: help; }
+/* Contract control status tag (Signed / Expiring / Cost-controlled / Prospect). */
+.proj-app .proj-ct { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.04em; padding: 1px 6px; border: 1px solid var(--border);
+  white-space: nowrap; cursor: help; }
+.proj-app .proj-ct-signed { color: var(--accent-green); border-color: var(--accent-green);
+  background: color-mix(in srgb, var(--accent-green) 12%, transparent); }
+.proj-app .proj-ct-expiring { color: var(--accent-gold); border-color: var(--accent-gold);
+  background: color-mix(in srgb, var(--accent-gold) 12%, transparent); }
+.proj-app .proj-ct-controlled { color: var(--accent-navy); border-color: var(--accent-navy);
+  background: color-mix(in srgb, var(--accent-navy) 12%, transparent); }
+.proj-app .proj-ct-prospect { color: var(--text-tertiary); background: var(--bg-tertiary); }
+/* Projections talent-by-age scatter. */
+.proj-app .proj-warmap { margin: 8px 0 12px; border: 1px solid var(--border); background: var(--bg-secondary); }
+.proj-app .proj-warmap > summary { padding: 8px 12px; cursor: pointer; font-family: var(--font-sans);
+  font-size: 12px; font-weight: 700; color: var(--text-secondary); letter-spacing: 0.04em; }
+.proj-app .proj-warmap > summary:hover { color: var(--text-primary); }
+.proj-app .proj-warmap-wrap { padding: 4px 12px 12px; overflow-x: auto; }
+.proj-app .proj-warmap-svg { width: 100%; max-width: 760px; height: auto; display: block; margin: 0 auto; }
+.proj-app .proj-tag-prospect { border-color: var(--accent-gold); color: var(--accent-gold); }
+
+@media (max-width: 720px) {
+  .fa-app .detail-table th, .fa-app .detail-table td { padding: 4px 6px; font-size: 11px; }
+  .fa-app button.chip { padding: 3px 8px; font-size: 11px; }
+  /* Wide board tables scroll inside their own box on phones instead of
+     dragging the whole page sideways. */
+  .fa-app .detail-table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+}
+
+/* ── GLOSSARY-PORT (generated; .gl-app-scoped prospx styles) ─────────── */
+.gl-app {
+  --font-sans: var(--font-retro); --font-serif: var(--font-retro);
+  --font-mono: var(--font-retro-mono); --font-retro-mono: var(--font-retro-mono);
+  --neon-cyan: var(--accent-cyan); --neon-amber: var(--accent-gold);
+  --neon-violet: #b47cff; --neon-orange: var(--accent-red);
+  --up: var(--accent-green); --down: var(--accent-red);
+  --radius-sm: 0; --radius-md: 0; --radius-lg: 0;
+  font-family: var(--font-retro);
+}
+.gl-app .gl-card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.gl-app .gl-fullname { font-size: 13px; color: var(--text-secondary); }
+.gl-app .gl-badges { margin-left: auto; display: inline-flex; gap: 4px; }
+.gl-app .gl-mod { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; padding: 2px 5px; border: 1px solid var(--border); color: var(--text-tertiary); }
+.gl-app .gl-mod--fa { border-color: var(--accent-gold); }
+.gl-app .gl-mod--prospx { border-color: var(--accent-cyan); }
+.gl-app .gl-shelf { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; padding: 2px 5px; border: 1px solid var(--border); }
+.gl-app .gl-shelf--ark { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.gl-app .gl-shelf--industry { border-color: var(--text-tertiary); color: var(--text-tertiary); }
+.gl-app .gl-shelf--foundation { border-color: var(--border); color: var(--text-tertiary); opacity: 0.85; }
+.gl-app .gl-origin { font-size: 11px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.45; }
+.gl-app .gl-def { margin-top: 4px; font-size: 12.5px; color: var(--text-primary); line-height: 1.45; }
+.gl-app .gl-meth p { margin: 0 0 8px; font-size: 12px; color: var(--text-secondary); line-height: 1.55; }
+.gl-app .gl-example { font-size: 11.5px; color: var(--text-secondary); font-style: italic; margin-top: 6px; }
+.gl-app .gl-microlabel { font-style: normal; color: var(--text-tertiary); font-size: 9px;
+  letter-spacing: 0.08em; text-transform: uppercase; font-weight: 600; }
+.gl-app .gl-relrow { margin-top: 8px; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+.gl-app .gl-rel { font-family: var(--font-retro-mono); font-size: 10px; color: var(--accent-cyan);
+  text-decoration: none; border: 1px solid var(--border-light); padding: 2px 8px; }
+.gl-app .gp-more summary { cursor: pointer; font-size: 10px; color: var(--text-tertiary);
+  letter-spacing: 0.06em; text-transform: uppercase; font-weight: 600; list-style: none; user-select: none; }
+.gl-app .gp-more-body { margin-top: 6px; }
+.gl-app .glossary-visual { padding: 10px 12px; border: 1px solid var(--border-light);
+  background: var(--bg-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.gl-app #gl-az { display: flex; flex-wrap: wrap; gap: 2px; font-family: var(--font-retro-mono);
+  font-size: 11px; margin: 6px 0 10px; }
+.gl-app #gl-az a, .gl-app #gl-az span { padding: 2px 5px; text-decoration: none; color: var(--text-secondary); }
+.gl-app #gl-az a:hover { color: var(--text-primary); background: var(--bg-tertiary); }
+.gl-app .gl-az-off { opacity: 0.3; }
+.gl-app .gl-count { color: var(--text-tertiary); font-size: 10px; margin-left: 3px; }
+/* Two-column flow so the intro fills the page width on wide screens (instead of
+   stopping mid-page) while each column stays a readable ~65ch; collapses to one
+   column below ~880px. */
+.gl-app .gl-intro { columns: 2 420px; column-gap: 40px; }
+.gl-app .gl-intro p { break-inside: avoid; font-size: 13px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 12px; }
+.gl-app .state-message { text-align: center; padding: 3rem 1rem; color: var(--text-secondary); }
+.gl-app input.gl-search { width: 100%; max-width: 460px; padding: 7px 10px; font-family: var(--font-retro-mono);
+  font-size: 13px; background: var(--bg-secondary); border: 1px solid var(--border); color: var(--text-primary); }
+.gl-app .filter-bar { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 8px 0;
+  padding: 8px 10px; background: var(--bg-secondary); border: 1px solid var(--border); }
+.gl-app button.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; cursor: pointer;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
+.gl-app button.chip.active { color: var(--text-primary); border-color: var(--accent-gold); font-weight: 700; }
+/* Outbound link styled as a chip (Data Sources & Attribution) - navigates to a
+   separate page rather than toggling a view, so it never carries .active. */
+.gl-app a.chip { font-family: var(--font-retro); font-size: 12px; padding: 4px 10px; text-decoration: none;
+  border: 1px solid var(--border); background: var(--bg-secondary); color: var(--text-secondary); }
+.gl-app a.chip.gl-chip-out { margin-left: auto; }
+.gl-app a.chip:hover { color: var(--text-primary); border-color: var(--accent-gold); }
+/* === Models & Proofs view === */
+/* Verdict pill: theme-aware via the shared accent tokens, so it reads on both
+   the light cream and the dark refractor themes. */
+.gl-app .gl-verdict { font-family: var(--font-retro-mono); font-size: 8px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; padding: 2px 6px; border: 1px solid var(--border);
+  color: var(--text-tertiary); white-space: nowrap; }
+.gl-app .gl-verdict--validated { color: var(--accent-green); border-color: var(--accent-green); }
+.gl-app .gl-verdict--provisional { color: var(--accent-gold); border-color: var(--accent-gold); }
+.gl-app .gl-verdict--unvalidated { color: var(--accent-red); border-color: var(--accent-red); }
+.gl-app .gl-verdict--deprecated { color: var(--text-tertiary); border-color: var(--border); opacity: 0.85; }
+.gl-app .gl-model-summary { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+  color: var(--text-primary); margin: 8px 0; }
+.gl-app .gl-model-filters { margin-top: 6px; }
+.gl-app .gl-model-group { margin: 16px 0; }
+.gl-app .gl-model-grouphead { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-secondary);
+  border-bottom: 1px solid var(--border); padding-bottom: 4px; margin-bottom: 8px; }
+.gl-app .gl-model-card { border: 1px solid var(--border-light); background: var(--bg-secondary); margin: 5px 0; }
+.gl-app .gl-model-head { cursor: pointer; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  padding: 8px 11px; list-style: none; user-select: none; }
+.gl-app .gl-model-head::-webkit-details-marker { display: none; }
+.gl-app .gl-model-head::marker { content: ""; }
+.gl-app .gl-model-card[open] > .gl-model-head { border-bottom: 1px solid var(--border-light); }
+.gl-app .gl-model-name { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+.gl-app .gl-model-surface { font-family: var(--font-retro-mono); font-size: 10px; color: var(--text-tertiary);
+  margin-left: auto; text-align: right; }
+.gl-app .gl-model-body { padding: 6px 11px 11px; }
+.gl-app .gl-model-row { display: grid; grid-template-columns: 160px 1fr; gap: 12px; padding: 6px 0;
+  border-bottom: 1px dotted var(--border-light); font-size: 12px; }
+.gl-app .gl-model-row:last-child { border-bottom: 0; }
+.gl-app .gl-model-rowlabel { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary); }
+.gl-app .gl-model-rowval { color: var(--text-secondary); line-height: 1.5; min-width: 0; word-break: break-word; }
+.gl-app .gl-model-rowval a { color: var(--accent-cyan); }
+/* Report Card v0: inline champion-vs-baseline proof bars */
+.gl-app .gl-card-proof { margin: 2px 0 10px; padding: 8px 10px; border: 1px solid var(--border-light);
+  background: var(--bg-primary); }
+.gl-app .gl-card-metric { margin-bottom: 8px; }
+.gl-app .gl-card-metric:last-of-type { margin-bottom: 0; }
+.gl-app .gl-card-metriclab { font-size: 11.5px; color: var(--text-primary); margin-bottom: 4px; }
+.gl-app .gl-card-dir { color: var(--text-tertiary); font-size: 10px; }
+.gl-app .gl-card-barrow { display: grid; grid-template-columns: 62px 1fr 46px; align-items: center;
+  gap: 8px; margin: 2px 0; }
+.gl-app .gl-card-barlab { font-family: var(--font-retro-mono); font-size: 9px; letter-spacing: 0.04em;
+  color: var(--text-tertiary); text-align: right; }
+.gl-app .gl-card-track { height: 9px; background: var(--bg-secondary); border: 1px solid var(--border-light); }
+.gl-app .gl-card-fill { display: block; height: 100%; background: var(--text-tertiary); }
+.gl-app .gl-card-fill--champ { background: var(--accent-cyan); }
+.gl-app .gl-card-barval { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary);
+  text-align: left; }
+.gl-app .gl-card-foot { font-family: var(--font-retro-mono); font-size: 9px; color: var(--text-tertiary);
+  margin-top: 6px; letter-spacing: 0.04em; }
+@media (max-width: 640px) {.gl-app .gl-model-row { grid-template-columns: 1fr; gap: 2px; }.gl-app .gl-model-surface { margin-left: 0; text-align: left; flex-basis: 100%; }
+    }
+.gl-app /* === How to Read the Site (guide) === */
+    .guide-wrap { max-width: 900px; }
+.gl-app .guide-intro { font-family: var(--font-serif); font-size: 14px; line-height: 1.6;
+      color: var(--text-secondary); margin: 2px 0 8px; }
+.gl-app .guide-anat { display: flex; flex-direction: column; gap: 0; margin: 6px 0 4px;
+      border: 1px solid var(--border); }
+.gl-app .guide-anat-row { display: flex; align-items: flex-start; gap: 14px; padding: 11px 14px;
+      border-bottom: 1px solid var(--border-light); }
+.gl-app .guide-anat-row:last-child { border-bottom: 0; }
+.gl-app .guide-anat-row:nth-child(odd) { background: var(--bg-secondary); }
+.gl-app .guide-anat-vis { flex: 0 0 130px; display: flex; align-items: center; min-height: 24px; }
+.gl-app .guide-anat-txt { flex: 1 1 auto; min-width: 0; }
+.gl-app .guide-anat-term { font-family: var(--font-mono); font-size: 13px; font-weight: 700;
+      color: var(--text-primary); margin-bottom: 2px; }
+.gl-app .guide-anat-plain { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); }
+.gl-app .arch-flow { display: flex; flex-wrap: wrap; align-items: stretch; gap: 8px;
+      margin: 8px 0 18px; }
+.gl-app .arch-stage { border: 1px solid var(--border); background: var(--bg-secondary);
+      padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.gl-app .arch-stage-label { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+.gl-app .arch-node { border: 1px solid var(--border-light); background: var(--bg-primary);
+      padding: 6px 9px; font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-primary); display: flex; flex-direction: column; }
+.gl-app .arch-node-sub { font-family: var(--font-sans); font-size: 9px; font-weight: 500;
+      letter-spacing: 0.02em; color: var(--text-tertiary); margin-top: 1px; }
+.gl-app .arch-node-col { display: flex; flex-direction: column; gap: 5px; }
+.gl-app .arch-arrow { display: flex; align-items: center; color: var(--neon-cyan);
+      font-size: 18px; font-weight: 700; }
+@media (max-width: 640px) {.gl-app .arch-flow { flex-direction: column; align-items: stretch; }.gl-app .arch-arrow { justify-content: center; transform: rotate(90deg); height: 18px; }.gl-app .guide-anat-vis { flex-basis: 96px; }
+    }
+.gl-app /* === Interactive teaching widgets (Part 5) === */
+    .gx-card { border: 1px solid var(--border); background: var(--bg-secondary);
+      margin: 10px 0 14px; max-width: 860px; }
+.gl-app .gx-card-title { font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.02em; color: var(--text-primary); padding: 9px 14px;
+      border-bottom: 1px solid var(--border); background: var(--bg-primary); }
+.gl-app .gx-card-body { padding: 14px; }
+.gl-app .gx-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: start; }
+.gl-app .gx-label { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary);
+      display: block; margin-bottom: 6px; }
+.gl-app .gx-label b { color: var(--neon-cyan); font-size: 14px; }
+.gl-app .gx-range { width: 100%; accent-color: var(--neon-cyan); cursor: pointer; }
+.gl-app .gx-range-sm { width: 90px; vertical-align: middle; }
+.gl-app .gx-num { font-family: var(--font-mono); font-size: 12px; background: var(--bg-primary);
+      color: var(--text-primary); border: 1px solid var(--border); padding: 3px 6px; width: 56px; }
+.gl-app .gx-out { font-family: var(--font-mono); font-size: 12px; color: var(--text-secondary); }
+.gl-app .gx-out-inline { display: inline-flex; gap: 14px; flex-wrap: wrap; }
+.gl-app .gx-out-big { font-family: var(--font-mono); font-size: 30px; font-weight: 800;
+      color: var(--neon-cyan); line-height: 1; margin-bottom: 8px; }
+.gl-app .gx-out-big .gx-out-sub { font-size: 12px; font-weight: 500; color: var(--text-tertiary); }
+.gl-app .gx-out-row { display: flex; justify-content: space-between; gap: 12px;
+      padding: 4px 0; border-bottom: 1px dotted var(--border-light); max-width: 280px; }
+.gl-app .gx-out-row b { color: var(--text-primary); }
+.gl-app .gx-srcs { display: flex; flex-direction: column; gap: 6px; }
+.gl-app .gx-src-row { display: grid; grid-template-columns: 1.2fr 1fr 1.4fr; gap: 10px; align-items: center;
+      font-family: var(--font-mono); font-size: 12px; padding: 4px 0; }
+.gl-app .gx-src-name { font-weight: 700; color: var(--text-primary); }
+.gl-app .gx-src-lab { color: var(--text-tertiary); display: flex; align-items: center; gap: 5px; }
+.gl-app .gx-steps .gx-step { display: grid; grid-template-columns: 18px 1fr auto; gap: 8px; align-items: baseline;
+      padding: 4px 0; border-bottom: 1px dotted var(--border-light); }
+.gl-app .gx-step-n { font-family: var(--font-mono); font-size: 10px; font-weight: 700; color: var(--text-tertiary);
+      text-align: center; border: 1px solid var(--border-light); border-radius: var(--radius-sm); }
+.gl-app .gx-step-t { color: var(--text-secondary); }
+.gl-app .gx-step-v { font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.gl-app .gx-step-sum .gx-step-n { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+.gl-app .gx-step-sum .gx-step-v { color: var(--neon-cyan); }
+.gl-app .gx-surplus-final { margin-top: 10px; padding-top: 8px; border-top: 2px solid var(--border);
+      font-family: var(--font-mono); font-size: 13px; color: var(--text-secondary); }
+.gl-app .gx-surplus-final b { font-size: 18px; color: var(--up); margin-left: 6px; }
+.gl-app .gx-surplus-note { font-family: var(--font-serif); font-size: 11px; font-style: italic;
+      color: var(--text-tertiary); margin-top: 5px; line-height: 1.45; }
+@media (max-width: 640px) {.gl-app .gx-2col { grid-template-columns: 1fr; }.gl-app .gx-src-row { grid-template-columns: 1fr 1fr; } }
+.gl-app /* === Methodology & Track Record === */
+    /* Source Comparison - visually set apart as the empirical "does it work?"
+       data area: framed panel + a data-tone eyebrow so it reads distinct from
+       the methodology prose. Sharp corners (site standard). */
+    .source-comp-wrap { border: 1px solid var(--border); border-left: 3px solid var(--neon-cyan);
+      background: var(--bg-secondary); padding: 14px 18px 20px; margin-top: 4px; }
+[data-theme="dark"] .gl-app .source-comp-wrap { background: rgba(78, 224, 255, 0.035); }
+.gl-app .source-comp-eyebrow { display: inline-flex; align-items: center; gap: 7px;
+      font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--text-tertiary);
+      margin-bottom: 6px; }
+.gl-app .source-comp-eyebrow .scx-dot { width: 7px; height: 7px; background: var(--neon-cyan);
+      border-radius: var(--radius-sm); box-shadow: 0 0 6px var(--neon-cyan); }
+/* Source-comparison HERO verdict banner - leads the page with the headline result. */
+.gl-app .source-comp-hero { border: 1px solid var(--neon-cyan); border-radius: var(--radius-sm);
+      background: linear-gradient(180deg, rgba(78,224,255,0.06), transparent);
+      padding: 18px 20px 20px; margin: 6px 0 22px; }
+.gl-app .source-comp-hero-kicker { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--neon-cyan); margin-bottom: 8px; }
+.gl-app .source-comp-hero-title { font-family: var(--font-retro-mono); font-size: clamp(19px, 2.4vw, 26px);
+      line-height: 1.2; font-weight: 800; color: var(--text-primary); margin: 0 0 10px; letter-spacing: 0.01em; }
+.gl-app .source-comp-hero-title em { font-style: italic; color: var(--neon-cyan); }
+.gl-app .source-comp-hero-lede { max-width: 820px; font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 14px; }
+.gl-app .source-comp-hero-tiles { margin: 0 0 12px; }
+.gl-app .source-comp-hero-tiles .scx-hero-efv { border-color: var(--neon-cyan); box-shadow: 0 0 0 1px var(--neon-cyan) inset; }
+.gl-app .source-comp-hero-tiles .scx-hero-efv .meth-find-stat { color: var(--neon-cyan); }
+.gl-app .source-comp-hero-foot { max-width: 820px; font-size: 11.5px; line-height: 1.5; color: var(--text-tertiary); margin: 0; font-style: italic; }
+.gl-app .meth-prose { max-width: 860px; margin-bottom: 22px; }
+.gl-app .meth-eq { font-family: var(--font-retro-mono); font-size: 13px; color: var(--text-primary);
+      background: var(--bg-secondary); border-left: 3px solid var(--neon-cyan);
+      padding: 9px 13px; margin: 8px 0 12px; max-width: 860px; line-height: 1.5; }
+.gl-app .meth-cmp { border-collapse: collapse; width: 100%; max-width: 860px; margin: 6px 0 16px;
+      font-family: var(--font-sans); font-size: 13px; }
+.gl-app .meth-cmp th { text-align: left; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--text-tertiary); border-bottom: 2px solid var(--border); padding: 6px 9px; }
+.gl-app .meth-cmp td { border-bottom: 1px solid var(--border-light); padding: 7px 9px; vertical-align: top;
+      color: var(--text-secondary); line-height: 1.45; }
+.gl-app .meth-cmp td:first-child { font-family: var(--font-mono); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.gl-app .meth-refs { max-width: 860px; margin: 4px 0 12px; padding-left: 18px; }
+.gl-app .meth-refs li { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin-bottom: 5px; }
+.gl-app .meth-changelog { list-style: none; padding: 0; margin: 4px 0 12px; max-width: 860px; }
+.gl-app .meth-changelog li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); padding: 6px 0 6px 0; border-bottom: 1px dotted var(--border-light);
+      display: grid; grid-template-columns: 64px 1fr; gap: 12px; }
+.gl-app .meth-changelog .mc-date { font-family: var(--font-retro-mono); font-size: 11px; font-weight: 700;
+      color: var(--neon-cyan); letter-spacing: 0.02em; }
+.gl-app .meth-eg-card { border: 1px solid var(--border); border-left: 3px solid var(--neon-amber);
+      background: var(--bg-secondary); padding: 11px 14px; margin: 8px 0 14px; max-width: 860px; }
+.gl-app .meth-eg-title { font-family: var(--font-retro-mono); font-size: 10px; font-weight: 700;
+      letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); margin-bottom: 7px; }
+.gl-app .meth-eg-row { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); padding: 4px 0; }
+.gl-app .meth-eg-row b { color: var(--text-primary); }
+.gl-app .meth-eg-note { font-family: var(--font-serif); font-size: 11px; font-style: italic;
+      color: var(--text-tertiary); margin-top: 5px; }
+.gl-app .meth-toolbar { display: flex; justify-content: flex-end; max-width: 860px; margin-bottom: 6px; }
+.gl-app .meth-export-btn { font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+      letter-spacing: 0.04em; color: var(--text-secondary); background: var(--bg-secondary);
+      border: 1px solid var(--border); padding: 6px 12px; cursor: pointer; }
+.gl-app .meth-export-btn:hover { color: var(--neon-cyan); border-color: var(--neon-cyan); }
+@media print {body.printing-meth * { visibility: hidden !important; }body.printing-meth #methodology-body, body.printing-meth #methodology-body * { visibility: visible !important; }body.printing-meth #methodology-body { position: absolute; left: 0; top: 0; width: 100%; }/* Don't print the toolbar or the interactive widgets - they don't belong in a handout. */
+      body.printing-meth .meth-toolbar, body.printing-meth .gx-card { display: none !important; }body.printing-meth #methodology-print-head { display: block !important; visibility: visible !important;
+        margin-bottom: 14px; font-family: var(--font-mono); border-bottom: 2px solid #000; padding-bottom: 8px; }
+    }
+.gl-app #methodology-print-head { display: none; }
+.gl-app .meth-h { font-family: var(--font-sans); font-size: 17px; font-weight: 800;
+      letter-spacing: 0.01em; color: var(--text-primary); margin: 24px 0 8px;
+      padding-bottom: 5px; border-bottom: 2px solid var(--border); }
+.gl-app .meth-h3 { font-family: var(--font-sans); font-size: 14px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-secondary); margin: 22px 0 6px; }
+.gl-app .meth-prose p, .gl-app .meth-window, .gl-app .meth-note { font-family: var(--font-serif);
+      font-size: 14px; line-height: 1.6; color: var(--text-secondary); margin: 0 0 10px; }
+.gl-app .meth-note { font-size: 12px; font-style: italic; color: var(--text-tertiary); max-width: 860px; }
+.gl-app .meth-window { font-size: 13px; max-width: 860px; }
+.gl-app .meth-prose code { font-family: var(--font-retro-mono); font-size: 12px;
+      background: var(--bg-secondary); padding: 1px 4px; }
+.gl-app .meth-dl { margin: 6px 0 0; }
+.gl-app .meth-dl dt { font-family: var(--font-sans); font-weight: 700; font-size: 14px;
+      color: var(--text-primary); margin-top: 14px; }
+.gl-app .meth-dl dd { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin: 3px 0 0; padding-left: 14px;
+      border-left: 2px solid var(--border-light); }
+.gl-app .meth-tag { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary);
+      border: 1px solid var(--border); padding: 1px 6px; margin-left: 8px; vertical-align: middle; }
+.gl-app .meth-chart { background: var(--bg-secondary); border: 1px solid var(--border);
+      padding: 14px 16px; margin: 0 0 16px; }
+.gl-app .meth-chart-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; }
+.gl-app .meth-chart-title { font-family: var(--font-sans); font-size: 13px; font-weight: 700;
+      letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-primary); margin-bottom: 8px; }
+.gl-app .meth-sub { font-family: var(--font-serif); font-style: italic; font-weight: 400;
+      font-size: 11px; text-transform: none; letter-spacing: 0; color: var(--text-tertiary); margin-left: 8px; }
+.gl-app .meth-findings { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 12px; margin: 4px 0 18px; }
+.gl-app .meth-find-card { background: var(--bg-secondary); border: 1px solid var(--border);
+      border-top: 2px solid var(--neon-cyan); padding: 12px 14px; }
+.gl-app .meth-find-stat { font-family: var(--font-retro-mono); font-size: 26px; font-weight: 700;
+      line-height: 1.05; color: var(--neon-cyan); }
+.gl-app .meth-find-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600;
+      color: var(--text-primary); margin-top: 6px; line-height: 1.3; }
+.gl-app .meth-find-sub { font-family: var(--font-serif); font-style: italic; font-size: 11px;
+      color: var(--text-tertiary); margin-top: 4px; line-height: 1.35; }
+.gl-app .meth-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 8px; }
+.gl-app .meth-legend-key { display: inline-flex; align-items: center; gap: 5px;
+      font-family: var(--font-retro-mono); font-size: 11px; color: var(--text-secondary); }
+.gl-app .meth-legend-swatch { width: 12px; height: 12px; border-radius: 2px; display: inline-block; }
+.gl-app .meth-metric { margin: 10px 0; }
+.gl-app .meth-metric-title { font-family: var(--font-serif); font-style: italic; font-size: 12px;
+      color: var(--text-tertiary); margin-bottom: 4px; }
+.gl-app .meth-bar-row { display: grid; grid-template-columns: 128px 1fr 64px; align-items: center;
+      gap: 8px; margin: 3px 0; }
+.gl-app .meth-bar-label { font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary); }
+.gl-app .meth-bar-track { background: var(--bg-primary); border: 1px solid var(--border-light); height: 16px; }
+.gl-app .meth-bar-fill { display: block; height: 100%; opacity: 0.55; }
+.gl-app .meth-bar-fill.is-consensus { opacity: 1; }
+.gl-app .meth-bar-val { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700;
+      color: var(--text-secondary); text-align: right; }
+.gl-app .meth-bar-val.is-best { color: var(--up); }
+.gl-app .meth-verdict { font-family: var(--font-serif); font-size: 13px; line-height: 1.55;
+      color: var(--text-secondary); margin: 12px 0 0; padding: 10px 12px;
+      border-left: 3px solid var(--border); background: var(--bg-primary); }
+.gl-app .meth-verdict.is-good { border-left-color: var(--up); }
+.gl-app .meth-tables { display: grid; grid-template-columns: repeat(auto-fit, minmax(330px, 1fr)); gap: 14px; }
+.gl-app .meth-table-wrap { min-width: 0; }
+.gl-app .meth-table-title { display: flex; align-items: center; gap: 7px; font-family: var(--font-sans);
+      font-size: 13px; font-weight: 700; color: var(--text-primary); margin-bottom: 5px; }
+.gl-app .meth-table { width: 100%; border-collapse: collapse; font-family: var(--font-retro-mono); font-size: 11px; }
+.gl-app .meth-table th { font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-tertiary);
+      text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--border); }
+.gl-app .meth-table th:first-child { text-align: left; }
+.gl-app .meth-table td { text-align: right; padding: 3px 6px; color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-light); font-variant-numeric: tabular-nums; }
+.gl-app .meth-td-tier { text-align: left !important; font-weight: 700; color: var(--text-primary); }
+.gl-app .meth-caveats { margin: 18px 0 0; padding: 12px 16px; border: 1px solid var(--neon-amber);
+      background: var(--bg-secondary); max-width: 860px; }
+.gl-app .meth-caveats-title { font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+      letter-spacing: 0.06em; text-transform: uppercase; color: var(--neon-amber); margin-bottom: 6px; }
+.gl-app .meth-caveats ul { margin: 0; padding-left: 18px; }
+.gl-app .meth-caveats li { font-family: var(--font-serif); font-size: 13px; line-height: 1.5;
+      color: var(--text-secondary); margin: 4px 0; }
+@media (max-width: 640px) {.gl-app /* rank | photo | logo | name | slot | fv (pos hidden) */
+      .tm-row { grid-template-columns: 26px 18px 20px minmax(0,1fr) auto auto; gap: 6px; }.gl-app .tm-pos { display: none; }.gl-app .tm-date-readout { min-width: 0; }.gl-app /* Keep the width-fair WAR/yr + graduation marker; drop the wider
+         cumulative-WAR and WAG chips so the row never overflows on phones. */
+      .tm-outcome { gap: 5px; }.gl-app .tm-stat-war, .gl-app .tm-stat-wag { display: none; }
+    }
+.gl-app .g-term {
+      cursor: help;
+      text-decoration: underline dotted var(--text-tertiary);
+      text-decoration-thickness: 1px;
+      text-underline-offset: 2px;
+      transition: color 0.12s, text-decoration-color 0.12s; }
+.gl-app .g-term:hover {
+      color: var(--neon-cyan);
+      text-decoration-color: var(--neon-cyan); }
+.gl-app /* Floating popover anchored near the clicked term. position absolute;
+       positioned via JS. Hidden by default - `.is-open` reveals it. */
+    .glossary-popover {
+      display: none;
+      position: absolute;
+      z-index: 50;
+      width: 320px;
+      max-width: 90vw;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: var(--shadow-card-hover);
+      padding: 12px 14px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      color: var(--text-primary); }
+.gl-app .glossary-popover.is-open { display: block; }
+.gl-app .glossary-popover .gp-term {
+      font-family: var(--font-retro-mono);
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--neon-cyan); }
+.gl-app .glossary-popover .gp-cat {
+      font-size: 9px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-tertiary); }
+.gl-app .glossary-popover .gp-short {
+      margin: 8px 0;
+      color: var(--text-secondary);
+      line-height: 1.5; }
+.gl-app .glossary-popover .gp-long {
+      font-size: 11.5px;
+      color: var(--text-secondary);
+      line-height: 1.5; }
+.gl-app .glossary-popover .gp-formula, .gl-app .gp-formula {
+      font-family: var(--font-mono);
+      font-size: 10.5px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-light);
+      border-radius: 2px;
+      padding: 6px 8px;
+      margin-top: 8px;
+      white-space: pre-wrap;
+      color: var(--text-primary); }
+.gl-app .glossary-popover .gp-open {
+      display: inline-block;
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--neon-cyan);
+      text-decoration: none; }
+.gl-app .glossary-popover .gp-open:hover { text-decoration: underline; }
+.gl-app /* Per-term card on the Glossary page. */
+    .glossary-card {
+      border: 1px solid var(--border-light);
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      padding: 10px 12px;
+      margin-bottom: 10px;
+      scroll-margin-top: 80px; }
+.gl-app .glossary-card.is-highlighted {
+      animation: glossary-highlight 1.8s ease-out; }
+@keyframes glossary-highlight {
+      0%   { background: rgba(143, 205, 245, 0.25); }
+      100% { background: var(--bg-secondary); }
+    }
+.gl-app .glossary-cat-heading {
+      font-family: var(--font-sans);
+      font-size: 11px;
+      letter-spacing: 0.10em;
+      text-transform: uppercase;
+      color: var(--text-tertiary);
+      margin: 18px 0 8px;
+      font-weight: 700;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--border-light); }
+/* qk quick-search palette (site-wide; unscoped - overlays any page) */
+    /* === Quick-search palette (Part 6, ⌘K) === */
+    .qk-overlay { position: fixed; inset: 0; z-index: 4000; display: none;
+      align-items: flex-start; justify-content: center; padding-top: 12vh;
+      background: rgba(0,0,0,0.45); backdrop-filter: blur(2px); }
+    .qk-overlay.is-open { display: flex; }
+    .qk-modal { width: min(560px, 92vw); background: var(--bg-primary);
+      border: 1px solid var(--border-strong); box-shadow: 0 18px 50px rgba(0,0,0,0.4);
+      display: flex; flex-direction: column; max-height: 70vh; }
+    .qk-input { font-family: var(--font-mono); font-size: 15px; color: var(--text-primary);
+      background: var(--bg-secondary); border: 0; border-bottom: 1px solid var(--border);
+      padding: 14px 16px; outline: none; }
+    .qk-results { overflow-y: auto; }
+    .qk-row { padding: 9px 16px; border-bottom: 1px solid var(--border-light); cursor: pointer; }
+    .qk-row:last-child { border-bottom: 0; }
+    .qk-row.is-active, .qk-row:hover { background: var(--bg-tertiary); }
+    .qk-row-h { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; }
+    .qk-row-name { font-family: var(--font-mono); font-size: 13px; font-weight: 700; color: var(--text-primary); }
+    .qk-row-tag { font-family: var(--font-retro-mono); font-size: 9px; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); white-space: nowrap; }
+    .qk-row-tag-p { color: var(--neon-cyan); }
+    .qk-row-sub { font-family: var(--font-sans); font-size: 12px; color: var(--text-secondary);
+      margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .qk-empty { padding: 16px; font-family: var(--font-mono); font-size: 12px; color: var(--text-tertiary); }
+    .qk-foot { display: flex; gap: 16px; padding: 8px 16px; border-top: 1px solid var(--border);
+      background: var(--bg-secondary); font-family: var(--font-mono); font-size: 10px; color: var(--text-tertiary); }
+    .qk-foot b { color: var(--text-secondary); }
+
+/* ── /GLOSSARY-PORT ───────────────────────────────────────────────────── */
+
+/* ── Shared glossary runtime (eephus-gl.js): palette token bridge, term
+      marker, hover tooltip, SR-only definitions. Unscoped - every surface. ── */
+.qk-overlay {
+  --font-mono: var(--font-retro-mono); --font-sans: var(--font-retro);
+  --border-strong: var(--text-tertiary); --neon-cyan: var(--accent-cyan);
+}
+.qk-empty a { color: var(--accent-cyan); }
+.g-term {
+  cursor: help;
+  text-decoration: underline dotted var(--text-tertiary);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+.g-term:hover, .g-term:focus-visible { color: var(--accent-cyan); text-decoration-color: var(--accent-cyan); }
+.gl-tip {
+  display: none; position: absolute; z-index: 4100; max-width: 300px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+  box-shadow: 0 8px 28px rgba(0,0,0,0.35); padding: 9px 11px;
+  font-family: var(--font-retro); font-size: 12px; line-height: 1.45;
+}
+.gl-tip.is-open { display: block; }
+.gl-tip-term { font-family: var(--font-retro-mono); font-weight: 700; font-size: 12px;
+  color: var(--text-primary); margin-bottom: 3px; }
+.gl-tip-def { color: var(--text-secondary); }
+.gl-tip-link { display: inline-block; margin-top: 6px; font-family: var(--font-retro-mono);
+  font-size: 10px; color: var(--accent-cyan); text-decoration: none; }
+.gl-srdef { position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Generate GFX modal (shared: Free Agency, Projections) ---- */
+.egfx-overlay {
+  position: fixed; inset: 0; z-index: 5000; display: none;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(0,0,0,.62); backdrop-filter: blur(2px);
+}
+.egfx-overlay.is-open { display: flex; }
+.egfx-modal {
+  position: relative; display: flex; flex-direction: column; gap: 12px;
+  width: min(880px, 96vw); max-height: 92vh; overflow: auto;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  box-shadow: 0 18px 60px rgba(0,0,0,.5); padding: 16px 18px 18px;
+}
+.egfx-head { display: flex; align-items: center; justify-content: space-between; }
+.egfx-title { font-family: var(--font-retro-mono); font-weight: 700; font-size: 14px;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-primary); }
+.egfx-x { background: none; border: none; color: var(--text-tertiary); font-size: 22px;
+  line-height: 1; cursor: pointer; padding: 0 4px; }
+.egfx-x:hover { color: var(--text-primary); }
+.egfx-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; }
+.egfx-ctrl { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-retro-mono);
+  font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--text-tertiary); }
+.egfx-select { font-family: var(--font-retro-mono); font-size: 12px; color: var(--text-primary);
+  background: var(--bg-secondary); border: 1px solid var(--border); padding: 3px 6px; }
+.egfx-accents { display: inline-flex; gap: 6px; }
+.egfx-accent { width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent;
+  cursor: pointer; padding: 0; }
+.egfx-accent.is-active { border-color: var(--text-primary); }
+.egfx-preview { display: flex; align-items: center; justify-content: center; min-height: 200px;
+  background: var(--bg-secondary); border: 1px solid var(--border); padding: 12px; position: relative; }
+.egfx-preview.is-busy { opacity: .55; }
+.egfx-canvas { max-width: 100%; max-height: 56vh; height: auto; box-shadow: 0 4px 18px rgba(0,0,0,.3); }
+.egfx-err { color: var(--text-tertiary); font-family: var(--font-retro-mono); font-size: 12px; padding: 40px; }
+.egfx-actions { display: flex; justify-content: flex-end; gap: 8px; }
+.egfx-btn { font-family: var(--font-retro-mono); font-size: 12px; font-weight: 700; padding: 6px 14px;
+  cursor: pointer; background: var(--bg-secondary); color: var(--text-primary); border: 1px solid var(--border); }
+.egfx-btn:hover { border-color: var(--accent-cyan); }
+.egfx-btn-primary { background: var(--accent-cyan); color: var(--bg-primary); border-color: var(--accent-cyan); }
+.egfx-chip-glyph { margin-right: 5px; opacity: .8; }
+.egfx-flash { position: absolute; bottom: 64px; left: 50%; transform: translateX(-50%);
+  background: var(--text-primary); color: var(--bg-primary); font-family: var(--font-retro-mono);
+  font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 4px; opacity: 0;
+  pointer-events: none; transition: opacity .2s; }
+.egfx-flash.is-show { opacity: 1; }
+
+/* ---- MLB player pages (/projections/#player=) ---- */
+.mlbp-page { max-width: 980px; }
+.mlbp-hero {
+  display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+  padding: 14px 16px; margin-bottom: 16px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.mlbp-headshot {
+  width: 96px; height: 96px; object-fit: cover; flex: none;
+  background: var(--bg-tertiary); border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-cyan);
+}
+.mlbp-hero-main { flex: 1; min-width: 220px; }
+.mlbp-name { display: flex; align-items: center; gap: 10px; }
+.mlbp-name h2 { margin: 0; font-family: var(--font-retro); font-size: 26px; }
+.mlbp-tiles { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.mlbp-tile {
+  display: flex; flex-direction: column; gap: 3px; align-items: flex-end;
+  min-width: 92px; padding: 8px 12px;
+  background: var(--bg-primary); border: 1px solid var(--border);
+}
+.mlbp-tile-label {
+  font-family: var(--font-sans); font-size: 10px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-tile-val { font-family: var(--font-mono); font-size: 18px; font-weight: 800; }
+.mlbp-tile-chip {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  border: 1px solid var(--border); padding: 2px 8px; margin-left: 8px;
+  color: var(--text-secondary); text-transform: uppercase;
+}
+.position-usage-strip {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  margin: 6px 0 12px; color: var(--text-secondary);
+  font-size: 11px; line-height: 1.4;
+}
+.position-usage-label {
+  color: var(--text-tertiary); font-size: 10px; letter-spacing: .06em;
+  text-transform: uppercase; font-weight: 700; margin-right: 2px;
+}
+.position-usage-chip {
+  display: inline-flex; align-items: baseline; gap: 1px;
+  padding: 2px 6px; border: 1px solid var(--border-light);
+  background: var(--bg-secondary); border-radius: 3px;
+  font-family: var(--font-mono); font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.position-usage-chip span {
+  color: var(--text-primary); font-family: var(--font-sans);
+  font-weight: 700; letter-spacing: .02em;
+}
+.mlbp-section { margin: 18px 0; }
+.mlbp-section-title {
+  font-family: var(--font-sans); font-size: 12px; font-weight: 700;
+  letter-spacing: .09em; text-transform: uppercase; color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
+}
+.mlbp-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+/* Even cells at any count/viewport (the Upside per-year strip: 5 seasons
+   otherwise wrap 3+2 with uneven widths on wide viewports). */
+.mlbp-grid-flow { grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); }
+.mlbp-cell {
+  display: flex; flex-direction: column; gap: 3px; padding: 9px 12px;
+  background: var(--bg-secondary); border: 1px solid var(--border);
+}
+.mlbp-cell-label {
+  font-family: var(--font-sans); font-size: 10.5px; font-weight: 600;
+  letter-spacing: .04em; text-transform: uppercase; color: var(--text-tertiary);
+}
+.mlbp-cell-val { font-family: var(--font-mono); font-size: 16px; font-weight: 700; }
+/* Savant-style percentile sliders */
+.mlbp-slider { display: grid; grid-template-columns: 130px 1fr 86px; gap: 12px; align-items: center; margin: 7px 0; }
+.mlbp-slider-label { font-family: var(--font-sans); font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.mlbp-slider-track { position: relative; height: 10px; background: var(--bg-tertiary); border: 1px solid var(--border); }
+.mlbp-slider-fill { height: 100%; }
+.mlbp-slider-fill.is-elite { background: var(--accent-green); }
+.mlbp-slider-fill.is-good  { background: var(--accent-cyan); }
+.mlbp-slider-fill.is-avg   { background: var(--text-tertiary); }
+.mlbp-slider-fill.is-low   { background: var(--accent-gold); }
+.mlbp-slider-fill.is-poor  { background: var(--accent-red); }
+.mlbp-slider-pct {
+  position: absolute; top: -7px; transform: translateX(-50%);
+  font-family: var(--font-mono); font-size: 11px; font-weight: 800;
+  background: var(--bg-primary); border: 1px solid var(--border);
+  padding: 1px 5px; border-radius: 999px; color: var(--text-primary);
+}
+.mlbp-slider-val { font-family: var(--font-mono); font-size: 13px; font-weight: 700; text-align: right; }
+/* projection fan chart */
+.mlbp-fan { width: 100%; height: auto; display: block; background: var(--bg-secondary); border: 1px solid var(--border); }
+.mlbp-fan-line { fill: none; stroke: var(--accent-cyan); stroke-width: 2; }
+.mlbp-fan-dot { fill: var(--accent-cyan); }
+.mlbp-fan-band { fill: var(--accent-cyan); opacity: .14; }
+.mlbp-fan-zero { stroke: var(--border); stroke-dasharray: 3 3; }
+.mlbp-fan-tick { fill: var(--text-tertiary); font-family: var(--font-mono); font-size: 10px; }
+@media (max-width: 720px) {
+  .mlbp-grid { grid-template-columns: 1fr 1fr; }
+  .mlbp-slider { grid-template-columns: 96px 1fr 70px; }
+  .mlbp-tiles { justify-content: flex-start; }
+}
+
+/* ---- player hub strip: one player, every module ---- */
+.player-hub-strip {
+  display: flex; gap: 0; flex-wrap: wrap; align-items: stretch;
+  margin: 0 0 14px; border: 1px solid var(--border);
+  background: var(--bg-secondary); width: fit-content;
+}
+.hub-chip {
+  display: inline-flex; align-items: center; gap: 7px;
+  font-family: var(--font-retro-mono); font-size: 11.5px; font-weight: 700;
+  letter-spacing: .05em; color: var(--text-secondary); text-decoration: none;
+  padding: 7px 13px; border-left: 1px solid var(--border);
+}
+.hub-chip:first-child { border-left: none; }
+.hub-chip .hub-glyph { color: var(--accent-gold); font-weight: 700; }
+.hub-chip .hub-note {
+  font-size: 10px; font-weight: 600; letter-spacing: .03em;
+  color: var(--text-tertiary); text-transform: lowercase;
+}
+a.hub-chip:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+.hub-chip.is-active {
+  background: var(--text-primary); color: var(--bg-primary);
+}
+.hub-chip.is-active .hub-glyph,
+.hub-chip.is-active .hub-note { color: var(--bg-primary); opacity: .75; }
+
+/* ---- homepage cross-module strip (Across eephus.io) ---- */
+.xmod-strip { margin: 18px 0; }
+.xmod-eyebrow {
+  font-family: var(--font-sans); font-size: 11px; font-weight: 700;
+  letter-spacing: .12em; text-transform: uppercase; color: var(--text-tertiary);
+  border-bottom: 1px solid var(--border); padding-bottom: 5px; margin-bottom: 10px;
+}
+.xmod-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.xmod-card { background: var(--bg-secondary); border: 1px solid var(--border); padding: 10px 12px; }
+.xmod-head { display: flex; justify-content: space-between; align-items: baseline; }
+.xmod-title { font-family: var(--font-retro-mono); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
+.xmod-link { font-size: 11px; color: var(--accent-cyan); text-decoration: none; }
+.xmod-link:hover { text-decoration: underline; }
+.xmod-sub-head { font-size: 10.5px; color: var(--text-tertiary); font-style: italic; margin: 2px 0 8px; }
+.xmod-row {
+  display: flex; align-items: baseline; gap: 8px; padding: 5px 0;
+  border-top: 1px solid var(--border); text-decoration: none; color: var(--text-primary);
+}
+.xmod-row:hover .xmod-name { color: var(--accent-cyan); }
+.xmod-name { font-family: var(--font-retro); font-size: 12.5px; font-weight: 600; flex: none; }
+.xmod-sub { font-size: 10.5px; color: var(--text-tertiary); flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; }
+.xmod-val { font-family: var(--font-mono); font-size: 12px; font-weight: 700; margin-left: auto; white-space: nowrap; }
+@media (max-width: 900px) { .xmod-grid { grid-template-columns: 1fr; } }
+
+/* FA board row headshots (filled async from the player-links map) */
+.fa-row-photo { display: inline-block; width: 24px; height: 24px; vertical-align: middle; margin-right: 7px; }
+.fa-row-headshot {
+  width: 24px; height: 24px; object-fit: cover; display: block;
+  border: 1px solid var(--border); background: var(--bg-tertiary);
+}
