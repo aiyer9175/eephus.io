@@ -1181,23 +1181,28 @@ def fetch_statcast_metrics_for_players(
                 gd = split.get("date")
                 if gd and gpk not in game_date_by_pk:
                     game_date_by_pk[gpk] = gd
-    feed_cache: dict[int, dict] = {}
     if game_pks:
         _p2_start = _time.monotonic()
         _log.info("statcast pass 2/3: fetching %d unique game feeds (deduped from %d player×game lookups)",
                   len(game_pks), sum(len(v) for v in fetched_logs_by_key.values()))
         def _fetch_feed(gpk):
+            # v20 — Warm the on-disk feed cache only; do NOT retain the parsed
+            # payload here. A full season's worth of feeds (thousands of full
+            # play-by-play JSON blobs) held in one in-memory dict was enough to
+            # OOM a modest box. Pass 3 re-reads each feed through
+            # feed_cache_mod.get_game_feed(), which is a fast local disk-cache
+            # hit by then (this pass just wrote it), so the wall-time win from
+            # pass 2's parallel dedup is preserved without holding the whole
+            # season resident in RAM at once.
             try:
-                return gpk, feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
+                feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
             except Exception as e:
                 _log.debug("statcast feed failed for game %s: %s", gpk, e)
-                return gpk, {}
         _p2_done = 0
         # Shared cache retries 429 with backoff, so a higher cap is safe.
         feed_workers = max(1, min(max_workers, 20))
         with concurrent.futures.ThreadPoolExecutor(max_workers=feed_workers) as ex:
-            for gpk, feed in ex.map(_fetch_feed, sorted(game_pks)):
-                feed_cache[gpk] = feed
+            for _ in ex.map(_fetch_feed, sorted(game_pks)):
                 _p2_done += 1
                 if _p2_done % 500 == 0 or _p2_done == len(game_pks):
                     elapsed = _time.monotonic() - _p2_start
@@ -1206,7 +1211,7 @@ def fetch_statcast_metrics_for_players(
                     _log.info("statcast pass 2/3: %d/%d feeds (%.0fs elapsed · ~%.0fs left)",
                               _p2_done, len(game_pks), elapsed, eta)
 
-    # ---- PASS 3: per-player processing using the cached feeds ----
+    # ---- PASS 3: per-player processing, reading feeds from the on-disk cache ----
     _p3_start = _time.monotonic()
     _log.info("statcast pass 3/3: processing %d players against cached feeds", len(targets))
     _p3_done = 0
@@ -1217,7 +1222,8 @@ def fetch_statcast_metrics_for_players(
             ex.submit(
                 fetch_statcast_metrics_for_player,
                 key, name, mlbam, season, level, is_pitcher,
-                feed_cache,
+                None,  # v20 — no in-memory feed_cache; falls back to the disk
+                       # cache pass 2 just warmed (see _fetch_feed above).
                 fetched_logs_by_key.get(key),
             ): key
             for key, name, mlbam, level, is_pitcher in targets
