@@ -9225,6 +9225,8 @@
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
         <button class="chip" data-draft-view="mock-draft"
                 title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
+        <button class="chip" data-draft-view="simulate"
+                title="Run the draft yourself: control one team, several, or all thirty, and pick from the real consensus board pick by pick. The CPU drafts best-board-available within bonus-pool budget; every pick is graded against slot value and consensus rank.">Simulate</button>
         <button class="chip" data-draft-view="war-room"
                 title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
@@ -22247,7 +22249,7 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "war-room"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "simulate", "war-room"];
   // War Room: gated on the presence of the live artifact (data/draft_live.json,
   // written by the draft-night poller). No artifact => chip hidden, so the view
   // is dark until the draft opens. Kick off a one-time fetch; re-render when it
@@ -22273,7 +22275,8 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock)) {
+      (state.draftView === "mock-draft" && !_anyMock) ||
+      (state.draftView === "simulate" && !_anyMock)) {
     // War Room stays selectable even before the live feed exists: it lands on
     // the "opens on draft night" state rather than bouncing to rankings, so the
     // chip is a real destination in the draft section year-round.
@@ -22284,6 +22287,7 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
+    if (view === "simulate" && !_anyMock) show = false;
     // War Room chip: always surfaced in the draft section so it is discoverable;
     // pre-draft it lands on the "opens on draft night" state (Phase 6 surfacing).
     b.style.display = show ? "" : "none";
@@ -22330,6 +22334,7 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
+    case "simulate":       return _renderDraftSimulate(host, _mockCls || cls);
     case "war-room":       return _renderWarRoom(host);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
@@ -23201,6 +23206,486 @@ function _renderMockDraft(host, cls) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// =============================================================================
+// Draft Simulate - an interactive, pick-by-pick run through the SAME real
+// board the algorithmic Mock Draft above is built from (cls.prospects,
+// cls.draft_order): control one team, several, or all thirty; the CPU drafts
+// best-board-available within its bonus-pool budget for every other pick.
+// Sits alongside the read-only Mock Draft view rather than replacing it - this
+// is a what-if toy, not another data product, so its "ask" economics are a
+// simple heuristic (rank + slot value), not a registered model. State lives
+// in the module-level _sim object (mirrors the _warRoom pattern), not the
+// URL-synced `state`, since a run is disposable and never worth deep-linking.
+// =============================================================================
+const _sim = {
+  year: null, pool: [], order: [], teams: [],
+  picks: [], pickIndex: 0, started: false, completed: false,
+  teamMode: "single", primaryTeam: null, controlledTeams: new Set(),
+  budgets: {}, demands: {}, simLength: "board",
+  aiTimer: null, aiRunning: false,
+  query: "", position: "ALL",
+  resultsTeam: "all"
+};
+const _SIM_POST_SLOT = 150000; // MLB rule: bonuses under this past pick 610-ish don't count against the pool
+
+function _simClearTimer() {
+  if (_sim.aiTimer) { window.clearTimeout(_sim.aiTimer); _sim.aiTimer = null; }
+  _sim.aiRunning = false;
+}
+
+// (Re)build the pool/order/teams for `cls` if the class changed or this is
+// the first entry. Pool = every prospect with a real consensus_pick (so every
+// simulated pick has a genuine board slot - no fabricated late-round filler).
+function _simEnsureInit(cls) {
+  if (_sim.year === cls.year && _sim.pool.length) return;
+  _simClearTimer();
+  _sim.year = cls.year;
+  _sim.pool = (cls.prospects || [])
+    .filter(p => p.consensus_pick != null)
+    .slice()
+    .sort((a, b) => a.consensus_pick - b.consensus_pick);
+  _sim.order = (cls.draft_order || []).slice().sort((a, b) => a.pick_overall - b.pick_overall);
+  const seen = new Set();
+  _sim.teams = [];
+  _sim.order.forEach(o => {
+    if (o.team && !seen.has(o.team)) { seen.add(o.team); _sim.teams.push(o.team); }
+  });
+  _sim.picks = []; _sim.pickIndex = 0; _sim.started = false; _sim.completed = false;
+  _sim.primaryTeam = _sim.teams[0] || null;
+  _sim.controlledTeams = new Set(_sim.primaryTeam ? [_sim.primaryTeam] : []);
+  _sim.budgets = {}; _sim.demands = {};
+  _sim.resultsTeam = "all";
+}
+
+function _simLengthOptions() {
+  const r1 = _sim.order.filter(o => o.round_label === "1" || o.round_label === "1A" || o.round_label === "1B").length;
+  const r5 = _sim.order.filter(o => { const n = parseInt(o.round_label, 10); return !isNaN(n) ? n <= 5 : true; }).length;
+  return { r1, r5, board: Math.min(_sim.pool.length, _sim.order.length) };
+}
+function _simActiveLength() {
+  const opts = _simLengthOptions();
+  if (_sim.simLength === 1) return opts.r1;
+  if (_sim.simLength === 5) return opts.r5;
+  return opts.board;
+}
+function _simActiveOrder() { return _sim.order.slice(0, _simActiveLength()); }
+
+function _simSlotForPick(pick) {
+  const o = _sim.order[pick - 1];
+  return (o && o.slot_usd != null) ? o.slot_usd : _SIM_POST_SLOT;
+}
+function _simCurrentSlot() {
+  const o = _simActiveOrder()[_sim.pickIndex];
+  return o ? { pick: o.pick_overall, round: o.round_label, team: o.team } : null;
+}
+function _simIsUserControlled(teamId) {
+  if (_sim.teamMode === "all") return true;
+  return _sim.controlledTeams.has(teamId);
+}
+function _simDraftedKeys() { return new Set(_sim.picks.map(p => p.player_key)); }
+function _simAvailablePlayers() {
+  const drafted = _simDraftedKeys();
+  const q = _sim.query.trim().toLowerCase();
+  return _sim.pool.filter(p => {
+    if (drafted.has(p.player_key)) return false;
+    if (_sim.position !== "ALL" && p.position !== _sim.position) return false;
+    if (q && !`${p.player_name} ${p.school || ""} ${p.position}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function _simIsComplete() {
+  return _sim.completed || _sim.pickIndex >= _simActiveLength() || _sim.picks.length >= _sim.pool.length;
+}
+
+// Bonus "ask" heuristic: scaled off the real pick's slot value + where the
+// player sits on the real consensus board, not a validated projection.
+function _simRound(v) { return Math.max(5000, Math.round(v / 100) * 100); }
+function _simBaseDemand(p) {
+  const poolLen = _sim.pool.length || 1;
+  const slot = _simSlotForPick(Math.min(p.consensus_pick, _sim.order.length || p.consensus_pick));
+  const hs = _isHSPlayer(p);
+  const frac = p.consensus_pick / poolLen;
+  if (frac > 0.85) return _simRound(hs ? slot * 1.15 : slot * 0.35);
+  if (frac > 0.55) return _simRound(hs ? slot * 1.08 : slot * 0.55);
+  if (frac > 0.35) return _simRound(hs ? slot * 1.03 : slot * 0.72);
+  if (frac > 0.15) return _simRound(hs ? slot * 1.00 : slot * 0.86);
+  if (frac > 0.05) return _simRound(hs ? slot * 0.98 : slot * 0.88);
+  return _simRound(hs ? slot * 1.02 : slot * 0.85);
+}
+function _simDemandKey(teamId, playerKey) { return teamId + ":" + playerKey; }
+function _simDemand(teamId, p) {
+  const mult = _sim.demands[_simDemandKey(teamId, p.player_key)] || 1;
+  return _simRound(_simBaseDemand(p) * mult);
+}
+function _simCreateDemands() {
+  const demands = {};
+  _sim.teams.forEach(teamId => {
+    _sim.pool.forEach(p => {
+      const hs = _isHSPlayer(p);
+      const lo = hs ? 0.88 : 0.75, hi = hs ? 1.16 : 1.10;
+      demands[_simDemandKey(teamId, p.player_key)] = lo + Math.random() * (hi - lo);
+    });
+  });
+  return demands;
+}
+function _simTeamPickSlots(teamId) {
+  return _simActiveOrder().filter(o => o.team === teamId)
+    .map(o => (o.slot_usd != null ? o.slot_usd : _SIM_POST_SLOT));
+}
+function _simCreateBudgets() {
+  const budgets = {};
+  _sim.teams.forEach(teamId => {
+    const slots = _simTeamPickSlots(teamId);
+    budgets[teamId] = { total: slots.reduce((s, v) => s + v, 0), spent: 0, picks: slots.length };
+  });
+  return budgets;
+}
+function _simRemainingBudget(teamId) {
+  const b = _sim.budgets[teamId] || { total: 0, spent: 0 };
+  return b.total - b.spent;
+}
+function _simFuturePickCount(teamId) {
+  return _simActiveOrder().slice(_sim.pickIndex + 1).filter(o => o.team === teamId).length;
+}
+
+function _simStart() {
+  if (_sim.started) return;
+  _simClearTimer();
+  _sim.pickIndex = 0; _sim.picks = []; _sim.started = true; _sim.completed = false;
+  _sim.demands = _simCreateDemands();
+  _sim.budgets = _simCreateBudgets();
+  _simRender();
+  _simRunAi();
+}
+
+function _simGradePick(pick, rank, bonus, slotValue) {
+  const delta = pick - rank;
+  const slot = Math.max(slotValue || 1, 1);
+  const savingsRate = (slot - bonus) / slot;
+  let score = 3.35;
+  if (delta > 0) score += Math.min(0.85, delta * 0.04);
+  if (delta < 0) score -= Math.min(3.2, 0.32 + Math.abs(delta) * 0.24);
+  if (savingsRate > 0) score += Math.min(0.5, savingsRate * 1.15);
+  else score += Math.max(-1.2, savingsRate * 2.25);
+  if (score >= 3.65) return "A";
+  if (score >= 2.9) return "B";
+  if (score >= 2.05) return "C";
+  if (score >= 1.1) return "D";
+  return "F";
+}
+
+function _simMakePick(playerKey, source) {
+  const slot = _simCurrentSlot();
+  const player = _sim.pool.find(p => p.player_key === playerKey);
+  if (!slot || !player) return;
+  const bonus = _simDemand(slot.team, player);
+  const slotValue = _simSlotForPick(slot.pick);
+  const poolCharge = slot.pick > 610 ? Math.max(0, bonus - _SIM_POST_SLOT) : bonus;
+  _sim.picks.push({
+    pick: slot.pick, round: slot.round, team: slot.team,
+    player_key: playerKey, source,
+    grade: _simGradePick(slot.pick, player.consensus_pick, bonus, slotValue),
+    slotValue, bonus, poolCharge
+  });
+  if (_sim.budgets[slot.team]) _sim.budgets[slot.team].spent += poolCharge;
+  _sim.pickIndex += 1;
+  if (_simIsComplete()) _sim.completed = true;
+}
+
+function _simSelectAiPlayer(teamId) {
+  const avail = _simAvailablePlayers();
+  if (!avail.length) return null;
+  const futureReserve = _simFuturePickCount(teamId) * 100000;
+  const maxSpend = Math.max(10000, _simRemainingBudget(teamId) - futureReserve);
+  const affordable = avail.filter(p => _simDemand(teamId, p) <= maxSpend);
+  if (affordable.length) return affordable[0].player_key;
+  const fallback = avail.filter(p => _simDemand(teamId, p) <= _simRemainingBudget(teamId))
+    .sort((a, b) => _simDemand(teamId, a) - _simDemand(teamId, b));
+  return (fallback[0] || avail[0]).player_key;
+}
+
+function _simRunAi() {
+  _simClearTimer();
+  if (!_sim.started || _simIsComplete()) { _sim.completed = _simIsComplete(); _simRender(); return; }
+  const slot = _simCurrentSlot();
+  if (!slot || _simIsUserControlled(slot.team)) { _simRender(); return; }
+  _sim.aiRunning = true;
+  _sim.aiTimer = window.setTimeout(() => {
+    _sim.aiTimer = null;
+    const active = _simCurrentSlot();
+    if (!active || _simIsUserControlled(active.team) || _simIsComplete()) { _sim.aiRunning = false; _simRender(); return; }
+    const key = _simSelectAiPlayer(active.team);
+    if (key) _simMakePick(key, "cpu");
+    _simRender();
+    _simRunAi();
+  }, 260);
+}
+
+function _simPick(playerKey) {
+  if (!_sim.started) _simStart();
+  if (_simIsComplete()) return;
+  const slot = _simCurrentSlot();
+  if (!slot || _simDraftedKeys().has(playerKey) || !_simIsUserControlled(slot.team)) return;
+  const player = _sim.pool.find(p => p.player_key === playerKey);
+  if (player && _simDemand(slot.team, player) > _simRemainingBudget(slot.team)) return;
+  _simMakePick(playerKey, "user");
+  _simRender();
+  _simRunAi();
+}
+
+function _simAutoPickForMe() {
+  const slot = _simCurrentSlot();
+  if (!_sim.started || !slot || !_simIsUserControlled(slot.team) || _simIsComplete()) return;
+  const key = _simSelectAiPlayer(slot.team);
+  if (key) _simPick(key);
+}
+
+function _simUndo() {
+  _simClearTimer();
+  if (!_sim.picks.length) return;
+  const removed = _sim.picks.pop();
+  if (_sim.budgets[removed.team]) _sim.budgets[removed.team].spent = Math.max(0, _sim.budgets[removed.team].spent - removed.poolCharge);
+  _sim.pickIndex = Math.max(0, _sim.pickIndex - 1);
+  _sim.completed = false;
+  _simRender();
+}
+
+function _simReset() {
+  _simClearTimer();
+  _sim.pickIndex = 0; _sim.picks = []; _sim.started = false; _sim.completed = false;
+  _sim.demands = {}; _sim.budgets = {};
+  _simRender();
+}
+
+function _simSetTeamMode(mode) {
+  _sim.teamMode = mode;
+  if (mode === "single") _sim.controlledTeams = new Set([_sim.primaryTeam]);
+  if (mode === "all") _sim.controlledTeams = new Set(_sim.teams);
+  _simRender();
+}
+function _simSetPrimaryTeam(teamId) {
+  _sim.primaryTeam = teamId;
+  if (_sim.teamMode === "single") _sim.controlledTeams = new Set([teamId]);
+  else _sim.controlledTeams.add(teamId);
+  _simRender();
+}
+function _simToggleControlledTeam(teamId) {
+  if (_sim.teamMode !== "multi") return;
+  if (_sim.controlledTeams.has(teamId)) _sim.controlledTeams.delete(teamId);
+  else _sim.controlledTeams.add(teamId);
+  if (!_sim.controlledTeams.size) _sim.controlledTeams.add(_sim.primaryTeam);
+  _simRender();
+}
+function _simSetLength(v) {
+  _sim.simLength = v === "board" ? "board" : Number(v);
+  _simRender();
+}
+
+function _simGradeColor(letter) {
+  return letter === "A" ? "var(--neon-green)" : letter === "F" ? "var(--neon-magenta)"
+       : letter === "B" ? "var(--neon-cyan)" : letter === "D" ? "var(--neon-orange)" : "var(--text-secondary)";
+}
+function _simMoney(v) {
+  if (v == null) return "-";
+  const a = Math.abs(v);
+  return (v < 0 ? "-" : "") + (a >= 1e6 ? `$${(a / 1e6).toFixed(1)}M` : a >= 1e3 ? `$${Math.round(a / 1e3)}K` : `$${a}`);
+}
+
+function _simSetupHTML() {
+  const teamOpts = _sim.teams.map(t => `<option value="${t}" ${t === _sim.primaryTeam ? "selected" : ""}>${escapeHtml(t)}</option>`).join("");
+  const multiPills = _sim.teams.map(t => `
+    <label class="chip" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="checkbox" name="sim-controlled-team" id="sim-team-${t}" value="${t}" ${_sim.controlledTeams.has(t) ? "checked" : ""}
+        onchange="_simToggleControlledTeam('${t}')" style="margin:0;" />${escapeHtml(t)}
+    </label>`).join(" ");
+  return `
+    <div class="draft-panel" style="padding:14px;">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;">
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Control</div>
+          <button class="chip ${_sim.teamMode === "single" ? "active" : ""}" onclick="_simSetTeamMode('single')">One team</button>
+          <button class="chip ${_sim.teamMode === "multi" ? "active" : ""}" onclick="_simSetTeamMode('multi')">Several teams</button>
+          <button class="chip ${_sim.teamMode === "all" ? "active" : ""}" onclick="_simSetTeamMode('all')">All 30 (GM mode)</button>
+        </div>
+        ${_sim.teamMode === "single" ? `
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Your team</div>
+          <select class="chip" id="sim-team-select" name="sim-team" onchange="_simSetPrimaryTeam(this.value)">${teamOpts}</select>
+        </div>` : ""}
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Length</div>
+          <select class="chip" id="sim-length-select" name="sim-length" onchange="_simSetLength(this.value)">
+            <option value="1" ${_sim.simLength === 1 ? "selected" : ""}>Round 1</option>
+            <option value="5" ${_sim.simLength === 5 ? "selected" : ""}>Rounds 1-5</option>
+            <option value="board" ${_sim.simLength === "board" ? "selected" : ""}>Full board (${_simLengthOptions().board} picks)</option>
+          </select>
+        </div>
+        <button class="gfx-btn is-primary" style="padding:8px 18px;" onclick="_simStart()">Start draft</button>
+      </div>
+      ${_sim.teamMode === "multi" ? `<div style="margin-top:10px;">${multiPills}</div>` : ""}
+      <div style="margin-top:10px;font-size:11px;color:var(--text-tertiary);">
+        The CPU drafts best-board-available within its bonus pool for every pick you don't control.
+        Bonus asks are a simplified rank/slot heuristic for the sim, not a projection.
+      </div>
+    </div>`;
+}
+
+function _simStatusHTML() {
+  const slot = _simCurrentSlot();
+  const complete = _simIsComplete();
+  const activeLen = _simActiveLength();
+  return `
+    <div class="draft-panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${!complete && slot ? `${teamLogoHTML(slot.team, "md")}
+          <div><strong style="font-size:15px;">${escapeHtml(slot.team)} on the clock</strong>
+          <div style="font-size:11px;color:var(--text-secondary);">Round ${escapeHtml(String(slot.round))} · Pick ${slot.pick} of ${activeLen}</div></div>`
+        : `<strong>${complete ? "Draft complete" : "Not started"}</strong>`}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="chip" ${(!_sim.started || complete || !slot || !_simIsUserControlled(slot.team)) ? "disabled" : ""} onclick="_simAutoPickForMe()">Auto pick for me</button>
+        <button class="chip" ${!_sim.picks.length ? "disabled" : ""} onclick="_simUndo()">Undo</button>
+        <button class="chip reset-chip" onclick="_simReset()">Reset</button>
+      </div>
+    </div>`;
+}
+
+function _simPoolChip(p) {
+  const hs = _isHSPlayer(p);
+  return `<span style="font-size:9px;font-weight:700;letter-spacing:.3px;padding:0 4px;border-radius:2px;
+    background:${hs ? "rgba(224,64,160,.16)" : "rgba(90,200,250,.14)"};
+    color:${hs ? "var(--spend-draft)" : "var(--neon-cyan)"};">${hs ? "HS" : "COL"}</span>`;
+}
+
+function _simBoardHTML() {
+  const slot = _simCurrentSlot();
+  const complete = _simIsComplete();
+  const controlled = !complete && slot && _simIsUserControlled(slot.team);
+  if (!_sim.started) {
+    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("Set up your draft above", "Pick your team(s) and hit Start - the board below fills in once the draft is running.")}</div>`;
+  }
+  if (complete) {
+    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("All picks are in", "Scroll down for the full results and, if you controlled a team, your recap.")}</div>`;
+  }
+  const positions = ["ALL", ...Array.from(new Set(_sim.pool.map(p => p.position))).sort()];
+  const options = _simAvailablePlayers().slice(0, 60);
+  const rows = options.map(p => {
+    const ask = _simDemand(slot.team, p);
+    const affordable = !controlled || ask <= _simRemainingBudget(slot.team);
+    const fv = p.consensus_fv_raw != null ? fvCeil(p.consensus_fv_raw) : p.consensus_fv;
+    const logo = _collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p));
+    return `
+      <tr>
+        <td style="text-align:center;font-weight:600;">${p.consensus_pick}</td>
+        <td><span class="draft-cell-ico">${logo}${escapeHtml(p.player_name)}</span></td>
+        <td>${escapeHtml(p.position || "")} ${_simPoolChip(p)}</td>
+        <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td style="text-align:right;">${_simMoney(ask)}</td>
+        <td style="text-align:center;">
+          <button class="chip ${controlled && affordable ? "" : "reset-chip"}" ${controlled && affordable ? "" : "disabled"}
+            onclick="_simPick('${p.player_key}')">${controlled ? (affordable ? "Draft" : "Over budget") : "-"}</button>
+        </td>
+      </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <input class="chip" id="sim-player-search" name="sim-player-search" style="min-width:180px;" type="search" placeholder="Search available players"
+          value="${escapeHtml(_sim.query)}" oninput="_sim.query=this.value;_simRender();" />
+        <select class="chip" id="sim-position-filter" name="sim-position" onchange="_sim.position=this.value;_simRender();">
+          ${positions.map(pos => `<option value="${pos}" ${pos === _sim.position ? "selected" : ""}>${pos === "ALL" ? "All positions" : pos}</option>`).join("")}
+        </select>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);align-self:center;">
+          ${controlled ? `${_simMoney(_simRemainingBudget(slot.team))} left in ${escapeHtml(slot.team)}'s pool` : "CPU is on the clock..."}
+        </span>
+      </div>
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">Board #</th><th>Player</th><th>Pos</th>
+          <th style="text-align:center;">FV</th><th style="text-align:right;">Ask</th><th style="text-align:center;">Pick</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="6">No players match these filters.</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+function _simResultsHTML() {
+  if (!_sim.picks.length) return "";
+  const recent = _sim.picks.slice().reverse().slice(0, 30);
+  const rows = recent.map(pick => {
+    const player = _sim.pool.find(p => p.player_key === pick.player_key);
+    const fv = player && player.consensus_fv_raw != null ? fvCeil(player.consensus_fv_raw) : (player ? player.consensus_fv : null);
+    const delta = player ? pick.pick - player.consensus_pick : 0;
+    return `
+      <tr>
+        <td style="text-align:center;">${pick.pick}</td>
+        <td><span class="draft-cell-ico">${teamLogoHTML(pick.team, "sm")}${escapeHtml(pick.team)}</span></td>
+        <td>${escapeHtml(player ? player.player_name : "Unknown")}</td>
+        <td>${escapeHtml(player ? player.position : "-")}</td>
+        <td style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td style="text-align:right;">${_simMoney(pick.bonus)}</td>
+        <td style="text-align:center;color:${delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)"};">${delta > 0 ? "+" + delta : delta}</td>
+        <td style="text-align:center;font-weight:700;color:${_simGradeColor(pick.grade)};">${pick.grade}</td>
+        <td style="text-align:center;font-size:10px;color:var(--text-tertiary);">${pick.source === "user" ? "You" : "CPU"}</td>
+      </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div class="filter-label" style="margin-bottom:6px;">Recent picks</div>
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
+          <th style="text-align:center;">FV</th><th style="text-align:right;">Bonus</th>
+          <th style="text-align:center;">vs board</th><th style="text-align:center;">Grade</th><th>Who</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function _simRecapHTML() {
+  if (!_simIsComplete()) return "";
+  const userPicks = _sim.picks.filter(p => p.source === "user");
+  if (!userPicks.length) return "";
+  const points = { A: 4, B: 3, C: 2, D: 1, F: 0 };
+  const avg = userPicks.reduce((s, p) => s + (points[p.grade] || 0), 0) / userPicks.length;
+  const overall = avg >= 3.5 ? "A" : avg >= 2.5 ? "B" : avg >= 1.5 ? "C" : avg >= 0.75 ? "D" : "F";
+  const controlledIds = Array.from(new Set(userPicks.map(p => p.team)));
+  const teamBlocks = controlledIds.map(teamId => {
+    const picks = userPicks.filter(p => p.team === teamId);
+    const budget = _sim.budgets[teamId] || { total: 0, spent: 0 };
+    return `
+      <div style="margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${teamLogoHTML(teamId, "sm")}<strong>${escapeHtml(teamId)}</strong>
+          <span style="font-size:11px;color:var(--text-tertiary);">${picks.length} picks · pool ${_simMoney(budget.total)} · spent ${_simMoney(budget.spent)}</span>
+        </div>
+      </div>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:32px;font-weight:800;color:${_simGradeColor(overall)};">${overall}</div>
+        <div><strong>Draft recap</strong><div style="font-size:11px;color:var(--text-tertiary);">Grade blends pick value vs. consensus rank and bonus pool discipline across your controlled picks.</div></div>
+      </div>
+      ${teamBlocks}
+    </div>`;
+}
+
+function _simRender() {
+  const host = document.getElementById("draft-rows");
+  if (!host || state.draftView !== "simulate") return;
+  host.innerHTML = _draftCaption(`${_sim.year} draft simulator`,
+      "control real teams against the real consensus board, picks graded live")
+    + _simSetupHTML() + _simStatusHTML() + _simBoardHTML() + _simResultsHTML() + _simRecapHTML();
+}
+
+function _renderDraftSimulate(host, cls) {
+  if (!cls || !(cls.prospects || []).length || !(cls.draft_order || []).length) {
+    host.innerHTML = _draftEmpty(`No simulator data for ${cls ? cls.year : "this class"}`,
+      "A simulator needs both a ranked board and a real draft order on file.");
+    return;
+  }
+  _simEnsureInit(cls);
+  _simRender();
 }
 
 function _renderDraftResults(host, cls) {
