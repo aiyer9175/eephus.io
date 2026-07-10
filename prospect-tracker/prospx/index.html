@@ -22623,6 +22623,79 @@ async function renderDraft() {
 // lottery rows (typically anything that's already drafted). The
 // rendered table is the FULL projected first round + 12 comp picks
 // (1A / 1B), with the odds column blank for deterministic slots.
+// A real lottery draw, run client-side against our own published odds - not
+// a re-derivation from a fresh standings fetch (Tankathon's odds already ARE
+// the pipeline's best estimate; drawing against them keeps one source of
+// truth instead of two live third-party fetches disagreeing with each
+// other). Draws 6 winners for picks 1-6, same mechanism MLB uses on lottery
+// night; everything past pick 6, including the competitive-balance rounds,
+// isn't part of the lottery mechanism and always follows the published order
+// already shown in the table above - so this only reveals a picks 1-6 outcome,
+// not a full re-ordered board.
+let _lotto = { key: null, pool: [], winners: [], drawn: false };
+function _lottoEnsure(cls, odds, snap) {
+  const key = `${cls.year}:${snap}`;
+  if (_lotto.key === key) return;
+  _lotto.key = key;
+  _lotto.pool = odds.filter(o => o.odds_pct != null);
+  _lotto.winners = [];
+  _lotto.drawn = false;
+}
+function _lottoWeightedDraw(pool) {
+  const total = pool.reduce((s, r) => s + (r.odds_pct || 0), 0);
+  let ticket = Math.random() * total;
+  for (const r of pool) { ticket -= (r.odds_pct || 0); if (ticket <= 0) return r; }
+  return pool[pool.length - 1];
+}
+function _lottoRun() {
+  const pool = _lotto.pool.slice();
+  const winners = [];
+  while (winners.length < Math.min(6, pool.length)) {
+    const w = _lottoWeightedDraw(pool);
+    winners.push(w);
+    pool.splice(pool.indexOf(w), 1);
+  }
+  _lotto.winners = winners;
+  _lotto.drawn = true;
+  renderDraft();
+}
+function _lottoDrawHTML(odds) {
+  const pool = odds.filter(o => o.odds_pct != null);
+  if (pool.length < 2) return "";
+  const seedRank = new Map(pool.map((o, i) => [o.team, i + 1]));
+  const rows = _lotto.winners.map((w, i) => {
+    const seed = seedRank.get(w.team) || null;
+    const delta = seed != null ? seed - (i + 1) : 0;
+    const deltaColor = delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)";
+    const deltaText = seed == null ? "-" : delta > 0 ? `↑ from #${seed}` : delta < 0 ? `↓ from #${seed}` : `held #${seed}`;
+    return `<tr>
+      <td style="text-align:center;font-weight:700;">${i + 1}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(w.team, "sm")}<strong>${escapeHtml(w.team)}</strong></span></td>
+      <td style="text-align:right;color:var(--text-secondary);">${w.odds_pct.toFixed(2)}%</td>
+      <td style="text-align:center;color:${deltaColor};">${deltaText}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div class="filter-label">Run the lottery</div>
+        <button class="chip" onclick="_lottoRun()">${_lotto.drawn ? "Draw again" : "Draw the top 6"}</button>
+      </div>
+      ${_lotto.drawn ? `
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">Pick</th><th>Team</th><th style="text-align:right;">Odds</th><th style="text-align:center;">vs. seed</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">
+        One random draw weighted by the published odds above - draw again as many times as you like.
+      </div>` : `
+      <div style="font-size:11px;color:var(--text-tertiary);">
+        Draws 6 winners for picks 1-6, weighted by the published odds above - the same mechanism MLB uses on
+        lottery night.
+      </div>`}
+    </div>`;
+}
+
 function _renderDraftLottery(host, cls) {
   const allOdds = cls.lottery_odds || [];
   // lottery_odds is a full time-series (one set of rows per scrape date).
@@ -22665,6 +22738,7 @@ function _renderDraftLottery(host, cls) {
 
   const nLottery = odds.filter(o => o.odds_pct != null).length;
   const nComp = odds.filter(o => o.round_label === "1A" || o.round_label === "1B").length;
+  _lottoEnsure(cls, odds, latestSnap);
 
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
@@ -22686,7 +22760,8 @@ function _renderDraftLottery(host, cls) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>`;
+    </div>
+    ${_lottoDrawHTML(odds)}`;
 }
 
 // v28 - Position bucket for draft prospects. Mirrors positionBucket()
