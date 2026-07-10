@@ -8933,9 +8933,12 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 "years":           _ct.get("years"),
                 "years_remaining": _ct.get("years_remaining"),
                 "signed_through":  _ct.get("signed_through"),
+                "deal_start_year": _ct.get("deal_start_year"),
+                "guaranteed_end_year": _ct.get("guaranteed_end_year"),
                 "spotrac_id":      _ct.get("spotrac_id"),
                 # v17 — new fields supporting the detail-page Contract panel.
                 "extension_signed": _ct.get("extension_signed"),
+                "contract_type":   _ct.get("contract_type"),
                 "source":          _ct.get("source") or "spotrac",
             }} if (_ct := contracts_by_key.get(p.player_key)) else {}),
             # Current IL stint, if any. Powers the IL badge on prospect

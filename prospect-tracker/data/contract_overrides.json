@@ -16,6 +16,53 @@
       "2032": 12500000
     },
     "extension_signed": "2026-03-15",
+    "contract_type": "extension",
+    "source": "manual"
+  },
+  "fernando_tatis_jr": {
+    "aav_usd": 24285714,
+    "total_usd": 340000000,
+    "years": 14,
+    "years_remaining": 9,
+    "signed_through": 2034,
+    "salary_usd": 20000000,
+    "salary_by_year": {
+      "2026": 20000000,
+      "2027": 25000000,
+      "2028": 25000000,
+      "2029": 36000000,
+      "2030": 36000000,
+      "2031": 36000000,
+      "2032": 36000000,
+      "2033": 36000000,
+      "2034": 36000000
+    },
+    "extension_signed": "2021-02-22",
+    "contract_type": "extension",
+    "source": "manual"
+  },
+  "roman_anthony": {
+    "aav_usd": 16250000,
+    "total_usd": 130000000,
+    "years": 8,
+    "years_remaining": 8,
+    "deal_start_year": 2026,
+    "guaranteed_end_year": 2033,
+    "signed_through": 2034,
+    "extension_signed": "2025-08-06",
+    "contract_type": "extension",
+    "source": "manual"
+  },
+  "jackson_chourio": {
+    "aav_usd": 10250000,
+    "total_usd": 82000000,
+    "years": 8,
+    "years_remaining": 8,
+    "deal_start_year": 2024,
+    "guaranteed_end_year": 2031,
+    "signed_through": 2033,
+    "extension_signed": "2023-12-04",
+    "contract_type": "extension",
     "source": "manual"
   }
 }

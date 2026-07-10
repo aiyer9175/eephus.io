@@ -77,6 +77,7 @@ _HERE = Path(__file__).resolve().parent
 _grpo_scores_cache: dict | None = None
 _MLB_DETAIL_CACHE: dict | None = None
 _FA_PREV_AAV_CACHE: dict | None = None
+_CONTRACT_OVERRIDES_CACHE: dict | None = None
 
 def _grpo_scores() -> dict:
     """Load GRPO breakout scores, keyed by player_key."""
@@ -120,6 +121,72 @@ def _mlb_projection_entry(player: dict) -> dict | None:
     if key in players:
         return players[key]
     return players.get(_name_key(player.get("player_name")))
+
+
+def _effective_current_contract(player: dict) -> dict:
+    """Return the best available current contract for Trade Board purposes.
+
+    The timeseries payload normally carries Spotrac/manual contract data. When
+    that scrape misses a player, the MLB projection ledger still has the
+    contracted-through year and AAV used by its surplus model. Use those fields
+    as a fallback so a known veteran deal never silently becomes league minimum.
+    """
+    contract: dict = {}
+    entry = _mlb_projection_entry(player) or {}
+    proj = entry.get("proj") or {}
+
+    thru = proj.get("thru")
+    aav = proj.get("aav")
+    if thru:
+        contract["signed_through"] = thru
+    if aav:
+        contract["aav_usd"] = aav
+    if contract:
+        contract["source"] = "mlb_projection"
+
+    contract.update(player.get("current_contract") or {})
+    override = _contract_overrides().get(player.get("player_key")) or {}
+    contract.update(override)
+    return contract
+
+
+def _contract_overrides() -> dict:
+    global _CONTRACT_OVERRIDES_CACHE
+    if _CONTRACT_OVERRIDES_CACHE is None:
+        try:
+            data = json.loads(
+                (_HERE / "data" / "contract_overrides.json").read_text(encoding="utf-8")
+            )
+            _CONTRACT_OVERRIDES_CACHE = {
+                key: row for key, row in data.items()
+                if not key.startswith("_") and isinstance(row, dict)
+            }
+        except Exception:
+            _CONTRACT_OVERRIDES_CACHE = {}
+    return _CONTRACT_OVERRIDES_CACHE
+
+
+def _is_extension_contract(contract: dict, service_fa_year: int | None) -> bool:
+    """Classify deals signed before free agency as extensions.
+
+    Long duration alone is insufficient: a 10-year open-market deal is still a
+    free-agent signing. Prefer explicit contract metadata, then use a recorded
+    extension signing date relative to the player's service-clock FA year.
+    """
+    kind = str(contract.get("contract_type") or contract.get("deal_type") or "").lower()
+    if kind in {"extension", "contract_extension"}:
+        return True
+    if kind in {"free_agent", "free-agent", "ufa"}:
+        return False
+
+    signed = contract.get("extension_signed")
+    if not signed:
+        return False
+    try:
+        signed_year = int(str(signed)[:4])
+    except (TypeError, ValueError):
+        return False
+    return service_fa_year is None or signed_year < service_fa_year
 
 
 def _mlb_projection_surplus_mm(player: dict) -> float | None:
@@ -386,9 +453,13 @@ def _cfg() -> dict:
 
 
 def _reset_cache() -> None:
-    global _cfg_cache, _grpo_scores_cache
+    global _cfg_cache, _grpo_scores_cache, _MLB_DETAIL_CACHE
+    global _FA_PREV_AAV_CACHE, _CONTRACT_OVERRIDES_CACHE
     _cfg_cache = None
     _grpo_scores_cache = None
+    _MLB_DETAIL_CACHE = None
+    _FA_PREV_AAV_CACHE = None
+    _CONTRACT_OVERRIDES_CACHE = None
 
 
 # ---------------------------------------------------------------------------
@@ -1333,7 +1404,7 @@ def _remaining_control_years(player: dict) -> tuple[float, str]:
       Roman Anthony (debut 2025, ext thru 2034):max(5, 9) = 9yr  ✓
     """
     today_year = date.today().year
-    contract   = player.get("current_contract") or {}
+    contract   = _effective_current_contract(player)
     roster     = player.get("roster_status")   or {}
 
     # Service control: debut year + 6 standard FA clock
@@ -1401,7 +1472,7 @@ def _estimate_salary_mm(player: dict, year: int, svc_ctrl: float,
       2. Pre-arb years: league minimum ($0.78M).
       3. Arb years 1-3: 40/60/80% of market value.
     """
-    contract     = player.get("current_contract") or {}
+    contract     = _effective_current_contract(player)
     aav_raw      = contract.get("aav_usd")
     signed_thru  = contract.get("signed_through")
     roster       = player.get("roster_status") or {}
@@ -1572,7 +1643,7 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
     if remaining_years <= 0 or true_talent_war is None:
         return 0.0
 
-    contract     = player.get("current_contract") or {}
+    contract     = _effective_current_contract(player)
     salary_by_yr = contract.get("salary_by_year") or {}
     is_pitcher   = bool(player.get("is_pitcher")) or is_pitcher_position(player.get("position"))
     age_now      = _safe_float(player.get("age"))
@@ -1590,8 +1661,11 @@ def _contract_surplus_mm(player: dict, true_talent_war: float,
     player_name = (player.get("player_name") or "").lower().replace(" ", "_").replace(".", "")
     opt_entry   = opts_data.get(player_key) or opts_data.get(player_name) or {}
     player_opt_years = set(opt_entry.get("player_options") or [])
-    club_opt_years   = {c["year"]: c.get("price_usd", 0)
-                        for c in (opt_entry.get("club_options") or [])}
+    club_opt_years   = {
+        c["year"]: c["price_usd"]
+        for c in (opt_entry.get("club_options") or [])
+        if c.get("year") and c.get("price_usd") is not None
+    }
 
     # P(player still here in year Y) — cumulative probability not yet opted out
     p_still_here = 1.0
@@ -1987,7 +2061,7 @@ def _hitter_current_offense_bad(player: dict, cfg: dict) -> bool:
 
 
 def _current_salary_mm(player: dict) -> float:
-    contract = player.get("current_contract") or {}
+    contract = _effective_current_contract(player)
     salary = _safe_float(contract.get("salary_usd"), None)
     if salary is None:
         salary_by_year = contract.get("salary_by_year") or {}
@@ -3505,7 +3579,7 @@ def bayesian_trade_value(
     # can show a richer "contract spec" column rather than just "Xyr ctrl".
     _contract_meta: dict = {}
     if is_mlb_player:
-        _cc  = player.get("current_contract") or {}
+        _cc  = _effective_current_contract(player)
         _rs2 = player.get("roster_status") or {}
         _debut_str = _rs2.get("mlb_debut_date") or ""
         _debut_yr  = int(_debut_str[:4]) if _debut_str else None
@@ -3525,13 +3599,28 @@ def bayesian_trade_value(
         _aav         = float(_cc.get("aav_usd") or 0)
         _ext_end_yr  = _cc.get("signed_through")
         _svc_fa_yr   = (_debut_yr + _MLB_CONTROL_YEARS) if _debut_yr else None  # service-clock FA
-        _is_ext      = bool(_ext_end_yr and _aav > 5_000_000 and
-                           _ext_end_yr > (_svc_fa_yr or 0))
+        _has_contract_deal = bool(_ext_end_yr and _aav > 0)
+        _has_long_deal = bool(_has_contract_deal and _aav > 5_000_000)
+        _is_ext      = bool(
+            _has_long_deal
+            and (
+                _is_extension_contract(_cc, _svc_fa_yr)
+                or (_svc_fa_yr is not None and _today_yr < _svc_fa_yr)
+            )
+        )
+        _is_fa_deal = bool(
+            _has_contract_deal
+            and not _is_ext
+            and _svc_fa_yr is not None
+            and _today_yr >= _svc_fa_yr
+        )
         _phase = _rs2.get("service_phase") or ""
         if _today_yr >= (_fa_year or 9999):
             _phase_label = "Free Agent"
         elif _is_ext:
             _phase_label = f"Ext. thru {_ext_end_yr}"
+        elif _is_fa_deal:
+            _phase_label = f"FA deal thru {_ext_end_yr}"
         elif _phase == "pre_arb":
             _phase_label = "Pre-Arb"
         elif _phase == "arb_eligible":
@@ -3550,7 +3639,11 @@ def bayesian_trade_value(
         # Never use the AAV directly as the displayed salary — for pre-arb one-year
         # deals, AAV = salary/years_listed is misleadingly low ($267k for Cameron).
         _sal_this_yr = _cc.get("salary_by_year") or {}
-        _sal_from_data = _sal_this_yr.get(str(_today_yr)) or 0
+        _sal_from_data = (
+            _sal_this_yr.get(str(_today_yr))
+            or _sal_this_yr.get(_today_yr)
+            or 0
+        )
         _LEAGUE_MIN_USD = 780_000  # 2026 MLB league minimum
         _prev_aav_mm = _fa_prev_aav_mm(player)
         if _sal_from_data:
@@ -3569,7 +3662,17 @@ def bayesian_trade_value(
         _opt_entry      = _contract_options().get(player_key) or \
                           _contract_options().get((player.get("player_name") or "").lower().replace(" ", "_").replace(".", "")) or {}
         _player_opt_yrs = sorted(_opt_entry.get("player_options") or [])
-        _club_opt_yrs   = sorted((c["year"] for c in (_opt_entry.get("club_options") or [])))
+        _club_options   = sorted(
+            (_opt for _opt in (_opt_entry.get("club_options") or []) if _opt.get("year")),
+            key=lambda _opt: _opt["year"],
+        )
+        _club_opt_yrs   = [c["year"] for c in _club_options]
+        _guaranteed_years = int(_cc.get("years") or 0) or None
+        _guaranteed_value = float(_cc.get("total_usd") or 0) or None
+        _deal_start_year = _cc.get("deal_start_year")
+        _guaranteed_end_year = _cc.get("guaranteed_end_year")
+        if not _guaranteed_end_year and _deal_start_year and _guaranteed_years:
+            _guaranteed_end_year = int(_deal_start_year) + _guaranteed_years - 1
 
         _contract_meta = {
             "phase":              _phase_label,
@@ -3577,10 +3680,32 @@ def bayesian_trade_value(
             "signed_through":     _ext_end_yr,
             "service_years":      _svc_yrs,
             "aav_mm":             round(_aav / 1e6, 2) or None,
+            "guaranteed_years":    _guaranteed_years,
+            "guaranteed_value_mm": round(_guaranteed_value / 1e6, 2) if _guaranteed_value else None,
+            "deal_start_year":     _deal_start_year,
+            "guaranteed_end_year": _guaranteed_end_year,
+            "contract_type":      (
+                "extension" if _is_ext
+                else "free_agent" if _is_fa_deal
+                else (_cc.get("contract_type") or "contract")
+            ),
+            "extension_signed":   _cc.get("extension_signed"),
+            "source":             _cc.get("source"),
             "milb_options_remaining": _milb_opts_rem,
             # Contract structural options (player opt-outs and club options)
             "player_opt_years":   _player_opt_yrs,
             "club_opt_years":     _club_opt_yrs,
+            "club_options": [
+                {
+                    "year": c["year"],
+                    "price_mm": (
+                        round(float(c["price_usd"]) / 1e6, 2)
+                        if c.get("price_usd") is not None else None
+                    ),
+                }
+                for c in _club_options
+            ],
+            "escalators":         _opt_entry.get("escalators"),
         }
 
     return {
@@ -3682,7 +3807,7 @@ def _trade_value_export_eligible(player: dict) -> bool:
     if roster.get("on_40_man"):
         return True
 
-    contract = player.get("current_contract") or {}
+    contract = _effective_current_contract(player)
     if contract.get("salary_usd") or contract.get("total_usd") or contract.get("signed_through"):
         return True
 
@@ -3763,8 +3888,12 @@ _BOARD_DROP = (
     "control_years_source", "rolling_label", "computed_at", "fv_effective",
 )  # posterior_surplus_mm is KEPT (the evaluator's prospect-pool currency)
 _FLASH_KEEP = ("is_bimodal", "p_click")                       # board ceiling flag + tooltip
-_CONTRACT_KEEP = ("phase", "current_salary_mm", "signed_through", "fa_year", "aav_mm",
-                  "player_opt_years", "club_opt_years")        # _tbCtrlBadge consumes these
+_CONTRACT_KEEP = (
+    "phase", "current_salary_mm", "signed_through", "fa_year", "aav_mm",
+    "guaranteed_years", "guaranteed_value_mm", "deal_start_year", "guaranteed_end_year",
+    "contract_type", "extension_signed", "source",
+    "player_opt_years", "club_opt_years", "club_options", "escalators",
+)        # _tbCtrlBadge consumes these
 
 
 def board_slim(r: dict) -> dict:

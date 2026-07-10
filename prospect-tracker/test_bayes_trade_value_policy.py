@@ -1858,6 +1858,100 @@ def test_elite_controlled_reliever_gets_exception_floor() -> None:
     assert out["posterior_surplus_mm"] >= 65.0
 
 
+def test_missing_spotrac_contract_uses_projection_ledger(monkeypatch) -> None:
+    import bayes_trade_value as btv
+
+    player = _base_debuted_player(
+        player_key="missing_contract_veteran",
+        player_name="Missing Contract Veteran",
+        position="RF",
+        age=28.0,
+        roster_status={"mlb_debut_date": "2019-03-28", "options_used": 0},
+        current_contract=None,
+    )
+    monkeypatch.setattr(
+        btv,
+        "_mlb_projection_entry",
+        lambda _player: {"proj": {"thru": 2034, "aav": 24_285_714}},
+    )
+
+    out = btv.bayesian_trade_value(player)
+
+    assert out["contract"]["current_salary_mm"] == 24.29
+    assert out["contract"]["signed_through"] == 2034
+    assert out["contract"]["phase"] == "FA deal thru 2034"
+    assert out["contract"]["source"] == "mlb_projection"
+
+
+def test_pre_free_agency_deal_is_labeled_extension() -> None:
+    player = _base_debuted_player(
+        player_key="extension_player",
+        player_name="Extension Player",
+        position="RF",
+        age=27.5,
+        roster_status={"mlb_debut_date": "2019-03-28", "options_used": 0},
+        current_contract={
+            "signed_through": 2034,
+            "aav_usd": 24_285_714,
+            "salary_by_year": {2026: 20_000_000},
+            "extension_signed": "2021-02-22",
+            "contract_type": "extension",
+        },
+    )
+
+    out = bayesian_trade_value(player)
+
+    assert out["contract"]["phase"] == "Ext. thru 2034"
+    assert out["contract"]["current_salary_mm"] == 20.0
+    assert out["contract"]["contract_type"] == "extension"
+
+
+def test_long_deal_signed_before_service_free_agency_is_inferred_extension(
+    monkeypatch,
+) -> None:
+    import bayes_trade_value as btv
+
+    player = _base_debuted_player(
+        player_key="young_extension_player",
+        player_name="Young Extension Player",
+        position="SS",
+        roster_status={"mlb_debut_date": "2022-04-07", "options_used": 0},
+        current_contract=None,
+    )
+    monkeypatch.setattr(
+        btv,
+        "_mlb_projection_entry",
+        lambda _player: {"proj": {"thru": 2037, "aav": 26_250_000}},
+    )
+
+    out = btv.bayesian_trade_value(player)
+
+    assert out["contract"]["phase"] == "Ext. thru 2037"
+    assert out["contract"]["contract_type"] == "extension"
+
+
+def test_contract_display_metadata_separates_guarantee_from_option_years() -> None:
+    player = _base_debuted_player(
+        player_key="roman_anthony",
+        player_name="Roman Anthony",
+        position="RF",
+        roster_status={"mlb_debut_date": "2025-06-09", "options_used": 0},
+        current_contract=None,
+    )
+
+    out = bayesian_trade_value(player)
+    contract = out["contract"]
+
+    assert contract["guaranteed_years"] == 8
+    assert contract["guaranteed_value_mm"] == 130.0
+    assert contract["deal_start_year"] == 2026
+    assert contract["guaranteed_end_year"] == 2033
+    assert contract["signed_through"] == 2034
+    assert contract["aav_mm"] == 16.25
+    assert contract["club_options"] == [{"year": 2034, "price_mm": None}]
+    assert contract["escalators"]["max_total_usd"] == 230_000_000
+
+
 def test_older_nonimpact_upper_minors_prospect_is_suppressed() -> None:
     player = {
         "player_key": "older_nonimpact",

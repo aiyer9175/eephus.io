@@ -27933,12 +27933,22 @@ function _tbCtrlBadge(p) {
     return `<span style="font-size:10px;color:var(--neon-amber);">${escapeHtml([sal, fa].filter(Boolean).join(" · "))}</span>`;
   }
 
-  // MLB player: full contract spec
+  // MLB player: guaranteed deal first, then optional/variable terms.
   const phase = cc.phase || " - ";
-  const sal   = cc.current_salary_mm != null
-    ? (cc.current_salary_mm < 1 ? `$${(cc.current_salary_mm*1000).toFixed(0)}k` : `$${cc.current_salary_mm.toFixed(1)}M`)
+  const fmtMm = mm => {
+    if (mm == null) return null;
+    const n = Number(mm);
+    return n < 1
+      ? `$${(n * 1000).toFixed(0)}k`
+      : `$${Number.isInteger(n) ? n.toFixed(0) : n.toFixed(2).replace(/0+$/, "").replace(/\.$/, "")}M`;
+  };
+  const aav = fmtMm(cc.aav_mm);
+  const guaranteed = cc.guaranteed_years && cc.guaranteed_value_mm != null
+    ? `${cc.guaranteed_years}yr/${fmtMm(cc.guaranteed_value_mm)}`
     : null;
-  const fa    = cc.fa_year ? `FA ${cc.fa_year}` : null;
+  const yearSpan = cc.deal_start_year && cc.guaranteed_end_year
+    ? `${cc.deal_start_year}-${String(cc.guaranteed_end_year).slice(-2)}`
+    : null;
   // Contract structural options (player opt-outs / club options)
   // Format year ranges compactly: [2030,2031,2032,2033] → "2030-33"
   function _fmtYears(yrs) {
@@ -27949,19 +27959,36 @@ function _tbCtrlBadge(p) {
   }
   const pOpts = cc.player_opt_years && cc.player_opt_years.length
     ? `P-opt ${_fmtYears(cc.player_opt_years)}` : null;
-  const cOpts = cc.club_opt_years && cc.club_opt_years.length
-    ? `C-opt ${_fmtYears(cc.club_opt_years)}` : null;
+  const cOpts = cc.club_options && cc.club_options.length
+    ? cc.club_options.map(o => `C-opt ${o.year}${o.price_mm != null ? ` (${fmtMm(o.price_mm)})` : ""}`).join(", ")
+    : cc.club_opt_years && cc.club_opt_years.length
+      ? `C-opt ${_fmtYears(cc.club_opt_years)}` : null;
+  const escalators = cc.escalators
+    ? `${cc.escalators.label || "Escalators"}${cc.escalators.max_total_usd ? ` up to ${fmtMm(cc.escalators.max_total_usd / 1e6)} total` : ""}`
+    : null;
 
-  const tip = [sal && `Salary: ${sal}/yr`, pOpts, cOpts].filter(Boolean).join(" · ");
+  const tip = [
+    guaranteed && `Guaranteed: ${guaranteed}${yearSpan ? ` (${yearSpan})` : ""}`,
+    aav && `AAV: ${aav}`,
+    pOpts,
+    cOpts,
+    escalators,
+  ].filter(Boolean).join(" · ");
   const col = ctrl >= 5 ? "var(--neon-green)" : ctrl >= 2 ? "var(--neon-amber)" : "var(--text-secondary)";
-  const parts = [
-    `<span style="font-weight:600;">${escapeHtml(phase)}</span>`,
-    sal  ? `<span style="color:${col}">${sal}</span>` : "",
+  const main = guaranteed
+    ? `${guaranteed}${yearSpan ? ` (${yearSpan})` : ""}`
+    : phase;
+  const detailParts = [
+    aav ? `<span style="color:${col}">AAV ${aav}</span>` : "",
     pOpts ? `<span style="color:var(--neon-amber);font-size:9px;" title="Player can opt out">${escapeHtml(pOpts)}</span>` : "",
     cOpts ? `<span style="color:var(--text-secondary);font-size:9px;" title="Team holds option">${escapeHtml(cOpts)}</span>` : "",
+    escalators ? `<span style="color:var(--text-secondary);font-size:9px;">${escapeHtml(escalators)}</span>` : "",
   ].filter(Boolean).join(" · ");
 
-  return `<span style="font-size:10px;line-height:1.3;" title="${escapeHtml(tip)}">${parts}</span>`;
+  return `<span style="font-size:10px;line-height:1.35;" title="${escapeHtml(tip)}">
+    <span style="font-weight:600;">${escapeHtml(main)}</span>
+    ${detailParts ? `<br><span>${detailParts}</span>` : ""}
+  </span>`;
 }
 function _tbFmt(mm) {
   if (mm == null) return " - ";
