@@ -162,6 +162,9 @@ class ZoneMetricRow:
     qualifier_min_pitches: int = PERCENTILE_MIN_PITCHES
     percentiles: dict[str, float] = field(default_factory=dict)
     level_splits: list[dict] = field(default_factory=list)
+    # Additive raw pitch counts that enable incremental daily updates without
+    # re-fetching the full season's game feeds.  See _tally_counts/_merge_counts.
+    raw_counts: dict = field(default_factory=dict)
 
 
 def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400) -> dict:
@@ -388,6 +391,103 @@ def _rate(num: int, den: int) -> float | None:
     return round(100.0 * num / den, 1) if den else None
 
 
+def _raw_metric_counts(pairs: list[tuple["PitchRow", int | None]], use_predicted: bool) -> dict:
+    """Like _metric_set but returns raw integer counts instead of rates."""
+    total = z_pitches = o_pitches = z_swings = o_swings = 0
+    z_contacts = o_contacts = all_swings = all_whiffs = 0
+    for pitch, pred in pairs:
+        zone = pred if use_predicted else pitch.actual_zone
+        if zone not in IN_ZONE | OUT_ZONE:
+            continue
+        total += 1
+        in_zone = zone in IN_ZONE
+        is_swing = pitch.call_code in SWING_CODES
+        is_whiff = pitch.call_code in WHIFF_CODES
+        if in_zone:
+            z_pitches += 1
+            if is_swing:
+                z_swings += 1
+                if not is_whiff:
+                    z_contacts += 1
+        else:
+            o_pitches += 1
+            if is_swing:
+                o_swings += 1
+                if not is_whiff:
+                    o_contacts += 1
+        if is_swing:
+            all_swings += 1
+            if is_whiff:
+                all_whiffs += 1
+    return dict(total=total, z_pitches=z_pitches, o_pitches=o_pitches,
+                z_swings=z_swings, o_swings=o_swings,
+                z_contacts=z_contacts, o_contacts=o_contacts,
+                all_swings=all_swings, all_whiffs=all_whiffs)
+
+
+def _tally_counts(rows: list["PitchRow"], predicted: list[int], game_pks: list[int]) -> dict:
+    """Compute additive raw counts from a batch of pitch rows + predictions."""
+    pairs = list(zip(rows, predicted))
+    labeled = [(r, p) for r, p in pairs if r.actual_zone in IN_ZONE | OUT_ZONE]
+    act = _raw_metric_counts(pairs, use_predicted=False)
+    act["labeled_total"] = len(labeled)
+    act["labeled_correct"] = sum(1 for r, p in labeled if r.actual_zone == p)
+    act["labeled_in_zone_correct"] = sum(
+        1 for r, p in labeled if (r.actual_zone in IN_ZONE) == (p in IN_ZONE)
+    )
+    return {
+        "game_pks": sorted(game_pks),
+        "pitch_rows_total": len(rows),
+        "predicted": _raw_metric_counts(pairs, use_predicted=True),
+        "actual": act,
+    }
+
+
+def _merge_counts(a: dict, b: dict) -> dict:
+    """Add two raw_counts dicts together (all numeric sub-fields are additive)."""
+    def _add(da: dict, db: dict) -> dict:
+        return {k: da.get(k, 0) + db.get(k, 0) for k in set(da) | set(db)}
+
+    return {
+        "game_pks": sorted(set(a.get("game_pks") or []) | set(b.get("game_pks") or [])),
+        "pitch_rows_total": a.get("pitch_rows_total", 0) + b.get("pitch_rows_total", 0),
+        "predicted": _add(a.get("predicted") or {}, b.get("predicted") or {}),
+        "actual": _add(a.get("actual") or {}, b.get("actual") or {}),
+    }
+
+
+def _rates_from_counts(counts: dict) -> tuple[dict, dict, "float | None", "float | None"]:
+    """Recompute metric rate dicts from stored raw counts.
+
+    Returns (predicted_metrics, actual_metrics, zone_accuracy, in_zone_accuracy).
+    """
+    def _metrics(c: dict) -> dict:
+        total = c.get("total", 0)
+        z = c.get("z_pitches", 0)
+        o = c.get("o_pitches", 0)
+        zs = c.get("z_swings", 0)
+        os_ = c.get("o_swings", 0)
+        aws = c.get("all_swings", 0)
+        return {
+            "zone_rate": _rate(z, total),
+            "z_swing_pct": _rate(zs, z),
+            "o_swing_pct": _rate(os_, o),
+            "z_contact_pct": _rate(c.get("z_contacts", 0), zs),
+            "o_contact_pct": _rate(c.get("o_contacts", 0), os_),
+            "overall_contact_pct": _rate(aws - c.get("all_whiffs", 0), aws),
+            "whiff_pct": _rate(c.get("all_whiffs", 0), aws),
+        }
+
+    act = counts.get("actual") or {}
+    lt = act.get("labeled_total", 0)
+    return (
+        _metrics(counts.get("predicted") or {}),
+        _metrics(act),
+        _rate(act.get("labeled_correct", 0), lt),
+        _rate(act.get("labeled_in_zone_correct", 0), lt),
+    )
+
+
 def _metric_set(rows: list[tuple[PitchRow, int | None]], use_predicted: bool) -> dict:
     zone_values = []
     swings = []
@@ -495,6 +595,7 @@ def _build_metric_row(
     rows: list[PitchRow],
     predicted: list[int],
     source: str = "mlb_stats_api_gameday_rf",
+    game_pks: list[int] = (),
 ) -> ZoneMetricRow:
     pairs = list(zip(rows, predicted))
     pred_metrics = _metric_set(pairs, use_predicted=True)
@@ -533,6 +634,7 @@ def _build_metric_row(
         qualifier_min_pitches=PERCENTILE_MIN_PITCHES,
         percentiles={},
         level_splits=[],
+        raw_counts=_tally_counts(rows, predicted, list(game_pks)),
         **display_metrics,
     )
 
@@ -739,6 +841,7 @@ def fetch_zone_metrics_for_players_with_model(
                 if taken_pitch_model is not None
                 else "mlb_stats_api_gameday_rf"
             ),
+            game_pks=sorted(games_by_split.get((key, level, is_pitcher), set())),
         )
 
     _attach_level_percentiles(split_rows)
@@ -756,6 +859,200 @@ def fetch_zone_metrics_for_players_with_model(
             for row in sorted(rows, key=lambda r: (ZONE_LEVELS.index(r.level), -r.pitches))
         ]
         out[key] = primary
+    return out
+
+
+def fetch_zone_metrics_incremental(
+    eligible: list[tuple[str, str, int, str, bool]],
+    season: int,
+    stored_metrics: dict[str, dict],
+    clf: "RandomForestClassifier",
+    levels: Iterable[str] = ZONE_LEVELS,
+    max_workers: int = 16,
+) -> dict[str, dict]:
+    """Fetch only game feeds that are new since the last stored refresh.
+
+    Reads raw_counts.game_pks from stored_metrics to determine which game PKs
+    have already been processed, then fetches only the delta. Returns updated
+    payload dicts (plain dicts, not ZoneMetricRow) keyed by player_key.
+
+    CPX players are NOT supported here — they need a full rebuild because their
+    taken-pitch zone model must be retrained on all season pitches.  Callers
+    should route CPX players to fetch_zone_metrics_for_players_with_model.
+    Players with no stored raw_counts are silently skipped (also need full run).
+    """
+    import logging as _log_mod
+    _log = _log_mod.getLogger(__name__)
+
+    allowed_levels = set(levels) - {"CPX"}
+    eligible_meta: dict[str, tuple[str, int, str, bool]] = {}
+    for key, name, mlbam_id, level, is_pitcher in eligible:
+        eligible_meta[key] = (name, mlbam_id, level, is_pitcher)
+
+    # --- Step 1: fetch game logs for all eligible players concurrently ---
+    def _fetch_logs(item: tuple) -> tuple[str, list]:
+        key, _name, mlbam_id, _level, is_pitcher = item
+        try:
+            return key, all_game_logs(mlbam_id, season, is_pitcher=is_pitcher)
+        except Exception:
+            return key, []
+
+    workers = max(1, min(max_workers, len(eligible))) if eligible else 1
+    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as ex:
+        logs_by_key: dict[str, list] = dict(ex.map(_fetch_logs, eligible))
+
+    # --- Step 2: determine new game PKs per (player, level, is_pitcher) ---
+    game_to_batters: dict[int, set[int]] = {}
+    game_to_pitchers: dict[int, set[int]] = {}
+    game_date_by_pk: dict[int, str] = {}
+    game_to_triples: dict[int, list[tuple[str, str, bool]]] = {}
+    player_new_pks: dict[tuple[str, str, bool], set[int]] = {}
+
+    for key, name, mlbam_id, level, is_pitcher in eligible:
+        stored = stored_metrics.get(key) or {}
+
+        # Collect stored game_pks per level from level_splits and top-level
+        stored_pks_by_level: dict[str, set[int]] = {}
+        for sp in stored.get("level_splits") or []:
+            sl = sp.get("level")
+            rc = sp.get("raw_counts") or {}
+            if sl and rc.get("game_pks"):
+                stored_pks_by_level[sl] = set(rc["game_pks"])
+        top_rc = stored.get("raw_counts") or {}
+        if top_rc.get("game_pks") and stored.get("level"):
+            stored_pks_by_level.setdefault(stored["level"], set()).update(top_rc["game_pks"])
+
+        if not stored_pks_by_level:
+            continue  # no prior raw_counts — caller should do full rebuild
+
+        for split in logs_by_key.get(key) or []:
+            split_level = (split.get("sport") or {}).get("abbreviation")
+            if split_level not in allowed_levels:
+                continue
+            pk = (split.get("game") or {}).get("gamePk")
+            if not pk:
+                continue
+            pk = int(pk)
+            if pk in (stored_pks_by_level.get(split_level) or set()):
+                continue  # already processed
+            gd = split.get("date")
+            if gd and pk not in game_date_by_pk:
+                game_date_by_pk[pk] = gd
+            triple = (key, split_level, is_pitcher)
+            player_new_pks.setdefault(triple, set()).add(pk)
+            game_to_triples.setdefault(pk, []).append(triple)
+            if is_pitcher:
+                game_to_pitchers.setdefault(pk, set()).add(mlbam_id)
+            else:
+                game_to_batters.setdefault(pk, set()).add(mlbam_id)
+
+    new_pks = sorted(game_to_triples)
+    if not new_pks:
+        return {}
+
+    _log.info("zone_metrics incremental: fetching %d new game feeds", len(new_pks))
+
+    # --- Step 3: fetch only the new game feeds (deduped) ---
+    new_pitches_by_triple: dict[tuple[str, str, bool], list["PitchRow"]] = {}
+
+    def _fetch_game(pk: int) -> tuple[int, list]:
+        try:
+            return pk, pitches_from_game(
+                pk,
+                batter_ids=game_to_batters.get(pk),
+                pitcher_ids=game_to_pitchers.get(pk),
+                game_date=game_date_by_pk.get(pk),
+            )
+        except Exception:
+            return pk, []
+
+    w = max(1, min(max_workers, len(new_pks)))
+    with concurrent.futures.ThreadPoolExecutor(max_workers=w) as ex:
+        for pk, rows in ex.map(_fetch_game, new_pks):
+            for triple in game_to_triples.get(pk, []):
+                key, _sl, is_pitcher = triple
+                _name, mlbam_id, _level, _ip = eligible_meta[key]
+                matched = [
+                    r for r in rows
+                    if (r.pitcher_id if is_pitcher else r.batter_id) == mlbam_id
+                ]
+                if matched:
+                    new_pitches_by_triple.setdefault(triple, []).extend(matched)
+
+    # --- Step 4: merge new counts into stored payload, recompute rates ---
+    out: dict[str, dict] = {}
+
+    for triple, new_rows in new_pitches_by_triple.items():
+        if not new_rows:
+            continue
+        key, split_level, is_pitcher = triple
+        new_pks_for_triple = sorted(player_new_pks.get(triple, set()))
+        predicted = _predict_zone_ids(new_rows, clf)
+        new_rc = _tally_counts(new_rows, predicted, new_pks_for_triple)
+
+        stored = stored_metrics.get(key) or {}
+        if key not in out:
+            import copy
+            out[key] = copy.deepcopy(stored)
+        payload = out[key]
+
+        # Find the matching stored level entry to merge raw_counts into
+        def _update_split(sp: dict, merged_rc: dict) -> None:
+            pred_m, actual_m, zone_acc, in_zone_acc = _rates_from_counts(merged_rc)
+            display_m = {
+                k: actual_m.get(k) if actual_m.get(k) is not None else pred_m.get(k)
+                for k in pred_m
+            }
+            sp.update(display_m)
+            sp["actual_zone_rate"] = actual_m.get("zone_rate")
+            sp["actual_z_swing_pct"] = actual_m.get("z_swing_pct")
+            sp["actual_o_swing_pct"] = actual_m.get("o_swing_pct")
+            sp["actual_z_contact_pct"] = actual_m.get("z_contact_pct")
+            sp["actual_o_contact_pct"] = actual_m.get("o_contact_pct")
+            sp["actual_zone_accuracy"] = zone_acc
+            sp["actual_in_zone_accuracy"] = in_zone_acc
+            sp["pitches"] = merged_rc.get("pitch_rows_total", sp.get("pitches", 0))
+            sp["games"] = len(merged_rc.get("game_pks") or []) or sp.get("games", 0)
+            sp["raw_counts"] = merged_rc
+            sp["qualified"] = sp["pitches"] >= PERCENTILE_MIN_PITCHES
+
+        if payload.get("level") == split_level:
+            stored_rc = payload.get("raw_counts") or {}
+            merged = _merge_counts(stored_rc, new_rc) if stored_rc else new_rc
+            _update_split(payload, merged)
+            payload["fetched_at"] = date.today().isoformat()
+        else:
+            splits = payload.get("level_splits") or []
+            for sp in splits:
+                if sp.get("level") == split_level:
+                    stored_rc = sp.get("raw_counts") or {}
+                    merged = _merge_counts(stored_rc, new_rc) if stored_rc else new_rc
+                    _update_split(sp, merged)
+                    break
+            else:
+                # New level for this player (e.g., first AAA games after MLB-only prior run)
+                pred_m, actual_m, zone_acc, in_zone_acc = _rates_from_counts(new_rc)
+                display_m = {
+                    k: actual_m.get(k) if actual_m.get(k) is not None else pred_m.get(k)
+                    for k in pred_m
+                }
+                new_sp: dict = dict(display_m)
+                new_sp.update({"level": split_level, "raw_counts": new_rc,
+                               "actual_zone_accuracy": zone_acc,
+                               "actual_in_zone_accuracy": in_zone_acc,
+                               "actual_zone_rate": actual_m.get("zone_rate"),
+                               "actual_z_swing_pct": actual_m.get("z_swing_pct"),
+                               "actual_o_swing_pct": actual_m.get("o_swing_pct"),
+                               "actual_z_contact_pct": actual_m.get("z_contact_pct"),
+                               "actual_o_contact_pct": actual_m.get("o_contact_pct"),
+                               "pitches": new_rc.get("pitch_rows_total", 0),
+                               "games": len(new_rc.get("game_pks") or []),
+                               "level_splits": [],
+                               "qualified": new_rc.get("pitch_rows_total", 0) >= PERCENTILE_MIN_PITCHES})
+                splits.append(new_sp)
+            payload["level_splits"] = splits
+            payload["fetched_at"] = date.today().isoformat()
+
     return out
 
 

@@ -331,7 +331,7 @@ def _stage_fangraphs_articles(log) -> None:
         log.info("fangraphs_csv: staged %d committed article CSV(s) for ingest", staged)
 
 
-def rebuild_only(out_dir: Path = Path("data")) -> None:
+def rebuild_only(out_dir: Path = Path("data"), refit_models: bool = True) -> None:
     """Fast export-only path: ingest any FG drops, rebuild the timeseries
     from the current DB state, write `data/timeseries.json`. No scraping,
     no MLB API calls. Use after a fangraphs_csv drop when you don't want
@@ -469,18 +469,17 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("ifa export crashed in rebuild_only — continuing")
 
-    # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors
-    # against the just-refreshed Single-A statlines and rebuilds the per-player
-    # sidecar (CS player pages) + the PROSPX draft bridge. Reads CollegeSavant's
-    # vendored TrackMan data + the DB; the factor bands tighten as more
-    # college->Single-A pairs accrue. Best-effort; a failure must not abort.
-    try:
-        from college_translation import build as _build_college_translation
-        _ct = _build_college_translation(out_dir=out_dir)
-        log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
-                 len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
-    except Exception:
-        log.exception("CollegeSavant translation crashed in rebuild_only — continuing")
+    # CollegeSavant -> Single-A translation. Re-fits the matched-pair factors.
+    # Monthly-only: factor re-fitting is expensive and stable within a month.
+    # Skipped on daily rebuild passes (refit_models=False).
+    if refit_models:
+        try:
+            from college_translation import build as _build_college_translation
+            _ct = _build_college_translation(out_dir=out_dir)
+            log.info("CollegeSavant translation (rebuild): %d factor blocks, %d draft-bridge entries",
+                     len(_ct.get("factors", {})), _ct.get("bridge_count", 0))
+        except Exception:
+            log.exception("CollegeSavant translation crashed in rebuild_only — continuing")
 
     # Organization Tendencies — pure aggregation over the DB + the
     # just-rebuilt sidecars (timeseries, ifa, debuts). Best-effort.
@@ -490,42 +489,41 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     except Exception:
         log.exception("org tendencies export crashed in rebuild_only — continuing")
 
-    # xFV — our outcome-grounded grade. Regenerates the labeled training matrix +
-    # the CURRENT active-board feature matrix from the just-written timeseries.json,
-    # fits the model, scores both cohorts (live board gated on a pro track record),
-    # and consolidates data/xfv.json (the site sidecar shown next to consensus FV).
-    # The forward-chained backtest eval (registry artifact) is stable -> not re-run
-    # here. Best-effort; a failure must not abort the run. Provisional grade.
-    try:
-        from xfv_export import regen_all as _regen_xfv
-        _xfv = _regen_xfv()
-        log.info("xFV (rebuild): %d players (%d live board) -> data/xfv.json",
-                 _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
-    except Exception:
-        log.exception("xFV regen crashed in rebuild_only — continuing")
+    # xFV — outcome-grounded grade. Monthly-only: full matrix rebuild + model
+    # fit. Skipped on daily passes; the existing xfv.json stays current.
+    if refit_models:
+        try:
+            from xfv_export import regen_all as _regen_xfv
+            _xfv = _regen_xfv()
+            log.info("xFV (rebuild): %d players (%d live board) -> data/xfv.json",
+                     _xfv["meta"]["n_players"], _xfv["meta"]["n_active"])
+        except Exception:
+            log.exception("xFV regen crashed in rebuild_only — continuing")
 
-    # MiLB -> first-MLB rate translation (K% / BB%; matched-pair, LOO-validated).
-    # Needs the xFV matrices (built above) + debuts.json. Best-effort.
-    try:
-        import milb_translation
-        _mt = milb_translation.build()
-        log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
-                 len(_mt["fits"]))
-    except Exception:
-        log.exception("milb_translation crashed in rebuild_only - continuing")
+    # MiLB -> first-MLB rate translation. Monthly-only: LOO model fit.
+    if refit_models:
+        try:
+            import milb_translation
+            _mt = milb_translation.build()
+            log.info("MiLB->MLB rate translation: %d fits -> data/milb_translation.json",
+                     len(_mt["fits"]))
+        except Exception:
+            log.exception("milb_translation crashed in rebuild_only - continuing")
 
-    # xFV PROXY — faster-resolving leading indicator (pre-debut profile -> first-MLB Statcast
-    # quality), forward-validated on recent debut cohorts. Separate artifact, NOT xFV; pulls
-    # Savant expected-stats (cached). Best-effort; a Savant outage must not abort the run.
-    try:
-        import xfv_proxy as _xfv_proxy
-        _xp = _xfv_proxy.run()
-        log.info("xFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
-                 _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
-    except Exception:
-        log.exception("xFV proxy crashed in rebuild_only — continuing")
+    # xFV PROXY — forward-validated leading indicator. Monthly-only: Savant
+    # expected-stats pull + proxy model scoring. Skipped on daily passes.
+    if refit_models:
+        try:
+            import xfv_proxy as _xfv_proxy
+            _xp = _xfv_proxy.run()
+            log.info("xFV proxy: hit r=%s / pit r=%s -> data/xfv_proxy_eval.json",
+                     _xp["sides"].get("hit", {}).get("r"), _xp["sides"].get("pit", {}).get("r"))
+        except Exception:
+            log.exception("xFV proxy crashed in rebuild_only — continuing")
 
-    # GRPO breakout scores — runs before trade values so scores can adjust FV priors.
+    # GRPO breakout scores — runs before trade values so priors are GRPO-informed.
+    # Daily passes rescore using the existing model (retrain=False); monthly runs
+    # also retrain the model against the latest graduate outcomes (retrain=True).
     try:
         from grpo_prospect import export_grpo_scores
         _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
@@ -536,7 +534,7 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
             out_path=out_dir / "grpo_scores.json",
             model_path=out_dir / "grpo_model.pkl",
             level_norms=json.loads(out_path.read_text()).get("level_norms"),
-            retrain=True,
+            retrain=refit_models,
         )
         log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
     except Exception:
@@ -654,7 +652,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # Franklin Primera: players with no scouting source coverage but who
         # have an MLBAM ID and are producing in affiliated ball enter the DB
         # here rather than waiting for a publication cycle.
-        with _step("d0. MLBAM prospect discovery (unranked actives)", log):
+        with _step("d0c. MLBAM prospect discovery (unranked actives)", log):
             try:
                 from mlbam_ingest import ingest_unranked_active_prospects
                 _mlbam_summary = ingest_unranked_active_prospects(season=season)
@@ -766,6 +764,12 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                         continue
                     sl = statlines.get(p.player_key) or {}
                     level = sl.get("level")
+                    # Debuted players are MLB-active but their statlines still
+                    # reflect their last MiLB level (d5c skips them), so the
+                    # level gate below would silently drop them. Force MLB so
+                    # their Statcast metrics stay current after debut.
+                    if p.status == "debuted":
+                        level = "MLB"
                     if level is not None and level not in DAILY_STATCAST_TRACKED_LEVELS:
                         continue
                     if p.player_key not in statcast_metric_meta and level != "MLB":
@@ -849,6 +853,98 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: incremental Statcast metrics failed — continuing")
 
+        # --- 5e. Incremental zone metrics (AA / A+ / A / CPX / DSL) ------
+        # Complements d5d: zone metrics use the game-feed classifier path,
+        # covering all affiliated levels including those without Statcast
+        # coverage. No game-log date probe exists for zone metrics, so we
+        # gate on fetched_at age — players with a row older than 20 hours
+        # (or no row) are re-fetched. The zone classifier trains from cached
+        # MLB game feeds so the training cost is minimal on a warm cache run.
+        with _step("d5e. Incremental zone metrics", log):
+            try:
+                from zone_metrics import (
+                    fetch_zone_metrics_for_players_with_model,
+                    fetch_zone_metrics_incremental,
+                    train_zone_classifier as _train_zone_clf,
+                    ZONE_LEVELS as _ZONE_LEVELS,
+                )
+                import datetime as _dt_zone
+                _zone_meta = load_zone_metrics_meta()
+                _stored_zone = load_zone_metrics()
+                _zone_stale_sec = 20 * 3600
+
+                def _zone_is_stale(key: str) -> bool:
+                    ts = _zone_meta.get(key)
+                    if not ts:
+                        return True
+                    try:
+                        fetched = _dt_zone.datetime.fromisoformat(str(ts).replace(" ", "T"))
+                        return (_dt_zone.datetime.utcnow() - fetched).total_seconds() > _zone_stale_sec
+                    except Exception:
+                        return True
+
+                _zstatlines = load_statlines()
+                zone_candidates = []
+                for p in timeseries:
+                    if not _zone_is_stale(p.player_key):
+                        continue
+                    mlbam = ids_by_key.get(p.player_key)
+                    if mlbam is None:
+                        continue
+                    _zsl = _zstatlines.get(p.player_key) or {}
+                    level = _zsl.get("level")
+                    if p.status == "debuted":
+                        level = "MLB"
+                    if level not in _ZONE_LEVELS:
+                        continue
+                    is_pitcher = bool(_zsl.get("is_pitcher")) or _is_pitcher(p.position)
+                    zone_candidates.append((p.player_key, p.player_name, mlbam, level, is_pitcher))
+
+                log.info("daily: zone metrics stale for %d players", len(zone_candidates))
+                if zone_candidates:
+                    # Route to incremental path when stored raw_counts exist;
+                    # CPX and first-time players fall back to full rebuild.
+                    inc_candidates, full_candidates = [], []
+                    for item in zone_candidates:
+                        key, _name, _mid, level, _ip = item
+                        if level == "CPX":
+                            full_candidates.append(item)
+                            continue
+                        stored = _stored_zone.get(key) or {}
+                        has_counts = bool(
+                            (stored.get("raw_counts") or {}).get("game_pks") or
+                            any((sp.get("raw_counts") or {}).get("game_pks")
+                                for sp in stored.get("level_splits") or [])
+                        )
+                        (inc_candidates if has_counts else full_candidates).append(item)
+
+                    log.info("daily: zone metrics incremental=%d full-rebuild=%d",
+                             len(inc_candidates), len(full_candidates))
+
+                    clf = _train_zone_clf(season, train_games=30,
+                                         train_start_date=f"{season}-05-15")
+                    updated_zone: dict = {}
+
+                    if inc_candidates:
+                        inc = fetch_zone_metrics_incremental(
+                            inc_candidates, season, _stored_zone, clf,
+                            max_workers=workers if "workers" in dir() else 16,
+                        )
+                        updated_zone.update(inc)
+
+                    if full_candidates:
+                        full = fetch_zone_metrics_for_players_with_model(
+                            full_candidates, season, clf,
+                            max_workers=workers if "workers" in dir() else 16,
+                        )
+                        updated_zone.update(full)
+
+                    if updated_zone:
+                        upsert_zone_metrics(updated_zone, season)
+                        log.info("daily: refreshed zone metrics for %d players", len(updated_zone))
+            except Exception:
+                log.exception("daily: incremental zone metrics failed — continuing")
+
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
             try:
@@ -903,7 +999,7 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
 
         # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
         with _step("d9. Rebuild timeseries (no scrape)", log):
-            rebuild_only(out_dir)
+            rebuild_only(out_dir, refit_models=False)
 
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
@@ -2377,7 +2473,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                transactions_by_player=transactions_by_key,
                                career_stats=career_cache,
                                career_war=career_war_all,
-                               acquisitions=load_acquisitions(),
+                               acquisitions=acquisitions,
                                il_status=load_il_status(),
                                rosters_by_org=rosters_by_org,
                                level_changes=level_changes_by_key,
