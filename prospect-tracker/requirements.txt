@@ -11,3 +11,4 @@ lightgbm>=4.0
 markdown>=3.5          # build_site.py: render content/articles/*.md -> static article pages
 orjson>=3.9            # storage export serializer: 3-5x faster dumps of the 60MB+ payloads
 py_mini_racer  # CollegeSavant JS smoke test (test_collegesavant_smoke.py)
+pyyaml>=6.0    # value_framework/bayes_trade_value/fa_class/valuation_sets: config/valuation_sets/*.yaml
