@@ -1217,7 +1217,7 @@ def fetch_statcast_metrics_for_players(
     _p3_start = _time.monotonic()
     _log.info("statcast pass 3/3: processing %d players against cached feeds", len(targets))
     _p3_done = 0
-    # v21 — Processes, not threads. _finalize_pitch/_finalize_contact do real
+    # v22 — Processes, not threads. _finalize_pitch/_finalize_contact do real
     # CPU work (JSON parse + per-pitch statistical aggregation), and CPython
     # threads don't get true parallelism for CPU-bound code (the GIL means
     # only one thread executes Python bytecode at a time regardless of
@@ -1227,15 +1227,24 @@ def fetch_statcast_metrics_for_players(
     # I/O concurrency) since extra processes past that just add overhead for
     # CPU-bound work. fetch_statcast_metrics_for_player's args and its
     # StatcastMetricRow return value are plain picklable types.
-    # Explicitly forked (not the platform/Python-version default, which
-    # varies): safe here because pass 2's thread pool is already fully shut
-    # down by the time we get here (its `with` block already exited), so
-    # there's no thread-holding-a-lock-at-fork-time risk, and fork sidesteps
-    # spawn's requirement that the importing module be guarded by
-    # `if __name__ == "__main__":` (this module is only ever imported, never
-    # run directly).
+    # SPAWN, not fork (v22 correction — an earlier version of this used
+    # fork and OOM'd on a full run): by the time we reach this step, the
+    # calling process (run_monthly.py's main()) has already accumulated a
+    # large heap — the full player timeseries, statlines, ID maps, etc.
+    # from every earlier step. fork() gives each worker a copy-on-write view
+    # of that WHOLE heap, and CPython's per-object refcounting means merely
+    # touching an inherited object (even incidentally, e.g. during a GC
+    # sweep) dirties its page and forces a real copy — across several
+    # workers that can multiply memory well past what the parent alone was
+    # using, which is exactly what caused a second OOM here. spawn starts
+    # each worker as a fresh interpreter that only receives the small,
+    # explicitly-pickled task arguments, never the parent's heap, at the
+    # cost of a negligible one-time interpreter-boot delay per worker.
+    # Requires the importing script's entry point to be guarded by
+    # `if __name__ == "__main__":` so a spawned child doesn't re-run it on
+    # import — confirmed true for run_monthly.py (see bottom of that file).
     _p3_workers = min(max_workers, os.cpu_count() or 4)
-    _p3_ctx = multiprocessing.get_context("fork")
+    _p3_ctx = multiprocessing.get_context("spawn")
     with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
         future_to_key = {
             ex.submit(
