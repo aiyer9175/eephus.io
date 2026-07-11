@@ -82,6 +82,7 @@ rsync -a --delete \
   --include='/player/***' --include='/projections/***' \
   --include='/prospx/***' --include='/sources/***' \
   --include='/team/***' --include='/teams/***' \
+  --include='/report/***' --include='/vendor/***' \
   --include='/data/' --include='/data/*.json' \
   --include='/data/pitch_plots/***' --include='/data/player_detail/***' \
   --exclude='*' \
