@@ -17,6 +17,8 @@ import concurrent.futures
 import hashlib
 import json
 import math
+import multiprocessing
+import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -1215,9 +1217,26 @@ def fetch_statcast_metrics_for_players(
     _p3_start = _time.monotonic()
     _log.info("statcast pass 3/3: processing %d players against cached feeds", len(targets))
     _p3_done = 0
-    # Parallel because _finalize_pitch / contact has noticeable CPU work
-    # for pitchers with many tracked pitches.
-    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
+    # v21 — Processes, not threads. _finalize_pitch/_finalize_contact do real
+    # CPU work (JSON parse + per-pitch statistical aggregation), and CPython
+    # threads don't get true parallelism for CPU-bound code (the GIL means
+    # only one thread executes Python bytecode at a time regardless of
+    # max_workers). A ProcessPoolExecutor gives each worker its own
+    # interpreter/GIL, so this actually uses the box's cores. Capped at the
+    # real core count (not max_workers, which was tuned high for pass 1/2's
+    # I/O concurrency) since extra processes past that just add overhead for
+    # CPU-bound work. fetch_statcast_metrics_for_player's args and its
+    # StatcastMetricRow return value are plain picklable types.
+    # Explicitly forked (not the platform/Python-version default, which
+    # varies): safe here because pass 2's thread pool is already fully shut
+    # down by the time we get here (its `with` block already exited), so
+    # there's no thread-holding-a-lock-at-fork-time risk, and fork sidesteps
+    # spawn's requirement that the importing module be guarded by
+    # `if __name__ == "__main__":` (this module is only ever imported, never
+    # run directly).
+    _p3_workers = min(max_workers, os.cpu_count() or 4)
+    _p3_ctx = multiprocessing.get_context("fork")
+    with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
         future_to_key = {
             ex.submit(
                 fetch_statcast_metrics_for_player,
