@@ -1810,23 +1810,39 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     )
 
 def _date_callout() -> str:
-    """Date-aware countdown when the MLB Draft or Int'l signing period is near."""
+    """Date-aware countdown when the MLB Draft or Int'l signing period is near.
+
+    Events carry a (start, end) range rather than a single date - the MLB
+    Draft runs three days (Jul 11-13), not one, so "days until" has to count
+    down to the START, and the callout needs an in-progress state for the
+    days the event is actually happening, not just before/after.
+    """
     today = date.today()
     yr = today.year
     events = [
-        (date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
+        (date(yr, 7, 11), date(yr, 7, 13), "MLB Draft", "/prospx/#tab=draft"),
         (date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
+         date(yr if today <= date(yr, 1, 15) else yr + 1, 1, 15),
          "International signing period", "/prospx/#tab=ifa"),
     ]
-    for d, name, href in sorted(events, key=lambda e: e[0]):
-        days = (d - today).days
-        if 0 <= days <= 45:
-            when = "Today" if days == 0 else ("Tomorrow" if days == 1 else f"in {days} days")
-            md = d.strftime("%b %d").replace(" 0", " ")
-            return (f'<a class="home-callout" href="{href}">'
-                    f'<span class="cal-tag">◆ Upcoming</span>'
-                    f'<span class="cal-msg"><strong>{html.escape(name)}</strong> · {md} · {when}</span>'
-                    f'<span class="cal-go">View →</span></a>')
+    for start, end, name, href in sorted(events, key=lambda e: e[0]):
+        if today > end:
+            continue
+        days = (start - today).days
+        if start <= today <= end:
+            tag, when = "◆ Live", "Underway"
+        elif 0 <= days <= 45:
+            tag = "◆ Upcoming"
+            when = "Tomorrow" if days == 1 else f"in {days} days"
+        else:
+            continue
+        md = start.strftime("%b %d").replace(" 0", " ")
+        if end != start:
+            md += "-" + end.strftime("%d").lstrip("0")
+        return (f'<a class="home-callout" href="{href}">'
+                f'<span class="cal-tag">{tag}</span>'
+                f'<span class="cal-msg"><strong>{html.escape(name)}</strong> · {md} · {when}</span>'
+                f'<span class="cal-go">View →</span></a>')
     return ""
 
 def _scatter_teaser() -> str:
