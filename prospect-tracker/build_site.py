@@ -147,17 +147,26 @@ NAV_ITEMS = [
     ("team",     "Developers",        "/team/"),
 ]
 
+# Nav keys not part of THIS beta release. The pages themselves still get
+# generated (build_site's route list doesn't change), but they're excluded
+# from the deploy rsync allowlist, so a real nav link would 404. Rendered
+# greyed-out with no href instead. Revert by emptying this set once those
+# modules are ready to ship.
+DISABLED_NAV_KEYS = {"mlbstats", "pal", "trademachine"}
+
 def _nav_is_group(item) -> bool:
     """A NAV_ITEMS entry is a group when it's a dict (vs a (key,label,href) leaf)."""
     return isinstance(item, dict)
 
 def nav_leaves() -> list[tuple]:
     """Flatten NAV_ITEMS (groups + leaves) to (key, label, href) in nav order -
-    the canonical link set the static nav copies must mirror."""
+    the canonical link set the static nav copies must mirror. Excludes
+    DISABLED_NAV_KEYS entries - those render as greyed, non-linked text
+    (see _nav()), not real links, so they're not part of the link set."""
     out: list[tuple] = []
     for item in NAV_ITEMS:
         if _nav_is_group(item):
-            out.extend(item["children"])
+            out.extend(c for c in item["children"] if c[0] not in DISABLED_NAV_KEYS)
         else:
             out.append(item)
     return out
@@ -630,6 +639,10 @@ def _nav(active: str) -> str:
             active_in = any(k == active for k, _l, _h in children)
             clinks = []
             for k, l, h in children:
+                if k in DISABLED_NAV_KEYS:
+                    clinks.append(f'<span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" '
+                                  f'title="Not part of this beta release yet">{html.escape(short.get(k, l))}</span>')
+                    continue
                 ccls = ' class="is-active"' if k == active else ""
                 clinks.append(f'<a href="{h}" role="menuitem"{ccls}>{html.escape(short.get(k, l))}</a>')
             gcls = " is-active" if active_in else ""
@@ -1994,6 +2007,11 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             # dropdown is for the horizontal top bar; the rail has room).
             nav.append(f'<div class="sb-subhead">{html.escape(item["group"])}</div>')
             for k, l, h in item["children"]:
+                if k in DISABLED_NAV_KEYS:
+                    icon = f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(k, "›")}</span>'
+                    nav.append(f'<span class="sb-grouped eephus-nav-disabled" aria-disabled="true" '
+                               f'title="Not part of this beta release yet">{icon}{html.escape(sidebar_labels.get(k, l))}</span>')
+                    continue
                 nav.append(_sb_link(k, l, h, grouped=True))   # leaf label under the subhead
         else:
             key, label, href = item

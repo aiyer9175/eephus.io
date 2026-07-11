@@ -422,6 +422,14 @@
   background: var(--bg-tertiary); color: var(--text-primary);
 }
 .eephus-nav .eephus-nav-menu a.is-active { color: var(--text-primary); font-weight: 700; }
+/* Nav items not part of this beta release (DISABLED_NAV_KEYS in build_site.py):
+   greyed, no href, no hover feedback - a plain "not available yet" label
+   instead of a link to a 404. */
+.eephus-nav .eephus-nav-menu .eephus-nav-disabled {
+  font-family: var(--font-retro); font-size: 12.5px; font-weight: 600;
+  letter-spacing: .02em; color: var(--text-tertiary); padding: 9px 14px;
+  white-space: nowrap; display: block; cursor: default; opacity: .6;
+}
 /* Site-wide controls (Watchlist, Dark Mode), right-aligned in the primary nav. */
 .eephus-nav .eephus-nav-controls { display: inline-flex; align-items: center; gap: 8px; }
 /* Terminal/Bloomberg treatment: see-through chip + hairline border + MS-Gothic
@@ -893,6 +901,13 @@ a.card:hover { box-shadow: var(--shadow-card-hover); transform: translateY(-1px)
   margin: 8px 0 2px; padding: 0 9px;
 }
 .sb-nav a.sb-grouped { margin-left: 10px; }
+/* Sidebar mirror of the disabled nav-menu treatment above - same
+   DISABLED_NAV_KEYS, greyed with no href instead of a link to a 404. */
+.sb-nav .eephus-nav-disabled.sb-grouped {
+  display: flex; align-items: center; gap: 8px; font-family: var(--font-retro);
+  font-size: 14px; font-weight: 600; color: var(--text-tertiary);
+  padding: 7px 9px; margin-left: 10px; cursor: default; opacity: .6;
+}
 .sb-subnav { display: grid; grid-template-columns: 1fr 1fr; gap: 2px; }
 .sb-subnav a { font-size: 12px; padding: 6px 8px; color: var(--text-secondary); }
 /* Touch devices get larger sidebar tap targets (~40px) without loosening the
