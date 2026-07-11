@@ -241,7 +241,7 @@ def _footer() -> str:
         f'<a href="/sources/">Data Sources</a>'
         f'<a href="/glossary/">Glossary</a>'
         f'<a href="/report/">Report a bug</a>'
-        f'<a href="https://x.com/ARKNDJL" target="_blank" rel="noopener noreferrer">@ARKNDJL</a>'
+        f'<a href="https://x.com/eephus_io" target="_blank" rel="noopener noreferrer">@eephus_io</a>'
         f'<a href="{html.escape(DISCORD_URL)}" target="_blank" rel="noopener noreferrer">Discord</a>'
     )
     # Footer carries the compact mark (the favicon ball) so the identity closes
