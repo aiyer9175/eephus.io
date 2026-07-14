@@ -1,0 +1,29 @@
+# data/ files that must NOT ship to the public webroot - model internals
+# and pipeline inputs no page fetches. Consumed by BOTH deploy paths
+# (deploy/nightly-build.sh rsync excludes + the workflow staging step),
+# and pinned by test_publish_manifest.py: a listed file may not be
+# fetched by any page and may not be a model_registry eval_artifact
+# (those are publicly hyperlinked from the Models & Proofs surface and
+# MUST ship - e.g. xfv_tools.json, eta_eval.json).
+#
+# NOTE data/*_eval.json artifacts ship on purpose (accountability
+# surface); do not add them here.
+xfv_hitter_matrix.json
+xfv_pitcher_matrix.json
+xfv_live_hitter_matrix.json
+xfv_live_pitcher_matrix.json
+xfv_scored.json
+xfv_scored_pitcher.json
+xfv_scored_live.json
+xfv_scored_live_pitcher.json
+xfv_tools_live.json
+xfv_backgrade.json
+xfv_dataset_report.json
+xfv_pitcher_dataset_report.json
+xfv_score_report.json
+xfv_score_report_pitcher.json
+mlb_def_history.json
+cba_rules.json
+contract_options.json
+grpo_scores.json
+xfv_extra_defense.json

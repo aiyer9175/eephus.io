@@ -44,6 +44,12 @@ fi
 echo "=== $(date -Is) nightly build start ==="
 cd "$APP"
 
+# Staleness alarm: if the webroot hasn't been touched in 48h, something has
+# been silently failing (red gate, dead cron) - say so loudly in the log.
+if [ -f "$WEBROOT/index.html" ] && [ -n "$(find "$WEBROOT/index.html" -mtime +2 2>/dev/null)" ]; then
+  echo "!!! WEBROOT STALE: $WEBROOT/index.html is older than 48h - previous nightlies did not publish. Check this log's history for the first failure."
+fi
+
 # The pipeline (below) rewrites TRACKED artifacts (data/xfv.json et al.) in place, so
 # the tree is dirty when this run ends. Restore tracked files before pulling so the
 # fast-forward can't abort on a dirty tree. Untracked state we deliberately keep
@@ -55,11 +61,29 @@ git -C "$REPO" pull --ff-only
 source "$VENV/bin/activate"
 pip install -q -r requirements.txt
 
+# A missing DB is NOT a normal cold start: prospects.db carries the 2021+
+# snapshot history (grade lists, tool grades, Arkmetric/metric snapshots,
+# IL history) that a re-scrape CANNOT recover - the archive backfills were
+# one-time. Rebuilding cold silently produces a plausible-looking site
+# with wrong FV history, consensus, and surplus numbers (this is what
+# production served after 2026-07-11). Seed the canonical DB first (see
+# deploy/README.md "Seeding the canonical database"), or opt into a
+# knowingly-degraded rebuild with EEPHUS_ALLOW_COLD_REBUILD=1.
+if [ ! -f prospects.db ] && [ "${EEPHUS_ALLOW_COLD_REBUILD:-}" != "1" ]; then
+  echo "!!! prospects.db is MISSING. Refusing to cold-rebuild (it cannot recover"
+  echo "!!! the 2021+ snapshot history and would publish wrong numbers)."
+  echo "!!! Seed the canonical DB per deploy/README.md, or set"
+  echo "!!! EEPHUS_ALLOW_COLD_REBUILD=1 to build a knowingly-degraded site."
+  exit 1
+fi
+
 if [ "$(date +%d)" = "01" ] || [ "${EEPHUS_FULL:-}" = "1" ] || [ ! -f prospects.db ]; then
   echo "--- FULL monthly pipeline"
+  MODE=full
   python run_monthly.py
 else
   echo "--- daily refresh"
+  MODE=daily
   python run_monthly.py --daily
 fi
 
@@ -71,18 +95,41 @@ python build_site.py
 # checks, since this run legitimately regenerates those artifacts from fresh data.
 EEPHUS_DEPLOY_RUN=1 python -m pytest -q
 
+# Deploy heartbeat: a tiny sidecar the webmaster (and a curl one-liner) can
+# check to confirm the nightly actually published. Written into the app's
+# data/ so the normal rsync ships it; untracked, so the pre-pull
+# `git checkout -- .` never sees it.
+printf '{"generated_at":"%s","git_sha":"%s","mode":"%s"}\n' \
+  "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+  "$(git -C "$REPO" rev-parse --short HEAD)" \
+  "$MODE" > data/build_info.json
+
+# The include-list is the shared manifest deploy/publish_paths.txt (one
+# source of truth with the GitHub workflow's staging step). Directories
+# ship recursively, bare names ship as root files; data/ rides its own
+# include rules below, minus deploy/data_exclude.txt (model internals no
+# page fetches - excludes must precede the /data/*.json include because
+# rsync applies the first matching rule).
 echo "--- rsync -> $WEBROOT"
 mkdir -p "$WEBROOT"
+INCLUDES=()
+while IFS= read -r p; do
+  case "$p" in ''|\#*) continue ;; esac
+  if [ -d "$APP/$p" ]; then
+    INCLUDES+=("--include=/$p/***")
+  else
+    INCLUDES+=("--include=/$p")
+  fi
+done < "$APP/deploy/publish_paths.txt"
+DATA_EXCLUDES=()
+while IFS= read -r p; do
+  case "$p" in ''|\#*) continue ;; esac
+  DATA_EXCLUDES+=("--exclude=/data/$p")
+done < "$APP/deploy/data_exclude.txt"
 rsync -a --delete \
-  --include='/index.html' --include='/404.html' \
-  --include='/robots.txt' --include='/sitemap.xml' --include='/favicon.ico' \
-  --include='/articles/***' --include='/assets/***' \
-  --include='/collegesavant/***' --include='/fa/***' \
-  --include='/forums/***' --include='/glossary/***' \
-  --include='/player/***' --include='/projections/***' \
-  --include='/prospx/***' --include='/sources/***' \
-  --include='/team/***' --include='/teams/***' \
-  --include='/data/' --include='/data/*.json' \
+  "${INCLUDES[@]}" \
+  "${DATA_EXCLUDES[@]}" \
+  --include='/data/' --include='/data/*.json' --include='/data/*.js' \
   --include='/data/pitch_plots/***' --include='/data/player_detail/***' \
   --exclude='*' \
   "$APP/" "$WEBROOT/"

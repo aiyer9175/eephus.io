@@ -7,6 +7,20 @@ prospects.db.bak*
 prospects.db-journal
 prospects.db-wal
 prospects.db-shm
+# deploy heartbeat written by deploy/nightly-build.sh on every publish
+data/build_info.json
+# nightly-regenerated exports, untracked 2026-07-14 (repo diet): every one
+# is rewritten by the daily rebuild (rebuild_only / regen_all / d9b2), so
+# tracking them only churned tens of MB into history per data commit. The
+# durable copies live in prospects.db (+ its nightly backups), not git.
+data/scout_reports.json
+data/draft_timeseries.json
+data/xfv_ungraded.json
+data/xfv_backgrade.json
+data/grpo_scores.json
+data/trade_values.json
+data/ifa_timeseries.json
+data/mlb_player_detail.json
 data/timeseries.json
 data/graduates.json
 data/debuts.json
@@ -74,6 +88,11 @@ Thumbs.db
 !assets/favicon-32.png
 !assets/apple-touch-icon.png
 !assets/share-default.png
+# article hero/inline images are authored content, not build output -
+# without this carve-out a NEW article's image is silently ignored and
+# 404s in production while working locally
+!assets/articles/
+!assets/articles/**/*.png
 !assets/icon-192.png
 !assets/icon-512.png
 !assets/icon-maskable-512.png

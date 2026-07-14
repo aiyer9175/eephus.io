@@ -29,15 +29,27 @@ behavior is unchanged.
 
 ## 2. First run
 
-Force the FULL monthly pipeline on the very first run so every tracked artifact
-is (re)built once from a clean pull, rather than a partial daily refresh:
+**Seed `prospects.db` BEFORE the first run** (deploy/README.md, "Seeding the
+canonical database"). The DB carries the 2021+ snapshot history that a
+re-scrape cannot recover; since 2026-07-14 the script refuses to start
+without it (`EEPHUS_ALLOW_COLD_REBUILD=1` overrides, producing a
+knowingly-degraded site - production accidentally ran degraded like this
+from 2026-07-11 to 2026-07-14).
+
+Then force the FULL monthly pipeline on the very first run so every tracked
+artifact is (re)built once from a clean pull, rather than a partial daily
+refresh:
 
 ```
 EEPHUS_FULL=1 /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh
 ```
 
-(The script also picks FULL automatically on the 1st of the month or when
-`prospects.db` is missing.)
+(The script also picks FULL automatically on the 1st of the month.)
+
+Verify the publish: `curl -s -A "Mozilla/5.0" https://eephus.io/data/build_info.json`
+must show tonight's `generated_at` and the expected `git_sha`, and the
+previously-404 modules (`/mlbstats/`, `/pal/`, `/trademachine/`, `/news/`,
+`/report/`) must all return 200.
 
 ## 3. Initial webroot redeploy (production is stale)
 
@@ -73,20 +85,23 @@ before the build:
 (The `%` signs must be backslash-escaped in a crontab.) Prune old copies on
 whatever retention you want; a week or two is plenty.
 
-## 6. editorial_eval forcing function (launch-day action, do NOT ignore)
+## 6. editorial_eval forcing function (owner action, no longer a freeze)
 
-There is a standing-rule test, `test_phase4b_evals.py::test_editorial_artifact_withheld_until_matured`,
-that is a deliberate forcing function, and it is NOT relaxed by
-`EEPHUS_DEPLOY_RUN`. While the `spotlights_movement` model registry verdict is
-`unvalidated`, the test requires that `data/editorial_eval.json` does NOT exist.
+UPDATED 2026-07-14. The standing-rule test
+`test_phase4b_evals.py::test_editorial_artifact_withheld_until_matured` used to
+hard-fail the moment the pipeline first wrote `data/editorial_eval.json` while
+`spotlights_movement` was still `unvalidated` in the model registry - and
+because the nightly gate blocks the rsync on ANY red test, that deliberately
+froze all publishing until the owner registered a verdict. This is one of the
+failure modes that (would have) kept production frozen after launch.
 
-Around launch day the first flag cohort matures, the pipeline writes
-`data/editorial_eval.json` for the first time, and from that moment the test
-goes RED until the owner registers a verdict for `spotlights_movement` in the
-model registry (moving it off `unvalidated`). A red suite freezes the nightly
-deploy: the gate blocks the rsync, so the site stops publishing.
+Behavior now: under `EEPHUS_DEPLOY_RUN=1` (the nightly box), the test SKIPS
+with a loud "OWNER ACTION PENDING" message instead of failing, so the site
+keeps publishing. In dev and CI (flag unset) it still hard-fails, so the
+verdict cannot be forgotten indefinitely: the next local test run or push
+after the artifact lands goes red until the registry is updated.
 
-Action: on the day `data/editorial_eval.json` first appears (watch
-`/opt/eephus/nightly.log` for the `editorial_eval: ... written=` line, or check
-for the file), register the `spotlights_movement` verdict in the model registry
-and commit it the SAME DAY. Nightly deploys stay frozen until you do.
+Action stands: when `data/editorial_eval.json` first appears (watch
+`/opt/eephus/nightly.log` for the `editorial_eval: ... written=` line),
+register the `spotlights_movement` verdict in the model registry and commit
+it promptly - the nightly log will carry the skip warning until you do.

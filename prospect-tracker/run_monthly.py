@@ -705,17 +705,22 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # monthly concern). Date-stamped label -> a same-day re-run updates in
         # place; a new day creates a new point-in-time row. Never aborts the run.
         with _step("d0. TJStats Live capture", log):
-            try:
-                import tjstats
-                _tj = tjstats.run_tjstats_pipeline(live=True, history=False)
-                if _tj.get("live"):
-                    log.info("tjstats: daily Live %d players @ %s",
-                             _tj["live"]["n_players"], _tj["live"]["captured_at"])
-                    tjstats.export_movers()   # wire sidecar + source events
-                elif _tj.get("health"):
-                    log.error("tjstats: health check failed, skipped: %s", _tj["health"])
-            except Exception:
-                log.exception("tjstats daily capture crashed — continuing")
+            if chained:
+                # WS-R: monthly 1c captured TJStats Live+history (and ran
+                # export_movers) minutes ago in THIS process.
+                log.info("daily: SKIP d0: monthly 1c just captured TJStats (chained)")
+            else:
+                try:
+                    import tjstats
+                    _tj = tjstats.run_tjstats_pipeline(live=True, history=False)
+                    if _tj.get("live"):
+                        log.info("tjstats: daily Live %d players @ %s",
+                                 _tj["live"]["n_players"], _tj["live"]["captured_at"])
+                        tjstats.export_movers()   # wire sidecar + source events
+                    elif _tj.get("health"):
+                        log.error("tjstats: health check failed, skipped: %s", _tj["health"])
+                except Exception:
+                    log.exception("tjstats daily capture crashed — continuing")
 
         # --- d0b. MLB Pipeline Live board (daily point-in-time capture) ---
         # Same rationale as d0: Pipeline re-ranks in-season (graduations,
@@ -770,47 +775,48 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 prospects, season=season, force_rebuild_index=no_cache,
             )
 
-        # --- 3. Team affiliations (cached) — needed for level_changes. ----
-        with _step("d3. Team affiliations", log):
-            try:
-                team_affil = fetch_team_affiliations(season)
-            except Exception:
-                log.exception("daily: team affiliations fetch failed — promotions "
-                              "may be stale this run")
-                team_affil = {}
+        # (d3 "Team affiliations" was cut 2026-07-14: its team_affil result
+        # was never read - _derive_all_level_changes self-fetches per-year
+        # affiliations when it actually derives moves.)
 
         # --- 4. Transactions (promotions/demotions + move timeline). ------
         with _step("d4. Player transactions", log):
-            try:
-                tx_tasks = [(p.player_key, ids_by_key.get(p.player_key))
-                            for p in timeseries
-                            if ids_by_key.get(p.player_key) is not None]
-                if tx_tasks:
-                    max_w = (max(1, min(workers, len(tx_tasks))) if workers is not None
-                             else min(24, max(1, len(tx_tasks))))
-                    new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
-                    if new_tx:
-                        upsert_player_transactions(new_tx)
-                    log.info("daily: refreshed transactions for %d players", len(new_tx))
-            except Exception:
-                log.exception("daily: transactions refresh failed — continuing")
+            if chained:
+                log.info("daily: SKIP d4: monthly path just refreshed transactions (chained)")
+            else:
+                try:
+                    tx_tasks = [(p.player_key, ids_by_key.get(p.player_key))
+                                for p in timeseries
+                                if ids_by_key.get(p.player_key) is not None]
+                    if tx_tasks:
+                        max_w = (max(1, min(workers, len(tx_tasks))) if workers is not None
+                                 else min(24, max(1, len(tx_tasks))))
+                        new_tx = bulk_fetch_player_transactions(tx_tasks, max_workers=max_w)
+                        if new_tx:
+                            upsert_player_transactions(new_tx)
+                        log.info("daily: refreshed transactions for %d players", len(new_tx))
+                except Exception:
+                    log.exception("daily: transactions refresh failed — continuing")
 
         # --- 5. IL status (+ append-only il_history timeline). ------------
         with _step("d5. IL status", log):
-            try:
-                il_mids = {p.player_key: ids_by_key.get(p.player_key)
-                           for p in timeseries
-                           if ids_by_key.get(p.player_key) is not None
-                           and p.status != "debuted"}
-                il_by_mid = bulk_fetch_il_status(il_mids.values())
-                il_updates = {k: il_by_mid.get(m) for k, m in il_mids.items()}
-                upsert_il_status(il_updates)
-                n_il = sum(1 for v in il_updates.values() if v)
-                hist = record_il_observation(load_il_status())
-                log.info("daily: %d on IL (il_history +%d placed / %d activated)",
-                         n_il, hist["placed"], hist["activated"])
-            except Exception:
-                log.exception("daily: IL refresh failed — continuing")
+            if chained:
+                log.info("daily: SKIP d5: monthly 2b.vii just refreshed IL status (chained)")
+            else:
+                try:
+                    il_mids = {p.player_key: ids_by_key.get(p.player_key)
+                               for p in timeseries
+                               if ids_by_key.get(p.player_key) is not None
+                               and p.status != "debuted"}
+                    il_by_mid = bulk_fetch_il_status(il_mids.values())
+                    il_updates = {k: il_by_mid.get(m) for k, m in il_mids.items()}
+                    upsert_il_status(il_updates)
+                    n_il = sum(1 for v in il_updates.values() if v)
+                    hist = record_il_observation(load_il_status())
+                    log.info("daily: %d on IL (il_history +%d placed / %d activated)",
+                             n_il, hist["placed"], hist["activated"])
+                except Exception:
+                    log.exception("daily: IL refresh failed — continuing")
 
         # --- 5c. Current-season stat lines (fast stats refresh) -----------
         # The board's current-season numbers used to wait for the monthly
@@ -990,22 +996,25 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
 
         # --- 6. Roster status (fresh tx + cached career stats). -----------
         with _step("d6. Roster status", log):
-            try:
-                career_cache = load_career_stats()
-                tx_cache = load_player_transactions()
-                roster_status_by_key: dict[str, dict] = {}
-                for p in timeseries:
-                    tx_rows = tx_cache.get(p.player_key, [])
-                    cs_rows = career_cache.get(p.player_key, [])
-                    mid = ids_by_key.get(p.player_key)
-                    api_debut = player_index.get_debut_date(mid) if mid else None
-                    roster_status_by_key[p.player_key] = derive_roster_status(
-                        tx_rows, cs_rows, api_debut_date=api_debut)
-                if roster_status_by_key:
-                    upsert_roster_status(roster_status_by_key)
-                log.info("daily: roster_status for %d players", len(roster_status_by_key))
-            except Exception:
-                log.exception("daily: roster_status derivation failed — continuing")
+            if chained:
+                log.info("daily: SKIP d6: monthly path just derived roster status (chained)")
+            else:
+                try:
+                    career_cache = load_career_stats()
+                    tx_cache = load_player_transactions()
+                    roster_status_by_key: dict[str, dict] = {}
+                    for p in timeseries:
+                        tx_rows = tx_cache.get(p.player_key, [])
+                        cs_rows = career_cache.get(p.player_key, [])
+                        mid = ids_by_key.get(p.player_key)
+                        api_debut = player_index.get_debut_date(mid) if mid else None
+                        roster_status_by_key[p.player_key] = derive_roster_status(
+                            tx_rows, cs_rows, api_debut_date=api_debut)
+                    if roster_status_by_key:
+                        upsert_roster_status(roster_status_by_key)
+                    log.info("daily: roster_status for %d players", len(roster_status_by_key))
+                except Exception:
+                    log.exception("daily: roster_status derivation failed — continuing")
 
         # --- 7. Debut / graduation detection. -----------------------------
         with _step("d7. Auto-debut detection", log):
@@ -1030,15 +1039,18 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
 
         # --- 8. Trade detection. ------------------------------------------
         with _step("d8. Trade detection", log):
-            try:
-                tracked = {p.player_key: (p.player_name, ids_by_key.get(p.player_key))
-                           for p in timeseries}
-                new_trades = detect_trades(all_snaps, tracked_players=tracked,
-                                           skip_api=False)
-                n_trades = insert_trades(new_trades)
-                log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
-            except Exception:
-                log.exception("daily: trade detection failed — continuing")
+            if chained:
+                log.info("daily: SKIP d8: monthly step 4 just ran trade detection (chained)")
+            else:
+                try:
+                    tracked = {p.player_key: (p.player_name, ids_by_key.get(p.player_key))
+                               for p in timeseries}
+                    new_trades = detect_trades(all_snaps, tracked_players=tracked,
+                                               skip_api=False)
+                    n_trades = insert_trades(new_trades)
+                    log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
+                except Exception:
+                    log.exception("daily: trade detection failed — continuing")
 
         # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
         with _step("d9. Rebuild timeseries (no scrape)", log):
@@ -1058,6 +1070,21 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                 _export_proj()
             except Exception:
                 log.exception("daily: proj_export re-bake failed — continuing")
+
+        # --- 9b2. Re-bake MLB player detail off the fresh projections. ----
+        # mlb_player_detail.json (the /projections/#player= cards) used to
+        # bake only in monthly 6b3, BEFORE the d9 eFV regen — so player cards
+        # could serve a stale eFV vs the PROSPX board for up to a month (the
+        # same staleness class d9b fixed for mlb_projections.json). Re-baking
+        # in the daily tail keeps cards, board, and projections in lock-step
+        # nightly, and makes the artifact fully daily-regenerated (so the
+        # repo no longer tracks it). Best-effort like d9b.
+        with _step("d9b2. Re-bake MLB player detail (mlb_player_detail.json)", log):
+            try:
+                from mlb_player_export import export as _export_mlbp
+                _export_mlbp()
+            except Exception:
+                log.exception("daily: mlb player detail re-bake failed — continuing")
 
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
@@ -2618,11 +2645,12 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # the corpus cache, Spotrac contract pages (cached) and the
         # just-written timeseries.json. Additive; never aborts the run.
         with _step("6b. MLB projections export (mlb_projections.json)", log):
-            try:
-                from proj_export import export as _export_proj
-                _export_proj()
-            except Exception:
-                log.exception("mlb projections export failed — continuing")
+            # WS-R merge (2026-07-14): main() always chains run_daily, whose
+            # d9b re-runs proj_export AFTER the d9 eFV regen - the export here
+            # was overwritten ~15 min later every monthly night (and, being
+            # pre-regen, was the STALER of the two). Skipped as duplication;
+            # standalone --daily keeps its own d9b export.
+            log.info("6b SKIP: chained d9b re-exports mlb_projections post-regen")
 
         # --- 6b2. Swing+ scoring (Will Cahoon's model, vendored) ---------
         # Per-player MLB bat-tracking pulls (cached; closed seasons
@@ -2652,13 +2680,13 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # --- 6b3. MLB player detail export (player pages) ----------------
         # The /projections/#player= + FA-card-linked per-player payloads:
         # careers (StatsAPI + war_daily), Savant percentiles, arsenals,
-        # Swing+, AAA Stuff+, FA market fields. Reads the exports above.
+        # Swing+, AAA Stuff+, FA market fields.
         with _step("6b3. MLB player detail export (mlb_player_detail.json)", log):
-            try:
-                from mlb_player_export import export as _export_mlbp
-                _export_mlbp()
-            except Exception:
-                log.exception("mlb player detail export failed — continuing")
+            # WS-R merge (2026-07-14): moved into the daily tail (d9b2) so the
+            # cards bake off the POST-regen eFV/projections. Baking here read
+            # the pre-regen 6b output, so /projections/ player cards served a
+            # stale eFV vs the PROSPX board for up to a month.
+            log.info("6b3 SKIP: chained d9b2 re-bakes mlb_player_detail post-regen")
 
         # --- 6b4. Bullpen Leaderboards (the /mlbstats/ surface) ---------
         # REM+ (FIP-based, pool-relative reliever skill; 100 = average) + team
@@ -2721,8 +2749,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # Cached winProbability keeps the multi-season walk fast. Never aborts.
         with _step("6b4d. bullpen history (bullpen_history.json)", log):
             try:
-                from bullpen_export import export_history as _export_bp_history
-                _export_bp_history(log=log.info)
+                # WS-R cadence gate (measured 3m33s): HISTORY_SEASONS are all
+                # CLOSED, immutable seasons - re-deriving them nightly buys
+                # nothing. Skip when the artifact is fresh; EEPHUS_LABS=1
+                # forces (e.g. after bumping HISTORY_SEASONS at season close).
+                if not _lab_should_skip(out_dir / "bullpen_history.json",
+                                        "6b4d bullpen history", log):
+                    from bullpen_export import export_history as _export_bp_history
+                    _export_bp_history(log=log.info)
             except Exception:
                 log.exception("bullpen history export failed - continuing")
 
@@ -2751,7 +2785,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 from starter_export import export as _export_starters, export_history as _export_st_history
                 _st_n = _export_starters(log=log.info)
                 log.info("starters: %d starters scored", _st_n)
-                _export_st_history(log=log.info)
+                # History = closed seasons only; same immutable-data cadence
+                # gate as 6b4d. The live export above still runs every run.
+                if not _lab_should_skip(out_dir / "starter_history.json",
+                                        "6b4f starter history", log):
+                    _export_st_history(log=log.info)
             except Exception:
                 log.exception("starter leaderboards export failed - continuing")
 
@@ -2788,7 +2826,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 from hitter_export import export as _export_hitters, export_history as _export_hit_history
                 _hit_n = _export_hitters(log=log.info)
                 log.info("hitters: %d hitters scored", _hit_n)
-                _export_hit_history(log=log.info)
+                # History = closed seasons only; same immutable-data cadence
+                # gate as 6b4d. The live export above still runs every run.
+                if not _lab_should_skip(out_dir / "hitter_history.json",
+                                        "6b4g hitter history", log):
+                    _export_hit_history(log=log.info)
             except Exception:
                 log.exception("hitter leaderboards export failed - continuing")
 
@@ -2805,8 +2847,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 _lev_n = _export_leverage(log=log.info)
                 log.info("leverage: %d batter+starter rows scored", _lev_n)
                 # Yearly batter/starter history (leverage_history.json) for the
-                # season pills. The prior seasons are already in the warm cache.
-                _export_lev_history(log=log.info)
+                # season pills - closed seasons only, so it rides the same
+                # immutable-data cadence gate as 6b4d (measured 1-2m saved).
+                if not _lab_should_skip(out_dir / "leverage_history.json",
+                                        "6b4h leverage history", log):
+                    _export_lev_history(log=log.info)
             except Exception:
                 log.exception("leverage leaderboards export failed - continuing")
 
@@ -2825,40 +2870,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
 
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
-        with _step("6c. Org tendencies export (org_tendencies.json)", log):
-            try:
-                from org_tendencies import export as _export_ot
-                _export_ot()
-            except Exception:
-                log.exception("org tendencies export failed — continuing")
-
-        # --- 6d. Bayesian trade values (data/trade_values.json) ---
-        with _step("6d. Bayesian trade value export (trade_values.json)", log):
-            try:
-                from bayes_trade_value import export_trade_values_json
-                _ts_payload = json.loads(out_path.read_text(encoding="utf-8"))
-                _tv_players = list(_ts_payload.get("players") or [])
-                _lnorms     = _ts_payload.get("level_norms")
-                for _sc in ("debuts.json", "graduates.json"):
-                    _sp = out_dir / _sc
-                    if _sp.exists():
-                        _tv_players += json.loads(_sp.read_text(encoding="utf-8"))
-                _n_tv = export_trade_values_json(
-                    _tv_players, out_dir / "trade_values.json", level_norms=_lnorms
-                )
-                log.info("trade values: exported %d players", _n_tv)
-                # Snapshot the board surplus values so a TRUE forward backtest of
-                # the Trade Machine becomes possible (the eval is rank-only today
-                # because trade_values.json was never snapshotted). Cannot be
-                # back-filled; the track record begins this run. Idempotent.
-                try:
-                    _tv_written = json.loads((out_dir / "trade_values.json").read_text(encoding="utf-8"))
-                    _n_tvh = snapshot_trade_values(_tv_written.get("players") or [])
-                    log.info("trade_value_history: snapshotted %d board records", _n_tvh)
-                except Exception:
-                    log.exception("trade_value snapshot failed — continuing")
-            except Exception:
-                log.exception("trade value export failed — continuing")
+        # --- 6c / 6d: exported by the chained daily tail instead. --------
+        # WS-R merge (2026-07-14): main() always chains run_daily(chained=True),
+        # whose d9 rebuild_only re-exports org_tendencies.json AND
+        # trade_values.json ~15 min from now with FRESHER inputs (post
+        # eFV-regen + GRPO retrain) - the exports here were overwritten every
+        # monthly night, so they were pure duplication (7.7s + 19.2s) and the
+        # trade_value_history snapshot recorded a board the site never served.
+        # The monthly-cadence snapshot_trade_values now runs AFTER the chained
+        # tail (see below) against the artifact actually published.
+        log.info("6c/6d SKIP: chained d9 re-exports org_tendencies + trade_values "
+                 "with post-regen inputs; snapshot moved after the chain")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
                    notes=f"{len(timeseries)} players, {len(new_trades)} trades")
@@ -2952,8 +2974,11 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # artifact until the first cohort matures (registry honesty —
         # an empty eval would let spotlights masquerade as measured).
         # NB once it first writes data/editorial_eval.json, the standing
-        # rule test goes red until the owner registers the verdict —
-        # that forcing function is the design.
+        # rule test goes red in dev/CI until the owner registers the
+        # verdict — that forcing function is the design. (Deploy runs,
+        # EEPHUS_DEPLOY_RUN=1, skip-with-warning instead so a pending
+        # verdict can't freeze nightly publishing; see 2026-07-14 note in
+        # DEPLOY_RUNBOOK section 6.)
         try:
             from editorial_eval import run as _ed_eval
             _ed = _ed_eval()
@@ -3010,14 +3035,26 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # failure must not fail the already-completed monthly run.
         try:
             log.info("monthly run: chaining the daily fast-moving refresh")
-            # WS-R: chained=True elides d5c (statlines) + d5d (Statcast): the
-            # monthly 3a/3b + 3d-ter passes just rebuilt both minutes ago in this
-            # same process (measured 68s + 167s = ~235s of pure duplication). The
-            # cheap/freshest-data d-steps (captures, tx, IL, debuts, trades) plus
-            # d9/d9b (final eFV regen) and d11 (site build) still run. d5e still
-            # runs so the game-log slice is fresh on monthly nights too.
+            # WS-R: chained=True elides the steps the monthly path just ran in
+            # THIS process: d5c (statlines, 3a/3b), d5d (Statcast, 3d-ter),
+            # and since 2026-07-14 also d0 (TJStats Live, 1c), d4 (tx), d5
+            # (IL, 2b.vii), d6 (roster), d8 (trades, step 4) — pure re-fetch
+            # duplication minutes apart. d0b (Pipeline Live), MLBAM discovery,
+            # d7 (debuts), d9/d9b (final eFV regen + projections re-bake),
+            # d5e (game logs) and d11 (site build) still run.
             run_daily(out_dir=out_dir, workers=workers, no_cache=no_cache,
                       chained=True)
+            # Monthly-cadence trade-value snapshot, AFTER the chain so the
+            # history records the trade_values.json actually published (the
+            # chained d9 re-exports it with post-regen inputs; snapshotting
+            # in old step 6d recorded a board the site never served).
+            try:
+                _tv_written = json.loads(
+                    (out_dir / "trade_values.json").read_text(encoding="utf-8"))
+                _n_tvh = snapshot_trade_values(_tv_written.get("players") or [])
+                log.info("trade_value_history: snapshotted %d board records", _n_tvh)
+            except Exception:
+                log.exception("trade_value snapshot failed — continuing")
         except Exception:
             log.exception("chained daily refresh failed — monthly run already completed")
     except Exception:
