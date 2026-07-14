@@ -132,16 +132,20 @@ def test_committed_artifact_headline_alias_contract():
 #   (run 372, 33m12s vs the 52m49s baseline = the WS-R cut proven) refreshed every
 #   artifact on launch-eve data; ordinary daily movement only, no model change
 #   (ops_rel shipped in the prior bump). Rowcount 8843.
-_GOLDEN_XFV_SHA256 = "2a5d59471dab7f699e80fbf019e52590a965296f2cf8591bdc59ef3a839fe33d"
+# Updated 2026-07-14 (owner full-pipeline run on post-deploy-overhaul code, the
+#   first run exercising the 13d7728 chain merges + d9b2 player-detail re-bake):
+#   ordinary data movement (draft-week churn + a week of statlines/IL/trades),
+#   no model change. Rowcount 8888.
+_GOLDEN_XFV_SHA256 = "e73cda47956593256bde2df0cb87b7a25b2dabb41c23dc921dbb73b3b72d3b97"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-07). The +/-20% band tolerates ordinary
+# (data/xfv.json by_player, read 2026-07-14). The +/-20% band tolerates ordinary
 # roster churn while still catching a gross truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 8841
+_GOLDEN_XFV_ROWCOUNT = 8888
 
 
 def test_efv_grade_map_inverts_on_model_window():

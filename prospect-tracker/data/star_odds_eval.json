@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-14",
  "experiment": "star-odds-calibration",
  "model": "star_odds (P>=2 control seasons of >=4 WAR; mixture Poisson-binomial)",
  "seed": null,
