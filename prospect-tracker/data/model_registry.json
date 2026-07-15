@@ -678,18 +678,19 @@
    }
   },
   {
+   "_comment": "PROPOSED replacement for the pal_conversion row in data/model_registry.json (T1-6). Not applied; owner merges.",
    "model_id": "pal_conversion",
    "surface": "/pal/ Pitcher Alchemy Lab",
-   "predicts": "RP<->SP role-conversion candidate FIT (0-100 screen) + a held-the-role labeled conversion history",
+   "predicts": "RP<->SP role-conversion candidate FIT (0-100 screen, per direction) + a held-the-role labeled conversion history",
    "champion": "pal_v1 (transparent weighted blend, arsenal-depth-anchored; frozen literature-prior weights)",
-   "baseline": "raw pitcher quality / fastball-share alone",
-   "metric": "Spearman rho of pre-conversion FIT vs held-the-role (directional sign-check on a small, selection-biased sample)",
+   "baseline": "same-event pre-year K-BB%, pre-year ERA, pre-year REM+ (RP->SP) / SEM+ (SP->RP)",
+   "metric": "per-direction Spearman rho of pre-conversion FIT vs continuous war_delta (bWAR post minus pre), gated vs the best same-event baseline with a bootstrap gap CI (seed 20260714, 2000 reps); pooled held rho retained as a legacy reporting field only",
    "eval_artifact": "data/pal_eval.json",
-   "verdict": "provisional",
-   "notes": "SHIPPED 2026-06-30 (/pal/) as a candidate SCREEN, not a success forecast. Two 0-100 fit scores (RP->SP, SP->RP) anchored on the role-STRUCTURAL arsenal-depth signal (a starter needs a 3rd pitch to beat the times-through-order penalty), plus command / platoon-neutrality / contact-quality lanes and a rigorous +-1 mph role velocity projection (Clemens, not folklore). 95 conversions detected 2018-2026 from season GS-share flips; labeled by HELD-the-role >=1 season (objective, avoids the role-adjusted-tax circularity the critique flagged). Backtest = SIGN CHECK only (Spearman 0.223, n=44; converters at the 72th pctile of the full pool), because the sample is tiny + selection-biased, so weights are frozen priors, never fitted, and the ML classifier is deferred. Named cases validate: Lugo/Holmes rank high + held, Hicks scored low + reverted. Data self-computed from bulk Statcast arsenal_stats (usage/whiff/xwOBA) + pitch_arsenal velo + StatsAPI vl/vr platoon + the season leaderboard (FanGraphs 403-blocked); REM+ relief projection is DISPLAY-ONLY (never a scored input, so no assumption is laundered in). Harness pal_conversion.py / pal_export.py.",
-   "last_checked": "2026-07-14",
+   "verdict": "unvalidated",
+   "notes": "DOWNGRADED 2026-07-15 (T1-6 repaired harness, pre-registered any-direction-fails rule). DOWNGRADED 2026-07-15 by the T1-6 repaired backtest (tools/pal_backtest_lab.py; zero model-weight changes - the harness was repaired, then the pre-registered gate ran). Repairs: TRUE pre-season scoring (year-1 bug dropped all 18 gap-2 events, 12-13 labeled), pedigree/p_throws set on backtest arms (the +3.0 nudge existed live but not in evaluated scores), per-direction evaluation (the two 0-100 scales were never poolable), continuous war_delta wired as the primary outcome (computed but unused since ship), held labels IP-gated (>=20 IP b+1) + 2025-pending excluded + 2019/2020-censor aware. GATE RESULT: SP->RP PASSES (rho_fit 0.2916 vs best baseline K-BB% -0.097, gap lo95 +0.0745, n=61) - the need-gated demotion screen carries real signal vs naive quality reads. RP->SP FAILS (rho_fit -0.2062 vs best baseline -ERA 0.1023, gap lo95 -0.7517, n=25) - on continuous WAR outcome the promotion FIT is directionally WRONG on this tiny, selection-biased sample (held-label read stays weakly positive at 0.134, n=13, but the gate is war_delta). Per the pre-registered rule (any direction failing downgrades), the row is DOWNGRADED: keep /pal/ as an explicitly-labeled SCREEN; the RP->SP backtest chip must not imply validation. Legacy pooled rho recomputed 0.288 (n=44) - matches pal.json's live stamp; the registered 0.223 was stale data drift, and the metric itself is retired to a reporting field. Data self-computed from bulk Statcast + StatsAPI (FanGraphs 403-blocked). Harness pal_conversion.py / pal_export.py / tools/pal_backtest_lab.py.",
+   "last_checked": "2026-07-15",
    "stale": false,
-   "artifact_age_days": 13
+   "artifact_age_days": 0
   },
   {
    "model_id": "xfv_isotonic_calibration",

@@ -455,11 +455,20 @@ def role_of(g, gs, ip) -> Optional[str]:
     return "SWING"
 
 
-def detect_conversions(by_pid: dict) -> list:
+def detect_conversions(by_pid: dict, last_closed_season: Optional[int] = None) -> list:
     """by_pid: {mlbam: {season: row}} where row has G/GS/IP + name/team + rates.
     Returns conversion events (RP->SP / SP->RP) between consecutive qualified
     seasons, with the pre/post rows and a 'held' flag (did the new role stick the
-    following season?)."""
+    following season?).
+
+    Label hygiene (T1-6 backtest repair):
+      - `last_closed_season`: when given, a held label is only read from a
+        COMPLETED b+1 season (an in-progress season's cumulative GS-share is
+        not a settled role read, so e.g. 2025 events stay held=None until 2026
+        closes). None keeps the legacy behavior for callers without a clock.
+      - IP gate: a b+1 season under CONV_MIN_IP cannot certify "held the new
+        role a full season" -> held stays None (too thin to judge, and a
+        1-appearance cameo is not evidence either way)."""
     events = []
     for pid, byyr in by_pid.items():
         yrs = sorted(byyr)
@@ -478,10 +487,13 @@ def detect_conversions(by_pid: dict) -> list:
             ipb = be.ip_to_float(byyr[b].get("IP"))
             if ipa < CONV_MIN_IP or ipb < CONV_MIN_IP:
                 continue
-            # held the new role the following season?
+            # held the new role the following season? (closed seasons with a
+            # real sample only - see the docstring)
             held = None
             nxt = b + 1
-            if nxt in byyr:
+            if (nxt in byyr
+                    and (last_closed_season is None or nxt <= last_closed_season)
+                    and be.ip_to_float(byyr[nxt].get("IP")) >= CONV_MIN_IP):
                 rn = role_of(byyr[nxt].get("G"), byyr[nxt].get("GS"), byyr[nxt].get("IP"))
                 held = (rn == rb) if rn else None
             events.append({
