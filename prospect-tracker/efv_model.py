@@ -453,6 +453,12 @@ _TOOL_IMPUTE = {"tool_hit": 50.0, "tool_speed": 48.0, "tool_fb": 58.0}
 # extrapolated beyond its training support. Cap at the training max.
 _N_MILB_SEASONS_CAP = 8.0
 
+# RELIEF-SHAPE neutral imputes (docs/efv-2026-07-15/GATES.md): observed
+# debuted-pool means, measured the same way as _TOOL_IMPUTE, so zero-graded
+# rows stay neutral under standardization instead of reading as RP-shaped.
+_SHAPE_IMPUTE = 38.9
+_DEPTH_IMPUTE = 1.6
+
 
 def _vec(r, side: str = "hit") -> dict:
     m = r.get("milb") or {}
@@ -517,6 +523,36 @@ def _vec(r, side: str = "hit") -> dict:
             # _x_era_k docstring for the audited-and-deferred quadrant issue.
             "x_era_k": _x_era_k(g(m.get("era_rel")), g(m.get("k_rel"))),
         })
+        # RELIEF-SHAPE (docs/efv-2026-07-15/GATES.md): the PAL prospect-watch
+        # shape composite (pal_conversion.prospect_role_fit, minus tool_ct
+        # which the pre-debut anchor never captures). Computed None-aware from
+        # the RAW grades: the imputed tool_* values above would fake depth 1
+        # (tool_fb=58) plus a 45 command on tool-missing rows - the 2026-07-14
+        # imputation-audit bug class. Zero observed pitch grades -> the
+        # observed-train-mean neutrals. GATE VERDICT 2026-07-15: all three
+        # arms FAILED the pre-registered RELIEF-SHAPE bar (best pooled
+        # -0.0021; the shape signal is real univariately but tool_fb +
+        # peak_k_rel/bb_rel already price it - adding it only redistributes
+        # rank skill between the 45/50 tiers). Ledger data/
+        # xfv_relief_shape_eval.json; arms SPENT, do not re-attempt blind.
+        # Keys stay emitted-but-INERT (never in _FEATURES_PIT; the
+        # age_missing precedent) so tools/efv_relief_shape_lab.py remains
+        # reproducible.
+        _obs = [float(v) for v in (r.get("tool_fb"), r.get("tool_sl"),
+                                   r.get("tool_cb"), r.get("tool_ch"))
+                if v is not None]
+        if _obs:
+            depth = sum(1 for v in _obs if v >= 55.0)
+            depth_s = {0: 5.0, 1: 15.0, 2: 45.0, 3: 80.0}.get(depth, 100.0)
+            raw_cmd = r.get("tool_cmd")
+            cmd_s = (50.0 if raw_cmd is None
+                     else max(0.0, min(100.0, (float(raw_cmd) - 40.0) / 20.0 * 100.0)))
+            shape = round(0.60 * depth_s + 0.40 * cmd_s, 1)
+            out.update({"starter_shape": shape, "arsenal_depth": float(depth),
+                        "relief_flag": 1.0 if shape < 40.0 else 0.0})
+        else:
+            out.update({"starter_shape": _SHAPE_IMPUTE, "arsenal_depth": _DEPTH_IMPUTE,
+                        "relief_flag": 0.0})
     else:
         out.update({
             "tool_hit": g(r.get("tool_hit"), _TOOL_IMPUTE["tool_hit"]),

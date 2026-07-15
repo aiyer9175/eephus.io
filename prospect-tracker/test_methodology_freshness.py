@@ -120,6 +120,10 @@ MODEL_GLOSSARY = {
     # into the hitter lean set via the pre-registered fringe re-gate at the
     # 2024-fold vintage; model-dev artifact, methodology under the xfv entry.
     "xfv_level_rank_fringe": "internal",
+    # RELIEF-SHAPE (2026-07-15, docs/efv-2026-07-15/GATES.md): PAL prospect-
+    # watch shape composite as pit features - all three arms failed the
+    # pre-registered bar; loss ledger, rendered nowhere.
+    "xfv_relief_shape": "internal",
     # eFV improvement pass (2026-07-14, docs/efv-2026-07-14/GATES.md): the
     # anchor-staleness decay + lambda band-raise + absolute-age feature
     # ledgers. Model-dev artifacts, rendered nowhere; the user-facing

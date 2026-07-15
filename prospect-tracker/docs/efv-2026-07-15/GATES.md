@@ -144,3 +144,105 @@ loss at the new vintage.
 - Anything that ships gets: its own lab tool under tools/, a committed
   data/*_eval.json ledger, a model_registry row/verdict update, and a golden
   bump. Losses get the eval ledger committed anyway.
+
+## RELIEF-SHAPE: PAL prospect-watch relief risk as a pitcher feature
+## (registered 2026-07-15, BEFORE any arm ran)
+
+Owner ask (verbatim intent): use the PAL Prospect Watch shape signal to wire
+a relief risk into eFV and adjust pitcher grades; only ship on a gain.
+
+Mechanism: pal_conversion.prospect_role_fit composes arsenal depth (count of
+20-80 pitch grades >= 55) + command into starter_shape (0-100); thin-arsenal /
+poor-command arms profile as relievers, and relievers deliver less first-6yr
+WAR. The pitcher matrix carries tool_fb/sl/cb/ch/cmd at the pre-debut anchor
+(fb+cmd 89% debuted / 98% eval-fold coverage; tool_ct is NOT captured at the
+anchor, so the composite is fb/sl/cb/ch + cmd, recorded as a PAL divergence).
+Ground-truth sanity (no outcomes touched): designated-RP rows mean shape 32.3
+vs pool 38.9; never-debuted bust pool 32.4.
+
+NOT a re-attempt of a ledgered loss: the 2026-06-23 "SP/RP role split"
+NULL was pos_prem, a POSITION-DESIGNATION feature (SIRP/MIRP/SP cover ~6% of
+debuted rows; near-constant column). This lane is tool-grade shape at 89%
+coverage - a different data source and mechanism. It is also NOT the
+xfv_role_ceiling overlay (a live-only, designation-gated owner policy dial);
+this is a trained feature through the standard forward-chained protocol.
+
+Arms (additive via efv_lab_runner, live lambda, censored primary target,
+resolved reported as sensitivity, deltas vs SAME-RUN BASE pit arms; the
+feature computation lives in efv_model._vec so the lab tests the production
+code path; ONE attempt each):
+
+- RS-1 `starter_shape`: PAL-faithful composite, None-aware on raw grades
+  (depth counts OBSERVED grades >= 55; cmd missing -> neutral 50 exactly as
+  PAL; zero observed pitch grades -> impute observed-train-mean 38.9 so
+  tool-missing rows stay neutral under standardization - the 2026-07-14
+  imputation-audit class; NEVER computed from the imputed tool_* feature
+  values, where tool_fb=58 would fake depth 1 + cmd 45 would fake shape 19).
+- RS-2 `arsenal_depth`: the raw observed depth count 0-4 (zero observed
+  grades -> train mean 1.6).
+- RS-3 `relief_flag`: 1.0 if observed starter_shape < 40 (PAL's RP-lean
+  threshold), 0.0 otherwise incl. shape-missing (bounded-indicator class).
+
+Ship bar per arm (the registered pit additive-feature bar, docs/
+efv-2026-07-14 GATES.md as re-used by MC-PIT, plus the weakest-cells clause
+this doc already binds pit levers to). SHIP iff ALL of:
+1. pooled Spearman delta >= +0.0046
+2. within-tier wm delta >= -0.0023
+3. t45 delta >= -0.0023
+4. no per-era cell drop > 0.01 (2019-2021 is the named weakest era)
+5. weakest tiers: per_tier 45 and 50 rho drop no more than 0.01
+Marginal counts as fail. If more than one arm passes, ship ONLY the highest
+pooled delta (the others ledger as subsumed, not closed).
+
+Fringe-signature record rule (level_rank precedent): an arm that FAILS the
+pooled bar but shows t45 >= +0.015 with pooled AND wm >= -0.0011 is ledgered
+FAIL with a keep-alive for a FUTURE pre-registered fringe re-gate at a new
+vintage; no same-session re-gate (that would be gate shopping).
+
+Honest caveat carried on any verdict: the debuted-only eval pool is
+survivorship-censored - it cannot see never-debut RP-shape washouts, so this
+gate can UNDER-credit the feature but not over-credit it (same caveat the
+age feature shipped under).
+
+Tool: tools/efv_relief_shape_lab.py. Artifact: data/xfv_relief_shape_eval.json.
+
+### RELIEF-SHAPE verdict (run executed after the registration above): NO SHIP
+
+All three arms FAIL the registered bar; no arm earns the fringe keep-alive
+(every arm misses BOTH -0.0011 floors). Same-run BASE pit censored:
+0.3020/0.1466/0.2056 (pooled/wm/t45), n=438.
+
+- RS-1 starter_shape: pooled -0.0078, wm -0.0154, t45 -0.0456 (fails 1/2/3/5;
+  tier-50 +0.0422 is the lone up cell). Resolved sensitivity agrees
+  (-0.0062/-0.0126/-0.0175).
+- RS-2 arsenal_depth: pooled -0.0038, wm -0.0143, t45 +0.0192 BUT tier-50
+  -0.0374 (fails 1/2/5). Resolved t45 +0.0664 with pooled still negative.
+- RS-3 relief_flag: pooled -0.0021, wm -0.0087, t45 +0.0314 BUT tier-50
+  -0.0103 (fails 1/2/5, tier-50 marginal-counts-as-fail). Resolved t45
+  +0.0764 with pooled still negative.
+
+Reading: the shape signal is REAL univariately (spearman +0.147 vs the
+censored target; designated-RP mean shape 32.3 vs pool 38.9) but the ridge
+already prices it through tool_fb + peak_k_rel/bb_rel - adding any shape
+composite only REDISTRIBUTES rank skill between the 45 and 50 tiers (RS-2/3
+buy t45 by selling tier-50 and pooled; RS-1 the reverse) and every arm
+degrades pooled + within-tier. Consistent with the ledgered "cmd does not
+help pit OOS" finding and the structural lesson that the lean set is at its
+trainable-data ceiling. The t45-vs-t50 tension replicates the joint-display-
+map fairness-vs-pooled-accuracy tension at this data resolution.
+
+Verdict verified by a 3-lens adversarial panel (lab-bug hunt reproduced
+every number to 4dp + confirmed no silent-zero/sign error; protocol audit
+recomputed all gate cells + confirmed thresholds match this registration;
+production-inertness lens proved shipped eFV output bit-identical). Two
+latent lab defects the audit flagged (fringe rule keyed on overall-fail
+instead of pooled-fail; 4dp rounding before gate comparison) were fixed and
+the lab re-run: verdict identical.
+
+One attempt per arm is SPENT; the lane closes. Next new information =
+resolved 2024+ cohorts (~2027 season end), same as every closed pit lane.
+The _vec starter_shape/arsenal_depth/relief_flag keys stay emitted-but-inert
+(the age_missing precedent) so the lab remains reproducible; _FEATURES_PIT
+is unchanged. If the owner wants a relief-risk DISPLAY on the PAL prospect
+watch or prospect cards, that is a UI ask, not a model change - the shipped
+xfv_role_ceiling dial already covers designated-RP arms on the live board.

@@ -1694,6 +1694,17 @@
    "last_checked": "2026-07-15",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_relief_shape",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger; owner ask: PAL Prospect Watch relief risk into eFV (2026-07-15)",
+   "predicts": "n/a - gated experiment: PAL prospect_role_fit shape composite (starter_shape / arsenal_depth / relief_flag, fb/sl/cb/ch + cmd, tool_ct absent at the anchor) as additive pit-ridge features (efv_lab_runner forward-chained folds)",
+   "champion": "shipped lean pitcher feature set - unchanged",
+   "baseline": "BASE_pit same-run baseline 0.3020/0.1466/0.2056 (pooled/within-tier/t45), n=438",
+   "metric": "docs/efv-2026-07-15/GATES.md RELIEF-SHAPE bar: pooled >= base+0.0046 AND wm >= base-0.0023 AND t45 >= base-0.0023 AND no era cell drop > 0.01 AND tier-45/50 drop <= 0.01",
+   "eval_artifact": "data/xfv_relief_shape_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP (2026-07-15, gate pre-registered before the run). All three arms FAIL: RS-1 starter_shape pooled -0.0078 / wm -0.0154 / t45 -0.0456; RS-2 arsenal_depth -0.0038 / -0.0143 / +0.0192 with tier-50 -0.0374; RS-3 relief_flag -0.0021 / -0.0087 / +0.0314 with tier-50 -0.0103. No fringe keep-alive (every arm misses both -0.0011 floors). The shape signal is REAL univariately (spearman +0.147 vs censored target; designated-RP mean shape 32.3 vs pool 38.9; bust pool 32.4) but the ridge already prices it via tool_fb + peak_k_rel/bb_rel - any shape composite only redistributes rank skill between the 45/50 tiers while degrading pooled + within-tier (the joint-display-map fairness-vs-pooled tension replicated at the feature layer). Verified by a 3-lens adversarial panel (numbers reproduced to 4dp; production bit-identical; thresholds match the registration). Distinct from the 2026-06-23 pos_prem designation-split NULL (near-constant column at ~6% RP-designation coverage; shape is tool-derived at 89%) and from the xfv_role_ceiling live-only owner dial (designation-gated overlay, still standing). The _vec keys stay emitted-but-inert for lab reproducibility; _FEATURES_PIT unchanged. Arms SPENT; next new information = resolved 2024+ cohorts (~2027 season end). Survivorship caveat carried: the debuted-only pool cannot see never-debut RP-shape washouts, so this gate can under-credit but not over-credit the feature."
   }
  ],
  "problems": []
