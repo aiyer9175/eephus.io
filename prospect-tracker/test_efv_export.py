@@ -155,17 +155,24 @@ def test_committed_artifact_headline_alias_contract():
 #   deflated; Pineda #78 -> #204) + the owner-directed reliever-ceiling
 #   overlay (second Moore directive; 9 arms, Moore #91 -> #159) on the
 #   full-pipeline data refresh.
-_GOLDEN_XFV_SHA256 = "f3b9b7d2b1bb8b8721eaeb5bad46f5ff2764e316e8630ee7b99d5e3e72d93eaa"
+# Updated 2026-07-15b (2026 draft completion, data change - no model change):
+#   post-draft FG board ingested (interval 2026-07-15) + MLB tracker results
+#   (613 picks) + the NEW signed-draftee seed (draft_promotion.
+#   seed_signed_draftees: 8 current-class signees, e.g. AJ Gracia -> ATL,
+#   surface on the board via the synthetic 'draft_signing' source). Rowcount
+#   9127 -> 9133.
+_GOLDEN_XFV_SHA256 = "a466bce0daf4f615f7bb290a7843130d8fd59cc9da73bb2264616e0b70a2c9c7"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-14 post-repair; the bust re-scale
-# added ~240 rows net). The +/-20% band tolerates ordinary roster churn while
-# still catching a gross truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9127
+# (data/xfv.json by_player, read 2026-07-15 post-draft-completion; the
+# signed-draftee seeds added 6 rows net). The +/-20% band tolerates ordinary
+# roster churn while still catching a gross truncation / empty-artifact
+# regression.
+_GOLDEN_XFV_ROWCOUNT = 9133
 
 
 def test_efv_grade_map_inverts_on_model_window():

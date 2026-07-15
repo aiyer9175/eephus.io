@@ -52,7 +52,7 @@ _PITCHER_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "P"}
 # FanGraphs tail -- the 2026 pitcher cell sent 35 -> 45 for 2,525 unlisted arms and
 # manufactured board top-100 pitchers out of complex-league statlines. Synthetic
 # sources pass through RAW, always.
-_SYNTHETIC_SOURCES = {"performance_ingest"}
+_SYNTHETIC_SOURCES = {"performance_ingest", "draft_signing"}
 
 
 def _mappable(src, ref) -> bool:

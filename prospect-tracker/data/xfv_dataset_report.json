@@ -9,36 +9,36 @@
   "debuted_no_pre_fv": 90,
   "debuted_no_war": 13,
   "debuted_kept": 754,
-  "bust_seen": 2548,
-  "bust_hitter": 1240,
+  "bust_seen": 2546,
+  "bust_hitter": 1239,
   "bust_no_fv": 62,
-  "bust_kept": 1178,
-  "bust_recent_flagged": 104,
+  "bust_kept": 1177,
+  "bust_recent_flagged": 103,
   "debuted_veteran_dropped": 28
  },
  "counts": {
-  "rows_total": 1932,
+  "rows_total": 1931,
   "debuted": 754,
-  "busts": 1178,
+  "busts": 1177,
   "resolved_debuted": 460,
   "censored_debuted": 294,
-  "bust_recent_excluded_from_label": 104
+  "bust_recent_excluded_from_label": 103
  },
  "feature_coverage": {
-  "consensus_fv_raw": "1932/1932",
-  "fv_fangraphs": "1294/1932",
-  "fv_mlb_pipeline": "1504/1932",
-  "fv_stddev": "891/1932",
-  "tool_hit": "1708/1932",
-  "tool_game_pwr": "1708/1932",
-  "pick_overall": "755/1932",
-  "bonus_usd": "483/1932"
+  "consensus_fv_raw": "1931/1931",
+  "fv_fangraphs": "1293/1931",
+  "fv_mlb_pipeline": "1504/1931",
+  "fv_stddev": "891/1931",
+  "tool_hit": "1707/1931",
+  "tool_game_pwr": "1707/1931",
+  "pick_overall": "754/1931",
+  "bonus_usd": "483/1931"
  },
  "milb_feature_coverage": {
-  "level_rank": "828/1932",
-  "age_rel_level": "828/1932",
-  "k_rel": "828/1932",
-  "iso_rel": "828/1932"
+  "level_rank": "828/1931",
+  "age_rel_level": "828/1931",
+  "k_rel": "828/1931",
+  "iso_rel": "828/1931"
  },
  "war_distribution_resolved_debuted": {
   "n": 460,

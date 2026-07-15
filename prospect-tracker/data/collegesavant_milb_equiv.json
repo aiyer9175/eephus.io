@@ -3411,6 +3411,30 @@
    ],
    "name": "Willits, Jaxon"
   },
+  "draft_2026_carlos_martinez": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "22.7%",
+     "band": "14-31%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.3%",
+     "band": "7-18%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".720",
+     "band": ".520-.920",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Martinez, Carlos"
+  },
   "draft_2024_ariel_armas": {
    "side": "hit",
    "headline": [
@@ -3938,6 +3962,30 @@
     }
    ],
    "name": "Neville, Mason"
+  },
+  "draft_2026_reece_moroney": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "24.1%",
+     "band": "16-32%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "15.6%",
+     "band": "10-21%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".712",
+     "band": ".512-.912",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Moroney, Reece"
   },
   "draft_2025_dallas_macias": {
    "side": "hit",
@@ -4946,6 +4994,30 @@
     }
    ],
    "name": "Levu, Mulivai"
+  },
+  "draft_2026_brayden_martin": {
+   "side": "hit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "22.6%",
+     "band": "14-31%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "15.6%",
+     "band": "10-21%",
+     "flag": "low confidence"
+    },
+    {
+     "label": "Proj A OPS",
+     "value": ".724",
+     "band": ".524-.924",
+     "flag": "experimental"
+    }
+   ],
+   "name": "Martin, Brayden"
   },
   "draft_2025_anthony_martinez": {
    "side": "hit",
@@ -8607,6 +8679,24 @@
    ],
    "name": "Jelkin, Jaxon"
   },
+  "draft_2026_dylan_marionneaux": {
+   "side": "pit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "22.6%",
+     "band": "15-30%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "11.6%",
+     "band": "6-17%",
+     "flag": null
+    }
+   ],
+   "name": "Marionneaux, Dylan"
+  },
   "draft_2023_christian_rodriguez": {
    "side": "pit",
    "headline": [
@@ -9201,6 +9291,24 @@
    ],
    "name": "Lee, Justin"
   },
+  "draft_2026_james_guyette": {
+   "side": "pit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "23.9%",
+     "band": "17-31%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "11.3%",
+     "band": "6-16%",
+     "flag": null
+    }
+   ],
+   "name": "Guyette, James"
+  },
   "draft_2025_ben_jacobs": {
    "side": "pit",
    "headline": [
@@ -9290,6 +9398,24 @@
     }
    ],
    "name": "Dietz, Hunter"
+  },
+  "draft_2026_cody_new": {
+   "side": "pit",
+   "headline": [
+    {
+     "label": "Proj A K%",
+     "value": "22.9%",
+     "band": "16-30%",
+     "flag": null
+    },
+    {
+     "label": "Proj A BB%",
+     "value": "12.5%",
+     "band": "7-18%",
+     "flag": null
+    }
+   ],
+   "name": "New, Cody"
   },
   "draft_2020_ryan_hagenow": {
    "side": "pit",

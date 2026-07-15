@@ -133,15 +133,22 @@ class MultiDraftCanonicalRecord(unittest.TestCase):
         self.assertIs(_better_draft_record(unsigned_new, signed_old),
                       signed_old)
 
-    def test_newer_year_wins_among_same_signed_status(self):
-        """Both signed (rare — typically a re-signing after release) →
-        pick the newer year. Both unsigned (also rare) → same rule so
-        the canonical record is at least the most recent attempt."""
-        signed_2021 = self._rec(2021, "BOS", signed=True, bonus=100_000)
-        signed_2024 = self._rec(2024, "NYY", signed=True, bonus=200_000)
-        self.assertIs(_better_draft_record(signed_2021, signed_2024),
-                      signed_2024)
+    def test_both_signed_is_a_collision_older_wins(self):
+        """Both SIGNED can only be a NAME COLLISION between different
+        people — a signed player is a pro and draft-ineligible forever.
+        The incumbent (earlier) pro keeps the key. Regression for the
+        Jake Bennett case: the 2022 WSN pick's acquisition was clobbered
+        by 2026's TOR pick of a different Jake Bennett."""
+        signed_2022 = self._rec(2022, "WSN", signed=True, bonus=1_734_800)
+        signed_2026 = self._rec(2026, "TOR", signed=True, bonus=1_000)
+        self.assertIs(_better_draft_record(signed_2022, signed_2026),
+                      signed_2022)
+        self.assertIs(_better_draft_record(signed_2026, signed_2022),
+                      signed_2022)
 
+    def test_newer_year_wins_among_unsigned(self):
+        """Both unsigned (HS → college re-entry) → the most recent
+        attempt is canonical."""
         unsigned_2021 = self._rec(2021, "BOS", signed=False)
         unsigned_2024 = self._rec(2024, "NYY", signed=False)
         self.assertIs(_better_draft_record(unsigned_2021, unsigned_2024),
@@ -182,8 +189,9 @@ class MultiDraftCanonicalRecord(unittest.TestCase):
             if not ac:
                 continue  # never linked — covered by other test
             signed_recs = [r for r in recs if r["signed"]]
-            # Canonical = signed, newest year if multiple.
-            canonical = max(signed_recs, key=lambda r: r["draft_year"] or 0)
+            # Canonical = signed; multiple signed = name collision, the
+            # incumbent (OLDEST) pro keeps the key.
+            canonical = min(signed_recs, key=lambda r: r["draft_year"] or 0)
             ok = (ac["year"] == canonical["draft_year"]
                   and (ac["team_name"] or "").upper() == (canonical["team"] or "").upper())
             if not ok:
@@ -194,6 +202,63 @@ class MultiDraftCanonicalRecord(unittest.TestCase):
         self.assertLess(miss_rate, 0.05,
                         f"multi-draft canonical mismatch rate {miss_rate:.1%}; "
                         f"sample: {mismatches[:3]}")
+
+
+class SeedSignedDraftees(unittest.TestCase):
+    """seed_signed_draftees — signed current-class picks surface on the
+    MiLB board via a synthetic 'draft_signing' snapshot; everyone else
+    is guarded out."""
+
+    @classmethod
+    def setUpClass(cls):
+        if not DB_PATH.exists():
+            raise unittest.SkipTest(f"no prospects.db at {DB_PATH}")
+
+    def test_idempotent_and_current_class_only(self):
+        from draft_promotion import seed_signed_draftees
+        from contextlib import closing
+        from datetime import date
+        first = seed_signed_draftees()
+        second = seed_signed_draftees()
+        # UNIQUE(source, interval_label, player_key) upsert — the re-run
+        # rewrites the same rows, never grows the table.
+        with closing(sqlite3.connect(DB_PATH)) as con:
+            con.row_factory = sqlite3.Row
+            rows = con.execute(
+                "SELECT player_key, org, fv, interval_label FROM snapshots "
+                "WHERE source='draft_signing'"
+            ).fetchall()
+        self.assertEqual(first, second)
+        self.assertEqual(len(rows), first)
+        this_year = str(date.today().year)
+        for r in rows:
+            # Only the current class is ever seeded.
+            self.assertTrue(r["interval_label"].startswith(this_year),
+                            f"stale-class seed: {dict(r)}")
+            # Every seed carries an org and a real board grade.
+            self.assertTrue(r["org"], f"org-less seed: {dict(r)}")
+            self.assertIsNotNone(r["fv"], f"grade-less seed: {dict(r)}")
+
+    def test_never_seeds_an_already_tracked_identity(self):
+        """A milb_key with ANY real MiLB snapshot (graduated pro, org-
+        source-covered prospect, or name-collided incumbent like the
+        WSN Jake Bennett) must never receive a seed."""
+        from contextlib import closing
+        with closing(sqlite3.connect(DB_PATH)) as con:
+            con.row_factory = sqlite3.Row
+            bad = con.execute(
+                """SELECT s.player_key, COUNT(*) n FROM snapshots s
+                   WHERE s.source='draft_signing'
+                     AND EXISTS (
+                       SELECT 1 FROM snapshots o
+                       WHERE o.player_key = s.player_key
+                         AND o.source != 'draft_signing'
+                         AND o.interval_label NOT GLOB '20[0-9][0-9]draft'
+                         AND o.snapshot_date < s.snapshot_date)
+                   GROUP BY s.player_key LIMIT 5"""
+            ).fetchall()
+        self.assertFalse([dict(r) for r in bad],
+                         "seed landed on an already-tracked identity")
 
 
 if __name__ == "__main__":

@@ -9,37 +9,37 @@
   "debuted_no_pre_fv": 120,
   "debuted_no_war": 33,
   "debuted_kept": 862,
-  "bust_seen": 2548,
-  "bust_hitter": 1213,
+  "bust_seen": 2546,
+  "bust_hitter": 1212,
   "bust_no_fv": 50,
-  "bust_kept": 1163,
-  "bust_recent_flagged": 122,
+  "bust_kept": 1162,
+  "bust_recent_flagged": 121,
   "debuted_veteran_dropped": 13,
   "debuted_war_gap_dropped": 1
  },
  "counts": {
-  "rows_total": 2025,
+  "rows_total": 2024,
   "debuted": 862,
-  "busts": 1163,
+  "busts": 1162,
   "resolved_debuted": 528,
   "censored_debuted": 334,
-  "bust_recent_excluded_from_label": 122
+  "bust_recent_excluded_from_label": 121
  },
  "feature_coverage": {
-  "consensus_fv_raw": "2025/2025",
-  "fv_fangraphs": "1351/2025",
-  "fv_mlb_pipeline": "1469/2025",
-  "fv_stddev": "833/2025",
-  "tool_hit": "0/2025",
-  "tool_game_pwr": "0/2025",
-  "pick_overall": "782/2025",
-  "bonus_usd": "552/2025"
+  "consensus_fv_raw": "2024/2024",
+  "fv_fangraphs": "1350/2024",
+  "fv_mlb_pipeline": "1469/2024",
+  "fv_stddev": "833/2024",
+  "tool_hit": "0/2024",
+  "tool_game_pwr": "0/2024",
+  "pick_overall": "781/2024",
+  "bonus_usd": "552/2024"
  },
  "milb_feature_coverage": {
-  "level_rank": "816/2025",
-  "age_rel_level": "816/2025",
-  "k_rel": "816/2025",
-  "era_rel": "816/2025"
+  "level_rank": "816/2024",
+  "age_rel_level": "816/2024",
+  "k_rel": "816/2024",
+  "era_rel": "816/2024"
  },
  "war_distribution_resolved_debuted": {
   "n": 528,

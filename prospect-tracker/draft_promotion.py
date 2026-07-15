@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import logging
 import sqlite3
+from datetime import date
 from typing import Iterable
 
 from scrapers import normalize_key
@@ -61,9 +62,15 @@ def _better_draft_record(a: dict, b: dict) -> dict:
     "drafted by the college team" because that's how they actually
     entered pro ball.
 
-    Among same-signed records, the NEWER draft year wins. (A re-signed
-    player who was drafted twice but signed both times is rare — the
-    canonical entry should still be the latest.)
+    Among UNSIGNED records, the NEWER draft year wins (a re-drafted
+    prospect's latest entry point is canonical).
+
+    Among SIGNED records, the OLDER draft year wins: a signed player is
+    a pro and cannot re-enter the draft, so two signed records for one
+    MiLB key can only be a NAME COLLISION between different people —
+    the incumbent (earlier) pro keeps the key. (Jake Bennett: the 2022
+    WSN pick was being clobbered by 2026's TOR pick of a different
+    Jake Bennett.)
     """
     a_signed = bool(a.get("_signed"))
     b_signed = bool(b.get("_signed"))
@@ -71,6 +78,8 @@ def _better_draft_record(a: dict, b: dict) -> dict:
         return a if a_signed else b
     a_year = a.get("year") or 0
     b_year = b.get("year") or 0
+    if a_signed:  # both signed -> collision -> older wins
+        return a if a_year <= b_year else b
     return a if a_year >= b_year else b
 
 
@@ -180,6 +189,128 @@ def promote_drafted_players(year: int | None = None) -> dict:
     summary = {"acquisitions": n_ac, "linked": n_link, "status_flipped": n_status}
     log.info("promote_drafted_players(year=%s): %s", year, summary)
     return summary
+
+
+def seed_signed_draftees(year: int | None = None) -> int:
+    """Surface SIGNED draftees on the MiLB active board immediately.
+
+    Promotion alone only writes the acquisitions bridge; a drafted player
+    used to appear in their new org's system only once an org SOURCE
+    (Pipeline org list, FG board, affiliate roster / game logs) published
+    them — a days-to-weeks lag after signing. This seeds one MiLB-side
+    snapshot per signed, draft-board-graded pick:
+
+        source='draft_signing' (SYNTHETIC — grade_normalization passes it
+        through raw, never quantile-maps it: the Pineda lesson),
+        org = the drafting club, fv = the draft-board consensus (mean of
+        latest FV per draft source), dated today.
+
+    Real org sources supersede/blend via normal consensus once they pick
+    the player up. Guards:
+      * only the CURRENT year's class (older signed draftees are already
+        tracked or graduated — a stale seed would resurrect them),
+      * only signed picks with a known team,
+      * only picks a draft board actually graded (no fabricated grades),
+      * SKIP any milb_key that already has ANY real MiLB snapshot
+        (leaked '<year>draft' board rows excepted) — that identity is
+        either already surfaced by an org source or a name-collided
+        incumbent pro (e.g. the two Jake Bennetts); never seed onto it,
+      * SKIP any milb_key whose earliest signed pick is an earlier year
+        (same collision, acquisitions side).
+
+    Idempotent: UNIQUE(source, interval_label, player_key) upserts.
+    Returns the number of snapshots written."""
+    from scrapers import Snapshot
+    from storage import insert_snapshots
+
+    results = [r for r in load_draft_results(draft_year=year)
+               if r.get("signed") and r.get("team") and r.get("player_key")]
+    if not results:
+        return 0
+
+    by_key = load_draft_players(draft_year=year)
+    canon = load_draft_canonical_keys()
+
+    # Earliest SIGNED year per milb key across ALL years (collision guard).
+    earliest_signed: dict[str, int] = {}
+    for r in load_draft_results(draft_year=None):
+        if not r.get("signed"):
+            continue
+        mk = canon.get(r.get("player_key")) or _milb_key_from_name(r.get("player_name") or "")
+        yr = r.get("draft_year") or 0
+        if mk and (mk not in earliest_signed or yr < earliest_signed[mk]):
+            earliest_signed[mk] = yr
+
+    try:
+        from trades import canonical_org
+    except ImportError:
+        canonical_org = lambda t: t  # noqa: E731
+
+    today = date.today().isoformat()
+    seeds: list[Snapshot] = []
+    with connect() as con:
+        for r in results:
+            dk = r["player_key"]
+            yr = r.get("draft_year") or 0
+            if yr < date.today().year:
+                continue  # only the current class — never resurrect old draftees
+            name = r.get("player_name") or (by_key.get(dk) or {}).get("player_name")
+            if not name:
+                continue
+            mk = canon.get(dk) or _milb_key_from_name(name)
+            if not mk:
+                continue
+            if earliest_signed.get(mk, yr) < yr:
+                continue  # an earlier signed pick owns this key (collision)
+            # interval_label GLOB filter: historical flat draft-board drops
+            # leaked org-less amateur rows into snapshots under
+            # '<year>draft' labels — those are the DRAFTEE, not a
+            # pre-existing pro, so they must not block the seed.
+            pre = con.execute(
+                "SELECT 1 FROM snapshots WHERE player_key=? AND source != 'draft_signing' "
+                "AND interval_label NOT GLOB '20[0-9][0-9]draft' LIMIT 1",
+                (mk,),
+            ).fetchone()
+            if pre:
+                continue  # identity already tracked by a real MiLB source
+            fv = _draft_board_consensus_fv(dk)
+            if fv is None:
+                continue  # no board grade — nothing honest to seed
+            meta = by_key.get(dk) or {}
+            seeds.append(Snapshot(
+                source="draft_signing",
+                snapshot_date=today,
+                interval_label=f"{yr} Draft Class",
+                player_key=mk,
+                player_name=name,
+                position=meta.get("position") or r.get("position"),
+                org=canonical_org(r.get("team")) or r.get("team"),
+                rank=None,
+                fv=float(fv),
+                status="active",
+            ))
+
+    n = insert_snapshots(seeds) if seeds else 0
+    log.info("seed_signed_draftees(year=%s): %d signed draftees seeded", year, n)
+    return n
+
+
+def _draft_board_consensus_fv(draft_key: str) -> float | None:
+    """Mean of the LATEST FV per draft source for one draft prospect
+    (fangraphs / mlb_pipeline_draft / espn_draft), None if never graded."""
+    with connect() as con:
+        rows = con.execute(
+            """SELECT source, fv FROM draft_snapshots
+               WHERE player_key=? AND fv IS NOT NULL
+               ORDER BY snapshot_date""",
+            (draft_key,),
+        ).fetchall()
+    latest: dict[str, float] = {}
+    for r in rows:
+        latest[r["source"]] = float(r["fv"])  # later rows overwrite = latest
+    if not latest:
+        return None
+    return round(sum(latest.values()) / len(latest), 1)
 
 
 def detect_milb_promotions(roster_keys: Iterable[str]) -> int:

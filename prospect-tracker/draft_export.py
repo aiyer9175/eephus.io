@@ -11,7 +11,8 @@ Aggregates the parallel draft_* tables into a frontend-friendly JSON:
     "classes": [
       {
         "year": 2026,
-        "is_current": true,
+        "is_current": true,   // upcoming class: year >= today AND no picks on record yet
+
         "stock_plus_mean": <class-median draft stock+>,
         "fv_distribution": {"60": 2, "55": 8, "50": 14, ...},
         "prospects": [
@@ -797,7 +798,13 @@ def _build_class(year: int,
                 team_spend[team] += int(row["bonus_usd"])
 
     today = date.today()
-    is_current = (year >= today.year)
+    # "Current" = the upcoming draft still being scouted. Year alone is not
+    # enough: the draft concludes mid-July, so a same-year class with real
+    # picks on record must read as completed (else the board says
+    # "still pre-draft" until January and drafted players are filtered
+    # off it as already-in-system).
+    has_picks = any(r.get("team") for r in results)
+    is_current = (year >= today.year) and not has_picks
 
     # Lottery + projected order - only populated for classes that
     # haven't drafted yet AND for which Tankathon has shipped a
