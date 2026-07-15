@@ -9,23 +9,29 @@ full-pool anchor with a calibrated, clamped model leg. Does re-plumbing the
 selector to production parity change the selected lambda, and is that selection
 stable enough to restamp?
 
-ANSWER (this lab, both sides): NO RESTAMP. Two faithful parity implementations
-disagree across the whole band on curves flat within noise:
-  - variant C (globally-prepped pool, the investigation prototype): argmax
-    hit 0.56 / pit 0.53;
-  - variant D (per-fold-prepped pool via efv_model.fit_production_stack, the
-    leakage-free build): argmax hit 0.68 / pit 0.69.
-Same question, same data, opposite ends of [0.50, 0.70]. The composite curve's
-top-5 candidates sit within ~0.003 of each other (vs a per-fold noise floor an
-order of magnitude larger), so the argmax is implementation-sensitive noise.
-Restamp protocol: a near-boundary or flat argmax requires the owner's sign-off,
-not a rerun. The shipped debuted-only selector (hit 0.70 / pit 0.63) stands.
+ANSWER - REWRITTEN after the 2026-07-15 adjudication tournament
+(data/xfv_lambda_adjudication_eval.json): NO RESTAMP, and the original
+"two faithful parity implementations disagree at opposite ends of the band"
+finding is RETIRED. Variant D as first shipped filtered raw matrix rows on a
+'decision_year' key the matrices do not carry (decision year is COMPUTED,
+efv_model._decision_year), so the filter was vacuous and D's production stack
+was fit on ALL rows - including each fold's own test rows. The C-vs-D
+disagreement was that leak, not implementation sensitivity: leak-fixed D
+produces fold rows identical to C. The nested forward-chained tournament then
+adjudicated the protocols out-of-sample (eval folds 2021-2023, per-fold pre-Y
+selection, production legs, 2000-rep paired bootstrap, seed 20260715): the
+single faithful parity protocol LOSES to the incumbent debuted-only selector
+(hit composite -0.1025, CI95 entirely negative, contributor-AUC floor also
+failed; pit -0.0024, tie). The incumbent selector stands as the ADJUDICATED
+WINNER; stamps stay on its live output.
 
 Variants per side (test rows always the debuted fold rows, the eval protocol):
   A = shipped selector (debuted anchor, debuted ridge, raw model leg)
   B = full-pool anchor only
   C = full parity, pool prepped ONCE globally then fold-sliced
-  D = full parity, pool prepped per fold (fit_production_stack; leakage-free)
+  D = full parity, pool re-selected per fold via fit_production_stack
+      (LEAK-FIXED 2026-07-15: pre-fold pool filtered by the REAL computed
+      decision year; with the fix D == C row-for-row by construction)
 
 Run: python tools/xfv_lambda_parity_lab.py    (writes the artifact; read-only
 against the matrices; ~2 min). Seed-free: no bootstrap here - the deliverable is
@@ -43,13 +49,21 @@ sys.path.insert(0, str(_ROOT))
 
 from efv_dataset import matrix_path                                    # noqa: E402
 from efv_model import (_prep, _feature_spec, _fit_ols_fv, _pred_ols,   # noqa: E402
-                       fit_production_stack, SCORED_YEARS)
+                       _decision_year, fit_production_stack, SCORED_YEARS)
 from prospect_path import (_fit_ridge, _predict,                        # noqa: E402
                            _fit_linear_calibration, _spearman)
 
 OUT = _ROOT / "data" / "xfv_lambda_parity_eval.json"
 _BAND = (0.50, 0.70)
-_SHIPPED = {"hit": 0.70, "pit": 0.63}
+# The live stamps are COMPUTED each production run (blend_lambda ->
+# rank_calibration), not frozen: report against the selector's current output
+# instead of a hardcoded snapshot (the old hardcode went stale within a day:
+# pit 0.63 -> 0.61 on the 2026-07-15 matrix refresh).
+
+
+def _shipped():
+    from efv_model import rank_calibration
+    return {s: rank_calibration(s)["lambda"] for s in ("hit", "pit")}
 
 
 def _folds(side: str, variant: str):
@@ -65,8 +79,12 @@ def _folds(side: str, variant: str):
         if len(te) < 15 or len(tr_d) < 60:
             continue
         if variant == "D":
+            # LEAK FIX 2026-07-15: raw matrix rows carry NO 'decision_year'
+            # key, so the old r.get("decision_year") filter was vacuous and the
+            # stack was fit on ALL rows (incl. this fold's test rows). Filter
+            # on the real computed decision year.
             stack = fit_production_stack([r for r in rows
-                                          if (r.get("decision_year") or 0) < yr], side, keys)
+                                          if _decision_year(r) < yr], side, keys)
             if not stack:
                 continue
             ridge, a, b, ols = stack["ridge"], stack["a"], stack["b"], stack["ols"]
@@ -119,6 +137,7 @@ def _curve(folds):
 
 
 def run(persist: bool = True) -> dict:
+    shipped = _shipped()
     sides = {}
     for side in ("hit", "pit"):
         variants = {}
@@ -132,7 +151,7 @@ def run(persist: bool = True) -> dict:
                            "curve": {str(k): v2 for k, v2 in curve.items()}}
         parity_argmaxes = [variants["C"]["argmax_lambda"], variants["D"]["argmax_lambda"]]
         sides[side] = {
-            "shipped_lambda": _SHIPPED[side],
+            "shipped_lambda": shipped[side],
             "variants": variants,
             "parity_disagreement": round(abs(parity_argmaxes[0] - parity_argmaxes[1]), 3),
         }
@@ -144,12 +163,13 @@ def run(persist: bool = True) -> dict:
         "sides": sides,
         "verdict": {
             "restamp": False,
-            "reason": "two faithful parity implementations (C globally-prepped, D per-fold-prepped) "
-                      "select argmax lambdas at opposite ends of the band on composite curves whose "
-                      "top candidates sit within ~0.003; the selection is implementation-sensitive "
-                      "noise and the restamp protocol (near-boundary/flat argmax -> owner sign-off) "
-                      "blocks it. Shipped debuted-only selector stands (hit 0.70 / pit 0.63).",
-            "owner_decision_required": True,
+            "reason": "ADJUDICATED 2026-07-15 (data/xfv_lambda_adjudication_eval.json): the original "
+                      "C-vs-D band-end disagreement was a variant-D leakage artifact (vacuous "
+                      "decision_year filter -> stack fit on all rows incl. test folds); leak-fixed "
+                      "D == C, and the faithful parity protocol LOSES to the incumbent debuted-only "
+                      "selector out-of-sample (hit significantly, pit tie). Incumbent stands; stamps "
+                      "stay on its live output.",
+            "owner_decision_required": False,
         },
     }
     if persist:

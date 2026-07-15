@@ -248,17 +248,16 @@ def rank_calibration(side: str) -> dict:
     weight ~0.03 higher than the number quoted here (rank order within a scoring run
     is unaffected; documented rather than re-plumbed).
 
-    PARITY ADJUDICATION 2026-07-15 (tools/xfv_lambda_parity_lab.py ->
-    data/xfv_lambda_parity_eval.json): re-plumbing these folds to full production
-    parity was implemented and REJECTED for restamping. Two faithful parity
-    implementations (per-fold-prepped vs globally-prepped pools) select argmax
-    lambdas at OPPOSITE ends of the band (hit 0.68 vs 0.56, pit 0.69 vs 0.53) on
-    composite curves flat within ~0.003 - the selection under parity is
-    implementation-sensitive noise, and the restamp protocol (near-boundary or
-    flat argmax -> owner sign-off) blocks it. The shipped debuted-only selector
-    stands until the owner adjudicates; the returned dict now carries the full
-    candidate curve + near_boundary flag so any future restamp checks flatness
-    first."""
+    ADJUDICATED 2026-07-15 (data/xfv_lambda_adjudication_eval.json): the parity
+    re-plumb was tested as a selection PROTOCOL in a nested forward-chained
+    tournament and LOST out-of-sample (hit composite -0.1025 with CI95 entirely
+    negative + contributor-AUC below floor; pit -0.0024, tie). The earlier
+    C-vs-D band-end disagreement was a lab leakage artifact (a vacuous
+    decision_year filter fit the parity stack on each fold's own test rows;
+    leak-fixed D == C exactly), not implementation sensitivity. This
+    debuted-only selector is the ADJUDICATED WINNER; no owner decision pending.
+    The returned dict carries the full candidate curve + near_boundary flag so
+    any future restamp proposal checks flatness first."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))

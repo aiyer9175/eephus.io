@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 
-**99 models.** Verdicts: validated: 25, provisional: 44, unvalidated: 3, deprecated: 27.
+**101 models.** Verdicts: validated: 26, provisional: 44, unvalidated: 3, deprecated: 28.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -109,6 +109,8 @@ stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 | `xfv_role_ceiling` | live eFV board overlay - 'Reliever ceiling' factor chip | n/a - owner-directed policy dial (2026-07-15): bounded model-leg haircut for age-25+ RP-designated prospects with model war6 >=... | overlay ON (owner-approved via AskUserQuestion, 'Dial + calibration gate') | no overlay | class prior vs model enthusiasm (0.17 mean WAR / 0% star, n=284); forward kil... | **provisional** | `data/xfv_role_ceiling_eval.json` | - | - |
 | `xfv_bucket_age_head` | model-dev artifact (rendered nowhere) - pit grade+age cov... | n/a - gated experiment (2026-07-15): p(bucket \| grade_band, age_band), pit-only, below the grade-monotone constraint | incumbent p_bucket_given_fv - STANDS (byte-identical, verified) | grade+age head, forward-chained 2020-2023, seed 20260715 | 4 gates: pooled log-loss, E-ISO4 bench/good guard, age-25+ subset, grade mono... | **deprecated** | `data/xfv_bucket_age_head_eval.json` | - | - |
 | `xfv_topquant` | model-dev artifact (rendered nowhere) - loss ledger; the... | n/a - gated owner decision OD2 TOP-QUANT: pitcher-only re-anchor of the eFV display quantile tail above the display-55 knee ont... | shipped per-side quantile display map (unchanged); efv_topquant.apply_display... | variants (a) isotonic-anchored / Theil-Sen linear-anchored / OLS / pure unanc... | pre-registered primary: joint top-25 hit-minus-pit realized first-6yr WAR gap... | **deprecated** | `data/xfv_topquant_eval.json` | - | - |
+| `xfv_joint_display_map` | model-dev artifact (rendered nowhere) - joint cross-side... | n/a - gated experiment (2026-07-15): joint quantile display map over rank_war (ARM-1) + expected-WAR-at-rank crosswalk (ARM-2) | incumbent per-side display map - STANDS | ARM-1 / ARM-2 on F-SIDE folds | G1 joint-board Spearman lo95(gap)>=0 + G2 AUC floors + G3 invariance + G4 S1-... | **deprecated** | `data/xfv_joint_map_eval.json` | - | - |
+| `xfv_lambda_adjudication` | model-dev artifact (rendered nowhere) - E-LAMBDA selectio... | n/a - adjudication (2026-07-15): which blend-lambda SELECTION PROTOCOL generalizes best OOS (nested forward-chaining, eval fold... | protocol A - the incumbent debuted-only rank_calibration selector - ADJUDICAT... | challengers C/D (production-parity selector; identical once the lab-D decisio... | pre-registered 2-gate ship rule: (1) pooled composite (rho+wm+t45) gap vs A b... | **validated** | `data/xfv_lambda_adjudication_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

@@ -1,0 +1,112 @@
+{
+ "experiment": "xfv_lambda_adjudication",
+ "generated_at": "2026-07-15",
+ "supersedes": "data/xfv_lambda_parity_eval.json (the flat-curve stalemate this tournament resolves)",
+ "question": "which lambda-SELECTION PROTOCOL generalizes best out-of-sample: the incumbent debuted-only selector (A), a production-parity selector (C globally-prepped / D per-fold-prepped), or frozen stamps (E)?",
+ "design": {
+  "shape": "nested forward-chaining protocol tournament, leakage-free",
+  "eval_folds": [2021, 2022, 2023],
+  "fold_2020": "excluded as an eval fold (no prior fold for selection stability); its rows participate as training",
+  "selection": "per eval fold Y and protocol P, run P's own internal machinery restricted to rows with decision_year < Y (band [0.50, 0.70] unchanged) -> lambda_P(Y)",
+  "evaluation": "production blend at lambda_P(Y) on fold Y's debuted rows; production legs = efv_model.fit_production_stack fit on pre-Y rows (real decision years); cons floored at 0, model leg calibrated + clamped at -2.0",
+  "metrics": "pooled Spearman + within-tier wm + FV-45 t45 (composite = sum, mirroring rank_calibration), plus contributor-AUC (>=3 WAR) and star-AUC (>=10 WAR) via source_backtest._auc",
+  "bootstrap": {"reps": 2000, "seed": 20260715, "pairing": "shared resample indices, paired diff vs protocol A on the pooled fold rows", "lo95": "2.5th percentile"}
+ },
+ "protocols": {
+  "A": "incumbent (debuted-only anchor + ridge, raw model leg - the shipped rank_calibration selector)",
+  "C": "parity, globally-prepped full pool (full-pool anchor, calibrated + clamped model leg)",
+  "D": "parity, per-fold-prepped pool via fit_production_stack - LEAK-FIXED (see findings.lab_D_leakage)",
+  "E": "null: frozen stamps as registered (hit 0.70 / pit 0.63)"
+ },
+ "registered_gates": {
+  "gate1": "composite (pooled+wm+t45) gap vs protocol A, pooled across folds, bootstrap lo95 >= 0",
+  "gate2": "contributor-AUC and star-AUC each >= A - 0.005 pooled",
+  "ship_rule": "challenger ships iff BOTH; if both C and D clear, higher composite wins; if neither clears, A is the adjudicated winner (valid no-loss outcome)"
+ },
+ "sides": {
+  "hit": {
+   "n_pooled": 294,
+   "lambda_by_fold": {
+    "A": {"2021": 0.67, "2022": 0.50, "2023": 0.65},
+    "C": {"2021": 0.70, "2022": 0.70, "2023": 0.55},
+    "D": {"2021": 0.70, "2022": 0.70, "2023": 0.55},
+    "E": {"2021": 0.70, "2022": 0.70, "2023": 0.70}
+   },
+   "pooled": {
+    "A": {"composite": 0.5747, "rho": 0.3717, "wm": 0.1171, "t45": 0.0859, "auc_contributor": 0.7690, "auc_star": 0.8303},
+    "C": {"composite": 0.4722, "rho": 0.3601, "wm": 0.0770, "t45": 0.0351, "auc_contributor": 0.7626, "auc_star": 0.8274},
+    "D": {"composite": 0.4722, "rho": 0.3601, "wm": 0.0770, "t45": 0.0351, "auc_contributor": 0.7626, "auc_star": 0.8274},
+    "E": {"composite": 0.5268, "rho": 0.3650, "wm": 0.0977, "t45": 0.0641, "auc_contributor": 0.7647, "auc_star": 0.8286}
+   },
+   "bootstrap_vs_A": {
+    "C": {"point_diff": -0.1025, "lo95": -0.1842, "hi95": -0.0153, "p_gt_0": 0.0105},
+    "D": {"point_diff": -0.1025, "lo95": -0.1842, "hi95": -0.0153, "p_gt_0": 0.0105},
+    "E": {"point_diff": -0.0479, "lo95": -0.1155, "hi95": 0.0240, "p_gt_0": 0.099}
+   },
+   "gates": {
+    "C": {"gate1_composite_lo95_ge_0": false, "gate2_auc_within_0p005": false, "ships": false},
+    "D": {"gate1_composite_lo95_ge_0": false, "gate2_auc_within_0p005": false, "ships": false}
+   },
+   "winner": "A",
+   "note": "parity is not merely non-superior on hitters - it is significantly WORSE (composite CI95 entirely negative) and fails the contributor-AUC floor (0.7626 < 0.7690 - 0.005)"
+  },
+  "pit": {
+   "n_pooled": 334,
+   "lambda_by_fold": {
+    "A": {"2021": 0.66, "2022": 0.63, "2023": 0.52},
+    "C": {"2021": 0.70, "2022": 0.58, "2023": 0.56},
+    "D": {"2021": 0.70, "2022": 0.58, "2023": 0.56},
+    "E": {"2021": 0.63, "2022": 0.63, "2023": 0.63}
+   },
+   "pooled": {
+    "A": {"composite": 0.8342, "rho": 0.3083, "wm": 0.1356, "t45": 0.3903, "auc_contributor": 0.6859, "auc_star": 0.8735},
+    "C": {"composite": 0.8318, "rho": 0.3059, "wm": 0.1350, "t45": 0.3910, "auc_contributor": 0.6848, "auc_star": 0.8732},
+    "D": {"composite": 0.8318, "rho": 0.3059, "wm": 0.1350, "t45": 0.3910, "auc_contributor": 0.6848, "auc_star": 0.8732},
+    "E": {"composite": 0.8381, "rho": 0.3103, "wm": 0.1455, "t45": 0.3823, "auc_contributor": 0.6858, "auc_star": 0.8730}
+   },
+   "bootstrap_vs_A": {
+    "C": {"point_diff": -0.0024, "lo95": -0.0274, "hi95": 0.0236, "p_gt_0": 0.395},
+    "D": {"point_diff": -0.0024, "lo95": -0.0274, "hi95": 0.0236, "p_gt_0": 0.395},
+    "E": {"point_diff": 0.0039, "lo95": -0.0538, "hi95": 0.0502, "p_gt_0": 0.5835}
+   },
+   "gates": {
+    "C": {"gate1_composite_lo95_ge_0": false, "gate2_auc_within_0p005": true, "ships": false},
+    "D": {"gate1_composite_lo95_ge_0": false, "gate2_auc_within_0p005": true, "ships": false}
+   },
+   "winner": "A",
+   "note": "parity is a statistical tie on pitchers (point -0.0024, CI straddles 0); it clears the AUC floor but not the composite gate - no evidence it generalizes better"
+  }
+ },
+ "protocol_E_vs_A": {
+  "question": "is per-run re-selection adding anything over frozen stamps?",
+  "hit": "A per-fold re-selection beats frozen 0.70 by +0.0479 pooled composite but not significantly (lo95 -0.1155, p_gt_0 of E>A only 0.099 in E's favor is the mirror: re-selection is nominally better)",
+  "pit": "dead tie (E - A = +0.0039, CI [-0.0538, +0.0502]); at the ACTUAL current live stamp 0.61 (unregistered diagnostic E'), E' - A = -0.0011 - also a tie",
+  "verdict": "re-selection is not demonstrably adding value over frozen stamps, and is not hurting; no action indicated (E was a null arm, not a shippable challenger under the registration)"
+ },
+ "winner_full_data_selection": {
+  "protocol": "A (incumbent rank_calibration, unchanged)",
+  "hit": {"lambda": 0.70, "curve_spread": 0.0409, "near_boundary": true, "note": "argmax at the band cap - the standing near-boundary caveat continues to apply"},
+  "pit": {"lambda": 0.61, "curve_spread": 0.0152, "near_boundary": false, "note": "matches the CURRENT live stamp (data/xfv.json meta.live_lambda pit=0.61, stamped by the 2026-07-15 production run); the registration's 0.63 was the prior stamp"}
+ },
+ "findings": {
+  "lab_D_leakage": "tools/xfv_lambda_parity_lab.py variant D filters raw matrix rows on r.get('decision_year') - a key the matrices DO NOT carry (decision year is computed, efv_model._decision_year) - so the filter is vacuous (2025/2025 pitcher rows pass a 'pre-2020' filter) and D's production stack was fit on ALL rows including each fold's own test rows. Leaky-D at HEAD selects hit 0.69 / pit 0.68; leak-fixed D selects hit 0.55 / pit 0.56.",
+  "C_equals_D_when_leak_fixed": "with the real decision-year filter, D produces fold rows IDENTICAL to C (same pool, same legs) - every per-fold selection, curve, and pooled composite matches C exactly. The 'two faithful parity implementations disagree at opposite ends of the band' conflict that motivated this adjudication was the leak artifact, not implementation sensitivity: there is exactly ONE faithful parity protocol, and it loses to the incumbent OOS.",
+  "parity_artifact_stale_at_HEAD": "data/xfv_lambda_parity_eval.json does not reproduce at HEAD f282695 on the committed matrices (all six variant curves differ; registered pit-A argmax 0.63 vs 0.61 at HEAD) - it was generated against an earlier code/matrix state and should be regenerated or marked superseded by this artifact.",
+  "live_stamp_drift": "blend_lambda live-computes rank_calibration each production run: the pit stamp had already moved 0.63 -> 0.61 in the 2026-07-15 run, independent of this adjudication. The E' diagnostic shows 0.61 is a tie with per-fold re-selection - the current stamp is well-supported."
+ },
+ "verdict": {
+  "winner": "A (incumbent) - BOTH sides; no per-side split",
+  "replumb": false,
+  "restamp": false,
+  "stamps": "stay on the incumbent selector's live output (hit 0.70 / pit 0.61 as of the 2026-07-15 run)",
+  "reason": "neither challenger cleared gate 1 on either side (hit: parity significantly worse, lo95 -0.1842; pit: tie, lo95 -0.0274) and hit also failed the contributor-AUC floor. Per the pre-registered ship rule this is a clean adjudicated no-loss outcome: the debuted-only selector is not a documented quirk to be repaired - it is the OOS-winning protocol.",
+  "owner_decision_required": false,
+  "closes": "the xfv_lambda_parity owner-decision queue item (the C-vs-D disagreement dissolved: it was a leak, and the leak-fixed parity protocol loses)"
+ },
+ "provenance": {
+  "repo_head": "f282695",
+  "matrices": "data/xfv_hitter_matrix.json + data/xfv_pitcher_matrix.json at commit 13d7728 (clean working tree)",
+  "runner": "scratchpad lam-adjudication/lam_tournament.py + addendum_diag.py (offline, repo read-only)",
+  "raw_results": "lam-adjudication/results.json + results_hit.json + results_pit.json + diagnostics_eprime.json (full per-fold curves + selection detail)"
+ }
+}

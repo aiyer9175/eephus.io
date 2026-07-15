@@ -1333,7 +1333,7 @@
    "metric": "curve geometry: argmax stability across faithful parity implementations + band-boundary/flatness protocol",
    "eval_artifact": "data/xfv_lambda_parity_eval.json",
    "verdict": "deprecated",
-   "notes": "NO-RESTAMP adjudication. Parity implementations DISAGREE across the band: C selects hit 0.56/pit 0.53, D selects hit 0.68/pit 0.69 (disagreement 0.12/0.16 on a 0.20 band) with top-5 composite candidates within ~0.003; the argmax under parity is implementation-sensitive noise and the restamp protocol (near-boundary/flat -> owner sign-off) fired on BOTH sides. Shipped alongside: fit_production_stack shared helper (efv_score._fit_production refactor, byte-identical fit verified) + curve/near_boundary/curve_spread reporting on rank_calibration; stamps unchanged. OWNER DECISION QUEUED: adjudicate whether any parity selector (and which prep convention) should replace the debuted-only selector. Precedent: the 2026-07-14 hit cap-raise retraction.",
+   "notes": "NO-RESTAMP adjudication. Parity implementations DISAGREE across the band: C selects hit 0.56/pit 0.53, D selects hit 0.68/pit 0.69 (disagreement 0.12/0.16 on a 0.20 band) with top-5 composite candidates within ~0.003; the argmax under parity is implementation-sensitive noise and the restamp protocol (near-boundary/flat -> owner sign-off) fired on BOTH sides. Shipped alongside: fit_production_stack shared helper (efv_score._fit_production refactor, byte-identical fit verified) + curve/near_boundary/curve_spread reporting on rank_calibration; stamps unchanged. OWNER DECISION QUEUED: adjudicate whether any parity selector (and which prep convention) should replace the debuted-only selector. Precedent: the 2026-07-14 hit cap-raise retraction. SUPERSEDED 2026-07-15 by xfv_lambda_adjudication: variant D had a leakage bug (decision_year filter on a key the matrices do not carry - the production stack was fit on all rows including test folds); leak-fixed D == C exactly. There was ONE faithful parity implementation, and the tournament shows it LOSES out-of-sample. Incumbent selector adjudicated the winner; lab fixed in the same commit.",
    "last_checked": "2026-07-15",
    "stale": false,
    "artifact_age_days": 0
@@ -1552,6 +1552,31 @@
    "eval_artifact": "data/xfv_topquant_eval.json",
    "verdict": "deprecated",
    "notes": "LOSS LEDGER (owner approved the attempt; the gate said no). The 55 knee is unreachable by construction (every fold's joint top-25 cutoff <= 55.00), so pitcher-only monotone remaps cannot change top-25 membership; at the workable 52.5 knee every FITTED candidate failed (isotonic 3.89, Theil-Sen WIDENS to 4.38, OLS degenerate). An unregistered knife-edge s=0.04-0.05 window passed and was REFUSED as gate-tuning (lambda-raise precedent). Root cause: the pit display tail is outcome-flat; the skew is the per-side map's 2.47x share re-inflation. HONEST PATH RECORDED: a JOINT cross-side quantile display map (touches hitter grades, needs a NEW owner registration) or resolved 2024+ folds. Gated-inert hooks shipped in efv_score + efv_topquant.py (byte-identity verified, 0 of 2202 live pit rows changed); activation requires ship.enabled AND ship.gate_pass in the eval artifact."
+  },
+  {
+   "model_id": "xfv_joint_display_map",
+   "surface": "model-dev artifact (rendered nowhere) - joint cross-side display map, owner-registered gate",
+   "predicts": "n/a - gated experiment (2026-07-15): joint quantile display map over rank_war (ARM-1) + expected-WAR-at-rank crosswalk (ARM-2)",
+   "champion": "incumbent per-side display map - STANDS",
+   "baseline": "ARM-1 / ARM-2 on F-SIDE folds",
+   "metric": "G1 joint-board Spearman lo95(gap)>=0 + G2 AUC floors + G3 invariance + G4 S1-S5 (seed 20260715)",
+   "eval_artifact": "data/xfv_joint_map_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER under the owner's ship-as-gains bar. G1 FAIL both arms (ARM-1 gap -0.0016; ARM-2 +0.0069 point gain but lo95 -0.0055, refused per the TOP-QUANT knife-edge precedent). G2 AUC PASS, G3 invariance PASS, G4 fairness PASS with the predicted large win (top-25 hit-minus-pit 4.52 -> 1.75 ARM-1 / 2.00 ARM-2; pit share 0.37 -> 0.13). ROOT CAUSE recorded: the per-side map's pit inflation is accidentally COMPENSATORY mid-board (51-200 pitchers outperform at equal rank_war), so the top-band fairness fix cancels in pooled Spearman - fairness and pooled accuracy are in tension at this data resolution. OWNER OPTION QUEUED: re-register G1 as a no-harm band (lo95 >= -0.005) to ship ARM-2 as a fairness fix with a point Spearman gain + held AUC; that gate relaxation requires explicit owner sign-off. Candidate patches preserved in the lane workspace, NO-SHIP banners on."
+  },
+  {
+   "model_id": "xfv_lambda_adjudication",
+   "surface": "model-dev artifact (rendered nowhere) - E-LAMBDA selection-protocol adjudication tournament",
+   "predicts": "n/a - adjudication (2026-07-15): which blend-lambda SELECTION PROTOCOL generalizes best OOS (nested forward-chaining, eval folds 2021-2023, seed 20260715, 2000-rep paired bootstrap)?",
+   "champion": "protocol A - the incumbent debuted-only rank_calibration selector - ADJUDICATED WINNER both sides; stamps stay on its live output (hit 0.70 / pit 0.61 as of 2026-07-15)",
+   "baseline": "challengers C/D (production-parity selector; identical once the lab-D decision_year leak is fixed) + null E (frozen stamps)",
+   "metric": "pre-registered 2-gate ship rule: (1) pooled composite (rho+wm+t45) gap vs A bootstrap lo95 >= 0; (2) contributor-AUC and star-AUC each >= A - 0.005. Result: hit C/D -0.1025 lo95 -0.1842 FAIL + contributor-AUC floor FAIL; pit C/D -0.0024 lo95 -0.0274 FAIL (AUC floor pass). E vs A: tie both sides.",
+   "eval_artifact": "data/xfv_lambda_adjudication_eval.json",
+   "verdict": "validated",
+   "notes": "CLOSES the xfv_lambda_parity owner-decision queue item. Key finding: the parity lab's C-vs-D 'opposite ends of the band' disagreement was a LEAK ARTIFACT - variant D filtered raw rows on a 'decision_year' key the matrices do not carry (vacuous filter -> stack fit on all rows incl. each fold's test rows). Leak-fixed D is row-identical to C; the single faithful parity protocol LOSES to the incumbent OOS (hitters significantly, CI95 entirely negative; pitchers tie). No re-plumb, no restamp, band [0.50, 0.70] untouched. Also recorded: data/xfv_lambda_parity_eval.json does not reproduce at HEAD (stale vs current code/matrix state) and the pit live stamp had already drifted 0.63 -> 0.61 via the live selector (E' diagnostic: 0.61 is a tie with per-fold re-selection).",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

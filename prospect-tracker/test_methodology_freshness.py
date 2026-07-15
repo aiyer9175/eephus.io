@@ -213,6 +213,13 @@ MODEL_GLOSSARY = {
     # gated-inert hooks shipped; honest path = a JOINT cross-side display map
     # under a NEW owner registration. Rendered nowhere.
     "xfv_topquant": "internal",
+    # Lambda adjudication tournament (2026-07-15): incumbent selector WON both
+    # sides (parity protocol loses OOS; the C-vs-D stalemate was a lab leak).
+    # Joint display map (owner-registered): loss ledger under the strict
+    # ship-as-gains G1 (fairness gates passed; re-registration option queued).
+    # Both rendered nowhere.
+    "xfv_lambda_adjudication": "internal",
+    "xfv_joint_display_map": "internal",
 }
 
 
