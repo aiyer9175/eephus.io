@@ -144,3 +144,41 @@ E-AGE re-measured, still a non-loss, now positive on every metric.
 - Anything that ships gets: its own lab tool under tools/, a committed
   data/*_eval.json ledger, a model_registry row/verdict update, and a
   golden bump. Losses get the eval ledger committed anyway.
+# Proposed standing-rule paragraph (append to docs/efv-2026-07-14/GATES.md or the successor GATES file)
+
+## F-SIDE: standing joint side-fairness line (eFV 3.4; registered 2026-07-15)
+
+A permanent measurement line, output-neutral on all published player numbers:
+per forward-chained fold (2020-2023, >=15/>=60 guards, stamped live lambdas),
+replicate the per-side quantile display map, union both sides, rank by display
+grade; per joint band (1-25 / 26-50 / 51-100 / 101-200) report by side the
+realized mean AND median first-6yr WAR (co-primary), contributor/star/bust
+rates, the bootstrap hit-minus-pit diff + CI90 (2000 reps, seed 7), pitcher
+slot share, and the display-vs-raw share-inflation ratio. Primary frame is
+full-pool KM; debuted-only is the sensitivity frame; IPCW re-weighting (weights
+capped at 5, effective-n reported) is the uncertainty band. Artifact:
+data/xfv_side_fairness_eval.json; compact summary blocks in xfv_eval.json and
+xfv_eval_pitcher.json. Binding rules encoded as fields: B1 >=3/4 fold sign
+agreement; B2 dual-frame sign agreement; B3 IPCW sign-preserving and within 1
+SE of unweighted on the resolved <=2018 subset; B4 CI90 excludes 0. Standing
+forward gates, checked on every future model change:
+
+- **S1**: the joint TOP-25 hit-minus-pit realized-WAR diff must not increase by
+  more than 1 bootstrap SE (mean AND median co-primary). Registered baselines:
+  mean +3.95 (SE 1.47, ceiling 5.42); median +2.83 (SE 2.29, ceiling 5.12).
+- **S2**: hit no-harm within 0.0023 of the corrected-label baseline
+  (hit pooled blend rho 0.3808, floor 0.3785).
+- **S3**: pit BENCH+GOOD bucket log-loss <= +1.0% relative (shipped references
+  BENCH 0.25642 / GOOD 0.04971, ceilings 0.25898 / 0.05021).
+- **S4**: the rank_war-frame mid-band pit-outperformance cells (51-100,
+  101-200, equal-FV40) must not flip sign (registered: -1.33 / -0.46 / -0.21,
+  all pit-outperform).
+- **S5**: stamp per-side fold-year counts against the >=15/>=60 guards; the
+  FIRST run where the 2024 decision fold becomes trainable (DEBUTED frame - the
+  full-pool 2024 cell is bust-only and does not count) trips a named re-run of
+  E-ISO4-path, M3 and E-STUFF before this line's baselines may be reset.
+
+Binding cell for equal-grade comparisons: display grade >= 55 (top-25 gap
+confirmation cell, +3.09 CI90 [1.08, 5.08]). The 50-band model-vs-realized
+discrepancy (currently -1.31, pitchers ahead) is published as a tracked
+diagnostic and is NEVER a gate.

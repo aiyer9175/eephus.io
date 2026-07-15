@@ -967,7 +967,7 @@
    "metric": "forward-chained Spearman Y->Y+1 RA9 (seeded bootstrap CI on the rho gap)",
    "eval_artifact": "data/sem_plus_eval.json",
    "verdict": "validated",
-   "notes": "SHIPPED 2026-07 (Wave B2, X-S1), the starter analog of REM+. Forward-chained OOS 2018-2025 (ex-2020, 702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3923 vs raw FIP 0.358, ERA 0.2612; bootstrap CI on the rho gap beats ERA (lo95 +0.081) and edges its raw-FIP parent (lo95 +0.019), so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Forward predictiveness is materially higher than REM+ (0.24) because starters carry larger, more stable single-season samples. X-S3 'more than FIP' test REJECTED: a ground-ball-adjusted HR expectation (groundOutsToAirouts) scored 0.3905 vs plain 0.3923, gap lo95 -0.0086, so plain FIP stays (starter samples are large enough that observed HR rate is already a strong estimate; loss ledger inside the same artifact). Durability (IP, GS, average start length) is shown as CONTEXT, never in the skill number; quality starts / times-through-order are not in the StatsAPI season feed. Data from the StatsAPI season pitching leaderboard (FanGraphs 403-blocked); no leverage walk (starters are not leverage-deployed). Harness tools/sem_plus_lab.py; core sem_plus.py (reuses the validated rem_plus FIP machinery). X-S4 (Statcast xwOBA-allowed) TESTED + REJECTED 2026-07-06: over 6 Savant year-pairs (592 starter pairs), xwOBA-allowed forward-predicts next-year RA9 at rho 0.377 vs FIP 0.382 (a 0.5x/0.5x blend 0.384, gap vs FIP lo95 -0.053, CI spans 0), so contact-quality-allowed is redundant with what FIP already strips out; the FIP core stays. (Unlike hitters, where xwOBA strips the batter own BABIP luck and DID beat actual wOBA -> shipped xHEM+.)",
+   "notes": "SHIPPED 2026-07 (Wave B2, X-S1), the starter analog of REM+. Forward-chained OOS 2018-2025 (ex-2020, 702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3923 vs raw FIP 0.358, ERA 0.2612; bootstrap CI on the rho gap beats ERA (lo95 +0.081) and edges its raw-FIP parent (lo95 +0.019), so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Forward predictiveness is materially higher than REM+ (0.24) because starters carry larger, more stable single-season samples. X-S3 'more than FIP' test REJECTED: a ground-ball-adjusted HR expectation (groundOutsToAirouts) scored 0.3905 vs plain 0.3923, gap lo95 -0.0086, so plain FIP stays (starter samples are large enough that observed HR rate is already a strong estimate; loss ledger inside the same artifact). Durability (IP, GS, average start length) is shown as CONTEXT, never in the skill number; quality starts / times-through-order are not in the StatsAPI season feed. Data from the StatsAPI season pitching leaderboard (FanGraphs 403-blocked); no leverage walk (starters are not leverage-deployed). Harness tools/sem_plus_lab.py; core sem_plus.py (reuses the validated rem_plus FIP machinery). X-S4 (Statcast xwOBA-allowed) TESTED + REJECTED 2026-07-06: over 6 Savant year-pairs (592 starter pairs), xwOBA-allowed forward-predicts next-year RA9 at rho 0.377 vs FIP 0.382 (a 0.5x/0.5x blend 0.384, gap vs FIP lo95 -0.053, CI spans 0), so contact-quality-allowed is redundant with what FIP already strips out; the FIP core stays. (Unlike hitters, where xwOBA strips the batter own BABIP luck and DID beat actual wOBA -> shipped xHEM+.) HARNESS-V2 RESTAMP 2026-07-15: the shipped n=702 VALIDATED verdict included 111 mid-2026 partial targets; corrected n=592 is STILL VALIDATED and stronger (rho 0.4167 v1 / 0.4200 v2). Zero gate flips across the 8-family restamp (see results_by_convention in each artifact).",
    "last_checked": "2026-07-14",
    "stale": false,
    "artifact_age_days": 7,
@@ -1331,6 +1331,64 @@
    "eval_artifact": "data/xfv_lambda_parity_eval.json",
    "verdict": "deprecated",
    "notes": "NO-RESTAMP adjudication. Parity implementations DISAGREE across the band: C selects hit 0.56/pit 0.53, D selects hit 0.68/pit 0.69 (disagreement 0.12/0.16 on a 0.20 band) with top-5 composite candidates within ~0.003; the argmax under parity is implementation-sensitive noise and the restamp protocol (near-boundary/flat -> owner sign-off) fired on BOTH sides. Shipped alongside: fit_production_stack shared helper (efv_score._fit_production refactor, byte-identical fit verified) + curve/near_boundary/curve_spread reporting on rank_calibration; stamps unchanged. OWNER DECISION QUEUED: adjudicate whether any parity selector (and which prep convention) should replace the debuted-only selector. Precedent: the 2026-07-14 hit cap-raise retraction."
+  },
+  {
+   "model_id": "xhem_multiyear_decay",
+   "surface": "model-dev artifact (rendered nowhere) - X-H4 decayed multi-year xHEM+ gate",
+   "predicts": "n/a - gated experiment (2026-07-15): decay-and-PA-weighted mean of Savant est_woba y-2..y as the hitter forward column",
+   "champion": "incumbents stand (1yr xwOBA / flat-3yr actual wOBA)",
+   "baseline": "recomputed same-set incumbents (n=1495 pairs)",
+   "metric": "forward Spearman vs next-season wOBA; bootstrap gap lo95 vs stronger incumbent",
+   "eval_artifact": "data/xhem_multiyear_decay_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER. Point rho 0.4876 beat both incumbents (+0.0110 vs stronger) but lo95 -0.0148; multi-year pooling carries the signal, the xwOBA+decay increment is noise at this n. Do not retry without more outcome years."
+  },
+  {
+   "model_id": "rem_sem_3yr_decay",
+   "surface": "model-dev artifact (rendered nowhere) - X-R2b/X-S2b decayed 3yr blends + eval window extension",
+   "predicts": "n/a - gated experiment (2026-07-15): w = IP * 0.8^years_back trailing-3yr REM+/SEM+, predictors extended to 2013",
+   "champion": "incumbents stand (flat IP-weighted 3yr, both provisional)",
+   "baseline": "1yr index + flat 3yr on identical extended pair sets (RP n=1405, SP n=986)",
+   "metric": "paired bootstrap lo95 on rho gaps, both legs required",
+   "eval_artifact": "data/rem_sem_3yr_decay_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER. RP: decay==flat (secondary lo95 -0.0051); SP: 3yr never significantly beats 1yr (primary lo95 -0.0128). KEEP-ALIVE recorded: extended-window RP evidence (d0.8 vs 1yr lo95 +0.0018 at n=1405) suggests the existing flat rem_plus_3yr provisional may clear validated under its own pre-registered re-gate."
+  },
+  {
+   "model_id": "xfv_side_fairness",
+   "surface": "model-dev eval line (rendered nowhere) - eFV 3.4 F-SIDE standing joint side-fairness measurement, computed next to _auc_breakdown inside efv_model.run()",
+   "predicts": "n/a - measurement line: realized first-6yr WAR parity (hit vs pit) by joint-board band under the production display-grade interleave AND the raw rank_war frame, forward-chained folds 2020-2023 with the stamped live lambdas",
+   "champion": "n/a (measurement-only; output-neutral on every published player number)",
+   "baseline": "equal consensus-FV cells (scouts' own cross-side calibration) + the raw rank_war joint frame",
+   "metric": "joint TOP-25 hit-minus-pit mean AND median first-6yr WAR (co-primary), CI90 + SE (2000 bootstraps, seed 7); binding rules B1 (>=3/4 fold sign agreement), B2 (dual-frame sign), B3 (IPCW identity on resolved <=2018), B4 (CI90 excludes 0); standing forward gates S1-S5 stamped in the artifact",
+   "eval_artifact": "data/xfv_side_fairness_eval.json",
+   "verdict": "provisional",
+   "notes": "REGISTERED 2026-07-15 (eFV 3.4 F-SIDE lane). Baseline stamps, full-pool KM primary frame: top-25 hit-minus-pit +3.95 CI90 [1.55, 6.35] p=0.996 (median +2.83 CI90 [0.20, 7.92]); 4/4 folds agree (2020 +4.29 / 2021 +1.21 / 2022 +9.40 / 2023 +4.46); debuted-only sensitivity +4.08 [1.64, 6.52]; IPCW <=2018 identity check exact (1.57 vs 1.57). The per-side quantile display map inflates pitcher top-25 share 0.15 -> 0.37 (x2.47) while top-25 pit mean WAR is 5.09 vs hit 9.04. Mid-board the sign FLIPS: rank_war 51-100 -1.33, 101-200 -0.46, equal-FV40 -0.21 (pitchers OUTperform; S4 protects these cells). Binding grade cell = display >= 55 (+3.09 CI90 [1.08, 5.08]); the 50-band discrepancy (-1.31) is a tracked diagnostic, NEVER a gate. 2024 tripwire NOT tripped (debuted 2024 n_test=0 both sides; full-pool 2024 cell is bust-only and deliberately excluded from the trip condition). All four binding rules PASS at registration.",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_alpha_criterion_perside",
+   "surface": "model-dev artifact (rendered nowhere) - eFV 3.1 per-side ridge alpha criterion gate",
+   "predicts": "n/a - gated experiment (2026-07-15): pit alpha selected by weighted-spearman rank objective (hit stays MAE), blend lambda re-selected end-to-end",
+   "champion": "incumbent MAE alpha criterion both sides - STANDS",
+   "baseline": "rank-criterion pit arm",
+   "metric": "pre-registered 5-clause gate (composite >= +0.0035 P>=0.90; hit byte-identical; era cell; pit BENCH log-loss; promotions count)",
+   "eval_artifact": "data/xfv_alpha_criterion_perside_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER, clean fail: pit composite -0.0012 (P=0.503) vs required +0.0035; clauses b-e all passed. M4's keep-alive cell (+0.0082) evaporated via the 2026-07-14 label repair, not the lambda re-selection (frozen-lambda decomposition -0.0032). The alpha-criterion line (M4 + this) is now FULLY CLOSED. Seed 20260715, 2000 reps."
+  },
+  {
+   "model_id": "xfv_promo_watch",
+   "surface": "model-dev artifact (data/xfv_promo_watch.json, deploy-excluded) - F-WATCH forward-registered promoted-pitcher watchlist",
+   "predicts": "forward experiment (frozen 2026-07-15): do eFV-promoted pitchers (xfv-cons >= +2.0, cons <= 45.33, grade >= 45; n=144 + 720 matched controls + 161 parity hitters) earn scout re-evaluation (h1, 2027-01-15..07-15) and debuts (h2, 2028-07-15)?",
+   "champion": "n/a - measurement instrument with a kill rule",
+   "baseline": "5x consensus/age/level-matched non-promoted controls",
+   "metric": "h1 scout re-evaluation (consensus +2.5 / new-source / top-100; dropped-from-all-lists = miss); kill at >=25 matured treated / >=75 controls, bootstrap P>=0.90",
+   "eval_artifact": "data/xfv_promo_watch.json",
+   "verdict": "provisional",
+   "notes": "Zero output change; editorial_eval registration pattern. Tags: C-RP 21, C-KBB 32, deep-consensus 3, strict-quantile 36. GRADE-GATE reading disclosed in-artifact (xfv_grade >= 45 count-pinned vs quantile n=36; both adjudicable). Deploy-excluded via data_exclude.txt."
   }
  ],
  "problems": []

@@ -27,3 +27,4 @@ cba_rules.json
 contract_options.json
 grpo_scores.json
 xfv_extra_defense.json
+xfv_promo_watch.json

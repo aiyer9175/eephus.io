@@ -1354,5 +1354,44 @@
    "age": 0.024
   }
  },
- "honest_note": "The lean feature set (Phase-1-earned signals only) lets eFV BEAT consensus FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent 2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, less-accurate scouting. eFV still trails on MAE (it predicts more spread; consensus regresses to the mean) -- that loss is committed. The flagship case: rank edge + calibrated distribution + uncertainty + surplus + power-correction."
+ "honest_note": "The lean feature set (Phase-1-earned signals only) lets eFV BEAT consensus FV on out-of-sample rank for both cuts -- and the edge holds/grows on recent 2019-2023 cohorts (era_split_debuted), so it is not just exploiting older, less-accurate scouting. eFV still trails on MAE (it predicts more spread; consensus regresses to the mean) -- that loss is committed. The flagship case: rank edge + calibrated distribution + uncertainty + surplus + power-correction.",
+ "side_fairness": {
+  "eval_line": "eFV 3.4 F-SIDE joint side-fairness (measurement-only; standing)",
+  "artifact": "data/xfv_side_fairness_eval.json",
+  "primary_frame": "full_pool_km, joint display-grade board, folds 2020-2023",
+  "top25_hit_minus_pit": {
+   "mean_diff": 3.95,
+   "mean_ci90": [
+    1.55,
+    6.35
+   ],
+   "mean_se": 1.47,
+   "median_diff": 2.83,
+   "median_ci90": [
+    0.2,
+    7.92
+   ],
+   "median_se": 2.291,
+   "p_hit_gt_pit": 0.996
+  },
+  "top25_pit_share": {
+   "display_frame": 0.37,
+   "rank_war_frame": 0.15,
+   "share_inflation": 2.47
+  },
+  "binding_rules_pass": {
+   "B1_fold_sign_agreement": true,
+   "B2_dual_frame_sign": true,
+   "B3_ipcw_identity_where_uncensored": true,
+   "B4_ci90_excludes_zero": true
+  },
+  "standing_gates": [
+   "S1_top25_no_widening",
+   "S2_hit_no_harm",
+   "S3_pit_bucket_logloss",
+   "S4_midband_pit_outperformance",
+   "S5_fold_guards_and_2024_tripwire"
+  ],
+  "note": "identical block on both sides; full tables + gate baselines live in the artifact"
+ }
 }
