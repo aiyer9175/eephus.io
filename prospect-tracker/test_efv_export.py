@@ -161,18 +161,24 @@ def test_committed_artifact_headline_alias_contract():
 #   seed_signed_draftees: 8 current-class signees, e.g. AJ Gracia -> ATL,
 #   surface on the board via the synthetic 'draft_signing' source). Rowcount
 #   9127 -> 9133.
-_GOLDEN_XFV_SHA256 = "a466bce0daf4f615f7bb290a7843130d8fd59cc9da73bb2264616e0b70a2c9c7"
+# Updated 2026-07-15c (production regen_all after the stats<->projections
+#   program; data change - no model change): the day's MiLB scrape refresh
+#   pulled one new performance_ingest arm (derik_aquino, LAD) into the pool
+#   when the matrices rebuilt. Also re-baselines away mid-suite test churn
+#   (a test regen under the pinned test valuation set had overwritten
+#   xfv.json in place - always re-stamp from a PRODUCTION efv_export run,
+#   never from a post-pytest working tree). Rowcount 9133 -> 9134.
+_GOLDEN_XFV_SHA256 = "14e1250f16175322367e4dc183c003af42e590d1102ddc7cba6c7bf073fdd135"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-15 post-draft-completion; the
-# signed-draftee seeds added 6 rows net). The +/-20% band tolerates ordinary
-# roster churn while still catching a gross truncation / empty-artifact
-# regression.
-_GOLDEN_XFV_ROWCOUNT = 9133
+# (data/xfv.json by_player, read 2026-07-15 post-program regen). The +/-20%
+# band tolerates ordinary roster churn while still catching a gross
+# truncation / empty-artifact regression.
+_GOLDEN_XFV_ROWCOUNT = 9134
 
 
 def test_efv_grade_map_inverts_on_model_window():

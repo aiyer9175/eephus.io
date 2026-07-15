@@ -220,6 +220,15 @@ MODEL_GLOSSARY = {
     # Both rendered nowhere.
     "xfv_lambda_adjudication": "internal",
     "xfv_joint_display_map": "internal",
+    # Owner-program loss ledgers (2026-07-15b): xwOBA output-blend on pWOBA
+    # (knife-edge NO-SHIP, keep-alive at extended n), EV/barrel residual arm
+    # (regresses; EV-on-pWOBA lane closed), eFV defensive tool grades and
+    # physical-by-position (both regress; frame/athl untrainable). All
+    # rendered nowhere.
+    "pwoba_xwoba_blend": "internal",
+    "pwoba_ev_arm": "internal",
+    "xfv_defense_tools": "internal",
+    "xfv_physical_position": "internal",
 }
 
 

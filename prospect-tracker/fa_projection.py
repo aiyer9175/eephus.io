@@ -639,6 +639,58 @@ def project_player(history: list[dict], side: str, target_season: int,
     return out
 
 
+def rate_path(proj: dict, side: str, curves: dict, league: dict,
+              horizon: int = 5) -> list[dict]:
+    """Out-year RATE line for the projections board: walk the year-1
+    component projection forward along the SAME per-component aging curves
+    the engine already fits, re-assembling the composites each season.
+
+    Season 1 reproduces project_player's own composites exactly (t=0 applies
+    no delta; for pitchers the year-1 FIP algebra reduces to the closed form
+    below because pt_proj = 4.3 * ip_proj). The league run environment is
+    HELD at the year-1 anchor across the horizon — out-year league constants
+    don't exist yet, and a moving anchor would put a fake discontinuity
+    between the last empirical league season and the fallback defaults.
+
+    DISPLAY machinery only: WAR pricing stays on the war_rate decay path
+    (_decay_path); nothing here feeds the WAR map or the valuation stack."""
+    if not proj:
+        return []
+    role = proj.get("role")
+    age = proj.get("age")
+    season0 = proj.get("season") or 0
+    comps = HIT_COMPONENTS if side == "hit" else PIT_COMPONENTS
+    cur = {c: proj.get(c) for c in comps}
+    if any(v is None for v in cur.values()):
+        return []
+    # Pitcher FIP core at the engine's fixed BF ≈ 4.3·IP (pt/ip cancels):
+    # core = 4.3·(13·hr_bf + 3·(bb_pct + hbp_rate) − 2·k_pct). The engine's
+    # own year-1 fip_proj uses the PT-aged pt_proj over the un-aged ip_proj,
+    # so it differs from the closed form by a small constant — anchor the
+    # path at fip_proj and apply only the aging DELTAS of the core.
+    def _fip_core(c):
+        return 4.3 * (13 * c["hr_bf"] + 3 * (c["bb_pct"] + 0.008) - 2 * c["k_pct"])
+    fip_anchor = proj.get("fip_proj")
+    core0 = _fip_core(cur) if side == "pit" else None
+    out: list[dict] = []
+    for t in range(horizon):
+        if t > 0 and age:
+            for c in comps:
+                cur[c] = max(0.0, cur[c] + curve_delta(curves, side, role, c, age + t))
+        if side == "hit":
+            snap = dict(proj)
+            snap.update(cur)
+            asm = _assemble_hitter(snap, league, season0)
+            out.append({"season": season0 + t, "woba": asm["woba_proj"],
+                        "wrc_plus": asm["wrc_plus_proj"], "avg": asm["avg"]})
+        else:
+            if fip_anchor is None:
+                return []
+            fip = fip_anchor + (_fip_core(cur) - core0)
+            out.append({"season": season0 + t, "fip": round(max(fip, 1.0), 2)})
+    return out
+
+
 def _assemble_hitter(p: dict, league: dict, season: int) -> dict:
     """Components → slash → wOBA → park-neutral wRC+ (documented algebra:
     fixed HBP/SF rates + a fixed 2B:3B split invert ISO into hit types)."""

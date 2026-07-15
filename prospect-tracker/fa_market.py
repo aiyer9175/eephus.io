@@ -190,7 +190,13 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
            "war_by_year_champ": [round(w, 2) for w in path],
            "war_total": round(sum(path[:years]), 2),
            "war_y1": round(path[0], 2) if path else 0.0,
-           "role": role, "pt_y1": proj["pt_proj"]}
+           "role": role, "pt_y1": proj["pt_proj"],
+           # Out-year RATE line (wOBA/wRC+ hitters, FIP pitchers) — the
+           # year-1 component projection walked along the per-component
+           # aging curves (fp.rate_path). DISPLAY machinery for the
+           # projections board; WAR pricing stays on the war_rate decay
+           # path above. Inherited into out_ml via {**out}.
+           "rates_by_year": fp.rate_path(proj, side, curves, league)}
     q = _gate1_band_quantiles().get(_band_bucket(side, expo))
     if q:
         p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)

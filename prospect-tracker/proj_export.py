@@ -320,6 +320,17 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
                                      else paths[s]["war_by_year"][0]) or 0.0
                                     for s in paths), 2),
         }
+        # Projected RATE lines (fa_projection.rate_path - the year-1 Marcel
+        # components walked along the per-component aging curves). Hitters:
+        # wOBA + wRC+; pitchers: FIP; two-way rows carry both. Display
+        # surfaces only - WAR/pricing are untouched by these.
+        _rh = (paths.get("hit") or {}).get("rates_by_year") or []
+        _rp = (paths.get("pit") or {}).get("rates_by_year") or []
+        if _rh:
+            m["woba"] = [r.get("woba") for r in _rh[:HORIZON]]
+            m["wrc"] = [r.get("wrc_plus") for r in _rh[:HORIZON]]
+        if _rp:
+            m["fip"] = [r.get("fip") for r in _rp[:HORIZON]]
         if two_way:
             m["warHit"] = [round(w, 2) for w in paths["hit"]["war_by_year"][:HORIZON]]
             m["warPit"] = [round(w, 2) for w in paths["pit"]["war_by_year"][:HORIZON]]

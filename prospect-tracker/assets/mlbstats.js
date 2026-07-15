@@ -905,14 +905,28 @@
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "SEM+ (skill) →", yLabel: "↑ IP/GS (durability)",
       xRef: 100, aria: "skill vs durability" });
-    if (!hist && !sc) return "";
+    // Earned vs deserved: SEM+ (FIP-based results) against xSEM+ (xwOBA-
+    // allowed). Below the diagonal band = results ahead of contact quality
+    // (regression candidates); above = deserving better.
+    var xpts = qual.filter(function (r) { return r.xsem_plus != null; }).map(function (r) {
+      return { x: r.sem_plus, y: r.xsem_plus,
+               label: r.name + "  SEM+ " + r.sem_plus + "  xSEM+ " + r.xsem_plus,
+               color: r.sem_plus >= 115 ? null : "#6a6f7a" };
+    });
+    var xsc = xpts.length >= 12
+      ? chart("scatter", xpts, { height: 250, xLabel: "SEM+ (results) →",
+          yLabel: "↑ xSEM+ (deserved)", xRef: 100, yRef: 100, aria: "earned vs deserved" })
+      : "";
+    if (!hist && !sc && !xsc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("SEM+", "sem_plus")
       + ' distribution <span class="proj-dim">(qualified starters; cyan = elite)</span></div>' + hist + "</div>"
       + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs durability'
         + ' <span class="proj-dim">(top-right = front-line workhorses)</span></div>' + sc + "</div>" : "")
+      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Earned vs deserved: SEM+ × ' + gloss("xSEM+", "xsem_plus")
+        + ' <span class="proj-dim">(below the diagonal = results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
       + "</div>";
-    return collapsible("starters-viz", 'Distribution <span class="proj-dim">(SEM+ spread, skill vs durability)</span>', body);
+    return collapsible("starters-viz", 'Distribution <span class="proj-dim">(SEM+ spread, durability, earned vs deserved)</span>', body);
   }
 
   function rotationLadders() {
@@ -1319,14 +1333,29 @@
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "HEM+ (skill) →", yLabel: "↑ PA (volume)",
       xRef: 100, aria: "skill vs volume" });
-    if (!hist && !sc) return "";
+    // Now vs next: this season's skill (HEM+) against the FORWARD projection
+    // (pWOBA). Off-diagonal names are the interesting ones - above the pack =
+    // the model believes more than the season shows (buy-lows), below = the
+    // season is outrunning the projection (sell-highs / luck candidates).
+    var ppts = qual.filter(function (r) { return r.pwoba != null; }).map(function (r) {
+      return { x: r.hem_plus, y: r.pwoba,
+               label: r.name + "  HEM+ " + r.hem_plus + "  pWOBA " + r.pwoba.toFixed(3),
+               color: r.hem_plus >= 130 ? null : "#6a6f7a" };
+    });
+    var psc = ppts.length >= 12
+      ? chart("scatter", ppts, { height: 250, xLabel: "HEM+ (this season) →",
+          yLabel: "↑ pWOBA (projected next)", xRef: 100, aria: "skill now vs projected next" })
+      : "";
+    if (!hist && !sc && !psc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("HEM+", "hem_plus")
       + ' distribution <span class="proj-dim">(qualified hitters; cyan = elite)</span></div>' + hist + "</div>"
       + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs volume'
         + ' <span class="proj-dim">(top-right = elite bats with the PAs to prove it)</span></div>' + sc + "</div>" : "")
+      + (psc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Now vs next: HEM+ × ' + gloss("pWOBA", "pwoba")
+        + ' <span class="proj-dim">(above the pack = projection believes; below = season outrunning it)</span></div>' + psc + "</div>" : "")
       + "</div>";
-    return collapsible("hitters-viz", 'Distribution <span class="proj-dim">(HEM+ spread, skill vs volume)</span>', body);
+    return collapsible("hitters-viz", 'Distribution <span class="proj-dim">(HEM+ spread, skill vs volume, now vs next)</span>', body);
   }
 
   // vs-RHP / vs-LHP segmented toggle for the constructed lineups.

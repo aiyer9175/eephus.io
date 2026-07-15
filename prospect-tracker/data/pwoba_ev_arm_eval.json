@@ -1,0 +1,110 @@
+{
+ "experiment": "P4 pWOBA EV/barrel residual-correction arm (hitters)",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "wOBA(Y+1) raw pooled",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "wOBA(Y+1) (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "protocol": {
+  "base_arm": "fa_projection",
+  "candidate": "base + OLS(residual ~ z(avg_hit_speed) + z(brl_pa) + z(ev95percent)), coefs frozen on train",
+  "ev_cache": "statcast_batter 2016-2023 backfilled 2026-07-15 (was 2024+)",
+  "gate_rule": "ev_corrected vs base: iid paired bootstrap lo95 >= 0 (v1)",
+  "ledger_position": "EV as proj_ml TREE features was rejected 2026-06-23; this is the output-layer residual form, newly powered by the cache backfill"
+ },
+ "n_pairs": 931,
+ "n_train": 223,
+ "n_gate": 708,
+ "drops": {
+  "partial_outcome": 0,
+  "window": 914,
+  "age_missing": 0,
+  "fa_proj_missing": 0,
+  "savant_missing": 0,
+  "ev_missing": 3
+ },
+ "frozen_hyperparams": {
+  "base_arm": "fa_projection",
+  "residual_ols_coef": {
+   "intercept": -0.00321,
+   "avg_hit_speed": -0.00598,
+   "brl_pa": -0.00556,
+   "ev95percent": 0.01011
+  },
+  "train_pred_years": "<= 2018",
+  "train_n": 223
+ },
+ "gate_rhos_v1": {
+  "base": 0.5182,
+  "ev_corrected": 0.5152
+ },
+ "results": {
+  "v1": {
+   "rhos": {
+    "base": 0.5182,
+    "ev_corrected": 0.5152
+   },
+   "gap_ci_primary_minus": {
+    "base": {
+     "mean": -0.003,
+     "lo95": -0.017,
+     "hi95": 0.0108
+    }
+   }
+  },
+  "v2": {
+   "rhos": {
+    "base": 0.5247,
+    "ev_corrected": 0.521
+   },
+   "gap_ci_primary_minus": {
+    "base": {
+     "mean": -0.0037,
+     "lo95": -0.0184,
+     "hi95": 0.0103
+    }
+   },
+   "cluster": {
+    "n_pairs": 708,
+    "n_players": 344,
+    "max_pairs_per_player": 3,
+    "mean_pairs_per_player": 2.06,
+    "n_strata_first_pred_season": 3
+   }
+  }
+ },
+ "gate": {
+  "gap_ci_candidate_minus_base_v1": {
+   "mean": -0.003,
+   "lo95": -0.017,
+   "hi95": 0.0108
+  },
+  "gap_ci_candidate_minus_base_v2": {
+   "mean": -0.0037,
+   "lo95": -0.0184,
+   "hi95": 0.0103
+  },
+  "pass": false,
+  "pass_under_v2": false
+ },
+ "runtime_seconds": 5.4
+}

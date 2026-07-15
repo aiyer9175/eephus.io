@@ -13766,6 +13766,13 @@ function levelStatlinesHTML(p, opts = {}) {
     const _lvlRank = { MLB: 7, AAA: 6, AA: 5, "A+": 4, A: 3, CPX: 2, DSL: 1 };
     const _dl = currentDisplayLevel(p);
     rows.sort((a, b) => {
+      if (opts.highestFirst) {
+        // v45 (owner): HIGHEST level first - a rehab assignment makes the
+        // "current" level a complex-league stint (Lombard CPX), which must
+        // not displace the real (highest) level's line on the list card.
+        return (_seasonOf(b) - _seasonOf(a))
+               || ((_lvlRank[b.level] || 0) - (_lvlRank[a.level] || 0));
+      }
       // current level first, then newest season, then highest level
       const ca = (_dl && a.level === _dl) ? 1 : 0, cb = (_dl && b.level === _dl) ? 1 : 0;
       return (cb - ca) || (_seasonOf(b) - _seasonOf(a))
@@ -13786,7 +13793,13 @@ function levelStatlinesHTML(p, opts = {}) {
       <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};white-space:nowrap;">${escapeHtml(formatLevelStatline(r))}</span>
     </span>`;
   });
-  if (displayLevel && !rows.some(r => r && r.level === displayLevel)) {
+  // "Stats pending" ghost row for a player promoted to a level with no stats
+  // on file yet. Suppressed under highestFirst when a real line is already
+  // shown - the shown HIGHEST-level line is the information; a pending chip
+  // for a rehab/complex stint would just re-add the second row the trim
+  // exists to remove.
+  if (displayLevel && !rows.some(r => r && r.level === displayLevel)
+      && !(opts.highestFirst && rows.length)) {
     pieces.unshift(`<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="No current-season stats on file yet at ${escapeHtml(displayLevel)}">
       <span class="level-pill level-neutral" style="font-size:9px;padding:1px 5px;">${escapeHtml(displayLevel)}</span>
       <span style="color:var(--text-tertiary);font-size:${compact ? "11px" : "12px"};">stats pending</span>
@@ -13812,7 +13825,12 @@ function makeMilbCell(p) {
   // Triple-slash / IP+ERA still leads the supporting line; the new
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
-  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 2, maxRows: 3 });
+  // v45 (owner): the LIST cell shows ONLY the HIGHEST level's line of the
+  // newest season - a multi-level season (A -> A+ -> AAA in one summer)
+  // stacked 3 slash lines and clipped the fixed-height card (Jenkins /
+  // Lombard), and "highest" (not "current") keeps a rehab CPX stint from
+  // displacing the real level. The detail page keeps the full table.
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 1, maxRows: 1, highestFirst: true });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
   // they're no longer in this prose detail line.

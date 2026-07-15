@@ -1,0 +1,166 @@
+{
+ "experiment": "P1 xwOBA-into-projection output blend (hitters)",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "wOBA(Y+1) raw pooled",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "wOBA(Y+1) (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "protocol": {
+  "arms": [
+   "fa_projection",
+   "xwoba_alone",
+   "output_blend",
+   "gap_corrected"
+  ],
+  "candidates": [
+   "output_blend",
+   "gap_corrected"
+  ],
+  "incumbent": "fa_projection (validated pWOBA, phem_marcel_lite)",
+  "hyperparams_fit": "predictor years <= 2018 ONLY, frozen",
+  "gate_rule": "winner candidate vs incumbent fa_projection: iid paired bootstrap lo95 >= 0 (v1)",
+  "pair_set": "phem_marcel_lite_lab construction (MIN_PA 150/150, 3yr window su>=2 & PA>=600, complete outcomes) + Savant est_woba present at PA >= 100.0",
+  "ledger_position": "NOT the rejected proj_ml feature bundle; this is the output-layer blend / gap-only lean angle"
+ },
+ "n_pairs": 934,
+ "n_train": 223,
+ "n_gate": 711,
+ "drops": {
+  "partial_outcome": 0,
+  "window": 914,
+  "age_missing": 0,
+  "fa_proj_missing": 0,
+  "savant_missing": 0
+ },
+ "gate_pred_years": [
+  2022,
+  2023,
+  2024
+ ],
+ "gate_outcome_years": [
+  2023,
+  2024,
+  2025
+ ],
+ "frozen_hyperparams": {
+  "beta": 0.2,
+  "gamma": 0.1,
+  "train_pred_years": "<= 2018",
+  "train_n": 223,
+  "beta_grid_train_rho": {
+   "0.2": 0.5658,
+   "0.3": 0.5596,
+   "0.4": 0.5526,
+   "0.5": 0.5465,
+   "0.6": 0.5347
+  },
+  "gamma_grid_train_rho": {
+   "0.1": 0.5648,
+   "0.2": 0.5569,
+   "0.3": 0.546,
+   "0.4": 0.5352,
+   "0.5": 0.5208
+  }
+ },
+ "gate_rhos_v1": {
+  "fa_projection": 0.5182,
+  "xwoba_alone": 0.4942,
+  "output_blend": 0.5274,
+  "gap_corrected": 0.5215
+ },
+ "winner_candidate": "output_blend",
+ "results": {
+  "v1": {
+   "rhos": {
+    "fa_projection": 0.5182,
+    "xwoba_alone": 0.4942,
+    "output_blend": 0.5274,
+    "gap_corrected": 0.5215
+   },
+   "gap_ci_primary_minus": {
+    "fa_projection": {
+     "mean": 0.0095,
+     "lo95": -0.0014,
+     "hi95": 0.0201
+    },
+    "xwoba_alone": {
+     "mean": 0.0322,
+     "lo95": 0.0041,
+     "hi95": 0.0615
+    },
+    "gap_corrected": {
+     "mean": 0.0062,
+     "lo95": -0.0032,
+     "hi95": 0.0156
+    }
+   }
+  },
+  "v2": {
+   "rhos": {
+    "fa_projection": 0.5247,
+    "xwoba_alone": 0.5027,
+    "output_blend": 0.5347,
+    "gap_corrected": 0.5279
+   },
+   "gap_ci_primary_minus": {
+    "fa_projection": {
+     "mean": 0.0099,
+     "lo95": -0.0001,
+     "hi95": 0.0196
+    },
+    "xwoba_alone": {
+     "mean": 0.0322,
+     "lo95": 0.0047,
+     "hi95": 0.061
+    },
+    "gap_corrected": {
+     "mean": 0.0067,
+     "lo95": -0.0024,
+     "hi95": 0.0156
+    }
+   },
+   "cluster": {
+    "n_pairs": 711,
+    "n_players": 344,
+    "max_pairs_per_player": 3,
+    "mean_pairs_per_player": 2.07,
+    "n_strata_first_pred_season": 3
+   }
+  }
+ },
+ "gate": {
+  "bar": "winner candidate paired-bootstrap lo95(winner - fa_projection) >= 0; v1 convention, seed 20260715, 2000 reps",
+  "gap_ci_winner_minus_incumbent_v1": {
+   "mean": 0.0095,
+   "lo95": -0.0014,
+   "hi95": 0.0201
+  },
+  "gap_ci_winner_minus_incumbent_v2": {
+   "mean": 0.0099,
+   "lo95": -0.0001,
+   "hi95": 0.0196
+  },
+  "pass": false,
+  "pass_under_v2": false
+ },
+ "runtime_seconds": 11.9
+}
