@@ -45,6 +45,23 @@ _MIN_N = 30                      # below this, pool the source across years (fla
 _MATERIAL_DRIFT_FV = 2.0         # |median shift| >= this FV is "material"
 _PITCHER_TOKENS = {"RHP", "LHP", "SP", "RP", "MIRP", "SIRP", "CL", "P"}
 
+# Internal synthetic anchors, not outlets with a grading scale. performance_ingest
+# hands EVERY auto-tracked player the same provisional FV 35 floor, so its "grade
+# distribution" is a constant: quantile-matching it against the (selection-biased)
+# overlap of players who later earned real grades maps that floor onto the overlap's
+# FanGraphs tail -- the 2026 pitcher cell sent 35 -> 45 for 2,525 unlisted arms and
+# manufactured board top-100 pitchers out of complex-league statlines. Synthetic
+# sources pass through RAW, always.
+_SYNTHETIC_SOURCES = {"performance_ingest"}
+
+
+def _mappable(src, ref) -> bool:
+    """A quantile map needs rank information on BOTH sides. A constant paired
+    distribution has no quantiles to match: every input collapses to one point of
+    the other side's distribution, which fabricates grades ("no fabricated grades"
+    is this module's contract). Degenerate cells fall back to the raw scale."""
+    return len(np.unique(src)) >= 2 and len(np.unique(ref)) >= 2
+
 
 def _is_pitcher(position: str | None) -> bool:
     if not position:
@@ -121,10 +138,10 @@ def quantile_map(fv: float, source: str, role: str, year: int) -> float | None:
     None if there is no usable overlap distribution."""
     if fv is None:
         return None
-    if source == REFERENCE:
+    if source == REFERENCE or source in _SYNTHETIC_SOURCES:
         return float(fv)
     src, ref, _pooled = _paired_dists(source, role, year)
-    if len(src) == 0 or len(ref) == 0:
+    if len(src) == 0 or len(ref) == 0 or not _mappable(src, ref):
         return None
     if len(src) == 1:
         q = 0.5
@@ -206,10 +223,10 @@ def build_remapper(years: list[int] | None = None):
         if years is not None and yr not in years:
             continue
         for src in sources:
-            if src == REFERENCE:
+            if src == REFERENCE or src in _SYNTHETIC_SOURCES:
                 continue
             s_sorted, r_sorted, _pooled = _paired_dists(src, role, yr)
-            if len(s_sorted) and len(r_sorted):
+            if len(s_sorted) and len(r_sorted) and _mappable(s_sorted, r_sorted):
                 table[(src, role, yr)] = (s_sorted, r_sorted)
 
     def remap(fv, source, position, year):
