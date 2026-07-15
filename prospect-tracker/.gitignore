@@ -134,3 +134,9 @@ data/_artifact_fingerprints/
 # poller (tools/draft_live_poller.py) overwrites it READ-ONLY with the live feed
 # on draft night; that live artifact is expected to differ locally on the poller
 # box and is not committed back.
+
+# BUCKET-AGE-HEAD governance lab (tools/bucket_age_head/): run outputs are
+# regenerable; the published verdict lives at data/xfv_bucket_age_head_eval.json.
+tools/bucket_age_head/results.json
+tools/bucket_age_head/eval_rows_ckpt.json
+tools/bucket_age_head/verify_sandbox/

@@ -6,7 +6,7 @@
   "arms": "elasticnet, histgbm, gbr, rf, extratrees, lgbm_rank, lgbm_quantile, ens_ridge_histgbm, ens_ridge_lgbm (canonical target) + ridge on target=rank / target=residual - all wired in the lab, never ledgered",
   "gate": "SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side; same-run BASE arms."
  },
- "verdict": "rejected - NOTHING beats the shipped ridge. Hit: every challenger below base pooled (best extratrees 0.3670 vs 0.3761). Pit: two NEAR-MISSES under the +0.0046 bar - elasticnet 0.3067 (+0.0035, wm/t45 both up) and target=residual 0.3064 (+0.0032, t45 up). KEEP-ALIVE: re-gate those two when the 2024 debuted fold lands (DEBUT_YEARS unlock); everything else is a clean loss.",
+ "verdict": "rejected - NOTHING beats the shipped ridge. Hit: every challenger below base pooled (best extratrees 0.3670 vs 0.3761). Pit: two NEAR-MISSES under the +0.0046 bar - elasticnet 0.3067 (+0.0035, wm/t45 both up) and target=residual 0.3064 (+0.0032, t45 up). KEEP-ALIVE: re-gate those two when the 2024 debuted fold lands (DEBUT_YEARS unlock); everything else is a clean loss. [2026-07-15b: keep-alive re-gate at the 2024-censored vintage FAILED again (elasticnet +0.0033, residual +0.0030) - spent; see regate_2026_07_15.]",
  "variants": [
   {
    "id": "BASE_hit",
@@ -1520,5 +1520,41 @@
    },
    "skipped_folds": 0
   }
- ]
+ ],
+ "regate_2026_07_15": {
+  "vintage": "2024-fold unlock (DEBUT_YEARS 2011-2024, censored weight-0.333 rows) + terminal-transaction label fix",
+  "spec": "pre-registered re-gate docs/efv-2026-07-15/GATES.md section MC-PIT; same-run BASE_pit arm",
+  "results": {
+   "BASE_pit": {
+    "spearman": 0.3028,
+    "within_tier_wm": 0.1488,
+    "t45": 0.2023,
+    "t50": 0.1766,
+    "era_2019_2021": 0.2034,
+    "n": 438,
+    "lam": 0.61
+   },
+   "pit_elasticnet": {
+    "spearman": 0.3061,
+    "within_tier_wm": 0.1538,
+    "t45": 0.206,
+    "t50": 0.176,
+    "era_2019_2021": 0.2025,
+    "delta_pooled": 0.0033,
+    "gate_bar": 0.0046,
+    "pass": false
+   },
+   "pit_target_residual": {
+    "spearman": 0.3058,
+    "within_tier_wm": 0.1513,
+    "t45": 0.2121,
+    "t50": 0.1728,
+    "era_2019_2021": 0.2072,
+    "delta_pooled": 0.003,
+    "gate_bar": 0.0046,
+    "pass": false
+   }
+  },
+  "verdict": "NO SHIP - keep-alive spent. Both arms remain under the pooled bar at the new vintage; weakest cells (t50, era 2019-2021) flat. Next re-open requires resolved 2024+ cohorts."
+ }
 }

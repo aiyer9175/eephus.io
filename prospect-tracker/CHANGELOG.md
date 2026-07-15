@@ -10,6 +10,45 @@ Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
 pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
 BETA_READINESS.md (go/no-go).
 
+## 2026-07-15 (eFV 2024-fold unlock: governance re-runs + level_rank ship + label integrity)
+
+The owner-queued 2024-fold unlock (docs/efv-2026-07-15/GATES.md; gates
+pre-registered before any keep-alive ran). `_GOLDEN_XFV_SHA256` bumped for the
+matrix + feature ships below.
+
+- 2024-fold unlock: efv_dataset.DEBUT_YEARS widened to 2011-2024; 210 dated-2024
+  debuts enter as censored weight-0.333 rows (hit +91, pit +119). SCORED_YEARS
+  unchanged - the rows enrich existing fold training pools. New selftest
+  baselines: hit blend 0.3765 / pit 0.3028.
+- Governance discharged (F-SIDE S5 + the bucket-head rerun marker): E-ISO4-path,
+  M3, E-STUFF and BUCKET-AGE-HEAD all re-ran at the new vintage with their
+  registered gates and all FAIL on their original binding cells - every
+  calibration-line close stands; registry rows restamped. The BUCKET-AGE-HEAD
+  lab now lives in-repo at tools/bucket_age_head/ (was temp-dir only).
+- level_rank SHIPPED into the hitter lean set under the pre-registered LR-FRINGE
+  gate (t45 +0.0192 vs bar +0.015; pooled/within-tier at the 0.0011 identity
+  noise floor; resolved-target sensitivity agrees). Ledger
+  data/xfv_level_rank_fringe_eval.json + registry row xfv_level_rank_fringe;
+  test_efv_model pins updated.
+- Keep-alives honestly closed at the new vintage: pit elasticnet (+0.0033) and
+  pit residual-target (+0.0030) still under the +0.0046 bar; E-LEAN1 five all
+  fail at re-measured noise floors; M3 re-run also consumes the pit:ifa-shrink
+  and c6 keep-alives (pit:ifa +0.0068 under the +0.01 bar). Next new
+  information for all of them = resolved 2024+ cohorts.
+- Label integrity: career-terminal transactions (lifetime DEI ban / retirement,
+  raw player_transactions, no-later-activation rule) now resolve censored
+  debuted rows at the observed sum with weight 1.0 (Marcano no longer
+  extrapolates a season he is banned from playing; alu/kirilloff/pint/ridings
+  likewise) and unflag recent-bust retirees (weight 0.5 -> 1.0).
+- Debut re-fire guard (storage.auto_debut_player): a player with any debuted
+  snapshot no longer re-fires on veteran re-appearances (the ryan_vilade
+  class), and a detected date later than roster_status.mlb_debut_date is
+  clamped to the known true debut. New pins in test_auto_graduation.py. The
+  41 historical run-date-stamped rows are left for an owner-approved repair.
+- PROSPX Generate GFX prospect card: the hero badge label now tracks the badge
+  value (eFV / Provisional eFV / Consensus FV on true fallback) instead of
+  hardcoding "Consensus FV" over an eFV number.
+
 ## 2026-07-07 (pre-launch pass: models + deploy + freshness + cards + polish)
 
 The final pre-Beta debugging/polish/refinement pass (plan:

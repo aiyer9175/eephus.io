@@ -457,5 +457,6 @@
     "2023": 0.3704
    }
   }
- ]
+ ],
+ "keepalive_outcome_2026_07_15": "hit_level_rank cleared its pre-registered LR-FRINGE re-gate at the 2024-fold vintage (t45 +0.0192 vs bar +0.015) and SHIPPED into xfv_hitter. See data/xfv_level_rank_fringe_eval.json + docs/efv-2026-07-15/GATES.md. All other arms remain clean losses."
 }

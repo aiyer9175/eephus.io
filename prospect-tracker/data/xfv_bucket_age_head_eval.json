@@ -14,21 +14,21 @@
   "incumbent_method": "proportional_odds"
  },
  "pool": {
-  "n": 1569,
+  "n": 1572,
   "kinds": {
-   "debuted": 528,
-   "bust": 1041
+   "debuted": 530,
+   "bust": 1042
   },
-  "age_known": 623,
+  "age_known": 626,
   "age_bands": {
+   "25p": 139,
    "le22": 266,
-   "23_24": 220,
-   "25p": 137,
+   "23_24": 221,
    "missing": 946
   },
   "grade_bands": {
    "35": 258,
-   "40": 693,
+   "40": 696,
    "45": 349,
    "50": 156,
    "55": 64,
@@ -54,20 +54,21 @@
   "2021": {
    "skipped": false,
    "n_train": 1097,
-   "n_test": 46,
+   "n_test": 47,
    "n_train_age_known": 347,
-   "n_test_age_known": 16,
-   "n_test_25p": 4,
+   "n_test_age_known": 17,
+   "n_test_25p": 5,
    "test_kinds": {
+    "debuted": 1,
     "bust": 46
    },
    "n_head_cells": 19
   },
   "2022": {
    "skipped": false,
-   "n_train": 1143,
+   "n_train": 1144,
    "n_test": 133,
-   "n_train_age_known": 363,
+   "n_train_age_known": 364,
    "n_test_age_known": 67,
    "n_test_25p": 22,
    "test_kinds": {
@@ -77,12 +78,13 @@
   },
   "2023": {
    "skipped": false,
-   "n_train": 1276,
-   "n_test": 141,
-   "n_train_age_known": 430,
-   "n_test_age_known": 86,
-   "n_test_25p": 25,
+   "n_train": 1277,
+   "n_test": 142,
+   "n_train_age_known": 431,
+   "n_test_age_known": 87,
+   "n_test_25p": 26,
    "test_kinds": {
+    "debuted": 1,
     "bust": 141
    },
    "n_head_cells": 19
@@ -90,137 +92,137 @@
  },
  "results": {
   "pooled": {
-   "n": 524,
+   "n": 526,
    "log_loss": {
-    "incumbent": 0.36184,
-    "head": 0.30733,
-    "delta": -0.05451
+    "incumbent": 0.36163,
+    "head": 0.30655,
+    "delta": -0.05508
    },
    "brier": {
-    "incumbent": 0.14147,
-    "head": 0.11703,
-    "delta": -0.02444
+    "incumbent": 0.14132,
+    "head": 0.11664,
+    "delta": -0.02468
    },
    "per_bucket_log_loss": {
     "bust": {
-     "incumbent": 0.32201,
-     "head": 0.27044,
-     "delta": -0.05157,
-     "rel_delta": -0.16014
+     "incumbent": 0.32195,
+     "head": 0.26981,
+     "delta": -0.05215,
+     "rel_delta": -0.16197
     },
     "bench": {
-     "incumbent": 0.20339,
-     "head": 0.18062,
-     "delta": -0.02277,
-     "rel_delta": -0.11195
+     "incumbent": 0.20328,
+     "head": 0.18013,
+     "delta": -0.02315,
+     "rel_delta": -0.11386
     },
     "regular": {
-     "incumbent": 0.09163,
-     "head": 0.07679,
-     "delta": -0.01484,
-     "rel_delta": -0.16195
+     "incumbent": 0.09157,
+     "head": 0.07664,
+     "delta": -0.01493,
+     "rel_delta": -0.16309
     },
     "good": {
-     "incumbent": 0.04431,
-     "head": 0.03677,
-     "delta": -0.00755,
-     "rel_delta": -0.17029
+     "incumbent": 0.04425,
+     "head": 0.03666,
+     "delta": -0.00759,
+     "rel_delta": -0.17152
     },
     "star": {
      "incumbent": 0.00161,
      "head": 0.00123,
      "delta": -0.00038,
-     "rel_delta": -0.23548
+     "rel_delta": -0.23661
     }
    }
   },
   "age_25p_subset": {
-   "n": 90,
+   "n": 92,
    "log_loss": {
-    "incumbent": 0.36661,
-    "head": 0.28004,
-    "delta": -0.08657
+    "incumbent": 0.36533,
+    "head": 0.2762,
+    "delta": -0.08913
    },
    "brier": {
-    "incumbent": 0.14286,
-    "head": 0.10314,
-    "delta": -0.03972
+    "incumbent": 0.14201,
+    "head": 0.10121,
+    "delta": -0.0408
    },
    "per_bucket_log_loss": {
     "bust": {
-     "incumbent": 0.31693,
-     "head": 0.23115,
-     "delta": -0.08578,
-     "rel_delta": -0.27067
+     "incumbent": 0.31672,
+     "head": 0.22837,
+     "delta": -0.08836,
+     "rel_delta": -0.27897
     },
     "bench": {
-     "incumbent": 0.19391,
-     "head": 0.14036,
-     "delta": -0.05356,
-     "rel_delta": -0.27618
+     "incumbent": 0.1935,
+     "head": 0.13846,
+     "delta": -0.05504,
+     "rel_delta": -0.28443
     },
     "regular": {
-     "incumbent": 0.10131,
-     "head": 0.0857,
-     "delta": -0.01561,
-     "rel_delta": -0.15406
+     "incumbent": 0.10079,
+     "head": 0.08466,
+     "delta": -0.01614,
+     "rel_delta": -0.16011
     },
     "good": {
-     "incumbent": 0.05825,
-     "head": 0.05061,
-     "delta": -0.00764,
-     "rel_delta": -0.13115
+     "incumbent": 0.0576,
+     "head": 0.04971,
+     "delta": -0.00789,
+     "rel_delta": -0.13699
     },
     "star": {
      "incumbent": 0.00115,
-     "head": 0.00083,
-     "delta": -0.00032,
-     "rel_delta": -0.27979
+     "head": 0.00082,
+     "delta": -0.00033,
+     "rel_delta": -0.28792
     }
    }
   },
   "age_known_subset": {
-   "n": 291,
+   "n": 293,
    "log_loss": {
-    "incumbent": 0.43266,
-    "head": 0.3345,
-    "delta": -0.09816
+    "incumbent": 0.4318,
+    "head": 0.33292,
+    "delta": -0.09888
    },
    "brier": {
-    "incumbent": 0.18323,
-    "head": 0.13923,
-    "delta": -0.044
+    "incumbent": 0.18269,
+    "head": 0.13838,
+    "delta": -0.04431
    },
    "per_bucket_log_loss": {
     "bust": {
-     "incumbent": 0.36093,
-     "head": 0.26808,
-     "delta": -0.09285,
-     "rel_delta": -0.25726
+     "incumbent": 0.36057,
+     "head": 0.26695,
+     "delta": -0.09361,
+     "rel_delta": -0.25963
     },
     "bench": {
-     "incumbent": 0.24329,
-     "head": 0.20228,
-     "delta": -0.041,
-     "rel_delta": -0.16853
+     "incumbent": 0.24282,
+     "head": 0.20127,
+     "delta": -0.04155,
+     "rel_delta": -0.17112
     },
     "regular": {
-     "incumbent": 0.10989,
-     "head": 0.08317,
-     "delta": -0.02672,
-     "rel_delta": -0.24315
+     "incumbent": 0.10967,
+     "head": 0.08286,
+     "delta": -0.02681,
+     "rel_delta": -0.24447
     },
     "good": {
-     "incumbent": 0.05931,
-     "head": 0.04572,
-     "delta": -0.01359,
-     "rel_delta": -0.2291
+     "incumbent": 0.0591,
+     "head": 0.04547,
+     "delta": -0.01363,
+     "rel_delta": -0.23056
     },
     "star": {
      "incumbent": 0.00211,
-     "head": 0.00143,
+     "head": 0.00142,
      "delta": -0.00068,
-     "rel_delta": -0.3236
+     "rel_delta": -0.32483
     }
    }
   },
@@ -271,47 +273,47 @@
     }
    },
    "2021": {
-    "n": 46,
+    "n": 47,
     "log_loss": {
-     "incumbent": 0.25803,
-     "head": 0.22485,
-     "delta": -0.03318
+     "incumbent": 0.26014,
+     "head": 0.22365,
+     "delta": -0.03649
     },
     "brier": {
-     "incumbent": 0.07935,
-     "head": 0.06427,
-     "delta": -0.01508
+     "incumbent": 0.08045,
+     "head": 0.06363,
+     "delta": -0.01682
     },
     "per_bucket_log_loss": {
      "bust": {
-      "incumbent": 0.25803,
-      "head": 0.22485,
-      "delta": -0.03317,
-      "rel_delta": -0.12856
+      "incumbent": 0.26014,
+      "head": 0.22365,
+      "delta": -0.03649,
+      "rel_delta": -0.14028
      },
      "bench": {
-      "incumbent": 0.14988,
-      "head": 0.13369,
-      "delta": -0.01619,
-      "rel_delta": -0.10804
+      "incumbent": 0.1509,
+      "head": 0.13266,
+      "delta": -0.01825,
+      "rel_delta": -0.12091
      },
      "regular": {
-      "incumbent": 0.06477,
-      "head": 0.05676,
-      "delta": -0.00801,
-      "rel_delta": -0.12372
+      "incumbent": 0.06533,
+      "head": 0.05682,
+      "delta": -0.00851,
+      "rel_delta": -0.13031
      },
      "good": {
-      "incumbent": 0.02341,
-      "head": 0.01893,
-      "delta": -0.00448,
-      "rel_delta": -0.19131
+      "incumbent": 0.02363,
+      "head": 0.01885,
+      "delta": -0.00478,
+      "rel_delta": -0.20215
      },
      "star": {
-      "incumbent": 0.0009,
-      "head": 0.00073,
-      "delta": -0.00017,
-      "rel_delta": -0.19074
+      "incumbent": 0.00091,
+      "head": 0.00072,
+      "delta": -0.00018,
+      "rel_delta": -0.20151
      }
     }
    },
@@ -319,89 +321,89 @@
     "n": 133,
     "log_loss": {
      "incumbent": 0.26217,
-     "head": 0.20206,
-     "delta": -0.06011
+     "head": 0.20179,
+     "delta": -0.06038
     },
     "brier": {
      "incumbent": 0.08245,
-     "head": 0.05386,
-     "delta": -0.02859
+     "head": 0.05377,
+     "delta": -0.02868
     },
     "per_bucket_log_loss": {
      "bust": {
       "incumbent": 0.26217,
-      "head": 0.20206,
-      "delta": -0.06012,
-      "rel_delta": -0.22931
+      "head": 0.20179,
+      "delta": -0.06039,
+      "rel_delta": -0.23033
      },
      "bench": {
       "incumbent": 0.1509,
-      "head": 0.11986,
-      "delta": -0.03104,
-      "rel_delta": -0.20572
+      "head": 0.11973,
+      "delta": -0.03118,
+      "rel_delta": -0.2066
      },
      "regular": {
       "incumbent": 0.06593,
-      "head": 0.05258,
-      "delta": -0.01335,
-      "rel_delta": -0.2025
+      "head": 0.05249,
+      "delta": -0.01344,
+      "rel_delta": -0.20389
      },
      "good": {
       "incumbent": 0.02396,
-      "head": 0.01658,
-      "delta": -0.00738,
-      "rel_delta": -0.30793
+      "head": 0.01656,
+      "delta": -0.0074,
+      "rel_delta": -0.30884
      },
      "star": {
       "incumbent": 0.00092,
       "head": 0.00062,
       "delta": -0.0003,
-      "rel_delta": -0.32916
+      "rel_delta": -0.33008
      }
     }
    },
    "2023": {
-    "n": 141,
+    "n": 142,
     "log_loss": {
-     "incumbent": 0.24667,
-     "head": 0.171,
-     "delta": -0.07567
+     "incumbent": 0.24673,
+     "head": 0.17032,
+     "delta": -0.07641
     },
     "brier": {
-     "incumbent": 0.07477,
-     "head": 0.04286,
-     "delta": -0.03191
+     "incumbent": 0.07478,
+     "head": 0.04259,
+     "delta": -0.03219
     },
     "per_bucket_log_loss": {
      "bust": {
-      "incumbent": 0.24667,
-      "head": 0.171,
-      "delta": -0.07566,
-      "rel_delta": -0.30674
+      "incumbent": 0.24673,
+      "head": 0.17032,
+      "delta": -0.07642,
+      "rel_delta": -0.30972
      },
      "bench": {
-      "incumbent": 0.14305,
-      "head": 0.10278,
-      "delta": -0.04027,
-      "rel_delta": -0.2815
+      "incumbent": 0.14311,
+      "head": 0.10233,
+      "delta": -0.04078,
+      "rel_delta": -0.28497
      },
      "regular": {
-      "incumbent": 0.06189,
-      "head": 0.04344,
-      "delta": -0.01845,
-      "rel_delta": -0.29811
+      "incumbent": 0.06191,
+      "head": 0.04333,
+      "delta": -0.01858,
+      "rel_delta": -0.30007
      },
      "good": {
       "incumbent": 0.02243,
-      "head": 0.01425,
-      "delta": -0.00818,
-      "rel_delta": -0.36459
+      "head": 0.01419,
+      "delta": -0.00824,
+      "rel_delta": -0.36729
      },
      "star": {
       "incumbent": 0.00086,
       "head": 0.00054,
       "delta": -0.00032,
-      "rel_delta": -0.36934
+      "rel_delta": -0.37198
      }
     }
    }
@@ -455,21 +457,21 @@
    "23_24": {
     "n": 113,
     "log_loss": {
-     "incumbent": 0.51,
+     "incumbent": 0.50999,
      "head": 0.4199,
-     "delta": -0.0901
+     "delta": -0.09009
     },
     "brier": {
-     "incumbent": 0.22928,
+     "incumbent": 0.22927,
      "head": 0.18765,
-     "delta": -0.04163
+     "delta": -0.04162
     },
     "per_bucket_log_loss": {
      "bust": {
       "incumbent": 0.40733,
-      "head": 0.322,
+      "head": 0.32199,
       "delta": -0.08534,
-      "rel_delta": -0.20951
+      "rel_delta": -0.2095
      },
      "bench": {
       "incumbent": 0.30864,
@@ -481,7 +483,7 @@
       "incumbent": 0.11466,
       "head": 0.07776,
       "delta": -0.0369,
-      "rel_delta": -0.32181
+      "rel_delta": -0.3218
      },
      "good": {
       "incumbent": 0.07218,
@@ -498,47 +500,47 @@
     }
    },
    "25p": {
-    "n": 90,
+    "n": 92,
     "log_loss": {
-     "incumbent": 0.36661,
-     "head": 0.28004,
-     "delta": -0.08657
+     "incumbent": 0.36533,
+     "head": 0.2762,
+     "delta": -0.08913
     },
     "brier": {
-     "incumbent": 0.14286,
-     "head": 0.10314,
-     "delta": -0.03972
+     "incumbent": 0.14201,
+     "head": 0.10121,
+     "delta": -0.0408
     },
     "per_bucket_log_loss": {
      "bust": {
-      "incumbent": 0.31693,
-      "head": 0.23115,
-      "delta": -0.08578,
-      "rel_delta": -0.27067
+      "incumbent": 0.31672,
+      "head": 0.22837,
+      "delta": -0.08836,
+      "rel_delta": -0.27897
      },
      "bench": {
-      "incumbent": 0.19391,
-      "head": 0.14036,
-      "delta": -0.05356,
-      "rel_delta": -0.27618
+      "incumbent": 0.1935,
+      "head": 0.13846,
+      "delta": -0.05504,
+      "rel_delta": -0.28443
      },
      "regular": {
-      "incumbent": 0.10131,
-      "head": 0.0857,
-      "delta": -0.01561,
-      "rel_delta": -0.15406
+      "incumbent": 0.10079,
+      "head": 0.08466,
+      "delta": -0.01614,
+      "rel_delta": -0.16011
      },
      "good": {
-      "incumbent": 0.05825,
-      "head": 0.05061,
-      "delta": -0.00764,
-      "rel_delta": -0.13115
+      "incumbent": 0.0576,
+      "head": 0.04971,
+      "delta": -0.00789,
+      "rel_delta": -0.13699
      },
      "star": {
       "incumbent": 0.00115,
-      "head": 0.00083,
-      "delta": -0.00032,
-      "rel_delta": -0.27979
+      "head": 0.00082,
+      "delta": -0.00033,
+      "rel_delta": -0.28792
      }
     }
    }
@@ -549,37 +551,37 @@
   "seed": 20260715,
   "pooled_ll": {
    "n_effective_reps": 2000,
-   "mean_delta": -0.0544,
+   "mean_delta": -0.05502,
    "ci90": [
-    -0.06153,
-    -0.0473
+    -0.06222,
+    -0.0481
    ],
    "p_delta_le_0": 1.0
   },
   "bench_ll": {
    "n_effective_reps": 2000,
-   "mean_delta": -0.02271,
+   "mean_delta": -0.0231,
    "ci90": [
-    -0.02605,
-    -0.01901
+    -0.02656,
+    -0.01957
    ],
    "p_delta_le_0": 1.0
   },
   "good_ll": {
    "n_effective_reps": 2000,
-   "mean_delta": -0.00754,
+   "mean_delta": -0.00759,
    "ci90": [
-    -0.00868,
-    -0.00646
+    -0.00875,
+    -0.00649
    ],
    "p_delta_le_0": 1.0
   },
   "ll_25p": {
    "n_effective_reps": 2000,
-   "mean_delta": -0.08648,
+   "mean_delta": -0.08902,
    "ci90": [
-    -0.09935,
-    -0.07349
+    -0.10189,
+    -0.07654
    ],
    "p_delta_le_0": 1.0
   }
@@ -587,34 +589,34 @@
  "gate": {
   "g1_pooled_logloss_le_incumbent": {
    "pass": true,
-   "head": 0.30733,
-   "incumbent": 0.36184,
-   "delta": -0.05451
+   "head": 0.30655,
+   "incumbent": 0.36163,
+   "delta": -0.05508
   },
   "g2_eiso4_guard_bench_good_le_1pct_rel": {
    "pass": true,
    "bench": {
     "pass": true,
-    "incumbent": 0.20339,
-    "head": 0.18062,
-    "delta": -0.02277,
-    "rel_delta": -0.11195
+    "incumbent": 0.20328,
+    "head": 0.18013,
+    "delta": -0.02315,
+    "rel_delta": -0.11386
    },
    "good": {
     "pass": true,
-    "incumbent": 0.04431,
-    "head": 0.03677,
-    "delta": -0.00755,
-    "rel_delta": -0.17029
+    "incumbent": 0.04425,
+    "head": 0.03666,
+    "delta": -0.00759,
+    "rel_delta": -0.17152
    },
    "tolerance_rel": 0.01
   },
   "g3_age25p_subset_improves": {
    "pass": true,
-   "n": 90,
-   "head": 0.28004,
-   "incumbent": 0.36661,
-   "delta": -0.08657
+   "n": 92,
+   "head": 0.2762,
+   "incumbent": 0.36533,
+   "delta": -0.08913
   },
   "g4_validity_and_grade_monotone": {
    "pass": false,
@@ -673,7 +675,7 @@
      "fv_from": 37.25,
      "fv_to": 37.5,
      "threshold": "P(Y<=bust)",
-     "increase": 0.0162
+     "increase": 0.01734
     },
     {
      "age_band": "25p",
@@ -687,7 +689,7 @@
      "fv_from": 37.25,
      "fv_to": 37.5,
      "threshold": "P(Y<=bench)",
-     "increase": 0.01549
+     "increase": 0.01563
     },
     {
      "age_band": "le22",
@@ -809,26 +811,26 @@
    "weight": 0.6875
   },
   "40|23_24": {
-   "n": 125,
+   "n": 126,
    "counts": [
-    115,
+    116,
     9,
     1,
     0,
     0
    ],
-   "weight": 0.8333
+   "weight": 0.8344
   },
   "40|25p": {
-   "n": 81,
+   "n": 83,
    "counts": [
-    80,
+    82,
     0,
     1,
     0,
     0
    ],
-   "weight": 0.7642
+   "weight": 0.7685
   },
   "40|le22": {
    "n": 110,
@@ -996,25 +998,25 @@
   "question": "how much of the age-head gain is the age covariate vs population-level recalibration of the incumbent to the (bustier) resolved matrix pool?",
   "method": "grade-band-only head, identical partial pooling n/(n+25), identical folds; pooled multiclass log-loss on the same 524 eval rows",
   "pooled_log_loss": {
-   "incumbent": 0.36184,
-   "grade_band_only_head": 0.17907,
-   "age_head": 0.30733
+   "incumbent": 0.36163,
+   "grade_band_only_head": 0.1786,
+   "age_head": 0.30655
   },
   "age_25p_subset_log_loss": {
-   "incumbent": 0.36661,
-   "grade_band_only_head": 0.21162,
-   "age_head": 0.28004
+   "incumbent": 0.36533,
+   "grade_band_only_head": 0.20834,
+   "age_head": 0.2762
   },
   "age_known_subset_log_loss": {
-   "incumbent": 0.43266,
-   "grade_band_only_head": 0.26921,
-   "age_head": 0.3345
+   "incumbent": 0.4318,
+   "grade_band_only_head": 0.26776,
+   "age_head": 0.33292
   },
   "decomposition": {
-   "age_head_gain_vs_incumbent": 0.05451,
-   "grade_band_only_gain_vs_incumbent": 0.18277,
-   "age_head_minus_grade_band_only_positive_is_worse": 0.12826,
-   "age_known_subset_age_head_minus_grade_band_only": 0.06529,
+   "age_head_gain_vs_incumbent": 0.05508,
+   "grade_band_only_gain_vs_incumbent": 0.18303,
+   "age_head_minus_grade_band_only_positive_is_worse": 0.12795,
+   "age_known_subset_age_head_minus_grade_band_only": 0.06516,
    "caveat": "NOT a clean age-signal estimate: the age head covers only the 40% age-known rows (incumbent fallback elsewhere) and its smaller cells carry much heavier n/(n+25) shrink toward the population-miscalibrated incumbent than the large grade-band cells; a hierarchical variant (age cells shrunk toward the GRADE-BAND empirical rather than the incumbent) was NOT pre-registered and was not gated here"
   },
   "reading": "the registered age head is DOMINATED by its own covariate-free ablation on the identical eval rows (pooled 0.30733 vs 0.17907; age-known subset 0.33450 vs 0.26921; 25+ subset 0.28004 vs 0.21162). The G1/G3 passes are therefore driven by population-level recalibration of the incumbent to the bustier resolved pool - the effect class the CLOSED grade-monotone calibration line (X-ISO/E-ISO2/3/4) already established as blocked - not by age information."

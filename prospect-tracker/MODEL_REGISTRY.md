@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 
-**108 models.** Verdicts: validated: 26, provisional: 45, unvalidated: 3, deprecated: 34.
+**109 models.** Verdicts: validated: 27, provisional: 45, unvalidated: 3, deprecated: 34.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -118,6 +118,7 @@ stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 | `xfv_model_class_sweep` | model-dev artifact (rendered nowhere) - loss ledger; mode... | n/a - gated sweep: 9 alternative model classes + 2 alternative targets vs the shipped ridge on the lean set, forward-chained folds | shipped ridge (unchanged) | same-run BASE arms: hit 0.3761/0.1640/0.0792, pit 0.3032/0.1492/0.2023 | SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base... | **deprecated** | `data/xfv_model_class_sweep_eval.json` | - | - |
 | `xfv_feature_arms_2026_07` | model-dev artifact (rendered nowhere) - loss ledger; neve... | n/a - additive isolated gates: level_rank, peak_obp_rel, peak_ops_rel, hitter bb_rel, pit peak_bb_rel | shipped lean sets (unchanged) | same-run BASE arms: hit 0.3782/0.1714/0.0876, pit 0.3026/0.1472/0.2056 | SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base... | **deprecated** | `data/xfv_feature_arms_eval.json` | - | - |
 | `fa_market_feature_arms` | model-dev artifact - the Gate-2 feature-experiment harnes... | n/a - pre-registered feature arms on identical forward-chained Gate-2 folds | fa_mkt_v2 + rate_line (SHIPPED; X_FEATURES['rate_line']=True) | same-run all-flags-off champion: guar 10.159 / aav 3.071 / years 0.4420 / meg... | pre-registered per-arm criteria in the lab header; rate_line: guar AND aav <... | **provisional** | `data/fa_market_feature_lab_eval.json` | - | - |
+| `xfv_level_rank_fringe` | model-dev artifact (rendered nowhere) - FV-45 fringe leve... | n/a - gated experiment LR-FRINGE (2024-fold unlock 2026-07-15): level_rank added to the hitter lean feature set under a pre-reg... | xfv_hitter WITH level_rank (this experiment shipped) | xfv_hitter without level_rank (the prior lean set), same-run BASE arm | pre-registered gate (docs/efv-2026-07-15/GATES.md LR-FRINGE, M5 template verb... | **validated** | `data/xfv_level_rank_fringe_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

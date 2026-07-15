@@ -17,35 +17,369 @@
   "declared_before_first_run": true
  },
  "baselines": {
-  "hit": {"censored": {"n": 399, "spearman": 0.3535, "within_tier_wm": 0.1775, "t45": 0.0697},
-          "resolved": {"n": 399, "spearman": 0.3558, "within_tier_wm": 0.1845, "t45": 0.06}},
-  "pit": {"censored": {"n": 466, "spearman": 0.2787, "within_tier_wm": 0.1317, "t45": 0.1217},
-          "resolved": {"n": 466, "spearman": 0.2704, "within_tier_wm": 0.1365, "t45": 0.1098}}
+  "hit": {
+   "censored": {
+    "n": 399,
+    "spearman": 0.3535,
+    "within_tier_wm": 0.1775,
+    "t45": 0.0697
+   },
+   "resolved": {
+    "n": 399,
+    "spearman": 0.3558,
+    "within_tier_wm": 0.1845,
+    "t45": 0.06
+   }
+  },
+  "pit": {
+   "censored": {
+    "n": 466,
+    "spearman": 0.2787,
+    "within_tier_wm": 0.1317,
+    "t45": 0.1217
+   },
+   "resolved": {
+    "n": 466,
+    "spearman": 0.2704,
+    "within_tier_wm": 0.1365,
+    "t45": 0.1098
+   }
+  }
  },
  "identity_noise_floor": {
-  "hit": {"censored_delta": -0.0015, "resolved_delta": -0.0023, "epsilon": 0.0023},
-  "pit": {"censored_delta": -0.0035, "resolved_delta": -0.0025, "epsilon": 0.0035}
+  "hit": {
+   "censored_delta": -0.0015,
+   "resolved_delta": -0.0023,
+   "epsilon": 0.0023
+  },
+  "pit": {
+   "censored_delta": -0.0035,
+   "resolved_delta": -0.0025,
+   "epsilon": 0.0035
+  }
  },
  "results_additive": {
-  "hit_prod_trend": {"censored": {"spearman": 0.3462, "delta": -0.0073, "wm": 0.159, "t45": 0.0534}, "resolved": {"spearman": 0.3458, "delta": -0.01, "wm": 0.1628, "t45": 0.0308}, "verdict": "FAIL (negative both targets)"},
-  "hit_fv_trend": {"censored": {"spearman": 0.3467, "delta": -0.0068, "wm": 0.1524, "t45": 0.054}, "resolved": {"spearman": 0.347, "delta": -0.0088, "wm": 0.1486, "t45": 0.0445}, "verdict": "FAIL (negative both targets)"},
-  "hit_ops_rel": {"censored": {"spearman": 0.3524, "delta": -0.0011, "wm": 0.1722, "t45": 0.09}, "resolved": {"spearman": 0.3554, "delta": -0.0004, "wm": 0.1836, "t45": 0.0661}, "verdict": "FAIL (pooled within noise floor). NOTE: t45 improves on both targets (+0.0203 cen / +0.0061 res); see notes"},
-  "hit_pos_prem": {"censored": {"spearman": 0.3532, "delta": -0.0003, "wm": 0.1753, "t45": 0.067}, "resolved": {"spearman": 0.3552, "delta": -0.0006, "wm": 0.1828, "t45": 0.0547}, "verdict": "FAIL (within noise floor)"},
-  "hit_il_stints_pre": {"censored": {"spearman": 0.3539, "delta": 0.0004, "wm": 0.1759, "t45": 0.0744}, "resolved": {"spearman": 0.3567, "delta": 0.0009, "wm": 0.1855, "t45": 0.0669}, "verdict": "FAIL (gain below noise floor both targets)"},
-  "hit_n_sources": {"censored": {"spearman": 0.3587, "delta": 0.0052, "wm": 0.1597, "t45": 0.0579}, "resolved": {"spearman": 0.362, "delta": 0.0062, "wm": 0.1728, "t45": 0.0438}, "verdict": "FAIL condition 2: pooled gain exceeds noise floor on both targets BUT within_tier_wm degrades (0.1775->0.1597 cen, 0.1845->0.1728 res) and t45 degrades (0.0697->0.0579, 0.06->0.0438). Coverage/popularity proxy: adds cross-tier rank signal already visible to readers, dilutes real within-tier signal. The exact pattern the within-tier condition exists to reject"},
-  "pit_prod_trend": {"censored": {"spearman": 0.277, "delta": -0.0017, "wm": 0.1292, "t45": 0.1193}, "resolved": {"spearman": 0.2698, "delta": -0.0006, "wm": 0.1359, "t45": 0.1065}, "verdict": "FAIL (within noise floor, negative)"},
-  "pit_fv_trend": {"censored": {"spearman": 0.2707, "delta": -0.008, "wm": 0.1318, "t45": 0.1256}, "resolved": {"spearman": 0.2648, "delta": -0.0056, "wm": 0.1401, "t45": 0.1277}, "verdict": "FAIL (negative both targets)"},
-  "pit_il_stints_pre": {"censored": {"spearman": 0.2787, "delta": 0.0, "wm": 0.1317, "t45": 0.1217}, "resolved": {"spearman": 0.2704, "delta": 0.0, "wm": 0.1365, "t45": 0.1098}, "verdict": "FAIL (exact no-op: il_stints_pre is a constant column for the pitcher matrix, ridge assigns zero weight; pre-debut IL data effectively absent for pitchers in this vintage)"},
-  "pit_n_sources": {"censored": {"spearman": 0.2636, "delta": -0.0151, "wm": 0.1093, "t45": 0.0564}, "resolved": {"spearman": 0.2547, "delta": -0.0157, "wm": 0.1145, "t45": 0.0413}, "verdict": "FAIL (materially negative everywhere)"}
+  "hit_prod_trend": {
+   "censored": {
+    "spearman": 0.3462,
+    "delta": -0.0073,
+    "wm": 0.159,
+    "t45": 0.0534
+   },
+   "resolved": {
+    "spearman": 0.3458,
+    "delta": -0.01,
+    "wm": 0.1628,
+    "t45": 0.0308
+   },
+   "verdict": "FAIL (negative both targets)"
+  },
+  "hit_fv_trend": {
+   "censored": {
+    "spearman": 0.3467,
+    "delta": -0.0068,
+    "wm": 0.1524,
+    "t45": 0.054
+   },
+   "resolved": {
+    "spearman": 0.347,
+    "delta": -0.0088,
+    "wm": 0.1486,
+    "t45": 0.0445
+   },
+   "verdict": "FAIL (negative both targets)"
+  },
+  "hit_ops_rel": {
+   "censored": {
+    "spearman": 0.3524,
+    "delta": -0.0011,
+    "wm": 0.1722,
+    "t45": 0.09
+   },
+   "resolved": {
+    "spearman": 0.3554,
+    "delta": -0.0004,
+    "wm": 0.1836,
+    "t45": 0.0661
+   },
+   "verdict": "FAIL (pooled within noise floor). NOTE: t45 improves on both targets (+0.0203 cen / +0.0061 res); see notes"
+  },
+  "hit_pos_prem": {
+   "censored": {
+    "spearman": 0.3532,
+    "delta": -0.0003,
+    "wm": 0.1753,
+    "t45": 0.067
+   },
+   "resolved": {
+    "spearman": 0.3552,
+    "delta": -0.0006,
+    "wm": 0.1828,
+    "t45": 0.0547
+   },
+   "verdict": "FAIL (within noise floor)"
+  },
+  "hit_il_stints_pre": {
+   "censored": {
+    "spearman": 0.3539,
+    "delta": 0.0004,
+    "wm": 0.1759,
+    "t45": 0.0744
+   },
+   "resolved": {
+    "spearman": 0.3567,
+    "delta": 0.0009,
+    "wm": 0.1855,
+    "t45": 0.0669
+   },
+   "verdict": "FAIL (gain below noise floor both targets)"
+  },
+  "hit_n_sources": {
+   "censored": {
+    "spearman": 0.3587,
+    "delta": 0.0052,
+    "wm": 0.1597,
+    "t45": 0.0579
+   },
+   "resolved": {
+    "spearman": 0.362,
+    "delta": 0.0062,
+    "wm": 0.1728,
+    "t45": 0.0438
+   },
+   "verdict": "FAIL condition 2: pooled gain exceeds noise floor on both targets BUT within_tier_wm degrades (0.1775->0.1597 cen, 0.1845->0.1728 res) and t45 degrades (0.0697->0.0579, 0.06->0.0438). Coverage/popularity proxy: adds cross-tier rank signal already visible to readers, dilutes real within-tier signal. The exact pattern the within-tier condition exists to reject"
+  },
+  "pit_prod_trend": {
+   "censored": {
+    "spearman": 0.277,
+    "delta": -0.0017,
+    "wm": 0.1292,
+    "t45": 0.1193
+   },
+   "resolved": {
+    "spearman": 0.2698,
+    "delta": -0.0006,
+    "wm": 0.1359,
+    "t45": 0.1065
+   },
+   "verdict": "FAIL (within noise floor, negative)"
+  },
+  "pit_fv_trend": {
+   "censored": {
+    "spearman": 0.2707,
+    "delta": -0.008,
+    "wm": 0.1318,
+    "t45": 0.1256
+   },
+   "resolved": {
+    "spearman": 0.2648,
+    "delta": -0.0056,
+    "wm": 0.1401,
+    "t45": 0.1277
+   },
+   "verdict": "FAIL (negative both targets)"
+  },
+  "pit_il_stints_pre": {
+   "censored": {
+    "spearman": 0.2787,
+    "delta": 0.0,
+    "wm": 0.1317,
+    "t45": 0.1217
+   },
+   "resolved": {
+    "spearman": 0.2704,
+    "delta": 0.0,
+    "wm": 0.1365,
+    "t45": 0.1098
+   },
+   "verdict": "FAIL (exact no-op: il_stints_pre is a constant column for the pitcher matrix, ridge assigns zero weight; pre-debut IL data effectively absent for pitchers in this vintage)"
+  },
+  "pit_n_sources": {
+   "censored": {
+    "spearman": 0.2636,
+    "delta": -0.0151,
+    "wm": 0.1093,
+    "t45": 0.0564
+   },
+   "resolved": {
+    "spearman": 0.2547,
+    "delta": -0.0157,
+    "wm": 0.1145,
+    "t45": 0.0413
+   },
+   "verdict": "FAIL (materially negative everywhere)"
+  }
  },
  "results_replacement": {
   "hit_ops_rel_for_obp_rel": {
-   "baseline_lean": {"censored": {"blend": 0.3535, "pure": 0.3725, "wm": 0.1775, "t45": 0.0697}, "resolved": {"blend": 0.3491, "pure": 0.3663, "wm": 0.1649, "t45": 0.0563}},
-   "swap": {"censored": {"blend": 0.3536, "pure": 0.3733, "wm": 0.1758, "t45": 0.0916}, "resolved": {"blend": 0.3493, "pure": 0.3672, "wm": 0.166, "t45": 0.064}},
+   "baseline_lean": {
+    "censored": {
+     "blend": 0.3535,
+     "pure": 0.3725,
+     "wm": 0.1775,
+     "t45": 0.0697
+    },
+    "resolved": {
+     "blend": 0.3491,
+     "pure": 0.3663,
+     "wm": 0.1649,
+     "t45": 0.0563
+    }
+   },
+   "swap": {
+    "censored": {
+     "blend": 0.3536,
+     "pure": 0.3733,
+     "wm": 0.1758,
+     "t45": 0.0916
+    },
+    "resolved": {
+     "blend": 0.3493,
+     "pure": 0.3672,
+     "wm": 0.166,
+     "t45": 0.064
+    }
+   },
    "verdict": "FAIL (pooled +0.0001/+0.0002, deep inside the 0.0023 noise floor; wm flat-to-down on censored). t45 again improves (+0.0219 cen / +0.0077 res), consistent with the additive form"
   }
  },
  "verdict": "NO SHIP - all 11 variants fail the pre-registered gate. Shipped lean feature sets and data/xfv.json unchanged (byte-neutral). Third independent confirmation that the current matrix vintage is at its trainable-data ceiling for pooled ranking.",
  "genuine_signal_recorded": "ops_rel carries FV-45 fringe-tier signal the lean set misses: t45 +0.0203/+0.0219 (censored, additive/swap) and +0.0061/+0.0077 (resolved) with pooled flat. A t45-targeted change is NOT shippable under this gate (pooled-first) and was not pre-registered as such; any future attempt must pre-register a fringe-tier gate with a pooled no-degrade condition and address the wm dip (0.1775->0.1722 additive censored) before re-testing. Do not ship on this post-hoc subgroup observation.",
- "do_not_retry": "prod_trend, fv_trend, pos_prem, il_stints_pre, n_sources as lean additions against this data vintage (2011-2023 debut cohorts, SCORED_YEARS 2020-2023). Re-opening requires resolved 2024+ cohorts (new information), not a re-run."
+ "do_not_retry": "prod_trend, fv_trend, pos_prem, il_stints_pre, n_sources as lean additions against this data vintage (2011-2023 debut cohorts, SCORED_YEARS 2020-2023). Re-opening requires resolved 2024+ cohorts (new information), not a re-run.",
+ "regate_2026_07_15": {
+  "vintage": "2024-fold unlock (censored 2024 rows; the do_not_retry asked for RESOLVED 2024 cohorts - re-opened per the owner queue, recorded honestly)",
+  "spec": "identical registered 4-condition gate; noise floors RE-MEASURED via identity variants at this vintage",
+  "identity_noise_floor": {
+   "hit": {
+    "censored_delta": -0.0006,
+    "resolved_delta": -0.0011,
+    "epsilon": 0.0011
+   },
+   "pit": {
+    "censored_delta": -0.0003,
+    "resolved_delta": -0.0006,
+    "epsilon": 0.0006
+   }
+  },
+  "results": {
+   "hit_prod_trend": {
+    "censored": {
+     "pooled_d": -0.0088,
+     "wm_d": -0.0237,
+     "t45_d": -0.0143
+    },
+    "resolved": {
+     "pooled_d": -0.0133,
+     "wm_d": -0.0359,
+     "t45_d": -0.0129
+    },
+    "verdict": "FAIL"
+   },
+   "hit_fv_trend": {
+    "censored": {
+     "pooled_d": -0.0013,
+     "wm_d": 0.0026,
+     "t45_d": -0.0026
+    },
+    "resolved": {
+     "pooled_d": -0.0039,
+     "wm_d": -0.0198,
+     "t45_d": -0.0086
+    },
+    "verdict": "FAIL"
+   },
+   "hit_pos_prem": {
+    "censored": {
+     "pooled_d": -0.0023,
+     "wm_d": -0.0063,
+     "t45_d": -0.0054
+    },
+    "resolved": {
+     "pooled_d": -0.0023,
+     "wm_d": -0.0059,
+     "t45_d": -0.0051
+    },
+    "verdict": "FAIL"
+   },
+   "hit_il_stints_pre": {
+    "censored": {
+     "pooled_d": 0.0003,
+     "wm_d": 0.0003,
+     "t45_d": 0.0039
+    },
+    "resolved": {
+     "pooled_d": 0.0008,
+     "wm_d": 0.0046,
+     "t45_d": 0.0036
+    },
+    "verdict": "FAIL (positive everywhere but pooled inside the 0.0011 noise floor; marginal counts as fail)"
+   },
+   "hit_n_sources": {
+    "censored": {
+     "pooled_d": -0.0077,
+     "wm_d": -0.0264,
+     "t45_d": -0.0841
+    },
+    "resolved": {
+     "pooled_d": -0.0094,
+     "wm_d": -0.0328,
+     "t45_d": -0.0962
+    },
+    "verdict": "FAIL"
+   },
+   "pit_prod_trend": {
+    "censored": {
+     "pooled_d": -0.0028,
+     "wm_d": -0.0087,
+     "t45_d": 0.009
+    },
+    "resolved": {
+     "pooled_d": 0.0007,
+     "wm_d": -0.0005,
+     "t45_d": -0.0077
+    },
+    "verdict": "FAIL"
+   },
+   "pit_fv_trend": {
+    "censored": {
+     "pooled_d": -0.0081,
+     "wm_d": -0.0147,
+     "t45_d": -0.2199
+    },
+    "resolved": {
+     "pooled_d": -0.0045,
+     "wm_d": -0.0111,
+     "t45_d": -0.2089
+    },
+    "verdict": "FAIL"
+   },
+   "pit_il_stints_pre": {
+    "censored": {
+     "pooled_d": 0.0,
+     "wm_d": 0.0,
+     "t45_d": 0.0
+    },
+    "resolved": {
+     "pooled_d": 0.0,
+     "wm_d": 0.0,
+     "t45_d": 0.0
+    },
+    "verdict": "FAIL (exact no-op again; IL tracking append-only since 2026-06)"
+   },
+   "pit_n_sources": {
+    "censored": {
+     "pooled_d": -0.0195,
+     "wm_d": -0.0299,
+     "t45_d": -0.0891
+    },
+    "resolved": {
+     "pooled_d": -0.0193,
+     "wm_d": -0.0257,
+     "t45_d": -0.0516
+    },
+    "verdict": "FAIL"
+   }
+  },
+  "verdict": "ALL FAIL - the five stay closed. Next new information = resolved 2024+ cohorts."
+ }
 }

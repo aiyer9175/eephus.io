@@ -174,7 +174,17 @@ def test_committed_artifact_headline_alias_contract():
 #   on WAR/grade/rank/surplus; war6 8.21 -> 9.66). 47 healthy post-TJ arms
 #   cleared (+1-3 grade pts); live IL components unchanged (623 players still
 #   priced). Registry notes on xfv_hitter/xfv_pitcher. Rowcount 9134.
-_GOLDEN_XFV_SHA256 = "b1747af5bb0ee493ab089262549716025d2a551368b67205cf90774ccebc68fb"
+# Updated 2026-07-15e (the 2024-fold unlock, MODEL + LABEL change;
+#   docs/efv-2026-07-15/GATES.md): DEBUT_YEARS widened to 2011-2024 (210
+#   dated-2024 debuts enter as censored weight-0.333 training rows),
+#   career-terminal transactions (lifetime DEI ban / retirement) resolve
+#   censored rows at the observed sum (marcano/alu/kirilloff/pint/ridings),
+#   and level_rank SHIPPED into the hitter lean set via the pre-registered
+#   LR-FRINGE gate (t45 +0.0192). Governance re-runs E-ISO4-path/M3/E-STUFF/
+#   BUCKET-AGE-HEAD all FAIL (closes stand); every other keep-alive ledgered
+#   as a loss. Evals re-run in the same regen (F-SIDE S5 tripwire recorded
+#   tripped). Rowcount 9134.
+_GOLDEN_XFV_SHA256 = "56b9fcf8225df413a463b38bea4ce14215868f9ea8533bd3af55fd71e1b37f4a"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

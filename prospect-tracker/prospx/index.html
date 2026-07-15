@@ -31689,6 +31689,12 @@ function buildProspectCard(snap) {
                 : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
   const fvNum = (_xgC != null) ? efvRankValue(p)
               : (p.fv_close != null ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null));
+  // Hero badge label tracks the badge VALUE above (eFV-first, consensus FV only
+  // where eFV abstains) - it used to hardcode "Consensus FV" over an eFV number.
+  // Mirrors the detail-page header labels (efvDetailHeaderHTML).
+  const fvBadgeLabel = _xgC != null
+    ? ((_xC && _xC.xfv_ungraded) ? "Provisional eFV" : "eFV")
+    : "Consensus FV";
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
@@ -32109,7 +32115,7 @@ function buildProspectCard(snap) {
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
           <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
+            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">${fvBadgeLabel}</span>
             <span>${fvBadgeBig}</span>
           </div>
           ${heroTiles}

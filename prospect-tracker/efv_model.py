@@ -94,6 +94,17 @@ _FEATURES_HIT = [
     # neutral under standardization; the indicator variant destabilizes
     # pitchers (sparse-column class).
     ("age",            -1),
+    # level_rank: highest MiLB level reached at the decision read (DSL 0 .. AAA 5).
+    # The 2026-07-15 feature-arms sweep flagged the ops_rel FRINGE signature (t45
+    # +0.0200, pooled flat) but refused post-hoc fringe-gating; the keep-alive
+    # cleared its PRE-REGISTERED fringe re-gate at the 2024-fold vintage
+    # (docs/efv-2026-07-15/GATES.md section LR-FRINGE): t45 +0.0192 (bar +0.015),
+    # pooled +0.0003 / within-tier -0.0003 (identity noise floor 0.0011), no era
+    # cell down > 0.01; resolved-target sensitivity agrees (t45 +0.0132). Proximity
+    # to the majors is exactly the fringe-tier discriminator the rate-relative
+    # block misses. Ledger: data/xfv_level_rank_fringe_eval.json. Kept LAST to
+    # match the tested key order (ridge predictions are feature-order invariant).
+    ("level_rank",     +1),
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
     # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]

@@ -116,6 +116,10 @@ MODEL_GLOSSARY = {
     "xfv_cohort_lambda_hier": "internal",
     "xfv_alpha_criterion": "internal",
     "xfv_ops_rel_fringe": "internal",
+    # LR-FRINGE (2026-07-15, docs/efv-2026-07-15/GATES.md): level_rank shipped
+    # into the hitter lean set via the pre-registered fringe re-gate at the
+    # 2024-fold vintage; model-dev artifact, methodology under the xfv entry.
+    "xfv_level_rank_fringe": "internal",
     # eFV improvement pass (2026-07-14, docs/efv-2026-07-14/GATES.md): the
     # anchor-staleness decay + lambda band-raise + absolute-age feature
     # ledgers. Model-dev artifacts, rendered nowhere; the user-facing

@@ -1874,6 +1874,35 @@ def auto_debut_player(player_key: str, debut_date: str | None = None) -> None:
         # than stamping today() — the caller can retry once data lands.
         return
     with connect() as con:
+        # RE-FIRE GUARD (audit residue 2026-07-15): a player with ANY debuted
+        # snapshot on file is already debuted — a later auto-detect pass must
+        # not fire again (ryan_vilade: a veteran re-appearance re-fired
+        # 2026-05-17 against a true 2021-09-18 debut; the snapshots UNIQUE
+        # key excludes the date, so the first fire's date wins forever and a
+        # re-fire with a different date is silently ignored — this makes the
+        # suppression explicit). Deliberately NOT keyed on
+        # roster_status.mlb_debut_date being set: the daily pipeline derives
+        # roster status minutes before auto-detection fires in the same run,
+        # which would suppress every legitimate first fire.
+        if con.execute(
+            "SELECT 1 FROM snapshots WHERE player_key = ? AND status = 'debuted' LIMIT 1",
+            (player_key,),
+        ).fetchone():
+            return
+        # DATE CLAMP: never stamp a debut later than the known true debut —
+        # when roster_status already carries an earlier mlb_debut_date, the
+        # detected date is a re-appearance artifact, not the debut.
+        rs = con.execute(
+            "SELECT payload_json FROM roster_status WHERE player_key = ? LIMIT 1",
+            (player_key,),
+        ).fetchone()
+        if rs:
+            try:
+                rs_debut = (json.loads(rs["payload_json"]) or {}).get("mlb_debut_date")
+            except (TypeError, ValueError):
+                rs_debut = None
+            if rs_debut and str(rs_debut) < snap_date:
+                snap_date = str(rs_debut)
         # Pull most recent metadata for this player
         row = con.execute(
             """SELECT player_name, position, org FROM snapshots
