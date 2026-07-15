@@ -77,14 +77,19 @@ def test_committed_grades_carry_the_round_to_nearest_signature():
 # 3. Live tilt factors are bounded on extreme inputs
 # --------------------------------------------------------------------------
 def test_injury_factor_bounds():
-    # every multiplier stacked at its worst -> still floored at 0.5, never above 1.0
+    # every LIVE multiplier stacked at its worst -> bounded, never above 1.0
     worst = {"il_on": True, "il_type": "60-day IL", "il_days_12mo": 400.0,
              "il_stints_12mo": 9.0, "is_post_tj": True}
     f = efv_score._injury_factor(worst)
     assert 0.5 <= f <= 1.0
-    assert f == 0.5, "the stacked worst case must hit the 0.5 durability floor"
+    # 0.70 * 0.82 * 0.92 (post-TJ no longer multiplies - owner 2026-07-15)
+    assert f == round(0.70 * 0.82 * 0.92, 3), \
+        "stacked worst case must be the three LIVE components only"
     # a healthy record is a no-op
     assert efv_score._injury_factor({}) == 1.0
+    # Owner directive 2026-07-15: post-TJ STATUS alone (fully recovered, zero
+    # IL time - the Kade Anderson case) is NOT an injury and carries NO penalty.
+    assert efv_score._injury_factor({"is_post_tj": True}) == 1.0
     # missing / None fields (the only non-numeric the live board ever produces)
     # never throw or escape the band
     for r in ({"il_days_12mo": None}, {"il_on": True, "il_type": None},

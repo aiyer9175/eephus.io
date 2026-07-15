@@ -168,7 +168,13 @@ def test_committed_artifact_headline_alias_contract():
 #   (a test regen under the pinned test valuation set had overwritten
 #   xfv.json in place - always re-stamp from a PRODUCTION efv_export run,
 #   never from a post-pytest working tree). Rowcount 9133 -> 9134.
-_GOLDEN_XFV_SHA256 = "14e1250f16175322367e4dc183c003af42e590d1102ddc7cba6c7bf073fdd135"
+# Updated 2026-07-15d (owner-directed MODEL change): the live injury overlay
+#   dropped its unconditional is_post_tj x0.85 - post-TJ STATUS alone is not
+#   an injury (Kade Anderson: recovered 2022 TJ, zero IL days, was taxed 15%
+#   on WAR/grade/rank/surplus; war6 8.21 -> 9.66). 47 healthy post-TJ arms
+#   cleared (+1-3 grade pts); live IL components unchanged (623 players still
+#   priced). Registry notes on xfv_hitter/xfv_pitcher. Rowcount 9134.
+_GOLDEN_XFV_SHA256 = "b1747af5bb0ee493ab089262549716025d2a551368b67205cf90774ccebc68fb"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

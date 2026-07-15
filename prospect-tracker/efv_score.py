@@ -178,7 +178,14 @@ def _injury_factor(r) -> float:
     projection (so it flows to the grade, the rank, AND surplus) for prospects who are
     currently hurt or recently fragile. Injuries cost cumulative WAR (durability) and
     carry re-injury risk that scout FV under-prices; eFV penalizes them harder. Applied
-    only to the LIVE board (resolved players' outcomes already embed their injuries)."""
+    only to the LIVE board (resolved players' outcomes already embed their injuries).
+
+    Owner directive 2026-07-15: post-TJ STATUS alone is NOT an injury and carries
+    no penalty. The old unconditional is_post_tj x0.85 taxed fully recovered arms
+    forever (Kade Anderson: zero IL days in 12 months, elite AA season, but a
+    2022 college TJ cost him 15% of WAR/grade/rank/surplus). Active TJ recovery
+    is already captured by the LIVE components (il_on + il_days_12mo); a healed
+    elbow is not a durability debit and can even read as a positive."""
     f = 1.0
     if r.get("il_on"):
         t = str(r.get("il_type") or "").lower()
@@ -190,8 +197,6 @@ def _injury_factor(r) -> float:
         f *= 0.90
     if float(r.get("il_stints_12mo") or 0.0) >= 3:
         f *= 0.92
-    if r.get("is_post_tj"):
-        f *= 0.85
     return round(max(0.5, f), 3)
 
 
