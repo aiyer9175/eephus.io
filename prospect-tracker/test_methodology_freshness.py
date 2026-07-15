@@ -229,6 +229,13 @@ MODEL_GLOSSARY = {
     "pwoba_ev_arm": "internal",
     "xfv_defense_tools": "internal",
     "xfv_physical_position": "internal",
+    # Owner-program wave 2 (2026-07-15): model-class/target sweep + feature
+    # arms (both all-NO-SHIP with 2024-fold keep-alives) and the FA Gate-2
+    # feature-arm harness (rate_line SHIPPED into fa_market; regime/age_pos/
+    # qo_tier ledgered losses). All rendered nowhere.
+    "xfv_model_class_sweep": "internal",
+    "xfv_feature_arms_2026_07": "internal",
+    "fa_market_feature_arms": "internal",
 }
 
 

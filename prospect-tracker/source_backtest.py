@@ -141,8 +141,10 @@ def _outcome(p: dict) -> dict:
     war = float(war) if war is not None else 0.0
     wpy = cw.get("war_per_yr")
     wpy = float(wpy) if wpy is not None else None
+    dd = str(p.get("debut_date") or "")
     return {
         "debuted": bool(debuted),
+        "debut_year": int(dd[:4]) if dd[:4].isdigit() else None,
         "war": war,
         "war_per_yr": wpy,
         "contributor": war >= CONTRIBUTOR_WAR,
@@ -358,6 +360,17 @@ def _xfv_vs_consensus_detail(common_rows: list[dict]) -> dict | None:
     for c in rows:
         k = c.get("key")
         if k is None:
+            continue
+        # PRE-DEBUT only (audit fix 2026-07-15): the eFV side of this contest
+        # is anchored strictly pre-debut (oos_grades at the debut-year
+        # decision), so the consensus read must be the same vintage. The old
+        # dedup took the latest read of ANY base year - consensus entered the
+        # contest with up to 2.5 years of the player's actual MLB results in
+        # hand (all 8 receipts were post-debut reads; Deivi Garcia's verdict
+        # was literally inverted). A base year EQUAL to the debut year is a
+        # preseason read and stays eligible.
+        dy = (c.get("outcome") or {}).get("debut_year")
+        if dy is not None and (c.get("year") or 0) > dy:
             continue
         if k not in latest or (c.get("year") or 0) > (latest[k].get("year") or 0):
             latest[k] = c

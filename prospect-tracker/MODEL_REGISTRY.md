@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 
-**105 models.** Verdicts: validated: 26, provisional: 44, unvalidated: 3, deprecated: 32.
+**108 models.** Verdicts: validated: 26, provisional: 45, unvalidated: 3, deprecated: 34.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -115,6 +115,9 @@ stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 | `pwoba_ev_arm` | model-dev artifact (rendered nowhere) - loss ledger; P4 E... | n/a - gated experiment: woba_proj + OLS(residual ~ z(avg_hit_speed)+z(brl_pa)+z(ev95percent)), coefs frozen on train, vs next-s... | fa_projection woba_proj (the validated pWOBA) - unchanged | same incumbent; statcast_batter caches backfilled 2016-2023 to power the gate... | candidate vs base: paired iid-bootstrap lo95 >= 0 (v1, seed 20260715, 2000 reps) | **deprecated** | `data/pwoba_ev_arm_eval.json` | - | - |
 | `xfv_defense_tools` | model-dev artifact (rendered nowhere) - loss ledger; owne... | n/a - gated experiment: isolated tool_field, D-Tool proxy (0.7*field+0.3*speed), and field x pos_prem interaction arms on the h... | shipped lean hitter feature set - unchanged | BASE_hit same-run baseline 0.3782/0.1714/0.0876 (pooled/within-tier/t45) | GATES.md ship gate: pooled >= base+0.0046 AND wm >= base-0.0023 AND t45 >= ba... | **deprecated** | `data/xfv_defense_tools_eval.json` | - | - |
 | `xfv_physical_position` | model-dev artifact (rendered nowhere) - loss ledger; owne... | n/a - gated experiment: bmi/height/weight + bmi_x_mid/is_mid_pos joins on the hitter ridge (efv_ml_lab extra_join=physical, dat... | shipped lean hitter feature set - unchanged | BASE_lean same-run baseline 0.3761/0.1640/0.0792 | GATES.md ship gate (as above) | **deprecated** | `data/xfv_physical_eval.json` | - | - |
+| `xfv_model_class_sweep` | model-dev artifact (rendered nowhere) - loss ledger; mode... | n/a - gated sweep: 9 alternative model classes + 2 alternative targets vs the shipped ridge on the lean set, forward-chained folds | shipped ridge (unchanged) | same-run BASE arms: hit 0.3761/0.1640/0.0792, pit 0.3032/0.1492/0.2023 | SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base... | **deprecated** | `data/xfv_model_class_sweep_eval.json` | - | - |
+| `xfv_feature_arms_2026_07` | model-dev artifact (rendered nowhere) - loss ledger; neve... | n/a - additive isolated gates: level_rank, peak_obp_rel, peak_ops_rel, hitter bb_rel, pit peak_bb_rel | shipped lean sets (unchanged) | same-run BASE arms: hit 0.3782/0.1714/0.0876, pit 0.3026/0.1472/0.2056 | SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base... | **deprecated** | `data/xfv_feature_arms_eval.json` | - | - |
+| `fa_market_feature_arms` | model-dev artifact - the Gate-2 feature-experiment harnes... | n/a - pre-registered feature arms on identical forward-chained Gate-2 folds | fa_mkt_v2 + rate_line (SHIPPED; X_FEATURES['rate_line']=True) | same-run all-flags-off champion: guar 10.159 / aav 3.071 / years 0.4420 / meg... | pre-registered per-arm criteria in the lab header; rate_line: guar AND aav <... | **provisional** | `data/fa_market_feature_lab_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

@@ -78,7 +78,7 @@
    "metric": "guarantee/AAV/years MAE (NPV basis), forward-chained 9 winters",
    "eval_artifact": "data/fa_gate2_eval.json",
    "verdict": "validated",
-   "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis - Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) - committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check). MEGA v3 (2026-06-13): the comps-anchor blend cap raised 0.9 -> 1.0 so the anchor takes the very top ($400M+ comps) outright, where the OLS has no training support. Forward-chained mega slice (actual >=$100M, n=50) now BEATS the comps baseline for the first time - model $80.1M vs $82.7M - and the move is MONOTONE in the cap (0.85:84.3 / 0.90:82.9 / 0.95:81.4 / 1.00:80.1), with the POOLED guarantee MAE improving alongside (10.06 -> 9.96, n=1199), so it is not a mega-slice-only overfit. All three hard gates still pass. FA MEGA-DEAL TAIL FIX (2026-06-25, deferred-queue item): the years cap that structurally truncated record terms (Soto 15->13yr; $765M deal predicted $520M) raised 13->15 in MarketModel._point (the modern record length; only OLS-predicted-13+ megastars are affected). Gate-validated forward-chained (fa_gate2): mega slice (actual>=$100M, n=50) MAE 80.07->77.22 AND pooled guarantee MAE 9.96->9.84 both IMPROVE, aav flat (3.081->3.082), years 0.436->0.440 (tiny, still beats comps 0.497); all 3 hard gates still pass; Soto now predicts 15yr. ISOLATED to the /fa/ market PRICE model - does NOT touch the value_framework $/WAR curve, so prospect xFV surplus + trade values are byte-unchanged. The convex-$/WAR 'FIX 1' (star premium above 2.5 WAR/season) is DEFERRED on purpose: xFV high-end is already OVER-predicted (see xfv_hitter/xfv_pitcher loss note), so a shared convex tail would compound prospect-surplus over-valuation; if revisited it must be scoped to FA/MLB pricing only + re-fit the surplus calibration. YEARS-STAGE DECADE-DEAL FIX (2026-06-25): the audit decomposed the mega misses - 7 of the top 12 are YEARS-underprediction (Seager 4->10, Bogaerts 4->11), not $/WAR-convexity. Added two ex-ante years features in _features_years: the 75th-pct comps years (the long-deal anchor the comps MEDIAN washes out) + a QO x prime x WAR interaction (the franchise-cornerstone marker the flat 30-age term misses for 27-30yo stars). Gate-validated: mega MAE 77.22->75.59, pooled guarantee 9.841->9.835, AAV 3.082->3.077 ALL improve; years 0.4395->0.442 (trivial +0.0025, still crushes comps base 0.497); all 3 gates pass. Isolated to /fa/ - fa_dpw_series byte-unchanged, prospect surplus untouched. The convex-$/WAR FIX 1 remains the deferred rank-2 lever (shared $/WAR, high blast radius).",
+   "notes": "Phase 2 (2026-06-11): targets/anchors/series moved to the deferral-adjusted NPV basis - Gate 2 improved (guarantee 10.06 vs comps 11.19; AAV 3.09; years 0.436). LightGBM challenger (fa_mkt_lgbm_v1, monotonic economic constraints, champion-stacked) LOST all three ship criteria (10.16 / 85.6 mega / 0.505 years) - committed in the artifact; transparent OLS retains. Deferral coverage audit clean (every >=200M deal has a ledger entry; 26 entries pending owner spot-check). MEGA v3 (2026-06-13): the comps-anchor blend cap raised 0.9 -> 1.0 so the anchor takes the very top ($400M+ comps) outright, where the OLS has no training support. Forward-chained mega slice (actual >=$100M, n=50) now BEATS the comps baseline for the first time - model $80.1M vs $82.7M - and the move is MONOTONE in the cap (0.85:84.3 / 0.90:82.9 / 0.95:81.4 / 1.00:80.1), with the POOLED guarantee MAE improving alongside (10.06 -> 9.96, n=1199), so it is not a mega-slice-only overfit. All three hard gates still pass. FA MEGA-DEAL TAIL FIX (2026-06-25, deferred-queue item): the years cap that structurally truncated record terms (Soto 15->13yr; $765M deal predicted $520M) raised 13->15 in MarketModel._point (the modern record length; only OLS-predicted-13+ megastars are affected). Gate-validated forward-chained (fa_gate2): mega slice (actual>=$100M, n=50) MAE 80.07->77.22 AND pooled guarantee MAE 9.96->9.84 both IMPROVE, aav flat (3.081->3.082), years 0.436->0.440 (tiny, still beats comps 0.497); all 3 hard gates still pass; Soto now predicts 15yr. ISOLATED to the /fa/ market PRICE model - does NOT touch the value_framework $/WAR curve, so prospect xFV surplus + trade values are byte-unchanged. The convex-$/WAR 'FIX 1' (star premium above 2.5 WAR/season) is DEFERRED on purpose: xFV high-end is already OVER-predicted (see xfv_hitter/xfv_pitcher loss note), so a shared convex tail would compound prospect-surplus over-valuation; if revisited it must be scoped to FA/MLB pricing only + re-fit the surplus calibration. YEARS-STAGE DECADE-DEAL FIX (2026-06-25): the audit decomposed the mega misses - 7 of the top 12 are YEARS-underprediction (Seager 4->10, Bogaerts 4->11), not $/WAR-convexity. Added two ex-ante years features in _features_years: the 75th-pct comps years (the long-deal anchor the comps MEDIAN washes out) + a QO x prime x WAR interaction (the franchise-cornerstone marker the flat 30-age term misses for 27-30yo stars). Gate-validated: mega MAE 77.22->75.59, pooled guarantee 9.841->9.835, AAV 3.082->3.077 ALL improve; years 0.4395->0.442 (trivial +0.0025, still crushes comps base 0.497); all 3 gates pass. Isolated to /fa/ - fa_dpw_series byte-unchanged, prospect surplus untouched. The convex-$/WAR FIX 1 remains the deferred rank-2 lever (shared $/WAR, high blast radius). 2026-07-15d rate_line feature SHIPPED (fa_market_feature_arms lab, pre-registered criteria; pooled guar 10.094 vs 10.159, aav 3.008 vs 3.071, mega/years not worse); Gate-2 artifact refreshed on the same folds.",
    "last_checked": "2026-07-15",
    "stale": false,
    "artifact_age_days": 20,
@@ -1645,6 +1645,39 @@
    "eval_artifact": "data/xfv_physical_eval.json",
    "verdict": "deprecated",
    "notes": "NO SHIP (2026-07-15). Decisive regression (0.3514/0.1114/0.0125) at bmi coverage 236/843 (28%). frame/athl are UNTRAINABLE outright (0/843 debuted coverage in tools_consensus) - same class as the GATES.md Statcast-physicals precedent. BMI-by-position echoes the def_value/BMI migration loss. Do not re-attempt blind."
+  },
+  {
+   "model_id": "xfv_model_class_sweep",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger; model-class + target-engineering sweep (owner program 2026-07-15)",
+   "predicts": "n/a - gated sweep: 9 alternative model classes + 2 alternative targets vs the shipped ridge on the lean set, forward-chained folds",
+   "champion": "shipped ridge (unchanged)",
+   "baseline": "same-run BASE arms: hit 0.3761/0.1640/0.0792, pit 0.3032/0.1492/0.2023",
+   "metric": "SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side; same-run BASE arms.",
+   "eval_artifact": "data/xfv_model_class_sweep_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP (2026-07-15). Ridge survives all 22 challengers. Pit near-misses under the bar (elasticnet +0.0035, residual-target +0.0032, both positive on every metric) - KEEP-ALIVE at the 2024-debuted-fold vintage."
+  },
+  {
+   "model_id": "xfv_feature_arms_2026_07",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger; never-isolated as-of-safe feature arms (owner program 2026-07-15)",
+   "predicts": "n/a - additive isolated gates: level_rank, peak_obp_rel, peak_ops_rel, hitter bb_rel, pit peak_bb_rel",
+   "champion": "shipped lean sets (unchanged)",
+   "baseline": "same-run BASE arms: hit 0.3782/0.1714/0.0876, pit 0.3026/0.1472/0.2056",
+   "metric": "SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side; same-run BASE arms.",
+   "eval_artifact": "data/xfv_feature_arms_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO SHIP (2026-07-15). hit_level_rank shows the ops_rel FRINGE signature (t45 +0.0200, pooled flat) but fringe-gating post-hoc is gate-shopping - KEEP-ALIVE: pre-registered FRINGE re-run at the 2024-fold vintage. All other arms regress cleanly."
+  },
+  {
+   "model_id": "fa_market_feature_arms",
+   "surface": "model-dev artifact - the Gate-2 feature-experiment harness (tools/fa_market_feature_lab.py); carries ONE shipped arm + three ledgered losses",
+   "predicts": "n/a - pre-registered feature arms on identical forward-chained Gate-2 folds",
+   "champion": "fa_mkt_v2 + rate_line (SHIPPED; X_FEATURES['rate_line']=True)",
+   "baseline": "same-run all-flags-off champion: guar 10.159 / aav 3.071 / years 0.4420 / mega 87.97",
+   "metric": "pre-registered per-arm criteria in the lab header; rate_line: guar AND aav < champ, years and mega not worse",
+   "eval_artifact": "data/fa_market_feature_lab_eval.json",
+   "verdict": "provisional",
+   "notes": "rate_line SHIPPED (guar 10.094, aav 3.008, mega 87.91, years equal; also flips the 2022 lockout fold to beat comps 13.35 vs 13.70) - the retained rate-line (fa_projection.rate_path) as pricing features; official Gate-2 artifact refreshed in the same commit. regime / age_pos / qo_tier LOST their pre-registered gates and stay ledgered flags."
   }
  ],
  "problems": []
