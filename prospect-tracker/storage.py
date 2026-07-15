@@ -7072,6 +7072,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(g)
         return float(cons) if cons is not None else None
 
+    def _xgq(pk, cons):
+        """RANK-basis grade: the quantile-mapped HEADLINE eFV (xfv_grade_quantile),
+        realized-grade then consensus fallback. This is the same chain the
+        frontend's efvRankValue ranks on, so baked overall/org ranks agree with
+        the live board instead of drifting one field apart (the Ike Irish
+        farm-preview-vs-roster bug). Model inputs (farm score, DvM+, movement
+        stock) stay on _xg — the realized grade — by design."""
+        row = _xfv_by_key.get(pk) or {}
+        g = row.get("xfv_grade_quantile")
+        if g is None:
+            g = row.get("xfv_grade")
+        if g is not None:
+            return float(g)
+        return float(cons) if cons is not None else None
+
     def _xsurplus(pk, cons_mm):
         """eFV expected surplus ($M); consensus-surplus fallback where eFV abstains."""
         s = (_xfv_by_key.get(pk) or {}).get("surplus_mm")
@@ -9688,21 +9703,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
         # eFV is the PRIMARY board-rank driver (consensus FV fallback where eFV
-        # abstains, via _xg). Rank by the SURFACED (snapped/displayed) grade — so
-        # a 56.3 and a 56.6 that both display as the same integer are TIED here
-        # and the Tiebreaker-Score proxy arbitrates, rather than the higher
-        # decimal auto-winning. The '+' upside flag (a consensus concept) is the
-        # only sub-grade distinction kept ahead of TBS.
-        _xg_val = _xg(p.player_key, latest.consensus_fv_raw)
-        surfaced_fv = (round(_xg_val) if _xg_val is not None
+        # abstains, via _xgq — the quantile HEADLINE grade with decimal
+        # tiebreak, matching the frontend's efvRankValue so baked ranks and
+        # the live board order never disagree). The '+' upside flag and the
+        # Tiebreaker-Score proxy arbitrate only EXACT decimal ties (mostly
+        # consensus-fallback players sitting on integer grades).
+        _xg_val = _xgq(p.player_key, latest.consensus_fv_raw)
+        surfaced_fv = (_xg_val if _xg_val is not None
                        else (latest.consensus_fv if latest.consensus_fv is not None
-                             else (round(latest.consensus_fv_raw)
+                             else (latest.consensus_fv_raw
                                    if latest.consensus_fv_raw is not None else 0)))
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -surfaced_fv,        # surfaced (rounded) eFV grade desc — primary
+            -surfaced_fv,        # headline eFV grade desc (decimal) — primary
             -upside,             # '+' upside flag — ranks above same-grade non-'+'
-            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced grade
+            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on exact ties
             rank_key,            # avg_rank asc — final stable separator
         )
     actives.sort(key=_active_key)

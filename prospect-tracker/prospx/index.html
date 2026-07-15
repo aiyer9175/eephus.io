@@ -8843,6 +8843,7 @@
       <div class="filter-group">
         <span class="filter-label">Position</span>
         <button class="chip active" data-filter-pos="all">All</button>
+        <button class="chip" data-filter-pos="H" title="Any position player - C / IF / OF / DH">H</button>
         <button class="chip" data-filter-pos="C">C</button>
         <button class="chip" data-filter-pos="1B">1B</button>
         <button class="chip" data-filter-pos="2B">2B</button>
@@ -8944,8 +8945,8 @@
         <span class="filter-label">Sort</span>
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
-            <option value="fv">Consensus FV</option>
             <option value="xfv">eFV (our outcome-grounded grade)</option>
+            <option value="fv">Consensus FV</option>
             <option value="xfv_delta">eFV − consensus gap (biggest first)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
@@ -14780,6 +14781,8 @@ function positionMatches(playerBucket, filterVal) {
   // "P" filter matches every pitcher bucket - back-compat with the
   // pre-v6 single-bucket world where all pitchers collapsed to "P".
   if (filterVal === "P"  && ["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
+  // "H" is the position-player mirror of "P": any non-pitcher bucket.
+  if (filterVal === "H" && !["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
   // "RP" rolls up the three relief sub-types (SIRP one-inning, MIRP
   // multi-inning, bare RP unspecified-relief).
   if (filterVal === "RP" && ["RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
@@ -16995,7 +16998,7 @@ function renderSpotlights() {
     const _fvTier = fvTierAttr(_full);
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
-      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
+      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${getEfvRank(_full) ?? _full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <span class="headshot-stack">${headshotHTML(_full, 42)}${optionsDotsHTML(_full)}</span>
         <div style="min-width:0;flex:1;">
@@ -19549,7 +19552,7 @@ function renderLeaderboards() {
       : `<span style="color:var(--text-tertiary);font-size:10px;"> - </span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
           ${headshotHTML(p, 40)}
           <div style="min-width:0;flex:1;">
@@ -20362,7 +20365,7 @@ function renderInjured() {
     const _pal = _ilTypePalette(il.type);
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -21229,7 +21232,7 @@ function renderRecentlyTraded() {
     return `
       ${_groupOpen}
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -29651,7 +29654,7 @@ let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives t
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _EFV = (j && j.by_player) || {};
-      _EFV_RANK = null; _EFV_PREV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
+      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
     })
@@ -29744,7 +29747,7 @@ function ensureEfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_UNG = j || { by_player: {}, by_mlbam: {} };
-      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
       try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
     .catch(() => { _EFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
@@ -30063,6 +30066,31 @@ function buildEfvRankMap() {
 function getEfvRank(p) {
   if (_EFV_RANK == null) buildEfvRankMap();
   return (p && _EFV_RANK) ? (_EFV_RANK[p.player_key] || null) : null;
+}
+// Canonical ORG rank: the player's position within their org's pool (graded +
+// provisional) under the SAME eFV ordering as the roster tab / farm preview /
+// main board. Replaces the baked p.org_rank (one run stale, realized-grade
+// basis) on live surfaces so org ranks can't disagree with the roster order.
+let _EFV_ORG_RANK = null;
+function buildEfvOrgRankMap() {
+  _EFV_ORG_RANK = {};
+  if (!DATA || !Array.isArray(DATA.players)) return;
+  const byOrg = {};
+  DATA.players.filter(p => p && p.player_key).concat(provPlayers()).forEach(p => {
+    const o = p.org || "?";
+    (byOrg[o] = byOrg[o] || []).push(p);
+  });
+  for (const o in byOrg) {
+    byOrg[o].sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    byOrg[o].forEach((p, i) => {
+      _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: byOrg[o].length };
+    });
+  }
+}
+function getEfvOrgRank(p) {
+  if (_EFV_ORG_RANK == null) buildEfvOrgRankMap();
+  return (p && _EFV_ORG_RANK) ? (_EFV_ORG_RANK[p.player_key] || null) : null;
 }
 // eFV grade as of ~one board update (RANK_WINDOW_DAYS) ago -- a FIXED recent window, so the
 // rank-delta reads "movement since the last update", not a lifetime climb. An event-based
@@ -31000,6 +31028,7 @@ function _gfxOrgNick(code) {
 const _GFX_POS_LABEL = {
   C: "Catchers", "1B": "1B", "2B": "2B", "3B": "3B", SS: "Shortstops",
   INF: "Infielders", CF: "CF", LF: "LF", RF: "RF", OF: "Outfielders",
+  H: "Hitters",
   P: "Pitchers", SP: "SP", RP: "Relievers", SIRP: "SIRP", MIRP: "MIRP",
 };
 function _gfxPosLabel(pos) { return _GFX_POS_LABEL[pos] || pos; }
@@ -31226,6 +31255,19 @@ function _gfxSilhouetteBg(P) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fill}" d="M12 12.4a4.6 4.6 0 1 0 0-9.2 4.6 4.6 0 0 0 0 9.2zm0 1.9c-4.7 0-8.5 2.4-8.5 5.7V22h17v-2c0-3.3-3.8-5.7-8.5-5.7z"/></svg>`;
   return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`;
 }
+// Base layer BEHIND a GFX photo well: the team logo (contained, centered)
+// when the org is known, else the neutral silhouette. The photo sits on top
+// as a cover layer, so a player with no headshot on file (or one that 404s)
+// degrades to the team logo - which reads far better on dark-mode GFX than
+// the dim silhouette. ESPN-CDN PNGs are crossorigin-safe under html2canvas
+// (same as the meta-line logos). Silhouette stays the last-resort fallback
+// for subjects with no MLB org (draftees, overseas).
+function _gfxPhotoBaseLayer(org, P) {
+  const url = (typeof teamLogoURL === "function" && org) ? teamLogoURL(org) : null;
+  return url
+    ? `background-color:${P.bg3};background-image:url('${url}');background-repeat:no-repeat;background-position:center;background-size:58%;`
+    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
+}
 // GFX headshot URL - DELIBERATELY omits MLB Cloudinary's `d_people:generic`
 // default param so a player with no headshot on file returns a real 404
 // (image/gif) instead of a silhouette served at HTTP 200. That 404 is what
@@ -31249,7 +31291,7 @@ const _gfxMissingPhotos = new Set();
 function _gfxLogMissingPhoto(id) {
   if (id == null || _gfxMissingPhotos.has(id)) return;
   _gfxMissingPhotos.add(id);
-  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing silhouette (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
+  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing team-logo fallback (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
 }
 // Small inline team-logo mark for the meta line, with a styled abbreviation
 // badge fallback when the CDN image fails (img hidden → abbr sibling shown).
@@ -31284,15 +31326,19 @@ function _gfxAvatar(r, P) {
   if (!useP && !useL) return "";
   // Portrait crop ~3:4 - rectangular with a subtle 3px radius for polish.
   const w = 40, h = 52;
+  // Cell background = team logo when the org is known (silhouette only for
+  // org-less rows: draftees / overseas). A 404'd photo then degrades to the
+  // logo, not the dim silhouette (owner: silhouettes read badly on dark-mode
+  // GFX). The small meta-line logo repeats on those rows - accepted, same
+  // trade-off as the full prospect card's logo base layer.
+  const _avLogo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
   const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex:none;border:1px solid ${P.border};`
-    + `background-color:${P.bg};background-image:${_gfxSilhouetteBg(P)};background-position:center;background-size:62%;`
+    + `background-color:${P.bg};background-image:${_avLogo ? `url('${_avLogo}')` : _gfxSilhouetteBg(P)};background-position:center;background-size:${_avLogo ? "58%" : "62%"};`
     + `background-repeat:no-repeat;overflow:hidden;display:inline-block;vertical-align:middle;`;
   if (useP) {
     const hs = _gfxHeadshotURL(r.mlbam, h);
-    // No photo on file → 404 → fall through to the silhouette background and
-    // log the miss. The team logo (when enabled) shows in the meta line, so
-    // we deliberately do NOT swap the avatar to a logo here (avoids a double
-    // team logo on photo-less rows).
+    // No photo on file → 404 → fall through to the cell background (team
+    // logo, silhouette when org-less) and log the miss.
     // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
     // scope does NOT have our functions, so a bare call would throw a
     // ReferenceError there. typeof on an undeclared name is safe (returns
@@ -31655,15 +31701,7 @@ function buildProspectCard(snap) {
   // default "rarity" style scales the frame with tier (thin/none below FV 45).
   const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
   const photoFrameBg = rarGrad || P.borderStrong;
-  // Base layer BEHIND the photo: the team logo (contained, centered) when we have one, else
-  // the neutral silhouette. Because the photo sits ON TOP as a cover layer, a player with no
-  // headshot on file (or a photo that 404s) degrades to the team logo instead of the dim
-  // silhouette -- which reads far better on dark-mode GFX. The logo is contained (never
-  // stretched) and rides the ESPN CDN (crossorigin-safe under html2canvas like the meta logos).
-  const _logoURL = (typeof teamLogoURL === "function" && p.org) ? teamLogoURL(p.org) : null;
-  const _baseLayer = _logoURL
-    ? `background-color:${P.bg3};background-image:url('${_logoURL}');background-repeat:no-repeat;background-position:center;background-size:58%;`
-    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
+  const _baseLayer = _gfxPhotoBaseLayer(p.org, P);
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
     <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;${_baseLayer}">
       ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
@@ -31856,7 +31894,11 @@ function buildProspectCard(snap) {
   // rank when the two boards disagree (mirrors the detail page's
   // secondary Consensus pill).
   const rankBits = [
-    (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null,
+    (() => {
+      const _or = (typeof getEfvOrgRank === "function" && p.org) ? getEfvOrgRank(p) : null;
+      if (_or) return `#${_or.rank} of ${_or.total} ${p.org}`;
+      return (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null;
+    })(),
     (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
       ? `Consensus #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
@@ -32296,7 +32338,7 @@ function buildCompareCard(snap) {
     const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
     const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
     return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
-      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
+      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
       <div style="display:flex;align-items:center;gap:8px;justify-content:center;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:22px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(d.p.player_name || "")}</div></div>
       <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
       <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
@@ -32361,7 +32403,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
   const PW = 116, PH = 150, pad = rar ? 5 : 3;
   const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 200) : "";
   const photo = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:7px;overflow:hidden;box-sizing:border-box;padding:${pad}px;background:${grad || P.borderStrong};border-top:3px solid ${orgColor};">
-      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;${_gfxPhotoBaseLayer(p.org, P)}">
         ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
       </div></div>`;
   const fvBadge = (r.fv != null)
@@ -39288,37 +39330,46 @@ function renderFarmSystems() {
         ? ""
         : `<div class="farm-rank-delta ${rankDelta > 0 ? 'stock-up' : 'stock-down'}" title="Was #${prev} on your last visit">${rankDelta > 0 ? '+' : ''}${rankDelta}${rankDelta > 0 ? '↑' : '↓'}</div>`;
     }
-    // Top-3 prospects strip (G16). Names are clickable - onclick fires
-    // goToPlayer() with the player_key and stopPropagation prevents the
-    // row's goToFarm() from also firing. Keyboard focus + Enter also
-    // routes to the player page for accessibility. Position shown
-    // inline before the name as a small tertiary chip.
-    const top3 = (org.prospects || []).slice(0, 3);
+    // Top-3 prospects strip (G16). Derived LIVE from the same pool + eFV
+    // ordering as the farm-detail Roster tab (efvRankValue over org players
+    // + provisionals) and ranked via getEfvRank -- the site-wide canonical --
+    // so the preview can never disagree with the roster or the main board.
+    // (The baked org.prospects order is one run stale and pre-dates the
+    // quantile headline: the Ike Irish #1/#80-vs-#3/#102 bug.) Names are
+    // clickable - onclick fires goToPlayer() with the player_key and
+    // stopPropagation prevents the row's goToFarm() from also firing.
+    if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
+    const _orgPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
+      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    _orgPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    const top3 = _orgPool.slice(0, 3);
     const topHtml = top3.length
       ? `<div class="farm-top3-stack">${top3.map(t => {
           const pkey = escapeHtml(t.player_key || "");
-          // Lead with eFV (consensus FV fallback), matching the active board.
-          const tFv = (t.xfv_grade != null) ? Math.round(t.xfv_grade)
-                    : (t.fv_raw != null ? fvCeil(t.fv_raw) : t.fv_label);
-          const primaryPos = (t.pos || t.position || "")
+          // Lead with eFV (consensus FV fallback), via the shared gradeBlock
+          // resolution so rounding + fallback match the board rows exactly.
+          const gb = (typeof gradeBlock === "function") ? gradeBlock(t) : null;
+          const tFv = gb && gb.label != null ? gb.label : "-";
+          const primaryPos = (t.position || "")
             .toString().split("/")[0].trim().toUpperCase();
           const posChip = primaryPos
-            ? `<span class="farm-top3-pos" title="${escapeHtml(t.pos || t.position || "")}">${escapeHtml(primaryPos)}</span>`
+            ? `<span class="farm-top3-pos" title="${escapeHtml(t.position || "")}">${escapeHtml(primaryPos)}</span>`
             : "";
           const nameHtml = pkey
-            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
-            : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
+            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.player_name)}</span>`
+            : `<span class="farm-top3-name">${escapeHtml(t.player_name)}</span>`;
           // v19 - Rank diamond LEFT of pos chip, matching active-list
           // treatment. Reuses rankNumRarityClass for the FV-tier border.
-          // storage.py emits the top-prospect's site-wide MiLB rank as `rank`
-          // on org.prospects (older payloads used `overall_rank`).
-          const _topRank = (t.overall_rank ?? t.rank);
+          const _topRank = (typeof getEfvRank === "function") ? getEfvRank(t) : null;
           const rankDiamond = _topRank != null
-            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: Number(tFv) }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
+            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: gb ? gb.value : null }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
             : "";
+          const _tTitle = gb && gb.lead === "efv" && gb.consVal != null
+            ? ` title="eFV ${tFv} · consensus FV ${gb.consLabel != null ? gb.consLabel : gb.consVal}"` : "";
           return `<div class="farm-top3-chip">
             ${rankDiamond}${posChip}${nameHtml}
-            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${t.xfv_grade != null ? ` title="eFV ${tFv} · consensus FV ${t.fv_label}"` : ""}>${tFv}</span>
+            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${_tTitle}>${tFv}</span>
           </div>`;
         }).join("")}</div>`
       : '<span style="color:var(--text-tertiary);"> - </span>';
@@ -43289,14 +43340,18 @@ function renderPlayerDetail(key) {
   // the list). Consensus rank shown as a secondary pill when it differs. Works for provisional
   // prospects too (getEfvRank computes their rank client-side).
   const _efvOverall = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
+  // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
+  // baked org_rank / provisional map as fallbacks only.
+  const _efvOrg = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
   const _provOrg = (p._is_provisional && typeof provOrgRank === "function") ? provOrgRank(p) : null;
-  const rankPills = (_efvOverall != null || p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
+  const rankPills = (_efvOverall != null || p.overall_rank != null || _efvOrg || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
         ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Consensus", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
-        ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
+        ${_efvOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _efvOrg.rank + " of " + _efvOrg.total, "var(--neon-cyan)")
+          : p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
           : (_provOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _provOrg.rank + " of " + _provOrg.total, "var(--neon-cyan)") : "")}
         ${wagRankPill}
       </div>`
