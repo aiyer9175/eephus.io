@@ -1407,6 +1407,65 @@
    "last_checked": "2026-07-15",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "fwdhem_plus",
+   "surface": "/mlbstats/ Hitter Leaderboards, xHEM+ Blend column (forward offense)",
+   "predicts": "a hitter's NEXT-year offensive rate: the T1-3 forward blend, 0.7 * z(Savant expected wOBA) + 0.3 * z(unrounded HEM+ core) within season, shown on the HEM+ ratio display scale (rank-preserving map). xwOBA carries the contact-quality signal; the light HEM+ leg recovers the shrunk plate-discipline signal xwOBA is blind to",
+   "champion": "fwdhem_plus (0.7/0.3 xwOBA+HEM-core within-season z blend; tracked hitters, min 100 Savant PA)",
+   "baseline": "xwOBA-alone forward rho vs wOBA(Y+1) on the same pair set",
+   "metric": "forward-chained Spearman: blend(Y) vs wOBA(Y+1) beats xwOBA-alone(Y) (seeded paired bootstrap CI on the gap, seed 20260706)",
+   "eval_artifact": "data/xhem_plus_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED 2026-07-15 (X-H5, wave-3 T1-3) as the forward companion to xHEM+. Forward-chained OOS on the X-H3 pair set (2016-2025 ex-2020, 1871 pairs): the blend predicts next-year wOBA at rho 0.4658 vs xwOBA-alone 0.4543 (HEM core alone 0.4147); paired bootstrap gap CI mean +0.0114, lo95 +0.0038 under the pre-registered v1 convention. pass_under_v2 = FALSE (clustered season-stratified bootstrap on the within-outcome-season z target reads the gap as mean +0.0015, lo95 -0.0069): the v1 gate was pre-declared and STANDS per the harness-v2 interpretation rules, but the v2 read is carried in the artifact for the next re-baseline. The competing decayed-multiyear candidate (X-H4, xhem_multiyear_decay) FAILED its gate, so this single-season blend is the declared incumbent forward column. Production join: hitter_export._join_fwdhem_plus (unrounded hem_plus_raw off the scored Hitter objects; blend re-standardized over the joined pool and mapped onto the pool's own HEM+ mean/sd, monotone, so the shipped ordering IS the validated ordering). Same Savant gating as xHEM+ (MLB-only, min 100 Savant PA); companion column, not population-complete. Harness tools/xhem_plus_lab.py (X-H5 arm).",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0,
+   "card": {
+    "n": 1871,
+    "window": "2016-2025 ex-2020, forward pairs",
+    "headline": [
+     {
+      "label": "Next-year offense (Spearman)",
+      "champion": 0.466,
+      "baseline": 0.454,
+      "better": "higher"
+     }
+    ]
+   }
+  },
+  {
+   "model_id": "k_strength_sweep",
+   "surface": "model-dev artifact (rendered nowhere) - T1-12 EB shrink-strength sweep",
+   "predicts": "n/a - gated experiment (2026-07-15): common multiplier x K_HOMERUN grid on the REM+/SEM+ shrink constants, nested forward-chained",
+   "champion": "shipped constants (70/170/170/400) - STAND",
+   "baseline": "24-point grid, winner selected on 2012-2021 tuning pairs",
+   "metric": "tuning margin >= +0.003 then holdout lo95 >= 0 (seed 20260715)",
+   "eval_artifact": "data/k_strength_sweep_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER. SEM+ tuning cleared decisively (K_HR axis monotone, winner m=3 x K_HR=2000 +0.0223) but holdout failed (lo95 -0.0147, v2 -0.0169); REM+ winner actively reverts OOS (-0.0064). Honest revisit path is 2026+ holdout seasons."
+  },
+  {
+   "model_id": "phem_marcel_lite",
+   "surface": "model-dev artifact (rendered nowhere pending owner display decision) - T1-10 multi-year pooled-count projection gate",
+   "predicts": "next-season wOBA (hitters primary) from decayed pooled component counts + age hinge, vs 4 incumbent arms incl. the FA-engine Marcel",
+   "champion": "fa_projection woba_proj (the EXISTING engine) - re-anchor, do not build",
+   "baseline": "1yr HEM+ 0.4740 / flat-3yr 0.4939 / textbook Marcel 0.4944 / pHEM+ Marcel-lite 0.5170",
+   "metric": "paired bootstrap lo95 >= 0 vs best incumbent (seed 20260715); winner 0.5189, lo95 +0.0010, pass_under_v2 true",
+   "eval_artifact": "data/phem_marcel_lite_eval.json",
+   "verdict": "provisional",
+   "notes": "Hitters gate PASS, won by arm 4 (the repo's validated FA-engine projection, computed point-in-time offline) - the SHIP is a pWOBA re-anchor column, which is a FIFTH hitter column: OWNER DISPLAY DECISION QUEUED before any export wiring. Pitchers FAIL (lo95 -0.0133, n=363), loss leg recorded. Lab tools/phem_marcel_lite_lab.py."
+  },
+  {
+   "model_id": "pal_gamelog_lanes",
+   "surface": "model-dev artifact (rendered nowhere) - T1-13 game-log recovery + stamina lane",
+   "predicts": "n/a - Lane A tagged mid-year/swing-bridge conversion recovery (sensitivity cohort); Lane B relief-usage stamina candidate for RP->SP",
+   "champion": "Lane A cohort ADOPTED as a tagged sensitivity arm (SP->RP strengthens: 0.3607, n=100, gap lo95 +0.4647, v1+v2); Lane B REJECTED",
+   "baseline": "legacy event set (byte-identity asserted with recovery off)",
+   "metric": "incumbent per-direction gate as sensitivity (seed 20260714) + Lane B pre-registered gate (seed 20260715)",
+   "eval_artifact": "data/pal_gamelog_eval.json",
+   "verdict": "provisional",
+   "notes": "pal_gamelogs.py ships as infrastructure (sportId=1 game-log walk, .cache/pal_gamelogs, 733 games cached). Lane B stamina lane FAILED (sign-check -0.0013; candidate code stays in pal_conversion as gated candidate-only, nothing live calls it). RP->SP stays sign-wrong on the expanded set (-0.1736) - the downgrade stands. Lane C census (89 strict attempts, ~85% audit precision) feeds nothing."
   }
  ],
  "problems": []

@@ -1097,6 +1097,10 @@
       title: "Deserved offense: the HEM+ scale on Savant expected wOBA (xwOBA). Forward-predicts next-year offense better than actual. Tracked hitters only.",
       get: function (r) { return r.xhem_plus; },
       cell: function (r) { return r.xhem_plus == null ? "" : hemCell(r.xhem_plus); } },
+    { key: "fwdhem_plus", label: "xHEM+ Blend", term: "fwdhem_plus", num: true, desc: true, isRem: true,
+      title: "Forward blend: 70% expected wOBA + 30% HEM+ core, on the HEM+ scale. The best single-number read on NEXT-year offense (beats xwOBA alone out of sample). Tracked hitters only.",
+      get: function (r) { return r.fwdhem_plus; },
+      cell: function (r) { return r.fwdhem_plus == null ? "" : hemCell(r.fwdhem_plus); } },
     { key: "luck_gap", label: "Luck", num: true, desc: true,
       title: "xHEM+ minus HEM+: positive = under-performing his contact quality (bad luck, room to bounce back); negative = over-performing (due to regress).",
       get: function (r) { return r.luck_gap; },
@@ -1121,8 +1125,8 @@
   ];
 
   // History rows carry the season fields but not the trailing-window HEM+ 3yr or
-  // the current-season Savant xHEM+ / Luck join.
-  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, luck_gap: 1 };
+  // the current-season Savant xHEM+ / xHEM+ Blend / Luck joins.
+  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1 };
   var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
   // A past board can only sort on columns it shows; if the shared key is a
   // current-only column (HEM+ 3yr), fall back to the HEM+ default.

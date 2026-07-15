@@ -1,5 +1,5 @@
 {
- "version": "2026-07-07",
+ "version": "2026-07-15",
  "groups": {
   "scouting": "Prospect Grades & Scouting",
   "definition": "Prospect Grades & Scouting",
@@ -5182,6 +5182,30 @@
    "seeAlso": [
     "hem_plus",
     "statcast_plus",
+    "xwoba"
+   ],
+   "shelf": "ark",
+   "origin": "Arkmetric, created by Noah J. Dengler, original to eephus.io. Expected-stat inputs from Baseball Savant (Statcast)."
+  },
+  {
+   "id": "fwdhem_plus",
+   "term": "xHEM+ Blend (Forward Offense)",
+   "category": "custom-index",
+   "module": [
+    "mlbstats"
+   ],
+   "aliases": [
+    "xHEM+ Blend",
+    "fwdHEM+",
+    "forward offense blend",
+    "forward HEM"
+   ],
+   "priority": 23,
+   "definition": "The best single-number read on a hitter's NEXT-year offense: a 70/30 blend of Savant expected wOBA and the HEM+ skill core, shown on the HEM+ scale (100 = the average hitter in the tracked pool). Expected wOBA carries the contact-quality signal; the light HEM+ leg adds back the shrunk plate-discipline signal that contact quality alone misses.",
+   "methodology": "Within the season, the hitter's Savant expected wOBA and his unrounded HEM+ core are each standardized over the tracked pool (100+ Savant plate appearances), combined 70/30, and mapped back onto the HEM+ ratio display scale by the pool's own HEM+ location and spread -- a rank-preserving transform, so the shipped ordering IS the validated ordering. Validated out of sample: forward-chained over eight season-pairs 2016-2025 (excluding 2020, 1871 pairs), the blend predicts a hitter's next-year wOBA at a Spearman correlation of 0.466 vs 0.454 for expected wOBA alone, with the paired bootstrap gap confidence floor above zero under the pre-registered convention (the newer clustered harness reads the same edge as positive but within noise, reported alongside). A competing multi-year decayed candidate failed its gate, so this single-season blend is the incumbent forward column. Like xHEM+, it is a COMPANION for tracked hitters (Statcast is MLB-only and needs a real sample), not the population-complete HEM+. Accountability artifact: data/xhem_plus_eval.json (X-H5 block).",
+   "seeAlso": [
+    "xhem_plus",
+    "hem_plus",
     "xwoba"
    ],
    "shelf": "ark",

@@ -1,0 +1,1399 @@
+{
+ "lane": "w3-t113-pal-gamelogs (T1-13 PAL game-log walk, sportId=1)",
+ "generated_at": "2026-07-15",
+ "conventions": {
+  "v1": "raw war_delta target, iid event bootstrap, complete-post-season events only (pre-registered gates run here)",
+  "v2_companion": "within-post-season z-scored war_delta + player-clustered season-stratified bootstrap (tools/plus_lab_harness); reported as pass_under_v2, never the gate",
+  "boot": 2000,
+  "seed_lane_a_sensitivity": 20260714,
+  "seed_lane_b": 20260715
+ },
+ "verdicts": {
+  "incumbent_reproduction": {
+   "status": "EXACT",
+   "detail": "arm0 (unmodified run()) reproduces data/pal_eval.json gates to the digit: RP->SP rho=-0.2062 FAIL, SP->RP rho=0.2916 gap lo95 0.0745 PASS, verdict downgraded",
+   "legacy_pooled_drift_note": "the reporting-only legacy pooled rho recomputed 0.482 (n=33) vs the committed eval's 0.2882 (n=44); it reads unrepaired held labels off the in-progress 2026 season, so it drifts run-to-run - exactly why T1-6 demoted it to reporting-only. Gate fields are unaffected (bit-identical)."
+  },
+  "byte_identity_recovery_off": {
+   "status": "PASS",
+   "detail": "legacy detect_conversions event set byte-identical between workspace and repo modules (n=96, sha256 match); recovery returns TAGGED events from pal_gamelogs only"
+  },
+  "lane_a": {
+   "status": "DONE (sensitivity arm; cannot flip the registry verdict by itself)",
+   "recovered": {
+    "total": 89,
+    "mid_year": 50,
+    "swing_bridge": 39,
+    "labelable_war_delta": 83,
+    "labelable_held": 45,
+    "verified_cases": {
+     "Corbin Burnes 2019->2021": "swing_bridge RP->SP held=True",
+     "Michael King 2023": "mid_year RP->SP held=True",
+     "Ranger Suarez 2021": "mid_year RP->SP held=True"
+    }
+   },
+   "sp_rp_pass_strengthens": {
+    "answer": true,
+    "legacy": {
+     "rho": 0.2916,
+     "n": 61,
+     "gap_lo95": 0.0745,
+     "pass": true
+    },
+    "expanded": {
+     "rho": 0.3607,
+     "n": 100,
+     "gap_lo95": 0.4647,
+     "pass": true,
+     "pass_under_v2": true
+    }
+   },
+   "rp_sp_stays_sign_wrong": {
+    "answer": true,
+    "legacy": {
+     "rho": -0.2062,
+     "n": 25,
+     "pass": false
+    },
+    "expanded": {
+     "rho": -0.1736,
+     "n": 35,
+     "pass": false,
+     "pass_under_v2": false,
+     "rho_z_target": -0.0769
+    }
+   }
+  },
+  "lane_b": {
+   "status": "FAIL (clean loss-ledger entry; nothing ships)",
+   "gate": {
+    "rule": "sign-check rho(stamina,war_delta) > 0 AND delta-rho point > 0 AND gap lo95 >= -0.01 vs incumbent FIT on the expanded labeled set",
+    "seed": 20260715,
+    "boot": 2000,
+    "sign_check_pass": false,
+    "delta_rho_pass": true,
+    "ci_pass": false,
+    "pass": false
+   },
+   "point_estimates": {
+    "rho_incumbent_fit": -0.2445,
+    "rho_fit_v2": -0.2441,
+    "rho_stamina_feature": -0.0013,
+    "delta_rho": 0.0004,
+    "gap_ci": {
+     "mean": 0.0002,
+     "lo95": -0.0672,
+     "hi95": 0.0628
+    },
+    "n_gate": 61
+   },
+   "pass_under_v2": false,
+   "direction_sign_agreement_vs_war_delta": false,
+   "honest_read": "the stamina feature is uncorrelated with war_delta (rho -0.0013) on the expanded n=61 RP->SP set; the 0.10-weight lane moves the blended FIT rho by +0.0004 with lo95 -0.0672. The lane does NOT help, and the RP->SP direction stays unvalidated (rho_fit_v2 still -0.2441). Fails sign-check and CI legs; only the trivial delta-rho point leg passes."
+  },
+  "lane_c": {
+   "status": "EXPLORATORY (labels feed nothing)",
+   "census_ladder": {
+    "raw_swing_seasons_any_ip": 724,
+    "raw_swing_seasons_20ip_all_years": 475,
+    "raw_swing_seasons_20ip_historical": 433,
+    "note": "strict-switch and anchored-attempt counts are filled in by run_t113 after the game-log walk",
+    "strict_midyear_switches": 144,
+    "anchored_midyear_attempts": 50,
+    "swing_bridge_recoveries": 39,
+    "plausible_true_attempts_total": 89
+   },
+   "hand_audit": {
+    "n": 20,
+    "file": "work/hand_audit.json",
+    "true_attempts": 17,
+    "ambiguous_or_artifact": 3,
+    "note": "judgments live in SUMMARY.md only"
+   },
+   "estimate_deltas": "orchestrator estimates vs actuals: ~192 historical SWING seasons -> 433 (>=20 IP, 2018-2025); 223 raw candidates -> 475 all-years >=20 IP (724 any-IP); ~35 plausible attempts -> 89 strict+anchored; 22 labelable -> 45 (held) / 83 (war_delta). The pre-registered strict definition was applied unchanged; counts reported as found."
+  }
+ },
+ "full_results": {
+  "generated_at": "2026-07-15",
+  "lane": "T1-13 PAL game-log walk (sportId=1)",
+  "incumbent_eval": {
+   "generated_at": "2026-07-15",
+   "model": "pal_conversion",
+   "lab": "tools/pal_backtest_lab.py (T1-6 harness repair)",
+   "seasons": [
+    2018,
+    2019,
+    2021,
+    2022,
+    2023,
+    2024,
+    2025,
+    2026
+   ],
+   "last_closed_season": 2025,
+   "n_conversions": 96,
+   "n_gap2_recovered": 18,
+   "primary_outcome": "war_delta: bref bWAR(post season) - bWAR(pre season), closed post seasons only; per direction, never pooled",
+   "baselines": [
+    "pre-year K-BB%",
+    "pre-year ERA (negated)",
+    "pre-year REM+ (RP->SP) / SEM+ (SP->RP)"
+   ],
+   "per_direction": {
+    "RP->SP": {
+     "n_events": 29,
+     "n_gate": 25,
+     "rho_fit_war_delta": -0.2062,
+     "baseline_rho_war_delta": {
+      "kbb_pre": -0.0738,
+      "neg_era_pre": 0.1023,
+      "index_pre": -0.2346
+     },
+     "best_baseline": "neg_era_pre",
+     "gap_ci_vs_best": {
+      "mean": -0.2952,
+      "lo95": -0.7517,
+      "hi95": 0.1152
+     },
+     "gap_ci_vs_each": {
+      "kbb_pre": {
+       "mean": -0.1172,
+       "lo95": -0.5138,
+       "hi95": 0.2921
+      },
+      "neg_era_pre": {
+       "mean": -0.2952,
+       "lo95": -0.7517,
+       "hi95": 0.1152
+      },
+      "index_pre": {
+       "mean": 0.03,
+       "lo95": -0.3762,
+       "hi95": 0.4264
+      }
+     },
+     "gate": {
+      "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+      "seed": 20260714,
+      "boot": 2000,
+      "pass": false
+     },
+     "sensitivity": {
+      "rho_fit_held_repaired": 0.1336,
+      "n_held_repaired": 13,
+      "rho_fit_held_washout_imputed": 0.0321,
+      "n_held_washout": 18,
+      "rho_fit_war_delta_incl_partial_2026": -0.2897,
+      "n_war_incl_partial": 29
+     }
+    },
+    "SP->RP": {
+     "n_events": 67,
+     "n_gate": 61,
+     "rho_fit_war_delta": 0.2916,
+     "baseline_rho_war_delta": {
+      "kbb_pre": -0.097,
+      "neg_era_pre": -0.62,
+      "index_pre": -0.4434
+     },
+     "best_baseline": "kbb_pre",
+     "gap_ci_vs_best": {
+      "mean": 0.3869,
+      "lo95": 0.0745,
+      "hi95": 0.688
+     },
+     "gap_ci_vs_each": {
+      "kbb_pre": {
+       "mean": 0.3869,
+       "lo95": 0.0745,
+       "hi95": 0.688
+      },
+      "neg_era_pre": {
+       "mean": 0.9028,
+       "lo95": 0.5334,
+       "hi95": 1.2193
+      },
+      "index_pre": {
+       "mean": 0.7281,
+       "lo95": 0.4178,
+       "hi95": 1.0142
+      }
+     },
+     "gate": {
+      "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+      "seed": 20260714,
+      "boot": 2000,
+      "pass": true
+     },
+     "sensitivity": {
+      "rho_fit_held_repaired": 0.4299,
+      "n_held_repaired": 22,
+      "rho_fit_held_washout_imputed": 0.1265,
+      "n_held_washout": 38,
+      "rho_fit_war_delta_incl_partial_2026": 0.2733,
+      "n_war_incl_partial": 67
+     }
+    }
+   },
+   "legacy_pooled": {
+    "note": "Shipped-harness replication (year-1 pre-row, no pedigree/p_throws, unrepaired held labels), POOLED across the two fit scales. Reporting field only - never the gate.",
+    "n_labeled": 33,
+    "spearman_prefit_vs_held": 0.482,
+    "registered_stamp": 0.223,
+    "live_pal_json_stamp": 0.288
+   },
+   "verdict": {
+    "status": "downgraded",
+    "gate": "per direction: rho(FIT, war_delta) >= rho(best baseline) with bootstrap gap lo95 > -0.01 (seed 20260714, 2000 reps); any direction failing downgrades the registry row",
+    "summary": "T1-6 repaired harness: 96 conversions (true pre-season scoring recovered 18 gap-2 events; pedigree/p_throws set on backtest arms; held labels IP-gated + 2025-pending excluded + 2019 censor-aware). Primary outcome = continuous war_delta, per direction. RP->SP: rho_fit=-0.2062 vs best baseline neg_era_pre=0.1023 (gap lo95 -0.7517, n=25) -> FAIL | SP->RP: rho_fit=0.2916 vs best baseline kbb_pre=-0.097 (gap lo95 0.0745, n=61) -> PASS. Legacy pooled rho (reporting only) = 0.482 (registered 0.223; stale live stamp 0.288). Verdict: DOWNGRADED."
+   }
+  },
+  "legacy_byte_identity": {
+   "byte_identical": true,
+   "workspace_sha256": "a80d461c1e895daccc57d79ced405f371bc07c4dfd42660a52a6af8783da5bd1",
+   "repo_sha256": "a80d461c1e895daccc57d79ced405f371bc07c4dfd42660a52a6af8783da5bd1",
+   "n_events": 96
+  },
+  "legacy_rescore_mismatches": 0,
+  "lane_c_census": {
+   "raw_swing_seasons_any_ip": 724,
+   "raw_swing_seasons_20ip_all_years": 475,
+   "raw_swing_seasons_20ip_historical": 433,
+   "note": "strict-switch and anchored-attempt counts are filled in by run_t113 after the game-log walk",
+   "strict_midyear_switches": 144,
+   "anchored_midyear_attempts": 50,
+   "swing_bridge_recoveries": 39,
+   "plausible_true_attempts_total": 89
+  },
+  "lane_a": {
+   "n_recovered": 89,
+   "n_mid_year": 50,
+   "n_swing_bridge": 39,
+   "n_labelable_war_delta": 83,
+   "n_labelable_held": 45,
+   "recovered_events": [
+    {
+     "mlbam": 453281,
+     "name": "Wade LeBlanc",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 471911,
+     "name": "Carlos Carrasco",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 488768,
+     "name": "Andrew Cashner",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 500779,
+     "name": "Jose Quintana",
+     "direction": "SP->RP",
+     "year": 2021,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 502239,
+     "name": "Trevor Cahill",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 502706,
+     "name": "Derek Holland",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 527048,
+     "name": "Mart\u00edn P\u00e9rez",
+     "direction": "SP->RP",
+     "year": 2021,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 527048,
+     "name": "Mart\u00edn P\u00e9rez",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 570632,
+     "name": "Jos\u00e9 Ure\u00f1a",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 570666,
+     "name": "Luis Cessa",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 579328,
+     "name": "Yusei Kikuchi",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 592332,
+     "name": "Kevin Gausman",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 592767,
+     "name": "Drew Smyly",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 592826,
+     "name": "Vince Velasquez",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 596001,
+     "name": "Jakob Junis",
+     "direction": "RP->SP",
+     "year": 2024,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 596295,
+     "name": "Austin Gomber",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 601713,
+     "name": "Nick Pivetta",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 605276,
+     "name": "David Hess",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 605288,
+     "name": "Adrian Houser",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 605513,
+     "name": "Spencer Turnbull",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 608717,
+     "name": "Chris Stratton",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 608723,
+     "name": "Austin Voth",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 622072,
+     "name": "Alex Wood",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 622694,
+     "name": "Elieser Hern\u00e1ndez",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 624133,
+     "name": "Ranger Suarez",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 628317,
+     "name": "Kenta Maeda",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 640455,
+     "name": "Sean Manaea",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 641771,
+     "name": "Chad Kuhl",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 641793,
+     "name": "Zack Littell",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 642232,
+     "name": "Ryan Yarbrough",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 642232,
+     "name": "Ryan Yarbrough",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 642547,
+     "name": "Freddy Peralta",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 643327,
+     "name": "Zack Godley",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 643377,
+     "name": "Griffin Jax",
+     "direction": "RP->SP",
+     "year": 2026,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 647336,
+     "name": "Michael Soroka",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 650633,
+     "name": "Michael King",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 656546,
+     "name": "Jeff Hoffman",
+     "direction": "SP->RP",
+     "year": 2021,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 656641,
+     "name": "Jacob Latz",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 659275,
+     "name": "Dinelson Lamet",
+     "direction": "SP->RP",
+     "year": 2021,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 663855,
+     "name": "Jordan Hicks",
+     "direction": "SP->RP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 663969,
+     "name": "Tyler Phillips",
+     "direction": "RP->SP",
+     "year": 2026,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 666214,
+     "name": "Joey Wentz",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 668868,
+     "name": "Zack Thompson",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 668964,
+     "name": "Tobias Myers",
+     "direction": "SP->RP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 669461,
+     "name": "Matthew Liberatore",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 669713,
+     "name": "Hayden Wesneski",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": false,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 676130,
+     "name": "Jos\u00e9 Butt\u00f3",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 678368,
+     "name": "Valente Bellozo",
+     "direction": "SP->RP",
+     "year": 2025,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 686973,
+     "name": "Louis Varland",
+     "direction": "SP->RP",
+     "year": 2024,
+     "held": true,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 694477,
+     "name": "Chad Patrick",
+     "direction": "SP->RP",
+     "year": 2026,
+     "held": null,
+     "recovered": "mid_year"
+    },
+    {
+     "mlbam": 471911,
+     "name": "Carlos Carrasco",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 502239,
+     "name": "Trevor Cahill",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 527048,
+     "name": "Mart\u00edn P\u00e9rez",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": false,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 527048,
+     "name": "Mart\u00edn P\u00e9rez",
+     "direction": "RP->SP",
+     "year": 2024,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 543475,
+     "name": "Jordan Lyles",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 570632,
+     "name": "Jos\u00e9 Ure\u00f1a",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 572362,
+     "name": "Robbie Erlin",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 579328,
+     "name": "Yusei Kikuchi",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 596001,
+     "name": "Jakob Junis",
+     "direction": "SP->RP",
+     "year": 2025,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 601713,
+     "name": "Nick Pivetta",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 605288,
+     "name": "Adrian Houser",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 605540,
+     "name": "Brandon Woodruff",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 608344,
+     "name": "Cole Irvin",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 608723,
+     "name": "Austin Voth",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 621389,
+     "name": "Ty Blach",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 624522,
+     "name": "Keegan Thompson",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 625643,
+     "name": "Reynaldo L\u00f3pez",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 628317,
+     "name": "Kenta Maeda",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 628711,
+     "name": "Julio Ur\u00edas",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 630023,
+     "name": "Yonny Chirinos",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 641771,
+     "name": "Chad Kuhl",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": false,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 642547,
+     "name": "Freddy Peralta",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 643230,
+     "name": "Steven Brault",
+     "direction": "RP->SP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 647336,
+     "name": "Michael Soroka",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 650895,
+     "name": "Diego Castillo",
+     "direction": "SP->RP",
+     "year": 2019,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 656557,
+     "name": "Tanner Houck",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 657376,
+     "name": "Clarke Schmidt",
+     "direction": "RP->SP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 663567,
+     "name": "Peter Lambert",
+     "direction": "RP->SP",
+     "year": 2026,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 663765,
+     "name": "Jake Woodford",
+     "direction": "SP->RP",
+     "year": 2022,
+     "held": false,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 663804,
+     "name": "Jackson Kowar",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 664299,
+     "name": "Cristian Javier",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 669160,
+     "name": "Dustin May",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 669203,
+     "name": "Corbin Burnes",
+     "direction": "RP->SP",
+     "year": 2021,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 669713,
+     "name": "Hayden Wesneski",
+     "direction": "RP->SP",
+     "year": 2025,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 672578,
+     "name": "Carlos Hern\u00e1ndez",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": true,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 672782,
+     "name": "Yoendrys G\u00f3mez",
+     "direction": "SP->RP",
+     "year": 2026,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 676265,
+     "name": "Cory Abbott",
+     "direction": "SP->RP",
+     "year": 2023,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 676879,
+     "name": "Aaron Ashby",
+     "direction": "RP->SP",
+     "year": 2022,
+     "held": null,
+     "recovered": "swing_bridge"
+    },
+    {
+     "mlbam": 695418,
+     "name": "Brad Lord",
+     "direction": "SP->RP",
+     "year": 2026,
+     "held": null,
+     "recovered": "swing_bridge"
+    }
+   ],
+   "per_direction": {
+    "RP->SP": {
+     "legacy": {
+      "n_gate": 25,
+      "rho_fit_war_delta": -0.2062,
+      "baseline_rho_war_delta": {
+       "kbb_pre": -0.0738,
+       "neg_era_pre": 0.1023,
+       "index_pre": -0.2346
+      },
+      "best_baseline": "neg_era_pre",
+      "gap_ci_vs_best": {
+       "mean": -0.2952,
+       "lo95": -0.7517,
+       "hi95": 0.1152
+      },
+      "gate": {
+       "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+       "seed": 20260714,
+       "boot": 2000,
+       "pass": false
+      },
+      "harness_v2": {
+       "rho_fit_war_delta_z": -0.1585,
+       "baseline_rho_z": {
+        "kbb_pre": -0.0277,
+        "neg_era_pre": 0.15,
+        "index_pre": -0.1854
+       },
+       "best_baseline": "neg_era_pre",
+       "cluster_gap_ci_vs_best": {
+        "mean": -0.3025,
+        "lo95": -0.7151,
+        "hi95": 0.1437
+       },
+       "cluster": {
+        "n_pairs": 25,
+        "n_players": 25,
+        "max_pairs_per_player": 1,
+        "mean_pairs_per_player": 1.0,
+        "n_strata_first_pred_season": 6
+       },
+       "pass_under_v2": false
+      },
+      "sensitivity": {
+       "rho_fit_held_repaired": 0.1336,
+       "n_held_repaired": 13
+      }
+     },
+     "expanded": {
+      "n_gate": 35,
+      "rho_fit_war_delta": -0.1736,
+      "baseline_rho_war_delta": {
+       "kbb_pre": 0.0366,
+       "neg_era_pre": -0.0506,
+       "index_pre": -0.109
+      },
+      "best_baseline": "kbb_pre",
+      "gap_ci_vs_best": {
+       "mean": -0.1982,
+       "lo95": -0.5579,
+       "hi95": 0.1832
+      },
+      "gate": {
+       "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+       "seed": 20260714,
+       "boot": 2000,
+       "pass": false
+      },
+      "harness_v2": {
+       "rho_fit_war_delta_z": -0.0769,
+       "baseline_rho_z": {
+        "kbb_pre": 0.1395,
+        "neg_era_pre": 0.0587,
+        "index_pre": 0.0106
+       },
+       "best_baseline": "kbb_pre",
+       "cluster_gap_ci_vs_best": {
+        "mean": -0.2154,
+        "lo95": -0.5759,
+        "hi95": 0.1518
+       },
+       "cluster": {
+        "n_pairs": 35,
+        "n_players": 35,
+        "max_pairs_per_player": 1,
+        "mean_pairs_per_player": 1.0,
+        "n_strata_first_pred_season": 6
+       },
+       "pass_under_v2": false
+      },
+      "sensitivity": {
+       "rho_fit_held_repaired": 0.0707,
+       "n_held_repaired": 34
+      }
+     },
+     "n_recovered_in_gate": 10
+    },
+    "SP->RP": {
+     "legacy": {
+      "n_gate": 61,
+      "rho_fit_war_delta": 0.2916,
+      "baseline_rho_war_delta": {
+       "kbb_pre": -0.097,
+       "neg_era_pre": -0.62,
+       "index_pre": -0.4434
+      },
+      "best_baseline": "kbb_pre",
+      "gap_ci_vs_best": {
+       "mean": 0.3869,
+       "lo95": 0.0745,
+       "hi95": 0.688
+      },
+      "gate": {
+       "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+       "seed": 20260714,
+       "boot": 2000,
+       "pass": true
+      },
+      "harness_v2": {
+       "rho_fit_war_delta_z": 0.2595,
+       "baseline_rho_z": {
+        "kbb_pre": -0.0155,
+        "neg_era_pre": -0.4993,
+        "index_pre": -0.3105
+       },
+       "best_baseline": "kbb_pre",
+       "cluster_gap_ci_vs_best": {
+        "mean": 0.2707,
+        "lo95": -0.0439,
+        "hi95": 0.5719
+       },
+       "cluster": {
+        "n_pairs": 61,
+        "n_players": 59,
+        "max_pairs_per_player": 2,
+        "mean_pairs_per_player": 1.03,
+        "n_strata_first_pred_season": 6
+       },
+       "pass_under_v2": false
+      },
+      "sensitivity": {
+       "rho_fit_held_repaired": 0.4299,
+       "n_held_repaired": 22
+      }
+     },
+     "expanded": {
+      "n_gate": 100,
+      "rho_fit_war_delta": 0.3607,
+      "baseline_rho_war_delta": {
+       "kbb_pre": -0.3471,
+       "neg_era_pre": -0.6828,
+       "index_pre": -0.525
+      },
+      "best_baseline": "kbb_pre",
+      "gap_ci_vs_best": {
+       "mean": 0.6984,
+       "lo95": 0.4647,
+       "hi95": 0.9239
+      },
+      "gate": {
+       "rule": "rho(FIT,war_delta) >= rho(best baseline) AND gap lo95 > -0.01",
+       "seed": 20260714,
+       "boot": 2000,
+       "pass": true
+      },
+      "harness_v2": {
+       "rho_fit_war_delta_z": 0.3576,
+       "baseline_rho_z": {
+        "kbb_pre": -0.3454,
+        "neg_era_pre": -0.6331,
+        "index_pre": -0.4777
+       },
+       "best_baseline": "kbb_pre",
+       "cluster_gap_ci_vs_best": {
+        "mean": 0.698,
+        "lo95": 0.4521,
+        "hi95": 0.9253
+       },
+       "cluster": {
+        "n_pairs": 100,
+        "n_players": 97,
+        "max_pairs_per_player": 2,
+        "mean_pairs_per_player": 1.03,
+        "n_strata_first_pred_season": 6
+       },
+       "pass_under_v2": true
+      },
+      "sensitivity": {
+       "rho_fit_held_repaired": 0.1115,
+       "n_held_repaired": 46
+      }
+     },
+     "n_recovered_in_gate": 39
+    }
+   }
+  },
+  "lane_b": {
+   "n_gate": 61,
+   "n_with_usage_read": 61,
+   "rho_incumbent_fit": -0.2445,
+   "rho_fit_v2": -0.2441,
+   "rho_stamina_feature": -0.0013,
+   "delta_rho": 0.0004,
+   "gap_ci_v2_minus_incumbent": {
+    "mean": 0.0002,
+    "lo95": -0.0672,
+    "hi95": 0.0628
+   },
+   "gate": {
+    "rule": "sign-check rho(stamina,war_delta) > 0 AND delta-rho point > 0 AND gap lo95 >= -0.01 vs incumbent FIT on the expanded labeled set",
+    "seed": 20260715,
+    "boot": 2000,
+    "sign_check_pass": false,
+    "delta_rho_pass": true,
+    "ci_pass": false,
+    "pass": false
+   },
+   "direction_sign_agreement_vs_war_delta": false,
+   "harness_v2": {
+    "rho_fit_v2_z": -0.2333,
+    "rho_incumbent_z": -0.2306,
+    "delta_rho_z": -0.0027,
+    "cluster_gap_ci": {
+     "mean": -0.0047,
+     "lo95": -0.077,
+     "hi95": 0.0546
+    },
+    "pass_under_v2": false
+   },
+   "ceiling": "provisional (candidate lane only; RP->SP direction remains downgraded)"
+  },
+  "current_pool": {
+   "season": 2026,
+   "n_rp_candidates": 208,
+   "n_with_usage_read": 208,
+   "multi_inning_share_quartiles": [
+    0.0938,
+    0.1892,
+    0.3235
+   ],
+   "b2b_rate_quartiles": [
+    0.1316,
+    0.1765,
+    0.2143
+   ],
+   "top_movers": [
+    {
+     "mlbam": 686930,
+     "name": "Mason Barnett",
+     "team": "ATH",
+     "fit": 28.9,
+     "fit_v2": 36.1,
+     "delta": 7.2,
+     "usage": {
+      "multi_inning_share": 0.5385,
+      "b2b_rate": 0.0,
+      "n_relief_apps": 13
+     }
+    },
+    {
+     "mlbam": 676477,
+     "name": "Garrett Whitlock",
+     "team": "BOS",
+     "fit": 87.3,
+     "fit_v2": 80.5,
+     "delta": -6.8,
+     "usage": {
+      "multi_inning_share": 0.0294,
+      "b2b_rate": 0.1765,
+      "n_relief_apps": 34
+     }
+    },
+    {
+     "mlbam": 592094,
+     "name": "Jason Adam",
+     "team": "SD",
+     "fit": 83.2,
+     "fit_v2": 76.5,
+     "delta": -6.7,
+     "usage": {
+      "multi_inning_share": 0.0278,
+      "b2b_rate": 0.2222,
+      "n_relief_apps": 36
+     }
+    },
+    {
+     "mlbam": 641329,
+     "name": "Bryan Baker",
+     "team": "TB",
+     "fit": 68.7,
+     "fit_v2": 62.7,
+     "delta": -6.0,
+     "usage": {
+      "multi_inning_share": 0.0,
+      "b2b_rate": 0.2632,
+      "n_relief_apps": 38
+     }
+    },
+    {
+     "mlbam": 680604,
+     "name": "Blas Casta\u00f1o",
+     "team": "COL",
+     "fit": 40.9,
+     "fit_v2": 46.9,
+     "delta": 6.0,
+     "usage": {
+      "multi_inning_share": 0.8,
+      "b2b_rate": 0.0,
+      "n_relief_apps": 10
+     }
+    },
+    {
+     "mlbam": 656546,
+     "name": "Jeff Hoffman",
+     "team": "TOR",
+     "fit": 84.0,
+     "fit_v2": 78.0,
+     "delta": -6.0,
+     "usage": {
+      "multi_inning_share": 0.0682,
+      "b2b_rate": 0.2273,
+      "n_relief_apps": 44
+     }
+    },
+    {
+     "mlbam": 656945,
+     "name": "Tanner Scott",
+     "team": "LAD",
+     "fit": 78.1,
+     "fit_v2": 72.2,
+     "delta": -5.9,
+     "usage": {
+      "multi_inning_share": 0.0732,
+      "b2b_rate": 0.2683,
+      "n_relief_apps": 41
+     }
+    },
+    {
+     "mlbam": 664199,
+     "name": "Taylor Clarke",
+     "team": "AZ",
+     "fit": 95.6,
+     "fit_v2": 89.8,
+     "delta": -5.8,
+     "usage": {
+      "multi_inning_share": 0.1429,
+      "b2b_rate": 0.1905,
+      "n_relief_apps": 42
+     }
+    },
+    {
+     "mlbam": 641755,
+     "name": "Tyler Kinley",
+     "team": "ATL",
+     "fit": 63.6,
+     "fit_v2": 57.9,
+     "delta": -5.7,
+     "usage": {
+      "multi_inning_share": 0.0,
+      "b2b_rate": 0.2895,
+      "n_relief_apps": 38
+     }
+    },
+    {
+     "mlbam": 552640,
+     "name": "Andrew Kittredge",
+     "team": "BAL",
+     "fit": 73.2,
+     "fit_v2": 67.5,
+     "delta": -5.7,
+     "usage": {
+      "multi_inning_share": 0.0,
+      "b2b_rate": 0.1724,
+      "n_relief_apps": 29
+     }
+    },
+    {
+     "mlbam": 682120,
+     "name": "Tim Herrin",
+     "team": "CLE",
+     "fit": 70.9,
+     "fit_v2": 65.3,
+     "delta": -5.6,
+     "usage": {
+      "multi_inning_share": 0.0488,
+      "b2b_rate": 0.2683,
+      "n_relief_apps": 41
+     }
+    },
+    {
+     "mlbam": 661395,
+     "name": "Jhoan Duran",
+     "team": "PHI",
+     "fit": 69.0,
+     "fit_v2": 63.5,
+     "delta": -5.5,
+     "usage": {
+      "multi_inning_share": 0.0,
+      "b2b_rate": 0.2059,
+      "n_relief_apps": 34
+     }
+    }
+   ],
+   "note": "platoon splits were not pulled for the pool (event pre-years only), so platoon_neutrality drops from both blends equally; deltas are internally consistent. Display demo only - nothing ships from here."
+  }
+ },
+ "program_ledger": {
+  "verdict": "mixed",
+  "note": "Lane A recovery (89 tagged events) STRENGTHENS the SP->RP pass: rho 0.2916->0.3607 (n=100), gap lo95 +0.4647, pass under v1 AND v2; RP->SP stays sign-wrong (-0.1736, n=35). Lane B stamina lane: FAIL loss ledger (sign-check -0.0013, lo95 -0.0672). Lane C census: 89 strict attempts, hand-audit ~85% precision, tagged-sensitivity use only."
+ }
+}

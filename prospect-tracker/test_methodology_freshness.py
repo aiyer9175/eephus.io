@@ -181,6 +181,14 @@ MODEL_GLOSSARY = {
     "xfv_alpha_criterion_perside": "internal",
     "xfv_side_fairness": "internal",
     "xfv_promo_watch": "internal",
+    # Wave 3 (2026-07-15): fwdhem_plus SHIPS on the Hitter Leaderboards with
+    # its own glossary entry; the K-strength sweep and pHEM+ Marcel-lite gate
+    # (won by the existing FA engine; pWOBA display decision queued) and the
+    # PAL game-log lanes are model-dev artifacts, rendered nowhere.
+    "fwdhem_plus": ["fwdhem_plus"],
+    "k_strength_sweep": "internal",
+    "phem_marcel_lite": "internal",
+    "pal_gamelog_lanes": "internal",
 }
 
 

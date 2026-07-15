@@ -171,6 +171,67 @@ def _join_xhem_plus(hitters: list[dict], season: int) -> int:
     return n
 
 
+def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
+    """Stamp fwdhem_plus ('xHEM+ Blend') onto tracked hitters: the validated T1-3
+    forward blend, 0.7 * z(Savant est_woba) + 0.3 * z(unrounded HEM+ core), z-scored
+    within the season over the joined pool, then mapped back onto the HEM+ ratio
+    display scale (the joined pool's own HEM+ mean/spread), so it reads on the same
+    ruler as HEM+/xHEM+. Forward-beats xwOBA-alone at predicting next-year wOBA
+    (validated: tools/xhem_plus_lab.py X-H5, x_h5_blend block of
+    data/xhem_plus_eval.json). Same Savant gating as xHEM+ (MLB-only, min 100
+    Savant PA), so it stamps only the tracked subset; missing -> field absent
+    (column blank). `hem_raw` is {mlbam: unrounded hem_plus_raw} from the scored
+    Hitter objects (display rounding never enters the blend). Best-effort."""
+    try:
+        import mlb_player_export as mpe
+        rows = mpe._savant("expected", int(season), "batter")
+    except Exception:
+        return 0
+    _FWDHEM_MIN_PA = 100.0     # same sample gate as the xHEM+ join
+    W_XWOBA, W_HEM = 0.7, 0.3  # T1-3 pre-registered weights
+    xw = {}
+    for r in rows:
+        try:
+            mid = int(r["player_id"]); ew = float(r["est_woba"]); pa = float(r["pa"])
+        except (TypeError, ValueError, KeyError):
+            continue
+        if pa >= _FWDHEM_MIN_PA and ew > 0:
+            xw[mid] = ew
+    # joined pool: tracked hitters with BOTH a real Savant sample and a HEM core
+    pool = {m: (ew, hem_raw[m]) for m, ew in xw.items() if hem_raw.get(m) is not None}
+    if len(pool) < 2:
+        return 0
+
+    def _mu_sd(vals):
+        k = len(vals)
+        mu = sum(vals) / k
+        sd = (sum((v - mu) ** 2 for v in vals) / (k - 1)) ** 0.5
+        return mu, sd
+
+    mu_x, sd_x = _mu_sd([v[0] for v in pool.values()])
+    mu_h, sd_h = _mu_sd([v[1] for v in pool.values()])
+    if not sd_x or not sd_h:
+        return 0
+    blend = {m: W_XWOBA * (ew - mu_x) / sd_x + W_HEM * (hp - mu_h) / sd_h
+             for m, (ew, hp) in pool.items()}
+    # A 0.7/0.3 blend of two unit-z legs has pool sd < 1 (the legs are not
+    # perfectly correlated), so re-standardize the blend over the pool before
+    # mapping back onto the HEM+ ratio display scale via the pool's own HEM+
+    # location/spread. Both steps are monotone, so the validated forward
+    # RANKING is exactly the shipped ranking; only the display width changes.
+    _, sd_b = _mu_sd(list(blend.values()))
+    if not sd_b:
+        return 0
+    n = 0
+    for h in hitters:
+        z = blend.get(int(h["mlbam"])) if h.get("mlbam") is not None else None
+        if z is None:
+            continue
+        h["fwdhem_plus"] = int(round(mu_h + sd_h * (z / sd_b)))
+        n += 1
+    return n
+
+
 def _verdict() -> str:
     try:
         j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
@@ -251,6 +312,13 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_xh = _join_xhem_plus(scored["hitters"], season)
     if n_xh:
         log(f"  hitters: xHEM+ (Savant deserved offense) joined for {n_xh} hitters")
+    # UNROUNDED HEM+ core off the scored Hitter objects (score_pool mutates in
+    # place), so the blend never sees display rounding.
+    _hem_raw = {int(h.mlbam): h.hem_plus_raw for h in hitters
+                if h.mlbam is not None and h.hem_plus_raw is not None}
+    n_fh = _join_fwdhem_plus(scored["hitters"], _hem_raw, season)
+    if n_fh:
+        log(f"  hitters: fwdHEM+ (xHEM+ Blend forward column) joined for {n_fh} hitters")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,

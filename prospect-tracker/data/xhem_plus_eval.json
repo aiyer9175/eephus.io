@@ -92,7 +92,90 @@
   "pass": true,
   "pass_under_v2": true
  },
- "runtime_seconds": 11.2,
+ "x_h5_blend": {
+  "experiment": "X-H5",
+  "model": "fwdhem_plus",
+  "seed": 20260706,
+  "weights": {
+   "xwoba_z": 0.7,
+   "hem_core_z": 0.3
+  },
+  "conventions": {
+   "predictor": "0.7 * z(Savant est_woba) + 0.3 * z(unrounded HEM+ core hem_plus_raw), z-scored WITHIN the predictor season over the joined pair set",
+   "hem_core_source": "cached StatsAPI hitting statlines scored via hem_plus (unrounded)",
+   "pair_set": "the X-H3 pair set (Savant PA>=200 both years) with HEM core joined",
+   "n_pairs_dropped_no_hem_core": 0
+  },
+  "n_forward_pairs": 1871,
+  "forward_spearman_vs_wOBA_next": {
+   "blend": 0.4658,
+   "xwoba_alone": 0.4543,
+   "hem_core_alone": 0.4147
+  },
+  "gap_ci_blend_minus_xwoba": {
+   "mean": 0.0114,
+   "lo95": 0.0038,
+   "hi95": 0.0197
+  },
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.4658,
+    "rho_baselines": {
+     "vs_xwoba_alone": 0.4543,
+     "vs_hem_core_alone": 0.4147
+    },
+    "gap_ci": {
+     "vs_xwoba_alone": {
+      "mean": 0.0114,
+      "lo95": 0.0038,
+      "hi95": 0.0197
+     },
+     "vs_hem_core_alone": {
+      "mean": 0.0511,
+      "lo95": 0.0347,
+      "hi95": 0.0676
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.4698,
+    "rho_baselines": {
+     "vs_xwoba_alone": 0.4683,
+     "vs_hem_core_alone": 0.4207
+    },
+    "gap_ci": {
+     "vs_xwoba_alone": {
+      "mean": 0.0015,
+      "lo95": -0.0069,
+      "hi95": 0.0106
+     },
+     "vs_hem_core_alone": {
+      "mean": 0.049,
+      "lo95": 0.0312,
+      "hi95": 0.0672
+     }
+    },
+    "cluster": {
+     "n_pairs": 1871,
+     "n_players": 649,
+     "max_pairs_per_player": 7,
+     "mean_pairs_per_player": 2.88,
+     "n_strata_first_pred_season": 7
+    }
+   }
+  },
+  "gate": {
+   "bar": "blend forward-beats xwOBA-alone on the same pair set (paired bootstrap gap lo95 > 0, seed 20260706)",
+   "convention": "v1",
+   "pass": true,
+   "pass_under_v2": false
+  },
+  "verdict": {
+   "status": "validated",
+   "summary": "Forward-chained OOS on the X-H3 pair set (1871 pairs): the 0.7/0.3 xwOBA+HEM-core blend predicts next-year wOBA at rho 0.4658 vs xwOBA-alone 0.4543 (HEM core alone 0.4147); paired bootstrap gap CI {'mean': 0.0114, 'lo95': 0.0038, 'hi95': 0.0197}. Shipped VALIDATED as the fwdhem_plus forward column: the light HEM leg recovers the shrunk-discipline signal xwOBA is blind to. The competing decayed-multiyear candidate (X-H4) failed its gate, so this single-season blend is the declared incumbent."
+  }
+ },
+ "runtime_seconds": 48.8,
  "verdict": {
   "status": "validated",
   "summary": "Forward-chained OOS over 7 year-pairs (1871 pairs): Savant xwOBA predicts next-year wOBA at rho 0.4543 vs actual wOBA 0.4108; bootstrap gap CI {'mean': 0.0432, 'lo95': 0.0173, 'hi95': 0.0699}. Shipped VALIDATED: xwOBA is the more forward-stable talent signal (it strips BABIP/sequencing luck), so xHEM+ (the HEM+ ratio scale on xwOBA) is a genuine deserved-offense companion. MLB-only + min-BBE gated, so it is a companion column, not population-complete."
