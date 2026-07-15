@@ -1,0 +1,723 @@
+{
+ "generated_at": "2026-07-15",
+ "eval_line": "eFV 3.5 OD2 TOP-QUANT -- cross-side re-anchor of the pitcher display quantile tail above the display-55 knee (gated owner decision; candidate REJECTED at its pre-registered primary gate)",
+ "question": "can a monotone, pitcher-only remap of the display-grade tail close the joint top-25 hit-minus-pit realized-WAR gap (+3.95) to <= +2.45 with CI90 covering 0, moving top-25 pitcher share from ~37% toward 15-25%?",
+ "protocol": {
+  "folds": [
+   2020,
+   2021,
+   2022,
+   2023
+  ],
+  "fold_guards": {
+   "min_test": 15,
+   "min_train": 60
+  },
+  "lambdas": {
+   "hit": 0.7,
+   "pit": 0.61
+  },
+  "lambda_source": "data/xfv.json meta.live_lambda",
+  "frame": "F-SIDE full_pool_km fold rows (efv_model._sf_pool/_sf_fwd_chain/_sf_quantile_display), production display-map analogue per fold year",
+  "bootstrap": {
+   "reps": 2000,
+   "seed": 20260715,
+   "seed7_sensitivity": "all headline cells re-run at the F-SIDE seed"
+  },
+  "war_metric": "first-6yr summed bWAR, KM-censored (target_censored)",
+  "baseline_reproduction": "top-25 gap +3.95 CI90 [1.59, 6.33] at seed 7 reproduces the standing F-SIDE artifact",
+  "n_fold_rows": 1675,
+  "rows_at_or_over_knee": {
+   "pit": 48,
+   "hit": 90
+  }
+ },
+ "knee_resolution": {
+  "registered_wording": "above the display-grade 55 knee; grades <= 55 byte-identical",
+  "resolution": "knee = raw 52.5, the display-55 boundary (grade >= 52.5 displays as 55 or better under the round-to-nearest eFV scale; identical to the F-SIDE 55_plus_binding cell boundary the skew was registered on). Rows below raw 52.5 (displayed <= 50) stay byte-identical.",
+  "why_not_raw_55": "STRUCTURAL PROOF, verified empirically: every fold's joint top-25 cutoff grade is <= 55.00 (52.99 / 50.00 / 55.00 / 52.66), so any pitcher-only monotone remap anchored at raw 55 keeps every remapped row above the cutoff -- top-25 MEMBERSHIP is invariant and the gate metric is byte-identical (measured: gap 3.95 unchanged for every shrink s in [0.1, 0.9]). The raw-55 knee reading makes the registered gate unreachable by construction."
+ },
+ "baseline_top25": {
+  "n_hit": 63,
+  "n_pit": 37,
+  "pit_share": 0.37,
+  "hit_mean_war": 9.04,
+  "pit_mean_war": 5.09,
+  "gap_mean_diff": 3.95,
+  "gap_ci90": [
+   1.53,
+   6.3
+  ],
+  "gap_mean_se": 1.48,
+  "per_fold": {
+   "2020": {
+    "n_hit": 18,
+    "n_pit": 7,
+    "mean_diff": 4.3
+   },
+   "2021": {
+    "n_hit": 13,
+    "n_pit": 12,
+    "mean_diff": 1.21
+   },
+   "2022": {
+    "n_hit": 13,
+    "n_pit": 12,
+    "mean_diff": 9.4
+   },
+   "2023": {
+    "n_hit": 19,
+    "n_pit": 6,
+    "mean_diff": 4.46
+   }
+  }
+ },
+ "variants": {
+  "a_isotonic_anchored": {
+   "description": "registered default family: per-side isotonic (PAVA) display-grade -> realized-WAR curves on all fold rows; pit tail remapped onto the hitter-anchored curve, knee-anchored (f(52.5)=52.5), min-slope 0.15 anti-collapse floor",
+   "fit": {
+    "family": "isotonic-anchored",
+    "knee": 52.5,
+    "H_knee": 52.66,
+    "pit_support_max": 60.517,
+    "knots": [
+     [
+      52.5,
+      52.5
+     ],
+     [
+      52.75,
+      52.5375
+     ],
+     [
+      53.0,
+      52.575
+     ],
+     [
+      53.25,
+      52.6125
+     ],
+     [
+      53.5,
+      52.65
+     ],
+     [
+      53.75,
+      52.6875
+     ],
+     [
+      54.0,
+      52.725
+     ],
+     [
+      54.25,
+      52.7625
+     ],
+     [
+      54.5,
+      52.8
+     ],
+     [
+      54.75,
+      52.8375
+     ],
+     [
+      55.0,
+      52.875
+     ],
+     [
+      55.25,
+      52.9125
+     ],
+     [
+      55.5,
+      55.878
+     ],
+     [
+      55.75,
+      55.9155
+     ],
+     [
+      56.0,
+      55.953
+     ],
+     [
+      56.25,
+      55.9905
+     ],
+     [
+      56.5,
+      56.028
+     ],
+     [
+      56.75,
+      56.0655
+     ],
+     [
+      57.0,
+      56.103
+     ],
+     [
+      57.25,
+      56.1405
+     ],
+     [
+      57.5,
+      56.178
+     ],
+     [
+      57.75,
+      56.2155
+     ],
+     [
+      58.0,
+      56.253
+     ],
+     [
+      58.25,
+      56.2905
+     ],
+     [
+      58.5,
+      56.328
+     ],
+     [
+      58.75,
+      56.3655
+     ],
+     [
+      59.0,
+      56.403
+     ],
+     [
+      59.25,
+      56.4405
+     ],
+     [
+      59.5,
+      56.478
+     ],
+     [
+      59.75,
+      56.5155
+     ],
+     [
+      60.0,
+      56.553
+     ],
+     [
+      60.25,
+      56.5905
+     ],
+     [
+      60.5,
+      56.628
+     ],
+     [
+      80.0,
+      76.128
+     ]
+    ]
+   },
+   "top25": {
+    "n_hit": 67,
+    "n_pit": 33,
+    "pit_share": 0.33,
+    "hit_mean_war": 9.01,
+    "pit_mean_war": 5.12,
+    "gap_mean_diff": 3.89,
+    "gap_ci90": [
+     1.5,
+     6.37
+    ],
+    "gap_mean_se": 1.482,
+    "per_fold": {
+     "2020": {
+      "n_hit": 20,
+      "n_pit": 5,
+      "mean_diff": 2.56
+     },
+     "2021": {
+      "n_hit": 13,
+      "n_pit": 12,
+      "mean_diff": 1.21
+     },
+     "2022": {
+      "n_hit": 15,
+      "n_pit": 10,
+      "mean_diff": 9.67
+     },
+     "2023": {
+      "n_hit": 19,
+      "n_pit": 6,
+      "mean_diff": 4.46
+     }
+    }
+   },
+   "gates": {
+    "primary_gap_le_2.45": false,
+    "primary_ci90_covers_0": false,
+    "primary_pass": false,
+    "S1_max_allowed": 5.43,
+    "S1_pass": true
+   },
+   "pathology": "the pit isotonic curve is dominated by a single block jump at disp 55.32 (mean WAR 5.48 -> 7.87), so the fitted remap INFLATES the 55.5+ pitcher tail (+5 grades over a 0.2-grade interval) -- a thin-cell artifact, not signal (26 pit rows above raw 55)."
+  },
+  "a_theil_sen_linear_anchored": {
+   "description": "robust member of the registered family: per-side Theil-Sen linear grade->WAR slopes on the 55+ displayed region; f(g) = 52.5 + (b_pit/b_hit) * (g - 52.5)",
+   "fit": {
+    "family": "theil-sen linear-anchored",
+    "knee": 52.5,
+    "n_hit": 90,
+    "n_pit": 48,
+    "hit_slope": 0.4815,
+    "pit_slope": 0.179,
+    "ols_hit_slope": 0.6805,
+    "ols_pit_slope": -0.0197,
+    "slope_ratio": 0.3718
+   },
+   "top25": {
+    "n_hit": 65,
+    "n_pit": 35,
+    "pit_share": 0.35,
+    "hit_mean_war": 9.16,
+    "pit_mean_war": 4.77,
+    "gap_mean_diff": 4.38,
+    "gap_ci90": [
+     1.96,
+     6.74
+    ],
+    "gap_mean_se": 1.469,
+    "per_fold": {
+     "2020": {
+      "n_hit": 18,
+      "n_pit": 7,
+      "mean_diff": 4.3
+     },
+     "2021": {
+      "n_hit": 13,
+      "n_pit": 12,
+      "mean_diff": 1.21
+     },
+     "2022": {
+      "n_hit": 15,
+      "n_pit": 10,
+      "mean_diff": 9.67
+     },
+     "2023": {
+      "n_hit": 19,
+      "n_pit": 6,
+      "mean_diff": 4.46
+     }
+    }
+   },
+   "gates": {
+    "primary_gap_le_2.45": false,
+    "primary_ci90_covers_0": false,
+    "primary_pass": false,
+    "S1_max_allowed": 5.43,
+    "S1_pass": true
+   },
+   "note": "gap WIDENS 3.95 -> 4.38: the boundary swap is outcome-random (drops Kirby 11.9 / Gore 9.2 / Brown 14.4-class pitchers, enters 55.00-flat hitters like Melendez -1.9)."
+  },
+  "a_ols_linear": {
+   "description": "OLS member of the family",
+   "fit_note": "DEGENERATE: pit OLS slope over the 55+ displayed region is -0.0197 (realized WAR does not rise with display grade among 52.5+ pitchers, n=48) -> remap falls back to identity",
+   "hit_slope": 0.6805,
+   "pit_slope": -0.0197
+  },
+  "a_pure_unanchored": {
+   "description": "literal reading (g' = Wh_inv(Wp(g)), level-correcting, order-repaired against untouched below-knee rows)",
+   "top25": {
+    "pit_share": 0.38,
+    "gap_mean_diff": 3.18,
+    "gap_ci90": [
+     0.61,
+     5.68
+    ]
+   },
+   "primary_pass": false
+  },
+  "a3_rank_war_crosswalk": {
+   "description": "pit tail display re-anchored onto the hitter rank_war->display curve, knee-anchored (a 'rank_war parity' literal reading)",
+   "top25": {
+    "n_hit": 59,
+    "n_pit": 41,
+    "pit_share": 0.41,
+    "hit_mean_war": 9.31,
+    "pit_mean_war": 5.22,
+    "gap_mean_diff": 4.09,
+    "gap_ci90": [
+     1.56,
+     6.63
+    ],
+    "gap_mean_se": null
+   },
+   "primary_pass": false,
+   "note": "the knee anchor re-introduces the level offset; share rises to 0.41"
+  },
+  "b_shrink_toward_55": {
+   "description": "registered comparison variant: f(g) = 55 + s*(g-55), pit only",
+   "grid": {
+    "s=0.1": {
+     "pit_share": 0.37,
+     "mean_diff": 3.95,
+     "mean_ci90": [
+      1.53,
+      6.3
+     ]
+    },
+    "s=0.3": {
+     "pit_share": 0.37,
+     "mean_diff": 3.95,
+     "mean_ci90": [
+      1.53,
+      6.3
+     ]
+    },
+    "s=0.5": {
+     "pit_share": 0.37,
+     "mean_diff": 3.95,
+     "mean_ci90": [
+      1.53,
+      6.3
+     ]
+    },
+    "s=0.7": {
+     "pit_share": 0.37,
+     "mean_diff": 3.95,
+     "mean_ci90": [
+      1.53,
+      6.3
+     ]
+    },
+    "s=0.9": {
+     "pit_share": 0.37,
+     "mean_diff": 3.95,
+     "mean_ci90": [
+      1.53,
+      6.3
+     ]
+    }
+   },
+   "primary_pass": false,
+   "verdict": "STRUCTURALLY INERT at its registered knee (see knee_resolution proof): gap byte-identical +3.95 for every s. Cells also thin as pre-registered (26 eval rows / 4-6 live pitchers above raw 55)."
+  }
+ },
+ "lofo_stability": {
+  "ratios_by_held_out_fold": {
+   "2020": 0.5625,
+   "2021": 0.0457,
+   "2022": 0.1127,
+   "2023": 0.7035
+  },
+  "range": [
+   0.0457,
+   0.7035
+  ],
+  "pooled_lofo_top25": {
+   "n_hit": 65,
+   "n_pit": 35,
+   "pit_share": 0.35,
+   "hit_mean_war": 9.16,
+   "pit_mean_war": 4.77,
+   "gap_mean_diff": 4.38,
+   "gap_ci90": [
+    1.96,
+    6.74
+   ],
+   "gap_mean_se": 1.469,
+   "per_fold": {
+    "2020": {
+     "n_hit": 18,
+     "n_pit": 7,
+     "mean_diff": 4.3
+    },
+    "2021": {
+     "n_hit": 13,
+     "n_pit": 12,
+     "mean_diff": 1.21
+    },
+    "2022": {
+     "n_hit": 15,
+     "n_pit": 10,
+     "mean_diff": 9.67
+    },
+    "2023": {
+     "n_hit": 19,
+     "n_pit": 6,
+     "mean_diff": 4.46
+    }
+   }
+  },
+  "gates": {
+   "primary_gap_le_2.45": false,
+   "primary_ci90_covers_0": false,
+   "primary_pass": false,
+   "S1_max_allowed": 5.43,
+   "S1_pass": true
+  },
+  "reading": "the pitcher tail carries no stable grade->outcome slope: the fitted cross-side ratio swings 15x across folds."
+ },
+ "knife_edge_audit": {
+  "description": "exhaustive shrink grid s in [0.00, 0.10] step 0.01 at knee 52.5 (pit only), both seeds",
+  "grid": {
+   "s=0.00": {
+    "pit_share": 0.16,
+    "gap": 3.57,
+    "ci90": [
+     1.09,
+     5.94
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.01": {
+    "pit_share": 0.16,
+    "gap": 2.67,
+    "ci90": [
+     -0.07,
+     5.3
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.02": {
+    "pit_share": 0.16,
+    "gap": 2.67,
+    "ci90": [
+     -0.07,
+     5.3
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.03": {
+    "pit_share": 0.17,
+    "gap": 2.63,
+    "ci90": [
+     -0.02,
+     5.31
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.04": {
+    "pit_share": 0.23,
+    "gap": 2.2,
+    "ci90": [
+     -0.36,
+     4.73
+    ],
+    "pass_seed_gate": true,
+    "pass_seed7": true
+   },
+   "s=0.05": {
+    "pit_share": 0.23,
+    "gap": 2.2,
+    "ci90": [
+     -0.36,
+     4.73
+    ],
+    "pass_seed_gate": true,
+    "pass_seed7": true
+   },
+   "s=0.06": {
+    "pit_share": 0.29,
+    "gap": 2.9,
+    "ci90": [
+     0.45,
+     5.38
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.07": {
+    "pit_share": 0.33,
+    "gap": 3.89,
+    "ci90": [
+     1.5,
+     6.37
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.08": {
+    "pit_share": 0.33,
+    "gap": 3.89,
+    "ci90": [
+     1.5,
+     6.37
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.09": {
+    "pit_share": 0.33,
+    "gap": 3.89,
+    "ci90": [
+     1.5,
+     6.37
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   },
+   "s=0.10": {
+    "pit_share": 0.33,
+    "gap": 3.89,
+    "ci90": [
+     1.5,
+     6.37
+    ],
+    "pass_seed_gate": false,
+    "pass_seed7": false
+   }
+  },
+  "reading": "the ONLY passing configurations are s in {0.04, 0.05} (gap 2.20, share 0.23): a 0.02-wide window, produced by NO registered fitting procedure, whose pass pivots on single-player membership luck (Jeremy Pena +27.7 WAR entering; Deivi Garcia/Sixto exiting). s=0.03 fails (2.63), s=0.06 fails (2.90). Selecting s from this grid would be gate-tuning -- the exact failure mode the 2026-07-14 lambda-raise retraction taught."
+ },
+ "gates": {
+  "primary": {
+   "rule": "joint top-25 hit-minus-pit realized-WAR gap <= +2.45 AND CI90 covers 0 under the candidate map (seed 20260715, 2000 reps)",
+   "best_fitted_candidate": "a_theil_sen_linear_anchored",
+   "result_gap": 4.38,
+   "result_ci90": [
+    1.96,
+    6.74
+   ],
+   "pass": false,
+   "all_fitted_variants_fail": true
+  },
+  "S1_top25_no_widening": {
+   "rule": "gap must not increase by > 1 bootstrap SE (baseline 3.95 + 1.47)",
+   "max_allowed": 5.43,
+   "ts_result": 4.38,
+   "pass": true,
+   "note": "irrelevant given the primary FAIL; stamped for completeness"
+  },
+  "S2_hit_no_harm": {
+   "rule": "hit pooled blend Spearman within 0.0023 of baseline",
+   "result": "PASS BY CONSTRUCTION + asserted: hit rows byte-identical in the offline replication (churn assertions)",
+   "pass": true
+  },
+  "S3_pit_bucket_logloss": {
+   "rule": "pit BENCH/GOOD bucket log-loss <= +1.0% relative",
+   "result": "PASS BY CONSTRUCTION + asserted: p_bucket / p_bust key off the realized grade upstream of the display map; byte-identical in the offline replication",
+   "pass": true
+  },
+  "S4_midband_pit_outperformance": {
+   "rule": "rank_war-frame 51-100 / 101-200 / equal-FV40 mean diffs must not flip sign",
+   "cells": {
+    "rank_war_051-100": -1.0,
+    "rank_war_101-200": -0.47,
+    "equal_fv40": -0.21
+   },
+   "pass": true,
+   "note": "cells are display-map-independent (rank_war + consensus FV inputs untouched); restamped, all negative"
+  },
+  "S5_fold_counts": {
+   "hit": {
+    "2020": {
+     "n_train": 844,
+     "n_test": 169
+    },
+    "2021": {
+     "n_train": 1013,
+     "n_test": 127
+    },
+    "2022": {
+     "n_train": 1140,
+     "n_test": 262
+    },
+    "2023": {
+     "n_train": 1402,
+     "n_test": 259
+    }
+   },
+   "pit": {
+    "2020": {
+     "n_train": 893,
+     "n_test": 204
+    },
+    "2021": {
+     "n_train": 1097,
+     "n_test": 152
+    },
+    "2022": {
+     "n_train": 1249,
+     "n_test": 234
+    },
+    "2023": {
+     "n_train": 1483,
+     "n_test": 268
+    }
+   }
+  }
+ },
+ "equal_display_55plus": {
+  "before": {
+   "n_hit": 90,
+   "n_pit": 48,
+   "pit_share": null,
+   "hit_mean_war": 8.07,
+   "pit_mean_war": 5.11,
+   "gap_mean_diff": 2.96,
+   "gap_ci90": [
+    0.98,
+    5.01
+   ],
+   "gap_mean_se": 1.222
+  },
+  "after_ts_candidate": {
+   "n_hit": 90,
+   "n_pit": 48,
+   "pit_share": null,
+   "hit_mean_war": 8.07,
+   "pit_mean_war": 5.11,
+   "gap_mean_diff": 2.96,
+   "gap_ci90": [
+    0.98,
+    5.01
+   ],
+   "gap_mean_se": 1.222
+  }
+ },
+ "reference_rank_war_top25": {
+  "n_hit": 87,
+  "n_pit": 13,
+  "pit_share": 0.13,
+  "hit_mean_war": 8.26,
+  "pit_mean_war": 6.51,
+  "gap_mean_diff": 1.75,
+  "gap_ci90": [
+   -1.29,
+   4.68
+  ],
+  "gap_mean_se": null
+ },
+ "verdict": "no_ship",
+ "verdict_detail": "REJECTED at the pre-registered primary gate. Variant (b) is structurally inert at its registered knee (cannot change top-25 membership; gap byte-identical). Variant (a) at the only workable knee (display-55 boundary, raw 52.5) fails in every FITTED operationalization: isotonic-anchored gap 3.89 (share 0.33), Theil-Sen linear gap 4.38 (WIDENS; share 0.35), OLS degenerate (pit slope -0.02 -> identity), pure unanchored 3.18 (share 0.38), rank_war crosswalk 4.09 (share 0.41). The gate-passing s=0.04-0.05 shrink exists but is un-fitted, knife-edged (0.02-wide window) and single-player-lucky -- shipping it would be gate-tuning. ROOT CAUSE: above the display-55 knee, pitcher display grades carry no realized-WAR gradient (OLS -0.02, Theil-Sen +0.18 with LOFO ratio range 0.05-0.70, isotonic curve = one thin-cell jump). No monotone relabeling of an outcome-flat tail can honestly close a gap that is driven by WHICH pitchers reach the tail, not by what number they wear.",
+ "path_forward": "The parity target is real and already achieved by the raw rank_war frame (top-25 pit share 0.13, gap 1.75, CI90 [-1.29, 4.68] covers 0). The skew is a display-map CONSTRUCTION artifact: per-side quantile mapping re-inflates pit tail share 2.47x (F-SIDE share_inflation_display_vs_raw). The honest instrument is a JOINT cross-side quantile display map above the knee (one pooled consensus-FV target, ranked by cross-side rank_war) -- but that changes HITTER display grades too, violating this decision's S2/byte-identity constraints, so it needs a new owner registration. Alternatively wait for resolved 2024+ folds to give the pit tail curves real support.",
+ "ship": {
+  "enabled": false,
+  "gate_pass": false,
+  "note": "efv_topquant.active_remap() requires enabled AND gate_pass true; with this artifact the production hook is a no-op (byte-identical output).",
+  "candidate_if_reregistered": {
+   "family": "theil_sen_linear_anchored",
+   "knee_raw": 52.5,
+   "slope_ratio": 0.3718
+  }
+ },
+ "churn_report": {
+  "status": "HYPOTHETICAL - candidate FAILED the pre-registered primary gate; NOT landing",
+  "live_board_top25_pit_share": [
+   0.28,
+   0.28
+  ],
+  "n_changed": {
+   "live_pit": 6,
+   "resolved_pit": 149,
+   "backgrade_pit": 106
+  },
+  "full_report": "workspace churn_report.json"
+ }
+}

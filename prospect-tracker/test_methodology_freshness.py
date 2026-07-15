@@ -208,6 +208,11 @@ MODEL_GLOSSARY = {
     # monotone-sanity fail + ablation showed population-recal, not age);
     # rendered nowhere; mandatory re-run at 2024-fold trainability.
     "xfv_bucket_age_head": "internal",
+    # TOP-QUANT (2026-07-15, owner-approved attempt): loss ledger - the top-25
+    # cutoff sits below the 55 knee so pit-only remaps are structurally inert;
+    # gated-inert hooks shipped; honest path = a JOINT cross-side display map
+    # under a NEW owner registration. Rendered nowhere.
+    "xfv_topquant": "internal",
 }
 
 

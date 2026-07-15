@@ -362,6 +362,17 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
 
+    # --- OD2 TOP-QUANT (2026-07-15): cross-side re-anchor of the PITCHER ---
+    # display tail above the display-55 knee. GATED INERT: apply_display_remap
+    # is a no-op unless data/xfv_topquant_eval.json stamps a PASSING primary
+    # gate AND ship.enabled -- the 2026-07-15 eval REJECTED every fitted
+    # candidate (pitcher tail grades carry no realized-WAR gradient), so this
+    # hook currently changes nothing (byte-identical output). Placed BEFORE the
+    # surplus re-price so an activated remap flows into surplus_mm.
+    if scored:
+        from efv_topquant import apply_display_remap
+        apply_display_remap(scored, is_pit)
+
     # --- re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade --------
     # Owner: eFV surplus must reflect the 20-80 grade the site shows (consensus-tier
     # market value), consistent with /projections/. Runs AFTER the quantile map since
@@ -676,6 +687,13 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    # OD2 TOP-QUANT pitcher-tail re-anchor hook -- GATED INERT (see run()): no-op
+    # until data/xfv_topquant_eval.json stamps ship.enabled + gate_pass (the
+    # 2026-07-15 eval REJECTED the candidate). Before the surplus re-price.
+    if scored:
+        from efv_topquant import apply_display_remap
+        apply_display_remap(scored, is_pit)
 
     # Re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade (see run()): eFV surplus
     # reflects the 20-80 grade shown, consistent site-wide + with /projections/. Star/bust

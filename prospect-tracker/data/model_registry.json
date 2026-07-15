@@ -1541,6 +1541,17 @@
    "eval_artifact": "data/xfv_bucket_age_head_eval.json",
    "verdict": "deprecated",
    "notes": "LOSS LEDGER (clean fail). G1-G3 passed decisively but G4 failed structurally (12 band-seam stochastic-ordering violations, worst +0.076 P(bust) at fv32.5->32.75) AND the ablation is decisive: a covariate-free grade-band recal dominates the age head everywhere (pooled 0.179 vs 0.307) - the gains were population recalibration, the effect class the CLOSED X-ISO line blocks, not age signal. Moore motivation partially failed replication (fv45/25+ n=8, empirical 0.750 not 0.81; within-fv45 the age-bust gradient runs the WRONG way; the real signal is at fv40/25+, bust 0.988 n=81). MANDATORY RE-RUN marker at 2024-debuted-fold trainability. Any redesign (hierarchical shrink + per-age isotonic repair) needs fresh pre-registration. The reliever-ceiling DIAL is unaffected (rank overlay, not bucket odds)."
+  },
+  {
+   "model_id": "xfv_topquant",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger; the OD2 cross-side display-tail re-anchor line + a gated-inert production hook",
+   "predicts": "n/a - gated owner decision OD2 TOP-QUANT: pitcher-only re-anchor of the eFV display quantile tail above the display-55 knee onto a cross-side realized-WAR scale; candidate REJECTED at the pre-registered primary gate",
+   "champion": "shipped per-side quantile display map (unchanged); efv_topquant.apply_display_remap hook lands INERT (no-op while data/xfv_topquant_eval.json ship.gate_pass is false)",
+   "baseline": "variants (a) isotonic-anchored / Theil-Sen linear-anchored / OLS / pure unanchored / rank_war crosswalk and (b) one-parameter shrink toward 55, on the F-SIDE full-pool KM folds 2020-2023, SEED=20260715, 2000 reps",
+   "metric": "pre-registered primary: joint top-25 hit-minus-pit realized first-6yr WAR gap <= +2.45 AND CI90 covers 0 under the candidate map; plus F-SIDE standing gates S1-S5",
+   "eval_artifact": "data/xfv_topquant_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER (owner approved the attempt; the gate said no). The 55 knee is unreachable by construction (every fold's joint top-25 cutoff <= 55.00), so pitcher-only monotone remaps cannot change top-25 membership; at the workable 52.5 knee every FITTED candidate failed (isotonic 3.89, Theil-Sen WIDENS to 4.38, OLS degenerate). An unregistered knife-edge s=0.04-0.05 window passed and was REFUSED as gate-tuning (lambda-raise precedent). Root cause: the pit display tail is outcome-flat; the skew is the per-side map's 2.47x share re-inflation. HONEST PATH RECORDED: a JOINT cross-side quantile display map (touches hitter grades, needs a NEW owner registration) or resolved 2024+ folds. Gated-inert hooks shipped in efv_score + efv_topquant.py (byte-identity verified, 0 of 2202 live pit rows changed); activation requires ship.enabled AND ship.gate_pass in the eval artifact."
   }
  ],
  "problems": []

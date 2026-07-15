@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 
-**98 models.** Verdicts: validated: 25, provisional: 44, unvalidated: 3, deprecated: 26.
+**99 models.** Verdicts: validated: 25, provisional: 44, unvalidated: 3, deprecated: 27.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -108,6 +108,7 @@ stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 | `hem_age_layer` | model-dev artifact (rendered nowhere) - T1-8 X-H3-AGE for... | n/a - gated experiment (2026-07-15), wave 3b | incumbents stand | pre-registered candidate arms | paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20... | **deprecated** | `data/hem_age_layer_eval.json` | - | - |
 | `xfv_role_ceiling` | live eFV board overlay - 'Reliever ceiling' factor chip | n/a - owner-directed policy dial (2026-07-15): bounded model-leg haircut for age-25+ RP-designated prospects with model war6 >=... | overlay ON (owner-approved via AskUserQuestion, 'Dial + calibration gate') | no overlay | class prior vs model enthusiasm (0.17 mean WAR / 0% star, n=284); forward kil... | **provisional** | `data/xfv_role_ceiling_eval.json` | - | - |
 | `xfv_bucket_age_head` | model-dev artifact (rendered nowhere) - pit grade+age cov... | n/a - gated experiment (2026-07-15): p(bucket \| grade_band, age_band), pit-only, below the grade-monotone constraint | incumbent p_bucket_given_fv - STANDS (byte-identical, verified) | grade+age head, forward-chained 2020-2023, seed 20260715 | 4 gates: pooled log-loss, E-ISO4 bench/good guard, age-25+ subset, grade mono... | **deprecated** | `data/xfv_bucket_age_head_eval.json` | - | - |
+| `xfv_topquant` | model-dev artifact (rendered nowhere) - loss ledger; the... | n/a - gated owner decision OD2 TOP-QUANT: pitcher-only re-anchor of the eFV display quantile tail above the display-55 knee ont... | shipped per-side quantile display map (unchanged); efv_topquant.apply_display... | variants (a) isotonic-anchored / Theil-Sen linear-anchored / OLS / pure unanc... | pre-registered primary: joint top-25 hit-minus-pit realized first-6yr WAR gap... | **deprecated** | `data/xfv_topquant_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 
