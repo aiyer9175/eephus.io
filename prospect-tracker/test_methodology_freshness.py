@@ -167,6 +167,20 @@ MODEL_GLOSSARY = {
     "xrem_plus": ["xrem_plus"],
     "xsem_plus": ["xsem_plus"],
     "leverage_board": ["wpa", "clutch", "pli"],
+    # Improvement program 2026-07-15 (both workflow reports): wave-1 loss
+    # ledgers (decayed multi-year xHEM+; decayed 3yr REM+/SEM+ blends), the
+    # E-LAMBDA parity adjudication (restamp blocked, owner decision queued),
+    # the per-side alpha-criterion close-out, and the two eFV measurement
+    # instruments (F-SIDE standing side-fairness eval line; F-WATCH frozen
+    # promoted-pitcher cohort with a kill rule). All model-dev artifacts,
+    # rendered nowhere; user-facing methodology stays under the xfv /
+    # xhem_plus / rem_plus_3yr / sem_plus_3yr glossary entries.
+    "xhem_multiyear_decay": "internal",
+    "rem_sem_3yr_decay": "internal",
+    "xfv_lambda_parity": "internal",
+    "xfv_alpha_criterion_perside": "internal",
+    "xfv_side_fairness": "internal",
+    "xfv_promo_watch": "internal",
 }
 
 
