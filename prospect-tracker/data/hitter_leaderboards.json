@@ -1,16 +1,16 @@
 {
- "generated_at": "2026-07-14",
+ "generated_at": "2026-07-15",
  "season": 2026,
- "as_of": "2026-07-14",
+ "as_of": "2026-07-15",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
   "n_pairs": 3372,
   "seasons": 12,
-  "rho_hem_plus": 0.4121,
-  "rho_woba": 0.4089,
-  "rho_ops": 0.411,
-  "rho_avg": 0.2348,
+  "rho_hem_plus": 0.4119,
+  "rho_woba": 0.4087,
+  "rho_ops": 0.4108,
+  "rho_avg": 0.2347,
   "disclaimer": "HEM+ predicts next-year offensive rate (wOBA) out of sample. Volume (PA), baserunning (SB), and the slash line are shown as context because HEM+ is offensive-rate skill, not counting or speed value."
  },
  "pool": {
@@ -46,12 +46,13 @@
    "bb_pct": 0.15,
    "k_pct": 0.1714,
    "babip": 0.321,
-   "hem_plus_3yr": 144,
-   "hem_plus_3yr_pct": 97,
+   "hem_plus_3yr": 145,
+   "hem_plus_3yr_pct": 98,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 208,
    "xwoba": 0.474,
-   "luck_gap": 46
+   "luck_gap": 46,
+   "fwdhem_plus": 167
   },
   {
    "key": "695578",
@@ -78,12 +79,13 @@
    "bb_pct": 0.174,
    "k_pct": 0.2841,
    "babip": 0.35,
-   "hem_plus_3yr": 124,
-   "hem_plus_3yr_pct": 92,
+   "hem_plus_3yr": 127,
+   "hem_plus_3yr_pct": 94,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 182,
    "xwoba": 0.437,
-   "luck_gap": 32
+   "luck_gap": 32,
+   "fwdhem_plus": 152
   },
   {
    "key": "656941",
@@ -111,11 +113,12 @@
    "k_pct": 0.3478,
    "babip": 0.326,
    "hem_plus_3yr": 147,
-   "hem_plus_3yr_pct": 98,
+   "hem_plus_3yr_pct": 99,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 140,
    "xwoba": 0.378,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 133
   },
   {
    "key": "665742",
@@ -147,7 +150,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 177,
    "xwoba": 0.431,
-   "luck_gap": 30
+   "luck_gap": 30,
+   "fwdhem_plus": 149
   },
   {
    "key": "808959",
@@ -174,12 +178,13 @@
    "bb_pct": 0.1776,
    "k_pct": 0.3359,
    "babip": 0.276,
-   "hem_plus_3yr": 149,
-   "hem_plus_3yr_pct": 99,
+   "hem_plus_3yr": 145,
+   "hem_plus_3yr_pct": 97,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 134,
    "xwoba": 0.37,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 130
   },
   {
    "key": "700250",
@@ -206,12 +211,13 @@
    "bb_pct": 0.1231,
    "k_pct": 0.2333,
    "babip": 0.297,
-   "hem_plus_3yr": 120,
-   "hem_plus_3yr_pct": 88,
+   "hem_plus_3yr": 124,
+   "hem_plus_3yr_pct": 92,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 142,
    "xwoba": 0.381,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 133
   },
   {
    "key": "691406",
@@ -243,7 +249,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 136,
    "xwoba": 0.372,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 129
   },
   {
    "key": "660271",
@@ -270,12 +277,13 @@
    "bb_pct": 0.1478,
    "k_pct": 0.2291,
    "babip": 0.339,
-   "hem_plus_3yr": 156,
+   "hem_plus_3yr": 157,
    "hem_plus_3yr_pct": 99,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 167,
    "xwoba": 0.416,
-   "luck_gap": 26
+   "luck_gap": 26,
+   "fwdhem_plus": 142
   },
   {
    "key": "701762",
@@ -302,12 +310,13 @@
    "bb_pct": 0.1845,
    "k_pct": 0.3155,
    "babip": 0.375,
-   "hem_plus_3yr": 149,
+   "hem_plus_3yr": 147,
    "hem_plus_3yr_pct": 98,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 141,
    "xwoba": 0.379,
-   "luck_gap": 2
+   "luck_gap": 2,
+   "fwdhem_plus": 131
   },
   {
    "key": "592450",
@@ -339,7 +348,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 166,
    "xwoba": 0.415,
-   "luck_gap": 30
+   "luck_gap": 30,
+   "fwdhem_plus": 140
   },
   {
    "key": "691718",
@@ -366,12 +376,13 @@
    "bb_pct": 0.1124,
    "k_pct": 0.2584,
    "babip": 0.359,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 53,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 60,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 130,
    "xwoba": 0.364,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 125
   },
   {
    "key": "545361",
@@ -398,12 +409,13 @@
    "bb_pct": 0.1893,
    "k_pct": 0.2458,
    "babip": 0.275,
-   "hem_plus_3yr": 129,
+   "hem_plus_3yr": 128,
    "hem_plus_3yr_pct": 96,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 162,
    "xwoba": 0.409,
-   "luck_gap": 28
+   "luck_gap": 28,
+   "fwdhem_plus": 138
   },
   {
    "key": "575929",
@@ -435,7 +447,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 148,
    "xwoba": 0.39,
-   "luck_gap": 15
+   "luck_gap": 15,
+   "fwdhem_plus": 132
   },
   {
    "key": "699013",
@@ -464,7 +477,8 @@
    "babip": 0.404,
    "xhem_plus": 137,
    "xwoba": 0.374,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 127
   },
   {
    "key": "641343",
@@ -491,12 +505,13 @@
    "bb_pct": 0.1358,
    "k_pct": 0.2572,
    "babip": 0.323,
-   "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 74,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 80,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 131,
    "xwoba": 0.366,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 124
   },
   {
    "key": "621439",
@@ -528,7 +543,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 121,
    "xwoba": 0.351,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 118
   },
   {
    "key": "668804",
@@ -555,12 +571,13 @@
    "bb_pct": 0.1469,
    "k_pct": 0.2227,
    "babip": 0.348,
-   "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 69,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 73,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 133,
    "xwoba": 0.369,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 124
   },
   {
    "key": "547180",
@@ -587,12 +604,13 @@
    "bb_pct": 0.1471,
    "k_pct": 0.201,
    "babip": 0.28,
-   "hem_plus_3yr": 129,
+   "hem_plus_3yr": 128,
    "hem_plus_3yr_pct": 96,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 149,
    "xwoba": 0.391,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 131
   },
   {
    "key": "691023",
@@ -619,12 +637,13 @@
    "bb_pct": 0.081,
    "k_pct": 0.2481,
    "babip": 0.346,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 34,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 36,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 137,
    "xwoba": 0.374,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 125
   },
   {
    "key": "666018",
@@ -651,12 +670,13 @@
    "bb_pct": 0.1256,
    "k_pct": 0.2167,
    "babip": 0.355,
-   "hem_plus_3yr": 122,
-   "hem_plus_3yr_pct": 90,
+   "hem_plus_3yr": 123,
+   "hem_plus_3yr_pct": 92,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 136,
    "xwoba": 0.372,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 125
   },
   {
    "key": "696100",
@@ -684,11 +704,12 @@
    "k_pct": 0.3218,
    "babip": 0.307,
    "hem_plus_3yr": 115,
-   "hem_plus_3yr_pct": 81,
+   "hem_plus_3yr_pct": 82,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 109,
    "xwoba": 0.334,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 113
   },
   {
    "key": "596142",
@@ -717,7 +738,8 @@
    "babip": 0.223,
    "xhem_plus": 137,
    "xwoba": 0.374,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 125
   },
   {
    "key": "650490",
@@ -744,12 +766,13 @@
    "bb_pct": 0.0939,
    "k_pct": 0.1371,
    "babip": 0.349,
-   "hem_plus_3yr": 117,
-   "hem_plus_3yr_pct": 84,
+   "hem_plus_3yr": 118,
+   "hem_plus_3yr_pct": 85,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 133,
    "xwoba": 0.368,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 123
   },
   {
    "key": "680777",
@@ -778,7 +801,8 @@
    "babip": 0.31,
    "xhem_plus": 148,
    "xwoba": 0.389,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 129
   },
   {
    "key": "668709",
@@ -805,12 +829,13 @@
    "bb_pct": 0.1373,
    "k_pct": 0.1972,
    "babip": 0.247,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 56,
+   "hem_plus_3yr": 106,
+   "hem_plus_3yr_pct": 62,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 133,
    "xwoba": 0.368,
-   "luck_gap": 8
+   "luck_gap": 8,
+   "fwdhem_plus": 123
   },
   {
    "key": "678246",
@@ -837,12 +862,13 @@
    "bb_pct": 0.1369,
    "k_pct": 0.1638,
    "babip": 0.243,
-   "hem_plus_3yr": 102,
+   "hem_plus_3yr": 101,
    "hem_plus_3yr_pct": 51,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 156,
    "xwoba": 0.401,
-   "luck_gap": 32
+   "luck_gap": 32,
+   "fwdhem_plus": 133
   },
   {
    "key": "687462",
@@ -870,11 +896,12 @@
    "k_pct": 0.1356,
    "babip": 0.295,
    "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 79,
+   "hem_plus_3yr_pct": 80,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 112,
    "xwoba": 0.339,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 113
   },
   {
    "key": "621566",
@@ -901,12 +928,13 @@
    "bb_pct": 0.0962,
    "k_pct": 0.238,
    "babip": 0.296,
-   "hem_plus_3yr": 121,
-   "hem_plus_3yr_pct": 88,
+   "hem_plus_3yr": 120,
+   "hem_plus_3yr_pct": 89,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 126,
    "xwoba": 0.358,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 119
   },
   {
    "key": "571970",
@@ -933,12 +961,13 @@
    "bb_pct": 0.119,
    "k_pct": 0.2351,
    "babip": 0.299,
-   "hem_plus_3yr": 129,
-   "hem_plus_3yr_pct": 97,
+   "hem_plus_3yr": 128,
+   "hem_plus_3yr_pct": 96,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 127,
    "xwoba": 0.36,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 119
   },
   {
    "key": "678554",
@@ -965,12 +994,13 @@
    "bb_pct": 0.1115,
    "k_pct": 0.1858,
    "babip": 0.251,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 33,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 41,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 131,
    "xwoba": 0.365,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 121
   },
   {
    "key": "682928",
@@ -998,11 +1028,12 @@
    "k_pct": 0.2152,
    "babip": 0.305,
    "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 52,
+   "hem_plus_3yr_pct": 53,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 113,
    "xwoba": 0.34,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 113
   },
   {
    "key": "624413",
@@ -1034,7 +1065,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 138,
    "xwoba": 0.376,
-   "luck_gap": 17
+   "luck_gap": 17,
+   "fwdhem_plus": 124
   },
   {
    "key": "518692",
@@ -1062,11 +1094,12 @@
    "k_pct": 0.1593,
    "babip": 0.317,
    "hem_plus_3yr": 123,
-   "hem_plus_3yr_pct": 92,
+   "hem_plus_3yr_pct": 91,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 143,
    "xwoba": 0.383,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 126
   },
   {
    "key": "682985",
@@ -1094,11 +1127,12 @@
    "k_pct": 0.27,
    "babip": 0.381,
    "hem_plus_3yr": 118,
-   "hem_plus_3yr_pct": 86,
+   "hem_plus_3yr_pct": 87,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 130,
    "xwoba": 0.364,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 120
   },
   {
    "key": "682848",
@@ -1127,7 +1161,8 @@
    "babip": 0.318,
    "xhem_plus": 131,
    "xwoba": 0.366,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 121
   },
   {
    "key": "665833",
@@ -1159,7 +1194,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 126,
    "xwoba": 0.358,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 118
   },
   {
    "key": "656811",
@@ -1186,12 +1222,13 @@
    "bb_pct": 0.0767,
    "k_pct": 0.2183,
    "babip": 0.33,
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 77,
+   "hem_plus_3yr": 115,
+   "hem_plus_3yr_pct": 82,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 108,
    "xwoba": 0.333,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 110
   },
   {
    "key": "686948",
@@ -1219,11 +1256,12 @@
    "k_pct": 0.2226,
    "babip": 0.289,
    "hem_plus_3yr": 117,
-   "hem_plus_3yr_pct": 83,
+   "hem_plus_3yr_pct": 84,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 141,
    "xwoba": 0.379,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 124
   },
   {
    "key": "689414",
@@ -1251,11 +1289,12 @@
    "k_pct": 0.0877,
    "babip": 0.281,
    "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 71,
+   "hem_plus_3yr_pct": 69,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": -27
+   "luck_gap": -27,
+   "fwdhem_plus": 103
   },
   {
    "key": "681198",
@@ -1282,12 +1321,13 @@
    "bb_pct": 0.1042,
    "k_pct": 0.138,
    "babip": 0.32,
-   "hem_plus_3yr": 117,
-   "hem_plus_3yr_pct": 83,
+   "hem_plus_3yr": 119,
+   "hem_plus_3yr_pct": 87,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 101,
    "xwoba": 0.323,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 107
   },
   {
    "key": "686527",
@@ -1314,12 +1354,13 @@
    "bb_pct": 0.0866,
    "k_pct": 0.2087,
    "babip": 0.28,
-   "hem_plus_3yr": 113,
+   "hem_plus_3yr": 112,
    "hem_plus_3yr_pct": 77,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 136,
    "xwoba": 0.372,
-   "luck_gap": 17
+   "luck_gap": 17,
+   "fwdhem_plus": 122
   },
   {
    "key": "672960",
@@ -1346,12 +1387,13 @@
    "bb_pct": 0.0942,
    "k_pct": 0.3089,
    "babip": 0.294,
-   "hem_plus_3yr": 115,
-   "hem_plus_3yr_pct": 81,
+   "hem_plus_3yr": 118,
+   "hem_plus_3yr_pct": 86,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 109
   },
   {
    "key": "805808",
@@ -1378,12 +1420,13 @@
    "bb_pct": 0.1453,
    "k_pct": 0.1356,
    "babip": 0.318,
-   "hem_plus_3yr": 117,
-   "hem_plus_3yr_pct": 83,
+   "hem_plus_3yr": 118,
+   "hem_plus_3yr_pct": 86,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 131,
    "xwoba": 0.366,
-   "luck_gap": 13
+   "luck_gap": 13,
+   "fwdhem_plus": 120
   },
   {
    "key": "592626",
@@ -1411,11 +1454,12 @@
    "k_pct": 0.2245,
    "babip": 0.254,
    "hem_plus_3yr": 120,
-   "hem_plus_3yr_pct": 88,
+   "hem_plus_3yr_pct": 89,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 121,
    "xwoba": 0.352,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 115
   },
   {
    "key": "666160",
@@ -1443,11 +1487,12 @@
    "k_pct": 0.2555,
    "babip": 0.312,
    "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_pct": 45,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": -24
+   "luck_gap": -24,
+   "fwdhem_plus": 103
   },
   {
    "key": "668227",
@@ -1474,12 +1519,13 @@
    "bb_pct": 0.0976,
    "k_pct": 0.2164,
    "babip": 0.349,
-   "hem_plus_3yr": 108,
-   "hem_plus_3yr_pct": 66,
+   "hem_plus_3yr": 109,
+   "hem_plus_3yr_pct": 71,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 123,
    "xwoba": 0.354,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 116
   },
   {
    "key": "682829",
@@ -1506,12 +1552,13 @@
    "bb_pct": 0.0971,
    "k_pct": 0.2853,
    "babip": 0.352,
-   "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 69,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 71,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 126,
    "xwoba": 0.359,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 117
   },
   {
    "key": "679822",
@@ -1540,7 +1587,8 @@
    "babip": 0.329,
    "xhem_plus": 127,
    "xwoba": 0.36,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 117
   },
   {
    "key": "650402",
@@ -1569,7 +1617,8 @@
    "babip": 0.328,
    "xhem_plus": 114,
    "xwoba": 0.342,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 112
   },
   {
    "key": "671277",
@@ -1596,12 +1645,13 @@
    "bb_pct": 0.047,
    "k_pct": 0.1505,
    "babip": 0.28,
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 43,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 45,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 127,
    "xwoba": 0.36,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 117
   },
   {
    "key": "673548",
@@ -1633,7 +1683,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.328,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 107
   },
   {
    "key": "665052",
@@ -1687,11 +1738,12 @@
    "k_pct": 0.2202,
    "babip": 0.282,
    "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 80,
+   "hem_plus_3yr_pct": 81,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 127,
    "xwoba": 0.36,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 117
   },
   {
    "key": "671056",
@@ -1718,12 +1770,13 @@
    "bb_pct": 0.1206,
    "k_pct": 0.1608,
    "babip": 0.279,
-   "hem_plus_3yr": 121,
-   "hem_plus_3yr_pct": 89,
+   "hem_plus_3yr": 119,
+   "hem_plus_3yr_pct": 88,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 116,
    "xwoba": 0.345,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 113
   },
   {
    "key": "669134",
@@ -1776,12 +1829,13 @@
    "bb_pct": 0.1087,
    "k_pct": 0.2101,
    "babip": 0.284,
-   "hem_plus_3yr": 112,
-   "hem_plus_3yr_pct": 74,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 79,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 123,
    "xwoba": 0.354,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 115
   },
   {
    "key": "502671",
@@ -1813,7 +1867,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 103
   },
   {
    "key": "672515",
@@ -1840,12 +1895,13 @@
    "bb_pct": 0.1164,
    "k_pct": 0.1564,
    "babip": 0.34,
-   "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 63,
+   "hem_plus_3yr": 108,
+   "hem_plus_3yr_pct": 65,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 131,
    "xwoba": 0.365,
-   "luck_gap": 17
+   "luck_gap": 17,
+   "fwdhem_plus": 118
   },
   {
    "key": "805811",
@@ -1872,9 +1928,13 @@
    "bb_pct": 0.129,
    "k_pct": 0.2442,
    "babip": 0.336,
+   "hem_plus_3yr": 111,
+   "hem_plus_3yr_pct": 74,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 136,
    "xwoba": 0.373,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 121
   },
   {
    "key": "660670",
@@ -1902,11 +1962,12 @@
    "k_pct": 0.2203,
    "babip": 0.304,
    "hem_plus_3yr": 128,
-   "hem_plus_3yr_pct": 95,
+   "hem_plus_3yr_pct": 97,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 140,
    "xwoba": 0.378,
-   "luck_gap": 27
+   "luck_gap": 27,
+   "fwdhem_plus": 122
   },
   {
    "key": "668930",
@@ -1933,12 +1994,13 @@
    "bb_pct": 0.1298,
    "k_pct": 0.2476,
    "babip": 0.335,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 54,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 58,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 119,
    "xwoba": 0.348,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 113
   },
   {
    "key": "802139",
@@ -1965,12 +2027,13 @@
    "bb_pct": 0.0983,
    "k_pct": 0.1572,
    "babip": 0.283,
-   "hem_plus_3yr": 116,
-   "hem_plus_3yr_pct": 82,
+   "hem_plus_3yr": 113,
+   "hem_plus_3yr_pct": 78,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 121,
    "xwoba": 0.351,
-   "luck_gap": 8
+   "luck_gap": 8,
+   "fwdhem_plus": 114
   },
   {
    "key": "680664",
@@ -2049,12 +2112,13 @@
    "bb_pct": 0.1708,
    "k_pct": 0.2073,
    "babip": 0.323,
-   "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 73,
+   "hem_plus_3yr": 112,
+   "hem_plus_3yr_pct": 76,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 119,
    "xwoba": 0.348,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 113
   },
   {
    "key": "687221",
@@ -2081,9 +2145,13 @@
    "bb_pct": 0.0927,
    "k_pct": 0.2585,
    "babip": 0.303,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 45,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 112,
    "xwoba": 0.339,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 110
   },
   {
    "key": "683737",
@@ -2111,11 +2179,12 @@
    "k_pct": 0.2217,
    "babip": 0.293,
    "hem_plus_3yr": 118,
-   "hem_plus_3yr_pct": 86,
+   "hem_plus_3yr_pct": 85,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 116,
    "xwoba": 0.345,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 112
   },
   {
    "key": "681715",
@@ -2143,11 +2212,12 @@
    "k_pct": 0.2325,
    "babip": 0.254,
    "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 73,
+   "hem_plus_3yr_pct": 75,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 130,
    "xwoba": 0.364,
-   "luck_gap": 18
+   "luck_gap": 18,
+   "fwdhem_plus": 118
   },
   {
    "key": "682729",
@@ -2200,12 +2270,13 @@
    "bb_pct": 0.0637,
    "k_pct": 0.2133,
    "babip": 0.284,
-   "hem_plus_3yr": 102,
-   "hem_plus_3yr_pct": 49,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 50,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 138,
    "xwoba": 0.376,
-   "luck_gap": 26
+   "luck_gap": 26,
+   "fwdhem_plus": 121
   },
   {
    "key": "664040",
@@ -2232,12 +2303,13 @@
    "bb_pct": 0.092,
    "k_pct": 0.2662,
    "babip": 0.285,
-   "hem_plus_3yr": 113,
+   "hem_plus_3yr": 112,
    "hem_plus_3yr_pct": 77,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 112,
    "xwoba": 0.339,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 109
   },
   {
    "key": "663616",
@@ -2269,7 +2341,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 114,
    "xwoba": 0.342,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 110
   },
   {
    "key": "671739",
@@ -2296,12 +2369,13 @@
    "bb_pct": 0.0425,
    "k_pct": 0.2068,
    "babip": 0.336,
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 26,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 25,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 129,
    "xwoba": 0.363,
-   "luck_gap": 18
+   "luck_gap": 18,
+   "fwdhem_plus": 117
   },
   {
    "key": "669016",
@@ -2329,11 +2403,12 @@
    "k_pct": 0.2645,
    "babip": 0.377,
    "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 66,
+   "hem_plus_3yr_pct": 64,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 100,
    "xwoba": 0.322,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 104
   },
   {
    "key": "694192",
@@ -2361,11 +2436,12 @@
    "k_pct": 0.2438,
    "babip": 0.339,
    "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 58,
+   "hem_plus_3yr_pct": 55,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 109,
    "xwoba": 0.334,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 108
   },
   {
    "key": "681624",
@@ -2392,12 +2468,13 @@
    "bb_pct": 0.0827,
    "k_pct": 0.1946,
    "babip": 0.298,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 54,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 59,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 110
   },
   {
    "key": "695657",
@@ -2424,12 +2501,13 @@
    "bb_pct": 0.0814,
    "k_pct": 0.3176,
    "babip": 0.264,
-   "hem_plus_3yr": 119,
-   "hem_plus_3yr_pct": 87,
+   "hem_plus_3yr": 116,
+   "hem_plus_3yr_pct": 83,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 102,
    "xwoba": 0.324,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 105
   },
   {
    "key": "677951",
@@ -2457,11 +2535,12 @@
    "k_pct": 0.1712,
    "babip": 0.32,
    "hem_plus_3yr": 122,
-   "hem_plus_3yr_pct": 91,
+   "hem_plus_3yr_pct": 90,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 148,
    "xwoba": 0.389,
-   "luck_gap": 38
+   "luck_gap": 38,
+   "fwdhem_plus": 124
   },
   {
    "key": "663993",
@@ -2493,7 +2572,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 121,
    "xwoba": 0.352,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 113
   },
   {
    "key": "624424",
@@ -2522,7 +2602,8 @@
    "babip": 0.302,
    "xhem_plus": 109,
    "xwoba": 0.335,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 108
   },
   {
    "key": "669364",
@@ -2550,11 +2631,12 @@
    "k_pct": 0.1174,
    "babip": 0.332,
    "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 46,
+   "hem_plus_3yr_pct": 48,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.327,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 105
   },
   {
    "key": "680474",
@@ -2607,12 +2689,13 @@
    "bb_pct": 0.0831,
    "k_pct": 0.2558,
    "babip": 0.284,
-   "hem_plus_3yr": 102,
+   "hem_plus_3yr": 101,
    "hem_plus_3yr_pct": 50,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 114,
    "xwoba": 0.341,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 110
   },
   {
    "key": "680977",
@@ -2641,7 +2724,8 @@
    "babip": 0.299,
    "xhem_plus": 116,
    "xwoba": 0.344,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 110
   },
   {
    "key": "686475",
@@ -2699,7 +2783,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 101
   },
   {
    "key": "669392",
@@ -2728,7 +2813,8 @@
    "babip": 0.491,
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 105
   },
   {
    "key": "803011",
@@ -2755,12 +2841,13 @@
    "bb_pct": 0.0724,
    "k_pct": 0.1513,
    "babip": 0.329,
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 59,
+   "hem_plus_3yr": 109,
+   "hem_plus_3yr_pct": 70,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 132,
    "xwoba": 0.367,
-   "luck_gap": 23
+   "luck_gap": 23,
+   "fwdhem_plus": 117
   },
   {
    "key": "691016",
@@ -2787,12 +2874,13 @@
    "bb_pct": 0.1297,
    "k_pct": 0.1758,
    "babip": 0.258,
-   "hem_plus_3yr": 112,
-   "hem_plus_3yr_pct": 75,
+   "hem_plus_3yr": 113,
+   "hem_plus_3yr_pct": 78,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 110
   },
   {
    "key": "683748",
@@ -2821,7 +2909,8 @@
    "babip": 0.23,
    "xhem_plus": 92,
    "xwoba": 0.311,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 100
   },
   {
    "key": "800050",
@@ -2848,12 +2937,13 @@
    "bb_pct": 0.0961,
    "k_pct": 0.1351,
    "babip": 0.294,
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr": 109,
+   "hem_plus_3yr_pct": 70,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 116,
    "xwoba": 0.345,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 111
   },
   {
    "key": "673962",
@@ -2881,11 +2971,12 @@
    "k_pct": 0.1835,
    "babip": 0.35,
    "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_pct": 36,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 120,
    "xwoba": 0.35,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 112
   },
   {
    "key": "608348",
@@ -2913,11 +3004,12 @@
    "k_pct": 0.1673,
    "babip": 0.314,
    "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 64,
+   "hem_plus_3yr_pct": 65,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.328,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 105
   },
   {
    "key": "657757",
@@ -2945,11 +3037,12 @@
    "k_pct": 0.2174,
    "babip": 0.245,
    "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_pct": 39,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 107,
    "xwoba": 0.331,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 106
   },
   {
    "key": "670623",
@@ -2977,11 +3070,12 @@
    "k_pct": 0.1589,
    "babip": 0.276,
    "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 79,
+   "hem_plus_3yr_pct": 80,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 102
   },
   {
    "key": "676369",
@@ -3034,9 +3128,13 @@
    "bb_pct": 0.0991,
    "k_pct": 0.2568,
    "babip": 0.353,
+   "hem_plus_3yr": 108,
+   "hem_plus_3yr_pct": 67,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 114,
    "xwoba": 0.341,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 109
   },
   {
    "key": "668715",
@@ -3063,12 +3161,13 @@
    "bb_pct": 0.095,
    "k_pct": 0.2235,
    "babip": 0.286,
-   "hem_plus_3yr": 102,
-   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 52,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 117,
    "xwoba": 0.346,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 111
   },
   {
    "key": "681481",
@@ -3095,12 +3194,13 @@
    "bb_pct": 0.0779,
    "k_pct": 0.3117,
    "babip": 0.264,
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 78,
+   "hem_plus_3yr": 112,
+   "hem_plus_3yr_pct": 76,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 89,
    "xwoba": 0.306,
-   "luck_gap": -19
+   "luck_gap": -19,
+   "fwdhem_plus": 98
   },
   {
    "key": "804668",
@@ -3158,7 +3258,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 98,
    "xwoba": 0.319,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 102
   },
   {
    "key": "665923",
@@ -3187,7 +3288,8 @@
    "babip": 0.317,
    "xhem_plus": 97,
    "xwoba": 0.318,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 102
   },
   {
    "key": "691720",
@@ -3214,12 +3316,13 @@
    "bb_pct": 0.1238,
    "k_pct": 0.2105,
    "babip": 0.315,
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 42,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 47,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 114,
    "xwoba": 0.341,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 109
   },
   {
    "key": "571771",
@@ -3272,12 +3375,13 @@
    "bb_pct": 0.0567,
    "k_pct": 0.251,
    "babip": 0.331,
-   "hem_plus_3yr": 90,
+   "hem_plus_3yr": 89,
    "hem_plus_3yr_pct": 16,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 77,
    "xwoba": 0.289,
-   "luck_gap": -30
+   "luck_gap": -30,
+   "fwdhem_plus": 93
   },
   {
    "key": "572233",
@@ -3305,11 +3409,12 @@
    "k_pct": 0.225,
    "babip": 0.26,
    "hem_plus_3yr": 108,
-   "hem_plus_3yr_pct": 68,
+   "hem_plus_3yr_pct": 66,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 87,
    "xwoba": 0.304,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 97
   },
   {
    "key": "702616",
@@ -3338,7 +3443,8 @@
    "babip": 0.253,
    "xhem_plus": 104,
    "xwoba": 0.328,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 105
   },
   {
    "key": "676475",
@@ -3370,7 +3476,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 143,
    "xwoba": 0.383,
-   "luck_gap": 36
+   "luck_gap": 36,
+   "fwdhem_plus": 122
   },
   {
    "key": "694671",
@@ -3399,7 +3506,8 @@
    "babip": 0.312,
    "xhem_plus": 90,
    "xwoba": 0.308,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 99
   },
   {
    "key": "669477",
@@ -3426,12 +3534,13 @@
    "bb_pct": 0.0243,
    "k_pct": 0.1919,
    "babip": 0.299,
-   "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 51,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 128,
    "xwoba": 0.361,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 115
   },
   {
    "key": "664034",
@@ -3458,12 +3567,13 @@
    "bb_pct": 0.0524,
    "k_pct": 0.2358,
    "babip": 0.306,
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 21,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 100,
    "xwoba": 0.322,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 103
   },
   {
    "key": "669257",
@@ -3495,7 +3605,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 145,
    "xwoba": 0.385,
-   "luck_gap": 39
+   "luck_gap": 39,
+   "fwdhem_plus": 122
   },
   {
    "key": "672640",
@@ -3523,11 +3634,12 @@
    "k_pct": 0.1415,
    "babip": 0.37,
    "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 28,
+   "hem_plus_3yr_pct": 27,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 110,
    "xwoba": 0.336,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 107
   },
   {
    "key": "663757",
@@ -3555,11 +3667,12 @@
    "k_pct": 0.1683,
    "babip": 0.254,
    "hem_plus_3yr": 120,
-   "hem_plus_3yr_pct": 87,
+   "hem_plus_3yr_pct": 88,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 124,
    "xwoba": 0.356,
-   "luck_gap": 18
+   "luck_gap": 18,
+   "fwdhem_plus": 113
   },
   {
    "key": "695506",
@@ -3586,12 +3699,13 @@
    "bb_pct": 0.0716,
    "k_pct": 0.2923,
    "babip": 0.335,
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 31,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 29,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 125,
    "xwoba": 0.357,
-   "luck_gap": 19
+   "luck_gap": 19,
+   "fwdhem_plus": 113
   },
   {
    "key": "656537",
@@ -3620,7 +3734,8 @@
    "babip": 0.37,
    "xhem_plus": 83,
    "xwoba": 0.298,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 95
   },
   {
    "key": "656413",
@@ -3673,12 +3788,13 @@
    "bb_pct": 0.1161,
    "k_pct": 0.329,
    "babip": 0.41,
-   "hem_plus_3yr": 106,
-   "hem_plus_3yr_pct": 61,
-   "hem_plus_3yr_tag": "provisional",
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 58,
+   "hem_plus_3yr_tag": "established",
    "xhem_plus": 125,
    "xwoba": 0.357,
-   "luck_gap": 19
+   "luck_gap": 19,
+   "fwdhem_plus": 113
   },
   {
    "key": "681807",
@@ -3707,7 +3823,8 @@
    "babip": 0.263,
    "xhem_plus": 58,
    "xwoba": 0.263,
-   "luck_gap": -48
+   "luck_gap": -48,
+   "fwdhem_plus": 85
   },
   {
    "key": "646240",
@@ -3739,7 +3856,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.327,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 104
   },
   {
    "key": "668723",
@@ -3768,7 +3886,8 @@
    "babip": 0.284,
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": -14
+   "luck_gap": -14,
+   "fwdhem_plus": 99
   },
   {
    "key": "678218",
@@ -3797,7 +3916,8 @@
    "babip": 0.291,
    "xhem_plus": 99,
    "xwoba": 0.321,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 102
   },
   {
    "key": "695238",
@@ -3851,11 +3971,12 @@
    "k_pct": 0.206,
    "babip": 0.252,
    "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 45,
+   "hem_plus_3yr_pct": 46,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 105
   },
   {
    "key": "666126",
@@ -3883,11 +4004,12 @@
    "k_pct": 0.1304,
    "babip": 0.302,
    "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 52,
+   "hem_plus_3yr_pct": 54,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 113,
    "xwoba": 0.34,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 108
   },
   {
    "key": "669242",
@@ -3940,12 +4062,13 @@
    "bb_pct": 0.1181,
    "k_pct": 0.2286,
    "babip": 0.305,
-   "hem_plus_3yr": 110,
-   "hem_plus_3yr_pct": 72,
+   "hem_plus_3yr": 109,
+   "hem_plus_3yr_pct": 71,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 109
   },
   {
    "key": "641355",
@@ -3972,12 +4095,13 @@
    "bb_pct": 0.1266,
    "k_pct": 0.1489,
    "babip": 0.274,
-   "hem_plus_3yr": 109,
+   "hem_plus_3yr": 108,
    "hem_plus_3yr_pct": 68,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 121,
    "xwoba": 0.352,
-   "luck_gap": 16
+   "luck_gap": 16,
+   "fwdhem_plus": 112
   },
   {
    "key": "669717",
@@ -4084,7 +4208,8 @@
    "babip": 0.25,
    "xhem_plus": 90,
    "xwoba": 0.308,
-   "luck_gap": -14
+   "luck_gap": -14,
+   "fwdhem_plus": 98
   },
   {
    "key": "621043",
@@ -4113,7 +4238,8 @@
    "babip": 0.33,
    "xhem_plus": 130,
    "xwoba": 0.364,
-   "luck_gap": 26
+   "luck_gap": 26,
+   "fwdhem_plus": 115
   },
   {
    "key": "667472",
@@ -4142,7 +4268,8 @@
    "babip": 0.338,
    "xhem_plus": 124,
    "xwoba": 0.355,
-   "luck_gap": 20
+   "luck_gap": 20,
+   "fwdhem_plus": 112
   },
   {
    "key": "571912",
@@ -4200,7 +4327,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 120,
    "xwoba": 0.35,
-   "luck_gap": 16
+   "luck_gap": 16,
+   "fwdhem_plus": 111
   },
   {
    "key": "682626",
@@ -4232,7 +4360,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 108,
    "xwoba": 0.333,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 105
   },
   {
    "key": "665161",
@@ -4260,11 +4389,12 @@
    "k_pct": 0.162,
    "babip": 0.321,
    "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 54,
+   "hem_plus_3yr_pct": 53,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 114,
    "xwoba": 0.342,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 108
   },
   {
    "key": "664983",
@@ -4292,11 +4422,12 @@
    "k_pct": 0.1759,
    "babip": 0.339,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr_pct": 34,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.314,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 99
   },
   {
    "key": "800325",
@@ -4377,7 +4508,8 @@
    "babip": 0.315,
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 103
   },
   {
    "key": "693304",
@@ -4404,12 +4536,13 @@
    "bb_pct": 0.0751,
    "k_pct": 0.1769,
    "babip": 0.372,
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 13,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 17,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.327,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 103
   },
   {
    "key": "682674",
@@ -4464,7 +4597,8 @@
    "babip": 0.257,
    "xhem_plus": 95,
    "xwoba": 0.315,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 100
   },
   {
    "key": "691783",
@@ -4519,7 +4653,8 @@
    "babip": 0.316,
    "xhem_plus": 125,
    "xwoba": 0.357,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 112
   },
   {
    "key": "663697",
@@ -4600,7 +4735,8 @@
    "babip": 0.344,
    "xhem_plus": 114,
    "xwoba": 0.341,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 107
   },
   {
    "key": "642133",
@@ -4655,7 +4791,8 @@
    "babip": 0.394,
    "xhem_plus": 102,
    "xwoba": 0.324,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 102
   },
   {
    "key": "669394",
@@ -4687,7 +4824,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 97
   },
   {
    "key": "608070",
@@ -4715,11 +4853,12 @@
    "k_pct": 0.1401,
    "babip": 0.249,
    "hem_plus_3yr": 118,
-   "hem_plus_3yr_pct": 86,
+   "hem_plus_3yr_pct": 87,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 124,
    "xwoba": 0.356,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 112
   },
   {
    "key": "543309",
@@ -4748,7 +4887,8 @@
    "babip": 0.264,
    "xhem_plus": 80,
    "xwoba": 0.293,
-   "luck_gap": -22
+   "luck_gap": -22,
+   "fwdhem_plus": 93
   },
   {
    "key": "679529",
@@ -4776,11 +4916,12 @@
    "k_pct": 0.3288,
    "babip": 0.274,
    "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 61,
+   "hem_plus_3yr_pct": 62,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 98,
    "xwoba": 0.319,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 100
   },
   {
    "key": "672695",
@@ -4812,7 +4953,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 103
   },
   {
    "key": "663897",
@@ -4865,12 +5007,13 @@
    "bb_pct": 0.0732,
    "k_pct": 0.3902,
    "babip": 0.342,
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 39,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 49,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 97
   },
   {
    "key": "656555",
@@ -4897,12 +5040,13 @@
    "bb_pct": 0.1597,
    "k_pct": 0.3156,
    "babip": 0.23,
-   "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 65,
+   "hem_plus_3yr": 108,
+   "hem_plus_3yr_pct": 66,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 77,
    "xwoba": 0.289,
-   "luck_gap": -25
+   "luck_gap": -25,
+   "fwdhem_plus": 91
   },
   {
    "key": "608369",
@@ -4934,7 +5078,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 110,
    "xwoba": 0.336,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 106
   },
   {
    "key": "606466",
@@ -4961,12 +5106,13 @@
    "bb_pct": 0.0716,
    "k_pct": 0.1432,
    "babip": 0.261,
-   "hem_plus_3yr": 131,
+   "hem_plus_3yr": 129,
    "hem_plus_3yr_pct": 97,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 130,
    "xwoba": 0.364,
-   "luck_gap": 29
+   "luck_gap": 29,
+   "fwdhem_plus": 114
   },
   {
    "key": "681297",
@@ -4993,12 +5139,13 @@
    "bb_pct": 0.1126,
    "k_pct": 0.3074,
    "babip": 0.282,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 55,
+   "hem_plus_3yr": 102,
+   "hem_plus_3yr_pct": 52,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 99
   },
   {
    "key": "668952",
@@ -5027,7 +5174,8 @@
    "babip": 0.292,
    "xhem_plus": 82,
    "xwoba": 0.297,
-   "luck_gap": -19
+   "luck_gap": -19,
+   "fwdhem_plus": 94
   },
   {
    "key": "682515",
@@ -5082,7 +5230,8 @@
    "babip": 0.287,
    "xhem_plus": 92,
    "xwoba": 0.311,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 98
   },
   {
    "key": "670042",
@@ -5109,12 +5258,13 @@
    "bb_pct": 0.0502,
    "k_pct": 0.3243,
    "babip": 0.288,
-   "hem_plus_3yr": 106,
-   "hem_plus_3yr_pct": 62,
+   "hem_plus_3yr": 105,
+   "hem_plus_3yr_pct": 61,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 14
+   "luck_gap": 14,
+   "fwdhem_plus": 108
   },
   {
    "key": "661388",
@@ -5141,12 +5291,13 @@
    "bb_pct": 0.0833,
    "k_pct": 0.1354,
    "babip": 0.306,
-   "hem_plus_3yr": 114,
-   "hem_plus_3yr_pct": 79,
+   "hem_plus_3yr": 113,
+   "hem_plus_3yr_pct": 78,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 111,
    "xwoba": 0.337,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 106
   },
   {
    "key": "665804",
@@ -5175,7 +5326,8 @@
    "babip": 0.293,
    "xhem_plus": 85,
    "xwoba": 0.3,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 94
   },
   {
    "key": "669065",
@@ -5202,12 +5354,13 @@
    "bb_pct": 0.0918,
    "k_pct": 0.3148,
    "babip": 0.321,
-   "hem_plus_3yr": 112,
+   "hem_plus_3yr": 110,
    "hem_plus_3yr_pct": 74,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 104
   },
   {
    "key": "665019",
@@ -5234,12 +5387,13 @@
    "bb_pct": 0.0663,
    "k_pct": 0.2259,
    "babip": 0.269,
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 42,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 39,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 110,
    "xwoba": 0.336,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 105
   },
   {
    "key": "676724",
@@ -5268,7 +5422,8 @@
    "babip": 0.279,
    "xhem_plus": 102,
    "xwoba": 0.325,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 102
   },
   {
    "key": "663611",
@@ -5326,7 +5481,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.314,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 99
   },
   {
    "key": "690291",
@@ -5405,12 +5561,13 @@
    "bb_pct": 0.0985,
    "k_pct": 0.1894,
    "babip": 0.267,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 51,
+   "hem_plus_3yr": 102,
+   "hem_plus_3yr_pct": 52,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 112,
    "xwoba": 0.338,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 106
   },
   {
    "key": "657041",
@@ -5438,11 +5595,12 @@
    "k_pct": 0.223,
    "babip": 0.283,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 29,
+   "hem_plus_3yr_pct": 31,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 104,
    "xwoba": 0.327,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 103
   },
   {
    "key": "677942",
@@ -5469,12 +5627,13 @@
    "bb_pct": 0.065,
    "k_pct": 0.2195,
    "babip": 0.396,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 34,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 38,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 128,
    "xwoba": 0.361,
-   "luck_gap": 28
+   "luck_gap": 28,
+   "fwdhem_plus": 113
   },
   {
    "key": "677587",
@@ -5501,12 +5660,13 @@
    "bb_pct": 0.0752,
    "k_pct": 0.1365,
    "babip": 0.302,
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 9,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 11,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.311,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 98
   },
   {
    "key": "670231",
@@ -5585,12 +5745,13 @@
    "bb_pct": 0.0751,
    "k_pct": 0.215,
    "babip": 0.317,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 37,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 46,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 119,
    "xwoba": 0.349,
-   "luck_gap": 19
+   "luck_gap": 19,
+   "fwdhem_plus": 109
   },
   {
    "key": "621020",
@@ -5617,12 +5778,13 @@
    "bb_pct": 0.1039,
    "k_pct": 0.236,
    "babip": 0.23,
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 39,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 37,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 84,
    "xwoba": 0.299,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 94
   },
   {
    "key": "657136",
@@ -5651,7 +5813,8 @@
    "babip": 0.373,
    "xhem_plus": 97,
    "xwoba": 0.318,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 100
   },
   {
    "key": "682997",
@@ -5732,7 +5895,8 @@
    "babip": 0.238,
    "xhem_plus": 82,
    "xwoba": 0.297,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 93
   },
   {
    "key": "606192",
@@ -5759,12 +5923,13 @@
    "bb_pct": 0.0956,
    "k_pct": 0.2789,
    "babip": 0.313,
-   "hem_plus_3yr": 111,
-   "hem_plus_3yr_pct": 72,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 73,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 102
   },
   {
    "key": "640902",
@@ -5817,12 +5982,13 @@
    "bb_pct": 0.1128,
    "k_pct": 0.2231,
    "babip": 0.209,
-   "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 70,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 73,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 99,
    "xwoba": 0.321,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 100
   },
   {
    "key": "673357",
@@ -5875,12 +6041,13 @@
    "bb_pct": 0.0924,
    "k_pct": 0.1688,
    "babip": 0.359,
-   "hem_plus_3yr": 102,
-   "hem_plus_3yr_pct": 49,
+   "hem_plus_3yr": 101,
+   "hem_plus_3yr_pct": 48,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 103
   },
   {
    "key": "664770",
@@ -5907,12 +6074,13 @@
    "bb_pct": 0.0548,
    "k_pct": 0.1461,
    "babip": 0.321,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 37,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 43,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 85,
    "xwoba": 0.301,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 94
   },
   {
    "key": "645277",
@@ -5940,11 +6108,12 @@
    "k_pct": 0.1341,
    "babip": 0.273,
    "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_pct": 20,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 79,
    "xwoba": 0.292,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 92
   },
   {
    "key": "545341",
@@ -5973,7 +6142,8 @@
    "babip": 0.26,
    "xhem_plus": 128,
    "xwoba": 0.361,
-   "luck_gap": 29
+   "luck_gap": 29,
+   "fwdhem_plus": 113
   },
   {
    "key": "681909",
@@ -6052,12 +6222,13 @@
    "bb_pct": 0.0751,
    "k_pct": 0.1609,
    "babip": 0.265,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 17,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 70,
    "xwoba": 0.279,
-   "luck_gap": -29
+   "luck_gap": -29,
+   "fwdhem_plus": 87
   },
   {
    "key": "677800",
@@ -6085,11 +6256,12 @@
    "k_pct": 0.205,
    "babip": 0.306,
    "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 59,
+   "hem_plus_3yr_pct": 61,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 112,
    "xwoba": 0.339,
-   "luck_gap": 13
+   "luck_gap": 13,
+   "fwdhem_plus": 106
   },
   {
    "key": "677649",
@@ -6116,12 +6288,13 @@
    "bb_pct": 0.0738,
    "k_pct": 0.2277,
    "babip": 0.326,
-   "hem_plus_3yr": 80,
-   "hem_plus_3yr_pct": 3,
+   "hem_plus_3yr": 83,
+   "hem_plus_3yr_pct": 6,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.307,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 96
   },
   {
    "key": "622268",
@@ -6176,7 +6349,8 @@
    "babip": 0.337,
    "xhem_plus": 83,
    "xwoba": 0.298,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 93
   },
   {
    "key": "700932",
@@ -6203,12 +6377,13 @@
    "bb_pct": 0.1065,
    "k_pct": 0.3097,
    "babip": 0.289,
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 60,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 56,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 96
   },
   {
    "key": "691019",
@@ -6289,7 +6464,8 @@
    "babip": 0.293,
    "xhem_plus": 66,
    "xwoba": 0.274,
-   "luck_gap": -32
+   "luck_gap": -32,
+   "fwdhem_plus": 86
   },
   {
    "key": "671976",
@@ -6316,12 +6492,13 @@
    "bb_pct": 0.0655,
    "k_pct": 0.1782,
    "babip": 0.354,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 33,
+   "hem_plus_3yr": 98,
+   "hem_plus_3yr_pct": 39,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 90,
    "xwoba": 0.308,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 96
   },
   {
    "key": "805367",
@@ -6349,11 +6526,12 @@
    "k_pct": 0.2398,
    "babip": 0.348,
    "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 24,
+   "hem_plus_3yr_pct": 26,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.287,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 90
   },
   {
    "key": "694208",
@@ -6382,7 +6560,8 @@
    "babip": 0.259,
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 97
   },
   {
    "key": "701162",
@@ -6487,12 +6666,13 @@
    "bb_pct": 0.1324,
    "k_pct": 0.1801,
    "babip": 0.306,
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 23,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 97,
    "xwoba": 0.317,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 99
   },
   {
    "key": "571448",
@@ -6519,12 +6699,13 @@
    "bb_pct": 0.0836,
    "k_pct": 0.2133,
    "babip": 0.279,
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 28,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 31,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 92
   },
   {
    "key": "694376",
@@ -6605,7 +6786,8 @@
    "babip": 0.313,
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 97
   },
   {
    "key": "663656",
@@ -6632,12 +6814,13 @@
    "bb_pct": 0.126,
    "k_pct": 0.1995,
    "babip": 0.294,
-   "hem_plus_3yr": 127,
+   "hem_plus_3yr": 126,
    "hem_plus_3yr_pct": 94,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 110,
    "xwoba": 0.336,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 104
   },
   {
    "key": "695391",
@@ -6695,7 +6878,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 119,
    "xwoba": 0.348,
-   "luck_gap": 21
+   "luck_gap": 21,
+   "fwdhem_plus": 108
   },
   {
    "key": "660162",
@@ -6724,7 +6908,8 @@
    "babip": 0.286,
    "xhem_plus": 63,
    "xwoba": 0.269,
-   "luck_gap": -35
+   "luck_gap": -35,
+   "fwdhem_plus": 84
   },
   {
    "key": "683079",
@@ -6779,7 +6964,8 @@
    "babip": 0.284,
    "xhem_plus": 71,
    "xwoba": 0.281,
-   "luck_gap": -27
+   "luck_gap": -27,
+   "fwdhem_plus": 88
   },
   {
    "key": "676551",
@@ -6885,11 +7071,12 @@
    "k_pct": 0.1531,
    "babip": 0.267,
    "hem_plus_3yr": 108,
-   "hem_plus_3yr_pct": 67,
+   "hem_plus_3yr_pct": 68,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 96
   },
   {
    "key": "694384",
@@ -6916,12 +7103,13 @@
    "bb_pct": 0.0813,
    "k_pct": 0.15,
    "babip": 0.311,
-   "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 53,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 57,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 101
   },
   {
    "key": "687394",
@@ -7054,7 +7242,8 @@
    "babip": 0.273,
    "xhem_plus": 85,
    "xwoba": 0.3,
-   "luck_gap": -13
+   "luck_gap": -13,
+   "fwdhem_plus": 93
   },
   {
    "key": "694203",
@@ -7083,7 +7272,8 @@
    "babip": 0.324,
    "xhem_plus": 78,
    "xwoba": 0.291,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 91
   },
   {
    "key": "665856",
@@ -7193,7 +7383,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 107,
    "xwoba": 0.331,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 103
   },
   {
    "key": "668904",
@@ -7220,12 +7411,13 @@
    "bb_pct": 0.0938,
    "k_pct": 0.2695,
    "babip": 0.265,
-   "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 34,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 89,
    "xwoba": 0.306,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 95
   },
   {
    "key": "701350",
@@ -7254,7 +7446,8 @@
    "babip": 0.32,
    "xhem_plus": 121,
    "xwoba": 0.352,
-   "luck_gap": 24
+   "luck_gap": 24,
+   "fwdhem_plus": 109
   },
   {
    "key": "702176",
@@ -7334,11 +7527,12 @@
    "k_pct": 0.2781,
    "babip": 0.352,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_pct": 31,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 91
   },
   {
    "key": "683953",
@@ -7365,12 +7559,13 @@
    "bb_pct": 0.1135,
    "k_pct": 0.2163,
    "babip": 0.285,
-   "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr": 97,
+   "hem_plus_3yr_pct": 37,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 81,
    "xwoba": 0.295,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 92
   },
   {
    "key": "669256",
@@ -7424,11 +7619,12 @@
    "k_pct": 0.2286,
    "babip": 0.307,
    "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 56,
+   "hem_plus_3yr_pct": 59,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 95,
    "xwoba": 0.315,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 98
   },
   {
    "key": "664068",
@@ -7533,12 +7729,13 @@
    "bb_pct": 0.1028,
    "k_pct": 0.2917,
    "babip": 0.284,
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 76,
+   "hem_plus_3yr": 112,
+   "hem_plus_3yr_pct": 75,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 79,
    "xwoba": 0.292,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 91
   },
   {
    "key": "514888",
@@ -7565,12 +7762,13 @@
    "bb_pct": 0.0915,
    "k_pct": 0.2208,
    "babip": 0.273,
-   "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 71,
+   "hem_plus_3yr": 110,
+   "hem_plus_3yr_pct": 72,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.287,
-   "luck_gap": -22
+   "luck_gap": -22,
+   "fwdhem_plus": 89
   },
   {
    "key": "671155",
@@ -7675,12 +7873,13 @@
    "bb_pct": 0.0597,
    "k_pct": 0.0398,
    "babip": 0.33,
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 22,
+   "hem_plus_3yr": 94,
+   "hem_plus_3yr_pct": 26,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.308,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 95
   },
   {
    "key": "695600",
@@ -7707,12 +7906,13 @@
    "bb_pct": 0.0896,
    "k_pct": 0.2919,
    "babip": 0.3,
-   "hem_plus_3yr": 102,
-   "hem_plus_3yr_pct": 50,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 42,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 75,
    "xwoba": 0.287,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 89
   },
   {
    "key": "593428",
@@ -7740,11 +7940,12 @@
    "k_pct": 0.1901,
    "babip": 0.257,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 30,
+   "hem_plus_3yr_pct": 29,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 95,
    "xwoba": 0.315,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 98
   },
   {
    "key": "691907",
@@ -7823,9 +8024,13 @@
    "bb_pct": 0.0743,
    "k_pct": 0.2772,
    "babip": 0.361,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 85,
    "xwoba": 0.3,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 93
   },
   {
    "key": "665953",
@@ -7932,7 +8137,8 @@
    "babip": 0.324,
    "xhem_plus": 94,
    "xwoba": 0.314,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 97
   },
   {
    "key": "681987",
@@ -7990,7 +8196,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 19
+   "luck_gap": 19,
+   "fwdhem_plus": 106
   },
   {
    "key": "650391",
@@ -8097,7 +8304,8 @@
    "babip": 0.267,
    "xhem_plus": 97,
    "xwoba": 0.317,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 98
   },
   {
    "key": "663604",
@@ -8152,7 +8360,8 @@
    "babip": 0.245,
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 96
   },
   {
    "key": "663609",
@@ -8205,12 +8414,13 @@
    "bb_pct": 0.1089,
    "k_pct": 0.2451,
    "babip": 0.3,
-   "hem_plus_3yr": 106,
+   "hem_plus_3yr": 105,
    "hem_plus_3yr_pct": 62,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 107,
    "xwoba": 0.331,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 102
   },
   {
    "key": "807713",
@@ -8239,7 +8449,8 @@
    "babip": 0.28,
    "xhem_plus": 85,
    "xwoba": 0.301,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 93
   },
   {
    "key": "640492",
@@ -8372,7 +8583,8 @@
    "babip": 0.299,
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 96
   },
   {
    "key": "663968",
@@ -8399,12 +8611,13 @@
    "bb_pct": 0.0553,
    "k_pct": 0.166,
    "babip": 0.371,
-   "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 13,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 18,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 78,
    "xwoba": 0.291,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 90
   },
   {
    "key": "553993",
@@ -8431,12 +8644,13 @@
    "bb_pct": 0.0899,
    "k_pct": 0.3596,
    "babip": 0.291,
-   "hem_plus_3yr": 113,
-   "hem_plus_3yr_pct": 78,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 81,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 60,
    "xwoba": 0.266,
-   "luck_gap": -35
+   "luck_gap": -35,
+   "fwdhem_plus": 82
   },
   {
    "key": "663624",
@@ -8491,7 +8705,8 @@
    "babip": 0.265,
    "xhem_plus": 47,
    "xwoba": 0.247,
-   "luck_gap": -48
+   "luck_gap": -48,
+   "fwdhem_plus": 76
   },
   {
    "key": "605137",
@@ -8518,12 +8733,13 @@
    "bb_pct": 0.0747,
    "k_pct": 0.216,
    "babip": 0.287,
-   "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 57,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 55,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 107,
    "xwoba": 0.331,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 102
   },
   {
    "key": "807799",
@@ -8550,9 +8766,13 @@
    "bb_pct": 0.0945,
    "k_pct": 0.1144,
    "babip": 0.288,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 43,
+   "hem_plus_3yr_tag": "established",
    "xhem_plus": 99,
    "xwoba": 0.321,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 99
   },
   {
    "key": "702284",
@@ -8579,12 +8799,13 @@
    "bb_pct": 0.0651,
    "k_pct": 0.1823,
    "babip": 0.285,
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 21,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 102
   },
   {
    "key": "669208",
@@ -8768,11 +8989,12 @@
    "k_pct": 0.2591,
    "babip": 0.303,
    "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr_pct": 22,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 114,
    "xwoba": 0.341,
-   "luck_gap": 19
+   "luck_gap": 19,
+   "fwdhem_plus": 105
   },
   {
    "key": "608841",
@@ -8826,11 +9048,12 @@
    "k_pct": 0.2315,
    "babip": 0.296,
    "hem_plus_3yr": 88,
-   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_pct": 13,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 64,
    "xwoba": 0.271,
-   "luck_gap": -31
+   "luck_gap": -31,
+   "fwdhem_plus": 84
   },
   {
    "key": "694378",
@@ -8883,12 +9106,13 @@
    "bb_pct": 0.099,
    "k_pct": 0.2014,
    "babip": 0.247,
-   "hem_plus_3yr": 117,
-   "hem_plus_3yr_pct": 82,
+   "hem_plus_3yr": 116,
+   "hem_plus_3yr_pct": 83,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 88,
    "xwoba": 0.305,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 94
   },
   {
    "key": "672284",
@@ -8941,12 +9165,13 @@
    "bb_pct": 0.1031,
    "k_pct": 0.2328,
    "babip": 0.287,
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 43,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 44,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 88,
    "xwoba": 0.305,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 94
   },
   {
    "key": "643289",
@@ -8978,7 +9203,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": 2
+   "luck_gap": 2,
+   "fwdhem_plus": 97
   },
   {
    "key": "663853",
@@ -9059,7 +9285,8 @@
    "babip": 0.28,
    "xhem_plus": 98,
    "xwoba": 0.319,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 98
   },
   {
    "key": "624585",
@@ -9086,12 +9313,13 @@
    "bb_pct": 0.1,
    "k_pct": 0.3097,
    "babip": 0.274,
-   "hem_plus_3yr": 105,
-   "hem_plus_3yr_pct": 61,
+   "hem_plus_3yr": 104,
+   "hem_plus_3yr_pct": 57,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 87,
    "xwoba": 0.304,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 94
   },
   {
    "key": "804606",
@@ -9119,11 +9347,12 @@
    "k_pct": 0.2632,
    "babip": 0.363,
    "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 27,
+   "hem_plus_3yr_pct": 28,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 88,
    "xwoba": 0.305,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 94
   },
   {
    "key": "678577",
@@ -9177,11 +9406,12 @@
    "k_pct": 0.1373,
    "babip": 0.278,
    "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 23,
+   "hem_plus_3yr_pct": 24,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.314,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 97
   },
   {
    "key": "607043",
@@ -9209,11 +9439,12 @@
    "k_pct": 0.2109,
    "babip": 0.318,
    "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 58,
+   "hem_plus_3yr_pct": 61,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 141,
    "xwoba": 0.379,
-   "luck_gap": 47
+   "luck_gap": 47,
+   "fwdhem_plus": 116
   },
   {
    "key": "823550",
@@ -9292,12 +9523,13 @@
    "bb_pct": 0.0958,
    "k_pct": 0.1521,
    "babip": 0.296,
-   "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 39,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 42,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 84,
    "xwoba": 0.299,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 92
   },
   {
    "key": "680779",
@@ -9326,7 +9558,8 @@
    "babip": 0.161,
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -14
+   "luck_gap": -14,
+   "fwdhem_plus": 90
   },
   {
    "key": "643217",
@@ -9354,11 +9587,12 @@
    "k_pct": 0.2396,
    "babip": 0.288,
    "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 40,
+   "hem_plus_3yr_pct": 41,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 101
   },
   {
    "key": "640459",
@@ -9489,9 +9723,13 @@
    "bb_pct": 0.1024,
    "k_pct": 0.1268,
    "babip": 0.264,
+   "hem_plus_3yr": 87,
+   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 97,
    "xwoba": 0.318,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 98
   },
   {
    "key": "683002",
@@ -9519,11 +9757,12 @@
    "k_pct": 0.2255,
    "babip": 0.254,
    "hem_plus_3yr": 115,
-   "hem_plus_3yr_pct": 81,
+   "hem_plus_3yr_pct": 82,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.308,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 95
   },
   {
    "key": "676914",
@@ -9552,7 +9791,8 @@
    "babip": 0.211,
    "xhem_plus": 63,
    "xwoba": 0.27,
-   "luck_gap": -31
+   "luck_gap": -31,
+   "fwdhem_plus": 83
   },
   {
    "key": "682634",
@@ -9659,7 +9899,8 @@
    "babip": 0.298,
    "xhem_plus": 103,
    "xwoba": 0.326,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 100
   },
   {
    "key": "687957",
@@ -9714,7 +9955,8 @@
    "babip": 0.231,
    "xhem_plus": 114,
    "xwoba": 0.342,
-   "luck_gap": 20
+   "luck_gap": 20,
+   "fwdhem_plus": 105
   },
   {
    "key": "680700",
@@ -9741,12 +9983,13 @@
    "bb_pct": 0.114,
    "k_pct": 0.1754,
    "babip": 0.282,
-   "hem_plus_3yr": 99,
-   "hem_plus_3yr_pct": 43,
+   "hem_plus_3yr": 100,
+   "hem_plus_3yr_pct": 44,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 96
   },
   {
    "key": "683011",
@@ -9775,7 +10018,8 @@
    "babip": 0.327,
    "xhem_plus": 82,
    "xwoba": 0.296,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 91
   },
   {
    "key": "669360",
@@ -9829,11 +10073,12 @@
    "k_pct": 0.32,
    "babip": 0.28,
    "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 45,
+   "hem_plus_3yr_pct": 47,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 95
   },
   {
    "key": "691723",
@@ -9860,12 +10105,13 @@
    "bb_pct": 0.0772,
    "k_pct": 0.3252,
    "babip": 0.235,
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 21,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 32,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 84,
    "xwoba": 0.299,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 92
   },
   {
    "key": "695508",
@@ -9923,7 +10169,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -13
+   "luck_gap": -13,
+   "fwdhem_plus": 90
   },
   {
    "key": "668670",
@@ -9952,7 +10199,8 @@
    "babip": 0.222,
    "xhem_plus": 52,
    "xwoba": 0.254,
-   "luck_gap": -41
+   "luck_gap": -41,
+   "fwdhem_plus": 78
   },
   {
    "key": "605244",
@@ -10005,9 +10253,13 @@
    "bb_pct": 0.0806,
    "k_pct": 0.1422,
    "babip": 0.266,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 109,
    "xwoba": 0.334,
-   "luck_gap": 16
+   "luck_gap": 16,
+   "fwdhem_plus": 102
   },
   {
    "key": "519317",
@@ -10216,12 +10468,13 @@
    "bb_pct": 0.0511,
    "k_pct": 0.2596,
    "babip": 0.344,
-   "hem_plus_3yr": 105,
+   "hem_plus_3yr": 104,
    "hem_plus_3yr_pct": 59,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 120,
    "xwoba": 0.35,
-   "luck_gap": 27
+   "luck_gap": 27,
+   "fwdhem_plus": 107
   },
   {
    "key": "606115",
@@ -10326,12 +10579,13 @@
    "bb_pct": 0.0438,
    "k_pct": 0.1235,
    "babip": 0.297,
-   "hem_plus_3yr": 91,
+   "hem_plus_3yr": 90,
    "hem_plus_3yr_pct": 18,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 97,
    "xwoba": 0.317,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 97
   },
   {
    "key": "592885",
@@ -10358,12 +10612,13 @@
    "bb_pct": 0.1014,
    "k_pct": 0.2862,
    "babip": 0.333,
-   "hem_plus_3yr": 118,
-   "hem_plus_3yr_pct": 85,
+   "hem_plus_3yr": 117,
+   "hem_plus_3yr_pct": 83,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 82,
    "xwoba": 0.296,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 91
   },
   {
    "key": "699625",
@@ -10421,7 +10676,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 93,
    "xwoba": 0.312,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 95
   },
   {
    "key": "641820",
@@ -10475,11 +10731,12 @@
    "k_pct": 0.308,
    "babip": 0.273,
    "hem_plus_3yr": 127,
-   "hem_plus_3yr_pct": 94,
+   "hem_plus_3yr_pct": 95,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.313,
-   "luck_gap": 2
+   "luck_gap": 2,
+   "fwdhem_plus": 96
   },
   {
    "key": "660821",
@@ -10507,11 +10764,12 @@
    "k_pct": 0.2222,
    "babip": 0.325,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_pct": 33,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 109,
    "xwoba": 0.335,
-   "luck_gap": 17
+   "luck_gap": 17,
+   "fwdhem_plus": 102
   },
   {
    "key": "678882",
@@ -10543,7 +10801,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.286,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 87
   },
   {
    "key": "671083",
@@ -10598,7 +10857,8 @@
    "babip": 0.319,
    "xhem_plus": 81,
    "xwoba": 0.295,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 90
   },
   {
    "key": "670032",
@@ -10627,7 +10887,8 @@
    "babip": 0.361,
    "xhem_plus": 54,
    "xwoba": 0.257,
-   "luck_gap": -38
+   "luck_gap": -38,
+   "fwdhem_plus": 78
   },
   {
    "key": "682657",
@@ -10659,7 +10920,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 89,
    "xwoba": 0.306,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 93
   },
   {
    "key": "665487",
@@ -10686,12 +10948,13 @@
    "bb_pct": 0.0817,
    "k_pct": 0.2091,
    "babip": 0.344,
-   "hem_plus_3yr": 115,
-   "hem_plus_3yr_pct": 80,
+   "hem_plus_3yr": 114,
+   "hem_plus_3yr_pct": 79,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 115,
    "xwoba": 0.343,
-   "luck_gap": 23
+   "luck_gap": 23,
+   "fwdhem_plus": 105
   },
   {
    "key": "680718",
@@ -10823,11 +11086,12 @@
    "k_pct": 0.2301,
    "babip": 0.293,
    "hem_plus_3yr": 107,
-   "hem_plus_3yr_pct": 65,
+   "hem_plus_3yr_pct": 64,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.286,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 87
   },
   {
    "key": "682641",
@@ -10882,7 +11146,8 @@
    "babip": 0.352,
    "xhem_plus": 69,
    "xwoba": 0.278,
-   "luck_gap": -22
+   "luck_gap": -22,
+   "fwdhem_plus": 85
   },
   {
    "key": "701358",
@@ -10909,12 +11174,13 @@
    "bb_pct": 0.0859,
    "k_pct": 0.2355,
    "babip": 0.254,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 15,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 113,
    "xwoba": 0.34,
-   "luck_gap": 22
+   "luck_gap": 22,
+   "fwdhem_plus": 104
   },
   {
    "key": "695731",
@@ -10943,7 +11209,8 @@
    "babip": 0.269,
    "xhem_plus": 87,
    "xwoba": 0.304,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 93
   },
   {
    "key": "665877",
@@ -10972,7 +11239,8 @@
    "babip": 0.285,
    "xhem_plus": 68,
    "xwoba": 0.277,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 84
   },
   {
    "key": "647304",
@@ -11000,11 +11268,12 @@
    "k_pct": 0.126,
    "babip": 0.273,
    "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 70,
+   "hem_plus_3yr_pct": 69,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 99,
    "xwoba": 0.321,
-   "luck_gap": 8
+   "luck_gap": 8,
+   "fwdhem_plus": 98
   },
   {
    "key": "672012",
@@ -11137,7 +11406,8 @@
    "babip": 0.329,
    "xhem_plus": 89,
    "xwoba": 0.306,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 93
   },
   {
    "key": "656775",
@@ -11164,12 +11434,13 @@
    "bb_pct": 0.0815,
    "k_pct": 0.2038,
    "babip": 0.218,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 36,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 34,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 58,
    "xwoba": 0.262,
-   "luck_gap": -33
+   "luck_gap": -33,
+   "fwdhem_plus": 80
   },
   {
    "key": "687231",
@@ -11198,7 +11469,8 @@
    "babip": 0.287,
    "xhem_plus": 58,
    "xwoba": 0.263,
-   "luck_gap": -32
+   "luck_gap": -32,
+   "fwdhem_plus": 80
   },
   {
    "key": "677870",
@@ -11227,7 +11499,8 @@
    "babip": 0.259,
    "xhem_plus": 105,
    "xwoba": 0.329,
-   "luck_gap": 15
+   "luck_gap": 15,
+   "fwdhem_plus": 100
   },
   {
    "key": "808975",
@@ -11256,7 +11529,8 @@
    "babip": 0.337,
    "xhem_plus": 87,
    "xwoba": 0.304,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 92
   },
   {
    "key": "624512",
@@ -11337,7 +11611,8 @@
    "babip": 0.286,
    "xhem_plus": 72,
    "xwoba": 0.282,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 86
   },
   {
    "key": "677588",
@@ -11366,7 +11641,8 @@
    "babip": 0.33,
    "xhem_plus": 94,
    "xwoba": 0.313,
-   "luck_gap": 4
+   "luck_gap": 4,
+   "fwdhem_plus": 95
   },
   {
    "key": "641584",
@@ -11421,7 +11697,8 @@
    "babip": 0.321,
    "xhem_plus": 98,
    "xwoba": 0.319,
-   "luck_gap": 8
+   "luck_gap": 8,
+   "fwdhem_plus": 97
   },
   {
    "key": "807727",
@@ -11502,7 +11779,8 @@
    "babip": 0.301,
    "xhem_plus": 82,
    "xwoba": 0.296,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 90
   },
   {
    "key": "694410",
@@ -11555,9 +11833,13 @@
    "bb_pct": 0.0905,
    "k_pct": 0.1286,
    "babip": 0.26,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 82,
    "xwoba": 0.297,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 90
   },
   {
    "key": "656577",
@@ -11690,7 +11972,8 @@
    "babip": 0.218,
    "xhem_plus": 60,
    "xwoba": 0.265,
-   "luck_gap": -30
+   "luck_gap": -30,
+   "fwdhem_plus": 80
   },
   {
    "key": "642201",
@@ -11719,7 +12002,8 @@
    "babip": 0.259,
    "xhem_plus": 71,
    "xwoba": 0.281,
-   "luck_gap": -19
+   "luck_gap": -19,
+   "fwdhem_plus": 85
   },
   {
    "key": "669357",
@@ -11747,11 +12031,12 @@
    "k_pct": 0.3231,
    "babip": 0.26,
    "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 26,
+   "hem_plus_3yr_pct": 28,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 69,
    "xwoba": 0.278,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 84
   },
   {
    "key": "516782",
@@ -11780,7 +12065,8 @@
    "babip": 0.367,
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 94
   },
   {
    "key": "621438",
@@ -11809,7 +12095,8 @@
    "babip": 0.22,
    "xhem_plus": 69,
    "xwoba": 0.278,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 84
   },
   {
    "key": "690976",
@@ -11836,12 +12123,13 @@
    "bb_pct": 0.1,
    "k_pct": 0.3,
    "babip": 0.336,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 15,
+   "hem_plus_3yr": 91,
+   "hem_plus_3yr_pct": 19,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 70,
    "xwoba": 0.279,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 84
   },
   {
    "key": "666211",
@@ -11870,7 +12158,8 @@
    "babip": 0.338,
    "xhem_plus": 74,
    "xwoba": 0.285,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 86
   },
   {
    "key": "676391",
@@ -11897,12 +12186,13 @@
    "bb_pct": 0.0348,
    "k_pct": 0.0936,
    "babip": 0.308,
-   "hem_plus_3yr": 85,
-   "hem_plus_3yr_pct": 8,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 9,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 66,
    "xwoba": 0.274,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 83
   },
   {
    "key": "703492",
@@ -11982,11 +12272,12 @@
    "k_pct": 0.2269,
    "babip": 0.313,
    "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_pct": 13,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 59,
    "xwoba": 0.264,
-   "luck_gap": -30
+   "luck_gap": -30,
+   "fwdhem_plus": 80
   },
   {
    "key": "690993",
@@ -12014,11 +12305,12 @@
    "k_pct": 0.1949,
    "babip": 0.28,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 31,
+   "hem_plus_3yr_pct": 33,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 102,
    "xwoba": 0.324,
-   "luck_gap": 13
+   "luck_gap": 13,
+   "fwdhem_plus": 98
   },
   {
    "key": "502054",
@@ -12072,11 +12364,12 @@
    "k_pct": 0.2786,
    "babip": 0.284,
    "hem_plus_3yr": 109,
-   "hem_plus_3yr_pct": 70,
+   "hem_plus_3yr_pct": 69,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.293,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 89
   },
   {
    "key": "596103",
@@ -12181,12 +12474,13 @@
    "bb_pct": 0.0399,
    "k_pct": 0.0969,
    "babip": 0.322,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 16,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 13,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.311,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 94
   },
   {
    "key": "669699",
@@ -12241,7 +12535,8 @@
    "babip": 0.241,
    "xhem_plus": 77,
    "xwoba": 0.289,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 87
   },
   {
    "key": "660688",
@@ -12268,9 +12563,13 @@
    "bb_pct": 0.033,
    "k_pct": 0.1274,
    "babip": 0.284,
+   "hem_plus_3yr": 77,
+   "hem_plus_3yr_pct": 1,
+   "hem_plus_3yr_tag": "established",
    "xhem_plus": 66,
    "xwoba": 0.274,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 83
   },
   {
    "key": "699393",
@@ -12323,12 +12622,13 @@
    "bb_pct": 0.125,
    "k_pct": 0.325,
    "babip": 0.221,
-   "hem_plus_3yr": 128,
+   "hem_plus_3yr": 127,
    "hem_plus_3yr_pct": 95,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 76,
    "xwoba": 0.288,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 87
   },
   {
    "key": "693459",
@@ -12382,11 +12682,12 @@
    "k_pct": 0.1667,
    "babip": 0.286,
    "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 8,
+   "hem_plus_3yr_pct": 10,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.307,
-   "luck_gap": 2
+   "luck_gap": 2,
+   "fwdhem_plus": 93
   },
   {
    "key": "680574",
@@ -12413,12 +12714,13 @@
    "bb_pct": 0.1165,
    "k_pct": 0.2686,
    "babip": 0.243,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 14,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 15,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 97,
    "xwoba": 0.317,
-   "luck_gap": 9
+   "luck_gap": 9,
+   "fwdhem_plus": 96
   },
   {
    "key": "691011",
@@ -12447,7 +12749,8 @@
    "babip": 0.129,
    "xhem_plus": 51,
    "xwoba": 0.252,
-   "luck_gap": -37
+   "luck_gap": -37,
+   "fwdhem_plus": 76
   },
   {
    "key": "681393",
@@ -12475,11 +12778,12 @@
    "k_pct": 0.3004,
    "babip": 0.291,
    "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr_pct": 20,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 72,
    "xwoba": 0.282,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 85
   },
   {
    "key": "666176",
@@ -12507,11 +12811,12 @@
    "k_pct": 0.218,
    "babip": 0.285,
    "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 47,
+   "hem_plus_3yr_pct": 50,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 102,
    "xwoba": 0.324,
-   "luck_gap": 14
+   "luck_gap": 14,
+   "fwdhem_plus": 98
   },
   {
    "key": "596117",
@@ -12564,12 +12869,13 @@
    "bb_pct": 0.0605,
    "k_pct": 0.1768,
    "babip": 0.287,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 34,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 32,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 106,
    "xwoba": 0.33,
-   "luck_gap": 18
+   "luck_gap": 18,
+   "fwdhem_plus": 99
   },
   {
    "key": "691176",
@@ -12598,7 +12904,8 @@
    "babip": 0.263,
    "xhem_plus": 87,
    "xwoba": 0.303,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 91
   },
   {
    "key": "686469",
@@ -12626,11 +12933,12 @@
    "k_pct": 0.1773,
    "babip": 0.252,
    "hem_plus_3yr": 104,
-   "hem_plus_3yr_pct": 57,
+   "hem_plus_3yr_pct": 56,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.313,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 94
   },
   {
    "key": "600869",
@@ -12683,9 +12991,13 @@
    "bb_pct": 0.088,
    "k_pct": 0.1713,
    "babip": 0.273,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 11,
+   "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 88
   },
   {
    "key": "630105",
@@ -12714,7 +13026,8 @@
    "babip": 0.24,
    "xhem_plus": 81,
    "xwoba": 0.295,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 89
   },
   {
    "key": "677060",
@@ -12846,11 +13159,12 @@
    "k_pct": 0.2185,
    "babip": 0.25,
    "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 22,
+   "hem_plus_3yr_pct": 23,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 87,
    "xwoba": 0.303,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 91
   },
   {
    "key": "815873",
@@ -12931,7 +13245,8 @@
    "babip": 0.176,
    "xhem_plus": 65,
    "xwoba": 0.272,
-   "luck_gap": -22
+   "luck_gap": -22,
+   "fwdhem_plus": 82
   },
   {
    "key": "805779",
@@ -12958,12 +13273,13 @@
    "bb_pct": 0.0464,
    "k_pct": 0.1139,
    "babip": 0.304,
-   "hem_plus_3yr": 101,
+   "hem_plus_3yr": 100,
    "hem_plus_3yr_pct": 46,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 74,
    "xwoba": 0.285,
-   "luck_gap": -13
+   "luck_gap": -13,
+   "fwdhem_plus": 86
   },
   {
    "key": "669701",
@@ -12992,7 +13308,8 @@
    "babip": 0.281,
    "xhem_plus": 70,
    "xwoba": 0.28,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 84
   },
   {
    "key": "701678",
@@ -13021,7 +13338,8 @@
    "babip": 0.327,
    "xhem_plus": 64,
    "xwoba": 0.271,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 81
   },
   {
    "key": "668901",
@@ -13049,11 +13367,12 @@
    "k_pct": 0.2402,
    "babip": 0.234,
    "hem_plus_3yr": 103,
-   "hem_plus_3yr_pct": 52,
+   "hem_plus_3yr_pct": 54,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 93
   },
   {
    "key": "670242",
@@ -13082,7 +13401,8 @@
    "babip": 0.254,
    "xhem_plus": 71,
    "xwoba": 0.281,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 84
   },
   {
    "key": "624428",
@@ -13137,7 +13457,8 @@
    "babip": 0.261,
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 88
   },
   {
    "key": "810938",
@@ -13164,12 +13485,13 @@
    "bb_pct": 0.0868,
    "k_pct": 0.1918,
    "babip": 0.312,
-   "hem_plus_3yr": 79,
-   "hem_plus_3yr_pct": 2,
+   "hem_plus_3yr": 80,
+   "hem_plus_3yr_pct": 3,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 85,
    "xwoba": 0.3,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 90
   },
   {
    "key": "683083",
@@ -13197,11 +13519,12 @@
    "k_pct": 0.2353,
    "babip": 0.326,
    "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 23,
+   "hem_plus_3yr_pct": 24,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 62,
    "xwoba": 0.268,
-   "luck_gap": -25
+   "luck_gap": -25,
+   "fwdhem_plus": 80
   },
   {
    "key": "662139",
@@ -13228,12 +13551,13 @@
    "bb_pct": 0.0844,
    "k_pct": 0.1981,
    "babip": 0.283,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 37,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 36,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 88
   },
   {
    "key": "596146",
@@ -13288,7 +13612,8 @@
    "babip": 0.242,
    "xhem_plus": 97,
    "xwoba": 0.318,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 95
   },
   {
    "key": "669720",
@@ -13369,7 +13694,8 @@
    "babip": 0.301,
    "xhem_plus": 71,
    "xwoba": 0.281,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 84
   },
   {
    "key": "687515",
@@ -13398,7 +13724,8 @@
    "babip": 0.25,
    "xhem_plus": 57,
    "xwoba": 0.261,
-   "luck_gap": -29
+   "luck_gap": -29,
+   "fwdhem_plus": 78
   },
   {
    "key": "701675",
@@ -13425,12 +13752,13 @@
    "bb_pct": 0.0512,
    "k_pct": 0.2126,
    "babip": 0.271,
-   "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 17,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 10,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 71,
    "xwoba": 0.281,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 84
   },
   {
    "key": "664702",
@@ -13459,7 +13787,8 @@
    "babip": 0.25,
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 88
   },
   {
    "key": "644433",
@@ -13514,7 +13843,8 @@
    "babip": 0.296,
    "xhem_plus": 82,
    "xwoba": 0.297,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 89
   },
   {
    "key": "592663",
@@ -13546,7 +13876,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 94,
    "xwoba": 0.313,
-   "luck_gap": 8
+   "luck_gap": 8,
+   "fwdhem_plus": 94
   },
   {
    "key": "694377",
@@ -13625,12 +13956,13 @@
    "bb_pct": 0.0694,
    "k_pct": 0.1388,
    "babip": 0.239,
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 20,
+   "hem_plus_3yr": 93,
+   "hem_plus_3yr_pct": 24,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.287,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 86
   },
   {
    "key": "680757",
@@ -13658,11 +13990,12 @@
    "k_pct": 0.1017,
    "babip": 0.251,
    "hem_plus_3yr": 101,
-   "hem_plus_3yr_pct": 48,
+   "hem_plus_3yr_pct": 49,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 92
   },
   {
    "key": "595879",
@@ -13742,11 +14075,12 @@
    "k_pct": 0.2483,
    "babip": 0.315,
    "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 6,
+   "hem_plus_3yr_pct": 5,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 77,
    "xwoba": 0.289,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 86
   },
   {
    "key": "669397",
@@ -13879,7 +14213,8 @@
    "babip": 0.241,
    "xhem_plus": 43,
    "xwoba": 0.242,
-   "luck_gap": -43
+   "luck_gap": -43,
+   "fwdhem_plus": 72
   },
   {
    "key": "671732",
@@ -13906,12 +14241,13 @@
    "bb_pct": 0.1204,
    "k_pct": 0.2664,
    "babip": 0.259,
-   "hem_plus_3yr": 100,
-   "hem_plus_3yr_pct": 44,
+   "hem_plus_3yr": 99,
+   "hem_plus_3yr_pct": 43,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.307,
-   "luck_gap": 5
+   "luck_gap": 5,
+   "fwdhem_plus": 92
   },
   {
    "key": "681082",
@@ -13938,12 +14274,13 @@
    "bb_pct": 0.0737,
    "k_pct": 0.1728,
    "babip": 0.286,
-   "hem_plus_3yr": 94,
+   "hem_plus_3yr": 93,
    "hem_plus_3yr_pct": 25,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 99,
    "xwoba": 0.32,
-   "luck_gap": 14
+   "luck_gap": 14,
+   "fwdhem_plus": 96
   },
   {
    "key": "683766",
@@ -14048,12 +14385,13 @@
    "bb_pct": 0.0533,
    "k_pct": 0.0967,
    "babip": 0.266,
-   "hem_plus_3yr": 82,
-   "hem_plus_3yr_pct": 5,
+   "hem_plus_3yr": 81,
+   "hem_plus_3yr_pct": 4,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 92
   },
   {
    "key": "691373",
@@ -14160,7 +14498,8 @@
    "babip": 0.225,
    "xhem_plus": 52,
    "xwoba": 0.254,
-   "luck_gap": -33
+   "luck_gap": -33,
+   "fwdhem_plus": 75
   },
   {
    "key": "655316",
@@ -14189,7 +14528,8 @@
    "babip": 0.272,
    "xhem_plus": 83,
    "xwoba": 0.298,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 89
   },
   {
    "key": "660710",
@@ -14296,7 +14636,8 @@
    "babip": 0.306,
    "xhem_plus": 67,
    "xwoba": 0.275,
-   "luck_gap": -17
+   "luck_gap": -17,
+   "fwdhem_plus": 82
   },
   {
    "key": "664954",
@@ -14325,7 +14666,8 @@
    "babip": 0.237,
    "xhem_plus": 62,
    "xwoba": 0.268,
-   "luck_gap": -22
+   "luck_gap": -22,
+   "fwdhem_plus": 79
   },
   {
    "key": "669087",
@@ -14378,12 +14720,13 @@
    "bb_pct": 0.0596,
    "k_pct": 0.1762,
    "babip": 0.276,
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 25,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 22,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 94
   },
   {
    "key": "691026",
@@ -14410,12 +14753,13 @@
    "bb_pct": 0.0812,
    "k_pct": 0.1961,
    "babip": 0.294,
-   "hem_plus_3yr": 90,
-   "hem_plus_3yr_pct": 15,
+   "hem_plus_3yr": 89,
+   "hem_plus_3yr_pct": 14,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 83,
    "xwoba": 0.298,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 88
   },
   {
    "key": "672580",
@@ -14443,11 +14787,12 @@
    "k_pct": 0.1531,
    "babip": 0.302,
    "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_pct": 16,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 94
   },
   {
    "key": "664761",
@@ -14474,12 +14819,13 @@
    "bb_pct": 0.0668,
    "k_pct": 0.1497,
    "babip": 0.225,
-   "hem_plus_3yr": 96,
-   "hem_plus_3yr_pct": 35,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 32,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 84,
    "xwoba": 0.299,
-   "luck_gap": 1
+   "luck_gap": 1,
+   "fwdhem_plus": 89
   },
   {
    "key": "621550",
@@ -14534,7 +14880,8 @@
    "babip": 0.239,
    "xhem_plus": 60,
    "xwoba": 0.266,
-   "luck_gap": -23
+   "luck_gap": -23,
+   "fwdhem_plus": 78
   },
   {
    "key": "656976",
@@ -14588,11 +14935,12 @@
    "k_pct": 0.1981,
    "babip": 0.285,
    "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_pct": 15,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 77,
    "xwoba": 0.29,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 86
   },
   {
    "key": "628451",
@@ -14647,7 +14995,8 @@
    "babip": 0.321,
    "xhem_plus": 63,
    "xwoba": 0.269,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 79
   },
   {
    "key": "693409",
@@ -14701,11 +15050,12 @@
    "k_pct": 0.2138,
    "babip": 0.245,
    "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 24,
+   "hem_plus_3yr_pct": 25,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 96,
    "xwoba": 0.316,
-   "luck_gap": 13
+   "luck_gap": 13,
+   "fwdhem_plus": 94
   },
   {
    "key": "666464",
@@ -14759,11 +15109,12 @@
    "k_pct": 0.2935,
    "babip": 0.278,
    "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 41,
+   "hem_plus_3yr_pct": 40,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 76,
    "xwoba": 0.288,
-   "luck_gap": -7
+   "luck_gap": -7,
+   "fwdhem_plus": 85
   },
   {
    "key": "694025",
@@ -14818,7 +15169,8 @@
    "babip": 0.232,
    "xhem_plus": 57,
    "xwoba": 0.261,
-   "luck_gap": -26
+   "luck_gap": -26,
+   "fwdhem_plus": 77
   },
   {
    "key": "699912",
@@ -14847,7 +15199,8 @@
    "babip": 0.32,
    "xhem_plus": 68,
    "xwoba": 0.276,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 81
   },
   {
    "key": "700246",
@@ -14902,7 +15255,8 @@
    "babip": 0.314,
    "xhem_plus": 48,
    "xwoba": 0.248,
-   "luck_gap": -34
+   "luck_gap": -34,
+   "fwdhem_plus": 73
   },
   {
    "key": "666969",
@@ -14930,11 +15284,12 @@
    "k_pct": 0.3243,
    "babip": 0.266,
    "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 10,
+   "hem_plus_3yr_pct": 12,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -2
+   "luck_gap": -2,
+   "fwdhem_plus": 87
   },
   {
    "key": "671655",
@@ -14989,7 +15344,8 @@
    "babip": 0.241,
    "xhem_plus": 113,
    "xwoba": 0.34,
-   "luck_gap": 31
+   "luck_gap": 31,
+   "fwdhem_plus": 101
   },
   {
    "key": "686823",
@@ -15120,12 +15476,13 @@
    "bb_pct": 0.0602,
    "k_pct": 0.2217,
    "babip": 0.283,
-   "hem_plus_3yr": 105,
+   "hem_plus_3yr": 104,
    "hem_plus_3yr_pct": 60,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 77,
    "xwoba": 0.29,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 85
   },
   {
    "key": "687401",
@@ -15157,7 +15514,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 81,
    "xwoba": 0.295,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 87
   },
   {
    "key": "696285",
@@ -15189,7 +15547,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 84,
    "xwoba": 0.299,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 88
   },
   {
    "key": "681508",
@@ -15218,7 +15577,8 @@
    "babip": 0.299,
    "xhem_plus": 70,
    "xwoba": 0.28,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 82
   },
   {
    "key": "682177",
@@ -15245,12 +15605,13 @@
    "bb_pct": 0.0843,
    "k_pct": 0.2912,
    "babip": 0.28,
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 10,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 8,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 76,
    "xwoba": 0.288,
-   "luck_gap": -5
+   "luck_gap": -5,
+   "fwdhem_plus": 85
   },
   {
    "key": "672724",
@@ -15277,12 +15638,13 @@
    "bb_pct": 0.0361,
    "k_pct": 0.296,
    "babip": 0.322,
-   "hem_plus_3yr": 75,
+   "hem_plus_3yr": 74,
    "hem_plus_3yr_pct": 0,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 73,
    "xwoba": 0.283,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 83
   },
   {
    "key": "672016",
@@ -15387,12 +15749,13 @@
    "bb_pct": 0.0664,
    "k_pct": 0.3142,
    "babip": 0.26,
-   "hem_plus_3yr": 86,
-   "hem_plus_3yr_pct": 9,
+   "hem_plus_3yr": 85,
+   "hem_plus_3yr_pct": 8,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 56,
    "xwoba": 0.26,
-   "luck_gap": -25
+   "luck_gap": -25,
+   "fwdhem_plus": 76
   },
   {
    "key": "691594",
@@ -15419,12 +15782,13 @@
    "bb_pct": 0.0574,
    "k_pct": 0.0861,
    "babip": 0.288,
-   "hem_plus_3yr": 80,
+   "hem_plus_3yr": 79,
    "hem_plus_3yr_pct": 2,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 67,
    "xwoba": 0.275,
-   "luck_gap": -14
+   "luck_gap": -14,
+   "fwdhem_plus": 81
   },
   {
    "key": "687282",
@@ -15479,7 +15843,8 @@
    "babip": 0.346,
    "xhem_plus": 75,
    "xwoba": 0.286,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 84
   },
   {
    "key": "676694",
@@ -15508,7 +15873,8 @@
    "babip": 0.24,
    "xhem_plus": 53,
    "xwoba": 0.255,
-   "luck_gap": -28
+   "luck_gap": -28,
+   "fwdhem_plus": 74
   },
   {
    "key": "682877",
@@ -15615,7 +15981,8 @@
    "babip": 0.255,
    "xhem_plus": 65,
    "xwoba": 0.273,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 80
   },
   {
    "key": "686217",
@@ -15647,7 +16014,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 72,
    "xwoba": 0.282,
-   "luck_gap": -9
+   "luck_gap": -9,
+   "fwdhem_plus": 83
   },
   {
    "key": "680776",
@@ -15675,11 +16043,12 @@
    "k_pct": 0.3005,
    "babip": 0.243,
    "hem_plus_3yr": 98,
-   "hem_plus_3yr_pct": 41,
+   "hem_plus_3yr_pct": 40,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": -1
+   "luck_gap": -1,
+   "fwdhem_plus": 86
   },
   {
    "key": "664056",
@@ -15708,7 +16077,8 @@
    "babip": 0.191,
    "xhem_plus": 65,
    "xwoba": 0.272,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 79
   },
   {
    "key": "669224",
@@ -15735,12 +16105,13 @@
    "bb_pct": 0.1091,
    "k_pct": 0.2773,
    "babip": 0.188,
-   "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 28,
+   "hem_plus_3yr": 95,
+   "hem_plus_3yr_pct": 30,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 74,
    "xwoba": 0.285,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 83
   },
   {
    "key": "677595",
@@ -15793,12 +16164,13 @@
    "bb_pct": 0.0592,
    "k_pct": 0.2056,
    "babip": 0.332,
-   "hem_plus_3yr": 77,
-   "hem_plus_3yr_pct": 1,
+   "hem_plus_3yr": 80,
+   "hem_plus_3yr_pct": 4,
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 70,
    "xwoba": 0.28,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 82
   },
   {
    "key": "663330",
@@ -15827,7 +16199,8 @@
    "babip": 0.19,
    "xhem_plus": 77,
    "xwoba": 0.29,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 85
   },
   {
    "key": "695257",
@@ -15907,11 +16280,12 @@
    "k_pct": 0.2713,
    "babip": 0.299,
    "hem_plus_3yr": 95,
-   "hem_plus_3yr_pct": 32,
+   "hem_plus_3yr_pct": 30,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 90,
    "xwoba": 0.307,
-   "luck_gap": 11
+   "luck_gap": 11,
+   "fwdhem_plus": 90
   },
   {
    "key": "609280",
@@ -15939,11 +16313,12 @@
    "k_pct": 0.1583,
    "babip": 0.293,
    "hem_plus_3yr": 94,
-   "hem_plus_3yr_pct": 26,
+   "hem_plus_3yr_pct": 27,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 82,
    "xwoba": 0.296,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 86
   },
   {
    "key": "701538",
@@ -15970,12 +16345,13 @@
    "bb_pct": 0.0714,
    "k_pct": 0.25,
    "babip": 0.274,
-   "hem_plus_3yr": 99,
+   "hem_plus_3yr": 98,
    "hem_plus_3yr_pct": 41,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 89,
    "xwoba": 0.306,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 89
   },
   {
    "key": "656716",
@@ -16002,12 +16378,13 @@
    "bb_pct": 0.1008,
    "k_pct": 0.1694,
    "babip": 0.224,
-   "hem_plus_3yr": 85,
+   "hem_plus_3yr": 86,
    "hem_plus_3yr_pct": 8,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 66,
    "xwoba": 0.274,
-   "luck_gap": -13
+   "luck_gap": -13,
+   "fwdhem_plus": 80
   },
   {
    "key": "681351",
@@ -16034,12 +16411,13 @@
    "bb_pct": 0.0687,
    "k_pct": 0.2489,
    "babip": 0.272,
-   "hem_plus_3yr": 93,
-   "hem_plus_3yr_pct": 23,
+   "hem_plus_3yr": 92,
+   "hem_plus_3yr_pct": 22,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 68,
    "xwoba": 0.276,
-   "luck_gap": -11
+   "luck_gap": -11,
+   "fwdhem_plus": 80
   },
   {
    "key": "660844",
@@ -16068,7 +16446,8 @@
    "babip": 0.203,
    "xhem_plus": 41,
    "xwoba": 0.238,
-   "luck_gap": -38
+   "luck_gap": -38,
+   "fwdhem_plus": 69
   },
   {
    "key": "663368",
@@ -16097,7 +16476,8 @@
    "babip": 0.197,
    "xhem_plus": 59,
    "xwoba": 0.264,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 76
   },
   {
    "key": "666023",
@@ -16126,7 +16506,8 @@
    "babip": 0.171,
    "xhem_plus": 58,
    "xwoba": 0.263,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 76
   },
   {
    "key": "686780",
@@ -16155,7 +16536,8 @@
    "babip": 0.262,
    "xhem_plus": 63,
    "xwoba": 0.27,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 78
   },
   {
    "key": "691458",
@@ -16210,7 +16592,8 @@
    "babip": 0.392,
    "xhem_plus": 72,
    "xwoba": 0.282,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 82
   },
   {
    "key": "666310",
@@ -16263,9 +16646,13 @@
    "bb_pct": 0.0744,
    "k_pct": 0.2233,
    "babip": 0.306,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 10,
+   "hem_plus_3yr_tag": "established",
    "xhem_plus": 70,
    "xwoba": 0.279,
-   "luck_gap": -8
+   "luck_gap": -8,
+   "fwdhem_plus": 81
   },
   {
    "key": "670764",
@@ -16292,12 +16679,13 @@
    "bb_pct": 0.1161,
    "k_pct": 0.2509,
    "babip": 0.298,
-   "hem_plus_3yr": 78,
+   "hem_plus_3yr": 77,
    "hem_plus_3yr_pct": 1,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 53,
    "xwoba": 0.255,
-   "luck_gap": -25
+   "luck_gap": -25,
+   "fwdhem_plus": 73
   },
   {
    "key": "663538",
@@ -16324,12 +16712,13 @@
    "bb_pct": 0.0857,
    "k_pct": 0.0786,
    "babip": 0.243,
-   "hem_plus_3yr": 92,
-   "hem_plus_3yr_pct": 19,
+   "hem_plus_3yr": 90,
+   "hem_plus_3yr_pct": 18,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 97,
    "xwoba": 0.318,
-   "luck_gap": 20
+   "luck_gap": 20,
+   "fwdhem_plus": 93
   },
   {
    "key": "691785",
@@ -16361,7 +16750,8 @@
    "hem_plus_3yr_tag": "provisional",
    "xhem_plus": 56,
    "xwoba": 0.259,
-   "luck_gap": -21
+   "luck_gap": -21,
+   "fwdhem_plus": 75
   },
   {
    "key": "687749",
@@ -16416,7 +16806,8 @@
    "babip": 0.228,
    "xhem_plus": 74,
    "xwoba": 0.285,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 82
   },
   {
    "key": "663743",
@@ -16448,7 +16839,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 63,
    "xwoba": 0.27,
-   "luck_gap": -14
+   "luck_gap": -14,
+   "fwdhem_plus": 78
   },
   {
    "key": "682668",
@@ -16477,7 +16869,8 @@
    "babip": 0.289,
    "xhem_plus": 73,
    "xwoba": 0.283,
-   "luck_gap": -4
+   "luck_gap": -4,
+   "fwdhem_plus": 82
   },
   {
    "key": "608701",
@@ -16506,7 +16899,8 @@
    "babip": 0.151,
    "xhem_plus": 48,
    "xwoba": 0.249,
-   "luck_gap": -29
+   "luck_gap": -29,
+   "fwdhem_plus": 71
   },
   {
    "key": "665926",
@@ -16538,7 +16932,8 @@
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 59,
    "xwoba": 0.264,
-   "luck_gap": -18
+   "luck_gap": -18,
+   "fwdhem_plus": 76
   },
   {
    "key": "677956",
@@ -16591,12 +16986,13 @@
    "bb_pct": 0.0507,
    "k_pct": 0.093,
    "babip": 0.308,
-   "hem_plus_3yr": 80,
-   "hem_plus_3yr_pct": 4,
+   "hem_plus_3yr": 79,
+   "hem_plus_3yr_pct": 2,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 60,
    "xwoba": 0.265,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 76
   },
   {
    "key": "700337",
@@ -16625,7 +17021,8 @@
    "babip": 0.232,
    "xhem_plus": 56,
    "xwoba": 0.26,
-   "luck_gap": -20
+   "luck_gap": -20,
+   "fwdhem_plus": 74
   },
   {
    "key": "645302",
@@ -16654,7 +17051,8 @@
    "babip": 0.263,
    "xhem_plus": 60,
    "xwoba": 0.266,
-   "luck_gap": -16
+   "luck_gap": -16,
+   "fwdhem_plus": 76
   },
   {
    "key": "695490",
@@ -16683,7 +17081,8 @@
    "babip": 0.308,
    "xhem_plus": 91,
    "xwoba": 0.309,
-   "luck_gap": 15
+   "luck_gap": 15,
+   "fwdhem_plus": 89
   },
   {
    "key": "678489",
@@ -16712,7 +17111,8 @@
    "babip": 0.253,
    "xhem_plus": 25,
    "xwoba": 0.216,
-   "luck_gap": -51
+   "luck_gap": -51,
+   "fwdhem_plus": 61
   },
   {
    "key": "643446",
@@ -16740,11 +17140,12 @@
    "k_pct": 0.1224,
    "babip": 0.249,
    "hem_plus_3yr": 91,
-   "hem_plus_3yr_pct": 18,
+   "hem_plus_3yr_pct": 19,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 82,
    "xwoba": 0.296,
-   "luck_gap": 6
+   "luck_gap": 6,
+   "fwdhem_plus": 85
   },
   {
    "key": "620443",
@@ -16773,7 +17174,8 @@
    "babip": 0.27,
    "xhem_plus": 64,
    "xwoba": 0.271,
-   "luck_gap": -12
+   "luck_gap": -12,
+   "fwdhem_plus": 78
   },
   {
    "key": "690984",
@@ -16880,7 +17282,8 @@
    "babip": 0.273,
    "xhem_plus": 64,
    "xwoba": 0.271,
-   "luck_gap": -10
+   "luck_gap": -10,
+   "fwdhem_plus": 77
   },
   {
    "key": "670770",
@@ -16907,9 +17310,13 @@
    "bb_pct": 0.0748,
    "k_pct": 0.243,
    "babip": 0.231,
+   "hem_plus_3yr": 103,
+   "hem_plus_3yr_pct": 54,
+   "hem_plus_3yr_tag": "established",
    "xhem_plus": 43,
    "xwoba": 0.242,
-   "luck_gap": -31
+   "luck_gap": -31,
+   "fwdhem_plus": 68
   },
   {
    "key": "681546",
@@ -16938,7 +17345,8 @@
    "babip": 0.25,
    "xhem_plus": 22,
    "xwoba": 0.211,
-   "luck_gap": -52
+   "luck_gap": -52,
+   "fwdhem_plus": 59
   },
   {
    "key": "663837",
@@ -16966,11 +17374,12 @@
    "k_pct": 0.1641,
    "babip": 0.227,
    "hem_plus_3yr": 89,
-   "hem_plus_3yr_pct": 12,
+   "hem_plus_3yr_pct": 14,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 85,
    "xwoba": 0.3,
-   "luck_gap": 12
+   "luck_gap": 12,
+   "fwdhem_plus": 86
   },
   {
    "key": "623168",
@@ -16999,7 +17408,8 @@
    "babip": 0.216,
    "xhem_plus": 42,
    "xwoba": 0.24,
-   "luck_gap": -31
+   "luck_gap": -31,
+   "fwdhem_plus": 67
   },
   {
    "key": "641555",
@@ -17054,7 +17464,8 @@
    "babip": 0.29,
    "xhem_plus": 48,
    "xwoba": 0.248,
-   "luck_gap": -24
+   "luck_gap": -24,
+   "fwdhem_plus": 69
   },
   {
    "key": "673490",
@@ -17109,7 +17520,8 @@
    "babip": 0.246,
    "xhem_plus": 69,
    "xwoba": 0.278,
-   "luck_gap": -3
+   "luck_gap": -3,
+   "fwdhem_plus": 79
   },
   {
    "key": "677950",
@@ -17138,7 +17550,8 @@
    "babip": 0.217,
    "xhem_plus": 79,
    "xwoba": 0.292,
-   "luck_gap": 7
+   "luck_gap": 7,
+   "fwdhem_plus": 83
   },
   {
    "key": "521692",
@@ -17165,12 +17578,13 @@
    "bb_pct": 0.0348,
    "k_pct": 0.2032,
    "babip": 0.232,
-   "hem_plus_3yr": 97,
-   "hem_plus_3yr_pct": 36,
+   "hem_plus_3yr": 96,
+   "hem_plus_3yr_pct": 35,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 75,
    "xwoba": 0.286,
-   "luck_gap": 3
+   "luck_gap": 3,
+   "fwdhem_plus": 81
   },
   {
    "key": "642851",
@@ -17225,7 +17639,8 @@
    "babip": 0.238,
    "xhem_plus": 65,
    "xwoba": 0.273,
-   "luck_gap": -6
+   "luck_gap": -6,
+   "fwdhem_plus": 77
   },
   {
    "key": "506702",
@@ -17304,12 +17719,13 @@
    "bb_pct": 0.09,
    "k_pct": 0.1185,
    "babip": 0.232,
-   "hem_plus_3yr": 84,
+   "hem_plus_3yr": 83,
    "hem_plus_3yr_pct": 6,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 80,
    "xwoba": 0.294,
-   "luck_gap": 10
+   "luck_gap": 10,
+   "fwdhem_plus": 83
   },
   {
    "key": "665561",
@@ -17364,7 +17780,8 @@
    "babip": 0.157,
    "xhem_plus": 92,
    "xwoba": 0.31,
-   "luck_gap": 24
+   "luck_gap": 24,
+   "fwdhem_plus": 87
   },
   {
    "key": "678662",
@@ -17391,12 +17808,13 @@
    "bb_pct": 0.0528,
    "k_pct": 0.2522,
    "babip": 0.242,
-   "hem_plus_3yr": 87,
-   "hem_plus_3yr_pct": 10,
+   "hem_plus_3yr": 86,
+   "hem_plus_3yr_pct": 9,
    "hem_plus_3yr_tag": "established",
    "xhem_plus": 67,
    "xwoba": 0.275,
-   "luck_gap": 0
+   "luck_gap": 0,
+   "fwdhem_plus": 76
   },
   {
    "key": "672820",
@@ -17425,7 +17843,8 @@
    "babip": 0.239,
    "xhem_plus": 48,
    "xwoba": 0.249,
-   "luck_gap": -15
+   "luck_gap": -15,
+   "fwdhem_plus": 67
   }
  ],
  "teams": [

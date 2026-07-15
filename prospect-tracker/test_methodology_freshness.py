@@ -197,6 +197,10 @@ MODEL_GLOSSARY = {
     "fbhr_csw_priors": "internal",
     "park_shrink_targets": "internal",
     "hem_age_layer": "internal",
+    # Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
+    # directive): policy dial, not an accuracy claim; surfaces per-player as
+    # the "Reliever ceiling" factor chip under the xfv methodology entry.
+    "xfv_role_ceiling": "internal",
 }
 
 

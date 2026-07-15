@@ -1,9 +1,9 @@
 {
- "generated_at": "2026-07-14",
+ "generated_at": "2026-07-15",
  "scope": "HITTERS",
- "n_scored": 1827,
+ "n_scored": 1828,
  "calibration_scale": {
-  "a": 0.023,
+  "a": 0.022,
   "b": 1.055
  },
  "headline_grade_divergence_vs_consensus": {
@@ -11,22 +11,22 @@
   "mean_abs_delta": 1.23,
   "max_up": 7.7,
   "max_down": -5.0,
-  "share_within_2_grades": 0.672
+  "share_within_2_grades": 0.671
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 7.48,
+  "mean_abs_delta": 7.47,
   "max_up": 9.8,
   "max_down": -22.7
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1481,
-  "n": 459,
+  "spearman_adj_vs_consensus_miss": 0.1472,
+  "n": 460,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 20745.8,
-  "consensus": 20671.7
+  "xfv": 20837.5,
+  "consensus": 20761.9
  },
  "example_up_adjustments": [
   {
@@ -39,15 +39,15 @@
   {
    "player_key": "tommy_edman",
    "consensus_fv": 40.0,
-   "xfv_grade": 48.3,
-   "delta": 8.3,
+   "xfv_grade": 48.2,
+   "delta": 8.2,
    "realized_war_6yr": 18.03
   },
   {
    "player_key": "daniel_johnson",
    "consensus_fv": 42.3,
    "xfv_grade": 50.2,
-   "delta": 7.9,
+   "delta": 7.8,
    "realized_war_6yr": -0.21
   },
   {

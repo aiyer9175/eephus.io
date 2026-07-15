@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 
-**96 models.** Verdicts: validated: 24, provisional: 44, unvalidated: 3, deprecated: 25.
+**97 models.** Verdicts: validated: 24, provisional: 45, unvalidated: 3, deprecated: 25.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -106,6 +106,7 @@ stamped as of **2026-07-15**. `validate()` at generation time: **clean**.
 | `fbhr_csw_priors` | model-dev artifact (rendered nowhere) - T1-9 X-R5 FB-cond... | n/a - gated experiment (2026-07-15), wave 3b | incumbents stand | pre-registered candidate arms | paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20... | **deprecated** | `data/fbhr_csw_eval.json` | - | - |
 | `park_shrink_targets` | model-dev artifact (rendered nowhere) - T1-5 X-R7/X-S7/X-... | n/a - gated experiment (2026-07-15), wave 3b | incumbents stand | pre-registered candidate arms | paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20... | **deprecated** | `data/park_shrink_eval.json` | - | - |
 | `hem_age_layer` | model-dev artifact (rendered nowhere) - T1-8 X-H3-AGE for... | n/a - gated experiment (2026-07-15), wave 3b | incumbents stand | pre-registered candidate arms | paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20... | **deprecated** | `data/hem_age_layer_eval.json` | - | - |
+| `xfv_role_ceiling` | live eFV board overlay - 'Reliever ceiling' factor chip | n/a - owner-directed policy dial (2026-07-15): bounded model-leg haircut for age-25+ RP-designated prospects with model war6 >=... | overlay ON (owner-approved via AskUserQuestion, 'Dial + calibration gate') | no overlay | class prior vs model enthusiasm (0.17 mean WAR / 0% star, n=284); forward kil... | **provisional** | `data/xfv_role_ceiling_eval.json` | - | - |
 
 Stored problems at last refresh: none.
 

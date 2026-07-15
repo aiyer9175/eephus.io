@@ -141,6 +141,38 @@ def _age_factor(r) -> float:
     return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
 
 
+_RP_DESIGNATIONS = {"SIRP", "MIRP", "RP", "CL"}
+
+
+def _role_factor(r, model_war: float) -> float:
+    """Owner-directed live RELIEVER-CEILING penalty (2026-07-15, the second
+    Andrew Moore directive: a near-27yo single-inning reliever must not rank
+    top-100). List-time RP-DESIGNATED prospects (SIRP/MIRP/RP/CL - generic "P"
+    excluded) realized 0.17 mean WAR, 2.8% contributor and 0% star across the
+    284 resolved training rows, a class prior the model cannot learn: the pit
+    ridge has no role feature, the FV45+ RP label cells are n<=3, and the
+    never-debuted old-reliever busts are survivorship-censored out of the
+    debuted eval pool (the same argument as _age_factor, which shipped
+    owner-directed for the same reason). Bounded multiplicative haircut on the
+    MODEL leg, LIVE board only, never the resolved eval; surfaced as a
+    "Reliever ceiling" factor chip. Triggers ONLY on model enthusiasm
+    (model_war >= 1.5) for RP-designated arms age 25+, so the blast radius is
+    the Moore class, not every bullpen prospect. Honestly labeled a policy
+    dial, not an accuracy claim; forward-adjudicated by the F-WATCH C-RP
+    cohort kill rule (data/xfv_promo_watch.json) and bounded by the F-SIDE S4
+    anti-blanket-penalty gate (mid-board pitcher outperformance must not
+    flip)."""
+    pos = str(r.get("position") or "").upper()
+    if pos not in _RP_DESIGNATIONS or model_war < 1.5:
+        return 1.0
+    age = r.get("age_now")
+    if age is None:
+        age = (r.get("milb") or {}).get("age")
+    if age is None or float(age) < 25.0:
+        return 1.0
+    return 0.70 if float(age) >= 26.0 else 0.80
+
+
 def _injury_factor(r) -> float:
     """Owner-directed live injury penalty: a multiplicative haircut on the eFV WAR
     projection (so it flows to the grade, the rank, AND surplus) for prospects who are
@@ -558,6 +590,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                                "mag": round(_stale_disc / 2.0, 2)})
         inj = _injury_factor(r)                           # owner-directed live injury penalty
         agef = _age_factor(r)                              # owner-directed live prospect-age penalty
+        rolef = _role_factor(r, xfv_war)                   # owner-directed reliever-ceiling penalty
         sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
@@ -568,7 +601,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if agef < 1.0:
             factors.insert(0, {"label": "Prospect age penalty", "dir": "down",
                                "mag": round((1 - agef) * 6, 2)})
-        adj_factor = inj * sc * agef
+        if rolef < 1.0:
+            factors.insert(0, {"label": "Reliever ceiling", "dir": "down",
+                               "mag": round((1 - rolef) * 6, 2)})
+        adj_factor = inj * sc * agef * rolef
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus

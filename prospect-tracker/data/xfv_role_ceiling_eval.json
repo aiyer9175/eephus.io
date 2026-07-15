@@ -1,0 +1,33 @@
+{
+ "experiment": "xfv_role_ceiling",
+ "generated_at": "2026-07-15",
+ "kind": "owner policy dial (NOT a forward-chained accuracy gate)",
+ "directive": "second Andrew Moore directive: a near-27yo single-inning reliever must not rank top-100",
+ "class_evidence": {
+  "population": "list-time RP-designated (SIRP/MIRP/RP/CL) resolved training rows",
+  "n": 284,
+  "mean_war": 0.17,
+  "contributor_rate": 0.028,
+  "star_rate": 0.0,
+  "fv45_plus_rp_label_cells": "n<=3 (untrainable)",
+  "why_not_gateable": "94% of the RP-designated class is decision-year>=2022 (censored); never-debuted old-reliever busts are survivorship-censored out of the debuted eval pool; every gated overlay variant failed adversarial verification 2026-07-15"
+ },
+ "mechanics": {
+  "trigger": "position in {SIRP, MIRP, RP, CL} AND age >= 25 AND model war6 >= 1.5",
+  "factor": "0.80 at age 25.x, 0.70 at 26+, model leg only, live board only",
+  "chip": "Reliever ceiling"
+ },
+ "measured_effect_2026_07_15": {
+  "arms_hit": 9,
+  "top300_affected": [
+   "andrew_moore"
+  ],
+  "moore": {
+   "rank": "91 -> 159",
+   "efvq": "48.8 -> 45.1",
+   "war6": 2.23,
+   "surplus_mm": 1.9
+  }
+ },
+ "forward_adjudication": "F-WATCH C-RP cohort kill rule (data/xfv_promo_watch.json, h1 2027-01-15) + F-SIDE S4 anti-blanket-penalty gate"
+}

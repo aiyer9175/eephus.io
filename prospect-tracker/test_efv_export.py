@@ -150,7 +150,12 @@ def test_committed_artifact_headline_alias_contract():
 #   live quantile scale (rowcount 8888 -> 9127), AND the lambda band raise
 #   RETRACTED (its evidence did not survive the label repair; hit lambda back
 #   to 0.70). Governance evals re-run in the same regen.
-_GOLDEN_XFV_SHA256 = "0a2b0fb7a4b10cf295d2e577810687c21a8f9d770a3f0b18c7138e5c999c85e2"
+# - 2026-07-15: the improvement-program board rebake: performance_ingest
+#   grade-normalization fix (106 synthetically inflated pitcher anchors
+#   deflated; Pineda #78 -> #204) + the owner-directed reliever-ceiling
+#   overlay (second Moore directive; 9 arms, Moore #91 -> #159) on the
+#   full-pipeline data refresh.
+_GOLDEN_XFV_SHA256 = "f3b9b7d2b1bb8b8721eaeb5bad46f5ff2764e316e8630ee7b99d5e3e72d93eaa"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
@@ -289,3 +294,19 @@ def test_asof_point_bust_uses_final_point():
     ])
     assert _asof_point(rec, None)["snapshot_date"] == "2022-05-01"
     assert _asof_point(_rec([]), None) is None
+
+
+def test_role_factor_semantics():
+    """Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
+    directive): fires ONLY on RP-designated (SIRP/MIRP/RP/CL, never generic P
+    or SP) arms age 25+ whose MODEL war is enthusiastic (>= 1.5); bounded
+    0.80/0.70, monotone in age. A policy dial, not a fitted parameter - this
+    pin keeps its scope from silently widening."""
+    from efv_score import _role_factor
+    assert _role_factor({"position": "SIRP", "age_now": 26.9}, 3.5) == 0.70
+    assert _role_factor({"position": "MIRP", "age_now": 25.4}, 3.5) == 0.80
+    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "SIRP", "age_now": 26.9}, 1.2) == 1.0   # no model enthusiasm
+    assert _role_factor({"position": "P", "age_now": 26.9}, 3.5) == 1.0     # generic P: exempt
+    assert _role_factor({"position": "SP", "age_now": 26.9}, 3.5) == 1.0
+    assert _role_factor({"position": None, "age_now": 26.9}, 3.5) == 1.0

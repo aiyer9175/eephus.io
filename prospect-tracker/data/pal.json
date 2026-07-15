@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-14",
+ "generated_at": "2026-07-15",
  "season": 2026,
  "n_conversions": 118,
  "rp2sp": [
@@ -23437,101 +23437,6 @@
  ],
  "history": [
   {
-   "mlbam": 665622,
-   "name": "Luis Medina",
-   "team": "ATH",
-   "direction": "SP->RP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 8,
-    "gs": 8,
-    "ip": 40.0,
-    "k_pct": 0.1778,
-    "bb_pct": 0.1111,
-    "era": 5.17
-   },
-   "post": {
-    "season": 2026,
-    "g": 31,
-    "gs": 1,
-    "ip": 42.7,
-    "k_pct": 0.2713,
-    "bb_pct": 0.117,
-    "era": 3.59
-   },
-   "held": null,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": 0.3,
-   "post_war": 0.7,
-   "war_delta": 0.4
-  },
-  {
-   "mlbam": 625643,
-   "name": "Reynaldo L\u00f3pez",
-   "team": "ATL",
-   "direction": "SP->RP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 26,
-    "gs": 25,
-    "ip": 135.7,
-    "k_pct": 0.2726,
-    "bb_pct": 0.0773,
-    "era": 1.99
-   },
-   "post": {
-    "season": 2026,
-    "g": 22,
-    "gs": 9,
-    "ip": 61.7,
-    "k_pct": 0.2077,
-    "bb_pct": 0.0962,
-    "era": 3.5
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": 5.1,
-   "post_war": 0.6,
-   "war_delta": -4.5
-  },
-  {
-   "mlbam": 663362,
-   "name": "Matt Waldron",
-   "team": "SD",
-   "direction": "SP->RP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 27,
-    "gs": 26,
-    "ip": 146.7,
-    "k_pct": 0.2128,
-    "bb_pct": 0.064,
-    "era": 4.91
-   },
-   "post": {
-    "season": 2026,
-    "g": 7,
-    "gs": 3,
-    "ip": 26.3,
-    "k_pct": 0.2049,
-    "bb_pct": 0.0656,
-    "era": 7.52
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": 0.8,
-   "post_war": -0.5,
-   "war_delta": -1.4
-  },
-  {
    "mlbam": 674841,
    "name": "Andrew Alvarez",
    "team": "WSH",
@@ -23594,51 +23499,129 @@
    }
   },
   {
-   "mlbam": 663542,
-   "name": "Bryan Hudson",
-   "team": "CWS",
-   "direction": "RP->SP",
+   "mlbam": 625643,
+   "name": "Reynaldo L\u00f3pez",
+   "team": "ATL",
+   "direction": "SP->RP",
    "year": 2026,
    "pre": {
     "season": 2024,
-    "g": 43,
-    "gs": 0,
-    "ip": 62.3,
-    "k_pct": 0.2684,
-    "bb_pct": 0.0736,
-    "era": 1.73
+    "g": 26,
+    "gs": 25,
+    "ip": 135.7,
+    "k_pct": 0.2726,
+    "bb_pct": 0.0773,
+    "era": 1.99
    },
    "post": {
     "season": 2026,
-    "g": 42,
-    "gs": 6,
-    "ip": 41.0,
-    "k_pct": 0.2241,
-    "bb_pct": 0.092,
-    "era": 2.2
+    "g": 22,
+    "gs": 9,
+    "ip": 61.7,
+    "k_pct": 0.2077,
+    "bb_pct": 0.0962,
+    "era": 3.5
    },
    "held": null,
    "in_progress": true,
    "pre_fit": 20.9,
    "success": null,
-   "pre_war": 2.4,
-   "post_war": 1.7,
-   "war_delta": -0.7,
+   "pre_war": 5.1,
+   "post_war": 0.6,
+   "war_delta": -4.5,
    "pitch_mix": {
     "before": [
      {
       "pitch": "FF",
-      "usage": 0.664
+      "usage": 0.552
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.294
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.116
      }
     ],
     "after": [
      {
       "pitch": "FF",
-      "usage": 0.669
+      "usage": 0.55
      },
      {
-      "pitch": "ST",
-      "usage": 0.249
+      "pitch": "SL",
+      "usage": 0.299
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.117
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 668964,
+   "name": "Tobias Myers",
+   "team": "NYM",
+   "direction": "SP->RP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 27,
+    "gs": 25,
+    "ip": 138.0,
+    "k_pct": 0.2232,
+    "bb_pct": 0.0633,
+    "era": 3.0
+   },
+   "post": {
+    "season": 2026,
+    "g": 26,
+    "gs": 3,
+    "ip": 46.0,
+    "k_pct": 0.1667,
+    "bb_pct": 0.0657,
+    "era": 6.26
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 21.5,
+   "success": null,
+   "pre_war": 2.6,
+   "post_war": -0.8,
+   "war_delta": -3.5,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.405
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.228
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.211
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.114
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.479
+     },
+     {
+      "pitch": "FS",
+      "usage": 0.23
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.162
      }
     ]
    }
@@ -23844,122 +23827,6 @@
      {
       "pitch": "SV",
       "usage": 0.097
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 668964,
-   "name": "Tobias Myers",
-   "team": "NYM",
-   "direction": "SP->RP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 27,
-    "gs": 25,
-    "ip": 138.0,
-    "k_pct": 0.2232,
-    "bb_pct": 0.0633,
-    "era": 3.0
-   },
-   "post": {
-    "season": 2026,
-    "g": 26,
-    "gs": 3,
-    "ip": 46.0,
-    "k_pct": 0.1667,
-    "bb_pct": 0.0657,
-    "era": 6.26
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": 28.8,
-   "success": null,
-   "pre_war": 2.6,
-   "post_war": -0.8,
-   "war_delta": -3.5,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "FF",
-      "usage": 0.452
-     },
-     {
-      "pitch": "FC",
-      "usage": 0.2
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.163
-     },
-     {
-      "pitch": "FS",
-      "usage": 0.156
-     }
-    ],
-    "after": [
-     {
-      "pitch": "FF",
-      "usage": 0.479
-     },
-     {
-      "pitch": "FS",
-      "usage": 0.23
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.162
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 663992,
-   "name": "Richard Lovelady",
-   "team": "WSH",
-   "direction": "RP->SP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 35,
-    "gs": 0,
-    "ip": 34.3,
-    "k_pct": 0.1769,
-    "bb_pct": 0.0748,
-    "era": 4.46
-   },
-   "post": {
-    "season": 2026,
-    "g": 33,
-    "gs": 5,
-    "ip": 30.3,
-    "k_pct": 0.1849,
-    "bb_pct": 0.1438,
-    "era": 3.86
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": 29.7,
-   "success": null,
-   "pre_war": 0.2,
-   "post_war": 0.4,
-   "war_delta": 0.3,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "ST",
-      "usage": 0.421
-     }
-    ],
-    "after": [
-     {
-      "pitch": "ST",
-      "usage": 0.429
-     },
-     {
-      "pitch": "SI",
-      "usage": 0.297
      }
     ]
    }
@@ -24276,6 +24143,137 @@
      {
       "pitch": "FS",
       "usage": 0.18
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 663362,
+   "name": "Matt Waldron",
+   "team": "SD",
+   "direction": "SP->RP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 27,
+    "gs": 26,
+    "ip": 146.7,
+    "k_pct": 0.2128,
+    "bb_pct": 0.064,
+    "era": 4.91
+   },
+   "post": {
+    "season": 2026,
+    "g": 7,
+    "gs": 3,
+    "ip": 26.3,
+    "k_pct": 0.2049,
+    "bb_pct": 0.0656,
+    "era": 7.52
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 37.1,
+   "success": null,
+   "pre_war": 0.8,
+   "post_war": -0.5,
+   "war_delta": -1.4,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "KN",
+      "usage": 0.382
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.198
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.187
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.146
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.087
+     }
+    ],
+    "after": [
+     {
+      "pitch": "KN",
+      "usage": 0.292
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.198
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.175
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 665622,
+   "name": "Luis Medina",
+   "team": "ATH",
+   "direction": "SP->RP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 8,
+    "gs": 8,
+    "ip": 40.0,
+    "k_pct": 0.1778,
+    "bb_pct": 0.1111,
+    "era": 5.17
+   },
+   "post": {
+    "season": 2026,
+    "g": 31,
+    "gs": 1,
+    "ip": 42.7,
+    "k_pct": 0.2713,
+    "bb_pct": 0.117,
+    "era": 3.59
+   },
+   "held": null,
+   "pre_fit": 39.7,
+   "success": null,
+   "pre_war": 0.3,
+   "post_war": 0.7,
+   "war_delta": 0.4,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.417
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.251
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.15
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.299
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.295
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.132
      }
     ]
    }
@@ -24849,6 +24847,122 @@
    }
   },
   {
+   "mlbam": 663992,
+   "name": "Richard Lovelady",
+   "team": "WSH",
+   "direction": "RP->SP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 35,
+    "gs": 0,
+    "ip": 34.3,
+    "k_pct": 0.1769,
+    "bb_pct": 0.0748,
+    "era": 4.46
+   },
+   "post": {
+    "season": 2026,
+    "g": 33,
+    "gs": 5,
+    "ip": 30.3,
+    "k_pct": 0.1849,
+    "bb_pct": 0.1438,
+    "era": 3.86
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 64.9,
+   "success": null,
+   "pre_war": 0.2,
+   "post_war": 0.4,
+   "war_delta": 0.3,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "SL",
+      "usage": 0.373
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.343
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.197
+     }
+    ],
+    "after": [
+     {
+      "pitch": "ST",
+      "usage": 0.429
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.297
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 663542,
+   "name": "Bryan Hudson",
+   "team": "CWS",
+   "direction": "RP->SP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 43,
+    "gs": 0,
+    "ip": 62.3,
+    "k_pct": 0.2684,
+    "bb_pct": 0.0736,
+    "era": 1.73
+   },
+   "post": {
+    "season": 2026,
+    "g": 42,
+    "gs": 6,
+    "ip": 41.0,
+    "k_pct": 0.2241,
+    "bb_pct": 0.092,
+    "era": 2.2
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 68.8,
+   "success": null,
+   "pre_war": 2.4,
+   "post_war": 1.7,
+   "war_delta": -0.7,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.522
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.245
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.233
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.669
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.249
+     }
+    ]
+   }
+  },
+  {
    "mlbam": 680755,
    "name": "Braydon Fisher",
    "team": "TOR",
@@ -24906,141 +25020,6 @@
      {
       "pitch": "FF",
       "usage": 0.172
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 672282,
-   "name": "Reid Detmers",
-   "team": "LAA",
-   "direction": "RP->SP",
-   "year": 2026,
-   "pre": {
-    "season": 2025,
-    "g": 61,
-    "gs": 0,
-    "ip": 63.7,
-    "k_pct": 0.3008,
-    "bb_pct": 0.094,
-    "era": 3.96
-   },
-   "post": {
-    "season": 2026,
-    "g": 19,
-    "gs": 19,
-    "ip": 108.7,
-    "k_pct": 0.2721,
-    "bb_pct": 0.0774,
-    "era": 4.39
-   },
-   "held": null,
-   "pre_fit": 72.3,
-   "success": null,
-   "pre_war": 1.1,
-   "post_war": 1.1,
-   "war_delta": 0.0,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "FF",
-      "usage": 0.454
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.312
-     },
-     {
-      "pitch": "CU",
-      "usage": 0.211
-     }
-    ],
-    "after": [
-     {
-      "pitch": "FF",
-      "usage": 0.448
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.323
-     },
-     {
-      "pitch": "CH",
-      "usage": 0.108
-     },
-     {
-      "pitch": "CU",
-      "usage": 0.105
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 643377,
-   "name": "Griffin Jax",
-   "team": "TB",
-   "direction": "RP->SP",
-   "year": 2026,
-   "pre": {
-    "season": 2025,
-    "g": 73,
-    "gs": 2,
-    "ip": 66.0,
-    "k_pct": 0.3498,
-    "bb_pct": 0.0742,
-    "era": 4.23
-   },
-   "post": {
-    "season": 2026,
-    "g": 25,
-    "gs": 14,
-    "ip": 70.0,
-    "k_pct": 0.2474,
-    "bb_pct": 0.0871,
-    "era": 3.47
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": 73.3,
-   "success": null,
-   "pre_war": 0.5,
-   "post_war": 0.4,
-   "war_delta": -0.0,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "ST",
-      "usage": 0.44
-     },
-     {
-      "pitch": "CH",
-      "usage": 0.223
-     },
-     {
-      "pitch": "FF",
-      "usage": 0.177
-     },
-     {
-      "pitch": "SI",
-      "usage": 0.117
-     }
-    ],
-    "after": [
-     {
-      "pitch": "ST",
-      "usage": 0.26
-     },
-     {
-      "pitch": "CH",
-      "usage": 0.225
-     },
-     {
-      "pitch": "SI",
-      "usage": 0.201
-     },
-     {
-      "pitch": "FF",
-      "usage": 0.179
      }
     ]
    }
@@ -25200,6 +25179,215 @@
    }
   },
   {
+   "mlbam": 672282,
+   "name": "Reid Detmers",
+   "team": "LAA",
+   "direction": "RP->SP",
+   "year": 2026,
+   "pre": {
+    "season": 2025,
+    "g": 61,
+    "gs": 0,
+    "ip": 63.7,
+    "k_pct": 0.3008,
+    "bb_pct": 0.094,
+    "era": 3.96
+   },
+   "post": {
+    "season": 2026,
+    "g": 19,
+    "gs": 19,
+    "ip": 108.7,
+    "k_pct": 0.2721,
+    "bb_pct": 0.0774,
+    "era": 4.39
+   },
+   "held": null,
+   "pre_fit": 75.3,
+   "success": null,
+   "pre_war": 1.1,
+   "post_war": 1.1,
+   "war_delta": 0.0,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.454
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.312
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.211
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.448
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.323
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.108
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.105
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 643377,
+   "name": "Griffin Jax",
+   "team": "TB",
+   "direction": "RP->SP",
+   "year": 2026,
+   "pre": {
+    "season": 2025,
+    "g": 73,
+    "gs": 2,
+    "ip": 66.0,
+    "k_pct": 0.3498,
+    "bb_pct": 0.0742,
+    "era": 4.23
+   },
+   "post": {
+    "season": 2026,
+    "g": 25,
+    "gs": 14,
+    "ip": 70.0,
+    "k_pct": 0.2474,
+    "bb_pct": 0.0871,
+    "era": 3.47
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 76.3,
+   "success": null,
+   "pre_war": 0.5,
+   "post_war": 0.4,
+   "war_delta": -0.0,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "ST",
+      "usage": 0.44
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.223
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.177
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.117
+     }
+    ],
+    "after": [
+     {
+      "pitch": "ST",
+      "usage": 0.26
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.225
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.201
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.179
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 669387,
+   "name": "Carmen Mlodzinski",
+   "team": "PIT",
+   "direction": "RP->SP",
+   "year": 2026,
+   "pre": {
+    "season": 2024,
+    "g": 40,
+    "gs": 4,
+    "ip": 50.7,
+    "k_pct": 0.2201,
+    "bb_pct": 0.0909,
+    "era": 3.38
+   },
+   "post": {
+    "season": 2026,
+    "g": 20,
+    "gs": 9,
+    "ip": 80.7,
+    "k_pct": 0.1839,
+    "bb_pct": 0.0805,
+    "era": 3.24
+   },
+   "held": null,
+   "in_progress": true,
+   "pre_fit": 77.5,
+   "success": null,
+   "pre_war": 0.8,
+   "post_war": 1.3,
+   "war_delta": 0.6,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.398
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.266
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.203
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.129
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.281
+     },
+     {
+      "pitch": "FS",
+      "usage": 0.254
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.174
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.121
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.106
+     }
+    ]
+   }
+  },
+  {
    "mlbam": 571927,
    "name": "Steven Matz",
    "team": "TB",
@@ -25224,7 +25412,7 @@
     "era": 6.28
    },
    "held": null,
-   "pre_fit": 75.3,
+   "pre_fit": 78.3,
    "success": null,
    "pre_war": 0.9,
    "post_war": -0.9,
@@ -25335,150 +25523,6 @@
    }
   },
   {
-   "mlbam": 669387,
-   "name": "Carmen Mlodzinski",
-   "team": "PIT",
-   "direction": "RP->SP",
-   "year": 2026,
-   "pre": {
-    "season": 2024,
-    "g": 40,
-    "gs": 4,
-    "ip": 50.7,
-    "k_pct": 0.2201,
-    "bb_pct": 0.0909,
-    "era": 3.38
-   },
-   "post": {
-    "season": 2026,
-    "g": 20,
-    "gs": 9,
-    "ip": 80.7,
-    "k_pct": 0.1839,
-    "bb_pct": 0.0805,
-    "era": 3.24
-   },
-   "held": null,
-   "in_progress": true,
-   "pre_fit": 84.6,
-   "success": null,
-   "pre_war": 0.8,
-   "post_war": 1.3,
-   "war_delta": 0.6,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "FF",
-      "usage": 0.362
-     },
-     {
-      "pitch": "FS",
-      "usage": 0.152
-     },
-     {
-      "pitch": "SI",
-      "usage": 0.151
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.141
-     },
-     {
-      "pitch": "ST",
-      "usage": 0.105
-     },
-     {
-      "pitch": "CU",
-      "usage": 0.089
-     }
-    ],
-    "after": [
-     {
-      "pitch": "FF",
-      "usage": 0.281
-     },
-     {
-      "pitch": "FS",
-      "usage": 0.254
-     },
-     {
-      "pitch": "SI",
-      "usage": 0.174
-     },
-     {
-      "pitch": "CU",
-      "usage": 0.121
-     },
-     {
-      "pitch": "ST",
-      "usage": 0.106
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 687888,
-   "name": "Brandon Walter",
-   "team": "HOU",
-   "direction": "RP->SP",
-   "year": 2025,
-   "pre": {
-    "season": 2023,
-    "g": 9,
-    "gs": 0,
-    "ip": 23.0,
-    "k_pct": 0.1509,
-    "bb_pct": 0.066,
-    "era": 6.26
-   },
-   "post": {
-    "season": 2025,
-    "g": 9,
-    "gs": 9,
-    "ip": 53.7,
-    "k_pct": 0.2453,
-    "bb_pct": 0.0189,
-    "era": 3.35
-   },
-   "held": null,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": -0.2,
-   "post_war": 1.3,
-   "war_delta": 1.4
-  },
-  {
-   "mlbam": 683175,
-   "name": "Connor Phillips",
-   "team": "CIN",
-   "direction": "SP->RP",
-   "year": 2025,
-   "pre": {
-    "season": 2023,
-    "g": 5,
-    "gs": 5,
-    "ip": 20.7,
-    "k_pct": 0.2708,
-    "bb_pct": 0.1354,
-    "era": 6.97
-   },
-   "post": {
-    "season": 2025,
-    "g": 21,
-    "gs": 0,
-    "ip": 25.0,
-    "k_pct": 0.3265,
-    "bb_pct": 0.1224,
-    "era": 2.88
-   },
-   "held": true,
-   "pre_fit": null,
-   "success": true,
-   "pre_war": -0.1,
-   "post_war": 0.7,
-   "war_delta": 0.8
-  },
-  {
    "mlbam": 663765,
    "name": "Jake Woodford",
    "team": "AZ",
@@ -25502,9 +25546,9 @@
     "bb_pct": 0.0765,
     "era": 6.44
    },
-   "held": true,
+   "held": null,
    "pre_fit": 37.3,
-   "success": true,
+   "success": null,
    "pre_war": -1.3,
    "post_war": -0.8,
    "war_delta": 0.5,
@@ -25563,9 +25607,9 @@
     "bb_pct": 0.1141,
     "era": 3.08
    },
-   "held": true,
+   "held": null,
    "pre_fit": 40.8,
-   "success": true,
+   "success": null,
    "pre_war": 0.0,
    "post_war": 1.4,
    "war_delta": 1.3,
@@ -25632,9 +25676,9 @@
     "bb_pct": 0.0767,
     "era": 2.78
    },
-   "held": false,
+   "held": null,
    "pre_fit": 41.6,
-   "success": false,
+   "success": null,
    "pre_war": -0.6,
    "post_war": 1.7,
    "war_delta": 2.3,
@@ -25770,9 +25814,9 @@
     "bb_pct": 0.088,
     "era": 3.99
    },
-   "held": true,
+   "held": null,
    "pre_fit": 49.6,
-   "success": true,
+   "success": null,
    "pre_war": 0.3,
    "post_war": 0.2,
    "war_delta": -0.1,
@@ -25827,9 +25871,9 @@
     "bb_pct": 0.0607,
     "era": 4.32
    },
-   "held": false,
+   "held": null,
    "pre_fit": 51.5,
-   "success": false,
+   "success": null,
    "pre_war": -0.3,
    "post_war": -0.1,
    "war_delta": 0.3,
@@ -25888,9 +25932,9 @@
     "bb_pct": 0.0672,
     "era": 3.51
    },
-   "held": true,
+   "held": null,
    "pre_fit": 51.8,
-   "success": true,
+   "success": null,
    "pre_war": -0.2,
    "post_war": 1.9,
    "war_delta": 2.1,
@@ -25934,6 +25978,59 @@
    }
   },
   {
+   "mlbam": 683175,
+   "name": "Connor Phillips",
+   "team": "CIN",
+   "direction": "SP->RP",
+   "year": 2025,
+   "pre": {
+    "season": 2023,
+    "g": 5,
+    "gs": 5,
+    "ip": 20.7,
+    "k_pct": 0.2708,
+    "bb_pct": 0.1354,
+    "era": 6.97
+   },
+   "post": {
+    "season": 2025,
+    "g": 21,
+    "gs": 0,
+    "ip": 25.0,
+    "k_pct": 0.3265,
+    "bb_pct": 0.1224,
+    "era": 2.88
+   },
+   "held": null,
+   "pre_fit": 57.6,
+   "success": null,
+   "pre_war": -0.1,
+   "post_war": 0.7,
+   "war_delta": 0.8,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.633
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.255
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.499
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.451
+     }
+    ]
+   }
+  },
+  {
    "mlbam": 672282,
    "name": "Reid Detmers",
    "team": "LAA",
@@ -25957,9 +26054,9 @@
     "bb_pct": 0.094,
     "era": 3.96
    },
-   "held": false,
+   "held": null,
    "pre_fit": 60.9,
-   "success": false,
+   "success": null,
    "pre_war": -1.1,
    "post_war": 1.1,
    "war_delta": 2.2,
@@ -26022,9 +26119,9 @@
     "bb_pct": 0.0617,
     "era": 4.21
    },
-   "held": true,
+   "held": null,
    "pre_fit": 66.2,
-   "success": true,
+   "success": null,
    "pre_war": 0.2,
    "post_war": 0.9,
    "war_delta": 0.7,
@@ -26080,6 +26177,71 @@
    }
   },
   {
+   "mlbam": 687888,
+   "name": "Brandon Walter",
+   "team": "HOU",
+   "direction": "RP->SP",
+   "year": 2025,
+   "pre": {
+    "season": 2023,
+    "g": 9,
+    "gs": 0,
+    "ip": 23.0,
+    "k_pct": 0.1509,
+    "bb_pct": 0.066,
+    "era": 6.26
+   },
+   "post": {
+    "season": 2025,
+    "g": 9,
+    "gs": 9,
+    "ip": 53.7,
+    "k_pct": 0.2453,
+    "bb_pct": 0.0189,
+    "era": 3.35
+   },
+   "held": null,
+   "pre_fit": 68.1,
+   "success": null,
+   "pre_war": -0.2,
+   "post_war": 1.3,
+   "war_delta": 1.4,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FC",
+      "usage": 0.312
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.263
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FC",
+      "usage": 0.274
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.225
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.193
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.183
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.125
+     }
+    ]
+   }
+  },
+  {
    "mlbam": 605280,
    "name": "Clay Holmes",
    "team": "NYM",
@@ -26103,9 +26265,9 @@
     "bb_pct": 0.0932,
     "era": 3.53
    },
-   "held": true,
+   "held": null,
    "pre_fit": 77.4,
-   "success": true,
+   "success": null,
    "pre_war": 0.6,
    "post_war": 2.1,
    "war_delta": 1.5,
@@ -26176,9 +26338,9 @@
     "bb_pct": 0.0819,
     "era": 2.55
    },
-   "held": true,
-   "pre_fit": 85.8,
-   "success": true,
+   "held": null,
+   "pre_fit": 88.8,
+   "success": null,
    "pre_war": 0.7,
    "post_war": 3.1,
    "war_delta": 2.4,
@@ -26371,9 +26533,9 @@
     "bb_pct": 0.0729,
     "era": 5.75
    },
-   "held": true,
+   "held": null,
    "pre_fit": 30.9,
-   "success": true,
+   "success": null,
    "pre_war": -0.7,
    "post_war": -0.2,
    "war_delta": 0.5,
@@ -26473,9 +26635,9 @@
     "bb_pct": 0.1538,
     "era": 7.43
    },
-   "held": true,
+   "held": null,
    "pre_fit": 39.7,
-   "success": true,
+   "success": null,
    "pre_war": 1.0,
    "post_war": -0.3,
    "war_delta": -1.3,
@@ -26579,63 +26741,6 @@
      {
       "pitch": "FF",
       "usage": 0.152
-     }
-    ]
-   }
-  },
-  {
-   "mlbam": 625643,
-   "name": "Reynaldo L\u00f3pez",
-   "team": "ATL",
-   "direction": "RP->SP",
-   "year": 2024,
-   "pre": {
-    "season": 2023,
-    "g": 68,
-    "gs": 0,
-    "ip": 66.0,
-    "k_pct": 0.2986,
-    "bb_pct": 0.1223,
-    "era": 3.27
-   },
-   "post": {
-    "season": 2024,
-    "g": 26,
-    "gs": 25,
-    "ip": 135.7,
-    "k_pct": 0.2726,
-    "bb_pct": 0.0773,
-    "era": 1.99
-   },
-   "held": true,
-   "pre_fit": 45.4,
-   "success": true,
-   "pre_war": 2.0,
-   "post_war": 5.1,
-   "war_delta": 3.0,
-   "pitch_mix": {
-    "before": [
-     {
-      "pitch": "FF",
-      "usage": 0.639
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.294
-     }
-    ],
-    "after": [
-     {
-      "pitch": "FF",
-      "usage": 0.552
-     },
-     {
-      "pitch": "SL",
-      "usage": 0.294
-     },
-     {
-      "pitch": "CU",
-      "usage": 0.116
      }
     ]
    }
@@ -26802,9 +26907,9 @@
     "bb_pct": 0.1219,
     "era": 3.46
    },
-   "held": true,
+   "held": null,
    "pre_fit": 48.0,
-   "success": true,
+   "success": null,
    "pre_war": 0.6,
    "post_war": 1.4,
    "war_delta": 0.8,
@@ -26835,6 +26940,63 @@
      {
       "pitch": "FC",
       "usage": 0.105
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 625643,
+   "name": "Reynaldo L\u00f3pez",
+   "team": "ATL",
+   "direction": "RP->SP",
+   "year": 2024,
+   "pre": {
+    "season": 2023,
+    "g": 68,
+    "gs": 0,
+    "ip": 66.0,
+    "k_pct": 0.2986,
+    "bb_pct": 0.1223,
+    "era": 3.27
+   },
+   "post": {
+    "season": 2024,
+    "g": 26,
+    "gs": 25,
+    "ip": 135.7,
+    "k_pct": 0.2726,
+    "bb_pct": 0.0773,
+    "era": 1.99
+   },
+   "held": null,
+   "pre_fit": 48.4,
+   "success": null,
+   "pre_war": 2.0,
+   "post_war": 5.1,
+   "war_delta": 3.0,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.639
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.294
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.552
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.294
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.116
      }
     ]
    }
@@ -27119,9 +27281,9 @@
     "bb_pct": 0.0731,
     "era": 4.08
    },
-   "held": false,
+   "held": null,
    "pre_fit": 66.3,
-   "success": false,
+   "success": null,
    "pre_war": -0.4,
    "post_war": 0.6,
    "war_delta": 1.0,
@@ -27456,9 +27618,9 @@
     "bb_pct": 0.0952,
     "era": 4.15
    },
-   "held": true,
+   "held": null,
    "pre_fit": 32.8,
-   "success": true,
+   "success": null,
    "pre_war": -0.0,
    "post_war": 0.3,
    "war_delta": 0.3,
@@ -27590,9 +27752,9 @@
     "bb_pct": 0.0805,
     "era": 5.96
    },
-   "held": true,
+   "held": null,
    "pre_fit": 49.9,
-   "success": true,
+   "success": null,
    "pre_war": -0.8,
    "post_war": -0.4,
    "war_delta": 0.4,
@@ -27705,7 +27867,7 @@
     "era": 6.4
    },
    "held": false,
-   "pre_fit": 54.0,
+   "pre_fit": 57.0,
    "success": false,
    "pre_war": -0.6,
    "post_war": -0.6,
@@ -28143,9 +28305,9 @@
     "bb_pct": 0.1024,
     "era": 2.64
    },
-   "held": true,
+   "held": null,
    "pre_fit": 34.8,
-   "success": true,
+   "success": null,
    "pre_war": -0.0,
    "post_war": 1.5,
    "war_delta": 1.6,
@@ -28391,9 +28553,9 @@
     "bb_pct": 0.1145,
     "era": 4.38
    },
-   "held": true,
+   "held": null,
    "pre_fit": 45.7,
-   "success": true,
+   "success": null,
    "pre_war": 0.1,
    "post_war": -0.0,
    "war_delta": -0.1,
@@ -28785,9 +28947,9 @@
     "bb_pct": 0.0565,
     "era": 2.46
    },
-   "held": true,
+   "held": null,
    "pre_fit": 73.4,
-   "success": true,
+   "success": null,
    "pre_war": 0.2,
    "post_war": 3.8,
    "war_delta": 3.5,
@@ -28823,159 +28985,81 @@
    }
   },
   {
-   "mlbam": 594965,
-   "name": "Daniel Ponce de Leon",
-   "team": "STL",
+   "mlbam": 622065,
+   "name": "Alex Young",
+   "team": "CLE",
    "direction": "SP->RP",
    "year": 2021,
    "pre": {
     "season": 2019,
-    "g": 13,
-    "gs": 8,
-    "ip": 48.7,
-    "k_pct": 0.2562,
-    "bb_pct": 0.1281,
-    "era": 3.7
+    "g": 17,
+    "gs": 15,
+    "ip": 83.3,
+    "k_pct": 0.2034,
+    "bb_pct": 0.0774,
+    "era": 3.56
    },
    "post": {
     "season": 2021,
-    "g": 24,
+    "g": 40,
     "gs": 2,
-    "ip": 33.3,
-    "k_pct": 0.1519,
-    "bb_pct": 0.1392,
-    "era": 6.21
-   },
-   "held": null,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": 0.5,
-   "post_war": -0.7,
-   "war_delta": -1.2
-  },
-  {
-   "mlbam": 593372,
-   "name": "Carlos Martinez",
-   "team": "STL",
-   "direction": "RP->SP",
-   "year": 2021,
-   "pre": {
-    "season": 2019,
-    "g": 48,
-    "gs": 0,
-    "ip": 48.3,
-    "k_pct": 0.265,
-    "bb_pct": 0.09,
-    "era": 3.17
-   },
-   "post": {
-    "season": 2021,
-    "g": 16,
-    "gs": 16,
-    "ip": 82.3,
-    "k_pct": 0.157,
-    "bb_pct": 0.0992,
-    "era": 6.23
-   },
-   "held": null,
-   "pre_fit": null,
-   "success": null,
-   "pre_war": 0.8,
-   "post_war": -1.2,
-   "war_delta": -2.1
-  },
-  {
-   "mlbam": 468504,
-   "name": "Jhoulys Chac\u00edn",
-   "team": "COL",
-   "direction": "SP->RP",
-   "year": 2021,
-   "pre": {
-    "season": 2019,
-    "g": 25,
-    "gs": 24,
-    "ip": 103.3,
-    "k_pct": 0.2149,
-    "bb_pct": 0.0979,
-    "era": 6.01
-   },
-   "post": {
-    "season": 2021,
-    "g": 46,
-    "gs": 1,
-    "ip": 64.3,
-    "k_pct": 0.1747,
-    "bb_pct": 0.1041,
-    "era": 4.34
+    "ip": 52.0,
+    "k_pct": 0.1748,
+    "bb_pct": 0.1098,
+    "era": 6.58
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 25.9,
    "success": true,
-   "pre_war": -0.6,
-   "post_war": 0.7,
-   "war_delta": 1.3
-  },
-  {
-   "mlbam": 503449,
-   "name": "Wily Peralta",
-   "team": "DET",
-   "direction": "RP->SP",
-   "year": 2021,
-   "pre": {
-    "season": 2019,
-    "g": 42,
-    "gs": 0,
-    "ip": 40.3,
-    "k_pct": 0.1364,
-    "bb_pct": 0.108,
-    "era": 5.8
-   },
-   "post": {
-    "season": 2021,
-    "g": 19,
-    "gs": 18,
-    "ip": 93.7,
-    "k_pct": 0.1443,
-    "bb_pct": 0.0945,
-    "era": 3.07
-   },
-   "held": false,
-   "pre_fit": null,
-   "success": false,
-   "pre_war": -0.2,
-   "post_war": 2.0,
-   "war_delta": 2.3
-  },
-  {
-   "mlbam": 657053,
-   "name": "Touki Toussaint",
-   "team": "ATL",
-   "direction": "RP->SP",
-   "year": 2021,
-   "pre": {
-    "season": 2019,
-    "g": 24,
-    "gs": 1,
-    "ip": 41.7,
-    "k_pct": 0.2273,
-    "bb_pct": 0.1313,
-    "era": 5.62
-   },
-   "post": {
-    "season": 2021,
-    "g": 11,
-    "gs": 10,
-    "ip": 50.0,
-    "k_pct": 0.2222,
-    "bb_pct": 0.1019,
-    "era": 4.5
-   },
-   "held": false,
-   "pre_fit": null,
-   "success": false,
-   "pre_war": -0.3,
-   "post_war": 0.2,
-   "war_delta": 0.6
+   "pre_war": 0.8,
+   "post_war": -1.1,
+   "war_delta": -1.9,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FC",
+      "usage": 0.233
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.222
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.201
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.201
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.143
+     }
+    ],
+    "after": [
+     {
+      "pitch": "SI",
+      "usage": 0.253
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.226
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.192
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.19
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.139
+     }
+    ]
+   }
   },
   {
    "mlbam": 670950,
@@ -29002,42 +29086,106 @@
     "era": 3.5
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 30.4,
    "success": true,
    "pre_war": 1.9,
    "post_war": 0.9,
-   "war_delta": -1.0
+   "war_delta": -1.0,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.437
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.383
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.096
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.071
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.567
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.295
+     }
+    ]
+   }
   },
   {
-   "mlbam": 446321,
-   "name": "Ross Detwiler",
-   "team": "SD",
+   "mlbam": 468504,
+   "name": "Jhoulys Chac\u00edn",
+   "team": "COL",
    "direction": "SP->RP",
    "year": 2021,
    "pre": {
     "season": 2019,
-    "g": 18,
-    "gs": 12,
-    "ip": 69.7,
-    "k_pct": 0.146,
-    "bb_pct": 0.0857,
-    "era": 6.59
+    "g": 25,
+    "gs": 24,
+    "ip": 103.3,
+    "k_pct": 0.2149,
+    "bb_pct": 0.0979,
+    "era": 6.01
    },
    "post": {
     "season": 2021,
-    "g": 53,
-    "gs": 5,
-    "ip": 52.3,
-    "k_pct": 0.2707,
-    "bb_pct": 0.0873,
-    "era": 4.64
+    "g": 46,
+    "gs": 1,
+    "ip": 64.3,
+    "k_pct": 0.1747,
+    "bb_pct": 0.1041,
+    "era": 4.34
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 30.7,
    "success": true,
    "pre_war": -0.6,
-   "post_war": 0.2,
-   "war_delta": 0.8
+   "post_war": 0.7,
+   "war_delta": 1.3,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "SL",
+      "usage": 0.496
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.314
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.129
+     }
+    ],
+    "after": [
+     {
+      "pitch": "CU",
+      "usage": 0.351
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.323
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.203
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.087
+     }
+    ]
+   }
   },
   {
    "mlbam": 592644,
@@ -29064,11 +29212,45 @@
     "era": 6.71
    },
    "held": null,
-   "pre_fit": null,
+   "pre_fit": 33.9,
    "success": null,
    "pre_war": 0.4,
    "post_war": -1.1,
-   "war_delta": -1.4
+   "war_delta": -1.4,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.539
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.24
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.112
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.105
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.499
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.33
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.102
+     }
+    ]
+   }
   },
   {
    "mlbam": 596057,
@@ -29095,42 +29277,98 @@
     "era": 6.16
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 34.1,
    "success": true,
    "pre_war": 3.1,
    "post_war": -0.7,
-   "war_delta": -3.8
+   "war_delta": -3.8,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.45
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.228
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.19
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.067
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.475
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.299
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.227
+     }
+    ]
+   }
   },
   {
-   "mlbam": 622446,
-   "name": "Jefry Rodriguez",
-   "team": "WSH",
+   "mlbam": 594965,
+   "name": "Daniel Ponce de Leon",
+   "team": "STL",
    "direction": "SP->RP",
    "year": 2021,
    "pre": {
     "season": 2019,
-    "g": 10,
+    "g": 13,
     "gs": 8,
-    "ip": 46.7,
-    "k_pct": 0.1626,
-    "bb_pct": 0.1034,
-    "era": 4.63
+    "ip": 48.7,
+    "k_pct": 0.2562,
+    "bb_pct": 0.1281,
+    "era": 3.7
    },
    "post": {
     "season": 2021,
-    "g": 14,
-    "gs": 1,
-    "ip": 24.3,
-    "k_pct": 0.1786,
-    "bb_pct": 0.1518,
-    "era": 5.92
+    "g": 24,
+    "gs": 2,
+    "ip": 33.3,
+    "k_pct": 0.1519,
+    "bb_pct": 0.1392,
+    "era": 6.21
    },
    "held": null,
-   "pre_fit": null,
+   "pre_fit": 36.0,
    "success": null,
-   "pre_war": 0.2,
-   "post_war": -0.1,
-   "war_delta": -0.3
+   "pre_war": 0.5,
+   "post_war": -0.7,
+   "war_delta": -1.2,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.707
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.134
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.737
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.121
+     }
+    ]
+   }
   },
   {
    "mlbam": 608723,
@@ -29157,73 +29395,106 @@
     "era": 5.34
    },
    "held": false,
-   "pre_fit": null,
+   "pre_fit": 36.1,
    "success": false,
    "pre_war": 1.1,
    "post_war": -0.4,
-   "war_delta": -1.5
+   "war_delta": -1.5,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.604
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.203
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.595
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.266
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.136
+     }
+    ]
+   }
   },
   {
-   "mlbam": 641482,
-   "name": "Nestor Cortes",
-   "team": "NYY",
-   "direction": "RP->SP",
-   "year": 2021,
-   "pre": {
-    "season": 2019,
-    "g": 33,
-    "gs": 1,
-    "ip": 66.7,
-    "k_pct": 0.2315,
-    "bb_pct": 0.094,
-    "era": 5.67
-   },
-   "post": {
-    "season": 2021,
-    "g": 22,
-    "gs": 14,
-    "ip": 93.0,
-    "k_pct": 0.2754,
-    "bb_pct": 0.0668,
-    "era": 2.9
-   },
-   "held": true,
-   "pre_fit": null,
-   "success": true,
-   "pre_war": -0.3,
-   "post_war": 2.8,
-   "war_delta": 3.1
-  },
-  {
-   "mlbam": 622065,
-   "name": "Alex Young",
-   "team": "CLE",
+   "mlbam": 446321,
+   "name": "Ross Detwiler",
+   "team": "SD",
    "direction": "SP->RP",
    "year": 2021,
    "pre": {
     "season": 2019,
-    "g": 17,
-    "gs": 15,
-    "ip": 83.3,
-    "k_pct": 0.2034,
-    "bb_pct": 0.0774,
-    "era": 3.56
+    "g": 18,
+    "gs": 12,
+    "ip": 69.7,
+    "k_pct": 0.146,
+    "bb_pct": 0.0857,
+    "era": 6.59
    },
    "post": {
     "season": 2021,
-    "g": 40,
-    "gs": 2,
-    "ip": 52.0,
-    "k_pct": 0.1748,
-    "bb_pct": 0.1098,
-    "era": 6.58
+    "g": 53,
+    "gs": 5,
+    "ip": 52.3,
+    "k_pct": 0.2707,
+    "bb_pct": 0.0873,
+    "era": 4.64
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 42.5,
    "success": true,
-   "pre_war": 0.8,
-   "post_war": -1.1,
-   "war_delta": -1.9
+   "pre_war": -0.6,
+   "post_war": 0.2,
+   "war_delta": 0.8,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.326
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.198
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.164
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.153
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.14
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FC",
+      "usage": 0.368
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.339
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.173
+     }
+    ]
+   }
   },
   {
    "mlbam": 663423,
@@ -29250,11 +29521,102 @@
     "era": 4.78
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 42.8,
    "success": true,
    "pre_war": 1.2,
    "post_war": -0.3,
-   "war_delta": -1.6
+   "war_delta": -1.6,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.44
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.271
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.16
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.089
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.389
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.251
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.21
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 622446,
+   "name": "Jefry Rodriguez",
+   "team": "WSH",
+   "direction": "SP->RP",
+   "year": 2021,
+   "pre": {
+    "season": 2019,
+    "g": 10,
+    "gs": 8,
+    "ip": 46.7,
+    "k_pct": 0.1626,
+    "bb_pct": 0.1034,
+    "era": 4.63
+   },
+   "post": {
+    "season": 2021,
+    "g": 14,
+    "gs": 1,
+    "ip": 24.3,
+    "k_pct": 0.1786,
+    "bb_pct": 0.1518,
+    "era": 5.92
+   },
+   "held": null,
+   "pre_fit": 43.6,
+   "success": null,
+   "pre_war": 0.2,
+   "post_war": -0.1,
+   "war_delta": -0.3,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "SI",
+      "usage": 0.397
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.284
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.23
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.515
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.231
+     }
+    ]
+   }
   },
   {
    "mlbam": 664199,
@@ -29281,11 +29643,321 @@
     "era": 4.98
    },
    "held": true,
-   "pre_fit": null,
+   "pre_fit": 43.6,
    "success": true,
    "pre_war": -0.4,
    "post_war": 0.0,
-   "war_delta": 0.4
+   "war_delta": 0.4,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.459
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.254
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.118
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.097
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.073
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.534
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.29
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.157
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 503449,
+   "name": "Wily Peralta",
+   "team": "DET",
+   "direction": "RP->SP",
+   "year": 2021,
+   "pre": {
+    "season": 2019,
+    "g": 42,
+    "gs": 0,
+    "ip": 40.3,
+    "k_pct": 0.1364,
+    "bb_pct": 0.108,
+    "era": 5.8
+   },
+   "post": {
+    "season": 2021,
+    "g": 19,
+    "gs": 18,
+    "ip": 93.7,
+    "k_pct": 0.1443,
+    "bb_pct": 0.0945,
+    "era": 3.07
+   },
+   "held": false,
+   "pre_fit": 47.6,
+   "success": false,
+   "pre_war": -0.2,
+   "post_war": 2.0,
+   "war_delta": 2.3,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.545
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.321
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.128
+     }
+    ],
+    "after": [
+     {
+      "pitch": "SI",
+      "usage": 0.291
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.261
+     },
+     {
+      "pitch": "FS",
+      "usage": 0.225
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.223
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 641482,
+   "name": "Nestor Cortes",
+   "team": "NYY",
+   "direction": "RP->SP",
+   "year": 2021,
+   "pre": {
+    "season": 2019,
+    "g": 33,
+    "gs": 1,
+    "ip": 66.7,
+    "k_pct": 0.2315,
+    "bb_pct": 0.094,
+    "era": 5.67
+   },
+   "post": {
+    "season": 2021,
+    "g": 22,
+    "gs": 14,
+    "ip": 93.0,
+    "k_pct": 0.2754,
+    "bb_pct": 0.0668,
+    "era": 2.9
+   },
+   "held": true,
+   "pre_fit": 59.7,
+   "success": true,
+   "pre_war": -0.3,
+   "post_war": 2.8,
+   "war_delta": 3.1,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.467
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.339
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.123
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.055
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.428
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.235
+     },
+     {
+      "pitch": "ST",
+      "usage": 0.198
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.096
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 657053,
+   "name": "Touki Toussaint",
+   "team": "ATL",
+   "direction": "RP->SP",
+   "year": 2021,
+   "pre": {
+    "season": 2019,
+    "g": 24,
+    "gs": 1,
+    "ip": 41.7,
+    "k_pct": 0.2273,
+    "bb_pct": 0.1313,
+    "era": 5.62
+   },
+   "post": {
+    "season": 2021,
+    "g": 11,
+    "gs": 10,
+    "ip": 50.0,
+    "k_pct": 0.2222,
+    "bb_pct": 0.1019,
+    "era": 4.5
+   },
+   "held": false,
+   "pre_fit": 64.4,
+   "success": false,
+   "pre_war": -0.3,
+   "post_war": 0.2,
+   "war_delta": 0.6,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "CU",
+      "usage": 0.274
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.248
+     },
+     {
+      "pitch": "FF",
+      "usage": 0.243
+     },
+     {
+      "pitch": "FS",
+      "usage": 0.234
+     }
+    ],
+    "after": [
+     {
+      "pitch": "SI",
+      "usage": 0.477
+     },
+     {
+      "pitch": "CU",
+      "usage": 0.272
+     },
+     {
+      "pitch": "FS",
+      "usage": 0.212
+     }
+    ]
+   }
+  },
+  {
+   "mlbam": 593372,
+   "name": "Carlos Martinez",
+   "team": "STL",
+   "direction": "RP->SP",
+   "year": 2021,
+   "pre": {
+    "season": 2019,
+    "g": 48,
+    "gs": 0,
+    "ip": 48.3,
+    "k_pct": 0.265,
+    "bb_pct": 0.09,
+    "era": 3.17
+   },
+   "post": {
+    "season": 2021,
+    "g": 16,
+    "gs": 16,
+    "ip": 82.3,
+    "k_pct": 0.157,
+    "bb_pct": 0.0992,
+    "era": 6.23
+   },
+   "held": null,
+   "pre_fit": 83.1,
+   "success": null,
+   "pre_war": 0.8,
+   "post_war": -1.2,
+   "war_delta": -2.1,
+   "pitch_mix": {
+    "before": [
+     {
+      "pitch": "FF",
+      "usage": 0.298
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.284
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.208
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.186
+     }
+    ],
+    "after": [
+     {
+      "pitch": "FF",
+      "usage": 0.275
+     },
+     {
+      "pitch": "SL",
+      "usage": 0.228
+     },
+     {
+      "pitch": "FC",
+      "usage": 0.213
+     },
+     {
+      "pitch": "SI",
+      "usage": 0.138
+     },
+     {
+      "pitch": "CH",
+      "usage": 0.135
+     }
+    ]
+   }
   },
   {
    "mlbam": 571863,
@@ -30448,6 +31120,80 @@
    ]
   },
   {
+   "mlbam": 594965,
+   "name": "Daniel Ponce de Leon",
+   "team": "STL",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.707
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.134
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.737
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.121
+    }
+   ]
+  },
+  {
+   "mlbam": 593372,
+   "name": "Carlos Martinez",
+   "team": "STL",
+   "direction": "RP->SP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.298
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.284
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.208
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.186
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.275
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.228
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.213
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.138
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.135
+    }
+   ]
+  },
+  {
    "mlbam": 547179,
    "name": "Michael Lorenzen",
    "team": "LAA",
@@ -30647,6 +31393,45 @@
    ]
   },
   {
+   "mlbam": 468504,
+   "name": "Jhoulys Chac\u00edn",
+   "team": "COL",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "SL",
+     "usage": 0.496
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.314
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.129
+    }
+   ],
+   "after": [
+    {
+     "pitch": "CU",
+     "usage": 0.351
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.323
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.203
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.087
+    }
+   ]
+  },
+  {
    "mlbam": 608328,
    "name": "Chase De Jong",
    "team": "PIT",
@@ -30717,6 +31502,45 @@
     {
      "pitch": "FF",
      "usage": 0.054
+    }
+   ]
+  },
+  {
+   "mlbam": 503449,
+   "name": "Wily Peralta",
+   "team": "DET",
+   "direction": "RP->SP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.545
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.321
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.128
+    }
+   ],
+   "after": [
+    {
+     "pitch": "SI",
+     "usage": 0.291
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.261
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.225
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.223
     }
    ]
   },
@@ -30953,6 +31777,45 @@
   {
    "mlbam": 657053,
    "name": "Touki Toussaint",
+   "team": "ATL",
+   "direction": "RP->SP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "CU",
+     "usage": 0.274
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.248
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.243
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.234
+    }
+   ],
+   "after": [
+    {
+     "pitch": "SI",
+     "usage": 0.477
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.272
+    },
+    {
+     "pitch": "FS",
+     "usage": 0.212
+    }
+   ]
+  },
+  {
+   "mlbam": 657053,
+   "name": "Touki Toussaint",
    "team": "CWS",
    "direction": "SP->RP",
    "year": 2024,
@@ -31169,6 +32032,41 @@
    ]
   },
   {
+   "mlbam": 670950,
+   "name": "Trevor Richards",
+   "team": "TOR",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.437
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.383
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.096
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.071
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.567
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.295
+    }
+   ]
+  },
+  {
    "mlbam": 605498,
    "name": "Andrew Su\u00e1rez",
    "team": "SF",
@@ -31204,6 +32102,49 @@
     {
      "pitch": "SL",
      "usage": 0.234
+    }
+   ]
+  },
+  {
+   "mlbam": 446321,
+   "name": "Ross Detwiler",
+   "team": "SD",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.326
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.198
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.164
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.153
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.14
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FC",
+     "usage": 0.368
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.339
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.173
     }
    ]
   },
@@ -31582,6 +32523,45 @@
    ]
   },
   {
+   "mlbam": 592644,
+   "name": "Adam Plutko",
+   "team": "BAL",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.539
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.24
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.112
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.105
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.499
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.33
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.102
+    }
+   ]
+  },
+  {
    "mlbam": 543208,
    "name": "Sam Gaviglio",
    "team": "TOR",
@@ -31613,6 +32593,76 @@
     {
      "pitch": "CH",
      "usage": 0.097
+    }
+   ]
+  },
+  {
+   "mlbam": 596057,
+   "name": "Daniel Norris",
+   "team": "MIL",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.45
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.228
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.19
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.067
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.475
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.299
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.227
+    }
+   ]
+  },
+  {
+   "mlbam": 622446,
+   "name": "Jefry Rodriguez",
+   "team": "WSH",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "SI",
+     "usage": 0.397
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.284
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.23
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.515
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.231
     }
    ]
   },
@@ -31699,6 +32749,37 @@
    ]
   },
   {
+   "mlbam": 608723,
+   "name": "Austin Voth",
+   "team": "WSH",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.604
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.203
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.595
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.266
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.136
+    }
+   ]
+  },
+  {
    "mlbam": 605280,
    "name": "Clay Holmes",
    "team": "NYM",
@@ -31777,6 +32858,49 @@
    ]
   },
   {
+   "mlbam": 641482,
+   "name": "Nestor Cortes",
+   "team": "NYY",
+   "direction": "RP->SP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.467
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.339
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.123
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.055
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.428
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.235
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.198
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.096
+    }
+   ]
+  },
+  {
    "mlbam": 608334,
    "name": "Carson Fulmer",
    "team": "CWS",
@@ -31847,6 +32971,96 @@
    ]
   },
   {
+   "mlbam": 622065,
+   "name": "Alex Young",
+   "team": "CLE",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FC",
+     "usage": 0.233
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.222
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.201
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.201
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.143
+    }
+   ],
+   "after": [
+    {
+     "pitch": "SI",
+     "usage": 0.253
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.226
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.192
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.19
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.139
+    }
+   ]
+  },
+  {
+   "mlbam": 663423,
+   "name": "Trent Thornton",
+   "team": "TOR",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.44
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.271
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.16
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.089
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.389
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.251
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.21
+    }
+   ]
+  },
+  {
    "mlbam": 641302,
    "name": "Tyler Alexander",
    "team": "DET",
@@ -31890,6 +33104,49 @@
     {
      "pitch": "SI",
      "usage": 0.11
+    }
+   ]
+  },
+  {
+   "mlbam": 664199,
+   "name": "Taylor Clarke",
+   "team": "AZ",
+   "direction": "SP->RP",
+   "year": 2021,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.459
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.254
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.118
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.097
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.073
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.534
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.29
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.157
     }
    ]
   },
@@ -32918,6 +34175,107 @@
    ]
   },
   {
+   "mlbam": 665622,
+   "name": "Luis Medina",
+   "team": "ATH",
+   "direction": "SP->RP",
+   "year": 2026,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.417
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.251
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.15
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.299
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.295
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.132
+    }
+   ]
+  },
+  {
+   "mlbam": 687888,
+   "name": "Brandon Walter",
+   "team": "HOU",
+   "direction": "RP->SP",
+   "year": 2025,
+   "before": [
+    {
+     "pitch": "FC",
+     "usage": 0.312
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.263
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FC",
+     "usage": 0.274
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.225
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.193
+    },
+    {
+     "pitch": "CH",
+     "usage": 0.183
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.125
+    }
+   ]
+  },
+  {
+   "mlbam": 683175,
+   "name": "Connor Phillips",
+   "team": "CIN",
+   "direction": "SP->RP",
+   "year": 2025,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.633
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.255
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.499
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.451
+    }
+   ]
+  },
+  {
    "mlbam": 681517,
    "name": "Kyle Leahy",
    "team": "STL",
@@ -33351,6 +34709,41 @@
    ]
   },
   {
+   "mlbam": 625643,
+   "name": "Reynaldo L\u00f3pez",
+   "team": "ATL",
+   "direction": "SP->RP",
+   "year": 2026,
+   "before": [
+    {
+     "pitch": "FF",
+     "usage": 0.552
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.294
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.116
+    }
+   ],
+   "after": [
+    {
+     "pitch": "FF",
+     "usage": 0.55
+    },
+    {
+     "pitch": "SL",
+     "usage": 0.299
+    },
+    {
+     "pitch": "CU",
+     "usage": 0.117
+    }
+   ]
+  },
+  {
    "mlbam": 607200,
    "name": "Erick Fedde",
    "team": "CWS",
@@ -33452,8 +34845,16 @@
    "year": 2026,
    "before": [
     {
-     "pitch": "ST",
-     "usage": 0.421
+     "pitch": "SL",
+     "usage": 0.373
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.343
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.197
     }
    ],
    "after": [
@@ -33550,27 +34951,19 @@
    "before": [
     {
      "pitch": "FF",
-     "usage": 0.362
-    },
-    {
-     "pitch": "FS",
-     "usage": 0.152
-    },
-    {
-     "pitch": "SI",
-     "usage": 0.151
+     "usage": 0.398
     },
     {
      "pitch": "SL",
-     "usage": 0.141
+     "usage": 0.266
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.203
     },
     {
      "pitch": "ST",
-     "usage": 0.105
-    },
-    {
-     "pitch": "CU",
-     "usage": 0.089
+     "usage": 0.129
     }
    ],
    "after": [
@@ -33593,6 +34986,49 @@
     {
      "pitch": "ST",
      "usage": 0.106
+    }
+   ]
+  },
+  {
+   "mlbam": 663362,
+   "name": "Matt Waldron",
+   "team": "SD",
+   "direction": "SP->RP",
+   "year": 2026,
+   "before": [
+    {
+     "pitch": "KN",
+     "usage": 0.382
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.198
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.187
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.146
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.087
+    }
+   ],
+   "after": [
+    {
+     "pitch": "KN",
+     "usage": 0.292
+    },
+    {
+     "pitch": "FF",
+     "usage": 0.198
+    },
+    {
+     "pitch": "SI",
+     "usage": 0.175
     }
    ]
   },
@@ -33660,7 +35096,15 @@
    "before": [
     {
      "pitch": "FF",
-     "usage": 0.664
+     "usage": 0.522
+    },
+    {
+     "pitch": "FC",
+     "usage": 0.245
+    },
+    {
+     "pitch": "ST",
+     "usage": 0.233
     }
    ],
    "after": [
@@ -33683,19 +35127,19 @@
    "before": [
     {
      "pitch": "FF",
-     "usage": 0.452
+     "usage": 0.405
     },
     {
      "pitch": "FC",
-     "usage": 0.2
+     "usage": 0.228
     },
     {
      "pitch": "SL",
-     "usage": 0.163
+     "usage": 0.211
     },
     {
-     "pitch": "FS",
-     "usage": 0.156
+     "pitch": "CH",
+     "usage": 0.114
     }
    ],
    "after": [
@@ -49017,11 +50461,26 @@
  ],
  "n_prospects": 1774,
  "backtest": {
-  "n_labeled": 44,
-  "spearman_prefit_vs_held": 0.288,
+  "n_labeled": 35,
+  "spearman_prefit_vs_held": 0.281,
+  "per_direction": {
+   "RP->SP": {
+    "n_war": 25,
+    "rho_prefit_vs_war_delta": -0.216,
+    "n_held": 13,
+    "rho_prefit_vs_held": 0.134
+   },
+   "SP->RP": {
+    "n_war": 61,
+    "rho_prefit_vs_war_delta": 0.295,
+    "n_held": 22,
+    "rho_prefit_vs_held": 0.43
+   }
+  },
+  "primary_outcome": "war_delta (bWAR post-season minus pre-season), per direction, closed post seasons only; the pooled held rho above is a legacy reporting field (two different 0-100 scales)",
   "relief_k_bump_measured": 0.0167,
-  "converter_median_fit_pool_pctile": 70,
-  "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature and this rho is a directional sign-check, not a fitted validation. Success = held the new role at least one full season."
+  "converter_median_fit_pool_pctile": 73,
+  "disclaimer": "A screen, not a success-probability model. The conversion sample is small and selection-biased (only pitchers teams chose to convert), so the weights are frozen priors from the literature. The gated evaluation (per-direction rho vs same-event baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; the rhos here are the live stamp of the same repaired harness. Held labels read closed >=20 IP follow-up seasons only."
  },
- "verdict": "provisional"
+ "verdict": "downgraded"
 }

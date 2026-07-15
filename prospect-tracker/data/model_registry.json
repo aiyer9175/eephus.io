@@ -1519,6 +1519,17 @@
    "eval_artifact": "data/hem_age_layer_eval.json",
    "verdict": "deprecated",
    "notes": "LOSS LEDGER by DOMINANCE. The age signal is real (hinge ~-0.72 HEM+ pts/yr over 30; beats HEM+ everywhere, v2 lo95 +0.0022; stacks on xwOBA) but v1 clause 2 fails vs pooled raw wOBA AND the FA-engine projection DOMINATES the candidate by ~7 rho points (0.5284 vs 0.4585) - convergent with phem_marcel_lite: aging belongs to the projection layer (fa_projection), not the descriptive + indexes. Pitchers 6/6 grid FAIL. Rejected fourth entry for docs/aging-curves.md."
+  },
+  {
+   "model_id": "xfv_role_ceiling",
+   "surface": "live eFV board overlay - 'Reliever ceiling' factor chip",
+   "predicts": "n/a - owner-directed policy dial (2026-07-15): bounded model-leg haircut for age-25+ RP-designated prospects with model war6 >= 1.5",
+   "champion": "overlay ON (owner-approved via AskUserQuestion, 'Dial + calibration gate')",
+   "baseline": "no overlay",
+   "metric": "class prior vs model enthusiasm (0.17 mean WAR / 0% star, n=284); forward kill rule = F-WATCH C-RP",
+   "eval_artifact": "data/xfv_role_ceiling_eval.json",
+   "verdict": "provisional",
+   "notes": "HONESTLY A JUDGMENT CALL, not an accuracy claim - the survivorship-censored pool cannot gate it (all gated variants failed adversarial verification). Same shipping logic as _age_factor (first Moore directive). Blast radius 9 arms, only Moore in the top 300. Bounded, transparent (chip), model-leg-only, live-only. Forward-adjudicated by F-WATCH; protected by F-SIDE S4. The companion grade+age bucket-head calibration gate (fixes published p_bust 0.388-vs-0.81) runs separately as a pre-registered experiment."
   }
  ],
  "problems": []
