@@ -187,7 +187,10 @@ MODEL_GLOSSARY = {
     # PAL game-log lanes are model-dev artifacts, rendered nowhere.
     "fwdhem_plus": ["fwdhem_plus"],
     "k_strength_sweep": "internal",
-    "phem_marcel_lite": "internal",
+    # phem_marcel_lite SHIPPED 2026-07-15 as the pWOBA column (owner display
+    # decision) - the FA-engine re-anchor; the pwoba glossary entry carries
+    # the methodology.
+    "phem_marcel_lite": ["pwoba"],
     "pal_gamelog_lanes": "internal",
     # Wave 3b loss ledgers (2026-07-15), all rendered nowhere: velo decline
     # adjustment, FB-HR + CSW shrink priors (K-prior lane closed permanently),
@@ -201,6 +204,10 @@ MODEL_GLOSSARY = {
     # directive): policy dial, not an accuracy claim; surfaces per-player as
     # the "Reliever ceiling" factor chip under the xfv methodology entry.
     "xfv_role_ceiling": "internal",
+    # Bucket-head calibration gate (2026-07-15): clean loss ledger (G4
+    # monotone-sanity fail + ablation showed population-recal, not age);
+    # rendered nowhere; mandatory re-run at 2024-fold trainability.
+    "xfv_bucket_age_head": "internal",
 }
 
 

@@ -1450,14 +1450,14 @@
   },
   {
    "model_id": "phem_marcel_lite",
-   "surface": "model-dev artifact (rendered nowhere pending owner display decision) - T1-10 multi-year pooled-count projection gate",
+   "surface": "/mlbstats/ Hitter Leaderboards pWOBA column",
    "predicts": "next-season wOBA (hitters primary) from decayed pooled component counts + age hinge, vs 4 incumbent arms incl. the FA-engine Marcel",
    "champion": "fa_projection woba_proj (the EXISTING engine) - re-anchor, do not build",
    "baseline": "1yr HEM+ 0.4740 / flat-3yr 0.4939 / textbook Marcel 0.4944 / pHEM+ Marcel-lite 0.5170",
    "metric": "paired bootstrap lo95 >= 0 vs best incumbent (seed 20260715); winner 0.5189, lo95 +0.0010, pass_under_v2 true",
    "eval_artifact": "data/phem_marcel_lite_eval.json",
-   "verdict": "provisional",
-   "notes": "Hitters gate PASS, won by arm 4 (the repo's validated FA-engine projection, computed point-in-time offline) - the SHIP is a pWOBA re-anchor column, which is a FIFTH hitter column: OWNER DISPLAY DECISION QUEUED before any export wiring. Pitchers FAIL (lo95 -0.0133, n=363), loss leg recorded. Lab tools/phem_marcel_lite_lab.py.",
+   "verdict": "validated",
+   "notes": "SHIP EXECUTED 2026-07-15 (owner display decision: 'Display pWOBA'): the gate was won by the EXISTING fa_projection engine (0.5189 vs best incumbent 0.4939, lo95 +0.0010, pass_under_v2 true, 918 OOS pairs) so the ship is a re-anchor - hitter_export._join_pwoba computes projected next-season wOBA per tracked hitter from the cached point-in-time engine (mirrors proj_export._veteran_rows; MIN_PA 100). Pitcher leg FAILED (lo95 -0.0133) and stays a loss ledger.",
    "last_checked": "2026-07-15",
    "stale": false,
    "artifact_age_days": 0
@@ -1530,6 +1530,17 @@
    "eval_artifact": "data/xfv_role_ceiling_eval.json",
    "verdict": "provisional",
    "notes": "HONESTLY A JUDGMENT CALL, not an accuracy claim - the survivorship-censored pool cannot gate it (all gated variants failed adversarial verification). Same shipping logic as _age_factor (first Moore directive). Blast radius 9 arms, only Moore in the top 300. Bounded, transparent (chip), model-leg-only, live-only. Forward-adjudicated by F-WATCH; protected by F-SIDE S4. The companion grade+age bucket-head calibration gate (fixes published p_bust 0.388-vs-0.81) runs separately as a pre-registered experiment."
+  },
+  {
+   "model_id": "xfv_bucket_age_head",
+   "surface": "model-dev artifact (rendered nowhere) - pit grade+age covariate bucket head gate",
+   "predicts": "n/a - gated experiment (2026-07-15): p(bucket | grade_band, age_band), pit-only, below the grade-monotone constraint",
+   "champion": "incumbent p_bucket_given_fv - STANDS (byte-identical, verified)",
+   "baseline": "grade+age head, forward-chained 2020-2023, seed 20260715",
+   "metric": "4 gates: pooled log-loss, E-ISO4 bench/good guard, age-25+ subset, grade monotone-sanity",
+   "eval_artifact": "data/xfv_bucket_age_head_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER (clean fail). G1-G3 passed decisively but G4 failed structurally (12 band-seam stochastic-ordering violations, worst +0.076 P(bust) at fv32.5->32.75) AND the ablation is decisive: a covariate-free grade-band recal dominates the age head everywhere (pooled 0.179 vs 0.307) - the gains were population recalibration, the effect class the CLOSED X-ISO line blocks, not age signal. Moore motivation partially failed replication (fv45/25+ n=8, empirical 0.750 not 0.81; within-fv45 the age-bust gradient runs the WRONG way; the real signal is at fv40/25+, bust 0.988 n=81). MANDATORY RE-RUN marker at 2024-debuted-fold trainability. Any redesign (hierarchical shrink + per-age isotonic repair) needs fresh pre-registration. The reliever-ceiling DIAL is unaffected (rank overlay, not bucket odds)."
   }
  ],
  "problems": []

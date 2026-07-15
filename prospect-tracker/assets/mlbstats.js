@@ -1101,6 +1101,17 @@
       title: "Forward blend: 70% expected wOBA + 30% HEM+ core, on the HEM+ scale. The best single-number read on NEXT-year offense (beats xwOBA alone out of sample). Tracked hitters only.",
       get: function (r) { return r.fwdhem_plus; },
       cell: function (r) { return r.fwdhem_plus == null ? "" : hemCell(r.fwdhem_plus); } },
+    { key: "pwoba", label: "pWOBA", term: "pwoba", num: true, desc: true,
+      title: "Projected NEXT-season wOBA from the site's FA-engine Marcel (the validated projection engine: forward rho 0.5189 vs next-year wOBA, best of five gated arms). Read like wOBA: ~.310 average, .400 elite. Tracked hitters with a recent MLB sample only.",
+      get: function (r) { return r.pwoba; },
+      cell: function (r) {
+        if (r.pwoba == null) return "";
+        // Color by pool percentile (the export stamps pwoba_pctile), same
+        // rem-* bands as the HEM+ family so the board reads as one system.
+        var p = num(r.pwoba_pctile);
+        var cls = p == null ? "rem-avg" : p >= 90 ? "rem-elite" : p >= 70 ? "rem-good" : p >= 25 ? "rem-avg" : "rem-low";
+        return '<span class="rem-plus ' + cls + '" data-gl="pwoba">' + f3(r.pwoba) + "</span>";
+      } },
     { key: "luck_gap", label: "Luck", num: true, desc: true,
       title: "xHEM+ minus HEM+: positive = under-performing his contact quality (bad luck, room to bounce back); negative = over-performing (due to regress).",
       get: function (r) { return r.luck_gap; },
@@ -1124,9 +1135,10 @@
     { key: "babip", label: "BABIP", fmt: f3, num: true },
   ];
 
-  // History rows carry the season fields but not the trailing-window HEM+ 3yr or
-  // the current-season Savant xHEM+ / xHEM+ Blend / Luck joins.
-  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1 };
+  // History rows carry the season fields but not the trailing-window HEM+ 3yr,
+  // the current-season Savant xHEM+ / xHEM+ Blend / Luck joins, or the
+  // current-projection-only pWOBA column (a past board has no "next season").
+  var HITTER_HISTORY_DROP = { hem_plus_3yr: 1, xhem_plus: 1, fwdhem_plus: 1, luck_gap: 1, pwoba: 1 };
   var HITTER_HISTORY_COLS = HITTER_COLS.filter(function (c) { return !HITTER_HISTORY_DROP[c.key]; });
   // A past board can only sort on columns it shows; if the shared key is a
   // current-only column (HEM+ 3yr), fall back to the HEM+ default.

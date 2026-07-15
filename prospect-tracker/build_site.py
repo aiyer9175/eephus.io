@@ -2413,8 +2413,9 @@ def build_pal() -> str:
     """The /pal/ Pitcher Alchemy Lab - role-conversion evaluation for MLB
     pitchers. Three sections: RP->SP Candidates (which relievers profile as
     starters), SP->RP Candidates (which starters would shine in relief), and
-    Conversion History (a validated archive of past SP<->RP switches that
-    doubles as the model's training/backtest set, plus pitch-mix changes).
+    Conversion History (an archive of past SP<->RP switches that doubles as
+    the model's backtest set, plus pitch-mix changes). Backtest evidence is
+    per direction: SP->RP validated, RP->SP structural screen only.
     Static shell + assets/pal.js, which fetches the pal_export.py sidecar
     (data/pal.json). Reuses the arsenal / velocity / platoon Statcast data, the
     validated REM+ model, and PROSPX prospect role history. Styles ride the
@@ -2424,7 +2425,9 @@ def build_pal() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
-        'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
+        'for the other role, plus the history of the conversions that worked and the ones that did not. The backtest '
+        'grades each direction on its own: the starter-to-relief signal is validated, the reliever-to-starter list '
+        'is a structural screen.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false">SP&rarr;RP Candidates</button>'
@@ -2443,7 +2446,7 @@ def build_pal() -> str:
     )
     return page("Pitcher Alchemy Lab - eephus.io", "pal", body,
                 "Pitcher Alchemy Lab: which MLB relievers profile as starters and which starters would shine in "
-                "relief, with a validated history of past role conversions. Arsenal depth, command, platoon splits, "
+                "relief, with a backtested history of past role conversions. Arsenal depth, command, platoon splits, "
                 "and role-adjusted velocity, computed from Statcast.",
                 url=f"{SITE_ORIGIN}/pal/")
 

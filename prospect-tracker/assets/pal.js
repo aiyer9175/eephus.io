@@ -11,11 +11,13 @@
 //             command, platoon-neutrality, role-adjusted velocity)
 //   sp2rp   - starters whose stuff would play up in relief (SP->RP FIT, putaway
 //             pitch, projected relief velo + REM+)
-//   history - a validated archive of past SP<->RP switches (the model's backtest
-//             set) with a scorecard, plus a pitch-mix before/after view
-// The FIT scores are a candidate SCREEN, not a success probability - the score
-// is anchored on the role-structural arsenal-depth signal; the backtest is a
-// directional sign-check on a small, selection-biased sample.
+//   history - an archive of past SP<->RP switches (the model's backtest set)
+//             with a scorecard, plus a pitch-mix before/after view
+// The FIT scores are a candidate SCREEN, not a success probability. Backtest
+// evidence is PER DIRECTION (repaired harness, 2026-07): SP->RP FIT carries a
+// validated directional signal vs realized WAR change; RP->SP FIT is a
+// structural screen whose backtest does NOT validate ranking within the
+// direction. The retired pooled rho is reporting-only and never cited here.
 (function () {
   "use strict";
 
@@ -332,7 +334,9 @@
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
-      + "platoon-neutrality, and contact quality. Click a row for the component breakdown.</div>" + tierLegend("rp2sp");
+      + "platoon-neutrality, and contact quality. This is a structural screen: the repaired backtest does not "
+      + "validate the ranking of RP&rarr;SP candidates against realized WAR change, so treat the order as a "
+      + "shortlist, not a forecast. Click a row for the component breakdown.</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
@@ -341,7 +345,9 @@
     var note = '<div class="mlbstats-note">Starters who are <b>struggling in the rotation</b> and whose stuff would play up in relief. '
       + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
-      + "the need signal; proj REM+ is a display-only relief projection.</div>" + tierLegend("sp2rp");
+      + "the need signal; proj REM+ is a display-only relief projection. This direction carries a validated "
+      + "directional signal: in the repaired backtest, pre-conversion SP&rarr;RP FIT out-ranked every same-event "
+      + "baseline against realized WAR change.</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -395,10 +401,21 @@
   }
   function scorecard() {
     var b = (DATA && DATA.backtest) || {};
+    var pd = b.per_direction || {};
+    // Evidence is per direction (repaired harness): pre-FIT rank vs realized
+    // WAR change within each direction. The old pooled held-role rho is a
+    // retired reporting-only field and is not shown.
+    function dirStat(key, label, tag) {
+      var d = pd[key] || {};
+      if (d.rho_prefit_vs_war_delta == null) return "";
+      return '<span class="pal-sc-stat">' + label + " <b>&rho; "
+        + esc(d.rho_prefit_vs_war_delta) + '</b><span class="proj-dim"> vs WAR change (n='
+        + esc(d.n_war) + ") &middot; " + tag + "</span></span>";
+    }
     return '<div class="pal-scorecard">'
       + '<span class="pal-sc-stat"><b>' + esc(DATA.n_conversions) + "</b> conversions</span>"
-      + '<span class="pal-sc-stat">' + gloss("pre-FIT vs held", "pal_conversion") + " <b>&rho; "
-      + (b.spearman_prefit_vs_held == null ? "-" : b.spearman_prefit_vs_held) + "</b><span class=\"proj-dim\"> (n=" + esc(b.n_labeled) + ")</span></span>"
+      + dirStat("SP->RP", gloss("SP→RP FIT", "sp_rp_fit"), "validated vs baselines")
+      + dirStat("RP->SP", gloss("RP→SP FIT", "rp_sp_fit"), "does not validate ranking")
       + '<span class="pal-sc-stat">converters at <b>' + esc(b.converter_median_fit_pool_pctile) + "th</b> pct of the field</span>"
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
@@ -557,6 +574,7 @@
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
       ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; a candidate screen, not a projection. '
+        + 'Backtest evidence is per direction: SP&rarr;RP validated, RP&rarr;SP structural screen only. '
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);

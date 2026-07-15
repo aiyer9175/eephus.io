@@ -232,6 +232,79 @@ def _join_fwdhem_plus(hitters: list[dict], hem_raw: dict, season: int) -> int:
     return n
 
 
+def _join_pwoba(hitters: list[dict], season: int) -> int:
+    """Stamp pwoba (projected NEXT-season wOBA) + pwoba_pctile onto tracked
+    hitters, straight from the FA engine (fa_projection.project_player
+    woba_proj) -- the validated projection engine that already prices the FA
+    class board and MLB Projections. This is a RE-ANCHOR, not a new model: the
+    T1-10 pHEM+ Marcel-lite gate (data/phem_marcel_lite_eval.json, registry row
+    phem_marcel_lite) was WON by this engine's projected wOBA (gate rho 0.5189
+    vs best incumbent 0.4939, lo95 +0.0010, pass_under_v2 true), so the ship is
+    exposing what the engine already computes.
+
+    Mirrors the vets path of proj_export._veteran_rows: corpus history for the
+    trailing 3 seasons, point-in-time fits (fitted_models at target-1, the
+    cached fa_fits pickle), the in-progress season handled by season_fraction
+    reliability-blending (PT only; the rate Marcel exposure-weights the partial
+    sample down on its own). Same MIN_PA=100 exposure floor as the vet
+    universe, so a 5-PA cup of coffee never shows a league-mean projection as
+    if it meant something. pwoba_pctile is the percentile within the joined
+    pool (the JS color ramp). Missing anything -> fields absent (column
+    blank). Best-effort: offline it rides the cached corpus/fits; any failure
+    returns 0 and the board ships without the column values."""
+    try:
+        import fa_projection as fp
+        corpus = fp.build_corpus()
+        league = corpus["league"]
+        target = int(season) + 1
+        curves, _ = fp.fitted_models(corpus, target - 1)
+    except Exception as e:   # noqa: BLE001 - best-effort join, never aborts the board
+        _log.warning("pwoba join unavailable (%s)", e)
+        return 0
+    # In-progress current season: same reliability treatment as the live vets
+    # export (proj_export). Affects playing time only; woba_proj is rate-side.
+    frac = fp.season_fraction(league, int(season))
+    in_prog = (int(season), frac) if frac < 1.0 else None
+    _PWOBA_MIN_PA = 100.0     # proj_export MIN_PA: the vet-universe exposure floor
+    by_player: dict[int, dict[int, dict]] = {}
+    for r in corpus["hit"]:
+        if r.get("mlbam") and r["season"] >= target - 3:
+            by_player.setdefault(int(r["mlbam"]), {})[r["season"]] = r
+    stamped: list[dict] = []
+    for h in hitters:
+        mid = h.get("mlbam")
+        seasons = by_player.get(int(mid)) if mid is not None else None
+        if not seasons:
+            continue
+        hist = [seasons[t] for t in (target - 1, target - 2, target - 3) if t in seasons]
+        if not hist or max((r.get("pa") or 0) for r in hist) < _PWOBA_MIN_PA:
+            continue
+        # Age anchored to the row that supplied it (the proj_export convention);
+        # ageless histories still project, they just skip the aging deltas.
+        age_row = next((r for r in hist if r.get("age")), None)
+        age = (age_row["age"] + (target - age_row["season"])) if age_row else None
+        try:
+            proj = fp.project_player(hist, "hit", target, curves, league, age,
+                                     in_progress=in_prog)
+        except Exception:   # noqa: BLE001 - one bad history never drops the board
+            continue
+        w = (proj or {}).get("woba_proj")
+        if w is None:
+            continue
+        h["pwoba"] = round(float(w), 3)
+        stamped.append(h)
+    # Percentile within the joined pool (mid-rank, 0-100) for the color ramp.
+    if len(stamped) >= 2:
+        import bisect
+        vals = sorted(h["pwoba"] for h in stamped)
+        n = len(vals)
+        for h in stamped:
+            lo = bisect.bisect_left(vals, h["pwoba"])
+            hi = bisect.bisect_right(vals, h["pwoba"])
+            h["pwoba_pctile"] = int(round(100.0 * ((lo + hi) / 2.0) / n))
+    return len(stamped)
+
+
 def _verdict() -> str:
     try:
         j = json.loads(EVAL_PATH.read_text(encoding="utf-8"))
@@ -319,6 +392,9 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     n_fh = _join_fwdhem_plus(scored["hitters"], _hem_raw, season)
     if n_fh:
         log(f"  hitters: fwdHEM+ (xHEM+ Blend forward column) joined for {n_fh} hitters")
+    n_pw = _join_pwoba(scored["hitters"], season)
+    if n_pw:
+        log(f"  hitters: pWOBA (FA-engine projected next-season wOBA) joined for {n_pw} hitters")
 
     payload = {
         "generated_at": today, "season": season, "as_of": today,
