@@ -2483,9 +2483,32 @@ def upsert_career_war(by_key: dict[str, dict]) -> int:
     """
     n = 0
     with connect() as con:
+        stored = {r["player_key"]: r["payload_json"] for r in con.execute(
+            "SELECT player_key, payload_json FROM career_war")}
         for key, rec in by_key.items():
             if not rec:
                 continue
+            # AUDIT FIX 2026-07-14: MERGE seasons instead of replacing the
+            # payload. A refetch with a narrower year window used to DELETE
+            # early-career seasons (the sliding start_year=season-10 bug),
+            # progressively decaying the eFV outcome labels. Seasons already
+            # on file that the new fetch does not cover are preserved; the
+            # aggregates are recomputed over the union.
+            try:
+                old = json.loads(stored.get(key) or "{}") or {}
+                old_seasons = old.get("seasons") or {}
+            except ValueError:
+                old_seasons = {}
+            if old_seasons:
+                merged = dict(old_seasons)
+                merged.update(rec.get("seasons") or {})
+                if merged != (rec.get("seasons") or {}):
+                    rec = dict(rec)
+                    rec["seasons"] = merged
+                    vals = [float(v) for v in merged.values()]
+                    rec["career_war"] = round(sum(vals), 2)
+                    rec["war_seasons_count"] = len(vals)
+                    rec["war_per_yr"] = round(sum(vals) / len(vals), 3) if vals else 0.0
             con.execute(
                 """INSERT INTO career_war (player_key, payload_json, fetched_at)
                    VALUES (?, ?, datetime('now'))

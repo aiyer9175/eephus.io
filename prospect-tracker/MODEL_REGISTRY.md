@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-14**. `validate()` at generation time: **clean**.
 
-**82 models.** Verdicts: validated: 24, provisional: 40, unvalidated: 3, deprecated: 15.
+**82 models.** Verdicts: validated: 23, provisional: 40, unvalidated: 3, deprecated: 16.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -90,7 +90,7 @@ stamped as of **2026-07-14**. `validate()` at generation time: **clean**.
 | `xfv_alpha_criterion` | model-dev artifact (rendered nowhere) - ridge alpha grid... | n/a - gated experiment M4 (pre-launch 2026-07): _ALPHAS (0.3..300) selected on weighted Spearman instead of MAE | shipped ridge (alpha grid 1/10/100 selected on MAE) - unchanged | shipped ridge fit reproduced exactly before comparison | pre-registered gate (GATES.md M4): OOS blend rho +>=0.003 on >=1 side, other... | **deprecated** | `data/xfv_alpha_criterion_eval.json` | 7 | no |
 | `xfv_ops_rel_fringe` | model-dev artifact (rendered nowhere) - FV-45 fringe ops_... | n/a - gated experiment M5 (pre-launch 2026-07): ops_rel added to the hitter lean feature set under a pre-registered fringe-tier... | xfv_hitter WITH ops_rel (this experiment shipped) | xfv_hitter without ops_rel (the prior lean set) | pre-registered gate (GATES.md M5): t45 >= +0.015 AND pooled >= -0.003 AND wit... | **validated** | `data/xfv_ops_rel_fringe_eval.json` | 7 | no |
 | `xfv_stale_anchor` | model-dev artifact (rendered nowhere) - E-STALE serve-tim... | n/a - gated mechanism (2026-07-14): decays the MODEL fv input + blend consensus leg for active players whose last list appearan... | xfv live scoring WITH the stale-anchor decay (this experiment shipped) | raw stale anchor served as if fresh (the Nathan Hickey class: ~7% of scored a... | pre-registered gate (docs/efv-2026-07-14/GATES.md E-STALE): held-out (fit 202... | **validated** | `data/xfv_stale_anchor_eval.json` | 0 | no |
-| `xfv_lambda_band` | model-dev artifact (rendered nowhere) - E-LAMBDA blend-ba... | n/a - gated experiment (2026-07-14): hit-side rank_calibration selection band ceiling raised 0.70 -> 0.90 (the hard clamp); pit... | hit blend lambda ~0.90 (composite argmax in [0.50, 0.90]) | the prior [0.50, 0.70] band selection (lambda 0.70) | M2 clause set on the forward-chained folds: composite >= +0.005, pooled >= -0... | **validated** | `data/xfv_lambda_band_eval.json` | 0 | no |
+| `xfv_lambda_band` | model-dev artifact (rendered nowhere) - E-LAMBDA blend-ba... | n/a - gated experiment (2026-07-14): hit-side rank_calibration selection band ceiling raised 0.70 -> 0.90 (the hard clamp); pit... | the conservative [0.50, 0.70] band (both sides) - the raise was retracted | the prior [0.50, 0.70] band selection (lambda 0.70) | M2 clause set on the forward-chained folds: composite >= +0.005, pooled >= -0... | **deprecated** | `data/xfv_lambda_band_eval.json` | 0 | no |
 | `xfv_age_feature` | model-dev artifact (rendered nowhere) - E-AGE absolute-ag... | n/a - gated experiment (2026-07-14): milb.age (+/- missing indicator) added to the lean sets | lean sets WITH age (age-only, no indicator; owner-directed ship) | the pre-ship lean sets | pre-registered gate (docs/efv-2026-07-14/GATES.md E-AGE): pooled >= +0.0046 (... | **provisional** | `data/xfv_age_feature_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.

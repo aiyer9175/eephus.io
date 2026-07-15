@@ -245,18 +245,19 @@ def test_stale_anchor_constants_match_artifact():
     assert art["clauses"]["c3_positive_fit"]["pass"]
 
 
-def test_lambda_band_raise_matches_artifact():
-    """The hit-side rank_calibration band ceiling (raised to the hard clamp,
-    2026-07-14 owner decision) must stay pinned to its ledger; pit stays
-    [0.50, 0.70] (its sweep never cleared the composite gate)."""
-    import efv_model as XM
+def test_lambda_band_retraction_matches_artifact():
+    """The 2026-07-14 hit-band cap-raise was RETRACTED the same day: the
+    label-integrity repair (veteran-debut mislabels + career_war window decay)
+    rebuilt the matrices and the raise's evidence evaporated (interior optimum
+    ~0.89, gain +0.0082, bootstrap P=0.677 - below every gate). This pin keeps
+    the code and the ledger telling the same story: conservative band stands
+    until a re-run of tools/efv_lambda_band_lab.py mechanically passes c1-c4."""
     art = _load("xfv_lambda_band_eval.json")
-    assert art["ship"]["hit_band_raise"] is True, \
-        "hit c1-c4 no longer pass - re-run tools/efv_lambda_band_lab.py and re-decide"
+    assert art["ship"]["hit_band_raise"] is False, \
+        "the lab now PASSES c1-c4 - if raising the band again, update " \
+        "rank_calibration + this pin together"
     src = (ROOT / "efv_model.py").read_text(encoding="utf-8")
-    assert '(0.50, _BLEND_LAMBDA_CLAMP[1]) if side == "hit" else (0.50, 0.70)' in src
-    assert XM._BLEND_LAMBDA_CLAMP[1] == 0.90
-    assert art["ship"]["new_hit_band"] == [0.50, XM._BLEND_LAMBDA_CLAMP[1]]
+    assert "lo, hi = 0.50, 0.70" in src
 
 
 def test_wilson_interval_sane():

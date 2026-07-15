@@ -103,6 +103,40 @@ result recorded as a loss ledger).
   terminal 10 FV pts, bands 35-45 only, active players only, display
   consensus untouched. Constants test-pinned to the artifact.
 
+## Repair pass (same day, second session): the audit's findings implemented
+
+The 5-agent audit's findings were verified inline and fixed. Label
+integrity first: (1) 41 veteran re-appearances mislabeled as MLB debuts
+(decline-tail labels on prospect anchors) - dropped with accounting;
+(2) career_war sliding-window refetch was DELETING early-career seasons
+(Correa's 2015 ROY year) - window floored at 2011, upsert made
+merge-preserving, 1,628 payloads healed; (3) postseason-only debuts
+re-dated; (4) ~20 real pitchers routed out of the hitter cohort
+(0-AB batting statlines no longer count as side evidence). Model
+mechanics: x_era_k double-bad quadrant ZEROED (owner-directed);
+tool imputation moved to observed train means (tool_fb 58.0 - the flat
+45.0 was a ~1.3 SD live penalty on the 56-65% tool-missing majority);
+milb_missing no longer fires for data-availability (2011-2015 rows are
+neutral via milb_unavailable); n_milb_seasons capped at the train
+support (8); eval guard-order crash fixed; sign-preserving tool-blend
+clamp. Ungraded model: production-only fit/eval pools, cold-cache
+cameo sub-floor fail-open. Scoring/display: backgrade injury penalty
+un-deadened (live IL fields populated), no-track-record backgrades
+prior-anchored per contract, ~2,200 bust rows moved onto the live
+quantile scale, post-debut anchors tagged, KRP+ gated on real exposure,
+mid-season league norms blended with the prior season by qualified
+count, live lambda stamped into xfv.json meta, four stale docstrings
+corrected.
+
+**RETRACTION: the E-LAMBDA hit cap-raise.** On the repaired labels the
+raise's evidence evaporated (interior optimum ~0.8875, composite gain
++0.0082, bootstrap P=0.677 - below every gate): the corrupted labels
+had been making consensus look artificially weak. Band restored to
+[0.50, 0.70], ledger + registry + pin updated. The corrected-label
+baselines: hit blend 0.3808 / wm 0.1725 / t45 0.0766; pit 0.3002 /
+0.1390 / 0.1891. E-STALE re-validated unchanged ({35,40,45}: 10.0);
+E-AGE re-measured, still a non-loss, now positive on every metric.
+
 ## Binding constraints
 
 - No re-attempt of ledgered losses: alpha criterion, cohort-lambda

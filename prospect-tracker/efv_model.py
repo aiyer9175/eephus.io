@@ -194,10 +194,13 @@ def wag_calibration(side: str) -> dict:
             continue
         ols = _fit_ols_fv(tr)
         ridge = _fit_ridge(tr, keys)
-        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
-        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+        # AUDIT FIX 2026-07-14 (guard order): check ols/ridge BEFORE calling
+        # _predict on them - _fit_ridge returns None under 40 rows, which
+        # would TypeError here (latent: today's fold gate makes it unreachable).
         if not (ols and ridge):
             continue
+        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
+        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
         for r in te:
             wg = wag.get(r["player_key"])
             if not wg:
@@ -236,7 +239,13 @@ def rank_calibration(side: str) -> dict:
     maximizes pooled + within-tier + fringe TOGETHER within a conservative [0.50, 0.70] band --
     the robust middle, not the noisy high-lambda plateau. (Leakage note: lambda is one smooth
     parameter; selecting it on the pooled OOS folds is in-sample for that single scalar, but the
-    per-cohort forward-chain independently validates the direction.)"""
+    per-cohort forward-chain independently validates the direction.)
+
+    AUDIT NOTE 2026-07-14: this selector's per-fold consensus-OLS anchor is fit on
+    DEBUTED-only rows, while production (_fit_production) fits its anchor on the full
+    pool minus recent busts - the flatter full-pool slope makes the EFFECTIVE live
+    weight ~0.03 higher than the number quoted here (rank order within a scoring run
+    is unaffected; documented rather than re-plumbed)."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -277,16 +286,17 @@ def rank_calibration(side: str) -> dict:
                 t45 = r
         return rho, (wsum / wn if wn else 0.0), t45
 
-    # E-LAMBDA (2026-07-14, owner-authorized cap-raise; tools/efv_lambda_band_lab.py
-    # -> data/xfv_lambda_band_eval.json): on fresh matrices the HIT composite
-    # (pooled + within-tier + t45) rises MONOTONICALLY past the old 0.70 ceiling
-    # all the way to pure-model - both eras and all four fold-years up - i.e. the
-    # original band rationale ("within-tier/fringe peak ~0.65, degrade toward
-    # 0.90") is inverted on current data. The HIT ceiling now meets the hard
-    # clamp (0.90); the retained 10% consensus weight is a deliberate robustness
-    # guard, no longer claimed to be the empirical optimum. PIT keeps [0.50,
-    # 0.70]: its sweep never cleared the composite gate (best +0.003, sub-bar).
-    lo, hi = (0.50, _BLEND_LAMBDA_CLAMP[1]) if side == "hit" else (0.50, 0.70)
+    # E-LAMBDA history (2026-07-14, tools/efv_lambda_band_lab.py ->
+    # data/xfv_lambda_band_eval.json): a same-day cap-raise of the HIT ceiling
+    # to 0.90 was shipped on a monotone-to-pure-model curve (composite +0.0253,
+    # bootstrap P=0.866)... and RETRACTED hours later when the label-integrity
+    # repair (41 veteran re-appearances mislabeled as debuts + the career_war
+    # sliding-window decay) rebuilt the matrices: on corrected labels the swept
+    # optimum is INTERIOR (~0.89) with gain +0.0082 and bootstrap P=0.677 -
+    # below every gate. The corrupted labels had been making consensus look
+    # worse than it is. The conservative [0.50, 0.70] band STANDS for both
+    # sides; the retraction is recorded in the ledger + registry.
+    lo, hi = 0.50, 0.70
     cand = [round(lo + (hi - lo) * i / 20, 3) for i in range(21)]
     metr = {lam: _metrics(lam) for lam in cand}
     best = max(cand, key=lambda L: sum(metr[L]))   # pooled + within-tier + FV-45 fringe
@@ -335,10 +345,13 @@ def oos_grades(side: str) -> dict:
             continue
         ols = _fit_ols_fv(tr)
         ridge = _fit_ridge(tr, keys)
-        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
-        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+        # AUDIT FIX 2026-07-14 (guard order): check ols/ridge BEFORE calling
+        # _predict on them - _fit_ridge returns None under 40 rows, which
+        # would TypeError here (latent: today's fold gate makes it unreachable).
         if not (ols and ridge):
             continue
+        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
+        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
         for r in te:
             cons_war = max(0.0, _pred_ols(ols, r["fv"]))
             model_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
@@ -377,22 +390,54 @@ def _pos_premium(pos, side: str) -> float:
 def _x_era_k(era_rel: float, k_rel: float) -> float:
     """Run-prevention x missing-bats interaction: (-era_rel)*k_rel.
 
-    KNOWN ISSUE (audited 2026-07-14, fix DEFERRED with evidence): the product
-    is POSITIVE in the double-bad quadrant (era worse than level AND K-rate
-    below level, neg*neg) - 730 live pitchers carry a spurious 'K-backed run
-    prevention' boost up to +0.48. BOTH candidate fixes were OOS-tested and
-    REVERTED under the no-losses rule: flipping the quadrant negative costs
-    t45 -0.044, zeroing it costs t45 -0.023 (vs the +/-0.0023 noise floor).
-    The debuted-only eval pool credits the spurious boost via survivorship
-    (its never-debut victims are not in the pool), so a fair re-test needs an
-    eval that includes never-debut outcomes. Mitigation shipped instead: the
-    absolute-age feature penalizes the (mostly old) double-bad org-arm class."""
-    return (-era_rel) * k_rel
+    QUADRANT FIX (audited, then OWNER-DIRECTED ship 2026-07-14): the raw
+    product is POSITIVE in the double-bad quadrant (era worse than level AND
+    K-rate below level, neg*neg) - 730 live pitchers carried a spurious
+    'K-backed run prevention' boost up to +0.48. The quadrant is ZEROED (not
+    flipped: the flip's large negatives reshape the fit for a worse measured
+    cost). Honesty note: on the DEBUTED-ONLY OOS protocol this measures as a
+    small fringe-tier loss (t45 ~-0.02) because that pool credits the
+    spurious boost via survivorship - its never-debut victims are outside
+    the sample frame. The owner chose correctness over the survivorship-
+    biased metric; the double-bad signal still reaches the model through
+    era_rel / k_rel / bb_rel directly."""
+    x = (-era_rel) * k_rel
+    if era_rel > 0 and k_rel < 0:
+        return 0.0
+    return x
+
+
+# Tool-grade imputation constants (AUDIT FIX 2026-07-14): the old flat 45.0
+# imputed far below the OBSERVED train means (tool_fb mean is 58.0!), and tools
+# are missing for 56-65% of LIVE rows vs only 11-14% of training rows - so the
+# majority of the live pitcher pool ate a ~-1.3 SD spurious fastball penalty
+# relative to training. Impute at the measured train means (pinned by
+# test_efv_model) so missing stays NEUTRAL under standardization. Non-lean
+# tools (cmd/sl/ch/cb, game_pwr/raw_pwr/field/throw) keep 45.0 - they carry no
+# shipped coefficient.
+_TOOL_IMPUTE = {"tool_hit": 50.0, "tool_speed": 48.0, "tool_fb": 58.0}
+
+# n_milb_seasons live support cap (AUDIT FIX 2026-07-14): training counts are
+# era-censored by the 2014 StatsAPI floor (observed max = 8 on both sides);
+# live rows count uncapped (and include the in-progress season), so the ridge
+# extrapolated beyond its training support. Cap at the training max.
+_N_MILB_SEASONS_CAP = 8.0
 
 
 def _vec(r, side: str = "hit") -> dict:
     m = r.get("milb") or {}
-    milb_missing = 0.0 if r.get("milb") else 1.0
+    # milb_missing semantics (AUDIT FIX 2026-07-14): the flag's documented job
+    # is "no pre-decision MiLB track record", but 100% of 2011-2014 and ~97% of
+    # 2015 debut rows fired it for DATA-AVAILABILITY reasons (no mlbam id /
+    # StatsAPI cache floor 2014) - real-WAR debuts flagged as imputed-zero
+    # production, diluting the coefficient. Rows the dataset marks
+    # milb_unavailable stay NEUTRAL (0.0) instead.
+    if r.get("milb"):
+        milb_missing = 0.0
+    elif r.get("milb_unavailable"):
+        milb_missing = 0.0
+    else:
+        milb_missing = 1.0
     pick = r.get("pick_overall")
     bonus = r.get("bonus_usd")
     def g(v, d=0.0):
@@ -418,7 +463,7 @@ def _vec(r, side: str = "hit") -> dict:
         "k_rel": g(m.get("k_rel")),
         "bb_rel": g(m.get("bb_rel")),
         "milb_missing": milb_missing,
-        "n_milb_seasons": g(m.get("n_milb_seasons")),
+        "n_milb_seasons": min(g(m.get("n_milb_seasons")), _N_MILB_SEASONS_CAP),
         "prod_trend": g(m.get("prod_trend")),
         "pos_prem": _pos_premium(r.get("position"), side),
         "pick_overall": float(pick) if pick is not None else 250.0,
@@ -433,7 +478,8 @@ def _vec(r, side: str = "hit") -> dict:
     }
     if side == "pit":
         out.update({
-            "tool_fb": g(r.get("tool_fb"), 45.0), "tool_cmd": g(r.get("tool_cmd"), 45.0),
+            "tool_fb": g(r.get("tool_fb"), _TOOL_IMPUTE["tool_fb"]),
+            "tool_cmd": g(r.get("tool_cmd"), 45.0),
             "tool_sl": g(r.get("tool_sl"), 45.0), "tool_ch": g(r.get("tool_ch"), 45.0),
             "tool_cb": g(r.get("tool_cb"), 45.0), "era_rel": g(m.get("era_rel")),
             "peak_k_rel": g(m.get("peak_k_rel")), "peak_bb_rel": g(m.get("peak_bb_rel")),
@@ -443,8 +489,10 @@ def _vec(r, side: str = "hit") -> dict:
         })
     else:
         out.update({
-            "tool_hit": g(r.get("tool_hit"), 45.0), "tool_game_pwr": g(r.get("tool_game_pwr"), 45.0),
-            "tool_speed": g(r.get("tool_speed"), 45.0), "tool_field": g(r.get("tool_field"), 45.0),
+            "tool_hit": g(r.get("tool_hit"), _TOOL_IMPUTE["tool_hit"]),
+            "tool_game_pwr": g(r.get("tool_game_pwr"), 45.0),
+            "tool_speed": g(r.get("tool_speed"), _TOOL_IMPUTE["tool_speed"]),
+            "tool_field": g(r.get("tool_field"), 45.0),
             "obp_rel": g(m.get("obp_rel")), "ops_rel": g(m.get("ops_rel")),
             "peak_obp_rel": g(m.get("peak_obp_rel")), "peak_k_rel": g(m.get("peak_k_rel")),
             "peak_iso_rel": g(m.get("peak_iso_rel")), "peak_ops_rel": g(m.get("peak_ops_rel")),
@@ -555,10 +603,15 @@ def _pred_comps(cm, feats, k=20):
 # ---------------------------------------------------------------------------
 
 def _lofo_calibrate(fold_map):
-    """Leave-one-fold-out linear recentering (realized ~ a + b*pred). Rank-
-    preserving (b>0), so Spearman is unchanged vs raw; only the scale/MAE
-    moves. Calibration for each fold is fit on the OTHER folds only -> no
-    leakage. Returns pooled calibrated [(cal_pred, target)]."""
+    """Leave-one-fold-out linear recentering (realized ~ a + b*pred).
+
+    DOCSTRING CORRECTED 2026-07-14 (audit): the old claims were wrong on both
+    counts. (1) POOLED Spearman is NOT strictly unchanged vs raw - each fold
+    gets its own affine map, so cross-fold ordering can shift (within-fold
+    order is preserved). (2) "fit on the OTHER folds only" includes LATER
+    folds - leave-one-out over a time series is not forward-chained, so this
+    is a diagnostic recentering, not a leakage-clean protocol; the governance
+    metrics never consume it for ranking claims."""
     out, yrs = [], list(fold_map)
     for yr in yrs:
         others = [p for y in yrs if y != yr for p in fold_map[y]]

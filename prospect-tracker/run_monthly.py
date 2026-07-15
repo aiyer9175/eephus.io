@@ -2205,13 +2205,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                              len(war_targets),
                              len(war_cohort) - len(war_targets))
                     if war_targets:
-                        # 10-year window covers every modern graduate.
-                        # Older grads (rare) get truncated WAR but still
-                        # surface a value.
+                        # AUDIT FIX 2026-07-14: the window is FLOORED at 2011
+                        # (the earliest eFV training debut cohort). The old
+                        # sliding start_year=season-10 silently DELETED
+                        # early-career seasons from stored payloads on every
+                        # refetch (Correa's 2015 ROY season vanished in the
+                        # 2026 refetch), and the label builder counted the
+                        # missing years as 0 WAR - progressive label decay.
                         try:
                             war_data = fetch_career_war_bulk(
                                 war_targets,
-                                start_year=season - 10,
+                                start_year=min(season - 10, 2011),
                                 end_year=season,
                             )
                             if war_data:

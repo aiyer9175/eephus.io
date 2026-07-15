@@ -142,16 +142,25 @@ def test_committed_artifact_headline_alias_contract():
 #   raised to the 0.90 clamp, absolute-age feature in both lean sets, and the
 #   owner-directed live prospect-age penalty (Moore #77 -> #114). All ledgered
 #   (xfv_stale_anchor/lambda_band/age_feature evals). Rowcount 8888.
-_GOLDEN_XFV_SHA256 = "d170df6db4895dce9922e258076143a42f4272d07a42a1550065fecce3db0e4b"
+# Updated 2026-07-14c (audit repair pass, GATES.md "Repair pass"): label
+#   integrity (41 veteran-debut mislabels dropped, career_war window decay
+#   healed - 1,628 payloads refetched 2011-floor), x_era_k double-bad quadrant
+#   zeroed (owner-directed), tool imputation at train means, milb_missing
+#   availability split, side-routing fix, ~2,200 bust rows re-scored onto the
+#   live quantile scale (rowcount 8888 -> 9127), AND the lambda band raise
+#   RETRACTED (its evidence did not survive the label repair; hit lambda back
+#   to 0.70). Governance evals re-run in the same regen.
+_GOLDEN_XFV_SHA256 = "0a2b0fb7a4b10cf295d2e577810687c21a8f9d770a3f0b18c7138e5c999c85e2"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-14). The +/-20% band tolerates ordinary
-# roster churn while still catching a gross truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 8888
+# (data/xfv.json by_player, read 2026-07-14 post-repair; the bust re-scale
+# added ~240 rows net). The +/-20% band tolerates ordinary roster churn while
+# still catching a gross truncation / empty-artifact regression.
+_GOLDEN_XFV_ROWCOUNT = 9127
 
 
 def test_efv_grade_map_inverts_on_model_window():

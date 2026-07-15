@@ -25,14 +25,17 @@ OUT_PATH = DATA_DIR / "xfv.json"
 def _entry(s, side, kind):
     e = {
         "side": "P" if side == "pit" else "H",
-        "kind": kind,                                    # "active" (live board) | "resolved"
-        # HEADLINE = the pure-model (realized) grade: realized_implied_fv(E[6yr WAR]), NO
-        # consensus blend / NO quantile remap. The model is the source of truth (OOS-better
-        # than consensus + individual sources), so the site shows the true outcome-implied
-        # grade -- the SAME grade that drives surplus + the outcome distribution.
-        "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) -- headline
+        "kind": kind,                    # "active" | "resolved" | backgrade kinds ("debuted"/"bust")
+        # COMMENT CORRECTED 2026-07-14 (audit; the flip shipped 2026-07-06):
+        # xfv_grade_quantile IS the displayed headline site-wide (prospx,
+        # build_site, proj_export, fa_fit all read it first) and surplus_mm is
+        # priced on it -- see meta.grade_scale. xfv_grade / xfv_grade_realized
+        # is the honest pure-model reference (realized_implied_fv(E[6yr WAR]),
+        # deflated), which still drives p_bucket / p_bust (validated odds).
+        # The artifact shape (xfv_grade == realized alias) is test-pinned.
+        "xfv_grade": s.get("xfv_grade"),                 # realized (pure model) reference
         "xfv_grade_realized": s.get("xfv_grade"),        # alias (identical; kept for back-compat reads)
-        "xfv_grade_quantile": s.get("xfv_grade_display"),# preserved: prior rank->consensus-scale map (projection pricing + backtests)
+        "xfv_grade_quantile": s.get("xfv_grade_display"),# the DISPLAYED headline (20-80 quantile map)
         "consensus_fv": s.get("consensus_fv"),
         "xfv_minus_consensus": s.get("xfv_minus_consensus"),          # realized - consensus (matches headline)
         "xfv_minus_consensus_quantile": s.get("xfv_minus_consensus_display"),  # preserved (quantile - consensus)
@@ -63,6 +66,7 @@ def _entry(s, side, kind):
 
 
 def run(persist: bool = True) -> dict:
+    from efv_model import blend_lambda   # local: avoids a module-level cycle
     by_player = {}
     counts = {"resolved": 0, "active": 0}
     # resolved (backtest cohort -- known outcomes; powers the Debuted views) FIRST, then
@@ -103,6 +107,13 @@ def run(persist: bool = True) -> dict:
             "generated_at": date.today().isoformat(),
             "n_players": len(by_player),
             "n_active": counts["active"],
+            # AUDIT FIX 2026-07-14: the LIVE blend lambda, stamped on every
+            # regen - the governance eval artifacts (xfv_eval*.json) record
+            # their own lambda at eval time and had silently desynced from
+            # the live value twice; this stamp is the always-current truth
+            # to compare them against.
+            "live_lambda": {"hit": round(blend_lambda("hit"), 4),
+                            "pit": round(blend_lambda("pit"), 4)},
             "grade_scale": "xfv_grade_quantile is the DISPLAYED grade site-wide: the model's "
                            "outcome-grounded ranking mapped onto the familiar 20-80 consensus "
                            "scale, and the grade surplus_mm is priced on (owner: eFV + eFV "
