@@ -497,20 +497,16 @@ def _fit_production(side: str):
     """Fit the shipped model (ridge + linear scale calibration + consensus-FV OLS anchor)
     on the FULL labeled matrix -- the same fit run() uses -- returning (ridge, a, b, ols, keys)."""
     keys, _mono = _feature_spec(side)
-    is_pit = side == "pit"
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    # Match the GOVERNANCE eval pool (efv_model.run): drop never-MLB recent-bust rows
-    # so the shipped model is fit on the same population the eval measures. Rank-neutral
-    # (those rows are outside every forward-chain fold), just removes fringe fit noise.
-    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
-            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
-    data = _prep(pool, "target_censored", side)
-    ridge = _fit_ridge(data, keys)
-    raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
-    cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
-    a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
-    ols = _fit_ols_fv(data)
-    return ridge, a, b, ols, keys
+    # ONE shared fit with the lambda selector (efv_model.fit_production_stack):
+    # full labeled pool minus never-MLB recent-bust rows, ridge + output
+    # calibration + consensus OLS. The selector sizing blend_lambda now measures
+    # exactly this stack (E-LAMBDA parity repair 2026-07-15).
+    from efv_model import fit_production_stack
+    stack = fit_production_stack(rows, side, keys)
+    if not stack:
+        raise RuntimeError(f"production stack unfittable for side={side}")
+    return stack["ridge"], stack["a"], stack["b"], stack["ols"], keys
 
 
 def run_live(persist: bool = True, side: str = "hit") -> dict:

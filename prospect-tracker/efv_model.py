@@ -245,7 +245,19 @@ def rank_calibration(side: str) -> dict:
     DEBUTED-only rows, while production (_fit_production) fits its anchor on the full
     pool minus recent busts - the flatter full-pool slope makes the EFFECTIVE live
     weight ~0.03 higher than the number quoted here (rank order within a scoring run
-    is unaffected; documented rather than re-plumbed)."""
+    is unaffected; documented rather than re-plumbed).
+
+    PARITY ADJUDICATION 2026-07-15 (tools/xfv_lambda_parity_lab.py ->
+    data/xfv_lambda_parity_eval.json): re-plumbing these folds to full production
+    parity was implemented and REJECTED for restamping. Two faithful parity
+    implementations (per-fold-prepped vs globally-prepped pools) select argmax
+    lambdas at OPPOSITE ends of the band (hit 0.68 vs 0.56, pit 0.69 vs 0.53) on
+    composite curves flat within ~0.003 - the selection under parity is
+    implementation-sensitive noise, and the restamp protocol (near-boundary or
+    flat argmax -> owner sign-off) blocks it. The shipped debuted-only selector
+    stands until the owner adjudicates; the returned dict now carries the full
+    candidate curve + near_boundary flag so any future restamp checks flatness
+    first."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -301,8 +313,15 @@ def rank_calibration(side: str) -> dict:
     metr = {lam: _metrics(lam) for lam in cand}
     best = max(cand, key=lambda L: sum(metr[L]))   # pooled + within-tier + FV-45 fringe
     rho, wm, t45 = metr[best]
+    # Flatness surface for the restamp protocol: a near-boundary argmax or a
+    # composite curve flat within noise across the band means the selection is
+    # weak evidence and a restamp needs the owner's sign-off, not just a rerun.
+    curve = {str(L): round(sum(metr[L]), 4) for L in cand}
+    spread = max(curve.values()) - min(curve.values())
     return {"lambda": best, "rho": round(rho, 4), "within_tier_wm": round(wm, 4),
-            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi]}
+            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi],
+            "curve": curve, "curve_spread": round(spread, 4),
+            "near_boundary": bool(best <= lo + 0.02 or best >= hi - 0.02)}
 
 
 def blend_lambda(side: str) -> float:
@@ -543,6 +562,36 @@ def _fit_ols_fv(train):
 
 def _pred_ols(model, fv):
     return model["a"] + model["b"] * fv
+
+
+def fit_production_stack(rows, side: str, keys=None):
+    """The ONE production fit, shared by efv_score._fit_production (the shipped
+    scorer) and rank_calibration (the lambda selector): full labeled pool minus
+    never-MLB recent busts -> ridge + linear output calibration + consensus OLS
+    anchor. E-LAMBDA parity repair 2026-07-15: the selector used to fit a
+    DEBUTED-only anchor and score a RAW uncalibrated model leg, so it sized
+    lambda for a blend production never ships (stamped pit 0.63 / hit 0.70 were
+    measured on the wrong blend). Both callers now fit through here; the
+    selector's legs apply the same calibration clamp and cons floor as run_live.
+    Returns {ridge, a, b, ols, keys, n} or None when the pool cannot support a fit."""
+    if keys is None:
+        keys, _m = _feature_spec(side)
+    is_pit = side == "pit"
+    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
+            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
+    data = _prep(pool, "target_censored", side)
+    if len(data) < 60:
+        return None
+    ridge = _fit_ridge(data, keys)
+    if not ridge:
+        return None
+    raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
+    cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
+    a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+    ols = _fit_ols_fv(data)
+    if not ols:
+        return None
+    return {"ridge": ridge, "a": a, "b": b, "ols": ols, "keys": keys, "n": len(data)}
 
 
 def _fit_lgbm_mono(train, keys, mono):

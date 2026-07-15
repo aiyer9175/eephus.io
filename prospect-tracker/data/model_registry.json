@@ -1319,6 +1319,17 @@
    "last_checked": "2026-07-14",
    "stale": false,
    "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_lambda_parity",
+   "surface": "model-dev artifact (rendered nowhere) - E-LAMBDA selector/production parity adjudication",
+   "predicts": "n/a - adjudication (2026-07-15): does re-plumbing rank_calibration to production parity (full-pool anchor + calibrated clamped model leg) support a blend-lambda restamp?",
+   "champion": "shipped debuted-only selector (hit 0.70 / pit 0.63) - STANDS",
+   "baseline": "parity variants C (globally-prepped pool) and D (per-fold-prepped, fit_production_stack)",
+   "metric": "curve geometry: argmax stability across faithful parity implementations + band-boundary/flatness protocol",
+   "eval_artifact": "data/xfv_lambda_parity_eval.json",
+   "verdict": "deprecated",
+   "notes": "NO-RESTAMP adjudication. Parity implementations DISAGREE across the band: C selects hit 0.56/pit 0.53, D selects hit 0.68/pit 0.69 (disagreement 0.12/0.16 on a 0.20 band) with top-5 composite candidates within ~0.003; the argmax under parity is implementation-sensitive noise and the restamp protocol (near-boundary/flat -> owner sign-off) fired on BOTH sides. Shipped alongside: fit_production_stack shared helper (efv_score._fit_production refactor, byte-identical fit verified) + curve/near_boundary/curve_spread reporting on rank_calibration; stamps unchanged. OWNER DECISION QUEUED: adjudicate whether any parity selector (and which prep convention) should replace the debuted-only selector. Precedent: the 2026-07-14 hit cap-raise retraction."
   }
  ],
  "problems": []
