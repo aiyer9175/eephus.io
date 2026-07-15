@@ -176,11 +176,16 @@ def run(persist: bool = True) -> dict:
             if len(sub) >= 20:
                 partial = _partial_after_grade([s[0] for s in sub],
                                                [s[1] for s in sub], [s[2] for s in sub])
-        # tool eFV score = z(grade) + w*z(milb), w from the partial (cap 0.5).
+        # tool eFV score = z(grade) + w*z(milb), w from the partial (cap |0.5|).
         # The partial is IN-SAMPLE, so GATE the applied weight on a forward-chained
         # OOS check (the platform's own bar): keep the blend only where it beats
         # grade-only out-of-sample; otherwise zero it (grade-only).
-        w_insample = max(0.0, min(0.5, (partial or 0.0) * 2.0)) if partial else 0.0
+        # AUDIT FIX 2026-07-14: preserve the partial's SIGN - the old max(0, ...)
+        # clamp silently zeroed negatively-oriented production signals, so the
+        # cmd/hit tool eFVs could never blend MiLB production that pointed
+        # against the expected direction even when the OOS gate validated it.
+        w_insample = (max(-0.5, min(0.5, (partial or 0.0) * 2.0))
+                      if partial is not None else 0.0)
         oos = _oos_validate(tool, spec, rows, realized)
         w = w_insample if (oos and oos["validated"]) else 0.0
         gz = _z([x[1] for x in recs])
@@ -253,7 +258,9 @@ def _fit_blend(tool, spec, train_rows, realized):
         if len(sub) >= 20:
             partial = _partial_after_grade([s[0] for s in sub], [s[1] for s in sub],
                                            [s[2] for s in sub])
-    w = max(0.0, min(0.5, (partial or 0.0) * 2.0)) if partial else 0.0
+    # sign-preserving clamp (AUDIT FIX 2026-07-14, matches run() above)
+    w = (max(-0.5, min(0.5, (partial or 0.0) * 2.0))
+         if partial is not None else 0.0)
     gmu, gsd = _mean_sd([x[0] for x in recs])
     fmu, fsd = (_mean_sd([(x[1] if x[1] is not None else 0.0) for x in recs])
                 if spec["milb"] else (0.0, 1.0))
@@ -326,7 +333,7 @@ if __name__ == "__main__":
         rep = run_live()
         print("LIVE tool eFV:", rep["n_players_with_tool_xfv"], "players")
         for t, d in rep["modeled_tools"].items():
-            print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_production')}")
+            print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_applied')}")
         sys.exit(0)
     rep = run()
     print("tool eFV validation (realized MLB stat):")

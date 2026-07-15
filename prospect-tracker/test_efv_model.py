@@ -96,10 +96,16 @@ _EXPECTED_HIT = [
     # ops_rel: FV-45 fringe signal shipped via WS-M / M5 (fringe gate, t45 +0.0237;
     # ledger data/xfv_ops_rel_fringe_eval.json). Kept last (ridge is order-invariant).
     ("ops_rel", +1),
+    # age: absolute age, OWNER-DIRECTED ship 2026-07-14 (missed the pooled
+    # auto-bar by 0.0003, every metric >= -noise; ledger
+    # data/xfv_age_feature_eval.json + docs/efv-2026-07-14/GATES.md).
+    ("age", -1),
 ]
 _EXPECTED_PIT = [
     ("fv", +1), ("peak_k_rel", +1), ("k_rel", +1), ("bb_rel", -1),
     ("age_rel_level", -1), ("x_era_k", +1), ("tool_fb", +1),
+    # age: same owner-directed 2026-07-14 ship as the hitter side.
+    ("age", -1),
 ]
 
 

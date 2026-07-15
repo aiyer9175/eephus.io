@@ -70,6 +70,11 @@ _FACTOR_LABELS = {
     "n_sources": "Source coverage", "pick_overall": "Draft pedigree",
     "bonus_log": "Signing bonus", "n_milb_seasons": "Track-record depth",
     "fv_stddev": "Source disagreement", "il_stints_pre": "Injury history",
+    # ops_rel shipped into the hitter lean set 2026-07-07 without a label, so
+    # the raw feature key leaked into the user-facing factors panel.
+    "ops_rel": "Production (OPS) vs level",
+    "peak_ops_rel": "Peak production (OPS)", "peak_obp_rel": "Peak on-base",
+    "peak_iso_rel": "Peak power (ISO)",
 }
 
 # Features excluded from the per-prospect explainer: model-internal recentering,
@@ -88,9 +93,12 @@ _EXPLAINER_SKIP = {"fv", "milb_missing", "is_ifa", "is_college"}
 
 def _factors(ridge, feats, top: int = 4) -> list:
     """Per-prospect explainer: the non-FV ridge contributions (weight * standardized
-    feature, in WAR units) that moved eFV off the consensus-FV prior, largest first.
-    Sum of these ~= the eFV-minus-consensus adjustment, so it literally explains the
-    delta. Returns [{label, dir, mag}]."""
+    feature, in raw ridge units) that moved eFV off the consensus-FV prior, largest
+    first. DOCSTRING CORRECTED 2026-07-14 (audit): the mags are DIRECTIONAL raw-model
+    contributions, NOT an exact decomposition of the headline delta - the headline
+    passes through the linear calibration (a + b*pred), the -2 floor, the blend
+    lambda, and the live overlays, so these do not sum to xfv_minus_consensus.
+    Returns [{label, dir, mag}]."""
     contribs = []
     for k, m, s, w in zip(ridge["keys"], ridge["mu"], ridge["sd"], ridge["w"]):
         if k in _EXPLAINER_SKIP:
@@ -111,6 +119,26 @@ def _age_at(birth_date, year):
         return round((date(int(year), 4, 1) - b).days / 365.25, 1)
     except (ValueError, TypeError):
         return None
+
+
+def _age_factor(r) -> float:
+    """Owner-directed live prospect-age penalty (2026-07-14, the Andrew Moore
+    directive: a 26.9yo AA reliever must not rank top-100). A multiplicative
+    haircut on the eFV WAR projection for OLD active prospects, mirroring the
+    injury-penalty overlay: LIVE board only, never the resolved eval.
+
+    Why an overlay and not a bigger model coefficient: the trained age
+    coefficient is honest but small because the debuted-only training pool is
+    survivorship-censored - the 26yo org arms who never got a shot are not in
+    it, so the data cannot support the penalty the owner (correctly) wants
+    priced. Ramp: 1.0 through age 25, -0.10/yr after, floored at 0.75
+    (age 27.5+). Transparent via the "Prospect age penalty" factor chip."""
+    age = r.get("age_now")
+    if age is None:
+        age = (r.get("milb") or {}).get("age")
+    if age is None or float(age) <= 25.0:
+        return 1.0
+    return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
 
 
 def _injury_factor(r) -> float:
@@ -515,10 +543,25 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             continue
         feats = _vec(r, side)
         xfv_war = max(-2.0, a + b * _predict(ridge, feats))
-        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        # E-STALE: the blend's consensus leg prices the DECAYED anchor
+        # (fv_effective, efv_dataset._stale_anchor_discount) - the ground-truth
+        # study shows a long-unlisted FV45 carries ~FV35 of credible consensus
+        # information, and blending toward the raw anchor would hand back what
+        # the decayed model feature just took away. Display consensus (cons_fv)
+        # stays raw everywhere.
+        _fv_eff = r.get("fv_effective")
+        _cons_anchor = float(_fv_eff) if _fv_eff is not None else cons_fv
+        cons_war = max(0.0, _pred_ols(ols, _cons_anchor)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         factors = _factors(ridge, feats)                  # explainer: why eFV != consensus
+        _stale_disc = float(r.get("anchor_stale_discount") or 0.0)
+        if _stale_disc > 0:
+            # surfaced like the other live overlays so the card explains WHY the
+            # grade sits under a stale consensus (the Hickey complaint).
+            factors.insert(0, {"label": "Stale list coverage", "dir": "down",
+                               "mag": round(_stale_disc / 2.0, 2)})
         inj = _injury_factor(r)                           # owner-directed live injury penalty
+        agef = _age_factor(r)                              # owner-directed live prospect-age penalty
         sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
@@ -526,7 +569,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if inj < 1.0:
             factors.insert(0, {"label": "Injury penalty", "dir": "down",
                                "mag": round((1 - inj) * 6, 2)})
-        adj_factor = inj * sc
+        if agef < 1.0:
+            factors.insert(0, {"label": "Prospect age penalty", "dir": "down",
+                               "mag": round((1 - agef) * 6, 2)})
+        adj_factor = inj * sc * agef
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus
@@ -555,7 +601,11 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         pcts = dist.get("percentiles") or {}
         def _mm(v):
             return round(float(v), 1) if v is not None else None
-        if is_pit and feats.get("x_era_k"):              # nonzero => has IP exposure (w>0 + era/k on file)
+        # AUDIT FIX 2026-07-14: gate KRP+ on actual exposure, not the product's
+        # truthiness - x_era_k == 0.0 also happens when era_rel is exactly 0.0
+        # (or in the zeroed double-bad quadrant), and those arms DO have IP.
+        if is_pit and (r.get("milb") or {}).get("era_rel") is not None \
+                and float(feats.get("rates_missing", 1.0) or 0.0) == 0.0:
             krp_raw[r["player_key"]] = feats["x_era_k"]
         scored.append({
             "player_key": r["player_key"], "kind": "active", "position": pos,
@@ -668,8 +718,20 @@ def run_backgrade(persist: bool = True) -> dict:
     debuted = json.loads(deb_path.read_text(encoding="utf-8")) if deb_path.exists() else []
     if isinstance(debuted, dict):
         debuted = debuted.get("players") or []
+    # AUDIT FIX 2026-07-14: bust-kind players (inactive.json, ~2,200) used to
+    # keep the RESOLVED pool's quantile scale in xfv.json because this queue
+    # only covered graduates + actives - a quarter of the artifact read on a
+    # different grade scale than the site. Score them here (anchored at their
+    # final snapshot, same as the resolved builder) so the whole site reads
+    # on the live scale.
+    inact_path = DATA_DIR / "inactive.json"
+    inact = json.loads(inact_path.read_text(encoding="utf-8")) if inact_path.exists() else []
+    if isinstance(inact, dict):
+        inact = inact.get("players") or []
     # Debuted first so a recently-graduated player who lingers in timeseries is tagged debuted.
-    queue = [(rec, "debuted") for rec in debuted] + [(rec, "active") for rec in actives]
+    queue = ([(rec, "debuted") for rec in debuted]
+             + [(rec, "active") for rec in actives]
+             + [(rec, "bust") for rec in inact])
     acq, il = _load_sidecars({rec.get("player_key") for rec, _ in queue if rec.get("player_key")})
 
     def _mm(v):
@@ -692,6 +754,11 @@ def run_backgrade(persist: bool = True) -> dict:
         # as-of point: graduate -> last snapshot before debut; active -> latest snapshot
         cand = [pt for pt in pts if (not debut_date or pt["snapshot_date"] < debut_date)] or pts
         pt = cand[-1]
+        # AUDIT FIX 2026-07-14: when EVERY snapshot is post-debut the `or pts`
+        # fallback anchors on a post-debut grade (187 graduates) - tag it so
+        # realized-vs-grade readouts can exclude these from "the grade eFV
+        # carried into the majors".
+        postdebut_anchor = bool(debut_date and pt["snapshot_date"] >= debut_date)
         cons_fv = _f(pt.get("consensus_fv_raw"))
         if cons_fv is None:
             continue
@@ -702,14 +769,35 @@ def run_backgrade(persist: bool = True) -> dict:
         ilf = _injury_features(il.get(pk), None) if kind == "active" else {}
         row = {"consensus_fv_raw": cons_fv, "pick_overall": a_sc.get("pick_overall"),
                "bonus_usd": a_sc.get("bonus_usd"), **ilf}
+        if kind == "active":
+            # AUDIT FIX 2026-07-14: _injury_factor reads the LIVE il fields
+            # (il_on/il_type/il_days_12mo/is_post_tj), which this row never
+            # carried (_injury_features emits the PRE-cutoff training features)
+            # - the backgrade injury penalty was dead code. Populate them the
+            # same way build_live_matrix does.
+            _il_st = rec.get("il_status") or {}
+            _hp = rec.get("health_profile") or {}
+            row.update({"il_on": 1 if _il_st.get("is_on_il") else 0,
+                        "il_type": _il_st.get("type"),
+                        "il_days_12mo": _f(_hp.get("il_days_12mo")) or 0.0,
+                        "il_stints_12mo": _f(_hp.get("il_stints_12mo")) or 0.0,
+                        "is_post_tj": bool(_hp.get("is_post_tj"))})
         row["is_ifa"], row["is_college"] = _cohort_flags(a_sc.get("method"), a_sc.get("year"), rec.get("birth_date"))
         row.update(_prior_features(rec, pt, side))
         row["milb"] = _milb_features(rec.get("mlbam_id"), milb_yr, rec.get("birth_date"), side)
         feats = _vec(row, side)
-        xfv_war = max(-2.0, a + b * _predict(ridge, feats))
-        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else 0.0
+        if row.get("milb"):
+            xfv_war = max(-2.0, a + b * _predict(ridge, feats))
+            factors = _factors(ridge, feats)
+        else:
+            # AUDIT FIX 2026-07-14: honor the docstring's prior-anchored
+            # contract - a no-track-record row scored through the ridge eats
+            # the trained milb_missing untracked-BUST penalty, which is wrong
+            # for a merely data-less graduate. Grade on the consensus prior.
+            xfv_war = cons_war
+            factors = []
         rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
-        factors = _factors(ridge, feats)
         inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
         if inj < 1.0:
             factors.insert(0, {"label": "Injury penalty", "dir": "down", "mag": round((1 - inj) * 6, 2)})
@@ -741,6 +829,7 @@ def run_backgrade(persist: bool = True) -> dict:
         pcts = dist.get("percentiles") or {}
         entry = {
             "player_key": pk, "side": side, "kind": kind, "position": pos,
+            **({"xfv_postdebut_anchor": True} if postdebut_anchor else {}),
             "consensus_fv": round(cons_fv, 1),
             "xfv_grade": round(xfv_grade, 1),
             "xfv_grade_display": round(disp, 1),

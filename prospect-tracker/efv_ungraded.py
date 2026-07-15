@@ -150,7 +150,15 @@ def fit_nofv(side: str):
     Returns (ridge, a, b) where war = max(-2, a + b*ridge(feats))."""
     is_pit = side == "pit"
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    data = _prep([r for r in rows if bool(r.get("is_pitcher")) == is_pit], side)
+    # AUDIT FIX 2026-07-14: this is the PRODUCTION-ONLY model - training it on
+    # rows with NO production block (features imputed to raw 0.0, previously a
+    # MAJORITY of the pool) taught it "all-zero features -> bust" instead of
+    # production->outcome, and the live model never sees such rows (its gate
+    # requires a milb block). Fit on production-bearing rows only; recent
+    # busts stay excluded (their window is still open).
+    data = _prep([r for r in rows
+                  if bool(r.get("is_pitcher")) == is_pit and r.get("milb")
+                  and not (r.get("kind") == "bust" and r.get("bust_recent"))], side)
     ridge = _fit_ridge(data, _keys(side))
     raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
     cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
@@ -319,7 +327,13 @@ def evaluate(persist: bool = True) -> dict:
     for side in ("hit", "pit"):
         is_pit = side == "pit"
         rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-        data = _prep([r for r in rows if bool(r.get("is_pitcher")) == is_pit], side)
+        # AUDIT FIX 2026-07-14: evaluate on the same production-bearing pool
+        # the live model can actually see - the old all-rows pool inflated
+        # the advertised Spearman with no-production rows (42% of test rows)
+        # whose all-zero features the fit had memorized as busts.
+        data = _prep([r for r in rows
+                      if bool(r.get("is_pitcher")) == is_pit and r.get("milb")
+                      and not (r.get("kind") == "bust" and r.get("bust_recent"))], side)
         keys = _keys(side)
         res = {}
         for label, levels, max_age in (("low_minors_age_le21", {"DSL", "CPX", "A"}, 21),
@@ -396,7 +410,11 @@ def build(persist: bool = True) -> dict:
                 # SAMPLE FLOOR: cap a sub-floor cameo at org-filler BEFORE it prices surplus,
                 # so a 1-PA/1.2-IP line can't ride level+age into a prospect grade.
                 _expo = ((statline or {}).get("tbf") if is_pit else (statline or {}).get("pa")) or 0
-                if _expo < (_MIN_EXPO_BF if is_pit else _MIN_EXPO_PA):
+                # AUDIT FIX 2026-07-14: only apply the cameo sub-floor when the
+                # display statline actually resolved - a cold/missing cache
+                # season returns statline=None, and treating that unknown
+                # exposure as 0 crushed real prospects to org-filler grades.
+                if statline is not None and _expo < (_MIN_EXPO_BF if is_pit else _MIN_EXPO_PA):
                     grade = min(grade, _SUBFLOOR_GRADE)
                 surplus = vf.expected_surplus_usd(grade, is_pit, pos, age=age, eta_years=eta)
                 dist = vf.sv_distribution(grade, is_pit, pos, age=age, eta_years=eta) or {}

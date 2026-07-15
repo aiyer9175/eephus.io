@@ -53,6 +53,48 @@ from prospect_path import _spearman   # reuse the house hand-rolled rank corr
 
 log = logging.getLogger(__name__)
 
+# --- E-STALE (2026-07-14): serve-time anchor-staleness decay -----------------
+# ~7% of actively-scored players carry a consensus anchor (fv + tools) frozen at
+# their LAST list appearance while stats/age move on. PREMISE CORRECTED by the
+# audit (measured): ~16% of debuted TRAINING rows also carry >1y-stale anchors
+# (26% of the 2017-2019 cohorts) - but ALL bust rows anchor at their final list
+# point (staleness 0 by construction), so the stale-anchor configuration
+# appears in training ONLY with debuted-survivor labels. The model structurally
+# cannot learn the stale-anchor BUST discount (that is the correct
+# justification for a serve-time decay, not zero train staleness). Ground truth (tools/
+# efv_stale_anchor_lab.py -> data/xfv_stale_anchor_eval.json, held-out-validated
+# 2021-fit / 2022-validate): dropped-from-lists players bust ~91% vs ~55% for
+# same-band re-listed controls and realize ~FV20-23 against FV35-45 anchors;
+# the age gradient is flat, so time-since-listing alone drives the schedule.
+# These constants MUST match the committed eval artifact (test-pinned, the
+# overseas-factors pattern). Applied to the MODEL's fv input + the blend's
+# consensus leg for ACTIVE rows only; the DISPLAYED consensus stays raw.
+STALE_ANCHOR_RAMP_START_MO = 18     # inside normal annual list cadence: no decay
+STALE_ANCHOR_RAMP_FULL_MO = 30      # fully "dropped" per the 18mo-relist study
+STALE_ANCHOR_TERMINAL = {35: 10.0, 40: 10.0, 45: 10.0}   # FV points at full ramp
+
+
+def _stale_anchor_discount(asof_iso, fv_raw, today=None):
+    """FV-point decay of the model anchor for a live row. 0 inside the ramp
+    start, linear to the band terminal at the ramp end. Bands without ground
+    truth (outside 35-45) are never decayed."""
+    if not asof_iso or fv_raw is None:
+        return 0.0
+    try:
+        asof = date.fromisoformat(str(asof_iso)[:10])
+    except ValueError:
+        return 0.0
+    months = ((today or date.today()) - asof).days / 30.44
+    if months <= STALE_ANCHOR_RAMP_START_MO:
+        return 0.0
+    band = int(round(float(fv_raw) / 5.0) * 5)
+    term = STALE_ANCHOR_TERMINAL.get(band)
+    if not term:
+        return 0.0
+    frac = min(1.0, (months - STALE_ANCHOR_RAMP_START_MO)
+               / (STALE_ANCHOR_RAMP_FULL_MO - STALE_ANCHOR_RAMP_START_MO))
+    return term * frac
+
 DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
@@ -97,18 +139,38 @@ def _f(v):
         return None
 
 
-def _rec_is_pitcher(rec) -> bool:
+def _rec_is_pitcher(rec):
+    """True / False / None-unknown. AUDIT FIX 2026-07-14: trusting
+    statline.is_pitcher==False routed ~20 real pitchers (nestor_cortes,
+    zack_britton, michael_pineda, ...) into the HITTER cohort - their
+    statline was a 0-AB batting-side fetch of a pitcher, and their real
+    pitcher WAR labels then trained the hitter model against fully-imputed
+    hitter features. A batting line with no AB/PA is uninformative; a
+    record with no position either side-routes on real evidence or is
+    dropped from the cohorts (None)."""
     sl = rec.get("statline") or {}
     if sl.get("is_pitcher") is True:
         return True
+    informative_batting = False
     if sl.get("is_pitcher") is False:
-        return False
+        if (_f(sl.get("ab")) or 0) > 0 or (_f(sl.get("pa")) or 0) > 0:
+            informative_batting = True
+        # else: 0-AB batting-side fetch - fall through to position evidence
     pos = (rec.get("position") or "").upper()
-    return any(p in pos for p in ("RHP", "LHP", "SP", "RP")) or pos == "P"
+    if any(p in pos for p in ("RHP", "LHP", "SP", "RP")) or pos == "P":
+        return True
+    if informative_batting:
+        return False
+    if not pos:
+        return None          # no usable side evidence
+    return False             # a real fielder position
 
 
 def _side_match(rec, side: str) -> bool:
-    return _rec_is_pitcher(rec) if side == "pit" else not _rec_is_pitcher(rec)
+    isp = _rec_is_pitcher(rec)
+    if isp is None:
+        return False         # unknown side: excluded from BOTH cohorts
+    return isp if side == "pit" else not isp
 
 
 def _asof_point(rec, cutoff: str | None):
@@ -433,6 +495,27 @@ def build_matrix(side: str = "hit"):
         if not seasons:
             acct["debuted_no_war"] += 1
             continue
+        # LABEL-INTEGRITY guards (audit 2026-07-14):
+        # (a) veteran RE-appearance mislabeled as a debut: MLB WAR seasons
+        #     strictly BEFORE the claimed debut year mean the "debut" is a
+        #     journeyman resurfacing (rougned_odor "2023" with 2016+ WAR) -
+        #     the 6yr window would attach a decline-tail label to a
+        #     prospect-era anchor. 41+ provable rows. Drop.
+        if min(seasons) < dy:
+            acct["debuted_veteran_dropped"] = acct.get("debuted_veteran_dropped", 0) + 1
+            continue
+        # (b) postseason-only "debut" (kirilloff/mcclanahan 2020): no
+        #     regular-season line in the debut year burns a 0-WAR window
+        #     season - re-date a Sept/Oct debut to the first WAR season.
+        #     A gap of MORE than one year is a data hole (e.g. the
+        #     career_war sliding-window decay), not a postseason debut: drop.
+        if min(seasons) == dy + 1 and dd[5:7] >= "09":
+            dy = min(seasons)
+            if dy not in DEBUT_YEARS:
+                continue
+        elif min(seasons) > dy:
+            acct["debuted_war_gap_dropped"] = acct.get("debuted_war_gap_dropped", 0) + 1
+            continue
         t_res, t_cens, cflag, w, n_obs = _label_6yr(seasons, dy)
         row = {"player_key": pk, "kind": "debuted", "debut_year": dy,
                "is_pitcher": is_pit, "cutoff": dd,
@@ -442,6 +525,14 @@ def build_matrix(side: str = "hit"):
                "position": rec.get("position")}
         row.update(_prior_features(rec, pt, side))
         row["milb"] = _milb_features(mlbam, dy, rec.get("birth_date"), side)
+        # AUDIT FIX 2026-07-14: distinguish "no pro track record" from "data
+        # cannot exist" - the StatsAPI cache floor is 2014 and the 2011-2015
+        # backfills mostly lack mlbam ids, so 100% of 2011-2014 debut rows
+        # fired milb_missing for availability reasons, diluting the
+        # coefficient whose job is spotting imputed-zero production.
+        # milb_unavailable rows stay NEUTRAL in efv_model._vec.
+        if row["milb"] is None and (dy <= 2015 or not mlbam):
+            row["milb_unavailable"] = True
         acct["debuted_kept"] += 1
         rows.append(row)
 
@@ -473,6 +564,9 @@ def build_matrix(side: str = "hit"):
         row.update(_prior_features(rec, pt, side))
         dec_year = (int(last_date[:4]) + 1) if last_date[:4].isdigit() else CURRENT_SEASON
         row["milb"] = _milb_features(rec.get("mlbam_id"), dec_year, rec.get("birth_date"), side)
+        # same availability distinction as the debuted loop
+        if row["milb"] is None and (dec_year <= 2015 or not rec.get("mlbam_id")):
+            row["milb_unavailable"] = True
         acct["bust_kept"] += 1
         rows.append(row)
 
@@ -544,6 +638,14 @@ def build_live_matrix(side: str = "hit"):
                # a live overlay tilt (no historical depth to train on). 100 = average.
                "statcast_plus": _f(rec.get("statcast_plus"))}
         row.update(_prior_features(rec, pt, side))
+        # E-STALE: decay the MODEL anchor for long-unlisted players (the Nathan
+        # Hickey class: FV frozen at a 2024 list while stats/age are current).
+        # fv_effective feeds _vec's fv feature + the scorer's consensus blend
+        # leg; consensus_fv_raw is untouched so every DISPLAY of consensus
+        # stays the true consensus.
+        _disc = _stale_anchor_discount(row.get("asof_date"), row.get("consensus_fv_raw"))
+        row["anchor_stale_discount"] = round(_disc, 2)
+        row["fv_effective"] = round(row["consensus_fv_raw"] - _disc, 2) if _disc else row["consensus_fv_raw"]
         # LIVE scoring includes the CURRENT season (no leakage -- current production IS the
         # signal). decision_year = CURRENT_SEASON+1 so _milb_features' range starts at the
         # current year. (Training stays strictly pre-outcome.) Without this, a 2026 breakout

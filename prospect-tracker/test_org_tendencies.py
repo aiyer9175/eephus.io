@@ -198,4 +198,8 @@ def test_prospx_and_glossary_wiring():
     gl = json.loads((ROOT / "data" / "glossary.json").read_text(encoding="utf-8"))
     assert any(e["id"] == "org_tendencies" for e in gl["entries"])
     rm = (ROOT / "run_monthly.py").read_text(encoding="utf-8")
-    assert rm.count("org_tendencies import export") >= 2   # monthly + rebuild_only
+    # rebuild_only exports it, and main() chains rebuild_only nightly (the
+    # duplicate monthly 6c export was merged away 2026-07-14 - it was
+    # overwritten by the chained rebuild ~15 min later every monthly night).
+    assert rm.count("org_tendencies import export") >= 1
+    assert "6c/6d SKIP" in rm

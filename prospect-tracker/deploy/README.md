@@ -1,9 +1,68 @@
 # Deploying eephus.io (without GitHub Pages)
 
-Production serves from an nginx box. Two supported ways to make it
-auto-refresh nightly in the 2-4am ET window - pick ONE.
+Production serves from an nginx box. The box is the ONE nightly writer
+(Option 1). The GitHub workflow is CI; its SSH publish is a break-glass
+path that stays off unless you explicitly arm it (Option 2).
 
-## Option 1 - the server builds itself (recommended: durable state)
+## Seeding the canonical database (do this FIRST)
+
+`prospects.db` carries the 2021+ snapshot history: per-source grade
+lists, tool grades, metric/Arkmetric snapshots, IL history. The archive
+backfills that built it were ONE-TIME - a fresh box that re-scrapes
+today's sources gets only current lists and silently publishes wrong FV
+history, consensus, and surplus numbers (production did exactly this
+after 2026-07-11: 6 FV instances for players with 61, surplus off by
+tens of $M). `nightly-build.sh` therefore REFUSES to run without a DB
+unless `EEPHUS_ALLOW_COLD_REBUILD=1` is set.
+
+On the dev machine (the box that has the real history):
+
+```bash
+cd prospect-tracker
+# consistent snapshot even if something has the DB open (also compacts):
+python -c "import sqlite3; sqlite3.connect('prospects.db').execute(\"VACUUM INTO 'prospects.seed.db'\")"
+gzip -9 prospects.seed.db                       # ~4-5x smaller on the wire
+scp prospects.seed.db.gz deploy@SERVER:/opt/eephus/
+
+# Cache seed - SELECTIVE. The full .cache is ~47GB (measured 2026-07-14:
+# win_prob 19GB + statcast_metrics 15GB + game_feeds 6GB + zone_metrics
+# 5GB), all refetchable API caches - do NOT ship those unless bandwidth
+# is free (they only make the first full run hours faster). What IS
+# worth shipping is small and partly irreplaceable:
+#   fg_*           FanGraphs pages  (~80MB - FG blocks Python; CANNOT refetch)
+#   milb_stats/    xFV model stat splits (~30MB)
+#   savant_*, spotrac_*, fa_*  (rate-limited scrape caches, ~700MB)
+tar czf cache-core.tgz .cache/fg_* .cache/milb_stats .cache/savant_* \
+    .cache/spotrac_* .cache/fa_*
+scp cache-core.tgz deploy@SERVER:/opt/eephus/
+# also ship the manual FanGraphs CSV drops (gitignored, hand-curated):
+tar czf fg-imports.tgz data/fangraphs_imports data/fangraphs_articles 2>/dev/null || true
+scp fg-imports.tgz deploy@SERVER:/opt/eephus/
+```
+
+On the server:
+
+```bash
+gunzip /opt/eephus/prospects.seed.db.gz
+mv /opt/eephus/prospects.seed.db /opt/eephus/repo/prospect-tracker/prospects.db
+tar xzf /opt/eephus/cache-core.tgz -C /opt/eephus/repo/prospect-tracker/
+tar xzf /opt/eephus/fg-imports.tgz -C /opt/eephus/repo/prospect-tracker/
+```
+
+## Getting NEW FanGraphs data into production (ongoing)
+
+FanGraphs blocks the pipeline's HTTP client, so FG lists enter via
+hand-dropped CSVs in `data/fangraphs_imports/` (gitignored - they stay
+out of the repo). Now that the SERVER is the publishing box, a CSV
+dropped on the dev machine never reaches production by itself:
+
+```bash
+scp data/fangraphs_imports/NEW_FILE.csv deploy@SERVER:/opt/eephus/repo/prospect-tracker/data/fangraphs_imports/
+# ingestion happens on the next FULL run (step 0b) - force one:
+ssh deploy@SERVER 'EEPHUS_FULL=1 /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh >> /opt/eephus/nightly.log 2>&1'
+```
+
+## Option 1 - the server builds itself (THE production path)
 
 The nginx box pulls the repo and runs the pipeline locally, so
 `prospects.db`, `.cache/`, and `data/pitch_plots/` live on a real disk
@@ -16,7 +75,7 @@ sudo mkdir -p /opt/eephus && sudo chown "$USER" /opt/eephus
 git clone https://github.com/aiyer9175/eephus.io.git /opt/eephus/repo
 python3.12 -m venv /opt/eephus/venv
 /opt/eephus/venv/bin/pip install -r /opt/eephus/repo/prospect-tracker/requirements.txt
-# seed the state once (the full pipeline; takes a while cold):
+# seed prospects.db (and optionally .cache/) as described above, THEN:
 EEPHUS_FULL=1 /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh
 ```
 
@@ -31,14 +90,19 @@ The script fast-forward-pulls, runs `--daily` (full pipeline on the 1st),
 rebuilds pages, gates on pytest, and rsyncs only the browser-served
 files into the webroot. A red test suite leaves the live site untouched.
 
-## Option 2 - GitHub Actions builds, then pushes over SSH
+## Option 2 - CI publish over SSH (BREAK-GLASS ONLY)
 
-The nightly workflow (`.github/workflows/deploy-prospect-tracker.yml`,
-07:30 UTC) already builds and test-gates the full site. Add three
-secrets and it rsyncs the build straight to the server - the box needs
-nothing but rsync + an authorized key.
+The workflow (`.github/workflows/deploy-prospect-tracker.yml`) builds
+and test-gates on every push, but it publishes to the server only when
+BOTH the three SSH secrets exist AND the repo variable
+`EEPHUS_CI_PUBLISH` is set to `true`. Keep the variable unset in normal
+operation: a CI runner's DB is a cold rebuild without the snapshot
+history, so letting it rsync over the box's canonical build regresses
+the live numbers (July 2026 incident). Arm it only when the box is down
+and a knowingly-degraded emergency publish beats an outage - then unset
+it again.
 
-One-time setup:
+Setup (only if you ever want the break-glass path available):
 
 ```bash
 # anywhere local:
@@ -48,23 +112,19 @@ ssh-keygen -t ed25519 -f eephus_deploy -N "" -C "eephus-nightly-deploy"
 
 Repo Settings -> Secrets and variables -> Actions:
 
-| secret            | value                                      |
-|-------------------|--------------------------------------------|
-| `DEPLOY_SSH_KEY`  | contents of the PRIVATE key `eephus_deploy` |
-| `DEPLOY_SSH_HOST` | `deploy@your.server.ip`                     |
-| `DEPLOY_WEBROOT`  | `/var/www/eephus.io`                        |
+| kind     | name                | value                                       |
+|----------|---------------------|---------------------------------------------|
+| secret   | `DEPLOY_SSH_KEY`    | contents of the PRIVATE key `eephus_deploy` |
+| secret   | `DEPLOY_SSH_HOST`   | `deploy@your.server.ip`                     |
+| secret   | `DEPLOY_WEBROOT`    | `/var/www/eephus.io`                        |
+| variable | `EEPHUS_CI_PUBLISH` | `true` ONLY during a box outage             |
 
-The workflow's "Publish to server over SSH" step activates only when
-the secrets exist; without them it logs a skip line. GitHub Pages
-remains an optional mirror - its steps are continue-on-error, so a
-repo with Pages disabled still gets the SSH publish.
+## Why one writer?
 
-## Why not both?
-
-You can: Option 2 for the site plus Option 1's cron WITHOUT the rsync
-(state-only) is pointless complexity. If the server is beefy enough to
-run the pipeline, Option 1 alone is the simplest reliable system; if
-you would rather keep the server dumb, Option 2 alone.
+Two schedules rsyncing the same webroot from different databases is how
+you get a site whose numbers change depending on which writer ran last,
+and `--delete` runs that remove files the other writer shipped. The box
+has the durable state, so the box owns the webroot; CI gates pushes.
 
 ## nginx server block (required pieces)
 
@@ -114,11 +174,51 @@ server {
 
 Reload with `sudo nginx -t && sudo systemctl reload nginx`.
 
+## Cloudflare (the site fronts through it)
+
+Observed live 2026-07-14, worth pinning down in the dashboard:
+
+- **Browser Cache TTL rewrites our headers.** Origin serves `/assets/`
+  as `no-cache`, but Cloudflare rewrote it to `max-age=14400` (its
+  default Browser Cache TTL), so browsers can hold stale assets for 4h
+  after a deploy. Set Caching -> Browser Cache TTL to **"Respect
+  Existing Headers"**.
+- **Do NOT enable "Cache Everything"** (or any cache rule) for `/data/`
+  or `*.html`. The nightly refresh depends on HTML and the un-stamped
+  boot probe revalidating; `?v=`-stamped data URLs are already safe.
+- **Bot challenge**: non-browser user agents get a managed challenge
+  (403). Fine for humans; note it blocks naive uptime checks - point
+  monitors at the site with a browser UA or add a WAF skip rule for
+  your monitor.
+- After a deploy that changes shared assets, "Purge Cache -> purge
+  everything" is the blunt-but-safe reset while the TTL rule above is
+  not yet in place.
+
+## Did tonight's build publish? (verification)
+
+The nightly writes a heartbeat the rsync ships:
+
+```bash
+curl -s -A "Mozilla/5.0" https://eephus.io/data/build_info.json
+# {"generated_at":"2026-07-15T07:41:02Z","git_sha":"abc1234","mode":"daily"}
+```
+
+`generated_at` must move every night. If it stops: `tail -100
+/opt/eephus/nightly.log` on the box - the script logs a loud
+`!!! WEBROOT STALE` line when the previous nights failed to publish,
+and a red test suite (the publish gate) prints its failures right
+above the missing rsync line. Spot-check the modules after any deploy
+change: `/prospx/`, `/mlbstats/`, `/pal/`, `/trademachine/`, `/news/`,
+`/report/` must all be 200.
+
 ## Fresh-box / first-run notes
 
-`nightly-build.sh` is safe on a clean clone: a missing `prospects.db`
-forces the FULL monthly pipeline (slow, one time), `data/pitch_plots/`
-and `data/player_detail/` are (re)created by the exporter, and
+`nightly-build.sh` is safe on a clean clone EXCEPT for the database:
+a missing `prospects.db` aborts with instructions (see "Seeding the
+canonical database" - a cold rebuild cannot recover the 2021+ snapshot
+history; `EEPHUS_ALLOW_COLD_REBUILD=1` overrides if you truly want a
+degraded site). Everything else self-heals: `data/pitch_plots/` and
+`data/player_detail/` are (re)created by the exporter, and
 `build_site.py` writes every page plus robots.txt / sitemap.xml /
 404.html from scratch. Shell scripts are pinned LF via .gitattributes,
 so a checkout from any OS runs under cron. The only state worth

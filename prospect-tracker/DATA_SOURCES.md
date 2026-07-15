@@ -16,7 +16,6 @@ happen inside the called module, so this file alone cannot split them).
 | d0. MLBAM prospect discovery (unranked actives) | - |
 | d1. Build player set from DB | - |
 | d2. Resolve IDs (warm PlayerIndex) | - |
-| d3. Team affiliations | - |
 | d4. Player transactions | - |
 | d5. IL status | - |
 | d5c. Current-season stat lines | - |
@@ -26,7 +25,8 @@ happen inside the called module, so this file alone cannot split them).
 | d7. Auto-debut detection | - |
 | d8. Trade detection | timeseries.json |
 | d9. Rebuild timeseries (no scrape) | mlb_projections.json, xfv.json |
-| d9b. Re-bake MLB Projections off fresh eFV | - |
+| d9b. Re-bake MLB Projections off fresh eFV | mlb_player_detail.json, mlb_projections.json |
+| d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json |
 | d10. FA signing-window refresh | timeseries.json |
 | d11. Rebuild site (build_site) | - |
 
@@ -73,14 +73,14 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4c. reliever lab (rem_plus_multiyear + riv_plus evals) | bullpen_history.json, rem_plus_multiyear_eval.json |
 | 6b4d. bullpen history (bullpen_history.json) | bullpen_history.json |
 | 6b4e. starter lab (sem_plus + sem_plus_multiyear evals) | sem_plus_eval.json |
-| 6b4f. Starter Leaderboards (starter_leaderboards.json) | starter_leaderboards.json |
+| 6b4f. Starter Leaderboards (starter_leaderboards.json) | starter_history.json, starter_leaderboards.json |
 | 6b4g-lab. hitter lab (hem_plus + hem_plus_multiyear evals) | hem_plus_eval.json, xhem_plus_eval.json |
-| 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_leaderboards.json, leverage_leaderboards.json |
+| 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
-| 6c. Org tendencies export (org_tendencies.json) | org_tendencies.json, trade_values.json |
-| 6d. Bayesian trade value export (trade_values.json) | debuts.json, graduates.json, trade_values.json |
-| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json, star_label_view.json, star_odds_eval.json |
+| 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
+| 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
+| post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json, star_label_view.json, star_odds_eval.json, trade_values.json |
 
 ## Rebuild-only hook (`run_monthly.rebuild_only`)
 

@@ -1,1 +1,5 @@
 *.sh text eol=lf
+# Read line-by-line by deploy/nightly-build.sh and the deploy workflow; a
+# CRLF checkout would corrupt every path match, so pin LF like the scripts.
+deploy/publish_paths.txt text eol=lf
+deploy/data_exclude.txt text eol=lf

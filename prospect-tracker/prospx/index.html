@@ -32403,10 +32403,22 @@ function buildProspectCard(snap) {
     return bits.join(" · ");
   })();
   const metaLine = [p.position, (typeof fullOrgName === "function" && p.org) ? fullOrgName(p.org) : p.org, sl.level, p.age != null ? "age " + p.age.toFixed(1) : null, htWt || null].filter(Boolean).join("  ·  ");
+  // Lead rank follows the SAME Rank-by toggle as the board rank cell
+  // (efvRankNumHTML) and this card's FV badge: eFV rank when eFV leads
+  // (getEfvRank = the active list's exact order, so the card can never
+  // disagree with the board - it was showing consensus #2 for the board's
+  // #1 prospect), consensus overall_rank when toggled to consensus.
+  const _cardXr = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
+  const _cardLeadEfv = _cardXr != null && (typeof _gradePrimary !== "function" || _gradePrimary() === "xfv");
+  const _cardLeadRank = _cardLeadEfv ? _cardXr : p.overall_rank;
   // Rankings are a hero TILE now (high priority); this line keeps only the
-  // org-rank context the tile doesn't carry.
+  // context the tile doesn't carry: org rank, plus the non-lead overall
+  // rank when the two boards disagree (mirrors the detail page's
+  // secondary Consensus pill).
   const rankBits = [
     (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null,
+    (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
+      ? `Consensus #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
   const rankLine = rankBits
     ? `<div style="font-family:var(--font-mono);font-size:14px;font-weight:700;color:${P.text2};margin-top:6px;">${escapeHtml(rankBits)}</div>` : "";
@@ -32423,8 +32435,9 @@ function buildProspectCard(snap) {
          <span style="font-family:var(--font-mono);font-size:19px;font-weight:800;font-variant-numeric:tabular-nums;color:${col || P.text};">${val}</span>
        </div>`);
     // Rank leads the rail (Open Beta priority: rankings up top, once -
-    // the eyebrow no longer repeats it).
-    if (p.overall_rank != null) tile("Rank", `#${p.overall_rank}`, accent);
+    // the eyebrow no longer repeats it). Lead-grade-aware (_cardLeadRank):
+    // eFV board rank when eFV leads, consensus rank otherwise.
+    if (_cardLeadRank != null) tile("Rank", `#${_cardLeadRank}`, accent);
     const _heroSv = displaySurplusMM(p);
     if (_heroSv != null && typeof fmtSvMM === "function") {
       tile("Surplus", fmtSvMM(_heroSv), accent);
