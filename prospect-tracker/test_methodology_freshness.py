@@ -116,6 +116,14 @@ MODEL_GLOSSARY = {
     "xfv_cohort_lambda_hier": "internal",
     "xfv_alpha_criterion": "internal",
     "xfv_ops_rel_fringe": "internal",
+    # eFV improvement pass (2026-07-14, docs/efv-2026-07-14/GATES.md): the
+    # anchor-staleness decay + lambda band-raise + absolute-age feature
+    # ledgers. Model-dev artifacts, rendered nowhere; the user-facing
+    # methodology stays under the xfv glossary entry (the stale decay and
+    # age penalty surface per-player as factor chips).
+    "xfv_stale_anchor": "internal",
+    "xfv_lambda_band": "internal",
+    "xfv_age_feature": "internal",
     # Review-queue round (2026-07-02): the eFV bucket-calibration final
     # attempt under a production-relevant gate; rejected, loss ledger,
     # rendered nowhere.

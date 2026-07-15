@@ -223,6 +223,42 @@ def test_editorial_artifact_withheld_until_matured():
             "unvalidated")
 
 
+# ---------------------------------------------------------------------------
+# E-STALE / E-LAMBDA (2026-07-14): shipped constants <-> committed eval artifacts
+# ---------------------------------------------------------------------------
+
+def test_stale_anchor_constants_match_artifact():
+    """The serve-time anchor-staleness schedule must stay in sync with the
+    held-out-validated ledger (tools/efv_stale_anchor_lab.py)."""
+    import efv_dataset as ed
+    art = _load("xfv_stale_anchor_eval.json")
+    assert art["ship"] is True
+    sched = art["schedule"]
+    assert ed.STALE_ANCHOR_RAMP_START_MO == sched["ramp_start_months"]
+    assert ed.STALE_ANCHOR_RAMP_FULL_MO == sched["ramp_full_months"]
+    assert {str(k): float(v) for k, v in ed.STALE_ANCHOR_TERMINAL.items()} == \
+        {k: float(v) for k, v in sched["terminal_discount_by_band"].items()}
+    for b, c in art["clauses"]["c1_error_improves"].items():
+        assert c["pass"], f"held-out error clause failed at band {b}"
+    for b, c in art["clauses"]["c2_no_overshoot"].items():
+        assert c["pass"], f"overshoot clause failed at band {b}"
+    assert art["clauses"]["c3_positive_fit"]["pass"]
+
+
+def test_lambda_band_raise_matches_artifact():
+    """The hit-side rank_calibration band ceiling (raised to the hard clamp,
+    2026-07-14 owner decision) must stay pinned to its ledger; pit stays
+    [0.50, 0.70] (its sweep never cleared the composite gate)."""
+    import efv_model as XM
+    art = _load("xfv_lambda_band_eval.json")
+    assert art["ship"]["hit_band_raise"] is True, \
+        "hit c1-c4 no longer pass - re-run tools/efv_lambda_band_lab.py and re-decide"
+    src = (ROOT / "efv_model.py").read_text(encoding="utf-8")
+    assert '(0.50, _BLEND_LAMBDA_CLAMP[1]) if side == "hit" else (0.50, 0.70)' in src
+    assert XM._BLEND_LAMBDA_CLAMP[1] == 0.90
+    assert art["ship"]["new_hit_band"] == [0.50, XM._BLEND_LAMBDA_CLAMP[1]]
+
+
 def test_wilson_interval_sane():
     from editorial_eval import _wilson
     p, lo, hi = _wilson(8, 10)

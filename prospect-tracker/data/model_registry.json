@@ -1277,6 +1277,48 @@
    "last_checked": "2026-07-14",
    "stale": false,
    "artifact_age_days": 7
+  },
+  {
+   "model_id": "xfv_stale_anchor",
+   "surface": "model-dev artifact (rendered nowhere) - E-STALE serve-time anchor-staleness decay; SHIPPED into xfv live scoring",
+   "predicts": "n/a - gated mechanism (2026-07-14): decays the MODEL fv input + blend consensus leg for active players whose last list appearance is >18mo old (ramp to 30mo, terminal 10 FV pts at bands 35-45); display consensus untouched",
+   "champion": "xfv live scoring WITH the stale-anchor decay (this experiment shipped)",
+   "baseline": "raw stale anchor served as if fresh (the Nathan Hickey class: ~7% of scored actives, anchor >1y old)",
+   "metric": "pre-registered gate (docs/efv-2026-07-14/GATES.md E-STALE): held-out (fit 2021 drops / validate 2022 drops) per-band |grade error| improves AND no overshoot AND positive fitted discounts",
+   "eval_artifact": "data/xfv_stale_anchor_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED (2026-07-14): dropped-from-lists players bust 91.9%/93.8% (2021/2022 cohorts) vs ~55% same-band re-listed controls, realizing ~FV20-23 against FV35-45 anchors (pooled n=313 fit, n=347 validate). Age gradient flat -> schedule keys on time-since-listing alone. Discount capped at 10 FV pts; bands without ground truth (<35, >45) never decay. Constants in efv_dataset pinned to the artifact by test_phase4b_evals.",
+   "last_checked": "2026-07-14",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_lambda_band",
+   "surface": "model-dev artifact (rendered nowhere) - E-LAMBDA blend-band cap-raise; SHIPPED into xfv_hitter rank_calibration",
+   "predicts": "n/a - gated experiment (2026-07-14): hit-side rank_calibration selection band ceiling raised 0.70 -> 0.90 (the hard clamp); pit band unchanged",
+   "champion": "hit blend lambda ~0.90 (composite argmax in [0.50, 0.90])",
+   "baseline": "the prior [0.50, 0.70] band selection (lambda 0.70)",
+   "metric": "M2 clause set on the forward-chained folds: composite >= +0.005, pooled >= -0.002, era no-drop 0.015, bootstrap P(gain>0) >= 0.75; c5 interior-optimum evaluated honestly (fails: optimum censored at pure model)",
+   "eval_artifact": "data/xfv_lambda_band_eval.json",
+   "verdict": "validated",
+   "notes": "SHIPPED (2026-07-14, OWNER-AUTHORIZED - executes the cap-raise the M2 lab queued): composite +0.0253 vs the 0.70 pick, bootstrap P=0.866, both eras and all four fold-years up; swept best 0.975, clamped pick 0.90 - the retained 10% consensus weight is a deliberate robustness guard, no longer claimed optimal. The prior band rationale (within-tier/fringe degrade toward 0.90) is INVERTED on 2026-07 matrices. PIT: no ship (d_comp -0.0003, bootstrap 0.233) - its [0.50, 0.70] band stands.",
+   "last_checked": "2026-07-14",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "xfv_age_feature",
+   "surface": "model-dev artifact (rendered nowhere) - E-AGE absolute-age feature gate; SHIPPED owner-directed into both lean sets",
+   "predicts": "n/a - gated experiment (2026-07-14): milb.age (+/- missing indicator) added to the lean sets",
+   "champion": "lean sets WITH age (age-only, no indicator; owner-directed ship)",
+   "baseline": "the pre-ship lean sets",
+   "metric": "pre-registered gate (docs/efv-2026-07-14/GATES.md E-AGE): pooled >= +0.0046 (2x noise) AND within-tier >= -0.0023 AND t45 >= -0.0023",
+   "eval_artifact": "data/xfv_age_feature_eval.json",
+   "verdict": "provisional",
+   "notes": "OWNER-DIRECTED SHIP (2026-07-14, explicit ask: 26-27yo org arms like Andrew Moore must not rank top-100): mechanically NO variant cleared the pre-registered pooled bar (best hit +0.0043, 0.0003 short), but age-only moves every metric >= -noise on both sides (hit +0.0036/+0.0071/+0.0051, pit +0.0032/+0.0124/-0.0004 vs the pre-ship lean baselines) and the debuted-only OOS pool is structurally blind to the never-debut risk absolute age targets. The age_missing indicator variant stays REJECTED (pit t45 -0.23, sparse-column class). PROVISIONAL pending the next forward-chained eval cycle; revisit if the 2024+ cohorts resolve against it. COMPANION OVERLAY (same day): efv_score._age_factor - owner-directed LIVE-only age tilt on the model WAR term (1.0 thru 25, -0.10/yr, floor 0.75, 'Prospect age penalty' chip), the injury-penalty pattern, because the survivorship-censored training pool caps the learnable coefficient far below the risk the owner wants priced.",
+   "last_checked": "2026-07-14",
+   "stale": false,
+   "artifact_age_days": 0
   }
  ],
  "problems": []

@@ -84,6 +84,15 @@ _FEATURES_HIT = [
     # the accepted sensitivity cost of a fringe-targeted add). Kept LAST to match the tested
     # key order (ridge predictions are feature-order invariant).
     ("ops_rel",        +1),
+    # age: absolute age at the production read (OWNER-DIRECTED ship 2026-07-14,
+    # data/xfv_age_feature_eval.json). Missed the pooled auto-ship bar by 0.0003
+    # (+0.0043) but improves within-tier (+0.0053) AND t45 (+0.0057) with no
+    # metric down -- and the OOS eval pool is debuted-only, structurally blind
+    # to the never-debut risk this feature targets (the 27yo-org-arm class the
+    # owner flagged). No missing indicator: mean-imputed (22.5) rows stay
+    # neutral under standardization; the indicator variant destabilizes
+    # pitchers (sparse-column class).
+    ("age",            -1),
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
     # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]
@@ -97,6 +106,11 @@ _FEATURES_PIT = [
                               # Feature re-test 2026-06-22: genuine OOS lift (debuted-km
                               # 0.274->0.282, blend +0.0074, sane cal); era_rel alone fails.
     ("tool_fb",        +1),   # fastball -- best pitcher tool adder
+    # age: OWNER-DIRECTED ship 2026-07-14 (see the hitter-side note +
+    # data/xfv_age_feature_eval.json): pit age-only pooled +0.0019 (sub-bar)
+    # but wm +0.0114 / t45 +0.0117, no metric down; the debuted-only eval
+    # cannot see the never-debut org-arm risk this targets.
+    ("age",            -1),
     # NOTE: pitcher cohort interactions (ifa_x_era / col_x_k / fb_x_k) were tested + REVERTED
     # 2026-06-24. They lifted OOS rank only marginally (blend 0.269->0.285, "marginally above
     # noise" per the sweep) AND col_x_k = is_college*k_rel is a SPARSE column (nonzero only for
@@ -263,7 +277,16 @@ def rank_calibration(side: str) -> dict:
                 t45 = r
         return rho, (wsum / wn if wn else 0.0), t45
 
-    lo, hi = 0.50, 0.70
+    # E-LAMBDA (2026-07-14, owner-authorized cap-raise; tools/efv_lambda_band_lab.py
+    # -> data/xfv_lambda_band_eval.json): on fresh matrices the HIT composite
+    # (pooled + within-tier + t45) rises MONOTONICALLY past the old 0.70 ceiling
+    # all the way to pure-model - both eras and all four fold-years up - i.e. the
+    # original band rationale ("within-tier/fringe peak ~0.65, degrade toward
+    # 0.90") is inverted on current data. The HIT ceiling now meets the hard
+    # clamp (0.90); the retained 10% consensus weight is a deliberate robustness
+    # guard, no longer claimed to be the empirical optimum. PIT keeps [0.50,
+    # 0.70]: its sweep never cleared the composite gate (best +0.003, sub-bar).
+    lo, hi = (0.50, _BLEND_LAMBDA_CLAMP[1]) if side == "hit" else (0.50, 0.70)
     cand = [round(lo + (hi - lo) * i / 20, 3) for i in range(21)]
     metr = {lam: _metrics(lam) for lam in cand}
     best = max(cand, key=lambda L: sum(metr[L]))   # pooled + within-tier + FV-45 fringe
@@ -351,6 +374,22 @@ def _pos_premium(pos, side: str) -> float:
     return 1.0 if any(x in p for x in _MID_POS) else 0.0
 
 
+def _x_era_k(era_rel: float, k_rel: float) -> float:
+    """Run-prevention x missing-bats interaction: (-era_rel)*k_rel.
+
+    KNOWN ISSUE (audited 2026-07-14, fix DEFERRED with evidence): the product
+    is POSITIVE in the double-bad quadrant (era worse than level AND K-rate
+    below level, neg*neg) - 730 live pitchers carry a spurious 'K-backed run
+    prevention' boost up to +0.48. BOTH candidate fixes were OOS-tested and
+    REVERTED under the no-losses rule: flipping the quadrant negative costs
+    t45 -0.044, zeroing it costs t45 -0.023 (vs the +/-0.0023 noise floor).
+    The debuted-only eval pool credits the spurious boost via survivorship
+    (its never-debut victims are not in the pool), so a fair re-test needs an
+    eval that includes never-debut outcomes. Mitigation shipped instead: the
+    absolute-age feature penalizes the (mostly old) double-bad org-arm class."""
+    return (-era_rel) * k_rel
+
+
 def _vec(r, side: str = "hit") -> dict:
     m = r.get("milb") or {}
     milb_missing = 0.0 if r.get("milb") else 1.0
@@ -359,10 +398,22 @@ def _vec(r, side: str = "hit") -> dict:
     def g(v, d=0.0):
         return float(v) if v is not None else d
     out = {
-        "fv": g(r.get("consensus_fv_raw")),
+        # fv_effective = the E-STALE anchor-staleness-decayed anchor (live rows
+        # only; efv_dataset.build_live_matrix). Training rows have no
+        # fv_effective (staleness 0 at a listing event by construction) and
+        # fall through to the raw consensus.
+        "fv": g(r.get("fv_effective"), g(r.get("consensus_fv_raw"))),
         "fv_trend": g(r.get("fv_trend")),
         "n_sources": g(r.get("n_sources")),
         "age_rel_level": g(m.get("age_rel_level")),
+        # Absolute age at the production read (E-AGE, docs/efv-2026-07-14):
+        # age_rel_level alone under-prices the outcome clock at old-skewing
+        # levels (a 26.6yo AAA bat reads as just "+2 vs level"). Mean-imputed
+        # (22.5) behind the indicator so milb-missing rows stay neutral under
+        # standardization. Emitted unconditionally; only in _FEATURES_* if the
+        # pre-registered gate cleared.
+        "age": g(m.get("age"), 22.5),
+        "age_missing": 0.0 if m.get("age") is not None else 1.0,
         "level_rank": g(m.get("level_rank")),
         "k_rel": g(m.get("k_rel")),
         "bb_rel": g(m.get("bb_rel")),
@@ -386,8 +437,9 @@ def _vec(r, side: str = "hit") -> dict:
             "tool_sl": g(r.get("tool_sl"), 45.0), "tool_ch": g(r.get("tool_ch"), 45.0),
             "tool_cb": g(r.get("tool_cb"), 45.0), "era_rel": g(m.get("era_rel")),
             "peak_k_rel": g(m.get("peak_k_rel")), "peak_bb_rel": g(m.get("peak_bb_rel")),
-            # run-prevention x missing-bats interaction (final-season): (-era_rel)*k_rel.
-            "x_era_k": (-g(m.get("era_rel"))) * g(m.get("k_rel")),
+            # run-prevention x missing-bats interaction (final-season); see the
+            # _x_era_k docstring for the audited-and-deferred quadrant issue.
+            "x_era_k": _x_era_k(g(m.get("era_rel")), g(m.get("k_rel"))),
         })
     else:
         out.update({

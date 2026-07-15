@@ -53,6 +53,44 @@ from prospect_path import _spearman   # reuse the house hand-rolled rank corr
 
 log = logging.getLogger(__name__)
 
+# --- E-STALE (2026-07-14): serve-time anchor-staleness decay -----------------
+# ~7% of actively-scored players carry a consensus anchor (fv + tools) frozen at
+# their LAST list appearance while stats/age move on. Training rows are built AT
+# listing events (staleness 0 by construction), so the model cannot learn the
+# discount - it must be applied at serving. Ground truth (tools/
+# efv_stale_anchor_lab.py -> data/xfv_stale_anchor_eval.json, held-out-validated
+# 2021-fit / 2022-validate): dropped-from-lists players bust ~91% vs ~55% for
+# same-band re-listed controls and realize ~FV20-23 against FV35-45 anchors;
+# the age gradient is flat, so time-since-listing alone drives the schedule.
+# These constants MUST match the committed eval artifact (test-pinned, the
+# overseas-factors pattern). Applied to the MODEL's fv input + the blend's
+# consensus leg for ACTIVE rows only; the DISPLAYED consensus stays raw.
+STALE_ANCHOR_RAMP_START_MO = 18     # inside normal annual list cadence: no decay
+STALE_ANCHOR_RAMP_FULL_MO = 30      # fully "dropped" per the 18mo-relist study
+STALE_ANCHOR_TERMINAL = {35: 10.0, 40: 10.0, 45: 10.0}   # FV points at full ramp
+
+
+def _stale_anchor_discount(asof_iso, fv_raw, today=None):
+    """FV-point decay of the model anchor for a live row. 0 inside the ramp
+    start, linear to the band terminal at the ramp end. Bands without ground
+    truth (outside 35-45) are never decayed."""
+    if not asof_iso or fv_raw is None:
+        return 0.0
+    try:
+        asof = date.fromisoformat(str(asof_iso)[:10])
+    except ValueError:
+        return 0.0
+    months = ((today or date.today()) - asof).days / 30.44
+    if months <= STALE_ANCHOR_RAMP_START_MO:
+        return 0.0
+    band = int(round(float(fv_raw) / 5.0) * 5)
+    term = STALE_ANCHOR_TERMINAL.get(band)
+    if not term:
+        return 0.0
+    frac = min(1.0, (months - STALE_ANCHOR_RAMP_START_MO)
+               / (STALE_ANCHOR_RAMP_FULL_MO - STALE_ANCHOR_RAMP_START_MO))
+    return term * frac
+
 DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
@@ -544,6 +582,14 @@ def build_live_matrix(side: str = "hit"):
                # a live overlay tilt (no historical depth to train on). 100 = average.
                "statcast_plus": _f(rec.get("statcast_plus"))}
         row.update(_prior_features(rec, pt, side))
+        # E-STALE: decay the MODEL anchor for long-unlisted players (the Nathan
+        # Hickey class: FV frozen at a 2024 list while stats/age are current).
+        # fv_effective feeds _vec's fv feature + the scorer's consensus blend
+        # leg; consensus_fv_raw is untouched so every DISPLAY of consensus
+        # stays the true consensus.
+        _disc = _stale_anchor_discount(row.get("asof_date"), row.get("consensus_fv_raw"))
+        row["anchor_stale_discount"] = round(_disc, 2)
+        row["fv_effective"] = round(row["consensus_fv_raw"] - _disc, 2) if _disc else row["consensus_fv_raw"]
         # LIVE scoring includes the CURRENT season (no leakage -- current production IS the
         # signal). decision_year = CURRENT_SEASON+1 so _milb_features' range starts at the
         # current year. (Training stays strictly pre-outcome.) Without this, a 2026 breakout

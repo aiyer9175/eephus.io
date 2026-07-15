@@ -70,6 +70,11 @@ _FACTOR_LABELS = {
     "n_sources": "Source coverage", "pick_overall": "Draft pedigree",
     "bonus_log": "Signing bonus", "n_milb_seasons": "Track-record depth",
     "fv_stddev": "Source disagreement", "il_stints_pre": "Injury history",
+    # ops_rel shipped into the hitter lean set 2026-07-07 without a label, so
+    # the raw feature key leaked into the user-facing factors panel.
+    "ops_rel": "Production (OPS) vs level",
+    "peak_ops_rel": "Peak production (OPS)", "peak_obp_rel": "Peak on-base",
+    "peak_iso_rel": "Peak power (ISO)",
 }
 
 # Features excluded from the per-prospect explainer: model-internal recentering,
@@ -111,6 +116,26 @@ def _age_at(birth_date, year):
         return round((date(int(year), 4, 1) - b).days / 365.25, 1)
     except (ValueError, TypeError):
         return None
+
+
+def _age_factor(r) -> float:
+    """Owner-directed live prospect-age penalty (2026-07-14, the Andrew Moore
+    directive: a 26.9yo AA reliever must not rank top-100). A multiplicative
+    haircut on the eFV WAR projection for OLD active prospects, mirroring the
+    injury-penalty overlay: LIVE board only, never the resolved eval.
+
+    Why an overlay and not a bigger model coefficient: the trained age
+    coefficient is honest but small because the debuted-only training pool is
+    survivorship-censored - the 26yo org arms who never got a shot are not in
+    it, so the data cannot support the penalty the owner (correctly) wants
+    priced. Ramp: 1.0 through age 25, -0.10/yr after, floored at 0.75
+    (age 27.5+). Transparent via the "Prospect age penalty" factor chip."""
+    age = r.get("age_now")
+    if age is None:
+        age = (r.get("milb") or {}).get("age")
+    if age is None or float(age) <= 25.0:
+        return 1.0
+    return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
 
 
 def _injury_factor(r) -> float:
@@ -515,10 +540,25 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             continue
         feats = _vec(r, side)
         xfv_war = max(-2.0, a + b * _predict(ridge, feats))
-        cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else xfv_war
+        # E-STALE: the blend's consensus leg prices the DECAYED anchor
+        # (fv_effective, efv_dataset._stale_anchor_discount) - the ground-truth
+        # study shows a long-unlisted FV45 carries ~FV35 of credible consensus
+        # information, and blending toward the raw anchor would hand back what
+        # the decayed model feature just took away. Display consensus (cons_fv)
+        # stays raw everywhere.
+        _fv_eff = r.get("fv_effective")
+        _cons_anchor = float(_fv_eff) if _fv_eff is not None else cons_fv
+        cons_war = max(0.0, _pred_ols(ols, _cons_anchor)) if ols else xfv_war
         rank_war = (1 - lam) * cons_war + lam * xfv_war   # guarded blend -> headline rank
         factors = _factors(ridge, feats)                  # explainer: why eFV != consensus
+        _stale_disc = float(r.get("anchor_stale_discount") or 0.0)
+        if _stale_disc > 0:
+            # surfaced like the other live overlays so the card explains WHY the
+            # grade sits under a stale consensus (the Hickey complaint).
+            factors.insert(0, {"label": "Stale list coverage", "dir": "down",
+                               "mag": round(_stale_disc / 2.0, 2)})
         inj = _injury_factor(r)                           # owner-directed live injury penalty
+        agef = _age_factor(r)                              # owner-directed live prospect-age penalty
         sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
@@ -526,7 +566,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if inj < 1.0:
             factors.insert(0, {"label": "Injury penalty", "dir": "down",
                                "mag": round((1 - inj) * 6, 2)})
-        adj_factor = inj * sc
+        if agef < 1.0:
+            factors.insert(0, {"label": "Prospect age penalty", "dir": "down",
+                               "mag": round((1 - agef) * 6, 2)})
+        adj_factor = inj * sc * agef
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus

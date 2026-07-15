@@ -326,7 +326,7 @@ if __name__ == "__main__":
         rep = run_live()
         print("LIVE tool eFV:", rep["n_players_with_tool_xfv"], "players")
         for t, d in rep["modeled_tools"].items():
-            print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_production')}")
+            print(f"  {t:9s} n_live={d.get('n_live')} blend_w={d.get('blend_weight_applied')}")
         sys.exit(0)
     rep = run()
     print("tool eFV validation (realized MLB stat):")

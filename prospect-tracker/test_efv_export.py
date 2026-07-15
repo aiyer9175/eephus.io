@@ -136,7 +136,13 @@ def test_committed_artifact_headline_alias_contract():
 #   first run exercising the 13d7728 chain merges + d9b2 player-detail re-bake):
 #   ordinary data movement (draft-week churn + a week of statlines/IL/trades),
 #   no model change. Rowcount 8888.
-_GOLDEN_XFV_SHA256 = "e73cda47956593256bde2df0cb87b7a25b2dabb41c23dc921dbb73b3b72d3b97"
+# Updated 2026-07-14b (eFV improvement pass, docs/efv-2026-07-14/GATES.md): FOUR
+#   deliberate model changes - E-STALE anchor decay (stale-listed actives fall to
+#   their outcome-grounded level, e.g. Hickey 43->35), hit blend-lambda band
+#   raised to the 0.90 clamp, absolute-age feature in both lean sets, and the
+#   owner-directed live prospect-age penalty (Moore #77 -> #114). All ledgered
+#   (xfv_stale_anchor/lambda_band/age_feature evals). Rowcount 8888.
+_GOLDEN_XFV_SHA256 = "d170df6db4895dce9922e258076143a42f4272d07a42a1550065fecce3db0e4b"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire

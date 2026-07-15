@@ -1,0 +1,128 @@
+{
+ "experiment": "xfv_stale_anchor",
+ "generated_at": "2026-07-14",
+ "gates_doc": "docs/efv-2026-07-14/GATES.md (E-STALE)",
+ "cohorts": {
+  "fit_2021_dropped": {
+   "35": {
+    "n": 172,
+    "mean_war": -0.005,
+    "bust_rate": 0.919,
+    "implied_fv": 20.0
+   },
+   "40": {
+    "n": 131,
+    "mean_war": 0.024,
+    "bust_rate": 0.893,
+    "implied_fv": 23.49
+   },
+   "45": {
+    "n": 10,
+    "mean_war": -0.023,
+    "bust_rate": 0.9,
+    "implied_fv": 20.0
+   }
+  },
+  "validate_2022_dropped": {
+   "35": {
+    "n": 197,
+    "mean_war": 0.01,
+    "bust_rate": 0.919,
+    "implied_fv": 22.34
+   },
+   "40": {
+    "n": 130,
+    "mean_war": 0.001,
+    "bust_rate": 0.938,
+    "implied_fv": 20.92
+   },
+   "45": {
+    "n": 20,
+    "mean_war": 0.002,
+    "bust_rate": 0.9,
+    "implied_fv": 21.14
+   }
+  },
+  "relisted_controls": {
+   "35": {
+    "n": 423,
+    "mean_war": 0.285,
+    "bust_rate": 0.626,
+    "implied_fv": 30.6
+   },
+   "40": {
+    "n": 827,
+    "mean_war": 0.332,
+    "bust_rate": 0.579,
+    "implied_fv": 31.36
+   },
+   "45": {
+    "n": 315,
+    "mean_war": 0.914,
+    "bust_rate": 0.419,
+    "implied_fv": 37.92
+   }
+  }
+ },
+ "pooled_fit": {
+  "n": 313,
+  "mean_war": 0.006,
+  "implied_fv": 21.93
+ },
+ "clauses": {
+  "c1_error_improves": {
+   "35": {
+    "raw_err": 12.66,
+    "decayed_err": 2.66,
+    "pass": true
+   },
+   "40": {
+    "raw_err": 19.08,
+    "decayed_err": 9.08,
+    "pass": true
+   },
+   "45": {
+    "raw_err": 23.86,
+    "decayed_err": 13.86,
+    "pass": true
+   }
+  },
+  "c2_no_overshoot": {
+   "35": {
+    "decayed": 25.0,
+    "floor": 20.34,
+    "pass": true
+   },
+   "40": {
+    "decayed": 30.0,
+    "floor": 18.92,
+    "pass": true
+   },
+   "45": {
+    "decayed": 35.0,
+    "floor": 19.14,
+    "pass": true
+   }
+  },
+  "c3_positive_fit": {
+   "discounts": {
+    "35": 10.0,
+    "40": 10.0,
+    "45": 10.0
+   },
+   "pass": true
+  }
+ },
+ "ship": true,
+ "schedule": {
+  "ramp_start_months": 18,
+  "ramp_full_months": 30,
+  "terminal_discount_by_band": {
+   "35": 10.0,
+   "40": 10.0,
+   "45": 10.0
+  },
+  "discount_cap": 10.0,
+  "applies_to": "the MODEL fv input for ACTIVE (non-debuted) players only; display consensus untouched"
+ }
+}
