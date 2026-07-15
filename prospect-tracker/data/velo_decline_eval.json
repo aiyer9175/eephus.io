@@ -1,0 +1,264 @@
+{
+ "experiment": "W3b T1-4 X-R8/X-S8 velo-decline adjustment (rerun lane; leverage loader stubbed - REM+/SEM+ raw are leverage-free)",
+ "generated_at": "2026-07-15",
+ "seed": 20260714,
+ "boot": 2000,
+ "g_grid": [
+  1.5,
+  2.5,
+  3.5
+ ],
+ "candidate": "index + g*min(0, velo_Y - velo_{Y-1}); missing velo => zero adjust",
+ "velo_convention": "max(ff,si,fc) avg speed per pal_export.load_velo, cached .cache/velo_arsenal_YYYY.json",
+ "selection": "g chosen on predictor-year < 2022 folds (forward-chained)",
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "-RA9 in year Y+1 (raw, pooled)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "-RA9 in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "X-R8_rem": {
+  "n_pairs": 878,
+  "reproduction": {
+   "expected": {
+    "rho": 0.2374,
+    "n": 878
+   },
+   "got": {
+    "rho": 0.2374,
+    "n": 878
+   },
+   "ok": true
+  },
+  "velo_coverage": {
+   "n_pairs": 878,
+   "n_with_dv": 625,
+   "n_dv_negative": 319,
+   "n_dv_le_-1.0": 99,
+   "n_zero_adjust_rows": 253,
+   "n_with_age": 878
+  },
+  "g_grid": {
+   "1.5": {
+    "rho_pre2022_selection": 0.1899,
+    "rho_2022plus_eval": 0.2687,
+    "rho_all_pairs": 0.2403
+   },
+   "2.5": {
+    "rho_pre2022_selection": 0.1914,
+    "rho_2022plus_eval": 0.2698,
+    "rho_all_pairs": 0.2421
+   },
+   "3.5": {
+    "rho_pre2022_selection": 0.1935,
+    "rho_2022plus_eval": 0.271,
+    "rho_all_pairs": 0.2437
+   }
+  },
+  "g_selected_on_pre2022_folds": 3.5,
+  "incumbent_rho": {
+   "pre2022_selection": 0.1866,
+   "eval_2022plus": 0.2661,
+   "all_pairs": 0.2374
+  },
+  "candidate_rho_all_pairs": 0.2437,
+  "gate": {
+   "bar": "paired bootstrap lo95(rho gap cand-inc) >= 0 pooled over ALL pairs (zero-adjust rows included), convention v1, seed 20260714",
+   "gap_ci_v1_all_pairs": {
+    "mean": 0.0063,
+    "lo95": -0.0026,
+    "hi95": 0.0165
+   },
+   "pass": false,
+   "gap_ci_v2_all_pairs": {
+    "mean": 0.0036,
+    "lo95": -0.0058,
+    "hi95": 0.0129
+   },
+   "pass_under_v2": false,
+   "rho_v2": {
+    "candidate": 0.2412,
+    "incumbent": 0.2374
+   },
+   "cluster": {
+    "n_pairs": 878,
+    "n_players": 454,
+    "max_pairs_per_player": 5,
+    "mean_pairs_per_player": 1.93,
+    "n_strata_first_pred_season": 5
+   }
+  },
+  "eval_2022plus_holdout_v1": {
+   "n": 519,
+   "rho_incumbent": 0.2661,
+   "rho_candidate": 0.271,
+   "gap_ci_v1": {
+    "mean": 0.0046,
+    "lo95": -0.0076,
+    "hi95": 0.0174
+   }
+  },
+  "diag_velo_loss_subset": {
+   "n": 99,
+   "rho_incumbent": 0.3276,
+   "rho_candidate": 0.3357,
+   "gap_ci_v1": {
+    "mean": 0.0082,
+    "lo95": -0.0305,
+    "hi95": 0.0496
+   },
+   "mean_next_ra9_loss_subset": 4.8111,
+   "mean_next_ra9_all": 4.6512
+  },
+  "diag_age_counterfactual": {
+   "n_fit_pre2022": 240,
+   "fit": {
+    "intercept": 0.7042,
+    "slope_dv_per_age_year": -0.0244
+   },
+   "rho_age_counterfactual": 0.2374,
+   "gap_ci_age_minus_incumbent_v1": {
+    "mean": 0.0,
+    "lo95": -0.0013,
+    "hi95": 0.0013
+   },
+   "gap_ci_velo_minus_age_v1": {
+    "mean": 0.0062,
+    "lo95": -0.0026,
+    "hi95": 0.0162
+   }
+  }
+ },
+ "X-S8_sem": {
+  "n_pairs": 592,
+  "reproduction": {
+   "expected": {
+    "rho": 0.4167,
+    "n": 592
+   },
+   "got": {
+    "rho": 0.4167,
+    "n": 592
+   },
+   "ok": true
+  },
+  "velo_coverage": {
+   "n_pairs": 592,
+   "n_with_dv": 488,
+   "n_dv_negative": 263,
+   "n_dv_le_-1.0": 85,
+   "n_zero_adjust_rows": 104,
+   "n_with_age": 592
+  },
+  "g_grid": {
+   "1.5": {
+    "rho_pre2022_selection": 0.447,
+    "rho_2022plus_eval": 0.3941,
+    "rho_all_pairs": 0.4135
+   },
+   "2.5": {
+    "rho_pre2022_selection": 0.4473,
+    "rho_2022plus_eval": 0.3891,
+    "rho_all_pairs": 0.4107
+   },
+   "3.5": {
+    "rho_pre2022_selection": 0.4433,
+    "rho_2022plus_eval": 0.382,
+    "rho_all_pairs": 0.4064
+   }
+  },
+  "g_selected_on_pre2022_folds": 2.5,
+  "incumbent_rho": {
+   "pre2022_selection": 0.4477,
+   "eval_2022plus": 0.3993,
+   "all_pairs": 0.4167
+  },
+  "candidate_rho_all_pairs": 0.4107,
+  "gate": {
+   "bar": "paired bootstrap lo95(rho gap cand-inc) >= 0 pooled over ALL pairs (zero-adjust rows included), convention v1, seed 20260714",
+   "gap_ci_v1_all_pairs": {
+    "mean": -0.0059,
+    "lo95": -0.0137,
+    "hi95": 0.0018
+   },
+   "pass": false,
+   "gap_ci_v2_all_pairs": {
+    "mean": -0.0079,
+    "lo95": -0.0159,
+    "hi95": 0.0
+   },
+   "pass_under_v2": false,
+   "rho_v2": {
+    "candidate": 0.412,
+    "incumbent": 0.42
+   },
+   "cluster": {
+    "n_pairs": 592,
+    "n_players": 273,
+    "max_pairs_per_player": 5,
+    "mean_pairs_per_player": 2.17,
+    "n_strata_first_pred_season": 5
+   }
+  },
+  "eval_2022plus_holdout_v1": {
+   "n": 356,
+   "rho_incumbent": 0.3993,
+   "rho_candidate": 0.3891,
+   "gap_ci_v1": {
+    "mean": -0.0101,
+    "lo95": -0.0206,
+    "hi95": 0.0
+   }
+  },
+  "diag_velo_loss_subset": {
+   "n": 85,
+   "rho_incumbent": 0.3899,
+   "rho_candidate": 0.3899,
+   "gap_ci_v1": {
+    "mean": 0.0006,
+    "lo95": -0.0158,
+    "hi95": 0.02
+   },
+   "mean_next_ra9_loss_subset": 4.5457,
+   "mean_next_ra9_all": 4.5593
+  },
+  "diag_age_counterfactual": {
+   "n_fit_pre2022": 196,
+   "fit": {
+    "intercept": -0.4677,
+    "slope_dv_per_age_year": 0.012
+   },
+   "rho_age_counterfactual": 0.4165,
+   "gap_ci_age_minus_incumbent_v1": {
+    "mean": -0.0001,
+    "lo95": -0.0012,
+    "hi95": 0.001
+   },
+   "gap_ci_velo_minus_age_v1": {
+    "mean": -0.0058,
+    "lo95": -0.0138,
+    "hi95": 0.0018
+   }
+  }
+ },
+ "runtime_seconds": 25.5,
+ "program_ledger": {
+  "verdict": "rejected",
+  "note": "LOSS LEDGER. REM+ directionally positive (+0.0063) but never separable from zero (lo95 -0.0026); SEM+ directionally NEGATIVE (-0.0059, v2 borderline significantly worse). Loss-subset decline is real (next RA9 4.81 vs 4.65) and velo-not-age (counterfactual inert) - just insufficient. Velo decline stays a display peripheral."
+ }
+}

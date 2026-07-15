@@ -189,6 +189,14 @@ MODEL_GLOSSARY = {
     "k_strength_sweep": "internal",
     "phem_marcel_lite": "internal",
     "pal_gamelog_lanes": "internal",
+    # Wave 3b loss ledgers (2026-07-15), all rendered nowhere: velo decline
+    # adjustment, FB-HR + CSW shrink priors (K-prior lane closed permanently),
+    # park-conditioned shrink targets, HEM+ age hinge (dominated by the FA
+    # engine - aging lives in the projection layer).
+    "velo_decline": "internal",
+    "fbhr_csw_priors": "internal",
+    "park_shrink_targets": "internal",
+    "hem_age_layer": "internal",
 }
 
 

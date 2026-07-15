@@ -1443,7 +1443,10 @@
    "metric": "tuning margin >= +0.003 then holdout lo95 >= 0 (seed 20260715)",
    "eval_artifact": "data/k_strength_sweep_eval.json",
    "verdict": "deprecated",
-   "notes": "LOSS LEDGER. SEM+ tuning cleared decisively (K_HR axis monotone, winner m=3 x K_HR=2000 +0.0223) but holdout failed (lo95 -0.0147, v2 -0.0169); REM+ winner actively reverts OOS (-0.0064). Honest revisit path is 2026+ holdout seasons."
+   "notes": "LOSS LEDGER. SEM+ tuning cleared decisively (K_HR axis monotone, winner m=3 x K_HR=2000 +0.0223) but holdout failed (lo95 -0.0147, v2 -0.0169); REM+ winner actively reverts OOS (-0.0064). Honest revisit path is 2026+ holdout seasons.",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "phem_marcel_lite",
@@ -1454,7 +1457,10 @@
    "metric": "paired bootstrap lo95 >= 0 vs best incumbent (seed 20260715); winner 0.5189, lo95 +0.0010, pass_under_v2 true",
    "eval_artifact": "data/phem_marcel_lite_eval.json",
    "verdict": "provisional",
-   "notes": "Hitters gate PASS, won by arm 4 (the repo's validated FA-engine projection, computed point-in-time offline) - the SHIP is a pWOBA re-anchor column, which is a FIFTH hitter column: OWNER DISPLAY DECISION QUEUED before any export wiring. Pitchers FAIL (lo95 -0.0133, n=363), loss leg recorded. Lab tools/phem_marcel_lite_lab.py."
+   "notes": "Hitters gate PASS, won by arm 4 (the repo's validated FA-engine projection, computed point-in-time offline) - the SHIP is a pWOBA re-anchor column, which is a FIFTH hitter column: OWNER DISPLAY DECISION QUEUED before any export wiring. Pitchers FAIL (lo95 -0.0133, n=363), loss leg recorded. Lab tools/phem_marcel_lite_lab.py.",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0
   },
   {
    "model_id": "pal_gamelog_lanes",
@@ -1465,7 +1471,54 @@
    "metric": "incumbent per-direction gate as sensitivity (seed 20260714) + Lane B pre-registered gate (seed 20260715)",
    "eval_artifact": "data/pal_gamelog_eval.json",
    "verdict": "provisional",
-   "notes": "pal_gamelogs.py ships as infrastructure (sportId=1 game-log walk, .cache/pal_gamelogs, 733 games cached). Lane B stamina lane FAILED (sign-check -0.0013; candidate code stays in pal_conversion as gated candidate-only, nothing live calls it). RP->SP stays sign-wrong on the expanded set (-0.1736) - the downgrade stands. Lane C census (89 strict attempts, ~85% audit precision) feeds nothing."
+   "notes": "pal_gamelogs.py ships as infrastructure (sportId=1 game-log walk, .cache/pal_gamelogs, 733 games cached). Lane B stamina lane FAILED (sign-check -0.0013; candidate code stays in pal_conversion as gated candidate-only, nothing live calls it). RP->SP stays sign-wrong on the expanded set (-0.1736) - the downgrade stands. Lane C census (89 strict attempts, ~85% audit precision) feeds nothing.",
+   "last_checked": "2026-07-15",
+   "stale": false,
+   "artifact_age_days": 0
+  },
+  {
+   "model_id": "velo_decline",
+   "surface": "model-dev artifact (rendered nowhere) - T1-4 X-R8/X-S8 YoY FB-velo decline adjustment",
+   "predicts": "n/a - gated experiment (2026-07-15), wave 3b",
+   "champion": "incumbents stand",
+   "baseline": "pre-registered candidate arms",
+   "metric": "paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20260714/20260715, 2000 reps)",
+   "eval_artifact": "data/velo_decline_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER. REM+ directionally positive (+0.0063) but never separable from zero (lo95 -0.0026); SEM+ directionally NEGATIVE (-0.0059, v2 borderline significantly worse). Loss-subset decline is real (next RA9 4.81 vs 4.65) and velo-not-age (counterfactual inert) - just insufficient. Velo decline stays a display peripheral. Lab: tools/velo_decline_lab.py."
+  },
+  {
+   "model_id": "fbhr_csw_priors",
+   "surface": "model-dev artifact (rendered nowhere) - T1-9 X-R5 FB-conditioned HR prior + T1-11 X-R1b multi-year CSW xK prior",
+   "predicts": "n/a - gated experiment (2026-07-15), wave 3b",
+   "champion": "incumbents stand",
+   "baseline": "pre-registered candidate arms",
+   "metric": "paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20260714/20260715, 2000 reps)",
+   "eval_artifact": "data/fbhr_csw_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER x2. X-R5 xFIP-lite: gap mean NEGATIVE (-0.0025, lo95 -0.0228) - conditioning the HR target on shrunk FB rate does not transfer to the REM+ architecture; the named rem_plus.py deferral is CLOSED. X-R1b: +0.0055 mean but lo95 -0.0045, and the mechanism read is decisive (rho(xK_multi, K% Y+1)=0.417 vs raw K% 0.537) - the K-PRIOR LANE IS CLOSED PERMANENTLY per the pre-registered consequence (SwStr X-R1 + CSW X-R1b both dead; no third whiff-proxy retry). Infrastructure shipped: tools/win_prob_walker.py (per-pitcher-season fb/csw/tto table off .cache/win_prob) + tools/offline_leverage.py (leverage rebuilt offline from cached payloads - kills the live-fetch trap). Lab: tools/fbhr_csw_labs.py."
+  },
+  {
+   "model_id": "park_shrink_targets",
+   "surface": "model-dev artifact (rendered nowhere) - T1-5 X-R7/X-S7/X-H-park park-conditioned HR shrink targets",
+   "predicts": "n/a - gated experiment (2026-07-15), wave 3b",
+   "champion": "incumbents stand",
+   "baseline": "pre-registered candidate arms",
+   "metric": "paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20260714/20260715, 2000 reps)",
+   "eval_artifact": "data/park_shrink_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER. 0/15 cells positive (3 models x 3 s x 2 conventions; best +0.0001). Extreme-park SEM+ cell significantly NEGATIVE (-0.0236) - the prior hurts most where it should help most. Mechanism: targets are raw next-season RA9/wOBA and players mostly KEEP their park, so the park-inflected component of the incumbent is itself predictive; park-adjusting the prior removes real signal. Park-shrink-target thread CLOSED against raw targets."
+  },
+  {
+   "model_id": "hem_age_layer",
+   "surface": "model-dev artifact (rendered nowhere) - T1-8 X-H3-AGE forward-fit age hinge on HEM+ (hitters primary)",
+   "predicts": "n/a - gated experiment (2026-07-15), wave 3b",
+   "champion": "incumbents stand",
+   "baseline": "pre-registered candidate arms",
+   "metric": "paired bootstrap lo95 >= 0 vs incumbent, v1 primary + pass_under_v2 (seeds 20260714/20260715, 2000 reps)",
+   "eval_artifact": "data/hem_age_layer_eval.json",
+   "verdict": "deprecated",
+   "notes": "LOSS LEDGER by DOMINANCE. The age signal is real (hinge ~-0.72 HEM+ pts/yr over 30; beats HEM+ everywhere, v2 lo95 +0.0022; stacks on xwOBA) but v1 clause 2 fails vs pooled raw wOBA AND the FA-engine projection DOMINATES the candidate by ~7 rho points (0.5284 vs 0.4585) - convergent with phem_marcel_lite: aging belongs to the projection layer (fa_projection), not the descriptive + indexes. Pitchers 6/6 grid FAIL. Rejected fourth entry for docs/aging-curves.md."
   }
  ],
  "problems": []
