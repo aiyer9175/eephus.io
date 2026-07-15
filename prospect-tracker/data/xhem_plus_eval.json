@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-15",
  "seasons": [
   2016,
   2017,
@@ -17,7 +17,29 @@
  "conventions": {
   "predictor_year": "Savant Y (PA>=200)",
   "target": "actual wOBA in Y+1 (PA>=200)",
-  "excluded": "2020"
+  "excluded": "2020",
+  "n_partial_outcome_pairs_dropped": 0
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "actual wOBA in Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "actual wOBA in Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
  },
  "n_forward_pairs": 1871,
  "forward_spearman_vs_wOBA_next": {
@@ -29,11 +51,48 @@
   "lo95": 0.0173,
   "hi95": 0.0699
  },
+ "results_by_convention": {
+  "v1": {
+   "rho_primary": 0.4543,
+   "rho_baselines": {
+    "vs_actual_woba": 0.4108
+   },
+   "gap_ci": {
+    "vs_actual_woba": {
+     "mean": 0.0432,
+     "lo95": 0.0173,
+     "hi95": 0.0699
+    }
+   }
+  },
+  "v2": {
+   "rho_primary": 0.4683,
+   "rho_baselines": {
+    "vs_actual_woba": 0.4125
+   },
+   "gap_ci": {
+    "vs_actual_woba": {
+     "mean": 0.0558,
+     "lo95": 0.0295,
+     "hi95": 0.0817
+    }
+   },
+   "cluster": {
+    "n_pairs": 1871,
+    "n_players": 649,
+    "max_pairs_per_player": 7,
+    "mean_pairs_per_player": 2.88,
+    "n_strata_first_pred_season": 7
+   }
+  }
+ },
  "gate": {
   "bar": "xwOBA forward-beats actual wOBA (gap lo95 > 0)",
-  "pass": true
+  "convention": "v1",
+  "pass": true,
+  "pass_under_v2": true
  },
- "runtime_seconds": 6.1,
+ "runtime_seconds": 11.2,
  "verdict": {
   "status": "validated",
   "summary": "Forward-chained OOS over 7 year-pairs (1871 pairs): Savant xwOBA predicts next-year wOBA at rho 0.4543 vs actual wOBA 0.4108; bootstrap gap CI {'mean': 0.0432, 'lo95': 0.0173, 'hi95': 0.0699}. Shipped VALIDATED: xwOBA is the more forward-stable talent signal (it strips BABIP/sequencing luck), so xHEM+ (the HEM+ ratio scale on xwOBA) is a genuine deserved-offense companion. MLB-only + min-BBE gated, so it is a companion column, not population-complete."

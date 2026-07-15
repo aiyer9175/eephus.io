@@ -1,0 +1,96 @@
+{
+ "generated_at": "2026-07-15",
+ "experiment": "T1-1 X-H4 multi-year decayed xHEM+ (forward column)",
+ "seed": 20260705,
+ "boot_reps": 2000,
+ "conventions": {
+  "predictor": "decay-and-PA-weighted mean of per-season Savant est_woba over y-2..y, weight_i = d_i * PA_i; most-recent season gets the largest d",
+  "predictor_source": ".cache/savant_mlb/expected_batter_YYYY.csv (offline)",
+  "target": "next-season (Y+1) actual wOBA computed from cached fa_statsapi_hitting_YYYY.json via hitter_export + hem_plus._raw_woba linear weights",
+  "eligibility": "Savant PA >= 200 in predictor year y AND StatsAPI PA >= 200 in outcome year y+1 AND >= 2-season Savant history in the y-2..y window",
+  "outcome_years": [
+   2018,
+   2019,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "excluded": "2020 (no Savant file; COVID); 2015 not cached",
+  "incumbent_b_actual_woba_source": "Savant per-season actual 'woba' column, flat PA-weighted over the same window",
+  "bootstrap": "player-paired: resample players, each carries all his pairs"
+ },
+ "n_pairs": 1495,
+ "n_players": 575,
+ "pairs_per_outcome_year": {
+  "2018": 262,
+  "2019": 245,
+  "2022": 233,
+  "2023": 237,
+  "2024": 265,
+  "2025": 253
+ },
+ "arms": {
+  "primary_d543": {
+   "rho": 0.4876,
+   "role": "PRIMARY"
+  },
+  "ablation_flat_d111": {
+   "rho": 0.4818,
+   "role": "ablation"
+  },
+  "ablation_front_d631": {
+   "rho": 0.4905,
+   "role": "ablation"
+  },
+  "inc_1yr_xwoba": {
+   "rho": 0.4673,
+   "role": "incumbent"
+  },
+  "inc_flat3_actual_woba": {
+   "rho": 0.4766,
+   "role": "incumbent"
+  }
+ },
+ "stronger_incumbent": "inc_flat3_actual_woba",
+ "rho_gaps_point": {
+  "primary_minus_inc_1yr_xwoba": 0.0204,
+  "primary_minus_inc_flat3_actual": 0.011
+ },
+ "gate_bootstrap_ci_primary_minus_stronger_incumbent": {
+  "mean": 0.012,
+  "lo95": -0.0148,
+  "hi95": 0.0386
+ },
+ "reporting_only_bootstrap_cis": {
+  "primary_d543_minus_inc_1yr_xwoba": {
+   "mean": 0.0197,
+   "lo95": 0.0,
+   "hi95": 0.0399
+  },
+  "ablation_flat_d111_minus_inc_flat3_actual_woba": {
+   "mean": 0.0061,
+   "lo95": -0.021,
+   "hi95": 0.033
+  },
+  "ablation_front_d631_minus_inc_flat3_actual_woba": {
+   "mean": 0.0151,
+   "lo95": -0.0131,
+   "hi95": 0.0431
+  }
+ },
+ "gate": {
+  "bar": "rho(primary d=5/4/3) > BOTH recomputed incumbents AND seeded 2000-rep player-paired bootstrap gap vs the STRONGER incumbent lo95 >= 0",
+  "beats_both_incumbents": true,
+  "gap_lo95_ok": false,
+  "pass": false
+ },
+ "runtime_seconds": 23.0,
+ "verdict": "rejected",
+ "loss_ledger": {
+  "gate": "rho(primary d=5/4/3) > both recomputed incumbents AND player-paired bootstrap lo95 >= 0 vs stronger incumbent (seed 20260705, 2000 reps)",
+  "outcome": "leg 1 PASS (+0.0203 vs 1yr xwOBA, +0.0110 vs flat-3yr actual), leg 2 FAIL (lo95 -0.0148)",
+  "reading": "multi-year pooling does the heavy lifting; xwOBA-vs-actual and decay-shape increments over a flat 3yr actual-wOBA blend are noise-level at n=1495",
+  "do_not_retry_without": "a materially larger pair set (2026+2027 outcomes) or a pre-registered variance-reduction design; the point gap is real but unresolvable at this n"
+ }
+}
