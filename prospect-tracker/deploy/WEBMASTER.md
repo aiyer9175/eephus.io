@@ -29,6 +29,15 @@ The owner produces the seeds on the dev machine (see deploy/README.md
 rate-limited scrape caches) and `fg-imports.tgz` (hand-curated FanGraphs
 CSVs the pipeline ingests). Install all three:
 
+> **Seed vintage 2026-07-16:** the seed set cut on 2026-07-16 already
+> contains the 2026 draft ingestion AND that day's database repairs (the
+> 936-row draft-board leak purge + the 43 debut-date corrections), so you
+> do NOT need to run `tools/delete_draft_board_leak.py` or
+> `tools/repair_debut_snapshots_2026.py` after installing it. Those tools
+> only matter for a database older than the seed. A SHA256SUMS.txt ships
+> alongside the three files - verify with `sha256sum -c SHA256SUMS.txt`
+> before installing.
+
 ```bash
 gunzip /opt/eephus/prospects.seed.db.gz
 mv /opt/eephus/prospects.seed.db /opt/eephus/repo/prospect-tracker/prospects.db
