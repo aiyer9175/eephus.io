@@ -604,6 +604,10 @@ def export_grpo_scores(
             model = train_grpo_policy(training_set, model_path)
 
     if model is None:
+        # Exiting here leaves the previous artifact on disk untouched -
+        # stale scores keep feeding trade-value FV priors, so be loud.
+        _log.warning("grpo: no model (empty training set or unreadable pickle); "
+                     "%s NOT refreshed", out_path.name)
         return {"error": "model training failed"}
 
     # Score all active prospects and build group membership index

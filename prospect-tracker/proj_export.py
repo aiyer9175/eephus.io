@@ -193,7 +193,7 @@ def _veteran_rows(corpus: dict, names: dict[int, str],
     _collision_rows: dict[str, list[dict]] = {}
     for mlbam in _vet_ids:
         sides = {}
-        for side, expo_key, floor in (("hit", "pa", MIN_PA), ("pit", "bf", 0)):
+        for side in ("hit", "pit"):
             seasons = by_player[side].get(mlbam) or {}
             hist = [seasons[t] for t in (FIRST_SEASON - 1, FIRST_SEASON - 2,
                                          FIRST_SEASON - 3) if t in seasons]

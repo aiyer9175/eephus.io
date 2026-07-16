@@ -14019,7 +14019,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #
     #   timeseries.json   — meta + active players + spotlights + org
     #                       summaries + level/trajectory norms (boot path)
-    #   graduates.json    — graduate-player payloads
+    #   debuts.json       — graduate-player payloads (the "debuts" slice)
     #   inactive.json     — inactive-player payloads
     #   rosters_by_org.json — per-org affiliate rosters (farm-detail only)
     #

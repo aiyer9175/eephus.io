@@ -778,7 +778,7 @@ class MarketModel:
         rows = [s for s in train if s.get("_war_path") and s.get("years")
                 and s.get("guarantee_usd")]
         self.train_pool = rows
-        self._comps_my_cache: dict[int, float] = {}
+        self._comps_my_cache: dict[tuple, tuple[float, float, float, float]] = {}
         self.coef_years = _ols(
             [_features_years(s, (_cs := self._comps_stats(s))[0], _cs[3]) for s in rows],
             [math.log(float(s["years"])) for s in rows])
@@ -814,8 +814,13 @@ class MarketModel:
         features both stages stack. The p75-years anchor is the long-deal signal
         the median washes out: a star's nearest comps include the rare 10yr
         prints, and the median collapses them (the years-stage decade-deal miss)."""
-        key = id(s)
-        if key not in self._comps_my_cache:
+        # Memo key: stable (player, winter) identity, NOT id(s) - serve rows
+        # are transient per-member dicts, so a recycled dict address could
+        # hand one free agent another player's comps anchor. Identity-less
+        # rows recompute uncached (correct, just unmemoized).
+        ident = s.get("player_key") or s.get("player_name")
+        key = (ident, s.get("class_year")) if ident is not None else None
+        if key is None or key not in self._comps_my_cache:
             cs = comps_for(s, self.train_pool)
             if cs:
                 yrs = sorted(c["years"] for c in cs)
@@ -835,7 +840,10 @@ class MarketModel:
                     for c in cs)
             else:
                 my, mg, ma, my75 = 1.0, 1_000_000.0, 1_000_000.0, 1.0
-            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)), ma, my75)
+            out = (my, math.log(max(mg, 1.0)), ma, my75)
+            if key is None:
+                return out
+            self._comps_my_cache[key] = out
         return self._comps_my_cache[key]
 
     def _comps_my(self, s: dict) -> float:

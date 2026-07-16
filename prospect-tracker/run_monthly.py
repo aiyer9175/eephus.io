@@ -602,8 +602,13 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         _ts_payload = {}
     try:
         from grpo_prospect import export_grpo_scores
-        _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
-            if (out_dir / "graduates.json").exists() else []
+        # storage writes the graduate sidecar as debuts.json (renamed from
+        # graduates.json); fall back like the grpo CLI so retrain never
+        # silently trains on an empty set and freezes grpo_scores.json.
+        _grads_path = next((p for p in (out_dir / "graduates.json",
+                                        out_dir / "debuts.json") if p.exists()), None)
+        _grads_for_grpo = json.loads(_grads_path.read_text(encoding="utf-8")) \
+            if _grads_path else []
         _grpo_result    = export_grpo_scores(
             _ts_payload.get("players") or [], _grads_for_grpo,
             out_path=out_dir / "grpo_scores.json",

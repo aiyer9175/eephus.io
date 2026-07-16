@@ -1696,16 +1696,24 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     today = date.today()
 
     def _anniv_prox(d: "date") -> int | None:
-        """Days between `d`'s anniversary this year and today; None if the
-        date is this year/later or doesn't map onto the current year."""
+        """Days between `d`'s nearest anniversary and today; None if the
+        date is this year/later or doesn't map onto a nearby year (Feb 29).
+        Checks the adjacent years too so a late-Dec/early-Jan anniversary
+        survives the year boundary; the event date itself never counts
+        (a days-old December debut is not history on Jan 1)."""
         if d.year >= today.year:
             return None
-        try:
-            anniv = date(today.year, d.month, d.day)
-        except ValueError:
-            return None
-        prox = abs((anniv - today).days)
-        return prox if prox <= 4 else None
+        prox = None
+        for yr in (today.year - 1, today.year, today.year + 1):
+            try:
+                anniv = date(yr, d.month, d.day)
+            except ValueError:
+                continue
+            if anniv == d:
+                continue
+            p = abs((anniv - today).days)
+            prox = p if prox is None else min(prox, p)
+        return prox if prox is not None and prox <= 4 else None
 
     # ---- Debuts on this day ----
     cands = []  # (date_proximity, -prominence, debut_date, grad)

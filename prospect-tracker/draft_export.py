@@ -858,10 +858,12 @@ def _attach_overperformance(classes: list[dict]) -> None:
     a board record fall back to their own consensus_fv (draft-time grade)."""
     val: dict[str, dict] = {}   # player_key -> {"fv":..., "war":...}
 
-    def _ingest(path: str) -> None:
+    def _ingest(path: Path) -> None:
         try:
-            d = json.loads(Path(path).read_text(encoding="utf-8"))
+            d = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            log.warning("draft overperformance: could not read %s - "
+                        "current_fv falls back to draft-time grades", path.name)
             return
         rows = d.get("players") if isinstance(d, dict) else d
         for p in (rows or []):
@@ -871,8 +873,12 @@ def _attach_overperformance(classes: list[dict]) -> None:
             war = (p.get("career_war") or {}).get("career_war")
             val[k] = {"fv": p.get("fv_close"), "war": war}
 
-    _ingest("data/timeseries.json")
-    _ingest("data/debuts.json")
+    # Anchor to the module dir - the pipeline runs under varying cwds
+    # (the overseas_export lesson). Reading the PREVIOUS cycle's export
+    # here is intentional (the draft phase runs before the re-export).
+    _data_dir = Path(__file__).resolve().parent / "data"
+    _ingest(_data_dir / "timeseries.json")
+    _ingest(_data_dir / "debuts.json")
 
     pooled: list[tuple[int, float]] = []   # (drafted_pick, current_fv)
     for cls in classes:
