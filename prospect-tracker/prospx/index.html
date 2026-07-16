@@ -10340,9 +10340,14 @@ function wireThemeToggle() {
 // HISTORICAL per-source tool grades moved to data/player_detail/{key}.json
 // (lazy-merged on card open; see _ensurePlayerDetail). Sidecar JSONs
 // fetched on demand:
-//   - debuts.json          when the user opens the Graduates tab
+//   - debuts_lite.json     when the user opens the Graduates tab (list
+//                          fields only; see ensureDebutsLite)
+//   - debuts.json          full graduate records - graduate card open,
+//                          Time Machine, debuted chart (ensureDebutsFull)
 //   - inactive.json        when the user opens the Inactive view
 //   - rosters_by_org.json  when the user opens any farm-detail page
+//   - scout_reports_<i>.json  the player's hash chunk, on first card open
+//                          (ensureScoutReports)
 //
 // The boot file advertises sidecars via `_slices`. We default-fill the
 // arrays with [] so first-paint render code that walks DATA.debuts
@@ -10462,6 +10467,138 @@ function loadSlice(name) {
     })
     .finally(() => { delete _sliceInFlight[name]; });
   return _sliceInFlight[name];
+}
+
+// Versioned sidecar URL for a bare data-dir filename (same ?v= cache-bust +
+// force-cache pattern as loadSlice).
+function _sliceUrl(file) {
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const v = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
+}
+
+// v46 payload-slim — the debuts slice ships two ways:
+//   debuts_lite.json  list-render fields only (Graduates tab rows, context
+//                     rail cards, farm graduates, trade-audit vet lookup).
+//   debuts.json       the full monolith - fetched only where the whole
+//                     record matters: a graduate's card, the Time Machine,
+//                     and the debuted chart mode.
+// DATA.debuts holds whichever is loaded; DATA._debutsFull flips true once
+// the full rows are merged. The full merge happens IN PLACE (Object.assign
+// onto the lite row) so references held by row caches stay valid.
+let _debutsLiteInFlight = null;
+let _debutsFullInFlight = null;
+function ensureDebutsLite() {
+  if (!DATA || !DATA._slices) return Promise.resolve();
+  if (DATA._debutsFull || (DATA.debuts || []).length) return Promise.resolve();
+  // Older export without the lite sidecar: fall back to the monolith.
+  if (!DATA._slices.debuts_lite) return ensureDebutsFull();
+  if (_debutsLiteInFlight) return _debutsLiteInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts_lite);
+  _debutsLiteInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(rows => {
+      // The full slice may have landed while this was in flight - never
+      // downgrade full rows back to lite ones.
+      if (!DATA._debutsFull && !((DATA.debuts || []).length) && Array.isArray(rows)) {
+        DATA.debuts = rows;
+      }
+    })
+    .catch(err => { console.warn("debuts_lite fetch failed:", err); })
+    .finally(() => { _debutsLiteInFlight = null; });
+  return _debutsLiteInFlight;
+}
+function ensureDebutsFull() {
+  if (!DATA) return Promise.resolve();
+  if (DATA._debutsFull) return Promise.resolve();
+  if (!DATA._slices || !DATA._slices.debuts) {
+    // Legacy monolithic export - debuts are already inline on DATA.
+    DATA._debutsFull = true;
+    return Promise.resolve();
+  }
+  if (_debutsFullInFlight) return _debutsFullInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts);
+  _debutsFullInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(full => {
+      if (!Array.isArray(full)) return;
+      const byKey = new Map((DATA.debuts || [])
+        .filter(g => g && g.player_key)
+        .map(g => [g.player_key, g]));
+      DATA.debuts = full.map(f => {
+        const lite = f && byKey.get(f.player_key);
+        if (!lite) return f;
+        Object.assign(lite, f);
+        delete lite._lite;
+        // Re-merge player_detail against the full points history (the
+        // lite row may have merged the shard against its stub points).
+        delete lite.__detailMerged;
+        return lite;
+      });
+      DATA._debutsFull = true;
+      DATA._tmDates = null;   // grads add earlier snapshot dates
+      DATA._tmByKey = null;   // rebuild the key -> player map with full rows
+    })
+    .catch(err => { console.warn("debuts slice fetch failed:", err); })
+    .finally(() => { _debutsFullInFlight = null; });
+  return _debutsFullInFlight;
+}
+
+// v46 payload-slim — scout reports ship in a fixed number of hash chunks
+// (advertised via boot._slices_chunked.scout_reports) so opening one card
+// pulls ~1/8th of the old 28MB monolith. Chunk index = sum of the player
+// key's char codes mod the chunk count - mirrored in storage.py; keep the
+// two in lockstep. Loaded chunks merge into the same DATA.scout_reports
+// map every reader already uses. Falls back to the single-file slice for
+// exports predating the contract.
+const _scoutChunksLoaded = {};
+const _scoutChunkInFlight = {};
+function _scoutChunkContract() {
+  const c = DATA && DATA._slices_chunked && DATA._slices_chunked.scout_reports;
+  return (c && c.prefix && c.chunks > 0) ? c : null;
+}
+function _scoutChunkOf(playerKey, nChunks) {
+  const s = String(playerKey || "");
+  let sum = 0;
+  for (let i = 0; i < s.length; i++) sum = (sum + s.charCodeAt(i)) % nChunks;
+  return sum;
+}
+// True when the data needed for this player's reports is already on DATA
+// (the player's chunk, the whole monolith, or a legacy inline payload).
+function scoutReportsReadyFor(playerKey) {
+  const c = _scoutChunkContract();
+  if (c) return !!_scoutChunksLoaded[_scoutChunkOf(playerKey, c.chunks)];
+  return !!DATA.scout_reports || !(DATA._slices && DATA._slices.scout_reports);
+}
+function ensureScoutReports(playerKey) {
+  const c = _scoutChunkContract();
+  if (!c) {
+    // Older export: single-file sidecar (or legacy inline payload).
+    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
+      return loadSlice("scout_reports");
+    }
+    return Promise.resolve();
+  }
+  const idx = _scoutChunkOf(playerKey, c.chunks);
+  if (_scoutChunksLoaded[idx]) return Promise.resolve();
+  if (_scoutChunkInFlight[idx]) return _scoutChunkInFlight[idx];
+  const { url, opts } = _sliceUrl(`${c.prefix}${idx}.json`);
+  _scoutChunkInFlight[idx] = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(payload => {
+      if (!DATA.scout_reports) DATA.scout_reports = {};
+      Object.assign(DATA.scout_reports, payload || {});
+      _scoutChunksLoaded[idx] = true;
+    })
+    .catch(err => {
+      console.warn("scout reports chunk fetch failed:", idx, err);
+      // Mark loaded anyway so the render/fetch cycle can't loop on a 404.
+      _scoutChunksLoaded[idx] = true;
+    })
+    .finally(() => { delete _scoutChunkInFlight[idx]; });
+  return _scoutChunkInFlight[idx];
 }
 
 let _playerNewsLoaded = false;
@@ -16585,17 +16722,19 @@ function renderActiveContextRail(railId = "active-context-rail") {
   if (!rail) return;
   const players = DATA.players || [];
 
-  // The "Recent debuts" + IL-returnee cards read DATA.debuts, but that slice
-  // is the heaviest sidecar (~9MB wire / 67MB parsed). This rail used to
-  // force-fetch it on the first paint of the DEFAULT view, which competed
-  // with the initial render AND silently defeated the v35 Save-Data/2g
-  // prefetch gate (the call had no _bgPrefetchOK guard). It no longer
-  // fetches here: for prefetch-OK users the idle background warm (boot
-  // IIFE) pulls the slice and schedules a coalesced re-render so the cards
-  // fill in moments after boot; everyone else gets a "Load recent debuts"
-  // link in the card below that pulls the slice on demand. The Graduates
-  // tab / debuted chart mode / Time Machine fetch paths are unchanged.
-  const _debutsPending = !!(DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length));
+  // The "Recent debuts" + IL-returnee cards read DATA.debuts. This rail used
+  // to force-fetch the full 67MB monolith on the first paint of the DEFAULT
+  // view, which competed with the initial render AND silently defeated the
+  // v35 Save-Data/2g prefetch gate (the call had no _bgPrefetchOK guard). It
+  // no longer fetches here: for prefetch-OK users the idle background warm
+  // (boot IIFE) pulls the LITE slice (v46 - list fields only) and schedules
+  // a coalesced re-render so the cards fill in moments after boot; everyone
+  // else gets a "Load recent debuts" link in the card below that pulls the
+  // lite slice on demand. Graduate cards / debuted chart mode / Time Machine
+  // fetch the full slice separately via ensureDebutsFull.
+  const _debutsPending = !!(DATA._slices
+    && (DATA._slices.debuts_lite || DATA._slices.debuts)
+    && !((DATA.debuts || []).length));
 
   // Shared row factory - consistent geometry across all cards.
   // rightHTML sits flush right (delta / FV / tool grade / days-back chip).
@@ -16849,7 +16988,7 @@ function renderActiveContextRail(railId = "active-context-rail") {
     ${grads.length
       ? gradRows
       : _debutsPending
-        ? `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;"><a class="ctx-card-link" data-load-debuts title="Fetches the debuts data (heavy; also fills the IL-returnees card)">Load recent debuts</a></div>`
+        ? `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;"><a class="ctx-card-link" data-load-debuts title="Fetches the debuts list (also fills the IL-returnees card)">Load recent debuts</a></div>`
         : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
   </div>`;
 
@@ -16878,14 +17017,14 @@ function renderActiveContextRail(railId = "active-context-rail") {
     });
   }
   // On-demand debuts loader (see the note at the top of this function).
-  // loadSlice de-dupes in-flight fetches, so clicking while the idle warm
-  // is already downloading just joins that request.
+  // ensureDebutsLite de-dupes in-flight fetches, so clicking while the
+  // idle warm is already downloading just joins that request.
   const loadDebutsLink = rail.querySelector("[data-load-debuts]");
   if (loadDebutsLink) {
     loadDebutsLink.addEventListener("click", (e) => {
       e.stopPropagation();
       loadDebutsLink.textContent = "Loading…";
-      loadSlice("debuts").then(() => {
+      ensureDebutsLite().then(() => {
         if (document.getElementById(railId)) renderActiveContextRail(railId);
       }).catch(() => {});
     });
@@ -18025,7 +18164,9 @@ function _ensureChartData(mode) {
           .then(j => { if (j) DATA[key] = j; })
           .catch(() => {});
   let pr;
-  if (mode === "debuted")      pr = loadSlice("debuts");
+  // Debuted chart mode plots each graduate's FULL points history, so it
+  // needs the monolith, not the lite list slice.
+  if (mode === "debuted")      pr = ensureDebutsFull();
   else if (mode === "draft")   pr = fetchInto("draft_timeseries.json", "draft");
   else if (mode === "ifa")     pr = fetchInto("ifa_timeseries.json", "ifa");
   else if (mode === "overseas")pr = fetchInto("overseas_timeseries.json", "overseas");
@@ -20225,11 +20366,13 @@ function renderTimeMachine() {
   // Pull in graduated players (debuts slice) so historical boards include
   // since-graduated prospects + the diff's "Graduated to MLB" bucket. Load in
   // the background - the board renders active-only first, then re-renders.
-  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._tmGradLoading) {
+  // v46 - the board reconstruction needs FULL points histories, so this
+  // pulls the monolith even when the lite slice is already on DATA.debuts
+  // (lite rows carry a single-point stub). ensureDebutsFull resets the
+  // _tmDates/_tmByKey caches itself once the full rows merge in.
+  if (DATA._slices && DATA._slices.debuts && !DATA._debutsFull && !DATA._tmGradLoading) {
     DATA._tmGradLoading = true;
-    loadSlice("debuts").then(() => {
-      DATA._tmDates = null;    // grads can add earlier snapshot dates
-      DATA._tmByKey = null;    // rebuild the key→player map to include grads
+    ensureDebutsFull().then(() => {
       if (state.section === "timemachine" && !state.view) renderTimeMachine();
     }).catch(() => {});
   }
@@ -28640,6 +28783,7 @@ function _positionGamesSummary(playerKey) {
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
 let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail fallback
+let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable" - grpo_public.json sidecar
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -28950,7 +29094,18 @@ function renderTradeBoard() {
     wrap.innerHTML = '<div class="spinner-wrap"><span class="spinner"></span></div>';
     fetch(base + "trade_values.json" + vp, { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => { _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters(); })
+      .then(d => {
+        _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
+        // Group-panel data rides the slim public sidecar (the full
+        // grpo_scores.json is deploy-excluded); never fetch the full file.
+        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
+          .then(r => (r.ok ? r.json() : null))
+          .then(g => {
+            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+            else { _tbGrpoState = "unavailable"; }
+          })
+          .catch(() => { _tbGrpoState = "unavailable"; });
+      })
       .catch(e => {
         wrap.innerHTML = `<div class="empty-state">Trade Board data not found (<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code> to generate it.<br><small>${e}</small></div>`;
       });
@@ -29093,7 +29248,16 @@ function _tbShowGroup(playerKey) {
   if (!panel || !title || !body) return;
 
   const pScore = (_tbData.all_scores || {})[playerKey];
-  if (!pScore) { panel.style.display = "none"; return; }
+  if (!pScore) {
+    title.innerHTML = "GRPO group";
+    body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
+      _tbGrpoState === "pending"
+        ? "Profile-group details are still loading. Try again in a moment."
+        : "Profile-group details are not available here right now. The breakout score on the chip still stands."
+    }</div>`;
+    panel.style.display = "block";
+    return;
+  }
 
   const members = pScore.active_group_members || [];
   const grp     = pScore.group || "?";
@@ -30825,6 +30989,12 @@ function _getFgExtras(p) {
 // Handedness, FG-first then TJStats (bat_side/throw_side) then any source.
 // bats: L/R/S, throws: L/R. Recovers handedness for prospects FG omits.
 function _getHandedness(p) {
+  // Baked top-level fields win when present: overseas payloads always carry
+  // them, and the v46 debuts_lite rows bake them (server-side mirror of the
+  // scan below) since lite rows ship without the points history.
+  if (p && (p.bats || p.throws)) {
+    return { bats: p.bats || null, throws: p.throws || null };
+  }
   const PRIMARY = ["fangraphs", "tjstats"];
   return _scanExtras(p, s => s === "fangraphs", _handFromExtras)
       || _scanExtras(p, s => s === "tjstats", _handFromExtras)
@@ -41432,6 +41602,11 @@ function _mergePlayerDetail(p, det) {
       if (!ps[src]) continue;
       if (moved.tools)  ps[src].tools  = moved.tools;
       if (moved.extras) ps[src].extras = moved.extras;
+      // v46 payload-slim - historical per-source scalars (interval_label /
+      // snapshot_date / status / fv_adjusted) ride the shard too; restore
+      // them for the per-source history table. Legacy shards without the
+      // key skip harmlessly.
+      if (moved.scalars) Object.assign(ps[src], moved.scalars);
     }
   }
   p.__detailMerged = true;
@@ -45201,14 +45376,17 @@ function renderPlayerDetail(key) {
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
     const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
-    // Gate on whether the SLICE is loaded, not on this player's entry: a prospect
-    // with no scouting report (e.g. a fresh draftee) has no entry even after the
-    // slice loads, so keying the warm-load on `sidecar === null` re-fired
-    // loadSlice().then(render) forever -> infinite render loop -> site freeze.
-    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
-      // First touch of any prospect detail page kicks off the sidecar
-      // warm. After load, re-render so the section populates.
-      loadSlice("scout_reports").then(() => {
+    // Gate on whether this player's DATA is loaded (their hash chunk under
+    // the v46 chunked contract, or the whole sidecar on older exports), not
+    // on the entry itself: a prospect with no scouting report (e.g. a fresh
+    // draftee) has no entry even after the load, so keying the warm-load on
+    // `sidecar === null` re-fired the fetch->render cycle forever ->
+    // infinite render loop -> site freeze. ensureScoutReports marks a chunk
+    // loaded even on fetch failure for the same reason.
+    if (!scoutReportsReadyFor(p.player_key)) {
+      // First touch of a prospect detail page pulls that player's chunk.
+      // After load, re-render so the section populates.
+      ensureScoutReports(p.player_key).then(() => {
         if (state.view && state.view.type === "player"
             && state.view.key === p.player_key) {
           render();
@@ -49263,10 +49441,18 @@ function render() {
     if (target) target.innerHTML = `<div class="state-message">${msg}</div>`;
   };
 
-  if (needsGrad && DATA._slices && DATA._slices.debuts && !DATA.debuts.length) {
-    showLoading("Loading debuted players…");
-    loadSlice("debuts").then(render);
-    return;
+  // v46 payload-slim - list surfaces (Graduates tab, Injured) run on the
+  // LITE slice; a graduate's CARD needs the full record (points history,
+  // statcast splits, per-source history), so the player view pulls the
+  // monolith before rendering - same blocking behavior as before, now
+  // scoped to the one surface that needs it.
+  if (needsGrad && DATA._slices && (DATA._slices.debuts_lite || DATA._slices.debuts)) {
+    const _wantFull = active === "player";
+    if (_wantFull ? !DATA._debutsFull : !DATA.debuts.length) {
+      showLoading("Loading debuted players…");
+      (_wantFull ? ensureDebutsFull() : ensureDebutsLite()).then(render);
+      return;
+    }
   }
   if (needsInactive && DATA._slices && DATA._slices.inactive
       && !DATA.inactive.length) {
@@ -52159,13 +52345,17 @@ function populateOrgFilter() {
     // before the heavy warm starts; setTimeout is the fallback.
     const _warm = () => {
       // The context-rail "Recent debuts" / IL-returnee cards read the debuts
-      // slice but no longer force-fetch it at render time (it is the ~9MB
-      // sidecar) - schedule a coalesced re-render when the warm lands so the
-      // visible section's rail fills in.
-      loadSlice("debuts").then(() => scheduleRender()).catch(() => {});
+      // slice but no longer force-fetch it at render time - schedule a
+      // coalesced re-render when the warm lands so the visible section's
+      // rail fills in. v46 payload-slim: the warm pulls the LITE slice only
+      // (list fields, a fraction of the old 9MB-gzip monolith); the full
+      // file loads on demand via ensureDebutsFull (graduate card open, Time
+      // Machine, debuted chart). scout_reports left the warm list for the
+      // same reason - it is card-only and now loads per hash chunk on the
+      // first card open (ensureScoutReports).
+      ensureDebutsLite().then(() => scheduleRender()).catch(() => {});
       loadSlice("rosters_by_org");
       loadSlice("inactive");
-      loadSlice("scout_reports");
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(_warm, { timeout: 2500 });
