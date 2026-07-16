@@ -50,18 +50,34 @@
       refs: [{ at: 100, label: "avg" }], aria: "REM+ distribution" });
     var pts = qual.filter(function (r) { return r.gmli != null; }).map(function (r) {
       return { x: r.rem_plus, y: r.gmli, label: r.name + "  REM+ " + r.rem_plus + "  gmLI " + r.gmli,
-               color: r.rem_plus >= 115 ? null : "#6a6f7a" };
+               color: r.rem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "REM+ (skill) →", yLabel: "↑ gmLI (leverage)",
       xRef: 100, yRef: 1, aria: "skill vs leverage" });
-    if (!hist && !sc) return "";
+    // Earned vs deserved: REM+ (FIP-based results) against xREM+ (xwOBA-
+    // allowed). Below the diagonal = results ahead of contact quality
+    // (regression candidates); above = deserving better. Mirrors the starter
+    // SEM+ x xSEM+ chart; the read matters MORE for relievers, whose small
+    // samples make FIP-vs-contact-quality gaps larger.
+    var xpts = qual.filter(function (r) { return r.xrem_plus != null; }).map(function (r) {
+      return { x: r.rem_plus, y: r.xrem_plus,
+               label: r.name + "  REM+ " + r.rem_plus + "  xREM+ " + r.xrem_plus,
+               color: r.rem_plus >= 115 ? null : "var(--text-tertiary)" };
+    });
+    var xsc = xpts.length >= 12
+      ? chart("scatter", xpts, { height: 250, xLabel: "REM+ (results) →",
+          yLabel: "↑ xREM+ (deserved)", xRef: 100, yRef: 100, diag: true, aria: "earned vs deserved" })
+      : "";
+    if (!hist && !sc && !xsc) return "";
     var body = '<div class="mlbstats-viz">'
       + '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">' + gloss("REM+", "rem_plus")
       + ' distribution <span class="proj-dim">(qualified relievers; cyan = elite)</span></div>' + hist + "</div>"
       + (sc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Skill vs leverage'
         + ' <span class="proj-dim">(top-right = elite arms in high leverage)</span></div>' + sc + "</div>" : "")
+      + (xsc ? '<div class="mlbstats-viz-cell"><div class="mlbstats-viz-h">Earned vs deserved: REM+ × ' + gloss("xREM+", "xrem_plus")
+        + ' <span class="proj-dim">(below the diagonal = results ahead of contact quality)</span></div>' + xsc + "</div>" : "")
       + "</div>";
-    return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, skill vs leverage)</span>', body);
+    return collapsible("relievers-viz", 'Charts <span class="proj-dim">(REM+ distribution, skill vs leverage, earned vs deserved)</span>', body);
   }
 
   // REM+/Bullpen+ index coloring (100 = average).
@@ -145,7 +161,7 @@
   // Skill core first, then the Impact/leverage columns (kept distinct from the
   // REM+ talent number by design).
   var REL_COLS = [
-    { key: "name", label: "Reliever", term: null, sortable: true, kind: "name" },
+    { key: "name", label: "Reliever", term: null, sortable: true, kind: "name", asc: true },
     { key: "rem_plus", label: "REM+", term: "rem_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "rem_plus_3yr", label: "REM+ 3yr", term: "rem_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.rem_plus_3yr; },
@@ -172,7 +188,7 @@
     { key: "ip", label: "IP", fmt: f1, num: true },
     { key: "g", label: "G", fmt: fInt, num: true },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
-    { key: "bb_pct", label: "BB%", fmt: fPct, num: true },
+    { key: "bb_pct", label: "BB%", fmt: fPct, num: true, asc: true },
     { key: "k_bb_pct", label: "K-BB%", fmt: fPct, num: true },
     { key: "fip", label: "FIP", fmt: f2, num: true, asc: true },
     { key: "swstr_pct", label: "SwStr%", fmt: fPct, num: true },
@@ -202,7 +218,7 @@
   var REL_HISTORY_COLS = REL_COLS.filter(function (c) { return REL_HISTORY_KEYS[c.key]; });
 
   var TEAM_COLS = [
-    { key: "team", label: "Team", sortable: true, kind: "team" },
+    { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "bullpen_plus", label: "Bullpen+", term: "bullpen_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "leverage_deploy_plus", label: "Lev Deploy+", term: "bullpen_plus", fmt: remCell, num: true },
     { key: "n_above_avg", label: "Above-avg arms", fmt: fInt, num: true,
@@ -239,14 +255,35 @@
     return row[col.key];
   }
 
+  // Sortable-header wiring shared by every leaderboard: click AND Enter/Space
+  // both activate the sort, and keyboard focus is restored to the same header
+  // after the re-render replaces the table (the root element persists).
+  function bindSortKeys(th, root, activate) {
+    th.addEventListener("click", activate);
+    th.addEventListener("keydown", function (e) {
+      if (e.key !== "Enter" && e.key !== " ") return;
+      e.preventDefault();
+      var key = th.getAttribute("data-col");
+      activate();
+      var again = root.querySelector('.mlbstats-table th[data-col="' + key + '"]');
+      if (again) again.focus();
+    });
+  }
+
   // ---- render: shared table -------------------------------------------------
   function renderTable(rows, cols, sort, onSort) {
     var head = "<thead><tr>";
     cols.forEach(function (c) {
+      var sortable = !!c.num || c.kind === "name" || c.kind === "team";
       var sorted = (c.key === sort.key) ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
       var title = c.title ? ' title="' + esc(c.title) + '"' : "";
-      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + title + ' data-col="' + c.key + '">' + lbl + "</th>";
+      // keyboard-operable sort headers (the trademachine _tbTh pattern):
+      // tabbable, announced as sorted, activated by Enter/Space via bindSortKeys
+      var a11y = sortable
+        ? ' tabindex="0" role="button" aria-sort="' + ((c.key === sort.key) ? (sort.asc ? "ascending" : "descending") : "none") + '"'
+        : "";
+      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + title + a11y + ' data-col="' + c.key + '">' + lbl + "</th>";
     });
     head += "</tr></thead>";
 
@@ -294,11 +331,25 @@
     cols.forEach(function (c) { if (c.key === sort.key) col = c; });
     if (!col) return rows.slice();
     var out = rows.slice();
+    var text = (col.kind === "name" || col.kind === "team");
     out.sort(function (a, b) {
       var va = getVal(col, a), vb = getVal(col, b);
-      va = (va == null || isNaN(va)) ? -Infinity : Number(va);
-      vb = (vb == null || isNaN(vb)) ? -Infinity : Number(vb);
-      return sort.asc ? va - vb : vb - va;
+      if (text) {
+        // text columns (player / team): locale order, missing values last
+        var sa = (va == null) ? "" : String(va), sb = (vb == null) ? "" : String(vb);
+        if (!sa && !sb) return 0;
+        if (!sa) return 1;
+        if (!sb) return -1;
+        return sort.asc ? sa.localeCompare(sb) : sb.localeCompare(sa);
+      }
+      // numeric columns: missing values always sort LAST regardless of
+      // direction (the trademachine _tbSortRows convention)
+      var na = (va == null || isNaN(va)) ? null : Number(va);
+      var nb = (vb == null || isNaN(vb)) ? null : Number(vb);
+      if (na == null && nb == null) return 0;
+      if (na == null) return 1;
+      if (nb == null) return -1;
+      return sort.asc ? na - nb : nb - na;
     });
     return out;
   }
@@ -563,7 +614,7 @@
     root.querySelectorAll("[data-mlbview]").forEach(function (b) {
       b.addEventListener("click", function () {
         view = b.getAttribute("data-mlbview");
-        try { history.replaceState(null, "", "#view=" + view); } catch (e) { /* hash optional */ }
+        writeHash();
         render();
       });
     });
@@ -585,7 +636,7 @@
       render();
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function () {
+      bindSortKeys(th, root, function () {
         var key = th.getAttribute("data-col");
         var cols = (view === "teams") ? TEAM_COLS
           : (view === "relievers" && relSeason !== "current") ? REL_HISTORY_COLS : REL_COLS;
@@ -618,17 +669,32 @@
   function readHash() {
     var h = location.hash || "";
     // Top-level section deep-link (#section=bullpen|starters|hitters) + the
-    // per-section view (#view= bullpen, #sview= starters).
-    var s = /section=(bullpen|starters|hitters|leverage)/.exec(h);
+    // per-section view (#view= bullpen, #sview= starters). Each key is anchored
+    // to a separator so e.g. "sview=teams" can never match the "view=" regex.
+    var s = /(?:^#|[#&])section=(bullpen|starters|hitters|leverage)\b/.exec(h);
     if (s) section = s[1];
-    var m = /view=(relievers|teams|depth)/.exec(h);
+    var m = /(?:^#|[#&])view=(relievers|teams|depth)\b/.exec(h);
     if (m) view = m[1];
-    var sv = /sview=(starters|teams|charts)/.exec(h);
+    var sv = /(?:^#|[#&])sview=(starters|teams|charts)\b/.exec(h);
     if (sv) starterView = sv[1];
-    var hv = /hview=(hitters|teams|charts)/.exec(h);
+    var hv = /(?:^#|[#&])hview=(hitters|teams|charts)\b/.exec(h);
     if (hv) hitterView = hv[1];
-    var lv = /lview=(batters|starters)/.exec(h);
+    var lv = /(?:^#|[#&])lview=(batters|starters)\b/.exec(h);
     if (lv) leverageView = lv[1];
+  }
+
+  // Compose the FULL page state into the hash on every section/tab switch so a
+  // copied URL restores what the user sees. The section is always written; the
+  // per-section views only when off their defaults (keeps URLs short), and the
+  // single replaceState never clobbers a deep-linked #section= the way the old
+  // bullpen-only "#view=" write did.
+  function writeHash() {
+    var parts = ["section=" + section];
+    if (view !== "relievers") parts.push("view=" + view);
+    if (starterView !== "starters") parts.push("sview=" + starterView);
+    if (hitterView !== "hitters") parts.push("hview=" + hitterView);
+    if (leverageView !== "batters") parts.push("lview=" + leverageView);
+    try { history.replaceState(null, "", "#" + parts.join("&")); } catch (e) { /* hash optional */ }
   }
 
   // Loader with a visible failure mode: a non-OK response or a network error
@@ -675,7 +741,7 @@
   // Skill core first (SEM+ and the trailing-window SEM+ 3yr), then the durability
   // and rate columns that ride as context.
   var STARTER_COLS = [
-    { key: "name", label: "Starter", term: null, sortable: true, kind: "name" },
+    { key: "name", label: "Starter", term: null, sortable: true, kind: "name", asc: true },
     { key: "sem_plus", label: "SEM+", term: "sem_plus", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "sem_plus_3yr", label: "SEM+ 3yr", term: "sem_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.sem_plus_3yr; },
@@ -703,7 +769,7 @@
     { key: "gs", label: "GS", fmt: fInt, num: true },
     { key: "ip_per_gs", label: "IP/GS", fmt: f1, num: true, title: "Average start length (innings per game started)" },
     { key: "k_pct", label: "K%", fmt: fPct, num: true },
-    { key: "bb_pct", label: "BB%", fmt: fPct, num: true },
+    { key: "bb_pct", label: "BB%", fmt: fPct, num: true, asc: true },
     { key: "k_bb_pct", label: "K-BB%", fmt: fPct, num: true },
     { key: "gb_pct", label: "GB%", fmt: fPct, num: true },
     { key: "fip", label: "FIP", term: "fip", fmt: f2, num: true, asc: true },
@@ -718,7 +784,7 @@
   var STARTER_HISTORY_COLS = STARTER_COLS.filter(function (c) { return !STARTER_HISTORY_DROP[c.key]; });
 
   var STARTER_TEAM_COLS = [
-    { key: "team", label: "Team", sortable: true, kind: "team" },
+    { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "rotation_plus", label: "Rotation+", fmt: remCell, num: true, desc: true, isRem: true },
     { key: "front_sem", label: "Front 3", fmt: remCell, num: true },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
@@ -901,7 +967,7 @@
       refs: [{ at: 100, label: "avg" }], aria: "SEM+ distribution" });
     var pts = qual.filter(function (r) { return r.ip_per_gs != null; }).map(function (r) {
       return { x: r.sem_plus, y: r.ip_per_gs, label: r.name + "  SEM+ " + r.sem_plus + "  IP/GS " + f1(r.ip_per_gs),
-               color: r.sem_plus >= 115 ? null : "#6a6f7a" };
+               color: r.sem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "SEM+ (skill) →", yLabel: "↑ IP/GS (durability)",
       xRef: 100, aria: "skill vs durability" });
@@ -911,11 +977,11 @@
     var xpts = qual.filter(function (r) { return r.xsem_plus != null; }).map(function (r) {
       return { x: r.sem_plus, y: r.xsem_plus,
                label: r.name + "  SEM+ " + r.sem_plus + "  xSEM+ " + r.xsem_plus,
-               color: r.sem_plus >= 115 ? null : "#6a6f7a" };
+               color: r.sem_plus >= 115 ? null : "var(--text-tertiary)" };
     });
     var xsc = xpts.length >= 12
       ? chart("scatter", xpts, { height: 250, xLabel: "SEM+ (results) →",
-          yLabel: "↑ xSEM+ (deserved)", xRef: 100, yRef: 100, aria: "earned vs deserved" })
+          yLabel: "↑ xSEM+ (deserved)", xRef: 100, yRef: 100, diag: true, aria: "earned vs deserved" })
       : "";
     if (!hist && !sc && !xsc) return "";
     var body = '<div class="mlbstats-viz">'
@@ -999,6 +1065,7 @@
     root.querySelectorAll("[data-starterview]").forEach(function (b) {
       b.addEventListener("click", function () {
         starterView = b.getAttribute("data-starterview");
+        writeHash();
         renderStarters();
       });
     });
@@ -1020,7 +1087,7 @@
       renderStarters();
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function () {
+      bindSortKeys(th, root, function () {
         var key = th.getAttribute("data-col");
         var cols = (starterView === "teams") ? STARTER_TEAM_COLS
           : (starterView === "starters" && starterSeason !== "current") ? STARTER_HISTORY_COLS : STARTER_COLS;
@@ -1096,7 +1163,7 @@
 
   // Skill core first (HEM+), then the volume + slash-line context columns.
   var HITTER_COLS = [
-    { key: "name", label: "Hitter", term: null, sortable: true, kind: "name" },
+    { key: "name", label: "Hitter", term: null, sortable: true, kind: "name", asc: true },
     { key: "hem_plus", label: "HEM+", term: "hem_plus", fmt: hemCell, num: true, desc: true, isRem: true },
     { key: "hem_plus_3yr", label: "HEM+ 3yr", term: "hem_plus_3yr", num: true, desc: true, isRem: true,
       get: function (r) { return r.hem_plus_3yr; },
@@ -1163,7 +1230,7 @@
   }
 
   var HITTER_TEAM_COLS = [
-    { key: "team", label: "Team", sortable: true, kind: "team" },
+    { key: "team", label: "Team", sortable: true, kind: "team", asc: true },
     { key: "offense_plus", label: "Offense+", fmt: hemCell, num: true, desc: true, isRem: true },
     { key: "heart_hem", label: "Heart 3", fmt: hemCell, num: true, title: "Top-3 regulars by HEM+ (heart of the order)" },
     { key: "n_above_avg", label: "Above-avg", fmt: fInt, num: true,
@@ -1329,7 +1396,7 @@
       refs: [{ at: 100, label: "avg" }], aria: "HEM+ distribution" });
     var pts = qual.filter(function (r) { return r.pa != null; }).map(function (r) {
       return { x: r.hem_plus, y: r.pa, label: r.name + "  HEM+ " + r.hem_plus + "  PA " + r.pa,
-               color: r.hem_plus >= 130 ? null : "#6a6f7a" };
+               color: r.hem_plus >= 130 ? null : "var(--text-tertiary)" };
     });
     var sc = chart("scatter", pts, { height: 250, xLabel: "HEM+ (skill) →", yLabel: "↑ PA (volume)",
       xRef: 100, aria: "skill vs volume" });
@@ -1340,7 +1407,7 @@
     var ppts = qual.filter(function (r) { return r.pwoba != null; }).map(function (r) {
       return { x: r.hem_plus, y: r.pwoba,
                label: r.name + "  HEM+ " + r.hem_plus + "  pWOBA " + r.pwoba.toFixed(3),
-               color: r.hem_plus >= 130 ? null : "#6a6f7a" };
+               color: r.hem_plus >= 130 ? null : "var(--text-tertiary)" };
     });
     var psc = ppts.length >= 12
       ? chart("scatter", ppts, { height: 250, xLabel: "HEM+ (this season) →",
@@ -1455,6 +1522,7 @@
     root.querySelectorAll("[data-hitterview]").forEach(function (b) {
       b.addEventListener("click", function () {
         hitterView = b.getAttribute("data-hitterview");
+        writeHash();
         renderHitters();
       });
     });
@@ -1482,7 +1550,7 @@
       renderHitters();
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function () {
+      bindSortKeys(th, root, function () {
         var key = th.getAttribute("data-col");
         var cols = (hitterView === "teams") ? HITTER_TEAM_COLS
           : (hitterSeason !== "current") ? HITTER_HISTORY_COLS : HITTER_COLS;
@@ -1568,7 +1636,7 @@
   // Skill/impact core first (WPA), then the leverage context (pLI, Clutch,
   // context-neutral WPA/LI) and the volume column.
   var BAT_LEV_COLS = [
-    { key: "name", label: "Batter", term: null, sortable: true, kind: "name" },
+    { key: "name", label: "Batter", term: null, sortable: true, kind: "name", asc: true },
     { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
       title: "Win Probability Added (batter): total win probability the hitter's plate appearances swung his team's way.",
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
@@ -1585,7 +1653,7 @@
   ];
 
   var STARTER_LEV_COLS = [
-    { key: "name", label: "Starter", term: null, sortable: true, kind: "name" },
+    { key: "name", label: "Starter", term: null, sortable: true, kind: "name", asc: true },
     { key: "wpa", label: "WPA", term: "wpa", num: true, desc: true,
       title: "Win Probability Added (starter): total win probability his starts swung his team's way.",
       cell: function (r) { return levSignedCell(r.wpa, 2, 0); } },
@@ -1684,7 +1752,7 @@
         { height: 108, highlightAbove: 0.04, refs: [{ at: 0, label: "0" }], aria: "WPA per start distribution" });
       pts = qual.filter(function (r) { return r.wpa_li != null && r.wpa != null; }).map(function (r) {
         var timing = r.wpa - r.wpa_li;      // realized minus context-neutral = leverage/timing
-        return { x: r.wpa_li, y: timing, color: timing >= 0 ? null : "#6a6f7a",
+        return { x: r.wpa_li, y: timing, color: timing >= 0 ? null : "var(--text-tertiary)",
                  label: r.name + "  WPA " + fSigned(r.wpa) + "  WPA/LI " + fSigned(r.wpa_li)
                    + "  timing " + fSigned(timing) };
       });
@@ -1703,7 +1771,7 @@
       { height: 108, highlightAbove: 2, refs: [{ at: 0, label: "0" }], aria: "WPA distribution" });
     pts = qual.filter(function (r) { return r.wpa_li != null && r.pli != null; }).map(function (r) {
       var c = r.clutch;
-      var col = (c == null) ? "#6a6f7a" : (c >= 0.5 ? "#3fb37f" : (c <= -0.5 ? "#c1554e" : "#6a6f7a"));
+      var col = (c == null) ? "var(--text-tertiary)" : (c >= 0.5 ? "var(--up)" : (c <= -0.5 ? "var(--down)" : "var(--text-tertiary)"));
       return { x: r.wpa_li, y: r.pli, color: col,
                label: r.name + "  WPA/LI " + fSigned(r.wpa_li) + "  pLI " + f2(r.pli)
                  + "  Clutch " + (c == null ? "-" : fSigned(c)) };
@@ -1815,6 +1883,7 @@
     root.querySelectorAll("[data-leverageview]").forEach(function (b) {
       b.addEventListener("click", function () {
         leverageView = b.getAttribute("data-leverageview");
+        writeHash();
         renderLeverage();
       });
     });
@@ -1836,7 +1905,7 @@
       renderLeverage();
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function () {
+      bindSortKeys(th, root, function () {
         var key = th.getAttribute("data-col");
         var cols = levCols();
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
@@ -1884,7 +1953,10 @@
   }
   function bindSectionNav() {
     document.querySelectorAll("[data-mlbsection]").forEach(function (b) {
-      b.addEventListener("click", function () { showSection(b.getAttribute("data-mlbsection")); });
+      b.addEventListener("click", function () {
+        showSection(b.getAttribute("data-mlbsection"));
+        writeHash();
+      });
     });
   }
 

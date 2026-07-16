@@ -48,6 +48,9 @@
   }
   function num(v) { return (v == null || isNaN(v)) ? null : Number(v); }
   function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
+  // FV / 20-80 grades display rounded UP, never nearest (owner rule; mirrors
+  // EEPHUS_HUB.fvCeil with the same float-noise epsilon guard).
+  function fCeil(v) { var n = num(v); return n == null ? "-" : String(Math.ceil(n - 1e-9)); }
   function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
   function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
@@ -133,7 +136,7 @@
       .map(function (r) {
         return { x: r.relief_upside, y: r.components.conversion_need,
                  label: r.name + "  upside " + r.relief_upside + "  need " + r.components.conversion_need + "  FIT " + r.fit,
-                 color: r.fit >= 55 ? null : "#6a6f7a" };
+                 color: r.fit >= 55 ? null : "var(--text-tertiary)" };
       });
     if (pts.length < 8) return "";
     var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
@@ -244,15 +247,25 @@
   function candTable(rows, cols, term) {
     var head = "<thead><tr>";
     cols.forEach(function (c) {
+      var sortable = c.kind !== "rank" && c.kind !== "name" && c.sortable !== false;
       var sorted = c.key === sortKey ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
-      head += '<th class="mlbstats-col-' + c.key + sorted + '" data-col="' + c.key + '">' + lbl + "</th>";
+      // keyboard-operable sort headers (the trademachine pattern): only the
+      // genuinely sortable columns carry data-col + the button affordance
+      var attrs = sortable
+        ? ' data-col="' + c.key + '" tabindex="0" role="button" aria-sort="'
+          + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '"'
+        : "";
+      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + attrs + '>' + lbl + "</th>";
     });
     head += "</tr></thead>";
     var body = "<tbody>";
     rows.forEach(function (r, i) {
       var open = (openRow === r.mlbam);
-      body += "<tr" + (open ? " class=\"is-open\"" : "") + " data-open=\"" + r.mlbam + "\">";
+      // expandable rows are tabbable and announce their open state so the
+      // component breakdown is reachable without a mouse
+      body += "<tr" + (open ? " class=\"is-open\"" : "") + " data-open=\"" + r.mlbam
+        + "\" tabindex=\"0\" aria-expanded=\"" + (open ? "true" : "false") + "\">";
       cols.forEach(function (c) {
         if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
@@ -321,8 +334,14 @@
     out.sort(function (a, b) {
       var va = col && col.get ? col.get(a) : a[sortKey];
       var vb = col && col.get ? col.get(b) : b[sortKey];
-      va = (va == null || isNaN(va)) ? -Infinity : Number(va);
-      vb = (vb == null || isNaN(vb)) ? -Infinity : Number(vb);
+      // missing values always sort LAST regardless of direction (the
+      // trademachine convention; matters for nullable columns like Platoon
+      // and the pending Held role / Result history cells)
+      va = (va == null || isNaN(va)) ? null : Number(va);
+      vb = (vb == null || isNaN(vb)) ? null : Number(vb);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
       return sortAsc ? va - vb : vb - va;
     });
     return out;
@@ -435,7 +454,9 @@
     rows = sortRows(rows, HISTORY_COLS);
     var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
       if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
-      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "") + ">" + c.label + "</th>";
+      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "")
+        + ' tabindex="0" role="button" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
+        + '">' + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
       return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + nameLink(h.name, h.mlbam) + "</td>"
@@ -543,7 +564,7 @@
       return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
-        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fInt(p.fv)
+        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fCeil(p.fv)
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
@@ -583,17 +604,28 @@
   function bindTable(root) {
     bindCollapse(root);
     root.querySelectorAll("[data-open]").forEach(function (tr) {
-      tr.addEventListener("click", function (e) {
-        if (e.target.closest("th")) return;
-        if (e.target.closest("a")) return;   // let name links navigate, don't toggle the row
+      function toggleRow() {
         var id = Number(tr.getAttribute("data-open"));
         openRow = (openRow === id) ? null : id;
         render();
+        // re-render replaces the rows: put keyboard focus back on this one
+        var again = root.querySelector('tr[data-open="' + id + '"]');
+        if (again) again.focus();
+      }
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest("th")) return;
+        if (e.target.closest("a")) return;   // let name links navigate, don't toggle the row
+        toggleRow();
+      });
+      tr.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (e.target.closest("a")) return;   // Enter on a focused name link should navigate
+        e.preventDefault();
+        toggleRow();
       });
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function (e) {
-        e.stopPropagation();
+      function sortBy() {
         var key = th.getAttribute("data-col");
         var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
@@ -601,6 +633,19 @@
         if (sortKey === key) sortAsc = !sortAsc;
         else { sortKey = key; sortAsc = !!col.asc; }
         render();
+        // restore focus to the same header after the table is rebuilt
+        var again = root.querySelector('.mlbstats-table th[data-col="' + key + '"]');
+        if (again) again.focus();
+      }
+      th.addEventListener("click", function (e) {
+        e.stopPropagation();
+        sortBy();
+      });
+      th.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        e.stopPropagation();
+        sortBy();
       });
     });
     root.querySelectorAll("[data-histview]").forEach(function (b) {
