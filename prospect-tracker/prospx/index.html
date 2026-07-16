@@ -10479,7 +10479,7 @@ function _sliceUrl(file) {
   return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
 }
 
-// v46 payload-slim — the debuts slice ships two ways:
+// v46 payload-slim - the debuts slice ships two ways:
 //   debuts_lite.json  list-render fields only (Graduates tab rows, context
 //                     rail cards, farm graduates, trade-audit vet lookup).
 //   debuts.json       the full monolith - fetched only where the whole
@@ -10546,7 +10546,7 @@ function ensureDebutsFull() {
   return _debutsFullInFlight;
 }
 
-// v46 payload-slim — scout reports ship in a fixed number of hash chunks
+// v46 payload-slim - scout reports ship in a fixed number of hash chunks
 // (advertised via boot._slices_chunked.scout_reports) so opening one card
 // pulls ~1/8th of the old 28MB monolith. Chunk index = sum of the player
 // key's char codes mod the chunk count - mirrored in storage.py; keep the
