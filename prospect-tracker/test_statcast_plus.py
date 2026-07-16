@@ -25,7 +25,10 @@ from statcast_plus import build_pool, compute_statcast_plus
 
 def _hit(player_key, ev, hh, brl, z_con, whiff, chase):
     """Build a hitter mini-payload that build_pool / compute_statcast_plus
-    can consume directly."""
+    can consume directly. The chase rate serializes as o_swing_pct -- the
+    ONLY key production ZoneMetricRow rows carry (chase_pct never existed on
+    them, which silently killed the component pre-2026-07-07); fixtures must
+    exercise that production path, not the defensive chase_pct fallback."""
     return {
         "player_key": player_key,
         "statline": {"is_pitcher": False, "level": "AA"},
@@ -39,7 +42,7 @@ def _hit(player_key, ev, hh, brl, z_con, whiff, chase):
         "zone_metrics": {
             "z_contact_pct": z_con,
             "whiff_pct": whiff,
-            "chase_pct": chase,
+            "o_swing_pct": chase,
         },
     }
 
@@ -59,7 +62,7 @@ def _pit(player_key, velo, whiff, chase, hh_allowed, brl_allowed):
         },
         "zone_metrics": {
             "whiff_pct": whiff,
-            "chase_pct": chase,
+            "o_swing_pct": chase,
         },
     }
 
@@ -152,6 +155,65 @@ class TestStatcastPlusCore:
         # Should still register elite — every contributing component
         # sits above pool mean.
         assert sp > 105
+
+
+# ----------------------------------------------------------------------
+# Chase-component key regression (bug-sweep fix 2026-07-07)
+# ----------------------------------------------------------------------
+
+class TestChaseComponentKey:
+    """The chase component died silently for ALL production rows because the
+    extractors read chase_pct while ZoneMetricRow serializes o_swing_pct.
+    These tests pin the resurrected o_swing_pct-first read on both sides, so
+    a revert to chase_pct-only fails the suite instead of passing quietly."""
+
+    def test_hitter_o_swing_only_yields_chase_component(self):
+        from statcast_plus import _extract_hitter
+        player = _hit("h_osw", ev=90.0, hh=40.0, brl=8.0,
+                      z_con=82.0, whiff=22.0, chase=27.0)
+        comps = _extract_hitter(player)
+        # chase is inverted (less chasing is better); None = the pre-fix bug.
+        assert comps["chase_inv"] == -27.0
+
+    def test_pitcher_o_swing_only_yields_chase_component(self):
+        from statcast_plus import _extract_pitcher
+        player = _pit("p_osw", velo=95.0, whiff=28.0, chase=33.0,
+                      hh_allowed=32.0, brl_allowed=5.0)
+        comps = _extract_pitcher(player)
+        assert comps["chase"] == 33.0
+
+    def test_chase_pct_fallback_still_honored(self):
+        """chase_pct stays a defensive fallback for alternate payload shapes."""
+        from statcast_plus import _extract_hitter, _extract_pitcher
+        h = _hit("h_fb", ev=90.0, hh=40.0, brl=8.0,
+                 z_con=82.0, whiff=22.0, chase=None)
+        h["zone_metrics"].pop("o_swing_pct")
+        h["zone_metrics"]["chase_pct"] = 29.0
+        assert _extract_hitter(h)["chase_inv"] == -29.0
+        p = _pit("p_fb", velo=95.0, whiff=28.0, chase=None,
+                 hh_allowed=32.0, brl_allowed=5.0)
+        p["zone_metrics"].pop("o_swing_pct")
+        p["zone_metrics"]["chase_pct"] = 31.0
+        assert _extract_pitcher(p)["chase"] == 31.0
+
+    def test_o_swing_moves_the_composite(self):
+        """End-to-end: with everything else identical, a lower chase rate
+        (o_swing_pct) must produce a higher hitter Statcast+ -- i.e. the
+        component actually reaches the composite from the production key."""
+        pool_players = [
+            _hit(f"h{i}", ev=88.0, hh=35.0, brl=6.0,
+                 z_con=80.0, whiff=24.0, chase=24.0 + i)
+            for i in range(8)
+        ]
+        pool = build_pool(pool_players)
+        disciplined = _hit("disc", ev=88.0, hh=35.0, brl=6.0,
+                           z_con=80.0, whiff=24.0, chase=20.0)
+        chaser = _hit("chase", ev=88.0, hh=35.0, brl=6.0,
+                      z_con=80.0, whiff=24.0, chase=36.0)
+        sp_disc = compute_statcast_plus(disciplined, pool)
+        sp_chase = compute_statcast_plus(chaser, pool)
+        assert sp_disc is not None and sp_chase is not None
+        assert sp_disc > sp_chase
 
 
 # ----------------------------------------------------------------------

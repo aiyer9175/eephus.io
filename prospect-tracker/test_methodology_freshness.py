@@ -210,8 +210,10 @@ MODEL_GLOSSARY = {
     "hem_age_layer": "internal",
     # Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
     # directive): policy dial, not an accuracy claim; surfaces per-player as
-    # the "Reliever ceiling" factor chip under the xfv methodology entry.
-    "xfv_role_ceiling": "internal",
+    # the "Reliever ceiling" factor chip. Documented (2026-07-16) in the xfv
+    # glossary methodology, so it maps there like the other live overlay chips
+    # (injury / age / stale-anchor) rather than hiding behind "internal".
+    "xfv_role_ceiling": ["xfv"],
     # Bucket-head calibration gate (2026-07-15): clean loss ledger (G4
     # monotone-sanity fail + ablation showed population-recal, not age);
     # rendered nowhere; mandatory re-run at 2024-fold trainability.
