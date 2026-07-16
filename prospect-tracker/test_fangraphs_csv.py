@@ -951,12 +951,24 @@ class TestFanGraphsYearCoverage:
         )
 
     def test_draft_cycle_present_for_recent_years(self):
-        labels = self._fg_labels()
-        # Draft cycle is a separate FG product (the draft-prospect
-        # boards). Coverage exists for 2021-2025; 2026 lands closer to
-        # the actual draft date.
-        missing = [f"{y}draft" for y in range(2021, 2026)
-                    if f"{y}draft" not in labels]
+        # Draft cycle is a separate FG product (the draft-prospect boards).
+        # It lives in draft_snapshots - NOT in the MiLB snapshots table, where
+        # its 2021-2026 leak was purged 2026-07-16 (test_no_draft_in_milb pins
+        # that firewall), so _fg_labels() can never see these labels again.
+        # Coverage exists for 2021-2025; 2026 lands closer to the draft date.
+        import sqlite3
+        db = Path(__file__).parent / "prospects.db"
+        if not db.exists():
+            import pytest
+            pytest.skip("prospects.db not present on this checkout")
+        con = sqlite3.connect(db)
+        try:
+            years = {r[0] for r in con.execute(
+                "SELECT DISTINCT draft_year FROM draft_snapshots "
+                "WHERE source='fangraphs'")}
+        finally:
+            con.close()
+        missing = [y for y in range(2021, 2026) if y not in years]
         assert not missing, (
             f"FG draft board missing for years: {missing}."
         )
