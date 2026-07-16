@@ -1,32 +1,32 @@
 {
  "generated_at": "2026-07-16",
  "scope": "HITTERS",
- "n_scored": 1919,
+ "n_scored": 1892,
  "calibration_scale": {
-  "a": 0.037,
-  "b": 1.043
+  "a": 0.035,
+  "b": 1.044
  },
  "headline_grade_divergence_vs_consensus": {
   "scale": "rank-preserving quantile map onto consensus FV distribution",
-  "mean_abs_delta": 1.24,
+  "mean_abs_delta": 1.26,
   "max_up": 7.7,
   "max_down": -5.0,
-  "share_within_2_grades": 0.661
+  "share_within_2_grades": 0.656
  },
  "realized_grade_divergence_vs_consensus": {
   "scale": "realized_implied_fv (honestly deflated; drives surplus + distribution)",
-  "mean_abs_delta": 7.62,
+  "mean_abs_delta": 7.63,
   "max_up": 9.4,
   "max_down": -22.7
  },
  "adjustment_direction_check": {
-  "spearman_adj_vs_consensus_miss": 0.1457,
+  "spearman_adj_vs_consensus_miss": 0.1461,
   "n": 463,
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 22055.8,
-  "consensus": 21967.6
+  "xfv": 22029.8,
+  "consensus": 21941.5
  },
  "example_up_adjustments": [
   {
@@ -46,14 +46,14 @@
   {
    "player_key": "adam_haseley",
    "consensus_fv": 47.7,
-   "xfv_grade": 54.8,
+   "xfv_grade": 54.7,
    "delta": 7.1,
    "realized_war_6yr": 1.54
   },
   {
    "player_key": "nathaniel_lowe",
    "consensus_fv": 47.7,
-   "xfv_grade": 54.6,
+   "xfv_grade": 54.7,
    "delta": 7.0,
    "realized_war_6yr": 12.3
   },

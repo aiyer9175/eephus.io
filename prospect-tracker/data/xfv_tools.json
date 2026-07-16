@@ -70,7 +70,7 @@
 "n": 691,
 "realized_stat": "bb_pct",
 "grade_only_spearman": 0.4004,
-"production_partial_after_grade": -0.2553,
+"production_partial_after_grade": -0.2552,
 "blend_weight_insample": -0.5,
 "blend_weight_applied": 0.0,
 "tool_xfv_spearman": 0.4004,

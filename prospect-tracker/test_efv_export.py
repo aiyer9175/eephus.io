@@ -190,17 +190,26 @@ def test_committed_artifact_headline_alias_contract():
 #   or feature change is in this stamp - the 2026-07-16 program's eFV-adjacent
 #   edits (efv_ungraded trajectory floor guard) do not touch xfv.json.
 #   Rowcount 9134 -> 9148 (ordinary roster churn).
-_GOLDEN_XFV_SHA256 = "9b25dbeb9b51183e37159d5df49522daea6bddb1288475476c9782b71e670ebf"
+# Updated 2026-07-16b (DB REPAIR, LABEL + POOL change): owner-authorized
+#   applies of tools/delete_draft_board_leak.py (936 org-less FG draft-board
+#   rows removed from MiLB snapshots; the 2021-2026 board leak) and
+#   tools/repair_debut_snapshots_2026.py (41 veteran re-appearance debut
+#   snapshots re-dated to true debuts + 2 same-season misdates). Restamped
+#   from the immediate post-repair rebuild_only production regen. Rowcount
+#   9148 -> 9010 (leak-only identities leave the eFV pool; debut-date labels
+#   corrected). Same repairs must run on the deploy box, which then restamps
+#   nothing (its golden check runs in EEPHUS_DEPLOY_RUN=1 shape mode).
+_GOLDEN_XFV_SHA256 = "58505c199e367b421cba643eb29d58c4154b55fb98075b63a2d49e3b7470edbd"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-16 post-program regen). The +/-20%
+# (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9148
+_GOLDEN_XFV_ROWCOUNT = 9010
 
 
 def test_efv_grade_map_inverts_on_model_window():
