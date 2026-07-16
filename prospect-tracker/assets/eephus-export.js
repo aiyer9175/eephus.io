@@ -543,8 +543,11 @@
   }
 
   // Selectors that are safe to auto-attach to. Real tables across the apps +
-  // grids/charts explicitly opted in with data-export.
-  var TABLE_SEL = "table.tt-table, table.draft-table, table.detail-table, table.proj-table, table.compare-stat-table, table[data-export]";
+  // grids/charts explicitly opted in with data-export. mlbstats-table covers
+  // every /mlbstats/ and /pal/ leaderboard (each sits in its own
+  // .mlbstats-scroll wrapper); tm-board-table is the Trade Board (its own
+  // .tm-board-tablewrap wrapper) - parity with the FA/projections boards.
+  var TABLE_SEL = "table.tt-table, table.draft-table, table.detail-table, table.proj-table, table.compare-stat-table, table.mlbstats-table, table.tm-board-table, table[data-export]";
   var CHART_SEL = "[data-export-chart]";
   var GRID_SEL = "[data-export-grid]";
 
