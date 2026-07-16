@@ -246,6 +246,8 @@ MODEL_GLOSSARY = {
     "xfv_model_class_sweep": "internal",
     "xfv_feature_arms_2026_07": "internal",
     "fa_market_feature_arms": "internal",
+    "fa_market_supply_population": "internal",  # serve-side input alignment (wave-2 ship, 2026-07-16)
+    "fa_market_class_age_anchor": "internal",   # serve-side input alignment (wave-2 ship, 2026-07-16)
 }
 
 

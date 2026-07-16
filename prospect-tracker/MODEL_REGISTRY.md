@@ -6,7 +6,7 @@ Source: `data/model_registry.json` via `model_registry.load()`. Freshness column
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
 stamped as of **2026-07-16**. `validate()` at generation time: **clean**.
 
-**110 models.** Verdicts: validated: 27, provisional: 45, unvalidated: 3, deprecated: 35.
+**112 models.** Verdicts: validated: 27, provisional: 47, unvalidated: 3, deprecated: 35.
 
 | model_id | surface | predicts | champion | baseline | metric | verdict | eval artifact | age (d) | stale |
 |---|---|---|---|---|---|---|---|---|---|
@@ -120,6 +120,8 @@ stamped as of **2026-07-16**. `validate()` at generation time: **clean**.
 | `fa_market_feature_arms` | model-dev artifact - the Gate-2 feature-experiment harnes... | n/a - pre-registered feature arms on identical forward-chained Gate-2 folds | fa_mkt_v2 + rate_line (SHIPPED; X_FEATURES['rate_line']=True) | same-run all-flags-off champion: guar 10.159 / aav 3.071 / years 0.4420 / meg... | pre-registered per-arm criteria in the lab header; rate_line: guar AND aav <... | **provisional** | `data/fa_market_feature_lab_eval.json` | 0 | no |
 | `xfv_level_rank_fringe` | model-dev artifact (rendered nowhere) - FV-45 fringe leve... | n/a - gated experiment LR-FRINGE (2024-fold unlock 2026-07-15): level_rank added to the hitter lean feature set under a pre-reg... | xfv_hitter WITH level_rank (this experiment shipped) | xfv_hitter without level_rank (the prior lean set), same-run BASE arm | pre-registered gate (docs/efv-2026-07-15/GATES.md LR-FRINGE, M5 template verb... | **validated** | `data/xfv_level_rank_fringe_eval.json` | 0 | no |
 | `xfv_relief_shape` | model-dev artifact (rendered nowhere) - loss ledger; owne... | n/a - gated experiment: PAL prospect_role_fit shape composite (starter_shape / arsenal_depth / relief_flag, fb/sl/cb/ch + cmd,... | shipped lean pitcher feature set - unchanged | BASE_pit same-run baseline 0.3020/0.1466/0.2056 (pooled/within-tier/t45), n=438 | docs/efv-2026-07-15/GATES.md RELIEF-SHAPE bar: pooled >= base+0.0046 AND wm >... | **deprecated** | `data/xfv_relief_shape_eval.json` | 0 | no |
+| `fa_market_supply_population` | /fa/ class board (fa_export serve path) - class-supply fe... | n/a - serve-side input alignment for fa_mkt_v2's supply feature (guarantee stage) | fa_mkt_v2 + supply_pop (SHIPPED; X_FEATURES['supply_pop']=True): serve supply... | whole-scraped-class counts (audited mismatch: 2027 RP 80 / POS 76 vs training... | pre-registered wave-2 criteria (lab header): Gate-2 guarantee/aav/years/mega... | **provisional** | `data/fa_market_feature_lab_wave2_eval.json` | 0 | no |
+| `fa_market_class_age_anchor` | /fa/ class board (fa_export serve path) - class projectio... | n/a - serve-side input alignment: class age anchored to the season of the age-supplying row (proj_export / enriched_signings co... | fa_mkt_v2 + age_anchor (SHIPPED; X_FEATURES['age_anchor']=True) | stale hist[0]-anchored offset (understated serve age 1-2y when the platform r... | pre-registered wave-2 criteria (lab header): Gate-2 four not-worse clauses +... | **provisional** | `data/fa_market_feature_lab_wave2_eval.json` | 0 | no |
 
 Stored problems at last refresh: none.
 

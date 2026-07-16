@@ -184,17 +184,23 @@ def test_committed_artifact_headline_alias_contract():
 #   BUCKET-AGE-HEAD all FAIL (closes stand); every other keep-alive ledgered
 #   as a loss. Evals re-run in the same regen (F-SIDE S5 tripwire recorded
 #   tripped). Rowcount 9134.
-_GOLDEN_XFV_SHA256 = "56b9fcf8225df413a463b38bea4ce14215868f9ea8533bd3af55fd71e1b37f4a"
+# Updated 2026-07-16 (DATA refresh, no model change): restamped from the
+#   refinement-program rebuild_only production regen (efv_export.regen_all)
+#   after a same-day daily data refresh moved stats/IL/rosters. No eFV code
+#   or feature change is in this stamp - the 2026-07-16 program's eFV-adjacent
+#   edits (efv_ungraded trajectory floor guard) do not touch xfv.json.
+#   Rowcount 9134 -> 9148 (ordinary roster churn).
+_GOLDEN_XFV_SHA256 = "9b25dbeb9b51183e37159d5df49522daea6bddb1288475476c9782b71e670ebf"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-15 post-program regen). The +/-20%
+# (data/xfv.json by_player, read 2026-07-16 post-program regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9134
+_GOLDEN_XFV_ROWCOUNT = 9148
 
 
 def test_efv_grade_map_inverts_on_model_window():
