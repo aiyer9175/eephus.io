@@ -1,53 +1,53 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-07-16",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 969.7,
+  "roster_war_sum": 969.5,
   "remainder_recenter_wins_per_team": 1.13,
-  "roster_war_sum_y1": 969.7,
+  "roster_war_sum_y1": 969.5,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2400.7,
-  "raw_wins_sum_y1": 2400.7,
+  "raw_wins_sum": 2400.5,
+  "raw_wins_sum_y1": 2400.5,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 438,
-   "depth_war_y1": 40.2,
-   "depth_war_5y": 77.8,
-   "n_unassigned": 307,
-   "war_unassigned_y1": 60.4,
-   "war_unassigned_5y": 113.4
+   "depth_war_y1": 40.4,
+   "depth_war_5y": 78.6,
+   "n_unassigned": 308,
+   "war_unassigned_y1": 60.2,
+   "war_unassigned_5y": 110.1
   },
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 969.7,
+    "roster_war_sum": 969.5,
     "wins_sum": 2430.1,
     "remainder_recenter_wins_per_team": 1.13
    },
    {
     "season": 2028,
-    "roster_war_sum": 638.2,
-    "wins_sum": 2430.4,
+    "roster_war_sum": 637.9,
+    "wins_sum": 2429.8,
     "remainder_recenter_wins_per_team": 11.7
    },
    {
     "season": 2029,
-    "roster_war_sum": 270.9,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 24.58
+    "roster_war_sum": 273.6,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": 24.5
    },
    {
     "season": 2030,
-    "roster_war_sum": 212.8,
-    "wins_sum": 2429.8,
-    "remainder_recenter_wins_per_team": 26.42
+    "roster_war_sum": 215.8,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 26.32
    },
    {
     "season": 2031,
-    "roster_war_sum": 184.3,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 27.28
+    "roster_war_sum": 186.7,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 27.21
    }
   ],
   "coverage_decomposition_2025": {
@@ -269,13 +269,13 @@
   "eta_coverage_orgs": 30,
   "align_coverage_orgs": 30,
   "eta_mean_range": [
-   2027.89,
-   2028.96
+   2027.9,
+   2028.98
   ],
   "align_median": 0.47,
   "align_range": [
-   -0.45,
-   1.01
+   -0.41,
+   1.1
   ],
   "aligned_org_count": 7,
   "limitations": [

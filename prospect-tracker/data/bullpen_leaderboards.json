@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-07-16",
  "season": 2026,
- "as_of": "2026-07-15",
+ "as_of": "2026-07-16",
  "coverage": {
   "games": 1444,
   "expected": 1453,
@@ -1395,7 +1395,7 @@
    "rem_plus_3yr_tag": "provisional",
    "xrem_plus": 106,
    "xwoba_against": 0.289,
-   "luck": -0.008
+   "luck": -0.007
   },
   {
    "key": "676879",
@@ -7325,7 +7325,7 @@
    "rem_plus_3yr_tag": "established",
    "xrem_plus": 111,
    "xwoba_against": 0.276,
-   "luck": 0.042
+   "luck": 0.048
   },
   {
    "key": "700413",
@@ -8841,8 +8841,8 @@
    "rem_plus_3yr_pct": 58,
    "rem_plus_3yr_tag": "established",
    "xrem_plus": 98,
-   "xwoba_against": 0.311,
-   "luck": -0.004
+   "xwoba_against": 0.312,
+   "luck": -0.003
   },
   {
    "key": "687941",
@@ -14868,6 +14868,14 @@
     },
     {
      "role": "High-leverage",
+     "key": "666745",
+     "name": "Jhony Brito",
+     "rem_plus": 101,
+     "gmli": 2.46,
+     "ip": 4.3
+    },
+    {
+     "role": "High-leverage",
      "key": "670970",
      "name": "Adrian Morejon",
      "rem_plus": 127,
@@ -14897,14 +14905,6 @@
      "rem_plus": 92,
      "gmli": 0.93,
      "ip": 33.0
-    },
-    {
-     "role": "Mop-up",
-     "key": "593974",
-     "name": "Wandy Peralta",
-     "rem_plus": 95,
-     "gmli": 0.71,
-     "ip": 48.3
     },
     {
      "role": "Mop-up",
@@ -15926,6 +15926,14 @@
     },
     {
      "role": "Middle",
+     "key": "669620",
+     "name": "Brady Basso",
+     "rem_plus": 85,
+     "gmli": 0.94,
+     "ip": 4.3
+    },
+    {
+     "role": "Middle",
      "key": "665622",
      "name": "Luis Medina",
      "rem_plus": 104,
@@ -15939,14 +15947,6 @@
      "rem_plus": 109,
      "gmli": 0.64,
      "ip": 50.3
-    },
-    {
-     "role": "Long",
-     "key": "686930",
-     "name": "Mason Barnett",
-     "rem_plus": 91,
-     "gmli": 0.52,
-     "ip": 21.3
     }
    ]
   },

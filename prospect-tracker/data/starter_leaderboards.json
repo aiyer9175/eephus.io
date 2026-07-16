@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-07-16",
  "season": 2026,
- "as_of": "2026-07-15",
+ "as_of": "2026-07-16",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
@@ -1701,7 +1701,7 @@
    "sem_plus_3yr_tag": "established",
    "xsem_plus": 99,
    "xwoba_against": 0.322,
-   "luck": 0.001
+   "luck": 0.003
   },
   {
    "key": "543135",

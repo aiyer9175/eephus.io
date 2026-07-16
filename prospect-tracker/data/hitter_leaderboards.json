@@ -1,7 +1,7 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-07-16",
  "season": 2026,
- "as_of": "2026-07-15",
+ "as_of": "2026-07-16",
  "verdict": "validated",
  "backtest": {
   "status": "validated",
@@ -5866,9 +5866,9 @@
    "hem_plus_3yr": 102,
    "hem_plus_3yr_pct": 52,
    "hem_plus_3yr_tag": "established",
-   "xhem_plus": 112,
+   "xhem_plus": 111,
    "xwoba": 0.338,
-   "luck_gap": 11,
+   "luck_gap": 10,
    "fwdhem_plus": 106,
    "pwoba": 0.306,
    "pwoba_pctile": 55
@@ -10681,10 +10681,10 @@
    "hem_plus_3yr": 94,
    "hem_plus_3yr_pct": 27,
    "hem_plus_3yr_tag": "established",
-   "xhem_plus": 80,
-   "xwoba": 0.294,
-   "luck_gap": -13,
-   "fwdhem_plus": 90,
+   "xhem_plus": 81,
+   "xwoba": 0.295,
+   "luck_gap": -12,
+   "fwdhem_plus": 91,
    "pwoba": 0.305,
    "pwoba_pctile": 53
   },

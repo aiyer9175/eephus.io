@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-15T12:36:29Z",
+ "generated_at": "2026-07-16T18:50:23Z",
  "vintage_rule": "weights for board-year Y use base years <= Y - 3 only",
  "per_year": [
   {
@@ -28,11 +28,11 @@
     "mlb_pipeline": 1.1398
    },
    "equal": {
-    "spearman": 0.3162,
+    "spearman": 0.3163,
     "auc": 0.7466
    },
    "weighted": {
-    "spearman": 0.3173,
+    "spearman": 0.3174,
     "auc": 0.7477
    }
   },

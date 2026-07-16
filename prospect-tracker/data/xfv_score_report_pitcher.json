@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-15",
+ "generated_at": "2026-07-16",
  "scope": "PITCHERS",
  "n_scored": 2023,
  "calibration_scale": {
@@ -25,8 +25,8 @@
   "reading": "positive => eFV up/down-adjustments point toward where consensus FV under/over-shot realized WAR (illustrative, in-sample)."
  },
  "surplus_totals_mm": {
-  "xfv": 13268.5,
-  "consensus": 13219.1
+  "xfv": 13315.2,
+  "consensus": 13263.6
  },
  "example_up_adjustments": [
   {

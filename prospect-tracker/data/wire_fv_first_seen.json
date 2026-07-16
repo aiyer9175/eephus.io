@@ -5,7 +5,7 @@
 },
 "aaron_watson": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "aaron_zavala": {
 "first_seen": "2024-01-22",
@@ -33,11 +33,11 @@
 },
 "adrian_bohorquez": {
 "first_seen": "2026-06-12",
-"fv": 38
+"fv": 40
 },
 "adrian_pena": {
 "first_seen": "2026-06-15",
-"fv": 40
+"fv": 38
 },
 "adrian_pinto": {
 "first_seen": "2026-02-12",
@@ -49,7 +49,7 @@
 },
 "adrian_rodriguez": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "adrian_santana": {
 "first_seen": "2026-06-26",
@@ -80,8 +80,8 @@
 "fv": 40
 },
 "aidan_miller": {
-"first_seen": "2026-07-07",
-"fv": 56
+"first_seen": "2026-07-15",
+"fv": 57
 },
 "aidan_smith": {
 "first_seen": "2026-06-26",
@@ -93,10 +93,14 @@
 },
 "aiden_may": {
 "first_seen": "2026-01-22",
-"fv": 40
+"fv": 38
 },
 "aiva_arquette": {
 "first_seen": "2026-07-07",
+"fv": 48
+},
+"aj_gracia": {
+"first_seen": "2026-07-15",
 "fv": 48
 },
 "aj_russell": {
@@ -108,8 +112,8 @@
 "fv": 43
 },
 "albert_fermin": {
-"first_seen": "2026-07-07",
-"fv": 45
+"first_seen": "2026-07-15",
+"fv": 43
 },
 "alberto_barriga": {
 "first_seen": "2026-02-12",
@@ -133,15 +137,15 @@
 },
 "alejandro_hidalgo": {
 "first_seen": "2026-06-12",
-"fv": 38
+"fv": 35
 },
 "alejandro_rosario": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "alex_clemmey": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "alex_cook": {
 "first_seen": "2026-06-26",
@@ -149,7 +153,7 @@
 },
 "alex_de_jesus": {
 "first_seen": "2024-08-01",
-"fv": 35
+"fv": 38
 },
 "alex_lodise": {
 "first_seen": "2026-02-12",
@@ -157,15 +161,15 @@
 },
 "alex_mccoy": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "alex_mcfarlane": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "alex_mooney": {
 "first_seen": "2024-08-01",
-"fv": 43
+"fv": 42
 },
 "alex_pham": {
 "first_seen": "2025-07-31",
@@ -173,11 +177,11 @@
 },
 "alex_santos_ii": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "alexander_alberto": {
 "first_seen": "2026-06-26",
-"fv": 42
+"fv": 43
 },
 "alexander_albertus": {
 "first_seen": "2026-01-22",
@@ -201,15 +205,15 @@
 },
 "alfredo_alcantara": {
 "first_seen": "2026-02-12",
-"fv": 35
+"fv": 38
 },
 "alfredo_duno": {
-"first_seen": "2026-07-05",
-"fv": 56
+"first_seen": "2026-07-15",
+"fv": 54
 },
 "alirio_ferrebus": {
 "first_seen": "2026-06-03",
-"fv": 43
+"fv": 40
 },
 "allan_castro": {
 "first_seen": "2026-05-22",
@@ -217,7 +221,7 @@
 },
 "alonzo_tredwell": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "ambioris_tavarez": {
 "first_seen": "2024-01-22",
@@ -229,7 +233,7 @@
 },
 "andreimi_antunez": {
 "first_seen": "2026-06-26",
-"fv": 43
+"fv": 38
 },
 "andres_arias": {
 "first_seen": "2025-07-31",
@@ -241,15 +245,15 @@
 },
 "andrew_baker": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 43
 },
 "andrew_fischer": {
 "first_seen": "2026-06-03",
-"fv": 50
+"fv": 47
 },
 "andrew_moore": {
 "first_seen": "2025-07-31",
-"fv": 43
+"fv": 45
 },
 "andrew_pinckney": {
 "first_seen": "2026-01-22",
@@ -265,7 +269,7 @@
 },
 "andrew_sears": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "andrew_taylor": {
 "first_seen": "2025-07-31",
@@ -285,7 +289,7 @@
 },
 "angel_bastardo": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 40
 },
 "angel_brachi": {
 "first_seen": "2025-07-31",
@@ -317,7 +321,7 @@
 },
 "anthony_huezo": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "anthony_marquez": {
 "first_seen": "2025-07-31",
@@ -349,11 +353,11 @@
 },
 "anyer_laureano": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 40
 },
 "argenis_cayama": {
 "first_seen": "2026-06-05",
-"fv": 46
+"fv": 45
 },
 "ariel_roque": {
 "first_seen": "2026-07-14",
@@ -377,7 +381,7 @@
 },
 "aroon_escobar": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 43
 },
 "asbel_gonzalez": {
 "first_seen": "2026-02-12",
@@ -389,7 +393,7 @@
 },
 "ashton_izzi": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "austin_charles": {
 "first_seen": "2026-02-12",
@@ -397,7 +401,7 @@
 },
 "austin_gauthier": {
 "first_seen": "2024-08-01",
-"fv": 35
+"fv": 38
 },
 "austin_gordon": {
 "first_seen": "2026-01-22",
@@ -409,7 +413,7 @@
 },
 "austin_love": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "austin_overn": {
 "first_seen": "2026-06-26",
@@ -421,15 +425,15 @@
 },
 "austin_smith": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "austin_vernon": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "axiel_plaz": {
 "first_seen": "2026-06-04",
-"fv": 43
+"fv": 40
 },
 "ayden_johnson": {
 "first_seen": "2026-02-12",
@@ -445,19 +449,19 @@
 },
 "ben_hess": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 47
 },
 "ben_jacobs": {
 "first_seen": "2026-07-07",
-"fv": 42
+"fv": 43
 },
 "ben_kudrna": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "ben_ross": {
 "first_seen": "2026-06-12",
-"fv": 43
+"fv": 40
 },
 "ben_shields": {
 "first_seen": "2026-02-12",
@@ -472,8 +476,8 @@
 "fv": 40
 },
 "billy_carlson": {
-"first_seen": "2026-07-14",
-"fv": 47
+"first_seen": "2026-07-15",
+"fv": 48
 },
 "bishop_letson": {
 "first_seen": "2026-07-07",
@@ -489,15 +493,15 @@
 },
 "blake_burke": {
 "first_seen": "2026-06-03",
-"fv": 45
+"fv": 43
 },
 "blake_burkhalter": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "blake_larson": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "blake_mitchell": {
 "first_seen": "2026-06-26",
@@ -505,11 +509,11 @@
 },
 "blake_morgan": {
 "first_seen": "2026-06-26",
-"fv": 43
+"fv": 40
 },
 "blake_wehunt": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 40
 },
 "blake_wolters": {
 "first_seen": "2026-02-12",
@@ -521,15 +525,15 @@
 },
 "boston_baro": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "boston_bateman": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "braden_davis": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "braden_nett": {
 "first_seen": "2026-02-12",
@@ -541,7 +545,7 @@
 },
 "brady_smith": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "brailer_guerrero": {
 "first_seen": "2026-06-26",
@@ -549,7 +553,7 @@
 },
 "brailyn_antunez": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 42
 },
 "bralyn_brazoban": {
 "first_seen": "2024-08-01",
@@ -561,11 +565,11 @@
 },
 "brandon_barriera": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "brandon_birdsell": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "brandon_butterworth": {
 "first_seen": "2026-02-12",
@@ -573,7 +577,7 @@
 },
 "brandon_clarke": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "brandon_compton": {
 "first_seen": "2026-06-15",
@@ -585,11 +589,11 @@
 },
 "branneli_franco": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "braxton_bragg": {
 "first_seen": "2026-02-12",
-"fv": 47
+"fv": 48
 },
 "braxton_roxby": {
 "first_seen": "2026-06-05",
@@ -653,15 +657,15 @@
 },
 "brett_bateman": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 42
 },
 "brett_sears": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "brett_wichrowski": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "breyson_guedez": {
 "first_seen": "2026-02-12",
@@ -677,7 +681,7 @@
 },
 "briggs_mckenzie": {
 "first_seen": "2026-02-12",
-"fv": 44
+"fv": 45
 },
 "brock_moore": {
 "first_seen": "2025-01-22",
@@ -685,15 +689,15 @@
 },
 "brock_porter": {
 "first_seen": "2024-08-01",
-"fv": 42
+"fv": 40
 },
 "brock_rodden": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 40
 },
 "brock_selvidge": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 38
 },
 "brock_vradenburg": {
 "first_seen": "2024-08-01",
@@ -705,19 +709,19 @@
 },
 "brody_brecht": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 45
 },
 "brody_hopkins": {
-"first_seen": "2026-01-22",
-"fv": 52
+"first_seen": "2026-06-26",
+"fv": 50
 },
 "brooks_auger": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "brooks_brannon": {
 "first_seen": "2026-05-22",
-"fv": 43
+"fv": 42
 },
 "brooks_bryan": {
 "first_seen": "2026-02-12",
@@ -729,11 +733,11 @@
 },
 "bryan_balzer": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "bryan_mata": {
 "first_seen": "2024-01-22",
-"fv": 42
+"fv": 40
 },
 "bryan_rincon": {
 "first_seen": "2026-02-12",
@@ -741,7 +745,7 @@
 },
 "bryce_cunningham": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "bryce_mayer": {
 "first_seen": "2026-02-12",
@@ -749,7 +753,7 @@
 },
 "bryce_meccage": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "bryce_rainer": {
 "first_seen": "2026-07-07",
@@ -761,7 +765,7 @@
 },
 "cade_crossland": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "cade_doughty": {
 "first_seen": "2024-08-01",
@@ -777,7 +781,7 @@
 },
 "cade_obermueller": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "caden_bodine": {
 "first_seen": "2026-07-07",
@@ -785,11 +789,11 @@
 },
 "caden_favors": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "caden_grice": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "caden_powell": {
 "first_seen": "2026-02-12",
@@ -809,7 +813,7 @@
 },
 "caleb_ricketts": {
 "first_seen": "2025-01-22",
-"fv": 38
+"fv": 40
 },
 "caleb_roberts": {
 "first_seen": "2024-08-01",
@@ -825,7 +829,7 @@
 },
 "calvin_ziegler": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "cam_caminiti": {
 "first_seen": "2026-06-30",
@@ -837,11 +841,11 @@
 },
 "cam_collier": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 43
 },
 "cam_leiter": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 43
 },
 "camden_lohman": {
 "first_seen": "2026-02-12",
@@ -849,11 +853,11 @@
 },
 "camden_minacci": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "cameron_millar": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "camilo_diaz": {
 "first_seen": "2024-08-01",
@@ -865,7 +869,7 @@
 },
 "carlos_alvarez": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "carlos_caro": {
 "first_seen": "2025-07-31",
@@ -873,11 +877,11 @@
 },
 "carlos_castillo": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "carlos_de_la_cruz": {
 "first_seen": "2024-01-22",
-"fv": 38
+"fv": 40
 },
 "carlos_gutierrez": {
 "first_seen": "2026-06-05",
@@ -937,7 +941,7 @@
 },
 "carter_holton": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "carter_johnson": {
 "first_seen": "2025-07-31",
@@ -945,11 +949,11 @@
 },
 "carter_mathison": {
 "first_seen": "2025-01-22",
-"fv": 35
+"fv": 38
 },
 "casey_hintz": {
 "first_seen": "2026-01-22",
-"fv": 42
+"fv": 38
 },
 "cayden_wallace": {
 "first_seen": "2025-01-22",
@@ -965,7 +969,7 @@
 },
 "chandler_champlain": {
 "first_seen": "2025-01-22",
-"fv": 38
+"fv": 35
 },
 "charlee_soto": {
 "first_seen": "2026-06-25",
@@ -993,15 +997,15 @@
 },
 "chase_hampton": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "chase_harlan": {
 "first_seen": "2026-06-03",
-"fv": 45
+"fv": 43
 },
 "chase_jaworsky": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 40
 },
 "chase_mobley": {
 "first_seen": "2026-02-12",
@@ -1009,7 +1013,7 @@
 },
 "chase_shores": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "chen_zhongao_zhuang": {
 "first_seen": "2026-02-12",
@@ -1017,7 +1021,7 @@
 },
 "chenwei_lin": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 40
 },
 "chinghsien_ko": {
 "first_seen": "2026-02-12",
@@ -1033,11 +1037,11 @@
 },
 "chris_cortez": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "chris_kean": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "chris_suero": {
 "first_seen": "2026-02-12",
@@ -1065,11 +1069,11 @@
 },
 "christian_mcgowan": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "christian_oppor": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 48
 },
 "christian_zazueta": {
 "first_seen": "2026-07-14",
@@ -1077,15 +1081,15 @@
 },
 "cj_culpepper": {
 "first_seen": "2026-06-12",
-"fv": 40
+"fv": 38
 },
 "cj_gray": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "cj_van_eyk": {
 "first_seen": "2024-08-01",
-"fv": 42
+"fv": 40
 },
 "cleiner_ramirez": {
 "first_seen": "2026-07-14",
@@ -1093,11 +1097,11 @@
 },
 "cobb_hightower": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 40
 },
 "cody_bowker": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "colby_langford": {
 "first_seen": "2025-07-31",
@@ -1109,7 +1113,7 @@
 },
 "cole_hertzler": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "cole_mathis": {
 "first_seen": "2026-02-12",
@@ -1121,7 +1125,7 @@
 },
 "cole_miller": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "cole_paplham": {
 "first_seen": "2025-07-31",
@@ -1129,11 +1133,11 @@
 },
 "cole_phillips": {
 "first_seen": "2025-01-22",
-"fv": 38
+"fv": 35
 },
 "cole_schoenwetter": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "colin_barber": {
 "first_seen": "2024-08-01",
@@ -1153,7 +1157,7 @@
 },
 "connor_foley": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "connor_noland": {
 "first_seen": "2026-02-12",
@@ -1161,7 +1165,7 @@
 },
 "conor_essenburg": {
 "first_seen": "2026-06-03",
-"fv": 45
+"fv": 43
 },
 "conrad_cason": {
 "first_seen": "2026-05-22",
@@ -1169,11 +1173,11 @@
 },
 "cooper_flemming": {
 "first_seen": "2026-06-26",
-"fv": 47
+"fv": 48
 },
 "cooper_hjerpe": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "cooper_kinney": {
 "first_seen": "2026-06-26",
@@ -1181,11 +1185,11 @@
 },
 "cory_lewis": {
 "first_seen": "2025-01-22",
-"fv": 40
+"fv": 38
 },
 "coy_james": {
 "first_seen": "2026-02-12",
-"fv": 35
+"fv": 38
 },
 "creed_willems": {
 "first_seen": "2026-02-12",
@@ -1193,7 +1197,7 @@
 },
 "cris_rodriguez": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 43
 },
 "cristhian_vaquero": {
 "first_seen": "2025-07-31",
@@ -1233,7 +1237,7 @@
 },
 "dahian_santos": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "daiber_de_los_santos": {
 "first_seen": "2025-07-31",
@@ -1249,11 +1253,11 @@
 },
 "dalton_pence": {
 "first_seen": "2026-02-12",
-"fv": 36
+"fv": 40
 },
 "dalton_rogers": {
 "first_seen": "2026-05-22",
-"fv": 38
+"fv": 35
 },
 "dameury_pena": {
 "first_seen": "2026-06-12",
@@ -1265,15 +1269,15 @@
 },
 "dane_acker": {
 "first_seen": "2024-08-01",
-"fv": 42
+"fv": 40
 },
 "daniel_dickinson": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 43
 },
 "daniel_eagen": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 45
 },
 "daniel_guilarte": {
 "first_seen": "2024-01-22",
@@ -1285,7 +1289,7 @@
 },
 "daniel_pierce": {
 "first_seen": "2026-06-26",
-"fv": 43
+"fv": 45
 },
 "daniel_vazquez": {
 "first_seen": "2026-01-22",
@@ -1333,15 +1337,15 @@
 },
 "david_davalillo": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "david_hagaman": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "david_matoma": {
 "first_seen": "2026-06-04",
-"fv": 38
+"fv": 35
 },
 "david_mccabe": {
 "first_seen": "2025-07-31",
@@ -1373,11 +1377,11 @@
 },
 "dean_curley": {
 "first_seen": "2026-06-03",
-"fv": 45
+"fv": 43
 },
 "dean_livingston": {
 "first_seen": "2026-02-12",
-"fv": 33
+"fv": 40
 },
 "dean_moss": {
 "first_seen": "2026-01-22",
@@ -1389,7 +1393,7 @@
 },
 "deivid_coronil": {
 "first_seen": "2026-01-22",
-"fv": 35
+"fv": 38
 },
 "demetrio_crisantes": {
 "first_seen": "2026-02-12",
@@ -1424,8 +1428,8 @@
 "fv": 38
 },
 "diego_frontado": {
-"first_seen": "2026-07-07",
-"fv": 43
+"first_seen": "2026-07-15",
+"fv": 42
 },
 "diego_hernandez": {
 "first_seen": "2024-08-01",
@@ -1453,11 +1457,11 @@
 },
 "dominic_fritton": {
 "first_seen": "2026-06-26",
-"fv": 45
+"fv": 40
 },
 "dominick_reid": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "dorian_soto": {
 "first_seen": "2026-05-22",
@@ -1469,15 +1473,15 @@
 },
 "douglas_orellana": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "drake_george": {
 "first_seen": "2026-06-05",
-"fv": 42
+"fv": 40
 },
 "drew_beam": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "drew_dowd": {
 "first_seen": "2026-06-26",
@@ -1485,11 +1489,11 @@
 },
 "drew_gray": {
 "first_seen": "2025-01-22",
-"fv": 38
+"fv": 35
 },
 "drue_hackenberg": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "druw_jones": {
 "first_seen": "2026-02-12",
@@ -1513,7 +1517,7 @@
 },
 "dylan_dreiling": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 44
 },
 "dylan_jordan": {
 "first_seen": "2026-02-12",
@@ -1521,11 +1525,11 @@
 },
 "dylan_lesko": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "dylan_orae": {
 "first_seen": "2024-08-01",
-"fv": 42
+"fv": 43
 },
 "dylan_ray": {
 "first_seen": "2026-02-12",
@@ -1533,7 +1537,7 @@
 },
 "dylan_ross": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "easton_carmichael": {
 "first_seen": "2026-06-04",
@@ -1597,7 +1601,7 @@
 },
 "eiver_mosquera": {
 "first_seen": "2026-06-15",
-"fv": 38
+"fv": 40
 },
 "eli_lovich": {
 "first_seen": "2026-02-12",
@@ -1633,7 +1637,7 @@
 },
 "elison_joseph": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "elorky_rodriguez": {
 "first_seen": "2026-02-12",
@@ -1661,7 +1665,7 @@
 },
 "emiliano_teodo": {
 "first_seen": "2026-02-12",
-"fv": 41
+"fv": 40
 },
 "emilio_sanchez": {
 "first_seen": "2025-01-22",
@@ -1709,7 +1713,7 @@
 },
 "eric_adler": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "eric_bitonti": {
 "first_seen": "2026-02-12",
@@ -1725,11 +1729,11 @@
 },
 "eric_reyzelman": {
 "first_seen": "2026-01-22",
-"fv": 43
+"fv": 45
 },
 "eric_silva": {
 "first_seen": "2024-08-01",
-"fv": 42
+"fv": 40
 },
 "erick_brito": {
 "first_seen": "2025-07-31",
@@ -1737,7 +1741,7 @@
 },
 "eriq_swan": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "esmil_valencia": {
 "first_seen": "2026-01-22",
@@ -1761,7 +1765,7 @@
 },
 "ethan_bagwell": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "ethan_conrad": {
 "first_seen": "2026-02-12",
@@ -1769,7 +1773,7 @@
 },
 "ethan_dorchies": {
 "first_seen": "2026-02-12",
-"fv": 35
+"fv": 40
 },
 "ethan_frey": {
 "first_seen": "2026-02-12",
@@ -1801,27 +1805,27 @@
 },
 "ethan_schiefelbein": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 38
 },
 "evan_reifert": {
 "first_seen": "2025-07-31",
 "fv": 45
 },
 "fabricio_blanco": {
-"first_seen": "2026-07-07",
-"fv": 40
+"first_seen": "2026-07-15",
+"fv": 43
 },
 "felipe_de_la_cruz": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "felix_arronde": {
 "first_seen": "2026-02-12",
-"fv": 41
+"fv": 43
 },
 "felix_morrobel": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "felnin_celesten": {
 "first_seen": "2026-07-06",
@@ -1841,7 +1845,7 @@
 },
 "fernando_perez": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "filippo_di_turi": {
 "first_seen": "2026-02-12",
@@ -1853,11 +1857,11 @@
 },
 "francis_texido": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "francisco_renteria": {
-"first_seen": "2026-07-07",
-"fv": 48
+"first_seen": "2026-07-15",
+"fv": 47
 },
 "francisco_vilorio": {
 "first_seen": "2025-07-31",
@@ -1865,11 +1869,11 @@
 },
 "frank_cairone": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "frank_mozzicato": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "franklin_arias": {
 "first_seen": "2026-07-14",
@@ -1889,7 +1893,7 @@
 },
 "gabel_pentecost": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "gabriel_davalillo": {
 "first_seen": "2026-02-12",
@@ -1921,7 +1925,7 @@
 },
 "gage_ziehl": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 40
 },
 "garielvin_silverio": {
 "first_seen": "2026-07-14",
@@ -1933,15 +1937,15 @@
 },
 "garrett_baumann": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "garrett_hawkins": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "gary_gill_hill": {
 "first_seen": "2026-06-26",
-"fv": 20
+"fv": 43
 },
 "gavin_conticello": {
 "first_seen": "2026-02-12",
@@ -1977,7 +1981,7 @@
 },
 "gerelmi_maldonado": {
 "first_seen": "2026-06-05",
-"fv": 40
+"fv": 38
 },
 "gian_zapata": {
 "first_seen": "2026-02-12",
@@ -1991,13 +1995,17 @@
 "first_seen": "2025-02-13",
 "fv": 35
 },
+"grant_rogers": {
+"first_seen": "2026-02-12",
+"fv": 35
+},
 "grant_shepardson": {
 "first_seen": "2025-01-22",
 "fv": 38
 },
 "grayson_hitt": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "gregory_barrios": {
 "first_seen": "2026-06-26",
@@ -2009,7 +2017,7 @@
 },
 "griff_mcgarry": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "griff_oferrall": {
 "first_seen": "2026-02-12",
@@ -2021,19 +2029,19 @@
 },
 "griffin_herring": {
 "first_seen": "2026-02-12",
-"fv": 39
+"fv": 40
 },
 "griffin_hugus": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "gustavo_melendez": {
 "first_seen": "2026-06-04",
 "fv": 35
 },
 "hagen_smith": {
-"first_seen": "2026-07-07",
-"fv": 53
+"first_seen": "2026-07-15",
+"fv": 52
 },
 "hancel_rincon": {
 "first_seen": "2026-02-12",
@@ -2065,7 +2073,7 @@
 },
 "hayden_mullins": {
 "first_seen": "2026-05-22",
-"fv": 40
+"fv": 38
 },
 "hayden_wynja": {
 "first_seen": "2025-07-31",
@@ -2077,15 +2085,15 @@
 },
 "hector_rodriguez": {
 "first_seen": "2026-02-12",
-"fv": 48
+"fv": 47
 },
 "hendry_mendez": {
 "first_seen": "2026-06-12",
-"fv": 48
+"fv": 47
 },
 "henry_baez": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "henry_godbout": {
 "first_seen": "2026-05-22",
@@ -2105,11 +2113,11 @@
 },
 "herick_hernandez": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "hiro_wyatt": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "homer_bush_jr": {
 "first_seen": "2026-06-26",
@@ -2125,7 +2133,7 @@
 },
 "hunter_cranton": {
 "first_seen": "2026-02-12",
-"fv": 36
+"fv": 40
 },
 "hunter_dryden": {
 "first_seen": "2026-06-05",
@@ -2137,7 +2145,7 @@
 },
 "hyun_seung_lee": {
 "first_seen": "2026-06-04",
-"fv": 43
+"fv": 38
 },
 "hyungchan_um": {
 "first_seen": "2025-01-22",
@@ -2145,7 +2153,7 @@
 },
 "hyunseok_jang": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 45
 },
 "ian_bedell": {
 "first_seen": "2025-01-22",
@@ -2173,7 +2181,7 @@
 },
 "ismael_agreda": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "ivan_luciano": {
 "first_seen": "2026-02-12",
@@ -2189,11 +2197,11 @@
 },
 "izaac_pacheco": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "izack_tiger": {
 "first_seen": "2026-02-12",
-"fv": 39
+"fv": 40
 },
 "jace_avina": {
 "first_seen": "2026-01-22",
@@ -2209,11 +2217,11 @@
 },
 "jack_cebert": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "jack_choate": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "jack_gurevitch": {
 "first_seen": "2026-02-12",
@@ -2229,7 +2237,7 @@
 },
 "jack_mahoney": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "jack_wenninger": {
 "first_seen": "2026-07-07",
@@ -2245,11 +2253,11 @@
 },
 "jackson_cox": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "jackson_humphries": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "jackson_kent": {
 "first_seen": "2026-02-12",
@@ -2257,7 +2265,7 @@
 },
 "jackson_nezuh": {
 "first_seen": "2026-02-12",
-"fv": 37
+"fv": 40
 },
 "jackson_strong": {
 "first_seen": "2026-02-12",
@@ -2269,7 +2277,7 @@
 },
 "jacob_bresnahan": {
 "first_seen": "2026-06-05",
-"fv": 45
+"fv": 47
 },
 "jacob_cozart": {
 "first_seen": "2026-02-12",
@@ -2281,7 +2289,7 @@
 },
 "jacob_kisting": {
 "first_seen": "2026-06-26",
-"fv": 43
+"fv": 40
 },
 "jacob_kuhn": {
 "first_seen": "2026-06-26",
@@ -2293,23 +2301,23 @@
 },
 "jacob_odle": {
 "first_seen": "2026-01-22",
-"fv": 42
+"fv": 40
 },
 "jacob_reimer": {
-"first_seen": "2026-06-30",
-"fv": 49
+"first_seen": "2026-07-07",
+"fv": 46
 },
 "jacob_steinmetz": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "jacob_wallace": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "jacob_zibin": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "jaden_fauske": {
 "first_seen": "2026-02-12",
@@ -2317,7 +2325,7 @@
 },
 "jaden_hamm": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "jaden_woods": {
 "first_seen": "2026-06-04",
@@ -2329,7 +2337,7 @@
 },
 "jagger_haynes": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "jaiden_lo_re": {
 "first_seen": "2026-06-03",
@@ -2344,8 +2352,8 @@
 "fv": 35
 },
 "jaison_chourio": {
-"first_seen": "2026-07-14",
-"fv": 49
+"first_seen": "2026-07-15",
+"fv": 45
 },
 "jake_cook": {
 "first_seen": "2026-02-12",
@@ -2377,7 +2385,7 @@
 },
 "james_ellwanger__sa3030911": {
 "first_seen": "2026-06-12",
-"fv": 42
+"fv": 45
 },
 "james_hicks": {
 "first_seen": "2026-02-12",
@@ -2388,16 +2396,16 @@
 "fv": 35
 },
 "james_tibbs_iii": {
-"first_seen": "2026-07-06",
-"fv": 50
+"first_seen": "2026-07-15",
+"fv": 48
 },
 "james_triantos": {
 "first_seen": "2026-02-12",
 "fv": 43
 },
 "jamie_arnold": {
-"first_seen": "2026-07-14",
-"fv": 47
+"first_seen": "2026-07-15",
+"fv": 48
 },
 "jancel_villarroel": {
 "first_seen": "2026-06-05",
@@ -2413,11 +2421,11 @@
 },
 "jared_johnson": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "jared_karros": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "jared_serna": {
 "first_seen": "2026-06-15",
@@ -2429,7 +2437,7 @@
 },
 "jared_thomas": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "jarlin_susana": {
 "first_seen": "2026-07-14",
@@ -2437,11 +2445,11 @@
 },
 "jarold_rosado": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "jaron_deberry": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "jase_mitchell": {
 "first_seen": "2026-02-12",
@@ -2449,11 +2457,11 @@
 },
 "javier_mogollon": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "javier_vaz": {
 "first_seen": "2025-07-31",
-"fv": 43
+"fv": 42
 },
 "jaxon_wiggins": {
 "first_seen": "2026-06-29",
@@ -2465,11 +2473,11 @@
 },
 "jaydenn_estanista": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "jb_middleton": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "jd_dix": {
 "first_seen": "2026-02-12",
@@ -2488,16 +2496,20 @@
 "fv": 35
 },
 "jeancer_custodio": {
-"first_seen": "2026-07-14",
-"fv": 40
+"first_seen": "2026-07-15",
+"fv": 42
 },
 "jeanpierre_ortiz": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "jefferson_rojas": {
 "first_seen": "2024-02-14",
 "fv": 52
+},
+"jensen_hirschkorn": {
+"first_seen": "2026-07-15",
+"fv": 40
 },
 "jeral_perez": {
 "first_seen": "2026-02-12",
@@ -2513,11 +2525,11 @@
 },
 "jesus_baez": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 43
 },
 "jesus_castillo": {
 "first_seen": "2024-01-22",
-"fv": 40
+"fv": 38
 },
 "jesus_galiz": {
 "first_seen": "2024-08-01",
@@ -2533,7 +2545,7 @@
 },
 "jeter_martinez": {
 "first_seen": "2026-01-22",
-"fv": 42
+"fv": 40
 },
 "jett_williams": {
 "first_seen": "2026-07-07",
@@ -2545,11 +2557,11 @@
 },
 "jhomnardo_reyes": {
 "first_seen": "2026-06-12",
-"fv": 47
+"fv": 43
 },
 "jhonan_coba": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "jhonayker_ugarte": {
 "first_seen": "2025-01-22",
@@ -2565,7 +2577,7 @@
 },
 "jimmy_joyce": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "jirvin_morillo": {
 "first_seen": "2026-02-12",
@@ -2573,15 +2585,15 @@
 },
 "joander_suarez": {
 "first_seen": "2024-01-22",
-"fv": 40
+"fv": 38
 },
 "joe_whitman": {
 "first_seen": "2026-06-05",
-"fv": 42
+"fv": 40
 },
 "joel_diaz": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "joel_hurtado": {
 "first_seen": "2026-02-12",
@@ -2593,19 +2605,19 @@
 },
 "joey_oakie": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "joey_volini": {
 "first_seen": "2026-06-15",
-"fv": 38
+"fv": 35
 },
 "jogly_garcia": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "johan_de_los_santos": {
 "first_seen": "2026-06-04",
-"fv": 45
+"fv": 44
 },
 "johanfran_garcia": {
 "first_seen": "2026-01-22",
@@ -2621,7 +2633,7 @@
 },
 "john_holobetz": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 43
 },
 "john_peck": {
 "first_seen": "2026-02-12",
@@ -2645,7 +2657,7 @@
 },
 "jojo_ingrassia": {
 "first_seen": "2026-05-22",
-"fv": 41
+"fv": 40
 },
 "jojo_parker": {
 "first_seen": "2026-07-07",
@@ -2685,7 +2697,7 @@
 },
 "jorge_marcheco": {
 "first_seen": "2024-01-22",
-"fv": 42
+"fv": 40
 },
 "jorge_quintana": {
 "first_seen": "2026-02-12",
@@ -2721,11 +2733,11 @@
 },
 "jose_olivares": {
 "first_seen": "2026-06-12",
-"fv": 38
+"fv": 35
 },
 "jose_paulino": {
 "first_seen": "2025-07-31",
-"fv": 46
+"fv": 43
 },
 "jose_pena": {
 "first_seen": "2026-02-12",
@@ -2757,7 +2769,7 @@
 },
 "joseph_montalvo": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "joseph_sullivan": {
 "first_seen": "2026-02-12",
@@ -2765,7 +2777,7 @@
 },
 "joseph_yabbour": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "josh_adamczewski": {
 "first_seen": "2026-07-07",
@@ -2781,7 +2793,7 @@
 },
 "josh_grosz": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "josh_hammond": {
 "first_seen": "2026-07-14",
@@ -2789,7 +2801,7 @@
 },
 "josh_hansell": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "josh_hartle": {
 "first_seen": "2026-02-12",
@@ -2801,7 +2813,7 @@
 },
 "josh_knoth": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "josh_mallitz": {
 "first_seen": "2026-02-12",
@@ -2821,15 +2833,15 @@
 },
 "josh_stephan": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "josh_trentadue": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "joshua_baez": {
-"first_seen": "2026-07-07",
-"fv": 48
+"first_seen": "2026-07-15",
+"fv": 50
 },
 "joshua_liranzo": {
 "first_seen": "2026-02-12",
@@ -2845,7 +2857,7 @@
 },
 "josueth_quinonez": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "joswa_lugo": {
 "first_seen": "2026-02-12",
@@ -2853,7 +2865,7 @@
 },
 "jt_quinn": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "juan_baez": {
 "first_seen": "2025-01-22",
@@ -2861,7 +2873,7 @@
 },
 "juan_bello": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "juan_cabada": {
 "first_seen": "2026-02-12",
@@ -2881,7 +2893,7 @@
 },
 "juan_flores": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 42
 },
 "juan_matheus": {
 "first_seen": "2026-06-15",
@@ -2889,7 +2901,7 @@
 },
 "juan_nunez": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "juan_rijo": {
 "first_seen": "2026-07-07",
@@ -2913,11 +2925,11 @@
 },
 "juan_villavicencio": {
 "first_seen": "2026-06-03",
-"fv": 43
+"fv": 38
 },
 "juaron_wattsbrown": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "jud_fabian": {
 "first_seen": "2026-02-12",
@@ -2933,7 +2945,7 @@
 },
 "junior_ciprian": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "junior_william": {
 "first_seen": "2026-06-26",
@@ -2941,11 +2953,11 @@
 },
 "junseok_shim": {
 "first_seen": "2024-08-01",
-"fv": 44
+"fv": 43
 },
 "jurrangelo_cijntje": {
 "first_seen": "2026-06-26",
-"fv": 48
+"fv": 50
 },
 "justice_bigbie": {
 "first_seen": "2025-01-22",
@@ -2953,15 +2965,15 @@
 },
 "justin_armbruester": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "justin_campbell": {
 "first_seen": "2026-01-22",
-"fv": 42
+"fv": 43
 },
 "justin_gonzales": {
-"first_seen": "2026-06-30",
-"fv": 54
+"first_seen": "2026-07-15",
+"fv": 50
 },
 "justin_lamkin": {
 "first_seen": "2026-02-12",
@@ -2993,11 +3005,11 @@
 },
 "kale_fountain": {
 "first_seen": "2026-02-12",
-"fv": 35
+"fv": 38
 },
 "kaleb_wing": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "kane_kepley": {
 "first_seen": "2026-02-12",
@@ -3025,7 +3037,7 @@
 },
 "kc_hunt": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "keaton_anthony": {
 "first_seen": "2026-02-12",
@@ -3053,7 +3065,7 @@
 },
 "kelvis_salcedo": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "kemp_alderman": {
 "first_seen": "2026-06-15",
@@ -3068,8 +3080,8 @@
 "fv": 40
 },
 "kendri_fana": {
-"first_seen": "2026-07-07",
-"fv": 42
+"first_seen": "2026-07-15",
+"fv": 40
 },
 "kendry_chourio": {
 "first_seen": "2026-06-29",
@@ -3085,11 +3097,11 @@
 },
 "kenny_fenelon": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "kenya_huggins": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "kevin_abel": {
 "first_seen": "2026-02-12",
@@ -3113,11 +3125,11 @@
 },
 "kevin_made": {
 "first_seen": "2025-07-31",
-"fv": 35
+"fv": 38
 },
 "keyner_benitez": {
 "first_seen": "2026-06-15",
-"fv": 42
+"fv": 43
 },
 "keyner_martinez": {
 "first_seen": "2026-06-05",
@@ -3125,7 +3137,7 @@
 },
 "keythel_key": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "khadim_diaw": {
 "first_seen": "2026-06-12",
@@ -3145,7 +3157,7 @@
 },
 "kohl_drake": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "konner_eaton": {
 "first_seen": "2026-02-12",
@@ -3173,7 +3185,7 @@
 },
 "kyle_carr": {
 "first_seen": "2026-01-22",
-"fv": 42
+"fv": 40
 },
 "kyle_debarge": {
 "first_seen": "2026-06-12",
@@ -3185,7 +3197,7 @@
 },
 "kyson_witherspoon": {
 "first_seen": "2026-07-07",
-"fv": 48
+"fv": 49
 },
 "lamar_king_jr": {
 "first_seen": "2026-02-12",
@@ -3197,11 +3209,11 @@
 },
 "landon_beidelschies": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "landon_harmon": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 45
 },
 "landon_hodge": {
 "first_seen": "2026-02-12",
@@ -3209,7 +3221,7 @@
 },
 "landon_sims": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "landyn_vidourek": {
 "first_seen": "2026-02-12",
@@ -3221,7 +3233,7 @@
 },
 "leandro_arias": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 40
 },
 "leandro_lopez": {
 "first_seen": "2026-02-12",
@@ -3237,7 +3249,7 @@
 },
 "leo_bernal": {
 "first_seen": "2026-02-12",
-"fv": 46
+"fv": 45
 },
 "leonardo_pineda": {
 "first_seen": "2025-07-31",
@@ -3245,7 +3257,7 @@
 },
 "leonardo_taveras": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "leonel_sequera": {
 "first_seen": "2026-02-12",
@@ -3253,7 +3265,7 @@
 },
 "levi_sterling": {
 "first_seen": "2026-06-04",
-"fv": 42
+"fv": 43
 },
 "levi_wells": {
 "first_seen": "2026-02-12",
@@ -3269,7 +3281,7 @@
 },
 "liomar_martinez": {
 "first_seen": "2026-06-15",
-"fv": 42
+"fv": 40
 },
 "lisbel_diaz": {
 "first_seen": "2026-01-22",
@@ -3281,11 +3293,11 @@
 },
 "logan_poteet": {
 "first_seen": "2026-01-22",
-"fv": 40
+"fv": 38
 },
 "logan_tabeling": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 37
 },
 "logan_wagner": {
 "first_seen": "2026-02-12",
@@ -3293,7 +3305,7 @@
 },
 "logan_workman": {
 "first_seen": "2025-07-31",
-"fv": 37
+"fv": 35
 },
 "lonnie_white_jr": {
 "first_seen": "2026-01-22",
@@ -3305,7 +3317,7 @@
 },
 "lucas_braun": {
 "first_seen": "2026-02-12",
-"fv": 37
+"fv": 40
 },
 "lucas_wepf": {
 "first_seen": "2025-07-31",
@@ -3313,7 +3325,7 @@
 },
 "luis_almeyda": {
 "first_seen": "2024-01-22",
-"fv": 38
+"fv": 40
 },
 "luis_arana": {
 "first_seen": "2026-06-15",
@@ -3333,7 +3345,7 @@
 },
 "luis_de_la_torre": {
 "first_seen": "2026-06-05",
-"fv": 20
+"fv": 40
 },
 "luis_de_leon": {
 "first_seen": "2026-02-12",
@@ -3353,15 +3365,15 @@
 },
 "luis_perales": {
 "first_seen": "2026-03-04",
-"fv": 45
+"fv": 47
 },
 "luis_r_rodriguez": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "luis_serna": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "luis_suisbel": {
 "first_seen": "2026-02-12",
@@ -3385,7 +3397,7 @@
 },
 "luke_hayden": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "luke_hill": {
 "first_seen": "2026-06-03",
@@ -3393,7 +3405,7 @@
 },
 "luke_holman": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "luke_sinnard": {
 "first_seen": "2026-02-12",
@@ -3405,7 +3417,7 @@
 },
 "luke_waddell": {
 "first_seen": "2024-08-01",
-"fv": 35
+"fv": 38
 },
 "mac_horvath": {
 "first_seen": "2025-07-31",
@@ -3413,11 +3425,11 @@
 },
 "maddux_bruns": {
 "first_seen": "2025-01-22",
-"fv": 42
+"fv": 40
 },
 "malachi_witherspoon": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "malcolm_moore": {
 "first_seen": "2026-02-12",
@@ -3433,7 +3445,7 @@
 },
 "manuel_genao": {
 "first_seen": "2026-06-15",
-"fv": 42
+"fv": 40
 },
 "marcelo_perez": {
 "first_seen": "2026-02-12",
@@ -3461,11 +3473,11 @@
 },
 "marcus_johnson": {
 "first_seen": "2026-06-26",
-"fv": 40
+"fv": 38
 },
 "marcus_phillips": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 43
 },
 "marek_houston": {
 "first_seen": "2026-06-12",
@@ -3477,7 +3489,7 @@
 },
 "marlon_nieves": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "marlon_quintero": {
 "first_seen": "2026-02-12",
@@ -3489,7 +3501,7 @@
 },
 "marquis_grissom_jr": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "marvin_alcantara": {
 "first_seen": "2026-05-22",
@@ -3497,7 +3509,7 @@
 },
 "mason_adams": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "mason_albright": {
 "first_seen": "2024-08-01",
@@ -3505,7 +3517,7 @@
 },
 "mason_marriott": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "mason_mcgwire": {
 "first_seen": "2026-01-22",
@@ -3525,7 +3537,7 @@
 },
 "mason_peters": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "mason_white": {
 "first_seen": "2026-05-22",
@@ -3537,7 +3549,7 @@
 },
 "mathias_lacombe": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 40
 },
 "matt_ager": {
 "first_seen": "2026-06-04",
@@ -3553,7 +3565,7 @@
 },
 "matthew_fisher": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "matthew_wood": {
 "first_seen": "2026-02-12",
@@ -3561,7 +3573,7 @@
 },
 "maui_ahuna": {
 "first_seen": "2026-06-05",
-"fv": 35
+"fv": 38
 },
 "mavis_graves": {
 "first_seen": "2026-01-22",
@@ -3597,11 +3609,11 @@
 },
 "micah_bucknam": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "michael_arias": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "michael_arroyo": {
 "first_seen": "2026-07-07",
@@ -3613,11 +3625,11 @@
 },
 "michael_kennedy": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "michael_knorr": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "michael_lombardi": {
 "first_seen": "2026-02-12",
@@ -3625,7 +3637,7 @@
 },
 "michael_morales": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "michael_oliveto": {
 "first_seen": "2026-02-12",
@@ -3633,11 +3645,11 @@
 },
 "michael_prosecky": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "michael_salina": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "miguel_bleis": {
 "first_seen": "2026-05-22",
@@ -3645,7 +3657,7 @@
 },
 "miguel_mendez": {
 "first_seen": "2026-02-12",
-"fv": 46
+"fv": 48
 },
 "miguel_palma": {
 "first_seen": "2024-01-22",
@@ -3673,7 +3685,7 @@
 },
 "misael_tamarez": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "mitch_jebb": {
 "first_seen": "2025-01-22",
@@ -3685,11 +3697,11 @@
 },
 "moises_chace": {
 "first_seen": "2026-02-12",
-"fv": 45
+"fv": 47
 },
 "murf_gray": {
 "first_seen": "2026-07-07",
-"fv": 47
+"fv": 48
 },
 "myles_naylor": {
 "first_seen": "2025-07-31",
@@ -3701,19 +3713,19 @@
 },
 "nate_dohm": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "nate_furman": {
 "first_seen": "2026-06-05",
 "fv": 43
 },
 "nate_george": {
-"first_seen": "2026-07-14",
-"fv": 48
+"first_seen": "2026-07-15",
+"fv": 49
 },
 "nate_lavender": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "nate_nankil": {
 "first_seen": "2026-01-22",
@@ -3729,7 +3741,7 @@
 },
 "nathan_hall": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "nathan_martorella": {
 "first_seen": "2025-07-31",
@@ -3741,11 +3753,11 @@
 },
 "nazier_mule": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "nazzan_zanetello": {
 "first_seen": "2025-01-22",
-"fv": 35
+"fv": 38
 },
 "nelly_taylor": {
 "first_seen": "2026-05-22",
@@ -3765,7 +3777,7 @@
 },
 "nick_frasso": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "nick_mclain": {
 "first_seen": "2025-01-22",
@@ -3785,7 +3797,7 @@
 },
 "nick_potter": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 38
 },
 "nigel_belgrave": {
 "first_seen": "2025-07-31",
@@ -3805,7 +3817,7 @@
 },
 "noah_dean": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "noah_miller": {
 "first_seen": "2026-02-12",
@@ -3813,7 +3825,7 @@
 },
 "noble_meyer": {
 "first_seen": "2026-06-15",
-"fv": 40
+"fv": 38
 },
 "nolan_perry": {
 "first_seen": "2026-07-07",
@@ -3845,19 +3857,23 @@
 },
 "owen_hall": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "owen_wild": {
 "first_seen": "2026-06-26",
-"fv": 45
+"fv": 40
 },
 "pablo_aliendo": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "parker_smith": {
 "first_seen": "2026-01-22",
 "fv": 38
+},
+"parks_harber": {
+"first_seen": "2026-06-05",
+"fv": 45
 },
 "patrick_copen": {
 "first_seen": "2026-02-12",
@@ -3869,15 +3885,15 @@
 },
 "patrick_reilly": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "paul_bonzagni": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "paul_wilson": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "paulino_santana": {
 "first_seen": "2026-02-12",
@@ -3901,7 +3917,7 @@
 },
 "pedro_catuy": {
 "first_seen": "2025-07-31",
-"fv": 35
+"fv": 38
 },
 "pedro_gomez": {
 "first_seen": "2026-07-07",
@@ -3913,7 +3929,7 @@
 },
 "pete_hansen": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "peter_heubeck": {
 "first_seen": "2026-02-12",
@@ -3925,11 +3941,15 @@
 },
 "peyton_alford": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "peyton_graham": {
 "first_seen": "2024-08-01",
 "fv": 38
+},
+"peyton_olejnik": {
+"first_seen": "2026-02-12",
+"fv": 40
 },
 "peyton_stovall": {
 "first_seen": "2025-07-31",
@@ -3941,7 +3961,7 @@
 },
 "pierce_coppola": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "pj_morlando": {
 "first_seen": "2026-01-22",
@@ -3953,11 +3973,11 @@
 },
 "quentin_young": {
 "first_seen": "2026-06-03",
-"fv": 43
+"fv": 40
 },
 "quinn_mathews": {
 "first_seen": "2026-02-12",
-"fv": 49
+"fv": 48
 },
 "rafael_ramirez_jr": {
 "first_seen": "2024-08-01",
@@ -3969,11 +3989,11 @@
 },
 "raimon_gomez": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "ralphy_velazquez": {
-"first_seen": "2026-07-07",
-"fv": 54
+"first_seen": "2026-07-15",
+"fv": 52
 },
 "ramcell_medina": {
 "first_seen": "2026-02-12",
@@ -4021,11 +4041,11 @@
 },
 "reed_trimble": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 40
 },
 "reggie_crawford": {
 "first_seen": "2026-06-05",
-"fv": 34
+"fv": 40
 },
 "reidis_sena": {
 "first_seen": "2024-08-01",
@@ -4033,15 +4053,15 @@
 },
 "reiner_lopez": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 43
 },
 "reinold_navarro": {
 "first_seen": "2026-06-04",
-"fv": 49
+"fv": 48
 },
 "reynaldo_yean": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "ricardo_olivar": {
 "first_seen": "2026-06-12",
@@ -4049,7 +4069,7 @@
 },
 "ricardo_yan": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "richard_de_los_santos": {
 "first_seen": "2026-02-12",
@@ -4061,11 +4081,11 @@
 },
 "richard_gallardo": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "richard_matic": {
 "first_seen": "2026-06-03",
-"fv": 40
+"fv": 35
 },
 "ricki_moneys": {
 "first_seen": "2026-07-07",
@@ -4097,15 +4117,15 @@
 },
 "rj_dabovich": {
 "first_seen": "2024-01-22",
-"fv": 40
+"fv": 38
 },
 "rj_petit": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "rj_sales": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 38
 },
 "rj_schreck": {
 "first_seen": "2026-02-12",
@@ -4129,7 +4149,7 @@
 },
 "robinson_ortiz": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "roc_riggio": {
 "first_seen": "2026-02-12",
@@ -4145,11 +4165,11 @@
 },
 "roman_angelo": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "romeli_espinosa": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "romeo_sanabria": {
 "first_seen": "2026-01-22",
@@ -4169,7 +4189,7 @@
 },
 "rory_fox": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "rosman_verdugo": {
 "first_seen": "2025-01-22",
@@ -4177,7 +4197,7 @@
 },
 "royber_salinas": {
 "first_seen": "2025-07-31",
-"fv": 39
+"fv": 40
 },
 "royelny_strop": {
 "first_seen": "2025-07-31",
@@ -4213,7 +4233,7 @@
 },
 "ryan_costeiu": {
 "first_seen": "2025-01-22",
-"fv": 35
+"fv": 40
 },
 "ryan_forcucci": {
 "first_seen": "2026-02-12",
@@ -4221,7 +4241,7 @@
 },
 "ryan_gallagher": {
 "first_seen": "2026-06-12",
-"fv": 42
+"fv": 40
 },
 "ryan_ignoffo": {
 "first_seen": "2026-06-15",
@@ -4229,7 +4249,7 @@
 },
 "ryan_jennings": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "ryan_lambert": {
 "first_seen": "2026-02-12",
@@ -4265,7 +4285,7 @@
 },
 "sadbiel_delzine": {
 "first_seen": "2026-05-22",
-"fv": 42
+"fv": 40
 },
 "sam_brown": {
 "first_seen": "2026-02-12",
@@ -4273,7 +4293,7 @@
 },
 "sam_shaw": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "sammy_siani": {
 "first_seen": "2024-02-14",
@@ -4289,7 +4309,7 @@
 },
 "samuel_sanchez": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "samuel_zavala": {
 "first_seen": "2024-01-22",
@@ -4309,7 +4329,7 @@
 },
 "santiago_suarez": {
 "first_seen": "2026-06-26",
-"fv": 45
+"fv": 47
 },
 "sean_gamble": {
 "first_seen": "2026-02-12",
@@ -4317,11 +4337,11 @@
 },
 "sean_paul_linan": {
 "first_seen": "2026-02-12",
-"fv": 41
+"fv": 38
 },
 "sean_sullivan": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "seaver_king": {
 "first_seen": "2026-07-07",
@@ -4333,11 +4353,15 @@
 },
 "sebastian_dos_santos": {
 "first_seen": "2026-06-03",
-"fv": 43
+"fv": 38
 },
 "sebastian_romero": {
 "first_seen": "2026-02-12",
 "fv": 40
+},
+"sebastian_walcott": {
+"first_seen": "2026-07-15",
+"fv": 52
 },
 "sem_robberse": {
 "first_seen": "2026-02-12",
@@ -4345,11 +4369,11 @@
 },
 "seongjun_kim": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "seth_keener": {
 "first_seen": "2025-07-31",
-"fv": 40
+"fv": 38
 },
 "seth_shuman": {
 "first_seen": "2024-08-01",
@@ -4361,15 +4385,15 @@
 },
 "shane_murphy": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "shane_panzini": {
 "first_seen": "2026-01-22",
-"fv": 38
+"fv": 35
 },
 "shengen_lin": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "shotaro_morii": {
 "first_seen": "2026-02-12",
@@ -4381,7 +4405,7 @@
 },
 "silvano_hechavarria": {
 "first_seen": "2026-02-12",
-"fv": 39
+"fv": 40
 },
 "sir_jamison_jones": {
 "first_seen": "2026-02-12",
@@ -4389,7 +4413,7 @@
 },
 "skylar_hales": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "slade_caldwell": {
 "first_seen": "2026-02-12",
@@ -4401,7 +4425,7 @@
 },
 "spencer_giesting": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "spencer_packard": {
 "first_seen": "2025-07-31",
@@ -4425,7 +4449,7 @@
 },
 "steven_echavarria": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "steven_perez": {
 "first_seen": "2026-02-12",
@@ -4437,7 +4461,7 @@
 },
 "stevie_emanuels": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "stiven_marinez": {
 "first_seen": "2026-02-12",
@@ -4457,11 +4481,11 @@
 },
 "talon_haley": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "tanner_franklin": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "tanner_kohlhepp": {
 "first_seen": "2025-07-31",
@@ -4489,7 +4513,7 @@
 },
 "taylor_dollard": {
 "first_seen": "2024-08-01",
-"fv": 40
+"fv": 38
 },
 "teddy_mcgraw": {
 "first_seen": "2026-02-12",
@@ -4497,7 +4521,7 @@
 },
 "tekoah_roby": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "termarr_johnson": {
 "first_seen": "2026-06-04",
@@ -4505,7 +4529,7 @@
 },
 "thatcher_hurd": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "thayron_liranzo": {
 "first_seen": "2026-02-12",
@@ -4537,11 +4561,11 @@
 },
 "tj_nichols": {
 "first_seen": "2026-06-26",
-"fv": 42
+"fv": 45
 },
 "tj_sikkema": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "tj_white": {
 "first_seen": "2024-01-22",
@@ -4557,11 +4581,11 @@
 },
 "tony_blanco_jr": {
 "first_seen": "2026-06-04",
-"fv": 42
+"fv": 38
 },
 "tony_rossi": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 40
 },
 "trace_bright": {
 "first_seen": "2026-02-12",
@@ -4577,7 +4601,7 @@
 },
 "trent_harris": {
 "first_seen": "2026-06-05",
-"fv": 38
+"fv": 40
 },
 "trevor_cohen": {
 "first_seen": "2026-06-05",
@@ -4585,15 +4609,15 @@
 },
 "trevor_harrison": {
 "first_seen": "2026-06-26",
-"fv": 42
+"fv": 43
 },
 "trey_dombroski": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "trey_gregoryalford": {
 "first_seen": "2026-02-12",
-"fv": 20
+"fv": 45
 },
 "trey_mcgough": {
 "first_seen": "2024-08-01",
@@ -4601,11 +4625,11 @@
 },
 "trey_snyder": {
 "first_seen": "2025-01-22",
-"fv": 40
+"fv": 38
 },
 "tristan_smith": {
 "first_seen": "2025-01-22",
-"fv": 40
+"fv": 38
 },
 "trystan_vrieling": {
 "first_seen": "2025-01-22",
@@ -4617,7 +4641,7 @@
 },
 "twine_palmer": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "ty_floyd": {
 "first_seen": "2026-02-12",
@@ -4625,7 +4649,7 @@
 },
 "ty_harvey": {
 "first_seen": "2026-06-03",
-"fv": 43
+"fv": 40
 },
 "ty_johnson": {
 "first_seen": "2026-06-26",
@@ -4637,7 +4661,7 @@
 },
 "tyler_baum": {
 "first_seen": "2024-01-22",
-"fv": 42
+"fv": 40
 },
 "tyler_bremner": {
 "first_seen": "2026-06-29",
@@ -4653,19 +4677,19 @@
 },
 "tyler_mattison": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "tyler_schlaffer": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "tyler_stuart": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "tyler_thornton": {
 "first_seen": "2024-08-01",
-"fv": 38
+"fv": 35
 },
 "tyson_guerrero": {
 "first_seen": "2026-02-12",
@@ -4685,7 +4709,7 @@
 },
 "ubaldo_soto": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "vance_honeycutt": {
 "first_seen": "2026-01-22",
@@ -4697,7 +4721,7 @@
 },
 "victor_acosta": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "victor_arias": {
 "first_seen": "2026-02-12",
@@ -4709,11 +4733,11 @@
 },
 "victor_lizarraga": {
 "first_seen": "2025-07-31",
-"fv": 38
+"fv": 35
 },
 "vladimir_asencio": {
 "first_seen": "2024-01-22",
-"fv": 38
+"fv": 40
 },
 "walker_janek": {
 "first_seen": "2026-02-12",
@@ -4721,11 +4745,11 @@
 },
 "walker_martin": {
 "first_seen": "2025-01-22",
-"fv": 38
+"fv": 40
 },
 "walter_ford": {
 "first_seen": "2024-01-22",
-"fv": 38
+"fv": 35
 },
 "warel_solano": {
 "first_seen": "2026-06-26",
@@ -4737,7 +4761,7 @@
 },
 "wehiwa_aloy": {
 "first_seen": "2026-06-03",
-"fv": 45
+"fv": 43
 },
 "weien_lin": {
 "first_seen": "2026-02-12",
@@ -4749,15 +4773,15 @@
 },
 "wellington_aracena": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "wenhui_pan": {
-"first_seen": "2025-02-13",
-"fv": 43
+"first_seen": "2026-02-12",
+"fv": 45
 },
 "wilberson_de_pena": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 42
 },
 "wilder_dalis": {
 "first_seen": "2026-02-12",
@@ -4777,7 +4801,7 @@
 },
 "wilian_bormie": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "will_bush": {
 "first_seen": "2026-02-12",
@@ -4785,15 +4809,15 @@
 },
 "will_hynes": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "will_johnston": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "will_sanders": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "will_simpson": {
 "first_seen": "2026-06-26",
@@ -4813,7 +4837,7 @@
 },
 "wilmer_flores": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "wilton_guerrero_jr": {
 "first_seen": "2026-07-07",
@@ -4845,7 +4869,7 @@
 },
 "yaqui_rivera": {
 "first_seen": "2026-02-12",
-"fv": 40
+"fv": 38
 },
 "yassel_soler": {
 "first_seen": "2026-02-12",
@@ -4877,7 +4901,7 @@
 },
 "yereny_teus": {
 "first_seen": "2026-06-26",
-"fv": 42
+"fv": 40
 },
 "yerlin_confidan": {
 "first_seen": "2026-02-12",
@@ -4893,7 +4917,7 @@
 },
 "yhoiker_fajardo": {
 "first_seen": "2026-02-12",
-"fv": 43
+"fv": 45
 },
 "yiddi_cappe": {
 "first_seen": "2025-07-31",
@@ -4913,7 +4937,7 @@
 },
 "yoel_tejeda_jr": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 43
 },
 "yoffry_solano": {
 "first_seen": "2025-07-31",
@@ -4925,7 +4949,7 @@
 },
 "yohanfer_santana": {
 "first_seen": "2026-06-15",
-"fv": 39
+"fv": 40
 },
 "yohendry_sanchez": {
 "first_seen": "2025-07-31",
@@ -4937,7 +4961,7 @@
 },
 "yondrei_rojas": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "yophery_rodriguez": {
 "first_seen": "2026-05-22",
@@ -4949,7 +4973,7 @@
 },
 "yordany_de_los_santos": {
 "first_seen": "2026-06-04",
-"fv": 45
+"fv": 43
 },
 "yordin_chalas": {
 "first_seen": "2026-02-12",
@@ -4969,7 +4993,7 @@
 },
 "yosber_sanchez": {
 "first_seen": "2025-07-31",
-"fv": 42
+"fv": 40
 },
 "yovanny_rodriguez": {
 "first_seen": "2026-02-12",
@@ -4977,7 +5001,7 @@
 },
 "yujanyer_herrera": {
 "first_seen": "2026-02-12",
-"fv": 38
+"fv": 35
 },
 "yulian_barreto": {
 "first_seen": "2026-01-22",
@@ -4985,15 +5009,15 @@
 },
 "yumin_lin": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "yunior_marte": {
 "first_seen": "2026-06-05",
-"fv": 38
+"fv": 40
 },
 "yunior_tur": {
 "first_seen": "2026-02-12",
-"fv": 42
+"fv": 40
 },
 "zac_leigh": {
 "first_seen": "2025-07-31",
@@ -5017,15 +5041,15 @@
 },
 "zach_root": {
 "first_seen": "2026-01-22",
-"fv": 50
+"fv": 48
 },
 "zack_showalter": {
 "first_seen": "2025-01-22",
-"fv": 40
+"fv": 38
 },
 "zander_mueth": {
 "first_seen": "2026-01-22",
-"fv": 40
+"fv": 38
 },
 "zane_taylor": {
 "first_seen": "2026-02-12",
