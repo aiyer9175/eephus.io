@@ -638,7 +638,30 @@ def qo_tax_usd(payor_tier: str, as_of) -> dict:
 # also flips the 2022 lockout fold to beating comps (13.35 vs 13.70).
 # regime / age_pos / qo_tier LOST their pre-registered gates (ledgered in
 # the same artifact); the flags stay for re-gating at future vintages.
-X_FEATURES = {"rate_line": True, "regime": False, "age_pos": False, "qo_tier": False}
+#
+# WAVE-2 arms (2026-07-16; pre-registered in the lab header BEFORE any run;
+# eval artifact data/fa_market_feature_lab_wave2_eval.json) -- SERVE-SIDE
+# alignment repairs consumed ONLY by fa_export's serve path. Nothing in this
+# module's fit/predict or in fa_backtest reads them, and the Gate-2 folds
+# already run the aligned regime (fold supply = enriched population at
+# fa_backtest.py:301; fold ages anchored in enriched_signings since ba3917d),
+# so Gate 2 is structurally byte-identical under either flag: the gate re-run
+# is a NOT-WORSE guard, the affirmative evidence is the lab-recorded serve
+# diagnostic (fa_export.serve_alignment_diagnostics).
+#   supply_pop  fa_export counts class supply over identity+history members
+#               (the serve-time analog of the enriched TRAINING population)
+#               instead of the whole scraped class. Audit 2026-07-16: the
+#               whole-class 2027 counts (RP 80 / POS 76) z-score +2.6..+2.8
+#               against training moments fit on enriched counts (mean ~33,
+#               sd ~17, max 61) -- a train/serve population mismatch.
+#   age_anchor  fa_export anchors the class projection age to the SEASON of
+#               the row that supplied it (the proj_export / enriched_signings
+#               ba3917d convention) instead of hist[0]'s season -- the stale
+#               form understated serve age by 1-2 years whenever the platform
+#               row lacked an age. Training ages are ALREADY anchored, so the
+#               live divergence is a train/serve skew.
+X_FEATURES = {"rate_line": True, "regime": False, "age_pos": False, "qo_tier": False,
+              "supply_pop": True, "age_anchor": True}
 
 
 def _x_rate_feats(s: dict) -> list[float]:
