@@ -322,10 +322,13 @@ function renderTradeMachine() {
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
 let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail fallback
-// GRPO group-panel sidecar availability. grpo_scores.json is NOT published to
-// every webroot (deploy/data_exclude.txt bars it in production), so the fetch
-// can 404 forever - track it so a chip click can say so honestly instead of
-// silently doing nothing.
+// GRPO group-panel sidecar availability. The full internals file
+// (grpo_scores.json) never ships (deploy/data_exclude.txt bars it), so we
+// fetch the slim public sidecar grpo_public.json instead - the projection
+// export_grpo_scores emits alongside the full file with only the fields the
+// panel renders. Until a deployment's pipeline has emitted it, the fetch can
+// 404 - track it so a chip click can say so honestly instead of silently
+// doing nothing. Never add a fallback fetch to the excluded full file.
 let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable"
 let _tbPool   = "all";
 let _tbTier   = "all";
@@ -779,11 +782,12 @@ function renderTradeBoard() {
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
         _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
-        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
-        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
-        // The sidecar is excluded from some webroots (deploy manifest), so a 404 is an
-        // expected outcome, not an error - mark it unavailable and degrade in the panel.
-        fetch(base + "grpo_scores.json" + vp, { cache: "no-cache" })
+        // GRPO group-panel data lives in the slim public sidecar; merge it so the
+        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
+        // already rendered. Before a deployment's first pipeline run emits the
+        // sidecar, this 404s - an expected outcome, not an error - so mark it
+        // unavailable and degrade in the panel.
+        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
           .then(r => r.ok ? r.json() : null)
           .then(g => {
             if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
@@ -940,11 +944,12 @@ function _tbShowGroup(playerKey) {
         _renderTBRows();
         _tbWireFilters();
         renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
-        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
-        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
-        // The sidecar is excluded from some webroots (deploy manifest), so a 404 is an
-        // expected outcome, not an error - mark it unavailable and degrade in the panel.
-        fetch(DATA_BASE + "grpo_scores.json", { cache: "no-cache" })
+        // GRPO group-panel data lives in the slim public sidecar; merge it so the
+        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
+        // already rendered. Before a deployment's first pipeline run emits the
+        // sidecar, this 404s - an expected outcome, not an error - so mark it
+        // unavailable and degrade in the panel.
+        fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
           .then(r => r.ok ? r.json() : null)
           .then(g => {
             if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }

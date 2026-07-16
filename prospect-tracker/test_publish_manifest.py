@@ -129,12 +129,15 @@ def test_excluded_data_is_not_fetched_by_any_page():
             pages.append((p, p.read_text(encoding="utf-8", errors="replace")))
     for name in _excluded_data_files():
         for path, src in pages:
-            for quote in ('"', "'"):
-                needle = f"{quote}/data/{name}"
-                assert needle not in src, (
-                    f"{path.name} references /data/{name} at runtime but "
-                    "deploy/data_exclude.txt stops it from shipping - "
-                    "remove it from the exclude list")
+            for quote in ('"', "'", "`"):
+                # '/data/<name>' is the direct fetch()/src= form; the bare
+                # '<name>' quoted form catches base-path concatenation
+                # (fetch(base + "grpo_scores.json") dodged the old needle).
+                for needle in (f"{quote}/data/{name}", f"{quote}{name}{quote}"):
+                    assert needle not in src, (
+                        f"{path.name} references {name} at runtime but "
+                        "deploy/data_exclude.txt stops it from shipping - "
+                        "remove it from the exclude list or drop the fetch")
 
 
 def test_excluded_data_is_not_a_registry_artifact():

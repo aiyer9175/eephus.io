@@ -72,6 +72,13 @@ INTEGRATION WITH TRADE VALUES
   bayes_trade_value reads this to lift/lower the FV prior before the
   Kalman update, effectively giving unranked / underranked players a
   more informed starting point.
+
+PUBLIC SIDECAR
+  grpo_scores.json is model internals and is excluded from the webroot
+  (deploy/data_exclude.txt). export_grpo_scores therefore also emits
+  data/grpo_public.json - a slim projection (see build_public_sidecar)
+  carrying only what the Trade Machine group panel renders. That file
+  SHIPS; the full file never does.
 """
 
 from __future__ import annotations
@@ -559,6 +566,59 @@ def score_player(player: dict, model: Any,
 # Batch export
 # ---------------------------------------------------------------------------
 
+# Public sidecar (data/grpo_public.json) - the slim projection the site fetches.
+#
+# The full artifact (grpo_scores.json) is model internals and is barred from
+# the webroot by deploy/data_exclude.txt, so the Trade Machine's GRPO group
+# panel fetches this sidecar instead. It carries ONLY the fields
+# assets/trademachine.js _tbShowGroup() renders - keep the three field lists
+# below in lockstep with that function (prospx/index.html has a twin copy).
+#
+# Anchors are limited to breakout_score >= _PUBLIC_MIN_BREAKOUT: the breakout
+# chip (the only UI path into the panel) renders at >= 0.55, so sub-threshold
+# players are unreachable; the 0.05 margin absorbs small score drift between
+# the sidecar and the chip's source (trade_values.json, stamped from the same
+# GRPO run). Full coverage would be ~3.6MB; the filter keeps it ~150KB.
+_PUBLIC_MIN_BREAKOUT = 0.50
+# Group-panel member rows: rank/name/pos/org/FV/age/level/age-vs-level/G-score.
+_PUBLIC_MEMBER_FIELDS = ("player_key", "player_name", "position", "org", "fv",
+                         "age", "current_level", "age_vs_level", "breakout_score")
+# Historical-comp rows: name/FV/WAR-per-yr/outcome (player_key is not rendered).
+_PUBLIC_COMP_FIELDS = ("player_name", "fv", "war_per_yr", "outcome")
+
+
+def build_public_sidecar(payload: dict) -> dict:
+    """Project the full GRPO artifact onto the public group-panel sidecar.
+
+    Derives everything from the just-built full payload so the two artifacts
+    can never drift: same run, same scores, same generated_at.
+    """
+    all_scores = payload.get("all_scores") or {}
+    slim: dict[str, dict] = {}
+    for key, s in all_scores.items():
+        if (s.get("breakout_score") or 0) < _PUBLIC_MIN_BREAKOUT:
+            continue
+        slim[key] = {
+            "player_name": s.get("player_name"),
+            "group":       s.get("group"),
+            "active_group_members": [
+                {f: m.get(f) for f in _PUBLIC_MEMBER_FIELDS}
+                for m in (s.get("active_group_members") or [])
+            ],
+            "comps": [
+                {f: c.get(f) for f in _PUBLIC_COMP_FIELDS}
+                for c in (s.get("comps") or [])
+            ],
+        }
+    return {
+        "generated_at":        payload.get("generated_at"),
+        "scored_count":        payload.get("scored_count"),
+        "included_count":      len(slim),
+        "min_breakout_score":  _PUBLIC_MIN_BREAKOUT,
+        "all_scores":          slim,
+    }
+
+
 def export_grpo_scores(
     active_players: list[dict],
     graduates: list[dict],
@@ -567,13 +627,17 @@ def export_grpo_scores(
     level_norms: dict | None = None,
     *,
     retrain: bool = True,
+    public_path: Path | str | None = None,
 ) -> dict:
     """Train (or load) the GRPO policy and score all active prospects.
 
-    Writes data/grpo_scores.json with per-player breakout scores and comps.
+    Writes data/grpo_scores.json with per-player breakout scores and comps,
+    plus the slim public sidecar (grpo_public.json next to out_path unless
+    public_path overrides it) that the site's group panel fetches.
     Returns a summary dict.
     """
-    out_path   = Path(out_path)
+    out_path    = Path(out_path)
+    public_path = Path(public_path) if public_path else out_path.parent / "grpo_public.json"
     model_path = Path(model_path) if model_path else _HERE / "data" / "grpo_model.pkl"
 
     # Build training data from graduates
@@ -604,10 +668,11 @@ def export_grpo_scores(
             model = train_grpo_policy(training_set, model_path)
 
     if model is None:
-        # Exiting here leaves the previous artifact on disk untouched -
-        # stale scores keep feeding trade-value FV priors, so be loud.
+        # Exiting here leaves the previous artifacts on disk untouched -
+        # stale scores keep feeding trade-value FV priors AND the public
+        # group-panel sidecar keeps serving old groups, so be loud.
         _log.warning("grpo: no model (empty training set or unreadable pickle); "
-                     "%s NOT refreshed", out_path.name)
+                     "%s and %s NOT refreshed", out_path.name, public_path.name)
         return {"error": "model training failed"}
 
     # Score all active prospects and build group membership index
@@ -674,7 +739,17 @@ def export_grpo_scores(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
     _log.info("grpo: wrote %d scores → %s", len(scores), out_path)
-    return {"scored": len(scores), "training_size": len(training_set)}
+
+    # Public sidecar: emitted alongside the full artifact from the SAME payload
+    # so the shipped group-panel data can never drift from the internals file.
+    public = build_public_sidecar(payload)
+    public_path.parent.mkdir(parents=True, exist_ok=True)
+    public_path.write_text(json.dumps(public, separators=(",", ":")), encoding="utf-8")
+    _log.info("grpo: wrote public sidecar (%d of %d anchors) → %s",
+              public["included_count"], len(scores), public_path)
+
+    return {"scored": len(scores), "training_size": len(training_set),
+            "public_anchors": public["included_count"]}
 
 
 # ---------------------------------------------------------------------------
@@ -690,9 +765,9 @@ if __name__ == "__main__":
     ap.add_argument("--top",  type=int, default=20, help="Show top N breakout candidates")
     args = ap.parse_args()
 
-    ts    = json.loads(Path("data/timeseries.json").read_text())
+    ts    = json.loads(Path("data/timeseries.json").read_text(encoding="utf-8"))
     gpath = Path("data/graduates.json")
-    grads = json.loads((gpath if gpath.exists() else Path("data/debuts.json")).read_text())
+    grads = json.loads((gpath if gpath.exists() else Path("data/debuts.json")).read_text(encoding="utf-8"))
     players  = ts.get("players") or []
     lnorms   = ts.get("level_norms")
 
@@ -717,7 +792,7 @@ if __name__ == "__main__":
                                      model_path=model_path, retrain=args.retrain)
         print(json.dumps(result, indent=2))
 
-        scores = json.loads(Path("data/grpo_scores.json").read_text())
+        scores = json.loads(Path("data/grpo_scores.json").read_text(encoding="utf-8"))
         print(f"\nTop {args.top} breakout candidates:")
         print(f"{'#':<4} {'Player':<28} {'Pos':<5} {'Org':<5} {'FV':<5} {'Lvl':<6} "
               f"{'BreakSc':<9} {'FVadj':<7} {'Group':<35} {'Conf'}")
