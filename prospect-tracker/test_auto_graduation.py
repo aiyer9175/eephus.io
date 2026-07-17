@@ -105,6 +105,60 @@ class TestAutoGraduation:
         grads = [p for p in ts if p.player_key == "test_guy2" and p.status == "debuted"]
         assert len(grads) == 1  # still just one graduate
 
+    def test_auto_graduate_refire_with_different_date_suppressed(self, tmp_path, monkeypatch):
+        """A second auto-detect fire with a DIFFERENT date must be suppressed
+        (audit residue 2026-07-15, the ryan_vilade class): the player is
+        already debuted, so a veteran re-appearance must neither add a row
+        nor move the debut date. Previously the snapshots UNIQUE key hid the
+        re-fire silently; the guard makes it explicit."""
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+
+        snap = Snapshot(
+            source="fangraphs", snapshot_date="2026-02-16",
+            interval_label="FG 2026 Report",
+            player_key="test_guy3", player_name="Test Guy 3",
+            position="C", org="BAL", rank=7, fv=50.0, status="active",
+        )
+        storage.insert_snapshots([snap])
+
+        storage.auto_debut_player("test_guy3", debut_date="2021-09-18")
+        storage.auto_debut_player("test_guy3", debut_date="2026-05-17")  # re-fire — suppressed
+
+        ts = build_timeseries(storage.load_all_snapshots())
+        p = [x for x in ts if x.player_key == "test_guy3"][0]
+        assert p.status == "debuted"
+        assert p.debut_date == "2021-09-18"  # first (true) date wins
+
+    def test_auto_debut_date_clamped_to_roster_status(self, tmp_path, monkeypatch):
+        """When roster_status already knows an EARLIER mlb_debut_date, a
+        later detected date is a re-appearance artifact — the guard clamps
+        the stamped snapshot to the known true debut (fixes the class at
+        the source; players with no roster_status row are untouched)."""
+        import json as _json
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+
+        snap = Snapshot(
+            source="fangraphs", snapshot_date="2026-02-16",
+            interval_label="FG 2026 Report",
+            player_key="test_guy4", player_name="Test Guy 4",
+            position="OF", org="COL", rank=9, fv=45.0, status="active",
+        )
+        storage.insert_snapshots([snap])
+        with storage.connect() as con:
+            con.execute(
+                "INSERT INTO roster_status (player_key, payload_json) VALUES (?, ?)",
+                ("test_guy4", _json.dumps({"mlb_debut_date": "2021-09-18"})),
+            )
+
+        storage.auto_debut_player("test_guy4", debut_date="2026-05-17")
+
+        ts = build_timeseries(storage.load_all_snapshots())
+        p = [x for x in ts if x.player_key == "test_guy4"][0]
+        assert p.status == "debuted"
+        assert p.debut_date == "2021-09-18"  # clamped to the known true debut
+
     def test_auto_graduate_moves_to_grad_section_in_export(self, tmp_path, monkeypatch):
         """End-to-end: auto-graduated player should appear in graduates in the JSON."""
         import json

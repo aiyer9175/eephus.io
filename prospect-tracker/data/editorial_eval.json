@@ -1,0 +1,151 @@
+{
+ "generated_at": "2026-07-17",
+ "hit_rules": {
+  "riser": {
+   "fv_delta": 5.0,
+   "direction": 1
+  },
+  "rebound": {
+   "fv_delta": 5.0,
+   "direction": 1
+  },
+  "faller": {
+   "fv_delta": -5.0,
+   "direction": -1
+  }
+ },
+ "horizons_days": [
+  30,
+  60
+ ],
+ "flags_logged": 2773,
+ "flags_matured": 602,
+ "flags_pending": 2171,
+ "by_flag_type": {
+  "faller": {
+   "matured_cohorts": 6,
+   "horizons": {
+    "h30": {
+     "n": 173,
+     "hit_rate": 0.0,
+     "ci": [
+      0.0,
+      0.0217
+     ],
+     "control_n": 865,
+     "control_rate": 0.0,
+     "control_ci": [
+      0.0,
+      0.0044
+     ],
+     "clears_control": false
+    },
+    "h60": {
+     "n": 0,
+     "hit_rate": 0.0,
+     "ci": [
+      0.0,
+      1.0
+     ],
+     "control_n": 0,
+     "control_rate": 0.0,
+     "control_ci": [
+      0.0,
+      1.0
+     ],
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "eligible": true,
+    "fails_to_clear": true,
+    "verdict_recommendation": "deprecated"
+   }
+  },
+  "rebound": {
+   "matured_cohorts": 6,
+   "horizons": {
+    "h30": {
+     "n": 60,
+     "hit_rate": 0.0,
+     "ci": [
+      0.0,
+      0.0602
+     ],
+     "control_n": 300,
+     "control_rate": 0.0167,
+     "control_ci": [
+      0.0071,
+      0.0384
+     ],
+     "clears_control": false
+    },
+    "h60": {
+     "n": 0,
+     "hit_rate": 0.0,
+     "ci": [
+      0.0,
+      1.0
+     ],
+     "control_n": 0,
+     "control_rate": 0.0,
+     "control_ci": [
+      0.0,
+      1.0
+     ],
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "eligible": true,
+    "fails_to_clear": true,
+    "verdict_recommendation": "deprecated"
+   }
+  },
+  "riser": {
+   "matured_cohorts": 6,
+   "horizons": {
+    "h30": {
+     "n": 369,
+     "hit_rate": 0.0298,
+     "ci": [
+      0.0167,
+      0.0526
+     ],
+     "control_n": 1845,
+     "control_rate": 0.0081,
+     "control_ci": [
+      0.0049,
+      0.0134
+     ],
+     "clears_control": true
+    },
+    "h60": {
+     "n": 0,
+     "hit_rate": 0.0,
+     "ci": [
+      0.0,
+      1.0
+     ],
+     "control_n": 0,
+     "control_rate": 0.0,
+     "control_ci": [
+      0.0,
+      1.0
+     ],
+     "clears_control": false
+    }
+   },
+   "kill_rule": {
+    "eligible": true,
+    "fails_to_clear": false,
+    "verdict_recommendation": "keep-measuring"
+   }
+  }
+ },
+ "conventions": {
+  "hit": "consensus FV moves >= fv_delta by the horizon, OR new top-100 entry, OR a new source publishes an FV (fallers invert the FV leg)",
+  "control": "unflagged players in the flag's fv_band with a snapshot within 15 days pre-emit, same rule + window",
+  "kill_rule": "flag type failing to clear control after 2 matured cohorts -> deprecated (registry verdict, owner-committed)"
+ }
+}

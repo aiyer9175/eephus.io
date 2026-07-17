@@ -1,0 +1,238 @@
+{
+ "experiment": "FA Gate-2 feature arms (owner program 2026-07-15)",
+ "generated_at": "2026-07-15",
+ "protocol": "identical forward-chained Gate-2 folds; pre-registered per-arm criteria in this file's header",
+ "champion": {
+  "pooled": {
+   "guarantee": {
+    "model": 10.159276511259382,
+    "base": 11.223747022518765,
+    "n": 1199
+   },
+   "aav": {
+    "model": 3.070831283085277,
+    "base": 3.340007430551239,
+    "n": 1199
+   },
+   "years": {
+    "model": 0.44203502919099247,
+    "base": 0.4970809007506255,
+    "n": 1199
+   },
+   "mega_guarantee": {
+    "model": 87.96769060000001,
+    "base": 98.3035713,
+    "n": 50
+   }
+  },
+  "winter_2022": {
+   "winter": 2022,
+   "n": 144,
+   "guarantee_mae_model": 13.601469034722221,
+   "guarantee_mae_base": 13.699901666666667,
+   "aav_mae_model": 3.0202598796296294,
+   "aav_mae_base": 3.4015369722222224,
+   "years_mae_model": 0.5694444444444444,
+   "years_mae_base": 0.5486111111111112,
+   "mega_guarantee_mae_model": 94.79688881818183,
+   "mega_guarantee_mae_base": 92.52812427272728
+  },
+  "gates_all_pass": true
+ },
+ "arms": {
+  "rate_line": {
+   "pooled": {
+    "guarantee": {
+     "model": 10.094295025020852,
+     "base": 11.223747022518765,
+     "n": 1199
+    },
+    "aav": {
+     "model": 3.0083766695740177,
+     "base": 3.340007430551239,
+     "n": 1199
+    },
+    "years": {
+     "model": 0.44203502919099247,
+     "base": 0.4970809007506255,
+     "n": 1199
+    },
+    "mega_guarantee": {
+     "model": 87.90505832000001,
+     "base": 98.3035713,
+     "n": 50
+    }
+   },
+   "winter_2022": {
+    "winter": 2022,
+    "n": 144,
+    "guarantee_mae_model": 13.345321430555556,
+    "guarantee_mae_base": 13.699901666666667,
+    "aav_mae_model": 2.914105289351852,
+    "aav_mae_base": 3.4015369722222224,
+    "years_mae_model": 0.5694444444444444,
+    "years_mae_base": 0.5486111111111112,
+    "mega_guarantee_mae_model": 92.65980090909092,
+    "mega_guarantee_mae_base": 92.52812427272728
+   },
+   "gates_all_pass": true,
+   "pass": true
+  },
+  "regime": {
+   "pooled": {
+    "guarantee": {
+     "model": 10.172598989157631,
+     "base": 11.223747022518765,
+     "n": 1199
+    },
+    "aav": {
+     "model": 3.0724398697408235,
+     "base": 3.340007430551239,
+     "n": 1199
+    },
+    "years": {
+     "model": 0.44203502919099247,
+     "base": 0.4970809007506255,
+     "n": 1199
+    },
+    "mega_guarantee": {
+     "model": 88.1746615,
+     "base": 98.3035713,
+     "n": 50
+    }
+   },
+   "winter_2022": {
+    "winter": 2022,
+    "n": 144,
+    "guarantee_mae_model": 13.646688923611112,
+    "guarantee_mae_base": 13.699901666666667,
+    "aav_mae_model": 3.0490265393518516,
+    "aav_mae_base": 3.4015369722222224,
+    "years_mae_model": 0.5694444444444444,
+    "years_mae_base": 0.5486111111111112,
+    "mega_guarantee_mae_model": 94.94103881818182,
+    "mega_guarantee_mae_base": 92.52812427272728
+   },
+   "gates_all_pass": true,
+   "pass": false
+  },
+  "age_pos": {
+   "pooled": {
+    "guarantee": {
+     "model": 10.118526918265221,
+     "base": 11.223747022518765,
+     "n": 1199
+    },
+    "aav": {
+     "model": 3.0203658113588387,
+     "base": 3.340007430551239,
+     "n": 1199
+    },
+    "years": {
+     "model": 0.4445371142618849,
+     "base": 0.4970809007506255,
+     "n": 1199
+    },
+    "mega_guarantee": {
+     "model": 88.1429232,
+     "base": 98.3035713,
+     "n": 50
+    }
+   },
+   "winter_2022": {
+    "winter": 2022,
+    "n": 144,
+    "guarantee_mae_model": 13.333291618055556,
+    "guarantee_mae_base": 13.699901666666667,
+    "aav_mae_model": 2.9042933935185187,
+    "aav_mae_base": 3.4015369722222224,
+    "years_mae_model": 0.5763888888888888,
+    "years_mae_base": 0.5486111111111112,
+    "mega_guarantee_mae_model": 93.27377636363636,
+    "mega_guarantee_mae_base": 92.52812427272728
+   },
+   "gates_all_pass": true,
+   "pass": false
+  },
+  "qo_tier": {
+   "pooled": {
+    "guarantee": {
+     "model": 10.157875313594662,
+     "base": 11.223747022518765,
+     "n": 1199
+    },
+    "aav": {
+     "model": 3.069871604186195,
+     "base": 3.340007430551239,
+     "n": 1199
+    },
+    "years": {
+     "model": 0.44203502919099247,
+     "base": 0.4970809007506255,
+     "n": 1199
+    },
+    "mega_guarantee": {
+     "model": 87.97861160000001,
+     "base": 98.3035713,
+     "n": 50
+    }
+   },
+   "winter_2022": {
+    "winter": 2022,
+    "n": 144,
+    "guarantee_mae_model": 13.590920645833332,
+    "guarantee_mae_base": 13.699901666666667,
+    "aav_mae_model": 3.0158581504629627,
+    "aav_mae_base": 3.4015369722222224,
+    "years_mae_model": 0.5694444444444444,
+    "years_mae_base": 0.5486111111111112,
+    "mega_guarantee_mae_model": 94.69989763636363,
+    "mega_guarantee_mae_base": 92.52812427272728
+   },
+   "gates_all_pass": true,
+   "pass": false
+  }
+ },
+ "combined": {
+  "pooled": {
+   "guarantee": {
+    "model": 10.094295025020852,
+    "base": 11.223747022518765,
+    "n": 1199
+   },
+   "aav": {
+    "model": 3.0083766695740177,
+    "base": 3.340007430551239,
+    "n": 1199
+   },
+   "years": {
+    "model": 0.44203502919099247,
+    "base": 0.4970809007506255,
+    "n": 1199
+   },
+   "mega_guarantee": {
+    "model": 87.90505832000001,
+    "base": 98.3035713,
+    "n": 50
+   }
+  },
+  "winter_2022": {
+   "winter": 2022,
+   "n": 144,
+   "guarantee_mae_model": 13.345321430555556,
+   "guarantee_mae_base": 13.699901666666667,
+   "aav_mae_model": 2.914105289351852,
+   "aav_mae_base": 3.4015369722222224,
+   "years_mae_model": 0.5694444444444444,
+   "years_mae_base": 0.5486111111111112,
+   "mega_guarantee_mae_model": 92.65980090909092,
+   "mega_guarantee_mae_base": 92.52812427272728
+  },
+  "gates_all_pass": true,
+  "arms": [
+   "rate_line"
+  ],
+  "ship": true
+ },
+ "runtime_seconds": 31.5
+}

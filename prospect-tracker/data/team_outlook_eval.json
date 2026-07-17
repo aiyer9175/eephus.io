@@ -1,53 +1,53 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-16",
  "first_season": 2027,
  "league_sum_accounting": {
-  "roster_war_sum": 973.8,
-  "remainder_recenter_wins_per_team": 1.04,
-  "roster_war_sum_y1": 973.8,
+  "roster_war_sum": 969.5,
+  "remainder_recenter_wins_per_team": 1.13,
+  "roster_war_sum_y1": 969.5,
   "league_war_benchmark": 1000,
   "benchmark_basis": "actual league bWAR sums 1000/1000/1000 for 2023/2024/2025 (war_daily)",
-  "raw_wins_sum": 2404.6,
-  "raw_wins_sum_y1": 2404.6,
+  "raw_wins_sum": 2400.5,
+  "raw_wins_sum_y1": 2400.5,
   "target_wins_sum": 2430,
   "depth_pool": {
    "n_depth_players": 438,
-   "depth_war_y1": 39.6,
-   "depth_war_5y": 76.3,
-   "n_unassigned": 307,
-   "war_unassigned_y1": 61.0,
-   "war_unassigned_5y": 118.4
+   "depth_war_y1": 40.4,
+   "depth_war_5y": 78.6,
+   "n_unassigned": 308,
+   "war_unassigned_y1": 60.2,
+   "war_unassigned_5y": 110.1
   },
   "by_season": [
    {
     "season": 2027,
-    "roster_war_sum": 973.8,
-    "wins_sum": 2430.3,
-    "remainder_recenter_wins_per_team": 1.04
+    "roster_war_sum": 969.5,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 1.13
    },
    {
     "season": 2028,
-    "roster_war_sum": 645.7,
-    "wins_sum": 2430.3,
-    "remainder_recenter_wins_per_team": 11.52
+    "roster_war_sum": 637.9,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 11.7
    },
    {
     "season": 2029,
-    "roster_war_sum": 278.1,
-    "wins_sum": 2429.7,
-    "remainder_recenter_wins_per_team": 24.36
+    "roster_war_sum": 273.6,
+    "wins_sum": 2430.3,
+    "remainder_recenter_wins_per_team": 24.5
    },
    {
     "season": 2030,
-    "roster_war_sum": 218.5,
-    "wins_sum": 2430.2,
-    "remainder_recenter_wins_per_team": 26.22
+    "roster_war_sum": 215.8,
+    "wins_sum": 2430.1,
+    "remainder_recenter_wins_per_team": 26.32
    },
    {
     "season": 2031,
-    "roster_war_sum": 191.9,
-    "wins_sum": 2430.0,
-    "remainder_recenter_wins_per_team": 27.04
+    "roster_war_sum": 186.7,
+    "wins_sum": 2429.8,
+    "remainder_recenter_wins_per_team": 27.21
    }
   ],
   "coverage_decomposition_2025": {
@@ -269,15 +269,15 @@
   "eta_coverage_orgs": 30,
   "align_coverage_orgs": 30,
   "eta_mean_range": [
-   2027.87,
-   2028.84
+   2027.9,
+   2028.98
   ],
-  "align_median": 0.43,
+  "align_median": 0.47,
   "align_range": [
-   -0.45,
-   0.85
+   -0.41,
+   1.1
   ],
-  "aligned_org_count": 6,
+  "aligned_org_count": 7,
   "limitations": [
    "etaMean is surplus-weighted by the platform surplus model (its uncertainty flows through); coreCenter is the controlled-core trajectory, not a scored contention forecast",
    "orgs whose farm carries no positive-surplus prospect fall back to a count-weighted center and report no arrival curve"

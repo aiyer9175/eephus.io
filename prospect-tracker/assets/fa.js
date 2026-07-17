@@ -473,7 +473,10 @@
     });
     const sHead = (label, key, title) => {
       const on = sortKey === key;
-      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
+      // a11y (matches the prospx/trademachine sort-header pattern): keyboard
+      // reachable, announced as a button, live sort state on aria-sort.
+      const ariaSort = on ? (boardState.dir < 0 ? "descending" : "ascending") : "none";
+      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
@@ -544,12 +547,20 @@
       <th><span data-gl="fit_components">Fits</span></th></tr></thead>
       <tbody>${body || '<tr><td colspan="12" style="padding:2rem;text-align:center;color:var(--text-tertiary);">No free agents match these filters.</td></tr>'}</tbody></table></div>
       ${boardRail(cls)}</div>`;
-    rows.querySelectorAll("[data-fsort]").forEach(h => h.onclick = () => {
-      const k = h.dataset.fsort;
-      if (boardState.sort === k) boardState.dir = -boardState.dir;
-      else { boardState.sort = k; boardState.dir = -1; }
-      renderBoard(rows, cls);
-      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    rows.querySelectorAll("[data-fsort]").forEach(h => {
+      const doSort = () => {
+        const k = h.dataset.fsort;
+        if (boardState.sort === k) boardState.dir = -boardState.dir;
+        else { boardState.sort = k; boardState.dir = -1; }
+        renderBoard(rows, cls);
+        if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+      };
+      h.onclick = doSort;
+      // Enter/Space sort from the keyboard; preventDefault stops Space from
+      // scrolling the page (same contract as the prospx sort headers).
+      h.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); doSort(); }
+      };
     });
     rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
       boardState[b.dataset.ffilter] = b.dataset.fval;
@@ -602,6 +613,41 @@
     </svg>`;
   }
 
+  // FA $/WAR by winter as a compact inline line chart: the full signings-implied
+  // series in one glance (the old six text rows truncated it and hid the shape -
+  // the gradual climb and the 2024 dip read instantly here). Local SVG style:
+  // var() tokens only (correct in both themes), endpoint value labels, first and
+  // last winter ticks, an invisible fat hit target per point for hover tooltips.
+  function dpwTrendChart(series, yrs) {
+    const pts = yrs.map(y => ({ y, v: Number(series[y]) })).filter(p => Number.isFinite(p.v));
+    if (pts.length < 2) return "";
+    const W = 220, H = 74, PT = 13, PB = 13, PL = 5, PR = 5;
+    const vs = pts.map(p => p.v);
+    let lo = Math.min(...vs), hi = Math.max(...vs);
+    const span = (hi - lo) || 1;
+    lo -= span * 0.08; hi += span * 0.08;
+    const x = i => PL + i * (W - PL - PR) / (pts.length - 1);
+    const y = v => PT + (hi - v) * (H - PT - PB) / (hi - lo);
+    const winter = yr => `${Number(yr) - 1}-${String(yr).slice(2)}`;
+    const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+    const dots = pts.map((p, i) => i === pts.length - 1
+      ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.6" fill="var(--accent-gold)"/>`
+      : `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="1.5" fill="var(--accent-gold)" fill-opacity="0.75"/>`).join("");
+    const hits = pts.map((p, i) =>
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="7" fill="transparent"><title>${winter(p.y)} winter: ${money(p.v)}/WAR</title></circle>`).join("");
+    const first = pts[0], last = pts[pts.length - 1];
+    const firstLbl = `<text x="${PL}" y="${Math.max(8, y(first.v) - 5).toFixed(1)}" font-size="8" fill="var(--text-tertiary)">${money(first.v)}</text>`;
+    const lastLbl = `<text x="${W - PR}" y="${Math.max(8, y(last.v) - 6).toFixed(1)}" text-anchor="end" font-size="9" font-weight="700" fill="var(--text-secondary)">${money(last.v)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;margin:4px 0 0;" role="img"
+      aria-label="FA dollars per WAR by winter, ${winter(first.y)} through ${winter(last.y)}: ${money(first.v)} to ${money(last.v)}">
+      <line x1="${PL}" y1="${H - PB + 3}" x2="${W - PR}" y2="${H - PB + 3}" stroke="var(--border-light)" stroke-width="1"/>
+      <polyline points="${line}" fill="none" stroke="var(--accent-gold)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${firstLbl}${lastLbl}${hits}
+      <text x="${PL}" y="${H - 2}" font-size="8" fill="var(--text-tertiary)">${winter(first.y)}</text>
+      <text x="${W - PR}" y="${H - 2}" text-anchor="end" font-size="8" fill="var(--text-tertiary)">${winter(last.y)}</text>
+    </svg>`;
+  }
+
   // Market-pulse rail beside the board: best values, biggest projected
   // overpays, class supply by position group, the $/WAR trend.
   function boardRail(cls) {
@@ -627,7 +673,9 @@
     const meta = D.fa_meta || {};
     const series = ((meta.dpw_series || {}).usd_per_war_by_winter) || {};
     const yrs = Object.keys(series).sort();
-    const trend = yrs.slice(-6).map(y =>
+    // Chart of the FULL series (hover any point for its winter + $/WAR);
+    // falls back to the old text rows if there are too few points for a line.
+    const trend = dpwTrendChart(series, yrs) || yrs.slice(-6).map(y =>
       `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
     const mod = (title, body, tip) => body
       ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";

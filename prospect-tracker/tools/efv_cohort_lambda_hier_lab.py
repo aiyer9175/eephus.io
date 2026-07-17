@@ -33,6 +33,7 @@ import json
 import random
 import sys
 from collections import defaultdict
+from datetime import date
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -302,7 +303,7 @@ def main():
     gate = evaluate_gate(sides)
 
     artifact = {
-        "generated_at": "2026-07-07",
+        "generated_at": date.today().isoformat(),
         "experiment": "M3: hierarchical shrunk per-cohort blend lambda (E-LAMBDA keep-alive successor)",
         "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M3",
         "seed": SEED,

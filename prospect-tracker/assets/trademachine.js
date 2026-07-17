@@ -57,6 +57,11 @@
     location.href = (isMlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(key);
   }
   window._tmNavPlayer = _tmNavPlayer;   // referenced from inline row onclick handlers
+  // Same trap as _tmNavPlayer: the GRPO breakout chip's inline onclick resolves
+  // against the global scope, not this IIFE's closure - without this export the
+  // chip threw ReferenceError and the group panel never opened. (Function
+  // declarations hoist, so assigning here is safe.)
+  window._tbShowGroup = _tbShowGroup;
 // Pagination window helper (transitive dep of renderPaginationStrip), from PROSPX.
 function computePageWindow(cur, total) {
   if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
@@ -317,6 +322,14 @@ function renderTradeMachine() {
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
 let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail fallback
+// GRPO group-panel sidecar availability. The full internals file
+// (grpo_scores.json) never ships (deploy/data_exclude.txt bars it), so we
+// fetch the slim public sidecar grpo_public.json instead - the projection
+// export_grpo_scores emits alongside the full file with only the fields the
+// panel renders. Until a deployment's pipeline has emitted it, the fetch can
+// 404 - track it so a chip click can say so honestly instead of silently
+// doing nothing. Never add a fallback fetch to the excluded full file.
+let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable"
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -362,9 +375,11 @@ function _tbSortParts() {
 }
 // Per-column accessor (numeric -> null when absent so nulls always sort last;
 // text -> string). The default Grade column ranks by the raw eFV grade
-// (xfv_grade), which orders realized WAR better than the $-surplus transform it
-// is derived from (data/trade_machine_eval.json: grade rho 0.3433 vs surplus
-// 0.3289, and grade wins within every tier); Surplus stays on trade_value_mm.
+// (xfv_grade), which orders realized WAR better than the $-surplus transform
+// (data/trade_machine_eval.json: grade rho 0.3433 vs surplus 0.3289, and grade
+// wins within every tier). Note: since the 2026-07-06 quantile flip, surplus
+// dollars are priced on the DISPLAYED quantile grade, not this raw grade -
+// they are related but distinct orderers. Surplus stays on trade_value_mm.
 function _tbSortVal(p, col) {
   const num = v => (v == null || v === "") ? null : (Number.isFinite(Number(v)) ? Number(v) : null);
   if (col === "age") return { n: num(p.age) };
@@ -621,7 +636,7 @@ function _renderTBRows() {
   let html = `<div style="margin:6px 0 4px;color:var(--text-secondary);font-size:11px;">${rows.length} players · ${escapeHtml(_tbData.generated_at || "")}</div>
   ${_crunchBanner}
   ${topPager}
-  <table class="stats-table tm-board-table">
+  <div class="tm-board-tablewrap"><table class="stats-table tm-board-table">
   <thead><tr>
     <th>#</th>
     ${_tbTh("Player", "name")}
@@ -629,7 +644,7 @@ function _renderTBRows() {
     ${_tbTh("Pos", "pos")}
     ${_tbTh("Org", "org")}
     ${_tbTh("FV", "fv", "tm-num", "Future Value grade (prospects only - hidden for MLB players where FV is no longer relevant)")}
-    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the eFV grade the surplus is derived from, which orders realized value better than the dollar transform; the letter is the coarse display.", true)}
+    ${_tbTh("Grade", "grade", "tm-num tm-col-div", "Trade Value Grade - the contract-adjusted surplus on an A+ to F scale. The board ranks by the model's raw eFV grade, which orders realized value better than the dollar transform; the letter is the coarse display.", true)}
     ${_tbTh("Surplus", "surplus", "tm-num", "Surplus value ($M of production above cost) - the same value_framework model PROSPX and MLB Projections use")}
     ${showRisk ? _tbTh("Risk", "risk", "tm-num", "Sortino: expected surplus per unit of downside risk (higher is safer). Tooltip carries the risk-adjusted surplus and bust probability.") : ""}
     ${_tbTh("Contract", "contract", "", "Contract: phase · salary · FA year (MLB) or remaining controlled seasons (MiLB)")}
@@ -659,7 +674,13 @@ function _renderTBRows() {
     const injD  = p.injury_discount || 0;
 
     // Navigate to player detail: MLB players -> their MLB Projections page,
-    // prospects -> their PROSPX page. If no key, no navigation.
+    // prospects -> their PROSPX page. If no key, no navigation. The whole row
+    // stays clickable as a convenience, but the player name is a REAL anchor so
+    // keyboard and screen-reader users can reach the player page too (the row
+    // onclick preventDefaults the anchor and routes to the same destination).
+    const href = p.player_key
+      ? (isMlb ? "/projections/#player=" : "/prospx/#player=") + encodeURIComponent(p.player_key)
+      : "";
     const rowClick = p.player_key
       ? `onclick="event.preventDefault();_tmNavPlayer('${escapeHtml(p.player_key)}',${isMlb});" style="cursor:pointer;"`
       : "";
@@ -684,7 +705,7 @@ function _renderTBRows() {
 
     html += `<tr class="prospect-row" ${rowClick} title="${rangeTip}">
       <td class="tm-rank">${rank}</td>
-      <td class="tm-player">${name}</td>
+      <td class="tm-player">${href ? `<a class="fa-player-link" href="${href}">${name}</a>` : name}</td>
       <td class="tm-num tm-dim">${p.age != null ? Number(p.age).toFixed(1) : "-"}</td>
       <td class="tm-dim">${pos}</td>
       <td><span class="tm-org-cell">${org ? _tmTeamLogo(org) : ""}<span class="tm-org-abbr">${org}</span></span></td>
@@ -696,7 +717,10 @@ function _renderTBRows() {
       <td class="tm-col-div tm-signals">${signals}</td>
     </tr>`;
   });
-  html += `</tbody></table>${topPager}`;
+  // The wrapper div is the host the universal copy/export chip attaches to
+  // (eephus-export.js puts the chip on the table's PARENT), keeping the chip
+  // pinned to the table instead of the whole board pane.
+  html += `</tbody></table></div>${topPager}`;
   wrap.innerHTML = html;
   // Sortable column headers (the table is rebuilt each render, so rewire here).
   wrap.querySelectorAll("th[data-tb-sortcol]").forEach(th => {
@@ -758,12 +782,18 @@ function renderTradeBoard() {
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
       .then(d => {
         _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
-        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
-        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
-        fetch(base + "grpo_scores.json" + vp, { cache: "no-cache" })
+        // GRPO group-panel data lives in the slim public sidecar; merge it so the
+        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
+        // already rendered. Before a deployment's first pipeline run emits the
+        // sidecar, this 404s - an expected outcome, not an error - so mark it
+        // unavailable and degrade in the panel.
+        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
           .then(r => r.ok ? r.json() : null)
-          .then(g => { if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; } })
-          .catch(() => {});
+          .then(g => {
+            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+            else { _tbGrpoState = "unavailable"; }
+          })
+          .catch(() => { _tbGrpoState = "unavailable"; });
       })
       .catch(e => {
         wrap.innerHTML = `<div class="empty-state">This view is temporarily unavailable. Check back shortly.</div>`;
@@ -787,7 +817,19 @@ function _tbShowGroup(playerKey) {
   if (!panel || !title || !body) return;
 
   const pScore = (_tbData.all_scores || {})[playerKey];
-  if (!pScore) { panel.style.display = "none"; return; }
+  if (!pScore) {
+    // Honest degrade: the group sidecar may still be loading, or this
+    // deployment does not publish it at all - say so instead of a dead click.
+    title.textContent = "GRPO profile group";
+    body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
+      _tbGrpoState === "pending"
+        ? "Group data is still loading. Try the chip again in a moment."
+        : "Profile-group details are not available here right now. The breakout score on the chip still stands."
+    }</div>`;
+    panel.style.display = "block";
+    panel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    return;
+  }
 
   const members = pScore.active_group_members || [];
   const grp     = pScore.group || "?";
@@ -803,10 +845,12 @@ function _tbShowGroup(playerKey) {
       const bs = m.breakout_score != null ? (m.breakout_score * 100).toFixed(0) + "%" : " - ";
       const bsCol = (m.breakout_score || 0) >= 0.60 ? "var(--neon-green)" : (m.breakout_score || 0) >= 0.45 ? "var(--neon-amber)" : "var(--text-secondary)";
       const avl = m.age_vs_level != null ? `${m.age_vs_level > 0 ? "+" : ""}${Number(m.age_vs_level).toFixed(1)}yr` : " - ";
+      const mHref = m.player_key ? "/prospx/#player=" + encodeURIComponent(m.player_key) : "";
+      const mName = escapeHtml(m.player_name || "?");
       return `<tr style="font-size:12px;cursor:pointer;" class="prospect-row"
                   onclick="_tmNavPlayer('${escapeHtml(m.player_key||'')}',false);">
         <td style="padding:4px 6px;color:var(--text-secondary);">${i + 1}</td>
-        <td style="padding:4px 6px;font-weight:600;">${escapeHtml(m.player_name || "?")}</td>
+        <td style="padding:4px 6px;font-weight:600;">${mHref ? `<a class="fa-player-link" href="${mHref}">${mName}</a>` : mName}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.position || "")}</td>
         <td style="padding:4px 6px;color:var(--text-secondary);">${escapeHtml(m.org || "")}</td>
         <td style="padding:4px 6px;text-align:right;">${m.fv != null ? String(Math.ceil(Number(m.fv))) : " - "}</td>
@@ -900,12 +944,18 @@ function _tbShowGroup(playerKey) {
         _renderTBRows();
         _tbWireFilters();
         renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
-        // GRPO group-panel data lives in a separate file; merge it so the ▲## breakout
-        // chip's _tbShowGroup() can resolve. Non-blocking: the board is already rendered.
-        fetch(DATA_BASE + "grpo_scores.json", { cache: "no-cache" })
+        // GRPO group-panel data lives in the slim public sidecar; merge it so the
+        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
+        // already rendered. Before a deployment's first pipeline run emits the
+        // sidecar, this 404s - an expected outcome, not an error - so mark it
+        // unavailable and degrade in the panel.
+        fetch(DATA_BASE + "grpo_public.json", { cache: "no-cache" })
           .then(r => r.ok ? r.json() : null)
-          .then(g => { if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; } })
-          .catch(() => {});
+          .then(g => {
+            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+            else { _tbGrpoState = "unavailable"; }
+          })
+          .catch(() => { _tbGrpoState = "unavailable"; });
         _tbWireFilterToggle();
       })
       .catch(() => {

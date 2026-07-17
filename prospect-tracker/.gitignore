@@ -14,16 +14,19 @@ data/build_info.json
 # tracking them only churned tens of MB into history per data commit. The
 # durable copies live in prospects.db (+ its nightly backups), not git.
 data/scout_reports.json
+data/scout_reports_[0-9].json
 data/draft_timeseries.json
 data/xfv_ungraded.json
 data/xfv_backgrade.json
 data/grpo_scores.json
+data/grpo_public.json
 data/trade_values.json
 data/ifa_timeseries.json
 data/mlb_player_detail.json
 data/timeseries.json
 data/graduates.json
 data/debuts.json
+data/debuts_lite.json
 data/inactive.json
 data/rosters_by_org.json
 # Source-vs-source backtest output (regenerated each monthly run; powers the
@@ -134,3 +137,9 @@ data/_artifact_fingerprints/
 # poller (tools/draft_live_poller.py) overwrites it READ-ONLY with the live feed
 # on draft night; that live artifact is expected to differ locally on the poller
 # box and is not committed back.
+
+# BUCKET-AGE-HEAD governance lab (tools/bucket_age_head/): run outputs are
+# regenerable; the published verdict lives at data/xfv_bucket_age_head_eval.json.
+tools/bucket_age_head/results.json
+tools/bucket_age_head/eval_rows_ckpt.json
+tools/bucket_age_head/verify_sandbox/

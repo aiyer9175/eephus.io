@@ -295,6 +295,68 @@ def rp_sp_fit(arm: PalArm) -> dict:
     }
 
 
+# --------------------------------------------------------------------------- #
+# T1-13 Lane B candidate: relief-usage stamina lane (game-log features)
+# --------------------------------------------------------------------------- #
+# A reliever whose org already uses him for multi-inning stints (>=4-out
+# appearances) is structurally closer to a starter's workload than a max-effort
+# back-to-back one-inning arm. multi_inning_share is the primary signal;
+# b2b_rate (pitched the day after a previous appearance) is the negative
+# complement. CANDIDATE weight 0.10 - gated in the T1-13 lab, NOT shipped.
+RP_SP_WEIGHTS_V2 = {**RP_SP_WEIGHTS, "stamina_usage": 0.10}
+STAMINA_MI_FULL = 0.50       # multi-inning share that saturates the lane
+STAMINA_B2B_FULL = 0.40      # b2b rate that zeroes the (0.3-weight) sub-lane
+
+
+def stamina_usage_score(multi_inning_share: Optional[float],
+                        b2b_rate: Optional[float]) -> Optional[float]:
+    """0-100 usage-stamina lane from the two game-log features. None (drops
+    from the renormalized blend) when the relief sample was too thin to read."""
+    if multi_inning_share is None:
+        return None
+    s_mi = _clamp(100.0 * multi_inning_share / STAMINA_MI_FULL)
+    s_b2b = 50.0 if b2b_rate is None else _clamp(100.0 * (1.0 - b2b_rate / STAMINA_B2B_FULL))
+    return 0.7 * s_mi + 0.3 * s_b2b
+
+
+def rp_sp_fit_v2(arm: PalArm, usage: Optional[dict] = None) -> dict:
+    """rp_sp_fit + the 0.10-weight stamina_usage lane (T1-13 Lane B candidate).
+    `usage` is pal_gamelogs.relief_usage_features output (or None). With
+    usage=None the lane drops from the renormalized blend, which is NOT the
+    identity - use rp_sp_fit for the incumbent score."""
+    npi = n_pitches(arm)
+    fb = fb_pct(arm)
+    plat = platoon_neutrality_score(arm.ops_vl, arm.ops_vr)
+    usage = usage or {}
+    comps = {
+        "arsenal_depth": arsenal_depth_score(npi),
+        "command": command_score(arm.bb_pct),
+        "fb_reliance_inv": fb_reliance_inv(fb),
+        "stuff_quality": stuff_quality_score(overall_est_woba(arm)),
+        "platoon_neutrality": plat,
+        "survivability": survivability_score(overall_hard_hit(arm)),
+        "stamina_usage": stamina_usage_score(usage.get("multi_inning_share"),
+                                             usage.get("b2b_rate")),
+    }
+    fit = _blend(RP_SP_WEIGHTS_V2, comps)
+    flags = _flags_rp_sp(arm, npi, fb, plat)
+    if arm.was_starter:
+        fit = min(100.0, fit + PEDIGREE_NUDGE)
+        flags.append({"key": "started_before", "label": "started before"})
+    elif arm.prospx_role == "SP":
+        fit = min(100.0, fit + PEDIGREE_NUDGE)
+        flags.append({"key": "prospect_sp", "label": "starter as a prospect"})
+    return {
+        "fit": round(fit, 1),
+        "components": {k: (round(v, 1) if v is not None else None) for k, v in comps.items()},
+        "n_pitches": npi,
+        "fb_pct": None if fb is None else round(fb, 3),
+        "proj_velo": project_velo(arm, "SP"),
+        "reverse_platoon": reverse_platoon(arm),
+        "flags": flags,
+    }
+
+
 def reverse_platoon(arm: PalArm) -> Optional[dict]:
     """Platoon split WITH direction. Conventionally a pitcher is tougher on
     same-handed hitters; a REVERSE split (tougher on the opposite hand) is a rare
@@ -455,11 +517,20 @@ def role_of(g, gs, ip) -> Optional[str]:
     return "SWING"
 
 
-def detect_conversions(by_pid: dict) -> list:
+def detect_conversions(by_pid: dict, last_closed_season: Optional[int] = None) -> list:
     """by_pid: {mlbam: {season: row}} where row has G/GS/IP + name/team + rates.
     Returns conversion events (RP->SP / SP->RP) between consecutive qualified
     seasons, with the pre/post rows and a 'held' flag (did the new role stick the
-    following season?)."""
+    following season?).
+
+    Label hygiene (T1-6 backtest repair):
+      - `last_closed_season`: when given, a held label is only read from a
+        COMPLETED b+1 season (an in-progress season's cumulative GS-share is
+        not a settled role read, so e.g. 2025 events stay held=None until 2026
+        closes). None keeps the legacy behavior for callers without a clock.
+      - IP gate: a b+1 season under CONV_MIN_IP cannot certify "held the new
+        role a full season" -> held stays None (too thin to judge, and a
+        1-appearance cameo is not evidence either way)."""
     events = []
     for pid, byyr in by_pid.items():
         yrs = sorted(byyr)
@@ -478,10 +549,13 @@ def detect_conversions(by_pid: dict) -> list:
             ipb = be.ip_to_float(byyr[b].get("IP"))
             if ipa < CONV_MIN_IP or ipb < CONV_MIN_IP:
                 continue
-            # held the new role the following season?
+            # held the new role the following season? (closed seasons with a
+            # real sample only - see the docstring)
             held = None
             nxt = b + 1
-            if nxt in byyr:
+            if (nxt in byyr
+                    and (last_closed_season is None or nxt <= last_closed_season)
+                    and be.ip_to_float(byyr[nxt].get("IP")) >= CONV_MIN_IP):
                 rn = role_of(byyr[nxt].get("G"), byyr[nxt].get("GS"), byyr[nxt].get("IP"))
                 held = (rn == rb) if rn else None
             events.append({

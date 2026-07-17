@@ -139,6 +139,53 @@ class HalfSeasonAdjustment(unittest.TestCase):
         self.assertEqual(r.season_phase, "pre_break")
 
 
+class CalendarFloor(unittest.TestCase):
+    """The eta_half bucket must never point at a sub-year window that has
+    already passed at compute time: post-break, a current-year "early"
+    (Apr-Jun) floors to "late"; in Nov/Dec a current-year ETA rolls to
+    next year's early window; Jan/Feb leaves current-year "early" alone."""
+
+    def _mlb_ready_payload(self):
+        # base_years pinned to 0 → travel time rounds to a current-year
+        # ETA and the sub-0.01 total forces the pre-clamp bucket to
+        # "early" — isolating the calendar floor itself.
+        return dict(
+            current_level="AAA",
+            age=24.0,
+            is_pitcher=False,
+            fv=55.0,
+            stats=None,
+            base_years={"AAA": 0.0},
+        )
+
+    def test_pre_break_keeps_early(self):
+        r = estimate_eta(snapshot_date=date(2026, 4, 15),
+                         **self._mlb_ready_payload())
+        self.assertEqual(r.eta_year, date.today().year)
+        self.assertEqual(r.eta_half, "early")
+
+    def test_post_break_floors_current_year_to_late(self):
+        r = estimate_eta(snapshot_date=date(2026, 8, 20),
+                         **self._mlb_ready_payload())
+        self.assertEqual(r.eta_year, date.today().year)
+        self.assertEqual(r.eta_half, "late")
+
+    def test_nov_dec_rolls_current_year_forward(self):
+        # Season over — a current-year debut can no longer happen.
+        r = estimate_eta(snapshot_date=date(2026, 11, 15),
+                         **self._mlb_ready_payload())
+        self.assertEqual(r.eta_year, date.today().year + 1)
+        self.assertEqual(r.eta_half, "early")
+
+    def test_jan_feb_offseason_not_rolled(self):
+        # Jan/Feb offseason: April is still ahead — "early <current
+        # year>" is legitimate.
+        r = estimate_eta(snapshot_date=date(2027, 1, 20),
+                         **self._mlb_ready_payload())
+        self.assertEqual(r.eta_year, date.today().year)
+        self.assertEqual(r.eta_half, "early")
+
+
 class OrgPromotionTendency(unittest.TestCase):
     """Per-org H1/H2 promotion tendency scales the half-season ETA
     adjustment. H2-heavy orgs (≥60% promotions post-ASB) get a

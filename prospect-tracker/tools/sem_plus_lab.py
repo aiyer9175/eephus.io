@@ -3,7 +3,8 @@
 # Proprietary and confidential
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
-"""Starter-metric lab (Wave B2). Three pre-registered experiments
+"""Starter-metric lab (Wave B2), HARNESS v2 (T1-7 2026-07-15; see
+tools/plus_lab_harness.py). Three pre-registered experiments
 (docs/audit-2026-07/AUDIT_FINDINGS.md, section "Wave B2"):
 
   X-S1  SEM+ skill validation. SEM+ = starter-pool EB-shrunk FIP. GATE (ship):
@@ -20,6 +21,12 @@
         Ship the adjusted core ONLY if it beats plain FIP forward (gap lo95 >= 0);
         else keep plain FIP, record the loss ledger.
 
+HARNESS v2 (vs the shipped 2026-07-07 artifact): the shipped n=702 VALIDATED
+verdict INCLUDED 2025->2026 pairs whose target is a mid-2026 partial season -
+those pairs are now DROPPED; predictors are the unrounded sem_plus_raw floats;
+both target conventions (v1 raw / v2 within-outcome-season z) + both bootstrap
+designs are emitted side by side. Gates stay declared on v1 this cycle.
+
 No leverage walk (starters are not leverage-deployed), so this is one StatsAPI
 call per season plus a best-effort bref SwStr pull. All stochastic steps seeded.
 Run: python tools/sem_plus_lab.py [--no-write] [--seasons 2018,2019,...]
@@ -27,19 +34,20 @@ Run: python tools/sem_plus_lab.py [--no-write] [--seasons 2018,2019,...]
 from __future__ import annotations
 
 import json
-import random
+import os
 import sys
 import time
 from datetime import date
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(os.environ.get("EEPHUS_ROOT") or Path(__file__).resolve().parent.parent)
 sys.path.insert(0, str(ROOT))
 sys.path.insert(0, str(ROOT / "tools"))
 
 import sem_plus  # noqa: E402
 import starter_export as se  # noqa: E402
-from rem_plus_backtest import _spearman, _ci, SEASONS as BT_SEASONS  # noqa: E402
+import plus_lab_harness as plh  # noqa: E402
+from rem_plus_backtest import _spearman, SEASONS as BT_SEASONS  # noqa: E402
 
 DATA = ROOT / "data"
 SEM_EVAL = DATA / "sem_plus_eval.json"
@@ -52,6 +60,9 @@ BOOT = 2000
 SEED = 20260703
 TAG_MIN_SEASONS = 2
 TAG_MIN_IP = 120.0                 # 3yr "established" bar (starters throw more)
+
+TARGET_V1 = "-RA9 in year Y+1 (raw, pooled across seasons)"
+TARGET_V2 = "-RA9 in year Y+1"
 
 
 def _r4(v):
@@ -67,7 +78,8 @@ def _raw_fip_starter(s: sem_plus.Starter):
 
 def load_season(y: int) -> dict:
     """MLBAM -> per-starter record for season Y's true-starter pool, carrying
-    plain SEM+, the GB-adjusted candidate SEM+, and outcome RA9."""
+    plain SEM+ (rounded display + UNROUNDED raw), the GB-adjusted candidate
+    SEM+, and outcome RA9."""
     rows = se.load_season_pitching(y)
     if not rows:
         return {}
@@ -87,7 +99,10 @@ def load_season(y: int) -> dict:
         f_gb = sem_plus.fip_skill(s, p_gb, gb_adjust=True)
         cand = (100.0 * p_gb.mean_fip / f_gb) if (f_gb and f_gb > 0) else None
         out[s.mlbam] = {
-            "name": s.name, "team": s.team, "sem_plus": plain, "cand_sem": cand,
+            "name": s.name, "team": s.team,
+            "sem_plus": plain,                      # rounded display (proposed_values)
+            "sem_plus_raw": s.sem_plus_raw,         # v2: unrounded eval predictor
+            "cand_sem": cand,
             "raw_fip": _raw_fip_starter(s), "era": s.rates.get("era"),
             "ra9": s.rates.get("ra9"), "ip": s.ip, "gs": s.gs, "tbf": s.tbf,
             "gb_pct": s.rates.get("gb_pct"), "ip_per_gs": s.rates.get("ip_per_gs"),
@@ -96,21 +111,31 @@ def load_season(y: int) -> dict:
     return out
 
 
-def _boot_gap_ci(a_pred, b_pred, tgt, seed=SEED):
-    """Seeded bootstrap CI on rho(a,tgt) - rho(b,tgt)."""
-    n = len(tgt)
-    rng = random.Random(seed)
-    gaps = []
-    for _ in range(BOOT):
-        samp = [rng.randrange(n) for _ in range(n)]
-        ra = _spearman([a_pred[i] for i in samp], [tgt[i] for i in samp])
-        rb = _spearman([b_pred[i] for i in samp], [tgt[i] for i in samp])
-        if ra is not None and rb is not None:
-            gaps.append(ra - rb)
-    return _ci(gaps)
+def _dual(primary, baselines: dict, tgt_raw, players, pred_seasons, out_seasons,
+          seed=SEED):
+    """One primary-vs-baselines comparison under BOTH conventions."""
+    tgt_v2 = plh.zscore_within(out_seasons, tgt_raw)
+    rp1 = _spearman(primary, tgt_raw)
+    rb1 = {k: _spearman(s, tgt_raw) for k, s in baselines.items()}
+    rp2 = _spearman(primary, tgt_v2)
+    rb2 = {k: _spearman(s, tgt_v2) for k, s in baselines.items()}
+    return {
+        "v1": {"rho_primary": _r4(rp1),
+               "rho_baselines": {k: _r4(v) for k, v in rb1.items()},
+               "rho_primary_full": rp1, "rho_baselines_full": rb1,
+               "gap_ci": plh.iid_boot_gaps(primary, baselines, tgt_raw, BOOT, seed)},
+        "v2": {"rho_primary": _r4(rp2),
+               "rho_baselines": {k: _r4(v) for k, v in rb2.items()},
+               "rho_primary_full": rp2, "rho_baselines_full": rb2,
+               "gap_ci": plh.cluster_boot_gaps(primary, baselines, tgt_v2, players,
+                                               pred_seasons, BOOT, seed),
+               "cluster": plh.cluster_summary(players, pred_seasons)},
+    }
 
 
 def _multiyear_proposed(by_season: dict, cur_season: int) -> dict:
+    """DISPLAY values keep the shipped rounding convention (rounded per-season
+    SEM+ in, int out) - harness v2 changes evals only, never shipped display."""
     window = [cur_season - 2, cur_season - 1, cur_season]
     cur = by_season.get(cur_season) or {}
     players, vals = {}, []
@@ -162,8 +187,10 @@ def run(write: bool = True) -> dict:
             by_season[y] = s
     print(f"  loaded {len(by_season)} seasons in {round(time.time()-t0,1)}s")
 
-    # ---- X-S1 + X-S3 forward pairs ---- #
+    # ---- X-S1 + X-S3 forward pairs (complete outcome seasons only) ---- #
     sem, cand, negfip, negera, negra9n = [], [], [], [], []
+    mids1, pys1, oys1 = [], [], []
+    dropped_partial = 0
     for y in SEASONS:
         cur, nxt = by_season.get(y), by_season.get(y + 1)
         if not cur or not nxt:
@@ -174,20 +201,42 @@ def run(write: bool = True) -> dict:
                 continue
             if a["raw_fip"] is None or a["era"] is None or b["ra9"] is None or a["cand_sem"] is None:
                 continue
-            sem.append(a["sem_plus"]); cand.append(a["cand_sem"])
+            if not plh.season_complete(y + 1):
+                dropped_partial += 1
+                continue
+            sem.append(a["sem_plus_raw"]); cand.append(a["cand_sem"])
             negfip.append(-a["raw_fip"]); negera.append(-a["era"]); negra9n.append(-b["ra9"])
+            mids1.append(mid); pys1.append(y); oys1.append(y + 1)
     n1 = len(sem)
-    rho_sem = _spearman(sem, negra9n)
-    rho_fip = _spearman(negfip, negra9n)
-    rho_era = _spearman(negera, negra9n)
-    xs1_vs_era = _boot_gap_ci(sem, negera, negra9n)
-    xs1_vs_fip = _boot_gap_ci(sem, negfip, negra9n)
+    print(f"  X-S1 pairs: {n1} (dropped {dropped_partial} partial-outcome pairs)")
+
+    xs1 = _dual(sem, {"vs_era": negera, "vs_raw_fip": negfip}, negra9n,
+                mids1, pys1, oys1)
+    rho_sem = xs1["v1"]["rho_primary"]
+    rho_fip = xs1["v1"]["rho_baselines"]["vs_raw_fip"]
+    rho_era = xs1["v1"]["rho_baselines"]["vs_era"]
+    xs1_vs_era = xs1["v1"]["gap_ci"]["vs_era"]
+    xs1_vs_fip = xs1["v1"]["gap_ci"]["vs_raw_fip"]
     xs1_pass = bool(rho_sem is not None and xs1_vs_era and xs1_vs_era["lo95"] > 0
                     and xs1_vs_fip and xs1_vs_fip["lo95"] >= -0.01)
-    rho_cand = _spearman(cand, negra9n)
-    xs3_gap = _boot_gap_ci(cand, sem, negra9n)
-    xs3_pass = bool(rho_cand is not None and rho_sem is not None
-                    and rho_cand > rho_sem and xs3_gap and xs3_gap["lo95"] >= 0)
+    xs1_pass_v2 = bool(xs1["v2"]["rho_primary"] is not None
+                       and xs1["v2"]["gap_ci"]["vs_era"]
+                       and xs1["v2"]["gap_ci"]["vs_era"]["lo95"] > 0
+                       and xs1["v2"]["gap_ci"]["vs_raw_fip"]
+                       and xs1["v2"]["gap_ci"]["vs_raw_fip"]["lo95"] >= -0.01)
+
+    xs3 = _dual(cand, {"vs_plain_sem": sem}, negra9n, mids1, pys1, oys1)
+    rho_cand = xs3["v1"]["rho_primary"]
+    xs3_gap = xs3["v1"]["gap_ci"]["vs_plain_sem"]
+    xs3_pass = bool(xs3["v1"]["rho_primary_full"] is not None
+                    and xs3["v1"]["rho_baselines_full"]["vs_plain_sem"] is not None
+                    and xs3["v1"]["rho_primary_full"] > xs3["v1"]["rho_baselines_full"]["vs_plain_sem"]
+                    and xs3_gap and xs3_gap["lo95"] >= 0)
+    xs3_gap_v2 = xs3["v2"]["gap_ci"]["vs_plain_sem"]
+    xs3_pass_v2 = bool(xs3["v2"]["rho_primary_full"] is not None
+                       and xs3["v2"]["rho_baselines_full"]["vs_plain_sem"] is not None
+                       and xs3["v2"]["rho_primary_full"] > xs3["v2"]["rho_baselines_full"]["vs_plain_sem"]
+                       and xs3_gap_v2 and xs3_gap_v2["lo95"] >= 0)
 
     # ---- X-S2: 3yr SEM+ forward pairs ---- #
     def _sem3(mid, y):
@@ -195,11 +244,12 @@ def run(write: bool = True) -> dict:
         su = 0
         for yy in (y - 2, y - 1, y):
             rec = (by_season.get(yy) or {}).get(mid)
-            if rec and rec.get("sem_plus") is not None and rec.get("ip"):
-                num += rec["sem_plus"] * rec["ip"]; den += rec["ip"]; su += 1
+            if rec and rec.get("sem_plus_raw") is not None and rec.get("ip"):
+                num += rec["sem_plus_raw"] * rec["ip"]; den += rec["ip"]; su += 1
         return (num / den if den else None), su, den
 
     one3, three3, ra9_3 = [], [], []
+    mids3, pys3, oys3 = [], [], []
     for y in SEASONS:
         cur, nxt = by_season.get(y), by_season.get(y + 1)
         if not cur or not nxt:
@@ -208,23 +258,37 @@ def run(write: bool = True) -> dict:
             b = nxt.get(mid)
             if not b or (a["ip"] or 0) < MIN_IP_Y or (b["ip"] or 0) < MIN_IP_NEXT or b["ra9"] is None:
                 continue
+            if not plh.season_complete(y + 1):
+                continue
             s3, su, ip3 = _sem3(mid, y)
             if s3 is None or su < TAG_MIN_SEASONS or ip3 < TAG_MIN_IP:
                 continue
-            one3.append(a["sem_plus"]); three3.append(s3); ra9_3.append(-b["ra9"])
+            one3.append(a["sem_plus_raw"]); three3.append(s3); ra9_3.append(-b["ra9"])
+            mids3.append(mid); pys3.append(y); oys3.append(y + 1)
     n3 = len(one3)
-    rho_1yr = _spearman(one3, ra9_3)
-    rho_3yr = _spearman(three3, ra9_3)
-    xs2_gap = _boot_gap_ci(three3, one3, ra9_3) if n3 >= 30 else None
-    xs2_pass = bool(rho_3yr is not None and rho_1yr is not None
-                    and rho_3yr > rho_1yr and xs2_gap and xs2_gap["lo95"] >= 0)
+    xs2 = (_dual(three3, {"vs_1yr": one3}, ra9_3, mids3, pys3, oys3)
+           if n3 >= 30 else None)
+    rho_1yr = xs2["v1"]["rho_baselines"]["vs_1yr"] if xs2 else None
+    rho_3yr = xs2["v1"]["rho_primary"] if xs2 else None
+    xs2_gap = xs2["v1"]["gap_ci"]["vs_1yr"] if xs2 else None
+    xs2_pass = bool(xs2 and xs2["v1"]["rho_primary_full"] is not None
+                    and xs2["v1"]["rho_baselines_full"]["vs_1yr"] is not None
+                    and xs2["v1"]["rho_primary_full"] > xs2["v1"]["rho_baselines_full"]["vs_1yr"]
+                    and xs2_gap and xs2_gap["lo95"] >= 0)
+    xs2_gap_v2 = xs2["v2"]["gap_ci"]["vs_1yr"] if xs2 else None
+    xs2_pass_v2 = bool(xs2 and xs2["v2"]["rho_primary_full"] is not None
+                       and xs2["v2"]["rho_baselines_full"]["vs_1yr"] is not None
+                       and xs2["v2"]["rho_primary_full"] > xs2["v2"]["rho_baselines_full"]["vs_1yr"]
+                       and xs2_gap_v2 and xs2_gap_v2["lo95"] >= 0)
 
     cur_season = max(by_season)
     dur = round(time.time() - t0, 1)
     common = {"generated_at": date.today().isoformat(), "seasons": SEASONS, "seed": SEED,
               "conventions": {"predictor_year": f"year Y qualified (IP>={int(MIN_IP_Y)})",
                               "target": f"-RA9 in year Y+1 (IP>={int(MIN_IP_NEXT)})",
-                              "excluded": "2020 (60-game COVID season)"},
+                              "excluded": "2020 (60-game COVID season)",
+                              "n_partial_outcome_pairs_dropped": dropped_partial},
+              "harness": plh.convention_meta(TARGET_V1, TARGET_V2),
               "runtime_seconds": dur}
 
     sem_payload = dict(common)
@@ -232,13 +296,19 @@ def run(write: bool = True) -> dict:
         "experiment": "X-S1 (+ X-S3)", "model": "sem_plus",
         "n_forward_pairs": n1,
         "forward_spearman_vs_RA9_next": {
-            "sem_plus": _r4(rho_sem), "raw_fip": _r4(rho_fip), "era": _r4(rho_era)},
+            "sem_plus": rho_sem, "raw_fip": rho_fip, "era": rho_era},
         "gap_ci_vs_era": xs1_vs_era, "gap_ci_vs_raw_fip": xs1_vs_fip,
+        "results_by_convention": xs1,
         "gate": {"bar": "beats ERA (gap lo95 > 0) AND not worse than raw FIP (lo95 >= -0.01)",
-                 "pass": xs1_pass},
+                 "convention": "v1", "pass": xs1_pass, "pass_under_v2": xs1_pass_v2},
+        "prior_artifact_defect": ("the 2026-07-07 shipped artifact's n=702 included "
+                                  "2025->2026 pairs whose target was a mid-2026 partial "
+                                  "season; harness v2 drops partial-outcome pairs"),
         "gb_adjusted_candidate": {
-            "experiment": "X-S3", "candidate_rho": _r4(rho_cand),
-            "gap_ci_vs_plain_sem": xs3_gap, "pass": xs3_pass,
+            "experiment": "X-S3", "candidate_rho": rho_cand,
+            "gap_ci_vs_plain_sem": xs3_gap,
+            "results_by_convention": xs3,
+            "pass": xs3_pass, "pass_under_v2": xs3_pass_v2,
             "verdict": ("PASS: the ground-ball-adjusted HR expectation beats plain FIP "
                         "forward; ship the adjusted core."
                         if xs3_pass else
@@ -247,9 +317,10 @@ def run(write: bool = True) -> dict:
                         "the observed HR rate is already a strong estimate.")},
         "verdict": {"status": "validated" if xs1_pass else "provisional",
                     "summary": (
-                        f"Forward-chained OOS over {len(SEASONS)} seasons ({n1} Y->Y+1 pairs): "
-                        f"SEM+ predicts next-year RA9 at rho {_r4(rho_sem)} vs raw FIP "
-                        f"{_r4(rho_fip)}, ERA {_r4(rho_era)}. CI on the rho gap vs ERA "
+                        f"Forward-chained OOS over {len(SEASONS)} seasons ({n1} Y->Y+1 pairs, "
+                        f"complete outcome seasons only): "
+                        f"SEM+ predicts next-year RA9 at rho {rho_sem} vs raw FIP "
+                        f"{rho_fip}, ERA {rho_era}. CI on the rho gap vs ERA "
                         f"{xs1_vs_era}, vs raw FIP {xs1_vs_fip}. "
                         + ("Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse "
                            "than its raw-FIP parent, so the empirical-Bayes shrinkage + "
@@ -261,10 +332,11 @@ def run(write: bool = True) -> dict:
     multi_payload = dict(common)
     multi_payload.update({
         "experiment": "X-S2", "model": "sem_plus_3yr", "n_forward_pairs": n3,
-        "sem_1yr_forward_rho_on_3yr_set": _r4(rho_1yr),
-        "sem_3yr_forward_rho": _r4(rho_3yr), "gap_ci_3yr_minus_1yr": xs2_gap,
+        "sem_1yr_forward_rho_on_3yr_set": rho_1yr,
+        "sem_3yr_forward_rho": rho_3yr, "gap_ci_3yr_minus_1yr": xs2_gap,
+        "results_by_convention": xs2,
         "gate": {"bar": "3yr rho > 1yr rho on the same set AND bootstrap gap lo95 >= 0",
-                 "pass": xs2_pass},
+                 "convention": "v1", "pass": xs2_pass, "pass_under_v2": xs2_pass_v2},
         "verdict": ("PASS: 3-year SEM+ forward-predicts next-year run prevention better than "
                     "one season; ship sem_plus_3yr as a companion column."
                     if xs2_pass else
@@ -273,10 +345,16 @@ def run(write: bool = True) -> dict:
         "proposed_values": _multiyear_proposed(by_season, cur_season)})
 
     print(json.dumps({
-        "X-S1": {"n": n1, "sem": _r4(rho_sem), "fip": _r4(rho_fip), "era": _r4(rho_era),
-                 "vs_era": xs1_vs_era, "vs_fip": xs1_vs_fip, "pass": xs1_pass},
-        "X-S3": {"cand": _r4(rho_cand), "gap": xs3_gap, "pass": xs3_pass},
-        "X-S2": {"n": n3, "one": _r4(rho_1yr), "three": _r4(rho_3yr), "gap": xs2_gap, "pass": xs2_pass},
+        "X-S1": {"n": n1, "sem": rho_sem, "fip": rho_fip, "era": rho_era,
+                 "vs_era_v1": xs1_vs_era, "vs_fip_v1": xs1_vs_fip,
+                 "vs_era_v2": xs1["v2"]["gap_ci"]["vs_era"],
+                 "vs_fip_v2": xs1["v2"]["gap_ci"]["vs_raw_fip"],
+                 "pass_v1": xs1_pass, "pass_v2": xs1_pass_v2},
+        "X-S3": {"cand": rho_cand, "gap_v1": xs3_gap, "gap_v2": xs3_gap_v2,
+                 "pass_v1": xs3_pass, "pass_v2": xs3_pass_v2},
+        "X-S2": {"n": n3, "one": rho_1yr, "three": rho_3yr,
+                 "gap_v1": xs2_gap, "gap_v2": xs2_gap_v2,
+                 "pass_v1": xs2_pass, "pass_v2": xs2_pass_v2},
     }, indent=1))
     if write:
         for path, pl in ((SEM_EVAL, sem_payload), (MULTI_EVAL, multi_payload)):

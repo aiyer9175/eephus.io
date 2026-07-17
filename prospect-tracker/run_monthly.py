@@ -429,9 +429,10 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
     # Draft pipeline — promote any newly-drafted players + write the
     # draft_timeseries.json sidecar. Promotion is idempotent.
     try:
-        from draft_promotion import promote_drafted_players
+        from draft_promotion import promote_drafted_players, seed_signed_draftees
         from draft_export import export_draft_json
         promote_drafted_players()
+        seed_signed_draftees()
         n_draft = export_draft_json(out_dir / "draft_timeseries.json")
         log.info("draft pipeline (rebuild): exported %d draft prospects", n_draft)
     except Exception:
@@ -601,8 +602,13 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
         _ts_payload = {}
     try:
         from grpo_prospect import export_grpo_scores
-        _grads_for_grpo = json.loads((out_dir / "graduates.json").read_text()) \
-            if (out_dir / "graduates.json").exists() else []
+        # storage writes the graduate sidecar as debuts.json (renamed from
+        # graduates.json); fall back like the grpo CLI so retrain never
+        # silently trains on an empty set and freezes grpo_scores.json.
+        _grads_path = next((p for p in (out_dir / "graduates.json",
+                                        out_dir / "debuts.json") if p.exists()), None)
+        _grads_for_grpo = json.loads(_grads_path.read_text(encoding="utf-8")) \
+            if _grads_path else []
         _grpo_result    = export_grpo_scores(
             _ts_payload.get("players") or [], _grads_for_grpo,
             out_path=out_dir / "grpo_scores.json",
@@ -1404,7 +1410,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                 try:
                     from scrapers import scrape_all_draft, scrape_mlb_draft_tracker
                     from storage import insert_draft_snapshots, upsert_draft_results
-                    from draft_promotion import promote_drafted_players
+                    from draft_promotion import promote_drafted_players, seed_signed_draftees
                     from draft_export import export_draft_json
 
                     draft_snaps = scrape_all_draft(force=force_refetch)
@@ -1430,6 +1436,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     if tk_rows:
                         upsert_draft_lottery_odds(tk_rows)
                     promote_drafted_players()
+                    seed_signed_draftees()
                     # v31.7 — Fetch college / HS / showcase stats from
                     # FG player pages for draft prospects with an FG ID
                     # on file. Concurrent (8 workers); on-disk cache

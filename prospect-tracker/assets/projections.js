@@ -68,8 +68,39 @@
     return " proj-war-low";
   }
 
-  const state = { src: "all", pos: "all", team: "all", contract: "all", q: "", sort: "warTotal",
+  // Projected RATE lines (vets only - fa_projection.rate_path arrays; the
+  // prospect outcome model is FV-anchored and carries no rate machinery,
+  // so prospect cells render a dash under a rate metric).
+  const RATE_META = {
+    wrc:  { label: "wRC+", fmt: v => String(Math.round(v)), hi: [140, 115, 90],
+            tip: "projected wRC+ (park-neutral, 100 = league average)" },
+    woba: { label: "wOBA", fmt: v => v.toFixed(3).replace(/^0(?=\.)/, ""), hi: [0.370, 0.340, 0.310],
+            tip: "projected wOBA (Marcel components aged along the engine's curves)" },
+    fip:  { label: "FIP", fmt: v => v.toFixed(2), lo: [3.00, 3.75, 4.50],
+            tip: "projected FIP (lower is better)" },
+  };
+  function rateAt(m, t) {
+    const arr = state.cells === "wrc" ? m.wrc
+      : state.cells === "woba" ? m.woba
+      : state.cells === "fip" ? m.fip : null;
+    return arr ? (arr[t] ?? null) : null;
+  }
+  function rateClass(v) {
+    const mm = RATE_META[state.cells];
+    if (!mm || v == null) return "";
+    if (mm.hi) return v >= mm.hi[0] ? " proj-war-elite" : v >= mm.hi[1] ? " proj-war-good"
+      : v >= mm.hi[2] ? " proj-war-avg" : " proj-war-low";
+    return v <= mm.lo[0] ? " proj-war-elite" : v <= mm.lo[1] ? " proj-war-good"
+      : v <= mm.lo[2] ? " proj-war-avg" : " proj-war-low";
+  }
+
+  const state = { src: "all", pos: "all", team: "all", contract: "all", age: "all", q: "", sort: "warTotal",
                   dir: -1, limit: 100, player: null, view: "players", cmp: [],
+                  // Season-cell metric: war (default) | wrc | woba | fip - the board's
+                  // per-season cells re-render on the projected RATE line when toggled.
+                  cells: "war",
+                  // Talent-map scatter axes (user-pickable).
+                  sx: "age", sy: "warY1",
                   // Team Outlook column sort: teamSort = column key (null keeps
                   // the export's roster-WAR order); teamDir = 1 natural / -1 reversed.
                   teamSort: null, teamDir: 1 };
@@ -89,6 +120,13 @@
     if (p.has("pos")) state.pos = p.get("pos");
     if (p.has("team")) state.team = p.get("team");
     if (p.has("contract")) state.contract = p.get("contract");
+    if (p.has("age")) state.age = p.get("age");
+    // Whitelist like view above: an arbitrary #cells= value (typo, truncated
+    // share link) would crash renderTable's header template on
+    // RATE_META[state.cells].label - fall back to the WAR default instead.
+    if (p.has("cells") && ["war", "wrc", "woba", "fip"].includes(p.get("cells"))) state.cells = p.get("cells");
+    if (p.has("sx")) state.sx = p.get("sx");
+    if (p.has("sy")) state.sy = p.get("sy");
     if (p.has("q")) state.q = p.get("q");
     if (p.has("sort")) state.sort = p.get("sort");
   }
@@ -101,6 +139,10 @@
     if (state.pos !== "all") p.set("pos", state.pos);
     if (state.team !== "all") p.set("team", state.team);
     if (state.contract !== "all") p.set("contract", state.contract);
+    if (state.age !== "all") p.set("age", state.age);
+    if (state.cells !== "war") p.set("cells", state.cells);
+    if (state.sx !== "age") p.set("sx", state.sx);
+    if (state.sy !== "warY1") p.set("sy", state.sy);
     if (state.q) p.set("q", state.q);
     if (state.sort !== "warTotal") p.set("sort", state.sort);
     const h = p.toString();
@@ -150,14 +192,32 @@
     return m.warTotalPTH ?? m.warTotal;
   }
 
+  // Age filter bands: [lo, hi) on the row's decimal age.
+  const AGE_FILTER_BANDS = { u23: [0, 23], "23-26": [23, 27], "27-30": [27, 31],
+                             "31-34": [31, 35], "35+": [35, 99] };
+  function posMatches(m) {
+    if (state.pos === "all") return true;
+    const g = posGroup(m.pos);
+    // H / P side roll-ups mirror the PROSPX position filter; two-way rows
+    // match both sides.
+    if (state.pos === "H") return m.twoWay || !["SP", "RP"].includes(g);
+    if (state.pos === "P") return m.twoWay || ["SP", "RP"].includes(g);
+    return g === state.pos;
+  }
+  function ageMatches(m) {
+    if (state.age === "all") return true;
+    const b = AGE_FILTER_BANDS[state.age];
+    return !!b && m.age != null && m.age >= b[0] && m.age < b[1];
+  }
   function rows() {
     const all = (DATA.vets || []).concat(DATA.prospects || []);
     const q = state.q.trim().toLowerCase();
     return all.filter(m =>
       (state.src === "all" || m.src === state.src)
-      && (state.pos === "all" || posGroup(m.pos) === state.pos)
+      && posMatches(m)
       && (state.team === "all" || m.team === state.team)
       && (state.contract === "all" || contractStatus(m).key === state.contract)
+      && ageMatches(m)
       && (!q || (m.name || "").toLowerCase().includes(q)));
   }
 
@@ -167,41 +227,67 @@
       if (k === "age") return m.age ?? 99;
       if (k === "sur") return m.surNpv ?? -1e15;
       if (k === "warTotal") return warShown(m) ?? -99;  // sort by the DISPLAYED 5yr total (prospects: in-window only)
-      if (k.startsWith("y")) return warAt(m, Number(k.slice(1))) ?? -99;
+      if (k.startsWith("y")) {
+        const t = Number(k.slice(1));
+        if (state.cells !== "war") {
+          // Season headers sort the ACTIVE cell metric. FIP is lower-better:
+          // negate so the default descending click puts the best arms first.
+          const v = rateAt(m, t);
+          if (v == null) return -1e9;
+          return state.cells === "fip" ? -v : v;
+        }
+        return warAt(m, t) ?? -99;
+      }
       return m[k] ?? -99;
     };
     return list.slice().sort((a, b) => state.dir * (val(a) > val(b) ? 1 : val(a) < val(b) ? -1 : 0));
   }
 
-  // Talent-by-age scatter: year-1 projected WAR (y, the if-healthy display
-  // value) vs age (x), so the league's aging landscape is visible at a glance -
-  // the inverted-U of peak years, ascending youth, declining vets. Colored by
+  // User-tweakable scatter: BOTH axes are pickable (age, year-1 WAR, 5y WAR,
+  // year-1 wOBA / wRC+ / FIP), so the one chart answers many questions -
+  // aging landscape, rate-vs-WAR agreement, arm value maps. Colored by
   // contract control status. Honors the current filters; dots link to players.
+  const SCATTER_AXES = {
+    age:      { label: "Age",                  get: m => m.age },
+    warY1:    { label: "Year-1 WAR",           get: m => warAt(m, 0) },
+    warTotal: { label: "5y WAR (shown)",       get: m => warShown(m) },
+    woba:     { label: "Year-1 wOBA (proj)",   get: m => (m.woba || [])[0] ?? null, f3: true },
+    wrc:      { label: "Year-1 wRC+ (proj)",   get: m => (m.wrc || [])[0] ?? null },
+    fip:      { label: "Year-1 FIP (proj)",    get: m => (m.fip || [])[0] ?? null, f2: true },
+  };
+  function _axFmt(ax, v) {
+    return ax.f3 ? v.toFixed(3).replace(/^0(?=\.)/, "") : ax.f2 ? v.toFixed(2)
+      : Math.abs(v) >= 100 ? String(Math.round(v)) : (Math.round(v * 10) / 10).toString();
+  }
+  // Talent-map dot tint by contract control status - one shared map for the
+  // scatter dots AND the legend row under the axis pickers, so they never drift.
+  const CONTRACT_DOT_COLORS = { signed: "var(--accent-green)", expiring: "var(--accent-gold)",
+                                controlled: "var(--accent-cyan)", prospect: "var(--text-tertiary)" };
   function projWarMap(list) {
-    const pts = list.filter(m => m.age != null && warAt(m, 0) != null);
+    const ax = SCATTER_AXES[state.sx] || SCATTER_AXES.age;
+    const ay = SCATTER_AXES[state.sy] || SCATTER_AXES.warY1;
+    const pts = list.map(m => ({ m, x: ax.get(m), y: ay.get(m) }))
+      .filter(p => p.x != null && p.y != null && isFinite(p.x) && isFinite(p.y));
     if (pts.length < 6) return "";
-    const W = 760, H = 400, PAD = 50;
-    const ages = pts.map(m => m.age), wars = pts.map(m => warAt(m, 0));
-    const ax0 = Math.min(18, Math.floor(Math.min(...ages)));
-    const ax1 = Math.max(40, Math.ceil(Math.max(...ages)));
-    const wy1 = Math.max(6, Math.ceil(Math.max(...wars)));
-    const px = a => PAD + (a - ax0) / (ax1 - ax0) * (W - 2 * PAD);
-    const py = w => (H - PAD) - Math.max(0, w) / wy1 * (H - 2 * PAD);
-    const xticks = []; for (let a = Math.ceil(ax0 / 2) * 2; a <= ax1; a += 4) xticks.push(a);
-    const yticks = []; for (let w = 0; w <= wy1; w += (wy1 > 12 ? 4 : 2)) yticks.push(w);
-    const grid = xticks.map(a => `<line x1="${px(a).toFixed(1)}" y1="${PAD}" x2="${px(a).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${px(a).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${a}</text>`).join("")
-      + yticks.map(w => `<line x1="${PAD}" y1="${py(w).toFixed(1)}" x2="${W - PAD}" y2="${py(w).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${PAD - 6}" y="${(py(w) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${w}</text>`).join("");
-    const ccol = { signed: "var(--accent-green)", expiring: "var(--accent-gold)", controlled: "var(--accent-cyan)", prospect: "var(--text-tertiary)" };
-    const dots = pts.map(m => {
-      const x = px(m.age), y = py(warAt(m, 0));
-      const c = ccol[contractStatus(m).key] || "var(--text-tertiary)";
+    const W = 760, H = 400, PAD = 52;
+    const xs = pts.map(p => p.x), ys = pts.map(p => p.y);
+    const _pad = (lo, hi) => { const d = (hi - lo) || 1; return [lo - 0.05 * d, hi + 0.05 * d]; };
+    const [x0, x1] = _pad(Math.min(...xs), Math.max(...xs));
+    const [y0, y1] = _pad(Math.min(...ys), Math.max(...ys));
+    const px = v => PAD + (v - x0) / (x1 - x0) * (W - 2 * PAD);
+    const py = v => (H - PAD) - (v - y0) / (y1 - y0) * (H - 2 * PAD);
+    const ticks = (lo, hi) => Array.from({ length: 6 }, (_, i) => lo + (hi - lo) * i / 5);
+    const grid = ticks(x0, x1).map(v => `<line x1="${px(v).toFixed(1)}" y1="${PAD}" x2="${px(v).toFixed(1)}" y2="${H - PAD}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${px(v).toFixed(1)}" y="${H - PAD + 14}" text-anchor="middle" font-size="9" fill="var(--text-tertiary)">${_axFmt(ax, v)}</text>`).join("")
+      + ticks(y0, y1).map(v => `<line x1="${PAD}" y1="${py(v).toFixed(1)}" x2="${W - PAD}" y2="${py(v).toFixed(1)}" stroke="var(--border-light)" stroke-width="0.5"/><text x="${PAD - 6}" y="${(py(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" fill="var(--text-tertiary)">${_axFmt(ay, v)}</text>`).join("");
+    const dots = pts.map(({ m, x, y }) => {
+      const c = CONTRACT_DOT_COLORS[contractStatus(m).key] || "var(--text-tertiary)";
       const href = m.src === "prospect" ? `/prospx/#player=${encodeURIComponent(m.key)}` : `#player=${encodeURIComponent(m.key)}`;
-      return `<a href="${href}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - age ${Math.floor(m.age)} · ${fmtWar(warAt(m, 0))} WAR (yr 1, if-healthy)</title></circle></a>`;
+      return `<a href="${href}"><circle cx="${px(x).toFixed(1)}" cy="${py(y).toFixed(1)}" r="3.5" fill="${c}" fill-opacity="0.7" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - ${esc(ax.label)} ${_axFmt(ax, x)} · ${esc(ay.label)} ${_axFmt(ay, y)}</title></circle></a>`;
     }).join("");
-    return `<svg viewBox="0 0 ${W} ${H}" class="proj-warmap-svg" role="img" aria-label="Year-1 projected WAR versus age scatter">
-      <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} players · year-1 projected WAR by age (if-healthy)</text>
-      <text x="${W / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">age</text>
-      <text x="14" y="${H / 2}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)" transform="rotate(-90 14 ${H / 2})">year-1 WAR</text>
+    return `<svg viewBox="0 0 ${W} ${H}" class="proj-warmap-svg" role="img" aria-label="${esc(ay.label)} versus ${esc(ax.label)} scatter">
+      <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} players · ${esc(ay.label)} vs ${esc(ax.label)}</text>
+      <text x="${W / 2}" y="${H - 4}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)">${esc(ax.label)}</text>
+      <text x="14" y="${H / 2}" text-anchor="middle" font-size="10" fill="var(--text-tertiary)" transform="rotate(-90 14 ${H / 2})">${esc(ay.label)}</text>
       ${grid}${dots}
     </svg>`;
   }
@@ -291,7 +377,9 @@
       <span class="filter-label" style="margin-left:10px;">Source</span>
       ${chip("All", "all", "src")}${chip("Veterans", "vet", "src")}${chip("Prospects", "prospect", "src")}
       <span class="filter-label" style="margin-left:10px;">Pos</span>
-      ${["all", "SP", "RP", "C", "IF", "OF", "DH"].map(p => chip(p === "all" ? "All" : p, p, "pos")).join("")}
+      ${[["All", "all"], ["H", "H"], ["P", "P"], ["SP", "SP"], ["RP", "RP"], ["C", "C"], ["IF", "IF"], ["OF", "OF"], ["DH", "DH"]].map(([l, p]) => chip(l, p, "pos")).join("")}
+      <span class="filter-label" style="margin-left:10px;">Age</span>
+      ${[["All", "all"], ["U23", "u23"], ["23-26", "23-26"], ["27-30", "27-30"], ["31-34", "31-34"], ["35+", "35+"]].map(([l, k]) => chip(l, k, "age")).join("")}
       <span class="filter-label" style="margin-left:10px;">Contract</span>
       ${[["All", "all"], ["Signed", "signed"], ["Expiring", "expiring"], ["Cost-ctrl", "controlled"], ["Prospect", "prospect"]].map(([l, k]) => chip(l, k, "contract")).join("")}
       <span class="filter-label" style="margin-left:10px;">Team</span>
@@ -299,6 +387,8 @@
         <option value="all">All teams</option>
         ${teams.map(t => `<option value="${t}"${state.team === t ? " selected" : ""}>${t}</option>`).join("")}
       </select>
+      <span class="filter-label" style="margin-left:10px;" title="What the per-season cells show: projected WAR (default) or the projected rate line (veterans; the prospect outcome model is FV-anchored and carries no rate paths)">Cells</span>
+      ${[["WAR", "war"], ["wRC+", "wrc"], ["wOBA", "woba"], ["FIP", "fip"]].map(([l, k]) => chip(l, k, "cells")).join("")}
       <input id="proj-q" class="proj-search" type="search" placeholder="Search players…" value="${esc(state.q)}" aria-label="Search players">`;
     bar.querySelectorAll("[data-pv]").forEach(b => b.onclick = () => {
       state.view = b.dataset.pv; syncToURL(); render();
@@ -672,6 +762,15 @@
     const seasons = Array.from({ length: DATA.horizon }, (_, t) => first + t);
     const body = list.slice(0, state.limit).map((m, i) => {
       const cells = seasons.map((s, t) => {
+        if (state.cells !== "war") {
+          const v = rateAt(m, t);
+          if (v == null) {
+            const milb = m.src === "prospect" && s < m.eta;
+            return `<td class="proj-dim">${milb ? "MiLB" : EM_DASH}</td>`;
+          }
+          const mm = RATE_META[state.cells];
+          return `<td class="proj-war${rateClass(v)}" title="${s}: ${esc(mm.tip)}. Rate line = the year-1 Marcel components walked along the engine's aging curves (display path; WAR and pricing are unaffected).">${mm.fmt(v)}</td>`;
+        }
         const w = warAt(m, t);
         if (w == null) {
           const milb = m.src === "prospect" && s < m.eta;
@@ -711,7 +810,24 @@
       </tr>`;
     }).join("");
     const _wm = projWarMap(list);
-    const warMap = _wm ? `<details class="proj-warmap"><summary>Talent by age &middot; year-1 WAR vs age (current filters)</summary><div class="proj-warmap-wrap" data-export-chart data-export-title="Talent by age - year-1 WAR vs age">${_wm}</div></details>` : "";
+    const _axSel = (id, cur) => `<select id="${id}" class="proj-select" style="font-size:11px;">
+      ${Object.entries(SCATTER_AXES).map(([k, ax]) => `<option value="${k}"${cur === k ? " selected" : ""}>${esc(ax.label)}</option>`).join("")}</select>`;
+    const _ay = (SCATTER_AXES[state.sy] || SCATTER_AXES.warY1).label;
+    const _ax2 = (SCATTER_AXES[state.sx] || SCATTER_AXES.age).label;
+    // Compact legend for the scatter's color encoding (contract status) -
+    // swatches share CONTRACT_DOT_COLORS with the dots; labels mirror the
+    // Contract filter chips. var() tokens keep it correct in both themes.
+    const warMapLegend = `<div style="display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin:2px 0 6px;font-size:11px;color:var(--text-secondary);">
+        <span style="color:var(--text-tertiary);">dot color = contract status</span>
+        ${[["signed", "Signed"], ["expiring", "Expiring"], ["controlled", "Cost-ctrl / unsigned"], ["prospect", "Prospect"]].map(([k, l]) =>
+          `<span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:9px;height:9px;border-radius:50%;background:${CONTRACT_DOT_COLORS[k]};opacity:.85;flex:none;" aria-hidden="true"></span>${l}</span>`).join("")}
+      </div>`;
+    const warMap = _wm ? `<details class="proj-warmap"><summary>Scatter &middot; ${esc(_ay)} vs ${esc(_ax2)} (current filters &middot; pick any axes)</summary>
+      <div style="display:flex;gap:10px;align-items:center;margin:6px 0;font-size:11px;color:var(--text-tertiary);">
+        <span>Y</span>${_axSel("proj-sy", state.sy)}<span>X</span>${_axSel("proj-sx", state.sx)}
+      </div>
+      ${warMapLegend}
+      <div class="proj-warmap-wrap" data-export-chart data-export-title="${esc(_ay)} vs ${esc(_ax2)}">${_wm}</div></details>` : "";
     // Right information rail for the Players view. Rebuilt inside renderTable so
     // the leaders and pool-supply modules track the CURRENT filtered/sorted
     // rows. View switching lives in the top filter-bar chips, so this rail is a
@@ -740,7 +856,9 @@
     }
     root.innerHTML = `<div class="fa-board-layout"><div class="fa-board-main">` + warMap + `<table class="detail-table proj-table">
       <thead><tr><th>#</th><th>Player</th>
-      ${seasons.map((s, t) => sortHead(String(s), "y" + t, `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`)).join("")}
+      ${seasons.map((s, t) => sortHead(String(s), "y" + t, state.cells === "war"
+        ? `Projected ${s} bWAR - the playing-time-held (if-healthy) path; hover any cell for the floor/ceiling outcome band`
+        : `Projected ${s} ${RATE_META[state.cells].label} (veterans; toggle Cells back to WAR for the priced path)`)).join("")}
       ${sortHead(`${DATA.horizon}y <span data-gl="war">WAR</span>`, "warTotal", "Five-year projected bWAR, playing-time-held (if-healthy) path, with the P10-P90 outcome band. Surplus prices the attrition-discounted expected value, not this path.")}
       <th>Contract</th>
       ${sortHead("Surplus", "sur", "Veterans: production value minus salary, salary-known seasons only. Prospects: platform surplus value.")}
@@ -751,6 +869,15 @@
       if (state.sort === k) state.dir = -state.dir;
       else { state.sort = k; state.dir = -1; }
       syncToURL(); renderTable();
+    });
+    ["proj-sx", "proj-sy"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.onchange = () => {
+        state[id === "proj-sx" ? "sx" : "sy"] = el.value;
+        syncToURL(); renderTable();
+        const d = root.querySelector("details.proj-warmap");
+        if (d) d.open = true;   // keep the chart open across the re-render
+      };
     });
     const more = document.getElementById("proj-more");
     if (more) more.onclick = () => { state.limit += 100; renderTable(); };
@@ -849,7 +976,7 @@
         <table class="detail-table proj-table" style="margin-top:10px;">
           <thead><tr><th>Season</th><th style="color:${CA};">${esc(a.name)}</th><th style="color:${CB};">${esc(b.name)}</th><th>Edge</th></tr></thead>
           <tbody>${seasonRows}
-            ${totRow(`${DATA.horizon}y WAR`, a.warTotalPTH ?? a.warTotal, b.warTotalPTH ?? b.warTotal, fmtWar)}
+            ${totRow(`${DATA.horizon}y WAR`, warShown(a), warShown(b), fmtWar)}
             ${totRow("Surplus", a.surNpv, b.surNpv, money)}</tbody></table>
         <div class="fa-note" style="margin-top:8px;">Edge = left minus right, per season. Totals carry each player's own P10-P90 band on the board view. Surplus compares different things across sources (veteran contract surplus vs prospect control-window surplus) - read it as "value above cost," not like-for-like contract terms.</div>
       </div></div>`;
@@ -860,7 +987,7 @@
         module: "MLB Projections",
         accentToken: "--accent-cyan",
         name: `${a.name} vs ${b.name}`,
-        meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(a.warTotalPTH ?? a.warTotal)} vs ${fmtWar(b.warTotalPTH ?? b.warTotal)}`,
+        meta: `head-to-head · projected ${DATA.horizon}y bWAR ${fmtWar(warShown(a))} vs ${fmtWar(warShown(b))}`,
         tiles: [],
         sections: [
           { title: esc(a.name), rows: seasons.map((s, t) => [String(s), fmtWar(warAt(a, t))]) },
@@ -1291,9 +1418,15 @@
   // Board spec for the Generate GFX modal: the league projection board as a
   // column leaderboard (projected 5y bWAR, P10-P90 range, contract surplus).
   function _projBoardSpec(top) {
-    const war = m => (m.warTotalPTH != null ? m.warTotalPTH : m.warTotal);
-    const lo = m => (m.warTotalPTHP10 != null ? m.warTotalPTHP10 : m.warTotalP10);
-    const hi = m => (m.warTotalPTHP90 != null ? m.warTotalPTHP90 : m.warTotalP90);
+    // Same HORIZON-windowed total the on-site board shows and sorts by
+    // (warShown), so the shared graphic never disagrees with the board row.
+    const war = m => warShown(m);
+    // A late-ETA prospect's exported P10/P90 totals bracket the ETA-anchored
+    // FULL-window total, not the calendar-windowed point above - drop the
+    // range for those rows rather than print a band around the wrong number.
+    const clipped = m => m.src === "prospect" && m.eta > DATA.first_season;
+    const lo = m => clipped(m) ? null : (m.warTotalPTHP10 != null ? m.warTotalPTHP10 : m.warTotalP10);
+    const hi = m => clipped(m) ? null : (m.warTotalPTHP90 != null ? m.warTotalPTHP90 : m.warTotalP90);
     const rows = top.map((m, i) => {
       const cells = [
         { t: i + 1 },

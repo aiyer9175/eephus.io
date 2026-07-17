@@ -17,8 +17,6 @@ import concurrent.futures
 import hashlib
 import json
 import math
-import multiprocessing
-import os
 import re
 import time
 from dataclasses import dataclass, field
@@ -1183,28 +1181,23 @@ def fetch_statcast_metrics_for_players(
                 gd = split.get("date")
                 if gd and gpk not in game_date_by_pk:
                     game_date_by_pk[gpk] = gd
+    feed_cache: dict[int, dict] = {}
     if game_pks:
         _p2_start = _time.monotonic()
         _log.info("statcast pass 2/3: fetching %d unique game feeds (deduped from %d player×game lookups)",
                   len(game_pks), sum(len(v) for v in fetched_logs_by_key.values()))
         def _fetch_feed(gpk):
-            # v20 — Warm the on-disk feed cache only; do NOT retain the parsed
-            # payload here. A full season's worth of feeds (thousands of full
-            # play-by-play JSON blobs) held in one in-memory dict was enough to
-            # OOM a modest box. Pass 3 re-reads each feed through
-            # feed_cache_mod.get_game_feed(), which is a fast local disk-cache
-            # hit by then (this pass just wrote it), so the wall-time win from
-            # pass 2's parallel dedup is preserved without holding the whole
-            # season resident in RAM at once.
             try:
-                feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
+                return gpk, feed_cache_mod.get_game_feed(gpk, game_date=game_date_by_pk.get(gpk))
             except Exception as e:
                 _log.debug("statcast feed failed for game %s: %s", gpk, e)
+                return gpk, {}
         _p2_done = 0
         # Shared cache retries 429 with backoff, so a higher cap is safe.
         feed_workers = max(1, min(max_workers, 20))
         with concurrent.futures.ThreadPoolExecutor(max_workers=feed_workers) as ex:
-            for _ in ex.map(_fetch_feed, sorted(game_pks)):
+            for gpk, feed in ex.map(_fetch_feed, sorted(game_pks)):
+                feed_cache[gpk] = feed
                 _p2_done += 1
                 if _p2_done % 500 == 0 or _p2_done == len(game_pks):
                     elapsed = _time.monotonic() - _p2_start
@@ -1213,45 +1206,18 @@ def fetch_statcast_metrics_for_players(
                     _log.info("statcast pass 2/3: %d/%d feeds (%.0fs elapsed · ~%.0fs left)",
                               _p2_done, len(game_pks), elapsed, eta)
 
-    # ---- PASS 3: per-player processing, reading feeds from the on-disk cache ----
+    # ---- PASS 3: per-player processing using the cached feeds ----
     _p3_start = _time.monotonic()
     _log.info("statcast pass 3/3: processing %d players against cached feeds", len(targets))
     _p3_done = 0
-    # v22 — Processes, not threads. _finalize_pitch/_finalize_contact do real
-    # CPU work (JSON parse + per-pitch statistical aggregation), and CPython
-    # threads don't get true parallelism for CPU-bound code (the GIL means
-    # only one thread executes Python bytecode at a time regardless of
-    # max_workers). A ProcessPoolExecutor gives each worker its own
-    # interpreter/GIL, so this actually uses the box's cores. Capped at the
-    # real core count (not max_workers, which was tuned high for pass 1/2's
-    # I/O concurrency) since extra processes past that just add overhead for
-    # CPU-bound work. fetch_statcast_metrics_for_player's args and its
-    # StatcastMetricRow return value are plain picklable types.
-    # SPAWN, not fork (v22 correction — an earlier version of this used
-    # fork and OOM'd on a full run): by the time we reach this step, the
-    # calling process (run_monthly.py's main()) has already accumulated a
-    # large heap — the full player timeseries, statlines, ID maps, etc.
-    # from every earlier step. fork() gives each worker a copy-on-write view
-    # of that WHOLE heap, and CPython's per-object refcounting means merely
-    # touching an inherited object (even incidentally, e.g. during a GC
-    # sweep) dirties its page and forces a real copy — across several
-    # workers that can multiply memory well past what the parent alone was
-    # using, which is exactly what caused a second OOM here. spawn starts
-    # each worker as a fresh interpreter that only receives the small,
-    # explicitly-pickled task arguments, never the parent's heap, at the
-    # cost of a negligible one-time interpreter-boot delay per worker.
-    # Requires the importing script's entry point to be guarded by
-    # `if __name__ == "__main__":` so a spawned child doesn't re-run it on
-    # import — confirmed true for run_monthly.py (see bottom of that file).
-    _p3_workers = min(max_workers, os.cpu_count() or 4)
-    _p3_ctx = multiprocessing.get_context("spawn")
-    with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
+    # Parallel because _finalize_pitch / contact has noticeable CPU work
+    # for pitchers with many tracked pitches.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as ex:
         future_to_key = {
             ex.submit(
                 fetch_statcast_metrics_for_player,
                 key, name, mlbam, season, level, is_pitcher,
-                None,  # v20 — no in-memory feed_cache; falls back to the disk
-                       # cache pass 2 just warmed (see _fetch_feed above).
+                feed_cache,
                 fetched_logs_by_key.get(key),
             ): key
             for key, name, mlbam, level, is_pitcher in targets

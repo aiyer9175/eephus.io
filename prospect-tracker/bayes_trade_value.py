@@ -4032,8 +4032,9 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         x_sur = xe.get("surplus_mm")
         # Carry the raw eFV grade through to the board: the convex-$/WAR + $0-floor
         # surplus transform compresses within-tier ordering (the backtest shows the
-        # grade orders realized WAR better than the $ value it is derived from), so
-        # the board uses xfv_grade as the within-tier tie-break for the bunched
+        # grade orders realized WAR better than the $-transform; surplus itself is
+        # priced on the displayed quantile grade since 2026-07-06), so the board
+        # uses xfv_grade as the within-tier tie-break for the bunched
         # low/floored block. Display value stays trade_value_mm.
         if xe.get("xfv_grade") is not None:
             r["xfv_grade"] = xe.get("xfv_grade")
@@ -4078,6 +4079,13 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                     r["downside_mm"] = rf["downside_mm"]
                     r["risk_mm"] = rf["risk_mm"]
                     r["sortino"] = rf["sortino"]
+            else:
+                # src == "projection": the bayes compute's lo/hi bracketed the
+                # DISCARDED bayes value, so the re-pointed surNpv could sit
+                # outside its own band. No band exists on this basis -> null
+                # (the frontends null-guard the range tooltip).
+                r["trade_value_lo"] = None
+                r["trade_value_hi"] = None
             stats[src] += 1
         else:
             stats["unchanged"] += 1

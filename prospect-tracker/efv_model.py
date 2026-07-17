@@ -32,6 +32,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import random
 import statistics
 from datetime import date
 from pathlib import Path
@@ -93,6 +94,17 @@ _FEATURES_HIT = [
     # neutral under standardization; the indicator variant destabilizes
     # pitchers (sparse-column class).
     ("age",            -1),
+    # level_rank: highest MiLB level reached at the decision read (DSL 0 .. AAA 5).
+    # The 2026-07-15 feature-arms sweep flagged the ops_rel FRINGE signature (t45
+    # +0.0200, pooled flat) but refused post-hoc fringe-gating; the keep-alive
+    # cleared its PRE-REGISTERED fringe re-gate at the 2024-fold vintage
+    # (docs/efv-2026-07-15/GATES.md section LR-FRINGE): t45 +0.0192 (bar +0.015),
+    # pooled +0.0003 / within-tier -0.0003 (identity noise floor 0.0011), no era
+    # cell down > 0.01; resolved-target sensitivity agrees (t45 +0.0132). Proximity
+    # to the majors is exactly the fringe-tier discriminator the rate-relative
+    # block misses. Ledger: data/xfv_level_rank_fringe_eval.json. Kept LAST to
+    # match the tested key order (ridge predictions are feature-order invariant).
+    ("level_rank",     +1),
     # NOTE: game power deliberately excluded -- Phase-1 shows scouts over-price it and it
     # is ~neutral-to-negative for incremental WAR (it predicts ISO, not WAR).
 ]
@@ -245,7 +257,18 @@ def rank_calibration(side: str) -> dict:
     DEBUTED-only rows, while production (_fit_production) fits its anchor on the full
     pool minus recent busts - the flatter full-pool slope makes the EFFECTIVE live
     weight ~0.03 higher than the number quoted here (rank order within a scoring run
-    is unaffected; documented rather than re-plumbed)."""
+    is unaffected; documented rather than re-plumbed).
+
+    ADJUDICATED 2026-07-15 (data/xfv_lambda_adjudication_eval.json): the parity
+    re-plumb was tested as a selection PROTOCOL in a nested forward-chained
+    tournament and LOST out-of-sample (hit composite -0.1025 with CI95 entirely
+    negative + contributor-AUC below floor; pit -0.0024, tie). The earlier
+    C-vs-D band-end disagreement was a lab leakage artifact (a vacuous
+    decision_year filter fit the parity stack on each fold's own test rows;
+    leak-fixed D == C exactly), not implementation sensitivity. This
+    debuted-only selector is the ADJUDICATED WINNER; no owner decision pending.
+    The returned dict carries the full candidate curve + near_boundary flag so
+    any future restamp proposal checks flatness first."""
     from efv_dataset import matrix_path
     keys, _m = _feature_spec(side)
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
@@ -301,8 +324,15 @@ def rank_calibration(side: str) -> dict:
     metr = {lam: _metrics(lam) for lam in cand}
     best = max(cand, key=lambda L: sum(metr[L]))   # pooled + within-tier + FV-45 fringe
     rho, wm, t45 = metr[best]
+    # Flatness surface for the restamp protocol: a near-boundary argmax or a
+    # composite curve flat within noise across the band means the selection is
+    # weak evidence and a restamp needs the owner's sign-off, not just a rerun.
+    curve = {str(L): round(sum(metr[L]), 4) for L in cand}
+    spread = max(curve.values()) - min(curve.values())
     return {"lambda": best, "rho": round(rho, 4), "within_tier_wm": round(wm, 4),
-            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi]}
+            "t45": round(t45, 4), "n": len(folds), "band": [lo, hi],
+            "curve": curve, "curve_spread": round(spread, 4),
+            "near_boundary": bool(best <= lo + 0.02 or best >= hi - 0.02)}
 
 
 def blend_lambda(side: str) -> float:
@@ -423,6 +453,12 @@ _TOOL_IMPUTE = {"tool_hit": 50.0, "tool_speed": 48.0, "tool_fb": 58.0}
 # extrapolated beyond its training support. Cap at the training max.
 _N_MILB_SEASONS_CAP = 8.0
 
+# RELIEF-SHAPE neutral imputes (docs/efv-2026-07-15/GATES.md): observed
+# debuted-pool means, measured the same way as _TOOL_IMPUTE, so zero-graded
+# rows stay neutral under standardization instead of reading as RP-shaped.
+_SHAPE_IMPUTE = 38.9
+_DEPTH_IMPUTE = 1.6
+
 
 def _vec(r, side: str = "hit") -> dict:
     m = r.get("milb") or {}
@@ -487,6 +523,36 @@ def _vec(r, side: str = "hit") -> dict:
             # _x_era_k docstring for the audited-and-deferred quadrant issue.
             "x_era_k": _x_era_k(g(m.get("era_rel")), g(m.get("k_rel"))),
         })
+        # RELIEF-SHAPE (docs/efv-2026-07-15/GATES.md): the PAL prospect-watch
+        # shape composite (pal_conversion.prospect_role_fit, minus tool_ct
+        # which the pre-debut anchor never captures). Computed None-aware from
+        # the RAW grades: the imputed tool_* values above would fake depth 1
+        # (tool_fb=58) plus a 45 command on tool-missing rows - the 2026-07-14
+        # imputation-audit bug class. Zero observed pitch grades -> the
+        # observed-train-mean neutrals. GATE VERDICT 2026-07-15: all three
+        # arms FAILED the pre-registered RELIEF-SHAPE bar (best pooled
+        # -0.0021; the shape signal is real univariately but tool_fb +
+        # peak_k_rel/bb_rel already price it - adding it only redistributes
+        # rank skill between the 45/50 tiers). Ledger data/
+        # xfv_relief_shape_eval.json; arms SPENT, do not re-attempt blind.
+        # Keys stay emitted-but-INERT (never in _FEATURES_PIT; the
+        # age_missing precedent) so tools/efv_relief_shape_lab.py remains
+        # reproducible.
+        _obs = [float(v) for v in (r.get("tool_fb"), r.get("tool_sl"),
+                                   r.get("tool_cb"), r.get("tool_ch"))
+                if v is not None]
+        if _obs:
+            depth = sum(1 for v in _obs if v >= 55.0)
+            depth_s = {0: 5.0, 1: 15.0, 2: 45.0, 3: 80.0}.get(depth, 100.0)
+            raw_cmd = r.get("tool_cmd")
+            cmd_s = (50.0 if raw_cmd is None
+                     else max(0.0, min(100.0, (float(raw_cmd) - 40.0) / 20.0 * 100.0)))
+            shape = round(0.60 * depth_s + 0.40 * cmd_s, 1)
+            out.update({"starter_shape": shape, "arsenal_depth": float(depth),
+                        "relief_flag": 1.0 if shape < 40.0 else 0.0})
+        else:
+            out.update({"starter_shape": _SHAPE_IMPUTE, "arsenal_depth": _DEPTH_IMPUTE,
+                        "relief_flag": 0.0})
     else:
         out.update({
             "tool_hit": g(r.get("tool_hit"), _TOOL_IMPUTE["tool_hit"]),
@@ -543,6 +609,36 @@ def _fit_ols_fv(train):
 
 def _pred_ols(model, fv):
     return model["a"] + model["b"] * fv
+
+
+def fit_production_stack(rows, side: str, keys=None):
+    """The ONE production fit, shared by efv_score._fit_production (the shipped
+    scorer) and rank_calibration (the lambda selector): full labeled pool minus
+    never-MLB recent busts -> ridge + linear output calibration + consensus OLS
+    anchor. E-LAMBDA parity repair 2026-07-15: the selector used to fit a
+    DEBUTED-only anchor and score a RAW uncalibrated model leg, so it sized
+    lambda for a blend production never ships (stamped pit 0.63 / hit 0.70 were
+    measured on the wrong blend). Both callers now fit through here; the
+    selector's legs apply the same calibration clamp and cons floor as run_live.
+    Returns {ridge, a, b, ols, keys, n} or None when the pool cannot support a fit."""
+    if keys is None:
+        keys, _m = _feature_spec(side)
+    is_pit = side == "pit"
+    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
+            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
+    data = _prep(pool, "target_censored", side)
+    if len(data) < 60:
+        return None
+    ridge = _fit_ridge(data, keys)
+    if not ridge:
+        return None
+    raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
+    cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
+    a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+    ols = _fit_ols_fv(data)
+    if not ols:
+        return None
+    return {"ridge": ridge, "a": a, "b": b, "ols": ols, "keys": keys, "n": len(data)}
 
 
 def _fit_lgbm_mono(train, keys, mono):
@@ -820,6 +916,607 @@ def _auc_breakdown(data, keys, lam, cohort_map) -> dict:
     return out
 
 
+# ---------------------------------------------------------------------------
+# eFV 3.4 F-SIDE -- standing JOINT side-fairness eval line (measurement-only)
+# ---------------------------------------------------------------------------
+# Question kept honest by this line: do PITCHERS at a given joint-board slot /
+# display grade systematically deliver worse realized outcomes than HITTERS at
+# the same slot -- and does any future model change WIDEN that gap? The line is
+# output-neutral by construction: it READS the Pass-1 matrices and the stamped
+# live lambdas, and WRITES only eval artifacts (data/xfv_side_fairness_eval.json
+# + a compact 'side_fairness' block in xfv_eval*.json). No scorer, producer or
+# payload writer is touched, so every published player number is byte-identical.
+#
+# Provenance: the 2026-07 side_fairness scratchpad investigation; this code is
+# that prototype verbatim (same folds, same guards, same RNG stream), so the
+# headline number reproduces bit-for-bit: full-pool joint display-grade TOP-25
+# hit-minus-pit mean first-6yr WAR +3.95, CI90 [1.55, 6.35], p(hit>pit)=0.996.
+
+_SF_SEED = 7            # bootstrap seed (prototype + program standard)
+_SF_BOOT = 2000         # bootstrap replicates (program standard)
+_SF_IPCW_CAP = 5.0      # IPCW weight cap
+_SF_BUST_WAR = 0.5      # realized bust threshold (first-6yr WAR < 0.5)
+_SF_BANDS = ((1, 25, "001-025"), (26, 50, "026-050"), (51, 100, "051-100"),
+             (101, 200, "101-200"), (201, 10 ** 9, "201+"))
+_SF_OUT = "xfv_side_fairness_eval.json"
+_SF_CACHE: dict = {}    # per-process memo: hit + pit run() calls share one computation
+
+
+def _sf_live_lambdas():
+    """Blend weights actually SERVED: the live lambdas stamped into data/xfv.json meta
+    by the scorer -- so a lambda restamp flows into this line automatically. Fallback =
+    the 2026-07-14 stamp so the line still runs on a cold tree (source recorded)."""
+    try:
+        meta = json.loads((DATA_DIR / "xfv.json").read_text(encoding="utf-8")).get("meta", {})
+        ll = meta.get("live_lambda") or {}
+        return ({"hit": float(ll["hit"]), "pit": float(ll["pit"])},
+                "data/xfv.json meta.live_lambda")
+    except Exception:
+        return {"hit": 0.70, "pit": 0.63}, "fallback constants (xfv.json meta unavailable)"
+
+
+def _sf_pool(side, frame):
+    """(prepped rows, player_key -> censored flag) for one side/frame.
+    full_pool (PRIMARY) = debuted + busts minus recent busts, KM target -- the
+    rank-the-board population; debuted_only = the survivorship-censored sensitivity
+    frame (it cannot see never-debut risk; that is WHY it is not primary)."""
+    from efv_dataset import matrix_path
+    rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
+    if frame == "debuted_only":
+        raw = [r for r in rows if r["kind"] == "debuted"]
+    else:
+        raw = [r for r in rows if not (r["kind"] == "bust" and r.get("bust_recent"))]
+    cens = {r["player_key"]: bool(r.get("censored")) for r in rows}
+    return _prep(raw, "target_censored", side), cens
+
+
+def _sf_fwd_chain(data, side, lam, years):
+    """Forward-chained OOS production-analogue scores (prototype verbatim): per fold
+    fit OLS(FV) anchor + lean ridge + linear calibration on decision_year < Y, score
+    == Y; rank_war = (1-lam)*max(0, cons) + lam*max(-2, a+b*ridge). Fold guards match
+    _run_eval (>=15 test / >=60 train)."""
+    keys, _m = _feature_spec(side)
+    out = []
+    for yr in years:
+        tr = [r for r in data if r["decision_year"] < yr]
+        te = [r for r in data if r["decision_year"] == yr]
+        if len(te) < 15 or len(tr) < 60:
+            continue
+        ols = _fit_ols_fv(tr)
+        ridge = _fit_ridge(tr, keys)
+        if not (ols and ridge):
+            continue
+        cal = _fit_linear_calibration([(_predict(ridge, r["feats"]), r["target"]) for r in tr])
+        a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
+        for r in te:
+            cons = max(0.0, _pred_ols(ols, r["fv"]))
+            model = max(-2.0, a + b * _predict(ridge, r["feats"]))
+            out.append({"pk": r["player_key"], "side": side, "year": yr, "fv": r["fv"],
+                        "war": r["target"], "rank_war": (1 - lam) * cons + lam * model})
+    return out
+
+
+def _sf_quantile_display(rows_side):
+    """Production display grade: per-side rank-preserving quantile map of rank_war onto
+    that side's OWN consensus-FV distribution (efv_score.run/run_live), replicated
+    within one fold-year test pool. This map is exactly what lets each side fill the
+    joint board's top slots at its own FV-distribution rate -- the display-vs-raw
+    share-inflation this line measures."""
+    if not rows_side:
+        return
+    target = sorted(r["fv"] for r in rows_side)
+    order = sorted(range(len(rows_side)), key=lambda i: rows_side[i]["rank_war"])
+    m = len(rows_side)
+    for pos_rank, i in enumerate(order):
+        pos = ((pos_rank / (m - 1)) if m > 1 else 0.0) * (m - 1)
+        lo = int(pos)
+        hi = min(m - 1, lo + 1)
+        rows_side[i]["disp"] = target[lo] * (1 - (pos - lo)) + target[hi] * (pos - lo)
+
+
+def _sf_summ(rows, wkey=None):
+    """Realized-outcome cell: mean AND median first-6yr WAR (co-primary) +
+    contributor/star/bust rates. wkey='ipcw_w' produces the IPCW-weighted variant
+    (weighted median = lowest value whose cumulative weight reaches half; effective_n
+    = (sum w)^2 / sum w^2 reported)."""
+    if not rows:
+        return None
+    wars = [r["war"] for r in rows]
+    if wkey is None:
+        n = len(wars)
+        return {"n": n,
+                "mean_war": round(statistics.mean(wars), 2),
+                "median_war": round(statistics.median(wars), 2),
+                "contrib_rate": round(sum(1 for x in wars if x >= _CONTRIB_WAR) / n, 3),
+                "star_rate": round(sum(1 for x in wars if x >= _STAR_WAR) / n, 3),
+                "bust_rate": round(sum(1 for x in wars if x < _SF_BUST_WAR) / n, 3)}
+    w = [r[wkey] for r in rows]
+    W = sum(w)
+    med = sorted(wars)[-1]
+    acc = 0.0
+    for x, wi in sorted(zip(wars, w)):
+        acc += wi
+        if acc >= W / 2:
+            med = x
+            break
+    return {"n": len(rows),
+            "effective_n": round(W * W / sum(x * x for x in w), 1),
+            "mean_war": round(sum(v * wi for v, wi in zip(wars, w)) / W, 2),
+            "median_war": round(med, 2),
+            "contrib_rate": round(sum(wi for v, wi in zip(wars, w) if v >= _CONTRIB_WAR) / W, 3),
+            "star_rate": round(sum(wi for v, wi in zip(wars, w) if v >= _STAR_WAR) / W, 3),
+            "bust_rate": round(sum(wi for v, wi in zip(wars, w) if v < _SF_BUST_WAR) / W, 3)}
+
+
+def _sf_boot(hit_rows, pit_rows, wkey=None, iters=_SF_BOOT, seed=_SF_SEED):
+    """Bootstrap hit-minus-pit realized-WAR difference: mean AND median co-primary,
+    each with CI90 + bootstrap SE. The unweighted mean draws consume the RNG stream
+    exactly as the prototype's boot_diff did, so historical CIs reproduce verbatim.
+    Weighted variant (wkey) resamples rows and recomputes the weighted statistic."""
+    if len(hit_rows) < 8 or len(pit_rows) < 8:
+        return None
+    rng = random.Random(seed)
+    hw = [r["war"] for r in hit_rows]
+    pw = [r["war"] for r in pit_rows]
+    hwt = None if wkey is None else [r[wkey] for r in hit_rows]
+    pwt = None if wkey is None else [r[wkey] for r in pit_rows]
+
+    def _mean(vals, wts):
+        if wts is None:
+            return statistics.mean(vals)
+        return sum(v * w for v, w in zip(vals, wts)) / sum(wts)
+
+    def _median(vals, wts):
+        if wts is None:
+            return statistics.median(vals)
+        W = sum(wts)
+        acc = 0.0
+        for v, w in sorted(zip(vals, wts)):
+            acc += w
+            if acc >= W / 2:
+                return v
+        return sorted(vals)[-1]
+
+    md, dd = [], []
+    for _ in range(iters):
+        hidx = [rng.randrange(len(hw)) for _ in hw]
+        pidx = [rng.randrange(len(pw)) for _ in pw]
+        hs, ps = [hw[i] for i in hidx], [pw[i] for i in pidx]
+        hws = None if hwt is None else [hwt[i] for i in hidx]
+        pws = None if pwt is None else [pwt[i] for i in pidx]
+        md.append(_mean(hs, hws) - _mean(ps, pws))
+        dd.append(_median(hs, hws) - _median(ps, pws))
+    md.sort()
+    dd.sort()
+    return {"mean_diff": round(_mean(hw, hwt) - _mean(pw, pwt), 2),
+            "mean_ci90": [round(md[int(0.05 * iters)], 2), round(md[int(0.95 * iters)], 2)],
+            "mean_se": round(statistics.pstdev(md), 3),
+            "median_diff": round(_median(hw, hwt) - _median(pw, pwt), 2),
+            "median_ci90": [round(dd[int(0.05 * iters)], 2), round(dd[int(0.95 * iters)], 2)],
+            "median_se": round(statistics.pstdev(dd), 3),
+            "p_hit_gt_pit": round(sum(1 for d in md if d > 0) / iters, 3)}
+
+
+def _sf_band_tables(scored, wkey=None):
+    """Joint-board band tables for BOTH rankings -- production display grade ('disp')
+    and raw rank_war WAR units (the calibration-honest cross-side comparison) --
+    banded within each fold year, pooled across folds. The display table carries the
+    pitcher slot share, the raw-frame share, and the display-vs-raw share-inflation
+    ratio (how much the per-side quantile map inflates pitcher representation)."""
+    tabs = {}
+    for key in ("disp", "rank_war"):
+        bands = {}
+        for yr in sorted({r["year"] for r in scored}):
+            pool = sorted([r for r in scored if r["year"] == yr], key=lambda r: -r[key])
+            for i, r in enumerate(pool, 1):
+                for lo, hi, name in _SF_BANDS:
+                    if lo <= i <= hi:
+                        bands.setdefault(name, []).append(r)
+                        break
+        out = {}
+        for name in sorted(bands):
+            grp = bands[name]
+            hit = [r for r in grp if r["side"] == "hit"]
+            pit = [r for r in grp if r["side"] == "pit"]
+            out[name] = {"pit_share": round(len(pit) / len(grp), 3),
+                         "hit": _sf_summ(hit, wkey), "pit": _sf_summ(pit, wkey),
+                         "boot": _sf_boot(hit, pit, wkey)}
+        tabs[key] = out
+    for name, cell in tabs["disp"].items():
+        rw = tabs["rank_war"].get(name, {}).get("pit_share")
+        cell["pit_share_rank_war_frame"] = rw
+        cell["share_inflation_display_vs_raw"] = (round(cell["pit_share"] / rw, 2)
+                                                  if rw else None)
+    return tabs["disp"], tabs["rank_war"]
+
+
+def _sf_grade_cells(scored, gkey, wkey=None):
+    """Equal-grade cells on nearest-5 bands (55-band = [52.5, 57.5), 60 = 57.5+;
+    prototype banding) PLUS the BINDING '55_plus' threshold cell = all rows with
+    grade >= 52.5 (displays as 55 or better under the round-to-nearest eFV scale).
+    The 50 band is a TRACKED DIAGNOSTIC, never a gate (pre-registered)."""
+    out = {}
+    for g in (40, 45, 50, 55, 60):
+        if g == 60:
+            grp = [r for r in scored if r.get(gkey) is not None and r[gkey] >= 57.5]
+        else:
+            grp = [r for r in scored if r.get(gkey) is not None
+                   and abs(r[gkey] - g) <= 2.5 and r[gkey] < g + 2.5]
+        hit = [r for r in grp if r["side"] == "hit"]
+        pit = [r for r in grp if r["side"] == "pit"]
+        out[str(g)] = {"hit": _sf_summ(hit, wkey), "pit": _sf_summ(pit, wkey),
+                       "boot": _sf_boot(hit, pit, wkey)}
+    grp = [r for r in scored if r.get(gkey) is not None and r[gkey] >= 52.5]
+    hit = [r for r in grp if r["side"] == "hit"]
+    pit = [r for r in grp if r["side"] == "pit"]
+    out["55_plus_binding"] = {"hit": _sf_summ(hit, wkey), "pit": _sf_summ(pit, wkey),
+                              "boot": _sf_boot(hit, pit, wkey)}
+    return out
+
+
+def _sf_per_fold_top25(scored):
+    """Per-fold joint display-grade TOP-25 hit-minus-pit diffs -- the B1 sign-agreement
+    input (mean AND median, co-primary)."""
+    out = {}
+    for yr in sorted({r["year"] for r in scored}):
+        pool = sorted([r for r in scored if r["year"] == yr], key=lambda r: -r["disp"])[:25]
+        hit = [r for r in pool if r["side"] == "hit"]
+        pit = [r for r in pool if r["side"] == "pit"]
+        if not (hit and pit):
+            out[str(yr)] = {"n_hit": len(hit), "n_pit": len(pit), "note": "one-sided top-25"}
+            continue
+        dm = (statistics.mean(r["war"] for r in hit)
+              - statistics.mean(r["war"] for r in pit))
+        dmed = (statistics.median(r["war"] for r in hit)
+                - statistics.median(r["war"] for r in pit))
+        out[str(yr)] = {"n_hit": len(hit), "n_pit": len(pit),
+                        "mean_diff": round(dm, 2), "median_diff": round(dmed, 2),
+                        "sign": "hit_gt_pit" if dm > 0 else "pit_ge_hit"}
+    return out
+
+
+def _sf_ipcw_weights(scored, cens_map):
+    """IPCW: on the RESOLVED subset, weight each row by 1 / P(resolved), estimated
+    empirically within (side, fold-year, nearest-5 FV) cells (fallback to
+    (side, fold-year) when the cell has < 5 rows), capped at _SF_IPCW_CAP. Returns
+    resolved rows with r['ipcw_w'] set. This re-inflates the resolved subset back
+    toward the full-board population -- the uncertainty band around the KM frame."""
+    from collections import defaultdict
+    cell = defaultdict(lambda: [0, 0])
+    coarse = defaultdict(lambda: [0, 0])
+    for r in scored:
+        res = not cens_map.get((r["side"], r["pk"]), False)
+        k = (r["side"], r["year"], round(r["fv"] / 5) * 5)
+        cell[k][0] += 1
+        cell[k][1] += res
+        coarse[(r["side"], r["year"])][0] += 1
+        coarse[(r["side"], r["year"])][1] += res
+    out = []
+    for r in scored:
+        if cens_map.get((r["side"], r["pk"]), False):
+            continue
+        k = (r["side"], r["year"], round(r["fv"] / 5) * 5)
+        n, nr = cell[k] if cell[k][0] >= 5 else coarse[(r["side"], r["year"])]
+        p = (nr / n) if n else 1.0
+        rr = dict(r)
+        rr["ipcw_w"] = min(_SF_IPCW_CAP, 1.0 / p) if p > 0 else _SF_IPCW_CAP
+        out.append(rr)
+    return out
+
+
+def _sf_frame(frame, lam):
+    """One frame (full_pool | debuted_only): forward-chain both sides, replicate the
+    display map, build the joint tables. Returns (result block, scored rows,
+    (side, pk) -> censored map)."""
+    scored, cens_map, fold_counts = [], {}, {}
+    for side in ("hit", "pit"):
+        data, cens = _sf_pool(side, frame)
+        fc = {}
+        for yr in (*SCORED_YEARS, max(SCORED_YEARS) + 1):
+            ntr = sum(1 for r in data if r["decision_year"] < yr)
+            nte = sum(1 for r in data if r["decision_year"] == yr)
+            fc[str(yr)] = {"n_train": ntr, "n_test": nte,
+                           "passes_guards": bool(nte >= 15 and ntr >= 60)}
+        fold_counts[side] = fc
+        rows = _sf_fwd_chain(data, side, lam[side], SCORED_YEARS)
+        for yr in sorted({r["year"] for r in rows}):
+            _sf_quantile_display([r for r in rows if r["year"] == yr])
+        for pk, c in cens.items():
+            cens_map[(side, pk)] = c
+        scored.extend(rows)
+    disp_tab, rw_tab = _sf_band_tables(scored)
+    res = {
+        "n_hit": sum(1 for r in scored if r["side"] == "hit"),
+        "n_pit": sum(1 for r in scored if r["side"] == "pit"),
+        "per_side_spearman_rankwar_vs_war": {
+            s: _spearman([r["rank_war"] for r in scored if r["side"] == s],
+                         [r["war"] for r in scored if r["side"] == s])
+            for s in ("hit", "pit")},
+        "fold_counts_vs_guards": fold_counts,
+        "per_fold_top25_display": _sf_per_fold_top25(scored),
+        "joint_bands_display_grade": disp_tab,
+        "joint_bands_rank_war": rw_tab,
+        "equal_display_grade": _sf_grade_cells(scored, "disp"),
+        "equal_consensus_fv": _sf_grade_cells(scored, "fv"),
+        "pred_vs_realized_by_side": {
+            s: {"n": len([r for r in scored if r["side"] == s]),
+                "mean_pred": round(statistics.mean(r["rank_war"] for r in scored
+                                                   if r["side"] == s), 2),
+                "mean_real": round(statistics.mean(r["war"] for r in scored
+                                                   if r["side"] == s), 2)}
+            for s in ("hit", "pit")},
+    }
+    return res, scored, cens_map
+
+
+def _sf_ipcw_frame(scored, cens_map):
+    """IPCW uncertainty band: band membership comes from the FULL joint board (all
+    rows ranked by display grade); band statistics are then estimated from the
+    RESOLVED members only, re-weighted by 1/P(resolved). Reported next to the KM
+    primary frame -- agreement bounds what window-censoring could be hiding."""
+    for yr in sorted({r["year"] for r in scored}):
+        pool = sorted([r for r in scored if r["year"] == yr], key=lambda r: -r["disp"])
+        for i, r in enumerate(pool, 1):
+            for lo, hi, name in _SF_BANDS:
+                if lo <= i <= hi:
+                    r["band_disp"] = name
+                    break
+    resolved = _sf_ipcw_weights(scored, cens_map)
+    ws = [r["ipcw_w"] for r in resolved]
+    out = {"resolved_n": len(resolved),
+           "resolved_share": round(len(resolved) / len(scored), 3) if scored else None,
+           "weight_cap": _SF_IPCW_CAP,
+           "weights": ({"max": round(max(ws), 2), "mean": round(statistics.mean(ws), 2),
+                        "n_at_cap": sum(1 for w in ws if w >= _SF_IPCW_CAP)} if ws else None),
+           "bands_display_grade": {}}
+    for lo, hi, name in _SF_BANDS:
+        grp = [r for r in resolved if r.get("band_disp") == name]
+        hit = [r for r in grp if r["side"] == "hit"]
+        pit = [r for r in grp if r["side"] == "pit"]
+        out["bands_display_grade"][name] = {
+            "hit": _sf_summ(hit, "ipcw_w"), "pit": _sf_summ(pit, "ipcw_w"),
+            "boot": _sf_boot(hit, pit, "ipcw_w")}
+    return out
+
+
+def _sf_resolved_le2018_check(lam):
+    """B3 input: on decision folds <= 2018 (first-6yr windows fully elapsed, censoring
+    ~absent) the IPCW estimator must preserve the top-25 diff sign AND sit within 1
+    bootstrap SE of the unweighted estimate -- i.e. the reweighting machinery must be
+    ~identity exactly where there is nothing to reweight."""
+    scored, cens_map = [], {}
+    for side in ("hit", "pit"):
+        data, cens = _sf_pool(side, "full_pool")
+        rows = _sf_fwd_chain(data, side, lam[side], (2016, 2017, 2018))
+        for yr in sorted({r["year"] for r in rows}):
+            _sf_quantile_display([r for r in rows if r["year"] == yr])
+        for pk, c in cens.items():
+            cens_map[(side, pk)] = c
+        scored.extend(rows)
+    if not scored:
+        return {"evaluable": False,
+                "note": "no <=2018 folds pass the >=15/>=60 guards"}
+    top = []
+    for yr in sorted({r["year"] for r in scored}):
+        pool = sorted([r for r in scored if r["year"] == yr], key=lambda r: -r["disp"])
+        top.extend(pool[:25])
+    hit = [r for r in top if r["side"] == "hit"]
+    pit = [r for r in top if r["side"] == "pit"]
+    unw = _sf_boot(hit, pit)
+    resolved = _sf_ipcw_weights(scored, cens_map)
+    wmap = {(r["side"], r["pk"], r["year"]): r["ipcw_w"] for r in resolved}
+    rtop = [dict(r, ipcw_w=wmap[(r["side"], r["pk"], r["year"])]) for r in top
+            if (r["side"], r["pk"], r["year"]) in wmap]
+    ipw = _sf_boot([r for r in rtop if r["side"] == "hit"],
+                   [r for r in rtop if r["side"] == "pit"], "ipcw_w")
+    if not (unw and ipw):
+        return {"evaluable": False, "fold_years_used": sorted({r["year"] for r in scored}),
+                "note": "top-25 too one-sided for a bootstrap on <=2018 folds",
+                "unweighted": unw, "ipcw": ipw}
+    sign_ok = (unw["mean_diff"] > 0) == (ipw["mean_diff"] > 0)
+    within = abs(ipw["mean_diff"] - unw["mean_diff"]) <= unw["mean_se"]
+    return {"evaluable": True,
+            "fold_years_used": sorted({r["year"] for r in scored}),
+            "resolved_share_of_top25": round(len(rtop) / len(top), 3),
+            "unweighted": unw, "ipcw": ipw,
+            "sign_preserved": bool(sign_ok),
+            "within_1se_of_unweighted": bool(within),
+            "pass": bool(sign_ok and within)}
+
+
+def _sf_s3_reference():
+    """S3 reference values: the SHIPPED pit BENCH/GOOD bucket log-loss (the
+    'logloss_before' line of the E-ISO4 artifact -- the live grade->bucket tables)."""
+    try:
+        d = json.loads((DATA_DIR / "xfv_grade_recal4_eval.json").read_text(encoding="utf-8"))
+        pb = d["results"]["per_side"]["pit"]["per_bucket"]
+        return {"bench_logloss": pb["bench"]["logloss_before"],
+                "good_logloss": pb["good"]["logloss_before"],
+                "source": "data/xfv_grade_recal4_eval.json results.per_side.pit.per_bucket "
+                          "logloss_before (the shipped tables)"}
+    except Exception:
+        return {"bench_logloss": 0.25642, "good_logloss": 0.04971,
+                "source": "fallback constants (2026-07 E-ISO4 artifact values)"}
+
+
+def _side_fairness_eval(persist: bool = True, out_path=None) -> dict:
+    """eFV 3.4 F-SIDE: the standing JOINT side-fairness eval line. Builds the
+    full-pool-KM primary frame, the debuted-only sensitivity frame and the IPCW
+    uncertainty band; stamps binding rules B1-B4 and standing forward gates S1-S5.
+    Memoized per process (hit + pit run() calls share one computation). Writes
+    data/xfv_side_fairness_eval.json when persist=True (out_path overrides)."""
+    art = _SF_CACHE.get("artifact")
+    if art is None:
+        lam, lam_src = _sf_live_lambdas()
+        full, scored_full, cens_full = _sf_frame("full_pool", lam)
+        deb, _s, _c = _sf_frame("debuted_only", lam)
+        ipcw = _sf_ipcw_frame(scored_full, cens_full)
+        b3 = _sf_resolved_le2018_check(lam)
+        top = full["joint_bands_display_grade"]["001-025"]
+        deb_top = deb["joint_bands_display_grade"]["001-025"]
+        pooled_sign = "hit_gt_pit" if top["boot"]["mean_diff"] > 0 else "pit_ge_hit"
+        folds = [v for v in full["per_fold_top25_display"].values() if "sign" in v]
+        n_agree = sum(1 for v in folds if v["sign"] == pooled_sign)
+        binding_rules = {
+            "B1_fold_sign_agreement": {
+                "rule": ">=3/4 forward-chained folds agree with the pooled sign of the "
+                        "joint top-25 hit-minus-pit mean-WAR diff (primary frame)",
+                "pooled_sign": pooled_sign, "n_folds": len(folds), "n_agree": n_agree,
+                "pass": bool(len(folds) >= 4 and n_agree >= 3)},
+            "B2_dual_frame_sign": {
+                "rule": "full-pool-KM and debuted-only top-25 mean diffs share a sign",
+                "full_pool_mean_diff": top["boot"]["mean_diff"],
+                "debuted_only_mean_diff": deb_top["boot"]["mean_diff"],
+                "pass": bool((top["boot"]["mean_diff"] > 0)
+                             == (deb_top["boot"]["mean_diff"] > 0))},
+            "B3_ipcw_identity_where_uncensored": dict(
+                {"rule": "IPCW estimate sign-preserving AND within 1 bootstrap SE of "
+                         "unweighted on the resolved <=2018 decision folds"}, **b3),
+            "B4_ci90_excludes_zero": {
+                "rule": "primary top-25 mean-diff CI90 excludes 0",
+                "mean_ci90": top["boot"]["mean_ci90"],
+                "median_ci90": top["boot"]["median_ci90"],
+                "pass": bool(top["boot"]["mean_ci90"][0] * top["boot"]["mean_ci90"][1] > 0)},
+        }
+        s3ref = _sf_s3_reference()
+        rw = full["joint_bands_rank_war"]
+        fv40 = full["equal_consensus_fv"]["40"]
+        gates = {
+            "S1_top25_no_widening": {
+                "rule": "S1: joint TOP-25 hit-minus-pit realized-WAR diff must not "
+                        "increase by >1 bootstrap SE (mean AND median co-primary)",
+                "frame": "full_pool_km / joint_bands_display_grade / 001-025",
+                "baseline_mean_diff": top["boot"]["mean_diff"],
+                "baseline_mean_se": top["boot"]["mean_se"],
+                "max_allowed_mean_diff": round(top["boot"]["mean_diff"]
+                                               + top["boot"]["mean_se"], 2),
+                "baseline_median_diff": top["boot"]["median_diff"],
+                "baseline_median_se": top["boot"]["median_se"],
+                "max_allowed_median_diff": round(top["boot"]["median_diff"]
+                                                 + top["boot"]["median_se"], 2)},
+            "S2_hit_no_harm": {
+                "rule": "S2: hit pooled blend Spearman must stay within 0.0023 of the "
+                        "corrected-label baseline",
+                "baseline_hit_blend_rho": 0.3808, "floor": 0.3785,
+                "source": "docs/efv-2026-07-14/GATES.md corrected-label baselines"},
+            "S3_pit_bucket_logloss": {
+                "rule": "S3: pit BENCH+GOOD bucket log-loss <= +1.0% relative",
+                "reference": s3ref,
+                "ceilings": {"bench": round(s3ref["bench_logloss"] * 1.01, 5),
+                             "good": round(s3ref["good_logloss"] * 1.01, 5)}},
+            "S4_midband_pit_outperformance": {
+                "rule": "S4: rank_war-frame mid-band pit-outperformance cells (51-100, "
+                        "101-200, equal-FV40) must not flip sign",
+                "cells": {
+                    "rank_war_051-100_mean_diff": (rw.get("051-100", {}).get("boot") or {}).get("mean_diff"),
+                    "rank_war_101-200_mean_diff": (rw.get("101-200", {}).get("boot") or {}).get("mean_diff"),
+                    "equal_fv40_mean_diff": (fv40.get("boot") or {}).get("mean_diff")},
+                "expected_sign": "negative (pitchers outperform hitters at equal raw "
+                                 "mid-board slot / equal FV40)",
+                "sign_now_all_negative": bool(all(
+                    (v is not None and v < 0) for v in (
+                        (rw.get("051-100", {}).get("boot") or {}).get("mean_diff"),
+                        (rw.get("101-200", {}).get("boot") or {}).get("mean_diff"),
+                        (fv40.get("boot") or {}).get("mean_diff"))))},
+            "S5_fold_guards_and_2024_tripwire": {
+                "rule": "S5: stamp per-side fold-year counts vs the >=15 test / >=60 "
+                        "train guards; the FIRST run where the 2024 decision fold "
+                        "becomes trainable must re-run E-ISO4-path, M3 and E-STUFF "
+                        "before re-baselining this line",
+                "guards": {"min_test": 15, "min_train": 60},
+                "fold_counts_full_pool": full["fold_counts_vs_guards"],
+                "fold_counts_debuted_only": deb["fold_counts_vs_guards"],
+                "first_trainable_2024_fold": {
+                    # keyed on the DEBUTED frame: the full-pool 2024 test cell is
+                    # currently bust-only (zero debuted rows), so its guard pass is
+                    # degenerate -- a tripwire fired on it would cry wolf on day one.
+                    "hit_passes_guards": deb["fold_counts_vs_guards"]["hit"]["2024"]["passes_guards"],
+                    "pit_passes_guards": deb["fold_counts_vs_guards"]["pit"]["2024"]["passes_guards"],
+                    "full_pool_2024_note": "full-pool 2024 cell passes the raw guards "
+                                           "on bust rows alone (no debuted rows); the "
+                                           "trip condition is the DEBUTED 2024 fold",
+                    "tripped": bool(
+                        deb["fold_counts_vs_guards"]["hit"]["2024"]["passes_guards"]
+                        or deb["fold_counts_vs_guards"]["pit"]["2024"]["passes_guards"]),
+                    "re_run_on_trip": ["E-ISO4-path", "M3", "E-STUFF"]}},
+        }
+        art = {
+            "generated_at": date.today().isoformat(),
+            "eval_line": "eFV 3.4 F-SIDE -- standing joint side-fairness eval "
+                         "(measurement-only; output-neutral)",
+            "question": "do pitchers at a given joint-board slot / display grade "
+                        "deliver worse realized outcomes than hitters at the same "
+                        "slot, and does any future change widen that gap?",
+            "protocol": {
+                "folds": list(SCORED_YEARS),
+                "fold_guards": {"min_test": 15, "min_train": 60},
+                "lambdas": lam, "lambda_source": lam_src,
+                "display_map": "per-side rank-preserving quantile map of rank_war onto "
+                               "the side's consensus-FV distribution, replicated within "
+                               "each fold-year test pool (production analogue)",
+                "joint_board": "both sides unioned; ranked by display grade "
+                               "(production) and by raw rank_war WAR units "
+                               "(calibration-honest)",
+                "war_metric": "first-6yr summed bWAR, KM-censored (target_censored)",
+                "bootstrap": {"reps": _SF_BOOT, "seed": _SF_SEED, "ci": "CI90"},
+                "outcome_thresholds": {"contributor": _CONTRIB_WAR, "star": _STAR_WAR,
+                                       "bust": _SF_BUST_WAR},
+                "provenance": "2026-07 side_fairness prototype verbatim; headline "
+                              "top-25 +3.95 CI90 [1.55, 6.35] reproduced"},
+            "primary_frame": "full_pool_km",
+            "frames": {"full_pool_km": full,
+                       "debuted_only_sensitivity": deb,
+                       "ipcw_resolved_reweighted": ipcw},
+            "binding_rules": binding_rules,
+            "binding_grade_cell": {
+                "binding": "equal display grade >= 55 (grade >= 52.5 on the "
+                           "round-to-nearest eFV scale; cell '55_plus_binding')",
+                "value": full["equal_display_grade"]["55_plus_binding"],
+                "diagnostic_50_band": dict(
+                    full["equal_display_grade"]["50"], never_a_gate=True,
+                    note="the 50-band model-vs-realized discrepancy is a TRACKED "
+                         "DIAGNOSTIC, never a gate (pre-registered)")},
+            "standing_gates": gates,
+            "output_neutrality": {
+                "claim": "measurement-only: no scorer/producer/payload writer touched; "
+                         "every published player number (data/xfv.json payloads) is "
+                         "byte-identical",
+                "writes": ["data/" + _SF_OUT,
+                           "side_fairness summary block in data/xfv_eval.json + "
+                           "data/xfv_eval_pitcher.json"]},
+        }
+        _SF_CACHE["artifact"] = art
+    if persist:
+        p = Path(out_path) if out_path else (DATA_DIR / _SF_OUT)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(art, indent=1), encoding="utf-8")
+        log.info("wrote %s", p)
+    return art
+
+
+def _side_fairness_summary() -> dict:
+    """Compact side_fairness block embedded in BOTH xfv_eval.json and
+    xfv_eval_pitcher.json (identical -- the eval is joint by construction)."""
+    art = _side_fairness_eval(persist=False)
+    full = art["frames"]["full_pool_km"]
+    top = full["joint_bands_display_grade"]["001-025"]
+    return {
+        "eval_line": "eFV 3.4 F-SIDE joint side-fairness (measurement-only; standing)",
+        "artifact": "data/" + _SF_OUT,
+        "primary_frame": "full_pool_km, joint display-grade board, folds "
+                         + "-".join(str(y) for y in (SCORED_YEARS[0], SCORED_YEARS[-1])),
+        "top25_hit_minus_pit": top["boot"],
+        "top25_pit_share": {"display_frame": top["pit_share"],
+                            "rank_war_frame": top["pit_share_rank_war_frame"],
+                            "share_inflation": top["share_inflation_display_vs_raw"]},
+        "binding_rules_pass": {k: v.get("pass")
+                               for k, v in art["binding_rules"].items()},
+        "standing_gates": sorted(art["standing_gates"].keys()),
+        "note": "identical block on both sides; full tables + gate baselines live "
+                "in the artifact",
+    }
+
+
 def _era_split(deb_data, keys, lam):
     """Honest record of the 'scouting got more accurate over time' question: forward-chained
     consensus vs shipped-blend rank by debut era. If eFV's edge lived only in old cohorts it
@@ -939,6 +1636,16 @@ def run(persist: bool = True, side: str = "hit") -> dict:
                         "consensus regresses to the mean) -- that loss is committed. The flagship case: "
                         "rank edge + calibrated distribution + uncertainty + surplus + power-correction."),
     }
+    # eFV 3.4 F-SIDE: joint side-fairness line (measurement-only; identical compact
+    # block on both sides -- the full tables live in data/xfv_side_fairness_eval.json).
+    # The line must never block the per-side eval artifact: fail soft, record why.
+    try:
+        out["side_fairness"] = _side_fairness_summary()
+        if persist:
+            _side_fairness_eval(persist=True)   # memoized; writes the joint artifact
+    except Exception as exc:
+        log.warning("F-SIDE side-fairness eval unavailable: %s", exc)
+        out["side_fairness"] = {"error": f"side-fairness eval unavailable: {exc}"}
     if persist:
         out_path = OUT_PATH if side == "hit" else (DATA_DIR / "xfv_eval_pitcher.json")
         out_path.write_text(json.dumps(out, indent=1), encoding="utf-8")
@@ -963,3 +1670,8 @@ if __name__ == "__main__":
     print("\nfeature diagnostics (full-window, interpretation only):")
     print("  ridge std weights:", json.dumps(rep["feature_diagnostics_full_window"].get("ridge_std_weights", {})))
     print("  lgbm gain share:  ", json.dumps(rep["feature_diagnostics_full_window"].get("lgbm_gain_share", {})))
+    sf = rep.get("side_fairness") or {}
+    if sf.get("top25_hit_minus_pit"):
+        print("\nF-SIDE joint top-25 hit-minus-pit (full-pool KM):",
+              json.dumps(sf["top25_hit_minus_pit"]))
+        print("  binding rules pass:", json.dumps(sf["binding_rules_pass"]))

@@ -888,10 +888,13 @@ class TestTwoWayPlayerComposites:
 # ---------------------------------------------------------------------------
 
 class TestFanGraphsYearCoverage:
-    """Audit that the timeseries.json carries FG snapshots across the
-    full 2021-2026 window. Catches regressions where a year's CSV drop
-    silently disappears between rebuilds (the parser silently ignores
-    missing files; without this assertion, a gap year goes unnoticed).
+    """Audit that FG snapshots cover the full 2021-2026 window. Catches
+    regressions where a year's CSV drop silently disappears between rebuilds
+    (the parser silently ignores missing files; without this assertion, a gap
+    year goes unnoticed). Since the v46 payload slim, non-newest per_source
+    scalars (incl. interval_label) live in the player_detail shards rather
+    than the boot payload, so coverage is audited against the DB (the ingest
+    ground truth) unioned with whatever the payload still names.
     """
 
     @classmethod
@@ -908,6 +911,21 @@ class TestFanGraphsYearCoverage:
                 fg = (pt.get("per_source") or {}).get("fangraphs")
                 if fg and fg.get("interval_label"):
                     labels.add(fg["interval_label"])
+        # v46 payload-slim: the boot payload only names the newest cycle per
+        # player; older cycles' labels ride the player_detail shards. The DB
+        # is the ingest ground truth - union it when present (payload-only
+        # checkouts keep the old behavior).
+        db = Path(__file__).parent / "prospects.db"
+        if db.exists():
+            import sqlite3
+            con = sqlite3.connect(db)
+            try:
+                rows = con.execute(
+                    "SELECT DISTINCT interval_label FROM snapshots "
+                    "WHERE source='fangraphs'").fetchall()
+                labels.update(r[0] for r in rows if r[0])
+            finally:
+                con.close()
         return labels
 
     def test_report_cycle_every_year_2021_2026(self):
@@ -933,12 +951,24 @@ class TestFanGraphsYearCoverage:
         )
 
     def test_draft_cycle_present_for_recent_years(self):
-        labels = self._fg_labels()
-        # Draft cycle is a separate FG product (the draft-prospect
-        # boards). Coverage exists for 2021-2025; 2026 lands closer to
-        # the actual draft date.
-        missing = [f"{y}draft" for y in range(2021, 2026)
-                    if f"{y}draft" not in labels]
+        # Draft cycle is a separate FG product (the draft-prospect boards).
+        # It lives in draft_snapshots - NOT in the MiLB snapshots table, where
+        # its 2021-2026 leak was purged 2026-07-16 (test_no_draft_in_milb pins
+        # that firewall), so _fg_labels() can never see these labels again.
+        # Coverage exists for 2021-2025; 2026 lands closer to the draft date.
+        import sqlite3
+        db = Path(__file__).parent / "prospects.db"
+        if not db.exists():
+            import pytest
+            pytest.skip("prospects.db not present on this checkout")
+        con = sqlite3.connect(db)
+        try:
+            years = {r[0] for r in con.execute(
+                "SELECT DISTINCT draft_year FROM draft_snapshots "
+                "WHERE source='fangraphs'")}
+        finally:
+            con.close()
+        missing = [y for y in range(2021, 2026) if y not in years]
         assert not missing, (
             f"FG draft board missing for years: {missing}."
         )

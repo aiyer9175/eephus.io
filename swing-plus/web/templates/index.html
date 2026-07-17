@@ -1,0 +1,1658 @@
+<!doctype html>
+<!--
+  Copyright (C) 2026 Will Cahoon (@willcolqhn) - All Rights Reserved
+  Unauthorized copying of this file, via any medium is strictly prohibited
+  Proprietary and confidential
+  Written by Will Cahoon (@willcolqhn), 2026
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Swing+ Leaderboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="/static/style.css?v={{ css_v }}">
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+} }
+</script>
+<script type="module" src="/static/swing3d.js?v={{ css_v }}"></script>
+</head>
+<body>
+<header>
+  <h1>Swing+</h1>
+  <p class="sub">Bat path quality from Statcast bat-tracking · 2023 H2 — 2026 H1</p>
+  <button id="model-cards-btn" class="cards-btn">📋 Model report cards</button>
+</header>
+
+<div id="cards-overlay" class="cards-overlay hidden">
+  <div class="cards-box">
+    <button id="cards-close" class="cards-close">×</button>
+    <h2>Model report cards</h2>
+    <p class="muted" style="margin:0 0 14px">Independent audit grades for the two core models (see chat for full test tables).</p>
+    <div class="cards-imgs">
+      <img src="/static/swing_report_card.png?v={{css_v}}" alt="Swing+ report card">
+      <img src="/static/decision_report_card.png?v={{css_v}}" alt="Decision+ report card">
+    </div>
+  </div>
+</div>
+
+<nav class="tabs">
+  <button class="tab active" data-view="alltime">All-time</button>
+  <button class="tab" data-view="season">Season</button>
+  <button class="tab" data-view="half">Half</button>
+</nav>
+
+<section class="controls">
+  <label>Search
+    <input id="search" type="search" placeholder="player name">
+  </label>
+  <label class="season-only">Season
+    <select id="season-select">
+      <option value="">All seasons (each ranked)</option>
+      {% for s in seasons %}<option value="{{ s }}">{{ s }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="half-only">Half
+    <select id="half-select">
+      <option value="">All halves (each ranked)</option>
+      {% for h in halves %}<option value="{{ h }}">{{ h }}</option>{% endfor %}
+    </select>
+  </label>
+  <label>Sample
+    <select id="sample-select">
+      <option value="0">All (50+ swings)</option>
+      <option value="100">100+ PA</option>
+      <option value="200">200+ PA</option>
+      <option value="qualified">Qualified (3.1 PA/G)</option>
+    </select>
+  </label>
+  <span id="row-count" class="muted"></span>
+</section>
+
+<main>
+  <table id="board">
+    <thead></thead>
+    <tbody></tbody>
+  </table>
+  <p id="empty" class="muted hidden">No rows. Has <code>run_leaderboard.py</code> been run yet?</p>
+</main>
+
+<div id="player-modal" class="modal hidden">
+  <div class="modal-card">
+    <button id="modal-close" class="modal-close" aria-label="close">×</button>
+    <h2 id="modal-name"></h2>
+    <div class="modal-controls">
+      <label>Season
+        <select id="modal-season"></select>
+      </label>
+      <div class="metric-toggle">
+        <button class="mbtn active" data-metric="sp">Swing+</button>
+        <button class="mbtn" data-metric="bs">Bat speed</button>
+        <button class="mbtn" data-metric="drv">Drivers</button>
+        <button class="mbtn" data-metric="decision">Decision</button>
+        <button class="mbtn" data-metric="adj">Adjust</button>
+        <button class="mbtn" data-metric="swing">Swing</button>
+        <button class="mbtn" data-metric="comps">Comps</button>
+        <button class="mbtn" data-metric="compare">Compare</button>
+        <button class="mbtn" data-metric="pitch">By pitch</button>
+        <button class="mbtn" data-metric="grades">Swing grades</button>
+        <button class="mbtn" data-metric="matchup">Matchup</button>
+        <button class="mbtn" data-metric="aging">Aging</button>
+      </div>
+      <span id="modal-meta" class="muted"></span>
+    </div>
+    <div id="modal-chart"></div>
+    <p class="muted">Rolling Swing+ over a trailing 100-swing window (raw). Each season is independent.</p>
+  </div>
+</div>
+
+<footer>
+  <p class="muted">
+    <b>Swing+</b> reliability-weighted toward 100 with k=360 swings.
+    <b>xwOBA</b> (amber) is a sample-size blend of observed and model-predicted full-PA xwOBA
+    — it predicts next-half xwOBA (r≈0.57) better than either observed or model alone;
+    <i>xwOBA obs</i> and <i>xwOBA pred</i> are the two inputs.
+    <i>xwOBA Δ</i> = obs − pred: near 0 = model fits the hitter well; large + = he outperformed
+    his swing/approach profile, large − = he underperformed it.
+    <b>Green</b> columns are predicted batted-ball stats from swing tracking.
+  </p>
+</footer>
+
+<script>
+// Blended full-PA value (pa_value_models.joblib): sample-size blend of
+// observed and model-predicted xwOBA. Headline = blend; obs/pred for context.
+const VALUE = [
+  { key: "blended_xwoba", label: "xwOBA", cls: "val", pctl: "xwoba", format: v => v?.toFixed(3),
+    desc: "Headline full-PA xwOBA: a sample-size blend of the player's OBSERVED xwOBA and the model's PREDICTED xwOBA from swing+approach. Predicts next-half xwOBA better than either alone. Window = the selected tab (career / season / half)." },
+  { key: "obs_xwoba", label: "xwOBA obs", cls: "val", format: v => v?.toFixed(3),
+    desc: "OBSERVED full-PA xwOBA — what the player actually produced (estimated wOBA over all plate appearances, incl. K/BB). One of the two inputs to the blended xwOBA." },
+  { key: "pred_xwoba", label: "xwOBA pred", cls: "val", format: v => v?.toFixed(3),
+    desc: "PREDICTED full-PA xwOBA from the swing + plate-discipline (approach) features. The model's skill-based estimate; the other input to the blend." },
+  { key: "xwoba_resid", label: "xwOBA Δ", cls: "val",
+    format: v => v == null ? "" : (v >= 0 ? "+" : "") + v.toFixed(3),
+    desc: "Observed − Predicted xwOBA. Positive = the player out-produced his swing/approach profile (skill the model can't see); near 0 = model fits him well." },
+];
+// Batted-ball stats: model Prediction, Observed result, and Δ (obs − pred).
+// predicted_stats_models.joblib supplies the predictions; observed from BIP.
+const BB = [
+  { key: "xwobacon",     label: "xwOBAcon", dec: 3, blurb: "expected wOBA ON CONTACT (balls in play only — excludes K/BB)" },
+  { key: "avg_ev",       label: "EV",       dec: 1, blurb: "average exit velocity on balls in play (mph)" },
+  { key: "avg_ev90",     label: "EV90",     dec: 1, blurb: "90th-percentile (top-end) exit velocity (mph) — peak power" },
+  { key: "hard_hit_pct", label: "Hard-Hit%", dec: 1, blurb: "share of BIP hit 95+ mph" },
+  { key: "barrel_pct",   label: "Barrel%",  dec: 1, blurb: "share of BIP in the 'barrel' EV/LA zone" },
+  { key: "avg_la",       label: "LA",       dec: 1, blurb: "average launch angle on balls in play (degrees)" },
+];
+const PRED = BB.flatMap(s => [
+  { key: `pred_${s.key}`,   label: `${s.label} (pred)`, cls: "pred", pctl: s.key,
+    format: v => v?.toFixed(s.dec),
+    desc: `PREDICTED ${s.blurb}, from the player's bat-tracking swing profile.` },
+  { key: `obs_${s.key}`,    label: `${s.label} (obs)`,  cls: "obs",
+    format: v => v?.toFixed(s.dec),
+    desc: `OBSERVED ${s.blurb} — what actually happened.` },
+  { key: `bbdiff_${s.key}`, label: `${s.label} Δ`,      cls: "diff",
+    format: v => v == null ? "" : (v >= 0 ? "+" : "") + v.toFixed(s.dec),
+    desc: `Observed − Predicted ${s.label}. Positive = the player beat what his swing implies for this stat.` },
+]);
+// Swing-based predicted PRODUCTION rates (K%/HR%/ISO) — validated to carry real
+// swing-path signal (HR% R²≈.39, K% ≈.39, ISO ≈.35). BB% omitted (no path signal).
+const PROD = [
+  { key: "k_pct",  label: "K%",  dec: 1, blurb: "strikeout rate (per PA)" },
+  { key: "hr_pct", label: "HR%", dec: 1, blurb: "home-run rate (per PA)" },
+  { key: "iso",    label: "ISO", dec: 3, blurb: "isolated power (extra bases / AB)" },
+];
+const PRED2 = PROD.flatMap(s => [
+  { key: `pred_${s.key}`,  label: `${s.label} (pred)`, cls: "pred",
+    format: v => v?.toFixed(s.dec),
+    desc: `PREDICTED ${s.blurb}, from the player's bat-tracking swing profile.` },
+  { key: `obs_${s.key}`,   label: `${s.label} (obs)`,  cls: "obs",
+    format: v => v?.toFixed(s.dec),
+    desc: `OBSERVED ${s.blurb} — what actually happened.` },
+  { key: `xdiff_${s.key}`, label: `${s.label} Δ`,      cls: "diff",
+    format: v => v == null ? "" : (v >= 0 ? "+" : "") + v.toFixed(s.dec),
+    desc: `Observed − Predicted ${s.label}. Positive = the player beat what his swing implies.` },
+]);
+// Park-NEUTRAL observed HR%/ISO (separate columns; raw obs kept). Home/road,
+// team-controlled park factors, PA-weighted by the player's actual exposure.
+const PARKADJ = [
+  { key: "obs_hr_pct_pn", label: "HR%+ (park-adj)", cls: "obs", format: v => v?.toFixed(1),
+    desc: "Park-NEUTRAL observed HR% — actual HR% ÷ the player's PA-weighted HR park factor (home/road, team-controlled). Coors/Dodger deflated, PNC/Oracle/Fenway boosted." },
+  { key: "obs_iso_pn", label: "ISO+ (park-adj)", cls: "obs", format: v => v?.toFixed(3),
+    desc: "Park-NEUTRAL observed ISO — actual ISO ÷ the player's extra-base park factor." },
+];
+// Swing components — each is its own sortable leaderboard, percentile-colored.
+const TRACK = [
+  { key: "bat_speed_mean", label: "Bat speed", pctl: "bat_speed", format: v => v?.toFixed(1),
+    desc: "Average bat speed at contact (mph), over competitive swings. The biggest single driver of Swing+." },
+  { key: "attack_angle_mean", label: "Attack angle", pctl: "attack_angle", format: v => v?.toFixed(1),
+    desc: "Average vertical attack angle (°, + = upward), over ALL competitive swings." },
+  { key: "attack_angle_bip", label: "Atk Ang (BIP)", format: v => v?.toFixed(1),
+    desc: "Attack angle on balls in play only (committed swings) — closer to Savant's published attack angle than the all-swing average." },
+  { key: "attack_direction_mean", label: "Attack dir", pctl: "attack_direction", format: v => v?.toFixed(1),
+    desc: "Average horizontal bat direction (°, + = toward pull) over competitive swings." },
+  { key: "swing_path_tilt_mean", label: "Swing tilt", pctl: "swing_tilt", format: v => v?.toFixed(1),
+    desc: "Average swing-path tilt (°) — the plane of the swing. Second-biggest Swing+ driver." },
+  { key: "intercept_ball_minus_batter_pos_y_inches_mean", label: "Contact depth", pctl: "contact_depth", format: v => v?.toFixed(1),
+    desc: "Average contact depth (inches): how far in front of / behind the batter contact is made." },
+  { key: "swing_length_mean", label: "Swing len", format: v => v?.toFixed(2),
+    desc: "Average swing length (feet) — the path distance of the bat head to contact." },
+];
+// Swing-DECISION (selection) — the orthogonal axis to Swing+ (path). External MLB
+// swing/take model joined on batter; 2026 (MLB qualified). swing_decision_talent+
+// is ~uncorrelated with Swing+ (r=-0.10), so it's genuinely new signal.
+// SwingDecision+ : OPS-optimal blend of Swing+ (power) and Decision+ (selection).
+const COMBO = [
+  { key: "hitter_plus", label: "Hitter+", cls: "key", format: v => v?.toFixed(1),
+    desc: "Hitter+ — the complete-hitter metric: OPS-optimal blend of all FIVE orthogonal axes Swing+ (31%, power), Decision+ (16%, selection), B2B+ (23%, contact quality/damage), Contact+ (17%, contact frequency/K% — v2, collision-aware), DCV+ (13%, damage geometry/pull-air). 100=league avg, SD 10. Beats SEAGER, SwingDecision+ and the 3/4-axis versions on ISO, K% and OPS, same- and next-season (same-season ISO r 0.81, K% 0.88, OPS 0.69; next-OPS 0.51 vs SEAGER 0.34). Decomposes into its 5 axes." },
+  { key: "swingdecision_plus", label: "SwingDecision+", cls: "key", format: v => v?.toFixed(1),
+    desc: "SwingDecision+ — OPS-optimal blend of Swing+ (63%) and Decision+ (37%), 100=avg, SD 10. The 2-axis combo (no bat-to-ball); Hitter+ adds the bat-to-ball + contact axes." },
+  { key: "b2b_plus", label: "B2B+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Bat-to-Ball+ (external 12-module model): contact-QUALITY / bat-to-ball damage axis, 100=avg. Orthogonal to Swing+ (r=-0.03) and Decision+ (r=-0.07). The damage-on-contact axis." },
+  { key: "contact_axis", label: "Contact+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Contact+ v2 (collision-aware): the contact-FREQUENCY axis — how often he makes contact when he swings (whiff-avoidance), now measured with Savant's bat-ball collision data (vertical-alignment consistency, perfect/flawed contact %, miss distance). Predicts next-season whiff rate at r=-0.85 (v1 was -0.80) and K% at r=-0.77. 100=avg, SD 10. High = Arraez/Kwan type; low = swing-and-miss sluggers (Kurtz, Judge)." },
+  { key: "dcv_plus", label: "DCV+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "Damage Conversion+ (DCV+, external damage-geometry model): does he convert his contact into PULLED AIR damage — pulled-air rate, pulled barrels, HR-window launch. The ISO/HR axis: same-season ISO r 0.54, and adding it to Hitter+ lifts ISO prediction 0.69→0.81 (next-ISO 0.58→0.64). Orthogonal to every other axis (B2B+ carries no pull-air info, r −0.14). 100=avg, SD 10. High = Schwarber/Torkelson pull-air types; 2026 calibrated from raw damage-geometry rates (R²=0.985)." },
+  { key: "hitter_plus_proj", label: "Hitter+ next", cls: "dec", format: v => v?.toFixed(1),
+    desc: "NEXT-SEASON projected Hitter+ (skill projection, not outcome projection): each axis regressed by its measured year-over-year persistence, plus only the OOS-validated terms — Swing+ aging quad (+0.9 pts at 23 → −0.4 at 34) and the BAT-SPEED CASCADE: bat speed today leads other skills tomorrow (sustains Swing+/B2B+, erodes Contact+ — big swingers' contact fades). Joint audit found decisions do NOT age (chase% age-flat; Báez-style chase decay is idiosyncratic) and pitchers challenge DAMAGE decline, not age (−0.3pp zone-seen per mph of EV90). Compresses toward 100; young breakouts hold value best. All-time view = projection from current season." },
+];
+const sgn2 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(2);
+const sgn3 = v => v == null ? "" : (v >= 0 ? "+" : "") + Number(v).toFixed(3);
+// LUCK / regression layer (external variance model): skill estimate = axes-based
+// expectation + calibrated-shrunk residual; luck = observed − skill (projected to vanish).
+// Holdout (2025→2026): next-wOBA r .26 (naive carry) → .33, MAE −11%; ISO .44→.51.
+const LUCK = [
+  { key: "sk_woba", label: "Skill wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill wOBA (luck-stripped): expectation from the five skill axes + sprint speed, plus only the CALIBRATED-REAL part of his over/under-performance (residual shrunk by PA/(PA+k), k=1218 PA — the variance model's k table). Beats naive stat-carry at projecting next season (holdout r .26→.33, MAE −11%). Season-grain; all-time view shows the CURRENT season's value." },
+  { key: "luck_woba", label: "wOBA luck", cls: "dec", format: sgn3,
+    desc: "wOBA luck: observed wOBA minus Skill wOBA — the part of his line projected to evaporate. + = over his skill (regression candidate), − = under it (bounce-back candidate). Defense/weather/pitcher-quality were adjudicated and excluded (≤1% of residual variance); park retained inside the BABIP component only." },
+  { key: "sk_iso", label: "Skill ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Skill ISO (luck-stripped), same construction as Skill wOBA with the ISO shrinkage constant (k=1828 PA). Holdout next-ISO r .44 (naive) → .51." },
+  { key: "luck_iso", label: "ISO luck", cls: "dec", format: sgn3,
+    desc: "ISO luck: observed ISO minus Skill ISO. + = power output over his skill, − = under it." },
+];
+// Projection engine (historical priors + skills): per-target champion = skills
+// (5 axes + bat speed + age) + own-stat current/career compact priors (full prior
+// blocks overfit). OOS (leave-transition-out): xwOBA r .65, K% .81, BB% .64.
+const STATPROJ = [
+  { key: "proj_xwoba", label: "Proj xwOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected NEXT-season xwOBA — the engine's primary target (sits between skill and realized production; ~2x more reliable y2y than wOBA). Ridge on the five skill axes + bat speed + age + own xwOBA current/career. OOS r 0.65, σ ±.028. Calibrated within ±.019 per decile." },
+  { key: "proj_woba", label: "Proj wOBA", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season wOBA — FUSION: deep-history backbone (ridge trained on 5,852 MLB transitions 2000-2022, era-relative, multi-year weights + aging + AAA/AA rookie translations learned at scale) + the five skill axes. OOS r 0.49, σ ±.032. Fusion beat skills-only and backbone-only on every realized stat." },
+  { key: "proj_k_pct", label: "Proj K%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season K% — fusion (deep-history backbone + skills). OOS r 0.82; the frozen backbone alone matches published ZiPS/Steamer K% accuracy (23→24 fold: r .850 / MAE 2.3% / RMSE 3.0% vs ZiPS .844 / 2.4% / 3.0%), and skills add on top." },
+  { key: "proj_bb_pct", label: "Proj BB%", cls: "dec", format: v => v == null ? "" : (v*100).toFixed(1) + "%",
+    desc: "Projected next-season BB% — fusion (deep-history backbone + skills). OOS r 0.69, MAE ~1.6pp (backbone matches ZiPS/Steamer MAE/RMSE on full-season folds). The walk axis the skill system lacks, learned from 20+ years of history." },
+  { key: "proj_iso", label: "Proj ISO", cls: "dec", format: v => v?.toFixed(3),
+    desc: "Projected next-season ISO — fusion (deep-history backbone + skills). OOS r 0.63, σ ±.043." },
+];
+const DECISION = [
+  { key: "decision_plus_mlb", label: "Decision+", cls: "dec", format: v => v?.toFixed(1),
+    desc: "MLB-native swing-DECISION grade (selection): run-value of swing/take choices vs league, base-out-count aware, tailored to his own swing. 100=avg, SD 10. Full coverage (802). The orthogonal axis to Swing+." },
+  { key: "dec100_chase", label: "Chase avoid", cls: "dec", format: sgn2,
+    desc: "Chase-avoidance driver: run value (per 100 pitches vs league) from his out-of-zone decisions. + = avoids chases well. Full coverage." },
+  { key: "dec100_zone", label: "Zone attack", cls: "dec", format: sgn2,
+    desc: "In-zone attack driver: run value (per 100 pitches) from swinging at hittable in-zone pitches. Full coverage." },
+  { key: "dec100_2k", label: "2-strike", cls: "dec", format: sgn2,
+    desc: "Two-strike management driver: run value (per 100 pitches) from his two-strike decisions. Full coverage." },
+];
+const SP = { key: "swing_plus", label: "Swing+", cls: "key", pctl: "swing_plus", format: v => v?.toFixed(1),
+  desc: "Swing+ — bat-path quality scaled to league avg 100 (SD 10), from 9 bat-tracking features. Reliability-weighted toward 100 by sample size. Window = selected tab." };
+// rank (1-N by Swing+) and league percentile, computed over the shown players
+const RANKCOL = { key: "__rank", label: "#", format: v => v ?? "",
+  desc: "Rank by Swing+ among the players currently shown." };
+const PCTCOL = { key: "__sppct", label: "%ile", cls: "key", isPct: true,
+  format: v => v == null ? "" : `${v}`,
+  desc: "Swing+ league percentile — where this player ranks vs the shown players (100 = best)." };
+const NSW = { key: "n_swings", label: "Swings", format: v => v?.toLocaleString(),
+  desc: "Competitive swings in this window — the sample Swing+ is built on." };
+const COLUMN_SPECS = {
+  alltime: [RANKCOL, { key: "name", label: "Player" }, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK,
+            NSW, { key: "n_halves", label: "Halves" }, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
+  season: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
+           { key: "season", label: "Season" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
+  half: [RANKCOL, SP, PCTCOL, ...COMBO, ...STATPROJ, ...LUCK, { key: "name", label: "Player" },
+         { key: "half", label: "Half" }, NSW, ...DECISION, ...VALUE, ...PRED2, ...PARKADJ, ...PRED, ...TRACK],
+};
+// category group for the sticky group-header row (inferred from each column's class)
+function groupOf(c) {
+  if (["__rank", "name", "season", "half", "n_swings", "n_halves"].includes(c.key)) return "";
+  if (c.key === "swing_plus" || c.key === "__sppct") return "Swing+";
+  if (["swingdecision_plus", "hitter_plus", "b2b_plus", "contact_axis", "dcv_plus", "hitter_plus_proj"].includes(c.key)) return "Combined";
+  if (["sk_woba", "luck_woba", "sk_iso", "luck_iso"].includes(c.key)) return "Skill vs luck";
+  if (c.key.startsWith("proj_")) return "Projected (next yr)";
+  if (c.cls === "dec") return "Decision · selection";
+  if (c.cls === "val") return "Value · xwOBA";
+  if (/_(k_pct|hr_pct|iso)(_pn)?$/.test(c.key)) return "Predicted production";   // K%/HR%/ISO (+park-adj)
+  if (["pred", "obs", "diff"].includes(c.cls)) return "Predicted batted-ball";
+  return "Swing tracking";
+}
+
+const state = {
+  view: "alltime",
+  rows: [],
+  sortKey: "swing_plus",
+  sortDir: -1,  // -1 desc, 1 asc
+  search: "",
+  sample: "0",   // sample-size filter: "0" | "50" | "100" | "200" | "qualified"
+};
+
+// "Qualified" = 3.1 PA per team game, scaled to the games in each window.
+const QUALIFIED_PA = { alltime: 1000, season: 502, half: 250 };
+
+function minPA() {
+  if (state.sample === "qualified") return QUALIFIED_PA[state.view] || 0;
+  return +state.sample || 0;
+}
+
+function endpoint() {
+  const p = new URLSearchParams();
+  if (state.view === "season") {
+    const s = document.getElementById("season-select").value;
+    if (s) p.set("season", s);
+  } else if (state.view === "half") {
+    const h = document.getElementById("half-select").value;
+    if (h) p.set("half", h);
+  }
+  return `/api/leaderboard/${state.view}?${p.toString()}`;
+}
+
+async function load() {
+  const r = await fetch(endpoint());
+  if (!r.ok) {
+    document.getElementById("empty").classList.remove("hidden");
+    document.getElementById("empty").textContent = `Error: ${r.status} ${await r.text()}`;
+    state.rows = [];
+    render();
+    return;
+  }
+  state.rows = await r.json();
+  // sensible default sort on first load
+  state.sortKey = "swing_plus";
+  state.sortDir = -1;   // Swing+ descending → best (rank 1, 100th %ile) on top
+  render();
+}
+
+// MLB percentile context (loaded from /api/percentiles)
+let PCTL = {};
+function pctOf(key, v) {
+  const bp = PCTL[key];
+  if (!bp || v == null || !isFinite(v)) return null;
+  if (v <= bp[0]) return 0;
+  if (v >= bp[100]) return 100;
+  let i = 0; while (i < 100 && bp[i + 1] <= v) i++;
+  const span = bp[i + 1] - bp[i];
+  return Math.round(i + (span ? (v - bp[i]) / span : 0));
+}
+function pctColor(p) {                       // Savant-style: low=blue, high=red
+  if (p == null) return "";
+  const t = (p - 50) / 50, a = (Math.abs(t) * 0.32).toFixed(3);
+  return t >= 0 ? `rgba(214,84,84,${a})` : `rgba(74,142,210,${a})`;
+}
+
+function render() {
+  const cols = COLUMN_SPECS[state.view];
+  const thead = document.querySelector("#board thead");
+  // category group row (sticky) so you can see what each block of columns is
+  const groups = [];
+  for (const c of cols) {
+    const g = groupOf(c);
+    if (groups.length && groups[groups.length - 1].g === g) groups[groups.length - 1].span++;
+    else groups.push({ g, span: 1 });
+  }
+  const groupRow = `<tr class="grp-row">${groups.map(gr =>
+    `<th colspan="${gr.span}" class="grp-th ${gr.g ? '' : 'grp-empty'}">${gr.g}</th>`).join("")}</tr>`;
+  const labelRow = `<tr class="lbl-row">${cols.map(c => {
+    const sortCls = state.sortKey === c.key ? (state.sortDir > 0 ? 'asc' : 'desc') : '';
+    const cls = [c.cls, sortCls, c.desc ? 'has-tip' : ''].filter(Boolean).join(' ');
+    const tip = c.desc ? ` title="${c.desc.replace(/"/g, '&quot;')}"` : '';
+    const cue = c.desc ? '<span class="tip-cue">?</span>' : '';
+    return `<th data-key="${c.key}" class="${cls}"${tip}>${c.label}${cue}</th>`;
+  }).join("")}</tr>`;
+  thead.innerHTML = groupRow + labelRow;
+  thead.querySelectorAll("tr.lbl-row th").forEach(th => {
+    th.addEventListener("click", () => {
+      const k = th.dataset.key;
+      if (state.sortKey === k) state.sortDir = -state.sortDir;
+      else { state.sortKey = k; state.sortDir = -1; }
+      render();
+    });
+  });
+
+  let rows = state.rows;
+  const pa = minPA();
+  if (pa > 0) rows = rows.filter(r => (r.n_pa ?? 0) >= pa);
+  if (state.search) {
+    const q = state.search.toLowerCase();
+    rows = rows.filter(r => (r.name || "").toLowerCase().includes(q));
+  }
+  // Swing+ rank (1 = best) + league percentile over the shown players
+  const sp = rows.filter(r => r.swing_plus != null).sort((a, b) => b.swing_plus - a.swing_plus);
+  const N = sp.length;
+  sp.forEach((r, i) => { r.__rank = i + 1; r.__sppct = N > 1 ? Math.round((N - 1 - i) / (N - 1) * 100) : 100; });
+  rows.forEach(r => { if (r.swing_plus == null) { r.__rank = null; r.__sppct = null; } });
+  rows = [...rows].sort((a, b) => {
+    const av = a[state.sortKey], bv = b[state.sortKey];
+    if (av == null && bv == null) return 0;
+    if (av == null) return 1;
+    if (bv == null) return -1;
+    if (typeof av === "number") return (av - bv) * state.sortDir;
+    return String(av).localeCompare(String(bv)) * state.sortDir;
+  });
+
+  const tbody = document.querySelector("#board tbody");
+  tbody.innerHTML = rows.map(r => {
+    const nm = (r.name || "").replace(/"/g, "&quot;");
+    return `<tr class="prow" data-batter="${r.batter ?? ''}" data-stand="${r.stand ?? ''}" data-name="${nm}">${cols.map(c => {
+      const v = r[c.key];
+      const txt = c.format ? (c.format(v) ?? "") : (v ?? "");
+      let extra = "";
+      if (c.isPct && v != null) {                       // the value already IS a percentile
+        extra = ` style="background:${pctColor(v)}" title="${v}th percentile vs shown players"`;
+      } else if (c.pctl && v != null) {
+        const pc = pctOf(c.pctl, v);
+        if (pc != null) extra = ` style="background:${pctColor(pc)}" title="${pc}th percentile"`;
+      }
+      return `<td class="${c.cls || ''}"${extra}>${txt}</td>`;
+    }).join("")}</tr>`;
+  }).join("");
+
+  const unit = state.view === "season" ? "player-seasons"
+             : state.view === "half" ? "player-halves" : "players";
+  document.getElementById("row-count").textContent = `${rows.length} ${unit}`;
+  document.getElementById("empty").classList.toggle("hidden", rows.length > 0);
+}
+
+// ---- Player trajectory modal ----
+let playerData = null;
+let currentMetric = "sp";   // "sp" = Swing+, "bs" = bat speed
+
+async function openPlayer(batter, name, season, stand) {
+  if (!batter) return;
+  const modal = document.getElementById("player-modal");
+  document.getElementById("modal-name").textContent = name || ("MLBAM " + batter);
+  document.getElementById("modal-chart").innerHTML = "<p class='muted'>loading…</p>";
+  document.getElementById("modal-season").innerHTML = "";
+  modal.classList.remove("hidden");
+  const q = stand ? `?stand=${stand}` : "";
+  const r = await fetch(`/api/player/${batter}${q}`);
+  if (!r.ok) {
+    document.getElementById("modal-chart").innerHTML = "<p class='muted'>No trajectory data.</p>";
+    return;
+  }
+  playerData = await r.json();
+  document.getElementById("modal-name").textContent = playerData.name;
+  currentMetric = "sp";   // reset to Swing+ on each open
+  drvMetric = "swing";    // reset drivers metric selector
+  adjState = {};          // clear adjustments for the new player
+  document.querySelectorAll(".mbtn").forEach(x =>
+    x.classList.toggle("active", x.dataset.metric === "sp"));
+  const sel = document.getElementById("modal-season");
+  sel.innerHTML = playerData.seasons.map(s => `<option value="${s}">${s}</option>`).join("");
+  // default to the requested season if valid, else the latest season WITH a swing
+  // profile (so Swing/Adjust aren't blank for partial-season players), else newest.
+  sel.value = (season && playerData.seasons.includes(season)) ? season
+    : (latestProfileSeason() || playerData.seasons[0]);
+  renderChart();
+  // shareable deep-link: ?player=ID&season=YYYY
+  const u = new URL(location); u.searchParams.set("player", batter);
+  u.searchParams.set("season", sel.value); history.replaceState(null, "", u);
+}
+
+// Swing+ driver groups (Shapley contributions): [key, label, color]
+const DRV = [
+  ["bat_speed", "Bat speed", "#1f6fd6"],
+  ["attack_angle", "Attack angle", "#e6a83c"],
+  ["swing_length", "Swing length", "#2e9e6b"],
+  ["attack_direction", "Attack direction", "#9b59b6"],
+  ["swing_tilt", "Swing tilt", "#cc5555"],
+  ["contact_point", "Contact point", "#888888"],
+];
+let drvScope = "season";   // Drivers tab: "season" | "career"
+let drvMetric = "swing";   // Drivers tab metric: "swing" | "decision" | "combo"
+// Decision+ driver buckets (run-value, scaled to Decision+ points): [key,label,color]
+const DEC_DRV = [
+  ["oze", "Chase avoid (early)", "#2e9e6b"],
+  ["ozl", "Chase avoid (2-strike)", "#1f6fd6"],
+  ["ize", "In-zone attack (early)", "#e6a83c"],
+  ["izl", "In-zone (2-strike)", "#9b59b6"],
+];
+const DEC_CFG = { val: "dp", comps: DEC_DRV, part: (p, k) => (p.parts && p.parts[k]) || 0,
+  total: "Decision+ (total)", ytitle: "Decision+ — driver contributions" };
+// SwingDecision+ : Swing+ sub-drivers (x0.63) + Decision+ buckets (x0.37), stacked
+const COMBO_DRV = [
+  ...DRV.map(([k, l, c]) => ["sw_" + k, "Swing+: " + l, c]),
+  ...DEC_DRV.map(([k, l, c]) => ["de_" + k, "Dec+: " + l, c]),
+];
+const COMBO_CFG = { val: "tot", comps: COMBO_DRV, part: (p, k) => (p.parts && p.parts[k]) || 0,
+  total: "SwingDecision+ (total)", ytitle: "SwingDecision+ — driver contributions" };
+
+// Build rolling points for Decision+ / SwingDecision+ (career or single season)
+function decComboPoints(metric, career, season) {
+  const ds = playerData.dec_series || {};
+  const decPts = career ? Object.keys(ds).sort().flatMap(s => ds[s].map(p => ({ ...p, season: s }))) : (ds[season] || []);
+  if (metric === "decision") {
+    return { pts: decPts.map(p => ({ date: p.date, season: p.season, dp: p.dp, parts: p.parts })), cfg: DEC_CFG };
+  }
+  // combo: align Swing+ rolling series with decision series by date
+  const swAll = career ? Object.keys(playerData.series).sort().flatMap(s => playerData.series[s].map(p => ({ ...p, season: s })))
+                       : (playerData.series[season] || []);
+  const swByDate = {}; swAll.forEach(p => { if (p.drv) swByDate[p.date] = p; });
+  const pts = [];
+  for (const d of decPts) {
+    const sw = swByDate[d.date]; if (!sw) continue;
+    const parts = {};
+    DRV.forEach(([k]) => { parts["sw_" + k] = 0.63 * ((sw.drv && sw.drv[k]) || 0); });
+    DEC_DRV.forEach(([k]) => { parts["de_" + k] = 0.37 * ((d.parts && d.parts[k]) || 0); });
+    const tot = 100 + 0.63 * (sw.sp - 100) + 0.37 * (d.dp - 100);
+    pts.push({ date: d.date, season: d.season, tot, parts });
+  }
+  return { pts, cfg: COMBO_CFG };
+}
+
+// SwingDecision+ decomposition (two axes) + Decision+ run-value drivers
+function comboDriversHtml() {
+  const d = playerData && playerData.decomp;
+  if (!d || d.swingdecision_plus == null) return "";
+  const sgn = v => (v >= 0 ? "+" : "") + v.toFixed(0);
+  // SwingDecision+ split: Swing+ part vs Decision+ part (points above/below 100)
+  const parts = [["Swing+ (power)", d.sd_swing_part, "#2f6fd0"], ["Decision+ (selection)", d.sd_dec_part, "#35b66a"]];
+  const maxP = Math.max(6, ...parts.map(p => Math.abs(p[1] || 0)));
+  const splitBars = parts.map(([lab, v, c]) => v == null ? "" : `
+    <div class="cd-row"><div class="cd-lab">${lab}</div>
+      <div class="cd-track"><div class="cd-mid"></div>
+        <div class="cd-fill" style="background:${c};${v>=0?`left:50%;width:${v/maxP*50}%`:`right:50%;width:${-v/maxP*50}%`}"></div></div>
+      <div class="cd-val">${sgn(v)}</div></div>`).join("");
+  // Decision+ run-value drivers (runs/100 pitches): chase-avoidance, in-zone attack, 2-strike
+  const dcs = [["Chase avoidance (out-of-zone)", d.dec_chase], ["In-zone attack", d.dec_zone], ["2-strike management", d.dec_2k]];
+  const maxD = Math.max(0.2, ...dcs.map(x => Math.abs(x[1] || 0)));
+  const decBars = dcs.map(([lab, v]) => v == null ? "" : `
+    <div class="cd-row"><div class="cd-lab">${lab}</div>
+      <div class="cd-track"><div class="cd-mid"></div>
+        <div class="cd-fill" style="background:${v>=0?'#35b66a':'#c0894a'};${v>=0?`left:50%;width:${v/maxD*50}%`:`right:50%;width:${-v/maxD*50}%`}"></div></div>
+      <div class="cd-val">${v>=0?'+':''}${v.toFixed(2)}</div></div>`).join("");
+  return `<div class="combodrv">
+    <div class="cd-block"><div class="cd-title">SwingDecision+ = <b>${d.swingdecision_plus.toFixed(0)}</b>
+      <span class="muted">(Swing+ ${d.swing_plus?.toFixed(0)} · Decision+ ${d.decision_plus_mlb?.toFixed(0)}) — what drives the combined grade:</span></div>${splitBars}</div>
+    <div class="cd-block"><div class="cd-title">Decision+ drivers <span class="muted">(run value / 100 pitches vs league)</span></div>${decBars}</div>
+  </div>`;
+}
+
+function renderChart() {
+  const season = document.getElementById("modal-season").value;
+  const all = (playerData && playerData.series[season]) || [];
+  const m = (playerData && playerData.meta && playerData.meta[season]) || null;
+  const lg = (playerData && playerData.league) || {};
+  const metric = currentMetric;
+  if (metric !== "swing" && window.disposeSwing3D) window.disposeSwing3D();  // tear down 3D when leaving
+
+  if (metric === "drv") {                         // driver decomposition
+    const mets = [["swing", "Swing+"], ["decision", "Decision+"], ["combo", "SwingDecision+"]];
+    const metToggle = `<div class="drv-metric">${mets.map(([k, l]) =>
+      `<button type="button" data-met="${k}" class="${drvMetric === k ? "on" : ""}">${l}</button>`).join("")}</div>`;
+    let body, meta, scopeToggle = "";
+    if (drvMetric === "swing") {
+      const scopes = [["season", "This season"], ["career", "Career"], ["byseason", "By season"], ["byhalf", "By half"]];
+      scopeToggle = `<div class="drv-scope">${scopes.map(([k, l]) =>
+        `<button type="button" data-scope="${k}" class="${drvScope === k ? "on" : ""}">${l}</button>`).join("")}</div>`;
+      if (drvScope === "byseason" || drvScope === "byhalf") {
+        const periods = aggPeriods(drvScope === "byhalf");
+        meta = periods.length ? `${periods.length} ${drvScope === "byhalf" ? "half-seasons" : "seasons"} · what drives Swing+ (avg Shapley)` : "no driver data";
+        body = svgBars(periods);
+      } else {
+        const dp = (drvScope === "career"
+          ? Object.keys(playerData.series).sort().flatMap(s => playerData.series[s].map(p => ({ ...p, season: s })))
+          : all).filter(p => p.drv);
+        meta = dp.length ? `${dp.length} game-dates · ${drvScope === "career" ? "full career" : season} · what drives Swing+` : "no driver data";
+        body = svgStack(dp);
+      }
+    } else {                                       // Decision+ or SwingDecision+ (rolling, career or season)
+      const scopes = [["season", "This season"], ["career", "Career"]];
+      scopeToggle = `<div class="drv-scope">${scopes.map(([k, l]) =>
+        `<button type="button" data-scope="${k}" class="${(drvScope === 'career' ? 'career' : 'season') === k ? "on" : ""}">${l}</button>`).join("")}</div>`;
+      const { pts, cfg } = decComboPoints(drvMetric, drvScope === "career", season);
+      meta = pts.length
+        ? `${pts.length} game-dates · ${drvScope === "career" ? "full career" : season} · what drives ${drvMetric === "combo" ? "SwingDecision+" : "Decision+"}`
+        : "no decision-driver data for this hitter";
+      body = pts.length ? svgStack(pts, cfg) : "<p class='muted' style='padding:20px'>No decision-driver data for this hitter.</p>";
+    }
+    document.getElementById("modal-meta").textContent = meta;
+    document.getElementById("modal-chart").innerHTML = metToggle + scopeToggle + body;
+    document.querySelectorAll(".drv-metric button").forEach(b =>
+      b.addEventListener("click", () => { drvMetric = b.dataset.met; renderChart(); }));
+    document.querySelectorAll(".drv-scope button").forEach(b =>
+      b.addEventListener("click", () => { drvScope = b.dataset.scope; renderChart(); }));
+    return;
+  }
+  if (metric === "adj") { renderAdjust(season); return; }   // what-if adjustment tool
+  if (metric === "swing") { renderSwing(season); return; }  // swing visualization
+  if (metric === "comps") { renderComps(); return; }        // similar swing paths
+  if (metric === "grades") { renderGrades(); return; }      // per-pitch swing grading
+  if (metric === "matchup") { renderMatchup(); return; }    // hitter vs pitcher arsenal
+  if (metric === "decision") { renderDecision(); return; }  // swing-decision (selection) axis
+  if (metric === "compare") { renderCompare(); return; }    // head-to-head vs another player
+  if (metric === "pitch") { renderPitchType(); return; }    // Swing+ by pitch group
+  if (metric === "aging") { renderAging(); return; }        // aging projection
+
+  const pts = all.map(p => ({ date: p.date, v: p[metric] })).filter(p => p.v != null);
+
+  let cfg, meta;
+  if (metric === "bs") {
+    cfg = { title: "Bat speed, mph — rolling 100-swing window",
+            ref: lg.bat_speed ?? null,
+            refLabel: lg.bat_speed != null ? `${lg.bat_speed} · league avg` : "",
+            wValue: (m && m.bat_speed != null) ? m.bat_speed : null,
+            wLabel: (m && m.bat_speed != null) ? `season avg ${m.bat_speed} mph` : "" };
+    meta = (m && m.bat_speed != null)
+      ? `${pts.length} game-dates · season bat speed ${m.bat_speed} mph` : `${pts.length} game-dates`;
+  } else {
+    cfg = { title: "Swing+ — rolling 100-swing window",
+            ref: 100, refLabel: "100 · league avg",
+            wValue: m ? m.weighted : null,
+            wLabel: m ? `season Swing+ ${m.weighted} (weighted)` : "" };
+    meta = m
+      ? `${pts.length} game-dates · season Swing+ ${m.weighted} (weighted, ${m.n_swings.toLocaleString()} swings)`
+      : `${pts.length} game-dates`;
+  }
+  document.getElementById("modal-meta").textContent = meta;
+  document.getElementById("modal-chart").innerHTML = svgLine(pts, cfg);
+}
+
+function svgLine(pts, cfg) {
+  if (!pts.length) return "<p class='muted'>No data for this season.</p>";
+  const W = 880, H = 400, padL = 56, padR = 24, padT = 22, padB = 50;
+  const xs = pts.map(p => new Date(p.date).getTime());
+  const ys = pts.map(p => p.v);
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const refs = [cfg.ref, cfg.wValue].filter(v => v != null && isFinite(v));
+  let lo = Math.min(...ys, ...refs), hi = Math.max(...ys, ...refs);
+  const padv = Math.max((hi - lo) * 0.15, 1); lo -= padv; hi += padv;
+  const range = hi - lo;
+  const step = range > 120 ? 40 : range > 50 ? 20 : range > 25 ? 10 : range > 10 ? 5 : range > 4 ? 2 : 1;
+  const sx = t => padL + (x1 === x0 ? 0.5 : (t - x0) / (x1 - x0)) * (W - padL - padR);
+  const sy = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+  let grid = "";
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
+    grid += `<line x1="${padL}" y1="${sy(v).toFixed(1)}" x2="${W - padR}" y2="${sy(v).toFixed(1)}" class="grid"/>`
+          + `<text x="${padL - 9}" y="${(sy(v) + 4).toFixed(1)}" class="axt" text-anchor="end">${v}</text>`;
+  }
+  const fmt = t => { const d = new Date(t); return (d.getUTCMonth() + 1) + "/" + d.getUTCDate(); };
+  let xticks = "";
+  const N = 6;
+  for (let i = 0; i < N; i++) {
+    const t = x0 + (x1 - x0) * i / (N - 1);
+    xticks += `<text x="${sx(t).toFixed(1)}" y="${H - padB + 20}" class="axt" text-anchor="middle">${fmt(t)}</text>`;
+  }
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${sx(xs[i]).toFixed(1)},${sy(p.v).toFixed(1)}`).join("");
+  const dots = pts.map((p, i) =>
+    `<circle cx="${sx(xs[i]).toFixed(1)}" cy="${sy(p.v).toFixed(1)}" r="1.7" class="dot"/>`).join("");
+  const yc = (padT + (H - padB)) / 2;
+
+  let refLine = "";
+  if (cfg.ref != null && isFinite(cfg.ref)) {
+    const yr = sy(cfg.ref);
+    refLine = `<line x1="${padL}" y1="${yr.toFixed(1)}" x2="${W - padR}" y2="${yr.toFixed(1)}" class="ref"/>`
+      + `<text x="${W - padR}" y="${(yr - 6).toFixed(1)}" class="reft" text-anchor="end">${cfg.refLabel}</text>`;
+  }
+  let avgLine = "";
+  if (cfg.wValue != null && isFinite(cfg.wValue)) {
+    const ya = sy(cfg.wValue);
+    avgLine = `<line x1="${padL}" y1="${ya.toFixed(1)}" x2="${W - padR}" y2="${ya.toFixed(1)}" class="avg"/>`
+      + `<text x="${padL + 4}" y="${(ya - 5).toFixed(1)}" class="avgt">${cfg.wLabel}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="#ffffff"/>
+    ${grid}${refLine}${avgLine}
+    <path d="${path}" class="line"/>${dots}
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    <line x1="${padL}" y1="${(H - padB).toFixed(1)}" x2="${W - padR}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    ${xticks}
+    <text x="16" y="${yc.toFixed(1)}" class="axtitle" text-anchor="middle"
+          transform="rotate(-90 16 ${yc.toFixed(1)})">${cfg.title}</text>
+  </svg>`;
+}
+
+function bandPath(xs, lower, upper, sx, sy) {
+  let d = upper.map((v, i) => `${i ? "L" : "M"}${sx(xs[i]).toFixed(1)},${sy(v).toFixed(1)}`).join("");
+  for (let i = lower.length - 1; i >= 0; i--) d += `L${sx(xs[i]).toFixed(1)},${sy(lower[i]).toFixed(1)}`;
+  return d + "Z";
+}
+
+// H1/H2 split at the All-Star break (matches the leaderboard: H1 ≤ ~7/15)
+function halfOf(date) { const d = new Date(date), m = d.getUTCMonth() + 1, day = d.getUTCDate();
+  return (m < 7 || (m === 7 && day <= 15)) ? "H1" : "H2"; }
+
+// Aggregate the rolling driver decomposition into discrete periods (season or half)
+// so seasons/halves can be compared side by side. Returns one entry per period.
+function aggPeriods(byHalf) {
+  const acc = {};
+  for (const s of Object.keys(playerData.series)) for (const p of playerData.series[s]) {
+    if (!p.drv) continue;
+    const key = byHalf ? `${s} ${halfOf(p.date)}` : s;
+    const a = acc[key] || (acc[key] = { sp: [], drv: {}, n: 0 });
+    a.sp.push(p.sp); a.n++;
+    for (const [k] of DRV) (a.drv[k] = a.drv[k] || []).push((p.drv && p.drv[k]) || 0);
+  }
+  const mean = arr => arr.reduce((x, y) => x + y, 0) / arr.length;
+  return Object.keys(acc).sort().map(key => ({
+    label: key, sp: mean(acc[key].sp), n: acc[key].n,
+    drv: Object.fromEntries(DRV.map(([k]) => [k, mean(acc[key].drv[k])])),
+  }));
+}
+
+// Stacked BARS — one per period (season/half) — for comparing what drives Swing+
+function svgBars(periods) {
+  if (!periods.length) return "<p class='muted'>No driver data.</p>";
+  const W = 880, H = 400, padL = 56, padR = 24, padT = 22, padB = 58;
+  const dv = (p, k) => (p.drv && p.drv[k]) || 0;
+  const base = periods.map(p => p.sp - DRV.reduce((a, [k]) => a + dv(p, k), 0));
+  const tops = periods.map((p, i) => base[i] + DRV.reduce((a, [k]) => a + Math.max(dv(p, k), 0), 0));
+  const bots = periods.map((p, i) => base[i] + DRV.reduce((a, [k]) => a + Math.min(dv(p, k), 0), 0));
+  let lo = Math.min(...bots, ...periods.map(p => p.sp));
+  let hi = Math.max(...tops, ...periods.map(p => p.sp));
+  const pv0 = Math.max((hi - lo) * 0.12, 2); lo -= pv0; hi += pv0;
+  const n = periods.length, slot = (W - padL - padR) / n, bw = Math.min(66, slot * 0.6);
+  const cx = i => padL + (i + 0.5) * slot;
+  const sy = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+  const step = (hi - lo) > 120 ? 40 : (hi - lo) > 50 ? 20 : (hi - lo) > 25 ? 10 : 5;
+  let grid = "";
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step)
+    grid += `<line x1="${padL}" y1="${sy(v).toFixed(1)}" x2="${W - padR}" y2="${sy(v).toFixed(1)}" class="grid"/>`
+          + `<text x="${padL - 9}" y="${(sy(v) + 4).toFixed(1)}" class="axt" text-anchor="end">${v}</text>`;
+
+  const rect = (x, y, w, h, c) => `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${w.toFixed(1)}" height="${Math.max(0, h).toFixed(1)}" fill="${c}" fill-opacity="0.88"/>`;
+  let bars = "";
+  periods.forEach((p, i) => {
+    const x = cx(i) - bw / 2; let pc = base[i], nc = base[i];
+    for (const [k, , color] of DRV) {
+      const pv = Math.max(dv(p, k), 0), nv = Math.min(dv(p, k), 0);
+      if (pv > 0) { bars += rect(x, sy(pc + pv), bw, sy(pc) - sy(pc + pv), color); pc += pv; }
+      if (nv < 0) { bars += rect(x, sy(nc), bw, sy(nc + nv) - sy(nc), color); nc += nv; }
+    }
+    const yt = sy(p.sp);
+    bars += `<line x1="${x.toFixed(1)}" y1="${yt.toFixed(1)}" x2="${(x + bw).toFixed(1)}" y2="${yt.toFixed(1)}" stroke="#111" stroke-width="2.5"/>`;
+    bars += `<text x="${cx(i).toFixed(1)}" y="${(yt - 7).toFixed(1)}" text-anchor="middle" style="font:700 12px system-ui;fill:#111">${p.sp.toFixed(0)}</text>`;
+    bars += `<text x="${cx(i).toFixed(1)}" y="${H - padB + 18}" class="axt" text-anchor="middle">${p.label}</text>`;
+    if (p.n) bars += `<text x="${cx(i).toFixed(1)}" y="${H - padB + 31}" class="axt" text-anchor="middle" style="opacity:0.55">${p.n} g</text>`;
+  });
+  const baseMean = base.reduce((a, b) => a + b, 0) / base.length, yb = sy(baseMean);
+  const yc = (padT + (H - padB)) / 2;
+  const legend = DRV.map(([, label, color]) => `<span class="lg"><i style="background:${color}"></i>${label}</span>`).join("")
+    + `<span class="lg"><i style="background:#111"></i>Swing+ (total)</span>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="#ffffff"/>
+    ${grid}
+    <line x1="${padL}" y1="${yb.toFixed(1)}" x2="${W - padR}" y2="${yb.toFixed(1)}" class="ref"/>
+    <text x="${W - padR}" y="${(yb - 6).toFixed(1)}" class="reft" text-anchor="end">${baseMean.toFixed(0)} · league avg</text>
+    ${bars}
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    <line x1="${padL}" y1="${(H - padB).toFixed(1)}" x2="${W - padR}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    <text x="16" y="${yc.toFixed(1)}" class="axtitle" text-anchor="middle"
+          transform="rotate(-90 16 ${yc.toFixed(1)})">Swing+ — driver contributions</text>
+  </svg><div class="chart-legend">${legend}</div>`;
+}
+
+const SWING_CFG = { val: "sp", comps: DRV, part: (p, k) => (p.drv && p.drv[k]) || 0,
+  total: "Swing+ (total)", ytitle: "Swing+ — driver contributions" };
+function svgStack(pts, cfg = SWING_CFG) {
+  if (!pts.length) return "<p class='muted'>No driver data for this season.</p>";
+  const DRV = cfg.comps;
+  const W = 880, H = 400, padL = 56, padR = 24, padT = 22, padB = 50;
+  // CAREER (multi-season): plot by game INDEX (evenly spaced), not calendar date,
+  // so the off-season gaps don't get bridged by a long diagonal. Single season =
+  // keep real dates.
+  const idxMode = new Set(pts.map(p => p.season).filter(Boolean)).size > 1;
+  const xs = idxMode ? pts.map((_, i) => i) : pts.map(p => new Date(p.date).getTime());
+  const x0 = Math.min(...xs), x1 = Math.max(...xs);
+  const sp = pts.map(p => p[cfg.val]);
+  const dv = (p, k) => cfg.part(p, k);
+  const base = pts.map(p => p[cfg.val] - DRV.reduce((a, [k]) => a + dv(p, k), 0));   // ~constant baseline
+  const posTop = pts.map((p, i) => base[i] + DRV.reduce((a, [k]) => a + Math.max(dv(p, k), 0), 0));
+  const negBot = pts.map((p, i) => base[i] + DRV.reduce((a, [k]) => a + Math.min(dv(p, k), 0), 0));
+  let lo = Math.min(...negBot, ...sp), hi = Math.max(...posTop, ...sp);
+  const pad = Math.max((hi - lo) * 0.1, 1); lo -= pad; hi += pad;
+  const sx = t => padL + (x1 === x0 ? 0.5 : (t - x0) / (x1 - x0)) * (W - padL - padR);
+  const sy = v => padT + (1 - (v - lo) / (hi - lo)) * (H - padT - padB);
+
+  const step = (hi - lo) > 120 ? 40 : (hi - lo) > 50 ? 20 : (hi - lo) > 25 ? 10 : 5;
+  let grid = "";
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step)
+    grid += `<line x1="${padL}" y1="${sy(v).toFixed(1)}" x2="${W - padR}" y2="${sy(v).toFixed(1)}" class="grid"/>`
+          + `<text x="${padL - 9}" y="${(sy(v) + 4).toFixed(1)}" class="axt" text-anchor="end">${v}</text>`;
+
+  let bands = "";
+  const pc = base.slice(), nc = base.slice();
+  for (const [k, , color] of DRV) {
+    const posHi = pts.map((p, i) => pc[i] + Math.max(dv(p, k), 0));
+    bands += `<path d="${bandPath(xs, pc.slice(), posHi, sx, sy)}" fill="${color}" fill-opacity="0.85"/>`;
+    for (let i = 0; i < pc.length; i++) pc[i] = posHi[i];
+    const negLo = pts.map((p, i) => nc[i] + Math.min(dv(p, k), 0));
+    bands += `<path d="${bandPath(xs, negLo, nc.slice(), sx, sy)}" fill="${color}" fill-opacity="0.85"/>`;
+    for (let i = 0; i < nc.length; i++) nc[i] = negLo[i];
+  }
+  const spLine = sp.map((v, i) => `${i ? "L" : "M"}${sx(xs[i]).toFixed(1)},${sy(v).toFixed(1)}`).join("");
+  const yb = sy(base[0]);
+  let xticks = "", seps = "";
+  if (idxMode) {
+    // x-axis BY SEASON: a centered "{season} · N g" label per season run + a
+    // dashed separator at each season boundary (no time gaps).
+    let start = 0;
+    for (let i = 1; i <= pts.length; i++) {
+      if (i === pts.length || pts[i].season !== pts[start].season) {
+        const mid = (start + i - 1) / 2;
+        xticks += `<text x="${sx(mid).toFixed(1)}" y="${H - padB + 22}" class="axt" text-anchor="middle">${pts[start].season} · ${i - start} g</text>`;
+        if (i < pts.length) { const bx = sx(i - 0.5).toFixed(1);
+          seps += `<line x1="${bx}" y1="${padT}" x2="${bx}" y2="${(H - padB).toFixed(1)}" stroke="#9aa3b2" stroke-width="1" stroke-dasharray="3 4" stroke-opacity="0.7"/>`; }
+        start = i;
+      }
+    }
+  } else {
+    const fmt = t => { const d = new Date(t); return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`; };
+    for (let i = 0; i < 6; i++) { const t = x0 + (x1 - x0) * i / 5;
+      xticks += `<text x="${sx(t).toFixed(1)}" y="${H - padB + 20}" class="axt" text-anchor="middle">${fmt(t)}</text>`; }
+  }
+  const yc = (padT + (H - padB)) / 2;
+  const legend = DRV.map(([, label, color]) =>
+    `<span class="lg"><i style="background:${color}"></i>${label}</span>`).join("")
+    + `<span class="lg"><i style="background:#111"></i>${cfg.total}</span>`;
+
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="#ffffff"/>
+    ${grid}${bands}${seps}
+    <line x1="${padL}" y1="${yb.toFixed(1)}" x2="${W - padR}" y2="${yb.toFixed(1)}" class="ref"/>
+    <text x="${W - padR}" y="${(yb - 6).toFixed(1)}" class="reft" text-anchor="end">${base[0].toFixed(0)} · league avg</text>
+    <path d="${spLine}" fill="none" stroke="#111" stroke-width="2.4"/>
+    <line x1="${padL}" y1="${padT}" x2="${padL}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    <line x1="${padL}" y1="${(H - padB).toFixed(1)}" x2="${W - padR}" y2="${(H - padB).toFixed(1)}" class="axis"/>
+    ${xticks}
+    <text x="16" y="${yc.toFixed(1)}" class="axtitle" text-anchor="middle"
+          transform="rotate(-90 16 ${yc.toFixed(1)})">${cfg.ytitle}</text>
+  </svg><div class="chart-legend">${legend}</div>`;
+}
+
+// ---- What-if adjustment tool ----
+// [key, label, unit, step, explore-span, hardMin, hardMax, endLabels, dirFn].
+// Slider = [max(hardMin, value-span), min(hardMax, value+span)] — centered on the
+// player so you can explore +/- a realistic amount, capped at the physical envelope.
+// dirFn(v) -> a real-world direction descriptor; endLabels = [lowWord, highWord].
+const ADJ_SLIDERS = [
+  ["bat_speed", "Bat speed", "mph", 0.5, 10, 55, 84, ["slower", "faster"], null],
+  ["attack_angle", "Attack angle", "°", 0.5, 14, -12, 32, ["chop down", "uppercut"],
+    v => v >= 1 ? "↑ swinging up" : v <= -1 ? "↓ swinging down" : "level"],
+  ["attack_direction", "Attack direction", "°", 0.5, 16, -25, 25, ["◀ oppo", "pull ▶"],
+    v => v >= 2 ? "▶ toward pull" : v <= -2 ? "◀ toward opposite field" : "up the middle"],
+  ["swing_tilt", "Swing tilt", "°", 0.5, 14, 10, 52, ["flat", "steep"],
+    v => v >= 36 ? "steep / vertical plane" : v <= 26 ? "flat plane" : "moderate plane"],
+  ["contact_depth", "Contact depth", "in", 0.5, 12, 14, 44, ["◀ toward catcher", "toward pitcher ▶"],
+    v => v >= 32 ? "▶ out front (toward pitcher)" : v <= 24 ? "◀ deep (toward catcher)" : "even with the plate"],
+];
+const ADJ_STATS = [["swing_plus", "Swing+", 1], ["xwoba", "xwOBA (full PA)", 3],
+  ["xwobacon", "xwOBAcon (on contact)", 3],
+  ["avg_ev", "Avg EV (mph)", 1], ["avg_ev90", "EV90 (mph)", 1], ["hard_hit_pct", "Hard-Hit%", 1],
+  ["barrel_pct", "Barrel%", 1], ["avg_la", "Avg LA (°)", 1]];
+let whatifTimer = null;
+let whatifSeq = 0;
+let adjBaseline = null;   // model outputs at the player's actual swing (for Δ)
+let adjState = {};        // last slider values, persists across tab switches
+
+// ============ Swing visualization — Savant-style hero panel ============
+// A stick-figure batter on a perspective grid floor (dark navy), with the BAT
+// extending from the hands and the barrel sweeping a real swing arc (hands stay
+// at the body; barrel sweeps down-and-through, contact at the low point, up into
+// follow-through). The measured contact zone is highlighted; a metric badge calls
+// out attack angle. Side-on camera. Animated. Current vs Adjusted overlaid.
+let swingRAF = null;
+const PHI_A = -2.0, PHI_B = 1.5;     // load -> follow-through sweep (rad)
+const WINr = 0.45;                    // +/- rad around contact = measured zone
+
+function drawArrow(ctx, x1, y1, x2, y2, head, color, lw) {
+  if (color) ctx.strokeStyle = color; if (lw) ctx.lineWidth = lw;
+  ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+  const a = Math.atan2(y2 - y1, x2 - x1);
+  ctx.beginPath(); ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - head * Math.cos(a - 0.4), y2 - head * Math.sin(a - 0.4));
+  ctx.lineTo(x2 - head * Math.cos(a + 0.4), y2 - head * Math.sin(a + 0.4));
+  ctx.closePath(); ctx.fillStyle = color || ctx.strokeStyle; ctx.fill();
+}
+
+// Side-on swing. World coords: x = out front (ft, + toward pitcher / catcher
+// behind at left), z = height (ft). The hands move on a small circle near the
+// body; the bat is a rigid segment hands->barrel; rotating phi sweeps it.
+function swingModel(p) {
+  const aa = p.attack_angle * Math.PI / 180;   // attack angle at contact
+  const xc = (p.depth ? p.depth / 12 : 2.6) - 1.4;  // contact x relative to body
+  const zc = 2.6;                               // contact height
+  const BAT = 2.7;                              // hands -> barrel (ft)
+  const HANDR = 0.9;                            // hand circle radius near body
+  // barrel rotation center sits up & behind so contact is the low, forward point
+  const bHat = [Math.cos(aa), Math.sin(aa)];    // barrel travel dir at contact
+  const aHat = [Math.sin(aa), -Math.cos(aa)];   // center -> contact (downward)
+  const O = [xc - BAT * aHat[0], zc - BAT * aHat[1]];   // shoulder/axis point
+  return { O, aHat, bHat, BAT, HANDR, contact: [xc, zc], aa };
+}
+function batAt(m, phi) {  // returns {hands:[x,z], barrel:[x,z], inZone}
+  const c = Math.cos(phi), s = Math.sin(phi);
+  const r = [c * m.aHat[0] + s * m.bHat[0], c * m.aHat[1] + s * m.bHat[1]];
+  const barrel = [m.O[0] + m.BAT * r[0], m.O[1] + m.BAT * r[1]];
+  const hands = [m.O[0] + (m.BAT - 1.7) * r[0], m.O[1] + (m.BAT - 1.7) * r[1]];
+  return { hands, barrel, inZone: Math.abs(phi) <= WINr };
+}
+
+function drawBatter(ctx, sx, sy, handsPx) {
+  // simple stick batter anchored at the plate; arms reach to the hands position.
+  const bx = -1.95, hipZ = 3.0, shZ = 4.6, headZ = 5.3;  // body ~2ft behind contact
+  ctx.strokeStyle = "#9fc3e6"; ctx.fillStyle = "#9fc3e6"; ctx.lineWidth = 3; ctx.lineCap = "round";
+  // head
+  ctx.beginPath(); ctx.arc(sx(bx), sy(headZ), 9, 0, 7); ctx.stroke();
+  // spine
+  ctx.beginPath(); ctx.moveTo(sx(bx), sy(shZ)); ctx.lineTo(sx(bx + 0.15), sy(hipZ)); ctx.stroke();
+  // legs
+  ctx.beginPath(); ctx.moveTo(sx(bx + 0.15), sy(hipZ));
+  ctx.lineTo(sx(bx - 0.5), sy(0.1)); ctx.moveTo(sx(bx + 0.15), sy(hipZ));
+  ctx.lineTo(sx(bx + 0.8), sy(0.1)); ctx.stroke();
+  // arms reach from shoulders to the hands (which hold the bat)
+  ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(sx(bx), sy(shZ)); ctx.lineTo(handsPx[0], handsPx[1]); ctx.stroke();
+}
+
+// A partial-season player (e.g. a switch hitter with one light side, or a season
+// below the swing threshold for that stand) can have trajectory seasons with no
+// swing profile. These find a season that actually HAS a profile so the Swing and
+// Adjust tabs still render instead of showing "no swing profile".
+function latestProfileSeason() {
+  const ks = Object.keys(playerData.profiles || {});
+  return ks.length ? ks.sort().reverse()[0] : null;
+}
+function resolveProfileSeason(season) {
+  if (playerData.profiles && playerData.profiles[season]) return season;
+  return latestProfileSeason();
+}
+
+function renderSwing(season) {
+  season = resolveProfileSeason(season);
+  const prof = season ? (playerData.profiles && playerData.profiles[season]) : null;
+  const chart = document.getElementById("modal-chart");
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  if (!prof) {
+    document.getElementById("modal-meta").textContent = "";
+    chart.innerHTML = "<p class='muted'>No swing profile for this player.</p>"; return;
+  }
+  document.getElementById("modal-season").value = season;   // reflect the season actually shown
+  document.getElementById("modal-meta").textContent =
+    `3D swing — drag to rotate · current vs adjusted (Adjust tab) · ${season}`;
+  chart.innerHTML = `<div class="swing-tab">
+    <div id="sw3d"></div>
+    <p class="viz-cap"><b style="color:#cfe0f7">current swing</b> · <b style="color:#2ecc71">adjusted swing</b>
+      (from the Adjust tab) · bright = measured contact zone, faint = generic motion (not tracked).
+      Bat swings from the hitter's hands. Drag to rotate the camera. Illustrative — not a measured 3D path.</p>
+  </div>`;
+  const sval = (k, d) => (adjState[k] != null ? adjState[k] : d);
+  const cur = { attack_angle: prof.attack_angle, depth: prof.contact_depth,
+                tilt: prof.swing_tilt, attack_dir: prof.attack_direction,
+                contact_side: prof.contact_side, stand: playerData.stand };
+  const adj = { attack_angle: sval("attack_angle", prof.attack_angle),
+                depth: sval("contact_depth", prof.contact_depth),
+                tilt: sval("swing_tilt", prof.swing_tilt),
+                attack_dir: sval("attack_direction", prof.attack_direction),
+                contact_side: prof.contact_side, stand: playerData.stand };
+  const mount = document.getElementById("sw3d");
+  if (window.renderSwing3D) window.renderSwing3D(mount, cur, adj, { height: 420 });
+  else mount.innerHTML = "<p class='muted' style='padding:20px'>3D engine loading… (needs internet for three.js)</p>";
+}
+
+let compsShapeOnly = false;
+async function renderComps() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "most similar hitters by swing path (RBF-kernel similarity on the bat-tracking profile)";
+  chart.innerHTML = "<p class='muted' style='padding:20px'>finding comps…</p>";
+  const params = new URLSearchParams();
+  if (playerData.stand) params.set("stand", playerData.stand);
+  if (compsShapeOnly) params.set("shape_only", "true");
+  const r = await fetch(`/api/comps/${playerData.batter}?${params}`);
+  if (!r.ok) { chart.innerHTML = "<p class='muted' style='padding:20px'>No comps (player needs 200+ PA).</p>"; return; }
+  const d = await r.json();
+  const rows = d.comps.map((c, i) => `<tr>
+      <td>${i + 1}</td><td class="cname">${c.name}</td>
+      <td><div class="simbar"><div class="simfill" style="width:${c.similarity}%"></div>
+        <span>${c.similarity}%</span></div></td>
+      <td>${c.swing_plus.toFixed(1)}</td><td>${c.bat_speed.toFixed(1)}</td><td>${c.attack_angle.toFixed(1)}</td>
+    </tr>`).join("");
+  chart.innerHTML = `<div class="comps">
+    <label class="comps-toggle"><input type="checkbox" id="comps-shape" ${compsShapeOnly ? "checked" : ""}>
+      shape only — match swing geometry, ignore bat speed</label>
+    <table class="comps-table"><thead><tr><th>#</th><th>Hitter</th><th>Similarity</th>
+      <th>Swing+</th><th>Bat&nbsp;spd</th><th>Atk&nbsp;ang</th></tr></thead><tbody>${rows}</tbody></table>
+    <p class="viz-cap">Similarity = SVM RBF (Gaussian) kernel on standardized swing-path features.
+      ${compsShapeOnly
+        ? "<b>Bat speed excluded</b> — comps share swing GEOMETRY (shape) regardless of how hard they swing."
+        : "Includes bat speed (swing length, attack angle/direction, tilt, contact point, variability)."}
+      100% = identical profile.</p></div>`;
+  document.getElementById("comps-shape").addEventListener("change", e => {
+    compsShapeOnly = e.target.checked; renderComps();
+  });
+}
+
+// ---- Hitter vs pitcher matchup ----
+let matchupState = { pitcher: null, name: null, throws: null, form: "career" };
+let muSearchTimer = null;
+function gradeBadgeBig(v) {
+  const t = Math.max(0, Math.min(1, (v - 30) / 40));
+  const r = Math.round(206 + t * (47 - 206)), g = Math.round(70 + t * (160 - 70)), b = Math.round(70 + t * (90 - 70));
+  return `rgb(${r},${g},${b})`;
+}
+async function renderMatchup() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "matchup — grade this hitter's contact/discipline vs a pitcher's arsenal (log5 of real rates)";
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  let body = "";
+  if (matchupState.pitcher) {
+    const st = playerData.stand ? `&stand=${playerData.stand}` : "";
+    const r = await fetch(`/api/matchup/${playerData.batter}?pitcher=${matchupState.pitcher}${st}&form=${matchupState.form}`);
+    if (!r.ok) { body = `<p class='muted' style='padding:14px 2px'>No arsenal for ${matchupState.name} vs ${playerData.stand}HB.</p>`; }
+    else {
+      const d = await r.json();
+      const lo = 20, hi = 90, pct = v => Math.max(3, Math.min(100, (v - lo) / (hi - lo) * 100));
+      const rows = d.pitches.map(p => {
+        const col = gradeBadgeBig(p.grade);
+        return `<tr><td class="mu-pt">${p.label}<span>${p.group}</span></td>
+          <td class="mu-use">${p.usage}%</td><td class="mu-velo">${p.velo}</td>
+          <td class="mu-bar"><div class="mu-track"><div class="mu-fill" style="width:${pct(p.grade)}%;background:${col}"></div>
+            <span class="mu-ref" style="left:${pct(50)}%"></span><span class="mu-g" style="left:${pct(p.grade)}%">${p.grade.toFixed(0)}</span></div></td>
+          <td class="mu-wh"><b>${p.whiff_prob.toFixed(0)}%</b> <span class="mu-lgwh">lg ${p.pitch_whiff.toFixed(0)}%</span></td>
+          <td class="mu-xw">${p.xwobacon.toFixed(3)}</td></tr>`;
+      }).join("");
+      const oc = gradeBadgeBig(d.overall_grade);
+      const comp = (lab, v) => v == null ? "" :
+        `<div class="mu-comp"><span class="mu-cv" style="color:${gradeBadgeBig(v)}">${v.toFixed(0)}</span><span class="mu-cl">${lab}</span></div>`;
+      const stat = (lab, v) => `<div class="mu-stat"><span class="mu-sv">${v}</span><span class="mu-sl">${lab}</span></div>`;
+      const components = d.decision_grade != null
+        ? `${comp("swing-fit", d.swing_fit)}${comp("decision", d.decision_grade)}<div class="mu-comp"><span class="mu-cv">${d.ooz_rate.toFixed(0)}%</span><span class="mu-cl">pitcher out-of-zone</span></div>`
+        : `${comp("swing-fit", d.swing_fit)}<div class="mu-comp mu-nodec">no decision data for this hitter — swing-fit only</div>`;
+      const projstats = `${stat("Whiff%", d.proj_whiff.toFixed(0) + "%")}${stat("xwOBAcon", d.proj_xwobacon.toFixed(3))}${stat("xwOBA / swing", d.proj_xwoba_swing.toFixed(3))}`;
+      body = `<div class="mu-head">
+          <div class="mu-overall"><div class="mu-ocircle" style="background:${oc}">${d.overall_grade.toFixed(0)}</div>
+            <div class="mu-olab">overall matchup grade<span>${playerData.name} (${d.stand}) vs ${d.pitcher_name} · ${d.throws}HP · 20–90 scouting (50 = avg, ±10 = 1 SD)</span></div></div>
+          <div class="mu-headctl">
+            <div class="mu-formtog">
+              <button class="mu-fbtn ${matchupState.form==='career'?'on':''}" data-form="career">Career</button>
+              <button class="mu-fbtn ${matchupState.form==='recent'?'on':''}" data-form="recent">Recent form</button>
+            </div>
+            <button class="mbtn" id="mu-change">Change pitcher</button>
+          </div></div>
+        <div class="mu-components">${components}</div>
+        <div class="mu-projrow"><div class="mu-projlab">projected vs this arsenal</div><div class="mu-projstats">${projstats}</div></div>
+        <table class="mu-table"><thead><tr><th>Pitch</th><th>Usage</th><th>Velo</th>
+          <th>Matchup grade (50 = avg) →</th><th>Whiff (his / lg)</th><th>xwOBAcon</th></tr></thead><tbody>${rows}</tbody></table>
+        <p class="viz-cap"><b>Grounded matchup</b>: his actual whiff &amp; contact-quality skill (by pitch group, reliability-shrunk)
+          combined with ${d.pitcher_name}'s real per-pitch rates via the <b>log5</b> method. Grades on the <b>20–90 scouting scale</b>
+          (50 = average hitter vs this arsenal, every 10 points = 1 SD). Projected stats are the two that validated out-of-sample at this
+          sample size — <b>whiff%</b> (AUC 0.65, pair r≈0.45) and <b>xwOBAcon</b> (hitter-driven); xwOBA/swing combines them.
+          ${d.decision_grade != null ? `Overall blends swing-fit with the <b>MLB swing-tailored Decision</b> model (does he swing where his own swing does damage), weighted ${(d.dec_weight*100).toFixed(0)}% by how often the pitcher works out of the zone.` : "(no decision data for this hitter, so overall = swing-fit.)"}
+          HR%/ISO are omitted — no signal at pair sample. No timing/sequencing modeled.</p>`;
+    }
+  }
+  chart.innerHTML = `<div class="matchup">
+      <div class="mu-search ${matchupState.pitcher ? "hidden" : ""}">
+        <label>Pitcher</label>
+        <input type="text" id="mu-q" placeholder="search a pitcher (e.g. Skubal, Skenes)…" autocomplete="off">
+        <div id="mu-results" class="mu-results"></div>
+      </div>
+      ${body}
+    </div>`;
+  const change = document.getElementById("mu-change");
+  if (change) change.onclick = () => { matchupState.pitcher = null; renderMatchup(); };
+  chart.querySelectorAll(".mu-fbtn").forEach(b => b.onclick = () => {
+    matchupState.form = b.dataset.form; renderMatchup(); });
+  const q = document.getElementById("mu-q");
+  if (q) {
+    q.focus();
+    q.addEventListener("input", () => {
+      clearTimeout(muSearchTimer);
+      muSearchTimer = setTimeout(async () => {
+        const v = q.value.trim();
+        const box = document.getElementById("mu-results");
+        if (v.length < 2) { box.innerHTML = ""; return; }
+        const r = await fetch(`/api/pitchers?q=${encodeURIComponent(v)}`);
+        const d = await r.json();
+        box.innerHTML = (d.pitchers || []).map(p =>
+          `<div class="mu-opt" data-id="${p.pitcher}" data-nm="${p.name}" data-th="${p.throws}">${p.name} <span>${p.throws}HP</span></div>`).join("")
+          || "<div class='mu-opt muted'>no pitchers found</div>";
+        box.querySelectorAll(".mu-opt[data-id]").forEach(el => el.onclick = () => {
+          matchupState.pitcher = +el.dataset.id; matchupState.name = el.dataset.nm; matchupState.throws = el.dataset.th;
+          renderMatchup();
+        });
+      }, 220);
+    });
+  }
+}
+
+// ---- Per-pitch swing grading ----
+const PT_LABEL = p => ({FF:"4-seam", SI:"Sinker", FC:"Cutter", SL:"Slider", ST:"Sweeper",
+  CU:"Curve", KC:"Knuckle-curve", SV:"Slurve", CH:"Change", FS:"Splitter", FO:"Forkball",
+  EP:"Eephus", all:"All pitches"}[p] || p);
+let gradeFilters = { pitch_type: "all", region: "all" };
+function gradeBadge(v) {
+  const t = Math.max(0, Math.min(1, (v - 30) / 40));   // 30..70 -> red..green
+  const r = Math.round(206 + t * (47 - 206)), g = Math.round(70 + t * (160 - 70)), b = Math.round(70 + t * (90 - 70));
+  return `<span class="gbadge" style="background:rgb(${r},${g},${b})">${v.toFixed(0)}</span>`;
+}
+function locLabel(px, pz, stand) {
+  const v = pz > 3.05 ? "up" : pz < 2.25 ? "down" : "mid";
+  const inside = stand === "L" ? px > 0.25 : px < -0.25;
+  const outside = stand === "L" ? px < -0.25 : px > 0.25;
+  const h = inside ? "in" : outside ? "away" : "mid";
+  return v === "mid" && h === "mid" ? "heart" : `${v}${h !== "mid" ? " " + (h === "in" ? "& in" : "& away") : ""}`;
+}
+async function renderGrades() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "per-pitch swing grades — 20–90 scouting scale + percentile vs league by pitch type";
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  chart.innerHTML = "<p class='muted' style='padding:20px'>grading swings…</p>";
+  const p = new URLSearchParams();
+  if (playerData.stand) p.set("stand", playerData.stand);
+  p.set("pitch_type", gradeFilters.pitch_type); p.set("region", gradeFilters.region);
+  const r = await fetch(`/api/swing_grades/${playerData.batter}?${p}`);
+  if (!r.ok) { chart.innerHTML = "<p class='muted' style='padding:20px'>No graded swings (MLB bat-tracking, 2024+).</p>"; return; }
+  const d = await r.json();
+  const ptOpts = ["all", ...d.pitch_types].map(x => `<option value="${x}" ${x === gradeFilters.pitch_type ? "selected" : ""}>${PT_LABEL(x)}</option>`).join("");
+  const regions = [["all", "All locations"], ["inside", "Inside"], ["outside", "Outside"], ["up", "Up"], ["down", "Down"], ["heart", "Heart"]];
+  const regOpts = regions.map(([v, l]) => `<option value="${v}" ${v === gradeFilters.region ? "selected" : ""}>${l}</option>`).join("");
+  const card = (lab, val) => `<div class="card"><div class="label">${lab}</div><div class="value">${val}</div></div>`;
+  const s = d.summary;
+  const cfTxt = s ? (s.contact_fit >= 0 ? "+" : "") + (s.contact_fit * 100).toFixed(1) + "%" : "";
+  const ord = n => n + (["th","st","nd","rd"][(n%100>>3^1&&n%10)<4?n%10:0]||"th");
+  const gradeCard = s ? `<div class="card"><div class="label">Avg swing grade</div>
+      <div class="value">${s.avg_grade.toFixed(1)}</div>
+      ${s.pctile!=null?`<div class="card-sub">${ord(s.pctile)} pctile vs league</div>`:""}</div>` : "";
+  const cards = s ? `<section class="cards">
+      ${card("Swings", s.n)}${gradeCard}
+      ${card("Whiff%", s.whiff_pct.toFixed(0) + "%")}${card("Contact fit", cfTxt)}
+      ${card("Exp xwOBAcon", s.exp_xwobacon.toFixed(3))}${card("Avg pitch", s.avg_velo.toFixed(0) + " mph")}</section>`
+    : "<p class='muted' style='padding:6px 2px'>No swings match this filter.</p>";
+  // ---- swing-grade distribution + percentile by pitch type ----
+  const gcol = v => { const t = Math.max(0, Math.min(1, (v - 30) / 40));
+    return `rgb(${Math.round(206+t*(47-206))},${Math.round(70+t*(160-70))},${Math.round(70+t*(90-70))})`; };
+  const pg = d.pitch_grades || [];
+  const pgBars = pg.map(p => {
+    const w = Math.max(2, (p.grade - 20) / 70 * 100);
+    return `<div class="pgrow"><div class="pglab">${p.label}<span>${p.n}</span></div>
+      <div class="pgtrack"><div class="pgfill" style="width:${w}%;background:${gcol(p.grade)}"></div>
+        <span class="pgref" style="left:${(50-20)/70*100}%"></span>
+        <span class="pgval">${p.grade.toFixed(0)}</span></div>
+      <div class="pgpct">${p.pctile!=null ? ord(p.pctile)+" %ile" : "—"}</div></div>`;
+  }).join("");
+  const dist = d.dist;
+  let histHtml = "";
+  if (dist && dist.counts.length) {
+    const mx = Math.max(...dist.counts, 1);
+    const bars = dist.counts.map((c, i) => {
+      const mid = dist.bins[i] + 2.5;
+      return `<div class="hbar" title="${dist.bins[i]}-${dist.bins[i+1]}: ${c}"><div class="hfill" style="height:${c/mx*100}%;background:${gcol(mid)}"></div></div>`;
+    }).join("");
+    const lo = 20, span = 70;
+    histHtml = `<div class="gdist">
+      <div class="zonetitle">Swing-grade distribution ${gradeFilters.pitch_type!=="all"?"· "+PT_LABEL(gradeFilters.pitch_type):""}
+        <span class="muted">(20–90 scouting; dotted = league avg 50)</span></div>
+      <div class="hbars">${bars}
+        <div class="hmark hmark-lg" style="left:${(50-lo)/span*100}%"></div>
+        <div class="hmark hmark-his" style="left:${(dist.his_mean-lo)/span*100}%"><span>${dist.his_mean.toFixed(0)}</span></div>
+      </div>
+      <div class="haxis"><span>20</span><span>50</span><span>90</span></div></div>`;
+  }
+  // zone heatmap (batter-relative 3x3): cols inside->away, rows up->down
+  const cellAt = (rr, cc) => (d.grid || []).find(g => g.row === rr && g.col === cc) || {n: 0, grade: null};
+  let heat = `<div class="zonewrap"><div class="zonetitle">Swing grade by zone <span class="muted">(batter-relative · left col = inside, top row = up)</span></div><div class="zonegrid">`;
+  for (let rr = 0; rr < 3; rr++) for (let cc = 0; cc < 3; cc++) {
+    const g = cellAt(rr, cc);
+    if (g.grade == null) { heat += `<div class="zcell zempty">—</div>`; continue; }
+    const t = Math.max(0, Math.min(1, (g.grade - 30) / 40));
+    const R = Math.round(206 + t * (47 - 206)), G = Math.round(70 + t * (160 - 70)), B = Math.round(70 + t * (90 - 70));
+    heat += `<div class="zcell" style="background:rgb(${R},${G},${B})" title="${g.n} swings"><b>${g.grade.toFixed(0)}</b><span>${g.n}</span></div>`;
+  }
+  heat += `</div><div class="zonelabels"><span>◂ inside</span><span>away ▸</span></div></div>`;
+  const rows = (d.swings || []).map(w => {
+    const res = (w.event || w.result.replace(/_/g, " "));
+    const ev = w.ev != null ? ` · ${w.ev} mph` : "";
+    return `<tr><td>${gradeBadge(w.grade)}</td><td>${PT_LABEL(w.pitch_type)} ${w.velo}</td>
+      <td>${locLabel(w.px, w.pz, d.stand)}</td><td>${w.count}</td>
+      <td>${w.bat_speed} / ${w.attack_angle}°</td><td>${w.whiff_prob.toFixed(0)}%</td>
+      <td>${res}${ev}</td></tr>`;
+  }).join("");
+  chart.innerHTML = `<div class="grades">
+    <div class="gfilters">
+      <label>Pitch <select id="g-pt">${ptOpts}</select></label>
+      <label>Location <select id="g-reg">${regOpts}</select></label>
+    </div>
+    ${cards}
+    <div class="gsplit">
+      <table class="grade-table"><thead><tr><th>Grade</th><th>Pitch</th><th>Loc</th><th>Count</th>
+        <th>Bat&nbsp;spd / AA</th><th>Whiff&nbsp;risk</th><th>Result</th></tr></thead><tbody>${rows}</tbody></table>
+      ${heat}
+    </div>
+    <div class="gsplit2">
+      ${pg.length ? `<div class="pgwrap"><div class="zonetitle">Swing grade by pitch type <span class="muted">(20–90 · percentile vs all hitters on that pitch)</span></div>${pgBars}</div>` : ""}
+      ${histHtml}
+    </div>
+    <p class="viz-cap">Each swing graded vs the league baseline for that exact pitch on the <b>20–90 scouting scale</b>
+      (50 = average swing for that pitch, every 10 = 1 SD; <b>percentile</b> ranks his average vs all hitters on that pitch).
+      <b>Contact fit</b> = how much his path lowers whiff probability vs an average swing (bat-speed-neutral).
+      Whiff risk = model P(miss) from path + pitch (AUC 0.86). Reads execution/fit, not timing. MLB bat-tracking, 2024+.</p>
+  </div>`;
+  document.getElementById("g-pt").onchange = e => { gradeFilters.pitch_type = e.target.value; renderGrades(); };
+  document.getElementById("g-reg").onchange = e => { gradeFilters.region = e.target.value; renderGrades(); };
+}
+
+// ---- Swing-decision (selection) axis ----
+function svgScatter(rows, A) {
+  const pts = rows.filter(r => r.swing_plus != null && r.decision_plus_mlb != null);
+  if (!pts.length) return "<p class='muted'>No decision data available.</p>";
+  const W = 860, H = 470, padL = 54, padR = 18, padT = 18, padB = 48;
+  const xs = pts.map(r => r.swing_plus), ys = pts.map(r => r.decision_plus_mlb);
+  let x0 = Math.min(...xs, 92), x1 = Math.max(...xs, 108);
+  let y0 = Math.min(...ys, 92), y1 = Math.max(...ys, 108);
+  const mx = (x1 - x0) * 0.06, my = (y1 - y0) * 0.06; x0 -= mx; x1 += mx; y0 -= my; y1 += my;
+  const sx = v => padL + (v - x0) / (x1 - x0) * (W - padL - padR);
+  const sy = v => padT + (1 - (v - y0) / (y1 - y0)) * (H - padT - padB);
+  let g = "";
+  for (let v = 80; v <= 150; v += 10) {
+    if (v > x0 && v < x1) g += `<line x1="${sx(v).toFixed(1)}" y1="${padT}" x2="${sx(v).toFixed(1)}" y2="${H - padB}" class="grid"/><text x="${sx(v).toFixed(1)}" y="${H - padB + 18}" class="axt" text-anchor="middle">${v}</text>`;
+    if (v > y0 && v < y1) g += `<line x1="${padL}" y1="${sy(v).toFixed(1)}" x2="${W - padR}" y2="${sy(v).toFixed(1)}" class="grid"/><text x="${padL - 8}" y="${(sy(v) + 4).toFixed(1)}" class="axt" text-anchor="end">${v}</text>`;
+  }
+  // 100/100 crosshair (league average on both axes)
+  g += `<line x1="${sx(100).toFixed(1)}" y1="${padT}" x2="${sx(100).toFixed(1)}" y2="${H - padB}" stroke="#aab2c0" stroke-dasharray="4 4"/>`;
+  g += `<line x1="${padL}" y1="${sy(100).toFixed(1)}" x2="${W - padR}" y2="${sy(100).toFixed(1)}" stroke="#aab2c0" stroke-dasharray="4 4"/>`;
+  const ql = [[sx(x1) - 6, sy(y1) + 14, "end", "elite swing + selective"],
+              [sx(x0) + 6, sy(y1) + 14, "start", "selective, modest swing"],
+              [sx(x1) - 6, sy(y0) - 8, "end", "big swing, free swinger"],
+              [sx(x0) + 6, sy(y0) - 8, "start", "modest swing, free swinger"]];
+  g += ql.map(([x, y, a, t]) => `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${a}" style="font:600 11px system-ui;fill:#9aa3b2">${t}</text>`).join("");
+  let dots = "";
+  for (const r of pts) {
+    const hit = A && r.batter === A.batter && (r.stand || "") === (A.stand || "");
+    if (hit) continue;
+    dots += `<circle cx="${sx(r.swing_plus).toFixed(1)}" cy="${sy(r.decision_plus_mlb).toFixed(1)}" r="3.4" fill="#4f9eff" fill-opacity="0.5"/>`;
+  }
+  let me = "";
+  if (A && A.decision_plus_mlb != null && A.swing_plus != null) {
+    const cx = sx(A.swing_plus), cy = sy(A.decision_plus_mlb);
+    me = `<circle cx="${cx.toFixed(1)}" cy="${cy.toFixed(1)}" r="7" fill="#ff5c5c" stroke="#fff" stroke-width="2"/>
+      <text x="${cx.toFixed(1)}" y="${(cy - 12).toFixed(1)}" text-anchor="middle" style="font:700 13px system-ui;fill:#fff">${A.name}</text>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="${W}" height="${H}" rx="6" fill="#0f1830"/>
+    ${g}${dots}${me}
+    <text x="${(W / 2).toFixed(0)}" y="${H - 6}" text-anchor="middle" class="axt">Swing+ (bat-path execution) →</text>
+    <text x="14" y="${(H / 2).toFixed(0)}" text-anchor="middle" class="axt" transform="rotate(-90 14 ${(H / 2).toFixed(0)})">Decision+ (selection) →</text>
+  </svg>`;
+}
+async function renderDecision() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "swing-decision profile (selection) — the orthogonal axis to Swing+ (path) · MLB 2026";
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  chart.innerHTML = "<p class='muted' style='padding:20px'>loading…</p>";
+  const rows = await ensureAllRows();
+  const A = rows.find(r => String(r.batter) === String(playerData.batter) && (!playerData.stand || r.stand === playerData.stand))
+         || rows.find(r => String(r.batter) === String(playerData.batter));
+  const has = A && A.decision_plus_mlb != null;
+  const card = (lab, v, d = 1) => `<div class="card"><div class="label">${lab}</div><div class="value">${v == null ? "—" : Number(v).toFixed(d)}</div></div>`;
+  const rv = (lab, v) => `<div class="card"><div class="label">${lab}</div><div class="value">${v == null ? "—" : (v >= 0 ? "+" : "") + Number(v).toFixed(2)}</div></div>`;
+  const cards = has ? `<section class="cards">
+      ${card("Decision+ (MLB)", A.decision_plus_mlb)}
+      ${card("SwingDecision+", A.swingdecision_plus)}
+      ${rv("Chase avoid (rv/100)", A.dec100_chase)}
+      ${rv("In-zone attack", A.dec100_zone)}
+      ${rv("2-strike mgmt", A.dec100_2k)}
+      ${card("Proj K%", A.projected_k_pct)}
+    </section>` : `<p class="muted" style="padding:6px 2px 12px">No swing-decision profile for this hitter (needs MLB bat-tracking-era pitches). The league map is shown below.</p>`;
+  chart.innerHTML = `<div class="decision">
+    ${cards}
+    <div class="panel"><h3>Execution vs Selection — where this hitter sits</h3>
+      ${svgScatter(rows, A)}</div>
+    <p class="viz-cap">Decision+ (MLB) is our swing-tailored swing/take run-value model (802-hitter coverage),
+      the selection axis Swing+ can't see — validated orthogonal. Chase-avoidance / in-zone attack / 2-strike are its
+      run-value drivers (runs per 100 pitches vs league). Archetypes: pure-contact selective (top-left) vs big-bat free-swingers (bottom-right).</p>
+  </div>`;
+}
+
+// ---- Head-to-head compare ----
+let cmpKey = "";   // selected comparison player as "batter_stand"
+async function ensureAllRows() {
+  if (!window.__allRows) window.__allRows = await (await fetch("/api/leaderboard/alltime")).json();
+  return window.__allRows;
+}
+function rowSwingProf(r) {     // career swing profile (from alltime means) for the 3D viz
+  return { attack_angle: r.attack_angle_mean,
+    depth: r.intercept_ball_minus_batter_pos_y_inches_mean,
+    tilt: r.swing_path_tilt_mean, attack_dir: r.attack_direction_mean,
+    contact_side: r.intercept_ball_minus_batter_pos_x_inches_mean, stand: r.stand };
+}
+function careerDrv(series) {   // mean Shapley driver contributions over a whole career
+  const sp = [], dd = {};
+  for (const s of Object.keys(series || {})) for (const p of series[s]) {
+    if (!p.drv) continue; sp.push(p.sp);
+    for (const [k] of DRV) (dd[k] = dd[k] || []).push(p.drv[k] || 0);
+  }
+  if (!sp.length) return null;
+  const mean = a => a.reduce((x, y) => x + y, 0) / a.length;
+  return { sp: mean(sp), drv: Object.fromEntries(DRV.map(([k]) => [k, dd[k] ? mean(dd[k]) : 0])) };
+}
+async function renderCompare() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "head-to-head — compare this hitter's swing to another (career)";
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  chart.innerHTML = "<p class='muted' style='padding:20px'>loading…</p>";
+  const rows = await ensureAllRows();
+  const A = rows.find(r => String(r.batter) === String(playerData.batter) && (!playerData.stand || r.stand === playerData.stand))
+         || rows.find(r => String(r.batter) === String(playerData.batter));
+  if (!A) { chart.innerHTML = "<p class='muted' style='padding:20px'>Player not on the career board.</p>"; return; }
+  const switchById = {}; rows.forEach(r => { switchById[r.batter] = (switchById[r.batter] || 0) + 1; });
+  const others = rows.filter(r => !(String(r.batter) === String(A.batter) && r.stand === A.stand))
+                     .sort((a, b) => (a.name || "").localeCompare(b.name || ""));
+  const opts = `<option value="">— pick a hitter —</option>` + others.map(r => {
+    const k = `${r.batter}_${r.stand || ""}`;
+    const nm = (r.name || "") + (switchById[r.batter] > 1 && r.stand ? ` (${r.stand})` : "");
+    return `<option value="${k}" ${k === cmpKey ? "selected" : ""}>${nm}</option>`;
+  }).join("");
+  let body = "<p class='muted' style='padding:24px 6px'>Pick a hitter above to compare.</p>";
+  let B = null, bdata = null;
+  if (cmpKey) {
+    const [bid, bst] = cmpKey.split("_");
+    B = rows.find(r => String(r.batter) === bid && (r.stand || "") === bst);
+    if (B) {
+      bdata = await (await fetch(`/api/player/${bid}${bst ? `?stand=${bst}` : ""}`)).json();
+      const dA = careerDrv(playerData.series), dB = careerDrv(bdata.series);
+      const STATS = [["swing_plus", "Swing+", 1], ["blended_xwoba", "xwOBA", 3], ["obs_avg_ev", "EV", 1],
+        ["obs_barrel_pct", "Barrel%", 1], ["pred_iso", "ISO (pred)", 3], ["pred_hr_pct", "HR% (pred)", 1],
+        ["pred_k_pct", "K% (pred)", 1], ["bat_speed_mean", "Bat speed", 1], ["attack_angle_mean", "Attack angle", 1]];
+      const fs = (v, d) => v == null ? "–" : (d === 3 ? v.toFixed(3) : v.toFixed(1));
+      const trs = STATS.map(([k, lab, d]) => {
+        const a = A[k], b = B[k], diff = (a != null && b != null) ? a - b : null;
+        const dd = diff == null ? "" : (diff >= 0 ? "+" : "") + (d === 3 ? diff.toFixed(3) : diff.toFixed(1));
+        return `<tr><td>${lab}</td><td>${fs(a, d)}</td><td>${fs(b, d)}</td>
+          <td class="${diff > 0 ? "up" : diff < 0 ? "dn" : ""}">${dd}</td></tr>`;
+      }).join("");
+      const bars = (dA && dB) ? svgBars([{ label: A.name, sp: dA.sp, drv: dA.drv },
+                                         { label: B.name, sp: dB.sp, drv: dB.drv }]) : "";
+      body = `<div id="cmp-sw3d" style="height:300px;margin:4px 0 12px"></div>
+        <table class="cmp-table"><thead><tr><th></th><th>${A.name}</th><th>${B.name}</th><th>Δ</th></tr></thead>
+          <tbody>${trs}</tbody></table>
+        <div>${bars}</div>
+        <p class="viz-cap">Swing overlay (blue = ${A.name}, green = ${B.name}) · career stat diff (A − B) ·
+          driver bars = what builds each hitter's Swing+.</p>`;
+    }
+  }
+  chart.innerHTML = `<div class="cmp">
+    <div class="cmp-pick"><b>${A.name}${A.stand ? ` (${A.stand})` : ""}</b> vs
+      <select id="cmp-sel">${opts}</select></div>
+    <div>${body}</div></div>`;
+  document.getElementById("cmp-sel").addEventListener("change", e => { cmpKey = e.target.value; renderCompare(); });
+  if (B) { const mount = document.getElementById("cmp-sw3d");
+    if (mount && window.renderSwing3D) window.renderSwing3D(mount, rowSwingProf(A), rowSwingProf(B), { height: 300 }); }
+}
+
+let ptExpanded = {};   // which groups are expanded
+async function renderPitchType() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "Swing+ by pitch — fastball / breaking / offspeed, click a group to drill into pitch types (career)";
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  chart.innerHTML = "<p class='muted' style='padding:20px'>loading pitch-type splits…</p>";
+  const st = playerData.stand ? `?stand=${playerData.stand}` : "";
+  const r = await fetch(`/api/pitchtype/${playerData.batter}${st}`);
+  if (!r.ok) { chart.innerHTML = "<p class='muted' style='padding:20px'>No pitch-type splits (needs 30+ swings).</p>"; return; }
+  const d = await r.json();
+  const lo = 70, hi = 130, pct = v => Math.max(3, Math.min(100, (v - lo) / (hi - lo) * 100));
+  const refPct = pct(100);
+  const barRow = (g, isChild) => {
+    const cls = g.swing_plus >= 100 ? "pos" : "neg";
+    const open = ptExpanded[g.key];
+    const caret = (!isChild && g.children && g.children.length)
+      ? `<span class="pt-caret ${open ? "open" : ""}">▸</span>` : (isChild ? `<span class="pt-caret ghost"></span>` : "");
+    return `<div class="pt-item ${isChild ? "child" : "group"} ${(!isChild && g.children && g.children.length) ? "clickable" : ""}" data-key="${g.key}">
+      <div class="pt-name">${caret}<span class="pt-nm">${g.label}</span>
+        <span class="pt-n">${g.n_swings.toLocaleString()} sw</span></div>
+      <div class="pt-track">
+        <div class="pt-ref" style="left:${refPct}%"></div>
+        <div class="pt-fill ${cls}" style="width:${pct(g.swing_plus)}%"></div>
+        <span class="pt-val ${cls}" style="left:${pct(g.swing_plus)}%">${g.swing_plus.toFixed(1)}</span>
+      </div>
+      <div class="pt-sub">bat ${g.bat_speed ?? "–"} mph · aa ${g.attack_angle ?? "–"}°</div>
+    </div>`;
+  };
+  const rows = d.groups.map(g => {
+    let html = barRow(g, false);
+    if (ptExpanded[g.key] && g.children && g.children.length)
+      html += `<div class="pt-kids">${g.children.map(c => barRow(c, true)).join("")}</div>`;
+    return html;
+  }).join("");
+  chart.innerHTML = `<div class="pitchtype">
+    <div class="pt-scalehead"><span>70</span><span>league avg 100</span><span>130</span></div>
+    ${rows}
+    <p class="viz-cap">Swing+ on each pitch's competitive swings (dotted line = league avg 100; green ≥100, amber below).
+      <b>Click a group</b> to expand its individual pitch types. Validated as a stable trait — fastball Swing+
+      half-to-half r=0.87, breaking r=0.74, fastball−breaking gap r=0.72. Small-sample splits are reliability-shrunk
+      toward 100. Career; 30+ swings shown.</p></div>`;
+  chart.querySelectorAll(".pt-item.clickable").forEach(el =>
+    el.addEventListener("click", () => { const k = el.dataset.key; ptExpanded[k] = !ptExpanded[k]; renderPitchType(); }));
+}
+
+async function renderAging() {
+  const chart = document.getElementById("modal-chart");
+  document.getElementById("modal-meta").textContent =
+    "career Swing+ + aging projection — 50th pct, 90th pct (+bat speed), and league average";
+  chart.innerHTML = "<p class='muted' style='padding:20px'>projecting…</p>";
+  const st = playerData.stand ? `?stand=${playerData.stand}` : "";
+  const r = await fetch(`/api/aging/${playerData.batter}${st}`);
+  if (!r.ok) { chart.innerHTML = "<p class='muted' style='padding:20px'>No aging projection (missing birthdate or season row).</p>"; return; }
+  const d = await r.json();
+  chart.innerHTML = `<div class="aging">
+    <div id="aging-svg"></div>
+    <p class="viz-cap">
+      <b style="color:#cbd2dd">━ career</b> = actual Swing+ each season (by age).
+      <b style="color:#1f6fd6">━ 50th pct</b> = median projection: all 9 components aged by their
+      <b>Bayesian drift</b> (survivorship-corrected), re-scored.
+      <b style="color:#e0a64a">━ 90th pct (+bat speed)</b> = a top-decile breakout — adds
+      <b>+${d.bs_jump} mph</b> bat speed (the 90th-pct real one-year gain; Vargas's +3.2 was ~99th pct),
+      worth <b>+${d.bs_gain} Swing+</b> at the empirical Δ-per-mph from real gainers, sustained then aged.
+      <b style="color:#7a8699">┄ league avg</b> = population mean by age (survivor-biased late). Preliminary (2023–26).</p></div>`;
+  document.getElementById("aging-svg").innerHTML = agingSvg(d);
+}
+
+function agingSvg(d) {
+  const W = 760, H = 340, padL = 46, padR = 16, padT = 18, padB = 36;
+  const hist = d.history || [], lg = d.league || [];
+  const xsP = d.ages;                                  // projection ages
+  const allAges = hist.map(h => h.age).concat(xsP, lg.map(l => l.age));
+  const xmin = Math.min(...allAges), xmax = Math.max(...allAges);
+  const allV = d.normal.concat(d.p90 || [], hist.map(h => h.swing_plus), lg.map(l => l.swing_plus));
+  let lo = Math.min(...allV), hi = Math.max(...allV);
+  const pad = Math.max((hi - lo) * 0.12, 2); lo -= pad; hi += pad;
+  const sx = a => padL + (a - xmin) / (xmax - xmin || 1) * (W - padL - padR);
+  const sy = v => (H - padB) - (v - lo) / (hi - lo) * (H - padB - padT);
+  const pathOf = (pts) => pts.map((p, i) => `${i ? "L" : "M"}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join("");
+  const dots = (pts, col) => pts.map(p => `<circle cx="${sx(p[0]).toFixed(1)}" cy="${sy(p[1]).toFixed(1)}" r="3" fill="${col}"/>`).join("");
+  // grid + axes
+  let grid = "";
+  const step = (hi - lo) > 20 ? 10 : (hi - lo) > 8 ? 5 : 2;
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step)
+    grid += `<line x1="${padL}" y1="${sy(v).toFixed(1)}" x2="${W - padR}" y2="${sy(v).toFixed(1)}" stroke="#eee"/>`
+          + `<text x="${padL - 8}" y="${(sy(v) + 4).toFixed(1)}" class="axt" text-anchor="end">${v}</text>`;
+  let xticks = "";
+  for (let a = Math.ceil(xmin); a <= Math.floor(xmax); a++)
+    xticks += `<text x="${sx(a).toFixed(1)}" y="${H - padB + 18}" class="axt" text-anchor="middle">${a}</text>`;
+  // 100 reference line
+  const ref100 = (100 >= lo && 100 <= hi) ? `<line x1="${padL}" y1="${sy(100).toFixed(1)}" x2="${W - padR}" y2="${sy(100).toFixed(1)}" stroke="#ccc" stroke-dasharray="2 3"/>` : "";
+  // series as [age, value] pairs
+  const histPts = hist.map(h => [h.age, h.swing_plus]);
+  const projPts = xsP.map((a, i) => [a, d.normal[i]]);
+  const p90Pts = (d.p90 || []).map((v, i) => [xsP[i], v]);
+  const lgPts = lg.map(l => [l.age, l.swing_plus]);
+  // vertical "now" marker at current age
+  const nowX = sx(d.current_age);
+  const nowMark = `<line x1="${nowX.toFixed(1)}" y1="${padT}" x2="${nowX.toFixed(1)}" y2="${H - padB}" stroke="#ddd" stroke-dasharray="4 4"/>`
+    + `<text x="${nowX.toFixed(1)}" y="${padT + 10}" class="axt" text-anchor="middle" fill="#999">now</text>`;
+  return `<svg viewBox="0 0 ${W} ${H}" class="chart" preserveAspectRatio="xMidYMid meet">
+    <rect width="${W}" height="${H}" rx="6" fill="#fff"/>${grid}${ref100}${nowMark}
+    ${lgPts.length ? `<path d="${pathOf(lgPts)}" fill="none" stroke="#7a8699" stroke-width="1.8" stroke-dasharray="5 4"/>` : ""}
+    <path d="${pathOf(p90Pts)}" fill="none" stroke="#e0a64a" stroke-width="2.6"/>${dots(p90Pts, "#e0a64a")}
+    <path d="${pathOf(projPts)}" fill="none" stroke="#1f6fd6" stroke-width="2.6"/>${dots(projPts, "#1f6fd6")}
+    <path d="${pathOf(histPts)}" fill="none" stroke="#3a4150" stroke-width="2.8"/>${dots(histPts, "#3a4150")}
+    ${xticks}
+    <text x="${(padL + W - padR) / 2}" y="${H - 4}" class="axt" text-anchor="middle">age →</text>
+    <text x="14" y="${(padT + H - padB) / 2}" class="axtitle" text-anchor="middle" transform="rotate(-90 14 ${(padT + H - padB) / 2})">Swing+ (raw)</text>
+  </svg>`;
+}
+
+function renderAdjust(season) {
+  season = resolveProfileSeason(season);
+  const prof = season ? (playerData.profiles && playerData.profiles[season]) : null;
+  const meta = document.getElementById("modal-meta");
+  const chart = document.getElementById("modal-chart");
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  if (!prof) { chart.innerHTML = "<p class='muted'>No swing profile for this player.</p>"; meta.textContent = ""; return; }
+  document.getElementById("modal-season").value = season;   // reflect the season actually shown
+  meta.textContent = `adjust the swing → projected outputs (${season} baseline · capped to realistic range)`;
+  const sliders = ADJ_SLIDERS.map(([k, label, unit, st, span, amin, amax, ends]) => {
+    const lo = Math.max(amin, prof[k] - span), hi = Math.min(amax, prof[k] + span);
+    return `<div class="sl-row">
+       <div class="sl-top"><span class="sl-name">${label}</span>
+         <span class="sl-read"><b class="sl-val" id="v-${k}">${prof[k].toFixed(1)}</b>${unit}
+           <span class="sl-dir" id="vd-${k}"></span></span></div>
+       <input type="range" id="s-${k}" min="${lo}" max="${hi}" step="${st}" value="${prof[k]}">
+       <div class="sl-scale"><span>${lo.toFixed(0)}${unit} · ${ends[0]}</span>
+         <span class="sl-chg" id="vc-${k}"></span>
+         <span>${ends[1]} · ${hi.toFixed(0)}${unit}</span></div></div>`;
+  }).join("");
+  adjBaseline = null;   // recompute baseline for this player/season
+  const rows = ADJ_STATS.map(([k, label]) =>
+    `<tr><td>${label}</td><td class="orig" id="o-${k}">–</td><td id="n-${k}">–</td>
+       <td class="adjdelta" id="d-${k}">–</td><td class="adjpct" id="p-${k}">–</td>
+       <td class="adjcol" id="a-${k}">–</td></tr>`).join("");
+  chart.innerHTML = `<div class="adjust">
+    <div class="sliders">
+      <p class="adj-hd">Adjust this player's swing (${season})</p>${sliders}
+      <button id="adj-reset" class="mbtn">Reset to actual</button></div>
+    <div class="adj-out">
+      <p class="adj-hd">Projected ${season} batted-ball quality</p>
+      <table class="adj-table"><thead><tr><th>Stat</th>
+        <th>Actual</th><th>New</th><th>Δ</th><th>%ile</th>
+        <th class="adjcol">+&nbsp;skill*</th></tr></thead><tbody>${rows}</tbody></table>
+      <p id="adj-note"></p>
+    </div></div>`;
+  const DIRFN = {}; ADJ_SLIDERS.forEach(([k,,,,,,,,fn]) => DIRFN[k] = fn);
+  const setSliderRead = k => {
+    const v = +document.getElementById(`s-${k}`).value;
+    document.getElementById(`v-${k}`).textContent = v.toFixed(1);
+    const dir = document.getElementById(`vd-${k}`);
+    if (dir && DIRFN[k]) dir.textContent = DIRFN[k](v);
+    const ch = document.getElementById(`vc-${k}`);
+    if (ch) {
+      const d = v - prof[k];
+      if (Math.abs(d) < 0.05) { ch.textContent = "= actual"; ch.className = "sl-chg"; }
+      else { ch.textContent = `${d > 0 ? "+" : ""}${d.toFixed(1)} vs actual`;
+             ch.className = "sl-chg " + (d > 0 ? "up" : "dn"); }
+    }
+  };
+  ADJ_SLIDERS.forEach(([k]) => {
+    if (adjState[k] != null) document.getElementById(`s-${k}`).value = adjState[k];  // restore
+    setSliderRead(k);
+    adjState[k] = +document.getElementById(`s-${k}`).value;
+    document.getElementById(`s-${k}`).addEventListener("input", () => {
+      adjState[k] = +document.getElementById(`s-${k}`).value;
+      setSliderRead(k);
+      clearTimeout(whatifTimer); whatifTimer = setTimeout(() => updateWhatif(season), 120);
+    });
+  });
+  document.getElementById("adj-reset").addEventListener("click", () => {
+    ADJ_SLIDERS.forEach(([k]) => {
+      document.getElementById(`s-${k}`).value = prof[k];
+      adjState[k] = prof[k];
+      setSliderRead(k);
+    });
+    updateWhatif(season);
+  });
+  updateWhatif(season);
+}
+
+async function updateWhatif(season) {
+  const seq = ++whatifSeq;                 // latest-request-wins guard
+  const g = k => document.getElementById(`s-${k}`).value;
+  const p = new URLSearchParams({ batter: playerData.batter, season,
+    ...(playerData.stand ? { stand: playerData.stand } : {}),
+    bat_speed: g("bat_speed"), attack_angle: g("attack_angle"),
+    attack_direction: g("attack_direction"), swing_tilt: g("swing_tilt"),
+    contact_depth: g("contact_depth") });
+  const r = await fetch(`/api/whatif?${p}`);
+  if (!r.ok || seq !== whatifSeq) return;  // superseded by a newer change
+  const d = await r.json();
+  if (seq !== whatifSeq) return;
+  if (adjBaseline === null) adjBaseline = Object.assign({}, d.model);   // actual-swing baseline
+  const is3 = k => (k === "xwobacon" || k === "xwoba");
+  const fmt = (k, v) => v == null ? "–" : (is3(k) ? v.toFixed(3) : v.toFixed(1));
+  ADJ_STATS.forEach(([k]) => {
+    document.getElementById(`o-${k}`).textContent = fmt(k, adjBaseline[k]);
+    document.getElementById(`n-${k}`).textContent = fmt(k, d.model[k]);
+    const dl = d.model[k] - adjBaseline[k];
+    const eps = is3(k) ? 0.0005 : 0.05;
+    const cell = document.getElementById(`d-${k}`);
+    cell.textContent = Math.abs(dl) < eps ? "—" : (dl >= 0 ? "+" : "") + dl.toFixed(is3(k) ? 3 : 1);
+    cell.className = "adjdelta " + (dl > eps ? "up" : dl < -eps ? "dn" : "");
+    const pc = pctOf(k, d.model[k]);
+    const pcell = document.getElementById(`p-${k}`);
+    if (pcell) { pcell.textContent = pc == null ? "–" : pc; pcell.style.background = pctColor(pc); }
+    document.getElementById(`a-${k}`).textContent = fmt(k, d.adjusted[k]);
+  });
+  const ri = d.residual || {};
+  document.getElementById("adj-note").innerHTML = ri.reliability != null
+    ? `<b>+ player skill</b> = model projection plus ${playerData.name}'s persistent `
+      + `over/under-performance vs his swing profile (xwOBAcon ${ri.xwobacon >= 0 ? "+" : ""}${ri.xwobacon}, `
+      + `EV ${ri.avg_ev >= 0 ? "+" : ""}${ri.avg_ev} mph), reliability-weighted ${ri.reliability}. `
+      + `<b>xwOBA</b> holds approach (whiff/chase) fixed — it shows how this swing change moves contact quality, `
+      + `not a full forecast. Swing+ has no skill residual.`
+    : "";
+}
+
+function closePlayer() {
+  if (swingRAF) { cancelAnimationFrame(swingRAF); swingRAF = null; }
+  if (window.disposeSwing3D) window.disposeSwing3D();
+  document.getElementById("player-modal").classList.add("hidden");
+  const u = new URL(location);
+  u.searchParams.delete("player"); u.searchParams.delete("season");
+  history.replaceState(null, "", u);
+}
+
+function bindControls() {
+  document.querySelector("#board tbody").addEventListener("click", e => {
+    const tr = e.target.closest("tr.prow");
+    if (tr) openPlayer(tr.dataset.batter, tr.dataset.name, null, tr.dataset.stand || null);
+  });
+  document.getElementById("modal-close").addEventListener("click", closePlayer);
+  document.getElementById("player-modal").addEventListener("click", e => {
+    if (e.target.id === "player-modal") closePlayer();
+  });
+  document.querySelectorAll(".mbtn").forEach(b => b.addEventListener("click", () => {
+    document.querySelectorAll(".mbtn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active");
+    currentMetric = b.dataset.metric;
+    renderChart();
+  }));
+  document.getElementById("modal-season").addEventListener("change", () => {
+    renderChart();
+    const u = new URL(location); u.searchParams.set("season",
+      document.getElementById("modal-season").value); history.replaceState(null, "", u);
+  });
+  document.addEventListener("keydown", e => { if (e.key === "Escape") closePlayer(); });
+
+  document.querySelectorAll(".tab").forEach(b => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+      state.view = b.dataset.view;
+      document.body.dataset.view = state.view;
+      load();
+    });
+  });
+  document.getElementById("search").addEventListener("input", e => {
+    state.search = e.target.value;
+    render();
+  });
+  document.getElementById("sample-select").addEventListener("change", e => {
+    state.sample = e.target.value;
+    render();   // client-side filter, no refetch needed
+  });
+  document.getElementById("season-select").addEventListener("change", load);
+  document.getElementById("half-select").addEventListener("change", load);
+  const cov = document.getElementById("cards-overlay");
+  document.getElementById("model-cards-btn").addEventListener("click", () => cov.classList.remove("hidden"));
+  document.getElementById("cards-close").addEventListener("click", () => cov.classList.add("hidden"));
+  cov.addEventListener("click", e => { if (e.target === cov) cov.classList.add("hidden"); });
+}
+
+document.body.dataset.view = "alltime";
+bindControls();
+load();
+fetch("/api/percentiles").then(r => r.ok ? r.json() : {}).then(d => {
+  PCTL = d; if (state.rows.length) render();
+});
+// Deep-link: /?player=ID&season=YYYY opens a player's Swing+ graph directly.
+(() => {
+  const p = new URLSearchParams(location.search);
+  if (p.get("player")) openPlayer(p.get("player"), "", p.get("season"));
+})();
+</script>
+</body>
+</html>

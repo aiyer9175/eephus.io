@@ -77,6 +77,28 @@ def test_build_remapper_identity_and_fallback():
     assert got == pytest.approx(want, abs=1e-6)
 
 
+def test_synthetic_source_passes_through_raw():
+    # performance_ingest is an internal auto-track floor (every snapshot FV 35), not
+    # an outlet with a grading scale. Its 2026 pitcher cell used to quantile-map
+    # 35 -> 45 off a 6-pair selection-biased overlap, inflating 2,500+ unlisted arms
+    # (Melvin Pineda reached board #78 on a 17.65 ERA). Synthetic sources must never
+    # be normalized: raw passthrough from both the remapper and quantile_map.
+    remap = gn.build_remapper()
+    for v in (35.0, 40.0, 45.0):
+        assert remap(v, "performance_ingest", "P", _CYCLE) == v
+        assert remap(v, "performance_ingest", "SS", _CYCLE) == v
+    assert gn.quantile_map(35.0, "performance_ingest", "pitcher", _CYCLE) == 35.0
+
+
+def test_degenerate_paired_dist_not_mappable():
+    # A constant side has no quantiles to match; mapping through it fabricates
+    # grades. Either-side degeneracy disqualifies the cell (raw fallback).
+    import numpy as np
+    assert gn._mappable(np.array([35.0] * 6), np.array([35.0, 40.0, 45.0])) is False
+    assert gn._mappable(np.array([40.0, 45.0, 50.0]), np.array([45.0] * 3)) is False
+    assert gn._mappable(np.array([40.0, 45.0, 50.0]), np.array([40.0, 45.0, 55.0])) is True
+
+
 def test_consensus_point_applies_grade_norm():
     # The plumbing must remap each source FV before it enters the mean. A mock
     # remapper that pins every grade to 40 must land the consensus at ~40.

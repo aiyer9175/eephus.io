@@ -1,0 +1,515 @@
+{
+ "experiment": "T1-10 pHEM+ Marcel-lite (wave 3)",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "wOBA(Y+1) raw pooled (hit) / -RA9(Y+1) raw pooled (pit)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "wOBA(Y+1) (hit) / -RA9(Y+1) (pit) (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "protocol": {
+  "candidate": "pHEM+ Marcel-lite: decayed pooled wOBA-component counts (y-2..y), ONE EB shrink (hem_plus constants) vs the year-y pool, re-indexed vs the year-y pool anchor, + age hinge at 30",
+  "hyperparams_fit": "predictor years <= 2018 ONLY, frozen",
+  "gate_set": "predictor years >= 2019 (outcome seasons 2020, 2022-2025; complete only)",
+  "gate_rule": "winner candidate (best gate rho among marcel_textbook / fa_projection / phem_marcel_lite) vs BEST incumbent (1yr HEM+ or flat-3yr HEM+): iid paired bootstrap lo95 >= 0 (v1)",
+  "decay_grid": {
+   "5/4/3": [
+    1.0,
+    0.8,
+    0.6
+   ],
+   "6/3/1": [
+    1.0,
+    0.5,
+    0.16666666666666666
+   ],
+   "flat": [
+    1.0,
+    1.0,
+    1.0
+   ]
+  }
+ },
+ "hitters": {
+  "side": "hit",
+  "n_pairs_total": 2382,
+  "n_train": 1464,
+  "n_gate": 918,
+  "drops": {
+   "partial_outcome": 0,
+   "window": 990,
+   "age_missing": 0,
+   "fa_proj_missing": 0
+  },
+  "seasons": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "gate_pred_years": [
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "gate_outcome_years": [
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "frozen_hyperparams": {
+   "decay": "5/4/3",
+   "weights": [
+    1.0,
+    0.8,
+    0.6
+   ],
+   "beta_hinge": -2.5666,
+   "hinge": "max(0, age_{y+1} - 30)",
+   "train_pred_years": "<= 2018",
+   "train_n": 1464,
+   "train_rho": 0.4653,
+   "grid_report": {
+    "5/4/3": {
+     "beta_hinge": -2.5666,
+     "ols_coef_a_b_c": [
+      0.216409,
+      0.001122,
+      -0.002881
+     ],
+     "train_rho_age_adj": 0.4653,
+     "train_rho_no_age": 0.4412
+    },
+    "6/3/1": {
+     "beta_hinge": -2.3085,
+     "ols_coef_a_b_c": [
+      0.214471,
+      0.001141,
+      -0.002633
+     ],
+     "train_rho_age_adj": 0.4643,
+     "train_rho_no_age": 0.4436
+    },
+    "flat": {
+     "beta_hinge": -2.7396,
+     "ols_coef_a_b_c": [
+      0.220129,
+      0.001087,
+      -0.002977
+     ],
+     "train_rho_age_adj": 0.4591,
+     "train_rho_no_age": 0.4339
+    }
+   }
+  },
+  "gate_rhos_v1": {
+   "incumbent_1yr": 0.474,
+   "incumbent_3yr_flat": 0.4939,
+   "marcel_textbook": 0.4944,
+   "fa_projection": 0.5189,
+   "phem_marcel_lite": 0.517
+  },
+  "best_incumbent": "incumbent_3yr_flat",
+  "winner_candidate": "fa_projection",
+  "results": {
+   "v1": {
+    "rhos": {
+     "incumbent_1yr": 0.474,
+     "incumbent_3yr_flat": 0.4939,
+     "marcel_textbook": 0.4944,
+     "fa_projection": 0.5189,
+     "phem_marcel_lite": 0.517
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0457,
+      "lo95": 0.0127,
+      "hi95": 0.0797
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.0254,
+      "lo95": 0.001,
+      "hi95": 0.0511
+     },
+     "marcel_textbook": {
+      "mean": 0.025,
+      "lo95": 0.004,
+      "hi95": 0.0461
+     },
+     "phem_marcel_lite": {
+      "mean": 0.0021,
+      "lo95": -0.0219,
+      "hi95": 0.0272
+     }
+    }
+   },
+   "v2": {
+    "rhos": {
+     "incumbent_1yr": 0.4755,
+     "incumbent_3yr_flat": 0.4944,
+     "marcel_textbook": 0.5066,
+     "fa_projection": 0.5304,
+     "phem_marcel_lite": 0.5116
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0546,
+      "lo95": 0.0201,
+      "hi95": 0.084
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.0362,
+      "lo95": 0.0122,
+      "hi95": 0.062
+     },
+     "marcel_textbook": {
+      "mean": 0.024,
+      "lo95": 0.0034,
+      "hi95": 0.0444
+     },
+     "phem_marcel_lite": {
+      "mean": 0.0189,
+      "lo95": -0.007,
+      "hi95": 0.0441
+     }
+    },
+    "cluster": {
+     "n_pairs": 918,
+     "n_players": 379,
+     "max_pairs_per_player": 4,
+     "mean_pairs_per_player": 2.42,
+     "n_strata_first_pred_season": 4
+    }
+   }
+  },
+  "gate": {
+   "bar": "winner candidate paired-bootstrap lo95(winner - best incumbent) >= 0; v1 convention (raw Y+1 target, iid bootstrap), seed 20260715, 2000 reps",
+   "convention": "v1",
+   "gap_ci_winner_minus_best_incumbent_v1": {
+    "mean": 0.0254,
+    "lo95": 0.001,
+    "hi95": 0.0511
+   },
+   "gap_ci_winner_minus_best_incumbent_v2": {
+    "mean": 0.0362,
+    "lo95": 0.0122,
+    "hi95": 0.062
+   },
+   "pass": true,
+   "pass_under_v2": true
+  },
+  "registered_candidate_diagnostic": {
+   "v1": {
+    "rhos": {
+     "incumbent_1yr": 0.474,
+     "incumbent_3yr_flat": 0.4939,
+     "marcel_textbook": 0.4944,
+     "fa_projection": 0.5189,
+     "phem_marcel_lite": 0.517
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0435,
+      "lo95": 0.0095,
+      "hi95": 0.0775
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.0232,
+      "lo95": 0.0042,
+      "hi95": 0.0441
+     },
+     "marcel_textbook": {
+      "mean": 0.0228,
+      "lo95": -0.0003,
+      "hi95": 0.0453
+     },
+     "fa_projection": {
+      "mean": -0.0021,
+      "lo95": -0.0272,
+      "hi95": 0.0219
+     }
+    }
+   },
+   "v2": {
+    "rhos": {
+     "incumbent_1yr": 0.4755,
+     "incumbent_3yr_flat": 0.4944,
+     "marcel_textbook": 0.5066,
+     "fa_projection": 0.5304,
+     "phem_marcel_lite": 0.5116
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0357,
+      "lo95": 0.0019,
+      "hi95": 0.0687
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.0173,
+      "lo95": -0.0023,
+      "hi95": 0.0378
+     },
+     "marcel_textbook": {
+      "mean": 0.0051,
+      "lo95": -0.0166,
+      "hi95": 0.0268
+     },
+     "fa_projection": {
+      "mean": -0.0189,
+      "lo95": -0.0441,
+      "hi95": 0.007
+     }
+    },
+    "cluster": {
+     "n_pairs": 918,
+     "n_players": 379,
+     "max_pairs_per_player": 4,
+     "mean_pairs_per_player": 2.42,
+     "n_strata_first_pred_season": 4
+    }
+   }
+  },
+  "full_set_rhos_v1": {
+   "incumbent_1yr": 0.4278,
+   "incumbent_3yr_flat": 0.4546,
+   "marcel_textbook": 0.4944,
+   "fa_projection": 0.506,
+   "phem_marcel_lite": 0.4699
+  },
+  "runtime_seconds": 47.2
+ },
+ "pitchers": {
+  "side": "pit",
+  "n_pairs_total": 986,
+  "n_train": 623,
+  "n_gate": 363,
+  "drops": {
+   "partial_outcome": 0,
+   "window": 372,
+   "age_missing": 0,
+   "fa_proj_missing": 0
+  },
+  "seasons": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "gate_pred_years": [
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "gate_outcome_years": [
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "frozen_hyperparams": {
+   "decay": "6/3/1",
+   "weights": [
+    1.0,
+    0.5,
+    0.16666666666666666
+   ],
+   "beta_hinge": -0.4194,
+   "hinge": "max(0, age_{y+1} - 30)",
+   "train_pred_years": "<= 2018",
+   "train_n": 623,
+   "train_rho": 0.418,
+   "grid_report": {
+    "5/4/3": {
+     "beta_hinge": -0.5798,
+     "ols_coef_a_b_c": [
+      -7.883679,
+      0.032192,
+      -0.018665
+     ],
+     "train_rho_age_adj": 0.3946,
+     "train_rho_no_age": 0.3929
+    },
+    "6/3/1": {
+     "beta_hinge": -0.4194,
+     "ols_coef_a_b_c": [
+      -8.059761,
+      0.033959,
+      -0.014241
+     ],
+     "train_rho_age_adj": 0.418,
+     "train_rho_no_age": 0.4178
+    },
+    "flat": {
+     "beta_hinge": -0.7237,
+     "ols_coef_a_b_c": [
+      -7.678529,
+      0.030204,
+      -0.021859
+     ],
+     "train_rho_age_adj": 0.3767,
+     "train_rho_no_age": 0.3747
+    }
+   }
+  },
+  "gate_rhos_v1": {
+   "incumbent_1yr": 0.4098,
+   "incumbent_3yr_flat": 0.4252,
+   "marcel_textbook": 0.3232,
+   "fa_projection": 0.4316,
+   "phem_marcel_lite": 0.4423
+  },
+  "best_incumbent": "incumbent_3yr_flat",
+  "winner_candidate": "phem_marcel_lite",
+  "results": {
+   "v1": {
+    "rhos": {
+     "incumbent_1yr": 0.4098,
+     "incumbent_3yr_flat": 0.4252,
+     "marcel_textbook": 0.3232,
+     "fa_projection": 0.4316,
+     "phem_marcel_lite": 0.4423
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0323,
+      "lo95": 0.0015,
+      "hi95": 0.0635
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.0175,
+      "lo95": -0.0133,
+      "hi95": 0.0484
+     },
+     "marcel_textbook": {
+      "mean": 0.1196,
+      "lo95": 0.0511,
+      "hi95": 0.1879
+     },
+     "fa_projection": {
+      "mean": 0.0106,
+      "lo95": -0.0228,
+      "hi95": 0.0438
+     }
+    }
+   },
+   "v2": {
+    "rhos": {
+     "incumbent_1yr": 0.4159,
+     "incumbent_3yr_flat": 0.4267,
+     "marcel_textbook": 0.34,
+     "fa_projection": 0.4528,
+     "phem_marcel_lite": 0.4467
+    },
+    "gap_ci_primary_minus": {
+     "incumbent_1yr": {
+      "mean": 0.0302,
+      "lo95": 0.0025,
+      "hi95": 0.0602
+     },
+     "incumbent_3yr_flat": {
+      "mean": 0.021,
+      "lo95": -0.0113,
+      "hi95": 0.0529
+     },
+     "marcel_textbook": {
+      "mean": 0.1074,
+      "lo95": 0.042,
+      "hi95": 0.173
+     },
+     "fa_projection": {
+      "mean": -0.006,
+      "lo95": -0.0404,
+      "hi95": 0.0279
+     }
+    },
+    "cluster": {
+     "n_pairs": 363,
+     "n_players": 165,
+     "max_pairs_per_player": 4,
+     "mean_pairs_per_player": 2.2,
+     "n_strata_first_pred_season": 4
+    }
+   }
+  },
+  "gate": {
+   "bar": "winner candidate paired-bootstrap lo95(winner - best incumbent) >= 0; v1 convention (raw Y+1 target, iid bootstrap), seed 20260715, 2000 reps",
+   "convention": "v1",
+   "gap_ci_winner_minus_best_incumbent_v1": {
+    "mean": 0.0175,
+    "lo95": -0.0133,
+    "hi95": 0.0484
+   },
+   "gap_ci_winner_minus_best_incumbent_v2": {
+    "mean": 0.021,
+    "lo95": -0.0113,
+    "hi95": 0.0529
+   },
+   "pass": false,
+   "pass_under_v2": false
+  },
+  "registered_candidate_diagnostic": null,
+  "full_set_rhos_v1": {
+   "incumbent_1yr": 0.4116,
+   "incumbent_3yr_flat": 0.4212,
+   "marcel_textbook": 0.3495,
+   "fa_projection": 0.4284,
+   "phem_marcel_lite": 0.4317
+  },
+  "runtime_seconds": 18.3,
+  "note": "pre-declared SECONDARY; provisional regardless of pass when n_gate < 700 (thin starter 3yr-window sample)",
+  "provisional": true
+ },
+ "runtime_seconds": 65.5,
+ "verdict": {
+  "hitters": {
+   "status": "PASS - but the WINNER is arm 4 (fa_projection projected wOBA), not the new pHEM+ engine",
+   "deliverable": "RE-ANCHOR TO THE EXISTING ENGINE (cheaper): fa_projection.project_player woba_proj, point-in-time, wins the gate (rho 0.5189 vs best incumbent hem_plus_3yr 0.4939; iid paired-bootstrap gap lo95 +0.0010 >= 0, v1, seed 20260715) and passes under v2 (lo95 +0.0122). The registered pHEM+ Marcel-lite (rho 0.5170) is statistically indistinguishable from it (gap CI [-0.0272, +0.0219]) and would ALSO clear the incumbent bar alone (lo95 +0.0042 v1), but the pre-registration says: if arm 4 wins, re-anchor - do not build the new engine.",
+   "owner_flag": "a ship = a FIFTH hitter column (projected wOBA / pWOBA next to HEM+, HEM+ 3yr, xHEM+, Luck) - DISPLAY DECISION NEEDED before any export wiring"
+  },
+  "pitchers": {
+   "status": "FAIL (clean loss ledger) + provisional by pre-declaration (n_gate=363 < 700)",
+   "detail": "pSEM+ Marcel-lite is the best arm at the gate (rho 0.4423 vs 3yr SEM+ 0.4252) but the paired gap lo95 is -0.0133 (v1) / -0.0113 (v2): NO SHIP. Textbook Marcel on runs/TBF is far behind (0.3232). Under v2 fa_projection (-FIP) actually outranks the candidate (0.4528 vs 0.4467)."
+  },
+  "gate_note": "gate predictor years are 2021-2024 (outcomes 2022-2025): 2019->2020 pairs do not exist under the lab convention because 2020 (COVID) is never loaded - identical to the shipped X-H2 construction, whose full-set rhos this lab reproduces exactly (0.4278/0.4546, n=2382)."
+ },
+ "program_ledger": {
+  "verdict": "validated-reanchor",
+  "note": "hitters PASS won by the EXISTING fa_projection engine (0.5189 vs best incumbent 0.4939, lo95 +0.0010, pass_under_v2 true) - deliverable is RE-ANCHOR (a pWOBA column), not a new model; pitchers FAIL (lo95 -0.0133). OWNER DISPLAY DECISION pending for the fifth hitter column."
+ }
+}

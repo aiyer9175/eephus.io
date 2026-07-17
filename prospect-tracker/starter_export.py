@@ -9,8 +9,8 @@ The starter analog of bullpen_export.py. Assembles the SEM+ starter board + team
 Rotation+ from the SAME reachable source (MLB StatsAPI season pitching leaderboard;
 FanGraphs is 403-blocked here). No leverage walk: starters are not leverage-
 deployed, so SEM+ is a pure-skill FIP index with durability (IP/GS/average start
-length) shown as context. SwStr% is enriched best-effort from bref like the
-reliever board.
+length) shown as context. No SwStr% here: the Starter record carries no such
+field (the reliever board's bref enrichment was never plumbed through).
 
 Feeds sem_plus.score_pool(), which filters to true starters, anchors SEM+ to the
 starter pool (100 = average qualified starter), and rolls up team rotations. Also
@@ -31,8 +31,8 @@ from typing import Optional
 
 import sem_plus
 from sem_plus import Starter
-# reuse the reliever board's StatsAPI loaders (season pitching + bref SwStr)
-from bullpen_export import load_season_pitching, load_bref_swstr, ip_to_float, _num
+# reuse the reliever board's StatsAPI loader (season pitching)
+from bullpen_export import load_season_pitching, ip_to_float, _num
 
 _log = logging.getLogger(__name__)
 
@@ -45,8 +45,9 @@ HISTORY_SEASONS = [2021, 2022, 2023, 2024, 2025]
 
 
 def build_starters(rows: list[dict], swstr: Optional[dict] = None) -> list[Starter]:
-    """StatsAPI season rows -> Starter records (SwStr% optional, display-only)."""
-    swstr = swstr or {}
+    """StatsAPI season rows -> Starter records. `swstr` is accepted for
+    legacy positional callers (tools/*) but IGNORED: Starter has no SwStr
+    field, so the export no longer pays for the bref pull."""
     out: list[Starter] = []
     for r in rows:
         mlbam = r.get("mlbam")
@@ -183,8 +184,7 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     if not rows:
         log(f"  starters: no pitching data for {season} (source blocked or empty); skipping")
         return 0
-    swstr = load_bref_swstr(season)
-    scored = sem_plus.score_pool(build_starters(rows, swstr))
+    scored = sem_plus.score_pool(build_starters(rows))
     n_s3 = _join_sem_plus_3yr(scored["starters"])
     if n_s3:
         log(f"  starters: 3-year SEM+ joined for {n_s3} starters")
@@ -227,8 +227,7 @@ def export_history(seasons=None, *, out_path: Optional[Path] = None,
         if not rows:
             log(f"  starter-history: no data for {y}; skipping")
             continue
-        swstr = load_bref_swstr(y)
-        scored = sem_plus.score_pool(build_starters(rows, swstr))
+        scored = sem_plus.score_pool(build_starters(rows))
         board = [{k: s.get(k) for k in _HISTORY_FIELDS}
                  for s in scored["starters"] if s.get("qualified")]
         board.sort(key=lambda s: (s.get("sem_plus") or -999), reverse=True)

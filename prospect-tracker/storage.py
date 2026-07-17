@@ -1874,6 +1874,35 @@ def auto_debut_player(player_key: str, debut_date: str | None = None) -> None:
         # than stamping today() — the caller can retry once data lands.
         return
     with connect() as con:
+        # RE-FIRE GUARD (audit residue 2026-07-15): a player with ANY debuted
+        # snapshot on file is already debuted — a later auto-detect pass must
+        # not fire again (ryan_vilade: a veteran re-appearance re-fired
+        # 2026-05-17 against a true 2021-09-18 debut; the snapshots UNIQUE
+        # key excludes the date, so the first fire's date wins forever and a
+        # re-fire with a different date is silently ignored — this makes the
+        # suppression explicit). Deliberately NOT keyed on
+        # roster_status.mlb_debut_date being set: the daily pipeline derives
+        # roster status minutes before auto-detection fires in the same run,
+        # which would suppress every legitimate first fire.
+        if con.execute(
+            "SELECT 1 FROM snapshots WHERE player_key = ? AND status = 'debuted' LIMIT 1",
+            (player_key,),
+        ).fetchone():
+            return
+        # DATE CLAMP: never stamp a debut later than the known true debut —
+        # when roster_status already carries an earlier mlb_debut_date, the
+        # detected date is a re-appearance artifact, not the debut.
+        rs = con.execute(
+            "SELECT payload_json FROM roster_status WHERE player_key = ? LIMIT 1",
+            (player_key,),
+        ).fetchone()
+        if rs:
+            try:
+                rs_debut = (json.loads(rs["payload_json"]) or {}).get("mlb_debut_date")
+            except (TypeError, ValueError):
+                rs_debut = None
+            if rs_debut and str(rs_debut) < snap_date:
+                snap_date = str(rs_debut)
         # Pull most recent metadata for this player
         row = con.execute(
             """SELECT player_name, position, org FROM snapshots
@@ -7072,6 +7101,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             return float(g)
         return float(cons) if cons is not None else None
 
+    def _xgq(pk, cons):
+        """RANK-basis grade: the quantile-mapped HEADLINE eFV (xfv_grade_quantile),
+        realized-grade then consensus fallback. This is the same chain the
+        frontend's efvRankValue ranks on, so baked overall/org ranks agree with
+        the live board instead of drifting one field apart (the Ike Irish
+        farm-preview-vs-roster bug). Model inputs (farm score, DvM+, movement
+        stock) stay on _xg — the realized grade — by design."""
+        row = _xfv_by_key.get(pk) or {}
+        g = row.get("xfv_grade_quantile")
+        if g is None:
+            g = row.get("xfv_grade")
+        if g is not None:
+            return float(g)
+        return float(cons) if cons is not None else None
+
     def _xsurplus(pk, cons_mm):
         """eFV expected surplus ($M); consensus-surplus fallback where eFV abstains."""
         s = (_xfv_by_key.get(pk) or {}).get("surplus_mm")
@@ -9688,21 +9732,21 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         latest = p.points[-1]
         rank_key = latest.avg_rank if latest.avg_rank is not None else 999
         # eFV is the PRIMARY board-rank driver (consensus FV fallback where eFV
-        # abstains, via _xg). Rank by the SURFACED (snapped/displayed) grade — so
-        # a 56.3 and a 56.6 that both display as the same integer are TIED here
-        # and the Tiebreaker-Score proxy arbitrates, rather than the higher
-        # decimal auto-winning. The '+' upside flag (a consensus concept) is the
-        # only sub-grade distinction kept ahead of TBS.
-        _xg_val = _xg(p.player_key, latest.consensus_fv_raw)
-        surfaced_fv = (round(_xg_val) if _xg_val is not None
+        # abstains, via _xgq — the quantile HEADLINE grade with decimal
+        # tiebreak, matching the frontend's efvRankValue so baked ranks and
+        # the live board order never disagree). The '+' upside flag and the
+        # Tiebreaker-Score proxy arbitrate only EXACT decimal ties (mostly
+        # consensus-fallback players sitting on integer grades).
+        _xg_val = _xgq(p.player_key, latest.consensus_fv_raw)
+        surfaced_fv = (_xg_val if _xg_val is not None
                        else (latest.consensus_fv if latest.consensus_fv is not None
-                             else (round(latest.consensus_fv_raw)
+                             else (latest.consensus_fv_raw
                                    if latest.consensus_fv_raw is not None else 0)))
         upside = 1 if getattr(latest, "consensus_fv_plus", False) else 0
         return (
-            -surfaced_fv,        # surfaced (rounded) eFV grade desc — primary
+            -surfaced_fv,        # headline eFV grade desc (decimal) — primary
             -upside,             # '+' upside flag — ranks above same-grade non-'+'
-            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on tied surfaced grade
+            -_tbs_proxy(p),      # Tiebreaker Score desc — ARBITER on exact ties
             rank_key,            # avg_rank asc — final stable separator
         )
     actives.sort(key=_active_key)
@@ -13975,7 +14019,7 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     #
     #   timeseries.json   — meta + active players + spotlights + org
     #                       summaries + level/trajectory norms (boot path)
-    #   graduates.json    — graduate-player payloads
+    #   debuts.json       — graduate-player payloads (the "debuts" slice)
     #   inactive.json     — inactive-player payloads
     #   rosters_by_org.json — per-org affiliate rosters (farm-detail only)
     #
@@ -14196,8 +14240,27 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 moved = {}
                 for f in ("tools", "extras"):
                     if obs.get(f):
-                        moved[f] = obs[f]
-                        obs[f] = None
+                        moved[f] = obs.pop(f)
+                    elif f in obs:
+                        del obs[f]          # drop the null stub outright
+                # v46 payload-slim — historical per-source SCALARS. The only
+                # cross-history readers of these four are card panels (the
+                # per-source FV history table's Update/date columns), which
+                # lazy-merge this shard back in. fv_published / fv_plus /
+                # rank / dropped_off STAY inline on every point: the list
+                # sparkline's upside dots, the movement mirror, and the
+                # source_backtest / efv_dataset pipelines read them across
+                # the whole history from the exported files.
+                scalars = {}
+                for f in ("interval_label", "snapshot_date", "status", "fv_adjusted"):
+                    v = obs.pop(f, None)
+                    if v is not None:
+                        scalars[f] = v
+                for f in ("fv_plus", "dropped_off"):
+                    if f in obs and not obs[f]:
+                        del obs[f]          # falsy flags read identically when absent
+                if scalars:
+                    moved["scalars"] = scalars
                 if moved:
                     pt_key = f"{pt.get('snapshot_date')}|{pt.get('interval_label')}"
                     moved_ps.setdefault(pt_key, {})[src] = moved
@@ -14212,6 +14275,144 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         _harvest_player_detail(p)
     for p in inactive_payload:
         _harvest_player_detail(p)
+
+    # v46 payload-slim — debuts_lite sidecar. The Graduates tab, the context
+    # rail, and the farm/trade/news list surfaces read only a slim slice of
+    # each graduate; the full monolith (points history, statcast level
+    # splits, tools history) is fetched only where the whole record matters
+    # (graduate card open, Time Machine, debuted chart mode). The field set
+    # is derived from the prospx list-path readers; card-only blocks stay in
+    # debuts.json, which the card path always loads before rendering.
+    # Built AFTER the harvests so slimmed sub-blocks mirror the shipped
+    # shape. Sub-objects are shared (not copied) wherever they ship whole.
+    _LITE_SCALARS = (
+        "player_key", "player_name", "position", "org", "age", "status",
+        "debut_date", "current_level", "mlbam_id", "fv_close", "fv_close_raw",
+        "fv_label", "fv_close_plus", "fv_total_instances", "overall_rank",
+        "prev_overall_rank", "org_rank", "org_rank_total", "statcast_plus",
+        "dollar_dvm_plus", "breakout_flag",
+    )
+    _LITE_WHOLE = (
+        "statline", "sabermetrics", "career_war", "stock", "trades",
+        "il_status", "il_stints", "acquisition", "breakout_meta",
+    )
+
+    def _lite_handedness(g: dict):
+        # Mirror of prospx _getHandedness: newest -> oldest, FanGraphs first,
+        # then TJStats, then any other source; bats/throws come from ONE
+        # extras blob (no cross-source merging). Runs post-harvest, so it
+        # sees exactly the observations the frontend keeps inline.
+        pts = g.get("points") or []
+
+        def _scan(pick):
+            for pt in reversed(pts):
+                for src, obs in (pt.get("per_source") or {}).items():
+                    if not pick(src) or not isinstance(obs, dict):
+                        continue
+                    tools = obs.get("tools")
+                    ex = tools.get("_extras") if isinstance(tools, dict) else None
+                    if not ex:
+                        continue
+                    bats = ex.get("bats") or ex.get("bat_side")
+                    throws = ex.get("throws") or ex.get("throw_side")
+                    if bats or throws:
+                        return bats, throws
+            return None
+
+        for pick in (lambda s: s == "fangraphs",
+                     lambda s: s == "tjstats",
+                     lambda s: s not in ("fangraphs", "tjstats")):
+            got = _scan(pick)
+            if got:
+                return got
+        return None, None
+
+    def _grad_lite(g: dict) -> dict:
+        lite = {k: g.get(k) for k in _LITE_SCALARS if g.get(k) is not None}
+        for k in _LITE_WHOLE:
+            v = g.get(k)
+            if v:
+                lite[k] = v
+        # career_stats: MLB rows only, the fields the WAG / WAR-rate helpers
+        # read (gradWarPerYr / gradPersonalFullSeason season fractions).
+        cs_slim = [{f: r.get(f) for f in ("season", "level", "ip", "pa", "ab")
+                    if r.get(f) is not None}
+                   for r in (g.get("career_stats") or [])
+                   if isinstance(r, dict)
+                   and str(r.get("level") or "").upper() == "MLB"]
+        if cs_slim:
+            lite["career_stats"] = cs_slim
+        # transactions: kind drives the WAG outcome penalty; date/orgs/
+        # description feed the farm-detail transaction feed.
+        tx_slim = [{f: t.get(f) for f in ("kind", "date", "from_org",
+                                          "to_org", "description")
+                    if t.get(f) is not None}
+                   for t in (g.get("transactions") or []) if isinstance(t, dict)]
+        if tx_slim:
+            lite["transactions"] = tx_slim
+        rs = g.get("roster_status") or {}
+        rs_slim = {f: rs.get(f) for f in ("on_40_man", "options_used",
+                                          "options_used_years",
+                                          "options_remaining", "service_phase",
+                                          "mlb_debut_date")
+                   if rs.get(f) is not None}
+        if rs_slim:
+            lite["roster_status"] = rs_slim
+        sp = g.get("surplus")
+        if isinstance(sp, dict) and sp:
+            lite["surplus"] = {k: v for k, v in sp.items()
+                               if k not in ("dist", "ci", "valuation_set")}
+        dv = g.get("debuted_value")
+        if isinstance(dv, dict) and dv:
+            lite["debuted_value"] = {k: v for k, v in dv.items()
+                                     if k not in ("prior", "remaining_dist")}
+        sc = g.get("statcast_metrics")
+        if isinstance(sc, dict) and sc:
+            sc_slim = {k: v for k, v in sc.items()
+                       if k not in ("level_splits", "coverage", "pitch_plot")}
+            pm = sc.get("pitch_movement")
+            if isinstance(pm, dict):
+                sc_slim["pitch_movement"] = {k: v for k, v in pm.items()
+                                             if k != "outings"}
+            lite["statcast_metrics"] = sc_slim
+        tl = g.get("tools")
+        if isinstance(tl, dict):
+            tl_slim = {k: v for k, v in tl.items()
+                       if k in ("grades", "spread") or k.startswith("composite")}
+            if tl_slim:
+                lite["tools"] = tl_slim
+        # Last consensus point only, per_source emptied: keeps the FV badge
+        # label, wide-spread W mark, and shrinkage tooltip working on list
+        # rows without shipping the history. Always present (the monolith
+        # rows always carry `points`, even when empty), so the two shapes
+        # stay drop-in compatible.
+        pts = g.get("points") or []
+        if pts and isinstance(pts[-1], dict):
+            lp = {k: v for k, v in pts[-1].items() if k != "per_source"}
+            lp["per_source"] = {}
+            lite["points"] = [lp]
+        else:
+            lite["points"] = []
+        bats, throws = _lite_handedness(g)
+        if bats:
+            lite["bats"] = bats
+        if throws:
+            lite["throws"] = throws
+        lite["_lite"] = True
+        return lite
+
+    debuts_lite = [_grad_lite(g) for g in graduate_payload]
+
+    # v46 payload-slim — scout reports also ship in a FIXED number of hash
+    # chunks (scout_reports_0.json .. scout_reports_7.json) so a card open
+    # pulls ~1/8th of the monolith instead of all of it. chunk index =
+    # sum(ord(char)) over player_key mod N, mirrored by _scoutChunkOf in
+    # prospx/index.html — keep the two in lockstep. The monolith keeps
+    # being written: mlb_player_export.py and legacy cached HTML read it.
+    _SCOUT_CHUNKS = 8
+    scout_report_chunks: list[dict] = [{} for _ in range(_SCOUT_CHUNKS)]
+    for _k, _v in scout_reports_sidecar.items():
+        scout_report_chunks[sum(ord(_c) for _c in _k) % _SCOUT_CHUNKS][_k] = _v
 
     boot = {
         "generated_at": _utcnow_iso() + "Z",
@@ -14245,6 +14446,11 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # the user opens the Transactions tab (trade audit consumer).
         "_slices": {
             "debuts":             "debuts.json",
+            # v46 payload-slim — list-render slice of the graduates. The
+            # Graduates tab / context rail / idle warm read THIS; the full
+            # debuts.json is fetched only on graduate card open, Time
+            # Machine, and the debuted chart mode (ensureDebutsFull).
+            "debuts_lite":        "debuts_lite.json",
             "inactive":           "inactive.json",
             "rosters_by_org":     "rosters_by_org.json",
             "scout_reports":      "scout_reports.json",
@@ -14253,6 +14459,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             # written by fa_export.py) are NOT advertised here — the FA
             # module is its own surface (/fa/, assets/fa.js) and fetches
             # them from /data/ directly. PROSPX carries zero FA bytes.
+        },
+        # v46 payload-slim — chunked-slice contract: {name: {prefix, chunks}}.
+        # The frontend fetches <prefix><i>.json where i = sum(ord) of the
+        # player_key mod `chunks` (see ensureScoutReports). scout_reports
+        # stays in _slices above so HTML predating this contract keeps
+        # working off the monolith.
+        "_slices_chunked": {
+            "scout_reports": {"prefix": "scout_reports_",
+                              "chunks": _SCOUT_CHUNKS},
         },
         # v32 — pitch_plot coordinates ship PER PLAYER under
         # data/pitch_plots/{player_key}.json (the monolithic sidecar
@@ -14288,9 +14503,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
             path.write_text(json.dumps(obj, **_compact))
     _dump(boot, out_path)
     _dump(graduate_payload, out_dir / "debuts.json")
+    _dump(debuts_lite, out_dir / "debuts_lite.json")
     _dump(inactive_payload, out_dir / "inactive.json")
     _dump(rosters_by_org, out_dir / "rosters_by_org.json")
     _dump(scout_reports_sidecar, out_dir / "scout_reports.json")
+    # v46 payload-slim — fixed chunk count, so every index is always
+    # (re)written and stale chunks can't linger between runs.
+    for _i, _chunk in enumerate(scout_report_chunks):
+        _dump(_chunk, out_dir / f"scout_reports_{_i}.json")
     # v31.8c — mlb_trade_players sidecar (lazy-loaded when the
     # Transactions tab opens, not part of initial boot).
     _dump(load_mlb_trade_players(), out_dir / "mlb_trade_players.json")

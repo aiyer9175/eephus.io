@@ -136,7 +136,8 @@ def _enrich(signing: dict, tp: dict | None, xfv_grade: float | None = None) -> d
             "is_tracked":   True,
             "fv":           fv,                                  # CURRENT grade (eFV or consensus)
             # eFV rounds to NEAREST (owner rule); consensus FV ceils.
-            "fv_label":     (str(int(round(fv))) if (use_xfv and fv is not None)
+            # Half-up like JS Math.round - Python round() is half-even.
+            "fv_label":     (str(int(math.floor(fv + 0.5))) if (use_xfv and fv is not None)
                              else _fv_label(fv, bool(tp.get("fv_close_plus")) and not use_xfv)),
             "fv_basis":     "xfv" if use_xfv else "consensus",
             # FV at signing ≈ the earliest grade we have on file (fv_open).
@@ -184,7 +185,14 @@ def _build_class(year: int, rows: list[dict], players_by_key: dict,
     def _enrich_row(r):
         tp = _lookup_tracked(players_by_key, r.get("player_key"))
         # Look up eFV by the TRACKED (canonical) key, not the signing key.
-        xg = (xfv_by_key.get(tp["player_key"]) or {}).get("xfv_grade") if tp else None
+        # Headline precedence matches every other surface (quantile flip
+        # 2026-07-06): xfv_grade_quantile -> realized -> raw.
+        xrec = (xfv_by_key.get(tp["player_key"]) or {}) if tp else {}
+        xg = xrec.get("xfv_grade_quantile")
+        if xg is None:
+            xg = xrec.get("xfv_grade_realized")
+        if xg is None:
+            xg = xrec.get("xfv_grade")
         return _enrich(r, tp, xg)
 
     signings = [_enrich_row(r) for r in rows]

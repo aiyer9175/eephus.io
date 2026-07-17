@@ -1,0 +1,195 @@
+name: Build & deploy eephus.io
+
+# CI gate + optional publish for eephus.io.
+#
+# PRODUCTION (2026-07-14 decision): the nginx box is the ONE nightly
+# writer - it pulls the repo, runs the pipeline against the canonical
+# prospects.db (seeded once from the dev box; a cold rebuild CANNOT
+# recover the 2021+ snapshot history), gates on pytest, and rsyncs the
+# webroot. See prospect-tracker/deploy/README.md + the runbook in
+# docs/prelaunch-2026-07/DEPLOY_RUNBOOK.md.
+#
+# This workflow is therefore CI first: every push to prospect-tracker/
+# builds the site and runs the full test gate. Publishing from CI is
+# OPT-IN (repo variable EEPHUS_CI_PUBLISH=true) because a CI runner's
+# actions/cache DB is a degraded cold rebuild - letting it rsync over
+# the box's canonical build is how production served wrong FV history
+# in July 2026. Leave the variable unset unless the box is down and
+# you knowingly want a degraded emergency publish.
+#
+#   - Manual run with full=true (or a cold runner) runs the FULL
+#     monthly pipeline; otherwise the fast --daily refresh.
+#   - The nightly schedule was removed 2026-07-14: the box cron owns
+#     nightly. Restore the `schedule:` block only if you deliberately
+#     move nightly builds back into CI (and set EEPHUS_CI_PUBLISH).
+#
+# State: prospects.db + .cache/ persist between runs via actions/cache
+# (GitHub evicts after ~7 idle days; the cold-start path then rebuilds
+# from sources via the full pipeline). The deploy is gated on pytest.
+# The GitHub Pages steps are continue-on-error so a repo with Pages
+# disabled still builds and gates.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'prospect-tracker/**'
+      - '.github/workflows/deploy-prospect-tracker.yml'
+  workflow_dispatch:
+    inputs:
+      full:
+        description: "Run the FULL monthly pipeline (grades, rankings, snapshots)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One deploy in flight; a fresh push supersedes an in-progress build.
+concurrency:
+  group: pages-prospect-tracker
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    defaults:
+      run:
+        working-directory: prospect-tracker
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: 'pip'
+          cache-dependency-path: prospect-tracker/requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Restore pipeline state (DB + HTTP cache)
+        uses: actions/cache@v4
+        with:
+          path: |
+            prospect-tracker/prospects.db
+            prospect-tracker/.cache
+          key: prospx-state-${{ github.run_id }}
+          restore-keys: |
+            prospx-state-
+
+      - name: Run pipeline
+        # Full monthly on the 1st, on demand, or on a cold runner (no
+        # cached DB); fast --daily refresh otherwise. The pipeline
+        # tolerates partial-failure paths (warnings logged, no exit),
+        # so one flaky source never kills the nightly deploy.
+        run: |
+          if [ "${{ inputs.full }}" = "true" ] || [ "$(date -u +%d)" = "01" ] || [ ! -f prospects.db ]; then
+            echo "FULL monthly pipeline"
+            python run_monthly.py
+          else
+            echo "daily refresh"
+            python run_monthly.py --daily
+          fi
+
+      - name: Build editorial pages
+        run: python build_site.py
+
+      - name: Gate on the test suite
+        # Browser-dependent tests importorskip-skip without playwright;
+        # everything else (artifact shapes, registry honesty, export
+        # contracts, calibration guards) must be green to publish.
+        # EEPHUS_DEPLOY_RUN=1 relaxes the dev-time exact-hash golden
+        # tripwires (data/xfv.json et al.) to shape checks, exactly like
+        # deploy/nightly-build.sh - this run just regenerated those
+        # artifacts from fresh data, so an exact-SHA pin can never pass.
+        # Its absence here froze CI publishing after 2026-07-11.
+        run: EEPHUS_DEPLOY_RUN=1 python -m pytest -q
+
+      - name: Stage site for Pages
+        # Ship exactly what the browser needs: the page directories,
+        # shared assets, and the data sidecars (pitch plots are split
+        # per player - the 411MB monolith never ships). Python sources,
+        # tests, caches, the DB, and model binaries stay out.
+        # The path list is the SHARED manifest deploy/publish_paths.txt
+        # (same file nightly-build.sh feeds rsync) - a hardcoded copy of
+        # the list here is how mlbstats/pal/trademachine/news/report/
+        # vendor 404'd in production until 2026-07-14.
+        run: |
+          mkdir -p _site
+          while IFS= read -r p; do
+            case "$p" in ''|\#*) continue ;; esac
+            if [ -d "$p" ]; then
+              cp -r "$p" "_site/$p"
+            elif [ -f "$p" ]; then
+              cp "$p" _site/
+            else
+              echo "manifest path missing from checkout: $p" >&2
+              exit 1
+            fi
+          done < deploy/publish_paths.txt
+          mkdir -p _site/data
+          # *.js too: data/value_framework.js and the collegesavant data
+          # scripts are hard <script src> deps - json-only shipping 404'd
+          # them in production (found 2026-07-14).
+          find data -maxdepth 1 \( -name '*.json' -o -name '*.js' \) -exec cp {} _site/data/ \;
+          # Strip model internals no page fetches (shared list with the
+          # nightly rsync; guarded by test_publish_manifest.py).
+          while IFS= read -r p; do
+            case "$p" in ''|\#*) continue ;; esac
+            rm -f "_site/data/$p"
+          done < deploy/data_exclude.txt
+          [ -d data/pitch_plots ] && cp -r data/pitch_plots _site/data/pitch_plots
+          [ -d data/player_detail ] && cp -r data/player_detail _site/data/player_detail
+          # Precompress text assets so nginx (gzip_static on) serves the
+          # .gz twins - mirrors deploy/nightly-build.sh.
+          find _site -type f \( -name '*.json' -o -name '*.js' -o -name '*.css'               -o -name '*.html' -o -name '*.svg' -o -name '*.xml' -o -name '*.txt' \)               -size +1k -exec gzip -9 -k -f {} +
+          du -sh _site
+
+      - name: Publish to server over SSH (emergency path - see deploy/README.md)
+        # OPT-IN: requires the repo variable EEPHUS_CI_PUBLISH=true in
+        # addition to the three secrets. The nginx box owns nightly
+        # publishing with the canonical DB; a CI publish rsyncs a
+        # degraded cold-rebuild dataset over it, so this exists only as
+        # a break-glass path while the box is down.
+        env:
+          EEPHUS_CI_PUBLISH: ${{ vars.EEPHUS_CI_PUBLISH }}
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_SSH_HOST: ${{ secrets.DEPLOY_SSH_HOST }}
+          DEPLOY_WEBROOT: ${{ secrets.DEPLOY_WEBROOT }}
+        run: |
+          if [ "$EEPHUS_CI_PUBLISH" != "true" ]; then
+            echo "EEPHUS_CI_PUBLISH repo variable is not 'true' - CI never publishes to the server (the nginx box owns nightly). Skipping."
+            exit 0
+          fi
+          if [ -z "$DEPLOY_SSH_KEY" ] || [ -z "$DEPLOY_SSH_HOST" ] || [ -z "$DEPLOY_WEBROOT" ]; then
+            echo "SSH deploy secrets not configured - skipping server publish."
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          printf '%s\n' "$DEPLOY_SSH_KEY" > ~/.ssh/eephus_deploy
+          chmod 600 ~/.ssh/eephus_deploy
+          ssh-keyscan -H "${DEPLOY_SSH_HOST#*@}" >> ~/.ssh/known_hosts 2>/dev/null || true
+          rsync -az --delete \
+            -e "ssh -i ~/.ssh/eephus_deploy -o StrictHostKeyChecking=accept-new" \
+            _site/ "$DEPLOY_SSH_HOST:$DEPLOY_WEBROOT/"
+          echo "published to $DEPLOY_SSH_HOST:$DEPLOY_WEBROOT"
+
+      # Optional Pages mirror - tolerant of Pages being disabled.
+      - uses: actions/configure-pages@v5
+        continue-on-error: true
+
+      - uses: actions/upload-pages-artifact@v3
+        continue-on-error: true
+        with:
+          path: prospect-tracker/_site
+
+      - id: deployment
+        uses: actions/deploy-pages@v4
+        continue-on-error: true

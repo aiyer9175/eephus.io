@@ -1,0 +1,14 @@
+# No raw datasets / generated artifacts in git (store externally: Drive/S3/GCS).
+data/
+**/data/
+*.parquet
+*.csv
+!samples/*.sample.csv      # small sample datasets only
+*.png
+*.gif
+*.log
+*.db
+__pycache__/
+*.pyc
+.venv/
+.DS_Store

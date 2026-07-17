@@ -55,10 +55,21 @@ def test_every_eval_artifact_is_registered():
     """THE STANDING RULE (owner directive 2026-06-11): every committed
     eval/gate artifact must belong to a registered model. New models
     cannot ship a backtest without a registry row — this test is the
-    enforcement."""
+    enforcement.
+
+    Registry-hygiene fix 2026-07-16: the glob is *_eval*.json (the old
+    *_eval.json missed suffixed companions like rem_plus_eval_restamp.json),
+    and COMPANION artifacts count as registered when their parent row's
+    notes cite them by path — a companion (restamp / sensitivity table)
+    never carries its own verdict, so it belongs on the parent's ledger,
+    not on a row of its own."""
     reg = mr.load()
     referenced = {m["eval_artifact"] for m in reg["models"] if m.get("eval_artifact")}
-    on_disk = {f"data/{p.name}" for p in (ROOT / "data").glob("*_eval.json")}
+    # companion artifacts cited on a registered row's notes ledger
+    import re
+    for m in reg["models"]:
+        referenced |= set(re.findall(r"data/[\w.\-]+\.json", m.get("notes") or ""))
+    on_disk = {f"data/{p.name}" for p in (ROOT / "data").glob("*_eval*.json")}
     on_disk |= {f"data/{p.name}" for p in (ROOT / "data").glob("*gate*_eval.json")}
     unregistered = on_disk - referenced
     # gate artifacts referenced under their canonical names still count
@@ -66,7 +77,8 @@ def test_every_eval_artifact_is_registered():
                     if u not in referenced}
     assert not unregistered, (
         f"eval artifacts with NO registry row (register them in "
-        f"data/model_registry.json): {sorted(unregistered)}")
+        f"data/model_registry.json, or cite the companion on its parent "
+        f"row's notes): {sorted(unregistered)}")
 
 
 def test_freshness_stamps():

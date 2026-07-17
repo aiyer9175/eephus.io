@@ -154,7 +154,7 @@ def load_platoon(pid_years: list, workers: int = 12) -> dict:
     return out
 
 
-@functools.lru_cache(maxsize=4)
+@functools.lru_cache(maxsize=16)
 def load_pitch_hand(season: int) -> dict:
     """{mlbam: 'L'|'R'} for every MLB pitcher, one bulk call (reverse platoon)."""
     try:
@@ -384,8 +384,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         log(f"  pal: no {season} pitching (source blocked); skipping")
         return 0
 
-    # conversions from role flips (cheap, season-stats only)
-    events = pc.detect_conversions(by_pid)
+    # conversions from role flips (cheap, season-stats only). The current
+    # season is in progress, so held labels only read seasons through season-1
+    # (T1-6: an in-progress b+1 GS-share is not a settled role).
+    events = pc.detect_conversions(by_pid, last_closed_season=season - 1)
     log(f"  pal: detected {len(events)} role conversions {HISTORY_YEARS[0]}-{HISTORY_YEARS[-1]}")
     # Current-season (in-progress) conversions that season-cumulative role_of misses
     # because a mid-year switch reads as SWING (e.g. Griffin Jax 2026). Always pending;
@@ -406,11 +408,15 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     arsenal_by_year = {y: load_arsenal(y) for y in HISTORY_YEARS}
     velo_by_year = {y: load_velo(y) for y in HISTORY_YEARS}
 
-    # who needs platoon: the current candidate pool + each converter's pre-year
+    # who needs platoon: the current candidate pool + each converter's TRUE
+    # pre-year. detect_conversions pairs seasons up to 2 apart (2020 excluded,
+    # injury gaps), so the pre row is e["pre"]["season"], NOT year-1 (T1-6:
+    # year-1 silently dropped every gap-2 event from the backtest).
     cur_rows = rows_by_year[season]
     cand_pids = [(r["mlbam"], season) for r in cur_rows
                  if be.ip_to_float(r.get("IP")) >= CAND_MIN_IP]
-    pre_pids = [(e["mlbam"], e["year"] - 1) for e in events]
+    pre_pids = [(e["mlbam"], (e.get("pre") or {}).get("season", e["year"] - 1))
+                for e in events]
     log(f"  pal: pulling platoon splits for {len(set(cand_pids) | set(pre_pids))} pitcher-seasons...")
     platoon = load_platoon(list(set(cand_pids) | set(pre_pids)))
 
@@ -419,6 +425,14 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
 
     # extensions: throwing hand (reverse platoon), MLB + PROSPX starter pedigree
     pitch_hand = load_pitch_hand(season)
+    # ... and for the backtest pre-arms: hand is static, so merge the bulk
+    # players call across each distinct pre-year (T1-6: backtested scores must
+    # carry the same p_throws input the live board scores do).
+    hand_all = {}
+    for y in sorted({(e.get("pre") or {}).get("season", e["year"] - 1) for e in events}):
+        if y != season:
+            hand_all.update(load_pitch_hand(y) or {})
+    hand_all.update(pitch_hand)
     links = load_player_links()
     # hard MLB-graduation gate for the prospect watch: anyone with meaningful MLB
     # service (career innings across the loaded seasons) has graduated even when
@@ -464,13 +478,22 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     # ---- conversion history + backtest -------------------------------------
     war_by_year = load_bref_pitcher_war()   # {year: {mlbam: bWAR}}, best-effort
     history, mix_changes = [], []
-    pre_fits, labels = [], []
+    pre_fits, labels = [], []           # legacy pooled read (REPORTING ONLY)
+    per_dir = {d: {"fit_war": [], "war": [], "fit_held": [], "held": []}
+               for d in ("RP->SP", "SP->RP")}
     for e in events:
-        py = e["year"] - 1
+        # TRUE pre-season (T1-6): the season the detector actually paired.
+        # year-1 lost every gap-2 pair (2020 exclusion / injury gaps) and
+        # silently dropped them from the labeled backtest set.
+        py = (e.get("pre") or {}).get("season", e["year"] - 1)
         pre_row = by_pid.get(e["mlbam"], {}).get(py)
         pre_fit = None
         if pre_row and pre_row.get("mlbam") in arsenal_by_year.get(py, {}):
             pre_arm = build_arm(pre_row, arsenal_by_year.get(py, {}), velo_by_year.get(py, {}), platoon, py)
+            # backtested scores carry the SAME inputs the live board scores do
+            # (T1-6): throwing hand + the +3.0 starter-pedigree nudge.
+            pre_arm.p_throws = hand_all.get(pre_arm.mlbam)
+            pre_arm.was_starter = _was_starter(by_pid, pre_arm.mlbam, py)
             if pre_arm.arsenal:
                 fit = (pc.rp_sp_fit(pre_arm) if e["direction"] == "RP->SP"
                        else pc.sp_rp_fit(pre_arm))
@@ -506,9 +529,30 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
         if pre_fit is not None and succ is not None:
             pre_fits.append(pre_fit)
             labels.append(1.0 if succ else 0.0)
+            if e["direction"] in per_dir:
+                per_dir[e["direction"]]["fit_held"].append(pre_fit)
+                per_dir[e["direction"]]["held"].append(1.0 if succ else 0.0)
+        # PRIMARY continuous outcome (T1-6): war_delta, PER DIRECTION (the two
+        # fit scores are different 0-100 scales - pooling them was never
+        # meaningful), closed post seasons only (a partial in-progress post
+        # season deflates bWAR mechanically).
+        if (pre_fit is not None and h["war_delta"] is not None
+                and post_season < season and e["direction"] in per_dir):
+            per_dir[e["direction"]]["fit_war"].append(pre_fit)
+            per_dir[e["direction"]]["war"].append(h["war_delta"])
     history.sort(key=lambda h: (h["year"], -(h["pre_fit"] or 0)), reverse=True)
 
-    rho = _spearman(pre_fits, labels)
+    rho = _spearman(pre_fits, labels)   # legacy pooled - REPORTING ONLY, not the gate
+    per_direction = {}
+    for d, v in per_dir.items():
+        rw = _spearman(v["fit_war"], v["war"])
+        rh = _spearman(v["fit_held"], v["held"])
+        per_direction[d] = {
+            "n_war": len(v["war"]),
+            "rho_prefit_vs_war_delta": None if rw is None else round(rw, 3),
+            "n_held": len(v["held"]),
+            "rho_prefit_vs_held": None if rh is None else round(rh, 3),
+        }
     # where do converters fall in the full-pool fit distribution (selection-bias check)
     full_rp_fits = sorted(x["fit"] for x in rp2sp)
     conv_rp_pct = _percentile_of([h["pre_fit"] for h in history
@@ -517,12 +561,18 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
     backtest = {
         "n_labeled": len(pre_fits),
         "spearman_prefit_vs_held": None if rho is None else round(rho, 3),
+        "per_direction": per_direction,
+        "primary_outcome": ("war_delta (bWAR post-season minus pre-season), per direction, "
+                            "closed post seasons only; the pooled held rho above is a legacy "
+                            "reporting field (two different 0-100 scales)"),
         "relief_k_bump_measured": relief_k_bump,
         "converter_median_fit_pool_pctile": conv_rp_pct,
         "disclaimer": ("A screen, not a success-probability model. The conversion sample is small and "
                        "selection-biased (only pitchers teams chose to convert), so the weights are frozen "
-                       "priors from the literature and this rho is a directional sign-check, not a fitted "
-                       "validation. Success = held the new role at least one full season."),
+                       "priors from the literature. The gated evaluation (per-direction rho vs same-event "
+                       "baselines, bootstrap CI) lives in tools/pal_backtest_lab.py -> data/pal_eval.json; "
+                       "the rhos here are the live stamp of the same repaired harness. Held labels read "
+                       "closed >=20 IP follow-up seasons only."),
     }
 
     # pitch-add lab: RP->SP candidates with a recommended weapon to add

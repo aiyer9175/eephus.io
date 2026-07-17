@@ -1,0 +1,1314 @@
+{
+ "generated_at": "2026-07-15",
+ "eval_line": "J-DISP -- joint cross-side display map (owner-registered 2026-07-15)",
+ "verdict": "NO-SHIP: both pre-registered arms FAILED the primary accuracy gate G1; production keeps the per-side quantile display maps unchanged",
+ "question": "replace the two per-side display quantile maps with ONE joint map so a displayed 60 carries the same blend-implied value on either side (the recorded honest fix for the F-SIDE skew: per-side maps re-inflate pit top-25 share 2.47x; equal display grades imply unequal realized WAR)",
+ "protocol": {
+  "frame": "F-SIDE full_pool_km, forward-chained folds 2020-2023",
+  "fold_guards": {
+   "min_test": 15,
+   "min_train": 60
+  },
+  "lambdas": {
+   "hit": 0.7,
+   "pit": 0.61
+  },
+  "lambda_source": "data/xfv.json meta.live_lambda",
+  "lambda_note": "live stamp 2026-07-15 = hit 0.70 / pit 0.61; the registered F-SIDE artifact (top-25 +3.95) was stamped under pit 0.63 -- the incumbent baseline here is recomputed under the CURRENT live stack (top-25 +4.52), so all arm-vs-incumbent gaps are apples-to-apples",
+  "seed": 20260715,
+  "bootstrap_reps": 2000,
+  "n_rows": 1675,
+  "n_hit": 817,
+  "n_pit": 858,
+  "war_metric": "first-6yr summed bWAR, KM-censored (target_censored)"
+ },
+ "arms": {
+  "ARM1_joint_quantile_over_rank_war": {
+   "spec": "union both sides' rows, order by (rank_war, side, within-side input position), map onto the JOINT consensus-FV multiset with the production interpolated-quantile mechanics + decimal tiebreak; within-side order preserved exactly",
+   "G1_spearman": {
+    "rho_incumbent": 0.2589,
+    "rho_candidate": 0.2573,
+    "gap": -0.0016,
+    "gap_boot_mean": -0.0018,
+    "gap_lo95": -0.0097,
+    "gap_ci90": [
+     -0.0097,
+     0.0057
+    ],
+    "p_gap_gt_0": 0.344,
+    "per_fold": {
+     "2020": {
+      "n": 373,
+      "rho_incumbent": 0.2526,
+      "rho_candidate": 0.2385
+     },
+     "2021": {
+      "n": 279,
+      "rho_incumbent": 0.1767,
+      "rho_candidate": 0.1683
+     },
+     "2022": {
+      "n": 496,
+      "rho_incumbent": 0.3064,
+      "rho_candidate": 0.3128
+     },
+     "2023": {
+      "n": 527,
+      "rho_incumbent": 0.2787,
+      "rho_candidate": 0.2772
+     }
+    },
+    "reps": 2000,
+    "seed": 20260715,
+    "pass": false
+   },
+   "G2_auc": {
+    "joint_incumbent": {
+     "contributor": 0.8547,
+     "star": 0.9087
+    },
+    "joint_candidate": {
+     "contributor": 0.8568,
+     "star": 0.9041
+    },
+    "gap": {
+     "contributor": 0.0021,
+     "star": -0.0046
+    },
+    "gap_ci90": {
+     "contributor": [
+      -0.0025,
+      0.0068
+     ],
+     "star": [
+      -0.0125,
+      0.0027
+     ]
+    },
+    "per_side": {
+     "hit": {
+      "incumbent": {
+       "contributor": 0.8901,
+       "star": 0.9036
+      },
+      "candidate": {
+       "contributor": 0.8928,
+       "star": 0.9034
+      }
+     },
+     "pit": {
+      "incumbent": {
+       "contributor": 0.8113,
+       "star": 0.9134
+      },
+      "candidate": {
+       "contributor": 0.8116,
+       "star": 0.9049
+      }
+     }
+    },
+    "tolerance": 0.005,
+    "reps": 2000,
+    "seed": 20260715,
+    "pass": true
+   },
+   "S1_top25": {
+    "incumbent": {
+     "n_hit": 63,
+     "n_pit": 37,
+     "pit_share": 0.37,
+     "hit": {
+      "n": 63,
+      "mean_war": 9.49,
+      "median_war": 7.28,
+      "contrib_rate": 0.762,
+      "star_rate": 0.429
+     },
+     "pit": {
+      "n": 37,
+      "mean_war": 4.96,
+      "median_war": 3.56,
+      "contrib_rate": 0.541,
+      "star_rate": 0.216
+     },
+     "boot_seed20260715": {
+      "mean_diff": 4.52,
+      "mean_ci90": [
+       2.07,
+       6.93
+      ],
+      "mean_se": 1.484,
+      "median_diff": 3.72,
+      "median_ci90": [
+       1.16,
+       8.41
+      ],
+      "median_se": 2.168,
+      "p_hit_gt_pit": 0.998
+     },
+     "boot_seed7_fside_comparability": {
+      "mean_diff": 4.52,
+      "mean_ci90": [
+       2.13,
+       6.98
+      ],
+      "mean_se": 1.509,
+      "median_diff": 3.72,
+      "median_ci90": [
+       1.33,
+       8.41
+      ],
+      "median_se": 2.099,
+      "p_hit_gt_pit": 0.999
+     }
+    },
+    "candidate": {
+     "n_hit": 87,
+     "n_pit": 13,
+     "pit_share": 0.13,
+     "hit": {
+      "n": 87,
+      "mean_war": 8.26,
+      "median_war": 6.01,
+      "contrib_rate": 0.69,
+      "star_rate": 0.368
+     },
+     "pit": {
+      "n": 13,
+      "mean_war": 6.51,
+      "median_war": 5.04,
+      "contrib_rate": 0.769,
+      "star_rate": 0.231
+     },
+     "boot_seed20260715": {
+      "mean_diff": 1.75,
+      "mean_ci90": [
+       -1.29,
+       4.68
+      ],
+      "mean_se": 1.793,
+      "median_diff": 0.97,
+      "median_ci90": [
+       -2.8,
+       3.19
+      ],
+      "median_se": 2.064,
+      "p_hit_gt_pit": 0.84
+     },
+     "boot_seed7_fside_comparability": {
+      "mean_diff": 1.75,
+      "mean_ci90": [
+       -1.26,
+       4.67
+      ],
+      "mean_se": 1.792,
+      "median_diff": 0.97,
+      "median_ci90": [
+       -2.55,
+       3.17
+      ],
+      "median_se": 1.998,
+      "p_hit_gt_pit": 0.845
+     }
+    },
+    "gap_not_increased": true
+   },
+   "S4_midband_restamp": {
+    "registered_reference": {
+     "rank_war_051-100": -1.33,
+     "rank_war_101-200": -0.46,
+     "equal_fv40": -0.21,
+     "source": "data/xfv_side_fairness_eval.json (seed 7)"
+    },
+    "cells": {
+     "cand_display_051-100": {
+      "pit_share": 0.455,
+      "hit": {
+       "n": 109,
+       "mean_war": 1.75,
+       "median_war": 0.0,
+       "contrib_rate": 0.257,
+       "star_rate": 0.046
+      },
+      "pit": {
+       "n": 91,
+       "mean_war": 2.75,
+       "median_war": 0.76,
+       "contrib_rate": 0.308,
+       "star_rate": 0.088
+      },
+      "boot": {
+       "mean_diff": -1.0,
+       "mean_ci90": [
+        -1.92,
+        -0.03
+       ],
+       "mean_se": 0.575,
+       "median_diff": -0.76,
+       "median_ci90": [
+        -1.6,
+        -0.38
+       ],
+       "median_se": 0.369,
+       "p_hit_gt_pit": 0.045
+      }
+     },
+     "cand_display_101-200": {
+      "pit_share": 0.59,
+      "hit": {
+       "n": 164,
+       "mean_war": 0.41,
+       "median_war": 0.0,
+       "contrib_rate": 0.061,
+       "star_rate": 0.006
+      },
+      "pit": {
+       "n": 236,
+       "mean_war": 0.88,
+       "median_war": 0.0,
+       "contrib_rate": 0.119,
+       "star_rate": 0.025
+      },
+      "boot": {
+       "mean_diff": -0.47,
+       "mean_ci90": [
+        -0.84,
+        -0.1
+       ],
+       "mean_se": 0.226,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.0,
+       "p_hit_gt_pit": 0.017
+      }
+     },
+     "equal_fv40": {
+      "hit": {
+       "n": 400,
+       "mean_war": 0.32,
+       "median_war": 0.0,
+       "contrib_rate": 0.05,
+       "star_rate": 0.007
+      },
+      "pit": {
+       "n": 489,
+       "mean_war": 0.53,
+       "median_war": 0.0,
+       "contrib_rate": 0.082,
+       "star_rate": 0.01
+      },
+      "boot": {
+       "mean_diff": -0.21,
+       "mean_ci90": [
+        -0.42,
+        0.01
+       ],
+       "mean_se": 0.131,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.0,
+       "p_hit_gt_pit": 0.054
+      }
+     }
+    },
+    "review_flags": {
+     "cand_display_051-100": {
+      "mean_diff": -1.0,
+      "flag_threshold_hit_favorable": 1.91,
+      "flagged_large_hit_favorable": false
+     },
+     "cand_display_101-200": {
+      "mean_diff": -0.47,
+      "flag_threshold_hit_favorable": 0.69,
+      "flagged_large_hit_favorable": false
+     },
+     "equal_fv40": {
+      "mean_diff": -0.21,
+      "flag_threshold_hit_favorable": 0.34,
+      "flagged_large_hit_favorable": false
+     }
+    }
+   },
+   "gate_verdicts": {
+    "G1": "FAIL (gap -0.0016, lo95 -0.0097, P(gap>0)=0.344)",
+    "G2": "PASS (contributor +0.0021, star -0.0046, both >= -0.005)",
+    "G4_S1": "PASS (top-25 hit-minus-pit 4.52 -> 1.75, pit share 0.37 -> 0.13)",
+    "G4_S4": "no cell flips to large hit-favorable (all still pit-favorable)"
+   }
+  },
+  "ARM2_expected_war_at_rank_crosswalk": {
+   "spec": {
+    "curve": "per fold+side: fold-model score on PRE-FOLD train rows, unweighted PAVA (nondecreasing) of target_censored over train rank quantiles; test rows read the curve at their within-side test rank quantile (interpolated)",
+    "interleave": "union ordered by expected_war; ties rank_war -> side (hit first) -> within-side index",
+    "grade_map": "joint consensus-FV multiset, ARM-1 mechanics"
+   },
+   "implementation_note": "flat-PAVA-block float ulps initially inverted the joint order inside blocks (~2-display-grade artifacts); expected_war is rounded to 6dp so blocks tie exactly and the rank_war tiebreak preserves within-side order (violations: 0)",
+   "G1_spearman": {
+    "rho_incumbent": 0.2589,
+    "rho_candidate": 0.2658,
+    "gap": 0.0069,
+    "gap_boot_mean": 0.0066,
+    "gap_lo95": -0.0055,
+    "gap_ci90": [
+     -0.0055,
+     0.0187
+    ],
+    "p_gap_gt_0": 0.809,
+    "per_fold": {
+     "2020": {
+      "n": 373,
+      "rho_incumbent": 0.2526,
+      "rho_candidate": 0.2411
+     },
+     "2021": {
+      "n": 279,
+      "rho_incumbent": 0.1767,
+      "rho_candidate": 0.1965
+     },
+     "2022": {
+      "n": 496,
+      "rho_incumbent": 0.3064,
+      "rho_candidate": 0.3299
+     },
+     "2023": {
+      "n": 527,
+      "rho_incumbent": 0.2787,
+      "rho_candidate": 0.2722
+     }
+    },
+    "reps": 2000,
+    "seed": 20260715,
+    "pass": false
+   },
+   "G2_auc": {
+    "joint_incumbent": {
+     "contributor": 0.8547,
+     "star": 0.9087
+    },
+    "joint_candidate": {
+     "contributor": 0.8535,
+     "star": 0.9074
+    },
+    "gap": {
+     "contributor": -0.0013,
+     "star": -0.0012
+    },
+    "gap_ci90": {
+     "contributor": [
+      -0.0086,
+      0.0059
+     ],
+     "star": [
+      -0.0088,
+      0.0057
+     ]
+    },
+    "per_side": {
+     "hit": {
+      "incumbent": {
+       "contributor": 0.8901,
+       "star": 0.9036
+      },
+      "candidate": {
+       "contributor": 0.892,
+       "star": 0.913
+      }
+     },
+     "pit": {
+      "incumbent": {
+       "contributor": 0.8113,
+       "star": 0.9134
+      },
+      "candidate": {
+       "contributor": 0.7994,
+       "star": 0.8924
+      }
+     }
+    },
+    "tolerance": 0.005,
+    "reps": 2000,
+    "seed": 20260715,
+    "pass": true
+   },
+   "S1_top25": {
+    "incumbent": {
+     "n_hit": 63,
+     "n_pit": 37,
+     "pit_share": 0.37,
+     "hit": {
+      "n": 63,
+      "mean_war": 9.49,
+      "median_war": 7.28,
+      "contrib_rate": 0.762,
+      "star_rate": 0.429
+     },
+     "pit": {
+      "n": 37,
+      "mean_war": 4.96,
+      "median_war": 3.56,
+      "contrib_rate": 0.541,
+      "star_rate": 0.216
+     },
+     "boot_seed20260715": {
+      "mean_diff": 4.52,
+      "mean_ci90": [
+       2.07,
+       6.93
+      ],
+      "mean_se": 1.484,
+      "median_diff": 3.72,
+      "median_ci90": [
+       1.16,
+       8.41
+      ],
+      "median_se": 2.168,
+      "p_hit_gt_pit": 0.998
+     },
+     "boot_seed7_fside_comparability": {
+      "mean_diff": 4.52,
+      "mean_ci90": [
+       2.13,
+       6.98
+      ],
+      "mean_se": 1.509,
+      "median_diff": 3.72,
+      "median_ci90": [
+       1.33,
+       8.41
+      ],
+      "median_se": 2.099,
+      "p_hit_gt_pit": 0.999
+     }
+    },
+    "candidate": {
+     "n_hit": 88,
+     "n_pit": 12,
+     "pit_share": 0.12,
+     "hit": {
+      "n": 88,
+      "mean_war": 8.12,
+      "median_war": 5.91,
+      "contrib_rate": 0.682,
+      "star_rate": 0.364
+     },
+     "pit": {
+      "n": 12,
+      "mean_war": 6.12,
+      "median_war": 4.88,
+      "contrib_rate": 0.667,
+      "star_rate": 0.25
+     },
+     "boot_seed20260715": {
+      "mean_diff": 2.0,
+      "mean_ci90": [
+       -1.33,
+       5.06
+      ],
+      "mean_se": 1.944,
+      "median_diff": 1.02,
+      "median_ci90": [
+       -3.45,
+       4.25
+      ],
+      "median_se": 2.355,
+      "p_hit_gt_pit": 0.835
+     },
+     "boot_seed7_fside_comparability": {
+      "mean_diff": 2.0,
+      "mean_ci90": [
+       -1.31,
+       5.21
+      ],
+      "mean_se": 1.934,
+      "median_diff": 1.02,
+      "median_ci90": [
+       -3.28,
+       4.13
+      ],
+      "median_se": 2.306,
+      "p_hit_gt_pit": 0.849
+     }
+    },
+    "gap_not_increased": true
+   },
+   "S4_midband_restamp": {
+    "cells": {
+     "cand_display_051-100": {
+      "pit_share": 0.49,
+      "hit": {
+       "n": 102,
+       "mean_war": 1.65,
+       "median_war": 0.0,
+       "contrib_rate": 0.255,
+       "star_rate": 0.039
+      },
+      "pit": {
+       "n": 98,
+       "mean_war": 2.79,
+       "median_war": 0.94,
+       "contrib_rate": 0.316,
+       "star_rate": 0.102
+      },
+      "boot": {
+       "mean_diff": -1.14,
+       "mean_ci90": [
+        -2.09,
+        -0.18
+       ],
+       "mean_se": 0.577,
+       "median_diff": -0.94,
+       "median_ci90": [
+        -1.63,
+        -0.44
+       ],
+       "median_se": 0.37,
+       "p_hit_gt_pit": 0.021
+      }
+     },
+     "cand_display_101-200": {
+      "pit_share": 0.573,
+      "hit": {
+       "n": 171,
+       "mean_war": 0.53,
+       "median_war": 0.0,
+       "contrib_rate": 0.076,
+       "star_rate": 0.012
+      },
+      "pit": {
+       "n": 229,
+       "mean_war": 0.69,
+       "median_war": 0.0,
+       "contrib_rate": 0.096,
+       "star_rate": 0.013
+      },
+      "boot": {
+       "mean_diff": -0.17,
+       "mean_ci90": [
+        -0.53,
+        0.2
+       ],
+       "mean_se": 0.222,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.0,
+       "p_hit_gt_pit": 0.217
+      }
+     },
+     "equal_fv40": {
+      "hit": {
+       "n": 400,
+       "mean_war": 0.32,
+       "median_war": 0.0,
+       "contrib_rate": 0.05,
+       "star_rate": 0.007
+      },
+      "pit": {
+       "n": 489,
+       "mean_war": 0.53,
+       "median_war": 0.0,
+       "contrib_rate": 0.082,
+       "star_rate": 0.01
+      },
+      "boot": {
+       "mean_diff": -0.21,
+       "mean_ci90": [
+        -0.42,
+        0.01
+       ],
+       "mean_se": 0.131,
+       "median_diff": 0.0,
+       "median_ci90": [
+        0.0,
+        0.0
+       ],
+       "median_se": 0.0,
+       "p_hit_gt_pit": 0.054
+      }
+     }
+    },
+    "review_flags": {
+     "cand_display_051-100": {
+      "mean_diff": -1.14,
+      "flag_threshold_hit_favorable": 1.91,
+      "flagged_large_hit_favorable": false
+     },
+     "cand_display_101-200": {
+      "mean_diff": -0.17,
+      "flag_threshold_hit_favorable": 0.68,
+      "flagged_large_hit_favorable": false
+     },
+     "equal_fv40": {
+      "mean_diff": -0.21,
+      "flag_threshold_hit_favorable": 0.34,
+      "flagged_large_hit_favorable": false
+     }
+    }
+   },
+   "gate_verdicts": {
+    "G1": "FAIL (gap +0.0069, lo95 -0.0055, P(gap>0)=0.809 -- better than incumbent in point estimate but NOT at the registered lo95(gap)>=0 bar)",
+    "G2": "PASS (contributor -0.0013, star -0.0012, both >= -0.005)",
+    "G4_S1": "PASS (top-25 4.52 -> 2.00, pit share 0.12)",
+    "G4_S4": "no cell flips to large hit-favorable"
+   }
+  }
+ },
+ "G3_within_side_invariance": {
+  "frame": "production analogue: incumbent vs ARM-1 candidate full scoring (resolved + live, both sides), repo data, outputs redirected",
+  "all_pass": true,
+  "asserts": {
+   "resolved_hit": {
+    "n_incumbent": 1828,
+    "n_candidate": 1828,
+    "same_players": true,
+    "n_frozen_mismatches": 0,
+    "dist_p_bust_mismatches": 0,
+    "display_monotone_along_stamping_order": {
+     "incumbent": true,
+     "candidate": true
+    },
+    "within_side_rank_order_identical": true,
+    "pass": true
+   },
+   "resolved_pit": {
+    "n_incumbent": 1903,
+    "n_candidate": 1903,
+    "same_players": true,
+    "n_frozen_mismatches": 0,
+    "dist_p_bust_mismatches": 0,
+    "display_monotone_along_stamping_order": {
+     "incumbent": true,
+     "candidate": true
+    },
+    "within_side_rank_order_identical": true,
+    "pass": true
+   },
+   "live_hit": {
+    "n_incumbent": 1929,
+    "n_candidate": 1929,
+    "same_players": true,
+    "n_frozen_mismatches": 0,
+    "dist_p_bust_mismatches": 0,
+    "display_monotone_along_stamping_order": {
+     "incumbent": true,
+     "candidate": true
+    },
+    "within_side_rank_order_identical": true,
+    "pass": true
+   },
+   "live_pit": {
+    "n_incumbent": 2202,
+    "n_candidate": 2202,
+    "same_players": true,
+    "n_frozen_mismatches": 0,
+    "dist_p_bust_mismatches": 0,
+    "display_monotone_along_stamping_order": {
+     "incumbent": true,
+     "candidate": true
+    },
+    "within_side_rank_order_identical": true,
+    "pass": true
+   }
+  },
+  "frozen_fields": [
+   "rank_war",
+   "xfv_war_6yr",
+   "xfv_grade",
+   "xfv_minus_consensus",
+   "consensus_fv",
+   "p_bucket",
+   "p_bust",
+   "factors",
+   "injury_factor",
+   "statcast_factor",
+   "krp_plus",
+   "realized_war_6yr",
+   "censored"
+  ],
+  "S3_bucket_logloss": "byte-identical by construction AND verified: p_bucket / p_bust / dist.p_bust 0 mismatches across all 4 pools",
+  "incumbent_regen_vs_committed": "byte-identical (xfv_scored_live.json + xfv_scored_live_pitcher.json) -- no environment drift"
+ },
+ "S5_fold_counts": {
+  "hit": {
+   "2020": {
+    "n_train": 844,
+    "n_test": 169,
+    "passes_guards": true
+   },
+   "2021": {
+    "n_train": 1013,
+    "n_test": 127,
+    "passes_guards": true
+   },
+   "2022": {
+    "n_train": 1140,
+    "n_test": 262,
+    "passes_guards": true
+   },
+   "2023": {
+    "n_train": 1402,
+    "n_test": 259,
+    "passes_guards": true
+   },
+   "2024": {
+    "n_train": 1661,
+    "n_test": 167,
+    "passes_guards": true
+   }
+  },
+  "pit": {
+   "2020": {
+    "n_train": 893,
+    "n_test": 204,
+    "passes_guards": true
+   },
+   "2021": {
+    "n_train": 1097,
+    "n_test": 152,
+    "passes_guards": true
+   },
+   "2022": {
+    "n_train": 1249,
+    "n_test": 234,
+    "passes_guards": true
+   },
+   "2023": {
+    "n_train": 1483,
+    "n_test": 268,
+    "passes_guards": true
+   },
+   "2024": {
+    "n_train": 1751,
+    "n_test": 152,
+    "passes_guards": true
+   }
+  }
+ },
+ "churn_if_shipped": {
+  "note": "INFORMATIONAL (nothing shipped): ARM-1 on the 2026-07-15 live board",
+  "pit_share_by_band": {
+   "25": {
+    "incumbent_pit_share": 0.28,
+    "candidate_pit_share": 0.08
+   },
+   "100": {
+    "incumbent_pit_share": 0.39,
+    "candidate_pit_share": 0.12
+   },
+   "250": {
+    "incumbent_pit_share": 0.392,
+    "candidate_pit_share": 0.276
+   }
+  },
+  "summary_by_side": {
+   "hit": {
+    "n_pool": 1929,
+    "n_moved": 549,
+    "mean_grade_delta": 0.12,
+    "max_up": 3.7,
+    "max_down": -2.7,
+    "share_of_pool_within_1_grade": 0.875,
+    "total_surplus_delta_mm": 705.2
+   },
+   "pit": {
+    "n_pool": 2202,
+    "n_moved": 537,
+    "mean_grade_delta": -0.12,
+    "max_up": 2.7,
+    "max_down": -8.1,
+    "share_of_pool_within_1_grade": 0.903,
+    "total_surplus_delta_mm": -576.2
+   }
+  },
+  "n_players_moved": 1086,
+  "spot_checks": {
+   "andrew_moore": {
+    "side": "pit",
+    "consensus_fv": 45.3,
+    "grade": [
+     45.1,
+     42.7
+    ],
+    "joint_rank": [
+     159,
+     252
+    ],
+    "surplus_mm": [
+     1.9,
+     1.9
+    ]
+   },
+   "leonardo_pineda": {
+    "side": "hit",
+    "consensus_fv": 48.0,
+    "grade": [
+     45.0,
+     45.3
+    ],
+    "joint_rank": [
+     185,
+     146
+    ],
+    "surplus_mm": [
+     7.0,
+     7.8
+    ]
+   },
+   "melvin_pineda": {
+    "side": "pit",
+    "consensus_fv": 35.0,
+    "grade": [
+     45.0,
+     42.7
+    ],
+    "joint_rank": [
+     223,
+     315
+    ],
+    "surplus_mm": [
+     5.4,
+     3.6
+    ]
+   },
+   "frandel_pineda": {
+    "side": "pit",
+    "consensus_fv": 41.7,
+    "grade": [
+     40.3,
+     40.0
+    ],
+    "joint_rank": [
+     470,
+     491
+    ],
+    "surplus_mm": [
+     1.3,
+     1.1
+    ]
+   },
+   "jack_pineda": {
+    "side": "hit",
+    "consensus_fv": 35.0,
+    "grade": [
+     37.7,
+     37.7
+    ],
+    "joint_rank": [
+     1241,
+     1274
+    ],
+    "surplus_mm": [
+     1.3,
+     1.3
+    ]
+   },
+   "queni_pineda": {
+    "side": "hit",
+    "consensus_fv": 35.0,
+    "grade": [
+     37.7,
+     35.0
+    ],
+    "joint_rank": [
+     1324,
+     1481
+    ],
+    "surplus_mm": [
+     1.1,
+     0.7
+    ]
+   },
+   "leandro_pineda": {
+    "side": "hit",
+    "consensus_fv": 40.0,
+    "grade": [
+     35.0,
+     35.0
+    ],
+    "joint_rank": [
+     2304,
+     2304
+    ],
+    "surplus_mm": [
+     0.8,
+     0.8
+    ]
+   },
+   "deiker_pineda": {
+    "side": "pit",
+    "consensus_fv": 35.0,
+    "grade": [
+     35.0,
+     35.0
+    ],
+    "joint_rank": [
+     2590,
+     2590
+    ],
+    "surplus_mm": [
+     0.6,
+     0.6
+    ]
+   },
+   "esmith_pineda": {
+    "side": "hit",
+    "consensus_fv": 40.0,
+    "grade": [
+     35.0,
+     35.0
+    ],
+    "joint_rank": [
+     3995,
+     3995
+    ],
+    "surplus_mm": [
+     0.7,
+     0.7
+    ]
+   },
+   "franklin_arias": {
+    "side": "hit",
+    "consensus_fv": 63.0,
+    "grade": [
+     65.0,
+     65.0
+    ],
+    "joint_rank": [
+     1,
+     1
+    ],
+    "surplus_mm": [
+     98.5,
+     98.5
+    ]
+   },
+   "jesus_made": {
+    "side": "hit",
+    "consensus_fv": 65.0,
+    "grade": [
+     64.1,
+     64.1
+    ],
+    "joint_rank": [
+     2,
+     2
+    ],
+    "surplus_mm": [
+     90.8,
+     90.8
+    ]
+   },
+   "leo_de_vries": {
+    "side": "hit",
+    "consensus_fv": 64.1,
+    "grade": [
+     63.0,
+     63.0
+    ],
+    "joint_rank": [
+     3,
+     3
+    ],
+    "surplus_mm": [
+     82.7,
+     82.7
+    ]
+   },
+   "max_clark": {
+    "side": "hit",
+    "consensus_fv": 61.0,
+    "grade": [
+     61.0,
+     62.0
+    ],
+    "joint_rank": [
+     6,
+     4
+    ],
+    "surplus_mm": [
+     67.7,
+     75.0
+    ]
+   },
+   "eli_willits": {
+    "side": "hit",
+    "consensus_fv": 58.1,
+    "grade": [
+     58.1,
+     61.1
+    ],
+    "joint_rank": [
+     8,
+     5
+    ],
+    "surplus_mm": [
+     47.4,
+     63.8
+    ]
+   },
+   "josue_de_paula": {
+    "side": "hit",
+    "consensus_fv": 58.1,
+    "grade": [
+     58.1,
+     61.0
+    ],
+    "joint_rank": [
+     9,
+     6
+    ],
+    "surplus_mm": [
+     50.8,
+     67.9
+    ]
+   },
+   "rainiel_rodriguez": {
+    "side": "hit",
+    "consensus_fv": 58.1,
+    "grade": [
+     58.1,
+     60.1
+    ],
+    "joint_rank": [
+     10,
+     7
+    ],
+    "surplus_mm": [
+     50.7,
+     61.3
+    ]
+   },
+   "walker_jenkins": {
+    "side": "hit",
+    "consensus_fv": 57.1,
+    "grade": [
+     57.1,
+     58.1
+    ],
+    "joint_rank": [
+     11,
+     8
+    ],
+    "surplus_mm": [
+     45.7,
+     50.6
+    ]
+   },
+   "george_lombard_jr": {
+    "side": "hit",
+    "consensus_fv": 57.0,
+    "grade": [
+     57.0,
+     58.1
+    ],
+    "joint_rank": [
+     12,
+     9
+    ],
+    "surplus_mm": [
+     39.3,
+     43.8
+    ]
+   },
+   "luis_pena": {
+    "side": "hit",
+    "consensus_fv": 53.9,
+    "grade": [
+     56.1,
+     58.1
+    ],
+    "joint_rank": [
+     13,
+     10
+    ],
+    "surplus_mm": [
+     38.3,
+     47.4
+    ]
+   },
+   "kade_anderson": {
+    "side": "pit",
+    "consensus_fv": 60.1,
+    "grade": [
+     62.0,
+     57.0
+    ],
+    "joint_rank": [
+     4,
+     12
+    ],
+    "surplus_mm": [
+     75.5,
+     43.3
+    ]
+   },
+   "seth_hernandez": {
+    "side": "pit",
+    "consensus_fv": 62.0,
+    "grade": [
+     61.1,
+     54.1
+    ],
+    "joint_rank": [
+     5,
+     18
+    ],
+    "surplus_mm": [
+     61.2,
+     28.3
+    ]
+   },
+   "ryan_sloan": {
+    "side": "pit",
+    "consensus_fv": 61.1,
+    "grade": [
+     60.1,
+     52.0
+    ],
+    "joint_rank": [
+     7,
+     27
+    ],
+    "surplus_mm": [
+     57.4,
+     24.9
+    ]
+   },
+   "thomas_white": {
+    "side": "pit",
+    "consensus_fv": 55.9,
+    "grade": [
+     55.9,
+     50.0
+    ],
+    "joint_rank": [
+     14,
+     66
+    ],
+    "surplus_mm": [
+     38.1,
+     21.0
+    ]
+   },
+   "christian_zazueta": {
+    "side": "pit",
+    "consensus_fv": 50.2,
+    "grade": [
+     53.0,
+     50.0
+    ],
+    "joint_rank": [
+     23,
+     74
+    ],
+    "surplus_mm": [
+     28.4,
+     21.0
+    ]
+   },
+   "nolan_perry": {
+    "side": "pit",
+    "consensus_fv": 51.7,
+    "grade": [
+     52.6,
+     50.0
+    ],
+    "joint_rank": [
+     24,
+     75
+    ],
+    "surplus_mm": [
+     23.6,
+     17.7
+    ]
+   },
+   "tyler_bremner": {
+    "side": "pit",
+    "consensus_fv": 52.1,
+    "grade": [
+     52.1,
+     48.8
+    ],
+    "joint_rank": [
+     25,
+     87
+    ],
+    "surplus_mm": [
+     24.8,
+     16.8
+    ]
+   },
+   "caden_hunter": {
+    "side": "pit",
+    "consensus_fv": 50.0,
+    "grade": [
+     52.0,
+     48.8
+    ],
+    "joint_rank": [
+     27,
+     88
+    ],
+    "surplus_mm": [
+     20.6,
+     13.7
+    ]
+   },
+   "carlos_lagrange": {
+    "side": "pit",
+    "consensus_fv": 51.3,
+    "grade": [
+     52.0,
+     48.4
+    ],
+    "joint_rank": [
+     28,
+     96
+    ],
+    "surplus_mm": [
+     6.4,
+     4.2
+    ]
+   },
+   "johnny_king": {
+    "side": "pit",
+    "consensus_fv": 48.8,
+    "grade": [
+     51.8,
+     48.4
+    ],
+    "joint_rank": [
+     30,
+     97
+    ],
+    "surplus_mm": [
+     23.1,
+     15.3
+    ]
+   }
+  },
+  "full_report": "scratchpad joint-display-map/churn_report.json + CHURN.md"
+ },
+ "ship": {
+  "enabled": false,
+  "gate_pass": false,
+  "ship_rule": "ARM-1 ships iff G1 AND G2 pass; else ARM-2 under the same gates; else NO-SHIP with the full ledger (registered 2026-07-15)",
+  "candidate_if_reregistered": {
+   "arm": "ARM-1 (patched efv_score.py exists, G3-verified); ARM-2 ranks better pooled (+0.0069) but is more parametric and touches the interleave with fitted curves",
+   "open_question_for_owner": "the fairness fix is real and large (top-25 gap 4.52 -> 1.75, the exact value the registration predicted) while the accuracy cost is at the noise floor (ARM-1 -0.0016) or a sub-significant gain (ARM-2 +0.0069). G1 as registered demands a significant accuracy WIN, which display relabeling cannot deliver because mid-band pitchers outperform at equal score -- the incumbent's inflation is accidentally compensatory below the top band. A re-registration would need G1 as a NO-HARM band instead of a strict win, which is the owner's call, not this lane's."
+  }
+ },
+ "honest_notes": [
+  "the TOP-QUANT ledger recorded 'HONEST PATH: a JOINT cross-side quantile map (needs a NEW owner registration)' -- this run IS that registration, and the pre-registered accuracy gate said no",
+  "root cause of the G1 failures: the display skew is concentrated in the top-25 band (outcome-flat pit tail), while in the 51-200 mid-band pitchers OUTPERFORM hitters at equal rank_war (S4 cells -1.0 to -1.33) -- a joint map deflates mid-band pitchers too, which cancels (ARM-1) or mutes (ARM-2) the top-band accuracy gain",
+  "every computation forward-chained; no fold reuse between selection and gating; gates evaluated exactly as registered, no gate-shopping"
+ ]
+}

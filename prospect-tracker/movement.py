@@ -321,7 +321,7 @@ def compute_genuine_movement(p: dict) -> dict:
         if direction == "flat" and spread >= 5:
             drivers.append({"label": f"sources split (spread {spread:g})",
                             "valence": "neutral",
-                            "tooltip": "Sources disagree on FV — no clear move"})
+                            "tooltip": "Sources disagree on FV - no clear move"})
     else:
         # No genuine same-source step. Fall back to on-field performance, then
         # explain the flat call (panel update vs building sample).
@@ -329,7 +329,7 @@ def compute_genuine_movement(p: dict) -> dict:
         if n_instances <= 1:
             direction, basis = "flat", "insufficient"
             drivers.append({"label": "building sample (1 grade)", "valence": "neutral",
-                            "tooltip": "Single FV observation — not enough to call a move"})
+                            "tooltip": "Single FV observation - not enough to call a move"})
         elif perf_is_riser:
             direction, basis = "up", "performance"
             if perf_driver:

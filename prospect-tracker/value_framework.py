@@ -1155,6 +1155,27 @@ def _service_path_surplus_usd(season_wars: list[float], super_two: bool,
                for t in range(len(season_wars)))
 
 
+def _arb_ladder(st: dict, super_two: bool) -> tuple[int, list[float]]:
+    """Pre-arb year count + arb-fraction ladder for a service path (the single
+    source of the super-two ladder; the prospect, remaining and consumed paths all
+    build it here). Super-two drops one pre-arb year and prepends the extra EARLY
+    arb year onto the standard schedule. CONSTRAINT: that prepended year is the
+    player's first arbitration year held a year early, so its fraction is clamped
+    to the schedule's own arb-1 step -- the ladder is monotone under every
+    valuation set by construction (an earlier arb year can never pay more than the
+    one after it). Under the legacy 0.40/0.60/0.80 schedule the calibrated 0.25
+    sits below arb-1 and passes through unchanged (base-identity output stays
+    byte-identical); under the clemens_2026 0.15/0.35/0.50/0.75 schedule the
+    legacy 0.25 exceeded arb-1 and inverted the ladder, so it clamps to the 0.15
+    arb-1 fraction. The clamp is a consistency constraint on the configured
+    super_two_first_fraction, not a new empirical estimate of super-two awards."""
+    fracs = [float(x) for x in st["arb_model"]["fractions_of_fa_value"]]
+    if not super_two:
+        return int(st["pre_arb_years"]), fracs
+    s2_first = min(float(st["arb_model"]["super_two_first_fraction"]), fracs[0])
+    return int(st["pre_arb_years"]) - 1, [s2_first] + fracs
+
+
 def _service_path_salaries(season_wars: list[float], markets: list[float],
                            super_two: bool) -> list[float]:
     """Per-season salary ($) over the control window: pre_arb_years at the league
@@ -1172,13 +1193,7 @@ def _service_path_salaries(season_wars: list[float], markets: list[float],
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
-    fracs = list(st["arb_model"]["fractions_of_fa_value"])
-    if super_two:
-        pre_arb = int(st["pre_arb_years"]) - 1
-        arb_fracs = [float(st["arb_model"]["super_two_first_fraction"])] + fracs
-    else:
-        pre_arb = int(st["pre_arb_years"])
-        arb_fracs = fracs
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
     arb_basis = str(st.get("arb_basis", "current_season"))
     out: list[float] = []
     for t in range(len(season_wars)):
@@ -1940,13 +1955,7 @@ def _remaining_path_surplus_usd(season_wars: list[float], start_k: int, super_tw
     cfg = _config()
     st = cfg["service_time"]
     league_min = float(st["league_min_usd"])
-    fracs = list(st["arb_model"]["fractions_of_fa_value"])
-    if super_two:
-        pre_arb = int(st["pre_arb_years"]) - 1
-        arb_fracs = [float(st["arb_model"]["super_two_first_fraction"])] + fracs
-    else:
-        pre_arb = int(st["pre_arb_years"])
-        arb_fracs = fracs
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
     net = (1.0 + float(cfg.get("dollars_per_war_inflation", 0.0))) / (1.0 + float(cfg["discount_rate"]))
     # Honor service_time.arb_basis + the league-min floor EXACTLY like
     # _service_path_salaries (the prospect path), so start_k=0 really does reproduce
@@ -2093,7 +2102,8 @@ def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
     model (single source of truth -- no separate frontend salary table): the
     first `pre_arb_years` seasons at league minimum, then
     arb_model.fractions_of_fa_value of THAT season's tiered market value
-    (super-two prepends super_two_first_fraction and drops one pre-arb year),
+    (super-two drops one pre-arb year and prepends the extra early arb year at
+    super_two_first_fraction clamped to the arb-1 step; see _arb_ladder),
     then full tiered market for any post-control (FA) seasons; every year floored
     at the league minimum. A real per-year salary (USD) supplied in
     `salary_by_year` (e.g. Spotrac) OVERRIDES the estimate for that year.
@@ -2127,13 +2137,7 @@ def realized_consumed_seasons(season_wars_by_year, *, salary_by_year=None,
     st = cfg["service_time"]
     league_min_mm = float(st["league_min_usd"]) / 1e6
     control_years = int(st["control_years"])
-    fracs = list(st["arb_model"]["fractions_of_fa_value"])
-    if super_two:
-        pre_arb = int(st["pre_arb_years"]) - 1
-        arb_fracs = [float(st["arb_model"]["super_two_first_fraction"])] + fracs
-    else:
-        pre_arb = int(st["pre_arb_years"])
-        arb_fracs = fracs
+    pre_arb, arb_fracs = _arb_ladder(st, super_two)
     sby = salary_by_year or {}
 
     arb_basis = str(st.get("arb_basis", "current_season"))

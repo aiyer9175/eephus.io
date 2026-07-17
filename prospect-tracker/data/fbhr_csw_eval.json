@@ -1,0 +1,457 @@
+{
+ "generated_at": "2026-07-15",
+ "seasons": [
+  2018,
+  2019,
+  2021,
+  2022,
+  2023,
+  2024,
+  2025
+ ],
+ "seed": 20260715,
+ "boot": 2000,
+ "runtime_seconds": 30.3,
+ "walker_table": "C:\\Users\\noah\\AppData\\Local\\Temp\\claude\\c--Users-noah-baseball-projects-BaseballR\\331298c7-aaee-481d-a8c1-7d07d0329da6\\scratchpad\\w3-walker-fbhr-csw\\win_prob_pitcher_seasons.parquet",
+ "leverage_source": "offline per-season rebuild from .cache/win_prob (offline_leverage.py; same _fold_game/_finalize as mlb_leverage; zero live fetches). Only entry_inning is load-bearing (opener drop).",
+ "reliever_pool_composition": {
+  "2018": {
+   "n_scored": 442,
+   "n_true_relievers": 442,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 442
+  },
+  "2019": {
+   "n_scored": 465,
+   "n_true_relievers": 465,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 465
+  },
+  "2021": {
+   "n_scored": 522,
+   "n_true_relievers": 522,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 522
+  },
+  "2022": {
+   "n_scored": 502,
+   "n_true_relievers": 502,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 501
+  },
+  "2023": {
+   "n_scored": 487,
+   "n_true_relievers": 487,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 487
+  },
+  "2024": {
+   "n_scored": 473,
+   "n_true_relievers": 473,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 473
+  },
+  "2025": {
+   "n_scored": 507,
+   "n_true_relievers": 507,
+   "n_openers_dropped": 0,
+   "n_entry_inning_covered": 507
+  }
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "-RA9 in year Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "-RA9 in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "gate_convention": "v1 (raw -RA9(Y+1) target, iid pair bootstrap, complete-outcome pairs) as pre-registered; pass_under_v2 reported alongside",
+ "X-R5": {
+  "experiment": "T1-9 X-R5: REM+ FB-conditioned HR prior (xFIP-lite)",
+  "candidate": "HR shrink target = lgHR/FB(Y) * EB-shrunk FB-per-TBF (fly_ball only; K_FB=80 batted balls; <20 batted balls -> incumbent pool-mean target); K_HOMERUN=400 and all other components unchanged",
+  "n_pairs": 878,
+  "n_fb_covered": 878,
+  "per_season_pool": {
+   "2018": {
+    "fb_pool": {
+     "lg_fb_rate": 0.15191178803744249,
+     "lg_hr_per_fb": 0.18120104438642298,
+     "n_covered": 376
+    },
+    "pool_mean_hr_rate": 0.0272
+   },
+   "2019": {
+    "fb_pool": {
+     "lg_fb_rate": 0.1525877960745434,
+     "lg_hr_per_fb": 0.22020304568527918,
+     "n_covered": 396
+    },
+    "pool_mean_hr_rate": 0.0336
+   },
+   "2021": {
+    "fb_pool": {
+     "lg_fb_rate": 0.16520825004812034,
+     "lg_hr_per_fb": 0.17870586126545976,
+     "n_covered": 423
+    },
+    "pool_mean_hr_rate": 0.0291
+   },
+   "2022": {
+    "fb_pool": {
+     "lg_fb_rate": 0.16533687943262412,
+     "lg_hr_per_fb": 0.15253767218267542,
+     "n_covered": 410
+    },
+    "pool_mean_hr_rate": 0.0249
+   },
+   "2023": {
+    "fb_pool": {
+     "lg_fb_rate": 0.16470477446087203,
+     "lg_hr_per_fb": 0.16638078902229847,
+     "n_covered": 394
+    },
+    "pool_mean_hr_rate": 0.0271
+   },
+   "2024": {
+    "fb_pool": {
+     "lg_fb_rate": 0.16897938819420624,
+     "lg_hr_per_fb": 0.15510241742018824,
+     "n_covered": 387
+    },
+    "pool_mean_hr_rate": 0.026
+   },
+   "2025": {
+    "fb_pool": {
+     "lg_fb_rate": 0.1717511767860335,
+     "lg_hr_per_fb": 0.15993061578490894,
+     "n_covered": 422
+    },
+    "pool_mean_hr_rate": 0.0271
+   }
+  },
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.235,
+    "rho_baselines": {
+     "vs_incumbent": 0.2374
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": -0.0025,
+      "lo95": -0.0228,
+      "hi95": 0.0196
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.2351,
+    "rho_baselines": {
+     "vs_incumbent": 0.2374
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": -0.0018,
+      "lo95": -0.0217,
+      "hi95": 0.0185
+     }
+    },
+    "cluster": {
+     "n_pairs": 878,
+     "n_players": 454,
+     "max_pairs_per_player": 5,
+     "mean_pairs_per_player": 1.93,
+     "n_strata_first_pred_season": 5
+    }
+   }
+  },
+  "gate": {
+   "bar": "ship iff gap lo95 >= 0 AND mean > 0; provisional iff mean > 0 with lo95 in (-0.005, 0)",
+   "verdict": "FAIL",
+   "pass": false,
+   "pass_under_v2": false
+  },
+  "popup_sensitivity_arm": {
+   "candidate": "FB = fly_ball + popup (same shrink, same constants)",
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.2315,
+     "rho_baselines": {
+      "vs_incumbent": 0.2374
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.006,
+       "lo95": -0.0275,
+       "hi95": 0.0168
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.2311,
+     "rho_baselines": {
+      "vs_incumbent": 0.2374
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0059,
+       "lo95": -0.0267,
+       "hi95": 0.0157
+      }
+     },
+     "cluster": {
+      "n_pairs": 878,
+      "n_players": 454,
+      "max_pairs_per_player": 5,
+      "mean_pairs_per_player": 1.93,
+      "n_strata_first_pred_season": 5
+     }
+    }
+   },
+   "verdict_same_bar": "FAIL"
+  }
+ },
+ "X-S5": {
+  "experiment": "X-S5: SEM+ FB-conditioned HR prior (pre-declared long-shot secondary)",
+  "n_pairs": 592,
+  "n_fb_covered": 592,
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.4156,
+    "rho_baselines": {
+     "vs_incumbent": 0.4167
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": -0.0011,
+      "lo95": -0.0148,
+      "hi95": 0.013
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.4195,
+    "rho_baselines": {
+     "vs_incumbent": 0.42
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": -0.0005,
+      "lo95": -0.0134,
+      "hi95": 0.0124
+     }
+    },
+    "cluster": {
+     "n_pairs": 592,
+     "n_players": 273,
+     "max_pairs_per_player": 5,
+     "mean_pairs_per_player": 2.17,
+     "n_strata_first_pred_season": 5
+    }
+   }
+  },
+  "gate": {
+   "bar": "same bar shape as X-R5 but SECONDARY: a pass flags to the owner, never auto-ships",
+   "verdict": "FAIL",
+   "pass_under_v2": false
+  },
+  "popup_sensitivity_arm": {
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.4158,
+     "rho_baselines": {
+      "vs_incumbent": 0.4167
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0009,
+       "lo95": -0.0151,
+       "hi95": 0.0142
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4198,
+     "rho_baselines": {
+      "vs_incumbent": 0.42
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0002,
+       "lo95": -0.0148,
+       "hi95": 0.0131
+      }
+     },
+     "cluster": {
+      "n_pairs": 592,
+      "n_players": 273,
+      "max_pairs_per_player": 5,
+      "mean_pairs_per_player": 2.17,
+      "n_strata_first_pred_season": 5
+     }
+    }
+   },
+   "verdict_same_bar": "FAIL"
+  }
+ },
+ "X-R1b": {
+  "experiment": "T1-11 X-R1b: multi-year CSW%-implied xK shrink target (the SwStr loss-ledger's sanctioned retry)",
+  "candidate": "csw_multi(Y) = pitch-weighted CSW(Y) + 0.6*pitch-weighted CSW(Y-1); xK = year-Y TBF-weighted OLS(K% ~ csw_multi), clamp (0.1, 0.45); K_STRIKEOUT=70 unchanged; no-coverage arms keep the incumbent pool-mean target",
+  "known_dilution": "no 2017/2020 winProbability cache -> 2018 and 2021 predictors are single-year CSW (no carry-in)",
+  "n_pairs": 878,
+  "n_csw_covered": 878,
+  "per_season_fit": {
+   "2018": {
+    "xk_fit": {
+     "intercept": -0.233,
+     "slope": 1.6694
+    },
+    "n_csw_covered": 442
+   },
+   "2019": {
+    "xk_fit": {
+     "intercept": -0.2451,
+     "slope": 1.7288
+    },
+    "n_csw_covered": 465
+   },
+   "2021": {
+    "xk_fit": {
+     "intercept": -0.1725,
+     "slope": 1.4745
+    },
+    "n_csw_covered": 522
+   },
+   "2022": {
+    "xk_fit": {
+     "intercept": -0.2106,
+     "slope": 1.5888
+    },
+    "n_csw_covered": 502
+   },
+   "2023": {
+    "xk_fit": {
+     "intercept": -0.1788,
+     "slope": 1.4728
+    },
+    "n_csw_covered": 487
+   },
+   "2024": {
+    "xk_fit": {
+     "intercept": -0.2014,
+     "slope": 1.5567
+    },
+    "n_csw_covered": 473
+   },
+   "2025": {
+    "xk_fit": {
+     "intercept": -0.1917,
+     "slope": 1.5112
+    },
+    "n_csw_covered": 507
+   }
+  },
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.2429,
+    "rho_baselines": {
+     "vs_incumbent": 0.2374
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": 0.0055,
+      "lo95": -0.0045,
+      "hi95": 0.0152
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.2425,
+    "rho_baselines": {
+     "vs_incumbent": 0.2374
+    },
+    "gap_ci": {
+     "vs_incumbent": {
+      "mean": 0.005,
+      "lo95": -0.0052,
+      "hi95": 0.0149
+     }
+    },
+    "cluster": {
+     "n_pairs": 878,
+     "n_players": 454,
+     "max_pairs_per_player": 5,
+     "mean_pairs_per_player": 1.93,
+     "n_strata_first_pred_season": 5
+    }
+   }
+  },
+  "gate": {
+   "bar": "incumbent re-baselined in the SAME run; gap lo95 >= 0",
+   "pass": false,
+   "pass_under_v2": false
+  },
+  "secondary_xk_vs_k": {
+   "n": 878,
+   "rho_xk_multi_vs_K_next": 0.417,
+   "rho_K_y_vs_K_next": 0.5367,
+   "xk_beats_raw_k": false
+  },
+  "secondary_tbf_band_100_150": {
+   "n": 130,
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.1773,
+     "rho_baselines": {
+      "vs_incumbent": 0.1703
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": 0.0063,
+       "lo95": -0.0354,
+       "hi95": 0.0518
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.1436,
+     "rho_baselines": {
+      "vs_incumbent": 0.132
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": 0.0118,
+       "lo95": -0.0321,
+       "hi95": 0.0606
+      }
+     },
+     "cluster": {
+      "n_pairs": 130,
+      "n_players": 118,
+      "max_pairs_per_player": 2,
+      "mean_pairs_per_player": 1.1,
+      "n_strata_first_pred_season": 5
+     }
+    }
+   }
+  },
+  "consequence_of_fail": "pre-registered: a FAIL closes the K-prior lane PERMANENTLY (no third retry with another whiff proxy)"
+ },
+ "program_ledger": {
+  "verdict": "rejected",
+  "note": "LOSS LEDGER x2. X-R5 xFIP-lite: gap mean NEGATIVE (-0.0025, lo95 -0.0228) - conditioning the HR target on shrunk FB rate does not transfer to the REM+ architecture; the named rem_plus.py deferral is CLOSED. X-R1b: +0.0055 mean but lo95 -0.0045, and the mechanism read is decisive (rho(xK_multi, K% Y+1)=0.417 vs raw K% 0.537) - the K-PRIOR LANE IS CLOSED PERMANENTLY per the pre-registered consequence (SwStr X-R1 + CSW X-R1b both dead; no third whiff-proxy retry). Infrastructure shipped: tools/win_prob_walker.py (per-pitcher-season fb/csw/tto table off .cache/win_prob) + tools/offline_leverage.py (leverage rebuilt offline from cached payloads - kills the live-fetch trap)."
+ }
+}

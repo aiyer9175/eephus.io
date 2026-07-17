@@ -1,0 +1,150 @@
+{
+ "generated_at": "2026-07-15",
+ "experiment": "xfv_alpha_criterion_perside: PITCHER ridge alpha selected by the rank objective (holdout weighted Spearman) instead of weighted MAE, base alpha grid (1, 10, 100); hitters unchanged (MAE). The registry's recorded untried follow-up to M4 (its loss ledger's keep-alive cell).",
+ "spec": "pre-registered gate id xfv_alpha_criterion_perside, seed 20260715; supersedes/closes the M4 keep-alive (data/xfv_alpha_criterion_eval.json)",
+ "method": {
+  "baseline": "shipped ridge (base grid, min weighted MAE) end-to-end",
+  "treatment": "pit-side alpha by MAX holdout weighted Spearman (KM weights, same seeded permutation holdout), base grid; hit side untouched",
+  "critical_requirement": "blend_lambda RE-SELECTED END-TO-END per arm: the patched ridge flows through wag_calibration AND rank_calibration (which refits the ridge per fold), so each arm is evaluated at the lambda production would stamp for that ridge. M4's frozen-lambda harness was invalid on this point.",
+  "eval": "forward-chained debuted target_censored folds (rank_calibration protocol, te>=15/tr>=60), composite = pooled rho + within-tier wm + t45",
+  "bootstrap": "paired row-level, 2000 reps, seed 20260715, P = share of reps with composite delta > 0",
+  "declared_before_first_run": true,
+  "code_snapshot_md5": {
+   "efv_model.py": "25dc39e350d069f6be008fb6f97d339d",
+   "efv_score.py": "62e8735959e1f7f48d172fe60548836b",
+   "prospect_path.py": "28e33395b1fd2a1ecba94b8fe353c86d"
+  }
+ },
+ "lambdas": {
+  "base": {
+   "hit": 0.7,
+   "pit": 0.63
+  },
+  "treat": {
+   "hit": 0.7,
+   "pit": 0.55
+  },
+  "source": "rank_gate both arms (WAG joins 0 rows on current debuts.json)"
+ },
+ "pit_alpha_path": {
+  "base": [
+   100.0,
+   1.0,
+   100.0,
+   10.0
+  ],
+  "treat": [
+   100.0,
+   10.0,
+   100.0,
+   10.0
+  ],
+  "note": "criterion flips only the 2021 fold (1 -> 10); 3 of 4 folds identical on the base grid"
+ },
+ "gate": {
+  "a_pit_composite_gain": {
+   "required": ">= +0.0035 with bootstrap P >= 0.90",
+   "base_composite": 0.6233,
+   "treat_composite": 0.6221,
+   "delta": -0.0012,
+   "bootstrap_p": 0.503,
+   "delta_ci90": [
+    -0.0377,
+    0.0322
+   ],
+   "pass": false
+  },
+  "b_hit_path_byte_identical": {
+   "hit_fold_predictions_identical": true,
+   "hit_selector_and_lambda_identical": true,
+   "hit_live_file_bytes_identical": true,
+   "pass": true
+  },
+  "c_era_2019_2021": {
+   "required": ">= -0.005",
+   "base": 0.1813,
+   "treat": 0.1835,
+   "delta": 0.0022,
+   "pass": true
+  },
+  "d_pit_bench_logloss": {
+   "required": "<= +1.0% relative (X-ISO oof protocol, eval years 2020-2023)",
+   "base": 0.26045,
+   "treat": 0.26039,
+   "relative_delta": -0.00022,
+   "n": 858,
+   "pass": true
+  },
+  "e_top250_promotions": {
+   "required": "consensus-rank>1000 pitchers in eFV top-250 must not rise (currently 19)",
+   "production": 19,
+   "base_replication": 19,
+   "treat": 17,
+   "pass": true
+  },
+  "pass": false
+ },
+ "sensitivity_wide_grid_not_gated": {
+  "grid": [
+   0.3,
+   1,
+   3,
+   10,
+   30,
+   100,
+   300
+  ],
+  "pit_composite_delta_vs_base": -0.0236,
+  "era_2019_2021": 0.16,
+  "reading": "wide grid + wspearman reaches alpha 300 and loses -0.0236 composite and -0.0213 on the 2019-2021 era cell -- M4's over-regularization finding reproduces on corrected labels."
+ },
+ "evaporation_decomposition": {
+  "note": "treat-vs-base pit composite delta at FIXED lambdas, isolating the criterion effect from the lambda re-selection. M4's keep-alive cell (+0.0082 on pre-repair labels, frozen lambda) is DEAD on corrected labels even at the frozen live lambda 0.63 (-0.0032, bootstrap P=0.316): the evaporation is the 2026-07-14 label repair, not the end-to-end lambda re-selection (which actually recovers a little: treat re-selects 0.55 where the cell is +0.0020).",
+  "at_lambda": {
+   "0.55": {
+    "base": {
+     "spearman": 0.2976,
+     "within_tier_wm": 0.1368,
+     "t45": 0.1857
+    },
+    "treat": {
+     "spearman": 0.2985,
+     "within_tier_wm": 0.1379,
+     "t45": 0.1857
+    },
+    "d_comp": 0.002
+   },
+   "0.63": {
+    "base": {
+     "spearman": 0.2992,
+     "within_tier_wm": 0.1359,
+     "t45": 0.1882
+    },
+    "treat": {
+     "spearman": 0.2997,
+     "within_tier_wm": 0.1357,
+     "t45": 0.1847
+    },
+    "d_comp": -0.0032
+   }
+  },
+  "frozen_lambda_0.63_bootstrap": {
+   "p": 0.3155,
+   "ci90": [
+    -0.0146,
+    0.0035
+   ]
+  }
+ },
+ "verdict": "NO SHIP",
+ "loss_ledger": {
+  "date": "2026-07-15",
+  "verdict": "NO SHIP",
+  "failed_conditions": [
+   "a_pit_composite_gain"
+  ],
+  "summary": "Rank-objective alpha selection for the pitcher ridge (base grid, hit untouched) does not clear its gate: pit composite -0.0012 vs the required +0.0035, bootstrap P(delta>0)=0.503 (a coin flip), CI90 [-0.038, +0.032]. Secondary clauses all pass (hit byte-identical; era 2019-2021 +0.0022; pit bench log-loss -0.02% rel; deep-consensus top-250 promotions 19 -> 17) but the primary gain is absent.",
+  "diagnosis": "M4's keep-alive cell (+0.0082 pit, base grid + wspearman) was measured on PRE-REPAIR labels. On the corrected matrices the cell is dead even at the frozen live lambda (-0.0032, P=0.316); the end-to-end lambda re-selection (treat stamps 0.55) claws back to -0.0012. Same mechanism as the E-LAMBDA retraction: the 41 mislabeled veteran debuts + career_war window decay had been making the consensus anchor look weaker than it is, and repairing them absorbed the residual gain. On the base grid the criterion is also nearly inert (alpha path differs in 1 of 4 folds) -- there was very little surface to win on.",
+  "disposition": "NO SHIP. The alpha-criterion line is now CLOSED: M4 (wide grid + criterion) ledgered 2026-07-07, and this per-side criterion-only follow-up -- the only keep-alive M4 left open -- is measured and ledgered on corrected labels. Do not re-attempt without materially new resolved cohorts."
+ }
+}

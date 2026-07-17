@@ -1,0 +1,154 @@
+{
+ "experiment": "E2 physical attributes x position into eFV (owner ask 2026-07-15)",
+ "generated_at": "2026-07-15",
+ "protocol": {
+  "lab": "tools/efv_ml_lab.py extra_join=physical (data/xfv_extra_physical.json)",
+  "features": [
+   "bmi",
+   "height_in",
+   "weight_lb",
+   "bmi_x_mid",
+   "is_mid_pos",
+   "frame",
+   "athl (both x_mid variants)"
+  ],
+  "gate": "Ship gate (docs/efv-2026-07-14/GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side.",
+  "coverage": "bmi 236/843 debuted hitters (28%); frame/athl 0/843 - UNTRAINABLE (tools_consensus carries no frame/athl for the debuted training pool; same verdict class as the GATES.md Statcast-physicals precedent)."
+ },
+ "baseline": {
+  "n": 353,
+  "spearman": 0.3761,
+  "within_tier_wm": 0.164,
+  "t45": 0.0792
+ },
+ "verdict": "rejected - decisive regression on every gate metric",
+ "detail": "lean+physical 0.3514/0.1114/0.0125 vs base 0.3761/0.1640/0.0792. BMI-by-position echoes the ledgered def_value/BMI-migration loss; frame/athl cannot even be trained at current coverage.",
+ "variants": [
+  {
+   "id": "BASE_lean",
+   "side": "hit",
+   "model": "ridge",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3761,
+   "spearman_pure": 0.3828,
+   "within_tier_wm": 0.164,
+   "t45": 0.0792,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3845
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1717
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2652
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0792
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2104
+    }
+   },
+   "era": {
+    "2019-2021": 0.2923,
+    "2022-2023": 0.4229
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3524
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4583
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3175
+    }
+   },
+   "per_year": {
+    "2020": 0.3477,
+    "2021": 0.2197,
+    "2022": 0.5622,
+    "2023": 0.2485
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "lean_physical",
+   "side": "hit",
+   "model": "ridge",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": "physical",
+   "n": 353,
+   "n_keys": 16,
+   "spearman": 0.3514,
+   "spearman_pure": 0.3415,
+   "within_tier_wm": 0.1114,
+   "t45": 0.0125,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.1404
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1281
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2316
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0125
+    },
+    "60": {
+     "n": 21,
+     "rho": 0.0818
+    }
+   },
+   "era": {
+    "2019-2021": 0.2557,
+    "2022-2023": 0.4128
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.2922
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4582
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3166
+    }
+   },
+   "per_year": {
+    "2020": 0.3446,
+    "2021": 0.1667,
+    "2022": 0.5404,
+    "2023": 0.2341
+   },
+   "skipped_folds": 0
+  }
+ ]
+}

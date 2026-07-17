@@ -649,6 +649,25 @@ def estimate_eta(
         half_score -= 0.5
     eta_half = "late" if half_score > 0.0 else "early"
 
+    # Calendar floor: never emit a sub-year window that has already passed
+    # at compute time. Post-break, a current-year "early" (Apr-Jun) window
+    # is gone, so it floors to "late"; in Nov/Dec the season itself is
+    # over, so a current-year ETA rolls to next year's early window.
+    # Jan/Feb "offseason" runs leave current-year "early" alone (April is
+    # still ahead).
+    if eta_year == today_year:
+        if phase == "post_break":
+            eta_half = "late"
+        elif phase == "offseason":
+            try:
+                _m = (snapshot_date.month if hasattr(snapshot_date, "month")
+                      else date.fromisoformat(str(snapshot_date)[:10]).month)
+            except (TypeError, ValueError):
+                _m = None
+            if _m in (11, 12):
+                eta_year += 1
+                eta_half = "early"
+
     return ETAResult(
         eta_year=eta_year,
         confidence=confidence,

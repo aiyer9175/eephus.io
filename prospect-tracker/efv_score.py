@@ -141,16 +141,60 @@ def _age_factor(r) -> float:
     return round(max(0.75, 1.0 - 0.10 * (float(age) - 25.0)), 3)
 
 
+_RP_DESIGNATIONS = {"SIRP", "MIRP", "RP", "CL"}
+
+
+def _role_factor(r, model_war: float) -> float:
+    """Owner-directed live RELIEVER-CEILING penalty (2026-07-15, the second
+    Andrew Moore directive: a near-27yo single-inning reliever must not rank
+    top-100). List-time RP-DESIGNATED prospects (SIRP/MIRP/RP/CL - generic "P"
+    excluded) realized 0.17 mean WAR, 2.8% contributor and 0% star across the
+    284 resolved training rows, a class prior the model cannot learn: the pit
+    ridge has no role feature, the FV45+ RP label cells are n<=3, and the
+    never-debuted old-reliever busts are survivorship-censored out of the
+    debuted eval pool (the same argument as _age_factor, which shipped
+    owner-directed for the same reason). Bounded multiplicative haircut on the
+    MODEL leg, LIVE board only, never the resolved eval; surfaced as a
+    "Reliever ceiling" factor chip. Triggers ONLY on model enthusiasm
+    (model_war >= 1.5) for RP-designated arms age 25+, so the blast radius is
+    the Moore class, not every bullpen prospect. Honestly labeled a policy
+    dial, not an accuracy claim; forward-adjudicated by the F-WATCH C-RP
+    cohort kill rule (data/xfv_promo_watch.json) and bounded by the F-SIDE S4
+    anti-blanket-penalty gate (mid-board pitcher outperformance must not
+    flip)."""
+    pos = str(r.get("position") or "").upper()
+    if pos not in _RP_DESIGNATIONS or model_war < 1.5:
+        return 1.0
+    age = r.get("age_now")
+    if age is None:
+        age = (r.get("milb") or {}).get("age")
+    if age is None or float(age) < 25.0:
+        return 1.0
+    return 0.70 if float(age) >= 26.0 else 0.80
+
+
 def _injury_factor(r) -> float:
     """Owner-directed live injury penalty: a multiplicative haircut on the eFV WAR
-    projection (so it flows to the grade, the rank, AND surplus) for prospects who are
-    currently hurt or recently fragile. Injuries cost cumulative WAR (durability) and
-    carry re-injury risk that scout FV under-prices; eFV penalizes them harder. Applied
-    only to the LIVE board (resolved players' outcomes already embed their injuries)."""
-    f = 1.0
-    if r.get("il_on"):
-        t = str(r.get("il_type") or "").lower()
-        f *= 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
+    projection (so it flows to the grade, the rank, AND surplus) for prospects who
+    are CURRENTLY on the IL. An active injury costs near-term WAR and carries
+    setback risk that scout FV under-prices; eFV penalizes it harder. Applied
+    only to the LIVE board (resolved players' outcomes already embed their injuries).
+
+    Owner directive 2026-07-15: post-TJ STATUS alone is NOT an injury and carries
+    no penalty. The old unconditional is_post_tj x0.85 taxed fully recovered arms
+    forever (Kade Anderson: zero IL days in 12 months, elite AA season, but a
+    2022 college TJ cost him 15% of WAR/grade/rank/surplus).
+
+    Owner directive 2026-07-17: a currently-HEALTHY player carries NO penalty at
+    all. The old trailing-12-month component kept taxing players after activation
+    (Josue Briceno: back from a 60-day stint, but ~108 trailing IL days held a
+    x0.90 haircut on his card the day he returned). Trailing IL days/stints now
+    only DEEPEN the haircut while the player is actually on the IL; the moment
+    il_on clears, the penalty clears with it."""
+    if not r.get("il_on"):
+        return 1.0
+    t = str(r.get("il_type") or "").lower()
+    f = 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
     days = float(r.get("il_days_12mo") or 0.0)
     if days >= 120:
         f *= 0.82
@@ -158,8 +202,6 @@ def _injury_factor(r) -> float:
         f *= 0.90
     if float(r.get("il_stints_12mo") or 0.0) >= 3:
         f *= 0.92
-    if r.get("is_post_tj"):
-        f *= 0.85
     return round(max(0.5, f), 3)
 
 
@@ -330,6 +372,17 @@ def run(persist: bool = True, side: str = "hit") -> dict:
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
 
+    # --- OD2 TOP-QUANT (2026-07-15): cross-side re-anchor of the PITCHER ---
+    # display tail above the display-55 knee. GATED INERT: apply_display_remap
+    # is a no-op unless data/xfv_topquant_eval.json stamps a PASSING primary
+    # gate AND ship.enabled -- the 2026-07-15 eval REJECTED every fitted
+    # candidate (pitcher tail grades carry no realized-WAR gradient), so this
+    # hook currently changes nothing (byte-identical output). Placed BEFORE the
+    # surplus re-price so an activated remap flows into surplus_mm.
+    if scored:
+        from efv_topquant import apply_display_remap
+        apply_display_remap(scored, is_pit)
+
     # --- re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade --------
     # Owner: eFV surplus must reflect the 20-80 grade the site shows (consensus-tier
     # market value), consistent with /projections/. Runs AFTER the quantile map since
@@ -497,20 +550,16 @@ def _fit_production(side: str):
     """Fit the shipped model (ridge + linear scale calibration + consensus-FV OLS anchor)
     on the FULL labeled matrix -- the same fit run() uses -- returning (ridge, a, b, ols, keys)."""
     keys, _mono = _feature_spec(side)
-    is_pit = side == "pit"
     rows = json.loads(matrix_path(side).read_text(encoding="utf-8"))
-    # Match the GOVERNANCE eval pool (efv_model.run): drop never-MLB recent-bust rows
-    # so the shipped model is fit on the same population the eval measures. Rank-neutral
-    # (those rows are outside every forward-chain fold), just removes fringe fit noise.
-    pool = [r for r in rows if bool(r.get("is_pitcher")) == is_pit
-            and not (r.get("kind") == "bust" and r.get("bust_recent"))]
-    data = _prep(pool, "target_censored", side)
-    ridge = _fit_ridge(data, keys)
-    raw = {r["player_key"]: _predict(ridge, r["feats"]) for r in data}
-    cal = _fit_linear_calibration([(raw[r["player_key"]], r["target"]) for r in data])
-    a, b = (cal["a"], cal["b"]) if cal else (0.0, 1.0)
-    ols = _fit_ols_fv(data)
-    return ridge, a, b, ols, keys
+    # ONE shared fit with the lambda selector (efv_model.fit_production_stack):
+    # full labeled pool minus never-MLB recent-bust rows, ridge + output
+    # calibration + consensus OLS. The selector sizing blend_lambda now measures
+    # exactly this stack (E-LAMBDA parity repair 2026-07-15).
+    from efv_model import fit_production_stack
+    stack = fit_production_stack(rows, side, keys)
+    if not stack:
+        raise RuntimeError(f"production stack unfittable for side={side}")
+    return stack["ridge"], stack["a"], stack["b"], stack["ols"], keys
 
 
 def run_live(persist: bool = True, side: str = "hit") -> dict:
@@ -562,6 +611,7 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
                                "mag": round(_stale_disc / 2.0, 2)})
         inj = _injury_factor(r)                           # owner-directed live injury penalty
         agef = _age_factor(r)                              # owner-directed live prospect-age penalty
+        rolef = _role_factor(r, xfv_war)                   # owner-directed reliever-ceiling penalty
         sc = _statcast_factor(r, side)                     # live Statcast+ quality tilt (per-side r-calibrated)
         if sc != 1.0:
             factors.insert(0, {"label": "Statcast+ quality", "dir": "up" if sc > 1 else "down",
@@ -572,7 +622,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         if agef < 1.0:
             factors.insert(0, {"label": "Prospect age penalty", "dir": "down",
                                "mag": round((1 - agef) * 6, 2)})
-        adj_factor = inj * sc * agef
+        if rolef < 1.0:
+            factors.insert(0, {"label": "Reliever ceiling", "dir": "down",
+                               "mag": round((1 - rolef) * 6, 2)})
+        adj_factor = inj * sc * agef * rolef
         if adj_factor != 1.0:                              # adjust grade, rank, AND surplus
             xfv_war = _apply_war_tilt(xfv_war, adj_factor)  # sign-aware (negative-war safe)
             # Tilt the MODEL term only, then rebuild the blend, so the consensus
@@ -644,6 +697,13 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
             disp = target[lo] * (1 - frac) + target[hi] * frac        # show in the grade
             scored[i]["xfv_grade_display"] = round(disp, 1)
             scored[i]["xfv_minus_consensus_display"] = round(disp - scored[i]["consensus_fv"], 1)
+
+    # OD2 TOP-QUANT pitcher-tail re-anchor hook -- GATED INERT (see run()): no-op
+    # until data/xfv_topquant_eval.json stamps ship.enabled + gate_pass (the
+    # 2026-07-15 eval REJECTED the candidate). Before the surplus re-price.
+    if scored:
+        from efv_topquant import apply_display_remap
+        apply_display_remap(scored, is_pit)
 
     # Re-price SURPLUS DOLLARS on the DISPLAYED (quantile) grade (see run()): eFV surplus
     # reflects the 20-80 grade shown, consistent site-wide + with /projections/. Star/bust

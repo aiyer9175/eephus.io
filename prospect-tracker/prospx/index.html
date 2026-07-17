@@ -8536,9 +8536,9 @@
       <div class="eephus-nav-menu" role="menu">
         <a href="/fa/" role="menuitem">Free Agency</a>
         <a href="/projections/" role="menuitem">Projections</a>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">MLB Stats</span>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Pitcher Alchemy Lab</span>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Trade Machine</span>
+        <a href="/mlbstats/" role="menuitem">MLB Stats</a>
+        <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
+        <a href="/trademachine/" role="menuitem">Trade Machine</a>
       </div>
     </details>
     <a href="/articles/">Articles</a>
@@ -8843,6 +8843,7 @@
       <div class="filter-group">
         <span class="filter-label">Position</span>
         <button class="chip active" data-filter-pos="all">All</button>
+        <button class="chip" data-filter-pos="H" title="Any position player - C / IF / OF / DH">H</button>
         <button class="chip" data-filter-pos="C">C</button>
         <button class="chip" data-filter-pos="1B">1B</button>
         <button class="chip" data-filter-pos="2B">2B</button>
@@ -8944,8 +8945,8 @@
         <span class="filter-label">Sort</span>
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
-            <option value="fv">Consensus FV</option>
             <option value="xfv">eFV (our outcome-grounded grade)</option>
+            <option value="fv">Consensus FV</option>
             <option value="xfv_delta">eFV − consensus gap (biggest first)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
@@ -9225,8 +9226,6 @@
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
         <button class="chip" data-draft-view="mock-draft"
                 title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
-        <button class="chip" data-draft-view="simulate"
-                title="Run the draft yourself: control one team, several, or all thirty, and pick from the real consensus board pick by pick. The CPU drafts best-board-available within bonus-pool budget; every pick is graded against slot value and consensus rank.">Simulate</button>
         <button class="chip" data-draft-view="war-room"
                 title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
@@ -10341,9 +10340,14 @@ function wireThemeToggle() {
 // HISTORICAL per-source tool grades moved to data/player_detail/{key}.json
 // (lazy-merged on card open; see _ensurePlayerDetail). Sidecar JSONs
 // fetched on demand:
-//   - debuts.json          when the user opens the Graduates tab
+//   - debuts_lite.json     when the user opens the Graduates tab (list
+//                          fields only; see ensureDebutsLite)
+//   - debuts.json          full graduate records - graduate card open,
+//                          Time Machine, debuted chart (ensureDebutsFull)
 //   - inactive.json        when the user opens the Inactive view
 //   - rosters_by_org.json  when the user opens any farm-detail page
+//   - scout_reports_<i>.json  the player's hash chunk, on first card open
+//                          (ensureScoutReports)
 //
 // The boot file advertises sidecars via `_slices`. We default-fill the
 // arrays with [] so first-paint render code that walks DATA.debuts
@@ -10463,6 +10467,138 @@ function loadSlice(name) {
     })
     .finally(() => { delete _sliceInFlight[name]; });
   return _sliceInFlight[name];
+}
+
+// Versioned sidecar URL for a bare data-dir filename (same ?v= cache-bust +
+// force-cache pattern as loadSlice).
+function _sliceUrl(file) {
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const v = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
+}
+
+// v46 payload-slim - the debuts slice ships two ways:
+//   debuts_lite.json  list-render fields only (Graduates tab rows, context
+//                     rail cards, farm graduates, trade-audit vet lookup).
+//   debuts.json       the full monolith - fetched only where the whole
+//                     record matters: a graduate's card, the Time Machine,
+//                     and the debuted chart mode.
+// DATA.debuts holds whichever is loaded; DATA._debutsFull flips true once
+// the full rows are merged. The full merge happens IN PLACE (Object.assign
+// onto the lite row) so references held by row caches stay valid.
+let _debutsLiteInFlight = null;
+let _debutsFullInFlight = null;
+function ensureDebutsLite() {
+  if (!DATA || !DATA._slices) return Promise.resolve();
+  if (DATA._debutsFull || (DATA.debuts || []).length) return Promise.resolve();
+  // Older export without the lite sidecar: fall back to the monolith.
+  if (!DATA._slices.debuts_lite) return ensureDebutsFull();
+  if (_debutsLiteInFlight) return _debutsLiteInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts_lite);
+  _debutsLiteInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(rows => {
+      // The full slice may have landed while this was in flight - never
+      // downgrade full rows back to lite ones.
+      if (!DATA._debutsFull && !((DATA.debuts || []).length) && Array.isArray(rows)) {
+        DATA.debuts = rows;
+      }
+    })
+    .catch(err => { console.warn("debuts_lite fetch failed:", err); })
+    .finally(() => { _debutsLiteInFlight = null; });
+  return _debutsLiteInFlight;
+}
+function ensureDebutsFull() {
+  if (!DATA) return Promise.resolve();
+  if (DATA._debutsFull) return Promise.resolve();
+  if (!DATA._slices || !DATA._slices.debuts) {
+    // Legacy monolithic export - debuts are already inline on DATA.
+    DATA._debutsFull = true;
+    return Promise.resolve();
+  }
+  if (_debutsFullInFlight) return _debutsFullInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts);
+  _debutsFullInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(full => {
+      if (!Array.isArray(full)) return;
+      const byKey = new Map((DATA.debuts || [])
+        .filter(g => g && g.player_key)
+        .map(g => [g.player_key, g]));
+      DATA.debuts = full.map(f => {
+        const lite = f && byKey.get(f.player_key);
+        if (!lite) return f;
+        Object.assign(lite, f);
+        delete lite._lite;
+        // Re-merge player_detail against the full points history (the
+        // lite row may have merged the shard against its stub points).
+        delete lite.__detailMerged;
+        return lite;
+      });
+      DATA._debutsFull = true;
+      DATA._tmDates = null;   // grads add earlier snapshot dates
+      DATA._tmByKey = null;   // rebuild the key -> player map with full rows
+    })
+    .catch(err => { console.warn("debuts slice fetch failed:", err); })
+    .finally(() => { _debutsFullInFlight = null; });
+  return _debutsFullInFlight;
+}
+
+// v46 payload-slim - scout reports ship in a fixed number of hash chunks
+// (advertised via boot._slices_chunked.scout_reports) so opening one card
+// pulls ~1/8th of the old 28MB monolith. Chunk index = sum of the player
+// key's char codes mod the chunk count - mirrored in storage.py; keep the
+// two in lockstep. Loaded chunks merge into the same DATA.scout_reports
+// map every reader already uses. Falls back to the single-file slice for
+// exports predating the contract.
+const _scoutChunksLoaded = {};
+const _scoutChunkInFlight = {};
+function _scoutChunkContract() {
+  const c = DATA && DATA._slices_chunked && DATA._slices_chunked.scout_reports;
+  return (c && c.prefix && c.chunks > 0) ? c : null;
+}
+function _scoutChunkOf(playerKey, nChunks) {
+  const s = String(playerKey || "");
+  let sum = 0;
+  for (let i = 0; i < s.length; i++) sum = (sum + s.charCodeAt(i)) % nChunks;
+  return sum;
+}
+// True when the data needed for this player's reports is already on DATA
+// (the player's chunk, the whole monolith, or a legacy inline payload).
+function scoutReportsReadyFor(playerKey) {
+  const c = _scoutChunkContract();
+  if (c) return !!_scoutChunksLoaded[_scoutChunkOf(playerKey, c.chunks)];
+  return !!DATA.scout_reports || !(DATA._slices && DATA._slices.scout_reports);
+}
+function ensureScoutReports(playerKey) {
+  const c = _scoutChunkContract();
+  if (!c) {
+    // Older export: single-file sidecar (or legacy inline payload).
+    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
+      return loadSlice("scout_reports");
+    }
+    return Promise.resolve();
+  }
+  const idx = _scoutChunkOf(playerKey, c.chunks);
+  if (_scoutChunksLoaded[idx]) return Promise.resolve();
+  if (_scoutChunkInFlight[idx]) return _scoutChunkInFlight[idx];
+  const { url, opts } = _sliceUrl(`${c.prefix}${idx}.json`);
+  _scoutChunkInFlight[idx] = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(payload => {
+      if (!DATA.scout_reports) DATA.scout_reports = {};
+      Object.assign(DATA.scout_reports, payload || {});
+      _scoutChunksLoaded[idx] = true;
+    })
+    .catch(err => {
+      console.warn("scout reports chunk fetch failed:", idx, err);
+      // Mark loaded anyway so the render/fetch cycle can't loop on a 404.
+      _scoutChunksLoaded[idx] = true;
+    })
+    .finally(() => { delete _scoutChunkInFlight[idx]; });
+  return _scoutChunkInFlight[idx];
 }
 
 let _playerNewsLoaded = false;
@@ -11229,7 +11365,7 @@ let _POS_PLAYED = null;
   fetch("/data/positions_played.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _POS_PLAYED = (j && j.players) || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _POS_PLAYED = {}; });
 })();
 // Game-data versa list for a prospect (>= 10 G or >= 5 GS at each, most-played first);
@@ -11823,6 +11959,14 @@ function _statcastStripHTML(p) {
 }
 
 function playerExpandedMetaHTML(p) {
+  // Expanded density was removed entirely (v31.9 pins the board to compact:
+  // body never gets .density-expanded, so `.player-row-expand { display:none }`
+  // has no enabler and this block could never be shown). Building it still ran
+  // five sub-renderers (Statcast strip / standout games / source agreement /
+  // career history / pitch arsenal) for every actives + watchlist + farm-roster
+  // row on the hottest render path - pure dead DOM. Short-circuit; the body
+  // below is kept for a future expanded-view revival.
+  return "";
   // v30.7 - Expanded density used to render TWO redundant tool strips
   // (the gold FV-tier chips from makeToolGradeChips PLUS this
   // function's _toolGradeStripHTML). Compact view already shows the
@@ -12856,7 +13000,14 @@ function renderDetailTabs(tabs, activeKey, dataKey) {
 // Encode current filter state into the URL hash so the view is shareable.
 // Detail pages get a dedicated `player=KEY` or `farm=ORG` hash param;
 // when set they take precedence over the list-page filters at render time.
+// compareSave/farmCompareSave mirror to the URL on every save; while
+// syncFromURL is mid-restore those re-entrant calls would stamp half-
+// restored state back into the hash. The flag makes syncToURL a no-op for
+// the duration of a URL read (state and the URL end consistent anyway -
+// we just read the URL).
+let _inSyncFromURL = false;
 function syncToURL(push) {
+  if (_inSyncFromURL) return;
   const p = new URLSearchParams();
   if (state.view && state.view.type === "player") p.set("player", state.view.key);
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
@@ -12977,7 +13128,13 @@ function syncToURL(push) {
   // matching detail page so other views don't carry an unused param.
   if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
   if (state.view && state.view.type === "farm"   && state.farmTab   && state.farmTab   !== "overview") p.set("ftab", state.farmTab);
-  if (state.view && state.view.type === "farm"   && state.farmCompareOrg) p.set("fcmp", state.farmCompareOrg);
+  // The farm-detail head-to-head picker rides its own `fco` param. It used
+  // to share `fcmp` with the farm compare CART (encoded further below, which
+  // overwrote this when non-empty), so a shared farm link injected the
+  // picker org into the cart and wiped the player compare cart on load.
+  // syncFromURL still reads legacy single-org `fcmp` farm links as the
+  // picker form for back-compat.
+  if (state.view && state.view.type === "farm"   && state.farmCompareOrg) p.set("fco", state.farmCompareOrg);
   if (state.view && state.view.type === "draftee" && state.prospectTab && state.prospectTab !== "overview") p.set("dttab", state.prospectTab);
   if (state.view && state.view.type === "overseas_player" && state.prospectTab && state.prospectTab !== "overview") p.set("ostab", state.prospectTab);
   // Pagination - only encoded when on a non-default page (page 1 = no
@@ -13008,8 +13165,15 @@ function syncToURL(push) {
 }
 
 // Read the URL hash and update state (called once on boot, and again on
-// hashchange so back/forward navigation works).
+// hashchange so back/forward navigation works). Wrapper sets the
+// re-entrancy flag (see syncToURL) around the body so the cart-restore
+// saves below can't rewrite the URL mid-read; try/finally keeps the flag
+// honest across the body's early returns.
 function syncFromURL() {
+  _inSyncFromURL = true;
+  try { _syncFromURLBody(); } finally { _inSyncFromURL = false; }
+}
+function _syncFromURLBody() {
   const hash = window.location.hash.slice(1);
   // Reset view first so navigating back from a detail page clears state.view.
   state.view = null;
@@ -13149,7 +13313,21 @@ function syncFromURL() {
   // shared URLs forward so they still land on the right panel.
   if (state.playerTab === "context") state.playerTab = "details";
   state.farmTab   = p.has("ftab") ? p.get("ftab") : "overview";
-  state.farmCompareOrg = p.has("fcmp") ? p.get("fcmp") : "";
+  // Farm head-to-head picker: new links carry `fco`. Back-compat for old
+  // shared links, where the picker was double-booked onto `fcmp` with the
+  // farm compare cart: a farm-detail link whose `fcmp` holds exactly ONE
+  // org (and no `fco`) is read as the legacy picker form - it restores the
+  // head-to-head compare and is NOT imported into the farm cart below, so
+  // it can no longer wipe the player cart or pollute the farm cart on
+  // load. (Old links could carry picker + player cart together, since the
+  // cart-side fcmp only overwrote the picker when the farm cart was
+  // non-empty - which mutual exclusivity rules out alongside cmp.)
+  const _fcmpParts = p.has("fcmp") ? p.get("fcmp").split(",").filter(Boolean) : [];
+  const _legacyPickerFcmp = !!(state.view && state.view.type === "farm"
+    && !p.has("fco") && _fcmpParts.length === 1);
+  state.farmCompareOrg = p.has("fco") ? p.get("fco")
+    : _legacyPickerFcmp ? _fcmpParts[0]
+    : "";
   if (!state.pages) state.pages = {};
   const _readPage = (k, key) => { state.pages[key] = p.has(k) ? Math.max(1, parseInt(p.get(k), 10) || 1) : 1; };
   _readPage("lbpage",  "leaderboard");
@@ -13163,19 +13341,34 @@ function syncFromURL() {
   _readPage("tbpage",  "tradeboard");
   // Shareable compare state. When both keys are present (stale link),
   // keep the longer list and clear the other - mutual exclusivity
-  // means at most one should be set going forward.
-  if (p.has("cmp") || p.has("fcmp")) {
+  // means at most one should be set going forward. A cart is only ever
+  // CLEARED when its own param is explicitly present (or it loses the
+  // both-present tiebreak): a link that simply doesn't mention a cart
+  // must not erase the local user's cart. Legacy single-org farm-detail
+  // `fcmp` links are the old head-to-head picker form and skip the cart
+  // restore entirely (handled above).
+  if (_legacyPickerFcmp) {
+    // Legacy farm-detail picker link: fcmp is the head-to-head org
+    // (restored above), NOT a cart. Still restore a player cart the link
+    // carries; leave both local carts otherwise untouched.
+    const cmpRaw = p.has("cmp") ? p.get("cmp").split(",").filter(Boolean).slice(0, COMPARE_MAX) : [];
+    if (cmpRaw.length) compareSave(cmpRaw);
+  } else if (p.has("cmp") || p.has("fcmp")) {
     const cmpRaw  = p.has("cmp")  ? p.get("cmp").split(",").filter(Boolean).slice(0, COMPARE_MAX) : [];
-    const fcmpRaw = p.has("fcmp") ? p.get("fcmp").split(",").filter(Boolean).slice(0, FARM_COMPARE_MAX) : [];
+    const fcmpRaw = _fcmpParts.slice(0, FARM_COMPARE_MAX);
     if (cmpRaw.length && fcmpRaw.length) {
       if (cmpRaw.length >= fcmpRaw.length) compareSave(cmpRaw), farmCompareSave([]);
       else compareSave([]), farmCompareSave(fcmpRaw);
     } else if (cmpRaw.length) {
       compareSave(cmpRaw);
-      farmCompareSave([]);
-    } else {
-      compareSave([]);
+      if (p.has("fcmp")) farmCompareSave([]);
+    } else if (fcmpRaw.length) {
       farmCompareSave(fcmpRaw);
+      if (p.has("cmp")) compareSave([]);
+    } else {
+      // Params present but empty - clear exactly the carts named.
+      if (p.has("cmp")) compareSave([]);
+      if (p.has("fcmp")) farmCompareSave([]);
     }
   }
 }
@@ -13767,6 +13960,13 @@ function levelStatlinesHTML(p, opts = {}) {
     const _lvlRank = { MLB: 7, AAA: 6, AA: 5, "A+": 4, A: 3, CPX: 2, DSL: 1 };
     const _dl = currentDisplayLevel(p);
     rows.sort((a, b) => {
+      if (opts.highestFirst) {
+        // v45 (owner): HIGHEST level first - a rehab assignment makes the
+        // "current" level a complex-league stint (Lombard CPX), which must
+        // not displace the real (highest) level's line on the list card.
+        return (_seasonOf(b) - _seasonOf(a))
+               || ((_lvlRank[b.level] || 0) - (_lvlRank[a.level] || 0));
+      }
       // current level first, then newest season, then highest level
       const ca = (_dl && a.level === _dl) ? 1 : 0, cb = (_dl && b.level === _dl) ? 1 : 0;
       return (cb - ca) || (_seasonOf(b) - _seasonOf(a))
@@ -13787,7 +13987,13 @@ function levelStatlinesHTML(p, opts = {}) {
       <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};white-space:nowrap;">${escapeHtml(formatLevelStatline(r))}</span>
     </span>`;
   });
-  if (displayLevel && !rows.some(r => r && r.level === displayLevel)) {
+  // "Stats pending" ghost row for a player promoted to a level with no stats
+  // on file yet. Suppressed under highestFirst when a real line is already
+  // shown - the shown HIGHEST-level line is the information; a pending chip
+  // for a rehab/complex stint would just re-add the second row the trim
+  // exists to remove.
+  if (displayLevel && !rows.some(r => r && r.level === displayLevel)
+      && !(opts.highestFirst && rows.length)) {
     pieces.unshift(`<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="No current-season stats on file yet at ${escapeHtml(displayLevel)}">
       <span class="level-pill level-neutral" style="font-size:9px;padding:1px 5px;">${escapeHtml(displayLevel)}</span>
       <span style="color:var(--text-tertiary);font-size:${compact ? "11px" : "12px"};">stats pending</span>
@@ -13813,7 +14019,12 @@ function makeMilbCell(p) {
   // Triple-slash / IP+ERA still leads the supporting line; the new
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
-  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 2, maxRows: 3 });
+  // v45 (owner): the LIST cell shows ONLY the HIGHEST level's line of the
+  // newest season - a multi-level season (A -> A+ -> AAA in one summer)
+  // stacked 3 slash lines and clipped the fixed-height card (Jenkins /
+  // Lombard), and "highest" (not "current") keeps a rehab CPX stint from
+  // displacing the real level. The detail page keeps the full table.
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 1, maxRows: 1, highestFirst: true });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
   // they're no longer in this prose detail line.
@@ -14782,6 +14993,8 @@ function positionMatches(playerBucket, filterVal) {
   // "P" filter matches every pitcher bucket - back-compat with the
   // pre-v6 single-bucket world where all pitchers collapsed to "P".
   if (filterVal === "P"  && ["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
+  // "H" is the position-player mirror of "P": any non-pitcher bucket.
+  if (filterVal === "H" && !["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
   // "RP" rolls up the three relief sub-types (SIRP one-inning, MIRP
   // multi-inning, bare RP unspecified-relief).
   if (filterVal === "RP" && ["RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
@@ -16509,17 +16722,19 @@ function renderActiveContextRail(railId = "active-context-rail") {
   if (!rail) return;
   const players = DATA.players || [];
 
-  // The "Recent debuts" + IL-returnee cards read DATA.debuts, but that slice is
-  // lazy-loaded (only fetched on demand) - on the active list it hasn't arrived
-  // yet, so the card rendered "No recent debuts on file." even when there ARE
-  // recent debuts. Kick the slice fetch off in the background and re-render this
-  // rail once it lands. Guarded so it fires once and never loops.
-  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._railGradLoading) {
-    DATA._railGradLoading = true;
-    loadSlice("debuts").then(() => {
-      if (document.getElementById(railId)) renderActiveContextRail(railId);
-    }).catch(() => {});
-  }
+  // The "Recent debuts" + IL-returnee cards read DATA.debuts. This rail used
+  // to force-fetch the full 67MB monolith on the first paint of the DEFAULT
+  // view, which competed with the initial render AND silently defeated the
+  // v35 Save-Data/2g prefetch gate (the call had no _bgPrefetchOK guard). It
+  // no longer fetches here: for prefetch-OK users the idle background warm
+  // (boot IIFE) pulls the LITE slice (v46 - list fields only) and schedules
+  // a coalesced re-render so the cards fill in moments after boot; everyone
+  // else gets a "Load recent debuts" link in the card below that pulls the
+  // lite slice on demand. Graduate cards / debuted chart mode / Time Machine
+  // fetch the full slice separately via ensureDebutsFull.
+  const _debutsPending = !!(DATA._slices
+    && (DATA._slices.debuts_lite || DATA._slices.debuts)
+    && !((DATA.debuts || []).length));
 
   // Shared row factory - consistent geometry across all cards.
   // rightHTML sits flush right (delta / FV / tool grade / days-back chip).
@@ -16766,11 +16981,15 @@ function renderActiveContextRail(railId = "active-context-rail") {
   }).join("");
   // Card always renders so the rail stays anchored even when the debut
   // pipeline has no recent rows (boot-up, dev, or end-of-offseason lulls).
+  // While the debuts slice is advertised-but-unloaded the card offers the
+  // on-demand loader instead of a misleading "No recent debuts on file."
   const gradsCard = `<div class="ctx-card">
     <div class="ctx-title">Recent debuts</div>
     ${grads.length
       ? gradRows
-      : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
+      : _debutsPending
+        ? `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;"><a class="ctx-card-link" data-load-debuts title="Fetches the debuts list (also fills the IL-returnees card)">Load recent debuts</a></div>`
+        : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
   </div>`;
 
   rail.innerHTML = moversCard + toolCard + ilCard + spotPeekCard + distCard + gradsCard;
@@ -16795,6 +17014,19 @@ function renderActiveContextRail(railId = "active-context-rail") {
       state.sidebarTopTool = toolSel.value;
       syncToURL();
       renderActiveContextRail(railId);
+    });
+  }
+  // On-demand debuts loader (see the note at the top of this function).
+  // ensureDebutsLite de-dupes in-flight fetches, so clicking while the
+  // idle warm is already downloading just joins that request.
+  const loadDebutsLink = rail.querySelector("[data-load-debuts]");
+  if (loadDebutsLink) {
+    loadDebutsLink.addEventListener("click", (e) => {
+      e.stopPropagation();
+      loadDebutsLink.textContent = "Loading…";
+      ensureDebutsLite().then(() => {
+        if (document.getElementById(railId)) renderActiveContextRail(railId);
+      }).catch(() => {});
     });
   }
   // "View all →" link routes to Spotlights tab.
@@ -16997,7 +17229,7 @@ function renderSpotlights() {
     const _fvTier = fvTierAttr(_full);
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
-      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
+      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${getEfvRank(_full) ?? _full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <span class="headshot-stack">${headshotHTML(_full, 42)}${optionsDotsHTML(_full)}</span>
         <div style="min-width:0;flex:1;">
@@ -17678,6 +17910,7 @@ function renderWatchlist() {
           ${makeMilbCell(p)}
           ${physClusterHTML(p)}
           ${makeEtaCell(p)}
+          <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
           ${playerExpandedMetaHTML(p)}
           ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
         </div>
@@ -17931,7 +18164,9 @@ function _ensureChartData(mode) {
           .then(j => { if (j) DATA[key] = j; })
           .catch(() => {});
   let pr;
-  if (mode === "debuted")      pr = loadSlice("debuts");
+  // Debuted chart mode plots each graduate's FULL points history, so it
+  // needs the monolith, not the lite list slice.
+  if (mode === "debuted")      pr = ensureDebutsFull();
   else if (mode === "draft")   pr = fetchInto("draft_timeseries.json", "draft");
   else if (mode === "ifa")     pr = fetchInto("ifa_timeseries.json", "ifa");
   else if (mode === "overseas")pr = fetchInto("overseas_timeseries.json", "overseas");
@@ -18321,15 +18556,33 @@ function renderCharts() {
   // R² is forced toward 1 and the slope is noise, so a 2-3 dot group (after
   // tight filters or a brush-zoom) must NOT render a confident "strong" trend.
   const MIN_TREND_N = 8;
-  let trend = (trendOn && dots.length >= MIN_TREND_N) ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  // Fit the least-squares line in the TRANSFORMED plotting space (log10 on an
+  // active log axis) so the drawn segment is genuinely straight on screen and
+  // the R² describes exactly the line shown. The old raw-space fit, drawn as
+  // one straight segment through log-aware scales, matched the true fit only
+  // at its two endpoints - and under Log Y a raw fitted value <= 0 handed
+  // Math.log10 a NaN, silently breaking the line. On linear axes tf() is the
+  // identity, so nothing changes there.
+  let trend = (trendOn && dots.length >= MIN_TREND_N)
+    ? _linearRegression(dots.map(d => [tf(d.x, logX), tf(d.y, logY)]))
+    : null;
   const tooFewForTrend = trendOn && dots.length < MIN_TREND_N;
-  const _trendX0 = tinv(xLoT, logX), _trendX1 = tinv(xHiT, logX);
+  // Screen mapping for TRANSFORMED coordinates (sx/sy expect data-space values).
+  const sxT = tv => ML + ((tv - xLoT) / (xHiT - xLoT)) * innerW;
+  const syT = tv => MT + innerH - ((tv - yLoT) / (yHiT - yLoT)) * innerH;
+  // Honest equation copy: name the fitted variables when a log axis is on.
+  const _xTerm = logX ? "log10(x)" : "x";
+  const _yTerm = logY ? "log10(y)" : "y";
+  const _trendEq = (mDp, bDp) => !trend ? ""
+    : (logX || logY)
+      ? `${_yTerm} = ${trend.m.toFixed(mDp)}·${_xTerm} + ${trend.b.toFixed(bDp)}`
+      : `y = ${trend.m.toFixed(mDp)}x + ${trend.b.toFixed(bDp)}`;
   const trendLine = trend
-    ? `<line x1="${sx(_trendX0).toFixed(1)}" y1="${sy(trend.m * _trendX0 + trend.b).toFixed(1)}"
-              x2="${sx(_trendX1).toFixed(1)}" y2="${sy(trend.m * _trendX1 + trend.b).toFixed(1)}"
+    ? `<line x1="${sxT(xLoT).toFixed(1)}" y1="${syT(trend.m * xLoT + trend.b).toFixed(1)}"
+              x2="${sxT(xHiT).toFixed(1)}" y2="${syT(trend.m * xHiT + trend.b).toFixed(1)}"
               stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"
               style="cursor:help;">
-         <title>Linear trendline: y = ${trend.m.toFixed(4)}x + ${trend.b.toFixed(3)} · R² = ${trend.r2.toFixed(3)}</title>
+         <title>Linear trendline: ${_trendEq(4, 3)} · R² = ${trend.r2.toFixed(3)}</title>
        </line>`
     : "";
   // R² chip - a small pill near top-right of the plot area.
@@ -18501,10 +18754,20 @@ function renderCharts() {
       if (di != null) { const d = dots[+di]; if (d && d._entity) grp.nav(d._entity); }
     }
   };
-  svg.addEventListener("pointerdown", onDown);
-  svg.addEventListener("pointermove", onMove);
-  svg.addEventListener("pointerup", onUp);
-  svg.addEventListener("dblclick", () => { if (state.chartView) { state.chartView = null; renderCharts(); } });
+  // ASSIGN (don't add) the pointer handlers. #chart-svg is a persistent
+  // element (only its innerHTML is replaced each render) and renderCharts
+  // re-runs on every control change - addEventListener stacked a fresh set
+  // of closures per render: a dot click fired grp.nav once per stacked
+  // handler (duplicate history entries, and stale closures could open the
+  // wrong player after a filter change), and a brush-zoom re-entered
+  // renderCharts once per stale handler. Property assignment overwrites the
+  // previous render's closures, so exactly one set - the current render's
+  // scales/dots - is ever live. Matches the onchange/onclick idiom used by
+  // every other handler in this renderer.
+  svg.onpointerdown = onDown;
+  svg.onpointermove = onMove;
+  svg.onpointerup = onUp;
+  svg.ondblclick = () => { if (state.chartView) { state.chartView = null; renderCharts(); } };
   svg.style.touchAction = "none";
 
   // Reset-view button - visible only when a zoom/pan view is active.
@@ -18600,7 +18863,7 @@ function renderCharts() {
     renderCharts();
   });
   document.getElementById("chart-stats").innerHTML = trend
-    ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
+    ? `Trendline: ${_trendEq(3, 2)} · R² = ${trend.r2.toFixed(3)}`
     : tooFewForTrend
     ? `Too few points for a trend (n=${dots.length}; need ${MIN_TREND_N})`
     : "Trendline disabled";
@@ -19551,7 +19814,7 @@ function renderLeaderboards() {
       : `<span style="color:var(--text-tertiary);font-size:10px;"> - </span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
           ${headshotHTML(p, 40)}
           <div style="min-width:0;flex:1;">
@@ -20103,11 +20366,13 @@ function renderTimeMachine() {
   // Pull in graduated players (debuts slice) so historical boards include
   // since-graduated prospects + the diff's "Graduated to MLB" bucket. Load in
   // the background - the board renders active-only first, then re-renders.
-  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._tmGradLoading) {
+  // v46 - the board reconstruction needs FULL points histories, so this
+  // pulls the monolith even when the lite slice is already on DATA.debuts
+  // (lite rows carry a single-point stub). ensureDebutsFull resets the
+  // _tmDates/_tmByKey caches itself once the full rows merge in.
+  if (DATA._slices && DATA._slices.debuts && !DATA._debutsFull && !DATA._tmGradLoading) {
     DATA._tmGradLoading = true;
-    loadSlice("debuts").then(() => {
-      DATA._tmDates = null;    // grads can add earlier snapshot dates
-      DATA._tmByKey = null;    // rebuild the key→player map to include grads
+    ensureDebutsFull().then(() => {
       if (state.section === "timemachine" && !state.view) renderTimeMachine();
     }).catch(() => {});
   }
@@ -20364,7 +20629,7 @@ function renderInjured() {
     const _pal = _ilTypePalette(il.type);
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -20605,7 +20870,11 @@ function renderRecentlyTraded() {
   const _fvNum = (row) => {
     const pts = (row.p && row.p.points) || [];
     const last = pts[pts.length - 1];
-    return last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label) ?? 0) : 0;
+    // parseFloat returns NaN (never null/undefined) for an unparseable
+    // label, so a trailing `?? 0` can't catch it - NaN in the comparator
+    // left those rows unsorted. Check finiteness explicitly instead.
+    const v = last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label)) : null;
+    return Number.isFinite(v) ? v : 0;
   };
   if (tradedMode === "name") {
     filtered.sort((a, b) => (a.p.player_name || "").localeCompare(b.p.player_name || ""));
@@ -21231,7 +21500,7 @@ function renderRecentlyTraded() {
     return `
       ${_groupOpen}
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -22249,7 +22518,7 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "simulate", "war-room"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "war-room"];
   // War Room: gated on the presence of the live artifact (data/draft_live.json,
   // written by the draft-night poller). No artifact => chip hidden, so the view
   // is dark until the draft opens. Kick off a one-time fetch; re-render when it
@@ -22275,8 +22544,7 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock) ||
-      (state.draftView === "simulate" && !_anyMock)) {
+      (state.draftView === "mock-draft" && !_anyMock)) {
     // War Room stays selectable even before the live feed exists: it lands on
     // the "opens on draft night" state rather than bouncing to rankings, so the
     // chip is a real destination in the draft section year-round.
@@ -22287,7 +22555,6 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
-    if (view === "simulate" && !_anyMock) show = false;
     // War Room chip: always surfaced in the draft section so it is discoverable;
     // pre-draft it lands on the "opens on draft night" state (Phase 6 surfacing).
     b.style.display = show ? "" : "none";
@@ -22334,7 +22601,6 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
-    case "simulate":       return _renderDraftSimulate(host, _mockCls || cls);
     case "war-room":       return _renderWarRoom(host);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
@@ -22352,79 +22618,6 @@ async function renderDraft() {
 // lottery rows (typically anything that's already drafted). The
 // rendered table is the FULL projected first round + 12 comp picks
 // (1A / 1B), with the odds column blank for deterministic slots.
-// A real lottery draw, run client-side against our own published odds - not
-// a re-derivation from a fresh standings fetch (Tankathon's odds already ARE
-// the pipeline's best estimate; drawing against them keeps one source of
-// truth instead of two live third-party fetches disagreeing with each
-// other). Draws 6 winners for picks 1-6, same mechanism MLB uses on lottery
-// night; everything past pick 6, including the competitive-balance rounds,
-// isn't part of the lottery mechanism and always follows the published order
-// already shown in the table above - so this only reveals a picks 1-6 outcome,
-// not a full re-ordered board.
-let _lotto = { key: null, pool: [], winners: [], drawn: false };
-function _lottoEnsure(cls, odds, snap) {
-  const key = `${cls.year}:${snap}`;
-  if (_lotto.key === key) return;
-  _lotto.key = key;
-  _lotto.pool = odds.filter(o => o.odds_pct != null);
-  _lotto.winners = [];
-  _lotto.drawn = false;
-}
-function _lottoWeightedDraw(pool) {
-  const total = pool.reduce((s, r) => s + (r.odds_pct || 0), 0);
-  let ticket = Math.random() * total;
-  for (const r of pool) { ticket -= (r.odds_pct || 0); if (ticket <= 0) return r; }
-  return pool[pool.length - 1];
-}
-function _lottoRun() {
-  const pool = _lotto.pool.slice();
-  const winners = [];
-  while (winners.length < Math.min(6, pool.length)) {
-    const w = _lottoWeightedDraw(pool);
-    winners.push(w);
-    pool.splice(pool.indexOf(w), 1);
-  }
-  _lotto.winners = winners;
-  _lotto.drawn = true;
-  renderDraft();
-}
-function _lottoDrawHTML(odds) {
-  const pool = odds.filter(o => o.odds_pct != null);
-  if (pool.length < 2) return "";
-  const seedRank = new Map(pool.map((o, i) => [o.team, i + 1]));
-  const rows = _lotto.winners.map((w, i) => {
-    const seed = seedRank.get(w.team) || null;
-    const delta = seed != null ? seed - (i + 1) : 0;
-    const deltaColor = delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)";
-    const deltaText = seed == null ? "-" : delta > 0 ? `↑ from #${seed}` : delta < 0 ? `↓ from #${seed}` : `held #${seed}`;
-    return `<tr>
-      <td style="text-align:center;font-weight:700;">${i + 1}</td>
-      <td><span class="draft-cell-ico">${teamLogoHTML(w.team, "sm")}<strong>${escapeHtml(w.team)}</strong></span></td>
-      <td style="text-align:right;color:var(--text-secondary);">${w.odds_pct.toFixed(2)}%</td>
-      <td style="text-align:center;color:${deltaColor};">${deltaText}</td>
-    </tr>`;
-  }).join("");
-  return `
-    <div class="draft-panel" style="padding:14px;margin-top:10px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
-        <div class="filter-label">Run the lottery</div>
-        <button class="chip" onclick="_lottoRun()">${_lotto.drawn ? "Draw again" : "Draw the top 6"}</button>
-      </div>
-      ${_lotto.drawn ? `
-      <table class="draft-table">
-        <thead><tr><th style="text-align:center;">Pick</th><th>Team</th><th style="text-align:right;">Odds</th><th style="text-align:center;">vs. seed</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">
-        One random draw weighted by the published odds above - draw again as many times as you like.
-      </div>` : `
-      <div style="font-size:11px;color:var(--text-tertiary);">
-        Draws 6 winners for picks 1-6, weighted by the published odds above - the same mechanism MLB uses on
-        lottery night.
-      </div>`}
-    </div>`;
-}
-
 function _renderDraftLottery(host, cls) {
   const allOdds = cls.lottery_odds || [];
   // lottery_odds is a full time-series (one set of rows per scrape date).
@@ -22467,7 +22660,6 @@ function _renderDraftLottery(host, cls) {
 
   const nLottery = odds.filter(o => o.odds_pct != null).length;
   const nComp = odds.filter(o => o.round_label === "1A" || o.round_label === "1B").length;
-  _lottoEnsure(cls, odds, latestSnap);
 
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
@@ -22489,8 +22681,7 @@ function _renderDraftLottery(host, cls) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>
-    ${_lottoDrawHTML(odds)}`;
+    </div>`;
 }
 
 // v28 - Position bucket for draft prospects. Mirrors positionBucket()
@@ -23281,486 +23472,6 @@ function _renderMockDraft(host, cls) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
-}
-
-// =============================================================================
-// Draft Simulate - an interactive, pick-by-pick run through the SAME real
-// board the algorithmic Mock Draft above is built from (cls.prospects,
-// cls.draft_order): control one team, several, or all thirty; the CPU drafts
-// best-board-available within its bonus-pool budget for every other pick.
-// Sits alongside the read-only Mock Draft view rather than replacing it - this
-// is a what-if toy, not another data product, so its "ask" economics are a
-// simple heuristic (rank + slot value), not a registered model. State lives
-// in the module-level _sim object (mirrors the _warRoom pattern), not the
-// URL-synced `state`, since a run is disposable and never worth deep-linking.
-// =============================================================================
-const _sim = {
-  year: null, pool: [], order: [], teams: [],
-  picks: [], pickIndex: 0, started: false, completed: false,
-  teamMode: "single", primaryTeam: null, controlledTeams: new Set(),
-  budgets: {}, demands: {}, simLength: "board",
-  aiTimer: null, aiRunning: false,
-  query: "", position: "ALL",
-  resultsTeam: "all"
-};
-const _SIM_POST_SLOT = 150000; // MLB rule: bonuses under this past pick 610-ish don't count against the pool
-
-function _simClearTimer() {
-  if (_sim.aiTimer) { window.clearTimeout(_sim.aiTimer); _sim.aiTimer = null; }
-  _sim.aiRunning = false;
-}
-
-// (Re)build the pool/order/teams for `cls` if the class changed or this is
-// the first entry. Pool = every prospect with a real consensus_pick (so every
-// simulated pick has a genuine board slot - no fabricated late-round filler).
-function _simEnsureInit(cls) {
-  if (_sim.year === cls.year && _sim.pool.length) return;
-  _simClearTimer();
-  _sim.year = cls.year;
-  _sim.pool = (cls.prospects || [])
-    .filter(p => p.consensus_pick != null)
-    .slice()
-    .sort((a, b) => a.consensus_pick - b.consensus_pick);
-  _sim.order = (cls.draft_order || []).slice().sort((a, b) => a.pick_overall - b.pick_overall);
-  const seen = new Set();
-  _sim.teams = [];
-  _sim.order.forEach(o => {
-    if (o.team && !seen.has(o.team)) { seen.add(o.team); _sim.teams.push(o.team); }
-  });
-  _sim.picks = []; _sim.pickIndex = 0; _sim.started = false; _sim.completed = false;
-  _sim.primaryTeam = _sim.teams[0] || null;
-  _sim.controlledTeams = new Set(_sim.primaryTeam ? [_sim.primaryTeam] : []);
-  _sim.budgets = {}; _sim.demands = {};
-  _sim.resultsTeam = "all";
-}
-
-function _simLengthOptions() {
-  const r1 = _sim.order.filter(o => o.round_label === "1" || o.round_label === "1A" || o.round_label === "1B").length;
-  const r5 = _sim.order.filter(o => { const n = parseInt(o.round_label, 10); return !isNaN(n) ? n <= 5 : true; }).length;
-  return { r1, r5, board: Math.min(_sim.pool.length, _sim.order.length) };
-}
-function _simActiveLength() {
-  const opts = _simLengthOptions();
-  if (_sim.simLength === 1) return opts.r1;
-  if (_sim.simLength === 5) return opts.r5;
-  return opts.board;
-}
-function _simActiveOrder() { return _sim.order.slice(0, _simActiveLength()); }
-
-function _simSlotForPick(pick) {
-  const o = _sim.order[pick - 1];
-  return (o && o.slot_usd != null) ? o.slot_usd : _SIM_POST_SLOT;
-}
-function _simCurrentSlot() {
-  const o = _simActiveOrder()[_sim.pickIndex];
-  return o ? { pick: o.pick_overall, round: o.round_label, team: o.team } : null;
-}
-function _simIsUserControlled(teamId) {
-  if (_sim.teamMode === "all") return true;
-  return _sim.controlledTeams.has(teamId);
-}
-function _simDraftedKeys() { return new Set(_sim.picks.map(p => p.player_key)); }
-function _simAvailablePlayers() {
-  const drafted = _simDraftedKeys();
-  const q = _sim.query.trim().toLowerCase();
-  return _sim.pool.filter(p => {
-    if (drafted.has(p.player_key)) return false;
-    if (_sim.position !== "ALL" && p.position !== _sim.position) return false;
-    if (q && !`${p.player_name} ${p.school || ""} ${p.position}`.toLowerCase().includes(q)) return false;
-    return true;
-  });
-}
-function _simIsComplete() {
-  return _sim.completed || _sim.pickIndex >= _simActiveLength() || _sim.picks.length >= _sim.pool.length;
-}
-
-// Bonus "ask" heuristic: scaled off the real pick's slot value + where the
-// player sits on the real consensus board, not a validated projection.
-function _simRound(v) { return Math.max(5000, Math.round(v / 100) * 100); }
-function _simBaseDemand(p) {
-  const poolLen = _sim.pool.length || 1;
-  const slot = _simSlotForPick(Math.min(p.consensus_pick, _sim.order.length || p.consensus_pick));
-  const hs = _isHSPlayer(p);
-  const frac = p.consensus_pick / poolLen;
-  if (frac > 0.85) return _simRound(hs ? slot * 1.15 : slot * 0.35);
-  if (frac > 0.55) return _simRound(hs ? slot * 1.08 : slot * 0.55);
-  if (frac > 0.35) return _simRound(hs ? slot * 1.03 : slot * 0.72);
-  if (frac > 0.15) return _simRound(hs ? slot * 1.00 : slot * 0.86);
-  if (frac > 0.05) return _simRound(hs ? slot * 0.98 : slot * 0.88);
-  return _simRound(hs ? slot * 1.02 : slot * 0.85);
-}
-function _simDemandKey(teamId, playerKey) { return teamId + ":" + playerKey; }
-function _simDemand(teamId, p) {
-  const mult = _sim.demands[_simDemandKey(teamId, p.player_key)] || 1;
-  return _simRound(_simBaseDemand(p) * mult);
-}
-function _simCreateDemands() {
-  const demands = {};
-  _sim.teams.forEach(teamId => {
-    _sim.pool.forEach(p => {
-      const hs = _isHSPlayer(p);
-      const lo = hs ? 0.88 : 0.75, hi = hs ? 1.16 : 1.10;
-      demands[_simDemandKey(teamId, p.player_key)] = lo + Math.random() * (hi - lo);
-    });
-  });
-  return demands;
-}
-function _simTeamPickSlots(teamId) {
-  return _simActiveOrder().filter(o => o.team === teamId)
-    .map(o => (o.slot_usd != null ? o.slot_usd : _SIM_POST_SLOT));
-}
-function _simCreateBudgets() {
-  const budgets = {};
-  _sim.teams.forEach(teamId => {
-    const slots = _simTeamPickSlots(teamId);
-    budgets[teamId] = { total: slots.reduce((s, v) => s + v, 0), spent: 0, picks: slots.length };
-  });
-  return budgets;
-}
-function _simRemainingBudget(teamId) {
-  const b = _sim.budgets[teamId] || { total: 0, spent: 0 };
-  return b.total - b.spent;
-}
-function _simFuturePickCount(teamId) {
-  return _simActiveOrder().slice(_sim.pickIndex + 1).filter(o => o.team === teamId).length;
-}
-
-function _simStart() {
-  if (_sim.started) return;
-  _simClearTimer();
-  _sim.pickIndex = 0; _sim.picks = []; _sim.started = true; _sim.completed = false;
-  _sim.demands = _simCreateDemands();
-  _sim.budgets = _simCreateBudgets();
-  _simRender();
-  _simRunAi();
-}
-
-function _simGradePick(pick, rank, bonus, slotValue) {
-  const delta = pick - rank;
-  const slot = Math.max(slotValue || 1, 1);
-  const savingsRate = (slot - bonus) / slot;
-  let score = 3.35;
-  if (delta > 0) score += Math.min(0.85, delta * 0.04);
-  if (delta < 0) score -= Math.min(3.2, 0.32 + Math.abs(delta) * 0.24);
-  if (savingsRate > 0) score += Math.min(0.5, savingsRate * 1.15);
-  else score += Math.max(-1.2, savingsRate * 2.25);
-  if (score >= 3.65) return "A";
-  if (score >= 2.9) return "B";
-  if (score >= 2.05) return "C";
-  if (score >= 1.1) return "D";
-  return "F";
-}
-
-function _simMakePick(playerKey, source) {
-  const slot = _simCurrentSlot();
-  const player = _sim.pool.find(p => p.player_key === playerKey);
-  if (!slot || !player) return;
-  const bonus = _simDemand(slot.team, player);
-  const slotValue = _simSlotForPick(slot.pick);
-  const poolCharge = slot.pick > 610 ? Math.max(0, bonus - _SIM_POST_SLOT) : bonus;
-  _sim.picks.push({
-    pick: slot.pick, round: slot.round, team: slot.team,
-    player_key: playerKey, source,
-    grade: _simGradePick(slot.pick, player.consensus_pick, bonus, slotValue),
-    slotValue, bonus, poolCharge
-  });
-  if (_sim.budgets[slot.team]) _sim.budgets[slot.team].spent += poolCharge;
-  _sim.pickIndex += 1;
-  if (_simIsComplete()) _sim.completed = true;
-}
-
-function _simSelectAiPlayer(teamId) {
-  const avail = _simAvailablePlayers();
-  if (!avail.length) return null;
-  const futureReserve = _simFuturePickCount(teamId) * 100000;
-  const maxSpend = Math.max(10000, _simRemainingBudget(teamId) - futureReserve);
-  const affordable = avail.filter(p => _simDemand(teamId, p) <= maxSpend);
-  if (affordable.length) return affordable[0].player_key;
-  const fallback = avail.filter(p => _simDemand(teamId, p) <= _simRemainingBudget(teamId))
-    .sort((a, b) => _simDemand(teamId, a) - _simDemand(teamId, b));
-  return (fallback[0] || avail[0]).player_key;
-}
-
-function _simRunAi() {
-  _simClearTimer();
-  if (!_sim.started || _simIsComplete()) { _sim.completed = _simIsComplete(); _simRender(); return; }
-  const slot = _simCurrentSlot();
-  if (!slot || _simIsUserControlled(slot.team)) { _simRender(); return; }
-  _sim.aiRunning = true;
-  _sim.aiTimer = window.setTimeout(() => {
-    _sim.aiTimer = null;
-    const active = _simCurrentSlot();
-    if (!active || _simIsUserControlled(active.team) || _simIsComplete()) { _sim.aiRunning = false; _simRender(); return; }
-    const key = _simSelectAiPlayer(active.team);
-    if (key) _simMakePick(key, "cpu");
-    _simRender();
-    _simRunAi();
-  }, 260);
-}
-
-function _simPick(playerKey) {
-  if (!_sim.started) _simStart();
-  if (_simIsComplete()) return;
-  const slot = _simCurrentSlot();
-  if (!slot || _simDraftedKeys().has(playerKey) || !_simIsUserControlled(slot.team)) return;
-  const player = _sim.pool.find(p => p.player_key === playerKey);
-  if (player && _simDemand(slot.team, player) > _simRemainingBudget(slot.team)) return;
-  _simMakePick(playerKey, "user");
-  _simRender();
-  _simRunAi();
-}
-
-function _simAutoPickForMe() {
-  const slot = _simCurrentSlot();
-  if (!_sim.started || !slot || !_simIsUserControlled(slot.team) || _simIsComplete()) return;
-  const key = _simSelectAiPlayer(slot.team);
-  if (key) _simPick(key);
-}
-
-function _simUndo() {
-  _simClearTimer();
-  if (!_sim.picks.length) return;
-  const removed = _sim.picks.pop();
-  if (_sim.budgets[removed.team]) _sim.budgets[removed.team].spent = Math.max(0, _sim.budgets[removed.team].spent - removed.poolCharge);
-  _sim.pickIndex = Math.max(0, _sim.pickIndex - 1);
-  _sim.completed = false;
-  _simRender();
-}
-
-function _simReset() {
-  _simClearTimer();
-  _sim.pickIndex = 0; _sim.picks = []; _sim.started = false; _sim.completed = false;
-  _sim.demands = {}; _sim.budgets = {};
-  _simRender();
-}
-
-function _simSetTeamMode(mode) {
-  _sim.teamMode = mode;
-  if (mode === "single") _sim.controlledTeams = new Set([_sim.primaryTeam]);
-  if (mode === "all") _sim.controlledTeams = new Set(_sim.teams);
-  _simRender();
-}
-function _simSetPrimaryTeam(teamId) {
-  _sim.primaryTeam = teamId;
-  if (_sim.teamMode === "single") _sim.controlledTeams = new Set([teamId]);
-  else _sim.controlledTeams.add(teamId);
-  _simRender();
-}
-function _simToggleControlledTeam(teamId) {
-  if (_sim.teamMode !== "multi") return;
-  if (_sim.controlledTeams.has(teamId)) _sim.controlledTeams.delete(teamId);
-  else _sim.controlledTeams.add(teamId);
-  if (!_sim.controlledTeams.size) _sim.controlledTeams.add(_sim.primaryTeam);
-  _simRender();
-}
-function _simSetLength(v) {
-  _sim.simLength = v === "board" ? "board" : Number(v);
-  _simRender();
-}
-
-function _simGradeColor(letter) {
-  return letter === "A" ? "var(--neon-green)" : letter === "F" ? "var(--neon-magenta)"
-       : letter === "B" ? "var(--neon-cyan)" : letter === "D" ? "var(--neon-orange)" : "var(--text-secondary)";
-}
-function _simMoney(v) {
-  if (v == null) return "-";
-  const a = Math.abs(v);
-  return (v < 0 ? "-" : "") + (a >= 1e6 ? `$${(a / 1e6).toFixed(1)}M` : a >= 1e3 ? `$${Math.round(a / 1e3)}K` : `$${a}`);
-}
-
-function _simSetupHTML() {
-  const teamOpts = _sim.teams.map(t => `<option value="${t}" ${t === _sim.primaryTeam ? "selected" : ""}>${escapeHtml(t)}</option>`).join("");
-  const multiPills = _sim.teams.map(t => `
-    <label class="chip" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">
-      <input type="checkbox" name="sim-controlled-team" id="sim-team-${t}" value="${t}" ${_sim.controlledTeams.has(t) ? "checked" : ""}
-        onchange="_simToggleControlledTeam('${t}')" style="margin:0;" />${escapeHtml(t)}
-    </label>`).join(" ");
-  return `
-    <div class="draft-panel" style="padding:14px;">
-      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;">
-        <div>
-          <div class="filter-label" style="margin-bottom:4px;">Control</div>
-          <button class="chip ${_sim.teamMode === "single" ? "active" : ""}" onclick="_simSetTeamMode('single')">One team</button>
-          <button class="chip ${_sim.teamMode === "multi" ? "active" : ""}" onclick="_simSetTeamMode('multi')">Several teams</button>
-          <button class="chip ${_sim.teamMode === "all" ? "active" : ""}" onclick="_simSetTeamMode('all')">All 30 (GM mode)</button>
-        </div>
-        ${_sim.teamMode === "single" ? `
-        <div>
-          <div class="filter-label" style="margin-bottom:4px;">Your team</div>
-          <select class="chip" id="sim-team-select" name="sim-team" onchange="_simSetPrimaryTeam(this.value)">${teamOpts}</select>
-        </div>` : ""}
-        <div>
-          <div class="filter-label" style="margin-bottom:4px;">Length</div>
-          <select class="chip" id="sim-length-select" name="sim-length" onchange="_simSetLength(this.value)">
-            <option value="1" ${_sim.simLength === 1 ? "selected" : ""}>Round 1</option>
-            <option value="5" ${_sim.simLength === 5 ? "selected" : ""}>Rounds 1-5</option>
-            <option value="board" ${_sim.simLength === "board" ? "selected" : ""}>Full board (${_simLengthOptions().board} picks)</option>
-          </select>
-        </div>
-        <button class="gfx-btn is-primary" style="padding:8px 18px;" onclick="_simStart()">Start draft</button>
-      </div>
-      ${_sim.teamMode === "multi" ? `<div style="margin-top:10px;">${multiPills}</div>` : ""}
-      <div style="margin-top:10px;font-size:11px;color:var(--text-tertiary);">
-        The CPU drafts best-board-available within its bonus pool for every pick you don't control.
-        Bonus asks are a simplified rank/slot heuristic for the sim, not a projection.
-      </div>
-    </div>`;
-}
-
-function _simStatusHTML() {
-  const slot = _simCurrentSlot();
-  const complete = _simIsComplete();
-  const activeLen = _simActiveLength();
-  return `
-    <div class="draft-panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;">
-      <div style="display:flex;align-items:center;gap:10px;">
-        ${!complete && slot ? `${teamLogoHTML(slot.team, "md")}
-          <div><strong style="font-size:15px;">${escapeHtml(slot.team)} on the clock</strong>
-          <div style="font-size:11px;color:var(--text-secondary);">Round ${escapeHtml(String(slot.round))} · Pick ${slot.pick} of ${activeLen}</div></div>`
-        : `<strong>${complete ? "Draft complete" : "Not started"}</strong>`}
-      </div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;">
-        <button class="chip" ${(!_sim.started || complete || !slot || !_simIsUserControlled(slot.team)) ? "disabled" : ""} onclick="_simAutoPickForMe()">Auto pick for me</button>
-        <button class="chip" ${!_sim.picks.length ? "disabled" : ""} onclick="_simUndo()">Undo</button>
-        <button class="chip reset-chip" onclick="_simReset()">Reset</button>
-      </div>
-    </div>`;
-}
-
-function _simPoolChip(p) {
-  const hs = _isHSPlayer(p);
-  return `<span style="font-size:9px;font-weight:700;letter-spacing:.3px;padding:0 4px;border-radius:2px;
-    background:${hs ? "rgba(224,64,160,.16)" : "rgba(90,200,250,.14)"};
-    color:${hs ? "var(--spend-draft)" : "var(--neon-cyan)"};">${hs ? "HS" : "COL"}</span>`;
-}
-
-function _simBoardHTML() {
-  const slot = _simCurrentSlot();
-  const complete = _simIsComplete();
-  const controlled = !complete && slot && _simIsUserControlled(slot.team);
-  if (!_sim.started) {
-    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("Set up your draft above", "Pick your team(s) and hit Start - the board below fills in once the draft is running.")}</div>`;
-  }
-  if (complete) {
-    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("All picks are in", "Scroll down for the full results and, if you controlled a team, your recap.")}</div>`;
-  }
-  const positions = ["ALL", ...Array.from(new Set(_sim.pool.map(p => p.position))).sort()];
-  const options = _simAvailablePlayers().slice(0, 60);
-  const rows = options.map(p => {
-    const ask = _simDemand(slot.team, p);
-    const affordable = !controlled || ask <= _simRemainingBudget(slot.team);
-    const fv = p.consensus_fv_raw != null ? fvCeil(p.consensus_fv_raw) : p.consensus_fv;
-    const logo = _collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p));
-    return `
-      <tr>
-        <td style="text-align:center;font-weight:600;">${p.consensus_pick}</td>
-        <td><span class="draft-cell-ico">${logo}${escapeHtml(p.player_name)}</span></td>
-        <td>${escapeHtml(p.position || "")} ${_simPoolChip(p)}</td>
-        <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
-        <td style="text-align:right;">${_simMoney(ask)}</td>
-        <td style="text-align:center;">
-          <button class="chip ${controlled && affordable ? "" : "reset-chip"}" ${controlled && affordable ? "" : "disabled"}
-            onclick="_simPick('${p.player_key}')">${controlled ? (affordable ? "Draft" : "Over budget") : "-"}</button>
-        </td>
-      </tr>`;
-  }).join("");
-  return `
-    <div class="draft-panel" style="padding:14px;">
-      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
-        <input class="chip" id="sim-player-search" name="sim-player-search" style="min-width:180px;" type="search" placeholder="Search available players"
-          value="${escapeHtml(_sim.query)}" oninput="_sim.query=this.value;_simRender();" />
-        <select class="chip" id="sim-position-filter" name="sim-position" onchange="_sim.position=this.value;_simRender();">
-          ${positions.map(pos => `<option value="${pos}" ${pos === _sim.position ? "selected" : ""}>${pos === "ALL" ? "All positions" : pos}</option>`).join("")}
-        </select>
-        <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);align-self:center;">
-          ${controlled ? `${_simMoney(_simRemainingBudget(slot.team))} left in ${escapeHtml(slot.team)}'s pool` : "CPU is on the clock..."}
-        </span>
-      </div>
-      <table class="draft-table">
-        <thead><tr><th style="text-align:center;">Board #</th><th>Player</th><th>Pos</th>
-          <th style="text-align:center;">FV</th><th style="text-align:right;">Ask</th><th style="text-align:center;">Pick</th></tr></thead>
-        <tbody>${rows || `<tr><td colspan="6">No players match these filters.</td></tr>`}</tbody>
-      </table>
-    </div>`;
-}
-
-function _simResultsHTML() {
-  if (!_sim.picks.length) return "";
-  const recent = _sim.picks.slice().reverse().slice(0, 30);
-  const rows = recent.map(pick => {
-    const player = _sim.pool.find(p => p.player_key === pick.player_key);
-    const fv = player && player.consensus_fv_raw != null ? fvCeil(player.consensus_fv_raw) : (player ? player.consensus_fv : null);
-    const delta = player ? pick.pick - player.consensus_pick : 0;
-    return `
-      <tr>
-        <td style="text-align:center;">${pick.pick}</td>
-        <td><span class="draft-cell-ico">${teamLogoHTML(pick.team, "sm")}${escapeHtml(pick.team)}</span></td>
-        <td>${escapeHtml(player ? player.player_name : "Unknown")}</td>
-        <td>${escapeHtml(player ? player.position : "-")}</td>
-        <td style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
-        <td style="text-align:right;">${_simMoney(pick.bonus)}</td>
-        <td style="text-align:center;color:${delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)"};">${delta > 0 ? "+" + delta : delta}</td>
-        <td style="text-align:center;font-weight:700;color:${_simGradeColor(pick.grade)};">${pick.grade}</td>
-        <td style="text-align:center;font-size:10px;color:var(--text-tertiary);">${pick.source === "user" ? "You" : "CPU"}</td>
-      </tr>`;
-  }).join("");
-  return `
-    <div class="draft-panel" style="padding:14px;margin-top:10px;">
-      <div class="filter-label" style="margin-bottom:6px;">Recent picks</div>
-      <table class="draft-table">
-        <thead><tr><th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
-          <th style="text-align:center;">FV</th><th style="text-align:right;">Bonus</th>
-          <th style="text-align:center;">vs board</th><th style="text-align:center;">Grade</th><th>Who</th></tr></thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-}
-
-function _simRecapHTML() {
-  if (!_simIsComplete()) return "";
-  const userPicks = _sim.picks.filter(p => p.source === "user");
-  if (!userPicks.length) return "";
-  const points = { A: 4, B: 3, C: 2, D: 1, F: 0 };
-  const avg = userPicks.reduce((s, p) => s + (points[p.grade] || 0), 0) / userPicks.length;
-  const overall = avg >= 3.5 ? "A" : avg >= 2.5 ? "B" : avg >= 1.5 ? "C" : avg >= 0.75 ? "D" : "F";
-  const controlledIds = Array.from(new Set(userPicks.map(p => p.team)));
-  const teamBlocks = controlledIds.map(teamId => {
-    const picks = userPicks.filter(p => p.team === teamId);
-    const budget = _sim.budgets[teamId] || { total: 0, spent: 0 };
-    return `
-      <div style="margin-top:8px;">
-        <div style="display:flex;align-items:center;gap:8px;">
-          ${teamLogoHTML(teamId, "sm")}<strong>${escapeHtml(teamId)}</strong>
-          <span style="font-size:11px;color:var(--text-tertiary);">${picks.length} picks · pool ${_simMoney(budget.total)} · spent ${_simMoney(budget.spent)}</span>
-        </div>
-      </div>`;
-  }).join("");
-  return `
-    <div class="draft-panel" style="padding:14px;margin-top:10px;">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div style="font-size:32px;font-weight:800;color:${_simGradeColor(overall)};">${overall}</div>
-        <div><strong>Draft recap</strong><div style="font-size:11px;color:var(--text-tertiary);">Grade blends pick value vs. consensus rank and bonus pool discipline across your controlled picks.</div></div>
-      </div>
-      ${teamBlocks}
-    </div>`;
-}
-
-function _simRender() {
-  const host = document.getElementById("draft-rows");
-  if (!host || state.draftView !== "simulate") return;
-  host.innerHTML = _draftCaption(`${_sim.year} draft simulator`,
-      "control real teams against the real consensus board, picks graded live")
-    + _simSetupHTML() + _simStatusHTML() + _simBoardHTML() + _simResultsHTML() + _simRecapHTML();
-}
-
-function _renderDraftSimulate(host, cls) {
-  if (!cls || !(cls.prospects || []).length || !(cls.draft_order || []).length) {
-    host.innerHTML = _draftEmpty(`No simulator data for ${cls ? cls.year : "this class"}`,
-      "A simulator needs both a ranked board and a real draft order on file.");
-    return;
-  }
-  _simEnsureInit(cls);
-  _simRender();
 }
 
 function _renderDraftResults(host, cls) {
@@ -29072,6 +28783,7 @@ function _positionGamesSummary(playerKey) {
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
 let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail fallback
+let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable" - grpo_public.json sidecar
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -29120,8 +28832,9 @@ function _tbSortRows(rows) {
     if (_tbSort === "org_asc") return withTradeTiebreak(cmpText(a.org, b.org), a, b);
     if (_tbSort === "pos_asc") return withTradeTiebreak(cmpText(_tbPrimaryPos(a.position), _tbPrimaryPos(b.position)), a, b);
     if (_tbSort === "surplus_desc") return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
-    // Default: rank by the eFV grade the surplus is derived from (orders realized
-    // WAR better than the $-transform per data/trade_machine_eval.json), surplus $
+    // Default: rank by the model's raw eFV grade (orders realized WAR better
+    // than the $-transform per data/trade_machine_eval.json; surplus itself is
+    // priced on the displayed quantile grade since 2026-07-06), surplus $
     // as the tiebreak.
     return withTradeTiebreak((num(b.xfv_grade) ?? -1) - (num(a.xfv_grade) ?? -1), a, b);
   });
@@ -29381,7 +29094,18 @@ function renderTradeBoard() {
     wrap.innerHTML = '<div class="spinner-wrap"><span class="spinner"></span></div>';
     fetch(base + "trade_values.json" + vp, { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => { _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters(); })
+      .then(d => {
+        _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
+        // Group-panel data rides the slim public sidecar (the full
+        // grpo_scores.json is deploy-excluded); never fetch the full file.
+        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
+          .then(r => (r.ok ? r.json() : null))
+          .then(g => {
+            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+            else { _tbGrpoState = "unavailable"; }
+          })
+          .catch(() => { _tbGrpoState = "unavailable"; });
+      })
       .catch(e => {
         wrap.innerHTML = `<div class="empty-state">Trade Board data not found (<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code> to generate it.<br><small>${e}</small></div>`;
       });
@@ -29524,7 +29248,16 @@ function _tbShowGroup(playerKey) {
   if (!panel || !title || !body) return;
 
   const pScore = (_tbData.all_scores || {})[playerKey];
-  if (!pScore) { panel.style.display = "none"; return; }
+  if (!pScore) {
+    title.innerHTML = "GRPO group";
+    body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
+      _tbGrpoState === "pending"
+        ? "Profile-group details are still loading. Try again in a moment."
+        : "Profile-group details are not available here right now. The breakout score on the chip still stands."
+    }</div>`;
+    panel.style.display = "block";
+    return;
+  }
 
   const members = pScore.active_group_members || [];
   const grp     = pScore.group || "?";
@@ -29843,8 +29576,18 @@ function renderDebuts() {
     orderedGrads.forEach((g, i) => { _emitGrad(g, i + 1, null, ""); });
   } else {
     let rank = 1;
-    for (const dateKey of sortedDates) {
-      for (const g of byDate[dateKey]) { _emitGrad(g, rank++, null, null); }
+    // Honor the universal direction flip on the grouped date path too.
+    // Clicking the Debut header toggles state.sortRev.debutSort (and the
+    // header arrow + URL srev param followed suit), but this branch was
+    // hard-coded newest-first - the arrow claimed ascending while the
+    // rendered order never changed. Mirror _applySortDir by reversing the
+    // date-group iteration AND the within-group order, so the emitted list
+    // is the exact reverse of the default.
+    const _dRev = !!(state.sortRev && state.sortRev.debutSort);
+    const _dates = _dRev ? sortedDates.slice().reverse() : sortedDates;
+    for (const dateKey of _dates) {
+      const _grp = _dRev ? byDate[dateKey].slice().reverse() : byDate[dateKey];
+      for (const g of _grp) { _emitGrad(g, rank++, null, null); }
     }
   }
   const _debutHidden = filtered.length - _debutEmitted;
@@ -30161,8 +29904,9 @@ let _SWING_PLUS = null;
     .then(j => {
       _SWING_PLUS = (j && j.players) || {};
       // The first paint can beat this fetch - repaint the open view so
-      // Swing+ tiles/chips appear without a manual refresh.
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      // Swing+ tiles/chips appear without a manual refresh (coalesced with
+      // the other sidecar landings via scheduleRender).
+      scheduleRender();
     })
     .catch(() => { _SWING_PLUS = {}; });
 })();
@@ -30184,7 +29928,7 @@ let _AAA_STUFF = null;
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _AAA_STUFF = (j && j.players) || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      scheduleRender();
     })
     .catch(() => { _AAA_STUFF = {}; });
 })();
@@ -30197,9 +29941,10 @@ function getAaaStuffPlus(p) {
 
 // ===== eFV - our outcome-grounded Future Value grade (data/xfv.json) ========
 // Sidecar keyed by player_key (a prospect-centric slug), NOT mlbam_id - eFV is
-// a prospect grade. Each entry: headline xfv_grade (rank-preserving onto the
-// 20-80 consensus scale), xfv_grade_realized (deflated outcome-implied grade
-// that drives surplus/distribution), the 5-bucket outcome mix, surplus + a P10-P90
+// a prospect grade. Each entry: xfv_grade_quantile (the displayed 20-80 headline;
+// drives surplus since the 2026-07-06 flip), xfv_grade (rank-preserving map onto
+// the consensus scale), xfv_grade_realized (deflated outcome-implied grade that
+// still drives the p_bucket/p_bust odds), the 5-bucket outcome mix, surplus + a P10-P90
 // fan, and tool eFVs. Shown ALONGSIDE consensus FV (it ties/▾consensus on rank;
 // its value-add is the calibrated distribution + uncertainty + surplus). Live-board
 // players carry kind="active"; eFV abstains on players with no pro track record.
@@ -30211,9 +29956,9 @@ let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives t
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _EFV = (j && j.by_player) || {};
-      _EFV_RANK = null; _EFV_PREV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
+      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      scheduleRender();
     })
     .catch(() => { _EFV = {}; });
 })();
@@ -30223,7 +29968,7 @@ let _MILBTR = null;
 (function loadMilbTr() {
   fetch("/data/milb_translation.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => { _MILBTR = j || {}; try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .then(j => { _MILBTR = j || {}; scheduleRender(); })
     .catch(() => { _MILBTR = {}; });
 })();
 function milbProjHTML(p) {
@@ -30253,7 +29998,7 @@ let _EFV_HIST = null;
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_HIST = (j && j.by_player) || {};
       _EFV_PREV_RANK = null;   // rank-delta chips need history -> rebuild the prev-grade rank map now that it loaded
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _EFV_HIST = {}; });
 })();
 function getEfvHistory(p) {
@@ -30304,8 +30049,8 @@ function ensureEfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_UNG = j || { by_player: {}, by_mlbam: {} };
-      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
+      scheduleRender(); })
     .catch(() => { _EFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
 // Synthesize first-class player objects for the provisional (source-ungraded) prospects so they
@@ -30373,7 +30118,7 @@ let _EFV_PROXY = null;
   fetch("/data/xfv_proxy_eval.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_PROXY = j || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _EFV_PROXY = {}; });
 })();
 function efvProxyPanel(p) {
@@ -30416,7 +30161,7 @@ function ensureEfvTrack() {
     grab("/data/source_backtest.json"), grab("/data/xfv_reliability.json"),
   ]).then(([hit, pit, bt, iso]) => {
     _EFV_TRACK = { hit: hit, pit: pit, bt: bt, iso: iso };
-    try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    scheduleRender();
   }).catch(() => { _EFV_TRACK = { hit: null, pit: null, bt: null, iso: null }; });
 }
 // Small shared bits for the track-record tables (inline-styled; the panel has no
@@ -30623,6 +30368,31 @@ function buildEfvRankMap() {
 function getEfvRank(p) {
   if (_EFV_RANK == null) buildEfvRankMap();
   return (p && _EFV_RANK) ? (_EFV_RANK[p.player_key] || null) : null;
+}
+// Canonical ORG rank: the player's position within their org's pool (graded +
+// provisional) under the SAME eFV ordering as the roster tab / farm preview /
+// main board. Replaces the baked p.org_rank (one run stale, realized-grade
+// basis) on live surfaces so org ranks can't disagree with the roster order.
+let _EFV_ORG_RANK = null;
+function buildEfvOrgRankMap() {
+  _EFV_ORG_RANK = {};
+  if (!DATA || !Array.isArray(DATA.players)) return;
+  const byOrg = {};
+  DATA.players.filter(p => p && p.player_key).concat(provPlayers()).forEach(p => {
+    const o = p.org || "?";
+    (byOrg[o] = byOrg[o] || []).push(p);
+  });
+  for (const o in byOrg) {
+    byOrg[o].sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    byOrg[o].forEach((p, i) => {
+      _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: byOrg[o].length };
+    });
+  }
+}
+function getEfvOrgRank(p) {
+  if (_EFV_ORG_RANK == null) buildEfvOrgRankMap();
+  return (p && _EFV_ORG_RANK) ? (_EFV_ORG_RANK[p.player_key] || null) : null;
 }
 // eFV grade as of ~one board update (RANK_WINDOW_DAYS) ago -- a FIXED recent window, so the
 // rank-delta reads "movement since the last update", not a lifetime climb. An event-based
@@ -31219,6 +30989,12 @@ function _getFgExtras(p) {
 // Handedness, FG-first then TJStats (bat_side/throw_side) then any source.
 // bats: L/R/S, throws: L/R. Recovers handedness for prospects FG omits.
 function _getHandedness(p) {
+  // Baked top-level fields win when present: overseas payloads always carry
+  // them, and the v46 debuts_lite rows bake them (server-side mirror of the
+  // scan below) since lite rows ship without the points history.
+  if (p && (p.bats || p.throws)) {
+    return { bats: p.bats || null, throws: p.throws || null };
+  }
   const PRIMARY = ["fangraphs", "tjstats"];
   return _scanExtras(p, s => s === "fangraphs", _handFromExtras)
       || _scanExtras(p, s => s === "tjstats", _handFromExtras)
@@ -31560,6 +31336,7 @@ function _gfxOrgNick(code) {
 const _GFX_POS_LABEL = {
   C: "Catchers", "1B": "1B", "2B": "2B", "3B": "3B", SS: "Shortstops",
   INF: "Infielders", CF: "CF", LF: "LF", RF: "RF", OF: "Outfielders",
+  H: "Hitters",
   P: "Pitchers", SP: "SP", RP: "Relievers", SIRP: "SIRP", MIRP: "MIRP",
 };
 function _gfxPosLabel(pos) { return _GFX_POS_LABEL[pos] || pos; }
@@ -31786,6 +31563,19 @@ function _gfxSilhouetteBg(P) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fill}" d="M12 12.4a4.6 4.6 0 1 0 0-9.2 4.6 4.6 0 0 0 0 9.2zm0 1.9c-4.7 0-8.5 2.4-8.5 5.7V22h17v-2c0-3.3-3.8-5.7-8.5-5.7z"/></svg>`;
   return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`;
 }
+// Base layer BEHIND a GFX photo well: the team logo (contained, centered)
+// when the org is known, else the neutral silhouette. The photo sits on top
+// as a cover layer, so a player with no headshot on file (or one that 404s)
+// degrades to the team logo - which reads far better on dark-mode GFX than
+// the dim silhouette. ESPN-CDN PNGs are crossorigin-safe under html2canvas
+// (same as the meta-line logos). Silhouette stays the last-resort fallback
+// for subjects with no MLB org (draftees, overseas).
+function _gfxPhotoBaseLayer(org, P) {
+  const url = (typeof teamLogoURL === "function" && org) ? teamLogoURL(org) : null;
+  return url
+    ? `background-color:${P.bg3};background-image:url('${url}');background-repeat:no-repeat;background-position:center;background-size:58%;`
+    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
+}
 // GFX headshot URL - DELIBERATELY omits MLB Cloudinary's `d_people:generic`
 // default param so a player with no headshot on file returns a real 404
 // (image/gif) instead of a silhouette served at HTTP 200. That 404 is what
@@ -31809,7 +31599,7 @@ const _gfxMissingPhotos = new Set();
 function _gfxLogMissingPhoto(id) {
   if (id == null || _gfxMissingPhotos.has(id)) return;
   _gfxMissingPhotos.add(id);
-  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing silhouette (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
+  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing team-logo fallback (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
 }
 // Small inline team-logo mark for the meta line, with a styled abbreviation
 // badge fallback when the CDN image fails (img hidden → abbr sibling shown).
@@ -31844,15 +31634,19 @@ function _gfxAvatar(r, P) {
   if (!useP && !useL) return "";
   // Portrait crop ~3:4 - rectangular with a subtle 3px radius for polish.
   const w = 40, h = 52;
+  // Cell background = team logo when the org is known (silhouette only for
+  // org-less rows: draftees / overseas). A 404'd photo then degrades to the
+  // logo, not the dim silhouette (owner: silhouettes read badly on dark-mode
+  // GFX). The small meta-line logo repeats on those rows - accepted, same
+  // trade-off as the full prospect card's logo base layer.
+  const _avLogo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
   const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex:none;border:1px solid ${P.border};`
-    + `background-color:${P.bg};background-image:${_gfxSilhouetteBg(P)};background-position:center;background-size:62%;`
+    + `background-color:${P.bg};background-image:${_avLogo ? `url('${_avLogo}')` : _gfxSilhouetteBg(P)};background-position:center;background-size:${_avLogo ? "58%" : "62%"};`
     + `background-repeat:no-repeat;overflow:hidden;display:inline-block;vertical-align:middle;`;
   if (useP) {
     const hs = _gfxHeadshotURL(r.mlbam, h);
-    // No photo on file → 404 → fall through to the silhouette background and
-    // log the miss. The team logo (when enabled) shows in the meta line, so
-    // we deliberately do NOT swap the avatar to a logo here (avoids a double
-    // team logo on photo-less rows).
+    // No photo on file → 404 → fall through to the cell background (team
+    // logo, silhouette when org-less) and log the miss.
     // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
     // scope does NOT have our functions, so a bare call would throw a
     // ReferenceError there. typeof on an undeclared name is safe (returns
@@ -32185,6 +31979,12 @@ function buildProspectCard(snap) {
                 : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
   const fvNum = (_xgC != null) ? efvRankValue(p)
               : (p.fv_close != null ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null));
+  // Hero badge label tracks the badge VALUE above (eFV-first, consensus FV only
+  // where eFV abstains) - it used to hardcode "Consensus FV" over an eFV number.
+  // Mirrors the detail-page header labels (efvDetailHeaderHTML).
+  const fvBadgeLabel = _xgC != null
+    ? ((_xC && _xC.xfv_ungraded) ? "Provisional eFV" : "eFV")
+    : "Consensus FV";
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
@@ -32215,15 +32015,7 @@ function buildProspectCard(snap) {
   // default "rarity" style scales the frame with tier (thin/none below FV 45).
   const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
   const photoFrameBg = rarGrad || P.borderStrong;
-  // Base layer BEHIND the photo: the team logo (contained, centered) when we have one, else
-  // the neutral silhouette. Because the photo sits ON TOP as a cover layer, a player with no
-  // headshot on file (or a photo that 404s) degrades to the team logo instead of the dim
-  // silhouette -- which reads far better on dark-mode GFX. The logo is contained (never
-  // stretched) and rides the ESPN CDN (crossorigin-safe under html2canvas like the meta logos).
-  const _logoURL = (typeof teamLogoURL === "function" && p.org) ? teamLogoURL(p.org) : null;
-  const _baseLayer = _logoURL
-    ? `background-color:${P.bg3};background-image:url('${_logoURL}');background-repeat:no-repeat;background-position:center;background-size:58%;`
-    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
+  const _baseLayer = _gfxPhotoBaseLayer(p.org, P);
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
     <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;${_baseLayer}">
       ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
@@ -32416,7 +32208,11 @@ function buildProspectCard(snap) {
   // rank when the two boards disagree (mirrors the detail page's
   // secondary Consensus pill).
   const rankBits = [
-    (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null,
+    (() => {
+      const _or = (typeof getEfvOrgRank === "function" && p.org) ? getEfvOrgRank(p) : null;
+      if (_or) return `#${_or.rank} of ${_or.total} ${p.org}`;
+      return (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null;
+    })(),
     (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
       ? `Consensus #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
@@ -32609,7 +32405,7 @@ function buildProspectCard(snap) {
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
           <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
+            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">${fvBadgeLabel}</span>
             <span>${fvBadgeBig}</span>
           </div>
           ${heroTiles}
@@ -32856,7 +32652,7 @@ function buildCompareCard(snap) {
     const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
     const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
     return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
-      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
+      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
       <div style="display:flex;align-items:center;gap:8px;justify-content:center;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:22px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(d.p.player_name || "")}</div></div>
       <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
       <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
@@ -32921,7 +32717,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
   const PW = 116, PH = 150, pad = rar ? 5 : 3;
   const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 200) : "";
   const photo = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:7px;overflow:hidden;box-sizing:border-box;padding:${pad}px;background:${grad || P.borderStrong};border-top:3px solid ${orgColor};">
-      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;${_gfxPhotoBaseLayer(p.org, P)}">
         ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
       </div></div>`;
   const fvBadge = (r.fv != null)
@@ -39848,37 +39644,46 @@ function renderFarmSystems() {
         ? ""
         : `<div class="farm-rank-delta ${rankDelta > 0 ? 'stock-up' : 'stock-down'}" title="Was #${prev} on your last visit">${rankDelta > 0 ? '+' : ''}${rankDelta}${rankDelta > 0 ? '↑' : '↓'}</div>`;
     }
-    // Top-3 prospects strip (G16). Names are clickable - onclick fires
-    // goToPlayer() with the player_key and stopPropagation prevents the
-    // row's goToFarm() from also firing. Keyboard focus + Enter also
-    // routes to the player page for accessibility. Position shown
-    // inline before the name as a small tertiary chip.
-    const top3 = (org.prospects || []).slice(0, 3);
+    // Top-3 prospects strip (G16). Derived LIVE from the same pool + eFV
+    // ordering as the farm-detail Roster tab (efvRankValue over org players
+    // + provisionals) and ranked via getEfvRank -- the site-wide canonical --
+    // so the preview can never disagree with the roster or the main board.
+    // (The baked org.prospects order is one run stale and pre-dates the
+    // quantile headline: the Ike Irish #1/#80-vs-#3/#102 bug.) Names are
+    // clickable - onclick fires goToPlayer() with the player_key and
+    // stopPropagation prevents the row's goToFarm() from also firing.
+    if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
+    const _orgPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
+      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    _orgPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    const top3 = _orgPool.slice(0, 3);
     const topHtml = top3.length
       ? `<div class="farm-top3-stack">${top3.map(t => {
           const pkey = escapeHtml(t.player_key || "");
-          // Lead with eFV (consensus FV fallback), matching the active board.
-          const tFv = (t.xfv_grade != null) ? Math.round(t.xfv_grade)
-                    : (t.fv_raw != null ? fvCeil(t.fv_raw) : t.fv_label);
-          const primaryPos = (t.pos || t.position || "")
+          // Lead with eFV (consensus FV fallback), via the shared gradeBlock
+          // resolution so rounding + fallback match the board rows exactly.
+          const gb = (typeof gradeBlock === "function") ? gradeBlock(t) : null;
+          const tFv = gb && gb.label != null ? gb.label : "-";
+          const primaryPos = (t.position || "")
             .toString().split("/")[0].trim().toUpperCase();
           const posChip = primaryPos
-            ? `<span class="farm-top3-pos" title="${escapeHtml(t.pos || t.position || "")}">${escapeHtml(primaryPos)}</span>`
+            ? `<span class="farm-top3-pos" title="${escapeHtml(t.position || "")}">${escapeHtml(primaryPos)}</span>`
             : "";
           const nameHtml = pkey
-            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
-            : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
+            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.player_name)}</span>`
+            : `<span class="farm-top3-name">${escapeHtml(t.player_name)}</span>`;
           // v19 - Rank diamond LEFT of pos chip, matching active-list
           // treatment. Reuses rankNumRarityClass for the FV-tier border.
-          // storage.py emits the top-prospect's site-wide MiLB rank as `rank`
-          // on org.prospects (older payloads used `overall_rank`).
-          const _topRank = (t.overall_rank ?? t.rank);
+          const _topRank = (typeof getEfvRank === "function") ? getEfvRank(t) : null;
           const rankDiamond = _topRank != null
-            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: Number(tFv) }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
+            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: gb ? gb.value : null }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
             : "";
+          const _tTitle = gb && gb.lead === "efv" && gb.consVal != null
+            ? ` title="eFV ${tFv} · consensus FV ${gb.consLabel != null ? gb.consLabel : gb.consVal}"` : "";
           return `<div class="farm-top3-chip">
             ${rankDiamond}${posChip}${nameHtml}
-            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${t.xfv_grade != null ? ` title="eFV ${tFv} · consensus FV ${t.fv_label}"` : ""}>${tFv}</span>
+            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${_tTitle}>${tFv}</span>
           </div>`;
         }).join("")}</div>`
       : '<span style="color:var(--text-tertiary);"> - </span>';
@@ -41797,6 +41602,11 @@ function _mergePlayerDetail(p, det) {
       if (!ps[src]) continue;
       if (moved.tools)  ps[src].tools  = moved.tools;
       if (moved.extras) ps[src].extras = moved.extras;
+      // v46 payload-slim - historical per-source scalars (interval_label /
+      // snapshot_date / status / fv_adjusted) ride the shard too; restore
+      // them for the per-source history table. Legacy shards without the
+      // key skip harmlessly.
+      if (moved.scalars) Object.assign(ps[src], moved.scalars);
     }
   }
   p.__detailMerged = true;
@@ -43849,14 +43659,18 @@ function renderPlayerDetail(key) {
   // the list). Consensus rank shown as a secondary pill when it differs. Works for provisional
   // prospects too (getEfvRank computes their rank client-side).
   const _efvOverall = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
+  // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
+  // baked org_rank / provisional map as fallbacks only.
+  const _efvOrg = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
   const _provOrg = (p._is_provisional && typeof provOrgRank === "function") ? provOrgRank(p) : null;
-  const rankPills = (_efvOverall != null || p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
+  const rankPills = (_efvOverall != null || p.overall_rank != null || _efvOrg || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
         ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Consensus", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
-        ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
+        ${_efvOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _efvOrg.rank + " of " + _efvOrg.total, "var(--neon-cyan)")
+          : p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
           : (_provOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _provOrg.rank + " of " + _provOrg.total, "var(--neon-cyan)") : "")}
         ${wagRankPill}
       </div>`
@@ -45562,14 +45376,17 @@ function renderPlayerDetail(key) {
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
     const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
-    // Gate on whether the SLICE is loaded, not on this player's entry: a prospect
-    // with no scouting report (e.g. a fresh draftee) has no entry even after the
-    // slice loads, so keying the warm-load on `sidecar === null` re-fired
-    // loadSlice().then(render) forever -> infinite render loop -> site freeze.
-    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
-      // First touch of any prospect detail page kicks off the sidecar
-      // warm. After load, re-render so the section populates.
-      loadSlice("scout_reports").then(() => {
+    // Gate on whether this player's DATA is loaded (their hash chunk under
+    // the v46 chunked contract, or the whole sidecar on older exports), not
+    // on the entry itself: a prospect with no scouting report (e.g. a fresh
+    // draftee) has no entry even after the load, so keying the warm-load on
+    // `sidecar === null` re-fired the fetch->render cycle forever ->
+    // infinite render loop -> site freeze. ensureScoutReports marks a chunk
+    // loaded even on fetch failure for the same reason.
+    if (!scoutReportsReadyFor(p.player_key)) {
+      // First touch of a prospect detail page pulls that player's chunk.
+      // After load, re-render so the section populates.
+      ensureScoutReports(p.player_key).then(() => {
         if (state.view && state.view.type === "player"
             && state.view.key === p.player_key) {
           render();
@@ -49462,6 +49279,32 @@ function _renderFarmDetailBody(orgCode, org, root) {
   });
 }
 
+// Coalesced render scheduler for ASYNC data landings. Seven sidecar fetches
+// fire at boot (positions_played, swing_plus, stuff_plus_aaa, xfv,
+// milb_translation, xfv_history, xfv_proxy_eval) plus two lazy loaders
+// (xfv_ungraded, the eFV track bundle); each used to call render() directly
+// as it landed, so the first paint could be followed by up to seven
+// back-to-back full section re-renders (each resetting the pool caches and
+// rebuilding 50 row templates). Any number of scheduleRender() calls before
+// the next animation frame collapse into ONE render(); the final painted
+// output is identical because render() always reads the current DATA +
+// sidecar state. Interactive paths keep calling render() directly for
+// synchronous feedback.
+let _renderQueued = false;
+function scheduleRender() {
+  if (_renderQueued) return;
+  _renderQueued = true;
+  const _flush = () => {
+    _renderQueued = false;
+    // Same guard the per-fetch calls carried: a sidecar can land before
+    // DATA / the template mount, where render() throws - swallow it (the
+    // boot render paints with the already-merged sidecar data anyway).
+    try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(_flush);
+  else setTimeout(_flush, 16);
+}
+
 function render() {
   // Clear per-render memo caches so derived values (e.g. pool mean age,
   // pool HT/WT/BMI stats) re-compute against any DATA that hydrated
@@ -49598,10 +49441,18 @@ function render() {
     if (target) target.innerHTML = `<div class="state-message">${msg}</div>`;
   };
 
-  if (needsGrad && DATA._slices && DATA._slices.debuts && !DATA.debuts.length) {
-    showLoading("Loading debuted players…");
-    loadSlice("debuts").then(render);
-    return;
+  // v46 payload-slim - list surfaces (Graduates tab, Injured) run on the
+  // LITE slice; a graduate's CARD needs the full record (points history,
+  // statcast splits, per-source history), so the player view pulls the
+  // monolith before rendering - same blocking behavior as before, now
+  // scoped to the one surface that needs it.
+  if (needsGrad && DATA._slices && (DATA._slices.debuts_lite || DATA._slices.debuts)) {
+    const _wantFull = active === "player";
+    if (_wantFull ? !DATA._debutsFull : !DATA.debuts.length) {
+      showLoading("Loading debuted players…");
+      (_wantFull ? ensureDebutsFull() : ensureDebutsLite()).then(render);
+      return;
+    }
   }
   if (needsInactive && DATA._slices && DATA._slices.inactive
       && !DATA.inactive.length) {
@@ -51969,12 +51820,26 @@ function attachHandlers() {
     render();
     syncToURL();
   });
+  // Picking a MAIN sort must take control back from the per-tool / per-
+  // Statcast sort overrides: sortPool gives those absolute priority and
+  // returns early, so without this the header/dropdown would light up
+  // while the list stayed sorted by the override (contradicting UI).
+  // Mirrors how picking an override takes control away from state.sort.
+  const _clearSortOverrides = () => {
+    state.toolSortKey     = "off";
+    state.statcastSortKey = "off";
+    const _ts = document.getElementById("tool-sort-select");
+    if (_ts) _ts.value = "off";
+    const _ss = document.getElementById("statcast-sort-select");
+    if (_ss) _ss.value = "off";
+  };
   // eFV / Consensus "Rank by" toggle: sets the board sort (and, via _gradePrimary,
   // which grade leads every cell). Sets state.sort to "xfv" or "fv".
   document.querySelectorAll("[data-grade-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.sort = btn.dataset.gradeToggle;
       if (state.sortRev) state.sortRev.sort = false;   // clear stale reverse flag on an explicit sort pick
+      _clearSortOverrides();
       _syncGradeToggle();
       syncSortHeaderActive();
       resetListPages();
@@ -51993,6 +51858,7 @@ function attachHandlers() {
   if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
     if (state.sortRev) state.sortRev.sort = false;   // an explicit dropdown pick must not be silently reversed by a stale column-toggle flag
+    _clearSortOverrides();   // the tool/Statcast overrides otherwise win in sortPool and the list ignores this pick
     _syncGradeToggle();
     // Mirror dropdown-driven sort changes into the column-click sort
     // header indicator (the header carries .is-active when its
@@ -52047,6 +51913,7 @@ function attachHandlers() {
       // Mirror the actives-list change back into the sort dropdown so
       // chip and header stay in sync. Only applies to the main sort.
       if (cfg.stateField === "sort") {
+        _clearSortOverrides();   // a main-column click means "sort by this column" - hand control back from the tool/Statcast overrides
         const sortSel = document.getElementById("sort-select");
         if (sortSel) sortSel.value = state.sort;
       }
@@ -52235,7 +52102,7 @@ function _resetPageFilters(page) {
     state.classFilter    = "all";
     state.levelFilter    = "all";
     state.posFilter      = "all";
-    state.sort           = "fv";
+    state.sort           = "xfv";   // eFV is the primary board ranking; reset returns to it, not consensus (matches the initializer + FILTER_DEFAULTS)
     state.stockFilter    = "all";
     state.spreadFilter   = "all";
     state.healthFilter   = "all";
@@ -52477,10 +52344,18 @@ function populateOrgFilter() {
     // requestIdleCallback (when available) yields to first user input
     // before the heavy warm starts; setTimeout is the fallback.
     const _warm = () => {
-      loadSlice("debuts");
+      // The context-rail "Recent debuts" / IL-returnee cards read the debuts
+      // slice but no longer force-fetch it at render time - schedule a
+      // coalesced re-render when the warm lands so the visible section's
+      // rail fills in. v46 payload-slim: the warm pulls the LITE slice only
+      // (list fields, a fraction of the old 9MB-gzip monolith); the full
+      // file loads on demand via ensureDebutsFull (graduate card open, Time
+      // Machine, debuted chart). scout_reports left the warm list for the
+      // same reason - it is card-only and now loads per hash chunk on the
+      // first card open (ensureScoutReports).
+      ensureDebutsLite().then(() => scheduleRender()).catch(() => {});
       loadSlice("rosters_by_org");
       loadSlice("inactive");
-      loadSlice("scout_reports");
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(_warm, { timeout: 2500 });
