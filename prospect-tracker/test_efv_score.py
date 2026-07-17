@@ -90,6 +90,11 @@ def test_injury_factor_bounds():
     # Owner directive 2026-07-15: post-TJ STATUS alone (fully recovered, zero
     # IL time - the Kade Anderson case) is NOT an injury and carries NO penalty.
     assert efv_score._injury_factor({"is_post_tj": True}) == 1.0
+    # Owner directive 2026-07-17: a currently-HEALTHY player carries NO penalty
+    # regardless of trailing-12mo IL time (the Josue Briceno case: activated off
+    # a 60-day stint with ~108 trailing IL days must clear to exactly 1.0).
+    assert efv_score._injury_factor({"il_on": 0, "il_days_12mo": 108.0}) == 1.0
+    assert efv_score._injury_factor({"il_days_12mo": 400.0, "il_stints_12mo": 9.0}) == 1.0
     # missing / None fields (the only non-numeric the live board ever produces)
     # never throw or escape the band
     for r in ({"il_days_12mo": None}, {"il_on": True, "il_type": None},

@@ -175,21 +175,26 @@ def _role_factor(r, model_war: float) -> float:
 
 def _injury_factor(r) -> float:
     """Owner-directed live injury penalty: a multiplicative haircut on the eFV WAR
-    projection (so it flows to the grade, the rank, AND surplus) for prospects who are
-    currently hurt or recently fragile. Injuries cost cumulative WAR (durability) and
-    carry re-injury risk that scout FV under-prices; eFV penalizes them harder. Applied
+    projection (so it flows to the grade, the rank, AND surplus) for prospects who
+    are CURRENTLY on the IL. An active injury costs near-term WAR and carries
+    setback risk that scout FV under-prices; eFV penalizes it harder. Applied
     only to the LIVE board (resolved players' outcomes already embed their injuries).
 
     Owner directive 2026-07-15: post-TJ STATUS alone is NOT an injury and carries
     no penalty. The old unconditional is_post_tj x0.85 taxed fully recovered arms
     forever (Kade Anderson: zero IL days in 12 months, elite AA season, but a
-    2022 college TJ cost him 15% of WAR/grade/rank/surplus). Active TJ recovery
-    is already captured by the LIVE components (il_on + il_days_12mo); a healed
-    elbow is not a durability debit and can even read as a positive."""
-    f = 1.0
-    if r.get("il_on"):
-        t = str(r.get("il_type") or "").lower()
-        f *= 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
+    2022 college TJ cost him 15% of WAR/grade/rank/surplus).
+
+    Owner directive 2026-07-17: a currently-HEALTHY player carries NO penalty at
+    all. The old trailing-12-month component kept taxing players after activation
+    (Josue Briceno: back from a 60-day stint, but ~108 trailing IL days held a
+    x0.90 haircut on his card the day he returned). Trailing IL days/stints now
+    only DEEPEN the haircut while the player is actually on the IL; the moment
+    il_on clears, the penalty clears with it."""
+    if not r.get("il_on"):
+        return 1.0
+    t = str(r.get("il_type") or "").lower()
+    f = 0.70 if "60" in t else (0.82 if ("15" in t or "10" in t) else 0.90)
     days = float(r.get("il_days_12mo") or 0.0)
     if days >= 120:
         f *= 0.82
