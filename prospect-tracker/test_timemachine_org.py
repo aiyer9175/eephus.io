@@ -21,7 +21,6 @@ These tests pin the invariant so it can't silently regress back to current org:
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from types import SimpleNamespace as NS
@@ -76,25 +75,18 @@ def test_pit_org_gap_returns_none_not_current():
 # --------------------------------------------------------------------------- #
 # Data — the exported points carry the historical org (skips pre-regeneration).
 # --------------------------------------------------------------------------- #
-def _load(path):
-    try:
-        d = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    return d if isinstance(d, list) else (d.get("players") or d.get("debuts") or [])
-
-
 @pytest.fixture(scope="module")
-def players():
-    pros = _load(ROOT / "data" / "timeseries.json")
-    grads = _load(ROOT / "data" / "debuts.json")
-    if pros is None or grads is None:
-        pytest.skip("data exports not present")
-    by_key = {p["player_key"]: p for p in (pros + grads) if p.get("player_key")}
-    has_org = any(pt.get("org") for p in by_key.values() for pt in (p.get("points") or []))
+def players(players_by_key):
+    # players_by_key is the session-shared pros+grads merge from conftest (one
+    # parse per suite run; it skips when either export is missing). This module
+    # only READS the shared dict. The has_org gate below stays ON TOP of the
+    # shared fixture: data regenerated before the consensus pipeline stamps
+    # point-in-time orgs must still skip.
+    has_org = any(pt.get("org") for p in players_by_key.values()
+                  for pt in (p.get("points") or []))
     if not has_org:
-        pytest.skip("points lack point-in-time org — re-run the consensus pipeline")
-    return by_key
+        pytest.skip("points lack point-in-time org - re-run the consensus pipeline")
+    return players_by_key
 
 
 def test_whitley_2023_point_is_astros_and_differs_from_current(players):

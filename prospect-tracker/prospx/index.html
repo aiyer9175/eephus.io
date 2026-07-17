@@ -9226,6 +9226,8 @@
                 title="Projected first round + competitive-balance picks for the next draft, with live lottery odds for eligible teams. Scraped from Tankathon based on current standings.">Lottery Odds</button>
         <button class="chip" data-draft-view="mock-draft"
                 title="Our pick-by-pick projection of the upcoming draft. The board (consensus rank + Draft Stock+) anchors each pick; each team's draft tendencies, bonus-pool behavior, and a prospect's signability nudge the fit within a small window of best-available.">Mock Draft</button>
+        <button class="chip" data-draft-view="simulate"
+                title="Run the draft yourself: control one team, several, or all thirty, and pick from the real consensus board pick by pick. The CPU drafts best-board-available within bonus-pool budget; every pick is graded against slot value and consensus rank.">Simulate</button>
         <button class="chip" data-draft-view="war-room"
                 title="Live draft board: each pick as it happens, priced against our board (consensus rank + eFV) and the historical pick-value curve, so you see the reach-or-steal in surplus dollars. Opens on draft night.">War Room</button>
       </span>
@@ -10041,14 +10043,11 @@
 
 </template>
 
-<!-- html2canvas - vendored locally (~200KB). Powers the "Share as image"
-     buttons on prospect / farm / leaderboard / chart-builder surfaces.
-     Loaded async so it doesn't block first paint; the export helper
-     gates on `window.html2canvas` being defined before firing. -->
-<script src="/vendor/html2canvas.min.js?v=20260709" defer></script>
-<!-- qrcode-generator (vendored, ~56KB) - builds the optional QR in the GFX card
-     header that links a shared graphic back to the eephus.io prospect/farm page. -->
-<script src="/vendor/qrcode.min.js?v=20260709" defer></script>
+<!-- v47 wire-slim - html2canvas (~200KB parse) and qrcode-generator (~56KB) are
+     no longer loaded eagerly on every cold visit. The GFX/export paths lazy-
+     inject them on first use (_ensureHtml2Canvas / _ensureQrcodeLib in the app
+     script; eephus-export.js keeps its own private html2canvas loader). -->
+
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=20260709" defer></script>
@@ -10342,8 +10341,10 @@ function wireThemeToggle() {
 // fetched on demand:
 //   - debuts_lite.json     when the user opens the Graduates tab (list
 //                          fields only; see ensureDebutsLite)
-//   - debuts.json          full graduate records - graduate card open,
-//                          Time Machine, debuted chart (ensureDebutsFull)
+//   - debuts_full/{key}.json  ONE graduate's full record, on his card open
+//                          (ensureDebutFullFor; falls back to the monolith)
+//   - debuts.json          full graduate records - Time Machine, debuted
+//                          chart (ensureDebutsFull)
 //   - inactive.json        when the user opens the Inactive view
 //   - rosters_by_org.json  when the user opens any farm-detail page
 //   - scout_reports_<i>.json  the player's hash chunk, on first card open
@@ -10479,6 +10480,13 @@ function _sliceUrl(file) {
   return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
 }
 
+// v47 wire-slim - inactive.json left the idle warm (see the boot IIFE).
+// The surfaces that read DATA.inactive opportunistically (farm-detail
+// transaction history, the Transactions tab's trade-audit vet lookup) fire
+// a NON-BLOCKING enrichment load instead; this one-shot flag stops a
+// failed fetch from being retried on every re-render.
+let _inactiveEnrichKicked = false;
+
 // v46 payload-slim - the debuts slice ships two ways:
 //   debuts_lite.json  list-render fields only (Graduates tab rows, context
 //                     rail cards, farm graduates, trade-audit vet lookup).
@@ -10544,6 +10552,74 @@ function ensureDebutsFull() {
     .catch(err => { console.warn("debuts slice fetch failed:", err); })
     .finally(() => { _debutsFullInFlight = null; });
   return _debutsFullInFlight;
+}
+
+// v47 wire-slim - per-graduate full shard. Opening ONE graduate's card used
+// to pull the entire debuts.json monolith (~9MB gzip); storage.py now emits
+// data/debuts_full/{player_key}.json (advertised via _slices.debuts_full,
+// value = the directory prefix) carrying that player's complete record.
+// Fetch just the shard and merge it IN PLACE onto the lite row (the same
+// Object.assign contract as the monolith merge above, so references held by
+// row caches stay valid). Any failure - an old cached payload without the
+// contract, a missing shard, a malformed body, a network error - falls back
+// to ensureDebutsFull so nothing regresses. Time Machine and the debuted
+// chart mode keep using the monolith (they need EVERY full row).
+const _debutShardInFlight = {};
+function _debutRowIsFull(playerKey) {
+  if (!DATA) return false;
+  if (DATA._debutsFull) return true;
+  const row = (DATA.debuts || []).find(g => g && g.player_key === playerKey);
+  return !!(row && !row._lite);
+}
+function ensureDebutFullFor(playerKey) {
+  if (!DATA || !playerKey) return Promise.resolve();
+  if (_debutRowIsFull(playerKey)) return Promise.resolve();
+  if (!DATA._slices || !DATA._slices.debuts_full) return ensureDebutsFull();
+  if (_debutShardInFlight[playerKey]) return _debutShardInFlight[playerKey];
+  // Lite rows first, so the shard has a row to merge onto (a deep link can
+  // land here before the idle warm has pulled debuts_lite).
+  _debutShardInFlight[playerKey] = ensureDebutsLite()
+    .then(() => {
+      // The monolith may have landed while lite was in flight.
+      if (_debutRowIsFull(playerKey)) return null;
+      const { url, opts } =
+        _sliceUrl(`${DATA._slices.debuts_full}${encodeURIComponent(playerKey)}.json`);
+      return fetch(url, opts);
+    })
+    .then(r => {
+      if (r === null) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(full => {
+      if (full === null) return;   // row already full; nothing fetched
+      if (!full || typeof full !== "object" || !full.player_key) {
+        // Malformed shard - throw into the catch so the monolith covers it.
+        throw new Error("malformed debut shard");
+      }
+      const lite = (DATA.debuts || []).find(g => g && g.player_key === full.player_key);
+      if (lite) {
+        Object.assign(lite, full);
+        delete lite._lite;
+        // Same contract as the monolith merge: the shard carries the full
+        // points history, so player_detail must re-merge against it.
+        delete lite.__detailMerged;
+      } else {
+        // No lite row to merge onto (the lite fetch failed, or the export
+        // is inconsistent). Do NOT push a lone row - a 1-row DATA.debuts
+        // would fool ensureDebutsLite's already-loaded guard and the
+        // Graduates-tab gate into treating the list as complete. Throw so
+        // the catch falls back to the monolith, which rebuilds the whole
+        // list consistently.
+        throw new Error("no lite row for debut shard");
+      }
+    })
+    .catch(err => {
+      console.warn("debut shard fetch failed, falling back to monolith:", playerKey, err);
+      return ensureDebutsFull();
+    })
+    .finally(() => { delete _debutShardInFlight[playerKey]; });
+  return _debutShardInFlight[playerKey];
 }
 
 // v46 payload-slim - scout reports ship in a fixed number of hash chunks
@@ -16730,8 +16806,9 @@ function renderActiveContextRail(railId = "active-context-rail") {
   // (boot IIFE) pulls the LITE slice (v46 - list fields only) and schedules
   // a coalesced re-render so the cards fill in moments after boot; everyone
   // else gets a "Load recent debuts" link in the card below that pulls the
-  // lite slice on demand. Graduate cards / debuted chart mode / Time Machine
-  // fetch the full slice separately via ensureDebutsFull.
+  // lite slice on demand. A graduate's card fetches his per-player shard
+  // (ensureDebutFullFor); debuted chart mode / Time Machine still pull the
+  // full slice via ensureDebutsFull.
   const _debutsPending = !!(DATA._slices
     && (DATA._slices.debuts_lite || DATA._slices.debuts)
     && !((DATA.debuts || []).length));
@@ -20854,6 +20931,17 @@ function renderRecentlyTraded() {
       if (state.section === "traded") renderRecentlyTraded();
     });
   }
+  // v47 wire-slim - inactive.json left the idle warm; it is the tier-3
+  // source for the trade-audit vet lookup below (legacy players with WAR).
+  // Same lazy load + conditional re-render pattern as mlb_trade_players.
+  if (DATA._slices && DATA._slices.inactive && !(DATA.inactive || []).length
+      && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.section === "traded" && !state.view) renderRecentlyTraded();
+    });
+  }
   // v30.8 - Now surfaces trades AND debut events. Debuts are the
   // canonical "prospect → MLB" transaction; previously they were
   // siloed in the Debuted section only. Both kinds are first-class
@@ -22518,7 +22606,7 @@ async function renderDraft() {
   // board views; OVERALL shows the cross-year analytics. Org Tendencies lives in
   // both (per-year vs all-time). Lottery is a per-year view gated on that
   // class carrying odds. The active view snaps into the current mode.
-  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "war-room"];
+  const YEAR_VIEWS = ["rankings", "leaderboard", "order", "results", "signing-trends", "org-tendencies", "overperformers", "hs-details", "colleges", "lottery", "mock-draft", "simulate", "war-room"];
   // War Room: gated on the presence of the live artifact (data/draft_live.json,
   // written by the draft-night poller). No artifact => chip hidden, so the view
   // is dark until the draft opens. Kick off a one-time fetch; re-render when it
@@ -22544,7 +22632,8 @@ async function renderDraft() {
   const modeViews = isOverall ? OVERALL_VIEWS : YEAR_VIEWS;
   if (!modeViews.includes(state.draftView) ||
       (state.draftView === "lottery" && !_anyLottery) ||
-      (state.draftView === "mock-draft" && !_anyMock)) {
+      (state.draftView === "mock-draft" && !_anyMock) ||
+      (state.draftView === "simulate" && !_anyMock)) {
     // War Room stays selectable even before the live feed exists: it lands on
     // the "opens on draft night" state rather than bouncing to rankings, so the
     // chip is a real destination in the draft section year-round.
@@ -22555,6 +22644,7 @@ async function renderDraft() {
     let show = modeViews.includes(view);
     if (view === "lottery" && !_anyLottery) show = false;
     if (view === "mock-draft" && !_anyMock) show = false;
+    if (view === "simulate" && !_anyMock) show = false;
     // War Room chip: always surfaced in the draft section so it is discoverable;
     // pre-draft it lands on the "opens on draft night" state (Phase 6 surfacing).
     b.style.display = show ? "" : "none";
@@ -22601,6 +22691,7 @@ async function renderDraft() {
     case "leaderboard":    return _renderDraftLeaderboard(host, cls);
     case "lottery":        return _renderDraftLottery(host, _lotteryCls || cls);
     case "mock-draft":     return _renderMockDraft(host, _mockCls || cls);
+    case "simulate":       return _renderDraftSimulate(host, _mockCls || cls);
     case "war-room":       return _renderWarRoom(host);
     case "class-strength": return _renderClassStrength(host, classes);
     case "signing-trends": return _renderSigningTrends(host, classes, isOverall ? null : state.draftYear);
@@ -22618,6 +22709,79 @@ async function renderDraft() {
 // lottery rows (typically anything that's already drafted). The
 // rendered table is the FULL projected first round + 12 comp picks
 // (1A / 1B), with the odds column blank for deterministic slots.
+// A real lottery draw, run client-side against our own published odds - not
+// a re-derivation from a fresh standings fetch (Tankathon's odds already ARE
+// the pipeline's best estimate; drawing against them keeps one source of
+// truth instead of two live third-party fetches disagreeing with each
+// other). Draws 6 winners for picks 1-6, same mechanism MLB uses on lottery
+// night; everything past pick 6, including the competitive-balance rounds,
+// isn't part of the lottery mechanism and always follows the published order
+// already shown in the table above - so this only reveals a picks 1-6 outcome,
+// not a full re-ordered board.
+let _lotto = { key: null, pool: [], winners: [], drawn: false };
+function _lottoEnsure(cls, odds, snap) {
+  const key = `${cls.year}:${snap}`;
+  if (_lotto.key === key) return;
+  _lotto.key = key;
+  _lotto.pool = odds.filter(o => o.odds_pct != null);
+  _lotto.winners = [];
+  _lotto.drawn = false;
+}
+function _lottoWeightedDraw(pool) {
+  const total = pool.reduce((s, r) => s + (r.odds_pct || 0), 0);
+  let ticket = Math.random() * total;
+  for (const r of pool) { ticket -= (r.odds_pct || 0); if (ticket <= 0) return r; }
+  return pool[pool.length - 1];
+}
+function _lottoRun() {
+  const pool = _lotto.pool.slice();
+  const winners = [];
+  while (winners.length < Math.min(6, pool.length)) {
+    const w = _lottoWeightedDraw(pool);
+    winners.push(w);
+    pool.splice(pool.indexOf(w), 1);
+  }
+  _lotto.winners = winners;
+  _lotto.drawn = true;
+  renderDraft();
+}
+function _lottoDrawHTML(odds) {
+  const pool = odds.filter(o => o.odds_pct != null);
+  if (pool.length < 2) return "";
+  const seedRank = new Map(pool.map((o, i) => [o.team, i + 1]));
+  const rows = _lotto.winners.map((w, i) => {
+    const seed = seedRank.get(w.team) || null;
+    const delta = seed != null ? seed - (i + 1) : 0;
+    const deltaColor = delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)";
+    const deltaText = seed == null ? "-" : delta > 0 ? `↑ from #${seed}` : delta < 0 ? `↓ from #${seed}` : `held #${seed}`;
+    return `<tr>
+      <td style="text-align:center;font-weight:700;">${i + 1}</td>
+      <td><span class="draft-cell-ico">${teamLogoHTML(w.team, "sm")}<strong>${escapeHtml(w.team)}</strong></span></td>
+      <td style="text-align:right;color:var(--text-secondary);">${w.odds_pct.toFixed(2)}%</td>
+      <td style="text-align:center;color:${deltaColor};">${deltaText}</td>
+    </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:8px;">
+        <div class="filter-label">Run the lottery</div>
+        <button class="chip" onclick="_lottoRun()">${_lotto.drawn ? "Draw again" : "Draw the top 6"}</button>
+      </div>
+      ${_lotto.drawn ? `
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">Pick</th><th>Team</th><th style="text-align:right;">Odds</th><th style="text-align:center;">vs. seed</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+      <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;">
+        One random draw weighted by the published odds above - draw again as many times as you like.
+      </div>` : `
+      <div style="font-size:11px;color:var(--text-tertiary);">
+        Draws 6 winners for picks 1-6, weighted by the published odds above - the same mechanism MLB uses on
+        lottery night.
+      </div>`}
+    </div>`;
+}
+
 function _renderDraftLottery(host, cls) {
   const allOdds = cls.lottery_odds || [];
   // lottery_odds is a full time-series (one set of rows per scrape date).
@@ -22660,6 +22824,7 @@ function _renderDraftLottery(host, cls) {
 
   const nLottery = odds.filter(o => o.odds_pct != null).length;
   const nComp = odds.filter(o => o.round_label === "1A" || o.round_label === "1B").length;
+  _lottoEnsure(cls, odds, latestSnap);
 
   host.innerHTML = `
     <div style="padding:12px 14px;background:var(--bg-secondary);
@@ -22681,7 +22846,8 @@ function _renderDraftLottery(host, cls) {
         </tr></thead>
         <tbody>${rows}</tbody>
       </table>
-    </div>`;
+    </div>
+    ${_lottoDrawHTML(odds)}`;
 }
 
 // v28 - Position bucket for draft prospects. Mirrors positionBucket()
@@ -23472,6 +23638,486 @@ function _renderMockDraft(host, cls) {
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>`;
+}
+
+// =============================================================================
+// Draft Simulate - an interactive, pick-by-pick run through the SAME real
+// board the algorithmic Mock Draft above is built from (cls.prospects,
+// cls.draft_order): control one team, several, or all thirty; the CPU drafts
+// best-board-available within its bonus-pool budget for every other pick.
+// Sits alongside the read-only Mock Draft view rather than replacing it - this
+// is a what-if toy, not another data product, so its "ask" economics are a
+// simple heuristic (rank + slot value), not a registered model. State lives
+// in the module-level _sim object (mirrors the _warRoom pattern), not the
+// URL-synced `state`, since a run is disposable and never worth deep-linking.
+// =============================================================================
+const _sim = {
+  year: null, pool: [], order: [], teams: [],
+  picks: [], pickIndex: 0, started: false, completed: false,
+  teamMode: "single", primaryTeam: null, controlledTeams: new Set(),
+  budgets: {}, demands: {}, simLength: "board",
+  aiTimer: null, aiRunning: false,
+  query: "", position: "ALL",
+  resultsTeam: "all"
+};
+const _SIM_POST_SLOT = 150000; // MLB rule: bonuses under this past pick 610-ish don't count against the pool
+
+function _simClearTimer() {
+  if (_sim.aiTimer) { window.clearTimeout(_sim.aiTimer); _sim.aiTimer = null; }
+  _sim.aiRunning = false;
+}
+
+// (Re)build the pool/order/teams for `cls` if the class changed or this is
+// the first entry. Pool = every prospect with a real consensus_pick (so every
+// simulated pick has a genuine board slot - no fabricated late-round filler).
+function _simEnsureInit(cls) {
+  if (_sim.year === cls.year && _sim.pool.length) return;
+  _simClearTimer();
+  _sim.year = cls.year;
+  _sim.pool = (cls.prospects || [])
+    .filter(p => p.consensus_pick != null)
+    .slice()
+    .sort((a, b) => a.consensus_pick - b.consensus_pick);
+  _sim.order = (cls.draft_order || []).slice().sort((a, b) => a.pick_overall - b.pick_overall);
+  const seen = new Set();
+  _sim.teams = [];
+  _sim.order.forEach(o => {
+    if (o.team && !seen.has(o.team)) { seen.add(o.team); _sim.teams.push(o.team); }
+  });
+  _sim.picks = []; _sim.pickIndex = 0; _sim.started = false; _sim.completed = false;
+  _sim.primaryTeam = _sim.teams[0] || null;
+  _sim.controlledTeams = new Set(_sim.primaryTeam ? [_sim.primaryTeam] : []);
+  _sim.budgets = {}; _sim.demands = {};
+  _sim.resultsTeam = "all";
+}
+
+function _simLengthOptions() {
+  const r1 = _sim.order.filter(o => o.round_label === "1" || o.round_label === "1A" || o.round_label === "1B").length;
+  const r5 = _sim.order.filter(o => { const n = parseInt(o.round_label, 10); return !isNaN(n) ? n <= 5 : true; }).length;
+  return { r1, r5, board: Math.min(_sim.pool.length, _sim.order.length) };
+}
+function _simActiveLength() {
+  const opts = _simLengthOptions();
+  if (_sim.simLength === 1) return opts.r1;
+  if (_sim.simLength === 5) return opts.r5;
+  return opts.board;
+}
+function _simActiveOrder() { return _sim.order.slice(0, _simActiveLength()); }
+
+function _simSlotForPick(pick) {
+  const o = _sim.order[pick - 1];
+  return (o && o.slot_usd != null) ? o.slot_usd : _SIM_POST_SLOT;
+}
+function _simCurrentSlot() {
+  const o = _simActiveOrder()[_sim.pickIndex];
+  return o ? { pick: o.pick_overall, round: o.round_label, team: o.team } : null;
+}
+function _simIsUserControlled(teamId) {
+  if (_sim.teamMode === "all") return true;
+  return _sim.controlledTeams.has(teamId);
+}
+function _simDraftedKeys() { return new Set(_sim.picks.map(p => p.player_key)); }
+function _simAvailablePlayers() {
+  const drafted = _simDraftedKeys();
+  const q = _sim.query.trim().toLowerCase();
+  return _sim.pool.filter(p => {
+    if (drafted.has(p.player_key)) return false;
+    if (_sim.position !== "ALL" && p.position !== _sim.position) return false;
+    if (q && !`${p.player_name} ${p.school || ""} ${p.position}`.toLowerCase().includes(q)) return false;
+    return true;
+  });
+}
+function _simIsComplete() {
+  return _sim.completed || _sim.pickIndex >= _simActiveLength() || _sim.picks.length >= _sim.pool.length;
+}
+
+// Bonus "ask" heuristic: scaled off the real pick's slot value + where the
+// player sits on the real consensus board, not a validated projection.
+function _simRound(v) { return Math.max(5000, Math.round(v / 100) * 100); }
+function _simBaseDemand(p) {
+  const poolLen = _sim.pool.length || 1;
+  const slot = _simSlotForPick(Math.min(p.consensus_pick, _sim.order.length || p.consensus_pick));
+  const hs = _isHSPlayer(p);
+  const frac = p.consensus_pick / poolLen;
+  if (frac > 0.85) return _simRound(hs ? slot * 1.15 : slot * 0.35);
+  if (frac > 0.55) return _simRound(hs ? slot * 1.08 : slot * 0.55);
+  if (frac > 0.35) return _simRound(hs ? slot * 1.03 : slot * 0.72);
+  if (frac > 0.15) return _simRound(hs ? slot * 1.00 : slot * 0.86);
+  if (frac > 0.05) return _simRound(hs ? slot * 0.98 : slot * 0.88);
+  return _simRound(hs ? slot * 1.02 : slot * 0.85);
+}
+function _simDemandKey(teamId, playerKey) { return teamId + ":" + playerKey; }
+function _simDemand(teamId, p) {
+  const mult = _sim.demands[_simDemandKey(teamId, p.player_key)] || 1;
+  return _simRound(_simBaseDemand(p) * mult);
+}
+function _simCreateDemands() {
+  const demands = {};
+  _sim.teams.forEach(teamId => {
+    _sim.pool.forEach(p => {
+      const hs = _isHSPlayer(p);
+      const lo = hs ? 0.88 : 0.75, hi = hs ? 1.16 : 1.10;
+      demands[_simDemandKey(teamId, p.player_key)] = lo + Math.random() * (hi - lo);
+    });
+  });
+  return demands;
+}
+function _simTeamPickSlots(teamId) {
+  return _simActiveOrder().filter(o => o.team === teamId)
+    .map(o => (o.slot_usd != null ? o.slot_usd : _SIM_POST_SLOT));
+}
+function _simCreateBudgets() {
+  const budgets = {};
+  _sim.teams.forEach(teamId => {
+    const slots = _simTeamPickSlots(teamId);
+    budgets[teamId] = { total: slots.reduce((s, v) => s + v, 0), spent: 0, picks: slots.length };
+  });
+  return budgets;
+}
+function _simRemainingBudget(teamId) {
+  const b = _sim.budgets[teamId] || { total: 0, spent: 0 };
+  return b.total - b.spent;
+}
+function _simFuturePickCount(teamId) {
+  return _simActiveOrder().slice(_sim.pickIndex + 1).filter(o => o.team === teamId).length;
+}
+
+function _simStart() {
+  if (_sim.started) return;
+  _simClearTimer();
+  _sim.pickIndex = 0; _sim.picks = []; _sim.started = true; _sim.completed = false;
+  _sim.demands = _simCreateDemands();
+  _sim.budgets = _simCreateBudgets();
+  _simRender();
+  _simRunAi();
+}
+
+function _simGradePick(pick, rank, bonus, slotValue) {
+  const delta = pick - rank;
+  const slot = Math.max(slotValue || 1, 1);
+  const savingsRate = (slot - bonus) / slot;
+  let score = 3.35;
+  if (delta > 0) score += Math.min(0.85, delta * 0.04);
+  if (delta < 0) score -= Math.min(3.2, 0.32 + Math.abs(delta) * 0.24);
+  if (savingsRate > 0) score += Math.min(0.5, savingsRate * 1.15);
+  else score += Math.max(-1.2, savingsRate * 2.25);
+  if (score >= 3.65) return "A";
+  if (score >= 2.9) return "B";
+  if (score >= 2.05) return "C";
+  if (score >= 1.1) return "D";
+  return "F";
+}
+
+function _simMakePick(playerKey, source) {
+  const slot = _simCurrentSlot();
+  const player = _sim.pool.find(p => p.player_key === playerKey);
+  if (!slot || !player) return;
+  const bonus = _simDemand(slot.team, player);
+  const slotValue = _simSlotForPick(slot.pick);
+  const poolCharge = slot.pick > 610 ? Math.max(0, bonus - _SIM_POST_SLOT) : bonus;
+  _sim.picks.push({
+    pick: slot.pick, round: slot.round, team: slot.team,
+    player_key: playerKey, source,
+    grade: _simGradePick(slot.pick, player.consensus_pick, bonus, slotValue),
+    slotValue, bonus, poolCharge
+  });
+  if (_sim.budgets[slot.team]) _sim.budgets[slot.team].spent += poolCharge;
+  _sim.pickIndex += 1;
+  if (_simIsComplete()) _sim.completed = true;
+}
+
+function _simSelectAiPlayer(teamId) {
+  const avail = _simAvailablePlayers();
+  if (!avail.length) return null;
+  const futureReserve = _simFuturePickCount(teamId) * 100000;
+  const maxSpend = Math.max(10000, _simRemainingBudget(teamId) - futureReserve);
+  const affordable = avail.filter(p => _simDemand(teamId, p) <= maxSpend);
+  if (affordable.length) return affordable[0].player_key;
+  const fallback = avail.filter(p => _simDemand(teamId, p) <= _simRemainingBudget(teamId))
+    .sort((a, b) => _simDemand(teamId, a) - _simDemand(teamId, b));
+  return (fallback[0] || avail[0]).player_key;
+}
+
+function _simRunAi() {
+  _simClearTimer();
+  if (!_sim.started || _simIsComplete()) { _sim.completed = _simIsComplete(); _simRender(); return; }
+  const slot = _simCurrentSlot();
+  if (!slot || _simIsUserControlled(slot.team)) { _simRender(); return; }
+  _sim.aiRunning = true;
+  _sim.aiTimer = window.setTimeout(() => {
+    _sim.aiTimer = null;
+    const active = _simCurrentSlot();
+    if (!active || _simIsUserControlled(active.team) || _simIsComplete()) { _sim.aiRunning = false; _simRender(); return; }
+    const key = _simSelectAiPlayer(active.team);
+    if (key) _simMakePick(key, "cpu");
+    _simRender();
+    _simRunAi();
+  }, 260);
+}
+
+function _simPick(playerKey) {
+  if (!_sim.started) _simStart();
+  if (_simIsComplete()) return;
+  const slot = _simCurrentSlot();
+  if (!slot || _simDraftedKeys().has(playerKey) || !_simIsUserControlled(slot.team)) return;
+  const player = _sim.pool.find(p => p.player_key === playerKey);
+  if (player && _simDemand(slot.team, player) > _simRemainingBudget(slot.team)) return;
+  _simMakePick(playerKey, "user");
+  _simRender();
+  _simRunAi();
+}
+
+function _simAutoPickForMe() {
+  const slot = _simCurrentSlot();
+  if (!_sim.started || !slot || !_simIsUserControlled(slot.team) || _simIsComplete()) return;
+  const key = _simSelectAiPlayer(slot.team);
+  if (key) _simPick(key);
+}
+
+function _simUndo() {
+  _simClearTimer();
+  if (!_sim.picks.length) return;
+  const removed = _sim.picks.pop();
+  if (_sim.budgets[removed.team]) _sim.budgets[removed.team].spent = Math.max(0, _sim.budgets[removed.team].spent - removed.poolCharge);
+  _sim.pickIndex = Math.max(0, _sim.pickIndex - 1);
+  _sim.completed = false;
+  _simRender();
+}
+
+function _simReset() {
+  _simClearTimer();
+  _sim.pickIndex = 0; _sim.picks = []; _sim.started = false; _sim.completed = false;
+  _sim.demands = {}; _sim.budgets = {};
+  _simRender();
+}
+
+function _simSetTeamMode(mode) {
+  _sim.teamMode = mode;
+  if (mode === "single") _sim.controlledTeams = new Set([_sim.primaryTeam]);
+  if (mode === "all") _sim.controlledTeams = new Set(_sim.teams);
+  _simRender();
+}
+function _simSetPrimaryTeam(teamId) {
+  _sim.primaryTeam = teamId;
+  if (_sim.teamMode === "single") _sim.controlledTeams = new Set([teamId]);
+  else _sim.controlledTeams.add(teamId);
+  _simRender();
+}
+function _simToggleControlledTeam(teamId) {
+  if (_sim.teamMode !== "multi") return;
+  if (_sim.controlledTeams.has(teamId)) _sim.controlledTeams.delete(teamId);
+  else _sim.controlledTeams.add(teamId);
+  if (!_sim.controlledTeams.size) _sim.controlledTeams.add(_sim.primaryTeam);
+  _simRender();
+}
+function _simSetLength(v) {
+  _sim.simLength = v === "board" ? "board" : Number(v);
+  _simRender();
+}
+
+function _simGradeColor(letter) {
+  return letter === "A" ? "var(--neon-green)" : letter === "F" ? "var(--neon-magenta)"
+       : letter === "B" ? "var(--neon-cyan)" : letter === "D" ? "var(--neon-orange)" : "var(--text-secondary)";
+}
+function _simMoney(v) {
+  if (v == null) return "-";
+  const a = Math.abs(v);
+  return (v < 0 ? "-" : "") + (a >= 1e6 ? `$${(a / 1e6).toFixed(1)}M` : a >= 1e3 ? `$${Math.round(a / 1e3)}K` : `$${a}`);
+}
+
+function _simSetupHTML() {
+  const teamOpts = _sim.teams.map(t => `<option value="${t}" ${t === _sim.primaryTeam ? "selected" : ""}>${escapeHtml(t)}</option>`).join("");
+  const multiPills = _sim.teams.map(t => `
+    <label class="chip" style="display:inline-flex;align-items:center;gap:4px;cursor:pointer;">
+      <input type="checkbox" name="sim-controlled-team" id="sim-team-${t}" value="${t}" ${_sim.controlledTeams.has(t) ? "checked" : ""}
+        onchange="_simToggleControlledTeam('${t}')" style="margin:0;" />${escapeHtml(t)}
+    </label>`).join(" ");
+  return `
+    <div class="draft-panel" style="padding:14px;">
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;">
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Control</div>
+          <button class="chip ${_sim.teamMode === "single" ? "active" : ""}" onclick="_simSetTeamMode('single')">One team</button>
+          <button class="chip ${_sim.teamMode === "multi" ? "active" : ""}" onclick="_simSetTeamMode('multi')">Several teams</button>
+          <button class="chip ${_sim.teamMode === "all" ? "active" : ""}" onclick="_simSetTeamMode('all')">All 30 (GM mode)</button>
+        </div>
+        ${_sim.teamMode === "single" ? `
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Your team</div>
+          <select class="chip" id="sim-team-select" name="sim-team" onchange="_simSetPrimaryTeam(this.value)">${teamOpts}</select>
+        </div>` : ""}
+        <div>
+          <div class="filter-label" style="margin-bottom:4px;">Length</div>
+          <select class="chip" id="sim-length-select" name="sim-length" onchange="_simSetLength(this.value)">
+            <option value="1" ${_sim.simLength === 1 ? "selected" : ""}>Round 1</option>
+            <option value="5" ${_sim.simLength === 5 ? "selected" : ""}>Rounds 1-5</option>
+            <option value="board" ${_sim.simLength === "board" ? "selected" : ""}>Full board (${_simLengthOptions().board} picks)</option>
+          </select>
+        </div>
+        <button class="gfx-btn is-primary" style="padding:8px 18px;" onclick="_simStart()">Start draft</button>
+      </div>
+      ${_sim.teamMode === "multi" ? `<div style="margin-top:10px;">${multiPills}</div>` : ""}
+      <div style="margin-top:10px;font-size:11px;color:var(--text-tertiary);">
+        The CPU drafts best-board-available within its bonus pool for every pick you don't control.
+        Bonus asks are a simplified rank/slot heuristic for the sim, not a projection.
+      </div>
+    </div>`;
+}
+
+function _simStatusHTML() {
+  const slot = _simCurrentSlot();
+  const complete = _simIsComplete();
+  const activeLen = _simActiveLength();
+  return `
+    <div class="draft-panel" style="padding:12px 14px;display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;">
+      <div style="display:flex;align-items:center;gap:10px;">
+        ${!complete && slot ? `${teamLogoHTML(slot.team, "md")}
+          <div><strong style="font-size:15px;">${escapeHtml(slot.team)} on the clock</strong>
+          <div style="font-size:11px;color:var(--text-secondary);">Round ${escapeHtml(String(slot.round))} · Pick ${slot.pick} of ${activeLen}</div></div>`
+        : `<strong>${complete ? "Draft complete" : "Not started"}</strong>`}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="chip" ${(!_sim.started || complete || !slot || !_simIsUserControlled(slot.team)) ? "disabled" : ""} onclick="_simAutoPickForMe()">Auto pick for me</button>
+        <button class="chip" ${!_sim.picks.length ? "disabled" : ""} onclick="_simUndo()">Undo</button>
+        <button class="chip reset-chip" onclick="_simReset()">Reset</button>
+      </div>
+    </div>`;
+}
+
+function _simPoolChip(p) {
+  const hs = _isHSPlayer(p);
+  return `<span style="font-size:9px;font-weight:700;letter-spacing:.3px;padding:0 4px;border-radius:2px;
+    background:${hs ? "rgba(224,64,160,.16)" : "rgba(90,200,250,.14)"};
+    color:${hs ? "var(--spend-draft)" : "var(--neon-cyan)"};">${hs ? "HS" : "COL"}</span>`;
+}
+
+function _simBoardHTML() {
+  const slot = _simCurrentSlot();
+  const complete = _simIsComplete();
+  const controlled = !complete && slot && _simIsUserControlled(slot.team);
+  if (!_sim.started) {
+    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("Set up your draft above", "Pick your team(s) and hit Start - the board below fills in once the draft is running.")}</div>`;
+  }
+  if (complete) {
+    return `<div class="draft-panel" style="padding:14px;">${_draftEmpty("All picks are in", "Scroll down for the full results and, if you controlled a team, your recap.")}</div>`;
+  }
+  const positions = ["ALL", ...Array.from(new Set(_sim.pool.map(p => p.position))).sort()];
+  const options = _simAvailablePlayers().slice(0, 60);
+  const rows = options.map(p => {
+    const ask = _simDemand(slot.team, p);
+    const affordable = !controlled || ask <= _simRemainingBudget(slot.team);
+    const fv = p.consensus_fv_raw != null ? fvCeil(p.consensus_fv_raw) : p.consensus_fv;
+    const logo = _collegeLogoImg(p.school_logo_url, p.school, _isHSPlayer(p));
+    return `
+      <tr>
+        <td style="text-align:center;font-weight:600;">${p.consensus_pick}</td>
+        <td><span class="draft-cell-ico">${logo}${escapeHtml(p.player_name)}</span></td>
+        <td>${escapeHtml(p.position || "")} ${_simPoolChip(p)}</td>
+        <td style="text-align:center;font-weight:700;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td style="text-align:right;">${_simMoney(ask)}</td>
+        <td style="text-align:center;">
+          <button class="chip ${controlled && affordable ? "" : "reset-chip"}" ${controlled && affordable ? "" : "disabled"}
+            onclick="_simPick('${p.player_key}')">${controlled ? (affordable ? "Draft" : "Over budget") : "-"}</button>
+        </td>
+      </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;">
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+        <input class="chip" id="sim-player-search" name="sim-player-search" style="min-width:180px;" type="search" placeholder="Search available players"
+          value="${escapeHtml(_sim.query)}" oninput="_sim.query=this.value;_simRender();" />
+        <select class="chip" id="sim-position-filter" name="sim-position" onchange="_sim.position=this.value;_simRender();">
+          ${positions.map(pos => `<option value="${pos}" ${pos === _sim.position ? "selected" : ""}>${pos === "ALL" ? "All positions" : pos}</option>`).join("")}
+        </select>
+        <span style="margin-left:auto;font-size:11px;color:var(--text-tertiary);align-self:center;">
+          ${controlled ? `${_simMoney(_simRemainingBudget(slot.team))} left in ${escapeHtml(slot.team)}'s pool` : "CPU is on the clock..."}
+        </span>
+      </div>
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">Board #</th><th>Player</th><th>Pos</th>
+          <th style="text-align:center;">FV</th><th style="text-align:right;">Ask</th><th style="text-align:center;">Pick</th></tr></thead>
+        <tbody>${rows || `<tr><td colspan="6">No players match these filters.</td></tr>`}</tbody>
+      </table>
+    </div>`;
+}
+
+function _simResultsHTML() {
+  if (!_sim.picks.length) return "";
+  const recent = _sim.picks.slice().reverse().slice(0, 30);
+  const rows = recent.map(pick => {
+    const player = _sim.pool.find(p => p.player_key === pick.player_key);
+    const fv = player && player.consensus_fv_raw != null ? fvCeil(player.consensus_fv_raw) : (player ? player.consensus_fv : null);
+    const delta = player ? pick.pick - player.consensus_pick : 0;
+    return `
+      <tr>
+        <td style="text-align:center;">${pick.pick}</td>
+        <td><span class="draft-cell-ico">${teamLogoHTML(pick.team, "sm")}${escapeHtml(pick.team)}</span></td>
+        <td>${escapeHtml(player ? player.player_name : "Unknown")}</td>
+        <td>${escapeHtml(player ? player.position : "-")}</td>
+        <td style="text-align:center;color:${_draftFvBucketColor(fv)};">${fv != null ? fv : "-"}</td>
+        <td style="text-align:right;">${_simMoney(pick.bonus)}</td>
+        <td style="text-align:center;color:${delta > 0 ? "var(--neon-cyan)" : delta < 0 ? "var(--neon-orange)" : "var(--text-tertiary)"};">${delta > 0 ? "+" + delta : delta}</td>
+        <td style="text-align:center;font-weight:700;color:${_simGradeColor(pick.grade)};">${pick.grade}</td>
+        <td style="text-align:center;font-size:10px;color:var(--text-tertiary);">${pick.source === "user" ? "You" : "CPU"}</td>
+      </tr>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div class="filter-label" style="margin-bottom:6px;">Recent picks</div>
+      <table class="draft-table">
+        <thead><tr><th style="text-align:center;">#</th><th>Team</th><th>Player</th><th>Pos</th>
+          <th style="text-align:center;">FV</th><th style="text-align:right;">Bonus</th>
+          <th style="text-align:center;">vs board</th><th style="text-align:center;">Grade</th><th>Who</th></tr></thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
+function _simRecapHTML() {
+  if (!_simIsComplete()) return "";
+  const userPicks = _sim.picks.filter(p => p.source === "user");
+  if (!userPicks.length) return "";
+  const points = { A: 4, B: 3, C: 2, D: 1, F: 0 };
+  const avg = userPicks.reduce((s, p) => s + (points[p.grade] || 0), 0) / userPicks.length;
+  const overall = avg >= 3.5 ? "A" : avg >= 2.5 ? "B" : avg >= 1.5 ? "C" : avg >= 0.75 ? "D" : "F";
+  const controlledIds = Array.from(new Set(userPicks.map(p => p.team)));
+  const teamBlocks = controlledIds.map(teamId => {
+    const picks = userPicks.filter(p => p.team === teamId);
+    const budget = _sim.budgets[teamId] || { total: 0, spent: 0 };
+    return `
+      <div style="margin-top:8px;">
+        <div style="display:flex;align-items:center;gap:8px;">
+          ${teamLogoHTML(teamId, "sm")}<strong>${escapeHtml(teamId)}</strong>
+          <span style="font-size:11px;color:var(--text-tertiary);">${picks.length} picks · pool ${_simMoney(budget.total)} · spent ${_simMoney(budget.spent)}</span>
+        </div>
+      </div>`;
+  }).join("");
+  return `
+    <div class="draft-panel" style="padding:14px;margin-top:10px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="font-size:32px;font-weight:800;color:${_simGradeColor(overall)};">${overall}</div>
+        <div><strong>Draft recap</strong><div style="font-size:11px;color:var(--text-tertiary);">Grade blends pick value vs. consensus rank and bonus pool discipline across your controlled picks.</div></div>
+      </div>
+      ${teamBlocks}
+    </div>`;
+}
+
+function _simRender() {
+  const host = document.getElementById("draft-rows");
+  if (!host || state.draftView !== "simulate") return;
+  host.innerHTML = _draftCaption(`${_sim.year} draft simulator`,
+      "control real teams against the real consensus board, picks graded live")
+    + _simSetupHTML() + _simStatusHTML() + _simBoardHTML() + _simResultsHTML() + _simRecapHTML();
+}
+
+function _renderDraftSimulate(host, cls) {
+  if (!cls || !(cls.prospects || []).length || !(cls.draft_order || []).length) {
+    host.innerHTML = _draftEmpty(`No simulator data for ${cls ? cls.year : "this class"}`,
+      "A simulator needs both a ranked board and a real draft order on file.");
+    return;
+  }
+  _simEnsureInit(cls);
+  _simRender();
 }
 
 function _renderDraftResults(host, cls) {
@@ -30459,7 +31105,11 @@ function gradeBlock(p, opts) {
              : (consLabel != null || consVal != null) ? "consensus"
              : (efvVal != null) ? "efv" : "none";
   return { x, primary, efvVal, consLabel, consVal, value, label, lead,
-           provisional: !!(x && x.xfv_ungraded), locked: !!(x && x.kind === "debuted") };
+           provisional: !!(x && x.xfv_ungraded),
+           // Source-GRADED but no pro track record yet (fresh draftees/signees):
+           // eFV is anchored to the consensus prior, not a model read.
+           priorAnchored: !!(x && x.xfv_provisional && !x.xfv_ungraded),
+           locked: !!(x && x.kind === "debuted") };
 }
 // efvGradeBand(x): the OUTCOME-distribution band expressed on the grade (20-80) scale.
 // eFV already publishes the outcome distribution in surplus dollars (dist.p10_mm/p90_mm).
@@ -30520,6 +31170,8 @@ function efvTooltip(x) {
     const d = efvMinusConsensus(x);
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
   }
+  if (x.xfv_provisional && !x.xfv_ungraded)
+    parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
   // Secondary transparency line: the pure-model outcome-implied grade before it is mapped
   // onto the 20-80 scale (the headline eFV above is that map). Kept so eFV stays legible.
   if (x.xfv_grade_realized != null && x.xfv_grade_quantile != null
@@ -30660,6 +31312,10 @@ function efvDetailHeaderHTML(p, fvBadge) {
     + efvGradeBandHTML(x)
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
+        : gb.priorAnchored
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
+          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
           + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
           + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
@@ -30673,6 +31329,8 @@ function efvDetailCard(p) {
   // leading indicator, not a source-anchored grade.
   const provBanner = x.xfv_ungraded
     ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional eFV</strong> - no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored eFV. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
+    : x.xfv_provisional
+    ? `<div style="border:1px dashed var(--border-light);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong>Prior-anchored eFV</strong> - drafted or signed but no pro track record yet, so eFV starts at the consensus prior. A small gap between eFV and consensus FV here is placement on the 20-80 scale when ranked among all graded prospects, not a model penalty. The model read goes live once pro playing time arrives.</div>`
     : "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
   // The $ surplus + its P10-P90 fan now live ONLY in the single Surplus-value card below
@@ -30701,7 +31359,7 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
@@ -31152,12 +31810,46 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
   await Promise.allSettled(jobs);
 }
 
+// v47 wire-slim - lazy vendor injection. html2canvas + qrcode left the eager
+// script tags in the document head; the export/GFX paths inject them on first use.
+// (window.EephusExport keeps its OWN private html2canvas loader inside its
+// IIFE - it is not exposed - so we replicate the tiny injector here rather
+// than reach into that module.) A failed load is dropped from the cache so
+// the next click can retry after a transient network blip.
+const _vendorInFlight = {};
+function _ensureVendor(src, ready) {
+  if (ready()) return Promise.resolve(true);
+  if (_vendorInFlight[src]) return _vendorInFlight[src];
+  _vendorInFlight[src] = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve(true);
+    s.onerror = () => {
+      delete _vendorInFlight[src];
+      reject(new Error("vendor script failed to load: " + src));
+    };
+    document.head.appendChild(s);
+  });
+  return _vendorInFlight[src];
+}
+function _ensureHtml2Canvas() {
+  return _ensureVendor("/vendor/html2canvas.min.js?v=20260709",
+    () => !!window.html2canvas);
+}
+function _ensureQrcodeLib() {
+  return _ensureVendor("/vendor/qrcode.min.js?v=20260709",
+    () => typeof window.qrcode !== "undefined");
+}
+
 async function exportElementAsImage(el, opts = {}) {
+  if (!el) return null;
+  // Lazy-inject the vendor lib (v47) - this promise MUST resolve before any
+  // capture runs so html2canvas never sees a half-loaded card.
+  try { await _ensureHtml2Canvas(); } catch (e) { /* fall through to guard */ }
   if (!window.html2canvas) {
-    alert("Image export not ready - refresh and try again (vendor script still loading).");
+    alert("Image export not ready - check your connection and try again.");
     return null;
   }
-  if (!el) return null;
   const scale = opts.scale || 2;
   // Preload → await fonts BEFORE capture (header carries the PROSPX wordmark +
   // eephus.io/PROSPX + timestamp; no footer/handle).
@@ -32992,7 +33684,17 @@ function openGfxModal() {
   _gfxApplyTheme();
   _gfxSyncControls();
   _gfxApplyModeUI();
-  _gfxRefresh();
+  // v47 - qrcode lazy-injects on first GFX open (it left the eager <head>
+  // tags). Build the board once the lib settles - loaded OR failed - so the
+  // header QR renders on the first pass instead of needing a rebuild.
+  // _gfxQR keeps its typeof guard as the failure mode: if the inject fails,
+  // the card simply omits the QR chip.
+  if (typeof window.qrcode === "undefined") {
+    _gfxBusy(true);   // spinner up while the (local, tiny) vendor loads
+    _ensureQrcodeLib().catch(() => {}).then(() => _gfxRefresh());
+  } else {
+    _gfxRefresh();
+  }
 }
 function closeGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -49443,14 +50145,21 @@ function render() {
 
   // v46 payload-slim - list surfaces (Graduates tab, Injured) run on the
   // LITE slice; a graduate's CARD needs the full record (points history,
-  // statcast splits, per-source history), so the player view pulls the
-  // monolith before rendering - same blocking behavior as before, now
-  // scoped to the one surface that needs it.
+  // statcast splits, per-source history). v47 - the card now pulls only
+  // HIS per-player shard (ensureDebutFullFor, data/debuts_full/{key}.json)
+  // instead of the whole monolith; the helper falls back to
+  // ensureDebutsFull when the shard contract is absent or the fetch fails,
+  // so old caches and missing shards behave exactly as before.
   if (needsGrad && DATA._slices && (DATA._slices.debuts_lite || DATA._slices.debuts)) {
-    const _wantFull = active === "player";
-    if (_wantFull ? !DATA._debutsFull : !DATA.debuts.length) {
+    if (active === "player") {
+      if (!_debutRowIsFull(state.view.key)) {
+        showLoading("Loading debuted players…");
+        ensureDebutFullFor(state.view.key).then(render);
+        return;
+      }
+    } else if (!DATA.debuts.length) {
       showLoading("Loading debuted players…");
-      (_wantFull ? ensureDebutsFull() : ensureDebutsLite()).then(render);
+      ensureDebutsLite().then(render);
       return;
     }
   }
@@ -49476,6 +50185,20 @@ function render() {
       loadSlice("rosters_by_org").then(render);
       return;
     }
+  }
+  // v47 wire-slim - inactive.json no longer rides the idle warm. The farm
+  // page's transaction history folds inactive players into the org event
+  // pool, so fire a NON-BLOCKING enrichment load on farm-detail open and
+  // re-render once it lands - same pattern as the debuts view's roster
+  // enrichment above. The Injured view and inactive-player deep links keep
+  // the BLOCKING needsInactive gate above (their primary data).
+  if (active === "farmDetail" && DATA._slices && DATA._slices.inactive
+      && !(DATA.inactive || []).length && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.view && state.view.type === "farm") render();
+    });
   }
   // Org_summary gate - farm detail render dereferences each org's
   // grades / financial / tool_dev blocks. If the main DATA payload
@@ -52336,7 +53059,7 @@ function populateOrgFilter() {
   });
 
   // Warm the sidecar slices in the background. The user has to click
-  // before they touch the graduates/inactive/farm-detail data, so by
+  // before they touch the graduates/farm-detail data, so by
   // the time they navigate, the slice is usually already on DATA.
   // If they beat the network, the render branches re-fire render()
   // once the slice arrives.
@@ -52349,13 +53072,17 @@ function populateOrgFilter() {
       // coalesced re-render when the warm lands so the visible section's
       // rail fills in. v46 payload-slim: the warm pulls the LITE slice only
       // (list fields, a fraction of the old 9MB-gzip monolith); the full
-      // file loads on demand via ensureDebutsFull (graduate card open, Time
-      // Machine, debuted chart). scout_reports left the warm list for the
-      // same reason - it is card-only and now loads per hash chunk on the
-      // first card open (ensureScoutReports).
+      // records load on demand (ensureDebutFullFor per graduate card;
+      // ensureDebutsFull for Time Machine / debuted chart). scout_reports
+      // left the warm list for the same reason - it is card-only and now
+      // loads per hash chunk on the first card open (ensureScoutReports).
+      // v47 wire-slim: inactive.json (~2.2MB gzip, ~24MB parse) left the
+      // warm too - most sessions never open a surface that reads it. It
+      // loads on demand instead: blocking on the Inactive/Injured view and
+      // inactive-player deep links (the needsInactive gate in render), and
+      // as a non-blocking enrichment on farm detail + Transactions.
       ensureDebutsLite().then(() => scheduleRender()).catch(() => {});
       loadSlice("rosters_by_org");
-      loadSlice("inactive");
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(_warm, { timeout: 2500 });

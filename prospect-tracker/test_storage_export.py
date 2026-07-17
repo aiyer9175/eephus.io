@@ -4,12 +4,19 @@
 # Written by Noah J. Dengler (@ARKNDJL), 2026
 
 """Tests for the storage.export_timeseries_json output shape, focused on
-the tool grades time-series fields (`tools.history`, `tools.source_history`,
-`tools.source_recency`) introduced by the consensus-broadening plan."""
+the tool grades time-series fields (`tools.source_history`,
+`tools.source_recency`) introduced by the consensus-broadening plan.
+
+v47 payload-slim: `tools.history` is NO LONGER shipped - its only
+consumer (bayes _has_top100_pedigree) reads the baked `top100_pedigree`
+player flag instead. Pins below cover the strip, the baked flag, the
+debuts_full/ per-player shard dir, the intermediate (mid-monthly) export
+mode, and the compare-before-write skip."""
 
 from __future__ import annotations
 
 import json
+import os
 import sys
 from datetime import date, timedelta
 from pathlib import Path
@@ -194,8 +201,9 @@ class TestToolsHistoryOrdersNewestFirst:
         assert dates[0] == "2025-07-31"
         assert dates[-1] == "2023-02-14"
 
-    def test_consensus_history_newest_first(self, tmp_path, monkeypatch):
-        """tools.history (the consensus timeline) must also be newest-first."""
+    def test_consensus_history_not_shipped(self, tmp_path, monkeypatch):
+        """v47: `tools.history` must NOT ship (payload slim); the
+        per-source timeline (`source_history`) still must."""
         snaps = [
             Snapshot(source="fangraphs", snapshot_date="2024-02-14",
                      interval_label="2024report",
@@ -210,11 +218,45 @@ class TestToolsHistoryOrdersNewestFirst:
         ]
         out = _build_export(tmp_path, monkeypatch, snaps)
         p = _player(out, "eps")
-        history = (p.get("tools") or {}).get("history") or []
-        assert len(history) >= 2
-        dates = [e["snapshot_date"] for e in history]
-        assert dates == sorted(dates, reverse=True), \
-            f"expected newest-first, got {dates}"
+        tools = p.get("tools") or {}
+        assert "history" not in tools, \
+            "tools.history is stripped in v47 - the baked top100_pedigree flag replaced its only reader"
+        assert tools.get("source_history"), "source_history must still ship"
+
+
+# ---------------------------------------------------------------------------
+# v47 - baked Top-100 pedigree flag. The export must OR the Top-100 label
+# match across the (unshipped) consensus history AND every source_history
+# row, exactly like bayes_trade_value._has_top100_pedigree's legacy walk,
+# and bake `top100_pedigree: true` on the player payload (omitted when
+# False).
+# ---------------------------------------------------------------------------
+
+class TestTop100PedigreeBaked:
+    def test_top100_interval_label_bakes_flag(self, tmp_path, monkeypatch):
+        snaps = [
+            Snapshot(source="mlb_pipeline", snapshot_date="2026-01-22",
+                     interval_label="MLB Pipeline 2026 Top 100",
+                     player_key="ped_yes", player_name="Ped Yes",
+                     position="SS", org="PIT", rank=40, fv=55.0,
+                     status="active", tools={"hit": 55.0}),
+        ]
+        out = _build_export(tmp_path, monkeypatch, snaps)
+        p = _player(out, "ped_yes")
+        assert p.get("top100_pedigree") is True
+
+    def test_no_top100_label_omits_flag(self, tmp_path, monkeypatch):
+        snaps = [
+            Snapshot(source="fangraphs", snapshot_date="2026-02-14",
+                     interval_label="2026report",
+                     player_key="ped_no", player_name="Ped No",
+                     position="SS", org="PIT", rank=40, fv=55.0,
+                     status="active", tools={"hit": 55.0}),
+        ]
+        out = _build_export(tmp_path, monkeypatch, snaps)
+        p = _player(out, "ped_no")
+        assert "top100_pedigree" not in p, \
+            "flag must be OMITTED (not false) when no Top-100 label exists"
 
 
 # ---------------------------------------------------------------------------
@@ -343,3 +385,102 @@ class TestFarmTreeDeterminism:
         # ranks form a proper 1..N permutation (no dupes / gaps from the ordinal sort)
         ranks = sorted(o.get("farm_rank") for o in a.values() if o.get("farm_rank") is not None)
         assert ranks == list(range(1, len(ranks) + 1)), ranks
+
+
+# ---------------------------------------------------------------------------
+# v47 - debuts_full/{player_key}.json shards, the intermediate (mid-monthly)
+# export skip list, and the compare-before-write dump path.
+# ---------------------------------------------------------------------------
+
+def _mixed_snaps() -> list[Snapshot]:
+    """One debuted graduate + one active prospect."""
+    return [
+        Snapshot(source="fangraphs", snapshot_date="2025-02-12",
+                 interval_label="2025report",
+                 player_key="grad_one", player_name="Grad One",
+                 position="SS", org="PIT", rank=12, fv=55.0,
+                 status="debuted", tools={"hit": 55.0}),
+        Snapshot(source="fangraphs", snapshot_date="2026-02-14",
+                 interval_label="2026report",
+                 player_key="active_one", player_name="Active One",
+                 position="CF", org="PIT", rank=30, fv=50.0,
+                 status="active", tools={"hit": 50.0}),
+    ]
+
+
+class TestDebutsFullShards:
+    def test_every_graduate_gets_a_full_shard(self, tmp_path, monkeypatch):
+        out = _build_export(tmp_path, monkeypatch, _mixed_snaps())
+        grads = json.loads((tmp_path / "debuts.json").read_text(encoding="utf-8"))
+        assert grads, "synthetic debuted prospect missing from debuts.json"
+        # Advertised on the dir contract, mirroring player_detail/.
+        assert out["_slices_dir"]["debuts_full"] == "debuts_full/"
+        for g in grads:
+            shard = tmp_path / "debuts_full" / f"{g['player_key']}.json"
+            assert shard.exists(), \
+                f"missing debuts_full shard for {g['player_key']}"
+            # The shard IS the complete debuts.json record for the player.
+            assert json.loads(shard.read_text(encoding="utf-8")) == g
+
+    def test_departed_graduate_shard_removed(self, tmp_path, monkeypatch):
+        stale_dir = tmp_path / "debuts_full"
+        stale_dir.mkdir(parents=True)
+        (stale_dir / "ghost_grad.json").write_text("{}", encoding="utf-8")
+        _build_export(tmp_path, monkeypatch, _mixed_snaps())
+        assert not (stale_dir / "ghost_grad.json").exists(), \
+            "stale debuts_full shard for a departed graduate must be removed"
+        assert (stale_dir / "grad_one.json").exists()
+
+
+class TestIntermediateExportSkipsSidecars:
+    def test_intermediate_writes_only_boot_debuts_rosters(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+        snaps = _mixed_snaps()
+        storage.insert_snapshots(snaps)
+        ts = build_timeseries(snaps, single_source_k=0)
+        out_path = tmp_path / "timeseries.json"
+        storage.export_timeseries_json(ts, out_path, intermediate=True)
+        # Kept: boot + debuts + rosters (monthly-tail readers exist).
+        assert out_path.exists()
+        assert (tmp_path / "debuts.json").exists()
+        assert (tmp_path / "rosters_by_org.json").exists()
+        # Skipped: frontend-only sidecars the chained d9 rewrites.
+        for skipped in ("debuts_lite.json", "inactive.json",
+                        "scout_reports.json", "scout_reports_0.json",
+                        "mlb_trade_players.json"):
+            assert not (tmp_path / skipped).exists(), \
+                f"{skipped} must be skipped on the intermediate export"
+        for skipped_dir in ("pitch_plots", "player_detail", "debuts_full"):
+            assert not (tmp_path / skipped_dir).exists(), \
+                f"{skipped_dir}/ must be skipped on the intermediate export"
+
+
+class TestCompareBeforeWrite:
+    def test_unchanged_payloads_not_rewritten_boot_still_is(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(storage, "DB_PATH", tmp_path / "test.db")
+        storage.init_db()
+        snaps = _mixed_snaps()
+        storage.insert_snapshots(snaps)
+        out_path = tmp_path / "timeseries.json"
+        storage.export_timeseries_json(
+            build_timeseries(snaps, single_source_k=0), out_path)
+        shard = tmp_path / "debuts_full" / "grad_one.json"
+        assert shard.exists()
+        sentinel = 946684800  # 2000-01-01, unmistakably old
+        os.utime(shard, (sentinel, sentinel))
+        os.utime(tmp_path / "debuts.json", (sentinel, sentinel))
+        os.utime(out_path, (sentinel, sentinel))
+        # Re-export from the same DB state: identical bytes -> writes
+        # skipped, mtimes untouched (this is what lets rsync quick-check
+        # and the deploy box's nightly gzip skip unchanged files).
+        storage.export_timeseries_json(
+            build_timeseries(snaps, single_source_k=0), out_path)
+        assert shard.stat().st_mtime == sentinel, \
+            "unchanged per-player shard must not be rewritten"
+        assert (tmp_path / "debuts.json").stat().st_mtime == sentinel, \
+            "unchanged debuts.json must not be rewritten"
+        # The boot payload carries a per-run stamp (meta.generated_at) and
+        # must keep writing unconditionally.
+        assert out_path.stat().st_mtime != sentinel, \
+            "boot timeseries.json must still write every export"

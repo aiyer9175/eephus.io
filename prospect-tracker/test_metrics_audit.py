@@ -179,14 +179,12 @@ class TestPhaseB1BreakoutSignal:
         assert score is not None
         assert 0 <= score <= 100
 
-    def test_breakout_score_emitted_on_export(self, tmp_path, monkeypatch):
-        """Integration check — the rebuild_only path stamps breakout_score
-        on at least some active prospects."""
-        ts_path = Path(__file__).parent / "data" / "timeseries.json"
-        if not ts_path.exists():
-            pytest.skip("data/timeseries.json not present — skip integration")
-        import json
-        d = json.loads(ts_path.read_text(encoding="utf-8"))
+    def test_breakout_score_emitted_on_export(self, timeseries_doc):
+        """Integration check - the rebuild_only path stamps breakout_score
+        on at least some active prospects. Reads the session-shared
+        conftest.timeseries_doc parse (read-only; skip-if-missing lives in
+        the fixture)."""
+        d = timeseries_doc
         with_score = [p for p in (d.get("players") or [])
                       if p.get("breakout_score") is not None]
         # Demand at least 10% of actives have a breakout_score (most do,
@@ -199,16 +197,14 @@ class TestPhaseB1BreakoutSignal:
 # ---------------------------------------------------------------------------
 
 class TestPhaseB4ClassStrength:
-    def test_class_strength_data_supports_strip(self):
+    def test_class_strength_data_supports_strip(self, debuts_doc):
         """The Class Strength Index UI strip reads data/debuts.json
         (the graduate payload) for per-year median FV-at-graduation.
         Confirm the data shape + coverage is sufficient for the strip
-        to render meaningfully."""
-        g_path = Path(__file__).parent / "data" / "debuts.json"
-        if not g_path.exists():
-            pytest.skip("data/debuts.json not present")
-        import json
-        grads = json.loads(g_path.read_text(encoding="utf-8"))
+        to render meaningfully. Reads the session-shared
+        conftest.debuts_doc parse (read-only; skip-if-missing lives in
+        the fixture)."""
+        grads = debuts_doc
         from collections import defaultdict
         by_year: dict[int, list[int]] = defaultdict(list)
         for grad in grads:

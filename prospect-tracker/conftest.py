@@ -16,7 +16,79 @@ and test_backtest.py."""
 
 from __future__ import annotations
 
+import functools
+import json
+from pathlib import Path
+
 import pytest
+
+# ---------------------------------------------------------------------------
+# Session-shared parses of the large data/ JSON artifacts.
+#
+# timeseries.json is ~65MB and was being independently json.load-ed by many
+# test modules (~36 parses per full-suite run, ~25s locally, more on the
+# deploy box). Parse each artifact ONCE per session and share the object.
+#
+# READ-ONLY CONTRACT: every consumer shares the SAME parsed object. A
+# consumer must never mutate the returned doc (no .pop/del/assignment into
+# entries). All converted call sites were audited read-only on 2026-07-17
+# (including spotlights.compute_movement, which copies driver dicts before
+# annotating). A future consumer that needs to mutate must deepcopy its
+# slice instead of writing into the shared doc.
+# ---------------------------------------------------------------------------
+
+_DATA_DIR = Path(__file__).resolve().parent / "data"
+
+
+@functools.lru_cache(maxsize=None)
+def load_data_doc(name: str):
+    """Session-cached json.load of data/<name>. Returns None when the
+    artifact is missing or unparseable (callers turn that into a skip -
+    the same skip-if-missing semantics the per-module loaders had).
+
+    Plain function (not a fixture) so unittest-style modules can share the
+    cache too: `from conftest import load_data_doc` works because the
+    prospect-tracker dir is on sys.path both under pytest and standalone."""
+    path = _DATA_DIR / name
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+
+
+def _player_list(doc):
+    """Normalize a timeseries/debuts doc to its player list (mirrors the
+    per-module _load helpers this cache replaced)."""
+    if isinstance(doc, list):
+        return doc
+    return doc.get("players") or doc.get("debuts") or []
+
+
+@pytest.fixture(scope="session")
+def timeseries_doc():
+    """The parsed data/timeseries.json doc, shared session-wide. Read-only."""
+    doc = load_data_doc("timeseries.json")
+    if doc is None:
+        pytest.skip("data/timeseries.json not built")
+    return doc
+
+
+@pytest.fixture(scope="session")
+def debuts_doc():
+    """The parsed data/debuts.json doc, shared session-wide. Read-only."""
+    doc = load_data_doc("debuts.json")
+    if doc is None:
+        pytest.skip("data/debuts.json not present")
+    return doc
+
+
+@pytest.fixture(scope="session")
+def players_by_key(timeseries_doc, debuts_doc):
+    """The pros+grads merged {player_key: player} dict several modules used
+    to rebuild from their own parses. Shared session-wide. Read-only."""
+    pros = _player_list(timeseries_doc)
+    grads = _player_list(debuts_doc)
+    return {p["player_key"]: p for p in (pros + grads) if p.get("player_key")}
 
 _RAW_ENGINE_MODULES = (
     "test_config_base_verification",

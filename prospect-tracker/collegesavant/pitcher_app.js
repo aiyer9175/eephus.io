@@ -462,6 +462,55 @@ function plusPill(value, label) {
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
+// Per-year pitch tables ride in as pitcher_pitch_data_<year>.js, each defining
+// window.PITCHER_PITCH_DATA_<year>. The page ships only the small recent-season
+// files (2025 + 2026); the 11.6MB 2024 table loads on demand the first time a
+// view asks for that season (same injector pattern as ensurePitchShapes).
+// The consts are declared before init() runs (same dead-zone rule as
+// CSPLUS_GROUPS above): collectPitchRows reads them during boot.
+const PITCH_DATA_YEARS = [2024, 2025, 2026];
+const _pitchDataLoadState = {};   // year -> "loading" | "ready" | "failed"
+
+function pitchRowsFor(year) {
+  return window[`PITCHER_PITCH_DATA_${year}`];
+}
+
+// Every pitch row currently on the page: the per-year tables plus the legacy
+// combined window.PITCHER_PITCH_DATA (still honored so older cached copies of
+// pitcher_data.js and the smoke harness keep working).
+function collectPitchRows() {
+  let rows = window.PITCHER_PITCH_DATA || [];
+  for (const year of PITCH_DATA_YEARS) {
+    const yearRows = pitchRowsFor(year);
+    if (Array.isArray(yearRows)) rows = rows.concat(yearRows);
+  }
+  return rows;
+}
+
+function pitchDataLoading(year) {
+  return _pitchDataLoadState[year] === "loading";
+}
+
+// Returns true when the year's pitch rows are on the page (or the year has no
+// file to fetch). Otherwise injects the year's script once and returns false;
+// onload merges the rows and repaints, onerror leaves the views' empty states.
+function ensurePitchData(year) {
+  if (!PITCH_DATA_YEARS.includes(year) || pitchRowsFor(year)) return true;
+  if (_pitchDataLoadState[year] === "loading" || _pitchDataLoadState[year] === "failed") return false;
+  _pitchDataLoadState[year] = "loading";
+  const s = document.createElement("script");
+  s.src = `pitcher_pitch_data_${year}.js`;
+  s.onload = () => {
+    _pitchDataLoadState[year] = "ready";
+    state.allPitches = state.allPitches.concat((pitchRowsFor(year) || []).map(normalizePitchRow));
+    setActiveYear(state.year);
+    render();
+  };
+  s.onerror = () => { _pitchDataLoadState[year] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+
 init();
 
 function init() {
@@ -471,7 +520,7 @@ function init() {
     // leaderboard with no hint anything went wrong (F-02).
     if (!window.PITCHER_DATA) throw new Error("pitcher_data.js is missing or failed to load");
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
-    state.allPitches = (window.PITCHER_PITCH_DATA || []).map(normalizePitchRow);
+    state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
     state.year = state.availableYears.includes(2025) ? 2025 : (state.availableYears[0] || 2026);
     setActiveYear(yearFromHash(window.location.hash) || state.year);
@@ -523,6 +572,7 @@ function normalizePitcher(row) {
 function setActiveYear(year) {
   const numericYear = Number(year);
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  ensurePitchData(state.year);
   state.pitchers = state.allPitchers.filter((pitcher) => pitcher.year === state.year);
   state.pitches = state.allPitches.filter((pitch) => pitch.year === state.year);
   state.percentiles = computePercentiles(state.pitchers);
@@ -1226,6 +1276,9 @@ function renderPitchTypeStuff(pitcher) {
     .sort((a, b) => b.pitch_count - a.pitch_count);
 
   if (!rows.length) {
+    if (pitchDataLoading(pitcher.year)) {
+      return `<div class="chart-empty">Loading ${pitcher.year} pitch data&hellip;</div>`;
+    }
     return `<div class="chart-empty">No pitch mix values available for this pitcher.</div>`;
   }
 
@@ -1539,8 +1592,11 @@ function availablePlayerYears(pitcher) {
 }
 
 function renderYearSelect(years = state.availableYears) {
+  // While a lazily fetched season's pitch table is still in flight the toggle
+  // shows a loading state; the onload repaint clears it.
+  const loading = pitchDataLoading(state.year);
   return `
-    <select class="select-box year-select" aria-label="Select season">
+    <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} pitch data"` : ""}>
       ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
     </select>
   `;

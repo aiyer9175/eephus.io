@@ -1744,6 +1744,47 @@ def test_multi_season_top100_mlb_player_can_reverse_prior() -> None:
     assert out["posterior_surplus_mm"] < 70.0
 
 
+def test_baked_top100_pedigree_flag_fires_floor_without_history() -> None:
+    # v47 artifact shape: tools.history is no longer shipped; the export
+    # bakes `top100_pedigree: true` on the player payload instead. The
+    # recent-top100 floor must fire identically off the baked flag.
+    player = {
+        "player_key": "baked_top100_cf",
+        "player_name": "Baked Top100 CF",
+        "org": "TST",
+        "status": "active",
+        "position": "CF",
+        "is_pitcher": False,
+        "fv_close": 54.0,
+        "age": 23.0,
+        "current_level": "AA",
+        "statline": {"level": "AA", "games": 60, "pa": 260, "ops": ".940", "iso": 0.220, "k_pct": 22.0, "bb_pct": 17.0},
+        "career_stats": [],
+        "tools": {},
+        "top100_pedigree": True,
+        "acquisition": {},
+    }
+
+    out = bayesian_trade_value(player)
+
+    assert "recent_top100_prospect_floor" in out["inputs_available"]
+    assert out["trade_value_mm"] >= 55.0
+
+
+def test_has_top100_pedigree_prefers_baked_flag_with_walk_fallback() -> None:
+    from bayes_trade_value import _has_top100_pedigree
+
+    # Baked flag wins outright (v47 artifacts ship no tools.history).
+    assert _has_top100_pedigree({"top100_pedigree": True, "tools": {}}) is True
+    # Pre-v47 fallback must OR across BOTH halves of the old walk.
+    assert _has_top100_pedigree(
+        {"tools": {"history": [{"interval_label": "BA 2026 Top 100"}]}}) is True
+    assert _has_top100_pedigree(
+        {"tools": {"source_history": {"mlb_pipeline": [
+            {"interval_label": "MLB Pipeline 2026 Top 100"}]}}}) is True
+    assert _has_top100_pedigree({"tools": {}}) is False
+
+
 def test_low_power_established_shortstop_does_not_take_full_projection_anchor(monkeypatch) -> None:
     import bayes_trade_value as btv
 

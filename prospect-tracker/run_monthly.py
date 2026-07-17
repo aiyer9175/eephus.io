@@ -2610,7 +2610,17 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                                ifa_spending_by_org=ifa_spending_by_org,
                                contracts_by_key=contracts_by_key,
                                draft_pools=draft_pools,
-                               player_ids=ids_by_key)
+                               player_ids=ids_by_key,
+                               # v47 - mid-monthly export: main() ALWAYS
+                               # chains run_daily(chained=True), whose d9
+                               # rebuild_only re-runs the FULL export ~15
+                               # min from here; nothing in the monthly
+                               # tail reads the frontend-only sidecars, so
+                               # this pass writes only boot + debuts.json
+                               # + rosters_by_org.json (~1GB of sidecar
+                               # duplication skipped). NEVER set this on
+                               # the daily / d9 / rebuild paths.
+                               intermediate=True)
         log.info("wrote %s", out_path)
         _post_export_summary(out_path, all_snaps, log)
         # International Amateurs sidecar — IFA signing classes from the

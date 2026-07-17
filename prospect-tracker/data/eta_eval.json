@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-17",
+ "generated_at": "2026-07-16",
  "vintage_years": [
   2018,
   2019,
@@ -9,16 +9,16 @@
   2023
  ],
  "accounting": {
-  "listed": 8985,
+  "listed": 9214,
   "excluded_post_debut": 620,
   "excluded_no_bio": 0,
-  "no_level_age_fallback": 3491,
+  "no_level_age_fallback": 3719,
   "level_from_statsapi": 3432,
-  "level_from_career_stats": 1442,
-  "debuted": 4119,
-  "censored_active": 2186,
-  "washed_out": 743,
-  "overdue": 860
+  "level_from_career_stats": 1443,
+  "debuted": 4178,
+  "censored_active": 2307,
+  "washed_out": 746,
+  "overdue": 885
  },
  "conventions": {
   "vintage_fv": "median of each source's earliest same-year snapshot",
@@ -28,11 +28,11 @@
   "selection": "MAE conditions on debuted players (shared by champion/baseline/challenger); overdue + washed-out rates carry the unconditional signal"
  },
  "champion_heuristic": {
-  "n": 4119,
-  "mae": 1.429,
-  "bias": 1.02,
+  "n": 4178,
+  "mae": 1.427,
+  "bias": 1.017,
   "within_1y": 0.585,
-  "exact": 0.217
+  "exact": 0.218
  },
  "baseline_naive_level_table": {
   "n": 3441,
@@ -93,9 +93,9 @@
   "DSL": 7.5
  },
  "overdue_v38_vs_km": {
-  "v38": 761,
-  "km_recalibrated": 860,
-  "censored_n": 2186
+  "v38": 786,
+  "km_recalibrated": 885,
+  "censored_n": 2307
  },
  "ship_decision": {
   "date": "2026-06-11",
@@ -185,25 +185,25 @@
    "exact": 0.253
   },
   "2021": {
-   "n": 698,
-   "mae": 1.933,
-   "bias": 1.695,
-   "within_1y": 0.407,
-   "exact": 0.106
+   "n": 721,
+   "mae": 1.926,
+   "bias": 1.674,
+   "within_1y": 0.406,
+   "exact": 0.108
   },
   "2022": {
-   "n": 698,
-   "mae": 1.476,
-   "bias": 1.223,
-   "within_1y": 0.569,
-   "exact": 0.208
+   "n": 724,
+   "mae": 1.459,
+   "bias": 1.202,
+   "within_1y": 0.575,
+   "exact": 0.213
   },
   "2023": {
-   "n": 570,
-   "mae": 1.435,
-   "bias": 1.274,
-   "within_1y": 0.582,
-   "exact": 0.204
+   "n": 580,
+   "mae": 1.428,
+   "bias": 1.269,
+   "within_1y": 0.586,
+   "exact": 0.203
   }
  },
  "residual_by_level": {
@@ -260,10 +260,10 @@
   "shippable_level_bias_adj": {
    "AAA": 0.5,
    "DSL": 0.5,
-   "AA": 0.5,
    "A+": 0.5,
-   "A": 0.5,
-   "CPX": 0.5
+   "CPX": 0.5,
+   "AA": 0.5,
+   "A": 0.5
   },
   "cap": 0.5,
   "shrink_k": 10,
@@ -271,10 +271,10 @@
   "note": "conservative -0.5 final shave at every minor level (eta.LEVEL_BIAS_ADJ), applied by the live caller (storage.py); champion backtest UNtouched. MAE/within-1y improve; overdue +~99 (in line with the accepted KM +101)."
  },
  "censoring": {
-  "censored_active": 2186,
-  "overdue_rate": 0.393,
-  "washed_out": 743,
-  "washed_out_share_of_listed": 0.105
+  "censored_active": 2307,
+  "overdue_rate": 0.384,
+  "washed_out": 746,
+  "washed_out_share_of_listed": 0.103
  },
  "empirical_tables_by_vintage": {
   "2019": {
@@ -342,15 +342,15 @@
    0.1874
   ],
   "A+": [
-   0.8999,
-   0.6853,
-   0.5064,
-   0.43,
-   0.3954,
-   0.3781,
-   0.3752,
-   0.3752,
-   0.3752
+   0.9,
+   0.6856,
+   0.5068,
+   0.4305,
+   0.3959,
+   0.3785,
+   0.3757,
+   0.3757,
+   0.3757
   ],
   "A": [
    0.969,

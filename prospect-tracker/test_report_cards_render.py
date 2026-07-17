@@ -37,16 +37,33 @@ def test_report_cards_flag_gating():
             page.on("pageerror", lambda e: errors.append(str(e)))
             base = f"http://127.0.0.1:{port}/glossary/index.html"
 
-            # Surfaced: proof charts show by default now.
+            # Surfaced: proof charts show by default now. Condition wait
+            # replaces the old fixed 600ms sleep: wait for the asserted
+            # chart count itself; a timeout is swallowed so the assertion
+            # below reports the real count.
             page.goto(base + "#view=models", wait_until="networkidle")
             page.wait_for_selector(".gl-model-card", timeout=15000)
-            page.wait_for_timeout(600)
+            try:
+                page.wait_for_function(
+                    "document.querySelectorAll('.gl-card-proof').length >= 8",
+                    timeout=10000)
+            except Exception:
+                pass
             on = page.eval_on_selector_all(".gl-card-proof", "els => els.length")
 
-            # ...and #cards=0 turns them off.
+            # ...and #cards=0 turns them off. Charts must NOT appear here,
+            # so there is no positive signal to wait on: wait for the full
+            # ledger (asserted below), then keep a SHORT settle so a buggy
+            # late chart injection would still be caught.
             page.goto(base + "#view=models&cards=0", wait_until="networkidle")
             page.wait_for_selector(".gl-model-card", timeout=15000)
-            page.wait_for_timeout(600)
+            try:
+                page.wait_for_function(
+                    "document.querySelectorAll('.gl-model-card').length >= 50",
+                    timeout=10000)
+            except Exception:
+                pass
+            page.wait_for_timeout(200)
             off = page.eval_on_selector_all(".gl-card-proof", "els => els.length")
             ledger = page.eval_on_selector_all(".gl-model-card", "els => els.length")
             browser.close()
