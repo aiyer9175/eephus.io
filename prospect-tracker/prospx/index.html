@@ -31105,7 +31105,11 @@ function gradeBlock(p, opts) {
              : (consLabel != null || consVal != null) ? "consensus"
              : (efvVal != null) ? "efv" : "none";
   return { x, primary, efvVal, consLabel, consVal, value, label, lead,
-           provisional: !!(x && x.xfv_ungraded), locked: !!(x && x.kind === "debuted") };
+           provisional: !!(x && x.xfv_ungraded),
+           // Source-GRADED but no pro track record yet (fresh draftees/signees):
+           // eFV is anchored to the consensus prior, not a model read.
+           priorAnchored: !!(x && x.xfv_provisional && !x.xfv_ungraded),
+           locked: !!(x && x.kind === "debuted") };
 }
 // efvGradeBand(x): the OUTCOME-distribution band expressed on the grade (20-80) scale.
 // eFV already publishes the outcome distribution in surplus dollars (dist.p10_mm/p90_mm).
@@ -31166,6 +31170,8 @@ function efvTooltip(x) {
     const d = efvMinusConsensus(x);
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
   }
+  if (x.xfv_provisional && !x.xfv_ungraded)
+    parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
   // Secondary transparency line: the pure-model outcome-implied grade before it is mapped
   // onto the 20-80 scale (the headline eFV above is that map). Kept so eFV stays legible.
   if (x.xfv_grade_realized != null && x.xfv_grade_quantile != null
@@ -31306,6 +31312,10 @@ function efvDetailHeaderHTML(p, fvBadge) {
     + efvGradeBandHTML(x)
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
+        : gb.priorAnchored
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
+          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
           + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
           + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
@@ -31319,6 +31329,8 @@ function efvDetailCard(p) {
   // leading indicator, not a source-anchored grade.
   const provBanner = x.xfv_ungraded
     ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional eFV</strong> - no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored eFV. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
+    : x.xfv_provisional
+    ? `<div style="border:1px dashed var(--border-light);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong>Prior-anchored eFV</strong> - drafted or signed but no pro track record yet, so eFV starts at the consensus prior. A small gap between eFV and consensus FV here is placement on the 20-80 scale when ranked among all graded prospects, not a model penalty. The model read goes live once pro playing time arrives.</div>`
     : "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
   // The $ surplus + its P10-P90 fan now live ONLY in the single Surplus-value card below
@@ -31347,7 +31359,7 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
