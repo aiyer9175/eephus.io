@@ -76,7 +76,19 @@ def test_war_room_renders_live_board(live_artifact):
             page.on("pageerror", lambda e: errs.append(str(e)))
             page.goto(f"http://127.0.0.1:{port}/prospx/index.html#tab=draft&dview=war-room",
                       wait_until="networkidle", timeout=45000)
-            page.wait_for_timeout(3500)
+            # Condition wait replaces the old fixed 3.5s sleep: the board is
+            # ready once the war-room poller holds data AND the priced pick
+            # rows are in the DOM (the same facts asserted below). Generous
+            # ceiling; a timeout is swallowed so the assertions report the
+            # real failure state.
+            try:
+                page.wait_for_function(
+                    "() => typeof _warRoom !== 'undefined' && !!_warRoom.data"
+                    " && document.querySelectorAll('.detail-table tbody tr')"
+                    ".length >= 2",
+                    timeout=30000)
+            except Exception:
+                pass
             info = page.evaluate("""() => ({
               view: (typeof state!=='undefined') ? state.draftView : '?',
               wrStatus: (typeof _warRoom!=='undefined' && _warRoom.data) ? _warRoom.data.status : null,

@@ -23,7 +23,6 @@ These tests pin the invariants so the behavior can't silently regress:
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 
@@ -33,29 +32,20 @@ ROOT = Path(__file__).resolve().parent
 INDEX = ROOT / "prospx" / "index.html"
 
 
-def _load(path: Path):
-    try:
-        d = json.loads(path.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
-    return d if isinstance(d, list) else (d.get("players") or d.get("debuts") or [])
-
-
 @pytest.fixture(scope="module")
-def players():
-    # timeseries.json / debuts.json are gitignored generated artifacts — present
+def players(players_by_key):
+    # timeseries.json / debuts.json are gitignored generated artifacts - present
     # locally + after a pipeline run, absent on a fresh checkout (then we skip the
     # data assertions; the backend-unit + JS-source guards below still run).
-    pros = _load(ROOT / "data" / "timeseries.json")
-    grads = _load(ROOT / "data" / "debuts.json")
-    if pros is None or grads is None:
-        pytest.skip("data exports (timeseries.json / debuts.json) not present")
-    by_key = {p["player_key"]: p for p in (pros + grads) if p.get("player_key")}
+    # players_by_key is the session-shared pros+grads merge from conftest (one
+    # parse per suite run; it skips when either export is missing). Everything
+    # in this module only READS the shared dict.
     has_splits = any(len(r.get("stints") or []) >= 2
-                     for p in by_key.values() for r in (p.get("career_stats") or []))
+                     for p in players_by_key.values()
+                     for r in (p.get("career_stats") or []))
     if not has_splits:
-        pytest.skip("data predates the stint split — re-run the stats pipeline to populate")
-    return by_key
+        pytest.skip("data predates the stint split - re-run the stats pipeline to populate")
+    return players_by_key
 
 
 # --------------------------------------------------------------------------- #

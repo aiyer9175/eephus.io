@@ -72,7 +72,17 @@ def booted_page(server):
         errs: list[str] = []
         page.on("pageerror", lambda err: errs.append(err.message))
         page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
-        page.wait_for_timeout(3000)
+        # Condition wait replaces the old fixed 3s sleep: boot is done once
+        # the loading placeholder has left #content. Generous ceiling; a
+        # timeout is swallowed so each test's assertions report the real
+        # failure state instead of a TimeoutError.
+        try:
+            page.wait_for_function(
+                "() => { const c = document.getElementById('content');"
+                " return !!c && c.innerHTML.indexOf('Loading prospect data') === -1; }",
+                timeout=30_000)
+        except Exception:
+            pass
         yield page, errs
         browser.close()
 
@@ -121,7 +131,17 @@ def test_aria_sort_reflects_state_and_enter_resorts(booted_page):
         f'#active-section .sort-header[data-sort-key="{target["key"]}"]',
         "el => el.focus()")
     page.keyboard.press("Enter")
-    page.wait_for_timeout(400)
+    # Condition wait replaces the old fixed 400ms sleep: the re-sort is done
+    # once the pressed header advertises the active sort. Timeout swallowed
+    # so the assertions below do the failing.
+    try:
+        page.wait_for_function(
+            "key => { const h = document.querySelector("
+            "`#active-section .sort-header[data-sort-key=\"${key}\"]`);"
+            " return !!h && h.classList.contains('is-active'); }",
+            arg=target["key"], timeout=10_000)
+    except Exception:
+        pass
     after = {s["key"]: s for s in aria_states()}
     assert after[target["key"]]["active"], (
         f"Enter on header '{target['key']}' did not activate its sort")
@@ -133,7 +153,18 @@ def test_aria_sort_reflects_state_and_enter_resorts(booted_page):
 def test_scatter_has_role_img_and_dynamic_label(booted_page):
     page, errs = booted_page
     page.click('.section-tab[data-section="charts"]')
-    page.wait_for_timeout(1500)
+    # Condition wait replaces the old fixed 1.5s sleep: the scatter is ready
+    # once #chart-svg carries a dynamic (non-placeholder) aria-label - the
+    # same facts asserted below. Timeout swallowed so the assertions report
+    # the failure.
+    try:
+        page.wait_for_function(
+            "() => { const s = document.getElementById('chart-svg');"
+            " const l = s && s.getAttribute('aria-label');"
+            " return !!l && l !== 'Scatterplot'; }",
+            timeout=10_000)
+    except Exception:
+        pass
     svg = page.evaluate("""() => {
         const s = document.getElementById('chart-svg');
         return s ? {role: s.getAttribute('role'),
