@@ -1734,6 +1734,14 @@ def _has_active_injury(player: dict) -> bool:
 
 
 def _has_top100_pedigree(player: dict) -> bool:
+    # v47 - the export bakes `top100_pedigree: true` on the player payload
+    # (omitted when False), computed with EXACTLY this label walk at export
+    # time, because tools.history is no longer shipped in the artifact.
+    # Prefer the baked flag; the walk below stays as the fallback for
+    # pre-v47 artifacts (where it must OR across BOTH tools.history and
+    # tools.source_history - a history-only walk under-fires).
+    if player.get("top100_pedigree"):
+        return True
     tools = player.get("tools") or {}
     labels: list[str] = []
     for row in tools.get("history") or []:

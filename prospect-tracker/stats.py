@@ -785,7 +785,6 @@ def _search_mlbam_via_api(player_name: str) -> tuple[int | None, str | None]:
         f"names={encoded}",               # pass 2: all players (MiLB / recent signings)
     ):
         url = f"{MLB_STATS_API}/people/search?{params}"
-        time.sleep(RATE_LIMIT_SECONDS)
         try:
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
@@ -1135,7 +1134,6 @@ def _fetch_splits_for_season(mlbam_id: int, season: int,
     splits: list[dict] = []
     seen_keys: set[tuple] = set()
     for url in urls:
-        time.sleep(RATE_LIMIT_SECONDS)
         try:
             resp = requests.get(url, timeout=15)
             resp.raise_for_status()
@@ -2849,7 +2847,6 @@ def fetch_pitch_arsenal(player_key: str, mlbam_id: int,
         f"{MLB_STATS_API}/people/{mlbam_id}/stats"
         f"?stats=pitchArsenal&group=pitching&season={season}"
     )
-    time.sleep(RATE_LIMIT_SECONDS)
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
@@ -2943,7 +2940,6 @@ def fetch_sabermetrics(player_key: str, mlbam_id: int,
         f"{MLB_STATS_API}/people/{mlbam_id}/stats"
         f"?stats=sabermetrics&group={group}&season={season}"
     )
-    time.sleep(RATE_LIMIT_SECONDS)
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()
@@ -3455,7 +3451,8 @@ def check_rookie_threshold(mlbam_id: int, is_pitcher: bool) -> tuple[bool, str |
     group = "pitching" if is_pitcher else "hitting"
     url = (f"{MLB_STATS_API}/people/{mlbam_id}/stats"
            f"?stats=career&group={group}&sportId=1")
-    time.sleep(RATE_LIMIT_SECONDS)
+    # NB: no outer sleep here - the `requests` caching proxy is the single
+    # rate limiter and only sleeps on its network path (cache misses).
     try:
         resp = requests.get(url, timeout=15)
         resp.raise_for_status()

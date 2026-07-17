@@ -1286,19 +1286,6 @@ CREATE TABLE IF NOT EXISTS draft_results (
 CREATE INDEX IF NOT EXISTS idx_draft_results_team   ON draft_results(team);
 CREATE INDEX IF NOT EXISTS idx_draft_results_player ON draft_results(player_key);
 
--- Mock drafts: one row per (source, snapshot, year, pick).
-CREATE TABLE IF NOT EXISTS draft_mocks (
-    source          TEXT NOT NULL,
-    snapshot_date   TEXT NOT NULL,
-    draft_year      INTEGER NOT NULL,
-    pick_overall    INTEGER NOT NULL,
-    team            TEXT NOT NULL,
-    player_key      TEXT,
-    player_name     TEXT NOT NULL,
-    PRIMARY KEY (source, snapshot_date, draft_year, pick_overall)
-);
-CREATE INDEX IF NOT EXISTS idx_draft_mocks_year ON draft_mocks(draft_year);
-
 -- Draft order — the assigned pick sequence (1-30 first round + comp picks)
 -- for a given year. Pre-draft this drives the "Draft Order & Slots" panel;
 -- post-draft it's redundant with draft_results.team but we keep it so the
@@ -2844,45 +2831,6 @@ def load_draft_order(draft_year: int | None = None) -> list[dict]:
         q += " WHERE draft_year = ?"
         params = (draft_year,)
     q += " ORDER BY draft_year DESC, pick_overall ASC"
-    try:
-        with connect() as con:
-            rows = con.execute(q, params).fetchall()
-    except sqlite3.OperationalError:
-        return []
-    return [dict(r) for r in rows]
-
-
-def upsert_draft_mocks(rows: Iterable[dict]) -> int:
-    n = 0
-    with connect() as con:
-        for r in rows:
-            con.execute(
-                """INSERT INTO draft_mocks
-                     (source, snapshot_date, draft_year, pick_overall,
-                      team, player_key, player_name)
-                   VALUES (?, ?, ?, ?, ?, ?, ?)
-                   ON CONFLICT(source, snapshot_date, draft_year, pick_overall)
-                   DO UPDATE SET
-                     team        = excluded.team,
-                     player_key  = COALESCE(excluded.player_key, draft_mocks.player_key),
-                     player_name = excluded.player_name""",
-                (r.get("source"), r.get("snapshot_date"), r.get("draft_year"),
-                 r.get("pick_overall"), r.get("team"),
-                 r.get("player_key"), r.get("player_name")),
-            )
-            n += 1
-    return n
-
-
-def load_draft_mocks(draft_year: int | None = None) -> list[dict]:
-    q = """SELECT source, snapshot_date, draft_year, pick_overall,
-                  team, player_key, player_name
-           FROM draft_mocks"""
-    params: tuple = ()
-    if draft_year is not None:
-        q += " WHERE draft_year = ?"
-        params = (draft_year,)
-    q += " ORDER BY snapshot_date DESC, pick_overall ASC"
     try:
         with connect() as con:
             rows = con.execute(q, params).fetchall()
@@ -7025,9 +6973,18 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                           contracts_by_key: dict[str, dict] | None = None,
                           draft_pools: dict | None = None,
                           player_ids: dict[str, int] | None = None,
-                          top_n_active: int | None = None):
+                          top_n_active: int | None = None,
+                          intermediate: bool = False):
     """
     Serialize for the front-end widget.
+
+    `intermediate=True` is passed ONLY by run_monthly.main() step 5 (the
+    mid-monthly export): it writes boot + debuts.json + rosters_by_org.json
+    and skips every frontend-only sidecar (debuts_lite, inactive,
+    scout_reports + chunks, mlb_trade_players, and the pitch_plots/,
+    player_detail/, debuts_full/ per-player dirs), because the chained
+    daily's d9 full export rewrites all of them minutes later. Daily, d9,
+    and rebuild paths must always run the full (default) export.
 
     Each player now carries:
       - statline      : slash line / ERA at the highest level this season
@@ -8659,6 +8616,10 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # D-Tool composite math, so consolidate once and pass through.
         _player_extras = _extract_player_extras(latest_point)
         _pos_bucket = _position_bucket(p.position)
+        # v47 - Top-100 pedigree flag; set from the tool-history labels
+        # below (tools.history itself is no longer shipped) and baked on
+        # the player payload for bayes_trade_value._has_top100_pedigree.
+        _top100_pedigree = False
         tools_payload = _compute_tool_composites(
             tool_consensus_grades, is_pitcher,
             player_extras=_player_extras,
@@ -8770,10 +8731,24 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 # rendered table.
                 deduped.sort(key=lambda e: e["snapshot_date"], reverse=True)
                 source_history[src] = deduped
-            if history_entries:
-                # Newest-first for the consensus timeline too.
-                history_entries.sort(key=lambda e: e["snapshot_date"], reverse=True)
-                tools_payload["history"] = history_entries
+            # v47 payload-slim - the consensus `history` timeline is no
+            # longer shipped (no frontend reader; the per-source dropdown
+            # reads source_history + source_recency, which stay). Its only
+            # downstream consumer was bayes _has_top100_pedigree, which ORs
+            # Top-100 labels across BOTH tools.history AND
+            # tools.source_history; that OR is reproduced here and baked as
+            # the `top100_pedigree` player flag (run_monthly re-reads this
+            # artifact from disk for the bayes pass, so the flag must ride
+            # the shipped payload for the early-debut / recent-top100
+            # floors to keep firing identically).
+            _ped_labels = [str(e.get("interval_label") or "")
+                           for e in history_entries]
+            for _ped_rows in source_history.values():
+                for _ped_row in _ped_rows:
+                    _ped_labels.append(str(_ped_row.get("interval_label") or ""))
+            _top100_pedigree = any(
+                "top 100" in _pl.lower() or "top100" in _pl.lower()
+                for _pl in _ped_labels)
             if source_history:
                 tools_payload["source_history"] = source_history
                 # Recency: latest publication per source + stale flag.
@@ -9251,6 +9226,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
                 for pt in p.points
             ],
         }
+
+        # v47 - baked Top-100 pedigree boolean (omitted when False so the
+        # key set stays lean). Computed above from the exact label walk
+        # bayes_trade_value._has_top100_pedigree performed against
+        # tools.history + tools.source_history; bayes now prefers this
+        # flag and keeps the walk only as a fallback for pre-v47 artifacts.
+        if _top100_pedigree:
+            payload["top100_pedigree"] = True
 
         # Boom / Bust label — graduates only. Computed post-payload-build
         # since _compute_boom_bust reads career_war + career_stats fields
@@ -14477,8 +14460,14 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # v33 — player_detail/{player_key}.json rides the same contract
         # (spray/rolling-xwOBA coordinates, game logs, historical
         # per-source tool grades; lazy-merged when a card opens).
+        # v47 - debuts_full/{player_key}.json carries the FULL graduate
+        # record (the same object serialized into debuts.json for that
+        # player: complete points, statcast level_splits, full tools,
+        # career_stats). EVERY row in debuts.json has a shard, so no keys
+        # list is needed; the graduate list itself is the key set.
         "_slices_dir": {"pitch_plots": "pitch_plots/",
-                        "player_detail": "player_detail/"},
+                        "player_detail": "player_detail/",
+                        "debuts_full": "debuts_full/"},
         "pitch_plots_keys": sorted(pitch_plots_sidecar),
         "player_detail_keys": sorted(player_detail_sidecar),
     }
@@ -14495,17 +14484,50 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # OPT_NON_STR_KEYS allows int keys (mlbam_id maps); orjson refuses
         # them by default. No SORT or INDENT — match the prior compact mode.
         _opts = _orjson.OPT_NON_STR_KEYS
-        def _dump(obj, path):
-            path.write_bytes(_orjson.dumps(obj, option=_opts))
+        def _dump_bytes(obj) -> bytes:
+            return _orjson.dumps(obj, option=_opts)
     except ImportError:
         _compact = {"separators": (",", ":")}
-        def _dump(obj, path):
-            path.write_text(json.dumps(obj, **_compact))
-    _dump(boot, out_path)
+        def _dump_bytes(obj) -> bytes:
+            # json.dumps keeps ensure_ascii=True, so these bytes are pure
+            # ASCII and encoding-equivalent to the old write_text path.
+            return json.dumps(obj, **_compact).encode("utf-8")
+
+    def _dump(obj, path, force: bool = False):
+        # v47 compare-before-write: when the target already holds byte-
+        # identical content, skip the write entirely (size check first,
+        # then a byte compare) so mtimes only move when payloads actually
+        # change - rsync quick-check and the deploy box's nightly gzip
+        # then skip the ~8k unchanged per-player shards. force=True is
+        # for payloads carrying a per-run stamp (the boot's
+        # meta.generated_at) where the compare could never match.
+        data = _dump_bytes(obj)
+        if not force:
+            try:
+                if path.stat().st_size == len(data) and path.read_bytes() == data:
+                    return
+            except OSError:
+                pass
+        path.write_bytes(data)
+    _dump(boot, out_path, force=True)
     _dump(graduate_payload, out_dir / "debuts.json")
+    _dump(rosters_by_org, out_dir / "rosters_by_org.json")
+    if intermediate:
+        # v47 - mid-monthly intermediate export (run_monthly.main step 5
+        # ONLY). Everything below this return is a frontend-only sidecar
+        # that the chained daily's d9 full export rewrites ~15 min later;
+        # nothing in the monthly tail reads them, so writing them here was
+        # ~1GB of pure duplication. STALENESS CLASS REINTRODUCED: between
+        # this export and the chained d9, debuts_lite / inactive /
+        # scout_reports* / mlb_trade_players / pitch_plots/ /
+        # player_detail/ / debuts_full/ on disk lag the boot + debuts.json
+        # written above. Any FUTURE monthly-tail step that reads one of
+        # the skipped sidecars must run after the full export (or this
+        # call must drop intermediate=True). Stale-shard cleanup also
+        # lives only in the full path below.
+        return out_path
     _dump(debuts_lite, out_dir / "debuts_lite.json")
     _dump(inactive_payload, out_dir / "inactive.json")
-    _dump(rosters_by_org, out_dir / "rosters_by_org.json")
     _dump(scout_reports_sidecar, out_dir / "scout_reports.json")
     # v46 payload-slim — fixed chunk count, so every index is always
     # (re)written and stale chunks can't linger between runs.
@@ -14538,6 +14560,28 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
     for stale in pd_existing - set(player_detail_sidecar):
         try:
             (pd_dir / f"{stale}.json").unlink()
+        except OSError:
+            pass
+    # v47 - debuts_full per-player shards (see the _slices_dir contract
+    # comment above): one file per graduate row carrying that player's
+    # COMPLETE debuts.json record, so a graduate card open can fetch one
+    # player instead of the whole monolith. debuts.json itself is
+    # unchanged this pass (Time Machine + the debuted chart mode still
+    # read it). Same lifecycle rules as player_detail: write current,
+    # remove departed players' files.
+    df_dir = out_dir / "debuts_full"
+    df_dir.mkdir(parents=True, exist_ok=True)
+    df_existing = {f.stem for f in df_dir.glob("*.json")}
+    df_keys: set[str] = set()
+    for g in graduate_payload:
+        gk = g.get("player_key")
+        if not gk:
+            continue
+        df_keys.add(gk)
+        _dump(g, df_dir / f"{gk}.json")
+    for stale in df_existing - df_keys:
+        try:
+            (df_dir / f"{stale}.json").unlink()
         except OSError:
             pass
     legacy_pp = out_dir / "pitch_plots.json"
