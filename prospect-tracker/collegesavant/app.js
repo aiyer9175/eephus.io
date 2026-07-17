@@ -153,20 +153,71 @@ function plusPill(value, label) {
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
+// Batted-ball point clouds ride in as hitter_bip_<year>.js, each defining
+// window.HITTER_BIP_<year> keyed "year:slug". The page ships only the current
+// season's file; the 11.6MB 2024 cloud loads on demand the first time a 2024
+// profile or the 2024 year toggle opens (same injector pattern as the pitcher
+// page's pitch shapes). The consts are declared before init() runs (same
+// dead-zone rule as CSPLUS_GROUPS above): collectHitterBip reads them at boot.
+const BIP_YEARS = [2024, 2025];
+const _bipLoadState = {};   // year -> "loading" | "ready" | "failed"
+
+function bipTableFor(year) {
+  return window[`HITTER_BIP_${year}`];
+}
+
+// Every batted-ball table currently on the page: the per-year tables plus the
+// legacy combined window.HITTER_BIP (still honored so older cached copies of
+// hitter_year_data.js keep working).
+function collectHitterBip() {
+  const merged = Object.assign({}, window.HITTER_BIP || {});
+  for (const year of BIP_YEARS) Object.assign(merged, bipTableFor(year) || {});
+  return merged;
+}
+
+function bipLoading(year) {
+  return _bipLoadState[year] === "loading";
+}
+
+// Returns true when the year's batted balls are on the page (or the year has
+// no file to fetch). Otherwise injects the year's script once and returns
+// false; onload merges the points and repaints, onerror leaves the profile's
+// empty-scatter state.
+function ensureHitterBip(year) {
+  if (!BIP_YEARS.includes(year) || bipTableFor(year)) return true;
+  if (_bipLoadState[year] === "loading" || _bipLoadState[year] === "failed") return false;
+  _bipLoadState[year] = "loading";
+  const s = document.createElement("script");
+  s.src = `hitter_bip_${year}.js`;
+  s.onload = () => {
+    _bipLoadState[year] = "ready";
+    for (const [slug, points] of normalizeBattedBalls(bipTableFor(year) || {})) {
+      state.battedBalls.set(slug, points);
+    }
+    render();
+  };
+  s.onerror = () => { _bipLoadState[year] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+
 init();
 
 async function init() {
   try {
     if (window.HITTER_DATA) {
       state.allPlayers = window.HITTER_DATA.map(normalizePlayer);
-      state.battedBalls = normalizeBattedBalls(window.HITTER_BIP || {});
+      state.battedBalls = normalizeBattedBalls(collectHitterBip());
     } else {
       const text = window.B1G_CSV || await fetch(CSV_PATH).then((res) => {
         if (!res.ok) throw new Error(`Could not load ${CSV_PATH}`);
         return res.text();
       });
       state.allPlayers = parseCsv(text).map((row) => normalizePlayer({ ...row, year: 2025 }));
-      state.battedBalls = normalizeBattedBalls(window.B1G_BIP || {});
+      // The legacy B1G_BIP blob no longer ships (922KB, dead on the happy
+      // path); this CSV fallback keeps the leaderboard alive with an empty
+      // batted-ball scatter instead of stale B1G-only points.
+      state.battedBalls = normalizeBattedBalls({});
     }
     state.availableYears = [...new Set(state.allPlayers.map((player) => player.year))].sort((a, b) => b - a);
     state.year = state.availableYears[0] || 2025;
@@ -261,6 +312,7 @@ function normalizePlayer(row) {
 function setActiveYear(year) {
   const numericYear = Number(year);
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  ensureHitterBip(state.year);
   state.players = state.allPlayers.filter((player) => player.year === state.year);
   state.percentiles = computePercentiles(state.players);
   state.csPlus = computeCSPlus(state.players);
@@ -976,6 +1028,12 @@ function renderPlayer(player) {
 function renderBattedBallChart(player) {
   const points = state.battedBalls.get(`${player.year}:${player.slug}`) || state.battedBalls.get(player.slug) || [];
   if (!points.length) {
+    // A lazily fetched season may still be in flight; the onload repaint
+    // fills the scatter in. ensureHitterBip also covers a deep link that
+    // landed here before any year toggle fired.
+    if (!ensureHitterBip(player.year) && bipLoading(player.year)) {
+      return `<div class="chart-empty">Loading ${player.year} batted balls&hellip;</div>`;
+    }
     return `<div class="chart-empty">No batted-ball EV/launch-angle points available.</div>`;
   }
 
@@ -1046,8 +1104,11 @@ function renderYearSelect(years = state.availableYears) {
   if (years.length <= 1) {
     return `<span class="badge">${years[0] ?? state.year}</span>`;
   }
+  // While a lazily fetched season's batted balls are still in flight the
+  // toggle shows a loading state; the onload repaint clears it.
+  const loading = bipLoading(state.year);
   return `
-    <select class="select-box year-select" aria-label="Select season">
+    <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} batted balls"` : ""}>
       ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
     </select>
   `;
