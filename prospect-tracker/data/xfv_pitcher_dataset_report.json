@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-16",
+ "generated_at": "2026-07-17",
  "scope": "PITCHERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
@@ -29,19 +29,19 @@
  },
  "feature_coverage": {
   "consensus_fv_raw": "2092/2092",
-  "fv_fangraphs": "1414/2092",
-  "fv_mlb_pipeline": "1570/2092",
-  "fv_stddev": "930/2092",
+  "fv_fangraphs": "1413/2092",
+  "fv_mlb_pipeline": "1569/2092",
+  "fv_stddev": "929/2092",
   "tool_hit": "0/2092",
   "tool_game_pwr": "0/2092",
-  "pick_overall": "847/2092",
-  "bonus_usd": "630/2092"
+  "pick_overall": "846/2092",
+  "bonus_usd": "629/2092"
  },
  "milb_feature_coverage": {
-  "level_rank": "927/2092",
-  "age_rel_level": "927/2092",
-  "k_rel": "927/2092",
-  "era_rel": "927/2092"
+  "level_rank": "926/2092",
+  "age_rel_level": "926/2092",
+  "k_rel": "926/2092",
+  "era_rel": "926/2092"
  },
  "war_distribution_resolved_debuted": {
   "n": 530,

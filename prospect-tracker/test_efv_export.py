@@ -199,7 +199,15 @@ def test_committed_artifact_headline_alias_contract():
 #   9148 -> 9010 (leak-only identities leave the eFV pool; debut-date labels
 #   corrected). Same repairs must run on the deploy box, which then restamps
 #   nothing (its golden check runs in EEPHUS_DEPLOY_RUN=1 shape mode).
-_GOLDEN_XFV_SHA256 = "58505c199e367b421cba643eb29d58c4154b55fb98075b63a2d49e3b7470edbd"
+# 2026-07-17 restamp: owner directive - the live injury penalty no longer
+#   applies to currently-healthy players (the Josue Briceno case: activated
+#   off a 60-day IL stint the same day, but ~108 trailing IL days still held
+#   a x0.90 haircut). _injury_factor now returns 1.0 unless il_on; trailing
+#   days/stints only deepen an ACTIVE stint's haircut (efv_score.py). 486
+#   currently-on-IL players keep a factor; every healthy player cleared.
+#   Restamped from the in-session rebuild_only production regen. Rowcount
+#   9010 -> 9040 (daily pool churn since the 07-16 stamp, not the directive).
+_GOLDEN_XFV_SHA256 = "58fcfd4fb47e24c2c497edf5222647d7cd61adfe55ed04da5aa972fd30f6fa8e"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
@@ -209,7 +217,7 @@ _GOLDEN_XFV_SHA256 = "58505c199e367b421cba643eb29d58c4154b55fb98075b63a2d49e3b74
 # (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
 # band tolerates ordinary roster churn while still catching a gross
 # truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9010
+_GOLDEN_XFV_ROWCOUNT = 9040
 
 
 def test_efv_grade_map_inverts_on_model_window():

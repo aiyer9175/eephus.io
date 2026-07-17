@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-16",
+ "generated_at": "2026-07-17",
  "scope": "HITTERS; debut 2011-2024 + never-MLB bust pool",
  "target": "first-6-season summed bWAR; resolved<= 2025",
  "no_model": true,
@@ -33,7 +33,7 @@
   "tool_hit": "1723/1942",
   "tool_game_pwr": "1723/1942",
   "pick_overall": "772/1942",
-  "bonus_usd": "547/1942"
+  "bonus_usd": "548/1942"
  },
  "milb_feature_coverage": {
   "level_rank": "913/1942",
