@@ -28,3 +28,17 @@ contract_options.json
 grpo_scores.json
 xfv_extra_defense.json
 xfv_extra_physical.json
+# 2026-07-17 additions. scout_reports.json: pages fetch the hashed
+# scout_reports_<i>.json chunks (prospx _slices_chunked contract); the
+# monolith is a bake-time input for mlb_player_export.py only. rsync runs
+# --delete without --delete-excluded, so the copy already on the webroot
+# survives as a frozen fallback for stale cached boot payloads.
+scout_reports.json
+# star_label_view.json: per-player training-label view; readers are
+# test_star_odds.py and the run_monthly regenerator, both local data/.
+star_label_view.json
+# prospect_def_value.json: model internal, no page fetches it.
+prospect_def_value.json
+# wire_fv_first_seen.json: build_site read-modify-write ledger kept in
+# local data/; no page fetches it.
+wire_fv_first_seen.json

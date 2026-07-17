@@ -29,6 +29,23 @@ data/debuts.json
 data/debuts_lite.json
 data/inactive.json
 data/rosters_by_org.json
+# tier-2 additions, untracked 2026-07-17 (same repo-diet criterion): each is
+# rewritten by the DAILY chain before the nightly rsync, so the box pull that
+# deletes the newly-untracked copy self-heals the same night.
+#   leaderboard_gamelogs.json  d5e (every daily + chained monthly night)
+#   mlb_projections.json       d9b proj_export re-bake
+#   player_links.json          d9b2 mlb_player_export.export -> _export_links
+#   mlb_trade_players.json     d9 rebuild_only -> storage.export_timeseries_json
+#   overseas_timeseries.json   d9 rebuild_only -> export_overseas_json
+# NOT untracked (monthly-only producers; a daily pull would leave them absent
+# for up to a month): bullpen/starter/hitter/leverage leaderboards (6b4*),
+# pal.json (6b5), swing_plus.json (6b2), stuff_plus_aaa.json (6b2b),
+# star_label_view.json (test_star_odds.py hard-reads it in the publish gate).
+data/leaderboard_gamelogs.json
+data/mlb_projections.json
+data/player_links.json
+data/mlb_trade_players.json
+data/overseas_timeseries.json
 # Source-vs-source backtest output (regenerated each monthly run; powers the
 # Methodology & Track Record tab). Generated artifact, like timeseries.json.
 data/source_backtest.json
