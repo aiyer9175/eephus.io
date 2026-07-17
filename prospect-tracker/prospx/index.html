@@ -10043,14 +10043,11 @@
 
 </template>
 
-<!-- html2canvas - vendored locally (~200KB). Powers the "Share as image"
-     buttons on prospect / farm / leaderboard / chart-builder surfaces.
-     Loaded async so it doesn't block first paint; the export helper
-     gates on `window.html2canvas` being defined before firing. -->
-<script src="/vendor/html2canvas.min.js?v=20260709" defer></script>
-<!-- qrcode-generator (vendored, ~56KB) - builds the optional QR in the GFX card
-     header that links a shared graphic back to the eephus.io prospect/farm page. -->
-<script src="/vendor/qrcode.min.js?v=20260709" defer></script>
+<!-- v47 wire-slim - html2canvas (~200KB parse) and qrcode-generator (~56KB) are
+     no longer loaded eagerly on every cold visit. The GFX/export paths lazy-
+     inject them on first use (_ensureHtml2Canvas / _ensureQrcodeLib in the app
+     script; eephus-export.js keeps its own private html2canvas loader). -->
+
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=20260709" defer></script>
@@ -10344,8 +10341,10 @@ function wireThemeToggle() {
 // fetched on demand:
 //   - debuts_lite.json     when the user opens the Graduates tab (list
 //                          fields only; see ensureDebutsLite)
-//   - debuts.json          full graduate records - graduate card open,
-//                          Time Machine, debuted chart (ensureDebutsFull)
+//   - debuts_full/{key}.json  ONE graduate's full record, on his card open
+//                          (ensureDebutFullFor; falls back to the monolith)
+//   - debuts.json          full graduate records - Time Machine, debuted
+//                          chart (ensureDebutsFull)
 //   - inactive.json        when the user opens the Inactive view
 //   - rosters_by_org.json  when the user opens any farm-detail page
 //   - scout_reports_<i>.json  the player's hash chunk, on first card open
@@ -10481,6 +10480,13 @@ function _sliceUrl(file) {
   return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
 }
 
+// v47 wire-slim - inactive.json left the idle warm (see the boot IIFE).
+// The surfaces that read DATA.inactive opportunistically (farm-detail
+// transaction history, the Transactions tab's trade-audit vet lookup) fire
+// a NON-BLOCKING enrichment load instead; this one-shot flag stops a
+// failed fetch from being retried on every re-render.
+let _inactiveEnrichKicked = false;
+
 // v46 payload-slim - the debuts slice ships two ways:
 //   debuts_lite.json  list-render fields only (Graduates tab rows, context
 //                     rail cards, farm graduates, trade-audit vet lookup).
@@ -10546,6 +10552,74 @@ function ensureDebutsFull() {
     .catch(err => { console.warn("debuts slice fetch failed:", err); })
     .finally(() => { _debutsFullInFlight = null; });
   return _debutsFullInFlight;
+}
+
+// v47 wire-slim - per-graduate full shard. Opening ONE graduate's card used
+// to pull the entire debuts.json monolith (~9MB gzip); storage.py now emits
+// data/debuts_full/{player_key}.json (advertised via _slices.debuts_full,
+// value = the directory prefix) carrying that player's complete record.
+// Fetch just the shard and merge it IN PLACE onto the lite row (the same
+// Object.assign contract as the monolith merge above, so references held by
+// row caches stay valid). Any failure - an old cached payload without the
+// contract, a missing shard, a malformed body, a network error - falls back
+// to ensureDebutsFull so nothing regresses. Time Machine and the debuted
+// chart mode keep using the monolith (they need EVERY full row).
+const _debutShardInFlight = {};
+function _debutRowIsFull(playerKey) {
+  if (!DATA) return false;
+  if (DATA._debutsFull) return true;
+  const row = (DATA.debuts || []).find(g => g && g.player_key === playerKey);
+  return !!(row && !row._lite);
+}
+function ensureDebutFullFor(playerKey) {
+  if (!DATA || !playerKey) return Promise.resolve();
+  if (_debutRowIsFull(playerKey)) return Promise.resolve();
+  if (!DATA._slices || !DATA._slices.debuts_full) return ensureDebutsFull();
+  if (_debutShardInFlight[playerKey]) return _debutShardInFlight[playerKey];
+  // Lite rows first, so the shard has a row to merge onto (a deep link can
+  // land here before the idle warm has pulled debuts_lite).
+  _debutShardInFlight[playerKey] = ensureDebutsLite()
+    .then(() => {
+      // The monolith may have landed while lite was in flight.
+      if (_debutRowIsFull(playerKey)) return null;
+      const { url, opts } =
+        _sliceUrl(`${DATA._slices.debuts_full}${encodeURIComponent(playerKey)}.json`);
+      return fetch(url, opts);
+    })
+    .then(r => {
+      if (r === null) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(full => {
+      if (full === null) return;   // row already full; nothing fetched
+      if (!full || typeof full !== "object" || !full.player_key) {
+        // Malformed shard - throw into the catch so the monolith covers it.
+        throw new Error("malformed debut shard");
+      }
+      const lite = (DATA.debuts || []).find(g => g && g.player_key === full.player_key);
+      if (lite) {
+        Object.assign(lite, full);
+        delete lite._lite;
+        // Same contract as the monolith merge: the shard carries the full
+        // points history, so player_detail must re-merge against it.
+        delete lite.__detailMerged;
+      } else {
+        // No lite row to merge onto (the lite fetch failed, or the export
+        // is inconsistent). Do NOT push a lone row - a 1-row DATA.debuts
+        // would fool ensureDebutsLite's already-loaded guard and the
+        // Graduates-tab gate into treating the list as complete. Throw so
+        // the catch falls back to the monolith, which rebuilds the whole
+        // list consistently.
+        throw new Error("no lite row for debut shard");
+      }
+    })
+    .catch(err => {
+      console.warn("debut shard fetch failed, falling back to monolith:", playerKey, err);
+      return ensureDebutsFull();
+    })
+    .finally(() => { delete _debutShardInFlight[playerKey]; });
+  return _debutShardInFlight[playerKey];
 }
 
 // v46 payload-slim - scout reports ship in a fixed number of hash chunks
@@ -16732,8 +16806,9 @@ function renderActiveContextRail(railId = "active-context-rail") {
   // (boot IIFE) pulls the LITE slice (v46 - list fields only) and schedules
   // a coalesced re-render so the cards fill in moments after boot; everyone
   // else gets a "Load recent debuts" link in the card below that pulls the
-  // lite slice on demand. Graduate cards / debuted chart mode / Time Machine
-  // fetch the full slice separately via ensureDebutsFull.
+  // lite slice on demand. A graduate's card fetches his per-player shard
+  // (ensureDebutFullFor); debuted chart mode / Time Machine still pull the
+  // full slice via ensureDebutsFull.
   const _debutsPending = !!(DATA._slices
     && (DATA._slices.debuts_lite || DATA._slices.debuts)
     && !((DATA.debuts || []).length));
@@ -20854,6 +20929,17 @@ function renderRecentlyTraded() {
     _ensureMlbTradePlayersLoaded().then(() => {
       // Only re-render if the user is still on this tab.
       if (state.section === "traded") renderRecentlyTraded();
+    });
+  }
+  // v47 wire-slim - inactive.json left the idle warm; it is the tier-3
+  // source for the trade-audit vet lookup below (legacy players with WAR).
+  // Same lazy load + conditional re-render pattern as mlb_trade_players.
+  if (DATA._slices && DATA._slices.inactive && !(DATA.inactive || []).length
+      && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.section === "traded" && !state.view) renderRecentlyTraded();
     });
   }
   // v30.8 - Now surfaces trades AND debut events. Debuts are the
@@ -31712,12 +31798,46 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
   await Promise.allSettled(jobs);
 }
 
+// v47 wire-slim - lazy vendor injection. html2canvas + qrcode left the eager
+// script tags in the document head; the export/GFX paths inject them on first use.
+// (window.EephusExport keeps its OWN private html2canvas loader inside its
+// IIFE - it is not exposed - so we replicate the tiny injector here rather
+// than reach into that module.) A failed load is dropped from the cache so
+// the next click can retry after a transient network blip.
+const _vendorInFlight = {};
+function _ensureVendor(src, ready) {
+  if (ready()) return Promise.resolve(true);
+  if (_vendorInFlight[src]) return _vendorInFlight[src];
+  _vendorInFlight[src] = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve(true);
+    s.onerror = () => {
+      delete _vendorInFlight[src];
+      reject(new Error("vendor script failed to load: " + src));
+    };
+    document.head.appendChild(s);
+  });
+  return _vendorInFlight[src];
+}
+function _ensureHtml2Canvas() {
+  return _ensureVendor("/vendor/html2canvas.min.js?v=20260709",
+    () => !!window.html2canvas);
+}
+function _ensureQrcodeLib() {
+  return _ensureVendor("/vendor/qrcode.min.js?v=20260709",
+    () => typeof window.qrcode !== "undefined");
+}
+
 async function exportElementAsImage(el, opts = {}) {
+  if (!el) return null;
+  // Lazy-inject the vendor lib (v47) - this promise MUST resolve before any
+  // capture runs so html2canvas never sees a half-loaded card.
+  try { await _ensureHtml2Canvas(); } catch (e) { /* fall through to guard */ }
   if (!window.html2canvas) {
-    alert("Image export not ready - refresh and try again (vendor script still loading).");
+    alert("Image export not ready - check your connection and try again.");
     return null;
   }
-  if (!el) return null;
   const scale = opts.scale || 2;
   // Preload → await fonts BEFORE capture (header carries the PROSPX wordmark +
   // eephus.io/PROSPX + timestamp; no footer/handle).
@@ -33552,7 +33672,17 @@ function openGfxModal() {
   _gfxApplyTheme();
   _gfxSyncControls();
   _gfxApplyModeUI();
-  _gfxRefresh();
+  // v47 - qrcode lazy-injects on first GFX open (it left the eager <head>
+  // tags). Build the board once the lib settles - loaded OR failed - so the
+  // header QR renders on the first pass instead of needing a rebuild.
+  // _gfxQR keeps its typeof guard as the failure mode: if the inject fails,
+  // the card simply omits the QR chip.
+  if (typeof window.qrcode === "undefined") {
+    _gfxBusy(true);   // spinner up while the (local, tiny) vendor loads
+    _ensureQrcodeLib().catch(() => {}).then(() => _gfxRefresh());
+  } else {
+    _gfxRefresh();
+  }
 }
 function closeGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -50003,14 +50133,21 @@ function render() {
 
   // v46 payload-slim - list surfaces (Graduates tab, Injured) run on the
   // LITE slice; a graduate's CARD needs the full record (points history,
-  // statcast splits, per-source history), so the player view pulls the
-  // monolith before rendering - same blocking behavior as before, now
-  // scoped to the one surface that needs it.
+  // statcast splits, per-source history). v47 - the card now pulls only
+  // HIS per-player shard (ensureDebutFullFor, data/debuts_full/{key}.json)
+  // instead of the whole monolith; the helper falls back to
+  // ensureDebutsFull when the shard contract is absent or the fetch fails,
+  // so old caches and missing shards behave exactly as before.
   if (needsGrad && DATA._slices && (DATA._slices.debuts_lite || DATA._slices.debuts)) {
-    const _wantFull = active === "player";
-    if (_wantFull ? !DATA._debutsFull : !DATA.debuts.length) {
+    if (active === "player") {
+      if (!_debutRowIsFull(state.view.key)) {
+        showLoading("Loading debuted players…");
+        ensureDebutFullFor(state.view.key).then(render);
+        return;
+      }
+    } else if (!DATA.debuts.length) {
       showLoading("Loading debuted players…");
-      (_wantFull ? ensureDebutsFull() : ensureDebutsLite()).then(render);
+      ensureDebutsLite().then(render);
       return;
     }
   }
@@ -50036,6 +50173,20 @@ function render() {
       loadSlice("rosters_by_org").then(render);
       return;
     }
+  }
+  // v47 wire-slim - inactive.json no longer rides the idle warm. The farm
+  // page's transaction history folds inactive players into the org event
+  // pool, so fire a NON-BLOCKING enrichment load on farm-detail open and
+  // re-render once it lands - same pattern as the debuts view's roster
+  // enrichment above. The Injured view and inactive-player deep links keep
+  // the BLOCKING needsInactive gate above (their primary data).
+  if (active === "farmDetail" && DATA._slices && DATA._slices.inactive
+      && !(DATA.inactive || []).length && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.view && state.view.type === "farm") render();
+    });
   }
   // Org_summary gate - farm detail render dereferences each org's
   // grades / financial / tool_dev blocks. If the main DATA payload
@@ -52896,7 +53047,7 @@ function populateOrgFilter() {
   });
 
   // Warm the sidecar slices in the background. The user has to click
-  // before they touch the graduates/inactive/farm-detail data, so by
+  // before they touch the graduates/farm-detail data, so by
   // the time they navigate, the slice is usually already on DATA.
   // If they beat the network, the render branches re-fire render()
   // once the slice arrives.
@@ -52909,13 +53060,17 @@ function populateOrgFilter() {
       // coalesced re-render when the warm lands so the visible section's
       // rail fills in. v46 payload-slim: the warm pulls the LITE slice only
       // (list fields, a fraction of the old 9MB-gzip monolith); the full
-      // file loads on demand via ensureDebutsFull (graduate card open, Time
-      // Machine, debuted chart). scout_reports left the warm list for the
-      // same reason - it is card-only and now loads per hash chunk on the
-      // first card open (ensureScoutReports).
+      // records load on demand (ensureDebutFullFor per graduate card;
+      // ensureDebutsFull for Time Machine / debuted chart). scout_reports
+      // left the warm list for the same reason - it is card-only and now
+      // loads per hash chunk on the first card open (ensureScoutReports).
+      // v47 wire-slim: inactive.json (~2.2MB gzip, ~24MB parse) left the
+      // warm too - most sessions never open a surface that reads it. It
+      // loads on demand instead: blocking on the Inactive/Injured view and
+      // inactive-player deep links (the needsInactive gate in render), and
+      // as a non-blocking enrichment on farm detail + Transactions.
       ensureDebutsLite().then(() => scheduleRender()).catch(() => {});
       loadSlice("rosters_by_org");
-      loadSlice("inactive");
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(_warm, { timeout: 2500 });
