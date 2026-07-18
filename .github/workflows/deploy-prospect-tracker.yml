@@ -147,6 +147,7 @@ jobs:
           done < deploy/data_exclude.txt
           [ -d data/pitch_plots ] && cp -r data/pitch_plots _site/data/pitch_plots
           [ -d data/player_detail ] && cp -r data/player_detail _site/data/player_detail
+          [ -d data/debuts_full ] && cp -r data/debuts_full _site/data/debuts_full
           # Precompress text assets so nginx (gzip_static on) serves the
           # .gz twins - mirrors deploy/nightly-build.sh.
           find _site -type f \( -name '*.json' -o -name '*.js' -o -name '*.css'               -o -name '*.html' -o -name '*.svg' -o -name '*.xml' -o -name '*.txt' \)               -size +1k -exec gzip -9 -k -f {} +

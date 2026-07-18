@@ -31,6 +31,7 @@
   var FORMATS = {
     wide:     { w: 1600, h: 900,  label: "Wide 16:9" },
     portrait: { w: 1080, h: 1350, label: "Portrait 4:5" },
+    tall:     { w: 1080, h: 1620, label: "Tall 2:3" },
     square:   { w: 1080, h: 1080, label: "Square 1:1" },
     story:    { w: 1080, h: 1920, label: "Story 9:16" },
   };
@@ -47,6 +48,7 @@
   var _origTheme = null;
   var _canvas = null;
   var _busy = false;
+  var _renderPending = false;
   var _lastFocus = null;
 
   function esc(s) {
@@ -108,9 +110,19 @@
       g.fillText(spec.subtitle, PAD, 134);
     }
 
-    // columns: drop wide-only columns on narrow canvases
+    // columns: drop wide-only columns on narrow canvases. AUDIT 2026-07-18 (A4):
+    // record each surviving column's ORIGINAL index so row cells (built by callers
+    // to match the FULL column list) are read by original position -- a non-trailing
+    // wideOnly column previously shifted every later cell one column left (FA board
+    // printed Deal WAR under the Surplus header on all narrow formats).
     var board = spec.board || {};
-    var cols = (board.columns || []).filter(function (col) { return !(col.wideOnly && W < 1300); });
+    var allCols = board.columns || [];
+    var origIdx = [];
+    var cols = allCols.filter(function (col, j) {
+      var keep = !(col.wideOnly && W < 1300);
+      if (keep) origIdx.push(j);
+      return keep;
+    });
     var usableW = W - 2 * PAD;
     var totFrac = cols.reduce(function (a, col) { return a + (col.frac || 0); }, 0) || 1;
     var x0 = [], acc = 0;
@@ -138,7 +150,7 @@
       var cells = row.cells || [];
       var y = topY + r * rowH + 18;
       for (var i = 0; i < cols.length; i++) {
-        var cell = cells[i] || {};
+        var cell = cells[origIdx[i]] || {};
         var t = cell.t == null ? "" : String(cell.t);
         if (cell.sub) {
           g.fillStyle = fg; g.font = "700 17px " + MONO;
@@ -159,7 +171,11 @@
       }
     }
 
-    // footer: caption + url left, watermark right
+    // footer: optional legend, caption + url left, watermark right
+    if (board.legend) {
+      g.fillStyle = sub; g.font = "13px " + MONO;
+      g.fillText(String(board.legend), PAD, H - 74);
+    }
     if (spec.caption) {
       g.fillStyle = sub; g.font = "13px " + MONO;
       g.fillText(spec.caption, PAD, H - 52);
@@ -287,11 +303,20 @@
 
   async function refresh() {
     var prev = document.getElementById("egfx-preview");
-    if (!prev || _busy) return;
+    if (!prev) return;
+    // AUDIT 2026-07-18 (A12): coalesce instead of dropping. A control change made
+    // while a render is in flight used to be discarded (early return on _busy),
+    // leaving _canvas -- what export/copy/share uses -- stale vs the selected
+    // options. Now the in-flight render re-runs with the latest _opts before it
+    // paints, so the preview and the exported PNG always match the controls.
+    if (_busy) { _renderPending = true; return; }
     _busy = true;
     prev.classList.add("is-busy");
     try {
-      _canvas = await renderCanvas();
+      do {
+        _renderPending = false;
+        _canvas = await renderCanvas();
+      } while (_renderPending);
       prev.innerHTML = "";
       var img = _canvas; // a canvas element scales fine inside the preview
       img.className = "egfx-canvas";
@@ -301,6 +326,7 @@
     } finally {
       prev.classList.remove("is-busy");
       _busy = false;
+      if (_renderPending) refresh();
     }
   }
 

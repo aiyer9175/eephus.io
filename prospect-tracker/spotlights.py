@@ -525,54 +525,11 @@ def _surface_score(p: dict) -> tuple[float, list[str]]:
     return score, drivers
 
 
-def _statcast_drivers(p: dict) -> tuple[float, list[str]]:
-    sc = p.get("statcast") or {}
-    ps = p.get("prospect_savant") or {}
-    pa = p.get("pitch_arsenal") or {}
-    score = 0.0
-    drivers: list[str] = []
-    ev = _num(sc.get("exit_velo"))
-    hh = _num(sc.get("hard_hit_pct"))
-    barrel = _num(sc.get("barrel_pct"))
-    fb = _num(pa.get("fb_velo"))
-    if ev is not None and ev >= 90:
-        score += 1.5
-        drivers.append(f"{ev:.1f} mph avg EV")
-    if hh is not None and hh >= 42:
-        score += 1.0
-        drivers.append(f"{hh:.1f}% hard-hit")
-    if barrel is not None and barrel >= 10:
-        score += 1.0
-        drivers.append(f"{barrel:.1f}% barrels")
-    if fb is not None and fb >= 95:
-        score += 1.5
-        drivers.append(f"{fb:.1f} mph fastball")
-    ps_score = _num(ps.get("ps_score"))
-    if ps_score is not None and ps_score >= 0.95:
-        score += 3.0
-    elif ps_score is not None and ps_score >= 0.85:
-        score += 1.5
-    max_ev = _num(ps.get("max_ev"))
-    ev_90 = _num(ps.get("ev_90"))
-    ps_ev = _num(ps.get("ev"))
-    hard_hit = _num(ps.get("hard_hit_pct"))
-    if max_ev is not None and max_ev >= 110:
-        score += 1.3
-        drivers.append(f"{max_ev:.1f} max EV")
-    if ev_90 is not None and ev_90 >= 104:
-        score += 1.2
-        drivers.append(f"{ev_90:.1f} mph 90th EV")
-    if ps_ev is not None and ps_ev >= 91:
-        score += 0.8
-        drivers.append(f"{ps_ev:.1f} mph avg EV")
-    if hard_hit is not None and hard_hit >= 45:
-        score += 0.8
-        drivers.append(f"{hard_hit:.1f}% hard-hit")
-    max_velo = _num(ps.get("max_velo"))
-    if max_velo is not None and max_velo >= 0.90:
-        score += 1.2
-        drivers.append(f"top-tier max velo score {max_velo:.3f}")
-    return score, drivers
+# AUDIT 2026-07-18 (A9): a dead, diverged first definition of `_statcast_drivers`
+# (returning tuple[float, list[str]]) lived here and was module-shadowed by the
+# live def further down (returning list[dict], which the single call site in
+# compute_movement consumes via `.extend(...)`). Removed to stop an edit landing
+# on the wrong copy.
 
 
 def _prior_underperformance(p: dict) -> tuple[float, list[str]]:

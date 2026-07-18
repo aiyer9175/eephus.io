@@ -205,6 +205,18 @@ function _tmTotal(side) {
 // real model uncertainty, so a sub-$5M edge is not a meaningful "winner."
 const BALANCED_THRESHOLD_MM = 5;
 
+// Open the shared Generate GFX modal for a one-subject (card) export; fall back
+// to the legacy direct download if the module didn't load. (Same wrapper the
+// fa.js / projections.js card chips use.)
+function _openCard(opts) {
+  if (window.EEPHUS_GFX) {
+    window.EEPHUS_GFX.open({ kind: "card", module: opts.module, accentToken: opts.accentToken,
+      title: opts.name, filenameBase: (opts.filename || "eephus-card").replace(/\.png$/, ""), card: opts });
+  } else if (window.EEPHUS_HUB) {
+    window.EEPHUS_HUB.shareCard(opts);
+  }
+}
+
 function renderTradeMachine() {
   const el = document.getElementById("trade-machine");
   if (!el) return;
@@ -268,6 +280,7 @@ function renderTradeMachine() {
          <div class="tm-controls">
            <button class="chip" data-tm-clear type="button">Clear</button>
            <button class="chip" data-tm-copy type="button">Copy as text</button>
+           ${bothSides ? `<button class="chip" data-tm-gfx type="button" title="Generate a shareable deal graphic (theme-aware, multiple formats)">Generate GFX</button>` : ""}
          </div>
        </div>`
     : "";
@@ -318,6 +331,38 @@ function renderTradeMachine() {
     if (navigator.clipboard) navigator.clipboard.writeText(text).then(done, () => prompt("Copy this trade:", text));
     else prompt("Copy this trade:", text);
   };
+  // Shareable deal card (only wired when both sides carry an asset). Two sections
+  // list each side's assets "name - $M"; four tiles carry the totals, gap, and
+  // verdict; the caption is the grader's verdict line.
+  const gfxB = el.querySelector("[data-tm-gfx]");
+  if (gfxB) gfxB.onclick = () => {
+    const asset = x => [String(x.name || "?"),
+      `${x.mm >= 0 ? "$" : "-$"}${Math.abs(x.mm || 0).toFixed(1)}M`,
+      (x.mm || 0) >= 0 ? undefined : "var(--down)"];
+    const vWord = vClass === "is-warn" ? "Hesitate"
+      : vClass === "is-bad" ? (pct >= 70 ? "Lopsided" : "Reject")
+      : "Fair";
+    _openCard({
+      module: "Trade Machine",
+      accentToken: "--accent-cyan",
+      name: "Trade Evaluation",
+      meta: "one currency · prospect eFV surplus + MLB contract surplus",
+      sub: `verdict: ${vWord.toUpperCase()}`,
+      tiles: [
+        { label: "Side A", value: `$${dA.toFixed(1)}M` },
+        { label: "Side B", value: `$${dB.toFixed(1)}M` },
+        { label: "Gap", value: `$${diff.toFixed(1)}M` },
+        { label: "Verdict", value: vWord },
+      ],
+      sections: [
+        { title: "Side A receives", rows: _TM.a.map(asset) },
+        { title: "Side B receives", rows: _TM.b.map(asset) },
+      ],
+      url: "eephus.io/trademachine",
+      filename: "eephus-trademachine-deal.png",
+      caption: vText,
+    });
+  };
 }
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
@@ -337,6 +382,10 @@ let _tbOrg    = "all";
 let _tbExactPos = "all";
 let _tbSort   = "trade_desc";
 let _tbQ      = "";        // free-text search
+// Full filtered+sorted board array from the latest _renderTBRows, captured so
+// the Generate GFX board spec renders the exact on-screen ordering (the modal
+// caps to the chosen Show count itself).
+let _tbLastRows = [];
 
 const _TB_POS_BUCKETS = {
   C:  p => _tbPrimaryPos(p) === "C",
@@ -608,6 +657,7 @@ function _renderTBRows() {
     return true;
   });
   rows = _tbSortRows(rows);
+  _tbLastRows = rows;   // full filtered+sorted set for the Generate GFX board spec
 
   if (!rows.length) {
     wrap.innerHTML = '<div class="empty-state">No players match.</div>';
@@ -731,6 +781,93 @@ function _renderTBRows() {
   });
 }
 
+// ── Generate GFX: board spec + chip ────────────────────────────────────────
+// Condensed one-line Signals string for the shared board graphic (the on-screen
+// column mixes colored badges + chips that don't survive to a flat canvas cell).
+function _tmSignalsText(p) {
+  const bits = [_tbIsMlb(p) ? "MLB" : "MiLB"];
+  const flash = p.flash || {};
+  if (flash.is_bimodal) bits.push("↑ ceiling");
+  if ((p.injury_discount || 0) > 0.05) bits.push("IL");
+  const c = p.crunch;
+  if (c) {
+    if (c.rule5_exposed) bits.push("R5");
+    else if (c.on_40_man && c.options_left === 0) bits.push("0-opt");
+    else if (c.on_40_man && c.options_left === 1) bits.push("1-opt");
+  }
+  const g = p.grpo_breakout_score;
+  if (g != null && g >= 0.55) bits.push("▲" + (g * 100).toFixed(0));
+  return bits.join(" · ");
+}
+// Board spec for EEPHUS_GFX.open, built from the CURRENT filtered+sorted array
+// (_tbLastRows). Mirrors the fa.js / projections.js board-spec pattern.
+function _tmBoardSpec(rows) {
+  const src = rows || [];
+  const brows = src.map((p, i) => {
+    const tv = p.trade_value_mm;
+    const grade = _tbGrade(tv);
+    let risk;
+    if (p.sortino == null) { risk = { t: "-", c: "muted" }; }
+    else {
+      const pb = p.p_bust;
+      const rc = pb == null ? null : pb >= 0.25 ? "red" : pb <= 0.10 ? "green" : null;
+      risk = rc ? { t: String(p.sortino), c: rc } : { t: String(p.sortino) };
+    }
+    const sub = [p.position, p.org, p.age != null ? Number(p.age).toFixed(1) : null]
+      .filter(Boolean).join(" · ");
+    return { cells: [
+      { t: i + 1 },
+      { t: p.player_name || "?", sub: sub || undefined },
+      { t: grade || "-", c: "accent" },
+      { t: tv == null ? "-" : _tbFmt(tv), c: tv == null ? "muted" : (tv >= 0 ? "green" : "red") },
+      risk,
+      { t: _tmSignalsText(p) },
+    ] };
+  });
+  const filt = [];
+  if (_tbPool !== "all") filt.push(_tbPool === "mlb" ? "MLB only" : "MiLB only");
+  if (_tbTier !== "all") filt.push(_tbTier + " tier");
+  if (_tbPos !== "all") filt.push(_tbPos);
+  if (_tbExactPos !== "all") filt.push(_tbExactPos);
+  if (_tbOrg !== "all") filt.push(_tbOrg);
+  if (_tbQ) filt.push('"' + _tbQ + '"');
+  return {
+    kind: "board", module: "Trade Machine", accentToken: "--accent-cyan",
+    title: "Trade Machine · Trade-Value Board",
+    subtitle: `${src.length} players${filt.length ? " · " + filt.join(" · ") : ""}`,
+    url: "eephus.io/trademachine", filenameBase: "eephus-trademachine-board",
+    caption: "Bayesian surplus · contract-aware · positional scarcity · opt-out adjusted",
+    board: {
+      defaultCount: 25, counts: [10, 25, 50],
+      legend: "Surplus = control-window NPV surplus ($M)",
+      columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.32 },
+        { label: "Grade", frac: 0.10 },
+        { label: "Surplus $M", frac: 0.14 },
+        { label: "Risk", frac: 0.13, wideOnly: true },
+        { label: "Signals", frac: 0.26, wideOnly: true },
+      ],
+      rows: brows,
+    },
+  };
+}
+// Inject the "Generate GFX" chip next to the Trade Board's Filter & Sort row
+// (the same .filter-toggle-row PROSPX hangs its list GFX buttons off). Idempotent.
+function _tbInjectGfxChip() {
+  if (!window.EEPHUS_GFX || !window.EEPHUS_GFX.chipHTML) return;
+  if (document.getElementById("tm-board-gfx")) return;
+  const sec = document.getElementById("proj-view-trademachine");
+  const row = (sec || document).querySelector(".filter-toggle-row");
+  if (!row) return;
+  row.insertAdjacentHTML("beforeend", window.EEPHUS_GFX.chipHTML("tm-board-gfx", "Generate GFX"));
+  const btn = document.getElementById("tm-board-gfx");
+  if (btn) {
+    btn.style.marginLeft = "8px";
+    btn.onclick = () => window.EEPHUS_GFX.open(_tmBoardSpec(_tbLastRows));
+  }
+}
+
 // ── Filter chip wiring (called once after first load) ──────────────────────
 function _tbWireFilters() {
   // The Trade Machine view scaffold root (was #tradeboard-section in PROSPX; the
@@ -768,41 +905,10 @@ function _tbWireFilters() {
   if (sortSel) sortSel.addEventListener("change", () => { _tbSort = sortSel.value || "trade_desc"; resetPage("tradeboard"); _renderTBRows(); });
 }
 
-// ── Main entry point ────────────────────────────────────────────────────────
-function renderTradeBoard() {
-  const wrap = document.getElementById("tradeboard-content");
-  if (!wrap) return;
-  const base = (typeof DATA_BASE !== "undefined" ? DATA_BASE : "/data/");
-  const vp   = (typeof _dataVersion !== "undefined" && _dataVersion)
-    ? "?v=" + encodeURIComponent(_dataVersion) : "";
-
-  if (!_tbData) {
-    wrap.innerHTML = '<div class="spinner-wrap"><span class="spinner"></span></div>';
-    fetch(base + "trade_values.json" + vp, { cache: "no-cache" })
-      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => {
-        _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
-        // GRPO group-panel data lives in the slim public sidecar; merge it so the
-        // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is
-        // already rendered. Before a deployment's first pipeline run emits the
-        // sidecar, this 404s - an expected outcome, not an error - so mark it
-        // unavailable and degrade in the panel.
-        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
-          .then(r => r.ok ? r.json() : null)
-          .then(g => {
-            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
-            else { _tbGrpoState = "unavailable"; }
-          })
-          .catch(() => { _tbGrpoState = "unavailable"; });
-      })
-      .catch(e => {
-        wrap.innerHTML = `<div class="empty-state">This view is temporarily unavailable. Check back shortly.</div>`;
-      });
-    return;
-  }
-  _tbPopulateSelectFilters();
-  _renderTBRows();
-}
+// AUDIT 2026-07-18 (A10): a renderTradeBoard() lived here - dead code that
+// duplicated mount()'s entire fetch / wire / GRPO-sidecar block and was never
+// referenced (mount() is the sole entry point, exported as
+// window.TradeMachine.mount). Removed to keep one board-boot path.
 
 // ── GRPO Group Panel ────────────────────────────────────────────────────────
 // Shows the "profile group" for a given player - all active prospects sharing
@@ -943,6 +1049,7 @@ function _tbShowGroup(playerKey) {
         _tbPopulateSelectFilters();
         _renderTBRows();
         _tbWireFilters();
+        _tbInjectGfxChip();     // "Generate GFX" chip beside the board filters
         renderTradeMachine();   // also fetches MLB detail + seeds from #tm=
         // GRPO group-panel data lives in the slim public sidecar; merge it so the
         // ▲## breakout chip's _tbShowGroup() can resolve. Non-blocking: the board is

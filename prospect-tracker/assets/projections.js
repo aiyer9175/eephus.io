@@ -694,6 +694,39 @@
       <div class="fa-sub" style="margin-top:6px;">Forward-chained debut cohorts ${esc((pp.scored_years || []).join(", "))}. The scouting-consensus FV model ranks better (higher Spearman); stat-line challengers lost the pre-registered dual gate and are committed as losses.</div>`;
   }
 
+  // Board spec for the Generate GFX modal on the Model Accountability view:
+  // the owner-committed model-verdict ledger (model, surface, metric, verdict
+  // badge) straight from data/model_registry.json - the same rows the cards
+  // below render. Verdict colour: validated green, provisional muted,
+  // deprecated/unvalidated red (a non-validated warning state).
+  function _accountabilityBoardSpec(models) {
+    const vcol = { validated: "green", provisional: "muted", deprecated: "red", unvalidated: "red" };
+    const rows = models.map(m => {
+      const vl = VERDICT_META[m.verdict] ? VERDICT_META[m.verdict].label : (m.verdict || "?");
+      return { cells: [
+        { t: m.label || m.model_id || "?" },
+        { t: m.surface || EM_DASH, c: "muted" },
+        { t: m.metric || EM_DASH },
+        { t: vl, c: vcol[m.verdict] || "muted", bold: true },
+      ] };
+    });
+    const acct = DATA.accountability || {};
+    return {
+      kind: "board", module: "MLB Projections", accentToken: "--accent-cyan",
+      title: "MLB Projections · Model Accountability",
+      subtitle: `${models.length} projection models graded against held-out history`
+        + (acct.registry_version ? ` · registry ${acct.registry_version}` : ""),
+      url: "eephus.io/projections", filenameBase: "eephus-projections-accountability",
+      caption: "Owner-committed verdicts · each model beats a baseline on a forward-chained backtest before it ships",
+      board: { defaultCount: 25, counts: [10, 25, 50], legend: "verdict per model_registry", columns: [
+        { label: "Model", frac: 0.28 },
+        { label: "Surface", frac: 0.28 },
+        { label: "Metric", frac: 0.30, wideOnly: true },
+        { label: "Verdict", frac: 0.14 },
+      ], rows },
+    };
+  }
+
   function renderAccountability() {
     const root = document.getElementById("proj-rows");
     const bar = document.getElementById("proj-filters");
@@ -704,9 +737,11 @@
       state.view = b.dataset.pv; syncToURL(); render();
     });
     if (banner) {
+      const acctGfxChip = ((acct.models || []).length && window.EEPHUS_GFX)
+        ? ` &middot; ${window.EEPHUS_GFX.chipHTML("proj-acct-gfx", "Generate GFX")}` : "";
       banner.innerHTML = `<div class="fa-note fa-sources">
         How these projections are validated: held-out <span data-gl="backtest">backtests</span>, owner-committed model <span data-gl="model_verdict">verdicts</span>, and a note on what is not yet scoreable.
-        ${acct.registry_version ? `&middot; model registry ${esc(String(acct.registry_version))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}</div>`;
+        ${acct.registry_version ? `&middot; model registry ${esc(String(acct.registry_version))}` : ""}${acct.generated_at ? ` &middot; as of ${esc(String(acct.generated_at))}` : ""}${acctGfxChip}</div>`;
     }
     const models = acct.models || [];
     if (!models.length) {
@@ -747,6 +782,10 @@
       <div class="fa-note" style="margin:8px 0;">Every projection on this site is graded against held-out history before it ships. Each model below shows its champion, the baseline it beat, the metric, the measured result, and a note on what is not yet gateable. Verdicts come from the platform's model registry, refreshed monthly.</div>
       <div style="margin:10px 0;line-height:2;">${legend}</div>
       ${cards}</div>`;
+    const agfx = document.getElementById("proj-acct-gfx");
+    if (agfx) agfx.onclick = () => {
+      if (window.EEPHUS_GFX && models.length) window.EEPHUS_GFX.open(_accountabilityBoardSpec(models));
+    };
     if (window.EEPHUS_GL) { if (banner) window.EEPHUS_GL.wire(banner); window.EEPHUS_GL.wire(root); }
   }
 

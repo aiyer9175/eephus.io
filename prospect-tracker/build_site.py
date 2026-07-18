@@ -2425,6 +2425,7 @@ def build_mlbstats() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
@@ -2466,6 +2467,7 @@ def build_pal() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
     return page("Pitcher Alchemy Lab - eephus.io", "pal", body,

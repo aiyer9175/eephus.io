@@ -291,6 +291,15 @@ Items 1, 3, 11, 12 unchanged. New items 13, 14 added below.
 - What: shrink the two heaviest browser payloads - the debuts payload (~122MB on
   disk) and the boot payload (~62MB) - so cold loads are lighter, without
   dropping any surface.
+- Status (2026-07-18): SUBSTANTIALLY DONE. The 07-16/17 payload-slimming surge
+  executed most of this item - debuts lite/full split + per-player `debuts_full/`
+  shards, scout-report chunking, prospx payload sharding, CollegeSavant year-split
+  payloads, and the publish diet (data_exclude additions). A latent bug from that
+  work was found and fixed in the 2026-07-18 audit (A1): the `debuts_full` shard
+  fetch read the wrong key and the shards were shipped by neither deploy path, so
+  the per-player lazy-load silently fell back to the monolith; both are now fixed.
+  Remaining tail: an explicit before/after wire-weight measurement of the sharded
+  boot path (the e2e boot check is green post-A1). Prior status below.
 - Status (2026-07-07): ACCEPTED-FOR-BETA as-is. `gzip_static` serves the `.gz`
   twins (deploy/README.md nginx block), so wire weight is already far below the
   on-disk figures and the numbers are a page-weight optimization, not a
