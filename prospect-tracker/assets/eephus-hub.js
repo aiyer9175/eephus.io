@@ -167,7 +167,14 @@
     { id: "fa", label: "FREE AGENCY", glyph: "$", note: "market card",
       href: r => r.fa ? `/fa/#player=${encodeURIComponent(r.key)}` : null },
     { id: "mlb", label: "MLB PROJECTIONS", glyph: "Δ", note: "player page",
-      href: r => r.key ? `/projections/#player=${encodeURIComponent(r.key)}` : null },
+      // AUDIT 2026-07-18 (A6): only offer the projections chip to players who have a
+      // projections page. player_links now tags projection-universe players proj:true;
+      // never-debuted prospects get proj:false. Older payloads without the flag
+      // (proj===undefined) fall back to the prior key-presence behavior until regen.
+      href: r => {
+        const has = (r.proj === undefined) ? r.key : r.proj;
+        return (has && r.key) ? `/projections/#player=${encodeURIComponent(r.key)}` : null;
+      } },
   ];
 
   // row: {key, mlbam, fa, prospx} (a player_links entry). active: module id.

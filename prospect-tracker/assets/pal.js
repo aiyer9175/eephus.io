@@ -347,6 +347,90 @@
     return out;
   }
 
+  // ---- Generate GFX board specs ---------------------------------------------
+  // Each candidate section exports its OWN board (the fa.js/projections.js
+  // pattern), rebuilt from the current sort at click time so the shared graphic
+  // always matches the on-screen order. FIT is a candidate SCREEN, not a success
+  // probability - the caption/legend keep that framing PER DIRECTION (RP->SP is a
+  // structural screen, SP->RP is validated). Module accent = cyan (the RP->SP
+  // primary direction + the "hi" FIT tier - the pal identity color).
+  function gfxChip(id) {
+    return window.EEPHUS_GFX ? " &middot; " + EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+  }
+  // Plain-text (canvas-safe) velocity cell: current FB velo -> role-projected
+  // velo with the delta. veloCell() emits HTML spans, so the board needs its own
+  // text-only builder.
+  function veloText(r) {
+    if (r.fb_velo == null) return "-";
+    var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
+    return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "")
+      + (d != null ? "  " + (d > 0 ? "+" : "") + d.toFixed(1) : "");
+  }
+  function rp2spBoardSpec() {
+    var rows = sortRows((DATA && DATA.rp2sp) || [], RP_COLS);
+    var brows = rows.map(function (r, i) {
+      return { cells: [
+        { t: i + 1 },
+        { t: r.name, sub: r.team || undefined },
+        { t: f1(r.fit), c: "accent" },
+        { t: tierTitle(r, "rp2sp") || "-" },
+        { t: fInt(r.n_pitches) },
+        { t: fPct(fbPct(r)) },
+        { t: veloText(r) },
+      ] };
+    });
+    return {
+      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Pitcher Alchemy Lab · RP→SP Candidates",
+      subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
+        + rows.length + " relievers who profile as starters",
+      url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
+      caption: "a candidate screen, not a forecast · RP→SP ranking is a structural screen (not backtest-validated)",
+      board: { defaultCount: 25, counts: [10, 25, 50],
+        legend: "FIT 0-100 = RP→SP conversion screen", columns: [
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.26 },
+          { label: "FIT", frac: 0.10 },
+          { label: "Tier", frac: 0.19 },
+          { label: "Arsenal", frac: 0.10, wideOnly: true },
+          { label: "FB%", frac: 0.10, wideOnly: true },
+          { label: "velo→SP", frac: 0.20 },
+        ], rows: brows },
+    };
+  }
+  function sp2rpBoardSpec() {
+    var rows = sortRows((DATA && DATA.sp2rp) || [], SP_COLS);
+    var brows = rows.map(function (r, i) {
+      return { cells: [
+        { t: i + 1 },
+        { t: r.name, sub: r.team || undefined },
+        { t: f1(r.fit), c: "accent" },
+        { t: f2(r.starter_era) },
+        { t: fPct(r.best_whiff) },
+        { t: veloText(r) },
+        { t: fInt(r.proj_relief_rem_plus) },
+      ] };
+    });
+    return {
+      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Pitcher Alchemy Lab · SP→RP Candidates",
+      subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
+        + rows.length + " starters whose stuff would play up in relief",
+      url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
+      caption: "a candidate screen · SP→RP carries a validated directional signal vs realized WAR change",
+      board: { defaultCount: 25, counts: [10, 25, 50],
+        legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need)", columns: [
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.28 },
+          { label: "FIT", frac: 0.11 },
+          { label: "SP ERA", frac: 0.12 },
+          { label: "Putaway whiff", frac: 0.14, wideOnly: true },
+          { label: "velo→RP", frac: 0.18, wideOnly: true },
+          { label: "proj REM+", frac: 0.12 },
+        ], rows: brows },
+    };
+  }
+
   // ---- sections -------------------------------------------------------------
   function renderRP2SP() {
     var rows = (DATA && DATA.rp2sp) || [];
@@ -355,7 +439,7 @@
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
       + "platoon-neutrality, and contact quality. This is a structural screen: the repaired backtest does not "
       + "validate the ranking of RP&rarr;SP candidates against realized WAR change, so treat the order as a "
-      + "shortlist, not a forecast. Click a row for the component breakdown.</div>" + tierLegend("rp2sp");
+      + "shortlist, not a forecast. Click a row for the component breakdown." + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
@@ -366,7 +450,7 @@
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
       + "the need signal; proj REM+ is a display-only relief projection. This direction carries a validated "
       + "directional signal: in the repaired backtest, pre-conversion SP&rarr;RP FIT out-ranked every same-event "
-      + "baseline against realized WAR change.</div>" + tierLegend("sp2rp");
+      + "baseline against realized WAR change." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -650,6 +734,16 @@
     });
     root.querySelectorAll("[data-histview]").forEach(function (b) {
       b.addEventListener("click", function () { historyView = b.getAttribute("data-histview"); render(); });
+    });
+    // Generate GFX chips - build the spec from the CURRENT sort at click time so
+    // the graphic matches the on-screen order (fa.js/projections.js pattern).
+    var rpGfx = root.querySelector("#pal-rp2sp-gfx");
+    if (rpGfx) rpGfx.addEventListener("click", function () {
+      if (window.EEPHUS_GFX) EEPHUS_GFX.open(rp2spBoardSpec());
+    });
+    var spGfx = root.querySelector("#pal-sp2rp-gfx");
+    if (spGfx) spGfx.addEventListener("click", function () {
+      if (window.EEPHUS_GFX) EEPHUS_GFX.open(sp2rpBoardSpec());
     });
   }
 

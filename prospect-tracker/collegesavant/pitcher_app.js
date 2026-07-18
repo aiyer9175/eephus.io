@@ -881,6 +881,7 @@ function renderLeaderboard() {
       </select>
       <label class="lb-pa">Min pitches <input type="number" min="0" step="50" value="${minPitch}" data-min-pitch></label>
       <button class="control-button" type="button" data-reset>Reset</button>
+      <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${minPitch > 0 ? ` with ${minPitch}+ pitches` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
@@ -912,18 +913,59 @@ function renderLeaderboard() {
     state.query = ""; state.minPitch = 0; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
     renderLeaderboard();
   });
+  const lbGfx = app.querySelector("#cs-lb-gfx");
+  if (lbGfx) lbGfx.onclick = () => {
+    if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(csLeaderboardSpec(filtered, col, dir));
+  };
+}
+
+// Board spec for the Generate GFX modal: the current filtered + sorted pitcher
+// leaderboard as a column board (leading metric + its percentile + CS+), built
+// from the SAME `filtered` array the table renders so the graphic always
+// matches what's on screen. Mirrors fa.js/_faBoardSpec + projections.js.
+function csLeaderboardSpec(rows, col, dir) {
+  const pctOf = state.percentiles || new Map();
+  const csOf = state.csPlus || new Map();
+  const brows = rows.map((p, i) => {
+    const v = sortVal(p, col.key);
+    const pctMap = pctOf.get(p.slug) || {};
+    const pctV = pctMap[col.key];
+    const cs = csOf.get(p.slug);
+    const csColor = Number.isFinite(cs) ? (cs >= 110 ? "green" : cs <= 90 ? "red" : "muted") : "muted";
+    return { cells: [
+      { t: i + 1 },
+      { t: displayName(p.pitcher_name), sub: formatTeamName(p.team) || undefined },
+      { t: lbFmt(col.fmt, v), c: "accent" },
+      { t: Number.isFinite(pctV) ? String(Math.round(pctV)) : "-", c: "muted" },
+      { t: Number.isFinite(cs) ? String(Math.round(cs)) : "-", c: csColor },
+    ] };
+  });
+  return {
+    kind: "board", module: "CollegeSavant", accentToken: "--accent-red",
+    title: `CollegeSavant · ${col.label} Leaders`,
+    subtitle: `${state.year} college pitchers · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
+    url: "eephus.io/collegesavant/pitcher_index.html", filenameBase: `eephus-collegesavant-pitchers-${col.key}`,
+    caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
+    board: { defaultCount: 25, counts: [10, 25, 50], legend: "CS+ 100 = D1 average", columns: [
+      { label: "#", frac: 0.06 },
+      { label: "Pitcher", frac: 0.42 },
+      { label: col.label, frac: 0.20 },
+      { label: "Pctile", frac: 0.16 },
+      { label: "CS+", frac: 0.16 },
+    ], rows: brows },
+  };
 }
 
 function _wireCsShare(pitcher, pct) {
   const btn = app.querySelector("#cs-share");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    if (!window.EEPHUS_HUB) return;
+    if (!window.EEPHUS_GFX && !window.EEPHUS_HUB) return;
     const rows = activePitcherMetrics()
       .filter((m) => pitcher[m.key] != null)
       .slice(0, 8)
       .map((m) => [m.label, `${formatMetric(pitcher[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
-    window.EEPHUS_HUB.shareCard({
+    const cardOpts = {
       module: "CollegeSavant",
       accentToken: "--accent-red",
       name: displayName(pitcher.pitcher_name),
@@ -938,7 +980,15 @@ function _wireCsShare(pitcher, pct) {
       url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
       filename: `eephus-collegesavant-${pitcher.slug}.png`,
       caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
-    });
+    };
+    // Open the shared Generate GFX modal (format / theme / accent controls);
+    // fall back to the legacy direct download if the GFX module didn't load.
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: cardOpts.module, accentToken: cardOpts.accentToken,
+        title: cardOpts.name, filenameBase: cardOpts.filename.replace(/\.png$/, ""), card: cardOpts });
+    } else if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.shareCard(cardOpts);
+    }
   });
 }
 

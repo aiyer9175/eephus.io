@@ -131,6 +131,7 @@ rsync -a --delete \
   "${DATA_EXCLUDES[@]}" \
   --include='/data/' --include='/data/*.json' --include='/data/*.js' \
   --include='/data/pitch_plots/***' --include='/data/player_detail/***' \
+  --include='/data/debuts_full/***' \
   --exclude='*' \
   "$APP/" "$WEBROOT/"
 

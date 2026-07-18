@@ -576,10 +576,17 @@
   }
 
   function controls() {
+    // Team Bullpens has no filter controls of its own; give it a bar that just
+    // carries the Generate GFX chip (only when the shared module is loaded).
+    if (view === "teams") {
+      var teamChip = gfxChip("mlbstats-teams-gfx");
+      return teamChip ? '<div class="mlbstats-bar">' + teamChip + "</div>" : "";
+    }
     if (view !== "relievers") return "";
     return '<div class="mlbstats-bar">'
       + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
       + '<input type="checkbox" id="mlbstats-qual"' + (qualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + gfxChip("mlbstats-rel-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-q" placeholder="Search reliever or team" value="' + esc(query) + '">'
       + "</div>";
   }
@@ -622,6 +629,19 @@
     if (q) q.addEventListener("input", function () { query = q.value; renderInPlace(); });
     var qual = root.querySelector("#mlbstats-qual");
     if (qual) qual.addEventListener("change", function () { qualifiedOnly = qual.checked; renderInPlace(); });
+    var relGfx = root.querySelector("#mlbstats-rel-gfx");
+    if (relGfx) relGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      var rows = (relSeason === "current")
+        ? sortRows(filteredRelievers(), REL_COLS, relSort)
+        : sortRows(filteredHistory(), REL_HISTORY_COLS, historySort());
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("relievers", rows));
+    });
+    var teamGfx = root.querySelector("#mlbstats-teams-gfx");
+    if (teamGfx) teamGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("bullpens", sortRows((DATA && DATA.teams) || [], TEAM_COLS, teamSort)));
+    });
     root.querySelectorAll("[data-mlbseason]").forEach(function (b) {
       b.addEventListener("click", function () {
         relSeason = b.getAttribute("data-mlbseason");
@@ -893,6 +913,7 @@
     return '<div class="mlbstats-bar">'
       + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
       + '<input type="checkbox" id="mlbstats-starter-qual"' + (starterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + gfxChip("mlbstats-starter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-starter-q" placeholder="Search starter or team" value="' + esc(starterQuery) + '">'
       + "</div>";
   }
@@ -1073,6 +1094,14 @@
     if (q) q.addEventListener("input", function () { starterQuery = q.value; renderStartersInPlace(); });
     var qual = root.querySelector("#mlbstats-starter-qual");
     if (qual) qual.addEventListener("change", function () { starterQualifiedOnly = qual.checked; renderStartersInPlace(); });
+    var starterGfx = root.querySelector("#mlbstats-starter-gfx");
+    if (starterGfx) starterGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      var rows = (starterSeason === "current")
+        ? sortRows(filteredStarters(), STARTER_COLS, starterSort)
+        : sortRows(filteredStarterHistory(), STARTER_HISTORY_COLS, starterHistorySort());
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("starters", rows));
+    });
     root.querySelectorAll("[data-starterseason]").forEach(function (b) {
       b.addEventListener("click", function () {
         starterSeason = b.getAttribute("data-starterseason");
@@ -1327,6 +1356,7 @@
     return '<div class="mlbstats-bar">'
       + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
       + '<input type="checkbox" id="mlbstats-hitter-qual"' + (hitterQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + gfxChip("mlbstats-hitter-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-hitter-q" placeholder="Search hitter or team" value="' + esc(hitterQuery) + '">'
       + "</div>";
   }
@@ -1536,6 +1566,14 @@
     if (q) q.addEventListener("input", function () { hitterQuery = q.value; renderHittersInPlace(); });
     var qual = root.querySelector("#mlbstats-hitter-qual");
     if (qual) qual.addEventListener("change", function () { hitterQualifiedOnly = qual.checked; renderHittersInPlace(); });
+    var hitterGfx = root.querySelector("#mlbstats-hitter-gfx");
+    if (hitterGfx) hitterGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      var rows = (hitterSeason === "current")
+        ? sortRows(filteredHitters(), HITTER_COLS, hitterSort)
+        : sortRows(filteredHitterHistory(), HITTER_HISTORY_COLS, hitterHistorySort());
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("hitters", rows));
+    });
     root.querySelectorAll("[data-hitterseason]").forEach(function (b) {
       b.addEventListener("click", function () {
         hitterSeason = b.getAttribute("data-hitterseason");
@@ -1800,6 +1838,7 @@
     return '<div class="mlbstats-bar">'
       + '<label style="font-size:11px;color:var(--text-tertiary);display:inline-flex;gap:5px;align-items:center;">'
       + '<input type="checkbox" id="mlbstats-leverage-qual"' + (leverageQualifiedOnly ? " checked" : "") + "> qualified only</label>"
+      + gfxChip("mlbstats-leverage-gfx")
       + '<input class="mlbstats-search" type="search" id="mlbstats-leverage-q" placeholder="Search player or team" value="' + esc(leverageQuery) + '">'
       + "</div>";
   }
@@ -1891,6 +1930,11 @@
     if (q) q.addEventListener("input", function () { leverageQuery = q.value; renderLeverageInPlace(); });
     var qual = root.querySelector("#mlbstats-leverage-qual");
     if (qual) qual.addEventListener("change", function () { leverageQualifiedOnly = qual.checked; renderLeverageInPlace(); });
+    var levGfx = root.querySelector("#mlbstats-leverage-gfx");
+    if (levGfx) levGfx.addEventListener("click", function () {
+      if (!window.EEPHUS_GFX) return;
+      EEPHUS_GFX.open(_mlbstatsBoardSpec("leverage", sortRows(filteredLeverage(), levCols(), levSort())));
+    });
     root.querySelectorAll("[data-leverageseason]").forEach(function (b) {
       b.addEventListener("click", function () {
         leverageSeason = b.getAttribute("data-leverageseason");
@@ -1931,6 +1975,173 @@
     leverageInit = true;
     renderLeverage();
     loadLeverage();
+  }
+
+  // ===========================================================================
+  // Generate GFX: shared EEPHUS_GFX board specs, one builder for every board.
+  // ---------------------------------------------------------------------------
+  // Each board's control row carries a "Generate GFX" chip; the click handler
+  // passes the view id plus the SAME filtered+sorted rows the table renders, so
+  // the graphic always matches what's on screen (season pill, qualified-only,
+  // search, and sort are all baked into `rows`). The module accent is gold; the
+  // columns mirror each board's headline metric, with the trailing-window /
+  // secondary columns marked wideOnly so the narrow (1080-wide) formats stay
+  // legible. Titles auto-derive from the board; the subtitle carries the active
+  // season/window selection. Mirrors fa.js / projections.js.
+  // ===========================================================================
+  function gfxChip(id) {
+    return (window.EEPHUS_GFX && EEPHUS_GFX.chipHTML) ? EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+  }
+
+  function _mlbstatsBoardSpec(view, rows) {
+    rows = rows || [];
+    // Season/window label for the subtitle: the live board reports the season +
+    // as-of date; a past-season pill reports "<year> season". Count noun varies.
+    function seasonBits(seasonSel, data, noun) {
+      var s;
+      if (seasonSel && seasonSel !== "current") {
+        s = seasonSel + " season";
+      } else {
+        s = (data && data.season != null) ? ("Season " + data.season) : "";
+        if (data && data.as_of) s += (s ? " · " : "") + "through " + data.as_of;
+      }
+      return (s ? s + " · " : "") + rows.length + " " + noun;
+    }
+    function spec(title, subtitle, filenameBase, caption, board) {
+      return { kind: "board", module: "MLB Stats", accentToken: "--accent-gold",
+        title: title, subtitle: subtitle, url: "eephus.io/mlbstats",
+        filenameBase: filenameBase, caption: caption, board: board };
+    }
+
+    if (view === "relievers") {
+      var relRows = rows.map(function (r, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: r.name || "-", sub: r.team || undefined },
+          { t: fInt(r.rem_plus), c: "accent" },
+          { t: fInt(r.rem_plus_3yr) },
+          { t: fPct(r.k_bb_pct) },
+          { t: f2(r.gmli) },
+        ] };
+      });
+      return spec("MLB Stats · REM+ Leaders",
+        seasonBits(relSeason, DATA, "relievers"),
+        "mlbstats-rem-leaders",
+        "REM+ = FIP-based, sample-shrunk run-prevention skill - leverage rides separate columns",
+        { defaultCount: 25, counts: [10, 25, 50], legend: "REM+ 100 = average reliever", columns: [
+          { label: "#", frac: 0.06 },
+          { label: "Player", frac: 0.42 },
+          { label: "REM+", frac: 0.14 },
+          { label: "REM+ 3yr", frac: 0.13, wideOnly: true },
+          { label: "K-BB%", frac: 0.13 },
+          { label: "gmLI", frac: 0.12, wideOnly: true },
+        ], rows: relRows });
+    }
+
+    if (view === "bullpens") {
+      var bpRows = rows.map(function (t, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: t.team || "-" },
+          { t: fInt(t.bullpen_plus), c: "accent" },
+          { t: fInt(t.high_lev_core_rem) },
+          { t: f1(t.relief_ip) },
+        ] };
+      });
+      return spec("MLB Stats · Bullpen+ Leaders",
+        seasonBits("current", DATA, "bullpens"),
+        "mlbstats-bullpen-rankings",
+        "Bullpen+ = relief-IP-weighted REM+ - the talent of the innings a pen actually uses",
+        { defaultCount: 30, counts: [10, 30], legend: "Bullpen+ 100 = average bullpen", columns: [
+          { label: "#", frac: 0.08 },
+          { label: "Team", frac: 0.34 },
+          { label: "Bullpen+", frac: 0.20 },
+          { label: "Hi-Lev Core", frac: 0.19, wideOnly: true },
+          { label: "Relief IP", frac: 0.19 },
+        ], rows: bpRows });
+    }
+
+    if (view === "starters") {
+      var spRows = rows.map(function (r, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: r.name || "-", sub: r.team || undefined },
+          { t: fInt(r.sem_plus), c: "accent" },
+          { t: fInt(r.sem_plus_3yr) },
+          { t: fPct(r.k_bb_pct) },
+        ] };
+      });
+      return spec("MLB Stats · SEM+ Leaders",
+        seasonBits(starterSeason, starterData, "starters"),
+        "mlbstats-sem-leaders",
+        "SEM+ = FIP-based, sample-shrunk starter run-prevention skill - durability kept separate",
+        { defaultCount: 25, counts: [10, 25, 50], legend: "SEM+ 100 = average starter", columns: [
+          { label: "#", frac: 0.06 },
+          { label: "Player", frac: 0.44 },
+          { label: "SEM+", frac: 0.17 },
+          { label: "SEM+ 3yr", frac: 0.16, wideOnly: true },
+          { label: "K-BB%", frac: 0.17 },
+        ], rows: spRows });
+    }
+
+    if (view === "hitters") {
+      var hitRows = rows.map(function (r, i) {
+        return { cells: [
+          { t: i + 1 },
+          { t: r.name || "-", sub: r.team || undefined },
+          { t: fInt(r.hem_plus), c: "accent" },
+          { t: fInt(r.hem_plus_3yr) },
+          { t: f3(r.woba) },
+        ] };
+      });
+      return spec("MLB Stats · HEM+ Leaders",
+        seasonBits(hitterSeason, hitterData, "hitters"),
+        "mlbstats-hem-leaders",
+        "HEM+ = sample-shrunk wOBA on a league-relative scale - volume + slash kept separate",
+        { defaultCount: 25, counts: [10, 25, 50], legend: "HEM+ 100 = average hitter", columns: [
+          { label: "#", frac: 0.06 },
+          { label: "Player", frac: 0.44 },
+          { label: "HEM+", frac: 0.17 },
+          { label: "HEM+ 3yr", frac: 0.16, wideOnly: true },
+          { label: "wOBA", frac: 0.17 },
+        ], rows: hitRows });
+    }
+
+    if (view === "leverage") {
+      var isStart = (leverageView === "starters");
+      var levRows = rows.map(function (r, i) {
+        var cells = [
+          { t: i + 1 },
+          { t: r.name || "-", sub: r.team || undefined },
+          { t: fSigned(r.wpa), c: "accent" },
+        ];
+        if (isStart) {
+          cells.push({ t: r.wpa_per_start == null ? "-"
+            : (r.wpa_per_start > 0 ? "+" : "") + Number(r.wpa_per_start).toFixed(2) });
+          cells.push({ t: fSigned(r.wpa_li) });
+        } else {
+          cells.push({ t: fSigned(r.wpa_li) });
+          cells.push({ t: fSigned(r.clutch) });
+        }
+        return { cells: cells };
+      });
+      var levCols2 = isStart
+        ? [ { label: "#", frac: 0.06 }, { label: "Player", frac: 0.44 },
+            { label: "WPA", frac: 0.17 }, { label: "WPA/start", frac: 0.17 },
+            { label: "WPA/LI", frac: 0.16, wideOnly: true } ]
+        : [ { label: "#", frac: 0.06 }, { label: "Player", frac: 0.44 },
+            { label: "WPA", frac: 0.17 }, { label: "WPA/LI", frac: 0.16 },
+            { label: "Clutch", frac: 0.17, wideOnly: true } ];
+      return spec("MLB Stats · WPA Leaders" + (isStart ? " (Starters)" : " (Batters)"),
+        seasonBits(leverageSeason, leverageData, isStart ? "starters" : "batters"),
+        "mlbstats-wpa-leaders",
+        "WPA = realized in-game win-probability impact · Clutch reads timing, not skill",
+        { defaultCount: 25, counts: [10, 25, 50],
+          legend: "WPA = win probability added · + adds wins, − costs them",
+          columns: levCols2, rows: levRows });
+    }
+
+    return null;
   }
 
   // ---- top-level section switching ------------------------------------------

@@ -10556,7 +10556,7 @@ function ensureDebutsFull() {
 
 // v47 wire-slim - per-graduate full shard. Opening ONE graduate's card used
 // to pull the entire debuts.json monolith (~9MB gzip); storage.py now emits
-// data/debuts_full/{player_key}.json (advertised via _slices.debuts_full,
+// data/debuts_full/{player_key}.json (advertised via _slices_dir.debuts_full,
 // value = the directory prefix) carrying that player's complete record.
 // Fetch just the shard and merge it IN PLACE onto the lite row (the same
 // Object.assign contract as the monolith merge above, so references held by
@@ -10574,7 +10574,12 @@ function _debutRowIsFull(playerKey) {
 function ensureDebutFullFor(playerKey) {
   if (!DATA || !playerKey) return Promise.resolve();
   if (_debutRowIsFull(playerKey)) return Promise.resolve();
-  if (!DATA._slices || !DATA._slices.debuts_full) return ensureDebutsFull();
+  // AUDIT 2026-07-18 (A1): debuts_full per-player shards are advertised under
+  // _slices_dir (a directory prefix), like pitch_plots/player_detail -- NOT under
+  // _slices. Reading _slices.debuts_full was always undefined, so this shard path
+  // never fired and every graduate card fell back to the full debuts monolith,
+  // defeating the payload-diet sharding. Read the dir prefix instead.
+  if (!DATA._slices_dir || !DATA._slices_dir.debuts_full) return ensureDebutsFull();
   if (_debutShardInFlight[playerKey]) return _debutShardInFlight[playerKey];
   // Lite rows first, so the shard has a row to merge onto (a deep link can
   // land here before the idle warm has pulled debuts_lite).
@@ -10583,7 +10588,7 @@ function ensureDebutFullFor(playerKey) {
       // The monolith may have landed while lite was in flight.
       if (_debutRowIsFull(playerKey)) return null;
       const { url, opts } =
-        _sliceUrl(`${DATA._slices.debuts_full}${encodeURIComponent(playerKey)}.json`);
+        _sliceUrl(`${DATA._slices_dir.debuts_full}${encodeURIComponent(playerKey)}.json`);
       return fetch(url, opts);
     })
     .then(r => {
@@ -11948,6 +11953,24 @@ function _toolGradeStripHTML(p) {
   // nothing rather than a row of invisible slots.
   if (!pills.some(s => !s.includes('is-empty'))) return '';
   return `<span class="expand-tools">${pills.join('')}</span>`;
+}
+
+// AUDIT 2026-07-18 (A3): the chase rate is serialized as `o_swing_pct` on zone
+// rows; `chase_pct` never existed on production payloads (statcast_plus.py:83-87),
+// which silently killed Chase% on the statcast strip, the outlier/ribbon chips,
+// the actives Chase% / Induced-chase% sorts, the SC+ JS fallback, the watch card
+// and the compare cart (all read z.chase_pct). Backfill chase_pct from o_swing_pct
+// on every zone row (root dict + per-level splits) so those o_swing_pct-blind reads
+// revive at once. Idempotent; safe to call on any pool as it hydrates.
+function _normalizeZoneChase(zm) {
+  if (!zm || typeof zm !== "object") return;
+  const fix = z => {
+    if (z && typeof z === "object" && z.chase_pct == null && z.o_swing_pct != null) {
+      z.chase_pct = z.o_swing_pct;
+    }
+  };
+  fix(zm);
+  if (Array.isArray(zm.level_splits)) zm.level_splits.forEach(fix);
 }
 
 // v29 - Advanced Statcast strip for expanded-density rows. Surfaces
@@ -31978,11 +32001,9 @@ function _gfxSet(section, kind, items, meta) {
   _gfxSnapshot = { section, kind, items: arr, total: arr.length, meta: meta || {} };
 }
 // Sections that can be graphic'd + their item "kind" (drives row rendering).
-const _GFX_SECTIONS = {
-  active: "prospect", injured: "prospect", watchlist: "prospect",
-  debuts: "graduate", draft: "draftee", overseas: "overseas",
-  leaderboards: "leader", farm: "farm", spotlights: "spotlight", ifa: "ifa",
-};
+// GFX 2026-07-18 (P0 #7): removed the dead `_GFX_SECTIONS` map (a vestige of the
+// retired global masthead GFX button; it was declared but never referenced - the
+// section->kind mapping now lives at each list's _gfxSet call site).
 // Social-media canvas presets (px). The board fills the chosen width and pins to
 // a minimum height so short lists render at the exact aspect (long lists extend).
 const _GFX_FORMATS = {
@@ -32103,6 +32124,11 @@ function _gfxSubtitle(total, cap) {
   } else if (snap.section === "overseas") {
     parts.push("ranked " + (state.overseasSort && state.overseasSort !== "fv" ? "by " + String(state.overseasSort).replace(/_/g, " ") : "by consensus FV"));
   } else if (snap.section === "leaderboards") {
+    // GFX 2026-07-18 (P0 #6): consume meta.window so a rolling-window leaderboard
+    // (e.g. "Last 14 days") is not mislabeled as a full-season board. It was set
+    // at the _gfxSet call but never rendered.
+    if (m.window) parts.push(String(m.window));
+    if (m.level && m.level !== "all") parts.push(String(m.level));
     if (m.season) parts.push(`${m.season} season`);
   } else if (snap.section === "farm") {
     parts.push(m.sortLabel ? "ranked " + m.sortLabel : "ranked by composite grade");
@@ -32161,18 +32187,52 @@ function _gfxRow(item, kind, meta) {
     // grades.overall diverge from that order and produced "#25 at position 30".
     const _w = state.formWindow || "7y";
     const _winLetter = ((o.letter_by_window || {})[_w]) || (o.grades && o.grades.overall) || "";
+    // GFX 2026-07-18: farm rows used to render just rank + letter (3 of ~20
+    // available fields). Surface the system's shape - top prospect, ranked count,
+    // avg age - plus the net active surplus $M under the grade, all already on the
+    // org object (matches buildFarmCard).
+    const _tp = o.top_prospect;
+    const _fbits = [];
+    if (_tp && (_tp.name || _tp.player_name)) _fbits.push("Top: " + (_tp.name || _tp.player_name));
+    if (o.count != null) _fbits.push(o.count + " ranked");
+    if (o.avg_age != null) _fbits.push("avg " + Number(o.avg_age).toFixed(1) + "y");
+    const _fsur = (o._active_surplus_net_mm != null && typeof fmtSvMM === "function")
+      ? fmtSvMM(o._active_surplus_net_mm) : null;
     return { rank: farmWindowRank(o), fv: null, org: o.org, mlbam: null,
              name: (typeof fullOrgName === "function" ? fullOrgName(o.org) : o.org) || o.org || " - ",
-             meta: "", value: _winLetter };
+             meta: _fbits.join(" · "), value: _winLetter, valueSub: _fsur };
+  }
+  if (kind === "prospect" && item && item.il) {
+    // GFX 2026-07-18: Injured-list rows carry {p, il:{type,since}, days}. Show the
+    // IL context (type + days) instead of the surplus $ the generic prospect path
+    // would print - the injured board is about health, not value.
+    const p = item.p || {};
+    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    const _px = (_gradePrimary() === "xfv") ? getEfv(p) : null;
+    const _pxg = (_px && _px.xfv_grade != null) ? efvGradeDisplay(_px) : null;
+    const fv = _pxg != null ? String(_pxg)
+      : (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+      : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
+    const ilTxt = String((item.il && item.il.type) || "IL").replace(/\s*list$/i, "");
+    const daysTxt = (item.days != null && isFinite(item.days) && item.days > 0) ? Math.round(item.days) + "d" : null;
+    return {
+      fv, name: p.player_name || "", mlbam: p.mlbam_id, org: p.org,
+      meta: [p.position, p.org, ageStr(p.age)].filter(Boolean).join(" · "),
+      value: ilTxt, valueSub: daysTxt,
+    };
   }
   if (kind === "leader") {
     const p = item.p || {}, r = item.r || {};
+    // GFX 2026-07-18: append the sample size (PA for hitters, IP for pitchers) to
+    // the meta line so a leaderboard graphic shows the volume behind the stat.
+    const _samp = (r.pa != null) ? Math.round(r.pa) + " PA"
+      : (r.ip != null) ? Number(r.ip).toFixed(1) + " IP" : null;
     return {
       // eFV grade (nearest) where rated, else consensus label, else fvCeil(fv_close) -- via gradeBlock.
       fv: gradeBlock(p).label,
       name: p.player_name || "",
       mlbam: p.mlbam_id, org: p.org,
-      meta: [p.position, p.org, r.level].filter(Boolean).join(" · "),
+      meta: [p.position, p.org, r.level, _samp].filter(Boolean).join(" · "),
       value: (meta && typeof meta.fmt === "function" && item.v != null) ? meta.fmt(item.v)
              : (item.v != null ? String(item.v) : ""),
     };
@@ -32180,12 +32240,24 @@ function _gfxRow(item, kind, meta) {
   if (kind === "spotlight") {
     const s = item || {};
     const d = (s.fv_delta != null) ? s.fv_delta : (s.delta != null ? s.delta : (s.fv_change != null ? s.fv_change : null));
+    // GFX 2026-07-18: surface the on-screen stat line and the top driver (the
+    // spotlight's actual "why") that were previously dropped from the graphic.
+    const _topDriver = (() => {
+      const ds = Array.isArray(s.drivers) ? s.drivers : [];
+      if (!ds.length) return null;
+      const _prio = { breakout: 0, good: 1, bad: 2, upside: 3, neutral: 4 };
+      const _val = x => typeof x === "string" ? "neutral" : (x.valence || "neutral");
+      const best = ds.slice().sort((a, b) => (_prio[_val(a)] ?? 9) - (_prio[_val(b)] ?? 9))[0];
+      const lbl = typeof best === "string" ? best : (best.label || "");
+      return (lbl && typeof _driverShort === "function") ? _driverShort(lbl) : (lbl || null);
+    })();
     return {
       fv: (s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null,
       name: s.player_name || "",
       mlbam: s.mlbam_id, org: s.org,
-      meta: [s.position, s.org, s.level].filter(Boolean).join(" · "),
+      meta: [s.position, s.org, s.level, s.line].filter(Boolean).join(" · "),
       value: (d != null && isFinite(d)) ? `${d > 0 ? "+" : ""}${Number(d).toFixed(1)} FV` : "",
+      valueSub: _topDriver,
     };
   }
   if (kind === "ifa") {
@@ -32225,6 +32297,7 @@ function _gfxRow(item, kind, meta) {
   metaBits.push(ageStr(p.age));
   if (kind === "prospect" || kind === "graduate") metaBits.push((p.statline || {}).level);
   let value = "";
+  let valueSub = null;
   if (kind === "graduate") {
     // Graduates are MLB players now → show raw WAR (not WAG) via the single
     // display escalation helper. WAG (WAR-above-grade) is kept for the explicit
@@ -32232,6 +32305,14 @@ function _gfxRow(item, kind, meta) {
     value = displayMetricFor(p).value;
   } else if (kind === "draftee") {
     if (p.draft_stock_plus != null) value = "Stk+ " + Math.round(p.draft_stock_plus);
+  } else if (kind === "overseas") {
+    // GFX 2026-07-18: the overseas value column was empty (no branch). Show a
+    // compact production line - OPS for hitters, ERA for pitchers - from the
+    // overseas record's own stat fields.
+    const _isPit = /P|RHP|LHP|SP|RP/i.test(String(p.position || "")) || p.era != null;
+    if (_isPit && p.era != null) { value = "ERA " + Number(p.era).toFixed(2); if (p.k_pct != null) valueSub = "K " + Number(p.k_pct).toFixed(1) + "%"; }
+    else if (p.slg != null && p.obp != null) { value = (Number(p.obp) + Number(p.slg)).toFixed(3).replace(/^0/, "") + " OPS"; if (p.hr != null) valueSub = p.hr + " HR"; }
+    else if (p.avg != null) { value = "." + String(Math.round(Number(p.avg) * 1000)).padStart(3, "0") + " AVG"; }
   } else if (kind === "prospect") {
     const _sv = displaySurplusMM(p);
     if (_sv != null && typeof fmtSvMM === "function") value = fmtSvMM(_sv);
@@ -32240,7 +32321,7 @@ function _gfxRow(item, kind, meta) {
            org: (kind === "draftee" || kind === "overseas") ? null : p.org,
            // v39 - per-player $DvM+ rides under the value column in the board.
            dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
-           meta: metaBits.filter(Boolean).join(" · "), value };
+           meta: metaBits.filter(Boolean).join(" · "), value, valueSub };
 }
 // v38 - GFX avatar: prospect headshot → team logo → silhouette fallback chain,
 // gated by the independent Photos / Logos toggles (both default-on). Renders an
@@ -32426,6 +32507,16 @@ function _gfxAsOf() {
   const dt = raw ? new Date(raw) : new Date();
   const d = isNaN(dt.getTime()) ? new Date() : dt;
   return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+// GFX 2026-07-18 (P1 #13): the list-board QR used to point at the bare
+// /prospx/ page. Encode the LIVE section+filters hash (the app keeps
+// location.hash in sync via syncToURL) so scanning the graphic reproduces the
+// exact list the viewer is looking at. Always resolves to the production origin.
+function _gfxDeepLink() {
+  try {
+    const h = (typeof location !== "undefined" && location.hash) ? location.hash : "";
+    return "https://eephus.io/prospx/" + h;
+  } catch (_) { return "https://eephus.io/prospx/"; }
 }
 // Single branding header (every GFX type): wordmark left, eephus.io/PROSPX + as-of
 // date right. No footer, no handle.
@@ -33425,6 +33516,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
       ${photo}
       <div style="font-family:var(--font-retro);font-size:18px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(r.name || "")}</div>
       <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};display:flex;align-items:center;gap:5px;justify-content:center;">${logo}${escapeHtml(metaTxt)}</div>
+      ${r.value ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</div>` : ""}
     </div>`;
 }
 
@@ -33515,7 +33607,7 @@ function buildGfxBoard() {
           <span style="font-weight:700;font-size:15px;color:${P.text};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
           ${(metaLogo || r.meta) ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;display:flex;align-items:center;gap:5px;">${metaLogo}${r.meta ? `<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.meta)}</span>` : ""}</span>` : ""}
         </span>
-        ${(showVal && (r.value || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : ""}</span>` : ""}
+        ${(showVal && (r.value || r.valueSub || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.valueSub ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">${escapeHtml(String(r.valueSub))}</span>` : (r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : "")}</span>` : ""}
       </div>`;
   };
   // Columns scale with the list length + canvas width (see _gfxColumnCount), so
@@ -33564,13 +33656,13 @@ function buildGfxBoard() {
           </div>
           <div style="font-family:var(--font-mono);font-size:12px;color:${P.text3};margin-top:3px;">eephus.io/PROSPX · ${_gfxAsOf()}</div>
         </div>
-        ${_gfxQR("https://eephus.io/prospx/", 74)}
+        ${_gfxQR(_gfxDeepLink(), 74)}
       </div>
     </div>
-    <div style="flex:1 0 auto;padding-top:20px;">${grid}</div>
+    <div style="flex:1 1 auto;padding:20px 0;display:flex;flex-direction:column;justify-content:center;">${grid}</div>
     <div style="margin-top:16px;border-top:1px solid ${P.border};padding-top:11px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;">
       <span>${escapeHtml(_gfxFooterNote(snap.kind))}</span>
-      <span>${total} matched${cap < total ? ` · showing top ${cap}` : ""}</span>
+      <span>${total} matched${cap < total ? ` · top ${cap} shown · +${total - cap} more at eephus.io/prospx` : ""}</span>
     </div>`;
   return { board, total, w: W, h: H };
 }
@@ -40133,7 +40225,6 @@ function makeToolDvmCell(org) {
 
 function renderFarmSystems() {
   let orgs = farmSortedOrgs();
-  _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
   // Tendency-filter chips (always rendered; active state from the Set).
   renderFarmTendencyChips();
   // Global top-search filters farms by org code / full name.
@@ -40160,6 +40251,10 @@ function renderFarmSystems() {
       });
     }
   }
+  // GFX 2026-07-18 (P0 #8): snapshot AFTER the search + tendency filters (moved
+  // down from the top of the function) so an exported farm graphic reflects the
+  // active filters, matching every other section's snapshot-after-filter contract.
+  _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
   // Apply card-mode class based on state.farmViewMode. The class flips
   // #farm-section into a CSS grid of cards via the .farm-rows-cards
   // stylesheet rules; .table-mode is the default no-op.
@@ -49402,7 +49497,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // provisional eFV for source-ungraded ones (via getUngradedEfv), consensus fv_raw as the floor.
   const _rosterGrade = pl => {
     const x = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-    if (x && x.xfv_grade != null) return Number(x.xfv_grade);
+    // AUDIT 2026-07-18 (A2): sort by the quantile DISPLAY grade (efvRankValue,
+    // xfv_grade_quantile-first) not the raw xfv_grade. The raw->quantile map is
+    // non-monotone, so a raw-grade sort produced visibly out-of-order quantile
+    // badges in the affiliate table (contradicting the "ordering matches the
+    // board's primary grade" contract below).
+    if (x && x.xfv_grade != null) return efvRankValue({ player_key: pl.player_key });
     const ung = (typeof getUngradedEfv === "function") ? getUngradedEfv(pl) : null;
     if (ung && ung.xfv_grade != null) return Number(ung.xfv_grade);
     return (pl.fv_raw != null) ? Number(pl.fv_raw) : -1;
@@ -49489,9 +49589,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
           ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
           : "";
         const _gx = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-        const _gl = (_gx && _gx.xfv_grade != null) ? String(Math.round(_gx.xfv_grade)) : pl.fv_label;
+        // AUDIT 2026-07-18 (A2): show the quantile headline grade (efvGradeDisplay),
+        // NOT the raw Math.round(xfv_grade) -- otherwise the same player reads one eFV
+        // here and a different eFV in the affiliate-rosters table on the same page.
+        const _gq = (_gx && _gx.xfv_grade != null) ? efvGradeDisplay(_gx) : null;
+        const _gl = (_gq != null) ? String(_gq) : pl.fv_label;
         return `<div class="graded-prospect-row"${click}>
-          <span class="fv-badge ${fvClass(_gl)} size-sm" title="${_gx && _gx.xfv_grade != null ? `eFV ${_gl} · consensus FV ${pl.fv_label}` : `Consensus FV ${pl.fv_label}`}">${_gl}</span>
+          <span class="fv-badge ${fvClass(_gl)} size-sm" title="${_gq != null ? `eFV ${_gl} · consensus FV ${pl.fv_label}` : `Consensus FV ${pl.fv_label}`}">${_gl}</span>
           <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
           <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(pl.position || " - ")}${pl.age != null ? ` · ${pl.age.toFixed(1)}` : ""}</span>
         </div>`;
@@ -51725,9 +51829,18 @@ function makeFarmCompareSideBySide(farms) {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
     const grade = ((o.letter_by_window || {})[state.formWindow || "7y"]) || (o.grades && o.grades.overall) || " - ";
     const tp = o.top_prospect;
-    // Lead with eFV (consensus FV fallback); top_prospect carries `name` + `xfv_grade`.
-    const tpFv = tp ? (tp.xfv_grade != null ? Math.round(tp.xfv_grade)
-                       : (tp.fv_raw != null ? fvCeil(tp.fv_raw) : null)) : null;
+    // Lead with eFV (consensus FV fallback); top_prospect carries `name`,
+    // `player_key` + a baked raw `xfv_grade`. AUDIT 2026-07-18 (A2): resolve the
+    // QUANTILE display grade client-side (efvGradeDisplay via getEfv) so this
+    // badge matches the eFV shown elsewhere; the baked raw grade is only a
+    // fallback for a top prospect not in the client eFV map.
+    let tpFv = null;
+    if (tp) {
+      const _tpx = (tp.player_key && typeof getEfv === "function") ? getEfv({ player_key: tp.player_key }) : null;
+      if (_tpx && _tpx.xfv_grade != null) tpFv = efvGradeDisplay(_tpx);
+      else if (tp.xfv_grade != null) tpFv = Math.round(tp.xfv_grade);
+      else if (tp.fv_raw != null) tpFv = fvCeil(tp.fv_raw);
+    }
     const tpHtml = tp
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.name || tp.player_name || " - ")}</span>${tpFv != null ? ` <span class="fv-badge size-sm ${fvClass(String(tpFv))}" style="margin-left:4px;">${tpFv}</span>` : ""}</div>`
       : "";
@@ -52958,6 +53071,10 @@ function populateOrgFilter() {
       </div>`;
     return;
   }
+
+  // AUDIT 2026-07-18 (A3): revive Chase% across the board - backfill chase_pct
+  // from o_swing_pct on every active player's zone rows (see _normalizeZoneChase).
+  DATA.players.forEach(p => p && _normalizeZoneChase(p.zone_metrics));
 
   // Load the resolved headshot-context map (small, ~50KB) before first paint so
   // headshotURL picks the context that actually has a photo (MiLB fills the

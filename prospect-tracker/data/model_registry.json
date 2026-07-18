@@ -1757,6 +1757,17 @@
    "stale": false,
    "artifact_age_days": 0,
    "card": null
+  },
+  {
+   "model_id": "xfv_improve_sweep",
+   "surface": "model-dev artifact (rendered nowhere) - loss ledger; 2026-07-18 eFV improvement sweep, five pre-registered arms all REJECTED",
+   "predicts": "n/a - five gated attempts to beat the shipped eFV blend on the same forward-chained protocol: E-FWDCAL (per-fold output calibration), E-RECENCY (recency-decay training weights), E-IPCW (inverse-P(censoring) weights), E-STACK (OOF simplex stacker over ridge/lgbm/comps), E-HURDLE (full-pool P(contributor)xE[WAR|debut] head)",
+   "champion": "shipped lean+guarded-blend eFV (unchanged; hit lambda 0.70 / pit 0.61)",
+   "baseline": "the five challenger arms, forward-chained, matrix vintage 2026-07-14 (git 13d7728^), lambda held fixed",
+   "metric": "per-arm pre-registered gate (docs/efv-2026-07-18/GATES.md): dual pooled MAE+Spearman for E-FWDCAL; pooled/within-tier/t45/era/per-year clauses for E-RECENCY/E-IPCW; +0.0046 pooled bar for E-STACK; full-pool Spearman + contributor-AUC for E-HURDLE",
+   "eval_artifact": "data/xfv_improve_sweep_eval.json",
+   "verdict": "deprecated",
+   "notes": "Gates pre-registered in docs/efv-2026-07-18/GATES.md BEFORE any arm ran; losers committed per program rule. ALL FIVE FAIL both sides. E-FWDCAL beats consensus on Spearman but the MAE half of the dual gate does not close even with leakage-clean forward calibration (the spread eFV predicts is intrinsic). E-RECENCY/E-IPCW/E-STACK all regress pooled rank (hit deltas -0.0017/-0.0205/-0.0352; pit -0.0046/-0.0018/-0.0034). E-HURDLE: hit rank -0.0042 but full-pool contributor-AUC +0.0193 vs blend (the one live, un-gated signal); pit rank +0.0061 but AUC +0.0017 (sub-bar) and loses to consensus. A fourth independent confirmation (after E-LEAN1 x2 and the model-class sweep) that this matrix vintage is at its trainable-data ceiling for pooled rank. No served numbers changed. Next new information = resolved 2024+ cohorts / the E-STUFF 2025-fold. The hit hurdle AUC signal needs a fresh owner-signed AUC-only pre-registration at the canonical vintage before any use (anti-gate-shopping rule)."
   }
  ],
  "problems": []

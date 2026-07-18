@@ -1256,16 +1256,29 @@ def fetch_statcast_metrics_for_players(
             ): key
             for key, name, mlbam, level, is_pitcher in targets
         }
+        _p3_errors = 0
         for fut in concurrent.futures.as_completed(future_to_key):
             key = future_to_key[fut]
             try:
                 row = fut.result()
-            except Exception:
+            except Exception as _exc:
+                # AUDIT 2026-07-18 (A8): under the spawn ProcessPoolExecutor a single
+                # dead worker marks the pool broken and raises BrokenProcessPool on
+                # EVERY pending future; swallowing them silently staled hundreds of
+                # rows inside a run that still logged success. Log so a pool break or
+                # a per-player fetch failure is visible at production log level.
                 row = None
+                _p3_errors += 1
+                if _p3_errors <= 5 or _p3_errors % 200 == 0:
+                    _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
+                                 key, _p3_errors, _exc)
             if row:
                 out[key] = row
             _p3_done += 1
             if _p3_done % 500 == 0 or _p3_done == len(targets):
                 _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
                           _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
+        if _p3_errors:
+            _log.warning("statcast pass 3/3: %d/%d workers failed (rows left stale this run)",
+                         _p3_errors, len(targets))
     return out
