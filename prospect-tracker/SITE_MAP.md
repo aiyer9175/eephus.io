@@ -19,10 +19,11 @@ fetch strings.
 | 6 | `mlbstats` | MLB Stats | `/mlbstats/` | MLB Modules |
 | 7 | `pal` | Pitcher Alchemy Lab | `/pal/` | MLB Modules |
 | 8 | `trademachine` | Trade Machine | `/trademachine/` | MLB Modules |
-| 9 | `articles` | Articles | `/articles/` | - |
-| 10 | `forums` | Forums | `/forums/` | - |
-| 11 | `glossary` | Glossary | `/glossary/` | - |
-| 12 | `team` | Developers | `/team/` | - |
+| 9 | `fantasy` | Fantasy | `/fantasy/` | MLB Modules |
+| 10 | `articles` | Articles | `/articles/` | - |
+| 11 | `forums` | Forums | `/forums/` | - |
+| 12 | `glossary` | Glossary | `/glossary/` | - |
+| 13 | `team` | Developers | `/team/` | - |
 
 ## PROSPX sub-sections (`build_site.PROSPX_SUBNAV`)
 
@@ -62,6 +63,7 @@ column below lists only what the surface's own module app fetches.
 | `/mlbstats/` | `build_site.build_mlbstats()` | `assets/mlbstats.js` | `bullpen_history.json`, `bullpen_leaderboards.json`, `hitter_history.json`, `hitter_leaderboards.json`, `leverage_history.json`, `leverage_leaderboards.json`, `starter_history.json`, `starter_leaderboards.json` | MLB Stats: Bullpen Leaderboards / REM+ |
 | `/pal/` | `build_site.build_pal()` | `assets/pal.js` | `pal.json`, `player_links.json` | Pitcher Alchemy Lab |
 | `/trademachine/` | `build_site.build_trademachine()` | `assets/trademachine.js` | `grpo_public.json`, `grpo_scores.json`, `mlb_player_detail.json`, `trade_machine_eval.json`, `trade_values.json` | Trade Machine (Bayesian trade board + one-currency deal evaluator) |
+| `/fantasy/` | `build_site.build_fantasy()` | `assets/fantasy.js` | `fantasy.json` | Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring |
 | `/glossary/` | `build_site.build_glossary()` | `assets/glossary.js` | `glossary.json`, `model_registry.json`, `source_backtest.json` | Unified glossary + methodology / model accountability |
 | `/teams/` | `build_site.build_teams_redirect()` | server-rendered | - | redirect stub: the old Teams module now lives in /projections/ Team Outlook |
 | `/team/` | `build_site.build_team()` | server-rendered | - | Developers page (content/team.json) |

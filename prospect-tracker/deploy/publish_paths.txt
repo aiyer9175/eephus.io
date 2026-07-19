@@ -18,6 +18,7 @@ articles
 assets
 collegesavant
 fa
+fantasy
 forums
 glossary
 mlbstats
