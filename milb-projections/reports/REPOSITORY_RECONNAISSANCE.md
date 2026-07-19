@@ -57,7 +57,7 @@ The charter assumes a dedicated MiLB↔MLB contact-quality-portability model. In
 
 ## 6. Repository mechanics affecting this build
 
-- `eephus.io/.gitignore` globally ignores `*.csv` and `*.parquet` (with one unrelated carve-out for `prospect-tracker/manual_rankings.csv`). Any fixture files this handoff produces must therefore use a non-ignored format (`.json`, `.jsonl`, or an explicit `.gitignore` negation scoped to `milb_pitch_quality_handoff/fixtures/`) — decided in Phase 2 scaffolding.
+- `eephus.io/.gitignore` globally ignores `*.csv` and `*.parquet` (with one unrelated carve-out for `prospect-tracker/manual_rankings.csv`). Any fixture files this handoff produces must therefore use a non-ignored format (`.json`, `.jsonl`, or an explicit `.gitignore` negation scoped to `milb-projections/fixtures/`) — decided in Phase 2 scaffolding.
 - No remote push has been made and none will be made without separate, explicit user confirmation at the time of the request (independent of what the charter's Phase 15 instructions say about branch/PR workflow).
 
 ## 7. Architecture graph

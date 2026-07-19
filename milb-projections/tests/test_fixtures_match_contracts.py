@@ -5,7 +5,7 @@ assets (Phase 12) -- an external builder with no access to real Eephus
 data can run this against the fixtures alone to confirm their ingestion
 code handles the documented schema, nulls, and key relationships.
 
-Run with: pytest milb_pitch_quality_handoff/tests/test_fixtures_match_contracts.py
+Run with: pytest milb-projections/tests/test_fixtures_match_contracts.py
 """
 import json
 from pathlib import Path

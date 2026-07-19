@@ -4,7 +4,7 @@ These tests exist to satisfy the charter's compatibility requirement: the
 handoff export must not alter, recompute, or drift from the authoritative
 MiLB park-factor source, and must not touch any existing consumer.
 
-Run with: pytest milb_pitch_quality_handoff/tests/test_park_context_compatibility.py
+Run with: pytest milb-projections/tests/test_park_context_compatibility.py
 Requires pandas and a readable ~/milb_park_rebuild checkout (skips otherwise).
 """
 import hashlib

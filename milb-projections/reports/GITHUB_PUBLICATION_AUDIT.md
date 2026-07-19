@@ -4,7 +4,7 @@
 
 - Branch: `milb-pitch-quality-handoff`, cut from `skill-modules-full-projection` at commit `d2406e6`'s parent.
 - Commits on this branch: 8, each scoped to one phase/responsibility (reconnaissance+inventory+scaffold; contact-translation+pitcher-eWAR adapters; park-context adapter+compatibility tests; identity adapter; historical audit+coverage matrix; benchmark manifest; research contract; fixtures+validation; full test suite; decision ledger+known gaps).
-- Files added: 42, all under `milb_pitch_quality_handoff/`. No existing file was modified.
+- Files added: 42, all under `milb-projections/`. No existing file was modified.
 - No large files: largest tracked file is `manifests/BENCHMARK_MANIFEST.yaml` at ~12.5KB.
 - No `.parquet`/`.csv` files committed (fixtures use `.json`; real exports go to `~/eephus_handoff_private_exports/`, entirely outside the git working tree).
 - No credentials, API keys, tokens, or secrets found in any tracked file.
@@ -12,7 +12,7 @@
 
 ## Pre-existing repository state (untouched)
 
-- 308 pre-existing untracked files/directories in the `eephus.io` checkout at the time this work began remain untracked and unmodified — verified via `git status --short` showing zero changes outside `milb_pitch_quality_handoff/`.
+- 308 pre-existing untracked files/directories in the `eephus.io` checkout at the time this work began remain untracked and unmodified — verified via `git status --short` showing zero changes outside `milb-projections/`.
 - `swing_plus`'s own unrelated uncommitted work was never read or touched.
 - All 41 pre-existing regression tests in `~/milb_park_rebuild/tests/` still pass, confirming this handoff introduced no regression to the systems it packages.
 
@@ -27,7 +27,7 @@
 cd ~/Desktop/eephus.io
 git push -u origin milb-pitch-quality-handoff
 gh pr create --title "Add MiLB pitch-quality research handoff package" \
-  --body "See milb_pitch_quality_handoff/README.md and reports/FINAL_HANDOFF_READINESS_REPORT.md for scope and readiness."
+  --body "See milb-projections/README.md and reports/FINAL_HANDOFF_READINESS_REPORT.md for scope and readiness."
 ```
 
 Before running the above, consider whether the other 5 platform contributors should review the `PUBLICATION_POLICY.md` classifications (in particular, that no proprietary source is republished and that Low-A pitcher eWAR stays internal) given this is a shared repository.

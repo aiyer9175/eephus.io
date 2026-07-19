@@ -16,7 +16,7 @@ The external builder is assumed to be able to pull public MLB/MiLB data (pitch-b
 ## Layout
 
 ```
-milb_pitch_quality_handoff/
+milb-projections/
 ├── README.md                    — this file
 ├── SYSTEM_OVERVIEW.md            — end-to-end explanation of the handoff layer
 ├── ARCHITECTURE.md               — source systems, adapters, exports, contracts, consumers

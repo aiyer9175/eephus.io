@@ -31,10 +31,10 @@ One JSON Schema (or equivalent) per exported artifact in `contracts/`, named to 
 
 ## Consumers (downstream of this package)
 
-The only intended consumer of this package is the future external MiLB pitch-quality research effort. This package has no consumers inside Eephus itself — it is additive and read-only with respect to every existing system. No existing Eephus pipeline, website route, or refresh job reads anything under `milb_pitch_quality_handoff/`.
+The only intended consumer of this package is the future external MiLB pitch-quality research effort. This package has no consumers inside Eephus itself — it is additive and read-only with respect to every existing system. No existing Eephus pipeline, website route, or refresh job reads anything under `milb-projections/`.
 
 ## Explicitly out of scope / not touched
 
 - `env_foundation_integration/modules/m06_stadium_translation.py` and `m09c_lower_milb_translation.py` — frozen, pending a separate rebuild charter (`NEXT_MILB_TRANSLATION_REBUILD_CHARTER.md`). Referenced in documentation only.
 - `swing_plus` — unrelated hitter model with its own in-progress uncommitted work; not read for authoritative data, not modified.
-- Any website/publication route in `eephus.io` outside `milb_pitch_quality_handoff/`.
+- Any website/publication route in `eephus.io` outside `milb-projections/`.
