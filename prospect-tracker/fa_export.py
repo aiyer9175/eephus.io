@@ -30,6 +30,7 @@ from __future__ import annotations
 
 import json
 import logging
+import statistics
 from collections import defaultdict
 from datetime import date
 from pathlib import Path
@@ -116,6 +117,29 @@ def _prospect_fv_history(keys: set) -> dict[str, dict]:
                 last = fv
         if len(pts) >= 2:
             out[key] = {"mlbam": int(p["mlbam_id"]), "pts": pts[-40:]}
+    return out
+
+
+def _class_supply_rows(cls: list[dict], class_year: int,
+                       by_player: dict[str, dict[int, dict]]) -> list[dict]:
+    """ARM supply_pop: the class-supply population under the ALIGNED
+    definition -- members whose identity resolves against war_daily AND who
+    carry >=1 corpus season inside the 3-season history window; exactly the
+    members the market model can price, and the serve-time analog of the
+    enriched TRAINING filter (mlb_deal + mlbam_id + corpus history -- see
+    fm.enriched_signings). Fringe class members bound for minors deals fail
+    the same bar here that their signings fail at train time, so train and
+    serve count the same population definition. fa_ident.resolve rides an
+    lru-cached index, so the member loop's later resolve is a dict hit."""
+    out = []
+    for row in cls:
+        mlbam = fa_ident.resolve(row["player_name"], range(class_year - 4, class_year))
+        if not mlbam:
+            continue
+        side = "pit" if fm._pos_group(row.get("position")) in ("SP", "RP") else "hit"
+        seasons = by_player[side].get(mlbam) or {}
+        if any(t in seasons for t in (class_year - 1, class_year - 2, class_year - 3)):
+            out.append({"class_year": class_year, "position": row.get("position")})
     return out
 
 
@@ -211,8 +235,17 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
     events = storage.load_fa_events(class_year)
     ev_date = {(e["player_key"], e["event_type"]): e["event_date"] for e in events}
     fv_hist = _prospect_fv_history({p.get("player_key") for p in cls})
-    model.supply_by_year[class_year] = fm._supply(
-        [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
+    if fm.X_FEATURES.get("supply_pop"):
+        # ARM supply_pop (default OFF; pre-registered in
+        # tools/fa_market_feature_lab.py): serve-time supply counts the
+        # ALIGNED population (identity+history members, the analog of the
+        # enriched training filter) instead of the whole scraped class,
+        # whose counts z-scored +2.6..+2.8 against the training moments.
+        model.supply_by_year[class_year] = fm._supply(
+            _class_supply_rows(cls, class_year, by_player), class_year)
+    else:
+        model.supply_by_year[class_year] = fm._supply(
+            [{"class_year": class_year, "position": p.get("position")} for p in cls], class_year)
     dpw = fm.winter_dpw(dpw_series, class_year)
 
     overrides = _load_overrides()
@@ -264,9 +297,22 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
                     m["thinPlatform"] = (f"only {vol:.0f} {vol_key.upper()} in "
                                          f"{class_year - 1} - injury-thin platform")
             if hist:
-                age_prev = next((h.get("age") for h in hist if h.get("age")), None)
-                age = ((age_prev + (class_year - hist[0]["season"])) if age_prev
-                       else int(row.get("age") or 30))
+                if fm.X_FEATURES.get("age_anchor"):
+                    # ARM age_anchor (default OFF; pre-registered in
+                    # tools/fa_market_feature_lab.py): anchor the offset to
+                    # the SEASON of the row that supplied the age -- the
+                    # proj_export / fm.enriched_signings (ba3917d)
+                    # convention. The stale hist[0] anchor understated age
+                    # by the season gap whenever the platform row lacked an
+                    # age; training ages are already anchored, so the stale
+                    # form is a train/serve skew.
+                    age_row = next((h for h in hist if h.get("age")), None)
+                    age = ((age_row["age"] + (class_year - age_row["season"]))
+                           if age_row else int(row.get("age") or 30))
+                else:
+                    age_prev = next((h.get("age") for h in hist if h.get("age")), None)
+                    age = ((age_prev + (class_year - hist[0]["season"])) if age_prev
+                           else int(row.get("age") or 30))
                 # CHAMPION paths throughout the FA pricing stack: the market
                 # model's Gate-2 verdict holds under champion inputs only
                 # (the ML-path version FAILED its gate - see
@@ -414,6 +460,84 @@ def build_fa_class_payload(class_year: int = CLASS_YEAR) -> dict:
             "milb": True if e.get("mlb_deal") is False else None,
             "optPrice": e.get("option_price_usd"),
         }) for e in events[:80]],
+    }
+
+
+def serve_alignment_diagnostics(class_year: int = CLASS_YEAR) -> dict:
+    """Read-only evidence block for the wave-2 serve-side arms (pre-registered
+    in tools/fa_market_feature_lab.py; recorded into its eval artifact by the
+    lab). Writes NOTHING, never constructs a MarketModel, never calls
+    predict -- safe to run alongside challenger/no-persist gate runs.
+
+      supply -- per-pos-group class counts under the live whole-class
+        convention (raw) vs the ALIGNED identity+history population
+        (_class_supply_rows), each z-scored against the CHAMPION training
+        supply moments (enriched signings 2015..class_year-1, the same
+        counts MarketModel.__init__ fits its z-moments on).
+      age -- the serve age every member would get under the stale hist[0]
+        anchor vs the anchored convention. Deltas (anchored - stale) are
+        structurally in [+1, +2] when nonzero: the anchored form adds the
+        gap between hist[0]'s season and the age-supplying row's season,
+        bounded by the 3-season history window."""
+    corpus = fp.build_corpus()
+    by_player: dict[str, dict[int, dict]] = {"hit": defaultdict(dict), "pit": defaultdict(dict)}
+    for side in ("hit", "pit"):
+        for r in corpus[side]:
+            if r.get("mlbam"):
+                by_player[side][r["mlbam"]][r["season"]] = r
+    cls = list(storage.load_fa_class_players(class_year).values())
+    enriched = fm.enriched_signings(2015, class_year - 1)
+    sup_by = {y: fm._supply(enriched, y) for y in {s["class_year"] for s in enriched}}
+    sup_all = [c for by in sup_by.values() for c in by.values()]
+    mean = statistics.mean(sup_all) if sup_all else 0.0
+    sd = statistics.pstdev(sup_all) if len(sup_all) > 1 else 1.0
+
+    raw = fm._supply([{"class_year": class_year, "position": p.get("position")}
+                      for p in cls], class_year)
+    aligned = fm._supply(_class_supply_rows(cls, class_year, by_player), class_year)
+
+    def _z(counts: dict) -> dict:
+        return {g: round((counts.get(g, 0.0) - mean) / (sd or 1.0), 3)
+                for g in fm.POS_GROUPS}
+
+    z_raw, z_aligned = _z(raw), _z(aligned)
+    age = {"n_members_with_hist": 0, "n_changed": 0,
+           "min_delta": None, "max_delta": None, "changed": []}
+    for row in cls:
+        mlbam = fa_ident.resolve(row["player_name"], range(class_year - 4, class_year))
+        if not mlbam:
+            continue
+        side = "pit" if fm._pos_group(row.get("position")) in ("SP", "RP") else "hit"
+        seasons = by_player[side].get(mlbam) or {}
+        hist = [seasons[t] for t in (class_year - 1, class_year - 2, class_year - 3)
+                if t in seasons]
+        if not hist:
+            continue
+        age["n_members_with_hist"] += 1
+        age_row = next((h for h in hist if h.get("age")), None)
+        if age_row is None:
+            continue                    # both conventions fall back identically
+        stale = age_row["age"] + (class_year - hist[0]["season"])
+        anchored = age_row["age"] + (class_year - age_row["season"])
+        if anchored != stale:
+            d = anchored - stale
+            age["n_changed"] += 1
+            age["min_delta"] = d if age["min_delta"] is None else min(age["min_delta"], d)
+            age["max_delta"] = d if age["max_delta"] is None else max(age["max_delta"], d)
+            if len(age["changed"]) < 40:
+                age["changed"].append({"key": row.get("player_key"),
+                                       "stale": stale, "anchored": anchored})
+    return {
+        "class_year": class_year,
+        "supply": {
+            "raw": {g: raw.get(g, 0.0) for g in fm.POS_GROUPS},
+            "aligned": {g: aligned.get(g, 0.0) for g in fm.POS_GROUPS},
+            "z_raw": z_raw, "z_aligned": z_aligned,
+            "train_mean": round(mean, 2), "train_sd": round(sd, 2),
+            "mean_abs_z_raw": round(statistics.mean(abs(v) for v in z_raw.values()), 4),
+            "mean_abs_z_aligned": round(statistics.mean(abs(v) for v in z_aligned.values()), 4),
+        },
+        "age": age,
     }
 
 

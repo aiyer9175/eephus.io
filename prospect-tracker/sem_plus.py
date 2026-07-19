@@ -6,7 +6,7 @@
 """SEM+ (Starter Evaluation Metric +) - the model core.
 
 SEM+ is the starter analog of REM+ (see rem_plus.py): a ratio-to-league rate
-index (100 = the average qualified starter, 110 = 10% better run prevention),
+index (100 = the average true starter in the calibration population, 110 = 10% better run prevention),
 the ERA+/wRC+ family, NOT a z-score. The headline number is PURE SKILL: a
 sample-shrunk, STARTER-pool-anchored FIP built from the components that carry a
 pitcher's run-prevention talent (K%, BB%, HBP, a heavily regressed HR rate),

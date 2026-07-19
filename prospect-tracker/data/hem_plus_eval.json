@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-15",
  "seasons": [
   2012,
   2013,
@@ -20,37 +20,133 @@
  "conventions": {
   "predictor_year": "year Y (PA>=150)",
   "target": "wOBA in year Y+1 (PA>=150)",
-  "excluded": "2020 (60-game COVID season)"
+  "excluded": "2020 (60-game COVID season)",
+  "n_partial_outcome_pairs_dropped": 0
  },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "wOBA in year Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "wOBA in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "lab_defect_fixed": "previous runs read the ROUNDED int hem_plus + 3-decimal display-rounded ops/avg/woba out of hitter_row(); harness v2 scores Hitter objects directly (hem_plus_raw, unrounded rates). Shipped display rounding untouched.",
  "n_forward_pairs": 3372,
  "forward_spearman_vs_wOBA_next": {
-  "hem_plus": 0.4121,
-  "raw_woba": 0.4089,
-  "ops": 0.411,
-  "avg": 0.2348
+  "hem_plus": 0.4119,
+  "raw_woba": 0.4087,
+  "ops": 0.4108,
+  "avg": 0.2347
  },
  "gap_ci_vs_avg": {
   "mean": 0.1771,
-  "lo95": 0.1452,
-  "hi95": 0.2071
+  "lo95": 0.1451,
+  "hi95": 0.2087
  },
  "gap_ci_vs_ops": {
-  "mean": 0.0011,
-  "lo95": -0.0122,
-  "hi95": 0.0144
+  "mean": 0.0012,
+  "lo95": -0.0126,
+  "hi95": 0.0157
  },
  "gap_ci_vs_raw_woba": {
-  "mean": 0.0032,
-  "lo95": -0.0092,
-  "hi95": 0.0159
+  "mean": 0.0033,
+  "lo95": -0.0096,
+  "hi95": 0.0166
+ },
+ "results_by_convention": {
+  "v1": {
+   "rho_primary": 0.4119,
+   "rho_baselines": {
+    "vs_avg": 0.2347,
+    "vs_ops": 0.4108,
+    "vs_raw_woba": 0.4087
+   },
+   "rho_primary_full": 0.41194736749462757,
+   "rho_baselines_full": {
+    "vs_avg": 0.23472953127416749,
+    "vs_ops": 0.41080616079054755,
+    "vs_raw_woba": 0.40867117620187204
+   },
+   "gap_ci": {
+    "vs_avg": {
+     "mean": 0.1771,
+     "lo95": 0.1451,
+     "hi95": 0.2087
+    },
+    "vs_ops": {
+     "mean": 0.0012,
+     "lo95": -0.0126,
+     "hi95": 0.0157
+    },
+    "vs_raw_woba": {
+     "mean": 0.0033,
+     "lo95": -0.0096,
+     "hi95": 0.0166
+    }
+   }
+  },
+  "v2": {
+   "rho_primary": 0.4191,
+   "rho_baselines": {
+    "vs_avg": 0.2287,
+    "vs_ops": 0.4086,
+    "vs_raw_woba": 0.4078
+   },
+   "rho_primary_full": 0.4191359240726653,
+   "rho_baselines_full": {
+    "vs_avg": 0.2286627328084533,
+    "vs_ops": 0.4086265202452642,
+    "vs_raw_woba": 0.40781772503420155
+   },
+   "gap_ci": {
+    "vs_avg": {
+     "mean": 0.1907,
+     "lo95": 0.1531,
+     "hi95": 0.2279
+    },
+    "vs_ops": {
+     "mean": 0.0106,
+     "lo95": -0.0041,
+     "hi95": 0.025
+    },
+    "vs_raw_woba": {
+     "mean": 0.0114,
+     "lo95": -0.0019,
+     "hi95": 0.0252
+    }
+   },
+   "cluster": {
+    "n_pairs": 3372,
+    "n_players": 945,
+    "max_pairs_per_player": 11,
+    "mean_pairs_per_player": 3.57,
+    "n_strata_first_pred_season": 11
+   }
+  }
  },
  "gate": {
   "bar": "beats AVG forward (gap lo95 > 0) AND not worse than raw wOBA (lo95 >= -0.01)",
-  "pass": true
+  "convention": "v1",
+  "pass": true,
+  "pass_under_v2": true
  },
- "runtime_seconds": 41.1,
+ "runtime_seconds": 68.0,
  "verdict": {
   "status": "validated",
-  "summary": "Forward-chained OOS over 12 seasons (3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4121 vs raw wOBA 0.4089, OPS 0.411, AVG 0.2348. CI on the rho gap vs AVG {'mean': 0.1771, 'lo95': 0.1452, 'hi95': 0.2071}, vs raw wOBA {'mean': 0.0032, 'lo95': -0.0092, 'hi95': 0.0159}. Shipped VALIDATED: HEM+ beats the naive rate baselines and holds even-or-ahead of its raw-wOBA parent out of sample, so the component empirical-Bayes shrinkage + hitter-pool anchoring earn their place. Volume/baserunning ride separate context columns."
+  "summary": "Forward-chained OOS over 12 seasons (3372 Y->Y+1 pairs): HEM+ predicts next-year wOBA at rho 0.4119 vs raw wOBA 0.4087, OPS 0.4108, AVG 0.2347. CI on the rho gap vs AVG {'mean': 0.1771, 'lo95': 0.1451, 'hi95': 0.2087}, vs raw wOBA {'mean': 0.0033, 'lo95': -0.0096, 'hi95': 0.0166}. Shipped VALIDATED: HEM+ beats the naive rate baselines and holds even-or-ahead of its raw-wOBA parent out of sample, so the component empirical-Bayes shrinkage + hitter-pool anchoring earn their place. Volume/baserunning ride separate context columns."
  }
 }

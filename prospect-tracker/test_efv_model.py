@@ -100,6 +100,10 @@ _EXPECTED_HIT = [
     # auto-bar by 0.0003, every metric >= -noise; ledger
     # data/xfv_age_feature_eval.json + docs/efv-2026-07-14/GATES.md).
     ("age", -1),
+    # level_rank: cleared its pre-registered LR-FRINGE re-gate at the 2024-fold
+    # vintage (t45 +0.0192, bar +0.015; docs/efv-2026-07-15/GATES.md; ledger
+    # data/xfv_level_rank_fringe_eval.json).
+    ("level_rank", +1),
 ]
 _EXPECTED_PIT = [
     ("fv", +1), ("peak_k_rel", +1), ("k_rel", +1), ("bb_rel", -1),

@@ -150,17 +150,74 @@ def test_committed_artifact_headline_alias_contract():
 #   live quantile scale (rowcount 8888 -> 9127), AND the lambda band raise
 #   RETRACTED (its evidence did not survive the label repair; hit lambda back
 #   to 0.70). Governance evals re-run in the same regen.
-_GOLDEN_XFV_SHA256 = "0a2b0fb7a4b10cf295d2e577810687c21a8f9d770a3f0b18c7138e5c999c85e2"
+# - 2026-07-15: the improvement-program board rebake: performance_ingest
+#   grade-normalization fix (106 synthetically inflated pitcher anchors
+#   deflated; Pineda #78 -> #204) + the owner-directed reliever-ceiling
+#   overlay (second Moore directive; 9 arms, Moore #91 -> #159) on the
+#   full-pipeline data refresh.
+# Updated 2026-07-15b (2026 draft completion, data change - no model change):
+#   post-draft FG board ingested (interval 2026-07-15) + MLB tracker results
+#   (613 picks) + the NEW signed-draftee seed (draft_promotion.
+#   seed_signed_draftees: 8 current-class signees, e.g. AJ Gracia -> ATL,
+#   surface on the board via the synthetic 'draft_signing' source). Rowcount
+#   9127 -> 9133.
+# Updated 2026-07-15c (production regen_all after the stats<->projections
+#   program; data change - no model change): the day's MiLB scrape refresh
+#   pulled one new performance_ingest arm (derik_aquino, LAD) into the pool
+#   when the matrices rebuilt. Also re-baselines away mid-suite test churn
+#   (a test regen under the pinned test valuation set had overwritten
+#   xfv.json in place - always re-stamp from a PRODUCTION efv_export run,
+#   never from a post-pytest working tree). Rowcount 9133 -> 9134.
+# Updated 2026-07-15d (owner-directed MODEL change): the live injury overlay
+#   dropped its unconditional is_post_tj x0.85 - post-TJ STATUS alone is not
+#   an injury (Kade Anderson: recovered 2022 TJ, zero IL days, was taxed 15%
+#   on WAR/grade/rank/surplus; war6 8.21 -> 9.66). 47 healthy post-TJ arms
+#   cleared (+1-3 grade pts); live IL components unchanged (623 players still
+#   priced). Registry notes on xfv_hitter/xfv_pitcher. Rowcount 9134.
+# Updated 2026-07-15e (the 2024-fold unlock, MODEL + LABEL change;
+#   docs/efv-2026-07-15/GATES.md): DEBUT_YEARS widened to 2011-2024 (210
+#   dated-2024 debuts enter as censored weight-0.333 training rows),
+#   career-terminal transactions (lifetime DEI ban / retirement) resolve
+#   censored rows at the observed sum (marcano/alu/kirilloff/pint/ridings),
+#   and level_rank SHIPPED into the hitter lean set via the pre-registered
+#   LR-FRINGE gate (t45 +0.0192). Governance re-runs E-ISO4-path/M3/E-STUFF/
+#   BUCKET-AGE-HEAD all FAIL (closes stand); every other keep-alive ledgered
+#   as a loss. Evals re-run in the same regen (F-SIDE S5 tripwire recorded
+#   tripped). Rowcount 9134.
+# Updated 2026-07-16 (DATA refresh, no model change): restamped from the
+#   refinement-program rebuild_only production regen (efv_export.regen_all)
+#   after a same-day daily data refresh moved stats/IL/rosters. No eFV code
+#   or feature change is in this stamp - the 2026-07-16 program's eFV-adjacent
+#   edits (efv_ungraded trajectory floor guard) do not touch xfv.json.
+#   Rowcount 9134 -> 9148 (ordinary roster churn).
+# Updated 2026-07-16b (DB REPAIR, LABEL + POOL change): owner-authorized
+#   applies of tools/delete_draft_board_leak.py (936 org-less FG draft-board
+#   rows removed from MiLB snapshots; the 2021-2026 board leak) and
+#   tools/repair_debut_snapshots_2026.py (41 veteran re-appearance debut
+#   snapshots re-dated to true debuts + 2 same-season misdates). Restamped
+#   from the immediate post-repair rebuild_only production regen. Rowcount
+#   9148 -> 9010 (leak-only identities leave the eFV pool; debut-date labels
+#   corrected). Same repairs must run on the deploy box, which then restamps
+#   nothing (its golden check runs in EEPHUS_DEPLOY_RUN=1 shape mode).
+# 2026-07-17 restamp: owner directive - the live injury penalty no longer
+#   applies to currently-healthy players (the Josue Briceno case: activated
+#   off a 60-day IL stint the same day, but ~108 trailing IL days still held
+#   a x0.90 haircut). _injury_factor now returns 1.0 unless il_on; trailing
+#   days/stints only deepen an ACTIVE stint's haircut (efv_score.py). 486
+#   currently-on-IL players keep a factor; every healthy player cleared.
+#   Restamped from the in-session rebuild_only production regen. Rowcount
+#   9010 -> 9040 (daily pool churn since the 07-16 stamp, not the directive).
+_GOLDEN_XFV_SHA256 = "58fcfd4fb47e24c2c497edf5222647d7cd61adfe55ed04da5aa972fd30f6fa8e"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box
 # regenerates data/xfv.json from FRESH data every run, so the exact-hash tripwire
 # above is a DEV-TIME guard, not a deploy gate: on the deploy box it would go red on
 # the first night real data moves and freeze publishing. Under EEPHUS_DEPLOY_RUN=1 we
 # swap the exact hash for a sane-shape check anchored on this recorded row count
-# (data/xfv.json by_player, read 2026-07-14 post-repair; the bust re-scale
-# added ~240 rows net). The +/-20% band tolerates ordinary roster churn while
-# still catching a gross truncation / empty-artifact regression.
-_GOLDEN_XFV_ROWCOUNT = 9127
+# (data/xfv.json by_player, read 2026-07-16 post-DB-repair regen). The +/-20%
+# band tolerates ordinary roster churn while still catching a gross
+# truncation / empty-artifact regression.
+_GOLDEN_XFV_ROWCOUNT = 9040
 
 
 def test_efv_grade_map_inverts_on_model_window():
@@ -289,3 +346,19 @@ def test_asof_point_bust_uses_final_point():
     ])
     assert _asof_point(rec, None)["snapshot_date"] == "2022-05-01"
     assert _asof_point(_rec([]), None) is None
+
+
+def test_role_factor_semantics():
+    """Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
+    directive): fires ONLY on RP-designated (SIRP/MIRP/RP/CL, never generic P
+    or SP) arms age 25+ whose MODEL war is enthusiastic (>= 1.5); bounded
+    0.80/0.70, monotone in age. A policy dial, not a fitted parameter - this
+    pin keeps its scope from silently widening."""
+    from efv_score import _role_factor
+    assert _role_factor({"position": "SIRP", "age_now": 26.9}, 3.5) == 0.70
+    assert _role_factor({"position": "MIRP", "age_now": 25.4}, 3.5) == 0.80
+    assert _role_factor({"position": "SIRP", "age_now": 24.9}, 3.5) == 1.0   # young: exempt
+    assert _role_factor({"position": "SIRP", "age_now": 26.9}, 1.2) == 1.0   # no model enthusiasm
+    assert _role_factor({"position": "P", "age_now": 26.9}, 3.5) == 1.0     # generic P: exempt
+    assert _role_factor({"position": "SP", "age_now": 26.9}, 3.5) == 1.0
+    assert _role_factor({"position": None, "age_now": 26.9}, 3.5) == 1.0

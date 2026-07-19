@@ -462,6 +462,55 @@ function plusPill(value, label) {
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
+// Per-year pitch tables ride in as pitcher_pitch_data_<year>.js, each defining
+// window.PITCHER_PITCH_DATA_<year>. The page ships only the small recent-season
+// files (2025 + 2026); the 11.6MB 2024 table loads on demand the first time a
+// view asks for that season (same injector pattern as ensurePitchShapes).
+// The consts are declared before init() runs (same dead-zone rule as
+// CSPLUS_GROUPS above): collectPitchRows reads them during boot.
+const PITCH_DATA_YEARS = [2024, 2025, 2026];
+const _pitchDataLoadState = {};   // year -> "loading" | "ready" | "failed"
+
+function pitchRowsFor(year) {
+  return window[`PITCHER_PITCH_DATA_${year}`];
+}
+
+// Every pitch row currently on the page: the per-year tables plus the legacy
+// combined window.PITCHER_PITCH_DATA (still honored so older cached copies of
+// pitcher_data.js and the smoke harness keep working).
+function collectPitchRows() {
+  let rows = window.PITCHER_PITCH_DATA || [];
+  for (const year of PITCH_DATA_YEARS) {
+    const yearRows = pitchRowsFor(year);
+    if (Array.isArray(yearRows)) rows = rows.concat(yearRows);
+  }
+  return rows;
+}
+
+function pitchDataLoading(year) {
+  return _pitchDataLoadState[year] === "loading";
+}
+
+// Returns true when the year's pitch rows are on the page (or the year has no
+// file to fetch). Otherwise injects the year's script once and returns false;
+// onload merges the rows and repaints, onerror leaves the views' empty states.
+function ensurePitchData(year) {
+  if (!PITCH_DATA_YEARS.includes(year) || pitchRowsFor(year)) return true;
+  if (_pitchDataLoadState[year] === "loading" || _pitchDataLoadState[year] === "failed") return false;
+  _pitchDataLoadState[year] = "loading";
+  const s = document.createElement("script");
+  s.src = `pitcher_pitch_data_${year}.js`;
+  s.onload = () => {
+    _pitchDataLoadState[year] = "ready";
+    state.allPitches = state.allPitches.concat((pitchRowsFor(year) || []).map(normalizePitchRow));
+    setActiveYear(state.year);
+    render();
+  };
+  s.onerror = () => { _pitchDataLoadState[year] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+
 init();
 
 function init() {
@@ -471,7 +520,7 @@ function init() {
     // leaderboard with no hint anything went wrong (F-02).
     if (!window.PITCHER_DATA) throw new Error("pitcher_data.js is missing or failed to load");
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
-    state.allPitches = (window.PITCHER_PITCH_DATA || []).map(normalizePitchRow);
+    state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
     state.year = state.availableYears.includes(2025) ? 2025 : (state.availableYears[0] || 2026);
     setActiveYear(yearFromHash(window.location.hash) || state.year);
@@ -523,6 +572,7 @@ function normalizePitcher(row) {
 function setActiveYear(year) {
   const numericYear = Number(year);
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  ensurePitchData(state.year);
   state.pitchers = state.allPitchers.filter((pitcher) => pitcher.year === state.year);
   state.pitches = state.allPitches.filter((pitch) => pitch.year === state.year);
   state.percentiles = computePercentiles(state.pitchers);
@@ -831,6 +881,7 @@ function renderLeaderboard() {
       </select>
       <label class="lb-pa">Min pitches <input type="number" min="0" step="50" value="${minPitch}" data-min-pitch></label>
       <button class="control-button" type="button" data-reset>Reset</button>
+      <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} pitcher${filtered.length === 1 ? "" : "s"}${minPitch > 0 ? ` with ${minPitch}+ pitches` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
@@ -862,18 +913,59 @@ function renderLeaderboard() {
     state.query = ""; state.minPitch = 0; state.teamFilter = "all"; state.sortKey = "stuff_plus"; state.sortDir = null;
     renderLeaderboard();
   });
+  const lbGfx = app.querySelector("#cs-lb-gfx");
+  if (lbGfx) lbGfx.onclick = () => {
+    if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(csLeaderboardSpec(filtered, col, dir));
+  };
+}
+
+// Board spec for the Generate GFX modal: the current filtered + sorted pitcher
+// leaderboard as a column board (leading metric + its percentile + CS+), built
+// from the SAME `filtered` array the table renders so the graphic always
+// matches what's on screen. Mirrors fa.js/_faBoardSpec + projections.js.
+function csLeaderboardSpec(rows, col, dir) {
+  const pctOf = state.percentiles || new Map();
+  const csOf = state.csPlus || new Map();
+  const brows = rows.map((p, i) => {
+    const v = sortVal(p, col.key);
+    const pctMap = pctOf.get(p.slug) || {};
+    const pctV = pctMap[col.key];
+    const cs = csOf.get(p.slug);
+    const csColor = Number.isFinite(cs) ? (cs >= 110 ? "green" : cs <= 90 ? "red" : "muted") : "muted";
+    return { cells: [
+      { t: i + 1 },
+      { t: displayName(p.pitcher_name), sub: formatTeamName(p.team) || undefined },
+      { t: lbFmt(col.fmt, v), c: "accent" },
+      { t: Number.isFinite(pctV) ? String(Math.round(pctV)) : "-", c: "muted" },
+      { t: Number.isFinite(cs) ? String(Math.round(cs)) : "-", c: csColor },
+    ] };
+  });
+  return {
+    kind: "board", module: "CollegeSavant", accentToken: "--accent-red",
+    title: `CollegeSavant · ${col.label} Leaders`,
+    subtitle: `${state.year} college pitchers · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
+    url: "eephus.io/collegesavant/pitcher_index.html", filenameBase: `eephus-collegesavant-pitchers-${col.key}`,
+    caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
+    board: { defaultCount: 25, counts: [10, 25, 50], legend: "CS+ 100 = D1 average", columns: [
+      { label: "#", frac: 0.06 },
+      { label: "Pitcher", frac: 0.42 },
+      { label: col.label, frac: 0.20 },
+      { label: "Pctile", frac: 0.16 },
+      { label: "CS+", frac: 0.16 },
+    ], rows: brows },
+  };
 }
 
 function _wireCsShare(pitcher, pct) {
   const btn = app.querySelector("#cs-share");
   if (!btn) return;
   btn.addEventListener("click", () => {
-    if (!window.EEPHUS_HUB) return;
+    if (!window.EEPHUS_GFX && !window.EEPHUS_HUB) return;
     const rows = activePitcherMetrics()
       .filter((m) => pitcher[m.key] != null)
       .slice(0, 8)
       .map((m) => [m.label, `${formatMetric(pitcher[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
-    window.EEPHUS_HUB.shareCard({
+    const cardOpts = {
       module: "CollegeSavant",
       accentToken: "--accent-red",
       name: displayName(pitcher.pitcher_name),
@@ -888,7 +980,15 @@ function _wireCsShare(pitcher, pct) {
       url: `eephus.io/collegesavant/pitcher_index.html#/player/${pitcher.year}/${pitcher.slug}`,
       filename: `eephus-collegesavant-${pitcher.slug}.png`,
       caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
-    });
+    };
+    // Open the shared Generate GFX modal (format / theme / accent controls);
+    // fall back to the legacy direct download if the GFX module didn't load.
+    if (window.EEPHUS_GFX) {
+      window.EEPHUS_GFX.open({ kind: "card", module: cardOpts.module, accentToken: cardOpts.accentToken,
+        title: cardOpts.name, filenameBase: cardOpts.filename.replace(/\.png$/, ""), card: cardOpts });
+    } else if (window.EEPHUS_HUB) {
+      window.EEPHUS_HUB.shareCard(cardOpts);
+    }
   });
 }
 
@@ -1226,6 +1326,9 @@ function renderPitchTypeStuff(pitcher) {
     .sort((a, b) => b.pitch_count - a.pitch_count);
 
   if (!rows.length) {
+    if (pitchDataLoading(pitcher.year)) {
+      return `<div class="chart-empty">Loading ${pitcher.year} pitch data&hellip;</div>`;
+    }
     return `<div class="chart-empty">No pitch mix values available for this pitcher.</div>`;
   }
 
@@ -1539,8 +1642,11 @@ function availablePlayerYears(pitcher) {
 }
 
 function renderYearSelect(years = state.availableYears) {
+  // While a lazily fetched season's pitch table is still in flight the toggle
+  // shows a loading state; the onload repaint clears it.
+  const loading = pitchDataLoading(state.year);
   return `
-    <select class="select-box year-select" aria-label="Select season">
+    <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} pitch data"` : ""}>
       ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
     </select>
   `;

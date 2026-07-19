@@ -7,8 +7,120 @@ SITE_MAP.md, DATA_SOURCES.md) are NOT logged here on regeneration, only when
 their generator changes behavior.
 
 Companion ledgers: docs/audit-2026-07/AUDIT_FINDINGS.md (findings +
-pre-registered experiment gates), REVIEW_QUEUE.md (deferred work),
-BETA_READINESS.md (go/no-go).
+pre-registered experiment gates), docs/audit-2026-07-18/FINDINGS.md (fresh
+audit), REVIEW_QUEUE.md (deferred work), BETA_READINESS.md (go/no-go).
+
+## 2026-07-18 (fresh audit fixes + Generate-GFX overhaul & site-wide rollout + eFV improvement sweep)
+
+Owner-directed pass: a fresh 8-lane adversarial audit of the least-recently-audited
+surfaces (the 07-16/17 payload+export surge, draft-night, statcast process-pool,
+FA wave-2, prospx frontend, module JS), a Generate-GFX overhaul + rollout to every
+module, and a pre-registered eFV improvement sweep. Full ledger:
+docs/audit-2026-07-18/FINDINGS.md; GFX design: docs/generate-gfx.md; eFV gates +
+results: docs/efv-2026-07-18/GATES.md. (CHANGELOG note: the 07-16/17 owner commits
+- payload slimming, DB repairs, injury/reliever directives, FA wave-2, draft
+ingestion - landed without their own stanzas; see `git log 6c11abb..` for that span.)
+
+### Audit fixes (safe correctness / dead-code / display; no published-number model change)
+- A1 (payload/perf): the debuts_full per-player shard path was dead - prospx read
+  DATA._slices.debuts_full but storage advertises it under _slices_dir, so every
+  graduate card fell back to the full debuts monolith (defeating the 07-16 sharding).
+  Routed the JS through _slices_dir.debuts_full, and added /data/debuts_full/*** to
+  the nightly rsync + CI staging (shipped by neither before).
+- A2 (prospx display): farm-detail showed two different eFV grades for one player -
+  the graded-by-level list + _rosterGrade sort + farm-compare top-prospect used the
+  raw xfv_grade; the affiliate table used the quantile headline. All routed through
+  efvGradeDisplay/efvRankValue (the raw->quantile map is non-monotone).
+- A3 (prospx feature): Chase% was dead on ~8 surfaces (statcast strip, outlier/ribbon
+  chips, actives sort, SC+ JS fallback, watch card, compare cart) - the JS read
+  z.chase_pct but zone rows serialize o_swing_pct. Backfill chase_pct from o_swing_pct
+  on every zone row at boot (_normalizeZoneChase).
+- A4 (GFX engine): eephus-gfx.js indexed row cells by filtered column position after
+  dropping wideOnly columns, shifting later cells when a wideOnly column is
+  non-trailing (FA specs) - Deal WAR printed under the Surplus header on narrow
+  formats. Preserve original column indices.
+- A5 (FA nav): future-class views dropped the class= hash param on player/rail links.
+- A6 (hub nav): the hub strip's "MLB Projections" chip fired for never-debuted
+  prospects (dead-end); player_links now tags projection-universe players proj:true.
+- A7 (prospx display): WAG list pills recomputed client-side and disagreed with the
+  server-baked eFV-basis regressed_wag; prefer the baked value when present.
+- A8 (statcast ops): pass-3 swallowed worker/pool failures silently - a BrokenProcess
+  Pool could stale hundreds of rows in a "success" run. Added a loud log.warning.
+- A9/A10/A12 (dead code): removed the shadowed _statcast_drivers in spotlights.py, the
+  dead renderTradeBoard() in trademachine.js, and the dead _GFX_SECTIONS map; fixed the
+  shared GFX modal dropping control changes made mid-render.
+- A11 (CollegeSavant): descending leaderboard sort floated missing values to the top;
+  nulls now sink last in both directions.
+- Deferred to owner (moves published numbers or needs the canonical DB - see FINDINGS
+  B1-B6): the debuted-player super_two dead-parameter, the 2026 draft team-pool
+  inflation claim, draft overperformers/simulate-slot edge cases, deeper statcast
+  spawn-hardening.
+
+### Generate-GFX overhaul (prospx) + site-wide rollout
+- prospx information pass: farm rows gained a top-prospect/count/avg-age meta line +
+  net surplus $M (were rank+letter only); injured rows show IL type + days (were
+  surplus $); overseas rows gained an OPS/ERA value (was blank); spotlights gained the
+  stat line + top driver; leaderboards gained the rolling-window label + PA/IP sample.
+- prospx layout pass: rows vertically centered (kills the short-list dead gap); footer
+  "+N more at eephus.io/prospx"; the header QR encodes the live section+filters deep
+  link; the farm snapshot now fires after its filters; card-pack minis show the value.
+- Shared engine: added the Tall 2:3 format, an optional footer legend, and the A4 fix.
+- Rollout - new Generate-GFX on Trade Machine (board + shareable deal card), MLB Stats
+  (REM+/Bullpen+/SEM+/HEM+/WPA leader boards), PAL (RP->SP & SP->RP boards),
+  Projections Accountability, FA Fits + Archive, and CollegeSavant (leaderboard board +
+  the share card upgraded to the format/theme/accent modal). eephus-gfx.js added to the
+  mlbstats/pal/collegesavant shells.
+
+### eFV improvement sweep (all five arms committed LOSSES - docs/efv-2026-07-18/GATES.md)
+- Pre-registered five arms against the shipped blend on the same forward-chained
+  protocol: E-FWDCAL (per-fold output calibration), E-RECENCY (recency-decay training
+  weights), E-IPCW (inverse-P(censoring) weights), E-STACK (OOF simplex stacker),
+  E-HURDLE (full-pool P(contributor)xE[WAR|debut] head). All FAIL both sides; the MAE
+  half of the dual gate does not close even with leakage-clean forward calibration - a
+  fourth independent confirmation the current matrix vintage is at its trainable-data
+  ceiling for pooled rank. One live-but-ungated signal noted for a future owner-signed
+  pre-registration: the hit hurdle head's +0.019 full-pool contributor-AUC. Artifact
+  data/xfv_improve_sweep_eval.json + registry row xfv_improve_sweep; no served numbers
+  changed (screen only).
+
+## 2026-07-15 (eFV 2024-fold unlock: governance re-runs + level_rank ship + label integrity)
+
+The owner-queued 2024-fold unlock (docs/efv-2026-07-15/GATES.md; gates
+pre-registered before any keep-alive ran). `_GOLDEN_XFV_SHA256` bumped for the
+matrix + feature ships below.
+
+- 2024-fold unlock: efv_dataset.DEBUT_YEARS widened to 2011-2024; 210 dated-2024
+  debuts enter as censored weight-0.333 rows (hit +91, pit +119). SCORED_YEARS
+  unchanged - the rows enrich existing fold training pools. New selftest
+  baselines: hit blend 0.3765 / pit 0.3028.
+- Governance discharged (F-SIDE S5 + the bucket-head rerun marker): E-ISO4-path,
+  M3, E-STUFF and BUCKET-AGE-HEAD all re-ran at the new vintage with their
+  registered gates and all FAIL on their original binding cells - every
+  calibration-line close stands; registry rows restamped. The BUCKET-AGE-HEAD
+  lab now lives in-repo at tools/bucket_age_head/ (was temp-dir only).
+- level_rank SHIPPED into the hitter lean set under the pre-registered LR-FRINGE
+  gate (t45 +0.0192 vs bar +0.015; pooled/within-tier at the 0.0011 identity
+  noise floor; resolved-target sensitivity agrees). Ledger
+  data/xfv_level_rank_fringe_eval.json + registry row xfv_level_rank_fringe;
+  test_efv_model pins updated.
+- Keep-alives honestly closed at the new vintage: pit elasticnet (+0.0033) and
+  pit residual-target (+0.0030) still under the +0.0046 bar; E-LEAN1 five all
+  fail at re-measured noise floors; M3 re-run also consumes the pit:ifa-shrink
+  and c6 keep-alives (pit:ifa +0.0068 under the +0.01 bar). Next new
+  information for all of them = resolved 2024+ cohorts.
+- Label integrity: career-terminal transactions (lifetime DEI ban / retirement,
+  raw player_transactions, no-later-activation rule) now resolve censored
+  debuted rows at the observed sum with weight 1.0 (Marcano no longer
+  extrapolates a season he is banned from playing; alu/kirilloff/pint/ridings
+  likewise) and unflag recent-bust retirees (weight 0.5 -> 1.0).
+- Debut re-fire guard (storage.auto_debut_player): a player with any debuted
+  snapshot no longer re-fires on veteran re-appearances (the ryan_vilade
+  class), and a detected date later than roster_status.mlb_debut_date is
+  clamped to the known true debut. New pins in test_auto_graduation.py. The
+  41 historical run-date-stamped rows are left for an owner-approved repair.
+- PROSPX Generate GFX prospect card: the hero badge label now tracks the badge
+  value (eFV / Provisional eFV / Consensus FV on true fallback) instead of
+  hardcoding "Consensus FV" over an eFV number.
 
 ## 2026-07-07 (pre-launch pass: models + deploy + freshness + cards + polish)
 

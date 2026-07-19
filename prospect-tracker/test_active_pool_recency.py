@@ -10,20 +10,13 @@ Skipped when data/timeseries.json hasn't been built yet (CI without a DB).
 """
 from __future__ import annotations
 
-import json
 from datetime import date
-from pathlib import Path
 
-import pytest
-
-TS = Path(__file__).resolve().parent / "data" / "timeseries.json"
 HARD_FV_STALE_YEARS = 2  # mirrors storage.export_timeseries_json (calendar-year basis)
 
-
-def _load():
-    if not TS.exists():
-        pytest.skip("data/timeseries.json not built")
-    return json.loads(TS.read_text(encoding="utf-8"))
+# Data access: the session-shared conftest.timeseries_doc fixture (one parse
+# of the ~65MB artifact per suite run, skip-if-missing preserved). Every test
+# below only READS the doc.
 
 
 def _latest(p):
@@ -39,28 +32,28 @@ def _latest_year(p):
         return None
 
 
-def test_no_aged_out_player_in_active_pool():
+def test_no_aged_out_player_in_active_pool(timeseries_doc):
     """No active prospect may have aged out of the recency ceiling: a grade in
     the current year or within HARD_FV_STALE_YEARS prior calendar years is
     required (no source update in 2+ calendar years = aged out)."""
-    d = _load()
+    d = timeseries_doc
     min_year = date.today().year - HARD_FV_STALE_YEARS
     aged = [(p["player_name"], _latest(p)) for p in d["players"]
             if (_latest_year(p) is not None and _latest_year(p) < min_year)]
     assert not aged, f"{len(aged)} aged-out players leaked into the active pool: {aged[:8]}"
 
 
-def test_no_graduated_player_in_active_pool():
-    """The active pool is current prospects only — no debuted/graduated players."""
-    d = _load()
+def test_no_graduated_player_in_active_pool(timeseries_doc):
+    """The active pool is current prospects only - no debuted/graduated players."""
+    d = timeseries_doc
     grad = [p["player_name"] for p in d["players"] if p.get("status") == "debuted"]
     assert not grad, f"{len(grad)} graduated players leaked into the active pool: {grad[:8]}"
 
 
-def test_farm_surplus_counts_active_only():
-    """Each org's active-surplus count never exceeds its active prospect count —
+def test_farm_surplus_counts_active_only(timeseries_doc):
+    """Each org's active-surplus count never exceeds its active prospect count -
     surplus must roll up active prospects only, never stale/graduated value."""
-    d = _load()
+    d = timeseries_doc
     from collections import Counter
     active_by_org = Counter(p.get("org") for p in d["players"])
     for o in d["org_summary"]:
@@ -71,8 +64,8 @@ def test_farm_surplus_counts_active_only():
             "— non-active value leaking into farm surplus")
 
 
-def test_active_count_header_matches_players():
+def test_active_count_header_matches_players(timeseries_doc):
     """The stamped active_count equals the actual active player list length."""
-    d = _load()
+    d = timeseries_doc
     assert d.get("active_count") == len(d["players"]), (
         f"active_count header {d.get('active_count')} != players {len(d['players'])}")

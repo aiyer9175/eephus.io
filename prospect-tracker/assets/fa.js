@@ -217,8 +217,18 @@
     return `<span title="Option-pending - class membership is probabilistic until the option resolves. ${src}">${esc((m.type || "").replace(/_/g, " "))}${price}${pct}</span>`;
   }
 
+  // A5: in-module deep links (player cards, rail, value-map, back-to-board) must
+  // carry the active future-class param, or a click while a non-current winter is
+  // selected drops class= - syncFromURL then reloads the CURRENT class and the
+  // #player card is the wrong player or missing entirely. Prefixes the hash query
+  // (class first, matching syncToURL's canonical order) so every in-module jump
+  // stays in the same winter. Empty string on the default (current) class.
+  function faHash() {
+    return state.classYear ? `class=${state.classYear}&` : "";
+  }
+
   function playerLink(m) {
-    return `<a href="#player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
+    return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}" class="fa-player-link"><span class="fa-row-photo" data-photo-key="${esc(m.key || "")}"></span><strong>${esc(m.name)}</strong></a>`;
   }
 
   // Board-row headshots: filled async from the cross-module links map
@@ -420,6 +430,88 @@
     };
   }
 
+  // Board spec for the Generate GFX modal when the Team Fits view is active:
+  // the selected club's fit leaders (fit composite + its component scores +
+  // how many near-ETA prospects / MLB incumbents block the slot). Takes the
+  // already-sorted per-team list renderFits builds, so the graphic matches the
+  // on-screen ranking exactly.
+  function _faFitsBoardSpec(cls, meta, team, list) {
+    const yy = `${cls.class_year - 1}-${String(cls.class_year).slice(2)}`;
+    const t = (meta && meta.teams && meta.teams[team]) || {};
+    const vc = v => v === "value" ? "pos" : v === "overpay" ? "neg" : "muted";
+    const sc = v => v != null ? Number(v).toFixed(2) : "-";
+    const top = (list || []).slice(0, 50);
+    const rows = top.map(({ m, f }, i) => ({ cells: [
+      { t: i + 1 },
+      { t: m.name, sub: `${m.pos || ""} · ${m.age != null ? Math.floor(m.age) : "?"}` },
+      { t: f.fit != null ? f.fit.toFixed(2) : "-", c: "accent" },
+      { t: sc(f.need) },
+      { t: sc(f.window) },
+      { t: sc(f.afford) },
+      { t: sc(f.park) },
+      { t: sc(f.behavior) },
+      { t: (f.blockedBy && f.blockedBy.length) ? String(f.blockedBy.length) : "0", c: (f.blockedBy && f.blockedBy.length) ? "neg" : "muted" },
+      { t: (m.verdict || "-").toUpperCase(), c: vc(m.verdict) },
+    ] }));
+    return {
+      kind: "board", module: "MLB Free Agency", accentToken: "--accent-green",
+      title: `MLB Free Agency · ${team} Team Fits`,
+      subtitle: `${yy} class · ${top.length} scored fits · CBT payroll ${money(t.taxPayroll ?? t.committed)}${t.space != null ? ` · tax space ${formatMetric(t.space / 1e6, "surplusM")}` : ""}`,
+      url: "eephus.io/fa", filenameBase: `fa-team-fits-${team}-${yy}`,
+      caption: "team fit = who they can afford, need, and will actually sign - and who blocks the slot",
+      board: { defaultCount: 25, counts: [10, 25, 50], legend: "Fit = need/window/afford/park/behavior composite", columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.28 },
+        { label: "Fit", frac: 0.10 },
+        { label: "Need", frac: 0.08 },
+        { label: "Window", frac: 0.09 },
+        { label: "Afford", frac: 0.09 },
+        { label: "Park", frac: 0.07, wideOnly: true },
+        { label: "Behavior", frac: 0.09, wideOnly: true },
+        { label: "Blocked", frac: 0.08 },
+        { label: "Verdict", frac: 0.07, wideOnly: true },
+      ], rows },
+    };
+  }
+
+  // Board spec for the Generate GFX modal when the Archive view is active: the
+  // selected winter's signings ranked by realized surplus-to-date, with the
+  // realized WAR delivered so far as the accent column (the winter graded by
+  // what has actually happened, not projections).
+  function _faArchiveBoardSpec(w) {
+    const yy = `${w.year - 1}-${String(w.year).slice(2)}`;
+    const signings = (w.signings || []).slice().sort((a, b) => {
+      const av = a.surplusTd, bv = b.surplusTd;
+      if (av == null && bv == null) return 0;
+      if (av == null) return 1;
+      if (bv == null) return -1;
+      return bv - av;
+    }).slice(0, 50);
+    const rows = signings.map((s, i) => ({ cells: [
+      { t: i + 1 },
+      { t: s.name, sub: `${s.pos || ""} · ${s.from || "?"} → ${s.to || "?"}` },
+      { t: s.milb ? "MiLB deal" : `${s.years ?? "?"}y / ${money(s.guar)}` },
+      { t: s.warTd != null ? formatMetric(s.warTd, "war") : "-", c: "accent" },
+      { t: s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : "-", c: s.surplusTd == null ? "muted" : (s.surplusTd >= 0 ? "pos" : "neg") },
+      { t: s.done ? "complete" : (s.warTd != null ? "running" : "-"), c: "muted" },
+    ] }));
+    return {
+      kind: "board", module: "MLB Free Agency", accentToken: "--accent-green",
+      title: `MLB Free Agency · ${yy} Archive`,
+      subtitle: `${w.n} signings · ${money(w.spend_usd)} guaranteed · implied $/WAR ${money(w.dpw_usd)}`,
+      url: "eephus.io/fa", filenameBase: `fa-archive-${yy}`,
+      caption: "realized WAR and surplus to date - the winter graded by what actually happened",
+      board: { defaultCount: 25, counts: [10, 25, 50], legend: "realized through today", columns: [
+        { label: "#", frac: 0.05 },
+        { label: "Player", frac: 0.34 },
+        { label: "Yrs / Guar", frac: 0.18 },
+        { label: "WAR-to-date", frac: 0.14 },
+        { label: "Surplus", frac: 0.15 },
+        { label: "Status", frac: 0.14, wideOnly: true },
+      ], rows },
+    };
+  }
+
   // Blocked-by chips: WHO and WHAT KIND ('prospect' = PROSPX near-ETA,
   // 'mlb' = a contracted incumbent already producing at the slot).
   function blockedText(blockedBy) {
@@ -473,7 +565,10 @@
     });
     const sHead = (label, key, title) => {
       const on = sortKey === key;
-      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
+      // a11y (matches the prospx/trademachine sort-header pattern): keyboard
+      // reachable, announced as a button, live sort state on aria-sort.
+      const ariaSort = on ? (boardState.dir < 0 ? "descending" : "ascending") : "none";
+      return `<th class="fa-sort${on ? " is-sorted" : ""}" data-fsort="${key}" title="${esc(title || "Click to sort")}" tabindex="0" role="button" aria-sort="${ariaSort}">${label}${on ? (boardState.dir < 0 ? " ▾" : " ▴") : ""}</th>`;
     };
     const head = `<div class="newsprint-eyebrow" style="margin-top:4px;">
       <span class="newsprint-eyebrow-label">${cls.class_year - 1}-${String(cls.class_year).slice(2)} Class Board</span>
@@ -544,12 +639,20 @@
       <th><span data-gl="fit_components">Fits</span></th></tr></thead>
       <tbody>${body || '<tr><td colspan="12" style="padding:2rem;text-align:center;color:var(--text-tertiary);">No free agents match these filters.</td></tr>'}</tbody></table></div>
       ${boardRail(cls)}</div>`;
-    rows.querySelectorAll("[data-fsort]").forEach(h => h.onclick = () => {
-      const k = h.dataset.fsort;
-      if (boardState.sort === k) boardState.dir = -boardState.dir;
-      else { boardState.sort = k; boardState.dir = -1; }
-      renderBoard(rows, cls);
-      if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+    rows.querySelectorAll("[data-fsort]").forEach(h => {
+      const doSort = () => {
+        const k = h.dataset.fsort;
+        if (boardState.sort === k) boardState.dir = -boardState.dir;
+        else { boardState.sort = k; boardState.dir = -1; }
+        renderBoard(rows, cls);
+        if (window.EEPHUS_GL) window.EEPHUS_GL.wire(rows);
+      };
+      h.onclick = doSort;
+      // Enter/Space sort from the keyboard; preventDefault stops Space from
+      // scrolling the page (same contract as the prospx sort headers).
+      h.onkeydown = (e) => {
+        if (e.key === "Enter" || e.key === " " || e.key === "Spacebar") { e.preventDefault(); doSort(); }
+      };
     });
     rows.querySelectorAll("[data-ffilter]").forEach(b => b.onclick = () => {
       boardState[b.dataset.ffilter] = b.dataset.fval;
@@ -590,7 +693,7 @@
     const dots = pts.map(m => {
       const x = px(m.projGuar / 1e6), y = py(m.rational / 1e6);
       const c = vcol[m.verdict] || "var(--text-tertiary)";
-      return `<a href="#player=${encodeURIComponent(m.key || "")}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${c}" fill-opacity="0.72" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - price ${money(m.projGuar)} · value ${money(m.rational)} · ${m.verdict || "?"}</title></circle></a>`;
+      return `<a href="#${faHash()}player=${encodeURIComponent(m.key || "")}"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="${c}" fill-opacity="0.72" stroke="${c}" stroke-width="0.5"><title>${esc(m.name)} - price ${money(m.projGuar)} · value ${money(m.rational)} · ${m.verdict || "?"}</title></circle></a>`;
     }).join("");
     return `<svg viewBox="0 0 ${W} ${H}" class="fa-valmap-svg" role="img" aria-label="Rational value versus predicted price scatter">
       <text x="${PAD}" y="20" font-size="11" font-weight="700" fill="var(--text-secondary)">${pts.length} priced free agents · above the line = value, below = overpay</text>
@@ -602,12 +705,47 @@
     </svg>`;
   }
 
+  // FA $/WAR by winter as a compact inline line chart: the full signings-implied
+  // series in one glance (the old six text rows truncated it and hid the shape -
+  // the gradual climb and the 2024 dip read instantly here). Local SVG style:
+  // var() tokens only (correct in both themes), endpoint value labels, first and
+  // last winter ticks, an invisible fat hit target per point for hover tooltips.
+  function dpwTrendChart(series, yrs) {
+    const pts = yrs.map(y => ({ y, v: Number(series[y]) })).filter(p => Number.isFinite(p.v));
+    if (pts.length < 2) return "";
+    const W = 220, H = 74, PT = 13, PB = 13, PL = 5, PR = 5;
+    const vs = pts.map(p => p.v);
+    let lo = Math.min(...vs), hi = Math.max(...vs);
+    const span = (hi - lo) || 1;
+    lo -= span * 0.08; hi += span * 0.08;
+    const x = i => PL + i * (W - PL - PR) / (pts.length - 1);
+    const y = v => PT + (hi - v) * (H - PT - PB) / (hi - lo);
+    const winter = yr => `${Number(yr) - 1}-${String(yr).slice(2)}`;
+    const line = pts.map((p, i) => `${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join(" ");
+    const dots = pts.map((p, i) => i === pts.length - 1
+      ? `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.6" fill="var(--accent-gold)"/>`
+      : `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="1.5" fill="var(--accent-gold)" fill-opacity="0.75"/>`).join("");
+    const hits = pts.map((p, i) =>
+      `<circle cx="${x(i).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="7" fill="transparent"><title>${winter(p.y)} winter: ${money(p.v)}/WAR</title></circle>`).join("");
+    const first = pts[0], last = pts[pts.length - 1];
+    const firstLbl = `<text x="${PL}" y="${Math.max(8, y(first.v) - 5).toFixed(1)}" font-size="8" fill="var(--text-tertiary)">${money(first.v)}</text>`;
+    const lastLbl = `<text x="${W - PR}" y="${Math.max(8, y(last.v) - 6).toFixed(1)}" text-anchor="end" font-size="9" font-weight="700" fill="var(--text-secondary)">${money(last.v)}</text>`;
+    return `<svg viewBox="0 0 ${W} ${H}" style="display:block;width:100%;height:auto;margin:4px 0 0;" role="img"
+      aria-label="FA dollars per WAR by winter, ${winter(first.y)} through ${winter(last.y)}: ${money(first.v)} to ${money(last.v)}">
+      <line x1="${PL}" y1="${H - PB + 3}" x2="${W - PR}" y2="${H - PB + 3}" stroke="var(--border-light)" stroke-width="1"/>
+      <polyline points="${line}" fill="none" stroke="var(--accent-gold)" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}${firstLbl}${lastLbl}${hits}
+      <text x="${PL}" y="${H - 2}" font-size="8" fill="var(--text-tertiary)">${winter(first.y)}</text>
+      <text x="${W - PR}" y="${H - 2}" text-anchor="end" font-size="8" fill="var(--text-tertiary)">${winter(last.y)}</text>
+    </svg>`;
+  }
+
   // Market-pulse rail beside the board: best values, biggest projected
   // overpays, class supply by position group, the $/WAR trend.
   function boardRail(cls) {
     const proj = cls.members.filter(m => m.projGuar != null);
     const railRow = m => `<div class="fa-rail-row">${teamLogo(m.from)}
-      <a class="fa-player-link" href="#player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
+      <a class="fa-player-link" href="#${faHash()}player=${encodeURIComponent(m.key || "")}">${esc(m.name)}</a>
       <span class="fa-rail-num">${surplusSpan(m.surplus)}</span></div>`;
     const values = proj.filter(m => m.verdict === "value")
       .sort((a, b) => (b.surplus || 0) - (a.surplus || 0)).slice(0, 6);
@@ -627,7 +765,9 @@
     const meta = D.fa_meta || {};
     const series = ((meta.dpw_series || {}).usd_per_war_by_winter) || {};
     const yrs = Object.keys(series).sort();
-    const trend = yrs.slice(-6).map(y =>
+    // Chart of the FULL series (hover any point for its winter + $/WAR);
+    // falls back to the old text rows if there are too few points for a line.
+    const trend = dpwTrendChart(series, yrs) || yrs.slice(-6).map(y =>
       `<div class="fa-rail-row"><span>${Number(y) - 1}-${String(y).slice(2)}</span><span class="fa-rail-num">${money(series[y])}</span></div>`).join("");
     const mod = (title, body, tip) => body
       ? `<div class="fa-rail-mod"><div class="fa-rail-head" title="${esc(tip || "")}">${title}</div>${body}</div>` : "";
@@ -692,7 +832,7 @@
       const label = e.type === "option_declined" ? `declines option${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - enters class`
         : e.type === "option_exercised" ? `option exercised${e.optPrice ? " (" + money(e.optPrice) + ")" : ""} - off the board`
         : e.type === "qo_offered" ? "receives qualifying offer" : esc(e.type);
-      return `<tr><td>${e.date}</td><td><a href="#player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
+      return `<tr><td>${e.date}</td><td><a href="#${faHash()}player=${encodeURIComponent(e.key || "")}" class="fa-player-link"><strong>${esc(e.name || e.key || "")}</strong></a> <span class="fa-sub">${esc(e.pos || "")}</span></td><td>${label}</td></tr>`;
     }).join("");
     const remaining = cls.members.filter(m => m.status !== "signed" && m.status !== "option_exercised" && m.projGuar != null).slice(0, 10);
     const trackerGfx = scored.length
@@ -734,7 +874,7 @@
   function renderPlayer(rows, cls, key) {
     const m = cls.members.find(x => x.key === key);
     if (!m) {
-      rows.innerHTML = `<div class="state-message">No class member &ldquo;${esc(key)}&rdquo;. <a href="#view=board">Back to the board</a>.</div>`;
+      rows.innerHTML = `<div class="state-message">No class member &ldquo;${esc(key)}&rdquo;. <a href="#${faHash()}view=board">Back to the board</a>.</div>`;
       return;
     }
     const band = (v, p10, p90, fmt) => v == null ? EM_DASH
@@ -777,7 +917,7 @@
       ${m.projGuar != null ? money(m.projGuar) + " predicted guarantee" : "constructed class row"} &middot;
       <a href="/prospx/#player=${encodeURIComponent(m.key)}">full prospect page &rarr;</a></p>` : "";
     rows.innerHTML = `
-      <p><a href="#view=board">&larr; Class Board</a></p>
+      <p><a href="#${faHash()}view=board">&larr; Class Board</a></p>
       <div id="fa-hub"></div>
       <div class="mlbp-hero" id="fa-player-hero">
         <span id="fa-hero-photo"></span>
@@ -909,9 +1049,11 @@
     const blockedLine = (t.blocked || []).length
       ? `<div class="fa-note" title="Positions this club is NOT shopping at - the needs matrix found a blocker. MLB = a contracted incumbent producing at the slot a signing would displace; PX = a near-ETA PROSPX prospect (FV ≥ 50).">Not buying: ${t.blocked.map(b =>
           `<span class="fa-block fa-block-${b.t}">${esc(b.pos)} - ${esc(b.n)}${b.w != null ? ` (${formatMetric(b.w, "war")} WAR)` : ""}<i>${b.t === "mlb" ? "MLB" : "PX"}</i></span>`).join(" ")}</div>` : "";
+    const fitsGfx = (window.EEPHUS_GFX && list.length)
+      ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-fits-gfx")}` : "";
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Team</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${teamLogo(state.team)}${state.team} fits</span>
-      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}</span></div>
+      <span class="newsprint-eyebrow-meta">CBT payroll ${money(t.taxPayroll ?? t.committed)} &middot; tax space ${t.space != null ? formatMetric(t.space / 1e6, "surplusM") : EM_DASH}${t.payor ? ` &middot; ${esc(t.payor)}` : ""} &middot; baseline ${t.baseWins ?? "?"}w (contracted core) &middot; biggest deal ever ${money(t.maxGuar)} &middot; last-3-winter outlay ${money(t.recentSpend)}${fitsGfx}</span></div>
       ${blockedLine}
       <table class="detail-table fa-fits-table">
       <thead><tr><th>Player</th><th>Fit</th><th title="Displacement WAR gap at the position (CAN they upgrade here)">Need</th><th title="Marginal playoff leverage at the club's baseline wins">Window</th><th title="CBT space vs the predicted AAV - habitual taxpayers keep a documented floor">Afford</th><th title="Park factor alignment (deliberately the smallest weight - a tiebreaker, not a driver)">Park</th><th title="WILL they spend: biggest deal ever vs this price, recent 3-winter outlay, $100M-deal participation">Behavior</th><th title="WHO blocks the position: PX = PROSPX prospect (near ETA), MLB = contracted incumbent producing at the displaced slot">Blocked by</th><th>Predicted</th><th>Verdict</th></tr></thead>
@@ -919,6 +1061,10 @@
     rows.querySelectorAll("[data-fa-team]").forEach(b => b.onclick = () => {
       state.team = b.dataset.faTeam; syncToURL(); render();
     });
+    const fgfx = document.getElementById("fa-fits-gfx");
+    if (fgfx) fgfx.onclick = () => {
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faFitsBoardSpec(cls, meta, state.team, list));
+    };
   }
 
   function renderArchive(rows) {
@@ -942,15 +1088,21 @@
         <td title="Realized surplus to date: WAR delivered x that season's estimated $/WAR minus prorated money paid">${s.surplusTd != null ? formatMetric(s.surplusTd / 1e6, "surplusM") : EM_DASH}</td>
         <td>${s.done ? "complete" : (s.warTd != null ? "running" : EM_DASH)}</td>
       </tr>`).join("");
+    const arcGfx = (window.EEPHUS_GFX && w.signings.length)
+      ? ` &middot; ${window.EEPHUS_GFX.chipHTML("fa-archive-gfx")}` : "";
     rows.innerHTML = `<div class="filter-bar"><span class="filter-label">Winter</span>${chips}</div>
       <div class="newsprint-eyebrow" style="margin-top:2px;"><span class="newsprint-eyebrow-label">${state.winter - 1}-${String(state.winter).slice(2)} winter</span>
-      <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${money(w.spend_usd)} guaranteed &middot; implied $/WAR ${money(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}</span></div>
+      <span class="newsprint-eyebrow-meta">${w.n} signings &middot; ${money(w.spend_usd)} guaranteed &middot; implied $/WAR ${money(w.dpw_usd)}${w.qo_offered != null ? ` &middot; ${w.qo_offered} qualifying offers` : ""}${arcGfx}</span></div>
       <table class="detail-table">
       <thead><tr><th>Player</th><th title="From = the club holding his rights AT signing - a midseason rental shows the acquiring club, not the team he opened the year with.">From &rarr; To</th><th>Yrs</th><th>Guarantee</th><th>AAV</th><th>WAR to date</th><th>Surplus to date</th><th>Status</th></tr></thead>
       <tbody>${body}</tbody></table>`;
     rows.querySelectorAll("[data-fa-winter]").forEach(b => b.onclick = () => {
       state.winter = Number(b.dataset.faWinter); syncToURL(); render();
     });
+    const agfx = document.getElementById("fa-archive-gfx");
+    if (agfx) agfx.onclick = () => {
+      if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(_faArchiveBoardSpec(w));
+    };
   }
 
   function renderModel(rows, meta) {

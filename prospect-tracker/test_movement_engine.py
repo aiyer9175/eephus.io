@@ -22,19 +22,24 @@ These exercise every user-supplied example from the 2026-05 overhaul:
 
 from __future__ import annotations
 
-import json
+import functools
 import unittest
-from pathlib import Path
 
 from spotlights import compute_movement
 
-TS_PATH = Path(__file__).parent / "data" / "timeseries.json"
 
-
+@functools.lru_cache(maxsize=1)
 def _load_players():
-    if not TS_PATH.exists():
+    # Session-shared parse via conftest.load_data_doc (one json.load of the
+    # ~65MB artifact per run instead of one per setUpClass), plus lru_cache
+    # so the per-name dedupe below runs once. Consumers only READ the shared
+    # payload (compute_movement is read-only on it - it copies driver dicts
+    # before annotating), so sharing one object is safe. The conftest import
+    # resolves both under pytest and standalone (script dir is on sys.path).
+    from conftest import load_data_doc
+    d = load_data_doc("timeseries.json")
+    if d is None:
         raise unittest.SkipTest("data/timeseries.json not present")
-    d = json.loads(TS_PATH.read_text(encoding="utf-8"))
     # The data file occasionally carries duplicate entries for the same
     # player name (e.g. `bryce_rainer` + `bryce_rainer__noid`). Prefer
     # the canonical key (no `__noid` suffix) so test fixtures pick the

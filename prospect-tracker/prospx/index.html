@@ -8536,9 +8536,9 @@
       <div class="eephus-nav-menu" role="menu">
         <a href="/fa/" role="menuitem">Free Agency</a>
         <a href="/projections/" role="menuitem">Projections</a>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">MLB Stats</span>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Pitcher Alchemy Lab</span>
-        <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Trade Machine</span>
+        <a href="/mlbstats/" role="menuitem">MLB Stats</a>
+        <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
+        <a href="/trademachine/" role="menuitem">Trade Machine</a>
       </div>
     </details>
     <a href="/articles/">Articles</a>
@@ -8843,6 +8843,7 @@
       <div class="filter-group">
         <span class="filter-label">Position</span>
         <button class="chip active" data-filter-pos="all">All</button>
+        <button class="chip" data-filter-pos="H" title="Any position player - C / IF / OF / DH">H</button>
         <button class="chip" data-filter-pos="C">C</button>
         <button class="chip" data-filter-pos="1B">1B</button>
         <button class="chip" data-filter-pos="2B">2B</button>
@@ -8944,8 +8945,8 @@
         <span class="filter-label">Sort</span>
         <select class="chip" id="sort-select">
           <optgroup label="Grade">
-            <option value="fv">Consensus FV</option>
             <option value="xfv">eFV (our outcome-grounded grade)</option>
+            <option value="fv">Consensus FV</option>
             <option value="xfv_delta">eFV − consensus gap (biggest first)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
@@ -10042,14 +10043,11 @@
 
 </template>
 
-<!-- html2canvas - vendored locally (~200KB). Powers the "Share as image"
-     buttons on prospect / farm / leaderboard / chart-builder surfaces.
-     Loaded async so it doesn't block first paint; the export helper
-     gates on `window.html2canvas` being defined before firing. -->
-<script src="/vendor/html2canvas.min.js?v=20260709" defer></script>
-<!-- qrcode-generator (vendored, ~56KB) - builds the optional QR in the GFX card
-     header that links a shared graphic back to the eephus.io prospect/farm page. -->
-<script src="/vendor/qrcode.min.js?v=20260709" defer></script>
+<!-- v47 wire-slim - html2canvas (~200KB parse) and qrcode-generator (~56KB) are
+     no longer loaded eagerly on every cold visit. The GFX/export paths lazy-
+     inject them on first use (_ensureHtml2Canvas / _ensureQrcodeLib in the app
+     script; eephus-export.js keeps its own private html2canvas loader). -->
+
 <!-- Universal copy/export: a quiet chip on every table + chart (text formats +
      branded image). Self-contained; lazy-loads html2canvas for image export. -->
 <script src="/assets/eephus-export.js?v=20260709" defer></script>
@@ -10341,9 +10339,16 @@ function wireThemeToggle() {
 // HISTORICAL per-source tool grades moved to data/player_detail/{key}.json
 // (lazy-merged on card open; see _ensurePlayerDetail). Sidecar JSONs
 // fetched on demand:
-//   - debuts.json          when the user opens the Graduates tab
+//   - debuts_lite.json     when the user opens the Graduates tab (list
+//                          fields only; see ensureDebutsLite)
+//   - debuts_full/{key}.json  ONE graduate's full record, on his card open
+//                          (ensureDebutFullFor; falls back to the monolith)
+//   - debuts.json          full graduate records - Time Machine, debuted
+//                          chart (ensureDebutsFull)
 //   - inactive.json        when the user opens the Inactive view
 //   - rosters_by_org.json  when the user opens any farm-detail page
+//   - scout_reports_<i>.json  the player's hash chunk, on first card open
+//                          (ensureScoutReports)
 //
 // The boot file advertises sidecars via `_slices`. We default-fill the
 // arrays with [] so first-paint render code that walks DATA.debuts
@@ -10463,6 +10468,218 @@ function loadSlice(name) {
     })
     .finally(() => { delete _sliceInFlight[name]; });
   return _sliceInFlight[name];
+}
+
+// Versioned sidecar URL for a bare data-dir filename (same ?v= cache-bust +
+// force-cache pattern as loadSlice).
+function _sliceUrl(file) {
+  const base = DATA_URL.replace(/[^/]+$/, "");
+  const v = DATA && DATA.generated_at
+    ? `?v=${encodeURIComponent(DATA.generated_at)}`
+    : "";
+  return { url: base + file + v, opts: { cache: v ? "force-cache" : "no-cache" } };
+}
+
+// v47 wire-slim - inactive.json left the idle warm (see the boot IIFE).
+// The surfaces that read DATA.inactive opportunistically (farm-detail
+// transaction history, the Transactions tab's trade-audit vet lookup) fire
+// a NON-BLOCKING enrichment load instead; this one-shot flag stops a
+// failed fetch from being retried on every re-render.
+let _inactiveEnrichKicked = false;
+
+// v46 payload-slim - the debuts slice ships two ways:
+//   debuts_lite.json  list-render fields only (Graduates tab rows, context
+//                     rail cards, farm graduates, trade-audit vet lookup).
+//   debuts.json       the full monolith - fetched only where the whole
+//                     record matters: a graduate's card, the Time Machine,
+//                     and the debuted chart mode.
+// DATA.debuts holds whichever is loaded; DATA._debutsFull flips true once
+// the full rows are merged. The full merge happens IN PLACE (Object.assign
+// onto the lite row) so references held by row caches stay valid.
+let _debutsLiteInFlight = null;
+let _debutsFullInFlight = null;
+function ensureDebutsLite() {
+  if (!DATA || !DATA._slices) return Promise.resolve();
+  if (DATA._debutsFull || (DATA.debuts || []).length) return Promise.resolve();
+  // Older export without the lite sidecar: fall back to the monolith.
+  if (!DATA._slices.debuts_lite) return ensureDebutsFull();
+  if (_debutsLiteInFlight) return _debutsLiteInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts_lite);
+  _debutsLiteInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(rows => {
+      // The full slice may have landed while this was in flight - never
+      // downgrade full rows back to lite ones.
+      if (!DATA._debutsFull && !((DATA.debuts || []).length) && Array.isArray(rows)) {
+        DATA.debuts = rows;
+      }
+    })
+    .catch(err => { console.warn("debuts_lite fetch failed:", err); })
+    .finally(() => { _debutsLiteInFlight = null; });
+  return _debutsLiteInFlight;
+}
+function ensureDebutsFull() {
+  if (!DATA) return Promise.resolve();
+  if (DATA._debutsFull) return Promise.resolve();
+  if (!DATA._slices || !DATA._slices.debuts) {
+    // Legacy monolithic export - debuts are already inline on DATA.
+    DATA._debutsFull = true;
+    return Promise.resolve();
+  }
+  if (_debutsFullInFlight) return _debutsFullInFlight;
+  const { url, opts } = _sliceUrl(DATA._slices.debuts);
+  _debutsFullInFlight = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(full => {
+      if (!Array.isArray(full)) return;
+      const byKey = new Map((DATA.debuts || [])
+        .filter(g => g && g.player_key)
+        .map(g => [g.player_key, g]));
+      DATA.debuts = full.map(f => {
+        const lite = f && byKey.get(f.player_key);
+        if (!lite) return f;
+        Object.assign(lite, f);
+        delete lite._lite;
+        // Re-merge player_detail against the full points history (the
+        // lite row may have merged the shard against its stub points).
+        delete lite.__detailMerged;
+        return lite;
+      });
+      DATA._debutsFull = true;
+      DATA._tmDates = null;   // grads add earlier snapshot dates
+      DATA._tmByKey = null;   // rebuild the key -> player map with full rows
+    })
+    .catch(err => { console.warn("debuts slice fetch failed:", err); })
+    .finally(() => { _debutsFullInFlight = null; });
+  return _debutsFullInFlight;
+}
+
+// v47 wire-slim - per-graduate full shard. Opening ONE graduate's card used
+// to pull the entire debuts.json monolith (~9MB gzip); storage.py now emits
+// data/debuts_full/{player_key}.json (advertised via _slices_dir.debuts_full,
+// value = the directory prefix) carrying that player's complete record.
+// Fetch just the shard and merge it IN PLACE onto the lite row (the same
+// Object.assign contract as the monolith merge above, so references held by
+// row caches stay valid). Any failure - an old cached payload without the
+// contract, a missing shard, a malformed body, a network error - falls back
+// to ensureDebutsFull so nothing regresses. Time Machine and the debuted
+// chart mode keep using the monolith (they need EVERY full row).
+const _debutShardInFlight = {};
+function _debutRowIsFull(playerKey) {
+  if (!DATA) return false;
+  if (DATA._debutsFull) return true;
+  const row = (DATA.debuts || []).find(g => g && g.player_key === playerKey);
+  return !!(row && !row._lite);
+}
+function ensureDebutFullFor(playerKey) {
+  if (!DATA || !playerKey) return Promise.resolve();
+  if (_debutRowIsFull(playerKey)) return Promise.resolve();
+  // AUDIT 2026-07-18 (A1): debuts_full per-player shards are advertised under
+  // _slices_dir (a directory prefix), like pitch_plots/player_detail -- NOT under
+  // _slices. Reading _slices.debuts_full was always undefined, so this shard path
+  // never fired and every graduate card fell back to the full debuts monolith,
+  // defeating the payload-diet sharding. Read the dir prefix instead.
+  if (!DATA._slices_dir || !DATA._slices_dir.debuts_full) return ensureDebutsFull();
+  if (_debutShardInFlight[playerKey]) return _debutShardInFlight[playerKey];
+  // Lite rows first, so the shard has a row to merge onto (a deep link can
+  // land here before the idle warm has pulled debuts_lite).
+  _debutShardInFlight[playerKey] = ensureDebutsLite()
+    .then(() => {
+      // The monolith may have landed while lite was in flight.
+      if (_debutRowIsFull(playerKey)) return null;
+      const { url, opts } =
+        _sliceUrl(`${DATA._slices_dir.debuts_full}${encodeURIComponent(playerKey)}.json`);
+      return fetch(url, opts);
+    })
+    .then(r => {
+      if (r === null) return null;
+      if (!r.ok) throw new Error(`HTTP ${r.status}`);
+      return r.json();
+    })
+    .then(full => {
+      if (full === null) return;   // row already full; nothing fetched
+      if (!full || typeof full !== "object" || !full.player_key) {
+        // Malformed shard - throw into the catch so the monolith covers it.
+        throw new Error("malformed debut shard");
+      }
+      const lite = (DATA.debuts || []).find(g => g && g.player_key === full.player_key);
+      if (lite) {
+        Object.assign(lite, full);
+        delete lite._lite;
+        // Same contract as the monolith merge: the shard carries the full
+        // points history, so player_detail must re-merge against it.
+        delete lite.__detailMerged;
+      } else {
+        // No lite row to merge onto (the lite fetch failed, or the export
+        // is inconsistent). Do NOT push a lone row - a 1-row DATA.debuts
+        // would fool ensureDebutsLite's already-loaded guard and the
+        // Graduates-tab gate into treating the list as complete. Throw so
+        // the catch falls back to the monolith, which rebuilds the whole
+        // list consistently.
+        throw new Error("no lite row for debut shard");
+      }
+    })
+    .catch(err => {
+      console.warn("debut shard fetch failed, falling back to monolith:", playerKey, err);
+      return ensureDebutsFull();
+    })
+    .finally(() => { delete _debutShardInFlight[playerKey]; });
+  return _debutShardInFlight[playerKey];
+}
+
+// v46 payload-slim - scout reports ship in a fixed number of hash chunks
+// (advertised via boot._slices_chunked.scout_reports) so opening one card
+// pulls ~1/8th of the old 28MB monolith. Chunk index = sum of the player
+// key's char codes mod the chunk count - mirrored in storage.py; keep the
+// two in lockstep. Loaded chunks merge into the same DATA.scout_reports
+// map every reader already uses. Falls back to the single-file slice for
+// exports predating the contract.
+const _scoutChunksLoaded = {};
+const _scoutChunkInFlight = {};
+function _scoutChunkContract() {
+  const c = DATA && DATA._slices_chunked && DATA._slices_chunked.scout_reports;
+  return (c && c.prefix && c.chunks > 0) ? c : null;
+}
+function _scoutChunkOf(playerKey, nChunks) {
+  const s = String(playerKey || "");
+  let sum = 0;
+  for (let i = 0; i < s.length; i++) sum = (sum + s.charCodeAt(i)) % nChunks;
+  return sum;
+}
+// True when the data needed for this player's reports is already on DATA
+// (the player's chunk, the whole monolith, or a legacy inline payload).
+function scoutReportsReadyFor(playerKey) {
+  const c = _scoutChunkContract();
+  if (c) return !!_scoutChunksLoaded[_scoutChunkOf(playerKey, c.chunks)];
+  return !!DATA.scout_reports || !(DATA._slices && DATA._slices.scout_reports);
+}
+function ensureScoutReports(playerKey) {
+  const c = _scoutChunkContract();
+  if (!c) {
+    // Older export: single-file sidecar (or legacy inline payload).
+    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
+      return loadSlice("scout_reports");
+    }
+    return Promise.resolve();
+  }
+  const idx = _scoutChunkOf(playerKey, c.chunks);
+  if (_scoutChunksLoaded[idx]) return Promise.resolve();
+  if (_scoutChunkInFlight[idx]) return _scoutChunkInFlight[idx];
+  const { url, opts } = _sliceUrl(`${c.prefix}${idx}.json`);
+  _scoutChunkInFlight[idx] = fetch(url, opts)
+    .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.json(); })
+    .then(payload => {
+      if (!DATA.scout_reports) DATA.scout_reports = {};
+      Object.assign(DATA.scout_reports, payload || {});
+      _scoutChunksLoaded[idx] = true;
+    })
+    .catch(err => {
+      console.warn("scout reports chunk fetch failed:", idx, err);
+      // Mark loaded anyway so the render/fetch cycle can't loop on a 404.
+      _scoutChunksLoaded[idx] = true;
+    })
+    .finally(() => { delete _scoutChunkInFlight[idx]; });
+  return _scoutChunkInFlight[idx];
 }
 
 let _playerNewsLoaded = false;
@@ -11229,7 +11446,7 @@ let _POS_PLAYED = null;
   fetch("/data/positions_played.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _POS_PLAYED = (j && j.players) || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _POS_PLAYED = {}; });
 })();
 // Game-data versa list for a prospect (>= 10 G or >= 5 GS at each, most-played first);
@@ -11738,6 +11955,24 @@ function _toolGradeStripHTML(p) {
   return `<span class="expand-tools">${pills.join('')}</span>`;
 }
 
+// AUDIT 2026-07-18 (A3): the chase rate is serialized as `o_swing_pct` on zone
+// rows; `chase_pct` never existed on production payloads (statcast_plus.py:83-87),
+// which silently killed Chase% on the statcast strip, the outlier/ribbon chips,
+// the actives Chase% / Induced-chase% sorts, the SC+ JS fallback, the watch card
+// and the compare cart (all read z.chase_pct). Backfill chase_pct from o_swing_pct
+// on every zone row (root dict + per-level splits) so those o_swing_pct-blind reads
+// revive at once. Idempotent; safe to call on any pool as it hydrates.
+function _normalizeZoneChase(zm) {
+  if (!zm || typeof zm !== "object") return;
+  const fix = z => {
+    if (z && typeof z === "object" && z.chase_pct == null && z.o_swing_pct != null) {
+      z.chase_pct = z.o_swing_pct;
+    }
+  };
+  fix(zm);
+  if (Array.isArray(zm.level_splits)) zm.level_splits.forEach(fix);
+}
+
 // v29 - Advanced Statcast strip for expanded-density rows. Surfaces
 // the metrics the user can't see on Compact: HH% / EV / Barrel% (from
 // statcast_metrics.contact_quality) and Z-Contact% / Whiff% / Chase%
@@ -11823,6 +12058,14 @@ function _statcastStripHTML(p) {
 }
 
 function playerExpandedMetaHTML(p) {
+  // Expanded density was removed entirely (v31.9 pins the board to compact:
+  // body never gets .density-expanded, so `.player-row-expand { display:none }`
+  // has no enabler and this block could never be shown). Building it still ran
+  // five sub-renderers (Statcast strip / standout games / source agreement /
+  // career history / pitch arsenal) for every actives + watchlist + farm-roster
+  // row on the hottest render path - pure dead DOM. Short-circuit; the body
+  // below is kept for a future expanded-view revival.
+  return "";
   // v30.7 - Expanded density used to render TWO redundant tool strips
   // (the gold FV-tier chips from makeToolGradeChips PLUS this
   // function's _toolGradeStripHTML). Compact view already shows the
@@ -12856,7 +13099,14 @@ function renderDetailTabs(tabs, activeKey, dataKey) {
 // Encode current filter state into the URL hash so the view is shareable.
 // Detail pages get a dedicated `player=KEY` or `farm=ORG` hash param;
 // when set they take precedence over the list-page filters at render time.
+// compareSave/farmCompareSave mirror to the URL on every save; while
+// syncFromURL is mid-restore those re-entrant calls would stamp half-
+// restored state back into the hash. The flag makes syncToURL a no-op for
+// the duration of a URL read (state and the URL end consistent anyway -
+// we just read the URL).
+let _inSyncFromURL = false;
 function syncToURL(push) {
+  if (_inSyncFromURL) return;
   const p = new URLSearchParams();
   if (state.view && state.view.type === "player") p.set("player", state.view.key);
   else if (state.view && state.view.type === "farm") p.set("farm-org", state.view.org);
@@ -12977,7 +13227,13 @@ function syncToURL(push) {
   // matching detail page so other views don't carry an unused param.
   if (state.view && state.view.type === "player" && state.playerTab && state.playerTab !== "overview") p.set("ptab", state.playerTab);
   if (state.view && state.view.type === "farm"   && state.farmTab   && state.farmTab   !== "overview") p.set("ftab", state.farmTab);
-  if (state.view && state.view.type === "farm"   && state.farmCompareOrg) p.set("fcmp", state.farmCompareOrg);
+  // The farm-detail head-to-head picker rides its own `fco` param. It used
+  // to share `fcmp` with the farm compare CART (encoded further below, which
+  // overwrote this when non-empty), so a shared farm link injected the
+  // picker org into the cart and wiped the player compare cart on load.
+  // syncFromURL still reads legacy single-org `fcmp` farm links as the
+  // picker form for back-compat.
+  if (state.view && state.view.type === "farm"   && state.farmCompareOrg) p.set("fco", state.farmCompareOrg);
   if (state.view && state.view.type === "draftee" && state.prospectTab && state.prospectTab !== "overview") p.set("dttab", state.prospectTab);
   if (state.view && state.view.type === "overseas_player" && state.prospectTab && state.prospectTab !== "overview") p.set("ostab", state.prospectTab);
   // Pagination - only encoded when on a non-default page (page 1 = no
@@ -13008,8 +13264,15 @@ function syncToURL(push) {
 }
 
 // Read the URL hash and update state (called once on boot, and again on
-// hashchange so back/forward navigation works).
+// hashchange so back/forward navigation works). Wrapper sets the
+// re-entrancy flag (see syncToURL) around the body so the cart-restore
+// saves below can't rewrite the URL mid-read; try/finally keeps the flag
+// honest across the body's early returns.
 function syncFromURL() {
+  _inSyncFromURL = true;
+  try { _syncFromURLBody(); } finally { _inSyncFromURL = false; }
+}
+function _syncFromURLBody() {
   const hash = window.location.hash.slice(1);
   // Reset view first so navigating back from a detail page clears state.view.
   state.view = null;
@@ -13149,7 +13412,21 @@ function syncFromURL() {
   // shared URLs forward so they still land on the right panel.
   if (state.playerTab === "context") state.playerTab = "details";
   state.farmTab   = p.has("ftab") ? p.get("ftab") : "overview";
-  state.farmCompareOrg = p.has("fcmp") ? p.get("fcmp") : "";
+  // Farm head-to-head picker: new links carry `fco`. Back-compat for old
+  // shared links, where the picker was double-booked onto `fcmp` with the
+  // farm compare cart: a farm-detail link whose `fcmp` holds exactly ONE
+  // org (and no `fco`) is read as the legacy picker form - it restores the
+  // head-to-head compare and is NOT imported into the farm cart below, so
+  // it can no longer wipe the player cart or pollute the farm cart on
+  // load. (Old links could carry picker + player cart together, since the
+  // cart-side fcmp only overwrote the picker when the farm cart was
+  // non-empty - which mutual exclusivity rules out alongside cmp.)
+  const _fcmpParts = p.has("fcmp") ? p.get("fcmp").split(",").filter(Boolean) : [];
+  const _legacyPickerFcmp = !!(state.view && state.view.type === "farm"
+    && !p.has("fco") && _fcmpParts.length === 1);
+  state.farmCompareOrg = p.has("fco") ? p.get("fco")
+    : _legacyPickerFcmp ? _fcmpParts[0]
+    : "";
   if (!state.pages) state.pages = {};
   const _readPage = (k, key) => { state.pages[key] = p.has(k) ? Math.max(1, parseInt(p.get(k), 10) || 1) : 1; };
   _readPage("lbpage",  "leaderboard");
@@ -13163,19 +13440,34 @@ function syncFromURL() {
   _readPage("tbpage",  "tradeboard");
   // Shareable compare state. When both keys are present (stale link),
   // keep the longer list and clear the other - mutual exclusivity
-  // means at most one should be set going forward.
-  if (p.has("cmp") || p.has("fcmp")) {
+  // means at most one should be set going forward. A cart is only ever
+  // CLEARED when its own param is explicitly present (or it loses the
+  // both-present tiebreak): a link that simply doesn't mention a cart
+  // must not erase the local user's cart. Legacy single-org farm-detail
+  // `fcmp` links are the old head-to-head picker form and skip the cart
+  // restore entirely (handled above).
+  if (_legacyPickerFcmp) {
+    // Legacy farm-detail picker link: fcmp is the head-to-head org
+    // (restored above), NOT a cart. Still restore a player cart the link
+    // carries; leave both local carts otherwise untouched.
+    const cmpRaw = p.has("cmp") ? p.get("cmp").split(",").filter(Boolean).slice(0, COMPARE_MAX) : [];
+    if (cmpRaw.length) compareSave(cmpRaw);
+  } else if (p.has("cmp") || p.has("fcmp")) {
     const cmpRaw  = p.has("cmp")  ? p.get("cmp").split(",").filter(Boolean).slice(0, COMPARE_MAX) : [];
-    const fcmpRaw = p.has("fcmp") ? p.get("fcmp").split(",").filter(Boolean).slice(0, FARM_COMPARE_MAX) : [];
+    const fcmpRaw = _fcmpParts.slice(0, FARM_COMPARE_MAX);
     if (cmpRaw.length && fcmpRaw.length) {
       if (cmpRaw.length >= fcmpRaw.length) compareSave(cmpRaw), farmCompareSave([]);
       else compareSave([]), farmCompareSave(fcmpRaw);
     } else if (cmpRaw.length) {
       compareSave(cmpRaw);
-      farmCompareSave([]);
-    } else {
-      compareSave([]);
+      if (p.has("fcmp")) farmCompareSave([]);
+    } else if (fcmpRaw.length) {
       farmCompareSave(fcmpRaw);
+      if (p.has("cmp")) compareSave([]);
+    } else {
+      // Params present but empty - clear exactly the carts named.
+      if (p.has("cmp")) compareSave([]);
+      if (p.has("fcmp")) farmCompareSave([]);
     }
   }
 }
@@ -13767,6 +14059,13 @@ function levelStatlinesHTML(p, opts = {}) {
     const _lvlRank = { MLB: 7, AAA: 6, AA: 5, "A+": 4, A: 3, CPX: 2, DSL: 1 };
     const _dl = currentDisplayLevel(p);
     rows.sort((a, b) => {
+      if (opts.highestFirst) {
+        // v45 (owner): HIGHEST level first - a rehab assignment makes the
+        // "current" level a complex-league stint (Lombard CPX), which must
+        // not displace the real (highest) level's line on the list card.
+        return (_seasonOf(b) - _seasonOf(a))
+               || ((_lvlRank[b.level] || 0) - (_lvlRank[a.level] || 0));
+      }
       // current level first, then newest season, then highest level
       const ca = (_dl && a.level === _dl) ? 1 : 0, cb = (_dl && b.level === _dl) ? 1 : 0;
       return (cb - ca) || (_seasonOf(b) - _seasonOf(a))
@@ -13787,7 +14086,13 @@ function levelStatlinesHTML(p, opts = {}) {
       <span style="color:var(--text-primary);font-family:var(--font-mono);font-size:${compact ? "11px" : "12px"};white-space:nowrap;">${escapeHtml(formatLevelStatline(r))}</span>
     </span>`;
   });
-  if (displayLevel && !rows.some(r => r && r.level === displayLevel)) {
+  // "Stats pending" ghost row for a player promoted to a level with no stats
+  // on file yet. Suppressed under highestFirst when a real line is already
+  // shown - the shown HIGHEST-level line is the information; a pending chip
+  // for a rehab/complex stint would just re-add the second row the trim
+  // exists to remove.
+  if (displayLevel && !rows.some(r => r && r.level === displayLevel)
+      && !(opts.highestFirst && rows.length)) {
     pieces.unshift(`<span style="display:${compact ? "inline-flex" : "flex"};align-items:baseline;gap:5px;${compact ? "margin-right:8px;" : "margin-bottom:2px;"}min-width:0;" title="No current-season stats on file yet at ${escapeHtml(displayLevel)}">
       <span class="level-pill level-neutral" style="font-size:9px;padding:1px 5px;">${escapeHtml(displayLevel)}</span>
       <span style="color:var(--text-tertiary);font-size:${compact ? "11px" : "12px"};">stats pending</span>
@@ -13813,7 +14118,12 @@ function makeMilbCell(p) {
   // Triple-slash / IP+ERA still leads the supporting line; the new
   // "key stat" detail row below it surfaces the rate stats the reader
   // most often wants without forcing them into the detail page.
-  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 2, maxRows: 3 });
+  // v45 (owner): the LIST cell shows ONLY the HIGHEST level's line of the
+  // newest season - a multi-level season (A -> A+ -> AAA in one summer)
+  // stacked 3 slash lines and clipped the fixed-height card (Jenkins /
+  // Lombard), and "highest" (not "current") keeps a rehab CPX stint from
+  // displacing the real level. The detail page keeps the full table.
+  const slashLine = levelStatlinesHTML(p, { hideCurrentLevelLabel: true, recentSeasons: 1, maxRows: 1, highestFirst: true });
   // Key-stat detail line: K%/BB% + HR/9 (P) or ISO/HR/HH (H). OPS+/ERA-
   // were promoted to a pill on the top row (next to Level + RPS+), so
   // they're no longer in this prose detail line.
@@ -14782,6 +15092,8 @@ function positionMatches(playerBucket, filterVal) {
   // "P" filter matches every pitcher bucket - back-compat with the
   // pre-v6 single-bucket world where all pitchers collapsed to "P".
   if (filterVal === "P"  && ["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
+  // "H" is the position-player mirror of "P": any non-pitcher bucket.
+  if (filterVal === "H" && !["P", "SP", "RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
   // "RP" rolls up the three relief sub-types (SIRP one-inning, MIRP
   // multi-inning, bare RP unspecified-relief).
   if (filterVal === "RP" && ["RP", "SIRP", "MIRP"].includes(playerBucket)) return true;
@@ -16509,17 +16821,20 @@ function renderActiveContextRail(railId = "active-context-rail") {
   if (!rail) return;
   const players = DATA.players || [];
 
-  // The "Recent debuts" + IL-returnee cards read DATA.debuts, but that slice is
-  // lazy-loaded (only fetched on demand) - on the active list it hasn't arrived
-  // yet, so the card rendered "No recent debuts on file." even when there ARE
-  // recent debuts. Kick the slice fetch off in the background and re-render this
-  // rail once it lands. Guarded so it fires once and never loops.
-  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._railGradLoading) {
-    DATA._railGradLoading = true;
-    loadSlice("debuts").then(() => {
-      if (document.getElementById(railId)) renderActiveContextRail(railId);
-    }).catch(() => {});
-  }
+  // The "Recent debuts" + IL-returnee cards read DATA.debuts. This rail used
+  // to force-fetch the full 67MB monolith on the first paint of the DEFAULT
+  // view, which competed with the initial render AND silently defeated the
+  // v35 Save-Data/2g prefetch gate (the call had no _bgPrefetchOK guard). It
+  // no longer fetches here: for prefetch-OK users the idle background warm
+  // (boot IIFE) pulls the LITE slice (v46 - list fields only) and schedules
+  // a coalesced re-render so the cards fill in moments after boot; everyone
+  // else gets a "Load recent debuts" link in the card below that pulls the
+  // lite slice on demand. A graduate's card fetches his per-player shard
+  // (ensureDebutFullFor); debuted chart mode / Time Machine still pull the
+  // full slice via ensureDebutsFull.
+  const _debutsPending = !!(DATA._slices
+    && (DATA._slices.debuts_lite || DATA._slices.debuts)
+    && !((DATA.debuts || []).length));
 
   // Shared row factory - consistent geometry across all cards.
   // rightHTML sits flush right (delta / FV / tool grade / days-back chip).
@@ -16766,11 +17081,15 @@ function renderActiveContextRail(railId = "active-context-rail") {
   }).join("");
   // Card always renders so the rail stays anchored even when the debut
   // pipeline has no recent rows (boot-up, dev, or end-of-offseason lulls).
+  // While the debuts slice is advertised-but-unloaded the card offers the
+  // on-demand loader instead of a misleading "No recent debuts on file."
   const gradsCard = `<div class="ctx-card">
     <div class="ctx-title">Recent debuts</div>
     ${grads.length
       ? gradRows
-      : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
+      : _debutsPending
+        ? `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;"><a class="ctx-card-link" data-load-debuts title="Fetches the debuts list (also fills the IL-returnees card)">Load recent debuts</a></div>`
+        : `<div style="font-size:11px;color:var(--text-tertiary);padding:4px 2px;">No recent debuts on file.</div>`}
   </div>`;
 
   rail.innerHTML = moversCard + toolCard + ilCard + spotPeekCard + distCard + gradsCard;
@@ -16795,6 +17114,19 @@ function renderActiveContextRail(railId = "active-context-rail") {
       state.sidebarTopTool = toolSel.value;
       syncToURL();
       renderActiveContextRail(railId);
+    });
+  }
+  // On-demand debuts loader (see the note at the top of this function).
+  // ensureDebutsLite de-dupes in-flight fetches, so clicking while the
+  // idle warm is already downloading just joins that request.
+  const loadDebutsLink = rail.querySelector("[data-load-debuts]");
+  if (loadDebutsLink) {
+    loadDebutsLink.addEventListener("click", (e) => {
+      e.stopPropagation();
+      loadDebutsLink.textContent = "Loading…";
+      ensureDebutsLite().then(() => {
+        if (document.getElementById(railId)) renderActiveContextRail(railId);
+      }).catch(() => {});
     });
   }
   // "View all →" link routes to Spotlights tab.
@@ -16997,7 +17329,7 @@ function renderSpotlights() {
     const _fvTier = fvTierAttr(_full);
     return `
     <div class="spotlight-row" data-key="${escapeHtml(s.player_key)}" data-fv-tier="${_fvTier}" style="${orgStripe(s.org)}">
-      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${_full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
+      <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(_full)}"><span class="rank-num-inner">#${getEfvRank(_full) ?? _full.overall_rank ?? (rankOffset + i + 1)}</span></div></div>
       <div style="display:flex;align-items:center;gap:10px;min-width:0;">
         <span class="headshot-stack">${headshotHTML(_full, 42)}${optionsDotsHTML(_full)}</span>
         <div style="min-width:0;flex:1;">
@@ -17678,6 +18010,7 @@ function renderWatchlist() {
           ${makeMilbCell(p)}
           ${physClusterHTML(p)}
           ${makeEtaCell(p)}
+          <div class="desktop-only" style="align-self:center;min-width:0;">${makeSurplusCell(p)}</div>
           ${playerExpandedMetaHTML(p)}
           ${makeListRowSummary(p) ? `<div class="player-row-toolstrip">${makeListRowSummary(p)}</div>` : ""}
         </div>
@@ -17931,7 +18264,9 @@ function _ensureChartData(mode) {
           .then(j => { if (j) DATA[key] = j; })
           .catch(() => {});
   let pr;
-  if (mode === "debuted")      pr = loadSlice("debuts");
+  // Debuted chart mode plots each graduate's FULL points history, so it
+  // needs the monolith, not the lite list slice.
+  if (mode === "debuted")      pr = ensureDebutsFull();
   else if (mode === "draft")   pr = fetchInto("draft_timeseries.json", "draft");
   else if (mode === "ifa")     pr = fetchInto("ifa_timeseries.json", "ifa");
   else if (mode === "overseas")pr = fetchInto("overseas_timeseries.json", "overseas");
@@ -18321,15 +18656,33 @@ function renderCharts() {
   // R² is forced toward 1 and the slope is noise, so a 2-3 dot group (after
   // tight filters or a brush-zoom) must NOT render a confident "strong" trend.
   const MIN_TREND_N = 8;
-  let trend = (trendOn && dots.length >= MIN_TREND_N) ? _linearRegression(dots.map(d => [d.x, d.y])) : null;
+  // Fit the least-squares line in the TRANSFORMED plotting space (log10 on an
+  // active log axis) so the drawn segment is genuinely straight on screen and
+  // the R² describes exactly the line shown. The old raw-space fit, drawn as
+  // one straight segment through log-aware scales, matched the true fit only
+  // at its two endpoints - and under Log Y a raw fitted value <= 0 handed
+  // Math.log10 a NaN, silently breaking the line. On linear axes tf() is the
+  // identity, so nothing changes there.
+  let trend = (trendOn && dots.length >= MIN_TREND_N)
+    ? _linearRegression(dots.map(d => [tf(d.x, logX), tf(d.y, logY)]))
+    : null;
   const tooFewForTrend = trendOn && dots.length < MIN_TREND_N;
-  const _trendX0 = tinv(xLoT, logX), _trendX1 = tinv(xHiT, logX);
+  // Screen mapping for TRANSFORMED coordinates (sx/sy expect data-space values).
+  const sxT = tv => ML + ((tv - xLoT) / (xHiT - xLoT)) * innerW;
+  const syT = tv => MT + innerH - ((tv - yLoT) / (yHiT - yLoT)) * innerH;
+  // Honest equation copy: name the fitted variables when a log axis is on.
+  const _xTerm = logX ? "log10(x)" : "x";
+  const _yTerm = logY ? "log10(y)" : "y";
+  const _trendEq = (mDp, bDp) => !trend ? ""
+    : (logX || logY)
+      ? `${_yTerm} = ${trend.m.toFixed(mDp)}·${_xTerm} + ${trend.b.toFixed(bDp)}`
+      : `y = ${trend.m.toFixed(mDp)}x + ${trend.b.toFixed(bDp)}`;
   const trendLine = trend
-    ? `<line x1="${sx(_trendX0).toFixed(1)}" y1="${sy(trend.m * _trendX0 + trend.b).toFixed(1)}"
-              x2="${sx(_trendX1).toFixed(1)}" y2="${sy(trend.m * _trendX1 + trend.b).toFixed(1)}"
+    ? `<line x1="${sxT(xLoT).toFixed(1)}" y1="${syT(trend.m * xLoT + trend.b).toFixed(1)}"
+              x2="${sxT(xHiT).toFixed(1)}" y2="${syT(trend.m * xHiT + trend.b).toFixed(1)}"
               stroke="var(--neon-orange)" stroke-width="1.5" stroke-dasharray="6,4"
               style="cursor:help;">
-         <title>Linear trendline: y = ${trend.m.toFixed(4)}x + ${trend.b.toFixed(3)} · R² = ${trend.r2.toFixed(3)}</title>
+         <title>Linear trendline: ${_trendEq(4, 3)} · R² = ${trend.r2.toFixed(3)}</title>
        </line>`
     : "";
   // R² chip - a small pill near top-right of the plot area.
@@ -18501,10 +18854,20 @@ function renderCharts() {
       if (di != null) { const d = dots[+di]; if (d && d._entity) grp.nav(d._entity); }
     }
   };
-  svg.addEventListener("pointerdown", onDown);
-  svg.addEventListener("pointermove", onMove);
-  svg.addEventListener("pointerup", onUp);
-  svg.addEventListener("dblclick", () => { if (state.chartView) { state.chartView = null; renderCharts(); } });
+  // ASSIGN (don't add) the pointer handlers. #chart-svg is a persistent
+  // element (only its innerHTML is replaced each render) and renderCharts
+  // re-runs on every control change - addEventListener stacked a fresh set
+  // of closures per render: a dot click fired grp.nav once per stacked
+  // handler (duplicate history entries, and stale closures could open the
+  // wrong player after a filter change), and a brush-zoom re-entered
+  // renderCharts once per stale handler. Property assignment overwrites the
+  // previous render's closures, so exactly one set - the current render's
+  // scales/dots - is ever live. Matches the onchange/onclick idiom used by
+  // every other handler in this renderer.
+  svg.onpointerdown = onDown;
+  svg.onpointermove = onMove;
+  svg.onpointerup = onUp;
+  svg.ondblclick = () => { if (state.chartView) { state.chartView = null; renderCharts(); } };
   svg.style.touchAction = "none";
 
   // Reset-view button - visible only when a zoom/pan view is active.
@@ -18600,7 +18963,7 @@ function renderCharts() {
     renderCharts();
   });
   document.getElementById("chart-stats").innerHTML = trend
-    ? `Trendline: y = ${trend.m.toFixed(3)}x + ${trend.b.toFixed(2)} · R² = ${trend.r2.toFixed(3)}`
+    ? `Trendline: ${_trendEq(3, 2)} · R² = ${trend.r2.toFixed(3)}`
     : tooFewForTrend
     ? `Too few points for a trend (n=${dots.length}; need ${MIN_TREND_N})`
     : "Trendline disabled";
@@ -19551,7 +19914,7 @@ function renderLeaderboards() {
       : `<span style="color:var(--text-tertiary);font-size:10px;"> - </span>`;
     return `
       <div class="player-row is-leaderboard" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (rankOffset + i + 1)}</span></div>${rankTrendHTML(p)}</div>
         <div style="display:flex;align-items:flex-start;gap:8px;min-width:0;">
           ${headshotHTML(p, 40)}
           <div style="min-width:0;flex:1;">
@@ -20103,11 +20466,13 @@ function renderTimeMachine() {
   // Pull in graduated players (debuts slice) so historical boards include
   // since-graduated prospects + the diff's "Graduated to MLB" bucket. Load in
   // the background - the board renders active-only first, then re-renders.
-  if (DATA._slices && DATA._slices.debuts && !((DATA.debuts || []).length) && !DATA._tmGradLoading) {
+  // v46 - the board reconstruction needs FULL points histories, so this
+  // pulls the monolith even when the lite slice is already on DATA.debuts
+  // (lite rows carry a single-point stub). ensureDebutsFull resets the
+  // _tmDates/_tmByKey caches itself once the full rows merge in.
+  if (DATA._slices && DATA._slices.debuts && !DATA._debutsFull && !DATA._tmGradLoading) {
     DATA._tmGradLoading = true;
-    loadSlice("debuts").then(() => {
-      DATA._tmDates = null;    // grads can add earlier snapshot dates
-      DATA._tmByKey = null;    // rebuild the key→player map to include grads
+    ensureDebutsFull().then(() => {
       if (state.section === "timemachine" && !state.view) renderTimeMachine();
     }).catch(() => {});
   }
@@ -20364,7 +20729,7 @@ function renderInjured() {
     const _pal = _ilTypePalette(il.type);
     return `
       <div class="player-row is-injured" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:10px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -20589,6 +20954,17 @@ function renderRecentlyTraded() {
       if (state.section === "traded") renderRecentlyTraded();
     });
   }
+  // v47 wire-slim - inactive.json left the idle warm; it is the tier-3
+  // source for the trade-audit vet lookup below (legacy players with WAR).
+  // Same lazy load + conditional re-render pattern as mlb_trade_players.
+  if (DATA._slices && DATA._slices.inactive && !(DATA.inactive || []).length
+      && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.section === "traded" && !state.view) renderRecentlyTraded();
+    });
+  }
   // v30.8 - Now surfaces trades AND debut events. Debuts are the
   // canonical "prospect → MLB" transaction; previously they were
   // siloed in the Debuted section only. Both kinds are first-class
@@ -20605,7 +20981,11 @@ function renderRecentlyTraded() {
   const _fvNum = (row) => {
     const pts = (row.p && row.p.points) || [];
     const last = pts[pts.length - 1];
-    return last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label) ?? 0) : 0;
+    // parseFloat returns NaN (never null/undefined) for an unparseable
+    // label, so a trailing `?? 0` can't catch it - NaN in the comparator
+    // left those rows unsorted. Check finiteness explicitly instead.
+    const v = last ? (last.consensus_fv_raw ?? parseFloat(last.consensus_fv_label)) : null;
+    return Number.isFinite(v) ? v : 0;
   };
   if (tradedMode === "name") {
     filtered.sort((a, b) => (a.p.player_name || "").localeCompare(b.p.player_name || ""));
@@ -21231,7 +21611,7 @@ function renderRecentlyTraded() {
     return `
       ${_groupOpen}
       <div class="player-row is-traded" data-key="${escapeHtml(p.player_key)}" style="${orgStripe(p.org)}">
-        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${p.overall_rank ?? (i + 1)}</span></div></div>
+        <div class="rank-cell-stack"><div class="rank-num ${rankNumRarityClass(p)}"><span class="rank-num-inner">#${getEfvRank(p) ?? p.overall_rank ?? (i + 1)}</span></div></div>
         <div style="display:flex;align-items:center;gap:8px;min-width:0;">
           <span class="headshot-stack">${headshotHTML(p, 50)}${optionsDotsHTML(p)}</span>
           <div style="min-width:0;flex:1;">
@@ -29072,6 +29452,7 @@ function _positionGamesSummary(playerKey) {
 
 // ─── Trade Board ──────────────────────────────────────────────────────────────
 let _tbData   = null;   // also exposed as window._tbData for renderPlayerDetail fallback
+let _tbGrpoState = "pending";   // "pending" | "ready" | "unavailable" - grpo_public.json sidecar
 let _tbPool   = "all";
 let _tbTier   = "all";
 let _tbPos    = "all";
@@ -29120,8 +29501,9 @@ function _tbSortRows(rows) {
     if (_tbSort === "org_asc") return withTradeTiebreak(cmpText(a.org, b.org), a, b);
     if (_tbSort === "pos_asc") return withTradeTiebreak(cmpText(_tbPrimaryPos(a.position), _tbPrimaryPos(b.position)), a, b);
     if (_tbSort === "surplus_desc") return (num(b.trade_value_mm) ?? -1) - (num(a.trade_value_mm) ?? -1);
-    // Default: rank by the eFV grade the surplus is derived from (orders realized
-    // WAR better than the $-transform per data/trade_machine_eval.json), surplus $
+    // Default: rank by the model's raw eFV grade (orders realized WAR better
+    // than the $-transform per data/trade_machine_eval.json; surplus itself is
+    // priced on the displayed quantile grade since 2026-07-06), surplus $
     // as the tiebreak.
     return withTradeTiebreak((num(b.xfv_grade) ?? -1) - (num(a.xfv_grade) ?? -1), a, b);
   });
@@ -29381,7 +29763,18 @@ function renderTradeBoard() {
     wrap.innerHTML = '<div class="spinner-wrap"><span class="spinner"></span></div>';
     fetch(base + "trade_values.json" + vp, { cache: "no-cache" })
       .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
-      .then(d => { _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters(); })
+      .then(d => {
+        _tbData = d; window._tbData = d; _tbPopulateSelectFilters(); _renderTBRows(); _tbWireFilters();
+        // Group-panel data rides the slim public sidecar (the full
+        // grpo_scores.json is deploy-excluded); never fetch the full file.
+        fetch(base + "grpo_public.json" + vp, { cache: "no-cache" })
+          .then(r => (r.ok ? r.json() : null))
+          .then(g => {
+            if (g && g.all_scores && _tbData) { _tbData.all_scores = g.all_scores; _tbGrpoState = "ready"; }
+            else { _tbGrpoState = "unavailable"; }
+          })
+          .catch(() => { _tbGrpoState = "unavailable"; });
+      })
       .catch(e => {
         wrap.innerHTML = `<div class="empty-state">Trade Board data not found (<code>data/trade_values.json</code>). Run <code>python run_monthly.py --rebuild-only</code> to generate it.<br><small>${e}</small></div>`;
       });
@@ -29524,7 +29917,16 @@ function _tbShowGroup(playerKey) {
   if (!panel || !title || !body) return;
 
   const pScore = (_tbData.all_scores || {})[playerKey];
-  if (!pScore) { panel.style.display = "none"; return; }
+  if (!pScore) {
+    title.innerHTML = "GRPO group";
+    body.innerHTML = `<div style="color:var(--text-secondary);font-size:12px;">${
+      _tbGrpoState === "pending"
+        ? "Profile-group details are still loading. Try again in a moment."
+        : "Profile-group details are not available here right now. The breakout score on the chip still stands."
+    }</div>`;
+    panel.style.display = "block";
+    return;
+  }
 
   const members = pScore.active_group_members || [];
   const grp     = pScore.group || "?";
@@ -29843,8 +30245,18 @@ function renderDebuts() {
     orderedGrads.forEach((g, i) => { _emitGrad(g, i + 1, null, ""); });
   } else {
     let rank = 1;
-    for (const dateKey of sortedDates) {
-      for (const g of byDate[dateKey]) { _emitGrad(g, rank++, null, null); }
+    // Honor the universal direction flip on the grouped date path too.
+    // Clicking the Debut header toggles state.sortRev.debutSort (and the
+    // header arrow + URL srev param followed suit), but this branch was
+    // hard-coded newest-first - the arrow claimed ascending while the
+    // rendered order never changed. Mirror _applySortDir by reversing the
+    // date-group iteration AND the within-group order, so the emitted list
+    // is the exact reverse of the default.
+    const _dRev = !!(state.sortRev && state.sortRev.debutSort);
+    const _dates = _dRev ? sortedDates.slice().reverse() : sortedDates;
+    for (const dateKey of _dates) {
+      const _grp = _dRev ? byDate[dateKey].slice().reverse() : byDate[dateKey];
+      for (const g of _grp) { _emitGrad(g, rank++, null, null); }
     }
   }
   const _debutHidden = filtered.length - _debutEmitted;
@@ -30161,8 +30573,9 @@ let _SWING_PLUS = null;
     .then(j => {
       _SWING_PLUS = (j && j.players) || {};
       // The first paint can beat this fetch - repaint the open view so
-      // Swing+ tiles/chips appear without a manual refresh.
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      // Swing+ tiles/chips appear without a manual refresh (coalesced with
+      // the other sidecar landings via scheduleRender).
+      scheduleRender();
     })
     .catch(() => { _SWING_PLUS = {}; });
 })();
@@ -30184,7 +30597,7 @@ let _AAA_STUFF = null;
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _AAA_STUFF = (j && j.players) || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      scheduleRender();
     })
     .catch(() => { _AAA_STUFF = {}; });
 })();
@@ -30197,9 +30610,10 @@ function getAaaStuffPlus(p) {
 
 // ===== eFV - our outcome-grounded Future Value grade (data/xfv.json) ========
 // Sidecar keyed by player_key (a prospect-centric slug), NOT mlbam_id - eFV is
-// a prospect grade. Each entry: headline xfv_grade (rank-preserving onto the
-// 20-80 consensus scale), xfv_grade_realized (deflated outcome-implied grade
-// that drives surplus/distribution), the 5-bucket outcome mix, surplus + a P10-P90
+// a prospect grade. Each entry: xfv_grade_quantile (the displayed 20-80 headline;
+// drives surplus since the 2026-07-06 flip), xfv_grade (rank-preserving map onto
+// the consensus scale), xfv_grade_realized (deflated outcome-implied grade that
+// still drives the p_bucket/p_bust odds), the 5-bucket outcome mix, surplus + a P10-P90
 // fan, and tool eFVs. Shown ALONGSIDE consensus FV (it ties/▾consensus on rank;
 // its value-add is the calibrated distribution + uncertainty + surplus). Live-board
 // players carry kind="active"; eFV abstains on players with no pro track record.
@@ -30211,9 +30625,9 @@ let _EFV_PREV_RANK = null; // player_key -> eFV rank by PREVIOUS grade (drives t
     .then(r => (r.ok ? r.json() : null))
     .then(j => {
       _EFV = (j && j.by_player) || {};
-      _EFV_RANK = null; _EFV_PREV_RANK = null;     // invalidate so the rank map rebuilds with fresh data
+      _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null;     // invalidate so the rank maps rebuild with fresh data
       // First paint can beat this fetch - repaint so eFV chips/cards appear.
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+      scheduleRender();
     })
     .catch(() => { _EFV = {}; });
 })();
@@ -30223,7 +30637,7 @@ let _MILBTR = null;
 (function loadMilbTr() {
   fetch("/data/milb_translation.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
-    .then(j => { _MILBTR = j || {}; try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+    .then(j => { _MILBTR = j || {}; scheduleRender(); })
     .catch(() => { _MILBTR = {}; });
 })();
 function milbProjHTML(p) {
@@ -30253,7 +30667,7 @@ let _EFV_HIST = null;
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_HIST = (j && j.by_player) || {};
       _EFV_PREV_RANK = null;   // rank-delta chips need history -> rebuild the prev-grade rank map now that it loaded
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _EFV_HIST = {}; });
 })();
 function getEfvHistory(p) {
@@ -30304,8 +30718,8 @@ function ensureEfvUngraded() {
   fetch("/data/xfv_ungraded.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_UNG = j || { by_player: {}, by_mlbam: {} };
-      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      _PROV_PLAYERS = null; _PROV_BY_KEY = null; _EFV_RANK = null; _EFV_PREV_RANK = null; _EFV_ORG_RANK = null; _PROV_ORGRANK = {};   // rebuild w/ provisional
+      scheduleRender(); })
     .catch(() => { _EFV_UNG = { by_player: {}, by_mlbam: {} }; });
 }
 // Synthesize first-class player objects for the provisional (source-ungraded) prospects so they
@@ -30373,7 +30787,7 @@ let _EFV_PROXY = null;
   fetch("/data/xfv_proxy_eval.json", { cache: "no-cache" })
     .then(r => (r.ok ? r.json() : null))
     .then(j => { _EFV_PROXY = j || {};
-      try { if (typeof render === "function") render(); } catch (e) { /* boot race */ } })
+      scheduleRender(); })
     .catch(() => { _EFV_PROXY = {}; });
 })();
 function efvProxyPanel(p) {
@@ -30416,7 +30830,7 @@ function ensureEfvTrack() {
     grab("/data/source_backtest.json"), grab("/data/xfv_reliability.json"),
   ]).then(([hit, pit, bt, iso]) => {
     _EFV_TRACK = { hit: hit, pit: pit, bt: bt, iso: iso };
-    try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+    scheduleRender();
   }).catch(() => { _EFV_TRACK = { hit: null, pit: null, bt: null, iso: null }; });
 }
 // Small shared bits for the track-record tables (inline-styled; the panel has no
@@ -30624,6 +31038,31 @@ function getEfvRank(p) {
   if (_EFV_RANK == null) buildEfvRankMap();
   return (p && _EFV_RANK) ? (_EFV_RANK[p.player_key] || null) : null;
 }
+// Canonical ORG rank: the player's position within their org's pool (graded +
+// provisional) under the SAME eFV ordering as the roster tab / farm preview /
+// main board. Replaces the baked p.org_rank (one run stale, realized-grade
+// basis) on live surfaces so org ranks can't disagree with the roster order.
+let _EFV_ORG_RANK = null;
+function buildEfvOrgRankMap() {
+  _EFV_ORG_RANK = {};
+  if (!DATA || !Array.isArray(DATA.players)) return;
+  const byOrg = {};
+  DATA.players.filter(p => p && p.player_key).concat(provPlayers()).forEach(p => {
+    const o = p.org || "?";
+    (byOrg[o] = byOrg[o] || []).push(p);
+  });
+  for (const o in byOrg) {
+    byOrg[o].sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    byOrg[o].forEach((p, i) => {
+      _EFV_ORG_RANK[p.player_key] = { rank: i + 1, total: byOrg[o].length };
+    });
+  }
+}
+function getEfvOrgRank(p) {
+  if (_EFV_ORG_RANK == null) buildEfvOrgRankMap();
+  return (p && _EFV_ORG_RANK) ? (_EFV_ORG_RANK[p.player_key] || null) : null;
+}
 // eFV grade as of ~one board update (RANK_WINDOW_DAYS) ago -- a FIXED recent window, so the
 // rank-delta reads "movement since the last update", not a lifetime climb. An event-based
 // "since last real step" walk-back reaches back past a plateau (Jesus Made sat at ~62 for a
@@ -30689,7 +31128,11 @@ function gradeBlock(p, opts) {
              : (consLabel != null || consVal != null) ? "consensus"
              : (efvVal != null) ? "efv" : "none";
   return { x, primary, efvVal, consLabel, consVal, value, label, lead,
-           provisional: !!(x && x.xfv_ungraded), locked: !!(x && x.kind === "debuted") };
+           provisional: !!(x && x.xfv_ungraded),
+           // Source-GRADED but no pro track record yet (fresh draftees/signees):
+           // eFV is anchored to the consensus prior, not a model read.
+           priorAnchored: !!(x && x.xfv_provisional && !x.xfv_ungraded),
+           locked: !!(x && x.kind === "debuted") };
 }
 // efvGradeBand(x): the OUTCOME-distribution band expressed on the grade (20-80) scale.
 // eFV already publishes the outcome distribution in surplus dollars (dist.p10_mm/p90_mm).
@@ -30750,6 +31193,8 @@ function efvTooltip(x) {
     const d = efvMinusConsensus(x);
     parts.push(`Consensus FV ${fvCeil(x.consensus_fv)}${d != null ? ` (${d > 0 ? "+" : ""}${d.toFixed(1)})` : ""}`);
   }
+  if (x.xfv_provisional && !x.xfv_ungraded)
+    parts.push("Prior-anchored: no pro track record yet - the grade starts at the consensus prior, and any small gap vs consensus FV is 20-80 rank placement, not a penalty");
   // Secondary transparency line: the pure-model outcome-implied grade before it is mapped
   // onto the 20-80 scale (the headline eFV above is that map). Kept so eFV stays legible.
   if (x.xfv_grade_realized != null && x.xfv_grade_quantile != null
@@ -30890,6 +31335,10 @@ function efvDetailHeaderHTML(p, fvBadge) {
     + efvGradeBandHTML(x)
     + (prov
         ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">production-only · no source grade</div>`
+        : gb.priorAnchored
+        ? `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;" title="No pro track record yet: eFV starts at the consensus prior. Any small gap vs consensus FV is placement on the 20-80 scale when ranked among graded prospects, not a model penalty.">`
+          + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
+          + ` · prior-anchored · awaiting pro debut</div>`
         : `<div style="margin-top:5px;font-family:var(--font-mono);font-size:10px;color:var(--text-tertiary);line-height:1.3;">`
           + `Consensus FV <b style="color:var(--text-secondary);">${fvCeil(x.consensus_fv)}</b>`
           + (dtxt ? ` · <span style="color:${dcol};font-weight:700;">eFV ${dtxt}</span>` : "") + `</div>`);
@@ -30903,6 +31352,8 @@ function efvDetailCard(p) {
   // leading indicator, not a source-anchored grade.
   const provBanner = x.xfv_ungraded
     ? `<div style="border:1px dashed var(--neon-cyan);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:rgba(0,200,220,0.05);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong style="color:var(--neon-cyan);">Provisional eFV</strong> - no scouting source has graded this prospect yet. This grade is a <strong>production-only leading indicator</strong> from his translated MiLB stats (a tool for finding DSL/CPX breakouts a cycle ahead of the boards), not a source-anchored eFV. <a href="/glossary/#g=xfv_ungraded" style="color:var(--neon-cyan);">Methodology →</a></div>`
+    : x.xfv_provisional
+    ? `<div style="border:1px dashed var(--border-light);border-radius:6px;padding:8px 11px;margin-bottom:10px;background:var(--bg-tertiary);font-size:11px;color:var(--text-secondary);line-height:1.5;"><strong>Prior-anchored eFV</strong> - drafted or signed but no pro track record yet, so eFV starts at the consensus prior. A small gap between eFV and consensus FV here is placement on the 20-80 scale when ranked among all graded prospects, not a model penalty. The model read goes live once pro playing time arrives.</div>`
     : "";
   const bucketBar = x.p_bucket ? renderBucketBar(x.p_bucket, { height: 18, labels: true, legend: true }) : "";
   // The $ surplus + its P10-P90 fan now live ONLY in the single Surplus-value card below
@@ -30931,7 +31382,7 @@ function efvDetailCard(p) {
   return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:12px 14px;margin-bottom:12px;background:var(--bg-secondary);">
       ${provBanner}
       <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px;">
-        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : "eFV · outcome-grounded grade"}</div>
+        <div class="detail-title" style="margin:0;">${x.xfv_ungraded ? "Provisional eFV · production-only" : x.xfv_provisional ? "eFV · prior-anchored (awaiting pro debut)" : "eFV · outcome-grounded grade"}</div>
         <span class="fv-badge ${fvClass(String(efvGradeDisplay(x)))} size-sm"${x.xfv_ungraded ? ' style="border-style:dashed;"' : ""} title="${escapeHtml(efvTooltip(x))}">${efvGradeDisplay(x)}</span>
       </div>
       ${x.krp_plus != null ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 8px;font-size:11px;color:var(--text-tertiary);">
@@ -31219,6 +31670,12 @@ function _getFgExtras(p) {
 // Handedness, FG-first then TJStats (bat_side/throw_side) then any source.
 // bats: L/R/S, throws: L/R. Recovers handedness for prospects FG omits.
 function _getHandedness(p) {
+  // Baked top-level fields win when present: overseas payloads always carry
+  // them, and the v46 debuts_lite rows bake them (server-side mirror of the
+  // scan below) since lite rows ship without the points history.
+  if (p && (p.bats || p.throws)) {
+    return { bats: p.bats || null, throws: p.throws || null };
+  }
   const PRIMARY = ["fangraphs", "tjstats"];
   return _scanExtras(p, s => s === "fangraphs", _handFromExtras)
       || _scanExtras(p, s => s === "tjstats", _handFromExtras)
@@ -31376,12 +31833,46 @@ async function _gfxAwaitAssets(el, timeoutMs = 8000) {
   await Promise.allSettled(jobs);
 }
 
+// v47 wire-slim - lazy vendor injection. html2canvas + qrcode left the eager
+// script tags in the document head; the export/GFX paths inject them on first use.
+// (window.EephusExport keeps its OWN private html2canvas loader inside its
+// IIFE - it is not exposed - so we replicate the tiny injector here rather
+// than reach into that module.) A failed load is dropped from the cache so
+// the next click can retry after a transient network blip.
+const _vendorInFlight = {};
+function _ensureVendor(src, ready) {
+  if (ready()) return Promise.resolve(true);
+  if (_vendorInFlight[src]) return _vendorInFlight[src];
+  _vendorInFlight[src] = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = src;
+    s.onload = () => resolve(true);
+    s.onerror = () => {
+      delete _vendorInFlight[src];
+      reject(new Error("vendor script failed to load: " + src));
+    };
+    document.head.appendChild(s);
+  });
+  return _vendorInFlight[src];
+}
+function _ensureHtml2Canvas() {
+  return _ensureVendor("/vendor/html2canvas.min.js?v=20260709",
+    () => !!window.html2canvas);
+}
+function _ensureQrcodeLib() {
+  return _ensureVendor("/vendor/qrcode.min.js?v=20260709",
+    () => typeof window.qrcode !== "undefined");
+}
+
 async function exportElementAsImage(el, opts = {}) {
+  if (!el) return null;
+  // Lazy-inject the vendor lib (v47) - this promise MUST resolve before any
+  // capture runs so html2canvas never sees a half-loaded card.
+  try { await _ensureHtml2Canvas(); } catch (e) { /* fall through to guard */ }
   if (!window.html2canvas) {
-    alert("Image export not ready - refresh and try again (vendor script still loading).");
+    alert("Image export not ready - check your connection and try again.");
     return null;
   }
-  if (!el) return null;
   const scale = opts.scale || 2;
   // Preload → await fonts BEFORE capture (header carries the PROSPX wordmark +
   // eephus.io/PROSPX + timestamp; no footer/handle).
@@ -31510,11 +32001,9 @@ function _gfxSet(section, kind, items, meta) {
   _gfxSnapshot = { section, kind, items: arr, total: arr.length, meta: meta || {} };
 }
 // Sections that can be graphic'd + their item "kind" (drives row rendering).
-const _GFX_SECTIONS = {
-  active: "prospect", injured: "prospect", watchlist: "prospect",
-  debuts: "graduate", draft: "draftee", overseas: "overseas",
-  leaderboards: "leader", farm: "farm", spotlights: "spotlight", ifa: "ifa",
-};
+// GFX 2026-07-18 (P0 #7): removed the dead `_GFX_SECTIONS` map (a vestige of the
+// retired global masthead GFX button; it was declared but never referenced - the
+// section->kind mapping now lives at each list's _gfxSet call site).
 // Social-media canvas presets (px). The board fills the chosen width and pins to
 // a minimum height so short lists render at the exact aspect (long lists extend).
 const _GFX_FORMATS = {
@@ -31560,6 +32049,7 @@ function _gfxOrgNick(code) {
 const _GFX_POS_LABEL = {
   C: "Catchers", "1B": "1B", "2B": "2B", "3B": "3B", SS: "Shortstops",
   INF: "Infielders", CF: "CF", LF: "LF", RF: "RF", OF: "Outfielders",
+  H: "Hitters",
   P: "Pitchers", SP: "SP", RP: "Relievers", SIRP: "SIRP", MIRP: "MIRP",
 };
 function _gfxPosLabel(pos) { return _GFX_POS_LABEL[pos] || pos; }
@@ -31634,6 +32124,11 @@ function _gfxSubtitle(total, cap) {
   } else if (snap.section === "overseas") {
     parts.push("ranked " + (state.overseasSort && state.overseasSort !== "fv" ? "by " + String(state.overseasSort).replace(/_/g, " ") : "by consensus FV"));
   } else if (snap.section === "leaderboards") {
+    // GFX 2026-07-18 (P0 #6): consume meta.window so a rolling-window leaderboard
+    // (e.g. "Last 14 days") is not mislabeled as a full-season board. It was set
+    // at the _gfxSet call but never rendered.
+    if (m.window) parts.push(String(m.window));
+    if (m.level && m.level !== "all") parts.push(String(m.level));
     if (m.season) parts.push(`${m.season} season`);
   } else if (snap.section === "farm") {
     parts.push(m.sortLabel ? "ranked " + m.sortLabel : "ranked by composite grade");
@@ -31692,18 +32187,52 @@ function _gfxRow(item, kind, meta) {
     // grades.overall diverge from that order and produced "#25 at position 30".
     const _w = state.formWindow || "7y";
     const _winLetter = ((o.letter_by_window || {})[_w]) || (o.grades && o.grades.overall) || "";
+    // GFX 2026-07-18: farm rows used to render just rank + letter (3 of ~20
+    // available fields). Surface the system's shape - top prospect, ranked count,
+    // avg age - plus the net active surplus $M under the grade, all already on the
+    // org object (matches buildFarmCard).
+    const _tp = o.top_prospect;
+    const _fbits = [];
+    if (_tp && (_tp.name || _tp.player_name)) _fbits.push("Top: " + (_tp.name || _tp.player_name));
+    if (o.count != null) _fbits.push(o.count + " ranked");
+    if (o.avg_age != null) _fbits.push("avg " + Number(o.avg_age).toFixed(1) + "y");
+    const _fsur = (o._active_surplus_net_mm != null && typeof fmtSvMM === "function")
+      ? fmtSvMM(o._active_surplus_net_mm) : null;
     return { rank: farmWindowRank(o), fv: null, org: o.org, mlbam: null,
              name: (typeof fullOrgName === "function" ? fullOrgName(o.org) : o.org) || o.org || " - ",
-             meta: "", value: _winLetter };
+             meta: _fbits.join(" · "), value: _winLetter, valueSub: _fsur };
+  }
+  if (kind === "prospect" && item && item.il) {
+    // GFX 2026-07-18: Injured-list rows carry {p, il:{type,since}, days}. Show the
+    // IL context (type + days) instead of the surplus $ the generic prospect path
+    // would print - the injured board is about health, not value.
+    const p = item.p || {};
+    const latest = (p.points && p.points.length) ? p.points[p.points.length - 1] : null;
+    const _px = (_gradePrimary() === "xfv") ? getEfv(p) : null;
+    const _pxg = (_px && _px.xfv_grade != null) ? efvGradeDisplay(_px) : null;
+    const fv = _pxg != null ? String(_pxg)
+      : (latest && latest.consensus_fv_label != null) ? latest.consensus_fv_label
+      : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
+    const ilTxt = String((item.il && item.il.type) || "IL").replace(/\s*list$/i, "");
+    const daysTxt = (item.days != null && isFinite(item.days) && item.days > 0) ? Math.round(item.days) + "d" : null;
+    return {
+      fv, name: p.player_name || "", mlbam: p.mlbam_id, org: p.org,
+      meta: [p.position, p.org, ageStr(p.age)].filter(Boolean).join(" · "),
+      value: ilTxt, valueSub: daysTxt,
+    };
   }
   if (kind === "leader") {
     const p = item.p || {}, r = item.r || {};
+    // GFX 2026-07-18: append the sample size (PA for hitters, IP for pitchers) to
+    // the meta line so a leaderboard graphic shows the volume behind the stat.
+    const _samp = (r.pa != null) ? Math.round(r.pa) + " PA"
+      : (r.ip != null) ? Number(r.ip).toFixed(1) + " IP" : null;
     return {
       // eFV grade (nearest) where rated, else consensus label, else fvCeil(fv_close) -- via gradeBlock.
       fv: gradeBlock(p).label,
       name: p.player_name || "",
       mlbam: p.mlbam_id, org: p.org,
-      meta: [p.position, p.org, r.level].filter(Boolean).join(" · "),
+      meta: [p.position, p.org, r.level, _samp].filter(Boolean).join(" · "),
       value: (meta && typeof meta.fmt === "function" && item.v != null) ? meta.fmt(item.v)
              : (item.v != null ? String(item.v) : ""),
     };
@@ -31711,12 +32240,24 @@ function _gfxRow(item, kind, meta) {
   if (kind === "spotlight") {
     const s = item || {};
     const d = (s.fv_delta != null) ? s.fv_delta : (s.delta != null ? s.delta : (s.fv_change != null ? s.fv_change : null));
+    // GFX 2026-07-18: surface the on-screen stat line and the top driver (the
+    // spotlight's actual "why") that were previously dropped from the graphic.
+    const _topDriver = (() => {
+      const ds = Array.isArray(s.drivers) ? s.drivers : [];
+      if (!ds.length) return null;
+      const _prio = { breakout: 0, good: 1, bad: 2, upside: 3, neutral: 4 };
+      const _val = x => typeof x === "string" ? "neutral" : (x.valence || "neutral");
+      const best = ds.slice().sort((a, b) => (_prio[_val(a)] ?? 9) - (_prio[_val(b)] ?? 9))[0];
+      const lbl = typeof best === "string" ? best : (best.label || "");
+      return (lbl && typeof _driverShort === "function") ? _driverShort(lbl) : (lbl || null);
+    })();
     return {
       fv: (s.fv != null && isFinite(s.fv)) ? String(fvCeil(s.fv)) : null,
       name: s.player_name || "",
       mlbam: s.mlbam_id, org: s.org,
-      meta: [s.position, s.org, s.level].filter(Boolean).join(" · "),
+      meta: [s.position, s.org, s.level, s.line].filter(Boolean).join(" · "),
       value: (d != null && isFinite(d)) ? `${d > 0 ? "+" : ""}${Number(d).toFixed(1)} FV` : "",
+      valueSub: _topDriver,
     };
   }
   if (kind === "ifa") {
@@ -31756,6 +32297,7 @@ function _gfxRow(item, kind, meta) {
   metaBits.push(ageStr(p.age));
   if (kind === "prospect" || kind === "graduate") metaBits.push((p.statline || {}).level);
   let value = "";
+  let valueSub = null;
   if (kind === "graduate") {
     // Graduates are MLB players now → show raw WAR (not WAG) via the single
     // display escalation helper. WAG (WAR-above-grade) is kept for the explicit
@@ -31763,6 +32305,14 @@ function _gfxRow(item, kind, meta) {
     value = displayMetricFor(p).value;
   } else if (kind === "draftee") {
     if (p.draft_stock_plus != null) value = "Stk+ " + Math.round(p.draft_stock_plus);
+  } else if (kind === "overseas") {
+    // GFX 2026-07-18: the overseas value column was empty (no branch). Show a
+    // compact production line - OPS for hitters, ERA for pitchers - from the
+    // overseas record's own stat fields.
+    const _isPit = /P|RHP|LHP|SP|RP/i.test(String(p.position || "")) || p.era != null;
+    if (_isPit && p.era != null) { value = "ERA " + Number(p.era).toFixed(2); if (p.k_pct != null) valueSub = "K " + Number(p.k_pct).toFixed(1) + "%"; }
+    else if (p.slg != null && p.obp != null) { value = (Number(p.obp) + Number(p.slg)).toFixed(3).replace(/^0/, "") + " OPS"; if (p.hr != null) valueSub = p.hr + " HR"; }
+    else if (p.avg != null) { value = "." + String(Math.round(Number(p.avg) * 1000)).padStart(3, "0") + " AVG"; }
   } else if (kind === "prospect") {
     const _sv = displaySurplusMM(p);
     if (_sv != null && typeof fmtSvMM === "function") value = fmtSvMM(_sv);
@@ -31771,7 +32321,7 @@ function _gfxRow(item, kind, meta) {
            org: (kind === "draftee" || kind === "overseas") ? null : p.org,
            // v39 - per-player $DvM+ rides under the value column in the board.
            dvm: (p.dollar_dvm_plus != null && isFinite(p.dollar_dvm_plus)) ? Math.round(p.dollar_dvm_plus) : null,
-           meta: metaBits.filter(Boolean).join(" · "), value };
+           meta: metaBits.filter(Boolean).join(" · "), value, valueSub };
 }
 // v38 - GFX avatar: prospect headshot → team logo → silhouette fallback chain,
 // gated by the independent Photos / Logos toggles (both default-on). Renders an
@@ -31785,6 +32335,19 @@ function _gfxSilhouetteBg(P) {
   // the url('...') wrapper. Double quotes get encoded away, leaving the wrapper safe.
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="${fill}" d="M12 12.4a4.6 4.6 0 1 0 0-9.2 4.6 4.6 0 0 0 0 9.2zm0 1.9c-4.7 0-8.5 2.4-8.5 5.7V22h17v-2c0-3.3-3.8-5.7-8.5-5.7z"/></svg>`;
   return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`;
+}
+// Base layer BEHIND a GFX photo well: the team logo (contained, centered)
+// when the org is known, else the neutral silhouette. The photo sits on top
+// as a cover layer, so a player with no headshot on file (or one that 404s)
+// degrades to the team logo - which reads far better on dark-mode GFX than
+// the dim silhouette. ESPN-CDN PNGs are crossorigin-safe under html2canvas
+// (same as the meta-line logos). Silhouette stays the last-resort fallback
+// for subjects with no MLB org (draftees, overseas).
+function _gfxPhotoBaseLayer(org, P) {
+  const url = (typeof teamLogoURL === "function" && org) ? teamLogoURL(org) : null;
+  return url
+    ? `background-color:${P.bg3};background-image:url('${url}');background-repeat:no-repeat;background-position:center;background-size:58%;`
+    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
 }
 // GFX headshot URL - DELIBERATELY omits MLB Cloudinary's `d_people:generic`
 // default param so a player with no headshot on file returns a real 404
@@ -31809,7 +32372,7 @@ const _gfxMissingPhotos = new Set();
 function _gfxLogMissingPhoto(id) {
   if (id == null || _gfxMissingPhotos.has(id)) return;
   _gfxMissingPhotos.add(id);
-  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing silhouette (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
+  try { console.warn("[GFX] no MLB headshot for mlbam_id " + id + " - showing team-logo fallback (" + _gfxMissingPhotos.size + " missing this session)"); } catch (_) {}
 }
 // Small inline team-logo mark for the meta line, with a styled abbreviation
 // badge fallback when the CDN image fails (img hidden → abbr sibling shown).
@@ -31844,15 +32407,19 @@ function _gfxAvatar(r, P) {
   if (!useP && !useL) return "";
   // Portrait crop ~3:4 - rectangular with a subtle 3px radius for polish.
   const w = 40, h = 52;
+  // Cell background = team logo when the org is known (silhouette only for
+  // org-less rows: draftees / overseas). A 404'd photo then degrades to the
+  // logo, not the dim silhouette (owner: silhouettes read badly on dark-mode
+  // GFX). The small meta-line logo repeats on those rows - accepted, same
+  // trade-off as the full prospect card's logo base layer.
+  const _avLogo = (typeof teamLogoURL === "function" && r && r.org) ? teamLogoURL(r.org) : null;
   const wrap = `width:${w}px;height:${h}px;border-radius:3px;flex:none;border:1px solid ${P.border};`
-    + `background-color:${P.bg};background-image:${_gfxSilhouetteBg(P)};background-position:center;background-size:62%;`
+    + `background-color:${P.bg};background-image:${_avLogo ? `url('${_avLogo}')` : _gfxSilhouetteBg(P)};background-position:center;background-size:${_avLogo ? "58%" : "62%"};`
     + `background-repeat:no-repeat;overflow:hidden;display:inline-block;vertical-align:middle;`;
   if (useP) {
     const hs = _gfxHeadshotURL(r.mlbam, h);
-    // No photo on file → 404 → fall through to the silhouette background and
-    // log the miss. The team logo (when enabled) shows in the meta line, so
-    // we deliberately do NOT swap the avatar to a logo here (avoids a double
-    // team logo on photo-less rows).
+    // No photo on file → 404 → fall through to the cell background (team
+    // logo, silhouette when org-less) and log the miss.
     // typeof guard: html2canvas rasterizes inside a cloned iframe whose global
     // scope does NOT have our functions, so a bare call would throw a
     // ReferenceError there. typeof on an undeclared name is safe (returns
@@ -31940,6 +32507,16 @@ function _gfxAsOf() {
   const dt = raw ? new Date(raw) : new Date();
   const d = isNaN(dt.getTime()) ? new Date() : dt;
   return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+}
+// GFX 2026-07-18 (P1 #13): the list-board QR used to point at the bare
+// /prospx/ page. Encode the LIVE section+filters hash (the app keeps
+// location.hash in sync via syncToURL) so scanning the graphic reproduces the
+// exact list the viewer is looking at. Always resolves to the production origin.
+function _gfxDeepLink() {
+  try {
+    const h = (typeof location !== "undefined" && location.hash) ? location.hash : "";
+    return "https://eephus.io/prospx/" + h;
+  } catch (_) { return "https://eephus.io/prospx/"; }
 }
 // Single branding header (every GFX type): wordmark left, eephus.io/PROSPX + as-of
 // date right. No footer, no handle.
@@ -32185,6 +32762,12 @@ function buildProspectCard(snap) {
                 : (p.fv_close != null ? String(fvCeil(p.fv_close)) : null);
   const fvNum = (_xgC != null) ? efvRankValue(p)
               : (p.fv_close != null ? Math.round(p.fv_close) : (fvLabel ? parseInt(fvLabel, 10) : null));
+  // Hero badge label tracks the badge VALUE above (eFV-first, consensus FV only
+  // where eFV abstains) - it used to hardcode "Consensus FV" over an eFV number.
+  // Mirrors the detail-page header labels (efvDetailHeaderHTML).
+  const fvBadgeLabel = _xgC != null
+    ? ((_xC && _xC.xfv_ungraded) ? "Provisional eFV" : "eFV")
+    : "Consensus FV";
   const sl = p.statline || {};
   const isPitcher = /^(RHP|LHP|SP|RP|MIRP|SIRP|P)/.test(String(p.position || "").toUpperCase()) || ((p.sabermetrics || {}).is_pitcher === true);
 
@@ -32215,15 +32798,7 @@ function buildProspectCard(snap) {
   // default "rarity" style scales the frame with tier (thin/none below FV 45).
   const photoPad = (frameStyle !== "rarity") ? 7 : (rar ? (rar === "legendary" ? 9 : 7) : 3);
   const photoFrameBg = rarGrad || P.borderStrong;
-  // Base layer BEHIND the photo: the team logo (contained, centered) when we have one, else
-  // the neutral silhouette. Because the photo sits ON TOP as a cover layer, a player with no
-  // headshot on file (or a photo that 404s) degrades to the team logo instead of the dim
-  // silhouette -- which reads far better on dark-mode GFX. The logo is contained (never
-  // stretched) and rides the ESPN CDN (crossorigin-safe under html2canvas like the meta logos).
-  const _logoURL = (typeof teamLogoURL === "function" && p.org) ? teamLogoURL(p.org) : null;
-  const _baseLayer = _logoURL
-    ? `background-color:${P.bg3};background-image:url('${_logoURL}');background-repeat:no-repeat;background-position:center;background-size:58%;`
-    : `background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;`;
+  const _baseLayer = _gfxPhotoBaseLayer(p.org, P);
   const headshot = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:9px;overflow:hidden;box-sizing:border-box;padding:${photoPad}px;background:${photoFrameBg};border-top:4px solid ${orgColor};box-shadow:0 2px 10px rgba(0,0,0,0.25);">
     <div style="width:100%;height:100%;border-radius:4px;overflow:hidden;${_baseLayer}">
       ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
@@ -32416,7 +32991,11 @@ function buildProspectCard(snap) {
   // rank when the two boards disagree (mirrors the detail page's
   // secondary Consensus pill).
   const rankBits = [
-    (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null,
+    (() => {
+      const _or = (typeof getEfvOrgRank === "function" && p.org) ? getEfvOrgRank(p) : null;
+      if (_or) return `#${_or.rank} of ${_or.total} ${p.org}`;
+      return (p.org_rank != null && p.org) ? `#${p.org_rank}${p.org_rank_total ? ` of ${p.org_rank_total}` : ""} ${p.org}` : null;
+    })(),
     (_cardLeadEfv && p.overall_rank != null && p.overall_rank !== _cardXr)
       ? `Consensus #${p.overall_rank}` : null,
   ].filter(Boolean).join("  ·  ");
@@ -32609,7 +33188,7 @@ function buildProspectCard(snap) {
         </div>
         <div style="flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:12px;">
           <div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">Consensus FV</span>
+            <span style="font-family:var(--font-sans);font-size:12px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:${P.text3};">${fvBadgeLabel}</span>
             <span>${fvBadgeBig}</span>
           </div>
           ${heroTiles}
@@ -32856,7 +33435,7 @@ function buildCompareCard(snap) {
     const hs = (d.p.mlbam_id) ? _gfxHeadshotURL(d.p.mlbam_id, 200) : "";
     const meta = [d.p.position, d.p.org, d.sl.level, d.p.age != null ? "age " + d.p.age.toFixed(1) : null].filter(Boolean).join(" · ");
     return `<div style="flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;border-top:5px solid ${d.color};padding:16px 10px 0;">
-      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
+      <div style="width:132px;height:176px;flex:none;border:1px solid ${P.borderStrong};border-radius:6px;overflow:hidden;${_gfxPhotoBaseLayer(d.p.org, P)}">${hs ? `<div style="width:100%;height:100%;background-image:url('${hs}');background-size:cover;background-position:center top;"></div>` : ""}</div>
       <div style="display:flex;align-items:center;gap:8px;justify-content:center;">${_gfxTeamLogo(d.p.org, P, 26)}<div style="font-family:var(--font-retro);font-size:22px;font-weight:700;color:${P.text};line-height:1.05;">${escapeHtml(d.p.player_name || "")}</div></div>
       <div style="font-family:var(--font-mono);font-size:12px;color:${P.text2};">${escapeHtml(meta)}</div>
       <span class="fv-badge ${fvClass(d.fvLabel)}" style="font-size:32px;padding:7px 15px;border-radius:8px;font-weight:800;">${escapeHtml(d.fvLabel)}</span>
@@ -32921,7 +33500,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
   const PW = 116, PH = 150, pad = rar ? 5 : 3;
   const hsURL = (_gfxOpts.photos !== false && p.mlbam_id) ? _gfxHeadshotURL(p.mlbam_id, 200) : "";
   const photo = `<div style="width:${PW}px;height:${PH}px;flex:none;border-radius:7px;overflow:hidden;box-sizing:border-box;padding:${pad}px;background:${grad || P.borderStrong};border-top:3px solid ${orgColor};">
-      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;background-color:${P.bg3};background-image:${_gfxSilhouetteBg(P)};background-repeat:no-repeat;background-position:center 64%;background-size:54%;">
+      <div style="width:100%;height:100%;border-radius:3px;overflow:hidden;${_gfxPhotoBaseLayer(p.org, P)}">
         ${hsURL ? `<div style="width:100%;height:100%;background-image:url('${hsURL}');background-size:cover;background-position:center top;background-repeat:no-repeat;"></div>` : ""}
       </div></div>`;
   const fvBadge = (r.fv != null)
@@ -32937,6 +33516,7 @@ function _gfxMiniCard(item, kind, P, accent, idx) {
       ${photo}
       <div style="font-family:var(--font-retro);font-size:18px;font-weight:700;line-height:1.05;color:${P.text};">${escapeHtml(r.name || "")}</div>
       <div style="font-family:var(--font-mono);font-size:11px;color:${P.text3};display:flex;align-items:center;gap:5px;justify-content:center;">${logo}${escapeHtml(metaTxt)}</div>
+      ${r.value ? `<div style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</div>` : ""}
     </div>`;
 }
 
@@ -33027,7 +33607,7 @@ function buildGfxBoard() {
           <span style="font-weight:700;font-size:15px;color:${P.text};display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.name)}</span>
           ${(metaLogo || r.meta) ? `<span style="font-family:var(--font-mono);font-size:11px;color:${P.text3};white-space:nowrap;display:flex;align-items:center;gap:5px;">${metaLogo}${r.meta ? `<span style="overflow:hidden;text-overflow:ellipsis;">${escapeHtml(r.meta)}</span>` : ""}</span>` : ""}
         </span>
-        ${(showVal && (r.value || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : ""}</span>` : ""}
+        ${(showVal && (r.value || r.valueSub || r.dvm != null)) ? `<span style="flex:none;text-align:right;font-family:var(--font-mono);font-variant-numeric:tabular-nums;line-height:1.15;">${r.value ? `<span style="display:block;font-size:13px;font-weight:700;color:${accent};">${escapeHtml(String(r.value))}</span>` : ""}${r.valueSub ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">${escapeHtml(String(r.valueSub))}</span>` : (r.dvm != null ? `<span style="display:block;font-size:10px;font-weight:700;color:${P.text3};">$DvM+ ${r.dvm}</span>` : "")}</span>` : ""}
       </div>`;
   };
   // Columns scale with the list length + canvas width (see _gfxColumnCount), so
@@ -33076,13 +33656,13 @@ function buildGfxBoard() {
           </div>
           <div style="font-family:var(--font-mono);font-size:12px;color:${P.text3};margin-top:3px;">eephus.io/PROSPX · ${_gfxAsOf()}</div>
         </div>
-        ${_gfxQR("https://eephus.io/prospx/", 74)}
+        ${_gfxQR(_gfxDeepLink(), 74)}
       </div>
     </div>
-    <div style="flex:1 0 auto;padding-top:20px;">${grid}</div>
+    <div style="flex:1 1 auto;padding:20px 0;display:flex;flex-direction:column;justify-content:center;">${grid}</div>
     <div style="margin-top:16px;border-top:1px solid ${P.border};padding-top:11px;font-size:11px;color:${P.text3};display:flex;justify-content:space-between;flex:none;">
       <span>${escapeHtml(_gfxFooterNote(snap.kind))}</span>
-      <span>${total} matched${cap < total ? ` · showing top ${cap}` : ""}</span>
+      <span>${total} matched${cap < total ? ` · top ${cap} shown · +${total - cap} more at eephus.io/prospx` : ""}</span>
     </div>`;
   return { board, total, w: W, h: H };
 }
@@ -33196,7 +33776,17 @@ function openGfxModal() {
   _gfxApplyTheme();
   _gfxSyncControls();
   _gfxApplyModeUI();
-  _gfxRefresh();
+  // v47 - qrcode lazy-injects on first GFX open (it left the eager <head>
+  // tags). Build the board once the lib settles - loaded OR failed - so the
+  // header QR renders on the first pass instead of needing a rebuild.
+  // _gfxQR keeps its typeof guard as the failure mode: if the inject fails,
+  // the card simply omits the QR chip.
+  if (typeof window.qrcode === "undefined") {
+    _gfxBusy(true);   // spinner up while the (local, tiny) vendor loads
+    _ensureQrcodeLib().catch(() => {}).then(() => _gfxRefresh());
+  } else {
+    _gfxRefresh();
+  }
 }
 function closeGfxModal() {
   const overlay = document.getElementById("gfx-overlay");
@@ -39635,7 +40225,6 @@ function makeToolDvmCell(org) {
 
 function renderFarmSystems() {
   let orgs = farmSortedOrgs();
-  _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
   // Tendency-filter chips (always rendered; active state from the Set).
   renderFarmTendencyChips();
   // Global top-search filters farms by org code / full name.
@@ -39662,6 +40251,10 @@ function renderFarmSystems() {
       });
     }
   }
+  // GFX 2026-07-18 (P0 #8): snapshot AFTER the search + tendency filters (moved
+  // down from the top of the function) so an exported farm graphic reflects the
+  // active filters, matching every other section's snapshot-after-filter contract.
+  _gfxSet("farm", "farm", orgs, { sortLabel: (state.farmSort && state.farmSort !== "farm_rank") ? "by " + String(state.farmSort).replace(/_/g, " ") : "by composite grade" });
   // Apply card-mode class based on state.farmViewMode. The class flips
   // #farm-section into a CSS grid of cards via the .farm-rows-cards
   // stylesheet rules; .table-mode is the default no-op.
@@ -39848,37 +40441,46 @@ function renderFarmSystems() {
         ? ""
         : `<div class="farm-rank-delta ${rankDelta > 0 ? 'stock-up' : 'stock-down'}" title="Was #${prev} on your last visit">${rankDelta > 0 ? '+' : ''}${rankDelta}${rankDelta > 0 ? '↑' : '↓'}</div>`;
     }
-    // Top-3 prospects strip (G16). Names are clickable - onclick fires
-    // goToPlayer() with the player_key and stopPropagation prevents the
-    // row's goToFarm() from also firing. Keyboard focus + Enter also
-    // routes to the player page for accessibility. Position shown
-    // inline before the name as a small tertiary chip.
-    const top3 = (org.prospects || []).slice(0, 3);
+    // Top-3 prospects strip (G16). Derived LIVE from the same pool + eFV
+    // ordering as the farm-detail Roster tab (efvRankValue over org players
+    // + provisionals) and ranked via getEfvRank -- the site-wide canonical --
+    // so the preview can never disagree with the roster or the main board.
+    // (The baked org.prospects order is one run stale and pre-dates the
+    // quantile headline: the Ike Irish #1/#80-vs-#3/#102 bug.) Names are
+    // clickable - onclick fires goToPlayer() with the player_key and
+    // stopPropagation prevents the row's goToFarm() from also firing.
+    if (typeof ensureEfvUngraded === "function") ensureEfvUngraded();
+    const _orgPool = (DATA.players || []).filter(p => p && p.player_key && p.org === org.org)
+      .concat((typeof provPlayers === "function" ? provPlayers() : []).filter(p => p.org === org.org));
+    _orgPool.sort((a, b) => efvRankValue(b) - efvRankValue(a)
+      || ((a._is_provisional || b._is_provisional) ? 0 : fvCmpDesc(a, b)));
+    const top3 = _orgPool.slice(0, 3);
     const topHtml = top3.length
       ? `<div class="farm-top3-stack">${top3.map(t => {
           const pkey = escapeHtml(t.player_key || "");
-          // Lead with eFV (consensus FV fallback), matching the active board.
-          const tFv = (t.xfv_grade != null) ? Math.round(t.xfv_grade)
-                    : (t.fv_raw != null ? fvCeil(t.fv_raw) : t.fv_label);
-          const primaryPos = (t.pos || t.position || "")
+          // Lead with eFV (consensus FV fallback), via the shared gradeBlock
+          // resolution so rounding + fallback match the board rows exactly.
+          const gb = (typeof gradeBlock === "function") ? gradeBlock(t) : null;
+          const tFv = gb && gb.label != null ? gb.label : "-";
+          const primaryPos = (t.position || "")
             .toString().split("/")[0].trim().toUpperCase();
           const posChip = primaryPos
-            ? `<span class="farm-top3-pos" title="${escapeHtml(t.pos || t.position || "")}">${escapeHtml(primaryPos)}</span>`
+            ? `<span class="farm-top3-pos" title="${escapeHtml(t.position || "")}">${escapeHtml(primaryPos)}</span>`
             : "";
           const nameHtml = pkey
-            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.name)}</span>`
-            : `<span class="farm-top3-name">${escapeHtml(t.name)}</span>`;
+            ? `<span class="farm-top3-name is-link" data-key="${pkey}" tabindex="0" onclick="event.stopPropagation();goToPlayer('${pkey}');" onkeydown="if(event.key==='Enter'){event.stopPropagation();goToPlayer('${pkey}');}">${escapeHtml(t.player_name)}</span>`
+            : `<span class="farm-top3-name">${escapeHtml(t.player_name)}</span>`;
           // v19 - Rank diamond LEFT of pos chip, matching active-list
           // treatment. Reuses rankNumRarityClass for the FV-tier border.
-          // storage.py emits the top-prospect's site-wide MiLB rank as `rank`
-          // on org.prospects (older payloads used `overall_rank`).
-          const _topRank = (t.overall_rank ?? t.rank);
+          const _topRank = (typeof getEfvRank === "function") ? getEfvRank(t) : null;
           const rankDiamond = _topRank != null
-            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: Number(tFv) }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
+            ? `<span class="rank-num ${typeof rankNumRarityClass === 'function' ? rankNumRarityClass({ fv_close: gb ? gb.value : null }) : ''}" style="width:18px;height:18px;flex-shrink:0;"><span class="rank-num-inner" style="font-size:8px;">${_topRank}</span></span>`
             : "";
+          const _tTitle = gb && gb.lead === "efv" && gb.consVal != null
+            ? ` title="eFV ${tFv} · consensus FV ${gb.consLabel != null ? gb.consLabel : gb.consVal}"` : "";
           return `<div class="farm-top3-chip">
             ${rankDiamond}${posChip}${nameHtml}
-            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${t.xfv_grade != null ? ` title="eFV ${tFv} · consensus FV ${t.fv_label}"` : ""}>${tFv}</span>
+            <span class="fv-badge ${fvClass(String(tFv))} size-xs" style="flex-shrink:0;"${_tTitle}>${tFv}</span>
           </div>`;
         }).join("")}</div>`
       : '<span style="color:var(--text-tertiary);"> - </span>';
@@ -41797,6 +42399,11 @@ function _mergePlayerDetail(p, det) {
       if (!ps[src]) continue;
       if (moved.tools)  ps[src].tools  = moved.tools;
       if (moved.extras) ps[src].extras = moved.extras;
+      // v46 payload-slim - historical per-source scalars (interval_label /
+      // snapshot_date / status / fv_adjusted) ride the shard too; restore
+      // them for the per-source history table. Legacy shards without the
+      // key skip harmlessly.
+      if (moved.scalars) Object.assign(ps[src], moved.scalars);
     }
   }
   p.__detailMerged = true;
@@ -43849,14 +44456,18 @@ function renderPlayerDetail(key) {
   // the list). Consensus rank shown as a secondary pill when it differs. Works for provisional
   // prospects too (getEfvRank computes their rank client-side).
   const _efvOverall = (typeof getEfvRank === "function") ? getEfvRank(p) : null;
+  // Org pill on the CANONICAL eFV org rank (same ordering as the roster tab),
+  // baked org_rank / provisional map as fallbacks only.
+  const _efvOrg = (typeof getEfvOrgRank === "function") ? getEfvOrgRank(p) : null;
   const _provOrg = (p._is_provisional && typeof provOrgRank === "function") ? provOrgRank(p) : null;
-  const rankPills = (_efvOverall != null || p.overall_rank != null || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
+  const rankPills = (_efvOverall != null || p.overall_rank != null || _efvOrg || p.org_rank != null || wagRankPill || liveRankPill || _provOrg)
     ? `<div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap;">
         ${_efvOverall != null ? rankPill("Overall eFV", "#" + _efvOverall, "var(--neon-violet)")
           : (p.overall_rank != null ? rankPill("Overall", "#" + p.overall_rank, "var(--neon-violet)") : "")}
         ${(_efvOverall != null && p.overall_rank != null && p.overall_rank !== _efvOverall) ? rankPill("Consensus", "#" + p.overall_rank, "var(--text-tertiary)") : ""}
         ${liveRankPill}
-        ${p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
+        ${_efvOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _efvOrg.rank + " of " + _efvOrg.total, "var(--neon-cyan)")
+          : p.org_rank != null ? rankPill(escapeHtml(p.org || "?"), "#" + p.org_rank + (p.org_rank_total ? " of " + p.org_rank_total : ""), "var(--neon-cyan)")
           : (_provOrg ? rankPill(escapeHtml(p.org || "?"), "#" + _provOrg.rank + " of " + _provOrg.total, "var(--neon-cyan)") : "")}
         ${wagRankPill}
       </div>`
@@ -45562,14 +46173,17 @@ function renderPlayerDetail(key) {
     ];
     const sidecar = (DATA.scout_reports && DATA.scout_reports[p.player_key]) || null;
     const srIds = sourceIdsFor(p);   // per-source player ids for "View on <source>" links
-    // Gate on whether the SLICE is loaded, not on this player's entry: a prospect
-    // with no scouting report (e.g. a fresh draftee) has no entry even after the
-    // slice loads, so keying the warm-load on `sidecar === null` re-fired
-    // loadSlice().then(render) forever -> infinite render loop -> site freeze.
-    if (!DATA.scout_reports && DATA._slices && DATA._slices.scout_reports) {
-      // First touch of any prospect detail page kicks off the sidecar
-      // warm. After load, re-render so the section populates.
-      loadSlice("scout_reports").then(() => {
+    // Gate on whether this player's DATA is loaded (their hash chunk under
+    // the v46 chunked contract, or the whole sidecar on older exports), not
+    // on the entry itself: a prospect with no scouting report (e.g. a fresh
+    // draftee) has no entry even after the load, so keying the warm-load on
+    // `sidecar === null` re-fired the fetch->render cycle forever ->
+    // infinite render loop -> site freeze. ensureScoutReports marks a chunk
+    // loaded even on fetch failure for the same reason.
+    if (!scoutReportsReadyFor(p.player_key)) {
+      // First touch of a prospect detail page pulls that player's chunk.
+      // After load, re-render so the section populates.
+      ensureScoutReports(p.player_key).then(() => {
         if (state.view && state.view.type === "player"
             && state.view.key === p.player_key) {
           render();
@@ -48883,7 +49497,12 @@ function _renderFarmDetailBody(orgCode, org, root) {
   // provisional eFV for source-ungraded ones (via getUngradedEfv), consensus fv_raw as the floor.
   const _rosterGrade = pl => {
     const x = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-    if (x && x.xfv_grade != null) return Number(x.xfv_grade);
+    // AUDIT 2026-07-18 (A2): sort by the quantile DISPLAY grade (efvRankValue,
+    // xfv_grade_quantile-first) not the raw xfv_grade. The raw->quantile map is
+    // non-monotone, so a raw-grade sort produced visibly out-of-order quantile
+    // badges in the affiliate table (contradicting the "ordering matches the
+    // board's primary grade" contract below).
+    if (x && x.xfv_grade != null) return efvRankValue({ player_key: pl.player_key });
     const ung = (typeof getUngradedEfv === "function") ? getUngradedEfv(pl) : null;
     if (ung && ung.xfv_grade != null) return Number(ung.xfv_grade);
     return (pl.fv_raw != null) ? Number(pl.fv_raw) : -1;
@@ -48970,9 +49589,13 @@ function _renderFarmDetailBody(orgCode, org, root) {
           ? ` onclick="goToPlayer('${escapeHtml(pl.player_key)}');" style="cursor:pointer;"`
           : "";
         const _gx = (pl.player_key && typeof getEfv === "function") ? getEfv({ player_key: pl.player_key }) : null;
-        const _gl = (_gx && _gx.xfv_grade != null) ? String(Math.round(_gx.xfv_grade)) : pl.fv_label;
+        // AUDIT 2026-07-18 (A2): show the quantile headline grade (efvGradeDisplay),
+        // NOT the raw Math.round(xfv_grade) -- otherwise the same player reads one eFV
+        // here and a different eFV in the affiliate-rosters table on the same page.
+        const _gq = (_gx && _gx.xfv_grade != null) ? efvGradeDisplay(_gx) : null;
+        const _gl = (_gq != null) ? String(_gq) : pl.fv_label;
         return `<div class="graded-prospect-row"${click}>
-          <span class="fv-badge ${fvClass(_gl)} size-sm" title="${_gx && _gx.xfv_grade != null ? `eFV ${_gl} · consensus FV ${pl.fv_label}` : `Consensus FV ${pl.fv_label}`}">${_gl}</span>
+          <span class="fv-badge ${fvClass(_gl)} size-sm" title="${_gq != null ? `eFV ${_gl} · consensus FV ${pl.fv_label}` : `Consensus FV ${pl.fv_label}`}">${_gl}</span>
           <span style="color:${pl.player_key ? "var(--neon-cyan)" : "var(--text-primary)"};overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(pl.fullName)}</span>
           <span style="color:var(--text-tertiary);font-size:10px;white-space:nowrap;">${escapeHtml(pl.position || " - ")}${pl.age != null ? ` · ${pl.age.toFixed(1)}` : ""}</span>
         </div>`;
@@ -49462,6 +50085,32 @@ function _renderFarmDetailBody(orgCode, org, root) {
   });
 }
 
+// Coalesced render scheduler for ASYNC data landings. Seven sidecar fetches
+// fire at boot (positions_played, swing_plus, stuff_plus_aaa, xfv,
+// milb_translation, xfv_history, xfv_proxy_eval) plus two lazy loaders
+// (xfv_ungraded, the eFV track bundle); each used to call render() directly
+// as it landed, so the first paint could be followed by up to seven
+// back-to-back full section re-renders (each resetting the pool caches and
+// rebuilding 50 row templates). Any number of scheduleRender() calls before
+// the next animation frame collapse into ONE render(); the final painted
+// output is identical because render() always reads the current DATA +
+// sidecar state. Interactive paths keep calling render() directly for
+// synchronous feedback.
+let _renderQueued = false;
+function scheduleRender() {
+  if (_renderQueued) return;
+  _renderQueued = true;
+  const _flush = () => {
+    _renderQueued = false;
+    // Same guard the per-fetch calls carried: a sidecar can land before
+    // DATA / the template mount, where render() throws - swallow it (the
+    // boot render paints with the already-merged sidecar data anyway).
+    try { if (typeof render === "function") render(); } catch (e) { /* boot race */ }
+  };
+  if (typeof requestAnimationFrame === "function") requestAnimationFrame(_flush);
+  else setTimeout(_flush, 16);
+}
+
 function render() {
   // Clear per-render memo caches so derived values (e.g. pool mean age,
   // pool HT/WT/BMI stats) re-compute against any DATA that hydrated
@@ -49598,10 +50247,25 @@ function render() {
     if (target) target.innerHTML = `<div class="state-message">${msg}</div>`;
   };
 
-  if (needsGrad && DATA._slices && DATA._slices.debuts && !DATA.debuts.length) {
-    showLoading("Loading debuted players…");
-    loadSlice("debuts").then(render);
-    return;
+  // v46 payload-slim - list surfaces (Graduates tab, Injured) run on the
+  // LITE slice; a graduate's CARD needs the full record (points history,
+  // statcast splits, per-source history). v47 - the card now pulls only
+  // HIS per-player shard (ensureDebutFullFor, data/debuts_full/{key}.json)
+  // instead of the whole monolith; the helper falls back to
+  // ensureDebutsFull when the shard contract is absent or the fetch fails,
+  // so old caches and missing shards behave exactly as before.
+  if (needsGrad && DATA._slices && (DATA._slices.debuts_lite || DATA._slices.debuts)) {
+    if (active === "player") {
+      if (!_debutRowIsFull(state.view.key)) {
+        showLoading("Loading debuted players…");
+        ensureDebutFullFor(state.view.key).then(render);
+        return;
+      }
+    } else if (!DATA.debuts.length) {
+      showLoading("Loading debuted players…");
+      ensureDebutsLite().then(render);
+      return;
+    }
   }
   if (needsInactive && DATA._slices && DATA._slices.inactive
       && !DATA.inactive.length) {
@@ -49625,6 +50289,20 @@ function render() {
       loadSlice("rosters_by_org").then(render);
       return;
     }
+  }
+  // v47 wire-slim - inactive.json no longer rides the idle warm. The farm
+  // page's transaction history folds inactive players into the org event
+  // pool, so fire a NON-BLOCKING enrichment load on farm-detail open and
+  // re-render once it lands - same pattern as the debuts view's roster
+  // enrichment above. The Injured view and inactive-player deep links keep
+  // the BLOCKING needsInactive gate above (their primary data).
+  if (active === "farmDetail" && DATA._slices && DATA._slices.inactive
+      && !(DATA.inactive || []).length && !_inactiveEnrichKicked) {
+    _inactiveEnrichKicked = true;
+    loadSlice("inactive").then(() => {
+      if ((DATA.inactive || []).length
+          && state.view && state.view.type === "farm") render();
+    });
   }
   // Org_summary gate - farm detail render dereferences each org's
   // grades / financial / tool_dev blocks. If the main DATA payload
@@ -51151,9 +51829,18 @@ function makeFarmCompareSideBySide(farms) {
     const color = COMPARE_COLORS[i % COMPARE_COLORS.length];
     const grade = ((o.letter_by_window || {})[state.formWindow || "7y"]) || (o.grades && o.grades.overall) || " - ";
     const tp = o.top_prospect;
-    // Lead with eFV (consensus FV fallback); top_prospect carries `name` + `xfv_grade`.
-    const tpFv = tp ? (tp.xfv_grade != null ? Math.round(tp.xfv_grade)
-                       : (tp.fv_raw != null ? fvCeil(tp.fv_raw) : null)) : null;
+    // Lead with eFV (consensus FV fallback); top_prospect carries `name`,
+    // `player_key` + a baked raw `xfv_grade`. AUDIT 2026-07-18 (A2): resolve the
+    // QUANTILE display grade client-side (efvGradeDisplay via getEfv) so this
+    // badge matches the eFV shown elsewhere; the baked raw grade is only a
+    // fallback for a top prospect not in the client eFV map.
+    let tpFv = null;
+    if (tp) {
+      const _tpx = (tp.player_key && typeof getEfv === "function") ? getEfv({ player_key: tp.player_key }) : null;
+      if (_tpx && _tpx.xfv_grade != null) tpFv = efvGradeDisplay(_tpx);
+      else if (tp.xfv_grade != null) tpFv = Math.round(tp.xfv_grade);
+      else if (tp.fv_raw != null) tpFv = fvCeil(tp.fv_raw);
+    }
     const tpHtml = tp
       ? `<div style="font-size:11px;color:var(--text-secondary);margin-top:3px;">Top: <span style="color:var(--text-primary);">${escapeHtml(tp.name || tp.player_name || " - ")}</span>${tpFv != null ? ` <span class="fv-badge size-sm ${fvClass(String(tpFv))}" style="margin-left:4px;">${tpFv}</span>` : ""}</div>`
       : "";
@@ -51969,12 +52656,26 @@ function attachHandlers() {
     render();
     syncToURL();
   });
+  // Picking a MAIN sort must take control back from the per-tool / per-
+  // Statcast sort overrides: sortPool gives those absolute priority and
+  // returns early, so without this the header/dropdown would light up
+  // while the list stayed sorted by the override (contradicting UI).
+  // Mirrors how picking an override takes control away from state.sort.
+  const _clearSortOverrides = () => {
+    state.toolSortKey     = "off";
+    state.statcastSortKey = "off";
+    const _ts = document.getElementById("tool-sort-select");
+    if (_ts) _ts.value = "off";
+    const _ss = document.getElementById("statcast-sort-select");
+    if (_ss) _ss.value = "off";
+  };
   // eFV / Consensus "Rank by" toggle: sets the board sort (and, via _gradePrimary,
   // which grade leads every cell). Sets state.sort to "xfv" or "fv".
   document.querySelectorAll("[data-grade-toggle]").forEach(btn => {
     btn.addEventListener("click", () => {
       state.sort = btn.dataset.gradeToggle;
       if (state.sortRev) state.sortRev.sort = false;   // clear stale reverse flag on an explicit sort pick
+      _clearSortOverrides();
       _syncGradeToggle();
       syncSortHeaderActive();
       resetListPages();
@@ -51993,6 +52694,7 @@ function attachHandlers() {
   if (sortEl) sortEl.addEventListener("change", e => {
     state.sort = e.target.value;
     if (state.sortRev) state.sortRev.sort = false;   // an explicit dropdown pick must not be silently reversed by a stale column-toggle flag
+    _clearSortOverrides();   // the tool/Statcast overrides otherwise win in sortPool and the list ignores this pick
     _syncGradeToggle();
     // Mirror dropdown-driven sort changes into the column-click sort
     // header indicator (the header carries .is-active when its
@@ -52047,6 +52749,7 @@ function attachHandlers() {
       // Mirror the actives-list change back into the sort dropdown so
       // chip and header stay in sync. Only applies to the main sort.
       if (cfg.stateField === "sort") {
+        _clearSortOverrides();   // a main-column click means "sort by this column" - hand control back from the tool/Statcast overrides
         const sortSel = document.getElementById("sort-select");
         if (sortSel) sortSel.value = state.sort;
       }
@@ -52235,7 +52938,7 @@ function _resetPageFilters(page) {
     state.classFilter    = "all";
     state.levelFilter    = "all";
     state.posFilter      = "all";
-    state.sort           = "fv";
+    state.sort           = "xfv";   // eFV is the primary board ranking; reset returns to it, not consensus (matches the initializer + FILTER_DEFAULTS)
     state.stockFilter    = "all";
     state.spreadFilter   = "all";
     state.healthFilter   = "all";
@@ -52369,6 +53072,10 @@ function populateOrgFilter() {
     return;
   }
 
+  // AUDIT 2026-07-18 (A3): revive Chase% across the board - backfill chase_pct
+  // from o_swing_pct on every active player's zone rows (see _normalizeZoneChase).
+  DATA.players.forEach(p => p && _normalizeZoneChase(p.zone_metrics));
+
   // Load the resolved headshot-context map (small, ~50KB) before first paint so
   // headshotURL picks the context that actually has a photo (MiLB fills the
   // prospect gaps). Failure is non-fatal - _photoCtx stays empty and headshots
@@ -52469,7 +53176,7 @@ function populateOrgFilter() {
   });
 
   // Warm the sidecar slices in the background. The user has to click
-  // before they touch the graduates/inactive/farm-detail data, so by
+  // before they touch the graduates/farm-detail data, so by
   // the time they navigate, the slice is usually already on DATA.
   // If they beat the network, the render branches re-fire render()
   // once the slice arrives.
@@ -52477,10 +53184,22 @@ function populateOrgFilter() {
     // requestIdleCallback (when available) yields to first user input
     // before the heavy warm starts; setTimeout is the fallback.
     const _warm = () => {
-      loadSlice("debuts");
+      // The context-rail "Recent debuts" / IL-returnee cards read the debuts
+      // slice but no longer force-fetch it at render time - schedule a
+      // coalesced re-render when the warm lands so the visible section's
+      // rail fills in. v46 payload-slim: the warm pulls the LITE slice only
+      // (list fields, a fraction of the old 9MB-gzip monolith); the full
+      // records load on demand (ensureDebutFullFor per graduate card;
+      // ensureDebutsFull for Time Machine / debuted chart). scout_reports
+      // left the warm list for the same reason - it is card-only and now
+      // loads per hash chunk on the first card open (ensureScoutReports).
+      // v47 wire-slim: inactive.json (~2.2MB gzip, ~24MB parse) left the
+      // warm too - most sessions never open a surface that reads it. It
+      // loads on demand instead: blocking on the Inactive/Injured view and
+      // inactive-player deep links (the needsInactive gate in render), and
+      // as a non-blocking enrichment on farm detail + Transactions.
+      ensureDebutsLite().then(() => scheduleRender()).catch(() => {});
       loadSlice("rosters_by_org");
-      loadSlice("inactive");
-      loadSlice("scout_reports");
     };
     if (typeof requestIdleCallback === "function") {
       requestIdleCallback(_warm, { timeout: 2500 });

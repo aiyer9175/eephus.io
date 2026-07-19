@@ -18,7 +18,6 @@ Covers:
 
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -32,8 +31,6 @@ from storage import (
     _bucket_weighted_tool_dvm,
     _compute_tool_deltas,
 )
-
-_TIMESERIES = Path(__file__).parent / "data" / "timeseries.json"
 
 
 # ---------------------------------------------------------------------------
@@ -206,11 +203,12 @@ class TestBucketWeightedToolDvm:
 # ---------------------------------------------------------------------------
 
 class TestExportedFields:
-    def setup_method(self):
-        if not _TIMESERIES.exists():
-            pytest.skip(f"{_TIMESERIES} not present — skip e2e checks")
-        with _TIMESERIES.open(encoding="utf-8") as fp:
-            self.d = json.load(fp)
+    @pytest.fixture(autouse=True)
+    def _shared_doc(self, timeseries_doc):
+        # Session-shared parse (conftest.timeseries_doc) replaces a per-test
+        # json.load of the ~65MB artifact. This class only READS the doc.
+        # Missing data -> the session fixture skips.
+        self.d = timeseries_doc
 
     def test_at_least_one_player_has_tool_deltas(self):
         # Sanity — if NO player has tool_deltas, the export hook is broken.

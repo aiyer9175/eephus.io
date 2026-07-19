@@ -62,7 +62,7 @@ happen inside the called module, so this file alone cannot split them).
 | 3e. Per-player transactions cache + within-season level changes (no _step wrapper) | - |
 | 3f. MLB roster-status derivation (debut, 40-man, options ...) (no _step wrapper) | - |
 | 4. Trade detection | - |
-| 5. Export (no _step wrapper) | ifa_timeseries.json, timeseries.json |
+| 5. Export (no _step wrapper) | debuts.json, ifa_timeseries.json, rosters_by_org.json, timeseries.json |
 | 6. FA refresh + export (fa_* sidecars) | timeseries.json |
 | 6b. MLB projections export (mlb_projections.json) | mlb_projections.json, swing_plus.json |
 | 6b2. Swing+ scoring (swing_plus.json) | swing_plus.json |

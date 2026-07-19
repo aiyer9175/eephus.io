@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-15",
  "seasons": [
   2018,
   2019,
@@ -13,44 +13,170 @@
  "conventions": {
   "predictor_year": "year Y qualified (IP>=50)",
   "target": "-RA9 in year Y+1 (IP>=40)",
-  "excluded": "2020 (60-game COVID season)"
+  "excluded": "2020 (60-game COVID season)",
+  "n_partial_outcome_pairs_dropped": 111
  },
- "runtime_seconds": 11.3,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "-RA9 in year Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "-RA9 in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "runtime_seconds": 22.9,
  "experiment": "X-S1 (+ X-S3)",
  "model": "sem_plus",
- "n_forward_pairs": 702,
+ "n_forward_pairs": 592,
  "forward_spearman_vs_RA9_next": {
-  "sem_plus": 0.3934,
-  "raw_fip": 0.3585,
-  "era": 0.2617
+  "sem_plus": 0.4167,
+  "raw_fip": 0.3821,
+  "era": 0.2843
  },
  "gap_ci_vs_era": {
-  "mean": 0.1318,
-  "lo95": 0.0829,
-  "hi95": 0.1807
+  "mean": 0.1326,
+  "lo95": 0.0797,
+  "hi95": 0.1844
  },
  "gap_ci_vs_raw_fip": {
-  "mean": 0.0346,
-  "lo95": 0.0198,
-  "hi95": 0.0493
+  "mean": 0.0342,
+  "lo95": 0.0177,
+  "hi95": 0.0508
+ },
+ "results_by_convention": {
+  "v1": {
+   "rho_primary": 0.4167,
+   "rho_baselines": {
+    "vs_era": 0.2843,
+    "vs_raw_fip": 0.3821
+   },
+   "rho_primary_full": 0.41666729566152605,
+   "rho_baselines_full": {
+    "vs_era": 0.2843418534938857,
+    "vs_raw_fip": 0.3820837522355322
+   },
+   "gap_ci": {
+    "vs_era": {
+     "mean": 0.1326,
+     "lo95": 0.0797,
+     "hi95": 0.1844
+    },
+    "vs_raw_fip": {
+     "mean": 0.0342,
+     "lo95": 0.0177,
+     "hi95": 0.0508
+    }
+   }
+  },
+  "v2": {
+   "rho_primary": 0.42,
+   "rho_baselines": {
+    "vs_era": 0.2994,
+    "vs_raw_fip": 0.3932
+   },
+   "rho_primary_full": 0.42001384510330003,
+   "rho_baselines_full": {
+    "vs_era": 0.2993903769400521,
+    "vs_raw_fip": 0.3931596994673683
+   },
+   "gap_ci": {
+    "vs_era": {
+     "mean": 0.1196,
+     "lo95": 0.0695,
+     "hi95": 0.1759
+    },
+    "vs_raw_fip": {
+     "mean": 0.0264,
+     "lo95": 0.0098,
+     "hi95": 0.0435
+    }
+   },
+   "cluster": {
+    "n_pairs": 592,
+    "n_players": 273,
+    "max_pairs_per_player": 5,
+    "mean_pairs_per_player": 2.17,
+    "n_strata_first_pred_season": 5
+   }
+  }
  },
  "gate": {
   "bar": "beats ERA (gap lo95 > 0) AND not worse than raw FIP (lo95 >= -0.01)",
-  "pass": true
+  "convention": "v1",
+  "pass": true,
+  "pass_under_v2": true
  },
+ "prior_artifact_defect": "the 2026-07-07 shipped artifact's n=702 included 2025->2026 pairs whose target was a mid-2026 partial season; harness v2 drops partial-outcome pairs",
  "gb_adjusted_candidate": {
   "experiment": "X-S3",
-  "candidate_rho": 0.3916,
+  "candidate_rho": 0.4136,
   "gap_ci_vs_plain_sem": {
-   "mean": -0.0017,
-   "lo95": -0.0087,
-   "hi95": 0.0055
+   "mean": -0.003,
+   "lo95": -0.01,
+   "hi95": 0.0043
+  },
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.4136,
+    "rho_baselines": {
+     "vs_plain_sem": 0.4167
+    },
+    "rho_primary_full": 0.41364135392413404,
+    "rho_baselines_full": {
+     "vs_plain_sem": 0.41666729566152605
+    },
+    "gap_ci": {
+     "vs_plain_sem": {
+      "mean": -0.003,
+      "lo95": -0.01,
+      "hi95": 0.0043
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.4174,
+    "rho_baselines": {
+     "vs_plain_sem": 0.42
+    },
+    "rho_primary_full": 0.4174365881616797,
+    "rho_baselines_full": {
+     "vs_plain_sem": 0.42001384510330003
+    },
+    "gap_ci": {
+     "vs_plain_sem": {
+      "mean": -0.0025,
+      "lo95": -0.0104,
+      "hi95": 0.0048
+     }
+    },
+    "cluster": {
+     "n_pairs": 592,
+     "n_players": 273,
+     "max_pairs_per_player": 5,
+     "mean_pairs_per_player": 2.17,
+     "n_strata_first_pred_season": 5
+    }
+   }
   },
   "pass": false,
+  "pass_under_v2": false,
   "verdict": "NO SHIP: the GB-adjusted core does not beat plain FIP forward out of sample; plain FIP stays. Starter samples are large enough that the observed HR rate is already a strong estimate."
  },
  "verdict": {
   "status": "validated",
-  "summary": "Forward-chained OOS over 7 seasons (702 Y->Y+1 pairs): SEM+ predicts next-year RA9 at rho 0.3934 vs raw FIP 0.3585, ERA 0.2617. CI on the rho gap vs ERA {'mean': 0.1318, 'lo95': 0.0829, 'hi95': 0.1807}, vs raw FIP {'mean': 0.0346, 'lo95': 0.0198, 'hi95': 0.0493}. Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse than its raw-FIP parent, so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Durability rides separate context columns."
+  "summary": "Forward-chained OOS over 7 seasons (592 Y->Y+1 pairs, complete outcome seasons only): SEM+ predicts next-year RA9 at rho 0.4167 vs raw FIP 0.3821, ERA 0.2843. CI on the rho gap vs ERA {'mean': 0.1326, 'lo95': 0.0797, 'hi95': 0.1844}, vs raw FIP {'mean': 0.0342, 'lo95': 0.0177, 'hi95': 0.0508}. Shipped VALIDATED: SEM+ beats the ERA baseline and is not worse than its raw-FIP parent, so the empirical-Bayes shrinkage + starter-pool anchoring earn their place. Durability rides separate context columns."
  }
 }

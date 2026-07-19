@@ -1,6 +1,6 @@
 {
- "generated_at": "2026-06-23",
- "model": "xFV ungraded (no-FV production ridge)",
+ "generated_at": "2026-07-14",
+ "model": "eFV ungraded (no-FV production ridge)",
  "by_side": {
   "hit": {
    "features": [
@@ -16,12 +16,12 @@
    ],
    "cohorts": {
     "low_minors_age_le21": {
-     "n": 108,
-     "spearman_vs_realized_war": 0.2326
+     "n": 105,
+     "spearman_vs_realized_war": 0.2369
     },
     "all_levels": {
-     "n": 1137,
-     "spearman_vs_realized_war": 0.245
+     "n": 621,
+     "spearman_vs_realized_war": 0.2985
     }
    }
   },
@@ -37,12 +37,12 @@
    ],
    "cohorts": {
     "low_minors_age_le21": {
-     "n": 61,
-     "spearman_vs_realized_war": 0.2507
+     "n": 62,
+     "spearman_vs_realized_war": 0.0867
     },
     "all_levels": {
-     "n": 1092,
-     "spearman_vs_realized_war": 0.1801
+     "n": 627,
+     "spearman_vs_realized_war": 0.1854
     }
    }
   }

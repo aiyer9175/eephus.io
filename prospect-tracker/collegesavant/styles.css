@@ -458,6 +458,18 @@ select {
   box-shadow: none;
 }
 
+/* A lazily fetched season's payload is still in flight (see ensurePitchData /
+   ensureHitterBip); the onload repaint drops the class. */
+.year-select.is-loading {
+  opacity: 0.55;
+  animation: yearSelectPulse 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes yearSelectPulse {
+  from { opacity: 0.55; }
+  to { opacity: 0.9; }
+}
+
 .control-button {
   min-height: 36px;
   padding: 0 11px;

@@ -11,7 +11,8 @@ Aggregates the parallel draft_* tables into a frontend-friendly JSON:
     "classes": [
       {
         "year": 2026,
-        "is_current": true,
+        "is_current": true,   // upcoming class: year >= today AND no picks on record yet
+
         "stock_plus_mean": <class-median draft stock+>,
         "fv_distribution": {"60": 2, "55": 8, "50": 14, ...},
         "prospects": [
@@ -797,7 +798,13 @@ def _build_class(year: int,
                 team_spend[team] += int(row["bonus_usd"])
 
     today = date.today()
-    is_current = (year >= today.year)
+    # "Current" = the upcoming draft still being scouted. Year alone is not
+    # enough: the draft concludes mid-July, so a same-year class with real
+    # picks on record must read as completed (else the board says
+    # "still pre-draft" until January and drafted players are filtered
+    # off it as already-in-system).
+    has_picks = any(r.get("team") for r in results)
+    is_current = (year >= today.year) and not has_picks
 
     # Lottery + projected order - only populated for classes that
     # haven't drafted yet AND for which Tankathon has shipped a
@@ -851,10 +858,12 @@ def _attach_overperformance(classes: list[dict]) -> None:
     a board record fall back to their own consensus_fv (draft-time grade)."""
     val: dict[str, dict] = {}   # player_key -> {"fv":..., "war":...}
 
-    def _ingest(path: str) -> None:
+    def _ingest(path: Path) -> None:
         try:
-            d = json.loads(Path(path).read_text(encoding="utf-8"))
+            d = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
+            log.warning("draft overperformance: could not read %s - "
+                        "current_fv falls back to draft-time grades", path.name)
             return
         rows = d.get("players") if isinstance(d, dict) else d
         for p in (rows or []):
@@ -864,8 +873,12 @@ def _attach_overperformance(classes: list[dict]) -> None:
             war = (p.get("career_war") or {}).get("career_war")
             val[k] = {"fv": p.get("fv_close"), "war": war}
 
-    _ingest("data/timeseries.json")
-    _ingest("data/debuts.json")
+    # Anchor to the module dir - the pipeline runs under varying cwds
+    # (the overseas_export lesson). Reading the PREVIOUS cycle's export
+    # here is intentional (the draft phase runs before the re-export).
+    _data_dir = Path(__file__).resolve().parent / "data"
+    _ingest(_data_dir / "timeseries.json")
+    _ingest(_data_dir / "debuts.json")
 
     pooled: list[tuple[int, float]] = []   # (drafted_pick, current_fv)
     for cls in classes:

@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import re
 import sys
+from bisect import bisect_right
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
@@ -43,6 +44,22 @@ BAN = [
 ]
 BAN_RE = re.compile("|".join(BAN), re.IGNORECASE)
 
+# Perf (2026-07-17): the surfaces total ~95MB and running the 17-branch
+# case-insensitive BAN_RE on every line took 30s+ per gate run. Every BAN
+# alternative contains at least one of these literal lowercase needles, so
+# a C-speed substring scan over a casefolded copy of the whole file finds
+# every line that could possibly match; BAN_RE then runs on just those
+# candidate lines (complete lines, so per-line match semantics and the
+# report output are unchanged). Keep this tuple in sync with BAN: every
+# alternative must contain at least one needle case-insensitively, or the
+# prefilter could skip a real finding.
+_NEEDLES = (
+    "seamless", "robust", "delve", "comprehensive", "crucial", "utiliz",
+    "myriad", "plethora", "worth noting", "in the realm of",
+    "a testament to", "game-chang", "cutting-edge", "dive into",
+    "tapestry", "meticulous", "showcase",
+)
+
 # Files that are pure copy (no code), so a ban-list hit is real prose to fix.
 # content/articles/* is owner editorial (long-form essays where normal English
 # like "crucial" is the author's own voice), so it's ADVISORY, not hard-fail.
@@ -56,6 +73,62 @@ def _is_pure(rel: str) -> bool:
     return rel in PURE_COPY
 
 
+def _scan_lines(rel: str, text: str, em_hits: list[str], ban: list[str]) -> None:
+    """The original exact per-line scan. Kept as the fallback for the rare
+    file where casefolding changes the text length (a char like U+0130 with
+    a multi-char casefold would shift the fast path's offsets)."""
+    for i, line in enumerate(text.split("\n"), 1):
+        if EM in line:
+            em_hits.append(f"{rel}:{i}")
+        for m in BAN_RE.finditer(line):
+            ban.append(f"{rel}:{i}: {m.group(0)!r}")
+
+
+def _scan(rel: str, text: str, em_hits: list[str], ban: list[str]) -> None:
+    """Prefiltered scan. Output (records + order) is identical to
+    _scan_lines: em-dash hits are one record per line in line order; BAN
+    records run line-ascending then match-position-ascending, exactly like
+    the old per-line finditer."""
+    low = text.casefold()
+    if len(low) != len(text):
+        # Casefold moved offsets; take the exact per-line path instead.
+        _scan_lines(rel, text, em_hits, ban)
+        return
+    has_em = EM in text
+    cand: set[int] = set()
+    for needle in _NEEDLES:
+        j = low.find(needle)
+        while j != -1:
+            cand.add(j)
+            j = low.find(needle, j + 1)
+    if not has_em and not cand:
+        return
+    # Line-start offsets; a "\n"-split line number is bisect_right(starts, i).
+    starts = [0]
+    j = text.find("\n")
+    while j != -1:
+        starts.append(j + 1)
+        j = text.find("\n", j + 1)
+    n_lines = len(starts)
+    if has_em:
+        last_line = 0
+        j = text.find(EM)
+        while j != -1:
+            ln = bisect_right(starts, j)
+            if ln != last_line:  # one record per line, like `if EM in line`
+                em_hits.append(f"{rel}:{ln}")
+                last_line = ln
+            j = text.find(EM, j + 1)
+    if cand:
+        # No BAN pattern (or needle) can span a newline, so running BAN_RE
+        # over each complete candidate line reproduces per-line matching.
+        for ln in sorted({bisect_right(starts, j) for j in cand}):
+            lo = starts[ln - 1]
+            hi = starts[ln] - 1 if ln < n_lines else len(text)
+            for m in BAN_RE.finditer(text[lo:hi]):
+                ban.append(f"{rel}:{ln}: {m.group(0)!r}")
+
+
 def main() -> int:
     check = "--check" in sys.argv
     em_hits: list[str] = []
@@ -67,12 +140,7 @@ def main() -> int:
         except UnicodeDecodeError:
             continue
         rel = str(p.relative_to(ROOT)).replace("\\", "/")
-        for i, line in enumerate(text.split("\n"), 1):
-            if EM in line:
-                em_hits.append(f"{rel}:{i}")
-            for m in BAN_RE.finditer(line):
-                rec = f"{rel}:{i}: {m.group(0)!r}"
-                (ban_hard if _is_pure(rel) else ban_soft).append(rec)
+        _scan(rel, text, em_hits, ban_hard if _is_pure(rel) else ban_soft)
 
     if em_hits:
         print("EM-DASHES (fail):", *em_hits[:60], sep="\n  ")

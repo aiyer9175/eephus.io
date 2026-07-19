@@ -96,6 +96,25 @@ def test_draft_canonical_keys_use_milb_target():
     )
 
 
+def test_no_new_draft_board_intervals_in_snapshots():
+    """The FG DRAFT boards must never land in the MiLB snapshots table.
+    Historical flat `<type>-<year>draft.csv` drops leaked org-less
+    amateur rows under interval_label='<year>draft' (2021-2026 boards,
+    ~936 rows — cleanup pending as an owner decision). draft_csv routes
+    draft slugs now, so any NEW leak (dated after the 2026 board's
+    2026-05-22 ingest) is a router regression."""
+    with _conn() as con:
+        leaks = con.execute(
+            "SELECT interval_label, snapshot_date, COUNT(*) FROM snapshots "
+            "WHERE interval_label GLOB '20[0-9][0-9]draft' "
+            "AND snapshot_date >= '2026-06-01' "
+            "GROUP BY interval_label, snapshot_date LIMIT 10"
+        ).fetchall()
+    assert not leaks, (
+        f"NEW draft-board intervals leaked into MiLB snapshots: {leaks}"
+    )
+
+
 def test_draft_snapshots_keyed_correctly():
     """Sanity: every row in draft_snapshots SHOULD have a draft_ key."""
     with _conn() as con:

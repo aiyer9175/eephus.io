@@ -48,6 +48,8 @@ SAMPLE = """{
    "tools":{"fb":60,"sl":55,"cmd":40},"starter_shape":27.0,"arsenal_depth":2,"role":"SP","lean":"RP","mismatch":true}],
  "n_prospects":1960,
  "backtest":{"n_labeled":44,"spearman_prefit_vs_held":0.223,"relief_k_bump_measured":0.022,
+   "per_direction":{"SP->RP":{"n_war":61,"rho_prefit_vs_war_delta":0.295,"n_held":22,"rho_prefit_vs_held":0.43},
+                    "RP->SP":{"n_war":25,"rho_prefit_vs_war_delta":-0.216,"n_held":13,"rho_prefit_vs_held":0.134}},
    "converter_median_fit_pool_pctile":72,"disclaimer":"A screen, not a success-probability model."}
 }"""
 
@@ -102,7 +104,11 @@ def test_sp2rp_need_gated_view():
 def test_history_scorecard_view():
     html = _render("#history")
     assert "pal-scorecard" in html
-    assert "0.223" in html and "Converted Guy" in html
+    # per-direction chips (the pooled sign-check is retired from the UI)
+    assert "0.223" not in html
+    assert "0.295" in html and "validated vs baselines" in html
+    assert "-0.216" in html and "does not validate ranking" in html
+    assert "Converted Guy" in html
     assert "Hit" in html                              # held-role label
     # WAR produced by the conversion: before -> after with the delta
     assert "WAR before" in html                       # column header

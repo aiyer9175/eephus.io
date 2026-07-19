@@ -49,26 +49,36 @@ def server():
         httpd.server_close()
 
 
-def _browser_page(p, page_errors):
-    try:
-        browser = p.chromium.launch(headless=True)
-    except Exception as exc:
-        pytest.skip(f"chromium not installed for playwright: {exc}")
-    page = browser.new_page()
-    page.on("pageerror", lambda err: page_errors.append(err.message))
-    return browser, page
-
-
-def test_news_page_renders_and_filters(server):
+@pytest.fixture(scope="module")
+def browser():
+    """One chromium per module (was: one launch per test). browser.new_page()
+    gives each test a fresh isolated context, so test isolation matches the
+    old fresh-browser-per-test behavior."""
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
 
+    with sync_playwright() as p:
+        try:
+            b = p.chromium.launch(headless=True)
+        except Exception as exc:
+            pytest.skip(f"chromium not installed for playwright: {exc}")
+        yield b
+        b.close()
+
+
+def _browser_page(browser, page_errors):
+    page = browser.new_page()
+    page.on("pageerror", lambda err: page_errors.append(err.message))
+    return page
+
+
+def test_news_page_renders_and_filters(server, browser):
     if not (ROOT / "news" / "index.html").exists():
         pytest.skip("news/index.html not built")
 
     page_errors: list[str] = []
-    with sync_playwright() as p:
-        browser, page = _browser_page(p, page_errors)
+    page = _browser_page(browser, page_errors)
+    try:
         page.goto(server + "news/index.html", wait_until="load", timeout=15_000)
         page.wait_for_selector("#news-feed .feed-item", timeout=10_000)
 
@@ -76,7 +86,9 @@ def test_news_page_renders_and_filters(server):
         n_chips = page.evaluate("document.querySelectorAll('[data-news-filter]').length")
 
         # Click the Trades filter; only trade rows should remain visible, and
-        # day blocks with no visible rows must hide.
+        # day blocks with no visible rows must hide. (The 150ms settle stays
+        # a fixed wait: hiding rows has no positive DOM signal to
+        # condition-wait on without assuming non-trade rows exist.)
         page.click('[data-news-filter="trade"]')
         page.wait_for_timeout(150)
         vis = page.evaluate("""() => {
@@ -90,7 +102,8 @@ def test_news_page_renders_and_filters(server):
                     && [...d.querySelectorAll('.feed-item')].every(it => it.style.display === 'none')),
             };
         }""")
-        browser.close()
+    finally:
+        page.close()
 
     assert not page_errors, "JS errors on /news/:\n  " + "\n  ".join(page_errors)
     assert total >= 20, f"news feed rendered only {total} rows"
@@ -99,19 +112,17 @@ def test_news_page_renders_and_filters(server):
     assert not vis["visibleDayWithNoRows"], "a day block stayed visible with no visible rows"
 
 
-def test_homepage_news_header_links_to_news(server):
-    pytest.importorskip("playwright.sync_api")
-    from playwright.sync_api import sync_playwright
-
+def test_homepage_news_header_links_to_news(server, browser):
     page_errors: list[str] = []
-    with sync_playwright() as p:
-        browser, page = _browser_page(p, page_errors)
+    page = _browser_page(browser, page_errors)
+    try:
         page.goto(server, wait_until="load", timeout=15_000)
         href = page.get_attribute('.sb-feed .feed-head a', "href")
         page.click('.sb-feed .feed-head a')
         page.wait_for_url("**/news/**", timeout=10_000)
         url = page.url
-        browser.close()
+    finally:
+        page.close()
 
     assert not page_errors, "JS errors on homepage:\n  " + "\n  ".join(page_errors)
     assert href == "/news/", f"sidebar Prospect News header href was {href!r}"

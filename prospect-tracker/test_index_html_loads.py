@@ -58,11 +58,28 @@ def server():
         httpd.server_close()
 
 
-def test_page_boots_without_js_errors(server):
+def _wait_for_boot(page):
+    """Condition wait replacing the old fixed 2.5-3s sleeps: boot is done
+    once the loading placeholder has left #content. Generous ceiling; a
+    timeout is swallowed so the assertions below report the real failure
+    state (JS error list + placeholder text) instead of a TimeoutError."""
+    try:
+        page.wait_for_function(
+            "() => { const c = document.getElementById('content');"
+            " return !!c && c.innerHTML.indexOf('Loading prospect data') === -1; }",
+            timeout=30_000)
+    except Exception:
+        pass
+
+
+@pytest.fixture(scope="module")
+def booted_page(server):
+    """One booted app page shared by the module (the pattern from
+    test_prospx_sort_a11y.py): one chromium launch + one boot of the large
+    payload instead of one per test."""
     pytest.importorskip("playwright.sync_api")
     from playwright.sync_api import sync_playwright
 
-    page_errors: list[str] = []
     with sync_playwright() as p:
         try:
             browser = p.chromium.launch(headless=True)
@@ -70,24 +87,31 @@ def test_page_boots_without_js_errors(server):
             pytest.skip(f"chromium not installed for playwright: {exc}")
         page = browser.new_page()
         # Pre-unlock the welcome gate so its full-screen overlay doesn't sit
-        # on top of #content. Runs before any page script on every navigation.
+        # on top of #content or intercept the .section-tab clicks. Runs
+        # before any page script on every navigation.
         page.add_init_script(
             "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
             "catch(e){}"
         )
+        page_errors: list[str] = []
         page.on("pageerror", lambda err: page_errors.append(err.message))
         page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
-        page.wait_for_timeout(2500)  # let async boot IIFE finish
-        content_html = page.evaluate(
-            "document.getElementById('content').innerHTML"
-        )
+        _wait_for_boot(page)
+        yield page, page_errors
         browser.close()
+
+
+def test_page_boots_without_js_errors(booted_page):
+    page, page_errors = booted_page
+    content_html = page.evaluate(
+        "document.getElementById('content').innerHTML"
+    )
 
     assert not page_errors, (
         "JS errors thrown on load:\n  " + "\n  ".join(page_errors)
     )
     assert "Loading prospect data" not in content_html, (
-        "Boot IIFE never finished — #content still shows the placeholder. "
+        "Boot IIFE never finished - #content still shows the placeholder. "
         "Likely a JS error before the fetch."
     )
 
@@ -110,65 +134,46 @@ SECTION_TABS = [
 ]
 
 
-def test_every_section_renders(server):
-    pytest.importorskip("playwright.sync_api")
-    from playwright.sync_api import sync_playwright
-
-    page_errors: list[str] = []
+def test_every_section_renders(booted_page):
+    page, page_errors = booted_page
     section_results: dict[str, dict] = {}
 
-    with sync_playwright() as p:
-        try:
-            browser = p.chromium.launch(headless=True)
-        except Exception as exc:
-            pytest.skip(f"chromium not installed for playwright: {exc}")
-        page = browser.new_page()
-        # Pre-unlock the welcome gate — otherwise its overlay intercepts the
-        # .section-tab clicks below.
-        page.add_init_script(
-            "try{localStorage.setItem('prospect-tracker.gate-unlocked','1')}"
-            "catch(e){}"
-        )
-        page.on("pageerror", lambda err: page_errors.append(err.message))
-        page.goto(server + "prospx/index.html", wait_until="load", timeout=15_000)
-        page.wait_for_timeout(3000)  # let boot + initial render settle
-
-        for section in SECTION_TABS:
-            # Click the section-tab button — same path as a real user.
-            # Watchlist no longer has a section tab; it's reached via the
-            # persistent top-right global control. Exercising that button
-            # here also guards the regression where it called an undefined
-            # renderSection() and silently failed to navigate.
-            if section == "watchlist":
-                page.click("#global-watchlist")
-            else:
-                page.click(f'.section-tab[data-section="{section}"]')
-            # Slice-gated sections (graduates, injured) fire one extra
-            # render once the lazy sidecar arrives — give it room.
-            page.wait_for_timeout(800)
-            result = page.evaluate(f"""() => {{
-                const sec = document.getElementById('{section}-section');
-                if (!sec) return {{found: false}};
-                const visible = sec.style.display !== 'none';
-                const html = sec.innerHTML;
-                // Has content if there's either a populated row container
-                // OR an explicit empty-state placeholder.
-                // `.debut-row` is the debuts/graduates list row class
-                // (renamed when the Graduates section became Debuted).
-                const hasRows = !!sec.querySelector(
-                    '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row');
-                const hasStateMsg = !!sec.querySelector('.state-message');
-                return {{
-                    found: true,
-                    visible,
-                    hasRows,
-                    hasStateMsg,
-                    htmlLen: html.length,
-                }};
-            }}""")
-            section_results[section] = result
-
-        browser.close()
+    for section in SECTION_TABS:
+        # Click the section-tab button - same path as a real user.
+        # Watchlist no longer has a section tab; it's reached via the
+        # persistent top-right global control. Exercising that button
+        # here also guards the regression where it called an undefined
+        # renderSection() and silently failed to navigate.
+        if section == "watchlist":
+            page.click("#global-watchlist")
+        else:
+            page.click(f'.section-tab[data-section="{section}"]')
+        # Slice-gated sections (graduates, injured) fire one extra
+        # render once the lazy sidecar arrives - give it room. (KEPT as
+        # a fixed settle wait: the re-render has no DOM completion
+        # signal to condition-wait on.)
+        page.wait_for_timeout(800)
+        result = page.evaluate(f"""() => {{
+            const sec = document.getElementById('{section}-section');
+            if (!sec) return {{found: false}};
+            const visible = sec.style.display !== 'none';
+            const html = sec.innerHTML;
+            // Has content if there's either a populated row container
+            // OR an explicit empty-state placeholder.
+            // `.debut-row` is the debuts/graduates list row class
+            // (renamed when the Graduates section became Debuted).
+            const hasRows = !!sec.querySelector(
+                '.player-row, .debut-row, .grad-row, .farm-row, .spotlight-row');
+            const hasStateMsg = !!sec.querySelector('.state-message');
+            return {{
+                found: true,
+                visible,
+                hasRows,
+                hasStateMsg,
+                htmlLen: html.length,
+            }};
+        }}""")
+        section_results[section] = result
 
     assert not page_errors, (
         f"JS errors during section walk:\n  " + "\n  ".join(page_errors)

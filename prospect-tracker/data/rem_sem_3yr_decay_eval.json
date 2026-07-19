@@ -1,0 +1,372 @@
+{
+ "experiment": "T1-2 X-R2b/X-S2b decayed trailing-3yr REM+/SEM+ blend + window extension",
+ "generated_at": "2026-07-15",
+ "seed": 20260714,
+ "bootstrap_reps": 2000,
+ "design": {
+  "blend": "w = IP * d^years_back on the UNROUNDED per-season index (*_raw)",
+  "candidate": "d=0.8 (pinned); d=1.0 flat and d=0.6 are sensitivity arms only",
+  "baseline_1yr": "unrounded single-season index (one_raw); the rounded incumbent rho is reported descriptively as one_round_descriptive",
+  "seasons_loaded": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2019,
+   2021,
+   2022,
+   2023,
+   2024,
+   2025
+  ],
+  "predictor_years": [
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "excluded_pairs": [
+   "2019->2020",
+   "2020->2021",
+   "2025->partial-2026"
+  ],
+  "note_2020": "2020 not loaded at all (repo convention; also absent from windows)",
+  "leverage": "not loaded (spec: not needed). Consequence: opener detection (entry-inning heuristic) is inert, so a handful of openers stay in the RP pool that the shipped board drops; identical across arms.",
+  "eligibility": {
+   "RP": {
+    "pred_tbf_min": 100.0,
+    "next_tbf_min": 60.0,
+    "window_min_seasons": 2,
+    "window_min_ip_flat": 40.0
+   },
+   "SP": {
+    "pred_ip_min": 50.0,
+    "next_ip_min": 40.0,
+    "window_min_seasons": 2,
+    "window_min_ip_flat": 120.0
+   }
+  },
+  "target": "-RA9 in year Y+1",
+  "gate": "per side: PRIMARY lo95(rho d0.8 - rho 1yr) >= 0 AND SECONDARY lo95(rho d0.8 - rho flat3yr) >= 0; 2000-rep paired bootstrap, seed 20260714; identical pair set for all arms",
+  "era_split": "predictor year 2013-2017 (old) vs 2018-2024 (new); old-era-only pass ships provisional"
+ },
+ "RP": {
+  "side": "RP (REM+, X-R2b)",
+  "pooled": {
+   "n": 1405,
+   "point_rho": {
+    "one_raw": 0.192,
+    "d1.0": 0.2238,
+    "d0.8": 0.2245,
+    "d0.6": 0.2223,
+    "one_round_descriptive": 0.1919
+   },
+   "gap_ci": {
+    "d0.8_minus_one_raw": {
+     "mean": 0.0327,
+     "lo95": 0.0018,
+     "hi95": 0.0634
+    },
+    "d0.8_minus_d1.0": {
+     "mean": 0.0006,
+     "lo95": -0.0051,
+     "hi95": 0.0065
+    },
+    "d1.0_minus_one_raw": {
+     "mean": 0.0321,
+     "lo95": -0.0034,
+     "hi95": 0.0668
+    },
+    "d0.6_minus_one_raw": {
+     "mean": 0.0305,
+     "lo95": 0.0057,
+     "hi95": 0.0558
+    },
+    "d0.6_minus_d1.0": {
+     "mean": -0.0016,
+     "lo95": -0.0138,
+     "hi95": 0.0107
+    }
+   }
+  },
+  "era_split": {
+   "old_2013_2017": {
+    "n": 711,
+    "point_rho": {
+     "one_raw": 0.1579,
+     "d1.0": 0.214,
+     "d0.8": 0.2082,
+     "d0.6": 0.2,
+     "one_round_descriptive": 0.1575
+    },
+    "gap_ci": {
+     "d0.8_minus_one_raw": {
+      "mean": 0.0503,
+      "lo95": 0.0078,
+      "hi95": 0.094
+     },
+     "d0.8_minus_d1.0": {
+      "mean": -0.0058,
+      "lo95": -0.0143,
+      "hi95": 0.0027
+     },
+     "d1.0_minus_one_raw": {
+      "mean": 0.0562,
+      "lo95": 0.0086,
+      "hi95": 0.1055
+     },
+     "d0.6_minus_one_raw": {
+      "mean": 0.0421,
+      "lo95": 0.0071,
+      "hi95": 0.0776
+     },
+     "d0.6_minus_d1.0": {
+      "mean": -0.0141,
+      "lo95": -0.0316,
+      "hi95": 0.0036
+     }
+    }
+   },
+   "new_2018_2024": {
+    "n": 694,
+    "point_rho": {
+     "one_raw": 0.2491,
+     "d1.0": 0.2447,
+     "d0.8": 0.2526,
+     "d0.6": 0.2577,
+     "one_round_descriptive": 0.2487
+    },
+    "gap_ci": {
+     "d0.8_minus_one_raw": {
+      "mean": 0.0029,
+      "lo95": -0.0357,
+      "hi95": 0.0427
+     },
+     "d0.8_minus_d1.0": {
+      "mean": 0.008,
+      "lo95": -0.0006,
+      "hi95": 0.0166
+     },
+     "d1.0_minus_one_raw": {
+      "mean": -0.0051,
+      "lo95": -0.0491,
+      "hi95": 0.0416
+     },
+     "d0.6_minus_one_raw": {
+      "mean": 0.0082,
+      "lo95": -0.0221,
+      "hi95": 0.04
+     },
+     "d0.6_minus_d1.0": {
+      "mean": 0.0133,
+      "lo95": -0.0045,
+      "hi95": 0.0304
+     }
+    }
+   }
+  },
+  "gate": {
+   "primary_lo95_d08_minus_1yr": 0.0018,
+   "primary_pass": true,
+   "secondary_lo95_d08_minus_flat3yr": -0.0051,
+   "secondary_pass": false,
+   "pass": false
+  },
+  "gate_by_era": {
+   "old_2013_2017": {
+    "primary_lo95_d08_minus_1yr": 0.0078,
+    "primary_pass": true,
+    "secondary_lo95_d08_minus_flat3yr": -0.0143,
+    "secondary_pass": false,
+    "pass": false
+   },
+   "new_2018_2024": {
+    "primary_lo95_d08_minus_1yr": -0.0357,
+    "primary_pass": false,
+    "secondary_lo95_d08_minus_flat3yr": -0.0006,
+    "secondary_pass": false,
+    "pass": false
+   }
+  },
+  "n_pairs_by_predictor_year": {
+   "2013": 132,
+   "2014": 134,
+   "2015": 143,
+   "2016": 145,
+   "2017": 157,
+   "2018": 152,
+   "2021": 113,
+   "2022": 139,
+   "2023": 143,
+   "2024": 147
+  }
+ },
+ "SP": {
+  "side": "SP (SEM+, X-S2b)",
+  "pooled": {
+   "n": 986,
+   "point_rho": {
+    "one_raw": 0.4116,
+    "d1.0": 0.4212,
+    "d0.8": 0.4285,
+    "d0.6": 0.4339,
+    "one_round_descriptive": 0.4118
+   },
+   "gap_ci": {
+    "d0.8_minus_one_raw": {
+     "mean": 0.0168,
+     "lo95": -0.0128,
+     "hi95": 0.0453
+    },
+    "d0.8_minus_d1.0": {
+     "mean": 0.0073,
+     "lo95": 0.0021,
+     "hi95": 0.0127
+    },
+    "d1.0_minus_one_raw": {
+     "mean": 0.0095,
+     "lo95": -0.0248,
+     "hi95": 0.0417
+    },
+    "d0.6_minus_one_raw": {
+     "mean": 0.0222,
+     "lo95": -0.0019,
+     "hi95": 0.045
+    },
+    "d0.6_minus_d1.0": {
+     "mean": 0.0127,
+     "lo95": 0.0012,
+     "hi95": 0.0242
+    }
+   }
+  },
+  "era_split": {
+   "old_2013_2017": {
+    "n": 527,
+    "point_rho": {
+     "one_raw": 0.4109,
+     "d1.0": 0.4041,
+     "d0.8": 0.4136,
+     "d0.6": 0.42,
+     "one_round_descriptive": 0.4099
+    },
+    "gap_ci": {
+     "d0.8_minus_one_raw": {
+      "mean": 0.003,
+      "lo95": -0.0389,
+      "hi95": 0.0425
+     },
+     "d0.8_minus_d1.0": {
+      "mean": 0.0095,
+      "lo95": 0.0021,
+      "hi95": 0.0173
+     },
+     "d1.0_minus_one_raw": {
+      "mean": -0.0065,
+      "lo95": -0.0538,
+      "hi95": 0.0387
+     },
+     "d0.6_minus_one_raw": {
+      "mean": 0.0093,
+      "lo95": -0.0242,
+      "hi95": 0.0423
+     },
+     "d0.6_minus_d1.0": {
+      "mean": 0.0158,
+      "lo95": 0.0002,
+      "hi95": 0.0327
+     }
+    }
+   },
+   "new_2018_2024": {
+    "n": 459,
+    "point_rho": {
+     "one_raw": 0.4113,
+     "d1.0": 0.4374,
+     "d0.8": 0.4436,
+     "d0.6": 0.4451,
+     "one_round_descriptive": 0.4129
+    },
+    "gap_ci": {
+     "d0.8_minus_one_raw": {
+      "mean": 0.0326,
+      "lo95": -0.0075,
+      "hi95": 0.0751
+     },
+     "d0.8_minus_d1.0": {
+      "mean": 0.0061,
+      "lo95": -0.0023,
+      "hi95": 0.0145
+     },
+     "d1.0_minus_one_raw": {
+      "mean": 0.0265,
+      "lo95": -0.0194,
+      "hi95": 0.0754
+     },
+     "d0.6_minus_one_raw": {
+      "mean": 0.034,
+      "lo95": 0.0015,
+      "hi95": 0.0689
+     },
+     "d0.6_minus_d1.0": {
+      "mean": 0.0075,
+      "lo95": -0.01,
+      "hi95": 0.025
+     }
+    }
+   }
+  },
+  "gate": {
+   "primary_lo95_d08_minus_1yr": -0.0128,
+   "primary_pass": false,
+   "secondary_lo95_d08_minus_flat3yr": 0.0021,
+   "secondary_pass": true,
+   "pass": false
+  },
+  "gate_by_era": {
+   "old_2013_2017": {
+    "primary_lo95_d08_minus_1yr": -0.0389,
+    "primary_pass": false,
+    "secondary_lo95_d08_minus_flat3yr": 0.0021,
+    "secondary_pass": true,
+    "pass": false
+   },
+   "new_2018_2024": {
+    "primary_lo95_d08_minus_1yr": -0.0075,
+    "primary_pass": false,
+    "secondary_lo95_d08_minus_flat3yr": -0.0023,
+    "secondary_pass": false,
+    "pass": false
+   }
+  },
+  "n_pairs_by_predictor_year": {
+   "2013": 103,
+   "2014": 106,
+   "2015": 105,
+   "2016": 110,
+   "2017": 103,
+   "2018": 96,
+   "2021": 82,
+   "2022": 95,
+   "2023": 92,
+   "2024": 94
+  }
+ },
+ "runtime_seconds": 35.7,
+ "verdict": "rejected",
+ "loss_ledger": {
+  "gate": "per side: lo95(decayed3yr d=0.8 - 1yr) >= 0 AND lo95(decayed - flat3yr) >= 0 (seed 20260714, 2000 reps, extended window 2013-2024)",
+  "outcome": "RP: primary PASS (+0.0018) secondary FAIL (-0.0051); SP: primary FAIL (-0.0128) secondary PASS (+0.0021); no era-split clause triggered",
+  "reading": "decay adds nothing over flat for relievers; for starters decay beats flat but the 3yr blend never significantly beats one season",
+  "keep_alive": "extended-window RP evidence (n=1405, d0.8 vs 1yr lo95 +0.0018) suggests the EXISTING flat rem_plus_3yr provisional row may now clear a validated bar; that upgrade needs its own pre-registered re-gate, not this ledger"
+ }
+}

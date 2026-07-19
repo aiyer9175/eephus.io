@@ -1,0 +1,668 @@
+{
+ "experiment": "xfv_lambda_band",
+ "generated_at": "2026-07-14",
+ "gates_doc": "docs/efv-2026-07-14/GATES.md (E-LAMBDA) + M2 clause set",
+ "grid": [
+  0.5,
+  1.0,
+  0.0125
+ ],
+ "clamp": [
+  0.35,
+  0.9
+ ],
+ "sides": {
+  "hit": {
+   "live_lambda": 0.7,
+   "live": {
+    "composite": 0.6388,
+    "pooled_rho": 0.3784,
+    "within_tier_wm": 0.1716,
+    "t45": 0.0888,
+    "era": {
+     "2019-2021": 0.2926,
+     "2022-2023": 0.4253
+    }
+   },
+   "swept_best": 0.8875,
+   "clamped_pick": 0.8875,
+   "pick": {
+    "composite": 0.6469,
+    "pooled_rho": 0.3824,
+    "within_tier_wm": 0.1793,
+    "t45": 0.0852,
+    "era": {
+     "2019-2021": 0.3011,
+     "2022-2023": 0.427
+    }
+   },
+   "bootstrap": {
+    "p_gain_gt_0": 0.677,
+    "mean_gain": 0.0083,
+    "ci95": [
+     -0.0366,
+     0.05596
+    ],
+    "n_resamples": 1000
+   },
+   "clauses": {
+    "c1_composite_gain": {
+     "value": 0.0082,
+     "threshold": 0.005,
+     "pass": true
+    },
+    "c2_pooled_no_drop": {
+     "value": 0.004,
+     "threshold": -0.002,
+     "pass": true
+    },
+    "c3_era_no_drop": {
+     "worst_drop": 0.0017,
+     "per_era_delta": {
+      "2022-2023": 0.0017,
+      "2019-2021": 0.0085
+     },
+     "threshold": -0.015,
+     "pass": true
+    },
+    "c4_bootstrap": {
+     "p_gain_gt_0": 0.677,
+     "threshold": 0.75,
+     "pass": false
+    },
+    "c5_interior_optimum": {
+     "swept_best": 0.8875,
+     "grid_edges": [
+      0.5,
+      1.0
+     ],
+     "at_boundary": false,
+     "pass": true,
+     "note": "fails by construction when the objective prefers pure model; the ship is therefore an owner decision, not an auto-ship"
+    }
+   },
+   "mechanical_pass_c1_c4": false,
+   "n_folds": 353,
+   "curve": {
+    "0.5000": {
+     "composite": 0.5971,
+     "pooled_rho": 0.3711,
+     "within_tier_wm": 0.1421,
+     "t45": 0.0839
+    },
+    "0.5125": {
+     "composite": 0.5938,
+     "pooled_rho": 0.3717,
+     "within_tier_wm": 0.1427,
+     "t45": 0.0794
+    },
+    "0.5250": {
+     "composite": 0.6,
+     "pooled_rho": 0.3722,
+     "within_tier_wm": 0.1459,
+     "t45": 0.0819
+    },
+    "0.5375": {
+     "composite": 0.6056,
+     "pooled_rho": 0.3725,
+     "within_tier_wm": 0.1479,
+     "t45": 0.0852
+    },
+    "0.5500": {
+     "composite": 0.6049,
+     "pooled_rho": 0.3728,
+     "within_tier_wm": 0.1481,
+     "t45": 0.084
+    },
+    "0.5625": {
+     "composite": 0.6094,
+     "pooled_rho": 0.3732,
+     "within_tier_wm": 0.1506,
+     "t45": 0.0856
+    },
+    "0.5750": {
+     "composite": 0.6185,
+     "pooled_rho": 0.3744,
+     "within_tier_wm": 0.1553,
+     "t45": 0.0888
+    },
+    "0.5875": {
+     "composite": 0.6193,
+     "pooled_rho": 0.375,
+     "within_tier_wm": 0.1559,
+     "t45": 0.0884
+    },
+    "0.6000": {
+     "composite": 0.624,
+     "pooled_rho": 0.3759,
+     "within_tier_wm": 0.1594,
+     "t45": 0.0887
+    },
+    "0.6125": {
+     "composite": 0.626,
+     "pooled_rho": 0.3756,
+     "within_tier_wm": 0.1611,
+     "t45": 0.0893
+    },
+    "0.6250": {
+     "composite": 0.6316,
+     "pooled_rho": 0.3765,
+     "within_tier_wm": 0.1644,
+     "t45": 0.0907
+    },
+    "0.6375": {
+     "composite": 0.6322,
+     "pooled_rho": 0.3769,
+     "within_tier_wm": 0.1653,
+     "t45": 0.09
+    },
+    "0.6500": {
+     "composite": 0.6322,
+     "pooled_rho": 0.3771,
+     "within_tier_wm": 0.1666,
+     "t45": 0.0885
+    },
+    "0.6625": {
+     "composite": 0.6332,
+     "pooled_rho": 0.3776,
+     "within_tier_wm": 0.1687,
+     "t45": 0.0869
+    },
+    "0.6750": {
+     "composite": 0.6345,
+     "pooled_rho": 0.3779,
+     "within_tier_wm": 0.1697,
+     "t45": 0.0869
+    },
+    "0.6875": {
+     "composite": 0.6369,
+     "pooled_rho": 0.3785,
+     "within_tier_wm": 0.1711,
+     "t45": 0.0873
+    },
+    "0.7000": {
+     "composite": 0.6388,
+     "pooled_rho": 0.3784,
+     "within_tier_wm": 0.1716,
+     "t45": 0.0888
+    },
+    "0.7125": {
+     "composite": 0.6327,
+     "pooled_rho": 0.3783,
+     "within_tier_wm": 0.1697,
+     "t45": 0.0847
+    },
+    "0.7250": {
+     "composite": 0.6337,
+     "pooled_rho": 0.3785,
+     "within_tier_wm": 0.1697,
+     "t45": 0.0855
+    },
+    "0.7375": {
+     "composite": 0.6353,
+     "pooled_rho": 0.3791,
+     "within_tier_wm": 0.1699,
+     "t45": 0.0863
+    },
+    "0.7500": {
+     "composite": 0.6364,
+     "pooled_rho": 0.3792,
+     "within_tier_wm": 0.1709,
+     "t45": 0.0863
+    },
+    "0.7625": {
+     "composite": 0.6395,
+     "pooled_rho": 0.3798,
+     "within_tier_wm": 0.1722,
+     "t45": 0.0875
+    },
+    "0.7750": {
+     "composite": 0.6401,
+     "pooled_rho": 0.3801,
+     "within_tier_wm": 0.1741,
+     "t45": 0.0859
+    },
+    "0.7875": {
+     "composite": 0.6413,
+     "pooled_rho": 0.3804,
+     "within_tier_wm": 0.1748,
+     "t45": 0.0861
+    },
+    "0.8000": {
+     "composite": 0.6411,
+     "pooled_rho": 0.3806,
+     "within_tier_wm": 0.1747,
+     "t45": 0.0858
+    },
+    "0.8125": {
+     "composite": 0.6406,
+     "pooled_rho": 0.3809,
+     "within_tier_wm": 0.1752,
+     "t45": 0.0845
+    },
+    "0.8250": {
+     "composite": 0.6418,
+     "pooled_rho": 0.381,
+     "within_tier_wm": 0.1764,
+     "t45": 0.0844
+    },
+    "0.8375": {
+     "composite": 0.6437,
+     "pooled_rho": 0.3811,
+     "within_tier_wm": 0.1774,
+     "t45": 0.0852
+    },
+    "0.8500": {
+     "composite": 0.6439,
+     "pooled_rho": 0.3815,
+     "within_tier_wm": 0.1783,
+     "t45": 0.0841
+    },
+    "0.8625": {
+     "composite": 0.6447,
+     "pooled_rho": 0.3817,
+     "within_tier_wm": 0.1782,
+     "t45": 0.0848
+    },
+    "0.8750": {
+     "composite": 0.6442,
+     "pooled_rho": 0.382,
+     "within_tier_wm": 0.1786,
+     "t45": 0.0836
+    },
+    "0.8875": {
+     "composite": 0.6469,
+     "pooled_rho": 0.3824,
+     "within_tier_wm": 0.1793,
+     "t45": 0.0852
+    },
+    "0.9000": {
+     "composite": 0.6445,
+     "pooled_rho": 0.3824,
+     "within_tier_wm": 0.1793,
+     "t45": 0.0828
+    },
+    "0.9125": {
+     "composite": 0.6447,
+     "pooled_rho": 0.3824,
+     "within_tier_wm": 0.1802,
+     "t45": 0.0821
+    },
+    "0.9250": {
+     "composite": 0.6403,
+     "pooled_rho": 0.3824,
+     "within_tier_wm": 0.1787,
+     "t45": 0.0792
+    },
+    "0.9375": {
+     "composite": 0.6377,
+     "pooled_rho": 0.3824,
+     "within_tier_wm": 0.179,
+     "t45": 0.0763
+    },
+    "0.9500": {
+     "composite": 0.6409,
+     "pooled_rho": 0.3826,
+     "within_tier_wm": 0.1806,
+     "t45": 0.0777
+    },
+    "0.9625": {
+     "composite": 0.6417,
+     "pooled_rho": 0.3832,
+     "within_tier_wm": 0.1804,
+     "t45": 0.0781
+    },
+    "0.9750": {
+     "composite": 0.6421,
+     "pooled_rho": 0.3835,
+     "within_tier_wm": 0.1809,
+     "t45": 0.0777
+    },
+    "0.9875": {
+     "composite": 0.6428,
+     "pooled_rho": 0.3835,
+     "within_tier_wm": 0.1805,
+     "t45": 0.0788
+    },
+    "1.0000": {
+     "composite": 0.6413,
+     "pooled_rho": 0.3835,
+     "within_tier_wm": 0.18,
+     "t45": 0.0778
+    }
+   }
+  },
+  "pit": {
+   "live_lambda": 0.63,
+   "live": {
+    "composite": 0.6233,
+    "pooled_rho": 0.2992,
+    "within_tier_wm": 0.1359,
+    "t45": 0.1882,
+    "era": {
+     "2019-2021": 0.1813,
+     "2022-2023": 0.3987
+    }
+   },
+   "swept_best": 0.6375,
+   "clamped_pick": 0.6375,
+   "pick": {
+    "composite": 0.6236,
+    "pooled_rho": 0.2997,
+    "within_tier_wm": 0.1371,
+    "t45": 0.1868,
+    "era": {
+     "2019-2021": 0.1819,
+     "2022-2023": 0.3991
+    }
+   },
+   "bootstrap": {
+    "p_gain_gt_0": 0.649,
+    "mean_gain": 0.00036,
+    "ci95": [
+     -0.00655,
+     0.005
+    ],
+    "n_resamples": 1000
+   },
+   "clauses": {
+    "c1_composite_gain": {
+     "value": 0.0003,
+     "threshold": 0.005,
+     "pass": false
+    },
+    "c2_pooled_no_drop": {
+     "value": 0.0005,
+     "threshold": -0.002,
+     "pass": true
+    },
+    "c3_era_no_drop": {
+     "worst_drop": 0.0004,
+     "per_era_delta": {
+      "2022-2023": 0.0004,
+      "2019-2021": 0.0006
+     },
+     "threshold": -0.015,
+     "pass": true
+    },
+    "c4_bootstrap": {
+     "p_gain_gt_0": 0.649,
+     "threshold": 0.75,
+     "pass": false
+    },
+    "c5_interior_optimum": {
+     "swept_best": 0.6375,
+     "grid_edges": [
+      0.5,
+      1.0
+     ],
+     "at_boundary": false,
+     "pass": true,
+     "note": "fails by construction when the objective prefers pure model; the ship is therefore an owner decision, not an auto-ship"
+    }
+   },
+   "mechanical_pass_c1_c4": false,
+   "n_folds": 438,
+   "curve": {
+    "0.5000": {
+     "composite": 0.612,
+     "pooled_rho": 0.2959,
+     "within_tier_wm": 0.1346,
+     "t45": 0.1815
+    },
+    "0.5125": {
+     "composite": 0.6118,
+     "pooled_rho": 0.2964,
+     "within_tier_wm": 0.1353,
+     "t45": 0.1801
+    },
+    "0.5250": {
+     "composite": 0.6125,
+     "pooled_rho": 0.2968,
+     "within_tier_wm": 0.1355,
+     "t45": 0.1802
+    },
+    "0.5375": {
+     "composite": 0.6165,
+     "pooled_rho": 0.2974,
+     "within_tier_wm": 0.1361,
+     "t45": 0.183
+    },
+    "0.5500": {
+     "composite": 0.62,
+     "pooled_rho": 0.2976,
+     "within_tier_wm": 0.1367,
+     "t45": 0.1857
+    },
+    "0.5625": {
+     "composite": 0.6174,
+     "pooled_rho": 0.2975,
+     "within_tier_wm": 0.1362,
+     "t45": 0.1837
+    },
+    "0.5750": {
+     "composite": 0.6145,
+     "pooled_rho": 0.298,
+     "within_tier_wm": 0.1361,
+     "t45": 0.1804
+    },
+    "0.5875": {
+     "composite": 0.6079,
+     "pooled_rho": 0.2978,
+     "within_tier_wm": 0.1344,
+     "t45": 0.1757
+    },
+    "0.6000": {
+     "composite": 0.612,
+     "pooled_rho": 0.2979,
+     "within_tier_wm": 0.1336,
+     "t45": 0.1805
+    },
+    "0.6125": {
+     "composite": 0.6147,
+     "pooled_rho": 0.2981,
+     "within_tier_wm": 0.1341,
+     "t45": 0.1825
+    },
+    "0.6250": {
+     "composite": 0.6196,
+     "pooled_rho": 0.2991,
+     "within_tier_wm": 0.1354,
+     "t45": 0.1851
+    },
+    "0.6375": {
+     "composite": 0.6236,
+     "pooled_rho": 0.2997,
+     "within_tier_wm": 0.1371,
+     "t45": 0.1868
+    },
+    "0.6500": {
+     "composite": 0.6148,
+     "pooled_rho": 0.2999,
+     "within_tier_wm": 0.1359,
+     "t45": 0.179
+    },
+    "0.6625": {
+     "composite": 0.6124,
+     "pooled_rho": 0.3,
+     "within_tier_wm": 0.1354,
+     "t45": 0.177
+    },
+    "0.6750": {
+     "composite": 0.6145,
+     "pooled_rho": 0.2999,
+     "within_tier_wm": 0.1357,
+     "t45": 0.1789
+    },
+    "0.6875": {
+     "composite": 0.6076,
+     "pooled_rho": 0.3,
+     "within_tier_wm": 0.1346,
+     "t45": 0.173
+    },
+    "0.7000": {
+     "composite": 0.6076,
+     "pooled_rho": 0.2996,
+     "within_tier_wm": 0.135,
+     "t45": 0.173
+    },
+    "0.7125": {
+     "composite": 0.6123,
+     "pooled_rho": 0.3002,
+     "within_tier_wm": 0.1357,
+     "t45": 0.1764
+    },
+    "0.7250": {
+     "composite": 0.6116,
+     "pooled_rho": 0.3003,
+     "within_tier_wm": 0.1354,
+     "t45": 0.1759
+    },
+    "0.7375": {
+     "composite": 0.6083,
+     "pooled_rho": 0.3001,
+     "within_tier_wm": 0.1347,
+     "t45": 0.1735
+    },
+    "0.7500": {
+     "composite": 0.6083,
+     "pooled_rho": 0.3001,
+     "within_tier_wm": 0.1347,
+     "t45": 0.1735
+    },
+    "0.7625": {
+     "composite": 0.61,
+     "pooled_rho": 0.3003,
+     "within_tier_wm": 0.1347,
+     "t45": 0.175
+    },
+    "0.7750": {
+     "composite": 0.606,
+     "pooled_rho": 0.3001,
+     "within_tier_wm": 0.1335,
+     "t45": 0.1724
+    },
+    "0.7875": {
+     "composite": 0.6036,
+     "pooled_rho": 0.3004,
+     "within_tier_wm": 0.1334,
+     "t45": 0.1698
+    },
+    "0.8000": {
+     "composite": 0.6052,
+     "pooled_rho": 0.3007,
+     "within_tier_wm": 0.1331,
+     "t45": 0.1714
+    },
+    "0.8125": {
+     "composite": 0.6018,
+     "pooled_rho": 0.3005,
+     "within_tier_wm": 0.1328,
+     "t45": 0.1685
+    },
+    "0.8250": {
+     "composite": 0.6011,
+     "pooled_rho": 0.3008,
+     "within_tier_wm": 0.133,
+     "t45": 0.1673
+    },
+    "0.8375": {
+     "composite": 0.6008,
+     "pooled_rho": 0.3008,
+     "within_tier_wm": 0.1332,
+     "t45": 0.1668
+    },
+    "0.8500": {
+     "composite": 0.5995,
+     "pooled_rho": 0.3007,
+     "within_tier_wm": 0.1329,
+     "t45": 0.1659
+    },
+    "0.8625": {
+     "composite": 0.605,
+     "pooled_rho": 0.301,
+     "within_tier_wm": 0.1332,
+     "t45": 0.1708
+    },
+    "0.8750": {
+     "composite": 0.603,
+     "pooled_rho": 0.3006,
+     "within_tier_wm": 0.1333,
+     "t45": 0.1691
+    },
+    "0.8875": {
+     "composite": 0.6055,
+     "pooled_rho": 0.3005,
+     "within_tier_wm": 0.1334,
+     "t45": 0.1716
+    },
+    "0.9000": {
+     "composite": 0.6006,
+     "pooled_rho": 0.3003,
+     "within_tier_wm": 0.1325,
+     "t45": 0.1678
+    },
+    "0.9125": {
+     "composite": 0.5984,
+     "pooled_rho": 0.3,
+     "within_tier_wm": 0.1317,
+     "t45": 0.1667
+    },
+    "0.9250": {
+     "composite": 0.5969,
+     "pooled_rho": 0.3,
+     "within_tier_wm": 0.1314,
+     "t45": 0.1655
+    },
+    "0.9375": {
+     "composite": 0.596,
+     "pooled_rho": 0.2999,
+     "within_tier_wm": 0.1316,
+     "t45": 0.1645
+    },
+    "0.9500": {
+     "composite": 0.592,
+     "pooled_rho": 0.2998,
+     "within_tier_wm": 0.1308,
+     "t45": 0.1614
+    },
+    "0.9625": {
+     "composite": 0.5955,
+     "pooled_rho": 0.2999,
+     "within_tier_wm": 0.1308,
+     "t45": 0.1648
+    },
+    "0.9750": {
+     "composite": 0.5908,
+     "pooled_rho": 0.2997,
+     "within_tier_wm": 0.13,
+     "t45": 0.1611
+    },
+    "0.9875": {
+     "composite": 0.5902,
+     "pooled_rho": 0.2996,
+     "within_tier_wm": 0.1301,
+     "t45": 0.1605
+    },
+    "1.0000": {
+     "composite": 0.5855,
+     "pooled_rho": 0.2991,
+     "within_tier_wm": 0.1292,
+     "t45": 0.1572
+    }
+   }
+  }
+ },
+ "ship": {
+  "hit_band_raise": false,
+  "new_hit_band": [
+   0.5,
+   0.7
+  ],
+  "pit_band": [
+   0.5,
+   0.7
+  ],
+  "decision": "OWNER-AUTHORIZED cap-raise (2026-07-14): hit selection band ceiling -> 0.90 (the hard clamp; the retained 10% consensus weight is a deliberate robustness guard). c5 fails by construction (optimum censored at pure-model) and is overridden by the owner decision; c1-c4 must all pass mechanically for the raise to stand. Pit unchanged: its sweep never cleared c1."
+ }
+}

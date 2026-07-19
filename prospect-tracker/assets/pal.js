@@ -11,11 +11,13 @@
 //             command, platoon-neutrality, role-adjusted velocity)
 //   sp2rp   - starters whose stuff would play up in relief (SP->RP FIT, putaway
 //             pitch, projected relief velo + REM+)
-//   history - a validated archive of past SP<->RP switches (the model's backtest
-//             set) with a scorecard, plus a pitch-mix before/after view
-// The FIT scores are a candidate SCREEN, not a success probability - the score
-// is anchored on the role-structural arsenal-depth signal; the backtest is a
-// directional sign-check on a small, selection-biased sample.
+//   history - an archive of past SP<->RP switches (the model's backtest set)
+//             with a scorecard, plus a pitch-mix before/after view
+// The FIT scores are a candidate SCREEN, not a success probability. Backtest
+// evidence is PER DIRECTION (repaired harness, 2026-07): SP->RP FIT carries a
+// validated directional signal vs realized WAR change; RP->SP FIT is a
+// structural screen whose backtest does NOT validate ranking within the
+// direction. The retired pooled rho is reporting-only and never cited here.
 (function () {
   "use strict";
 
@@ -46,6 +48,9 @@
   }
   function num(v) { return (v == null || isNaN(v)) ? null : Number(v); }
   function fInt(v) { var n = num(v); return n == null ? "-" : String(Math.round(n)); }
+  // FV / 20-80 grades display rounded UP, never nearest (owner rule; mirrors
+  // EEPHUS_HUB.fvCeil with the same float-noise epsilon guard).
+  function fCeil(v) { var n = num(v); return n == null ? "-" : String(Math.ceil(n - 1e-9)); }
   function f1(v) { var n = num(v); return n == null ? "-" : n.toFixed(1); }
   function f2(v) { var n = num(v); return n == null ? "-" : n.toFixed(2); }
   function fPct(v) { var n = num(v); return n == null ? "-" : (n * 100).toFixed(1) + "%"; }
@@ -131,7 +136,7 @@
       .map(function (r) {
         return { x: r.relief_upside, y: r.components.conversion_need,
                  label: r.name + "  upside " + r.relief_upside + "  need " + r.components.conversion_need + "  FIT " + r.fit,
-                 color: r.fit >= 55 ? null : "#6a6f7a" };
+                 color: r.fit >= 55 ? null : "var(--text-tertiary)" };
       });
     if (pts.length < 8) return "";
     var sc = chart("scatter", pts, { height: 270, xMin: 0, xMax: 100, yMin: 0, yMax: 100,
@@ -242,15 +247,25 @@
   function candTable(rows, cols, term) {
     var head = "<thead><tr>";
     cols.forEach(function (c) {
+      var sortable = c.kind !== "rank" && c.kind !== "name" && c.sortable !== false;
       var sorted = c.key === sortKey ? " is-sorted" : "";
       var lbl = c.term ? gloss(c.label, c.term) : esc(c.label);
-      head += '<th class="mlbstats-col-' + c.key + sorted + '" data-col="' + c.key + '">' + lbl + "</th>";
+      // keyboard-operable sort headers (the trademachine pattern): only the
+      // genuinely sortable columns carry data-col + the button affordance
+      var attrs = sortable
+        ? ' data-col="' + c.key + '" tabindex="0" role="button" aria-sort="'
+          + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none") + '"'
+        : "";
+      head += '<th class="mlbstats-col-' + c.key + sorted + '"' + attrs + '>' + lbl + "</th>";
     });
     head += "</tr></thead>";
     var body = "<tbody>";
     rows.forEach(function (r, i) {
       var open = (openRow === r.mlbam);
-      body += "<tr" + (open ? " class=\"is-open\"" : "") + " data-open=\"" + r.mlbam + "\">";
+      // expandable rows are tabbable and announce their open state so the
+      // component breakdown is reachable without a mouse
+      body += "<tr" + (open ? " class=\"is-open\"" : "") + " data-open=\"" + r.mlbam
+        + "\" tabindex=\"0\" aria-expanded=\"" + (open ? "true" : "false") + "\">";
       cols.forEach(function (c) {
         if (c.kind === "rank") { body += "<td>" + (i + 1) + "</td>"; return; }
         if (c.kind === "name") {
@@ -319,11 +334,101 @@
     out.sort(function (a, b) {
       var va = col && col.get ? col.get(a) : a[sortKey];
       var vb = col && col.get ? col.get(b) : b[sortKey];
-      va = (va == null || isNaN(va)) ? -Infinity : Number(va);
-      vb = (vb == null || isNaN(vb)) ? -Infinity : Number(vb);
+      // missing values always sort LAST regardless of direction (the
+      // trademachine convention; matters for nullable columns like Platoon
+      // and the pending Held role / Result history cells)
+      va = (va == null || isNaN(va)) ? null : Number(va);
+      vb = (vb == null || isNaN(vb)) ? null : Number(vb);
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
       return sortAsc ? va - vb : vb - va;
     });
     return out;
+  }
+
+  // ---- Generate GFX board specs ---------------------------------------------
+  // Each candidate section exports its OWN board (the fa.js/projections.js
+  // pattern), rebuilt from the current sort at click time so the shared graphic
+  // always matches the on-screen order. FIT is a candidate SCREEN, not a success
+  // probability - the caption/legend keep that framing PER DIRECTION (RP->SP is a
+  // structural screen, SP->RP is validated). Module accent = cyan (the RP->SP
+  // primary direction + the "hi" FIT tier - the pal identity color).
+  function gfxChip(id) {
+    return window.EEPHUS_GFX ? " &middot; " + EEPHUS_GFX.chipHTML(id, "Generate GFX") : "";
+  }
+  // Plain-text (canvas-safe) velocity cell: current FB velo -> role-projected
+  // velo with the delta. veloCell() emits HTML spans, so the board needs its own
+  // text-only builder.
+  function veloText(r) {
+    if (r.fb_velo == null) return "-";
+    var d = (r.proj_velo != null) ? (r.proj_velo - r.fb_velo) : null;
+    return f1(r.fb_velo) + (r.proj_velo != null ? " → " + f1(r.proj_velo) : "")
+      + (d != null ? "  " + (d > 0 ? "+" : "") + d.toFixed(1) : "");
+  }
+  function rp2spBoardSpec() {
+    var rows = sortRows((DATA && DATA.rp2sp) || [], RP_COLS);
+    var brows = rows.map(function (r, i) {
+      return { cells: [
+        { t: i + 1 },
+        { t: r.name, sub: r.team || undefined },
+        { t: f1(r.fit), c: "accent" },
+        { t: tierTitle(r, "rp2sp") || "-" },
+        { t: fInt(r.n_pitches) },
+        { t: fPct(fbPct(r)) },
+        { t: veloText(r) },
+      ] };
+    });
+    return {
+      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Pitcher Alchemy Lab · RP→SP Candidates",
+      subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
+        + rows.length + " relievers who profile as starters",
+      url: "eephus.io/pal", filenameBase: "pal-rp2sp-candidates",
+      caption: "a candidate screen, not a forecast · RP→SP ranking is a structural screen (not backtest-validated)",
+      board: { defaultCount: 25, counts: [10, 25, 50],
+        legend: "FIT 0-100 = RP→SP conversion screen", columns: [
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.26 },
+          { label: "FIT", frac: 0.10 },
+          { label: "Tier", frac: 0.19 },
+          { label: "Arsenal", frac: 0.10, wideOnly: true },
+          { label: "FB%", frac: 0.10, wideOnly: true },
+          { label: "velo→SP", frac: 0.20 },
+        ], rows: brows },
+    };
+  }
+  function sp2rpBoardSpec() {
+    var rows = sortRows((DATA && DATA.sp2rp) || [], SP_COLS);
+    var brows = rows.map(function (r, i) {
+      return { cells: [
+        { t: i + 1 },
+        { t: r.name, sub: r.team || undefined },
+        { t: f1(r.fit), c: "accent" },
+        { t: f2(r.starter_era) },
+        { t: fPct(r.best_whiff) },
+        { t: veloText(r) },
+        { t: fInt(r.proj_relief_rem_plus) },
+      ] };
+    });
+    return {
+      kind: "board", module: "Pitcher Alchemy Lab", accentToken: "--accent-cyan",
+      title: "Pitcher Alchemy Lab · SP→RP Candidates",
+      subtitle: (DATA && DATA.season ? "Season " + DATA.season + " · " : "")
+        + rows.length + " starters whose stuff would play up in relief",
+      url: "eephus.io/pal", filenameBase: "pal-sp2rp-candidates",
+      caption: "a candidate screen · SP→RP carries a validated directional signal vs realized WAR change",
+      board: { defaultCount: 25, counts: [10, 25, 50],
+        legend: "FIT 0-100 = SP→RP relief-upside screen (gated by conversion need)", columns: [
+          { label: "#", frac: 0.05 },
+          { label: "Player", frac: 0.28 },
+          { label: "FIT", frac: 0.11 },
+          { label: "SP ERA", frac: 0.12 },
+          { label: "Putaway whiff", frac: 0.14, wideOnly: true },
+          { label: "velo→RP", frac: 0.18, wideOnly: true },
+          { label: "proj REM+", frac: 0.12 },
+        ], rows: brows },
+    };
   }
 
   // ---- sections -------------------------------------------------------------
@@ -332,7 +437,9 @@
     if (!rows.length) return empty("No RP→SP candidates yet.");
     var note = '<div class="mlbstats-note">Relievers who profile as starters. ' + gloss("RP→SP FIT", "rp_sp_fit")
       + " leads on arsenal depth (a starter needs a third pitch to survive a lineup three times), then command, "
-      + "platoon-neutrality, and contact quality. Click a row for the component breakdown.</div>" + tierLegend("rp2sp");
+      + "platoon-neutrality, and contact quality. This is a structural screen: the repaired backtest does not "
+      + "validate the ranking of RP&rarr;SP candidates against realized WAR change, so treat the order as a "
+      + "shortlist, not a forecast. Click a row for the component breakdown." + gfxChip("pal-rp2sp-gfx") + "</div>" + tierLegend("rp2sp");
     return rp2spViz() + note + candTable(sortRows(rows, RP_COLS), RP_COLS);
   }
   function renderSP2RP() {
@@ -341,7 +448,9 @@
     var note = '<div class="mlbstats-note">Starters who are <b>struggling in the rotation</b> and whose stuff would play up in relief. '
       + gloss("SP→RP FIT", "sp_rp_fit") + " is relief upside GATED by conversion need: a starter succeeding in the rotation "
       + "scores low no matter how nasty his stuff is, because a good starter is worth more than a good reliever. SP ERA is "
-      + "the need signal; proj REM+ is a display-only relief projection.</div>" + tierLegend("sp2rp");
+      + "the need signal; proj REM+ is a display-only relief projection. This direction carries a validated "
+      + "directional signal: in the repaired backtest, pre-conversion SP&rarr;RP FIT out-ranked every same-event "
+      + "baseline against realized WAR change." + gfxChip("pal-sp2rp-gfx") + "</div>" + tierLegend("sp2rp");
     return sp2rpViz() + note + candTable(sortRows(rows, SP_COLS), SP_COLS);
   }
 
@@ -395,10 +504,21 @@
   }
   function scorecard() {
     var b = (DATA && DATA.backtest) || {};
+    var pd = b.per_direction || {};
+    // Evidence is per direction (repaired harness): pre-FIT rank vs realized
+    // WAR change within each direction. The old pooled held-role rho is a
+    // retired reporting-only field and is not shown.
+    function dirStat(key, label, tag) {
+      var d = pd[key] || {};
+      if (d.rho_prefit_vs_war_delta == null) return "";
+      return '<span class="pal-sc-stat">' + label + " <b>&rho; "
+        + esc(d.rho_prefit_vs_war_delta) + '</b><span class="proj-dim"> vs WAR change (n='
+        + esc(d.n_war) + ") &middot; " + tag + "</span></span>";
+    }
     return '<div class="pal-scorecard">'
       + '<span class="pal-sc-stat"><b>' + esc(DATA.n_conversions) + "</b> conversions</span>"
-      + '<span class="pal-sc-stat">' + gloss("pre-FIT vs held", "pal_conversion") + " <b>&rho; "
-      + (b.spearman_prefit_vs_held == null ? "-" : b.spearman_prefit_vs_held) + "</b><span class=\"proj-dim\"> (n=" + esc(b.n_labeled) + ")</span></span>"
+      + dirStat("SP->RP", gloss("SP→RP FIT", "sp_rp_fit"), "validated vs baselines")
+      + dirStat("RP->SP", gloss("RP→SP FIT", "rp_sp_fit"), "does not validate ranking")
       + '<span class="pal-sc-stat">converters at <b>' + esc(b.converter_median_fit_pool_pctile) + "th</b> pct of the field</span>"
       + '<span class="pal-sc-note">' + esc(b.disclaimer || "") + "</span>"
       + "</div>";
@@ -418,7 +538,9 @@
     rows = sortRows(rows, HISTORY_COLS);
     var head = "<thead><tr>" + HISTORY_COLS.map(function (c) {
       if (c.kind === "name" || c.sortable === false) return "<th>" + c.label + "</th>";
-      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "") + ">" + c.label + "</th>";
+      return '<th data-col="' + c.key + '"' + (c.key === sortKey ? ' class="is-sorted"' : "")
+        + ' tabindex="0" role="button" aria-sort="' + (c.key === sortKey ? (sortAsc ? "ascending" : "descending") : "none")
+        + '">' + c.label + "</th>";
     }).join("") + "</tr></thead>";
     var body = "<tbody>" + rows.map(function (h) {
       return "<tr><td class=\"mlbstats-name\">" + logo(h.team) + nameLink(h.name, h.mlbam) + "</td>"
@@ -526,7 +648,7 @@
       return '<div class="pal-mix-card"><h4><span>' + logo(p.org) + esc(p.name)
         + '<span class="proj-dim"> ' + esc(p.org || "") + "</span></span>"
         + '<span class="pal-dir' + dirClass(pdir) + '">' + arrow + "</span></h4>"
-        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fInt(p.fv)
+        + '<div class="mlbstats-note" style="margin:2px 0">Scouted ' + esc(p.position) + " &middot; FV " + fCeil(p.fv)
         + " &middot; shape " + f1(p.starter_shape) + " &middot; " + esc(p.arsenal_depth) + " plus pitches</div>"
         + '<div style="margin:6px 0;font-size:11px;color:var(--text-secondary)">' + esc(msg) + "</div>"
         + toolBars(p.tools) + "</div>";
@@ -557,6 +679,7 @@
     var banner = document.getElementById("pal-banner");
     if (banner) banner.innerHTML = DATA.season
       ? '<div class="mlbstats-note">Season ' + esc(DATA.season) + ' &middot; a candidate screen, not a projection. '
+        + 'Backtest evidence is per direction: SP&rarr;RP validated, RP&rarr;SP structural screen only. '
         + esc((DATA.verdict && DATA.verdict !== "validated") ? "[" + DATA.verdict + "]" : "") + "</div>" : "";
     bindTable(root);
     wireGlossary(root);
@@ -565,17 +688,28 @@
   function bindTable(root) {
     bindCollapse(root);
     root.querySelectorAll("[data-open]").forEach(function (tr) {
-      tr.addEventListener("click", function (e) {
-        if (e.target.closest("th")) return;
-        if (e.target.closest("a")) return;   // let name links navigate, don't toggle the row
+      function toggleRow() {
         var id = Number(tr.getAttribute("data-open"));
         openRow = (openRow === id) ? null : id;
         render();
+        // re-render replaces the rows: put keyboard focus back on this one
+        var again = root.querySelector('tr[data-open="' + id + '"]');
+        if (again) again.focus();
+      }
+      tr.addEventListener("click", function (e) {
+        if (e.target.closest("th")) return;
+        if (e.target.closest("a")) return;   // let name links navigate, don't toggle the row
+        toggleRow();
+      });
+      tr.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        if (e.target.closest("a")) return;   // Enter on a focused name link should navigate
+        e.preventDefault();
+        toggleRow();
       });
     });
     root.querySelectorAll(".mlbstats-table th[data-col]").forEach(function (th) {
-      th.addEventListener("click", function (e) {
-        e.stopPropagation();
+      function sortBy() {
         var key = th.getAttribute("data-col");
         var cols = (section === "sp2rp") ? SP_COLS : (section === "history") ? HISTORY_COLS : RP_COLS;
         var col = null; cols.forEach(function (c) { if (c.key === key) col = c; });
@@ -583,10 +717,33 @@
         if (sortKey === key) sortAsc = !sortAsc;
         else { sortKey = key; sortAsc = !!col.asc; }
         render();
+        // restore focus to the same header after the table is rebuilt
+        var again = root.querySelector('.mlbstats-table th[data-col="' + key + '"]');
+        if (again) again.focus();
+      }
+      th.addEventListener("click", function (e) {
+        e.stopPropagation();
+        sortBy();
+      });
+      th.addEventListener("keydown", function (e) {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        e.stopPropagation();
+        sortBy();
       });
     });
     root.querySelectorAll("[data-histview]").forEach(function (b) {
       b.addEventListener("click", function () { historyView = b.getAttribute("data-histview"); render(); });
+    });
+    // Generate GFX chips - build the spec from the CURRENT sort at click time so
+    // the graphic matches the on-screen order (fa.js/projections.js pattern).
+    var rpGfx = root.querySelector("#pal-rp2sp-gfx");
+    if (rpGfx) rpGfx.addEventListener("click", function () {
+      if (window.EEPHUS_GFX) EEPHUS_GFX.open(rp2spBoardSpec());
+    });
+    var spGfx = root.querySelector("#pal-sp2rp-gfx");
+    if (spGfx) spGfx.addEventListener("click", function () {
+      if (window.EEPHUS_GFX) EEPHUS_GFX.open(sp2rpBoardSpec());
     });
   }
 

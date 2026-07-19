@@ -21,7 +21,6 @@ Backend assertions:
   * Waiver scoreboard now populates."""
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
 
@@ -40,8 +39,6 @@ from storage import (
     FARM_TREE_WEIGHT_TRANSACTIONS,
     _pick_slot_expected_war,
 )
-
-_TIMESERIES = Path(__file__).parent / "data" / "timeseries.json"
 
 
 # ---------------------------------------------------------------------------
@@ -183,11 +180,12 @@ class TestPickSlotExpectedWar:
 # ---------------------------------------------------------------------------
 
 class TestExportedTreeShape:
-    def setup_method(self):
-        if not _TIMESERIES.exists():
-            pytest.skip(f"{_TIMESERIES} missing — skip e2e")
-        with _TIMESERIES.open(encoding="utf-8") as fp:
-            self.d = json.load(fp)
+    @pytest.fixture(autouse=True)
+    def _shared_doc(self, timeseries_doc):
+        # Session-shared parse (conftest.timeseries_doc) replaces a per-test
+        # json.load of the ~65MB artifact. This class only READS the doc.
+        # Missing data -> the session fixture skips.
+        self.d = timeseries_doc
         self.orgs = (list(self.d["org_summary"].values())
                      if isinstance(self.d["org_summary"], dict)
                      else self.d["org_summary"])

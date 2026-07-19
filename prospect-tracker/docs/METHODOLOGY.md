@@ -114,6 +114,25 @@ year from projected debut. There is no second inflation or discount anywhere on
 the path (the `present_value` helper is intentionally never called; a test guards
 this).
 
+**Super-two.** The engine blends a second service path for the roughly 22 percent
+of the two-to-three-year service class that reaches arbitration a year early: one
+league-minimum pre-arb season converts into an extra early arbitration season
+(more career salary, less surplus than the standard path). The fraction paid in
+that extra year is the configured `super_two_first_fraction` clamped to the
+schedule's own Arb 1 step (`value_framework._arb_ladder`), so the ladder is
+monotone by construction: an earlier arbitration year can never be priced above
+the year that follows it. Under the legacy 0.40/0.60/0.80 schedule the calibrated
+0.25 sits below Arb 1 and passes through unchanged; under the `clemens_2026`
+0.15/0.35/0.50/0.75 schedule it clamps to the 0.15 Arb 1 fraction, which is the
+natural reading of that year under the Clemens semantics (a super-two's first
+arbitration year is an Arb 1 hearing held a year early). Recalibrated 2026-07-16:
+before the clamp, the legacy 0.25 was prepended unchanged onto the clemens
+schedule, producing the non-monotone ladder [0.25, 0.15, 0.35, 0.50, 0.75] (a
+super-two priced as earning more in his first arbitration year than his second),
+overstating super-two salaries and slightly understating surplus. The clamp is a
+consistency correction to the configured value, not a new empirical estimate of
+super-two award levels.
+
 ## 4. Star Odds
 
 Computed analytically from the same mixture the surplus uses: for each outcome

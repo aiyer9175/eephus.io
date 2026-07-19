@@ -60,12 +60,14 @@
   }
 
   // ---- lightweight inline charts (SVG, theme-tokened) -----------------------
+  // Emit live CSS variable references (the fa.js precedent), not resolved hexes:
+  // SVG fill/stroke resolve var() at paint time, so an open chart re-themes the
+  // moment data-theme flips instead of keeping the old theme's baked colors.
+  // The canvas share card keeps resolved values via _tok (canvas can't do var()).
   function _chartTokens() {
-    var cs = getComputedStyle(document.documentElement);
-    var g = function (n, f) { return (cs.getPropertyValue(n) || "").trim() || f; };
-    return { grid: g("--border", "#2b2b31"), axis: g("--text-tertiary", "#7c808a"),
-             bar: g("--accent-gold", "#c9a227"), hi: g("--accent-cyan", "#00d9ff"),
-             lo: g("--accent-red", "#b91c1c"), text: g("--text-secondary", "#aaa") };
+    return { grid: "var(--border, #2b2b31)", axis: "var(--text-tertiary, #7c808a)",
+             bar: "var(--accent-gold, #c9a227)", hi: "var(--accent-cyan, #00d9ff)",
+             lo: "var(--accent-red, #b91c1c)", text: "var(--text-secondary, #aaa)" };
   }
   function _fmtN(v) {
     if (Math.abs(v) >= 10) return String(Math.round(v));
@@ -103,12 +105,15 @@
     return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" preserveAspectRatio="none" role="img" aria-label="' + esc(o.aria || "distribution") + '">' + bars + refs + ax + "</svg>";
   }
 
-  // scatter(points [{x,y,label,color}], {width,height,xLabel,yLabel,xRef,yRef,aria})
+  // scatter(points [{x,y,label,color}], {width,height,xLabel,yLabel,xRef,yRef,
+  //   xRefLabel,yRefLabel,diag,aria}). Axes carry numeric tick values and the
+  //   xRef/yRef reference lines are labeled with their values; diag:true draws
+  //   the y = x identity line (only meaningful when both axes share units).
   function scatter(points, o) {
     o = o || {};
     var pts = (points || []).filter(function (p) { return p && !isNaN(p.x) && !isNaN(p.y); });
     if (pts.length < 3) return "";
-    var W = o.width || 640, H = o.height || 300, padL = 34, padB = 26, padT = 10, padR = 10;
+    var W = o.width || 640, H = o.height || 300, padL = 34, padB = 34, padT = 16, padR = 10;
     var xs = pts.map(function (p) { return p.x; }), ys = pts.map(function (p) { return p.y; });
     var x0 = o.xMin != null ? o.xMin : Math.min.apply(null, xs), x1 = o.xMax != null ? o.xMax : Math.max.apply(null, xs);
     var y0 = o.yMin != null ? o.yMin : Math.min.apply(null, ys), y1 = o.yMax != null ? o.yMax : Math.max.apply(null, ys);
@@ -117,15 +122,40 @@
     var sx = function (x) { return padL + (x - x0) / (x1 - x0) * iw; };
     var sy = function (y) { return padT + (1 - (y - y0) / (y1 - y0)) * ih; };
     var refs = "";
-    if (o.xRef != null) refs += '<line x1="' + sx(o.xRef).toFixed(1) + '" y1="' + padT + '" x2="' + sx(o.xRef).toFixed(1) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>';
-    if (o.yRef != null) refs += '<line x1="' + padL + '" y1="' + sy(o.yRef).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + sy(o.yRef).toFixed(1) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>';
+    if (o.xRef != null) {
+      refs += '<line x1="' + sx(o.xRef).toFixed(1) + '" y1="' + padT + '" x2="' + sx(o.xRef).toFixed(1) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>'
+        + '<text x="' + (sx(o.xRef) + 3).toFixed(1) + '" y="' + (padT + 9) + '" fill="' + t.axis + '" font-size="9" font-family="monospace">'
+        + esc(o.xRefLabel != null ? o.xRefLabel : _fmtN(o.xRef)) + "</text>";
+    }
+    if (o.yRef != null) {
+      refs += '<line x1="' + padL + '" y1="' + sy(o.yRef).toFixed(1) + '" x2="' + (W - padR) + '" y2="' + sy(o.yRef).toFixed(1) + '" stroke="' + t.grid + '" stroke-dasharray="3 3"/>'
+        + '<text x="' + (W - padR) + '" y="' + (sy(o.yRef) - 3).toFixed(1) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="end">'
+        + esc(o.yRefLabel != null ? o.yRefLabel : _fmtN(o.yRef)) + "</text>";
+    }
+    if (o.diag) {
+      // y = x identity, clipped to the shared domain (fa.js fair-value treatment)
+      var d0 = Math.max(x0, y0), d1 = Math.min(x1, y1);
+      if (d1 > d0) {
+        refs += '<line x1="' + sx(d0).toFixed(1) + '" y1="' + sy(d0).toFixed(1) + '" x2="' + sx(d1).toFixed(1) + '" y2="' + sy(d1).toFixed(1) + '" stroke="' + t.axis + '" stroke-dasharray="5 4"/>'
+          + '<text x="' + (sx(d1) - 4).toFixed(1) + '" y="' + (sy(d1) + 12).toFixed(1) + '" fill="' + t.axis + '" font-size="9" font-style="italic" font-family="monospace" text-anchor="end">y = x</text>';
+      }
+    }
     var dots = pts.map(function (p) {
       return '<circle cx="' + sx(p.x).toFixed(1) + '" cy="' + sy(p.y).toFixed(1) + '" r="' + (p.r || 3) + '" fill="' + (p.color || t.hi) + '" opacity="0.7"><title>' + esc(p.label || "") + "</title></circle>";
     }).join("");
+    // numeric tick values (4 per axis) so magnitudes read without hovering dots
+    var ticks = "";
+    for (var i = 0; i <= 3; i++) {
+      var vx = x0 + (x1 - x0) * i / 3, vy = y0 + (y1 - y0) * i / 3;
+      var anch = i === 0 ? "start" : (i === 3 ? "end" : "middle");
+      ticks += '<text x="' + sx(vx).toFixed(1) + '" y="' + (H - padB + 12) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="' + anch + '">' + esc(_fmtN(vx)) + "</text>"
+        + '<text x="' + (padL - 5) + '" y="' + (sy(vy) + 3).toFixed(1) + '" fill="' + t.axis + '" font-size="9" font-family="monospace" text-anchor="end">' + esc(_fmtN(vy)) + "</text>";
+    }
     var ax = '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
       + '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" stroke="' + t.grid + '"/>'
+      + ticks
       + (o.xLabel ? '<text x="' + (W - padR) + '" y="' + (H - 6) + '" fill="' + t.axis + '" font-size="10" font-family="monospace" text-anchor="end">' + esc(o.xLabel) + "</text>" : "")
-      + (o.yLabel ? '<text x="4" y="' + (padT + 10) + '" fill="' + t.axis + '" font-size="10" font-family="monospace">' + esc(o.yLabel) + "</text>" : "");
+      + (o.yLabel ? '<text x="4" y="10" fill="' + t.axis + '" font-size="10" font-family="monospace">' + esc(o.yLabel) + "</text>" : "");
     return '<svg class="eephus-chart" viewBox="0 0 ' + W + ' ' + H + '" width="100%" role="img" aria-label="' + esc(o.aria || "scatter") + '">' + refs + dots + ax + "</svg>";
   }
 
@@ -137,7 +167,14 @@
     { id: "fa", label: "FREE AGENCY", glyph: "$", note: "market card",
       href: r => r.fa ? `/fa/#player=${encodeURIComponent(r.key)}` : null },
     { id: "mlb", label: "MLB PROJECTIONS", glyph: "Δ", note: "player page",
-      href: r => r.key ? `/projections/#player=${encodeURIComponent(r.key)}` : null },
+      // AUDIT 2026-07-18 (A6): only offer the projections chip to players who have a
+      // projections page. player_links now tags projection-universe players proj:true;
+      // never-debuted prospects get proj:false. Older payloads without the flag
+      // (proj===undefined) fall back to the prior key-presence behavior until regen.
+      href: r => {
+        const has = (r.proj === undefined) ? r.key : r.proj;
+        return (has && r.key) ? `/projections/#player=${encodeURIComponent(r.key)}` : null;
+      } },
   ];
 
   // row: {key, mlbam, fa, prospx} (a player_links entry). active: module id.

@@ -441,7 +441,9 @@ def build(persist: bool = True) -> dict:
                     # point just as the card headline floors it (cumulative would leave it above).
                     _stat_S = _display_statline(mid, _ms, side, p.get("team_name"))
                     _expo_S = ((_stat_S or {}).get("tbf") if is_pit else (_stat_S or {}).get("pa")) or 0
-                    if _expo_S < _min_expo:
+                    # Same unresolved-statline guard as the headline (AUDIT FIX
+                    # 2026-07-14): a None statline is UNKNOWN exposure, not 0.
+                    if _stat_S is not None and _expo_S < _min_expo:
                         _xg = min(_xg, _SUBFLOOR_GRADE)
                     xfv_hist.append({"d": f"{int(_S)}-07-01", "x": _xg})
                 # Approximate birth_date from the roster age so the detail-page stats table can

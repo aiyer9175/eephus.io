@@ -1,0 +1,1560 @@
+{
+ "experiment": "eFV model-class + target-engineering sweep (owner program 2026-07-15)",
+ "generated_at": "2026-07-15",
+ "protocol": {
+  "lab": "tools/efv_ml_lab.py, lean feature set, forward-chained folds 2020-2023",
+  "arms": "elasticnet, histgbm, gbr, rf, extratrees, lgbm_rank, lgbm_quantile, ens_ridge_histgbm, ens_ridge_lgbm (canonical target) + ridge on target=rank / target=residual - all wired in the lab, never ledgered",
+  "gate": "SHIP-GATE (GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side; same-run BASE arms."
+ },
+ "verdict": "rejected - NOTHING beats the shipped ridge. Hit: every challenger below base pooled (best extratrees 0.3670 vs 0.3761). Pit: two NEAR-MISSES under the +0.0046 bar - elasticnet 0.3067 (+0.0035, wm/t45 both up) and target=residual 0.3064 (+0.0032, t45 up). KEEP-ALIVE: re-gate those two when the 2024 debuted fold lands (DEBUT_YEARS unlock); everything else is a clean loss. [2026-07-15b: keep-alive re-gate at the 2024-censored vintage FAILED again (elasticnet +0.0033, residual +0.0030) - spent; see regate_2026_07_15.]",
+ "variants": [
+  {
+   "id": "BASE_hit",
+   "side": "hit",
+   "model": "ridge",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3761,
+   "spearman_pure": 0.3828,
+   "within_tier_wm": 0.164,
+   "t45": 0.0792,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3845
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1717
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2652
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0792
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2104
+    }
+   },
+   "era": {
+    "2019-2021": 0.2923,
+    "2022-2023": 0.4229
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3524
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4583
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3175
+    }
+   },
+   "per_year": {
+    "2020": 0.3477,
+    "2021": 0.2197,
+    "2022": 0.5622,
+    "2023": 0.2485
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_elasticnet",
+   "side": "hit",
+   "model": "elasticnet",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3544,
+   "spearman_pure": 0.3564,
+   "within_tier_wm": 0.0656,
+   "t45": 0.0793,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.1579
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.0086
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.1959
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0793
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2195
+    }
+   },
+   "era": {
+    "2019-2021": 0.2542,
+    "2022-2023": 0.4091
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3208
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4475
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3052
+    }
+   },
+   "per_year": {
+    "2020": 0.3316,
+    "2021": 0.1586,
+    "2022": 0.5584,
+    "2023": 0.2234
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_histgbm",
+   "side": "hit",
+   "model": "histgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3182,
+   "spearman_pure": 0.2858,
+   "within_tier_wm": 0.0309,
+   "t45": 0.0285,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.0104
+    },
+    "40": {
+     "n": 116,
+     "rho": -0.0014
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.1567
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0285
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.0805
+    }
+   },
+   "era": {
+    "2019-2021": 0.2808,
+    "2022-2023": 0.339
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3592
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.3293
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2579
+    }
+   },
+   "per_year": {
+    "2020": 0.3805,
+    "2021": 0.1559,
+    "2022": 0.5158,
+    "2023": 0.1269
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_gbr",
+   "side": "hit",
+   "model": "gbr",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3388,
+   "spearman_pure": 0.3192,
+   "within_tier_wm": 0.0526,
+   "t45": 0.0097,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": -0.0314
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.0825
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.194
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0097
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1338
+    }
+   },
+   "era": {
+    "2019-2021": 0.3158,
+    "2022-2023": 0.3558
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3584
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.3556
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2687
+    }
+   },
+   "per_year": {
+    "2020": 0.3692,
+    "2021": 0.2267,
+    "2022": 0.53,
+    "2023": 0.1593
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_rf",
+   "side": "hit",
+   "model": "rf",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3641,
+   "spearman_pure": 0.3553,
+   "within_tier_wm": 0.0801,
+   "t45": 0.0464,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": -0.0165
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1643
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.1417
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0464
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2065
+    }
+   },
+   "era": {
+    "2019-2021": 0.3478,
+    "2022-2023": 0.3762
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3803
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4261
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2857
+    }
+   },
+   "per_year": {
+    "2020": 0.376,
+    "2021": 0.2941,
+    "2022": 0.5339,
+    "2023": 0.2224
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_extratrees",
+   "side": "hit",
+   "model": "extratrees",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.367,
+   "spearman_pure": 0.3599,
+   "within_tier_wm": 0.1074,
+   "t45": 0.0457,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.2023
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.135
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2206
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0457
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2636
+    }
+   },
+   "era": {
+    "2019-2021": 0.3639,
+    "2022-2023": 0.3768
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3423
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4424
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3001
+    }
+   },
+   "per_year": {
+    "2020": 0.3884,
+    "2021": 0.3216,
+    "2022": 0.5301,
+    "2023": 0.2183
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_lgbm_rank",
+   "side": "hit",
+   "model": "lgbm_rank",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3492,
+   "spearman_pure": 0.3217,
+   "within_tier_wm": 0.0384,
+   "t45": -0.0006,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": -0.0432
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1047
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.099
+    },
+    "45": {
+     "n": 95,
+     "rho": -0.0006
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1519
+    }
+   },
+   "era": {
+    "2019-2021": 0.3226,
+    "2022-2023": 0.361
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.337
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4347
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2758
+    }
+   },
+   "per_year": {
+    "2020": 0.3613,
+    "2021": 0.2479,
+    "2022": 0.5296,
+    "2023": 0.2239
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_lgbm_quantile",
+   "side": "hit",
+   "model": "lgbm_quantile",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.33,
+   "spearman_pure": 0.3108,
+   "within_tier_wm": 0.024,
+   "t45": -0.0125,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": -0.0848
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.0747
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.0729
+    },
+    "45": {
+     "n": 95,
+     "rho": -0.0125
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.0065
+    }
+   },
+   "era": {
+    "2019-2021": 0.3054,
+    "2022-2023": 0.3446
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3097
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.3728
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2931
+    }
+   },
+   "per_year": {
+    "2020": 0.3656,
+    "2021": 0.2083,
+    "2022": 0.5075,
+    "2023": 0.1729
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_ens_ridge_histgbm",
+   "side": "hit",
+   "model": "ens_ridge_histgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3553,
+   "spearman_pure": 0.3505,
+   "within_tier_wm": 0.0726,
+   "t45": 0.0831,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.0432
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.0697
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.1809
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0831
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1935
+    }
+   },
+   "era": {
+    "2019-2021": 0.2974,
+    "2022-2023": 0.3872
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3475
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4139
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.2923
+    }
+   },
+   "per_year": {
+    "2020": 0.3638,
+    "2021": 0.2313,
+    "2022": 0.5097,
+    "2023": 0.2271
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_ens_ridge_lgbm",
+   "side": "hit",
+   "model": "ens_ridge_lgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3599,
+   "spearman_pure": 0.3572,
+   "within_tier_wm": 0.0916,
+   "t45": 0.051,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.078
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.0976
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2164
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.051
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.0701
+    }
+   },
+   "era": {
+    "2019-2021": 0.2946,
+    "2022-2023": 0.3971
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3505
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4259
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3011
+    }
+   },
+   "per_year": {
+    "2020": 0.3537,
+    "2021": 0.2395,
+    "2022": 0.525,
+    "2023": 0.2359
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_target_rank",
+   "side": "hit",
+   "model": "ridge",
+   "target": "rank",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3442,
+   "spearman_pure": 0.377,
+   "within_tier_wm": 0.0202,
+   "t45": 0.0579,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.1347
+    },
+    "40": {
+     "n": 116,
+     "rho": -0.0563
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.0899
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0579
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1455
+    }
+   },
+   "era": {
+    "2019-2021": 0.2715,
+    "2022-2023": 0.3867
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3056
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4613
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3033
+    }
+   },
+   "per_year": {
+    "2020": 0.3386,
+    "2021": 0.1897,
+    "2022": 0.5572,
+    "2023": 0.2072
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "hit_target_residual",
+   "side": "hit",
+   "model": "ridge",
+   "target": "residual",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.7,
+   "extra_join": null,
+   "n": 353,
+   "n_keys": 13,
+   "spearman": 0.3743,
+   "spearman_pure": 0.2413,
+   "within_tier_wm": 0.1364,
+   "t45": 0.0521,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.2697
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1627
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.224
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0521
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1312
+    }
+   },
+   "era": {
+    "2019-2021": 0.2976,
+    "2022-2023": 0.4176
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3524
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4517
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3134
+    }
+   },
+   "per_year": {
+    "2020": 0.3445,
+    "2021": 0.2295,
+    "2022": 0.5616,
+    "2023": 0.2411
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "BASE_pit",
+   "side": "pit",
+   "model": "ridge",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.3032,
+   "spearman_pure": 0.305,
+   "within_tier_wm": 0.1492,
+   "t45": 0.2023,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.1168
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.1766
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1819
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.2023
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0731
+    }
+   },
+   "era": {
+    "2019-2021": 0.2035,
+    "2022-2023": 0.3947
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.2972
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3042
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.3171
+    }
+   },
+   "per_year": {
+    "2020": 0.2434,
+    "2021": 0.1062,
+    "2022": 0.4175,
+    "2023": 0.3694
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_elasticnet",
+   "side": "pit",
+   "model": "elasticnet",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.3067,
+   "spearman_pure": 0.3125,
+   "within_tier_wm": 0.1543,
+   "t45": 0.206,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.1647
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.176
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1935
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.206
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0889
+    }
+   },
+   "era": {
+    "2019-2021": 0.2026,
+    "2022-2023": 0.3953
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.2892
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3191
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.3151
+    }
+   },
+   "per_year": {
+    "2020": 0.2409,
+    "2021": 0.1181,
+    "2022": 0.4244,
+    "2023": 0.3635
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_histgbm",
+   "side": "pit",
+   "model": "histgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2749,
+   "spearman_pure": 0.2426,
+   "within_tier_wm": 0.075,
+   "t45": -0.0617,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.0916
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.0041
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1464
+    },
+    "45": {
+     "n": 49,
+     "rho": -0.0617
+    },
+    "35": {
+     "n": 39,
+     "rho": -0.0128
+    }
+   },
+   "era": {
+    "2019-2021": 0.2001,
+    "2022-2023": 0.3401
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.0921
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.385
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.3015
+    }
+   },
+   "per_year": {
+    "2020": 0.1703,
+    "2021": 0.2521,
+    "2022": 0.4087,
+    "2023": 0.2756
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_gbr",
+   "side": "pit",
+   "model": "gbr",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2798,
+   "spearman_pure": 0.2523,
+   "within_tier_wm": 0.0773,
+   "t45": -0.0388,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.0745
+    },
+    "50": {
+     "n": 40,
+     "rho": -0.0477
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1462
+    },
+    "45": {
+     "n": 49,
+     "rho": -0.0388
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0229
+    }
+   },
+   "era": {
+    "2019-2021": 0.1934,
+    "2022-2023": 0.3524
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.1083
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.4031
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2904
+    }
+   },
+   "per_year": {
+    "2020": 0.2016,
+    "2021": 0.2234,
+    "2022": 0.4595,
+    "2023": 0.2458
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_rf",
+   "side": "pit",
+   "model": "rf",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2368,
+   "spearman_pure": 0.2089,
+   "within_tier_wm": -0.0021,
+   "t45": -0.0904,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.249
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.0943
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.0817
+    },
+    "45": {
+     "n": 49,
+     "rho": -0.0904
+    },
+    "35": {
+     "n": 39,
+     "rho": -0.3334
+    }
+   },
+   "era": {
+    "2019-2021": 0.1187,
+    "2022-2023": 0.3548
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.1289
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.2998
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2498
+    }
+   },
+   "per_year": {
+    "2020": 0.1305,
+    "2021": 0.1411,
+    "2022": 0.4192,
+    "2023": 0.2885
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_extratrees",
+   "side": "pit",
+   "model": "extratrees",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2455,
+   "spearman_pure": 0.2282,
+   "within_tier_wm": 0.0179,
+   "t45": 0.0603,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.3754
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.2419
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.0799
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.0603
+    },
+    "35": {
+     "n": 39,
+     "rho": -0.3307
+    }
+   },
+   "era": {
+    "2019-2021": 0.1188,
+    "2022-2023": 0.3509
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.1123
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3087
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2686
+    }
+   },
+   "per_year": {
+    "2020": 0.1689,
+    "2021": 0.1338,
+    "2022": 0.385,
+    "2023": 0.3362
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_lgbm_rank",
+   "side": "pit",
+   "model": "lgbm_rank",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2824,
+   "spearman_pure": 0.236,
+   "within_tier_wm": 0.0545,
+   "t45": -0.0542,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.4232
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.1425
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1384
+    },
+    "45": {
+     "n": 49,
+     "rho": -0.0542
+    },
+    "35": {
+     "n": 39,
+     "rho": -0.0362
+    }
+   },
+   "era": {
+    "2019-2021": 0.178,
+    "2022-2023": 0.3594
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.1977
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3394
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2899
+    }
+   },
+   "per_year": {
+    "2020": 0.1847,
+    "2021": 0.1795,
+    "2022": 0.4216,
+    "2023": 0.3018
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_lgbm_quantile",
+   "side": "pit",
+   "model": "lgbm_quantile",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2573,
+   "spearman_pure": 0.2082,
+   "within_tier_wm": 0.0373,
+   "t45": -0.1004,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.2202
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.044
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1254
+    },
+    "45": {
+     "n": 49,
+     "rho": -0.1004
+    },
+    "35": {
+     "n": 39,
+     "rho": -0.1598
+    }
+   },
+   "era": {
+    "2019-2021": 0.1629,
+    "2022-2023": 0.3445
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.147
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.2997
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2724
+    }
+   },
+   "per_year": {
+    "2020": 0.059,
+    "2021": 0.2715,
+    "2022": 0.4071,
+    "2023": 0.287
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_ens_ridge_histgbm",
+   "side": "pit",
+   "model": "ens_ridge_histgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.3049,
+   "spearman_pure": 0.3018,
+   "within_tier_wm": 0.1342,
+   "t45": 0.1617,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.1028
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.1459
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1733
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.1617
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0362
+    }
+   },
+   "era": {
+    "2019-2021": 0.1942,
+    "2022-2023": 0.4052
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.274
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3636
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2986
+    }
+   },
+   "per_year": {
+    "2020": 0.2258,
+    "2021": 0.1308,
+    "2022": 0.4447,
+    "2023": 0.3565
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_ens_ridge_lgbm",
+   "side": "pit",
+   "model": "ens_ridge_lgbm",
+   "target": "censored",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.3016,
+   "spearman_pure": 0.2988,
+   "within_tier_wm": 0.1264,
+   "t45": 0.1271,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.1325
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.1596
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1726
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.1271
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0123
+    }
+   },
+   "era": {
+    "2019-2021": 0.1849,
+    "2022-2023": 0.4046
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.2754
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3569
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.2949
+    }
+   },
+   "per_year": {
+    "2020": 0.2237,
+    "2021": 0.1284,
+    "2022": 0.4423,
+    "2023": 0.356
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_target_rank",
+   "side": "pit",
+   "model": "ridge",
+   "target": "rank",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.2808,
+   "spearman_pure": 0.3114,
+   "within_tier_wm": 0.113,
+   "t45": 0.1707,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.307
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.2039
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1368
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.1707
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.1633
+    }
+   },
+   "era": {
+    "2019-2021": 0.2052,
+    "2022-2023": 0.3537
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.2276
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.3035
+    }
+   },
+   "per_year": {
+    "2020": 0.2405,
+    "2021": 0.1132,
+    "2022": 0.3691,
+    "2023": 0.3452
+   },
+   "skipped_folds": 0
+  },
+  {
+   "id": "pit_target_residual",
+   "side": "pit",
+   "model": "ridge",
+   "target": "residual",
+   "features": "lean",
+   "blend": "war",
+   "lam": 0.61,
+   "extra_join": null,
+   "n": 438,
+   "n_keys": 8,
+   "spearman": 0.3064,
+   "spearman_pure": 0.1971,
+   "within_tier_wm": 0.152,
+   "t45": 0.2121,
+   "per_tier": {
+    "55": {
+     "n": 35,
+     "rho": -0.1487
+    },
+    "50": {
+     "n": 40,
+     "rho": 0.1728
+    },
+    "40": {
+     "n": 263,
+     "rho": 0.1862
+    },
+    "45": {
+     "n": 49,
+     "rho": 0.2121
+    },
+    "35": {
+     "n": 39,
+     "rho": 0.0939
+    }
+   },
+   "era": {
+    "2019-2021": 0.2073,
+    "2022-2023": 0.3955
+   },
+   "per_cohort": {
+    "ifa": {
+     "n": 107,
+     "rho": 0.289
+    },
+    "hs": {
+     "n": 97,
+     "rho": 0.3104
+    },
+    "college": {
+     "n": 230,
+     "rho": 0.3191
+    }
+   },
+   "per_year": {
+    "2020": 0.2434,
+    "2021": 0.1111,
+    "2022": 0.4232,
+    "2023": 0.3682
+   },
+   "skipped_folds": 0
+  }
+ ],
+ "regate_2026_07_15": {
+  "vintage": "2024-fold unlock (DEBUT_YEARS 2011-2024, censored weight-0.333 rows) + terminal-transaction label fix",
+  "spec": "pre-registered re-gate docs/efv-2026-07-15/GATES.md section MC-PIT; same-run BASE_pit arm",
+  "results": {
+   "BASE_pit": {
+    "spearman": 0.3028,
+    "within_tier_wm": 0.1488,
+    "t45": 0.2023,
+    "t50": 0.1766,
+    "era_2019_2021": 0.2034,
+    "n": 438,
+    "lam": 0.61
+   },
+   "pit_elasticnet": {
+    "spearman": 0.3061,
+    "within_tier_wm": 0.1538,
+    "t45": 0.206,
+    "t50": 0.176,
+    "era_2019_2021": 0.2025,
+    "delta_pooled": 0.0033,
+    "gate_bar": 0.0046,
+    "pass": false
+   },
+   "pit_target_residual": {
+    "spearman": 0.3058,
+    "within_tier_wm": 0.1513,
+    "t45": 0.2121,
+    "t50": 0.1728,
+    "era_2019_2021": 0.2072,
+    "delta_pooled": 0.003,
+    "gate_bar": 0.0046,
+    "pass": false
+   }
+  },
+  "verdict": "NO SHIP - keep-alive spent. Both arms remain under the pooled bar at the new vintage; weakest cells (t50, era 2019-2021) flat. Next re-open requires resolved 2024+ cohorts."
+ }
+}

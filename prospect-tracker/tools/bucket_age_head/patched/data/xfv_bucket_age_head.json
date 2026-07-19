@@ -1,0 +1,219 @@
+{
+ "generated_at": "2026-07-15",
+ "model": "BUCKET-AGE-HEAD (pit-only p(bucket | grade_band, age_band))",
+ "status": "CANDIDATE - FAILED its pre-registered gate (G4 grade monotone-sanity); DO NOT SHIP without a gate PASS under the rerun marker",
+ "seed": 20260715,
+ "shrink_n": 25.0,
+ "age_bands": {
+  "le22": "age < 23",
+  "23_24": "23 <= age < 25",
+  "25p": "age >= 25"
+ },
+ "grade_band_convention": "int(round(fv/5)*5) (efv_isotonic_lab._tier)",
+ "buckets": [
+  "bust",
+  "bench",
+  "regular",
+  "good",
+  "star"
+ ],
+ "fit_population": "resolved labeled pitcher matrix, debuted+busts, bust_recent excluded, censored==False (n=1572)",
+ "cells": {
+  "35|23_24": {
+   "n": 31,
+   "counts": [
+    31,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "35|25p": {
+   "n": 44,
+   "counts": [
+    44,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "35|le22": {
+   "n": 55,
+   "counts": [
+    55,
+    0,
+    0,
+    0,
+    0
+   ]
+  },
+  "40|23_24": {
+   "n": 126,
+   "counts": [
+    116,
+    9,
+    1,
+    0,
+    0
+   ]
+  },
+  "40|25p": {
+   "n": 83,
+   "counts": [
+    82,
+    0,
+    1,
+    0,
+    0
+   ]
+  },
+  "40|le22": {
+   "n": 110,
+   "counts": [
+    103,
+    4,
+    3,
+    0,
+    0
+   ]
+  },
+  "45|23_24": {
+   "n": 29,
+   "counts": [
+    24,
+    4,
+    0,
+    1,
+    0
+   ]
+  },
+  "45|25p": {
+   "n": 8,
+   "counts": [
+    6,
+    1,
+    0,
+    1,
+    0
+   ]
+  },
+  "45|le22": {
+   "n": 49,
+   "counts": [
+    45,
+    2,
+    2,
+    0,
+    0
+   ]
+  },
+  "50|23_24": {
+   "n": 18,
+   "counts": [
+    10,
+    5,
+    1,
+    2,
+    0
+   ]
+  },
+  "50|25p": {
+   "n": 4,
+   "counts": [
+    2,
+    2,
+    0,
+    0,
+    0
+   ]
+  },
+  "50|le22": {
+   "n": 24,
+   "counts": [
+    14,
+    8,
+    0,
+    2,
+    0
+   ]
+  },
+  "55|23_24": {
+   "n": 12,
+   "counts": [
+    4,
+    4,
+    2,
+    2,
+    0
+   ]
+  },
+  "55|le22": {
+   "n": 20,
+   "counts": [
+    12,
+    6,
+    1,
+    1,
+    0
+   ]
+  },
+  "60|23_24": {
+   "n": 2,
+   "counts": [
+    1,
+    0,
+    1,
+    0,
+    0
+   ]
+  },
+  "60|le22": {
+   "n": 6,
+   "counts": [
+    1,
+    2,
+    2,
+    1,
+    0
+   ]
+  },
+  "65|23_24": {
+   "n": 2,
+   "counts": [
+    1,
+    1,
+    0,
+    0,
+    0
+   ]
+  },
+  "70|23_24": {
+   "n": 1,
+   "counts": [
+    0,
+    0,
+    0,
+    0,
+    1
+   ]
+  },
+  "70|le22": {
+   "n": 2,
+   "counts": [
+    0,
+    1,
+    1,
+    0,
+    0
+   ]
+  }
+ },
+ "rerun_marker": {
+  "pattern": "F-SIDE S5 tripwire",
+  "trigger": "the FIRST pipeline run where the 2024 decision fold becomes trainable in the DEBUTED frame (debuted rows with decision_year==2024 carrying resolved censored==False labels; the full-pool 2024 cell is bust-only today and does NOT count)",
+  "action": "MANDATORY named re-run of BUCKET-AGE-HEAD (this lab, identical pre-registered gates) before the head may ship or any baseline resets; the Moore-class RP-role cohort resolves only then (improvement-program 2026-07-15: role blindness not gateable until 2024+ cohorts resolve)",
+  "registered": "2026-07-15"
+ }
+}

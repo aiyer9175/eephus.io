@@ -30,8 +30,9 @@ PIPELINE
             silently - the Phase-4b lesson).
   score     vendor_swing_plus.SwingPlusModel.score_to_leaderboard on
             the pooled swings (the model applies its own competitive-
-            swing filter + reliability shrink; min_swings=180 for a
-            full-strength score, fewer shrinks toward 100).
+            swing filter; profiles under its min_swings floor are
+            EXCLUDED, and kept scores shrink toward 100 with weight
+            n_swings/(n_swings+reliability_k)).
   output    data/swing_plus.json: {mlbam: {swing_plus, n_swings,
             seasons, name}} + provenance block.
 
@@ -130,13 +131,21 @@ def default_pool() -> dict[int, str]:
         log.warning("swing pool: debuts.json unavailable")
     try:
         fa = json.loads((DATA_DIR / "fa_class.json").read_text(encoding="utf-8"))
-        for p in fa.get("players") or []:
-            pos = (p.get("position") or "").upper()
-            mid = p.get("mlbam") or p.get("mlbam_id")
-            if mid and pos and not pos.startswith(("SP", "RP", "P", "LHP", "RHP")):
-                pool.setdefault(int(mid), p.get("player_name") or p.get("name") or "")
-    except (OSError, ValueError):
-        pass
+        # Members carry pos/name only (no MLBAM id) - resolve by name via the
+        # shared war_daily index, same as fa_export. Unresolvable/ambiguous
+        # names just stay out of the pool.
+        import fa_ident
+        season = date.today().year
+        for p in fa.get("members") or []:
+            pos = (p.get("pos") or "").upper()
+            name = p.get("name") or ""
+            if not name or not pos or pos.startswith(("SP", "RP", "P", "LHP", "RHP")):
+                continue
+            mid = fa_ident.resolve(name, range(season - 4, season))
+            if mid:
+                pool.setdefault(int(mid), name)
+    except Exception:                                         # noqa: BLE001
+        log.warning("swing pool: fa_class.json unavailable or FA resolve failed")
     # two-way projections vets (the Ohtani case: debut pre-2024 and a
     # pitcher-coded position would otherwise exclude the best swing in
     # the sport)
@@ -158,6 +167,11 @@ def score_pool(pool: dict[int, str], fetch: bool = True,
         warnings.simplefilter("ignore")     # cross-version sklearn unpickle
         from vendor_swing_plus import SwingPlusModel
         model = SwingPlusModel(MODEL_PATH)
+    # The artifact's real sample knobs, surfaced for provenance: profiles
+    # under min_swings are excluded; kept scores shrink toward 100 with
+    # weight n/(n+reliability_k).
+    knobs = {"min_swings": int(model.min_swings),
+             "reliability_k": int(model.reliability_k)}
     seasons = range(FIRST_TRACKING_SEASON, date.today().year + 1)
     frames = []
     mlbams = sorted(pool)
@@ -180,7 +194,7 @@ def score_pool(pool: dict[int, str], fetch: bool = True,
             frames.append(df)
             fetched += 1
     if not frames:
-        return {"players": {}, "n_scored": 0}
+        return {"players": {}, "n_scored": 0, **knobs}
     pitches = pd.concat(frames, ignore_index=True)
     # group_by=[] pools every season's swings into ONE per-batter score
     # (the model's reliability shrink handles small samples).
@@ -201,7 +215,8 @@ def score_pool(pool: dict[int, str], fetch: bool = True,
             "n_swings": int(row.n_swings),
             "name": pool.get(mid, ""),
         }
-    return {"players": out, "n_scored": len(out), "n_player_seasons": fetched}
+    return {"players": out, "n_scored": len(out), "n_player_seasons": fetched,
+            **knobs}
 
 
 def run(persist: bool = True, fetch: bool = True,
@@ -214,7 +229,10 @@ def run(persist: bool = True, fetch: bool = True,
         "model": "swing_plus v1.0.0 (Will Cahoon, vendored inference)",
         "data_boundary": "MLB bat tracking 2024+ only - no public MiLB "
                          "tracking exists; pre-debut prospects cannot score",
-        "min_swings_full_strength": 180,
+        # the artifact's real sample knobs (the old min_swings_full_strength
+        # field misdescribed the model; no consumer read it)
+        "min_swings": res.get("min_swings"),
+        "reliability_k": res.get("reliability_k"),
         "n_scored": res["n_scored"],
         "players": res["players"],
     }

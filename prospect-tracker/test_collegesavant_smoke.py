@@ -40,7 +40,17 @@ PITCHER_ROWS = """[
 def _prelude(kind: str) -> str:
     data_var = "HITTER_DATA" if kind == "hitter" else "PITCHER_DATA"
     rows = HITTER_ROWS if kind == "hitter" else PITCHER_ROWS
-    extra = "" if kind == "hitter" else "window.PITCHER_PITCH_DATA=[]; window.PITCH_SHAPES_2024={}; window.PITCH_SHAPES_2025={};"
+    # The pitch/BIP payloads are split per year (pitcher_pitch_data_<year>.js /
+    # hitter_bip_<year>.js); stub every per-year global so the apps' lazy
+    # injectors see the season as present. The legacy combined globals stay
+    # stubbed too: the apps still honor them (older cached payloads).
+    if kind == "hitter":
+        extra = "window.HITTER_BIP={}; window.HITTER_BIP_2024={}; window.HITTER_BIP_2025={};"
+    else:
+        extra = ("window.PITCHER_PITCH_DATA=[];"
+                 " window.PITCHER_PITCH_DATA_2024=[]; window.PITCHER_PITCH_DATA_2025=[];"
+                 " window.PITCHER_PITCH_DATA_2026=[];"
+                 " window.PITCH_SHAPES_2024={}; window.PITCH_SHAPES_2025={};")
     return f"""
     var __errors=[];
     var console={{log:function(){{}},warn:function(){{}},error:function(){{__errors.push(Array.prototype.join.call(arguments,' '));}}}};
@@ -133,6 +143,12 @@ def test_new_features_actually_render():
     ctx.eval(cap)
     ctx.eval((CS / "team_names.js").read_text(encoding="utf-8"))
     ctx.eval((CS / "app.js").read_text(encoding="utf-8"))
+    # init() must survive boot with the payload present: a swallowed crash
+    # (e.g. a const dead-zone hit inside init's try) paints the F-02 error
+    # state here and only self-heals on the next hashchange, which the
+    # per-hash renders below would mask.
+    boot = ctx.eval("__html['app']||''")
+    assert "Data failed to load" not in boot, "init() crashed at boot"
     ctx.eval("location.hash='#/player/2024/condon-charlie';window.location.hash=location.hash;render();")
     html = ctx.eval("__html['app']||''")
     for needle in ["cs-plus-pill", "Georgia", "Projected Single-A", "23.5%",

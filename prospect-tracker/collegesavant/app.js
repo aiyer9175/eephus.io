@@ -153,20 +153,71 @@ function plusPill(value, label) {
   return `<span class="cs-plus-pill ${cls}" title="${escapeHtml(tip)}">${escapeHtml(label)} ${value}</span>`;
 }
 
+// Batted-ball point clouds ride in as hitter_bip_<year>.js, each defining
+// window.HITTER_BIP_<year> keyed "year:slug". The page ships only the current
+// season's file; the 11.6MB 2024 cloud loads on demand the first time a 2024
+// profile or the 2024 year toggle opens (same injector pattern as the pitcher
+// page's pitch shapes). The consts are declared before init() runs (same
+// dead-zone rule as CSPLUS_GROUPS above): collectHitterBip reads them at boot.
+const BIP_YEARS = [2024, 2025];
+const _bipLoadState = {};   // year -> "loading" | "ready" | "failed"
+
+function bipTableFor(year) {
+  return window[`HITTER_BIP_${year}`];
+}
+
+// Every batted-ball table currently on the page: the per-year tables plus the
+// legacy combined window.HITTER_BIP (still honored so older cached copies of
+// hitter_year_data.js keep working).
+function collectHitterBip() {
+  const merged = Object.assign({}, window.HITTER_BIP || {});
+  for (const year of BIP_YEARS) Object.assign(merged, bipTableFor(year) || {});
+  return merged;
+}
+
+function bipLoading(year) {
+  return _bipLoadState[year] === "loading";
+}
+
+// Returns true when the year's batted balls are on the page (or the year has
+// no file to fetch). Otherwise injects the year's script once and returns
+// false; onload merges the points and repaints, onerror leaves the profile's
+// empty-scatter state.
+function ensureHitterBip(year) {
+  if (!BIP_YEARS.includes(year) || bipTableFor(year)) return true;
+  if (_bipLoadState[year] === "loading" || _bipLoadState[year] === "failed") return false;
+  _bipLoadState[year] = "loading";
+  const s = document.createElement("script");
+  s.src = `hitter_bip_${year}.js`;
+  s.onload = () => {
+    _bipLoadState[year] = "ready";
+    for (const [slug, points] of normalizeBattedBalls(bipTableFor(year) || {})) {
+      state.battedBalls.set(slug, points);
+    }
+    render();
+  };
+  s.onerror = () => { _bipLoadState[year] = "failed"; render(); };
+  document.head.appendChild(s);
+  return false;
+}
+
 init();
 
 async function init() {
   try {
     if (window.HITTER_DATA) {
       state.allPlayers = window.HITTER_DATA.map(normalizePlayer);
-      state.battedBalls = normalizeBattedBalls(window.HITTER_BIP || {});
+      state.battedBalls = normalizeBattedBalls(collectHitterBip());
     } else {
       const text = window.B1G_CSV || await fetch(CSV_PATH).then((res) => {
         if (!res.ok) throw new Error(`Could not load ${CSV_PATH}`);
         return res.text();
       });
       state.allPlayers = parseCsv(text).map((row) => normalizePlayer({ ...row, year: 2025 }));
-      state.battedBalls = normalizeBattedBalls(window.B1G_BIP || {});
+      // The legacy B1G_BIP blob no longer ships (922KB, dead on the happy
+      // path); this CSV fallback keeps the leaderboard alive with an empty
+      // batted-ball scatter instead of stale B1G-only points.
+      state.battedBalls = normalizeBattedBalls({});
     }
     state.availableYears = [...new Set(state.allPlayers.map((player) => player.year))].sort((a, b) => b - a);
     state.year = state.availableYears[0] || 2025;
@@ -261,6 +312,7 @@ function normalizePlayer(row) {
 function setActiveYear(year) {
   const numericYear = Number(year);
   state.year = state.availableYears.includes(numericYear) ? numericYear : (state.availableYears[0] || numericYear);
+  ensureHitterBip(state.year);
   state.players = state.allPlayers.filter((player) => player.year === state.year);
   state.percentiles = computePercentiles(state.players);
   state.csPlus = computeCSPlus(state.players);
@@ -513,7 +565,17 @@ function renderLeaderboard() {
     p.hitter_name.toLowerCase().includes(q) &&
     (minPA <= 0 || p.pa == null || p.pa >= minPA) &&
     (teamF === "all" || p.team === teamF));
-  filtered.sort((a, b) => dir * compareNullable(sortVal(a, state.sortKey), sortVal(b, state.sortKey)));
+  // A11: missing values must always sink to the BOTTOM, in both directions.
+  // The old `dir * compareNullable(...)` multiplied the null guard by the sort
+  // direction, so a descending sort inverted the sink and floated MISSING
+  // values to the TOP. Resolve nulls BEFORE applying the direction, so only the
+  // finite comparison is direction-scaled (matches pitcher_app.js's comparator).
+  filtered.sort((a, b) => {
+    const av = sortVal(a, state.sortKey), bv = sortVal(b, state.sortKey);
+    const aOk = Number.isFinite(av), bOk = Number.isFinite(bv);
+    if (!aOk || !bOk) return aOk === bOk ? 0 : aOk ? -1 : 1;
+    return dir * (av - bv);
+  });
   const visible = filtered.slice(0, LEADERBOARD_LIMIT);
   const hasPa = state.players.some((p) => p.pa != null);
   const teams = [...new Set(state.players.map((p) => p.team).filter(Boolean))]
@@ -545,6 +607,7 @@ function renderLeaderboard() {
       </select>
       ${hasPa ? `<label class="lb-pa">Min PA <input type="number" min="0" step="10" value="${minPA}" data-min-pa></label>` : ""}
       <button class="control-button" type="button" data-reset>Reset</button>
+      <button class="chip egfx-chip" id="cs-lb-gfx" title="Generate a shareable graphic (theme-aware, multiple formats)"><span class="egfx-chip-glyph" aria-hidden="true">&#9636;</span>Generate GFX</button>
     </section>
     <p class="note-line">${filtered.length.toLocaleString()} hitter${filtered.length === 1 ? "" : "s"}${(hasPa && minPA > 0) ? ` with ${minPA}+ PA` : ""}${teamF !== "all" ? ` on ${escapeHtml(formatTeamName(teamF))}` : ""}, ${state.year}. Click any column header to sort.${filtered.length > visible.length ? ` Showing the top ${visible.length}.` : ""}</p>
     <section class="leaderboard tt-board"><div class="tt-scroll"><table class="tt-table">
@@ -576,6 +639,47 @@ function renderLeaderboard() {
     state.query = ""; state.minPA = 0; state.teamFilter = "all"; state.sortKey = "cs_plus"; state.sortDir = null;
     renderLeaderboard();
   });
+  const lbGfx = app.querySelector("#cs-lb-gfx");
+  if (lbGfx) lbGfx.onclick = () => {
+    if (window.EEPHUS_GFX) window.EEPHUS_GFX.open(csLeaderboardSpec(filtered, col, dir));
+  };
+}
+
+// Board spec for the Generate GFX modal: the current filtered + sorted hitter
+// leaderboard as a column board (leading metric + its percentile + CS+), built
+// from the SAME `filtered` array the table renders so the graphic always
+// matches what's on screen. Mirrors fa.js/_faBoardSpec + projections.js.
+function csLeaderboardSpec(rows, col, dir) {
+  const pctOf = state.percentiles || new Map();
+  const csOf = state.csPlus || new Map();
+  const brows = rows.map((p, i) => {
+    const v = sortVal(p, col.key);
+    const pctMap = pctOf.get(p.slug) || {};
+    const pctV = pctMap[col.key];
+    const cs = csOf.get(p.slug);
+    const csColor = Number.isFinite(cs) ? (cs >= 110 ? "green" : cs <= 90 ? "red" : "muted") : "muted";
+    return { cells: [
+      { t: i + 1 },
+      { t: displayName(p.hitter_name), sub: formatTeamName(p.team) || undefined },
+      { t: lbFmt(col.fmt, v), c: "accent" },
+      { t: Number.isFinite(pctV) ? String(Math.round(pctV)) : "-", c: "muted" },
+      { t: Number.isFinite(cs) ? String(Math.round(cs)) : "-", c: csColor },
+    ] };
+  });
+  return {
+    kind: "board", module: "CollegeSavant", accentToken: "--accent-red",
+    title: `CollegeSavant · ${col.label} Leaders`,
+    subtitle: `${state.year} college hitters · sorted by ${col.label}${dir < 0 ? " (high → low)" : " (low → high)"} · ${rows.length} qualified`,
+    url: "eephus.io/collegesavant", filenameBase: `eephus-collegesavant-${col.key}`,
+    caption: "college tracked-skill leaders · CollegeSavant by Joseph Gillis",
+    board: { defaultCount: 25, counts: [10, 25, 50], legend: "CS+ 100 = D1 average", columns: [
+      { label: "#", frac: 0.06 },
+      { label: "Player", frac: 0.42 },
+      { label: col.label, frac: 0.20 },
+      { label: "Pctile", frac: 0.16 },
+      { label: "CS+", frac: 0.16 },
+    ], rows: brows },
+  };
 }
 
 // ---- College Team Tendencies -----------------------------------------------
@@ -948,12 +1052,12 @@ function renderPlayer(player) {
   const shareBtn = app.querySelector("#cs-share");
   if (shareBtn) {
     shareBtn.addEventListener("click", () => {
-      if (!window.EEPHUS_HUB) return;
+      if (!window.EEPHUS_GFX && !window.EEPHUS_HUB) return;
       const rows = METRICS
         .filter((m) => player[m.key] != null)
         .slice(0, 8)
         .map((m) => [m.label, `${formatMetric(player[m.key], m.fmt)}  (${pct && pct[m.key] != null ? pct[m.key] : "-"})`]);
-      window.EEPHUS_HUB.shareCard({
+      const cardOpts = {
         module: "CollegeSavant",
         accentToken: "--accent-red",
         name: displayName(player.hitter_name),
@@ -968,7 +1072,15 @@ function renderPlayer(player) {
         url: `eephus.io/collegesavant/#/player/${player.year}/${player.slug}`,
         filename: `eephus-collegesavant-${player.slug}.png`,
         caption: "college percentiles vs the qualified pool · CollegeSavant by Joseph Gillis",
-      });
+      };
+      // Open the shared Generate GFX modal (format / theme / accent controls);
+      // fall back to the legacy direct download if the GFX module didn't load.
+      if (window.EEPHUS_GFX) {
+        window.EEPHUS_GFX.open({ kind: "card", module: cardOpts.module, accentToken: cardOpts.accentToken,
+          title: cardOpts.name, filenameBase: cardOpts.filename.replace(/\.png$/, ""), card: cardOpts });
+      } else if (window.EEPHUS_HUB) {
+        window.EEPHUS_HUB.shareCard(cardOpts);
+      }
     });
   }
 }
@@ -976,6 +1088,12 @@ function renderPlayer(player) {
 function renderBattedBallChart(player) {
   const points = state.battedBalls.get(`${player.year}:${player.slug}`) || state.battedBalls.get(player.slug) || [];
   if (!points.length) {
+    // A lazily fetched season may still be in flight; the onload repaint
+    // fills the scatter in. ensureHitterBip also covers a deep link that
+    // landed here before any year toggle fired.
+    if (!ensureHitterBip(player.year) && bipLoading(player.year)) {
+      return `<div class="chart-empty">Loading ${player.year} batted balls&hellip;</div>`;
+    }
     return `<div class="chart-empty">No batted-ball EV/launch-angle points available.</div>`;
   }
 
@@ -1046,8 +1164,11 @@ function renderYearSelect(years = state.availableYears) {
   if (years.length <= 1) {
     return `<span class="badge">${years[0] ?? state.year}</span>`;
   }
+  // While a lazily fetched season's batted balls are still in flight the
+  // toggle shows a loading state; the onload repaint clears it.
+  const loading = bipLoading(state.year);
   return `
-    <select class="select-box year-select" aria-label="Select season">
+    <select class="select-box year-select${loading ? " is-loading" : ""}" aria-label="Select season"${loading ? ` aria-busy="true" title="Loading ${state.year} batted balls"` : ""}>
       ${years.map((year) => `<option value="${year}" ${year === state.year ? "selected" : ""}>${year}</option>`).join("")}
     </select>
   `;

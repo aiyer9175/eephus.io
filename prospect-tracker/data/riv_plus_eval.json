@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-15",
  "seasons": [
   2018,
   2019,
@@ -13,7 +13,29 @@
  "conventions": {
   "predictor_year": "year Y qualified (TBF>=100)",
   "target": "-RA9 in year Y+1 (TBF>=60)",
-  "excluded": "2020 (60-game COVID season)"
+  "excluded": "2020 (60-game COVID season)",
+  "n_partial_outcome_pairs_dropped": 162
+ },
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "-RA9 in year Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "-RA9 in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
  },
  "experiment": "X-R3",
  "model": "riv_plus (Reliever Impact Value)",
@@ -24,15 +46,17 @@
   "scale": 10.0
  },
  "forward_stability_check": {
-  "riv_plus_y_to_y1_rho": 0.2094,
-  "rem_plus_y_to_y1_rho": 0.3498,
+  "riv_plus_y_to_y1_rho": 0.2023,
+  "rem_plus_y_to_y1_rho": 0.3601,
   "riv_less_stable_than_rem": true,
+  "note": "harness v2: unrounded riv_raw/rem_plus_raw, complete-season pairs only; the within-outcome-season z target convention does not apply (the target here is the next-year metric, already pool-standardized)",
   "reading": "CONFIRMS the two-number design: RIV+ (realized impact) is less repeatable year to year than REM+ (skill), so leverage-weighted value stays a separate Impact column and never enters the skill scale"
  },
  "market_check_aav": {
   "n_signings_matched": 271,
-  "rho_riv_vs_aav": 0.5759,
-  "rho_rem_vs_aav": 0.5084,
+  "rho_riv_vs_aav": 0.5775,
+  "rho_rem_vs_aav": 0.5101,
+  "predictors": "unrounded riv_raw / rem_plus_raw (harness v2)",
   "reading": "RIV+ aligns with RP pay at least as well as REM+ (captures deployed value)"
  },
  "checks": {
@@ -45,440 +69,467 @@
   "metric": "riv_plus",
   "display_name": "RIV+",
   "definition": "Reliever Impact Value: a 100-anchored index of realized leverage-weighted value (WPA-primary, with a shutdowns-minus-meltdowns overlay), standardized over the season pool (100 + 10*z). A DEPLOYMENT / VALUE metric, not a repeatable-skill number: it credits the wins a reliever actually added in the leverage he was given, so it is by design less stable year to year than the REM+ skill scale.",
-  "n_pool_qualified": 198,
-  "n_with_value": 198,
+  "n_pool_qualified": 204,
+  "n_with_value": 204,
   "players": {
    "695243": {
     "name": "Mason Miller",
     "team": "SD",
-    "riv_plus": 142,
-    "wpa": 3.171,
-    "sd": 20,
+    "riv_plus": 145,
+    "wpa": 3.593,
+    "sd": 22,
     "md": 2,
-    "gmli": 1.824
-   },
-   "686973": {
-    "name": "Louis Varland",
-    "team": "TOR",
-    "riv_plus": 146,
-    "wpa": 3.527,
-    "sd": 21,
-    "md": 2,
-    "gmli": 1.898
+    "gmli": 1.851
    },
    "661395": {
     "name": "Jhoan Duran",
     "team": "PHI",
-    "riv_plus": 131,
-    "wpa": 2.382,
-    "sd": 17,
+    "riv_plus": 135,
+    "wpa": 2.834,
+    "sd": 19,
     "md": 3,
-    "gmli": 2.044
+    "gmli": 2.049
+   },
+   "686973": {
+    "name": "Louis Varland",
+    "team": "TOR",
+    "riv_plus": 145,
+    "wpa": 3.573,
+    "sd": 21,
+    "md": 2,
+    "gmli": 1.836
    },
    "669276": {
     "name": "Dylan Lee",
     "team": "ATL",
-    "riv_plus": 124,
-    "wpa": 1.655,
-    "sd": 19,
+    "riv_plus": 127,
+    "wpa": 1.916,
+    "sd": 21,
     "md": 4,
-    "gmli": 1.393
-   },
-   "671922": {
-    "name": "Cade Smith",
-    "team": "CLE",
-    "riv_plus": 131,
-    "wpa": 1.982,
-    "sd": 25,
-    "md": 4,
-    "gmli": 1.894
+    "gmli": 1.403
    },
    "656730": {
     "name": "Trevor Megill",
     "team": "MIL",
-    "riv_plus": 122,
+    "riv_plus": 121,
     "wpa": 1.401,
     "sd": 20,
     "md": 4,
     "gmli": 1.724
    },
-   "681870": {
-    "name": "Erik Sabrowski",
+   "671922": {
+    "name": "Cade Smith",
     "team": "CLE",
-    "riv_plus": 122,
-    "wpa": 1.741,
-    "sd": 15,
-    "md": 5,
-    "gmli": 1.565
+    "riv_plus": 137,
+    "wpa": 2.6,
+    "sd": 27,
+    "md": 4,
+    "gmli": 1.877
    },
    "656945": {
     "name": "Tanner Scott",
     "team": "LAD",
-    "riv_plus": 116,
-    "wpa": 0.993,
-    "sd": 18,
+    "riv_plus": 118,
+    "wpa": 1.211,
+    "sd": 19,
     "md": 5,
-    "gmli": 1.484
-   },
-   "656546": {
-    "name": "Jeff Hoffman",
-    "team": "TOR",
-    "riv_plus": 90,
-    "wpa": -1.076,
-    "sd": 15,
-    "md": 9,
-    "gmli": 1.4
+    "gmli": 1.503
    },
    "670970": {
     "name": "Adrian Morejon",
     "team": "SD",
     "riv_plus": 121,
-    "wpa": 1.371,
-    "sd": 24,
-    "md": 9,
-    "gmli": 1.847
+    "wpa": 1.408,
+    "sd": 25,
+    "md": 10,
+    "gmli": 1.812
+   },
+   "656546": {
+    "name": "Jeff Hoffman",
+    "team": "TOR",
+    "riv_plus": 87,
+    "wpa": -1.377,
+    "sd": 15,
+    "md": 10,
+    "gmli": 1.392
    },
    "680742": {
     "name": "Jonathan Bowlan",
     "team": "PHI",
-    "riv_plus": 87,
-    "wpa": -0.685,
-    "sd": 3,
+    "riv_plus": 94,
+    "wpa": -0.273,
+    "sd": 6,
     "md": 8,
-    "gmli": 0.923
+    "gmli": 1.115
+   },
+   "628452": {
+    "name": "Raisel Iglesias",
+    "team": "ATL",
+    "riv_plus": 115,
+    "wpa": 1.073,
+    "sd": 13,
+    "md": 2,
+    "gmli": 1.554
+   },
+   "681911": {
+    "name": "Alex Vesia",
+    "team": "LAD",
+    "riv_plus": 119,
+    "wpa": 1.697,
+    "sd": 11,
+    "md": 3,
+    "gmli": 1.424
+   },
+   "800311": {
+    "name": "Didier Fuentes",
+    "team": "ATL",
+    "riv_plus": 117,
+    "wpa": 1.351,
+    "sd": 12,
+    "md": 3,
+    "gmli": 1.453
    },
    "656641": {
     "name": "Jacob Latz",
     "team": "TEX",
-    "riv_plus": 125,
-    "wpa": 1.676,
-    "sd": 19,
+    "riv_plus": 127,
+    "wpa": 1.942,
+    "sd": 21,
     "md": 4,
-    "gmli": 1.93
+    "gmli": 1.937
+   },
+   "676477": {
+    "name": "Garrett Whitlock",
+    "team": "BOS",
+    "riv_plus": 126,
+    "wpa": 1.989,
+    "sd": 17,
+    "md": 3,
+    "gmli": 1.458
    },
    "596133": {
     "name": "Luke Weaver",
     "team": "NYM",
     "riv_plus": 135,
-    "wpa": 2.491,
-    "sd": 22,
+    "wpa": 2.567,
+    "sd": 23,
     "md": 3,
-    "gmli": 1.724
+    "gmli": 1.717
    },
-   "628452": {
-    "name": "Raisel Iglesias",
-    "team": "ATL",
-    "riv_plus": 113,
-    "wpa": 0.826,
-    "sd": 12,
-    "md": 2,
-    "gmli": 1.509
-   },
-   "670280": {
-    "name": "David Bednar",
+   "687396": {
+    "name": "Brent Headrick",
     "team": "NYY",
-    "riv_plus": 113,
-    "wpa": 0.845,
-    "sd": 14,
+    "riv_plus": 125,
+    "wpa": 1.888,
+    "sd": 18,
     "md": 4,
-    "gmli": 1.415
+    "gmli": 1.273
    },
-   "676477": {
-    "name": "Garrett Whitlock",
-    "team": "BOS",
-    "riv_plus": 119,
-    "wpa": 1.326,
-    "sd": 15,
-    "md": 3,
-    "gmli": 1.37
+   "641329": {
+    "name": "Bryan Baker",
+    "team": "TB",
+    "riv_plus": 117,
+    "wpa": 1.182,
+    "sd": 17,
+    "md": 4,
+    "gmli": 1.439
    },
-   "681911": {
-    "name": "Alex Vesia",
-    "team": "LAD",
-    "riv_plus": 121,
-    "wpa": 1.735,
+   "805299": {
+    "name": "Brandyn Garcia",
+    "team": "AZ",
+    "riv_plus": 115,
+    "wpa": 1.148,
     "sd": 11,
-    "md": 3,
-    "gmli": 1.449
+    "md": 2,
+    "gmli": 1.244
+   },
+   "662253": {
+    "name": "Andr\u00e9s Mu\u00f1oz",
+    "team": "SEA",
+    "riv_plus": 101,
+    "wpa": -0.201,
+    "sd": 16,
+    "md": 8,
+    "gmli": 1.844
    },
    "669622": {
     "name": "Anthony Bender",
     "team": "MIA",
-    "riv_plus": 118,
+    "riv_plus": 117,
     "wpa": 1.354,
     "sd": 14,
     "md": 4,
     "gmli": 1.307
    },
-   "664991": {
-    "name": "Grant Wolfram",
-    "team": "BAL",
-    "riv_plus": 99,
-    "wpa": 0.013,
-    "sd": 9,
-    "md": 7,
-    "gmli": 1.253
-   },
-   "800311": {
-    "name": "Didier Fuentes",
-    "team": "ATL",
-    "riv_plus": 119,
-    "wpa": 1.454,
-    "sd": 11,
-    "md": 1,
-    "gmli": 1.354
+   "670280": {
+    "name": "David Bednar",
+    "team": "NYY",
+    "riv_plus": 116,
+    "wpa": 1.083,
+    "sd": 16,
+    "md": 4,
+    "gmli": 1.404
    },
    "670059": {
     "name": "Colin Holderman",
     "team": "CLE",
-    "riv_plus": 119,
-    "wpa": 1.387,
-    "sd": 14,
+    "riv_plus": 123,
+    "wpa": 1.717,
+    "sd": 16,
     "md": 3,
-    "gmli": 1.234
+    "gmli": 1.297
+   },
+   "681870": {
+    "name": "Erik Sabrowski",
+    "team": "CLE",
+    "riv_plus": 113,
+    "wpa": 1.082,
+    "sd": 15,
+    "md": 8,
+    "gmli": 1.6
    },
    "666661": {
     "name": "Juan Morillo",
     "team": "AZ",
-    "riv_plus": 99,
-    "wpa": -0.323,
-    "sd": 16,
-    "md": 8,
-    "gmli": 1.524
-   },
-   "662253": {
-    "name": "Andr\u00e9s Mu\u00f1oz",
-    "team": "SEA",
-    "riv_plus": 99,
-    "wpa": -0.343,
-    "sd": 15,
-    "md": 8,
-    "gmli": 1.883
-   },
-   "687396": {
-    "name": "Brent Headrick",
-    "team": "NYY",
-    "riv_plus": 124,
-    "wpa": 1.786,
+    "riv_plus": 101,
+    "wpa": -0.186,
     "sd": 17,
-    "md": 4,
-    "gmli": 1.306
+    "md": 8,
+    "gmli": 1.477
    },
    "547973": {
     "name": "Aroldis Chapman",
     "team": "BOS",
-    "riv_plus": 107,
-    "wpa": 0.359,
-    "sd": 13,
+    "riv_plus": 111,
+    "wpa": 0.702,
+    "sd": 15,
     "md": 4,
-    "gmli": 1.708
+    "gmli": 1.784
    },
-   "641329": {
-    "name": "Bryan Baker",
-    "team": "TB",
-    "riv_plus": 116,
-    "wpa": 1.068,
-    "sd": 16,
-    "md": 4,
-    "gmli": 1.454
+   "702193": {
+    "name": "Andrew Morris",
+    "team": "MIN",
+    "riv_plus": 105,
+    "wpa": 0.207,
+    "sd": 14,
+    "md": 6,
+    "gmli": 1.349
    },
-   "693686": {
-    "name": "Spencer Miles",
-    "team": "TOR",
-    "riv_plus": 117,
-    "wpa": 1.466,
+   "664991": {
+    "name": "Grant Wolfram",
+    "team": "BAL",
+    "riv_plus": 97,
+    "wpa": -0.092,
     "sd": 9,
-    "md": 2,
-    "gmli": 0.869
+    "md": 8,
+    "gmli": 1.253
    },
    "656794": {
     "name": "Sean Newcomb",
     "team": "CWS",
-    "riv_plus": 121,
-    "wpa": 1.82,
-    "sd": 10,
+    "riv_plus": 122,
+    "wpa": 1.914,
+    "sd": 11,
     "md": 3,
-    "gmli": 1.505
-   },
-   "656848": {
-    "name": "Michael Petersen",
-    "team": "MIA",
-    "riv_plus": 117,
-    "wpa": 1.216,
-    "sd": 15,
-    "md": 5,
-    "gmli": 1.357
+    "gmli": 1.531
    },
    "663158": {
     "name": "Robert Suarez",
     "team": "ATL",
-    "riv_plus": 127,
+    "riv_plus": 126,
     "wpa": 1.999,
     "sd": 16,
     "md": 2,
     "gmli": 1.342
    },
-   "676879": {
-    "name": "Aaron Ashby",
-    "team": "MIL",
-    "riv_plus": 102,
-    "wpa": 0.074,
-    "sd": 14,
-    "md": 8,
-    "gmli": 1.316
-   },
-   "694361": {
-    "name": "Will Klein",
-    "team": "LAD",
-    "riv_plus": 100,
-    "wpa": 0.003,
-    "sd": 8,
-    "md": 5,
-    "gmli": 1.37
-   },
-   "641835": {
-    "name": "Tim Mayza",
-    "team": "PHI",
-    "riv_plus": 91,
-    "wpa": -0.389,
-    "sd": 1,
-    "md": 5,
-    "gmli": 0.605
-   },
-   "702193": {
-    "name": "Andrew Morris",
-    "team": "MIN",
-    "riv_plus": 99,
-    "wpa": -0.176,
-    "sd": 11,
-    "md": 6,
-    "gmli": 1.331
-   },
-   "805299": {
-    "name": "Brandyn Garcia",
-    "team": "AZ",
-    "riv_plus": 113,
-    "wpa": 1.034,
-    "sd": 10,
-    "md": 2,
-    "gmli": 1.287
-   },
-   "681895": {
-    "name": "Evan Sisk",
-    "team": "PIT",
+   "489446": {
+    "name": "Kirby Yates",
+    "team": "LAA",
     "riv_plus": 86,
-    "wpa": -0.915,
+    "wpa": -0.967,
     "sd": 3,
     "md": 6,
-    "gmli": 0.894
+    "gmli": 1.063
+   },
+   "664076": {
+    "name": "Garrett Cleavinger",
+    "team": "TB",
+    "riv_plus": 110,
+    "wpa": 0.829,
+    "sd": 11,
+    "md": 5,
+    "gmli": 1.485
    },
    "669330": {
     "name": "Tyler Wells",
     "team": "BAL",
-    "riv_plus": 108,
-    "wpa": 0.589,
+    "riv_plus": 105,
+    "wpa": 0.422,
     "sd": 10,
-    "md": 4,
-    "gmli": 0.968
+    "md": 5,
+    "gmli": 0.951
    },
-   "683618": {
-    "name": "Edgardo Henriquez",
-    "team": "LAD",
-    "riv_plus": 114,
-    "wpa": 1.221,
-    "sd": 9,
-    "md": 3,
-    "gmli": 0.748
+   "676879": {
+    "name": "Aaron Ashby",
+    "team": "MIL",
+    "riv_plus": 96,
+    "wpa": -0.439,
+    "sd": 14,
+    "md": 9,
+    "gmli": 1.328
    },
-   "666974": {
-    "name": "Yennier Cano",
-    "team": "BAL",
-    "riv_plus": 98,
-    "wpa": 0.119,
-    "sd": 3,
-    "md": 4,
-    "gmli": 0.934
-   },
-   "642207": {
-    "name": "Devin Williams",
-    "team": "NYM",
-    "riv_plus": 114,
-    "wpa": 1.016,
-    "sd": 16,
+   "641835": {
+    "name": "Tim Mayza",
+    "team": "PHI",
+    "riv_plus": 87,
+    "wpa": -0.773,
+    "sd": 1,
     "md": 6,
-    "gmli": 1.629
+    "gmli": 0.607
    },
-   "670329": {
-    "name": "Rico Garcia",
-    "team": "BAL",
-    "riv_plus": 115,
-    "wpa": 1.115,
-    "sd": 16,
-    "md": 7,
-    "gmli": 1.449
+   "656848": {
+    "name": "Michael Petersen",
+    "team": "MIA",
+    "riv_plus": 121,
+    "wpa": 1.574,
+    "sd": 17,
+    "md": 5,
+    "gmli": 1.427
    },
    "656464": {
     "name": "Kevin Ginkel",
     "team": "AZ",
-    "riv_plus": 113,
-    "wpa": 1.16,
+    "riv_plus": 115,
+    "wpa": 1.333,
+    "sd": 13,
+    "md": 7,
+    "gmli": 1.248
+   },
+   "686580": {
+    "name": "Justin Slaten",
+    "team": "BOS",
+    "riv_plus": 96,
+    "wpa": -0.501,
     "sd": 12,
     "md": 7,
-    "gmli": 1.286
+    "gmli": 1.648
    },
-   "699134": {
-    "name": "Bradgley Rodriguez",
-    "team": "SD",
-    "riv_plus": 96,
-    "wpa": -0.19,
-    "sd": 7,
-    "md": 6,
-    "gmli": 1.241
+   "518585": {
+    "name": "Fernando Cruz",
+    "team": "NYY",
+    "riv_plus": 129,
+    "wpa": 2.144,
+    "sd": 20,
+    "md": 4,
+    "gmli": 1.635
+   },
+   "595345": {
+    "name": "Steven Okert",
+    "team": "HOU",
+    "riv_plus": 114,
+    "wpa": 0.929,
+    "sd": 16,
+    "md": 5,
+    "gmli": 1.143
    },
    "643410": {
     "name": "Mark Leiter Jr.",
     "team": "ATH",
     "riv_plus": 100,
-    "wpa": -0.001,
+    "wpa": 0.005,
     "sd": 9,
     "md": 6,
-    "gmli": 1.094
+    "gmli": 1.035
+   },
+   "681895": {
+    "name": "Evan Sisk",
+    "team": "PIT",
+    "riv_plus": 87,
+    "wpa": -0.915,
+    "sd": 3,
+    "md": 6,
+    "gmli": 0.894
+   },
+   "666974": {
+    "name": "Yennier Cano",
+    "team": "BAL",
+    "riv_plus": 100,
+    "wpa": 0.218,
+    "sd": 4,
+    "md": 4,
+    "gmli": 0.912
+   },
+   "694361": {
+    "name": "Will Klein",
+    "team": "LAD",
+    "riv_plus": 98,
+    "wpa": -0.2,
+    "sd": 9,
+    "md": 6,
+    "gmli": 1.359
+   },
+   "641302": {
+    "name": "Tyler Alexander",
+    "team": "TEX",
+    "riv_plus": 102,
+    "wpa": 0.408,
+    "sd": 8,
+    "md": 7,
+    "gmli": 1.138
    },
    "676263": {
     "name": "Jack Dreyer",
     "team": "LAD",
-    "riv_plus": 95,
-    "wpa": -0.25,
-    "sd": 6,
-    "md": 6,
-    "gmli": 0.755
-   },
-   "518585": {
-    "name": "Fernando Cruz",
-    "team": "NYY",
-    "riv_plus": 126,
-    "wpa": 1.888,
-    "sd": 18,
-    "md": 4,
-    "gmli": 1.618
-   },
-   "682608": {
-    "name": "Peyton Gray",
-    "team": "TEX",
-    "riv_plus": 107,
-    "wpa": 0.642,
+    "riv_plus": 93,
+    "wpa": -0.435,
     "sd": 7,
-    "md": 3,
-    "gmli": 1.005
+    "md": 7,
+    "gmli": 0.858
    },
-   "664076": {
-    "name": "Garrett Cleavinger",
-    "team": "TB",
-    "riv_plus": 107,
-    "wpa": 0.629,
-    "sd": 9,
-    "md": 5,
-    "gmli": 1.524
+   "670329": {
+    "name": "Rico Garcia",
+    "team": "BAL",
+    "riv_plus": 116,
+    "wpa": 1.244,
+    "sd": 17,
+    "md": 7,
+    "gmli": 1.417
+   },
+   "683618": {
+    "name": "Edgardo Henriquez",
+    "team": "LAD",
+    "riv_plus": 113,
+    "wpa": 1.142,
+    "sd": 10,
+    "md": 4,
+    "gmli": 0.919
+   },
+   "660825": {
+    "name": "Eduard Bazardo",
+    "team": "SEA",
+    "riv_plus": 114,
+    "wpa": 1.063,
+    "sd": 17,
+    "md": 7,
+    "gmli": 1.447
+   },
+   "665660": {
+    "name": "Elvis Alvarado",
+    "team": "ATH",
+    "riv_plus": 93,
+    "wpa": -0.575,
+    "sd": 8,
+    "md": 6,
+    "gmli": 1.375
+   },
+   "699134": {
+    "name": "Bradgley Rodriguez",
+    "team": "SD",
+    "riv_plus": 95,
+    "wpa": -0.285,
+    "sd": 7,
+    "md": 7,
+    "gmli": 1.231
    },
    "646241": {
     "name": "Enmanuel De Jesus",
@@ -489,77 +540,86 @@
     "md": 3,
     "gmli": 0.5
    },
-   "660825": {
-    "name": "Eduard Bazardo",
-    "team": "SEA",
-    "riv_plus": 114,
-    "wpa": 1.009,
-    "sd": 17,
-    "md": 7,
-    "gmli": 1.528
+   "642528": {
+    "name": "Jonathan Lo\u00e1isiga",
+    "team": "AZ",
+    "riv_plus": 108,
+    "wpa": 0.645,
+    "sd": 12,
+    "md": 5,
+    "gmli": 0.947
+   },
+   "660761": {
+    "name": "Jos\u00e9 Suarez",
+    "team": "ATH",
+    "riv_plus": 96,
+    "wpa": -0.076,
+    "sd": 2,
+    "md": 3,
+    "gmli": 0.641
    },
    "621237": {
     "name": "Jos\u00e9 Alvarado",
     "team": "PHI",
-    "riv_plus": 107,
-    "wpa": 0.426,
+    "riv_plus": 106,
+    "wpa": 0.367,
     "sd": 13,
-    "md": 5,
-    "gmli": 1.249
-   },
-   "682842": {
-    "name": "Abner Uribe",
-    "team": "MIL",
-    "riv_plus": 126,
-    "wpa": 1.862,
-    "sd": 20,
-    "md": 5,
-    "gmli": 1.845
-   },
-   "548384": {
-    "name": "Brooks Raley",
-    "team": "NYM",
-    "riv_plus": 112,
-    "wpa": 0.753,
-    "sd": 17,
     "md": 6,
-    "gmli": 1.58
+    "gmli": 1.204
    },
-   "669165": {
-    "name": "Kyle Hurt",
-    "team": "LAD",
-    "riv_plus": 99,
-    "wpa": -0.08,
-    "sd": 8,
-    "md": 4,
-    "gmli": 0.805
+   "689266": {
+    "name": "Dylan Dodd",
+    "team": "ATL",
+    "riv_plus": 104,
+    "wpa": 0.43,
+    "sd": 7,
+    "md": 3,
+    "gmli": 0.912
    },
    "660853": {
     "name": "Enyel De Los Santos",
     "team": "HOU",
     "riv_plus": 105,
-    "wpa": 0.435,
+    "wpa": 0.538,
     "sd": 12,
     "md": 8,
-    "gmli": 1.185
+    "gmli": 1.145
    },
-   "686580": {
-    "name": "Justin Slaten",
-    "team": "BOS",
-    "riv_plus": 90,
-    "wpa": -0.872,
-    "sd": 9,
+   "642207": {
+    "name": "Devin Williams",
+    "team": "NYM",
+    "riv_plus": 111,
+    "wpa": 0.746,
+    "sd": 16,
     "md": 7,
-    "gmli": 1.544
+    "gmli": 1.59
    },
-   "663738": {
-    "name": "Daniel Lynch IV",
-    "team": "KC",
-    "riv_plus": 121,
-    "wpa": 1.45,
+   "548384": {
+    "name": "Brooks Raley",
+    "team": "NYM",
+    "riv_plus": 113,
+    "wpa": 0.845,
     "sd": 18,
+    "md": 6,
+    "gmli": 1.579
+   },
+   "681217": {
+    "name": "Chase Silseth",
+    "team": "LAA",
+    "riv_plus": 102,
+    "wpa": 0.22,
+    "sd": 11,
+    "md": 7,
+    "gmli": 1.362
+   },
+   "682608": {
+    "name": "Peyton Gray",
+    "team": "TEX",
+    "riv_plus": 103,
+    "wpa": 0.33,
+    "sd": 8,
     "md": 5,
-    "gmli": 1.459
+    "gmli": 1.118
    },
    "668933": {
     "name": "Graham Ashcraft",
@@ -570,14 +630,23 @@
     "md": 4,
     "gmli": 1.239
    },
-   "595345": {
-    "name": "Steven Okert",
-    "team": "HOU",
-    "riv_plus": 111,
-    "wpa": 0.699,
+   "622608": {
+    "name": "Antonio Senzatela",
+    "team": "COL",
+    "riv_plus": 103,
+    "wpa": 0.189,
     "sd": 14,
+    "md": 8,
+    "gmli": 1.652
+   },
+   "663738": {
+    "name": "Daniel Lynch IV",
+    "team": "KC",
+    "riv_plus": 122,
+    "wpa": 1.604,
+    "sd": 19,
     "md": 5,
-    "gmli": 1.128
+    "gmli": 1.445
    },
    "695380": {
     "name": "Alex Hoppe",
@@ -587,15 +656,6 @@
     "sd": 0,
     "md": 1,
     "gmli": 0.372
-   },
-   "676775": {
-    "name": "Keaton Winn",
-    "team": "SF",
-    "riv_plus": 100,
-    "wpa": 0.205,
-    "sd": 6,
-    "md": 5,
-    "gmli": 1.382
    },
    "596001": {
     "name": "Jakob Junis",
@@ -615,140 +675,149 @@
     "md": 4,
     "gmli": 1.349
    },
+   "669165": {
+    "name": "Kyle Hurt",
+    "team": "LAD",
+    "riv_plus": 99,
+    "wpa": -0.08,
+    "sd": 8,
+    "md": 4,
+    "gmli": 0.805
+   },
    "657097": {
     "name": "Jacob Webb",
     "team": "CHC",
-    "riv_plus": 102,
-    "wpa": -0.018,
-    "sd": 12,
-    "md": 5,
-    "gmli": 1.166
-   },
-   "642528": {
-    "name": "Jonathan Lo\u00e1isiga",
-    "team": "AZ",
-    "riv_plus": 107,
-    "wpa": 0.526,
-    "sd": 11,
-    "md": 5,
-    "gmli": 0.967
-   },
-   "641302": {
-    "name": "Tyler Alexander",
-    "team": "TEX",
-    "riv_plus": 103,
-    "wpa": 0.434,
-    "sd": 8,
-    "md": 6,
-    "gmli": 1.115
-   },
-   "642397": {
-    "name": "Gregory Soto",
-    "team": "PIT",
-    "riv_plus": 119,
-    "wpa": 1.124,
-    "sd": 20,
-    "md": 4,
-    "gmli": 1.756
-   },
-   "668873": {
-    "name": "Caleb Kilian",
-    "team": "SF",
-    "riv_plus": 112,
-    "wpa": 0.663,
+    "riv_plus": 105,
+    "wpa": 0.179,
     "sd": 14,
-    "md": 2,
+    "md": 5,
     "gmli": 1.234
    },
-   "689254": {
-    "name": "Mason Fluharty",
-    "team": "TOR",
-    "riv_plus": 99,
-    "wpa": 0.233,
-    "sd": 9,
-    "md": 10,
-    "gmli": 1.185
-   },
-   "622608": {
-    "name": "Antonio Senzatela",
-    "team": "COL",
-    "riv_plus": 108,
-    "wpa": 0.547,
-    "sd": 14,
-    "md": 6,
-    "gmli": 1.684
-   },
-   "623454": {
-    "name": "Drew Anderson",
-    "team": "DET",
-    "riv_plus": 92,
-    "wpa": -0.526,
-    "sd": 9,
-    "md": 9,
-    "gmli": 1.2
-   },
-   "687330": {
-    "name": "Kevin Kelly",
-    "team": "TB",
-    "riv_plus": 126,
-    "wpa": 1.856,
-    "sd": 21,
-    "md": 6,
-    "gmli": 1.93
+   "623149": {
+    "name": "Paul Sewald",
+    "team": "AZ",
+    "riv_plus": 118,
+    "wpa": 1.236,
+    "sd": 18,
+    "md": 5,
+    "gmli": 1.686
    },
    "608718": {
     "name": "Brent Suter",
     "team": "LAA",
     "riv_plus": 89,
-    "wpa": -0.629,
+    "wpa": -0.646,
     "sd": 2,
     "md": 5,
-    "gmli": 0.541
+    "gmli": 0.513
    },
-   "665660": {
-    "name": "Elvis Alvarado",
-    "team": "ATH",
+   "623454": {
+    "name": "Drew Anderson",
+    "team": "DET",
     "riv_plus": 93,
-    "wpa": -0.606,
-    "sd": 8,
-    "md": 6,
-    "gmli": 1.471
+    "wpa": -0.496,
+    "sd": 9,
+    "md": 9,
+    "gmli": 1.144
    },
-   "681217": {
-    "name": "Chase Silseth",
-    "team": "LAA",
-    "riv_plus": 102,
-    "wpa": 0.148,
-    "sd": 11,
-    "md": 7,
-    "gmli": 1.411
-   },
-   "689147": {
-    "name": "Orion Kerkering",
-    "team": "PHI",
-    "riv_plus": 109,
-    "wpa": 0.711,
-    "sd": 12,
+   "682842": {
+    "name": "Abner Uribe",
+    "team": "MIL",
+    "riv_plus": 126,
+    "wpa": 1.913,
+    "sd": 20,
     "md": 5,
-    "gmli": 1.107
+    "gmli": 1.774
    },
-   "678606": {
-    "name": "Jos\u00e9 A. Ferrer",
-    "team": "SEA",
-    "riv_plus": 103,
-    "wpa": 0.074,
-    "sd": 14,
-    "md": 7,
-    "gmli": 1.367
+   "669062": {
+    "name": "Erik Miller",
+    "team": "SF",
+    "riv_plus": 102,
+    "wpa": 0.209,
+    "sd": 10,
+    "md": 6,
+    "gmli": 1.202
+   },
+   "687330": {
+    "name": "Kevin Kelly",
+    "team": "TB",
+    "riv_plus": 125,
+    "wpa": 1.815,
+    "sd": 21,
+    "md": 6,
+    "gmli": 1.811
    },
    "676617": {
     "name": "Riley O'Brien",
     "team": "STL",
-    "riv_plus": 128,
-    "wpa": 1.818,
-    "sd": 23,
+    "riv_plus": 129,
+    "wpa": 2.033,
+    "sd": 24,
     "md": 5,
-    "gmli": 2.074
+    "gmli": 2.017
+   },
+   "668873": {
+    "name": "Caleb Kilian",
+    "team": "SF",
+    "riv_plus": 104,
+    "wpa": -0.09,
+    "sd": 14,
+    "md": 3,
+    "gmli": 1.246
+   },
+   "689254": {
+    "name": "Mason Fluharty",
+    "team": "TOR",
+    "riv_plus": 98,
+    "wpa": 0.178,
+    "sd": 9,
+    "md": 11,
+    "gmli": 1.145
+   },
+   "676775": {
+    "name": "Keaton Winn",
+    "team": "SF",
+    "riv_plus": 101,
+    "wpa": 0.309,
+    "sd": 6,
+    "md": 5,
+    "gmli": 1.4
+   },
+   "642121": {
+    "name": "Cole Sulser",
+    "team": "TB",
+    "riv_plus": 105,
+    "wpa": 0.574,
+    "sd": 8,
+    "md": 5,
+    "gmli": 1.088
+   },
+   "665622": {
+    "name": "Luis Medina",
+    "team": "ATH",
+    "riv_plus": 93,
+    "wpa": -0.62,
+    "sd": 8,
+    "md": 5,
+    "gmli": 0.924
+   },
+   "689296": {
+    "name": "Anthony Nunez",
+    "team": "BAL",
+    "riv_plus": 94,
+    "wpa": -0.387,
+    "sd": 9,
+    "md": 9,
+    "gmli": 1.308
+   },
+   "642397": {
+    "name": "Gregory Soto",
+    "team": "PIT",
+    "riv_plus": 121,
+    "wpa": 1.342,
+    "sd": 21,
+    "md": 4,
+    "gmli": 1.763
    },
    "595014": {
     "name": "Blake Treinen",
@@ -759,113 +828,95 @@
     "md": 5,
     "gmli": 1.286
    },
-   "669020": {
-    "name": "Ryan Rolison",
-    "team": "CHC",
-    "riv_plus": 97,
-    "wpa": -0.065,
-    "sd": 4,
-    "md": 4,
-    "gmli": 0.931
-   },
-   "676684": {
-    "name": "Will Vest",
-    "team": "DET",
-    "riv_plus": 79,
-    "wpa": -1.743,
-    "sd": 6,
-    "md": 7,
-    "gmli": 1.576
-   },
-   "623149": {
-    "name": "Paul Sewald",
-    "team": "AZ",
-    "riv_plus": 115,
-    "wpa": 1.046,
-    "sd": 16,
+   "683769": {
+    "name": "Hunter Gaddis",
+    "team": "CLE",
+    "riv_plus": 114,
+    "wpa": 0.923,
+    "sd": 17,
     "md": 5,
-    "gmli": 1.675
-   },
-   "642100": {
-    "name": "Gabe Speier",
-    "team": "SEA",
-    "riv_plus": 111,
-    "wpa": 0.879,
-    "sd": 11,
-    "md": 5,
-    "gmli": 1.533
-   },
-   "660761": {
-    "name": "Jos\u00e9 Suarez",
-    "team": "ATH",
-    "riv_plus": 96,
-    "wpa": -0.06,
-    "sd": 2,
-    "md": 3,
-    "gmli": 0.676
+    "gmli": 1.674
    },
    "622088": {
     "name": "Tejay Antone",
     "team": "CIN",
     "riv_plus": 112,
-    "wpa": 0.863,
+    "wpa": 0.921,
     "sd": 10,
     "md": 2,
-    "gmli": 1.456
+    "gmli": 1.386
    },
-   "665622": {
-    "name": "Luis Medina",
-    "team": "ATH",
-    "riv_plus": 90,
-    "wpa": -0.763,
+   "676684": {
+    "name": "Will Vest",
+    "team": "DET",
+    "riv_plus": 80,
+    "wpa": -1.743,
     "sd": 6,
-    "md": 5,
-    "gmli": 0.916
+    "md": 7,
+    "gmli": 1.576
    },
-   "642121": {
-    "name": "Cole Sulser",
-    "team": "TB",
-    "riv_plus": 104,
-    "wpa": 0.473,
-    "sd": 7,
+   "667297": {
+    "name": "Tommy Nance",
+    "team": "MIN",
+    "riv_plus": 101,
+    "wpa": 0.252,
+    "sd": 6,
     "md": 4,
-    "gmli": 1.037
+    "gmli": 0.576
    },
-   "687377": {
-    "name": "Orlando Ribalta",
-    "team": "WSH",
-    "riv_plus": 116,
-    "wpa": 1.302,
-    "sd": 12,
-    "md": 4,
-    "gmli": 1.794
-   },
-   "667463": {
-    "name": "John King",
-    "team": "MIA",
-    "riv_plus": 118,
-    "wpa": 1.373,
-    "sd": 12,
-    "md": 2,
-    "gmli": 1.006
-   },
-   "689296": {
-    "name": "Anthony Nunez",
-    "team": "BAL",
-    "riv_plus": 93,
-    "wpa": -0.417,
-    "sd": 8,
+   "678606": {
+    "name": "Jos\u00e9 A. Ferrer",
+    "team": "SEA",
+    "riv_plus": 103,
+    "wpa": 0.087,
+    "sd": 15,
     "md": 8,
-    "gmli": 1.324
+    "gmli": 1.314
    },
-   "687911": {
-    "name": "Bryan King",
-    "team": "HOU",
-    "riv_plus": 119,
-    "wpa": 1.291,
+   "621112": {
+    "name": "Paul Blackburn",
+    "team": "NYY",
+    "riv_plus": 102,
+    "wpa": 0.332,
+    "sd": 5,
+    "md": 3,
+    "gmli": 0.791
+   },
+   "670950": {
+    "name": "Trevor Richards",
+    "team": "CWS",
+    "riv_plus": 104,
+    "wpa": 0.431,
+    "sd": 4,
+    "md": 1,
+    "gmli": 0.51
+   },
+   "669020": {
+    "name": "Ryan Rolison",
+    "team": "CHC",
+    "riv_plus": 92,
+    "wpa": -0.505,
+    "sd": 4,
+    "md": 5,
+    "gmli": 1.098
+   },
+   "689147": {
+    "name": "Orion Kerkering",
+    "team": "PHI",
+    "riv_plus": 109,
+    "wpa": 0.676,
+    "sd": 12,
+    "md": 5,
+    "gmli": 1.087
+   },
+   "643511": {
+    "name": "Tyler Rogers",
+    "team": "TOR",
+    "riv_plus": 120,
+    "wpa": 1.225,
     "sd": 19,
-    "md": 6,
-    "gmli": 2.007
+    "md": 3,
+    "gmli": 1.366
    },
    "681867": {
     "name": "Cooper Criswell",
@@ -876,158 +927,131 @@
     "md": 6,
     "gmli": 0.895
    },
+   "663947": {
+    "name": "Tyler Holton",
+    "team": "DET",
+    "riv_plus": 89,
+    "wpa": -0.796,
+    "sd": 8,
+    "md": 9,
+    "gmli": 1.052
+   },
+   "663855": {
+    "name": "Jordan Hicks",
+    "team": "CWS",
+    "riv_plus": 103,
+    "wpa": 0.378,
+    "sd": 7,
+    "md": 4,
+    "gmli": 0.91
+   },
    "657044": {
     "name": "Ryan Thompson",
     "team": "AZ",
-    "riv_plus": 102,
-    "wpa": 0.285,
-    "sd": 7,
-    "md": 5,
-    "gmli": 1.119
-   },
-   "683769": {
-    "name": "Hunter Gaddis",
-    "team": "CLE",
-    "riv_plus": 111,
-    "wpa": 0.638,
-    "sd": 15,
-    "md": 5,
-    "gmli": 1.601
-   },
-   "667297": {
-    "name": "Tommy Nance",
-    "team": "TOR",
     "riv_plus": 103,
-    "wpa": 0.336,
-    "sd": 6,
-    "md": 3,
-    "gmli": 0.541
+    "wpa": 0.353,
+    "sd": 8,
+    "md": 5,
+    "gmli": 1.077
    },
-   "676534": {
-    "name": "Calvin Faucher",
+   "667463": {
+    "name": "John King",
     "team": "MIA",
-    "riv_plus": 97,
-    "wpa": -0.349,
-    "sd": 13,
-    "md": 8,
-    "gmli": 1.413
+    "riv_plus": 117,
+    "wpa": 1.376,
+    "sd": 12,
+    "md": 2,
+    "gmli": 1.015
+   },
+   "552640": {
+    "name": "Andrew Kittredge",
+    "team": "BAL",
+    "riv_plus": 96,
+    "wpa": -0.219,
+    "sd": 5,
+    "md": 4,
+    "gmli": 0.968
    },
    "668390": {
     "name": "Cole Winn",
     "team": "TEX",
-    "riv_plus": 94,
-    "wpa": -0.403,
-    "sd": 6,
+    "riv_plus": 100,
+    "wpa": -0.009,
+    "sd": 9,
     "md": 5,
-    "gmli": 1.138
+    "gmli": 1.253
    },
-   "621112": {
-    "name": "Paul Blackburn",
-    "team": "NYY",
-    "riv_plus": 99,
-    "wpa": 0.064,
+   "666171": {
+    "name": "Ryan Zeferjahn",
+    "team": "LAA",
+    "riv_plus": 105,
+    "wpa": 0.517,
+    "sd": 10,
+    "md": 6,
+    "gmli": 1.172
+   },
+   "806188": {
+    "name": "Cade Gibson",
+    "team": "MIA",
+    "riv_plus": 103,
+    "wpa": 0.388,
     "sd": 4,
-    "md": 3,
-    "gmli": 0.754
+    "md": 2,
+    "gmli": 0.751
+   },
+   "666277": {
+    "name": "George Soriano",
+    "team": "STL",
+    "riv_plus": 114,
+    "wpa": 1.168,
+    "sd": 14,
+    "md": 6,
+    "gmli": 1.362
+   },
+   "668941": {
+    "name": "JoJo Romero",
+    "team": "STL",
+    "riv_plus": 108,
+    "wpa": 0.596,
+    "sd": 18,
+    "md": 11,
+    "gmli": 1.707
+   },
+   "701519": {
+    "name": "Travis Adams",
+    "team": "MIN",
+    "riv_plus": 98,
+    "wpa": 0.079,
+    "sd": 3,
+    "md": 4,
+    "gmli": 1.037
+   },
+   "657514": {
+    "name": "Brennan Bernardino",
+    "team": "COL",
+    "riv_plus": 94,
+    "wpa": -0.33,
+    "sd": 7,
+    "md": 8,
+    "gmli": 1.256
    },
    "679358": {
     "name": "Eric Orze",
     "team": "MIN",
     "riv_plus": 97,
-    "wpa": -0.364,
+    "wpa": -0.394,
     "sd": 12,
     "md": 7,
-    "gmli": 1.27
+    "gmli": 1.277
    },
-   "668941": {
-    "name": "JoJo Romero",
-    "team": "STL",
-    "riv_plus": 110,
-    "wpa": 0.756,
-    "sd": 17,
-    "md": 10,
-    "gmli": 1.72
-   },
-   "643511": {
-    "name": "Tyler Rogers",
-    "team": "TOR",
-    "riv_plus": 118,
-    "wpa": 1.083,
-    "sd": 18,
-    "md": 3,
-    "gmli": 1.403
-   },
-   "552640": {
-    "name": "Andrew Kittredge",
-    "team": "BAL",
-    "riv_plus": 94,
-    "wpa": -0.31,
-    "sd": 4,
+   "641755": {
+    "name": "Tyler Kinley",
+    "team": "ATL",
+    "riv_plus": 109,
+    "wpa": 0.865,
+    "sd": 9,
     "md": 4,
-    "gmli": 0.907
-   },
-   "669062": {
-    "name": "Erik Miller",
-    "team": "SF",
-    "riv_plus": 98,
-    "wpa": -0.04,
-    "sd": 8,
-    "md": 6,
-    "gmli": 1.179
-   },
-   "686993": {
-    "name": "Justin Sterner",
-    "team": "ATH",
-    "riv_plus": 100,
-    "wpa": -0.11,
-    "sd": 12,
-    "md": 6,
-    "gmli": 1.35
-   },
-   "666808": {
-    "name": "Camilo Doval",
-    "team": "NYY",
-    "riv_plus": 80,
-    "wpa": -1.375,
-    "sd": 5,
-    "md": 10,
-    "gmli": 1.065
-   },
-   "669711": {
-    "name": "Greg Weissert",
-    "team": "BOS",
-    "riv_plus": 85,
-    "wpa": -1.015,
-    "sd": 5,
-    "md": 8,
-    "gmli": 1.112
-   },
-   "670950": {
-    "name": "Trevor Richards",
-    "team": "CWS",
-    "riv_plus": 104,
-    "wpa": 0.426,
-    "sd": 4,
-    "md": 1,
-    "gmli": 0.552
-   },
-   "573204": {
-    "name": "Caleb Thielbar",
-    "team": "CHC",
-    "riv_plus": 97,
-    "wpa": -0.296,
-    "sd": 10,
-    "md": 6,
-    "gmli": 1.424
-   },
-   "641745": {
-    "name": "Brad Keller",
-    "team": "PHI",
-    "riv_plus": 111,
-    "wpa": 0.942,
-    "sd": 11,
-    "md": 5,
-    "gmli": 1.524
+    "gmli": 1.154
    },
    "677053": {
     "name": "Andrew Nardi",
@@ -1038,122 +1062,50 @@
     "md": 4,
     "gmli": 1.159
    },
+   "676534": {
+    "name": "Calvin Faucher",
+    "team": "MIA",
+    "riv_plus": 96,
+    "wpa": -0.488,
+    "sd": 14,
+    "md": 9,
+    "gmli": 1.427
+   },
+   "641745": {
+    "name": "Brad Keller",
+    "team": "PHI",
+    "riv_plus": 111,
+    "wpa": 0.943,
+    "sd": 11,
+    "md": 5,
+    "gmli": 1.477
+   },
    "663687": {
     "name": "Hogan Harris",
     "team": "ATH",
-    "riv_plus": 111,
-    "wpa": 0.852,
+    "riv_plus": 110,
+    "wpa": 0.843,
     "sd": 15,
     "md": 8,
-    "gmli": 1.636
+    "gmli": 1.584
    },
-   "656234": {
-    "name": "Jake Bird",
-    "team": "NYY",
-    "riv_plus": 90,
-    "wpa": -0.705,
-    "sd": 5,
-    "md": 6,
-    "gmli": 1.055
-   },
-   "657514": {
-    "name": "Brennan Bernardino",
-    "team": "COL",
-    "riv_plus": 89,
-    "wpa": -0.57,
-    "sd": 4,
-    "md": 8,
-    "gmli": 1.249
-   },
-   "663947": {
-    "name": "Tyler Holton",
-    "team": "DET",
-    "riv_plus": 88,
-    "wpa": -0.824,
-    "sd": 8,
-    "md": 9,
-    "gmli": 1.097
-   },
-   "666171": {
-    "name": "Ryan Zeferjahn",
-    "team": "LAA",
-    "riv_plus": 104,
-    "wpa": 0.452,
-    "sd": 9,
-    "md": 6,
-    "gmli": 1.194
-   },
-   "668984": {
-    "name": "Casey Legumina",
-    "team": "TB",
-    "riv_plus": 97,
-    "wpa": -0.145,
-    "sd": 5,
-    "md": 3,
-    "gmli": 0.939
-   },
-   "701519": {
-    "name": "Travis Adams",
-    "team": "MIN",
-    "riv_plus": 96,
-    "wpa": -0.036,
-    "sd": 2,
-    "md": 4,
-    "gmli": 1.044
-   },
-   "690925": {
-    "name": "Clayton Beeter",
-    "team": "WSH",
-    "riv_plus": 106,
-    "wpa": 0.487,
-    "sd": 11,
-    "md": 5,
-    "gmli": 2.026
-   },
-   "670036": {
-    "name": "Matt Festa",
-    "team": "CLE",
-    "riv_plus": 94,
-    "wpa": -0.249,
+   "669711": {
+    "name": "Greg Weissert",
+    "team": "BOS",
+    "riv_plus": 87,
+    "wpa": -0.926,
     "sd": 6,
-    "md": 7,
-    "gmli": 1.081
+    "md": 8,
+    "gmli": 1.069
    },
-   "820862": {
-    "name": "Jos\u00e9 Fermin",
-    "team": "LAA",
-    "riv_plus": 96,
-    "wpa": -0.308,
-    "sd": 7,
-    "md": 4,
-    "gmli": 0.9
-   },
-   "673513": {
-    "name": "Yuki Matsui",
-    "team": "SD",
-    "riv_plus": 100,
-    "wpa": 0.18,
-    "sd": 4,
-    "md": 3,
-    "gmli": 0.925
-   },
-   "805123": {
-    "name": "AJ Blubaugh",
-    "team": "HOU",
-    "riv_plus": 108,
-    "wpa": 0.586,
-    "sd": 10,
-    "md": 3,
-    "gmli": 0.853
-   },
-   "641755": {
-    "name": "Tyler Kinley",
-    "team": "ATL",
-    "riv_plus": 108,
-    "wpa": 0.751,
-    "sd": 8,
-    "md": 4,
-    "gmli": 1.147
+   "687377": {
+    "name": "Orlando Ribalta",
+    "team": "WSH",
+    "riv_plus": 114,
+    "wpa": 1.18,
+    "sd": 12,
+    "md": 5,
+    "gmli": 1.726
    },
    "669084": {
     "name": "DL Hall",
@@ -1164,122 +1116,158 @@
     "md": 5,
     "gmli": 0.854
    },
-   "664199": {
-    "name": "Taylor Clarke",
-    "team": "AZ",
-    "riv_plus": 113,
-    "wpa": 1.09,
+   "675848": {
+    "name": "Juan Mejia",
+    "team": "COL",
+    "riv_plus": 91,
+    "wpa": -0.603,
+    "sd": 8,
+    "md": 10,
+    "gmli": 1.629
+   },
+   "805123": {
+    "name": "AJ Blubaugh",
+    "team": "HOU",
+    "riv_plus": 108,
+    "wpa": 0.595,
     "sd": 10,
     "md": 3,
-    "gmli": 1.027
+    "gmli": 0.834
    },
-   "621383": {
-    "name": "Tanner Banks",
-    "team": "PHI",
-    "riv_plus": 89,
-    "wpa": -0.761,
-    "sd": 3,
-    "md": 5,
-    "gmli": 0.692
+   "573204": {
+    "name": "Caleb Thielbar",
+    "team": "CHC",
+    "riv_plus": 99,
+    "wpa": -0.223,
+    "sd": 11,
+    "md": 6,
+    "gmli": 1.364
    },
-   "606996": {
-    "name": "Kyle Hart",
-    "team": "SD",
-    "riv_plus": 100,
-    "wpa": 0.08,
+   "656234": {
+    "name": "Jake Bird",
+    "team": "NYY",
+    "riv_plus": 90,
+    "wpa": -0.721,
     "sd": 5,
-    "md": 3,
-    "gmli": 1.169
+    "md": 6,
+    "gmli": 1.028
+   },
+   "670036": {
+    "name": "Matt Festa",
+    "team": "CLE",
+    "riv_plus": 91,
+    "wpa": -0.596,
+    "sd": 6,
+    "md": 8,
+    "gmli": 1.089
+   },
+   "820862": {
+    "name": "Jos\u00e9 Fermin",
+    "team": "LAA",
+    "riv_plus": 97,
+    "wpa": -0.294,
+    "sd": 7,
+    "md": 4,
+    "gmli": 0.84
    },
    "701719": {
     "name": "Tyler Samaniego",
     "team": "BOS",
-    "riv_plus": 94,
+    "riv_plus": 95,
     "wpa": -0.244,
     "sd": 2,
     "md": 3,
     "gmli": 0.842
    },
-   "656638": {
-    "name": "Alex Lange",
-    "team": "KC",
-    "riv_plus": 96,
-    "wpa": -0.245,
-    "sd": 6,
-    "md": 4,
-    "gmli": 1.004
-   },
-   "676428": {
-    "name": "Brant Hurter",
-    "team": "DET",
-    "riv_plus": 107,
-    "wpa": 0.556,
-    "sd": 8,
-    "md": 3,
-    "gmli": 1.463
-   },
-   "666277": {
-    "name": "George Soriano",
-    "team": "STL",
-    "riv_plus": 116,
-    "wpa": 1.204,
-    "sd": 14,
-    "md": 5,
-    "gmli": 1.381
-   },
-   "696147": {
-    "name": "Sam Bachman",
-    "team": "LAA",
-    "riv_plus": 126,
-    "wpa": 1.805,
-    "sd": 19,
-    "md": 4,
-    "gmli": 1.699
-   },
-   "675848": {
-    "name": "Juan Mejia",
-    "team": "COL",
-    "riv_plus": 84,
-    "wpa": -1.053,
-    "sd": 6,
-    "md": 10,
-    "gmli": 1.425
-   },
-   "681810": {
-    "name": "Austin Warren",
-    "team": "NYM",
-    "riv_plus": 104,
-    "wpa": 0.36,
-    "sd": 7,
-    "md": 3,
-    "gmli": 0.872
-   },
-   "699823": {
-    "name": "Tyler Davis",
-    "team": "CWS",
+   "594580": {
+    "name": "Sam Moll",
+    "team": "CIN",
     "riv_plus": 94,
-    "wpa": -0.392,
-    "sd": 5,
-    "md": 5,
-    "gmli": 1.08
+    "wpa": -0.587,
+    "sd": 13,
+    "md": 10,
+    "gmli": 1.165
    },
    "518886": {
     "name": "Craig Kimbrel",
     "team": "TB",
     "riv_plus": 94,
-    "wpa": -0.282,
+    "wpa": -0.288,
     "sd": 2,
     "md": 3,
-    "gmli": 0.792
+    "gmli": 0.737
    },
-   "687606": {
-    "name": "Paxton Schultz",
-    "team": "WSH",
-    "riv_plus": 93,
-    "wpa": -0.337,
-    "sd": 2,
+   "606996": {
+    "name": "Kyle Hart",
+    "team": "SD",
+    "riv_plus": 101,
+    "wpa": 0.161,
+    "sd": 6,
+    "md": 3,
+    "gmli": 1.125
+   },
+   "676428": {
+    "name": "Brant Hurter",
+    "team": "DET",
+    "riv_plus": 106,
+    "wpa": 0.556,
+    "sd": 8,
+    "md": 3,
+    "gmli": 1.463
+   },
+   "666808": {
+    "name": "Camilo Doval",
+    "team": "NYY",
+    "riv_plus": 81,
+    "wpa": -1.389,
+    "sd": 5,
+    "md": 10,
+    "gmli": 1.063
+   },
+   "664199": {
+    "name": "Taylor Clarke",
+    "team": "AZ",
+    "riv_plus": 112,
+    "wpa": 1.057,
+    "sd": 10,
     "md": 4,
-    "gmli": 0.713
+    "gmli": 0.995
+   },
+   "664126": {
+    "name": "Pete Fairbanks",
+    "team": "MIA",
+    "riv_plus": 97,
+    "wpa": -0.308,
+    "sd": 8,
+    "md": 5,
+    "gmli": 1.387
+   },
+   "622554": {
+    "name": "Seranthony Dom\u00ednguez",
+    "team": "CWS",
+    "riv_plus": 97,
+    "wpa": -0.357,
+    "sd": 11,
+    "md": 6,
+    "gmli": 1.622
+   },
+   "699823": {
+    "name": "Tyler Davis",
+    "team": "CWS",
+    "riv_plus": 94,
+    "wpa": -0.352,
+    "sd": 5,
+    "md": 5,
+    "gmli": 1.017
+   },
+   "573124": {
+    "name": "Taylor Rogers",
+    "team": "MIN",
+    "riv_plus": 101,
+    "wpa": 0.008,
+    "sd": 13,
+    "md": 7,
+    "gmli": 1.495
    },
    "695418": {
     "name": "Brad Lord",
@@ -1290,14 +1278,23 @@
     "md": 5,
     "gmli": 1.203
    },
-   "572955": {
-    "name": "Pierce Johnson",
-    "team": "CIN",
-    "riv_plus": 108,
-    "wpa": 0.717,
-    "sd": 8,
+   "687606": {
+    "name": "Paxton Schultz",
+    "team": "WSH",
+    "riv_plus": 93,
+    "wpa": -0.337,
+    "sd": 2,
     "md": 4,
-    "gmli": 0.938
+    "gmli": 0.713
+   },
+   "681982": {
+    "name": "Grant Anderson",
+    "team": "MIL",
+    "riv_plus": 103,
+    "wpa": 0.389,
+    "sd": 8,
+    "md": 5,
+    "gmli": 0.864
    },
    "688158": {
     "name": "David Morgan",
@@ -1308,32 +1305,41 @@
     "md": 4,
     "gmli": 0.633
    },
-   "663765": {
-    "name": "Jake Woodford",
-    "team": "MIL",
-    "riv_plus": 93,
-    "wpa": -0.222,
-    "sd": 0,
-    "md": 3,
-    "gmli": 0.302
-   },
-   "664126": {
-    "name": "Pete Fairbanks",
-    "team": "MIA",
-    "riv_plus": 94,
-    "wpa": -0.484,
-    "sd": 7,
-    "md": 5,
-    "gmli": 1.394
-   },
    "664141": {
     "name": "JT Brubaker",
     "team": "SF",
-    "riv_plus": 100,
-    "wpa": 0.262,
-    "sd": 2,
+    "riv_plus": 103,
+    "wpa": 0.45,
+    "sd": 4,
     "md": 2,
-    "gmli": 0.423
+    "gmli": 0.465
+   },
+   "663765": {
+    "name": "Jake Woodford",
+    "team": "CHC",
+    "riv_plus": 91,
+    "wpa": -0.394,
+    "sd": 0,
+    "md": 4,
+    "gmli": 0.328
+   },
+   "696147": {
+    "name": "Sam Bachman",
+    "team": "LAA",
+    "riv_plus": 124,
+    "wpa": 1.67,
+    "sd": 21,
+    "md": 5,
+    "gmli": 1.725
+   },
+   "676755": {
+    "name": "Isaac Mattson",
+    "team": "PIT",
+    "riv_plus": 112,
+    "wpa": 0.963,
+    "sd": 11,
+    "md": 3,
+    "gmli": 1.116
    },
    "663767": {
     "name": "Chase Shugart",
@@ -1344,131 +1350,131 @@
     "md": 3,
     "gmli": 0.405
    },
-   "622554": {
-    "name": "Seranthony Dom\u00ednguez",
-    "team": "CWS",
-    "riv_plus": 97,
-    "wpa": -0.383,
-    "sd": 11,
-    "md": 6,
-    "gmli": 1.755
+   "593974": {
+    "name": "Wandy Peralta",
+    "team": "SD",
+    "riv_plus": 89,
+    "wpa": -0.715,
+    "sd": 2,
+    "md": 5,
+    "gmli": 0.713
    },
-   "573124": {
-    "name": "Taylor Rogers",
-    "team": "MIN",
-    "riv_plus": 104,
-    "wpa": 0.183,
-    "sd": 13,
+   "686993": {
+    "name": "Justin Sterner",
+    "team": "ATH",
+    "riv_plus": 100,
+    "wpa": -0.158,
+    "sd": 12,
     "md": 6,
-    "gmli": 1.449
+    "gmli": 1.269
    },
-   "676755": {
-    "name": "Isaac Mattson",
-    "team": "PIT",
-    "riv_plus": 111,
-    "wpa": 0.874,
-    "sd": 10,
-    "md": 3,
-    "gmli": 1.146
+   "656638": {
+    "name": "Alex Lange",
+    "team": "KC",
+    "riv_plus": 92,
+    "wpa": -0.609,
+    "sd": 6,
+    "md": 5,
+    "gmli": 1.025
    },
    "670990": {
     "name": "Yohan Ram\u00edrez",
     "team": "PIT",
-    "riv_plus": 118,
-    "wpa": 1.503,
-    "sd": 13,
+    "riv_plus": 120,
+    "wpa": 1.674,
+    "sd": 15,
     "md": 5,
-    "gmli": 1.209
-   },
-   "542888": {
-    "name": "Shawn Armstrong",
-    "team": "CLE",
-    "riv_plus": 101,
-    "wpa": 0.303,
-    "sd": 7,
-    "md": 7,
-    "gmli": 1.164
-   },
-   "681982": {
-    "name": "Grant Anderson",
-    "team": "MIL",
-    "riv_plus": 103,
-    "wpa": 0.351,
-    "sd": 8,
-    "md": 5,
-    "gmli": 0.909
-   },
-   "594580": {
-    "name": "Sam Moll",
-    "team": "CIN",
-    "riv_plus": 94,
-    "wpa": -0.559,
-    "sd": 12,
-    "md": 9,
-    "gmli": 1.153
-   },
-   "672335": {
-    "name": "Cionel P\u00e9rez",
-    "team": "NYM",
-    "riv_plus": 104,
-    "wpa": 0.317,
-    "sd": 8,
-    "md": 3,
-    "gmli": 0.946
-   },
-   "445276": {
-    "name": "Kenley Jansen",
-    "team": "DET",
-    "riv_plus": 84,
-    "wpa": -1.493,
-    "sd": 8,
-    "md": 5,
-    "gmli": 1.849
+    "gmli": 1.198
    },
    "694335": {
     "name": "Matt Svanson",
     "team": "STL",
-    "riv_plus": 81,
-    "wpa": -1.251,
+    "riv_plus": 82,
+    "wpa": -1.266,
     "sd": 2,
     "md": 8,
-    "gmli": 0.655
+    "gmli": 0.64
    },
-   "642232": {
-    "name": "Ryan Yarbrough",
-    "team": "NYY",
-    "riv_plus": 95,
-    "wpa": -0.103,
-    "sd": 0,
-    "md": 2,
-    "gmli": 0.424
+   "687911": {
+    "name": "Bryan King",
+    "team": "HOU",
+    "riv_plus": 113,
+    "wpa": 0.866,
+    "sd": 19,
+    "md": 8,
+    "gmli": 1.965
    },
-   "674444": {
-    "name": "Steven Cruz",
-    "team": "KC",
-    "riv_plus": 95,
-    "wpa": -0.255,
-    "sd": 4,
+   "445276": {
+    "name": "Kenley Jansen",
+    "team": "DET",
+    "riv_plus": 85,
+    "wpa": -1.432,
+    "sd": 8,
+    "md": 5,
+    "gmli": 1.752
+   },
+   "669684": {
+    "name": "Chris Murphy",
+    "team": "CWS",
+    "riv_plus": 96,
+    "wpa": -0.074,
+    "sd": 3,
     "md": 4,
-    "gmli": 0.596
+    "gmli": 0.968
+   },
+   "668984": {
+    "name": "Casey Legumina",
+    "team": "TB",
+    "riv_plus": 97,
+    "wpa": -0.185,
+    "sd": 5,
+    "md": 3,
+    "gmli": 0.891
+   },
+   "690925": {
+    "name": "Clayton Beeter",
+    "team": "WSH",
+    "riv_plus": 101,
+    "wpa": -0.041,
+    "sd": 12,
+    "md": 6,
+    "gmli": 2.07
+   },
+   "681810": {
+    "name": "Austin Warren",
+    "team": "NYM",
+    "riv_plus": 98,
+    "wpa": -0.207,
+    "sd": 7,
+    "md": 4,
+    "gmli": 0.855
    },
    "592773": {
     "name": "Ryne Stanek",
     "team": "STL",
-    "riv_plus": 90,
-    "wpa": -0.912,
-    "sd": 12,
+    "riv_plus": 94,
+    "wpa": -0.716,
+    "sd": 14,
     "md": 9,
-    "gmli": 1.332
+    "gmli": 1.349
    },
-   "656271": {
-    "name": "Brock Burke",
-    "team": "CIN",
-    "riv_plus": 112,
-    "wpa": 0.769,
-    "sd": 16,
-    "md": 6,
-    "gmli": 1.146
+   "674444": {
+    "name": "Steven Cruz",
+    "team": "KC",
+    "riv_plus": 97,
+    "wpa": -0.14,
+    "sd": 5,
+    "md": 4,
+    "gmli": 0.625
+   },
+   "642100": {
+    "name": "Gabe Speier",
+    "team": "SEA",
+    "riv_plus": 106,
+    "wpa": 0.602,
+    "sd": 11,
+    "md": 7,
+    "gmli": 1.518
    },
    "592094": {
     "name": "Jason Adam",
@@ -1488,15 +1494,6 @@
     "md": 8,
     "gmli": 1.772
    },
-   "670167": {
-    "name": "John Schreiber",
-    "team": "KC",
-    "riv_plus": 104,
-    "wpa": 0.44,
-    "sd": 10,
-    "md": 7,
-    "gmli": 1.372
-   },
    "607455": {
     "name": "Anthony Banda",
     "team": "MIN",
@@ -1506,50 +1503,104 @@
     "md": 6,
     "gmli": 1.389
    },
-   "677865": {
-    "name": "Justin Bruihl",
-    "team": "STL",
-    "riv_plus": 94,
-    "wpa": -0.26,
-    "sd": 8,
-    "md": 10,
-    "gmli": 0.954
+   "642232": {
+    "name": "Ryan Yarbrough",
+    "team": "NYY",
+    "riv_plus": 96,
+    "wpa": -0.093,
+    "sd": 0,
+    "md": 2,
+    "gmli": 0.48
    },
-   "663855": {
-    "name": "Jordan Hicks",
-    "team": "CWS",
+   "815083": {
+    "name": "Mitch Farris",
+    "team": "LAA",
     "riv_plus": 101,
-    "wpa": 0.248,
-    "sd": 6,
-    "md": 4,
-    "gmli": 0.952
+    "wpa": 0.179,
+    "sd": 4,
+    "md": 2,
+    "gmli": 0.538
+   },
+   "542888": {
+    "name": "Shawn Armstrong",
+    "team": "CLE",
+    "riv_plus": 99,
+    "wpa": 0.233,
+    "sd": 7,
+    "md": 9,
+    "gmli": 1.174
+   },
+   "656271": {
+    "name": "Brock Burke",
+    "team": "CIN",
+    "riv_plus": 112,
+    "wpa": 0.795,
+    "sd": 16,
+    "md": 6,
+    "gmli": 1.105
    },
    "669211": {
     "name": "Keegan Akin",
     "team": "BAL",
-    "riv_plus": 90,
+    "riv_plus": 91,
     "wpa": -0.584,
     "sd": 3,
     "md": 5,
     "gmli": 0.795
    },
+   "677865": {
+    "name": "Justin Bruihl",
+    "team": "STL",
+    "riv_plus": 95,
+    "wpa": -0.197,
+    "sd": 9,
+    "md": 11,
+    "gmli": 0.963
+   },
+   "673513": {
+    "name": "Yuki Matsui",
+    "team": "SD",
+    "riv_plus": 98,
+    "wpa": 0.059,
+    "sd": 4,
+    "md": 4,
+    "gmli": 0.929
+   },
+   "572955": {
+    "name": "Pierce Johnson",
+    "team": "CIN",
+    "riv_plus": 105,
+    "wpa": 0.571,
+    "sd": 8,
+    "md": 5,
+    "gmli": 0.941
+   },
+   "670167": {
+    "name": "John Schreiber",
+    "team": "KC",
+    "riv_plus": 104,
+    "wpa": 0.45,
+    "sd": 10,
+    "md": 7,
+    "gmli": 1.344
+   },
    "672782": {
     "name": "Yoendrys G\u00f3mez",
     "team": "MIN",
-    "riv_plus": 125,
-    "wpa": 1.956,
-    "sd": 12,
+    "riv_plus": 127,
+    "wpa": 2.207,
+    "sd": 14,
     "md": 1,
-    "gmli": 1.271
+    "gmli": 1.308
    },
    "544150": {
     "name": "Albert Su\u00e1rez",
     "team": "BAL",
     "riv_plus": 95,
-    "wpa": -0.179,
+    "wpa": -0.171,
     "sd": 1,
     "md": 3,
-    "gmli": 0.293
+    "gmli": 0.284
    },
    "656222": {
     "name": "Jalen Beeks",
@@ -1569,23 +1620,23 @@
     "md": 2,
     "gmli": 0.906
    },
-   "642701": {
-    "name": "Dennis Santana",
-    "team": "PIT",
-    "riv_plus": 96,
-    "wpa": -0.486,
-    "sd": 9,
-    "md": 4,
-    "gmli": 0.912
+   "670245": {
+    "name": "Ryan Watson",
+    "team": "BOS",
+    "riv_plus": 99,
+    "wpa": 0.161,
+    "sd": 2,
+    "md": 2,
+    "gmli": 0.285
    },
-   "681402": {
-    "name": "Gus Varland",
-    "team": "WSH",
+   "640448": {
+    "name": "Kyle Finnegan",
+    "team": "DET",
     "riv_plus": 106,
-    "wpa": 0.502,
-    "sd": 13,
-    "md": 8,
-    "gmli": 1.573
+    "wpa": 0.496,
+    "sd": 12,
+    "md": 6,
+    "gmli": 1.275
    },
    "571948": {
     "name": "Hoby Milner",
@@ -1596,113 +1647,113 @@
     "md": 3,
     "gmli": 1.089
    },
-   "815083": {
-    "name": "Mitch Farris",
-    "team": "LAA",
+   "681402": {
+    "name": "Gus Varland",
+    "team": "WSH",
+    "riv_plus": 106,
+    "wpa": 0.502,
+    "sd": 13,
+    "md": 8,
+    "gmli": 1.573
+   },
+   "672335": {
+    "name": "Cionel P\u00e9rez",
+    "team": "NYM",
     "riv_plus": 104,
-    "wpa": 0.404,
-    "sd": 4,
-    "md": 1,
-    "gmli": 0.553
+    "wpa": 0.289,
+    "sd": 8,
+    "md": 3,
+    "gmli": 0.918
    },
-   "657612": {
-    "name": "Tim Hill",
-    "team": "NYY",
-    "riv_plus": 108,
-    "wpa": 0.368,
-    "sd": 15,
-    "md": 5,
-    "gmli": 1.331
+   "621383": {
+    "name": "Tanner Banks",
+    "team": "PHI",
+    "riv_plus": 86,
+    "wpa": -1.036,
+    "sd": 3,
+    "md": 6,
+    "gmli": 0.69
    },
-   "676254": {
-    "name": "Ryan Walker",
-    "team": "SF",
-    "riv_plus": 89,
-    "wpa": -0.805,
-    "sd": 4,
-    "md": 5,
-    "gmli": 0.982
+   "663423": {
+    "name": "Trent Thornton",
+    "team": "CHC",
+    "riv_plus": 112,
+    "wpa": 1.303,
+    "sd": 5,
+    "md": 2,
+    "gmli": 1.207
    },
-   "670245": {
-    "name": "Ryan Watson",
-    "team": "BOS",
-    "riv_plus": 99,
-    "wpa": 0.16,
+   "686560": {
+    "name": "Gavin Collyer",
+    "team": "TEX",
+    "riv_plus": 96,
+    "wpa": -0.185,
     "sd": 2,
     "md": 2,
-    "gmli": 0.294
-   },
-   "640448": {
-    "name": "Kyle Finnegan",
-    "team": "DET",
-    "riv_plus": 105,
-    "wpa": 0.372,
-    "sd": 11,
-    "md": 6,
-    "gmli": 1.281
+    "gmli": 0.371
    },
    "621366": {
     "name": "Ryan Borucki",
     "team": "SF",
-    "riv_plus": 94,
+    "riv_plus": 95,
     "wpa": -0.124,
     "sd": 2,
     "md": 5,
     "gmli": 0.817
    },
+   "700669": {
+    "name": "Gordon Graceffo",
+    "team": "STL",
+    "riv_plus": 123,
+    "wpa": 1.818,
+    "sd": 13,
+    "md": 1,
+    "gmli": 1.092
+   },
    "664208": {
     "name": "Phil Maton",
     "team": "CHC",
-    "riv_plus": 87,
+    "riv_plus": 88,
     "wpa": -0.866,
     "sd": 5,
     "md": 7,
     "gmli": 1.056
    },
-   "663423": {
-    "name": "Trent Thornton",
-    "team": "CHC",
-    "riv_plus": 110,
-    "wpa": 1.066,
-    "sd": 4,
-    "md": 2,
-    "gmli": 1.132
+   "642701": {
+    "name": "Dennis Santana",
+    "team": "PIT",
+    "riv_plus": 91,
+    "wpa": -0.879,
+    "sd": 10,
+    "md": 6,
+    "gmli": 0.946
    },
    "680730": {
     "name": "Mitchell Parker",
     "team": "WSH",
-    "riv_plus": 74,
+    "riv_plus": 75,
     "wpa": -2.02,
     "sd": 6,
     "md": 10,
     "gmli": 1.233
    },
-   "676760": {
-    "name": "Ron Marinaccio",
-    "team": "SD",
-    "riv_plus": 101,
-    "wpa": 0.158,
-    "sd": 5,
-    "md": 3,
-    "gmli": 0.423
-   },
    "682120": {
     "name": "Tim Herrin",
     "team": "CLE",
-    "riv_plus": 98,
-    "wpa": -0.072,
+    "riv_plus": 99,
+    "wpa": -0.013,
     "sd": 12,
     "md": 10,
-    "gmli": 1.501
+    "gmli": 1.496
    },
-   "668674": {
-    "name": "Lucas Erceg",
-    "team": "KC",
-    "riv_plus": 87,
-    "wpa": -1.487,
-    "sd": 14,
-    "md": 7,
-    "gmli": 1.659
+   "676760": {
+    "name": "Ron Marinaccio",
+    "team": "SD",
+    "riv_plus": 102,
+    "wpa": 0.244,
+    "sd": 6,
+    "md": 3,
+    "gmli": 0.428
    },
    "681799": {
     "name": "Ethan Roberts",
@@ -1713,14 +1764,23 @@
     "md": 4,
     "gmli": 0.627
    },
-   "700669": {
-    "name": "Gordon Graceffo",
-    "team": "STL",
-    "riv_plus": 122,
-    "wpa": 1.669,
-    "sd": 12,
-    "md": 1,
-    "gmli": 1.132
+   "668674": {
+    "name": "Lucas Erceg",
+    "team": "KC",
+    "riv_plus": 88,
+    "wpa": -1.458,
+    "sd": 14,
+    "md": 7,
+    "gmli": 1.548
+   },
+   "680767": {
+    "name": "Victor Vodnik",
+    "team": "COL",
+    "riv_plus": 94,
+    "wpa": -0.531,
+    "sd": 8,
+    "md": 5,
+    "gmli": 1.432
    },
    "663574": {
     "name": "Tony Santillan",
@@ -1734,11 +1794,38 @@
    "688642": {
     "name": "Zach Agnos",
     "team": "COL",
-    "riv_plus": 84,
-    "wpa": -1.049,
+    "riv_plus": 85,
+    "wpa": -1.022,
     "sd": 1,
     "md": 6,
-    "gmli": 0.497
+    "gmli": 0.485
+   },
+   "650556": {
+    "name": "Bryan Abreu",
+    "team": "HOU",
+    "riv_plus": 103,
+    "wpa": 0.373,
+    "sd": 8,
+    "md": 6,
+    "gmli": 1.19
+   },
+   "657612": {
+    "name": "Tim Hill",
+    "team": "NYY",
+    "riv_plus": 101,
+    "wpa": -0.124,
+    "sd": 15,
+    "md": 7,
+    "gmli": 1.297
+   },
+   "681892": {
+    "name": "Kody Funderburk",
+    "team": "MIN",
+    "riv_plus": 101,
+    "wpa": 0.128,
+    "sd": 6,
+    "md": 3,
+    "gmli": 1.203
    },
    "669270": {
     "name": "Joel Kuhnel",
@@ -1749,64 +1836,46 @@
     "md": 7,
     "gmli": 1.118
    },
-   "680767": {
-    "name": "Victor Vodnik",
-    "team": "COL",
-    "riv_plus": 92,
-    "wpa": -0.654,
-    "sd": 7,
-    "md": 5,
-    "gmli": 1.431
-   },
-   "650556": {
-    "name": "Bryan Abreu",
-    "team": "HOU",
-    "riv_plus": 103,
-    "wpa": 0.395,
-    "sd": 8,
-    "md": 6,
-    "gmli": 1.227
-   },
-   "519141": {
-    "name": "Drew Pomeranz",
-    "team": "CHC",
-    "riv_plus": 88,
-    "wpa": -0.969,
-    "sd": 7,
-    "md": 7,
-    "gmli": 1.193
-   },
-   "621381": {
-    "name": "Matt Strahm",
-    "team": "KC",
-    "riv_plus": 101,
-    "wpa": 0.002,
-    "sd": 13,
-    "md": 7,
-    "gmli": 1.322
-   },
-   "681892": {
-    "name": "Kody Funderburk",
-    "team": "MIN",
-    "riv_plus": 99,
-    "wpa": -0.009,
+   "543056": {
+    "name": "Danny Coulombe",
+    "team": "BOS",
+    "riv_plus": 98,
+    "wpa": 0.073,
     "sd": 5,
-    "md": 3,
-    "gmli": 1.207
+    "md": 5,
+    "gmli": 1.316
+   },
+   "676254": {
+    "name": "Ryan Walker",
+    "team": "SF",
+    "riv_plus": 89,
+    "wpa": -0.808,
+    "sd": 4,
+    "md": 5,
+    "gmli": 0.91
    },
    "657424": {
     "name": "Matt Gage",
     "team": "SF",
-    "riv_plus": 89,
+    "riv_plus": 90,
     "wpa": -0.745,
     "sd": 6,
     "md": 7,
     "gmli": 1.38
    },
+   "621381": {
+    "name": "Matt Strahm",
+    "team": "KC",
+    "riv_plus": 94,
+    "wpa": -0.602,
+    "sd": 13,
+    "md": 9,
+    "gmli": 1.315
+   },
    "683175": {
     "name": "Connor Phillips",
     "team": "CIN",
-    "riv_plus": 104,
+    "riv_plus": 103,
     "wpa": 0.584,
     "sd": 6,
     "md": 6,
@@ -1821,16 +1890,25 @@
     "md": 4,
     "gmli": 1.246
    },
+   "519141": {
+    "name": "Drew Pomeranz",
+    "team": "CHC",
+    "riv_plus": 87,
+    "wpa": -1.041,
+    "sd": 7,
+    "md": 8,
+    "gmli": 1.205
+   },
    "664875": {
     "name": "Justin Lawrence",
     "team": "WSH",
-    "riv_plus": 85,
-    "wpa": -1.002,
+    "riv_plus": 84,
+    "wpa": -1.033,
     "sd": 3,
-    "md": 7,
-    "gmli": 0.867
+    "md": 8,
+    "gmli": 0.836
    }
   }
  },
- "runtime_seconds": 185.4
+ "runtime_seconds": 229.6
 }

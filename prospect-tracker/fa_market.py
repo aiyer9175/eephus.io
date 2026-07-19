@@ -190,7 +190,13 @@ def contract_war_path(hist: list[dict], side: str, class_year: int, years: int,
            "war_by_year_champ": [round(w, 2) for w in path],
            "war_total": round(sum(path[:years]), 2),
            "war_y1": round(path[0], 2) if path else 0.0,
-           "role": role, "pt_y1": proj["pt_proj"]}
+           "role": role, "pt_y1": proj["pt_proj"],
+           # Out-year RATE line (wOBA/wRC+ hitters, FIP pitchers) — the
+           # year-1 component projection walked along the per-component
+           # aging curves (fp.rate_path). DISPLAY machinery for the
+           # projections board; WAR pricing stays on the war_rate decay
+           # path above. Inherited into out_ml via {**out}.
+           "rates_by_year": fp.rate_path(proj, side, curves, league)}
     q = _gate1_band_quantiles().get(_band_bucket(side, expo))
     if q:
         p10 = _decay_path(war1 + q["q10"], expo, side, decay_role, a, curves)
@@ -620,6 +626,58 @@ def qo_tax_usd(payor_tier: str, as_of) -> dict:
 # Predicted market price — transparent two-stage OLS + empirical bands
 # ============================================================================
 
+# Gate-2 feature-experiment flags (owner program 2026-07-15). Each arm is
+# pre-registered in tools/fa_market_feature_lab.py and toggled there on
+# IDENTICAL forward-chained folds; a winning arm ships by flipping its
+# default to True in the same commit as the refreshed Gate-2 artifact +
+# registry note.
+#
+# rate_line SHIPPED (data/fa_market_feature_lab_eval.json, same-run champion
+# comparison): guarantee MAE 10.094 vs 10.159, aav 3.008 vs 3.071, years
+# equal, mega 87.91 vs 87.97 — teams pay for rate quality beyond raw WAR/PT;
+# also flips the 2022 lockout fold to beating comps (13.35 vs 13.70).
+# regime / age_pos / qo_tier LOST their pre-registered gates (ledgered in
+# the same artifact); the flags stay for re-gating at future vintages.
+#
+# WAVE-2 arms (2026-07-16; pre-registered in the lab header BEFORE any run;
+# eval artifact data/fa_market_feature_lab_wave2_eval.json) -- SERVE-SIDE
+# alignment repairs consumed ONLY by fa_export's serve path. Nothing in this
+# module's fit/predict or in fa_backtest reads them, and the Gate-2 folds
+# already run the aligned regime (fold supply = enriched population at
+# fa_backtest.py:301; fold ages anchored in enriched_signings since ba3917d),
+# so Gate 2 is structurally byte-identical under either flag: the gate re-run
+# is a NOT-WORSE guard, the affirmative evidence is the lab-recorded serve
+# diagnostic (fa_export.serve_alignment_diagnostics).
+#   supply_pop  fa_export counts class supply over identity+history members
+#               (the serve-time analog of the enriched TRAINING population)
+#               instead of the whole scraped class. Audit 2026-07-16: the
+#               whole-class 2027 counts (RP 80 / POS 76) z-score +2.6..+2.8
+#               against training moments fit on enriched counts (mean ~33,
+#               sd ~17, max 61) -- a train/serve population mismatch.
+#   age_anchor  fa_export anchors the class projection age to the SEASON of
+#               the row that supplied it (the proj_export / enriched_signings
+#               ba3917d convention) instead of hist[0]'s season -- the stale
+#               form understated serve age by 1-2 years whenever the platform
+#               row lacked an age. Training ages are ALREADY anchored, so the
+#               live divergence is a train/serve skew.
+X_FEATURES = {"rate_line": True, "regime": False, "age_pos": False, "qo_tier": False,
+              "supply_pop": True, "age_anchor": True}
+
+
+def _x_rate_feats(s: dict) -> list[float]:
+    """Rate-quality features from the retained projection rate line
+    (fa_projection.rate_path, on _war_path since 2026-07-15). Hitters carry
+    year-1 projected wOBA (0 for pitchers/absent); pitchers carry FIP
+    headroom below 5.5 (0 for hitters/absent) so both are >=0 and
+    higher-is-better."""
+    rl = (s.get("_war_path") or {}).get("rates_by_year") or []
+    r0 = rl[0] if rl else {}
+    woba = float(r0.get("woba") or 0.0)
+    fip = r0.get("fip")
+    fip_q = max(0.0, 5.5 - float(fip)) if fip is not None else 0.0
+    return [woba, fip_q]
+
+
 def _features_years(s: dict, comps_my: float, comps_my75: float | None = None) -> list[float]:
     """log-years stage. Years is skewed-discrete (1-year deals dominate;
     long deals are rare and young-star-only), so the stage models
@@ -633,21 +691,26 @@ def _features_years(s: dict, comps_my: float, comps_my75: float | None = None) -
     qo = 1.0 if s.get("qo") else 0.0
     if comps_my75 is None:
         comps_my75 = comps_my
-    return [1.0, s["_age"], w1, w1 * w1, s["_age"] * w1,
-            1.0 if g == "SP" else 0.0, 1.0 if g == "RP" else 0.0,
-            1.0 if g == "C" else 0.0, qo,
-            comps_my,
-            # prime years remaining — the term structure behind long deals:
-            # teams buy seasons through ~30; a 26-year-old's market simply
-            # has more buyable years in it (v2 feature, gate-measured).
-            prime,
-            # v3 decade-deal tail (gate-measured): (1) the 75th-pct comps years,
-            # the long-deal anchor the median washes out (Seager/Bogaerts-type
-            # 10yr prints live in a star's comps); (2) QO x prime x quality - the
-            # franchise-cornerstone marker that signs the surprise decade deal
-            # the prime term alone (flat ~0-3 for a 27-30yo star) misses.
-            comps_my75,
-            qo * prime * w1]
+    out = [1.0, s["_age"], w1, w1 * w1, s["_age"] * w1,
+           1.0 if g == "SP" else 0.0, 1.0 if g == "RP" else 0.0,
+           1.0 if g == "C" else 0.0, qo,
+           comps_my,
+           # prime years remaining — the term structure behind long deals:
+           # teams buy seasons through ~30; a 26-year-old's market simply
+           # has more buyable years in it (v2 feature, gate-measured).
+           prime,
+           # v3 decade-deal tail (gate-measured): (1) the 75th-pct comps years,
+           # the long-deal anchor the median washes out (Seager/Bogaerts-type
+           # 10yr prints live in a star's comps); (2) QO x prime x quality - the
+           # franchise-cornerstone marker that signs the surprise decade deal
+           # the prime term alone (flat ~0-3 for a 27-30yo star) misses.
+           comps_my75,
+           qo * prime * w1]
+    if X_FEATURES["age_pos"]:
+        # role term structure: pitchers age on a different curve than bats
+        out += [s["_age"] * (1.0 if g == "SP" else 0.0),
+                s["_age"] * (1.0 if g == "RP" else 0.0)]
+    return out
 
 
 def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
@@ -666,9 +729,26 @@ def _features_guar(s: dict, years: float, dpw_usd: float, supply: float,
     Predictions are still CLAMPED to the comps envelope at predict time
     (see _point) — the documented extrapolation backstop."""
     w1 = s["_war_path"]["war_y1"]
-    return [1.0, years, w1, w1 * years, s["_age"],
-            1.0 if s.get("qo") else 0.0, supply, math.log(max(dpw_usd, 1e6)),
-            log_comps_guar, log_rational, prime_war]
+    out = [1.0, years, w1, w1 * years, s["_age"],
+           1.0 if s.get("qo") else 0.0, supply, math.log(max(dpw_usd, 1e6)),
+           log_comps_guar, log_rational, prime_war]
+    if X_FEATURES["rate_line"]:
+        out += _x_rate_feats(s)
+    if X_FEATURES["regime"]:
+        # dated market-regime dummies (fa_config regimes; current/pre_covid
+        # form the baseline) — the 2022 lockout winter is the one Gate-2
+        # fold where the model loses to comps.
+        cy = int(s.get("class_year") or 0)
+        out += [1.0 if cy == 2021 else 0.0, 1.0 if cy == 2022 else 0.0]
+    if X_FEATURES["age_pos"]:
+        g = _pos_group(s.get("position"))
+        out += [s["_age"] * (1.0 if g == "SP" else 0.0),
+                s["_age"] * (1.0 if g == "RP" else 0.0)]
+    if X_FEATURES["qo_tier"]:
+        # QO x quality: the qualifying-offer stars own the top-of-market
+        # misses; a flat QO dummy can't separate them from mid-tier QOs.
+        out += [(1.0 if s.get("qo") else 0.0) * max(0.0, w1)]
+    return out
 
 
 def _ols(X: list[list[float]], y: list[float], ridge: float = 0.0):
@@ -721,7 +801,7 @@ class MarketModel:
         rows = [s for s in train if s.get("_war_path") and s.get("years")
                 and s.get("guarantee_usd")]
         self.train_pool = rows
-        self._comps_my_cache: dict[int, float] = {}
+        self._comps_my_cache: dict[tuple, tuple[float, float, float, float]] = {}
         self.coef_years = _ols(
             [_features_years(s, (_cs := self._comps_stats(s))[0], _cs[3]) for s in rows],
             [math.log(float(s["years"])) for s in rows])
@@ -757,8 +837,13 @@ class MarketModel:
         features both stages stack. The p75-years anchor is the long-deal signal
         the median washes out: a star's nearest comps include the rare 10yr
         prints, and the median collapses them (the years-stage decade-deal miss)."""
-        key = id(s)
-        if key not in self._comps_my_cache:
+        # Memo key: stable (player, winter) identity, NOT id(s) - serve rows
+        # are transient per-member dicts, so a recycled dict address could
+        # hand one free agent another player's comps anchor. Identity-less
+        # rows recompute uncached (correct, just unmemoized).
+        ident = s.get("player_key") or s.get("player_name")
+        key = (ident, s.get("class_year")) if ident is not None else None
+        if key is None or key not in self._comps_my_cache:
             cs = comps_for(s, self.train_pool)
             if cs:
                 yrs = sorted(c["years"] for c in cs)
@@ -778,7 +863,10 @@ class MarketModel:
                     for c in cs)
             else:
                 my, mg, ma, my75 = 1.0, 1_000_000.0, 1_000_000.0, 1.0
-            self._comps_my_cache[key] = (my, math.log(max(mg, 1.0)), ma, my75)
+            out = (my, math.log(max(mg, 1.0)), ma, my75)
+            if key is None:
+                return out
+            self._comps_my_cache[key] = out
         return self._comps_my_cache[key]
 
     def _comps_my(self, s: dict) -> float:

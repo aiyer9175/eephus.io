@@ -99,7 +99,7 @@ DATA_DIR = Path(__file__).parent / "data"
 MATRIX_PATH = DATA_DIR / "xfv_hitter_matrix.json"
 REPORT_PATH = DATA_DIR / "xfv_dataset_report.json"
 
-DEBUT_YEARS = tuple(range(2011, 2024))      # 2011-2023 (2011-2016 via the MLB Pipeline
+DEBUT_YEARS = tuple(range(2011, 2025))      # 2011-2024 (2011-2016 via the MLB Pipeline
 #   backfill, now in debuts.json after the rebuild — captured directly, no augment needed)
 RESOLVED_THROUGH = 2025                      # last fully-played season
 TARGET_SEASONS = 6
@@ -428,6 +428,72 @@ def _load_sidecars(player_keys: set[str]):
     return acq, il
 
 
+# Career-terminal transactions (AUDIT FIX 2026-07-15): a lifetime DEI ban or a
+# retirement means the player plays NONE of the label window's unobserved
+# seasons, so the censored extrapolation invents WAR they cannot earn
+# (tucupita_marcano's lifetime gambling ban extrapolated a 2026 season he is
+# barred from playing). Raw payloads are the ONLY source: stats.py
+# derive_transactions drops DEI (unmapped) and maps RET to rule_5_return.
+# NB bare "signed" is NOT activating - it substring-matches "assigned", and
+# Marcano's post-ban winter-league assignment rows would falsely clear him.
+_TERMINAL_ACTIVATING = ("selected the contract", "purchased the contract",
+                        "recalled", "reinstated", "activated")
+
+
+def _terminal_date(txs: list[dict]) -> str | None:
+    """Date of the last career-terminal transaction (DEI ban / retirement)
+    with NO later activating move. One-year bans (Saalfrank, Groome) are
+    cleared by their later reinstate/activate/recall rows."""
+    terminal, activating = [], []
+    for tx in txs or []:
+        d = tx.get("date") or ""
+        if not d:
+            continue
+        code = (tx.get("type_code") or "").upper()
+        desc = (tx.get("description") or "").lower()
+        if code == "DEI" or (code == "RET" and "retired" in desc):
+            terminal.append(d)
+        elif any(a in desc for a in _TERMINAL_ACTIVATING):
+            activating.append(d)
+    if not terminal:
+        return None
+    term = max(terminal)
+    return None if any(a > term for a in activating) else term
+
+
+def _terminal_resolves(tdate) -> bool:
+    """A terminal event fully resolves a censored window only when the player
+    cannot have logged WAR the window has not observed yet: any event through
+    RESOLVED_THROUGH, or a pre-season (on/before Apr 1) event in the first
+    unresolved season. A mid-season CURRENT_SEASON retirement could strand
+    real not-yet-resolved WAR, so those rows stay censored until the season
+    resolves."""
+    try:
+        y = int(str(tdate)[:4])
+    except (TypeError, ValueError):
+        return False
+    return y <= RESOLVED_THROUGH or (y == RESOLVED_THROUGH + 1
+                                     and str(tdate)[5:10] <= "04-01")
+
+
+def _load_terminal_dates(player_keys: set[str]) -> dict[str, str]:
+    """{player_key: terminal_date} from the raw player_transactions payloads."""
+    term = {}
+    with storage.connect() as con:
+        ph = ",".join("?" for _ in player_keys)
+        for r in con.execute(
+                f"SELECT player_key, payload_json FROM player_transactions "
+                f"WHERE player_key IN ({ph})", tuple(player_keys)):
+            try:
+                txs = json.loads(r["payload_json"]) or []
+            except ValueError:
+                continue
+            td = _terminal_date(txs)
+            if td:
+                term[r["player_key"]] = td
+    return term
+
+
 def _cohort_flags(method, year, birth_date) -> tuple[float, float]:
     """Acquisition-cohort indicators used as model features. is_ifa = signed as an
     international free agent; is_college = drafted out of college (age>=21 in the draft
@@ -572,12 +638,32 @@ def build_matrix(side: str = "hit"):
 
     # sidecars
     acq, il = _load_sidecars({r["player_key"] for r in rows})
+    term = _load_terminal_dates({r["player_key"] for r in rows})
     for r in rows:
         a = acq.get(r["player_key"]) or {}
         r["pick_overall"] = a.get("pick_overall")
         r["bonus_usd"] = a.get("bonus_usd")
         r["is_ifa"], r["is_college"] = _cohort_flags(a.get("method"), a.get("year"), r.get("birth_date"))
         r.update(_injury_features(il.get(r["player_key"]), r["cutoff"]))
+        # AUDIT FIX 2026-07-15: consume career-terminal transactions. A banned
+        # or retired player resolves at the observed sum with full weight
+        # instead of extrapolating seasons they cannot play; a recent-bust
+        # retiree is no longer "may still be developing".
+        td = term.get(r["player_key"])
+        if td:
+            if r["kind"] == "debuted" and r["censored"] and _terminal_resolves(td):
+                r["target_censored"] = r["target_resolved"]
+                r["censored"] = False
+                r["weight"] = 1.0
+                r["observed_seasons"] = TARGET_SEASONS
+                r["terminal_resolved"] = td
+                acct["debuted_terminal_resolved"] = acct.get("debuted_terminal_resolved", 0) + 1
+            elif r["kind"] == "bust" and r.get("bust_recent"):
+                r["weight"] = 1.0
+                r["bust_recent"] = False
+                r["terminal_resolved"] = td
+                acct["bust_recent_flagged"] -= 1
+                acct["bust_terminal_resolved"] = acct.get("bust_terminal_resolved", 0) + 1
 
     return rows, acct
 

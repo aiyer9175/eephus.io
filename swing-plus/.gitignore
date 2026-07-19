@@ -1,0 +1,48 @@
+# Raw datasets & generated artifacts live in external storage, never in git.
+# (full Statcast 285M, generated leaderboards/trajectories 57M, graphics)
+data/raw/
+data/processed/
+
+# Small committed sample data is the exception
+!data/samples/
+
+# Data file types anywhere (belt-and-suspenders)
+*.parquet
+*.csv
+!data/samples/*.csv
+
+# Large binaries -> external storage. EXCEPTION: the small trained model artifacts
+# (~2.2 MB total) are the essential deliverable and ARE committed so the app runs on clone.
+*.joblib
+*.lgb
+*.pkl
+*.h5
+*.zip
+!swing_plus_model_v1.joblib
+!predicted_stats_models.joblib
+!pa_value_models.joblib
+!ev90_model.joblib
+!extra_stats_models.joblib
+!swing_grade_models.joblib
+
+# Generated graphics ignored, EXCEPT the model report cards the UI serves.
+*.png
+!web/static/*.png
+
+# Python / env
+.venv/
+venv/
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.DS_Store
+
+# Secrets / local config
+.env
+*.local
+secrets.json
+
+# Runtime logs + scratch
+logs/
+*_test.py
+swing_plus_data.tar.gz

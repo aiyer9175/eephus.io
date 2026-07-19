@@ -1734,6 +1734,14 @@ def _has_active_injury(player: dict) -> bool:
 
 
 def _has_top100_pedigree(player: dict) -> bool:
+    # v47 - the export bakes `top100_pedigree: true` on the player payload
+    # (omitted when False), computed with EXACTLY this label walk at export
+    # time, because tools.history is no longer shipped in the artifact.
+    # Prefer the baked flag; the walk below stays as the fallback for
+    # pre-v47 artifacts (where it must OR across BOTH tools.history and
+    # tools.source_history - a history-only walk under-fires).
+    if player.get("top100_pedigree"):
+        return True
     tools = player.get("tools") or {}
     labels: list[str] = []
     for row in tools.get("history") or []:
@@ -4032,8 +4040,9 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         x_sur = xe.get("surplus_mm")
         # Carry the raw eFV grade through to the board: the convex-$/WAR + $0-floor
         # surplus transform compresses within-tier ordering (the backtest shows the
-        # grade orders realized WAR better than the $ value it is derived from), so
-        # the board uses xfv_grade as the within-tier tie-break for the bunched
+        # grade orders realized WAR better than the $-transform; surplus itself is
+        # priced on the displayed quantile grade since 2026-07-06), so the board
+        # uses xfv_grade as the within-tier tie-break for the bunched
         # low/floored block. Display value stays trade_value_mm.
         if xe.get("xfv_grade") is not None:
             r["xfv_grade"] = xe.get("xfv_grade")
@@ -4078,6 +4087,13 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
                     r["downside_mm"] = rf["downside_mm"]
                     r["risk_mm"] = rf["risk_mm"]
                     r["sortino"] = rf["sortino"]
+            else:
+                # src == "projection": the bayes compute's lo/hi bracketed the
+                # DISCARDED bayes value, so the re-pointed surNpv could sit
+                # outside its own band. No band exists on this basis -> null
+                # (the frontends null-guard the range tooltip).
+                r["trade_value_lo"] = None
+                r["trade_value_hi"] = None
             stats[src] += 1
         else:
             stats["unchanged"] += 1

@@ -655,6 +655,12 @@ def _export_links(payload: dict) -> None:
     for key, p in payload["players"].items():
         row = {"key": key, "mlbam": p.get("mlbam"),
                "fa": bool(p.get("fa")),
+               # AUDIT 2026-07-18 (A6): mark projection-universe players so the hub
+               # strip only offers the "MLB Projections -> player page" chip to
+               # players who actually HAVE that page. Every key in payload["players"]
+               # is a projections vet or FA member with a real /projections/#player=
+               # page; the active-prospect rows merged below are NOT and get proj=False.
+               "proj": True,
                "prospx": (p.get("origin") or {}).get("prospx"),
                "name": p.get("name"), "team": p.get("team"), "pos": p.get("pos")}
         by_key[key] = row
@@ -664,6 +670,7 @@ def _export_links(payload: dict) -> None:
     for row in _active_prospect_rows():
         if row["key"] in by_key:
             continue   # ex-prospect already carried by the MLB payload
+        row.setdefault("proj", False)   # never-debuted prospect: no projections page
         by_key[row["key"]] = row
         if row.get("mlbam"):
             by_mlbam.setdefault(str(row["mlbam"]), row)

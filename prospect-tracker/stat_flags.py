@@ -129,8 +129,8 @@ HITTER_RULES: tuple[_HitterRule, ...] = (
         fmt_value="rate3", polarity="above_good",
         green_delta=0.045, green_absolute=0.180,
         red_delta=-0.035,  red_absolute=0.090,
-        green_note="Above-average power for level — projects MLB raw power.",
-        red_note="Limited power output — raises bat-only profile risk.",
+        green_note="Above-average power for level - projects MLB raw power.",
+        red_note="Limited power output - raises bat-only profile risk.",
     ),
     _HitterRule(
         stat="BB%", category="discipline",
@@ -138,8 +138,8 @@ HITTER_RULES: tuple[_HitterRule, ...] = (
         fmt_value="pct", polarity="above_good",
         green_delta=2.0,  green_absolute=11.0,
         red_delta=-2.0,   red_absolute=5.0,
-        green_note="Patient approach — strong walk rate projects to MLB.",
-        red_note="Aggressive zone control — sub-MLB walk rate at this level.",
+        green_note="Patient approach - strong walk rate projects to MLB.",
+        red_note="Aggressive zone control - sub-MLB walk rate at this level.",
     ),
     _HitterRule(
         stat="K%", category="contact",
@@ -147,8 +147,8 @@ HITTER_RULES: tuple[_HitterRule, ...] = (
         fmt_value="pct", polarity="below_good",
         green_delta=-4.0, green_absolute=17.0,
         red_delta=4.0,    red_absolute=28.0,
-        green_note="Strong contact rate — projects MLB-survivable swing-and-miss.",
-        red_note="Concerning whiff profile — questions on whether contact translates.",
+        green_note="Strong contact rate - projects MLB-survivable swing-and-miss.",
+        red_note="Concerning whiff profile - questions on whether contact translates.",
     ),
     _HitterRule(
         stat="OPS", category="results",
@@ -173,8 +173,8 @@ PITCHER_RULES: tuple[_PitcherRule, ...] = (
         fmt_value="rate2", polarity="above_good",
         green_delta=1.5, green_absolute=10.5,
         red_delta=-1.5,  red_absolute=7.0,
-        green_note="Plus swing-and-miss for level — projects MLB strikeouts.",
-        red_note="Below-average miss rate — relies on contact management.",
+        green_note="Plus swing-and-miss for level - projects MLB strikeouts.",
+        red_note="Below-average miss rate - relies on contact management.",
     ),
     _PitcherRule(
         stat="BB/9", category="command",
@@ -182,8 +182,8 @@ PITCHER_RULES: tuple[_PitcherRule, ...] = (
         fmt_value="rate2", polarity="below_good",
         green_delta=-1.0, green_absolute=2.2,
         red_delta=1.0,    red_absolute=4.5,
-        green_note="Plus command — walk rate translates cleanly upward.",
-        red_note="Walks raise floor concerns — command needs to tighten.",
+        green_note="Plus command - walk rate translates cleanly upward.",
+        red_note="Walks raise floor concerns - command needs to tighten.",
     ),
     _PitcherRule(
         # "longball" — HR/9 is a contact-quality stat from the pitcher's
@@ -196,8 +196,8 @@ PITCHER_RULES: tuple[_PitcherRule, ...] = (
         fmt_value="rate2", polarity="below_good",
         green_delta=-0.30, green_absolute=0.70,
         red_delta=0.40,    red_absolute=1.50,
-        green_note="Keeps the ball in the park — durable shape against MLB hitters.",
-        red_note="HR-prone profile — habitually punished at the level, harder at MLB.",
+        green_note="Keeps the ball in the park - durable shape against MLB hitters.",
+        red_note="HR-prone profile - habitually punished at the level, harder at MLB.",
     ),
     _PitcherRule(
         stat="WHIP", category="results",
@@ -205,8 +205,8 @@ PITCHER_RULES: tuple[_PitcherRule, ...] = (
         fmt_value="whip", polarity="below_good",
         green_delta=-0.12, green_absolute=1.10,
         red_delta=0.15,    red_absolute=1.45,
-        green_note="Suppresses baserunners — fewer crooked innings at MLB.",
-        red_note="Traffic constantly — concerning baserunner suppression.",
+        green_note="Suppresses baserunners - fewer crooked innings at MLB.",
+        red_note="Traffic constantly - concerning baserunner suppression.",
     ),
     _PitcherRule(
         stat="ERA", category="results",
@@ -331,7 +331,7 @@ def compute_stat_flags(statline: dict | None,
                 "delta_display": None,
                 "category":      "health",
                 "polarity":      "below_good",
-                "note":          "Frequent / extended IL time over the last 12 months — durability risk.",
+                "note":          "Frequent / extended IL time over the last 12 months - durability risk.",
             })
 
     if not statline:
@@ -463,7 +463,7 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"+{int(g - 50)}",
                 "category": _TOOL_CATEGORY.get(key, "tool"),
                 "polarity": "above_good",
-                "note": f"{int(g)} {labels[key].lower()} — carry tool.",
+                "note": f"{int(g)} {labels[key].lower()} - carry tool.",
             })
         elif g >= TOOL_GREEN_GRADE:
             out.append({
@@ -477,7 +477,7 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"+{int(g - 50)}",
                 "category": _TOOL_CATEGORY.get(key, "tool"),
                 "polarity": "above_good",
-                "note": f"{int(g)} {labels[key].lower()} — plus tool.",
+                "note": f"{int(g)} {labels[key].lower()} - plus tool.",
             })
         elif g <= TOOL_RED_GRADE:
             out.append({
@@ -491,7 +491,7 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"{int(g - 50)}",
                 "category": _TOOL_CATEGORY.get(key, "tool"),
                 "polarity": "below_good",
-                "note": f"{int(g)} {labels[key].lower()} — well below average.",
+                "note": f"{int(g)} {labels[key].lower()} - well below average.",
             })
 
     # Composite-level callouts. Note: in practice, the Tool / O-Tool /
@@ -524,7 +524,7 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"{v - 50:+.1f}",
                 "category": "composite",
                 "polarity": "above_good",
-                "note": f"{label} {v:.1f} — Plus tier (60+) composite toolset.",
+                "note": f"{label} {v:.1f} - Plus tier (60+) composite toolset.",
             })
         elif raw_key == "composite_overall" and v <= TOOL_COMPOSITE_RED:
             out.append({
@@ -538,7 +538,7 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"{v - 50:+.1f}",
                 "category": "composite",
                 "polarity": "below_good",
-                "note": f"{label} {v:.1f} — Below-Average tier composite toolset.",
+                "note": f"{label} {v:.1f} - Below-Average tier composite toolset.",
             })
     # Stuff+ / Cmd+ retained on the cohort +/- scale.
     for plus_key, label in (
@@ -560,6 +560,6 @@ def compute_tool_flags(tools: dict | None, is_pitcher: bool) -> list[dict]:
                 "delta_display": f"{v - 100:+d}",
                 "category": "composite",
                 "polarity": "above_good",
-                "note": f"{label} index {v} — above-cohort.",
+                "note": f"{label} index {v} - above-cohort.",
             })
     return out

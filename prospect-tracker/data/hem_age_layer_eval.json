@@ -1,0 +1,799 @@
+{
+ "experiment": "T1-8 X-H3-AGE forward-fit age layer (wave 3b rerun, lane w3b-age)",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "wOBA in year Y+1 (raw, pooled across seasons)",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "wOBA in year Y+1 (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "candidate_form": "cand = hem_plus_raw + b*max(0, age-30); b refit per eval season from strictly-prior predictor seasons only, PA-weighted through-origin LS on within-outcome-season-z target scaled by the training index spread, shrunk n_h/(n_h+500) with n_h = strictly-prior hinge>0 pairs",
+ "data": {
+  "source": ".cache/fa_statsapi_hitting_2000-2026.json read directly (TTL refetch bypassed); age = stat.age (seasonal age)",
+  "pred_seasons": [
+   2000,
+   2001,
+   2002,
+   2003,
+   2004,
+   2005,
+   2006,
+   2007,
+   2008,
+   2009,
+   2010,
+   2011,
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2021,
+   2022,
+   2023,
+   2024
+  ],
+  "min_pa_y": 150.0,
+  "min_pa_next": 150.0,
+  "n_pairs": 7064,
+  "n_age_missing_dropped": 0,
+  "age_sanity": {
+   "consecutive_pairs_checked": 16317,
+   "pct_age_increments_by_1": 1.0
+  }
+ },
+ "b_trace_by_eval_season": {
+  "2000": {
+   "n_train": 0,
+   "n_hinge": 0,
+   "b_raw": null,
+   "b": 0.0
+  },
+  "2001": {
+   "n_train": 314,
+   "n_hinge": 108,
+   "b_raw": -0.7717,
+   "b": -0.1371
+  },
+  "2002": {
+   "n_train": 622,
+   "n_hinge": 208,
+   "b_raw": -0.8653,
+   "b": -0.2542
+  },
+  "2003": {
+   "n_train": 924,
+   "n_hinge": 307,
+   "b_raw": -0.859,
+   "b": -0.3268
+  },
+  "2004": {
+   "n_train": 1235,
+   "n_hinge": 413,
+   "b_raw": -0.8319,
+   "b": -0.3763
+  },
+  "2005": {
+   "n_train": 1539,
+   "n_hinge": 513,
+   "b_raw": -0.8849,
+   "b": -0.4481
+  },
+  "2006": {
+   "n_train": 1843,
+   "n_hinge": 624,
+   "b_raw": -0.9475,
+   "b": -0.526
+  },
+  "2007": {
+   "n_train": 2147,
+   "n_hinge": 722,
+   "b_raw": -0.8331,
+   "b": -0.4922
+  },
+  "2008": {
+   "n_train": 2456,
+   "n_hinge": 833,
+   "b_raw": -0.8401,
+   "b": -0.525
+  },
+  "2009": {
+   "n_train": 2767,
+   "n_hinge": 934,
+   "b_raw": -0.8572,
+   "b": -0.5583
+  },
+  "2010": {
+   "n_train": 3071,
+   "n_hinge": 1033,
+   "b_raw": -0.8322,
+   "b": -0.5608
+  },
+  "2011": {
+   "n_train": 3381,
+   "n_hinge": 1134,
+   "b_raw": -0.8394,
+   "b": -0.5825
+  },
+  "2012": {
+   "n_train": 3692,
+   "n_hinge": 1221,
+   "b_raw": -0.8105,
+   "b": -0.5751
+  },
+  "2013": {
+   "n_train": 4000,
+   "n_hinge": 1302,
+   "b_raw": -0.8264,
+   "b": -0.5971
+  },
+  "2014": {
+   "n_train": 4310,
+   "n_hinge": 1381,
+   "b_raw": -0.8571,
+   "b": -0.6293
+  },
+  "2015": {
+   "n_train": 4605,
+   "n_hinge": 1462,
+   "b_raw": -0.8919,
+   "b": -0.6646
+  },
+  "2016": {
+   "n_train": 4914,
+   "n_hinge": 1552,
+   "b_raw": -0.8778,
+   "b": -0.6639
+  },
+  "2017": {
+   "n_train": 5213,
+   "n_hinge": 1628,
+   "b_raw": -0.9393,
+   "b": -0.7186
+  },
+  "2018": {
+   "n_train": 5519,
+   "n_hinge": 1707,
+   "b_raw": -0.9025,
+   "b": -0.6981
+  },
+  "2021": {
+   "n_train": 5821,
+   "n_hinge": 1784,
+   "b_raw": -0.9006,
+   "b": -0.7034
+  },
+  "2022": {
+   "n_train": 6135,
+   "n_hinge": 1859,
+   "b_raw": -0.919,
+   "b": -0.7242
+  },
+  "2023": {
+   "n_train": 6444,
+   "n_hinge": 1935,
+   "b_raw": -0.9133,
+   "b": -0.7257
+  },
+  "2024": {
+   "n_train": 6759,
+   "n_hinge": 2007,
+   "b_raw": -0.8968,
+   "b": -0.718
+  }
+ },
+ "primary": {
+  "results_by_convention": {
+   "v1": {
+    "rho_primary": 0.4655,
+    "rho_baselines": {
+     "vs_hem_plus": 0.462,
+     "vs_raw_woba": 0.4684
+    },
+    "rho_primary_full": 0.4655234468114926,
+    "rho_baselines_full": {
+     "vs_hem_plus": 0.4620345641847191,
+     "vs_raw_woba": 0.4684207238150813
+    },
+    "gap_ci": {
+     "vs_hem_plus": {
+      "mean": 0.0035,
+      "lo95": 0.0022,
+      "hi95": 0.0048
+     },
+     "vs_raw_woba": {
+      "mean": -0.0028,
+      "lo95": -0.0115,
+      "hi95": 0.0061
+     }
+    }
+   },
+   "v2": {
+    "rho_primary": 0.4791,
+    "rho_baselines": {
+     "vs_hem_plus": 0.4758,
+     "vs_raw_woba": 0.4495
+    },
+    "rho_primary_full": 0.4791163495120182,
+    "rho_baselines_full": {
+     "vs_hem_plus": 0.4757565654099625,
+     "vs_raw_woba": 0.4494619058699202
+    },
+    "gap_ci": {
+     "vs_hem_plus": {
+      "mean": 0.0034,
+      "lo95": 0.0022,
+      "hi95": 0.0046
+     },
+     "vs_raw_woba": {
+      "mean": 0.0296,
+      "lo95": 0.0207,
+      "hi95": 0.0387
+     }
+    },
+    "cluster": {
+     "n_pairs": 7064,
+     "n_players": 1516,
+     "max_pairs_per_player": 19,
+     "mean_pairs_per_player": 4.66,
+     "n_strata_first_pred_season": 23
+    }
+   }
+  },
+  "gate": {
+   "bar": "paired bootstrap gap lo95 >= 0 vs incumbent HEM+ AND rho_candidate > raw wOBA rho; v1 primary, seed 20260715",
+   "convention": "v1",
+   "pass": false,
+   "pass_under_v2": true
+  }
+ },
+ "diagnostics": {
+  "modern_era_2015plus": {
+   "n_pairs": 2459,
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.4144,
+     "rho_baselines": {
+      "vs_hem_plus": 0.411,
+      "vs_raw_woba": 0.4058
+     },
+     "rho_primary_full": 0.4143567218914056,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.41101733791685396,
+      "vs_raw_woba": 0.4057899666836117
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0034,
+       "lo95": 0.0008,
+       "hi95": 0.0059
+      },
+      "vs_raw_woba": {
+       "mean": 0.0086,
+       "lo95": -0.0065,
+       "hi95": 0.0238
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4238,
+     "rho_baselines": {
+      "vs_hem_plus": 0.4199,
+      "vs_raw_woba": 0.4072
+     },
+     "rho_primary_full": 0.42375402249716393,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.4199378675305068,
+      "vs_raw_woba": 0.40719915939779383
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0039,
+       "lo95": 0.0016,
+       "hi95": 0.0062
+      },
+      "vs_raw_woba": {
+       "mean": 0.0166,
+       "lo95": 0.002,
+       "hi95": 0.0317
+      }
+     },
+     "cluster": {
+      "n_pairs": 2459,
+      "n_players": 794,
+      "max_pairs_per_player": 8,
+      "mean_pairs_per_player": 3.1,
+      "n_strata_first_pred_season": 8
+     }
+    }
+   },
+   "bar": "v1 gap vs HEM+ lo95 >= 0",
+   "pass": true
+  },
+  "age_30_plus_subset": {
+   "n_pairs": 2663,
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.4804,
+     "rho_baselines": {
+      "vs_hem_plus": 0.4768,
+      "vs_raw_woba": 0.4818
+     },
+     "rho_primary_full": 0.48038125068562704,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.47683404550643277,
+      "vs_raw_woba": 0.4818266497031623
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0036,
+       "lo95": 0.0009,
+       "hi95": 0.0063
+      },
+      "vs_raw_woba": {
+       "mean": -0.0013,
+       "lo95": -0.0152,
+       "hi95": 0.0128
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4943,
+     "rho_baselines": {
+      "vs_hem_plus": 0.4928,
+      "vs_raw_woba": 0.4676
+     },
+     "rho_primary_full": 0.4942715598325222,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.4928141042299559,
+      "vs_raw_woba": 0.46761808126703247
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0015,
+       "lo95": -0.001,
+       "hi95": 0.0039
+      },
+      "vs_raw_woba": {
+       "mean": 0.0266,
+       "lo95": 0.0131,
+       "hi95": 0.0402
+      }
+     },
+     "cluster": {
+      "n_pairs": 2663,
+      "n_players": 809,
+      "max_pairs_per_player": 13,
+      "mean_pairs_per_player": 3.29,
+      "n_strata_first_pred_season": 23
+     }
+    }
+   }
+  },
+  "age_31_plus_subset_informational": {
+   "n_pairs": 2072,
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.4972,
+     "rho_baselines": {
+      "vs_hem_plus": 0.4922
+     },
+     "rho_primary_full": 0.4971712612280288,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.4922379153216965
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0049,
+       "lo95": 0.0017,
+       "hi95": 0.0079
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.5053,
+     "rho_baselines": {
+      "vs_hem_plus": 0.5036
+     },
+     "rho_primary_full": 0.5052835032496975,
+     "rho_baselines_full": {
+      "vs_hem_plus": 0.5035572764100757
+     },
+     "gap_ci": {
+      "vs_hem_plus": {
+       "mean": 0.0017,
+       "lo95": -0.0008,
+       "hi95": 0.0044
+      }
+     },
+     "cluster": {
+      "n_pairs": 2072,
+      "n_players": 685,
+      "max_pairs_per_player": 12,
+      "mean_pairs_per_player": 3.02,
+      "n_strata_first_pred_season": 23
+     }
+    }
+   }
+  },
+  "xhem_stacking": {
+   "n_pairs": 1871,
+   "note": "arm A (primary read): b refit forward on the savant pair set itself; arm B: hitter-fit b transferred. index_x = shipped xHEM+ ratio scale on est_woba",
+   "arm_A_refit": {
+    "results_by_convention": {
+     "v1": {
+      "rho_primary": 0.4646,
+      "rho_baselines": {
+       "vs_xwoba_index": 0.4617,
+       "vs_actual_woba": 0.4108
+      },
+      "rho_primary_full": 0.4646374304547963,
+      "rho_baselines_full": {
+       "vs_xwoba_index": 0.46171942107691905,
+       "vs_actual_woba": 0.41083287446198946
+      },
+      "gap_ci": {
+       "vs_xwoba_index": {
+        "mean": 0.0029,
+        "lo95": 0.0009,
+        "hi95": 0.0049
+       },
+       "vs_actual_woba": {
+        "mean": 0.054,
+        "lo95": 0.0271,
+        "hi95": 0.0818
+       }
+      }
+     },
+     "v2": {
+      "rho_primary": 0.4729,
+      "rho_baselines": {
+       "vs_xwoba_index": 0.4708,
+       "vs_actual_woba": 0.4125
+      },
+      "rho_primary_full": 0.4729379180559116,
+      "rho_baselines_full": {
+       "vs_xwoba_index": 0.4708340150579185,
+       "vs_actual_woba": 0.4125415976173744
+      },
+      "gap_ci": {
+       "vs_xwoba_index": {
+        "mean": 0.0021,
+        "lo95": 0.0003,
+        "hi95": 0.0039
+       },
+       "vs_actual_woba": {
+        "mean": 0.0604,
+        "lo95": 0.0341,
+        "hi95": 0.0878
+       }
+      },
+      "cluster": {
+       "n_pairs": 1871,
+       "n_players": 649,
+       "max_pairs_per_player": 7,
+       "mean_pairs_per_player": 2.88,
+       "n_strata_first_pred_season": 7
+      }
+     }
+    },
+    "b_trace": {
+     "2016": {
+      "n_train": 0,
+      "n_hinge": 0,
+      "b_raw": null,
+      "b": 0.0
+     },
+     "2017": {
+      "n_train": 261,
+      "n_hinge": 70,
+      "b_raw": -3.5956,
+      "b": -0.4416
+     },
+     "2018": {
+      "n_train": 538,
+      "n_hinge": 139,
+      "b_raw": -2.7102,
+      "b": -0.5895
+     },
+     "2021": {
+      "n_train": 800,
+      "n_hinge": 201,
+      "b_raw": -2.5884,
+      "b": -0.7422
+     },
+     "2022": {
+      "n_train": 1067,
+      "n_hinge": 264,
+      "b_raw": -2.4908,
+      "b": -0.8607
+     },
+     "2023": {
+      "n_train": 1328,
+      "n_hinge": 328,
+      "b_raw": -2.2286,
+      "b": -0.8828
+     },
+     "2024": {
+      "n_train": 1606,
+      "n_hinge": 394,
+      "b_raw": -1.961,
+      "b": -0.8642
+     }
+    },
+    "age_delta_adds_on_xwoba": true
+   },
+   "arm_B_transfer": {
+    "results_by_convention": {
+     "v1": {
+      "rho_primary": 0.4649,
+      "rho_baselines": {
+       "vs_xwoba_index": 0.4617
+      },
+      "rho_primary_full": 0.4649002335531779,
+      "rho_baselines_full": {
+       "vs_xwoba_index": 0.46171942107691905
+      },
+      "gap_ci": {
+       "vs_xwoba_index": {
+        "mean": 0.0032,
+        "lo95": 0.0012,
+        "hi95": 0.0051
+       }
+      }
+     },
+     "v2": {
+      "rho_primary": 0.4744,
+      "rho_baselines": {
+       "vs_xwoba_index": 0.4708
+      },
+      "rho_primary_full": 0.47435745751490804,
+      "rho_baselines_full": {
+       "vs_xwoba_index": 0.4708340150579185
+      },
+      "gap_ci": {
+       "vs_xwoba_index": {
+        "mean": 0.0035,
+        "lo95": 0.0016,
+        "hi95": 0.0055
+       }
+      },
+      "cluster": {
+       "n_pairs": 1871,
+       "n_players": 649,
+       "max_pairs_per_player": 7,
+       "mean_pairs_per_player": 2.88,
+       "n_strata_first_pred_season": 7
+      }
+     }
+    }
+   }
+  },
+  "fa_projection_context_arm": {
+   "note": "T1-10 cross-reference (NOT part of the gate): the independent T1-10 lane's winner was fa_projection woba_proj (its gate rho 0.5189 vs flat-3yr HEM+ 0.4939 on predictors 2021-2024). An age-layer ship must beat simply using the engine's projected wOBA. Computed point-in-time from fa_corpus.pkl + disk-cached fa_fits_{Y}_2000.pkl, pred seasons >= 2002; gap CI is candidate MINUS fa_projection.",
+   "n_pairs_shared": 6442,
+   "results_by_convention": {
+    "v1": {
+     "rho_primary": 0.4585,
+     "rho_baselines": {
+      "vs_fa_projection": 0.5284,
+      "vs_hem_plus": 0.4551
+     },
+     "rho_primary_full": 0.4584779991223537,
+     "rho_baselines_full": {
+      "vs_fa_projection": 0.5283624705661619,
+      "vs_hem_plus": 0.4550562379401231
+     },
+     "gap_ci": {
+      "vs_fa_projection": {
+       "mean": -0.0701,
+       "lo95": -0.0833,
+       "hi95": -0.057
+      },
+      "vs_hem_plus": {
+       "mean": 0.0034,
+       "lo95": 0.002,
+       "hi95": 0.0048
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4712,
+     "rho_baselines": {
+      "vs_fa_projection": 0.5166,
+      "vs_hem_plus": 0.4675
+     },
+     "rho_primary_full": 0.4711996346072267,
+     "rho_baselines_full": {
+      "vs_fa_projection": 0.5166001967666349,
+      "vs_hem_plus": 0.4675220701782783
+     },
+     "gap_ci": {
+      "vs_fa_projection": {
+       "mean": -0.0453,
+       "lo95": -0.0582,
+       "hi95": -0.0321
+      },
+      "vs_hem_plus": {
+       "mean": 0.0036,
+       "lo95": 0.0024,
+       "hi95": 0.005
+      }
+     },
+     "cluster": {
+      "n_pairs": 6442,
+      "n_players": 1418,
+      "max_pairs_per_player": 18,
+      "mean_pairs_per_player": 4.54,
+      "n_strata_first_pred_season": 21
+     }
+    }
+   },
+   "candidate_beats_fa_projection_v1": false
+  }
+ },
+ "pitcher_secondary": {
+  "note": "pre-declared secondary, fixed hinge grid {1,2,3} index pts per yr over 30 (penalty subtracted); REM+ expected to fail",
+  "starters_X_S6": {
+   "population": "starters (SEM+, X-S6)",
+   "n_pairs": 2839,
+   "grid": {
+    "g1": {
+     "penalty_pts_per_yr_over_30": 1.0,
+     "n_pairs": 2839,
+     "n_hinge_pos": 693,
+     "rho_incumbent_v1": 0.4089,
+     "rho_incumbent_v2": 0.4135,
+     "rho_candidate_v1": 0.4064,
+     "gap_ci_v1": {
+      "mean": -0.0025,
+      "lo95": -0.0083,
+      "hi95": 0.0034
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.4093,
+     "gap_ci_v2": {
+      "mean": -0.0041,
+      "lo95": -0.0101,
+      "hi95": 0.0016
+     },
+     "pass_v2": false
+    },
+    "g2": {
+     "penalty_pts_per_yr_over_30": 2.0,
+     "n_pairs": 2839,
+     "n_hinge_pos": 693,
+     "rho_incumbent_v1": 0.4089,
+     "rho_incumbent_v2": 0.4135,
+     "rho_candidate_v1": 0.3963,
+     "gap_ci_v1": {
+      "mean": -0.0125,
+      "lo95": -0.0232,
+      "hi95": -0.002
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.3979,
+     "gap_ci_v2": {
+      "mean": -0.0154,
+      "lo95": -0.0273,
+      "hi95": -0.0034
+     },
+     "pass_v2": false
+    },
+    "g3": {
+     "penalty_pts_per_yr_over_30": 3.0,
+     "n_pairs": 2839,
+     "n_hinge_pos": 693,
+     "rho_incumbent_v1": 0.4089,
+     "rho_incumbent_v2": 0.4135,
+     "rho_candidate_v1": 0.3834,
+     "gap_ci_v1": {
+      "mean": -0.0254,
+      "lo95": -0.04,
+      "hi95": -0.0109
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.3839,
+     "gap_ci_v2": {
+      "mean": -0.0293,
+      "lo95": -0.0471,
+      "hi95": -0.0113
+     },
+     "pass_v2": false
+    }
+   }
+  },
+  "relievers_X_R6": {
+   "population": "relievers (REM+, X-R6)",
+   "n_pairs": 3648,
+   "grid": {
+    "g1": {
+     "penalty_pts_per_yr_over_30": 1.0,
+     "n_pairs": 3648,
+     "n_hinge_pos": 1234,
+     "rho_incumbent_v1": 0.2459,
+     "rho_incumbent_v2": 0.247,
+     "rho_candidate_v1": 0.249,
+     "gap_ci_v1": {
+      "mean": 0.0031,
+      "lo95": -0.0024,
+      "hi95": 0.0087
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.2494,
+     "gap_ci_v2": {
+      "mean": 0.0025,
+      "lo95": -0.0028,
+      "hi95": 0.0075
+     },
+     "pass_v2": false
+    },
+    "g2": {
+     "penalty_pts_per_yr_over_30": 2.0,
+     "n_pairs": 3648,
+     "n_hinge_pos": 1234,
+     "rho_incumbent_v1": 0.2459,
+     "rho_incumbent_v2": 0.247,
+     "rho_candidate_v1": 0.2458,
+     "gap_ci_v1": {
+      "mean": -0.0001,
+      "lo95": -0.0109,
+      "hi95": 0.01
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.2456,
+     "gap_ci_v2": {
+      "mean": -0.0013,
+      "lo95": -0.0119,
+      "hi95": 0.0086
+     },
+     "pass_v2": false
+    },
+    "g3": {
+     "penalty_pts_per_yr_over_30": 3.0,
+     "n_pairs": 3648,
+     "n_hinge_pos": 1234,
+     "rho_incumbent_v1": 0.2459,
+     "rho_incumbent_v2": 0.247,
+     "rho_candidate_v1": 0.2391,
+     "gap_ci_v1": {
+      "mean": -0.0068,
+      "lo95": -0.0215,
+      "hi95": 0.0072
+     },
+     "pass_v1": false,
+     "rho_candidate_v2": 0.2384,
+     "gap_ci_v2": {
+      "mean": -0.0086,
+      "lo95": -0.0235,
+      "hi95": 0.0055
+     },
+     "pass_v2": false
+    }
+   }
+  }
+ },
+ "program_ledger": {
+  "verdict": "rejected",
+  "note": "LOSS LEDGER by DOMINANCE. The age signal is real (hinge ~-0.72 HEM+ pts/yr over 30; beats HEM+ everywhere, v2 lo95 +0.0022; stacks on xwOBA) but v1 clause 2 fails vs pooled raw wOBA AND the FA-engine projection DOMINATES the candidate by ~7 rho points (0.5284 vs 0.4585) - convergent with phem_marcel_lite: aging belongs to the projection layer (fa_projection), not the descriptive + indexes. Pitchers 6/6 grid FAIL. Rejected fourth entry for docs/aging-curves.md."
+ }
+}

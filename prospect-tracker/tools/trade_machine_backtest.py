@@ -167,7 +167,8 @@ def _slice_a(by_player: dict) -> dict:
         "pooled": {"spearman": pooled, "auc_useful_asset": auc, "useful_war_threshold": USEFUL_WAR},
         "baseline_consensus_fv": {"spearman": baseline, "n": len(cfv_rows)},
         "xfv_grade_orderer": {"spearman": xfv_pooled, "n": len(xg_rows),
-                              "note": "the raw grade the surplus is derived from; orders realized "
+                              "note": "the model's raw eFV grade (surplus is priced on the displayed "
+                                      "quantile grade since 2026-07-06); orders realized "
                                       "WAR better than the $-transform (board within-tier tie-break)"},
         "by_tier": by_tier,
         "by_side": by_side,

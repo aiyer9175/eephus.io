@@ -116,6 +116,14 @@ MODEL_GLOSSARY = {
     "xfv_cohort_lambda_hier": "internal",
     "xfv_alpha_criterion": "internal",
     "xfv_ops_rel_fringe": "internal",
+    # LR-FRINGE (2026-07-15, docs/efv-2026-07-15/GATES.md): level_rank shipped
+    # into the hitter lean set via the pre-registered fringe re-gate at the
+    # 2024-fold vintage; model-dev artifact, methodology under the xfv entry.
+    "xfv_level_rank_fringe": "internal",
+    # RELIEF-SHAPE (2026-07-15, docs/efv-2026-07-15/GATES.md): PAL prospect-
+    # watch shape composite as pit features - all three arms failed the
+    # pre-registered bar; loss ledger, rendered nowhere.
+    "xfv_relief_shape": "internal",
     # eFV improvement pass (2026-07-14, docs/efv-2026-07-14/GATES.md): the
     # anchor-staleness decay + lambda band-raise + absolute-age feature
     # ledgers. Model-dev artifacts, rendered nowhere; the user-facing
@@ -167,6 +175,79 @@ MODEL_GLOSSARY = {
     "xrem_plus": ["xrem_plus"],
     "xsem_plus": ["xsem_plus"],
     "leverage_board": ["wpa", "clutch", "pli"],
+    # Improvement program 2026-07-15 (both workflow reports): wave-1 loss
+    # ledgers (decayed multi-year xHEM+; decayed 3yr REM+/SEM+ blends), the
+    # E-LAMBDA parity adjudication (restamp blocked, owner decision queued),
+    # the per-side alpha-criterion close-out, and the two eFV measurement
+    # instruments (F-SIDE standing side-fairness eval line; F-WATCH frozen
+    # promoted-pitcher cohort with a kill rule). All model-dev artifacts,
+    # rendered nowhere; user-facing methodology stays under the xfv /
+    # xhem_plus / rem_plus_3yr / sem_plus_3yr glossary entries.
+    "xhem_multiyear_decay": "internal",
+    "rem_sem_3yr_decay": "internal",
+    "xfv_lambda_parity": "internal",
+    "xfv_alpha_criterion_perside": "internal",
+    "xfv_side_fairness": "internal",
+    "xfv_promo_watch": "internal",
+    # Wave 3 (2026-07-15): fwdhem_plus SHIPS on the Hitter Leaderboards with
+    # its own glossary entry; the K-strength sweep and pHEM+ Marcel-lite gate
+    # (won by the existing FA engine; pWOBA display decision queued) and the
+    # PAL game-log lanes are model-dev artifacts, rendered nowhere.
+    "fwdhem_plus": ["fwdhem_plus"],
+    "k_strength_sweep": "internal",
+    # phem_marcel_lite SHIPPED 2026-07-15 as the pWOBA column (owner display
+    # decision) - the FA-engine re-anchor; the pwoba glossary entry carries
+    # the methodology.
+    "phem_marcel_lite": ["pwoba"],
+    "pal_gamelog_lanes": "internal",
+    # Wave 3b loss ledgers (2026-07-15), all rendered nowhere: velo decline
+    # adjustment, FB-HR + CSW shrink priors (K-prior lane closed permanently),
+    # park-conditioned shrink targets, HEM+ age hinge (dominated by the FA
+    # engine - aging lives in the projection layer).
+    "velo_decline": "internal",
+    "fbhr_csw_priors": "internal",
+    "park_shrink_targets": "internal",
+    "hem_age_layer": "internal",
+    # Owner-directed reliever-ceiling overlay (2026-07-15, second Moore
+    # directive): policy dial, not an accuracy claim; surfaces per-player as
+    # the "Reliever ceiling" factor chip. Documented (2026-07-16) in the xfv
+    # glossary methodology, so it maps there like the other live overlay chips
+    # (injury / age / stale-anchor) rather than hiding behind "internal".
+    "xfv_role_ceiling": ["xfv"],
+    # Bucket-head calibration gate (2026-07-15): clean loss ledger (G4
+    # monotone-sanity fail + ablation showed population-recal, not age);
+    # rendered nowhere; mandatory re-run at 2024-fold trainability.
+    "xfv_bucket_age_head": "internal",
+    # TOP-QUANT (2026-07-15, owner-approved attempt): loss ledger - the top-25
+    # cutoff sits below the 55 knee so pit-only remaps are structurally inert;
+    # gated-inert hooks shipped; honest path = a JOINT cross-side display map
+    # under a NEW owner registration. Rendered nowhere.
+    "xfv_topquant": "internal",
+    # Lambda adjudication tournament (2026-07-15): incumbent selector WON both
+    # sides (parity protocol loses OOS; the C-vs-D stalemate was a lab leak).
+    # Joint display map (owner-registered): loss ledger under the strict
+    # ship-as-gains G1 (fairness gates passed; re-registration option queued).
+    # Both rendered nowhere.
+    "xfv_lambda_adjudication": "internal",
+    "xfv_joint_display_map": "internal",
+    # Owner-program loss ledgers (2026-07-15b): xwOBA output-blend on pWOBA
+    # (knife-edge NO-SHIP, keep-alive at extended n), EV/barrel residual arm
+    # (regresses; EV-on-pWOBA lane closed), eFV defensive tool grades and
+    # physical-by-position (both regress; frame/athl untrainable). All
+    # rendered nowhere.
+    "pwoba_xwoba_blend": "internal",
+    "pwoba_ev_arm": "internal",
+    "xfv_defense_tools": "internal",
+    "xfv_physical_position": "internal",
+    # Owner-program wave 2 (2026-07-15): model-class/target sweep + feature
+    # arms (both all-NO-SHIP with 2024-fold keep-alives) and the FA Gate-2
+    # feature-arm harness (rate_line SHIPPED into fa_market; regime/age_pos/
+    # qo_tier ledgered losses). All rendered nowhere.
+    "xfv_model_class_sweep": "internal",
+    "xfv_feature_arms_2026_07": "internal",
+    "fa_market_feature_arms": "internal",
+    "fa_market_supply_population": "internal",  # serve-side input alignment (wave-2 ship, 2026-07-16)
+    "fa_market_class_age_anchor": "internal",   # serve-side input alignment (wave-2 ship, 2026-07-16)
 }
 
 

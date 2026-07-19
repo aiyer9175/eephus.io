@@ -1,0 +1,373 @@
+{
+ "lane": "w3b-park (T1-5 X-R7 / X-S7 / X-H-park rerun; leverage stubbed)",
+ "leverage_note": "mlb_leverage.fetch_season_leverage stubbed to ({}, 0.0); leverage decorates gmli/role display fields only and is never an input to REM+/SEM+/HEM+ raw skill scores",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "s_grid": [
+  0.25,
+  0.5,
+  0.75
+ ],
+ "s_primary": 0.5,
+ "harness": {
+  "harness_version": 2,
+  "primary_convention": "v1",
+  "v1": {
+   "target": "next-season outcome, raw, pooled across seasons",
+   "bootstrap": "iid pair resample (legacy; 2000 reps, seeded)",
+   "note": "legacy convention; the shipped gate verdicts were established here"
+  },
+  "v2": {
+   "target": "next-season outcome (within-OUTCOME-season z-score removes the era term)",
+   "bootstrap": "player-clustered (all of a player's pairs move together), season-stratified (players stratified by first predictor season); 2000 reps, seeded; CIs are wider by design",
+   "note": "transition-cycle companion; future gates must pre-declare v1 or v2"
+  },
+  "pair_rule": "Y->Y+1 pairs kept only when the OUTCOME season is complete (past Nov 15). Partial-year targets (e.g. mid-2026) are a defect, dropped under BOTH conventions.",
+  "predictors": "unrounded *_raw model scores (display rounding never enters evals)",
+  "interpretation_rules": [
+   "existing VALIDATED ships STAND even if v2 weakens them; a reversal is flagged to the owner, not auto-reverted",
+   "ledgered NO-SHIPs are re-baselined under v2 but never revived by v2 alone",
+   "X-R2 / X-S2 flips are not promised"
+  ]
+ },
+ "park_factor_provenance": {
+  "source": ".cache/savant_pf_{year}_all.html via fa_sources.fetch_savant_park_factors",
+  "rolling": "Savant park-factor indexes are 3-YEAR ROLLING (year=Y covers Y-2..Y), 100 = neutral; the predictor-year index is used",
+  "join": "park row main_team_id (stringified MLBAM team id) -> int -> the player's StatsAPI season-split team id (cached fa_statsapi_*)",
+  "neutral_fallback": "multi-team player-seasons (numTeams>1), unknown teams, and venues missing from the park table use the neutral target (candidate == incumbent there); applied to pitchers and hitters alike",
+  "hitter_pre2016_note": "savant_pf 2012-2015 fetched live from Savant this run (Savant reachable) and cached; HEM+ therefore runs its full family-lab season list"
+ },
+ "design": "Candidate changes ONE thing vs the incumbent skill core: the HR component's empirical-Bayes SHRINK TARGET becomes pool_hr * (1 + s*(index_hr/100 - 1)). Observed counts are never park-adjusted. Candidate pool anchor recomputed so 100 = pool average under the candidate core.",
+ "experiments": {
+  "X-R7_rem_plus": {
+   "n_forward_pairs": 878,
+   "n_pairs_park_known": 716,
+   "n_pairs_neutral_fallback": 162,
+   "n_partial_outcome_pairs_dropped": 0,
+   "park_index_over_pairs": {
+    "mean": 100.162,
+    "sd": 13.7548,
+    "n_extreme": 272
+   },
+   "target": "-RA9 in year Y+1 (v1 raw pooled; v2 within-outcome-season z)",
+   "incumbent_rho_v1": 0.2374,
+   "candidate_rho_v1_s0.5": 0.2376,
+   "gap_ci_v1_s0.5": {
+    "mean": 0.0001,
+    "lo95": -0.0086,
+    "hi95": 0.0083
+   },
+   "gap_ci_v2_s0.5": {
+    "mean": 0.0001,
+    "lo95": -0.0087,
+    "hi95": 0.0088
+   },
+   "results_by_convention_s0.5": {
+    "v1": {
+     "rho_primary": 0.2376,
+     "rho_baselines": {
+      "vs_incumbent": 0.2374
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": 0.0001,
+       "lo95": -0.0086,
+       "hi95": 0.0083
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.2376,
+     "rho_baselines": {
+      "vs_incumbent": 0.2374
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": 0.0001,
+       "lo95": -0.0087,
+       "hi95": 0.0088
+      }
+     },
+     "cluster": {
+      "n_pairs": 878,
+      "n_players": 454,
+      "max_pairs_per_player": 5,
+      "mean_pairs_per_player": 1.93,
+      "n_strata_first_pred_season": 5
+     }
+    }
+   },
+   "sensitivity": {
+    "s=0.25": {
+     "rho_candidate": 0.2374,
+     "rho_incumbent": 0.2374,
+     "gap_ci_v1": {
+      "mean": -0.0,
+      "lo95": -0.0046,
+      "hi95": 0.0042
+     },
+     "lo95_ge_0": false
+    },
+    "s=0.75": {
+     "rho_candidate": 0.2372,
+     "rho_incumbent": 0.2374,
+     "gap_ci_v1": {
+      "mean": -0.0004,
+      "lo95": -0.0133,
+      "hi95": 0.0114
+     },
+     "lo95_ge_0": false
+    }
+   },
+   "extreme_park_diagnostic": {
+    "threshold_abs": 14.0,
+    "n": 272,
+    "rho_incumbent": 0.2519,
+    "rho_candidate_s0.5": 0.2477,
+    "gap_ci_v1": {
+     "mean": -0.0036,
+     "lo95": -0.0294,
+     "hi95": 0.0206
+    },
+    "note": "diagnostic only (never a gate); iid bootstrap on the extreme-park subset"
+   },
+   "gate": {
+    "bar": "paired bootstrap lo95(rho_cand - rho_incumbent) >= 0 on the identical complete-outcome pair set (s=0.5 primary)",
+    "convention": "v1",
+    "seed": 20260715,
+    "boot": 2000,
+    "pass": false,
+    "pass_under_v2": false
+   },
+   "experiment": "X-R7",
+   "model": "rem_plus",
+   "candidate": "REM+ skill core with the HR shrink target scaled by the predictor-year park: pool_hr * (1 + s*(index_hr/100 - 1))",
+   "pair_thresholds": {
+    "tbf_y": 100.0,
+    "tbf_next": 60.0
+   }
+  },
+  "X-S7_sem_plus": {
+   "n_forward_pairs": 592,
+   "n_pairs_park_known": 544,
+   "n_pairs_neutral_fallback": 48,
+   "n_partial_outcome_pairs_dropped": 0,
+   "park_index_over_pairs": {
+    "mean": 100.7923,
+    "sd": 13.0245,
+    "n_extreme": 189
+   },
+   "target": "-RA9 in year Y+1 (v1 raw pooled; v2 within-outcome-season z)",
+   "incumbent_rho_v1": 0.4167,
+   "candidate_rho_v1_s0.5": 0.4113,
+   "gap_ci_v1_s0.5": {
+    "mean": -0.0054,
+    "lo95": -0.0126,
+    "hi95": 0.002
+   },
+   "gap_ci_v2_s0.5": {
+    "mean": -0.0055,
+    "lo95": -0.0128,
+    "hi95": 0.0018
+   },
+   "results_by_convention_s0.5": {
+    "v1": {
+     "rho_primary": 0.4113,
+     "rho_baselines": {
+      "vs_incumbent": 0.4167
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0054,
+       "lo95": -0.0126,
+       "hi95": 0.002
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4145,
+     "rho_baselines": {
+      "vs_incumbent": 0.42
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0055,
+       "lo95": -0.0128,
+       "hi95": 0.0018
+      }
+     },
+     "cluster": {
+      "n_pairs": 592,
+      "n_players": 273,
+      "max_pairs_per_player": 5,
+      "mean_pairs_per_player": 2.17,
+      "n_strata_first_pred_season": 5
+     }
+    }
+   },
+   "sensitivity": {
+    "s=0.25": {
+     "rho_candidate": 0.4146,
+     "rho_incumbent": 0.4167,
+     "gap_ci_v1": {
+      "mean": -0.002,
+      "lo95": -0.006,
+      "hi95": 0.002
+     },
+     "lo95_ge_0": false
+    },
+    "s=0.75": {
+     "rho_candidate": 0.4081,
+     "rho_incumbent": 0.4167,
+     "gap_ci_v1": {
+      "mean": -0.0087,
+      "lo95": -0.019,
+      "hi95": 0.0021
+     },
+     "lo95_ge_0": false
+    }
+   },
+   "extreme_park_diagnostic": {
+    "threshold_abs": 14.0,
+    "n": 189,
+    "rho_incumbent": 0.4074,
+    "rho_candidate_s0.5": 0.3838,
+    "gap_ci_v1": {
+     "mean": -0.0236,
+     "lo95": -0.0443,
+     "hi95": -0.0043
+    },
+    "note": "diagnostic only (never a gate); iid bootstrap on the extreme-park subset"
+   },
+   "gate": {
+    "bar": "paired bootstrap lo95(rho_cand - rho_incumbent) >= 0 on the identical complete-outcome pair set (s=0.5 primary)",
+    "convention": "v1",
+    "seed": 20260715,
+    "boot": 2000,
+    "pass": false,
+    "pass_under_v2": false
+   },
+   "experiment": "X-S7",
+   "model": "sem_plus",
+   "candidate": "plain SEM+ skill core (no GB adjust) with the HR shrink target scaled by the predictor-year park",
+   "pair_thresholds": {
+    "ip_y": 50.0,
+    "ip_next": 40.0
+   }
+  },
+  "X-H-park_hem_plus": {
+   "n_forward_pairs": 3372,
+   "n_pairs_park_known": 3068,
+   "n_pairs_neutral_fallback": 304,
+   "n_partial_outcome_pairs_dropped": 0,
+   "park_index_over_pairs": {
+    "mean": 100.1287,
+    "sd": 15.5489,
+    "n_extreme": 1313
+   },
+   "target": "wOBA in year Y+1 (v1 raw pooled; v2 within-outcome-season z)",
+   "incumbent_rho_v1": 0.4119,
+   "candidate_rho_v1_s0.5": 0.4111,
+   "gap_ci_v1_s0.5": {
+    "mean": -0.0008,
+    "lo95": -0.0027,
+    "hi95": 0.0011
+   },
+   "gap_ci_v2_s0.5": {
+    "mean": -0.0007,
+    "lo95": -0.0027,
+    "hi95": 0.0013
+   },
+   "results_by_convention_s0.5": {
+    "v1": {
+     "rho_primary": 0.4111,
+     "rho_baselines": {
+      "vs_incumbent": 0.4119
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0008,
+       "lo95": -0.0027,
+       "hi95": 0.0011
+      }
+     }
+    },
+    "v2": {
+     "rho_primary": 0.4184,
+     "rho_baselines": {
+      "vs_incumbent": 0.4191
+     },
+     "gap_ci": {
+      "vs_incumbent": {
+       "mean": -0.0007,
+       "lo95": -0.0027,
+       "hi95": 0.0013
+      }
+     },
+     "cluster": {
+      "n_pairs": 3372,
+      "n_players": 945,
+      "max_pairs_per_player": 11,
+      "mean_pairs_per_player": 3.57,
+      "n_strata_first_pred_season": 11
+     }
+    }
+   },
+   "sensitivity": {
+    "s=0.25": {
+     "rho_candidate": 0.4117,
+     "rho_incumbent": 0.4119,
+     "gap_ci_v1": {
+      "mean": -0.0002,
+      "lo95": -0.0012,
+      "hi95": 0.0008
+     },
+     "lo95_ge_0": false
+    },
+    "s=0.75": {
+     "rho_candidate": 0.4101,
+     "rho_incumbent": 0.4119,
+     "gap_ci_v1": {
+      "mean": -0.0018,
+      "lo95": -0.0045,
+      "hi95": 0.001
+     },
+     "lo95_ge_0": false
+    }
+   },
+   "extreme_park_diagnostic": {
+    "threshold_abs": 14.0,
+    "n": 1313,
+    "rho_incumbent": 0.4679,
+    "rho_candidate_s0.5": 0.4659,
+    "gap_ci_v1": {
+     "mean": -0.002,
+     "lo95": -0.0067,
+     "hi95": 0.0027
+    },
+    "note": "diagnostic only (never a gate); iid bootstrap on the extreme-park subset"
+   },
+   "gate": {
+    "bar": "paired bootstrap lo95(rho_cand - rho_incumbent) >= 0 on the identical complete-outcome pair set (s=0.5 primary)",
+    "convention": "v1",
+    "seed": 20260715,
+    "boot": 2000,
+    "pass": false,
+    "pass_under_v2": false
+   },
+   "experiment": "X-H-park",
+   "model": "hem_plus",
+   "candidate": "HEM+ skill core with ONLY the HR component's shrink target park-conditioned (2B/3B stay pool-mean)",
+   "pair_thresholds": {
+    "pa_y": 150.0,
+    "pa_next": 150.0
+   }
+  }
+ },
+ "runtime_seconds": 56.2,
+ "program_ledger": {
+  "verdict": "rejected",
+  "note": "LOSS LEDGER. 0/15 cells positive (3 models x 3 s x 2 conventions; best +0.0001). Extreme-park SEM+ cell significantly NEGATIVE (-0.0236) - the prior hurts most where it should help most. Mechanism: targets are raw next-season RA9/wOBA and players mostly KEEP their park, so the park-inflected component of the incumbent is itself predictive; park-adjusting the prior removes real signal. Park-shrink-target thread CLOSED against raw targets."
+ }
+}

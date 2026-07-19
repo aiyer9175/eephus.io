@@ -1,0 +1,245 @@
+# eephus.io - webmaster runbook (refreshed 2026-07-18)
+
+Hand this file to whoever runs the production box. Following it top to bottom
+takes a fresh box to a self-updating nightly deploy that serves a site
+**byte-for-byte identical to the developer's local build** - same code, same
+seeded database, same `build_site.py` / `run_monthly.py`, same test gate.
+
+Assumes: Ubuntu-ish box, nginx, Python 3.12, a `deploy` user that owns
+`/opt/eephus`. Companion doc: `deploy/README.md` (architecture rationale, nginx
+config, DB seeding). The build entry point is `deploy/nightly-build.sh`.
+
+---
+
+## 0. The model in one paragraph (why the site matches local)
+
+There is exactly ONE nightly writer: this box. It `git pull`s the repo, runs the
+same pipeline (`run_monthly.py` / `--daily`) against a **seeded canonical
+`prospects.db`**, runs `build_site.py`, runs the full pytest gate, and only then
+rsyncs to the nginx webroot. Because the box uses the same code and the same
+seeded database the developer used, the published pages are identical to the
+local `python build_site.py && python -m http.server 8000` experience. GitHub
+Actions is a break-glass CI path only (it does not publish unless explicitly
+armed - see deploy/README.md). Do not add a second writer.
+
+---
+
+## 1. Which branch the box tracks
+
+**Track `beta`.** Development lands on `main`; a single `Sync beta to main@<sha>`
+commit then delivers a full-tree snapshot of main onto `beta` (an orphan
+operations branch), and the box's nightly `git pull --ff-only` picks it up. This
+is the established delivery path (the operator's own box-side fixes have
+historically been committed on `beta`, and the developer pushes the sync
+commits).
+
+One-time, on the box:
+
+```bash
+git -C /opt/eephus/repo checkout beta
+git -C /opt/eephus/repo branch --set-upstream-to=origin/beta beta
+git -C /opt/eephus/repo rev-parse --abbrev-ref HEAD   # must print: beta
+```
+
+> As of 2026-07-18 `main` and `beta` point at identical trees (main@3e06473 ==
+> beta@07a22a7), so a box on either branch builds the same site tonight. The
+> divergence risk returns the moment `main` moves without a beta sync - hence
+> pin the box to `beta` and rely on the sync commits. If you ever find the box on
+> `main`, that is fine too, but then it will pick up dev work a sync-commit
+> earlier than beta-tracking boxes; keep all your boxes on the SAME branch.
+
+The nightly script is branch-agnostic (`git pull --ff-only` on whatever branch is
+checked out), so no script change is needed - just check out `beta` once.
+
+---
+
+## 2. One-time: install the canonical database (do NOT skip)
+
+The live numbers are only correct with the seeded database - a cold rebuild
+cannot recover the 2021+ grade-history archive and silently publishes wrong FV
+histories and surplus values. The owner produces the seeds on the dev machine
+(see deploy/README.md "Seeding the canonical database"):
+`prospects.seed.db.gz` (~250-350MB), `cache-core.tgz` (~1GB of FanGraphs pages
+that CANNOT be refetched + rate-limited scrape caches), and `fg-imports.tgz`
+(hand-curated FanGraphs CSVs the pipeline ingests). Verify then install:
+
+```bash
+cd /opt/eephus
+sha256sum -c SHA256SUMS.txt            # verify the three files first
+gunzip prospects.seed.db.gz
+mv prospects.seed.db repo/prospect-tracker/prospects.db
+tar xzf cache-core.tgz -C repo/prospect-tracker/
+tar xzf fg-imports.tgz -C repo/prospect-tracker/
+```
+
+The nightly script REFUSES to run without `prospects.db` (`prospects.db is
+MISSING` abort). If you see that, restore the seed or a backup - never force a
+cold rebuild with the override flag; that is exactly the wrong-numbers bug.
+
+Seed vintage note: a seed cut on/after 2026-07-16 already contains the 2026
+draft ingestion and the draft-board-leak + debut-date repairs, so you do NOT need
+`tools/delete_draft_board_leak.py` / `tools/repair_debut_snapshots_2026.py` after
+installing it. Those tools only matter for a database older than the seed.
+
+---
+
+## 3. One-time: repo + venv (skip what already exists)
+
+```bash
+sudo mkdir -p /opt/eephus && sudo chown deploy /opt/eephus
+git clone https://github.com/aiyer9175/eephus.io.git /opt/eephus/repo
+git -C /opt/eephus/repo checkout beta        # section 1
+python3.12 -m venv /opt/eephus/venv
+/opt/eephus/venv/bin/pip install -r /opt/eephus/repo/prospect-tracker/requirements.txt
+```
+
+The build script expects the venv at `/opt/eephus/venv` and the webroot at
+`/var/www/eephus.io` (override with `EEPHUS_VENV` / `EEPHUS_WEBROOT` if your
+layout differs). `pip install` is re-run every night to pick up requirement
+changes, so a new dependency lands automatically.
+
+---
+
+## 4. First build (manual, watch it)
+
+```bash
+EEPHUS_FULL=1 /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh 2>&1 | tee /opt/eephus/nightly.log
+```
+
+Order of events: flock -> `git checkout -- .` (restore tracked artifacts the
+prior pipeline rewrote) -> `git pull --ff-only` -> pip sync -> full pipeline
+(30-60 min warm; longer if you skipped the cache seed) -> `build_site.py` ->
+test gate -> `build_info.json` heartbeat -> rsync to webroot -> gzip precompress.
+A red test suite stops before the rsync on purpose: the live site is never
+replaced by a broken build.
+
+---
+
+## 5. Install the crons (this is the "auto-updates daily")
+
+`crontab -e` as the deploy user:
+
+```cron
+# consistent DB backup a few minutes before the build (%'s must be escaped)
+55 2 * * * TZ=America/New_York mkdir -p /opt/eephus/backups && sqlite3 /opt/eephus/repo/prospect-tracker/prospects.db ".backup /opt/eephus/backups/prospects-$(date +\%Y\%m\%d).db"
+# nightly build + publish, 03:10 ET (inside the 2-4am ET quiet window)
+10 3 * * * TZ=America/New_York /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh >> /opt/eephus/nightly.log 2>&1
+```
+
+The script auto-selects the mode: the FULL monthly pipeline on the 1st of the
+month (or with `EEPHUS_FULL=1`, or if `prospects.db` is absent), the fast
+`--daily` refresh every other night. Force a full rebuild any time with
+`EEPHUS_FULL=1 .../nightly-build.sh`. Prune `/opt/eephus/backups` on whatever
+retention you like (a week or two is plenty).
+
+### What "auto-refresh" does each night (the mechanics)
+
+cron 03:10 ET -> `git checkout -- .` + `git pull --ff-only` (picks up new beta
+commits) -> pip sync -> pipeline (`--daily`, or FULL on the 1st) refreshes
+prospects.db from the live sources and rewrites the tracked `data/*.json` +
+generated pages -> `build_site.py` rebuilds every HTML page (so the committed
+built pages in git are irrelevant; the box regenerates them) -> pytest gate ->
+`data/build_info.json` heartbeat written -> rsync `--delete` to the webroot ->
+`gzip -9` twins for nginx `gzip_static`. Reader-facing freshness shows on the
+PROSPX footer (`data_freshness` stamp) and in `timeseries.json` `generated_at`.
+
+---
+
+## 6. nginx + Cloudflare (verify once)
+
+nginx (full block in deploy/README.md): `gzip_static on;` (without it the boot
+JSON ships uncompressed), `error_page 404 /404.html`, `location /data/` ->
+`max-age=604800` (safe: payloads are `?v=<stamp>` cache-busted), `/assets/` and
+`*.html` -> `no-cache` (ETag + gzip_static make revalidation a cheap 304), and
+Range requests must stay enabled (the PROSPX boot probe reads bytes 0-2048 of
+`timeseries.json` for its version stamp). After edits: `sudo nginx -t &&
+sudo systemctl reload nginx`.
+
+Cloudflare (dashboard, verify once):
+- Caching -> Browser Cache TTL -> **"Respect Existing Headers"** (it was
+  rewriting `/assets/` no-cache to a 4h max-age, so users saw stale assets).
+- No "Cache Everything" rules on `/data/` or HTML.
+- The bot managed-challenge 403s non-browser user agents - point any uptime
+  monitor at the site with a browser User-Agent (or add a WAF skip).
+- After the first successful build, do one "Purge Cache -> purge everything".
+
+---
+
+## 7. Verify
+
+```bash
+# heartbeat: generated_at must be tonight and must advance every night
+curl -s -A "Mozilla/5.0" https://eephus.io/data/build_info.json
+
+# every module page + script dep + per-player shard dir must be 200
+for p in /prospx/ /fa/ /projections/ /mlbstats/ /pal/ /trademachine/ \
+         /collegesavant/ /news/ /report/ \
+         /data/value_framework.js /data/collegesavant_translation.js \
+         /data/source_backtest.json /data/photo_ctx.json /data/build_info.json \
+         /data/debuts_full/ ; do
+  curl -s -o /dev/null -w "%{http_code} $p\n" -A "Mozilla/5.0" https://eephus.io$p
+done
+```
+
+Data-sanity spot checks (confirms the site matches the intended local build):
+1. Open any top prospect's detail page on `/prospx/` - the FV-history chart
+   should show a multi-year line with many points per source (a degraded/cold
+   DB shows only 2026 points). This is the single best "is the seed installed"
+   check.
+2. Open a **Farm Systems** detail page - the "graded prospects by level" list and
+   the affiliate-rosters table must show the SAME eFV grade for the same player
+   (the 2026-07-18 A2 fix). If they disagree, the deploy is serving pre-A2 code.
+3. Open a graduate card, then open a second one - the per-player `debuts_full/`
+   shard should load (Network tab shows `debuts_full/<key>.json`, 200) rather
+   than re-pulling the whole debuts monolith (the 2026-07-18 A1 fix; the shard
+   dir is now in both the rsync manifest and CI staging).
+4. On any list, click **Generate GFX** - the graphic should render with the
+   current filters/sort and a scannable QR.
+
+---
+
+## 8. Ongoing / troubleshooting
+
+- `generated_at` in `build_info.json` stalls => `tail -200 /opt/eephus/nightly.log`.
+  The script prints a loud `!!! WEBROOT STALE` banner when `index.html` in the
+  webroot is >48h old, and the test gate prints its failures right above the
+  missing rsync. The step-summary tail names the failed phase.
+- The nightly test gate runs under `EEPHUS_DEPLOY_RUN=1`, which relaxes the
+  dev-time exact-hash golden tripwires to shape checks (a deploy run legitimately
+  regenerates them). Do not remove that flag - its absence is what froze
+  publishing after 2026-07-11.
+- A log line `OWNER ACTION PENDING: editorial_eval` (if it appears) is informational
+  for the owner; deploys are NOT frozen by it - the nightly SKIPS that step with a
+  warning and keeps publishing. (Older docs describing a hard editorial-eval
+  freeze are superseded.)
+- GitHub Actions does NOT touch this box unless the repo variable
+  `EEPHUS_CI_PUBLISH` is set to `true` (break-glass only, e.g. box outage). Normal
+  operation: this box is the only writer. A CI runner's DB is a degraded cold
+  rebuild, so arm CI publish only during a real outage, then unset it.
+- Ongoing FanGraphs data: scp new CSVs to `data/fangraphs_imports/` on the box,
+  then force one `EEPHUS_FULL=1 .../nightly-build.sh` to ingest them.
+- State worth backing up: `prospects.db` (cron above) and `.cache/`. Everything
+  else rebuilds from the repo. Note that `data/scout_reports.json` on the webroot
+  is a frozen fallback (it is publish-excluded but survives via rsync without
+  `--delete-excluded`); its live content ships via the chunked
+  `scout_reports_*.json` shards.
+
+---
+
+## 9. What changed since the last runbook (2026-07-14 -> 2026-07-18)
+
+- **Branch pinned (section 1).** The prior runbook cloned without naming a branch;
+  the box now explicitly tracks `beta`.
+- **debuts_full shards now ship.** `deploy/nightly-build.sh` and the CI staging
+  step gained `/data/debuts_full/***`; the PROSPX graduate-card lazy-load was
+  fixed to read the shard directory (2026-07-18 A1). Verify #3 above covers it.
+- **The old "what is wrong today" section is retired** - the July 2026 incidents
+  (404ing modules, frozen CI, cold-rebuilt wrong numbers) are fixed in the repo
+  and this runbook describes the healthy steady state, not the recovery.
+- **Boot-payload size:** the 2026-07-15..17 payload-slimming program (prospx
+  sharding, debuts lite/full split, scout-report chunking, CollegeSavant
+  year-split) materially reduced wire weight; re-measure with the browser Network
+  tab if you need a current figure rather than trusting an old "~26MB" number.
+- After any new dev work lands on `main`, a `Sync beta to main@<sha>` commit is
+  the prerequisite for this box (on `beta`) to pick it up; confirm the box built
+  it via `build_info.json`'s `git_sha`.

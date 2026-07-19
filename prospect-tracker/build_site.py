@@ -147,26 +147,17 @@ NAV_ITEMS = [
     ("team",     "Developers",        "/team/"),
 ]
 
-# Nav keys not part of THIS beta release. The pages themselves still get
-# generated (build_site's route list doesn't change), but they're excluded
-# from the deploy rsync allowlist, so a real nav link would 404. Rendered
-# greyed-out with no href instead. Revert by emptying this set once those
-# modules are ready to ship.
-DISABLED_NAV_KEYS = {"mlbstats", "pal", "trademachine"}
-
 def _nav_is_group(item) -> bool:
     """A NAV_ITEMS entry is a group when it's a dict (vs a (key,label,href) leaf)."""
     return isinstance(item, dict)
 
 def nav_leaves() -> list[tuple]:
     """Flatten NAV_ITEMS (groups + leaves) to (key, label, href) in nav order -
-    the canonical link set the static nav copies must mirror. Excludes
-    DISABLED_NAV_KEYS entries - those render as greyed, non-linked text
-    (see _nav()), not real links, so they're not part of the link set."""
+    the canonical link set the static nav copies must mirror."""
     out: list[tuple] = []
     for item in NAV_ITEMS:
         if _nav_is_group(item):
-            out.extend(c for c in item["children"] if c[0] not in DISABLED_NAV_KEYS)
+            out.extend(item["children"])
         else:
             out.append(item)
     return out
@@ -639,10 +630,6 @@ def _nav(active: str) -> str:
             active_in = any(k == active for k, _l, _h in children)
             clinks = []
             for k, l, h in children:
-                if k in DISABLED_NAV_KEYS:
-                    clinks.append(f'<span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" '
-                                  f'title="Not part of this beta release yet">{html.escape(short.get(k, l))}</span>')
-                    continue
                 ccls = ' class="is-active"' if k == active else ""
                 clinks.append(f'<a href="{h}" role="menuitem"{ccls}>{html.escape(short.get(k, l))}</a>')
             gcls = " is-active" if active_in else ""
@@ -1709,16 +1696,24 @@ def _this_day_html(graduates: list, players: list | None = None, n: int = 5) -> 
     today = date.today()
 
     def _anniv_prox(d: "date") -> int | None:
-        """Days between `d`'s anniversary this year and today; None if the
-        date is this year/later or doesn't map onto the current year."""
+        """Days between `d`'s nearest anniversary and today; None if the
+        date is this year/later or doesn't map onto a nearby year (Feb 29).
+        Checks the adjacent years too so a late-Dec/early-Jan anniversary
+        survives the year boundary; the event date itself never counts
+        (a days-old December debut is not history on Jan 1)."""
         if d.year >= today.year:
             return None
-        try:
-            anniv = date(today.year, d.month, d.day)
-        except ValueError:
-            return None
-        prox = abs((anniv - today).days)
-        return prox if prox <= 4 else None
+        prox = None
+        for yr in (today.year - 1, today.year, today.year + 1):
+            try:
+                anniv = date(yr, d.month, d.day)
+            except ValueError:
+                continue
+            if anniv == d:
+                continue
+            p = abs((anniv - today).days)
+            prox = p if prox is None else min(prox, p)
+        return prox if prox is not None and prox <= 4 else None
 
     # ---- Debuts on this day ----
     cands = []  # (date_proximity, -prominence, debut_date, grad)
@@ -2007,11 +2002,6 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
             # dropdown is for the horizontal top bar; the rail has room).
             nav.append(f'<div class="sb-subhead">{html.escape(item["group"])}</div>')
             for k, l, h in item["children"]:
-                if k in DISABLED_NAV_KEYS:
-                    icon = f'<span class="sb-ico" aria-hidden="true">{sidebar_icons.get(k, "›")}</span>'
-                    nav.append(f'<span class="sb-grouped eephus-nav-disabled" aria-disabled="true" '
-                               f'title="Not part of this beta release yet">{icon}{html.escape(sidebar_labels.get(k, l))}</span>')
-                    continue
                 nav.append(_sb_link(k, l, h, grouped=True))   # leaf label under the subhead
         else:
             key, label, href = item
@@ -2435,6 +2425,7 @@ def build_mlbstats() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/mlbstats.js?v={_MLBSTATS_VER}" defer></script>'
     )
     return page("MLB Stats - eephus.io", "mlbstats", body,
@@ -2447,8 +2438,9 @@ def build_pal() -> str:
     """The /pal/ Pitcher Alchemy Lab - role-conversion evaluation for MLB
     pitchers. Three sections: RP->SP Candidates (which relievers profile as
     starters), SP->RP Candidates (which starters would shine in relief), and
-    Conversion History (a validated archive of past SP<->RP switches that
-    doubles as the model's training/backtest set, plus pitch-mix changes).
+    Conversion History (an archive of past SP<->RP switches that doubles as
+    the model's backtest set, plus pitch-mix changes). Backtest evidence is
+    per direction: SP->RP validated, RP->SP structural screen only.
     Static shell + assets/pal.js, which fetches the pal_export.py sidecar
     (data/pal.json). Reuses the arsenal / velocity / platoon Statcast data, the
     validated REM+ model, and PROSPX prospect role history. Styles ride the
@@ -2458,7 +2450,9 @@ def build_pal() -> str:
         f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
         f'<h1>Pitcher Alchemy Lab <span class="eephus-beta" title="{html.escape(MODULE_STAGE["pal"][1])}">β beta</span></h1></div>'
         '<span class="section-sub">Turning relievers into starters and starters into relievers. Which arms profile '
-        'for the other role, and a validated history of the conversions that worked and the ones that did not.</span></div>'
+        'for the other role, plus the history of the conversions that worked and the ones that did not. The backtest '
+        'grades each direction on its own: the starter-to-relief signal is validated, the reliever-to-starter list '
+        'is a structural screen.</span></div>'
         '<div class="mlbstats-sectionnav" role="tablist" aria-label="PAL sections">'
         '<button type="button" class="mlbstats-sectionbtn active" data-palsection="rp2sp" role="tab" aria-selected="true">RP&rarr;SP Candidates</button>'
         '<button type="button" class="mlbstats-sectionbtn" data-palsection="sp2rp" role="tab" aria-selected="false">SP&rarr;RP Candidates</button>'
@@ -2473,11 +2467,12 @@ def build_pal() -> str:
         '</div>'
         '</div>'
         f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
         f'<script src="/assets/pal.js?v={_PAL_VER}" defer></script>'
     )
     return page("Pitcher Alchemy Lab - eephus.io", "pal", body,
                 "Pitcher Alchemy Lab: which MLB relievers profile as starters and which starters would shine in "
-                "relief, with a validated history of past role conversions. Arsenal depth, command, platoon splits, "
+                "relief, with a backtested history of past role conversions. Arsenal depth, command, platoon splits, "
                 "and role-adjusted velocity, computed from Statcast.",
                 url=f"{SITE_ORIGIN}/pal/")
 

@@ -1,0 +1,306 @@
+{
+ "experiment": "E1 defensive tool grades into eFV (owner ask 2026-07-15)",
+ "generated_at": "2026-07-15",
+ "protocol": {
+  "lab": "tools/efv_lab_runner.py (forward-chained folds 2020-2023, ridge blend)",
+  "arms": [
+   "BASE_hit",
+   "field (tool_field)",
+   "dtool_proxy (0.7*field + 0.3*speed)",
+   "field_x_pos (field * pos_prem)",
+   "field_plus_interaction"
+  ],
+  "gate": "Ship gate (docs/efv-2026-07-14/GATES.md): pooled rho >= base + 0.0046 AND within_tier_wm >= base - 0.0023 AND t45 >= base - 0.0023, per side.",
+  "ledger_position": "Distinct mechanism from the ledgered prospect_def_value swap (position-migration model): these are the ISOLATED scouting tool-grade arms the owner asked about. tool_throw is not vectorized (2017-2020-only coverage), so the D-Tool proxy uses field+speed."
+ },
+ "baseline": {
+  "n": 353,
+  "spearman": 0.3782,
+  "within_tier_wm": 0.1714,
+  "t45": 0.0876
+ },
+ "verdict": "rejected - every arm REGRESSES all three gate metrics",
+ "detail": "field 0.3758/0.1592/0.0414, dtool_proxy 0.3768/0.1583/0.0422, field_x_pos 0.3758/0.1613/0.0835, field+interaction 0.3755/0.1617/0.0377 vs base 0.3782/0.1714/0.0876. Replicates the def_value ledger's conclusion via a different mechanism: the binding constraint is the offense-dominated first-6yr WAR target, not defense measurement.",
+ "variants": [
+  {
+   "id": "BASE_hit",
+   "side": "hit",
+   "target": "censored",
+   "cohort": null,
+   "n": 353,
+   "spearman": 0.3782,
+   "within_tier_wm": 0.1714,
+   "t45": 0.0876,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3736
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1876
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2609
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0876
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1857
+    }
+   },
+   "era": {
+    "2019-2021": 0.2923,
+    "2022-2023": 0.425
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3535
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.46
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3196
+    }
+   },
+   "per_year": {
+    "2020": 0.3477,
+    "2021": 0.2197,
+    "2022": 0.5605,
+    "2023": 0.2469
+   }
+  },
+  {
+   "id": "field",
+   "side": "hit",
+   "target": "censored",
+   "cohort": null,
+   "n": 353,
+   "spearman": 0.3758,
+   "within_tier_wm": 0.1592,
+   "t45": 0.0414,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3577
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1973
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2717
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0414
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2208
+    }
+   },
+   "era": {
+    "2019-2021": 0.304,
+    "2022-2023": 0.416
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3613
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.452
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3101
+    }
+   },
+   "per_year": {
+    "2020": 0.3691,
+    "2021": 0.2271,
+    "2022": 0.5537,
+    "2023": 0.2392
+   }
+  },
+  {
+   "id": "dtool_proxy",
+   "side": "hit",
+   "target": "censored",
+   "cohort": null,
+   "n": 353,
+   "spearman": 0.3768,
+   "within_tier_wm": 0.1583,
+   "t45": 0.0422,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3694
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.199
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2673
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0422
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.2597
+    }
+   },
+   "era": {
+    "2019-2021": 0.3007,
+    "2022-2023": 0.4187
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.363
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4529
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3145
+    }
+   },
+   "per_year": {
+    "2020": 0.3571,
+    "2021": 0.2271,
+    "2022": 0.5555,
+    "2023": 0.2432
+   }
+  },
+  {
+   "id": "field_x_pos",
+   "side": "hit",
+   "target": "censored",
+   "cohort": null,
+   "n": 353,
+   "spearman": 0.3758,
+   "within_tier_wm": 0.1613,
+   "t45": 0.0835,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3653
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.1747
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.2368
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0835
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.174
+    }
+   },
+   "era": {
+    "2019-2021": 0.2893,
+    "2022-2023": 0.4235
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3508
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4544
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.3171
+    }
+   },
+   "per_year": {
+    "2020": 0.3417,
+    "2021": 0.2193,
+    "2022": 0.5602,
+    "2023": 0.2447
+   }
+  },
+  {
+   "id": "field_plus_interaction",
+   "side": "hit",
+   "target": "censored",
+   "cohort": null,
+   "n": 353,
+   "spearman": 0.3755,
+   "within_tier_wm": 0.1617,
+   "t45": 0.0377,
+   "per_tier": {
+    "50": {
+     "n": 42,
+     "rho": 0.3658
+    },
+    "40": {
+     "n": 116,
+     "rho": 0.2002
+    },
+    "55": {
+     "n": 57,
+     "rho": 0.263
+    },
+    "45": {
+     "n": 95,
+     "rho": 0.0377
+    },
+    "60": {
+     "n": 21,
+     "rho": -0.1727
+    }
+   },
+   "era": {
+    "2019-2021": 0.3014,
+    "2022-2023": 0.4159
+   },
+   "per_cohort": {
+    "college": {
+     "n": 131,
+     "rho": 0.3615
+    },
+    "hs": {
+     "n": 113,
+     "rho": 0.4544
+    },
+    "ifa": {
+     "n": 104,
+     "rho": 0.31
+    }
+   },
+   "per_year": {
+    "2020": 0.3639,
+    "2021": 0.2258,
+    "2022": 0.5537,
+    "2023": 0.235
+   }
+  }
+ ]
+}

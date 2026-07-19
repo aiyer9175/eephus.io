@@ -26,7 +26,7 @@
     <script>(function(){try{var t=localStorage.getItem("prospect-tracker.theme");if(!t)t=(window.matchMedia&&matchMedia("(prefers-color-scheme: dark)").matches)?"dark":"light";document.documentElement.setAttribute("data-theme",t);}catch(e){}})();function eephusToggleTheme(){try{var c=document.documentElement.getAttribute("data-theme")==="dark"?"light":"dark";document.documentElement.setAttribute("data-theme",c);localStorage.setItem("prospect-tracker.theme",c);}catch(e){}}</script>
     <link rel="stylesheet" href="/assets/site.css?v=20260709" />
     <link rel="stylesheet" href="/assets/eephus-account.css?v=20260709" />
-    <link rel="stylesheet" href="styles.css?v=20260709" />
+    <link rel="stylesheet" href="styles.css?v=20260717" />
   </head>
   <body>
     <!-- Site-wide nav - mirrors build_site.py NAV_ITEMS (keep in sync) -->
@@ -43,9 +43,9 @@
           <div class="eephus-nav-menu" role="menu">
             <a href="/fa/" role="menuitem">Free Agency</a>
             <a href="/projections/" role="menuitem">Projections</a>
-            <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">MLB Stats</span>
-            <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Pitcher Alchemy Lab</span>
-            <span class="eephus-nav-disabled" role="menuitem" aria-disabled="true" title="Not part of this beta release yet">Trade Machine</span>
+            <a href="/mlbstats/" role="menuitem">MLB Stats</a>
+            <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
+            <a href="/trademachine/" role="menuitem">Trade Machine</a>
           </div>
         </details>
         <a href="/articles/">Articles</a>
@@ -85,17 +85,22 @@
     </main>
 
     <!-- Data + app, deferred: the page paints before the payloads parse.
-         hitter_year_data.js (14MB) is lazy-injected by the global search on
-         first use; pitch_shape_data_2024/2025.js (38MB/1.6MB) are
-         lazy-injected by renderPitchShapePlot when a pitcher detail with
-         that season's tracking opens (pitcher_app.js ensurePitchShapes). -->
-    <script src="data.js?v=20260709" defer></script>
-    <script src="pitcher_data.js?v=20260709" defer></script>
+         hitter_year_data.js is lazy-injected by the global search on first
+         use; pitch_shape_data_2024/2025.js (38MB/1.6MB) are lazy-injected by
+         renderPitchShapePlot when a pitcher detail with that season's
+         tracking opens (pitcher_app.js ensurePitchShapes). Pitch tables are
+         split per year: only the small recent seasons ship at boot; the
+         11.6MB pitcher_pitch_data_2024.js is lazy-injected by
+         pitcher_app.js ensurePitchData when a 2024 view opens. -->
+    <script src="data.js?v=20260717" defer></script>
+    <script src="pitcher_data.js?v=20260717" defer></script>
+    <script src="pitcher_pitch_data_2025.js?v=20260717" defer></script>
+    <script src="pitcher_pitch_data_2026.js?v=20260717" defer></script>
     <script src="/data/collegesavant_translation.js" defer></script>
     <script src="/data/collegesavant_draft_prospects.js" defer></script>
     <script src="global_search.js?v=20260709" defer></script>
     <script src="table_sort.js?v=20260709" defer></script>
-    <script src="pitcher_app.js?v=20260709" defer></script>
+    <script src="pitcher_app.js?v=20260717" defer></script>
     <script src="/assets/eephus-config.js?v=20260709" defer></script>
     <script src="/assets/eephus-account.js?v=20260709" defer></script>
     <script src="/assets/eephus-nav.js?v=20260709" defer></script>
@@ -103,6 +108,7 @@
     <script src="/assets/eephus-bg.js?v=20260709" defer></script>
     <script src="/assets/eephus-gl.js?v=20260709" defer></script>
     <script src="/assets/eephus-hub.js?v=20260709" defer></script>
+    <script src="/assets/eephus-gfx.js?v=20260709" defer></script>
     <script src="/assets/eephus-export.js?v=20260709" defer></script>
   </body>
 </html>

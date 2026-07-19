@@ -36,13 +36,25 @@ def test_fv_tape_flag_gating():
             except Exception as e:  # noqa: BLE001
                 pytest.skip(f"chromium unavailable: {e}")
 
+            # The tape renders inside the same template string as the player
+            # page's "FV history" .detail-title (see makeFvTape's call site
+            # in prospx/index.html), so once any .detail-title exists the
+            # .fv-tape count is final - a deterministic signal for BOTH the
+            # on and off cases, replacing the old fixed 2.5s sleeps.
+            # Timeouts are swallowed so the assertions report the failure.
+            def _wait_player_rendered(pg):
+                try:
+                    pg.wait_for_selector(".detail-title", timeout=30000)
+                except Exception:
+                    pass
+
             # Surfaced: on by default in a clean context.
             ctx_on = browser.new_context()
             p1 = ctx_on.new_page()
             errs = []
             p1.on("pageerror", lambda e: errs.append(str(e)))
             p1.goto(f"{base}#player={PLAYER}", wait_until="networkidle", timeout=45000)
-            p1.wait_for_timeout(2500)
+            _wait_player_rendered(p1)
             on = p1.eval_on_selector_all(".fv-tape", "e => e.length")
             ctx_on.close()
 
@@ -50,7 +62,7 @@ def test_fv_tape_flag_gating():
             ctx_off = browser.new_context()
             p2 = ctx_off.new_page()
             p2.goto(f"{base}?tape=0#player={PLAYER}", wait_until="networkidle", timeout=45000)
-            p2.wait_for_timeout(2500)
+            _wait_player_rendered(p2)
             off = p2.eval_on_selector_all(".fv-tape", "e => e.length")
             ctx_off.close()
             browser.close()

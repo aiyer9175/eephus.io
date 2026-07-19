@@ -1,0 +1,105 @@
+{"experiment_id": "game_manifest_v1", "timestamp": "2026-06-11T23:46:14", "pid": 72262, "seasons": [2021, 2022, 2023, 2024, 2025, 2026], "sports": [1, 11, 12, 13, 14, 16], "n_games": 68866, "out": "/Users/willcahoon/milb_decision_plus/data/raw/game_manifest/game_manifest.parquet"}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:48:48", "pid": 72430, "season": 2026, "level": "CPX", "n_games": 632, "minutes": 0.1}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:50:21", "pid": 72523, "season": 2025, "level": "AAA", "n_games": 2232, "minutes": 0.8}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:51:02", "pid": 72523, "season": 2025, "level": "MLB", "n_games": 2430, "minutes": 0.7}
+{"experiment_id": "official_statlines_v1", "timestamp": "2026-06-11T23:52:12", "pid": 72723, "seasons": [2021, 2022, 2023, 2024, 2025, 2026], "sports": [1, 11, 12, 13, 14, 16], "n_raw": 35561, "n_agg": 35561}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:52:18", "pid": 72523, "season": 2025, "level": "AA", "n_games": 2056, "minutes": 1.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:52:57", "pid": 72523, "season": 2025, "level": "A+", "n_games": 1958, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:53:34", "pid": 72523, "season": 2025, "level": "A", "n_games": 1948, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:54:11", "pid": 72523, "season": 2025, "level": "CPX", "n_games": 2313, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:54:29", "pid": 72523, "season": 2026, "level": "AAA", "n_games": 980, "minutes": 0.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:54:45", "pid": 72523, "season": 2026, "level": "MLB", "n_games": 1024, "minutes": 0.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:54:57", "pid": 72523, "season": 2026, "level": "AA", "n_games": 888, "minutes": 0.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:55:08", "pid": 72523, "season": 2026, "level": "A+", "n_games": 883, "minutes": 0.2}
+{"experiment_id": "pa_reconstruction_gate_v1", "timestamp": "2026-06-11T23:55:11", "pid": 72904, "gate": "PASS", "n_games": 4288, "dup_pa": 0, "worst_exact": 0.98556}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:55:20", "pid": 72523, "season": 2026, "level": "A", "n_games": 896, "minutes": 0.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:57:15", "pid": 72523, "season": 2024, "level": "AAA", "n_games": 2232, "minutes": 1.9}
+{"experiment_id": "player_metrics_v1", "timestamp": "2026-06-11T23:57:43", "pid": 73152, "n_rows": 5567, "seasons": [2025]}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-11T23:57:56", "pid": 72523, "season": 2024, "level": "MLB", "n_games": 2429, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:02:01", "pid": 72523, "season": 2024, "level": "AA", "n_games": 2053, "minutes": 4.1}
+{"experiment_id": "transitions_v1", "timestamp": "2026-06-12T00:02:22", "pid": 73519, "spine": 82222, "next_pairs": 82525, "mlb_pairs": 6460}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:03:34", "pid": 72523, "season": 2024, "level": "A+", "n_games": 1963, "minutes": 1.5}
+{"experiment_id": "baselines_v1", "timestamp": "2026-06-12T00:03:49", "pid": 73577, "train_end": 2023, "decision_file": null, "n_pairs": 28838}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:05:18", "pid": 72523, "season": 2024, "level": "A", "n_games": 1945, "minutes": 1.7}
+{"experiment_id": "level_translation_v1", "timestamp": "2026-06-12T00:06:46", "pid": 73856, "train_end": 2020, "n_ladder": 6, "n_promo": 4}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:08:48", "pid": 72523, "season": 2024, "level": "CPX", "n_games": 2266, "minutes": 3.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:09:59", "pid": 72523, "season": 2023, "level": "AAA", "n_games": 2224, "minutes": 1.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:10:43", "pid": 72523, "season": 2023, "level": "MLB", "n_games": 2430, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:13:14", "pid": 72523, "season": 2023, "level": "AA", "n_games": 2054, "minutes": 2.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:14:34", "pid": 72523, "season": 2023, "level": "A+", "n_games": 1955, "minutes": 1.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:16:06", "pid": 72523, "season": 2023, "level": "A", "n_games": 1952, "minutes": 1.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:20:06", "pid": 72523, "season": 2023, "level": "CPX", "n_games": 2210, "minutes": 4.0}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:20:51", "pid": 72523, "season": 2022, "level": "AAA", "n_games": 2237, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:21:33", "pid": 72523, "season": 2022, "level": "MLB", "n_games": 2430, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:22:43", "pid": 72523, "season": 2022, "level": "AA", "n_games": 2050, "minutes": 1.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:24:26", "pid": 72523, "season": 2022, "level": "A+", "n_games": 1954, "minutes": 1.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:25:58", "pid": 72523, "season": 2022, "level": "A", "n_games": 1956, "minutes": 1.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:30:04", "pid": 72523, "season": 2022, "level": "CPX", "n_games": 2361, "minutes": 4.1}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:30:34", "pid": 72523, "season": 2021, "level": "AAA", "n_games": 1925, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:31:15", "pid": 72523, "season": 2021, "level": "MLB", "n_games": 2429, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:34:22", "pid": 72523, "season": 2021, "level": "AA", "n_games": 1741, "minutes": 3.1}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:35:23", "pid": 72523, "season": 2021, "level": "A+", "n_games": 1772, "minutes": 1.0}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:36:44", "pid": 72523, "season": 2021, "level": "A", "n_games": 1777, "minutes": 1.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T00:41:10", "pid": 72523, "season": 2021, "level": "CPX", "n_games": 2281, "minutes": 4.4}
+{"experiment_id": "player_metrics_v1", "timestamp": "2026-06-12T00:42:15", "pid": 78075, "n_rows": 34049, "seasons": [2021, 2022, 2023, 2024, 2025, 2026]}
+{"experiment_id": "pa_reconstruction_gate_v1", "timestamp": "2026-06-12T00:42:42", "pid": 78200, "gate": "PASS", "n_games": 68866, "dup_pa": 0, "worst_exact": 0.95366}
+{"experiment_id": "decision_plus_v1", "timestamp": "2026-06-12T00:43:00", "pid": 78258, "n": 34049, "train_end": 2023, "weights": {"take_ball_z": 0.0686, "ts_called_z": -0.355, "fp_swing_z": 0.0285, "tb_swing_z": -0.1334, "swing_z": -0.4145}}
+{"experiment_id": "baselines_with_decision", "timestamp": "2026-06-12T00:45:02", "pid": 78490, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 28838}
+{"experiment_id": "baselines_common", "timestamp": "2026-06-12T00:45:54", "pid": 78595, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11624}
+{"experiment_id": "baselines_fusion", "timestamp": "2026-06-12T00:47:08", "pid": 78693, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11624}
+{"experiment_id": "baselines_final", "timestamp": "2026-06-12T00:48:29", "pid": 78800, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11624}
+{"experiment_id": "baselines_oof", "timestamp": "2026-06-12T00:49:28", "pid": 78889, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11624}
+{"experiment_id": "model_strategy_race_v1", "timestamp": "2026-06-12T00:51:22", "pid": 78989, "n_rows": 120}
+{"experiment_id": "audits_v1", "timestamp": "2026-06-12T14:18:10", "pid": 81692, "features": "D_decision", "n_cal": 100, "n_stress": 80}
+{"experiment_id": "ship_projections_v1", "timestamp": "2026-06-12T14:18:36", "pid": 81730, "season": 2026, "n": 2162}
+{"experiment_id": "decision_plus_v1", "timestamp": "2026-06-12T14:20:13", "pid": 81861, "n": 34049, "train_end": 2023, "weights": {"take_ball_z": 0.0686, "ts_called_z": -0.355, "fp_swing_z": 0.0285, "tb_swing_z": -0.1334, "swing_z": -0.4145}}
+{"experiment_id": "ship_projections_v1", "timestamp": "2026-06-12T14:20:14", "pid": 81862, "season": 2026, "n": 2162}
+{"experiment_id": "tool_v1", "timestamp": "2026-06-12T14:21:52", "pid": 81933, "n_players": 2162}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:00:48", "pid": 92505, "season": 2025, "level": "AAA", "n_games": 2232, "minutes": 1.0}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:01:34", "pid": 92505, "season": 2025, "level": "MLB", "n_games": 2430, "minutes": 0.8}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:02:03", "pid": 92505, "season": 2025, "level": "AA", "n_games": 2056, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:02:35", "pid": 92505, "season": 2025, "level": "A+", "n_games": 1958, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:03:35", "pid": 92505, "season": 2025, "level": "A", "n_games": 1948, "minutes": 1.0}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:04:08", "pid": 92505, "season": 2025, "level": "CPX", "n_games": 2313, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:04:29", "pid": 92505, "season": 2026, "level": "AAA", "n_games": 980, "minutes": 0.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:04:46", "pid": 92505, "season": 2026, "level": "MLB", "n_games": 1024, "minutes": 0.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:05:00", "pid": 92505, "season": 2026, "level": "AA", "n_games": 888, "minutes": 0.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:05:13", "pid": 92505, "season": 2026, "level": "A+", "n_games": 883, "minutes": 0.2}
+{"experiment_id": "zone_calibration_v1", "timestamp": "2026-06-12T17:05:16", "pid": 92742, "holdout_MLB_AAA_2026": 0.9588, "ood_A_tracked": 0.9346, "ood_CPX_tracked": 0.9582, "geometry": {"xlim": 0.83, "zbuf": 0.12}}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:05:30", "pid": 92505, "season": 2026, "level": "A", "n_games": 896, "minutes": 0.3}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:05:39", "pid": 92505, "season": 2026, "level": "CPX", "n_games": 632, "minutes": 0.2}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:06:21", "pid": 92505, "season": 2024, "level": "AAA", "n_games": 2232, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:07:05", "pid": 92505, "season": 2024, "level": "MLB", "n_games": 2429, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:07:34", "pid": 92505, "season": 2024, "level": "AA", "n_games": 2053, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:08:05", "pid": 92505, "season": 2024, "level": "A+", "n_games": 1963, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:08:36", "pid": 92505, "season": 2024, "level": "A", "n_games": 1945, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:09:06", "pid": 92505, "season": 2024, "level": "CPX", "n_games": 2266, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:10:06", "pid": 92505, "season": 2023, "level": "AAA", "n_games": 2224, "minutes": 1.0}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:10:49", "pid": 92505, "season": 2023, "level": "MLB", "n_games": 2430, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:11:17", "pid": 92505, "season": 2023, "level": "AA", "n_games": 2054, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:11:47", "pid": 92505, "season": 2023, "level": "A+", "n_games": 1955, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:12:16", "pid": 92505, "season": 2023, "level": "A", "n_games": 1952, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:12:49", "pid": 92505, "season": 2023, "level": "CPX", "n_games": 2210, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:13:24", "pid": 92505, "season": 2022, "level": "AAA", "n_games": 2237, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:14:09", "pid": 92505, "season": 2022, "level": "MLB", "n_games": 2430, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:14:40", "pid": 92505, "season": 2022, "level": "AA", "n_games": 2050, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:15:08", "pid": 92505, "season": 2022, "level": "A+", "n_games": 1954, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:15:42", "pid": 92505, "season": 2022, "level": "A", "n_games": 1956, "minutes": 0.6}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:16:13", "pid": 92505, "season": 2022, "level": "CPX", "n_games": 2361, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:16:41", "pid": 92505, "season": 2021, "level": "AAA", "n_games": 1925, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:17:24", "pid": 92505, "season": 2021, "level": "MLB", "n_games": 2429, "minutes": 0.7}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:17:55", "pid": 92505, "season": 2021, "level": "AA", "n_games": 1741, "minutes": 0.5}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:18:20", "pid": 92505, "season": 2021, "level": "A+", "n_games": 1772, "minutes": 0.4}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:18:46", "pid": 92505, "season": 2021, "level": "A", "n_games": 1777, "minutes": 0.4}
+{"experiment_id": "pitch_extract_v1", "timestamp": "2026-06-12T17:19:16", "pid": 92505, "season": 2021, "level": "CPX", "n_games": 2281, "minutes": 0.5}
+{"experiment_id": "player_metrics_v1", "timestamp": "2026-06-12T17:29:23", "pid": 93957, "n_rows": 34048, "seasons": [2021, 2022, 2023, 2024, 2025, 2026]}
+{"experiment_id": "coverage_report_v1", "timestamp": "2026-06-12T17:38:32", "pid": 94393, "worst_pitch": 1.0, "worst_zone": 1.0, "n_missing": 0}
+{"experiment_id": "decision_plus_v1", "timestamp": "2026-06-12T17:38:47", "pid": 94440, "n": 34048, "train_end": 2023, "weights": {"take_ball_z": 0.0662, "ts_called_z": -0.2618, "fp_swing_z": 0.0409, "tb_swing_z": -0.0823, "swing_z": -0.1811, "chase_z": 0.0369, "z_take_z": 0.2361, "zone_rec_z": 0.0946}}
+{"experiment_id": "baselines_zone", "timestamp": "2026-06-12T17:39:12", "pid": 94491, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11533}
+{"experiment_id": "decision_plus_v1", "timestamp": "2026-06-12T17:40:54", "pid": 94565, "n": 34048, "train_end": 2023, "weights": {"take_ball_z": 0.0372, "ts_called_z": -0.1699, "fp_swing_z": 0.0215, "tb_swing_z": -0.0488, "swing_z": -0.0824, "chase_z": 0.1278, "z_take_z": 0.3061, "zone_rec_z": 0.2064}}
+{"experiment_id": "baselines_zone2", "timestamp": "2026-06-12T17:41:13", "pid": 94579, "train_end": 2023, "decision_file": "data/processed/decision_plus.parquet", "n_pairs": 11533}
+{"experiment_id": "decision_plus_v1", "timestamp": "2026-06-12T19:06:21", "pid": 20437, "n": 34048, "train_end": 2023, "weights": {"take_ball_z": 0.0372, "ts_called_z": -0.1699, "fp_swing_z": 0.0215, "tb_swing_z": -0.0488, "swing_z": -0.0824, "chase_z": 0.1278, "z_take_z": 0.3061, "zone_rec_z": 0.2064}}
+{"experiment_id": "model_strategy_race_v1", "timestamp": "2026-06-12T19:07:26", "pid": 20438, "n_rows": 160}
+{"experiment_id": "audits_v1", "timestamp": "2026-06-12T19:08:52", "pid": 20617, "features": "D_decision", "n_cal": 100, "n_stress": 80}
+{"experiment_id": "ship_projections_v1", "timestamp": "2026-06-12T19:08:53", "pid": 20644, "season": 2026, "n": 2169}
+{"experiment_id": "tool_v1", "timestamp": "2026-06-12T19:08:54", "pid": 20648, "n_players": 2169}

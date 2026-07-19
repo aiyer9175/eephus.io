@@ -1,0 +1,1046 @@
+{
+ "generated_at": "2026-07-15",
+ "experiment": "BUCKET-AGE-HEAD: pit-only covariate bucket head p(bucket | grade_band, age_band) below the grade-monotone constraint (grade-monotone calibration line is CLOSED: X-ISO/E-ISO2/3/4 all rejected)",
+ "seed": 20260715,
+ "bootstrap_reps": 2000,
+ "design": {
+  "head": "p(bucket | grade_band, age_band), pit only; age bands <=22 / 23-24 / 25+ (le22: age<23; 23_24: 23<=age<25; 25p: age>=25); grade bands = the existing 5-point FV tiers (round(fv/5)*5, efv_isotonic_lab._tier); cell empirical partially pooled toward the incumbent p_bucket_given_fv row at the ACTUAL grade with weight n/(n+25); missing age or missing cell -> incumbent exactly",
+  "population": "resolved labeled pitcher matrix (data/xfv_pitcher_matrix.json): is_pitcher, debuted+busts, bust_recent excluded, censored==False, consensus_fv_raw + target_resolved present (n=1569, all weight 1.0); mirrors efv_model.oos_grades pool restricted to resolved labels",
+  "conditioning_grade": "consensus_fv_raw (the pre-outcome list grade), mirroring the incumbent table's own population convention (published-FV rows); served on xfv_grade exactly as the incumbent already is",
+  "age_at": "decision cutoff (birth_date exact; fallback milb.age advanced by cutoff-vs-season staleness; None -> incumbent fallback)",
+  "realized_bucket": "6yr-avg annual WAR (target_resolved/6) binned <0.5/1.5/2.5/4.0 (engine bands, efv_isotonic_lab convention)",
+  "folds": "forward-chained decision-year folds 2020-2023, head fit strictly on decision_year < Y; incumbent is the fixed production curve",
+  "metrics": "log-loss clip 1e-6; per-bucket = binary cross-entropy (efv_isotonic_lab.logloss_per_bucket); unweighted means (all rows w=1)",
+  "incumbent_method": "proportional_odds"
+ },
+ "pool": {
+  "n": 1572,
+  "kinds": {
+   "debuted": 530,
+   "bust": 1042
+  },
+  "age_known": 626,
+  "age_bands": {
+   "25p": 139,
+   "le22": 266,
+   "23_24": 221,
+   "missing": 946
+  },
+  "grade_bands": {
+   "35": 258,
+   "40": 696,
+   "45": 349,
+   "50": 156,
+   "55": 64,
+   "60": 39,
+   "65": 2,
+   "70": 8
+  }
+ },
+ "folds": {
+  "2020": {
+   "skipped": false,
+   "n_train": 893,
+   "n_test": 204,
+   "n_train_age_known": 225,
+   "n_test_age_known": 122,
+   "n_test_25p": 39,
+   "test_kinds": {
+    "debuted": 104,
+    "bust": 100
+   },
+   "n_head_cells": 15
+  },
+  "2021": {
+   "skipped": false,
+   "n_train": 1097,
+   "n_test": 47,
+   "n_train_age_known": 347,
+   "n_test_age_known": 17,
+   "n_test_25p": 5,
+   "test_kinds": {
+    "debuted": 1,
+    "bust": 46
+   },
+   "n_head_cells": 19
+  },
+  "2022": {
+   "skipped": false,
+   "n_train": 1144,
+   "n_test": 133,
+   "n_train_age_known": 364,
+   "n_test_age_known": 67,
+   "n_test_25p": 22,
+   "test_kinds": {
+    "bust": 133
+   },
+   "n_head_cells": 19
+  },
+  "2023": {
+   "skipped": false,
+   "n_train": 1277,
+   "n_test": 142,
+   "n_train_age_known": 431,
+   "n_test_age_known": 87,
+   "n_test_25p": 26,
+   "test_kinds": {
+    "debuted": 1,
+    "bust": 141
+   },
+   "n_head_cells": 19
+  }
+ },
+ "results": {
+  "pooled": {
+   "n": 526,
+   "log_loss": {
+    "incumbent": 0.36163,
+    "head": 0.30655,
+    "delta": -0.05508
+   },
+   "brier": {
+    "incumbent": 0.14132,
+    "head": 0.11664,
+    "delta": -0.02468
+   },
+   "per_bucket_log_loss": {
+    "bust": {
+     "incumbent": 0.32195,
+     "head": 0.26981,
+     "delta": -0.05215,
+     "rel_delta": -0.16197
+    },
+    "bench": {
+     "incumbent": 0.20328,
+     "head": 0.18013,
+     "delta": -0.02315,
+     "rel_delta": -0.11386
+    },
+    "regular": {
+     "incumbent": 0.09157,
+     "head": 0.07664,
+     "delta": -0.01493,
+     "rel_delta": -0.16309
+    },
+    "good": {
+     "incumbent": 0.04425,
+     "head": 0.03666,
+     "delta": -0.00759,
+     "rel_delta": -0.17152
+    },
+    "star": {
+     "incumbent": 0.00161,
+     "head": 0.00123,
+     "delta": -0.00038,
+     "rel_delta": -0.23661
+    }
+   }
+  },
+  "age_25p_subset": {
+   "n": 92,
+   "log_loss": {
+    "incumbent": 0.36533,
+    "head": 0.2762,
+    "delta": -0.08913
+   },
+   "brier": {
+    "incumbent": 0.14201,
+    "head": 0.10121,
+    "delta": -0.0408
+   },
+   "per_bucket_log_loss": {
+    "bust": {
+     "incumbent": 0.31672,
+     "head": 0.22837,
+     "delta": -0.08836,
+     "rel_delta": -0.27897
+    },
+    "bench": {
+     "incumbent": 0.1935,
+     "head": 0.13846,
+     "delta": -0.05504,
+     "rel_delta": -0.28443
+    },
+    "regular": {
+     "incumbent": 0.10079,
+     "head": 0.08466,
+     "delta": -0.01614,
+     "rel_delta": -0.16011
+    },
+    "good": {
+     "incumbent": 0.0576,
+     "head": 0.04971,
+     "delta": -0.00789,
+     "rel_delta": -0.13699
+    },
+    "star": {
+     "incumbent": 0.00115,
+     "head": 0.00082,
+     "delta": -0.00033,
+     "rel_delta": -0.28792
+    }
+   }
+  },
+  "age_known_subset": {
+   "n": 293,
+   "log_loss": {
+    "incumbent": 0.4318,
+    "head": 0.33292,
+    "delta": -0.09888
+   },
+   "brier": {
+    "incumbent": 0.18269,
+    "head": 0.13838,
+    "delta": -0.04431
+   },
+   "per_bucket_log_loss": {
+    "bust": {
+     "incumbent": 0.36057,
+     "head": 0.26695,
+     "delta": -0.09361,
+     "rel_delta": -0.25963
+    },
+    "bench": {
+     "incumbent": 0.24282,
+     "head": 0.20127,
+     "delta": -0.04155,
+     "rel_delta": -0.17112
+    },
+    "regular": {
+     "incumbent": 0.10967,
+     "head": 0.08286,
+     "delta": -0.02681,
+     "rel_delta": -0.24447
+    },
+    "good": {
+     "incumbent": 0.0591,
+     "head": 0.04547,
+     "delta": -0.01363,
+     "rel_delta": -0.23056
+    },
+    "star": {
+     "incumbent": 0.00211,
+     "head": 0.00142,
+     "delta": -0.00068,
+     "rel_delta": -0.32483
+    }
+   }
+  },
+  "per_fold": {
+   "2020": {
+    "n": 204,
+    "log_loss": {
+     "incumbent": 0.52984,
+     "head": 0.48879,
+     "delta": -0.04105
+    },
+    "brier": {
+     "incumbent": 0.24005,
+     "head": 0.22139,
+     "delta": -0.01866
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.42752,
+      "head": 0.39404,
+      "delta": -0.03348,
+      "rel_delta": -0.07831
+     },
+     "bench": {
+      "incumbent": 0.29137,
+      "head": 0.28461,
+      "delta": -0.00676,
+      "rel_delta": -0.02321
+     },
+     "regular": {
+      "incumbent": 0.13499,
+      "head": 0.12014,
+      "delta": -0.01485,
+      "rel_delta": -0.11003
+     },
+     "good": {
+      "incumbent": 0.07742,
+      "head": 0.06951,
+      "delta": -0.00791,
+      "rel_delta": -0.10218
+     },
+     "star": {
+      "incumbent": 0.00275,
+      "head": 0.00223,
+      "delta": -0.00052,
+      "rel_delta": -0.18937
+     }
+    }
+   },
+   "2021": {
+    "n": 47,
+    "log_loss": {
+     "incumbent": 0.26014,
+     "head": 0.22365,
+     "delta": -0.03649
+    },
+    "brier": {
+     "incumbent": 0.08045,
+     "head": 0.06363,
+     "delta": -0.01682
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.26014,
+      "head": 0.22365,
+      "delta": -0.03649,
+      "rel_delta": -0.14028
+     },
+     "bench": {
+      "incumbent": 0.1509,
+      "head": 0.13266,
+      "delta": -0.01825,
+      "rel_delta": -0.12091
+     },
+     "regular": {
+      "incumbent": 0.06533,
+      "head": 0.05682,
+      "delta": -0.00851,
+      "rel_delta": -0.13031
+     },
+     "good": {
+      "incumbent": 0.02363,
+      "head": 0.01885,
+      "delta": -0.00478,
+      "rel_delta": -0.20215
+     },
+     "star": {
+      "incumbent": 0.00091,
+      "head": 0.00072,
+      "delta": -0.00018,
+      "rel_delta": -0.20151
+     }
+    }
+   },
+   "2022": {
+    "n": 133,
+    "log_loss": {
+     "incumbent": 0.26217,
+     "head": 0.20179,
+     "delta": -0.06038
+    },
+    "brier": {
+     "incumbent": 0.08245,
+     "head": 0.05377,
+     "delta": -0.02868
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.26217,
+      "head": 0.20179,
+      "delta": -0.06039,
+      "rel_delta": -0.23033
+     },
+     "bench": {
+      "incumbent": 0.1509,
+      "head": 0.11973,
+      "delta": -0.03118,
+      "rel_delta": -0.2066
+     },
+     "regular": {
+      "incumbent": 0.06593,
+      "head": 0.05249,
+      "delta": -0.01344,
+      "rel_delta": -0.20389
+     },
+     "good": {
+      "incumbent": 0.02396,
+      "head": 0.01656,
+      "delta": -0.0074,
+      "rel_delta": -0.30884
+     },
+     "star": {
+      "incumbent": 0.00092,
+      "head": 0.00062,
+      "delta": -0.0003,
+      "rel_delta": -0.33008
+     }
+    }
+   },
+   "2023": {
+    "n": 142,
+    "log_loss": {
+     "incumbent": 0.24673,
+     "head": 0.17032,
+     "delta": -0.07641
+    },
+    "brier": {
+     "incumbent": 0.07478,
+     "head": 0.04259,
+     "delta": -0.03219
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.24673,
+      "head": 0.17032,
+      "delta": -0.07642,
+      "rel_delta": -0.30972
+     },
+     "bench": {
+      "incumbent": 0.14311,
+      "head": 0.10233,
+      "delta": -0.04078,
+      "rel_delta": -0.28497
+     },
+     "regular": {
+      "incumbent": 0.06191,
+      "head": 0.04333,
+      "delta": -0.01858,
+      "rel_delta": -0.30007
+     },
+     "good": {
+      "incumbent": 0.02243,
+      "head": 0.01419,
+      "delta": -0.00824,
+      "rel_delta": -0.36729
+     },
+     "star": {
+      "incumbent": 0.00086,
+      "head": 0.00054,
+      "delta": -0.00032,
+      "rel_delta": -0.37198
+     }
+    }
+   }
+  },
+  "per_age_band": {
+   "le22": {
+    "n": 88,
+    "log_loss": {
+     "incumbent": 0.40089,
+     "head": 0.28053,
+     "delta": -0.12036
+    },
+    "brier": {
+     "incumbent": 0.16539,
+     "head": 0.11397,
+     "delta": -0.05142
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.34636,
+      "head": 0.23662,
+      "delta": -0.10974,
+      "rel_delta": -0.31683
+     },
+     "bench": {
+      "incumbent": 0.20986,
+      "head": 0.15842,
+      "delta": -0.05144,
+      "rel_delta": -0.24514
+     },
+     "regular": {
+      "incumbent": 0.11254,
+      "head": 0.08753,
+      "delta": -0.02502,
+      "rel_delta": -0.22227
+     },
+     "good": {
+      "incumbent": 0.04386,
+      "head": 0.02421,
+      "delta": -0.01966,
+      "rel_delta": -0.44816
+     },
+     "star": {
+      "incumbent": 0.00184,
+      "head": 0.00095,
+      "delta": -0.00089,
+      "rel_delta": -0.48363
+     }
+    }
+   },
+   "23_24": {
+    "n": 113,
+    "log_loss": {
+     "incumbent": 0.50999,
+     "head": 0.4199,
+     "delta": -0.09009
+    },
+    "brier": {
+     "incumbent": 0.22927,
+     "head": 0.18765,
+     "delta": -0.04162
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.40733,
+      "head": 0.32199,
+      "delta": -0.08534,
+      "rel_delta": -0.2095
+     },
+     "bench": {
+      "incumbent": 0.30864,
+      "head": 0.28577,
+      "delta": -0.02287,
+      "rel_delta": -0.07409
+     },
+     "regular": {
+      "incumbent": 0.11466,
+      "head": 0.07776,
+      "delta": -0.0369,
+      "rel_delta": -0.3218
+     },
+     "good": {
+      "incumbent": 0.07218,
+      "head": 0.05858,
+      "delta": -0.0136,
+      "rel_delta": -0.18839
+     },
+     "star": {
+      "incumbent": 0.00309,
+      "head": 0.00228,
+      "delta": -0.00081,
+      "rel_delta": -0.26229
+     }
+    }
+   },
+   "25p": {
+    "n": 92,
+    "log_loss": {
+     "incumbent": 0.36533,
+     "head": 0.2762,
+     "delta": -0.08913
+    },
+    "brier": {
+     "incumbent": 0.14201,
+     "head": 0.10121,
+     "delta": -0.0408
+    },
+    "per_bucket_log_loss": {
+     "bust": {
+      "incumbent": 0.31672,
+      "head": 0.22837,
+      "delta": -0.08836,
+      "rel_delta": -0.27897
+     },
+     "bench": {
+      "incumbent": 0.1935,
+      "head": 0.13846,
+      "delta": -0.05504,
+      "rel_delta": -0.28443
+     },
+     "regular": {
+      "incumbent": 0.10079,
+      "head": 0.08466,
+      "delta": -0.01614,
+      "rel_delta": -0.16011
+     },
+     "good": {
+      "incumbent": 0.0576,
+      "head": 0.04971,
+      "delta": -0.00789,
+      "rel_delta": -0.13699
+     },
+     "star": {
+      "incumbent": 0.00115,
+      "head": 0.00082,
+      "delta": -0.00033,
+      "rel_delta": -0.28792
+     }
+    }
+   }
+  }
+ },
+ "bootstrap": {
+  "n_reps": 2000,
+  "seed": 20260715,
+  "pooled_ll": {
+   "n_effective_reps": 2000,
+   "mean_delta": -0.05502,
+   "ci90": [
+    -0.06222,
+    -0.0481
+   ],
+   "p_delta_le_0": 1.0
+  },
+  "bench_ll": {
+   "n_effective_reps": 2000,
+   "mean_delta": -0.0231,
+   "ci90": [
+    -0.02656,
+    -0.01957
+   ],
+   "p_delta_le_0": 1.0
+  },
+  "good_ll": {
+   "n_effective_reps": 2000,
+   "mean_delta": -0.00759,
+   "ci90": [
+    -0.00875,
+    -0.00649
+   ],
+   "p_delta_le_0": 1.0
+  },
+  "ll_25p": {
+   "n_effective_reps": 2000,
+   "mean_delta": -0.08902,
+   "ci90": [
+    -0.10189,
+    -0.07654
+   ],
+   "p_delta_le_0": 1.0
+  }
+ },
+ "gate": {
+  "g1_pooled_logloss_le_incumbent": {
+   "pass": true,
+   "head": 0.30655,
+   "incumbent": 0.36163,
+   "delta": -0.05508
+  },
+  "g2_eiso4_guard_bench_good_le_1pct_rel": {
+   "pass": true,
+   "bench": {
+    "pass": true,
+    "incumbent": 0.20328,
+    "head": 0.18013,
+    "delta": -0.02315,
+    "rel_delta": -0.11386
+   },
+   "good": {
+    "pass": true,
+    "incumbent": 0.04425,
+    "head": 0.03666,
+    "delta": -0.00759,
+    "rel_delta": -0.17152
+   },
+   "tolerance_rel": 0.01
+  },
+  "g3_age25p_subset_improves": {
+   "pass": true,
+   "n": 92,
+   "head": 0.2762,
+   "incumbent": 0.36533,
+   "delta": -0.08913
+  },
+  "g4_validity_and_grade_monotone": {
+   "pass": false,
+   "valid_distributions": true,
+   "max_abs_sum_minus_1": 4.440892098500626e-16,
+   "min_prob": 0.0,
+   "monotone_sane": false,
+   "monotone_tolerance": 1e-06,
+   "n_violation_boundaries": 12,
+   "max_violation": 0.07621,
+   "violations": [
+    {
+     "age_band": "le22",
+     "fv_from": 32.5,
+     "fv_to": 32.75,
+     "threshold": "P(Y<=bust)",
+     "increase": 0.07621
+    },
+    {
+     "age_band": "25p",
+     "fv_from": 32.5,
+     "fv_to": 32.75,
+     "threshold": "P(Y<=bust)",
+     "increase": 0.07039
+    },
+    {
+     "age_band": "23_24",
+     "fv_from": 32.5,
+     "fv_to": 32.75,
+     "threshold": "P(Y<=bust)",
+     "increase": 0.06056
+    },
+    {
+     "age_band": "le22",
+     "fv_from": 67.25,
+     "fv_to": 67.5,
+     "threshold": "P(Y<=regular)",
+     "increase": 0.04843
+    },
+    {
+     "age_band": "23_24",
+     "fv_from": 62.5,
+     "fv_to": 62.75,
+     "threshold": "P(Y<=bench)",
+     "increase": 0.03211
+    },
+    {
+     "age_band": "23_24",
+     "fv_from": 72.5,
+     "fv_to": 72.75,
+     "threshold": "P(Y<=good)",
+     "increase": 0.02402
+    },
+    {
+     "age_band": "25p",
+     "fv_from": 37.25,
+     "fv_to": 37.5,
+     "threshold": "P(Y<=bust)",
+     "increase": 0.01734
+    },
+    {
+     "age_band": "25p",
+     "fv_from": 47.25,
+     "fv_to": 47.5,
+     "threshold": "P(Y<=regular)",
+     "increase": 0.01619
+    },
+    {
+     "age_band": "23_24",
+     "fv_from": 37.25,
+     "fv_to": 37.5,
+     "threshold": "P(Y<=bench)",
+     "increase": 0.01563
+    },
+    {
+     "age_band": "le22",
+     "fv_from": 52.5,
+     "fv_to": 52.75,
+     "threshold": "P(Y<=regular)",
+     "increase": 0.0051
+    },
+    {
+     "age_band": "le22",
+     "fv_from": 37.25,
+     "fv_to": 37.5,
+     "threshold": "P(Y<=regular)",
+     "increase": 0.00266
+    },
+    {
+     "age_band": "le22",
+     "fv_from": 72.5,
+     "fv_to": 72.75,
+     "threshold": "P(Y<=bust)",
+     "increase": 0.00041
+    }
+   ],
+   "grid": [
+    20.0,
+    80.0,
+    0.25
+   ]
+  },
+  "verdict": "FAIL"
+ },
+ "moore": {
+  "xfv_grade_live_45.8": {
+   "grade": 45.8,
+   "age": 26.9,
+   "incumbent_p_bust": 0.476,
+   "head_p_bust": 0.542,
+   "head_p_bucket": {
+    "bust": 0.542,
+    "bench": 0.23,
+    "regular": 0.135,
+    "good": 0.091,
+    "star": 0.003
+   }
+  },
+  "band_rep_45.0": {
+   "grade": 45.0,
+   "age": 26.9,
+   "incumbent_p_bust": 0.508,
+   "head_p_bust": 0.567,
+   "head_p_bucket": {
+    "bust": 0.567,
+    "bench": 0.223,
+    "regular": 0.123,
+    "good": 0.084,
+    "star": 0.002
+   }
+  },
+  "registered_motivation_grade_48.0": {
+   "grade": 48.0,
+   "age": 26.9,
+   "incumbent_p_bust": 0.388,
+   "head_p_bust": 0.404,
+   "head_p_bucket": {
+    "bust": 0.404,
+    "bench": 0.307,
+    "regular": 0.19,
+    "good": 0.095,
+    "star": 0.004
+   }
+  },
+  "cell_fv45_25p": {
+   "n": 8,
+   "empirical_p_bust": 0.75,
+   "empirical_counts": [
+    6,
+    1,
+    0,
+    1,
+    0
+   ],
+   "shrink_weight_n_over_n_plus_25": 0.242,
+   "registered_band_empirical_claim": 0.81,
+   "note": "under THIS lab's conventions (resolved pool, consensus-FV grade bands, age at decision cutoff) the fv45/25+ cell is n=8 with empirical p_bust 0.750, and mean realized WAR6 RISES with age inside the fv45 band (0.51 le22 / 1.70 23-24 / 2.51 25+): the registered 0.81 band-empirical figure is not reproduced here"
+  }
+ },
+ "production_head_cells": {
+  "35|23_24": {
+   "n": 31,
+   "counts": [
+    31,
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.5536
+  },
+  "35|25p": {
+   "n": 44,
+   "counts": [
+    44,
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.6377
+  },
+  "35|le22": {
+   "n": 55,
+   "counts": [
+    55,
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.6875
+  },
+  "40|23_24": {
+   "n": 126,
+   "counts": [
+    116,
+    9,
+    1,
+    0,
+    0
+   ],
+   "weight": 0.8344
+  },
+  "40|25p": {
+   "n": 83,
+   "counts": [
+    82,
+    0,
+    1,
+    0,
+    0
+   ],
+   "weight": 0.7685
+  },
+  "40|le22": {
+   "n": 110,
+   "counts": [
+    103,
+    4,
+    3,
+    0,
+    0
+   ],
+   "weight": 0.8148
+  },
+  "45|23_24": {
+   "n": 29,
+   "counts": [
+    24,
+    4,
+    0,
+    1,
+    0
+   ],
+   "weight": 0.537
+  },
+  "45|25p": {
+   "n": 8,
+   "counts": [
+    6,
+    1,
+    0,
+    1,
+    0
+   ],
+   "weight": 0.2424
+  },
+  "45|le22": {
+   "n": 49,
+   "counts": [
+    45,
+    2,
+    2,
+    0,
+    0
+   ],
+   "weight": 0.6622
+  },
+  "50|23_24": {
+   "n": 18,
+   "counts": [
+    10,
+    5,
+    1,
+    2,
+    0
+   ],
+   "weight": 0.4186
+  },
+  "50|25p": {
+   "n": 4,
+   "counts": [
+    2,
+    2,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.1379
+  },
+  "50|le22": {
+   "n": 24,
+   "counts": [
+    14,
+    8,
+    0,
+    2,
+    0
+   ],
+   "weight": 0.4898
+  },
+  "55|23_24": {
+   "n": 12,
+   "counts": [
+    4,
+    4,
+    2,
+    2,
+    0
+   ],
+   "weight": 0.3243
+  },
+  "55|le22": {
+   "n": 20,
+   "counts": [
+    12,
+    6,
+    1,
+    1,
+    0
+   ],
+   "weight": 0.4444
+  },
+  "60|23_24": {
+   "n": 2,
+   "counts": [
+    1,
+    0,
+    1,
+    0,
+    0
+   ],
+   "weight": 0.0741
+  },
+  "60|le22": {
+   "n": 6,
+   "counts": [
+    1,
+    2,
+    2,
+    1,
+    0
+   ],
+   "weight": 0.1935
+  },
+  "65|23_24": {
+   "n": 2,
+   "counts": [
+    1,
+    1,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0741
+  },
+  "70|23_24": {
+   "n": 1,
+   "counts": [
+    0,
+    0,
+    0,
+    0,
+    1
+   ],
+   "weight": 0.0385
+  },
+  "70|le22": {
+   "n": 2,
+   "counts": [
+    0,
+    1,
+    1,
+    0,
+    0
+   ],
+   "weight": 0.0741
+  }
+ },
+ "rerun_marker": {
+  "pattern": "F-SIDE S5 tripwire",
+  "trigger": "the FIRST pipeline run where the 2024 decision fold becomes trainable in the DEBUTED frame (debuted rows with decision_year==2024 carrying resolved censored==False labels; the full-pool 2024 cell is bust-only today and does NOT count)",
+  "action": "MANDATORY named re-run of BUCKET-AGE-HEAD (this lab, identical pre-registered gates) before the head may ship or any baseline resets; the Moore-class RP-role cohort resolves only then (improvement-program 2026-07-15: role blindness not gateable until 2024+ cohorts resolve)",
+  "registered": "2026-07-15"
+ },
+ "diagnostics_post_hoc": {
+  "label": "POST-HOC DIAGNOSTIC (recorded after the gate ran; NOT a gate condition)",
+  "question": "how much of the age-head gain is the age covariate vs population-level recalibration of the incumbent to the (bustier) resolved matrix pool?",
+  "method": "grade-band-only head, identical partial pooling n/(n+25), identical folds; pooled multiclass log-loss on the same 524 eval rows",
+  "pooled_log_loss": {
+   "incumbent": 0.36163,
+   "grade_band_only_head": 0.1786,
+   "age_head": 0.30655
+  },
+  "age_25p_subset_log_loss": {
+   "incumbent": 0.36533,
+   "grade_band_only_head": 0.20834,
+   "age_head": 0.2762
+  },
+  "age_known_subset_log_loss": {
+   "incumbent": 0.4318,
+   "grade_band_only_head": 0.26776,
+   "age_head": 0.33292
+  },
+  "decomposition": {
+   "age_head_gain_vs_incumbent": 0.05508,
+   "grade_band_only_gain_vs_incumbent": 0.18303,
+   "age_head_minus_grade_band_only_positive_is_worse": 0.12795,
+   "age_known_subset_age_head_minus_grade_band_only": 0.06516,
+   "caveat": "NOT a clean age-signal estimate: the age head covers only the 40% age-known rows (incumbent fallback elsewhere) and its smaller cells carry much heavier n/(n+25) shrink toward the population-miscalibrated incumbent than the large grade-band cells; a hierarchical variant (age cells shrunk toward the GRADE-BAND empirical rather than the incumbent) was NOT pre-registered and was not gated here"
+  },
+  "reading": "the registered age head is DOMINATED by its own covariate-free ablation on the identical eval rows (pooled 0.30733 vs 0.17907; age-known subset 0.33450 vs 0.26921; 25+ subset 0.28004 vs 0.21162). The G1/G3 passes are therefore driven by population-level recalibration of the incumbent to the bustier resolved pool - the effect class the CLOSED grade-monotone calibration line (X-ISO/E-ISO2/3/4) already established as blocked - not by age information."
+ },
+ "notes": {
+  "population_mismatch": "the incumbent p_bucket table is calibrated on the Clemens published-list population; the resolved matrix pool (busts from inactive.json included) is far bustier (fv45 pit band pooled empirical bust ~0.87 vs incumbent 0.51 at fv45), so ANY recalibration toward this pool posts large in-population log-loss gains regardless of covariate",
+  "g2_population_caveat": "G2 (bench/good) passing here does NOT contradict the E-ISO4 pit-BENCH blocker: that line evaluated the KM full pool (target_censored, censored rows carried with weights); this pre-registration fixed the RESOLVED-only frame, where realized bench/good frequencies are lower and cutting bench/good mass is rewarded",
+  "fold_composition": "resolved-only framing makes the 2021-2023 eval folds bust-only (debut cohorts 2021+ are censored until they resolve); only the 2020 fold (n=204, 104 debuted / 100 busts) tests non-bust discrimination",
+  "moore_motivation_check": "the registered motivation numbers do NOT reproduce under the lab conventions: the fv45/25+ cell is n=8 with empirical p_bust 0.750 (claim: 0.81), and mean realized WAR6 RISES with age inside fv45 (0.51/1.70/2.51 across bands) - the within-band age-bust gradient lives at fv40 (25+ bust 0.988, n=81), not at Moore's band; incumbent p_bust(48.0)=0.388 ties the published figure to his pre-overlay grade ~48 (current live grade 45.8 -> incumbent 0.476)",
+  "age_missingness": "age is recoverable for only 623/1569 resolved rows and missingness correlates with the outcome (busts are 72% of age-missing rows vs 58% of age-known): the head's serve population (live rows, age always present) is NOT the fit population - an additional unpriced train/serve mismatch"
+ },
+ "loss_ledger": {
+  "date": "2026-07-15",
+  "experiment": "BUCKET-AGE-HEAD: pit-only p(bucket | grade_band, age_band) below the grade-monotone constraint (partial pooling n/(n+25) toward the incumbent row); the recorded-open covariate path after the grade-monotone calibration line was CLOSED",
+  "hypothesis": "within grade bands, age carries real outcome signal (the Moore case: published p_bust 0.388 vs claimed band-empirical 0.81), so an age-banded bucket head improves calibration without touching the grade-only incumbent or its five non-eFV consumers",
+  "result": {
+   "verdict": "FAIL (G4: grade monotone-sanity)",
+   "g1_pooled_ll": "PASS 0.36184 -> 0.30733 (delta -0.05451, CI90 [-0.06153, -0.04730], P(delta<=0)=1.0)",
+   "g2_bench_good": "PASS bench -11.2% rel / good -17.0% rel (guard was <=+1.0%)",
+   "g3_age25p_ll": "PASS 0.36661 -> 0.28004 (delta -0.08657, CI90 [-0.09935, -0.07349])",
+   "g4_monotone": "FAIL: 12 band-seam stochastic-ordering violations across all three age bands; worst +0.07621 P(bust) jump crossing INTO the fv35 band at 32.5/32.75 (all-bust empirical cells vs incumbent fallback below support); further seams at 37.5, 47.5, 52.75, 62.75, 67.5, 72.75 (thin n=1-8 cells)"
+  },
+  "diagnosis": "two independent kill mechanisms: (1) the piecewise (grade_band x age_band) cell structure cannot preserve grade stochastic ordering at band seams when cell empiricals sit far from the incumbent curve - the head does NOT stay 'below the grade-monotone constraint' as designed; (2) the post-hoc ablation shows the registered head is dominated by a covariate-free grade-band recalibration on the same rows, so the G1/G3 gains are population recalibration (the CLOSED line), not age signal",
+  "what_would_be_different": "a hierarchical head (age cells shrunk toward the grade-band EMPIRICAL, itself monotone-repaired across bands, e.g. isotonic in grade per age band) plus a serve-population-matched fit frame; requires fresh pre-registration and should wait for the S5 tripwire (2024 debuted cohorts resolving) when the Moore-class RP cohort becomes gateable",
+  "disposition": "NO SHIP. Incumbent p_bucket_given_fv untouched in production; candidate implementation preserved in patched/ for the re-run; re-attempt only under the rerun_marker trigger with a redesigned shrink target"
+ }
+}

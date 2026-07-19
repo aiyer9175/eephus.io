@@ -1,0 +1,425 @@
+{
+ "experiment": "T1-12 K-strength sweep (wave 3)",
+ "generated_at": "2026-07-15",
+ "seed": 20260715,
+ "boot": 2000,
+ "harness": "tools/plus_lab_harness.py v2 (dual-convention; gate declared on v1)",
+ "shipped_constants": {
+  "K_STRIKEOUT": 70.0,
+  "K_WALK": 170.0,
+  "K_HBP": 170.0,
+  "K_HOMERUN": 400.0
+ },
+ "grid": {
+  "m": [
+   0.75,
+   1.0,
+   1.5,
+   2.0,
+   3.0,
+   4.0
+  ],
+  "k_homerun": [
+   400.0,
+   800.0,
+   1300.0,
+   2000.0
+  ],
+  "note": "m multiplies K_STRIKEOUT/K_WALK/K_HBP; K_HOMERUN axis is the grid value directly (replaces the multiplied HR constant so K_HR=1300 literature point is testable)"
+ },
+ "pair_conventions": {
+  "source": ".cache/fa_statsapi_pitching_<year>.json (aggregate splits)",
+  "predictor": "true starter, IP>=50 (SEM+); true reliever, TBF>=100 (REM+)",
+  "outcome": "same-role pool member Y+1, IP>=40 / TBF>=70, -RA9 target",
+  "excluded": "2020 predictor and outcome legs (COVID; family convention)",
+  "tuning": "predictor seasons 2012-2021 ex-2020 legs -> {2012..2018, 2021}",
+  "holdout": "2022->23, 23->24, 24->25 (complete outcome seasons)"
+ },
+ "sem_plus": {
+  "label": "SEM+ K-strength sweep (starters, K_HR axis primary)",
+  "seed": 20260715,
+  "boot": 2000,
+  "n_tuning_pairs": 1003,
+  "n_holdout_pairs": 357,
+  "tuning_pred_seasons": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2021
+  ],
+  "holdout_pred_seasons": [
+   2022,
+   2023,
+   2024
+  ],
+  "baseline": {
+   "m": 1.0,
+   "k_hr": 400.0,
+   "rho_tune": 0.4019
+  },
+  "winner": {
+   "m": 3.0,
+   "k_hr": 2000.0,
+   "rho_tune": 0.4242
+  },
+  "tuning_margin": 0.0223,
+  "tuning_bar": ">= +0.003 over baseline",
+  "tuning_table": [
+   {
+    "m": 3.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4242
+   },
+   {
+    "m": 4.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4236
+   },
+   {
+    "m": 2.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4229
+   },
+   {
+    "m": 1.5,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4214
+   },
+   {
+    "m": 1.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4191
+   },
+   {
+    "m": 2.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.419
+   },
+   {
+    "m": 3.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.4188
+   },
+   {
+    "m": 1.5,
+    "k_hr": 1300.0,
+    "rho_tune": 0.4186
+   },
+   {
+    "m": 4.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.418
+   },
+   {
+    "m": 0.75,
+    "k_hr": 2000.0,
+    "rho_tune": 0.4174
+   },
+   {
+    "m": 1.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.4174
+   },
+   {
+    "m": 0.75,
+    "k_hr": 1300.0,
+    "rho_tune": 0.4165
+   },
+   {
+    "m": 1.5,
+    "k_hr": 800.0,
+    "rho_tune": 0.4129
+   },
+   {
+    "m": 2.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.4128
+   },
+   {
+    "m": 1.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.4123
+   },
+   {
+    "m": 0.75,
+    "k_hr": 800.0,
+    "rho_tune": 0.4118
+   },
+   {
+    "m": 3.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.4107
+   },
+   {
+    "m": 4.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.4078
+   },
+   {
+    "m": 0.75,
+    "k_hr": 400.0,
+    "rho_tune": 0.4024
+   },
+   {
+    "m": 1.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.4019
+   },
+   {
+    "m": 1.5,
+    "k_hr": 400.0,
+    "rho_tune": 0.4008
+   },
+   {
+    "m": 2.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.3988
+   },
+   {
+    "m": 3.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.3943
+   },
+   {
+    "m": 4.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.3893
+   }
+  ],
+  "tuning_cleared": true,
+  "holdout": {
+   "convention": "v1 (pre-registered)",
+   "v1": {
+    "rho_winner": 0.413,
+    "rho_baseline": 0.4033,
+    "gap_ci": {
+     "mean": 0.0096,
+     "lo95": -0.0147,
+     "hi95": 0.0344
+    },
+    "passes": false
+   },
+   "v2": {
+    "rho_winner": 0.4167,
+    "rho_baseline": 0.4081,
+    "gap_ci": {
+     "mean": 0.008,
+     "lo95": -0.0169,
+     "hi95": 0.0328
+    },
+    "passes": false,
+    "cluster": {
+     "n_pairs": 357,
+     "n_players": 193,
+     "max_pairs_per_player": 3,
+     "mean_pairs_per_player": 1.85,
+     "n_strata_first_pred_season": 3
+    }
+   },
+   "gate_bar": "v1 iid bootstrap gap lo95 >= 0 (2000 reps, seed 20260715)"
+  },
+  "verdict": "FAIL (holdout): winner (m=3.0, K_HR=2000.0) holdout gap lo95=-0.0147 vs baseline; pass_under_v2=False.",
+  "pass": false,
+  "pass_under_v2": false
+ },
+ "rem_plus": {
+  "label": "REM+ K-strength sweep (relievers, secondary)",
+  "seed": 20260715,
+  "boot": 2000,
+  "n_tuning_pairs": 1340,
+  "n_holdout_pairs": 496,
+  "tuning_pred_seasons": [
+   2012,
+   2013,
+   2014,
+   2015,
+   2016,
+   2017,
+   2018,
+   2021
+  ],
+  "holdout_pred_seasons": [
+   2022,
+   2023,
+   2024
+  ],
+  "baseline": {
+   "m": 1.0,
+   "k_hr": 400.0,
+   "rho_tune": 0.1685
+  },
+  "winner": {
+   "m": 4.0,
+   "k_hr": 1300.0,
+   "rho_tune": 0.1756
+  },
+  "tuning_margin": 0.0071,
+  "tuning_bar": ">= +0.003 over baseline",
+  "tuning_table": [
+   {
+    "m": 4.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1756
+   },
+   {
+    "m": 3.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1747
+   },
+   {
+    "m": 4.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.1745
+   },
+   {
+    "m": 4.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.1742
+   },
+   {
+    "m": 3.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.1738
+   },
+   {
+    "m": 3.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.1732
+   },
+   {
+    "m": 2.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.1726
+   },
+   {
+    "m": 2.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1726
+   },
+   {
+    "m": 1.5,
+    "k_hr": 800.0,
+    "rho_tune": 0.1711
+   },
+   {
+    "m": 2.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.171
+   },
+   {
+    "m": 1.5,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1706
+   },
+   {
+    "m": 2.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.1698
+   },
+   {
+    "m": 1.5,
+    "k_hr": 400.0,
+    "rho_tune": 0.1696
+   },
+   {
+    "m": 1.5,
+    "k_hr": 2000.0,
+    "rho_tune": 0.1695
+   },
+   {
+    "m": 3.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.1694
+   },
+   {
+    "m": 1.0,
+    "k_hr": 800.0,
+    "rho_tune": 0.1692
+   },
+   {
+    "m": 1.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.1685
+   },
+   {
+    "m": 1.0,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1685
+   },
+   {
+    "m": 4.0,
+    "k_hr": 400.0,
+    "rho_tune": 0.1681
+   },
+   {
+    "m": 1.0,
+    "k_hr": 2000.0,
+    "rho_tune": 0.1675
+   },
+   {
+    "m": 0.75,
+    "k_hr": 800.0,
+    "rho_tune": 0.1675
+   },
+   {
+    "m": 0.75,
+    "k_hr": 400.0,
+    "rho_tune": 0.1672
+   },
+   {
+    "m": 0.75,
+    "k_hr": 1300.0,
+    "rho_tune": 0.1667
+   },
+   {
+    "m": 0.75,
+    "k_hr": 2000.0,
+    "rho_tune": 0.1658
+   }
+  ],
+  "tuning_cleared": true,
+  "holdout": {
+   "convention": "v1 (pre-registered)",
+   "v1": {
+    "rho_winner": 0.2796,
+    "rho_baseline": 0.2861,
+    "gap_ci": {
+     "mean": -0.0064,
+     "lo95": -0.0204,
+     "hi95": 0.007
+    },
+    "passes": false
+   },
+   "v2": {
+    "rho_winner": 0.2822,
+    "rho_baseline": 0.2886,
+    "gap_ci": {
+     "mean": -0.0065,
+     "lo95": -0.0212,
+     "hi95": 0.0078
+    },
+    "passes": false,
+    "cluster": {
+     "n_pairs": 496,
+     "n_players": 284,
+     "max_pairs_per_player": 3,
+     "mean_pairs_per_player": 1.75,
+     "n_strata_first_pred_season": 3
+    }
+   },
+   "gate_bar": "v1 iid bootstrap gap lo95 >= 0 (2000 reps, seed 20260715)"
+  },
+  "verdict": "FAIL (holdout): winner (m=4.0, K_HR=1300.0) holdout gap lo95=-0.0204 vs baseline; pass_under_v2=False.",
+  "pass": false,
+  "pass_under_v2": false
+ },
+ "dropped_by_preregistration": "HEM+ leg (m=0 vs m=1 wash on 3,372 pairs)",
+ "program_ledger": {
+  "verdict": "rejected",
+  "note": "tuning cleared (SEM+ m=3 x K_HR=2000 +0.0223) but holdout failed both legs (SEM+ lo95 -0.0147; REM+ point-negative -0.0064). Shipped K constants stand. Revisit = more completed holdout seasons, never a looser gate."
+ }
+}

@@ -1,5 +1,5 @@
 {
- "generated_at": "2026-07-07",
+ "generated_at": "2026-07-15",
  "experiment": "M3: hierarchical shrunk per-cohort blend lambda (E-LAMBDA keep-alive successor)",
  "spec": "gate pre-registered in docs/prelaunch-2026-07/GATES.md section M3",
  "seed": 7,
@@ -29,47 +29,40 @@
  "sides": {
   "hit": {
    "shipped_lambda_global": 0.7,
-   "selected_k": 100,
+   "selected_k": 50,
    "k_selection_pre2023_pooled_treat_rho": {
-    "50": 0.4084,
-    "100": 0.4099,
-    "200": 0.4096
+    "50": 0.4319,
+    "100": 0.4314,
+    "200": 0.4301
    },
-   "n_scored": 399,
+   "n_scored": 353,
    "metrics": {
     "pooled": {
-     "base": 0.3506,
-     "treat": 0.3536,
-     "delta": 0.003
+     "base": 0.3765,
+     "treat": 0.3809,
+     "delta": 0.0044
     },
     "per_cohort": {
      "college": {
-      "n": 136,
+      "n": 131,
       "gated": true,
-      "base": 0.3562,
-      "treat": 0.3609,
-      "delta": 0.0047
-     },
-     "draft": {
-      "n": 1,
-      "gated": false,
-      "base": null,
-      "treat": null,
-      "delta": null
+      "base": 0.3526,
+      "treat": 0.361,
+      "delta": 0.0084
      },
      "hs": {
-      "n": 130,
+      "n": 113,
       "gated": true,
-      "base": 0.3708,
-      "treat": 0.3701,
-      "delta": -0.0007
+      "base": 0.4582,
+      "treat": 0.4598,
+      "delta": 0.0016
      },
      "ifa": {
-      "n": 127,
+      "n": 104,
       "gated": true,
-      "base": 0.3219,
-      "treat": 0.3157,
-      "delta": -0.0062
+      "base": 0.3174,
+      "treat": 0.3087,
+      "delta": -0.0087
      },
      "other": {
       "n": 5,
@@ -81,147 +74,138 @@
     },
     "per_era": {
      "2019-2021": {
-      "n": 154,
-      "base": 0.2858,
-      "treat": 0.2972,
-      "delta": 0.0114
+      "n": 133,
+      "base": 0.2932,
+      "treat": 0.2983,
+      "delta": 0.0051
      },
      "2022-2023": {
-      "n": 245,
-      "base": 0.3837,
-      "treat": 0.3816,
-      "delta": -0.0021
+      "n": 220,
+      "base": 0.423,
+      "treat": 0.4252,
+      "delta": 0.0022
      }
     },
     "within_tier": {
-     "wm_base": 0.2031,
-     "wm_treat": 0.2207,
-     "wm_delta": 0.0177,
-     "t45_base": 0.1125,
-     "t45_treat": 0.1411,
-     "t45_delta": 0.0286
+     "wm_base": 0.1652,
+     "wm_treat": 0.1723,
+     "wm_delta": 0.0072,
+     "t45_base": 0.0795,
+     "t45_treat": 0.0991,
+     "t45_delta": 0.0196
     }
    },
    "lambda_c_paths": {
     "college": [
      {
       "year": 2020,
-      "lambda_c": 0.5883,
-      "lambdahat": 0.25,
+      "lambda_c": 0.4416,
+      "lambdahat": 0.05,
       "n_c": 33,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.7649,
-      "lambdahat": 0.9,
+      "lambda_c": 0.749,
+      "lambdahat": 0.8,
       "n_c": 48,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.8315,
-      "lambdahat": 1.0,
-      "n_c": 78,
+      "lambda_c": 0.7603,
+      "lambdahat": 0.8,
+      "n_c": 76,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.8649,
-      "lambdahat": 1.0,
-      "n_c": 122,
+      "lambda_c": 0.8401,
+      "lambdahat": 0.9,
+      "n_c": 117,
       "mode": "selected"
-     }
-    ],
-    "draft": [
-     {
-      "year": 2023,
-      "lambda_c": 0.7,
-      "lambdahat": 0.7,
-      "n_c": 1,
-      "mode": "fallback_shipped"
      }
     ],
     "hs": [
      {
       "year": 2020,
-      "lambda_c": 0.4704,
-      "lambdahat": 0.1,
-      "n_c": 62,
+      "lambda_c": 0.3231,
+      "lambdahat": 0.05,
+      "n_c": 69,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.3889,
+      "lambda_c": 0.2574,
       "lambdahat": 0.0,
-      "n_c": 80,
+      "n_c": 86,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.407,
-      "lambdahat": 0.15,
-      "n_c": 114,
+      "lambda_c": 0.2852,
+      "lambdahat": 0.1,
+      "n_c": 112,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.3264,
-      "lambdahat": 0.1,
-      "n_c": 165,
+      "lambda_c": 0.1683,
+      "lambdahat": 0.0,
+      "n_c": 158,
       "mode": "selected"
      }
     ],
     "ifa": [
      {
       "year": 2020,
-      "lambda_c": 0.5224,
-      "lambdahat": 0.0,
-      "n_c": 34,
+      "lambda_c": 0.4457,
+      "lambdahat": 0.15,
+      "n_c": 43,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.7773,
-      "lambdahat": 0.9,
-      "n_c": 63,
+      "lambda_c": 0.3831,
+      "lambdahat": 0.15,
+      "n_c": 68,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.3743,
-      "lambdahat": 0.0,
-      "n_c": 87,
+      "lambda_c": 0.3838,
+      "lambdahat": 0.2,
+      "n_c": 86,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.8142,
-      "lambdahat": 0.9,
-      "n_c": 133,
+      "lambda_c": 0.3429,
+      "lambdahat": 0.2,
+      "n_c": 125,
       "mode": "selected"
      }
     ],
     "other": [
      {
       "year": 2020,
-      "lambda_c": 0.2944,
+      "lambda_c": 0.2012,
       "lambdahat": 0.05,
-      "n_c": 166,
+      "n_c": 165,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.2925,
+      "lambda_c": 0.1998,
       "lambdahat": 0.05,
-      "n_c": 168,
+      "n_c": 167,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.2907,
+      "lambda_c": 0.1984,
       "lambdahat": 0.05,
-      "n_c": 170,
+      "n_c": 169,
       "mode": "selected"
      }
     ]
@@ -229,71 +213,62 @@
    "stability": {
     "college": {
      "lambda_c_path": [
-      0.5883,
-      0.7649,
-      0.8315,
-      0.8649
+      0.4416,
+      0.749,
+      0.7603,
+      0.8401
      ],
-     "range": 0.2766,
+     "range": 0.3985,
      "step_deltas": [
-      0.1766,
-      0.0666,
-      0.0334
+      0.3074,
+      0.0113,
+      0.0798
      ],
      "reversal": false,
      "stable": false
     },
-    "draft": {
-     "lambda_c_path": [
-      0.7
-     ],
-     "range": 0.0,
-     "reversal": false,
-     "stable": true,
-     "note": "fewer than 2 folds; cannot oscillate"
-    },
     "hs": {
      "lambda_c_path": [
-      0.4704,
-      0.3889,
-      0.407,
-      0.3264
+      0.3231,
+      0.2574,
+      0.2852,
+      0.1683
      ],
-     "range": 0.144,
+     "range": 0.1548,
      "step_deltas": [
-      -0.0815,
-      0.0181,
-      -0.0806
+      -0.0657,
+      0.0278,
+      -0.1169
      ],
      "reversal": false,
      "stable": true
     },
     "ifa": {
      "lambda_c_path": [
-      0.5224,
-      0.7773,
-      0.3743,
-      0.8142
+      0.4457,
+      0.3831,
+      0.3838,
+      0.3429
      ],
-     "range": 0.4399,
+     "range": 0.1028,
      "step_deltas": [
-      0.2549,
-      -0.403,
-      0.4399
+      -0.0626,
+      0.0007,
+      -0.0409
      ],
-     "reversal": true,
-     "stable": false
+     "reversal": false,
+     "stable": true
     },
     "other": {
      "lambda_c_path": [
-      0.2944,
-      0.2925,
-      0.2907
+      0.2012,
+      0.1998,
+      0.1984
      ],
-     "range": 0.0037,
+     "range": 0.0028,
      "step_deltas": [
-      -0.0019,
-      -0.0018
+      -0.0014,
+      -0.0014
      ],
      "reversal": false,
      "stable": true
@@ -301,41 +276,41 @@
    }
   },
   "pit": {
-   "shipped_lambda_global": 0.54,
-   "selected_k": 50,
+   "shipped_lambda_global": 0.61,
+   "selected_k": 200,
    "k_selection_pre2023_pooled_treat_rho": {
-    "50": 0.2577,
-    "100": 0.257,
-    "200": 0.2553
+    "50": 0.2801,
+    "100": 0.2813,
+    "200": 0.2821
    },
-   "n_scored": 466,
+   "n_scored": 438,
    "metrics": {
     "pooled": {
-     "base": 0.2755,
-     "treat": 0.2781,
-     "delta": 0.0026
+     "base": 0.3028,
+     "treat": 0.3015,
+     "delta": -0.0013
     },
     "per_cohort": {
      "college": {
-      "n": 234,
+      "n": 230,
       "gated": true,
-      "base": 0.2938,
-      "treat": 0.2908,
-      "delta": -0.003
+      "base": 0.3171,
+      "treat": 0.3112,
+      "delta": -0.0059
      },
      "hs": {
-      "n": 107,
+      "n": 97,
       "gated": true,
-      "base": 0.2989,
-      "treat": 0.2987,
-      "delta": -0.0002
+      "base": 0.3033,
+      "treat": 0.2949,
+      "delta": -0.0084
      },
      "ifa": {
-      "n": 121,
+      "n": 107,
       "gated": true,
-      "base": 0.246,
-      "treat": 0.2593,
-      "delta": 0.0133
+      "base": 0.2972,
+      "treat": 0.304,
+      "delta": 0.0068
      },
      "other": {
       "n": 4,
@@ -347,130 +322,130 @@
     },
     "per_era": {
      "2019-2021": {
-      "n": 219,
-      "base": 0.1673,
-      "treat": 0.1818,
-      "delta": 0.0145
+      "n": 210,
+      "base": 0.2034,
+      "treat": 0.2076,
+      "delta": 0.0042
      },
      "2022-2023": {
-      "n": 247,
-      "base": 0.3743,
-      "treat": 0.3629,
-      "delta": -0.0114
+      "n": 228,
+      "base": 0.3936,
+      "treat": 0.3875,
+      "delta": -0.0061
      }
     },
     "within_tier": {
-     "wm_base": 0.113,
-     "wm_treat": 0.1208,
-     "wm_delta": 0.0077,
-     "t45_base": 0.1764,
-     "t45_treat": 0.1916,
-     "t45_delta": 0.0152
+     "wm_base": 0.1488,
+     "wm_treat": 0.1486,
+     "wm_delta": -0.0002,
+     "t45_base": 0.2023,
+     "t45_treat": 0.1712,
+     "t45_delta": -0.0311
     }
    },
    "lambda_c_paths": {
     "college": [
      {
       "year": 2020,
-      "lambda_c": 0.4267,
-      "lambdahat": 0.2,
-      "n_c": 25,
+      "lambda_c": 0.5398,
+      "lambdahat": 0.0,
+      "n_c": 26,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.5744,
-      "lambdahat": 0.6,
-      "n_c": 67,
+      "lambda_c": 0.4835,
+      "lambdahat": 0.1,
+      "n_c": 66,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.6182,
-      "lambdahat": 0.65,
-      "n_c": 123,
+      "lambda_c": 0.3801,
+      "lambdahat": 0.0,
+      "n_c": 121,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.7449,
+      "lambda_c": 0.7008,
       "lambdahat": 0.8,
-      "n_c": 186,
+      "n_c": 183,
       "mode": "selected"
      }
     ],
     "hs": [
      {
       "year": 2020,
-      "lambda_c": 0.2596,
-      "lambdahat": 0.0,
-      "n_c": 54,
+      "lambda_c": 0.4864,
+      "lambdahat": 0.1,
+      "n_c": 64,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.1985,
-      "lambdahat": 0.0,
-      "n_c": 86,
+      "lambda_c": 0.4469,
+      "lambdahat": 0.1,
+      "n_c": 94,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.1698,
+      "lambda_c": 0.3836,
       "lambdahat": 0.0,
-      "n_c": 109,
+      "n_c": 118,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.1517,
+      "lambda_c": 0.3664,
       "lambdahat": 0.0,
-      "n_c": 128,
+      "n_c": 133,
       "mode": "selected"
      }
     ],
     "ifa": [
      {
       "year": 2020,
-      "lambda_c": 0.6713,
-      "lambdahat": 0.8,
-      "n_c": 51,
+      "lambda_c": 0.6844,
+      "lambdahat": 0.9,
+      "n_c": 69,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.7008,
-      "lambdahat": 0.8,
-      "n_c": 81,
+      "lambda_c": 0.74,
+      "lambdahat": 1.0,
+      "n_c": 100,
       "mode": "selected"
      },
      {
       "year": 2022,
-      "lambda_c": 0.7896,
-      "lambdahat": 0.9,
-      "n_c": 113,
+      "lambda_c": 0.7607,
+      "lambdahat": 1.0,
+      "n_c": 126,
       "mode": "selected"
      },
      {
       "year": 2023,
-      "lambda_c": 0.8796,
+      "lambda_c": 0.7771,
       "lambdahat": 1.0,
-      "n_c": 141,
+      "n_c": 150,
       "mode": "selected"
      }
     ],
     "other": [
      {
       "year": 2020,
-      "lambda_c": 0.8969,
-      "lambdahat": 1.0,
+      "lambda_c": 0.3271,
+      "lambdahat": 0.0,
       "n_c": 173,
       "mode": "selected"
      },
      {
       "year": 2021,
-      "lambda_c": 0.8982,
-      "lambdahat": 1.0,
+      "lambda_c": 0.3245,
+      "lambdahat": 0.0,
       "n_c": 176,
       "mode": "selected"
      }
@@ -479,60 +454,60 @@
    "stability": {
     "college": {
      "lambda_c_path": [
-      0.4267,
-      0.5744,
-      0.6182,
-      0.7449
+      0.5398,
+      0.4835,
+      0.3801,
+      0.7008
      ],
-     "range": 0.3182,
+     "range": 0.3207,
      "step_deltas": [
-      0.1477,
-      0.0438,
-      0.1267
+      -0.0563,
+      -0.1034,
+      0.3207
      ],
-     "reversal": false,
+     "reversal": true,
      "stable": false
     },
     "hs": {
      "lambda_c_path": [
-      0.2596,
-      0.1985,
-      0.1698,
-      0.1517
+      0.4864,
+      0.4469,
+      0.3836,
+      0.3664
      ],
-     "range": 0.1079,
+     "range": 0.12,
      "step_deltas": [
-      -0.0611,
-      -0.0287,
-      -0.0181
+      -0.0395,
+      -0.0633,
+      -0.0172
      ],
      "reversal": false,
      "stable": true
     },
     "ifa": {
      "lambda_c_path": [
-      0.6713,
-      0.7008,
-      0.7896,
-      0.8796
+      0.6844,
+      0.74,
+      0.7607,
+      0.7771
      ],
-     "range": 0.2083,
+     "range": 0.0927,
      "step_deltas": [
-      0.0295,
-      0.0888,
-      0.09
+      0.0556,
+      0.0207,
+      0.0164
      ],
      "reversal": false,
-     "stable": false
+     "stable": true
     },
     "other": {
      "lambda_c_path": [
-      0.8969,
-      0.8982
+      0.3271,
+      0.3245
      ],
-     "range": 0.0013,
+     "range": 0.0026,
      "step_deltas": [
-      0.0013
+      -0.0026
      ],
      "reversal": false,
      "stable": true
@@ -543,82 +518,64 @@
  "gate": {
   "condition_1_pooled_no_decrease": {
    "hit": {
-    "delta": 0.003,
+    "delta": 0.0044,
     "pass": true
    },
    "pit": {
-    "delta": 0.0026,
-    "pass": true
+    "delta": -0.0013,
+    "pass": false
    }
   },
   "condition_2_target_cohort_improve": {
    "named_targets": {
     "pit:ifa": {
-     "delta": 0.0133,
+     "delta": 0.0068,
      "gated": true,
-     "pass": true
+     "pass": false
     }
    },
    "pit_pre2018_era_note": "not scoreable: <=2018 era absent from SCORED_YEARS folds",
    "requires": "pit:ifa gated & improves >= +0.01",
-   "pass": true
+   "pass": false
   },
   "condition_3_no_cohort_degrade": {
    "degraded_gated_cohorts": {
-    "hit:ifa": -0.0062
+    "hit:ifa": -0.0087,
+    "pit:college": -0.0059,
+    "pit:hs": -0.0084
    },
    "pass": false
   },
   "condition_4_era_no_drop": {
-   "era_drops": {
-    "pit:2022-2023": -0.0114
-   },
-   "pass": false
+   "era_drops": {},
+   "pass": true
   },
   "condition_5_within_tier_t45": {
-   "tier_failures": {},
-   "pass": true
+   "tier_failures": {
+    "pit:t45_delta": -0.0311
+   },
+   "pass": false
   },
   "condition_6_fold_stability": {
    "unstable_gated_cohorts": {
     "hit:college": {
-     "range": 0.2766,
+     "range": 0.3985,
      "reversal": false,
      "lambda_c_path": [
-      0.5883,
-      0.7649,
-      0.8315,
-      0.8649
-     ]
-    },
-    "hit:ifa": {
-     "range": 0.4399,
-     "reversal": true,
-     "lambda_c_path": [
-      0.5224,
-      0.7773,
-      0.3743,
-      0.8142
+      0.4416,
+      0.749,
+      0.7603,
+      0.8401
      ]
     },
     "pit:college": {
-     "range": 0.3182,
-     "reversal": false,
+     "range": 0.3207,
+     "reversal": true,
      "lambda_c_path": [
-      0.4267,
-      0.5744,
-      0.6182,
-      0.7449
-     ]
-    },
-    "pit:ifa": {
-     "range": 0.2083,
-     "reversal": false,
-     "lambda_c_path": [
-      0.6713,
-      0.7008,
-      0.7896,
-      0.8796
+      0.5398,
+      0.4835,
+      0.3801,
+      0.7008
      ]
     }
    },
@@ -630,8 +587,10 @@
  "loss_ledger": {
   "verdict": "NO SHIP",
   "failed_conditions": [
+   "condition_1_pooled_no_decrease",
+   "condition_2_target_cohort_improve",
    "condition_3_no_cohort_degrade",
-   "condition_4_era_no_drop",
+   "condition_5_within_tier_t45",
    "condition_6_fold_stability"
   ],
   "summary": "The hierarchical shrunk cohort-lambda did not clear the full M3 gate, but it is a genuine advance over the raw per-cohort argmax (E-LAMBDA, NO SHIP): shrinkage toward the global lambda FIXED the pooled degradation (E-LAMBDA pit pooled -0.0104 -> hier +0.0026; hit +0.0030, both no-decrease = clause 1 PASS) and CAPTURED the proven pit:ifa direction (+0.0133 >= +0.01 = clause 2 PASS). It is blocked by the collateral, not the target.",
