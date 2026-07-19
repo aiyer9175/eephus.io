@@ -1261,6 +1261,7 @@ def fetch_statcast_metrics_for_players(
     # ProcessPoolExecutor's max_tasks_per_child, unavailable on this box's
     # Python 3.10, hence doing it by hand.
     _P3_BATCH_SIZE = 750
+    _p3_errors = 0
     for _batch_start in range(0, len(targets), _P3_BATCH_SIZE):
         _batch = targets[_batch_start:_batch_start + _P3_BATCH_SIZE]
         with concurrent.futures.ProcessPoolExecutor(max_workers=_p3_workers, mp_context=_p3_ctx) as ex:
@@ -1278,12 +1279,28 @@ def fetch_statcast_metrics_for_players(
                 key = future_to_key[fut]
                 try:
                     row = fut.result()
-                except Exception:
+                except Exception as _exc:
+                    # AUDIT 2026-07-18 (A8, upstream) — under a spawn ProcessPoolExecutor
+                    # a single dead worker marks the pool broken and raises
+                    # BrokenProcessPool on EVERY pending future; swallowing that
+                    # silently staled hundreds of rows inside a run that still
+                    # logged success. Log so a pool break or a per-player fetch
+                    # failure is visible at production log level. The v23 batching
+                    # above also caps the blast radius of any one break to the
+                    # current batch (<= _P3_BATCH_SIZE players) instead of the
+                    # whole 6700+-player run.
                     row = None
+                    _p3_errors += 1
+                    if _p3_errors <= 5 or _p3_errors % 200 == 0:
+                        _log.warning("statcast pass 3/3: worker failed for %s (%d errors so far): %s",
+                                     key, _p3_errors, _exc)
                 if row:
                     out[key] = row
                 _p3_done += 1
                 if _p3_done % 500 == 0 or _p3_done == len(targets):
                     _log.info("statcast pass 3/3: %d/%d processed (%d with data, %.0fs elapsed)",
                               _p3_done, len(targets), len(out), _time.monotonic() - _p3_start)
+    if _p3_errors:
+        _log.warning("statcast pass 3/3: %d/%d workers failed (rows left stale this run)",
+                     _p3_errors, len(targets))
     return out
