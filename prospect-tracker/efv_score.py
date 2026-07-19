@@ -42,7 +42,14 @@ def _provisional_prior_war(cons_war: float, pick_overall, bonus_usd) -> tuple[fl
 
     Math: prior_war = w*slot_war + (1-w)*cons_war, w = pedigree/(pedigree+base),
     pedigree = pick_tier_precision + bonus_log_precision (capped). Bonus adds TRUST
-    (a weight), not a WAR value — it is dimensionless precision, never summed as WAR."""
+    (a weight), not a WAR value — it is dimensionless precision, never summed as WAR.
+
+    UNITS INVARIANT (do not break): both terms are 6-SEASON-TOTAL WAR. cons_war =
+    _pred_ols on the target_censored column, which efv_dataset builds over a
+    TARGET_SEASONS=6 window (obs_sum + tail); storage._pick_slot_expected_war returns
+    the first6_step_curve, also 6-season-total WAR. So the blend is on one axis and
+    feeds rank_war/realized_implied_fv unchanged. If either basis ever changes to
+    per-season, rescale the other here or the grades will be off by ~6x."""
     import math
     cfg = (vf._config().get("efv_provisional_prior") or {})
     if not cfg.get("enabled"):

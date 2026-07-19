@@ -71,6 +71,27 @@ If P1 fails clause 2–5 (a real modeling defect) the flag stays off and the los
 recorded here. Clause 1 failing means the WIRING is wrong (a bug), not a modeling
 loss — fix the leak and re-gate.
 
+## Harness
+
+`tools/efv_provisional_prior_lab.py` — runs clauses 2-5 (clause 1 is a separate
+`efv_model.run` OFF-vs-ON bit-identity check). Artifact:
+`data/xfv_provisional_prior_eval.json` (do NOT commit a copy produced on a degraded
+matrix). The lab ABSTAINS (not FAIL) when it detects a degenerate `target_censored`
+column, so a degraded-vintage run cannot be mistaken for a loss.
+
+## Units basis (verified 2026-07-19 — do not break)
+
+Both blend terms are **6-season-TOTAL WAR**: `cons_war = _pred_ols(ols, cons_fv)` is
+the OLS on `target_censored`, which `efv_dataset` builds over a `TARGET_SEASONS=6`
+window; `storage._pick_slot_expected_war` returns the `first6_step_curve`, also
+6-season-total WAR. So the blend is on one consistent axis and feeds
+`rank_war`/`realized_implied_fv` unchanged (documented in the helper docstring). If
+either basis ever moves to per-season, the other must be rescaled or grades shift ~6x.
+
 ## RESULTS
 
-_Pending the canonical-vintage run on the box._
+- **2026-07-19 (local, PRELIMINARY):** ABSTAIN. The restored-from-git dev matrix has an
+  all-zero `target_censored` column, so the consensus-WAR OLS baseline collapses to ~0
+  and OFF-vs-ON is not measurable here. The harness runs end-to-end and abstains
+  correctly. **Re-run on the canonical matrix (box / seeded dev env) for a real verdict.**
+- _Canonical-vintage run: pending on the box._
