@@ -8539,6 +8539,7 @@
         <a href="/mlbstats/" role="menuitem">MLB Stats</a>
         <a href="/pal/" role="menuitem">Pitcher Alchemy Lab</a>
         <a href="/trademachine/" role="menuitem">Trade Machine</a>
+        <a href="/fantasy/" role="menuitem">Fantasy</a>
       </div>
     </details>
     <a href="/articles/">Articles</a>
@@ -34791,10 +34792,13 @@ function headshotURL(mlbamId, sizePx) {
   if (ctx === "none") return null;
   if (ctx === "67" || ctx === "milb")
     return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/${ctx}/current`;
-  // Not yet resolved (map not loaded, or id added since the last backfill):
-  // legacy 67 + generic overlay (always 200 - real photo or generic silhouette)
-  // so coverage never regresses before the resolver reaches this id.
-  return `https://img.mlbstatic.com/mlb-photos/image/upload/d_people:generic:headshot:67:current.png/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
+  // Not yet resolved (map not loaded, or id added since the last backfill - the
+  // photo_ctx.json resolver only reruns on the monthly build, so mid-month
+  // additions land here). Request the REAL 67 photo WITHOUT the generic overlay,
+  // so a missing 67 photo 404s instead of returning a silhouette-at-200; that
+  // 404 is what lets headshotHTML's onerror retry the MiLB context and recover
+  // the photo. Makes coverage independent of photo_ctx.json freshness on the box.
+  return `https://img.mlbstatic.com/mlb-photos/image/upload/w_${r},q_auto:best/v1/people/${mlbamId}/headshot/67/current`;
 }
 // Resolve a player's FV to the nearest published tier (80/75/70/65/60/
 // 55/50/45/40/35/30/25/20) so the wrapper picks up the right palette
@@ -34879,11 +34883,23 @@ function headshotHTML(player, sizePx = 36) {
   // blank silhouette. Native lazy-load is browser-managed, kicks in as
   // soon as the row is layout-visible, and avoids the observer roundtrip.
   // The silhouette behind the img still shows through if Cloudinary 404s.
+  // Self-healing fallback: for an id the resolver hasn't reached yet (mid-month
+  // additions - the photo_ctx.json backfill only reruns on the monthly build),
+  // headshotURL returns the "67" set, which 404s for the many prospects whose
+  // only photo lives in the MiLB set. Retry the "milb" context ONCE before we
+  // hide the img and let the silhouette show through, so coverage no longer
+  // depends on photo_ctx.json being current on the deploy box. A resolved id
+  // ('67'/'milb') is already the right URL, so its onerror just reveals the sil.
+  const _resolved = (_photoCtx[id] === "67" || _photoCtx[id] === "milb");
+  const _milbSrc = `https://img.mlbstatic.com/mlb-photos/image/upload/w_${Math.max(60, Math.round(h * 2))},q_auto:best/v1/people/${id}/headshot/milb/current`;
+  const _onerr = _resolved
+    ? "this.style.display='none'"
+    : `if(this.dataset.mt){this.style.display='none'}else{this.dataset.mt=1;this.src='${_milbSrc}'}`;
   return `<span class="headshot ${ringClass}" style="${wrap}">
     ${sil}
     <img src="${url}" alt="" loading="lazy" decoding="async"
          style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"
-         onerror="this.style.display='none'"/>
+         onerror="${_onerr}"/>
   </span>`;
 }
 // Render a team logo with an inline fallback when the CDN 404s. `size`

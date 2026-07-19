@@ -35,6 +35,18 @@ VENV="${EEPHUS_VENV:-/opt/eephus/venv}"
 WEBROOT="${EEPHUS_WEBROOT:-/var/www/eephus.io}"
 LOCK="/tmp/eephus-nightly.lock"
 
+# Memory guardrails for low-RAM boxes (the ~6GB VPS was OOM-killed mid-build).
+# Cap the statcast spawn ProcessPoolExecutor (the one pool whose RSS scales with
+# worker count) and skip the pipeline's IN-PROCESS site rebuild - this script
+# rebuilds the site in its own process below, so the pipeline needn't also do it
+# inside its already-peaked heap. Raise EEPHUS_MAX_WORKERS if the box has RAM.
+export EEPHUS_MAX_WORKERS="${EEPHUS_MAX_WORKERS:-3}"
+export EEPHUS_SKIP_INPROC_BUILD="${EEPHUS_SKIP_INPROC_BUILD:-1}"
+# If it STILL OOM-kills, add swap (highest-leverage ops fix on a small box):
+#   sudo fallocate -l 4G /swapfile && sudo chmod 600 /swapfile
+#   sudo mkswap /swapfile && sudo swapon /swapfile
+#   echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab
+
 exec 9>"$LOCK"
 if ! flock -n 9; then
   echo "$(date -Is) another nightly build is still running - skipping"
