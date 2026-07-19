@@ -991,19 +991,33 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
 # local build) every team's `current` is None and the row is byte-for-byte the
 # 2027-only output. FIRST_SEASON=2027 is the first PROJECTED season; the
 # in-progress current season is FIRST_SEASON-1 = 2026.
-_PYTHAG_EXP = 1.83               # baseball-reference standard exponent
+_PYTHAG_EXP = 1.83               # fixed fallback exponent (baseball-reference standard)
+_PYTHAGENPAT_EXP = 0.287         # Smyth/Patriot Pythagenpat: exp = RPG**0.287
 CURRENT_PRIOR_PSEUDO_GAMES = 40  # k: prior worth ~1/4 season; wPrior=0.5 at G=40
 # StatsAPI 40-man roster status codes -> "out for the bulk of the season" flag,
 # used ONLY for the display-only ilOut60 badge (NOT any projection number).
 _IL60_CODES = {"D60", "D7D60", "60"}
 
 
-def _pythag_pct(rs: float | None, ra: float | None) -> float | None:
-    """Pythagorean win expectation from runs scored/allowed (fixed 1.83)."""
+def _pythag_pct(rs: float | None, ra: float | None,
+                g: float | None = None) -> float | None:
+    """Pythagorean win expectation from runs scored/allowed.
+
+    When games played `g` is known, use Pythagenpat (Smyth/Patriot): the exponent
+    scales with the run environment, exp = ((RS+RA)/G)**0.287, which is materially
+    more accurate than a fixed exponent for extreme offenses/pitching and is the
+    modern sabermetric standard. Falls back to the fixed 1.83 when G is unavailable
+    (e.g. RS/RA present but gamesPlayed absent). NOTE the caller prefers StatsAPI's
+    own xWinLoss when present; this fires only when that is missing."""
     if rs is None or ra is None or rs < 0 or ra < 0 or (rs + ra) <= 0:
         return None
-    rse = rs ** _PYTHAG_EXP
-    rae = ra ** _PYTHAG_EXP
+    if g and g > 0:
+        rpg = (rs + ra) / g
+        exp = rpg ** _PYTHAGENPAT_EXP if rpg > 0 else _PYTHAG_EXP
+    else:
+        exp = _PYTHAG_EXP
+    rse = rs ** exp
+    rae = ra ** exp
     if rse + rae <= 0:
         return None
     return rse / (rse + rae)
@@ -1039,7 +1053,7 @@ def _current_blend(rec: dict, prior_pct: float,
         pw, pl = rec["pythagWins"], rec["pythagLosses"]
         pythag_pct = pw / (pw + pl) if (pw + pl) > 0 else None
     else:
-        pythag_pct = _pythag_pct(rec.get("rs"), rec.get("ra"))
+        pythag_pct = _pythag_pct(rec.get("rs"), rec.get("ra"), g)
     if pythag_pct is None:
         pythag_pct = prior_pct   # no run data yet -> lean on the prior
 

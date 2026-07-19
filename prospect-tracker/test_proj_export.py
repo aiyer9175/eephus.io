@@ -20,6 +20,23 @@ ROOT = Path(__file__).parent
 SIDECAR = ROOT / "data" / "mlb_projections.json"
 
 
+def test_pythagenpat_scales_exponent_with_run_environment():
+    """With games played, _pythag_pct uses Pythagenpat (exp = RPG**0.287): a
+    higher run environment lifts the exponent, spreading a given RS/RA ratio's
+    win% further from .500 than the fixed-1.83 fallback. Equal RS/RA is always
+    .500; None inputs guard to None."""
+    # same RS/RA ratio (1.2), different run environments via games played
+    lo = pe._pythag_pct(600, 500, 162)   # ~6.8 RPG
+    hi = pe._pythag_pct(1200, 1000, 162)  # ~13.6 RPG, exponent higher
+    assert hi > lo > 0.5
+    # fixed fallback (no g) sits at the 1.83 exponent, below the high-env Pythagenpat
+    fixed = pe._pythag_pct(1200, 1000, None)
+    assert hi > fixed > 0.5
+    assert pe._pythag_pct(700, 700, 162) == 0.5
+    assert pe._pythag_pct(None, 500, 162) is None
+    assert pe._pythag_pct(500, -1, 162) is None
+
+
 def test_season_value_pricing_is_convex_and_escalates():
     """Season $ value rides the platform tier curve (convex) at the winter
     level, escalating per season — the same pricing as FA rational value."""
