@@ -1,0 +1,42 @@
+{
+  "$comment": "Machine-readable counterpart to ../definitions/COVERAGE_AND_TRUST.md. Placed under manifests/ rather than a separate context/ directory -- see ../DECISION_LEDGER.md.",
+  "trust_status_enum": ["TRUSTED", "USABLE_WITH_FILTER", "PARTIAL", "SYSTEMATICALLY_MISSING", "KNOWN_DEFECT", "NOT_VALIDATED", "UNAVAILABLE"],
+  "contact_coverage_by_level": [
+    {"level": "MLB", "seasons": "2021-2025", "trust_status": "TRUSTED", "notes": "bat-tracking era 2023H2+ for Damage Conversion+ specifically"},
+    {"level": "AAA", "seasons": "2023-2025 (full), 2021-2022 (fi_only)", "trust_status": "PARTIAL", "full_rows": 3726, "fi_only_rows": 2441, "total_rows": 6167},
+    {"level": "AA", "seasons": "none", "trust_status": "SYSTEMATICALLY_MISSING", "fi_only_rows": 4985, "total_rows": 4985},
+    {"level": "High-A", "seasons": "none", "trust_status": "SYSTEMATICALLY_MISSING", "fi_only_rows": 5019, "total_rows": 5019},
+    {"level": "Low-A", "seasons": "not independently re-verified by this package", "trust_status": "NOT_VALIDATED"},
+    {"level": "CPX/DSL", "seasons": "no dedicated artifact", "trust_status": "UNAVAILABLE"}
+  ],
+  "park_factor_coverage": {
+    "milb_v2": {"coverage_share": 1.0, "trust_status": "TRUSTED", "rows": 600},
+    "deprecated_air_density_index": {"trust_status": "KNOWN_DEFECT", "defect": "SELECTED_SAMPLE_INVALID", "missing_games_pct": 3.12, "zero_coverage_venues": 4}
+  },
+  "identity_field_coverage": {
+    "name": 1.000,
+    "fangraphs_id": 0.556,
+    "bbref_id": 0.556,
+    "retro_id": 0.549,
+    "dob": 0.547,
+    "organization": 0.546,
+    "primary_position": 0.547,
+    "bats": 0.076,
+    "throws": 0.000,
+    "secondary_positions": 0.000,
+    "n_players": 10679,
+    "measured_directly": true
+  },
+  "framing": {"treatment": "DISCLOSED_SHARED", "trust_status": "PARTIAL"},
+  "raw_pitch_tracking_fields": {
+    "pitch_type": "NOT_VALIDATED",
+    "velocity": "NOT_VALIDATED",
+    "location": "NOT_VALIDATED",
+    "pitch_outcome": "NOT_VALIDATED",
+    "exit_velocity": "NOT_VALIDATED",
+    "launch_angle": "NOT_VALIDATED",
+    "catcher": "NOT_VALIDATED",
+    "tracking_source_metadata": "NOT_VALIDATED",
+    "note": "No Eephus production system ingests or scores raw pitch-by-pitch tracking data today. This is not an assessment of quality either way -- it is the absence of a prior Eephus finding."
+  }
+}
