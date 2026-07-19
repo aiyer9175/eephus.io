@@ -982,11 +982,11 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
 
 
 # ============================================================================
-# Current-season (2026) view — Bayesian + Pythag blend, log5 SOS, playoff odds
+# Current-season (2026) view - Bayesian + Pythag blend, log5 SOS, playoff odds
 # ============================================================================
 # DARK-LAUNCHED, ADDITIVE overlay. This runs OUTSIDE _team_outlook, after it
 # returns, and only ever writes a nested `current` block (+ two flat mirrors) on
-# each row — the 2027 byYear[]/wins/war/lockedPct output and team_outlook_eval
+# each row - the 2027 byYear[]/wins/war/lockedPct output and team_outlook_eval
 # are never touched. When live standings/schedule are absent (offline / degraded
 # local build) every team's `current` is None and the row is byte-for-byte the
 # 2027-only output. FIRST_SEASON=2027 is the first PROJECTED season; the
@@ -1026,7 +1026,7 @@ def _pythag_pct(rs: float | None, ra: float | None,
 def _talent_prior_pct(win_total: float) -> float:
     """The pure roster-talent prior as a win rate: the model's recentered year-1
     (2027) team win total / 162, clamped to a sane [.20, .80]. This reuses the
-    EXISTING machinery (the same `wins` the 2027 view already published) — it does
+    EXISTING machinery (the same `wins` the 2027 view already published) - it does
     NOT recompute the model, and 2026-vs-2027 talent drift is negligible next to
     the k=40 shrinkage."""
     return min(0.80, max(0.20, win_total / 162.0))
@@ -1091,7 +1091,7 @@ def _attach_current_season(rows: list[dict], standings: dict[str, dict],
     """Overlay the `current` block onto each team_outlook row IN PLACE and return
     the schedule-source flag ('live' | 'balanced_fallback' | None). rows carry the
     2027 view; `standings` is standings_now(2026). No-op returning None when
-    `standings` is empty (degraded/offline) — the 2027 output is left untouched."""
+    `standings` is empty (degraded/offline) - the 2027 output is left untouched."""
     if not standings:
         return None
     season = season or (FIRST_SEASON - 1)
@@ -1382,7 +1382,7 @@ def build_payload() -> dict:
         corpus, names, contracts, {m["mlbam"] for m in vets if m.get("mlbam")})
     team_outlook = _team_outlook(vets, prospects, depth_team_war, depth_acct,
                                  _cohort_intercepts())
-    # Current-season (2026) overlay — ADDITIVE, dark-launched. Best-effort: any
+    # Current-season (2026) overlay - ADDITIVE, dark-launched. Best-effort: any
     # fetch failure (offline / degraded local build) leaves team_outlook exactly
     # as the 2027-only output and mc_schedule_source None. FIRST_SEASON-1 = 2026.
     mc_schedule_source = None

@@ -576,7 +576,7 @@
       surplus:   { get: r => (r.farm || {}).farmSurplusMM, natural: "desc" },
       prospect:  { get: r => ((r.farm || {}).topProspect || {}).fv, natural: "desc" },
       projected: { get: r => ((r.top || [])[0] || {}).war, natural: "desc" },
-      // Current (2026) columns — only active in now-mode; additive, no collision.
+      // Current (2026) columns - only active in now-mode; additive, no collision.
       nowPct:    { get: r => (r.current || {}).actualPct, natural: "desc" },
       pythag:    { get: r => (r.current || {}).pythagPct, natural: "desc" },
       blend:     { get: r => (r.current || {}).curPct, natural: "desc" },

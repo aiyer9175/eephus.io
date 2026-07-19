@@ -129,7 +129,7 @@
       '<table class="fantasy-table"><thead><tr><th>#</th><th>Date</th><th>Pitcher</th><th>Opponent</th><th>Exp pts</th><th>SEM+</th><th>Park</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
   function tableTwoStart(list) {
-    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected in the current window yet — MLB announces probables ~5 days out, so this fills in as the scoring week firms up.</div>';
+    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected in the current window yet - MLB announces probables ~5 days out, so this fills in as the scoring week firms up.</div>';
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) { return "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")"; }).join(" · ");
       return '<tr><td class="ff-rk">' + (i + 1) + '</td><td class="ff-nm">' + nameLink(t.mlbam, t.name) + " " + teamLogo(t.team) +
@@ -166,7 +166,7 @@
       }).join("");
       return '<div class="fantasy-team-card"><div class="ff-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" + lst + "</div>";
     }).join("");
-    return '<div class="fantasy-note">Bullpen pecking order by average leverage (gmLI) — the top arm is the likely closer, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
+    return '<div class="fantasy-note">Bullpen pecking order by average leverage (gmLI) - the top arm is the likely closer, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
   }
   function renderCallups() {
     var list = (S.data.sections || {}).callup_watch || [];
@@ -175,7 +175,7 @@
       return "<tr><td class=\"ff-nm\">" + nameLink(c.mlbam, c.name) + "</td><td>" + esc(c.org) + "</td><td>" + esc(c.pos) +
         "</td><td>" + esc(c.eta) + "</td><td>" + num(c.fv, 0) + "</td></tr>";
     }).join("");
-    return '<div class="fantasy-note">Prospects near the majors with fantasy upside — stash before the call.</div>' +
+    return '<div class="fantasy-note">Prospects near the majors with fantasy upside - stash before the call.</div>' +
       '<table class="fantasy-table"><thead><tr><th>Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>FV</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
 
@@ -235,12 +235,12 @@
   function errorState(msg) {
     var root = el("fantasy-app-root");
     if (root) root.innerHTML = '<div class="fantasy-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' The nightly build may be mid-run — <button type="button" id="fantasy-retry" class="ff-scorebtn">retry</button>.</div>';
+      esc(msg || "") + ' The nightly build may be mid-run - <button type="button" id="fantasy-retry" class="ff-scorebtn">retry</button>.</div>';
     var rb = el("fantasy-retry"); if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var root = el("fantasy-app-root");
-    if (root) root.innerHTML = '<div class="fantasy-note">Fantasy projections are being computed — check back after the next nightly build.</div>';
+    if (root) root.innerHTML = '<div class="fantasy-note">Fantasy projections are being computed - check back after the next nightly build.</div>';
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
