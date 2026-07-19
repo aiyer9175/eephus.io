@@ -72,7 +72,12 @@ def _oof_rows(side: str) -> list[dict]:
     Mirrors tools/efv_isotonic_lab.oof_rows but with no chdir side effect."""
     import numpy as np
     import value_framework as vf
-    from efv_dataset import matrix_path
+    # TARGET_SEASONS = the model's exposure window (efv_dataset, =6). Imported from
+    # efv_dataset (not the module-level 6.0 above, which is the realized-bucket
+    # divisor pinned to the isotonic lab) so the grade-map inversion below tracks
+    # whatever window efv_score ships. Shadows the module global inside this
+    # function only; _realized_bucket keeps its own module-level divisor.
+    from efv_dataset import matrix_path, TARGET_SEASONS
     from efv_model import _prep, _feature_spec
     from efv_score import _age_at
     from prospect_path import _fit_ridge, _predict, _fit_linear_calibration
@@ -101,8 +106,13 @@ def _oof_rows(side: str) -> list[dict]:
             xfv_war = max(-2.0, a + b * _predict(ridge, r["feats"]))
             dyear = src.get("debut_year") or 2020
             age = _age_at(src.get("birth_date"), dyear)
-            grade = vf.realized_implied_fv(xfv_war, is_pit, age=age,
-                                           position=src.get("position"))
+            # exposure_seasons=TARGET_SEASONS so these reliability/ECE curves measure
+            # the SHIPPED 6yr-window grade (efv_score.run/run_live/run_backgrade all
+            # pass it); omitting it defaulted to control_years=7 and the diagnostic
+            # described a bucket distribution the site never shows (2026-07-19 fix).
+            pos = src.get("position")
+            grade = vf.realized_implied_fv(xfv_war, is_pit, age=age, position=pos,
+                                           exposure_seasons=TARGET_SEASONS)
             if grade is None:
                 continue
             probs = vf.p_bucket_given_fv(grade, is_pit)

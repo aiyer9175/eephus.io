@@ -246,7 +246,11 @@ def fitted_models(corpus: dict, max_season: int, use_cache: bool = True) -> tupl
     """(curves, war_map) fitted on seasons <= max_season, disk-cached per
     max_season — Gate 2 and the live market model reuse Gate 1's twelve
     point-in-time fits instead of recomputing them (load-time ask)."""
-    cache = CACHE_DIR / f"fa_fits_{max_season}_{corpus['first']}.pkl"
+    # Key on corpus['last'] too (mirrors proj_ml's frame-cache key): a corpus
+    # refresh strictly advances 'last' (annual rollover + the in-progress season
+    # going partial->full + bWAR revisions), so omitting it served the PREVIOUS
+    # vintage's stale aging curves + WAR map from disk forever (2026-07-19 fix).
+    cache = CACHE_DIR / f"fa_fits_{max_season}_{corpus['first']}_{corpus['last']}.pkl"
     if use_cache and cache.exists():
         with open(cache, "rb") as fh:
             return pickle.load(fh)

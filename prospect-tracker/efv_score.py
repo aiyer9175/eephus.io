@@ -540,6 +540,21 @@ def _map_grade(grade_map, rank_war):
     return y0 if x1 == x0 else y0 + (y1 - y0) * (rank_war - x0) / (x1 - x0)
 
 
+def _history_model_war(row, cons_war, ridge_war_fn):
+    """eFV model WAR for ONE historical snapshot (score_history / FV-history chart).
+    A snapshot WITH a MiLB track record uses the model prediction (ridge_war_fn); a
+    NO-track-record snapshot is prior-anchored via _provisional_prior_war off cons_war
+    instead of being scored through the ridge. Scoring a data-less snapshot through the
+    ridge applies the trained milb_missing untracked-bust penalty, which fabricates a
+    spuriously depressed early eFV point for a player who merely had no pro line yet.
+    Mirrors run_backgrade's AUDIT FIX 2026-07-14. ridge_war_fn is deferred so a
+    no-track-record snapshot never pays the ridge predict."""
+    if row.get("milb"):
+        return ridge_war_fn()
+    war, _ = _provisional_prior_war(cons_war, row.get("pick_overall"), row.get("bonus_usd"))
+    return war
+
+
 def score_history(persist: bool = True) -> dict:
     """Backfill an eFV value at EACH historical board snapshot so the FV-history chart can
     plot eFV over time (not just consensus). For every points[] entry we re-score the as-of
@@ -585,13 +600,25 @@ def score_history(persist: bool = True) -> dict:
             row.update(_prior_features(rec, pt, side))
             row["milb"] = _milb_features(rec.get("mlbam_id"), min(yr, CURRENT_SEASON) + 1,
                                          rec.get("birth_date"), side)
-            model_war = max(-2.0, a + b * _predict(ridge, _vec(row, side)))
+            # cons_war (consensus-anchor WAR) is computed first so a no-track-record
+            # snapshot can be prior-anchored off it. ols is always present here
+            # (fit_production_stack returns None otherwise and _fit_production raises),
+            # so the `else` branch is defensive only.
+            cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else 0.0
+            # 2026-07-19 FIX: route a NO-track-record snapshot through the prior-anchor
+            # path (mirror run_backgrade's 2026-07-14 AUDIT FIX), NOT the ridge. Scoring a
+            # data-less snapshot through the ridge applies the trained milb_missing
+            # untracked-bust penalty, fabricating a spuriously depressed early eFV point
+            # (a fake early dip on the FV-history chart). Resolved/track-record snapshots
+            # (milb present) are unchanged.
+            model_war = _history_model_war(
+                row, cons_war,
+                lambda: max(-2.0, a + b * _predict(ridge, _vec(row, side))))
             # DISPLAYED (20-80 quantile-scale) grade at this snapshot: guarded blend ->
             # live grade map, the same transform behind the headline since the 2026-07-06
             # quantile flip -- so the eFV-history chart is on ONE scale with the badge (no
             # scale discontinuity at the live point; the pre-flip realized line sat ~5-9
             # grades below the displayed number).
-            cons_war = max(0.0, _pred_ols(ols, cons_fv)) if ols else model_war
             rank_war = (1 - lam[side]) * cons_war + lam[side] * model_war
             grade = _map_grade(gmap[side], rank_war)
             if grade is None:
@@ -621,6 +648,18 @@ def _fit_production(side: str):
     if not stack:
         raise RuntimeError(f"production stack unfittable for side={side}")
     return stack["ridge"], stack["a"], stack["b"], stack["ols"], keys
+
+
+def _krp_eligible(r, is_pit) -> bool:
+    """KRP+ (K-backed Run Prevention) exposure gate for the live pitcher pool.
+    A pitcher qualifies only with a real MiLB rate line: era_rel present AND
+    rates_missing == 0 (has batters-faced). rates_missing lives in the MiLB
+    feature dict (efv_dataset._season_rates), NOT in efv_model._vec's output -
+    reading it off the _vec feature vector always defaulted to 1.0 and gated out
+    EVERY live pitcher, leaving the KRP+ pill dead site-wide (2026-07-19 fix)."""
+    milb = r.get("milb") or {}
+    return bool(is_pit and milb.get("era_rel") is not None
+                and float(milb.get("rates_missing", 1.0) or 0.0) == 0.0)
 
 
 def run_live(persist: bool = True, side: str = "hit") -> dict:
@@ -718,8 +757,10 @@ def run_live(persist: bool = True, side: str = "hit") -> dict:
         # AUDIT FIX 2026-07-14: gate KRP+ on actual exposure, not the product's
         # truthiness - x_era_k == 0.0 also happens when era_rel is exactly 0.0
         # (or in the zeroed double-bad quadrant), and those arms DO have IP.
-        if is_pit and (r.get("milb") or {}).get("era_rel") is not None \
-                and float(feats.get("rates_missing", 1.0) or 0.0) == 0.0:
+        # 2026-07-19 FIX: the exposure signal (rates_missing) lives in r['milb']
+        # (efv_dataset._season_rates), NOT in _vec's output; reading it off feats
+        # always defaulted to 1.0 and gated out EVERY live pitcher. See _krp_eligible.
+        if _krp_eligible(r, is_pit):
             krp_raw[r["player_key"]] = feats["x_era_k"]
         scored.append({
             "player_key": r["player_key"], "kind": "active", "position": pos,

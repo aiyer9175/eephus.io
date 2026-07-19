@@ -301,6 +301,35 @@ def test_team_outlook_prospect_eta_offset(monkeypatch):
     assert aaa["byYear"][3]["war"] == round(1.0 + 3.5, 1)
 
 
+def test_accountability_vet_horizons_surfaces_survived_and_pinball():
+    """The accountability 'Veteran WAR paths' backtest must surface the HONEST
+    calibration reads - survived-only coverage (+ its n) and the pinball loss -
+    not only the pooled coverage the eval harness itself warns 'a wide band
+    catches trivially' (absent seasons score actual=0, inside almost any band).
+    Fields are additive: the pooled `coverage` the frontend reads stays."""
+    he = ROOT / "data" / "proj_horizon_eval.json"
+    if not he.exists():
+        pytest.skip("proj_horizon_eval.json not present on this machine")
+    acct = pe._accountability_block()
+    vh = (acct.get("backtests") or {}).get("data/proj_horizon_eval.json") or {}
+    rows = ((vh.get("champion") or {}).get("horizons")) or []
+    if not rows:
+        pytest.skip("proj_horizon_eval.json holdout_2022_2024 block absent")
+    for r in rows:
+        # pooled coverage retained (assets/projections.js reads r.coverage)
+        assert "coverage" in r
+        # honest metrics now surfaced alongside it
+        for k in ("coverage_survived", "n_survived", "pinball_q10", "pinball_q90"):
+            assert k in r, f"missing {k} on horizon {r.get('h')}"
+    # Not misleadingly optimistic: pooled coverage is >= the honest survived-only
+    # read wherever both are computed (pooled is inflated by absent-season zeros).
+    both = [r for r in rows if r.get("coverage") is not None
+            and r.get("coverage_survived") is not None]
+    assert both, "no horizon carries both pooled and survived coverage"
+    for r in both:
+        assert r["coverage"] + 1e-9 >= r["coverage_survived"], r
+
+
 def test_site_carries_projections_surface():
     site = (ROOT / "build_site.py").read_text(encoding="utf-8")
     assert '"/projections/"' in site, "NAV_ITEMS must deep-link /projections/"

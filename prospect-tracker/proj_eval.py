@@ -172,13 +172,36 @@ def run(bases: list[int], persist: bool = True, predict_fn=None,
     return out
 
 
+def _parse_bases(spec: str) -> list[int]:
+    """Expand a --bases spec into an explicit, sorted, de-duplicated season
+    list. A 'lo-hi' token is an INCLUSIVE range: '2017-2021' -> [2017, 2018,
+    2019, 2020, 2021]. (The prior endpoint-only parse silently dropped the
+    interior cohorts 2018-2020, biasing the champion/challenger ship decision
+    on the documented '2022-2024' holdout.) Plain comma tokens parse as
+    literals, so the dashless default keeps its deliberate 2020-COVID gap."""
+    out: set[int] = set()
+    for tok in spec.split(","):
+        tok = tok.strip()
+        if not tok:
+            continue
+        if "-" in tok:
+            lo_s, hi_s = tok.split("-", 1)
+            lo, hi = int(lo_s), int(hi_s)
+            if hi < lo:
+                lo, hi = hi, lo
+            out.update(range(lo, hi + 1))
+        else:
+            out.add(int(tok))
+    return sorted(out)
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(message)s")
     ap = argparse.ArgumentParser()
     ap.add_argument("--bases", default="2017,2018,2019,2021")
     ap.add_argument("--no-persist", action="store_true")
     args = ap.parse_args()
-    bases = [int(b) for b in args.bases.replace("-", ",").split(",")]
+    bases = _parse_bases(args.bases)
     res = run(bases, persist=not args.no_persist)
     print(f"\n==== Multi-horizon WAR-path eval (bases {bases}) — {res['model']} ====")
     print(f"{'h':>2} {'n':>6} {'MAE':>7} {'bias':>7} {'starMAE':>8} {'starBias':>9} "
@@ -193,8 +216,21 @@ def main() -> None:
               f"{s['pinball_q10'] if s['pinball_q10'] is not None else float('nan'):>6.3f} "
               f"{s['pinball_q90'] if s['pinball_q90'] is not None else float('nan'):>6.3f}")
     if not args.no_persist:
-        (DATA_DIR / "proj_horizon_eval.json").write_text(
-            json.dumps(res, indent=1), encoding="utf-8")
+        # Read-modify-write. run() computes only the champion top-level keys
+        # (model/bases/n_players/horizons); the artifact also carries a
+        # top-level challenger_blocks owned by other tools (train_proj_models /
+        # *_backtest, via setdefault-merge). A verbatim overwrite would destroy
+        # those committed governance receipts and empty the /projections/
+        # accountability 'Veteran WAR paths' card, so preserve every existing
+        # key and update only the ones this run produced (mirrors
+        # proj_export._write_team_outlook_eval's retro_backtest preservation).
+        path = DATA_DIR / "proj_horizon_eval.json"
+        try:
+            merged = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            merged = {}
+        merged.update(res)
+        path.write_text(json.dumps(merged, indent=1), encoding="utf-8")
         print("wrote data/proj_horizon_eval.json")
 
 

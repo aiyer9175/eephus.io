@@ -1307,9 +1307,24 @@ def _accountability_block() -> dict:
     cb = he.get("challenger_blocks") or {}
 
     def _horizon_rows(block) -> list[dict]:
+        # `coverage` is the POOLED band coverage. The eval harness's own
+        # docstring warns absent seasons (actual=0) sit inside almost any
+        # P10-P90 band, so pooled coverage reads trivially high (~0.9+) and is
+        # NOT band reliability. Surface the honest reads alongside it -
+        # coverage_survived (only players who actually played the target
+        # season, plus its n) and the pinball loss (the proper quantile scoring
+        # rule) - so the accountability view is not misleadingly optimistic.
+        # All four are already computed and committed on each horizon block by
+        # proj_eval; this is pure surfacing (additive - the frontend still
+        # reads h/n/mae/bias/coverage and degrades absent the new fields).
         hz = (block or {}).get("horizons") or {}
         return [{"h": int(h), "n": v.get("n"), "mae": v.get("mae"),
-                 "bias": v.get("bias"), "coverage": v.get("coverage")}
+                 "bias": v.get("bias"), "coverage": v.get("coverage"),
+                 "coverage_survived": v.get("coverage_survived"),
+                 "n_survived": v.get("n_survived"),
+                 "pinball_q10": v.get("pinball_q10"),
+                 "pinball_q90": v.get("pinball_q90"),
+                 "mae_star": v.get("mae_star"), "n_star": v.get("n_star")}
                 for h, v in sorted(hz.items(), key=lambda kv: int(kv[0]))]
 
     vet_horizons = {
