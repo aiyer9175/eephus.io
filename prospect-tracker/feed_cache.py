@@ -31,6 +31,8 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
 import time
 from datetime import date
 from pathlib import Path
@@ -89,6 +91,66 @@ def _ttl_for_date(game_date: str | None) -> int:
     return FINAL_TTL if age_days >= RECENT_WINDOW_DAYS else SHORT_TTL
 
 
+# detailedState values that mean the game IS complete, and ones that mean it is
+# explicitly NOT (a suspended/postponed game gets resumed or replayed later).
+_FINAL_DETAILED = {"Final", "Game Over", "Completed Early"}
+_NONFINAL_DETAILED = {"Suspended", "Postponed"}
+
+
+def _looks_final(data) -> bool:
+    """Best-effort: does this feed's OWN status say the game is truly complete?
+
+    FINAL_TTL is chosen from the game's date alone, but date is not proof of
+    finality: a game suspended (e.g. rain) and resumed days later keeps its
+    original date, so a feed cached mid-suspension would be frozen under the
+    ~10y FINAL_TTL and serve a partial play list for years after the game
+    actually completes. This gate lets get_game_feed trust FINAL_TTL only for a
+    feed whose status is genuinely final. Unknown/odd shapes return False
+    ('not proven final' -> re-fetch), which is safe (just a network cost)."""
+    if not isinstance(data, dict):
+        return False
+    game_data = data.get("gameData")
+    status = (game_data or {}).get("status") if isinstance(game_data, dict) else None
+    if not isinstance(status, dict):
+        return False
+    detailed = status.get("detailedState")
+    if detailed in _NONFINAL_DETAILED:
+        return False
+    if status.get("abstractGameState") == "Final":
+        return True
+    if detailed in _FINAL_DETAILED:
+        return True
+    return status.get("codedGameState") in {"F", "O"}
+
+
+def atomic_write_json(path: Path, data) -> None:
+    """Write `data` as JSON to `path` atomically and concurrency-safely.
+
+    Each writer gets its OWN temp file in the same directory (so os.replace is a
+    same-filesystem atomic rename) - never a per-game shared name that two
+    same-game writers would race on and corrupt / crash renaming. A lost race
+    (a peer already promoted a valid file onto `path`) is treated as success
+    rather than an unhandled error. Shared so statcast_metrics et al. reuse it.
+    """
+    payload = json.dumps(data)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmpname = tempfile.mkstemp(dir=str(path.parent),
+                                   prefix=f"{path.stem}.", suffix=".json.tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            fh.write(payload)
+        os.replace(tmpname, path)
+    except OSError:
+        # Lost race or transient FS error: if a peer already produced a valid
+        # file at `path`, treat it as success; otherwise clean up and re-raise.
+        try:
+            os.unlink(tmpname)
+        except OSError:
+            pass
+        if not path.exists():
+            raise
+
+
 def get_game_feed(game_pk: int, *, game_date: str | None = None) -> dict:
     """Return the `/feed/live` payload for one game, cached on disk by game_pk.
 
@@ -101,16 +163,23 @@ def get_game_feed(game_pk: int, *, game_date: str | None = None) -> dict:
     ttl = _ttl_for_date(game_date)
     if path.exists() and time.time() - path.stat().st_mtime <= ttl:
         try:
-            return json.loads(path.read_text(encoding="utf-8"))
+            cached = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
-            pass  # corrupt/partial cache file — re-fetch below
+            cached = None  # corrupt/partial cache file — re-fetch below
+        if cached is not None:
+            # A long FINAL_TTL is only trustworthy for a feed that is actually
+            # final; a suspended-then-resumed game keeps its original date, so
+            # date-derived TTL alone would serve a stale partial feed for years.
+            # SHORT_TTL (recent games) is served within its 24h window as before.
+            if ttl < FINAL_TTL or _looks_final(cached):
+                return cached
     time.sleep(_FETCH_SLEEP)
     resp = SESSION.get(f"{MLB_GAME_FEED_API}/{game_pk}/feed/live", timeout=30)
     resp.raise_for_status()
     data = resp.json()
-    tmp = path.with_suffix(".json.tmp")
-    tmp.write_text(json.dumps(data), encoding="utf-8")
-    tmp.replace(path)  # atomic: never leave a half-written feed for a concurrent reader
+    # Writer-unique temp + atomic replace: never leave a half-written feed for a
+    # concurrent reader, and never race two same-game writers on one tmp name.
+    atomic_write_json(path, data)
     return data
 
 

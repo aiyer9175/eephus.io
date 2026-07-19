@@ -61,7 +61,18 @@ SAFE_CACHES: tuple[str, ...] = (
     "swing_pitches",      # swing+ pitch pulls
     "season_pitching",    # season pitching splits
     "milb_stats",         # bulk MiLB season stats (current season TTL-refreshed)
+    "proj_current",       # /schedule pulls, one date-keyed file per calendar day
+    "fantasy_schedule",   # /schedule probables, new date-keyed files daily
 )
+
+# Hash-keyed caches: files are named by an md5 of (version|url) or (url), so a
+# CACHE_VERSION bump (statcast_metrics) or a no-longer-queried URL leaves the old
+# file orphaned FOREVER in a flat dir with no recoverable version tag. Their live
+# entries are re-written (mtime refreshed) well within their short network TTL
+# each build (statcast game-log 1d, zone 7d), so an mtime sweep reclaims only the
+# stale/orphaned set. These are a subset of SAFE_CACHES; listed separately so
+# prune_versioned_orphans can target them with a generous age default.
+VERSIONED_CACHES: tuple[str, ...] = ("statcast_metrics", "zone_metrics")
 
 # Never pruned: backups + rate-limited/small provenance scrapes.
 EXCLUDED = ("efv_backup", "bref_register", "draft_history")
@@ -148,6 +159,24 @@ def prune_by_age(max_age_days: float, caches=SAFE_CACHES, *,
     return n, freed
 
 
+def prune_versioned_orphans(max_age_days: float = 30, *,
+                            root: Path | None = None,
+                            dry_run: bool = False) -> tuple[int, int]:
+    """Reclaim orphaned prior-version files from the hash-keyed caches.
+
+    statcast_metrics bakes CACHE_VERSION into its md5 cache key and zone_metrics
+    keys per-URL; a version bump (or a URL that is no longer queried, e.g. a
+    graduated player or a past season) changes/retires the hash, so the old file
+    is never re-touched and would otherwise persist forever with no recoverable
+    version tag on disk. Because live current-version entries are re-written well
+    within their short network TTL each build, an mtime sweep at a generous
+    ``max_age_days`` (default 30d, > both the 1d statcast and 7d zone TTLs)
+    removes only the stale/orphaned set and never the current version's live
+    cache. Opt-in; returns (count, bytes)."""
+    return prune_by_age(max_age_days, caches=VERSIONED_CACHES,
+                        root=root, dry_run=dry_run)
+
+
 def prune_to_target(target_free_gb: float, caches=SAFE_CACHES, *,
                     root: Path | None = None, min_keep_days: float = 120,
                     dry_run: bool = False) -> tuple[int, int, bool]:
@@ -197,6 +226,11 @@ def main(argv=None) -> int:
                     help="Print per-cache size report and exit.")
     ap.add_argument("--max-age-days", type=float, default=None,
                     help="Delete cached files older than N days (steady-state bound).")
+    ap.add_argument("--prune-versioned-orphans", type=float, nargs="?", const=30,
+                    default=None, metavar="DAYS",
+                    help="Age-prune ONLY the hash-keyed caches (statcast_metrics, "
+                         "zone_metrics) whose prior-version files orphan on a "
+                         "CACHE_VERSION bump (default 30d). Safe to cron routinely.")
     ap.add_argument("--target-free-gb", type=float, default=None,
                     help="Prune oldest-first until this many GB are free (disk-pressure relief).")
     ap.add_argument("--min-keep-days", type=float, default=120,
@@ -218,6 +252,8 @@ def main(argv=None) -> int:
 
     if args.max_age_days is not None:
         prune_by_age(args.max_age_days, dry_run=args.dry_run)
+    if args.prune_versioned_orphans is not None:
+        prune_versioned_orphans(args.prune_versioned_orphans, dry_run=args.dry_run)
     if args.target_free_gb is not None:
         _n, _b, reached = prune_to_target(
             args.target_free_gb, min_keep_days=args.min_keep_days, dry_run=args.dry_run)
@@ -226,8 +262,10 @@ def main(argv=None) -> int:
                          "of cache; lower --min-keep-days or free disk elsewhere.",
                          args.target_free_gb, args.min_keep_days)
             return 2
-    if args.max_age_days is None and args.target_free_gb is None:
-        ap.error("nothing to do: pass --print-free, --report, --max-age-days, or --target-free-gb")
+    if (args.max_age_days is None and args.target_free_gb is None
+            and args.prune_versioned_orphans is None):
+        ap.error("nothing to do: pass --print-free, --report, --max-age-days, "
+                 "--prune-versioned-orphans, or --target-free-gb")
     return 0
 
 

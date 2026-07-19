@@ -79,3 +79,55 @@ def test_safe_caches_excludes_backups():
     for name in prune_cache.EXCLUDED:
         assert name not in prune_cache.SAFE_CACHES
     assert "efv_backup" in prune_cache.EXCLUDED
+
+
+class TestVersionedOrphans:
+    """statcast_metrics/zone_metrics orphan prior-version files on a CACHE_VERSION
+    bump; prune_versioned_orphans mtime-sweeps just those hash-keyed caches."""
+
+    def test_prunes_old_hashed_files_keeps_fresh(self, tmp_path):
+        # An orphaned prior-version file (old mtime) is reclaimed; the live
+        # current-version file (recently re-written) survives the sweep.
+        _mk(tmp_path / "statcast_metrics" / "oldhash.json", 10, age_days=90)
+        _mk(tmp_path / "statcast_metrics" / "livehash.json", 10, age_days=1)
+        _mk(tmp_path / "zone_metrics" / "oldzone.json", 10, age_days=90)
+        n, freed = prune_cache.prune_versioned_orphans(30, root=tmp_path)
+        assert n == 2 and freed == 20
+        assert not (tmp_path / "statcast_metrics" / "oldhash.json").exists()
+        assert (tmp_path / "statcast_metrics" / "livehash.json").exists()
+        assert not (tmp_path / "zone_metrics" / "oldzone.json").exists()
+
+    def test_never_touches_other_caches(self, tmp_path):
+        # Only the hash-keyed caches are swept, never e.g. win_prob.
+        _mk(tmp_path / "win_prob" / "old.json", 10, age_days=999)
+        n, _ = prune_cache.prune_versioned_orphans(30, root=tmp_path)
+        assert n == 0
+        assert (tmp_path / "win_prob" / "old.json").exists()
+
+    def test_dry_run_deletes_nothing(self, tmp_path):
+        _mk(tmp_path / "statcast_metrics" / "old.json", 10, age_days=90)
+        n, freed = prune_cache.prune_versioned_orphans(30, root=tmp_path, dry_run=True)
+        assert n == 1 and freed == 10
+        assert (tmp_path / "statcast_metrics" / "old.json").exists()
+
+    def test_versioned_caches_are_subset_of_safe(self):
+        for name in prune_cache.VERSIONED_CACHES:
+            assert name in prune_cache.SAFE_CACHES
+
+
+class TestScheduleCachesPrunable:
+    """proj_current / fantasy_schedule accumulate one date-keyed file per day;
+    they are now in SAFE_CACHES so the existing age/target sweeps evict them."""
+
+    def test_schedule_caches_are_safe(self):
+        assert "proj_current" in prune_cache.SAFE_CACHES
+        assert "fantasy_schedule" in prune_cache.SAFE_CACHES
+
+    def test_age_prune_sweeps_schedule_caches_by_default(self, tmp_path):
+        _mk(tmp_path / "proj_current" / "sched_old.json", 10, age_days=90)
+        _mk(tmp_path / "fantasy_schedule" / "old_R.json", 10, age_days=90)
+        _mk(tmp_path / "proj_current" / "sched_today.json", 10, age_days=1)
+        # Default SAFE_CACHES set now includes both schedule dirs.
+        n, freed = prune_cache.prune_by_age(30, root=tmp_path)
+        assert n == 2 and freed == 20
+        assert (tmp_path / "proj_current" / "sched_today.json").exists()

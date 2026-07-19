@@ -108,12 +108,17 @@ def _get_json(url: str, params: dict | None = None, ttl_seconds: int = 7 * 86400
     safe = hashlib.md5(versioned_key.encode("utf-8")).hexdigest()
     path = CACHE_DIR / f"{safe}.json"
     if path.exists() and time.time() - path.stat().st_mtime <= ttl_seconds:
-        return json.loads(path.read_text(encoding="utf-8"))
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            pass  # corrupt/half-written cache (e.g. process killed mid-write) — refetch
     time.sleep(0.04)
     resp = SESSION.get(url, params=params, timeout=30)
     resp.raise_for_status()
     data = resp.json()
-    path.write_text(json.dumps(data), encoding="utf-8")
+    # Writer-unique temp + atomic replace (shared with feed_cache): a killed
+    # process never leaves a half-written file for the next run to choke on.
+    feed_cache_mod.atomic_write_json(path, data)
     return data
 
 
