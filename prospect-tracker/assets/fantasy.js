@@ -14,6 +14,9 @@
   "use strict";
   var DATA_URL = "/data/fantasy.json";
   var S = { data: null, system: "fgp", section: "streamers", byId: {} };
+  // player_links map (mlbam -> merged-card key), resolved once at boot so
+  // nameLink can build hrefs synchronously (mirrors mlbstats.js / pal.js).
+  var LINKS = null;
 
   // ---- helpers --------------------------------------------------------------
   function el(id) { return document.getElementById(id); }
@@ -21,10 +24,8 @@
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function nameLink(mlbam, name) {
-    if (window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      var L = EEPHUS_HUB.links(); var e = L && L.byMlbam && L.byMlbam[mlbam];
-      if (e && e.key) return '<a class="fantasy-name-link" href="/projections/#player=' + esc(e.key) + '">' + esc(name) + "</a>";
-    }
+    var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
+    if (e && e.key) return '<a class="fantasy-name-link" href="/projections/#player=' + esc(e.key) + '">' + esc(name) + "</a>";
     return esc(name);
   }
   function teamLogo(team) {
@@ -140,9 +141,11 @@
     function col(ids, label, cls) {
       var rows = (ids || []).slice(0, 30).map(function (m) {
         var p = S.byId[m]; if (!p) return "";
-        var s = p.skill || {}, gap = p.side === "hit" ? s.luck_gap : s.luck;
+        var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
+        // Hitter luck_gap is a plus-stat (0 decimals); pitcher luck is in wOBA
+        // points (~0.03), so render 3 decimals or it collapses to "0".
         return "<tr><td class=\"ff-nm\">" + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + "</td><td>" + esc(p.pos || "") +
-          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, 0) + "</td></tr>";
+          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, isHit ? 0 : 3) + "</td></tr>";
       }).join("");
       return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
     }
@@ -249,6 +252,11 @@
     if (banner) banner.innerHTML = '<div class="fantasy-asof">' + (d.n_players || 0) + " players · rest-of-season, " +
       Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played · scored in your league format</div>";
     renderSelector(); wireTabs(); renderSection();
+    // Preload the player-links map, then re-render so names upgrade from plain
+    // text to merged-card links (matches mlbstats.js / pal.js).
+    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
+      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
+    }
   }
   function boot() {
     fetch(DATA_URL, { cache: "no-cache" }).then(function (r) {

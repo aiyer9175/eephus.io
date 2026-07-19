@@ -86,6 +86,18 @@ def _names_from_leaderboards() -> dict:
     return out
 
 
+def _name_from_links(links, mid) -> str | None:
+    """Resolve a display name from player_links.json. Its shape is
+    {generated_at, byKey, byMlbam}; the mlbam->entry map is nested under byMlbam
+    and is STRING-keyed, so the lookup must go through byMlbam[str(mid)] (not the
+    top-level dict). Returns None when absent."""
+    by_mlbam = links.get("byMlbam") if isinstance(links, dict) else None
+    e = (by_mlbam or {}).get(str(mid)) if isinstance(by_mlbam, dict) else None
+    if isinstance(e, dict):
+        return e.get("name")
+    return e if isinstance(e, str) else None
+
+
 def _hitter_ros(proj: dict, ros_pa: float, sb_per_pa: float | None) -> dict:
     """Invert the projected per-PA rate components into ROS counting stats over
     `ros_pa`, mirroring _assemble_hitter's hit-type algebra."""
@@ -213,10 +225,7 @@ def build_players(limit: int | None = None) -> dict:
     def _name(mid: int) -> str | None:
         if mid in name_map:
             return name_map[mid]
-        e = links.get(str(mid)) if isinstance(links, dict) else None
-        if isinstance(e, dict):
-            return e.get("name")
-        return e if isinstance(e, str) else None
+        return _name_from_links(links, mid)
 
     players: list[dict] = []
     ids = set(by_player["hit"]) | set(by_player["pit"])
@@ -281,6 +290,39 @@ def _lb_index(fname: str, key: str) -> dict:
             for r in ((_load_json(fname) or {}).get(key) or []) if r.get("mlbam")}
 
 
+def _player_luck(p: dict):
+    """Raw regression-candidate luck for a player: hitter luck_gap (xHEM+ - HEM+,
+    a plus-stat delta) or pitcher luck (wOBA - xwOBA, in wOBA points)."""
+    s = p.get("skill") or {}
+    return s.get("luck_gap") if p.get("side") == "hit" else s.get("luck")
+
+
+def _buy_sell(players: list[dict], n: int = 50) -> tuple[list, list]:
+    """Combined Buy-Low / Sell-High mlbam lists (positive luck = unlucky = buy).
+
+    Hitter luck_gap (plus-stat units, spread ~+/-50) and pitcher luck (wOBA
+    points, spread ~+/-0.05) sit ~500x apart, so a raw combined sort buries
+    pitchers in the middle and fills both top-N lists with hitters only. Scale
+    each side's luck by its own pool spread (population std) onto a common axis
+    before the combined sort. Scaling by std (not mean-centering) preserves the
+    sign, so a buy row keeps a positive gap and a sell row a negative one."""
+    import statistics
+    luckable = [p for p in players
+                if _player_luck(p) is not None and (p.get("fpts_fgp") or 0) > 20]
+    scale: dict = {}
+    for side in ("hit", "pit"):
+        vals = [_player_luck(p) for p in luckable if p.get("side") == side]
+        scale[side] = statistics.pstdev(vals) if len(vals) >= 2 else 0.0
+
+    def _norm(p):
+        sd = scale.get(p.get("side")) or 0.0
+        return (_player_luck(p) / sd) if sd else 0.0
+
+    buy = [p["mlbam"] for p in sorted(luckable, key=lambda p: -_norm(p))[:n]]
+    sell = [p["mlbam"] for p in sorted(luckable, key=lambda p: _norm(p))[:n]]
+    return buy, sell
+
+
 def _teams_context() -> dict:
     """{org: {offense_plus, heart_hem, bullpen_plus, leverage_deploy_plus}} — the
     opponent-quality context a streamer ranking needs."""
@@ -296,9 +338,11 @@ def _teams_context() -> dict:
 
 
 def _enrich(players: list[dict]) -> None:
-    """Attach each player's team + skill metrics + season-to-date line from the
-    matching skill leaderboard (mlbam-joined). Powers the section signals
-    (luck_gap → buy/sell, gmli/saves → closers) and the card display."""
+    """Attach each player's team + the skill metrics the /fantasy/ surface reads
+    from the matching skill leaderboard (mlbam-joined). Powers the section
+    signals (luck_gap/luck -> buy/sell, gmli/saves -> closers) and the card
+    HEM+/SEM+/REM+ display. Only the read keys are baked: the old p['std'] block
+    and the wider skill set had zero reader (client or server) - dead payload."""
     hit = _lb_index("hitter_leaderboards.json", "hitters")
     sp = _lb_index("starter_leaderboards.json", "starters")
     rp = _lb_index("bullpen_leaderboards.json", "relievers")
@@ -306,19 +350,13 @@ def _enrich(players: list[dict]) -> None:
         mid, r = p["mlbam"], None
         if p["side"] == "hit":
             r = hit.get(mid) or {}
-            p["skill"] = {k: r.get(k) for k in
-                          ("hem_plus", "xhem_plus", "luck_gap", "fwdhem_plus", "pwoba", "tier", "bats")}
-            p["std"] = {k: r.get(k) for k in ("pa", "hr", "sb", "avg", "obp", "slg", "ops", "woba")}
+            p["skill"] = {k: r.get(k) for k in ("hem_plus", "luck_gap")}
         elif p["pos"] == "SP":
             r = sp.get(mid) or {}
-            p["skill"] = {k: r.get(k) for k in
-                          ("sem_plus", "xsem_plus", "luck", "ip_per_gs", "fip", "era")}
-            p["std"] = {k: r.get(k) for k in ("ip", "g", "gs", "k_pct", "bb_pct")}
+            p["skill"] = {k: r.get(k) for k in ("sem_plus", "luck")}
         else:
             r = rp.get(mid) or {}
-            p["skill"] = {k: r.get(k) for k in
-                          ("rem_plus", "riv_plus", "gmli", "saves", "holds", "luck", "sd", "md")}
-            p["std"] = {k: r.get(k) for k in ("ip", "g", "era")}
+            p["skill"] = {k: r.get(k) for k in ("rem_plus", "gmli", "saves", "luck")}
         p["team"] = r.get("team")
 
 
@@ -375,14 +413,11 @@ def build_sections(payload: dict) -> dict:
         "ros_rp": rank(rps, 180),
     }
 
-    # Buy-Low / Sell-High — hitters by luck_gap (xHEM+ − HEM+; + = unlucky = buy),
-    # pitchers by `luck` (xERA/xwOBA vs actual). Positive residual = due to regress up.
-    def _luck(p):
-        s = p.get("skill") or {}
-        return s.get("luck_gap") if p["side"] == "hit" else s.get("luck")
-    luckable = [p for p in players if _luck(p) is not None and (p.get("fpts_fgp") or 0) > 20]
-    sections["buy_low"] = [p["mlbam"] for p in sorted(luckable, key=lambda p: -_luck(p))[:50]]
-    sections["sell_high"] = [p["mlbam"] for p in sorted(luckable, key=lambda p: _luck(p))[:50]]
+    # Buy-Low / Sell-High. Hitters by luck_gap (xHEM+ - HEM+; + = unlucky = buy),
+    # pitchers by `luck` (xERA/xwOBA vs actual). Positive residual = due to
+    # regress up. The two luck scales are ~500x apart, so _buy_sell normalizes
+    # each side by its own spread before the combined sort (see _buy_sell).
+    sections["buy_low"], sections["sell_high"] = _buy_sell(players)
 
     # Closer Depth Chart — relievers grouped by team, ranked by a role score
     # (avg leverage gmli dominates; saves + REM+ break ties). Top = likely closer,

@@ -1471,18 +1471,28 @@ _NEWS_FILTER_JS = """<script>
 (function(){
   var bar=document.getElementById('news-filter-bar'),feed=document.getElementById('news-feed');
   if(!bar||!feed)return;
+  var empty=null;
   bar.addEventListener('click',function(e){
     var b=e.target.closest('[data-news-filter]');if(!b)return;
     var f=b.getAttribute('data-news-filter');
     bar.querySelectorAll('[data-news-filter]').forEach(function(x){x.classList.toggle('active',x===b);});
+    var shown=0;
     feed.querySelectorAll('.news-day').forEach(function(day){
       var any=false;
       day.querySelectorAll('.feed-item').forEach(function(it){
         var show=(f==='all')||it.getAttribute('data-cat')===f;
-        it.style.display=show?'':'none';if(show)any=true;
+        it.style.display=show?'':'none';if(show){any=true;shown++;}
       });
       day.style.display=any?'':'none';
     });
+    if(!empty){
+      empty=document.createElement('div');
+      empty.className='news-empty';
+      empty.style.cssText='padding:2rem 1rem;text-align:center;color:var(--text-tertiary,#888);';
+      feed.appendChild(empty);
+    }
+    if(shown===0){empty.textContent='No items in this category.';empty.style.display='';}
+    else{empty.style.display='none';}
   });
 })();
 </script>"""
