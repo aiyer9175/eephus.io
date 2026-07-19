@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "identity.schema.json",
+  "title": "Player identity export",
+  "publication_classification": "PRIVATE_EXPORT_REQUIRED (values, redacted); PUBLIC_SCHEMA_ONLY (this contract)",
+  "authoritative_source": "career_outcome_plus/data/eephus_identity.parquet",
+  "observation_unit": "one row per player, current-state only (NOT effective-dated)",
+  "primary_key": ["mlbam_id"],
+  "join_key_guidance": "Join on mlbam_id (statcast_id/milb_id are aliases of it), not eephus_pid -- eephus_pid is re-minted on each build and is not stable across rebuilds.",
+  "required_columns": [
+    "eephus_pid", "mlbam_id", "statcast_id", "milb_id", "fangraphs_id", "bbref_id", "retro_id",
+    "name", "organization", "current_level", "bats", "throws", "birth_year", "primary_position",
+    "secondary_positions", "is_predebut", "fangraphs_coverage", "bbref_coverage", "retro_coverage",
+    "dob_coverage", "org_coverage", "primary_position_coverage", "bats_coverage", "name_coverage",
+    "throws_coverage", "secondary_positions_coverage", "bio_coverage"
+  ],
+  "redaction": {
+    "dob_dropped": true,
+    "birth_year_added": "birth_year (int, nullable) replaces the full dob column in this export -- see PUBLICATION_POLICY.md"
+  },
+  "known_absent_columns": [
+    "team_id", "affiliate_id", "parent_org_id", "league_id", "venue_id / park_id",
+    "effective_start_date", "effective_end_date", "mixed_season_flag"
+  ],
+  "known_placeholder_columns": ["throws (always null upstream)", "secondary_positions (always null upstream)"],
+  "context_columns": ["current_level", "is_predebut", "organization", "primary_position"],
+  "supports_historical_joins": false
+}
