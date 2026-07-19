@@ -1,0 +1,236 @@
+# Machine-readable artifact inventory for the MiLB pitch-quality handoff.
+# publication: PUBLIC_GITHUB | PUBLIC_SCHEMA_ONLY | PRIVATE_EXPORT_REQUIRED | PRIVATE_OPTIONAL | INTERNAL_ONLY | DEPRECATED | NOT_NEEDED
+# importance:  BLOCKING_FOR_BUILD | BLOCKING_FOR_FINAL_RULING | REQUIRED_WHERE_COVERED | DEGRADES_VALIDATION | OPTIONAL
+
+artifacts:
+  - id: contact_quality_mlb_only
+    group: A
+    name: "Statcast contact-quality models (Bat-to-Ball+/Contact+/Damage Conversion+)"
+    source_path: ["~/bat_to_ball_plus", "~/contact_plus", "~/damage_conversion_plus"]
+    authoritative: true
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+    notes: "MLB-only, no MiLB dimension. Not a portability model."
+
+  - id: milb_rate_skill_translation
+    group: A
+    name: "MiLB rate-skill translation architecture"
+    source_path: "~/career_outcome_plus/milb/block2_translations.py"
+    authoritative: true
+    publication: PUBLIC_SCHEMA_ONLY
+    importance: BLOCKING_FOR_FINAL_RULING
+    license_note: "source is copyright-headered (All Rights Reserved); document methodology only, do not republish source"
+
+  - id: latent_rate_talent_and_xwar
+    group: A
+    name: "latent_rate_talent.parquet / milb_xwar_projection.parquet"
+    source_path: "~/career_outcome_plus/data/"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+
+  - id: contact_portability_dedicated_model
+    group: A
+    name: "Dedicated MiLB<->MLB contact-quality portability model"
+    source_path: null
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+    notes: "Does not exist. Recorded in KNOWN_GAPS.md."
+
+  - id: milb_pitcher_ewar_aaa_aa_higha
+    group: B
+    name: "MiLB pitcher eWAR (AAA/AA/High-A)"
+    source_path: "~/milb_pitcher_ewar/data/{aaa,aa,higha}_pitcher_ewar.parquet"
+    schema_version: "milb-pitcher-ewar-1.0.0"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    schema_publication: PUBLIC_SCHEMA_ONLY
+    importance: BLOCKING_FOR_BUILD
+
+  - id: milb_pitcher_ewar_lowa
+    group: B
+    name: "MiLB pitcher eWAR (Low-A)"
+    source_path: "~/milb_pitcher_ewar/data/lowa_pitcher_ewar.parquet"
+    authoritative: true
+    publication: INTERNAL_ONLY
+    importance: DEGRADES_VALIDATION
+    notes: "Publication explicitly withheld pending approval. Do not export."
+
+  - id: milb_pitcher_ewar_cpx_dsl
+    group: B
+    name: "MiLB pitcher eWAR (CPX/DSL)"
+    source_path: null
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+
+  - id: aaa_contact_management_plus
+    group: B
+    name: "AAA Contact Management+ (component)"
+    source_path: "~/milb_pitcher_ewar/data/aaa_contact_*.parquet"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+
+  - id: sem_core_architecture
+    group: B
+    name: "SEM-core architecture (AA/High-A/Low-A)"
+    source_path: "~/milb_pitcher_ewar/pipeline/build_sem_ledgers.py"
+    authoritative: true
+    publication: PUBLIC_SCHEMA_ONLY
+    importance: REQUIRED_WHERE_COVERED
+
+  - id: mlb_pitcher_ewar_champion
+    group: B
+    name: "MLB pitcher eWAR champion"
+    source_path: "~/pitcher_ewar/data/pitcher_ewar.parquet"
+    schema_version: "pitcher-ewar-1.1.0"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    schema_publication: PUBLIC_SCHEMA_ONLY
+    importance: BLOCKING_FOR_BUILD
+
+  - id: mlb_pitcher_ewar_champion_freeze
+    group: B
+    name: "MLB pitcher eWAR champion freeze + archive"
+    source_path: ["~/pitcher_ewar/champion/", "~/pitcher_ewar/data/archive/"]
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+
+  - id: arsenal_stuff_command_output
+    group: B
+    name: "Arsenal/Stuff+/Command+ pitch-level output"
+    source_path: null
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+    notes: "Does not exist in either pitcher stack; explicitly out-of-scope in both manifests."
+
+  - id: milb_park_factors_v2
+    group: C
+    name: "MiLB park factors v2"
+    source_path: "~/milb_park_rebuild/data/milb_park_factors_v2.parquet"
+    schema_version: "milb-park-factors-2.0.0"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    schema_publication: PUBLIC_SCHEMA_ONLY
+    importance: BLOCKING_FOR_BUILD
+
+  - id: milb_park_factor_tests
+    group: C
+    name: "MiLB park factor test suite"
+    source_path: "~/milb_park_rebuild/tests/"
+    authoritative: true
+    publication: PUBLIC_GITHUB
+    importance: BLOCKING_FOR_FINAL_RULING
+
+  - id: milb_park_factors_deprecated
+    group: C
+    name: "Deprecated MiLB air-density index"
+    source_path: "~/environment_engine/data/environment/milb_park_factors.parquet"
+    authoritative: false
+    publication: DEPRECATED
+    importance: REQUIRED_WHERE_COVERED
+    notes: "SELECTED_SAMPLE_INVALID per environment_engine/PRODUCTION_STATUS.json. Historical/incident context only."
+
+  - id: mlb_park_air_factors
+    group: C
+    name: "MLB park/air-density physics"
+    source_path: "~/environment_engine/data/park_air_factors.parquet"
+    authoritative: true
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+
+  - id: env_foundation_frozen_modules
+    group: C
+    name: "env_foundation_integration m06/m09c (frozen MiLB translation consumers)"
+    source_path: "~/env_foundation_integration/modules/"
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+    notes: "Out of scope; separate pending rebuild charter. Reference only in dependency map."
+
+  - id: eephus_identity
+    group: D
+    name: "Player identity mapping"
+    source_path: "~/career_outcome_plus/data/eephus_identity.parquet"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: BLOCKING_FOR_BUILD
+    redaction_required: "dob column must be truncated to birth-year or dropped before export"
+
+  - id: milb_team_affiliate_park_mapping
+    group: D
+    name: "Team/affiliate/league/park mapping"
+    source_path: "~/milb_pitcher_ewar/pipeline/build_infrastructure.py"
+    authoritative: true
+    publication: NOT_NEEDED
+    importance: OPTIONAL
+    notes: "Reconstructable from public MLB Stats API directly; documented as builder-obtainable, not exported."
+
+  - id: identity_historical_joins
+    group: D
+    name: "Historical/effective-dated identity joins"
+    source_path: null
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: BLOCKING_FOR_FINAL_RULING
+    notes: "Does not exist; both identity systems are current-state-only. Documented as a limitation."
+
+  - id: identity_collision_handling
+    group: D
+    name: "Identity collision/ambiguity handling"
+    source_path: "~/career_outcome_plus/build_eephus_identity.py"
+    authoritative: true
+    publication: NOT_NEEDED
+    importance: BLOCKING_FOR_FINAL_RULING
+    notes: "Silent drop_duplicates(keep='last'), no logged collision count. Documented as a known defect."
+
+  - id: mlb_pitcher_ewar_archive_dated
+    group: E
+    name: "MLB pitcher eWAR dated archive snapshots"
+    source_path: "~/pitcher_ewar/data/archive/"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+    historical_status: CURRENT_MODEL_BACKFILL
+    notes: "Only one date so far (2026-07-17); insufficient for a true time series yet."
+
+  - id: mlb_pitcher_ewar_champion_snapshot
+    group: E
+    name: "MLB pitcher eWAR champion freeze"
+    source_path: "~/pitcher_ewar/champion/"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+    historical_status: TRUE_HISTORICAL_SNAPSHOT
+
+  - id: milb_pitcher_ewar_restatement_ledger
+    group: E
+    name: "MiLB pitcher eWAR restatement ledger"
+    source_path: "~/milb_park_rebuild/data/MILB_PITCHER_EWAR_RESTATEMENT_LEDGER.parquet"
+    authoritative: true
+    publication: PRIVATE_EXPORT_REQUIRED
+    importance: REQUIRED_WHERE_COVERED
+    historical_status: RECONSTRUCTED_AS_OF
+    notes: "Before/after diff of a real methodology change; not a forecast snapshot."
+
+  - id: milb_pitcher_ewar_no_archive
+    group: E
+    name: "MiLB pitcher eWAR archive/snapshot directory"
+    source_path: null
+    authoritative: false
+    publication: NOT_NEEDED
+    importance: DEGRADES_VALIDATION
+    notes: "Does not exist. Gap, not fabricated."
+
+  - id: career_outcome_plus_baseline_manifest
+    group: E
+    name: "career_outcome_plus/milb baseline manifest"
+    source_path: "~/career_outcome_plus/milb/handoff/00_baseline_manifest.json"
+    authoritative: true
+    publication: PRIVATE_OPTIONAL
+    importance: OPTIONAL
+    historical_status: SEASON_END_DESCRIPTIVE

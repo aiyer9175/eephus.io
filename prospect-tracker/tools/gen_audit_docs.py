@@ -179,6 +179,7 @@ _ROUTE_NOTES = {
     "mlbstats/index.html": "MLB Stats: Bullpen Leaderboards / REM+",
     "pal/index.html": "Pitcher Alchemy Lab",
     "trademachine/index.html": "Trade Machine (Bayesian trade board + one-currency deal evaluator)",
+    "fantasy/index.html": "Fantasy: ROS rankings + daily streamers, multi-format (Ottoneu) scoring",
     "glossary/index.html": "Unified glossary + methodology / model accountability",
     "teams/index.html": "redirect stub: the old Teams module now lives in /projections/ Team Outlook",
     "team/index.html": "Developers page (content/team.json)",

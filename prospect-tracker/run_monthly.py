@@ -1092,6 +1092,39 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
             except Exception:
                 log.exception("daily: mlb player detail re-bake failed — continuing")
 
+        # --- 9c. Headshot resolution (data/photo_ctx.json). ---------------
+        # Refresh the mlbstatic photo-context map on the DAILY path too, not just
+        # the monthly build — otherwise mid-month additions (new draftees, fresh
+        # call-ups) stay unresolved until the 1st and show a silhouette on deploy.
+        # Incremental: TTL-skips already-resolved ids and only probes new or
+        # still-missing players, so a steady-state night probes ~nothing. Runs
+        # after the timeseries/debuts exports it reads and before d11 so build_site
+        # and the GFX exporter (which read the map directly and don't self-heal)
+        # see fresh coverage. Best-effort — a network hiccup must not fail the run
+        # (the front-end onerror chain recovers any unresolved id regardless).
+        with _step("d9c. Headshot resolution (photo_ctx.json)", log):
+            try:
+                from headshots import backfill as _backfill_headshots
+                _hs = _backfill_headshots(data_dir=out_dir, workers=16, write_json=True)
+                log.info("daily headshots: %.1f%% coverage (%d/%d) — %d probed, %d missing",
+                         _hs["pct"], _hs["with_photo"], _hs["total"],
+                         _hs.get("probed_this_run", 0), _hs["missing_count"])
+            except Exception:
+                log.exception("daily: headshot resolution failed — continuing")
+
+        # --- 9d. Fantasy daily refresh (schedule-only; cheap) -------------
+        # Re-pull the probable-pitcher schedule and rebuild the schedule-driven
+        # fantasy sections (Daily Streamers, Two-Start SP) off the monthly ROS
+        # players. Skips build_corpus (kept on the monthly path for memory), so
+        # the daily job stays light. No-op until the monthly build seeds
+        # fantasy.json. Best-effort — never aborts.
+        with _step("9d. Fantasy daily refresh (fantasy.json schedule)", log):
+            try:
+                from fantasy_export import refresh_live as _refresh_fantasy
+                _refresh_fantasy(log=log.info)
+            except Exception:
+                log.exception("daily: fantasy refresh failed — continuing")
+
         # --- 10. FA signing-window tracker (Nov–Mar only). ----------------
         # In-winter the class moves daily (signings, option decisions, QO
         # acceptances), so the daily job re-scrapes the current class and
@@ -1122,12 +1155,20 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
         # the site on a full monthly run. Best-effort: a build failure must not fail
         # the data pipeline. (nightly-build.sh also runs build_site after the pipeline
         # on the server; this makes freshness robust to how the pipeline is invoked.)
-        try:
-            with _step("d11. Rebuild site (build_site)", log):
-                import build_site
-                build_site.main()
-        except Exception:
-            log.exception("daily: site rebuild failed — continuing (data is fresh, pages stale)")
+        # The deploy shell (nightly-build.sh) runs build_site as its OWN process
+        # right after the pipeline, so on the box this in-process rebuild just
+        # stacks a full site-build heap onto the already-peaked pipeline process
+        # (an OOM contributor). EEPHUS_SKIP_INPROC_BUILD=1 skips it there; it still
+        # runs by default so a bare `run_monthly.py` self-publishes.
+        if os.environ.get("EEPHUS_SKIP_INPROC_BUILD") == "1":
+            log.info("d11 SKIP: EEPHUS_SKIP_INPROC_BUILD=1 (deploy shell rebuilds the site separately)")
+        else:
+            try:
+                with _step("d11. Rebuild site (build_site)", log):
+                    import build_site
+                    build_site.main()
+            except Exception:
+                log.exception("daily: site rebuild failed — continuing (data is fresh, pages stale)")
         total = time.monotonic() - _run_start
         log.info("DAILY run %s complete in %.1fs", run_id, total)
         for label, secs in _STEP_TIMES:
@@ -2889,6 +2930,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             except Exception:
                 log.exception("pitcher alchemy lab export failed - continuing")
 
+        # --- 6b6. Fantasy Tools (the /fantasy/ surface) -----------------
+        # ROS fantasy projections (reuse the FA/Projections engine) scored in the
+        # Ottoneu formats + the probable-pitcher schedule -> 8 sections (daily
+        # streamers, ROS SP/RP/hitters, two-start, buy/sell, closers, callups).
+        # The heavy build_corpus() lives HERE (monthly); run_daily does a cheap
+        # schedule-only refresh (fantasy_export.refresh_live). Additive; never aborts.
+        with _step("6b6. Fantasy Tools (fantasy.json)", log):
+            try:
+                from fantasy_export import export as _export_fantasy
+                _fan_n = _export_fantasy(log=log.info)
+                log.info("fantasy: %d players projected ROS", _fan_n)
+            except Exception:
+                log.exception("fantasy export failed - continuing")
+
         # --- 6c. Organization Tendencies (farm-detail Tendencies tab) ---
         # Pure aggregation over the DB + just-written sidecars; additive.
         # --- 6c / 6d: exported by the chained daily tail instead. --------
@@ -3054,6 +3109,20 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # fresh monthly grades and the up-to-the-day transactions/IL. Best-effort
         # + self-contained (own run_id + timeseries rebuild); a daily-side
         # failure must not fail the already-completed monthly run.
+        #
+        # OOM: free the monthly working set BEFORE chaining the daily tail.
+        # run_daily + its rebuild_only re-derive everything below from the DB (or
+        # read artifacts from disk), so these whole-universe caches — every
+        # tracked player's career history, the Statcast/zone/arsenal/sabermetric
+        # caches, all snapshots — are dead weight from here, and holding them
+        # while the daily/rebuild/export/site-build heaps stack is the main
+        # memory driver on the ~6GB box (nothing above was ever freed). Only the
+        # confirmed main() locals are dropped (params + globals left untouched).
+        import gc as _gc
+        all_snaps = timeseries = career_cache = statlines = statcast_metric_cache = \
+            zone_metric_cache = arsenals = sabermetrics = tx_cache = draft_by_id = \
+            trades_by_player = career_war_all = None
+        _gc.collect()
         try:
             log.info("monthly run: chaining the daily fast-moving refresh")
             # WS-R: chained=True elides the steps the monthly path just ran in
@@ -3124,6 +3193,17 @@ if __name__ == "__main__":
                          "monthly cadence (a plain `python run_monthly.py`). "
                          "Run this nightly.")
     args = ap.parse_args()
+    # Ceiling worker counts on low-RAM deploy boxes: the spawn ProcessPoolExecutor
+    # in statcast pass-3 is the one pool whose resident memory scales with worker
+    # count, so bounding `workers` bounds the peak. EEPHUS_MAX_WORKERS (e.g. 2-3 on
+    # the ~6GB box) trades a little wall-time for headroom; unset = unchanged.
+    _wcap = os.environ.get("EEPHUS_MAX_WORKERS")
+    if _wcap:
+        try:
+            _wc = max(1, int(_wcap))
+            args.workers = _wc if args.workers is None else min(args.workers, _wc)
+        except ValueError:
+            pass
     if args.dry_run:
         probe(force=args.force)
         sys.exit(0)

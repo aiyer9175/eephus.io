@@ -26,7 +26,9 @@ happen inside the called module, so this file alone cannot split them).
 | d8. Trade detection | timeseries.json |
 | d9. Rebuild timeseries (no scrape) | mlb_projections.json, xfv.json |
 | d9b. Re-bake MLB Projections off fresh eFV | mlb_player_detail.json, mlb_projections.json |
-| d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json |
+| d9b2. Re-bake MLB player detail (mlb_player_detail.json) | mlb_player_detail.json, photo_ctx.json |
+| d9c. Headshot resolution (photo_ctx.json) | fantasy.json, photo_ctx.json |
+| 9d. Fantasy daily refresh (fantasy.json schedule) | fantasy.json |
 | d10. FA signing-window refresh | timeseries.json |
 | d11. Rebuild site (build_site) | - |
 
@@ -78,6 +80,7 @@ happen inside the called module, so this file alone cannot split them).
 | 6b4g. Hitter Leaderboards (hitter_leaderboards.json) | hitter_history.json, hitter_leaderboards.json, leverage_leaderboards.json |
 | 6b4h. Leverage Leaderboards (leverage_leaderboards.json) | leverage_history.json, leverage_leaderboards.json |
 | 6b5. Pitcher Alchemy Lab (pal.json) | pal.json |
+| 6b6. Fantasy Tools (fantasy.json) | fantasy.json |
 | 6c. Organization Tendencies (farm-detail Tendencies tab) (no _step wrapper) | - |
 | 6c / 6d: exported by the chained daily tail instead (no _step wrapper) | org_tendencies.json, trade_values.json |
 | post-export passes (best-effort: board/farm snapshots, source_backtest, consensus + draft weight A/B, eta_backtest, editorial_eval, model-registry freshness,... | debuts.json, draft_source_weights.json, draft_timeseries.json, editorial_eval.json, model_registry.json, photo_ctx.json, source_backtest.json, star_label_view.json, star_odds_eval.json, trade_values.json |

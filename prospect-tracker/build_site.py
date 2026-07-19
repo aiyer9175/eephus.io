@@ -65,6 +65,7 @@ _TM_VER = _asset_ver("assets/trademachine.js")
 _TM_CSS_VER = _asset_ver("assets/trademachine.css")
 _HUB_VER = _asset_ver("assets/eephus-hub.js")
 _GFX_VER = _asset_ver("assets/eephus-gfx.js")
+_FANTASY_VER = _asset_ver("assets/fantasy.js")
 _EXPORT_VER = _asset_ver("assets/eephus-export.js")
 
 # eephus.io account layer (Parts 1-7), injected before </body> on every editorial
@@ -140,6 +141,7 @@ NAV_ITEMS = [
         ("mlbstats",    "MLB Stats",   "/mlbstats/"),
         ("pal",         "Pitcher Alchemy Lab", "/pal/"),
         ("trademachine", "Trade Machine", "/trademachine/"),
+        ("fantasy",     "Fantasy", "/fantasy/"),
     ]},
     ("articles", "Articles",         "/articles/"),
     ("forums",   "Forums",           "/forums/"),
@@ -280,6 +282,7 @@ MODULE_STAGE = {
     "projections": ("β", "MLB Projections is in beta - newly launched; numbers may shift as the model matures"),
     "mlbstats": ("β", "MLB Stats is in beta - newly launched; metrics may shift as the models mature"),
     "pal": ("β", "Pitcher Alchemy Lab is in beta - newly launched; the conversion models are provisional"),
+    "fantasy": ("β", "Fantasy is in beta - newly launched; ROS projections may shift as the models mature"),
     "forums": ("β", "Forums is in beta - newly launched"),
 }
 
@@ -1984,7 +1987,8 @@ def build_home(articles: list[dict], data: dict | None = None) -> str:
                       "glossary": "Glossary & Methodology"}
     sidebar_icons = {"home": "⌂", "articles": "¶", "fa": "$", "projections": "Δ",
                      "collegesavant": "✪", "glossary": "§", "forums": "❝",
-                     "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄"}
+                     "team": "⚒", "mlbstats": "▦", "pal": "⚗", "trademachine": "⇄",
+                     "fantasy": "◈"}
     def _sb_link(key, label, href, grouped=False):
         classes = []
         if key == "home":
@@ -2476,6 +2480,50 @@ def build_pal() -> str:
                 "and role-adjusted velocity, computed from Statcast.",
                 url=f"{SITE_ORIGIN}/pal/")
 
+def build_fantasy() -> str:
+    """The /fantasy/ Fantasy module - rest-of-season fantasy rankings + daily SP
+    streamers, scored in the user's league format (Ottoneu FanGraphs Points
+    default, SABR points, 5x5, 4x4). Static shell + assets/fantasy.js, which
+    fetches the fantasy_export.py sidecar (data/fantasy.json): ROS projections
+    from the FA/Projections engine, per-player counting-stat vectors the client
+    re-scores per system, the probable-pitcher schedule, and eight sections
+    (Daily Streamers, Two-Start SP, ROS SP/RP/Hitters, Buy/Sell, Closer Grid,
+    Call-up Watch). Styles ride the .fa-app / .mlbstats-app blocks in site.css."""
+    body = (
+        '<div class="fa-app mlbstats-app fantasy-app">'
+        f'<div class="section-head section-head--byline"><div class="section-head-titles">{CREATED_BY_BANNER}'
+        f'<h1>Fantasy <span class="eephus-beta" title="{html.escape(MODULE_STAGE["fantasy"][1])}">β beta</span></h1></div>'
+        '<span class="section-sub">Rest-of-season fantasy rankings and daily streamers, scored in YOUR league format - '
+        'Ottoneu FanGraphs Points (default), SABR Points, Old School 5x5, or Ottoneu 4x4. ROS projections from the same '
+        'engine as the MLB Projections board; matchup + regression context from REM+/SEM+/HEM+, team Offense+/Bullpen+, '
+        'and xStat luck gaps.</span></div>'
+        # League scoring selector (fantasy.js fills it from data/fantasy.json scoring_catalog; default FanGraphs Points).
+        '<div id="fantasy-scoring" class="fantasy-scoring-bar" aria-label="League scoring format"></div>'
+        '<div class="mlbstats-sectionnav" role="tablist" aria-label="Fantasy sections">'
+        '<button type="button" class="mlbstats-sectionbtn active" data-fantasysection="streamers" role="tab" aria-selected="true">Daily Streamers</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="two_start" role="tab" aria-selected="false">Two-Start SP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_sp" role="tab" aria-selected="false">ROS SP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_rp" role="tab" aria-selected="false">ROS RP</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="ros_hitter" role="tab" aria-selected="false">ROS Hitters</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="buysell" role="tab" aria-selected="false">Buy / Sell</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="closers" role="tab" aria-selected="false">Closer Grid</button>'
+        '<button type="button" class="mlbstats-sectionbtn" data-fantasysection="callups" role="tab" aria-selected="false">Call-up Watch</button>'
+        '</div>'
+        '<div id="fantasy-section" class="mlbstats-section">'
+        '<div id="fantasy-banner"></div>'
+        '<div id="fantasy-app-root"></div>'
+        '</div>'
+        '</div>'
+        f'<script src="/assets/eephus-hub.js?v={_HUB_VER}" defer></script>'
+        f'<script src="/assets/eephus-gfx.js?v={_GFX_VER}" defer></script>'
+        f'<script src="/assets/fantasy.js?v={_FANTASY_VER}" defer></script>'
+    )
+    return page("Fantasy - eephus.io", "fantasy", body,
+                "Rest-of-season fantasy baseball rankings and daily SP streamers from eephus.io, scored in your league "
+                "format (Ottoneu FanGraphs Points, SABR, 5x5, 4x4): SP/RP/hitter ROS ranks, two-start pitchers, "
+                "buy-low/sell-high regression candidates, and a closer depth grid.",
+                url=f"{SITE_ORIGIN}/fantasy/")
+
 def build_glossary() -> str:
     """The /glossary/ unified Glossary & Methodology module - the canonical
     definition layer's page. Static shell + assets/glossary.js; definitions
@@ -2965,6 +3013,7 @@ def build_sitemap(articles: list[dict]) -> str:
         ("/mlbstats/", "daily", "0.8"),
         ("/pal/", "daily", "0.8"),
         ("/trademachine/", "daily", "0.8"),
+        ("/fantasy/", "daily", "0.8"),
         ("/articles/", "weekly", "0.7"),
         ("/forums/", "daily", "0.6"),
         ("/glossary/", "weekly", "0.7"),
@@ -3031,6 +3080,7 @@ def main() -> None:
     _write("mlbstats/index.html", build_mlbstats())
     _write("pal/index.html", build_pal())
     _write("trademachine/index.html", build_trademachine())
+    _write("fantasy/index.html", build_fantasy())
     _write("glossary/index.html", build_glossary())
     _write("teams/index.html", build_teams_redirect())
     _write("team/index.html", build_team())

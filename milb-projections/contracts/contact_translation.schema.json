@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "contact_translation.schema.json",
+  "title": "MiLB rate-skill translation export (closest available substitute for contact portability)",
+  "description": "See definitions/CONTACT_PORTABILITY.md. Not a Statcast contact-quality portability model.",
+  "publication_classification": "PRIVATE_EXPORT_REQUIRED",
+  "authoritative_source": "career_outcome_plus/data/{latent_rate_talent,milb_xwar_projection}.parquet",
+  "artifacts": {
+    "latent_rate_talent": {
+      "observation_unit": "batter x season",
+      "primary_key": ["batter", "season"],
+      "required_columns": {
+        "batter": {"type": "integer", "description": "MLBAM batter id"},
+        "season": {"type": "integer"},
+        "eff_n": {"type": "number", "description": "effective sample size (uncertainty proxy)"},
+        "def_n": {"type": "number"},
+        "top_level": {"type": "string", "enum": ["MLB", "AAA", "AA", "A+", "A", "Rk", "DSL"]},
+        "off": {"type": "number"},
+        "pow": {"type": "number"},
+        "con": {"type": "number", "description": "1 minus K-rate based contact-avoidance skill, NOT batted-ball contact quality"},
+        "def": {"type": "number"},
+        "up_mid_share": {"type": "number"},
+        "premium": {"type": "boolean"},
+        "weight": {"type": "number"},
+        "off_z": {"type": "number"},
+        "pow_z": {"type": "number"},
+        "con_z": {"type": "number"},
+        "def_z": {"type": "number"},
+        "theta": {"type": "number", "description": "composite latent skill estimate"},
+        "season_state": {"type": "string"}
+      },
+      "known_absent_fields": ["confidence_interval", "ev_barrel_contact_quality", "pitch_family", "level_translation_factor (physical unit conversion — this is a shrinkage weight system, not a unit converter)"]
+    },
+    "milb_xwar_projection": {
+      "observation_unit": "batter x season x level",
+      "primary_key": ["batter", "season", "level"],
+      "required_columns": {
+        "batter": {"type": "integer"},
+        "season": {"type": "integer"},
+        "level": {"type": "string"},
+        "age": {"type": "number"},
+        "p_reach_100_pa": {"type": "number"},
+        "e_war": {"type": "number"},
+        "xWAR": {"type": "number"},
+        "p_coffee": {"type": "number"},
+        "p_regular": {"type": "number"},
+        "p_role": {"type": "number"},
+        "p_star": {"type": "number"},
+        "p_super": {"type": "number"},
+        "has_mlb_appearance": {"type": "boolean"},
+        "mlb_debut_season": {"type": ["integer", "null"]},
+        "has_reached_100_pa": {"type": "boolean"},
+        "career_mlb_pa": {"type": "number"},
+        "reach100_season": {"type": ["integer", "null"]},
+        "already_debuted": {"type": "boolean"},
+        "debut_season": {"type": ["integer", "null"]},
+        "season_state": {"type": "string"},
+        "status_as_of_date": {"type": "string", "format": "date"},
+        "status_source": {"type": "string"},
+        "model_version": {"type": "string"}
+      }
+    }
+  },
+  "redaction_required": [],
+  "temporal_notes": "status_as_of_date/season_state are the only per-row timestamp fields; treat absence of a later-than-season status_as_of_date as unknown, not as confirmation of point-in-time safety."
+}

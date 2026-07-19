@@ -1,0 +1,30 @@
+{
+  "_comment": "Synthetic fixture for the MiLB rate-skill translation substitute (see definitions/CONTACT_PORTABILITY.md -- NOT a Statcast contact-quality portability model). batter ids out of any real range.",
+  "latent_rate_talent": [
+    {
+      "batter": 999301, "season": 2024, "eff_n": 340.5, "def_n": 210.0, "top_level": "AAA",
+      "off": 0.32, "pow": 0.18, "con": 0.41, "def": -0.05,
+      "up_mid_share": 0.52, "premium": false, "weight": 0.62,
+      "off_z": 0.9, "pow_z": 0.5, "con_z": 1.2, "def_z": -0.15,
+      "theta": 0.71, "season_state": "in_season"
+    },
+    {
+      "batter": 999302, "season": 2022, "eff_n": 55.0, "def_n": 30.0, "top_level": "A",
+      "off": -0.10, "pow": -0.22, "con": 0.05, "def": null,
+      "up_mid_share": null, "premium": false, "weight": 0.21,
+      "off_z": -0.4, "pow_z": -0.8, "con_z": 0.15, "def_z": null,
+      "theta": -0.18, "season_state": "season_end"
+    }
+  ],
+  "milb_xwar_projection": [
+    {
+      "batter": 999301, "season": 2024, "level": "AAA", "age": 24.2,
+      "p_reach_100_pa": 0.81, "e_war": 1.2, "xWAR": 1.35,
+      "p_coffee": 0.05, "p_regular": 0.35, "p_role": 0.30, "p_star": 0.22, "p_super": 0.08,
+      "has_mlb_appearance": false, "mlb_debut_season": null,
+      "has_reached_100_pa": true, "career_mlb_pa": 0, "reach100_season": 2024,
+      "already_debuted": false, "debut_season": null, "season_state": "in_season",
+      "status_as_of_date": "2026-07-18", "status_source": "fixture", "model_version": "reach-2.0.0"
+    }
+  ]
+}

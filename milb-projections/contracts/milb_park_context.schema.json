@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "milb_park_context.schema.json",
+  "title": "MiLB park context export",
+  "publication_classification": "PRIVATE_EXPORT_REQUIRED (values); PUBLIC_SCHEMA_ONLY (this contract)",
+  "authoritative_source": "milb_park_rebuild/data/milb_park_factors_v2.parquet",
+  "schema_version": "milb-park-factors-2.0.0",
+  "observation_unit": "team_id x season (venue_id carries park identity)",
+  "primary_key": ["season", "team_id"],
+  "required_columns": [
+    "season", "level", "league_id", "league_name", "team_id", "team_name", "venue_id",
+    "venue_name", "run_park_factor", "hr_park_factor", "run_pf", "hr_pf", "run_pf_sample",
+    "hr_pf_sample", "home_games", "away_games", "run_pf_reliability", "hr_pf_reliability",
+    "centering_group", "centering_residual", "park_factor_method", "park_factor_confidence",
+    "coverage_share", "weather_required", "model_version", "as_of_date"
+  ],
+  "known_absent_columns": ["contact_factor", "strikeout_factor", "batter_eye_factor", "park_id (venue_id is the park key)"],
+  "invariants": {
+    "no_duplicate_season_team_id": true,
+    "run_hr_non_null_every_row": true,
+    "centering_residual_lt_0_02": true,
+    "coverage_share_equals_1_0": true,
+    "weather_required_always_false": true
+  },
+  "context_columns": ["run_park_factor", "hr_park_factor", "park_factor_confidence", "run_pf_reliability", "hr_pf_reliability"],
+  "compatibility_rule": "The export must equal the authoritative source row-for-row for the same model_version. See tests/test_park_context_compatibility.py."
+}
