@@ -107,6 +107,96 @@ class TestGetGameFeed:
         assert out == payload
         assert session.get.call_count == 1
 
+    def test_nonfinal_feed_under_final_ttl_is_refetched_until_final(self, monkeypatch, tmp_path):
+        # A suspended game cached mid-suspension keeps its original (now-old)
+        # date, so date-derived FINAL_TTL would freeze the partial feed for years.
+        # It must be re-fetched every run until the game is actually final.
+        partial = {"gameData": {"status": {"abstractGameState": "Live",
+                                           "detailedState": "Suspended"}}}
+        session = self._patch(monkeypatch, tmp_path, partial)
+
+        out1 = feed_cache.get_game_feed(715010, game_date=_iso(10))
+        assert out1 == partial
+        assert session.get.call_count == 1
+
+        # Not final -> the long FINAL_TTL is ignored; a later read re-fetches.
+        feed_cache.get_game_feed(715010, game_date=_iso(10))
+        assert session.get.call_count == 2
+
+        # Game resumes and completes; the final feed now caches permanently.
+        final = {"gameData": {"status": {"abstractGameState": "Final",
+                                         "detailedState": "Final"}}}
+        session.get.return_value.json.return_value = final
+        out3 = feed_cache.get_game_feed(715010, game_date=_iso(10))
+        assert out3 == final
+        assert session.get.call_count == 3
+
+        out4 = feed_cache.get_game_feed(715010, game_date=_iso(10))
+        assert out4 == final
+        assert session.get.call_count == 3  # final -> served from cache, no re-fetch
+
+
+# ── finality gate (suspended-then-resumed guard) ─────────────────────────────
+
+class TestLooksFinal:
+    def test_final_abstract_state(self):
+        assert feed_cache._looks_final({"gameData": {"status": {"abstractGameState": "Final"}}})
+
+    def test_final_coded_game_state(self):
+        assert feed_cache._looks_final({"gameData": {"status": {"codedGameState": "F"}}})
+
+    def test_suspended_is_not_final(self):
+        assert not feed_cache._looks_final(
+            {"gameData": {"status": {"abstractGameState": "Live", "detailedState": "Suspended"}}})
+
+    def test_postponed_overrides_final_abstract(self):
+        assert not feed_cache._looks_final(
+            {"gameData": {"status": {"abstractGameState": "Final", "detailedState": "Postponed"}}})
+
+    def test_missing_or_bad_shapes_are_not_final(self):
+        assert not feed_cache._looks_final({"gameData": {}})
+        assert not feed_cache._looks_final({})
+        assert not feed_cache._looks_final(None)
+        assert not feed_cache._looks_final({"gameData": {"status": {}}})
+
+
+# ── atomic, concurrency-safe write ───────────────────────────────────────────
+
+class TestAtomicWrite:
+    def test_writes_valid_json_and_leaves_no_tmp(self, tmp_path):
+        path = tmp_path / "999.json"
+        feed_cache.atomic_write_json(path, {"a": 1, "b": [1, 2, 3]})
+        assert json.loads(path.read_text(encoding="utf-8")) == {"a": 1, "b": [1, 2, 3]}
+        assert list(tmp_path.glob("*.tmp")) == []  # writer temp cleaned up
+
+    def test_concurrent_same_path_writers_never_corrupt(self, tmp_path):
+        # The pre-fix bug: a per-GAME (not per-writer) tmp name let two same-game
+        # writers race on one tmp file and crash on the rename. With a
+        # writer-unique tmp, many concurrent writers to the SAME path all succeed
+        # and the promoted file is always exactly one writer's valid payload.
+        import threading
+
+        path = tmp_path / "715100.json"
+        payloads = [{"w": i, "plays": list(range(40))} for i in range(24)]
+        errors: list[Exception] = []
+
+        def worker(p):
+            try:
+                feed_cache.atomic_write_json(path, p)
+            except Exception as e:  # noqa: BLE001
+                errors.append(e)
+
+        threads = [threading.Thread(target=worker, args=(p,)) for p in payloads]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []                                     # no writer raised
+        loaded = json.loads(path.read_text(encoding="utf-8"))   # promoted file is valid
+        assert loaded in payloads                               # exactly one writer's payload
+        assert list(tmp_path.glob("*.tmp")) == []               # every temp cleaned up
+
 
 # ── pruning ─────────────────────────────────────────────────────────────────
 

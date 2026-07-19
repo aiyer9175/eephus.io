@@ -241,6 +241,62 @@ def test_efv_grade_map_inverts_on_model_window():
             "(a control_years flip would silently re-deflate top-end grades): " + " ".join(c.split())[:90])
 
 
+def test_efv_reliability_grade_map_inverts_on_model_window():
+    # The reliability/ECE curves (efv_reliability.py) DIAGNOSE the shipped eFV
+    # distribution, so their grade-map call must invert on the same 6yr window the
+    # scorer ships (exposure_seasons=TARGET_SEASONS). Omitting it defaulted to
+    # control_years=7 and the curves measured a distribution the site never shows.
+    # Same source-pin as efv_score above, so it cannot silently regress.
+    import re
+    import efv_dataset
+    assert efv_dataset.TARGET_SEASONS == 6
+    src = (Path(efv_export.__file__).parent / "efv_reliability.py").read_text(encoding="utf-8")
+    calls = re.findall(r"realized_implied_fv\((.*?)\)", src, re.DOTALL)
+    grade_calls = [c for c in calls if ("xfv_war" in c or "model_war" in c) and "," in c]
+    assert grade_calls, "no realized_implied_fv grade-map calls found in efv_reliability.py"
+    for c in grade_calls:
+        assert "exposure_seasons=TARGET_SEASONS" in c, (
+            "an efv_reliability grade-map call is missing exposure_seasons=TARGET_SEASONS "
+            "(the diagnostic would measure a 7yr-window grade the site never shows): "
+            + " ".join(c.split())[:90])
+
+
+def test_krp_plus_gate_reads_rates_missing_from_milb():
+    # KRP+ live-pitcher gate: rates_missing lives in r['milb'] (efv_dataset
+    # ._season_rates), NOT in efv_model._vec's output. Reading it off the _vec
+    # feature vector always defaulted to 1.0 and gated out EVERY live pitcher
+    # (dead pill site-wide). Guard the corrected exposure gate.
+    import efv_score
+    from efv_model import _vec
+    complete = {"milb": {"era_rel": -0.5, "rates_missing": 0.0}}
+    missing = {"milb": {"era_rel": -0.5, "rates_missing": 1.0}}
+    assert efv_score._krp_eligible(complete, True) is True     # rate-complete -> KRP+
+    assert efv_score._krp_eligible(missing, True) is False     # rate-missing -> gated out
+    assert efv_score._krp_eligible({"milb": {"rates_missing": 0.0}}, True) is False  # no era_rel
+    assert efv_score._krp_eligible({"milb": None}, True) is False                    # no milb
+    assert efv_score._krp_eligible(complete, False) is False   # hitter -> never KRP+
+    # The bug's root: rates_missing is not a key _vec emits, so the pre-fix
+    # feats.get('rates_missing', 1.0) could never be 0.0 for any live pitcher.
+    assert "rates_missing" not in _vec(complete, "pit")
+
+
+def test_score_history_no_track_record_uses_prior_not_ridge(monkeypatch):
+    # score_history must route a NO-track-record snapshot through the prior-anchor
+    # path (like run_backgrade), NOT the ridge -- the ridge applies the trained
+    # milb_missing untracked-bust penalty and fabricates a depressed early eFV point.
+    # Resolved (milb-present) snapshots must still use the ridge prediction.
+    import efv_score
+    monkeypatch.setattr(efv_score, "_provisional_prior_war",
+                        lambda cons_war, pick, bonus: (cons_war - 7.0, ["PRIOR"]))
+    ridge_sentinel = lambda: 99.0
+    # WITH a MiLB track record -> ridge prediction (resolved snapshots unchanged)
+    assert efv_score._history_model_war({"milb": {"era_rel": -0.3}}, 3.0, ridge_sentinel) == 99.0
+    # NO track record -> prior-anchored off cons_war, NOT the ridge sentinel
+    war = efv_score._history_model_war(
+        {"milb": None, "pick_overall": 5, "bonus_usd": 1e6}, 3.0, ridge_sentinel)
+    assert war == 3.0 - 7.0
+
+
 def _load_xfv_doc():
     """Read data/xfv.json, retrying once if the read looks torn (the nightly deploy
     runs this test right after the pipeline has rewritten the artifact, so a rare

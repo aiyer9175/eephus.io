@@ -103,7 +103,10 @@
                   sx: "age", sy: "warY1",
                   // Team Outlook column sort: teamSort = column key (null keeps
                   // the export's roster-WAR order); teamDir = 1 natural / -1 reversed.
-                  teamSort: null, teamDir: 1 };
+                  teamSort: null, teamDir: 1,
+                  // Team Outlook slate: "proj" = the 2027 projection (default),
+                  // "now" = the dark-launched Current (2026) view (#now=1 soak).
+                  teamMode: "proj", teamModeTouched: false };
   let DETAIL = null;            // data/mlb_player_detail.json, lazy
   let DETAIL_LOADING = false;
   let FIELDING = null;          // data/mlb_fielding_positions.json, lazy
@@ -448,6 +451,25 @@
     const windowOn = _wp != null ? _wp !== "0" : WINDOW_DEFAULT;
     const hasWindow = rows.some(r => (r.farm || {}).etaAlignYears != null);
     const showWindow = hasWindow && windowOn;
+    // Current (2026) slate: dark-launched behind #now=1 (mirrors #window). Opt in
+    // with #now=1; degrades on payload presence (older/degraded exports carry no
+    // `current` block). When off, every branch below takes the existing 2027 path.
+    const NOW_DEFAULT = false;
+    const _np = new URLSearchParams((location.hash || "").replace(/^#/, "")).get("now");
+    const nowFlag = _np != null ? _np !== "0" : NOW_DEFAULT;
+    const hasNow = rows.some(r => r.current);
+    const nowAvail = hasNow && nowFlag;
+    // #now=1 should LAND on the Current slate the first time it's available this
+    // session; a subsequent manual chip toggle (which sets teamModeTouched) then
+    // sticks. The flag isn't persisted to URL (mirrors #window), so re-derive the
+    // active slate every render and never trust a stale teamMode when the payload
+    // is absent.
+    if (nowAvail && !state.teamModeTouched) state.teamMode = "now";
+    if (!nowAvail) state.teamMode = "proj";
+    const nowMode = nowAvail && state.teamMode === "now";
+    const curSeason = DATA.current_season || (DATA.first_season ? DATA.first_season - 1 : "");
+    const pctStr = (p) => p == null ? EM_DASH : (p * 100).toFixed(1) + "%";
+    const wlOf = (w, l) => `${Math.round(w)}-${Math.round(l)}`;
     // Window cell: an arrival-curve sparkline (share of farm surplus landing
     // each 2027-31 season + a later bucket) plus etaAlignYears, colored by
     // whether the farm lands inside the controlled-core window (<= 0 aligned).
@@ -472,6 +494,50 @@
       const sign = a > 0 ? "+" : "";
       const tip = `Window alignment: the farm's surplus-weighted arrival (${f.etaMean != null ? f.etaMean : "?"}) vs the controlled-core WAR center (${f.coreCenter != null ? f.coreCenter : "?"}). ${a <= 0 ? "Farm lands inside the control window (aligned)." : "Farm arrives after the core leaks to free agency (gap)."} Bars = share of farm surplus by arrival season.`;
       return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${spark}<span style="font-family:var(--font-mono);font-weight:600;color:${col};">${sign}${a.toFixed(1)}y</span></span>`;
+    };
+    // ---- Current (2026) cell-builders. All read r.current (the exporter's
+    // nested block) and EM_DASH per-field when absent, so a partial payload
+    // degrades cleanly. No math here beyond display formatting + bar widths. ----
+    const currentCell = (r) => {
+      const c = r.current; if (!c || c.record == null) return EM_DASH;
+      const pc = c.actualPct != null ? (c.actualPct * 100).toFixed(1) + "%" : EM_DASH;
+      const gb = c.gb != null ? (c.gb === 0 ? "div lead" : `${c.gb} GB`) : "";
+      const tip = `Actual ${curSeason} record: ${c.record} (${pc})${gb ? " · " + gb : ""}${c.ilOut60 ? ` · ${c.ilOut60} on the 60-day IL` : ""}.`;
+      return `<span title="${esc(tip)}" style="white-space:nowrap;"><strong>${esc(c.record)}</strong> <span class="fa-sub">${pc}</span></span>`;
+    };
+    const pythagCell = (r) => {
+      const c = r.current; if (!c || c.pythagPct == null) return EM_DASH;
+      const delta = (c.actualPct != null) ? c.actualPct - c.pythagPct : null;
+      const col = delta == null ? "var(--text-primary)"
+        : delta >= 0.020 ? "var(--up)" : delta <= -0.020 ? "var(--down)" : "var(--text-primary)";
+      const tip = `Pythagorean expectation ${(c.pythagPct * 100).toFixed(1)}% from run differential (exp 1.83).${delta != null ? ` Actual is ${delta >= 0 ? "over" : "under"}-performing by ${Math.abs(delta * 100).toFixed(1)} pts.` : ""}`;
+      return `<span title="${esc(tip)}" style="font-family:var(--font-mono);color:${col};">${(c.pythagPct * 100).toFixed(1)}%</span>`;
+    };
+    const blendCell = (r) => {
+      const c = r.current; if (!c || c.curWins == null) return EM_DASH;
+      const tip = `Projected full-season ${curSeason} record: ${wlOf(c.curWins, c.curLosses)} (${(c.curPct * 100).toFixed(1)}%). Bayesian blend of the roster-talent prior (${pctStr(c.talentPriorPct)}), actual record (${pctStr(c.actualPct)}), and Pythag (${pctStr(c.pythagPct)}); weights prior/actual/pythag = ${c.blendWeights ? [c.blendWeights.prior, c.blendWeights.actual, c.blendWeights.pythag].map(x => x.toFixed(2)).join("/") : "?"} at ${c.gamesPlayed} games played.`;
+      return `<span title="${esc(tip)}" style="white-space:nowrap;"><strong>${wlOf(c.curWins, c.curLosses)}</strong> <span class="fa-sub">${(c.curPct * 100).toFixed(1)}%</span></span>`;
+    };
+    const playoffCell = (r) => {
+      const c = r.current; if (!c || c.playoffPct == null) return EM_DASH;
+      const div = c.divisionPct || 0, wc = c.wildcardPct || 0, play = c.playoffPct || 0;
+      const divW = Math.round(div * 100), wcW = Math.round(wc * 100);
+      const missW = Math.max(0, 100 - divW - wcW);
+      const bar = `<span style="display:inline-flex;width:64px;height:9px;border-radius:2px;overflow:hidden;vertical-align:middle;background:var(--track,rgba(128,128,128,.25));">`
+        + `<span style="width:${divW}%;background:var(--up);"></span>`
+        + `<span style="width:${wcW}%;background:var(--accent-gold);"></span>`
+        + `<span style="width:${missW}%;background:transparent;"></span></span>`;
+      const proj = (c.projWinsP10 != null && c.projWinsP90 != null)
+        ? ` Projected wins ${c.projWinsMean} (80% range ${c.projWinsP10}-${c.projWinsP90}).` : "";
+      const tip = `Playoff odds ${(play * 100).toFixed(0)}% = division ${(div * 100).toFixed(0)}% + wildcard ${(wc * 100).toFixed(0)}% (Monte Carlo, ${DATA.mc_schedule_source === "balanced_fallback" ? "balanced-schedule estimate" : "live remaining schedule"}).${proj}`;
+      return `<span title="${esc(tip)}" style="display:inline-flex;align-items:center;gap:6px;white-space:nowrap;">${bar}<span style="font-family:var(--font-mono);font-weight:600;">${(play * 100).toFixed(0)}%</span></span>`;
+    };
+    const sosCell = (r) => {
+      const c = r.current; if (!c || c.sos == null) return EM_DASH;
+      const rk = c.sosRank != null ? `#${c.sosRank}` : "";
+      const col = c.sos >= 0.520 ? "var(--down)" : c.sos <= 0.480 ? "var(--up)" : "var(--text-primary)";
+      const tip = `Remaining strength of schedule (log5): avg opponent talent ${(c.sos * 100).toFixed(1)}% over ${c.remGames} unplayed games; rank ${rk} (1 = hardest). Expected ~${c.remWinExp} added wins the rest of the way.`;
+      return `<span title="${esc(tip)}" style="font-family:var(--font-mono);color:${col};">${(c.sos * 100).toFixed(1)}% <span class="fa-sub">${rk}</span></span>`;
     };
     // Core-control cell: a decline sparkline of CONTROLLED WAR per season (the
     // cliff) + the WAR-weighted lock-up %. % colored up/down; bars from byYear.
@@ -510,6 +576,12 @@
       surplus:   { get: r => (r.farm || {}).farmSurplusMM, natural: "desc" },
       prospect:  { get: r => ((r.farm || {}).topProspect || {}).fv, natural: "desc" },
       projected: { get: r => ((r.top || [])[0] || {}).war, natural: "desc" },
+      // Current (2026) columns - only active in now-mode; additive, no collision.
+      nowPct:    { get: r => (r.current || {}).actualPct, natural: "desc" },
+      pythag:    { get: r => (r.current || {}).pythagPct, natural: "desc" },
+      blend:     { get: r => (r.current || {}).curPct, natural: "desc" },
+      playoff:   { get: r => (r.current || {}).playoffPct, natural: "desc" },
+      sos:       { get: r => (r.current || {}).sos, natural: "desc" },
     };
     const _sortAsc = (key) => {
       const col = TEAM_SORTS[key];
@@ -551,6 +623,19 @@
       const wlTip = r.depthWar != null
         ? `Roster WAR + ${r.depthWar} depth-allowance WAR over the 47.7 replacement baseline (league recentered to 2,430 total wins${r.winsRaw != null ? `; raw roster-only read ${Math.round(r.winsRaw)} wins` : ""})`
         : `Roster WAR over the 47.7 replacement baseline`;
+      if (nowMode) {
+        // Current (2026) slate: actual record / Pythag / blended projection /
+        // playoff odds / remaining SOS. Team + rank columns are shared.
+        return `<tr>
+      <td>${i + 1}</td>
+      <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
+      <td>${currentCell(r)}</td>
+      <td>${pythagCell(r)}</td>
+      <td>${blendCell(r)}</td>
+      <td>${playoffCell(r)}</td>
+      <td>${sosCell(r)}</td>
+    </tr>`;
+      }
       return `<tr>
       <td>${i + 1}</td>
       <td class="proj-player">${teamLogo(r.team)}<strong>${esc(r.team)}</strong></td>
@@ -563,21 +648,42 @@
       ${hasFarm ? `<td class="fa-sub" style="white-space:nowrap;">${openCell}</td>` : ""}
     </tr>`;
     }).join("");
-    const note = `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) - 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
+    const note = nowMode
+      ? `Current (${curSeason}) slate <span class="eephus-beta" title="Newly launched; blend + odds may shift">β beta</span>: a Bayesian blend of the roster-talent prior, actual record, and Pythagorean expectation (RS/RA). Prior acts as ~40 pseudo-games, so it leads early and fades toward the in-season signals as the season progresses. Playoff odds are a ${DATA.mc_schedule_source === "balanced_fallback" ? "Monte Carlo over a balanced-schedule ESTIMATE (live schedule unavailable)" : "Monte Carlo over the live remaining schedule"}; SOS is the log5 average opponent talent over unplayed games (rank 1 = hardest). This view is additive and does not change the projection board.`
+      : `Current-season (${DATA.first_season}) roster bWAR -> projected wins at the 47.7 replacement baseline (forward-gated against actual standings).${hasControl ? ` Core control measures organizational strength for the FUTURE: the WAR-weighted share of each org's projected 2027-${DATA.first_season + (DATA.horizon || 5) - 1} production that is cost-controlled (under contract or club control) - 100% means the whole core is locked through the horizon, a low % means it leaks to free agency. The sparkline is controlled WAR per season; the drop-off is the control cliff.` : ""}${hasFarm ? " Farm rank, surplus, and top prospect join from the PROSPX org models." : ""}`;
     // Sortable header: click to sort by it, click again to flip direction.
     // The active column shows a ▲/▼ arrow reflecting the effective direction.
     const _arrow = (key) => state.teamSort === key
       ? ` <span style="font-size:0.8em;opacity:0.75;">${_sortAsc(key) ? "▲" : "▼"}</span>` : "";
     const sth = (key, label, title) =>
       `<th class="proj-sortable" data-team-sort="${key}"${title ? ` title="${esc(title)}"` : ""} style="cursor:pointer;user-select:none;white-space:nowrap;">${label}${_arrow(key)}</th>`;
-    root.innerHTML = `<div class="fa-note" style="margin:8px 0;">${note}</div>
+    // Mode sub-chips (only when the current-season payload is available + opted in).
+    const modeChips = nowAvail
+      ? `<div class="proj-mode-chips" style="margin:6px 0 2px;display:flex;gap:6px;">
+        <button class="chip${!nowMode ? " active" : ""}" data-team-mode="proj">Projected (${DATA.first_season})</button>
+        <button class="chip${nowMode ? " active" : ""}" data-team-mode="now">Current (${curSeason})</button></div>`
+      : "";
+    const header = nowMode
+      ? `<thead><tr><th>#</th>${sth("team", "Team")}${sth("nowPct", "Record", `Actual ${curSeason} record + win%`)}${sth("pythag", "Pythag", "Pythagorean win% from run differential (exp 1.83)")}${sth("blend", "Proj W-L", "Bayesian blend of talent prior + actual + Pythag -> projected full-season record")}${sth("playoff", "Playoff odds", "Monte-Carlo division/wildcard/playoff probability")}${sth("sos", "Rem SOS", "Remaining strength of schedule via log5 (rank 1 = hardest)")}</tr></thead>`
+      : `<thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${showWindow ? sth("window", "Window", `System Duration: farm surplus-weighted arrival vs the controlled-core window. Negative = the farm lands while the core is still under control (aligned); positive = it arrives after the core leaks. Bars = share of farm surplus by arrival season.`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>`;
+    root.innerHTML = `${modeChips}<div class="fa-note" style="margin:8px 0;">${note}</div>
       <table class="detail-table proj-table">
-      <thead><tr><th>#</th>${sth("team", "Team")}${sth("war", "Roster WAR")}${sth("wins", "Proj W-L", "Projected record, league-recentered (depth allowance over the rostered universe)")}${hasControl ? sth("control", "Core control", `Cost-controlled core: WAR-weighted share of projected ${DATA.first_season}-${DATA.first_season + (DATA.horizon || 5) - 1} WAR under team control (sparkline = controlled WAR per season)`) : ""}${showWindow ? sth("window", "Window", `System Duration: farm surplus-weighted arrival vs the controlled-core window. Negative = the farm lands while the core is still under control (aligned); positive = it arrives after the core leaks. Bars = share of farm surplus by arrival season.`) : ""}${hasFarm ? `${sth("farm", "Farm", "PROSPX farm-system rank + grade score")}${sth("surplus", "Farm surplus", "Net control-window NPV over the org's active prospect pool")}${sth("prospect", "Top prospect", "Sort by top prospect FV")}` : ""}${sth("projected", "Top projected", "Sort by the org's top projected player WAR")}${hasFarm ? "<th>Open</th>" : ""}</tr></thead>
+      ${header}
       <tbody>${body}</tbody></table>`;
     root.querySelectorAll("[data-team-sort]").forEach(h => h.onclick = () => {
       const k = h.dataset.teamSort;
       if (state.teamSort === k) state.teamDir = state.teamDir === -1 ? 1 : -1;
       else { state.teamSort = k; state.teamDir = 1; }
+      renderTeams();
+    });
+    root.querySelectorAll("[data-team-mode]").forEach(b => b.onclick = () => {
+      const m = b.dataset.teamMode;
+      if (m === state.teamMode) return;
+      // Switching slates: the two modes have disjoint sortable columns, so clear
+      // any active sort to avoid a stale key pointing at a now-hidden column.
+      // teamModeTouched pins the user's choice over the #now=1 auto-land default.
+      state.teamMode = m; state.teamModeTouched = true;
+      state.teamSort = null; state.teamDir = 1;
       renderTeams();
     });
     root.querySelectorAll("[data-team-filter]").forEach(a => a.onclick = (ev) => {

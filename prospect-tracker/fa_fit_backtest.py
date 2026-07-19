@@ -99,6 +99,90 @@ def standings_wins(season: int) -> dict[str, int]:
     return out
 
 
+def _sn_int(v) -> int | None:
+    """Tolerant int() for StatsAPI (numeric strings, occasional nulls). Returns
+    None on failure so a genuinely-absent field stays distinguishable from 0."""
+    if v is None:
+        return None
+    try:
+        return int(v)
+    except (ValueError, TypeError):
+        return None
+
+
+def _sn_float(v, dash: float | None = 0.0) -> float | None:
+    """Tolerant float() for winningPercentage ('0.556') and the games-back
+    family ('-' -> `dash`, '4.5' -> 4.5). Absent/None -> None."""
+    if v is None or v == "":
+        return None
+    if v == "-":
+        return dash
+    try:
+        return float(v)
+    except (ValueError, TypeError):
+        return None
+
+
+def standings_now(season: int) -> dict[str, dict]:
+    """Widened live-standings read for the current-season Team Outlook view.
+    {org: {wins, losses, pct, gamesPlayed, rs, ra, runDiff, gb, divGb, wcGb,
+    divRank, leagueRank, wcRank, streak, league, div, pythagWins,
+    pythagLosses}}. Reuses the SAME disk-cached _fetch + canonical_org + the
+    len<=3 MLB-club guard as standings_wins(); returns {} on any fetch/parse
+    failure (degraded/offline -> the current-season view degrades to null and
+    the 2027 projection is unaffected).
+
+    pythagWins/Losses come from StatsAPI's built-in xWinLoss expectedRecord
+    (present on standingsTypes=regularSeason); None when the block is absent,
+    in which case the blend computes Pythag from rs/ra itself."""
+    fr = _fetch(_STANDINGS_URL.format(season=season),
+                f"statsapi_standings_{season}", accept_json=True)
+    if fr.status != 200 or not fr.body:
+        return {}
+    out: dict[str, dict] = {}
+    try:
+        d = json.loads(fr.body)
+        for rec in d.get("records") or []:
+            league = (rec.get("league") or {}).get("id")
+            div = (rec.get("division") or {}).get("id")
+            for tr in rec.get("teamRecords") or []:
+                org = canonical_org((tr.get("team") or {}).get("name") or "")
+                if not org or len(org) > 3:
+                    continue
+                rs = _sn_int(tr.get("runsScored"))
+                ra = _sn_int(tr.get("runsAllowed"))
+                run_diff = _sn_int(tr.get("runDifferential"))
+                if run_diff is None and rs is not None and ra is not None:
+                    run_diff = rs - ra
+                pyth_w = pyth_l = None
+                exp = ((tr.get("records") or {}).get("expectedRecords")) or []
+                for er in exp:
+                    if (er.get("type") or "").lower() == "xwinloss":
+                        pyth_w = _sn_int(er.get("wins"))
+                        pyth_l = _sn_int(er.get("losses"))
+                        break
+                out[org] = {
+                    "wins": _sn_int(tr.get("wins")),
+                    "losses": _sn_int(tr.get("losses")),
+                    "pct": _sn_float(tr.get("winningPercentage")),
+                    "gamesPlayed": _sn_int(tr.get("gamesPlayed")),
+                    "rs": rs, "ra": ra, "runDiff": run_diff,
+                    "gb": _sn_float(tr.get("gamesBack")),
+                    "divGb": _sn_float(tr.get("divisionGamesBack")),
+                    "wcGb": _sn_float(tr.get("wildCardGamesBack"), dash=None),
+                    "divRank": _sn_int(tr.get("divisionRank")),
+                    "leagueRank": _sn_int(tr.get("leagueRank")),
+                    "wcRank": _sn_int(tr.get("wildCardRank")),
+                    "streak": (tr.get("streak") or {}).get("streakCode"),
+                    "league": league, "div": div,
+                    "pythagWins": pyth_w, "pythagLosses": pyth_l,
+                }
+    except (ValueError, TypeError):
+        log.warning("standings_now %d unparseable", season)
+        return {}
+    return out
+
+
 def team_payroll_state(season: int) -> dict[str, dict]:
     """{org: {tax_payroll_usd, payor}} for one season (cached scrape)."""
     out: dict[str, dict] = defaultdict(dict)

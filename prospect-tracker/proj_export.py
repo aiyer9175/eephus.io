@@ -982,6 +982,259 @@ def _write_team_outlook_eval(rows: list[dict], raw_wins_sum_y1: float,
 
 
 # ============================================================================
+# Current-season (2026) view - Bayesian + Pythag blend, log5 SOS, playoff odds
+# ============================================================================
+# DARK-LAUNCHED, ADDITIVE overlay. This runs OUTSIDE _team_outlook, after it
+# returns, and only ever writes a nested `current` block (+ two flat mirrors) on
+# each row - the 2027 byYear[]/wins/war/lockedPct output and team_outlook_eval
+# are never touched. When live standings/schedule are absent (offline / degraded
+# local build) every team's `current` is None and the row is byte-for-byte the
+# 2027-only output. FIRST_SEASON=2027 is the first PROJECTED season; the
+# in-progress current season is FIRST_SEASON-1 = 2026.
+_PYTHAG_EXP = 1.83               # fixed fallback exponent (baseball-reference standard)
+_PYTHAGENPAT_EXP = 0.287         # Smyth/Patriot Pythagenpat: exp = RPG**0.287
+CURRENT_PRIOR_PSEUDO_GAMES = 40  # k: prior worth ~1/4 season; wPrior=0.5 at G=40
+# StatsAPI 40-man roster status codes -> "out for the bulk of the season" flag,
+# used ONLY for the display-only ilOut60 badge (NOT any projection number).
+_IL60_CODES = {"D60", "D7D60", "60"}
+
+
+def _pythag_pct(rs: float | None, ra: float | None,
+                g: float | None = None) -> float | None:
+    """Pythagorean win expectation from runs scored/allowed.
+
+    When games played `g` is known, use Pythagenpat (Smyth/Patriot): the exponent
+    scales with the run environment, exp = ((RS+RA)/G)**0.287, which is materially
+    more accurate than a fixed exponent for extreme offenses/pitching and is the
+    modern sabermetric standard. Falls back to the fixed 1.83 when G is unavailable
+    (e.g. RS/RA present but gamesPlayed absent). NOTE the caller prefers StatsAPI's
+    own xWinLoss when present; this fires only when that is missing."""
+    if rs is None or ra is None or rs < 0 or ra < 0 or (rs + ra) <= 0:
+        return None
+    if g and g > 0:
+        rpg = (rs + ra) / g
+        exp = rpg ** _PYTHAGENPAT_EXP if rpg > 0 else _PYTHAG_EXP
+    else:
+        exp = _PYTHAG_EXP
+    rse = rs ** exp
+    rae = ra ** exp
+    if rse + rae <= 0:
+        return None
+    return rse / (rse + rae)
+
+
+def _talent_prior_pct(win_total: float) -> float:
+    """The pure roster-talent prior as a win rate: the model's recentered year-1
+    (2027) team win total / 162, clamped to a sane [.20, .80]. This reuses the
+    EXISTING machinery (the same `wins` the 2027 view already published) - it does
+    NOT recompute the model, and 2026-vs-2027 talent drift is negligible next to
+    the k=40 shrinkage."""
+    return min(0.80, max(0.20, win_total / 162.0))
+
+
+def _current_blend(rec: dict, prior_pct: float,
+                   k: float = CURRENT_PRIOR_PSEUDO_GAMES) -> dict:
+    """Bayesian blend of the roster-talent prior, actual record, and Pythag for
+    the in-progress season. Prior acts as k pseudo-games, so it dominates in April
+    and fades (never fully) toward the in-season signals by September; Pythag gets
+    twice actual's share of the in-season weight (it predicts future record
+    better). Projected full-season record banks games played and projects the
+    remainder at the forward-looking (prior+Pythag) rate."""
+    g = rec.get("gamesPlayed") or 0
+    wins = rec.get("wins")
+    losses = rec.get("losses")
+    actual_pct = rec.get("pct")
+    if actual_pct is None and wins is not None and g:
+        actual_pct = wins / g
+    if actual_pct is None:
+        actual_pct = 0.5
+    # Prefer StatsAPI's own xWinLoss pythag; else compute from RS/RA.
+    if rec.get("pythagWins") is not None and rec.get("pythagLosses") is not None:
+        pw, pl = rec["pythagWins"], rec["pythagLosses"]
+        pythag_pct = pw / (pw + pl) if (pw + pl) > 0 else None
+    else:
+        pythag_pct = _pythag_pct(rec.get("rs"), rec.get("ra"), g)
+    if pythag_pct is None:
+        pythag_pct = prior_pct   # no run data yet -> lean on the prior
+
+    w_prior = k / (k + g)
+    in_season = 1.0 - w_prior
+    w_actual = in_season * (1.0 / 3.0)
+    w_pythag = in_season * (2.0 / 3.0)
+    # Forward rate for un-played games drops `actual` (those games are banked).
+    fwd_denom = w_prior + w_pythag
+    forward_pct = ((w_prior * prior_pct + w_pythag * pythag_pct) / fwd_denom
+                   if fwd_denom > 0 else prior_pct)
+    wins_to_date = wins if wins is not None else round(actual_pct * g)
+    cur_wins = int(round(wins_to_date + max(0, 162 - g) * forward_pct))
+    cur_wins = min(162, max(0, cur_wins))
+    cur_losses = 162 - cur_wins
+    return {
+        "gamesPlayed": g,
+        "record": f"{wins}-{losses}" if wins is not None and losses is not None else None,
+        "actualPct": round(actual_pct, 3),
+        "pythagPct": round(pythag_pct, 3),
+        "talentPriorPct": round(prior_pct, 3),
+        "curWins": cur_wins,
+        "curLosses": cur_losses,
+        "curPct": round(cur_wins / 162.0, 3),
+        "gb": rec.get("divGb"),
+        "blendWeights": {"prior": round(w_prior, 3),
+                         "actual": round(w_actual, 3),
+                         "pythag": round(w_pythag, 3)},
+    }
+
+
+def _attach_current_season(rows: list[dict], standings: dict[str, dict],
+                           il_out60: dict[str, int] | None = None,
+                           season: int | None = None) -> str | None:
+    """Overlay the `current` block onto each team_outlook row IN PLACE and return
+    the schedule-source flag ('live' | 'balanced_fallback' | None). rows carry the
+    2027 view; `standings` is standings_now(2026). No-op returning None when
+    `standings` is empty (degraded/offline) - the 2027 output is left untouched."""
+    if not standings:
+        return None
+    season = season or (FIRST_SEASON - 1)
+    il_out60 = il_out60 or {}
+
+    # 1) blend: pure talent prior (2027 team win total / 162) + actual + Pythag.
+    prior_by_team: dict[str, float] = {}
+    for r in rows:
+        tm = r.get("team")
+        rec = standings.get(tm)
+        if not rec:
+            r["current"] = None
+            continue
+        prior_pct = _talent_prior_pct(r.get("wins") or 0.0)
+        prior_by_team[tm] = prior_pct
+        cur = _current_blend(rec, prior_pct)
+        cur["ilOut60"] = il_out60.get(tm)
+        r["current"] = cur
+        # flat mirrors for GFX / sortless consumers (mirror war/wins at :859)
+        r["curWins"] = cur["curWins"]
+        r["curPct"] = cur["curPct"]
+
+    # 2) shared remaining schedule (live -> fallback), used by BOTH SOS + MC.
+    import proj_current as pc
+    teams_present = [r["team"] for r in rows if r.get("current")]
+    sched = pc.remaining_schedule(season)
+    sched_source = "live"
+    if not sched:
+        # fallback needs a per-team games-remaining estimate: 162 - gamesPlayed.
+        gr = {r["team"]: max(0, 162 - (r["current"]["gamesPlayed"] or 0))
+              for r in rows if r.get("current")}
+        sched = pc.balanced_remaining(teams_present, games_remaining=gr)
+        sched_source = "balanced_fallback"
+
+    # 3) log5 SOS + remaining-win expectation over that schedule.
+    talent = {tm: prior_by_team.get(tm, 0.5) for tm in teams_present}
+    sos_vals: dict[str, float] = {}
+    for r in rows:
+        cur = r.get("current")
+        if not cur:
+            continue
+        tm = r["team"]
+        opps = sched.get(tm) or []
+        if not opps:
+            cur["sos"] = None
+            cur["remGames"] = 0
+            cur["remWinExp"] = 0.0
+            continue
+        opp_pcts = [talent.get(o, 0.5) for o in opps]
+        sos = sum(opp_pcts) / len(opp_pcts)
+        rem_win_exp = sum(pc.log5(talent.get(tm, 0.5), op) for op in opp_pcts)
+        cur["sos"] = round(sos, 4)
+        cur["remGames"] = len(opps)
+        cur["remWinExp"] = round(rem_win_exp, 1)
+        sos_vals[tm] = sos
+    # SOS rank: 1 = hardest (highest opponent talent). Ties broken by org.
+    for rank, tm in enumerate(sorted(sos_vals, key=lambda t: (-sos_vals[t], t)), 1):
+        for r in rows:
+            if r.get("team") == tm and r.get("current"):
+                r["current"]["sosRank"] = rank
+
+    # 4) Monte-Carlo playoff odds over the SAME schedule + pure talent.
+    mc_teams = {}
+    for r in rows:
+        cur = r.get("current")
+        tm = r.get("team")
+        rec = standings.get(tm)
+        if not cur or not rec:
+            continue
+        mc_teams[tm] = {"wins": rec.get("wins") or 0, "losses": rec.get("losses") or 0,
+                        "p": talent.get(tm, 0.5),
+                        "league": rec.get("league"), "div": rec.get("div")}
+    pairs = pc.remaining_pairs(season) if sched_source == "live" else _pairs_from_sched(sched)
+    odds = pc.simulate_playoffs(mc_teams, pairs)
+    for r in rows:
+        cur = r.get("current")
+        if cur is None:
+            continue
+        o = odds.get(r.get("team"))
+        if o:
+            cur.update(o)
+        else:
+            for kf in ("playoffPct", "divisionPct", "wildcardPct",
+                       "projWinsMean", "projWinsP10", "projWinsP90"):
+                cur.setdefault(kf, None)
+    return sched_source
+
+
+def _pairs_from_sched(sched: dict[str, list[str]]) -> list[tuple[str, str]]:
+    """Reconstruct (home, away) pairs from a {org:[opp,...]} fallback schedule,
+    de-duplicating the mirrored entries (each game appears on both teams)."""
+    seen: dict[tuple, int] = {}
+    pairs: list[tuple[str, str]] = []
+    for tm, opps in sched.items():
+        for op in opps:
+            key = tuple(sorted((tm, op)))
+            seen[key] = seen.get(key, 0) + 1
+    for (a, b), cnt in seen.items():
+        for _ in range(max(1, cnt // 2)):
+            pairs.append((a, b))
+    return pairs
+
+
+def _il_out60(season: int) -> dict[str, int]:
+    """Display-only {org: count of 40-man players on the 60-day IL}. Best-effort;
+    {} on any failure (badge just doesn't render). Never feeds a projection."""
+    try:
+        import proj_current  # noqa: F401  (keep import graph explicit)
+        from trades import canonical_org
+        from scrapers import _fetch
+    except Exception:                                          # noqa: BLE001
+        return {}
+    teams_url = "https://statsapi.mlb.com/api/v1/teams?sportId=1&season={}".format(season)
+    fr = _fetch(teams_url, f"statsapi_teams_{season}", accept_json=True)
+    if fr.status != 200 or not fr.body:
+        return {}
+    out: dict[str, int] = {}
+    try:
+        teams = json.loads(fr.body).get("teams") or []
+    except (ValueError, TypeError):
+        return {}
+    for t in teams:
+        tid, name = t.get("id"), t.get("name")
+        org = canonical_org(name or "")
+        if not tid or not org or len(org) > 3:
+            continue
+        rr = _fetch("https://statsapi.mlb.com/api/v1/teams/{}/roster?rosterType=40Man"
+                    "&season={}".format(tid, season),
+                    f"statsapi_roster_40man_{tid}_{season}", accept_json=True)
+        if rr.status != 200 or not rr.body:
+            continue
+        try:
+            roster = json.loads(rr.body).get("roster") or []
+        except (ValueError, TypeError):
+            continue
+        n = sum(1 for p in roster
+                if ((p.get("status") or {}).get("code")) in _IL60_CODES)
+        if n:
+            out[org] = n
+    return out
+
+
+# ============================================================================
 # Model Accountability (/projections/#view=accountability)
 # ============================================================================
 # Curated, ordered registry rows that power the projections surface, paired
@@ -1054,9 +1307,24 @@ def _accountability_block() -> dict:
     cb = he.get("challenger_blocks") or {}
 
     def _horizon_rows(block) -> list[dict]:
+        # `coverage` is the POOLED band coverage. The eval harness's own
+        # docstring warns absent seasons (actual=0) sit inside almost any
+        # P10-P90 band, so pooled coverage reads trivially high (~0.9+) and is
+        # NOT band reliability. Surface the honest reads alongside it -
+        # coverage_survived (only players who actually played the target
+        # season, plus its n) and the pinball loss (the proper quantile scoring
+        # rule) - so the accountability view is not misleadingly optimistic.
+        # All four are already computed and committed on each horizon block by
+        # proj_eval; this is pure surfacing (additive - the frontend still
+        # reads h/n/mae/bias/coverage and degrades absent the new fields).
         hz = (block or {}).get("horizons") or {}
         return [{"h": int(h), "n": v.get("n"), "mae": v.get("mae"),
-                 "bias": v.get("bias"), "coverage": v.get("coverage")}
+                 "bias": v.get("bias"), "coverage": v.get("coverage"),
+                 "coverage_survived": v.get("coverage_survived"),
+                 "n_survived": v.get("n_survived"),
+                 "pinball_q10": v.get("pinball_q10"),
+                 "pinball_q90": v.get("pinball_q90"),
+                 "mae_star": v.get("mae_star"), "n_star": v.get("n_star")}
                 for h, v in sorted(hz.items(), key=lambda kv: int(kv[0]))]
 
     vet_horizons = {
@@ -1114,6 +1382,19 @@ def build_payload() -> dict:
         corpus, names, contracts, {m["mlbam"] for m in vets if m.get("mlbam")})
     team_outlook = _team_outlook(vets, prospects, depth_team_war, depth_acct,
                                  _cohort_intercepts())
+    # Current-season (2026) overlay - ADDITIVE, dark-launched. Best-effort: any
+    # fetch failure (offline / degraded local build) leaves team_outlook exactly
+    # as the 2027-only output and mc_schedule_source None. FIRST_SEASON-1 = 2026.
+    mc_schedule_source = None
+    try:
+        from fa_fit_backtest import standings_now as _standings_now
+        _sn = _standings_now(FIRST_SEASON - 1)
+        if _sn:
+            mc_schedule_source = _attach_current_season(
+                team_outlook, _sn, il_out60=_il_out60(FIRST_SEASON - 1),
+                season=FIRST_SEASON - 1)
+    except Exception:                                          # noqa: BLE001
+        log.warning("current-season overlay skipped (best-effort)", exc_info=True)
     cfg = vf._config()
     re_anchor = (cfg["dollars_per_war"].get("_fa_reanchor") or {})
     return {
@@ -1125,6 +1406,8 @@ def build_payload() -> dict:
         "n_vets": len(vets), "n_prospects": len(prospects),
         "vets": vets, "prospects": prospects,
         "team_outlook": team_outlook,
+        "current_season": (FIRST_SEASON - 1) if mc_schedule_source else None,
+        "mc_schedule_source": mc_schedule_source,
         "accountability": _accountability_block(),
         "notes": [
             "veterans: the FA module's Gate-1-validated Marcel engine; bands = Gate-1 empirical year-1 residual quantiles decayed along the fitted aging curves",

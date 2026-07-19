@@ -93,6 +93,68 @@ def test_data_js_ships():
     assert "-name '*.js'" in workflow
 
 
+def _slices_dir_shards() -> list[str]:
+    """The runtime-fetched shard directories the boot payload advertises under
+    storage.py's `_slices_dir` dict literal, extracted by regex over the source
+    (no import / no synthetic export needed). Values are the shard dir paths
+    (e.g. "pitch_plots/"); dict keys never end in '/', so the quoted strings
+    that DO end in '/' are exactly the advertised dirs."""
+    src = (ROOT / "storage.py").read_text(encoding="utf-8")
+    m = re.search(r'"_slices_dir"\s*:\s*\{([^}]*)\}', src)
+    assert m, "could not locate the _slices_dir dict literal in storage.py"
+    dirs = [v.rstrip("/") for v in re.findall(r'"([^"]+/)"', m.group(1))]
+    assert dirs, "no shard directories parsed from storage.py _slices_dir"
+    return dirs
+
+
+def _ships_in_nightly(nightly: str, d: str) -> bool:
+    """True if deploy/nightly-build.sh ships shard dir `d`. Robust to quote
+    style / glob depth: an rsync `--include=/data/<d>/...` (any quoting) or a
+    `cp -r data/<d>` both count."""
+    esc = re.escape(d)
+    return bool(
+        re.search(rf"--include=['\"]?/data/{esc}/", nightly)
+        or re.search(rf"cp\s+-r\s+data/{esc}\b", nightly))
+
+
+def _ships_in_workflow(workflow: str, d: str) -> bool:
+    """True if the CI workflow stages shard dir `d` into the webroot. Accepts
+    `cp -r data/<d>`, an rsync include, or an explicit `_site/data/<d>` stage -
+    robust to the copy mechanism, but requires an actual ship (not a bare
+    comment mention)."""
+    esc = re.escape(d)
+    return bool(
+        re.search(rf"cp\s+-r\s+data/{esc}\b", workflow)
+        or re.search(rf"--include=['\"]?/data/{esc}/", workflow)
+        or re.search(rf"_site/data/{esc}\b", workflow))
+
+
+def test_slices_dir_shards_ship_in_both_deploy_consumers():
+    """Runtime-fetched shard dirs (debuts_full/, player_detail/, pitch_plots/)
+    are advertised by storage._slices_dir and fetched by prospx, but shipped by
+    SEPARATE hardcoded lines in each deploy consumer with no cross-check. That
+    is the A1 root-cause class: debuts_full was advertised + fetched but shipped
+    by neither path, so every graduate card silently 404'd to the monolith while
+    the whole suite stayed green. Guard the class - every _slices_dir shard must
+    ship in BOTH the nightly rsync includes AND the CI staging step."""
+    shards = _slices_dir_shards()
+    nightly = (ROOT / "deploy" / "nightly-build.sh").read_text(encoding="utf-8")
+    for d in shards:
+        assert _ships_in_nightly(nightly, d), (
+            f"storage._slices_dir advertises shard dir '{d}/' but "
+            f"deploy/nightly-build.sh never ships /data/{d}/ (no rsync "
+            f"--include) - it will 404 in production")
+    wf_path = (ROOT.parent / ".github" / "workflows"
+               / "deploy-prospect-tracker.yml")
+    if wf_path.exists():   # CI workflow lives one dir up; skip if not checked out
+        workflow = wf_path.read_text(encoding="utf-8")
+        for d in shards:
+            assert _ships_in_workflow(workflow, d), (
+                f"storage._slices_dir advertises shard dir '{d}/' but the CI "
+                f"workflow's staging step never copies data/{d}/ - it will 404 "
+                "in production")
+
+
 def test_deploy_consumers_read_the_manifest():
     """Both deploy paths must consume the shared manifest, not a hardcoded
     list (drift between two hardcoded lists caused the July 2026 404s)."""

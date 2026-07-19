@@ -89,6 +89,33 @@ if [ ! -f prospects.db ] && [ "${EEPHUS_ALLOW_COLD_REBUILD:-}" != "1" ]; then
   exit 1
 fi
 
+# Disk preflight. A disk-full MID-BUILD leaves a half-written data/*.json that
+# then poisons the rsync'd deploy, so catch low disk BEFORE the hour-long build.
+# The refetchable game/player caches (.cache/win_prob ~19GB, statcast_metrics,
+# zone_metrics, ...) grow without bound; under pressure we reclaim from them
+# (safe - everything there re-pulls from StatsAPI/Savant) and only then abort if
+# still tight. Tunables: EEPHUS_DISK_MIN_GB (hard floor), EEPHUS_DISK_TARGET_GB
+# (reclaim target). Set EEPHUS_DISK_MIN_GB=0 to disable (big-disk boxes).
+DISK_MIN_GB="${EEPHUS_DISK_MIN_GB:-6}"
+DISK_TARGET_GB="${EEPHUS_DISK_TARGET_GB:-12}"
+if [ "$DISK_MIN_GB" != "0" ]; then
+  FREE_GB="$(python tools/prune_cache.py --print-free 2>/dev/null || echo 999)"
+  echo "--- disk preflight: ${FREE_GB} GB free (min ${DISK_MIN_GB}, target ${DISK_TARGET_GB})"
+  if awk "BEGIN{exit !(${FREE_GB} < ${DISK_MIN_GB})}"; then
+    echo "!!! LOW DISK - pruning the refetchable cache toward ${DISK_TARGET_GB} GB free"
+    python tools/prune_cache.py --target-free-gb "$DISK_TARGET_GB" || true
+    FREE_GB="$(python tools/prune_cache.py --print-free 2>/dev/null || echo 999)"
+    echo "--- after prune: ${FREE_GB} GB free"
+    if awk "BEGIN{exit !(${FREE_GB} < ${DISK_MIN_GB})}"; then
+      echo "!!! STILL LOW DISK (${FREE_GB} GB < ${DISK_MIN_GB} GB) after cache prune."
+      echo "!!! Aborting BEFORE the build to avoid a mid-write disk-full that would"
+      echo "!!! corrupt the deploy. Free space (old /opt/eephus/backups, nightly.log)"
+      echo "!!! and re-run, or lower EEPHUS_DISK_MIN_GB if this box is intentionally small."
+      exit 1
+    fi
+  fi
+fi
+
 if [ "$(date +%d)" = "01" ] || [ "${EEPHUS_FULL:-}" = "1" ] || [ ! -f prospects.db ]; then
   echo "--- FULL monthly pipeline"
   MODE=full
@@ -165,4 +192,5 @@ find "$WEBROOT" -type f -name '*.gz' | while read -r gz; do
   [ -f "${gz%.gz}" ] || rm -f "$gz"
 done
 
+echo "--- disk after build: $(python tools/prune_cache.py --print-free 2>/dev/null || echo '?') GB free"
 echo "=== $(date -Is) nightly build done ==="

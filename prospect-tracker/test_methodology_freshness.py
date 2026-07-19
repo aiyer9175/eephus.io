@@ -124,6 +124,10 @@ MODEL_GLOSSARY = {
     # watch shape composite as pit features - all three arms failed the
     # pre-registered bar; loss ledger, rendered nowhere.
     "xfv_relief_shape": "internal",
+    # eFV improvement sweep (2026-07-18, docs/audit-2026-07-18/): five gated
+    # arms (fwd-cal, recency-decay, IPCW, OOF stacker, hurdle head) all
+    # rejected on the forward-chained protocol; loss ledger, rendered nowhere.
+    "xfv_improve_sweep": "internal",
     # eFV improvement pass (2026-07-14, docs/efv-2026-07-14/GATES.md): the
     # anchor-staleness decay + lambda band-raise + absolute-age feature
     # ledgers. Model-dev artifacts, rendered nowhere; the user-facing

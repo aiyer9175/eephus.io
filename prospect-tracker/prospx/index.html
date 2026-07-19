@@ -13713,6 +13713,14 @@ const SORT_HEADER_MAP = [
   { datasetKey: "ovsPitSort",    stateField: "ovsPitSort",    rerender: () => renderOverseas() },
 ];
 
+// Set of state fields that drive a sortable table (derived from
+// SORT_HEADER_MAP). Used to scope reverse-flag resets: a chip group
+// whose stateKey is in here is a sort family, so selecting a chip must
+// clear state.sortRev[stateKey] (mirroring the header-click reset) to
+// stop a prior header direction-toggle from silently inverting the
+// chip's intended sort direction.
+const _SORT_STATE_FIELDS = new Set(SORT_HEADER_MAP.map(c => c.stateField));
+
 // v29 - Custom direction-pair map for sort keys that don't use the
 // _asc / _desc suffix convention. Clicking a header whose key is
 // listed here flips between the two paired keys (e.g. WAG sort cycles
@@ -13724,6 +13732,18 @@ const REVERSE_SORT_PAIRS = {
   vs_fv_proj:     "vs_fv_proj_low",
   vs_fv_proj_low: "vs_fv_proj",
 };
+
+// Main-board sort keys whose comparators hard-sink no-data (null) rows to
+// the bottom AND honor the reverse flag internally (they flip only the
+// finite-value term, keeping the null-sink returns direction-independent).
+// _applySortDir(pool,"sort") must NOT also blanket-reverse these keys, or
+// the reverse would float every no-data row to the top. All other main
+// keys still reverse via the flag in _applySortDir.
+const _INTERNAL_DIR_MAIN_SORTS = new Set([
+  "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
+  "surplus_pbust", "wag", "star_odds", "opt_pct",
+  "tool", "t_plus",
+]);
 
 // v29 - Universal post-sort direction helper. Each renderer that owns
 // a sort family calls _applySortDir(pool, stateField) AFTER its
@@ -15464,9 +15484,13 @@ function getFilteredActives() {
     // read straight from the per-player surplus / debuted_value block). Expected
     // SV / risk-adj / P10 / P90 sort DESC (bigger = better); P(bust) ASC (lowest
     // bust risk first); WAG reads debuted players' WAR-above-grade. Missing sink;
-    // FV is the tiebreak. Header re-click toggles direction via _applySortDir.
+    // FV is the tiebreak. Header re-click reverses direction (see _rev below).
     const _sk = state.sort;
     const _asc = (_sk === "surplus_pbust");
+    // Reverse flag handled INSIDE the comparator (flip only the finite
+    // term) so no-data rows stay pinned at the bottom in both directions;
+    // _applySortDir skips these keys (see _INTERNAL_DIR_MAIN_SORTS).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
     const _sval = p => {
       // eFV is the primary surplus when present + the grade toggle is on eFV.
       const xf = getEfv(p);
@@ -15488,7 +15512,10 @@ function getFilteredActives() {
       if (am && bm) return fvCmpDesc(a, b);
       if (am) return 1;
       if (bm) return -1;
-      return (_asc ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
+      // Natural direction is _asc; the reverse flag flips it. Nulls above
+      // still sink regardless of direction.
+      const _up = (_asc !== _rev);
+      return (_up ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
   } else if (state.sort === "star_odds") {
     // FanGraphs published Star Odds (P(2+ seasons of 4+ WAR in control)),
@@ -15497,26 +15524,32 @@ function getFilteredActives() {
     // _asc/_desc suffix, so it falls through to the state.sortRev toggle).
     const _so = p => (p.surplus && p.surplus.star_odds != null)
                       ? Number(p.surplus.star_odds) : null;
+    // Reverse flag handled inside the comparator so no-data rows stay at
+    // the bottom in both directions (_applySortDir skips this key).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
     pool.sort((a, b) => {
       const av = _so(a), bv = _so(b);
       const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
       if (am && bm) return fvCmpDesc(a, b);
       if (am) return 1;
       if (bm) return -1;
-      return (bv - av) || fvCmpDesc(a, b);
+      return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
   } else if (state.sort === "opt_pct") {
     // OPT% (upgrade-option layer), descending. Missing sinks; FV is the tiebreak.
     // Negative values (high-grade downgrade risk) sort below positive ones.
     const _op = p => (p.surplus && p.surplus.opt_pct != null)
                       ? Number(p.surplus.opt_pct) : null;
+    // Reverse flag handled inside the comparator so no-data rows stay at
+    // the bottom in both directions (_applySortDir skips this key).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
     pool.sort((a, b) => {
       const av = _op(a), bv = _op(b);
       const am = (av == null || !isFinite(av)), bm = (bv == null || !isFinite(bv));
       if (am && bm) return fvCmpDesc(a, b);
       if (am) return 1;
       if (bm) return -1;
-      return (bv - av) || fvCmpDesc(a, b);
+      return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
   } else if (state.sort === "age_asc") {
     pool.sort((a, b) => (a.age ?? 99) - (b.age ?? 99));
@@ -15545,13 +15578,16 @@ function getFilteredActives() {
     // with Tool 60.
     // `t_plus` is the back-compat alias for legacy share-links that
     // predate the Tools+ → Tool grade rename. New canonical key is `tool`.
+    // Reverse flag handled inside the comparator so no-data rows stay at
+    // the bottom in both directions (_applySortDir skips these keys).
+    const _rev = !!(state.sortRev && state.sortRev.sort);
     pool.sort((a, b) => {
       const av = (a.tools || {}).composite_overall;
       const bv = (b.tools || {}).composite_overall;
       if (av == null && bv == null) return fvCmpDesc(a, b);
       if (av == null) return 1;
       if (bv == null) return -1;
-      return bv - av || fvCmpDesc(a, b);
+      return (_rev ? (av - bv) : (bv - av)) || fvCmpDesc(a, b);
     });
   } else if (state.sort === "source_confidence") {
     // Most-corroborated FVs first - multi-source consensus floats above
@@ -15642,7 +15678,11 @@ function getFilteredActives() {
   }
   // v29 - Honor the universal column-sort direction flag (set when the
   // user clicks the same header twice for a non-_asc/_desc key).
-  _applySortDir(pool, "sort");
+  // Surplus / Star Odds / PLUS% (and the rest of the surplus block) apply
+  // the reverse flag inside their own comparators so no-data rows stay
+  // pinned at the bottom in both directions; blanket-reversing them here
+  // would float every null row to the top, so skip those keys.
+  if (!_INTERNAL_DIR_MAIN_SORTS.has(state.sort)) _applySortDir(pool, "sort");
   return pool;
 }
 
@@ -32113,9 +32153,26 @@ function _gfxSubtitle(total, cap) {
   };
   if (snap.section === "active") {
     parts.push("ranked " + (SORT[state.sort] || "by eFV"));
-    if (state.ageFilter && state.ageFilter !== "all") parts.push(`age ≤ ${state.ageFilter}`);
-    if (state.etaFilter && state.etaFilter !== "all") parts.push(`ETA by ${state.etaFilter}`);
+    // Every active-board filter that getFilteredActives applies must be
+    // stated here so a filtered share is never presented as the full
+    // top-N. Org / pos / level already ride in the title; search is
+    // appended globally below. (state.ageFilter / state.etaFilter were
+    // dead references - no UI control ever set them - so they are gone.)
     if (state.acqFilter && state.acqFilter !== "all") parts.push(`${String(state.acqFilter).replace(/_/g, " ")}`);
+    if (state.classFilter && state.classFilter !== "all") parts.push(`${state.classFilter} class`);
+    if (state.stockFilter && state.stockFilter !== "all") parts.push(`stock ${state.stockFilter}`);
+    if (state.healthFilter && state.healthFilter !== "all") parts.push(state.healthFilter === "healthy" ? "healthy only" : String(state.healthFilter));
+    if (state.fvIndicators && state.fvIndicators.size) {
+      const FVIND = { wide: "wide FV range", single: "single-source FV", breakout: "breakout", upside: "high upside" };
+      for (const ind of state.fvIndicators) parts.push(FVIND[ind] || ind);
+    }
+    if (state.statcastFilter && state.statcastFilter.size) {
+      for (const tier of state.statcastFilter) parts.push(`SC+ ${tier}`);
+    }
+    if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
+      const _tl = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
+      parts.push(`${_tl} ≥ ${state.toolFilterMin}`);
+    }
   } else if (snap.section === "debuts") {
     parts.push("ranked " + ({ vs_fv_proj: "by WAG", vs_fv_proj_low: "by lowest WAG", warwag: "by WARWAG",
       wag_pct: "by WAG percentile", war: "by current WAR", career_war: "by career WAR",
@@ -50512,6 +50569,12 @@ function attachChipGroup(attr, stateKey, onChange, opts = {}) {
         btn.classList.add("active");
         state[stateKey] = btn.dataset[dsKey];
       }
+      // If this chip group drives a sort family (one that also exposes
+      // clickable direction-toggle headers), clear any stale reverse flag
+      // so the chip lands on its own natural direction rather than
+      // inheriting a prior header double-click toggle. Mirrors the
+      // header-click path, which resets sortRev when the sort key changes.
+      if (state.sortRev && _SORT_STATE_FIELDS.has(stateKey)) state.sortRev[stateKey] = false;
       if (clearView) state.view = null;
       onChange(state[stateKey], btn);
       syncToURL();

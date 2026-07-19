@@ -20,6 +20,23 @@ ROOT = Path(__file__).parent
 SIDECAR = ROOT / "data" / "mlb_projections.json"
 
 
+def test_pythagenpat_scales_exponent_with_run_environment():
+    """With games played, _pythag_pct uses Pythagenpat (exp = RPG**0.287): a
+    higher run environment lifts the exponent, spreading a given RS/RA ratio's
+    win% further from .500 than the fixed-1.83 fallback. Equal RS/RA is always
+    .500; None inputs guard to None."""
+    # same RS/RA ratio (1.2), different run environments via games played
+    lo = pe._pythag_pct(600, 500, 162)   # ~6.8 RPG
+    hi = pe._pythag_pct(1200, 1000, 162)  # ~13.6 RPG, exponent higher
+    assert hi > lo > 0.5
+    # fixed fallback (no g) sits at the 1.83 exponent, below the high-env Pythagenpat
+    fixed = pe._pythag_pct(1200, 1000, None)
+    assert hi > fixed > 0.5
+    assert pe._pythag_pct(700, 700, 162) == 0.5
+    assert pe._pythag_pct(None, 500, 162) is None
+    assert pe._pythag_pct(500, -1, 162) is None
+
+
 def test_season_value_pricing_is_convex_and_escalates():
     """Season $ value rides the platform tier curve (convex) at the winter
     level, escalating per season — the same pricing as FA rational value."""
@@ -282,6 +299,35 @@ def test_team_outlook_prospect_eta_offset(monkeypatch):
     assert aaa["byYear"][1]["war"] == 1.0
     assert aaa["byYear"][2]["war"] == 4.0          # 1.0 + 3.0
     assert aaa["byYear"][3]["war"] == round(1.0 + 3.5, 1)
+
+
+def test_accountability_vet_horizons_surfaces_survived_and_pinball():
+    """The accountability 'Veteran WAR paths' backtest must surface the HONEST
+    calibration reads - survived-only coverage (+ its n) and the pinball loss -
+    not only the pooled coverage the eval harness itself warns 'a wide band
+    catches trivially' (absent seasons score actual=0, inside almost any band).
+    Fields are additive: the pooled `coverage` the frontend reads stays."""
+    he = ROOT / "data" / "proj_horizon_eval.json"
+    if not he.exists():
+        pytest.skip("proj_horizon_eval.json not present on this machine")
+    acct = pe._accountability_block()
+    vh = (acct.get("backtests") or {}).get("data/proj_horizon_eval.json") or {}
+    rows = ((vh.get("champion") or {}).get("horizons")) or []
+    if not rows:
+        pytest.skip("proj_horizon_eval.json holdout_2022_2024 block absent")
+    for r in rows:
+        # pooled coverage retained (assets/projections.js reads r.coverage)
+        assert "coverage" in r
+        # honest metrics now surfaced alongside it
+        for k in ("coverage_survived", "n_survived", "pinball_q10", "pinball_q90"):
+            assert k in r, f"missing {k} on horizon {r.get('h')}"
+    # Not misleadingly optimistic: pooled coverage is >= the honest survived-only
+    # read wherever both are computed (pooled is inflated by absent-season zeros).
+    both = [r for r in rows if r.get("coverage") is not None
+            and r.get("coverage_survived") is not None]
+    assert both, "no horizon carries both pooled and survived coverage"
+    for r in both:
+        assert r["coverage"] + 1e-9 >= r["coverage_survived"], r
 
 
 def test_site_carries_projections_surface():

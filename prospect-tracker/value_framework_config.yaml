@@ -961,6 +961,59 @@ trade_value:
       CPX:  {k_pct: 20.0, bb_pct: 11.0, era: 4.50, fip: 4.40}
 
 
+# § SURPLUS LEVERS (S1 super-two population blend, S2 positional scarcity) -------
+# Both GATED (move served surplus $), both require a real surplus backtest AND an
+# owner golden restamp before shipping. `enabled: false` until then.
+# docs: docs/surplus-levers/GATES.md.
+surplus_levers:
+  # S1 (audit B1): a serviced player whose super-two status is genuinely UNKNOWN
+  # is currently treated as non-super-two (fraction 0), denying the ~22% population
+  # chance he arbs a year early. When enabled, an unknown-status serviced player
+  # uses the same population fraction (service_time.super_two.fraction) that a
+  # just-debuted player already gets — KNOWN-status players are unchanged.
+  super_two_population_blend: false
+  # S2 (audit B2): wire the comp-calibrated trade_value.positional_scarcity table
+  # into CORE surplus as a WAR-input multiplier. Off by default AND flagged as a
+  # modeling hazard: that table was fit on AAV data, which double-counts the
+  # positional value WAR already encodes (see the `position:` block comment). Do
+  # NOT enable without a clean, non-AAV-confounded re-estimation — this flag exists
+  # to carry the wiring as a committed loss, not to ship the AAV-confounded table.
+  positional_scarcity_in_core_surplus: false
+
+# § EFV PROVISIONAL PRIOR (P1 — audit B5) --------------------------------------
+# For a fresh draftee/IFA with NO MiLB track record yet, efv_score currently
+# grades on the CONSENSUS prior ALONE (efv_score.py: the `not row["milb"]` branch),
+# discarding the pick_overall / bonus_usd already in-row — so a high-pedigree
+# top-pick draftee reads identically to a fringe consensus-FV twin (the
+# Cholowsky/Gracia case). This blends the shipped draft-slot first-6 WAR curve
+# (storage._pick_slot_expected_war) with the consensus WAR, precision-weighted by
+# pedigree (pick tier + log-scale bonus), so a stronger pick/bonus shifts the
+# prior toward the slot expectation. Weight is pedigree/(pedigree+base), capped,
+# and DECAYS to consensus as pedigree->0. IFA-only (no pick) stays consensus:
+# no WAR expectation is invented from a bonus alone.
+#
+# GATED: moves served draftee eFVs. `enabled: false` until the pre-registered
+# gate passes at the canonical matrix vintage (docs/efv-provisional-prior/GATES.md).
+# No provisional player is in the flagship rank/AUC eval, so it CANNOT harm the
+# flagship metric — the gate is a directional-sanity + no-regression check.
+efv_provisional_prior:
+  enabled: false
+  base_precision: 1.0            # consensus prior's own precision weight
+  # pedigree precision from the DRAFT pick tier (mirrors trade_value.prior.pedigree)
+  draft_top10_precision: 0.8     # picks 1-10
+  draft_round1_precision: 0.4    # picks 11-~30 (round 1)
+  draft_round2_precision: 0.15   # picks ~31-~70 (round 2)
+  draft_later_precision: 0.05    # later picks — a whisper of pedigree
+  round1_last_pick: 30           # overall-pick boundary for round 1
+  round2_last_pick: 70           # overall-pick boundary for round 2
+  # bonus adds precision on a log scale (each 10x over $10k adds this much)
+  bonus_log_scale: 0.5
+  bonus_floor_usd: 10000         # denominator floor for log10(bonus/floor)
+  max_pedigree_precision: 3.0    # cap so no single draftee is immovable
+  # safety clamp on the blended prior WAR (same rails as the ridge path's -2 floor)
+  war_floor: -2.0
+  war_ceiling: 20.0
+
 sources:
   buckets_and_probs: "Ben Clemens, 'How Do Prospect Grades Translate to Future Outcomes?', FanGraphs (2025)"
   fv_avg_annual_war: "'The New FanGraphs Scouting Primer' (2018); Prospect Week Primer calibration examples"

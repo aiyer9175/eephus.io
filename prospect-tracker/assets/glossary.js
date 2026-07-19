@@ -48,7 +48,10 @@
   // ---- URL state: #g=<slug>&view=&cat=&q= -----------------------------------
   function syncFromURL() {
     const p = new URLSearchParams(location.hash.slice(1));
-    if (p.has("view")) _S.view = p.get("view");
+    if (p.has("view")) {
+      const v = p.get("view");
+      if (["terms", "guide", "methodology", "source-comparison", "models"].includes(v)) _S.view = v;
+    }
     if (p.has("cat")) _S.cat = p.get("cat");
     if (p.has("q")) _S.q = p.get("q");
     _S.cards = p.has("cards") ? p.get("cards") !== "0" : _CARDS_DEFAULT;

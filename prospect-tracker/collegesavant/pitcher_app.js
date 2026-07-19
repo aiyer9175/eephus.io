@@ -522,7 +522,7 @@ function init() {
     state.allPitchers = (window.PITCHER_DATA || []).map(normalizePitcher);
     state.allPitches = collectPitchRows().map(normalizePitchRow);
     state.availableYears = [...new Set(state.allPitchers.map((pitcher) => pitcher.year))].sort((a, b) => b - a);
-    state.year = state.availableYears.includes(2025) ? 2025 : (state.availableYears[0] || 2026);
+    state.year = state.availableYears[0] || 2026;
     setActiveYear(yearFromHash(window.location.hash) || state.year);
     window.addEventListener("hashchange", render);
     render();

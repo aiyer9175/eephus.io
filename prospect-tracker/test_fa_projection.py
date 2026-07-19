@@ -92,6 +92,49 @@ def test_no_history_returns_none():
     assert fp.project_player(old, "hit", 2027, NO_CURVES, LEAGUE, age=30) is None
 
 
+def test_fitted_models_cache_key_invalidates_on_corpus_refresh(tmp_path, monkeypatch):
+    """A corpus refresh (corpus['last'] rolls forward: annual rollover, the
+    in-progress season going partial->full, or bWAR revisions) must force a refit
+    at the SAME max_season -- not serve the previous vintage's stale aging curves +
+    WAR map from the disk cache. The fits cache key therefore includes
+    corpus['last'] (mirrors proj_ml's frame-cache key)."""
+    monkeypatch.setattr(fp, "CACHE_DIR", tmp_path)
+    calls = []
+
+    def _fake_curves(corpus, max_season=None, write=True):
+        calls.append(("curves", corpus["last"]))
+        return {"vintage": corpus["last"]}
+
+    def _fake_war(corpus, max_season=None):
+        calls.append(("war", corpus["last"]))
+        return {"vintage": corpus["last"]}
+
+    monkeypatch.setattr(fp, "fit_aging_curves", _fake_curves)
+    monkeypatch.setattr(fp, "fit_war_map", _fake_war)
+
+    v1 = {"first": 2000, "last": 2026, "hit": [], "pit": [], "league": {}}
+    v2 = {"first": 2000, "last": 2027, "hit": [], "pit": [], "league": {}}
+
+    c1, w1 = fp.fitted_models(v1, 2026)
+    assert (c1, w1) == ({"vintage": 2026}, {"vintage": 2026})
+
+    # Same max_season + first, but the corpus vintage advanced -> MUST refit and
+    # return the fresh fits, not v1's cached ones.
+    c2, w2 = fp.fitted_models(v2, 2026)
+    assert (c2, w2) == ({"vintage": 2027}, {"vintage": 2027})
+
+    # Two distinct on-disk cache files (the key carries corpus['last']).
+    names = [p.name for p in tmp_path.glob("fa_fits_*.pkl")]
+    assert len(names) == 2, names
+    assert any("2027" in n for n in names) and any("2026" in n for n in names)
+
+    # Re-requesting v1 still hits its own cache -- no spurious refit.
+    calls.clear()
+    c1b, _ = fp.fitted_models(v1, 2026)
+    assert c1b == {"vintage": 2026}
+    assert calls == []
+
+
 # ---- HARD GATE 1 artifact ------------------------------------------------------
 
 def test_gate1_artifact_committed_and_passing():

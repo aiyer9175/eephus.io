@@ -168,6 +168,14 @@ def regen_all(persist: bool = True, include_eval: bool = False) -> dict:
         efv_ungraded.build(persist)
     except Exception:
         log.exception("efv_ungraded.build failed -- continuing without ungraded grades")
+    # C1: refresh the shipped-distribution reliability curves + drift tripwire.
+    # Diagnostic only (no served number depends on them); regen_all previously
+    # omitted it, leaving data/xfv_reliability.json stale. Best-effort.
+    try:
+        import efv_reliability
+        efv_reliability.build(persist)
+    except Exception:
+        log.exception("efv_reliability.build failed -- continuing without reliability regen")
     return run(persist)
 
 

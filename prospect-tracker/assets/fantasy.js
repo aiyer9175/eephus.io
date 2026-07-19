@@ -14,6 +14,9 @@
   "use strict";
   var DATA_URL = "/data/fantasy.json";
   var S = { data: null, system: "fgp", section: "streamers", byId: {} };
+  // player_links map (mlbam -> merged-card key), resolved once at boot so
+  // nameLink can build hrefs synchronously (mirrors mlbstats.js / pal.js).
+  var LINKS = null;
 
   // ---- helpers --------------------------------------------------------------
   function el(id) { return document.getElementById(id); }
@@ -21,10 +24,8 @@
     return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]; }); }
   function num(v, d) { return (v == null || isNaN(v)) ? "-" : Number(v).toFixed(d == null ? 1 : d); }
   function nameLink(mlbam, name) {
-    if (window.EEPHUS_HUB && EEPHUS_HUB.links) {
-      var L = EEPHUS_HUB.links(); var e = L && L.byMlbam && L.byMlbam[mlbam];
-      if (e && e.key) return '<a class="fantasy-name-link" href="/projections/#player=' + esc(e.key) + '">' + esc(name) + "</a>";
-    }
+    var e = LINKS && LINKS.byMlbam && LINKS.byMlbam[String(mlbam)];
+    if (e && e.key) return '<a class="fantasy-name-link" href="/projections/#player=' + esc(e.key) + '">' + esc(name) + "</a>";
     return esc(name);
   }
   function teamLogo(team) {
@@ -128,7 +129,7 @@
       '<table class="fantasy-table"><thead><tr><th>#</th><th>Date</th><th>Pitcher</th><th>Opponent</th><th>Exp pts</th><th>SEM+</th><th>Park</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
   function tableTwoStart(list) {
-    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected in the current window yet — MLB announces probables ~5 days out, so this fills in as the scoring week firms up.</div>';
+    if (!list || !list.length) return '<div class="fantasy-note">No two-start pitchers detected in the current window yet - MLB announces probables ~5 days out, so this fills in as the scoring week firms up.</div>';
     var rows = list.slice(0, 60).map(function (t, i) {
       var legs = (t.legs || []).map(function (l) { return "@" + esc(l.opp_org) + " (" + num(l.exp_fgp, 0) + ")"; }).join(" · ");
       return '<tr><td class="ff-rk">' + (i + 1) + '</td><td class="ff-nm">' + nameLink(t.mlbam, t.name) + " " + teamLogo(t.team) +
@@ -140,9 +141,11 @@
     function col(ids, label, cls) {
       var rows = (ids || []).slice(0, 30).map(function (m) {
         var p = S.byId[m]; if (!p) return "";
-        var s = p.skill || {}, gap = p.side === "hit" ? s.luck_gap : s.luck;
+        var s = p.skill || {}, isHit = p.side === "hit", gap = isHit ? s.luck_gap : s.luck;
+        // Hitter luck_gap is a plus-stat (0 decimals); pitcher luck is in wOBA
+        // points (~0.03), so render 3 decimals or it collapses to "0".
         return "<tr><td class=\"ff-nm\">" + teamLogo(p.team) + " " + nameLink(p.mlbam, p.name) + "</td><td>" + esc(p.pos || "") +
-          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, 0) + "</td></tr>";
+          '</td><td class="ff-sc ' + cls + '">' + (gap > 0 ? "+" : "") + num(gap, isHit ? 0 : 3) + "</td></tr>";
       }).join("");
       return '<div class="fantasy-half"><h3>' + label + '</h3><table class="fantasy-table"><thead><tr><th>Player</th><th>Pos</th><th>Luck gap</th></tr></thead><tbody>' + rows + "</tbody></table></div>";
     }
@@ -163,7 +166,7 @@
       }).join("");
       return '<div class="fantasy-team-card"><div class="ff-team-hd">' + teamLogo(tm) + " " + esc(tm) + "</div>" + lst + "</div>";
     }).join("");
-    return '<div class="fantasy-note">Bullpen pecking order by average leverage (gmLI) — the top arm is the likely closer, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
+    return '<div class="fantasy-note">Bullpen pecking order by average leverage (gmLI) - the top arm is the likely closer, the rest are save handcuffs. Grab the next-in-line before the save chance opens.</div><div class="fantasy-grid">' + cards + "</div>";
   }
   function renderCallups() {
     var list = (S.data.sections || {}).callup_watch || [];
@@ -172,7 +175,7 @@
       return "<tr><td class=\"ff-nm\">" + nameLink(c.mlbam, c.name) + "</td><td>" + esc(c.org) + "</td><td>" + esc(c.pos) +
         "</td><td>" + esc(c.eta) + "</td><td>" + num(c.fv, 0) + "</td></tr>";
     }).join("");
-    return '<div class="fantasy-note">Prospects near the majors with fantasy upside — stash before the call.</div>' +
+    return '<div class="fantasy-note">Prospects near the majors with fantasy upside - stash before the call.</div>' +
       '<table class="fantasy-table"><thead><tr><th>Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>FV</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
 
@@ -232,12 +235,12 @@
   function errorState(msg) {
     var root = el("fantasy-app-root");
     if (root) root.innerHTML = '<div class="fantasy-error" role="alert"><strong>Data failed to load.</strong> ' +
-      esc(msg || "") + ' The nightly build may be mid-run — <button type="button" id="fantasy-retry" class="ff-scorebtn">retry</button>.</div>';
+      esc(msg || "") + ' The nightly build may be mid-run - <button type="button" id="fantasy-retry" class="ff-scorebtn">retry</button>.</div>';
     var rb = el("fantasy-retry"); if (rb) rb.addEventListener("click", boot);
   }
   function notReady() {
     var root = el("fantasy-app-root");
-    if (root) root.innerHTML = '<div class="fantasy-note">Fantasy projections are being computed — check back after the next nightly build.</div>';
+    if (root) root.innerHTML = '<div class="fantasy-note">Fantasy projections are being computed - check back after the next nightly build.</div>';
   }
   function onData(d) {
     if (!d || !d.players) { notReady(); return; }
@@ -249,6 +252,11 @@
     if (banner) banner.innerHTML = '<div class="fantasy-asof">' + (d.n_players || 0) + " players · rest-of-season, " +
       Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played · scored in your league format</div>";
     renderSelector(); wireTabs(); renderSection();
+    // Preload the player-links map, then re-render so names upgrade from plain
+    // text to merged-card links (matches mlbstats.js / pal.js).
+    if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
+      EEPHUS_HUB.links().then(function (L) { LINKS = L || null; renderSection(); });
+    }
   }
   function boot() {
     fetch(DATA_URL, { cache: "no-cache" }).then(function (r) {

@@ -585,13 +585,28 @@ def position_multiplier(position: str | None) -> float:
     positional adjustment, so the core surplus applies no $/position multiplier
     (see docs/sv-audit.md FLAG 7). Returns a configured scarcity factor only if
     `position.apply_market_scarcity` is enabled."""
-    cfg = _config()["position"]
+    full = _config()
+    cfg = full["position"]
     if not cfg.get("apply_market_scarcity"):
         return 1.0
     p = _pos_primary(position)
     if p is None:
         return 1.0
-    return float(cfg.get("market_scarcity", {}).get(p, 1.0))
+    ms = cfg.get("market_scarcity", {}) or {}
+    if p in ms:
+        return float(ms[p])
+    # S2 (audit B2, gated + double-gated on apply_market_scarcity): fall back to the
+    # comp-calibrated trade_value.positional_scarcity table for positions not given
+    # an explicit clean value. HAZARD: that table was fit on AAV, which double-counts
+    # the positional value WAR already encodes — so this is a KNOWN-confounded input,
+    # carried as a committed loss, NOT a ship. Only reaches here when BOTH
+    # apply_market_scarcity AND surplus_levers.positional_scarcity_in_core_surplus
+    # are true; off by default, so this is a no-op in production.
+    if (full.get("surplus_levers") or {}).get("positional_scarcity_in_core_surplus"):
+        tv_scar = ((full.get("trade_value") or {}).get("positional_scarcity") or {})
+        if p in tv_scar:
+            return float(tv_scar[p])
+    return 1.0
 
 
 # =============================================================================
@@ -2285,6 +2300,7 @@ def debuted_player_value(
     observed_ip: float | None = None,
     service_time: float = 0.0,
     super_two: bool = False,
+    super_two_known: bool = True,
     age: float | None = None,
     consumed_seasons: list | None = None,
     fv_reflects_mlb: float = 0.0,
@@ -2340,7 +2356,18 @@ def debuted_player_value(
     s2_frac_pop = float(s2cfg["fraction"]) if s2cfg.get("enabled") else 0.0
     # super-two is uncertain for a just-debuted player -> blend by population rate
     # (matches the prospect model exactly at continuity); known thereafter.
-    super_two_fraction = s2_frac_pop if (sample <= 0 and float(service_time) <= 0) else (1.0 if super_two else 0.0)
+    # S1 (audit B1, gated): a SERVICED player whose super-two status is genuinely
+    # unknown (super_two_known=False) is otherwise treated as non-super-two (0);
+    # blend by the population rate instead, the same treatment the just-debuted
+    # player already gets. KNOWN-status players are unchanged, and with the flag
+    # off or super_two_known=True (the default) this is byte-identical to before.
+    _s1_on = bool((cfg.get("surplus_levers") or {}).get("super_two_population_blend"))
+    if sample <= 0 and float(service_time) <= 0:
+        super_two_fraction = s2_frac_pop                       # just-debuted: population blend
+    elif _s1_on and not super_two_known:
+        super_two_fraction = s2_frac_pop                       # S1: unknown serviced -> population
+    else:
+        super_two_fraction = 1.0 if super_two else 0.0         # known status
     # Round debut age to the same 0.5-yr grid the prospect path uses (_round_timing),
     # so continuity at 0 PA is exact at fractional ages too.
     debut_age = (round((float(age) - n_consumed) * 2) / 2) if age is not None else None

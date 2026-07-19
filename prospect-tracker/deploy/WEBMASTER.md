@@ -120,8 +120,9 @@ replaced by a broken build.
 `crontab -e` as the deploy user:
 
 ```cron
-# consistent DB backup a few minutes before the build (%'s must be escaped)
-55 2 * * * TZ=America/New_York mkdir -p /opt/eephus/backups && sqlite3 /opt/eephus/repo/prospect-tracker/prospects.db ".backup /opt/eephus/backups/prospects-$(date +\%Y\%m\%d).db"
+# consistent DB backup a few minutes before the build, then auto-prune backups
+# older than 14 days so /opt/eephus/backups can't fill the disk (%'s escaped)
+55 2 * * * TZ=America/New_York mkdir -p /opt/eephus/backups && sqlite3 /opt/eephus/repo/prospect-tracker/prospects.db ".backup /opt/eephus/backups/prospects-$(date +\%Y\%m\%d).db" && find /opt/eephus/backups -name 'prospects-*.db' -mtime +14 -delete
 # nightly build + publish, 03:10 ET (inside the 2-4am ET quiet window)
 10 3 * * * TZ=America/New_York /opt/eephus/repo/prospect-tracker/deploy/nightly-build.sh >> /opt/eephus/nightly.log 2>&1
 ```
@@ -129,8 +130,8 @@ replaced by a broken build.
 The script auto-selects the mode: the FULL monthly pipeline on the 1st of the
 month (or with `EEPHUS_FULL=1`, or if `prospects.db` is absent), the fast
 `--daily` refresh every other night. Force a full rebuild any time with
-`EEPHUS_FULL=1 .../nightly-build.sh`. Prune `/opt/eephus/backups` on whatever
-retention you like (a week or two is plenty).
+`EEPHUS_FULL=1 .../nightly-build.sh`. The `find ... -mtime +14 -delete` above
+keeps two weeks of DB backups; widen it if you have the disk.
 
 ### What "auto-refresh" does each night (the mechanics)
 
@@ -223,6 +224,20 @@ Data-sanity spot checks (confirms the site matches the intended local build):
   is a frozen fallback (it is publish-excluded but survives via rsync without
   `--delete-excluded`); its live content ships via the chunked
   `scout_reports_*.json` shards.
+- **Disk / low-space.** The build does a disk preflight: if free space is under
+  `EEPHUS_DISK_MIN_GB` (default 6) it prunes the refetchable game/player caches
+  (`.cache/win_prob`, `statcast_metrics`, `zone_metrics`, `game_feeds`, Savant
+  pulls - the bulk of the ~40GB+ cache, all re-pullable from StatsAPI/Savant)
+  toward `EEPHUS_DISK_TARGET_GB` (default 12) and, only if still tight, aborts
+  BEFORE the build rather than dying mid-write. Inspect or run pruning by hand:
+  `python tools/prune_cache.py --report` (per-cache sizes),
+  `python tools/prune_cache.py --target-free-gb 20` (reclaim to 20GB free),
+  `python tools/prune_cache.py --max-age-days 400` (steady-state age bound).
+  Pruned files simply re-fetch on the next run that needs them (a slower build,
+  never wrong data). On a deliberately tiny box set `EEPHUS_DISK_MIN_GB=0` to
+  skip the guard, but then watch `df -h` yourself. Backups auto-prune at 14 days
+  via the cron above; `.cache/efv_backup`, `bref_register`, `draft_history` are
+  never auto-pruned (backup / rate-limited scrapes).
 
 ---
 

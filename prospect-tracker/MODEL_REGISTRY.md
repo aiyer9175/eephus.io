@@ -4,7 +4,7 @@
 Source: `data/model_registry.json` via `model_registry.load()`. Freshness columns
 (artifact age / stale) are the registry's own stamps, written by
 `model_registry.refresh_stamps()` on the pipeline cadence (STALE_DAYS = 240);
-stamped as of **2026-07-19**. `validate()` at generation time: **1 problem(s)** (listed below).
+stamped as of **2026-07-19**. `validate()` at generation time: **clean**.
 
 **113 models.** Verdicts: validated: 27, provisional: 47, unvalidated: 3, deprecated: 36.
 
@@ -125,10 +125,6 @@ stamped as of **2026-07-19**. `validate()` at generation time: **1 problem(s)** 
 | `xfv_improve_sweep` | model-dev artifact (rendered nowhere) - loss ledger; 2026... | n/a - five gated attempts to beat the shipped eFV blend on the same forward-chained protocol: E-FWDCAL (per-fold output calibra... | shipped lean+guarded-blend eFV (unchanged; hit lambda 0.70 / pit 0.61) | the five challenger arms, forward-chained, matrix vintage 2026-07-14 (git 13d... | per-arm pre-registered gate (docs/efv-2026-07-18/GATES.md): dual pooled MAE+S... | **deprecated** | `data/xfv_improve_sweep_eval.json` | 0 | no |
 
 Stored problems at last refresh: ['source_track_record: artifact missing: data/source_backtest.json'].
-
-Live `validate()` problems:
-
-- source_track_record: artifact missing: data/source_backtest.json
 
 Verdict semantics (from `model_registry.py`): validated = committed forward
 backtest beats the stated baseline; provisional = partially measured;

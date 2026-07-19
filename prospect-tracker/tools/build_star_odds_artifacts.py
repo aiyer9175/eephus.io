@@ -236,17 +236,22 @@ def build_calibration_eval() -> dict:
 
 
 def main() -> None:
-    eval_doc = build_calibration_eval()
-    (_DATA / "star_odds_eval.json").write_text(
-        json.dumps(eval_doc, indent=1) + "\n", encoding="utf-8")
-    print(f"wrote {_DATA / 'star_odds_eval.json'} "
-          f"(max_abs_dev={eval_doc['gate']['max_abs_dev']}, pass={eval_doc['gate']['pass']})")
+    # Build + WRITE the label view FIRST. build_calibration_eval() ->
+    # _realized_calibration() reads data/star_label_view.json, so it must be on
+    # disk and reflect THIS run before the eval is computed. Previously the eval
+    # ran first, so realized_calibration always read the PREVIOUS run's labels
+    # (or {} on a first/cleared run). Pure reorder - no model math changes.
     label_doc = build_label_view()
     (_DATA / "star_label_view.json").write_text(
         json.dumps(label_doc, indent=1) + "\n", encoding="utf-8")
     c = label_doc["counts"]
     print(f"wrote {_DATA / 'star_label_view.json'} "
           f"(n={c['n_players']}, star_window={c['n_star_window']}, star_career={c['n_star_career']})")
+    eval_doc = build_calibration_eval()
+    (_DATA / "star_odds_eval.json").write_text(
+        json.dumps(eval_doc, indent=1) + "\n", encoding="utf-8")
+    print(f"wrote {_DATA / 'star_odds_eval.json'} "
+          f"(max_abs_dev={eval_doc['gate']['max_abs_dev']}, pass={eval_doc['gate']['pass']})")
 
 
 if __name__ == "__main__":
