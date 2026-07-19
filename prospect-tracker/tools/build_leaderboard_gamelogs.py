@@ -193,6 +193,35 @@ def build(season: int | None = None,
             if g["d"] and g["d"] > as_of:
                 as_of = g["d"]
 
+    # Fail-safe (finding [24]): a ZERO-player pull is a transient upstream
+    # failure (StatsAPI outage, or the soft deadline fired before any future
+    # completed), NOT a legitimately empty board. Overwriting the served slice
+    # with {} would blank every date-windowed leaderboard ("last 7d" / custom)
+    # until the next good run - the frontend's only guard is `!players`, which
+    # is falsy for a present-but-empty {} and falls through to an empty pool.
+    # So when the pull yields nothing, keep the prior good slice instead. Match
+    # the season so a NEW-season cold start doesn't preserve last season's
+    # games (which would be worse than an empty board).
+    if not out_players and OUT.exists():
+        prior = None
+        try:
+            prior = json.loads(OUT.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            prior = None
+        if (isinstance(prior, dict) and prior.get("season") == season
+                and (prior.get("players") or {})):
+            lg.warning("leaderboard_gamelogs: fresh pull yielded 0 players "
+                       "(transient upstream failure?) - keeping the prior good "
+                       "slice (%d players, as_of=%s) rather than blanking %s",
+                       len(prior.get("players") or {}), prior.get("as_of"),
+                       OUT.name)
+            return {"players": 0, "games": 0,
+                    "as_of": prior.get("as_of", ""),
+                    "elapsed_s": time.time() - t0,
+                    "skipped_deadline": skipped_deadline,
+                    "kept_prior": True,
+                    "prior_players": len(prior.get("players") or {})}
+
     slice_obj = {
         "generated_at": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S") + "Z",
         "season": season,

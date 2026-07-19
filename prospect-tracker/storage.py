@@ -1666,6 +1666,41 @@ def connect():
         con.close()
 
 
+def _checkpoint_and_maybe_vacuum() -> None:
+    """End-of-run DB maintenance (finding [21]).
+
+    prospects.db runs in WAL mode. Row deletes (leak-row purges, eFV-pool
+    churn, snapshot re-dates, monthly re-inserts) leave free pages SQLite never
+    reclaims without VACUUM, and the -wal sidecar can sit at its full-monthly
+    high-water mark, so the file grows and every daily `.backup` copy inherits
+    the slack.
+
+      * PRAGMA wal_checkpoint(TRUNCATE) - always run: flush the WAL into the
+        main DB and truncate the -wal back to 0 bytes. Cheap, and returns
+        `busy` (no error) if another connection is mid-write.
+      * VACUUM - OPT-IN ONLY, via env PROSPECTS_DB_VACUUM=1. It needs ~2x
+        transient disk + an exclusive lock, so it must NEVER run on the daily
+        hot path; enable it only on the canonical box's monthly branch, and
+        schedule it BEFORE the daily backup so the backup captures the
+        compacted file.
+
+    Best-effort: any failure here is swallowed so it can never fail a run. Runs
+    on a dedicated autocommit connection because wal_checkpoint / VACUUM must
+    not execute inside an open transaction."""
+    try:
+        con = sqlite3.connect(DB_PATH, timeout=30.0, isolation_level=None)
+    except sqlite3.Error:
+        return
+    try:
+        con.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        if os.environ.get("PROSPECTS_DB_VACUUM") == "1":
+            con.execute("VACUUM")
+    except sqlite3.Error:
+        pass
+    finally:
+        con.close()
+
+
 def init_db():
     with connect() as con:
         con.executescript(SCHEMA)
@@ -4129,6 +4164,11 @@ def finish_run(run_id: int, new_snapshots: int, stat_lines: int, notes: str = ""
             (_utcnow_iso(),
              new_snapshots, stat_lines, notes, run_id),
         )
+    # End-of-run maintenance (finding [21]): truncate the WAL (always) and,
+    # only when explicitly opted in via PROSPECTS_DB_VACUUM=1, VACUUM to reclaim
+    # deleted-row slack. Run AFTER the writer connection above has closed so the
+    # checkpoint has no open transaction to contend with. Best-effort.
+    _checkpoint_and_maybe_vacuum()
 
 
 def latest_run_summary() -> dict | None:
@@ -6952,6 +6992,37 @@ def _build_org_fv_history(
                         key=lambda e: (e["date"], e["kind"]))
         result[org] = {"series": series, "events": events}
     return result
+
+
+def _file_equals_bytes(path: Path, data: bytes, chunk: int = 1 << 20) -> bool:
+    """Return True iff `path`'s on-disk bytes equal `data`, comparing in
+    `chunk`-sized reads so the whole file is never loaded into a SECOND full
+    buffer alongside `data`.
+
+    This backs the export compare-before-write (finding [19]): the naive
+    `path.read_bytes() == data` doubles the transient footprint at the export
+    peak for the large monolithic sidecars (debuts.json ~60MB, scout_reports
+    ~29MB, inactive ~22MB) - `data` and the whole-file read are both live at
+    once. Streaming holds only one chunk (+ a zero-copy memoryview slice of
+    `data`) beyond `data` itself, preserving byte-identical compare semantics
+    (and therefore the rsync/gzip mtime-stability skip)."""
+    n = len(data)
+    mv = memoryview(data)
+    try:
+        with open(path, "rb") as fh:
+            pos = 0
+            while pos < n:
+                block = fh.read(chunk)
+                if not block:
+                    return False  # on-disk file is shorter than `data`
+                blen = len(block)
+                if block != mv[pos:pos + blen]:
+                    return False
+                pos += blen
+            # `data` fully matched; the file must not carry extra trailing bytes.
+            return not fh.read(1)
+    finally:
+        mv.release()
 
 
 def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
@@ -14410,15 +14481,19 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         "spotlights": spotlight_payload,
         "org_summary": org_summary,
         "farm_trajectory_means": farm_trajectory_means,
-        "farm_trajectory_stdevs": farm_trajectory_stdevs,
-        # v28 — cohort-restricted (hitter / pitcher) league means + stdevs
-        # per window. Mirror of the org-wide pair above; lets the frontend
+        # v28 — cohort-restricted (hitter / pitcher) league trajectory means
+        # per window. Mirror of the org-wide mean above; lets the frontend
         # render a cohort-only growth chart with the same baseline-removal
-        # math used for the all-prospects chart.
+        # math used for the all-prospects chart. NB: the per-window league
+        # STDEV maps (farm_trajectory_stdevs / hitter_traj_stdevs /
+        # pitcher_traj_stdevs) are computed above and consumed INTERNALLY only
+        # (they feed dvm_plus / hitter_dvm_plus / pitcher_dvm_plus). They are
+        # deliberately NOT baked into the boot payload: the growth-chart
+        # baseline math (makeFarmGrowthChart / makeFarmCohortGrowthPanel) uses
+        # only the means, so shipping the stdevs was a dead wire field with no
+        # JS/HTML reader (finding [32]).
         "farm_hitter_trajectory_means":   hitter_traj_means,
-        "farm_hitter_trajectory_stdevs":  hitter_traj_stdevs,
         "farm_pitcher_trajectory_means":  pitcher_traj_means,
-        "farm_pitcher_trajectory_stdevs": pitcher_traj_stdevs,
         "level_norms": level_norms,
         # MLB Draft bonus-pool ceilings + per-pick slot values, scraped
         # from MLB.com per year. Keyed by year (int). Drives the
@@ -14501,10 +14576,15 @@ def export_timeseries_json(timeseries: list[PlayerTimeseries], out_path: Path,
         # then skip the ~8k unchanged per-player shards. force=True is
         # for payloads carrying a per-run stamp (the boot's
         # meta.generated_at) where the compare could never match.
+        # v48 (finding [19]): the byte compare STREAMS the on-disk file in
+        # chunks (_file_equals_bytes) instead of path.read_bytes(), so a
+        # ~60MB monolith is not loaded into a second full buffer alongside
+        # `data` at the export peak. The size check still short-circuits the
+        # common changed case before any read.
         data = _dump_bytes(obj)
         if not force:
             try:
-                if path.stat().st_size == len(data) and path.read_bytes() == data:
+                if path.stat().st_size == len(data) and _file_equals_bytes(path, data):
                     return
             except OSError:
                 pass
