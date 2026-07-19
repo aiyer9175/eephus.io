@@ -445,11 +445,19 @@ function _tbSortRows(rows) {
   const [col, dir] = _tbSortParts();
   const sign = dir === "asc" ? 1 : -1;
   const tv = p => { const v = Number(p.trade_value_mm); return Number.isFinite(v) ? v : -1e9; };
-  // Cross-key tiebreaks: surplus $ then eFV grade. The default Grade column now
-  // ranks by xfv_grade directly (see _tbSortVal); the explicit Surplus column
-  // ranks by trade_value_mm and falls to xfv_grade to break the large low/fringe
-  // block the convex-$/WAR + $0-floor surplus transform bunches at one value.
+  // Cross-key tiebreaks: surplus $ then the FINEST available eFV orderer. The
+  // convex-$/WAR + $0-floor surplus transform bunches a large low/fringe block at
+  // one trade_value_mm AND one displayed grade, where xfv_grade can no longer
+  // separate rows. xfv_war_6yr is the continuous WAR projection behind the grade,
+  // so it breaks those $-floor ties finer; fall back to xfv_grade when it's
+  // absent (older exports). Display value stays trade_value_mm.
+  const xw = p => { const v = Number(p.xfv_war_6yr); return Number.isFinite(v) ? v : null; };
   const xg = p => { const v = Number(p.xfv_grade); return Number.isFinite(v) ? v : -1e9; };
+  const efvTie = (a, b) => {                      // war6 desc when both present, else grade desc
+    const aw = xw(a), bw = xw(b);
+    if (aw != null && bw != null && aw !== bw) return bw - aw;
+    return xg(b) - xg(a);
+  };
   rows.sort((a, b) => {
     const av = _tbSortVal(a, col), bv = _tbSortVal(b, col);
     let c;
@@ -461,7 +469,7 @@ function _tbSortRows(rows) {
       else if (bv.n == null) c = -1;
       else c = (av.n - bv.n) * sign;
     }
-    return c || (tv(b) - tv(a)) || (xg(b) - xg(a));   // surplus desc, then eFV grade desc
+    return c || (tv(b) - tv(a)) || efvTie(a, b);   // surplus desc, then finest eFV orderer
   });
   return rows;
 }

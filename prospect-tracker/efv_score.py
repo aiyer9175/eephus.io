@@ -32,6 +32,60 @@ from prospect_path import _fit_ridge, _predict, _fit_linear_calibration, _spearm
 from efv_model import _prep, _vec, _feature_spec, _fit_ols_fv, _pred_ols, blend_lambda
 from efv_dataset import matrix_path, live_matrix_path, CURRENT_SEASON, TARGET_SEASONS
 
+
+def _provisional_prior_war(cons_war: float, pick_overall, bonus_usd) -> tuple[float, list]:
+    """P1 (audit B5) — the no-MiLB-track-record prior. Precision-weight the shipped
+    draft-slot first-6 WAR expectation against the consensus WAR by pedigree (pick
+    tier + log-scale bonus). Returns (prior_war, factors). When disabled, or when no
+    draft pick exists (IFA / missing), returns (cons_war, []) — i.e. today's
+    consensus-only behavior, so gating this OFF is byte-identical.
+
+    Math: prior_war = w*slot_war + (1-w)*cons_war, w = pedigree/(pedigree+base),
+    pedigree = pick_tier_precision + bonus_log_precision (capped). Bonus adds TRUST
+    (a weight), not a WAR value — it is dimensionless precision, never summed as WAR."""
+    import math
+    cfg = (vf._config().get("efv_provisional_prior") or {})
+    if not cfg.get("enabled"):
+        return cons_war, []
+    import storage
+    slot_war = storage._pick_slot_expected_war(pick_overall)
+    if slot_war is None:
+        # IFA / no overall pick: do not invent a WAR expectation from a bonus.
+        return cons_war, []
+    base = float(cfg.get("base_precision", 1.0))
+    # pick-tier precision
+    try:
+        p = int(pick_overall)
+    except (TypeError, ValueError):
+        return cons_war, []
+    if p <= 10:
+        ped = float(cfg.get("draft_top10_precision", 0.8))
+    elif p <= int(cfg.get("round1_last_pick", 30)):
+        ped = float(cfg.get("draft_round1_precision", 0.4))
+    elif p <= int(cfg.get("round2_last_pick", 70)):
+        ped = float(cfg.get("draft_round2_precision", 0.15))
+    else:
+        ped = float(cfg.get("draft_later_precision", 0.05))
+    # bonus adds log-scale precision (each 10x over the floor adds bonus_log_scale)
+    b = None
+    try:
+        b = float(bonus_usd) if bonus_usd is not None else None
+    except (TypeError, ValueError):
+        b = None
+    if b is not None and b > 0:
+        floor = float(cfg.get("bonus_floor_usd", 10000))
+        ped += max(0.0, math.log10(max(b, floor) / floor)) * float(cfg.get("bonus_log_scale", 0.5))
+    ped = min(ped, float(cfg.get("max_pedigree_precision", 3.0)))
+    w = ped / (ped + base) if (ped + base) > 0 else 0.0
+    prior = w * float(slot_war) + (1.0 - w) * float(cons_war)
+    prior = max(float(cfg.get("war_floor", -2.0)),
+                min(float(cfg.get("war_ceiling", 20.0)), prior))
+    factors = []
+    if abs(prior - cons_war) >= 0.05:
+        factors.append({"label": "Draft pedigree prior", "dir": "up" if prior > cons_war else "down",
+                        "mag": round(abs(prior - cons_war), 2)})
+    return prior, factors
+
 log = logging.getLogger(__name__)
 DATA_DIR = Path(__file__).parent / "data"
 _BUCKETS = ("bust", "bench", "regular", "good", "star")
@@ -855,8 +909,11 @@ def run_backgrade(persist: bool = True) -> dict:
             # contract - a no-track-record row scored through the ridge eats
             # the trained milb_missing untracked-BUST penalty, which is wrong
             # for a merely data-less graduate. Grade on the consensus prior.
-            xfv_war = cons_war
-            factors = []
+            # P1 (audit B5, gated): fold the draft-slot WAR + bonus pedigree that
+            # is already in-row into that prior; reduces to cons_war when the flag
+            # is off or no draft pick exists (so OFF is byte-identical).
+            xfv_war, factors = _provisional_prior_war(
+                cons_war, row.get("pick_overall"), row.get("bonus_usd"))
         rank_war = (1 - lam[side]) * cons_war + lam[side] * xfv_war
         inj = _injury_factor(row) if kind == "active" else 1.0   # graduate prospect-era IL is moot
         if inj < 1.0:

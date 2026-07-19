@@ -4046,6 +4046,14 @@ def apply_platform_surplus(records: list[dict], data_dir: Path | str) -> dict:
         # low/floored block. Display value stays trade_value_mm.
         if xe.get("xfv_grade") is not None:
             r["xfv_grade"] = xe.get("xfv_grade")
+        # Also carry the continuous 6yr WAR projection through as a FINER within-
+        # tier tie-break: at the $-floor a large block (~1/3) compresses to one
+        # surplus value AND the same displayed grade, where xfv_grade can no
+        # longer separate them. xfv_war_6yr is the continuous quantity behind the
+        # grade, so it breaks those ties by projected value. Display value stays
+        # trade_value_mm; this only orders otherwise-tied rows.
+        if xe.get("xfv_war_6yr") is not None:
+            r["xfv_war_6yr"] = xe.get("xfv_war_6yr")
         new, src = None, None
         if is_pros:
             if x_sur is not None:
