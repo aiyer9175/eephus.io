@@ -617,6 +617,15 @@ def rebuild_only(out_dir: Path = Path("data")) -> None:
             retrain=True,
         )
         log.info("grpo: scored %d prospects", _grpo_result.get("scored", 0))
+        # Free the first debuts.json parse (~60MB) before the trade-value block
+        # below re-parses the SAME file - otherwise two full debuts copies (this
+        # _grads_for_grpo + tv_players) coexist at the trade-value peak. Both
+        # names are guaranteed defined here (the log line above reads
+        # _grpo_result) and are unused past this point. The tv path re-reads
+        # rather than reusing this list on purpose: the grpo fallback prefers
+        # graduates.json first while the tv loop appends both sidecars, so the
+        # two lists can differ - the del is the correct zero-risk fix.
+        del _grads_for_grpo, _grpo_result
     except Exception:
         log.exception("grpo scoring failed in rebuild_only — continuing")
 
@@ -1057,6 +1066,18 @@ def run_daily(out_dir: Path = Path("data"), workers: int | None = None,
                     log.info("daily: detected %d trades (%d new)", len(new_trades), n_trades)
                 except Exception:
                     log.exception("daily: trade detection failed — continuing")
+
+        # OOM: free the whole-universe caches BEFORE d9. all_snaps + timeseries
+        # (built at d1) are the largest structures in the daily frame and are
+        # dead from here on - last live read is d8 trade detection (non-chained)
+        # or d7 (chained). d9 rebuild_only() INDEPENDENTLY reloads its own
+        # all_snaps + timeseries, so without this drop two full snapshot-universe
+        # copies coexist through the rebuild/export/site-build tail. Mirrors the
+        # cleanup main() does at its tail before chaining the daily refresh. Both
+        # locals are guaranteed defined (built unconditionally at d1).
+        import gc as _gc
+        del all_snaps, timeseries
+        _gc.collect()
 
         # --- 9. Rebuild timeseries.json from the refreshed DB. ------------
         with _step("d9. Rebuild timeseries (no scrape)", log):
@@ -1947,6 +1968,28 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                     log.exception("positions_played build failed — continuing")
         _step_3a_per_start = time.monotonic() if not skip_stats else None
         if not skip_stats:
+            # STALENESS (needs-owner): _derive_all_level_changes() reads the
+            # player_transactions DB table, which is NOT refreshed until step 3e
+            # (upsert_player_transactions, further below). So the
+            # current_year_level_change_keys computed here reflect the PREVIOUS
+            # monthly run's transactions. A player promoted THIS cycle whose
+            # promotion transaction is first fetched at 3e is therefore not
+            # flagged, and if they are bulk-covered (in keys_with_bulk_2026)
+            # with >1 cached career row they get skipped from the per-player
+            # yearByYear refetch below. Impact is bounded and self-healing: the
+            # bulk merge in 3a-i already spliced the new level's current-season
+            # AGGREGATE row into career_cache, so only the finer yearByYear
+            # per-stint / org-stint detail lags one monthly cycle. (The other
+            # gate path this flag feeds - the _is_career_fresh skip at 2005-2009
+            # - is inert in monthly runs because CAREER_STATS_FRESH_DAYS == 0.)
+            # This same derivation (affil map + derive_level_changes) also runs
+            # a second time at 3e over the FRESHLY fetched tx (see line ~2526),
+            # so it executes twice per monthly run (warm-cache CPU only;
+            # fetch_team_affiliations is 7-day disk-cached). The clean fix -
+            # refresh transactions before this gate, then reuse ONE derivation
+            # instead of recomputing at 3e - is a structural reorder (3e also
+            # derives non-trade transactions and 3f roster-status depends on
+            # it), so it is left for owner review rather than reordered blind.
             level_changes_for_stats = _derive_all_level_changes()
             current_year_level_change_keys = {
                 key for key, evs in level_changes_for_stats.items()
@@ -2675,6 +2718,25 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
             log.exception("ifa export crashed — continuing")
         _STEP_TIMES.append(("5. Export timeseries.json + summary", time.monotonic() - _step_5_start))
 
+        # OOM: free the monthly whole-universe caches HERE, right after the
+        # step-5 export consumed them, instead of waiting for the pre-daily-chain
+        # block far below. Steps 6-6b6 (FA refresh/export, Swing+, AAA Stuff+,
+        # the six /mlbstats/ leaderboards, PAL, and especially fantasy
+        # build_corpus) all re-load what they need from disk/DB and never read
+        # these locals, so holding ~11 whole-universe dicts (all_snaps + the
+        # career/statline/Statcast/zone/arsenal/sabermetric/tx/trades/career-WAR
+        # caches + draft_by_id) atop the fantasy corpus is dead weight through
+        # the heaviest monthly phase. The ONLY post-export reads are len() of
+        # timeseries + new_trades in the finish_run note below, so stash the one
+        # count and keep new_trades (small) live. all_snaps was last read by
+        # _post_export_summary just above.
+        _n_ts = len(timeseries)
+        import gc as _gc
+        all_snaps = timeseries = career_cache = statlines = statcast_metric_cache = \
+            zone_metric_cache = arsenals = sabermetrics = tx_cache = draft_by_id = \
+            trades_by_player = career_war_all = None
+        _gc.collect()
+
         # --- 6. Free Agency module (the standalone /fa/ surface) --------
         # Refresh the constructed class (Spotrac, page-cached) + payroll
         # ledger, then re-export the fa_* sidecars assets/fa.js consumes.
@@ -2959,7 +3021,7 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
                  "with post-regen inputs; snapshot moved after the chain")
 
         finish_run(run_id, new_snapshots=new_count, stat_lines=stat_count,
-                   notes=f"{len(timeseries)} players, {len(new_trades)} trades")
+                   notes=f"{_n_ts} players, {len(new_trades)} trades")
         _patch_export_run_summary(out_path, log)
         # Capture the DERIVED board state (consensus rank/FV + Arkmetric
         # family) for the active board so the time-travel board (Part 2) and
@@ -3110,18 +3172,14 @@ def main(force_refetch: bool = False, skip_stats: bool = False,
         # + self-contained (own run_id + timeseries rebuild); a daily-side
         # failure must not fail the already-completed monthly run.
         #
-        # OOM: free the monthly working set BEFORE chaining the daily tail.
-        # run_daily + its rebuild_only re-derive everything below from the DB (or
-        # read artifacts from disk), so these whole-universe caches — every
-        # tracked player's career history, the Statcast/zone/arsenal/sabermetric
-        # caches, all snapshots — are dead weight from here, and holding them
-        # while the daily/rebuild/export/site-build heaps stack is the main
-        # memory driver on the ~6GB box (nothing above was ever freed). Only the
-        # confirmed main() locals are dropped (params + globals left untouched).
+        # OOM: the monthly whole-universe caches (all_snaps, timeseries, and the
+        # career/statline/Statcast/zone/arsenal/sabermetric/tx/trades/career-WAR
+        # caches + draft_by_id) were already freed right after the step-5 export
+        # above (see that block) - they are None here. This final collect sweeps
+        # the step 6-6b6 garbage (FA + leaderboard + fantasy corpora) before the
+        # daily/rebuild/export/site-build heaps stack, which is the main memory
+        # driver on the ~6GB box.
         import gc as _gc
-        all_snaps = timeseries = career_cache = statlines = statcast_metric_cache = \
-            zone_metric_cache = arsenals = sabermetrics = tx_cache = draft_by_id = \
-            trades_by_player = career_war_all = None
         _gc.collect()
         try:
             log.info("monthly run: chaining the daily fast-moving refresh")
