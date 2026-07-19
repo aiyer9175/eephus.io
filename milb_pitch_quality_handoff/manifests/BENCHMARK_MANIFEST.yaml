@@ -1,0 +1,213 @@
+# Machine-readable benchmark manifest for the MiLB pitch-quality handoff.
+# Only Eephus-specific benchmarks are listed here. Public-data baselines
+# (velocity_only, raw_pitch_results, etc.) are builder-generated and are
+# listed under required_comparison_roles for completeness only -- this
+# package does not and should not build them.
+
+benchmarks:
+
+  mlb_pitcher_ewar_champion:
+    role: production_champion
+    authoritative_source: "~/pitcher_ewar/data/pitcher_ewar.parquet"
+    export_path: "adapters/export_pitcher_ewar_mlb.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/pitcher_ewar_mlb/pitcher_ewar.parquet"
+    observation_unit: "player_id x season"
+    prediction_timestamp: "as_of_date column, per row"
+    target_period: "season (2021-2025)"
+    target_definition: "runs above replacement, converted to wins via runs_per_win; see definitions/PITCHER_EWAR.md"
+    model_version: "pitcher-ewar-1.1.0"
+    feature_version: null
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "all MLB pitchers, tbf>=1, 2021-2025"
+    allowed_uses: ["cross-stack champion reference", "component-level incremental value testing", "descriptive comparison across seasons"]
+    prohibited_uses: ["training a model to reproduce this value directly (label leakage)", "walk-forward evaluation assuming this is a real-time historical forecast"]
+    required_for: ["champion_plus_challenger", "champion_plus_raw_challenger_features", "existing_eephus_pitcher_stack"]
+    known_limitations: ["no pitch-type/arsenal decomposition", "HR-conversion component documented elsewhere as low-repeatability"]
+
+  mlb_pitcher_ewar_champion_freeze:
+    role: historical_snapshot
+    authoritative_source: "~/pitcher_ewar/champion/"
+    export_path: "PRIVATE_EXPORT_REQUIRED, not yet built as a dedicated adapter -- see KNOWN_GAPS.md"
+    observation_unit: "player_id x season"
+    prediction_timestamp: "frozen_at: 2026-07-17"
+    target_period: "season (2021-2025, as of freeze)"
+    target_definition: "same as mlb_pitcher_ewar_champion, frozen model state pitcher-ewar-1.0.0-CANDIDATE"
+    model_version: "pitcher-ewar-1.0.0-CANDIDATE"
+    feature_version: null
+    historical_status: TRUE_HISTORICAL_SNAPSHOT
+    coverage: "same as mlb_pitcher_ewar_champion"
+    allowed_uses: ["model-stability / version-diff comparisons", "component-level incremental value testing via champion_input_*.parquet"]
+    prohibited_uses: ["representing as a running time series (only one freeze date exists)"]
+    required_for: ["champion_plus_challenger"]
+    known_limitations: ["single freeze date, not a series"]
+
+  milb_pitcher_ewar_aaa:
+    role: production_champion
+    authoritative_source: "~/milb_pitcher_ewar/data/aaa_pitcher_ewar.parquet"
+    export_path: "adapters/export_pitcher_ewar_milb.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/pitcher_ewar_milb/aaa_pitcher_ewar.parquet"
+    observation_unit: "player_id x level x league x season"
+    prediction_timestamp: "as_of_date column, per row"
+    target_period: "season (2021-2025)"
+    target_definition: "runs above replacement, level-local currency; see definitions/MILB_PITCHER_PROJECTION.md"
+    model_version: "milb-pitcher-ewar-1.0.0 (park-restated subset: 1.1.0)"
+    feature_version: null
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "AAA, 2021-2025; contact component only 2023-2025 (see coverage_matrix.json)"
+    allowed_uses: ["level-local champion reference", "component incremental-value testing"]
+    prohibited_uses: ["cross-level comparison to AA/High-A/Low-A or MLB without a translation layer (none exists for pitchers)", "training a model to reproduce this value directly"]
+    required_for: ["champion_plus_challenger", "existing_eephus_pitcher_stack"]
+    known_limitations: ["level-local currency only", "no pitch-type/arsenal output"]
+
+  milb_pitcher_ewar_aa_higha:
+    role: production_champion
+    authoritative_source: "~/milb_pitcher_ewar/data/{aa,higha}_pitcher_ewar.parquet"
+    export_path: "adapters/export_pitcher_ewar_milb.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/pitcher_ewar_milb/{aa,higha}_pitcher_ewar.parquet"
+    observation_unit: "player_id x level x league x season"
+    prediction_timestamp: "as_of_date column, per row"
+    target_period: "season (2021-2025)"
+    target_definition: "FI-runs-based runs above replacement, level-local; see definitions/LOWER_LEVEL_PITCHER_COMPONENT.md"
+    model_version: "milb-pitcher-ewar-1.0.0"
+    feature_version: null
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "AA and High-A, 2021-2025, 100% fi_only (no contact component at these levels)"
+    allowed_uses: ["level-local champion reference"]
+    prohibited_uses: ["cross-level comparison", "assuming a contact component exists (it does not)"]
+    required_for: ["existing_eephus_pitcher_stack"]
+    known_limitations: ["no contact/HR-opportunity/HR-conversion decomposition at all"]
+
+  milb_pitcher_ewar_lowa:
+    role: internal_only
+    authoritative_source: "~/milb_pitcher_ewar/data/lowa_pitcher_ewar.parquet"
+    export_path: "NONE -- INTERNAL_ONLY, never exported by this package"
+    observation_unit: "player_id x level x league x season"
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "Low-A, 2021-2025"
+    allowed_uses: []
+    prohibited_uses: ["any export, public or private, without separate explicit approval"]
+    required_for: []
+    known_limitations: ["publication withheld per FINAL_MILB_PITCHER_EWAR_BUILD_REPORT.md"]
+
+  aaa_contact_management_plus:
+    role: component_champion
+    authoritative_source: "~/milb_pitcher_ewar/data/aaa_contact_runs.parquet"
+    export_path: "adapters/export_pitcher_ewar_milb.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/pitcher_ewar_milb/aaa_contact_management_plus.parquet"
+    observation_unit: "pitcher x season"
+    prediction_timestamp: "unknown -- no as_of_date column on this intermediate file"
+    target_period: "season, AAA only, 2023-2025 primarily"
+    target_definition: "contact_runs_above_average; see definitions/AAA_CONTACT_PLUS.md"
+    model_version: null
+    feature_version: null
+    historical_status: UNKNOWN
+    coverage: "AAA only"
+    allowed_uses: ["component-level incremental value testing"]
+    prohibited_uses: ["walk-forward evaluation (no as_of_date to anchor on)"]
+    required_for: ["existing_eephus_pitcher_stack component decomposition"]
+    known_limitations: ["no uncertainty column on this intermediate file -- use parent aaa_pitcher_ewar.parquet's contact_runs_sd instead"]
+
+  milb_park_factors_v2:
+    role: descriptive_champion
+    authoritative_source: "~/milb_park_rebuild/data/milb_park_factors_v2.parquet"
+    export_path: "adapters/export_park_context.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/park_context/milb_park_factors_v2.parquet"
+    observation_unit: "team_id x season"
+    prediction_timestamp: "as_of_date: 2026-07-18"
+    target_period: "season (2021-2025), 3-season rolling window"
+    target_definition: "empirical home/road run and HR park factors; see definitions/MILB_PARK_FACTORS.md"
+    model_version: "milb-park-factors-2.0.0"
+    feature_version: null
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "600 team-seasons, 124 venues, coverage_share == 1.0 on every row"
+    allowed_uses: ["context feature for park-neutralizing pitch outcomes", "descriptive park-effect analysis"]
+    prohibited_uses: ["walk-forward eval assuming season-specific factors were known in real time during that season", "treating as a contact/strikeout factor (does not exist)"]
+    required_for: ["context_adjusted_pitch_results"]
+    known_limitations: ["no contact/strikeout/batter-eye factor", "no per-pitch-type split"]
+
+  milb_pitcher_ewar_restatement_ledger:
+    role: historical_snapshot
+    authoritative_source: "~/milb_park_rebuild/data/MILB_PITCHER_EWAR_RESTATEMENT_LEDGER.parquet"
+    export_path: "PRIVATE_EXPORT_REQUIRED, not yet built as a dedicated adapter -- see KNOWN_GAPS.md"
+    observation_unit: "player_id x level x league x season"
+    prediction_timestamp: "restatement event, 2026-07-18"
+    target_period: "season (2021-2025)"
+    target_definition: "before/after eWAR diff from the park-factor v2 restatement"
+    model_version: "milb-pitcher-ewar-1.1.0 (restated) vs 1.0.0 (prior)"
+    feature_version: null
+    historical_status: RECONSTRUCTED_AS_OF
+    coverage: "22,076 rows, all 4 published+internal MiLB levels, 2021-2025"
+    allowed_uses: ["worked example of legitimate restatement discipline"]
+    prohibited_uses: ["treating as a forecast snapshot", "assuming pre-2026-07-18 systems knew the v2 park factors"]
+    required_for: []
+    known_limitations: []
+
+  eephus_identity:
+    role: reference
+    authoritative_source: "~/career_outcome_plus/data/eephus_identity.parquet"
+    export_path: "adapters/export_identity.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/identity/eephus_identity_redacted.parquet"
+    observation_unit: "player (mlbam_id), current-state only"
+    prediction_timestamp: "unknown -- no as_of_date on the identity build itself"
+    target_period: "n/a"
+    target_definition: "n/a -- identity mapping, not a model output"
+    model_version: null
+    feature_version: null
+    historical_status: UNKNOWN
+    coverage: "10,679 players; per-field coverage in manifests/coverage_matrix.json"
+    allowed_uses: ["join key for any other benchmark", "context (current_level, is_predebut, organization)"]
+    prohibited_uses: ["historical/effective-dated joins (not supported)", "using dob/birth_year at finer than year granularity (dob was redacted)"]
+    required_for: ["every other benchmark join"]
+    known_limitations: ["no team/affiliate/park join", "no effective-dating", "undocumented upstream collision handling"]
+
+  milb_rate_skill_translation:
+    role: research_benchmark
+    authoritative_source: "~/career_outcome_plus/data/{latent_rate_talent,milb_xwar_projection}.parquet"
+    export_path: "adapters/export_contact_translation.py -> $EEPHUS_HANDOFF_PRIVATE_OUT/contact_translation/"
+    observation_unit: "batter x season (latent_rate_talent); batter x season x level (milb_xwar_projection)"
+    prediction_timestamp: "status_as_of_date (milb_xwar_projection only)"
+    target_period: "season"
+    target_definition: "see definitions/CONTACT_PORTABILITY.md"
+    model_version: "reach-2.0.0"
+    feature_version: null
+    historical_status: CURRENT_MODEL_BACKFILL
+    coverage: "77,524 batter-seasons (latent_rate_talent); 4,721 batter-season-levels (milb_xwar_projection)"
+    allowed_uses: ["context only -- describes hitters, not pitchers"]
+    prohibited_uses: ["use as a contact-quality (EV/barrel) portability benchmark -- it is not one", "use as a pitch-quality feature or label"]
+    required_for: ["contact_portability (documented substitute, not a true fill)"]
+    known_limitations: ["not translatable below AAA for anything Statcast-adjacent", "'con' field name collision with batted-ball contact quality -- it means 1-K%, not damage"]
+
+  contact_portability_dedicated_model:
+    role: research_benchmark
+    authoritative_source: null
+    export_path: null
+    observation_unit: null
+    historical_status: UNKNOWN
+    coverage: "does not exist"
+    allowed_uses: []
+    prohibited_uses: ["fabricating one to complete this manifest"]
+    required_for: ["contact_portability"]
+    known_limitations: ["does not exist -- see KNOWN_GAPS.md"]
+
+required_comparison_roles:
+  # Only Eephus-specific benchmarks above are exported by this package.
+  # Everything below with builder_generated: true must be built by the
+  # external builder from public data they pull themselves.
+  - name: velocity_only
+    builder_generated: true
+  - name: raw_pitch_results
+    builder_generated: true
+  - name: shrunken_pitch_results
+    builder_generated: true
+  - name: context_adjusted_pitch_results
+    builder_generated: true
+    depends_on_eephus_benchmark: milb_park_factors_v2
+  - name: contact_portability
+    builder_generated: false
+    eephus_benchmark: milb_rate_skill_translation
+    note: "documented substitute, not a true contact-quality portability benchmark -- see definitions/CONTACT_PORTABILITY.md"
+  - name: existing_eephus_pitcher_stack
+    builder_generated: false
+    eephus_benchmarks: [mlb_pitcher_ewar_champion, milb_pitcher_ewar_aaa, milb_pitcher_ewar_aa_higha]
+  - name: future_latent_pitch_quality
+    builder_generated: true
+  - name: champion_plus_challenger
+    builder_generated: true
+    depends_on_eephus_benchmark: existing_eephus_pitcher_stack
+  - name: champion_plus_raw_challenger_features
+    builder_generated: true
+    depends_on_eephus_benchmark: existing_eephus_pitcher_stack
