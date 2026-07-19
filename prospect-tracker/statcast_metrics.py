@@ -1143,10 +1143,31 @@ def fetch_statcast_metrics_for_players(
     # ============================================================
 
     # ---- PASS 1: game logs per player (parallel, cached) ----
+    # v24 — 4th OOM in this area, this time confirmed as the PARENT process
+    # (nightly-build.sh: "Killed python run_monthly.py", not a spawned worker
+    # — v23's pool-recycling fix targets worker creep and can't help here).
+    # fetched_logs_by_key holds one entry per player×game (190K+ on a full
+    # run with the real seed DB) for the ENTIRE duration of pass 2 AND pass
+    # 3, but tracing every read of a split across this whole function (pass
+    # 2's dedup, pass 3's level filter) shows only 3 fields are ever used:
+    # game.gamePk, date, _level. Everything else in a raw MLB Stats API
+    # gameLog split — full batting/pitching stat lines, team/venue info — is
+    # dead weight sitting in the parent's memory the whole time. Trimmed here
+    # rather than in _game_logs() itself, since other callers (pal_gamelogs.py,
+    # vaa.py) need the full stat line from that function.
+    def _slim_split(split: dict) -> dict:
+        return {
+            "game": {"gamePk": (split.get("game") or {}).get("gamePk")},
+            "date": split.get("date"),
+            "_level": split.get("_level"),
+        }
     fetched_logs_by_key: dict[str, list[dict]] = {}
     _p1_start = _time.monotonic()
     if logs_by_key is not None:
-        fetched_logs_by_key = {key: list(logs_by_key.get(key) or []) for key, *_ in targets}
+        fetched_logs_by_key = {
+            key: [_slim_split(s) for s in (logs_by_key.get(key) or [])]
+            for key, *_ in targets
+        }
         _log.info("statcast pass 1/3: using preloaded game logs for %d players",
                   len(targets))
     else:
@@ -1155,7 +1176,7 @@ def fetch_statcast_metrics_for_players(
         def _fetch_logs(item):
             key, _name, mlbam, _level, is_p = item
             try:
-                return key, _game_logs(int(mlbam), season, is_pitcher=is_p)
+                return key, [_slim_split(s) for s in _game_logs(int(mlbam), season, is_pitcher=is_p)]
             except Exception as e:
                 _log.debug("statcast logs failed for %s: %s", key, e)
                 return key, []
