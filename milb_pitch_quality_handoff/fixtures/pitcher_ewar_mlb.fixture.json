@@ -1,0 +1,41 @@
+{
+  "_comment": "Synthetic fixture for MLB pitcher eWAR. player_id values are out of any real range (999xxx). Mirrors contracts/pitcher_ewar.schema.json#mlb_pitcher_ewar.",
+  "rows": [
+    {
+      "player_id": 999001, "player_name": "Fixture Playerone", "season": 2024, "team": "FIX",
+      "role": "SP", "starter_share": 0.95, "opener_share": 0.0, "bulk_reliever_share": 0.0, "short_reliever_share": 0.0,
+      "innings_pitched": 165.0, "batters_faced": 660,
+      "fi_runs_observed": 12.4, "fi_runs_stabilized": 10.1,
+      "hr_runs_above_average": 1.2, "hr_opportunity_runs": 0.8, "hr_conversion_runs": 0.4,
+      "all_contact_suppression_runs": 3.1, "contact_runs_above_average": 2.9, "contact_missing": false,
+      "league_adjustment_runs": 0.5, "pitcher_runs_above_average": 16.0,
+      "replacement_runs": 8.0, "runs_above_replacement": 24.0, "runs_per_win": 9.8, "pitcher_ewar": 2.45,
+      "fi_runs_sd": 3.2, "contact_runs_sd": 1.8, "pitcher_ewar_sd": 0.55,
+      "pitcher_ewar_low": 1.75, "pitcher_ewar_high": 3.15,
+      "reliability": 0.82, "sample_tier": "FULL",
+      "hr": 18, "hr_neut": 16.4, "hr_pf_exposure": 1.02,
+      "park_hr_credit_runs": 0.6, "park_adjustment_method": "ACTUAL_EXPOSURE", "park_adjustment_confidence": 0.9,
+      "framing_runs_exposure": 0.3, "framing_coverage": 0.95, "framing_treatment": "DISCLOSED_SHARED",
+      "position_player_pitching_flag": false,
+      "model_version": "pitcher-ewar-1.1.0", "as_of_date": "2026-07-17", "data_freshness": "current"
+    },
+    {
+      "player_id": 999002, "player_name": "Fixture Playertwo", "season": 2024, "team": "FIX",
+      "role": "RP", "starter_share": 0.0, "opener_share": 0.0, "bulk_reliever_share": 0.3, "short_reliever_share": 0.7,
+      "innings_pitched": 58.0, "batters_faced": 245,
+      "fi_runs_observed": -2.1, "fi_runs_stabilized": -1.4,
+      "hr_runs_above_average": -0.3, "hr_opportunity_runs": -0.1, "hr_conversion_runs": -0.2,
+      "all_contact_suppression_runs": -0.8, "contact_runs_above_average": null, "contact_missing": true,
+      "league_adjustment_runs": 0.1, "pitcher_runs_above_average": -3.1,
+      "replacement_runs": 3.0, "runs_above_replacement": -0.1, "runs_per_win": 9.8, "pitcher_ewar": -0.01,
+      "fi_runs_sd": 2.5, "contact_runs_sd": null, "pitcher_ewar_sd": 0.35,
+      "pitcher_ewar_low": -0.46, "pitcher_ewar_high": 0.44,
+      "reliability": 0.41, "sample_tier": "PARTIAL",
+      "hr": 5, "hr_neut": 5.2, "hr_pf_exposure": 0.98,
+      "park_hr_credit_runs": -0.1, "park_adjustment_method": "LEAGUE_FALLBACK", "park_adjustment_confidence": 0.5,
+      "framing_runs_exposure": 0.05, "framing_coverage": 0.6, "framing_treatment": "DISCLOSED_SHARED",
+      "position_player_pitching_flag": false,
+      "model_version": "pitcher-ewar-1.1.0", "as_of_date": "2026-07-17", "data_freshness": "current"
+    }
+  ]
+}

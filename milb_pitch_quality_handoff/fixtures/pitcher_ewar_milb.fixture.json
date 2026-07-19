@@ -1,0 +1,59 @@
+{
+  "_comment": "Synthetic fixture for MiLB pitcher eWAR (AAA + AA/High-A shape). player_id values out of any real range. Low-A deliberately has no fixture -- it is never exported. Mirrors contracts/pitcher_ewar.schema.json.",
+  "aaa_pitcher_ewar": [
+    {
+      "player_id": 999101, "player_name": "Fixture Aaaone", "season": 2024, "level": "AAA",
+      "league": "International League", "league_id": 117, "org": "Fixture Org", "team_id": 99903,
+      "role": "SP", "starter_share": 0.9, "innings_pitched": 120.0, "batters_faced": 500,
+      "fi_runs_observed": 5.0, "fi_runs_stabilized": 4.2,
+      "hr_runs_above_average": 0.5, "hr_opportunity_runs": 0.3, "hr_conversion_runs": 0.2,
+      "contact_runs_above_average": 1.1,
+      "league_adjustment_runs": 0.2, "pitcher_runs_above_average": 5.7,
+      "replacement_runs": 4.0, "runs_above_replacement": 9.7, "runs_per_win": 10.5, "pitcher_ewar": 0.92,
+      "fi_runs_sd": 2.0, "contact_runs_sd": 1.1, "pitcher_ewar_sd": 0.4,
+      "pitcher_ewar_low": 0.41, "pitcher_ewar_high": 1.43,
+      "reliability": 0.68, "sample_tier": "FULL",
+      "architecture": "MODIFIED_MLB", "coverage_level": "full", "missing_components": [],
+      "park_adjustment_method": "ACTUAL_EXPOSURE", "framing_treatment": "DISCLOSED_SHARED",
+      "model_version": "milb-pitcher-ewar-1.1.0", "as_of_date": "2026-07-18"
+    },
+    {
+      "player_id": 999102, "player_name": "Fixture Aaatwo", "season": 2021, "level": "AAA",
+      "league": "Pacific Coast League", "league_id": 118, "org": "Fixture Org 2", "team_id": 99904,
+      "role": "RP", "starter_share": 0.0, "innings_pitched": 40.0, "batters_faced": 170,
+      "fi_runs_observed": -1.0, "fi_runs_stabilized": -0.6,
+      "hr_runs_above_average": null, "hr_opportunity_runs": null, "hr_conversion_runs": null,
+      "contact_runs_above_average": null,
+      "league_adjustment_runs": 0.1, "pitcher_runs_above_average": -0.9,
+      "replacement_runs": 1.5, "runs_above_replacement": 0.6, "runs_per_win": 10.2, "pitcher_ewar": 0.06,
+      "fi_runs_sd": 1.4, "contact_runs_sd": null, "pitcher_ewar_sd": 0.25,
+      "pitcher_ewar_low": -0.26, "pitcher_ewar_high": 0.38,
+      "reliability": 0.35, "sample_tier": "SPARSE",
+      "architecture": "MODIFIED_MLB", "coverage_level": "fi_only", "missing_components": ["contact"],
+      "park_adjustment_method": "TRADITIONAL_FACTOR", "framing_treatment": "DISCLOSED_SHARED",
+      "model_version": "milb-pitcher-ewar-1.0.0", "as_of_date": "2026-07-18"
+    }
+  ],
+  "milb_pitcher_ewar_aa_higha": [
+    {
+      "player_id": 999201, "player_name": "Fixture Aaone", "team_id": 99905, "league": "Texas League",
+      "level": "AA", "sportId": 12, "season": 2023,
+      "innings_pitched": 95.0, "batters_faced": 400, "so": 88, "bb": 30, "hbp": 4, "hr": 9,
+      "g": 18, "gs": 18, "r": 44, "org": "Fixture Org 3", "league_id": 234,
+      "runs_per_win": 10.0, "lg_ra9": 4.6,
+      "fi_runs_observed": 2.5, "fi_runs_stabilized": 2.0,
+      "starter_share": 1.0, "role": "SP",
+      "replacement_runs": 3.5, "league_adjustment_runs": 0.3, "pitcher_runs_above_average": 2.8,
+      "runs_above_replacement": 6.3, "pitcher_ewar": 0.63,
+      "fi_runs_sd": 1.9, "pitcher_ewar_sd": 0.3, "pitcher_ewar_low": 0.25, "pitcher_ewar_high": 1.01,
+      "sample_tier": "FULL", "reliability": 0.6,
+      "architecture": "SEM_CORE", "coverage_level": "fi_only", "missing_components": ["contact", "hr_opportunity", "hr_conversion"],
+      "park_adjustment_method": "LEAGUE_NEUTRAL", "framing_treatment": "DISCLOSED_SHARED",
+      "model_version": "milb-pitcher-ewar-1.0.0", "as_of_date": "2026-07-18"
+    }
+  ],
+  "aaa_contact_management_plus": [
+    {"pitcher": 999101, "season": 2024, "contact_runs_above_average": 1.1, "n_bip": 210},
+    {"pitcher": 999102, "season": 2021, "contact_runs_above_average": null, "n_bip": 0}
+  ]
+}

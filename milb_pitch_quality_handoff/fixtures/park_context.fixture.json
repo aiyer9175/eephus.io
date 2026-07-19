@@ -1,0 +1,31 @@
+{
+  "_comment": "Synthetic fixture for MiLB park context. venue_id/team_id values out of any real range. Mirrors contracts/milb_park_context.schema.json. Invariants (coverage_share==1.0, weather_required==false) are preserved.",
+  "rows": [
+    {
+      "season": 2024, "level": "AAA", "league_id": 999, "league_name": "Fixture League",
+      "team_id": 99901, "team_name": "Fixture Fliers", "venue_id": 88801, "venue_name": "Fixture Field",
+      "run_park_factor": 1.08, "hr_park_factor": 1.15,
+      "run_pf": 1.06, "hr_pf": 1.12,
+      "run_pf_sample": 120, "hr_pf_sample": 9000.0,
+      "home_games": 60, "away_games": 60,
+      "run_pf_reliability": 0.55, "hr_pf_reliability": 0.55,
+      "centering_group": "AAA|Fixture League|2024", "centering_residual": 0.0008,
+      "park_factor_method": "EMPIRICAL_HOME_ROAD_NO_WEATHER", "park_factor_confidence": 0.55,
+      "coverage_share": 1.0, "weather_required": false,
+      "model_version": "milb-park-factors-2.0.0", "as_of_date": "2026-07-18"
+    },
+    {
+      "season": 2024, "level": "Low-A", "league_id": 998, "league_name": "Fixture League South",
+      "team_id": 99902, "team_name": "Fixture Bandboxes", "venue_id": 88802, "venue_name": "Fixture Bandbox Park",
+      "run_park_factor": 0.94, "hr_park_factor": 0.88,
+      "run_pf": 0.95, "hr_pf": 0.90,
+      "run_pf_sample": 118, "hr_pf_sample": 8500.0,
+      "home_games": 59, "away_games": 59,
+      "run_pf_reliability": 0.50, "hr_pf_reliability": 0.50,
+      "centering_group": "Low-A|Fixture League South|2024", "centering_residual": -0.0011,
+      "park_factor_method": "EMPIRICAL_HOME_ROAD_NO_WEATHER", "park_factor_confidence": 0.50,
+      "coverage_share": 1.0, "weather_required": false,
+      "model_version": "milb-park-factors-2.0.0", "as_of_date": "2026-07-18"
+    }
+  ]
+}
