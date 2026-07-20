@@ -1,0 +1,30 @@
+# Production Component Recommendations — Phase 1C
+
+Deliverable 7. Classification: `Independent production model | Independent descriptive metric | Supporting feature only | Context variable | Benchmark only | Research only | Unsupported`.
+
+| Construct | Classification | Evidence | Tradeoffs | Remaining uncertainty |
+|---|---|---|---|---|
+| Velocity | **Independent production model** (within Module 1: Physical Stuff) | Split-half r=0.98-0.99, ICC 24-27% (Phase 1B) | High confidence, low ambiguity | Minimal — the best-supported construct in this entire research program |
+| Movement | **Independent production model** (within Module 1) | Split-half r=0.91-0.98, ICC 12-35% (Phase 1B) | Same as velocity | Minimal |
+| Spin | **Independent production model** (within Module 1), with a flag | Split-half r=0.98, ICC 27-31% (Phase 1B) | Strong reliability, but measurably less complete even at tracked venues (`INFORMATION_CONTENT_REPORT.md`, Phase 1B) | Completeness gap unexplained (vendor identity not exposed by this data source) |
+| Pitch mix / arsenal diversity | **Independent production model** (Module 2) | Largest single incremental-R² contribution to whiff rate this phase (0.071) | Adds real signal but needs pitch-type identity, restricting it to tracked venues | Family-restricted reliability untested (flagged repeatedly) |
+| Whiff rate | **Independent production model** (Module 3, tracked); **Independent descriptive metric** (Module 6, outcome-only/untracked) | Split-half r=0.33-0.51 depending on level (Phase 1B); not redundant with Modules 1-2 (this phase) | Real but moderate reliability — should be presented with uncertainty, not as a precise point estimate | ~77% of its own variance unexplained by everything tested |
+| Ground-ball tendency | **Independent descriptive metric**, not yet a full production model | R²=0.134 explained by Movement, driven mostly by Movement's contribution (this phase) | Real, mechanically sensible relationship | Its own reliability was never separately tested — recommend confirming before promoting to a full production model |
+| Avg. launch speed / hard-hit rate (Damage suppression, merged) | **Research only** | r=0.72 redundant with each other (this phase); only 1.9-3.7% explained by everything else tested (this phase) | Merging avoids duplicating one signal as two; but the signal itself is nearly unexplained by anything else measured | Own reliability never tested — cannot rule out this metric being dominated by noise, park, defense, or batted-ball luck rather than pitcher skill |
+| Location / command (zone rate) | **Unsupported** | Split-half r=0.07-0.19 at typical sample sizes, still rising at largest tested threshold (Phase 1B) | Excluding it loses a conceptually important construct (scouts care about command) | Genuinely unresolved whether more data would fix this — see Phase 1B's stabilization-curve caveats |
+| Chase rate | **Supporting feature only** (within Module 3's location contribution), not standalone | Weak-moderate reliability (r=0.21 AAA, 0.55 Low-A, Phase 1B); contributes to but doesn't dominate the whiff chain (this phase) | Inconsistent reliability between the two tracked populations, unexplained | Why AAA and Low-A differ this much is an open question |
+| Called-strike rate | **Unsupported** | r=-0.10 to +0.06 at every level, every sample size (Phase 1B) — the clearest negative finding in the whole program | None — excluding it is close to a strict win given the evidence | Whether umpire/framing context (unavailable) would rescue it as a signal, once isolated |
+| Venue / park effects (outcome metrics) | **Context variable**, not a component | Between-venue ICC 0.01-0.3% at every level (Phase 1B) — no detected signal, but also not a confirmed null (method-of-moments power at 30-31 venues is limited) | Kept as a routing/context variable (tracked vs. untracked), not a scored component | Whether a real but small park effect exists undetected at this sample size |
+| Organization | **Context variable**, not a component | Not independently re-tested this phase; Phase 1A/1B found no wiring for organization-level effects in existing Eephus systems either | — | Untested directly at the pitch level in any phase so far |
+| Eephus champion benchmarks (park factors, pitcher eWAR) | **Benchmark only** | Standing constraint since Phase 1A — private exports unavailable in this environment (`DECISION_LEDGER.md` #1) | Cannot be a feature or component; only usable, once supplied, as a comparison target | Unresolved — the single largest open blocker across all three phases |
+| Role (starter/reliever) | **Unsupported** (no evidence either way — not built) | No roster/appearance data pulled at any phase | — | Completely untested |
+| Pitch sequencing/interaction | **Unsupported** (no evidence either way — not built) | Count-state fields exist in the dataset but were never aggregated into a sequencing metric | — | Completely untested |
+| Development trajectory / pitch aging | **Unsupported** (no evidence either way — not built) | Requires multi-season data; this research is single-season (2025) throughout | — | Completely untested; needs a scope decision beyond this charter |
+
+## Observed evidence / Inference / Speculation
+
+Every classification above traces to a specific reliability, variance, or incremental-R² number from Phase 1B or this phase — none are assigned from intuition. "Unsupported" is used specifically for two different situations that shouldn't be conflated: constructs *tested and found wanting* (command, called-strike rate) vs. constructs *never tested at all* (role, sequencing, development trajectory) — the evidence column makes this distinction explicit in each row.
+
+## Future work
+
+The three "Research only" / most-uncertain rows (ground-ball tendency's own reliability, damage-suppression's own reliability, family-restricted arsenal reliability) are the concrete next steps before any of `MINIMUM_ARCHITECTURE.md`'s six modules moves from "evidence-supported design" to "implemented and validated production component."

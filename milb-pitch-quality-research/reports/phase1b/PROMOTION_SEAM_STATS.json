@@ -1,0 +1,556 @@
+{
+  "whiff_rate": {
+    "n_pitcher_level_transitions": 348,
+    "status": "exploratory",
+    "before_after_correlation": 0.303,
+    "mean_signed_diff_after_minus_before": -0.0203,
+    "transitions_by_level_pair": {
+      "AA->AAA": 95,
+      "AA->High-A": 8,
+      "AAA->AA": 25,
+      "AAA->High-A": 5,
+      "High-A->AA": 94,
+      "High-A->AAA": 15,
+      "High-A->Low-A": 3,
+      "Low-A->AA": 13,
+      "Low-A->AAA": 7,
+      "Low-A->High-A": 83
+    },
+    "sample_transitions": [
+      {
+        "pitcher_id": 527048,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.2,
+        "value_after": 0.0833,
+        "n_before": 20,
+        "n_after": 24
+      },
+      {
+        "pitcher_id": 529017,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.2449,
+        "value_after": 0.35,
+        "n_before": 437,
+        "n_after": 40
+      },
+      {
+        "pitcher_id": 572383,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.1111,
+        "value_after": 0.1389,
+        "n_before": 27,
+        "n_after": 36
+      },
+      {
+        "pitcher_id": 605513,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.2344,
+        "value_after": 0.1311,
+        "n_before": 64,
+        "n_after": 61
+      },
+      {
+        "pitcher_id": 624133,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.4,
+        "value_after": 0.3594,
+        "n_before": 20,
+        "n_after": 64
+      },
+      {
+        "pitcher_id": 640444,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.2647,
+        "value_after": 0.2174,
+        "n_before": 34,
+        "n_after": 23
+      },
+      {
+        "pitcher_id": 650869,
+        "from_level": "AAA",
+        "to_level": "High-A",
+        "value_before": 0.15,
+        "value_after": 0.4583,
+        "n_before": 20,
+        "n_after": 24
+      },
+      {
+        "pitcher_id": 656671,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.2899,
+        "value_after": 0.2553,
+        "n_before": 69,
+        "n_after": 47
+      },
+      {
+        "pitcher_id": 657022,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.3171,
+        "value_after": 0.2121,
+        "n_before": 41,
+        "n_after": 99
+      },
+      {
+        "pitcher_id": 662914,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.1765,
+        "value_after": 0.2727,
+        "n_before": 68,
+        "n_after": 22
+      }
+    ]
+  },
+  "called_strike_rate": {
+    "n_pitcher_level_transitions": 404,
+    "status": "exploratory",
+    "before_after_correlation": 0.0531,
+    "mean_signed_diff_after_minus_before": -0.0125,
+    "transitions_by_level_pair": {
+      "AA->AAA": 111,
+      "AA->High-A": 12,
+      "AAA->AA": 28,
+      "AAA->High-A": 4,
+      "High-A->AA": 107,
+      "High-A->AAA": 16,
+      "High-A->Low-A": 6,
+      "Low-A->AA": 17,
+      "Low-A->AAA": 10,
+      "Low-A->High-A": 93
+    },
+    "sample_transitions": [
+      {
+        "pitcher_id": 527048,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.4444,
+        "value_after": 0.4118,
+        "n_before": 27,
+        "n_after": 34
+      },
+      {
+        "pitcher_id": 529017,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.2444,
+        "value_after": 0.25,
+        "n_before": 450,
+        "n_after": 48
+      },
+      {
+        "pitcher_id": 572383,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.4286,
+        "value_after": 0.32,
+        "n_before": 42,
+        "n_after": 50
+      },
+      {
+        "pitcher_id": 605513,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.2364,
+        "value_after": 0.2368,
+        "n_before": 55,
+        "n_after": 76
+      },
+      {
+        "pitcher_id": 621016,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.3636,
+        "value_after": 0.3287,
+        "n_before": 22,
+        "n_after": 143
+      },
+      {
+        "pitcher_id": 621112,
+        "from_level": "High-A",
+        "to_level": "AAA",
+        "value_before": 0.3043,
+        "value_after": 0.2376,
+        "n_before": 23,
+        "n_after": 101
+      },
+      {
+        "pitcher_id": 640444,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.2456,
+        "value_after": 0.3939,
+        "n_before": 57,
+        "n_after": 33
+      },
+      {
+        "pitcher_id": 656671,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.2676,
+        "value_after": 0.2167,
+        "n_before": 71,
+        "n_after": 60
+      },
+      {
+        "pitcher_id": 657022,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.25,
+        "value_after": 0.375,
+        "n_before": 44,
+        "n_after": 144
+      },
+      {
+        "pitcher_id": 660822,
+        "from_level": "High-A",
+        "to_level": "AA",
+        "value_before": 0.3636,
+        "value_after": 0.2,
+        "n_before": 22,
+        "n_after": 50
+      }
+    ]
+  },
+  "swing_rate": {
+    "n_pitcher_level_transitions": 593,
+    "status": "exploratory",
+    "before_after_correlation": 0.1658,
+    "mean_signed_diff_after_minus_before": -0.0047,
+    "transitions_by_level_pair": {
+      "AA->AAA": 140,
+      "AA->High-A": 15,
+      "AA->Low-A": 2,
+      "AAA->AA": 45,
+      "AAA->High-A": 8,
+      "AAA->Low-A": 3,
+      "High-A->AA": 157,
+      "High-A->AAA": 28,
+      "High-A->Low-A": 9,
+      "Low-A->AA": 30,
+      "Low-A->AAA": 24,
+      "Low-A->High-A": 132
+    },
+    "sample_transitions": [
+      {
+        "pitcher_id": 527048,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.4255,
+        "value_after": 0.4138,
+        "n_before": 47,
+        "n_after": 58
+      },
+      {
+        "pitcher_id": 529017,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.4927,
+        "value_after": 0.4545,
+        "n_before": 887,
+        "n_after": 88
+      },
+      {
+        "pitcher_id": 572383,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.3913,
+        "value_after": 0.4186,
+        "n_before": 69,
+        "n_after": 86
+      },
+      {
+        "pitcher_id": 605513,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.5378,
+        "value_after": 0.4453,
+        "n_before": 119,
+        "n_after": 137
+      },
+      {
+        "pitcher_id": 607237,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.4194,
+        "value_after": 0.4872,
+        "n_before": 31,
+        "n_after": 39
+      },
+      {
+        "pitcher_id": 621016,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.3333,
+        "value_after": 0.4348,
+        "n_before": 33,
+        "n_after": 253
+      },
+      {
+        "pitcher_id": 621112,
+        "from_level": "High-A",
+        "to_level": "AAA",
+        "value_before": 0.3947,
+        "value_after": 0.4684,
+        "n_before": 38,
+        "n_after": 190
+      },
+      {
+        "pitcher_id": 621114,
+        "from_level": "AAA",
+        "to_level": "Low-A",
+        "value_before": 0.3971,
+        "value_after": 0.4706,
+        "n_before": 68,
+        "n_after": 34
+      },
+      {
+        "pitcher_id": 621399,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.35,
+        "value_after": 0.4776,
+        "n_before": 20,
+        "n_after": 67
+      },
+      {
+        "pitcher_id": 622088,
+        "from_level": "High-A",
+        "to_level": "AA",
+        "value_before": 0.3867,
+        "value_after": 0.4571,
+        "n_before": 75,
+        "n_after": 35
+      }
+    ]
+  },
+  "in_play_rate": {
+    "n_pitcher_level_transitions": 593,
+    "status": "exploratory",
+    "before_after_correlation": 0.1265,
+    "mean_signed_diff_after_minus_before": 0.0021,
+    "transitions_by_level_pair": {
+      "AA->AAA": 140,
+      "AA->High-A": 15,
+      "AA->Low-A": 2,
+      "AAA->AA": 45,
+      "AAA->High-A": 8,
+      "AAA->Low-A": 3,
+      "High-A->AA": 157,
+      "High-A->AAA": 28,
+      "High-A->Low-A": 9,
+      "Low-A->AA": 30,
+      "Low-A->AAA": 24,
+      "Low-A->High-A": 132
+    },
+    "sample_transitions": [
+      {
+        "pitcher_id": 527048,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.1915,
+        "value_after": 0.2069,
+        "n_before": 47,
+        "n_after": 58
+      },
+      {
+        "pitcher_id": 529017,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.1556,
+        "value_after": 0.1023,
+        "n_before": 887,
+        "n_after": 88
+      },
+      {
+        "pitcher_id": 572383,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.1884,
+        "value_after": 0.1395,
+        "n_before": 69,
+        "n_after": 86
+      },
+      {
+        "pitcher_id": 605513,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.1933,
+        "value_after": 0.2409,
+        "n_before": 119,
+        "n_after": 137
+      },
+      {
+        "pitcher_id": 607237,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.129,
+        "value_after": 0.1282,
+        "n_before": 31,
+        "n_after": 39
+      },
+      {
+        "pitcher_id": 621016,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.1515,
+        "value_after": 0.166,
+        "n_before": 33,
+        "n_after": 253
+      },
+      {
+        "pitcher_id": 621112,
+        "from_level": "High-A",
+        "to_level": "AAA",
+        "value_before": 0.1316,
+        "value_after": 0.2105,
+        "n_before": 38,
+        "n_after": 190
+      },
+      {
+        "pitcher_id": 621114,
+        "from_level": "AAA",
+        "to_level": "Low-A",
+        "value_before": 0.1176,
+        "value_after": 0.2353,
+        "n_before": 68,
+        "n_after": 34
+      },
+      {
+        "pitcher_id": 621399,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.1,
+        "value_after": 0.1642,
+        "n_before": 20,
+        "n_after": 67
+      },
+      {
+        "pitcher_id": 622088,
+        "from_level": "High-A",
+        "to_level": "AA",
+        "value_before": 0.16,
+        "value_after": 0.0571,
+        "n_before": 75,
+        "n_after": 35
+      }
+    ]
+  },
+  "foul_rate": {
+    "n_pitcher_level_transitions": 348,
+    "status": "exploratory",
+    "before_after_correlation": 0.1116,
+    "mean_signed_diff_after_minus_before": 0.0121,
+    "transitions_by_level_pair": {
+      "AA->AAA": 95,
+      "AA->High-A": 8,
+      "AAA->AA": 25,
+      "AAA->High-A": 5,
+      "High-A->AA": 94,
+      "High-A->AAA": 15,
+      "High-A->Low-A": 3,
+      "Low-A->AA": 13,
+      "Low-A->AAA": 7,
+      "Low-A->High-A": 83
+    },
+    "sample_transitions": [
+      {
+        "pitcher_id": 527048,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.35,
+        "value_after": 0.4167,
+        "n_before": 20,
+        "n_after": 24
+      },
+      {
+        "pitcher_id": 529017,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.4394,
+        "value_after": 0.425,
+        "n_before": 437,
+        "n_after": 40
+      },
+      {
+        "pitcher_id": 572383,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.4074,
+        "value_after": 0.5278,
+        "n_before": 27,
+        "n_after": 36
+      },
+      {
+        "pitcher_id": 605513,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.4062,
+        "value_after": 0.3279,
+        "n_before": 64,
+        "n_after": 61
+      },
+      {
+        "pitcher_id": 624133,
+        "from_level": "Low-A",
+        "to_level": "AAA",
+        "value_before": 0.35,
+        "value_after": 0.3125,
+        "n_before": 20,
+        "n_after": 64
+      },
+      {
+        "pitcher_id": 640444,
+        "from_level": "AAA",
+        "to_level": "AA",
+        "value_before": 0.3235,
+        "value_after": 0.3478,
+        "n_before": 34,
+        "n_after": 23
+      },
+      {
+        "pitcher_id": 650869,
+        "from_level": "AAA",
+        "to_level": "High-A",
+        "value_before": 0.55,
+        "value_after": 0.2917,
+        "n_before": 20,
+        "n_after": 24
+      },
+      {
+        "pitcher_id": 656671,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.4348,
+        "value_after": 0.3617,
+        "n_before": 69,
+        "n_after": 47
+      },
+      {
+        "pitcher_id": 657022,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.2927,
+        "value_after": 0.3636,
+        "n_before": 41,
+        "n_after": 99
+      },
+      {
+        "pitcher_id": 662914,
+        "from_level": "AA",
+        "to_level": "AAA",
+        "value_before": 0.3382,
+        "value_after": 0.2727,
+        "n_before": 68,
+        "n_after": 22
+      }
+    ]
+  }
+}

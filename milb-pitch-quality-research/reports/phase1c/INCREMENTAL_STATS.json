@@ -1,0 +1,205 @@
+{
+  "population": {
+    "tracked_chain_n_pitchers": 600,
+    "all_levels_chain_n_pitchers": 600,
+    "min_tracked_pitches": 100,
+    "min_total_pitches": 100,
+    "min_batted_balls": 15
+  },
+  "chain_physical_to_whiff": [
+    {
+      "family_added": "velocity",
+      "columns": [
+        "velocity"
+      ],
+      "cumulative_r2": 0.0395,
+      "incremental_r2": 0.0395,
+      "n_pitchers": 600
+    },
+    {
+      "family_added": "movement",
+      "columns": [
+        "movement_pfx_x",
+        "movement_pfx_z"
+      ],
+      "cumulative_r2": 0.0598,
+      "incremental_r2": 0.0203,
+      "n_pitchers": 600
+    },
+    {
+      "family_added": "spin",
+      "columns": [
+        "spin_rate"
+      ],
+      "cumulative_r2": 0.0664,
+      "incremental_r2": 0.0066,
+      "n_pitchers": 600
+    },
+    {
+      "family_added": "pitch_mix_diversity",
+      "columns": [
+        "share_fastball",
+        "share_breaking",
+        "pitch_entropy"
+      ],
+      "cumulative_r2": 0.1372,
+      "incremental_r2": 0.0708,
+      "n_pitchers": 600
+    },
+    {
+      "family_added": "location",
+      "columns": [
+        "zone_rate"
+      ],
+      "cumulative_r2": 0.2022,
+      "incremental_r2": 0.065,
+      "n_pitchers": 600
+    },
+    {
+      "family_added": "swing_decision",
+      "columns": [
+        "chase_rate"
+      ],
+      "cumulative_r2": 0.2276,
+      "incremental_r2": 0.0254,
+      "n_pitchers": 600
+    }
+  ],
+  "chain_physical_whiff_to_avg_launch_speed": [
+    {
+      "family_added": "velocity",
+      "columns": [
+        "velocity"
+      ],
+      "cumulative_r2": 0.0039,
+      "incremental_r2": 0.0039,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "movement",
+      "columns": [
+        "movement_pfx_x",
+        "movement_pfx_z"
+      ],
+      "cumulative_r2": 0.0091,
+      "incremental_r2": 0.0052,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "spin",
+      "columns": [
+        "spin_rate"
+      ],
+      "cumulative_r2": 0.0117,
+      "incremental_r2": 0.0026,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "location",
+      "columns": [
+        "zone_rate"
+      ],
+      "cumulative_r2": 0.0155,
+      "incremental_r2": 0.0038,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "whiff_ability",
+      "columns": [
+        "whiff_rate"
+      ],
+      "cumulative_r2": 0.0186,
+      "incremental_r2": 0.0031,
+      "n_pitchers": 577
+    }
+  ],
+  "chain_physical_whiff_to_hard_hit_rate": [
+    {
+      "family_added": "velocity",
+      "columns": [
+        "velocity"
+      ],
+      "cumulative_r2": 0.0084,
+      "incremental_r2": 0.0084,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "movement",
+      "columns": [
+        "movement_pfx_x",
+        "movement_pfx_z"
+      ],
+      "cumulative_r2": 0.0125,
+      "incremental_r2": 0.004,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "spin",
+      "columns": [
+        "spin_rate"
+      ],
+      "cumulative_r2": 0.0293,
+      "incremental_r2": 0.0169,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "location",
+      "columns": [
+        "zone_rate"
+      ],
+      "cumulative_r2": 0.0304,
+      "incremental_r2": 0.0011,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "whiff_ability",
+      "columns": [
+        "whiff_rate"
+      ],
+      "cumulative_r2": 0.0368,
+      "incremental_r2": 0.0064,
+      "n_pitchers": 577
+    }
+  ],
+  "chain_physical_to_ground_ball_rate": [
+    {
+      "family_added": "velocity",
+      "columns": [
+        "velocity"
+      ],
+      "cumulative_r2": 0.02,
+      "incremental_r2": 0.02,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "movement",
+      "columns": [
+        "movement_pfx_x",
+        "movement_pfx_z"
+      ],
+      "cumulative_r2": 0.1228,
+      "incremental_r2": 0.1029,
+      "n_pitchers": 577
+    },
+    {
+      "family_added": "spin",
+      "columns": [
+        "spin_rate"
+      ],
+      "cumulative_r2": 0.1341,
+      "incremental_r2": 0.0112,
+      "n_pitchers": 577
+    }
+  ],
+  "chain_all_levels_swing_to_whiff": [
+    {
+      "family_added": "swing_decision_all_levels",
+      "columns": [
+        "swing_rate_all_levels"
+      ],
+      "cumulative_r2": 0.0158,
+      "incremental_r2": 0.0158,
+      "n_pitchers": 600
+    }
+  ]
+}
