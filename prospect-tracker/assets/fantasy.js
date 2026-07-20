@@ -5,8 +5,9 @@
 //
 // /fantasy/ module app. Reads data/fantasy.json (fantasy_export.py): ROS
 // projections with per-player counting-stat vectors, the four Ottoneu scoring
-// systems' weight tables, the probable-pitcher schedule, and eight prebuilt
-// sections. The client re-scores the whole pool on the fly when the league
+// systems' weight tables, the probable-pitcher schedule, and nine prebuilt
+// sections (incl. eFV-derived Dynasty Prospects). The client re-scores the whole
+// pool on the fly when the league
 // scoring selector changes (points = dot product; roto = pool z-scores), so a
 // user always sees ranks in THEIR format. Theme-tokened, EEPHUS_HUB player
 // links, defensive load states (matches the mlbstats/pal smoke-test contract).
@@ -178,6 +179,24 @@
     return '<div class="fantasy-note">Prospects near the majors with fantasy upside - stash before the call.</div>' +
       '<table class="fantasy-table"><thead><tr><th>Prospect</th><th>Org</th><th>Pos</th><th>ETA</th><th>FV</th></tr></thead><tbody>' + rows + "</tbody></table>";
   }
+  function renderDynasty() {
+    var list = (S.data.sections || {}).dynasty || [];
+    if (!list.length) return '<div class="fantasy-note">Dynasty prospect rankings populate from the eFV model on the nightly build.</div>';
+    var rows = list.map(function (d) {
+      var band = d.band || [], outlook = (band[0] != null && band[1] != null) ?
+        ("$" + num(band[0], 0) + "-" + num(band[1], 0) + "M") : "-";
+      var tierCls = d.tier === "Elite" ? " ff-tier-elite" : (d.tier === "Tier 1" ? " ff-tier-one" : "");
+      return '<tr><td class="ff-rk">' + esc(d.rank) + '</td><td class="ff-nm">' + teamLogo(d.org) + " " +
+        nameLink(d.mlbam, d.name) + '</td><td>' + esc(d.pos || "") +
+        '</td><td class="ff-sc">' + num(d.efv, 0) + '</td><td>' + esc(d.eta || "-") +
+        '</td><td>' + num(d.star, 0) + '%</td><td>' + num(d.bust, 0) + '%</td><td>' + outlook +
+        '</td><td><span class="ff-tier' + tierCls + '">' + esc(d.tier) + '</span></td></tr>';
+    }).join("");
+    return '<div class="fantasy-note">Dynasty prospect value from our flagship eFV model - ranked by a blend that keeps the eFV grade primary, then rewards star upside (star-outcome odds), penalizes floor risk (bust odds), and factors ETA proximity and projected surplus. Outlook is each prospect\'s 10th-to-90th percentile career-value band. This is a display ranking over served eFV numbers, not a separate model.</div>' +
+      '<table class="fantasy-table"><thead><tr><th>#</th><th>Prospect</th><th>Pos</th><th class="g-term" data-gl="xfv">eFV</th><th>ETA</th>' +
+      '<th class="g-term" data-gl="star_odds">Star</th><th class="g-term" data-gl="bust_prob">Bust</th><th>Outlook</th><th>Tier</th></tr></thead><tbody>' +
+      rows + "</tbody></table>";
+  }
 
   function renderSection() {
     var sec = S.data.sections || {}, root = el("fantasy-app-root");
@@ -192,6 +211,7 @@
       case "buysell": html = renderBuySell(); break;
       case "closers": html = renderClosers(); break;
       case "callups": html = renderCallups(); break;
+      case "dynasty": html = renderDynasty(); break;
       default: html = tableStreamers(sec.daily_streamers);
     }
     root.innerHTML = html;
@@ -217,6 +237,23 @@
         renderSelector(); renderSection();
       });
     });
+  }
+  // The "Dynasty Prospects" tab is injected client-side (the shell's section nav
+  // is otherwise static) so it exists before wireTabs() binds click handlers.
+  // Idempotent: re-running boot/onData never duplicates the button.
+  function injectDynastyTab() {
+    var nav = document.querySelector(".mlbstats-sectionnav");
+    if (!nav || nav.querySelector('[data-fantasysection="dynasty"]')) return;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "mlbstats-sectionbtn";
+    b.setAttribute("data-fantasysection", "dynasty");
+    b.setAttribute("role", "tab");
+    b.setAttribute("aria-selected", "false");
+    b.textContent = "Dynasty Prospects";
+    var callups = nav.querySelector('[data-fantasysection="callups"]');
+    if (callups && callups.nextSibling) nav.insertBefore(b, callups.nextSibling);
+    else nav.appendChild(b);
   }
   function wireTabs() {
     document.querySelectorAll(".mlbstats-sectionbtn[data-fantasysection]").forEach(function (b) {
@@ -251,7 +288,7 @@
     var banner = el("fantasy-banner");
     if (banner) banner.innerHTML = '<div class="fantasy-asof">' + (d.n_players || 0) + " players · rest-of-season, " +
       Math.round((d.season_fraction || 0) * 100) + "% of " + esc(d.season) + " played · scored in your league format</div>";
-    renderSelector(); wireTabs(); renderSection();
+    renderSelector(); injectDynastyTab(); wireTabs(); renderSection();
     // Preload the player-links map, then re-render so names upgrade from plain
     // text to merged-card links (matches mlbstats.js / pal.js).
     if (!LINKS && window.EEPHUS_HUB && EEPHUS_HUB.links) {
@@ -292,7 +329,10 @@
     ".ff-hc{font:600 9px/1 var(--font-retro,monospace);color:var(--text-tertiary)}",
     ".fantasy-asof{font-size:12px;color:var(--text-tertiary);margin:4px 0}",
     ".fantasy-error{border:1px solid var(--accent-red,#c55);border-radius:8px;padding:12px;color:var(--text-primary);background:var(--bg-secondary)}",
-    ".fantasy-name-link{color:var(--accent-cyan,#2a7);text-decoration:none}.fantasy-name-link:hover{text-decoration:underline}"
+    ".fantasy-name-link{color:var(--accent-cyan,#2a7);text-decoration:none}.fantasy-name-link:hover{text-decoration:underline}",
+    ".ff-tier{font:600 10px/1 var(--font-retro,monospace);color:var(--text-secondary);background:var(--bg-secondary);border:1px solid var(--border-subtle,#333);border-radius:4px;padding:2px 6px;white-space:nowrap}",
+    ".ff-tier.ff-tier-elite{color:#fff;background:var(--accent-green,#3a9);border-color:transparent}",
+    ".ff-tier.ff-tier-one{color:var(--accent-cyan,#2a7);border-color:var(--accent-cyan,#2a7)}"
   ].join("");
   document.head.appendChild(css);
 })();

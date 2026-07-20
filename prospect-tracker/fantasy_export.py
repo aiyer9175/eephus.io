@@ -360,22 +360,114 @@ def _enrich(players: list[dict]) -> None:
         p["team"] = r.get("team")
 
 
-def _callup_watch() -> list:
+def _callup_watch(ts: dict | None = None) -> list:
     """Best-effort: fantasy-relevant prospects near the majors, from PROSPX forward
-    signals (timeseries.json, a generated artifact). Empty when unavailable."""
-    ts = _load_json("timeseries.json")
+    signals (timeseries.json, a generated artifact). Empty when unavailable. Accepts
+    a pre-loaded timeseries dict so build_sections parses the ~66MB file once for
+    both this and the dynasty ranking."""
+    if ts is None:
+        ts = _load_json("timeseries.json")
     if not isinstance(ts, dict):
         return []
     out = []
     for pl in (ts.get("players") or []):
-        eta = pl.get("eta") or pl.get("eta_year")
-        near = (str(eta) in ("2026", "2027")) if eta else False
+        eta = pl.get("eta")
+        eta_year = eta.get("year") if isinstance(eta, dict) else eta
+        near = (str(eta_year) in ("2026", "2027")) if eta_year else False
         if near and pl.get("mlbam_id"):
             out.append({"mlbam": pl.get("mlbam_id"), "name": pl.get("player_name"),
-                        "org": pl.get("org"), "pos": pl.get("position"), "eta": eta,
+                        "org": pl.get("org"), "pos": pl.get("position"), "eta": eta_year,
                         "fv": pl.get("consensus_fv") or pl.get("fv_close")})
     out.sort(key=lambda x: -(x.get("fv") or 0))
     return out[:60]
+
+
+# ETA-proximity discount per year still to come (sooner ETA = more dynasty value now).
+_DYN_ETA_DECAY = 0.18
+_DYN_ETA_UNKNOWN = 0.4          # proximity credit when a prospect has no ETA year
+
+
+def _dynasty_tier(rank: int) -> str:
+    """Rank-bucket label for the dynasty board (mirrors how ranking products group
+    an ordered list into tiers)."""
+    if rank <= 10:
+        return "Elite"
+    if rank <= 25:
+        return "Tier 1"
+    if rank <= 50:
+        return "Tier 2"
+    if rank <= 100:
+        return "Tier 3"
+    if rank <= 200:
+        return "Tier 4"
+    return "Depth"
+
+
+def _dynasty_prospects(ts: dict | None, season: int, xfv: dict | None = None,
+                       n: int = 300) -> list:
+    """eFV-derived Dynasty Prospect rankings.
+
+    A DISPLAY-LAYER blend (like the client's scoring re-rank), not a trained model:
+    it moves no served eFV number and triggers no model gate. Joins the flagship
+    eFV rows in data/xfv.json (by_player, slug-keyed) to the PROSPX prospect roster
+    in timeseries.json (player_key -> mlbam / name / org / pos / ETA), then ranks
+    by a composite that keeps the eFV grade quantile PRIMARY:
+
+        score = xfv_grade_quantile            # primary driver (~20-80 scale)
+              + 10 * p_bucket['star']         # ceiling premium (star odds)
+              -  6 * p_bust                    # floor risk
+              +  4 * eta_proximity             # sooner ETA = value sooner
+              +  2 * clamp(surplus_mm / 100)   # surplus composite (small tiebreak)
+
+    Returns rows sorted desc with rank + rank-bucket tier + the eFV outcome band
+    (band_p10_mm..band_p90_mm, $M). Best-effort: empty list when inputs unavailable."""
+    if not isinstance(ts, dict):
+        return []
+    if xfv is None:
+        xfv = _load_json("xfv.json")
+    by_player = (xfv or {}).get("by_player")
+    if not isinstance(by_player, dict):
+        return []
+    rows: list[dict] = []
+    for pl in (ts.get("players") or []):
+        key = pl.get("player_key")
+        xr = by_player.get(key) if key else None
+        mid = pl.get("mlbam_id")
+        if not xr or not mid:
+            continue
+        efv_q = xr.get("xfv_grade_quantile")
+        if efv_q is None:
+            efv_q = xr.get("xfv_grade")
+        if efv_q is None:
+            continue
+        pb = xr.get("p_bucket") or {}
+        star = pb.get("star") or 0.0
+        bust = xr.get("p_bust")
+        if bust is None:
+            bust = pb.get("bust") or 0.0
+        surplus = xr.get("surplus_mm") or 0.0
+        eta = pl.get("eta")
+        eta_year = eta.get("year") if isinstance(eta, dict) else (eta if isinstance(eta, int) else None)
+        if eta_year:
+            eta_prox = max(0.0, 1.0 - _DYN_ETA_DECAY * max(0, eta_year - season))
+        else:
+            eta_prox = _DYN_ETA_UNKNOWN
+        surplus_norm = max(-0.5, min(1.5, surplus / 100.0))
+        score = (efv_q + 10.0 * star - 6.0 * bust + 4.0 * eta_prox + 2.0 * surplus_norm)
+        rows.append({
+            "mlbam": mid, "name": pl.get("player_name"), "org": pl.get("org"),
+            "pos": pl.get("position"), "eta": eta_year,
+            "efv": round(efv_q, 1), "star": round(star * 100),
+            "bust": round((bust or 0.0) * 100), "surplus": round(surplus),
+            "band": [xr.get("band_p10_mm"), xr.get("band_p90_mm")],
+            "score": round(score, 1),
+        })
+    rows.sort(key=lambda r: -(r["score"] if r.get("score") is not None else -1e9))
+    rows = rows[:n]
+    for i, r in enumerate(rows):
+        r["rank"] = i + 1
+        r["tier"] = _dynasty_tier(i + 1)
+    return rows
 
 
 def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
@@ -395,8 +487,10 @@ def _start_score(p: dict, opp_org: str | None, teams_ctx: dict) -> dict | None:
 
 
 def build_sections(payload: dict) -> dict:
-    """Organize the projected pool + schedule + skill context into the 8 sections.
-    Sections reference players by mlbam (the client resolves against `players`)."""
+    """Organize the projected pool + schedule + skill context into the 9 sections.
+    ROS/streamer/buy-sell/closer sections reference the MLB pool by mlbam (client
+    resolves against `players`); the prospect sections (callup_watch, dynasty) are
+    self-contained rows joined from timeseries.json + xfv.json."""
     players = payload["players"]
     hitters = [p for p in players if p["side"] == "hit"]
     sps = [p for p in players if p.get("pos") == "SP"]
@@ -470,7 +564,11 @@ def build_sections(payload: dict) -> dict:
     two.sort(key=lambda s: -(s.get("total_fgp") or -1e9))
     sections["two_start"] = two
 
-    sections["callup_watch"] = _callup_watch()
+    # Parse the ~66MB timeseries.json ONCE for both prospect-roster sections.
+    ts = _load_json("timeseries.json")
+    sections["callup_watch"] = _callup_watch(ts)
+    season = payload.get("season") or datetime.now(timezone.utc).year
+    sections["dynasty"] = _dynasty_prospects(ts, season)
     return sections
 
 
