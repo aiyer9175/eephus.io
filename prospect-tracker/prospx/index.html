@@ -17336,11 +17336,25 @@ function renderActives() {
   }).join("");
 
   const _convHdr = convictionBanner();
-  document.getElementById("rows").innerHTML = filtered.length
+  const _rowsEl = document.getElementById("rows");
+  // Preserve keyboard focus across the innerHTML swap. A board re-paint (e.g. an
+  // async sidecar landing via scheduleRender) can fire between a keyboard user
+  // focusing a sort-header and pressing Enter; the swap destroys the focused
+  // element, dropping focus to <body>, so the Enter/Space resort (which reads
+  // e.target) silently no-ops. Remember the focused header's key and restore it
+  // to the fresh element after the swap.
+  const _fa = document.activeElement;
+  const _keepKey = (_fa && _rowsEl && _rowsEl.contains(_fa) && _fa.classList
+      && _fa.classList.contains("sort-header")) ? _fa.getAttribute("data-sort-key") : null;
+  _rowsEl.innerHTML = filtered.length
     ? _convHdr + paginationStripTop + header + rows + paginationStrip
     : _convHdr + `<div class="state-message">No active prospects match these filters.</div>`;
   // Highlight the active sort column in the fresh header.
   syncSortHeaderActive();
+  if (_keepKey) {
+    const _kh = _rowsEl.querySelector(`.sort-header[data-sort-key="${_keepKey}"]`);
+    if (_kh) { if (!_kh.hasAttribute("tabindex")) _kh.setAttribute("tabindex", "0"); _kh.focus(); }
+  }
 }
 
 function renderSpotlights() {
