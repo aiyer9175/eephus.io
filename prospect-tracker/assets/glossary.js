@@ -1147,10 +1147,24 @@ function renderMethodology() {
       .catch(() => { _S.registry = { __error: true };
         if (_S.view === "methodology") renderMethodology(); });
   }
+  // Live calibration monitor (finding 37): lazy-load the eFV self-monitoring
+  // artifact, same guard/re-render pattern as the registry above. Diagnostic
+  // only; a failed fetch or absent artifact simply drops its sub-block (the
+  // section renders nothing) - it is dark-launched, so the dev artifact is a
+  // stale vintage that the canonical box regenerates nightly.
+  if (!_S.reliability && !_S.relLoading) {
+    _S.relLoading = true;
+    fetch("/data/xfv_reliability.json", { cache: "no-cache" })
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => { _S.reliability = j || { __error: true };
+        if (_S.view === "methodology") renderMethodology(); })
+      .catch(() => { _S.reliability = { __error: true };
+        if (_S.view === "methodology") renderMethodology(); });
+  }
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   const printHead = `<div id="methodology-print-head">eephus.io - Methodology · eephus.io/glossary · ${escapeHtml(today)}</div>`;
   const toolbar = `<div class="meth-toolbar"><button class="meth-export-btn" type="button" onclick="_printMethodology()" title="Print or save the methodology as a PDF">⎙ Export methodology (PDF)</button></div>`;
-  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methInteractivesHTML();
+  el.innerHTML = printHead + toolbar + _methProseHTML() + _methRegistryHTML() + _methReliabilityHTML() + _methInteractivesHTML();
   if (window.EEPHUS_GL) window.EEPHUS_GL.wire(el);
   // Populate the interactives' initial state.
   _gx2080(); _gxConsensus(); _gxSurplus();
@@ -1201,6 +1215,95 @@ function _methRegistryHTML() {
     <div class="source-comp-eyebrow"><span class="scx-dot"></span>Model accountability · the registry, rendered verbatim</div>
     <h2 class="meth-h">Which models are validated - and which aren't</h2>
     ${body}
+  </div>`;
+}
+
+// Live calibration monitor (finding 37): the flagship self-monitoring, made
+// visible. efv_reliability.build writes data/xfv_reliability.json nightly -
+// forward-chained out-of-fold reliability for the SHIPPED eFV 5-bucket outcome
+// distribution, plus a bust-bucket ECE drift tripwire. No competitor surfaces
+// live model calibration. Strictly DIAGNOSTIC: no served eFV/WAR/grade/surplus
+// number depends on these curves; they only measure them.
+//
+// Degrades GRACEFULLY and ADDITIVELY. The whole section returns "" when the
+// artifact is absent / errored / an unexpected shape, and each sub-block
+// renders ONLY when its own field is present, so the dark-launched dev vintage
+// (which predates tripwire + per_tier_reliability) shows just the per-bucket
+// ECE it does carry, while the freshly regenerated box artifact shows the full
+// monitor. Nothing here can 404 or throw a visible error.
+const _REL_BUCKET_LABEL = { bust: "Bust", bench: "Bench", regular: "Regular",
+                            good: "Good", star: "Star" };
+const _REL_BUCKET_ORDER = ["bust", "bench", "regular", "good", "star"];
+function _methReliabilityHTML() {
+  const rel = _S.reliability;
+  // Silent while the fetch is in flight (null) or failed (__error); the
+  // resolved re-render fills it in, and a failure just stays hidden.
+  if (!rel || rel.__error || typeof rel !== "object") return "";
+  const before = rel.reliability_curves_pooled && rel.reliability_curves_pooled.before;
+  if (!before || typeof before !== "object") return "";   // unexpected shape - hide
+  const f3 = v => (v == null || isNaN(Number(v)) ? "-" : Number(v).toFixed(3));
+  const pct = v => (v == null || isNaN(Number(v)) ? "-" : Math.round(Number(v) * 100) + "%");
+
+  // --- Tripwire status banner (fresh artifact only) ------------------------
+  // Composed from tripped/bust_ece/threshold only; the artifact's own note
+  // string is NOT rendered verbatim (it carries a dash character), so the
+  // page copy stays owner-clean regardless of the artifact vintage.
+  let tripHTML = "";
+  const tw = rel.tripwire;
+  if (tw && typeof tw === "object" && tw.bust_ece != null && tw.threshold != null) {
+    const tripped = !!tw.tripped;
+    tripHTML = `<div class="meth-verdict${tripped ? "" : " is-good"}"${tripped ? ' style="border-left-color:var(--down);"' : ""}>
+      <strong>${tripped ? "Drift flagged for review" : "Calibration within the documented band"}</strong>
+      · bust-bucket calibration error (ECE) is <b>${f3(tw.bust_ece)}</b> against a drift threshold of <b>${f3(tw.threshold)}</b>${tripped
+        ? ", so the low-probability bust bin has widened and is queued for a calibration review."
+        : ", so no drift is flagged this run."}</div>`;
+  }
+
+  // --- Per-outcome-bucket calibration error (both vintages carry this) ------
+  const bucketRows = _REL_BUCKET_ORDER
+    .filter(b => before[b] && before[b].ece != null)
+    .map(b => `<tr><td class="meth-td-tier">${_REL_BUCKET_LABEL[b]}</td><td>${f3(before[b].ece)}</td></tr>`)
+    .join("");
+  const bucketTable = bucketRows ? `<div class="meth-table-wrap">
+      <div class="meth-table-title">Calibration error by outcome bucket</div>
+      <table class="meth-table"><thead><tr><th>Outcome</th><th>ECE</th></tr></thead>
+      <tbody>${bucketRows}</tbody></table></div>` : "";
+
+  // --- Predicted vs realized by consensus-FV tier (fresh artifact only) -----
+  const tiers = rel.per_tier_reliability;
+  let tierTable = "";
+  if (tiers && typeof tiers === "object") {
+    const tks = Object.keys(tiers)
+      .filter(k => tiers[k] && tiers[k].gap != null)
+      .sort((a, b) => Number(a) - Number(b));
+    if (tks.length) {
+      const rows = tks.map(k => {
+        const t = tiers[k], rf = t.realized_freq || {}, mp = t.mean_p || {};
+        return `<tr><td class="meth-td-tier">FV ${escapeHtml(k)}</td><td>${t.n != null ? t.n : "-"}</td>
+          <td>${pct(mp.star)}</td><td>${pct(rf.star)}</td>
+          <td>${pct(mp.bust)}</td><td>${pct(rf.bust)}</td>
+          <td>${f3(t.gap)}</td></tr>`;
+      }).join("");
+      tierTable = `<div class="meth-table-wrap">
+        <div class="meth-table-title">Predicted vs realized outcome, by consensus-FV tier</div>
+        <table class="meth-table"><thead><tr><th>Tier</th><th>n</th>
+          <th>Star pred</th><th>Star obs</th><th>Bust pred</th><th>Bust obs</th><th>Mean gap</th></tr></thead>
+        <tbody>${rows}</tbody></table></div>`;
+    }
+  }
+
+  // Fully hide when there is genuinely nothing to show.
+  if (!tripHTML && !bucketTable && !tierTable) return "";
+
+  const nPool = rel.pooled_n != null ? ` · n=${rel.pooled_n}` : "";
+  const gen = rel.generated_at ? ` · regenerated ${escapeHtml(String(rel.generated_at))}` : "";
+  return `<div class="source-comp-wrap">
+    <div class="source-comp-eyebrow"><span class="scx-dot"></span>Live calibration monitor · the model grading itself</div>
+    <h2 class="meth-h">Is eFV still calibrated?</h2>
+    <p class="meth-note">Every night the shipped eFV five-bucket outcome distribution is re-scored forward-chained out-of-fold against resolved outcomes${nPool}${gen}. This is the model's own self-monitoring: a widening bust-bucket calibration gap trips a review flag. Diagnostic only - no grade, WAR, or dollar figure depends on these curves; they only measure them.</p>
+    ${tripHTML}
+    <div class="meth-tables">${bucketTable}${tierTable}</div>
+    <p class="meth-note">ECE (expected calibration error) is the bin-weighted gap between the probability the model assigned an outcome and how often it actually happened; lower is better. Honest read: low-probability bust calls land above the diagonal, meaning more prospects bust than the model predicts, so bust risk on higher-FV prospects runs understated - a standing miscalibration the tripwire watches for widening.</p>
   </div>`;
 }
 
