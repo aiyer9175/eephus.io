@@ -1,0 +1,169 @@
+{
+  "pairwise_correlation_matrix": {
+    "velocity": {
+      "velocity": 1.0,
+      "movement_pfx_z": 0.3308,
+      "spin_rate": 0.2722,
+      "pitch_entropy": -0.4417,
+      "zone_rate": -0.0688,
+      "chase_rate": -0.0207,
+      "whiff_rate": 0.1987,
+      "avg_launch_speed": 0.0626,
+      "hard_hit_rate": 0.0917,
+      "ground_ball_rate": 0.1414
+    },
+    "movement_pfx_z": {
+      "velocity": 0.3308,
+      "movement_pfx_z": 1.0,
+      "spin_rate": -0.057,
+      "pitch_entropy": -0.1219,
+      "zone_rate": 0.1535,
+      "chase_rate": -0.1058,
+      "whiff_rate": 0.0477,
+      "avg_launch_speed": 0.0815,
+      "hard_hit_rate": -0.0294,
+      "ground_ball_rate": -0.2522
+    },
+    "spin_rate": {
+      "velocity": 0.2722,
+      "movement_pfx_z": -0.057,
+      "spin_rate": 1.0,
+      "pitch_entropy": -0.3337,
+      "zone_rate": -0.0511,
+      "chase_rate": -0.0502,
+      "whiff_rate": 0.1517,
+      "avg_launch_speed": -0.0356,
+      "hard_hit_rate": -0.0892,
+      "ground_ball_rate": -0.0081
+    },
+    "pitch_entropy": {
+      "velocity": -0.4417,
+      "movement_pfx_z": -0.1219,
+      "spin_rate": -0.3337,
+      "pitch_entropy": 1.0,
+      "zone_rate": 0.0177,
+      "chase_rate": 0.1655,
+      "whiff_rate": -0.0752,
+      "avg_launch_speed": -0.0025,
+      "hard_hit_rate": -0.0047,
+      "ground_ball_rate": -0.0376
+    },
+    "zone_rate": {
+      "velocity": -0.0688,
+      "movement_pfx_z": 0.1535,
+      "spin_rate": -0.0511,
+      "pitch_entropy": 0.0177,
+      "zone_rate": 1.0,
+      "chase_rate": -0.0233,
+      "whiff_rate": -0.2761,
+      "avg_launch_speed": 0.0667,
+      "hard_hit_rate": 0.0136,
+      "ground_ball_rate": -0.0708
+    },
+    "chase_rate": {
+      "velocity": -0.0207,
+      "movement_pfx_z": -0.1058,
+      "spin_rate": -0.0502,
+      "pitch_entropy": 0.1655,
+      "zone_rate": -0.0233,
+      "chase_rate": 1.0,
+      "whiff_rate": 0.1758,
+      "avg_launch_speed": -0.0381,
+      "hard_hit_rate": -0.0142,
+      "ground_ball_rate": -0.0379
+    },
+    "whiff_rate": {
+      "velocity": 0.1987,
+      "movement_pfx_z": 0.0477,
+      "spin_rate": 0.1517,
+      "pitch_entropy": -0.0752,
+      "zone_rate": -0.2761,
+      "chase_rate": 0.1758,
+      "whiff_rate": 1.0,
+      "avg_launch_speed": -0.0544,
+      "hard_hit_rate": -0.0782,
+      "ground_ball_rate": 0.0306
+    },
+    "avg_launch_speed": {
+      "velocity": 0.0626,
+      "movement_pfx_z": 0.0815,
+      "spin_rate": -0.0356,
+      "pitch_entropy": -0.0025,
+      "zone_rate": 0.0667,
+      "chase_rate": -0.0381,
+      "whiff_rate": -0.0544,
+      "avg_launch_speed": 1.0,
+      "hard_hit_rate": 0.7238,
+      "ground_ball_rate": -0.0891
+    },
+    "hard_hit_rate": {
+      "velocity": 0.0917,
+      "movement_pfx_z": -0.0294,
+      "spin_rate": -0.0892,
+      "pitch_entropy": -0.0047,
+      "zone_rate": 0.0136,
+      "chase_rate": -0.0142,
+      "whiff_rate": -0.0782,
+      "avg_launch_speed": 0.7238,
+      "hard_hit_rate": 1.0,
+      "ground_ball_rate": 0.0196
+    },
+    "ground_ball_rate": {
+      "velocity": 0.1414,
+      "movement_pfx_z": -0.2522,
+      "spin_rate": -0.0081,
+      "pitch_entropy": -0.0376,
+      "zone_rate": -0.0708,
+      "chase_rate": -0.0379,
+      "whiff_rate": 0.0306,
+      "avg_launch_speed": -0.0891,
+      "hard_hit_rate": 0.0196,
+      "ground_ball_rate": 1.0
+    }
+  },
+  "partial_correlations": {
+    "velocity_vs_whiff_controlling_for_movement_spin": {
+      "partial_r": 0.1556,
+      "n": 600,
+      "controls": [
+        "movement_pfx_z",
+        "spin_rate"
+      ]
+    },
+    "whiff_vs_avg_launch_speed_controlling_for_physical": {
+      "partial_r": -0.0639,
+      "n": 577,
+      "controls": [
+        "velocity",
+        "movement_pfx_z",
+        "spin_rate"
+      ]
+    },
+    "zone_rate_vs_chase_rate_controlling_for_velocity": {
+      "partial_r": -0.0248,
+      "n": 600,
+      "controls": [
+        "velocity"
+      ]
+    },
+    "spin_rate_vs_movement_controlling_for_velocity": {
+      "partial_r": -0.162,
+      "n": 600,
+      "controls": [
+        "velocity"
+      ]
+    }
+  },
+  "n_pitchers_used": {
+    "velocity": 600,
+    "movement_pfx_z": 600,
+    "spin_rate": 600,
+    "pitch_entropy": 600,
+    "zone_rate": 600,
+    "chase_rate": 600,
+    "whiff_rate": 600,
+    "avg_launch_speed": 577,
+    "hard_hit_rate": 577,
+    "ground_ball_rate": 577
+  }
+}

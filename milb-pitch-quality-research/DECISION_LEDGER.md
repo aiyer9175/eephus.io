@@ -29,3 +29,17 @@ Consequential choices made while building the Phase 1 pilot, in the order they c
 12. **Promotion-seam analysis is explicitly labeled exploratory, using chronological (not hierarchical) level ordering.** "Which level came first" for a given pitcher is used only as a timestamp-ordering, not a confirmed promotion — the public schedule/feed data doesn't distinguish a promotion from a demotion, option, or rehab assignment. Reported transition counts (e.g. `AAA->AA`, not just `AA->AAA`) are shown in the output specifically so this ambiguity isn't hidden by the framing.
 
 13. **`reports/phase1b/` and `scripts/phase1b/` subdirectories, not flat/prefixed files.** Nine new report deliverables plus five new scripts would otherwise clutter Phase 1A's existing flat `reports/`/`scripts/` structure; a subdirectory keeps the two phases' outputs cleanly separable while both phases' scripts still share `scripts/common.py` (via a `sys.path.insert` one level up).
+
+## Phase 1C (incremental information, feature attribution, architecture finalization)
+
+14. **No new API pull for Phase 1C.** The charter explicitly instructs against repeating coverage/trust/missingness/reliability/stabilization/identifiability/variance work — this phase reuses the exact games Phase 1B already cached (`data_cache/{level}/{gamePk}.json`), re-parsed rather than re-fetched.
+
+15. **A new `pitch_dataset_v2.parquet` extends, rather than overwrites, Phase 1B's `pitch_dataset.parquet`.** The only real gap Phase 1C needed to close was `hitData` (weak contact/ground-ball/damage fields) — confirmed present at tracked venues since Phase 1A, but never extracted in Phase 1B (`FEATURE_FEASIBILITY_MATRIX.md` flagged this explicitly). Writing a new file rather than modifying Phase 1B's keeps that phase's reported numbers reproducible from the exact artifact they were computed against.
+
+16. **Incremental-information analysis uses block-wise OLS R² increments via numpy least-squares, not a formal nested-model-comparison framework (e.g. likelihood-ratio tests) or true conditional mutual information.** Consistent with Phase 1B's no-`statsmodels` precedent (still not installed) and the charter's own explicit list of acceptable methods ("incremental variance explained... or other scientifically justified methods"). Explicitly framed as variance bookkeeping, not predictive modeling, per the charter's governing philosophy for this phase ("do not optimize for prediction").
+
+17. **Redundancy is measured via Pearson correlation among family-representative scalar metrics (one per family), not a full covariance/factor-analytic treatment of every column.** A representative-metric approach was chosen for tractability and interpretability (a 10x10 correlation matrix is directly readable; a full multi-column covariance structure across ~20 raw fields would not be, and the charter asks for family-level redundancy, not column-level).
+
+18. **The tracked-population minimum-volume thresholds (≥100 tracked pitches, ≥15 batted balls) are reused from Phase 1B's established viable-population logic, not re-derived.** Keeps the population comparable across phases rather than introducing a new, unexplained threshold.
+
+19. **`reports/phase1c/` and `scripts/phase1c/` subdirectories**, same rationale as Phase 1B's #13 — keeps three phases' outputs cleanly separable.
