@@ -30,3 +30,7 @@ server.*.log
 xrv_models_vaa/
 xwoba_model_metrics.json
 ncaa_statsapi_2026_summary.json
+
+# milb-pitch-quality-research: raw MLB Stats API pulls are cached locally,
+# never committed (large, public-source, regenerable from scripts/)
+milb-pitch-quality-research/data_cache/
