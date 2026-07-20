@@ -10,7 +10,7 @@ The governing document is the **Pitch-Quality Research Charter** (Phase I), repr
 
 This is explicitly **not** a "build MiLB Stuff+" project. It is an investigation into what's recoverable, trustworthy, stable, and portable — and the architecture (if any) should follow from that evidence, not be assumed up front.
 
-## Status: Phase 1 research complete (1A + 1B + 1C) + Architecture & Integration Charter complete — see reports/architecture/FINAL_ARCHITECTURE_RULING.md
+## Status: Phase 1 research (1A+1B+1C) + Architecture Charter + Engineering Charter all complete — see reports/engineering/FINAL_ENGINEERING_RULING.md
 
 **Phase 1A** (bounded pilot) determined available, trustworthy, and portable information: a venue-stratified sample across all 4 levels, real Coverage/Trust/Missingness/Field-Availability matrices (`reports/`), and the headline finding that pitch-tracking coverage is a venue property, not a level property (AAA universal, AA/High-A absent, Low-A confined to 10 spring-training-complex venues). See `reports/DATA_AUDIT_REPORT.md`.
 
@@ -29,6 +29,8 @@ All three research phases share the same standing constraints:
 **The Architecture & Integration Charter** (`reports/architecture/`, 22 deliverables) turns the completed research into a production blueprint — and substantially corrects the original charter's assumed champion. A three-agent survey of the actual `eephus.io` website found that "pitcher eWAR/Contact+/SEM-derived components" (the original charter's named champion) have **zero presence on the live site** — that stack is a private repo not accessible from this environment. What's actually live is `stuff_plus_aaa` (an in-house AAA physics-only model, provisional verdict) and `sem_plus`/`rem_plus` (validated, but a different level/grain entirely). This research now uses a **tiered-champion framing**: `stuff_plus_aaa`/`stuff_plus_external` are the champion for the pitch-quality/arsenal layer this research addresses; the private `pitcher_ewar` stack remains the champion for full pitcher value, a layer this research doesn't touch. Full ruling in `reports/architecture/FINAL_ARCHITECTURE_RULING.md`.
 
 Recommended near-term implementation: 4 of 6 specified modules (Arsenal Construction, Miss-Inducing Ability × 2 variants, Ground-Ball Tendency), each pending a named reliability gap; Physical Stuff redirected toward reconciling with `stuff_plus_aaa` rather than a guaranteed new surface; Damage Suppression held back entirely. See `reports/architecture/IMPLEMENTATION_ROADMAP.md`.
+
+**The Engineering Charter** (`reports/engineering/`, 13 deliverables) resolves the Stuff+ reconciliation question definitively (`STUFF_PLUS_RECONCILIATION.md`: a precise hybrid — Module 1 augments `stuff_plus_aaa` where it operates in AAA, extends independently into tracked Low-A where it doesn't — blocked on reconciling two different public data endpoints), specifies every module's implementable interface (`MODULE_INTERFACES.md`), and reaches a split GO/NO-GO on Module 1 (`MODULE1_READINESS.md`): GO for its independent pipeline and a new PROSPX pitcher-card field, NO-GO for the `stuff_plus_aaa`-augmentation path until the data-source blocker clears. Honest bottom line (`FINAL_ENGINEERING_RULING.md`): every module across four charters of work is still fully unimplemented — documentation and specification are complete, but zero production code exists yet, and no module currently has a real (built, not just designed) downstream consumer.
 
 ## Relationship to `milb-projections/`
 
@@ -54,13 +56,18 @@ milb-pitch-quality-research/
     │                          VARIANCE_STATS.json, PROMOTION_SEAM_STATS.json
     ├── phase1c/             — Phase 1C's 9 deliverables + INCREMENTAL_STATS.json,
     │                          REDUNDANCY_STATS.json, culminating in FINAL_PHASE1_RULING.md
-    └── architecture/         — Architecture & Integration Charter's 22 deliverables
-                               (15 phase docs + SYSTEM_ARCHITECTURE/MODULE_BOOK/DATA_FLOW/
-                               CONSUMER_MAP/FINAL_ARCHITECTURE_RULING/DECISION_LEDGER/
-                               KNOWN_GAPS — the last two scoped to this charter, distinct
-                               from the package-root files of the same name)
+    ├── architecture/         — Architecture & Integration Charter's 22 deliverables
+    │                          (15 phase docs + SYSTEM_ARCHITECTURE/MODULE_BOOK/DATA_FLOW/
+    │                          CONSUMER_MAP/FINAL_ARCHITECTURE_RULING/DECISION_LEDGER/
+    │                          KNOWN_GAPS — the last two scoped to this charter, distinct
+    │                          from the package-root files of the same name)
+    └── engineering/          — Engineering Charter's 13 deliverables: frozen architecture,
+                               module interfaces, Stuff+ reconciliation, consumer wiring/
+                               validation, data contracts, refresh/publication specs,
+                               engineering standards, Module 1 readiness, implementation
+                               sequence, culminating in FINAL_ENGINEERING_RULING.md
 ```
 
 ## Start here
 
-Read `reports/architecture/FINAL_ARCHITECTURE_RULING.md` first — it synthesizes the entire research program (1A-1C) plus the architecture charter into one production-facing ruling and links back to all supporting evidence. For the research detail underneath it: `PILOT_SCOPE.md` and `reports/DATA_AUDIT_REPORT.md` (1A), `reports/phase1b/IDENTIFIABILITY_REPORT.md` (1B), `reports/phase1c/MINIMUM_ARCHITECTURE.md` (1C), `reports/architecture/CURRENT_ECOSYSTEM_MAP.md` (the real-website survey that reframed the champion question).
+Read `reports/engineering/FINAL_ENGINEERING_RULING.md` first — it's the current end state of this entire research program: what's frozen, what's specified, what's blocked, and the one concrete unblocked next action (Module 1's independent implementation path). From there: `reports/engineering/STUFF_PLUS_RECONCILIATION.md` (the central open question, now resolved) and `reports/engineering/MODULE1_READINESS.md` (the GO/NO-GO verdict). For the research/architecture detail underneath: `reports/architecture/FINAL_ARCHITECTURE_RULING.md`, `PILOT_SCOPE.md` and `reports/DATA_AUDIT_REPORT.md` (1A), `reports/phase1b/IDENTIFIABILITY_REPORT.md` (1B), `reports/phase1c/MINIMUM_ARCHITECTURE.md` (1C), `reports/architecture/CURRENT_ECOSYSTEM_MAP.md` (the real-website survey that reframed the champion question).
