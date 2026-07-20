@@ -362,6 +362,26 @@ def _build_rem_pool(rows_2026: list, arsenal, velo, platoon) -> rem_plus.Pool:
     return rem_plus.build_pool(pool)
 
 
+def build_prospect_watch(prospects: list, cap: int = 150) -> list:
+    """The /pal/ prospect conversion watch: the role MISMATCHES worth a look (a
+    scouted starter that profiles as a reliever, or vice versa), gated to real
+    prospects (FV >= 40) and capped. Shape-only (scout tools, no MiLB stuff physics).
+
+    Each entry carries `player_key` so a consumer (prospx pitcher cards) can join
+    the role-fit read back onto its own prospect board by the canonical prospect
+    key -- the reason this is a named helper rather than an inline loop."""
+    watch = []
+    for p in prospects:
+        rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
+        if not rf["mismatch"] or (p.get("fv") or 0) < 40:
+            continue
+        watch.append({"player_key": p.get("player_key"), "name": p["name"],
+                      "org": p.get("org"), "position": p.get("position"),
+                      "fv": p.get("fv"), "tools": p.get("tools"), **rf})
+    watch.sort(key=lambda x: -(x.get("fv") or 0))
+    return watch[:cap]
+
+
 # --------------------------------------------------------------------------- #
 # export
 # --------------------------------------------------------------------------- #
@@ -583,16 +603,10 @@ def export(season: Optional[int] = None, *, out_path: Optional[Path] = None,
 
     # prospect conversion watch (shape-only, no MiLB stuff physics): the role
     # MISMATCHES worth a look (a scouted starter that profiles as a reliever, or
-    # vice versa), gated to real prospects (FV >= 40) and capped.
-    prospect_watch = []
-    for p in prospects:
-        rf = pc.prospect_role_fit(p.get("tools"), p.get("position"))
-        if not rf["mismatch"] or (p.get("fv") or 0) < 40:
-            continue
-        prospect_watch.append({"name": p["name"], "org": p.get("org"), "position": p.get("position"),
-                               "fv": p.get("fv"), "tools": p.get("tools"), **rf})
-    prospect_watch.sort(key=lambda x: -(x.get("fv") or 0))
-    prospect_watch = prospect_watch[:150]
+    # vice versa), gated to real prospects (FV >= 40) and capped. Each entry now
+    # carries player_key so prospx can cross-link the role-fit read onto its
+    # pitcher cards (see build_prospect_watch).
+    prospect_watch = build_prospect_watch(prospects)
 
     payload = {
         "generated_at": today, "season": season,

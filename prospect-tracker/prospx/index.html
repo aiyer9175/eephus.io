@@ -8895,6 +8895,12 @@
         <button class="chip is-multi" data-filter-statcast="below" title="Statcast+ ≤ 95 - below pool mean. Surfaces prospects whose tracked data lags the surface stats; useful for regression-watch.">SC+ below</button>
       </div>
       <div class="filter-group">
+        <span class="filter-label" title="Filter by the SHAPE of the modeled eFV outcome (not its level): the outcome-bucket distribution each graded prospect already carries. Empty = show all. Multiple selected = OR (union). Prior-anchored / provisional grades (no pro track record yet) are excluded since their band is the consensus prior, not a model read.">Risk profile</span>
+        <button class="chip is-multi" data-filter-risk="floor" title="High floor - low modeled bust risk (P(bust) ≤ 40%). Safe, likely to be a real contributor: the win-now trade target.">High floor</button>
+        <button class="chip is-multi" data-filter-risk="lottery" title="Lottery ticket - elevated bust risk but a real good/star ceiling (P(good-or-better) ≥ 10%). Boom-or-bust upside for a rebuild.">Lottery</button>
+        <button class="chip is-multi" data-filter-risk="balanced" title="Balanced - meaningful floor mass with a modest ceiling; the middle of the risk distribution (neither clearly high-floor nor a lottery ticket).">Balanced</button>
+      </div>
+      <div class="filter-group">
         <span class="filter-label" title="Filter prospects by a specific tool grade meeting a minimum threshold. 'Any tool' matches when any one canonical 20-80 grade meets the threshold; pick a specific tool to isolate it.">Tool grade</span>
         <select class="chip" id="tool-filter-key">
           <option value="off"> - off - </option>
@@ -8949,6 +8955,7 @@
             <option value="xfv">eFV (our outcome-grounded grade)</option>
             <option value="fv">Consensus FV</option>
             <option value="xfv_delta">eFV − consensus gap (biggest first)</option>
+            <option value="conviction">Conviction board (boldest bets, both ways)</option>
             <option value="upside">Upside (^) first</option>
             <option value="statcast_plus">Statcast+ (highest)</option>
             <option value="source_confidence">Source confidence (most sources first)</option>
@@ -13655,6 +13662,11 @@ function restoreUIFromState() {
     const k = b.dataset.filterStatcast;
     b.classList.toggle("active", !!(state.statcastFilter && state.statcastFilter.has(k)));
   });
+  // Risk-profile filter chip state (own state slot, OR semantics).
+  document.querySelectorAll("[data-filter-risk]").forEach(b => {
+    const k = b.dataset.filterRisk;
+    b.classList.toggle("active", !!(state.riskFilter && state.riskFilter.has(k)));
+  });
   // v28 - Draft + Overseas chip / select state. Chips read from
   // state.draftPool / state.draftSide / etc.; the FV-indicator multi-
   // selects walk the Set; the sort <select>s mirror state.draftSort /
@@ -13742,7 +13754,7 @@ const REVERSE_SORT_PAIRS = {
 const _INTERNAL_DIR_MAIN_SORTS = new Set([
   "surplus_sv", "surplus_risk", "surplus_p10", "surplus_p90",
   "surplus_pbust", "wag", "star_odds", "opt_pct",
-  "tool", "t_plus",
+  "tool", "t_plus", "conviction",
 ]);
 
 // v29 - Universal post-sort direction helper. Each renderer that owns
@@ -14979,6 +14991,11 @@ const state = {
   // Independent of fvIndicators so the user reads scout-side signals
   // (FV indicators) separately from stats-derived signals (Statcast).
   statcastFilter: new Set(),
+  // Risk-profile filter (set of shape keys: "floor" | "lottery" | "balanced").
+  // Queries the outcome SHAPE each graded prospect already carries (eFV p_bucket
+  // distribution): high-floor (safe), lottery-ticket (boom-or-bust), or balanced.
+  // OR semantics across selections, like statcastFilter. See _riskShape().
+  riskFilter: new Set(),
   // Tool-grade filter - restrict to prospects whose specified tool
   // grade meets a minimum threshold. `toolFilterKey` is "off" (default),
   // "any" (matches the threshold across any single tool), or a canonical
@@ -15318,6 +15335,16 @@ function getFilteredActives() {
       return typeof v === "number" && v >= state.toolFilterMin;
     });
   }
+  // Risk-profile filter - narrow to prospects whose modeled eFV outcome SHAPE
+  // matches a selected risk chip (high-floor / lottery / balanced). OR semantics
+  // across selections; a prospect with no meaningful/model outcome shape (deep
+  // filler, or a prior-anchored grade) is naturally excluded when any chip is on.
+  if (state.riskFilter && state.riskFilter.size) {
+    pool = pool.filter(p => {
+      const shape = _riskShape(p);
+      return shape != null && state.riskFilter.has(shape);
+    });
+  }
   // v30.8 - Per-Statcast-metric sort override. Wins over both
   // toolSortKey and state.sort when active. Each metric extracts
   // its value from statcast_metrics.contact_quality / pitch_movement
@@ -15477,6 +15504,30 @@ function getFilteredActives() {
       return (efvMinusConsensus(x) != null) ? Number(efvMinusConsensus(x)) : -Infinity;
     };
     pool.sort((a, b) => (_gap(b) - _gap(a)) || (efvRankValue(b) - efvRankValue(a)) || fvCmpDesc(a, b));
+  } else if (state.sort === "conviction") {
+    // Conviction board: the biggest CURRENT eFV-vs-consensus disagreements, in
+    // BOTH directions (we grade higher OR lower), ranked by the ABSOLUTE gap so
+    // our boldest bets - up and down - sit at the top. Distinct from xfv_delta
+    // (which is signed, buys-only-at-top). Prior-anchored / provisional grades
+    // are EXCLUDED (gap == null -> sinks): their small vs-consensus gap is 20-80
+    // rank placement, not a model read (B5), so they must not pollute the bets.
+    // Reverse flag handled inside the comparator so excluded rows stay pinned to
+    // the bottom in both directions (_applySortDir skips this key).
+    const _absGap = p => {
+      const x = getEfv(p);
+      if (!x || x.xfv_grade == null || x.xfv_ungraded || x.xfv_provisional) return null;
+      const d = efvMinusConsensus(x);
+      return (d != null && isFinite(d)) ? Math.abs(Number(d)) : null;
+    };
+    const _rev = !!(state.sortRev && state.sortRev.sort);
+    pool.sort((a, b) => {
+      const av = _absGap(a), bv = _absGap(b);
+      const am = (av == null), bm = (bv == null);
+      if (am && bm) return efvRankValue(b) - efvRankValue(a) || fvCmpDesc(a, b);
+      if (am) return 1;
+      if (bm) return -1;
+      return (_rev ? (av - bv) : (bv - av)) || (efvRankValue(b) - efvRankValue(a)) || fvCmpDesc(a, b);
+    });
   } else if (state.sort === "surplus_sv" || state.sort === "surplus_risk"
              || state.sort === "surplus_p10" || state.sort === "surplus_p90"
              || state.sort === "surplus_pbust" || state.sort === "wag") {
@@ -17184,6 +17235,31 @@ function renderActiveContextRail(railId = "active-context-rail") {
   }
 }
 
+// Conviction-board spotlight header. Shown ONLY when the board is on the
+// "conviction" sort (biggest current eFV-vs-consensus bets, both ways). Anchors
+// the live bets to the resolved track record: on disagreements this size, how
+// often was eFV closer to the realized outcome? That credibility line comes from
+// data/source_backtest.json (accuracy.xfv_vs_consensus_detail), lazily fetched via
+// ensureEfvTrack() - the SAME artifact the Debuted-tab track record reads. The
+// banner degrades to just the framing line until the artifact lands, then repaints
+// (ensureEfvTrack calls scheduleRender). Pure additive: empty string on every
+// other sort, so the default board is untouched.
+function convictionBanner() {
+  if (state.sort !== "conviction") return "";
+  if (typeof ensureEfvTrack === "function") ensureEfvTrack();
+  const det = (_EFV_TRACK && _EFV_TRACK.bt && _EFV_TRACK.bt.accuracy)
+              ? _EFV_TRACK.bt.accuracy.xfv_vs_consensus_detail : null;
+  let cred = "";
+  if (det && det.xfv_right_share_on_disagreements != null && det.n_disagreements != null) {
+    const pct = Math.round(det.xfv_right_share_on_disagreements * 100);
+    cred = `<div style="font-family:var(--font-mono);font-size:11px;color:var(--text-secondary);line-height:1.5;margin-top:6px;">Track record: on <b style="color:var(--neon-cyan);">${det.n_disagreements}</b> resolved disagreements this size (grades at least 15 percentile points apart), eFV landed closer to the realized MLB outcome <b style="color:var(--neon-cyan);">${pct}%</b> of the time <span style="color:var(--text-tertiary);">· out-of-sample, debuted cohorts. See the full track record on the Debuted tab.</span></div>`;
+  }
+  return `<div class="conviction-banner" style="margin:0 0 12px;border:1px solid var(--border-light);border-radius:var(--radius-sm);background:var(--bg-secondary);padding:10px 14px;">
+      <div style="font-family:var(--font-retro);font-size:13px;font-weight:600;color:var(--text-primary);">Conviction board <span style="color:var(--text-tertiary);font-weight:400;">· our boldest bets vs the consensus</span></div>
+      <div style="font-size:11px;color:var(--text-tertiary);line-height:1.5;margin-top:4px;">Ranked by the size of the gap between eFV and the scouting consensus right now, in both directions - where we grade a prospect furthest above OR below the industry. Prior-anchored grades (no pro track record yet) are held out; these are model reads, not prior placement.</div>
+      ${cred}
+    </div>`;
+}
 function renderActives() {
   // v30.7 - News widget moved out of the global header into the
   // Transactions section (where it's the natural fit). MiLB Prospects
@@ -17259,9 +17335,10 @@ function renderActives() {
     `;
   }).join("");
 
+  const _convHdr = convictionBanner();
   document.getElementById("rows").innerHTML = filtered.length
-    ? paginationStripTop + header + rows + paginationStrip
-    : `<div class="state-message">No active prospects match these filters.</div>`;
+    ? _convHdr + paginationStripTop + header + rows + paginationStrip
+    : _convHdr + `<div class="state-message">No active prospects match these filters.</div>`;
   // Highlight the active sort column in the fresh header.
   syncSortHeaderActive();
 }
@@ -30851,6 +30928,66 @@ function efvProxyPanel(p) {
       <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">Faster-resolving <strong>leading indicator</strong>, not eFV: predicts this prospect's debut-season Statcast quality from the pre-debut profile${r != null ? ` (out-of-sample r ${r.toFixed(2)} on recent debut cohorts)` : ""}. MLB average xwOBA ≈ .310. Survivorship-limited (debut cohort); provisional.</div>
     </div>`;
 }
+// PAL role-conversion cross-link (data/pal.json prospect_watch): the Pitcher
+// Alchemy Lab flags pitcher prospects whose scouted role and shape DISAGREE (a
+// starter that profiles as a reliever, or a reliever that could start). Surface
+// that read as a compact chip on the pitcher's detail card, linking to /pal/.
+// Lazy: pal.json loads on the first pitcher-card render; the chip is hidden when
+// the artifact is absent OR the prospect isn't in the watch list (graceful).
+// Join by player_key (exact, once pal_export re-runs) with a name+org fallback so
+// the chip works against the currently-committed pal.json too.
+let _PAL_FIT = null, _PAL_FIT_LOADING = false;
+function _palFitKey(name, org) {
+  return (typeof _deaccent === "function" ? _deaccent(name || "") : String(name || "").toLowerCase())
+    + "|" + String(org || "").toLowerCase();
+}
+function ensurePalFit() {
+  if (_PAL_FIT !== null || _PAL_FIT_LOADING) return;
+  _PAL_FIT_LOADING = true;
+  fetch("/data/pal.json", { cache: "no-cache" })
+    .then(r => (r.ok ? r.json() : null))
+    .then(j => {
+      const byKey = {}, byNameOrg = {};
+      const watch = (j && j.prospect_watch) || [];
+      for (const w of watch) {
+        if (!w) continue;
+        if (w.player_key) byKey[w.player_key] = w;
+        if (w.name) byNameOrg[_palFitKey(w.name, w.org)] = w;
+      }
+      _PAL_FIT = { byKey, byNameOrg };
+      scheduleRender();
+    })
+    .catch(() => { _PAL_FIT = { byKey: {}, byNameOrg: {} }; });
+}
+function _palFitFor(p) {
+  if (!_PAL_FIT || !p) return null;
+  if (p.player_key && _PAL_FIT.byKey[p.player_key]) return _PAL_FIT.byKey[p.player_key];
+  const w = _PAL_FIT.byNameOrg[_palFitKey(p.player_name, p.org)];
+  return w || null;
+}
+function palFitPanel(p) {
+  if (!p) return "";
+  const isPit = !!(p.statline && p.statline.is_pitcher);
+  if (!isPit) return "";               // pitcher prospects only
+  ensurePalFit();                      // lazy-load on the first pitcher card
+  const w = _palFitFor(p);
+  if (!w || !w.mismatch) return "";
+  const dir = (w.role === "SP" && w.lean === "RP") ? "Starter → Reliever"
+            : (w.role === "RP" && w.lean === "SP") ? "Reliever → Starter" : null;
+  if (!dir) return "";                 // only clear SP<->RP mismatches
+  const shape = (w.starter_shape != null && isFinite(w.starter_shape))
+              ? Math.round(Number(w.starter_shape)) : null;
+  const lead = (w.role === "SP")
+    ? "Scouted as a starter, but the arsenal + command profile leans relief"
+    : "Scouted in relief, but the arsenal depth + command could carry a rotation spot";
+  return `<div class="detail-card" style="border:1px solid var(--border-light);border-radius:6px;padding:10px 14px;margin-bottom:12px;background:var(--bg-secondary);">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;">
+        <div style="font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-tertiary);font-weight:700;">PAL role-conversion read</div>
+        <a href="/pal/#prospects" style="font-family:var(--font-mono);font-size:12px;font-weight:700;color:var(--neon-cyan);text-decoration:none;white-space:nowrap;">${escapeHtml(dir)} →</a>
+      </div>
+      <div style="font-size:10px;color:var(--text-tertiary);line-height:1.45;margin-top:5px;">${escapeHtml(lead)}${shape != null ? ` (starter shape <b style="color:var(--text-secondary);">${shape}/100</b>)` : ""}. Shape-only screen from the scout tool grades - open the <strong>Pitcher Alchemy Lab</strong> for the full role-fit breakdown.</div>
+    </div>`;
+}
 // ===== eFV vs consensus: the track record (C1) + reliability diagram (C2) ==
 // A collapsed panel at the top of the Debuted tab (the retrospective
 // eFV-vs-consensus view). Every number comes straight from a committed eval
@@ -31222,6 +31359,29 @@ function efvMinusConsensus(x) {
   if (x && x.xfv_grade_realized != null && x.consensus_fv != null)
     return Math.round((x.xfv_grade_realized - x.consensus_fv) * 10) / 10;
   return (x && x.xfv_minus_consensus != null) ? x.xfv_minus_consensus : null;
+}
+// Risk-profile shape from the eFV outcome-bucket distribution the prospect already
+// carries (p_bucket: {bust, bench, regular, good, star}, summing to 1). Returns
+// "floor" | "lottery" | "balanced" | null. This is the SHAPE of the modeled
+// outcome, not its level:
+//   floor    - low bust probability (safe, likely to be a real contributor)
+//   lottery  - elevated bust risk BUT a real good/star ceiling (boom-or-bust)
+//   balanced - meaningful floor mass with a modest ceiling (the middle)
+//   null     - deep filler with no meaningful outcome shape, OR a grade with no
+//              model outcome read (prior-anchored / provisional) which is excluded
+//              because its band is the consensus prior, not a model read (B5).
+function _riskShape(p) {
+  const x = (typeof getEfv === "function") ? getEfv(p) : null;
+  if (!x || x.xfv_grade == null || x.xfv_ungraded || x.xfv_provisional) return null;
+  const b = x.p_bucket || {};
+  const bust = (x.p_bust != null) ? Number(x.p_bust)
+             : (b.bust != null) ? Number(b.bust) : null;
+  if (bust == null || !isFinite(bust)) return null;
+  const upside = (Number(b.good) || 0) + (Number(b.star) || 0);   // P(good-or-better)
+  if (bust <= 0.40) return "floor";        // safe, high-floor
+  if (upside >= 0.10) return "lottery";    // real ceiling despite real bust risk
+  if (bust <= 0.75) return "balanced";     // meaningful floor mass, modest ceiling
+  return null;                             // deep filler: no meaningful shape
 }
 // Tooltip describing eFV vs consensus + the outcome read.
 function efvTooltip(x) {
@@ -32145,6 +32305,7 @@ function _gfxSubtitle(total, cap) {
   const parts = [];
   const SORT = {
     xfv: "by eFV", fv: "by consensus FV", upside: "upside first", statcast_plus: "by Statcast+",
+    xfv_delta: "by eFV − consensus gap", conviction: "conviction (boldest bets vs consensus)",
     tool: "by tool grade", stock_movers: "biggest FV movers", source_confidence: "most-corroborated FV",
     surplus_sv: "by expected surplus value", surplus_risk: "by risk-adjusted SV",
     surplus_p90: "by ceiling (P90)", surplus_p10: "by floor (P10)", surplus_pbust: "lowest bust risk",
@@ -32168,6 +32329,10 @@ function _gfxSubtitle(total, cap) {
     }
     if (state.statcastFilter && state.statcastFilter.size) {
       for (const tier of state.statcastFilter) parts.push(`SC+ ${tier}`);
+    }
+    if (state.riskFilter && state.riskFilter.size) {
+      const RISK = { floor: "high floor", lottery: "lottery ticket", balanced: "balanced risk" };
+      for (const shape of state.riskFilter) parts.push(RISK[shape] || shape);
     }
     if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
       const _tl = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
@@ -34692,6 +34857,11 @@ document.addEventListener("click", (e) => {
         state.statcastFilter.delete(key.slice(3));
       }
       break;
+    case key.startsWith("risk:"):
+      if (state.riskFilter && state.riskFilter.delete) {
+        state.riskFilter.delete(key.slice(5));
+      }
+      break;
   }
   if (needsListPagesReset) resetListPages();
   restoreUIFromState();
@@ -36137,6 +36307,7 @@ function activeFilterCount() {
   // strip. Each selected FV indicator counts individually.
   if (state.fvIndicators && state.fvIndicators.size) n += state.fvIndicators.size;
   if (state.statcastFilter && state.statcastFilter.size) n += state.statcastFilter.size;
+  if (state.riskFilter && state.riskFilter.size) n += state.riskFilter.size;
   if (state.toolSortKey && state.toolSortKey !== "off") n++;
   if (state.statcastSortKey && state.statcastSortKey !== "off") n++;
   if (state.search) n++;
@@ -36173,6 +36344,10 @@ function renderActiveFiltersStrip() {
   }
   if (state.statcastFilter && state.statcastFilter.size) {
     for (const tier of state.statcastFilter) chip("Statcast", `SC+ ${tier}`, `sc:${tier}`);
+  }
+  if (state.riskFilter && state.riskFilter.size) {
+    const RISK = { floor: "High floor", lottery: "Lottery", balanced: "Balanced" };
+    for (const shape of state.riskFilter) chip("Risk", RISK[shape] || shape, `risk:${shape}`);
   }
   if (state.toolFilterKey && state.toolFilterKey !== "off" && state.toolFilterMin > 0) {
     const label = toolAbbrev ? toolAbbrev(state.toolFilterKey).toUpperCase() : state.toolFilterKey;
@@ -47389,7 +47564,8 @@ function renderPlayerDetail(key) {
   const playerNewsSection = makePlayerNewsSection(p);
   const efvCardHtml = efvDetailCard(p);   // eFV outcome read (primary grade's distribution + surplus)
   const efvProxyHtml = (typeof efvProxyPanel === "function") ? efvProxyPanel(p) : "";  // leading indicator
-  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
+  const palFitHtml = (typeof palFitPanel === "function") ? palFitPanel(p) : "";  // PAL role-conversion cross-link (pitchers)
+  const overviewHtml = [summaryGridHtml, efvCardHtml, efvProxyHtml, palFitHtml, valuationHtml, chartSection, playerNewsSection, scoutReportsOnOverview, sourceSection, noteSection]
     .filter(Boolean).join("");
   // v30.8 - Recent gameLogs viz. Reads p.statcast_metrics.recent_games
   // (populated by the per-player MLB Stats API gameLog pass). When
@@ -52546,6 +52722,20 @@ function attachHandlers() {
       render();
     });
   });
+  // Risk-profile filter chip group (multi-select, OR semantics). Same shape as
+  // the Statcast handler above, on its own state slot (state.riskFilter).
+  document.querySelectorAll("[data-filter-risk]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const key = btn.dataset.filterRisk;
+      if (!key) return;
+      if (!state.riskFilter) state.riskFilter = new Set();
+      if (state.riskFilter.has(key)) state.riskFilter.delete(key);
+      else state.riskFilter.add(key);
+      btn.classList.toggle("active", state.riskFilter.has(key));
+      resetListPages();
+      render();
+    });
+  });
 
   // v28 - Generic collapsible-bar toggle. Any element with
   // data-collapse-target="<id>" flips the target's .is-open class +
@@ -53023,6 +53213,7 @@ function _resetPageFilters(page) {
     state.healthFilter   = "all";
     state.fvIndicators   = new Set();
     state.statcastFilter = new Set();
+    state.riskFilter     = new Set();
     state.toolFilterKey  = "off";
     state.toolFilterMin  = 0;
     state.toolSortKey    = "off";
