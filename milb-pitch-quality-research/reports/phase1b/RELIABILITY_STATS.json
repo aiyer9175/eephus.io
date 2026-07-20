@@ -1,0 +1,2168 @@
+{
+  "AAA": {
+    "whiff_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Whiffs per swing -- outcome-only, no tracking required.",
+      "n_qualifying_pitches": 50380,
+      "split_half": {
+        "r_half": 0.1954,
+        "r_full_spearman_brown": 0.3269,
+        "n_pitchers": 660
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2801,
+        "n_pitchers": 82
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1954,
+          "r_full_spearman_brown": 0.3269,
+          "n_pitchers": 660,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.318,
+          "r_full_spearman_brown": 0.4825,
+          "n_pitchers": 359,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.3226,
+          "r_full_spearman_brown": 0.4878,
+          "n_pitchers": 131,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.6042,
+          "r_full_spearman_brown": 0.7533,
+          "n_pitchers": 26,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "called_strike_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Called strikes per taken pitch -- outcome-only.",
+      "n_qualifying_pitches": 57758,
+      "split_half": {
+        "r_half": -0.0464,
+        "r_full_spearman_brown": -0.0973,
+        "n_pitchers": 695
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0416,
+        "n_pitchers": 103
+      },
+      "stabilization_curve": [
+        {
+          "r_half": -0.0464,
+          "r_full_spearman_brown": -0.0973,
+          "n_pitchers": 695,
+          "min_n": 20
+        },
+        {
+          "r_half": -0.0409,
+          "r_full_spearman_brown": -0.0853,
+          "n_pitchers": 412,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.0326,
+          "r_full_spearman_brown": 0.0631,
+          "n_pitchers": 170,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.1722,
+          "r_full_spearman_brown": 0.2939,
+          "n_pitchers": 41,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "swing_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Swings per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 108138,
+      "split_half": {
+        "r_half": 0.1416,
+        "r_full_spearman_brown": 0.248,
+        "n_pitchers": 793
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1266,
+        "n_pitchers": 159
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1416,
+          "r_full_spearman_brown": 0.248,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.1718,
+          "r_full_spearman_brown": 0.2932,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.2321,
+          "r_full_spearman_brown": 0.3768,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3685,
+          "r_full_spearman_brown": 0.5385,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.597,
+          "r_full_spearman_brown": 0.7477,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "in_play_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Balls in play per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 108138,
+      "split_half": {
+        "r_half": 0.0355,
+        "r_full_spearman_brown": 0.0685,
+        "n_pitchers": 793
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1714,
+        "n_pitchers": 159
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0355,
+          "r_full_spearman_brown": 0.0685,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.1121,
+          "r_full_spearman_brown": 0.2016,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1258,
+          "r_full_spearman_brown": 0.2235,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2549,
+          "r_full_spearman_brown": 0.4062,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.2859,
+          "r_full_spearman_brown": 0.4446,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "foul_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Fouls per swing -- outcome-only.",
+      "n_qualifying_pitches": 50380,
+      "split_half": {
+        "r_half": 0.0344,
+        "r_full_spearman_brown": 0.0666,
+        "n_pitchers": 660
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0387,
+        "n_pitchers": 82
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0344,
+          "r_full_spearman_brown": 0.0666,
+          "n_pitchers": 660,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.066,
+          "r_full_spearman_brown": 0.1238,
+          "n_pitchers": 359,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1097,
+          "r_full_spearman_brown": 0.1977,
+          "n_pitchers": 131,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3809,
+          "r_full_spearman_brown": 0.5516,
+          "n_pitchers": 26,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_start_speed": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean pitch velocity -- requires tracking.",
+      "n_qualifying_pitches": 108126,
+      "split_half": {
+        "r_half": 0.9555,
+        "r_full_spearman_brown": 0.9772,
+        "n_pitchers": 822
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.7793,
+        "n_pitchers": 185
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9575,
+          "r_full_spearman_brown": 0.9783,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.943,
+          "r_full_spearman_brown": 0.9706,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9559,
+          "r_full_spearman_brown": 0.9775,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9686,
+          "r_full_spearman_brown": 0.984,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9754,
+          "r_full_spearman_brown": 0.9875,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_spin_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean spin rate -- requires tracking; noted in Phase 1A as less reliable than velocity even at tracked venues.",
+      "n_qualifying_pitches": 106484,
+      "split_half": {
+        "r_half": 0.955,
+        "r_full_spearman_brown": 0.977,
+        "n_pitchers": 820
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8309,
+        "n_pitchers": 182
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9571,
+          "r_full_spearman_brown": 0.9781,
+          "n_pitchers": 791,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9622,
+          "r_full_spearman_brown": 0.9807,
+          "n_pitchers": 620,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9707,
+          "r_full_spearman_brown": 0.9851,
+          "n_pitchers": 376,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9828,
+          "r_full_spearman_brown": 0.9913,
+          "n_pitchers": 141,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.99,
+          "r_full_spearman_brown": 0.995,
+          "n_pitchers": 35,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_pfx_x": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean horizontal movement -- requires tracking.",
+      "n_qualifying_pitches": 108126,
+      "split_half": {
+        "r_half": 0.9332,
+        "r_full_spearman_brown": 0.9655,
+        "n_pitchers": 822
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8304,
+        "n_pitchers": 185
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9378,
+          "r_full_spearman_brown": 0.9679,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9546,
+          "r_full_spearman_brown": 0.9768,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9685,
+          "r_full_spearman_brown": 0.984,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9806,
+          "r_full_spearman_brown": 0.9902,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9951,
+          "r_full_spearman_brown": 0.9975,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_pfx_z": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean vertical movement (induced) -- requires tracking.",
+      "n_qualifying_pitches": 108126,
+      "split_half": {
+        "r_half": 0.8626,
+        "r_full_spearman_brown": 0.9262,
+        "n_pitchers": 822
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.7894,
+        "n_pitchers": 185
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.8744,
+          "r_full_spearman_brown": 0.933,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9106,
+          "r_full_spearman_brown": 0.9532,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9191,
+          "r_full_spearman_brown": 0.9579,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9492,
+          "r_full_spearman_brown": 0.974,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9646,
+          "r_full_spearman_brown": 0.982,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "zone_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Share of pitches located in the strike zone -- a location/command proxy; requires tracking (zone is a Trackman-derived field).",
+      "n_qualifying_pitches": 108126,
+      "split_half": {
+        "r_half": 0.0375,
+        "r_full_spearman_brown": 0.0724,
+        "n_pitchers": 793
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1092,
+        "n_pitchers": 159
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0375,
+          "r_full_spearman_brown": 0.0724,
+          "n_pitchers": 793,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0998,
+          "r_full_spearman_brown": 0.1815,
+          "n_pitchers": 627,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1803,
+          "r_full_spearman_brown": 0.3055,
+          "n_pitchers": 383,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.336,
+          "r_full_spearman_brown": 0.503,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.5045,
+          "r_full_spearman_brown": 0.6707,
+          "n_pitchers": 36,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "chase_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Swings on pitches outside the zone -- requires tracking to know zone.",
+      "n_qualifying_pitches": 57832,
+      "split_half": {
+        "r_half": 0.1159,
+        "r_full_spearman_brown": 0.2077,
+        "n_pitchers": 697
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1522,
+        "n_pitchers": 101
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1159,
+          "r_full_spearman_brown": 0.2077,
+          "n_pitchers": 697,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.2314,
+          "r_full_spearman_brown": 0.3759,
+          "n_pitchers": 420,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.2953,
+          "r_full_spearman_brown": 0.456,
+          "n_pitchers": 168,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2598,
+          "r_full_spearman_brown": 0.4125,
+          "n_pitchers": 43,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    }
+  },
+  "AA": {
+    "whiff_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Whiffs per swing -- outcome-only, no tracking required.",
+      "n_qualifying_pitches": 48347,
+      "split_half": {
+        "r_half": 0.3457,
+        "r_full_spearman_brown": 0.5138,
+        "n_pitchers": 607
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1351,
+        "n_pitchers": 93
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.3457,
+          "r_full_spearman_brown": 0.5138,
+          "n_pitchers": 607,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.4016,
+          "r_full_spearman_brown": 0.573,
+          "n_pitchers": 319,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.5142,
+          "r_full_spearman_brown": 0.6792,
+          "n_pitchers": 136,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.5721,
+          "r_full_spearman_brown": 0.7278,
+          "n_pitchers": 33,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "called_strike_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Called strikes per taken pitch -- outcome-only.",
+      "n_qualifying_pitches": 54064,
+      "split_half": {
+        "r_half": 0.0076,
+        "r_full_spearman_brown": 0.015,
+        "n_pitchers": 636
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0041,
+        "n_pitchers": 105
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0076,
+          "r_full_spearman_brown": 0.015,
+          "n_pitchers": 636,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0221,
+          "r_full_spearman_brown": 0.0432,
+          "n_pitchers": 354,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1164,
+          "r_full_spearman_brown": 0.2086,
+          "n_pitchers": 163,
+          "min_n": 100
+        },
+        {
+          "r_half": -0.0623,
+          "r_full_spearman_brown": -0.1328,
+          "n_pitchers": 51,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 4
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "swing_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Swings per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 102411,
+      "split_half": {
+        "r_half": 0.2299,
+        "r_full_spearman_brown": 0.3739,
+        "n_pitchers": 722
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2795,
+        "n_pitchers": 147
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.2299,
+          "r_full_spearman_brown": 0.3739,
+          "n_pitchers": 722,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.2118,
+          "r_full_spearman_brown": 0.3495,
+          "n_pitchers": 576,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.2564,
+          "r_full_spearman_brown": 0.4081,
+          "n_pitchers": 338,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3936,
+          "r_full_spearman_brown": 0.5649,
+          "n_pitchers": 154,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.636,
+          "r_full_spearman_brown": 0.7775,
+          "n_pitchers": 41,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "in_play_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Balls in play per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 102411,
+      "split_half": {
+        "r_half": 0.1247,
+        "r_full_spearman_brown": 0.2217,
+        "n_pitchers": 722
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0647,
+        "n_pitchers": 147
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1247,
+          "r_full_spearman_brown": 0.2217,
+          "n_pitchers": 722,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0177,
+          "r_full_spearman_brown": 0.0347,
+          "n_pitchers": 576,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1725,
+          "r_full_spearman_brown": 0.2943,
+          "n_pitchers": 338,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2005,
+          "r_full_spearman_brown": 0.334,
+          "n_pitchers": 154,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.3403,
+          "r_full_spearman_brown": 0.5078,
+          "n_pitchers": 41,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "foul_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Fouls per swing -- outcome-only.",
+      "n_qualifying_pitches": 48347,
+      "split_half": {
+        "r_half": 0.1434,
+        "r_full_spearman_brown": 0.2508,
+        "n_pitchers": 607
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0648,
+        "n_pitchers": 93
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1434,
+          "r_full_spearman_brown": 0.2508,
+          "n_pitchers": 607,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.147,
+          "r_full_spearman_brown": 0.2564,
+          "n_pitchers": 319,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.163,
+          "r_full_spearman_brown": 0.2803,
+          "n_pitchers": 136,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3574,
+          "r_full_spearman_brown": 0.5266,
+          "n_pitchers": 33,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_start_speed": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean pitch velocity -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_spin_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean spin rate -- requires tracking; noted in Phase 1A as less reliable than velocity even at tracked venues.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_pfx_x": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean horizontal movement -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_pfx_z": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean vertical movement (induced) -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "zone_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Share of pitches located in the strike zone -- a location/command proxy; requires tracking (zone is a Trackman-derived field).",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "chase_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Swings on pitches outside the zone -- requires tracking to know zone.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    }
+  },
+  "High-A": {
+    "whiff_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Whiffs per swing -- outcome-only, no tracking required.",
+      "n_qualifying_pitches": 48873,
+      "split_half": {
+        "r_half": 0.3232,
+        "r_full_spearman_brown": 0.4885,
+        "n_pitchers": 632
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1959,
+        "n_pitchers": 84
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.3232,
+          "r_full_spearman_brown": 0.4885,
+          "n_pitchers": 632,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.3811,
+          "r_full_spearman_brown": 0.5518,
+          "n_pitchers": 327,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.4394,
+          "r_full_spearman_brown": 0.6105,
+          "n_pitchers": 145,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.4311,
+          "r_full_spearman_brown": 0.6025,
+          "n_pitchers": 25,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "called_strike_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Called strikes per taken pitch -- outcome-only.",
+      "n_qualifying_pitches": 55972,
+      "split_half": {
+        "r_half": -0.0505,
+        "r_full_spearman_brown": -0.1064,
+        "n_pitchers": 671
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2044,
+        "n_pitchers": 110
+      },
+      "stabilization_curve": [
+        {
+          "r_half": -0.0505,
+          "r_full_spearman_brown": -0.1064,
+          "n_pitchers": 671,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0213,
+          "r_full_spearman_brown": 0.0418,
+          "n_pitchers": 393,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.0888,
+          "r_full_spearman_brown": 0.1631,
+          "n_pitchers": 176,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2325,
+          "r_full_spearman_brown": 0.3772,
+          "n_pitchers": 40,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 1
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "swing_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Swings per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 104845,
+      "split_half": {
+        "r_half": 0.1161,
+        "r_full_spearman_brown": 0.2081,
+        "n_pitchers": 754
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1924,
+        "n_pitchers": 154
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1161,
+          "r_full_spearman_brown": 0.2081,
+          "n_pitchers": 754,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.2057,
+          "r_full_spearman_brown": 0.3412,
+          "n_pitchers": 611,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.3225,
+          "r_full_spearman_brown": 0.4877,
+          "n_pitchers": 358,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3634,
+          "r_full_spearman_brown": 0.5331,
+          "n_pitchers": 165,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.5353,
+          "r_full_spearman_brown": 0.6973,
+          "n_pitchers": 35,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 2
+        }
+      ]
+    },
+    "in_play_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Balls in play per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 104845,
+      "split_half": {
+        "r_half": -0.0046,
+        "r_full_spearman_brown": -0.0093,
+        "n_pitchers": 754
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.168,
+        "n_pitchers": 154
+      },
+      "stabilization_curve": [
+        {
+          "r_half": -0.0046,
+          "r_full_spearman_brown": -0.0093,
+          "n_pitchers": 754,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.1235,
+          "r_full_spearman_brown": 0.2199,
+          "n_pitchers": 611,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.2472,
+          "r_full_spearman_brown": 0.3964,
+          "n_pitchers": 358,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2515,
+          "r_full_spearman_brown": 0.4019,
+          "n_pitchers": 165,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.4561,
+          "r_full_spearman_brown": 0.6265,
+          "n_pitchers": 35,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 2
+        }
+      ]
+    },
+    "foul_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Fouls per swing -- outcome-only.",
+      "n_qualifying_pitches": 48873,
+      "split_half": {
+        "r_half": 0.0881,
+        "r_full_spearman_brown": 0.1619,
+        "n_pitchers": 632
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.0735,
+        "n_pitchers": 84
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0881,
+          "r_full_spearman_brown": 0.1619,
+          "n_pitchers": 632,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0894,
+          "r_full_spearman_brown": 0.1641,
+          "n_pitchers": 327,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1459,
+          "r_full_spearman_brown": 0.2546,
+          "n_pitchers": 145,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.0682,
+          "r_full_spearman_brown": 0.1276,
+          "n_pitchers": 25,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_start_speed": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean pitch velocity -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_spin_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean spin rate -- requires tracking; noted in Phase 1A as less reliable than velocity even at tracked venues.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_pfx_x": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean horizontal movement -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_pfx_z": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean vertical movement (induced) -- requires tracking.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "zone_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Share of pitches located in the strike zone -- a location/command proxy; requires tracking (zone is a Trackman-derived field).",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "chase_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Swings on pitches outside the zone -- requires tracking to know zone.",
+      "n_qualifying_pitches": 0,
+      "split_half": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "month_to_month_early_vs_late": {
+        "status": "insufficient_pitchers",
+        "n_pitchers": 0
+      },
+      "stabilization_curve": [
+        {
+          "min_n": 20,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 50,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 100,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 200,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    }
+  },
+  "Low-A": {
+    "whiff_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Whiffs per swing -- outcome-only, no tracking required.",
+      "n_qualifying_pitches": 42505,
+      "split_half": {
+        "r_half": 0.2056,
+        "r_full_spearman_brown": 0.3411,
+        "n_pitchers": 486
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.175,
+        "n_pitchers": 69
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.2056,
+          "r_full_spearman_brown": 0.3411,
+          "n_pitchers": 486,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.4234,
+          "r_full_spearman_brown": 0.5949,
+          "n_pitchers": 238,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.4831,
+          "r_full_spearman_brown": 0.6515,
+          "n_pitchers": 141,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.5734,
+          "r_full_spearman_brown": 0.7289,
+          "n_pitchers": 40,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 1
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "called_strike_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Called strikes per taken pitch -- outcome-only.",
+      "n_qualifying_pitches": 50707,
+      "split_half": {
+        "r_half": 0.0031,
+        "r_full_spearman_brown": 0.0062,
+        "n_pitchers": 545
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2476,
+        "n_pitchers": 77
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0031,
+          "r_full_spearman_brown": 0.0062,
+          "n_pitchers": 545,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.1495,
+          "r_full_spearman_brown": 0.2601,
+          "n_pitchers": 278,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.199,
+          "r_full_spearman_brown": 0.3319,
+          "n_pitchers": 162,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2369,
+          "r_full_spearman_brown": 0.3831,
+          "n_pitchers": 67,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 4
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "swing_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Swings per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 93212,
+      "split_half": {
+        "r_half": 0.1156,
+        "r_full_spearman_brown": 0.2072,
+        "n_pitchers": 660
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.1089,
+        "n_pitchers": 94
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1156,
+          "r_full_spearman_brown": 0.2072,
+          "n_pitchers": 660,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.2197,
+          "r_full_spearman_brown": 0.3603,
+          "n_pitchers": 450,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.4426,
+          "r_full_spearman_brown": 0.6136,
+          "n_pitchers": 250,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.4113,
+          "r_full_spearman_brown": 0.5829,
+          "n_pitchers": 150,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.5663,
+          "r_full_spearman_brown": 0.7231,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "in_play_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Balls in play per pitch thrown -- outcome-only.",
+      "n_qualifying_pitches": 93212,
+      "split_half": {
+        "r_half": 0.0276,
+        "r_full_spearman_brown": 0.0537,
+        "n_pitchers": 660
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2313,
+        "n_pitchers": 94
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.0276,
+          "r_full_spearman_brown": 0.0537,
+          "n_pitchers": 660,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0275,
+          "r_full_spearman_brown": 0.0535,
+          "n_pitchers": 450,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.2112,
+          "r_full_spearman_brown": 0.3487,
+          "n_pitchers": 250,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.3844,
+          "r_full_spearman_brown": 0.5553,
+          "n_pitchers": 150,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.3614,
+          "r_full_spearman_brown": 0.5309,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "foul_rate": {
+      "scope": "ALL_LEVELS",
+      "description": "Fouls per swing -- outcome-only.",
+      "n_qualifying_pitches": 42505,
+      "split_half": {
+        "r_half": 0.1148,
+        "r_full_spearman_brown": 0.206,
+        "n_pitchers": 486
+      },
+      "month_to_month_early_vs_late": {
+        "r": -0.0526,
+        "n_pitchers": 69
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1148,
+          "r_full_spearman_brown": 0.206,
+          "n_pitchers": 486,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.0782,
+          "r_full_spearman_brown": 0.1451,
+          "n_pitchers": 238,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.1276,
+          "r_full_spearman_brown": 0.2263,
+          "n_pitchers": 141,
+          "min_n": 100
+        },
+        {
+          "r_half": -0.0067,
+          "r_full_spearman_brown": -0.0134,
+          "n_pitchers": 40,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 1
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    },
+    "avg_start_speed": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean pitch velocity -- requires tracking.",
+      "n_qualifying_pitches": 74891,
+      "split_half": {
+        "r_half": 0.9739,
+        "r_full_spearman_brown": 0.9868,
+        "n_pitchers": 398
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8223,
+        "n_pitchers": 84
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9723,
+          "r_full_spearman_brown": 0.986,
+          "n_pitchers": 387,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9623,
+          "r_full_spearman_brown": 0.9808,
+          "n_pitchers": 292,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9714,
+          "r_full_spearman_brown": 0.9855,
+          "n_pitchers": 215,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9801,
+          "r_full_spearman_brown": 0.9899,
+          "n_pitchers": 147,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.982,
+          "r_full_spearman_brown": 0.9909,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_spin_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean spin rate -- requires tracking; noted in Phase 1A as less reliable than velocity even at tracked venues.",
+      "n_qualifying_pitches": 73761,
+      "split_half": {
+        "r_half": 0.969,
+        "r_full_spearman_brown": 0.9842,
+        "n_pitchers": 395
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8419,
+        "n_pitchers": 82
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9681,
+          "r_full_spearman_brown": 0.9838,
+          "n_pitchers": 384,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9828,
+          "r_full_spearman_brown": 0.9913,
+          "n_pitchers": 292,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9883,
+          "r_full_spearman_brown": 0.9941,
+          "n_pitchers": 212,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9907,
+          "r_full_spearman_brown": 0.9953,
+          "n_pitchers": 144,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9857,
+          "r_full_spearman_brown": 0.9928,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_pfx_x": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean horizontal movement -- requires tracking.",
+      "n_qualifying_pitches": 74891,
+      "split_half": {
+        "r_half": 0.955,
+        "r_full_spearman_brown": 0.977,
+        "n_pitchers": 398
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8887,
+        "n_pitchers": 84
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.9629,
+          "r_full_spearman_brown": 0.9811,
+          "n_pitchers": 387,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.98,
+          "r_full_spearman_brown": 0.9899,
+          "n_pitchers": 292,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9881,
+          "r_full_spearman_brown": 0.994,
+          "n_pitchers": 215,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.992,
+          "r_full_spearman_brown": 0.996,
+          "n_pitchers": 147,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9922,
+          "r_full_spearman_brown": 0.9961,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "avg_pfx_z": {
+      "scope": "TRACKED_ONLY",
+      "description": "Mean vertical movement (induced) -- requires tracking.",
+      "n_qualifying_pitches": 74891,
+      "split_half": {
+        "r_half": 0.8368,
+        "r_full_spearman_brown": 0.9111,
+        "n_pitchers": 398
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.8015,
+        "n_pitchers": 84
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.8462,
+          "r_full_spearman_brown": 0.9167,
+          "n_pitchers": 387,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.9198,
+          "r_full_spearman_brown": 0.9582,
+          "n_pitchers": 292,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.9491,
+          "r_full_spearman_brown": 0.9739,
+          "n_pitchers": 215,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.9591,
+          "r_full_spearman_brown": 0.9791,
+          "n_pitchers": 147,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.9743,
+          "r_full_spearman_brown": 0.987,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "zone_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Share of pitches located in the strike zone -- a location/command proxy; requires tracking (zone is a Trackman-derived field).",
+      "n_qualifying_pitches": 74891,
+      "split_half": {
+        "r_half": 0.1049,
+        "r_full_spearman_brown": 0.1898,
+        "n_pitchers": 387
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.3309,
+        "n_pitchers": 81
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.1049,
+          "r_full_spearman_brown": 0.1898,
+          "n_pitchers": 387,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.2605,
+          "r_full_spearman_brown": 0.4134,
+          "n_pitchers": 292,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.4359,
+          "r_full_spearman_brown": 0.6072,
+          "n_pitchers": 215,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.4273,
+          "r_full_spearman_brown": 0.5988,
+          "n_pitchers": 147,
+          "min_n": 200
+        },
+        {
+          "r_half": 0.5724,
+          "r_full_spearman_brown": 0.7281,
+          "n_pitchers": 51,
+          "min_n": 400
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 3
+        }
+      ]
+    },
+    "chase_rate": {
+      "scope": "TRACKED_ONLY",
+      "description": "Swings on pitches outside the zone -- requires tracking to know zone.",
+      "n_qualifying_pitches": 38513,
+      "split_half": {
+        "r_half": 0.3766,
+        "r_full_spearman_brown": 0.5472,
+        "n_pitchers": 328
+      },
+      "month_to_month_early_vs_late": {
+        "r": 0.2537,
+        "n_pitchers": 63
+      },
+      "stabilization_curve": [
+        {
+          "r_half": 0.3766,
+          "r_full_spearman_brown": 0.5472,
+          "n_pitchers": 328,
+          "min_n": 20
+        },
+        {
+          "r_half": 0.4145,
+          "r_full_spearman_brown": 0.5861,
+          "n_pitchers": 217,
+          "min_n": 50
+        },
+        {
+          "r_half": 0.3468,
+          "r_full_spearman_brown": 0.515,
+          "n_pitchers": 156,
+          "min_n": 100
+        },
+        {
+          "r_half": 0.2827,
+          "r_full_spearman_brown": 0.4408,
+          "n_pitchers": 55,
+          "min_n": 200
+        },
+        {
+          "min_n": 400,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 4
+        },
+        {
+          "min_n": 800,
+          "status": "insufficient_pitchers",
+          "n_pitchers": 0
+        }
+      ]
+    }
+  }
+}

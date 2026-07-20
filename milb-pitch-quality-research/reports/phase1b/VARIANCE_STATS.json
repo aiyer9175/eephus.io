@@ -1,0 +1,964 @@
+{
+  "by_pitcher": {
+    "AAA": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 861,
+        "n_obs": 50347,
+        "var_between": 0.002321,
+        "var_within_residual": 0.18342,
+        "icc_share_between": 0.0125
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 858,
+        "n_obs": 57707,
+        "var_between": 0.0,
+        "var_within_residual": 0.206608,
+        "icc_share_between": 0.0
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 871,
+        "n_obs": 108131,
+        "var_between": 0.000879,
+        "var_within_residual": 0.247961,
+        "icc_share_between": 0.0035
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 871,
+        "n_obs": 108131,
+        "var_between": 0.000302,
+        "var_within_residual": 0.139555,
+        "icc_share_between": 0.0022
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 861,
+        "n_obs": 50347,
+        "var_between": 0.000567,
+        "var_within_residual": 0.237967,
+        "icc_share_between": 0.0024
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 871,
+        "n_obs": 108119,
+        "var_between": 8.185225,
+        "var_within_residual": 25.451127,
+        "icc_share_between": 0.2433
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 868,
+        "n_obs": 106477,
+        "var_between": 35026.085292,
+        "var_within_residual": 94218.752356,
+        "icc_share_between": 0.271
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 871,
+        "n_obs": 108119,
+        "var_between": 9.038986,
+        "var_within_residual": 24.92655,
+        "icc_share_between": 0.2661
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 871,
+        "n_obs": 108119,
+        "var_between": 2.631388,
+        "var_within_residual": 18.720906,
+        "icc_share_between": 0.1232
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 871,
+        "n_obs": 108119,
+        "var_between": 0.000545,
+        "var_within_residual": 0.248243,
+        "icc_share_between": 0.0022
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 861,
+        "n_obs": 57794,
+        "var_between": 0.001406,
+        "var_within_residual": 0.202775,
+        "icc_share_between": 0.0069
+      }
+    },
+    "AA": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 747,
+        "n_obs": 48310,
+        "var_between": 0.002615,
+        "var_within_residual": 0.187593,
+        "icc_share_between": 0.0138
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 752,
+        "n_obs": 54043,
+        "var_between": 0.000295,
+        "var_within_residual": 0.207436,
+        "icc_share_between": 0.0014
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 758,
+        "n_obs": 102411,
+        "var_between": 0.000995,
+        "var_within_residual": 0.248231,
+        "icc_share_between": 0.004
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 758,
+        "n_obs": 102411,
+        "var_between": 0.000323,
+        "var_within_residual": 0.139442,
+        "icc_share_between": 0.0023
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 747,
+        "n_obs": 48310,
+        "var_between": 0.000722,
+        "var_within_residual": 0.236947,
+        "icc_share_between": 0.003
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      }
+    },
+    "High-A": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 788,
+        "n_obs": 48840,
+        "var_between": 0.002879,
+        "var_within_residual": 0.189361,
+        "icc_share_between": 0.015
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 788,
+        "n_obs": 55939,
+        "var_between": 0.000196,
+        "var_within_residual": 0.208324,
+        "icc_share_between": 0.0009
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 796,
+        "n_obs": 104833,
+        "var_between": 0.001473,
+        "var_within_residual": 0.247386,
+        "icc_share_between": 0.0059
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 796,
+        "n_obs": 104833,
+        "var_between": 0.000524,
+        "var_within_residual": 0.137647,
+        "icc_share_between": 0.0038
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 788,
+        "n_obs": 48840,
+        "var_between": 0.000692,
+        "var_within_residual": 0.236144,
+        "icc_share_between": 0.0029
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      }
+    },
+    "Low-A": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 709,
+        "n_obs": 42443,
+        "var_between": 0.002758,
+        "var_within_residual": 0.188002,
+        "icc_share_between": 0.0145
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 709,
+        "n_obs": 50653,
+        "var_between": 0.000426,
+        "var_within_residual": 0.205947,
+        "icc_share_between": 0.0021
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 724,
+        "n_obs": 93193,
+        "var_between": 0.001417,
+        "var_within_residual": 0.24665,
+        "icc_share_between": 0.0057
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 724,
+        "n_obs": 93193,
+        "var_between": 0.000438,
+        "var_within_residual": 0.136072,
+        "icc_share_between": 0.0032
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 709,
+        "n_obs": 42443,
+        "var_between": 0.000485,
+        "var_within_residual": 0.236494,
+        "icc_share_between": 0.002
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 423,
+        "n_obs": 74891,
+        "var_between": 9.064035,
+        "var_within_residual": 24.042699,
+        "icc_share_between": 0.2738
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 421,
+        "n_obs": 73761,
+        "var_between": 43483.532479,
+        "var_within_residual": 95354.476494,
+        "icc_share_between": 0.3132
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 423,
+        "n_obs": 74891,
+        "var_between": 11.417608,
+        "var_within_residual": 21.383868,
+        "icc_share_between": 0.3481
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 423,
+        "n_obs": 74891,
+        "var_between": 2.667262,
+        "var_within_residual": 20.053534,
+        "icc_share_between": 0.1174
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 423,
+        "n_obs": 74891,
+        "var_between": 0.001381,
+        "var_within_residual": 0.248426,
+        "icc_share_between": 0.0055
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 416,
+        "n_obs": 38489,
+        "var_between": 0.001579,
+        "var_within_residual": 0.187876,
+        "icc_share_between": 0.0083
+      }
+    }
+  },
+  "by_venue": {
+    "AAA": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 50380,
+        "var_between": 0.000508,
+        "var_within_residual": 0.185207,
+        "icc_share_between": 0.0027
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 57758,
+        "var_between": 1.4e-05,
+        "var_within_residual": 0.206543,
+        "icc_share_between": 0.0001
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 108138,
+        "var_between": 0.00016,
+        "var_within_residual": 0.248685,
+        "icc_share_between": 0.0006
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 108138,
+        "var_between": 6.1e-05,
+        "var_within_residual": 0.139797,
+        "icc_share_between": 0.0004
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 50380,
+        "var_between": 0.000171,
+        "var_within_residual": 0.238335,
+        "icc_share_between": 0.0007
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 108126,
+        "var_between": 0.368131,
+        "var_within_residual": 33.263896,
+        "icc_share_between": 0.0109
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 106484,
+        "var_between": 496.574835,
+        "var_within_residual": 128689.638945,
+        "icc_share_between": 0.0038
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 108126,
+        "var_between": 0.319956,
+        "var_within_residual": 33.640552,
+        "icc_share_between": 0.0094
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 108126,
+        "var_between": 0.197748,
+        "var_within_residual": 21.155603,
+        "icc_share_between": 0.0093
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 108126,
+        "var_between": 9e-06,
+        "var_within_residual": 0.248779,
+        "icc_share_between": 0.0
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 30,
+        "n_obs": 57832,
+        "var_between": 0.000129,
+        "var_within_residual": 0.204062,
+        "icc_share_between": 0.0006
+      }
+    },
+    "AA": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 48347,
+        "var_between": 0.000307,
+        "var_within_residual": 0.189913,
+        "icc_share_between": 0.0016
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 54064,
+        "var_between": 9.6e-05,
+        "var_within_residual": 0.207675,
+        "icc_share_between": 0.0005
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 102411,
+        "var_between": 0.000161,
+        "var_within_residual": 0.249069,
+        "icc_share_between": 0.0006
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 102411,
+        "var_between": 2.6e-05,
+        "var_within_residual": 0.139739,
+        "icc_share_between": 0.0002
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 48347,
+        "var_between": 0.000259,
+        "var_within_residual": 0.237372,
+        "icc_share_between": 0.0011
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      }
+    },
+    "High-A": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 48873,
+        "var_between": 0.000324,
+        "var_within_residual": 0.191897,
+        "icc_share_between": 0.0017
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 55972,
+        "var_between": 0.000117,
+        "var_within_residual": 0.208401,
+        "icc_share_between": 0.0006
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 104845,
+        "var_between": 7.3e-05,
+        "var_within_residual": 0.248786,
+        "icc_share_between": 0.0003
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 104845,
+        "var_between": 5.6e-05,
+        "var_within_residual": 0.138141,
+        "icc_share_between": 0.0004
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 30,
+        "n_obs": 48873,
+        "var_between": 0.000137,
+        "var_within_residual": 0.236672,
+        "icc_share_between": 0.0006
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "status": "insufficient_data",
+        "k_groups": 0,
+        "n_obs": 0
+      }
+    },
+    "Low-A": {
+      "whiff_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 42505,
+        "var_between": 0.000213,
+        "var_within_residual": 0.190533,
+        "icc_share_between": 0.0011
+      },
+      "called_strike_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 50707,
+        "var_between": 0.0,
+        "var_within_residual": 0.206442,
+        "icc_share_between": 0.0
+      },
+      "swing_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 93212,
+        "var_between": 8.1e-05,
+        "var_within_residual": 0.247992,
+        "icc_share_between": 0.0003
+      },
+      "in_play_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 93212,
+        "var_between": 2.2e-05,
+        "var_within_residual": 0.13651,
+        "icc_share_between": 0.0002
+      },
+      "foul_rate": {
+        "scope": "ALL_LEVELS",
+        "k_groups": 31,
+        "n_obs": 42505,
+        "var_between": 7.6e-05,
+        "var_within_residual": 0.236871,
+        "icc_share_between": 0.0003
+      },
+      "avg_start_speed": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 74891,
+        "var_between": 0.433731,
+        "var_within_residual": 32.683105,
+        "icc_share_between": 0.0131
+      },
+      "avg_spin_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 73761,
+        "var_between": 882.890332,
+        "var_within_residual": 137856.703958,
+        "icc_share_between": 0.0064
+      },
+      "avg_pfx_x": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 74891,
+        "var_between": 0.281329,
+        "var_within_residual": 32.50047,
+        "icc_share_between": 0.0086
+      },
+      "avg_pfx_z": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 74891,
+        "var_between": 0.068326,
+        "var_within_residual": 22.648191,
+        "icc_share_between": 0.003
+      },
+      "zone_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 74891,
+        "var_between": 0.000133,
+        "var_within_residual": 0.249684,
+        "icc_share_between": 0.0005
+      },
+      "chase_rate": {
+        "scope": "TRACKED_ONLY",
+        "k_groups": 10,
+        "n_obs": 38513,
+        "var_between": 4.7e-05,
+        "var_within_residual": 0.189405,
+        "icc_share_between": 0.0002
+      }
+    }
+  },
+  "nested_pitcher_family": {
+    "AAA": {
+      "avg_start_speed": {
+        "between_pitcher": {
+          "k_groups": 868,
+          "n_obs": 107581,
+          "var_between": 8.354698,
+          "var_within_residual": 25.322279,
+          "icc_share_between": 0.2481
+        },
+        "family_within_pitcher_var": 35.0056,
+        "residual_within_cell_var": 4.246334,
+        "n_pitcher_family_cells": 2155,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_spin_rate": {
+        "between_pitcher": {
+          "k_groups": 865,
+          "n_obs": 105929,
+          "var_between": 35421.81815,
+          "var_within_residual": 92589.765946,
+          "icc_share_between": 0.2767
+        },
+        "family_within_pitcher_var": 118647.035202,
+        "residual_within_cell_var": 21228.327599,
+        "n_pitcher_family_cells": 2144,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_pfx_x": {
+        "between_pitcher": {
+          "k_groups": 868,
+          "n_obs": 107581,
+          "var_between": 9.087125,
+          "var_within_residual": 24.836468,
+          "icc_share_between": 0.2679
+        },
+        "family_within_pitcher_var": 31.791667,
+        "residual_within_cell_var": 5.695547,
+        "n_pitcher_family_cells": 2155,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_pfx_z": {
+        "between_pitcher": {
+          "k_groups": 868,
+          "n_obs": 107581,
+          "var_between": 2.674044,
+          "var_within_residual": 18.695614,
+          "icc_share_between": 0.1251
+        },
+        "family_within_pitcher_var": 22.898141,
+        "residual_within_cell_var": 4.90925,
+        "n_pitcher_family_cells": 2155,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "zone_rate": {
+        "between_pitcher": {
+          "k_groups": 868,
+          "n_obs": 107581,
+          "var_between": 0.000613,
+          "var_within_residual": 0.248215,
+          "icc_share_between": 0.0025
+        },
+        "family_within_pitcher_var": 0.006425,
+        "residual_within_cell_var": 0.244346,
+        "n_pitcher_family_cells": 2155,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "chase_rate": {
+        "between_pitcher": {
+          "k_groups": 827,
+          "n_obs": 56858,
+          "var_between": 0.001422,
+          "var_within_residual": 0.202808,
+          "icc_share_between": 0.007
+        },
+        "family_within_pitcher_var": 0.004311,
+        "residual_within_cell_var": 0.200281,
+        "n_pitcher_family_cells": 1958,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      }
+    },
+    "AA": {
+      "avg_start_speed": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_spin_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_pfx_x": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_pfx_z": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "zone_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "chase_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      }
+    },
+    "High-A": {
+      "avg_start_speed": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_spin_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_pfx_x": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "avg_pfx_z": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "zone_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      },
+      "chase_rate": {
+        "status": "insufficient_data",
+        "k_pitchers": 0,
+        "k_cells": 0
+      }
+    },
+    "Low-A": {
+      "avg_start_speed": {
+        "between_pitcher": {
+          "k_groups": 422,
+          "n_obs": 74580,
+          "var_between": 9.235398,
+          "var_within_residual": 23.90426,
+          "icc_share_between": 0.2787
+        },
+        "family_within_pitcher_var": 32.460778,
+        "residual_within_cell_var": 4.686053,
+        "n_pitcher_family_cells": 1026,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_spin_rate": {
+        "between_pitcher": {
+          "k_groups": 420,
+          "n_obs": 73453,
+          "var_between": 43886.730059,
+          "var_within_residual": 93753.984097,
+          "icc_share_between": 0.3188
+        },
+        "family_within_pitcher_var": 116638.636547,
+        "residual_within_cell_var": 24606.7982,
+        "n_pitcher_family_cells": 1023,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_pfx_x": {
+        "between_pitcher": {
+          "k_groups": 422,
+          "n_obs": 74580,
+          "var_between": 11.500395,
+          "var_within_residual": 21.27384,
+          "icc_share_between": 0.3509
+        },
+        "family_within_pitcher_var": 26.489449,
+        "residual_within_cell_var": 5.590922,
+        "n_pitcher_family_cells": 1026,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "avg_pfx_z": {
+        "between_pitcher": {
+          "k_groups": 422,
+          "n_obs": 74580,
+          "var_between": 2.705492,
+          "var_within_residual": 20.026394,
+          "icc_share_between": 0.119
+        },
+        "family_within_pitcher_var": 24.754488,
+        "residual_within_cell_var": 5.370649,
+        "n_pitcher_family_cells": 1026,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "zone_rate": {
+        "between_pitcher": {
+          "k_groups": 422,
+          "n_obs": 74580,
+          "var_between": 0.00141,
+          "var_within_residual": 0.248413,
+          "icc_share_between": 0.0056
+        },
+        "family_within_pitcher_var": 0.005181,
+        "residual_within_cell_var": 0.245345,
+        "n_pitcher_family_cells": 1026,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      },
+      "chase_rate": {
+        "between_pitcher": {
+          "k_groups": 402,
+          "n_obs": 37981,
+          "var_between": 0.001574,
+          "var_within_residual": 0.187843,
+          "icc_share_between": 0.0083
+        },
+        "family_within_pitcher_var": 0.003328,
+        "residual_within_cell_var": 0.185949,
+        "n_pitcher_family_cells": 920,
+        "families_observed": [
+          "breaking",
+          "fastball",
+          "offspeed",
+          "other"
+        ]
+      }
+    }
+  }
+}

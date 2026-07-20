@@ -4,9 +4,12 @@ game, cached and resumable.
 Each game is written to data_cache/{level}/{gamePk}.json. Already-cached
 games are skipped, so this script can be re-run safely if interrupted.
 
-Usage: python pull_game_feeds.py [--limit N]
-  --limit N   only pull the first N *missing* games per level (for smoke
-              testing before running the full pilot).
+Usage: python pull_game_feeds.py [--limit N] [--sample-suffix SUFFIX]
+  --limit N            only pull the first N *missing* games per level (for
+                        smoke testing before running the full pilot).
+  --sample-suffix S    read data_cache/samples/{level}_{S}.json instead of
+                        {level}.json (e.g. "team_stratified" for Phase 1B's
+                        sample, built by phase1b/sample_team_stratified.py).
 """
 from __future__ import annotations
 
@@ -27,8 +30,9 @@ from common import (  # noqa: E402
 )
 
 
-def pull_level(level: str, limit: int | None) -> tuple[int, int]:
-    samples_path = DATA_CACHE / "samples" / f"{level}.json"
+def pull_level(level: str, limit: int | None, suffix: str = "") -> tuple[int, int]:
+    filename = f"{level}_{suffix}.json" if suffix else f"{level}.json"
+    samples_path = DATA_CACHE / "samples" / filename
     samples = load_json(samples_path)
 
     pulled = 0
@@ -55,9 +59,14 @@ def main() -> None:
         idx = sys.argv.index("--limit")
         limit = int(sys.argv[idx + 1])
 
+    suffix = ""
+    if "--sample-suffix" in sys.argv:
+        idx = sys.argv.index("--sample-suffix")
+        suffix = sys.argv[idx + 1]
+
     for level in LEVELS:
         print(f"Pulling game feeds for {level}" + (f" (limit={limit})" if limit else "") + "...")
-        pulled, skipped = pull_level(level, limit)
+        pulled, skipped = pull_level(level, limit, suffix)
         print(f"  {level}: pulled {pulled} new, {skipped} already cached")
 
 
