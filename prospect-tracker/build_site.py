@@ -310,7 +310,7 @@ def _x_link(handle: str, cls: str = "") -> str:
 
 # Community Discord server - one module-level constant so every surface points
 # at the same invite. Inline glyph mirrors the _X_SVG treatment (no external art).
-DISCORD_URL = "https://discord.gg/X3BbVrJ4w"
+DISCORD_URL = "https://discord.gg/UdC4C34uA"
 _DISCORD_SVG = ('<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.317 4.369a19.79 19.79 0 0 0-4.885-1.515.074.074 0 0 0-.079.037 '
                 'c-.211.375-.445.865-.608 1.249a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.036 '
                 '19.736 19.736 0 0 0-4.885 1.515.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 '
