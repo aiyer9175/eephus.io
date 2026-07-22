@@ -1065,12 +1065,24 @@ def fetch_statcast_metrics_for_player(
     if not contact and not pitch_movement:
         return None
     level_splits: list[dict] = []
+    # v32 — 5th OOM in this area (parent process, pass 3/3, dying at ~5500/6749
+    # despite the v24 fetched_logs_by_key trim not moving the death point at
+    # all across two runs). Root cause: for a single-level player — the
+    # common case — this loop re-ran _finalize_contact/_finalize_pitch on
+    # the exact same points already aggregated above, allocating a second,
+    # near-identical set of point dicts (up to PITCH_PLOT_LIMIT=900 pitch
+    # points + 450 contact locs) per player. Reuse the aggregate's already-
+    # computed dicts instead of recomputing when there's only one level.
+    _single_level = len(per_level) == 1
     for level, bucket in sorted(per_level.items()):
-        split_contact = _finalize_contact(bucket["contact_rows"], is_pitcher=is_pitcher)
-        split_pitch_movement, split_pitch_plot = (
-            _finalize_pitch(bucket["pitch_points"], bucket["outings"])
-            if is_pitcher else ({}, {})
-        )
+        if _single_level:
+            split_contact, split_pitch_movement, split_pitch_plot = contact, pitch_movement, pitch_plot
+        else:
+            split_contact = _finalize_contact(bucket["contact_rows"], is_pitcher=is_pitcher)
+            split_pitch_movement, split_pitch_plot = (
+                _finalize_pitch(bucket["pitch_points"], bucket["outings"])
+                if is_pitcher else ({}, {})
+            )
         if not split_contact and not split_pitch_movement:
             continue
         level_splits.append({
