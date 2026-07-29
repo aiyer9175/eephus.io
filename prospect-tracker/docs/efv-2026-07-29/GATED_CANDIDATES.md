@@ -127,3 +127,52 @@ All four were built, measured, and reverted in the same session. The measurement
 the expensive part and they are recorded here so a future attempt starts from evidence rather
 than from scratch. What none of them has is a gate, and that is the only thing standing
 between them and shipping.
+
+---
+
+## C5. The MLB projection-surplus anchor is INERT (found 2026-07-29)
+
+**This is a live defect, not a stale test bound.** It keeps
+`test_bayes_trade_value_policy::test_mlb_hitter_500_pa_projection_anchor_grounds_middling_bat`
+red, and the test is right.
+
+**Reproduction**, run through the test's own `_base_debuted_player` helper so the player shape
+is faithful:
+
+```
+anchor = 35.0  -> posterior_surplus_mm 47.9
+anchor = None  -> posterior_surplus_mm 47.9
+pull-down: 0.00
+```
+
+Identical to the decimal. The anchor is advertised in `inputs_available`, asserted by a
+passing assertion in the same test, and changes the posterior by nothing.
+
+**Mechanism.** `bayes_trade_value.py:3282` sets `posterior_surplus_mm = _proj_surplus_mm`
+inside the `if _projection_anchor:` block. The FV-prior Bayesian update that follows then
+assigns `posterior_surplus_mm` UNCONDITIONALLY on both of its branches
+(`:3347` in the signal branch, `:3353` in the prior-only branch), so the anchor is discarded
+before it can matter. It survives only in `gross_floor_mm` and in the discount caps at
+`:3524`. The irony is that the comment at that surviving site states the anchor's whole
+rationale: the MLB projection "already bakes in recent performance and playing-time risk". It
+does, and then the code prices the player off a prospect FV prior anyway.
+
+Same defect class as the dead `statline.rps_plus` reads and the old KRP+ `rates_missing`
+lookup: a declared input that reaches no consumer.
+
+**Why it is not fixed here.** I tried the obvious repair, re-applying the anchor after the
+update block, and MEASURED it: the anchor still did not bind (47.9 unchanged) AND ten other
+policy tests broke. So the posterior is being set by something further down among the
+interacting floors (`young_top_prospect_prior_floor`, the top-100 market floor, the rarity
+floor, the archetype posterior floor), and the ordering question is genuinely subtle rather
+than a one-line move. Reverted rather than half-shipped.
+
+**What a real fix needs.** Establish which floor actually determines 47.9 for this player,
+then decide the precedence explicitly: for a player with 500+ MLB plate appearances, a
+prospect-derived floor arguably should not outrank a projection built from his own MLB
+performance, but that is a policy call with a served-dollar consequence on every established
+MLB player on the trade board. It needs the precedence written down and a blast-radius
+battery, not a reordering.
+
+**Do not** resolve this by relaxing the `< 45.0` bound. The bound is not the problem; the
+anchor doing nothing is the problem, and the bound is the only thing currently reporting it.

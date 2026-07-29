@@ -322,6 +322,22 @@ def test_committed_artifact_headline_alias_contract():
 #   live eFV board, shifting active-prospect grades. The RESOLVED OOS accuracy is unchanged
 #   (scoreboard hit 0.3834/0.7762, pit 0.303/0.7197 - the resolved cohort is historical
 #   debuted players, unaffected by the 2026 active-grade refresh). Rowcount 9268.
+# 2026-07-29 - DELIBERATELY NOT RESTAMPED, and this entry explains why so the next person
+#   does not "fix" it with the wrong hash. The committed artifact currently fingerprints
+#   39f9224922d2f6c1b49e5723c4d489ec130a91c88cea52384c87e36723a181b9, so this test is red.
+#   Two separate reasons stack, and neither is resolved by stamping that hash:
+#   (1) The pin below was last set on 2026-07-24e, which PREDATES the entire 2026-07-25
+#       program. The 39f9224 hash is simply the 2026-07-28 pipeline output, i.e. drift that
+#       was already committed before this program started.
+#   (2) This program then shipped changes that WILL move the artifact on the next production
+#       regen: the S2 eta-hazard flip (eta.FORTYMAN_ADJ, 54 rows, 22 ETAs a year earlier, 9
+#       surplus moves) and the sub-45 empirical anchors (published ctrl_war at the bottom of
+#       the board). Stamping 39f9224 now would record a state that is stale on arrival.
+#   The standing convention is that the golden is restamped from a PRODUCTION
+#   `efv_export.py --all` run on the box, not from a dev tree. So the restamp is OWED on the
+#   next box regen, and at that point the new hash should be recorded here together with the
+#   S2 and anchor ships as its cause. Under EEPHUS_DEPLOY_RUN=1 this test shape-checks
+#   instead of hashing, so the deploy gate is not blocked meanwhile.
 _GOLDEN_XFV_SHA256 = "e975a35d4f79e5c0dbe0793fcab44960253f9c9650efec13de59528741c0b711"
 
 # DEPLOY-MODE baseline (see test_xfv_golden_fingerprint). The nightly deploy box

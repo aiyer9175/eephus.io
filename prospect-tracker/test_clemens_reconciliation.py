@@ -32,9 +32,17 @@ def test_shipped_sets_carry_no_reconciliation_scale():
 
 
 def test_surplus_50_hitter_stays_model_scale_not_table():
-    # Production surplus for a 50 FV hitter is the MODEL value (~$18.5M), NOT the
-    # published table $45M. The reconciliation does not move it.
-    assert vf.surplus_value_mm(50.0, False) == pytest.approx(18.5, abs=0.6)
+    # Production surplus for a 50 FV hitter is the MODEL value, NOT the published table
+    # $45M. The reconciliation does not move it.
+    # Literal restamped 2026-07-29: 18.5 -> 29.6. That is the third pre-v5 literal in this
+    # cluster (the others were 28.2 and a v3-era 17.7, both now 32.8); the v5 surplus
+    # calibration moved the model scale and these assertions were never restamped with it.
+    # The test's PURPOSE is intact and verified: the model value 29.6 is still distinct from
+    # the prospx_current TABLE value 32.8, which is the thing this test exists to pin.
+    # NOTE the headroom: the < 30.0 guard below now clears by only 0.4, so the next upward
+    # move in the model scale will trip it. That is deliberate. It is the tripwire for "the
+    # board jumped to table scale", and it should be re-examined rather than widened.
+    assert vf.surplus_value_mm(50.0, False) == pytest.approx(29.6, abs=0.6)
     assert vf.surplus_value_mm(50.0, False) < 30.0
 
 

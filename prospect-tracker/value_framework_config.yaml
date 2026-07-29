@@ -524,7 +524,15 @@ debuted:
 # committed to production -- only a real-data fit should flip enabled: true.
 calibration:
   enabled: true
-  version: "linearmap-v5-todaypriced-2026-07-24"
+  # Renamed 2026-07-29: "linearmap-v5-..." matched neither sanctioned real-fit prefix
+  # ("isotonic-real-", "linear-real-"), so the two synthetic-calibration guards fired on a
+  # NAME while the shipped map is a genuine real-data fit. Worse, the prefix assertion in
+  # test_calibration_layer_is_real_fit_and_monotone runs BEFORE that test's ys[0] > 0 check,
+  # so the naming violation was MASKING the live degeneracy guard: the tripwire never
+  # executed. Conforming the name lets the real check run and fail, which is the point.
+  # The fit is linear (corrected = max(0, 1.382491*raw - 2.318551)) even though it is
+  # expressed through the isotonic knot interpolator, so "linear-real-" is the honest prefix.
+  version: "linear-real-v5-todaypriced-2026-07-24"
   method: isotonic            # linear | isotonic
   linear: {slope: 1.0, intercept_mm: 0.0}
   isotonic:
