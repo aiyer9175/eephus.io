@@ -1,4 +1,6 @@
 {
+ "generated_at": "2026-07-25",
+ "generated_at_note": "backfilled 2026-07-29: this artifact shipped without a generated_at, so model_registry.refresh_stamps() could not age it and freshness fell back to file mtime. Date taken from the lane that wrote it.",
  "line": "W-SIDESCALE per-side affine outcome calibration of the eFV board grade",
  "module": "efv_board_scale.py",
  "standard": "docs/EFV_GATE_STANDARD.md",

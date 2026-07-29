@@ -2265,14 +2265,14 @@
   },
   {
    "model_id": "xfv_injury_history",
-   "surface": "eFV injury overlay scaffold (efv_score EEPHUS_INJURY_HISTORY, default OFF)",
+   "surface": "eFV injury overlay: scaffold DELIVERED AS A PATCH ONLY, never applied to efv_score (no such symbol in the tree)",
    "predicts": "durability discount from career IL history",
    "champion": "n/a",
    "baseline": "n/a",
    "metric": "descriptive",
    "eval_artifact": "data/xfv_injury_history_eval.json",
    "verdict": "deprecated",
-   "notes": "Round 2 LEDGER 2026-07-24e: coverage-starved. IL tracking began 2026-06 (il_stints_pre 2/845 hit, 0/981 pit resolved); contemporaneous cross-section wrong-signed (40-man selection); forward test correctly-signed but NULL (n=21 p=0.18). Bounded default-OFF scaffold delivered; revival when IL history matures (~2028). No served change.",
+   "notes": "Round 2 LEDGER 2026-07-24e: coverage-starved. IL tracking began 2026-06 (il_stints_pre 2/845 hit, 0/981 pit resolved); contemporaneous cross-section wrong-signed (40-man selection); forward test correctly-signed but NULL (n=21 p=0.18). Bounded default-OFF scaffold delivered; revival when IL history matures (~2028). No served change. SURFACE CORRECTED 2026-07-29: the row previously claimed the overlay lived at 'efv_score EEPHUS_INJURY_HISTORY, default OFF'. That symbol does not exist anywhere in the tree; the scaffold was delivered as a unified diff and never applied. The verdict (deprecated, coverage-starved) was and remains correct.",
    "last_checked": "2026-07-28",
    "stale": false,
    "artifact_age_days": 3
@@ -2360,6 +2360,72 @@
    "last_checked": "2026-07-28",
    "stale": false,
    "artifact_age_days": 2
+  },
+  {
+   "model_id": "xfv_pred_dispersion",
+   "surface": "eFV model output (xfv_war_6yr), diagnostic only",
+   "predicts": "OOS level calibration of the eFV predicted first-6yr WAR",
+   "champion": "measurement, no model",
+   "baseline": "consensus FV predicted WAR on the same rows",
+   "metric": "OLS slope of realized first-6yr bWAR on the OOS prediction (1.0 == calibrated in level)",
+   "eval_artifact": "data/xfv_pred_dispersion_eval.json",
+   "verdict": "provisional",
+   "notes": "DEFECT A, measured 2026-07-25, recorded 2026-07-29 (docs/efv-2026-07-29/CALIBRATION_FINDINGS.md). eFV's predicted WAR is OVER-DISPERSED: slope 0.654 hit CI95 [0.362,0.764] and 0.587 pit CI95 [0.233,0.721] against a calibrated 1.0, while consensus FV on the same rows sits at 0.921 and 1.192. Permuted-prediction zero-information control CI95 [-0.070,+0.092] hit and [-0.087,+0.124] pit, so the measurement resolves. This is the mechanism behind the standing 'eFV wins rank, loses MAE' ledger, and behind the 3,821 of 9,318 served rows carrying a negative projected 6-year WAR (floor -2.0). NOT a rank lever and no rank claim is made. Repair pre-registered as a rank-preserving level correction; gates in CALIBRATION_FINDINGS.md."
+  },
+  {
+   "model_id": "xfv_level_calibration",
+   "surface": "value_framework.fv_to_6yr_avg_war (the grade-to-WAR anchor), diagnostic only",
+   "predicts": "whether the config's declared WAR meaning of a grade matches realized WAR by tier",
+   "champion": "measurement, no model",
+   "baseline": "the shipped empirical_anchors curve",
+   "metric": "bias = realized - implied first-6yr WAR, per displayed grade tier, forward-chained OOS",
+   "eval_artifact": "data/xfv_level_calibration_eval.json",
+   "verdict": "provisional",
+   "notes": "DEFECT B, measured 2026-07-25, recorded 2026-07-29 (docs/efv-2026-07-29/CALIBRATION_FINDINGS.md). The declared anchor curve is too flat: too generous at the bottom, too stingy in the middle. FV40 bias -0.883 CI95 [-1.014,-0.607] on n=471 (the modal cell of the board), entirely outside its permuted-grade control band [-0.070,+0.718]; FV35 -0.943 CI95 [-1.181,-0.410] agrees in direction; FV50 runs the other way at +2.181 CI95 [+0.112,+4.303]. Pooled hit bias -0.326 CI95 [-0.570,-0.045]. Related structural gap found by the same program: empirical_anchors carries NO knot below FV 40, so one constant 0.19 WAR/yr covers 88.3% of the board. This is the layer the killed dpw-reconcile-surplus-recal workflow was sequenced to refit BEFORE the surplus map, so the anchors refit is a prerequisite rather than an option."
+  },
+  {
+   "model_id": "xfv_odds_dispersion",
+   "surface": "eFV served p_bust on source-graded rows (efv_odds_calibration.py, INERT)",
+   "predicts": "P(bust) for a served eFV grade",
+   "champion": "candidate, not shipped",
+   "baseline": "vf.p_bucket_given_fv read at xfv_grade",
+   "metric": "Brier + log loss + Murphy reliability/resolution decomposition (proper scoring, never a rank metric)",
+   "eval_artifact": "data/xfv_odds_dispersion_eval.json",
+   "verdict": "provisional",
+   "notes": "CANDIDATE, NOT SHIPPED (2026-07-25). Defect: p_bust is served as vf.p_bucket_given_fv(xfv_grade, is_pitcher)[bust], but that curve was fitted over the Clemens published-list population and keyed on CONSENSUS FV, while production reads it at the realized-implied eFV grade, a different and much wider scale. Patch exists and is INERT (efv_odds_calibration.py + tools/_prem_odds.patch); efv_score.py was not edited. Disjoint from xfv_thin_pbust, which owns the efv_ungraded provisional rows while this owns source-graded served rows."
+  },
+  {
+   "model_id": "xfv_thin_pbust",
+   "surface": "efv_ungraded provisional cards (THIN_PBUST_ENABLED)",
+   "predicts": "P(bust) conditional on a thin-sample provisional grade",
+   "champion": "thin_pbust_v1",
+   "baseline": "vf.p_bucket_given_fv keyed on the grade alone",
+   "metric": "out-of-fold log loss, leave-one-cohort-year-out, B=400 paired bootstrap refitting the provisional ridge per draw",
+   "eval_artifact": "data/xfv_thin_pbust_eval.json",
+   "verdict": "provisional",
+   "notes": "SHIPPED 2026-07-25 and the one fully-gated win of that program: G2 OOF log-loss +0.0179 CI95 [0.0123,0.0249] P=1.000, G4 permutation p95 -0.00007 against a candidate 0.0164. Defect: the served bust curve was fitted on the source-graded published-list population and keyed on grade alone, then applied unchanged to provisional grades fitted off a different and much thinner population. Moves p_bust on 3,320 of 3,419 provisional cards. Carries an explicit owner authorization amending the standing 'p_bucket / p_bust are NEVER touched' invariant to 'NEVER touched EXCEPT by the thin-sample conditional', scoped to efv_ungraded provisional rows only."
+  },
+  {
+   "model_id": "xfv_generality",
+   "surface": "eFV served grade, diagnostic only",
+   "predicts": "whether the eFV grade generalizes across board strata (level, age-for-level, production band)",
+   "champion": "measurement, no model",
+   "baseline": "the served board",
+   "metric": "per-stratum served-vs-pooled grade offsets and board cost",
+   "eval_artifact": "data/xfv_generality_eval.json",
+   "verdict": "provisional",
+   "notes": "Stratum-generality audit of the served eFV grade (2026-07-25, the 'unearned premium' lane, owner question 'why is Bradfield so high'). Board mean raw gap -12.024 over 4,231 stratifiable rows; 27 over-served strata covering 250 rows. Companions on this ledger, same lane, no independent verdict: data/xfv_generality2_eval.json (stratum offsets and class sizes), data/xfv_generality3_eval.json (the old-for-level and below-median-production cells, including the Triple-A Bradfield cell), data/xfv_generality4_eval.json (premium recentering candidates). The lane shipped NOTHING. Its durable finding is that two live FV-to-WAR maps are not inverses of each other and cross at FV about 40.2, which made 7,175 rows fail the premium-chip identity; that is the same object as the xfv_level_calibration anchor defect and is repaired there."
+  },
+  {
+   "model_id": "am_crossmodel_agelevel",
+   "surface": "cross-model age-for-level redundancy check, diagnostic only",
+   "predicts": "whether a shared age-for-level treatment improves the eFV block",
+   "champion": "incumbent (no change)",
+   "baseline": "the served per-model treatment",
+   "metric": "block Spearman vs base, paired bootstrap n=300 draws",
+   "eval_artifact": "data/_am_crossmodel_agelevel_eval.json",
+   "verdict": "deprecated",
+   "notes": "MEASURED NULL (2026-07-25, all-models accuracy/redundancy lane). Site arm hit +0.00051 CI95 [-0.0047,+0.0055] P(improves) 0.617; pit -0.00285 CI95 [-0.0153,+0.0094] P 0.303; block -0.00122. Every interval straddles zero and the effects sit far inside the registered MDE95 floors. Incumbent retained, loss committed. Do not re-attempt without new information."
   }
  ],
  "problems": []

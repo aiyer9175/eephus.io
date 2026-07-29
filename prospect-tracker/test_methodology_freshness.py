@@ -88,6 +88,20 @@ MODEL_GLOSSARY = {
     "xfv_injury_history": "internal",   # injury-history overlay ledger (coverage-starved)
     "xfv_peak_war": "internal",         # peak-WAR target measurement ledger (keep cumulative)
     "xfv_bughunt2": "internal",         # bug hunt r2 + scoreboard intl_bat dedup fix
+    # 2026-07-25 calibration/diagnostic lanes, registered 2026-07-29. All are
+    # measurement ledgers rather than user-facing models: they grade the eFV
+    # model against its own declared meaning. The findings they carry are
+    # written up in docs/efv-2026-07-29/CALIBRATION_FINDINGS.md, and the two
+    # that drive a repair land their user-visible effect through the eFV grade
+    # and surplus entries that already exist.
+    "xfv_pred_dispersion": "internal",    # Defect A ledger: OOS WAR over-dispersion
+    "xfv_level_calibration": "internal",  # Defect B ledger: grade-to-WAR anchor bias
+    "xfv_odds_dispersion": "internal",    # p_bust dispersion candidate, patch INERT
+    "xfv_generality": "internal",         # stratum-generality audit, shipped nothing
+    "am_crossmodel_agelevel": "internal", # cross-model age-for-level null
+    # thin-sample p_bust DID ship and moves a number readers see on provisional
+    # cards, so it points at the provisional entry rather than being internal.
+    "xfv_thin_pbust": ["xfv_ungraded"],
     "spotlights_movement": ["spotlights", "spotlight_age_cap"],
     "org_tendencies": ["org_tendencies"],
     "team_win_projections": ["mlb_projections"],
