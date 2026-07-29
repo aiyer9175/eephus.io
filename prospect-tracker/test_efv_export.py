@@ -70,19 +70,26 @@ def test_entry_side_tag_and_optional_fields():
 def test_committed_artifact_headline_alias_contract():
     """Read-only field contract of the shipped artifact.
 
-    REWRITTEN 2026-07-25 for W-SIDESCALE. This used to assert
-    `xfv_grade == xfv_grade_realized` for every player, i.e. that the headline was a
-    pure ALIAS of the realized grade. The per-side board calibration
-    (efv_board_scale, owner-directed enable) deliberately broke that: the headline is
-    now the SIDE-SCALED board grade, and the pre-scale value moved to
-    `xfv_grade_model_raw` precisely so re-stamping stays idempotent. Asserting the old
-    alias made a sanctioned ship look like artifact drift, which is the job of the
-    golden fingerprint below, not of a field-contract test.
+    The contract depends on whether the per-side board scale is enabled, so this
+    asserts the one that is actually in force rather than hard-coding either.
 
-    The three-field contract that actually ships, all verified on the live artifact:
-      xfv_grade_model_raw == xfv_grade_realized   (the PRE-scale model grade; 9287/9287)
-      xfv_grade           == board_value(record)  (the scaled grade the board serves)
-      xfv_grade_quantile  present and distinct    (the retired display scale, kept)
+    Scale DISABLED (the state since 2026-07-29):
+      xfv_grade == xfv_grade_realized             a pure alias, board_value is identity
+      xfv_grade_model_raw                         absent, nothing stamps it
+      xfv_grade_quantile present and distinct     the retired display scale, kept
+
+    Scale ENABLED:
+      xfv_grade_model_raw == xfv_grade_realized   the PRE-scale model grade
+      xfv_grade           == board_value(record)  the scaled grade the board serves
+      xfv_grade_quantile  present and distinct
+
+    History: this test asserted the plain alias until 2026-07-25, when W-SIDESCALE
+    rewrote it for the enabled state. The scale was disabled again on 2026-07-29
+    because its primary gate never resolved against its own control (perm p 0.259) and
+    nothing in the pipeline ever stamped the artifact, so the enabled-only form was
+    failing on the first row of a perfectly valid artifact. Parameterising on
+    bs.enabled() means neither flip can make a sanctioned state look like drift, which
+    is the golden fingerprint's job rather than a field-contract test's.
     """
     import efv_board_scale as bs
 
@@ -93,7 +100,11 @@ def test_committed_artifact_headline_alias_contract():
     both = distinct = scaled_apart = 0
     for key, e in bp.items():
         raw, real = e.get("xfv_grade_model_raw"), e.get("xfv_grade_realized")
-        assert raw is not None, f"{key}: no xfv_grade_model_raw (scale anchor missing)"
+        if bs.enabled():
+            assert raw is not None, f"{key}: no xfv_grade_model_raw (scale anchor missing)"
+        if raw is None:
+            # unstamped artifact: the headline IS the pre-scale model grade
+            raw = e.get("xfv_grade")
         assert raw == real, f"{key}: model_raw {raw} != realized {real}"
 
         # the headline must be exactly what the board scale produces for this row.

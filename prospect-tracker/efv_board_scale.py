@@ -167,7 +167,20 @@ DATA_DIR = Path(__file__).parent / "data"
 # the quantile/raw offset, so no phantom grade moves; (2) BOARD_RANK_BASIS_EPOCH is already
 # "2026-07-25" with a STRICTLY-AFTER gate, so every row stamped today is excluded from the
 # movement engine and the first admitted snapshot is already on this basis. No bump needed.
-ENABLED_DEFAULT = True           # env override: EEPHUS_BOARD_SIDE_SCALE
+# DISABLED 2026-07-29 by owner decision, on this module's own evidence.
+# The primary gate is a measured NULL (gap@55 point -1.87, perm p 0.259, inside its
+# own zero-info control band) and 2 of the 5 acceptance checks were never met. It was
+# also running in an incoherent half-state: enabled here, but nothing in the pipeline
+# ever called stamp_doc/stamp_file, so data/xfv.json carried the raw grade on 0 of
+# 9,318 rows while storage._board_grade and build_site applied the affine at READ
+# time. The server ranked on the calibrated number and the PROSPX client sorted on the
+# raw one, which is what made the "Last board #N" pill fire across most of the board.
+# Turning it off is byte-identical to the shipped artifact (xfv_grade ==
+# xfv_grade_realized on all 9,318 rows), so this collapses server and client onto one
+# basis with no regen and no golden restamp. Re-enable only behind a gate that
+# resolves against its own control; the cross-side comparability argument may still be
+# right, but it is not yet measured.
+ENABLED_DEFAULT = False          # env override: EEPHUS_BOARD_SIDE_SCALE
 ENV_FLAG = "EEPHUS_BOARD_SIDE_SCALE"
 
 FIT_BAND = (45.0, 59.0)          # (t45 fringe cut, common-support ceiling)

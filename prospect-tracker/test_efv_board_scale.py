@@ -26,7 +26,23 @@ def _board(pool_kind=None):
 # ── the scale itself ────────────────────────────────────────────────────────
 def test_coefficients_reproduce_from_the_labeled_artifacts():
     """The shipped constants must be re-derivable from the recorded recipe, so the
-    provenance in the docstring is checkable rather than a claim."""
+    provenance in the docstring is checkable rather than a claim.
+
+    Only meaningful while the scale is ENABLED. `fit_from_artifacts()` re-derives from
+    data/xfv_scored*.json, which is a moving pool: the 2026-07-28 regen shifted it
+    (grade-normalization rebuild, blend lambda, training-pool repairs), so the
+    re-derivation now returns hit intercept -2.863787 against the shipped -2.603487.
+
+    With the scale disabled (2026-07-29) those constants are inert -- calibrate() is
+    the identity and test_disabled_is_exactly_the_identity pins that. Patching COEFFS
+    to match a pool that moved for unrelated reasons would fake provenance rather than
+    establish it, so the constants stay frozen exactly as shipped and recorded in
+    data/xfv_board_scale_eval.json shipped_coeffs. If the scale is ever re-enabled it
+    must be RE-FIT and re-gated, not patched, and this test becomes live again.
+    """
+    if not bs.enabled():
+        pytest.skip("board scale disabled; frozen constants are inert, re-fit on any "
+                    "re-enable rather than reconciling against a moved pool")
     f = bs.fit_from_artifacts()
     for side, (a, b) in bs.COEFFS.items():
         assert abs(f[side][0] - a) < 5e-5, f"{side} intercept drifted from the fit"
