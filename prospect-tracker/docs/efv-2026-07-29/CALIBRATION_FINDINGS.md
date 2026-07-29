@@ -93,11 +93,39 @@ again". The shipped v5 knots are `y_mm: [0.0, 0.0, 25.33, 80.63, 550.68]`, so `y
 of the exact defect it was written to prevent**, and the table above is the evidence:
 88.9% of FV35 and 25.9% of FV40 now serve exactly $0.
 
-Why this happened, and why it is the same object as A and B: the model over-disperses
-(A), so 3,821 rows carry a negative predicted 6-year WAR; a negative WAR produces a
-negative raw surplus; the v5 floor clamps every one of those to exactly $0. The anchor
-defect (B) compounds it by over-stating what an FV40 is worth in WAR, which is the tier
-where the floor starts biting.
+### CORRECTION 2026-07-29: the mechanism stated here first was WRONG
+
+This section originally claimed the chain was "the model over-disperses (A), so 3,821 rows
+carry a negative predicted WAR, which produces a negative raw surplus, which the v5 floor
+clamps to $0". Adversarial verification refuted the middle step and I am recording that
+rather than quietly editing it.
+
+Measured on the full sweep (78,624 cells) and on the served zero block:
+`n_prefloor_base_negative = 0`. **No row anywhere has a negative pre-floor raw surplus.**
+Across the 6,384 zero rows the raw value runs min $0.64M, median $0.78M, max $4.89M,
+aggregating to $6,096M of value that is served as nothing. And the zero block is not the
+negative-WAR block: 3,821 negative-WAR rows AND 2,563 POSITIVE-WAR rows both price at $0,
+while zero negative-WAR rows price positive.
+
+The real mechanism is the map's intercept, not a floor on negative inputs. The v5 map is
+`max(0, 1.382491*raw - 2.318551)`, whose zero-cross sits at raw $1.677M, so every raw
+value below $1.677M is sent to exactly zero. The zero block's median raw is $0.78M, well
+underneath it.
+
+The deeper cause, found by the same verification: `value_framework.expected_surplus_usd`
+does not return a pipeline prediction at the bottom of the board at all. For
+`fv <= lowtier_anchor.cutover_fv` (40) it returns a FIXED published dollar anchor,
+`2.0e6 * exp(-0.16*(40-fv))` with a 0.90 pitcher factor, and the engine's own code
+describes it as "a fixed dollar figure with NO parameter uncertainty". The v5 calibration
+was fit on pipeline predictions and is then applied to that anchor anyway, which it has
+no fitted support for. That single branch owns **6,038 of the 6,384 zero rows**, and it is
+why the config declares an FV40 position player worth $2.0M while the site serves $0.4M
+(1.382491 * 2.0 - 2.318551 = 0.446).
+
+So Defect C is real and the tier table above stands, but it is NOT downstream of Defect A.
+Consequence for sequencing: **C does not wait on A**, and fixing A moves surplus by exactly
+$0.00, because served dollars are priced from `xfv_grade_quantile`, a rank-quantile map of
+a frozen `rank_war`, which no level correction can move.
 
 The v5 provenance defends the floor as "accuracy-load-bearing", and it is, on MAE. But
 MAE on a right-skewed target is minimized by predicting the mode, and the mode of prospect
@@ -127,17 +155,22 @@ ledger, not a silently retained floor.
 
 ## How A, B and C relate
 
-They are distinct layers and must not be conflated. A is the model's predicted WAR
-(`xfv_war_6yr`). B is the config's declared WAR meaning of a displayed grade. C is the surplus
-map that turns a grade into dollars. Surplus consumes all three in sequence, so a mis-level
-anywhere propagates: the over-dispersed prediction pushes the bottom tail negative, the anchor
-mis-states what the tier is worth in WAR, and the floor then collapses the result to exactly
-zero. That chain is why the FV35-40 band, which is most of the board, is simultaneously the
-worst-calibrated tier and the one priced at nothing.
+They are distinct layers, and the measured dependency graph is NOT a single chain. Corrected
+2026-07-29 after verification:
 
-Repair order follows the chain, and it is not optional. Refitting the surplus map while the
-prediction still runs negative would only fit a new floor onto a broken input, which is the
-same error shape as the 2026-07-14 lambda retraction.
+- **A is independent of dollars entirely.** Served surplus prices from `xfv_grade_quantile`, a
+  rank-quantile map of a frozen `rank_war`. A level correction of the predicted WAR is
+  rank-preserving by construction, so it moves served dollars by exactly $0.00. A is worth
+  shipping for the honesty of the published WAR number and for the negative-row count, not for
+  its dollar effect, of which it has none.
+- **B moves `ctrl_war`, not dollars.** `ctrl_war` is `fv_to_6yr_avg_war * 6`, so the anchor
+  refit moves the published control-window WAR. Measured: `surplus_musd` is byte-identical
+  under shipped and amended anchors at every tier.
+- **C is where the dollars are**, and it is independent of both A and B.
+
+So the real order is: B and C can proceed in parallel; A is optional and dollar-neutral. The
+one hard sequencing rule that survives is within B: the anchor table must be written before
+the `prospx_current` re-freeze, because the re-freeze captures `ctrl_war`.
 
 ## Pre-registered repair and gates
 

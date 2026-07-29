@@ -52,28 +52,45 @@ meta:
 #   v3 2026-07-04 hitter: 35+ 1.4 / 40 1.5 / 40+ 2.6 / 45 4.5 / 45+ 14.8 / 50 17.7 / 55 33.2 / 60 63.9 / 65 111.1 / 70 157.9
 # ctrl_war is calibration-independent (fv_to_6yr_avg_war*6) and unchanged.
 tiers:
+  # RE-CAPTURED 2026-07-29. Two independent things moved, and they are worth keeping
+  # straight because only one of them is this program's doing.
+  #
+  # surplus_musd drifted BEFORE this program. The 2026-07-24 v5 calibration ship moved
+  # served pricing and the mandated coordinated re-capture never ran, so the frozen
+  # table sat about 16% below the live engine at FV50 (28.2 against 32.8) and 16 of
+  # these acceptance cases were red on arrival. The dollars below are the engine's
+  # current output; the prices readers have been seeing were already these.
+  #
+  # ctrl_war moved BECAUSE of this program: it is fv_to_6yr_avg_war * 6, and the
+  # sub-45 anchor knots were amended on 2026-07-29 (see
+  # data/value_framework_fitted.json empirical_anchors.anchors_provenance). The bottom
+  # three cells fall hard because the old table declared one constant 0.19 WAR/yr for
+  # every grade from 20 to 40: 35+ 1.14 -> 0.32, 40 1.14 -> 0.52, 40+ 1.50 -> 1.19.
+  # Grades 45 and up are unchanged in BOTH columns, by design.
+  #
+  # Grid history: v3 17.7 -> v4 31.6 -> v5 28.2 -> now 32.8 at FV50 hitter.
   hitter:
-    "35+": {surplus_musd: 0.0,   ctrl_war: 1.14}
-    "40":  {surplus_musd: 0.4,   ctrl_war: 1.14}
-    "40+": {surplus_musd: 5.1,   ctrl_war: 1.50}
-    "45":  {surplus_musd: 9.8,   ctrl_war: 1.86}
-    "45+": {surplus_musd: 18.7,  ctrl_war: 2.94}
-    "50":  {surplus_musd: 28.2,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 45.6,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 78.6,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 129.3, ctrl_war: 12.00}
-    "70":  {surplus_musd: 179.6, ctrl_war: 15.12}
+    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 0.4,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 6.1,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 11.7,  ctrl_war: 1.86}
+    "45+": {surplus_musd: 22.0,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 32.8,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 52.8,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 90.5,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 148.5, ctrl_war: 12.00}
+    "70":  {surplus_musd: 206.0, ctrl_war: 15.12}
   pitcher:
-    "35+": {surplus_musd: 0.0,   ctrl_war: 1.14}
-    "40":  {surplus_musd: 0.2,   ctrl_war: 1.14}
-    "40+": {surplus_musd: 3.1,   ctrl_war: 1.50}
-    "45":  {surplus_musd: 6.0,   ctrl_war: 1.86}
-    "45+": {surplus_musd: 12.4,  ctrl_war: 2.94}
-    "50":  {surplus_musd: 19.8,  ctrl_war: 4.02}
-    "55":  {surplus_musd: 34.2,  ctrl_war: 5.88}
-    "60":  {surplus_musd: 63.8,  ctrl_war: 8.64}
-    "65":  {surplus_musd: 109.9, ctrl_war: 12.00}
-    "70":  {surplus_musd: 155.2, ctrl_war: 15.12}
+    "35+": {surplus_musd: 0.0,   ctrl_war: 0.32}
+    "40":  {surplus_musd: 0.2,   ctrl_war: 0.52}
+    "40+": {surplus_musd: 3.8,   ctrl_war: 1.19}
+    "45":  {surplus_musd: 7.4,   ctrl_war: 1.86}
+    "45+": {surplus_musd: 14.8,  ctrl_war: 2.94}
+    "50":  {surplus_musd: 23.2,  ctrl_war: 4.02}
+    "55":  {surplus_musd: 39.8,  ctrl_war: 5.88}
+    "60":  {surplus_musd: 73.6,  ctrl_war: 8.64}
+    "65":  {surplus_musd: 126.3, ctrl_war: 12.00}
+    "70":  {surplus_musd: 178.1, ctrl_war: 15.12}
 
 # --- Global valuation parameters ---
 # MIRROR of value_framework_config.yaml at capture, for documentation and diff
