@@ -48,3 +48,12 @@ wire_fv_first_seen.json
 # test_identity_collisions.py and by whoever works the repair queue.
 identity_collisions.json
 positional_fit.json
+# comps.json (5.6 MB): the archetype-comps donor pool from the 2026-07-25
+# combinatorial sweep. The sweep returned NO SHIP (nested-CV lift negative,
+# selection bias 88-234%), comps_engine.py is unwired, and no page fetches
+# it. Keep it local until an archetype surface is actually built.
+comps.json
+# milb_pitch_rates.json (5.3 MB): MiLB CSW/SwStr rates from the csw-consensus
+# lane. Its own header reads "DATA ASSET - NOT A MODEL INPUT"; the lane was a
+# measured null on all 5 conditions and no page fetches it.
+milb_pitch_rates.json
